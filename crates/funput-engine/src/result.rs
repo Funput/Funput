@@ -5,7 +5,7 @@
 pub enum Action {
     /// Pass the key through to the app — no inject.
     None,
-    /// Delete `backspace` chars in the app, then inject `chars[..count]`.
+    /// Delete `backspace` chars in the app, then inject `output`.
     Send,
     /// Restore pre-composition text (e.g. ESC) — phase E5+.
     Restore,

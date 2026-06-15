@@ -64,18 +64,21 @@ Platform đọc `ImeResult` rồi quyết định **cách inject** (Backspace, S
 
 Platform nhận bước 2: xóa 1 ký tự, inject `á`, nuốt key `s`.
 
-## Cấu trúc module (hiện tại — E0)
+## Cấu trúc module (hiện tại — E1)
 
 ```
 funput-engine/src/
 ├── lib.rs                # Engine, re-exports
 ├── result.rs             # Action, ImeResult
-├── session.rs            # enabled, method, buffer
-├── pipeline.rs           # stub — E1
-└── diff.rs               # stub — E1
-```
+├── session.rs            # enabled, method, buffer, keys
+├── pipeline.rs           # TransformKind → ImeResult
+└── diff.rs               # buffer diff → backspace + output
 
-Integration tests (`tests/telex_steps.rs`, …) — E1+.
+tests/
+├── support/mod.rs        # type_keys helpers
+├── telex_steps.rs
+└── vni_steps.rs
+```
 
 ## Phụ thuộc
 
@@ -104,4 +107,4 @@ cargo test -p funput-engine
 cargo clippy -p funput-engine -- -D warnings
 ```
 
-**E0:** `process_char` stub trả `Action::None`; pipeline/diff implement ở E1.
+**E1:** pipeline gọi `funput-core::apply`, map `TransformKind` → `ImeResult`; word boundary ở E2.

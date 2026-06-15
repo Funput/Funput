@@ -23,7 +23,7 @@ Trả lời một câu hỏi duy nhất:
 | `funput-core` | `funput-engine` |
 |---------------|-----------------|
 | `apply(buffer, key, method) -> TransformResult` | Giữ `session.buffer` qua nhiều keystroke |
-| `TransformKind` + `text` sau một bước | `Action` + `backspace` + UTF-32 output |
+| `TransformKind` + `text` sau một bước | `Action` + `backspace` + `output: String` |
 | Stateless, pure function | Session: `enabled`, `method`, buffer |
 | Validation cấu trúc âm tiết | Word boundary, `clear()` |
 | Pass-through literal (`text`+`1` → `"text1"`) | English restore khi Space (phase E3) |
@@ -241,6 +241,9 @@ Gõ `ng` + `s` (Telex — core sửa từ bản mới: tone-letter không nguyê
 
 Step tests pass; `cargo clippy -p funput-engine -- -D warnings`.
 
+- [x] `diff`, `pipeline`, `process_char` wired
+- [x] `tests/telex_steps.rs`, `tests/vni_steps.rs`
+
 ---
 
 ## Phase E2 — Word boundary (`clear`)
@@ -418,7 +421,7 @@ flowchart TD
 | Phase | Trạng thái |
 |-------|------------|
 | E0 Setup | ✅ |
-| E1 Pipeline | ⬜ |
+| E1 Pipeline | ✅ |
 | E2 Word boundary | ⬜ |
 | E3 English restore | ⬜ |
 | E4 API freeze | ⬜ |

@@ -15,7 +15,8 @@ mod result;
 mod session;
 
 pub use result::{Action, ImeResult};
-pub use session::Session;
+
+use session::Session;
 
 /// Vietnamese IME engine — single source of truth for composition state.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -54,11 +55,18 @@ impl Engine {
         &self.session.buffer
     }
 
+    /// Raw keystrokes since the last word boundary (for English restore in E3).
+    pub fn keys(&self) -> &str {
+        &self.session.keys
+    }
+
     /// Process one Unicode scalar (platform maps keycode → char).
-    ///
-    /// E0 stub: always returns [`Action::None`] and leaves the buffer unchanged.
-    pub fn process_char(&mut self, _key: char) -> ImeResult {
-        ImeResult::none()
+    pub fn process_char(&mut self, key: char) -> ImeResult {
+        if !self.session.enabled {
+            return ImeResult::none();
+        }
+        self.session.keys.push(key);
+        pipeline::process(&mut self.session, key)
     }
 }
 
@@ -103,12 +111,23 @@ mod tests {
     }
 
     #[test]
-    fn process_char_stub_none() {
+    fn process_char_pending_updates_buffer_and_keys() {
         let mut engine = Engine::new();
         let result = engine.process_char('a');
         assert_eq!(result.action, Action::None);
         assert_eq!(result.backspace, 0);
         assert!(result.output.is_empty());
+        assert_eq!(engine.buffer(), "a");
+        assert_eq!(engine.keys(), "a");
+    }
+
+    #[test]
+    fn disabled_does_not_touch_buffer_or_keys() {
+        let mut engine = Engine::new();
+        engine.set_enabled(false);
+        let result = engine.process_char('a');
+        assert_eq!(result.action, Action::None);
         assert_eq!(engine.buffer(), "");
+        assert_eq!(engine.keys(), "");
     }
 }
