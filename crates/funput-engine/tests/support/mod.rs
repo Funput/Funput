@@ -3,7 +3,7 @@
 #![allow(dead_code)]
 
 use funput_core::InputMethod;
-use funput_engine::{Engine, ImeResult};
+use funput_engine::{Action, Engine, ImeResult};
 
 pub fn type_keys(method: InputMethod, keys: &str) -> (String, Vec<ImeResult>) {
     let mut engine = Engine::new();
@@ -34,4 +34,26 @@ pub fn type_words(method: InputMethod, text: &str) -> String {
         words.push(engine.buffer().to_owned());
     }
     words.join(" ")
+}
+
+/// Reconstruct the app text from the inject stream (None → append key,
+/// Send → delete `backspace` chars then append `output`).
+pub fn app_text(method: InputMethod, keys: &str) -> String {
+    let mut engine = Engine::new();
+    engine.set_method(method);
+    let mut app = String::new();
+    for key in keys.chars() {
+        let r = engine.process_char(key);
+        match r.action {
+            Action::None => app.push(key),
+            Action::Send => {
+                for _ in 0..r.backspace {
+                    app.pop();
+                }
+                app.push_str(&r.output);
+            }
+            Action::Restore => unreachable!("Restore not implemented yet"),
+        }
+    }
+    app
 }

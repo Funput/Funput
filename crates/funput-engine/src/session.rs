@@ -10,8 +10,8 @@ pub struct Session {
     /// Composed text currently shown in the app (the composition span).
     pub buffer: String,
     /// Raw keystrokes since the last word boundary. Lets English restore
-    /// (phase E3) rebuild the original Latin text when a word is not valid
-    /// Vietnamese (`mas` → `má`, but Space restores `mas`).
+    /// (phase E3) rebuild the original Latin text when the composed buffer is
+    /// not a complete Vietnamese syllable (`keys != buffer && !is_complete_syllable(buffer)`).
     pub keys: String,
 }
 

@@ -45,33 +45,34 @@ fn type_words_leaves_buffer_empty_after_trailing_space() {
     assert_eq!(engine.buffer(), "");
 }
 
-/// Reconstruct the app text from the inject stream (None → append key,
-/// Send → delete `backspace` chars then append `output`).
-fn app_text(method: InputMethod, keys: &str) -> String {
-    let mut engine = Engine::new();
-    engine.set_method(method);
-    let mut app = String::new();
-    for key in keys.chars() {
-        let r = engine.process_char(key);
-        match r.action {
-            Action::None => app.push(key),
-            Action::Send => {
-                for _ in 0..r.backspace {
-                    app.pop();
-                }
-                app.push_str(&r.output);
-            }
-            Action::Restore => unreachable!("no restore in E2"),
-        }
-    }
-    app
-}
-
 #[test]
 fn punctuation_is_a_boundary_no_cross_syllable_bleed() {
     // The modifier in the second chunk must not reach back to the first syllable.
-    assert_eq!(app_text(InputMethod::Telex, "as,af"), "á,à");
-    assert_eq!(app_text(InputMethod::Vni, "a1.a2"), "á.à");
+    assert_eq!(support::app_text(InputMethod::Telex, "as,af"), "á,à");
+    assert_eq!(support::app_text(InputMethod::Vni, "a1.a2"), "á.à");
     // Buffer resets after the punctuation so the second word composes cleanly.
-    assert_eq!(app_text(InputMethod::Telex, "anhf-em"), "ành-em");
+    assert_eq!(support::app_text(InputMethod::Telex, "anhf-em"), "ành-em");
+}
+
+#[test]
+fn english_word_restored_on_boundary() {
+    // Words composing to a non-Vietnamese final are restored to raw keystrokes.
+    assert_eq!(support::app_text(InputMethod::Telex, "card "), "card ");
+    assert_eq!(support::app_text(InputMethod::Telex, "cool "), "cool ");
+    assert_eq!(support::app_text(InputMethod::Telex, "hard."), "hard.");
+    assert_eq!(support::app_text(InputMethod::Telex, "masz "), "masz ");
+}
+
+#[test]
+fn valid_vietnamese_kept_on_boundary() {
+    // A complete syllable is intentional — never restored, even if it also reads
+    // as English (`test` → `tét`).
+    assert_eq!(support::app_text(InputMethod::Telex, "mas "), "má ");
+    assert_eq!(support::app_text(InputMethod::Telex, "test "), "tét ");
+    assert_eq!(support::app_text(InputMethod::Telex, "vietj "), "việt ");
+}
+
+#[test]
+fn mixed_english_and_vietnamese_words() {
+    assert_eq!(support::app_text(InputMethod::Telex, "card mas "), "card má ");
 }

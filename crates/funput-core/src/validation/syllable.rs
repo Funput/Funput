@@ -82,9 +82,28 @@ pub fn validate_stroke(buffer: &str) -> ModifierValidation {
 }
 
 /// Returns true if the syllable structure is valid for transform.
-#[allow(dead_code)] // Public API for engine / future callers.
+///
+/// **Lenient** (mid-typing): a single trailing consonant is accepted because the
+/// user may still be typing (e.g. `mix` → allow, so `mĩx` can compose). For a
+/// finished word use [`is_complete_syllable`].
 pub fn is_valid(buffer: &str) -> bool {
     matches!(validate_modifier(buffer), ModifierValidation::Allow)
+}
+
+/// Returns true if `buffer` is a *complete* valid Vietnamese syllable.
+///
+/// **Strict**: the coda must be a real Vietnamese final (`c ch m n ng nh p t`),
+/// with no "still typing" leniency. Use this at a word boundary — e.g. the engine
+/// decides English restore when a finished word is *not* a complete syllable
+/// (`cảd` from `card`, `côl` from `cool`).
+pub fn is_complete_syllable(buffer: &str) -> bool {
+    let parts = parse_syllable(buffer);
+
+    !parts.invalid_onset
+        && (parts.onset.is_empty() || is_valid_onset(&parts.onset.to_lowercase()))
+        && !parts.nucleus.is_empty()
+        && !violates_ckg_spelling(&parts.onset, &parts.nucleus)
+        && VALID_CODAS.contains(&parts.coda.to_lowercase().as_str())
 }
 
 #[cfg(test)]
@@ -104,6 +123,30 @@ mod tests {
     fn validate_stroke_cases() {
         assert_eq!(validate_stroke("d"), ModifierValidation::Allow);
         assert_eq!(validate_stroke("x"), ModifierValidation::Ignored);
+    }
+
+    #[test]
+    fn is_valid_cases() {
+        assert!(is_valid("má"));
+        assert!(is_valid("ma"));
+        assert!(!is_valid("ábc"));
+        assert!(!is_valid("text"));
+    }
+
+    #[test]
+    fn is_complete_syllable_cases() {
+        // Complete Vietnamese syllables.
+        for ok in ["má", "ma", "tét", "việt", "trường", "quá", "ăn", "nhanh"] {
+            assert!(is_complete_syllable(ok), "{ok} should be complete");
+        }
+        // Invalid finals — a finished word ending in a non-Vietnamese coda.
+        for bad in ["cảd", "côl", "máz", "hảd", "ng", "abc", "text"] {
+            assert!(!is_complete_syllable(bad), "{bad} should be incomplete");
+        }
+        // Stricter than `is_valid`: single trailing `d`/`z` is lenient-valid but
+        // not a complete syllable.
+        assert!(is_valid("cảd"));
+        assert!(!is_complete_syllable("cảd"));
     }
 
     #[test]

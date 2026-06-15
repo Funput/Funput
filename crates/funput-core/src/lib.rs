@@ -6,7 +6,9 @@
 //! # API FROZEN (Phase 8)
 //!
 //! The public surface is intentionally minimal for `funput-engine`:
-//! [`InputMethod`], [`TransformKind`], [`TransformResult`], and [`apply`].
+//! [`InputMethod`], [`TransformKind`], [`TransformResult`], [`apply`], and the
+//! syllable-structure checks [`is_valid`] (lenient) / [`is_complete_syllable`]
+//! (strict, for word boundaries).
 //! Breaking changes require semver coordination with the engine.
 //!
 //! # Contract
@@ -70,6 +72,8 @@ pub struct TransformResult {
 ///     }
 /// );
 /// ```
+pub use validation::syllable::{is_complete_syllable, is_valid};
+
 pub fn apply(buffer: &str, key: char, method: InputMethod) -> TransformResult {
     match method {
         InputMethod::Vni => composition::transform::apply_vni(buffer, key),

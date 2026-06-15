@@ -1,5 +1,8 @@
 //! Word-boundary handling — end-of-word clears composition state.
 
+use funput_core::is_complete_syllable;
+
+use crate::result::ImeResult;
 use crate::session::Session;
 
 /// A word boundary ends the current composition: any whitespace or ASCII
@@ -10,14 +13,40 @@ pub fn is_word_boundary(key: char) -> bool {
     key.is_whitespace() || key.is_ascii_punctuation()
 }
 
-/// End-of-word: reset composition state. E3 adds English restore before clear.
-pub fn on_word_boundary(session: &mut Session) {
+/// True when the composed buffer should be replaced with raw keystrokes on boundary.
+///
+/// The word is finished, so we use the **strict** [`is_complete_syllable`]: a word
+/// ending in a non-Vietnamese final (`cảd` from `card`, `côl` from `cool`) is not
+/// a real syllable and is restored to the raw Latin keystrokes. A valid syllable
+/// (`má`, `tét`) is kept — typing it was intentional.
+pub(crate) fn should_restore(session: &Session) -> bool {
+    !session.buffer.is_empty()
+        && session.keys != session.buffer
+        && !is_complete_syllable(&session.buffer)
+}
+
+fn english_restore_result(session: &Session, boundary_key: char) -> ImeResult {
+    let backspace = session.buffer.chars().count();
+    let output = format!("{}{}", session.keys, boundary_key);
+    ImeResult::send(backspace, output)
+}
+
+/// End-of-word: optionally restore English Latin text, then reset composition state.
+pub fn on_word_boundary(session: &mut Session, boundary_key: char) -> ImeResult {
+    let result = if should_restore(session) {
+        english_restore_result(session, boundary_key)
+    } else {
+        ImeResult::none()
+    };
     session.clear();
+    result
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::result::Action;
+    use funput_core::InputMethod;
 
     #[test]
     fn word_boundary_chars() {
@@ -32,11 +61,82 @@ mod tests {
     }
 
     #[test]
+    fn should_restore_when_buffer_invalid_and_keys_differ() {
+        let session = Session {
+            enabled: true,
+            method: InputMethod::Telex,
+            buffer: "ábc".into(),
+            keys: "absc".into(),
+        };
+        assert!(should_restore(&session));
+    }
+
+    #[test]
+    fn should_not_restore_when_buffer_valid_vietnamese() {
+        let session = Session {
+            enabled: true,
+            method: InputMethod::Telex,
+            buffer: "má".into(),
+            keys: "mas".into(),
+        };
+        assert!(!should_restore(&session));
+    }
+
+    #[test]
+    fn should_not_restore_when_keys_match_buffer() {
+        let session = Session {
+            enabled: true,
+            method: InputMethod::Telex,
+            buffer: "text".into(),
+            keys: "text".into(),
+        };
+        assert!(!should_restore(&session));
+    }
+
+    #[test]
+    fn should_not_restore_when_buffer_empty() {
+        let session = Session::new();
+        assert!(!should_restore(&session));
+    }
+
+    #[test]
+    fn on_word_boundary_restores_english() {
+        let mut session = Session {
+            enabled: true,
+            method: InputMethod::Telex,
+            buffer: "ábc".into(),
+            keys: "absc".into(),
+        };
+        let result = on_word_boundary(&mut session, ' ');
+        assert_eq!(result.action, Action::Send);
+        assert_eq!(result.backspace, 3);
+        assert_eq!(result.output, "absc ");
+        assert!(session.buffer.is_empty());
+        assert!(session.keys.is_empty());
+    }
+
+    #[test]
+    fn on_word_boundary_valid_vn_no_restore() {
+        let mut session = Session {
+            enabled: true,
+            method: InputMethod::Telex,
+            buffer: "má".into(),
+            keys: "mas".into(),
+        };
+        let result = on_word_boundary(&mut session, ' ');
+        assert_eq!(result.action, Action::None);
+        assert_eq!(result.backspace, 0);
+        assert!(result.output.is_empty());
+        assert!(session.buffer.is_empty());
+        assert!(session.keys.is_empty());
+    }
+
+    #[test]
     fn on_word_boundary_clears_session() {
         let mut session = Session::new();
         session.buffer.push('á');
         session.keys.push_str("as");
-        on_word_boundary(&mut session);
+        on_word_boundary(&mut session, ' ');
         assert!(session.buffer.is_empty());
         assert!(session.keys.is_empty());
     }

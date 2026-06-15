@@ -71,7 +71,7 @@ funput-engine/src/
 ├── lib.rs                # Engine, re-exports
 ├── result.rs             # Action, ImeResult
 ├── session.rs            # enabled, method, buffer, keys
-├── boundary.rs           # word boundary → clear (E3 restore hook)
+├── boundary.rs           # word boundary → clear + English restore (E3)
 ├── pipeline.rs           # TransformKind → ImeResult
 └── diff.rs               # buffer diff → backspace + output
 
@@ -80,6 +80,7 @@ tests/
 ├── telex_steps.rs
 ├── vni_steps.rs
 └── word_boundary.rs
+└── english_restore.rs
 ```
 
 ## Phụ thuộc
@@ -109,4 +110,5 @@ cargo test -p funput-engine
 cargo clippy -p funput-engine -- -D warnings
 ```
 
-**E2:** Space/Enter/Tab → `clear()` buffer + keys, pass key (`Action::None`); English restore ở E3.
+**E3:** Trên boundary, nếu `keys != buffer && !is_valid(buffer)` → `Send` restore Latin
+(`output = keys + boundary_key`); âm tiết VN hợp lệ (`má`) giữ composed.

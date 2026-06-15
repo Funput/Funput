@@ -67,8 +67,7 @@ impl Engine {
             return ImeResult::none();
         }
         if boundary::is_word_boundary(key) {
-            boundary::on_word_boundary(&mut self.session);
-            return ImeResult::none();
+            return boundary::on_word_boundary(&mut self.session, key);
         }
         self.session.keys.push(key);
         pipeline::process(&mut self.session, key)
