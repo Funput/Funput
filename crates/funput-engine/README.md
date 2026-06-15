@@ -64,20 +64,22 @@ Platform đọc `ImeResult` rồi quyết định **cách inject** (Backspace, S
 
 Platform nhận bước 2: xóa 1 ký tự, inject `á`, nuốt key `s`.
 
-## Cấu trúc module (hiện tại — E1)
+## Cấu trúc module (hiện tại — E2)
 
 ```
 funput-engine/src/
 ├── lib.rs                # Engine, re-exports
 ├── result.rs             # Action, ImeResult
 ├── session.rs            # enabled, method, buffer, keys
+├── boundary.rs           # word boundary → clear (E3 restore hook)
 ├── pipeline.rs           # TransformKind → ImeResult
 └── diff.rs               # buffer diff → backspace + output
 
 tests/
-├── support/mod.rs        # type_keys helpers
+├── support/mod.rs        # type_keys, type_words
 ├── telex_steps.rs
-└── vni_steps.rs
+├── vni_steps.rs
+└── word_boundary.rs
 ```
 
 ## Phụ thuộc
@@ -107,4 +109,4 @@ cargo test -p funput-engine
 cargo clippy -p funput-engine -- -D warnings
 ```
 
-**E1:** pipeline gọi `funput-core::apply`, map `TransformKind` → `ImeResult`; word boundary ở E2.
+**E2:** Space/Enter/Tab → `clear()` buffer + keys, pass key (`Action::None`); English restore ở E3.

@@ -248,18 +248,19 @@ Step tests pass; `cargo clippy -p funput-engine -- -D warnings`.
 
 ## Phase E2 — Word boundary (`clear`)
 
-**File:** `session.rs`, `pipeline.rs`
+**File:** `boundary.rs`, `lib.rs`
 
 ### Việc làm
 
 | # | Task |
 |---|------|
-| E2.1 | `process_char` nhận diện boundary: Space, Enter, Tab (v1) |
+| E2.1 | `process_char` nhận diện boundary: whitespace + ASCII punctuation (chữ số KHÔNG phải boundary — VNI modifier) |
 | E2.2 | Output đã inject tăng dần qua từng key → boundary **không cần commit gì**, chỉ `clear()` state (buffer + keys) |
 | E2.3 | `clear()` reset buffer + keys sau boundary |
-| E2.4 | Boundary key: `Action::None`, pass key (space vẫn vào app) |
+| E2.4 | Boundary key: `Action::None`, pass key (space/dấu câu vẫn vào app) |
 | E2.5 | Test: `ma` + space → buffer clear, space passed |
 | E2.6 | Test multi-word: `type_words` simulation qua engine |
+| E2.7 | Test dấu câu là boundary: `as,af` → `á,à` (không rỉ modifier qua âm tiết) |
 
 ### Hành vi
 
@@ -271,6 +272,10 @@ Step tests pass; `cargo clippy -p funput-engine -- -D warnings`.
 ### Done khi
 
 Multi-syllable simulation (`xins chaof banj` từng key + space) pass.
+
+- [x] `boundary.rs` — `is_word_boundary`, `on_word_boundary` (clear only; hook E3)
+- [x] `process_char` boundary trước `keys.push`
+- [x] `tests/word_boundary.rs`, `support::type_words`
 
 ---
 
@@ -422,7 +427,7 @@ flowchart TD
 |-------|------------|
 | E0 Setup | ✅ |
 | E1 Pipeline | ✅ |
-| E2 Word boundary | ⬜ |
+| E2 Word boundary | ✅ |
 | E3 English restore | ⬜ |
 | E4 API freeze | ⬜ |
 | E5 ESC Restore | ⬜ optional |

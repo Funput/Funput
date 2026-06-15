@@ -9,6 +9,7 @@
 //! - **Delegates transform:** all Telex/VNI rules live in `funput-core`.
 //! - **No I/O:** no keyboard hooks, no inject — platform reads [`ImeResult`].
 
+mod boundary;
 mod diff;
 mod pipeline;
 mod result;
@@ -63,6 +64,10 @@ impl Engine {
     /// Process one Unicode scalar (platform maps keycode → char).
     pub fn process_char(&mut self, key: char) -> ImeResult {
         if !self.session.enabled {
+            return ImeResult::none();
+        }
+        if boundary::is_word_boundary(key) {
+            boundary::on_word_boundary(&mut self.session);
             return ImeResult::none();
         }
         self.session.keys.push(key);
@@ -128,6 +133,40 @@ mod tests {
         let result = engine.process_char('a');
         assert_eq!(result.action, Action::None);
         assert_eq!(engine.buffer(), "");
+        assert_eq!(engine.keys(), "");
+    }
+
+    #[test]
+    fn word_boundary_clears_after_word() {
+        let mut engine = Engine::new();
+        engine.process_char('m');
+        engine.process_char('a');
+        let tone = engine.process_char('s');
+        assert_eq!(tone.action, Action::Send);
+        assert_eq!(engine.buffer(), "má");
+        assert_eq!(engine.keys(), "mas");
+
+        let space = engine.process_char(' ');
+        assert_eq!(space.action, Action::None);
+        assert_eq!(engine.buffer(), "");
+        assert_eq!(engine.keys(), "");
+    }
+
+    #[test]
+    fn word_boundary_on_empty_buffer() {
+        let mut engine = Engine::new();
+        let result = engine.process_char(' ');
+        assert_eq!(result.action, Action::None);
+        assert_eq!(engine.buffer(), "");
+        assert_eq!(engine.keys(), "");
+    }
+
+    #[test]
+    fn word_boundary_does_not_append_keys() {
+        let mut engine = Engine::new();
+        engine.process_char('a');
+        assert_eq!(engine.keys(), "a");
+        engine.process_char(' ');
         assert_eq!(engine.keys(), "");
     }
 }
