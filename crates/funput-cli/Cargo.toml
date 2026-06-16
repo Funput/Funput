@@ -1,0 +1,13 @@
+[package]
+name = "funput-cli"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "funput"
+path = "src/main.rs"
+
+[dependencies]
+funput-core = { path = "../funput-core" }
+funput-engine = { path = "../funput-engine" }
+clap = { version = "4", features = ["derive"] }
