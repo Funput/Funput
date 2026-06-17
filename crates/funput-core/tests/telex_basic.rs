@@ -39,16 +39,17 @@ fn telex_shape_then_tone() {
 fn telex_reposition() {
     assert_eq!(type_keys("hoaf"), "hoà");
     assert_eq!(type_keys("thuyr"), "thuỷ");
-    assert_eq!(type_keys("hoaff"), "hoa");
 }
 
 #[test]
 fn telex_revert() {
-    assert_eq!(type_keys("ass"), "a");
-    assert_eq!(type_keys("aaa"), "a");
-    assert_eq!(type_keys("ddd"), "d");
-    assert_eq!(type_keys("aas"), "ấ");
-    assert_eq!(type_keys("aass"), "â");
+    // Double modifier restores raw keystrokes: strip diacritic + append the key.
+    assert_eq!(type_keys("ass"), "as");
+    assert_eq!(type_keys("aaa"), "aa");
+    assert_eq!(type_keys("ddd"), "dd");
+    assert_eq!(type_keys("aas"), "ấ"); // single sắc on â — not a revert
+    assert_eq!(type_keys("aass"), "âs");
+    assert_eq!(type_keys("hoaff"), "hoaf");
 }
 
 #[test]

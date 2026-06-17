@@ -279,19 +279,27 @@ Các case reposition trong bảng trên pass.
 
 ---
 
-## Phase 5 — VNI: revert (gõ đúp số)
+## Phase 5 — Revert (gõ đúp phím dấu)
 
-**Quy ước: Cách A** — gõ lại cùng phím modifier → bỏ một lớp modifier trên mục tiêu hiện tại (align UniKey/OpenKey).
+**Quy ước: khôi phục chuỗi gõ gốc** — gõ lại cùng phím modifier → **bỏ dấu** trên mục
+tiêu hiện tại **và chèn ký tự phím vừa gõ** (raw keystroke). Áp dụng chung VNI + Telex
+(method-agnostic, xử lý ở `apply_action`).
 
 | Input | Output | Ghi chú |
 |-------|--------|---------|
-| `a11` | `a` | Revert tone: bỏ sắc |
-| `a66` | `a` | Revert shape: bỏ mũ |
-| `d99` | `d` | Revert stroke |
-| `a611` | `â` | Revert tone, giữ mũ |
-| `a12` | `à` | Khác tone → thay tone (Applied) |
+| `a11` | `a1` | Bỏ sắc + chèn `1` |
+| `a66` | `a6` | Bỏ mũ + chèn `6` |
+| `d99` | `d9` | Bỏ gạch + chèn `9` |
+| `a611` | `â1` | Bỏ sắc (giữ mũ) + chèn `1` |
+| `a12` | `à` | Khác phím → thay dấu (Applied), không revert |
+| Telex `ass` | `as` | Bỏ sắc + chèn `s` |
+| Telex `dd` `d` | `dd` | Bỏ gạch + chèn `d` |
+| `phu11` | `phu1` | Ví dụ người dùng: "Phú" + `1` → "Phu1" |
 
-Trả `TransformKind::Reverted` khi revert thành công.
+Trả `TransformKind::Reverted`; engine diff `buffer` cũ↔mới (xoá dấu, chèn `stem+key`).
+
+> Vì raw key khác nhau theo phương thức (VNI chèn chữ số, Telex chèn chữ cái), các case
+> revert **không** còn là parity VNI↔Telex.
 
 ### Done khi
 

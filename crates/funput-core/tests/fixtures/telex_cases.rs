@@ -50,17 +50,17 @@ pub const CASES: &[TelexCase] = &[
     },
     TelexCase {
         keys: "ass",
-        output: "a",
+        output: "as",
         label: "revert tone ass",
     },
     TelexCase {
         keys: "aaa",
-        output: "a",
+        output: "aa",
         label: "revert shape aaa",
     },
     TelexCase {
         keys: "ddd",
-        output: "d",
+        output: "dd",
         label: "revert stroke ddd",
     },
     TelexCase {

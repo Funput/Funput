@@ -123,30 +123,30 @@ pub const CASES: &[VniCase] = &[
         output: "trường",
         label: "reposition tru7o7n2g",
     },
-    // Revert
+    // Revert — double modifier restores raw keystrokes (strip diacritic + append key)
     VniCase {
         keys: "a11",
-        output: "a",
+        output: "a1",
         label: "revert tone a11",
     },
     VniCase {
         keys: "a66",
-        output: "a",
+        output: "a6",
         label: "revert shape a66",
     },
     VniCase {
         keys: "d99",
-        output: "d",
+        output: "d9",
         label: "revert stroke d99",
     },
     VniCase {
         keys: "hoa22",
-        output: "hoa",
+        output: "hoa2",
         label: "revert reposition hoa22",
     },
     VniCase {
         keys: "tru7o7n2g2",
-        output: "trương",
+        output: "trương2",
         label: "revert tru7o7n2g2",
     },
     // Complex syllables (Phase 6)

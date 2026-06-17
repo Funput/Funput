@@ -41,7 +41,8 @@ pub enum TransformKind {
     Pending,
     /// Tone, shape, stroke, or reposition produced new composed text in `text`.
     Applied,
-    /// Double modifier removed one layer (e.g. `a11` → `a`).
+    /// Double modifier restores the raw keystrokes — strips the diacritic and
+    /// appends the literal key (e.g. `a11` → `a1`, Telex `ass` → `as`).
     Reverted,
     /// Modifier rejected — `text` unchanged (e.g. `ng` + `1`, stroke on non-`d`).
     Ignored,

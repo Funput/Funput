@@ -23,7 +23,8 @@ fn vni_d9_stroke() {
 
 #[test]
 fn vni_a11_revert() {
-    assert_eq!(support::type_keys_buffer(InputMethod::Vni, "a11"), "a");
+    // Double tone key restores raw keystrokes: "á" + "1" → "a1".
+    assert_eq!(support::type_keys_buffer(InputMethod::Vni, "a11"), "a1");
 }
 
 #[test]

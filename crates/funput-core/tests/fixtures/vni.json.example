@@ -4,7 +4,7 @@
     { "method": "vni", "keys": "a1", "output": "á", "label": "tone sac" },
     { "method": "vni", "keys": "d9", "output": "đ", "label": "stroke d9" },
     { "method": "vni", "keys": "hoa2", "output": "hoà", "label": "reposition hoa2" },
-    { "method": "vni", "keys": "a11", "output": "a", "label": "revert tone a11" },
+    { "method": "vni", "keys": "a11", "output": "a1", "label": "revert tone a11" },
     { "method": "vni", "keys": "vie5t", "output": "việt", "label": "complex vie5t" },
     { "method": "vni", "keys": "truo7ng", "output": "trương", "label": "complex truo7ng" },
     { "method": "vni", "keys": "ngu7o7i2", "output": "người", "label": "complex ngu7o7i2" }

@@ -119,31 +119,9 @@ pub const CASES: &[ParityCase] = &[
         vni_keys: "tru7o7n2g",
         label: "reposition truwownfg",
     },
-    ParityCase {
-        telex_keys: "ass",
-        vni_keys: "a11",
-        label: "revert tone",
-    },
-    ParityCase {
-        telex_keys: "aaa",
-        vni_keys: "a66",
-        label: "revert shape",
-    },
-    ParityCase {
-        telex_keys: "ddd",
-        vni_keys: "d99",
-        label: "revert stroke",
-    },
-    ParityCase {
-        telex_keys: "hoaff",
-        vni_keys: "hoa22",
-        label: "revert reposition",
-    },
-    ParityCase {
-        telex_keys: "truwownfgf",
-        vni_keys: "tru7o7n2g2",
-        label: "revert truwownfg",
-    },
+    // NOTE: revert (double modifier) restores raw keystrokes, which differ by
+    // method (VNI appends a digit, Telex a letter), so revert is intentionally
+    // NOT a parity case — see `telex_cases`/`vni_cases` for per-method outputs.
     ParityCase {
         telex_keys: "nguws",
         vni_keys: "ngu71",

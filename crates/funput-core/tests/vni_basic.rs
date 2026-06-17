@@ -110,18 +110,20 @@ fn vni_reposition() {
 
 #[test]
 fn vni_revert() {
-    assert_eq!(support::type_keys(InputMethod::Vni, "a11"), "a");
-    assert_eq!(support::type_keys(InputMethod::Vni, "a66"), "a");
-    assert_eq!(support::type_keys(InputMethod::Vni, "a88"), "a");
-    assert_eq!(support::type_keys(InputMethod::Vni, "d99"), "d");
-    assert_eq!(support::type_keys(InputMethod::Vni, "a611"), "â");
-    assert_eq!(support::type_keys(InputMethod::Vni, "a12"), "à");
-    assert_eq!(support::type_keys(InputMethod::Vni, "hoa22"), "hoa");
-    assert_eq!(support::type_keys(InputMethod::Vni, "uo77"), "uo");
-    assert_eq!(support::type_keys(InputMethod::Vni, "tru7o7n2g2"), "trương");
+    // Double modifier restores raw keystrokes: strip diacritic + append the key.
+    assert_eq!(support::type_keys(InputMethod::Vni, "a11"), "a1");
+    assert_eq!(support::type_keys(InputMethod::Vni, "a66"), "a6");
+    assert_eq!(support::type_keys(InputMethod::Vni, "a88"), "a8");
+    assert_eq!(support::type_keys(InputMethod::Vni, "d99"), "d9");
+    assert_eq!(support::type_keys(InputMethod::Vni, "a611"), "â1");
+    assert_eq!(support::type_keys(InputMethod::Vni, "a12"), "à"); // different key → re-tone
+    assert_eq!(support::type_keys(InputMethod::Vni, "hoa22"), "hoa2");
+    assert_eq!(support::type_keys(InputMethod::Vni, "uo77"), "uo7");
+    assert_eq!(support::type_keys(InputMethod::Vni, "tru7o7n2g2"), "trương2");
+    assert_eq!(support::type_keys(InputMethod::Vni, "phu11"), "phu1");
 
     let (text, kinds) = support::type_keys_with_kinds(InputMethod::Vni, "a11");
-    assert_eq!(text, "a");
+    assert_eq!(text, "a1");
     assert_eq!(kinds.last(), Some(&TransformKind::Reverted));
 }
 

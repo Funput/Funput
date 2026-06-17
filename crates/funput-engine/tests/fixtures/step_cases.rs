@@ -73,13 +73,14 @@ pub const STEP_CASES: &[StepCase] = &[
                 backspace: 1,
                 output: "á",
             },
+            // Double tone key restores raw keystrokes: "á" → "as".
             ExpectedStep {
                 action: Action::Send,
                 backspace: 1,
-                output: "a",
+                output: "as",
             },
         ],
-        final_buffer: "a",
+        final_buffer: "as",
         label: "telex revert ass",
     },
     StepCase {
@@ -158,19 +159,19 @@ pub const TELEX_BUFFER_CASES: &[BufferCase] = &[
     BufferCase {
         method: InputMethod::Telex,
         keys: "ass",
-        output: "a",
+        output: "as",
         label: "revert tone ass",
     },
     BufferCase {
         method: InputMethod::Telex,
         keys: "aaa",
-        output: "a",
+        output: "aa",
         label: "revert shape aaa",
     },
     BufferCase {
         method: InputMethod::Telex,
         keys: "ddd",
-        output: "d",
+        output: "dd",
         label: "revert stroke ddd",
     },
     BufferCase {
@@ -329,31 +330,31 @@ pub const VNI_BUFFER_CASES: &[BufferCase] = &[
     BufferCase {
         method: InputMethod::Vni,
         keys: "a11",
-        output: "a",
+        output: "a1",
         label: "revert tone a11",
     },
     BufferCase {
         method: InputMethod::Vni,
         keys: "a66",
-        output: "a",
+        output: "a6",
         label: "revert shape a66",
     },
     BufferCase {
         method: InputMethod::Vni,
         keys: "d99",
-        output: "d",
+        output: "d9",
         label: "revert stroke d99",
     },
     BufferCase {
         method: InputMethod::Vni,
         keys: "hoa22",
-        output: "hoa",
+        output: "hoa2",
         label: "revert reposition hoa22",
     },
     BufferCase {
         method: InputMethod::Vni,
         keys: "tru7o7n2g2",
-        output: "trương",
+        output: "trương2",
         label: "revert tru7o7n2g2",
     },
     BufferCase {

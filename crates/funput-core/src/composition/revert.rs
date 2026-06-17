@@ -1,4 +1,9 @@
-//! VNI revert helpers — double modifier key removes one layer (Cách A).
+//! Revert helpers — detect a double modifier key and strip the diacritic it
+//! would re-apply, returning the bare stem. The caller ([`apply_action`]) then
+//! appends the literal key so the user gets back their raw keystrokes
+//! (`á` + `1` → `a` here → `a1` in the pipeline).
+//!
+//! [`apply_action`]: crate::composition::transform::apply_action
 
 use crate::unicode::marks::{tone_on_vowel, vowel_stem, Tone};
 use crate::unicode::shapes::{shape_on_vowel, shaped_vowel_index, strip_shape, VowelShape};

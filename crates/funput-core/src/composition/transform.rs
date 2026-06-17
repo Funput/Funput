@@ -56,14 +56,14 @@ pub(crate) fn apply_action(buffer: &str, key: char, action: KeyAction) -> Transf
     match action {
         KeyAction::Stroke => {
             if let Some(text) = try_revert_stroke(buffer) {
-                return reverted(text);
+                return reverted(format!("{text}{key}"));
             }
             validation_gate(buffer, key, validate_stroke(buffer))
                 .unwrap_or_else(|| apply_stroke(buffer))
         }
         KeyAction::Tone(tone) => {
             if let Some(text) = try_revert_tone(buffer, tone) {
-                return reverted(text);
+                return reverted(format!("{text}{key}"));
             }
             validation_gate(buffer, key, validate_tone(buffer))
                 .unwrap_or_else(|| apply_tone_key(buffer, tone))
@@ -78,7 +78,7 @@ pub(crate) fn apply_action(buffer: &str, key: char, action: KeyAction) -> Transf
                     .unwrap_or_else(|| apply_shape_key(buffer, shape));
             }
             if let Some(text) = try_revert_shape(buffer, shape) {
-                return reverted(text);
+                return reverted(format!("{text}{key}"));
             }
             validation_gate(buffer, key, validate_shape(buffer))
                 .unwrap_or_else(|| apply_shape_key(buffer, shape))
@@ -147,14 +147,16 @@ mod tests {
 
     #[test]
     fn revert_cases() {
-        assert_eq!(apply_vni("á", '1'), reverted("a".into()));
-        assert_eq!(apply_vni("â", '6'), reverted("a".into()));
-        assert_eq!(apply_vni("đ", '9'), reverted("d".into()));
-        assert_eq!(apply_vni("ấ", '1'), reverted("â".into()));
-        assert_eq!(type_keys("a12"), "à");
-        assert_eq!(type_keys("a11"), "a");
-        assert_eq!(type_keys("a66"), "a");
-        assert_eq!(type_keys("uo77"), "uo");
+        // Double modifier restores raw keystrokes: strip diacritic + append the key.
+        assert_eq!(apply_vni("á", '1'), reverted("a1".into()));
+        assert_eq!(apply_vni("â", '6'), reverted("a6".into()));
+        assert_eq!(apply_vni("đ", '9'), reverted("d9".into()));
+        assert_eq!(apply_vni("ấ", '1'), reverted("â1".into()));
+        assert_eq!(type_keys("a12"), "à"); // different tone key → re-tone, not revert
+        assert_eq!(type_keys("a11"), "a1");
+        assert_eq!(type_keys("a66"), "a6");
+        assert_eq!(type_keys("uo77"), "uo7");
+        assert_eq!(type_keys("phu11"), "phu1");
     }
 
     #[test]

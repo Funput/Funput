@@ -32,11 +32,13 @@ fn telex_dd_stroke() {
 
 #[test]
 fn telex_ass_revert_tone() {
+    // Double tone key restores raw keystrokes: "á" + "s" → "as".
     let (buffer, results) = support::type_keys(InputMethod::Telex, "ass");
-    assert_eq!(buffer, "a");
+    assert_eq!(buffer, "as");
     assert_eq!(results.len(), 3);
     assert_eq!(results[0].action, Action::None);
     assert_eq!(results[2].action, Action::Send);
+    assert_eq!(results[2].output, "as");
 }
 
 #[test]
