@@ -1,0 +1,289 @@
+//! Interposer orchestration: spawn the child in a PTY and shuttle bytes both
+//! ways, composing Vietnamese on the input path.
+
+use std::io::{self, Read, Write};
+use std::sync::Arc;
+use std::thread;
+
+use funput_core::InputMethod;
+use funput_engine::{Action, Engine};
+use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+
+use crate::inject::result_bytes;
+use crate::input::{ByteKind, Classifier};
+use crate::output::forward_output;
+use crate::state::SharedState;
+use crate::term::{set_title, RawModeGuard};
+
+/// Run options resolved from the command line.
+pub struct Options {
+    pub method: InputMethod,
+    pub toggle: u8,
+    pub command: Vec<String>,
+}
+
+/// Read keystrokes from `reader`, compose, and write the result bytes to `writer`.
+///
+/// Pure of real I/O — the caller injects the reader/writer and a toggle callback,
+/// so this is unit-tested with in-memory pipes.
+pub fn forward_input<R, W, F>(
+    mut reader: R,
+    mut writer: W,
+    method: InputMethod,
+    state: &SharedState,
+    toggle: u8,
+    mut on_toggle: F,
+) -> io::Result<()>
+where
+    R: Read,
+    W: Write,
+    F: FnMut(bool),
+{
+    let mut engine = Engine::new();
+    engine.set_method(method);
+    let mut classifier = Classifier::new(toggle);
+    let mut buf = [0u8; 4096];
+
+    loop {
+        let n = reader.read(&mut buf)?;
+        if n == 0 {
+            break;
+        }
+        for &byte in &buf[..n] {
+            match classifier.classify(byte) {
+                ByteKind::Toggle => {
+                    let enabled = state.toggle();
+                    engine.clear();
+                    on_toggle(enabled);
+                }
+                ByteKind::Printable(ch) if state.composing() => {
+                    let result = engine.process_char(ch);
+                    writer.write_all(&result_bytes(ch, &result))?;
+                }
+                // Backspace: drop the last char from the composition so the next
+                // key composes against the corrected text ("Phua" ⌫ "s" → "Phú"),
+                // then pass it so the app deletes its own last char.
+                ByteKind::Control if state.composing() && is_backspace(byte) => {
+                    engine.on_backspace();
+                    writer.write_all(&[byte])?;
+                }
+                // Whitespace controls (Enter, Tab) are word boundaries: route them
+                // through the engine so English-restore fires before they reach the
+                // child (e.g. typing "text"+Enter submits "text", not "tẽt").
+                ByteKind::Control if state.composing() && is_ws_boundary(byte) => {
+                    let ch = byte as char;
+                    let result = engine.process_char(ch);
+                    match result.action {
+                        Action::None => writer.write_all(&[byte])?,
+                        _ => writer.write_all(&result_bytes(ch, &result))?,
+                    }
+                }
+                // Control / escape / utf8 / printable-while-disabled: end the
+                // current word and forward the byte unchanged.
+                _ => {
+                    engine.clear();
+                    writer.write_all(&[byte])?;
+                }
+            }
+        }
+        writer.flush()?;
+    }
+    Ok(())
+}
+
+/// Whitespace control bytes that act as word boundaries (Tab, LF, CR/Enter).
+fn is_ws_boundary(byte: u8) -> bool {
+    matches!(byte, b'\t' | b'\n' | b'\r')
+}
+
+/// Backspace bytes — DEL (0x7f, common in terminals) or BS (0x08).
+fn is_backspace(byte: u8) -> bool {
+    matches!(byte, 0x7f | 0x08)
+}
+
+fn pty_err<E: std::fmt::Display>(e: E) -> io::Error {
+    io::Error::other(e.to_string())
+}
+
+/// Spawn `opts.command` in a PTY and run the interposer until the child exits.
+/// Returns the child's exit code.
+pub fn run(opts: Options) -> io::Result<i32> {
+    let (cols, rows) = crossterm::terminal::size().unwrap_or((80, 24));
+    let size = PtySize {
+        rows,
+        cols,
+        pixel_width: 0,
+        pixel_height: 0,
+    };
+
+    // Enter raw mode first: if there is no real terminal this fails fast, before
+    // we spawn a child we'd have to clean up. Restored on drop.
+    let _raw = RawModeGuard::enter()?;
+
+    let pair = native_pty_system().openpty(size).map_err(pty_err)?;
+
+    let mut cmd = CommandBuilder::new(&opts.command[0]);
+    for arg in &opts.command[1..] {
+        cmd.arg(arg);
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        cmd.cwd(cwd);
+    }
+    for (key, value) in std::env::vars() {
+        cmd.env(key, value);
+    }
+
+    let mut child = pair.slave.spawn_command(cmd).map_err(pty_err)?;
+    drop(pair.slave);
+
+    let writer = pair.master.take_writer().map_err(pty_err)?;
+    let reader = pair.master.try_clone_reader().map_err(pty_err)?;
+
+    let state = Arc::new(SharedState::new(true));
+
+    spawn_resize_thread(pair.master);
+
+    // Child -> terminal (own thread; ends at EOF when the child exits).
+    let state_out = Arc::clone(&state);
+    let output = thread::spawn(move || {
+        let _ = forward_output(reader, io::stdout(), &state_out);
+    });
+
+    // Terminal -> child (detached; blocks on stdin until the process exits).
+    let state_in = Arc::clone(&state);
+    let method = opts.method;
+    let toggle = opts.toggle;
+    thread::spawn(move || {
+        let _ = forward_input(io::stdin(), writer, method, &state_in, toggle, |on| {
+            let mut out = io::stdout();
+            let _ = set_title(&mut out, if on { "funput · VI" } else { "funput · EN" });
+        });
+    });
+
+    let status = child.wait().map_err(pty_err)?;
+    let _ = output.join();
+    Ok(status.exit_code() as i32)
+}
+
+#[cfg(unix)]
+fn spawn_resize_thread(master: Box<dyn portable_pty::MasterPty + Send>) {
+    use signal_hook::consts::SIGWINCH;
+    use signal_hook::iterator::Signals;
+
+    thread::spawn(move || {
+        let Ok(mut signals) = Signals::new([SIGWINCH]) else {
+            return;
+        };
+        for _ in signals.forever() {
+            if let Ok((cols, rows)) = crossterm::terminal::size() {
+                let _ = master.resize(PtySize {
+                    rows,
+                    cols,
+                    pixel_width: 0,
+                    pixel_height: 0,
+                });
+            }
+        }
+    });
+}
+
+#[cfg(not(unix))]
+fn spawn_resize_thread(_master: Box<dyn portable_pty::MasterPty + Send>) {
+    // Windows resize handling lands with ConPTY support (phase TT6).
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn compose(method: InputMethod, input: &[u8]) -> Vec<u8> {
+        let state = SharedState::new(true);
+        let mut out = Vec::new();
+        forward_input(input, &mut out, method, &state, 0x1c, |_| {}).unwrap();
+        out
+    }
+
+    #[test]
+    fn telex_word_emits_backspace_and_unicode() {
+        // "as": 'a' passes through, 's' deletes 'a' and injects 'á'.
+        let mut expected = b"a".to_vec();
+        expected.push(0x7f);
+        expected.extend_from_slice("á".as_bytes());
+        assert_eq!(compose(InputMethod::Telex, b"as"), expected);
+    }
+
+    /// Reconstruct the child's visible text from the byte stream we send it
+    /// (DEL = backspace one char; other bytes are injected UTF-8).
+    fn reconstruct(bytes: &[u8]) -> String {
+        let mut text = String::new();
+        let mut i = 0;
+        while i < bytes.len() {
+            let b = bytes[i];
+            if b == 0x7f {
+                text.pop();
+                i += 1;
+            } else {
+                let len = match b {
+                    _ if b < 0x80 => 1,
+                    _ if b >> 5 == 0b110 => 2,
+                    _ if b >> 4 == 0b1110 => 3,
+                    _ => 4,
+                };
+                if let Ok(s) = std::str::from_utf8(&bytes[i..i + len]) {
+                    text.push_str(s);
+                }
+                i += len;
+            }
+        }
+        text
+    }
+
+    #[test]
+    fn enter_triggers_english_restore() {
+        // "text" composes to "tẽt", but Enter (a boundary) restores the raw word.
+        let out = compose(InputMethod::Telex, b"text\r");
+        assert_eq!(reconstruct(&out), "text\r");
+    }
+
+    #[test]
+    fn backspace_corrects_mid_composition() {
+        // "Phua" (typo), Backspace the "a", then "s" → "Phú".
+        let out = compose(InputMethod::Telex, b"Phua\x7fs");
+        assert_eq!(reconstruct(&out), "Phú");
+    }
+
+    #[test]
+    fn double_modifier_revert_sends_no_extra_char() {
+        // "mix" → "mĩ"; pressing 'x' again reverts to the raw "mix" (one x, not
+        // "mixx"). Confirms funput-term emits the correct bytes.
+        let out = compose(InputMethod::Telex, b"mixx");
+        assert_eq!(reconstruct(&out), "mix");
+    }
+
+    #[test]
+    fn enter_keeps_valid_vietnamese() {
+        // A real syllable is finalized, not restored.
+        let out = compose(InputMethod::Telex, b"mas\r");
+        assert_eq!(reconstruct(&out), "má\r");
+    }
+
+    #[test]
+    fn toggle_off_disables_composition() {
+        let state = SharedState::new(true);
+        let mut out = Vec::new();
+        let mut toggles = Vec::new();
+        // Ctrl-\ then "as": composition is off, so bytes pass through raw.
+        forward_input(
+            &[0x1c, b'a', b's'][..],
+            &mut out,
+            InputMethod::Telex,
+            &state,
+            0x1c,
+            |on| toggles.push(on),
+        )
+        .unwrap();
+        assert_eq!(out, b"as");
+        assert_eq!(toggles, vec![false]);
+        assert!(!state.composing());
+    }
+}

@@ -1,0 +1,18 @@
+[package]
+name = "funput-term"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "funput-term"
+path = "src/main.rs"
+
+[dependencies]
+funput-core = { path = "../funput-core" }
+funput-engine = { path = "../funput-engine" }
+clap = { version = "4", features = ["derive"] }
+portable-pty = "0.8"
+crossterm = "0.28"
+
+[target.'cfg(unix)'.dependencies]
+signal-hook = "0.3"

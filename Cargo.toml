@@ -5,6 +5,7 @@ members = [
     "crates/funput-engine",
     "crates/funput-cli",
     "crates/funput-ffi",
+    "crates/funput-term",
 ]
 
 [workspace.package]
