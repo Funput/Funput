@@ -95,6 +95,18 @@ void funput_clear(FunputEngine *engine);
  */
 FunputResult funput_process_char(FunputEngine *engine, uint32_t codepoint);
 
+/**
+ * Backspace inside the current composition: drop the last composed character so
+ * the next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`).
+ *
+ * Returns a no-op result — the host passes the Backspace through to delete one
+ * character in the app.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+FunputResult funput_backspace(FunputEngine *engine);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus

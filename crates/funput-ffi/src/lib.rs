@@ -107,3 +107,19 @@ pub unsafe extern "C" fn funput_process_char(
     };
     FunputResult::from_ime(&engine.inner.process_char(ch))
 }
+
+/// Backspace inside the current composition: drop the last composed character so
+/// the next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`).
+///
+/// Returns a no-op result — the host passes the Backspace through to delete one
+/// character in the app.
+///
+/// # Safety
+/// `engine` must be a valid handle or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_backspace(engine: *mut FunputEngine) -> FunputResult {
+    let Some(engine) = (unsafe { engine.as_mut() }) else {
+        return FunputResult::none();
+    };
+    FunputResult::from_ime(&engine.inner.on_backspace())
+}

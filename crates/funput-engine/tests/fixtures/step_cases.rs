@@ -101,15 +101,17 @@ pub const STEP_CASES: &[StepCase] = &[
                 backspace: 1,
                 output: "ả",
             },
-            TELEX_NONE,
+            // Eager restore: the invalid coda `d` flips "cảd" back to "card" at once.
             ExpectedStep {
                 action: Action::Send,
-                backspace: 3,
-                output: "card ",
+                backspace: 1,
+                output: "ard",
             },
+            // Already restored, so the space just passes through.
+            TELEX_NONE,
         ],
         final_buffer: "",
-        label: "telex restore card",
+        label: "telex eager restore card",
     },
 ];
 
@@ -434,9 +436,9 @@ pub const APP_TEXT_CASES: &[AppTextCase] = &[
     },
     AppTextCase {
         method: InputMethod::Vni,
-        keys: "trung1 quoc1 ban5 nuoc1 ",
-        output: "trúng quóc bạn nuóc ",
-        label: "vni multi-word trung1 quoc1",
+        keys: "trung1 quoc61 ban5 nuoc71 ",
+        output: "trúng quốc bạn nước ",
+        label: "vni multi-word real words",
     },
     AppTextCase {
         method: InputMethod::Telex,

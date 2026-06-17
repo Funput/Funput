@@ -73,7 +73,7 @@ pub struct TransformResult {
 ///     }
 /// );
 /// ```
-pub use validation::syllable::{is_complete_syllable, is_valid};
+pub use validation::syllable::{is_complete_syllable, is_definitely_invalid, is_valid};
 
 pub fn apply(buffer: &str, key: char, method: InputMethod) -> TransformResult {
     match method {

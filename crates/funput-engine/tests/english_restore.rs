@@ -24,24 +24,27 @@ fn telex_english_restore_on_punctuation() {
 }
 
 #[test]
-fn telex_absc_restore_step() {
+fn revert_then_space_keeps_reverted_word() {
+    // "mix" → "mĩ"; double `x` reverts to "mix"; pressing Space must NOT re-restore
+    // the stale raw keystrokes ("mixx"). The revert is the user's final intent.
+    assert_eq!(support::app_text(InputMethod::Telex, "mixx "), "mix ");
+    assert_eq!(support::app_text(InputMethod::Vni, "a11 "), "a1 ");
+}
+
+#[test]
+fn telex_eager_restore_step() {
+    // "tẽ" is still valid Vietnamese, so it composes; the closing "t" makes
+    // "tẽt" a dead end, restoring "text" the instant it is typed — no boundary.
     let mut engine = Engine::new();
-    engine.process_char('a');
-    engine.process_char('b');
-    let tone = engine.process_char('s');
-    assert_eq!(tone.action, Action::Send);
-    assert_eq!(engine.buffer(), "áb");
-    assert_eq!(engine.keys(), "abs");
+    for key in "tex".chars() {
+        engine.process_char(key);
+    }
+    assert_eq!(engine.buffer(), "tẽ");
 
-    engine.process_char('c');
-    assert_eq!(engine.buffer(), "ábc");
-    assert_eq!(engine.keys(), "absc");
-
-    let space = engine.process_char(' ');
-    assert_eq!(space.action, Action::Send);
-    assert_eq!(space.backspace, 3);
-    assert_eq!(space.output, "absc ");
-    assert_eq!(engine.buffer(), "");
+    let closing = engine.process_char('t');
+    assert_eq!(closing.action, Action::Send);
+    assert_eq!(engine.buffer(), "text");
+    assert_eq!(engine.keys(), "text");
 }
 
 #[test]

@@ -1,8 +1,8 @@
 //! Round-trip tests: drive the `extern "C"` API exactly like a C caller would.
 
 use funput_ffi::{
-    funput_clear, funput_engine_free, funput_engine_new, funput_process_char, funput_set_method,
-    FunputResult, ACTION_NONE, ACTION_SEND,
+    funput_backspace, funput_clear, funput_engine_free, funput_engine_new, funput_process_char,
+    funput_set_method, FunputResult, ACTION_NONE, ACTION_SEND,
 };
 
 fn output(result: &FunputResult) -> String {
@@ -79,12 +79,31 @@ fn result_fields_for_as() {
 }
 
 #[test]
+fn backspace_corrects_composition() {
+    unsafe {
+        let engine = funput_engine_new();
+        funput_set_method(engine, 0); // Telex
+        for ch in "Phua".chars() {
+            funput_process_char(engine, ch as u32);
+        }
+        let bs = funput_backspace(engine); // delete the 'a'
+        assert_eq!(bs.action, ACTION_NONE);
+
+        let toned = funput_process_char(engine, 's' as u32);
+        assert_eq!(toned.action, ACTION_SEND);
+        assert_eq!(output(&toned), "ú"); // "Phu" + s → "Phú"
+        funput_engine_free(engine);
+    }
+}
+
+#[test]
 fn null_handle_is_safe() {
     unsafe {
         let result = funput_process_char(std::ptr::null_mut(), 'a' as u32);
         assert_eq!(result.action, ACTION_NONE);
         // These must not crash.
         funput_clear(std::ptr::null_mut());
+        funput_backspace(std::ptr::null_mut());
         funput_engine_free(std::ptr::null_mut());
     }
 }

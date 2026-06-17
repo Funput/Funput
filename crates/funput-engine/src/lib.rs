@@ -74,6 +74,22 @@ impl Engine {
         &self.session.keys
     }
 
+    /// The user pressed Backspace inside the current composition: drop the last
+    /// character so the next keystroke composes against the corrected text
+    /// (`Phua` → ⌫ → `Phu` → `s` → `Phú`, instead of losing the context).
+    ///
+    /// Returns [`Action::None`] — the Backspace key passes through so the app
+    /// deletes its own last character, keeping app and engine in sync.
+    pub fn on_backspace(&mut self) -> ImeResult {
+        if !self.session.enabled {
+            return ImeResult::none();
+        }
+        self.session.buffer.pop();
+        // The remaining buffer is the corrected raw text for this word.
+        self.session.keys = self.session.buffer.clone();
+        ImeResult::none()
+    }
+
     /// Process one Unicode scalar (platform maps keycode → char).
     ///
     /// # Behavior
@@ -127,6 +143,25 @@ mod tests {
         let mut engine = Engine::new();
         engine.set_enabled(false);
         assert!(!engine.is_enabled());
+    }
+
+    #[test]
+    fn backspace_keeps_composition_context() {
+        // Typo "Phua", backspace the "a", then "s" → "Phú" (tone applies on "Phu").
+        let mut engine = Engine::new();
+        for key in "Phua".chars() {
+            engine.process_char(key);
+        }
+        assert_eq!(engine.buffer(), "Phua");
+
+        let bs = engine.on_backspace();
+        assert_eq!(bs.action, Action::None);
+        assert_eq!(engine.buffer(), "Phu");
+        assert_eq!(engine.keys(), "Phu");
+
+        let result = engine.process_char('s');
+        assert_eq!(result.action, Action::Send);
+        assert_eq!(engine.buffer(), "Phú");
     }
 
     #[test]
