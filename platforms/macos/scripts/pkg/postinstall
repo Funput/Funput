@@ -1,0 +1,45 @@
+#!/bin/sh
+# Runs as root after the payload lands at the staging path below. Funput is a
+# per-user input method, so the real install target is the logged-in user's
+# ~/Library/Input Methods — not a system path. We detect the console user, copy
+# the notarized bundle into their home with correct ownership, register it with
+# LaunchServices, and launch it. Mirrors the old "Install Funput.command", but
+# the .pkg around this script IS notarized, so Gatekeeper never blocks it.
+set -eu
+
+STAGE="/Library/Application Support/Funput/Funput.app"
+
+CONSOLE_UID="$(stat -f%u /dev/console 2>/dev/null || echo 0)"
+CONSOLE_USER="$(stat -f%Su /dev/console 2>/dev/null || echo root)"
+
+# No GUI session (e.g. installed over SSH / at the login window): leave the staged
+# copy in place so a later login can still find it, and exit cleanly.
+if [ "$CONSOLE_UID" = "0" ] || [ "$CONSOLE_USER" = "root" ] || [ -z "$CONSOLE_USER" ]; then
+    exit 0
+fi
+
+HOME_DIR="$(dscl . -read "/Users/$CONSOLE_USER" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
+HOME_DIR="${HOME_DIR:-/Users/$CONSOLE_USER}"
+DEST="$HOME_DIR/Library/Input Methods"
+
+mkdir -p "$DEST"
+# Quit a running instance so the bundle can be replaced and reloaded.
+launchctl asuser "$CONSOLE_UID" killall Funput 2>/dev/null || true
+rm -rf "$DEST/Funput.app"
+ditto "$STAGE" "$DEST/Funput.app"
+chown -R "$CONSOLE_UID":staff "$DEST/Funput.app"
+
+# The staging copy under /Library has done its job; don't leave it behind.
+rm -rf "/Library/Application Support/Funput"
+
+# LaunchServices keys input sources by bundle id; refresh its record in the
+# user's context so Funput appears without a logout where possible.
+LSR="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+launchctl asuser "$CONSOLE_UID" sudo -u "$CONSOLE_USER" "$LSR" -f "$DEST/Funput.app" 2>/dev/null \
+    || "$LSR" -f "$DEST/Funput.app" 2>/dev/null || true
+
+# Launch so the IMKServer comes up; it then runs as a background agent and
+# registers itself as an input source.
+launchctl asuser "$CONSOLE_UID" sudo -u "$CONSOLE_USER" /usr/bin/open "$DEST/Funput.app" 2>/dev/null || true
+
+exit 0

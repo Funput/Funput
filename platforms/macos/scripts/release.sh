@@ -1,7 +1,9 @@
 #!/bin/sh
-# Build, sign (Developer ID), notarize, and package Funput.app into a DMG for
-# direct distribution (GitHub Releases). Funput is an input method and cannot be
-# sandboxed, so the Mac App Store is not an option.
+# Build, sign (Developer ID), notarize, and package Funput.app into a .pkg
+# installer for direct distribution (GitHub Releases). Funput is an input method
+# and cannot be sandboxed, so the Mac App Store is not an option. A .pkg (not a
+# DMG + shell-script installer) is used because a flat script cannot carry a
+# notarization ticket and so always trips Gatekeeper on download.
 #
 #   ./scripts/release.sh             # full release: Developer ID + notarize + staple
 #   DRY_RUN=1 ./scripts/release.sh   # ad-hoc sign, skip notarize — test the pipeline
@@ -19,6 +21,8 @@ set -eu
 
 CONFIGURATION="${CONFIGURATION:-Release}"
 SIGN_ID="${SIGN_ID:-Developer ID Application}"
+SIGN_INSTALLER_ID="${SIGN_INSTALLER_ID:-Developer ID Installer}"
+PKG_IDENTIFIER="${PKG_IDENTIFIER:-com.funput.installer}"
 TEAM_ID="${TEAM_ID:-RSARFZ5CD3}"
 NOTARY_PROFILE="${NOTARY_PROFILE:-funput}"
 DRY_RUN="${DRY_RUN:-}"
@@ -47,7 +51,7 @@ DERIVED="$OUT/DerivedData"
 ARCHIVE="$OUT/Funput.xcarchive"
 EXPORT="$OUT/export"
 APP="$EXPORT/Funput.app"
-mkdir -p "$OUT" # fresh checkout (CI) has no build/ yet; logs + zip + dmg land here
+mkdir -p "$OUT" # fresh checkout (CI) has no build/ yet; logs + zip + pkg land here
 
 # --- 1. Version (names the DMG) -------------------------------------------------
 if [ -z "${VERSION:-}" ]; then
@@ -56,7 +60,7 @@ if [ -z "${VERSION:-}" ]; then
         | awk '/ MARKETING_VERSION = /{print $3; exit}')"
 fi
 VERSION="${VERSION:-0.0.0}"
-DMG="$OUT/Funput-$VERSION.dmg"
+PKG="$OUT/Funput-$VERSION.pkg"
 echo "Releasing Funput $VERSION (${DRY_RUN:+DRY_RUN }$CONFIGURATION)…"
 
 # --- 2. Preflight ---------------------------------------------------------------
@@ -68,6 +72,17 @@ else
 error: no "Developer ID Application" certificate found in the keychain.
 Create one in Xcode → Settings → Accounts → Manage Certificates → + →
 "Developer ID Application", then re-run. (Use DRY_RUN=1 to test packaging now.)
+EOF
+        exit 1
+    fi
+    # The .pkg installer is signed with a *separate* "Developer ID Installer"
+    # certificate (basic codesigning lists do not show it; search all identities).
+    if ! security find-identity -v | grep -q "Developer ID Installer"; then
+        cat >&2 <<EOF
+error: no "Developer ID Installer" certificate found in the keychain.
+This is a different cert from "Developer ID Application" and is required to sign
+the .pkg. Create one in Xcode → Settings → Accounts → Manage Certificates → + →
+"Developer ID Installer", then re-run. (Use DRY_RUN=1 to test packaging now.)
 EOF
         exit 1
     fi
@@ -83,7 +98,7 @@ EOF
     fi
 fi
 
-rm -rf "$ARCHIVE" "$EXPORT" "$OUT/dmg" "$DMG"
+rm -rf "$ARCHIVE" "$EXPORT" "$OUT/pkgroot" "$OUT/Funput-component.pkg" "$PKG"
 
 # Run a build/export step quietly, but dump the captured xcodebuild log on failure
 # (xcodebuild writes errors to stdout, so swallowing it would hide the reason — as
@@ -153,28 +168,47 @@ if [ -z "$DRY_RUN" ]; then
     rm -f "$OUT/Funput-app.zip"
 fi
 
-# --- 7. Build the DMG (app + installer helper + readme) -------------------------
-echo "Building DMG…"
-STAGE="$OUT/dmg"
-mkdir -p "$STAGE"
-cp -R "$APP" "$STAGE/Funput.app"
-cp "$PROJECT_DIR/scripts/dmg/Install Funput.command" "$STAGE/"
-cp "$PROJECT_DIR/scripts/dmg/README.txt" "$STAGE/"
-chmod +x "$STAGE/Install Funput.command"
-hdiutil create -volname "Funput" -srcfolder "$STAGE" -format UDZO -ov "$DMG" >/dev/null
-rm -rf "$STAGE"
+# --- 7. Build the signed .pkg installer -----------------------------------------
+# A double-clickable .pkg replaces the old "Install Funput.command": unlike a flat
+# shell script (which cannot carry a notarization ticket and so always trips
+# Gatekeeper), a .pkg is signed with "Developer ID Installer", notarized, and
+# stapled — Installer.app opens it with no warning. The payload lands in a staging
+# path under /Library; the bundled postinstall then relocates it into the logged-in
+# user's ~/Library/Input Methods (see scripts/pkg/postinstall).
+echo "Building .pkg…"
+PKGROOT="$OUT/pkgroot"
+SCRIPTS="$OUT/pkgscripts"
+COMPONENT="$OUT/Funput-component.pkg"
+rm -rf "$PKGROOT" "$SCRIPTS"
+mkdir -p "$PKGROOT/Library/Application Support/Funput" "$SCRIPTS"
+cp -R "$APP" "$PKGROOT/Library/Application Support/Funput/Funput.app"
+cp "$PROJECT_DIR/scripts/pkg/postinstall" "$SCRIPTS/postinstall"
+chmod +x "$SCRIPTS/postinstall"
 
-# --- 8. Notarize the DMG + staple -----------------------------------------------
+pkgbuild --root "$PKGROOT" --scripts "$SCRIPTS" \
+    --identifier "$PKG_IDENTIFIER" --version "$VERSION" \
+    --install-location "/" "$COMPONENT" >/dev/null
+
+if [ -n "$DRY_RUN" ]; then
+    # No Installer identity in dry runs: emit an unsigned product archive so the
+    # packaging path is still exercised end to end.
+    productbuild --package "$COMPONENT" "$PKG" >/dev/null
+else
+    productbuild --package "$COMPONENT" --sign "$SIGN_INSTALLER_ID" "$PKG" >/dev/null
+fi
+rm -rf "$PKGROOT" "$SCRIPTS" "$COMPONENT"
+
+# --- 8. Notarize the .pkg + staple ----------------------------------------------
 if [ -z "$DRY_RUN" ]; then
-    echo "Notarizing DMG…"
-    notarize "$DMG"
-    xcrun stapler staple "$DMG"
+    echo "Notarizing .pkg…"
+    notarize "$PKG"
+    xcrun stapler staple "$PKG"
 fi
 
 # --- 9. Report ------------------------------------------------------------------
 echo ""
-echo "Built: $DMG"
-shasum -a 256 "$DMG"
+echo "Built: $PKG"
+shasum -a 256 "$PKG"
 if [ -n "$DRY_RUN" ]; then
-    echo "(DRY_RUN: ad-hoc signed, NOT notarized — for pipeline testing only.)"
+    echo "(DRY_RUN: ad-hoc signed app, UNSIGNED pkg, NOT notarized — pipeline test only.)"
 fi

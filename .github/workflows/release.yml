@@ -1,6 +1,6 @@
 name: Release
 
-# One tag → both platforms. Pushing a tag like v1.2026.1 builds the macOS DMG and
+# One tag → both platforms. Pushing a tag like v1.2026.1 builds the macOS .pkg and
 # the Windows .exe, both stamped with the **tag version** (single source of truth),
 # and publishes them to one GitHub Release. workflow_dispatch builds without
 # publishing (verify secrets / smoke test).
@@ -34,7 +34,7 @@ jobs:
             echo "is_release=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # ---- macOS: Developer ID + notarize + DMG ---------------------------------
+  # ---- macOS: Developer ID + notarize + .pkg --------------------------------
   macos:
     needs: version
     runs-on: macos-latest
@@ -64,9 +64,13 @@ jobs:
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          # The p12 must contain BOTH "Developer ID Application" (signs the app) and
+          # "Developer ID Installer" (signs the .pkg). productbuild/productsign need
+          # key access too, hence the extra -T entries.
           security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$CERT_PASSWORD" \
-            -T /usr/bin/codesign -T /usr/bin/xcodebuild
-          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -T /usr/bin/codesign -T /usr/bin/xcodebuild \
+            -T /usr/bin/productbuild -T /usr/bin/productsign -T /usr/bin/pkgbuild
+          security set-key-partition-list -S apple-tool:,apple:,codesign:,productsign: \
             -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
           security list-keychains -d user -s "$KEYCHAIN" \
             $(security list-keychains -d user | sed 's/["[:space:]]//g')
@@ -85,10 +89,10 @@ jobs:
       - name: Stage artifact
         working-directory: platforms/macos
         run: |
-          DMG="$(ls build/release/Funput-*.dmg)"
+          PKG="$(ls build/release/Funput-*.pkg)"
           OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
-          cp "$DMG" "$OUT/"
-          shasum -a 256 "$DMG" | awk '{print $1}' > "$OUT/$(basename "$DMG").sha256"
+          cp "$PKG" "$OUT/"
+          shasum -a 256 "$PKG" | awk '{print $1}' > "$OUT/$(basename "$PKG").sha256"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -171,7 +175,8 @@ jobs:
             echo "## Funput ${{ github.ref_name }}"
             echo
             echo "### macOS"
-            echo "- \`Funput-*.dmg\` — mở rồi double-click **Install Funput.command**. Đã ký Developer ID + notarized."
+            echo "- \`Funput-*.pkg\` — double-click để cài (mở Installer.app). Đã ký Developer ID Installer + notarized, không bị Gatekeeper chặn."
+            echo "  Sau khi cài: **System Settings → Keyboard → Input Sources → + → Vietnamese → Funput**."
             echo "### Windows"
             echo "- \`Funput-*.exe\` — portable, double-click là chạy (nằm ở khay hệ thống). Cần WebView2 (có sẵn trên Win10/11)."
             echo
@@ -184,7 +189,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            out/*.dmg
+            out/*.pkg
             out/*.exe
           body_path: notes.md
           generate_release_notes: true
