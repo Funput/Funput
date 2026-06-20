@@ -111,7 +111,8 @@ echo "Archiving (universal)…"
 set -- -project Funput.xcodeproj -scheme Funput -configuration "$CONFIGURATION" \
     -derivedDataPath "$DERIVED" -archivePath "$ARCHIVE" \
     -destination "generic/platform=macOS" \
-    "ARCHS=arm64 x86_64" ONLY_ACTIVE_ARCH=NO
+    "ARCHS=arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+    "MARKETING_VERSION=$VERSION"
 if [ -n "$DRY_RUN" ]; then
     set -- "$@" CODE_SIGNING_ALLOWED=NO
 else

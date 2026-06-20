@@ -1,0 +1,186 @@
+name: Release
+
+# One tag → both platforms. Pushing a tag like v1.2026.1 builds the macOS DMG and
+# the Windows .exe, both stamped with the **tag version** (single source of truth),
+# and publishes them to one GitHub Release. workflow_dispatch builds without
+# publishing (verify secrets / smoke test).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ---- Single source of truth for the version -------------------------------
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      is_release: ${{ steps.v.outputs.is_release }}
+    steps:
+      - id: v
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=" >> "$GITHUB_OUTPUT"
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---- macOS: Developer ID + notarize + DMG ---------------------------------
+  macos:
+    needs: version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Rust targets (universal)
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Import Developer ID certificate
+        env:
+          CERT_P12: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/funput-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$CERT_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/xcodebuild
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" \
+            $(security list-keychains -d user | sed 's/["[:space:]]//g')
+          security default-keychain -s "$KEYCHAIN"
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+      - name: Build, sign, notarize, package
+        working-directory: platforms/macos
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARY_TEAM_ID || 'RSARFZ5CD3' }}
+        run: ./scripts/release.sh
+
+      - name: Stage artifact
+        working-directory: platforms/macos
+        run: |
+          DMG="$(ls build/release/Funput-*.dmg)"
+          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          cp "$DMG" "$OUT/"
+          shasum -a 256 "$DMG" | awk '{print $1}' > "$OUT/$(basename "$DMG").sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: ${{ runner.temp }}/out/*
+
+  # ---- Windows: shared UI + portable .exe -----------------------------------
+  windows:
+    needs: version
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust target
+        run: rustup target add x86_64-pc-windows-msvc
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: platforms/windows/src-tauri -> target
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Stamp version from tag
+        if: needs.version.outputs.version != ''
+        run: |
+          node -e "const f='platforms/windows/src-tauri/tauri.conf.json';const fs=require('fs');const j=JSON.parse(fs.readFileSync(f));j.version=process.argv[1];fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n')" "${{ needs.version.outputs.version }}"
+
+      - name: Build shared UI
+        run: |
+          pnpm -C platforms/ui install --no-frozen-lockfile
+          pnpm -C platforms/ui build
+
+      - name: Build Funput.exe
+        working-directory: platforms/windows/src-tauri
+        run: cargo build --release
+
+      - name: Stage artifact
+        run: |
+          V="${{ needs.version.outputs.version }}"; V="${V:-dev}"
+          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          cp platforms/windows/src-tauri/target/release/funput.exe "$OUT/Funput-$V.exe"
+          sha256sum "$OUT/Funput-$V.exe" | awk '{print $1}' > "$OUT/Funput-$V.exe.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: ${{ runner.temp }}/out/*
+
+  # ---- Publish one release with both artifacts ------------------------------
+  publish:
+    needs: [version, macos, windows]
+    if: needs.version.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Assemble release notes
+        run: |
+          mkdir -p out
+          cp artifacts/macos/* out/ 2>/dev/null || true
+          cp artifacts/windows/* out/ 2>/dev/null || true
+          ls -l out
+          {
+            echo "## Funput ${{ github.ref_name }}"
+            echo
+            echo "### macOS"
+            echo "- \`Funput-*.dmg\` — mở rồi double-click **Install Funput.command**. Đã ký Developer ID + notarized."
+            echo "### Windows"
+            echo "- \`Funput-*.exe\` — portable, double-click là chạy (nằm ở khay hệ thống). Cần WebView2 (có sẵn trên Win10/11)."
+            echo
+            echo "### SHA-256"
+            for f in out/*.sha256; do
+              echo "- \`$(basename "${f%.sha256}")\`: \`$(cat "$f")\`"
+            done
+          } > notes.md
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/*.dmg
+            out/*.exe
+          body_path: notes.md
+          generate_release_notes: true

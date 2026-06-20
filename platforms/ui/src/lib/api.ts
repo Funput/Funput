@@ -58,3 +58,10 @@ export async function closeThisWindow(): Promise<void> {
   const { getCurrentWindow } = await import("@tauri-apps/api/window");
   await getCurrentWindow().close();
 }
+
+/// The app version (Tauri reads it from tauri.conf.json). "dev" outside Tauri.
+export async function getAppVersion(): Promise<string> {
+  if (!inTauri) return "dev";
+  const { getVersion } = await import("@tauri-apps/api/app");
+  return getVersion();
+}

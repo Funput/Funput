@@ -1,8 +1,15 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Pane from "../Pane.svelte";
   import GlassCard from "../../components/GlassCard.svelte";
+  import { getAppVersion } from "../../api";
 
-  const version = "1.2026.1";
+  // Version comes from the app itself (Tauri reads it from tauri.conf.json, which CI
+  // sets from the git tag) — single source of truth, no per-file drift.
+  let version = $state("");
+  onMount(async () => {
+    version = await getAppVersion();
+  });
 
   // Logo lives in platforms/ui/public/logo.png (served at /logo.png). Fall back to
   // the "FU" badge until the file is added.
