@@ -124,7 +124,11 @@ jobs:
       - name: Stamp version from tag
         if: needs.version.outputs.version != ''
         run: |
-          node -e "const f='platforms/windows/src-tauri/tauri.conf.json';const fs=require('fs');const j=JSON.parse(fs.readFileSync(f));j.version=process.argv[1];fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n')" "${{ needs.version.outputs.version }}"
+          V="${{ needs.version.outputs.version }}"
+          # App version (read by getVersion + embedded in the exe).
+          node -e "const fs=require('fs');const f='platforms/windows/src-tauri/tauri.conf.json';const j=JSON.parse(fs.readFileSync(f));j.version=process.argv[1];fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n')" "$V"
+          # Crate version so `cargo` logs + the package metadata match the tag too.
+          node -e "const fs=require('fs');const f='platforms/windows/src-tauri/Cargo.toml';let s=fs.readFileSync(f,'utf8');s=s.replace(/^version = \".*\"/m,'version = \"'+process.argv[1]+'\"');fs.writeFileSync(f,s)" "$V"
 
       - name: Build shared UI
         run: |
