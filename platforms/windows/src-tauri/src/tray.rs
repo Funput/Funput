@@ -5,7 +5,7 @@
 use funput_core::InputMethod;
 use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
-use tauri::{image::Image, AppHandle, Manager};
+use tauri::{image::Image, AppHandle};
 
 use crate::{hook, shell, windows_ui};
 
@@ -78,10 +78,11 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let vi_h = vi.clone();
     hook::set_on_toggle(move |on| {
         let handle = handle.clone();
+        let inner = handle.clone(); // used inside the main-thread closure
         let vi_h = vi_h.clone();
         let _ = handle.run_on_main_thread(move || {
             let _ = vi_h.set_checked(on);
-            if let Some(tray) = handle.tray_by_id("funput") {
+            if let Some(tray) = inner.tray_by_id("funput") {
                 let _ = tray.set_tooltip(Some(tooltip(on)));
             }
         });

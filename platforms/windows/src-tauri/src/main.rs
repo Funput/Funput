@@ -13,7 +13,6 @@ mod shell;
 mod tray;
 mod windows_ui;
 
-use tauri::Manager;
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 
 fn main() {
