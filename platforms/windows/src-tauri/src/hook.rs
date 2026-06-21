@@ -45,7 +45,7 @@ pub fn spawn() {
         let _win_event = SetWinEventHook(
             EVENT_SYSTEM_FOREGROUND,
             EVENT_SYSTEM_FOREGROUND,
-            HMODULE::default(),
+            HMODULE(std::ptr::null_mut()), // OUT_OF_CONTEXT: no DLL module
             Some(win_event_proc),
             0,
             0,
@@ -96,7 +96,7 @@ unsafe fn exe_of_window(hwnd: HWND) -> Option<(String, String)> {
     if pid == 0 {
         return None;
     }
-    let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false.into(), pid).ok()?;
+    let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
 
     let mut buf = [0u16; 260];
     let mut len = buf.len() as u32;
