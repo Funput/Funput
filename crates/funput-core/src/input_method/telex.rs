@@ -14,16 +14,18 @@
 //!
 //! # Priority
 //!
-//! 1. Digraph stroke/shape (`dd`, `aa`, `ee`, `oo`) on plain vowels
-//! 2. `w` — `uo` compound before single `o` / `u` / `a`; shaped-vowel revert
-//! 3. Stroke/shape revert (`đ`+`d`, `â`+`a`, …)
-//! 4. Tone keys `s` / `f` / `r` / `x` / `j`
-//! 5. Normal character
+//! 1. Stroke `đ` — adjacent `dd`, `đ`+`d` revert, or a `d`/`đ` already past the
+//!    nucleus so the `d` can be typed anywhere in the syllable (`dược`+`d` → `được`)
+//! 2. Digraph shape (`aa`, `ee`, `oo`) on plain vowels
+//! 3. `w` — `uo` compound before single `o` / `u` / `a`; shaped-vowel revert
+//! 4. Shape revert (`â`+`a`, …)
+//! 5. Tone keys `s` / `f` / `r` / `x` / `j`
+//! 6. Normal character
 
 use crate::composition::apply::uo_pair_in_vowel_cluster;
 use crate::input_method::KeyAction;
 use crate::unicode::marks::{is_vowel, tone_on_vowel, vowel_stem, Tone};
-use crate::unicode::shapes::{shape_on_vowel, strip_shape, VowelShape};
+use crate::unicode::shapes::{shape_on_vowel, shape_target_index, strip_shape, VowelShape};
 
 /// Map Telex tone keys to tone marks.
 pub fn tone_from_key(key: char) -> Option<Tone> {
@@ -39,13 +41,13 @@ pub fn tone_from_key(key: char) -> Option<Tone> {
 
 /// Classify a Telex keystroke into a method-agnostic [`KeyAction`].
 pub fn classify_key(buffer: &str, key: char) -> KeyAction {
+    if let Some(action) = classify_stroke(buffer, key) {
+        return action;
+    }
     if let Some(action) = classify_digraph(buffer, key) {
         return action;
     }
     if key.eq_ignore_ascii_case(&'w') && let Some(action) = classify_w(buffer) {
-        return action;
-    }
-    if let Some(action) = classify_revert_stroke(buffer, key) {
         return action;
     }
     if let Some(action) = classify_revert_circumflex(buffer, key) {
@@ -74,6 +76,22 @@ fn classify_w(buffer: &str) -> Option<KeyAction> {
 
     let last = last_char(buffer)?;
 
+    // `w` typed after the coda (last char is a consonant): place the shape on the
+    // nucleus wherever it sits, so the breve/horn key works anywhere in the
+    // syllable (`lam` + `w` → `lăm`, `con` + `w` → `cơn`), mirroring free-position
+    // `đ`. A Vietnamese syllable never has a `w` after the coda, so this is
+    // unambiguous. The `uo` horn compound is already handled above; breve (only
+    // `a` takes it) is tried before horn (`o`/`u`).
+    if !is_vowel(last) {
+        if shape_target_index(buffer, VowelShape::Breve).is_some() {
+            return Some(KeyAction::Shape(VowelShape::Breve));
+        }
+        if shape_target_index(buffer, VowelShape::Horn).is_some() {
+            return Some(KeyAction::Shape(VowelShape::Horn));
+        }
+        return None;
+    }
+
     if let Some(shape) = shape_on_vowel(last) {
         return match shape {
             VowelShape::Breve | VowelShape::Horn => Some(KeyAction::Shape(shape)),
@@ -91,12 +109,47 @@ fn classify_w(buffer: &str) -> Option<KeyAction> {
     None
 }
 
-fn classify_digraph(buffer: &str, key: char) -> Option<KeyAction> {
-    let last = last_char(buffer)?;
+/// A `d`/`đ`/`Đ` already sits before a vowel, so a later `d` keystroke is the
+/// stroke modifier wherever it lands. A Vietnamese syllable never has a `d` after
+/// its nucleus, so a trailing `d` here is unambiguously the đ modifier, never a
+/// letter — letting the user mark `đ` anywhere (`dược`+`d` → `được`) instead of
+/// only as the adjacent `dd` at the onset.
+fn stroke_target_before_vowel(buffer: &str) -> bool {
+    let mut seen_d = false;
+    for c in buffer.chars() {
+        if matches!(c, 'd' | 'D' | 'đ' | 'Đ') {
+            seen_d = true;
+        } else if seen_d && is_vowel(c) {
+            return true;
+        }
+    }
+    false
+}
 
-    if last.eq_ignore_ascii_case(&'d') && key.eq_ignore_ascii_case(&'d') {
+/// Classify the `d` key into a stroke action. Fires for the adjacent `dd` digraph,
+/// the `đ`+`d` revert, and the free-position case (a `d`/`đ` already past the
+/// nucleus). The apply layer ([`apply_stroke`]/[`try_revert_stroke`]) then targets
+/// the right `d`/`đ` wherever it is.
+///
+/// [`apply_stroke`]: crate::composition::apply::apply_stroke
+/// [`try_revert_stroke`]: crate::composition::revert::try_revert_stroke
+fn classify_stroke(buffer: &str, key: char) -> Option<KeyAction> {
+    if !key.eq_ignore_ascii_case(&'d') {
+        return None;
+    }
+    if let Some(last) = last_char(buffer)
+        && (last.eq_ignore_ascii_case(&'d') || matches!(last, 'đ' | 'Đ'))
+    {
         return Some(KeyAction::Stroke);
     }
+    if stroke_target_before_vowel(buffer) {
+        return Some(KeyAction::Stroke);
+    }
+    None
+}
+
+fn classify_digraph(buffer: &str, key: char) -> Option<KeyAction> {
+    let last = last_char(buffer)?;
 
     for base in ['a', 'e', 'o'] {
         if is_plain_vowel(last, base) && key.eq_ignore_ascii_case(&base) {
@@ -104,14 +157,6 @@ fn classify_digraph(buffer: &str, key: char) -> Option<KeyAction> {
         }
     }
 
-    None
-}
-
-fn classify_revert_stroke(buffer: &str, key: char) -> Option<KeyAction> {
-    let last = last_char(buffer)?;
-    if matches!(last, 'đ' | 'Đ') && key.eq_ignore_ascii_case(&'d') {
-        return Some(KeyAction::Stroke);
-    }
     None
 }
 
@@ -208,6 +253,34 @@ mod tests {
         assert_eq!(classify_key("", 'x'), KeyAction::Normal);
         assert_eq!(classify_key("", 'f'), KeyAction::Normal);
         assert_eq!(classify_key("", 'j'), KeyAction::Normal);
+    }
+
+    #[test]
+    fn classify_stroke_anywhere_in_syllable() {
+        // The `d` key strokes the onset `d`/`đ` even when typed after the rest of
+        // the syllable — `dược` + `d` → stroke (→ `được`), not a literal `d`.
+        assert_eq!(classify_key("duoc", 'd'), KeyAction::Stroke);
+        assert_eq!(classify_key("dược", 'd'), KeyAction::Stroke);
+        assert_eq!(classify_key("dang", 'd'), KeyAction::Stroke);
+        assert_eq!(classify_key("Dươc", 'd'), KeyAction::Stroke);
+        // No `d` in the syllable, or only an onset with no nucleus yet → literal.
+        assert_eq!(classify_key("tao", 'd'), KeyAction::Normal);
+        assert_eq!(classify_key("nga", 'd'), KeyAction::Normal);
+    }
+
+    #[test]
+    fn classify_w_anywhere_in_syllable() {
+        // `w` typed after the coda still shapes the nucleus — `lam` + `w` → breve
+        // (→ `lăm`), `con` + `w` → horn (→ `cơn`).
+        assert_eq!(classify_key("lam", 'w'), KeyAction::Shape(VowelShape::Breve));
+        assert_eq!(classify_key("an", 'w'), KeyAction::Shape(VowelShape::Breve));
+        assert_eq!(classify_key("con", 'w'), KeyAction::Shape(VowelShape::Horn));
+        assert_eq!(classify_key("tun", 'w'), KeyAction::Shape(VowelShape::Horn));
+        // `uo` compound after a coda already worked and still does.
+        assert_eq!(classify_key("nuoc", 'w'), KeyAction::Shape(VowelShape::Horn));
+        // No shapeable nucleus → `w` is a literal.
+        assert_eq!(classify_key("eng", 'w'), KeyAction::Normal);
+        assert_eq!(classify_key("ng", 'w'), KeyAction::Normal);
     }
 
     #[test]

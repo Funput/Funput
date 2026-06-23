@@ -69,6 +69,22 @@ fn telex_complex_syllables() {
 }
 
 #[test]
+fn telex_free_position_marks() {
+    // Marks can be typed anywhere in the syllable, not only adjacent to their
+    // target — the user may place the dấu at any position.
+    // Breve typed after the coda: "lamws" → lắm (a→ă via w, then sắc via s).
+    assert_eq!(type_keys("lamws"), "lắm");
+    // Conventional order still works: "lawms" → lắm.
+    assert_eq!(type_keys("lawms"), "lắm");
+    // Stroke đ typed after the whole rhyme: "duocwjd" → được.
+    assert_eq!(type_keys("duocwjd"), "được");
+    assert_eq!(type_keys("dduocwj"), "được"); // đ first — unchanged
+    // Horn after the coda.
+    assert_eq!(type_keys("conw"), "cơn");
+    assert_eq!(type_keys("anw"), "ăn");
+}
+
+#[test]
 fn telex_validation_and_pass_through() {
     // A tone letter with no vowel to land on is kept literally, not dropped.
     assert_eq!(
