@@ -51,21 +51,14 @@ void clearPreedit(IBusEngine *engine) {
     ibus_engine_hide_preedit_text(engine);
 }
 
-// Show buffer() as preedit, optionally underlined, cursor at the end.
+// Show buffer() as preedit, cursor at the end. We don't set any underline
+// attribute: how preedit is drawn is up to the client app, which renders its
+// default composing style (typically underlined). Trying to override it isn't
+// reliable since many clients ignore the attribute.
 void updatePreedit(IBusEngine *engine, EngineState *st) {
     const std::string s = st->handle_.buffer();
     IBusText *text = ibus_text_new_from_string(s.c_str());
     const glong len = g_utf8_strlen(s.c_str(), -1);
-    if (!s.empty()) {
-        // IBus clients (GTK/Qt) underline preedit by *default*, so omitting the
-        // attribute does NOT turn it off — we must send an explicit UNDERLINE_NONE
-        // when composingUnderline is off. SINGLE when on.
-        const guint underline = st->settings_.composingUnderline
-                                    ? IBUS_ATTR_UNDERLINE_SINGLE
-                                    : IBUS_ATTR_UNDERLINE_NONE;
-        ibus_text_append_attribute(text, IBUS_ATTR_TYPE_UNDERLINE, underline, 0,
-                                   static_cast<gint>(len));
-    }
     // ibus_engine_update_preedit_text sinks the floating ref on `text`.
     ibus_engine_update_preedit_text(engine, text, static_cast<guint>(len),
                                     s.empty() ? FALSE : TRUE);

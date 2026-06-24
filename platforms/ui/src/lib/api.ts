@@ -26,8 +26,6 @@ export interface Settings {
   launchAtLogin: boolean;
   hasCompletedOnboarding: boolean;
   excludedApps: ExcludedApp[];
-  /// Underline composing text (Linux preedit). Off → looks like typed text.
-  composingUnderline: boolean;
 }
 
 const DEFAULTS: Settings = {
@@ -40,7 +38,6 @@ const DEFAULTS: Settings = {
   launchAtLogin: false,
   hasCompletedOnboarding: false,
   excludedApps: [],
-  composingUnderline: false,
 };
 
 // Which OS shell hosts this UI. The shell appends `&platform=windows|linux` to the
@@ -68,7 +65,6 @@ export const setToneStyle = (toneStyle: ToneStyle) => call("set_tone_style", { t
 export const setEnabled = (on: boolean) => call("set_enabled", { on });
 export const setSmartRestore = (on: boolean) => call("set_smart_restore", { on });
 export const setEagerRestore = (on: boolean) => call("set_eager_restore", { on });
-export const setComposingUnderline = (on: boolean) => call("set_composing_underline", { on });
 export const setToggleHotkey = (hotkey: Hotkey) => call("set_toggle_hotkey", { hotkey });
 export const setLaunchAtLogin = (on: boolean) => call("set_launch_at_login", { on });
 export const completeOnboarding = () => call("complete_onboarding");
