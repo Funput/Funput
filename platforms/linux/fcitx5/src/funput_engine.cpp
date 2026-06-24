@@ -83,9 +83,9 @@ void FunputEngine::noteRecentApp(const std::string &program) {
 void FunputEngine::updatePreedit(fcitx::InputContext *ic) {
     const std::string s = handle_.buffer();
     fcitx::Text preedit;
-    const auto flag = settings_.composingUnderline ? fcitx::TextFormatFlag::Underline
-                                                   : fcitx::TextFormatFlag::NoFlag;
-    if (!s.empty()) preedit.append(s, flag);
+    // Mark the composing buffer with the standard underline. How (or whether)
+    // this is drawn is ultimately up to the client app.
+    if (!s.empty()) preedit.append(s, fcitx::TextFormatFlag::Underline);
     preedit.setCursor(static_cast<int>(s.size()));
 
     auto &panel = ic->inputPanel();

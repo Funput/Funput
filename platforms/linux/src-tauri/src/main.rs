@@ -39,7 +39,6 @@ fn main() {
             commands::get_settings,
             commands::set_method,
             commands::set_tone_style,
-            commands::set_composing_underline,
             commands::set_enabled,
             commands::set_smart_restore,
             commands::set_eager_restore,

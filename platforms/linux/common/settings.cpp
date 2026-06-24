@@ -80,7 +80,6 @@ bool Settings::reloadIfChanged() {
     enabled = j.value("enabled", enabled);
     smartRestore = j.value("smartRestore", smartRestore);
     eagerRestore = j.value("eagerRestore", eagerRestore);
-    composingUnderline = j.value("composingUnderline", composingUnderline);
     toggleHotkey = parseHotkey(j.value("toggleHotkey", std::string(hotkeyStr(toggleHotkey))));
 
     // excludedApps: [{ "id": "code", "name": "Code" }, ...] — keep just the ids.
@@ -95,7 +94,7 @@ bool Settings::reloadIfChanged() {
 
     return method != prev.method || toneStyle != prev.toneStyle ||
            enabled != prev.enabled || smartRestore != prev.smartRestore ||
-           eagerRestore != prev.eagerRestore || composingUnderline != prev.composingUnderline ||
+           eagerRestore != prev.eagerRestore ||
            toggleHotkey != prev.toggleHotkey || excludedAppIds != prev.excludedAppIds;
 }
 
@@ -125,7 +124,6 @@ void Settings::save() const {
     j["enabled"] = enabled;
     j["smartRestore"] = smartRestore;
     j["eagerRestore"] = eagerRestore;
-    j["composingUnderline"] = composingUnderline;
     j["toggleHotkey"] = hotkeyStr(toggleHotkey);
 
     std::ofstream out(p, std::ios::trunc);
