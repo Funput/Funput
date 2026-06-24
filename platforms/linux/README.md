@@ -122,8 +122,10 @@ Mở một app GTK (gedit) và một app Qt:
 
 - **IBus v1 chưa có per-app auto-switch** (app trong danh sách loại trừ → tiếng Anh). IBus không
   cấp id app đang focus đáng tin cậy, nhất là trên Wayland. Fcitx5 vẫn hỗ trợ đầy đủ tính năng này.
+  App Settings **ẩn hẳn trang "Ứng dụng bỏ qua" khi đang chạy IBus** (phát hiện qua session D-Bus +
+  env IM-module), chỉ hiện khi Fcitx5 là IME đang hoạt động.
 - **Chỉ `.deb`** (chưa rpm/AppImage). Hai gói `funput` (Fcitx5) và `funput-ibus` hiện đóng gói riêng,
   mỗi gói tự bundle `libfunput_ffi.so` + app Settings (gói chung `funput-common` để sau).
-- Hotkey `alt_shift` (combo chỉ-modifier) chưa hỗ trợ; dùng `ctrl_backtick`/`ctrl_space`.
+- Hotkey `alt_shift` (combo chỉ-modifier) chưa hỗ trợ; UI Linux chỉ hiện `ctrl_backtick`/`ctrl_space`.
 - Settings đồng bộ theo **mtime ở lần focus-in kế tiếp** — có thể trễ một nhịp (inotify để sau).
 - App Settings là **GTK4 + libadwaita**, yêu cầu **Ubuntu 24.04+** (GTK 4.14 / libadwaita 1.5).

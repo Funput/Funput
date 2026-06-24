@@ -8,6 +8,7 @@
 #[cfg(not(target_os = "linux"))]
 compile_error!("funput-settings builds only on Linux (the typing engine ships as a Fcitx5/IBus shell).");
 
+mod framework;
 mod onboarding;
 mod settings;
 mod settings_window;

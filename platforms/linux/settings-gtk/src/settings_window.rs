@@ -29,7 +29,11 @@ pub fn build(app: &Application) -> PreferencesWindow {
     window.add(&input_method_page());
     window.add(&smart_page());
     window.add(&keyboard_page());
-    window.add(&apps_page());
+    // Per-app auto-switch is Fcitx5-only; hide the page entirely on IBus (where it
+    // would do nothing) rather than show a dead pane.
+    if crate::framework::per_app_supported() {
+        window.add(&apps_page());
+    }
     window.add(&general_page());
     window.add(&about_page(&window));
 
@@ -226,10 +230,7 @@ fn apps_page() -> PreferencesPage {
 
     let excluded_group = PreferencesGroup::builder()
         .title("Ứng dụng bỏ qua")
-        .description(
-            "Mặc định tiếng Anh khi vào các app này — vẫn bật lại tiếng Việt bằng phím tắt. \
-             (IBus hiện chưa hỗ trợ tự chuyển theo app; cần Fcitx5.)",
-        )
+        .description("Mặc định tiếng Anh khi vào các app này — vẫn bật lại tiếng Việt bằng phím tắt.")
         .build();
     let recent_group = PreferencesGroup::builder().title("App gần đây").build();
     page.add(&excluded_group);
