@@ -3,6 +3,7 @@
 //! function with no user pointer, so this lives in a process-global behind a mutex.
 //! No Windows APIs here.
 
+use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
@@ -23,6 +24,15 @@ struct Shell {
     /// Recently-focused apps (most recent first), fed by the foreground hook. Not
     /// persisted — it's just a convenience source for the Settings UI.
     recent: Vec<ExcludedApp>,
+    /// Per-app manual VI/EN overrides (runtime only, not persisted). A manual
+    /// toggle records the user's choice here so the per-app auto-switch honours it
+    /// on the next focus change instead of reverting to the exclusion-list default.
+    /// Keyed by the lowercased exe id (e.g. "code.exe").
+    overrides: HashMap<String, bool>,
+    /// A manual toggle whose target app isn't known yet. The tray and the Settings
+    /// toggle steal foreground (the taskbar/Settings window becomes foreground), so
+    /// the choice is parked here and bound to the next app the user focuses.
+    pending_override: Option<bool>,
 }
 
 static SHELL: OnceLock<Mutex<Shell>> = OnceLock::new();
@@ -45,6 +55,8 @@ fn shell() -> &'static Mutex<Shell> {
             engine,
             settings,
             recent: Vec::new(),
+            overrides: HashMap::new(),
+            pending_override: None,
         })
     })
 }
@@ -52,6 +64,16 @@ fn shell() -> &'static Mutex<Shell> {
 fn with<R>(f: impl FnOnce(&mut Shell) -> R) -> R {
     let mut guard = shell().lock().expect("shell mutex poisoned");
     f(&mut guard)
+}
+
+/// Apply a VI/EN state to both the persisted settings and the live engine. Callers
+/// persist (`save`) themselves, since some batch this with other field writes.
+fn set_enabled_state(s: &mut Shell, on: bool) {
+    s.settings.enabled = on;
+    s.engine.set_enabled(on);
+    if !on {
+        s.engine.clear();
+    }
 }
 
 // --- reads -----------------------------------------------------------------
@@ -93,15 +115,31 @@ pub fn foreground_is_chrome() -> bool {
 
 // --- writes (each persists) ------------------------------------------------
 
-/// Flip VI/EN; returns the new state.
+/// Flip VI/EN from the tray; returns the new state. The tray click steals
+/// foreground, so the choice is parked as a pending override and bound to the next
+/// app the user focuses (see [`apply_for_app`]) — otherwise the per-app auto-switch
+/// would revert it the instant focus returns to a non-excluded app.
 pub fn toggle_enabled() -> bool {
     with(|s| {
         let on = !s.settings.enabled;
-        s.settings.enabled = on;
-        s.engine.set_enabled(on);
-        if !on {
-            s.engine.clear();
+        set_enabled_state(s, on);
+        s.pending_override = Some(on);
+        s.settings.save();
+        on
+    })
+}
+
+/// Flip VI/EN from the keyboard hotkey; returns the new state. Unlike the tray, the
+/// hotkey fires while the target app is focused, so the choice binds to that app
+/// (`recent[0]`) immediately and clears any stale pending override.
+pub fn toggle_enabled_hotkey() -> bool {
+    with(|s| {
+        let on = !s.settings.enabled;
+        set_enabled_state(s, on);
+        if let Some(app) = s.recent.first() {
+            s.overrides.insert(app.id.clone(), on);
         }
+        s.pending_override = None;
         s.settings.save();
         on
     })
@@ -109,11 +147,10 @@ pub fn toggle_enabled() -> bool {
 
 pub fn set_enabled(on: bool) {
     with(|s| {
-        s.settings.enabled = on;
-        s.engine.set_enabled(on);
-        if !on {
-            s.engine.clear();
-        }
+        set_enabled_state(s, on);
+        // The Settings window holds focus while this runs, so treat it like the
+        // tray: bind the choice to the next app the user returns to.
+        s.pending_override = Some(on);
         s.settings.save();
     });
 }
@@ -208,26 +245,37 @@ pub fn note_foreground(id: String, name: String) {
     });
 }
 
-/// Apply the per-app default for the newly-focused app, mirroring the macOS shell:
-/// excluded apps → English, every other app → Vietnamese. No-op (returns `None`)
-/// when the list is empty or the state is unchanged. Returns `Some(on)` when it
-/// flipped VI/EN, so the caller can refresh the tray.
+/// Decide VI/EN for the newly-focused app, in priority order:
+///
+/// 1. A pending manual toggle (from the tray / Settings, which steal foreground)
+///    binds to this app — the user's choice lands on the app they return to.
+/// 2. A remembered manual override for this app wins over the list default, so a
+///    prior manual toggle survives leaving and re-focusing the app.
+/// 3. Otherwise the exclusion-list default, mirroring the macOS shell: excluded
+///    apps → English, every other app → Vietnamese. No-op when the list is empty,
+///    so users who don't use the feature keep a plain global toggle.
+///
+/// Returns `Some(on)` when it flipped VI/EN (so the caller can refresh the tray),
+/// `None` when nothing changed.
 pub fn apply_for_app(id: &str) -> Option<bool> {
     with(|s| {
-        if s.settings.excluded_apps.is_empty() {
+        let target = if let Some(on) = s.pending_override.take() {
+            s.overrides.insert(id.to_string(), on);
+            on
+        } else if let Some(&on) = s.overrides.get(id) {
+            on
+        } else if s.settings.excluded_apps.is_empty() {
+            return None;
+        } else {
+            !s.settings.excluded_apps.iter().any(|a| a.id == id)
+        };
+
+        if s.settings.enabled == target {
             return None;
         }
-        let on = !s.settings.excluded_apps.iter().any(|a| a.id == id);
-        if s.settings.enabled == on {
-            return None;
-        }
-        s.settings.enabled = on;
-        s.engine.set_enabled(on);
-        if !on {
-            s.engine.clear();
-        }
+        set_enabled_state(s, target);
         s.settings.save();
-        Some(on)
+        Some(target)
     })
 }
 

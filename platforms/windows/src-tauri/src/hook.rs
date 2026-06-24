@@ -136,7 +136,7 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
     let mods = keymap::read_mods();
 
     if keymap::is_toggle(vk, mods, shell::toggle_hotkey()) {
-        let on = shell::toggle_enabled();
+        let on = shell::toggle_enabled_hotkey();
         if let Some(cb) = ON_TOGGLE.get() {
             cb(on);
         }
