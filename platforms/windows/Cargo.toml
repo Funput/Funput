@@ -18,8 +18,8 @@ slint-build = "1.17"
 winresource = "0.1"
 
 [dependencies]
-# Native UI. Default features bring the winit backend + FemtoVG renderer; the
-# Fluent (Windows 11) widget style is selected in build.rs.
+# Native UI. Default features bring the winit backend + FemtoVG renderer (SVG
+# decoding included); the Fluent (Windows 11) widget style is selected in build.rs.
 slint = "1.17"
 # Tray icon + menu — the standalone crate Tauri itself wraps, so no WebView2. The
 # menu types come from tray-icon's re-exported `muda` (kept version-matched).

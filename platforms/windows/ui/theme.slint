@@ -19,8 +19,8 @@ export struct AppEntry {
 export global Theme {
     out property <bool> dark: Palette.color-scheme == ColorScheme.dark;
 
-    // Funput brand accent (kept across platforms; #5b63f5).
-    out property <color> accent: #5b63f5;
+    // Funput brand accent — the violet at the heart of the logo ribbon.
+    out property <color> accent: #9333ea;
     out property <color> accent-text: #ffffff;
 
     out property <length> sp-xs: 4px;
@@ -38,7 +38,7 @@ export global Theme {
         : @linear-gradient(160deg, #eef0fb 0%, #e6e8f5 100%);
 
     // Glass surfaces: translucent fills + a bright edge so they read as frosted.
-    out property <brush> card-bg: root.dark ? #ffffff14 : #ffffff80;
+    out property <brush> card-bg: root.dark ? #ffffff17 : #ffffff8c;
     out property <color> card-border: root.dark ? #ffffff24 : #ffffffa6;
     out property <color> shadow: root.dark ? #00000066 : #2a235e26;
 
