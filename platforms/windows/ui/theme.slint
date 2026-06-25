@@ -1,7 +1,7 @@
-// Shared design tokens + reusable widgets for the Funput Settings/Onboarding
-// windows. Colors adapt to the system light/dark theme via the Fluent `Palette`
-// color-scheme; the brand accent stays fixed. Cards sit on a soft window gradient
-// with a drop shadow for depth (a reliable, polished look across machines).
+// Shared design tokens + reusable widgets for Funput's Settings/Onboarding
+// windows — a macOS-style "liquid glass" look. Translucent panels sit over a soft
+// multi-colour field drawn inside the window (see the backdrop blobs in app.slint);
+// colours adapt to the system light/dark theme via `Palette.color-scheme`.
 
 import { Palette } from "std-widgets.slint";
 
@@ -29,23 +29,28 @@ export global Theme {
     out property <length> sp-lg: 18px;
     out property <length> sp-xl: 28px;
 
-    out property <length> r-card: 14px;
-    out property <length> r-control: 9px;
+    out property <length> r-card: 16px;
+    out property <length> r-control: 10px;
 
-    // Window backdrop gradient (no Mica dependency).
-    out property <brush> window-bg: root.dark
-        ? @linear-gradient(180deg, #20222b 0%, #181920 100%)
-        : @linear-gradient(180deg, #eef0f6 0%, #e4e6ef 60%, #dadce8 100%);
+    // Base window wash (the colour blobs are layered on top of this in app.slint).
+    out property <brush> window-base: root.dark
+        ? @linear-gradient(160deg, #1c1d27 0%, #15161d 100%)
+        : @linear-gradient(160deg, #eef0fb 0%, #e6e8f5 100%);
 
-    out property <brush> card-bg: root.dark ? #2b2c33f2 : #fffffff2;
-    out property <color> card-border: root.dark ? #ffffff1f : #0000000f;
-    out property <color> shadow: root.dark ? #00000099 : #0000002b;
-    out property <brush> sidebar-bg: root.dark ? #ffffff0d : #ffffff66;
-    out property <brush> track: root.dark ? #ffffff1f : #00000012;
-    out property <brush> nav-active: root.dark ? #5b63f540 : #5b63f524;
-    out property <brush> nav-hover: root.dark ? #ffffff14 : #0000000a;
-    out property <color> subtle: root.dark ? #ffffffb3 : #1c1c1eb3;
-    out property <color> faint: root.dark ? #ffffff80 : #1c1c1e80;
+    // Glass surfaces: translucent fills + a bright edge so they read as frosted.
+    out property <brush> card-bg: root.dark ? #ffffff14 : #ffffff80;
+    out property <color> card-border: root.dark ? #ffffff24 : #ffffffa6;
+    out property <color> shadow: root.dark ? #00000066 : #2a235e26;
+
+    out property <brush> sidebar-bg: root.dark ? #ffffff0d : #ffffff52;
+    out property <color> sidebar-border: root.dark ? #ffffff1c : #ffffff8c;
+
+    out property <brush> track: root.dark ? #ffffff1a : #6e6a8c2b;
+    out property <brush> nav-active: root.dark ? #ffffff1f : #ffffffbf;
+    out property <brush> nav-hover: root.dark ? #ffffff12 : #ffffff66;
+
+    out property <color> subtle: root.dark ? #a8a4bb : #6f6b86;
+    out property <color> faint: root.dark ? #817d95 : #908ca6;
 }
 
 // A small keycap badge, e.g. for "Ctrl" + "`".
@@ -69,15 +74,15 @@ export component KeyCap inherits Rectangle {
     }
 }
 
-// A frosted card container; callers drop rows/controls inside as children.
+// A frosted glass card; callers drop rows/controls inside as children.
 export component Card inherits Rectangle {
     border-radius: Theme.r-card;
     background: Theme.card-bg;
     border-width: 1px;
     border-color: Theme.card-border;
-    drop-shadow-blur: 16px;
+    drop-shadow-blur: 22px;
     drop-shadow-color: Theme.shadow;
-    drop-shadow-offset-y: 3px;
+    drop-shadow-offset-y: 6px;
     VerticalLayout {
         padding: Theme.sp-lg;
         spacing: Theme.sp-md;
@@ -116,7 +121,7 @@ export component Row {
     }
 }
 
-// A pill segmented control sitting in a subtle track. `current` highlights the
+// A pill segmented control sitting in a translucent track. `current` highlights the
 // active option; `changed` fires the chosen option's id (state lives in the parent).
 export component Segmented {
     in property <[SegOption]> options;

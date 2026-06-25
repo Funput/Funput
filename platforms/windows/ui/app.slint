@@ -1,17 +1,50 @@
-// The two Funput windows (Settings + Onboarding), rendered with the Fluent style.
-// Rust (`windows_ui.rs`) sets the `in`/`in-out` properties and handles the
-// callbacks; the window background is transparent so the Mica backdrop shows.
+// The two Funput windows (Settings + Onboarding) — a macOS-style liquid-glass
+// look. Rust (`windows_ui.rs`) sets the `in`/`in-out` properties and handles the
+// callbacks. Each window draws a base wash + soft colour blobs, then translucent
+// glass panels on top.
 
 import { Palette, Button, Switch, ScrollView } from "std-widgets.slint";
 import { Theme, Card, Row, Segmented, KeyCap, Dot, SegOption, AppEntry } from "theme.slint";
 
 export { AppEntry }
 
+// Soft multi-colour field layered over the base wash to give the glass something
+// colourful to sit on. Three large, very soft radial blobs in the corners.
+component Backdrop inherits Rectangle {
+    Rectangle {
+        x: -80px;
+        y: -90px;
+        width: 420px;
+        height: 360px;
+        background: Theme.dark
+            ? @radial-gradient(circle, #786eff5c 0%, #786eff00 70%)
+            : @radial-gradient(circle, #5b63f566 0%, #5b63f500 70%);
+    }
+    Rectangle {
+        x: parent.width - 320px;
+        y: -110px;
+        width: 420px;
+        height: 380px;
+        background: Theme.dark
+            ? @radial-gradient(circle, #cc5ae04d 0%, #cc5ae000 70%)
+            : @radial-gradient(circle, #d66ce05c 0%, #d66ce000 70%);
+    }
+    Rectangle {
+        x: parent.width - 380px;
+        y: parent.height - 280px;
+        width: 460px;
+        height: 400px;
+        background: Theme.dark
+            ? @radial-gradient(circle, #36aabe40 0%, #36aabe00 70%)
+            : @radial-gradient(circle, #48c4d150 0%, #48c4d100 70%);
+    }
+}
+
 export component SettingsWindow inherits Window {
     title: "Funput — Cài đặt";
     width: 720px;
     height: 480px;
-    background: Theme.window-bg;
+    background: Theme.window-base;
 
     // --- state from Rust ---
     in property <string> method;
@@ -46,6 +79,8 @@ export component SettingsWindow inherits Window {
         { id: "about", label: "Giới thiệu", icon: "ⓘ" },
     ];
 
+    Backdrop { }
+
     HorizontalLayout {
         spacing: 0px;
 
@@ -53,6 +88,8 @@ export component SettingsWindow inherits Window {
         Rectangle {
             width: 200px;
             background: Theme.sidebar-bg;
+            border-width: 1px;
+            border-color: Theme.sidebar-border;
             VerticalLayout {
                 padding: Theme.sp-md;
                 spacing: 2px;
@@ -68,17 +105,8 @@ export component SettingsWindow inherits Window {
                     height: 36px;
                     border-radius: Theme.r-control;
                     background: root.active == item.id
-                        ? Theme.nav-active
+                        ? Theme.accent
                         : (nav-touch.has-hover ? Theme.nav-hover : transparent);
-                    // Left accent indicator for the active item.
-                    if root.active == item.id: Rectangle {
-                        x: 0;
-                        y: (parent.height - 18px) / 2;
-                        width: 3px;
-                        height: 18px;
-                        border-radius: 1.5px;
-                        background: Theme.accent;
-                    }
                     HorizontalLayout {
                         padding-left: 12px;
                         spacing: Theme.sp-sm;
@@ -86,14 +114,14 @@ export component SettingsWindow inherits Window {
                             text: item.icon;
                             vertical-alignment: center;
                             font-size: 14px;
-                            color: root.active == item.id ? Theme.accent : Palette.foreground;
+                            color: root.active == item.id ? Theme.accent-text : Palette.foreground;
                         }
                         Text {
                             text: item.label;
                             vertical-alignment: center;
                             font-size: 13px;
                             font-weight: root.active == item.id ? 600 : 400;
-                            color: Palette.foreground;
+                            color: root.active == item.id ? Theme.accent-text : Palette.foreground;
                         }
                     }
                     nav-touch := TouchArea {
@@ -320,7 +348,7 @@ export component OnboardingWindow inherits Window {
     title: "Chào mừng đến Funput";
     width: 460px;
     height: 540px;
-    background: Theme.window-bg;
+    background: Theme.window-base;
 
     in property <string> method;
     in-out property <bool> launch-at-login;
@@ -329,6 +357,8 @@ export component OnboardingWindow inherits Window {
     callback pick-method(string);
     callback set-launch(bool);
     callback finish();
+
+    Backdrop { }
 
     VerticalLayout {
         padding: Theme.sp-xl;
