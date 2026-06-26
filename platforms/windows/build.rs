@@ -11,6 +11,14 @@ fn main() {
         let mut res = winresource::WindowsResource::new();
         res.set_icon("icons/icon.ico");
         res.set_manifest(MANIFEST);
+        // Version-info strings shown by Windows. Without these, winresource derives
+        // them from the crate name ("funput-windows"); Task Manager surfaces
+        // FileDescription as the process "Name". Pin them to "Funput" so the
+        // displayed name matches the macOS/Linux apps.
+        res.set("FileDescription", "Funput");
+        res.set("ProductName", "Funput");
+        res.set("InternalName", "Funput");
+        res.set("OriginalFilename", "Funput.exe");
         if let Err(e) = res.compile() {
             println!("cargo:warning=winresource failed: {e}");
         }

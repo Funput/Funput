@@ -42,6 +42,10 @@ fn populate_settings(win: &SettingsWindow) {
     win.set_eager_restore(s.eager_restore);
     win.set_launch_at_login(s.launch_at_login);
     win.set_version(env!("CARGO_PKG_VERSION").into());
+    // Reset the updater UI each time the window is (re)shown.
+    win.set_update_state("idle".into());
+    win.set_update_version("".into());
+    win.set_update_message("".into());
     refresh_apps(win);
 }
 
@@ -102,6 +106,36 @@ fn wire_settings(win: &SettingsWindow) {
     });
 
     win.on_open_link(|url| commands::open_url(url.as_str()));
+
+    // Auto-update: the buttons are argument-free; state flows back through
+    // `set_update_state`. `commands` runs the work off the main thread.
+    win.on_check_update(commands::check_for_updates);
+    win.on_install_update(commands::install_update);
+    win.on_relaunch_now(commands::relaunch_after_update);
+}
+
+/// Reflect an update step on the Settings window (no-op if it is not open).
+/// Called on the main thread via `slint::invoke_from_event_loop`.
+pub fn set_update_state(state: &str, version: &str, message: &str) {
+    SETTINGS.with(|c| {
+        if let Some(win) = c.borrow().as_ref() {
+            win.set_update_state(state.into());
+            win.set_update_version(version.into());
+            win.set_update_message(message.into());
+        }
+    });
+}
+
+/// Open Settings on the "Giới thiệu" tab and immediately check for updates — the
+/// tray's "Kiểm tra cập nhật…" entry point.
+pub fn open_settings_and_check_updates() {
+    open_settings();
+    SETTINGS.with(|c| {
+        if let Some(win) = c.borrow().as_ref() {
+            win.set_active("about".into());
+        }
+    });
+    commands::check_for_updates();
 }
 
 /// Refresh the excluded list and the "recent" picker (recent minus already-excluded).

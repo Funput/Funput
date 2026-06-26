@@ -16,6 +16,7 @@ mod keymap;
 mod settings;
 mod shell;
 mod tray;
+mod update;
 mod windows_ui;
 
 fn main() {

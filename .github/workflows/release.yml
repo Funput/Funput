@@ -1,9 +1,12 @@
 name: Release
 
-# One tag → both platforms. Pushing a tag like v1.2026.1 builds the macOS .pkg and
-# the Windows .exe, both stamped with the **tag version** (single source of truth),
-# and publishes them to one GitHub Release. workflow_dispatch builds without
-# publishing (verify secrets / smoke test).
+# One tag → all platforms. Pushing a tag like v1.2026.1 builds the macOS .pkg, the
+# Windows .exe, and the Linux .debs — all stamped with the **tag version** (single
+# source of truth) — and publishes them to one GitHub Release. workflow_dispatch
+# builds without publishing (verify secrets / smoke test).
+#
+# The per-platform build steps live in reusable workflows (build-*.yml) and are
+# called below; artifacts they upload are gathered by `publish` in the same run.
 on:
   push:
     tags: ["v*"]
@@ -11,13 +14,6 @@ on:
 
 permissions:
   contents: write
-
-# Cargo network resilience for all jobs that build Rust. CI runners intermittently
-# hit "curl HTTP2 framing layer" (error 16) errors fetching crates from crates.io;
-# forcing HTTP/1.1 avoids the bug, and a higher retry count rides out blips.
-env:
-  CARGO_HTTP_MULTIPLEXING: "false"
-  CARGO_NET_RETRY: "5"
 
 concurrency:
   group: release-${{ github.ref }}
@@ -41,224 +37,28 @@ jobs:
             echo "is_release=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # ---- macOS: Developer ID + notarize + .pkg --------------------------------
+  # ---- Per-platform builds (reusable workflows) -----------------------------
+  # `secrets: inherit` forwards the signing/notarization secrets each build needs.
   macos:
     needs: version
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
+    uses: ./.github/workflows/build-macos.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit
 
-      - name: Select latest stable Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-
-      - name: Rust targets (universal)
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
-
-      - name: Cache cargo build
-        uses: Swatinem/rust-cache@v2
-
-      - name: Import Developer ID certificate
-        env:
-          CERT_P12: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
-          CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
-        run: |
-          set -euo pipefail
-          KEYCHAIN="$RUNNER_TEMP/funput-signing.keychain-db"
-          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
-          # The p12 must contain BOTH "Developer ID Application" (signs the app) and
-          # "Developer ID Installer" (signs the .pkg). productbuild/productsign need
-          # key access too, hence the extra -T entries.
-          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$CERT_PASSWORD" \
-            -T /usr/bin/codesign -T /usr/bin/xcodebuild \
-            -T /usr/bin/productbuild -T /usr/bin/productsign -T /usr/bin/pkgbuild
-          security set-key-partition-list -S apple-tool:,apple:,codesign:,productsign: \
-            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
-          security list-keychains -d user -s "$KEYCHAIN" \
-            $(security list-keychains -d user | sed 's/["[:space:]]//g')
-          security default-keychain -s "$KEYCHAIN"
-          rm -f "$RUNNER_TEMP/cert.p12"
-
-      - name: Build, sign, notarize, package
-        working-directory: platforms/macos
-        env:
-          VERSION: ${{ needs.version.outputs.version }}
-          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
-          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
-          TEAM_ID: ${{ secrets.NOTARY_TEAM_ID || 'RSARFZ5CD3' }}
-        run: ./scripts/release.sh
-
-      - name: Stage artifact
-        working-directory: platforms/macos
-        run: |
-          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
-          for f in build/release/Funput-*.pkg build/release/Funput-*.app.zip; do
-            cp "$f" "$OUT/"
-            shasum -a 256 "$f" | awk '{print $1}' > "$OUT/$(basename "$f").sha256"
-          done
-
-      # Sparkle auto-update feed: sign the .app.zip with the EdDSA key and emit an
-      # appcast.xml whose enclosure points at this tag's GitHub Release asset. The
-      # app's SUFeedURL reads releases/latest/download/appcast.xml, so publishing
-      # appcast.xml as a release asset is enough — no separate host needed.
-      - name: Generate + sign Sparkle appcast
-        if: needs.version.outputs.version != ''
-        working-directory: platforms/macos
-        env:
-          VERSION: ${{ needs.version.outputs.version }}
-          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
-          # Keep the CLI tools in lockstep with the framework SPM resolves (~> 2.6).
-          SPARKLE_VERSION: "2.9.3"
-        run: |
-          set -euo pipefail
-          # Fetch Sparkle's command-line tools (generate_appcast / sign_update).
-          TOOLS="$RUNNER_TEMP/sparkle"; mkdir -p "$TOOLS"
-          curl -fsSL "https://github.com/sparkle-project/Sparkle/releases/download/$SPARKLE_VERSION/Sparkle-$SPARKLE_VERSION.tar.xz" \
-            | tar -xJ -C "$TOOLS"
-          # generate_appcast reads CFBundleVersion/CFBundleShortVersionString from the
-          # app inside the archive, so feed it a clean dir with just the .app.zip.
-          ARCHIVES="$RUNNER_TEMP/appcast"; mkdir -p "$ARCHIVES"
-          cp build/release/Funput-*.app.zip "$ARCHIVES/"
-          KEYFILE="$RUNNER_TEMP/sparkle_ed_key"
-          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$KEYFILE"
-          "$TOOLS/bin/generate_appcast" \
-            --ed-key-file "$KEYFILE" \
-            --download-url-prefix "https://github.com/Funput/Funput/releases/download/v$VERSION/" \
-            -o "$ARCHIVES/appcast.xml" \
-            "$ARCHIVES"
-          rm -f "$KEYFILE"
-          cp "$ARCHIVES/appcast.xml" "$RUNNER_TEMP/out/appcast.xml"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos
-          path: ${{ runner.temp }}/out/*
-
-  # ---- Windows: native Slint portable .exe ----------------------------------
   windows:
     needs: version
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v4
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit
 
-      - name: Cache cargo build
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: platforms/windows -> target
-
-      - name: Stamp version from tag
-        if: needs.version.outputs.version != ''
-        run: |
-          V="${{ needs.version.outputs.version }}"
-          # Crate version is the single source of truth: cargo logs, the exe's
-          # embedded version resource, and the About pane (CARGO_PKG_VERSION).
-          node -e "const fs=require('fs');const f='platforms/windows/Cargo.toml';let s=fs.readFileSync(f,'utf8');s=s.replace(/^version = \".*\"/m,'version = \"'+process.argv[1]+'\"');fs.writeFileSync(f,s)" "$V"
-
-      - name: Build Funput.exe
-        working-directory: platforms/windows
-        run: cargo build --release
-
-      - name: Stage artifact
-        run: |
-          V="${{ needs.version.outputs.version }}"; V="${V:-dev}"
-          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
-          cp platforms/windows/target/release/funput.exe "$OUT/Funput-$V.exe"
-          sha256sum "$OUT/Funput-$V.exe" | awk '{print $1}' > "$OUT/Funput-$V.exe.sha256"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: windows
-          path: ${{ runner.temp }}/out/*
-
-  # ---- Linux: shared UI + Settings app + Fcitx5 addon & IBus engine → .debs -
-  # Built natively per arch (no cross-compile) so dpkg-shlibdeps records the right
-  # deps. arm64 covers Apple Silicon VMs (Apple Virtualization) and arm servers.
-  # Two packages per arch: funput (Fcitx5) and funput-ibus (IBus).
   linux:
     needs: version
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: amd64
-            runner: ubuntu-latest
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install build deps
-        run: |
-          sudo apt-get update
-          # Fcitx5 + IBus shell toolchains + JSON, and the GTK4/libadwaita Settings deps.
-          sudo apt-get install -y \
-            cmake nlohmann-json3-dev \
-            fcitx5 libfcitx5core-dev libfcitx5utils-dev libfcitx5config-dev \
-            ibus libibus-1.0-dev libglib2.0-dev \
-            libgtk-4-dev libadwaita-1-dev librsvg2-dev
-
-      - name: Cache cargo build
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            . -> target
-            platforms/linux/settings-gtk -> target
-
-      - name: Stamp version from tag
-        if: needs.version.outputs.version != ''
-        run: |
-          V="${{ needs.version.outputs.version }}"
-          # Stamp the GUI crate version (shown in the Settings "Giới thiệu" page via
-          # CARGO_PKG_VERSION). The .deb version comes separately from -DFUNPUT_VERSION.
-          sed -i -E "0,/^version = \".*\"/s//version = \"$V\"/" platforms/linux/settings-gtk/Cargo.toml
-
-      - name: Build Settings app (GTK4 + libadwaita)
-        working-directory: platforms/linux/settings-gtk
-        run: cargo build --release
-
-      - name: Build addons + .debs
-        run: |
-          V="${{ needs.version.outputs.version }}"; V="${V:-1.2026.1}"
-          # Each shell is its own CMake project; build into a separate dir so the
-          # two CPack runs don't clobber each other.
-          for fw in fcitx5 ibus; do
-            cmake -S "platforms/linux/$fw" -B "platforms/linux/build/$fw" \
-              -DCMAKE_BUILD_TYPE=Release -DFUNPUT_VERSION="$V"
-            cmake --build "platforms/linux/build/$fw" --parallel
-            ( cd "platforms/linux/build/$fw" && cpack -G DEB )
-          done
-
-      - name: Verify .debs (apt can parse them)
-        run: |
-          # Fail fast instead of shipping a broken package. `--simulate` forces apt
-          # to parse the .deb metadata through its own reader.
-          find platforms/linux/build -name '*.deb' | while read -r f; do
-            echo "== $f =="
-            dpkg-deb --info "$f" >/dev/null
-            sudo apt-get install --simulate "./$f" >/dev/null
-          done
-
-      - name: Stage artifact
-        run: |
-          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
-          find platforms/linux/build -name '*.deb' | while read -r f; do
-            cp "$f" "$OUT/"
-            sha256sum "$f" | awk '{print $1}' > "$OUT/$(basename "$f").sha256"
-          done
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-${{ matrix.arch }}
-          path: ${{ runner.temp }}/out/*
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit
 
   # ---- Publish one release with all artifacts -------------------------------
   publish:
@@ -275,6 +75,7 @@ jobs:
           mkdir -p out
           cp artifacts/macos/* out/ 2>/dev/null || true
           cp artifacts/windows/* out/ 2>/dev/null || true
+          cp artifacts/windows-feed/* out/ 2>/dev/null || true
           cp artifacts/linux-*/* out/ 2>/dev/null || true
           ls -l out
           {
@@ -285,7 +86,7 @@ jobs:
             echo "- \`Funput-*.app.zip\` — **không có quyền admin:** giải nén, rồi kéo \`Funput.app\` vào \`~/Library/Input Methods\` (Finder → \`Cmd+Shift+G\` → gõ đường dẫn đó, tạo nếu chưa có). App đã notarized nên không bị chặn; không cần admin."
             echo "  Sau khi cài (cả hai cách): **System Settings → Keyboard → Input Sources → + → Vietnamese → Funput**. Chưa thấy thì log out/in một lần."
             echo "### Windows"
-            echo "- \`Funput-*.exe\` — portable, double-click là chạy (nằm ở khay hệ thống). Cần WebView2 (có sẵn trên Win10/11)."
+            echo "- \`Funput-*.exe\` — portable, double-click là chạy (nằm ở khay hệ thống). Tự cập nhật trong app (Cài đặt → Giới thiệu → Kiểm tra cập nhật…)."
             echo "### Linux"
             echo "Chọn gói theo input framework của desktop (chọn đúng kiến trúc — \`dpkg --print-architecture\` — \`amd64\` cho PC x86-64, \`arm64\` cho Apple Silicon VM / máy ARM):"
             echo "- **GNOME / Ubuntu mặc định (IBus):** \`funput-ibus_*_<arch>.deb\` — \`sudo apt install ./funput-ibus_*_<arch>.deb\`, rồi \`ibus restart\`. **Settings → Keyboard → Input Sources → + → Vietnamese → Funput.**"
@@ -306,5 +107,6 @@ jobs:
             out/*.exe
             out/*.deb
             out/appcast.xml
+            out/*.json
           body_path: notes.md
           generate_release_notes: true
