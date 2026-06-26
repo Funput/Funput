@@ -91,12 +91,11 @@ else()
                     "packaging the Fcitx5 addon only (no Settings GUI).")
 endif()
 
-# --- .deb packaging (CPack) ------------------------------------------------
+# --- Packaging (CPack: .deb + .rpm) ----------------------------------------
 # CI overrides this from the git tag (-DFUNPUT_VERSION=...); otherwise project().
 set(FUNPUT_VERSION "${PROJECT_VERSION}" CACHE STRING "Package version")
-set(CPACK_GENERATOR "DEB")
 # Lay the relative installs (bin, share/…) under /usr to match the absolute
-# Fcitx5 addon dirs — everything in the .deb lives under /usr.
+# Fcitx5 addon dirs — everything in the package lives under /usr.
 set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 set(CPACK_PACKAGE_NAME "funput")
 set(CPACK_PACKAGE_VERSION "${FUNPUT_VERSION}")
@@ -121,4 +120,23 @@ else()
 endif()
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${FUNPUT_DEB_ARCH}")
 set(CPACK_PACKAGE_FILE_NAME "funput_${FUNPUT_VERSION}_${FUNPUT_DEB_ARCH}")
+
+# --- .rpm packaging (CPack, Fedora/openSUSE) -------------------------------
+# Both generators are listed; CI selects one per host with `cpack -G DEB|RPM`
+# (a Fedora runner produces the .rpm so GNUInstallDirs/FCITX_INSTALL_ADDONDIR
+# resolve the rpm-distro libdir — /usr/lib64 — and shlib deps match Fedora pkgs).
+# The CPACK_RPM_* fields below are ignored when the DEB generator runs.
+set(CPACK_GENERATOR "DEB;RPM")
+set(CPACK_RPM_PACKAGE_LICENSE "MIT")
+set(CPACK_RPM_PACKAGE_GROUP "Applications/System")
+set(CPACK_RPM_PACKAGE_URL "https://github.com/Funput/Funput")
+# fcitx5 must be present; AUTOREQ picks up the shared-lib deps automatically.
+set(CPACK_RPM_PACKAGE_REQUIRES "fcitx5")
+set(CPACK_RPM_PACKAGE_AUTOREQ ON)
+# RPM arch names differ from dpkg's (x86_64/aarch64, not amd64/arm64); take them
+# from the native build host. dpkg is absent on Fedora, so this is independent of
+# FUNPUT_DEB_ARCH above (which falls back to amd64 there but is unused for RPM).
+set(CPACK_RPM_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+set(CPACK_RPM_FILE_NAME "funput-${FUNPUT_VERSION}.${CMAKE_SYSTEM_PROCESSOR}.rpm")
+
 include(CPack)
