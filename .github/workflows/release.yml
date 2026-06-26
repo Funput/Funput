@@ -130,6 +130,9 @@ jobs:
             done
           } > notes.md
 
+      # Create the release as a DRAFT with all assets attached. This repo has
+      # "immutable releases" enabled: a published release rejects asset uploads, so
+      # we must attach everything while it is still a mutable draft, then publish.
       - uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -141,8 +144,25 @@ jobs:
             out/*.json
           body_path: notes.md
           generate_release_notes: true
+          draft: true
           # Dispatch runs have no pushed tag, so name it explicitly (the action
           # creates the tag); tag pushes reuse the pushed ref. Dispatch publishes
           # are always prereleases.
           prerelease: ${{ needs.version.outputs.prerelease }}
           tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.version.outputs.version) }}
+
+      # Flip the draft to published. This fires `release.published` and bakes the
+      # already-attached assets into the now-immutable release.
+      - name: Publish the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.version.outputs.version) }}
+          PRERELEASE: ${{ needs.version.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          if [[ "$PRERELEASE" == "true" ]]; then
+            # Prerelease must NOT become the `latest` the auto-updater serves.
+            gh release edit "$TAG" --draft=false --prerelease --latest=false
+          else
+            gh release edit "$TAG" --draft=false --latest
+          fi
