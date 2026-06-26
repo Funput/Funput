@@ -40,7 +40,7 @@ ureq = "2" # sync HTTP client (rustls, no OpenSSL); runs on its own thread
 ed25519-dalek = "2" # verify the Sparkle-compatible Ed25519 signature
 base64 = "0.22" # decode the public key + signature
 semver = "1" # compare the manifest version against CARGO_PKG_VERSION
-self_replace = "1" # replace the currently running executable
+self-replace = "1" # replace the currently running executable (crate `self_replace`)
 funput-core = { path = "../../crates/funput-core" }
 funput-engine = { path = "../../crates/funput-engine" }
 funput-desktop = { path = "../../crates/funput-desktop" }
