@@ -1,0 +1,99 @@
+name: Build Linux
+
+# Reusable: builds the shared UI + Settings app + Fcitx5 addon & IBus engine into
+# .debs, natively per arch (no cross-compile) so dpkg-shlibdeps records the right
+# deps. arm64 covers Apple Silicon VMs (Apple Virtualization) and arm servers. Two
+# packages per arch: funput (Fcitx5) and funput-ibus (IBus). Called by release.yml;
+# artifacts (names: linux-<arch>) are picked up by its `publish` job.
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Release version (empty for a non-tag smoke test)."
+        required: false
+        type: string
+        default: ""
+
+# Cargo network resilience (see release.yml). Workflow-level env does not cross the
+# workflow_call boundary, so each build workflow repeats it.
+env:
+  CARGO_HTTP_MULTIPLEXING: "false"
+  CARGO_NET_RETRY: "5"
+
+jobs:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          # Fcitx5 + IBus shell toolchains + JSON, and the GTK4/libadwaita Settings deps.
+          sudo apt-get install -y \
+            cmake nlohmann-json3-dev \
+            fcitx5 libfcitx5core-dev libfcitx5utils-dev libfcitx5config-dev \
+            ibus libibus-1.0-dev libglib2.0-dev \
+            libgtk-4-dev libadwaita-1-dev librsvg2-dev
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+            platforms/linux/settings-gtk -> target
+
+      - name: Stamp version from tag
+        if: inputs.version != ''
+        run: |
+          V="${{ inputs.version }}"
+          # Stamp the GUI crate version (shown in the Settings "Giới thiệu" page via
+          # CARGO_PKG_VERSION). The .deb version comes separately from -DFUNPUT_VERSION.
+          sed -i -E "0,/^version = \".*\"/s//version = \"$V\"/" platforms/linux/settings-gtk/Cargo.toml
+
+      - name: Build Settings app (GTK4 + libadwaita)
+        working-directory: platforms/linux/settings-gtk
+        run: cargo build --release
+
+      - name: Build addons + .debs
+        run: |
+          V="${{ inputs.version }}"; V="${V:-1.2026.1}"
+          # Each shell is its own CMake project; build into a separate dir so the
+          # two CPack runs don't clobber each other.
+          for fw in fcitx5 ibus; do
+            cmake -S "platforms/linux/$fw" -B "platforms/linux/build/$fw" \
+              -DCMAKE_BUILD_TYPE=Release -DFUNPUT_VERSION="$V"
+            cmake --build "platforms/linux/build/$fw" --parallel
+            ( cd "platforms/linux/build/$fw" && cpack -G DEB )
+          done
+
+      - name: Verify .debs (apt can parse them)
+        run: |
+          # Fail fast instead of shipping a broken package. `--simulate` forces apt
+          # to parse the .deb metadata through its own reader.
+          find platforms/linux/build -name '*.deb' | while read -r f; do
+            echo "== $f =="
+            dpkg-deb --info "$f" >/dev/null
+            sudo apt-get install --simulate "./$f" >/dev/null
+          done
+
+      - name: Stage artifact
+        run: |
+          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          find platforms/linux/build -name '*.deb' | while read -r f; do
+            cp "$f" "$OUT/"
+            sha256sum "$f" | awk '{print $1}' > "$OUT/$(basename "$f").sha256"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: ${{ runner.temp }}/out/*

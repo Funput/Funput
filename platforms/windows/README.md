@@ -17,9 +17,11 @@ Funput.exe (Rust, Slint) — khởi động ẩn, tray-only
 ├─ keymap.rs      vkCode + modifier → funput_desktop::KeyEvent (ToUnicodeEx)
 ├─ inject.rs      InjectPlan → SendInput (VK_BACK ×n, KEYEVENTF_UNICODE), gắn INJECT_TAG
 ├─ shell.rs       state toàn cục: Engine + settings + per-app override (mutex)
-├─ tray.rs        tray-icon + muda: VI/EN, VNI/Telex, Cài đặt…, Hướng dẫn, Thoát
+├─ tray.rs        tray-icon + muda: VI/EN, VNI/Telex, Cài đặt…, Hướng dẫn, Kiểm tra cập nhật…, Thoát
 ├─ windows_ui.rs  mở cửa sổ Slint (Settings/Onboarding) + áp Mica theo sáng/tối hệ thống
-├─ commands.rs    glue: persist settings + autostart (auto-launch) + mở link (open)
+├─ commands.rs    glue: persist settings + autostart (auto-launch) + mở link + auto-update
+├─ update.rs      auto-update: tải manifest JSON + verify chữ ký Ed25519 + tráo exe + relaunch
+├─ dark_mode.rs   bật preferred-app-mode để context menu của tray theo dark/light hệ thống
 └─ ui/*.slint     SettingsWindow + OnboardingWindow (style Fluent)
 ```
 
@@ -62,6 +64,20 @@ Hiện build ra **`funput.exe` portable** (icon + manifest DPI/asInvoker nhúng 
 Bản Tauri trước lo luôn bundler; nếu cần MSI/NSIS, thêm bước riêng (`cargo-wix` hoặc script NSIS)
 — **chưa** nằm trong crate này.
 
+## Tự cập nhật (auto-update)
+
+Giống bản macOS (Sparkle) hết mức có thể, **dùng chung cặp khóa EdDSA** với macOS:
+
+- **Manifest** `funput-windows.json` (tương đương `appcast.xml`) đính kèm GitHub Release; app đọc ở
+  URL cố định `releases/latest/download/funput-windows.json` (redirect tải thẳng — không đụng REST
+  API nên không dính rate-limit).
+- **Kiểm tra thủ công** (không tự poll nền): tray "Kiểm tra cập nhật…" hoặc Cài đặt → Giới thiệu.
+- Khi có bản mới: tải `.exe` → **verify chữ ký Ed25519** bằng cùng public key macOS (`update.rs`) →
+  `self-replace` exe đang chạy → relaunch (tray process nên **không cần logout** như macOS).
+- **Ký** bằng `sign_update` của Sparkle trong CI (`secret SPARKLE_ED_PRIVATE_KEY`); xem job
+  `windows-feed` trong [`.github/workflows/build-windows.yml`](../../.github/workflows/build-windows.yml).
+- Test cục bộ: đặt `FUNPUT_UPDATE_FEED=<url manifest>` (chỉ có tác dụng ở **debug build**).
+
 ## Hạn chế đã biết
 
 - **Không gõ được vào app chạy quyền Admin** (trừ khi `funput.exe` cũng chạy Admin) — bản chất của
@@ -81,5 +97,8 @@ Notepad/WordPad/trình duyệt:
   từ chữ kế; "Thoát" để thoát.
 - `Ctrl+` ``` bật/tắt nhanh (đổi được trong Settings).
 - Settings: đổi kiểu gõ / phím tắt / smart-eager có hiệu lực ngay; **giữ qua restart**.
-- Đổi Windows sang Dark/Light → cửa sổ đổi nền gradient + màu chữ theo.
+- Đổi Windows sang Dark/Light → cửa sổ đổi nền gradient + màu chữ theo; right-click tray ở Dark mode
+  → context menu cũng nền tối.
 - Bật "Khởi động cùng Windows" → có registry `HKCU\…\Run`.
+- Auto-update: đặt `FUNPUT_UPDATE_FEED` trỏ manifest có version cao hơn (debug build) → tray/Settings
+  "Kiểm tra cập nhật…" → tải + verify + tráo exe + relaunch; chữ ký sai thì báo lỗi, không tráo.

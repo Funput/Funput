@@ -39,6 +39,7 @@ pub fn install() {
     let telex = CheckMenuItem::with_id("telex", "Telex", true, method == InputMethod::Telex, None);
     let settings = MenuItem::with_id("settings", "Cài đặt…", true, None);
     let guide = MenuItem::with_id("guide", "Hướng dẫn", true, None);
+    let update = MenuItem::with_id("check-update", "Kiểm tra cập nhật…", true, None);
     let quit = MenuItem::with_id("quit", "Thoát", true, None);
 
     let menu = Menu::new();
@@ -48,6 +49,7 @@ pub fn install() {
         &PredefinedMenuItem::separator(),
         &settings,
         &guide,
+        &update,
         &PredefinedMenuItem::separator(),
         &quit,
     ])
@@ -99,6 +101,9 @@ pub fn drain_events() {
             }
             "guide" => {
                 let _ = slint::invoke_from_event_loop(windows_ui::open_onboarding);
+            }
+            "check-update" => {
+                let _ = slint::invoke_from_event_loop(windows_ui::open_settings_and_check_updates);
             }
             "quit" => {
                 let _ = slint::invoke_from_event_loop(|| {

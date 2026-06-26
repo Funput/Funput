@@ -1,0 +1,119 @@
+name: Build Windows
+
+# Reusable: builds the native Slint portable .exe (job `windows`), then signs it
+# with the shared Sparkle EdDSA key and emits the in-app update feed
+# `funput-windows.json` (job `windows-feed`). Called by release.yml; artifacts
+# (names: windows, windows-feed) are picked up by its `publish` job.
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Release version (empty for a non-tag smoke test)."
+        required: false
+        type: string
+        default: ""
+
+# Cargo network resilience (see release.yml). Workflow-level env does not cross the
+# workflow_call boundary, so each build workflow repeats it.
+env:
+  CARGO_HTTP_MULTIPLEXING: "false"
+  CARGO_NET_RETRY: "5"
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: platforms/windows -> target
+
+      - name: Stamp version from tag
+        if: inputs.version != ''
+        run: |
+          V="${{ inputs.version }}"
+          # Crate version is the single source of truth: cargo logs, the exe's
+          # embedded version resource, and the About pane (CARGO_PKG_VERSION).
+          node -e "const fs=require('fs');const f='platforms/windows/Cargo.toml';let s=fs.readFileSync(f,'utf8');s=s.replace(/^version = \".*\"/m,'version = \"'+process.argv[1]+'\"');fs.writeFileSync(f,s)" "$V"
+
+      - name: Build Funput.exe
+        working-directory: platforms/windows
+        run: cargo build --release
+
+      # This crate is excluded from the workspace, so its unit tests (the Ed25519
+      # signature-verify + version-compare logic in update.rs) only run here.
+      # --release reuses the build above instead of compiling a second time.
+      - name: Run tests
+        working-directory: platforms/windows
+        run: cargo test --release
+
+      - name: Stage artifact
+        run: |
+          V="${{ inputs.version }}"; V="${V:-dev}"
+          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          cp platforms/windows/target/release/funput.exe "$OUT/Funput-$V.exe"
+          sha256sum "$OUT/Funput-$V.exe" | awk '{print $1}' > "$OUT/Funput-$V.exe.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: ${{ runner.temp }}/out/*
+
+  # Sign the .exe with the shared Sparkle EdDSA key and emit funput-windows.json.
+  # The in-app updater (platforms/windows/src/update.rs) fetches it from
+  # releases/latest/download and verifies the .exe against the *same* Ed25519 key
+  # macOS uses. Sparkle's sign_update is macOS-only, so this runs on a macOS runner;
+  # it just needs the built .exe, hence `needs: windows`.
+  windows-feed:
+    needs: windows
+    if: inputs.version != ''
+    runs-on: macos-latest
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows
+          path: win
+
+      - name: Sign .exe + emit funput-windows.json
+        env:
+          VERSION: ${{ inputs.version }}
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+          # Keep the CLI tools in lockstep with the macOS job (and the framework).
+          SPARKLE_VERSION: "2.9.3"
+        run: |
+          set -euo pipefail
+          EXE="win/Funput-$VERSION.exe"
+          # Fetch Sparkle's command-line tools (sign_update).
+          TOOLS="$RUNNER_TEMP/sparkle"; mkdir -p "$TOOLS"
+          curl -fsSL "https://github.com/sparkle-project/Sparkle/releases/download/$SPARKLE_VERSION/Sparkle-$SPARKLE_VERSION.tar.xz" \
+            | tar -xJ -C "$TOOLS"
+          KEYFILE="$RUNNER_TEMP/sparkle_ed_key"
+          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$KEYFILE"
+          # sign_update prints one line: sparkle:edSignature="<base64>" length="<bytes>"
+          SIGLINE="$("$TOOLS/bin/sign_update" "$EXE" -f "$KEYFILE")"
+          rm -f "$KEYFILE"
+          ED_SIG="$(printf '%s' "$SIGLINE" | sed -E 's/.*edSignature="([^"]+)".*/\1/')"
+          LENGTH="$(printf '%s' "$SIGLINE" | sed -E 's/.*length="([^"]+)".*/\1/')"
+          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          cat > "$OUT/funput-windows.json" <<EOF
+          {
+            "version": "$VERSION",
+            "url": "https://github.com/Funput/Funput/releases/download/v$VERSION/Funput-$VERSION.exe",
+            "ed_signature": "$ED_SIG",
+            "length": $LENGTH,
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "notes_url": "https://github.com/Funput/Funput/releases/tag/v$VERSION"
+          }
+          EOF
+          cat "$OUT/funput-windows.json"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-feed
+          path: ${{ runner.temp }}/out/*
