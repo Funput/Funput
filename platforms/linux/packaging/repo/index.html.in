@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- Landing page for the Funput Linux package repository.
+     @REPO_URL@ is substituted by the publish-repo workflow with the Pages base URL. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Funput — kho phần mềm Linux</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { max-width: 760px; margin: 2rem auto; padding: 0 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1 { margin-bottom: .2rem; }
+  p.lead { color: #888; margin-top: 0; }
+  h2 { margin-top: 2rem; }
+  pre { background: #1113; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+  code { font-family: ui-monospace, monospace; }
+  .note { font-size: .9rem; color: #888; }
+  small { color: #888; }
+</style>
+</head>
+<body>
+<h1>Funput</h1>
+<p class="lead">Bộ gõ tiếng Việt cho Linux — kho cài đặt &amp; cập nhật tự động.</p>
+
+<p>Chọn <strong>IBus</strong> (GNOME mặc định) hoặc <strong>Fcitx5</strong> (KDE / đầy đủ tính năng).
+Sau khi thêm kho, cập nhật về sau chỉ là <code>apt/dnf/zypper upgrade</code> bình thường.</p>
+
+<h2>Debian / Ubuntu (.deb)</h2>
+<pre><code>sudo install -d /usr/share/keyrings
+curl -fsSL @REPO_URL@funput.asc | sudo tee /usr/share/keyrings/funput.asc >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/funput.asc] @REPO_URL@deb ./" \
+  | sudo tee /etc/apt/sources.list.d/funput.list
+sudo apt update
+sudo apt install funput-ibus    # hoặc: funput  (Fcitx5)</code></pre>
+
+<h2>Fedora (.rpm)</h2>
+<pre><code>sudo dnf config-manager --add-repo @REPO_URL@funput.repo
+sudo dnf install funput-ibus    # hoặc: funput  (Fcitx5)</code></pre>
+
+<h2>openSUSE (.rpm)</h2>
+<pre><code>sudo rpm --import @REPO_URL@funput.asc
+sudo zypper addrepo -gf @REPO_URL@rpm/ funput
+sudo zypper install funput-ibus # hoặc: funput  (Fcitx5)</code></pre>
+
+<h2>Arch Linux</h2>
+<p>Cài qua AUR: <code>yay -S funput-ibus</code> hoặc <code>yay -S funput</code>.</p>
+
+<p class="note">Sau khi cài: <strong>Settings → Keyboard → Input Sources → + → Vietnamese → Funput</strong>
+(IBus cần <code>ibus restart</code>; Fcitx5 dùng <code>fcitx5-configtool</code>). Mở <strong>Funput</strong>
+trong menu ứng dụng để chỉnh Telex/VNI.</p>
+
+<hr>
+<p><small>Khóa ký công khai: <a href="@REPO_URL@funput.asc">funput.asc</a> ·
+Mã nguồn: <a href="https://github.com/Funput/Funput">github.com/Funput/Funput</a></small></p>
+</body>
+</html>

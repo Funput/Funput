@@ -162,9 +162,11 @@ Mở một app GTK (gedit) và một app Qt:
   bộ gõ: addon Fcitx5/engine IBus phải cài vào thư mục hệ thống mà daemon quét, còn AppImage mount ở
   path tạm và không cài gì → daemon không thấy. Hai gói `funput` (Fcitx5) và `funput-ibus` hiện đóng gói
   riêng, mỗi gói tự bundle `libfunput_ffi.so` + app Settings (gói chung `funput-common` để sau).
-- **Auto-update (apt/dnf repo có ký GPG) để sau.** Repo apt + dnf là file tĩnh, host được trên GitHub
-  Pages / R2; mỗi định dạng cần repo + chữ ký GPG riêng (Arch đi đường AUR). Hiện phân phối qua GitHub
-  Release + `install.sh`; chạy lại script để cập nhật.
+- **Auto-update qua kho apt/dnf có ký GPG** tại `repo.funput.app`: kho tĩnh trên GitHub Pages (custom
+  domain), dựng bởi `.github/workflows/publish-repo.yml` mỗi khi có release chính thức — người dùng
+  `apt/dnf/zypper upgrade` như bình thường. Thiết lập (khóa GPG + secrets + Pages + DNS):
+  [`packaging/repo/README.md`](packaging/repo/README.md). GitHub Release + `install.sh` vẫn là kênh
+  tải trực tiếp song song. Kênh *official* của distro (OBS/COPR/PPA) là bước sau.
 - Hotkey `alt_shift` (combo chỉ-modifier) chưa hỗ trợ; UI Linux chỉ hiện `ctrl_backtick`/`ctrl_space`.
 - Settings **áp dụng tức thì** qua theo dõi file (inotify, `common/settings_watch.*`): Fcitx5 wire fd
   vào event loop riêng, IBus qua `g_unix_fd_add` trên GLib loop; vẫn giữ fallback so mtime lúc focus-in.
