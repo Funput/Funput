@@ -45,6 +45,13 @@ jobs:
         working-directory: platforms/windows
         run: cargo build --release
 
+      # This crate is excluded from the workspace, so its unit tests (the Ed25519
+      # signature-verify + version-compare logic in update.rs) only run here.
+      # --release reuses the build above instead of compiling a second time.
+      - name: Run tests
+        working-directory: platforms/windows
+        run: cargo test --release
+
       - name: Stage artifact
         run: |
           V="${{ inputs.version }}"; V="${V:-dev}"

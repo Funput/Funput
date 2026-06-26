@@ -6,7 +6,7 @@
 //! 135) and `FlushMenuThemes` (ordinal 136), the same trick win32-darkmode uses.
 //! muda themes the menu *bar* but explicitly not popups, so we do this ourselves.
 
-use windows::core::{s, PCSTR};
+use windows::core::PCSTR;
 use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryA};
 
 /// Opt the process into dark menus when Windows is in dark mode (and light when
@@ -17,7 +17,8 @@ pub fn allow_dark_menus() {
     const ALLOW_DARK: i32 = 1;
 
     unsafe {
-        let Ok(uxtheme) = LoadLibraryA(s!("uxtheme.dll")) else {
+        // Null-terminated literal → PCSTR, without relying on the `s!` macro path.
+        let Ok(uxtheme) = LoadLibraryA(PCSTR(b"uxtheme.dll\0".as_ptr())) else {
             return;
         };
         // The two uxtheme functions are exported by ordinal only (no public names),
