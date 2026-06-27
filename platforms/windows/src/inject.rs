@@ -3,12 +3,10 @@
 //! `dwExtraInfo` so the hook ignores them (no re-entrancy).
 
 use funput_desktop::InjectPlan;
-use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP,
     KEYEVENTF_UNICODE, VIRTUAL_KEY, VK_BACK, VK_DELETE,
 };
-use windows::Win32::UI::WindowsAndMessaging::{PostMessageW, WM_CHAR, WM_KEYDOWN, WM_KEYUP};
 
 use crate::shell::INJECT_TAG;
 
@@ -87,39 +85,6 @@ pub fn send_plan(plan: &InjectPlan) {
     let mut inputs = deletions(plan.backspaces);
     inputs.extend(text(&plan.units));
     raw_send(&inputs);
-}
-
-/// Deliver a plan to one of Funput's **own** windows (the Slint Settings UI).
-///
-/// winit (Slint's backend) does not consume the synthetic Unicode key events that
-/// `SendInput`/`KEYEVENTF_UNICODE` produce — it maps input by physical scancode — so
-/// composed diacritics never land in our own `LineEdit`. Instead we post the real
-/// window messages winit *does* read: `WM_KEYDOWN`/`WM_KEYUP` (VK_BACK) for the
-/// deletions and `WM_CHAR` for each UTF-16 unit. `PostMessage` bypasses the low-level
-/// hook entirely, so no `INJECT_TAG` round-trip is needed.
-///
-/// `hwnd` is our foreground top-level window; winit routes the messages to the
-/// focused control (the expansion field).
-pub fn send_plan_to_window(plan: &InjectPlan, hwnd: HWND) {
-    if plan.is_noop() {
-        return;
-    }
-    // Backspace, with the standard scancode (0x0E) in the lParam so winit recognises
-    // the physical key; bits 30/31 mark the key-up transition.
-    const BACK_SCAN: isize = 0x0E << 16;
-    let down = LPARAM(BACK_SCAN | 1);
-    let up = LPARAM(BACK_SCAN | 1 | (1 << 30) | (1 << 31));
-    for _ in 0..plan.backspaces {
-        unsafe {
-            let _ = PostMessageW(hwnd, WM_KEYDOWN, WPARAM(VK_BACK.0 as usize), down);
-            let _ = PostMessageW(hwnd, WM_KEYUP, WPARAM(VK_BACK.0 as usize), up);
-        }
-    }
-    for &unit in &plan.units {
-        unsafe {
-            let _ = PostMessageW(hwnd, WM_CHAR, WPARAM(unit as usize), LPARAM(0));
-        }
-    }
 }
 
 /// Like [`send_plan`] but prepends a single `Delete` press before the deletions,

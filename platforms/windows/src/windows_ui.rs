@@ -9,12 +9,15 @@ use std::cell::RefCell;
 
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
+use crate::compose::FieldComposer;
 use crate::settings::{Hotkey, Method, ToneStyle};
-use crate::{commands, shell, AppEntry, OnboardingWindow, SettingsWindow, ShortcutEntry};
+use crate::{commands, shell, AppEntry, Compose, OnboardingWindow, SettingsWindow, ShortcutEntry};
 
 thread_local! {
     static SETTINGS: RefCell<Option<SettingsWindow>> = const { RefCell::new(None) };
     static ONBOARDING: RefCell<Option<OnboardingWindow>> = const { RefCell::new(None) };
+    /// Vietnamese composer for the gõ tắt expansion field (UI thread only).
+    static COMPOSER: RefCell<FieldComposer> = RefCell::new(FieldComposer::new());
 }
 
 // --- Settings --------------------------------------------------------------
@@ -130,7 +133,19 @@ fn wire_settings(win: &SettingsWindow) {
     win.on_edit_expansion(|index, text| {
         commands::set_shortcut_expansion(index.max(0) as usize, text.to_string());
     });
-    win.on_compose_active(commands::set_compose_in_own);
+
+    // In-process Vietnamese composition for the expansion field (the global hook
+    // can't reach our own window). The Slint TextInput forwards each keystroke here.
+    let compose = win.global::<Compose>();
+    compose.on_reset(|text| {
+        let (method, tone) = shell::method_and_tone();
+        COMPOSER.with(|c| c.borrow_mut().reset(text.as_str(), method, tone));
+    });
+    compose.on_key(|ch| {
+        let c = ch.chars().next().unwrap_or('\0');
+        COMPOSER.with(|comp| comp.borrow_mut().key(c)).into()
+    });
+    compose.on_backspace(|| COMPOSER.with(|comp| comp.borrow_mut().backspace()).into());
 
     win.on_open_link(|url| commands::open_url(url.as_str()));
 

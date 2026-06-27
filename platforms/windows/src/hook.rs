@@ -171,13 +171,11 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
         return false; // English mode: hands off
     }
 
-    // Funput's own Settings window (Slint). The global SendInput path doesn't compose
-    // into it (winit ignores synthetic Unicode), so we handle it specially: compose
-    // only while the expansion field is focused (`compose_in_own`), and deliver via
-    // PostMessage. Everywhere else in our UI, keys pass through literally — including
-    // the trigger field, which must stay raw ASCII.
-    let own_window = unsafe { own_foreground_window() };
-    if own_window.is_some() && !shell::compose_in_own() {
+    // Funput's own Settings window (Slint). The global SendInput path can't compose
+    // into it (winit ignores synthetic input), so the window composes Vietnamese
+    // in-process via the engine (see `windows_ui`/Slint `TextInput`). The hook stays
+    // out of it entirely — keys pass through to Slint untouched.
+    if unsafe { own_foreground_window() }.is_some() {
         return false;
     }
 
@@ -186,9 +184,6 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
             let plan = plan_inject(&shell::process_char(c));
             if plan.is_noop() {
                 false // Action::None — the literal key reaches the app
-            } else if let Some(hwnd) = own_window {
-                inject::send_plan_to_window(&plan, hwnd); // our own Slint window
-                true
             } else {
                 // Chrome's omnibox eats a Backspace to clear its autocomplete
                 // selection, so it gets a Delete primer first (see

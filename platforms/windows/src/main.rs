@@ -10,6 +10,7 @@ compile_error!("funput-windows builds only on Windows (global keyboard hook + Se
 slint::include_modules!();
 
 mod commands;
+mod compose;
 mod dark_mode;
 mod hook;
 mod inject;

@@ -1,0 +1,85 @@
+// In-process Vietnamese composition for fields inside Funput's own window. The global
+// keyboard hook can't compose here (winit ignores synthetic input), so a TextInput
+// intercepts each real keystroke and feeds it to funput-engine through these
+// callbacks (set from Rust in windows_ui.rs).
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+
+export global Compose {
+    // A typed character → the new full field text.
+    callback key(string) -> string;
+    // Backspace → the new full field text.
+    callback backspace() -> string;
+    // Focus-in: seed the composer with the field's current text.
+    callback reset(string);
+}
+
+// A single-line field that composes Vietnamese as you type. Styled to match the
+// Fluent LineEdit used elsewhere in Settings.
+export component ComposingInput inherits Rectangle {
+    in-out property <string> text;
+    in property <string> placeholder;
+    callback edited(string);
+
+    height: 32px;
+    border-radius: Theme.r-control;
+    background: Theme.dark ? #ffffff14 : #ffffffcc;
+    border-width: 1px;
+    border-color: ti.has-focus ? Theme.accent : Theme.card-border;
+
+    ph := Text {
+        x: 10px;
+        height: 100%;
+        vertical-alignment: center;
+        text: root.placeholder;
+        color: Theme.subtle;
+        visible: root.text == "";
+    }
+
+    ti := TextInput {
+        x: 10px;
+        width: parent.width - 20px;
+        height: 100%;
+        vertical-alignment: center;
+        single-line: true;
+        text <=> root.text;
+        color: Palette.foreground;
+
+        changed has-focus => {
+            if self.has-focus {
+                Compose.reset(self.text);
+            }
+        }
+        edited => {
+            root.edited(self.text);
+        }
+        key-pressed(event) => {
+            // Modifier combos (Ctrl/Alt/Win) are shortcuts — let them through.
+            if event.modifiers.control || event.modifiers.alt || event.modifiers.meta {
+                return reject;
+            }
+            if event.text == Key.Backspace {
+                self.text = Compose.backspace();
+                self.set-selection-offsets(1000000, 1000000);
+                root.edited(self.text);
+                return accept;
+            }
+            // Navigation / editing keys: let TextInput handle them, then resync so the
+            // next typed character appends to the now-current text.
+            if event.text == Key.LeftArrow || event.text == Key.RightArrow
+                || event.text == Key.UpArrow || event.text == Key.DownArrow
+                || event.text == Key.Home || event.text == Key.End
+                || event.text == Key.Return || event.text == Key.Tab
+                || event.text == Key.Escape || event.text == Key.Delete {
+                Compose.reset(self.text);
+                return reject;
+            }
+            // A printable character → compose.
+            self.text = Compose.key(event.text);
+            self.set-selection-offsets(1000000, 1000000);
+            root.edited(self.text);
+            return accept;
+        }
+    }
+}

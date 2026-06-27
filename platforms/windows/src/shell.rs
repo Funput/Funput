@@ -4,7 +4,6 @@
 //! No Windows APIs here.
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, OnceLock};
 
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
@@ -37,11 +36,6 @@ struct Shell {
 }
 
 static SHELL: OnceLock<Mutex<Shell>> = OnceLock::new();
-
-/// True while the gõ tắt **expansion** field in our own Settings window is focused.
-/// The hook reads this to compose Vietnamese into our own window (via PostMessage)
-/// only there — the trigger field and the rest of the UI take keys literally.
-static COMPOSE_IN_OWN: AtomicBool = AtomicBool::new(false);
 
 fn apply_to_engine(engine: &mut Engine, s: &Settings) {
     engine.set_method(s.method.core());
@@ -121,15 +115,11 @@ pub fn toggle_hotkey() -> Hotkey {
 pub fn is_composing() -> bool {
     with(|s| !s.engine.buffer().is_empty())
 }
-pub fn compose_in_own() -> bool {
-    COMPOSE_IN_OWN.load(Ordering::Relaxed)
-}
 
-/// The expansion field gained/lost focus. Toggle composition into our own window and
-/// reset the engine so each editing session starts from a clean composition state.
-pub fn set_compose_in_own(on: bool) {
-    COMPOSE_IN_OWN.store(on, Ordering::Relaxed);
-    with(|s| s.engine.clear());
+/// The user's current input method + tone style, for the in-process composer that the
+/// Settings window's gõ tắt field uses (it can't go through the global hook).
+pub fn method_and_tone() -> (InputMethod, CoreToneStyle) {
+    with(|s| (s.settings.method.core(), s.settings.tone_style.core()))
 }
 
 /// True when the most-recently-focused app is Google Chrome. Used to route text

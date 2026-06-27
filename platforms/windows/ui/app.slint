@@ -14,8 +14,9 @@ import { AppsPage } from "page_apps.slint";
 import { GeneralPage } from "page_general.slint";
 import { AboutPage } from "page_about.slint";
 import { OnboardingWindow } from "onboarding.slint";
+import { Compose } from "compose.slint";
 
-export { AppEntry, ShortcutEntry, OnboardingWindow }
+export { AppEntry, ShortcutEntry, OnboardingWindow, Compose }
 
 export component SettingsWindow inherits Window {
     title: "Funput — Cài đặt";
@@ -54,7 +55,6 @@ export component SettingsWindow inherits Window {
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
-    callback compose-active(bool);
     callback open-link(string);
     callback check-update();
     callback install-update();
@@ -165,7 +165,6 @@ export component SettingsWindow inherits Window {
                     remove-shortcut(i) => { root.remove-shortcut(i); }
                     edit-trigger(i, t) => { root.edit-trigger(i, t); }
                     edit-expansion(i, t) => { root.edit-expansion(i, t); }
-                    compose-active(b) => { root.compose-active(b); }
                 }
 
                 if root.active == "apps": AppsPage {
