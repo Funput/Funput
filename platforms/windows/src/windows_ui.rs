@@ -8,7 +8,7 @@
 use std::cell::RefCell;
 use std::process::{Child, Command};
 
-use slint::{ComponentHandle, ModelRc, SharedString, VecModel, Weak};
+use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::System::Threading::{
     OpenProcess, TerminateProcess, WaitForSingleObject, PROCESS_SYNCHRONIZE, PROCESS_TERMINATE,
@@ -238,13 +238,33 @@ fn wire_settings(win: &SettingsWindow) {
         }
     });
 
-    // Editing a field only persists (engine + settings); the model is NOT rebuilt,
-    // so the LineEdit keeps its text and caret while the user types.
-    win.on_edit_trigger(|index, text| {
-        commands::set_shortcut_trigger(index.max(0) as usize, text.to_string());
+    // Persist the edit and mutate only that row in the existing model. Replacing
+    // the whole model would disturb the caret, while leaving it stale would lose
+    // the visible value when ShortcutsPage is recreated after switching tabs.
+    let w = win.as_weak();
+    win.on_edit_trigger(move |index, text| {
+        let index = index.max(0) as usize;
+        commands::set_shortcut_trigger(index, text.to_string());
+        if let Some(win) = w.upgrade() {
+            let model = win.get_shortcuts();
+            if let Some(mut entry) = model.row_data(index) {
+                entry.trigger = text;
+                model.set_row_data(index, entry);
+            }
+        }
     });
-    win.on_edit_expansion(|index, text| {
-        commands::set_shortcut_expansion(index.max(0) as usize, text.to_string());
+
+    let w = win.as_weak();
+    win.on_edit_expansion(move |index, text| {
+        let index = index.max(0) as usize;
+        commands::set_shortcut_expansion(index, text.to_string());
+        if let Some(win) = w.upgrade() {
+            let model = win.get_shortcuts();
+            if let Some(mut entry) = model.row_data(index) {
+                entry.expansion = text;
+                model.set_row_data(index, entry);
+            }
+        }
     });
 
     // In-process Vietnamese composition for the expansion field (the global hook
