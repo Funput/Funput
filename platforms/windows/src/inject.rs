@@ -111,13 +111,13 @@ pub fn send_plan_to_window(plan: &InjectPlan, hwnd: HWND) {
     let up = LPARAM(BACK_SCAN | 1 | (1 << 30) | (1 << 31));
     for _ in 0..plan.backspaces {
         unsafe {
-            let _ = PostMessageW(Some(hwnd), WM_KEYDOWN, WPARAM(VK_BACK.0 as usize), down);
-            let _ = PostMessageW(Some(hwnd), WM_KEYUP, WPARAM(VK_BACK.0 as usize), up);
+            let _ = PostMessageW(hwnd, WM_KEYDOWN, WPARAM(VK_BACK.0 as usize), down);
+            let _ = PostMessageW(hwnd, WM_KEYUP, WPARAM(VK_BACK.0 as usize), up);
         }
     }
     for &unit in &plan.units {
         unsafe {
-            let _ = PostMessageW(Some(hwnd), WM_CHAR, WPARAM(unit as usize), LPARAM(0));
+            let _ = PostMessageW(hwnd, WM_CHAR, WPARAM(unit as usize), LPARAM(0));
         }
     }
 }
