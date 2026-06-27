@@ -55,8 +55,47 @@ export component ComposingInput inherits Rectangle {
             root.edited(self.text);
         }
         key-pressed(event) => {
-            // Modifier combos (Ctrl/Alt/Win) are shortcuts — let them through.
-            if event.modifiers.control || event.modifiers.alt || event.modifiers.meta {
+            // Editing shortcuts: because we own `key-pressed` on the raw TextInput,
+            // its built-in Ctrl+A/C/V/X handling is bypassed, so wire them explicitly.
+            if event.modifiers.control && !event.modifiers.alt {
+                // Slint may report Ctrl+letter as the letter ("a") or as the control
+                // character (0x01) depending on platform; accept both forms.
+                if event.text == "a" || event.text == "\u{1}" {
+                    self.select-all();
+                    return accept;
+                }
+                if event.text == "c" || event.text == "\u{3}" {
+                    self.copy();
+                    return accept;
+                }
+                if event.text == "x" || event.text == "\u{18}" {
+                    self.cut();
+                    Compose.reset(self.text);
+                    root.edited(self.text);
+                    return accept;
+                }
+                if event.text == "v" || event.text == "\u{16}" {
+                    self.paste();
+                    Compose.reset(self.text);
+                    root.edited(self.text);
+                    return accept;
+                }
+                if event.text == "z" || event.text == "\u{1a}" {
+                    self.undo();
+                    Compose.reset(self.text);
+                    root.edited(self.text);
+                    return accept;
+                }
+                if event.text == "y" || event.text == "\u{19}" {
+                    self.redo();
+                    Compose.reset(self.text);
+                    root.edited(self.text);
+                    return accept;
+                }
+                return reject; // other Ctrl combos (e.g. Ctrl+Home) → default handling
+            }
+            // Alt / Win combos are shortcuts — leave them to the system.
+            if event.modifiers.alt || event.modifiers.meta {
                 return reject;
             }
             if event.text == Key.Backspace {
