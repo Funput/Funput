@@ -1,21 +1,21 @@
 //! Open the Settings / Onboarding windows on demand (tray-only app otherwise).
-//! Slint windows are created lazily and kept alive (they are cheap), so reopening
-//! just re-shows them. A Mica backdrop gives the native Windows 11 frosted look.
+//! Slint windows are created lazily and cached weakly. Closing a window releases
+//! its component tree and renderer resources; reopening creates a fresh instance.
 //!
 //! Everything here runs on the main (Slint event-loop) thread. The tray, which
 //! lives on the hook thread, reaches these via `slint::invoke_from_event_loop`.
 
 use std::cell::RefCell;
 
-use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
+use slint::{ComponentHandle, ModelRc, SharedString, VecModel, Weak};
 
 use crate::compose::FieldComposer;
 use crate::settings::{Hotkey, Method, ToneStyle};
 use crate::{commands, shell, AppEntry, Compose, OnboardingWindow, SettingsWindow, ShortcutEntry};
 
 thread_local! {
-    static SETTINGS: RefCell<Option<SettingsWindow>> = const { RefCell::new(None) };
-    static ONBOARDING: RefCell<Option<OnboardingWindow>> = const { RefCell::new(None) };
+    static SETTINGS: RefCell<Option<Weak<SettingsWindow>>> = const { RefCell::new(None) };
+    static ONBOARDING: RefCell<Option<Weak<OnboardingWindow>>> = const { RefCell::new(None) };
     /// Vietnamese composer for the gõ tắt expansion field (UI thread only).
     static COMPOSER: RefCell<FieldComposer> = RefCell::new(FieldComposer::new());
 }
@@ -23,7 +23,7 @@ thread_local! {
 // --- Settings --------------------------------------------------------------
 
 pub fn open_settings() {
-    if let Some(win) = SETTINGS.with(|c| c.borrow().as_ref().map(|w| w.clone_strong())) {
+    if let Some(win) = SETTINGS.with(|c| c.borrow().as_ref().and_then(|w| w.upgrade())) {
         populate_settings(&win);
         let _ = win.show();
         return;
@@ -32,7 +32,7 @@ pub fn open_settings() {
     populate_settings(&win);
     wire_settings(&win);
     let _ = win.show();
-    SETTINGS.with(|c| *c.borrow_mut() = Some(win));
+    SETTINGS.with(|c| *c.borrow_mut() = Some(win.as_weak()));
 }
 
 fn populate_settings(win: &SettingsWindow) {
@@ -160,7 +160,7 @@ fn wire_settings(win: &SettingsWindow) {
 /// Called on the main thread via `slint::invoke_from_event_loop`.
 pub fn set_update_state(state: &str, version: &str, message: &str) {
     SETTINGS.with(|c| {
-        if let Some(win) = c.borrow().as_ref() {
+        if let Some(win) = c.borrow().as_ref().and_then(|w| w.upgrade()) {
             win.set_update_state(state.into());
             win.set_update_version(version.into());
             win.set_update_message(message.into());
@@ -173,7 +173,7 @@ pub fn set_update_state(state: &str, version: &str, message: &str) {
 pub fn open_settings_and_check_updates() {
     open_settings();
     SETTINGS.with(|c| {
-        if let Some(win) = c.borrow().as_ref() {
+        if let Some(win) = c.borrow().as_ref().and_then(|w| w.upgrade()) {
             win.set_active("about".into());
         }
     });
@@ -194,7 +194,7 @@ fn refresh_apps(win: &SettingsWindow) {
 // --- Onboarding ------------------------------------------------------------
 
 pub fn open_onboarding() {
-    if let Some(win) = ONBOARDING.with(|c| c.borrow().as_ref().map(|w| w.clone_strong())) {
+    if let Some(win) = ONBOARDING.with(|c| c.borrow().as_ref().and_then(|w| w.upgrade())) {
         win.set_step(0);
         let _ = win.show();
         return;
@@ -224,7 +224,7 @@ pub fn open_onboarding() {
     });
 
     let _ = win.show();
-    ONBOARDING.with(|c| *c.borrow_mut() = Some(win));
+    ONBOARDING.with(|c| *c.borrow_mut() = Some(win.as_weak()));
 }
 
 // --- helpers ---------------------------------------------------------------
