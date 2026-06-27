@@ -1,6 +1,7 @@
 // Settings → "Gõ tắt": manage text-expansion shortcuts (`vn` → `Việt Nam`).
-// Editing a field only persists; the model is not rebuilt, so the LineEdit keeps
-// its caret. Add/remove rebuild the list (see windows_ui.rs).
+// Editing mutates the existing model row without rebuilding the list, so the
+// LineEdit keeps its caret and the value survives switching tabs. Add/remove
+// rebuild the list (see windows_ui.rs).
 
 import { Palette, Button, LineEdit } from "std-widgets.slint";
 import { Theme, Card, ShortcutEntry } from "theme.slint";
