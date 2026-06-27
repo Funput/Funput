@@ -13,9 +13,6 @@ description = "Funput for Windows — global keyboard hook + tray + native Slint
 name = "funput"
 path = "src/main.rs"
 
-[build]
-rustflags = ["--cfg", "slint_style = \"cupertino\""]
-
 [build-dependencies]
 slint-build = "1.17"
 winresource = "0.1"
