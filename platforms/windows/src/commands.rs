@@ -58,6 +58,12 @@ pub fn set_shortcut_expansion(index: usize, expansion: String) {
     shell::set_shortcut_expansion(index, expansion);
 }
 
+/// The expansion field's focus changed — enable Vietnamese composition into our own
+/// window only while it is focused (the trigger stays literal ASCII).
+pub fn set_compose_in_own(on: bool) {
+    shell::set_compose_in_own(on);
+}
+
 /// Persist the launch-at-login preference and mirror it into the OS autostart
 /// (HKCU `…\Run`) via `auto-launch`.
 pub fn set_launch_at_login(on: bool) {

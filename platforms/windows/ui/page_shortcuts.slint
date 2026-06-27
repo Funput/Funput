@@ -11,6 +11,9 @@ export component ShortcutsPage inherits VerticalLayout {
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
+    // Fired when an expansion field gains/loses focus, so the engine composes
+    // Vietnamese into it (the trigger field stays literal ASCII).
+    callback compose-active(bool);
 
     spacing: Theme.sp-md;
     Text { text: "Gõ tắt"; font-size: 20px; font-weight: 700; color: Palette.foreground; }
@@ -60,6 +63,7 @@ export component ShortcutsPage inherits VerticalLayout {
                 placeholder-text: "Việt Nam";
                 text: entry.expansion;
                 edited(t) => { root.edit-expansion(i, t); }
+                changed has-focus => { root.compose-active(self.has-focus); }
             }
             Button {
                 text: "Xóa";

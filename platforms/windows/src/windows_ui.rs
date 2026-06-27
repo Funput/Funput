@@ -130,6 +130,7 @@ fn wire_settings(win: &SettingsWindow) {
     win.on_edit_expansion(|index, text| {
         commands::set_shortcut_expansion(index.max(0) as usize, text.to_string());
     });
+    win.on_compose_active(commands::set_compose_in_own);
 
     win.on_open_link(|url| commands::open_url(url.as_str()));
 

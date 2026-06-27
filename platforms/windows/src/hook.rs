@@ -10,14 +10,15 @@ use windows::core::PWSTR;
 use windows::Win32::Foundation::{CloseHandle, HINSTANCE, HMODULE, HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Threading::{
-    OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
+    GetCurrentProcessId, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
+    PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::Accessibility::{SetWinEventHook, HWINEVENTHOOK};
 use windows::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY;
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, DispatchMessageW, GetMessageW, GetWindowThreadProcessId, SetWindowsHookExW,
-    TranslateMessage, EVENT_SYSTEM_FOREGROUND, HC_ACTION, KBDLLHOOKSTRUCT, MSG, WH_KEYBOARD_LL,
-    WINEVENT_OUTOFCONTEXT, WM_KEYDOWN, WM_SYSKEYDOWN,
+    CallNextHookEx, DispatchMessageW, GetForegroundWindow, GetMessageW, GetWindowThreadProcessId,
+    SetWindowsHookExW, TranslateMessage, EVENT_SYSTEM_FOREGROUND, HC_ACTION, KBDLLHOOKSTRUCT, MSG,
+    WH_KEYBOARD_LL, WINEVENT_OUTOFCONTEXT, WM_KEYDOWN, WM_SYSKEYDOWN,
 };
 
 use crate::{inject, keymap, shell, tray};
@@ -120,6 +121,23 @@ unsafe fn exe_of_window(hwnd: HWND) -> Option<(String, String)> {
     Some((id, name))
 }
 
+/// The foreground window when it belongs to **our own** process (the Slint Settings
+/// UI), else `None`. Used to route composition through PostMessage instead of the
+/// SendInput path winit ignores.
+unsafe fn own_foreground_window() -> Option<HWND> {
+    let hwnd = GetForegroundWindow();
+    if hwnd.0.is_null() {
+        return None;
+    }
+    let mut pid = 0u32;
+    GetWindowThreadProcessId(hwnd, Some(&mut pid));
+    if pid != 0 && pid == GetCurrentProcessId() {
+        Some(hwnd)
+    } else {
+        None
+    }
+}
+
 unsafe extern "system" fn keyboard_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     if code == HC_ACTION as i32 {
         let kbd = &*(lparam.0 as *const KBDLLHOOKSTRUCT);
@@ -153,11 +171,24 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
         return false; // English mode: hands off
     }
 
+    // Funput's own Settings window (Slint). The global SendInput path doesn't compose
+    // into it (winit ignores synthetic Unicode), so we handle it specially: compose
+    // only while the expansion field is focused (`compose_in_own`), and deliver via
+    // PostMessage. Everywhere else in our UI, keys pass through literally — including
+    // the trigger field, which must stay raw ASCII.
+    let own_window = unsafe { own_foreground_window() };
+    if own_window.is_some() && !shell::compose_in_own() {
+        return false;
+    }
+
     match classify(&keymap::to_key_event(kbd)) {
         KeyKind::Compose(c) => {
             let plan = plan_inject(&shell::process_char(c));
             if plan.is_noop() {
                 false // Action::None — the literal key reaches the app
+            } else if let Some(hwnd) = own_window {
+                inject::send_plan_to_window(&plan, hwnd); // our own Slint window
+                true
             } else {
                 // Chrome's omnibox eats a Backspace to clear its autocomplete
                 // selection, so it gets a Delete primer first (see
