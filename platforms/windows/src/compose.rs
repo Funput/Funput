@@ -41,6 +41,12 @@ impl FieldComposer {
 
     /// Feed one typed character; returns the new full field text.
     pub fn key(&mut self, c: char) -> String {
+        // Slint reports modifier keys (Shift/Ctrl/…), F-keys and other non-text keys
+        // as control or Private-Use-Area characters. Ignore them — only real text
+        // composes. (Backspace/navigation are handled before reaching here.)
+        if !is_text(c) {
+            return self.current();
+        }
         if c.is_whitespace() || c.is_ascii_punctuation() {
             // Word boundary: fold the composed word + this separator into committed.
             self.committed.push_str(self.engine.buffer());
@@ -67,4 +73,18 @@ impl Default for FieldComposer {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Whether `c` is real typed text (a letter, digit, space, punctuation, accented or
+/// CJK character) rather than a control char or a Slint special-key codepoint
+/// (modifier keys, arrows, F-keys live in the Unicode Private Use Areas).
+fn is_text(c: char) -> bool {
+    if c.is_control() {
+        return false;
+    }
+    let u = c as u32;
+    let private_use = (0xE000..=0xF8FF).contains(&u)
+        || (0xF_0000..=0xF_FFFD).contains(&u)
+        || (0x10_0000..=0x10_FFFD).contains(&u);
+    !private_use
 }
