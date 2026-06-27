@@ -146,6 +146,37 @@ fn build_row(
         });
     }
 
+    // `connect_changed` only sees *committed* text. An async IME (IBus) commits the
+    // last preedit word on focus-out, after the final `changed` — so persist the
+    // fully-committed text again when each field loses focus. Without this, typing
+    // "Việt Nam" then switching away could save just "Việt".
+    {
+        let entry = trigger_row.clone();
+        let focus = gtk::EventControllerFocus::new();
+        focus.connect_leave(move |_| {
+            let text = entry.text().to_string();
+            Settings::update(move |s| {
+                if let Some(item) = s.shortcuts.get_mut(index) {
+                    item.trigger = text;
+                }
+            });
+        });
+        trigger_row.add_controller(focus);
+    }
+    {
+        let entry = expansion_row.clone();
+        let focus = gtk::EventControllerFocus::new();
+        focus.connect_leave(move |_| {
+            let text = entry.text().to_string();
+            Settings::update(move |s| {
+                if let Some(item) = s.shortcuts.get_mut(index) {
+                    item.expansion = text;
+                }
+            });
+        });
+        expansion_row.add_controller(focus);
+    }
+
     expander.add_row(&trigger_row);
     expander.add_row(&expansion_row);
 
