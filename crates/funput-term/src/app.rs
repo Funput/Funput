@@ -7,13 +7,13 @@ use std::thread;
 
 use funput_core::InputMethod;
 use funput_engine::{Action, Engine};
-use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 
 use crate::inject::result_bytes;
 use crate::input::{ByteKind, Classifier};
 use crate::output::forward_output;
 use crate::state::SharedState;
-use crate::term::{set_title, RawModeGuard};
+use crate::term::{RawModeGuard, set_title};
 
 /// Run options resolved from the command line.
 pub struct Options {
@@ -78,6 +78,9 @@ where
                         _ => writer.write_all(&result_bytes(ch, &result))?,
                     }
                 }
+                // Bracketed-paste content: forward verbatim, never compose. The
+                // start marker already flushed composition via the arm below.
+                ByteKind::Paste => writer.write_all(&[byte])?,
                 // Control / escape / utf8 / printable-while-disabled: end the
                 // current word and forward the byte unchanged.
                 _ => {
@@ -265,6 +268,24 @@ mod tests {
         // A real syllable is finalized, not restored.
         let out = compose(InputMethod::Telex, b"mas\r");
         assert_eq!(reconstruct(&out), "má\r");
+    }
+
+    #[test]
+    fn bracketed_paste_is_forwarded_verbatim() {
+        // "as" pasted inside ESC[200~…ESC[201~ must stay "as", not compose to
+        // "á"; the markers themselves are forwarded to the child untouched.
+        let out = compose(InputMethod::Telex, b"\x1b[200~as\x1b[201~");
+        assert!(out.starts_with(b"\x1b[200~"));
+        assert!(out.ends_with(b"\x1b[201~"));
+        assert_eq!(reconstruct(&out), "\x1b[200~as\x1b[201~");
+    }
+
+    #[test]
+    fn composition_resumes_after_paste() {
+        // Compose, paste raw, then compose again — all in one buffer.
+        let out = compose(InputMethod::Telex, b"as\x1b[200~as\x1b[201~as");
+        // First "as" → "á", pasted "as" stays literal, trailing "as" → "á".
+        assert_eq!(reconstruct(&out), "á\x1b[200~as\x1b[201~á");
     }
 
     #[test]

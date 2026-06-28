@@ -18,7 +18,8 @@ funput-term -- cursor
 ```
 
 - VNI `xin1 chao2` hoặc Telex `xins chaof` → **xín chào**.
-- **`Ctrl-\`**: bật/tắt tiếng Việt (trạng thái VI/EN hiện ở **tiêu đề cửa sổ** qua OSC).
+- **`Ctrl-\`**: bật/tắt tiếng Việt (trạng thái VI/EN hiện ở **tiêu đề cửa sổ** qua OSC; tự bọc
+  passthrough cho **tmux/screen**).
 - Từ không hợp lệ tiếng Việt tự khôi phục ở ranh giới từ (`card ` → `card`).
 
 **"Luôn bật":** `alias claude='funput-term -- claude'`, hoặc cấu hình terminal emulator chạy
@@ -36,7 +37,8 @@ CLI: `-m, --method telex|vni` (mặc định `vni`); chương trình truyền sa
 | App full-screen (vim, less, htop) | **Tự tắt** soạn (phát hiện alt-screen) để không phá UI |
 | Backspace giữa lúc soạn | `engine.on_backspace()` — sửa rồi soạn tiếp (`Phua` ⌫ `s` → `Phú`) |
 | Enter / Tab khi đang soạn | Đi qua engine trước → English-restore kịp chạy (`text`+Enter gửi `text`, không phải `tẽt`) |
-| Escape / mũi tên / phím tắt / paste / UTF-8 | Forward **thô**, flush composition |
+| Bracketed paste (`ESC[200~ … ESC[201~`) | Nội dung dán forward **thô** (không soạn từng ký tự); marker giữ nguyên cho app con |
+| Escape / mũi tên / phím tắt / UTF-8 | Forward **thô**, flush composition |
 
 ## Cách hoạt động
 
@@ -88,6 +90,10 @@ src/
 - Resize: Unix `SIGWINCH` (`signal-hook`) → `crossterm::size` → `master.resize`. Windows: TT6.
 - Alt-screen: `output.rs` thấy `ESC[?1049h` → set `state.alt_screen` → input passthrough (vim/less
   không bị soạn).
+- Bracketed paste: `input.rs` thấy `ESC[200~` → `in_paste` → nội dung dán phân loại `Paste`
+  (forward thô) tới `ESC[201~`. Chịu được marker bị cắt qua nhiều chunk; buffer tham số CSI có giới hạn.
+- Title qua mux: `term.rs::detect_mux` đọc `$TMUX`/`$STY`/`$TERM`; `title_sequence` bọc DCS passthrough
+  cho tmux (nhân đôi ESC) và screen.
 
 ## Quan hệ với phần còn lại
 
@@ -114,14 +120,13 @@ cargo run    -p funput-term -- cat       # gõ "as" → "á"
 
 Unit test thuần (pipe in-memory): classifier (printable/control/escape/mũi tên/Alt/utf8/toggle),
 `inject` (None/Send/Restore), `forward_input` (compose `as`→`a`+DEL+`á`, `Phua`⌫`s`→`Phú`,
-`text`+Enter restore, `mas`+Enter giữ `má`, revert `mixx`→`mix`, toggle off), alt-screen scanner
-(kể cả chunk bị cắt), state.
+`text`+Enter restore, `mas`+Enter giữ `má`, revert `mixx`→`mix`, toggle off, bracketed paste giữ
+nguyên + soạn lại sau khi dán), bracketed paste (marker bị cắt, toggle/chữ trong paste là thô, CSI
+quá dài không phải marker), alt-screen scanner (kể cả chunk bị cắt), `title_sequence` (none/tmux/screen), state.
 
 ## Còn làm (sau v1)
 
 - **Windows (ConPTY):** hiện chỉ Unix PTY; stack `portable-pty` đã sẵn, cần tầng input/resize cho
   Windows (TT6).
-- **Bracketed paste:** khi dán (`ESC[200~ … ESC[201~`) nên pass-through thô thay vì soạn từng ký tự,
-  tránh méo nội dung dán (phát hiện tương tự alt-screen).
 - **Cấu hình bền:** phương thức + phím toggle đang cố định qua CLI; thêm env/file + đổi phương thức
   lúc đang chạy.
