@@ -95,10 +95,11 @@ final class FunputComposer {
     }
 
     /// Flip the word being composed between its Vietnamese form and its raw
-    /// keystrokes (`card` ⇄ `cải`), and back on a second call. Returns `true` when
-    /// the composition changed, so the caller re-renders the marked text from
-    /// `buffer()`; `false` when there is nothing to flip.
-    func flipComposing() -> Bool {
+    /// keystrokes (`card` ⇄ `cải`), and back on a second call. Returns the engine
+    /// result; the caller re-renders the marked text from `buffer()` when its
+    /// action is not `ACTION_NONE` (macOS shows marked text, so the delete+inject
+    /// payload itself is unused).
+    func flipComposing() -> FunputResult {
         funput_flip_composing(handle)
     }
 

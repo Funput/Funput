@@ -167,7 +167,7 @@ final class FunputInputController: IMKInputController {
     /// marked (uncommitted) text, so we just re-render it — works in every app,
     /// unlike editing already-committed text.
     private func flipComposing(_ client: IMKTextInput) {
-        guard composer.flipComposing() else { return } // nothing to flip
+        guard composer.flipComposing().action != ACTION_NONE else { return } // nothing to flip
         setMarked(composer.buffer(), client)
     }
 
