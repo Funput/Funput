@@ -165,30 +165,49 @@ if ! codesign -dvv "$APP" 2>&1 | grep -q 'flags=.*runtime'; then
 fi
 lipo -info "$APP/Contents/MacOS/Funput"
 
-# --- 6. Notarize the app + staple (so the copied-out app validates offline) -----
+# --- 5b. Build the /Applications launcher stub ----------------------------------
+# A tiny normal app so users can find "Funput" in Spotlight — the input method in
+# /Library/Input Methods is an LSUIElement agent that Spotlight does not surface.
+# It just opens funput://settings. Signed with the same Developer ID + hardened
+# runtime so it notarizes alongside the app below.
+echo "Building launcher…"
+LAUNCHER="$OUT/launcher/Funput.app"
+"$PROJECT_DIR/scripts/build-launcher.sh" "$OUT/launcher" "$VERSION" "$SIGN_ID" >/dev/null
+codesign --verify --strict --verbose=2 "$LAUNCHER"
+
+# --- 6. Notarize the app + launcher + staple (so they validate offline) ---------
 if [ -z "$DRY_RUN" ]; then
     echo "Notarizing app…"
     ditto -c -k --keepParent "$APP" "$OUT/Funput-app.zip"
     notarize "$OUT/Funput-app.zip"
     xcrun stapler staple "$APP"
     rm -f "$OUT/Funput-app.zip"
+
+    echo "Notarizing launcher…"
+    ditto -c -k --keepParent "$LAUNCHER" "$OUT/Funput-launcher.zip"
+    notarize "$OUT/Funput-launcher.zip"
+    xcrun stapler staple "$LAUNCHER"
+    rm -f "$OUT/Funput-launcher.zip"
 fi
 
 # --- 7. Build the signed .pkg installer -----------------------------------------
 # A double-clickable .pkg replaces the old "Install Funput.command": unlike a flat
 # shell script (which cannot carry a notarization ticket and so always trips
 # Gatekeeper), a .pkg is signed with "Developer ID Installer", notarized, and
-# stapled — Installer.app opens it with no warning. The payload installs Funput.app
-# directly into /Library/Input Methods (a valid, system-wide input-method search
-# location), so the install is correct from the payload alone; the postinstall only
-# does best-effort LaunchServices registration (see scripts/pkg/postinstall).
+# stapled — Installer.app opens it with no warning. The payload installs the input
+# method into /Library/Input Methods (a valid, system-wide input-method search
+# location) and the launcher stub into /Applications, so the install is correct
+# from the payload alone; the postinstall only does best-effort LaunchServices
+# registration (see scripts/pkg/postinstall).
 echo "Building .pkg…"
 PKGROOT="$OUT/pkgroot"
 SCRIPTS="$OUT/pkgscripts"
 COMPONENT="$OUT/Funput-component.pkg"
 rm -rf "$PKGROOT" "$SCRIPTS"
-mkdir -p "$PKGROOT/Library/Input Methods" "$SCRIPTS"
+mkdir -p "$PKGROOT/Library/Input Methods" "$PKGROOT/Applications" "$SCRIPTS"
 cp -R "$APP" "$PKGROOT/Library/Input Methods/Funput.app"
+# Spotlight-findable launcher (step 5b) — installed into /Applications.
+cp -R "$LAUNCHER" "$PKGROOT/Applications/Funput.app"
 cp "$PROJECT_DIR/scripts/pkg/postinstall" "$SCRIPTS/postinstall"
 chmod +x "$SCRIPTS/postinstall"
 
