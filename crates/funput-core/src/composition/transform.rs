@@ -307,6 +307,20 @@ mod tests {
     }
 
     #[test]
+    fn shape_after_tone_keeps_tone() {
+        // Applying a shape to an already-toned vowel must keep the tone, so the mark
+        // order is free (shape-then-tone and tone-then-shape agree).
+        // Telex:
+        assert_eq!(type_telex("asw", false), "ắ"); // á + breve → ắ (not ă)
+        assert_eq!(type_telex("aws", false), "ắ"); // breve + á → ắ (same result)
+        assert_eq!(type_telex("osw", false), "ớ"); // ó + horn → ớ (keeps sắc)
+        // VNI (position-free digits) gets the same benefit:
+        assert_eq!(type_keys("a18"), "ắ"); // á + 8 (breve) → ắ
+        assert_eq!(type_keys("o17"), "ớ"); // ó + 7 (horn) → ớ
+        assert_eq!(type_keys("a16"), "ấ"); // á + 6 (circumflex) → ấ
+    }
+
+    #[test]
     fn telex_ua_rhyme_horns_u() {
         // `w` after a plain `ua` forms the `ưa` rhyme (horn on `u`), so the horn can
         // be placed last: `nuawx` → `nữa`, same as `nuwax`.
