@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- AGP 9.2.1 emits a Gradle 10 deprecation internally on Gradle 9.6.x. -->
+    <issue id="AndroidGradlePluginVersion">
+        <ignore regexp="gradle-wrapper\.properties" />
+    </issue>
+
+    <!-- The Compose compiler plugin stays aligned with AGP 9.2 built-in Kotlin. -->
+    <issue id="NewerVersionAvailable">
+        <ignore regexp="org\.jetbrains\.kotlin\.plugin\.compose" />
+    </issue>
+</lint>

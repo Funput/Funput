@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Funput</string>
+    <string name="keyboard_preview_title">Keyboard playground</string>
+    <string name="keyboard_preview_description">The same responsive Canvas renderer will power the Funput input method and theme previews.</string>
+    <string name="input_method_label">Vietnamese input method</string>
+    <string name="input_method_telex">Telex</string>
+    <string name="input_method_vni">VNI</string>
 </resources>

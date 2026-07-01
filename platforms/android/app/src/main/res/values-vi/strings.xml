@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Funput</string>
+    <string name="keyboard_preview_title">Thử nghiệm bàn phím</string>
+    <string name="keyboard_preview_description">Cùng một Canvas renderer responsive sẽ được dùng cho bộ gõ Funput và phần xem trước theme.</string>
+    <string name="input_method_label">Kiểu gõ tiếng Việt</string>
+    <string name="input_method_telex">Telex</string>
+    <string name="input_method_vni">VNI</string>
+</resources>
