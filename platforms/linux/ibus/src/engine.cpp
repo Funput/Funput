@@ -254,10 +254,14 @@ static void ibus_funput_engine_disable(IBusEngine *engine) {
     commitBuffer(engine, FUNPUT_ENGINE(engine)->state);
 }
 
+// A reset ends the current composition. Commit the in-progress word rather than
+// dropping it: some clients deliver focus-loss as reset() instead of focus_out(),
+// so discarding here silently ate whatever the user had typed but not yet
+// committed. Committing mirrors the macOS IMKit shell (commit on
+// commitComposition); commitBuffer() no-ops on an empty buffer, so a reset right
+// after a commit never double-types.
 static void ibus_funput_engine_reset(IBusEngine *engine) {
-    EngineState *st = FUNPUT_ENGINE(engine)->state;
-    st->handle_.clear();
-    clearPreedit(engine);
+    commitBuffer(engine, FUNPUT_ENGINE(engine)->state);
 }
 
 // --- Lifecycle -------------------------------------------------------------

@@ -270,9 +270,14 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ke
     keyEvent.filterAndAccept();
 }
 
+// A reset ends the current composition. Commit the in-progress word rather than
+// dropping it: many client toolkits deliver focus-loss to Fcitx5 as reset() instead
+// of deactivate(), so discarding here silently ate whatever the user had typed but
+// not yet committed. Committing mirrors the macOS IMKit shell, which flushes the
+// buffer on commitComposition. commitBuffer() is a no-op on an empty buffer, so a
+// reset right after a commit (e.g. a word boundary) never double-types.
 void FunputEngine::reset(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
-    handle_.clear();
-    clearPreedit(event.inputContext());
+    commitBuffer(event.inputContext());
 }
 
 void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
