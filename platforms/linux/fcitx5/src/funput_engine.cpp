@@ -70,12 +70,19 @@ void FunputEngine::applySettings() {
     handle_.clear();
 }
 
-// excluded app → English; any other app → Vietnamese. No-op when the list is empty
-// (keeps the plain global toggle for users who don't use the feature).
+// Per-app default on focus-in: a positively-excluded app starts in English; every
+// other app follows the user's global VI/EN setting (settings_.enabled).
+//
+// Deliberately fail-safe. On Linux the focused-app id is unreliable — program()
+// is often empty on Wayland (no WM_CLASS exposed to the IME), and the IBus shell
+// skips per-app switching entirely for this reason. So we only force English on a
+// *confident* match: isExcluded() treats an empty/unknown program as "not
+// excluded", meaning an app we can't identify can never silently disable Vietnamese
+// everywhere. The previous `!isExcluded(program)` also ignored the global toggle,
+// forcing Vietnamese on every non-excluded app; deferring to settings_.enabled
+// keeps VI/EN togglable when the exclusion list is non-empty.
 void FunputEngine::applyPerAppDefault(const std::string &program) {
-    const bool eff = settings_.excludedAppIds.empty()
-                         ? settings_.enabled
-                         : !settings_.isExcluded(program);
+    const bool eff = settings_.isExcluded(program) ? false : settings_.enabled;
     if (eff == effectiveEnabled_) return;
     effectiveEnabled_ = eff;
     handle_.setEnabled(eff);
