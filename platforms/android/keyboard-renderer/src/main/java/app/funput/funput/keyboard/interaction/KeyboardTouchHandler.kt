@@ -4,11 +4,11 @@ import android.view.MotionEvent
 
 /** Converts Android pointer events into renderer-independent pressed-key state. */
 internal class KeyboardTouchHandler(
-    private val keyAt: (x: Float, y: Float) -> String?,
-    private val onPressedStateChanged: () -> Unit,
+    keyAt: (x: Float, y: Float) -> String?,
+    onPressedStateChanged: () -> Unit,
     private val requestParentIntercept: (disallow: Boolean) -> Unit,
 ) : PressedKeyState {
-    private val pressedKeys = PressedKeyTracker()
+    private val pointerSession = PointerKeySession(keyAt, onPressedStateChanged)
 
     fun onTouchEvent(event: MotionEvent): Result = when (event.actionMasked) {
         MotionEvent.ACTION_DOWN -> handleDown(event)
@@ -33,11 +33,9 @@ internal class KeyboardTouchHandler(
         else -> Result.UNHANDLED
     }
 
-    override fun isPressed(keyId: String): Boolean = pressedKeys.isPressed(keyId)
+    override fun isPressed(keyId: String): Boolean = pointerSession.isPressed(keyId)
 
-    fun clear() {
-        if (pressedKeys.clear()) onPressedStateChanged()
-    }
+    fun clear() = pointerSession.clear()
 
     private fun handleDown(event: MotionEvent): Result {
         val handled = update(event, event.actionIndex)
@@ -47,22 +45,21 @@ internal class KeyboardTouchHandler(
 
     private fun handleUp(event: MotionEvent): Result {
         val pointerId = event.getPointerId(event.actionIndex)
-        val wasPressed = pressedKeys.keyForPointer(pointerId) != null
-        release(pointerId)
+        val wasPressed = pointerSession.release(pointerId)
         requestParentIntercept(false)
         return if (wasPressed) Result.CLICK else Result.HANDLED
     }
 
     private fun update(event: MotionEvent, pointerIndex: Int): Boolean {
-        val keyId = keyAt(event.getX(pointerIndex), event.getY(pointerIndex))
-        if (pressedKeys.update(event.getPointerId(pointerIndex), keyId)) {
-            onPressedStateChanged()
-        }
-        return keyId != null
+        return pointerSession.update(
+            pointerId = event.getPointerId(pointerIndex),
+            x = event.getX(pointerIndex),
+            y = event.getY(pointerIndex),
+        )
     }
 
     private fun release(pointerId: Int) {
-        if (pressedKeys.release(pointerId)) onPressedStateChanged()
+        pointerSession.release(pointerId)
     }
 
     enum class Result {
