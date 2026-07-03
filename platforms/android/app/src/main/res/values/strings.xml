@@ -5,4 +5,5 @@
     <string name="input_method_label">Vietnamese input method</string>
     <string name="input_method_telex">Telex</string>
     <string name="input_method_vni">VNI</string>
+    <string name="last_key_action">Last action: %1$s</string>
 </resources>

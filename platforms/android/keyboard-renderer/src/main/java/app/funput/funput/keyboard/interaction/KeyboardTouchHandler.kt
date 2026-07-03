@@ -6,6 +6,7 @@ import android.view.MotionEvent
 internal class KeyboardTouchHandler(
     keyAt: (x: Float, y: Float) -> String?,
     onPressedStateChanged: () -> Unit,
+    private val onKeyReleased: (keyId: String) -> Unit,
     private val requestParentIntercept: (disallow: Boolean) -> Unit,
 ) : PressedKeyState {
     private val pointerSession = PointerKeySession(keyAt, onPressedStateChanged)
@@ -21,7 +22,7 @@ internal class KeyboardTouchHandler(
             Result.HANDLED
         }
         MotionEvent.ACTION_POINTER_UP -> {
-            release(event.getPointerId(event.actionIndex))
+            release(event, event.actionIndex)
             Result.HANDLED
         }
         MotionEvent.ACTION_UP -> handleUp(event)
@@ -44,10 +45,9 @@ internal class KeyboardTouchHandler(
     }
 
     private fun handleUp(event: MotionEvent): Result {
-        val pointerId = event.getPointerId(event.actionIndex)
-        val wasPressed = pointerSession.release(pointerId)
+        val releasedKeyId = release(event, event.actionIndex)
         requestParentIntercept(false)
-        return if (wasPressed) Result.CLICK else Result.HANDLED
+        return if (releasedKeyId != null) Result.CLICK else Result.HANDLED
     }
 
     private fun update(event: MotionEvent, pointerIndex: Int): Boolean {
@@ -58,8 +58,14 @@ internal class KeyboardTouchHandler(
         )
     }
 
-    private fun release(pointerId: Int) {
-        pointerSession.release(pointerId)
+    private fun release(event: MotionEvent, pointerIndex: Int): String? {
+        val keyId = pointerSession.release(
+            pointerId = event.getPointerId(pointerIndex),
+            x = event.getX(pointerIndex),
+            y = event.getY(pointerIndex),
+        )
+        if (keyId != null) onKeyReleased(keyId)
+        return keyId
     }
 
     enum class Result {

@@ -18,11 +18,12 @@ internal class PointerKeySession(
         return keyId != null
     }
 
-    /** Releases only [pointerId] and returns whether it previously held a key. */
-    fun release(pointerId: Int): Boolean {
+    /** Releases only [pointerId] and returns the key under its final coordinates. */
+    fun release(pointerId: Int, x: Float, y: Float): String? {
         val wasPressed = pressedKeys.keyForPointer(pointerId) != null
+        val releasedKeyId = if (wasPressed) keyAt(x, y) else null
         if (pressedKeys.release(pointerId)) onPressedStateChanged()
-        return wasPressed
+        return releasedKeyId
     }
 
     fun clear() {

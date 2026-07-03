@@ -10,8 +10,10 @@ import app.funput.funput.keyboard.layout.KeyboardGeometry
 import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
 import app.funput.funput.keyboard.layout.KeyboardLayouts
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
+import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
+import app.funput.funput.keyboard.model.toKeyAction
 import app.funput.funput.keyboard.rendering.KeyboardCanvasRenderer
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.roundToInt
@@ -48,15 +50,13 @@ class KeyboardSurfaceView @JvmOverloads constructor(
 
     var suggestions: List<String> = emptyList()
         set(value) {
-            val normalized = value.asSequence()
-                .map(String::trim)
-                .filter(String::isNotEmpty)
-                .take(MaxVisibleSuggestions)
-                .toList()
+            val normalized = SuggestionNormalizer.normalize(value)
             if (field == normalized) return
             field = normalized
             invalidate()
         }
+
+    var onKeyAction: ((KeyAction) -> Unit)? = null
 
     private var keyboardLayout: KeyboardLayout = KeyboardLayouts.forInputMethod(inputMethod)
     private var resolvedKeyboard: ResolvedKeyboard? = null
@@ -64,6 +64,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     private val touchHandler = KeyboardTouchHandler(
         keyAt = { x, y -> resolvedKeyboard?.keyAt(x, y)?.spec?.id },
         onPressedStateChanged = ::postInvalidateOnAnimation,
+        onKeyReleased = ::dispatchKeyAction,
         requestParentIntercept = { disallow -> parent?.requestDisallowInterceptTouchEvent(disallow) },
     )
 
@@ -127,9 +128,13 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         )
     }
 
+    private fun dispatchKeyAction(keyId: String) {
+        val key = resolvedKeyboard?.keys?.firstOrNull { it.spec.id == keyId } ?: return
+        onKeyAction?.invoke(key.spec.toKeyAction())
+    }
+
     companion object {
         private const val DefaultKeyboardWidthDp = 360f
-        private const val MaxVisibleSuggestions = 3
 
         fun recommendedHeightDp(inputMethod: KeyboardInputMethod): Float = when (inputMethod) {
             KeyboardInputMethod.TELEX -> 290f

@@ -2,6 +2,7 @@ package app.funput.funput.keyboard.interaction
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -43,7 +44,7 @@ class PointerKeySessionTest {
         session.update(pointerId = 3, x = 50f, y = 0f)
         session.update(pointerId = 11, x = 150f, y = 0f)
 
-        assertTrue(session.release(pointerId = 3))
+        assertEquals("a", session.release(pointerId = 3, x = 50f, y = 0f))
         assertFalse(session.isPressed("a"))
         assertTrue(session.isPressed("s"))
     }
@@ -69,5 +70,19 @@ class PointerKeySessionTest {
         assertFalse(session.isPressed("a"))
         assertFalse(session.isPressed("s"))
         assertEquals(changesBeforeCancel + 1, stateChangeCount)
+    }
+
+    @Test
+    fun releaseUsesFinalCoordinates() {
+        session.update(pointerId = 3, x = 50f, y = 0f)
+
+        assertEquals("s", session.release(pointerId = 3, x = 150f, y = 0f))
+    }
+
+    @Test
+    fun releaseOutsideDoesNotReturnAKey() {
+        session.update(pointerId = 3, x = 50f, y = 0f)
+
+        assertNull(session.release(pointerId = 3, x = -1f, y = 0f))
     }
 }
