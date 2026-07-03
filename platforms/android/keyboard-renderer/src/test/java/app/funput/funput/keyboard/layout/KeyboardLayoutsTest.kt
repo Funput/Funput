@@ -30,22 +30,29 @@ class KeyboardLayoutsTest {
     @Test
     fun everyLayoutUsesStableUniqueKeyIds() {
         KeyboardInputMethod.entries.forEach { inputMethod ->
-            val ids = KeyboardLayouts.forInputMethod(inputMethod).rows.flatMap { row -> row.keys.map { key -> key.id } }
+            val layout = KeyboardLayouts.forInputMethod(inputMethod)
+            val ids = buildList {
+                add(layout.suggestionBar.emojiKey.id)
+                layout.rows.forEach { row -> addAll(row.keys.map { key -> key.id }) }
+            }
 
             assertEquals(ids.size, ids.distinct().size)
         }
     }
 
     @Test
-    fun actionRowProvidesEmojiAndLanguageToggleOnSpace() {
+    fun suggestionBarOwnsEmojiAndActionRowGivesSpaceMoreWidth() {
         KeyboardInputMethod.entries.forEach { inputMethod ->
-            val actionKeys = KeyboardLayouts.forInputMethod(inputMethod).rows.last().keys
-            val emoji = actionKeys.first { key -> key.id == "emoji" }
+            val layout = KeyboardLayouts.forInputMethod(inputMethod)
+            val actionKeys = layout.rows.last().keys
+            val emoji = layout.suggestionBar.emojiKey
             val space = actionKeys.first { key -> key.id == "space" }
 
             assertEquals(KeyRole.EMOJI, emoji.role)
+            assertTrue(actionKeys.none { key -> key.role == KeyRole.EMOJI })
             assertEquals(KeySwipeAction.TOGGLE_LANGUAGE, space.horizontalSwipeAction)
             assertEquals("VI ⇄ EN", space.label)
+            assertEquals(5.3f, space.widthWeight)
         }
     }
 }

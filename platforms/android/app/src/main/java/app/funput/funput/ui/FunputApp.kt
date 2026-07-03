@@ -31,6 +31,8 @@ import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.theme.FunputTheme
 
+private val PreviewSuggestions = listOf("mình", "chào", "bạn")
+
 @Composable
 fun FunputApp() {
     var inputMethod by rememberSaveable { mutableStateOf(KeyboardInputMethod.TELEX) }
@@ -94,9 +96,13 @@ private fun KeyboardPreviewScreen(
             factory = { context ->
                 KeyboardSurfaceView(context).apply {
                     this.inputMethod = inputMethod
+                    suggestions = PreviewSuggestions
                 }
             },
-            update = { keyboardView -> keyboardView.inputMethod = inputMethod },
+            update = { keyboardView ->
+                keyboardView.inputMethod = inputMethod
+                keyboardView.suggestions = PreviewSuggestions
+            },
             modifier = Modifier
                 .padding(horizontal = 8.dp)
                 .fillMaxWidth()

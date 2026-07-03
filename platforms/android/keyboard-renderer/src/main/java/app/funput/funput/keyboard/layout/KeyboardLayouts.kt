@@ -2,10 +2,11 @@ package app.funput.funput.keyboard.layout
 
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
+import app.funput.funput.keyboard.model.KeySwipeAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
 import app.funput.funput.keyboard.model.KeyboardRow
-import app.funput.funput.keyboard.model.KeySwipeAction
+import app.funput.funput.keyboard.model.SuggestionBarSpec
 
 object KeyboardLayouts {
     fun forInputMethod(inputMethod: KeyboardInputMethod): KeyboardLayout = when (inputMethod) {
@@ -32,6 +33,7 @@ object KeyboardLayouts {
     ): KeyboardLayout = KeyboardLayout(
         id = id,
         inputMethod = inputMethod,
+        suggestionBar = suggestionBar(),
         rows = buildList {
             addAll(leadingRows)
             add(characterRow("qwertyuiop"))
@@ -68,18 +70,26 @@ object KeyboardLayouts {
     private fun actionRow(): KeyboardRow = KeyboardRow(
         keys = listOf(
             specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.25f, accessibilityLabel = "Symbols"),
-            specialKey("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
             specialKey("comma", ",", KeyRole.PUNCTUATION, 0.85f),
             KeySpec(
                 id = "space",
                 label = "VI ⇄ EN",
                 role = KeyRole.SPACE,
-                widthWeight = 4.3f,
+                widthWeight = 5.3f,
                 accessibilityLabel = "Space. Swipe to switch Vietnamese and English",
                 horizontalSwipeAction = KeySwipeAction.TOGGLE_LANGUAGE,
             ),
             specialKey("period", ".", KeyRole.PUNCTUATION, 0.85f),
             specialKey("enter", "", KeyRole.ENTER, 1.35f, accessibilityLabel = "Enter"),
+        ),
+    )
+
+    private fun suggestionBar(): SuggestionBarSpec = SuggestionBarSpec(
+        emojiKey = specialKey(
+            id = "emoji",
+            label = "",
+            role = KeyRole.EMOJI,
+            accessibilityLabel = "Emoji",
         ),
     )
 
@@ -132,5 +142,4 @@ object KeyboardLayouts {
         widthWeight = widthWeight,
         accessibilityLabel = accessibilityLabel,
     )
-
 }

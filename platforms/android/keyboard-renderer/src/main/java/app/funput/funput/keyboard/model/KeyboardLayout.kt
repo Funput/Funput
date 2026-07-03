@@ -31,16 +31,28 @@ data class KeyboardRow(
     }
 }
 
+data class SuggestionBarSpec(
+    val emojiKey: KeySpec,
+) {
+    init {
+        require(emojiKey.role == KeyRole.EMOJI) { "Suggestion bar action must be an emoji key" }
+    }
+}
+
 data class KeyboardLayout(
     val id: String,
     val inputMethod: KeyboardInputMethod,
+    val suggestionBar: SuggestionBarSpec,
     val rows: List<KeyboardRow>,
 ) {
     init {
         require(id.isNotBlank()) { "Layout id must not be blank" }
         require(rows.isNotEmpty()) { "Keyboard layout must contain at least one row" }
 
-        val keyIds = rows.flatMap { row -> row.keys.map(KeySpec::id) }
+        val keyIds = buildList {
+            add(suggestionBar.emojiKey.id)
+            rows.forEach { row -> addAll(row.keys.map(KeySpec::id)) }
+        }
         require(keyIds.distinct().size == keyIds.size) { "Key ids must be unique within a layout" }
     }
 }

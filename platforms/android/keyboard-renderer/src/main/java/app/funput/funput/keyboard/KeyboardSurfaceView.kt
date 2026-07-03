@@ -15,6 +15,7 @@ import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
 import app.funput.funput.keyboard.layout.KeyboardLayouts
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
+import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
@@ -49,6 +50,19 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             field = value
             applyTheme()
             rebuildBackgroundShader()
+            invalidate()
+        }
+
+    var suggestions: List<String> = emptyList()
+        set(value) {
+            val normalized = value
+                .asSequence()
+                .map(String::trim)
+                .filter(String::isNotEmpty)
+                .take(MaxVisibleSuggestions)
+                .toList()
+            if (field == normalized) return
+            field = normalized
             invalidate()
         }
 
@@ -103,7 +117,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         super.onDraw(canvas)
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
 
-        resolvedKeyboard?.keys?.forEach { key ->
+        val keyboard = resolvedKeyboard ?: return
+        drawSuggestionBar(canvas, keyboard.suggestionBar)
+        keyboard.keys.forEach { key ->
             drawKeyBackground(canvas, key)
             drawKeyContent(canvas, key)
         }
@@ -158,6 +174,45 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         }
         canvas.drawRoundRect(drawingRect, radius, radius, keyPaint)
         canvas.drawRoundRect(drawingRect, radius, radius, keyBorderPaint)
+    }
+
+    private fun drawSuggestionBar(canvas: Canvas, suggestionBar: ResolvedSuggestionBar) {
+        val bounds = suggestionBar.suggestionsBounds
+        val radius = dpToPx(keyboardTheme.keyCornerRadiusDp)
+
+        drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
+        keyPaint.color = keyboardTheme.keyColor
+        canvas.drawRoundRect(drawingRect, radius, radius, keyPaint)
+        canvas.drawRoundRect(drawingRect, radius, radius, keyBorderPaint)
+
+        if (suggestions.isEmpty()) return
+
+        labelPaint.color = keyboardTheme.labelColor
+        labelPaint.textSize = spToPx(SuggestionLabelSizeSp)
+        labelPaint.typeface = specialTypeface
+        labelPaint.textAlign = Paint.Align.CENTER
+        labelPaint.getFontMetrics(fontMetrics)
+
+        val segmentWidth = bounds.width / suggestions.size
+        val baseline = bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
+        suggestions.forEachIndexed { index, suggestion ->
+            if (index > 0) {
+                val dividerX = bounds.left + segmentWidth * index
+                canvas.drawLine(
+                    dividerX,
+                    bounds.top + dpToPx(9f),
+                    dividerX,
+                    bounds.bottom - dpToPx(9f),
+                    keyBorderPaint,
+                )
+            }
+            canvas.drawText(
+                suggestion,
+                bounds.left + segmentWidth * (index + 0.5f),
+                baseline,
+                labelPaint,
+            )
+        }
     }
 
     private fun drawKeyContent(canvas: Canvas, key: ResolvedKey) {
@@ -331,11 +386,13 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         private const val SpecialLabelSizeSp = 13f
         private const val SpaceLabelSizeSp = 12f
         private const val SecondaryLabelSizeSp = 9f
+        private const val SuggestionLabelSizeSp = 14f
         private const val MaxFontScale = 1.25f
+        private const val MaxVisibleSuggestions = 3
 
         fun recommendedHeightDp(inputMethod: KeyboardInputMethod): Float = when (inputMethod) {
-            KeyboardInputMethod.TELEX -> 242f
-            KeyboardInputMethod.VNI -> 300f
+            KeyboardInputMethod.TELEX -> 290f
+            KeyboardInputMethod.VNI -> 348f
         }
     }
 }

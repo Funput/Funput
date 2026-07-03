@@ -12,6 +12,8 @@ class KeyboardGeometryTest {
         verticalPadding = 24f,
         horizontalGap = 15f,
         verticalGap = 18f,
+        suggestionBarHeight = 126f,
+        suggestionBarGap = 18f,
     )
 
     @Test
@@ -55,9 +57,23 @@ class KeyboardGeometryTest {
     fun hitTestingReturnsResolvedKey() {
         val keyboard = resolve(KeyboardInputMethod.TELEX)
         val space = keyboard.keys.first { key -> key.spec.id == "space" }
+        val firstCharacter = keyboard.rows.first().first()
 
         assertEquals(space, keyboard.keyAt(space.bounds.centerX, space.bounds.centerY))
-        assertNotNull(keyboard.keyAt(keyboard.rows.first().first().bounds.centerX, 50f))
+        assertNotNull(keyboard.keyAt(firstCharacter.bounds.centerX, firstCharacter.bounds.centerY))
+    }
+
+    @Test
+    fun suggestionBarPlacesEmojiAtTheRightEdge() {
+        val keyboard = resolve(KeyboardInputMethod.TELEX)
+        val suggestionBar = keyboard.suggestionBar
+
+        assertEquals("emoji", suggestionBar.emojiKey.spec.id)
+        assertTrue(suggestionBar.suggestionsBounds.right < suggestionBar.emojiKey.bounds.left)
+        assertEquals(
+            suggestionBar.emojiKey,
+            keyboard.keyAt(suggestionBar.emojiKey.bounds.centerX, suggestionBar.emojiKey.bounds.centerY),
+        )
     }
 
     private fun resolve(inputMethod: KeyboardInputMethod): ResolvedKeyboard = KeyboardGeometry.resolve(
