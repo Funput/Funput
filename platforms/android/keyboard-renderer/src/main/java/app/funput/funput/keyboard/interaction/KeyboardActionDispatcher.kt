@@ -1,0 +1,34 @@
+package app.funput.funput.keyboard.interaction
+
+import app.funput.funput.keyboard.model.KeyAction
+import app.funput.funput.keyboard.model.KeyRole
+import app.funput.funput.keyboard.model.KeySpec
+import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.model.toKeyAction
+
+/** Applies keyboard modifier state before forwarding semantic actions to the host. */
+internal class KeyboardActionDispatcher(
+    private val keySpec: (keyId: String) -> KeySpec?,
+    private val onAction: (KeyAction) -> Unit,
+    private val onShiftStateChanged: () -> Unit,
+    doubleTapTimeoutMillis: Long,
+) {
+    private val shiftController = ShiftStateController(doubleTapTimeoutMillis)
+
+    val shiftState: ShiftState get() = shiftController.state
+
+    fun dispatch(keyId: String, eventTimeMillis: Long) {
+        val key = keySpec(keyId) ?: return
+        if (key.role == KeyRole.SHIFT) {
+            shiftController.onShiftReleased(eventTimeMillis)
+            onShiftStateChanged()
+        }
+
+        onAction(key.toKeyAction(shiftState))
+        if (shiftController.consumeAfter(key.role)) onShiftStateChanged()
+    }
+
+    fun reset() {
+        if (shiftController.reset()) onShiftStateChanged()
+    }
+}

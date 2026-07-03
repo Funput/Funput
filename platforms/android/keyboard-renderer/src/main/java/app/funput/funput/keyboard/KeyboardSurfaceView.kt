@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
+import app.funput.funput.keyboard.interaction.KeyboardActionDispatcher
 import app.funput.funput.keyboard.interaction.KeyboardTouchHandler
 import app.funput.funput.keyboard.layout.KeyboardGeometry
 import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
@@ -13,7 +15,7 @@ import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
-import app.funput.funput.keyboard.model.toKeyAction
+import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.rendering.KeyboardCanvasRenderer
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.roundToInt
@@ -33,6 +35,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         set(value) {
             if (field == value) return
             touchHandler.clear()
+            actionDispatcher.reset()
             field = value
             keyboardLayout = KeyboardLayouts.forInputMethod(value)
             requestLayout()
@@ -57,14 +60,21 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         }
 
     var onKeyAction: ((KeyAction) -> Unit)? = null
+    val shiftState: ShiftState get() = actionDispatcher.shiftState
 
     private var keyboardLayout: KeyboardLayout = KeyboardLayouts.forInputMethod(inputMethod)
     private var resolvedKeyboard: ResolvedKeyboard? = null
     private val renderer = KeyboardCanvasRenderer(resources)
+    private val actionDispatcher = KeyboardActionDispatcher(
+        keySpec = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.spec },
+        onAction = { action -> onKeyAction?.invoke(action) },
+        onShiftStateChanged = ::postInvalidateOnAnimation,
+        doubleTapTimeoutMillis = ViewConfiguration.getDoubleTapTimeout().toLong(),
+    )
     private val touchHandler = KeyboardTouchHandler(
         keyAt = { x, y -> resolvedKeyboard?.keyAt(x, y)?.spec?.id },
         onPressedStateChanged = ::postInvalidateOnAnimation,
-        onKeyReleased = ::dispatchKeyAction,
+        onKeyReleased = actionDispatcher::dispatch,
         requestParentIntercept = { disallow -> parent?.requestDisallowInterceptTouchEvent(disallow) },
     )
 
@@ -77,7 +87,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
         setMeasuredDimension(
-            resolveSize((DefaultKeyboardWidthDp * density).roundToInt(), widthMeasureSpec),
+            resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec),
             resolveSize((recommendedHeightDp(inputMethod) * density).roundToInt(), heightMeasureSpec),
         )
     }
@@ -91,7 +101,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val keyboard = resolvedKeyboard ?: return
-        renderer.draw(canvas, width, height, keyboard, suggestions, touchHandler)
+        renderer.draw(canvas, width, height, keyboard, suggestions, touchHandler, shiftState)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean = when (touchHandler.onTouchEvent(event)) {
@@ -128,17 +138,8 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         )
     }
 
-    private fun dispatchKeyAction(keyId: String) {
-        val key = resolvedKeyboard?.keys?.firstOrNull { it.spec.id == keyId } ?: return
-        onKeyAction?.invoke(key.spec.toKeyAction())
-    }
-
     companion object {
-        private const val DefaultKeyboardWidthDp = 360f
-
-        fun recommendedHeightDp(inputMethod: KeyboardInputMethod): Float = when (inputMethod) {
-            KeyboardInputMethod.TELEX -> 290f
-            KeyboardInputMethod.VNI -> 348f
-        }
+        fun recommendedHeightDp(inputMethod: KeyboardInputMethod): Float =
+            KeyboardDimensions.recommendedHeightDp(inputMethod)
     }
 }

@@ -14,14 +14,17 @@ class KeyActionMapperTest {
 
         textRoles.forEach { role ->
             val key = key(role, label = "x")
-            assertEquals(KeyAction.Input(keyId = key.id, text = "x"), key.toKeyAction())
+            assertEquals(
+                KeyAction.Input(keyId = key.id, text = "x"),
+                key.toKeyAction(ShiftState.OFF),
+            )
         }
     }
 
     @Test
     fun commandKeysMapToSemanticActions() {
         val expectedActions = mapOf(
-            KeyRole.SHIFT to KeyAction.Shift,
+            KeyRole.SHIFT to KeyAction.Shift(ShiftState.OFF),
             KeyRole.BACKSPACE to KeyAction.Backspace,
             KeyRole.SYMBOLS to KeyAction.Symbols,
             KeyRole.EMOJI to KeyAction.Emoji,
@@ -30,7 +33,7 @@ class KeyActionMapperTest {
         )
 
         expectedActions.forEach { (role, action) ->
-            assertEquals(action, key(role).toKeyAction())
+            assertEquals(action, key(role).toKeyAction(ShiftState.OFF))
         }
     }
 

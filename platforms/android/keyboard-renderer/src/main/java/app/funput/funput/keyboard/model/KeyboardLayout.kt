@@ -5,6 +5,7 @@ data class KeySpec(
     val label: String,
     val role: KeyRole,
     val widthWeight: Float = 1f,
+    val shiftedLabel: String? = null,
     val secondaryLabel: String? = null,
     val accessibilityLabel: String = label,
     val horizontalSwipeAction: KeySwipeAction? = null,
@@ -12,6 +13,7 @@ data class KeySpec(
     init {
         require(id.isNotBlank()) { "Key id must not be blank" }
         require(widthWeight > 0f) { "Key width weight must be positive" }
+        require(shiftedLabel == null || shiftedLabel.isNotEmpty()) { "Shifted label must not be empty" }
         require(accessibilityLabel.isNotBlank()) { "Accessibility label must not be blank" }
     }
 }

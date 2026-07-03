@@ -6,7 +6,7 @@ import android.view.MotionEvent
 internal class KeyboardTouchHandler(
     keyAt: (x: Float, y: Float) -> String?,
     onPressedStateChanged: () -> Unit,
-    private val onKeyReleased: (keyId: String) -> Unit,
+    private val onKeyReleased: (keyId: String, eventTimeMillis: Long) -> Unit,
     private val requestParentIntercept: (disallow: Boolean) -> Unit,
 ) : PressedKeyState {
     private val pointerSession = PointerKeySession(keyAt, onPressedStateChanged)
@@ -64,7 +64,7 @@ internal class KeyboardTouchHandler(
             x = event.getX(pointerIndex),
             y = event.getY(pointerIndex),
         )
-        if (keyId != null) onKeyReleased(keyId)
+        if (keyId != null) onKeyReleased(keyId, event.eventTime)
         return keyId
     }
 

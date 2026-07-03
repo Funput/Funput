@@ -4,7 +4,7 @@ import app.funput.funput.keyboard.model.KeyAction
 
 internal fun KeyAction?.previewLabel(): String = when (this) {
     is KeyAction.Input -> text
-    KeyAction.Shift -> "Shift"
+    is KeyAction.Shift -> "Shift: ${state.name}"
     KeyAction.Backspace -> "Backspace"
     KeyAction.Symbols -> "Symbols"
     KeyAction.Emoji -> "Emoji"

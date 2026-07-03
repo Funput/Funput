@@ -6,6 +6,7 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole
+import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.theme.KeyboardTheme
 
 /** Draws key surfaces and text while delegating symbolic key artwork. */
@@ -26,9 +27,16 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         iconRenderer.updateTheme(theme)
     }
 
-    fun draw(canvas: Canvas, key: ResolvedKey, theme: KeyboardTheme, isPressed: Boolean) {
-        drawSurface(canvas, key, theme, isPressed)
-        if (!iconRenderer.draw(canvas, key)) drawLabels(canvas, key, theme)
+    fun draw(
+        canvas: Canvas,
+        key: ResolvedKey,
+        theme: KeyboardTheme,
+        isPressed: Boolean,
+        shiftState: ShiftState,
+    ) {
+        val isActivated = key.spec.role == KeyRole.SHIFT && shiftState.isActive
+        drawSurface(canvas, key, theme, isPressed, isActivated)
+        if (!iconRenderer.draw(canvas, key, shiftState)) drawLabels(canvas, key, theme, shiftState)
     }
 
     private fun drawSurface(
@@ -36,6 +44,7 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         key: ResolvedKey,
         theme: KeyboardTheme,
         isPressed: Boolean,
+        isActivated: Boolean,
     ) {
         val bounds = key.bounds
         val radius = metrics.dp(theme.keyCornerRadiusDp)
@@ -48,15 +57,25 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
         fillPaint.color = when {
             isPressed -> theme.pressedKeyColor
+            isActivated -> theme.activatedKeyColor
             key.spec.role.isSpecial -> theme.specialKeyColor
             else -> theme.keyColor
         }
-        borderPaint.color = if (isPressed) theme.pressedKeyBorderColor else theme.keyBorderColor
+        borderPaint.color = when {
+            isPressed -> theme.pressedKeyBorderColor
+            isActivated -> theme.activatedKeyBorderColor
+            else -> theme.keyBorderColor
+        }
         canvas.drawRoundRect(drawingRect, radius, radius, fillPaint)
         canvas.drawRoundRect(drawingRect, radius, radius, borderPaint)
     }
 
-    private fun drawLabels(canvas: Canvas, key: ResolvedKey, theme: KeyboardTheme) {
+    private fun drawLabels(
+        canvas: Canvas,
+        key: ResolvedKey,
+        theme: KeyboardTheme,
+        shiftState: ShiftState,
+    ) {
         val role = key.spec.role
         labelPaint.color = if (role == KeyRole.SPACE) theme.secondaryLabelColor else theme.labelColor
         labelPaint.textSize = metrics.sp(role.labelSizeSp)
@@ -64,7 +83,12 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         labelPaint.textAlign = Paint.Align.CENTER
         labelPaint.getFontMetrics(fontMetrics)
         val baseline = key.bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
-        canvas.drawText(key.spec.label, key.bounds.centerX, baseline, labelPaint)
+        val label = if (role == KeyRole.CHARACTER && shiftState.isActive) {
+            key.spec.shiftedLabel ?: key.spec.label
+        } else {
+            key.spec.label
+        }
+        canvas.drawText(label, key.bounds.centerX, baseline, labelPaint)
 
         val secondaryLabel = key.spec.secondaryLabel ?: return
         labelPaint.color = theme.accentColor

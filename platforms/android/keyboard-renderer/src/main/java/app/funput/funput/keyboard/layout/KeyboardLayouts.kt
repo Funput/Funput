@@ -126,6 +126,7 @@ object KeyboardLayouts {
         id = "character-$character",
         label = character.toString(),
         role = KeyRole.CHARACTER,
+        shiftedLabel = character.uppercaseChar().toString(),
         accessibilityLabel = character.toString(),
     )
 

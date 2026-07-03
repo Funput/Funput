@@ -12,7 +12,7 @@ sealed interface KeyAction {
         }
     }
 
-    data object Shift : KeyAction
+    data class Shift(val state: ShiftState) : KeyAction
     data object Backspace : KeyAction
     data object Symbols : KeyAction
     data object Emoji : KeyAction
