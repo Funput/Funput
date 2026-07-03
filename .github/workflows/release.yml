@@ -118,13 +118,6 @@ jobs:
             echo "- **macOS:** \`Funput-*.pkg\` (có quyền admin) hoặc \`Funput-*.app.zip\` (không cần admin)."
             echo "- **Windows:** \`Funput-*.exe\` — portable, chạy ngay, tự cập nhật trong app."
             echo "- **Linux:** \`.deb\` (Debian/Ubuntu) hoặc \`.rpm\` (Fedora/openSUSE); mỗi loại có bản **IBus** (\`funput-ibus-*\`) và **Fcitx5** (\`funput-*\`). Chọn đúng kiến trúc CPU."
-            echo
-            echo "Các bước cài đặt, kích hoạt và chọn Telex/VNI: xem https://docs.funput.app/docs/install/"
-            echo
-            echo "### SHA-256"
-            for f in out/*.sha256; do
-              echo "- \`$(basename "${f%.sha256}")\`: \`$(cat "$f")\`"
-            done
           } > notes.md
 
       # Create the release as a DRAFT with all assets attached. This repo has

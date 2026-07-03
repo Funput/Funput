@@ -92,10 +92,63 @@ jobs:
       - name: Stage artifact
         run: |
           OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
-          find platforms/linux/build -name '*.deb' | while read -r f; do
-            cp "$f" "$OUT/"
-            sha256sum "$f" | awk '{print $1}' > "$OUT/$(basename "$f").sha256"
-          done
+          find platforms/linux/build -name '*.deb' -exec cp {} "$OUT/" \;
+
+      # Portable tarballs for the no-sudo `install.sh --user` path (IBus + Fcitx5).
+      # The engine binaries are relocatable (INSTALL_RPATH "$ORIGIN" finds
+      # libfunput_ffi.so beside them), so we just repackage the already-built .deb
+      # payload into an ~/.local-shaped tree. IBus ships its component manifest as a
+      # template with the version pre-filled (install.sh substitutes
+      # @IBUS_ENGINE_PATH@ with the real $HOME path); Fcitx5 loads its addon by
+      # Library= name, so its .conf files need no rewrite. .deb job only (glibc
+      # from ubuntu-latest).
+      - name: Stage portable --user tarballs
+        run: |
+          set -euo pipefail
+          V="${{ inputs.version }}"; V="${V:-1.2026.1}"
+          ARCH="${{ matrix.arch }}"
+          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+
+          # Assemble a staged dir, tar it, and drop the tarball into $OUT.
+          pack() {
+            local name="$1"
+            tar -C "$RUNNER_TEMP/tarball" -czf "$OUT/${name}.tar.gz" "$name"
+            echo "Staged: $name"; ls -l "$OUT/${name}.tar.gz"
+          }
+          # Files common to both frameworks: Settings binary, icons, desktop entry.
+          add_common() {
+            local stage="$1"
+            mkdir -p "$stage/bin" \
+                     "$stage/share/icons/hicolor/scalable/apps" \
+                     "$stage/share/icons/hicolor/512x512/apps" \
+                     "$stage/share/applications"
+            cp platforms/linux/settings-gtk/target/release/funput-settings "$stage/bin/"
+            cp assets/svg/funput_logo.svg "$stage/share/icons/hicolor/scalable/apps/funput.svg"
+            cp assets/logo.png            "$stage/share/icons/hicolor/512x512/apps/funput.png"
+            cp platforms/linux/packaging/funput-settings.desktop "$stage/share/applications/"
+          }
+
+          rm -rf "$RUNNER_TEMP/tarball"
+
+          # --- IBus ---
+          IBUS="funput-ibus-${V}-${ARCH}-linux"; S="$RUNNER_TEMP/tarball/$IBUS"
+          mkdir -p "$S/lib/funput" "$S/share/ibus/component"
+          cp platforms/linux/build/ibus/ibus-engine-funput "$S/lib/funput/"
+          cp target/release/libfunput_ffi.so               "$S/lib/funput/"
+          # Pre-fill the version; leave @IBUS_ENGINE_PATH@ for install.sh to fill.
+          sed "s/@FUNPUT_VERSION@/${V}/" platforms/linux/ibus/data/funput.xml.in \
+            > "$S/share/ibus/component/funput.xml.in"
+          add_common "$S"; pack "$IBUS"
+
+          # --- Fcitx5 ---
+          # Addon config is RENAMEd to funput.conf under addon/ (matches the .deb).
+          FCITX="funput-fcitx5-${V}-${ARCH}-linux"; S="$RUNNER_TEMP/tarball/$FCITX"
+          mkdir -p "$S/lib/fcitx5" "$S/share/fcitx5/addon" "$S/share/fcitx5/inputmethod"
+          cp platforms/linux/build/fcitx5/libfunput.so "$S/lib/fcitx5/"
+          cp target/release/libfunput_ffi.so           "$S/lib/fcitx5/"
+          cp platforms/linux/build/fcitx5/funput-addon.conf "$S/share/fcitx5/addon/funput.conf"
+          cp platforms/linux/build/fcitx5/funput.conf       "$S/share/fcitx5/inputmethod/funput.conf"
+          add_common "$S"; pack "$FCITX"
 
       - uses: actions/upload-artifact@v5
         with:
@@ -182,10 +235,7 @@ jobs:
       - name: Stage artifact
         run: |
           OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
-          find platforms/linux/build -name '*.rpm' | while read -r f; do
-            cp "$f" "$OUT/"
-            sha256sum "$f" | awk '{print $1}' > "$OUT/$(basename "$f").sha256"
-          done
+          find platforms/linux/build -name '*.rpm' -exec cp {} "$OUT/" \;
 
       - uses: actions/upload-artifact@v5
         with:
