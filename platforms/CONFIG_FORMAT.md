@@ -70,10 +70,34 @@ one machine imports on another. macOS is the first implementation
 | `platform.macos.flipShortcut` | ❌ | `KeyCombo` or `null`. Applied only on macOS, only if present. |
 | `platform.macos.excludedApps[]` | ❌ | `{ id (bundleId), name }`. macOS-only; unioned by `id`. |
 
+### `platform.windows`
+
+Windows uses **hotkey presets** (not raw key codes) and identifies apps by exe name,
+so its block differs from macOS:
+
+```json
+"platform": {
+  "windows": {
+    "toggleHotkey": "ctrl_backtick",
+    "flipHotkey": "off",
+    "excludedApps": [ { "id": "code.exe", "name": "VS Code" } ]
+  }
+}
+```
+
+| Field | Notes |
+|---|---|
+| `toggleHotkey` | Preset id: `ctrl_backtick` \| `ctrl_space` \| `alt_shift`. |
+| `flipHotkey` | Preset id: `off` \| `ctrl_shift_z` \| `ctrl_shift_x`. |
+| `excludedApps[]` | `{ id (lowercased exe name), name }`. Unioned by `id`. |
+
+Windows-only, applied only when running on Windows.
+
 ### Not exported
 
-Runtime/local-only state is never written: `vietnameseEnabled`,
-`hasCompletedOnboarding`, `showMenuBarIcon`, `launchAtLogin`.
+Runtime/local-only state is never written. macOS: `vietnameseEnabled`,
+`hasCompletedOnboarding`, `showMenuBarIcon`, `launchAtLogin`. Windows: `enabled`,
+`hasCompletedOnboarding`, `launchAtLogin`.
 
 ## Adding a platform
 

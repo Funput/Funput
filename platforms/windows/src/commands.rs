@@ -2,8 +2,10 @@
 //! mutates the shared `shell` state (which applies to the engine + persists); a
 //! couple also apply an OS side effect (autostart registry, opening a link).
 
+use std::path::Path;
 use std::sync::Mutex;
 
+use crate::config_transfer::{self, ConfigError, ImportSummary};
 use crate::settings::{ExcludedApp, FlipHotkey, Hotkey, Method, ToneStyle};
 use crate::update::{self, Manifest};
 use crate::{shell, windows_ui};
@@ -96,6 +98,21 @@ fn autolaunch() -> Option<auto_launch::AutoLaunch> {
 /// Open an external link (GitHub / Website) in the system browser.
 pub fn open_url(url: &str) {
     let _ = open::that(url);
+}
+
+// --- Config Export / Import -------------------------------------------------
+
+/// Write the current settings to `path` as an interchange file.
+pub fn export_config(path: &Path) -> std::io::Result<()> {
+    config_transfer::export_to(path, &shell::snapshot())
+}
+
+/// Merge a config file into the live settings (applies to the engine + persists).
+pub fn import_config(path: &Path) -> Result<ImportSummary, ConfigError> {
+    let mut settings = shell::snapshot();
+    let summary = config_transfer::import_file(path, &mut settings)?;
+    shell::replace_settings(settings);
+    Ok(summary)
 }
 
 // --- Auto-update ------------------------------------------------------------

@@ -28,6 +28,9 @@ tray-icon = "0.24"
 auto-launch = "0.5"
 # Open external links in the system browser.
 open = "5"
+# Native Open/Save + message dialogs for config Export/Import (Win32 IFileDialog,
+# no WebView).
+rfd = "0.17.2"
 # Decode the tray PNGs to RGBA for `tray_icon::Icon::from_rgba`.
 image = { version = "0.25", default-features = false, features = ["png"] }
 serde = { version = "1", features = ["derive"] }

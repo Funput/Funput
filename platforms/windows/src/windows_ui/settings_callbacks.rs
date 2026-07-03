@@ -6,6 +6,7 @@ use slint::{ComponentHandle, Model};
 
 use super::{models, settings_window};
 use crate::compose::FieldComposer;
+use crate::config_transfer::{self, ImportSummary};
 use crate::settings::{FlipHotkey, Hotkey, Method, ToneStyle};
 use crate::{commands, shell, Compose, SettingsWindow};
 
@@ -71,6 +72,67 @@ pub(super) fn wire(window: &SettingsWindow) {
     window.on_check_update(commands::check_for_updates);
     window.on_install_update(commands::install_update);
     window.on_relaunch_now(commands::relaunch_after_update);
+
+    wire_config_transfer(window);
+}
+
+/// Export/Import cấu hình. Native file dialogs (rfd) run modally on the UI thread;
+/// after a successful import the whole window is re-populated from the new state.
+fn wire_config_transfer(window: &SettingsWindow) {
+    window.on_export_config(|| {
+        let Some(path) = rfd::FileDialog::new()
+            .set_file_name(format!("Funput-config-{}.json", config_transfer::today_stamp()))
+            .add_filter("JSON", &["json"])
+            .save_file()
+        else {
+            return;
+        };
+        if let Err(err) = commands::export_config(&path) {
+            message(&format!("Không xuất được cấu hình: {err}"));
+        }
+    });
+
+    let weak = window.as_weak();
+    window.on_import_config(move || {
+        let Some(path) = rfd::FileDialog::new().add_filter("JSON", &["json"]).pick_file() else {
+            return;
+        };
+        match commands::import_config(&path) {
+            Ok(summary) => {
+                if let Some(window) = weak.upgrade() {
+                    settings_window::populate(&window);
+                }
+                message(&import_message(&summary));
+            }
+            Err(err) => message(&err.to_string()),
+        }
+    });
+}
+
+fn message(text: &str) {
+    rfd::MessageDialog::new()
+        .set_title("Cấu hình")
+        .set_description(text)
+        .show();
+}
+
+fn import_message(summary: &ImportSummary) -> String {
+    let mut lines = vec!["Đã áp các tuỳ chọn gõ.".to_string()];
+    if summary.shortcuts_added > 0 || summary.shortcuts_updated > 0 {
+        lines.push(format!(
+            "Gõ tắt: thêm {}, cập nhật {}.",
+            summary.shortcuts_added, summary.shortcuts_updated
+        ));
+    } else {
+        lines.push("Không có gõ tắt mới.".to_string());
+    }
+    if summary.applied_platform {
+        lines.push("Đã áp phím tắt và danh sách app bỏ qua.".to_string());
+    }
+    if summary.newer_version {
+        lines.push("Lưu ý: tệp từ phiên bản mới hơn — một số mục có thể bị bỏ qua.".to_string());
+    }
+    lines.join("\n")
 }
 
 fn wire_apps(window: &SettingsWindow) {
