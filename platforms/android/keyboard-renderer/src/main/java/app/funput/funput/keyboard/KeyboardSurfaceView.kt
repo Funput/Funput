@@ -9,7 +9,9 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
+import app.funput.funput.keyboard.interaction.PressedKeyTracker
 import app.funput.funput.keyboard.layout.KeyboardGeometry
 import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
 import app.funput.funput.keyboard.layout.KeyboardLayouts
@@ -37,6 +39,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var inputMethod: KeyboardInputMethod = KeyboardInputMethod.TELEX
         set(value) {
             if (field == value) return
+            clearPressedKeys()
             field = value
             keyboardLayout = KeyboardLayouts.forInputMethod(value)
             requestLayout()
@@ -68,6 +71,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
 
     private var keyboardLayout: KeyboardLayout = KeyboardLayouts.forInputMethod(inputMethod)
     private var resolvedKeyboard: ResolvedKeyboard? = null
+    private val pressedKeyTracker = PressedKeyTracker()
 
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val keyPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -96,6 +100,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     init {
         applyTheme()
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
+        isClickable = true
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -123,6 +128,65 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             drawKeyBackground(canvas, key)
             drawKeyContent(canvas, key)
         }
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean = when (event.actionMasked) {
+        MotionEvent.ACTION_DOWN -> {
+            val handled = updatePressedKey(event, event.actionIndex)
+            if (handled) {
+                parent?.requestDisallowInterceptTouchEvent(true)
+            }
+            handled
+        }
+
+        MotionEvent.ACTION_POINTER_DOWN -> {
+            updatePressedKey(event, event.actionIndex)
+            true
+        }
+
+        MotionEvent.ACTION_MOVE -> {
+            for (pointerIndex in 0 until event.pointerCount) {
+                updatePressedKey(event, pointerIndex)
+            }
+            true
+        }
+
+        MotionEvent.ACTION_POINTER_UP -> {
+            releasePointer(event.getPointerId(event.actionIndex))
+            true
+        }
+
+        MotionEvent.ACTION_UP -> {
+            val pointerId = event.getPointerId(event.actionIndex)
+            val wasPressed = pressedKeyTracker.keyForPointer(pointerId) != null
+            releasePointer(pointerId)
+            parent?.requestDisallowInterceptTouchEvent(false)
+            if (wasPressed) performClick()
+            true
+        }
+
+        MotionEvent.ACTION_CANCEL -> {
+            clearPressedKeys()
+            parent?.requestDisallowInterceptTouchEvent(false)
+            true
+        }
+
+        else -> super.onTouchEvent(event)
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
+    }
+
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        super.onWindowFocusChanged(hasWindowFocus)
+        if (!hasWindowFocus) clearPressedKeys()
+    }
+
+    override fun onDetachedFromWindow() {
+        clearPressedKeys()
+        super.onDetachedFromWindow()
     }
 
     private fun resolveGeometry() {
@@ -161,16 +225,24 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     private fun drawKeyBackground(canvas: Canvas, key: ResolvedKey) {
         val bounds = key.bounds
         val radius = dpToPx(keyboardTheme.keyCornerRadiusDp)
-        val shadowOffset = dpToPx(keyboardTheme.keyShadowOffsetDp)
+        val isPressed = pressedKeyTracker.isPressed(key.spec.id)
+        val shadowOffset = dpToPx(
+            if (isPressed) keyboardTheme.pressedKeyShadowOffsetDp else keyboardTheme.keyShadowOffsetDp,
+        )
 
         drawingRect.set(bounds.left, bounds.top + shadowOffset, bounds.right, bounds.bottom + shadowOffset)
         canvas.drawRoundRect(drawingRect, radius, radius, keyShadowPaint)
 
         drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
-        keyPaint.color = if (key.spec.role.isSpecial) {
-            keyboardTheme.specialKeyColor
+        keyPaint.color = when {
+            isPressed -> keyboardTheme.pressedKeyColor
+            key.spec.role.isSpecial -> keyboardTheme.specialKeyColor
+            else -> keyboardTheme.keyColor
+        }
+        keyBorderPaint.color = if (isPressed) {
+            keyboardTheme.pressedKeyBorderColor
         } else {
-            keyboardTheme.keyColor
+            keyboardTheme.keyBorderColor
         }
         canvas.drawRoundRect(drawingRect, radius, radius, keyPaint)
         canvas.drawRoundRect(drawingRect, radius, radius, keyBorderPaint)
@@ -182,6 +254,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
 
         drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
         keyPaint.color = keyboardTheme.keyColor
+        keyBorderPaint.color = keyboardTheme.keyBorderColor
         canvas.drawRoundRect(drawingRect, radius, radius, keyPaint)
         canvas.drawRoundRect(drawingRect, radius, radius, keyBorderPaint)
 
@@ -222,6 +295,30 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             KeyRole.EMOJI -> drawEmojiIcon(canvas, key)
             KeyRole.ENTER -> drawEnterIcon(canvas, key)
             else -> drawLabels(canvas, key)
+        }
+    }
+
+    private fun updatePressedKey(event: MotionEvent, pointerIndex: Int): Boolean {
+        val pointerId = event.getPointerId(pointerIndex)
+        val keyId = resolvedKeyboard
+            ?.keyAt(event.getX(pointerIndex), event.getY(pointerIndex))
+            ?.spec
+            ?.id
+        if (pressedKeyTracker.update(pointerId, keyId)) {
+            postInvalidateOnAnimation()
+        }
+        return keyId != null
+    }
+
+    private fun releasePointer(pointerId: Int) {
+        if (pressedKeyTracker.release(pointerId)) {
+            postInvalidateOnAnimation()
+        }
+    }
+
+    private fun clearPressedKeys() {
+        if (pressedKeyTracker.clear()) {
+            postInvalidateOnAnimation()
         }
     }
 
