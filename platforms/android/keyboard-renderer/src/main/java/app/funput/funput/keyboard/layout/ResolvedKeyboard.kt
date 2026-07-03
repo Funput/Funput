@@ -19,6 +19,7 @@ data class KeyBounds(
 data class ResolvedKey(
     val spec: KeySpec,
     val bounds: KeyBounds,
+    val hitBounds: KeyBounds = bounds,
 )
 
 data class ResolvedSuggestionBar(
@@ -37,6 +38,7 @@ data class ResolvedKeyboard(
         add(suggestionBar.emojiKey)
         rows.forEach(::addAll)
     }
+    private val hitTester = KeyboardHitTester(width, height, keys)
 
-    fun keyAt(x: Float, y: Float): ResolvedKey? = keys.firstOrNull { it.bounds.contains(x, y) }
+    fun keyAt(x: Float, y: Float): ResolvedKey? = hitTester.keyAt(x, y)
 }

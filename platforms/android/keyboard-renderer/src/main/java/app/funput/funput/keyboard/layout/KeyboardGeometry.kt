@@ -46,7 +46,9 @@ object KeyboardGeometry {
                 ).also { cursor += keyWidth + spec.horizontalGap }
             }
         }
-        return ResolvedKeyboard(width, height, suggestionBar, rows)
+        return KeyboardHitTargetResolver.resolve(
+            ResolvedKeyboard(width, height, suggestionBar, rows),
+        )
     }
 
     private fun resolveSuggestionBar(

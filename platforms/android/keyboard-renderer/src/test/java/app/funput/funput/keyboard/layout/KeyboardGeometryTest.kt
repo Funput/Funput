@@ -28,6 +28,12 @@ class KeyboardGeometryTest {
                 assertTrue(key.bounds.bottom <= keyboard.height)
                 assertTrue(key.bounds.width > 0f)
                 assertTrue(key.bounds.height > 0f)
+                assertTrue(key.hitBounds.left >= 0f)
+                assertTrue(key.hitBounds.top >= 0f)
+                assertTrue(key.hitBounds.right <= keyboard.width)
+                assertTrue(key.hitBounds.bottom <= keyboard.height)
+                assertTrue(key.hitBounds.width > 0f)
+                assertTrue(key.hitBounds.height > 0f)
             }
         }
     }
