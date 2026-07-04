@@ -14,6 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.ui.playground.PlaygroundTextBuffer
+import app.funput.funput.ui.playground.PlaygroundTextBufferSaver
+import app.funput.funput.ui.playground.PlaygroundKeyActionReducer
 import app.funput.funput.ui.theme.FunputTheme
 
 @Composable
@@ -22,6 +25,9 @@ fun FunputApp() {
     var lastAction by remember { mutableStateOf<KeyAction?>(null) }
     var actionCount by remember { mutableIntStateOf(0) }
     var lastUiCallback by remember { mutableStateOf("—") }
+    var textBuffer by rememberSaveable(stateSaver = PlaygroundTextBufferSaver) {
+        mutableStateOf(PlaygroundTextBuffer.from("Funput playground 👋"))
+    }
 
     FunputTheme(dynamicColor = false) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -31,7 +37,11 @@ fun FunputApp() {
                 lastAction = lastAction,
                 actionCount = actionCount,
                 lastUiCallback = lastUiCallback,
+                textBuffer = textBuffer,
+                onTextCursorChanged = { offset -> textBuffer = textBuffer.moveCursorTo(offset) },
+                onTextCleared = { textBuffer = textBuffer.clear() },
                 onKeyAction = { action ->
+                    textBuffer = PlaygroundKeyActionReducer.reduce(textBuffer, action)
                     actionCount = if (action == lastAction) actionCount + 1 else 1
                     lastAction = action
                 },

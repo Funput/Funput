@@ -5,27 +5,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import app.funput.funput.R
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.SuggestionSelection
-import app.funput.funput.keyboard.ui.FunputKeyboardView
-
-private val PreviewSuggestions = listOf("mình", "chào", "bạn")
+import app.funput.funput.ui.playground.PlaygroundTextBuffer
+import app.funput.funput.ui.playground.PlaygroundTextField
 
 @Composable
 internal fun KeyboardPreviewScreen(
@@ -34,6 +29,9 @@ internal fun KeyboardPreviewScreen(
     lastAction: KeyAction?,
     actionCount: Int,
     lastUiCallback: String,
+    textBuffer: PlaygroundTextBuffer,
+    onTextCursorChanged: (Int) -> Unit,
+    onTextCleared: () -> Unit,
     onKeyAction: (KeyAction) -> Unit,
     onEmojiPanelOpened: () -> Unit,
     onEmojiSelected: (String) -> Unit,
@@ -53,7 +51,14 @@ internal fun KeyboardPreviewScreen(
             actionCount = actionCount,
             lastUiCallback = lastUiCallback,
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+        PlaygroundTextField(
+            buffer = textBuffer,
+            onCursorChanged = onTextCursorChanged,
+            onClear = onTextCleared,
+            modifier = Modifier.padding(horizontal = 20.dp),
+        )
+        Spacer(modifier = Modifier.height(16.dp))
         KeyboardPreview(
             inputMethod = inputMethod,
             onKeyAction = onKeyAction,
@@ -105,30 +110,4 @@ private fun PreviewHeader(
             style = MaterialTheme.typography.labelMedium,
         )
     }
-}
-
-@Composable
-private fun KeyboardPreview(
-    inputMethod: KeyboardInputMethod,
-    onKeyAction: (KeyAction) -> Unit,
-    onEmojiPanelOpened: () -> Unit,
-    onEmojiSelected: (String) -> Unit,
-    onSuggestionSelected: (SuggestionSelection) -> Unit,
-) {
-    AndroidView(
-        factory = { context -> FunputKeyboardView(context) },
-        update = { keyboard ->
-            keyboard.inputMethod = inputMethod
-            keyboard.suggestions = PreviewSuggestions
-            keyboard.callbacks.onKeyAction = onKeyAction
-            keyboard.callbacks.onEmojiPanelOpened = onEmojiPanelOpened
-            keyboard.callbacks.onEmojiSelected = onEmojiSelected
-            keyboard.callbacks.onSuggestionSelected = onSuggestionSelected
-        },
-        modifier = Modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxWidth()
-            .height(FunputKeyboardView.recommendedHeightDp(inputMethod).dp)
-            .clip(RoundedCornerShape(18.dp)),
-    )
 }

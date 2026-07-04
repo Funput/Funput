@@ -8,4 +8,8 @@
     <string name="input_method_vni">VNI</string>
     <string name="last_key_action">Thao tác phím cuối: %1$s</string>
     <string name="last_ui_callback">Callback UI cuối: %1$s</string>
+    <string name="playground_text_field_label">Ô nhập liệu giả lập</string>
+    <string name="playground_text_field_clear">Xóa</string>
+    <string name="playground_text_field_description">Vùng nhập liệu thử nghiệm Funput</string>
+    <string name="playground_text_field_placeholder">Nội dung từ Funput sẽ xuất hiện tại đây</string>
 </resources>
