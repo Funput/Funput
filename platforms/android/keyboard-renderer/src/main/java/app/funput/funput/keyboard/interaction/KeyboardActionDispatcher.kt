@@ -3,6 +3,7 @@ package app.funput.funput.keyboard.interaction
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
+import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.toKeyAction
 
@@ -29,6 +30,8 @@ internal class KeyboardActionDispatcher(
     }
 
     fun repeatBackspace() = onAction(KeyAction.Backspace)
+
+    fun toggleLanguage(language: KeyboardLanguage) = onAction(KeyAction.ToggleLanguage(language))
 
     fun reset() {
         if (shiftController.reset()) onShiftStateChanged()

@@ -18,5 +18,5 @@ sealed interface KeyAction {
     data object Emoji : KeyAction
     data object Space : KeyAction
     data object Enter : KeyAction
-    data object ToggleLanguage : KeyAction
+    data class ToggleLanguage(val language: KeyboardLanguage) : KeyAction
 }

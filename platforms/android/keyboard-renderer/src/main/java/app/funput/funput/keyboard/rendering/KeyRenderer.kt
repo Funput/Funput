@@ -6,6 +6,7 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole
+import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.theme.KeyboardTheme
 
@@ -20,6 +21,7 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
     private val characterTypeface = Typeface.create("sans-serif", Typeface.NORMAL)
     private val specialTypeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private val iconRenderer = KeyIconRenderer(metrics)
+    private val spacebarRenderer = SpacebarContentRenderer(metrics)
 
     fun updateTheme(theme: KeyboardTheme) {
         shadowPaint.color = theme.keyShadowColor
@@ -33,10 +35,14 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         theme: KeyboardTheme,
         isPressed: Boolean,
         shiftState: ShiftState,
+        language: KeyboardLanguage,
     ) {
         val isActivated = key.spec.role == KeyRole.SHIFT && shiftState.isActive
         drawSurface(canvas, key, theme, isPressed, isActivated)
-        if (!iconRenderer.draw(canvas, key, shiftState)) drawLabels(canvas, key, theme, shiftState)
+        when {
+            key.spec.role == KeyRole.SPACE -> spacebarRenderer.draw(canvas, key, theme, language)
+            !iconRenderer.draw(canvas, key, shiftState) -> drawLabels(canvas, key, theme, shiftState)
+        }
     }
 
     private fun drawSurface(
@@ -77,7 +83,7 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         shiftState: ShiftState,
     ) {
         val role = key.spec.role
-        labelPaint.color = if (role == KeyRole.SPACE) theme.secondaryLabelColor else theme.labelColor
+        labelPaint.color = theme.labelColor
         labelPaint.textSize = metrics.sp(role.labelSizeSp)
         labelPaint.typeface = if (role == KeyRole.CHARACTER) characterTypeface else specialTypeface
         labelPaint.textAlign = Paint.Align.CENTER
@@ -106,7 +112,6 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
     private val KeyRole.labelSizeSp: Float
         get() = when (this) {
             KeyRole.CHARACTER, KeyRole.VNI_MODIFIER, KeyRole.PUNCTUATION -> CharacterLabelSizeSp
-            KeyRole.SPACE -> SpaceLabelSizeSp
             else -> SpecialLabelSizeSp
         }
 
@@ -117,7 +122,6 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
     private companion object {
         const val CharacterLabelSizeSp = 20f
         const val SpecialLabelSizeSp = 13f
-        const val SpaceLabelSizeSp = 12f
         const val SecondaryLabelSizeSp = 9f
     }
 }

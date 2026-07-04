@@ -51,7 +51,7 @@ class KeyboardLayoutsTest {
             assertEquals(KeyRole.EMOJI, emoji.role)
             assertTrue(actionKeys.none { key -> key.role == KeyRole.EMOJI })
             assertEquals(KeySwipeAction.TOGGLE_LANGUAGE, space.horizontalSwipeAction)
-            assertEquals("VI ⇄ EN", space.label)
+            assertEquals("Tiếng Việt", space.label)
             assertEquals(5.3f, space.widthWeight)
         }
     }

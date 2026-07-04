@@ -15,6 +15,7 @@ import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
+import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.rendering.KeyboardCanvasRenderer
 import app.funput.funput.theme.KeyboardTheme
@@ -60,6 +61,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
 
     var onKeyAction: ((KeyAction) -> Unit)? = null
     val shiftState: ShiftState get() = interaction.shiftState
+    var language: KeyboardLanguage
+        get() = interaction.language
+        set(value) = interaction.setLanguage(value)
 
     private var keyboardLayout: KeyboardLayout = KeyboardLayouts.forInputMethod(inputMethod)
     private var resolvedKeyboard: ResolvedKeyboard? = null
@@ -73,6 +77,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         cancel = ::removeCallbacks,
         requestParentIntercept = { disallow -> parent?.requestDisallowInterceptTouchEvent(disallow) },
         doubleTapTimeoutMillis = ViewConfiguration.getDoubleTapTimeout().toLong(),
+        density = resources.displayMetrics.density,
     )
 
     init {
@@ -98,7 +103,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val keyboard = resolvedKeyboard ?: return
-        renderer.draw(canvas, width, height, keyboard, suggestions, interaction, shiftState)
+        renderer.draw(canvas, width, height, keyboard, suggestions, interaction, shiftState, language)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean = when (interaction.onTouchEvent(event)) {

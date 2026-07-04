@@ -73,10 +73,10 @@ object KeyboardLayouts {
             specialKey("comma", ",", KeyRole.PUNCTUATION, 0.85f),
             KeySpec(
                 id = "space",
-                label = "VI ⇄ EN",
+                label = "Tiếng Việt",
                 role = KeyRole.SPACE,
                 widthWeight = 5.3f,
-                accessibilityLabel = "Space. Swipe to switch Vietnamese and English",
+                accessibilityLabel = "Dấu cách. Vuốt để đổi Tiếng Việt và Tiếng Anh",
                 horizontalSwipeAction = KeySwipeAction.TOGGLE_LANGUAGE,
             ),
             specialKey("period", ".", KeyRole.PUNCTUATION, 0.85f),

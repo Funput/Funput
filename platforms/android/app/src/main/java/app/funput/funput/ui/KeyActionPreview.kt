@@ -11,7 +11,7 @@ internal fun KeyAction?.previewLabel(repeatCount: Int): String {
         KeyAction.Emoji -> "Emoji"
         KeyAction.Space -> "Space"
         KeyAction.Enter -> "Enter"
-        KeyAction.ToggleLanguage -> "Language"
+        is KeyAction.ToggleLanguage -> "Language: ${language.displayLabel}"
         null -> "—"
     }
     return if (this != null && repeatCount > 1) "$label ×$repeatCount" else label

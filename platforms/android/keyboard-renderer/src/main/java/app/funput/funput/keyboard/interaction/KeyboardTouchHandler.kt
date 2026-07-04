@@ -6,8 +6,9 @@ import android.view.MotionEvent
 internal class KeyboardTouchHandler(
     keyAt: (x: Float, y: Float) -> String?,
     onPressedStateChanged: () -> Unit,
+    private val onPointerStarted: (pointerId: Int, keyId: String?, x: Float, y: Float) -> Unit,
     private val onPointerKeyChanged: (pointerId: Int, keyId: String?) -> Unit,
-    private val onKeyReleased: (pointerId: Int, keyId: String?, eventTimeMillis: Long) -> Unit,
+    private val onKeyReleased: (pointerId: Int, keyId: String?, x: Float, y: Float, eventTimeMillis: Long) -> Unit,
     private val onCancelled: () -> Unit,
     private val requestParentIntercept: (disallow: Boolean) -> Unit,
 ) : PressedKeyState {
@@ -16,7 +17,7 @@ internal class KeyboardTouchHandler(
     fun onTouchEvent(event: MotionEvent): Result = when (event.actionMasked) {
         MotionEvent.ACTION_DOWN -> handleDown(event)
         MotionEvent.ACTION_POINTER_DOWN -> {
-            update(event, event.actionIndex)
+            startPointer(event, event.actionIndex)
             Result.HANDLED
         }
         MotionEvent.ACTION_MOVE -> {
@@ -44,7 +45,7 @@ internal class KeyboardTouchHandler(
     }
 
     private fun handleDown(event: MotionEvent): Result {
-        val handled = update(event, event.actionIndex)
+        val handled = startPointer(event, event.actionIndex)
         if (handled) requestParentIntercept(true)
         return if (handled) Result.HANDLED else Result.UNHANDLED
     }
@@ -68,13 +69,31 @@ internal class KeyboardTouchHandler(
         return handled
     }
 
+    private fun startPointer(event: MotionEvent, pointerIndex: Int): Boolean {
+        val handled = update(event, pointerIndex)
+        val pointerId = event.getPointerId(pointerIndex)
+        onPointerStarted(
+            pointerId,
+            pointerSession.keyForPointer(pointerId),
+            event.getX(pointerIndex),
+            event.getY(pointerIndex),
+        )
+        return handled
+    }
+
     private fun release(event: MotionEvent, pointerIndex: Int): String? {
         val keyId = pointerSession.release(
             pointerId = event.getPointerId(pointerIndex),
             x = event.getX(pointerIndex),
             y = event.getY(pointerIndex),
         )
-        onKeyReleased(event.getPointerId(pointerIndex), keyId, event.eventTime)
+        onKeyReleased(
+            event.getPointerId(pointerIndex),
+            keyId,
+            event.getX(pointerIndex),
+            event.getY(pointerIndex),
+            event.eventTime,
+        )
         return keyId
     }
 
