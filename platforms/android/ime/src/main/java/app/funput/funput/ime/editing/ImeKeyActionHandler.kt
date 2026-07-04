@@ -13,13 +13,16 @@ internal class ImeKeyActionHandler(
     private val connection: () -> InputConnection?,
     private val enterCommand: () -> ImeEditCommand,
 ) {
+    private var compositionAllowed = true
+
     var language: KeyboardLanguage = KeyboardLanguage.VIETNAMESE
         private set
 
-    fun start(inputMethod: KeyboardInputMethod) {
+    fun start(inputMethod: KeyboardInputMethod, allowComposition: Boolean = true) {
+        compositionAllowed = allowComposition
         composition.reset()
         composition.setInputMethod(inputMethod)
-        composition.setEnabled(language == KeyboardLanguage.VIETNAMESE)
+        composition.setEnabled(usesComposition)
     }
 
     fun onKeyAction(action: KeyAction) {
@@ -48,7 +51,7 @@ internal class ImeKeyActionHandler(
     }
 
     private fun inputText(text: String) {
-        if (language == KeyboardLanguage.VIETNAMESE) {
+        if (usesComposition) {
             composition.input(connection(), text)
         } else {
             execute(ImeEditCommand.CommitText(text))
@@ -61,7 +64,7 @@ internal class ImeKeyActionHandler(
 
     private fun enter() {
         val command = enterCommand()
-        if (language == KeyboardLanguage.VIETNAMESE && command == NewLineCommand) {
+        if (usesComposition && command == NewLineCommand) {
             composition.input(connection(), "\n")
         } else {
             finish()
@@ -70,9 +73,10 @@ internal class ImeKeyActionHandler(
     }
 
     private fun toggleLanguage(value: KeyboardLanguage) {
+        if (!compositionAllowed) return
         finish()
         language = value
-        composition.setEnabled(value == KeyboardLanguage.VIETNAMESE)
+        composition.setEnabled(usesComposition)
     }
 
     private fun commitExternalText(text: String) {
@@ -83,6 +87,9 @@ internal class ImeKeyActionHandler(
     private fun execute(command: ImeEditCommand) {
         editor.execute(connection(), command)
     }
+
+    private val usesComposition: Boolean
+        get() = compositionAllowed && language == KeyboardLanguage.VIETNAMESE
 
     private companion object {
         val NewLineCommand = ImeEditCommand.CommitText("\n")

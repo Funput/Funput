@@ -8,6 +8,10 @@ commands, and executes them against the current `InputConnection`.
 selects the Enter-key presentation and routes standard or custom editor actions
 through `performEditorAction`; multiline fields retain normal newline behavior.
 
+`EditorInfoKeyboardModeResolver` maps Android input-type flags to renderer modes.
+Email and URL editors receive compact ASCII QWERTY layouts with contextual
+punctuation and bypass Vietnamese composition.
+
 `AndroidCompositionSession` renders the shared Rust engine buffer with
 `setComposingText()`. JNI is intentionally narrow: one synchronous call per text
 key, no network or storage, and safe registry IDs instead of native pointers.

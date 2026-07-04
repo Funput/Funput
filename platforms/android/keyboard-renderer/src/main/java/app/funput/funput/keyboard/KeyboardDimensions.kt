@@ -1,12 +1,17 @@
 package app.funput.funput.keyboard
 
+import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 
-internal object KeyboardDimensions {
+object KeyboardDimensions {
     const val DefaultWidthDp = 360f
 
-    fun recommendedHeightDp(inputMethod: KeyboardInputMethod): Float = when (inputMethod) {
-        KeyboardInputMethod.TELEX -> 290f
-        KeyboardInputMethod.VNI -> 348f
+    fun recommendedHeightDp(
+        inputMethod: KeyboardInputMethod,
+        editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
+    ): Float = if (editorMode.supportsVietnameseComposition && inputMethod == KeyboardInputMethod.VNI) {
+        348f
+    } else {
+        290f
     }
 }

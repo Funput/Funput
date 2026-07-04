@@ -5,12 +5,15 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import app.funput.funput.ime.editing.AndroidCompositionSession
 import app.funput.funput.ime.editing.EditorInfoActionResolver
+import app.funput.funput.ime.editing.EditorInfoKeyboardModeResolver
 import app.funput.funput.ime.editing.ImeEditorAction
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.InputMethodSettings
+import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +27,7 @@ class FunputInputMethodService : InputMethodService() {
     private val editor = InputConnectionEditor()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var editorAction = ImeEditorAction.NewLine
+    private var editorMode = KeyboardEditorMode.TEXT
     private var inputMethod = InputMethodSettings.DefaultInputMethod
     private var keyboardView: FunputKeyboardView? = null
     private lateinit var nativeEngine: NativeVietnameseEngine
@@ -44,24 +48,20 @@ class FunputInputMethodService : InputMethodService() {
     override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
         keyboardView = view
         view.inputMethod = inputMethod
-        view.language = actionHandler.language
-        view.enterAction = editorAction.presentation
+        updateInputView(view)
         bindCallbacks(view)
     }
 
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
-        actionHandler.start(inputMethod)
+        resolveEditor(attribute)
+        actionHandler.start(inputMethod, editorMode.supportsVietnameseComposition)
     }
 
     override fun onStartInputView(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInputView(attribute, restarting)
-        editorAction = EditorInfoActionResolver.resolve(attribute)
-        keyboardView?.apply {
-            inputMethod = this@FunputInputMethodService.inputMethod
-            language = actionHandler.language
-            enterAction = editorAction.presentation
-        }
+        resolveEditor(attribute)
+        keyboardView?.let(::updateInputView)
     }
 
     override fun onUpdateSelection(
@@ -112,7 +112,24 @@ class FunputInputMethodService : InputMethodService() {
         if (method == inputMethod) return
         actionHandler.finish()
         inputMethod = method
-        actionHandler.start(method)
+        actionHandler.start(method, editorMode.supportsVietnameseComposition)
         keyboardView?.inputMethod = method
+    }
+
+    private fun resolveEditor(info: EditorInfo) {
+        editorAction = EditorInfoActionResolver.resolve(info)
+        editorMode = EditorInfoKeyboardModeResolver.resolve(info)
+    }
+
+    private fun updateInputView(view: FunputKeyboardView) = with(view) {
+        showLettersPanel()
+        inputMethod = this@FunputInputMethodService.inputMethod
+        editorMode = this@FunputInputMethodService.editorMode
+        language = if (editorMode.supportsVietnameseComposition) {
+            actionHandler.language
+        } else {
+            KeyboardLanguage.ENGLISH
+        }
+        enterAction = editorAction.presentation
     }
 }

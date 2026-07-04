@@ -11,10 +11,10 @@ import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.KeyboardTouchHandler
 import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
-import app.funput.funput.keyboard.layout.KeyboardLayouts
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.layout.resolveGeometry
 import app.funput.funput.keyboard.model.KeyboardEnterAction
+import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
@@ -36,14 +36,18 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             field = value
             updateKeyboardLayout()
         }
-
     var layoutMode: KeyboardLayoutMode = KeyboardLayoutMode.LETTERS
         set(value) {
             if (field == value) return
             field = value
             updateKeyboardLayout()
         }
-
+    var editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT
+        set(value) {
+            if (field == value) return
+            field = value
+            updateKeyboardLayout()
+        }
     var keyboardTheme: KeyboardTheme = KeyboardTheme.Aurora
         set(value) {
             if (field == value) return
@@ -51,7 +55,6 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             renderer.updateTheme(value, width, height)
             invalidate()
         }
-
     var suggestions: List<String> = emptyList()
         set(value) {
             val normalized = SuggestionNormalizer.normalize(value)
@@ -59,17 +62,15 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             field = normalized
             invalidate()
         }
-
     var enterAction: KeyboardEnterAction = KeyboardEnterAction.Standard.NEW_LINE
         set(value) { field = value; invalidate() }
-
     val callbacks = KeyboardCallbacks()
     val shiftState: ShiftState get() = interaction.shiftState
     var language: KeyboardLanguage
         get() = interaction.language
         set(value) = interaction.setLanguage(value)
 
-    private var keyboardLayout: KeyboardLayout = KeyboardLayouts.forInputMethod(inputMethod)
+    private var keyboardLayout: KeyboardLayout = KeyboardLayoutResolver.resolve(inputMethod, layoutMode, editorMode)
     private var resolvedKeyboard: ResolvedKeyboard? = null
     private val renderer = KeyboardCanvasRenderer(resources)
     private val interaction = KeyboardSurfaceInteraction(
@@ -96,10 +97,12 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         val density = resources.displayMetrics.density
         setMeasuredDimension(
             resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec),
-            resolveSize((recommendedHeightDp(inputMethod) * density).roundToInt(), heightMeasureSpec),
+            resolveSize(
+                (KeyboardDimensions.recommendedHeightDp(inputMethod, editorMode) * density).roundToInt(),
+                heightMeasureSpec,
+            ),
         )
     }
-
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
         resolveGeometry()
@@ -139,12 +142,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
 
     private fun updateKeyboardLayout() {
         interaction.reset()
-        keyboardLayout = KeyboardLayoutResolver.resolve(inputMethod, layoutMode)
+        keyboardLayout = KeyboardLayoutResolver.resolve(inputMethod, layoutMode, editorMode)
         requestLayout()
         resolveGeometry()
         invalidate()
-    }
-    companion object {
-        fun recommendedHeightDp(method: KeyboardInputMethod) = KeyboardDimensions.recommendedHeightDp(method)
     }
 }

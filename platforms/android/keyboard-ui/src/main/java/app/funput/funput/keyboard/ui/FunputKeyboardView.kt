@@ -5,8 +5,10 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
 import app.funput.funput.keyboard.KeyboardSurfaceView
+import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardEnterAction
+import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
@@ -31,11 +33,16 @@ class FunputKeyboardView @JvmOverloads constructor(
             requestLayout()
         }
 
+    var editorMode: KeyboardEditorMode
+        get() = keyboardSurface.editorMode
+        set(value) {
+            keyboardSurface.editorMode = value
+            requestLayout()
+        }
+
     var enterAction: KeyboardEnterAction
         get() = keyboardSurface.enterAction
-        set(value) {
-            keyboardSurface.enterAction = value
-        }
+        set(value) { keyboardSurface.enterAction = value }
 
     var keyboardTheme: KeyboardTheme
         get() = keyboardSurface.keyboardTheme
@@ -52,9 +59,7 @@ class FunputKeyboardView @JvmOverloads constructor(
 
     var language: KeyboardLanguage
         get() = keyboardSurface.language
-        set(value) {
-            keyboardSurface.language = value
-        }
+        set(value) { keyboardSurface.language = value }
 
     var hapticsEnabled: Boolean
         get() = keyboardSurface.isHapticFeedbackEnabled
@@ -103,8 +108,9 @@ class FunputKeyboardView @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
-        val width = resolveSize((DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
-        val height = resolveSize((recommendedHeightDp(inputMethod) * density).roundToInt(), heightMeasureSpec)
+        val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
+        val heightDp = KeyboardDimensions.recommendedHeightDp(inputMethod, editorMode)
+        val height = resolveSize((heightDp * density).roundToInt(), heightMeasureSpec)
         super.onMeasure(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
             MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
@@ -140,10 +146,4 @@ class FunputKeyboardView @JvmOverloads constructor(
         LayoutParams.MATCH_PARENT,
     )
 
-    companion object {
-        private const val DefaultWidthDp = 360f
-
-        fun recommendedHeightDp(inputMethod: KeyboardInputMethod): Float =
-            KeyboardSurfaceView.recommendedHeightDp(inputMethod)
-    }
 }

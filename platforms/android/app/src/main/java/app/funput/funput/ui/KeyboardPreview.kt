@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.SuggestionSelection
@@ -37,7 +38,7 @@ internal fun KeyboardPreview(
         modifier = Modifier
             .padding(horizontal = 8.dp)
             .fillMaxWidth()
-            .height(FunputKeyboardView.recommendedHeightDp(inputMethod).dp)
+            .height(KeyboardDimensions.recommendedHeightDp(inputMethod).dp)
             .clip(RoundedCornerShape(18.dp)),
     )
 }
