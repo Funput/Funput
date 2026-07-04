@@ -93,11 +93,36 @@ so its block differs from macOS:
 
 Windows-only, applied only when running on Windows.
 
+### `platform.linux`
+
+Same shape as Windows (shared hotkey presets), but apps are identified by their
+Fcitx5 `program()`/WM_CLASS, not exe name:
+
+```json
+"platform": {
+  "linux": {
+    "toggleHotkey": "ctrl_backtick",
+    "flipHotkey": "off",
+    "excludedApps": [ { "id": "code", "name": "VS Code" } ]
+  }
+}
+```
+
+| Field | Notes |
+|---|---|
+| `toggleHotkey` | Preset id: `ctrl_backtick` \| `ctrl_space` \| `alt_shift`. |
+| `flipHotkey` | Preset id: `off` \| `ctrl_shift_z` \| `ctrl_shift_x`. |
+| `excludedApps[]` | `{ id (WM_CLASS / program name), name }`. Unioned by `id`. |
+
+Linux-only, applied only when running on Linux. Note: Windows and Linux hotkey
+presets are identical, but each still reads only its own block (exe names ≠
+WM_CLASS), so hotkeys/apps do not cross between them.
+
 ### Not exported
 
 Runtime/local-only state is never written. macOS: `vietnameseEnabled`,
-`hasCompletedOnboarding`, `showMenuBarIcon`, `launchAtLogin`. Windows: `enabled`,
-`hasCompletedOnboarding`, `launchAtLogin`.
+`hasCompletedOnboarding`, `showMenuBarIcon`, `launchAtLogin`. Windows/Linux:
+`enabled`, `hasCompletedOnboarding`, `launchAtLogin`.
 
 ## Adding a platform
 
