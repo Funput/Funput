@@ -3,49 +3,116 @@ package app.funput.funput.ime
 import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import app.funput.funput.ime.editing.AndroidCompositionSession
 import app.funput.funput.ime.editing.EditorInfoActionResolver
-import app.funput.funput.ime.editing.ImeEditCommand
 import app.funput.funput.ime.editing.ImeEditorAction
+import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
-import app.funput.funput.ime.editing.toImeEditCommand
+import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
+import app.funput.funput.ime.settings.InputMethodSettings
+import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.ui.FunputKeyboardView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 /** System entry point that owns the Funput keyboard view inside the IME window. */
 class FunputInputMethodService : InputMethodService() {
     private val editor = InputConnectionEditor()
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var editorAction = ImeEditorAction.NewLine
+    private var inputMethod = InputMethodSettings.DefaultInputMethod
     private var keyboardView: FunputKeyboardView? = null
+    private lateinit var nativeEngine: NativeVietnameseEngine
+    private lateinit var actionHandler: ImeKeyActionHandler
+
+    override fun onCreate() {
+        super.onCreate()
+        nativeEngine = NativeVietnameseEngine()
+        actionHandler = ImeKeyActionHandler(
+            composition = AndroidCompositionSession(nativeEngine),
+            editor = editor,
+            connection = { currentInputConnection },
+            enterCommand = { editorAction.command },
+        )
+        observeInputMethod(InputMethodSettings(this))
+    }
 
     override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
         keyboardView = view
+        view.inputMethod = inputMethod
+        view.language = actionHandler.language
         view.enterAction = editorAction.presentation
         bindCallbacks(view)
+    }
+
+    override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
+        super.onStartInput(attribute, restarting)
+        actionHandler.start(inputMethod)
     }
 
     override fun onStartInputView(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInputView(attribute, restarting)
         editorAction = EditorInfoActionResolver.resolve(attribute)
-        keyboardView?.enterAction = editorAction.presentation
+        keyboardView?.apply {
+            inputMethod = this@FunputInputMethodService.inputMethod
+            language = actionHandler.language
+            enterAction = editorAction.presentation
+        }
+    }
+
+    override fun onUpdateSelection(
+        oldSelStart: Int,
+        oldSelEnd: Int,
+        newSelStart: Int,
+        newSelEnd: Int,
+        candidatesStart: Int,
+        candidatesEnd: Int,
+    ) {
+        super.onUpdateSelection(
+            oldSelStart,
+            oldSelEnd,
+            newSelStart,
+            newSelEnd,
+            candidatesStart,
+            candidatesEnd,
+        )
+        actionHandler.onSelectionChanged(newSelStart, newSelEnd, candidatesEnd)
+    }
+
+    override fun onFinishInput() {
+        actionHandler.finish()
+        super.onFinishInput()
     }
 
     override fun onDestroy() {
+        serviceScope.cancel()
+        actionHandler.finish()
+        nativeEngine.close()
         keyboardView = null
         super.onDestroy()
     }
 
     private fun bindCallbacks(view: FunputKeyboardView) = with(view.callbacks) {
-        onKeyAction = { action ->
-            action.toImeEditCommand(editorAction.command)?.let(::execute)
-        }
-        onEmojiSelected = { emoji ->
-            execute(ImeEditCommand.CommitText(emoji))
-        }
-        onSuggestionSelected = { suggestion ->
-            execute(ImeEditCommand.CommitText(suggestion.text))
+        onKeyAction = actionHandler::onKeyAction
+        onEmojiSelected = actionHandler::onEmojiSelected
+        onSuggestionSelected = actionHandler::onSuggestionSelected
+    }
+
+    private fun observeInputMethod(settings: InputMethodSettings) {
+        serviceScope.launch {
+            settings.inputMethod.collect(::applyInputMethod)
         }
     }
 
-    private fun execute(command: ImeEditCommand) {
-        editor.execute(currentInputConnection, command)
+    private fun applyInputMethod(method: KeyboardInputMethod) {
+        if (method == inputMethod) return
+        actionHandler.finish()
+        inputMethod = method
+        actionHandler.start(method)
+        keyboardView?.inputMethod = method
     }
 }

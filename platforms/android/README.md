@@ -1,7 +1,7 @@
 # Funput for Android
 
 Native Android shell and keyboard UI for Funput. The Android app is written in
-Kotlin; Vietnamese composition will be provided by the shared Rust engine.
+Kotlin; Vietnamese composition comes from the shared Rust engine through JNI.
 
 ## Modules
 
@@ -20,8 +20,12 @@ app -> ime -> keyboard-ui -> keyboard-renderer -> theme-runtime
 app --------> keyboard-ui ----------------------> theme-runtime
 ```
 
-Keyboard hosting in the IME, Rust JNI, billing, and the remote theme store are
-added incrementally after the renderer prototype.
+The app persists the Vietnamese input method with Preferences DataStore. VNI is
+the first-run default; selecting Telex in the app updates the active IME through
+the same observable setting.
+
+The IME owns Android composing spans while `funput-engine` remains the only
+source of truth for Telex and VNI rules.
 
 ## Build
 
@@ -31,8 +35,15 @@ Open this directory in the latest stable Android Studio, or run:
 ./gradlew :app:assembleDebug
 ```
 
-The project currently requires Android SDK 37 and supports Android 8.0 (API 26)
-or newer.
+The Gradle build cross-compiles `funput-jni` for `arm64-v8a` and `x86_64`.
+Install the matching Rust standard libraries once:
+
+```bash
+rustup target add aarch64-linux-android x86_64-linux-android
+```
+
+The project requires Android SDK 37, NDK 29, and supports Android 8.0 (API 26)
+or newer. The NDK version is pinned for reproducible native builds.
 
 See [`docs/ARCHITECTURE_PROPOSAL.md`](docs/ARCHITECTURE_PROPOSAL.md) for the
 long-term architecture. The repository is licensed under the

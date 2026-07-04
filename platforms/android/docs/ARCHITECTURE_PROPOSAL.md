@@ -74,7 +74,7 @@ flowchart TB
     IC["Android InputConnection"]
     IME["FunputInputMethodService - Kotlin"]
     Adapter["Android Composition Adapter"]
-    JNI["funput-android-jni"]
+    JNI["funput-jni"]
     Engine["funput-engine - Rust"]
     Core["funput-core - Rust"]
     Surface["KeyboardSurfaceView"]
@@ -111,7 +111,7 @@ app/
 │   ├── funput-core/                 # hiện có
 │   ├── funput-engine/               # hiện có
 │   ├── funput-ffi/                  # hiện có, tiếp tục phục vụ desktop
-│   └── funput-android-jni/          # mới: JNI dành riêng cho Android
+│   └── funput-jni/                  # mới: JNI dành riêng cho Android
 └── platforms/
     └── android/
         ├── app/                     # Android application module
@@ -217,7 +217,7 @@ class FunputInputMethodService : InputMethodService() {
 
 ### 8.1. Crate mới
 
-Nên thêm `funput-android-jni` thay vì ép Android dùng trực tiếp C ABI desktop. Crate này phụ thuộc `funput-engine` và build thành `cdylib`:
+Nên thêm `funput-jni` thay vì ép Android dùng trực tiếp C ABI desktop. Crate này phụ thuộc `funput-engine` và build thành `cdylib`:
 
 ```toml
 [lib]
