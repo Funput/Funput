@@ -1,0 +1,29 @@
+package app.funput.funput.keyboard.interaction
+
+import app.funput.funput.keyboard.KeyboardHapticType
+import app.funput.funput.keyboard.model.KeyRole
+import app.funput.funput.keyboard.model.KeySpec
+
+internal object KeyHapticTypeMapper {
+    fun forTarget(key: KeySpec?, isSuggestion: Boolean): KeyboardHapticType? = when {
+        key != null -> forRole(key.role)
+        isSuggestion -> KeyboardHapticType.CONTROL
+        else -> null
+    }
+
+    private fun forRole(role: KeyRole): KeyboardHapticType = when (role) {
+        KeyRole.CHARACTER,
+        KeyRole.VNI_MODIFIER,
+        KeyRole.PUNCTUATION,
+        KeyRole.SPACE,
+        -> KeyboardHapticType.KEY_PRESS
+
+        KeyRole.SHIFT,
+        KeyRole.SYMBOLS,
+        KeyRole.EMOJI,
+        -> KeyboardHapticType.CONTROL
+
+        KeyRole.BACKSPACE -> KeyboardHapticType.DELETE
+        KeyRole.ENTER -> KeyboardHapticType.SUBMIT
+    }
+}

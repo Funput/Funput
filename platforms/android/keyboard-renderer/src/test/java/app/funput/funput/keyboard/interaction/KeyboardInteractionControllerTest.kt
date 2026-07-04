@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.interaction
 
+import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
@@ -12,6 +13,7 @@ import org.junit.Test
 class KeyboardInteractionControllerTest {
     private val actions = mutableListOf<KeyAction>()
     private val selections = mutableListOf<SuggestionSelection>()
+    private val haptics = mutableListOf<KeyboardHapticType>()
     private var emojiRequestCount = 0
     private var visualStateChangeCount = 0
     private val space = KeySpec(
@@ -29,6 +31,7 @@ class KeyboardInteractionControllerTest {
         onAction = { action -> actions += action },
         onEmojiRequested = { emojiRequestCount++ },
         onSuggestionSelected = { selection -> selections += selection },
+        onHapticFeedback = { type -> haptics += type },
         onVisualStateChanged = { visualStateChangeCount++ },
         schedule = { _, _ -> },
         cancel = {},
@@ -78,6 +81,23 @@ class KeyboardInteractionControllerTest {
 
         assertEquals(listOf(SuggestionSelection(1, "chào")), selections)
         assertEquals(emptyList<KeyAction>(), actions)
+    }
+
+    @Test
+    fun pointerDownEmitsHapticForEachTargetType() {
+        controller.onPointerStarted(3, space.id, 100f, 50f)
+        controller.onPointerStarted(4, emoji.id, 100f, 50f)
+        controller.onPointerStarted(5, "suggestion-1", 100f, 50f)
+        controller.onPointerStarted(6, null, 100f, 50f)
+
+        assertEquals(
+            listOf(
+                KeyboardHapticType.KEY_PRESS,
+                KeyboardHapticType.CONTROL,
+                KeyboardHapticType.CONTROL,
+            ),
+            haptics,
+        )
     }
 
     private fun swipe(pointerId: Int, fromX: Float, toX: Float) {

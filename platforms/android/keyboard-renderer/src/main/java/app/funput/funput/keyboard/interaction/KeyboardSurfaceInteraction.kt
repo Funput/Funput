@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.interaction
 
 import android.view.MotionEvent
+import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardLanguage
@@ -15,6 +16,7 @@ internal class KeyboardSurfaceInteraction(
     onAction: (KeyAction) -> Unit,
     onEmojiRequested: () -> Unit,
     onSuggestionSelected: (SuggestionSelection) -> Unit,
+    onHapticFeedback: (KeyboardHapticType) -> Unit,
     onVisualStateChanged: () -> Unit,
     schedule: (task: Runnable, delayMillis: Long) -> Unit,
     cancel: (task: Runnable) -> Unit,
@@ -28,6 +30,7 @@ internal class KeyboardSurfaceInteraction(
         onAction = onAction,
         onEmojiRequested = onEmojiRequested,
         onSuggestionSelected = onSuggestionSelected,
+        onHapticFeedback = onHapticFeedback,
         onVisualStateChanged = onVisualStateChanged,
         schedule = schedule,
         cancel = cancel,

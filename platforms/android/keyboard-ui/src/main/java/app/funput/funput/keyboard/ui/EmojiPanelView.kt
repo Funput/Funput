@@ -5,6 +5,8 @@ import android.graphics.Color
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
 import android.widget.LinearLayout
+import app.funput.funput.keyboard.KeyboardHapticType
+import app.funput.funput.keyboard.KeyboardHaptics
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.theme.KeyboardTheme
 
@@ -15,6 +17,12 @@ internal class EmojiPanelView @JvmOverloads constructor(
     var onEmojiSelected: (String) -> Unit = {}
     var onLettersRequested: () -> Unit = {}
     var onBackspaceRequested: (KeyAction) -> Unit = {}
+    var hapticsEnabled: Boolean
+        get() = isHapticFeedbackEnabled
+        set(value) {
+            isHapticFeedbackEnabled = value
+            picker.hapticsEnabled = value
+        }
 
     private val picker = ScrollableEmojiPickerView(
         ContextThemeWrapper(context, R.style.Theme_Funput_EmojiPicker),
@@ -24,9 +32,18 @@ internal class EmojiPanelView @JvmOverloads constructor(
     init {
         orientation = VERTICAL
         picker.setBackgroundColor(Color.TRANSPARENT)
-        picker.setOnEmojiPickedListener { emoji -> onEmojiSelected(emoji) }
-        toolbar.onLettersRequested = { onLettersRequested() }
-        toolbar.onBackspaceRequested = { onBackspaceRequested(KeyAction.Backspace) }
+        picker.setOnEmojiPickedListener { emoji ->
+            haptic(KeyboardHapticType.KEY_PRESS)
+            onEmojiSelected(emoji)
+        }
+        toolbar.onLettersRequested = {
+            haptic(KeyboardHapticType.CONTROL)
+            onLettersRequested()
+        }
+        toolbar.onBackspaceRequested = {
+            haptic(KeyboardHapticType.DELETE)
+            onBackspaceRequested(KeyAction.Backspace)
+        }
         addView(picker, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
         addView(pickerDivider(), LayoutParams(LayoutParams.MATCH_PARENT, dp(1)))
         addView(toolbar, LayoutParams(LayoutParams.MATCH_PARENT, dp(52)))
@@ -45,6 +62,10 @@ internal class EmojiPanelView @JvmOverloads constructor(
 
     private fun pickerDivider() = android.view.View(context).apply {
         setBackgroundColor(0x33FFFFFF)
+    }
+
+    private fun haptic(type: KeyboardHapticType) {
+        KeyboardHaptics.perform(this, type)
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()

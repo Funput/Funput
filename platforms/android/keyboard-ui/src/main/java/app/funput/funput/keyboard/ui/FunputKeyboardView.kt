@@ -47,6 +47,13 @@ class FunputKeyboardView @JvmOverloads constructor(
             lettersSurface.language = value
         }
 
+    var hapticsEnabled: Boolean
+        get() = lettersSurface.isHapticFeedbackEnabled
+        set(value) {
+            lettersSurface.isHapticFeedbackEnabled = value
+            emojiPanel?.hapticsEnabled = value
+        }
+
     private val panelController = KeyboardPanelController()
     private val lettersSurface = KeyboardSurfaceView(context)
     private var emojiPanel: EmojiPanelView? = null
@@ -91,6 +98,7 @@ class FunputKeyboardView @JvmOverloads constructor(
 
     private fun createEmojiPanel() = EmojiPanelView(context).apply {
         updateTheme(keyboardTheme)
+        hapticsEnabled = this@FunputKeyboardView.hapticsEnabled
         onEmojiSelected = callbacks::dispatchEmoji
         onBackspaceRequested = callbacks::dispatch
         onLettersRequested = ::showLettersPanel

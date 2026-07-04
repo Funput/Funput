@@ -16,6 +16,13 @@ internal class ScrollableEmojiPickerView(context: Context) : FrameLayout(context
             picker.emojiGridColumns = value
         }
 
+    var hapticsEnabled: Boolean
+        get() = picker.isHapticFeedbackEnabled
+        set(value) {
+            isHapticFeedbackEnabled = value
+            picker.isHapticFeedbackEnabled = value
+        }
+
     init {
         picker.setBackgroundColor(Color.TRANSPARENT)
         addView(picker, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))

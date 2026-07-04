@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.interaction
 
+import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
@@ -15,6 +16,7 @@ internal class KeyboardInteractionController(
     onAction: (KeyAction) -> Unit,
     private val onEmojiRequested: () -> Unit,
     private val onSuggestionSelected: (SuggestionSelection) -> Unit,
+    private val onHapticFeedback: (KeyboardHapticType) -> Unit,
     private val onVisualStateChanged: () -> Unit,
     schedule: (task: Runnable, delayMillis: Long) -> Unit,
     cancel: (task: Runnable) -> Unit,
@@ -30,7 +32,10 @@ internal class KeyboardInteractionController(
     private val backspaceRepeat = BackspaceRepeatController(
         schedule = schedule,
         cancel = cancel,
-        onRepeat = actionDispatcher::repeatBackspace,
+        onRepeat = {
+            actionDispatcher.repeatBackspace()
+            onHapticFeedback(KeyboardHapticType.DELETE_REPEAT)
+        },
     )
     private val swipeGestures = KeySwipeGestureTracker.fromDensity(density)
 
@@ -39,7 +44,9 @@ internal class KeyboardInteractionController(
         private set
 
     fun onPointerStarted(pointerId: Int, keyId: String?, x: Float, y: Float) {
-        swipeGestures.start(pointerId, keyId?.let(keySpec), x, y)
+        val key = keyId?.let(keySpec)
+        KeyHapticTypeMapper.forTarget(key, keyId?.let(suggestionSelection) != null)?.let(onHapticFeedback)
+        swipeGestures.start(pointerId, key, x, y)
     }
 
     fun onPointerKeyChanged(pointerId: Int, keyId: String?) {

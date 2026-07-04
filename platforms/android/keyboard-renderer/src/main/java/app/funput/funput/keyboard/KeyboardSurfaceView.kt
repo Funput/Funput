@@ -71,6 +71,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         onAction = callbacks::dispatch,
         onEmojiRequested = callbacks::dispatchEmojiRequest,
         onSuggestionSelected = callbacks::dispatchSuggestion,
+        onHapticFeedback = { type -> KeyboardHaptics.perform(this, type) },
         onVisualStateChanged = ::postInvalidateOnAnimation,
         schedule = { task, delay -> postDelayed(task, delay) },
         cancel = ::removeCallbacks,
