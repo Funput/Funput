@@ -1,0 +1,149 @@
+# Curated Telex golden corpus — keys<TAB>expected, ToneStyle::Traditional.
+# Generated from funput-core::apply and hand-verified. See corpus.rs.
+
+# --- Shapes (â ê ô ơ ư ă, uơ) ---
+aa	â
+ee	ê
+oo	ô
+ow	ơ
+uw	ư
+aw	ă
+uow	uơ
+# --- Stroke + tones ---
+dd	đ
+DD	Đ
+as	á
+af	à
+ar	ả
+ax	ã
+aj	ạ
+mas	má
+# --- Shape then tone ---
+oos	ố
+aas	ấ
+# --- Glide + tone (traditional placement) ---
+hoaf	hòa
+khoer	khỏe
+thuys	thúy
+thuyr	thủy
+quys	quý
+quyfnh	quỳnh
+huyfnh	huỳnh
+# --- iê / yê ---
+nghieeng	nghiêng
+tieengs	tiếng
+gieengs	giếng
+gieengf	giềng
+yeen	yên
+bieens	biến
+mieengs	miếng
+ngheej	nghệ
+vieecj	việc
+nghieepj	nghiệp
+# --- uyê ---
+chuyeenj	chuyện
+tuyeets	tuyết
+khuyeen	khuyên
+nguyeenx	nguyễn
+thuyeenf	thuyền
+xuyeens	xuyến
+quyeenr	quyển
+quyeetj	quyệt
+# --- uy / uya / uyu ---
+khuya	khuya
+khuyru	khuỷu
+huy	huy
+# --- oo / ôô loanwords + oo->ô contrast ---
+xoong	xông
+xooong	xoong
+booong	boong
+sooocs	soóc
+mooocs	moóc
+soocs	sốc
+moocs	mốc
+coong	công
+soocj	sộc
+# --- ă / â + coda ---
+quawngj	quặng
+thoawn	thoăn
+choawts	choắt
+khoawmf	khoằm
+oawm	oăm
+huychs	huých
+uychj	uỵch
+ngoawnf	ngoằn
+khueechs	khuếch
+# --- ươ + coda / nặng ---
+huowu	hươu
+ruwowuj	rượu
+muwownj	mượn
+thuowng	thương
+dduowngf	đường
+giuowngf	giường
+ruwowix	rưỡi
+buowms	bướm
+thuowr	thuở
+dduowcj	được
+# --- Common vocabulary ---
+vietj	việt
+nuocws	nước
+truwownfg	trường
+nguwowif	người
+quoocs	quốc
+xuaan	xuân
+tuaanf	tuần
+chuwa	chưa
+giuwx	giữ
+cuar	của
+nuwx	nữ
+vuwaf	vừa
+toans	toán
+hoafn	hoàn
+queets	quết
+uoongs	uống
+uwu	ưu
+yeeus	yếu
+quaats	quất
+huowngf	hường
+ngoaif	ngoài
+khoanr	khoản
+# --- Free-position marks (dấu typed after the coda) ---
+lamws	lắm
+lawms	lắm
+conw	cơn
+anw	ăn
+duocwjd	được
+nguoiwf	người
+# --- Literal / revert (non-Vietnamese kept verbatim) ---
+file	file
+from	from
+just	just
+zzz	zzz
+faf	faf
+www	www
+ass	as
+aaa	aa
+ddd	dd
+aass	âs
+# --- Case preservation ---
+Nghieeng	Nghiêng
+VIEETJ	VIỆT
+Ddaays	Đấy
+Ddaayj	Đậy
+
+# --- gi-onset: bare 'e' stays plain (regression for the ie->iê over-promotion) ---
+gies	gié
+gier	giẻ
+giex	giẽ
+gieos	giéo
+gieor	giẻo
+# --- guard: real iê words MUST keep ê (ie->iê promotion still fires) ---
+giets	giết
+gieengs	giếng
+gieengf	giềng
+bieets	biết
+kieemr	kiểm
+chieus	chiếu
+yeeu	yêu
+nhieuf	nhiều
+tieeu	tiêu

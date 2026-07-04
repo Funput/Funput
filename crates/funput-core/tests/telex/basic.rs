@@ -1,9 +1,8 @@
-mod support;
 
 use funput_core::{apply, InputMethod, ToneStyle, TransformKind, TransformResult};
 
 fn type_keys(keys: &str) -> String {
-    support::type_keys(InputMethod::Telex, keys)
+    crate::support::type_keys(InputMethod::Telex, keys)
 }
 
 #[test]
@@ -59,7 +58,7 @@ fn telex_revert() {
 #[test]
 fn telex_multi_syllable_words() {
     assert_eq!(
-        support::type_words(InputMethod::Telex, "xins chaof banj"),
+        crate::support::type_words(InputMethod::Telex, "xins chaof banj"),
         "xín chào bạn"
     );
 }

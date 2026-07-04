@@ -121,7 +121,7 @@ pub const CASES: &[ParityCase] = &[
     },
     // NOTE: revert (double modifier) restores raw keystrokes, which differ by
     // method (VNI appends a digit, Telex a letter), so revert is intentionally
-    // NOT a parity case — see `telex_cases`/`vni_cases` for per-method outputs.
+    // NOT a parity case — see each suite's `cases` fixtures for per-method outputs.
     ParityCase {
         telex_keys: "nguws",
         vni_keys: "ngu71",

@@ -127,6 +127,22 @@ pub fn tone_target_vowel(buffer: &str, vowel_idx: usize) -> Option<char> {
         return Some(vowel);
     }
 
+    // The `iê` diphthong exists only closed (`iêt`/`iên`/`iêm`/…) or as the open
+    // triphthong `iêu`; open `ie`/`ieo` do not (open /iə/ is written `ia`). So promote
+    // only when `e` is followed by a coda consonant or the glide `u` — otherwise keep
+    // plain `e`. This fixes the gi-onset words `gié`/`giẻ`/`giẹo` (previously
+    // `giế`/`giể`/`giếo`) while leaving `viết`/`giết`/`chiếu` untouched. A cheap char
+    // test (no allocation, no rhyme-table scan) keeps `apply` on its hot path.
+    let promote = match chars.get(vowel_idx + 1).copied() {
+        None => false,                             // open `ie` → keep `e` (`gié`)
+        Some(c) if is_vowel(c) => vowel_stem(c)    // `ieu` promotes, `ieo` does not
+            .is_some_and(|s| s.eq_ignore_ascii_case(&'u')),
+        Some(_) => true,                           // coda consonant → `iê`
+    };
+    if !promote {
+        return Some(vowel);
+    }
+
     // `apply_shape` already preserves case (`e` → `ê`, `E` → `Ê`).
     apply_shape(stem, VowelShape::Circumflex)
 }

@@ -55,22 +55,20 @@ behavior across operating systems.
   <sub>Configure the input method, tone placement, and smart typing features on macOS.</sub>
 </p>
 
-## Near-instant response
+## Performance
 
-Funput processes each keystroke in approximately **1.5 microseconds** — roughly
-**650,000 keystrokes per second**. At normal typing speeds of only a few
-keystrokes per second, engine latency is effectively imperceptible and does not
-become a bottleneck in the input experience.
+The core is written in Rust. Per-keystroke cost, measured with Criterion on a
+release build:
 
 | Component / API | Measured scope | Telex | VNI |
 |---|---|---:|---:|
-| [`funput-core::apply_checked`](crates/funput-core) | Telex/VNI transformation core | 0.230 µs/key | 0.204 µs/key |
-| [`funput-engine::Engine::process_char`](crates/funput-engine) | Full pipeline, including boundaries and English restore | 1.50 µs/key | 1.53 µs/key |
-| [`funput-ffi::{funput_process_char, funput_buffer}`](crates/funput-ffi) | Engine through the C ABI, including composed-buffer reads | 1.54 µs/key | 1.53 µs/key |
+| [`funput-core::apply`](crates/funput-core) | Telex/VNI transformation core | 0.230 µs/key | 0.204 µs/key |
+| [`funput-engine::Engine::process_char`](crates/funput-engine) | Full pipeline (boundaries + English restore) | 1.50 µs/key | 1.53 µs/key |
+| [`funput-ffi::{funput_process_char, funput_buffer}`](crates/funput-ffi) | Engine through the C ABI + composed-buffer reads | 1.54 µs/key | 1.53 µs/key |
 
-> Results were measured from a release build on an Apple M-series machine. They
-> cover Funput's own processing and exclude operating-system keyboard event
-> delivery and rendering by the host application.
+> Measured from a release build on an Apple M-series machine; covers Funput's own
+> processing only (excludes OS keyboard-event delivery and host-app rendering).
+> Numbers depend on hardware — re-run on yours.
 
 See the [benchmark methodology, source code, and reproduction instructions](benchmarks/README.md).
 

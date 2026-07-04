@@ -25,10 +25,26 @@ enum Tone {
 /// Encode finished Vietnamese `text` into the keystrokes for `method`.
 pub fn encode(text: &str, method: Method) -> String {
     let mut out = String::new();
-    for ch in text.chars() {
+    let chars: Vec<char> = text.chars().collect();
+    for (i, &ch) in chars.iter().enumerate() {
+        // Telex only: a genuine double `o` (`boong`, `soóc`, `xoong`) collides with
+        // the `oo`→`ô` digraph. Typing a third `o` escapes it (`booong`→`boong`), so
+        // when a plain `o` (bare `o`, any tone — but not `ô`/`ơ`) immediately follows
+        // another plain `o`, emit the extra escape key before encoding it.
+        if method == Method::Telex && i > 0 && is_plain_o(ch) && is_plain_o(chars[i - 1]) {
+            out.push(if ch.is_uppercase() { 'O' } else { 'o' });
+        }
         encode_char(ch, method, &mut out);
     }
     out
+}
+
+/// A bare `o`/`O` carrying at most a tone — excludes `ô` (circumflex) and `ơ` (horn),
+/// which are distinct vowels Telex types differently.
+fn is_plain_o(ch: char) -> bool {
+    let mut marks = ch.nfd();
+    matches!(marks.next(), Some('o') | Some('O'))
+        && !marks.any(|m| matches!(m, '\u{0302}' | '\u{031B}'))
 }
 
 fn encode_char(ch: char, method: Method, out: &mut String) {
@@ -136,6 +152,8 @@ mod tests {
     const WORDS: &[&str] = &[
         "đầu", "việt", "nước", "Đắk", "nam", "tiếng", "người", "được", "rượu", "nghiêng",
         "Ô", "khuỷu",
+        // `oo` loanwords: the double-o escapes the Telex `oo`→`ô` digraph.
+        "boong", "xoong", "soóc", "moóc", "voọc", "coong",
     ];
 
     #[test]

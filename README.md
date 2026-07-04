@@ -54,24 +54,21 @@ nền tảng dùng chung một lõi xử lý để giữ hành vi gõ nhất qu�
   <sub>Tuỳ chỉnh phương thức gõ, kiểu đặt dấu và các tính năng thông minh trên macOS.</sub>
 </p>
 
-## Phản hồi gần như tức thời
+## Hiệu năng
 
-Funput xử lý mỗi phím trong khoảng **1,5 micro giây** — tương đương khoảng
-**650.000 phím mỗi giây**. Với tốc độ gõ thông thường chỉ vài phím mỗi giây, độ
-trễ của engine gần như không thể cảm nhận và không trở thành nút thắt trong trải
-nghiệm nhập liệu.
+Lõi xử lý viết bằng Rust. Chi phí mỗi phím, đo bằng Criterion trên release build:
 
-| Component / API | Phạm vi đo | Telex | VNI |
+| Thành phần / API | Phạm vi đo | Telex | VNI |
 |---|---|---:|---:|
-| [`funput-core::apply_checked`](crates/funput-core) | Lõi biến đổi Telex/VNI | 0,230 µs/phím | 0,204 µs/phím |
-| [`funput-engine::Engine::process_char`](crates/funput-engine) | Pipeline đầy đủ, gồm boundary và English restore | 1,50 µs/phím | 1,53 µs/phím |
-| [`funput-ffi::{funput_process_char, funput_buffer}`](crates/funput-ffi) | Engine qua C ABI và đọc composed buffer | 1,54 µs/phím | 1,53 µs/phím |
+| [`funput-core::apply`](crates/funput-core) | Lõi biến đổi Telex/VNI | 0,230 µs/phím | 0,204 µs/phím |
+| [`funput-engine::Engine::process_char`](crates/funput-engine) | Pipeline đầy đủ (boundary + English restore) | 1,50 µs/phím | 1,53 µs/phím |
+| [`funput-ffi::{funput_process_char, funput_buffer}`](crates/funput-ffi) | Engine qua C ABI + đọc composed buffer | 1,54 µs/phím | 1,53 µs/phím |
 
-> Kết quả được đo với release build trên máy Apple M-series. Số liệu bao gồm phần
-> xử lý của Funput, không bao gồm thời gian chuyển sự kiện bàn phím của hệ điều hành
-> hoặc render của ứng dụng đích.
+> Đo trên release build, máy Apple M-series; chỉ gồm phần xử lý của Funput (không
+> tính OS chuyển sự kiện bàn phím hay app đích render). Số phụ thuộc phần cứng —
+> nên chạy lại trên máy bạn.
 
-Xem [phương pháp đo, mã benchmark và cách tái lập](benchmarks/README.md).
+Xem [phương pháp đo benchmark](benchmarks/README.md).
 
 ## Trạng thái
 

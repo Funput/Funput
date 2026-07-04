@@ -69,30 +69,32 @@ keystrokes that would produce it, type those back through the real engine, and
 check we get the original syllable. A syllable is covered if it reproduces
 under **either** tone style (`hòa` and `hoà` are both valid). Smart-restore is off
 to isolate pure composition. The corpus is filtered to structurally valid
-Vietnamese syllables, so acronyms (AIDS), symbols (Ar/As) and foreign words are
-excluded.
+Vietnamese syllables, so acronyms (AIDS), symbols (Ar/As), foreign words, and
+malformed entries (stacked or misplaced diacritics) are excluded.
 
 ```sh
 # Default: the committed, MIT-clean sample corpus.
-cargo run --release -p funput-cli -- coverage benchmarks/sample.txt --show-mismatches 10
+cargo run --release -p funput-cli -- dev coverage benchmarks/sample.txt --show-mismatches 10
 
 # Headline: a large external word list (downloaded, not vendored — see below).
 sh benchmarks/fetch-corpus.sh
-cargo run --release -p funput-cli -- coverage benchmarks/.corpus/Viet74K.txt
-cargo run --release -p funput-cli -- coverage benchmarks/.corpus/Viet74K.txt --json
+cargo run --release -p funput-cli -- dev coverage benchmarks/.corpus/Viet74K.txt
+cargo run --release -p funput-cli -- dev coverage benchmarks/.corpus/Viet74K.txt --json
 ```
 
 | Corpus | Syllables | Telex | VNI |
 |---|---|---|---|
-| Viet74K (full) | 8,977 | **99.33%** | **99.70%** |
+| Viet74K (full) | 8,956 | **100%** | **100%** |
 | `sample.txt` | 137 | **100%** | **100%** |
 
-The handful of misses are genuine, explainable edges — not silent corruption:
-- **Telex digraph collisions** in rare loanword rhymes (`boong`, `boóc`): `oo`→`ô`
-  by Telex convention, so they need an alternative typing. VNI has no digraphs, so
-  it scores higher here.
-- **Malformed corpus entries** with stacked diacritics (e.g. two tones).
-- A few `gi`-onset / glide cases.
+Every structurally valid syllable round-trips under both methods. The one Telex
+subtlety — the `oo`→`ô` digraph in genuine double-`o` loanwords (`boong`, `xoong`,
+`soóc`) — is handled exactly the way a user types them: a third `o` escapes the
+digraph (`booong`→`boong`), which the encoder emits. VNI has no digraphs.
+
+Malformed corpus entries (two tone marks in one syllable, or a tone on the wrong
+vowel) are **not counted** — they are not valid Vietnamese, and the engine correctly
+declines to reproduce them (see `CORPUS_NOISE` in `crates/funput-cli/src/coverage.rs`).
 
 ## Data & licensing
 
