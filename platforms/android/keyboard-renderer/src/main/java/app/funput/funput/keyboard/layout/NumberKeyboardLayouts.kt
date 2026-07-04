@@ -1,11 +1,9 @@
 package app.funput.funput.keyboard.layout
 
 import app.funput.funput.keyboard.model.KeyRole
-import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
-import app.funput.funput.keyboard.model.KeyboardRow
 
 internal object NumberKeyboardLayouts {
     fun resolve(inputMethod: KeyboardInputMethod, mode: KeyboardEditorMode): KeyboardLayout {
@@ -15,41 +13,16 @@ internal object NumberKeyboardLayouts {
             inputMethod = inputMethod,
             suggestionBar = null,
             rows = listOf(
-                row(digit('1'), digit('2'), digit('3'), command("backspace", KeyRole.BACKSPACE)),
-                row(digit('4'), digit('5'), digit('6'), command("enter", KeyRole.ENTER)),
-                row(digit('7'), digit('8'), digit('9'), text("period", ".", "Decimal point")),
-                row(empty("left"), digit('0'), empty("right"), text("comma", ",", "Decimal comma")),
+                keypadRow(keypadDigit('1'), keypadDigit('2'), keypadDigit('3'), backspace()),
+                keypadRow(keypadDigit('4'), keypadDigit('5'), keypadDigit('6'), enter()),
+                keypadRow(keypadDigit('7'), keypadDigit('8'), keypadDigit('9'), period()),
+                keypadRow(keypadEmpty("left"), keypadDigit('0'), keypadEmpty("right"), comma()),
             ),
         )
     }
 
-    private fun row(vararg keys: KeySpec) = KeyboardRow(keys.toList())
-
-    private fun digit(value: Char) = KeySpec(
-        id = "number-$value",
-        label = value.toString(),
-        role = KeyRole.CHARACTER,
-        accessibilityLabel = value.toString(),
-    )
-
-    private fun command(id: String, role: KeyRole) = KeySpec(
-        id = id,
-        label = "",
-        role = role,
-        accessibilityLabel = id.replaceFirstChar(Char::uppercaseChar),
-    )
-
-    private fun text(id: String, value: String, accessibilityLabel: String) = KeySpec(
-        id = id,
-        label = value,
-        role = KeyRole.PUNCTUATION,
-        accessibilityLabel = accessibilityLabel,
-    )
-
-    private fun empty(position: String) = KeySpec(
-        id = "placeholder-$position",
-        label = "",
-        role = KeyRole.PLACEHOLDER,
-        accessibilityLabel = "Empty keypad position",
-    )
+    private fun backspace() = keypadCommand("backspace", KeyRole.BACKSPACE, "Backspace")
+    private fun enter() = keypadCommand("enter", KeyRole.ENTER, "Enter")
+    private fun period() = keypadText("period", ".", "Decimal point")
+    private fun comma() = keypadText("comma", ",", "Decimal comma")
 }

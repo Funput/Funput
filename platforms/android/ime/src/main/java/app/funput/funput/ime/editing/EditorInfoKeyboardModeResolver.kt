@@ -12,6 +12,7 @@ internal object EditorInfoKeyboardModeResolver {
         return when (inputType and InputType.TYPE_MASK_CLASS) {
             InputType.TYPE_CLASS_TEXT -> resolveText(inputType)
             InputType.TYPE_CLASS_NUMBER -> resolveNumber(inputType)
+            InputType.TYPE_CLASS_PHONE -> KeyboardEditorMode.PHONE
             else -> KeyboardEditorMode.TEXT
         }
     }

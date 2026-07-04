@@ -9,6 +9,7 @@ internal object EditorKeyboardLayouts {
         KeyboardEditorMode.TEXT -> KeyboardLayouts.forInputMethod(inputMethod)
         KeyboardEditorMode.EMAIL -> emailLayouts.getValue(inputMethod)
         KeyboardEditorMode.URL -> urlLayouts.getValue(inputMethod)
+        KeyboardEditorMode.PHONE -> PhoneKeyboardLayouts.resolve(inputMethod)
         KeyboardEditorMode.NUMBER,
         KeyboardEditorMode.NUMBER_DECIMAL,
         KeyboardEditorMode.NUMBER_SIGNED,

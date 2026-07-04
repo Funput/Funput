@@ -35,9 +35,9 @@ class EditorInfoKeyboardModeResolverTest {
     }
 
     @Test
-    fun `non text classes remain standard until their layouts are implemented`() {
+    fun `phone class resolves to phone mode`() {
         assertEquals(
-            KeyboardEditorMode.TEXT,
+            KeyboardEditorMode.PHONE,
             EditorInfoKeyboardModeResolver.resolve(InputType.TYPE_CLASS_PHONE),
         )
     }

@@ -10,6 +10,7 @@ enum class KeyboardEditorMode(
     TEXT(supportsVietnameseComposition = true),
     EMAIL(supportsVietnameseComposition = false),
     URL(supportsVietnameseComposition = false),
+    PHONE(supportsVietnameseComposition = false),
     NUMBER(supportsVietnameseComposition = false, isNumber = true),
     NUMBER_DECIMAL(supportsVietnameseComposition = false, isNumber = true, allowsDecimal = true),
     NUMBER_SIGNED(supportsVietnameseComposition = false, isNumber = true, allowsSigned = true),
@@ -20,4 +21,6 @@ enum class KeyboardEditorMode(
         allowsSigned = true,
     ),
     ;
+
+    val usesKeypad: Boolean get() = isNumber || this == PHONE
 }

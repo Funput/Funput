@@ -14,6 +14,7 @@ punctuation and bypass Vietnamese composition.
 
 Number editors receive a suggestion-free 4×4 keypad with fixed period and comma
 keys. Signed and decimal flags remain represented in the resolved editor mode.
+Phone editors use a matching 4×4 dial pad with direct `+`, `*`, and `#` keys.
 
 `AndroidCompositionSession` renders the shared Rust engine buffer with
 `setComposingText()`. JNI is intentionally narrow: one synchronous call per text
