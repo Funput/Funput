@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="emoji_panel_letters">ABC</string>
+    <string name="emoji_panel_letters" translatable="false">ABC</string>
     <string name="emoji_panel_letters_description">Return to letters</string>
     <string name="emoji_panel_backspace_description">Backspace</string>
 </resources>

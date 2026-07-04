@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Funput.EmojiPicker" parent="android:style/Theme.Material.NoActionBar">
+    <style name="Theme.Funput.EmojiPicker.Base" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:colorAccent">#8DB8FF</item>
         <item name="android:colorControlNormal">#B8E2E8F7</item>
         <item name="android:fontFamily">sans</item>
         <item name="android:navigationBarColor">#090D18</item>
-        <item name="android:windowLightNavigationBar">false</item>
     </style>
+
+    <style name="Theme.Funput.EmojiPicker" parent="Theme.Funput.EmojiPicker.Base" />
 </resources>
