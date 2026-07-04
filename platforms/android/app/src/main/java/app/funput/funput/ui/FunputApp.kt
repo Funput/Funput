@@ -16,6 +16,7 @@ import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.playground.PlaygroundTextBuffer
 import app.funput.funput.ui.playground.PlaygroundTextBufferSaver
+import app.funput.funput.ui.playground.PlaygroundCallbackReducer
 import app.funput.funput.ui.playground.PlaygroundKeyActionReducer
 import app.funput.funput.ui.theme.FunputTheme
 
@@ -46,8 +47,12 @@ fun FunputApp() {
                     lastAction = action
                 },
                 onEmojiPanelOpened = { lastUiCallback = "Emoji panel opened" },
-                onEmojiSelected = { emoji -> lastUiCallback = "Emoji: $emoji" },
+                onEmojiSelected = { emoji ->
+                    textBuffer = PlaygroundCallbackReducer.emojiSelected(textBuffer, emoji)
+                    lastUiCallback = "Emoji: $emoji"
+                },
                 onSuggestionSelected = { selection ->
+                    textBuffer = PlaygroundCallbackReducer.suggestionSelected(textBuffer, selection)
                     lastUiCallback = "Suggestion: ${selection.text}"
                 },
                 modifier = Modifier.padding(innerPadding),

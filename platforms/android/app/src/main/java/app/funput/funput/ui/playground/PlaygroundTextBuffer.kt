@@ -12,6 +12,14 @@ internal data class PlaygroundTextBuffer private constructor(
         return PlaygroundTextBuffer(updatedText, cursor + value.length)
     }
 
+    fun replace(start: Int, end: Int, value: String): PlaygroundTextBuffer {
+        require(start in 0..end && end <= text.length) { "Replacement range must be within the text" }
+        val safeStart = PlaygroundGraphemeNavigator.floor(text, start)
+        val safeEnd = PlaygroundGraphemeNavigator.floor(text, end)
+        val updatedText = text.replaceRange(safeStart, safeEnd, value)
+        return PlaygroundTextBuffer(updatedText, safeStart + value.length)
+    }
+
     fun backspace(): PlaygroundTextBuffer {
         if (cursor == 0) return this
         val deleteFrom = PlaygroundGraphemeNavigator.previous(text, cursor)
