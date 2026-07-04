@@ -16,9 +16,8 @@ Kotlin; Vietnamese composition will be provided by the shared Rust engine.
 Dependency direction is intentionally one-way:
 
 ```text
-app -> ime
-app -> keyboard-ui -> keyboard-renderer -> theme-runtime
-                   \--------------------> theme-runtime
+app -> ime -> keyboard-ui -> keyboard-renderer -> theme-runtime
+app --------> keyboard-ui ----------------------> theme-runtime
 ```
 
 Keyboard hosting in the IME, Rust JNI, billing, and the remote theme store are

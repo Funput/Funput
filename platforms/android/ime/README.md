@@ -1,5 +1,5 @@
 # Funput IME
 
 Owns the Android `InputMethodService` lifecycle and the bridge to the focused
-editor. The initial milestone only registers Funput with the system; keyboard UI
-hosting and `InputConnection` editing are added in separate, testable steps.
+editor. It hosts `FunputKeyboardView` in the system IME window; `InputConnection`
+editing is added as a separate, testable step.

@@ -19,5 +19,6 @@ android {
 }
 
 dependencies {
+    implementation(project(":keyboard-ui"))
     testImplementation(libs.junit)
 }
