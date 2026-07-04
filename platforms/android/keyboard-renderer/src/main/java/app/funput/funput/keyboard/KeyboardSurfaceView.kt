@@ -6,7 +6,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
-import app.funput.funput.keyboard.interaction.KeyboardActionDispatcher
+import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.KeyboardTouchHandler
 import app.funput.funput.keyboard.layout.KeyboardGeometry
 import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
@@ -34,8 +34,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var inputMethod: KeyboardInputMethod = KeyboardInputMethod.TELEX
         set(value) {
             if (field == value) return
-            touchHandler.clear()
-            actionDispatcher.reset()
+            interaction.reset()
             field = value
             keyboardLayout = KeyboardLayouts.forInputMethod(value)
             requestLayout()
@@ -60,22 +59,20 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         }
 
     var onKeyAction: ((KeyAction) -> Unit)? = null
-    val shiftState: ShiftState get() = actionDispatcher.shiftState
+    val shiftState: ShiftState get() = interaction.shiftState
 
     private var keyboardLayout: KeyboardLayout = KeyboardLayouts.forInputMethod(inputMethod)
     private var resolvedKeyboard: ResolvedKeyboard? = null
     private val renderer = KeyboardCanvasRenderer(resources)
-    private val actionDispatcher = KeyboardActionDispatcher(
+    private val interaction = KeyboardSurfaceInteraction(
+        keyAt = { x, y -> resolvedKeyboard?.keyAt(x, y)?.spec?.id },
         keySpec = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.spec },
         onAction = { action -> onKeyAction?.invoke(action) },
-        onShiftStateChanged = ::postInvalidateOnAnimation,
-        doubleTapTimeoutMillis = ViewConfiguration.getDoubleTapTimeout().toLong(),
-    )
-    private val touchHandler = KeyboardTouchHandler(
-        keyAt = { x, y -> resolvedKeyboard?.keyAt(x, y)?.spec?.id },
-        onPressedStateChanged = ::postInvalidateOnAnimation,
-        onKeyReleased = actionDispatcher::dispatch,
+        onVisualStateChanged = ::postInvalidateOnAnimation,
+        schedule = { task, delay -> postDelayed(task, delay) },
+        cancel = ::removeCallbacks,
         requestParentIntercept = { disallow -> parent?.requestDisallowInterceptTouchEvent(disallow) },
+        doubleTapTimeoutMillis = ViewConfiguration.getDoubleTapTimeout().toLong(),
     )
 
     init {
@@ -101,10 +98,10 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val keyboard = resolvedKeyboard ?: return
-        renderer.draw(canvas, width, height, keyboard, suggestions, touchHandler, shiftState)
+        renderer.draw(canvas, width, height, keyboard, suggestions, interaction, shiftState)
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean = when (touchHandler.onTouchEvent(event)) {
+    override fun onTouchEvent(event: MotionEvent): Boolean = when (interaction.onTouchEvent(event)) {
         KeyboardTouchHandler.Result.UNHANDLED -> false
         KeyboardTouchHandler.Result.HANDLED -> true
         KeyboardTouchHandler.Result.CLICK -> {
@@ -120,11 +117,11 @@ class KeyboardSurfaceView @JvmOverloads constructor(
 
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus)
-        if (!hasWindowFocus) touchHandler.clear()
+        if (!hasWindowFocus) interaction.clear()
     }
 
     override fun onDetachedFromWindow() {
-        touchHandler.clear()
+        interaction.clear()
         super.onDetachedFromWindow()
     }
 

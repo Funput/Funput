@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -38,6 +39,7 @@ private val PreviewSuggestions = listOf("mình", "chào", "bạn")
 fun FunputApp() {
     var inputMethod by rememberSaveable { mutableStateOf(KeyboardInputMethod.TELEX) }
     var lastAction by remember { mutableStateOf<KeyAction?>(null) }
+    var actionCount by remember { mutableIntStateOf(0) }
 
     FunputTheme(dynamicColor = false) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -45,7 +47,11 @@ fun FunputApp() {
                 inputMethod = inputMethod,
                 onInputMethodSelected = { selectedMethod -> inputMethod = selectedMethod },
                 lastAction = lastAction,
-                onKeyAction = { action -> lastAction = action },
+                actionCount = actionCount,
+                onKeyAction = { action ->
+                    actionCount = if (action == lastAction) actionCount + 1 else 1
+                    lastAction = action
+                },
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -57,6 +63,7 @@ private fun KeyboardPreviewScreen(
     inputMethod: KeyboardInputMethod,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     lastAction: KeyAction?,
+    actionCount: Int,
     onKeyAction: (KeyAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -97,7 +104,7 @@ private fun KeyboardPreviewScreen(
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = stringResource(R.string.last_key_action, lastAction.previewLabel()),
+                text = stringResource(R.string.last_key_action, lastAction.previewLabel(actionCount)),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.labelMedium,
             )

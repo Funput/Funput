@@ -28,6 +28,8 @@ internal class KeyboardActionDispatcher(
         if (shiftController.consumeAfter(key.role)) onShiftStateChanged()
     }
 
+    fun repeatBackspace() = onAction(KeyAction.Backspace)
+
     fun reset() {
         if (shiftController.reset()) onShiftStateChanged()
     }

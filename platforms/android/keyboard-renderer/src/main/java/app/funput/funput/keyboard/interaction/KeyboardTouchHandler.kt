@@ -6,7 +6,9 @@ import android.view.MotionEvent
 internal class KeyboardTouchHandler(
     keyAt: (x: Float, y: Float) -> String?,
     onPressedStateChanged: () -> Unit,
-    private val onKeyReleased: (keyId: String, eventTimeMillis: Long) -> Unit,
+    private val onPointerKeyChanged: (pointerId: Int, keyId: String?) -> Unit,
+    private val onKeyReleased: (pointerId: Int, keyId: String?, eventTimeMillis: Long) -> Unit,
+    private val onCancelled: () -> Unit,
     private val requestParentIntercept: (disallow: Boolean) -> Unit,
 ) : PressedKeyState {
     private val pointerSession = PointerKeySession(keyAt, onPressedStateChanged)
@@ -36,7 +38,10 @@ internal class KeyboardTouchHandler(
 
     override fun isPressed(keyId: String): Boolean = pointerSession.isPressed(keyId)
 
-    fun clear() = pointerSession.clear()
+    fun clear() {
+        pointerSession.clear()
+        onCancelled()
+    }
 
     private fun handleDown(event: MotionEvent): Result {
         val handled = update(event, event.actionIndex)
@@ -51,11 +56,16 @@ internal class KeyboardTouchHandler(
     }
 
     private fun update(event: MotionEvent, pointerIndex: Int): Boolean {
-        return pointerSession.update(
-            pointerId = event.getPointerId(pointerIndex),
+        val pointerId = event.getPointerId(pointerIndex)
+        val previousKeyId = pointerSession.keyForPointer(pointerId)
+        val handled = pointerSession.update(
+            pointerId = pointerId,
             x = event.getX(pointerIndex),
             y = event.getY(pointerIndex),
         )
+        val currentKeyId = pointerSession.keyForPointer(pointerId)
+        if (previousKeyId != currentKeyId) onPointerKeyChanged(pointerId, currentKeyId)
+        return handled
     }
 
     private fun release(event: MotionEvent, pointerIndex: Int): String? {
@@ -64,7 +74,7 @@ internal class KeyboardTouchHandler(
             x = event.getX(pointerIndex),
             y = event.getY(pointerIndex),
         )
-        if (keyId != null) onKeyReleased(keyId, event.eventTime)
+        onKeyReleased(event.getPointerId(pointerIndex), keyId, event.eventTime)
         return keyId
     }
 
