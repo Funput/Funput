@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.FrameLayout
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.model.KeyAction
+import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
@@ -28,6 +29,12 @@ class FunputKeyboardView @JvmOverloads constructor(
         set(value) {
             keyboardSurface.inputMethod = value
             requestLayout()
+        }
+
+    var enterAction: KeyboardEnterAction
+        get() = keyboardSurface.enterAction
+        set(value) {
+            keyboardSurface.enterAction = value
         }
 
     var keyboardTheme: KeyboardTheme

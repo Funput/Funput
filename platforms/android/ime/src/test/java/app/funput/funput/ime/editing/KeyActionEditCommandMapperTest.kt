@@ -27,6 +27,13 @@ class KeyActionEditCommandMapperTest {
     }
 
     @Test
+    fun `enter uses the command resolved for the active editor`() {
+        val command = ImeEditCommand.PerformEditorAction(42)
+
+        assertEquals(command, KeyAction.Enter.toImeEditCommand(command))
+    }
+
+    @Test
     fun `state and panel actions do not edit text`() {
         val actions = listOf(
             KeyAction.Shift(ShiftState.CAPS_LOCK),

@@ -44,21 +44,4 @@ internal class NavigationKeyIconRenderer(private val metrics: RenderMetrics) {
         }
     }
 
-    fun drawEnter(canvas: Canvas, key: ResolvedKey) {
-        val size = min(key.bounds.width, key.bounds.height) * 0.34f
-        val centerX = key.bounds.centerX
-        val centerY = key.bounds.centerY
-        val right = centerX + size * 0.5f
-        val left = centerX - size * 0.5f
-        path.reset()
-        path.moveTo(right, centerY - size * 0.48f)
-        path.lineTo(right, centerY + size * 0.18f)
-        path.quadTo(right, centerY + size * 0.45f, right - size * 0.28f, centerY + size * 0.45f)
-        path.lineTo(left, centerY + size * 0.45f)
-        path.moveTo(left, centerY + size * 0.45f)
-        path.lineTo(left + size * 0.3f, centerY + size * 0.15f)
-        path.moveTo(left, centerY + size * 0.45f)
-        path.lineTo(left + size * 0.3f, centerY + size * 0.75f)
-        canvas.drawPath(path, paint)
-    }
 }

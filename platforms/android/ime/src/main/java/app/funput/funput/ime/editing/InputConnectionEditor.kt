@@ -14,6 +14,7 @@ internal class InputConnectionEditor {
         return when (command) {
             is ImeEditCommand.CommitText -> connection.commitText(command.text, CursorAfterText)
             ImeEditCommand.DeleteBackward -> deleteBackward(connection)
+            is ImeEditCommand.PerformEditorAction -> connection.performEditorAction(command.actionId)
         }
     }
 

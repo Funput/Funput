@@ -14,6 +14,7 @@ import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
 import app.funput.funput.keyboard.layout.KeyboardLayouts
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.layout.resolveGeometry
+import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
@@ -59,6 +60,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             invalidate()
         }
 
+    var enterAction: KeyboardEnterAction = KeyboardEnterAction.Standard.NEW_LINE
+        set(value) { field = value; invalidate() }
+
     val callbacks = KeyboardCallbacks()
     val shiftState: ShiftState get() = interaction.shiftState
     var language: KeyboardLanguage
@@ -83,13 +87,11 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         doubleTapTimeoutMillis = ViewConfiguration.getDoubleTapTimeout().toLong(),
         density = resources.displayMetrics.density,
     )
-
     init {
         renderer.updateTheme(keyboardTheme, width, height)
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
         isClickable = true
     }
-
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
         setMeasuredDimension(
@@ -107,7 +109,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val keyboard = resolvedKeyboard ?: return
-        renderer.draw(canvas, width, height, keyboard, suggestions, interaction, shiftState, language)
+        renderer.draw(canvas, width, height, keyboard, suggestions, interaction, shiftState, language, enterAction)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean = when (interaction.onTouchEvent(event)) {
@@ -142,7 +144,6 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         resolveGeometry()
         invalidate()
     }
-
     companion object {
         fun recommendedHeightDp(method: KeyboardInputMethod) = KeyboardDimensions.recommendedHeightDp(method)
     }

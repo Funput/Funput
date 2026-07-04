@@ -6,6 +6,7 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole
+import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.theme.KeyboardTheme
@@ -36,12 +37,13 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         isPressed: Boolean,
         shiftState: ShiftState,
         language: KeyboardLanguage,
+        enterAction: KeyboardEnterAction,
     ) {
         val isActivated = key.spec.role == KeyRole.SHIFT && shiftState.isActive
         drawSurface(canvas, key, theme, isPressed, isActivated)
         when {
             key.spec.role == KeyRole.SPACE -> spacebarRenderer.draw(canvas, key, theme, language)
-            !iconRenderer.draw(canvas, key, shiftState) -> drawLabels(canvas, key, theme, shiftState)
+            !iconRenderer.draw(canvas, key, shiftState, enterAction) -> drawLabels(canvas, key, theme, shiftState)
         }
     }
 

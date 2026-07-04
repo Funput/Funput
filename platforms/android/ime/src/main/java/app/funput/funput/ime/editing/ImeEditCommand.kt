@@ -9,4 +9,5 @@ internal sealed interface ImeEditCommand {
     }
 
     data object DeleteBackward : ImeEditCommand
+    data class PerformEditorAction(val actionId: Int) : ImeEditCommand
 }
