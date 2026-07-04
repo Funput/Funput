@@ -35,7 +35,8 @@ fun FunputApp() {
                     actionCount = if (action == lastAction) actionCount + 1 else 1
                     lastAction = action
                 },
-                onEmojiRequested = { lastUiCallback = "Emoji" },
+                onEmojiPanelOpened = { lastUiCallback = "Emoji panel opened" },
+                onEmojiSelected = { emoji -> lastUiCallback = "Emoji: $emoji" },
                 onSuggestionSelected = { selection ->
                     lastUiCallback = "Suggestion: ${selection.text}"
                 },

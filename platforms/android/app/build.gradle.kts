@@ -36,7 +36,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":keyboard-renderer"))
+    implementation(project(":keyboard-ui"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

@@ -116,6 +116,7 @@ app/
     └── android/
         ├── app/                     # Android application module
         ├── ime/                     # IME service và InputConnection adapter
+        ├── keyboard-ui/             # điều phối QWERTY, emoji và các panel sau này
         ├── keyboard-renderer/       # layout, hit testing, Canvas renderer
         ├── theme-runtime/           # schema, parser, resolver, asset cache
         ├── theme-store/             # catalog, billing, download, entitlement

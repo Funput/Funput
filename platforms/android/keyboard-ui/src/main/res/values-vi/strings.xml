@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="emoji_panel_letters_description">Quay lại bàn phím chữ</string>
+    <string name="emoji_panel_backspace_description">Xóa lùi</string>
+</resources>

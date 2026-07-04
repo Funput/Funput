@@ -20,10 +20,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import app.funput.funput.R
-import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.SuggestionSelection
+import app.funput.funput.keyboard.ui.FunputKeyboardView
 
 private val PreviewSuggestions = listOf("mình", "chào", "bạn")
 
@@ -35,7 +35,8 @@ internal fun KeyboardPreviewScreen(
     actionCount: Int,
     lastUiCallback: String,
     onKeyAction: (KeyAction) -> Unit,
-    onEmojiRequested: () -> Unit,
+    onEmojiPanelOpened: () -> Unit,
+    onEmojiSelected: (String) -> Unit,
     onSuggestionSelected: (SuggestionSelection) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -56,7 +57,8 @@ internal fun KeyboardPreviewScreen(
         KeyboardPreview(
             inputMethod = inputMethod,
             onKeyAction = onKeyAction,
-            onEmojiRequested = onEmojiRequested,
+            onEmojiPanelOpened = onEmojiPanelOpened,
+            onEmojiSelected = onEmojiSelected,
             onSuggestionSelected = onSuggestionSelected,
         )
     }
@@ -109,22 +111,24 @@ private fun PreviewHeader(
 private fun KeyboardPreview(
     inputMethod: KeyboardInputMethod,
     onKeyAction: (KeyAction) -> Unit,
-    onEmojiRequested: () -> Unit,
+    onEmojiPanelOpened: () -> Unit,
+    onEmojiSelected: (String) -> Unit,
     onSuggestionSelected: (SuggestionSelection) -> Unit,
 ) {
     AndroidView(
-        factory = { context -> KeyboardSurfaceView(context) },
+        factory = { context -> FunputKeyboardView(context) },
         update = { keyboard ->
             keyboard.inputMethod = inputMethod
             keyboard.suggestions = PreviewSuggestions
             keyboard.callbacks.onKeyAction = onKeyAction
-            keyboard.callbacks.onEmojiRequested = onEmojiRequested
+            keyboard.callbacks.onEmojiPanelOpened = onEmojiPanelOpened
+            keyboard.callbacks.onEmojiSelected = onEmojiSelected
             keyboard.callbacks.onSuggestionSelected = onSuggestionSelected
         },
         modifier = Modifier
             .padding(horizontal = 8.dp)
             .fillMaxWidth()
-            .height(KeyboardSurfaceView.recommendedHeightDp(inputMethod).dp)
+            .height(FunputKeyboardView.recommendedHeightDp(inputMethod).dp)
             .clip(RoundedCornerShape(18.dp)),
     )
 }
