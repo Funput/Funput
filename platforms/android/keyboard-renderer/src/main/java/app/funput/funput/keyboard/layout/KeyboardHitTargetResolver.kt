@@ -8,7 +8,9 @@ package app.funput.funput.keyboard.layout
  */
 internal object KeyboardHitTargetResolver {
     fun resolve(keyboard: ResolvedKeyboard): ResolvedKeyboard {
-        val emojiKey = resolveEmojiKey(keyboard)
+        val suggestionBar = keyboard.suggestionBar?.let { bar ->
+            bar.copy(emojiKey = resolveEmojiKey(keyboard, bar))
+        }
         val rows = keyboard.rows.mapIndexed { rowIndex, row ->
             val hitTop = rowHitTop(keyboard, rowIndex)
             val hitBottom = rowHitBottom(keyboard, rowIndex)
@@ -24,13 +26,15 @@ internal object KeyboardHitTargetResolver {
             }
         }
         return keyboard.copy(
-            suggestionBar = keyboard.suggestionBar.copy(emojiKey = emojiKey),
+            suggestionBar = suggestionBar,
             rows = rows,
         )
     }
 
-    private fun resolveEmojiKey(keyboard: ResolvedKeyboard): ResolvedKey {
-        val bar = keyboard.suggestionBar
+    private fun resolveEmojiKey(
+        keyboard: ResolvedKeyboard,
+        bar: ResolvedSuggestionBar,
+    ): ResolvedKey {
         val key = bar.emojiKey
         return key.copy(
             hitBounds = KeyBounds(
@@ -45,7 +49,7 @@ internal object KeyboardHitTargetResolver {
     private fun rowHitTop(keyboard: ResolvedKeyboard, rowIndex: Int): Float {
         val row = keyboard.rows[rowIndex]
         return if (rowIndex == 0) {
-            midpoint(keyboard.suggestionBar.bounds.bottom, row.first().bounds.top)
+            keyboard.suggestionBar?.let { midpoint(it.bounds.bottom, row.first().bounds.top) } ?: 0f
         } else {
             midpoint(keyboard.rows[rowIndex - 1].first().bounds.bottom, row.first().bounds.top)
         }

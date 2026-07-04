@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.model
 
 enum class KeyRole {
+    PLACEHOLDER,
     CHARACTER,
     VNI_MODIFIER,
     PUNCTUATION,

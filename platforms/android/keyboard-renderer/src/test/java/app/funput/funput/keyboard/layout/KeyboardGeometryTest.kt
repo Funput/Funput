@@ -72,7 +72,7 @@ class KeyboardGeometryTest {
     @Test
     fun suggestionBarPlacesEmojiAtTheRightEdge() {
         val keyboard = resolve(KeyboardInputMethod.TELEX)
-        val suggestionBar = keyboard.suggestionBar
+        val suggestionBar = requireNotNull(keyboard.suggestionBar)
 
         assertEquals("emoji", suggestionBar.emojiKey.spec.id)
         assertTrue(suggestionBar.suggestionsBounds.right < suggestionBar.emojiKey.bounds.left)

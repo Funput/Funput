@@ -38,7 +38,8 @@ class SymbolLayoutsTest {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             listOf(KeyboardLayoutMode.SYMBOLS_PRIMARY, KeyboardLayoutMode.SYMBOLS_SECONDARY).forEach { mode ->
                 val layout = KeyboardLayoutResolver.resolve(inputMethod, mode)
-                val ids = listOf(layout.suggestionBar.emojiKey.id) + layout.rows.flattenedKeys().map { it.id }
+                val emojiId = requireNotNull(layout.suggestionBar).emojiKey.id
+                val ids = listOf(emojiId) + layout.rows.flattenedKeys().map { it.id }
                 assertEquals(ids.size, ids.distinct().size)
             }
         }

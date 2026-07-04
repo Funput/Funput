@@ -44,7 +44,7 @@ data class SuggestionBarSpec(
 data class KeyboardLayout(
     val id: String,
     val inputMethod: KeyboardInputMethod,
-    val suggestionBar: SuggestionBarSpec,
+    val suggestionBar: SuggestionBarSpec?,
     val rows: List<KeyboardRow>,
 ) {
     init {
@@ -52,7 +52,7 @@ data class KeyboardLayout(
         require(rows.isNotEmpty()) { "Keyboard layout must contain at least one row" }
 
         val keyIds = buildList {
-            add(suggestionBar.emojiKey.id)
+            suggestionBar?.emojiKey?.let { add(it.id) }
             rows.forEach { row -> addAll(row.keys.map(KeySpec::id)) }
         }
         require(keyIds.distinct().size == keyIds.size) { "Key ids must be unique within a layout" }

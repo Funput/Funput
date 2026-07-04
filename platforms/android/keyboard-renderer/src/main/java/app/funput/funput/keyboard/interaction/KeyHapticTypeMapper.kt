@@ -11,7 +11,8 @@ internal object KeyHapticTypeMapper {
         else -> null
     }
 
-    private fun forRole(role: KeyRole): KeyboardHapticType = when (role) {
+    private fun forRole(role: KeyRole): KeyboardHapticType? = when (role) {
+        KeyRole.PLACEHOLDER -> null
         KeyRole.CHARACTER,
         KeyRole.VNI_MODIFIER,
         KeyRole.PUNCTUATION,

@@ -9,9 +9,9 @@ object KeyboardDimensions {
     fun recommendedHeightDp(
         inputMethod: KeyboardInputMethod,
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
-    ): Float = if (editorMode.supportsVietnameseComposition && inputMethod == KeyboardInputMethod.VNI) {
-        348f
-    } else {
-        290f
+    ): Float = when {
+        editorMode.isNumber -> 300f
+        editorMode.supportsVietnameseComposition && inputMethod == KeyboardInputMethod.VNI -> 348f
+        else -> 290f
     }
 }

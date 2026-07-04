@@ -16,8 +16,10 @@ object KeyboardGeometry {
         require(height > 0f) { "Keyboard height must be positive" }
 
         val contentWidth = width - spec.horizontalPadding * 2f
-        val contentHeight = height - spec.verticalPadding * 2f -
-            spec.suggestionBarHeight - spec.suggestionBarGap
+        val hasSuggestionBar = layout.suggestionBar != null
+        val barHeight = if (hasSuggestionBar) spec.suggestionBarHeight else 0f
+        val barGap = if (hasSuggestionBar) spec.suggestionBarGap else 0f
+        val contentHeight = height - spec.verticalPadding * 2f - barHeight - barGap
         val rowHeight = (contentHeight - spec.verticalGap * (layout.rows.size - 1)) /
             layout.rows.size
         require(contentWidth > 0f && rowHeight > 0f) {
@@ -27,7 +29,7 @@ object KeyboardGeometry {
         val canonicalUnit = (contentWidth - spec.horizontalGap * (CanonicalColumnCount - 1)) /
             CanonicalColumnCount
         val suggestionBar = resolveSuggestionBar(layout, width, spec)
-        val rowsTop = suggestionBar.bounds.bottom + spec.suggestionBarGap
+        val rowsTop = suggestionBar?.bounds?.bottom?.plus(spec.suggestionBarGap) ?: spec.verticalPadding
         val rows = layout.rows.mapIndexed { rowIndex, row ->
             val rowTop = rowsTop + rowIndex * (rowHeight + spec.verticalGap)
             val inset = canonicalUnit * row.horizontalInsetUnits
@@ -55,7 +57,8 @@ object KeyboardGeometry {
         layout: KeyboardLayout,
         width: Float,
         spec: KeyboardGeometrySpec,
-    ): ResolvedSuggestionBar {
+    ): ResolvedSuggestionBar? {
+        val barSpec = layout.suggestionBar ?: return null
         val top = spec.verticalPadding
         val bottom = top + spec.suggestionBarHeight
         val left = spec.horizontalPadding
@@ -65,7 +68,7 @@ object KeyboardGeometry {
             bounds = KeyBounds(left, top, right, bottom),
             suggestionsBounds = KeyBounds(left, top, emojiLeft - spec.horizontalGap, bottom),
             emojiKey = ResolvedKey(
-                layout.suggestionBar.emojiKey,
+                barSpec.emojiKey,
                 KeyBounds(emojiLeft, top, right, bottom),
             ),
         )

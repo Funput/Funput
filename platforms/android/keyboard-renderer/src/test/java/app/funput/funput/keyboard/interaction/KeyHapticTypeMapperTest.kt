@@ -22,10 +22,12 @@ class KeyHapticTypeMapperTest {
     fun `maps suggestions but ignores empty surface`() {
         assertEquals(KeyboardHapticType.CONTROL, KeyHapticTypeMapper.forTarget(null, isSuggestion = true))
         assertNull(KeyHapticTypeMapper.forTarget(null, isSuggestion = false))
+        assertNull(KeyHapticTypeMapper.forTarget(key(KeyRole.PLACEHOLDER), isSuggestion = false))
     }
 
     private fun assertMapped(role: KeyRole, expected: KeyboardHapticType) {
-        val key = KeySpec(id = role.name, label = role.name, role = role)
-        assertEquals(expected, KeyHapticTypeMapper.forTarget(key, isSuggestion = false))
+        assertEquals(expected, KeyHapticTypeMapper.forTarget(key(role), isSuggestion = false))
     }
+
+    private fun key(role: KeyRole) = KeySpec(id = role.name, label = role.name, role = role)
 }

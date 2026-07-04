@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.model
 
 internal fun KeySpec.toKeyAction(shiftState: ShiftState): KeyAction? = when (role) {
+    KeyRole.PLACEHOLDER -> null
     KeyRole.CHARACTER -> KeyAction.Input(
         keyId = id,
         text = if (shiftState.isActive) shiftedLabel ?: label else label,

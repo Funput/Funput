@@ -32,7 +32,7 @@ class KeyboardLayoutsTest {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             val layout = KeyboardLayouts.forInputMethod(inputMethod)
             val ids = buildList {
-                add(layout.suggestionBar.emojiKey.id)
+                add(requireNotNull(layout.suggestionBar).emojiKey.id)
                 layout.rows.forEach { row -> addAll(row.keys.map { key -> key.id }) }
             }
 
@@ -45,7 +45,7 @@ class KeyboardLayoutsTest {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             val layout = KeyboardLayouts.forInputMethod(inputMethod)
             val actionKeys = layout.rows.last().keys
-            val emoji = layout.suggestionBar.emojiKey
+            val emoji = requireNotNull(layout.suggestionBar).emojiKey
             val space = actionKeys.first { key -> key.id == "space" }
 
             assertEquals(KeyRole.EMOJI, emoji.role)

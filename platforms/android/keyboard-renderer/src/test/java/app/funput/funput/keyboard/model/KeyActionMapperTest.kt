@@ -40,8 +40,9 @@ class KeyActionMapperTest {
     }
 
     @Test
-    fun emojiDoesNotMapToAKeyAction() {
+    fun nonActionKeysDoNotMapToAKeyAction() {
         assertNull(key(KeyRole.EMOJI).toKeyAction(ShiftState.OFF))
+        assertNull(key(KeyRole.PLACEHOLDER).toKeyAction(ShiftState.OFF))
     }
 
     private fun key(role: KeyRole, label: String = role.name): KeySpec = KeySpec(

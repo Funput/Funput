@@ -49,7 +49,9 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         enterAction: KeyboardEnterAction,
     ) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
-        suggestionBarRenderer.draw(canvas, keyboard.suggestionBar, suggestions, pressedKeys)
+        keyboard.suggestionBar?.let { bar ->
+            suggestionBarRenderer.draw(canvas, bar, suggestions, pressedKeys)
+        }
         keyboard.keys.forEach { key ->
             keyRenderer.draw(
                 canvas,

@@ -26,7 +26,7 @@ class KeyboardInteractionTargetsTest {
 
     @Test
     fun eachVisibleSuggestionHasItsOwnTarget() {
-        val bounds = keyboard.suggestionBar.suggestionsBounds
+        val bounds = requireNotNull(keyboard.suggestionBar).suggestionsBounds
         val segmentWidth = bounds.width / SuggestionCount
 
         repeat(SuggestionCount) { index ->
@@ -40,7 +40,7 @@ class KeyboardInteractionTargetsTest {
 
     @Test
     fun emptySuggestionListLeavesBarNonInteractive() {
-        val bounds = keyboard.suggestionBar.suggestionsBounds
+        val bounds = requireNotNull(keyboard.suggestionBar).suggestionsBounds
 
         assertNull(keyboard.interactionTargetAt(bounds.centerX, bounds.centerY, 0))
     }
@@ -57,7 +57,7 @@ class KeyboardInteractionTargetsTest {
 
     @Test
     fun emojiStillResolvesAsAKeyTarget() {
-        val emoji = keyboard.suggestionBar.emojiKey
+        val emoji = requireNotNull(keyboard.suggestionBar).emojiKey
 
         assertEquals(
             emoji.spec.id,

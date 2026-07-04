@@ -53,14 +53,14 @@ class KeyboardHitTesterTest {
 
     @Test
     fun suggestionTextAreaDoesNotResolveToAKey() {
-        val bounds = keyboard.suggestionBar.suggestionsBounds
+        val bounds = requireNotNull(keyboard.suggestionBar).suggestionsBounds
 
         assertNull(keyboard.keyAt(bounds.centerX, bounds.centerY))
     }
 
     @Test
     fun emojiTargetAbsorbsItsAdjacentGap() {
-        val bar = keyboard.suggestionBar
+        val bar = requireNotNull(keyboard.suggestionBar)
         val midpoint = (bar.suggestionsBounds.right + bar.emojiKey.bounds.left) / 2f
 
         assertNull(keyboard.keyAt(midpoint - TestOffset, bar.bounds.centerY))

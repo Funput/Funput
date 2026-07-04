@@ -39,6 +39,7 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         language: KeyboardLanguage,
         enterAction: KeyboardEnterAction,
     ) {
+        if (key.spec.role == KeyRole.PLACEHOLDER) return
         val isActivated = key.spec.role == KeyRole.SHIFT && shiftState.isActive
         drawSurface(canvas, key, theme, isPressed, isActivated)
         when {
@@ -113,6 +114,7 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
 
     private val KeyRole.labelSizeSp: Float
         get() = when (this) {
+            KeyRole.PLACEHOLDER,
             KeyRole.CHARACTER, KeyRole.VNI_MODIFIER, KeyRole.PUNCTUATION -> CharacterLabelSizeSp
             else -> SpecialLabelSizeSp
         }

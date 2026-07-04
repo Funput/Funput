@@ -9,6 +9,11 @@ internal object EditorKeyboardLayouts {
         KeyboardEditorMode.TEXT -> KeyboardLayouts.forInputMethod(inputMethod)
         KeyboardEditorMode.EMAIL -> emailLayouts.getValue(inputMethod)
         KeyboardEditorMode.URL -> urlLayouts.getValue(inputMethod)
+        KeyboardEditorMode.NUMBER,
+        KeyboardEditorMode.NUMBER_DECIMAL,
+        KeyboardEditorMode.NUMBER_SIGNED,
+        KeyboardEditorMode.NUMBER_SIGNED_DECIMAL,
+        -> NumberKeyboardLayouts.resolve(inputMethod, editorMode)
     }
 
     private val emailLayouts = KeyboardInputMethod.entries.associateWith { method ->

@@ -31,11 +31,11 @@ data class ResolvedSuggestionBar(
 data class ResolvedKeyboard(
     val width: Float,
     val height: Float,
-    val suggestionBar: ResolvedSuggestionBar,
+    val suggestionBar: ResolvedSuggestionBar?,
     val rows: List<List<ResolvedKey>>,
 ) {
     val keys: List<ResolvedKey> = buildList {
-        add(suggestionBar.emojiKey)
+        suggestionBar?.emojiKey?.let(::add)
         rows.forEach(::addAll)
     }
     private val hitTester = KeyboardHitTester(width, height, keys)

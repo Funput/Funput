@@ -1,8 +1,23 @@
 package app.funput.funput.keyboard.model
 
 /** Describes the focused editor so the renderer and IME can apply matching behavior. */
-enum class KeyboardEditorMode(val supportsVietnameseComposition: Boolean) {
+enum class KeyboardEditorMode(
+    val supportsVietnameseComposition: Boolean,
+    val isNumber: Boolean = false,
+    val allowsDecimal: Boolean = false,
+    val allowsSigned: Boolean = false,
+) {
     TEXT(supportsVietnameseComposition = true),
     EMAIL(supportsVietnameseComposition = false),
     URL(supportsVietnameseComposition = false),
+    NUMBER(supportsVietnameseComposition = false, isNumber = true),
+    NUMBER_DECIMAL(supportsVietnameseComposition = false, isNumber = true, allowsDecimal = true),
+    NUMBER_SIGNED(supportsVietnameseComposition = false, isNumber = true, allowsSigned = true),
+    NUMBER_SIGNED_DECIMAL(
+        supportsVietnameseComposition = false,
+        isNumber = true,
+        allowsDecimal = true,
+        allowsSigned = true,
+    ),
+    ;
 }

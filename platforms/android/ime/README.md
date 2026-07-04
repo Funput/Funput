@@ -12,6 +12,9 @@ through `performEditorAction`; multiline fields retain normal newline behavior.
 Email and URL editors receive compact ASCII QWERTY layouts with contextual
 punctuation and bypass Vietnamese composition.
 
+Number editors receive a suggestion-free 4×4 keypad with fixed period and comma
+keys. Signed and decimal flags remain represented in the resolved editor mode.
+
 `AndroidCompositionSession` renders the shared Rust engine buffer with
 `setComposingText()`. JNI is intentionally narrow: one synchronous call per text
 key, no network or storage, and safe registry IDs instead of native pointers.

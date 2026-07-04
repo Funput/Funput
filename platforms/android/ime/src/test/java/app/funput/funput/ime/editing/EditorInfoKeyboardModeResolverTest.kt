@@ -36,8 +36,26 @@ class EditorInfoKeyboardModeResolverTest {
 
     @Test
     fun `non text classes remain standard until their layouts are implemented`() {
-        listOf(InputType.TYPE_CLASS_NUMBER, InputType.TYPE_CLASS_PHONE).forEach { inputType ->
-            assertEquals(KeyboardEditorMode.TEXT, EditorInfoKeyboardModeResolver.resolve(inputType))
+        assertEquals(
+            KeyboardEditorMode.TEXT,
+            EditorInfoKeyboardModeResolver.resolve(InputType.TYPE_CLASS_PHONE),
+        )
+    }
+
+    @Test
+    fun `number flags resolve to the matching numeric mode`() {
+        val cases = mapOf(
+            0 to KeyboardEditorMode.NUMBER,
+            InputType.TYPE_NUMBER_FLAG_DECIMAL to KeyboardEditorMode.NUMBER_DECIMAL,
+            InputType.TYPE_NUMBER_FLAG_SIGNED to KeyboardEditorMode.NUMBER_SIGNED,
+            InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED to
+                KeyboardEditorMode.NUMBER_SIGNED_DECIMAL,
+        )
+        cases.forEach { (flags, expected) ->
+            assertEquals(
+                expected,
+                EditorInfoKeyboardModeResolver.resolve(InputType.TYPE_CLASS_NUMBER or flags),
+            )
         }
     }
 
