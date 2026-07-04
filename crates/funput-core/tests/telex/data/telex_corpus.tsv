@@ -130,3 +130,20 @@ Nghieeng	Nghiêng
 VIEETJ	VIỆT
 Ddaays	Đấy
 Ddaayj	Đậy
+
+# --- gi-onset: bare 'e' stays plain (regression for the ie->iê over-promotion) ---
+gies	gié
+gier	giẻ
+giex	giẽ
+gieos	giéo
+gieor	giẻo
+# --- guard: real iê words MUST keep ê (ie->iê promotion still fires) ---
+giets	giết
+gieengs	giếng
+gieengf	giềng
+bieets	biết
+kieemr	kiểm
+chieus	chiếu
+yeeu	yêu
+nhieuf	nhiều
+tieeu	tiêu

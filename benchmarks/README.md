@@ -84,15 +84,14 @@ cargo run --release -p funput-cli -- dev coverage benchmarks/.corpus/Viet74K.txt
 
 | Corpus | Syllables | Telex | VNI |
 |---|---|---|---|
-| Viet74K (full) | 8,956 | **99.56%** | **99.92%** |
+| Viet74K (full) | 8,956 | **99.64%** | **100%** |
 | `sample.txt` | 137 | **100%** | **100%** |
 
-The remaining misses are genuine, explainable edges — not silent corruption:
+The remaining misses are a single, explainable class — not silent corruption:
 - **Telex digraph collisions** in rare loanword rhymes (`boong`, `boóc`, `xoong`):
   `oo`→`ô` by Telex convention, so they need an alternative typing (`booong`) that
-  the encoder does not emit. VNI has no digraphs, so it scores 100% on these.
-- **`gi`-onset cases** (`gièm`, `giẻ`, `gié`): the engine composes `gi+e` as `gi+ê`,
-  so these fail under both Telex and VNI.
+  the encoder does not emit. VNI has no digraphs, so it round-trips every syllable
+  (100%).
 
 Malformed corpus entries (two tone marks in one syllable, or a tone on the wrong
 vowel) are **not counted** — they are not valid Vietnamese, and the engine correctly
