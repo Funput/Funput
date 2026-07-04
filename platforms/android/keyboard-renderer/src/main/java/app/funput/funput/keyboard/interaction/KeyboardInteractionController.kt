@@ -6,11 +6,15 @@ import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeySwipeAction
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.model.SuggestionSelection
 
 /** Coordinates touch-driven behaviors without coupling them to the Android view lifecycle. */
 internal class KeyboardInteractionController(
     private val keySpec: (keyId: String) -> KeySpec?,
+    private val suggestionSelection: (targetId: String) -> SuggestionSelection?,
     onAction: (KeyAction) -> Unit,
+    private val onEmojiRequested: () -> Unit,
+    private val onSuggestionSelected: (SuggestionSelection) -> Unit,
     private val onVisualStateChanged: () -> Unit,
     schedule: (task: Runnable, delayMillis: Long) -> Unit,
     cancel: (task: Runnable) -> Unit,
@@ -44,16 +48,20 @@ internal class KeyboardInteractionController(
     }
 
     fun onKeyReleased(pointerId: Int, keyId: String?, x: Float, y: Float, eventTimeMillis: Long) {
+        val selection = keyId?.let(suggestionSelection)
         val key = keyId?.let(keySpec)
         val isBackspace = key?.role == KeyRole.BACKSPACE
         val swipeAction = swipeGestures.finish(pointerId, key, x, y)
-        if (!backspaceRepeat.finish(pointerId, isBackspace) && keyId != null) {
-            if (swipeAction == KeySwipeAction.TOGGLE_LANGUAGE) {
+        if (backspaceRepeat.finish(pointerId, isBackspace)) return
+
+        when {
+            selection != null -> onSuggestionSelected(selection)
+            key?.role == KeyRole.EMOJI -> onEmojiRequested()
+            swipeAction == KeySwipeAction.TOGGLE_LANGUAGE -> {
                 setLanguage(language.toggled())
                 actionDispatcher.toggleLanguage(language)
-            } else {
-                actionDispatcher.dispatch(keyId, eventTimeMillis)
             }
+            keyId != null -> actionDispatcher.dispatch(keyId, eventTimeMillis)
         }
     }
 

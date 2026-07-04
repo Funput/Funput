@@ -2,8 +2,12 @@ package app.funput.funput.keyboard.rendering
 
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
+import androidx.core.graphics.withSave
+import app.funput.funput.keyboard.interaction.PressedKeyState
+import app.funput.funput.keyboard.interaction.SuggestionTargetIds
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
 import app.funput.funput.theme.KeyboardTheme
@@ -16,6 +20,7 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     }
     private val drawingRect = RectF()
+    private val clipPath = Path()
     private val fontMetrics = Paint.FontMetrics()
     private var theme: KeyboardTheme = KeyboardTheme.Aurora
 
@@ -27,7 +32,12 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         labelPaint.color = theme.labelColor
     }
 
-    fun draw(canvas: Canvas, suggestionBar: ResolvedSuggestionBar, suggestions: List<String>) {
+    fun draw(
+        canvas: Canvas,
+        suggestionBar: ResolvedSuggestionBar,
+        suggestions: List<String>,
+        pressedTargets: PressedKeyState,
+    ) {
         val bounds = suggestionBar.suggestionsBounds
         val radius = metrics.dp(theme.keyCornerRadiusDp)
         drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
@@ -35,6 +45,7 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         canvas.drawRoundRect(drawingRect, radius, radius, borderPaint)
         if (suggestions.isEmpty()) return
 
+        drawPressedSegments(canvas, bounds, radius, suggestions.size, pressedTargets)
         labelPaint.textSize = metrics.sp(SuggestionLabelSizeSp)
         labelPaint.getFontMetrics(fontMetrics)
         val segmentWidth = bounds.width / suggestions.size
@@ -48,6 +59,30 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
                 labelPaint,
             )
         }
+    }
+
+    private fun drawPressedSegments(
+        canvas: Canvas,
+        bounds: KeyBounds,
+        radius: Float,
+        suggestionCount: Int,
+        pressedTargets: PressedKeyState,
+    ) {
+        val segmentWidth = bounds.width / suggestionCount
+        canvas.withSave {
+            drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
+            clipPath.reset()
+            clipPath.addRoundRect(drawingRect, radius, radius, Path.Direction.CW)
+            clipPath(clipPath)
+            fillPaint.color = theme.pressedKeyColor
+            repeat(suggestionCount) { index ->
+                if (pressedTargets.isPressed(SuggestionTargetIds.id(index))) {
+                    val left = bounds.left + segmentWidth * index
+                    drawRect(left, bounds.top, left + segmentWidth, bounds.bottom, fillPaint)
+                }
+            }
+        }
+        fillPaint.color = theme.keyColor
     }
 
     private fun drawDivider(canvas: Canvas, bounds: KeyBounds, x: Float) {

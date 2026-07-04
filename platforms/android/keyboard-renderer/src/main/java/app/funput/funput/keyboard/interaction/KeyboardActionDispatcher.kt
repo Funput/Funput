@@ -25,7 +25,8 @@ internal class KeyboardActionDispatcher(
             onShiftStateChanged()
         }
 
-        onAction(key.toKeyAction(shiftState))
+        val action = key.toKeyAction(shiftState) ?: return
+        onAction(action)
         if (shiftController.consumeAfter(key.role)) onShiftStateChanged()
     }
 

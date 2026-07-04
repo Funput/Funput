@@ -6,5 +6,6 @@
     <string name="input_method_label">Kiểu gõ tiếng Việt</string>
     <string name="input_method_telex">Telex</string>
     <string name="input_method_vni">VNI</string>
-    <string name="last_key_action">Thao tác cuối: %1$s</string>
+    <string name="last_key_action">Thao tác phím cuối: %1$s</string>
+    <string name="last_ui_callback">Callback UI cuối: %1$s</string>
 </resources>

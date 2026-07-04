@@ -5,12 +5,16 @@ import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.model.SuggestionSelection
 
 /** Wires Android touch routing to renderer-independent keyboard interaction state. */
 internal class KeyboardSurfaceInteraction(
     keyAt: (x: Float, y: Float) -> String?,
     keySpec: (keyId: String) -> KeySpec?,
+    suggestionSelection: (targetId: String) -> SuggestionSelection?,
     onAction: (KeyAction) -> Unit,
+    onEmojiRequested: () -> Unit,
+    onSuggestionSelected: (SuggestionSelection) -> Unit,
     onVisualStateChanged: () -> Unit,
     schedule: (task: Runnable, delayMillis: Long) -> Unit,
     cancel: (task: Runnable) -> Unit,
@@ -20,7 +24,10 @@ internal class KeyboardSurfaceInteraction(
 ) : PressedKeyState {
     private val controller = KeyboardInteractionController(
         keySpec = keySpec,
+        suggestionSelection = suggestionSelection,
         onAction = onAction,
+        onEmojiRequested = onEmojiRequested,
+        onSuggestionSelected = onSuggestionSelected,
         onVisualStateChanged = onVisualStateChanged,
         schedule = schedule,
         cancel = cancel,

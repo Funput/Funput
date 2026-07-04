@@ -47,7 +47,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         language: KeyboardLanguage,
     ) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
-        suggestionBarRenderer.draw(canvas, keyboard.suggestionBar, suggestions)
+        suggestionBarRenderer.draw(canvas, keyboard.suggestionBar, suggestions, pressedKeys)
         keyboard.keys.forEach { key ->
             keyRenderer.draw(canvas, key, theme, pressedKeys.isPressed(key.spec.id), shiftState, language)
         }

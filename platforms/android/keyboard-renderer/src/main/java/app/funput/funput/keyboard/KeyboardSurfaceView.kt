@@ -6,13 +6,14 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import app.funput.funput.keyboard.interaction.interactionTargetAt
 import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.KeyboardTouchHandler
+import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.layout.KeyboardGeometry
 import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
 import app.funput.funput.keyboard.layout.KeyboardLayouts
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
-import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
 import app.funput.funput.keyboard.model.KeyboardLanguage
@@ -21,12 +22,7 @@ import app.funput.funput.keyboard.rendering.KeyboardCanvasRenderer
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.roundToInt
 
-/**
- * Low-allocation keyboard surface shared by the future IME and preview application.
- *
- * Layout, rendering, and touch tracking are delegated so this class only coordinates Android's
- * [View] lifecycle.
- */
+/** Low-allocation keyboard surface that coordinates Android's [View] lifecycle. */
 class KeyboardSurfaceView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -59,7 +55,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             invalidate()
         }
 
-    var onKeyAction: ((KeyAction) -> Unit)? = null
+    val callbacks = KeyboardCallbacks()
     val shiftState: ShiftState get() = interaction.shiftState
     var language: KeyboardLanguage
         get() = interaction.language
@@ -69,9 +65,12 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     private var resolvedKeyboard: ResolvedKeyboard? = null
     private val renderer = KeyboardCanvasRenderer(resources)
     private val interaction = KeyboardSurfaceInteraction(
-        keyAt = { x, y -> resolvedKeyboard?.keyAt(x, y)?.spec?.id },
+        keyAt = { x, y -> resolvedKeyboard?.interactionTargetAt(x, y, suggestions.size) },
         keySpec = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.spec },
-        onAction = { action -> onKeyAction?.invoke(action) },
+        suggestionSelection = { id -> suggestions.selectionForTarget(id) },
+        onAction = callbacks::dispatch,
+        onEmojiRequested = callbacks::dispatchEmojiRequest,
+        onSuggestionSelected = callbacks::dispatchSuggestion,
         onVisualStateChanged = ::postInvalidateOnAnimation,
         schedule = { task, delay -> postDelayed(task, delay) },
         cancel = ::removeCallbacks,

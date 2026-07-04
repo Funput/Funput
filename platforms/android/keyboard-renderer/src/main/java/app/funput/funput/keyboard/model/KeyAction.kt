@@ -15,7 +15,6 @@ sealed interface KeyAction {
     data class Shift(val state: ShiftState) : KeyAction
     data object Backspace : KeyAction
     data object Symbols : KeyAction
-    data object Emoji : KeyAction
     data object Space : KeyAction
     data object Enter : KeyAction
     data class ToggleLanguage(val language: KeyboardLanguage) : KeyAction

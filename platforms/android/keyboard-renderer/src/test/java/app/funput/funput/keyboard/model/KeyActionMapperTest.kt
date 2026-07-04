@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.model
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class KeyActionMapperTest {
@@ -27,7 +28,6 @@ class KeyActionMapperTest {
             KeyRole.SHIFT to KeyAction.Shift(ShiftState.OFF),
             KeyRole.BACKSPACE to KeyAction.Backspace,
             KeyRole.SYMBOLS to KeyAction.Symbols,
-            KeyRole.EMOJI to KeyAction.Emoji,
             KeyRole.SPACE to KeyAction.Space,
             KeyRole.ENTER to KeyAction.Enter,
         )
@@ -35,6 +35,11 @@ class KeyActionMapperTest {
         expectedActions.forEach { (role, action) ->
             assertEquals(action, key(role).toKeyAction(ShiftState.OFF))
         }
+    }
+
+    @Test
+    fun emojiDoesNotMapToAKeyAction() {
+        assertNull(key(KeyRole.EMOJI).toKeyAction(ShiftState.OFF))
     }
 
     private fun key(role: KeyRole, label: String = role.name): KeySpec = KeySpec(
