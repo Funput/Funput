@@ -8,6 +8,7 @@ Kotlin; Vietnamese composition will be provided by the shared Rust engine.
 | Module | Responsibility |
 |---|---|
 | `app` | Compose host for onboarding, settings, and keyboard previews |
+| `ime` | Android input-method lifecycle and focused-editor bridge |
 | `keyboard-ui` | Panel navigation and the lazy-loaded AndroidX emoji picker |
 | `keyboard-renderer` | Responsive keyboard layout, touch, accessibility, and Canvas rendering |
 | `theme-runtime` | Versioned theme contract, validation, token resolution, and safe asset access |
@@ -15,12 +16,13 @@ Kotlin; Vietnamese composition will be provided by the shared Rust engine.
 Dependency direction is intentionally one-way:
 
 ```text
+app -> ime
 app -> keyboard-ui -> keyboard-renderer -> theme-runtime
                    \--------------------> theme-runtime
 ```
 
-IME integration, Rust JNI, billing, and the remote theme store will be added only
-after the renderer prototype is stable.
+Keyboard hosting in the IME, Rust JNI, billing, and the remote theme store are
+added incrementally after the renderer prototype.
 
 ## Build
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+    android:supportsSwitchingToNextInputMethod="false">
+
+    <subtype
+        android:imeSubtypeExtraValue="AsciiCapable"
+        android:imeSubtypeMode="keyboard"
+        android:isAsciiCapable="true"
+        android:label="@string/funput_ime_subtype_vietnamese"
+        android:languageTag="vi-VN"
+        android:subtypeId="0x66760001" />
+
+</input-method>

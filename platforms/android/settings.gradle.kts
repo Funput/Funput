@@ -24,6 +24,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "Funput"
 include(":app")
+include(":ime")
 include(":keyboard-renderer")
 include(":keyboard-ui")
 include(":theme-runtime")

@@ -36,6 +36,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":ime"))
     implementation(project(":keyboard-ui"))
 
     implementation(platform(libs.androidx.compose.bom))
