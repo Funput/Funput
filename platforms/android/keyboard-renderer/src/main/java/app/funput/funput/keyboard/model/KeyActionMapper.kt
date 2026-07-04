@@ -13,6 +13,8 @@ internal fun KeySpec.toKeyAction(shiftState: ShiftState): KeyAction? = when (rol
     KeyRole.SHIFT -> KeyAction.Shift(shiftState)
     KeyRole.BACKSPACE -> KeyAction.Backspace
     KeyRole.SYMBOLS -> KeyAction.Symbols
+    KeyRole.MORE_SYMBOLS -> KeyAction.MoreSymbols
+    KeyRole.LETTERS -> KeyAction.Letters
     KeyRole.EMOJI -> null
     KeyRole.SPACE -> KeyAction.Space
     KeyRole.ENTER -> KeyAction.Enter

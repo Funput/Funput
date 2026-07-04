@@ -10,12 +10,13 @@ import app.funput.funput.keyboard.interaction.interactionTargetAt
 import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.KeyboardTouchHandler
 import app.funput.funput.keyboard.interaction.selectionForTarget
-import app.funput.funput.keyboard.layout.KeyboardGeometry
-import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
+import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
 import app.funput.funput.keyboard.layout.KeyboardLayouts
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
+import app.funput.funput.keyboard.layout.resolveGeometry
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
+import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.rendering.KeyboardCanvasRenderer
@@ -31,12 +32,15 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var inputMethod: KeyboardInputMethod = KeyboardInputMethod.TELEX
         set(value) {
             if (field == value) return
-            interaction.reset()
             field = value
-            keyboardLayout = KeyboardLayouts.forInputMethod(value)
-            requestLayout()
-            resolveGeometry()
-            invalidate()
+            updateKeyboardLayout()
+        }
+
+    var layoutMode: KeyboardLayoutMode = KeyboardLayoutMode.LETTERS
+        set(value) {
+            if (field == value) return
+            field = value
+            updateKeyboardLayout()
         }
 
     var keyboardTheme: KeyboardTheme = KeyboardTheme.Aurora
@@ -109,10 +113,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     override fun onTouchEvent(event: MotionEvent): Boolean = when (interaction.onTouchEvent(event)) {
         KeyboardTouchHandler.Result.UNHANDLED -> false
         KeyboardTouchHandler.Result.HANDLED -> true
-        KeyboardTouchHandler.Result.CLICK -> {
-            performClick()
-            true
-        }
+        KeyboardTouchHandler.Result.CLICK -> performClick()
     }
 
     override fun performClick(): Boolean {
@@ -131,17 +132,18 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     }
 
     private fun resolveGeometry() {
-        if (width <= 0 || height <= 0) return
-        resolvedKeyboard = KeyboardGeometry.resolve(
-            layout = keyboardLayout,
-            width = width.toFloat(),
-            height = height.toFloat(),
-            spec = KeyboardGeometrySpec.fromDensity(resources.displayMetrics.density),
-        )
+        resolvedKeyboard = keyboardLayout.resolveGeometry(width, height, resources.displayMetrics.density)
+    }
+
+    private fun updateKeyboardLayout() {
+        interaction.reset()
+        keyboardLayout = KeyboardLayoutResolver.resolve(inputMethod, layoutMode)
+        requestLayout()
+        resolveGeometry()
+        invalidate()
     }
 
     companion object {
-        fun recommendedHeightDp(inputMethod: KeyboardInputMethod): Float =
-            KeyboardDimensions.recommendedHeightDp(inputMethod)
+        fun recommendedHeightDp(method: KeyboardInputMethod) = KeyboardDimensions.recommendedHeightDp(method)
     }
 }

@@ -8,6 +8,8 @@ internal fun KeyAction?.previewLabel(repeatCount: Int): String {
         is KeyAction.Shift -> "Shift: ${state.name}"
         KeyAction.Backspace -> "Backspace"
         KeyAction.Symbols -> "Symbols"
+        KeyAction.MoreSymbols -> "More symbols"
+        KeyAction.Letters -> "Letters"
         KeyAction.Space -> "Space"
         KeyAction.Enter -> "Enter"
         is KeyAction.ToggleLanguage -> "Language: ${language.displayLabel}"

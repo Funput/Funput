@@ -7,6 +7,8 @@ enum class KeyRole {
     SHIFT,
     BACKSPACE,
     SYMBOLS,
+    MORE_SYMBOLS,
+    LETTERS,
     EMOJI,
     SPACE,
     ENTER,

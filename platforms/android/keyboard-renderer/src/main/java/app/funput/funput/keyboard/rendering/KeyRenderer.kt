@@ -116,8 +116,10 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         }
 
     private val KeyRole.isSpecial: Boolean
-        get() = this == KeyRole.SHIFT || this == KeyRole.BACKSPACE || this == KeyRole.SYMBOLS ||
-            this == KeyRole.EMOJI || this == KeyRole.ENTER
+        get() = when (this) {
+            KeyRole.CHARACTER, KeyRole.VNI_MODIFIER, KeyRole.PUNCTUATION, KeyRole.SPACE -> false
+            else -> true
+        }
 
     private companion object {
         const val CharacterLabelSizeSp = 20f

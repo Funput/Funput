@@ -28,6 +28,8 @@ class KeyActionMapperTest {
             KeyRole.SHIFT to KeyAction.Shift(ShiftState.OFF),
             KeyRole.BACKSPACE to KeyAction.Backspace,
             KeyRole.SYMBOLS to KeyAction.Symbols,
+            KeyRole.MORE_SYMBOLS to KeyAction.MoreSymbols,
+            KeyRole.LETTERS to KeyAction.Letters,
             KeyRole.SPACE to KeyAction.Space,
             KeyRole.ENTER to KeyAction.Enter,
         )

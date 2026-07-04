@@ -11,6 +11,8 @@ class KeyboardPanelControllerTest {
         val controller = KeyboardPanelController()
 
         assertEquals(KeyboardPanel.LETTERS, controller.activePanel)
+        assertTrue(controller.show(KeyboardPanel.SYMBOLS))
+        assertEquals(KeyboardPanel.SYMBOLS, controller.activePanel)
         assertTrue(controller.show(KeyboardPanel.EMOJI))
         assertEquals(KeyboardPanel.EMOJI, controller.activePanel)
         assertFalse(controller.show(KeyboardPanel.EMOJI))
