@@ -66,6 +66,8 @@ export component SettingsWindow inherits Window {
     callback check-update();
     callback install-update();
     callback relaunch-now();
+    callback export-config();
+    callback import-config();
 
     // `in-out` so the tray's "Kiểm tra cập nhật…" can jump straight to the About tab.
     in-out property <string> active: "input";
@@ -191,6 +193,8 @@ export component SettingsWindow inherits Window {
                 if root.active == "general": GeneralPage {
                     launch-at-login <=> root.launch-at-login;
                     set-launch(v) => { root.set-launch(v); }
+                    export-config() => { root.export-config(); }
+                    import-config() => { root.import-config(); }
                 }
 
                 if root.active == "about": AboutPage {

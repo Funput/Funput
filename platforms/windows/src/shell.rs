@@ -157,6 +157,17 @@ pub fn reload_settings() -> bool {
     })
 }
 
+/// Replace all settings at once (config import). Applies to the live engine and
+/// persists to disk; the background hook process picks the change up via
+/// `reload_settings`, exactly as it does for any single-field edit.
+pub fn replace_settings(new: Settings) {
+    with(|s| {
+        apply_to_engine(&mut s.engine, &new);
+        s.settings = new;
+        s.settings.save();
+    });
+}
+
 /// Seed a Settings child with the background process's runtime-only recent-app list.
 pub fn seed_recent_apps(apps: Vec<ExcludedApp>) {
     with(|s| s.recent = apps);

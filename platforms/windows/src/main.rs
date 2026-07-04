@@ -11,6 +11,7 @@ slint::include_modules!();
 
 mod commands;
 mod compose;
+mod config_transfer;
 mod dark_mode;
 mod hook;
 mod inject;

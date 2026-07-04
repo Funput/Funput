@@ -36,7 +36,7 @@ pub fn build(app: &Application) -> PreferencesWindow {
     if crate::framework::per_app_supported() {
         window.add(&apps::page());
     }
-    window.add(&general::page());
+    window.add(&general::page(&window));
     window.add(&about::page(&window));
 
     window

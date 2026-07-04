@@ -30,7 +30,7 @@ fn current() -> Option<SettingsWindow> {
     WINDOW.with(|cell| cell.borrow().as_ref().and_then(Weak::upgrade))
 }
 
-fn populate(window: &SettingsWindow) {
+pub(super) fn populate(window: &SettingsWindow) {
     let settings = shell::snapshot();
     window.set_method(settings.method.id().into());
     window.set_tone_style(settings.tone_style.id().into());
