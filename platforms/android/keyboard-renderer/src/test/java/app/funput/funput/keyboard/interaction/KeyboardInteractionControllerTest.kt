@@ -92,7 +92,7 @@ class KeyboardInteractionControllerTest {
 
         assertEquals(
             listOf(
-                KeyboardHapticType.KEY_PRESS,
+                KeyboardHapticType.SPACE,
                 KeyboardHapticType.CONTROL,
                 KeyboardHapticType.CONTROL,
             ),

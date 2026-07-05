@@ -89,7 +89,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         onSuggestionSelected = callbacks::dispatchSuggestion,
         onHapticFeedback = { type ->
             KeyboardHaptics.perform(this, type)
-            KeyboardSounds.perform(this)
+            KeyboardSounds.perform(this, type)
         },
         onVisualStateChanged = ::postInvalidateOnAnimation,
         schedule = { task, delay -> postDelayed(task, delay) },

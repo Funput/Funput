@@ -11,7 +11,7 @@ class KeyHapticTypeMapperTest {
     @Test
     fun `maps every key family to semantic feedback`() {
         assertMapped(KeyRole.CHARACTER, KeyboardHapticType.KEY_PRESS)
-        assertMapped(KeyRole.SPACE, KeyboardHapticType.KEY_PRESS)
+        assertMapped(KeyRole.SPACE, KeyboardHapticType.SPACE)
         assertMapped(KeyRole.SHIFT, KeyboardHapticType.CONTROL)
         assertMapped(KeyRole.EMOJI, KeyboardHapticType.CONTROL)
         assertMapped(KeyRole.BACKSPACE, KeyboardHapticType.DELETE)

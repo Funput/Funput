@@ -16,8 +16,9 @@ internal object KeyHapticTypeMapper {
         KeyRole.CHARACTER,
         KeyRole.VNI_MODIFIER,
         KeyRole.PUNCTUATION,
-        KeyRole.SPACE,
         -> KeyboardHapticType.KEY_PRESS
+
+        KeyRole.SPACE -> KeyboardHapticType.SPACE
 
         KeyRole.SHIFT,
         KeyRole.SYMBOLS,

@@ -38,17 +38,17 @@ internal class EmojiPanelView @JvmOverloads constructor(
         picker.setBackgroundColor(Color.TRANSPARENT)
         picker.setOnEmojiPickedListener { emoji ->
             haptic(KeyboardHapticType.KEY_PRESS)
-            sound()
+            sound(KeyboardHapticType.KEY_PRESS)
             onEmojiSelected(emoji)
         }
         toolbar.onLettersRequested = {
             haptic(KeyboardHapticType.CONTROL)
-            sound()
+            sound(KeyboardHapticType.CONTROL)
             onLettersRequested()
         }
         toolbar.onBackspaceRequested = {
             haptic(KeyboardHapticType.DELETE)
-            sound()
+            sound(KeyboardHapticType.DELETE)
             onBackspaceRequested(KeyAction.Backspace)
         }
         addView(picker, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
@@ -75,7 +75,7 @@ internal class EmojiPanelView @JvmOverloads constructor(
         KeyboardHaptics.perform(this, type)
     }
 
-    private fun sound() = KeyboardSounds.perform(this)
+    private fun sound(type: KeyboardHapticType) = KeyboardSounds.perform(this, type)
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 }

@@ -13,6 +13,7 @@ object KeyboardHaptics {
 
     internal fun feedbackConstant(type: KeyboardHapticType, sdkInt: Int): Int? = when (type) {
         KeyboardHapticType.KEY_PRESS -> HapticFeedbackConstants.KEYBOARD_PRESS
+        KeyboardHapticType.SPACE -> HapticFeedbackConstants.KEYBOARD_PRESS
         KeyboardHapticType.CONTROL -> HapticFeedbackConstants.VIRTUAL_KEY
         KeyboardHapticType.DELETE -> HapticFeedbackConstants.VIRTUAL_KEY
         KeyboardHapticType.DELETE_REPEAT -> if (sdkInt >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
