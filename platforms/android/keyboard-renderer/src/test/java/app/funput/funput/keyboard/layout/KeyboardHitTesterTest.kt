@@ -1,7 +1,6 @@
 package app.funput.funput.keyboard.layout
 
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.keyboard.model.SuggestionBarSpec
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -27,8 +26,7 @@ class KeyboardHitTesterTest {
             actionKeys = KeyboardLayouts.telex.rows.last().keys,
             showSuggestionBar = true,
         ).copy(
-            suggestionBar = SuggestionBarSpec(
-                emojiKey = KeyboardLayouts.telex.suggestionBar!!.emojiKey,
+            suggestionBar = requireNotNull(KeyboardLayouts.telex.suggestionBar).copy(
                 suggestionsEnabled = true,
             ),
         ),
@@ -79,11 +77,26 @@ class KeyboardHitTesterTest {
     }
 
     @Test
-    fun emojiTargetAbsorbsItsAdjacentGap() {
+    fun settingsTargetAbsorbsGapBetweenSuggestionsAndEmoji() {
         val bar = requireNotNull(keyboardWithSuggestions.suggestionBar)
-        val midpoint = (bar.suggestionsBounds.right + bar.emojiKey.bounds.left) / 2f
+        val midpoint = (bar.suggestionsBounds.right + bar.settingsKey.bounds.left) / 2f
 
         assertNull(keyboardWithSuggestions.keyAt(midpoint - TestOffset, bar.bounds.centerY))
+        assertEquals(
+            bar.settingsKey,
+            keyboardWithSuggestions.keyAt(midpoint + TestOffset, bar.bounds.centerY),
+        )
+    }
+
+    @Test
+    fun emojiTargetAbsorbsItsAdjacentGap() {
+        val bar = requireNotNull(keyboardWithSuggestions.suggestionBar)
+        val midpoint = (bar.settingsKey.bounds.right + bar.emojiKey.bounds.left) / 2f
+
+        assertEquals(
+            bar.settingsKey,
+            keyboardWithSuggestions.keyAt(midpoint - TestOffset, bar.bounds.centerY),
+        )
         assertEquals(
             bar.emojiKey,
             keyboardWithSuggestions.keyAt(midpoint + TestOffset, bar.bounds.centerY),

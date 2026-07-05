@@ -3,7 +3,6 @@ package app.funput.funput.keyboard.layout
 import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.keyboard.model.SuggestionBarSpec
 import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -77,15 +76,14 @@ class KeyboardGeometryTest {
     }
 
     @Test
-    fun suggestionBarPlacesEmojiAtTheRightEdge() {
+    fun suggestionBarPlacesSettingsAndEmojiAtTheRightEdge() {
         val layout = qwertyLayout(
             id = "test-suggestions",
             inputMethod = KeyboardInputMethod.TELEX,
             actionKeys = KeyboardLayouts.telex.rows.last().keys,
             showSuggestionBar = true,
         ).copy(
-            suggestionBar = SuggestionBarSpec(
-                emojiKey = KeyboardLayouts.telex.suggestionBar!!.emojiKey,
+            suggestionBar = requireNotNull(KeyboardLayouts.telex.suggestionBar).copy(
                 suggestionsEnabled = true,
             ),
         )
@@ -97,8 +95,14 @@ class KeyboardGeometryTest {
         )
         val suggestionBar = requireNotNull(keyboard.suggestionBar)
 
+        assertEquals("settings", suggestionBar.settingsKey.spec.id)
         assertEquals("emoji", suggestionBar.emojiKey.spec.id)
-        assertTrue(suggestionBar.suggestionsBounds.right < suggestionBar.emojiKey.bounds.left)
+        assertTrue(suggestionBar.suggestionsBounds.right < suggestionBar.settingsKey.bounds.left)
+        assertTrue(suggestionBar.settingsKey.bounds.right < suggestionBar.emojiKey.bounds.left)
+        assertEquals(
+            suggestionBar.settingsKey,
+            keyboard.keyAt(suggestionBar.settingsKey.bounds.centerX, suggestionBar.settingsKey.bounds.centerY),
+        )
         assertEquals(
             suggestionBar.emojiKey,
             keyboard.keyAt(suggestionBar.emojiKey.bounds.centerX, suggestionBar.emojiKey.bounds.centerY),

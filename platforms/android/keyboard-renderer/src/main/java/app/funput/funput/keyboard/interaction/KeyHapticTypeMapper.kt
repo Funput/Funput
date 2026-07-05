@@ -24,6 +24,7 @@ internal object KeyHapticTypeMapper {
         KeyRole.SYMBOLS,
         KeyRole.MORE_SYMBOLS,
         KeyRole.LETTERS,
+        KeyRole.SETTINGS,
         KeyRole.EMOJI,
         -> KeyboardHapticType.CONTROL
 

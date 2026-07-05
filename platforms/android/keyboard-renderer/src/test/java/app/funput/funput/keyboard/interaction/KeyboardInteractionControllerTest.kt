@@ -14,6 +14,7 @@ class KeyboardInteractionControllerTest {
     private val actions = mutableListOf<KeyAction>()
     private val selections = mutableListOf<SuggestionSelection>()
     private val haptics = mutableListOf<KeyboardHapticType>()
+    private var settingsRequestCount = 0
     private var emojiRequestCount = 0
     private var visualStateChangeCount = 0
     private val space = KeySpec(
@@ -22,13 +23,15 @@ class KeyboardInteractionControllerTest {
         role = KeyRole.SPACE,
         horizontalSwipeAction = KeySwipeAction.TOGGLE_LANGUAGE,
     )
+    private val settings = KeySpec("settings", "", KeyRole.SETTINGS, accessibilityLabel = "Settings")
     private val emoji = KeySpec("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji")
     private val controller = KeyboardInteractionController(
-        keySpec = { id -> listOf(space, emoji).firstOrNull { it.id == id } },
+        keySpec = { id -> listOf(space, settings, emoji).firstOrNull { it.id == id } },
         suggestionSelection = { id ->
             SuggestionSelection(1, "chào").takeIf { id == "suggestion-1" }
         },
         onAction = { action -> actions += action },
+        onSettingsRequested = { settingsRequestCount++ },
         onEmojiRequested = { emojiRequestCount++ },
         onSuggestionSelected = { selection -> selections += selection },
         onHapticFeedback = { type -> haptics += type },
@@ -66,6 +69,15 @@ class KeyboardInteractionControllerTest {
     }
 
     @Test
+    fun settingsUsesDedicatedCallback() {
+        controller.onPointerStarted(3, settings.id, 100f, 50f)
+        controller.onKeyReleased(3, settings.id, 100f, 50f, eventTimeMillis = 100L)
+
+        assertEquals(1, settingsRequestCount)
+        assertEquals(emptyList<KeyAction>(), actions)
+    }
+
+    @Test
     fun emojiUsesDedicatedCallback() {
         controller.onPointerStarted(3, emoji.id, 100f, 50f)
         controller.onKeyReleased(3, emoji.id, 100f, 50f, eventTimeMillis = 100L)
@@ -86,13 +98,15 @@ class KeyboardInteractionControllerTest {
     @Test
     fun pointerDownEmitsHapticForEachTargetType() {
         controller.onPointerStarted(3, space.id, 100f, 50f)
-        controller.onPointerStarted(4, emoji.id, 100f, 50f)
-        controller.onPointerStarted(5, "suggestion-1", 100f, 50f)
-        controller.onPointerStarted(6, null, 100f, 50f)
+        controller.onPointerStarted(4, settings.id, 100f, 50f)
+        controller.onPointerStarted(5, emoji.id, 100f, 50f)
+        controller.onPointerStarted(6, "suggestion-1", 100f, 50f)
+        controller.onPointerStarted(7, null, 100f, 50f)
 
         assertEquals(
             listOf(
                 KeyboardHapticType.SPACE,
+                KeyboardHapticType.CONTROL,
                 KeyboardHapticType.CONTROL,
                 KeyboardHapticType.CONTROL,
             ),

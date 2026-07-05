@@ -82,6 +82,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     init {
         addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::handleKeyAction
+        keyboardSurface.callbacks.onSettingsRequested = ::openSettings
         keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
         keyboardSurface.callbacks.onEmojiRequested = ::openEmojiFromKeyboard
     }
@@ -126,6 +127,10 @@ class FunputKeyboardView @JvmOverloads constructor(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
             MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
         )
+    }
+
+    private fun openSettings() {
+        context.openFunputSettings()
     }
 
     private fun openEmojiFromKeyboard() {

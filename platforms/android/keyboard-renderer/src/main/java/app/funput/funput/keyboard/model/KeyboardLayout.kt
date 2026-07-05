@@ -34,11 +34,13 @@ data class KeyboardRow(
 }
 
 data class SuggestionBarSpec(
+    val settingsKey: KeySpec,
     val emojiKey: KeySpec,
     val suggestionsEnabled: Boolean = true,
 ) {
     init {
-        require(emojiKey.role == KeyRole.EMOJI) { "Suggestion bar action must be an emoji key" }
+        require(settingsKey.role == KeyRole.SETTINGS) { "Toolbar settings action must be a settings key" }
+        require(emojiKey.role == KeyRole.EMOJI) { "Toolbar emoji action must be an emoji key" }
     }
 }
 
@@ -53,6 +55,7 @@ data class KeyboardLayout(
         require(rows.isNotEmpty()) { "Keyboard layout must contain at least one row" }
 
         val keyIds = buildList {
+            suggestionBar?.settingsKey?.let { add(it.id) }
             suggestionBar?.emojiKey?.let { add(it.id) }
             rows.forEach { row -> addAll(row.keys.map(KeySpec::id)) }
         }

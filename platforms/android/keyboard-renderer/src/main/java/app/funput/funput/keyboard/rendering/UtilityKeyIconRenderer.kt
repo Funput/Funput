@@ -56,6 +56,23 @@ internal class UtilityKeyIconRenderer(private val metrics: RenderMetrics) {
         )
     }
 
+    fun drawSettings(canvas: Canvas, key: ResolvedKey) {
+        val radius = min(key.bounds.width, key.bounds.height) * 0.19f
+        val centerX = key.bounds.centerX
+        val centerY = key.bounds.centerY
+        canvas.drawCircle(centerX, centerY, radius * 0.32f, paint)
+        canvas.drawCircle(centerX, centerY, radius, paint)
+        repeat(6) { index ->
+            val angle = Math.toRadians((index * 60.0) - 90.0)
+            val innerRadius = radius * 0.58f
+            val startX = centerX + (Math.cos(angle) * innerRadius).toFloat()
+            val startY = centerY + (Math.sin(angle) * innerRadius).toFloat()
+            val endX = centerX + (Math.cos(angle) * radius).toFloat()
+            val endY = centerY + (Math.sin(angle) * radius).toFloat()
+            canvas.drawLine(startX, startY, endX, endY, paint)
+        }
+    }
+
     fun drawEmoji(canvas: Canvas, key: ResolvedKey) {
         val radius = min(key.bounds.width, key.bounds.height) * 0.19f
         drawingRect.set(

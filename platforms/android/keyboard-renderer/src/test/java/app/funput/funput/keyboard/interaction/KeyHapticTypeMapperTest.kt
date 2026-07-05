@@ -13,6 +13,7 @@ class KeyHapticTypeMapperTest {
         assertMapped(KeyRole.CHARACTER, KeyboardHapticType.KEY_PRESS)
         assertMapped(KeyRole.SPACE, KeyboardHapticType.SPACE)
         assertMapped(KeyRole.SHIFT, KeyboardHapticType.CONTROL)
+        assertMapped(KeyRole.SETTINGS, KeyboardHapticType.CONTROL)
         assertMapped(KeyRole.EMOJI, KeyboardHapticType.CONTROL)
         assertMapped(KeyRole.BACKSPACE, KeyboardHapticType.DELETE)
         assertMapped(KeyRole.ENTER, KeyboardHapticType.SUBMIT)

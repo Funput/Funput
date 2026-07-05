@@ -14,6 +14,7 @@ internal class KeyboardInteractionController(
     private val keySpec: (keyId: String) -> KeySpec?,
     private val suggestionSelection: (targetId: String) -> SuggestionSelection?,
     onAction: (KeyAction) -> Unit,
+    private val onSettingsRequested: () -> Unit,
     private val onEmojiRequested: () -> Unit,
     private val onSuggestionSelected: (SuggestionSelection) -> Unit,
     private val onHapticFeedback: (KeyboardHapticType) -> Unit,
@@ -63,6 +64,7 @@ internal class KeyboardInteractionController(
 
         when {
             selection != null -> onSuggestionSelected(selection)
+            key?.role == KeyRole.SETTINGS -> onSettingsRequested()
             key?.role == KeyRole.EMOJI -> onEmojiRequested()
             swipeAction == KeySwipeAction.TOGGLE_LANGUAGE -> {
                 setLanguage(language.toggled())

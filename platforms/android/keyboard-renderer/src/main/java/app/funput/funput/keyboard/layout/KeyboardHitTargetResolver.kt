@@ -9,7 +9,24 @@ package app.funput.funput.keyboard.layout
 internal object KeyboardHitTargetResolver {
     fun resolve(keyboard: ResolvedKeyboard): ResolvedKeyboard {
         val suggestionBar = keyboard.suggestionBar?.let { bar ->
-            bar.copy(emojiKey = resolveEmojiKey(keyboard, bar))
+            bar.copy(
+                settingsKey = resolveToolbarKey(
+                    keyboard = keyboard,
+                    key = bar.settingsKey,
+                    left = if (bar.suggestionsEnabled) {
+                        midpoint(bar.suggestionsBounds.right, bar.settingsKey.bounds.left)
+                    } else {
+                        midpoint(bar.bounds.left, bar.settingsKey.bounds.left)
+                    },
+                    right = midpoint(bar.settingsKey.bounds.right, bar.emojiKey.bounds.left),
+                ),
+                emojiKey = resolveToolbarKey(
+                    keyboard = keyboard,
+                    key = bar.emojiKey,
+                    left = midpoint(bar.settingsKey.bounds.right, bar.emojiKey.bounds.left),
+                    right = keyboard.width,
+                ),
+            )
         }
         val rows = keyboard.rows.mapIndexed { rowIndex, row ->
             val hitTop = rowHitTop(keyboard, rowIndex)
@@ -31,16 +48,17 @@ internal object KeyboardHitTargetResolver {
         )
     }
 
-    private fun resolveEmojiKey(
+    private fun resolveToolbarKey(
         keyboard: ResolvedKeyboard,
-        bar: ResolvedSuggestionBar,
+        key: ResolvedKey,
+        left: Float,
+        right: Float,
     ): ResolvedKey {
-        val key = bar.emojiKey
         return key.copy(
             hitBounds = KeyBounds(
-                left = midpoint(bar.suggestionsBounds.right, key.bounds.left),
+                left = left,
                 top = 0f,
-                right = keyboard.width,
+                right = right,
                 bottom = midpoint(key.bounds.bottom, keyboard.rows.first().first().bounds.top),
             ),
         )

@@ -97,6 +97,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         keySpec = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.spec },
         suggestionSelection = { id -> suggestions.selectionForTarget(id) },
         onAction = callbacks::dispatch,
+        onSettingsRequested = callbacks::dispatchSettingsRequest,
         onEmojiRequested = callbacks::dispatchEmojiRequest,
         onSuggestionSelected = callbacks::dispatchSuggestion,
         onHapticFeedback = { type ->

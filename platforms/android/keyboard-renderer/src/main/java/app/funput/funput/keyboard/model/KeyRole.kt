@@ -10,6 +10,7 @@ enum class KeyRole {
     SYMBOLS,
     MORE_SYMBOLS,
     LETTERS,
+    SETTINGS,
     EMOJI,
     SPACE,
     ENTER,

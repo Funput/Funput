@@ -33,6 +33,7 @@ class KeyboardLayoutsTest {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             val layout = KeyboardLayouts.forInputMethod(inputMethod)
             val ids = buildList {
+                layout.suggestionBar?.settingsKey?.id?.let(::add)
                 layout.suggestionBar?.emojiKey?.id?.let(::add)
                 layout.rows.forEach { row -> addAll(row.keys.map { key -> key.id }) }
             }
@@ -45,6 +46,7 @@ class KeyboardLayoutsTest {
     fun emojiToolbarIsShownWithoutSuggestionStrip() {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             val bar = requireNotNull(KeyboardLayouts.forInputMethod(inputMethod).suggestionBar)
+            assertEquals(KeyRole.SETTINGS, bar.settingsKey.role)
             assertEquals(KeyRole.EMOJI, bar.emojiKey.role)
             assertFalse(bar.suggestionsEnabled)
         }
@@ -57,7 +59,7 @@ class KeyboardLayoutsTest {
             val actionKeys = layout.rows.last().keys
             val space = actionKeys.first { key -> key.id == "space" }
 
-            assertTrue(actionKeys.none { key -> key.role == KeyRole.EMOJI })
+            assertTrue(actionKeys.none { key -> key.role == KeyRole.EMOJI || key.role == KeyRole.SETTINGS })
             assertEquals(KeySwipeAction.TOGGLE_LANGUAGE, space.horizontalSwipeAction)
             assertEquals("Tiếng Việt", space.label)
             assertEquals(5.8f, space.widthWeight)

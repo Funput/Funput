@@ -19,10 +19,7 @@ internal fun qwertyLayout(
     id = id,
     inputMethod = inputMethod,
     suggestionBar = if (showSuggestionBar) {
-        SuggestionBarSpec(
-            emojiKey = specialKey("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
-            suggestionsEnabled = KeyboardFeatures.SuggestionsEnabled,
-        )
+        keyboardToolbarSpec()
     } else {
         null
     },
@@ -100,4 +97,10 @@ private fun characterKey(character: Char) = KeySpec(
     role = KeyRole.CHARACTER,
     shiftedLabel = character.uppercaseChar().toString(),
     accessibilityLabel = character.toString(),
+)
+
+internal fun keyboardToolbarSpec() = SuggestionBarSpec(
+    settingsKey = specialKey("settings", "", KeyRole.SETTINGS, accessibilityLabel = "Settings"),
+    emojiKey = specialKey("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
+    suggestionsEnabled = KeyboardFeatures.SuggestionsEnabled,
 )

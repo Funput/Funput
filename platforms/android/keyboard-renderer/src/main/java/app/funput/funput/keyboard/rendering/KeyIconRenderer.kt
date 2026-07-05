@@ -29,6 +29,7 @@ internal class KeyIconRenderer(metrics: RenderMetrics) {
             KeyRole.SHIFT -> navigationIcons.drawShift(canvas, key, shiftState)
             KeyRole.ENTER -> enterContent.draw(canvas, key, enterAction)
             KeyRole.BACKSPACE -> utilityIcons.drawBackspace(canvas, key)
+            KeyRole.SETTINGS -> utilityIcons.drawSettings(canvas, key)
             KeyRole.EMOJI -> utilityIcons.drawEmoji(canvas, key)
             else -> return false
         }

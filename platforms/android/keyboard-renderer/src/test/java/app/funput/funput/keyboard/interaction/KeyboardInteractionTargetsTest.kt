@@ -5,7 +5,6 @@ import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
 import app.funput.funput.keyboard.layout.KeyboardLayouts
 import app.funput.funput.keyboard.layout.qwertyLayout
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.keyboard.model.SuggestionBarSpec
 import app.funput.funput.keyboard.model.SuggestionSelection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -30,8 +29,7 @@ class KeyboardInteractionTargetsTest {
             actionKeys = KeyboardLayouts.telex.rows.last().keys,
             showSuggestionBar = true,
         ).copy(
-            suggestionBar = SuggestionBarSpec(
-                emojiKey = KeyboardLayouts.telex.suggestionBar!!.emojiKey,
+            suggestionBar = requireNotNull(KeyboardLayouts.telex.suggestionBar).copy(
                 suggestionsEnabled = true,
             ),
         ),
@@ -68,6 +66,16 @@ class KeyboardInteractionTargetsTest {
         assertEquals(
             SuggestionSelection(index = 1, text = "chào"),
             suggestions.selectionForTarget(SuggestionTargetIds.id(1)),
+        )
+    }
+
+    @Test
+    fun settingsStillResolvesAsAKeyTarget() {
+        val settings = requireNotNull(keyboard.suggestionBar).settingsKey
+
+        assertEquals(
+            settings.spec.id,
+            keyboard.interactionTargetAt(settings.bounds.centerX, settings.bounds.centerY, SuggestionCount),
         )
     }
 

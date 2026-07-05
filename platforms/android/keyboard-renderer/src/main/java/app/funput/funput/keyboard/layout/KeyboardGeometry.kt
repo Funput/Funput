@@ -117,10 +117,16 @@ object KeyboardGeometry {
         val left = spec.horizontalPadding
         val right = width - spec.horizontalPadding
         val emojiLeft = right - spec.suggestionBarHeight
-        val suggestionsRight = if (barSpec.suggestionsEnabled) emojiLeft - spec.horizontalGap else emojiLeft
+        val settingsRight = emojiLeft - spec.horizontalGap
+        val settingsLeft = settingsRight - spec.suggestionBarHeight
+        val suggestionsRight = if (barSpec.suggestionsEnabled) settingsLeft - spec.horizontalGap else settingsLeft
         val suggestionBar = ResolvedSuggestionBar(
             bounds = KeyBounds(left, top, right, bottom),
             suggestionsBounds = KeyBounds(left, top, suggestionsRight, bottom),
+            settingsKey = ResolvedKey(
+                barSpec.settingsKey,
+                KeyBounds(settingsLeft, top, settingsRight, bottom),
+            ),
             emojiKey = ResolvedKey(
                 barSpec.emojiKey,
                 KeyBounds(emojiLeft, top, right, bottom),
