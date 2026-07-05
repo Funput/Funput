@@ -3,7 +3,6 @@ package app.funput.funput.keyboard.layout
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
-import app.funput.funput.keyboard.model.KeyboardRow
 
 object KeyboardLayouts {
     fun forInputMethod(inputMethod: KeyboardInputMethod): KeyboardLayout = when (inputMethod) {
@@ -12,13 +11,14 @@ object KeyboardLayouts {
     }
 
     val telex = create("qwerty-telex", KeyboardInputMethod.TELEX)
-    val vni = create("qwerty-vni", KeyboardInputMethod.VNI, listOf(vniModifierRow()))
+    val vni = create("qwerty-vni", KeyboardInputMethod.VNI)
 
-    private fun create(
-        id: String,
-        inputMethod: KeyboardInputMethod,
-        leadingRows: List<KeyboardRow> = emptyList(),
-    ) = qwertyLayout(id, inputMethod, leadingRows, standardActionKeys())
+    private fun create(id: String, inputMethod: KeyboardInputMethod) = qwertyLayout(
+        id = id,
+        inputMethod = inputMethod,
+        leadingRows = listOf(topNumberRowForLetters(inputMethod)),
+        actionKeys = standardActionKeys(),
+    )
 
     private fun standardActionKeys() = listOf(
         specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),

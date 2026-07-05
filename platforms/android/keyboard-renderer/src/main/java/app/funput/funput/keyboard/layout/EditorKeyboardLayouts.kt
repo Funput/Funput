@@ -38,6 +38,9 @@ internal object EditorKeyboardLayouts {
         qwertyLayout(
             id = "qwerty-email-${method.name.lowercase()}",
             inputMethod = method,
+            leadingRows = listOf(
+                topNumberRow(TopNumberRowMode.PLAIN_CHARACTER, pageId = "email-${method.name.lowercase()}"),
+            ),
             actionKeys = listOf(
                 specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
                 specialKey("at", "@", KeyRole.PUNCTUATION, 1.7f, "At sign"),
@@ -53,6 +56,9 @@ internal object EditorKeyboardLayouts {
         qwertyLayout(
             id = "qwerty-url-${method.name.lowercase()}",
             inputMethod = method,
+            leadingRows = listOf(
+                topNumberRow(TopNumberRowMode.PLAIN_CHARACTER, pageId = "url-${method.name.lowercase()}"),
+            ),
             actionKeys = listOf(
                 specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
                 specialKey("slash", "/", KeyRole.PUNCTUATION, 1.7f, "Slash"),

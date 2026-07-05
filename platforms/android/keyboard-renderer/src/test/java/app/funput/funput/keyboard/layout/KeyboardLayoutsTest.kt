@@ -10,54 +10,46 @@ import org.junit.Test
 
 class KeyboardLayoutsTest {
     @Test
-    fun telexUsesFourRows() {
-        val layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX)
-
-        assertEquals(4, layout.rows.size)
-        assertEquals("qwertyuiop", layout.rows.first().keys.joinToString("") { key -> key.label })
+    fun bothInputMethodsUseFiveRows() {
+        KeyboardInputMethod.entries.forEach { inputMethod ->
+            val layout = KeyboardLayouts.forInputMethod(inputMethod)
+            assertEquals(5, layout.rows.size)
+        }
     }
 
     @Test
-    fun telexShowsModifierHintsOnLetterKeys() {
+    fun telexTopRowUsesPlainDigits() {
+        val topRow = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX).rows.first()
+
+        assertEquals("1234567890", topRow.keys.joinToString("") { key -> key.label })
+        assertTrue(topRow.keys.all { key -> key.role == KeyRole.CHARACTER })
+        assertTrue(topRow.keys.all { key -> key.secondaryLabel == null })
+    }
+
+    @Test
+    fun vniTopRowUsesModifierHints() {
+        val topRow = KeyboardLayouts.forInputMethod(KeyboardInputMethod.VNI).rows.first()
+
+        assertEquals("1234567890", topRow.keys.joinToString("") { key -> key.label })
+        assertTrue(topRow.keys.all { key -> key.role == KeyRole.VNI_MODIFIER })
+        assertTrue(topRow.keys.all { key -> key.secondaryLabel != null })
+    }
+
+    @Test
+    fun letterRowsStartBelowTopNumberRow() {
+        val layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX)
+
+        assertEquals("qwertyuiop", layout.rows[1].keys.joinToString("") { key -> key.label })
+    }
+
+    @Test
+    fun letterKeysDoNotShowSecondaryHints() {
         val keys = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX)
             .rows
             .flatMap { row -> row.keys }
-            .filter { key -> key.role == KeyRole.CHARACTER }
-            .associateBy { key -> key.label.single() }
-
-        assertEquals("´", keys.getValue('s').secondaryLabel)
-        assertEquals("`", keys.getValue('f').secondaryLabel)
-        assertEquals("̉", keys.getValue('r').secondaryLabel)
-        assertEquals("˜", keys.getValue('x').secondaryLabel)
-        assertEquals("̣", keys.getValue('j').secondaryLabel)
-        assertEquals("×", keys.getValue('z').secondaryLabel)
-        assertEquals("đ", keys.getValue('d').secondaryLabel)
-        assertEquals("˘+", keys.getValue('w').secondaryLabel)
-        assertEquals("ˆ", keys.getValue('a').secondaryLabel)
-        assertEquals("ˆ", keys.getValue('e').secondaryLabel)
-        assertEquals("ˆ", keys.getValue('o').secondaryLabel)
-        assertEquals(null, keys.getValue('q').secondaryLabel)
-    }
-
-    @Test
-    fun vniLetterKeysDoNotShowTelexHints() {
-        val keys = KeyboardLayouts.forInputMethod(KeyboardInputMethod.VNI)
-            .rows
-            .flatMap { row -> row.keys }
-            .filter { key -> key.role == KeyRole.CHARACTER }
+            .filter { key -> key.role == KeyRole.CHARACTER && key.label.length == 1 && key.label[0].isLetter() }
 
         assertTrue(keys.none { key -> key.secondaryLabel != null })
-    }
-
-    @Test
-    fun vniAddsDirectModifierRow() {
-        val layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.VNI)
-        val modifierRow = layout.rows.first()
-
-        assertEquals(5, layout.rows.size)
-        assertEquals("1234567890", modifierRow.keys.joinToString("") { key -> key.label })
-        assertTrue(modifierRow.keys.all { key -> key.role == KeyRole.VNI_MODIFIER })
-        assertTrue(modifierRow.keys.all { key -> key.secondaryLabel != null })
     }
 
     @Test

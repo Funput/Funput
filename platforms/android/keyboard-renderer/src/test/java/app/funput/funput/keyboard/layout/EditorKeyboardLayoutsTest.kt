@@ -12,33 +12,34 @@ import org.junit.Test
 
 class EditorKeyboardLayoutsTest {
     @Test
-    fun `email layout exposes email punctuation without VNI modifier row`() {
+    fun `email layout exposes email punctuation with top number row`() {
         KeyboardInputMethod.entries.forEach { method ->
             val layout = resolve(method, KeyboardEditorMode.EMAIL)
 
-            assertEquals(4, layout.rows.size)
+            assertEquals(5, layout.rows.size)
+            assertEquals("1234567890", layout.rows.first().keys.joinToString("") { it.label })
             assertEquals(listOf("@", ".", ".com"), actionLabels(layout).filter { it in EmailLabels })
             assertNull(layout.rows.last().keys.first { it.id == "space" }.horizontalSwipeAction)
         }
     }
 
     @Test
-    fun `URL layout exposes slash and domain punctuation`() {
+    fun `URL layout exposes slash and domain punctuation with top number row`() {
         val layout = resolve(KeyboardInputMethod.VNI, KeyboardEditorMode.URL)
 
-        assertEquals(4, layout.rows.size)
+        assertEquals(5, layout.rows.size)
         assertEquals(listOf("/", ".", ".com"), actionLabels(layout).filter { it in UrlLabels })
     }
 
     @Test
-    fun `ASCII layouts use compact height even when VNI is selected`() {
+    fun `QWERTY layouts share the same five row height`() {
         assertEquals(
-            268f,
+            318f,
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.EMAIL),
         )
         assertEquals(
             318f,
-            KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.TEXT),
+            KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.TELEX, KeyboardEditorMode.TEXT),
         )
     }
 

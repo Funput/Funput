@@ -25,9 +25,9 @@ internal fun qwertyLayout(
     },
     rows = buildList {
         addAll(leadingRows)
-        add(characterRow("qwertyuiop", inputMethod))
-        add(characterRow("asdfghjkl", inputMethod, horizontalInsetUnits = 0.5f))
-        add(bottomCharacterRow(inputMethod))
+        add(characterRow("qwertyuiop"))
+        add(characterRow("asdfghjkl", horizontalInsetUnits = 0.5f))
+        add(bottomCharacterRow())
         add(KeyboardRow(actionKeys))
     },
 )
@@ -57,50 +57,24 @@ internal fun specialKey(
     accessibilityLabel: String = label,
 ) = KeySpec(id, label, role, widthWeight, accessibilityLabel = accessibilityLabel)
 
-internal fun vniModifierRow(): KeyboardRow {
-    val hints = listOf("´", "`", "̉", "˜", "̣", "ˆ", "+", "˘", "đ", "×")
-    val descriptions = listOf(
-        "Sắc tone", "Huyền tone", "Hỏi tone", "Ngã tone", "Nặng tone",
-        "Circumflex modifier", "Horn modifier", "Breve modifier",
-        "D stroke modifier", "Remove tone",
-    )
-    return KeyboardRow(
-        keys = (0..9).map { index ->
-            val digit = if (index == 9) 0 else index + 1
-            KeySpec(
-                id = "vni-$digit",
-                label = digit.toString(),
-                secondaryLabel = hints[index],
-                role = KeyRole.VNI_MODIFIER,
-                accessibilityLabel = descriptions[index],
-            )
-        },
-    )
-}
-
-private fun characterRow(
-    characters: String,
-    inputMethod: KeyboardInputMethod,
-    horizontalInsetUnits: Float = 0f,
-) = KeyboardRow(
-    keys = characters.map { character -> characterKey(character, inputMethod) },
+private fun characterRow(characters: String, horizontalInsetUnits: Float = 0f) = KeyboardRow(
+    keys = characters.map(::characterKey),
     horizontalInsetUnits = horizontalInsetUnits,
 )
 
-private fun bottomCharacterRow(inputMethod: KeyboardInputMethod) = KeyboardRow(
+private fun bottomCharacterRow() = KeyboardRow(
     keys = buildList {
         add(specialKey("shift", "", KeyRole.SHIFT, 1.5f, "Shift"))
-        addAll("zxcvbnm".map { character -> characterKey(character, inputMethod) })
+        addAll("zxcvbnm".map(::characterKey))
         add(specialKey("backspace", "", KeyRole.BACKSPACE, 1.5f, "Backspace"))
     },
 )
 
-private fun characterKey(character: Char, inputMethod: KeyboardInputMethod) = KeySpec(
+private fun characterKey(character: Char) = KeySpec(
     id = "character-$character",
     label = character.toString(),
     role = KeyRole.CHARACTER,
     shiftedLabel = character.uppercaseChar().toString(),
-    secondaryLabel = TelexKeyHints.secondaryLabel(inputMethod, character),
     accessibilityLabel = character.toString(),
 )
 

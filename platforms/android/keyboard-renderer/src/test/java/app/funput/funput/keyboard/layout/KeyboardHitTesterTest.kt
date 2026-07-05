@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -35,14 +36,16 @@ class KeyboardHitTesterTest {
     private fun resolveLayout(layout: app.funput.funput.keyboard.model.KeyboardLayout) = KeyboardGeometry.resolve(
         layout = layout,
         width = 1080f,
-        height = 726f,
+        height = KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.TELEX) *
+            (1080f / KeyboardDimensions.DefaultWidthDp),
         spec = spec,
     )
 
     @Test
     fun horizontalGapIsSplitBetweenAdjacentKeys() {
-        val q = keyboard.rows.first()[0]
-        val w = keyboard.rows.first()[1]
+        val qwertyRow = keyboard.rows[1]
+        val q = qwertyRow[0]
+        val w = qwertyRow[1]
         val midpoint = (q.bounds.right + w.bounds.left) / 2f
 
         assertEquals(q, keyboard.keyAt(midpoint - TestOffset, q.bounds.centerY))

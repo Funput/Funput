@@ -15,26 +15,33 @@ import org.junit.Test
 
 class SymbolLayoutsTest {
     @Test
-    fun `primary page contains digits and navigation keys`() {
+    fun `primary page uses five rows with common symbols`() {
         val layout = KeyboardLayoutResolver.resolve(
             KeyboardInputMethod.TELEX,
             KeyboardLayoutMode.SYMBOLS_PRIMARY,
         )
 
-        assertEquals("1234567890", labels(layout.rows.first().keys))
+        assertEquals(5, layout.rows.size)
+        assertEquals("1234567890", labels(layout.rows[0].keys))
+        assertTrue(layout.rows[0].keys.all { key -> key.role == KeyRole.PUNCTUATION })
+        assertTrue(layout.rows[0].keys.all { key -> key.secondaryLabel == null })
+        assertEquals("@#$", labels(layout.rows[1].keys).take(3))
+        assertEquals("*\"'", labels(layout.rows[2].keys).take(3))
         assertTrue(layout.rows.flattenedKeys().any { it.role == KeyRole.MORE_SYMBOLS })
         assertTrue(layout.rows.flattenedKeys().any { it.role == KeyRole.LETTERS })
     }
 
     @Test
-    fun `secondary page returns to primary page`() {
+    fun `secondary page uses five rows with less common symbols`() {
         val layout = KeyboardLayoutResolver.resolve(
             KeyboardInputMethod.VNI,
             KeyboardLayoutMode.SYMBOLS_SECONDARY,
         )
 
+        assertEquals(5, layout.rows.size)
         assertTrue(layout.rows.flattenedKeys().any { it.role == KeyRole.SYMBOLS && it.label == "?123" })
         assertTrue(layout.rows.flattenedKeys().any { it.label == "€" })
+        assertTrue(layout.rows.flattenedKeys().none { it.role == KeyRole.PLACEHOLDER })
     }
 
     @Test

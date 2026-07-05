@@ -20,9 +20,10 @@ internal object SymbolLayouts {
         suggestionsEnabled = suggestionsEnabled,
         secure = secure,
         rows = listOf(
-            symbolRow("primary", 0, listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")),
-            symbolRow("primary", 1, listOf("@", "#", "$", "_", "&", "-", "+", "(", ")", "/")),
-            bottomRow("primary", KeyRole.MORE_SYMBOLS, "=\\<", listOf("*", "\"", "'", ":", ";", "!", "?")),
+            topNumberRow(TopNumberRowMode.PLAIN_PUNCTUATION, pageId = "primary"),
+            symbolRow("primary", 1, SymbolPageContent.primaryRow1),
+            symbolRow("primary", 2, SymbolPageContent.primaryRow2),
+            bottomRow("primary", KeyRole.MORE_SYMBOLS, "=\\<", SymbolPageContent.primaryRow3),
             actionRow("primary", secure),
         ),
     )
@@ -37,9 +38,10 @@ internal object SymbolLayouts {
         suggestionsEnabled = suggestionsEnabled,
         secure = secure,
         rows = listOf(
-            symbolRow("secondary", 0, listOf("[", "]", "{", "}", "#", "%", "^", "*", "+", "=")),
-            symbolRow("secondary", 1, listOf("_", "\\", "|", "~", "<", ">", "€", "£", "¥", "•")),
-            bottomRow("secondary", KeyRole.SYMBOLS, "?123", listOf("`", "´", "©", "®", "™", "✓", "×")),
+            topNumberRow(TopNumberRowMode.PLAIN_PUNCTUATION, pageId = "secondary"),
+            symbolRow("secondary", 1, SymbolPageContent.secondaryRow1),
+            symbolRow("secondary", 2, SymbolPageContent.secondaryRow2),
+            bottomRow("secondary", KeyRole.SYMBOLS, "?123", SymbolPageContent.secondaryRow3),
             actionRow("secondary", secure),
         ),
     )
@@ -77,7 +79,7 @@ internal object SymbolLayouts {
     ) = KeyboardRow(
         keys = buildList {
             add(specialKey("switch-$page", switchLabel, switchRole, 1.5f, "Switch symbol page"))
-            addAll(symbols.mapIndexed { index, label -> symbolKey(page, 2, index, label) })
+            addAll(symbols.mapIndexed { index, label -> symbolKey(page, 3, index, label) })
             add(specialKey("backspace-$page", "", KeyRole.BACKSPACE, 1.5f, "Backspace"))
         },
     )
