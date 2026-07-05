@@ -78,6 +78,8 @@ internal class KeyboardInteractionController(
         onVisualStateChanged()
     }
 
+    fun setShiftState(value: ShiftState) = actionDispatcher.setShiftState(value)
+
     fun cancel() {
         backspaceRepeat.cancelAll()
         swipeGestures.cancel()

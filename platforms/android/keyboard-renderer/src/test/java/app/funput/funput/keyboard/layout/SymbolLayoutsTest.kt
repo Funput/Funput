@@ -3,9 +3,12 @@ package app.funput.funput.keyboard.layout
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.model.KeyboardEditorMode
+import app.funput.funput.keyboard.model.KeySwipeAction
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardRow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -43,6 +46,20 @@ class SymbolLayoutsTest {
                 assertEquals(ids.size, ids.distinct().size)
             }
         }
+    }
+
+    @Test
+    fun `no suggestions removes toolbar without disabling language swipe`() {
+        val layout = KeyboardLayoutResolver.resolve(
+            KeyboardInputMethod.VNI,
+            KeyboardLayoutMode.SYMBOLS_PRIMARY,
+            KeyboardEditorMode.TEXT,
+            suggestionBarEnabled = false,
+        )
+
+        assertNull(layout.suggestionBar)
+        val space = layout.rows.last().keys.first { it.role == KeyRole.SPACE }
+        assertEquals(KeySwipeAction.TOGGLE_LANGUAGE, space.horizontalSwipeAction)
     }
 
     private fun labels(keys: List<KeySpec>) = keys.joinToString("") { it.label }

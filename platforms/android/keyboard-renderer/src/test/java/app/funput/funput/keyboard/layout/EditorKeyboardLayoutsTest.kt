@@ -40,6 +40,18 @@ class EditorKeyboardLayoutsTest {
         )
     }
 
+    @Test
+    fun `disabled suggestion policy removes the letters toolbar`() {
+        val layout = KeyboardLayoutResolver.resolve(
+            KeyboardInputMethod.VNI,
+            KeyboardLayoutMode.LETTERS,
+            KeyboardEditorMode.TEXT,
+            suggestionBarEnabled = false,
+        )
+
+        assertNull(layout.suggestionBar)
+    }
+
     private fun resolve(method: KeyboardInputMethod, editorMode: KeyboardEditorMode) =
         KeyboardLayoutResolver.resolve(method, KeyboardLayoutMode.LETTERS, editorMode)
 

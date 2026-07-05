@@ -24,54 +24,53 @@ class FunputKeyboardView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
     val callbacks = FunputKeyboardCallbacks()
     val activePanel: KeyboardPanel get() = panelController.activePanel
-    val shiftState: ShiftState get() = keyboardSurface.shiftState
-
+    var shiftState: ShiftState
+        get() = keyboardSurface.shiftState
+        set(value) { keyboardSurface.shiftState = value }
     var inputMethod: KeyboardInputMethod
         get() = keyboardSurface.inputMethod
         set(value) {
             keyboardSurface.inputMethod = value
             requestLayout()
         }
-
     var editorMode: KeyboardEditorMode
         get() = keyboardSurface.editorMode
         set(value) {
             keyboardSurface.editorMode = value
             requestLayout()
         }
-
+    var suggestionBarEnabled: Boolean
+        get() = keyboardSurface.suggestionBarEnabled
+        set(value) {
+            keyboardSurface.suggestionBarEnabled = value
+            syncSuggestions()
+        }
     var enterAction: KeyboardEnterAction
         get() = keyboardSurface.enterAction
         set(value) { keyboardSurface.enterAction = value }
-
     var keyboardTheme: KeyboardTheme
         get() = keyboardSurface.keyboardTheme
         set(value) {
             keyboardSurface.keyboardTheme = value
             emojiPanel?.updateTheme(value)
         }
-
     var suggestions: List<String> = emptyList()
         set(value) {
             field = value
             syncSuggestions()
         }
-
     var language: KeyboardLanguage
         get() = keyboardSurface.language
         set(value) { keyboardSurface.language = value }
-
     var hapticsEnabled: Boolean
         get() = keyboardSurface.isHapticFeedbackEnabled
         set(value) {
             keyboardSurface.isHapticFeedbackEnabled = value
             emojiPanel?.hapticsEnabled = value
         }
-
     private val panelController = KeyboardPanelController()
     private val keyboardSurface = KeyboardSurfaceView(context)
     private var emojiPanel: EmojiPanelView? = null
-
     init {
         addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::handleKeyAction
@@ -131,7 +130,8 @@ class FunputKeyboardView @JvmOverloads constructor(
     }
 
     private fun syncSuggestions() {
-        keyboardSurface.suggestions = suggestions.takeIf { activePanel == KeyboardPanel.LETTERS }.orEmpty()
+        val visible = activePanel == KeyboardPanel.LETTERS && suggestionBarEnabled
+        keyboardSurface.suggestions = suggestions.takeIf { visible }.orEmpty()
     }
 
     private fun createEmojiPanel() = EmojiPanelView(context).apply {

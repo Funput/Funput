@@ -52,6 +52,8 @@ internal class KeyboardSurfaceInteraction(
 
     fun setLanguage(value: KeyboardLanguage) = controller.setLanguage(value)
 
+    fun setShiftState(value: ShiftState) = controller.setShiftState(value)
+
     fun onTouchEvent(event: MotionEvent): KeyboardTouchHandler.Result = touchHandler.onTouchEvent(event)
 
     fun clear() = touchHandler.clear()

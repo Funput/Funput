@@ -74,6 +74,17 @@ class KeyboardActionDispatcherTest {
         assertEquals(KeyAction.Input("vni-1", "1"), actions[2])
     }
 
+    @Test
+    fun externallyRequestedShiftUsesTheSameOneShotBehavior() {
+        dispatcher.setShiftState(ShiftState.ON)
+
+        dispatcher.dispatch("a", eventTimeMillis = 100L)
+
+        assertEquals(listOf(input("A")), actions)
+        assertEquals(ShiftState.OFF, dispatcher.shiftState)
+        assertEquals(2, shiftStateChangeCount)
+    }
+
     private fun input(text: String): KeyAction = KeyAction.Input("a", text)
 
     private fun key(

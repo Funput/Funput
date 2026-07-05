@@ -12,6 +12,11 @@ through `performEditorAction`; multiline fields retain normal newline behavior.
 Email and URL editors receive compact ASCII QWERTY layouts with contextual
 punctuation and bypass Vietnamese composition.
 
+`EditorInfoPolicyResolver` also owns capitalization, multiline, suggestion
+source, and personalized-learning policy. Auto-capitalization follows the
+editor's live cursor caps mode; app-provided completions are transient and are
+committed with `commitCompletion()` instead of being retained as Funput data.
+
 Number editors receive a suggestion-free 4×4 keypad with fixed period and comma
 keys. Signed and decimal flags remain represented in the resolved editor mode.
 Phone editors use a matching 4×4 dial pad with direct `+`, `*`, and `#` keys.

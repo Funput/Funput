@@ -32,6 +32,13 @@ internal class ShiftStateController(
         return true
     }
 
+    fun setState(value: ShiftState): Boolean {
+        if (state == value) return false
+        state = value
+        lastShiftUpTimeMillis = null
+        return true
+    }
+
     fun reset(): Boolean {
         if (state == ShiftState.OFF) return false
         state = ShiftState.OFF

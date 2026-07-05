@@ -3,20 +3,32 @@ package app.funput.funput.keyboard.layout
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.model.KeyboardLayout
 
 internal object EditorKeyboardLayouts {
-    fun resolve(inputMethod: KeyboardInputMethod, editorMode: KeyboardEditorMode) = when (editorMode) {
-        KeyboardEditorMode.TEXT -> KeyboardLayouts.forInputMethod(inputMethod)
-        KeyboardEditorMode.EMAIL -> emailLayouts.getValue(inputMethod)
-        KeyboardEditorMode.URL -> urlLayouts.getValue(inputMethod)
-        KeyboardEditorMode.PHONE -> PhoneKeyboardLayouts.resolve(inputMethod)
-        KeyboardEditorMode.PASSWORD -> PasswordKeyboardLayouts.text(inputMethod)
-        KeyboardEditorMode.PIN -> PasswordKeyboardLayouts.pin(inputMethod)
-        KeyboardEditorMode.NUMBER,
-        KeyboardEditorMode.NUMBER_DECIMAL,
-        KeyboardEditorMode.NUMBER_SIGNED,
-        KeyboardEditorMode.NUMBER_SIGNED_DECIMAL,
-        -> NumberKeyboardLayouts.resolve(inputMethod, editorMode)
+    fun resolve(
+        inputMethod: KeyboardInputMethod,
+        editorMode: KeyboardEditorMode,
+        suggestionBarEnabled: Boolean,
+    ): KeyboardLayout {
+        val layout = when (editorMode) {
+            KeyboardEditorMode.TEXT -> KeyboardLayouts.forInputMethod(inputMethod)
+            KeyboardEditorMode.EMAIL -> emailLayouts.getValue(inputMethod)
+            KeyboardEditorMode.URL -> urlLayouts.getValue(inputMethod)
+            KeyboardEditorMode.PHONE -> PhoneKeyboardLayouts.resolve(inputMethod)
+            KeyboardEditorMode.PASSWORD -> PasswordKeyboardLayouts.text(inputMethod)
+            KeyboardEditorMode.PIN -> PasswordKeyboardLayouts.pin(inputMethod)
+            KeyboardEditorMode.NUMBER,
+            KeyboardEditorMode.NUMBER_DECIMAL,
+            KeyboardEditorMode.NUMBER_SIGNED,
+            KeyboardEditorMode.NUMBER_SIGNED_DECIMAL,
+            -> NumberKeyboardLayouts.resolve(inputMethod, editorMode)
+        }
+        return if (suggestionBarEnabled || layout.suggestionBar == null) {
+            layout
+        } else {
+            layout.copy(id = "${layout.id}-no-suggestions", suggestionBar = null)
+        }
     }
 
     private val emailLayouts = KeyboardInputMethod.entries.associateWith { method ->

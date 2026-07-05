@@ -48,6 +48,12 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             field = value
             updateKeyboardLayout()
         }
+    var suggestionBarEnabled: Boolean = true
+        set(value) {
+            if (field == value) return
+            field = value
+            updateKeyboardLayout()
+        }
     var keyboardTheme: KeyboardTheme = KeyboardTheme.Aurora
         set(value) {
             if (field == value) return
@@ -65,12 +71,13 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var enterAction: KeyboardEnterAction = KeyboardEnterAction.Standard.NEW_LINE
         set(value) { field = value; invalidate() }
     val callbacks = KeyboardCallbacks()
-    val shiftState: ShiftState get() = interaction.shiftState
+    var shiftState: ShiftState
+        get() = interaction.shiftState
+        set(value) = interaction.setShiftState(value)
     var language: KeyboardLanguage
         get() = interaction.language
         set(value) = interaction.setLanguage(value)
-
-    private var keyboardLayout: KeyboardLayout = KeyboardLayoutResolver.resolve(inputMethod, layoutMode, editorMode)
+    private var keyboardLayout: KeyboardLayout = KeyboardLayoutResolver.resolve(inputMethod, layoutMode, editorMode, suggestionBarEnabled)
     private var resolvedKeyboard: ResolvedKeyboard? = null
     private val renderer = KeyboardCanvasRenderer(resources)
     private val interaction = KeyboardSurfaceInteraction(
@@ -108,41 +115,34 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         resolveGeometry()
         renderer.updateTheme(keyboardTheme, width, height)
     }
-
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val keyboard = resolvedKeyboard ?: return
         renderer.draw(canvas, width, height, keyboard, suggestions, interaction, shiftState, language, enterAction)
     }
-
     override fun onTouchEvent(event: MotionEvent): Boolean = when (interaction.onTouchEvent(event)) {
         KeyboardTouchHandler.Result.UNHANDLED -> false
         KeyboardTouchHandler.Result.HANDLED -> true
         KeyboardTouchHandler.Result.CLICK -> performClick()
     }
-
     override fun performClick(): Boolean {
         super.performClick()
         return true
     }
-
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus)
         if (!hasWindowFocus) interaction.clear()
     }
-
     override fun onDetachedFromWindow() {
         interaction.clear()
         super.onDetachedFromWindow()
     }
-
     private fun resolveGeometry() {
         resolvedKeyboard = keyboardLayout.resolveGeometry(width, height, resources.displayMetrics.density)
     }
-
     private fun updateKeyboardLayout() {
         interaction.reset()
-        keyboardLayout = KeyboardLayoutResolver.resolve(inputMethod, layoutMode, editorMode)
+        keyboardLayout = KeyboardLayoutResolver.resolve(inputMethod, layoutMode, editorMode, suggestionBarEnabled)
         requestLayout()
         resolveGeometry()
         invalidate()

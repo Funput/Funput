@@ -10,9 +10,13 @@ internal object KeyboardLayoutResolver {
         inputMethod: KeyboardInputMethod,
         mode: KeyboardLayoutMode,
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
+        suggestionBarEnabled: Boolean = true,
     ): KeyboardLayout = when (mode) {
-        KeyboardLayoutMode.LETTERS -> EditorKeyboardLayouts.resolve(inputMethod, editorMode)
-        KeyboardLayoutMode.SYMBOLS_PRIMARY -> SymbolLayouts.primary(inputMethod, editorMode.isPassword)
-        KeyboardLayoutMode.SYMBOLS_SECONDARY -> SymbolLayouts.secondary(inputMethod, editorMode.isPassword)
+        KeyboardLayoutMode.LETTERS ->
+            EditorKeyboardLayouts.resolve(inputMethod, editorMode, suggestionBarEnabled)
+        KeyboardLayoutMode.SYMBOLS_PRIMARY ->
+            SymbolLayouts.primary(inputMethod, suggestionBarEnabled, editorMode.isPassword)
+        KeyboardLayoutMode.SYMBOLS_SECONDARY ->
+            SymbolLayouts.secondary(inputMethod, suggestionBarEnabled, editorMode.isPassword)
     }
 }

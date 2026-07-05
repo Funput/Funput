@@ -9,9 +9,14 @@ import app.funput.funput.keyboard.model.KeyboardRow
 import app.funput.funput.keyboard.model.SuggestionBarSpec
 
 internal object SymbolLayouts {
-    fun primary(inputMethod: KeyboardInputMethod, secure: Boolean = false): KeyboardLayout = create(
+    fun primary(
+        inputMethod: KeyboardInputMethod,
+        suggestionBarEnabled: Boolean = true,
+        secure: Boolean = false,
+    ): KeyboardLayout = create(
         id = "symbols-primary",
         inputMethod = inputMethod,
+        suggestionBarEnabled = suggestionBarEnabled,
         secure = secure,
         rows = listOf(
             symbolRow("primary", 0, listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")),
@@ -21,9 +26,14 @@ internal object SymbolLayouts {
         ),
     )
 
-    fun secondary(inputMethod: KeyboardInputMethod, secure: Boolean = false): KeyboardLayout = create(
+    fun secondary(
+        inputMethod: KeyboardInputMethod,
+        suggestionBarEnabled: Boolean = true,
+        secure: Boolean = false,
+    ): KeyboardLayout = create(
         id = "symbols-secondary",
         inputMethod = inputMethod,
+        suggestionBarEnabled = suggestionBarEnabled,
         secure = secure,
         rows = listOf(
             symbolRow("secondary", 0, listOf("[", "]", "{", "}", "#", "%", "^", "*", "+", "=")),
@@ -36,14 +46,15 @@ internal object SymbolLayouts {
     private fun create(
         id: String,
         inputMethod: KeyboardInputMethod,
+        suggestionBarEnabled: Boolean,
         secure: Boolean,
         rows: List<KeyboardRow>,
     ) = KeyboardLayout(
-        id = "$id-${inputMethod.name.lowercase()}${if (secure) "-secure" else ""}",
+        id = "$id-${inputMethod.name.lowercase()}${suffix(suggestionBarEnabled, secure)}",
         inputMethod = inputMethod,
-        suggestionBar = if (secure) null else SuggestionBarSpec(
+        suggestionBar = if (suggestionBarEnabled && !secure) SuggestionBarSpec(
             emojiKey = specialKey("emoji-$id", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
-        ),
+        ) else null,
         rows = rows,
     )
 
@@ -97,4 +108,10 @@ internal object SymbolLayouts {
         widthWeight: Float = 1f,
         accessibilityLabel: String = label,
     ) = KeySpec(id, label, role, widthWeight, accessibilityLabel = accessibilityLabel)
+
+    private fun suffix(suggestionBarEnabled: Boolean, secure: Boolean): String = when {
+        secure -> "-secure"
+        !suggestionBarEnabled -> "-no-suggestions"
+        else -> ""
+    }
 }

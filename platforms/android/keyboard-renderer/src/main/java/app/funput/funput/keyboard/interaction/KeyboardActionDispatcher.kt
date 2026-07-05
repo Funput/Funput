@@ -34,6 +34,10 @@ internal class KeyboardActionDispatcher(
 
     fun toggleLanguage(language: KeyboardLanguage) = onAction(KeyAction.ToggleLanguage(language))
 
+    fun setShiftState(value: ShiftState) {
+        if (shiftController.setState(value)) onShiftStateChanged()
+    }
+
     fun reset() {
         if (shiftController.reset()) onShiftStateChanged()
     }
