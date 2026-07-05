@@ -717,13 +717,24 @@ Các con số dưới đây là mục tiêu ban đầu, cần hiệu chỉnh b�
 
 ### 18.3. Instrumentation
 
-- `setComposingText`, `finishComposingText`, backspace và cursor movement.
-- Telex/VNI end-to-end.
-- Rotation, split screen và configuration changes.
+Đã tự động hoá (module `ime`, source set `androidTest`, chạy pipeline soạn thảo thật +
+engine JNI thật trên `InputConnection`/`Editable` thật của một `EditText`):
+
+- `setComposingText`/`finishComposingText`, backspace trong composition và cursor movement
+  (`ImeCompositionInstrumentedTest`).
+- Telex/VNI end-to-end (`vieejt` → `việt`, chuyển VNI end-to-end).
+- Grapheme-aware backspace và commit trên Editable thật (`InputConnectionEditorInstrumentedTest`).
+- Password behavior: `EditorInfoPolicyResolver` tắt composition → commit raw ASCII
+  (`PasswordEditorInstrumentedTest`).
+- Fixture dùng chung: `editing/support/ImeEditingScenario` (real `EditText` + `InputConnection`).
+- Chạy: `./gradlew :ime:connectedDebugAndroidTest` (cần thiết bị arm64 hoặc emulator x86_64).
+
+Còn thủ công trên thiết bị thật (cần bật Funput IME ở cấp OS):
+
+- App host variations: Compose `TextField`, WebView và các app phổ biến.
+- Ma trận OEM, rotation/split-screen/configuration changes.
 - Theme download/install/rollback.
 - TalkBack virtual nodes.
-- Password behavior.
-- App host variations: native EditText, Compose TextField, WebView và các app phổ biến.
 
 ### 18.4. Golden screenshot
 

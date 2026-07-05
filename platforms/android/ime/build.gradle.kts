@@ -19,6 +19,7 @@ android {
 
     defaultConfig {
         minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
         ndk {
             abiFilters += setOf("arm64-v8a", "x86_64")
@@ -35,6 +36,8 @@ dependencies {
     implementation(project(":keyboard-ui"))
     implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
 
 androidComponents.onVariants { variant ->
