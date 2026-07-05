@@ -35,6 +35,7 @@ internal fun SettingsScreen(
     appearanceMode: AppearanceMode,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
+    versionName: String,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onAppearanceSelected: (AppearanceMode) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
@@ -112,6 +113,16 @@ internal fun SettingsScreen(
                         iconBackground = BrandPink,
                         iconColor = Color(0xFF321700),
                         onClick = onShowKeyboardPicker,
+                    )
+                }
+            }
+            item {
+                SettingsGroup {
+                    SettingsValueRow(
+                        title = stringResource(R.string.settings_version_title),
+                        value = versionName,
+                        iconRes = R.drawable.ic_info,
+                        iconBackground = BrandBlue,
                     )
                 }
             }

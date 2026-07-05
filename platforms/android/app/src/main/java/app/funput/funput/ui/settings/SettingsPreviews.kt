@@ -33,6 +33,7 @@ private fun SettingsPreview(appearanceMode: AppearanceMode) {
             appearanceMode = appearanceMode,
             hapticsEnabled = true,
             soundsEnabled = false,
+            versionName = "1.2026.1",
             onInputMethodSelected = {},
             onAppearanceSelected = {},
             onHapticsChanged = {},

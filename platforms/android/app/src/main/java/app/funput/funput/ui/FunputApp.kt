@@ -25,6 +25,7 @@ fun FunputApp() {
     val inputSettings = remember(context) { InputMethodSettings(context) }
     val appearanceSettings = remember(context) { AppearanceSettings(context) }
     val feedbackSettings = remember(context) { KeyboardFeedbackSettings(context) }
+    val versionName = remember(context) { AppVersionProvider.versionName(context) }
     val inputMethod by inputSettings.inputMethod.collectAsState(InputMethodSettings.DefaultInputMethod)
     val appearanceMode by appearanceSettings.mode.collectAsState(AppearanceSettings.DefaultMode)
     val feedback by feedbackSettings.preferences.collectAsState(KeyboardFeedbackPreferences.Default)
@@ -39,6 +40,7 @@ fun FunputApp() {
                 appearanceMode = appearanceMode,
                 hapticsEnabled = feedback.hapticsEnabled,
                 soundsEnabled = feedback.soundsEnabled,
+                versionName = versionName,
                 onInputMethodSelected = { method ->
                     scope.launch { inputSettings.setInputMethod(method) }
                 },
