@@ -36,7 +36,7 @@ object KeyboardGeometry {
             verticalGap = verticalMetrics.verticalGap,
         )
 
-        val suggestionBar = resolveSuggestionBar(layout, width, resolvedSpec)
+        val suggestionBar = ToolbarGeometry.resolve(layout, width, resolvedSpec)
         val rowsTop = suggestionBar?.bounds?.bottom?.plus(resolvedSpec.suggestionBarGap)
             ?: spec.verticalPadding
         val rowsTopOffset = rowsTop
@@ -106,43 +106,4 @@ object KeyboardGeometry {
         )
     }
 
-    private fun resolveSuggestionBar(
-        layout: KeyboardLayout,
-        width: Float,
-        spec: KeyboardGeometrySpec,
-    ): ResolvedSuggestionBar? {
-        val barSpec = layout.suggestionBar ?: return null
-        val top = spec.verticalPadding
-        val bottom = top + spec.suggestionBarHeight
-        val left = spec.horizontalPadding
-        val right = width - spec.horizontalPadding
-        val emojiLeft = right - spec.suggestionBarHeight
-        val settingsRight = emojiLeft - spec.horizontalGap
-        val settingsLeft = settingsRight - spec.suggestionBarHeight
-        val suggestionsRight = if (barSpec.suggestionsEnabled) settingsLeft - spec.horizontalGap else settingsLeft
-        val logoSize = spec.suggestionBarHeight * ToolbarBrandMetrics.LogoSizeRatio
-        val logoTop = top + (spec.suggestionBarHeight - logoSize) / 2f
-        val logoBounds = KeyBounds(left, logoTop, left + logoSize, logoTop + logoSize)
-        val suggestionsLeft = logoBounds.right + spec.horizontalGap
-        val suggestionBar = ResolvedSuggestionBar(
-            bounds = KeyBounds(left, top, right, bottom),
-            logoBounds = logoBounds,
-            suggestionsBounds = KeyBounds(suggestionsLeft, top, suggestionsRight, bottom),
-            settingsKey = ResolvedKey(
-                barSpec.settingsKey,
-                KeyBounds(settingsLeft, top, settingsRight, bottom),
-            ),
-            emojiKey = ResolvedKey(
-                barSpec.emojiKey,
-                KeyBounds(emojiLeft, top, right, bottom),
-            ),
-            suggestionsEnabled = barSpec.suggestionsEnabled,
-        )
-        if (barSpec.suggestionsEnabled) {
-            require(suggestionBar.suggestionsBounds.width > 0f) {
-                "Keyboard is too narrow for the suggestion bar"
-            }
-        }
-        return suggestionBar
-    }
 }

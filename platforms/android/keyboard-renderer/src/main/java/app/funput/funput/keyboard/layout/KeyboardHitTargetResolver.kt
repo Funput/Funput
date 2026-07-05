@@ -9,15 +9,25 @@ package app.funput.funput.keyboard.layout
 internal object KeyboardHitTargetResolver {
     fun resolve(keyboard: ResolvedKeyboard): ResolvedKeyboard {
         val suggestionBar = keyboard.suggestionBar?.let { bar ->
+            val systemKey = bar.systemInputMethodKey?.let { key ->
+                resolveToolbarKey(
+                    keyboard = keyboard,
+                    key = key,
+                    left = if (bar.suggestionsEnabled) {
+                        midpoint(bar.suggestionsBounds.right, key.bounds.left)
+                    } else {
+                        key.bounds.left
+                    },
+                    right = midpoint(key.bounds.right, bar.settingsKey.bounds.left),
+                )
+            }
             bar.copy(
+                systemInputMethodKey = systemKey,
                 settingsKey = resolveToolbarKey(
                     keyboard = keyboard,
                     key = bar.settingsKey,
-                    left = if (bar.suggestionsEnabled) {
-                        midpoint(bar.suggestionsBounds.right, bar.settingsKey.bounds.left)
-                    } else {
-                        midpoint(bar.logoBounds.right, bar.settingsKey.bounds.left)
-                    },
+                    left = systemKey?.let { midpoint(it.bounds.right, bar.settingsKey.bounds.left) }
+                        ?: settingsHitLeft(bar),
                     right = midpoint(bar.settingsKey.bounds.right, bar.emojiKey.bounds.left),
                 ),
                 emojiKey = resolveToolbarKey(
@@ -46,6 +56,12 @@ internal object KeyboardHitTargetResolver {
             suggestionBar = suggestionBar,
             rows = rows,
         )
+    }
+
+    private fun settingsHitLeft(bar: ResolvedSuggestionBar): Float = if (bar.suggestionsEnabled) {
+        midpoint(bar.suggestionsBounds.right, bar.settingsKey.bounds.left)
+    } else {
+        midpoint(bar.logoBounds.right, bar.settingsKey.bounds.left)
     }
 
     private fun resolveToolbarKey(

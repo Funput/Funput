@@ -1,9 +1,11 @@
 package app.funput.funput.keyboard.rendering
 
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import androidx.core.graphics.PathParser
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.min
@@ -16,6 +18,9 @@ internal class UtilityKeyIconRenderer(private val metrics: RenderMetrics) {
     }
     private val path = Path()
     private val drawingRect = RectF()
+    private val settingsPath = requireNotNull(PathParser.createPathFromPathData(SettingsPathData))
+    private val settingsMatrix = Matrix()
+    private val settingsViewport = RectF(0f, 0f, 24f, 24f)
 
     fun updateTheme(theme: KeyboardTheme) {
         paint.color = theme.labelColor
@@ -73,20 +78,22 @@ internal class UtilityKeyIconRenderer(private val metrics: RenderMetrics) {
     }
 
     fun drawSettings(canvas: Canvas, key: ResolvedKey) {
-        val radius = min(key.bounds.width, key.bounds.height) * 0.19f
-        val centerX = key.bounds.centerX
-        val centerY = key.bounds.centerY
-        canvas.drawCircle(centerX, centerY, radius * 0.32f, paint)
-        canvas.drawCircle(centerX, centerY, radius, paint)
-        repeat(6) { index ->
-            val angle = Math.toRadians((index * 60.0) - 90.0)
-            val innerRadius = radius * 0.58f
-            val startX = centerX + (Math.cos(angle) * innerRadius).toFloat()
-            val startY = centerY + (Math.sin(angle) * innerRadius).toFloat()
-            val endX = centerX + (Math.cos(angle) * radius).toFloat()
-            val endY = centerY + (Math.sin(angle) * radius).toFloat()
-            canvas.drawLine(startX, startY, endX, endY, paint)
-        }
+        val size = min(key.bounds.width, key.bounds.height) * 0.46f
+        val half = size / 2f
+        drawingRect.set(
+            key.bounds.centerX - half,
+            key.bounds.centerY - half,
+            key.bounds.centerX + half,
+            key.bounds.centerY + half,
+        )
+        settingsMatrix.setRectToRect(settingsViewport, drawingRect, Matrix.ScaleToFit.CENTER)
+        path.reset()
+        path.fillType = Path.FillType.EVEN_ODD
+        settingsPath.transform(settingsMatrix, path)
+        paint.style = Paint.Style.FILL
+        canvas.drawPath(path, paint)
+        paint.style = Paint.Style.STROKE
+        path.fillType = Path.FillType.WINDING
     }
 
     fun drawEmoji(canvas: Canvas, key: ResolvedKey) {
@@ -121,5 +128,19 @@ internal class UtilityKeyIconRenderer(private val metrics: RenderMetrics) {
             key.bounds.centerY + radius * 0.5f,
         )
         canvas.drawArc(drawingRect, 18f, 144f, false, paint)
+    }
+
+    private companion object {
+        const val SettingsPathData =
+            "M19.43,12.98c.04,-.32 .07,-.65 .07,-.98s-.03,-.66 -.07,-.98l2.11,-1.65" +
+                "c.19,-.15 .24,-.42 .12,-.64l-2,-3.46c-.12,-.22 -.37,-.31 -.6,-.22l-2.49,1" +
+                "c-.52,-.4 -1.08,-.73 -1.69,-.98L14.5,2.42C14.47,2.18 14.25,2 14,2h-4" +
+                "c-.25,0 -.46,.18 -.5,.42L9.12,5.07c-.61,.25 -1.17,.58 -1.69,.98l-2.49,-1" +
+                "c-.23,-.09 -.48,0 -.6,.22l-2,3.46c-.12,.22 -.07,.49 .12,.64l2.11,1.65" +
+                "c-.04,.32 -.07,.65 -.07,.98s.03,.66 .07,.98l-2.11,1.65c-.19,.15 -.24,.42 -.12,.64" +
+                "l2,3.46c.12,.22 .37,.31 .6,.22l2.49,-1c.52,.4 1.08,.73 1.69,.98l.38,2.65" +
+                "c.04,.24 .25,.42 .5,.42h4c.25,0 .46,-.18 .5,-.42l.38,-2.65c.61,-.25 1.17,-.58 1.69,-.98" +
+                "l2.49,1c.23,.09 .48,0 .6,-.22l2,-3.46c.12,-.22 .07,-.49 -.12,-.64z" +
+                "M12,15.5A3.5,3.5 0,1 1,12,8a3.5,3.5 0,0 1,0,7.5z"
     }
 }
