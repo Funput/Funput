@@ -20,13 +20,14 @@ class NumberKeyboardLayoutsTest {
             listOf(
                 listOf("1", "2", "3", ""),
                 listOf("4", "5", "6", ""),
-                listOf("7", "8", "9", "."),
-                listOf("", "0", "", ","),
+                listOf("7", "8", "9", ""),
+                listOf("", "0", "", ""),
             ),
             layout.rows.map { row -> row.keys.map { it.label } },
         )
         assertEquals(KeyRole.BACKSPACE, layout.rows[0].keys[3].role)
         assertEquals(KeyRole.ENTER, layout.rows[1].keys[3].role)
+        assertEquals(KeyRole.PLACEHOLDER, layout.rows[2].keys[3].role)
         assertEquals(KeyRole.PLACEHOLDER, layout.rows[3].keys[0].role)
         assertEquals(KeyRole.PLACEHOLDER, layout.rows[3].keys[2].role)
         assertNull(layout.suggestionBar)
@@ -34,10 +35,20 @@ class NumberKeyboardLayoutsTest {
     }
 
     @Test
-    fun `all numeric variants share the same keypad`() {
-        val expected = resolve(KeyboardEditorMode.NUMBER).rows.map { row -> row.keys.map { it.label } }
-        KeyboardEditorMode.entries.filter { it.isNumber }.forEach { mode ->
-            assertEquals(expected, resolve(mode).rows.map { row -> row.keys.map { it.label } })
+    fun `numeric flags control sign and decimal keys`() {
+        val expectedOptionalKeys = mapOf(
+            KeyboardEditorMode.NUMBER to emptyList(),
+            KeyboardEditorMode.NUMBER_DECIMAL to listOf(".", ","),
+            KeyboardEditorMode.NUMBER_SIGNED to listOf("-"),
+            KeyboardEditorMode.NUMBER_SIGNED_DECIMAL to listOf(".", "-", ","),
+        )
+
+        expectedOptionalKeys.forEach { (mode, expected) ->
+            val optional = resolve(mode).rows
+                .flatMap { it.keys }
+                .filter { it.role == KeyRole.PUNCTUATION }
+                .map { it.label }
+            assertEquals(expected, optional)
         }
     }
 

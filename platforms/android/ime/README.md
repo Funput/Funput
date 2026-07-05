@@ -9,16 +9,18 @@ selects the Enter-key presentation and routes standard or custom editor actions
 through `performEditorAction`; multiline fields retain normal newline behavior.
 
 `EditorInfoKeyboardModeResolver` maps Android input-type flags to renderer modes.
-Email and URL editors receive compact ASCII QWERTY layouts with contextual
-punctuation and bypass Vietnamese composition.
+Email editors receive compact ASCII QWERTY layouts and bypass Vietnamese
+composition. URI editors are treated as browser omnibox/search fields: they use
+web punctuation while retaining Vietnamese composition because the same field
+accepts both addresses and natural-language search queries.
 
 `EditorInfoPolicyResolver` also owns capitalization, multiline, suggestion
 source, and personalized-learning policy. Auto-capitalization follows the
 editor's live cursor caps mode; app-provided completions are transient and are
 committed with `commitCompletion()` instead of being retained as Funput data.
 
-Number editors receive a suggestion-free 4×4 keypad with fixed period and comma
-keys. Signed and decimal flags remain represented in the resolved editor mode.
+Number editors receive a suggestion-free 4×4 keypad. Minus appears only for the
+signed flag; period and comma appear only for the decimal flag.
 Phone editors use a matching 4×4 dial pad with direct `+`, `*`, and `#` keys.
 Text and numeric password variations use suggestion-free layouts, bypass
 composition, and keep both symbol pages free of candidate and emoji UI.

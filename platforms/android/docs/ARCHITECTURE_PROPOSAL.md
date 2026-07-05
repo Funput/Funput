@@ -189,7 +189,7 @@ class FunputInputMethodService : InputMethodService() {
 ### 7.1. Khi bắt đầu nhập
 
 1. Đọc `EditorInfo.inputType`.
-2. Chọn layout: text, number, phone, email, URL hoặc password.
+2. Chọn layout: text, search/omnibox, number, phone, email hoặc password.
 3. Reset composition Rust.
 4. Đồng bộ method Telex/VNI và các setting đã cache.
 5. Bật/tắt auto-capitalize dựa trên `inputType` và `imeOptions`.
@@ -207,7 +207,7 @@ class FunputInputMethodService : InputMethodService() {
 |---|---|
 | Text thường | Telex/VNI, composition, auto-cap tùy setting |
 | Email | Thêm `@`, `.`, thường tắt autocorrect mạnh |
-| URL | Thêm `/`, `.`, `.com` tùy layout; tránh sửa ngoài ý muốn |
+| URI / browser omnibox | Dùng search layout có `/`, `.`, `.com`; vẫn chạy Vietnamese composition vì cùng ô nhập nhận cả địa chỉ lẫn truy vấn tìm kiếm |
 | Password | Không candidate/preview/log; đầy đủ ký tự cần thiết |
 | Number | Numeric pad; không chạy Vietnamese composition |
 | Phone | Phone pad với `+`, `*`, `#` |
@@ -345,7 +345,7 @@ data class KeyboardLayout(
 - QWERTY lowercase/uppercase.
 - Symbol pages.
 - Numeric/phone.
-- Email/URL variations.
+- Email và search/omnibox variations; URI variation phải vào search mode, không set cứng URL mode.
 - Telex.
 - VNI với number row dễ truy cập; không bắt người dùng đổi trang để bấm dấu số.
 - Globe, emoji/symbol, settings, backspace, shift, enter và space.
@@ -826,7 +826,7 @@ Không được đo:
 
 - Telex/VNI.
 - Shift/backspace/space/enter/symbol.
-- Text, number, email, URL, password layouts.
+- Text, number, email, search/omnibox và password layouts.
 - DataStore settings cơ bản.
 - Onboarding bật và chọn Funput.
 - Một theme glass mặc định với fallback hoàn chỉnh.
@@ -900,7 +900,7 @@ Không được đo:
 - Gõ Telex và VNI đúng theo fixture cốt lõi.
 - Không viết lại luật tiếng Việt bằng Kotlin.
 - Password fields không để lộ hoặc lưu nội dung.
-- Chuyển text/email/URL/number/password layout đúng.
+- Chuyển text/email/search/number/password layout đúng; URI/omnibox vẫn gõ được tiếng Việt.
 - Theme mặc định đẹp ở cả AGSL và static fallback.
 - Theme preview giống renderer thật.
 - Warm open không có jank rõ ràng trên máy tầm trung.
