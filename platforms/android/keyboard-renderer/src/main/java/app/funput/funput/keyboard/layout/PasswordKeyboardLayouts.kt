@@ -10,11 +10,11 @@ internal object PasswordKeyboardLayouts {
         inputMethod = inputMethod,
         leadingRows = listOf(keypadRow(*"1234567890".map(::keypadDigit).toTypedArray())),
         actionKeys = listOf(
-            specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.25f, "Symbols"),
-            specialKey("comma", ",", KeyRole.PUNCTUATION, 0.85f),
-            asciiSpaceKey(5.3f),
-            specialKey("period", ".", KeyRole.PUNCTUATION, 0.85f),
-            specialKey("enter", "", KeyRole.ENTER, 1.35f, "Enter"),
+            specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
+            specialKey("comma", ",", KeyRole.PUNCTUATION, 0.9f),
+            asciiSpaceKey(6f),
+            specialKey("period", ".", KeyRole.PUNCTUATION, 0.9f),
+            specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
         showSuggestionBar = false,
     )

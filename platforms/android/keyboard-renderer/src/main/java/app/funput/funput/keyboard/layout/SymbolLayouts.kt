@@ -69,19 +69,19 @@ internal object SymbolLayouts {
         symbols: List<String>,
     ) = KeyboardRow(
         keys = buildList {
-            add(specialKey("switch-$page", switchLabel, switchRole, 1.35f, "Switch symbol page"))
+            add(specialKey("switch-$page", switchLabel, switchRole, 1.5f, "Switch symbol page"))
             addAll(symbols.mapIndexed { index, label -> symbolKey(page, 2, index, label) })
-            add(specialKey("backspace-$page", "", KeyRole.BACKSPACE, 1.35f, "Backspace"))
+            add(specialKey("backspace-$page", "", KeyRole.BACKSPACE, 1.5f, "Backspace"))
         },
     )
 
     private fun actionRow(page: String, secure: Boolean) = KeyboardRow(
         keys = listOf(
-            specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.25f, "Letters"),
-            specialKey("comma-$page", ",", KeyRole.PUNCTUATION, 0.85f),
+            specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.7f, "Letters"),
+            specialKey("comma-$page", ",", KeyRole.PUNCTUATION, 0.9f),
             symbolSpace(page, secure),
-            specialKey("period-$page", ".", KeyRole.PUNCTUATION, 0.85f),
-            specialKey("enter-$page", "", KeyRole.ENTER, 1.35f, "Enter"),
+            specialKey("period-$page", ".", KeyRole.PUNCTUATION, 0.9f),
+            specialKey("enter-$page", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
     )
 
@@ -89,7 +89,7 @@ internal object SymbolLayouts {
         id = "space-$page",
         label = if (secure) "English" else "Tiếng Việt",
         role = KeyRole.SPACE,
-        widthWeight = 5.3f,
+        widthWeight = 6f,
         accessibilityLabel = if (secure) "Space" else "Dấu cách. Vuốt để đổi ngôn ngữ",
         horizontalSwipeAction = KeySwipeAction.TOGGLE_LANGUAGE.takeUnless { secure },
     )

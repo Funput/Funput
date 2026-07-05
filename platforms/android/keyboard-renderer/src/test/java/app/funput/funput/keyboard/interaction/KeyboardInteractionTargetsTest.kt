@@ -17,8 +17,11 @@ class KeyboardInteractionTargetsTest {
         spec = KeyboardGeometrySpec(
             horizontalPadding = 21f,
             verticalPadding = 24f,
-            horizontalGap = 15f,
-            verticalGap = 18f,
+            horizontalGap = 0f,
+            verticalGap = 0f,
+            horizontalGapRatio = 0.11f,
+            verticalGapRatio = 0.16f,
+            keyAspectRatio = 0.75f,
             suggestionBarHeight = 126f,
             suggestionBarGap = 18f,
         ),

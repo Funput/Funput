@@ -7,18 +7,22 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class KeyboardHitTesterTest {
+    private val spec = KeyboardGeometrySpec(
+        horizontalPadding = 21f,
+        verticalPadding = 24f,
+        horizontalGap = 0f,
+        verticalGap = 0f,
+        horizontalGapRatio = 0.11f,
+        verticalGapRatio = 0.16f,
+        keyAspectRatio = 0.75f,
+        suggestionBarHeight = 126f,
+        suggestionBarGap = 18f,
+    )
     private val keyboard = KeyboardGeometry.resolve(
         layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX),
         width = 1080f,
         height = 726f,
-        spec = KeyboardGeometrySpec(
-            horizontalPadding = 21f,
-            verticalPadding = 24f,
-            horizontalGap = 15f,
-            verticalGap = 18f,
-            suggestionBarHeight = 126f,
-            suggestionBarGap = 18f,
-        ),
+        spec = spec,
     )
 
     @Test

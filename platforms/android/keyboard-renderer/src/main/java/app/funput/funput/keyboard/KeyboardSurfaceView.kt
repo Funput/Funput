@@ -11,6 +11,7 @@ import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.KeyboardTouchHandler
 import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
+import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.layout.resolveGeometry
 import app.funput.funput.keyboard.model.KeyboardEnterAction
@@ -61,6 +62,15 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             renderer.updateTheme(value, width, height)
             invalidate()
         }
+    var sizingProfile: KeyboardSizingProfile = KeyboardSizingProfile.Default
+        set(value) {
+            if (field == value) return
+            field = value
+            renderer.updateSizing(value)
+            requestLayout()
+            resolveGeometry()
+            invalidate()
+        }
     var suggestions: List<String> = emptyList()
         set(value) {
             val normalized = SuggestionNormalizer.normalize(value)
@@ -100,13 +110,14 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     )
     init {
         renderer.updateTheme(keyboardTheme, width, height)
+        renderer.updateSizing(sizingProfile)
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
         isClickable = true
     }
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
         val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
-        val heightDp = KeyboardDimensions.recommendedHeightDp(inputMethod, editorMode)
+        val heightDp = KeyboardDimensions.recommendedHeightDp(inputMethod, editorMode, sizingProfile)
         val height = resolveSize((heightDp * density).roundToInt(), heightMeasureSpec)
         setMeasuredDimension(width, height)
     }
@@ -138,7 +149,12 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         super.onDetachedFromWindow()
     }
     private fun resolveGeometry() {
-        resolvedKeyboard = keyboardLayout.resolveGeometry(width, height, resources.displayMetrics.density)
+        resolvedKeyboard = keyboardLayout.resolveGeometry(
+            width = width,
+            height = height,
+            density = resources.displayMetrics.density,
+            profile = sizingProfile,
+        )
     }
     private fun updateKeyboardLayout() {
         interaction.reset()

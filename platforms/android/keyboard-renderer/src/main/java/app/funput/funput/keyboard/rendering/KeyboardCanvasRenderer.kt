@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.Shader
 import app.funput.funput.keyboard.interaction.PressedKeyState
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
+import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
@@ -35,6 +36,10 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
                 Shader.TileMode.CLAMP,
             )
         }
+    }
+
+    fun updateSizing(profile: KeyboardSizingProfile) {
+        metrics.updateLabelScale(profile.labelScale)
     }
 
     fun draw(

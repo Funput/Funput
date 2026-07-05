@@ -59,7 +59,7 @@ class PasswordKeyboardLayoutsTest {
         assertTrue(KeyboardEditorMode.PASSWORD.isPassword)
         assertTrue(KeyboardEditorMode.PIN.isPassword)
         assertEquals(
-            348f,
+            252f,
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.TELEX, KeyboardEditorMode.PASSWORD),
         )
         assertEquals(

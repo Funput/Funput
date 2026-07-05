@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.FrameLayout
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.KeyboardDimensions
+import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardEditorMode
@@ -53,6 +54,12 @@ class FunputKeyboardView @JvmOverloads constructor(
         set(value) {
             keyboardSurface.keyboardTheme = value
             emojiPanel?.updateTheme(value)
+        }
+    var sizingProfile: KeyboardSizingProfile
+        get() = keyboardSurface.sizingProfile
+        set(value) {
+            keyboardSurface.sizingProfile = value
+            requestLayout()
         }
     var suggestions: List<String> = emptyList()
         set(value) {
@@ -109,7 +116,11 @@ class FunputKeyboardView @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
         val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
-        val heightDp = KeyboardDimensions.recommendedHeightDp(inputMethod, editorMode)
+        val heightDp = KeyboardDimensions.recommendedHeightDp(
+            inputMethod = inputMethod,
+            editorMode = editorMode,
+            profile = sizingProfile,
+        )
         val height = resolveSize((heightDp * density).roundToInt(), heightMeasureSpec)
         super.onMeasure(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),

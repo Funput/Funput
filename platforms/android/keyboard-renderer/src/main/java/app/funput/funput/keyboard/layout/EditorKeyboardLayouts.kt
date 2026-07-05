@@ -36,12 +36,12 @@ internal object EditorKeyboardLayouts {
             id = "qwerty-email-${method.name.lowercase()}",
             inputMethod = method,
             actionKeys = listOf(
-                specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.25f, "Symbols"),
-                specialKey("at", "@", KeyRole.PUNCTUATION, 0.85f, "At sign"),
-                asciiSpaceKey(3.3f),
-                specialKey("period", ".", KeyRole.PUNCTUATION, 0.8f, "Period"),
-                specialKey("dot-com", ".com", KeyRole.PUNCTUATION, 1.2f, "Dot com"),
-                specialKey("enter", "", KeyRole.ENTER, 1.35f, "Enter"),
+                specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
+                specialKey("at", "@", KeyRole.PUNCTUATION, 1.7f, "At sign"),
+                asciiSpaceKey(3.8f),
+                specialKey("period", ".", KeyRole.PUNCTUATION, 0.9f, "Period"),
+                specialKey("dot-com", ".com", KeyRole.PUNCTUATION, 1.7f, "Dot com"),
+                specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
             ),
         )
     }
@@ -51,12 +51,12 @@ internal object EditorKeyboardLayouts {
             id = "qwerty-url-${method.name.lowercase()}",
             inputMethod = method,
             actionKeys = listOf(
-                specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.25f, "Symbols"),
-                specialKey("slash", "/", KeyRole.PUNCTUATION, 0.8f, "Slash"),
-                asciiSpaceKey(3.3f),
-                specialKey("period", ".", KeyRole.PUNCTUATION, 0.8f, "Period"),
-                specialKey("dot-com", ".com", KeyRole.PUNCTUATION, 1.2f, "Dot com"),
-                specialKey("enter", "", KeyRole.ENTER, 1.35f, "Enter"),
+                specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
+                specialKey("slash", "/", KeyRole.PUNCTUATION, 1.7f, "Slash"),
+                asciiSpaceKey(3.8f),
+                specialKey("period", ".", KeyRole.PUNCTUATION, 0.9f, "Period"),
+                specialKey("dot-com", ".com", KeyRole.PUNCTUATION, 1.7f, "Dot com"),
+                specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
             ),
         )
     }

@@ -52,7 +52,7 @@ class KeyboardLayoutsTest {
             assertTrue(actionKeys.none { key -> key.role == KeyRole.EMOJI })
             assertEquals(KeySwipeAction.TOGGLE_LANGUAGE, space.horizontalSwipeAction)
             assertEquals("Tiếng Việt", space.label)
-            assertEquals(5.3f, space.widthWeight)
+            assertEquals(6f, space.widthWeight)
         }
     }
 }

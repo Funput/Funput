@@ -31,11 +31,11 @@ class EditorKeyboardLayoutsTest {
     @Test
     fun `ASCII layouts use compact height even when VNI is selected`() {
         assertEquals(
-            290f,
+            268f,
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.EMAIL),
         )
         assertEquals(
-            348f,
+            318f,
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.TEXT),
         )
     }

@@ -33,7 +33,7 @@ internal fun qwertyLayout(
     },
 )
 
-internal fun standardSpaceKey(widthWeight: Float = 5.3f) = KeySpec(
+internal fun standardSpaceKey(widthWeight: Float = 6f) = KeySpec(
     id = "space",
     label = "Tiếng Việt",
     role = KeyRole.SPACE,
@@ -86,9 +86,9 @@ private fun characterRow(characters: String, horizontalInsetUnits: Float = 0f) =
 
 private fun bottomCharacterRow() = KeyboardRow(
     keys = buildList {
-        add(specialKey("shift", "", KeyRole.SHIFT, 1.35f, "Shift"))
+        add(specialKey("shift", "", KeyRole.SHIFT, 1.5f, "Shift"))
         addAll("zxcvbnm".map(::characterKey))
-        add(specialKey("backspace", "", KeyRole.BACKSPACE, 1.35f, "Backspace"))
+        add(specialKey("backspace", "", KeyRole.BACKSPACE, 1.5f, "Backspace"))
     },
 )
 

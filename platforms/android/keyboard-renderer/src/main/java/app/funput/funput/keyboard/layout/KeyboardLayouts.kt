@@ -21,10 +21,10 @@ object KeyboardLayouts {
     ) = qwertyLayout(id, inputMethod, leadingRows, standardActionKeys())
 
     private fun standardActionKeys() = listOf(
-        specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.25f, "Symbols"),
-        specialKey("comma", ",", KeyRole.PUNCTUATION, 0.85f),
+        specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
+        specialKey("comma", ",", KeyRole.PUNCTUATION, 0.9f),
         standardSpaceKey(),
-        specialKey("period", ".", KeyRole.PUNCTUATION, 0.85f),
-        specialKey("enter", "", KeyRole.ENTER, 1.35f, "Enter"),
+        specialKey("period", ".", KeyRole.PUNCTUATION, 0.9f),
+        specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
     )
 }
