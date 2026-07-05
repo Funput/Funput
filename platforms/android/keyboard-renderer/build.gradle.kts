@@ -21,5 +21,6 @@ android {
 dependencies {
     implementation(project(":theme-runtime"))
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.customview)
     testImplementation(libs.junit)
 }

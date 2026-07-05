@@ -2,10 +2,13 @@ package app.funput.funput.keyboard
 
 import android.content.Context
 import android.graphics.Canvas
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import app.funput.funput.keyboard.accessibility.KeyboardAccessibilityDelegate
+import app.funput.funput.keyboard.accessibility.KeyboardAccessibilitySnapshot
 import app.funput.funput.keyboard.interaction.interactionTargetAt
 import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.KeyboardTouchHandler
@@ -13,15 +16,12 @@ import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.layout.resolveGeometry
-import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.rendering.KeyboardCanvasRenderer
-import app.funput.funput.theme.KeyboardTheme
-import app.funput.funput.theme.KeyboardThemeCatalog
 import kotlin.math.roundToInt
 
 /** Low-allocation keyboard surface that coordinates Android's [View] lifecycle. */
@@ -31,36 +31,22 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : View(context, attrs, defStyleAttr) {
     private val layoutState = KeyboardSurfaceLayoutState(::updateKeyboardLayout)
+    private val renderer = KeyboardCanvasRenderer(resources)
+    private val presentation = KeyboardSurfacePresentationState(
+        onThemeChanged = { renderer.updateTheme(it, width, height); invalidate() },
+        onSizingChanged = { renderer.updateSizing(it); requestLayout(); resolveGeometry(); invalidate() },
+        onSuggestionsChanged = ::invalidate,
+        onEnterActionChanged = ::invalidate,
+    )
     var inputMethod: KeyboardInputMethod by layoutState::inputMethod
     var layoutMode: KeyboardLayoutMode by layoutState::layoutMode
     var editorMode: KeyboardEditorMode by layoutState::editorMode
     var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
     var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
-    var keyboardTheme: KeyboardTheme = KeyboardThemeCatalog.default()
-        set(value) {
-            if (field == value) return
-            field = value
-            renderer.updateTheme(value, width, height)
-            invalidate()
-        }
-    var sizingProfile: KeyboardSizingProfile = KeyboardSizingProfile.Default
-        set(value) {
-            if (field == value) return
-            field = value
-            renderer.updateSizing(value)
-            requestLayout()
-            resolveGeometry()
-            invalidate()
-        }
-    var suggestions: List<String> = emptyList()
-        set(value) {
-            val normalized = SuggestionNormalizer.normalize(value)
-            if (field == normalized) return
-            field = normalized
-            invalidate()
-        }
-    var enterAction: KeyboardEnterAction = KeyboardEnterAction.Standard.NEW_LINE
-        set(value) { field = value; invalidate() }
+    var keyboardTheme by presentation::keyboardTheme
+    var sizingProfile: KeyboardSizingProfile by presentation::sizingProfile
+    var suggestions: List<String> by presentation::suggestions
+    var enterAction by presentation::enterAction
     val callbacks = KeyboardCallbacks()
     var shiftState: ShiftState
         get() = interaction.shiftState
@@ -69,8 +55,15 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         get() = interaction.language
         set(value) = interaction.setLanguage(value)
     private var resolvedKeyboard: ResolvedKeyboard? = null
-    private val renderer = KeyboardCanvasRenderer(resources)
-    private val interaction = KeyboardSurfaceInteraction(
+    // Cached so TalkBack's many ExploreByTouchHelper callbacks share one immutable
+    // snapshot per scan; rebuilt only when geometry or semantic state changes.
+    private var accessibilitySnapshot: KeyboardAccessibilitySnapshot? = null
+    private val accessibility: KeyboardAccessibilityDelegate = KeyboardAccessibilityDelegate(
+        host = this,
+        snapshot = { accessibilitySnapshot },
+        activate = ::performAccessibilityClick,
+    )
+    private val interaction: KeyboardSurfaceInteraction = KeyboardSurfaceInteraction(
         keyAt = { x, y -> resolvedKeyboard?.interactionTargetAt(x, y, suggestions.size) },
         keySpec = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.spec },
         suggestionSelection = { id -> suggestions.selectionForTarget(id) },
@@ -83,6 +76,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             KeyboardSounds.perform(this, type)
         },
         onVisualStateChanged = ::postInvalidateOnAnimation,
+        onSemanticStateChanged = ::invalidateAccessibility,
         schedule = { task, delay -> postDelayed(task, delay) },
         cancel = ::removeCallbacks,
         requestParentIntercept = { disallow -> parent?.requestDisallowInterceptTouchEvent(disallow) },
@@ -117,6 +111,8 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         KeyboardTouchHandler.Result.HANDLED -> true
         KeyboardTouchHandler.Result.CLICK -> performClick()
     }
+    override fun dispatchHoverEvent(event: MotionEvent): Boolean =
+        accessibility.dispatchHover(event) || super.dispatchHoverEvent(event)
     override fun performClick(): Boolean {
         super.performClick()
         return true
@@ -136,11 +132,22 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             density = resources.displayMetrics.density,
             profile = sizingProfile,
         )
+        refreshAccessibilitySnapshot()
     }
     private fun updateKeyboardLayout() {
         interaction.reset()
         requestLayout()
         resolveGeometry()
         invalidate()
+    }
+    private fun performAccessibilityClick(keyId: String) {
+        interaction.performAccessibilityClick(keyId, SystemClock.uptimeMillis())
+    }
+    private fun invalidateAccessibility() {
+        refreshAccessibilitySnapshot()
+    }
+    private fun refreshAccessibilitySnapshot() {
+        accessibilitySnapshot = resolvedKeyboard?.let { KeyboardAccessibilitySnapshot(it, shiftState) }
+        accessibility.invalidateRoot()
     }
 }

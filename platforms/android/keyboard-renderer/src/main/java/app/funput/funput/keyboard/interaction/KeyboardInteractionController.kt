@@ -19,6 +19,7 @@ internal class KeyboardInteractionController(
     private val onSuggestionSelected: (SuggestionSelection) -> Unit,
     private val onHapticFeedback: (KeyboardHapticType) -> Unit,
     private val onVisualStateChanged: () -> Unit,
+    private val onSemanticStateChanged: () -> Unit,
     schedule: (task: Runnable, delayMillis: Long) -> Unit,
     cancel: (task: Runnable) -> Unit,
     doubleTapTimeoutMillis: Long,
@@ -27,7 +28,10 @@ internal class KeyboardInteractionController(
     private val actionDispatcher = KeyboardActionDispatcher(
         keySpec = keySpec,
         onAction = onAction,
-        onShiftStateChanged = onVisualStateChanged,
+        onShiftStateChanged = {
+            onVisualStateChanged()
+            onSemanticStateChanged()
+        },
         doubleTapTimeoutMillis = doubleTapTimeoutMillis,
     )
     private val backspaceRepeat = BackspaceRepeatController(
@@ -62,22 +66,25 @@ internal class KeyboardInteractionController(
         val swipeAction = swipeGestures.finish(pointerId, key, x, y)
         if (backspaceRepeat.finish(pointerId, isBackspace)) return
 
-        when {
-            selection != null -> onSuggestionSelected(selection)
-            key?.role == KeyRole.SETTINGS -> onSettingsRequested()
-            key?.role == KeyRole.EMOJI -> onEmojiRequested()
-            swipeAction == KeySwipeAction.TOGGLE_LANGUAGE -> {
-                setLanguage(language.toggled())
-                actionDispatcher.toggleLanguage(language)
-            }
-            keyId != null -> actionDispatcher.dispatch(keyId, eventTimeMillis)
+        if (swipeAction == KeySwipeAction.TOGGLE_LANGUAGE) {
+            setLanguage(language.toggled())
+            actionDispatcher.toggleLanguage(language)
+        } else {
+            dispatchTarget(keyId, key, selection, eventTimeMillis)
         }
+    }
+
+    fun onAccessibilityClick(keyId: String, eventTimeMillis: Long) {
+        val key = keySpec(keyId) ?: return
+        KeyHapticTypeMapper.forTarget(key, isSuggestion = false)?.let(onHapticFeedback)
+        dispatchTarget(keyId, key, selection = null, eventTimeMillis)
     }
 
     fun setLanguage(value: KeyboardLanguage) {
         if (language == value) return
         language = value
         onVisualStateChanged()
+        onSemanticStateChanged()
     }
 
     fun setShiftState(value: ShiftState) = actionDispatcher.setShiftState(value)
@@ -90,5 +97,19 @@ internal class KeyboardInteractionController(
     fun reset() {
         cancel()
         actionDispatcher.reset()
+    }
+
+    private fun dispatchTarget(
+        keyId: String?,
+        key: KeySpec?,
+        selection: SuggestionSelection?,
+        eventTimeMillis: Long,
+    ) {
+        when {
+            selection != null -> onSuggestionSelected(selection)
+            key?.role == KeyRole.SETTINGS -> onSettingsRequested()
+            key?.role == KeyRole.EMOJI -> onEmojiRequested()
+            keyId != null -> actionDispatcher.dispatch(keyId, eventTimeMillis)
+        }
     }
 }

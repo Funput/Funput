@@ -19,6 +19,7 @@ internal class KeyboardSurfaceInteraction(
     onSuggestionSelected: (SuggestionSelection) -> Unit,
     onHapticFeedback: (KeyboardHapticType) -> Unit,
     onVisualStateChanged: () -> Unit,
+    onSemanticStateChanged: () -> Unit,
     schedule: (task: Runnable, delayMillis: Long) -> Unit,
     cancel: (task: Runnable) -> Unit,
     requestParentIntercept: (disallow: Boolean) -> Unit,
@@ -34,6 +35,7 @@ internal class KeyboardSurfaceInteraction(
         onSuggestionSelected = onSuggestionSelected,
         onHapticFeedback = onHapticFeedback,
         onVisualStateChanged = onVisualStateChanged,
+        onSemanticStateChanged = onSemanticStateChanged,
         schedule = schedule,
         cancel = cancel,
         doubleTapTimeoutMillis = doubleTapTimeoutMillis,
@@ -57,6 +59,9 @@ internal class KeyboardSurfaceInteraction(
     fun setShiftState(value: ShiftState) = controller.setShiftState(value)
 
     fun onTouchEvent(event: MotionEvent): KeyboardTouchHandler.Result = touchHandler.onTouchEvent(event)
+
+    fun performAccessibilityClick(keyId: String, eventTimeMillis: Long) =
+        controller.onAccessibilityClick(keyId, eventTimeMillis)
 
     fun clear() = touchHandler.clear()
 

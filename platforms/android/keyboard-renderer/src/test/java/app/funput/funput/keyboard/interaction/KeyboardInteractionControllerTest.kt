@@ -17,6 +17,7 @@ class KeyboardInteractionControllerTest {
     private var settingsRequestCount = 0
     private var emojiRequestCount = 0
     private var visualStateChangeCount = 0
+    private var semanticStateChangeCount = 0
     private val space = KeySpec(
         id = "space",
         label = "Tiếng Việt",
@@ -36,6 +37,7 @@ class KeyboardInteractionControllerTest {
         onSuggestionSelected = { selection -> selections += selection },
         onHapticFeedback = { type -> haptics += type },
         onVisualStateChanged = { visualStateChangeCount++ },
+        onSemanticStateChanged = { semanticStateChangeCount++ },
         schedule = { _, _ -> },
         cancel = {},
         doubleTapTimeoutMillis = 300L,
@@ -49,6 +51,17 @@ class KeyboardInteractionControllerTest {
         assertEquals(KeyboardLanguage.ENGLISH, controller.language)
         assertEquals(KeyAction.ToggleLanguage(KeyboardLanguage.ENGLISH), actions.single())
         assertEquals(1, visualStateChangeCount)
+        assertEquals(1, semanticStateChangeCount)
+    }
+
+    @Test
+    fun accessibilityClickUsesTheSameSemanticDispatch() {
+        controller.onAccessibilityClick("settings", eventTimeMillis = 100L)
+        controller.onAccessibilityClick("space", eventTimeMillis = 101L)
+
+        assertEquals(1, settingsRequestCount)
+        assertEquals(KeyAction.Space, actions.single())
+        assertEquals(listOf(KeyboardHapticType.CONTROL, KeyboardHapticType.SPACE), haptics)
     }
 
     @Test

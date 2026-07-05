@@ -363,10 +363,28 @@ data class KeyboardLayout(
 
 ### 10.3. Accessibility
 
-Vì toàn keyboard là một custom `View`, cần virtual accessibility nodes, ví dụ dùng `ExploreByTouchHelper` hoặc triển khai provider tương đương:
+Vì toàn keyboard là một custom `View`, mỗi phím được phơi ra như một virtual
+accessibility node qua `ExploreByTouchHelper`. Hiện trạng triển khai:
 
-- Mỗi phím là một node có label, bounds và action click/long-click.
-- TalkBack đọc đúng “Shift”, “Xóa”, “Dấu cách”, không chỉ đọc icon.
+- `KeyboardAccessibilityDelegate` (subclass của `ExploreByTouchHelper`) gắn vào
+  `KeyboardSurfaceView`, ánh xạ mỗi phím thành một node có label, bounds và action
+  `ACTION_CLICK`; click ảo được định tuyến qua `performAccessibilityClick`.
+- `KeyboardAccessibilitySnapshot` là dữ liệu bất biến, thuần Kotlin (không phụ thuộc
+  Android view) nên unit-test được: lọc phím `PLACEHOLDER`, đổi label theo `ShiftState`,
+  và đánh dấu `selected` cho phím Shift.
+- TalkBack đọc đúng “Shift”, “Xóa”, “Dấu cách”, không chỉ đọc icon (label lấy từ
+  `KeySpec.accessibilityLabel`, không phải từ glyph).
+- **Snapshot được cache** trong `KeyboardSurfaceView` và chỉ dựng lại khi geometry
+  hoặc semantic state đổi (`refreshAccessibilitySnapshot`). Điều này tránh cấp phát
+  rác trên mỗi callback của `ExploreByTouchHelper` khi TalkBack quét, đúng với mục tiêu
+  low-allocation của surface.
+- `onPopulateNodeForVirtualView` chịu được virtual id cũ (khi keyboard bị dựng lại
+  giữa `getVisibleVirtualViews` và populate): trả về node rỗng hợp lệ thay vì crash.
+
+Các hạng mục accessibility còn lại (chưa nằm trong pass đầu):
+
+- Long-click / popup key qua accessibility action.
+- `stateDescription` phân biệt Shift vs Caps Lock.
 - Độ tương phản không phụ thuộc transparency.
 - Reduce motion tắt refraction/animation không thiết yếu.
 - Font scale và display size không được làm tràn layout.
