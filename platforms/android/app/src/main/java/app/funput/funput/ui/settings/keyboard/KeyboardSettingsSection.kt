@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
+import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.theme.KeyboardThemeId
@@ -27,6 +28,7 @@ import app.funput.funput.ui.theme.BrandPurple
 internal fun KeyboardSettingsSection(
     setupStatus: KeyboardSetupStatus,
     inputMethod: KeyboardInputMethod,
+    toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
     keyboardThemeId: KeyboardThemeId,
     onOpenPicker: (SettingsPicker) -> Unit,
@@ -50,6 +52,14 @@ internal fun KeyboardSettingsSection(
                 iconRes = R.drawable.ic_keyboard,
                 iconBackground = BrandPurple,
                 onClick = { onOpenPicker(SettingsPicker.INPUT_METHOD) },
+            )
+            SettingsDivider()
+            SettingsRow(
+                title = stringResource(R.string.settings_tone_style_title),
+                value = toneStyle.label(),
+                iconRes = R.drawable.ic_globe,
+                iconBackground = BrandBlue,
+                onClick = { onOpenPicker(SettingsPicker.TONE_STYLE) },
             )
             SettingsDivider()
             SettingsRow(

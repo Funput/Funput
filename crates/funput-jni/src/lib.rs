@@ -5,6 +5,7 @@ mod registry;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use funput_core::InputMethod;
+use funput_core::ToneStyle;
 use funput_engine::Action;
 use jni::EnvUnowned;
 use jni::errors::ThrowRuntimeExAndDefault;
@@ -67,6 +68,23 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
             InputMethod::Telex
         };
         registry::with_mut(handle, |engine| engine.set_method(method));
+    });
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeSetToneStyle(
+    _env: EnvUnowned<'_>,
+    _this: JavaObject<'_>,
+    handle: jlong,
+    style: jint,
+) {
+    safe((), || {
+        let style = if style == 1 {
+            ToneStyle::Modern
+        } else {
+            ToneStyle::Traditional
+        };
+        registry::with_mut(handle, |engine| engine.set_tone_style(style));
     });
 }
 

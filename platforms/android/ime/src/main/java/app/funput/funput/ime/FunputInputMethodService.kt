@@ -14,6 +14,8 @@ import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
 import app.funput.funput.ime.settings.KeyboardSizingSettings
 import app.funput.funput.ime.settings.KeyboardThemeSettings
+import app.funput.funput.ime.settings.ToneStyle
+import app.funput.funput.ime.settings.ToneStyleSettings
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
@@ -33,6 +35,7 @@ class FunputInputMethodService : InputMethodService() {
     private var inputMethod = InputMethodSettings.DefaultInputMethod
     private var sizingProfile = KeyboardSizingSettings.DefaultProfile
     private var keyboardThemeId = KeyboardThemeSettings.DefaultThemeId
+    private var toneStyle = ToneStyleSettings.DefaultToneStyle
     private var feedback = KeyboardFeedbackPreferences.Default
     private var keyboardView: FunputKeyboardView? = null
     private lateinit var nativeEngine: NativeVietnameseEngine
@@ -56,6 +59,7 @@ class FunputInputMethodService : InputMethodService() {
             enterCommand = { editorRuntime.policy.editorAction.command },
         )
         InputMethodSettings(this).inputMethod.collectIn(serviceScope, ::applyInputMethod)
+        ToneStyleSettings(this).toneStyle.collectIn(serviceScope, ::applyToneStyle)
         KeyboardSizingSettings(this).profile.collectIn(serviceScope, ::applySizingProfile)
         KeyboardThemeSettings(this).themeId.collectIn(serviceScope, ::applyKeyboardTheme)
         KeyboardFeedbackSettings(this).preferences.collectIn(serviceScope, ::applyFeedback)
@@ -132,6 +136,12 @@ class FunputInputMethodService : InputMethodService() {
         inputMethod = method
         actionHandler.start(method, editorRuntime.policy.editorMode.supportsVietnameseComposition)
         keyboardView?.inputMethod = method
+    }
+
+    private fun applyToneStyle(style: ToneStyle) {
+        if (style == toneStyle) return
+        toneStyle = style
+        nativeEngine.setToneStyle(style)
     }
 
     private fun applySizingProfile(profile: KeyboardSizingProfile) {

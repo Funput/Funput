@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.theme.KeyboardThemeId
@@ -52,6 +53,7 @@ private fun SettingsPreview(
         SettingsScreen(
             keyboardSetupStatus = keyboardSetupStatus,
             inputMethod = KeyboardInputMethod.VNI,
+            toneStyle = ToneStyle.TRADITIONAL,
             keySizeProfile = KeyboardSizingProfile.Normal,
             keyboardThemeId = KeyboardThemeId.DARK,
             appearanceMode = appearanceMode,
@@ -59,6 +61,7 @@ private fun SettingsPreview(
             soundsEnabled = false,
             versionName = "1.2026.1",
             onInputMethodSelected = {},
+            onToneStyleSelected = {},
             onKeySizeSelected = {},
             onKeyboardThemeSelected = {},
             onAppearanceSelected = {},

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.theme.KeyboardThemeId
@@ -13,10 +14,12 @@ import app.funput.funput.ui.settings.components.PreferencePickerSheet
 internal fun SettingsPickerSheet(
     picker: SettingsPicker?,
     inputMethod: KeyboardInputMethod,
+    toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
     keyboardThemeId: KeyboardThemeId,
     appearanceMode: AppearanceMode,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
+    onToneStyleSelected: (ToneStyle) -> Unit,
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     onKeyboardThemeSelected: (KeyboardThemeId) -> Unit,
     onAppearanceSelected: (AppearanceMode) -> Unit,
@@ -28,6 +31,13 @@ internal fun SettingsPickerSheet(
             options = inputMethodOptions(),
             selected = inputMethod,
             onSelected = onInputMethodSelected,
+            onDismiss = onDismiss,
+        )
+        SettingsPicker.TONE_STYLE -> PreferencePickerSheet(
+            title = stringResource(R.string.settings_tone_style_title),
+            options = toneStyleOptions(),
+            selected = toneStyle,
+            onSelected = onToneStyleSelected,
             onDismiss = onDismiss,
         )
         SettingsPicker.KEY_SIZE -> PreferencePickerSheet(

@@ -10,6 +10,7 @@ internal object FunputNative {
     external fun nativeDestroy(handle: Long)
     external fun nativeClear(handle: Long)
     external fun nativeSetMethod(handle: Long, method: Int)
+    external fun nativeSetToneStyle(handle: Long, style: Int)
     external fun nativeSetEnabled(handle: Long, enabled: Boolean)
     external fun nativeProcess(handle: Long, codePoint: Int): String
     external fun nativeBoundary(handle: Long, codePoint: Int): String

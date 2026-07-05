@@ -2,6 +2,7 @@ package app.funput.funput.ime.editing
 
 import android.view.inputmethod.InputConnection
 import app.funput.funput.ime.nativebridge.VietnameseEngine
+import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import java.lang.reflect.Proxy
 import org.junit.Assert.assertEquals
@@ -105,6 +106,7 @@ private class ScriptedEngine(
     override fun setInputMethod(method: KeyboardInputMethod) {
         inputMethod = method
     }
+    override fun setToneStyle(style: ToneStyle) = Unit
     override fun setEnabled(enabled: Boolean) = Unit
     override fun clear() = Unit
     override fun close() = Unit

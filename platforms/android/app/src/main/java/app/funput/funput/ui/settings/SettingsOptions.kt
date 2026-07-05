@@ -5,9 +5,16 @@ import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.ui.settings.components.PickerOption
 import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.theme.KeyboardThemeId
+
+@Composable
+internal fun ToneStyle.label(): String = when (this) {
+    ToneStyle.TRADITIONAL -> stringResource(R.string.tone_style_traditional)
+    ToneStyle.MODERN -> stringResource(R.string.tone_style_modern)
+}
 
 @Composable
 internal fun KeyboardInputMethod.label(): String = when (this) {
@@ -37,6 +44,9 @@ internal fun KeyboardThemeId.label(): String = when (this) {
 
 @Composable
 internal fun inputMethodOptions() = KeyboardInputMethod.entries.map { PickerOption(it, it.label()) }
+
+@Composable
+internal fun toneStyleOptions() = ToneStyle.entries.map { PickerOption(it, it.label()) }
 
 @Composable
 internal fun appearanceOptions() = AppearanceMode.entries.map { PickerOption(it, it.label()) }

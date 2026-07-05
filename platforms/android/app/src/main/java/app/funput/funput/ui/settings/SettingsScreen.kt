@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.theme.KeyboardThemeId
@@ -34,6 +35,7 @@ import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 internal fun SettingsScreen(
     keyboardSetupStatus: KeyboardSetupStatus,
     inputMethod: KeyboardInputMethod,
+    toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
     keyboardThemeId: KeyboardThemeId,
     appearanceMode: AppearanceMode,
@@ -41,6 +43,7 @@ internal fun SettingsScreen(
     soundsEnabled: Boolean,
     versionName: String,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
+    onToneStyleSelected: (ToneStyle) -> Unit,
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     onKeyboardThemeSelected: (KeyboardThemeId) -> Unit,
     onAppearanceSelected: (AppearanceMode) -> Unit,
@@ -71,6 +74,7 @@ internal fun SettingsScreen(
                 KeyboardSettingsSection(
                     setupStatus = keyboardSetupStatus,
                     inputMethod = inputMethod,
+                    toneStyle = toneStyle,
                     keySizeProfile = keySizeProfile,
                     keyboardThemeId = keyboardThemeId,
                     onOpenPicker = { picker = it },
@@ -103,10 +107,12 @@ internal fun SettingsScreen(
     SettingsPickerSheet(
         picker = picker,
         inputMethod = inputMethod,
+        toneStyle = toneStyle,
         keySizeProfile = keySizeProfile,
         keyboardThemeId = keyboardThemeId,
         appearanceMode = appearanceMode,
         onInputMethodSelected = onInputMethodSelected,
+        onToneStyleSelected = onToneStyleSelected,
         onKeySizeSelected = onKeySizeSelected,
         onKeyboardThemeSelected = onKeyboardThemeSelected,
         onAppearanceSelected = onAppearanceSelected,

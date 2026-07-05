@@ -26,6 +26,9 @@
     <string name="settings_keyboard_theme_light">Sáng</string>
     <string name="input_method_telex">Telex</string>
     <string name="input_method_vni">VNI</string>
+    <string name="settings_tone_style_title">Kiểu đặt dấu</string>
+    <string name="tone_style_traditional">Truyền thống</string>
+    <string name="tone_style_modern">Hiện đại</string>
     <string name="settings_theme_title">Chế độ màu</string>
     <string name="settings_theme_system">Hệ thống</string>
     <string name="settings_theme_light">Sáng</string>

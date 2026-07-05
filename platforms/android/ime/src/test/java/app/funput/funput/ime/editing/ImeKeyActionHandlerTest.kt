@@ -2,6 +2,7 @@ package app.funput.funput.ime.editing
 
 import android.view.inputmethod.InputConnection
 import app.funput.funput.ime.nativebridge.VietnameseEngine
+import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import java.lang.reflect.Proxy
@@ -38,6 +39,7 @@ private class RecordingEngine : VietnameseEngine {
     override fun processBoundary(codePoint: Int): String? = null
     override fun backspace(): String = ""
     override fun setInputMethod(method: KeyboardInputMethod) = Unit
+    override fun setToneStyle(style: ToneStyle) = Unit
     override fun setEnabled(enabled: Boolean) { enabledValue = enabled }
     override fun clear() = Unit
     override fun close() = Unit

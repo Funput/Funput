@@ -1,10 +1,12 @@
 package app.funput.funput.ime.nativebridge
 
+import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 
 /** Platform-independent contract consumed by Android's composition adapter. */
 internal interface VietnameseEngine : AutoCloseable {
     fun setInputMethod(method: KeyboardInputMethod)
+    fun setToneStyle(style: ToneStyle)
     fun setEnabled(enabled: Boolean)
     fun process(codePoint: Int): String
     fun processBoundary(codePoint: Int): String?
@@ -20,6 +22,10 @@ internal class NativeVietnameseEngine : VietnameseEngine {
 
     override fun setInputMethod(method: KeyboardInputMethod) = withHandle { value ->
         FunputNative.nativeSetMethod(value, method.nativeValue)
+    }
+
+    override fun setToneStyle(style: ToneStyle) = withHandle { value ->
+        FunputNative.nativeSetToneStyle(value, style.nativeValue)
     }
 
     override fun setEnabled(enabled: Boolean) = withHandle { value ->

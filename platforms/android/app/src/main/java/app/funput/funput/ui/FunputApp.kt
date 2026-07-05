@@ -17,6 +17,7 @@ import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
 import app.funput.funput.ime.settings.KeyboardSizingSettings
 import app.funput.funput.ime.settings.KeyboardThemeSettings
+import app.funput.funput.ime.settings.ToneStyleSettings
 import app.funput.funput.ui.keyboard.openKeyboardSettings
 import app.funput.funput.ui.keyboard.openWebsite
 import app.funput.funput.ui.keyboard.showKeyboardPicker
@@ -32,11 +33,13 @@ fun FunputApp() {
     val inputSettings = remember(context) { InputMethodSettings(context) }
     val sizingSettings = remember(context) { KeyboardSizingSettings(context) }
     val keyboardThemeSettings = remember(context) { KeyboardThemeSettings(context) }
+    val toneStyleSettings = remember(context) { ToneStyleSettings(context) }
     val appearanceSettings = remember(context) { AppearanceSettings(context) }
     val feedbackSettings = remember(context) { KeyboardFeedbackSettings(context) }
     val versionName = remember(context) { AppVersionProvider.versionName(context) }
     val keyboardSetupStatus = rememberKeyboardSetupStatus()
     val inputMethod by inputSettings.inputMethod.collectAsState(InputMethodSettings.DefaultInputMethod)
+    val toneStyle by toneStyleSettings.toneStyle.collectAsState(ToneStyleSettings.DefaultToneStyle)
     val keySizeProfile by sizingSettings.profile.collectAsState(KeyboardSizingSettings.DefaultProfile)
     val keyboardThemeId by keyboardThemeSettings.themeId.collectAsState(KeyboardThemeSettings.DefaultThemeId)
     val appearanceMode by appearanceSettings.mode.collectAsState(AppearanceSettings.DefaultMode)
@@ -50,6 +53,7 @@ fun FunputApp() {
             SettingsScreen(
                 keyboardSetupStatus = keyboardSetupStatus,
                 inputMethod = inputMethod,
+                toneStyle = toneStyle,
                 keySizeProfile = keySizeProfile,
                 keyboardThemeId = keyboardThemeId,
                 appearanceMode = appearanceMode,
@@ -58,6 +62,9 @@ fun FunputApp() {
                 versionName = versionName,
                 onInputMethodSelected = { method ->
                     scope.launch { inputSettings.setInputMethod(method) }
+                },
+                onToneStyleSelected = { style ->
+                    scope.launch { toneStyleSettings.setToneStyle(style) }
                 },
                 onKeySizeSelected = { profile ->
                     scope.launch { sizingSettings.setProfile(profile) }
