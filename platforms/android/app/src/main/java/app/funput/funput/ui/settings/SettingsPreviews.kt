@@ -46,6 +46,7 @@ private fun SettingsPreview(appearanceMode: AppearanceMode) {
             onSoundsChanged = {},
             onOpenKeyboardSettings = {},
             onShowKeyboardPicker = {},
+            onOpenWebsite = {},
         )
     }
 }

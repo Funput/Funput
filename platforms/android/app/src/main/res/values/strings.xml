@@ -26,6 +26,9 @@
     <string name="settings_haptics_title">Rung khi nhấn phím</string>
     <string name="settings_sounds_title">Âm thanh phím</string>
     <string name="settings_version_title">Phiên bản</string>
+    <string name="settings_website_title">Website</string>
+    <string name="settings_website_display">funput.app</string>
+    <string name="settings_website_url">https://funput.app/</string>
     <string name="settings_manage_keyboards_title">Quản lý bàn phím</string>
     <string name="settings_choose_keyboard_title">Chọn bàn phím đang dùng</string>
 </resources>

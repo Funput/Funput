@@ -48,6 +48,7 @@ internal fun SettingsScreen(
     onSoundsChanged: (Boolean) -> Unit,
     onOpenKeyboardSettings: () -> Unit,
     onShowKeyboardPicker: () -> Unit,
+    onOpenWebsite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var picker by rememberSaveable { mutableStateOf<SettingsPicker?>(null) }
@@ -148,6 +149,15 @@ internal fun SettingsScreen(
                         value = versionName,
                         iconRes = R.drawable.ic_info,
                         iconBackground = BrandBlue,
+                    )
+                    SettingsDivider()
+                    SettingsRow(
+                        title = stringResource(R.string.settings_website_title),
+                        value = stringResource(R.string.settings_website_display),
+                        iconRes = R.drawable.ic_globe,
+                        iconBackground = BrandOrange,
+                        iconColor = Color(0xFF3D2200),
+                        onClick = onOpenWebsite,
                     )
                 }
             }

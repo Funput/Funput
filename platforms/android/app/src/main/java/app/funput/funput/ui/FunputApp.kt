@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import app.funput.funput.R
 import app.funput.funput.ime.settings.AppearanceSettings
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
@@ -69,6 +70,9 @@ fun FunputApp() {
                 },
                 onOpenKeyboardSettings = context::openKeyboardSettings,
                 onShowKeyboardPicker = context::showKeyboardPicker,
+                onOpenWebsite = {
+                    context.openWebsite(context.getString(R.string.settings_website_url))
+                },
             )
         }
     }
