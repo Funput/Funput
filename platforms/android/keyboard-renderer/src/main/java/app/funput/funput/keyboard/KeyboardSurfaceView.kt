@@ -90,7 +90,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
         val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
-        val heightDp = KeyboardDimensions.recommendedHeightDp(inputMethod, editorMode, sizingProfile)
+        val heightDp = KeyboardDimensions.recommendedHeightDp(inputMethod, editorMode, sizingProfile, width / density)
         val height = resolveSize((heightDp * density).roundToInt(), heightMeasureSpec)
         setMeasuredDimension(width, height)
     }

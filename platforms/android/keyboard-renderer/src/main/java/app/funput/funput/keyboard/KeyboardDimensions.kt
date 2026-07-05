@@ -15,15 +15,17 @@ object KeyboardDimensions {
         inputMethod: KeyboardInputMethod,
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
         profile: KeyboardSizingProfile = KeyboardSizingProfile.Default,
-    ): Float = baseRecommendedHeightDp(editorMode, profile) * profile.heightScale
+        widthDp: Float = DefaultWidthDp,
+    ): Float = baseRecommendedHeightDp(editorMode, profile, widthDp) * profile.heightScale
 
     internal fun baseRecommendedHeightDp(
         editorMode: KeyboardEditorMode,
         profile: KeyboardSizingProfile = KeyboardSizingProfile.Default,
+        widthDp: Float = DefaultWidthDp,
     ): Float = when {
-        editorMode.usesKeypad -> heightForRowCount(rowCount = 4, hasSuggestionBar = false, profile)
-        editorMode.isPassword -> FiveRowHeightDp
-        else -> FiveRowWithSuggestionHeightDp
+        editorMode.usesKeypad -> heightForRowCount(4, false, profile, widthDp)
+        editorMode.isPassword -> heightForRowCount(5, false, profile, widthDp)
+        else -> heightForRowCount(5, true, profile, widthDp)
     }
 
     /** Matches [KeyboardGeometry] row-height cap so keypad rows fill the panel without a blank band. */
@@ -31,9 +33,11 @@ object KeyboardDimensions {
         rowCount: Int,
         hasSuggestionBar: Boolean,
         profile: KeyboardSizingProfile = KeyboardSizingProfile.Default,
+        widthDp: Float = DefaultWidthDp,
     ): Float {
         require(rowCount > 0) { "Row count must be positive" }
-        val contentWidth = DefaultWidthDp - profile.horizontalPaddingDp * 2f
+        val contentWidth = minOf(widthDp, DefaultWidthDp) - profile.horizontalPaddingDp * 2f
+        require(contentWidth > 0f) { "Keyboard width must exceed its horizontal padding" }
         val canonicalUnit = contentWidth /
             (CanonicalColumnCount + (CanonicalColumnCount - 1) * profile.horizontalGapRatio)
         val rowHeight = canonicalUnit / profile.keyAspectRatio
@@ -46,7 +50,4 @@ object KeyboardDimensions {
         }
         return profile.verticalPaddingDp * 2f + suggestionBarBlock + rowsBlockHeight
     }
-
-    private const val FiveRowWithSuggestionHeightDp = 318f
-    private const val FiveRowHeightDp = 252f
 }

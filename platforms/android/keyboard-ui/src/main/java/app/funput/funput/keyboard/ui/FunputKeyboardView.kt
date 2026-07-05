@@ -102,6 +102,7 @@ class FunputKeyboardView @JvmOverloads constructor(
             inputMethod = inputMethod,
             editorMode = editorMode,
             profile = sizingProfile,
+            widthDp = (width - safeArea.horizontalInset) / density,
         )
         val height = resolveSize((heightDp * density).roundToInt() + safeArea.bottomInset, heightMeasureSpec)
         super.onMeasure(

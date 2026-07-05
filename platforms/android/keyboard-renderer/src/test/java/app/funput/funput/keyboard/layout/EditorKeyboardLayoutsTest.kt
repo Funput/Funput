@@ -42,16 +42,17 @@ class EditorKeyboardLayoutsTest {
 
     @Test
     fun `QWERTY layouts share the same five row height`() {
+        val expected = KeyboardDimensions.heightForRowCount(rowCount = 5, hasSuggestionBar = true)
         assertEquals(
-            318f,
+            expected,
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.EMAIL),
         )
         assertEquals(
-            318f,
+            expected,
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.SEARCH),
         )
         assertEquals(
-            318f,
+            expected,
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.TELEX, KeyboardEditorMode.TEXT),
         )
     }

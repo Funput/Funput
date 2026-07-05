@@ -53,6 +53,37 @@ class KeyboardGeometryProfileTest {
         assertEquals(letters.rows[1].first().bounds.top, symbols.rows[1].first().bounds.top, 0.5f)
     }
 
+    @Test
+    fun narrowFoldCoverLayoutsFillTheSameRecommendedHeight() {
+        val width = 344f
+        val height = KeyboardDimensions.recommendedHeightDp(
+            KeyboardInputMethod.VNI,
+            widthDp = width,
+        )
+        val spec = KeyboardGeometrySpec.fromDensity(1f)
+
+        listOf(KeyboardLayoutMode.LETTERS, KeyboardLayoutMode.SYMBOLS_PRIMARY).forEach { mode ->
+            val keyboard = KeyboardGeometry.resolve(
+                KeyboardLayoutResolver.resolve(KeyboardInputMethod.VNI, mode),
+                width,
+                height,
+                spec,
+            )
+            assertEquals(height - spec.verticalPadding, keyboard.rows.last().first().bounds.bottom, 0.5f)
+        }
+    }
+
+    @Test
+    fun wideFoldScreenDoesNotGrowPastThePhoneKeyboardHeight() {
+        val phoneHeight = KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.TELEX)
+        val innerScreenHeight = KeyboardDimensions.recommendedHeightDp(
+            KeyboardInputMethod.TELEX,
+            widthDp = 690f,
+        )
+
+        assertEquals(phoneHeight, innerScreenHeight, 0.01f)
+    }
+
     private fun resolveWithProfile(profile: KeyboardSizingProfile): ResolvedKeyboard = KeyboardGeometry.resolve(
         layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX),
         width = KeyboardDimensions.DefaultWidthDp,
