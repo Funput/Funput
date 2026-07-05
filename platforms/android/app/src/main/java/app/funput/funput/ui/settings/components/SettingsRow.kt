@@ -1,11 +1,9 @@
-package app.funput.funput.ui.settings
+package app.funput.funput.ui.settings.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,20 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
-
-@Composable
-internal fun SettingsGroup(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(SettingsGroupShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        content = content,
-    )
-}
 
 @Composable
 internal fun SettingsRow(
@@ -103,5 +87,3 @@ internal fun SettingsIcon(
         )
     }
 }
-
-private val SettingsGroupShape = RoundedCornerShape(16.dp)

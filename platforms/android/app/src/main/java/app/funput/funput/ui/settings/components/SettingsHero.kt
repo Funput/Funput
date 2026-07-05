@@ -1,4 +1,4 @@
-package app.funput.funput.ui.settings
+package app.funput.funput.ui.settings.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

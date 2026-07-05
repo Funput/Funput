@@ -3,6 +3,7 @@ package app.funput.funput.ui.settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
+import app.funput.funput.ui.settings.components.PickerOption
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod

@@ -17,7 +17,11 @@ import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
 import app.funput.funput.ime.settings.KeyboardSizingSettings
 import app.funput.funput.ime.settings.KeyboardThemeSettings
+import app.funput.funput.ui.keyboard.openKeyboardSettings
+import app.funput.funput.ui.keyboard.openWebsite
+import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.settings.SettingsScreen
+import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.resolveDarkTheme
 import kotlinx.coroutines.launch
@@ -31,6 +35,7 @@ fun FunputApp() {
     val appearanceSettings = remember(context) { AppearanceSettings(context) }
     val feedbackSettings = remember(context) { KeyboardFeedbackSettings(context) }
     val versionName = remember(context) { AppVersionProvider.versionName(context) }
+    val keyboardSetupStatus = rememberKeyboardSetupStatus()
     val inputMethod by inputSettings.inputMethod.collectAsState(InputMethodSettings.DefaultInputMethod)
     val keySizeProfile by sizingSettings.profile.collectAsState(KeyboardSizingSettings.DefaultProfile)
     val keyboardThemeId by keyboardThemeSettings.themeId.collectAsState(KeyboardThemeSettings.DefaultThemeId)
@@ -43,6 +48,7 @@ fun FunputApp() {
         SyncSystemBarAppearance(darkTheme = darkTheme)
         Surface(modifier = Modifier.fillMaxSize()) {
             SettingsScreen(
+                keyboardSetupStatus = keyboardSetupStatus,
                 inputMethod = inputMethod,
                 keySizeProfile = keySizeProfile,
                 keyboardThemeId = keyboardThemeId,
@@ -68,8 +74,8 @@ fun FunputApp() {
                 onSoundsChanged = { enabled ->
                     scope.launch { feedbackSettings.setSoundsEnabled(enabled) }
                 },
-                onOpenKeyboardSettings = context::openKeyboardSettings,
-                onShowKeyboardPicker = context::showKeyboardPicker,
+                onEnableKeyboard = context::openKeyboardSettings,
+                onSelectKeyboard = context::showKeyboardPicker,
                 onOpenWebsite = {
                     context.openWebsite(context.getString(R.string.settings_website_url))
                 },

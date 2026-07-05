@@ -7,8 +7,15 @@
     <string name="settings_section_keyboard">Bàn phím</string>
     <string name="settings_section_appearance">Giao diện</string>
     <string name="settings_section_feedback">Âm thanh &amp; rung</string>
-    <string name="settings_section_system">Hệ thống</string>
     <string name="settings_section_about">Thông tin</string>
+    <string name="settings_keyboard_customize_heading">Tùy chỉnh</string>
+    <string name="settings_keyboard_setup_not_enabled_title">Funput chưa được bật</string>
+    <string name="settings_keyboard_setup_not_enabled_body">Bật Funput trong cài đặt bàn phím Android để bắt đầu gõ.</string>
+    <string name="settings_keyboard_setup_enable_action">Bật Funput</string>
+    <string name="settings_keyboard_setup_not_selected_title">Chọn Funput làm bàn phím</string>
+    <string name="settings_keyboard_setup_not_selected_body">Chọn Funput khi gõ để dùng bộ gõ tiếng Việt.</string>
+    <string name="settings_keyboard_setup_select_action">Chọn bàn phím</string>
+    <string name="settings_keyboard_setup_ready">Funput đã sẵn sàng</string>
     <string name="settings_input_method_title">Kiểu gõ</string>
     <string name="settings_key_size_title">Kích thước phím</string>
     <string name="settings_key_size_compact">Nhỏ gọn</string>
@@ -29,6 +36,4 @@
     <string name="settings_website_title">Website</string>
     <string name="settings_website_display">funput.app</string>
     <string name="settings_website_url">https://funput.app/</string>
-    <string name="settings_manage_keyboards_title">Quản lý bàn phím</string>
-    <string name="settings_choose_keyboard_title">Chọn bàn phím đang dùng</string>
 </resources>

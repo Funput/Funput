@@ -1,4 +1,4 @@
-package app.funput.funput.ui
+package app.funput.funput.ui.keyboard
 
 import android.content.Context
 import android.content.Intent
