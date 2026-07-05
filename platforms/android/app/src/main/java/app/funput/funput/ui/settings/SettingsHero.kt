@@ -4,12 +4,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,10 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.ui.theme.BrandBlue
@@ -31,40 +30,43 @@ import app.funput.funput.ui.theme.BrandPurple
 
 @Composable
 internal fun SettingsHero(modifier: Modifier = Modifier) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(
-                    Brush.linearGradient(
-                        listOf(BrandOrange, BrandPink, BrandPurple, BrandBlue),
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        BrandOrange.copy(alpha = 0.14f),
+                        BrandPink.copy(alpha = 0.10f),
+                        BrandPurple.copy(alpha = 0.08f),
+                        BrandBlue.copy(alpha = 0.06f),
                     ),
                 ),
-        ) {
-            Image(
-                painter = painterResource(R.drawable.ic_funput_monochrome),
-                contentDescription = stringResource(R.string.funput_logo_description),
-                colorFilter = ColorFilter.tint(Color.White),
-                modifier = Modifier.size(48.dp),
             )
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-        Column {
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Image(
+                painter = painterResource(R.drawable.img_funput_logo),
+                contentDescription = stringResource(R.string.funput_logo_description),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(88.dp),
+            )
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
                 text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center,
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(R.string.settings_tagline),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
             )
         }
     }
