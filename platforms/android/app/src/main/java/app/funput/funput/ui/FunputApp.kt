@@ -14,6 +14,7 @@ import app.funput.funput.ime.settings.AppearanceSettings
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
+import app.funput.funput.ime.settings.KeyboardSizingSettings
 import app.funput.funput.ui.settings.SettingsScreen
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.resolveDarkTheme
@@ -23,10 +24,12 @@ import kotlinx.coroutines.launch
 fun FunputApp() {
     val context = LocalContext.current
     val inputSettings = remember(context) { InputMethodSettings(context) }
+    val sizingSettings = remember(context) { KeyboardSizingSettings(context) }
     val appearanceSettings = remember(context) { AppearanceSettings(context) }
     val feedbackSettings = remember(context) { KeyboardFeedbackSettings(context) }
     val versionName = remember(context) { AppVersionProvider.versionName(context) }
     val inputMethod by inputSettings.inputMethod.collectAsState(InputMethodSettings.DefaultInputMethod)
+    val keySizeProfile by sizingSettings.profile.collectAsState(KeyboardSizingSettings.DefaultProfile)
     val appearanceMode by appearanceSettings.mode.collectAsState(AppearanceSettings.DefaultMode)
     val feedback by feedbackSettings.preferences.collectAsState(KeyboardFeedbackPreferences.Default)
     val scope = rememberCoroutineScope()
@@ -37,12 +40,16 @@ fun FunputApp() {
         Surface(modifier = Modifier.fillMaxSize()) {
             SettingsScreen(
                 inputMethod = inputMethod,
+                keySizeProfile = keySizeProfile,
                 appearanceMode = appearanceMode,
                 hapticsEnabled = feedback.hapticsEnabled,
                 soundsEnabled = feedback.soundsEnabled,
                 versionName = versionName,
                 onInputMethodSelected = { method ->
                     scope.launch { inputSettings.setInputMethod(method) }
+                },
+                onKeySizeSelected = { profile ->
+                    scope.launch { sizingSettings.setProfile(profile) }
                 },
                 onAppearanceSelected = { mode ->
                     scope.launch { appearanceSettings.setMode(mode) }

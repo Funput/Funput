@@ -21,22 +21,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.theme.BrandBlue
 import app.funput.funput.ui.theme.BrandOrange
 import app.funput.funput.ui.theme.BrandPink
 import app.funput.funput.ui.theme.BrandPurple
 
-private enum class SettingsPicker { INPUT_METHOD, APPEARANCE }
+private enum class SettingsPicker { INPUT_METHOD, KEY_SIZE, APPEARANCE }
 
 @Composable
 internal fun SettingsScreen(
     inputMethod: KeyboardInputMethod,
+    keySizeProfile: KeyboardSizingProfile,
     appearanceMode: AppearanceMode,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
     versionName: String,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
+    onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     onAppearanceSelected: (AppearanceMode) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
@@ -47,21 +50,21 @@ internal fun SettingsScreen(
     var picker by rememberSaveable { mutableStateOf<SettingsPicker?>(null) }
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
-            item {
+            item(key = "title") {
                 Text(
                     text = stringResource(R.string.settings_title),
                     style = MaterialTheme.typography.headlineLarge,
                 )
             }
-            item { SettingsHero() }
-            item {
-                SettingsGroup {
+            item(key = "hero") { SettingsHero() }
+            item(key = "keyboard") {
+                SettingsSection(title = stringResource(R.string.settings_section_keyboard)) {
                     SettingsRow(
                         title = stringResource(R.string.settings_input_method_title),
                         value = inputMethod.label(),
@@ -71,6 +74,17 @@ internal fun SettingsScreen(
                     )
                     SettingsDivider()
                     SettingsRow(
+                        title = stringResource(R.string.settings_key_size_title),
+                        value = keySizeProfile.label(),
+                        iconRes = R.drawable.ic_key_size,
+                        iconBackground = BrandOrange,
+                        onClick = { picker = SettingsPicker.KEY_SIZE },
+                    )
+                }
+            }
+            item(key = "appearance") {
+                SettingsSection(title = stringResource(R.string.settings_section_appearance)) {
+                    SettingsRow(
                         title = stringResource(R.string.settings_theme_title),
                         value = appearanceMode.label(),
                         iconRes = R.drawable.ic_appearance,
@@ -79,8 +93,8 @@ internal fun SettingsScreen(
                     )
                 }
             }
-            item {
-                SettingsGroup {
+            item(key = "feedback") {
+                SettingsSection(title = stringResource(R.string.settings_section_feedback)) {
                     SettingsSwitchRow(
                         title = stringResource(R.string.settings_haptics_title),
                         checked = hapticsEnabled,
@@ -98,8 +112,8 @@ internal fun SettingsScreen(
                     )
                 }
             }
-            item {
-                SettingsGroup {
+            item(key = "system") {
+                SettingsSection(title = stringResource(R.string.settings_section_system)) {
                     SettingsRow(
                         title = stringResource(R.string.settings_manage_keyboards_title),
                         iconRes = R.drawable.ic_settings,
@@ -116,8 +130,8 @@ internal fun SettingsScreen(
                     )
                 }
             }
-            item {
-                SettingsGroup {
+            item(key = "about") {
+                SettingsSection(title = stringResource(R.string.settings_section_about)) {
                     SettingsValueRow(
                         title = stringResource(R.string.settings_version_title),
                         value = versionName,
@@ -134,6 +148,13 @@ internal fun SettingsScreen(
             options = inputMethodOptions(),
             selected = inputMethod,
             onSelected = onInputMethodSelected,
+            onDismiss = { picker = null },
+        )
+        SettingsPicker.KEY_SIZE -> PreferencePickerSheet(
+            title = stringResource(R.string.settings_key_size_title),
+            options = keySizeOptions(),
+            selected = keySizeProfile,
+            onSelected = onKeySizeSelected,
             onDismiss = { picker = null },
         )
         SettingsPicker.APPEARANCE -> PreferencePickerSheet(

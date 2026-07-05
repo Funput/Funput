@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.theme.FunputTheme
 
@@ -30,11 +31,13 @@ private fun SettingsPreview(appearanceMode: AppearanceMode) {
     FunputTheme(appearanceMode = appearanceMode) {
         SettingsScreen(
             inputMethod = KeyboardInputMethod.VNI,
+            keySizeProfile = KeyboardSizingProfile.Normal,
             appearanceMode = appearanceMode,
             hapticsEnabled = true,
             soundsEnabled = false,
             versionName = "1.2026.1",
             onInputMethodSelected = {},
+            onKeySizeSelected = {},
             onAppearanceSelected = {},
             onHapticsChanged = {},
             onSoundsChanged = {},

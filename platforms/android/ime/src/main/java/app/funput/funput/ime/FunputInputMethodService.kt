@@ -12,6 +12,8 @@ import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
+import app.funput.funput.ime.settings.KeyboardSizingSettings
+import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
@@ -26,6 +28,7 @@ class FunputInputMethodService : InputMethodService() {
     private val editor = InputConnectionEditor()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var inputMethod = InputMethodSettings.DefaultInputMethod
+    private var sizingProfile = KeyboardSizingSettings.DefaultProfile
     private var feedback = KeyboardFeedbackPreferences.Default
     private var keyboardView: FunputKeyboardView? = null
     private lateinit var nativeEngine: NativeVietnameseEngine
@@ -49,11 +52,13 @@ class FunputInputMethodService : InputMethodService() {
             enterCommand = { editorRuntime.policy.editorAction.command },
         )
         InputMethodSettings(this).inputMethod.collectIn(serviceScope, ::applyInputMethod)
+        KeyboardSizingSettings(this).profile.collectIn(serviceScope, ::applySizingProfile)
         KeyboardFeedbackSettings(this).preferences.collectIn(serviceScope, ::applyFeedback)
     }
     override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
         keyboardView = view
         view.inputMethod = inputMethod
+        view.sizingProfile = sizingProfile
         updateInputView(view)
         bindCallbacks(view)
     }
@@ -123,6 +128,12 @@ class FunputInputMethodService : InputMethodService() {
         keyboardView?.inputMethod = method
     }
 
+    private fun applySizingProfile(profile: KeyboardSizingProfile) {
+        if (profile == sizingProfile) return
+        sizingProfile = profile
+        keyboardView?.sizingProfile = profile
+    }
+
     private fun applyFeedback(preferences: KeyboardFeedbackPreferences) {
         feedback = preferences
         keyboardView?.apply {
@@ -136,6 +147,7 @@ class FunputInputMethodService : InputMethodService() {
         policy = editorRuntime.policy,
         currentLanguage = actionHandler.language,
         feedback = feedback,
+        sizingProfile = sizingProfile,
     )
 
     private fun onSuggestionSelected(selection: SuggestionSelection) {

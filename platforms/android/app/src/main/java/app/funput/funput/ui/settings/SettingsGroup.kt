@@ -4,6 +4,8 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,8 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,16 +29,15 @@ import app.funput.funput.R
 @Composable
 internal fun SettingsGroup(
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(20.dp),
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        content()
-    }
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(SettingsGroupShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        content = content,
+    )
 }
 
 @Composable
@@ -104,3 +103,5 @@ internal fun SettingsIcon(
         )
     }
 }
+
+private val SettingsGroupShape = RoundedCornerShape(16.dp)

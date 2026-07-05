@@ -37,5 +37,10 @@ data class KeyboardSizingProfile(
         )
 
         val Default: KeyboardSizingProfile = Normal
+
+        val Presets: List<KeyboardSizingProfile> = listOf(Compact, Normal, Large)
+
+        fun fromId(id: String?): KeyboardSizingProfile =
+            Presets.firstOrNull { it.id == id } ?: Default
     }
 }

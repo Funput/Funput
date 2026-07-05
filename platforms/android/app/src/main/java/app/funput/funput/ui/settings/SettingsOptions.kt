@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 
 @Composable
@@ -20,7 +21,17 @@ internal fun AppearanceMode.label(): String = when (this) {
 }
 
 @Composable
+internal fun KeyboardSizingProfile.label(): String = when (id) {
+    KeyboardSizingProfile.Compact.id -> stringResource(R.string.settings_key_size_compact)
+    KeyboardSizingProfile.Large.id -> stringResource(R.string.settings_key_size_large)
+    else -> stringResource(R.string.settings_key_size_normal)
+}
+
+@Composable
 internal fun inputMethodOptions() = KeyboardInputMethod.entries.map { PickerOption(it, it.label()) }
 
 @Composable
 internal fun appearanceOptions() = AppearanceMode.entries.map { PickerOption(it, it.label()) }
+
+@Composable
+internal fun keySizeOptions() = KeyboardSizingProfile.Presets.map { PickerOption(it, it.label()) }
