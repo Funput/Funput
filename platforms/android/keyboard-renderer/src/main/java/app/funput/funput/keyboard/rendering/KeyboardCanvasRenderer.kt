@@ -19,6 +19,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
     private val metrics = RenderMetrics(resources)
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val keyRenderer = KeyRenderer(metrics)
+    private val keyPopupRenderer = KeyPopupRenderer(metrics)
     private val suggestionBarRenderer = SuggestionBarRenderer(metrics)
     private val toolbarLogoRenderer = ToolbarLogoRenderer(resources)
     private var theme: KeyboardTheme = KeyboardThemeCatalog.default()
@@ -60,6 +61,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         shiftState: ShiftState,
         language: KeyboardLanguage,
         enterAction: KeyboardEnterAction,
+        secure: Boolean,
     ) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
         keyboard.suggestionBar?.let { bar ->
@@ -78,6 +80,11 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
                 language,
                 enterAction,
             )
+        }
+        keyboard.keys.forEach { key ->
+            if (pressedKeys.isPressed(key.spec.id) && KeyPopupLayout.isEligible(key, secure)) {
+                keyPopupRenderer.draw(canvas, key, width.toFloat(), theme, shiftState)
+            }
         }
     }
 }

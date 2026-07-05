@@ -55,9 +55,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         get() = interaction.language
         set(value) = interaction.setLanguage(value)
     private var resolvedKeyboard: ResolvedKeyboard? = null
-    // Cached so TalkBack's many ExploreByTouchHelper callbacks share one immutable
-    // snapshot per scan; rebuilt only when geometry or semantic state changes.
-    private var accessibilitySnapshot: KeyboardAccessibilitySnapshot? = null
+    private var accessibilitySnapshot: KeyboardAccessibilitySnapshot? = null // Shared by TalkBack callbacks.
     private val accessibility: KeyboardAccessibilityDelegate = KeyboardAccessibilityDelegate(
         host = this,
         snapshot = { accessibilitySnapshot },
@@ -104,15 +102,16 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val keyboard = resolvedKeyboard ?: return
-        renderer.draw(canvas, width, height, keyboard, suggestions, interaction, shiftState, language, enterAction)
+        renderer.draw(canvas, width, height, keyboard, suggestions, interaction,
+            shiftState, language, enterAction, editorMode.isPassword)
     }
     override fun onTouchEvent(event: MotionEvent): Boolean = when (interaction.onTouchEvent(event)) {
         KeyboardTouchHandler.Result.UNHANDLED -> false
         KeyboardTouchHandler.Result.HANDLED -> true
         KeyboardTouchHandler.Result.CLICK -> performClick()
     }
-    override fun dispatchHoverEvent(event: MotionEvent): Boolean =
-        accessibility.dispatchHover(event) || super.dispatchHoverEvent(event)
+    override fun dispatchHoverEvent(event: MotionEvent): Boolean = accessibility.dispatchHover(event) ||
+        super.dispatchHoverEvent(event)
     override fun performClick(): Boolean {
         super.performClick()
         return true
@@ -140,12 +139,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         resolveGeometry()
         invalidate()
     }
-    private fun performAccessibilityClick(keyId: String) {
+    private fun performAccessibilityClick(keyId: String) =
         interaction.performAccessibilityClick(keyId, SystemClock.uptimeMillis())
-    }
-    private fun invalidateAccessibility() {
-        refreshAccessibilitySnapshot()
-    }
+    private fun invalidateAccessibility() = refreshAccessibilitySnapshot()
     private fun refreshAccessibilitySnapshot() {
         accessibilitySnapshot = resolvedKeyboard?.let { KeyboardAccessibilitySnapshot(it, shiftState) }
         accessibility.invalidateRoot()
