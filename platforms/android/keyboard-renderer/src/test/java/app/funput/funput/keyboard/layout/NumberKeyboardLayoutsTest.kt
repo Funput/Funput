@@ -43,20 +43,24 @@ class NumberKeyboardLayoutsTest {
 
     @Test
     fun `numeric geometry gives rows the full area without hidden toolbar`() {
-        val layout = resolve(KeyboardEditorMode.NUMBER_SIGNED_DECIMAL)
+        val mode = KeyboardEditorMode.NUMBER_SIGNED_DECIMAL
+        val layout = resolve(mode)
         val spec = KeyboardGeometrySpec.fromDensity(1f)
-        val keyboard = KeyboardGeometry.resolve(layout, 360f, 300f, spec)
+        val height = KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, mode)
+        val keyboard = KeyboardGeometry.resolve(layout, 360f, height, spec)
 
         assertNull(keyboard.suggestionBar)
         assertEquals(spec.verticalPadding, keyboard.rows.first().first().bounds.top)
+        assertEquals(height - spec.verticalPadding, keyboard.rows.last().first().bounds.bottom, 0.5f)
         assertFalse(keyboard.keys.any { it.spec.id == "emoji" })
     }
 
     @Test
-    fun `all numeric modes disable composition and use numeric height`() {
+    fun `all numeric modes disable composition and use four row keypad height`() {
+        val expectedHeight = KeyboardDimensions.heightForRowCount(rowCount = 4, hasSuggestionBar = false)
         KeyboardEditorMode.entries.filter { it.isNumber }.forEach { mode ->
             assertFalse(mode.supportsVietnameseComposition)
-            assertEquals(300f, KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, mode))
+            assertEquals(expectedHeight, KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, mode))
             assertTrue(resolve(mode).id.contains(mode.name.lowercase()))
         }
     }

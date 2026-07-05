@@ -63,7 +63,7 @@ class PasswordKeyboardLayoutsTest {
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.TELEX, KeyboardEditorMode.PASSWORD),
         )
         assertEquals(
-            300f,
+            KeyboardDimensions.heightForRowCount(rowCount = 4, hasSuggestionBar = false),
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.PIN),
         )
     }

@@ -31,10 +31,21 @@ class PhoneKeyboardLayoutsTest {
     }
 
     @Test
-    fun `phone mode disables composition and uses keypad height`() {
+    fun `phone geometry fills the panel without a blank bottom row`() {
+        val layout = resolve()
+        val spec = KeyboardGeometrySpec.fromDensity(1f)
+        val height = KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.PHONE)
+        val keyboard = KeyboardGeometry.resolve(layout, 360f, height, spec)
+
+        assertNull(keyboard.suggestionBar)
+        assertEquals(height - spec.verticalPadding, keyboard.rows.last().first().bounds.bottom, 0.5f)
+    }
+
+    @Test
+    fun `phone mode disables composition and uses four row keypad height`() {
         assertFalse(KeyboardEditorMode.PHONE.supportsVietnameseComposition)
         assertEquals(
-            300f,
+            KeyboardDimensions.heightForRowCount(rowCount = 4, hasSuggestionBar = false),
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.PHONE),
         )
     }
