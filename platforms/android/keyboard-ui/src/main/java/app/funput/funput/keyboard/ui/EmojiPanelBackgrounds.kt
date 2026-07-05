@@ -30,6 +30,8 @@ internal object EmojiPanelBackgrounds {
         shape = GradientDrawable.RECTANGLE
         setColor(color)
         cornerRadius = theme.keyCornerRadiusDp * density
-        setStroke((theme.keyBorderWidthDp * density).toInt().coerceAtLeast(1), borderColor)
+        if (theme.keyBorderWidthDp > 0f) {
+            setStroke((theme.keyBorderWidthDp * density).toInt().coerceAtLeast(1), borderColor)
+        }
     }
 }

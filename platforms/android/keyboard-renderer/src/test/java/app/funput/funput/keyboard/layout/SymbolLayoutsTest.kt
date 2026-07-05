@@ -8,6 +8,7 @@ import app.funput.funput.keyboard.model.KeySwipeAction
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardRow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -41,23 +42,27 @@ class SymbolLayoutsTest {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             listOf(KeyboardLayoutMode.SYMBOLS_PRIMARY, KeyboardLayoutMode.SYMBOLS_SECONDARY).forEach { mode ->
                 val layout = KeyboardLayoutResolver.resolve(inputMethod, mode)
-                val emojiId = requireNotNull(layout.suggestionBar).emojiKey.id
-                val ids = listOf(emojiId) + layout.rows.flattenedKeys().map { it.id }
+                val ids = buildList {
+                    layout.suggestionBar?.emojiKey?.id?.let(::add)
+                    addAll(layout.rows.flattenedKeys().map { it.id })
+                }
                 assertEquals(ids.size, ids.distinct().size)
             }
         }
     }
 
     @Test
-    fun `no suggestions removes toolbar without disabling language swipe`() {
+    fun `no suggestions keeps emoji toolbar without disabling language swipe`() {
         val layout = KeyboardLayoutResolver.resolve(
             KeyboardInputMethod.VNI,
             KeyboardLayoutMode.SYMBOLS_PRIMARY,
             KeyboardEditorMode.TEXT,
-            suggestionBarEnabled = false,
+            suggestionsEnabled = false,
         )
 
-        assertNull(layout.suggestionBar)
+        val bar = requireNotNull(layout.suggestionBar)
+        assertEquals(KeyRole.EMOJI, bar.emojiKey.role)
+        assertFalse(bar.suggestionsEnabled)
         val space = layout.rows.last().keys.first { it.role == KeyRole.SPACE }
         assertEquals(KeySwipeAction.TOGGLE_LANGUAGE, space.horizontalSwipeAction)
     }

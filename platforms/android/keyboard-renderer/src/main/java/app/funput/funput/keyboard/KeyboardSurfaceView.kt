@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import app.funput.funput.keyboard.KeyboardFeatures
 import app.funput.funput.keyboard.interaction.interactionTargetAt
 import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.KeyboardTouchHandler
@@ -23,6 +24,7 @@ import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.rendering.KeyboardCanvasRenderer
 import app.funput.funput.theme.KeyboardTheme
+import app.funput.funput.theme.KeyboardThemeCatalog
 import kotlin.math.roundToInt
 
 /** Low-allocation keyboard surface that coordinates Android's [View] lifecycle. */
@@ -49,13 +51,13 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             field = value
             updateKeyboardLayout()
         }
-    var suggestionBarEnabled: Boolean = true
+    var suggestionBarEnabled: Boolean = KeyboardFeatures.SuggestionsEnabled
         set(value) {
             if (field == value) return
             field = value
             updateKeyboardLayout()
         }
-    var keyboardTheme: KeyboardTheme = KeyboardTheme.Aurora
+    var keyboardTheme: KeyboardTheme = KeyboardThemeCatalog.default()
         set(value) {
             if (field == value) return
             field = value

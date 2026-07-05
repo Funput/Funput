@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.KeyboardFeatures
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
@@ -10,13 +11,13 @@ internal object KeyboardLayoutResolver {
         inputMethod: KeyboardInputMethod,
         mode: KeyboardLayoutMode,
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
-        suggestionBarEnabled: Boolean = true,
+        suggestionsEnabled: Boolean = KeyboardFeatures.SuggestionsEnabled,
     ): KeyboardLayout = when (mode) {
         KeyboardLayoutMode.LETTERS ->
-            EditorKeyboardLayouts.resolve(inputMethod, editorMode, suggestionBarEnabled)
+            EditorKeyboardLayouts.resolve(inputMethod, editorMode, suggestionsEnabled)
         KeyboardLayoutMode.SYMBOLS_PRIMARY ->
-            SymbolLayouts.primary(inputMethod, suggestionBarEnabled, editorMode.isPassword)
+            SymbolLayouts.primary(inputMethod, suggestionsEnabled, editorMode.isPassword)
         KeyboardLayoutMode.SYMBOLS_SECONDARY ->
-            SymbolLayouts.secondary(inputMethod, suggestionBarEnabled, editorMode.isPassword)
+            SymbolLayouts.secondary(inputMethod, suggestionsEnabled, editorMode.isPassword)
     }
 }

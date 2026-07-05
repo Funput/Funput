@@ -35,6 +35,7 @@ data class KeyboardRow(
 
 data class SuggestionBarSpec(
     val emojiKey: KeySpec,
+    val suggestionsEnabled: Boolean = true,
 ) {
     init {
         require(emojiKey.role == KeyRole.EMOJI) { "Suggestion bar action must be an emoji key" }

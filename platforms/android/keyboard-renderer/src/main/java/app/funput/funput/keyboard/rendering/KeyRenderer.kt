@@ -60,8 +60,10 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         val shadowOffset = metrics.dp(
             if (isPressed) theme.pressedKeyShadowOffsetDp else theme.keyShadowOffsetDp,
         )
-        drawingRect.set(bounds.left, bounds.top + shadowOffset, bounds.right, bounds.bottom + shadowOffset)
-        canvas.drawRoundRect(drawingRect, radius, radius, shadowPaint)
+        if (shadowOffset > 0f && theme.keyShadowColor ushr 24 != 0) {
+            drawingRect.set(bounds.left, bounds.top + shadowOffset, bounds.right, bounds.bottom + shadowOffset)
+            canvas.drawRoundRect(drawingRect, radius, radius, shadowPaint)
+        }
 
         drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
         fillPaint.color = when {
@@ -70,13 +72,15 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
             key.spec.role.isSpecial -> theme.specialKeyColor
             else -> theme.keyColor
         }
-        borderPaint.color = when {
-            isPressed -> theme.pressedKeyBorderColor
-            isActivated -> theme.activatedKeyBorderColor
-            else -> theme.keyBorderColor
-        }
         canvas.drawRoundRect(drawingRect, radius, radius, fillPaint)
-        canvas.drawRoundRect(drawingRect, radius, radius, borderPaint)
+        if (theme.keyBorderWidthDp > 0f) {
+            borderPaint.color = when {
+                isPressed -> theme.pressedKeyBorderColor
+                isActivated -> theme.activatedKeyBorderColor
+                else -> theme.keyBorderColor
+            }
+            canvas.drawRoundRect(drawingRect, radius, radius, borderPaint)
+        }
     }
 
     private fun drawLabels(

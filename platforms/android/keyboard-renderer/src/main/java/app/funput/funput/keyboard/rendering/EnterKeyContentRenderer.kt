@@ -24,9 +24,9 @@ internal class EnterKeyContentRenderer(private val metrics: RenderMetrics) {
     private val fontMetrics = Paint.FontMetrics()
 
     fun updateTheme(theme: KeyboardTheme) {
-        iconPaint.color = theme.labelColor
+        iconPaint.color = theme.accentColor
         iconPaint.strokeWidth = metrics.dp(1.7f)
-        labelPaint.color = theme.labelColor
+        labelPaint.color = theme.accentColor
     }
 
     fun draw(canvas: Canvas, key: ResolvedKey, action: KeyboardEnterAction) {

@@ -22,9 +22,9 @@ object KeyboardLayouts {
 
     private fun standardActionKeys() = listOf(
         specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
-        specialKey("comma", ",", KeyRole.PUNCTUATION, 0.9f),
+        specialKey("comma", ",", KeyRole.PUNCTUATION),
         standardSpaceKey(),
-        specialKey("period", ".", KeyRole.PUNCTUATION, 0.9f),
+        specialKey("period", ".", KeyRole.PUNCTUATION),
         specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
     )
 }

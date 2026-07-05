@@ -3,28 +3,41 @@ package app.funput.funput.keyboard.interaction
 import app.funput.funput.keyboard.layout.KeyboardGeometry
 import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
 import app.funput.funput.keyboard.layout.KeyboardLayouts
+import app.funput.funput.keyboard.layout.qwertyLayout
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.model.SuggestionBarSpec
 import app.funput.funput.keyboard.model.SuggestionSelection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 class KeyboardInteractionTargetsTest {
+    private val spec = KeyboardGeometrySpec(
+        horizontalPadding = 21f,
+        verticalPadding = 24f,
+        horizontalGap = 0f,
+        verticalGap = 0f,
+        horizontalGapRatio = 0.11f,
+        verticalGapRatio = 0.16f,
+        keyAspectRatio = 0.75f,
+        suggestionBarHeight = 126f,
+        suggestionBarGap = 18f,
+    )
     private val keyboard = KeyboardGeometry.resolve(
-        layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX),
+        layout = qwertyLayout(
+            id = "test-suggestions",
+            inputMethod = KeyboardInputMethod.TELEX,
+            actionKeys = KeyboardLayouts.telex.rows.last().keys,
+            showSuggestionBar = true,
+        ).copy(
+            suggestionBar = SuggestionBarSpec(
+                emojiKey = KeyboardLayouts.telex.suggestionBar!!.emojiKey,
+                suggestionsEnabled = true,
+            ),
+        ),
         width = 1080f,
         height = 726f,
-        spec = KeyboardGeometrySpec(
-            horizontalPadding = 21f,
-            verticalPadding = 24f,
-            horizontalGap = 0f,
-            verticalGap = 0f,
-            horizontalGapRatio = 0.11f,
-            verticalGapRatio = 0.16f,
-            keyAspectRatio = 0.75f,
-            suggestionBarHeight = 126f,
-            suggestionBarGap = 18f,
-        ),
+        spec = spec,
     )
 
     @Test

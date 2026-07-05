@@ -2,6 +2,7 @@ package app.funput.funput.keyboard.rendering
 
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Typeface
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyboardLanguage
@@ -14,11 +15,10 @@ internal class SpacebarContentRenderer(private val metrics: RenderMetrics) {
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     }
-    private val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
-        strokeJoin = Paint.Join.ROUND
+    private val chevronPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
     }
+    private val chevronPath = Path()
     private val fontMetrics = Paint.FontMetrics()
 
     fun draw(
@@ -35,32 +35,37 @@ internal class SpacebarContentRenderer(private val metrics: RenderMetrics) {
         val baseline = centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
         canvas.drawText(language.displayLabel, centerX, baseline, labelPaint)
 
-        arrowPaint.color = theme.accentColor
-        arrowPaint.strokeWidth = metrics.dp(ArrowStrokeWidthDp)
-        val offset = min(key.bounds.width * 0.36f, metrics.dp(MaxArrowOffsetDp))
-        val size = min(key.bounds.height * 0.13f, metrics.dp(MaxArrowSizeDp))
-        drawChevron(canvas, centerX - offset, centerY, size, pointsRight = false)
-        drawChevron(canvas, centerX + offset, centerY, size, pointsRight = true)
+        chevronPaint.color = (theme.secondaryLabelColor and 0x00FFFFFF) or ChevronAlpha
+        val offset = min(key.bounds.width * 0.34f, metrics.dp(MaxChevronOffsetDp))
+        val height = min(key.bounds.height * 0.22f, metrics.dp(MaxChevronHeightDp))
+        drawFilledChevron(canvas, centerX - offset, centerY, height, pointsLeft = true)
+        drawFilledChevron(canvas, centerX + offset, centerY, height, pointsLeft = false)
     }
 
-    private fun drawChevron(
+    private fun drawFilledChevron(
         canvas: Canvas,
         centerX: Float,
         centerY: Float,
-        size: Float,
-        pointsRight: Boolean,
+        height: Float,
+        pointsLeft: Boolean,
     ) {
-        val direction = if (pointsRight) 1f else -1f
-        val tipX = centerX + size * direction
-        val tailX = centerX - size * direction
-        canvas.drawLine(tailX, centerY - size, tipX, centerY, arrowPaint)
-        canvas.drawLine(tipX, centerY, tailX, centerY + size, arrowPaint)
+        val halfHeight = height * 0.5f
+        val width = height * ChevronWidthRatio
+        val tipX = centerX + if (pointsLeft) -width * 0.5f else width * 0.5f
+        val baseX = centerX + if (pointsLeft) width * 0.5f else -width * 0.5f
+        chevronPath.reset()
+        chevronPath.moveTo(tipX, centerY)
+        chevronPath.lineTo(baseX, centerY - halfHeight)
+        chevronPath.lineTo(baseX, centerY + halfHeight)
+        chevronPath.close()
+        canvas.drawPath(chevronPath, chevronPaint)
     }
 
     private companion object {
         const val LabelSizeSp = 12f
-        const val ArrowStrokeWidthDp = 1.5f
-        const val MaxArrowOffsetDp = 72f
-        const val MaxArrowSizeDp = 5f
+        const val MaxChevronOffsetDp = 68f
+        const val MaxChevronHeightDp = 7f
+        const val ChevronWidthRatio = 0.62f
+        const val ChevronAlpha = 0x99000000.toInt()
     }
 }

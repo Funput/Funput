@@ -1,7 +1,9 @@
 package app.funput.funput.keyboard.layout
 
 import app.funput.funput.keyboard.KeyboardDimensions
+import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.model.SuggestionBarSpec
 import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -76,7 +78,23 @@ class KeyboardGeometryTest {
 
     @Test
     fun suggestionBarPlacesEmojiAtTheRightEdge() {
-        val keyboard = resolve(KeyboardInputMethod.TELEX)
+        val layout = qwertyLayout(
+            id = "test-suggestions",
+            inputMethod = KeyboardInputMethod.TELEX,
+            actionKeys = KeyboardLayouts.telex.rows.last().keys,
+            showSuggestionBar = true,
+        ).copy(
+            suggestionBar = SuggestionBarSpec(
+                emojiKey = KeyboardLayouts.telex.suggestionBar!!.emojiKey,
+                suggestionsEnabled = true,
+            ),
+        )
+        val keyboard = KeyboardGeometry.resolve(
+            layout = layout,
+            width = 1080f,
+            height = 726f,
+            spec = spec,
+        )
         val suggestionBar = requireNotNull(keyboard.suggestionBar)
 
         assertEquals("emoji", suggestionBar.emojiKey.spec.id)

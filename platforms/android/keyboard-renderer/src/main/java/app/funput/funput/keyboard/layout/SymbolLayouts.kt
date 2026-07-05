@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.KeyboardFeatures
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeySwipeAction
@@ -11,12 +12,12 @@ import app.funput.funput.keyboard.model.SuggestionBarSpec
 internal object SymbolLayouts {
     fun primary(
         inputMethod: KeyboardInputMethod,
-        suggestionBarEnabled: Boolean = true,
+        suggestionsEnabled: Boolean = KeyboardFeatures.SuggestionsEnabled,
         secure: Boolean = false,
     ): KeyboardLayout = create(
         id = "symbols-primary",
         inputMethod = inputMethod,
-        suggestionBarEnabled = suggestionBarEnabled,
+        suggestionsEnabled = suggestionsEnabled,
         secure = secure,
         rows = listOf(
             symbolRow("primary", 0, listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")),
@@ -28,12 +29,12 @@ internal object SymbolLayouts {
 
     fun secondary(
         inputMethod: KeyboardInputMethod,
-        suggestionBarEnabled: Boolean = true,
+        suggestionsEnabled: Boolean = KeyboardFeatures.SuggestionsEnabled,
         secure: Boolean = false,
     ): KeyboardLayout = create(
         id = "symbols-secondary",
         inputMethod = inputMethod,
-        suggestionBarEnabled = suggestionBarEnabled,
+        suggestionsEnabled = suggestionsEnabled,
         secure = secure,
         rows = listOf(
             symbolRow("secondary", 0, listOf("[", "]", "{", "}", "#", "%", "^", "*", "+", "=")),
@@ -46,15 +47,20 @@ internal object SymbolLayouts {
     private fun create(
         id: String,
         inputMethod: KeyboardInputMethod,
-        suggestionBarEnabled: Boolean,
+        suggestionsEnabled: Boolean,
         secure: Boolean,
         rows: List<KeyboardRow>,
     ) = KeyboardLayout(
-        id = "$id-${inputMethod.name.lowercase()}${suffix(suggestionBarEnabled, secure)}",
+        id = "$id-${inputMethod.name.lowercase()}${suffix(suggestionsEnabled, secure)}",
         inputMethod = inputMethod,
-        suggestionBar = if (suggestionBarEnabled && !secure) SuggestionBarSpec(
-            emojiKey = specialKey("emoji-$id", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
-        ) else null,
+        suggestionBar = if (KeyboardFeatures.EmojiToolbarEnabled && !secure) {
+            SuggestionBarSpec(
+                emojiKey = specialKey("emoji-$id", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
+                suggestionsEnabled = KeyboardFeatures.SuggestionsEnabled && suggestionsEnabled,
+            )
+        } else {
+            null
+        },
         rows = rows,
     )
 
@@ -78,9 +84,9 @@ internal object SymbolLayouts {
     private fun actionRow(page: String, secure: Boolean) = KeyboardRow(
         keys = listOf(
             specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.7f, "Letters"),
-            specialKey("comma-$page", ",", KeyRole.PUNCTUATION, 0.9f),
+            specialKey("comma-$page", ",", KeyRole.PUNCTUATION),
             symbolSpace(page, secure),
-            specialKey("period-$page", ".", KeyRole.PUNCTUATION, 0.9f),
+            specialKey("period-$page", ".", KeyRole.PUNCTUATION),
             specialKey("enter-$page", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
     )
@@ -89,7 +95,7 @@ internal object SymbolLayouts {
         id = "space-$page",
         label = if (secure) "English" else "Tiếng Việt",
         role = KeyRole.SPACE,
-        widthWeight = 6f,
+        widthWeight = 5.8f,
         accessibilityLabel = if (secure) "Space" else "Dấu cách. Vuốt để đổi ngôn ngữ",
         horizontalSwipeAction = KeySwipeAction.TOGGLE_LANGUAGE.takeUnless { secure },
     )
@@ -109,9 +115,9 @@ internal object SymbolLayouts {
         accessibilityLabel: String = label,
     ) = KeySpec(id, label, role, widthWeight, accessibilityLabel = accessibilityLabel)
 
-    private fun suffix(suggestionBarEnabled: Boolean, secure: Boolean): String = when {
+    private fun suffix(suggestionsEnabled: Boolean, secure: Boolean): String = when {
         secure -> "-secure"
-        !suggestionBarEnabled -> "-no-suggestions"
+        !KeyboardFeatures.SuggestionsEnabled || !suggestionsEnabled -> "-no-suggestions"
         else -> ""
     }
 }

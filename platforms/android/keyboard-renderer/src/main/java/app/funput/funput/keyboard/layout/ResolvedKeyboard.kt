@@ -26,6 +26,7 @@ data class ResolvedSuggestionBar(
     val bounds: KeyBounds,
     val suggestionsBounds: KeyBounds,
     val emojiKey: ResolvedKey,
+    val suggestionsEnabled: Boolean,
 )
 
 data class ResolvedKeyboard(

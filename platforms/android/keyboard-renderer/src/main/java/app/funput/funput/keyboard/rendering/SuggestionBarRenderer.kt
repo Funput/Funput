@@ -11,10 +11,12 @@ import app.funput.funput.keyboard.interaction.SuggestionTargetIds
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
 import app.funput.funput.theme.KeyboardTheme
+import app.funput.funput.theme.KeyboardThemeCatalog
 
 internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
+    private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
@@ -22,13 +24,14 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     private val drawingRect = RectF()
     private val clipPath = Path()
     private val fontMetrics = Paint.FontMetrics()
-    private var theme: KeyboardTheme = KeyboardTheme.Aurora
+    private var theme: KeyboardTheme = KeyboardThemeCatalog.default()
 
     fun updateTheme(theme: KeyboardTheme) {
         this.theme = theme
         fillPaint.color = theme.keyColor
         borderPaint.color = theme.keyBorderColor
         borderPaint.strokeWidth = metrics.dp(theme.keyBorderWidthDp)
+        dividerPaint.color = theme.secondaryLabelColor and 0x00FFFFFF or DividerAlpha
         labelPaint.color = theme.labelColor
     }
 
@@ -42,7 +45,9 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         val radius = metrics.dp(theme.keyCornerRadiusDp)
         drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
         canvas.drawRoundRect(drawingRect, radius, radius, fillPaint)
-        canvas.drawRoundRect(drawingRect, radius, radius, borderPaint)
+        if (theme.keyBorderWidthDp > 0f) {
+            canvas.drawRoundRect(drawingRect, radius, radius, borderPaint)
+        }
         if (suggestions.isEmpty()) return
 
         drawPressedSegments(canvas, bounds, radius, suggestions.size, pressedTargets)
@@ -91,12 +96,13 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
             bounds.top + metrics.dp(DividerInsetDp),
             x,
             bounds.bottom - metrics.dp(DividerInsetDp),
-            borderPaint,
+            dividerPaint,
         )
     }
 
     private companion object {
         const val SuggestionLabelSizeSp = 14f
         const val DividerInsetDp = 9f
+        const val DividerAlpha = 0x33000000
     }
 }

@@ -4,6 +4,7 @@ import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeySwipeAction
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -32,7 +33,7 @@ class KeyboardLayoutsTest {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             val layout = KeyboardLayouts.forInputMethod(inputMethod)
             val ids = buildList {
-                add(requireNotNull(layout.suggestionBar).emojiKey.id)
+                layout.suggestionBar?.emojiKey?.id?.let(::add)
                 layout.rows.forEach { row -> addAll(row.keys.map { key -> key.id }) }
             }
 
@@ -41,18 +42,25 @@ class KeyboardLayoutsTest {
     }
 
     @Test
-    fun suggestionBarOwnsEmojiAndActionRowGivesSpaceMoreWidth() {
+    fun emojiToolbarIsShownWithoutSuggestionStrip() {
+        KeyboardInputMethod.entries.forEach { inputMethod ->
+            val bar = requireNotNull(KeyboardLayouts.forInputMethod(inputMethod).suggestionBar)
+            assertEquals(KeyRole.EMOJI, bar.emojiKey.role)
+            assertFalse(bar.suggestionsEnabled)
+        }
+    }
+
+    @Test
+    fun actionRowGivesSpaceMoreWidth() {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             val layout = KeyboardLayouts.forInputMethod(inputMethod)
             val actionKeys = layout.rows.last().keys
-            val emoji = requireNotNull(layout.suggestionBar).emojiKey
             val space = actionKeys.first { key -> key.id == "space" }
 
-            assertEquals(KeyRole.EMOJI, emoji.role)
             assertTrue(actionKeys.none { key -> key.role == KeyRole.EMOJI })
             assertEquals(KeySwipeAction.TOGGLE_LANGUAGE, space.horizontalSwipeAction)
             assertEquals("Tiếng Việt", space.label)
-            assertEquals(6f, space.widthWeight)
+            assertEquals(5.8f, space.widthWeight)
         }
     }
 }

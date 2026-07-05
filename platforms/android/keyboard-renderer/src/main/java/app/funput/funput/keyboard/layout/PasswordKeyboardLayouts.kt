@@ -11,9 +11,9 @@ internal object PasswordKeyboardLayouts {
         leadingRows = listOf(keypadRow(*"1234567890".map(::keypadDigit).toTypedArray())),
         actionKeys = listOf(
             specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
-            specialKey("comma", ",", KeyRole.PUNCTUATION, 0.9f),
-            asciiSpaceKey(6f),
-            specialKey("period", ".", KeyRole.PUNCTUATION, 0.9f),
+            specialKey("comma", ",", KeyRole.PUNCTUATION),
+            asciiSpaceKey(5.8f),
+            specialKey("period", ".", KeyRole.PUNCTUATION),
             specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
         showSuggestionBar = false,

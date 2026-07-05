@@ -117,16 +117,20 @@ object KeyboardGeometry {
         val left = spec.horizontalPadding
         val right = width - spec.horizontalPadding
         val emojiLeft = right - spec.suggestionBarHeight
+        val suggestionsRight = if (barSpec.suggestionsEnabled) emojiLeft - spec.horizontalGap else emojiLeft
         val suggestionBar = ResolvedSuggestionBar(
             bounds = KeyBounds(left, top, right, bottom),
-            suggestionsBounds = KeyBounds(left, top, emojiLeft - spec.horizontalGap, bottom),
+            suggestionsBounds = KeyBounds(left, top, suggestionsRight, bottom),
             emojiKey = ResolvedKey(
                 barSpec.emojiKey,
                 KeyBounds(emojiLeft, top, right, bottom),
             ),
+            suggestionsEnabled = barSpec.suggestionsEnabled,
         )
-        require(suggestionBar.suggestionsBounds.width > 0f) {
-            "Keyboard is too narrow for the suggestion bar"
+        if (barSpec.suggestionsEnabled) {
+            require(suggestionBar.suggestionsBounds.width > 0f) {
+                "Keyboard is too narrow for the suggestion bar"
+            }
         }
         return suggestionBar
     }

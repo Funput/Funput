@@ -2,9 +2,11 @@ package app.funput.funput.keyboard.layout
 
 import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.model.KeyboardEditorMode
+import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -41,15 +43,17 @@ class EditorKeyboardLayoutsTest {
     }
 
     @Test
-    fun `disabled suggestion policy removes the letters toolbar`() {
+    fun `disabled suggestion policy keeps emoji toolbar only`() {
         val layout = KeyboardLayoutResolver.resolve(
             KeyboardInputMethod.VNI,
             KeyboardLayoutMode.LETTERS,
             KeyboardEditorMode.TEXT,
-            suggestionBarEnabled = false,
+            suggestionsEnabled = false,
         )
+        val bar = requireNotNull(layout.suggestionBar)
 
-        assertNull(layout.suggestionBar)
+        assertEquals(KeyRole.EMOJI, bar.emojiKey.role)
+        assertFalse(bar.suggestionsEnabled)
     }
 
     private fun resolve(method: KeyboardInputMethod, editorMode: KeyboardEditorMode) =

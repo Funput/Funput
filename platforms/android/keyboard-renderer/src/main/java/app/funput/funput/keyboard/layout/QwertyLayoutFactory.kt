@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.KeyboardFeatures
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeySwipeAction
@@ -13,13 +14,14 @@ internal fun qwertyLayout(
     inputMethod: KeyboardInputMethod,
     leadingRows: List<KeyboardRow> = emptyList(),
     actionKeys: List<KeySpec>,
-    showSuggestionBar: Boolean = true,
+    showSuggestionBar: Boolean = KeyboardFeatures.EmojiToolbarEnabled,
 ): KeyboardLayout = KeyboardLayout(
     id = id,
     inputMethod = inputMethod,
     suggestionBar = if (showSuggestionBar) {
         SuggestionBarSpec(
             emojiKey = specialKey("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
+            suggestionsEnabled = KeyboardFeatures.SuggestionsEnabled,
         )
     } else {
         null
@@ -33,7 +35,7 @@ internal fun qwertyLayout(
     },
 )
 
-internal fun standardSpaceKey(widthWeight: Float = 6f) = KeySpec(
+internal fun standardSpaceKey(widthWeight: Float = 5.8f) = KeySpec(
     id = "space",
     label = "Tiếng Việt",
     role = KeyRole.SPACE,

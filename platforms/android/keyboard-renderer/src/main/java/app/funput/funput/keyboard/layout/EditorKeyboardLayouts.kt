@@ -9,7 +9,7 @@ internal object EditorKeyboardLayouts {
     fun resolve(
         inputMethod: KeyboardInputMethod,
         editorMode: KeyboardEditorMode,
-        suggestionBarEnabled: Boolean,
+        suggestionsEnabled: Boolean,
     ): KeyboardLayout {
         val layout = when (editorMode) {
             KeyboardEditorMode.TEXT -> KeyboardLayouts.forInputMethod(inputMethod)
@@ -24,10 +24,13 @@ internal object EditorKeyboardLayouts {
             KeyboardEditorMode.NUMBER_SIGNED_DECIMAL,
             -> NumberKeyboardLayouts.resolve(inputMethod, editorMode)
         }
-        return if (suggestionBarEnabled || layout.suggestionBar == null) {
+        return if (suggestionsEnabled || layout.suggestionBar == null) {
             layout
         } else {
-            layout.copy(id = "${layout.id}-no-suggestions", suggestionBar = null)
+            layout.copy(
+                id = "${layout.id}-no-suggestions",
+                suggestionBar = layout.suggestionBar.copy(suggestionsEnabled = false),
+            )
         }
     }
 
@@ -38,8 +41,8 @@ internal object EditorKeyboardLayouts {
             actionKeys = listOf(
                 specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
                 specialKey("at", "@", KeyRole.PUNCTUATION, 1.7f, "At sign"),
-                asciiSpaceKey(3.8f),
-                specialKey("period", ".", KeyRole.PUNCTUATION, 0.9f, "Period"),
+                asciiSpaceKey(3.7f),
+                specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Period"),
                 specialKey("dot-com", ".com", KeyRole.PUNCTUATION, 1.7f, "Dot com"),
                 specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
             ),
@@ -53,8 +56,8 @@ internal object EditorKeyboardLayouts {
             actionKeys = listOf(
                 specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
                 specialKey("slash", "/", KeyRole.PUNCTUATION, 1.7f, "Slash"),
-                asciiSpaceKey(3.8f),
-                specialKey("period", ".", KeyRole.PUNCTUATION, 0.9f, "Period"),
+                asciiSpaceKey(3.7f),
+                specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Period"),
                 specialKey("dot-com", ".com", KeyRole.PUNCTUATION, 1.7f, "Dot com"),
                 specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
             ),
