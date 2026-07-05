@@ -3,6 +3,7 @@ package app.funput.funput.ime.editing
 import android.text.InputType
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class EditorInfoKeyboardModeResolverTest {
@@ -20,11 +21,16 @@ class EditorInfoKeyboardModeResolverTest {
     }
 
     @Test
-    fun `URI variation resolves to URL mode`() {
+    fun `URI variation resolves to search mode for browser omnibars`() {
         assertEquals(
-            KeyboardEditorMode.URL,
+            KeyboardEditorMode.SEARCH,
             resolveTextVariation(InputType.TYPE_TEXT_VARIATION_URI),
         )
+    }
+
+    @Test
+    fun `search mode enables Vietnamese composition`() {
+        assertTrue(KeyboardEditorMode.SEARCH.supportsVietnameseComposition)
     }
 
     @Test

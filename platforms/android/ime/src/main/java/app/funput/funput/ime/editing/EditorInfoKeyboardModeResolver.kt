@@ -28,7 +28,7 @@ internal object EditorInfoKeyboardModeResolver {
             InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD,
             -> KeyboardEditorMode.PASSWORD
 
-            InputType.TYPE_TEXT_VARIATION_URI -> KeyboardEditorMode.URL
+            InputType.TYPE_TEXT_VARIATION_URI -> KeyboardEditorMode.SEARCH
             else -> KeyboardEditorMode.TEXT
         }
 

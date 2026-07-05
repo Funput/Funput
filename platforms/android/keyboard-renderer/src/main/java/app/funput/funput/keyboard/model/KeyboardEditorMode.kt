@@ -9,6 +9,7 @@ enum class KeyboardEditorMode(
     val allowsSigned: Boolean = false,
 ) {
     TEXT(supportsVietnameseComposition = true),
+    SEARCH(supportsVietnameseComposition = true),
     EMAIL(supportsVietnameseComposition = false),
     URL(supportsVietnameseComposition = false),
     PHONE(supportsVietnameseComposition = false),

@@ -24,6 +24,15 @@ class EditorKeyboardLayoutsTest {
     }
 
     @Test
+    fun `search layout exposes slash and domain punctuation with top number row`() {
+        val layout = resolve(KeyboardInputMethod.VNI, KeyboardEditorMode.SEARCH)
+
+        assertEquals(5, layout.rows.size)
+        assertEquals("1234567890", layout.rows.first().keys.joinToString("") { it.label })
+        assertEquals(listOf("/", ".", ".com"), actionLabels(layout).filter { it in UrlLabels })
+    }
+
+    @Test
     fun `URL layout exposes slash and domain punctuation with top number row`() {
         val layout = resolve(KeyboardInputMethod.VNI, KeyboardEditorMode.URL)
 
@@ -36,6 +45,10 @@ class EditorKeyboardLayoutsTest {
         assertEquals(
             318f,
             KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.EMAIL),
+        )
+        assertEquals(
+            318f,
+            KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, KeyboardEditorMode.SEARCH),
         )
         assertEquals(
             318f,

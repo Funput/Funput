@@ -13,6 +13,7 @@ internal object EditorKeyboardLayouts {
     ): KeyboardLayout {
         val layout = when (editorMode) {
             KeyboardEditorMode.TEXT -> KeyboardLayouts.forInputMethod(inputMethod)
+            KeyboardEditorMode.SEARCH -> searchLayouts.getValue(inputMethod)
             KeyboardEditorMode.EMAIL -> emailLayouts.getValue(inputMethod)
             KeyboardEditorMode.URL -> urlLayouts.getValue(inputMethod)
             KeyboardEditorMode.PHONE -> PhoneKeyboardLayouts.resolve(inputMethod)
@@ -52,21 +53,36 @@ internal object EditorKeyboardLayouts {
         )
     }
 
-    private val urlLayouts = KeyboardInputMethod.entries.associateWith { method ->
-        qwertyLayout(
-            id = "qwerty-url-${method.name.lowercase()}",
+    private val searchLayouts = KeyboardInputMethod.entries.associateWith { method ->
+        webNavigationLayout(
+            idPrefix = "search",
             inputMethod = method,
-            leadingRows = listOf(
-                topNumberRow(TopNumberRowMode.PLAIN_CHARACTER, pageId = "url-${method.name.lowercase()}"),
-            ),
-            actionKeys = listOf(
-                specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
-                specialKey("slash", "/", KeyRole.PUNCTUATION, 1.7f, "Slash"),
-                asciiSpaceKey(3.7f),
-                specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Period"),
-                specialKey("dot-com", ".com", KeyRole.PUNCTUATION, 1.7f, "Dot com"),
-                specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
-            ),
         )
     }
+
+    private val urlLayouts = KeyboardInputMethod.entries.associateWith { method ->
+        webNavigationLayout(
+            idPrefix = "url",
+            inputMethod = method,
+        )
+    }
+
+    private fun webNavigationLayout(
+        idPrefix: String,
+        inputMethod: KeyboardInputMethod,
+    ): KeyboardLayout = qwertyLayout(
+        id = "qwerty-$idPrefix-${inputMethod.name.lowercase()}",
+        inputMethod = inputMethod,
+        leadingRows = listOf(
+            topNumberRow(TopNumberRowMode.PLAIN_CHARACTER, pageId = "$idPrefix-${inputMethod.name.lowercase()}"),
+        ),
+        actionKeys = listOf(
+            specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
+            specialKey("slash", "/", KeyRole.PUNCTUATION, 1.7f, "Slash"),
+            asciiSpaceKey(3.7f),
+            specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Period"),
+            specialKey("dot-com", ".com", KeyRole.PUNCTUATION, 1.7f, "Dot com"),
+            specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
+        ),
+    )
 }
