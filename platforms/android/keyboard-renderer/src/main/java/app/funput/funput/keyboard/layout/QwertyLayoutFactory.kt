@@ -25,9 +25,9 @@ internal fun qwertyLayout(
     },
     rows = buildList {
         addAll(leadingRows)
-        add(characterRow("qwertyuiop"))
-        add(characterRow("asdfghjkl", horizontalInsetUnits = 0.5f))
-        add(bottomCharacterRow())
+        add(characterRow("qwertyuiop", inputMethod))
+        add(characterRow("asdfghjkl", inputMethod, horizontalInsetUnits = 0.5f))
+        add(bottomCharacterRow(inputMethod))
         add(KeyboardRow(actionKeys))
     },
 )
@@ -78,24 +78,29 @@ internal fun vniModifierRow(): KeyboardRow {
     )
 }
 
-private fun characterRow(characters: String, horizontalInsetUnits: Float = 0f) = KeyboardRow(
-    keys = characters.map(::characterKey),
+private fun characterRow(
+    characters: String,
+    inputMethod: KeyboardInputMethod,
+    horizontalInsetUnits: Float = 0f,
+) = KeyboardRow(
+    keys = characters.map { character -> characterKey(character, inputMethod) },
     horizontalInsetUnits = horizontalInsetUnits,
 )
 
-private fun bottomCharacterRow() = KeyboardRow(
+private fun bottomCharacterRow(inputMethod: KeyboardInputMethod) = KeyboardRow(
     keys = buildList {
         add(specialKey("shift", "", KeyRole.SHIFT, 1.5f, "Shift"))
-        addAll("zxcvbnm".map(::characterKey))
+        addAll("zxcvbnm".map { character -> characterKey(character, inputMethod) })
         add(specialKey("backspace", "", KeyRole.BACKSPACE, 1.5f, "Backspace"))
     },
 )
 
-private fun characterKey(character: Char) = KeySpec(
+private fun characterKey(character: Char, inputMethod: KeyboardInputMethod) = KeySpec(
     id = "character-$character",
     label = character.toString(),
     role = KeyRole.CHARACTER,
     shiftedLabel = character.uppercaseChar().toString(),
+    secondaryLabel = TelexKeyHints.secondaryLabel(inputMethod, character),
     accessibilityLabel = character.toString(),
 )
 

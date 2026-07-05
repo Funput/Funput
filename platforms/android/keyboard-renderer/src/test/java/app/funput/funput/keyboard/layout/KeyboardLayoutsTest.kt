@@ -18,6 +18,38 @@ class KeyboardLayoutsTest {
     }
 
     @Test
+    fun telexShowsModifierHintsOnLetterKeys() {
+        val keys = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX)
+            .rows
+            .flatMap { row -> row.keys }
+            .filter { key -> key.role == KeyRole.CHARACTER }
+            .associateBy { key -> key.label.single() }
+
+        assertEquals("´", keys.getValue('s').secondaryLabel)
+        assertEquals("`", keys.getValue('f').secondaryLabel)
+        assertEquals("̉", keys.getValue('r').secondaryLabel)
+        assertEquals("˜", keys.getValue('x').secondaryLabel)
+        assertEquals("̣", keys.getValue('j').secondaryLabel)
+        assertEquals("×", keys.getValue('z').secondaryLabel)
+        assertEquals("đ", keys.getValue('d').secondaryLabel)
+        assertEquals("˘+", keys.getValue('w').secondaryLabel)
+        assertEquals("ˆ", keys.getValue('a').secondaryLabel)
+        assertEquals("ˆ", keys.getValue('e').secondaryLabel)
+        assertEquals("ˆ", keys.getValue('o').secondaryLabel)
+        assertEquals(null, keys.getValue('q').secondaryLabel)
+    }
+
+    @Test
+    fun vniLetterKeysDoNotShowTelexHints() {
+        val keys = KeyboardLayouts.forInputMethod(KeyboardInputMethod.VNI)
+            .rows
+            .flatMap { row -> row.keys }
+            .filter { key -> key.role == KeyRole.CHARACTER }
+
+        assertTrue(keys.none { key -> key.secondaryLabel != null })
+    }
+
+    @Test
     fun vniAddsDirectModifierRow() {
         val layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.VNI)
         val modifierRow = layout.rows.first()
