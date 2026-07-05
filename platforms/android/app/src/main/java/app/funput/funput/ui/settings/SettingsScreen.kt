@@ -23,23 +23,26 @@ import app.funput.funput.R
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.ui.theme.BrandBlue
 import app.funput.funput.ui.theme.BrandOrange
 import app.funput.funput.ui.theme.BrandPink
 import app.funput.funput.ui.theme.BrandPurple
 
-private enum class SettingsPicker { INPUT_METHOD, KEY_SIZE, APPEARANCE }
+private enum class SettingsPicker { INPUT_METHOD, KEY_SIZE, KEYBOARD_THEME, APPEARANCE }
 
 @Composable
 internal fun SettingsScreen(
     inputMethod: KeyboardInputMethod,
     keySizeProfile: KeyboardSizingProfile,
+    keyboardThemeId: KeyboardThemeId,
     appearanceMode: AppearanceMode,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
     versionName: String,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
+    onKeyboardThemeSelected: (KeyboardThemeId) -> Unit,
     onAppearanceSelected: (AppearanceMode) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
@@ -79,6 +82,14 @@ internal fun SettingsScreen(
                         iconRes = R.drawable.ic_key_size,
                         iconBackground = BrandOrange,
                         onClick = { picker = SettingsPicker.KEY_SIZE },
+                    )
+                    SettingsDivider()
+                    SettingsRow(
+                        title = stringResource(R.string.settings_keyboard_theme_title),
+                        value = keyboardThemeId.label(),
+                        iconRes = R.drawable.ic_keyboard_theme,
+                        iconBackground = BrandBlue,
+                        onClick = { picker = SettingsPicker.KEYBOARD_THEME },
                     )
                 }
             }
@@ -155,6 +166,13 @@ internal fun SettingsScreen(
             options = keySizeOptions(),
             selected = keySizeProfile,
             onSelected = onKeySizeSelected,
+            onDismiss = { picker = null },
+        )
+        SettingsPicker.KEYBOARD_THEME -> PreferencePickerSheet(
+            title = stringResource(R.string.settings_keyboard_theme_title),
+            options = keyboardThemeOptions(),
+            selected = keyboardThemeId,
+            onSelected = onKeyboardThemeSelected,
             onDismiss = { picker = null },
         )
         SettingsPicker.APPEARANCE -> PreferencePickerSheet(

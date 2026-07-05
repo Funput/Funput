@@ -22,6 +22,26 @@ object KeyboardThemes {
         pressedKeyShadowOffsetDp = 0f,
     )
 
+    val Light: KeyboardTheme = KeyboardTheme(
+        backgroundStartColor = 0xFFEDEDED.toInt(),
+        backgroundEndColor = 0xFFEDEDED.toInt(),
+        keyColor = 0xFFFFFFFF.toInt(),
+        specialKeyColor = 0xFFE1E3E6.toInt(),
+        keyBorderColor = 0xFFE1E3E6.toInt(),
+        keyShadowColor = 0x00000000,
+        pressedKeyColor = 0xFFD6D6D6.toInt(),
+        pressedKeyBorderColor = 0xFFD6D6D6.toInt(),
+        activatedKeyColor = 0xFFCECECE.toInt(),
+        activatedKeyBorderColor = 0xFFCECECE.toInt(),
+        labelColor = 0xFF1F1F1F.toInt(),
+        secondaryLabelColor = 0xFF757575.toInt(),
+        accentColor = 0xFFC8A951.toInt(),
+        keyCornerRadiusDp = 8f,
+        keyBorderWidthDp = 0f,
+        keyShadowOffsetDp = 0f,
+        pressedKeyShadowOffsetDp = 0f,
+    )
+
     /** Legacy glass preset kept for reference while migrating themes. */
     internal val Aurora: KeyboardTheme = KeyboardTheme(
         backgroundStartColor = 0xFF12182B.toInt(),

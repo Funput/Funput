@@ -13,11 +13,14 @@ import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
 import app.funput.funput.ime.settings.KeyboardSizingSettings
+import app.funput.funput.ime.settings.KeyboardThemeSettings
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.ui.FunputKeyboardView
+import app.funput.funput.theme.KeyboardThemeCatalog
+import app.funput.funput.theme.KeyboardThemeId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,6 +32,7 @@ class FunputInputMethodService : InputMethodService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var inputMethod = InputMethodSettings.DefaultInputMethod
     private var sizingProfile = KeyboardSizingSettings.DefaultProfile
+    private var keyboardThemeId = KeyboardThemeSettings.DefaultThemeId
     private var feedback = KeyboardFeedbackPreferences.Default
     private var keyboardView: FunputKeyboardView? = null
     private lateinit var nativeEngine: NativeVietnameseEngine
@@ -53,12 +57,14 @@ class FunputInputMethodService : InputMethodService() {
         )
         InputMethodSettings(this).inputMethod.collectIn(serviceScope, ::applyInputMethod)
         KeyboardSizingSettings(this).profile.collectIn(serviceScope, ::applySizingProfile)
+        KeyboardThemeSettings(this).themeId.collectIn(serviceScope, ::applyKeyboardTheme)
         KeyboardFeedbackSettings(this).preferences.collectIn(serviceScope, ::applyFeedback)
     }
     override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
         keyboardView = view
         view.inputMethod = inputMethod
         view.sizingProfile = sizingProfile
+        view.keyboardTheme = KeyboardThemeCatalog.resolve(keyboardThemeId)
         updateInputView(view)
         bindCallbacks(view)
     }
@@ -134,6 +140,12 @@ class FunputInputMethodService : InputMethodService() {
         keyboardView?.sizingProfile = profile
     }
 
+    private fun applyKeyboardTheme(themeId: KeyboardThemeId) {
+        if (themeId == keyboardThemeId) return
+        keyboardThemeId = themeId
+        keyboardView?.keyboardTheme = KeyboardThemeCatalog.resolve(themeId)
+    }
+
     private fun applyFeedback(preferences: KeyboardFeedbackPreferences) {
         feedback = preferences
         keyboardView?.apply {
@@ -148,6 +160,7 @@ class FunputInputMethodService : InputMethodService() {
         currentLanguage = actionHandler.language,
         feedback = feedback,
         sizingProfile = sizingProfile,
+        keyboardTheme = KeyboardThemeCatalog.resolve(keyboardThemeId),
     )
 
     private fun onSuggestionSelected(selection: SuggestionSelection) {

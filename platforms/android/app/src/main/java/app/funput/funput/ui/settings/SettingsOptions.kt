@@ -6,6 +6,7 @@ import app.funput.funput.R
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.theme.KeyboardThemeId
 
 @Composable
 internal fun KeyboardInputMethod.label(): String = when (this) {
@@ -28,6 +29,12 @@ internal fun KeyboardSizingProfile.label(): String = when (id) {
 }
 
 @Composable
+internal fun KeyboardThemeId.label(): String = when (this) {
+    KeyboardThemeId.DARK -> stringResource(R.string.settings_keyboard_theme_dark)
+    KeyboardThemeId.LIGHT -> stringResource(R.string.settings_keyboard_theme_light)
+}
+
+@Composable
 internal fun inputMethodOptions() = KeyboardInputMethod.entries.map { PickerOption(it, it.label()) }
 
 @Composable
@@ -35,3 +42,6 @@ internal fun appearanceOptions() = AppearanceMode.entries.map { PickerOption(it,
 
 @Composable
 internal fun keySizeOptions() = KeyboardSizingProfile.Presets.map { PickerOption(it, it.label()) }
+
+@Composable
+internal fun keyboardThemeOptions() = KeyboardThemeId.Presets.map { PickerOption(it, it.label()) }

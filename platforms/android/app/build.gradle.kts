@@ -38,6 +38,7 @@ android {
 dependencies {
     implementation(project(":ime"))
     implementation(project(":keyboard-renderer"))
+    implementation(project(":theme-runtime"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

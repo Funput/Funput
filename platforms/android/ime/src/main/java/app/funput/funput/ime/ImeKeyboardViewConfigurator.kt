@@ -7,6 +7,7 @@ import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.ui.FunputKeyboardView
+import app.funput.funput.theme.KeyboardTheme
 
 internal fun FunputKeyboardView.configureForEditor(
     inputMethod: KeyboardInputMethod,
@@ -14,10 +15,12 @@ internal fun FunputKeyboardView.configureForEditor(
     currentLanguage: KeyboardLanguage,
     feedback: KeyboardFeedbackPreferences,
     sizingProfile: KeyboardSizingProfile,
+    keyboardTheme: KeyboardTheme,
 ) {
     showLettersPanel()
     this.inputMethod = inputMethod
     this.sizingProfile = sizingProfile
+    this.keyboardTheme = keyboardTheme
     editorMode = policy.editorMode
     suggestionBarEnabled = KeyboardFeatures.SuggestionsEnabled && policy.showsSuggestionBar
     language = if (policy.editorMode.supportsVietnameseComposition) {

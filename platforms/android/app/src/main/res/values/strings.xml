@@ -14,6 +14,9 @@
     <string name="settings_key_size_compact">Nhỏ gọn</string>
     <string name="settings_key_size_normal">Vừa</string>
     <string name="settings_key_size_large">Lớn</string>
+    <string name="settings_keyboard_theme_title">Chủ đề bàn phím</string>
+    <string name="settings_keyboard_theme_dark">Tối</string>
+    <string name="settings_keyboard_theme_light">Sáng</string>
     <string name="input_method_telex">Telex</string>
     <string name="input_method_vni">VNI</string>
     <string name="settings_theme_title">Chế độ màu</string>
