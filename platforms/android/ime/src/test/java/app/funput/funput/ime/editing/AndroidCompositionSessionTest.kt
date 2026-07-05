@@ -108,6 +108,9 @@ private class ScriptedEngine(
     }
     override fun setToneStyle(style: ToneStyle) = Unit
     override fun setEnabled(enabled: Boolean) = Unit
+    override fun setSpellCheck(enabled: Boolean) = Unit
+    override fun setSmartRestore(enabled: Boolean) = Unit
+    override fun setEagerRestore(enabled: Boolean) = Unit
     override fun clear() = Unit
     override fun close() = Unit
 }

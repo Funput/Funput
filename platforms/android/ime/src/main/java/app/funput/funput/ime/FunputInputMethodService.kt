@@ -9,20 +9,11 @@ import app.funput.funput.ime.editing.ImeEditorRuntime
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
-import app.funput.funput.ime.settings.InputMethodSettings
-import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
-import app.funput.funput.ime.settings.KeyboardFeedbackSettings
-import app.funput.funput.ime.settings.KeyboardSizingSettings
-import app.funput.funput.ime.settings.KeyboardThemeSettings
-import app.funput.funput.ime.settings.ToneStyle
-import app.funput.funput.ime.settings.ToneStyleSettings
-import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 import app.funput.funput.theme.KeyboardThemeCatalog
-import app.funput.funput.theme.KeyboardThemeId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -32,15 +23,11 @@ import kotlinx.coroutines.cancel
 class FunputInputMethodService : InputMethodService() {
     private val editor = InputConnectionEditor()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private var inputMethod = InputMethodSettings.DefaultInputMethod
-    private var sizingProfile = KeyboardSizingSettings.DefaultProfile
-    private var keyboardThemeId = KeyboardThemeSettings.DefaultThemeId
-    private var toneStyle = ToneStyleSettings.DefaultToneStyle
-    private var feedback = KeyboardFeedbackPreferences.Default
     private var keyboardView: FunputKeyboardView? = null
     private lateinit var nativeEngine: NativeVietnameseEngine
     private lateinit var actionHandler: ImeKeyActionHandler
     private lateinit var editorRuntime: ImeEditorRuntime
+    private lateinit var settings: ImeSettingsController
 
     override fun onCreate() {
         super.onCreate()
@@ -58,17 +45,16 @@ class FunputInputMethodService : InputMethodService() {
             connection = { currentInputConnection },
             enterCommand = { editorRuntime.policy.editorAction.command },
         )
-        InputMethodSettings(this).inputMethod.collectIn(serviceScope, ::applyInputMethod)
-        ToneStyleSettings(this).toneStyle.collectIn(serviceScope, ::applyToneStyle)
-        KeyboardSizingSettings(this).profile.collectIn(serviceScope, ::applySizingProfile)
-        KeyboardThemeSettings(this).themeId.collectIn(serviceScope, ::applyKeyboardTheme)
-        KeyboardFeedbackSettings(this).preferences.collectIn(serviceScope, ::applyFeedback)
+        settings = ImeSettingsController(
+            engine = nativeEngine,
+            onInputMethodChanged = ::restartComposition,
+            onViewSettingsChanged = { keyboardView?.let(::updateInputView) },
+        )
+        settings.observe(this, serviceScope)
     }
+
     override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
         keyboardView = view
-        view.inputMethod = inputMethod
-        view.sizingProfile = sizingProfile
-        view.keyboardTheme = KeyboardThemeCatalog.resolve(keyboardThemeId)
         updateInputView(view)
         bindCallbacks(view)
     }
@@ -76,7 +62,7 @@ class FunputInputMethodService : InputMethodService() {
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         editorRuntime.configure(attribute)
-        actionHandler.start(inputMethod, editorRuntime.policy.editorMode.supportsVietnameseComposition)
+        actionHandler.start(settings.inputMethod, editorRuntime.policy.editorMode.supportsVietnameseComposition)
     }
 
     override fun onStartInputView(attribute: EditorInfo, restarting: Boolean) {
@@ -130,47 +116,19 @@ class FunputInputMethodService : InputMethodService() {
         onSuggestionSelected = ::onSuggestionSelected
     }
 
-    private fun applyInputMethod(method: KeyboardInputMethod) {
-        if (method == inputMethod) return
+    private fun restartComposition(method: KeyboardInputMethod) {
         actionHandler.finish()
-        inputMethod = method
         actionHandler.start(method, editorRuntime.policy.editorMode.supportsVietnameseComposition)
         keyboardView?.inputMethod = method
     }
 
-    private fun applyToneStyle(style: ToneStyle) {
-        if (style == toneStyle) return
-        toneStyle = style
-        nativeEngine.setToneStyle(style)
-    }
-
-    private fun applySizingProfile(profile: KeyboardSizingProfile) {
-        if (profile == sizingProfile) return
-        sizingProfile = profile
-        keyboardView?.sizingProfile = profile
-    }
-
-    private fun applyKeyboardTheme(themeId: KeyboardThemeId) {
-        if (themeId == keyboardThemeId) return
-        keyboardThemeId = themeId
-        keyboardView?.keyboardTheme = KeyboardThemeCatalog.resolve(themeId)
-    }
-
-    private fun applyFeedback(preferences: KeyboardFeedbackPreferences) {
-        feedback = preferences
-        keyboardView?.apply {
-            hapticsEnabled = preferences.hapticsEnabled
-            soundsEnabled = preferences.soundsEnabled
-        }
-    }
-
     private fun updateInputView(view: FunputKeyboardView) = view.configureForEditor(
-        inputMethod = inputMethod,
+        inputMethod = settings.inputMethod,
         policy = editorRuntime.policy,
         currentLanguage = actionHandler.language,
-        feedback = feedback,
-        sizingProfile = sizingProfile,
-        keyboardTheme = KeyboardThemeCatalog.resolve(keyboardThemeId),
+        feedback = settings.feedback,
+        sizingProfile = settings.sizingProfile,
+        keyboardTheme = KeyboardThemeCatalog.resolve(settings.keyboardThemeId),
     )
 
     private fun onSuggestionSelected(selection: SuggestionSelection) {

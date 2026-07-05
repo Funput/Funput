@@ -41,6 +41,9 @@ private class RecordingEngine : VietnameseEngine {
     override fun setInputMethod(method: KeyboardInputMethod) = Unit
     override fun setToneStyle(style: ToneStyle) = Unit
     override fun setEnabled(enabled: Boolean) { enabledValue = enabled }
+    override fun setSpellCheck(enabled: Boolean) = Unit
+    override fun setSmartRestore(enabled: Boolean) = Unit
+    override fun setEagerRestore(enabled: Boolean) = Unit
     override fun clear() = Unit
     override fun close() = Unit
 }

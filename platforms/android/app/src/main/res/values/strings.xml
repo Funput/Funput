@@ -5,6 +5,7 @@
     <string name="settings_title">Cài đặt</string>
     <string name="settings_tagline">Bộ gõ tiếng Việt đa nền tảng - mã nguồn mở</string>
     <string name="settings_section_keyboard">Bàn phím</string>
+    <string name="settings_section_smart">Gõ thông minh</string>
     <string name="settings_section_appearance">Giao diện</string>
     <string name="settings_section_feedback">Âm thanh &amp; rung</string>
     <string name="settings_section_about">Thông tin</string>
@@ -35,6 +36,8 @@
     <string name="settings_theme_dark">Tối</string>
     <string name="settings_haptics_title">Rung khi nhấn phím</string>
     <string name="settings_sounds_title">Âm thanh phím</string>
+    <string name="settings_smart_restore_title">Tự khôi phục từ tiếng Anh</string>
+    <string name="settings_spell_check_title">Kiểm tra chính tả</string>
     <string name="settings_version_title">Phiên bản</string>
     <string name="settings_website_title">Website</string>
     <string name="settings_website_display">funput.app</string>

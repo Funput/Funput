@@ -8,6 +8,9 @@ internal interface VietnameseEngine : AutoCloseable {
     fun setInputMethod(method: KeyboardInputMethod)
     fun setToneStyle(style: ToneStyle)
     fun setEnabled(enabled: Boolean)
+    fun setSpellCheck(enabled: Boolean)
+    fun setSmartRestore(enabled: Boolean)
+    fun setEagerRestore(enabled: Boolean)
     fun process(codePoint: Int): String
     fun processBoundary(codePoint: Int): String?
     fun backspace(): String
@@ -30,6 +33,18 @@ internal class NativeVietnameseEngine : VietnameseEngine {
 
     override fun setEnabled(enabled: Boolean) = withHandle { value ->
         FunputNative.nativeSetEnabled(value, enabled)
+    }
+
+    override fun setSpellCheck(enabled: Boolean) = withHandle { value ->
+        FunputNative.nativeSetSpellCheck(value, enabled)
+    }
+
+    override fun setSmartRestore(enabled: Boolean) = withHandle { value ->
+        FunputNative.nativeSetSmartRestore(value, enabled)
+    }
+
+    override fun setEagerRestore(enabled: Boolean) = withHandle { value ->
+        FunputNative.nativeSetEagerRestore(value, enabled)
     }
 
     override fun process(codePoint: Int): String = withHandle { value ->

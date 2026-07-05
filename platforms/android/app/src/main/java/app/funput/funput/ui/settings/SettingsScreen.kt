@@ -30,6 +30,7 @@ import app.funput.funput.ui.settings.components.SettingsHero
 import app.funput.funput.ui.settings.feedback.FeedbackSettingsSection
 import app.funput.funput.ui.settings.keyboard.KeyboardSettingsSection
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
+import app.funput.funput.ui.settings.smart.SmartSettingsSection
 
 @Composable
 internal fun SettingsScreen(
@@ -41,6 +42,8 @@ internal fun SettingsScreen(
     appearanceMode: AppearanceMode,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
+    smartRestoreEnabled: Boolean,
+    spellCheckEnabled: Boolean,
     versionName: String,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
@@ -49,6 +52,8 @@ internal fun SettingsScreen(
     onAppearanceSelected: (AppearanceMode) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
+    onSmartRestoreChanged: (Boolean) -> Unit,
+    onSpellCheckChanged: (Boolean) -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
     onOpenWebsite: () -> Unit,
@@ -80,6 +85,14 @@ internal fun SettingsScreen(
                     onOpenPicker = { picker = it },
                     onEnableKeyboard = onEnableKeyboard,
                     onSelectKeyboard = onSelectKeyboard,
+                )
+            }
+            item(key = "smart") {
+                SmartSettingsSection(
+                    smartRestoreEnabled = smartRestoreEnabled,
+                    spellCheckEnabled = spellCheckEnabled,
+                    onSmartRestoreChanged = onSmartRestoreChanged,
+                    onSpellCheckChanged = onSpellCheckChanged,
                 )
             }
             item(key = "appearance") {
