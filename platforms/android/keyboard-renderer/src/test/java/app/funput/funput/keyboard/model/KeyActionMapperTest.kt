@@ -30,6 +30,7 @@ class KeyActionMapperTest {
             KeyRole.SYMBOLS to KeyAction.Symbols,
             KeyRole.MORE_SYMBOLS to KeyAction.MoreSymbols,
             KeyRole.LETTERS to KeyAction.Letters,
+            KeyRole.SYSTEM_INPUT_METHOD to KeyAction.SwitchInputMethod,
             KeyRole.SPACE to KeyAction.Space,
             KeyRole.ENTER to KeyAction.Enter,
         )

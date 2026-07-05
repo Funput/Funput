@@ -26,3 +26,7 @@ composition, and keep both symbol pages free of candidate and emoji UI.
 `AndroidCompositionSession` renders the shared Rust engine buffer with
 `setComposingText()`. JNI is intentionally narrow: one synchronous call per text
 key, no network or storage, and safe registry IDs instead of native pointers.
+
+The system-keyboard globe appears only when Android reports another input method
+is available. Switching finishes the active composition before handing control
+to `InputMethodService.switchToNextInputMethod()`.

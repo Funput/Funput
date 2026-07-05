@@ -12,6 +12,7 @@ internal object KeyboardLayoutResolver {
         mode: KeyboardLayoutMode,
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
         suggestionsEnabled: Boolean = KeyboardFeatures.SuggestionsEnabled,
+        systemInputMethodSwitcherVisible: Boolean = false,
     ): KeyboardLayout = when (mode) {
         KeyboardLayoutMode.LETTERS ->
             EditorKeyboardLayouts.resolve(inputMethod, editorMode, suggestionsEnabled)
@@ -19,5 +20,5 @@ internal object KeyboardLayoutResolver {
             SymbolLayouts.primary(inputMethod, suggestionsEnabled, editorMode.isPassword)
         KeyboardLayoutMode.SYMBOLS_SECONDARY ->
             SymbolLayouts.secondary(inputMethod, suggestionsEnabled, editorMode.isPassword)
-    }
+    }.withSystemInputMethodSwitcher(systemInputMethodSwitcherVisible)
 }

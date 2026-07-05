@@ -36,6 +36,7 @@ internal class ImeKeyActionHandler(
             KeyAction.Symbols,
             KeyAction.MoreSymbols,
             KeyAction.Letters,
+            KeyAction.SwitchInputMethod,
             -> Unit
         }
     }

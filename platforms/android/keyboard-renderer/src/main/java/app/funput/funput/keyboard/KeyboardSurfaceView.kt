@@ -6,19 +6,16 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
-import app.funput.funput.keyboard.KeyboardFeatures
 import app.funput.funput.keyboard.interaction.interactionTargetAt
 import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.KeyboardTouchHandler
 import app.funput.funput.keyboard.interaction.selectionForTarget
-import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.layout.resolveGeometry
 import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.keyboard.model.KeyboardLayout
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
@@ -33,30 +30,12 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
 ) : View(context, attrs, defStyleAttr) {
-    var inputMethod: KeyboardInputMethod = KeyboardInputMethod.TELEX
-        set(value) {
-            if (field == value) return
-            field = value
-            updateKeyboardLayout()
-        }
-    var layoutMode: KeyboardLayoutMode = KeyboardLayoutMode.LETTERS
-        set(value) {
-            if (field == value) return
-            field = value
-            updateKeyboardLayout()
-        }
-    var editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT
-        set(value) {
-            if (field == value) return
-            field = value
-            updateKeyboardLayout()
-        }
-    var suggestionBarEnabled: Boolean = KeyboardFeatures.SuggestionsEnabled
-        set(value) {
-            if (field == value) return
-            field = value
-            updateKeyboardLayout()
-        }
+    private val layoutState = KeyboardSurfaceLayoutState(::updateKeyboardLayout)
+    var inputMethod: KeyboardInputMethod by layoutState::inputMethod
+    var layoutMode: KeyboardLayoutMode by layoutState::layoutMode
+    var editorMode: KeyboardEditorMode by layoutState::editorMode
+    var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
+    var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
     var keyboardTheme: KeyboardTheme = KeyboardThemeCatalog.default()
         set(value) {
             if (field == value) return
@@ -89,7 +68,6 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var language: KeyboardLanguage
         get() = interaction.language
         set(value) = interaction.setLanguage(value)
-    private var keyboardLayout: KeyboardLayout = KeyboardLayoutResolver.resolve(inputMethod, layoutMode, editorMode, suggestionBarEnabled)
     private var resolvedKeyboard: ResolvedKeyboard? = null
     private val renderer = KeyboardCanvasRenderer(resources)
     private val interaction = KeyboardSurfaceInteraction(
@@ -152,7 +130,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         super.onDetachedFromWindow()
     }
     private fun resolveGeometry() {
-        resolvedKeyboard = keyboardLayout.resolveGeometry(
+        resolvedKeyboard = layoutState.layout.resolveGeometry(
             width = width,
             height = height,
             density = resources.displayMetrics.density,
@@ -161,7 +139,6 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     }
     private fun updateKeyboardLayout() {
         interaction.reset()
-        keyboardLayout = KeyboardLayoutResolver.resolve(inputMethod, layoutMode, editorMode, suggestionBarEnabled)
         requestLayout()
         resolveGeometry()
         invalidate()

@@ -6,6 +6,7 @@ import app.funput.funput.keyboard.model.SuggestionSelection
 /** Host callbacks emitted by the complete Funput keyboard UI. */
 class FunputKeyboardCallbacks {
     var onKeyAction: ((KeyAction) -> Unit)? = null
+    var onInputMethodSwitchRequested: (() -> Unit)? = null
     var onSettingsRequested: (() -> Unit)? = null
     var onEmojiPanelOpened: (() -> Unit)? = null
     var onEmojiSelected: ((String) -> Unit)? = null
@@ -13,6 +14,10 @@ class FunputKeyboardCallbacks {
 
     internal fun dispatch(action: KeyAction) {
         onKeyAction?.invoke(action)
+    }
+
+    internal fun dispatchInputMethodSwitchRequest() {
+        onInputMethodSwitchRequested?.invoke()
     }
 
     internal fun dispatchSettingsRequest() {

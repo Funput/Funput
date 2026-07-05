@@ -56,6 +56,22 @@ internal class UtilityKeyIconRenderer(private val metrics: RenderMetrics) {
         )
     }
 
+    fun drawSystemInputMethod(canvas: Canvas, key: ResolvedKey) {
+        val radius = min(key.bounds.width, key.bounds.height) * 0.2f
+        val centerX = key.bounds.centerX
+        val centerY = key.bounds.centerY
+        drawingRect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
+        canvas.drawOval(drawingRect, paint)
+        canvas.drawOval(
+            centerX - radius * 0.45f,
+            centerY - radius,
+            centerX + radius * 0.45f,
+            centerY + radius,
+            paint,
+        )
+        canvas.drawLine(centerX - radius, centerY, centerX + radius, centerY, paint)
+    }
+
     fun drawSettings(canvas: Canvas, key: ResolvedKey) {
         val radius = min(key.bounds.width, key.bounds.height) * 0.19f
         val centerX = key.bounds.centerX

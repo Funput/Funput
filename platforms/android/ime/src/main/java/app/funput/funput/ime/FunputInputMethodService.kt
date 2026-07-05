@@ -23,6 +23,7 @@ import kotlinx.coroutines.cancel
 class FunputInputMethodService : InputMethodService() {
     private val editor = InputConnectionEditor()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val systemInputMethodSwitcher by lazy { SystemInputMethodSwitcher(this) }
     private var keyboardView: FunputKeyboardView? = null
     private lateinit var nativeEngine: NativeVietnameseEngine
     private lateinit var actionHandler: ImeKeyActionHandler
@@ -112,6 +113,10 @@ class FunputInputMethodService : InputMethodService() {
 
     private fun bindCallbacks(view: FunputKeyboardView) = with(view.callbacks) {
         onKeyAction = actionHandler::onKeyAction
+        onInputMethodSwitchRequested = {
+            actionHandler.finish()
+            systemInputMethodSwitcher.switch()
+        }
         onEmojiSelected = actionHandler::onEmojiSelected
         onSuggestionSelected = ::onSuggestionSelected
     }
@@ -129,6 +134,7 @@ class FunputInputMethodService : InputMethodService() {
         feedback = settings.feedback,
         sizingProfile = settings.sizingProfile,
         keyboardTheme = KeyboardThemeCatalog.resolve(settings.keyboardThemeId),
+        systemInputMethodSwitcherVisible = systemInputMethodSwitcher.isAvailable(),
     )
 
     private fun onSuggestionSelected(selection: SuggestionSelection) {

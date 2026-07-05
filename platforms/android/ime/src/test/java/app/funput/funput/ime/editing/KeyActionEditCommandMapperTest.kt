@@ -41,6 +41,7 @@ class KeyActionEditCommandMapperTest {
             KeyAction.Symbols,
             KeyAction.MoreSymbols,
             KeyAction.Letters,
+            KeyAction.SwitchInputMethod,
         )
 
         actions.forEach { action -> assertNull(action.toImeEditCommand()) }

@@ -16,11 +16,13 @@ internal fun FunputKeyboardView.configureForEditor(
     feedback: KeyboardFeedbackPreferences,
     sizingProfile: KeyboardSizingProfile,
     keyboardTheme: KeyboardTheme,
+    systemInputMethodSwitcherVisible: Boolean,
 ) {
     showLettersPanel()
     this.inputMethod = inputMethod
     this.sizingProfile = sizingProfile
     this.keyboardTheme = keyboardTheme
+    this.systemInputMethodSwitcherVisible = systemInputMethodSwitcherVisible
     editorMode = policy.editorMode
     suggestionBarEnabled = KeyboardFeatures.SuggestionsEnabled && policy.showsSuggestionBar
     language = if (policy.editorMode.supportsVietnameseComposition) {

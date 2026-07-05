@@ -15,5 +15,6 @@ internal fun KeyAction.toImeEditCommand(
     KeyAction.Symbols,
     KeyAction.MoreSymbols,
     KeyAction.Letters,
+    KeyAction.SwitchInputMethod,
     -> null
 }

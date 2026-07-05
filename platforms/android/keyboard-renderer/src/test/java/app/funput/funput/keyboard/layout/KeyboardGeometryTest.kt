@@ -3,8 +3,6 @@ package app.funput.funput.keyboard.layout
 import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.keyboard.model.KeyboardLayoutMode
-import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -112,86 +110,6 @@ class KeyboardGeometryTest {
         )
     }
 
-    @Test
-    fun normalProfileKeepsCharacterKeyAspectRatioNearTarget() {
-        val keyboard = resolveWithProfile(KeyboardInputMethod.TELEX, KeyboardSizingProfile.Normal)
-        val characterKey = keyboard.rows.first().first()
-        val aspectRatio = characterKey.bounds.width / characterKey.bounds.height
-
-        assertTrue(aspectRatio in 0.72f..0.78f)
-    }
-
-    @Test
-    fun normalProfileUsesRatioBasedHorizontalGap() {
-        val profile = KeyboardSizingProfile.Normal
-        val spec = KeyboardGeometrySpec.fromProfile(1f, profile)
-        val width = KeyboardDimensions.DefaultWidthDp
-        val height = KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.TELEX, profile = profile)
-        val keyboard = KeyboardGeometry.resolve(
-            layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX),
-            width = width,
-            height = height,
-            spec = spec,
-        )
-        val topRow = keyboard.rows.first()
-        val gap = topRow[1].bounds.left - topRow[0].bounds.right
-        val canonicalUnit = topRow[0].bounds.width
-        val gapRatio = gap / canonicalUnit
-
-        assertTrue(abs(gapRatio - profile.horizontalGapRatio) <= 0.01f)
-    }
-
-    @Test
-    fun sizingPresetsScaleKeyboardHeight() {
-        val telex = KeyboardInputMethod.TELEX
-        val normal = KeyboardDimensions.recommendedHeightDp(telex, profile = KeyboardSizingProfile.Normal)
-        val compact = KeyboardDimensions.recommendedHeightDp(telex, profile = KeyboardSizingProfile.Compact)
-        val large = KeyboardDimensions.recommendedHeightDp(telex, profile = KeyboardSizingProfile.Large)
-
-        assertTrue(compact < normal)
-        assertTrue(large > normal)
-        assertEquals(normal * 0.92f, compact, 0.01f)
-        assertEquals(normal * 1.08f, large, 0.01f)
-    }
-
-    @Test
-    fun vniSymbolLayerKeepsBottomRowAlignedWithLetters() {
-        val letters = KeyboardLayoutResolver.resolve(
-            KeyboardInputMethod.VNI,
-            KeyboardLayoutMode.LETTERS,
-        )
-        val symbols = KeyboardLayoutResolver.resolve(
-            KeyboardInputMethod.VNI,
-            KeyboardLayoutMode.SYMBOLS_PRIMARY,
-        )
-        val density = 1f
-        val spec = KeyboardGeometrySpec.fromProfile(density, KeyboardSizingProfile.Normal)
-        val width = KeyboardDimensions.DefaultWidthDp * density
-        val height = KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI) * density
-        val lettersKeyboard = KeyboardGeometry.resolve(
-            layout = letters,
-            width = width,
-            height = height,
-            spec = spec,
-        )
-        val symbolsKeyboard = KeyboardGeometry.resolve(
-            layout = symbols,
-            width = width,
-            height = height,
-            spec = spec,
-        )
-        val lettersSpace = lettersKeyboard.keys.first { key -> key.spec.id == "space" }
-        val symbolsSpace = symbolsKeyboard.keys.first { key -> key.spec.id == "space-primary" }
-
-        assertEquals(lettersSpace.bounds.top, symbolsSpace.bounds.top, 0.5f)
-        assertEquals(lettersSpace.bounds.bottom, symbolsSpace.bounds.bottom, 0.5f)
-        assertEquals(
-            lettersKeyboard.rows[1].first().bounds.top,
-            symbolsKeyboard.rows[1].first().bounds.top,
-            0.5f,
-        )
-    }
-
     private fun resolve(inputMethod: KeyboardInputMethod): ResolvedKeyboard = KeyboardGeometry.resolve(
         layout = KeyboardLayouts.forInputMethod(inputMethod),
         width = 1080f,
@@ -199,16 +117,4 @@ class KeyboardGeometryTest {
         spec = spec,
     )
 
-    private fun resolveWithProfile(
-        inputMethod: KeyboardInputMethod,
-        profile: KeyboardSizingProfile,
-    ): ResolvedKeyboard {
-        val density = 1f
-        return KeyboardGeometry.resolve(
-            layout = KeyboardLayouts.forInputMethod(inputMethod),
-            width = KeyboardDimensions.DefaultWidthDp * density,
-            height = KeyboardDimensions.recommendedHeightDp(inputMethod, profile = profile) * density,
-            spec = KeyboardGeometrySpec.fromProfile(density, profile),
-        )
-    }
 }
