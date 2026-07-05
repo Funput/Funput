@@ -6,8 +6,8 @@ import org.junit.Test
 
 class KeyboardSizingProfileTest {
     @Test
-    fun defaultProfileIsNormal() {
-        assertSame(KeyboardSizingProfile.Normal, KeyboardSizingProfile.Default)
+    fun defaultProfileIsLarge() {
+        assertSame(KeyboardSizingProfile.Large, KeyboardSizingProfile.Default)
     }
 
     @Test
@@ -18,11 +18,11 @@ class KeyboardSizingProfileTest {
     }
 
     @Test
-    fun fromIdResolvesKnownPresetsAndFallsBackToNormal() {
+    fun fromIdResolvesKnownPresetsAndFallsBackToDefault() {
         assertSame(KeyboardSizingProfile.Compact, KeyboardSizingProfile.fromId("compact"))
         assertSame(KeyboardSizingProfile.Normal, KeyboardSizingProfile.fromId("normal"))
         assertSame(KeyboardSizingProfile.Large, KeyboardSizingProfile.fromId("large"))
-        assertSame(KeyboardSizingProfile.Normal, KeyboardSizingProfile.fromId(null))
-        assertSame(KeyboardSizingProfile.Normal, KeyboardSizingProfile.fromId("unknown"))
+        assertSame(KeyboardSizingProfile.Default, KeyboardSizingProfile.fromId(null))
+        assertSame(KeyboardSizingProfile.Default, KeyboardSizingProfile.fromId("unknown"))
     }
 }

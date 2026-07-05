@@ -36,7 +36,7 @@ data class KeyboardSizingProfile(
             labelScale = 1.04f,
         )
 
-        val Default: KeyboardSizingProfile = Normal
+        val Default: KeyboardSizingProfile = Large
 
         val Presets: List<KeyboardSizingProfile> = listOf(Compact, Normal, Large)
 

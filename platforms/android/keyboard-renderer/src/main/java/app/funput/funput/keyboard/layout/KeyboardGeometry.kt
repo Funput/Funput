@@ -91,7 +91,7 @@ object KeyboardGeometry {
     ): VerticalMetrics {
         require(rowCount > 0) { "Keyboard layout must contain at least one row" }
 
-        val maxRowHeight = canonicalUnit / spec.keyAspectRatio
+        val maxRowHeight = canonicalUnit / spec.keyAspectRatio * spec.heightScale
         val splitDenominator = rowCount + (rowCount - 1) * spec.verticalGapRatio
         val splitRowHeight = contentHeight / splitDenominator
         val rowHeight = minOf(splitRowHeight, maxRowHeight)

@@ -16,7 +16,7 @@ object KeyboardDimensions {
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
         profile: KeyboardSizingProfile = KeyboardSizingProfile.Default,
         widthDp: Float = DefaultWidthDp,
-    ): Float = baseRecommendedHeightDp(editorMode, profile, widthDp) * profile.heightScale
+    ): Float = baseRecommendedHeightDp(editorMode, profile, widthDp)
 
     internal fun baseRecommendedHeightDp(
         editorMode: KeyboardEditorMode,
@@ -28,7 +28,11 @@ object KeyboardDimensions {
         else -> heightForRowCount(5, true, profile, widthDp)
     }
 
-    /** Matches [KeyboardGeometry] row-height cap so keypad rows fill the panel without a blank band. */
+    /**
+     * Matches [KeyboardGeometry] row-height cap so keypad rows fill the panel without a blank band.
+     * The whole panel scales by [KeyboardSizingProfile.heightScale]; the geometry spec scales its
+     * vertical dimensions by the same factor so the rows still fill it exactly.
+     */
     internal fun heightForRowCount(
         rowCount: Int,
         hasSuggestionBar: Boolean,
@@ -48,6 +52,6 @@ object KeyboardDimensions {
         } else {
             0f
         }
-        return profile.verticalPaddingDp * 2f + suggestionBarBlock + rowsBlockHeight
+        return (profile.verticalPaddingDp * 2f + suggestionBarBlock + rowsBlockHeight) * profile.heightScale
     }
 }

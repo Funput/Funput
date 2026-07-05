@@ -6,9 +6,9 @@ import org.junit.Test
 
 class KeyboardSizingSettingCodecTest {
     @Test
-    fun missingOrUnknownSettingFallsBackToNormal() {
-        assertEquals(KeyboardSizingProfile.Normal, KeyboardSizingSettingCodec.decode(null))
-        assertEquals(KeyboardSizingProfile.Normal, KeyboardSizingSettingCodec.decode("unknown"))
+    fun missingOrUnknownSettingFallsBackToDefault() {
+        assertEquals(KeyboardSizingProfile.Default, KeyboardSizingSettingCodec.decode(null))
+        assertEquals(KeyboardSizingProfile.Default, KeyboardSizingSettingCodec.decode("unknown"))
     }
 
     @Test
