@@ -11,6 +11,7 @@ object KeyboardDimensions {
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
     ): Float = when {
         editorMode.usesKeypad -> 300f
+        editorMode.isPassword -> 348f
         editorMode.supportsVietnameseComposition && inputMethod == KeyboardInputMethod.VNI -> 348f
         else -> 290f
     }

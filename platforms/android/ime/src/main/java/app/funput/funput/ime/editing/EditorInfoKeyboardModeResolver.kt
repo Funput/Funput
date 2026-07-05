@@ -23,11 +23,19 @@ internal object EditorInfoKeyboardModeResolver {
             InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS,
             -> KeyboardEditorMode.EMAIL
 
+            InputType.TYPE_TEXT_VARIATION_PASSWORD,
+            InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
+            InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD,
+            -> KeyboardEditorMode.PASSWORD
+
             InputType.TYPE_TEXT_VARIATION_URI -> KeyboardEditorMode.URL
             else -> KeyboardEditorMode.TEXT
         }
 
     private fun resolveNumber(inputType: Int): KeyboardEditorMode {
+        if (inputType and InputType.TYPE_MASK_VARIATION == InputType.TYPE_NUMBER_VARIATION_PASSWORD) {
+            return KeyboardEditorMode.PIN
+        }
         val decimal = inputType and InputType.TYPE_NUMBER_FLAG_DECIMAL != 0
         val signed = inputType and InputType.TYPE_NUMBER_FLAG_SIGNED != 0
         return when {

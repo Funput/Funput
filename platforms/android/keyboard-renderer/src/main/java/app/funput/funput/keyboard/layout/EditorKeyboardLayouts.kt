@@ -10,6 +10,8 @@ internal object EditorKeyboardLayouts {
         KeyboardEditorMode.EMAIL -> emailLayouts.getValue(inputMethod)
         KeyboardEditorMode.URL -> urlLayouts.getValue(inputMethod)
         KeyboardEditorMode.PHONE -> PhoneKeyboardLayouts.resolve(inputMethod)
+        KeyboardEditorMode.PASSWORD -> PasswordKeyboardLayouts.text(inputMethod)
+        KeyboardEditorMode.PIN -> PasswordKeyboardLayouts.pin(inputMethod)
         KeyboardEditorMode.NUMBER,
         KeyboardEditorMode.NUMBER_DECIMAL,
         KeyboardEditorMode.NUMBER_SIGNED,

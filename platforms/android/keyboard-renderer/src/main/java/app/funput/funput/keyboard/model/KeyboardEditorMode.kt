@@ -4,6 +4,7 @@ package app.funput.funput.keyboard.model
 enum class KeyboardEditorMode(
     val supportsVietnameseComposition: Boolean,
     val isNumber: Boolean = false,
+    val isPassword: Boolean = false,
     val allowsDecimal: Boolean = false,
     val allowsSigned: Boolean = false,
 ) {
@@ -11,6 +12,8 @@ enum class KeyboardEditorMode(
     EMAIL(supportsVietnameseComposition = false),
     URL(supportsVietnameseComposition = false),
     PHONE(supportsVietnameseComposition = false),
+    PASSWORD(supportsVietnameseComposition = false, isPassword = true),
+    PIN(supportsVietnameseComposition = false, isPassword = true),
     NUMBER(supportsVietnameseComposition = false, isNumber = true),
     NUMBER_DECIMAL(supportsVietnameseComposition = false, isNumber = true, allowsDecimal = true),
     NUMBER_SIGNED(supportsVietnameseComposition = false, isNumber = true, allowsSigned = true),
@@ -22,5 +25,5 @@ enum class KeyboardEditorMode(
     ),
     ;
 
-    val usesKeypad: Boolean get() = isNumber || this == PHONE
+    val usesKeypad: Boolean get() = isNumber || this == PHONE || this == PIN
 }

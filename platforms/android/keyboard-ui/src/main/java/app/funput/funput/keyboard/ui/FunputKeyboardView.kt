@@ -118,6 +118,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     }
 
     private fun openEmojiFromKeyboard() {
+        if (editorMode.isPassword) return
         showEmojiPanel()
         callbacks.dispatchEmojiPanelOpened()
     }

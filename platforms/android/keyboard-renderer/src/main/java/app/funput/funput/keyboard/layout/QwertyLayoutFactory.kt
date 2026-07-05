@@ -13,12 +13,17 @@ internal fun qwertyLayout(
     inputMethod: KeyboardInputMethod,
     leadingRows: List<KeyboardRow> = emptyList(),
     actionKeys: List<KeySpec>,
+    showSuggestionBar: Boolean = true,
 ): KeyboardLayout = KeyboardLayout(
     id = id,
     inputMethod = inputMethod,
-    suggestionBar = SuggestionBarSpec(
-        emojiKey = specialKey("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
-    ),
+    suggestionBar = if (showSuggestionBar) {
+        SuggestionBarSpec(
+            emojiKey = specialKey("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
+        )
+    } else {
+        null
+    },
     rows = buildList {
         addAll(leadingRows)
         add(characterRow("qwertyuiop"))

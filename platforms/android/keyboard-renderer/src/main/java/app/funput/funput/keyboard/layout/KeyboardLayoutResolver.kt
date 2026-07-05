@@ -12,7 +12,7 @@ internal object KeyboardLayoutResolver {
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
     ): KeyboardLayout = when (mode) {
         KeyboardLayoutMode.LETTERS -> EditorKeyboardLayouts.resolve(inputMethod, editorMode)
-        KeyboardLayoutMode.SYMBOLS_PRIMARY -> SymbolLayouts.primary(inputMethod)
-        KeyboardLayoutMode.SYMBOLS_SECONDARY -> SymbolLayouts.secondary(inputMethod)
+        KeyboardLayoutMode.SYMBOLS_PRIMARY -> SymbolLayouts.primary(inputMethod, editorMode.isPassword)
+        KeyboardLayoutMode.SYMBOLS_SECONDARY -> SymbolLayouts.secondary(inputMethod, editorMode.isPassword)
     }
 }

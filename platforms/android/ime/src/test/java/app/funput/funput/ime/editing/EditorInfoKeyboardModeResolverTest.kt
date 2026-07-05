@@ -28,6 +28,26 @@ class EditorInfoKeyboardModeResolverTest {
     }
 
     @Test
+    fun `all text password variations resolve to secure password mode`() {
+        listOf(
+            InputType.TYPE_TEXT_VARIATION_PASSWORD,
+            InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
+            InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD,
+        ).forEach { variation ->
+            assertEquals(KeyboardEditorMode.PASSWORD, resolveTextVariation(variation))
+        }
+    }
+
+    @Test
+    fun `numeric password resolves to PIN mode even when number flags are present`() {
+        val inputType = InputType.TYPE_CLASS_NUMBER or
+            InputType.TYPE_NUMBER_VARIATION_PASSWORD or
+            InputType.TYPE_NUMBER_FLAG_DECIMAL
+
+        assertEquals(KeyboardEditorMode.PIN, EditorInfoKeyboardModeResolver.resolve(inputType))
+    }
+
+    @Test
     fun `plain and flagged text remain standard text mode`() {
         val inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
 
