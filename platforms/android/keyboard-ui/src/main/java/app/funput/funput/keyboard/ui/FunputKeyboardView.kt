@@ -4,6 +4,10 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
@@ -45,6 +49,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         set(value) {
             keyboardSurface.keyboardTheme = value
             emojiPanel?.updateTheme(value)
+            setBackgroundColor(value.backgroundEndColor)
         }
     var sizingProfile: KeyboardSizingProfile by keyboardSurface::sizingProfile
     var suggestions: List<String> = emptyList()
@@ -55,12 +60,19 @@ class FunputKeyboardView @JvmOverloads constructor(
     var language: KeyboardLanguage by keyboardSurface::language
     var hapticsEnabled: Boolean by feedbackController::hapticsEnabled
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
+    // Space reserved below/beside the keys for the system navigation bar (edge-to-edge IME).
+    private var safeArea: Insets = Insets.NONE
     init {
         addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::handleKeyAction
         keyboardSurface.callbacks.onSettingsRequested = ::openSettings
         keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
         keyboardSurface.callbacks.onEmojiRequested = ::openEmojiFromKeyboard
+        setBackgroundColor(keyboardTheme.backgroundEndColor)
+        ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+            applySafeArea(insets.getInsets(WindowInsetsCompat.Type.navigationBars()))
+            WindowInsetsCompat.CONSUMED
+        }
     }
 
     fun showEmojiPanel() {
@@ -92,17 +104,25 @@ class FunputKeyboardView @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
-        val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
+        val keyboardWidth = (KeyboardDimensions.DefaultWidthDp * density).roundToInt()
+        val width = resolveSize(keyboardWidth + safeArea.left + safeArea.right, widthMeasureSpec)
         val heightDp = KeyboardDimensions.recommendedHeightDp(
             inputMethod = inputMethod,
             editorMode = editorMode,
             profile = sizingProfile,
         )
-        val height = resolveSize((heightDp * density).roundToInt(), heightMeasureSpec)
+        val height = resolveSize((heightDp * density).roundToInt() + safeArea.bottom, heightMeasureSpec)
         super.onMeasure(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
             MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
         )
+    }
+
+    private fun applySafeArea(insets: Insets) {
+        if (insets == safeArea) return
+        safeArea = insets
+        updatePadding(left = insets.left, right = insets.right, bottom = insets.bottom)
+        requestLayout()
     }
 
     private fun openSettings() {

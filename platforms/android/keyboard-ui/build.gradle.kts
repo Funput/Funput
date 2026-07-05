@@ -21,6 +21,7 @@ android {
 dependencies {
     api(project(":keyboard-renderer"))
     api(project(":theme-runtime"))
+    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.emoji2.emojipicker)
     testImplementation(libs.junit)
 }

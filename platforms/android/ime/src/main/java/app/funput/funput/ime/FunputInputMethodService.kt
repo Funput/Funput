@@ -106,9 +106,11 @@ class FunputInputMethodService : InputMethodService() {
         serviceScope.cancel()
         actionHandler.finish()
         editorRuntime.finish()
-        nativeEngine.close()
         keyboardView = null
+        // super.onDestroy() re-enters onFinishInput() while input is still open, which
+        // routes back through the engine; close it only after the framework is done.
         super.onDestroy()
+        nativeEngine.close()
     }
 
     private fun bindCallbacks(view: FunputKeyboardView) = with(view.callbacks) {
