@@ -25,8 +25,9 @@ class SymbolLayoutsTest {
         assertEquals("1234567890", labels(layout.rows[0].keys))
         assertTrue(layout.rows[0].keys.all { key -> key.role == KeyRole.PUNCTUATION })
         assertTrue(layout.rows[0].keys.all { key -> key.secondaryLabel == null })
-        assertEquals("@#$", labels(layout.rows[1].keys).take(3))
-        assertEquals("*\"'", labels(layout.rows[2].keys).take(3))
+        assertEquals("@#₫", labels(layout.rows[1].keys).take(3))
+        assertEquals("()-", labels(layout.rows[2].keys).take(3))
+        assertTrue(layout.rows.flattenedKeys().any { it.label == "₫" })
         assertTrue(layout.rows.flattenedKeys().any { it.role == KeyRole.MORE_SYMBOLS })
         assertTrue(layout.rows.flattenedKeys().any { it.role == KeyRole.LETTERS })
     }
@@ -74,6 +75,16 @@ class SymbolLayoutsTest {
         assertFalse(bar.suggestionsEnabled)
         val space = layout.rows.last().keys.first { it.role == KeyRole.SPACE }
         assertEquals(KeySwipeAction.TOGGLE_LANGUAGE, space.horizontalSwipeAction)
+    }
+
+    @Test
+    fun `no symbol glyph is repeated across the two pages`() {
+        val glyphs = with(SymbolPageContent) {
+            primaryRow1 + primaryRow2 + primaryRow3 +
+                secondaryRow1 + secondaryRow2 + secondaryRow3
+        }
+
+        assertEquals(glyphs.size, glyphs.distinct().size)
     }
 
     private fun labels(keys: List<KeySpec>) = keys.joinToString("") { it.label }
