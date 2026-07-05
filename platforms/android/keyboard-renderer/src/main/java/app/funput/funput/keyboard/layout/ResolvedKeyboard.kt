@@ -24,6 +24,7 @@ data class ResolvedKey(
 
 data class ResolvedSuggestionBar(
     val bounds: KeyBounds,
+    val logoBounds: KeyBounds,
     val suggestionsBounds: KeyBounds,
     val settingsKey: ResolvedKey,
     val emojiKey: ResolvedKey,

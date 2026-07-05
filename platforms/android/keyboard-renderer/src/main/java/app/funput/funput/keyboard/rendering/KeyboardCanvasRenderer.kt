@@ -20,12 +20,14 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val keyRenderer = KeyRenderer(metrics)
     private val suggestionBarRenderer = SuggestionBarRenderer(metrics)
+    private val toolbarLogoRenderer = ToolbarLogoRenderer(resources)
     private var theme: KeyboardTheme = KeyboardThemeCatalog.default()
 
     fun updateTheme(theme: KeyboardTheme, width: Int, height: Int) {
         this.theme = theme
         keyRenderer.updateTheme(theme)
         suggestionBarRenderer.updateTheme(theme)
+        toolbarLogoRenderer.updateTheme(theme)
         if (width > 0 && height > 0) {
             if (theme.backgroundStartColor == theme.backgroundEndColor) {
                 backgroundPaint.shader = null
@@ -60,8 +62,11 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         enterAction: KeyboardEnterAction,
     ) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
-        keyboard.suggestionBar?.takeIf { it.suggestionsEnabled }?.let { bar ->
-            suggestionBarRenderer.draw(canvas, bar, suggestions, pressedKeys)
+        keyboard.suggestionBar?.let { bar ->
+            if (bar.suggestionsEnabled) {
+                suggestionBarRenderer.draw(canvas, bar, suggestions, pressedKeys)
+            }
+            toolbarLogoRenderer.draw(canvas, bar.logoBounds)
         }
         keyboard.keys.forEach { key ->
             keyRenderer.draw(

@@ -120,9 +120,14 @@ object KeyboardGeometry {
         val settingsRight = emojiLeft - spec.horizontalGap
         val settingsLeft = settingsRight - spec.suggestionBarHeight
         val suggestionsRight = if (barSpec.suggestionsEnabled) settingsLeft - spec.horizontalGap else settingsLeft
+        val logoSize = spec.suggestionBarHeight * ToolbarBrandMetrics.LogoSizeRatio
+        val logoTop = top + (spec.suggestionBarHeight - logoSize) / 2f
+        val logoBounds = KeyBounds(left, logoTop, left + logoSize, logoTop + logoSize)
+        val suggestionsLeft = logoBounds.right + spec.horizontalGap
         val suggestionBar = ResolvedSuggestionBar(
             bounds = KeyBounds(left, top, right, bottom),
-            suggestionsBounds = KeyBounds(left, top, suggestionsRight, bottom),
+            logoBounds = logoBounds,
+            suggestionsBounds = KeyBounds(suggestionsLeft, top, suggestionsRight, bottom),
             settingsKey = ResolvedKey(
                 barSpec.settingsKey,
                 KeyBounds(settingsLeft, top, settingsRight, bottom),

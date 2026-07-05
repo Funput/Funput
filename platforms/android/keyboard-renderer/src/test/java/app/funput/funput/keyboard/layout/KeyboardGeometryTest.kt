@@ -98,6 +98,8 @@ class KeyboardGeometryTest {
 
         assertEquals("settings", suggestionBar.settingsKey.spec.id)
         assertEquals("emoji", suggestionBar.emojiKey.spec.id)
+        assertTrue(suggestionBar.logoBounds.width > 0f)
+        assertTrue(suggestionBar.suggestionsBounds.left > suggestionBar.logoBounds.right)
         assertTrue(suggestionBar.suggestionsBounds.right < suggestionBar.settingsKey.bounds.left)
         assertTrue(suggestionBar.settingsKey.bounds.right < suggestionBar.emojiKey.bounds.left)
         assertEquals(

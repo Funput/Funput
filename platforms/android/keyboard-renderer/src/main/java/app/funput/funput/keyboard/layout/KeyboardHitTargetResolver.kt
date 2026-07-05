@@ -16,7 +16,7 @@ internal object KeyboardHitTargetResolver {
                     left = if (bar.suggestionsEnabled) {
                         midpoint(bar.suggestionsBounds.right, bar.settingsKey.bounds.left)
                     } else {
-                        midpoint(bar.bounds.left, bar.settingsKey.bounds.left)
+                        midpoint(bar.logoBounds.right, bar.settingsKey.bounds.left)
                     },
                     right = midpoint(bar.settingsKey.bounds.right, bar.emojiKey.bounds.left),
                 ),
