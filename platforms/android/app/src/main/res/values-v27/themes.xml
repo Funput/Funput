@@ -2,6 +2,7 @@
 <resources>
     <style name="Theme.Funput" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/funput_window_background</item>
+        <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

@@ -63,14 +63,15 @@ class FunputKeyboardView @JvmOverloads constructor(
         get() = keyboardSurface.language
         set(value) { keyboardSurface.language = value }
     var hapticsEnabled: Boolean
-        get() = keyboardSurface.isHapticFeedbackEnabled
-        set(value) {
-            keyboardSurface.isHapticFeedbackEnabled = value
-            emojiPanel?.hapticsEnabled = value
-        }
+        get() = feedbackController.hapticsEnabled
+        set(value) { feedbackController.hapticsEnabled = value }
+    var soundsEnabled: Boolean
+        get() = feedbackController.soundsEnabled
+        set(value) { feedbackController.soundsEnabled = value }
     private val panelController = KeyboardPanelController()
     private val keyboardSurface = KeyboardSurfaceView(context)
     private var emojiPanel: EmojiPanelView? = null
+    private val feedbackController = KeyboardFeedbackController(keyboardSurface) { emojiPanel }
     init {
         addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::handleKeyAction
@@ -137,14 +138,13 @@ class FunputKeyboardView @JvmOverloads constructor(
     private fun createEmojiPanel() = EmojiPanelView(context).apply {
         updateTheme(keyboardTheme)
         hapticsEnabled = this@FunputKeyboardView.hapticsEnabled
+        soundsEnabled = this@FunputKeyboardView.soundsEnabled
         onEmojiSelected = callbacks::dispatchEmoji
         onBackspaceRequested = callbacks::dispatch
         onLettersRequested = ::showLettersPanel
     }
 
-    private fun matchParentLayoutParams() = LayoutParams(
-        LayoutParams.MATCH_PARENT,
-        LayoutParams.MATCH_PARENT,
-    )
+    private fun matchParentLayoutParams() =
+        LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
 
 }

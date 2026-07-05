@@ -1,14 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Funput</string>
-    <string name="keyboard_preview_title">Keyboard playground</string>
-    <string name="keyboard_preview_description">The same responsive Canvas renderer will power the Funput input method and theme previews.</string>
-    <string name="input_method_label">Vietnamese input method</string>
+    <string name="funput_logo_description">Logo Funput</string>
+    <string name="settings_title">Cài đặt</string>
+    <string name="settings_tagline">Nhanh. Nhẹ. Của bạn.</string>
+    <string name="settings_input_method_title">Kiểu gõ</string>
     <string name="input_method_telex">Telex</string>
     <string name="input_method_vni">VNI</string>
-    <string name="last_key_action">Last key action: %1$s</string>
-    <string name="last_ui_callback">Last UI callback: %1$s</string>
-    <string name="playground_text_field_label">Fake text field</string>
-    <string name="playground_text_field_clear">Clear</string>
-    <string name="playground_text_field_description">Funput playground text area</string>
-    <string name="playground_text_field_placeholder">Funput output will appear here</string>
+    <string name="settings_theme_title">Giao diện</string>
+    <string name="settings_theme_system">Hệ thống</string>
+    <string name="settings_theme_light">Sáng</string>
+    <string name="settings_theme_dark">Tối</string>
+    <string name="settings_haptics_title">Rung khi nhấn phím</string>
+    <string name="settings_sounds_title">Âm thanh phím</string>
+    <string name="settings_manage_keyboards_title">Quản lý bàn phím</string>
+    <string name="settings_choose_keyboard_title">Chọn bàn phím đang dùng</string>
 </resources>

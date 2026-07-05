@@ -87,7 +87,10 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         onAction = callbacks::dispatch,
         onEmojiRequested = callbacks::dispatchEmojiRequest,
         onSuggestionSelected = callbacks::dispatchSuggestion,
-        onHapticFeedback = { type -> KeyboardHaptics.perform(this, type) },
+        onHapticFeedback = { type ->
+            KeyboardHaptics.perform(this, type)
+            KeyboardSounds.perform(this)
+        },
         onVisualStateChanged = ::postInvalidateOnAnimation,
         schedule = { task, delay -> postDelayed(task, delay) },
         cancel = ::removeCallbacks,
@@ -102,13 +105,10 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     }
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
-        setMeasuredDimension(
-            resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec),
-            resolveSize(
-                (KeyboardDimensions.recommendedHeightDp(inputMethod, editorMode) * density).roundToInt(),
-                heightMeasureSpec,
-            ),
-        )
+        val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
+        val heightDp = KeyboardDimensions.recommendedHeightDp(inputMethod, editorMode)
+        val height = resolveSize((heightDp * density).roundToInt(), heightMeasureSpec)
+        setMeasuredDimension(width, height)
     }
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)

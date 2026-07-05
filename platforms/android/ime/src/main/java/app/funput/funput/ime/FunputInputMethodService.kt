@@ -10,8 +10,9 @@ import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.InputMethodSettings
+import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
+import app.funput.funput.ime.settings.KeyboardFeedbackSettings
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.ui.FunputKeyboardView
@@ -19,13 +20,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 
 /** System entry point that owns the Funput keyboard view inside the IME window. */
 class FunputInputMethodService : InputMethodService() {
     private val editor = InputConnectionEditor()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var inputMethod = InputMethodSettings.DefaultInputMethod
+    private var feedback = KeyboardFeedbackPreferences.Default
     private var keyboardView: FunputKeyboardView? = null
     private lateinit var nativeEngine: NativeVietnameseEngine
     private lateinit var actionHandler: ImeKeyActionHandler
@@ -47,7 +48,8 @@ class FunputInputMethodService : InputMethodService() {
             connection = { currentInputConnection },
             enterCommand = { editorRuntime.policy.editorAction.command },
         )
-        observeInputMethod(InputMethodSettings(this))
+        InputMethodSettings(this).inputMethod.collectIn(serviceScope, ::applyInputMethod)
+        KeyboardFeedbackSettings(this).preferences.collectIn(serviceScope, ::applyFeedback)
     }
     override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
         keyboardView = view
@@ -113,12 +115,6 @@ class FunputInputMethodService : InputMethodService() {
         onSuggestionSelected = ::onSuggestionSelected
     }
 
-    private fun observeInputMethod(settings: InputMethodSettings) {
-        serviceScope.launch {
-            settings.inputMethod.collect(::applyInputMethod)
-        }
-    }
-
     private fun applyInputMethod(method: KeyboardInputMethod) {
         if (method == inputMethod) return
         actionHandler.finish()
@@ -127,19 +123,20 @@ class FunputInputMethodService : InputMethodService() {
         keyboardView?.inputMethod = method
     }
 
-    private fun updateInputView(view: FunputKeyboardView) = with(view) {
-        val policy = editorRuntime.policy
-        showLettersPanel()
-        inputMethod = this@FunputInputMethodService.inputMethod
-        editorMode = policy.editorMode
-        suggestionBarEnabled = policy.showsSuggestionBar
-        language = if (policy.editorMode.supportsVietnameseComposition) {
-            actionHandler.language
-        } else {
-            KeyboardLanguage.ENGLISH
+    private fun applyFeedback(preferences: KeyboardFeedbackPreferences) {
+        feedback = preferences
+        keyboardView?.apply {
+            hapticsEnabled = preferences.hapticsEnabled
+            soundsEnabled = preferences.soundsEnabled
         }
-        enterAction = policy.editorAction.presentation
     }
+
+    private fun updateInputView(view: FunputKeyboardView) = view.configureForEditor(
+        inputMethod = inputMethod,
+        policy = editorRuntime.policy,
+        currentLanguage = actionHandler.language,
+        feedback = feedback,
+    )
 
     private fun onSuggestionSelected(selection: SuggestionSelection) {
         if (!editorRuntime.selectCompletion(selection, actionHandler::finish)) {

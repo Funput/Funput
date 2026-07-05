@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
@@ -12,11 +11,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
-private val Context.funputSettings by preferencesDataStore(name = "funput_settings")
-
 /** Persists lightweight keyboard choices shared by the settings app and IME. */
 class InputMethodSettings(context: Context) {
-    private val dataStore = context.applicationContext.funputSettings
+    private val dataStore = context.applicationContext.funputSettingsStore
 
     val inputMethod: Flow<KeyboardInputMethod> = dataStore.data
         .catch { error ->
