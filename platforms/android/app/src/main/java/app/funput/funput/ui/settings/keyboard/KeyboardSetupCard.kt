@@ -1,25 +1,17 @@
 package app.funput.funput.ui.settings.keyboard
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
@@ -31,82 +23,70 @@ internal fun KeyboardSetupCard(
     onSelectKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    when (status) {
-        KeyboardSetupStatus.READY -> ReadyCard(modifier)
-        KeyboardSetupStatus.NOT_ENABLED -> SetupActionCard(
-            title = stringResource(R.string.settings_keyboard_setup_not_enabled_title),
-            body = stringResource(R.string.settings_keyboard_setup_not_enabled_body),
-            actionLabel = stringResource(R.string.settings_keyboard_setup_enable_action),
-            onAction = onEnableKeyboard,
-            modifier = modifier,
-        )
-        KeyboardSetupStatus.NOT_SELECTED -> SetupActionCard(
-            title = stringResource(R.string.settings_keyboard_setup_not_selected_title),
-            body = stringResource(R.string.settings_keyboard_setup_not_selected_body),
-            actionLabel = stringResource(R.string.settings_keyboard_setup_select_action),
-            onAction = onSelectKeyboard,
-            modifier = modifier,
-        )
+    if (status == KeyboardSetupStatus.READY) {
+        SetupReadyCard(modifier)
+    } else {
+        SetupJourneyCard(status, onEnableKeyboard, onSelectKeyboard, modifier)
     }
 }
 
 @Composable
-private fun ReadyCard(modifier: Modifier = Modifier) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_check),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(22.dp),
-        )
-        Text(
-            text = stringResource(R.string.settings_keyboard_setup_ready),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(start = 12.dp),
-        )
-    }
-}
-
-@Composable
-private fun SetupActionCard(
-    title: String,
-    body: String,
-    actionLabel: String,
-    onAction: () -> Unit,
+private fun SetupJourneyCard(
+    status: KeyboardSetupStatus,
+    onEnableKeyboard: () -> Unit,
+    onSelectKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
-                shape = RoundedCornerShape(16.dp),
-            )
-            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f))
-            .padding(16.dp),
+    val enabling = status == KeyboardSetupStatus.NOT_ENABLED
+    Column(modifier = modifier.heroCard()) {
+        SetupHeroHeader(
+            iconRes = R.drawable.ic_keyboard,
+            title = stringResource(R.string.settings_keyboard_setup_heading),
+            subtitle = stringResource(R.string.settings_keyboard_setup_progress, if (enabling) 1 else 2),
+        )
+        Spacer(Modifier.height(18.dp))
+        SetupStepRow(
+            index = 1,
+            state = if (enabling) StepState.ACTIVE else StepState.DONE,
+            title = stringResource(R.string.settings_keyboard_setup_step_enable),
+            connected = true,
+        )
+        SetupStepRow(
+            index = 2,
+            state = if (enabling) StepState.UPCOMING else StepState.ACTIVE,
+            title = stringResource(R.string.settings_keyboard_setup_step_select),
+            connected = false,
+        )
+        Spacer(Modifier.height(18.dp))
+        SetupGradientButton(
+            label = stringResource(
+                if (enabling) R.string.settings_keyboard_setup_enable_action
+                else R.string.settings_keyboard_setup_select_action,
+            ),
+            onClick = if (enabling) onEnableKeyboard else onSelectKeyboard,
+        )
+    }
+}
+
+@Composable
+private fun SetupReadyCard(modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.heroCard(),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = body,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Spacer(modifier = Modifier.height(14.dp))
-        Button(onClick = onAction, modifier = Modifier.fillMaxWidth()) {
-            Text(text = actionLabel)
+        SetupStepBadge(state = StepState.DONE, index = 0)
+        Spacer(Modifier.width(14.dp))
+        Column {
+            Text(
+                text = stringResource(R.string.settings_keyboard_setup_ready),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(R.string.settings_keyboard_setup_ready_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

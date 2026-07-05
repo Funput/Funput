@@ -17,6 +17,11 @@
     <string name="settings_keyboard_setup_not_selected_body">Chọn Funput khi gõ để dùng bộ gõ tiếng Việt.</string>
     <string name="settings_keyboard_setup_select_action">Chọn bàn phím</string>
     <string name="settings_keyboard_setup_ready">Funput đã sẵn sàng</string>
+    <string name="settings_keyboard_setup_heading">Thiết lập Funput</string>
+    <string name="settings_keyboard_setup_progress">Bước %1$d trên 2</string>
+    <string name="settings_keyboard_setup_step_enable">Bật Funput trong bàn phím</string>
+    <string name="settings_keyboard_setup_step_select">Chọn Funput khi gõ</string>
+    <string name="settings_keyboard_setup_ready_hint">Gõ tiếng Việt ở bất kỳ đâu</string>
     <string name="settings_input_method_title">Kiểu gõ</string>
     <string name="settings_key_size_title">Kích thước phím</string>
     <string name="settings_key_size_compact">Nhỏ gọn</string>
