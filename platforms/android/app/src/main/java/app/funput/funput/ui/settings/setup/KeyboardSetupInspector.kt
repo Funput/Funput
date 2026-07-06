@@ -9,19 +9,21 @@ internal object KeyboardSetupInspector {
     fun read(context: Context): KeyboardSetupStatus {
         val imm = context.getSystemService(InputMethodManager::class.java)
         val enabledFromSystem = imm.enabledInputMethodList.any { it.packageName == FunputImeComponent.PACKAGE }
-        val enabledSetting = Settings.Secure.getString(
-            context.contentResolver,
-            Settings.Secure.ENABLED_INPUT_METHODS,
-        )
-        val defaultSetting = Settings.Secure.getString(
-            context.contentResolver,
-            Settings.Secure.DEFAULT_INPUT_METHOD,
-        )
+        // ENABLED_INPUT_METHODS is not readable for targetSdk > 33 (throws SecurityException);
+        // the enabled-list API above already answers "is Funput enabled". DEFAULT_INPUT_METHOD is
+        // read defensively so a platform/OEM restriction degrades to NOT_SELECTED, never a crash.
+        val defaultSetting = readSecureSetting(context, Settings.Secure.DEFAULT_INPUT_METHOD)
         return resolve(
             enabledFromSystem = enabledFromSystem,
-            enabledSetting = enabledSetting,
+            enabledSetting = null,
             defaultSetting = defaultSetting,
         )
+    }
+
+    private fun readSecureSetting(context: Context, key: String): String? = try {
+        Settings.Secure.getString(context.contentResolver, key)
+    } catch (error: SecurityException) {
+        null
     }
 
     fun resolve(

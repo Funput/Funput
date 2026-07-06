@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Release signing secrets — never commit these (keystore.properties.example is tracked)
+keystore.properties
+*.jks
+*.keystore
+/app/release/

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -13,17 +15,39 @@ android {
         applicationId = "app.funput.funput"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.2026.44"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Release signing is read from keystore.properties (git-ignored). When the file is
+    // absent — CI, contributors, local debug builds — no release signing config exists and
+    // the release artifact stays unsigned instead of failing configuration.
+    signingConfigs {
+        val keystorePropertiesFile = rootProject.file("keystore.properties")
+        if (keystorePropertiesFile.exists()) {
+            val keystoreProperties = Properties().apply {
+                keystorePropertiesFile.inputStream().use { load(it) }
+            }
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.findByName("release")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
     compileOptions {
