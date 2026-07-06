@@ -15,3 +15,9 @@ dirs = "6"
 
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.4.4"
+
+[target.'cfg(windows)'.dependencies]
+# Console mode + code page control: put the console into the VT byte-stream mode
+# the interposer expects (matching the Unix PTY model). Same crate/version as the
+# Windows IME platform crate.
+windows = { version = "0.58", features = ["Win32_Foundation", "Win32_System_Console"] }
