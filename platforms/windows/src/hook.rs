@@ -8,7 +8,7 @@ use std::sync::OnceLock;
 
 use funput_desktop::{classify, plan_inject, KeyKind};
 use windows::core::PWSTR;
-use windows::Win32::Foundation::{CloseHandle, HINSTANCE, HMODULE, HWND, LPARAM, LRESULT, WPARAM};
+use windows::Win32::Foundation::{CloseHandle, HINSTANCE, HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
@@ -39,7 +39,7 @@ pub fn set_on_toggle(f: impl Fn(bool) + Send + Sync + 'static) {
 pub fn run() {
     unsafe {
         let hmod = GetModuleHandleW(None).unwrap_or_default();
-        let hook = SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_proc), HINSTANCE(hmod.0), 0);
+        let hook = SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_proc), Some(HINSTANCE(hmod.0)), 0);
         if hook.is_err() {
             eprintln!("Funput: failed to install keyboard hook: {hook:?}");
             return;
@@ -50,7 +50,7 @@ pub fn run() {
         // `KeyKind::Flush` path) — otherwise the next keystroke diffs against a stale
         // word at the new caret and corrupts neighbouring text. Delivered to this
         // thread's message pump, so it shares the engine via `shell` like the others.
-        let mouse_hook = SetWindowsHookExW(WH_MOUSE_LL, Some(mouse_proc), HINSTANCE(hmod.0), 0);
+        let mouse_hook = SetWindowsHookExW(WH_MOUSE_LL, Some(mouse_proc), Some(HINSTANCE(hmod.0)), 0);
         if mouse_hook.is_err() {
             // Non-fatal: typing still works, only mouse-click flush is unavailable.
             eprintln!("Funput: failed to install mouse hook: {mouse_hook:?}");
@@ -61,7 +61,7 @@ pub fn run() {
         let _win_event = SetWinEventHook(
             EVENT_SYSTEM_FOREGROUND,
             EVENT_SYSTEM_FOREGROUND,
-            HMODULE(std::ptr::null_mut()), // OUT_OF_CONTEXT: no DLL module
+            None, // OUT_OF_CONTEXT: no DLL module
             Some(win_event_proc),
             0,
             0,

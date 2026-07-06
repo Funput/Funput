@@ -98,21 +98,24 @@ fn feed_url() -> String {
 /// A shared HTTP agent with sane timeouts. Built per call (cheap) so the update
 /// thread owns it and nothing lingers on the main app.
 fn agent() -> ureq::Agent {
-    ureq::AgentBuilder::new()
-        .timeout_connect(Duration::from_secs(15))
-        .timeout_read(Duration::from_secs(60))
+    ureq::Agent::config_builder()
+        .timeout_connect(Some(Duration::from_secs(15)))
+        .timeout_recv_response(Some(Duration::from_secs(60)))
         .build()
+        .into()
 }
 
 /// Fetch and parse the update manifest from the GitHub Release feed.
 pub fn fetch_manifest() -> Result<Manifest> {
-    let resp = agent()
+    let mut resp = agent()
         .get(&feed_url())
         .call()
         .map_err(|e| Error::Network(e.to_string()))?;
-    // `into_string` is core ureq (no extra feature), with a built-in size cap.
+    // `read_to_string` caps the body at ureq's default 10MB — ample for a small
+    // JSON manifest and a guard against a runaway feed.
     let body = resp
-        .into_string()
+        .body_mut()
+        .read_to_string()
         .map_err(|e| Error::Network(e.to_string()))?;
     serde_json::from_str(&body).map_err(|e| Error::BadManifest(e.to_string()))
 }
@@ -147,7 +150,8 @@ pub fn download(url: &str, expected_len: u64) -> Result<Vec<u8>> {
         .map_err(|e| Error::Network(e.to_string()))?;
 
     let mut bytes = Vec::with_capacity(expected_len.min(MAX_DOWNLOAD_BYTES) as usize);
-    resp.into_reader()
+    resp.into_body()
+        .into_reader()
         .take(MAX_DOWNLOAD_BYTES)
         .read_to_end(&mut bytes)
         .map_err(|e| Error::Network(e.to_string()))?;
