@@ -57,6 +57,49 @@ jobs:
           name: windows
           path: ${{ runner.temp }}/out/*
 
+  # Build the `funput` umbrella CLI (crates/funput-cli, which hosts `funput term`)
+  # for Windows and package it as a zip for the Scoop bucket. This is a DIFFERENT
+  # binary from the Slint IME GUI above, even though both are named funput.exe — so
+  # the release asset is the distinctly-named zip below, never `Funput-<v>.exe`.
+  windows-cli:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          # Workspace root is the tarball root (app/), so the CLI target is `-> target`.
+          workspaces: . -> target
+
+      - name: Stamp version from tag
+        if: inputs.version != ''
+        run: |
+          V="${{ inputs.version }}"
+          # funput-cli inherits [workspace.package] version; stamp it so `funput
+          # --version` reports the release version (single source of truth = tag).
+          node -e "const fs=require('fs');const f='Cargo.toml';let s=fs.readFileSync(f,'utf8');s=s.replace(/^version = \".*\"/m,'version = \"'+process.argv[1]+'\"');fs.writeFileSync(f,s)" "$V"
+
+      - name: Build funput CLI
+        run: cargo build --release -p funput-cli
+
+      - name: Stage artifact
+        run: |
+          V="${{ inputs.version }}"; V="${V:-dev}"
+          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          ZIP="funput-term-$V-x86_64-pc-windows-msvc.zip"
+          # Package just the CLI exe; Scoop shims funput.exe from inside the zip.
+          7z a -tzip "$OUT/$ZIP" "./target/release/funput.exe" >/dev/null
+          (cd "$OUT" && sha256sum "$ZIP" | awk '{print $1}' > "$ZIP.sha256")
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: windows-cli
+          path: ${{ runner.temp }}/out/*
+
   # Sign the .exe with the shared Sparkle EdDSA key and emit funput-windows.json.
   # The in-app updater (platforms/windows/src/update.rs) fetches it from
   # releases/latest/download and verifies the .exe against the *same* Ed25519 key
