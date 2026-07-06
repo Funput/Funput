@@ -1,9 +1,10 @@
-package app.funput.funput.keyboard
+package app.funput.funput.keyboard.surface
 
+import app.funput.funput.keyboard.SuggestionNormalizer
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.theme.KeyboardTheme
-import app.funput.funput.theme.KeyboardThemeCatalog
+import app.funput.funput.theme.LocalKeyboardThemeCatalog
 
 /** Owns render-facing state and emits only meaningful changes. */
 internal class KeyboardSurfacePresentationState(
@@ -12,7 +13,7 @@ internal class KeyboardSurfacePresentationState(
     private val onSuggestionsChanged: () -> Unit,
     private val onEnterActionChanged: () -> Unit,
 ) {
-    var keyboardTheme = KeyboardThemeCatalog.default()
+    var keyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
         set(value) {
             if (field == value) return
             field = value

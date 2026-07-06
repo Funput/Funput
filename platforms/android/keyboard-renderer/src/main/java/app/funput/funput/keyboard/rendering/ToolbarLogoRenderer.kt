@@ -7,11 +7,11 @@ import androidx.core.graphics.drawable.DrawableCompat
 import app.funput.funput.keyboard.R
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.theme.KeyboardTheme
-import app.funput.funput.theme.KeyboardThemeCatalog
+import app.funput.funput.theme.LocalKeyboardThemeCatalog
 import kotlin.math.roundToInt
 
 internal class ToolbarLogoRenderer(private val resources: Resources) {
-    private var theme: KeyboardTheme = KeyboardThemeCatalog.default()
+    private var theme: KeyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
     private var logoDrawable = ResourcesCompat.getDrawable(resources, R.drawable.ic_funput_toolbar_logo, null)?.mutate()
 
     fun updateTheme(theme: KeyboardTheme) {

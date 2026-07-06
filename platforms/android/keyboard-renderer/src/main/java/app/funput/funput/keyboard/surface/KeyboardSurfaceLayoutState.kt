@@ -1,5 +1,6 @@
-package app.funput.funput.keyboard
+package app.funput.funput.keyboard.surface
 
+import app.funput.funput.keyboard.KeyboardFeatures
 import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod

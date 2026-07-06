@@ -48,7 +48,6 @@ internal fun SettingsScreen(
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
-    onKeyboardThemeSelected: (KeyboardThemeId) -> Unit,
     onAppearanceSelected: (AppearanceMode) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
@@ -56,6 +55,7 @@ internal fun SettingsScreen(
     onSpellCheckChanged: (Boolean) -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
+    onOpenThemeGallery: () -> Unit,
     onOpenWebsite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -83,6 +83,7 @@ internal fun SettingsScreen(
                     keySizeProfile = keySizeProfile,
                     keyboardThemeId = keyboardThemeId,
                     onOpenPicker = { picker = it },
+                    onOpenThemeGallery = onOpenThemeGallery,
                     onEnableKeyboard = onEnableKeyboard,
                     onSelectKeyboard = onSelectKeyboard,
                 )
@@ -122,12 +123,10 @@ internal fun SettingsScreen(
         inputMethod = inputMethod,
         toneStyle = toneStyle,
         keySizeProfile = keySizeProfile,
-        keyboardThemeId = keyboardThemeId,
         appearanceMode = appearanceMode,
         onInputMethodSelected = onInputMethodSelected,
         onToneStyleSelected = onToneStyleSelected,
         onKeySizeSelected = onKeySizeSelected,
-        onKeyboardThemeSelected = onKeyboardThemeSelected,
         onAppearanceSelected = onAppearanceSelected,
         onDismiss = { picker = null },
     )

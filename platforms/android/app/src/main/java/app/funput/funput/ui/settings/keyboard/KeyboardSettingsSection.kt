@@ -32,6 +32,7 @@ internal fun KeyboardSettingsSection(
     keySizeProfile: KeyboardSizingProfile,
     keyboardThemeId: KeyboardThemeId,
     onOpenPicker: (SettingsPicker) -> Unit,
+    onOpenThemeGallery: () -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
@@ -75,7 +76,7 @@ internal fun KeyboardSettingsSection(
                 value = keyboardThemeId.label(),
                 iconRes = R.drawable.ic_keyboard_theme,
                 iconBackground = BrandBlue,
-                onClick = { onOpenPicker(SettingsPicker.KEYBOARD_THEME) },
+                onClick = onOpenThemeGallery,
             )
         }
     }

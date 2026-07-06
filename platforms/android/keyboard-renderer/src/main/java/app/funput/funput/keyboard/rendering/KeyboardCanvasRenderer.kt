@@ -12,7 +12,7 @@ import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.theme.KeyboardTheme
-import app.funput.funput.theme.KeyboardThemeCatalog
+import app.funput.funput.theme.LocalKeyboardThemeCatalog
 
 /** Draws a fully resolved keyboard without owning Android view state. */
 internal class KeyboardCanvasRenderer(resources: Resources) {
@@ -22,7 +22,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
     private val keyPopupRenderer = KeyPopupRenderer(metrics)
     private val suggestionBarRenderer = SuggestionBarRenderer(metrics)
     private val toolbarLogoRenderer = ToolbarLogoRenderer(resources)
-    private var theme: KeyboardTheme = KeyboardThemeCatalog.default()
+    private var theme: KeyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
 
     fun updateTheme(theme: KeyboardTheme, width: Int, height: Int) {
         this.theme = theme

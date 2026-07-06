@@ -11,7 +11,7 @@ import app.funput.funput.keyboard.interaction.SuggestionTargetIds
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
 import app.funput.funput.theme.KeyboardTheme
-import app.funput.funput.theme.KeyboardThemeCatalog
+import app.funput.funput.theme.LocalKeyboardThemeCatalog
 
 internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -24,7 +24,7 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     private val drawingRect = RectF()
     private val clipPath = Path()
     private val fontMetrics = Paint.FontMetrics()
-    private var theme: KeyboardTheme = KeyboardThemeCatalog.default()
+    private var theme: KeyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
 
     fun updateTheme(theme: KeyboardTheme) {
         this.theme = theme

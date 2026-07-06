@@ -6,15 +6,22 @@ import org.junit.Test
 
 class KeyboardThemeSettingCodecTest {
     @Test
-    fun missingOrUnknownSettingFallsBackToDark() {
-        assertEquals(KeyboardThemeId.DARK, KeyboardThemeSettingCodec.decode(null))
-        assertEquals(KeyboardThemeId.DARK, KeyboardThemeSettingCodec.decode("unknown"))
+    fun missingOrMalformedSettingFallsBackToDark() {
+        assertEquals(KeyboardThemeId.Dark, KeyboardThemeSettingCodec.decode(null))
+        assertEquals(KeyboardThemeId.Dark, KeyboardThemeSettingCodec.decode("invalid theme"))
     }
 
     @Test
-    fun allPresetsRoundTrip() {
-        KeyboardThemeId.Presets.forEach { themeId ->
+    fun builtInThemesRoundTrip() {
+        listOf(KeyboardThemeId.Dark, KeyboardThemeId.Light).forEach { themeId ->
             assertEquals(themeId, KeyboardThemeSettingCodec.decode(KeyboardThemeSettingCodec.encode(themeId)))
         }
+    }
+
+    @Test
+    fun futureThemeIdentifierRoundTripsWithoutBeingKnownByCurrentCatalog() {
+        val themeId = KeyboardThemeId.of("com.funput.theme.future")
+
+        assertEquals(themeId, KeyboardThemeSettingCodec.decode(KeyboardThemeSettingCodec.encode(themeId)))
     }
 }

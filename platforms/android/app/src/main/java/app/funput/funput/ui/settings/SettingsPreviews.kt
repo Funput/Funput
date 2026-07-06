@@ -55,7 +55,7 @@ private fun SettingsPreview(
             inputMethod = KeyboardInputMethod.VNI,
             toneStyle = ToneStyle.TRADITIONAL,
             keySizeProfile = KeyboardSizingProfile.Normal,
-            keyboardThemeId = KeyboardThemeId.DARK,
+            keyboardThemeId = KeyboardThemeId.Dark,
             appearanceMode = appearanceMode,
             hapticsEnabled = true,
             soundsEnabled = false,
@@ -65,7 +65,6 @@ private fun SettingsPreview(
             onInputMethodSelected = {},
             onToneStyleSelected = {},
             onKeySizeSelected = {},
-            onKeyboardThemeSelected = {},
             onAppearanceSelected = {},
             onHapticsChanged = {},
             onSoundsChanged = {},
@@ -73,6 +72,7 @@ private fun SettingsPreview(
             onSpellCheckChanged = {},
             onEnableKeyboard = {},
             onSelectKeyboard = {},
+            onOpenThemeGallery = {},
             onOpenWebsite = {},
         )
     }

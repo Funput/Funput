@@ -13,7 +13,7 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.ui.FunputKeyboardView
-import app.funput.funput.theme.KeyboardThemeCatalog
+import app.funput.funput.theme.LocalKeyboardThemeCatalog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -135,7 +135,7 @@ class FunputInputMethodService : InputMethodService() {
         currentLanguage = actionHandler.language,
         feedback = settings.feedback,
         sizingProfile = settings.sizingProfile,
-        keyboardTheme = KeyboardThemeCatalog.resolve(settings.keyboardThemeId),
+        keyboardTheme = LocalKeyboardThemeCatalog.resolve(settings.keyboardThemeId).theme,
         systemInputMethodSwitcherVisible = systemInputMethodSwitcher.isAvailable(),
     )
 

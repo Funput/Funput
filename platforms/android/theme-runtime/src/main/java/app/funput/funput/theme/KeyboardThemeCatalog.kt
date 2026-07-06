@@ -1,31 +1,68 @@
 package app.funput.funput.theme
 
-/** Stable identifiers for built-in keyboard theme presets. */
-enum class KeyboardThemeId(val id: String) {
-    DARK("dark"),
-    LIGHT("light"),
-    ;
+/**
+ * Immutable collection of themes available to the runtime.
+ *
+ * Keeping lookup and fallback behavior here means the IME never has to handle a missing theme.
+ * A future installed-theme repository can construct the same catalog type from verified packages.
+ */
+class KeyboardThemeCatalog(
+    themes: List<KeyboardThemeDescriptor>,
+    defaultThemeId: KeyboardThemeId,
+) {
+    val themes: List<KeyboardThemeDescriptor> = themes.toList()
 
-    companion object {
-        val Default: KeyboardThemeId = DARK
+    private val themesById: Map<KeyboardThemeId, KeyboardThemeDescriptor>
 
-        val Presets: List<KeyboardThemeId> = entries
+    val defaultTheme: KeyboardThemeDescriptor
 
-        fun fromId(id: String?): KeyboardThemeId =
-            entries.firstOrNull { it.id == id } ?: Default
+    init {
+        require(this.themes.isNotEmpty()) { "A theme catalog must not be empty" }
+
+        themesById = this.themes.associateBy(KeyboardThemeDescriptor::id)
+        require(themesById.size == this.themes.size) { "Theme identifiers must be unique" }
+
+        defaultTheme = requireNotNull(themesById[defaultThemeId]) {
+            "Default theme must be present in the catalog"
+        }
     }
+
+    fun find(id: KeyboardThemeId): KeyboardThemeDescriptor? = themesById[id]
+
+    fun resolve(id: KeyboardThemeId): KeyboardThemeDescriptor = find(id) ?: defaultTheme
 }
 
-/** Resolves built-in keyboard themes for renderer consumers. */
-object KeyboardThemeCatalog {
-    fun default(): KeyboardTheme = resolve(KeyboardThemeId.Default)
+/** The themes shipped with the application and always available offline. */
+object LocalKeyboardThemeCatalog {
+    private const val FunputAuthor = "Funput"
 
-    fun dark(): KeyboardTheme = KeyboardThemes.Dark
+    private val catalog = KeyboardThemeCatalog(
+        themes = listOf(
+            KeyboardThemeDescriptor(
+                id = KeyboardThemeId.Dark,
+                version = 1,
+                name = "Dark",
+                author = FunputAuthor,
+                theme = KeyboardThemes.Dark,
+            ),
+            KeyboardThemeDescriptor(
+                id = KeyboardThemeId.Light,
+                version = 1,
+                name = "Light",
+                author = FunputAuthor,
+                theme = KeyboardThemes.Light,
+            ),
+        ),
+        defaultThemeId = KeyboardThemeId.Default,
+    )
 
-    fun light(): KeyboardTheme = KeyboardThemes.Light
+    val themes: List<KeyboardThemeDescriptor>
+        get() = catalog.themes
 
-    fun resolve(id: KeyboardThemeId): KeyboardTheme = when (id) {
-        KeyboardThemeId.DARK -> KeyboardThemes.Dark
-        KeyboardThemeId.LIGHT -> KeyboardThemes.Light
-    }
+    val defaultTheme: KeyboardThemeDescriptor
+        get() = catalog.defaultTheme
+
+    fun find(id: KeyboardThemeId): KeyboardThemeDescriptor? = catalog.find(id)
+
+    fun resolve(id: KeyboardThemeId): KeyboardThemeDescriptor = catalog.resolve(id)
 }

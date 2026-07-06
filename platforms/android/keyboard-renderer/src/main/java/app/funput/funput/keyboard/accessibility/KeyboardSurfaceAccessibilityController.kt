@@ -1,0 +1,26 @@
+package app.funput.funput.keyboard.accessibility
+
+import android.view.MotionEvent
+import android.view.View
+import app.funput.funput.keyboard.layout.ResolvedKeyboard
+import app.funput.funput.keyboard.model.ShiftState
+
+/** Owns the virtual accessibility tree exposed by a keyboard surface. */
+internal class KeyboardSurfaceAccessibilityController(
+    host: View,
+    activate: (String) -> Unit,
+) {
+    private var snapshot: KeyboardAccessibilitySnapshot? = null
+    private val delegate = KeyboardAccessibilityDelegate(
+        host = host,
+        snapshot = { snapshot },
+        activate = activate,
+    )
+
+    fun dispatchHover(event: MotionEvent): Boolean = delegate.dispatchHover(event)
+
+    fun refresh(keyboard: ResolvedKeyboard?, shiftState: ShiftState) {
+        snapshot = keyboard?.let { KeyboardAccessibilitySnapshot(it, shiftState) }
+        delegate.invalidateRoot()
+    }
+}
