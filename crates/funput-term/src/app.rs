@@ -248,9 +248,31 @@ fn spawn_resize_thread(master: Box<dyn portable_pty::MasterPty + Send>) {
     });
 }
 
+// Windows (and any non-Unix) has no SIGWINCH, so poll the terminal size and push
+// changes to the PTY. `crossterm::size` + `master.resize` are cross-platform, so this
+// needs no OS-specific code; the ~120ms tick is imperceptible for window resizes.
 #[cfg(not(unix))]
-fn spawn_resize_thread(_master: Box<dyn portable_pty::MasterPty + Send>) {
-    // Windows resize handling lands with ConPTY support (phase TT6).
+fn spawn_resize_thread(master: Box<dyn portable_pty::MasterPty + Send>) {
+    use std::time::Duration;
+
+    thread::spawn(move || {
+        let mut last = crossterm::terminal::size().unwrap_or((80, 24));
+        loop {
+            thread::sleep(Duration::from_millis(120));
+            let Ok((cols, rows)) = crossterm::terminal::size() else {
+                continue;
+            };
+            if (cols, rows) != last {
+                last = (cols, rows);
+                let _ = master.resize(PtySize {
+                    rows,
+                    cols,
+                    pixel_width: 0,
+                    pixel_height: 0,
+                });
+            }
+        }
+    });
 }
 
 #[cfg(test)]

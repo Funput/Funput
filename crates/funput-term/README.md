@@ -51,7 +51,7 @@ chia sẻ luôn preferences của IME hệ thống; macOS dùng file riêng tạ
 | | |
 |--|--|
 | Terminal emulator | **Tất cả** (chỉ cần TTY) |
-| Hệ điều hành | macOS, Linux (Unix PTY). Windows (ConPTY): đang làm |
+| Hệ điều hành | macOS, Linux (Unix PTY), Windows (ConPTY) |
 | App nhập theo dòng (shell, Claude, Cursor, REPL) | Soạn đầy đủ |
 | App full-screen (vim, less, htop) | **Tự tắt** soạn (phát hiện alt-screen) để không phá UI |
 | Backspace giữa lúc soạn | `engine.on_backspace()` — sửa rồi soạn tiếp (`Phua` ⌫ `s` → `Phú`) |
@@ -108,10 +108,12 @@ pipe in-memory hoặc input dạng chuỗi.
 ### Robustness
 
 - `RawModeGuard` vào raw-mode **trước** khi spawn → không TTY thì fail nhanh, không bỏ rơi child;
-  drop luôn khôi phục (kể cả panic).
+  drop luôn khôi phục (kể cả panic). Trên **Windows** còn bật VT input/output của console + codepage
+  UTF-8 (để phím escape/mũi tên tới child và VT của ConPTY render đúng), khôi phục hết khi drop.
 - `portable_pty::openpty` + `CommandBuilder` kế thừa cwd + env. Child thoát → reader EOF → output
   thread dừng → exit đúng status code.
-- Resize: Unix `SIGWINCH` (`signal-hook`) → `crossterm::size` → `master.resize`. Windows: TT6.
+- Resize: Unix `SIGWINCH` (`signal-hook`) → `crossterm::size` → `master.resize`; Windows (không có
+  SIGWINCH) poll `crossterm::size` mỗi ~120ms, đổi thì `master.resize`.
 - Alt-screen: `output.rs` thấy `ESC[?1049h` → set `state.alt_screen` → input passthrough (vim/less
   không bị soạn).
 - Bracketed paste: `input.rs` thấy `ESC[200~` → `in_paste` → nội dung dán phân loại `Paste`
@@ -155,8 +157,6 @@ override + ưu tiên, parse phím toggle), `install` (snippet bash/zsh/fish, ide
 
 ## Còn làm (sau v1)
 
-- **Windows (ConPTY):** hiện chỉ Unix PTY; stack `portable-pty` đã sẵn, cần tầng input/resize cho
-  Windows (TT6).
 - **Đổi kiểu đặt dấu lúc đang chạy:** đã có xoay Telex↔VNI (`Ctrl-^`); còn thiếu phím bật/tắt
   kiểu đặt dấu (traditional/modern) ngay trong phiên.
 - **Per-app profile:** dùng `excludedApps` từ settings.json để tự bật/tắt theo lệnh được bọc.
