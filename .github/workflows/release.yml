@@ -106,6 +106,7 @@ jobs:
           mkdir -p out
           cp artifacts/macos/* out/ 2>/dev/null || true
           cp artifacts/windows/* out/ 2>/dev/null || true
+          cp artifacts/windows-cli/* out/ 2>/dev/null || true
           cp artifacts/windows-feed/* out/ 2>/dev/null || true
           cp artifacts/linux-*/* out/ 2>/dev/null || true
           ls -l out
@@ -117,6 +118,7 @@ jobs:
             echo "### Tải về"
             echo "- **macOS:** \`Funput-*.pkg\` (có quyền admin) hoặc \`Funput-*.app.zip\` (không cần admin)."
             echo "- **Windows:** \`Funput-*.exe\` — portable, chạy ngay, tự cập nhật trong app."
+            echo "- **Funput Term (CLI, Windows):** \`scoop bucket add funput https://github.com/Funput/scoop-funput && scoop install funput\`, hoặc tải \`funput-term-*-x86_64-pc-windows-msvc.zip\`."
             echo "- **Linux:** \`.deb\` (Debian/Ubuntu) hoặc \`.rpm\` (Fedora/openSUSE); mỗi loại có bản **IBus** (\`funput-ibus-*\`) và **Fcitx5** (\`funput-*\`). Chọn đúng kiến trúc CPU."
           } > notes.md
 
@@ -129,6 +131,7 @@ jobs:
             out/*.pkg
             out/*.app.zip
             out/*.exe
+            out/*.zip
             out/*.deb
             out/*.rpm
             out/appcast.xml
@@ -185,4 +188,31 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${TOKEN}" \
             https://api.github.com/repos/Funput/homebrew-tap/dispatches \
+            -d "{\"event_type\":\"release\",\"client_payload\":{\"version\":\"${VERSION}\"}}"
+
+  # ---- Trigger the Scoop bucket to bump its manifest ------------------------
+  # Windows analogue of `homebrew`. Fires only for a real public release. The
+  # bucket's `bump.yml` points funput.json at the new release zip + sha256 and
+  # commits it — instant, no community review (unlike winget public). Requires a
+  # `SCOOP_BUCKET_TOKEN` secret (a PAT with `contents: write` on
+  # Funput/scoop-funput); skipped automatically if absent.
+  scoop:
+    needs: [version, publish]
+    if: needs.version.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch manifest bump to Funput/scoop-funput
+        env:
+          TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${TOKEN:-}" ]]; then
+            echo "SCOOP_BUCKET_TOKEN not set — skipping bucket update." >&2
+            exit 0
+          fi
+          curl -fsS -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://api.github.com/repos/Funput/scoop-funput/dispatches \
             -d "{\"event_type\":\"release\",\"client_payload\":{\"version\":\"${VERSION}\"}}"
