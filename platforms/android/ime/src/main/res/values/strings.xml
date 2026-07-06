@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="funput_ime_name" translatable="false">Funput</string>
+    <string name="funput_ime_subtype_vietnamese">Vietnamese</string>
+</resources>

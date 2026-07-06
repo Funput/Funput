@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Matches ic_launcher_foreground inset so themed icons are not clipped. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_funput_monochrome"
+    android:inset="22%" />
