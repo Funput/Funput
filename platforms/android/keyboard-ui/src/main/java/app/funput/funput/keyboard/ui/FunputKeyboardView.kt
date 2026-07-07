@@ -47,6 +47,7 @@ class FunputKeyboardView @JvmOverloads constructor(
             emojiPanel?.updateTheme(value)
             setBackgroundColor(value.backgroundEndColor)
         }
+    var keyboardThemeBackgroundImage by keyboardSurface::keyboardThemeBackgroundImage
     var sizingProfile: KeyboardSizingProfile by keyboardSurface::sizingProfile
     var suggestions: List<String> = emptyList()
         set(value) {
@@ -111,9 +112,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         )
     }
 
-    private fun openSettings() {
-        context.openFunputSettings()
-    }
+    private fun openSettings() = context.openFunputSettings()
 
     private fun openEmojiFromKeyboard() {
         if (editorMode.isPassword) return
@@ -143,7 +142,5 @@ class FunputKeyboardView @JvmOverloads constructor(
         onLettersRequested = ::showLettersPanel
     }
 
-    private fun matchParentLayoutParams() =
-        LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-
+    private fun matchParentLayoutParams() = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
 }

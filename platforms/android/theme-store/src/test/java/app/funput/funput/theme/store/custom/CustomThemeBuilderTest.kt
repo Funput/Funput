@@ -19,7 +19,10 @@ class CustomThemeBuilderTest {
             author = "  Me  ",
             baseThemeId = baseTheme.id,
             backgroundImage = KeyboardThemeBackgroundImage("content://image/ocean", 0.48f),
-            overrides = CustomThemeOverrides(accentColor = OceanAccent),
+            overrides = CustomThemeOverrides(
+                accentColor = OceanAccent,
+                keyBackgroundOpacity = KeyOpacity,
+            ),
         )
 
         val descriptor = builder.build(draft, baseTheme, existingThemeIds = setOf(baseTheme.id))
@@ -28,9 +31,11 @@ class CustomThemeBuilderTest {
         assertEquals("My Ocean", descriptor.name)
         assertEquals("Me", descriptor.author)
         assertEquals(KeyboardThemeOrigin.CUSTOM, descriptor.origin)
+        assertEquals(baseTheme.id, descriptor.baseThemeId)
         assertEquals(draft.backgroundImage, descriptor.backgroundImage)
         assertEquals(OceanAccent, descriptor.theme.accentColor)
-        assertEquals(baseTheme.theme.keyColor, descriptor.theme.keyColor)
+        assertEquals(KeyAlpha, descriptor.theme.keyColor ushr AlphaShift)
+        assertEquals(KeyAlpha, descriptor.theme.specialKeyColor ushr AlphaShift)
     }
 
     @Test
@@ -51,7 +56,26 @@ class CustomThemeBuilderTest {
         }
     }
 
+    @Test
+    fun buildCanKeepExistingThemeIdForEdits() {
+        val editedId = KeyboardThemeId.of("custom.my-ocean")
+        val draft = CustomThemeDraft(name = "Ocean 2", baseThemeId = baseTheme.id)
+
+        val descriptor = builder.build(
+            draft = draft,
+            baseTheme = baseTheme,
+            existingThemeIds = emptySet(),
+            themeId = editedId,
+        )
+
+        assertEquals(editedId, descriptor.id)
+        assertEquals("Ocean 2", descriptor.name)
+    }
+
     private companion object {
         const val OceanAccent = 0xFF0099CC.toInt()
+        const val KeyOpacity = 0.62f
+        const val KeyAlpha = 158
+        const val AlphaShift = 24
     }
 }

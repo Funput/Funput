@@ -7,6 +7,7 @@ data class KeyboardThemeDescriptor(
     val name: String,
     val author: String,
     val origin: KeyboardThemeOrigin = KeyboardThemeOrigin.BUILT_IN,
+    val baseThemeId: KeyboardThemeId? = null,
     val backgroundImage: KeyboardThemeBackgroundImage? = null,
     val theme: KeyboardTheme,
 ) {

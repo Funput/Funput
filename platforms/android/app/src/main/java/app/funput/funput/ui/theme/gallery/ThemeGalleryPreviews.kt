@@ -36,6 +36,7 @@ private fun GalleryPreview(appearanceMode: AppearanceMode) {
             selectedThemeId = KeyboardThemeId.Dark,
             onThemeSelected = {},
             onCreateTheme = {},
+            onEditTheme = {},
             onBack = {},
         )
     }

@@ -18,4 +18,19 @@ class CustomThemeInstaller(
         store.upsertTheme(descriptor)
         return descriptor
     }
+
+    fun update(
+        themeId: KeyboardThemeId,
+        draft: CustomThemeDraft,
+        baseTheme: KeyboardThemeDescriptor,
+    ): KeyboardThemeDescriptor {
+        val descriptor = builder.build(
+            draft = draft,
+            baseTheme = baseTheme,
+            existingThemeIds = emptySet(),
+            themeId = themeId,
+        )
+        store.upsertTheme(descriptor)
+        return descriptor
+    }
 }

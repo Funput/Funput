@@ -16,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +24,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
@@ -35,6 +38,7 @@ internal fun ThemeCard(
     descriptor: KeyboardThemeDescriptor,
     selected: Boolean,
     onSelected: () -> Unit,
+    onEdit: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val title = descriptor.localizedName()
@@ -57,6 +61,7 @@ internal fun ThemeCard(
         Column(modifier = Modifier.padding(12.dp)) {
             KeyboardThemePreview(
                 theme = descriptor.theme,
+                backgroundImage = descriptor.backgroundImage,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(190.dp)
@@ -77,9 +82,35 @@ internal fun ThemeCard(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-                if (selected) SelectedBadge()
+                ThemeActions(
+                    title = title,
+                    selected = selected,
+                    onEdit = onEdit,
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun ThemeActions(
+    title: String,
+    selected: Boolean,
+    onEdit: (() -> Unit)?,
+) {
+    val editDescription = stringResource(R.string.theme_gallery_edit_description, title)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        onEdit?.let {
+            TextButton(onClick = it) {
+                Text(
+                    text = stringResource(R.string.theme_gallery_edit),
+                    modifier = Modifier.semantics {
+                        contentDescription = editDescription
+                    },
+                )
+            }
+        }
+        if (selected) SelectedBadge()
     }
 }
 

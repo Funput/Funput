@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
+import app.funput.funput.theme.KeyboardThemeOrigin
 
 /** Stateless gallery for locally available keyboard themes. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +33,7 @@ internal fun ThemeGalleryScreen(
     selectedThemeId: KeyboardThemeId,
     onThemeSelected: (KeyboardThemeId) -> Unit,
     onCreateTheme: () -> Unit,
+    onEditTheme: (KeyboardThemeId) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -86,6 +88,11 @@ internal fun ThemeGalleryScreen(
                         descriptor = descriptor,
                         selected = descriptor.id == selectedThemeId,
                         onSelected = { onThemeSelected(descriptor.id) },
+                        onEdit = if (descriptor.origin == KeyboardThemeOrigin.CUSTOM) {
+                            { onEditTheme(descriptor.id) }
+                        } else {
+                            null
+                        },
                     )
                 }
             }

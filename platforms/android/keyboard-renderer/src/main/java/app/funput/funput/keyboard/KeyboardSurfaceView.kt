@@ -18,10 +18,9 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
-import app.funput.funput.keyboard.rendering.KeyboardCanvasRenderer
 import app.funput.funput.keyboard.surface.KeyboardSurfaceEventDispatcher
 import app.funput.funput.keyboard.surface.KeyboardSurfaceLayoutState
-import app.funput.funput.keyboard.surface.KeyboardSurfacePresentationState
+import app.funput.funput.keyboard.surface.KeyboardSurfaceRenderController
 import app.funput.funput.keyboard.surface.createKeyboardSurfaceInteraction
 import kotlin.math.roundToInt
 
@@ -32,22 +31,23 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : View(context, attrs, defStyleAttr) {
     private val layoutState = KeyboardSurfaceLayoutState(::updateKeyboardLayout)
-    private val renderer = KeyboardCanvasRenderer(resources)
-    private val presentation = KeyboardSurfacePresentationState(
-        onThemeChanged = { renderer.updateTheme(it, width, height); invalidate() },
-        onSizingChanged = { renderer.updateSizing(it); requestLayout(); resolveGeometry(); invalidate() },
-        onSuggestionsChanged = ::invalidate,
-        onEnterActionChanged = ::invalidate,
+    private val render = KeyboardSurfaceRenderController(
+        context = context,
+        resources = resources,
+        invalidate = ::invalidate,
+        requestLayout = ::requestLayout,
+        resolveGeometry = ::resolveGeometry,
     )
     var inputMethod: KeyboardInputMethod by layoutState::inputMethod
     var layoutMode: KeyboardLayoutMode by layoutState::layoutMode
     var editorMode: KeyboardEditorMode by layoutState::editorMode
     var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
     var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
-    var keyboardTheme by presentation::keyboardTheme
-    var sizingProfile: KeyboardSizingProfile by presentation::sizingProfile
-    var suggestions: List<String> by presentation::suggestions
-    var enterAction by presentation::enterAction
+    var keyboardTheme by render::keyboardTheme
+    var keyboardThemeBackgroundImage by render::keyboardThemeBackgroundImage
+    var sizingProfile: KeyboardSizingProfile by render::sizingProfile
+    var suggestions: List<String> by render::suggestions
+    var enterAction by render::enterAction
     val callbacks = KeyboardCallbacks()
     var shiftState: ShiftState
         get() = interaction.shiftState
@@ -85,10 +85,6 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         set(value) {
             events.setEnabled(value)
         }
-    init {
-        renderer.updateTheme(keyboardTheme, width, height)
-        renderer.updateSizing(sizingProfile)
-    }
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
         val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
@@ -99,13 +95,12 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
         resolveGeometry()
-        renderer.updateTheme(keyboardTheme, width, height)
+        render.updateSize(width, height)
     }
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val keyboard = resolvedKeyboard ?: return
-        renderer.draw(canvas, width, height, keyboard, suggestions, interaction,
-            shiftState, language, enterAction, editorMode.isPassword)
+        render.draw(canvas, keyboard, interaction, shiftState, language, editorMode)
     }
     override fun onTouchEvent(event: MotionEvent): Boolean = events.dispatchTouch(event, ::performClick)
     override fun dispatchHoverEvent(event: MotionEvent): Boolean =
@@ -121,6 +116,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     }
     override fun onDetachedFromWindow() {
         interaction.clear()
+        render.clear()
         super.onDetachedFromWindow()
     }
     private fun resolveGeometry() {

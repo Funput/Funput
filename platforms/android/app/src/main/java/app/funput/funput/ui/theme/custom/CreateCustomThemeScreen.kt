@@ -1,5 +1,8 @@
 package app.funput.funput.ui.theme.custom
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
@@ -17,9 +20,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
+import app.funput.funput.theme.KeyboardThemeBackgroundImage
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.store.custom.CustomThemeDraft
@@ -29,18 +34,43 @@ import app.funput.funput.theme.store.custom.CustomThemeOverrides
 @Composable
 internal fun CreateCustomThemeScreen(
     baseThemes: List<KeyboardThemeDescriptor>,
+    editingTheme: KeyboardThemeDescriptor? = null,
     onSave: (CustomThemeDraft) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var name by rememberSaveable { mutableStateOf("") }
-    var baseThemeValue by rememberSaveable { mutableStateOf(KeyboardThemeId.Default.value) }
-    var accentColor by rememberSaveable { mutableStateOf(AccentPresets.first().argb) }
-    var imageOpacity by rememberSaveable { mutableFloatStateOf(0.4f) }
+    val context = LocalContext.current
+    var name by rememberSaveable(editingTheme?.id?.value) { mutableStateOf(editingTheme.initialThemeName()) }
+    var baseThemeValue by rememberSaveable(editingTheme?.id?.value) {
+        mutableStateOf(editingTheme.initialBaseThemeValue())
+    }
+    var accentColor by rememberSaveable(editingTheme?.id?.value) {
+        mutableStateOf(editingTheme.initialAccentColor())
+    }
+    var backgroundImageSource by rememberSaveable(editingTheme?.id?.value) {
+        mutableStateOf(editingTheme.initialBackgroundImageSource())
+    }
+    var imageOpacity by rememberSaveable(editingTheme?.id?.value) {
+        mutableFloatStateOf(editingTheme.initialBackgroundImageOpacity())
+    }
+    var keyBackgroundOpacity by rememberSaveable(editingTheme?.id?.value) {
+        mutableFloatStateOf(editingTheme.initialKeyBackgroundOpacity())
+    }
     val fallbackTheme = baseThemes.first()
     val baseTheme = baseThemes.find { theme -> theme.id.value == baseThemeValue } ?: fallbackTheme
-    val previewTheme = remember(baseTheme, accentColor) {
-        CustomThemeOverrides(accentColor = accentColor).applyTo(baseTheme.theme)
+    val previewTheme = remember(baseTheme, accentColor, keyBackgroundOpacity) {
+        CustomThemeOverrides(
+            accentColor = accentColor,
+            keyBackgroundOpacity = keyBackgroundOpacity,
+        ).applyTo(baseTheme.theme)
+    }
+    val imagePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        uri?.let {
+            context.persistBackgroundImageAccess(it)
+            backgroundImageSource = it.toString()
+        }
     }
 
     Scaffold(
@@ -48,7 +78,13 @@ internal fun CreateCustomThemeScreen(
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.custom_theme_title)) },
+                title = {
+                    Text(
+                        stringResource(
+                            if (editingTheme == null) R.string.custom_theme_title else R.string.custom_theme_edit_title,
+                        ),
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -65,19 +101,32 @@ internal fun CreateCustomThemeScreen(
             baseThemes = baseThemes,
             selectedBaseThemeId = baseTheme.id,
             accentColor = accentColor,
+            keyBackgroundOpacity = keyBackgroundOpacity,
+            backgroundImageSource = backgroundImageSource,
             imageOpacity = imageOpacity,
             previewTheme = previewTheme,
             contentPadding = padding,
             onNameChange = { name = it },
             onBaseThemeSelected = { id -> baseThemeValue = id.value },
             onAccentSelected = { color -> accentColor = color },
+            onKeyBackgroundOpacityChange = { opacity -> keyBackgroundOpacity = opacity },
             onImageOpacityChange = { opacity -> imageOpacity = opacity },
+            onChooseBackgroundImage = {
+                imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            onRemoveBackgroundImage = { backgroundImageSource = null },
             onSave = {
                 onSave(
                     CustomThemeDraft(
                         name = name,
                         baseThemeId = baseTheme.id,
-                        overrides = CustomThemeOverrides(accentColor = accentColor),
+                        backgroundImage = backgroundImageSource?.let { source ->
+                            KeyboardThemeBackgroundImage(source = source, opacity = imageOpacity)
+                        },
+                        overrides = CustomThemeOverrides(
+                            accentColor = accentColor,
+                            keyBackgroundOpacity = keyBackgroundOpacity,
+                        ),
                     ),
                 )
             },

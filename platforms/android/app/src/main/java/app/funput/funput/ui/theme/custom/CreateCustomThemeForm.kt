@@ -4,24 +4,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
-import app.funput.funput.ui.theme.KeyboardThemePreview
 
 @Composable
 internal fun CreateCustomThemeForm(
@@ -29,18 +28,24 @@ internal fun CreateCustomThemeForm(
     baseThemes: List<KeyboardThemeDescriptor>,
     selectedBaseThemeId: KeyboardThemeId,
     accentColor: Int,
+    keyBackgroundOpacity: Float,
+    backgroundImageSource: String?,
     imageOpacity: Float,
     previewTheme: KeyboardTheme,
     contentPadding: PaddingValues,
     onNameChange: (String) -> Unit,
     onBaseThemeSelected: (KeyboardThemeId) -> Unit,
     onAccentSelected: (Int) -> Unit,
+    onKeyBackgroundOpacityChange: (Float) -> Unit,
     onImageOpacityChange: (Float) -> Unit,
+    onChooseBackgroundImage: () -> Unit,
+    onRemoveBackgroundImage: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var selectedTab by rememberSaveable { mutableStateOf(CreateThemeEditorTab.Style) }
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
         contentPadding = PaddingValues(
             start = 20.dp,
             top = contentPadding.calculateTopPadding() + 16.dp,
@@ -50,48 +55,36 @@ internal fun CreateCustomThemeForm(
         modifier = modifier.fillMaxSize(),
     ) {
         item(key = "preview") {
-            Text(
-                text = stringResource(R.string.custom_theme_preview_title),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            KeyboardThemePreview(
-                theme = previewTheme,
-                modifier = Modifier
-                    .padding(top = 10.dp)
-                    .fillMaxWidth()
-                    .height(190.dp)
-                    .clip(CardShape),
+            CreateThemePreviewHeader(
+                previewTheme = previewTheme,
+                backgroundImageSource = backgroundImageSource,
+                imageOpacity = imageOpacity,
             )
         }
-        item(key = "name") {
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                singleLine = true,
-                label = { Text(stringResource(R.string.custom_theme_name_label)) },
-                placeholder = { Text(stringResource(R.string.custom_theme_name_placeholder)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("custom-theme-name"),
+        item(key = "tabs") {
+            CreateThemeEditorTabs(
+                selectedTab = selectedTab,
+                onSelected = { selectedTab = it },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
-        item(key = "base") {
-            BaseThemeSelector(
-                themes = baseThemes,
-                selectedThemeId = selectedBaseThemeId,
-                onSelected = onBaseThemeSelected,
-            )
-        }
-        item(key = "accent") {
-            AccentColorSelector(
-                selectedColor = accentColor,
-                onSelected = onAccentSelected,
-            )
-        }
-        item(key = "background") {
-            BackgroundImagePlaceholder(
-                opacity = imageOpacity,
-                onOpacityChange = onImageOpacityChange,
+        item(key = selectedTab.name) {
+            CreateThemeTabContent(
+                selectedTab = selectedTab,
+                name = name,
+                baseThemes = baseThemes,
+                selectedBaseThemeId = selectedBaseThemeId,
+                accentColor = accentColor,
+                keyBackgroundOpacity = keyBackgroundOpacity,
+                backgroundImageSource = backgroundImageSource,
+                imageOpacity = imageOpacity,
+                onNameChange = onNameChange,
+                onBaseThemeSelected = onBaseThemeSelected,
+                onAccentSelected = onAccentSelected,
+                onKeyBackgroundOpacityChange = onKeyBackgroundOpacityChange,
+                onImageOpacityChange = onImageOpacityChange,
+                onChooseBackgroundImage = onChooseBackgroundImage,
+                onRemoveBackgroundImage = onRemoveBackgroundImage,
             )
         }
         item(key = "save") {
@@ -102,6 +95,51 @@ internal fun CreateCustomThemeForm(
             ) {
                 Text(stringResource(R.string.custom_theme_save))
             }
+            if (name.trim().isEmpty()) {
+                Text(
+                    text = stringResource(R.string.custom_theme_save_hint),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun CreateThemeTabContent(
+    selectedTab: CreateThemeEditorTab,
+    name: String,
+    baseThemes: List<KeyboardThemeDescriptor>,
+    selectedBaseThemeId: KeyboardThemeId,
+    accentColor: Int,
+    keyBackgroundOpacity: Float,
+    backgroundImageSource: String?,
+    imageOpacity: Float,
+    onNameChange: (String) -> Unit,
+    onBaseThemeSelected: (KeyboardThemeId) -> Unit,
+    onAccentSelected: (Int) -> Unit,
+    onKeyBackgroundOpacityChange: (Float) -> Unit,
+    onImageOpacityChange: (Float) -> Unit,
+    onChooseBackgroundImage: () -> Unit,
+    onRemoveBackgroundImage: () -> Unit,
+) = when (selectedTab) {
+    CreateThemeEditorTab.Style -> ThemeStyleTab(
+        baseThemes = baseThemes,
+        selectedBaseThemeId = selectedBaseThemeId,
+        accentColor = accentColor,
+        keyBackgroundOpacity = keyBackgroundOpacity,
+        onBaseThemeSelected = onBaseThemeSelected,
+        onAccentSelected = onAccentSelected,
+        onKeyBackgroundOpacityChange = onKeyBackgroundOpacityChange,
+    )
+    CreateThemeEditorTab.Background -> BackgroundImagePlaceholder(
+        imageSelected = backgroundImageSource != null,
+        opacity = imageOpacity,
+        onOpacityChange = onImageOpacityChange,
+        onChooseImage = onChooseBackgroundImage,
+        onRemoveImage = onRemoveBackgroundImage,
+    )
+    CreateThemeEditorTab.Info -> ThemeInfoTab(name = name, onNameChange = onNameChange)
 }

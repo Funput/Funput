@@ -12,6 +12,7 @@ class CustomThemeBuilder(
         draft: CustomThemeDraft,
         baseTheme: KeyboardThemeDescriptor,
         existingThemeIds: Set<KeyboardThemeId>,
+        themeId: KeyboardThemeId? = null,
     ): KeyboardThemeDescriptor {
         require(draft.baseThemeId == baseTheme.id) {
             "Draft base theme must match the resolved base theme"
@@ -23,11 +24,12 @@ class CustomThemeBuilder(
         require(author.isNotBlank()) { "Custom theme author must not be blank" }
 
         return KeyboardThemeDescriptor(
-            id = idGenerator.generate(name, existingThemeIds),
+            id = themeId ?: idGenerator.generate(name, existingThemeIds),
             version = 1,
             name = name,
             author = author,
             origin = KeyboardThemeOrigin.CUSTOM,
+            baseThemeId = draft.baseThemeId,
             backgroundImage = draft.backgroundImage,
             theme = draft.overrides.applyTo(baseTheme.theme),
         )

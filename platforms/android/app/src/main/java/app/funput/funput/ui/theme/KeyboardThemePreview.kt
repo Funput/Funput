@@ -3,6 +3,7 @@ package app.funput.funput.ui.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import app.funput.funput.theme.KeyboardThemeBackgroundImage
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardEditorMode
@@ -36,26 +37,33 @@ internal data class KeyboardThemePreviewConfiguration(
 internal fun KeyboardThemePreview(
     theme: KeyboardTheme,
     modifier: Modifier = Modifier,
+    backgroundImage: KeyboardThemeBackgroundImage? = null,
     configuration: KeyboardThemePreviewConfiguration = KeyboardThemePreviewConfiguration(),
 ) {
+    KeyboardThemePreviewSurface(theme, backgroundImage, configuration, modifier)
+}
+
+@Composable
+private fun KeyboardThemePreviewSurface(
+    theme: KeyboardTheme,
+    backgroundImage: KeyboardThemeBackgroundImage?,
+    configuration: KeyboardThemePreviewConfiguration,
+    modifier: Modifier = Modifier,
+) {
     AndroidView(
-        factory = { context ->
-            KeyboardSurfaceView(context).apply {
-                interactionEnabled = false
-            }
-        },
+        factory = { context -> KeyboardSurfaceView(context).apply { interactionEnabled = false } },
         modifier = modifier,
-        update = { view ->
-            view.applyPreview(theme, configuration)
-        },
+        update = { view -> view.applyPreview(theme, backgroundImage, configuration) },
     )
 }
 
 private fun KeyboardSurfaceView.applyPreview(
     theme: KeyboardTheme,
+    backgroundImage: KeyboardThemeBackgroundImage?,
     configuration: KeyboardThemePreviewConfiguration,
 ) {
     keyboardTheme = theme
+    keyboardThemeBackgroundImage = backgroundImage
     inputMethod = configuration.inputMethod
     layoutMode = configuration.layoutMode
     editorMode = configuration.editorMode

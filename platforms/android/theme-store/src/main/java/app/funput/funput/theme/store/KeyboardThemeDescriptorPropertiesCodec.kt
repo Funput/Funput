@@ -20,6 +20,7 @@ internal object KeyboardThemeDescriptorPropertiesCodec {
             setProperty("name", descriptor.name)
             setProperty("author", descriptor.author)
             setProperty("origin", descriptor.origin.name)
+            descriptor.baseThemeId?.let { id -> setProperty("baseThemeId", id.value) }
             descriptor.backgroundImage?.let { background ->
                 setProperty("background.source", background.source)
                 setProperty("background.opacity", background.opacity.toString())
@@ -40,6 +41,7 @@ internal object KeyboardThemeDescriptorPropertiesCodec {
             name = properties.string("name"),
             author = properties.string("author"),
             origin = KeyboardThemeOrigin.valueOf(properties.string("origin")),
+            baseThemeId = properties.optionalThemeId("baseThemeId"),
             backgroundImage = properties.backgroundImageOrNull(),
             theme = properties.theme(),
         )
@@ -99,4 +101,7 @@ internal object KeyboardThemeDescriptorPropertiesCodec {
     private fun Properties.int(key: String): Int = string(key).toInt()
 
     private fun Properties.float(key: String): Float = string(key).toFloat()
+
+    private fun Properties.optionalThemeId(key: String): KeyboardThemeId? =
+        getProperty(key)?.let(KeyboardThemeId::of)
 }
