@@ -4,4 +4,5 @@ package app.funput.funput.ui.navigation
 internal enum class AppDestination {
     SETTINGS,
     THEME_GALLERY,
+    CREATE_CUSTOM_THEME,
 }

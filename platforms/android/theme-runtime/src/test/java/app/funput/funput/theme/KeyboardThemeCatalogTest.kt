@@ -12,6 +12,10 @@ class KeyboardThemeCatalogTest {
             listOf(KeyboardThemeId.Dark, KeyboardThemeId.Light),
             LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::id),
         )
+        assertEquals(
+            listOf(KeyboardThemeOrigin.BUILT_IN, KeyboardThemeOrigin.BUILT_IN),
+            LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::origin),
+        )
     }
 
     @Test

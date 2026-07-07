@@ -4,8 +4,8 @@ import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.theme.InstalledThemeRepository
 import app.funput.funput.theme.KeyboardThemeId
-import app.funput.funput.theme.LocalKeyboardThemeCatalog
 import app.funput.funput.ui.theme.FunputTheme
 
 @Preview(name = "Theme gallery · Light", showBackground = true, widthDp = 390, heightDp = 844)
@@ -28,11 +28,14 @@ private fun DarkThemeGalleryPreview() {
 
 @Composable
 private fun GalleryPreview(appearanceMode: AppearanceMode) {
+    val repository = InstalledThemeRepository.builtIn()
+
     FunputTheme(appearanceMode) {
         ThemeGalleryScreen(
-            themes = LocalKeyboardThemeCatalog.themes,
+            themes = repository.themes,
             selectedThemeId = KeyboardThemeId.Dark,
             onThemeSelected = {},
+            onCreateTheme = {},
             onBack = {},
         )
     }

@@ -22,7 +22,11 @@ import app.funput.funput.ime.settings.KeyboardThemeSettings
 import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.SmartCompositionSettings
 import app.funput.funput.ime.settings.ToneStyleSettings
-import app.funput.funput.theme.LocalKeyboardThemeCatalog
+import app.funput.funput.theme.BuiltInKeyboardThemeSource
+import app.funput.funput.theme.InstalledThemeRepository
+import app.funput.funput.theme.store.CustomKeyboardThemeSource
+import app.funput.funput.theme.store.custom.CustomThemeInstaller
+import app.funput.funput.theme.store.customKeyboardThemeStore
 import app.funput.funput.ui.keyboard.openKeyboardSettings
 import app.funput.funput.ui.keyboard.openWebsite
 import app.funput.funput.ui.keyboard.showKeyboardPicker
@@ -31,9 +35,13 @@ import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.settings.SettingsScreen
 import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
 import app.funput.funput.ui.theme.FunputTheme
+import app.funput.funput.ui.theme.custom.CreateCustomThemeScreen
 import app.funput.funput.ui.theme.gallery.ThemeGalleryScreen
+import app.funput.funput.ui.theme.localizedName
 import app.funput.funput.ui.theme.resolveDarkTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun FunputApp() {
@@ -58,6 +66,15 @@ fun FunputApp() {
     val darkTheme = appearanceMode.resolveDarkTheme(isSystemInDarkTheme())
     val websiteUrl = stringResource(R.string.settings_website_url)
     val navigator = rememberAppNavigator()
+    val customThemeStore = remember(context) { context.customKeyboardThemeStore() }
+    val themeRepository = remember(customThemeStore) {
+        InstalledThemeRepository(
+            BuiltInKeyboardThemeSource,
+            CustomKeyboardThemeSource(customThemeStore),
+        )
+    }
+    val customThemeInstaller = remember(customThemeStore) { CustomThemeInstaller(customThemeStore) }
+    val keyboardThemeLabel = themeRepository.resolve(keyboardThemeId).localizedName()
 
     BackHandler(enabled = navigator.canNavigateBack) {
         navigator.navigateBack()
@@ -73,6 +90,7 @@ fun FunputApp() {
                     toneStyle = toneStyle,
                     keySizeProfile = keySizeProfile,
                     keyboardThemeId = keyboardThemeId,
+                    keyboardThemeLabel = keyboardThemeLabel,
                     appearanceMode = appearanceMode,
                     hapticsEnabled = feedback.hapticsEnabled,
                     soundsEnabled = feedback.soundsEnabled,
@@ -97,10 +115,28 @@ fun FunputApp() {
                     onOpenWebsite = { context.openWebsite(websiteUrl) },
                 )
                 AppDestination.THEME_GALLERY -> ThemeGalleryScreen(
-                    themes = LocalKeyboardThemeCatalog.themes,
+                    themes = themeRepository.themes,
                     selectedThemeId = keyboardThemeId,
                     onThemeSelected = { themeId ->
                         scope.launch { keyboardThemeSettings.setTheme(themeId) }
+                    },
+                    onCreateTheme = { navigator.navigate(AppDestination.CREATE_CUSTOM_THEME) },
+                    onBack = navigator::navigateBack,
+                )
+                AppDestination.CREATE_CUSTOM_THEME -> CreateCustomThemeScreen(
+                    baseThemes = BuiltInKeyboardThemeSource.loadThemes(),
+                    onSave = { draft ->
+                        scope.launch {
+                            val descriptor = withContext(Dispatchers.IO) {
+                                customThemeInstaller.install(
+                                    draft = draft,
+                                    baseTheme = themeRepository.resolve(draft.baseThemeId),
+                                    existingThemeIds = themeRepository.themes.map { theme -> theme.id }.toSet(),
+                                )
+                            }
+                            keyboardThemeSettings.setTheme(descriptor.id)
+                            navigator.navigateBack()
+                        }
                     },
                     onBack = navigator::navigateBack,
                 )

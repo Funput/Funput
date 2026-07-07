@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 
-/** Small restorable back stack for the app's current pair of destinations. */
+/** Small restorable back stack for destinations owned by the app shell. */
 @Stable
 internal class AppNavigator private constructor(
     initialBackStack: List<AppDestination>,

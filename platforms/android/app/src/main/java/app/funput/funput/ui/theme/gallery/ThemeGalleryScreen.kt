@@ -31,6 +31,7 @@ internal fun ThemeGalleryScreen(
     themes: List<KeyboardThemeDescriptor>,
     selectedThemeId: KeyboardThemeId,
     onThemeSelected: (KeyboardThemeId) -> Unit,
+    onCreateTheme: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -64,6 +65,9 @@ internal fun ThemeGalleryScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyLarge,
                 )
+            }
+            item(key = "create-theme") {
+                CreateThemeCard(onClick = onCreateTheme)
             }
             if (themes.isEmpty()) {
                 item(key = "empty") {
