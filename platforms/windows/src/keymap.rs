@@ -71,7 +71,7 @@ fn translate_char(kbd: &KBDLLHOOKSTRUCT) -> Option<char> {
     }
     let layout = unsafe { GetKeyboardLayout(0) };
     let mut buf = [0u16; 8];
-    let n = unsafe { ToUnicodeEx(kbd.vkCode, kbd.scanCode, &state, &mut buf, 0, layout) };
+    let n = unsafe { ToUnicodeEx(kbd.vkCode, kbd.scanCode, &state, &mut buf, 0, Some(layout)) };
     if n == 1 {
         char::from_u32(buf[0] as u32)
     } else {
