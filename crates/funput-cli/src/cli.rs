@@ -12,7 +12,11 @@ use funput_core::InputMethod;
 use crate::sim::Method;
 
 #[derive(Debug, Parser)]
-#[command(name = "funput", version, about = "Funput — Vietnamese input, from the terminal")]
+#[command(
+    name = "funput",
+    version,
+    about = "Funput — Vietnamese input, from the terminal"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,

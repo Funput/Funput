@@ -131,7 +131,7 @@ fn tone_key(method: Method, tone: Tone) -> char {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sim::{simulate_with, SimConfig};
+    use crate::sim::{SimConfig, simulate_with};
     use funput_core::ToneStyle;
 
     /// The meaningful property: encoding a word and typing it back reproduces it.
@@ -150,8 +150,8 @@ mod tests {
     // Words chosen to be tone-style-invariant (no oa/oe/uy glide) so both Telex and
     // VNI round-trip exactly under the traditional style.
     const WORDS: &[&str] = &[
-        "đầu", "việt", "nước", "Đắk", "nam", "tiếng", "người", "được", "rượu", "nghiêng",
-        "Ô", "khuỷu",
+        "đầu", "việt", "nước", "Đắk", "nam", "tiếng", "người", "được", "rượu", "nghiêng", "Ô",
+        "khuỷu",
         // `oo` loanwords: the double-o escapes the Telex `oo`→`ô` digraph.
         "boong", "xoong", "soóc", "moóc", "voọc", "coong",
     ];

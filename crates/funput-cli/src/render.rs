@@ -58,7 +58,7 @@ fn show_str(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sim::{simulate, Method};
+    use crate::sim::{Method, simulate};
 
     #[test]
     fn table_has_header_rows_and_summary() {
