@@ -3,7 +3,7 @@
 //! Decides whether a modifier should apply, be ignored, or pass through as a
 //! literal key (non-Vietnamese structure the engine restores later).
 
-use crate::unicode::marks::{tone_on_vowel, vowel_stem, Tone};
+use crate::unicode::marks::{Tone, tone_on_vowel, vowel_stem};
 use crate::validation::parse::{is_valid_onset, parse_syllable};
 use crate::validation::rhyme::{self, is_valid_rhyme};
 
@@ -66,7 +66,8 @@ fn violates_ckg_spelling(onset: &str, nucleus: &str) -> bool {
 fn validate_modifier(buffer: &str) -> ModifierValidation {
     let parts = parse_syllable(buffer);
 
-    if parts.invalid_onset || (!parts.onset.is_empty() && !is_valid_onset(&parts.onset.to_lowercase()))
+    if parts.invalid_onset
+        || (!parts.onset.is_empty() && !is_valid_onset(&parts.onset.to_lowercase()))
     {
         return ModifierValidation::PassThrough;
     }
@@ -258,7 +259,18 @@ mod tests {
         // Complete Vietnamese syllables. `k` + `y` (kỳ/ký/kỹ) and the triphthong
         // `ngoài` are regression guards for tone-placement / ckg-spelling fixes.
         for ok in [
-            "má", "ma", "tét", "việt", "trường", "quá", "ăn", "nhanh", "kỳ", "ký", "kỹ", "ngoài",
+            "má",
+            "ma",
+            "tét",
+            "việt",
+            "trường",
+            "quá",
+            "ăn",
+            "nhanh",
+            "kỳ",
+            "ký",
+            "kỹ",
+            "ngoài",
         ] {
             assert!(is_complete_syllable(ok), "{ok} should be complete");
         }
@@ -315,7 +327,8 @@ mod tests {
         // Alive: still typing, already valid, OR a stop coda awaiting its tone
         // (`nuoc`/`nươc`/`côt` → user types the tone after the coda).
         for alive in [
-            "tẽ", "te", "ng", "ngh", "cả", "cản", "việt", "má", "trươ", "nuoc", "nươc", "côt", "tét",
+            "tẽ", "te", "ng", "ngh", "cả", "cản", "việt", "má", "trươ", "nuoc", "nươc", "côt",
+            "tét",
         ] {
             assert!(!is_definitely_invalid(alive), "{alive} should stay alive");
         }

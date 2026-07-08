@@ -1,5 +1,7 @@
 # funput-core
 
+[English](README.en.md) · **Tiếng Việt**
+
 Crate **thuần logic** gõ tiếng Việt: cho một buffer ký tự Latin + một phím vừa gõ, theo Telex/VNI,
 trả về buffer mới. Không hook bàn phím, không I/O, không config file, không biết
 macOS/Windows/Linux.
@@ -33,6 +35,7 @@ Bề mặt nhỏ và ổn định cho `funput-engine`. Đổi breaking cần đ�
 | `TransformKind` | `Pending` \| `Applied` \| `Reverted` \| `Ignored` |
 | `TransformResult` | `{ kind, text }` — trạng thái sau một phím |
 | `apply(buffer, key, method, tone_style) -> TransformResult` | Transform một bước |
+| `apply_checked(buffer, key, method, tone_style, spell_check) -> TransformResult` | Như `apply` + cổng **kiểm tra chính tả**: khi `spell_check` bật, chỉ đặt dấu nếu kết quả vẫn có thể thành âm tiết VN hợp lệ, ngược lại giữ phím dấu thành ký tự thường (`mix` + ngã → `mĩx` bị chặn). `spell_check = false` ≡ `apply` |
 | `is_valid(buffer) -> bool` | Buffer **có thể** còn là âm tiết VN hợp lệ (lenient) |
 | `is_complete_syllable(buffer) -> bool` | Buffer là âm tiết VN **hoàn chỉnh** (strict) |
 | `is_definitely_invalid(buffer) -> bool` | Buffer **chắc chắn** không thể thành âm tiết VN |
@@ -159,8 +162,11 @@ cargo clippy -p funput-core -- -D warnings
 cargo doc    -p funput-core --no-deps
 ```
 
-Fixture canonical là **Rust const** (không serde, không JSON loader runtime):
-`tests/fixtures/{vni_cases,telex_cases,telex_parity}.rs`. Helper chung ở `tests/support/`.
+Test gom theo bộ gõ: `tests/telex/` (basic, cases, corpus, parity, `properties` — **proptest**,
+regression) và `tests/vni/` (basic, cases, regression), cùng `tests/spellcheck_corpus.rs` cho cổng
+kiểm tra chính tả. Corpus Telex là bảng TSV nạp **compile-time** (`include_str!` →
+`tests/telex/data/telex_corpus.tsv`); các case khác là **Rust const** (không serde, không loader
+runtime). Helper chung ở `tests/support/`.
 
 ## Phụ thuộc & ranh giới
 

@@ -1,8 +1,8 @@
 //! Tone mark placement — modern Vietnamese reposition rules.
 
-use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, tone_on_vowel, vowel_stem};
-use crate::unicode::shapes::{apply_shape, shape_on_vowel, VowelShape};
 use crate::ToneStyle;
+use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, tone_on_vowel, vowel_stem};
+use crate::unicode::shapes::{VowelShape, apply_shape, shape_on_vowel};
 
 struct VowelCluster {
     indices: Vec<usize>,
@@ -91,7 +91,7 @@ pub fn tone_vowel_index(buffer: &str, style: ToneStyle) -> Option<usize> {
 
     // No shaped vowel: structural rule. A coda exists when a (consonant) char
     // follows the last vowel of the cluster.
-    let last_vowel = *cluster.indices.last().expect("cluster is non-empty");
+    let last_vowel = *cluster.indices.last()?;
     let has_coda = last_vowel + 1 < chars.len();
 
     // "Kiểu mới": an open `oa`/`oe`/`uy` takes the tone on the second vowel.
@@ -134,10 +134,10 @@ pub fn tone_target_vowel(buffer: &str, vowel_idx: usize) -> Option<char> {
     // `giế`/`giể`/`giếo`) while leaving `viết`/`giết`/`chiếu` untouched. A cheap char
     // test (no allocation, no rhyme-table scan) keeps `apply` on its hot path.
     let promote = match chars.get(vowel_idx + 1).copied() {
-        None => false,                             // open `ie` → keep `e` (`gié`)
-        Some(c) if is_vowel(c) => vowel_stem(c)    // `ieu` promotes, `ieo` does not
+        None => false, // open `ie` → keep `e` (`gié`)
+        Some(c) if is_vowel(c) => vowel_stem(c) // `ieu` promotes, `ieo` does not
             .is_some_and(|s| s.eq_ignore_ascii_case(&'u')),
-        Some(_) => true,                           // coda consonant → `iê`
+        Some(_) => true, // coda consonant → `iê`
     };
     if !promote {
         return Some(vowel);
@@ -153,7 +153,9 @@ pub fn reposition_existing_tone(buffer: &str, style: ToneStyle) -> Option<String
 
     let mut toned_index: Option<(usize, crate::unicode::marks::Tone)> = None;
     for (i, ch) in buffer.chars().enumerate() {
-        if is_vowel(ch) && let Some(tone) = tone_on_vowel(ch) {
+        if is_vowel(ch)
+            && let Some(tone) = tone_on_vowel(ch)
+        {
             toned_index = Some((i, tone));
             break;
         }

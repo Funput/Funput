@@ -7,12 +7,12 @@ use crate::composition::apply::{
     ends_with_open_uo_horn, remove_tone, shape_apply_target_exists,
 };
 use crate::composition::revert::{try_revert_shape, try_revert_stroke, try_revert_tone};
+use crate::input_method::KeyAction;
 use crate::input_method::telex;
 use crate::input_method::vni;
-use crate::input_method::KeyAction;
 use crate::unicode::tone_position::reposition_existing_tone;
 use crate::validation::syllable::{
-    is_definitely_invalid, validate_shape, validate_stroke, validate_tone, ModifierValidation,
+    ModifierValidation, is_definitely_invalid, validate_shape, validate_stroke, validate_tone,
 };
 use crate::{ToneStyle, TransformKind, TransformResult};
 
@@ -42,7 +42,11 @@ fn spell_check_gate(
     result
 }
 
-fn validation_gate(buffer: &str, key: char, validation: ModifierValidation) -> Option<TransformResult> {
+fn validation_gate(
+    buffer: &str,
+    key: char,
+    validation: ModifierValidation,
+) -> Option<TransformResult> {
     match validation {
         ModifierValidation::Allow => None,
         ModifierValidation::Ignored => Some(TransformResult {
@@ -63,7 +67,13 @@ pub(crate) fn apply_vni(
     style: ToneStyle,
     spell_check: bool,
 ) -> TransformResult {
-    apply_action(buffer, key, vni::classify_key(buffer, key), style, spell_check)
+    apply_action(
+        buffer,
+        key,
+        vni::classify_key(buffer, key),
+        style,
+        spell_check,
+    )
 }
 
 /// Apply one Telex keystroke to `buffer`.
@@ -179,7 +189,7 @@ pub(crate) fn apply_action(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{apply, InputMethod};
+    use crate::{InputMethod, apply};
 
     /// VNI keystroke with the default (traditional) tone style.
     fn av(buffer: &str, key: char) -> TransformResult {
@@ -243,7 +253,10 @@ mod tests {
     fn spell_check_does_not_block_revert() {
         // Double modifier to revert (`ass` → `as`) is a deliberate restore, not an
         // applied diacritic, so the spell-check gate must leave it alone.
-        assert_eq!(apply_telex("á", 's', ToneStyle::Traditional, true).text, "as");
+        assert_eq!(
+            apply_telex("á", 's', ToneStyle::Traditional, true).text,
+            "as"
+        );
     }
 
     #[test]
@@ -393,10 +406,13 @@ mod tests {
         assert_eq!(av("", '6').kind, TransformKind::Ignored);
         assert_eq!(av("ng", '7').kind, TransformKind::Ignored);
         assert_eq!(av("", '1').kind, TransformKind::Ignored);
-        assert_eq!(av("a", 'b'), TransformResult {
-            kind: TransformKind::Pending,
-            text: "ab".into(),
-        });
+        assert_eq!(
+            av("a", 'b'),
+            TransformResult {
+                kind: TransformKind::Pending,
+                text: "ab".into(),
+            }
+        );
     }
 
     #[test]

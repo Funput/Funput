@@ -88,11 +88,7 @@ pub(crate) fn strip_shape(vowel: char) -> Option<char> {
 }
 
 fn case_pair(base: char, lower: char, upper: char) -> char {
-    if base.is_uppercase() {
-        upper
-    } else {
-        lower
-    }
+    if base.is_uppercase() { upper } else { lower }
 }
 
 struct ShapedVowel {
@@ -135,8 +131,12 @@ const SHAPED_VOWELS: &[ShapedVowel] = &[
 ];
 
 fn shaped_entry(shaped_stem: char) -> Option<&'static ShapedVowel> {
-    let lower = char::to_lowercase(shaped_stem).next().unwrap_or(shaped_stem);
-    SHAPED_VOWELS.iter().find(|entry| entry.shaped_lower == lower)
+    let lower = char::to_lowercase(shaped_stem)
+        .next()
+        .unwrap_or(shaped_stem);
+    SHAPED_VOWELS
+        .iter()
+        .find(|entry| entry.shaped_lower == lower)
 }
 
 #[cfg(test)]

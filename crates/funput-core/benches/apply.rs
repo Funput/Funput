@@ -8,8 +8,8 @@
 
 use std::hint::black_box;
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use funput_core::{apply_checked, InputMethod, ToneStyle};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use funput_core::{InputMethod, ToneStyle, apply_checked};
 
 // Realistic typing with tones, circumflex/horn/breve and the `đ` stroke.
 const TELEX: &str = "tooi yeeu tieesng vieejt nam ddaats nuwowcs hoom nay troiwf ddepj";

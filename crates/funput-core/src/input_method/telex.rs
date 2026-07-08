@@ -24,8 +24,8 @@
 
 use crate::composition::apply::uo_pair_in_vowel_cluster;
 use crate::input_method::KeyAction;
-use crate::unicode::marks::{is_vowel, tone_on_vowel, vowel_stem, Tone};
-use crate::unicode::shapes::{shape_on_vowel, shape_target_index, strip_shape, VowelShape};
+use crate::unicode::marks::{Tone, is_vowel, tone_on_vowel, vowel_stem};
+use crate::unicode::shapes::{VowelShape, shape_on_vowel, shape_target_index, strip_shape};
 
 /// Map Telex tone keys to tone marks.
 pub fn tone_from_key(key: char) -> Option<Tone> {
@@ -47,7 +47,9 @@ pub fn classify_key(buffer: &str, key: char) -> KeyAction {
     if let Some(action) = classify_digraph(buffer, key) {
         return action;
     }
-    if key.eq_ignore_ascii_case(&'w') && let Some(action) = classify_w(buffer) {
+    if key.eq_ignore_ascii_case(&'w')
+        && let Some(action) = classify_w(buffer)
+    {
         return action;
     }
     if let Some(action) = classify_revert_circumflex(buffer, key) {
@@ -274,7 +276,10 @@ mod tests {
         assert_eq!(classify_key("u", 'w'), KeyAction::Shape(VowelShape::Horn));
         assert_eq!(classify_key("uo", 'w'), KeyAction::Shape(VowelShape::Horn));
         assert_eq!(classify_key("tru", 'w'), KeyAction::Shape(VowelShape::Horn));
-        assert_eq!(classify_key("nuoc", 'w'), KeyAction::Shape(VowelShape::Horn));
+        assert_eq!(
+            classify_key("nuoc", 'w'),
+            KeyAction::Shape(VowelShape::Horn)
+        );
     }
 
     #[test]
@@ -310,12 +315,18 @@ mod tests {
     fn classify_w_anywhere_in_syllable() {
         // `w` typed after the coda still shapes the nucleus — `lam` + `w` → breve
         // (→ `lăm`), `con` + `w` → horn (→ `cơn`).
-        assert_eq!(classify_key("lam", 'w'), KeyAction::Shape(VowelShape::Breve));
+        assert_eq!(
+            classify_key("lam", 'w'),
+            KeyAction::Shape(VowelShape::Breve)
+        );
         assert_eq!(classify_key("an", 'w'), KeyAction::Shape(VowelShape::Breve));
         assert_eq!(classify_key("con", 'w'), KeyAction::Shape(VowelShape::Horn));
         assert_eq!(classify_key("tun", 'w'), KeyAction::Shape(VowelShape::Horn));
         // `uo` compound after a coda already worked and still does.
-        assert_eq!(classify_key("nuoc", 'w'), KeyAction::Shape(VowelShape::Horn));
+        assert_eq!(
+            classify_key("nuoc", 'w'),
+            KeyAction::Shape(VowelShape::Horn)
+        );
         // No shapeable nucleus → `w` is a literal.
         assert_eq!(classify_key("eng", 'w'), KeyAction::Normal);
         assert_eq!(classify_key("ng", 'w'), KeyAction::Normal);
@@ -344,13 +355,25 @@ mod tests {
         // `mua` + `w` → `mưa`, `ngua` + `w` → `ngưa`.
         assert_eq!(classify_key("nua", 'w'), KeyAction::Shape(VowelShape::Horn));
         assert_eq!(classify_key("mua", 'w'), KeyAction::Shape(VowelShape::Horn));
-        assert_eq!(classify_key("ngua", 'w'), KeyAction::Shape(VowelShape::Horn));
+        assert_eq!(
+            classify_key("ngua", 'w'),
+            KeyAction::Shape(VowelShape::Horn)
+        );
         assert_eq!(classify_key("ua", 'w'), KeyAction::Shape(VowelShape::Horn));
         // `qu` glide: the `u` is part of the onset, so the `a` takes the breve.
-        assert_eq!(classify_key("qua", 'w'), KeyAction::Shape(VowelShape::Breve));
-        assert_eq!(classify_key("Qua", 'w'), KeyAction::Shape(VowelShape::Breve));
+        assert_eq!(
+            classify_key("qua", 'w'),
+            KeyAction::Shape(VowelShape::Breve)
+        );
+        assert_eq!(
+            classify_key("Qua", 'w'),
+            KeyAction::Shape(VowelShape::Breve)
+        );
         // `oa` still breves the `a` (`xoăn`), unaffected by the `ua` rule.
-        assert_eq!(classify_key("hoa", 'w'), KeyAction::Shape(VowelShape::Breve));
+        assert_eq!(
+            classify_key("hoa", 'w'),
+            KeyAction::Shape(VowelShape::Breve)
+        );
         // Toned `u` still classifies as horn (the apply layer keeps the tone → `ứa`).
         assert_eq!(classify_key("úa", 'w'), KeyAction::Shape(VowelShape::Horn));
         // Already-horned `ưa` classifies as horn too — the transform layer sees no
@@ -361,7 +384,10 @@ mod tests {
 
     #[test]
     fn classify_revert_triggers() {
-        assert_eq!(classify_key("â", 'a'), KeyAction::Shape(VowelShape::Circumflex));
+        assert_eq!(
+            classify_key("â", 'a'),
+            KeyAction::Shape(VowelShape::Circumflex)
+        );
         assert_eq!(classify_key("ơ", 'w'), KeyAction::Shape(VowelShape::Horn));
         assert_eq!(classify_key("đ", 'd'), KeyAction::Stroke);
         assert_eq!(classify_key("á", 's'), KeyAction::Tone(Tone::Sac));

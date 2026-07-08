@@ -7,18 +7,57 @@
 //! are never rejected (else spell-check would wrongly block a real word); and
 //! (b) **precision** — structurally-plausible non-syllables are rejected.
 
-use funput_core::{apply_checked, is_complete_syllable, InputMethod, ToneStyle, TransformKind};
+use funput_core::{InputMethod, ToneStyle, TransformKind, apply_checked, is_complete_syllable};
 
 /// Real Vietnamese syllables (incl. established loanwords / onomatopoeia). Each MUST
 /// be accepted as a complete syllable — otherwise spell-check would block a real word.
 const MUST_ACCEPT: &[&str] = &[
     // Everyday vocabulary across the rhyme space.
-    "ăn", "uống", "người", "nghiêng", "được", "trường", "khỏe", "thúy", "quỳnh", "khuỷu", "hươu",
-    "rượu", "khuya", "nghệ", "ngoại", "huỳnh", "quặng", "thoăn", "choắt",
+    "ăn",
+    "uống",
+    "người",
+    "nghiêng",
+    "được",
+    "trường",
+    "khỏe",
+    "thúy",
+    "quỳnh",
+    "khuỷu",
+    "hươu",
+    "rượu",
+    "khuya",
+    "nghệ",
+    "ngoại",
+    "huỳnh",
+    "quặng",
+    "thoăn",
+    "choắt",
     // The loanword / onomatopoeia rhymes added in Mức B (each previously blocked).
-    "buýt", "huýt", "suýt", "quýt", "quỵt", "giêng", "giếng", "giềng", "yểng", "tuýp", "tuyn",
-    "luyn", "xoong", "boong", "soóc", "moóc", "oăm", "khoằm", "huých", "uỵch", "khuều", "ngoao",
-    "ngoém", "héc", "véc",
+    "buýt",
+    "huýt",
+    "suýt",
+    "quýt",
+    "quỵt",
+    "giêng",
+    "giếng",
+    "giềng",
+    "yểng",
+    "tuýp",
+    "tuyn",
+    "luyn",
+    "xoong",
+    "boong",
+    "soóc",
+    "moóc",
+    "oăm",
+    "khoằm",
+    "huých",
+    "uỵch",
+    "khuều",
+    "ngoao",
+    "ngoém",
+    "héc",
+    "véc",
 ];
 
 /// Toned forms that are NOT valid Vietnamese but are structurally close enough to
@@ -33,14 +72,20 @@ const MUST_REJECT: &[&str] = &[
 #[test]
 fn corpus_real_syllables_accepted() {
     for &s in MUST_ACCEPT {
-        assert!(is_complete_syllable(s), "real syllable wrongly rejected: {s}");
+        assert!(
+            is_complete_syllable(s),
+            "real syllable wrongly rejected: {s}"
+        );
     }
 }
 
 #[test]
 fn corpus_nonsyllables_rejected() {
     for &s in MUST_REJECT {
-        assert!(!is_complete_syllable(s), "non-syllable wrongly accepted: {s}");
+        assert!(
+            !is_complete_syllable(s),
+            "non-syllable wrongly accepted: {s}"
+        );
     }
 }
 
@@ -90,7 +135,10 @@ fn tay_nguyen_place_names_accepted() {
         "kông",  // k + ô — loanword/toponym (Hồng Kông, Kông Chro)
         "pơng",  // ơng rhyme (Chư Pơng)
     ] {
-        assert!(is_complete_syllable(s), "Tây Nguyên name wrongly rejected: {s}");
+        assert!(
+            is_complete_syllable(s),
+            "Tây Nguyên name wrongly rejected: {s}"
+        );
     }
 }
 
@@ -119,7 +167,10 @@ fn tay_nguyen_out_of_scope_still_rejected() {
 #[test]
 fn final_k_does_not_overaccept_english() {
     for &s in &["book", "look", "rock", "tank"] {
-        assert!(!is_complete_syllable(s), "English word wrongly accepted: {s}");
+        assert!(
+            !is_complete_syllable(s),
+            "English word wrongly accepted: {s}"
+        );
     }
 }
 
