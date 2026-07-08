@@ -26,13 +26,13 @@ pub unsafe extern "C" fn funput_add_shortcut(
     expansion: *const u32,
     expansion_len: usize,
 ) {
-    support::safe((), || {
-        if let Some(engine) = unsafe { engine.as_mut() } {
-            let trigger = unsafe { string_from_utf32(trigger, trigger_len) };
-            let expansion = unsafe { string_from_utf32(expansion, expansion_len) };
-            engine.inner.add_shortcut(trigger, expansion);
-        }
-    })
+    unsafe {
+        support::with_engine_mut(engine, |e| {
+            let trigger = string_from_utf32(trigger, trigger_len);
+            let expansion = string_from_utf32(expansion, expansion_len);
+            e.add_shortcut(trigger, expansion);
+        })
+    }
 }
 
 /// Remove every text-expansion shortcut. Combine with [`funput_add_shortcut`] to
@@ -42,11 +42,7 @@ pub unsafe extern "C" fn funput_add_shortcut(
 /// `engine` must be a valid handle or null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_clear_shortcuts(engine: *mut FunputEngine) {
-    support::safe((), || {
-        if let Some(engine) = unsafe { engine.as_mut() } {
-            engine.inner.clear_shortcuts();
-        }
-    })
+    unsafe { support::with_engine_mut(engine, |e| e.clear_shortcuts()) }
 }
 
 /// Decode `len` UTF-32 codepoints at `ptr` into a `String`, skipping invalid
@@ -58,6 +54,5 @@ unsafe fn string_from_utf32(ptr: *const u32, len: usize) -> String {
     if ptr.is_null() {
         return String::new();
     }
-    let slice = unsafe { std::slice::from_raw_parts(ptr, len) };
-    slice.iter().filter_map(|&c| char::from_u32(c)).collect()
+    support::decode_codepoints(unsafe { std::slice::from_raw_parts(ptr, len) })
 }

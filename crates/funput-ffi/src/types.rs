@@ -2,6 +2,8 @@
 
 use funput_engine::{Action, ImeResult};
 
+use crate::support;
+
 /// Max output codepoints carried inline. Generous enough for English-restore of
 /// long words; longer output is truncated (practically never happens).
 pub const CHARS_CAP: usize = 64;
@@ -44,14 +46,7 @@ impl FunputResult {
         };
 
         let mut chars = [0u32; CHARS_CAP];
-        let mut count = 0usize;
-        for ch in result.output.chars() {
-            if count >= CHARS_CAP {
-                break;
-            }
-            chars[count] = ch as u32;
-            count += 1;
-        }
+        let count = support::copy_codepoints(&mut chars, result.output.chars());
 
         Self {
             action,
@@ -64,10 +59,14 @@ impl FunputResult {
     /// Output codepoints as a `String` — test helper.
     #[cfg(test)]
     pub(crate) fn output_string(&self) -> String {
-        self.chars[..self.count as usize]
-            .iter()
-            .filter_map(|&c| char::from_u32(c))
-            .collect()
+        support::decode_codepoints(&self.chars[..self.count as usize])
+    }
+}
+
+/// The no-op result, so generic boundary helpers can use `R::default()`.
+impl Default for FunputResult {
+    fn default() -> Self {
+        Self::none()
     }
 }
 

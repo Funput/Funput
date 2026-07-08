@@ -1,5 +1,6 @@
 //! Composition operations exposed over the C ABI: feed keys, read the composed
-//! buffer, and reset state.
+//! buffer, and reset state. Each wraps [`support::with_engine_mut`] /
+//! [`support::with_engine_ref`], which null-check the handle and guard against panics.
 
 use crate::FunputEngine;
 use crate::support;
@@ -12,11 +13,7 @@ use crate::types::FunputResult;
 /// `engine` must be a valid handle or null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_arm_capitalization(engine: *mut FunputEngine) {
-    support::safe((), || {
-        if let Some(engine) = unsafe { engine.as_mut() } {
-            engine.inner.arm_capitalization();
-        }
-    })
+    unsafe { support::with_engine_mut(engine, |e| e.arm_capitalization()) }
 }
 
 /// Reset composition state (buffer + raw keys), e.g. on focus change.
@@ -25,11 +22,7 @@ pub unsafe extern "C" fn funput_arm_capitalization(engine: *mut FunputEngine) {
 /// `engine` must be a valid handle or null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_clear(engine: *mut FunputEngine) {
-    support::safe((), || {
-        if let Some(engine) = unsafe { engine.as_mut() } {
-            engine.inner.clear();
-        }
-    })
+    unsafe { support::with_engine_mut(engine, |e| e.clear()) }
 }
 
 /// Process one Unicode scalar. Returns the platform instruction by value.
@@ -43,15 +36,12 @@ pub unsafe extern "C" fn funput_process_char(
     engine: *mut FunputEngine,
     codepoint: u32,
 ) -> FunputResult {
-    support::safe(FunputResult::none(), || {
-        let Some(engine) = (unsafe { engine.as_mut() }) else {
-            return FunputResult::none();
-        };
-        let Some(ch) = char::from_u32(codepoint) else {
-            return FunputResult::none();
-        };
-        FunputResult::from_ime(&engine.inner.process_char(ch))
-    })
+    unsafe {
+        support::with_engine_mut(engine, |e| match char::from_u32(codepoint) {
+            Some(ch) => FunputResult::from_ime(&e.process_char(ch)),
+            None => FunputResult::none(),
+        })
+    }
 }
 
 /// Copy the current composed buffer (the text the host shows as marked/underlined
@@ -69,23 +59,15 @@ pub unsafe extern "C" fn funput_buffer(
     out: *mut u32,
     cap: usize,
 ) -> usize {
-    support::safe(0, || {
-        let Some(engine) = (unsafe { engine.as_ref() }) else {
-            return 0;
-        };
-        if out.is_null() {
-            return 0;
-        }
-        let mut count = 0;
-        for ch in engine.inner.buffer().chars() {
-            if count >= cap {
-                break;
+    unsafe {
+        support::with_engine_ref(engine, |e| {
+            if out.is_null() {
+                return 0;
             }
-            unsafe { *out.add(count) = ch as u32 };
-            count += 1;
-        }
-        count
-    })
+            let dst = std::slice::from_raw_parts_mut(out, cap);
+            support::copy_codepoints(dst, e.buffer().chars())
+        })
+    }
 }
 
 /// Backspace inside the current composition: drop the last composed character so
@@ -98,12 +80,7 @@ pub unsafe extern "C" fn funput_buffer(
 /// `engine` must be a valid handle or null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_backspace(engine: *mut FunputEngine) -> FunputResult {
-    support::safe(FunputResult::none(), || {
-        let Some(engine) = (unsafe { engine.as_mut() }) else {
-            return FunputResult::none();
-        };
-        FunputResult::from_ime(&engine.inner.on_backspace())
-    })
+    unsafe { support::with_engine_mut(engine, |e| FunputResult::from_ime(&e.on_backspace())) }
 }
 
 /// Flip the word being composed between its Vietnamese form and its raw keystrokes
@@ -116,10 +93,5 @@ pub unsafe extern "C" fn funput_backspace(engine: *mut FunputEngine) -> FunputRe
 /// `engine` must be a valid handle or null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_flip_composing(engine: *mut FunputEngine) -> FunputResult {
-    support::safe(FunputResult::none(), || {
-        let Some(engine) = (unsafe { engine.as_mut() }) else {
-            return FunputResult::none();
-        };
-        FunputResult::from_ime(&engine.inner.flip_composing())
-    })
+    unsafe { support::with_engine_mut(engine, |e| FunputResult::from_ime(&e.flip_composing())) }
 }
