@@ -18,9 +18,9 @@
 ---
 
 **Funput** is an open-source Vietnamese input method released for macOS,
-Windows, and Linux. Android support is in development, with iOS planned next.
-Every platform shares the same processing core to provide consistent typing
-behavior across operating systems.
+Windows, and Linux. Android is in closed testing on Google Play, with iOS
+planned next. Every platform shares the same processing core to provide
+consistent typing behavior across operating systems.
 
 ## Get started
 
@@ -43,7 +43,7 @@ behavior across operating systems.
   <img src="https://img.shields.io/badge/Windows-Released-22C55E?style=for-the-badge&logo=windows&logoColor=white" alt="Windows: released">
   <img src="https://img.shields.io/badge/Linux-Released-22C55E?style=for-the-badge&logo=linux&logoColor=white" alt="Linux: released">
   <br>
-  <img src="https://img.shields.io/badge/Android-In_development-EAB308?style=for-the-badge&logo=android&logoColor=white" alt="Android: in development">
+  <img src="https://img.shields.io/badge/Android-Closed_testing-EAB308?style=for-the-badge&logo=android&logoColor=white" alt="Android: closed testing">
   <img src="https://img.shields.io/badge/iOS-Planned-555555?style=for-the-badge&logo=apple&logoColor=white" alt="iOS: planned">
 </p>
 

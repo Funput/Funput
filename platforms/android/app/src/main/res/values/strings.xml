@@ -33,9 +33,17 @@
     <string name="theme_gallery_title">Chủ đề bàn phím</string>
     <string name="theme_gallery_description">Chọn phong cách phù hợp với cách bạn gõ.</string>
     <string name="theme_gallery_back_description">Quay lại</string>
+    <string name="theme_gallery_system_section">Theme hệ thống</string>
+    <string name="theme_gallery_user_section">Theme của bạn</string>
     <string name="theme_gallery_selected">Đang sử dụng</string>
     <string name="theme_gallery_edit">Sửa</string>
     <string name="theme_gallery_edit_description">Sửa theme %1$s</string>
+    <string name="theme_gallery_delete">Xóa</string>
+    <string name="theme_gallery_delete_description">Xóa theme %1$s</string>
+    <string name="theme_gallery_delete_dialog_title">Xóa theme?</string>
+    <string name="theme_gallery_delete_dialog_body">Theme “%1$s” sẽ bị xóa khỏi máy. Bạn vẫn có thể tạo lại theme mới sau.</string>
+    <string name="theme_gallery_delete_confirm">Xóa theme</string>
+    <string name="theme_gallery_delete_cancel">Giữ lại</string>
     <string name="theme_gallery_author">Bởi %1$s</string>
     <string name="theme_gallery_empty">Chưa có chủ đề nào.</string>
     <string name="theme_gallery_create_title">Tạo theme riêng</string>

@@ -24,11 +24,7 @@ import app.funput.funput.ime.settings.KeyboardThemeSettings
 import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.SmartCompositionSettings
 import app.funput.funput.ime.settings.ToneStyleSettings
-import app.funput.funput.theme.BuiltInKeyboardThemeSource
-import app.funput.funput.theme.InstalledThemeRepository
 import app.funput.funput.theme.KeyboardThemeId
-import app.funput.funput.theme.store.CustomKeyboardThemeSource
-import app.funput.funput.theme.store.custom.CustomThemeInstaller
 import app.funput.funput.theme.store.customKeyboardThemeStore
 import app.funput.funput.ui.keyboard.openKeyboardSettings
 import app.funput.funput.ui.keyboard.openWebsite
@@ -38,8 +34,8 @@ import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.settings.SettingsScreen
 import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
 import app.funput.funput.ui.theme.FunputTheme
-import app.funput.funput.ui.theme.custom.CustomThemeSaveHandler
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
+import app.funput.funput.ui.theme.custom.rememberCustomThemeServices
 import app.funput.funput.ui.theme.gallery.ThemeGalleryScreen
 import app.funput.funput.ui.theme.localizedName
 import app.funput.funput.ui.theme.resolveDarkTheme
@@ -69,16 +65,10 @@ fun FunputApp() {
     val websiteUrl = stringResource(R.string.settings_website_url)
     val navigator = rememberAppNavigator()
     val customThemeStore = remember(context) { context.customKeyboardThemeStore() }
-    val themeRepository = remember(customThemeStore) {
-        InstalledThemeRepository(
-            BuiltInKeyboardThemeSource,
-            CustomKeyboardThemeSource(customThemeStore),
-        )
-    }
-    val customThemeInstaller = remember(customThemeStore) { CustomThemeInstaller(customThemeStore) }
-    val customThemeSaveHandler = remember(themeRepository, customThemeInstaller, keyboardThemeSettings) {
-        CustomThemeSaveHandler(themeRepository, customThemeInstaller, keyboardThemeSettings)
-    }
+    val themeRepository = remember(customThemeStore) { installedThemeRepository(customThemeStore) }
+    val customThemeServices = rememberCustomThemeServices(themeRepository, customThemeStore, keyboardThemeSettings)
+    var themeCatalogRevision by remember { mutableStateOf(0) }
+    val installedThemes = remember(themeRepository, themeCatalogRevision) { themeRepository.themes }
     val keyboardThemeLabel = themeRepository.resolve(keyboardThemeId).localizedName()
     var editingThemeId by remember { mutableStateOf<KeyboardThemeId?>(null) }
 
@@ -119,7 +109,7 @@ fun FunputApp() {
                     onOpenWebsite = { context.openWebsite(websiteUrl) },
                 )
                 AppDestination.THEME_GALLERY -> ThemeGalleryScreen(
-                    themes = themeRepository.themes,
+                    themes = installedThemes,
                     selectedThemeId = keyboardThemeId,
                     onThemeSelected = { themeId ->
                         scope.launch { keyboardThemeSettings.setTheme(themeId) }
@@ -132,13 +122,20 @@ fun FunputApp() {
                         editingThemeId = themeId
                         navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
                     },
+                    onDeleteTheme = { themeId ->
+                        scope.launch {
+                            customThemeServices.deleteHandler.delete(themeId, keyboardThemeId)
+                            themeCatalogRevision += 1
+                        }
+                    },
                     onBack = navigator::navigateBack,
                 )
                 AppDestination.CREATE_CUSTOM_THEME -> CustomThemeStudioRoute(
                     editingThemeId = editingThemeId,
                     themeRepository = themeRepository,
-                    saveHandler = customThemeSaveHandler,
+                    saveHandler = customThemeServices.saveHandler,
                     onDone = {
+                        themeCatalogRevision += 1
                         editingThemeId = null
                         navigator.navigateBack()
                     },

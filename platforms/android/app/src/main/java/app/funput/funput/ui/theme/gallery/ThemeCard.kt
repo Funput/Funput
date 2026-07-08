@@ -4,28 +4,19 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
@@ -39,6 +30,7 @@ internal fun ThemeCard(
     selected: Boolean,
     onSelected: () -> Unit,
     onEdit: (() -> Unit)?,
+    onDelete: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val title = descriptor.localizedName()
@@ -50,7 +42,6 @@ internal fun ThemeCard(
         color = MaterialTheme.colorScheme.surfaceVariant,
         border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
         modifier = modifier
-            .fillMaxWidth()
             .testTag(descriptor.id.value)
             .selectable(
                 selected = selected,
@@ -63,7 +54,6 @@ internal fun ThemeCard(
                 theme = descriptor.theme,
                 backgroundImage = descriptor.backgroundImage,
                 modifier = Modifier
-                    .fillMaxWidth()
                     .height(190.dp)
                     .clip(PreviewShape),
             )
@@ -86,55 +76,9 @@ internal fun ThemeCard(
                     title = title,
                     selected = selected,
                     onEdit = onEdit,
+                    onDelete = onDelete,
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun ThemeActions(
-    title: String,
-    selected: Boolean,
-    onEdit: (() -> Unit)?,
-) {
-    val editDescription = stringResource(R.string.theme_gallery_edit_description, title)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        onEdit?.let {
-            TextButton(onClick = it) {
-                Text(
-                    text = stringResource(R.string.theme_gallery_edit),
-                    modifier = Modifier.semantics {
-                        contentDescription = editDescription
-                    },
-                )
-            }
-        }
-        if (selected) SelectedBadge()
-    }
-}
-
-@Composable
-private fun SelectedBadge() {
-    Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        shape = RoundedCornerShape(50),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_check),
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(modifier = Modifier.width(5.dp))
-            Text(
-                text = stringResource(R.string.theme_gallery_selected),
-                style = MaterialTheme.typography.labelLarge,
-            )
         }
     }
 }

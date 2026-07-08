@@ -37,6 +37,7 @@ private fun GalleryPreview(appearanceMode: AppearanceMode) {
             onThemeSelected = {},
             onCreateTheme = {},
             onEditTheme = {},
+            onDeleteTheme = {},
             onBack = {},
         )
     }

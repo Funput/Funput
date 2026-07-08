@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.funput.funput.theme.InstalledThemeRepository
 import app.funput.funput.theme.KeyboardThemeDescriptor
@@ -27,6 +28,7 @@ class ThemeGalleryScreenTest {
         var backRequested = false
         var createRequested = false
         var editedThemeId: KeyboardThemeId? = null
+        var deletedThemeId: KeyboardThemeId? = null
         val repository = InstalledThemeRepository.builtIn()
         val customTheme = KeyboardThemeDescriptor(
             id = KeyboardThemeId.of("custom.ocean"),
@@ -46,6 +48,7 @@ class ThemeGalleryScreenTest {
                     onThemeSelected = { selectedThemeId = it },
                     onCreateTheme = { createRequested = true },
                     onEditTheme = { themeId -> editedThemeId = themeId },
+                    onDeleteTheme = { themeId -> deletedThemeId = themeId },
                     onBack = { backRequested = true },
                 )
             }
@@ -53,6 +56,8 @@ class ThemeGalleryScreenTest {
 
         compose.onNodeWithContentDescription("Tạo theme riêng").performClick()
         compose.onNodeWithContentDescription("Sửa theme Ocean").performClick()
+        compose.onNodeWithContentDescription("Xóa theme Ocean").performClick()
+        compose.onNodeWithText("Xóa theme").performClick()
         compose.onNodeWithTag("dark").assertIsSelected()
         compose.onNodeWithTag("light").assertIsNotSelected().performClick()
         compose.onNodeWithContentDescription("Quay lại").performClick()
@@ -60,6 +65,7 @@ class ThemeGalleryScreenTest {
         compose.runOnIdle {
             assertEquals(KeyboardThemeId.Light, selectedThemeId)
             assertEquals(customTheme.id, editedThemeId)
+            assertEquals(customTheme.id, deletedThemeId)
             assertTrue(createRequested)
             assertTrue(backRequested)
         }
