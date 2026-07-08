@@ -7,7 +7,7 @@ license.workspace = true
 [dependencies]
 
 [dev-dependencies]
-criterion = { version = "0.8", features = ["html_reports"] }
+criterion = { version = "0.8.2", features = ["html_reports"] }
 proptest = "1.11.0"
 
 [[bench]]
