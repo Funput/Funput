@@ -1,5 +1,7 @@
 # funput-ffi
 
+[English](README.en.md) · **Tiếng Việt**
+
 Biên **C ABI** cho `funput-engine` — để shell **không phải Rust** gọi engine qua hàm C. Engine chạy
 trong `.dylib`/`.so`/`.a`; phía native (Swift, C++) load và gọi.
 
@@ -16,7 +18,9 @@ platform.
 
 Handle-based; kết quả trả **theo giá trị** (POD, không cần free); input là **codepoint** (platform
 tự map keycode → char). Mọi hàm **null-safe** (handle null / codepoint không hợp lệ → kết quả
-`None`).
+`None`) và **panic-safe**: mọi entry point chạm engine chạy trong `support::safe()`
+(`catch_unwind`), nên panic trong engine bị chặn tại biên và trả kết quả no-op — **không bao giờ**
+unwind sang host (điều sẽ abort cả tiến trình IME).
 
 ```c
 typedef struct FunputEngine FunputEngine;   // opaque handle
@@ -85,7 +89,11 @@ IMKInputController.handle (Swift)
 ## Cấu trúc & build
 
 ```
-src/lib.rs          # extern "C" exports + opaque FunputEngine (newtype quanh Engine)
+src/lib.rs          # module root: opaque FunputEngine + new/free + re-export surface
+src/config.rs       # 7 setter: method/tone_style/enabled/smart|eager_restore/spell/autocap
+src/compose.rs      # process_char/backspace/flip_composing/clear/arm/buffer
+src/shortcuts.rs    # add_shortcut/clear_shortcuts (gõ tắt)
+src/support.rs      # safe(): catch_unwind guard cho biên C
 src/types.rs        # #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 cbindgen.toml
 scripts/gen-header.sh

@@ -164,10 +164,34 @@ FunputResult funput_process_char(FunputEngine *engine, uint32_t codepoint);
 uintptr_t funput_buffer(const FunputEngine *engine, uint32_t *out, uintptr_t cap);
 
 /**
+ * Backspace inside the current composition: drop the last composed character so
+ * the next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`).
+ *
+ * Returns a no-op result — the host passes the Backspace through to delete one
+ * character in the app.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+FunputResult funput_backspace(FunputEngine *engine);
+
+/**
+ * Flip the word being composed between its Vietnamese form and its raw keystrokes
+ * (`card` ⇄ `cải`), and back on a second call. Returns the delete+inject the host
+ * should apply (`ACTION_SEND`), or [`FunputResult::none`] when there is nothing to
+ * flip. Hosts that show marked text can ignore the payload and re-render
+ * [`funput_buffer`] after a non-`ACTION_NONE` result.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+FunputResult funput_flip_composing(FunputEngine *engine);
+
+/**
  * Define a text-expansion shortcut (gõ tắt): typing `trigger` then a word boundary
  * injects `expansion` (`vn` → `Việt Nam`). Both strings are passed as UTF-32
- * (`*const u32` + length), matching [`funput_buffer`]. An empty trigger is ignored
- * by the engine; re-adding a trigger overwrites it.
+ * (`*const u32` + length), matching [`crate::funput_buffer`]. An empty trigger is
+ * ignored by the engine; re-adding a trigger overwrites it.
  *
  * Hosts sync the whole table by calling [`funput_clear_shortcuts`] then adding each
  * entry (the engine is a runtime mirror of the host's config).
@@ -194,30 +218,6 @@ void funput_add_shortcut(FunputEngine *engine,
  * `engine` must be a valid handle or null.
  */
 void funput_clear_shortcuts(FunputEngine *engine);
-
-/**
- * Backspace inside the current composition: drop the last composed character so
- * the next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`).
- *
- * Returns a no-op result — the host passes the Backspace through to delete one
- * character in the app.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-FunputResult funput_backspace(FunputEngine *engine);
-
-/**
- * Flip the word being composed between its Vietnamese form and its raw keystrokes
- * (`card` ⇄ `cải`), and back on a second call. Returns the delete+inject the host
- * should apply (`ACTION_SEND`), or [`FunputResult::none`] when there is nothing to
- * flip. Hosts that show marked text can ignore the payload and re-render
- * [`funput_buffer`] after a non-`ACTION_NONE` result.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-FunputResult funput_flip_composing(FunputEngine *engine);
 
 #ifdef __cplusplus
 }  // extern "C"
