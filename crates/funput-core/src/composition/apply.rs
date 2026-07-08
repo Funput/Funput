@@ -26,7 +26,10 @@ pub(crate) fn apply_stroke(buffer: &str) -> TransformResult {
     let Some(idx) = chars.iter().rposition(|c| matches!(c, 'd' | 'D')) else {
         return ignored(buffer);
     };
-    chars[idx] = stroke_d(chars[idx]).expect("d/D always strokes");
+    let Some(struck) = stroke_d(chars[idx]) else {
+        return ignored(buffer);
+    };
+    chars[idx] = struck;
     TransformResult {
         kind: TransformKind::Applied,
         text: chars.into_iter().collect(),
@@ -39,7 +42,9 @@ pub(crate) fn apply_tone_key(buffer: &str, tone: Tone, style: ToneStyle) -> Tran
         return ignored(buffer);
     };
 
-    let vowel = buffer.chars().nth(vowel_idx).expect("vowel index in bounds");
+    let Some(vowel) = buffer.chars().nth(vowel_idx) else {
+        return ignored(buffer);
+    };
     let tone_target = tone_target_vowel(buffer, vowel_idx).unwrap_or(vowel);
     let Some(toned) = apply_tone_to_vowel(tone_target, tone) else {
         return ignored(buffer);
@@ -87,7 +92,9 @@ pub(crate) fn apply_shape_key(buffer: &str, shape: VowelShape) -> TransformResul
         return ignored(buffer);
     };
 
-    let vowel = buffer.chars().nth(vowel_idx).expect("vowel index in bounds");
+    let Some(vowel) = buffer.chars().nth(vowel_idx) else {
+        return ignored(buffer);
+    };
     let Some(shaped) = apply_shape_to_vowel(vowel, shape) else {
         return ignored(buffer);
     };

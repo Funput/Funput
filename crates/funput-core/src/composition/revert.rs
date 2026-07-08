@@ -12,7 +12,9 @@ use crate::ToneStyle;
 
 pub(crate) fn replace_char_at(buffer: &str, char_idx: usize, new_ch: char) -> String {
     let mut chars: Vec<char> = buffer.chars().collect();
-    chars[char_idx] = new_ch;
+    if let Some(slot) = chars.get_mut(char_idx) {
+        *slot = new_ch;
+    }
     chars.into_iter().collect()
 }
 

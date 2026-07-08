@@ -39,9 +39,12 @@ pub fn classify_key(_buffer: &str, key: char) -> KeyAction {
     match key {
         '0' => KeyAction::RemoveTone,
         '9' => KeyAction::Stroke,
-        '1'..='5' => KeyAction::Tone(tone_from_digit(key).expect("digit 1-5")),
-        '6'..='8' => KeyAction::Shape(shape_from_digit(key).expect("digit 6-8")),
-        _ => KeyAction::Normal,
+        // Drive the digit ranges off the mapping helpers themselves, so the
+        // classification can never disagree with what they actually cover.
+        _ => tone_from_digit(key)
+            .map(KeyAction::Tone)
+            .or_else(|| shape_from_digit(key).map(KeyAction::Shape))
+            .unwrap_or(KeyAction::Normal),
     }
 }
 

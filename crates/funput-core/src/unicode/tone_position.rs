@@ -91,7 +91,7 @@ pub fn tone_vowel_index(buffer: &str, style: ToneStyle) -> Option<usize> {
 
     // No shaped vowel: structural rule. A coda exists when a (consonant) char
     // follows the last vowel of the cluster.
-    let last_vowel = *cluster.indices.last().expect("cluster is non-empty");
+    let last_vowel = *cluster.indices.last()?;
     let has_coda = last_vowel + 1 < chars.len();
 
     // "Kiểu mới": an open `oa`/`oe`/`uy` takes the tone on the second vowel.
