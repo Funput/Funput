@@ -21,10 +21,28 @@ use crate::sim::{Method, SimConfig, simulate_with};
 /// than silently guessed at runtime.
 const CORPUS_NOISE: &[&str] = &[
     // Two tone marks in one syllable.
-    "chưởì", "cướì", "cưỡì", "dướỉ", "dịệp", "lèõ", "lưỡì", "lưỡí", "lưỡỉ", "lạị",
-    "ngườì", "ngườí", "ngồí", "phổí",
+    "chưởì",
+    "cướì",
+    "cưỡì",
+    "dướỉ",
+    "dịệp",
+    "lèõ",
+    "lưỡì",
+    "lưỡí",
+    "lưỡỉ",
+    "lạị",
+    "ngườì",
+    "ngườí",
+    "ngồí",
+    "phổí",
     // Tone on the wrong vowel (engine produces the correctly-placed spelling).
-    "ngươí", "ngóeo", "quoắt", "rià", "sóoc", "tơì", "tươì",
+    "ngươí",
+    "ngóeo",
+    "quoắt",
+    "rià",
+    "sóoc",
+    "tơì",
+    "tươì",
 ];
 
 /// A token is a testable Vietnamese syllable when (a) it is not a known-malformed

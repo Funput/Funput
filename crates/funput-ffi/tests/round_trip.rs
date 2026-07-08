@@ -1,9 +1,9 @@
 //! Round-trip tests: drive the `extern "C"` API exactly like a C caller would.
 
 use funput_ffi::{
-    funput_add_shortcut, funput_backspace, funput_buffer, funput_clear, funput_clear_shortcuts,
-    funput_engine_free, funput_engine_new, funput_process_char, funput_set_method, FunputResult,
-    ACTION_NONE, ACTION_SEND,
+    ACTION_NONE, ACTION_SEND, FunputResult, funput_add_shortcut, funput_backspace, funput_buffer,
+    funput_clear, funput_clear_shortcuts, funput_engine_free, funput_engine_new,
+    funput_process_char, funput_set_method,
 };
 
 fn output(result: &FunputResult) -> String {
@@ -142,7 +142,10 @@ fn buffer_reflects_marked_text() {
 fn buffer_null_safe() {
     let mut out = [0u32; 8];
     unsafe {
-        assert_eq!(funput_buffer(std::ptr::null(), out.as_mut_ptr(), out.len()), 0);
+        assert_eq!(
+            funput_buffer(std::ptr::null(), out.as_mut_ptr(), out.len()),
+            0
+        );
         let engine = funput_engine_new();
         assert_eq!(funput_buffer(engine, std::ptr::null_mut(), 8), 0);
         funput_engine_free(engine);
@@ -218,7 +221,13 @@ fn shortcut_null_safe() {
         // Null handle: must not crash.
         funput_clear_shortcuts(std::ptr::null_mut());
         let t = [b'v' as u32, b'n' as u32];
-        funput_add_shortcut(std::ptr::null_mut(), t.as_ptr(), t.len(), t.as_ptr(), t.len());
+        funput_add_shortcut(
+            std::ptr::null_mut(),
+            t.as_ptr(),
+            t.len(),
+            t.as_ptr(),
+            t.len(),
+        );
 
         // Null string pointers are treated as empty (empty trigger is ignored).
         let engine = funput_engine_new();

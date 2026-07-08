@@ -6,7 +6,7 @@
 use std::io::{self, BufRead, Write};
 
 use crate::render::steps_table;
-use crate::sim::{simulate, Method};
+use crate::sim::{Method, simulate};
 
 pub fn run(method: Method, steps: bool) {
     let name = match method {
