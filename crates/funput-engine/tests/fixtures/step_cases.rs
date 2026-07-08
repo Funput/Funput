@@ -44,22 +44,28 @@ pub const STEP_CASES: &[StepCase] = &[
     StepCase {
         method: InputMethod::Telex,
         keys: "as",
-        steps: &[TELEX_NONE, ExpectedStep {
-            action: Action::Send,
-            backspace: 1,
-            output: "á",
-        }],
+        steps: &[
+            TELEX_NONE,
+            ExpectedStep {
+                action: Action::Send,
+                backspace: 1,
+                output: "á",
+            },
+        ],
         final_buffer: "á",
         label: "telex tone sac",
     },
     StepCase {
         method: InputMethod::Telex,
         keys: "dd",
-        steps: &[TELEX_NONE, ExpectedStep {
-            action: Action::Send,
-            backspace: 1,
-            output: "đ",
-        }],
+        steps: &[
+            TELEX_NONE,
+            ExpectedStep {
+                action: Action::Send,
+                backspace: 1,
+                output: "đ",
+            },
+        ],
         final_buffer: "đ",
         label: "telex stroke dd",
     },
