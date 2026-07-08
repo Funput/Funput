@@ -1,5 +1,7 @@
 # funput-engine
 
+[English](README.en.md) · **Tiếng Việt**
+
 Crate **điều phối có trạng thái**: nhận từng phím theo thời gian, giữ buffer đang soạn, gọi
 `funput-core` rồi trả về một `ImeResult` cho biết **platform cần làm gì** (xoá mấy ký tự, chèn chuỗi
 gì). Không hook bàn phím, không inject, không C ABI, không UI.
@@ -41,11 +43,15 @@ preedit/marked text…); logic inject không thuộc crate này.
 | `new()` | Tạo engine (mặc định: bật, Telex, Traditional) |
 | `process_char(key: char) -> ImeResult` | Xử lý một Unicode scalar (platform tự map keycode → char) |
 | `on_backspace() -> ImeResult` | User bấm Backspace khi đang soạn → đồng bộ buffer |
+| `flip_composing() -> ImeResult` | Lật từ đang soạn giữa dạng tiếng Việt ⇄ phím thô (`card` ⇄ `cải`); lựa chọn dính (sticky) cho phần còn lại của từ |
 | `set_enabled(bool)` / `is_enabled()` | Bật/tắt gõ tiếng Việt (English pass-through) |
 | `set_method(InputMethod)` / `method()` | Telex ↔ VNI |
 | `set_tone_style(ToneStyle)` / `tone_style()` | Kiểu đặt dấu (truyền thống `hòa` / hiện đại `hoà`) |
 | `set_smart_restore(bool)` | Tự khôi phục từ không phải tiếng Việt về Latin gốc |
 | `set_eager_restore(bool)` | Khôi phục ngay khi biết chắc, không đợi dấu cách |
+| `set_spell_check(bool)` | Kiểm tra chính tả — chỉ đặt dấu nếu kết quả vẫn có thể là âm tiết VN hợp lệ |
+| `set_auto_capitalize(bool)` | Tự động viết hoa chữ đầu câu |
+| `arm_capitalization()` | "Nạp" viết hoa cho từ kế tiếp (platform gọi khi text field được focus) |
 | `clear()` | Reset buffer + keys (ranh giới từ, đổi focus) |
 | `buffer() -> &str` | Text đang soạn — platform dùng để vẽ preedit/marked text |
 | `keys() -> &str` | Chuỗi phím thô từ ranh giới từ gần nhất — dùng để khôi phục tiếng Anh |
@@ -54,7 +60,8 @@ preedit/marked text…); logic inject không thuộc crate này.
 | `clear_shortcuts()` | Xoá toàn bộ bảng gõ tắt (clear + add lại = replace-all khi sync config) |
 | `shortcuts() -> &HashMap<String, String>` | Đọc bảng gõ tắt hiện tại |
 
-4 method gõ tắt là thay đổi **additive** lên API E4 (chỉ thêm, không phá vỡ surface cũ).
+Spell-check, auto-capitalize, flip và 4 method gõ tắt đều là thay đổi **additive** lên API E4 (chỉ
+thêm, không phá vỡ surface cũ).
 
 Re-export: `Action`, `ImeResult` (từ `result.rs`). Đổi breaking cần đồng bộ semver với `funput-ffi`.
 
@@ -113,6 +120,18 @@ việc này ngay khi buffer trở thành dead-end thay vì đợi dấu cách.
 Không từ điển: từ tiếng Anh tình cờ là âm tiết VN hợp lệ (`test` → `tét`) sẽ **không** auto-restore
 — đổi lại không bao giờ phá tiếng Việt đang gõ đúng (giống UniKey không từ điển).
 
+## Lật VN ⇄ phím thô (flip)
+
+`flip_composing()` lật **từ đang soạn** giữa dạng tiếng Việt và chuỗi phím thô (`card` ⇄ `cải`), lật
+lại ở lần gọi kế. Trả `Send` (xoá + chèn) cho host gõ text thật, hoặc `None` khi không có gì để lật
+(chưa soạn, hoặc dạng VN trùng phím thô như `the`). Vì chỉ thao tác trên từ *chưa commit*, host chỉ
+việc vẽ lại marked text — hoạt động ở mọi app.
+
+Lựa chọn **dính (sticky)**: sau khi lật, các phím tiếp theo giữ dạng đã chọn và ranh giới từ sẽ
+**không** khôi phục tiếng Anh ngược lại. Override được reset theo từng từ (`clear()`). Logic ở
+`flip.rs`; `session.vn_form` giữ lại dạng VN trước khi eager-restore kịp thu gọn buffer, để lật khôi
+phục được ngay cả sau khi đã restore.
+
 ## Gõ tắt / Text expansion (macro)
 
 Bảng trigger → expansion do người dùng định nghĩa (`vn` → `Việt Nam`, `kg` → `không`). Tại **ranh
@@ -135,9 +154,10 @@ chỉ `clear_shortcuts()` mới xoá. Engine không đọc/ghi file — platform
 src/
 ├── lib.rs        # Engine + public API, re-export Action/ImeResult
 ├── result.rs     # Action, ImeResult
-├── session.rs    # state: enabled, method, tone_style, buffer, keys, smart/eager restore
+├── session.rs    # state: enabled, method, tone_style, buffer, keys, các toggle (restore/spell/autocap), shortcuts, flip override
 ├── pipeline.rs   # process(session, key): TransformKind → ImeResult
 ├── boundary.rs   # ranh giới từ + quyết định English restore
+├── flip.rs       # lật VN ⇄ phím thô cho từ đang soạn (sticky override)
 └── diff.rs       # buffer diff → (backspace, output)
 ```
 
@@ -158,6 +178,9 @@ cargo clippy -p funput-engine -- -D warnings
 cargo doc    -p funput-engine --no-deps
 ```
 
-`tests/`: step vectors Telex/VNI (`telex_steps.rs`, `vni_steps.rs`), ranh giới từ
-(`word_boundary.rs`), khôi phục tiếng Anh (`english_restore.rs`), fixture regression
-(`engine_fixtures.rs` + `fixtures/step_cases.rs`), helper ở `support/`.
+`tests/` gom theo chủ đề — mỗi nhóm là một test binary (file entry) + thư mục con:
+
+- `methods/` (telex, vni) · `restore/` (english, toggle) · `diacritics/` (placement, remove_tone,
+  stroke) · `words/` (boundary, shortcut).
+- `engine_api.rs`: end-to-end public `Engine` API. `engine_fixtures.rs` + `fixtures/step_cases.rs`:
+  fixture regression (`engine_full_regression`). Helper dùng chung ở `support/`.
