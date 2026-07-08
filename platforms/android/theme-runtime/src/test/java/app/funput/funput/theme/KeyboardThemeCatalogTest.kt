@@ -2,25 +2,59 @@ package app.funput.funput.theme
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class KeyboardThemeCatalogTest {
     @Test
-    fun defaultThemeIsDark() {
-        assertSame(KeyboardThemes.Dark, KeyboardThemeCatalog.default())
+    fun localCatalogContainsBuiltInThemesInDisplayOrder() {
+        assertEquals(
+            listOf(KeyboardThemeId.Dark, KeyboardThemeId.Light),
+            LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::id),
+        )
+        assertEquals(
+            listOf(KeyboardThemeOrigin.BUILT_IN, KeyboardThemeOrigin.BUILT_IN),
+            LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::origin),
+        )
     }
 
     @Test
-    fun fromIdResolvesKnownPresetsAndFallsBackToDark() {
-        assertEquals(KeyboardThemeId.DARK, KeyboardThemeId.fromId("dark"))
-        assertEquals(KeyboardThemeId.LIGHT, KeyboardThemeId.fromId("light"))
-        assertEquals(KeyboardThemeId.DARK, KeyboardThemeId.fromId(null))
-        assertEquals(KeyboardThemeId.DARK, KeyboardThemeId.fromId("unknown"))
+    fun localCatalogUsesDarkAsDefault() {
+        assertEquals(KeyboardThemeId.Dark, LocalKeyboardThemeCatalog.defaultTheme.id)
+        assertSame(KeyboardThemes.Dark, LocalKeyboardThemeCatalog.defaultTheme.theme)
     }
 
     @Test
-    fun resolveMapsIdsToThemePresets() {
-        assertSame(KeyboardThemes.Dark, KeyboardThemeCatalog.resolve(KeyboardThemeId.DARK))
-        assertSame(KeyboardThemes.Light, KeyboardThemeCatalog.resolve(KeyboardThemeId.LIGHT))
+    fun resolveReturnsKnownThemeAndFallsBackForUnknownTheme() {
+        assertSame(
+            KeyboardThemes.Light,
+            LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.Light).theme,
+        )
+        assertSame(
+            KeyboardThemes.Dark,
+            LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.of("future-theme")).theme,
+        )
+    }
+
+    @Test
+    fun catalogRejectsDuplicateIdentifiers() {
+        val theme = LocalKeyboardThemeCatalog.defaultTheme
+
+        assertThrows(IllegalArgumentException::class.java) {
+            KeyboardThemeCatalog(
+                themes = listOf(theme, theme.copy(name = "Duplicate")),
+                defaultThemeId = theme.id,
+            )
+        }
+    }
+
+    @Test
+    fun catalogRequiresItsDefaultThemeToBePresent() {
+        assertThrows(IllegalArgumentException::class.java) {
+            KeyboardThemeCatalog(
+                themes = listOf(LocalKeyboardThemeCatalog.defaultTheme),
+                defaultThemeId = KeyboardThemeId.Light,
+            )
+        }
     }
 }

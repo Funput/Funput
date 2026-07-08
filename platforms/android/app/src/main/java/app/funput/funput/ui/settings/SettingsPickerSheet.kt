@@ -7,7 +7,6 @@ import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.ui.settings.components.PreferencePickerSheet
 
 @Composable
@@ -16,12 +15,10 @@ internal fun SettingsPickerSheet(
     inputMethod: KeyboardInputMethod,
     toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
-    keyboardThemeId: KeyboardThemeId,
     appearanceMode: AppearanceMode,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
-    onKeyboardThemeSelected: (KeyboardThemeId) -> Unit,
     onAppearanceSelected: (AppearanceMode) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -45,13 +42,6 @@ internal fun SettingsPickerSheet(
             options = keySizeOptions(),
             selected = keySizeProfile,
             onSelected = onKeySizeSelected,
-            onDismiss = onDismiss,
-        )
-        SettingsPicker.KEYBOARD_THEME -> PreferencePickerSheet(
-            title = stringResource(R.string.settings_keyboard_theme_title),
-            options = keyboardThemeOptions(),
-            selected = keyboardThemeId,
-            onSelected = onKeyboardThemeSelected,
             onDismiss = onDismiss,
         )
         SettingsPicker.APPEARANCE -> PreferencePickerSheet(

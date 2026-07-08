@@ -8,6 +8,7 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 import app.funput.funput.theme.KeyboardTheme
+import app.funput.funput.theme.KeyboardThemeBackgroundImage
 
 internal fun FunputKeyboardView.configureForEditor(
     inputMethod: KeyboardInputMethod,
@@ -16,12 +17,14 @@ internal fun FunputKeyboardView.configureForEditor(
     feedback: KeyboardFeedbackPreferences,
     sizingProfile: KeyboardSizingProfile,
     keyboardTheme: KeyboardTheme,
+    keyboardThemeBackgroundImage: KeyboardThemeBackgroundImage?,
     systemInputMethodSwitcherVisible: Boolean,
 ) {
     showLettersPanel()
     this.inputMethod = inputMethod
     this.sizingProfile = sizingProfile
     this.keyboardTheme = keyboardTheme
+    this.keyboardThemeBackgroundImage = keyboardThemeBackgroundImage
     this.systemInputMethodSwitcherVisible = systemInputMethodSwitcherVisible
     editorMode = policy.editorMode
     suggestionBarEnabled = KeyboardFeatures.SuggestionsEnabled && policy.showsSuggestionBar

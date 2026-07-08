@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.rendering
 
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.LinearGradient
 import android.graphics.Paint
@@ -12,7 +13,8 @@ import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.theme.KeyboardTheme
-import app.funput.funput.theme.KeyboardThemeCatalog
+import app.funput.funput.theme.KeyboardThemeBackgroundImage
+import app.funput.funput.theme.LocalKeyboardThemeCatalog
 
 /** Draws a fully resolved keyboard without owning Android view state. */
 internal class KeyboardCanvasRenderer(resources: Resources) {
@@ -22,7 +24,8 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
     private val keyPopupRenderer = KeyPopupRenderer(metrics)
     private val suggestionBarRenderer = SuggestionBarRenderer(metrics)
     private val toolbarLogoRenderer = ToolbarLogoRenderer(resources)
-    private var theme: KeyboardTheme = KeyboardThemeCatalog.default()
+    private val backgroundImageRenderer = KeyboardBackgroundImageRenderer()
+    private var theme: KeyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
 
     fun updateTheme(theme: KeyboardTheme, width: Int, height: Int) {
         this.theme = theme
@@ -56,6 +59,8 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         width: Int,
         height: Int,
         keyboard: ResolvedKeyboard,
+        backgroundImage: KeyboardThemeBackgroundImage?,
+        backgroundBitmap: Bitmap?,
         suggestions: List<String>,
         pressedKeys: PressedKeyState,
         shiftState: ShiftState,
@@ -64,6 +69,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         secure: Boolean,
     ) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
+        backgroundImageRenderer.draw(canvas, backgroundBitmap, backgroundImage, width, height)
         keyboard.suggestionBar?.let { bar ->
             if (bar.suggestionsEnabled) {
                 suggestionBarRenderer.draw(canvas, bar, suggestions, pressedKeys)

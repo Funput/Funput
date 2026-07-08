@@ -13,7 +13,6 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.ui.FunputKeyboardView
-import app.funput.funput.theme.KeyboardThemeCatalog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,6 +23,7 @@ class FunputInputMethodService : InputMethodService() {
     private val editor = InputConnectionEditor()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val systemInputMethodSwitcher by lazy { SystemInputMethodSwitcher(this) }
+    private val themeRepository by lazy { installedImeThemeRepository() }
     private var keyboardView: FunputKeyboardView? = null
     private lateinit var nativeEngine: NativeVietnameseEngine
     private lateinit var actionHandler: ImeKeyActionHandler
@@ -92,9 +92,8 @@ class FunputInputMethodService : InputMethodService() {
         editorRuntime.updateCapitalization()
     }
 
-    override fun onDisplayCompletions(completions: Array<out CompletionInfo>?) {
+    override fun onDisplayCompletions(completions: Array<out CompletionInfo>?) =
         editorRuntime.updateCompletions(completions)
-    }
 
     override fun onFinishInput() {
         actionHandler.finish()
@@ -129,15 +128,19 @@ class FunputInputMethodService : InputMethodService() {
         keyboardView?.inputMethod = method
     }
 
-    private fun updateInputView(view: FunputKeyboardView) = view.configureForEditor(
-        inputMethod = settings.inputMethod,
-        policy = editorRuntime.policy,
-        currentLanguage = actionHandler.language,
-        feedback = settings.feedback,
-        sizingProfile = settings.sizingProfile,
-        keyboardTheme = KeyboardThemeCatalog.resolve(settings.keyboardThemeId),
-        systemInputMethodSwitcherVisible = systemInputMethodSwitcher.isAvailable(),
-    )
+    private fun updateInputView(view: FunputKeyboardView) {
+        val descriptor = themeRepository.resolve(settings.keyboardThemeId)
+        view.configureForEditor(
+            inputMethod = settings.inputMethod,
+            policy = editorRuntime.policy,
+            currentLanguage = actionHandler.language,
+            feedback = settings.feedback,
+            sizingProfile = settings.sizingProfile,
+            keyboardTheme = descriptor.theme,
+            keyboardThemeBackgroundImage = descriptor.backgroundImage,
+            systemInputMethodSwitcherVisible = systemInputMethodSwitcher.isAvailable(),
+        )
+    }
 
     private fun onSuggestionSelected(selection: SuggestionSelection) {
         if (!editorRuntime.selectCompletion(selection, actionHandler::finish)) {

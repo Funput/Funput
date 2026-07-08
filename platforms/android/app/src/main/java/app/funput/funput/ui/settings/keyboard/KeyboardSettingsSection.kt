@@ -12,7 +12,6 @@ import app.funput.funput.R
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.ui.settings.SettingsPicker
 import app.funput.funput.ui.settings.components.SettingsDivider
 import app.funput.funput.ui.settings.components.SettingsGroup
@@ -30,8 +29,9 @@ internal fun KeyboardSettingsSection(
     inputMethod: KeyboardInputMethod,
     toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
-    keyboardThemeId: KeyboardThemeId,
+    keyboardThemeLabel: String,
     onOpenPicker: (SettingsPicker) -> Unit,
+    onOpenThemeGallery: () -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
@@ -72,10 +72,10 @@ internal fun KeyboardSettingsSection(
             SettingsDivider()
             SettingsRow(
                 title = stringResource(R.string.settings_keyboard_theme_title),
-                value = keyboardThemeId.label(),
+                value = keyboardThemeLabel,
                 iconRes = R.drawable.ic_keyboard_theme,
                 iconBackground = BrandBlue,
-                onClick = { onOpenPicker(SettingsPicker.KEYBOARD_THEME) },
+                onClick = onOpenThemeGallery,
             )
         }
     }

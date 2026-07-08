@@ -36,7 +36,8 @@ class KeyboardThemeSettings(context: Context) {
 }
 
 internal object KeyboardThemeSettingCodec {
-    fun encode(themeId: KeyboardThemeId): String = themeId.id
+    fun encode(themeId: KeyboardThemeId): String = themeId.value
 
-    fun decode(value: String?): KeyboardThemeId = KeyboardThemeId.fromId(value)
+    fun decode(value: String?): KeyboardThemeId =
+        KeyboardThemeId.parseOrNull(value) ?: KeyboardThemeId.Default
 }
