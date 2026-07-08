@@ -1,5 +1,3 @@
-mod support;
-
 use funput_core::InputMethod;
 use funput_engine::Action;
 
@@ -22,7 +20,7 @@ fn telex_as_step_by_step() {
 
 #[test]
 fn telex_dd_stroke() {
-    let (buffer, results) = support::type_keys(InputMethod::Telex, "dd");
+    let (buffer, results) = crate::support::type_keys(InputMethod::Telex, "dd");
     assert_eq!(buffer, "đ");
     assert_eq!(results[0].action, Action::None);
     assert_eq!(results[1].action, Action::Send);
@@ -33,7 +31,7 @@ fn telex_dd_stroke() {
 #[test]
 fn telex_ass_revert_tone() {
     // Double tone key restores raw keystrokes: "á" + "s" → "as".
-    let (buffer, results) = support::type_keys(InputMethod::Telex, "ass");
+    let (buffer, results) = crate::support::type_keys(InputMethod::Telex, "ass");
     assert_eq!(buffer, "as");
     assert_eq!(results.len(), 3);
     assert_eq!(results[0].action, Action::None);
@@ -43,7 +41,7 @@ fn telex_ass_revert_tone() {
 
 #[test]
 fn telex_ngs_literal() {
-    let (buffer, results) = support::type_keys(InputMethod::Telex, "ngs");
+    let (buffer, results) = crate::support::type_keys(InputMethod::Telex, "ngs");
     assert_eq!(buffer, "ngs");
     assert_eq!(results[2].action, Action::None);
     assert_eq!(results[2].backspace, 0);
@@ -53,7 +51,7 @@ fn telex_ngs_literal() {
 #[test]
 fn telex_truowng_complex() {
     assert_eq!(
-        support::type_keys_buffer(InputMethod::Telex, "truowng"),
+        crate::support::type_keys_buffer(InputMethod::Telex, "truowng"),
         "trương"
     );
 }

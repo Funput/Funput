@@ -1,34 +1,44 @@
-mod support;
-
 use funput_core::InputMethod;
 use funput_engine::{Action, Engine};
 
 #[test]
 fn telex_valid_vn_keeps_composed_on_space() {
-    assert_eq!(support::app_text(InputMethod::Telex, "mas "), "má ");
+    assert_eq!(crate::support::app_text(InputMethod::Telex, "mas "), "má ");
 }
 
 #[test]
 fn telex_english_restore_on_space() {
-    assert_eq!(support::app_text(InputMethod::Telex, "absc "), "absc ");
+    assert_eq!(
+        crate::support::app_text(InputMethod::Telex, "absc "),
+        "absc "
+    );
 }
 
 #[test]
 fn telex_pass_through_english_no_restore() {
-    assert_eq!(support::app_text(InputMethod::Telex, "file "), "file ");
+    assert_eq!(
+        crate::support::app_text(InputMethod::Telex, "file "),
+        "file "
+    );
 }
 
 #[test]
 fn telex_english_restore_on_punctuation() {
-    assert_eq!(support::app_text(InputMethod::Telex, "absc,"), "absc,");
+    assert_eq!(
+        crate::support::app_text(InputMethod::Telex, "absc,"),
+        "absc,"
+    );
 }
 
 #[test]
 fn revert_then_space_keeps_reverted_word() {
     // "mix" → "mĩ"; double `x` reverts to "mix"; pressing Space must NOT re-restore
     // the stale raw keystrokes ("mixx"). The revert is the user's final intent.
-    assert_eq!(support::app_text(InputMethod::Telex, "mixx "), "mix ");
-    assert_eq!(support::app_text(InputMethod::Vni, "a11 "), "a1 ");
+    assert_eq!(
+        crate::support::app_text(InputMethod::Telex, "mixx "),
+        "mix "
+    );
+    assert_eq!(crate::support::app_text(InputMethod::Vni, "a11 "), "a1 ");
 }
 
 #[test]
