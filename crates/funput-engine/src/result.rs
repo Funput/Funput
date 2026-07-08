@@ -18,8 +18,8 @@ pub enum Action {
 /// Output of processing one keystroke.
 ///
 /// Rust-native shape for ergonomic use and testing. `funput-ffi` marshals this
-/// into its `#[repr(C)]` struct (`backspace: u8`, `chars: [u32; 32]`, `count: u8`)
-/// at the FFI boundary — the 32-char / `u8` limits live there, not here.
+/// into its `#[repr(C)]` struct (`backspace: u32`, `chars: [u32; 64]`, `count: u32`)
+/// at the FFI boundary — the 64-char cap lives there, not here.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImeResult {
     /// Platform action for this keystroke.
