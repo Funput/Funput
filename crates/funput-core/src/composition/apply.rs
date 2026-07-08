@@ -4,8 +4,10 @@
 //! resolved by a classifier, so VNI and Telex share them unchanged.
 
 use crate::composition::replace_char_at;
-use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, stroke_d, tone_on_vowel, vowel_stem, Tone};
-use crate::unicode::shapes::{apply_shape, apply_shape_to_vowel, shape_target_index, VowelShape};
+use crate::unicode::marks::{
+    Tone, apply_tone_to_vowel, is_vowel, stroke_d, tone_on_vowel, vowel_stem,
+};
+use crate::unicode::shapes::{VowelShape, apply_shape, apply_shape_to_vowel, shape_target_index};
 use crate::unicode::tone_position::{tone_target_vowel, tone_vowel_index};
 use crate::{ToneStyle, TransformKind, TransformResult};
 

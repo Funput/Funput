@@ -5,10 +5,10 @@
 //!
 //! [`apply_action`]: crate::composition::transform::apply_action
 
-use crate::unicode::marks::{tone_on_vowel, vowel_stem, Tone};
-use crate::unicode::shapes::{shape_on_vowel, shaped_vowel_index, strip_shape, VowelShape};
-use crate::unicode::tone_position::tone_vowel_index;
 use crate::ToneStyle;
+use crate::unicode::marks::{Tone, tone_on_vowel, vowel_stem};
+use crate::unicode::shapes::{VowelShape, shape_on_vowel, shaped_vowel_index, strip_shape};
+use crate::unicode::tone_position::tone_vowel_index;
 
 pub(crate) fn replace_char_at(buffer: &str, char_idx: usize, new_ch: char) -> String {
     let mut chars: Vec<char> = buffer.chars().collect();
@@ -72,7 +72,9 @@ fn try_revert_uo_compound(buffer: &str) -> Option<String> {
 
 /// Revert shape when the same shape key is pressed on the shaped vowel.
 pub fn try_revert_shape(buffer: &str, shape: VowelShape) -> Option<String> {
-    if shape == VowelShape::Horn && let Some(text) = try_revert_uo_compound(buffer) {
+    if shape == VowelShape::Horn
+        && let Some(text) = try_revert_uo_compound(buffer)
+    {
         return Some(text);
     }
 
@@ -95,15 +97,30 @@ mod tests {
 
     #[test]
     fn revert_tone() {
-        assert_eq!(try_revert_tone("á", Tone::Sac, ToneStyle::Traditional),Some("a".into()));
-        assert_eq!(try_revert_tone("hòa", Tone::Huyen, ToneStyle::Traditional), Some("hoa".into()));
-        assert_eq!(try_revert_tone("a", Tone::Sac, ToneStyle::Traditional),None);
-        assert_eq!(try_revert_tone("à", Tone::Sac, ToneStyle::Traditional),None);
+        assert_eq!(
+            try_revert_tone("á", Tone::Sac, ToneStyle::Traditional),
+            Some("a".into())
+        );
+        assert_eq!(
+            try_revert_tone("hòa", Tone::Huyen, ToneStyle::Traditional),
+            Some("hoa".into())
+        );
+        assert_eq!(
+            try_revert_tone("a", Tone::Sac, ToneStyle::Traditional),
+            None
+        );
+        assert_eq!(
+            try_revert_tone("à", Tone::Sac, ToneStyle::Traditional),
+            None
+        );
     }
 
     #[test]
     fn revert_shape() {
-        assert_eq!(try_revert_shape("â", VowelShape::Circumflex), Some("a".into()));
+        assert_eq!(
+            try_revert_shape("â", VowelShape::Circumflex),
+            Some("a".into())
+        );
         assert_eq!(try_revert_shape("ă", VowelShape::Breve), Some("a".into()));
         assert_eq!(try_revert_shape("ươ", VowelShape::Horn), Some("uo".into()));
         assert_eq!(try_revert_shape("a", VowelShape::Circumflex), None);
@@ -111,6 +128,9 @@ mod tests {
 
     #[test]
     fn revert_tone_keeps_shape() {
-        assert_eq!(try_revert_tone("ấ", Tone::Sac, ToneStyle::Traditional),Some("â".into()));
+        assert_eq!(
+            try_revert_tone("ấ", Tone::Sac, ToneStyle::Traditional),
+            Some("â".into())
+        );
     }
 }

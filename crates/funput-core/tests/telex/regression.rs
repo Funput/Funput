@@ -1,4 +1,3 @@
-
 use funput_core::InputMethod;
 
 #[test]

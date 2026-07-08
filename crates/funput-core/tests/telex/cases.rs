@@ -85,10 +85,8 @@ pub const CASES: &[TelexCase] = &[
     },
 ];
 
-pub const WORD_CASES: &[TelexWordCase] = &[
-    TelexWordCase {
-        words: "xins chaof banj",
-        output: "xín chào bạn",
-        label: "multi-word greeting",
-    },
-];
+pub const WORD_CASES: &[TelexWordCase] = &[TelexWordCase {
+    words: "xins chaof banj",
+    output: "xín chào bạn",
+    label: "multi-word greeting",
+}];

@@ -17,26 +17,21 @@ const VALID_RHYMES: &[&str] = &[
     // Open (no coda)
     "a", "e", "ê", "i", "o", "ô", "ơ", "u", "ư", "y", "ia", "ya", "ai", "ao", "au", "ay", "âu",
     "ây", "eo", "êu", "iu", "oa", "oe", "oi", "ôi", "ơi", "ua", "ui", "uê", "uy", "uơ", "ưa", "ưi",
-    "ưu", "oai", "oay", "oeo", "uôi", "uây", "uya", "uyu", "ươi", "ươu", "iêu", "yêu", "oao", "uêu",
-    // -m
+    "ưu", "oai", "oay", "oeo", "uôi", "uây", "uya", "uyu", "ươi", "ươu", "iêu", "yêu", "oao",
+    "uêu", // -m
     "am", "ăm", "âm", "em", "êm", "im", "om", "ôm", "ơm", "um", "iêm", "yêm", "uôm", "ươm", "oam",
-    "oăm", "oem",
-    // -p
+    "oăm", "oem", // -p
     "ap", "ăp", "âp", "ep", "êp", "ip", "op", "ôp", "ơp", "up", "iêp", "ươp", "oap", "uyp",
     // -n
     "an", "ăn", "ân", "en", "ên", "in", "on", "ôn", "ơn", "un", "ưn", "iên", "yên", "uôn", "ươn",
-    "oan", "oăn", "oen", "uân", "uyên", "uyn",
-    // -t
+    "oan", "oăn", "oen", "uân", "uyên", "uyn", // -t
     "at", "ăt", "ât", "et", "êt", "it", "ot", "ôt", "ơt", "ut", "ưt", "iêt", "yêt", "uôt", "ươt",
-    "oat", "oăt", "oet", "uât", "uyêt", "yt", "uyt",
-    // -ng
+    "oat", "oăt", "oet", "uât", "uyêt", "yt", "uyt", // -ng
     "ang", "ăng", "âng", "eng", "ong", "ông", "ung", "ưng", "iêng", "uông", "ương", "oang", "oăng",
-    "uâng", "oong", "êng", "yêng", "ơng",
-    // -c
+    "uâng", "oong", "êng", "yêng", "ơng", // -c
     "ac", "ăc", "âc", "oc", "ôc", "uc", "ưc", "iêc", "uôc", "ươc", "oac", "oăc", "ec", "ooc",
     // -nh
-    "anh", "ênh", "inh", "ynh", "uynh", "uênh", "oanh",
-    // -ch
+    "anh", "ênh", "inh", "ynh", "uynh", "uênh", "oanh", // -ch
     "ach", "êch", "ich", "uêch", "oach", "uych",
 ];
 

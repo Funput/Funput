@@ -87,7 +87,12 @@ pub struct TransformResult {
 /// ```
 pub use validation::syllable::{is_complete_syllable, is_definitely_invalid, is_valid};
 
-pub fn apply(buffer: &str, key: char, method: InputMethod, tone_style: ToneStyle) -> TransformResult {
+pub fn apply(
+    buffer: &str,
+    key: char,
+    method: InputMethod,
+    tone_style: ToneStyle,
+) -> TransformResult {
     apply_checked(buffer, key, method, tone_style, false)
 }
 

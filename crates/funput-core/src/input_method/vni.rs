@@ -67,7 +67,10 @@ mod tests {
 
     #[test]
     fn classify_shapes() {
-        assert_eq!(classify_key("", '6'), KeyAction::Shape(VowelShape::Circumflex));
+        assert_eq!(
+            classify_key("", '6'),
+            KeyAction::Shape(VowelShape::Circumflex)
+        );
         assert_eq!(classify_key("", '7'), KeyAction::Shape(VowelShape::Horn));
         assert_eq!(classify_key("", '8'), KeyAction::Shape(VowelShape::Breve));
     }

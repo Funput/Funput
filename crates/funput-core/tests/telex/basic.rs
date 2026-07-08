@@ -1,5 +1,4 @@
-
-use funput_core::{apply, InputMethod, ToneStyle, TransformKind, TransformResult};
+use funput_core::{InputMethod, ToneStyle, TransformKind, TransformResult, apply};
 
 fn type_keys(keys: &str) -> String {
     crate::support::type_keys(InputMethod::Telex, keys)

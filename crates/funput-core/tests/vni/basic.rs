@@ -1,5 +1,4 @@
-
-use funput_core::{apply, InputMethod, ToneStyle, TransformKind};
+use funput_core::{InputMethod, ToneStyle, TransformKind, apply};
 
 #[test]
 fn vni_stroke_d9() {
@@ -29,19 +28,34 @@ fn vni_syllables_with_tone() {
 
 #[test]
 fn vni_longer_syllables() {
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "trung1"), "trúng");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "trung1"),
+        "trúng"
+    );
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "ban5"), "bạn");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "nem1"), "ném");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "dep1"), "dép");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "sinh1"), "sính");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "nuoc1"), "nuóc");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "dung2"), "dùng");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "thanh1"), "thánh");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "thanh1"),
+        "thánh"
+    );
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "nghe1"), "nghé");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "phong1"), "phóng");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "phong1"),
+        "phóng"
+    );
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "dong2"), "dòng");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "thang1"), "tháng");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "d9i5nh"), "định");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "thang1"),
+        "tháng"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "d9i5nh"),
+        "định"
+    );
 }
 
 #[test]
@@ -83,12 +97,27 @@ fn vni_shape_basic() {
 fn vni_shape_syllables() {
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "uo7"), "uơ");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "uo73"), "uở");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "thuo73"), "thuở");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "thuo7ng2"), "thường");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "quo7i1"), "quới");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "thuo73"),
+        "thuở"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "thuo7ng2"),
+        "thường"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "quo7i1"),
+        "quới"
+    );
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "u7o7"), "ươ");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "u7o7ng"), "ương");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "tru7o7ng"), "trương");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "u7o7ng"),
+        "ương"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "tru7o7ng"),
+        "trương"
+    );
 }
 
 #[test]
@@ -98,7 +127,10 @@ fn vni_reposition() {
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "thuy3"), "thủy");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "khoe3"), "khỏe");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "hoaf2"), "hoàf");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "tru7o7n2g"), "trường");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "tru7o7n2g"),
+        "trường"
+    );
     assert_eq!(
         crate::support::type_words(InputMethod::Vni, "xin1 chao2 ban5"),
         "xín chào bạn"
@@ -122,7 +154,10 @@ fn vni_revert() {
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "a12"), "à"); // different key → re-tone
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "hoa22"), "hoa2");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "uo77"), "uo7");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "tru7o7n2g2"), "trương2");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "tru7o7n2g2"),
+        "trương2"
+    );
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "phu11"), "phu1");
 
     let (text, kinds) = crate::support::type_keys_with_kinds(InputMethod::Vni, "a11");
@@ -133,21 +168,57 @@ fn vni_revert() {
 #[test]
 fn vni_complex_syllables() {
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "ngu71"), "ngứ");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "truo7ng"), "trương");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "ngu7o7i2"), "người");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "truo7ng"),
+        "trương"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "ngu7o7i2"),
+        "người"
+    );
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "vie5t"), "việt");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "nghia4"), "nghĩa");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "phuo7ng"), "phương");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "thuo7ng"), "thương");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "tru7o7n2g"), "trường");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "ngu7o7c1"), "ngước");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "nghia4"),
+        "nghĩa"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "phuo7ng"),
+        "phương"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "thuo7ng"),
+        "thương"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "tru7o7n2g"),
+        "trường"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "ngu7o7c1"),
+        "ngước"
+    );
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "lien4"), "liễn");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "d9i5nh"), "định");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "nghie5ng"), "nghiệng");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "nuoc71"), "nước");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "khuye6n2"), "khuyền");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "d9i5nh"),
+        "định"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "nghie5ng"),
+        "nghiệng"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "nuoc71"),
+        "nước"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "khuye6n2"),
+        "khuyền"
+    );
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "hoan2"), "hoàn");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "nghie6ng"), "nghiêng");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "nghie6ng"),
+        "nghiêng"
+    );
 }
 
 #[test]
@@ -169,9 +240,18 @@ fn vni_qu_gi_onset_tone_placement() {
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "gia1"), "giá");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "gium2"), "giùm");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "quy1"), "quý");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "quoc61"), "quốc");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "quyen62"), "quyền");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "giuong72"), "giường");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "quoc61"),
+        "quốc"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "quyen62"),
+        "quyền"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "giuong72"),
+        "giường"
+    );
 
     // `gi` releases its `i` as the nucleus when no other vowel follows.
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "gi2"), "gì");
@@ -187,10 +267,22 @@ fn vni_shaped_vowel_takes_tone() {
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "to6i2"), "tồi");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "mo7i1"), "mới");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "nau61"), "nấu");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "muo6n1"), "muốn");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "tuo6i3"), "tuổi");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "nhie6u2"), "nhiều");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "xoan82"), "xoằn");
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "muo6n1"),
+        "muốn"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "tuo6i3"),
+        "tuổi"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "nhie6u2"),
+        "nhiều"
+    );
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Vni, "xoan82"),
+        "xoằn"
+    );
 }
 
 #[test]

@@ -2,7 +2,7 @@
 
 #![allow(dead_code)]
 
-use funput_core::{apply, InputMethod, ToneStyle, TransformKind};
+use funput_core::{InputMethod, ToneStyle, TransformKind, apply};
 
 pub fn type_keys(method: InputMethod, keys: &str) -> String {
     let mut buffer = String::new();
