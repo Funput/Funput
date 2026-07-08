@@ -1,15 +1,13 @@
 //! The đ stroke targets the syllable's leading `d`, so the key may be typed after
 //! the rest of the word — `dang9` → `đang` (VNI), not only `d9ang`.
 
-mod support;
-
 use funput_core::InputMethod;
 
 fn vni(keys: &str) -> String {
-    support::type_keys_buffer(InputMethod::Vni, keys)
+    crate::support::type_keys_buffer(InputMethod::Vni, keys)
 }
 fn telex(keys: &str) -> String {
-    support::type_keys_buffer(InputMethod::Telex, keys)
+    crate::support::type_keys_buffer(InputMethod::Telex, keys)
 }
 
 #[test]

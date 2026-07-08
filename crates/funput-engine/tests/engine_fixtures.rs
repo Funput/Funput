@@ -4,18 +4,14 @@ mod fixtures {
 mod support;
 
 use fixtures::step_cases::{
-    AppTextCase, BufferCase, StepCase, APP_TEXT_CASES, STEP_CASES, TELEX_BUFFER_CASES,
+    APP_TEXT_CASES, AppTextCase, BufferCase, STEP_CASES, StepCase, TELEX_BUFFER_CASES,
     VNI_BUFFER_CASES,
 };
 use support::{app_text, type_keys_buffer, type_keys_with_results};
 
 fn assert_steps(case: &StepCase) {
     let (buffer, results) = type_keys_with_results(case.method, case.keys);
-    assert_eq!(
-        buffer, case.final_buffer,
-        "{}: final buffer",
-        case.label
-    );
+    assert_eq!(buffer, case.final_buffer, "{}: final buffer", case.label);
     assert_eq!(
         results.len(),
         case.steps.len(),
@@ -23,13 +19,21 @@ fn assert_steps(case: &StepCase) {
         case.label
     );
     for (i, (got, expected)) in results.iter().zip(case.steps.iter()).enumerate() {
-        assert_eq!(got.action, expected.action, "{}: step {i} action", case.label);
+        assert_eq!(
+            got.action, expected.action,
+            "{}: step {i} action",
+            case.label
+        );
         assert_eq!(
             got.backspace, expected.backspace,
             "{}: step {i} backspace",
             case.label
         );
-        assert_eq!(got.output, expected.output, "{}: step {i} output", case.label);
+        assert_eq!(
+            got.output, expected.output,
+            "{}: step {i} output",
+            case.label
+        );
     }
 }
 

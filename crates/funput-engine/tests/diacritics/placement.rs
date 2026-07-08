@@ -1,15 +1,22 @@
 //! End-to-end tone placement: `k`+`y` words and triphthong (kiểu truyền thống).
 
-use funput_engine::Engine;
 use funput_core::{InputMethod, ToneStyle};
+use funput_engine::Engine;
 fn run(m: InputMethod, keys: &str) -> String {
-    let mut e = Engine::new(); e.set_method(m);
-    for k in keys.chars() { e.process_char(k); }
+    let mut e = Engine::new();
+    e.set_method(m);
+    for k in keys.chars() {
+        e.process_char(k);
+    }
     e.buffer().to_string()
 }
 fn run_modern(m: InputMethod, keys: &str) -> String {
-    let mut e = Engine::new(); e.set_method(m); e.set_tone_style(ToneStyle::Modern);
-    for k in keys.chars() { e.process_char(k); }
+    let mut e = Engine::new();
+    e.set_method(m);
+    e.set_tone_style(ToneStyle::Modern);
+    for k in keys.chars() {
+        e.process_char(k);
+    }
     e.buffer().to_string()
 }
 #[test]

@@ -4,8 +4,6 @@
 //! case-sensitively, and expands at the boundary — taking priority over English
 //! restore. See `src/boundary.rs` for the matching logic.
 
-mod support;
-
 use funput_core::InputMethod;
 use funput_engine::{Action, Engine};
 
@@ -108,5 +106,8 @@ fn re_adding_trigger_overwrites() {
     let mut engine = Engine::new();
     engine.add_shortcut("vn", "Việt Nam");
     engine.add_shortcut("vn", "Vietnam");
-    assert_eq!(engine.shortcuts().get("vn").map(String::as_str), Some("Vietnam"));
+    assert_eq!(
+        engine.shortcuts().get("vn").map(String::as_str),
+        Some("Vietnam")
+    );
 }
