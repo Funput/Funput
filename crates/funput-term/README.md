@@ -1,5 +1,7 @@
 # funput-term
 
+[English](README.en.md) · **Tiếng Việt**
+
 Gõ **tiếng Việt** trong app terminal (Claude Code, Cursor, shell, REPL…) — nơi IME hệ thống thường
 lỗi vì terminal chạy raw-mode.
 
@@ -67,7 +69,7 @@ escape/mouse/paste).
 ```
 stdin  ─raw bytes─► input::Classifier ─► engine ─► inject::result_bytes ─► PTY ─► child
 stdout ◄─────────── output: scan alt-screen ◄──────────────────────────── PTY ◄─ child
-        main: spawn child trong PTY, chờ exit; thread SIGWINCH→resize; RawModeGuard (RAII)
+        runtime::run: spawn child trong PTY, chờ exit; thread SIGWINCH→resize; RawModeGuard (RAII)
 ```
 
 Hai thread: stdin→pty (`forward_input`) và pty→stdout (`forward_output`). Engine sống gọn trong
