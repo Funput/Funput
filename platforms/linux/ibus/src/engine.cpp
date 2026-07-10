@@ -80,11 +80,16 @@ void updatePreedit(IBusEngine *engine, EngineState *st) {
 // Commit buffer() and end composition.
 void commitBuffer(IBusEngine *engine, EngineState *st) {
     const std::string s = st->handle_.buffer();
+    st->handle_.clear();
+    // Hide the preedit *before* committing. With client-side (on-the-spot) preedit,
+    // Chromium/Electron apps (VS Code, Cursor) otherwise finalize the still-active
+    // composing region *and* apply our commit — duplicating the word when followed
+    // by Enter, or dropping both when the commit races a focus change (word lost on
+    // focus-out). Hiding it first turns the commit into a plain, atomic insertion.
+    clearPreedit(engine);
     if (!s.empty()) {
         ibus_engine_commit_text(engine, ibus_text_new_from_string(s.c_str()));
     }
-    st->handle_.clear();
-    clearPreedit(engine);
 }
 
 // Boundary key (space / punctuation) while composing. The engine decides
@@ -114,9 +119,9 @@ bool handleBoundary(IBusEngine *engine, EngineState *st, char32_t scalar) {
     std::string boundary;
     funput::appendUtf8(boundary, static_cast<uint32_t>(scalar));
     const std::string full = word + boundary;
-    ibus_engine_commit_text(engine, ibus_text_new_from_string(full.c_str()));
     st->handle_.clear();
-    clearPreedit(engine);
+    clearPreedit(engine); // hide the composing region before commit (see commitBuffer)
+    ibus_engine_commit_text(engine, ibus_text_new_from_string(full.c_str()));
     return true;
 }
 

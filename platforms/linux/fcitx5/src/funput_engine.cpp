@@ -139,9 +139,15 @@ void FunputEngine::clearPreedit(fcitx::InputContext *ic) {
 
 void FunputEngine::commitBuffer(fcitx::InputContext *ic) {
     const std::string s = handle_.buffer();
-    if (!s.empty()) ic->commitString(s);
     handle_.clear();
+    // Clear the preedit *before* committing. With client-side (on-the-spot)
+    // preedit, Chromium/Electron apps (VS Code, Cursor) otherwise finalize the
+    // still-active composing region *and* apply our commit — duplicating the word
+    // when the commit is followed by Enter, or dropping both when the commit races
+    // a focus change (the word is lost on focus-out). Resetting the composing
+    // region first turns the commit into a plain, atomic insertion.
     clearPreedit(ic);
+    if (!s.empty()) ic->commitString(s);
 }
 
 // Boundary key (space / punctuation) while composing. The engine decides
@@ -170,9 +176,9 @@ bool FunputEngine::handleBoundary(fcitx::InputContext *ic, char32_t scalar) {
 
     std::string boundary;
     funput::appendUtf8(boundary, static_cast<uint32_t>(scalar));
-    ic->commitString(word + boundary);
     handle_.clear();
-    clearPreedit(ic);
+    clearPreedit(ic); // reset the composing region before commit (see commitBuffer)
+    ic->commitString(word + boundary);
     return true;
 }
 
