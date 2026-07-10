@@ -8,22 +8,6 @@
 use funput_core::{InputMethod, ToneStyle};
 use funput_engine::{Action, Engine};
 
-/// Input method selectable on the command line.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Method {
-    Telex,
-    Vni,
-}
-
-impl Method {
-    fn to_core(self) -> InputMethod {
-        match self {
-            Method::Telex => InputMethod::Telex,
-            Method::Vni => InputMethod::Vni,
-        }
-    }
-}
-
 /// One keystroke and what the engine asked the platform to do.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Step {
@@ -43,13 +27,11 @@ pub struct Simulation {
     pub steps: Vec<Step>,
 }
 
-/// Run `input` through a fresh engine, acting as the platform: apply each
-/// `ImeResult` to an app-text model exactly like a real shell would.
 /// Engine configuration for a simulation run. Mirrors the toggles a platform shell
 /// would push to the engine.
 #[derive(Debug, Clone, Copy)]
 pub struct SimConfig {
-    pub method: Method,
+    pub method: InputMethod,
     pub tone_style: ToneStyle,
     pub smart_restore: bool,
     pub spell_check: bool,
@@ -57,7 +39,7 @@ pub struct SimConfig {
 
 impl SimConfig {
     /// Defaults matching a fresh engine (smart restore on, spell-check off).
-    pub fn new(method: Method) -> Self {
+    pub fn new(method: InputMethod) -> Self {
         Self {
             method,
             tone_style: ToneStyle::Traditional,
@@ -67,14 +49,15 @@ impl SimConfig {
     }
 }
 
-pub fn simulate(method: Method, input: &str) -> Simulation {
+pub fn simulate(method: InputMethod, input: &str) -> Simulation {
     simulate_with(SimConfig::new(method), input)
 }
 
-/// Like [`simulate`], but with explicit engine configuration.
+/// Run `input` through a fresh engine, acting as the platform: apply each
+/// `ImeResult` to an app-text model exactly like a real shell would.
 pub fn simulate_with(config: SimConfig, input: &str) -> Simulation {
     let mut engine = Engine::new();
-    engine.set_method(config.method.to_core());
+    engine.set_method(config.method);
     engine.set_tone_style(config.tone_style);
     engine.set_smart_restore(config.smart_restore);
     engine.set_spell_check(config.spell_check);
@@ -110,36 +93,36 @@ pub fn simulate_with(config: SimConfig, input: &str) -> Simulation {
 mod tests {
     use super::*;
 
-    fn app(method: Method, input: &str) -> String {
+    fn app(method: InputMethod, input: &str) -> String {
         simulate(method, input).app_text
     }
 
     #[test]
     fn telex_basic_and_words() {
-        assert_eq!(app(Method::Telex, "as"), "á");
-        assert_eq!(app(Method::Telex, "dd"), "đ");
-        assert_eq!(app(Method::Telex, "xins chaof"), "xín chào");
-        assert_eq!(app(Method::Telex, "truowng"), "trương");
+        assert_eq!(app(InputMethod::Telex, "as"), "á");
+        assert_eq!(app(InputMethod::Telex, "dd"), "đ");
+        assert_eq!(app(InputMethod::Telex, "xins chaof"), "xín chào");
+        assert_eq!(app(InputMethod::Telex, "truowng"), "trương");
     }
 
     #[test]
     fn vni_basic() {
-        assert_eq!(app(Method::Vni, "a1"), "á");
-        assert_eq!(app(Method::Vni, "d9"), "đ");
-        assert_eq!(app(Method::Vni, "ma1 ca2"), "má cà");
+        assert_eq!(app(InputMethod::Vni, "a1"), "á");
+        assert_eq!(app(InputMethod::Vni, "d9"), "đ");
+        assert_eq!(app(InputMethod::Vni, "ma1 ca2"), "má cà");
     }
 
     #[test]
     fn english_restore_on_boundary() {
-        assert_eq!(app(Method::Telex, "card "), "card ");
-        assert_eq!(app(Method::Telex, "cool "), "cool ");
+        assert_eq!(app(InputMethod::Telex, "card "), "card ");
+        assert_eq!(app(InputMethod::Telex, "cool "), "cool ");
         // A valid syllable is intentional — kept.
-        assert_eq!(app(Method::Telex, "mas "), "má ");
+        assert_eq!(app(InputMethod::Telex, "mas "), "má ");
     }
 
     #[test]
     fn steps_record_each_keystroke() {
-        let sim = simulate(Method::Telex, "as");
+        let sim = simulate(InputMethod::Telex, "as");
         assert_eq!(sim.steps.len(), 2);
 
         assert_eq!(sim.steps[0].action, Action::None);

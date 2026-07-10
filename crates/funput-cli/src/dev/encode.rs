@@ -4,7 +4,7 @@
 
 use unicode_normalization::UnicodeNormalization;
 
-use crate::sim::Method;
+use funput_core::InputMethod;
 
 #[derive(Clone, Copy)]
 enum Shape {
@@ -23,7 +23,7 @@ enum Tone {
 }
 
 /// Encode finished Vietnamese `text` into the keystrokes for `method`.
-pub fn encode(text: &str, method: Method) -> String {
+pub fn encode(text: &str, method: InputMethod) -> String {
     let mut out = String::new();
     let chars: Vec<char> = text.chars().collect();
     for (i, &ch) in chars.iter().enumerate() {
@@ -31,7 +31,7 @@ pub fn encode(text: &str, method: Method) -> String {
         // the `oo`→`ô` digraph. Typing a third `o` escapes it (`booong`→`boong`), so
         // when a plain `o` (bare `o`, any tone — but not `ô`/`ơ`) immediately follows
         // another plain `o`, emit the extra escape key before encoding it.
-        if method == Method::Telex && i > 0 && is_plain_o(ch) && is_plain_o(chars[i - 1]) {
+        if method == InputMethod::Telex && i > 0 && is_plain_o(ch) && is_plain_o(chars[i - 1]) {
             out.push(if ch.is_uppercase() { 'O' } else { 'o' });
         }
         encode_char(ch, method, &mut out);
@@ -47,7 +47,7 @@ fn is_plain_o(ch: char) -> bool {
         && !marks.any(|m| matches!(m, '\u{0302}' | '\u{031B}'))
 }
 
-fn encode_char(ch: char, method: Method, out: &mut String) {
+fn encode_char(ch: char, method: InputMethod, out: &mut String) {
     // `đ`/`Đ` do not decompose under NFD — handle the stroke explicitly.
     match ch {
         'đ' => return push_stroke(method, 'd', out),
@@ -85,23 +85,23 @@ fn encode_char(ch: char, method: Method, out: &mut String) {
 }
 
 /// `đ`: Telex doubles the `d` (`dd`/`Dd`); VNI uses the `9` modifier (`d9`/`D9`).
-fn push_stroke(method: Method, d: char, out: &mut String) {
+fn push_stroke(method: InputMethod, d: char, out: &mut String) {
     out.push(d);
     match method {
-        Method::Telex => out.push('d'),
-        Method::Vni => out.push('9'),
+        InputMethod::Telex => out.push('d'),
+        InputMethod::Vni => out.push('9'),
     }
 }
 
-fn push_shape(method: Method, base: char, shape: Shape, out: &mut String) {
+fn push_shape(method: InputMethod, base: char, shape: Shape, out: &mut String) {
     match method {
         // Telex: circumflex doubles the vowel (`aa`→â); breve/horn use `w`.
-        Method::Telex => match shape {
+        InputMethod::Telex => match shape {
             Shape::Circumflex => out.push(base.to_ascii_lowercase()),
             Shape::Breve | Shape::Horn => out.push('w'),
         },
         // VNI: 6 = circumflex, 8 = breve, 7 = horn.
-        Method::Vni => out.push(match shape {
+        InputMethod::Vni => out.push(match shape {
             Shape::Circumflex => '6',
             Shape::Breve => '8',
             Shape::Horn => '7',
@@ -109,16 +109,16 @@ fn push_shape(method: Method, base: char, shape: Shape, out: &mut String) {
     }
 }
 
-fn tone_key(method: Method, tone: Tone) -> char {
+fn tone_key(method: InputMethod, tone: Tone) -> char {
     match method {
-        Method::Telex => match tone {
+        InputMethod::Telex => match tone {
             Tone::Acute => 's',
             Tone::Grave => 'f',
             Tone::Hook => 'r',
             Tone::Tilde => 'x',
             Tone::Dot => 'j',
         },
-        Method::Vni => match tone {
+        InputMethod::Vni => match tone {
             Tone::Acute => '1',
             Tone::Grave => '2',
             Tone::Hook => '3',
@@ -130,13 +130,14 @@ fn tone_key(method: Method, tone: Tone) -> char {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::sim::{SimConfig, simulate_with};
     use funput_core::ToneStyle;
+
+    use super::super::sim::{SimConfig, simulate_with};
+    use super::*;
 
     /// The meaningful property: encoding a word and typing it back reproduces it.
     /// Smart-restore off to isolate pure composition.
-    fn roundtrip(word: &str, method: Method) -> String {
+    fn roundtrip(word: &str, method: InputMethod) -> String {
         let keys = encode(word, method);
         let config = SimConfig {
             method,
@@ -159,14 +160,14 @@ mod tests {
     #[test]
     fn telex_roundtrip() {
         for &w in WORDS {
-            assert_eq!(roundtrip(w, Method::Telex), w, "telex: {w}");
+            assert_eq!(roundtrip(w, InputMethod::Telex), w, "telex: {w}");
         }
     }
 
     #[test]
     fn vni_roundtrip() {
         for &w in WORDS {
-            assert_eq!(roundtrip(w, Method::Vni), w, "vni: {w}");
+            assert_eq!(roundtrip(w, InputMethod::Vni), w, "vni: {w}");
         }
     }
 }

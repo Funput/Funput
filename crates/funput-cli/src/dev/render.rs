@@ -4,7 +4,7 @@ use std::fmt::Write as _;
 
 use funput_engine::Action;
 
-use crate::sim::Simulation;
+use super::sim::Simulation;
 
 /// Render the per-keystroke table plus the final app text.
 pub fn steps_table(sim: &Simulation) -> String {
@@ -57,12 +57,14 @@ fn show_str(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use funput_core::InputMethod;
+
+    use super::super::sim::simulate;
     use super::*;
-    use crate::sim::{Method, simulate};
 
     #[test]
     fn table_has_header_rows_and_summary() {
-        let table = steps_table(&simulate(Method::Telex, "as"));
+        let table = steps_table(&simulate(InputMethod::Telex, "as"));
         let lines: Vec<&str> = table.lines().collect();
         assert!(lines[0].starts_with("#"));
         assert_eq!(lines.len(), 1 + 2 + 1); // header + 2 steps + summary

@@ -5,13 +5,15 @@
 
 use std::io::{self, BufRead, Write};
 
-use crate::render::steps_table;
-use crate::sim::{Method, simulate};
+use funput_core::InputMethod;
 
-pub fn run(method: Method, steps: bool) {
+use super::render::steps_table;
+use super::sim::simulate;
+
+pub fn run(method: InputMethod, steps: bool) {
     let name = match method {
-        Method::Telex => "telex",
-        Method::Vni => "vni",
+        InputMethod::Telex => "telex",
+        InputMethod::Vni => "vni",
     };
     // Banner on stderr so stdout stays clean for piping.
     eprintln!("funput repl [{name}] — type a line then Enter; :q or Ctrl-D to quit.");
