@@ -227,6 +227,9 @@ static gboolean ibus_funput_engine_process_key_event(IBusEngine *engine, guint k
 
     // Compose: feed the scalar and show the updated buffer as preedit.
     st->handle_.process(static_cast<uint32_t>(scalar));
+    // Nothing composing → the engine passed the key through (e.g. a digit starting a
+    // word: a number, not Vietnamese). Let the app insert it instead of swallowing it.
+    if (st->handle_.buffer().empty()) return FALSE;
     updatePreedit(engine, st);
     return TRUE;
 }

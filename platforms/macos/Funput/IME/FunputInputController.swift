@@ -87,6 +87,11 @@ final class FunputInputController: IMKInputController {
         }
 
         composer.process(scalar)
+        // Nothing composing after this key → the engine passed it through (e.g. a
+        // digit starting a word: a number, not Vietnamese). Let the app insert it.
+        if composer.buffer().isEmpty {
+            return false
+        }
         setMarked(composer.buffer(), client)
         return true
     }

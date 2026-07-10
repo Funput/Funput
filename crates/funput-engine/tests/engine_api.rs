@@ -346,3 +346,55 @@ fn flip_choice_resets_after_the_word_commits() {
     type_word(&mut engine, "card"); // a new word
     assert_eq!(engine.buffer(), "card"); // eager-restored again, override gone
 }
+
+// --- Word-start digits (numeric fields / OTP codes / phone numbers) ----------
+
+/// A digit typed with an empty buffer is a number, not the start of a Vietnamese
+/// syllable, so the engine passes it through untouched in either method.
+#[test]
+fn word_start_digit_passes_through() {
+    for method in [InputMethod::Telex, InputMethod::Vni] {
+        let mut engine = Engine::new();
+        engine.set_method(method);
+        let result = engine.process_char('1');
+        assert_eq!(result.action, Action::None, "{method:?}");
+        assert_eq!(engine.buffer(), "", "{method:?}: a leading digit must not compose");
+    }
+}
+
+/// A whole number never opens a composition — including in VNI, where digits are the
+/// tone/shape keys (they only modify a preceding vowel, which a bare number lacks).
+#[test]
+fn full_number_never_composes() {
+    for method in [InputMethod::Telex, InputMethod::Vni] {
+        let mut engine = Engine::new();
+        engine.set_method(method);
+        for key in "0912345678".chars() {
+            assert_eq!(engine.process_char(key).action, Action::None, "{method:?}");
+        }
+        assert_eq!(engine.buffer(), "", "{method:?}");
+    }
+}
+
+/// The rule is word-start only: a VNI tone digit *after* a vowel still applies.
+#[test]
+fn digit_after_vowel_still_modifies_in_vni() {
+    let mut engine = Engine::new();
+    engine.set_method(InputMethod::Vni);
+    engine.process_char('a');
+    let result = engine.process_char('1'); // á
+    assert_eq!(result.action, Action::Send);
+    assert_eq!(engine.buffer(), "á");
+}
+
+/// A real word typed right after a leading number composes normally.
+#[test]
+fn word_after_leading_digit_still_composes() {
+    let mut engine = Engine::new(); // Telex by default
+    engine.process_char('3'); // passthrough — buffer stays empty
+    assert_eq!(engine.buffer(), "");
+    for key in "meof".chars() {
+        engine.process_char(key);
+    }
+    assert_eq!(engine.buffer(), "mèo");
+}

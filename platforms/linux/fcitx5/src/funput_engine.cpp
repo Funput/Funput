@@ -273,6 +273,10 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ke
 
     // Compose: feed the scalar and show the updated buffer as underlined preedit.
     handle_.process(static_cast<uint32_t>(scalar));
+    // Nothing composing → the engine passed the key through (e.g. a digit starting a
+    // word: a number, not Vietnamese). Let the app insert it instead of swallowing it
+    // as (empty) preedit.
+    if (handle_.buffer().empty()) return;
     updatePreedit(ic);
     keyEvent.filterAndAccept();
 }
