@@ -2,7 +2,7 @@
 //! wrapper.
 //!
 //! This crate is the reusable library behind the `funput term` subcommand: run a
-//! program through it (`app::run`) and ASCII keystrokes are composed into
+//! program through it ([`runtime::run`]) and ASCII keystrokes are composed into
 //! Vietnamese before reaching the child; everything else is forwarded untouched.
 //! Toggle with `Ctrl-\`. Not an IME — no system hooks, no permissions; works in any
 //! terminal emulator.
@@ -10,16 +10,13 @@
 //! Settings come from the shared `Funput/settings.json`, overridable by env vars
 //! and CLI flags (see [`config`]). [`install`] wires it into the user's shell.
 //!
-//! The umbrella `funput` binary ([crates/funput-cli]) depends on this crate and
-//! dispatches to [`app`], [`config`], and [`install`]; the PTY-heavy plumbing
-//! (`inject`, `input`, `output`, `state`, `term`) stays crate-internal.
+//! The umbrella `funput` binary (`funput-cli`) depends on this crate and dispatches
+//! to [`runtime`], [`config`], and [`install`]. The terminal primitives
+//! ([`terminal`]) and the interposer plumbing (`runtime`'s `input`, `inject`,
+//! `output`, `state`) stay crate-internal.
 
-pub mod app;
 pub mod config;
 pub mod install;
+pub mod runtime;
 
-mod inject;
-mod input;
-mod output;
-mod state;
-mod term;
+mod terminal;

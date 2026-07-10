@@ -2,7 +2,7 @@
 
 use std::io::{self, Read, Write};
 
-use crate::state::SharedState;
+use super::state::SharedState;
 
 // Alt-screen enter/leave sequences (xterm). Entering = full-screen TUI (vim, less…).
 const ENTER_1049: &[u8] = b"\x1b[?1049h";

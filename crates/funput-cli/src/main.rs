@@ -66,7 +66,7 @@ fn run_wrapper(run: cli::TermRunArgs) {
         run.program
     };
 
-    match funput_term::app::run(funput_term::app::Options { config, command }) {
+    match funput_term::runtime::run(funput_term::runtime::Options { config, command }) {
         Ok(code) => std::process::exit(code),
         Err(err) => {
             eprintln!("funput term: {err}");

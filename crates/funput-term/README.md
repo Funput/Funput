@@ -1,5 +1,7 @@
 # funput-term
 
+[English](README.en.md) · **Tiếng Việt**
+
 Gõ **tiếng Việt** trong app terminal (Claude Code, Cursor, shell, REPL…) — nơi IME hệ thống thường
 lỗi vì terminal chạy raw-mode.
 
@@ -67,7 +69,7 @@ escape/mouse/paste).
 ```
 stdin  ─raw bytes─► input::Classifier ─► engine ─► inject::result_bytes ─► PTY ─► child
 stdout ◄─────────── output: scan alt-screen ◄──────────────────────────── PTY ◄─ child
-        main: spawn child trong PTY, chờ exit; thread SIGWINCH→resize; RawModeGuard (RAII)
+        runtime::run: spawn child trong PTY, chờ exit; thread SIGWINCH→resize; RawModeGuard (RAII)
 ```
 
 Hai thread: stdin→pty (`forward_input`) và pty→stdout (`forward_output`). Engine sống gọn trong
@@ -77,17 +79,30 @@ engine của hệ Funput.
 
 ### Module
 
+Đây là **library crate** (`lib.rs`); CLI clap (`funput term …`) nằm ở `funput-cli`.
+
 ```
 src/
-├── main.rs    # clap CLI: [run] -m telex|vni [-- command] (default $SHELL); subcommand `install`
-├── config.rs  # THUẦN: đọc settings.json → TermConfig; overlay env; apply_to(engine); ưu tiên CLI>env>file
-├── install.rs # THUẦN: snippet(shell, aliases) (bash/zsh/fish, idempotent) + ghi vào rc file
-├── app.rs     # forward_input (seam THUẦN, có test) + run() orchestration (spawn PTY, threads, indicators)
-├── input.rs   # THUẦN: Classifier byte → ByteKind (Printable/Control/Escape/Utf8/Toggle/CycleMethod/Paste)
-├── inject.rs  # THUẦN: result_bytes(char, &ImeResult) → bytes (None→phím; Send/Restore→DEL×bs + UTF-8)
-├── output.rs  # forward_output + AltScreenScanner (ESC[?1049h/l, chịu được chunk bị cắt)
-├── term.rs    # RawModeGuard (RAII), Mux passthrough, set_title (OSC) + set_cursor_cue (OSC 12/112)
-└── state.rs   # SharedState: enabled (toggle) + alt_screen (atomics)
+├── lib.rs                # khai báo module: runtime · config · install · terminal
+├── runtime/              # interposer: spawn PTY, shuttle bytes, soạn tiếng Việt
+│   ├── mod.rs            #   run() orchestration (spawn PTY, threads, indicators); từ chối command rỗng
+│   ├── driver.rs         #   forward_input (seam THUẦN, có test) + Status + other_method
+│   ├── input.rs          #   THUẦN: Classifier byte → ByteKind (Printable/Control/Escape/Utf8/Toggle/CycleMethod/Paste)
+│   ├── inject.rs         #   THUẦN: result_bytes(char, &ImeResult) → bytes (None→phím; Send/Restore→DEL×bs + UTF-8)
+│   ├── output.rs         #   forward_output + AltScreenScanner (ESC[?1049h/l, chịu được chunk bị cắt)
+│   ├── resize.rs         #   spawn_resize_thread (Unix SIGWINCH / non-Unix poll)
+│   └── state.rs          #   SharedState: enabled (toggle) + alt_screen (atomics)
+├── terminal/             # nguyên thủy terminal (crate-internal)
+│   ├── mod.rs            #   RawModeGuard (RAII)
+│   ├── console.rs        #   Windows: VT input/output + codepage UTF-8 (#[cfg(windows)])
+│   └── indicator.rs      #   Mux passthrough, set_title (OSC) + set_cursor_cue (OSC 12/112)
+├── config/               # THUẦN: settings.json → TermConfig; ưu tiên CLI>env>file
+│   ├── mod.rs            #   TermConfig, from_json, apply_to(engine), load
+│   ├── schema.rs         #   FileSettings serde (camelCase) + default
+│   └── parse.rs          #   overlay env (apply_env) + parse phím/enum
+└── install/              # THUẦN: wire alias vào shell rc
+    ├── mod.rs            #   Shell (bash/zsh/fish) + ghi rc file (idempotent)
+    └── snippet.rs        #   snippet(shell, aliases) + parse_alias
 ```
 
 `input` / `inject` / `forward_input` / `config` / `install` **thuần, không I/O thật** → unit-test bằng
@@ -118,7 +133,7 @@ pipe in-memory hoặc input dạng chuỗi.
   không bị soạn).
 - Bracketed paste: `input.rs` thấy `ESC[200~` → `in_paste` → nội dung dán phân loại `Paste`
   (forward thô) tới `ESC[201~`. Chịu được marker bị cắt qua nhiều chunk; buffer tham số CSI có giới hạn.
-- Title qua mux: `term.rs::detect_mux` đọc `$TMUX`/`$STY`/`$TERM`; `title_sequence` bọc DCS passthrough
+- Title qua mux: `terminal/indicator.rs::detect_mux` đọc `$TMUX`/`$STY`/`$TERM`; `title_sequence` bọc DCS passthrough
   cho tmux (nhân đôi ESC) và screen.
 
 ## Quan hệ với phần còn lại
