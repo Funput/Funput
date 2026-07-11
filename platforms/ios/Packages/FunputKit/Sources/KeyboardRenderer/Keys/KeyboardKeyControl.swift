@@ -11,6 +11,7 @@ final class KeyboardKeyControl: UIControl {
     private let interactionControl = UIControl()
     private let label = UILabel()
     private let iconView = UIImageView()
+    private let spacebarContent = KeyboardSpacebarContentView()
     private let surface = KeyboardKeySurfaceView()
     private var theme = KeyboardThemeTokens.funputGlass
     private var shiftState = ShiftState.lowercase
@@ -37,6 +38,7 @@ final class KeyboardKeyControl: UIControl {
         let contentInset = max(6, bounds.height * 0.2)
         label.frame = bounds.insetBy(dx: 5, dy: contentInset * 0.5)
         iconView.frame = bounds.insetBy(dx: contentInset, dy: contentInset)
+        spacebarContent.frame = bounds
         surface.updateShape(cornerRadius: theme.cornerRadius)
     }
 
@@ -53,8 +55,15 @@ final class KeyboardKeyControl: UIControl {
         label.font = KeyboardKeyContentStyle.font(for: spec.role, scale: theme.fontScale)
         label.text = KeyboardKeyContentStyle.label(for: spec, shiftState: shiftState)
         iconView.image = KeyboardKeyContentStyle.icon(for: spec.role, shiftState: shiftState)
-        label.isHidden = iconView.image != nil
-        iconView.isHidden = iconView.image == nil
+        spacebarContent.apply(
+            label: spec.label,
+            color: theme.secondaryLabel.uiColor(for: traits),
+            font: label.font
+        )
+        let showsSpacebar = spec.role == .space
+        spacebarContent.isHidden = !showsSpacebar
+        label.isHidden = showsSpacebar || iconView.image != nil
+        iconView.isHidden = showsSpacebar || iconView.image == nil
         setNeedsLayout()
     }
 
@@ -95,6 +104,9 @@ final class KeyboardKeyControl: UIControl {
         iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(weight: .medium)
         iconView.isUserInteractionEnabled = false
         interactionControl.addSubview(iconView)
+
+        spacebarContent.isUserInteractionEnabled = false
+        interactionControl.addSubview(spacebarContent)
     }
 
     private func handleTouch(_ phase: KeyboardKeyEvent.Phase) {

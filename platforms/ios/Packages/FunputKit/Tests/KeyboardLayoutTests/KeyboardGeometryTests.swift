@@ -71,6 +71,9 @@ struct KeyboardGeometryTests {
         #expect(rows.count == 5)
         #expect(rows[0].keys.map(\.label) == ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"])
         #expect(rows[4].keys.map(\.id) == ["symbols", "comma", "space", "period", "enter"])
+        let space = rows[4].keys.first { $0.role == .space }
+        #expect(space?.label == "Tiếng Việt")
+        #expect(space?.accessibilityLabel.contains("Vuốt") == true)
         #expect(!rows.flatMap(\.keys).contains { $0.role == .inputMode })
     }
 

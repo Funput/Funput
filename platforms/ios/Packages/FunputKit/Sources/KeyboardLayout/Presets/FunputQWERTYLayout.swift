@@ -62,7 +62,7 @@ private func actionRow() -> KeyboardRow {
             label: "Tiếng Việt",
             role: .space,
             widthWeight: 5.8,
-            accessibilityLabel: "Dấu cách"
+            accessibilityLabel: "Dấu cách. Vuốt để đổi Tiếng Việt và Tiếng Anh"
         ),
         KeySpec(id: "period", label: ".", role: .punctuation, accessibilityLabel: "Dấu chấm"),
         KeySpec(
