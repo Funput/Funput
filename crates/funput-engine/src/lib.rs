@@ -203,6 +203,8 @@ impl Engine {
     /// - **Word boundary** (whitespace / ASCII punctuation): optionally restore Latin
     ///   via [`Action::Send`] when `keys != buffer` and buffer is not a complete
     ///   Vietnamese syllable; then clear session. Otherwise pass the boundary key.
+    /// - **Word-start digit** (a digit with an empty buffer): [`Action::None`], passed
+    ///   through untouched — a number, never a Vietnamese syllable.
     /// - **Normal key:** append to `keys`, call `funput-core`, map
     ///   `TransformKind` → `ImeResult` (see the README).
     pub fn process_char(&mut self, key: char) -> ImeResult {
@@ -213,6 +215,13 @@ impl Engine {
             return boundary::on_word_boundary(&mut self.session, key);
         }
         let key = self.maybe_capitalize(key);
+        // A digit at the start of a word is a number, never the start of a Vietnamese
+        // syllable — and a VNI tone/shape digit needs a vowel before it. Pass it
+        // straight through without opening a composition (numeric fields, OTP codes,
+        // phone numbers), keeping `buffer` and `keys` clean for the next real word.
+        if self.session.buffer.is_empty() && key.is_ascii_digit() {
+            return ImeResult::none();
+        }
         self.session.keys.push(key);
         pipeline::process(&mut self.session, key)
     }
