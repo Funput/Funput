@@ -26,6 +26,7 @@
             <option value="$PROJECT_DIR$/keyboard-renderer" />
             <option value="$PROJECT_DIR$/keyboard-ui" />
             <option value="$PROJECT_DIR$/theme-runtime" />
+            <option value="$PROJECT_DIR$/theme-store" />
           </set>
         </option>
       </GradleProjectSettings>
