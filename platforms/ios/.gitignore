@@ -24,7 +24,5 @@ DerivedData
 .build/
 .swiftpm
 
-# Rust FFI static lib — rebuilt from source by scripts/build-ffi.sh on every
-# Xcode build (Run Script phase, before Compile Sources), so a committed copy
-# just churns the working tree and bloats history.
-Vendor/
+# Rust FFI XCFramework — generated locally or in CI from committed Rust sources.
+Frameworks/FunputCore.xcframework/

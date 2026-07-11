@@ -296,11 +296,32 @@ Artifact được đóng gói thành:
 
 ```text
 FunputCore.xcframework/
+├── Info.plist
 ├── ios-arm64/
-├── ios-arm64-simulator/
-├── Headers/funput.h
-└── Modules/module.modulemap
+│   ├── libfunput_ffi.a
+│   └── Headers/
+│       ├── funput.h
+│       └── module.modulemap
+└── ios-arm64-simulator/
+    ├── libfunput_ffi.a
+    └── Headers/
+        ├── funput.h
+        └── module.modulemap
 ```
+
+### Build từ source
+
+Máy build cần Xcode command-line tools, Rust stable và `rustup`. Từ workspace root:
+
+```bash
+platforms/ios/Scripts/build-ffi.sh
+```
+
+Script build `funput-ffi` với Cargo lockfile cho device và Apple Silicon
+simulator, sau đó tạo `platforms/ios/Frameworks/FunputCore.xcframework`.
+Có thể đặt output tạm cho CI bằng `FUNPUT_FFI_OUTPUT=/path/to/output`.
+XCFramework là generated artifact và không được commit; source of truth gồm
+Rust crate, `funput.h`, module map và build script.
 
 ### Lifetime và threading
 
