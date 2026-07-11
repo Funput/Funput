@@ -6,6 +6,9 @@ struct KeyboardLabControls: View {
 
     var body: some View {
         VStack(spacing: 18) {
+            KeyboardLabLayoutControls(configuration: $configuration)
+            Divider()
+
             Picker("Giao diện", selection: $previewStyle) {
                 ForEach(KeyboardPreviewStyle.allCases) { style in
                     Text(style.title).tag(style)

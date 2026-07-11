@@ -32,7 +32,8 @@ public final class KeyboardSurfaceView: UIView {
         CGSize(
             width: UIView.noIntrinsicMetric,
             height: KeyboardMetrics.recommendedHeight(
-                for: traitCollection,
+                for: presentation.layout,
+                traits: traitCollection,
                 scale: presentation.sizing.heightScale
             )
         )
@@ -48,10 +49,9 @@ public final class KeyboardSurfaceView: UIView {
         let geometry = KeyboardGeometry.resolve(
             layout: presentation.layout,
             size: bounds.size,
-            sizing: presentation.sizing,
-            showsInputModeKey: presentation.showsInputModeKey
+            sizing: presentation.sizing
         )
-        toolbarView.frame = geometry.toolbarFrame
+        toolbarView.frame = geometry.toolbarFrame ?? .zero
         geometry.keys.forEach { key in
             keyControls[key.spec.id]?.frame = key.frame
         }
@@ -88,8 +88,7 @@ public final class KeyboardSurfaceView: UIView {
     }
 
     private func presentationDidChange(from oldValue: KeyboardPresentation) {
-        if oldValue.layout != presentation.layout ||
-            oldValue.showsInputModeKey != presentation.showsInputModeKey {
+        if oldValue.layout != presentation.layout {
             rebuildKeys()
         }
         applyPresentation()
@@ -99,9 +98,7 @@ public final class KeyboardSurfaceView: UIView {
 
     private func rebuildKeys() {
         keyControls.values.forEach { $0.removeFromSuperview() }
-        let specs = presentation.layout.rows
-            .flatMap(\.keys)
-            .filter { presentation.showsInputModeKey || $0.role != .inputMode }
+        let specs = presentation.layout.rows.flatMap(\.keys)
         keyControls = Dictionary(uniqueKeysWithValues: specs.map { spec in
             let control = KeyboardKeyControl(spec: spec)
             control.onEvent = { [weak self] event in self?.handle(event) }
@@ -113,13 +110,13 @@ public final class KeyboardSurfaceView: UIView {
     private func applyPresentation() {
         backdropView.apply(theme: presentation.theme, traits: traitCollection)
         keysHost.apply(presentation: presentation)
-        toolbarView.apply(theme: presentation.theme, traits: traitCollection)
+        toolbarView.apply(
+            spec: presentation.layout.toolbar,
+            theme: presentation.theme,
+            traits: traitCollection
+        )
         keyControls.values.forEach {
-            $0.apply(
-                theme: presentation.theme,
-                shiftState: presentation.shiftState,
-                traits: traitCollection
-            )
+            $0.apply(presentation: presentation, traits: traitCollection)
         }
     }
 

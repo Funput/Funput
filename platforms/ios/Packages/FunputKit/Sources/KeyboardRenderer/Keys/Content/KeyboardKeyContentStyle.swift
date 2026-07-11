@@ -15,7 +15,7 @@ enum KeyboardKeyContentStyle {
             name = shiftState.isUppercase ? "shift.fill" : "shift"
         case .backspace:
             name = "delete.left"
-        case .inputMode:
+        case .systemInputMode:
             name = "globe"
         case .enter:
             name = "return"
@@ -32,7 +32,7 @@ enum KeyboardKeyContentStyle {
     static func font(for role: KeyRole, scale: Double) -> UIFont {
         let metrics: (size: CGFloat, weight: UIFont.Weight)
         switch role {
-        case .character, .punctuation:
+        case .character, .vniModifier, .punctuation:
             metrics = (22, .regular)
         case .space:
             metrics = (12, .medium)

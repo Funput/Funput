@@ -1,10 +1,14 @@
 public enum KeyRole: String, Hashable, Sendable {
+    case placeholder
     case character
+    case vniModifier
     case punctuation
     case shift
     case backspace
     case symbols
-    case inputMode
+    case moreSymbols
+    case letters
+    case systemInputMode
     case space
     case enter
     case emoji
@@ -12,7 +16,7 @@ public enum KeyRole: String, Hashable, Sendable {
 
     public var isSpecial: Bool {
         switch self {
-        case .character, .punctuation, .space:
+        case .character, .vniModifier, .punctuation, .space:
             false
         default:
             true

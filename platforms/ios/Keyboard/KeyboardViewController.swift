@@ -52,7 +52,8 @@ final class KeyboardViewController: UIInputViewController {
 
     private func updatePreferredHeight() {
         heightConstraint?.constant = KeyboardMetrics.recommendedHeight(
-            for: traitCollection,
+            for: keyboardView.presentation.layout,
+            traits: traitCollection,
             scale: keyboardView.presentation.sizing.heightScale
         )
     }

@@ -19,8 +19,7 @@ struct KeyboardGeometryTests {
         let resolved = KeyboardGeometry.resolve(
             layout: .funputQWERTY,
             size: size,
-            sizing: .default,
-            showsInputModeKey: true
+            sizing: .default
         )
 
         for key in resolved.keys {
@@ -36,8 +35,7 @@ struct KeyboardGeometryTests {
         let resolved = KeyboardGeometry.resolve(
             layout: .funputQWERTY,
             size: CGSize(width: 390, height: 280),
-            sizing: .default,
-            showsInputModeKey: true
+            sizing: .default
         )
 
         for row in resolved.rows {
@@ -52,8 +50,7 @@ struct KeyboardGeometryTests {
         let resolved = KeyboardGeometry.resolve(
             layout: .funputQWERTY,
             size: CGSize(width: 390, height: 280),
-            sizing: .default,
-            showsInputModeKey: true
+            sizing: .default
         )
         let firstCharacterRow = resolved.rows[1]
         let secondCharacterRow = resolved.rows[2]
@@ -74,7 +71,7 @@ struct KeyboardGeometryTests {
         let space = rows[4].keys.first { $0.role == .space }
         #expect(space?.label == "Tiếng Việt")
         #expect(space?.accessibilityLabel.contains("Vuốt") == true)
-        #expect(!rows.flatMap(\.keys).contains { $0.role == .inputMode })
+        #expect(!rows.flatMap(\.keys).contains { $0.role == .systemInputMode })
     }
 
     @Test("Customization extremes remain valid", arguments: [
@@ -90,8 +87,7 @@ struct KeyboardGeometryTests {
         let resolved = KeyboardGeometry.resolve(
             layout: .funputQWERTY,
             size: CGSize(width: 390, height: height),
-            sizing: sizing,
-            showsInputModeKey: true
+            sizing: sizing
         )
 
         #expect(resolved.keys.allSatisfy { $0.frame.width > 0 && $0.frame.height > 0 })

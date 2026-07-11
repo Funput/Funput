@@ -42,12 +42,14 @@ final class KeyboardSpacebarContentView: UIView {
         )
     }
 
-    func apply(label text: String, color: UIColor, font: UIFont) {
+    func apply(label text: String, color: UIColor, font: UIFont, showsChevrons: Bool) {
         label.text = text
         label.textColor = color
         label.font = font
         leadingChevron.tintColor = color.withAlphaComponent(0.6)
         trailingChevron.tintColor = color.withAlphaComponent(0.6)
+        leadingChevron.isHidden = !showsChevrons
+        trailingChevron.isHidden = !showsChevrons
     }
 
     private func configure(_ imageView: UIImageView, symbol: String) {

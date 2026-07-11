@@ -12,12 +12,12 @@ public struct ResolvedKey: Hashable, Sendable {
 
 public struct ResolvedKeyboard: Hashable, Sendable {
     public let size: CGSize
-    public let toolbarFrame: CGRect
+    public let toolbarFrame: CGRect?
     public let rows: [[ResolvedKey]]
 
     public var keys: [ResolvedKey] { rows.flatMap { $0 } }
 
-    public init(size: CGSize, toolbarFrame: CGRect, rows: [[ResolvedKey]]) {
+    public init(size: CGSize, toolbarFrame: CGRect?, rows: [[ResolvedKey]]) {
         self.size = size
         self.toolbarFrame = toolbarFrame
         self.rows = rows
@@ -30,24 +30,24 @@ public enum KeyboardGeometry {
     public static func resolve(
         layout: KeyboardLayout,
         size: CGSize,
-        sizing: KeyboardSizingProfile,
-        showsInputModeKey: Bool
+        sizing: KeyboardSizingProfile
     ) -> ResolvedKeyboard {
         precondition(size.width > 0 && size.height > 0, "Keyboard size must be positive")
 
         let verticalScale = sizing.heightScale
         let verticalPadding = sizing.verticalPadding * verticalScale
         let verticalGap = sizing.verticalGap * verticalScale
-        let toolbarHeight = sizing.toolbarHeight * verticalScale
-        let toolbarGap = sizing.toolbarGap * verticalScale
         let contentWidth = max(1, size.width - sizing.horizontalPadding * 2)
-        let toolbarFrame = CGRect(
-            x: sizing.horizontalPadding,
-            y: verticalPadding,
-            width: contentWidth,
-            height: toolbarHeight
-        )
-        let rowsTop = toolbarFrame.maxY + toolbarGap
+        let toolbarFrame = layout.toolbar.map { _ in
+            CGRect(
+                x: sizing.horizontalPadding,
+                y: verticalPadding,
+                width: contentWidth,
+                height: sizing.toolbarHeight * verticalScale
+            )
+        }
+        let rowsTop = toolbarFrame.map { $0.maxY + sizing.toolbarGap * verticalScale }
+            ?? verticalPadding
         let rowsHeight = max(
             1,
             size.height - rowsTop - verticalPadding - verticalGap * CGFloat(layout.rows.count - 1)
@@ -60,7 +60,7 @@ public enum KeyboardGeometry {
         let canonicalUnit = canonicalKeyWidth + sizing.horizontalGap
 
         let rows = layout.rows.enumerated().map { rowIndex, row in
-            let visibleKeys = row.keys.filter { showsInputModeKey || $0.role != .inputMode }
+            let visibleKeys = row.keys
             let inset = row.horizontalInsetUnits * canonicalUnit
             let rowWidth = max(1, contentWidth - inset * 2)
             let gapWidth = sizing.horizontalGap * CGFloat(max(visibleKeys.count - 1, 0))

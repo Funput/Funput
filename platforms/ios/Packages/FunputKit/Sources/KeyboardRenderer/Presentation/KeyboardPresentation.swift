@@ -16,20 +16,23 @@ public struct KeyboardPresentation: Hashable, Sendable {
     public var sizing: KeyboardSizingProfile
     public var theme: KeyboardThemeTokens
     public var shiftState: ShiftState
-    public var showsInputModeKey: Bool
+    public var language: KeyboardLanguage
+    public var enterAction: KeyboardEnterAction
 
     public init(
         layout: KeyboardLayout = .funputQWERTY,
         sizing: KeyboardSizingProfile = .default,
         theme: KeyboardThemeTokens = .funputGlass,
         shiftState: ShiftState = .lowercase,
-        showsInputModeKey: Bool = true
+        language: KeyboardLanguage = .vietnamese,
+        enterAction: KeyboardEnterAction = .newLine
     ) {
         self.layout = layout
         self.sizing = sizing
         self.theme = theme
         self.shiftState = shiftState
-        self.showsInputModeKey = showsInputModeKey
+        self.language = language
+        self.enterAction = enterAction
     }
 }
 
@@ -59,6 +62,14 @@ public enum KeyboardMetrics {
         for traits: UITraitCollection,
         scale: CGFloat = 1
     ) -> CGFloat {
+        recommendedHeight(for: .funputQWERTY, traits: traits, scale: scale)
+    }
+
+    public static func recommendedHeight(
+        for layout: KeyboardLayout,
+        traits: UITraitCollection,
+        scale: CGFloat = 1
+    ) -> CGFloat {
         let baseHeight: CGFloat
         if traits.userInterfaceIdiom == .pad {
             baseHeight = padBaseHeight
@@ -67,7 +78,34 @@ public enum KeyboardMetrics {
         } else {
             baseHeight = phonePortraitBaseHeight
         }
-        return baseHeight * min(max(scale, 0.85), 1.15)
+        return height(for: layout, baseHeight: baseHeight, scale: scale)
+    }
+
+    public static func phonePortraitHeight(
+        for layout: KeyboardLayout,
+        scale: CGFloat = 1
+    ) -> CGFloat {
+        height(for: layout, baseHeight: phonePortraitBaseHeight, scale: scale)
+    }
+
+    private static func height(
+        for layout: KeyboardLayout,
+        baseHeight: CGFloat,
+        scale: CGFloat
+    ) -> CGFloat {
+        let verticalPadding: CGFloat = 12
+        let toolbarChrome: CGFloat = 50
+        let rowGap: CGFloat = 7
+        let standardRows: CGFloat = 5
+        let standardRowHeight = (
+            baseHeight - verticalPadding - toolbarChrome - rowGap * (standardRows - 1)
+        ) / standardRows
+        let rowCount = CGFloat(layout.rows.count)
+        let targetHeight = verticalPadding
+            + standardRowHeight * rowCount
+            + rowGap * CGFloat(max(layout.rows.count - 1, 0))
+            + (layout.toolbar == nil ? 0 : toolbarChrome)
+        return targetHeight * min(max(scale, 0.85), 1.15)
     }
 }
 

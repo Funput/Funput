@@ -21,5 +21,9 @@ let package = Package(
             name: "KeyboardLayoutTests",
             dependencies: ["KeyboardLayout"]
         ),
+        .testTarget(
+            name: "KeyboardRendererTests",
+            dependencies: ["KeyboardLayout", "KeyboardRenderer", "ThemeSchema"]
+        ),
     ]
 )
