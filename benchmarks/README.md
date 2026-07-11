@@ -26,11 +26,11 @@ their corresponding directories in `target/criterion/`.
 
 | Metric | Result |
 |---|---|
-| Compose latency (core `apply`) | **~0.23 µs / keystroke** (Telex), ~0.22 µs (VNI) |
+| Compose latency (core `apply`) | **~0.23 µs / keystroke** (Telex), ~0.20 µs (VNI) |
 | Compose throughput | **> 4 million keystrokes / second** |
-| Full engine path (`process_char`, incl. boundary + English-restore) | ~1.5 µs / keystroke |
-| **End-to-end across the C FFI** (`process_char` + read composed text back) | **~1.5 µs / keystroke** |
-| `size_of::<Engine>` (per-field session state) | **112 bytes** |
+| Full engine path (`process_char`, incl. boundary + English-restore) | **~0.52 µs / keystroke** (~1.9 M/s) |
+| **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.55 µs / keystroke** |
+| `size_of::<Engine>` (per-field session state) | **136 bytes** |
 | Release FFI shared lib (`libfunput_ffi.dylib`) | ~0.46 MB |
 
 A human types a few keys per second; Funput answers each in **sub-microsecond**
@@ -44,7 +44,7 @@ The `latency` bench drives the **real C ABI a platform shell uses** for every ke
 `funput_buffer` (copies the composed text back out to render the marked text). This
 is the layer the pure-core bench skips.
 
-Key finding: it lands at **~1.5 µs/keystroke — essentially identical to the engine
+Key finding: it lands at **~0.55 µs/keystroke — essentially identical to the engine
 alone**, so the FFI boundary (handle indirection + by-value result + UTF-32 copy)
 adds negligible cost.
 

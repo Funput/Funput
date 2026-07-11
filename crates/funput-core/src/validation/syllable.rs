@@ -3,6 +3,8 @@
 //! Decides whether a modifier should apply, be ignored, or pass through as a
 //! literal key (non-Vietnamese structure the engine restores later).
 
+use std::sync::LazyLock;
+
 use crate::unicode::marks::{Tone, tone_on_vowel, vowel_stem};
 use crate::validation::parse::{is_valid_onset, parse_syllable};
 use crate::validation::rhyme::{self, is_valid_rhyme};
@@ -188,6 +190,12 @@ fn deshape(s: &str) -> String {
     s.chars().map(plain_base).collect()
 }
 
+/// The rhyme inventory with tone/shape stripped, built once. Lets
+/// [`is_definitely_invalid`] test reachability without re-`deshape`-ing all ~166
+/// rhymes (a `String` allocation each) on every keystroke.
+static DESHAPED_RHYMES: LazyLock<Vec<String>> =
+    LazyLock::new(|| rhyme::all().iter().map(|r| deshape(r)).collect());
+
 /// True when `buffer` can **no longer** become a valid Vietnamese syllable by
 /// typing more — used for *eager* English restore (flip back to the raw
 /// keystrokes the instant a word is unrecoverable, without waiting for a boundary):
@@ -207,9 +215,9 @@ pub fn is_definitely_invalid(buffer: &str) -> bool {
 
     let coda = normalize_ethnic_coda(&parts.coda);
     let rhyme_query = format!("{}{}", deshape(&parts.nucleus), deshape(coda));
-    let reachable = rhyme::all()
+    let reachable = DESHAPED_RHYMES
         .iter()
-        .any(|r| deshape(r).starts_with(&rhyme_query));
+        .any(|r| r.starts_with(&rhyme_query));
     if !reachable {
         return true;
     }
