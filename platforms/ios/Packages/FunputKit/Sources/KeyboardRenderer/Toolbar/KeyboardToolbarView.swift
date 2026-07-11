@@ -70,7 +70,7 @@ final class KeyboardToolbarView: UIView {
     private func configure(_ button: UIButton, symbol: String, role: KeyRole) {
         button.setImage(UIImage(systemName: symbol), for: .normal)
         button.accessibilityTraits = .keyboardKey
-        button.addAction(UIAction { [weak self] _ in self?.emit(role) }, for: .touchUpInside)
+        configureInteraction(button, role: role)
         addSubview(button)
     }
 
@@ -78,13 +78,23 @@ final class KeyboardToolbarView: UIView {
         inputMethodButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .bold)
         inputMethodButton.layer.cornerCurve = .continuous
         inputMethodButton.accessibilityTraits = .keyboardKey
-        inputMethodButton.addAction(UIAction { [weak self] _ in
-            self?.emit(.inputMethod)
-        }, for: .touchUpInside)
+        configureInteraction(inputMethodButton, role: .inputMethod)
         addSubview(inputMethodButton)
     }
 
-    private func emit(_ role: KeyRole) {
+    private func configureInteraction(_ button: UIButton, role: KeyRole) {
+        button.addAction(UIAction { [weak self] _ in
+            self?.emit(role, phase: .pressed)
+        }, for: .touchDown)
+        button.addAction(UIAction { [weak self] _ in
+            self?.emit(role, phase: .released)
+        }, for: .touchUpInside)
+        button.addAction(UIAction { [weak self] _ in
+            self?.emit(role, phase: .cancelled)
+        }, for: [.touchCancel, .touchDragExit, .touchUpOutside])
+    }
+
+    private func emit(_ role: KeyRole, phase: KeyboardKeyEvent.Phase) {
         let key: KeySpec? = switch role {
         case .inputMethod: spec?.inputMethodKey
         case .systemInputMode: spec?.systemInputModeKey
@@ -93,7 +103,7 @@ final class KeyboardToolbarView: UIView {
         default: nil
         }
         guard let key else { return }
-        onEvent?(KeyboardKeyEvent(key: key, phase: .released))
+        onEvent?(KeyboardKeyEvent(key: key, phase: phase))
     }
 }
 #endif

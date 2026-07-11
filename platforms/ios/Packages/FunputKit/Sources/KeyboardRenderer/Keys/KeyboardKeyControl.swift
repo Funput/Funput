@@ -67,6 +67,7 @@ final class KeyboardKeyControl: UIControl {
 
     private func configureInteraction() {
         contentView.isUserInteractionEnabled = false
+        interactionControl.isMultipleTouchEnabled = false
         interactionControl.addAction(UIAction { [weak self] _ in
             self?.handleTouch(.pressed)
         }, for: .touchDown)
@@ -75,7 +76,7 @@ final class KeyboardKeyControl: UIControl {
         }, for: .touchUpInside)
         interactionControl.addAction(UIAction { [weak self] _ in
             self?.handleTouch(.cancelled)
-        }, for: [.touchCancel, .touchUpOutside])
+        }, for: [.touchCancel, .touchDragExit, .touchUpOutside])
     }
 
     private func applySurfaceIfNeeded(traits: UITraitCollection) {

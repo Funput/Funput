@@ -61,5 +61,18 @@ struct KeyboardInputCompositionTests {
 
         #expect(document.text == "Phú")
     }
+
+    @Test("Repeated Backspace keeps composer and document synchronized")
+    func repeatedBackspace() {
+        let coordinator = KeyboardInputCoordinator(inputMethod: .telex)
+        let document = TestKeyboardDocument()
+
+        type("Phua", with: coordinator, into: document)
+        coordinator.handle(testKey(.backspace), document: document)
+        coordinator.handle(testKey(.backspace), document: document)
+        type("os", with: coordinator, into: document)
+
+        #expect(document.text == "Phó")
+    }
 }
 #endif

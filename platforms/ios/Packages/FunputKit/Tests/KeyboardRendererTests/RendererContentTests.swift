@@ -66,6 +66,21 @@ struct RendererContentTests {
         #expect(toolbar.isHidden)
     }
 
+    @Test("Toolbar emits press and release phases")
+    func toolbarInteraction() {
+        let toolbar = KeyboardToolbarView()
+        var events: [KeyboardKeyEvent] = []
+        toolbar.onEvent = { events.append($0) }
+        toolbar.apply(spec: .standard(for: .vni), theme: .funputGlass, traits: traits)
+
+        let button = visibleButtons(in: toolbar)[0]
+        button.sendActions(for: .touchDown)
+        button.sendActions(for: .touchUpInside)
+
+        #expect(events.map(\.phase) == [.pressed, .released])
+        #expect(events.map(\.key.role) == [.inputMethod, .inputMethod])
+    }
+
     private func renderedControl(_ key: KeySpec) -> KeyboardKeyControl {
         let control = KeyboardKeyControl(spec: key)
         control.apply(presentation: KeyboardPresentation(), traits: traits)

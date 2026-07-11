@@ -5,7 +5,12 @@ import UIKit
 
 extension KeyboardViewController {
     func handleKeyEvent(_ event: KeyboardKeyEvent) {
-        guard event.phase == .released else { return }
+        switch event.phase {
+        case .released, .repeated:
+            break
+        case .pressed, .cancelled:
+            return
+        }
 
         let previousState = inputCoordinator.state
         let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
@@ -28,6 +33,7 @@ extension KeyboardViewController {
         presentation.shiftState = state.shiftState
         presentation.language = .vietnamese
         presentation.enterAction = state.enterAction
+        presentation.showsKeyPreviews = !state.editorMode.isPassword
         keyboardView.presentation = presentation
         updatePreferredHeight()
     }

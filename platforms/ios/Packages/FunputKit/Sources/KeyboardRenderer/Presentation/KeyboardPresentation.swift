@@ -10,6 +10,8 @@ public struct KeyboardPresentation: Hashable, Sendable {
     public var shiftState: ShiftState
     public var language: KeyboardLanguage
     public var enterAction: KeyboardEnterAction
+    public var isHapticFeedbackEnabled: Bool
+    public var showsKeyPreviews: Bool
 
     public init(
         layout: KeyboardLayout = .funputQWERTY,
@@ -17,7 +19,9 @@ public struct KeyboardPresentation: Hashable, Sendable {
         theme: KeyboardThemeTokens = .funputGlass,
         shiftState: ShiftState = .lowercase,
         language: KeyboardLanguage = .vietnamese,
-        enterAction: KeyboardEnterAction = .newLine
+        enterAction: KeyboardEnterAction = .newLine,
+        isHapticFeedbackEnabled: Bool = true,
+        showsKeyPreviews: Bool = true
     ) {
         self.layout = layout
         self.sizing = sizing
@@ -25,12 +29,15 @@ public struct KeyboardPresentation: Hashable, Sendable {
         self.shiftState = shiftState
         self.language = language
         self.enterAction = enterAction
+        self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
+        self.showsKeyPreviews = showsKeyPreviews
     }
 }
 
 public struct KeyboardKeyEvent: Sendable {
-    public enum Phase: Sendable {
+    public enum Phase: Equatable, Sendable {
         case pressed
+        case repeated
         case released
         case cancelled
     }

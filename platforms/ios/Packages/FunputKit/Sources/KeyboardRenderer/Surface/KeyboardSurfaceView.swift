@@ -15,6 +15,11 @@ public final class KeyboardSurfaceView: UIView {
     private let toolbarView = KeyboardToolbarView()
     private let contentHost = UIView()
     private let keysHost = KeyboardKeysHostView()
+    let previewView = KeyboardKeyPreviewView()
+    lazy var interactionController = KeyboardSurfaceInteractionController(
+        onEvent: { [weak self] event in self?.onKeyEvent?(event) },
+        onPreview: { [weak self] key, frame in self?.updatePreview(key, sourceFrame: frame) }
+    )
     private var keyControls: [String: KeyboardKeyControl] = [:]
 
     public init(presentation: KeyboardPresentation = KeyboardPresentation()) {
@@ -63,6 +68,13 @@ public final class KeyboardSurfaceView: UIView {
         applyPresentation()
     }
 
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window == nil {
+            interactionController.cancelAll()
+        }
+    }
+
     private func configureView() {
         clipsToBounds = true
         backgroundColor = .clear
@@ -70,7 +82,8 @@ public final class KeyboardSurfaceView: UIView {
         addSubview(contentHost)
         contentHost.addSubview(keysHost)
         contentHost.addSubview(toolbarView)
-        toolbarView.onEvent = { [weak self] event in self?.onKeyEvent?(event) }
+        addSubview(previewView)
+        toolbarView.onEvent = { [weak self] event in self?.route(event, from: nil) }
         rebuildKeys()
         applyPresentation()
 
@@ -89,6 +102,7 @@ public final class KeyboardSurfaceView: UIView {
 
     private func presentationDidChange(from oldValue: KeyboardPresentation) {
         if oldValue.layout != presentation.layout {
+            interactionController.cancelAll()
             rebuildKeys()
         }
         applyPresentation()
@@ -101,7 +115,9 @@ public final class KeyboardSurfaceView: UIView {
         let specs = presentation.layout.rows.flatMap(\.keys)
         keyControls = Dictionary(uniqueKeysWithValues: specs.map { spec in
             let control = KeyboardKeyControl(spec: spec)
-            control.onEvent = { [weak self] event in self?.onKeyEvent?(event) }
+            control.onEvent = { [weak self, weak control] event in
+                self?.route(event, from: control)
+            }
             return (spec.id, control)
         })
         keysHost.install(Array(keyControls.values))
