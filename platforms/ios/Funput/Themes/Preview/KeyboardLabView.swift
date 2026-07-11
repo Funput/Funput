@@ -38,7 +38,7 @@ struct KeyboardLabView: View {
             presentation: presentation,
             interfaceStyle: previewStyle.interfaceStyle
         )
-        .frame(height: 280 * heightScale)
+        .frame(height: KeyboardMetrics.phonePortraitBaseHeight * heightScale)
         .clipShape(.rect(cornerRadius: 18))
         .overlay {
             RoundedRectangle(cornerRadius: 18)

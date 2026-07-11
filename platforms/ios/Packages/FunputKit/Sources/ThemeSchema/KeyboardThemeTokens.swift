@@ -100,32 +100,32 @@ public struct KeyboardThemeTokens: Hashable, Sendable {
     public static let funputGlass = KeyboardThemeTokens(
         material: .glass,
         backgroundStart: AdaptiveThemeColor(
-            light: ThemeRGBA(hex: 0xCAD4E0, alpha: 0.98),
-            dark: ThemeRGBA(hex: 0x151A26, alpha: 0.96)
+            light: ThemeRGBA(hex: 0xDCE4ED, alpha: 0.58),
+            dark: ThemeRGBA(hex: 0x3A3A3C, alpha: 0.48)
         ),
         backgroundEnd: AdaptiveThemeColor(
-            light: ThemeRGBA(hex: 0xB8C5D4, alpha: 0.98),
-            dark: ThemeRGBA(hex: 0x090D18, alpha: 0.98)
+            light: ThemeRGBA(hex: 0xAEBCCC, alpha: 0.44),
+            dark: ThemeRGBA(hex: 0x121214, alpha: 0.62)
         ),
         characterKey: AdaptiveThemeColor(
             light: ThemeRGBA(hex: 0xFFFFFF),
-            dark: ThemeRGBA(hex: 0x263142)
+            dark: ThemeRGBA(hex: 0x6C6C70)
         ),
         specialKey: AdaptiveThemeColor(
             light: ThemeRGBA(hex: 0xAAB7C7),
-            dark: ThemeRGBA(hex: 0x3A4658)
+            dark: ThemeRGBA(hex: 0x464649)
         ),
         border: AdaptiveThemeColor(
             light: ThemeRGBA(hex: 0x718096, alpha: 0.45),
-            dark: ThemeRGBA(hex: 0x94A3B8, alpha: 0.36)
+            dark: ThemeRGBA(hex: 0xFFFFFF, alpha: 0.16)
         ),
         label: AdaptiveThemeColor(
             light: ThemeRGBA(hex: 0x111318),
-            dark: ThemeRGBA(hex: 0xF7F9FF)
+            dark: ThemeRGBA(hex: 0xFFFFFF)
         ),
         secondaryLabel: AdaptiveThemeColor(
             light: ThemeRGBA(hex: 0x414957),
-            dark: ThemeRGBA(hex: 0xC8D0DE)
+            dark: ThemeRGBA(hex: 0xEBEBF5, alpha: 0.82)
         ),
         accent: AdaptiveThemeColor(
             light: ThemeRGBA(hex: 0xA98B32),

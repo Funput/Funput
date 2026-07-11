@@ -11,9 +11,13 @@ public final class KeyboardSurfaceView: UIView {
 
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
 
+    private let backdropView = UIVisualEffectView()
     private let gradientLayer = CAGradientLayer()
     private let toolbarView = KeyboardToolbarView()
     private let contentHost = UIView()
+    private var keysHost = UIView()
+    private var glassContainerView: UIVisualEffectView?
+    private var usesGlassContainer = false
     private var keyControls: [String: KeyboardKeyControl] = [:]
 
     public init(presentation: KeyboardPresentation = KeyboardPresentation()) {
@@ -39,8 +43,13 @@ public final class KeyboardSurfaceView: UIView {
 
     public override func layoutSubviews() {
         super.layoutSubviews()
+        backdropView.frame = bounds
         gradientLayer.frame = bounds
         contentHost.frame = bounds
+        glassContainerView?.frame = bounds
+        if glassContainerView == nil {
+            keysHost.frame = bounds
+        }
 
         guard bounds.width > 0, bounds.height > 0 else { return }
         let geometry = KeyboardGeometry.resolve(
@@ -63,10 +72,14 @@ public final class KeyboardSurfaceView: UIView {
 
     private func commonInit() {
         clipsToBounds = true
-        layer.addSublayer(gradientLayer)
+        backgroundColor = .clear
+        backdropView.isUserInteractionEnabled = false
+        addSubview(backdropView)
+        backdropView.contentView.layer.addSublayer(gradientLayer)
         addSubview(contentHost)
         contentHost.addSubview(toolbarView)
         toolbarView.onEvent = { [weak self] event in self?.onKeyEvent?(event) }
+        ensureKeysHost()
         rebuildKeys()
         applyTheme()
 
@@ -104,21 +117,84 @@ public final class KeyboardSurfaceView: UIView {
             let control = KeyboardKeyControl(spec: spec)
             control.onEvent = { [weak self] event in self?.handle(event) }
             keyControls[spec.id] = control
-            contentHost.addSubview(control)
+            keysHost.addSubview(control)
         }
     }
 
     private func applyTheme() {
         let theme = presentation.theme
+        ensureKeysHost()
+        let reducesTransparency = UIAccessibility.isReduceTransparencyEnabled
+        backdropView.effect = reducesTransparency
+            ? nil
+            : UIBlurEffect(style: .systemChromeMaterial)
+
+        let startColor = theme.backgroundStart.uiColor(for: traitCollection)
+        let endColor = theme.backgroundEnd.uiColor(for: traitCollection)
         gradientLayer.colors = [
-            theme.backgroundStart.uiColor(for: traitCollection).cgColor,
-            theme.backgroundEnd.uiColor(for: traitCollection).cgColor,
+            (reducesTransparency ? startColor.withAlphaComponent(1) : startColor).cgColor,
+            (reducesTransparency ? endColor.withAlphaComponent(1) : endColor).cgColor,
         ]
-        gradientLayer.startPoint = CGPoint(x: 0, y: 0)
-        gradientLayer.endPoint = CGPoint(x: 1, y: 1)
+        gradientLayer.locations = [0, 1]
+        gradientLayer.startPoint = CGPoint(x: 0.08, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 0.92, y: 1)
         toolbarView.apply(theme: theme, traits: traitCollection)
         keyControls.values.forEach {
             $0.apply(theme: theme, shiftState: presentation.shiftState, traits: traitCollection)
+        }
+    }
+
+    private func ensureKeysHost() {
+        let shouldUseGlass = shouldUseGlassContainer
+        guard keysHost.superview == nil || shouldUseGlass != usesGlassContainer else {
+            updateGlassContainerSpacing()
+            return
+        }
+
+        let controls = Array(keyControls.values)
+        glassContainerView?.removeFromSuperview()
+        if glassContainerView == nil {
+            keysHost.removeFromSuperview()
+        }
+
+        if shouldUseGlass, #available(iOS 26.0, *) {
+            let effect = UIGlassContainerEffect()
+            effect.spacing = glassContainerSpacing
+            let effectView = UIVisualEffectView(effect: effect)
+            contentHost.insertSubview(effectView, belowSubview: toolbarView)
+            glassContainerView = effectView
+            keysHost = effectView.contentView
+        } else {
+            let host = UIView()
+            contentHost.insertSubview(host, belowSubview: toolbarView)
+            glassContainerView = nil
+            keysHost = host
+        }
+
+        usesGlassContainer = shouldUseGlass
+        controls.forEach(keysHost.addSubview)
+        setNeedsLayout()
+    }
+
+    private var shouldUseGlassContainer: Bool {
+        guard presentation.theme.material == .glass,
+              !UIAccessibility.isReduceTransparencyEnabled else { return false }
+        if #available(iOS 26.0, *) { return true }
+        return false
+    }
+
+    private var glassContainerSpacing: CGFloat {
+        let nearestGap = min(
+            presentation.sizing.horizontalGap,
+            presentation.sizing.verticalGap
+        )
+        return max(0, nearestGap - 1)
+    }
+
+    private func updateGlassContainerSpacing() {
+        if #available(iOS 26.0, *),
+           let effect = glassContainerView?.effect as? UIGlassContainerEffect {
+            effect.spacing = glassContainerSpacing
         }
     }
 

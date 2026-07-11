@@ -83,6 +83,7 @@ public extension KeyboardLayout {
     static let funputQWERTY = KeyboardLayout(
         id: "funput-qwerty",
         rows: [
+            digitRow(),
             characterRow("qwertyuiop"),
             characterRow("asdfghjkl", inset: 0.5),
             bottomCharacterRow(),
@@ -91,22 +92,27 @@ public extension KeyboardLayout {
                     id: "symbols",
                     label: "123",
                     role: .symbols,
-                    widthWeight: 1.35,
+                    widthWeight: 1.7,
                     accessibilityLabel: "Số và ký hiệu"
                 ),
                 KeySpec(
-                    id: "input-mode",
-                    label: "",
-                    role: .inputMode,
-                    widthWeight: 1.1,
-                    accessibilityLabel: "Bàn phím tiếp theo"
+                    id: "comma",
+                    label: ",",
+                    role: .punctuation,
+                    accessibilityLabel: "Dấu phẩy"
                 ),
                 KeySpec(
                     id: "space",
                     label: "Tiếng Việt",
                     role: .space,
-                    widthWeight: 5.1,
+                    widthWeight: 5.8,
                     accessibilityLabel: "Dấu cách"
+                ),
+                KeySpec(
+                    id: "period",
+                    label: ".",
+                    role: .punctuation,
+                    accessibilityLabel: "Dấu chấm"
                 ),
                 KeySpec(
                     id: "enter",
@@ -118,6 +124,18 @@ public extension KeyboardLayout {
             ]),
         ]
     )
+}
+
+private func digitRow() -> KeyboardRow {
+    let digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+    return KeyboardRow(keys: digits.map { digit in
+        KeySpec(
+            id: "digit-\(digit)",
+            label: digit,
+            role: .character,
+            accessibilityLabel: digit
+        )
+    })
 }
 
 private func characterRow(_ characters: String, inset: CGFloat = 0) -> KeyboardRow {

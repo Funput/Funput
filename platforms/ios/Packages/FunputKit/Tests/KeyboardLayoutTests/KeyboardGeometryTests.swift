@@ -55,35 +55,23 @@ struct KeyboardGeometryTests {
             sizing: .default,
             showsInputModeKey: true
         )
-        let firstRow = resolved.rows[0]
-        let secondRow = resolved.rows[1]
-        let thirdRow = resolved.rows[2]
+        let firstCharacterRow = resolved.rows[1]
+        let secondCharacterRow = resolved.rows[2]
+        let thirdCharacterRow = resolved.rows[3]
 
-        #expect(secondRow[0].frame.minX > firstRow[0].frame.minX)
-        #expect(thirdRow[0].frame.width > thirdRow[1].frame.width)
-        #expect(thirdRow.last!.frame.width > thirdRow[1].frame.width)
+        #expect(secondCharacterRow[0].frame.minX > firstCharacterRow[0].frame.minX)
+        #expect(thirdCharacterRow[0].frame.width > thirdCharacterRow[1].frame.width)
+        #expect(thirdCharacterRow.last!.frame.width > thirdCharacterRow[1].frame.width)
         #expect(resolved.keys.allSatisfy { !$0.spec.accessibilityLabel.isEmpty })
     }
 
-    @Test("Input mode key is conditional")
-    func inputModeKeyVisibility() {
-        let size = CGSize(width: 390, height: 280)
-        let shown = KeyboardGeometry.resolve(
-            layout: .funputQWERTY,
-            size: size,
-            sizing: .default,
-            showsInputModeKey: true
-        )
-        let hidden = KeyboardGeometry.resolve(
-            layout: .funputQWERTY,
-            size: size,
-            sizing: .default,
-            showsInputModeKey: false
-        )
-
-        #expect(shown.keys.contains { $0.spec.role == .inputMode })
-        #expect(!hidden.keys.contains { $0.spec.role == .inputMode })
-        #expect(hidden.keys.first { $0.spec.role == .space }!.frame.width > shown.keys.first { $0.spec.role == .space }!.frame.width)
+    @Test("Layout matches the Android keyboard anatomy")
+    func androidLayoutAnatomy() {
+        let rows = KeyboardLayout.funputQWERTY.rows
+        #expect(rows.count == 5)
+        #expect(rows[0].keys.map(\.label) == ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"])
+        #expect(rows[4].keys.map(\.id) == ["symbols", "comma", "space", "period", "enter"])
+        #expect(!rows.flatMap(\.keys).contains { $0.role == .inputMode })
     }
 
     @Test("Customization extremes remain valid", arguments: [

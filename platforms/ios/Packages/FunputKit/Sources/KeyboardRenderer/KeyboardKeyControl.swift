@@ -8,12 +8,14 @@ final class KeyboardKeyControl: UIControl {
     var onEvent: ((KeyboardKeyEvent) -> Void)?
 
     private let spec: KeySpec
+    private let interactionControl = UIControl()
     private let label = UILabel()
     private let iconView = UIImageView()
     private var surfaceView: UIView?
     private var theme = KeyboardThemeTokens.funputGlass
     private var shiftState = ShiftState.lowercase
     private var normalSurfaceAlpha: CGFloat = 1
+    private var usesNativeGlassInteraction = false
 
     init(spec: KeySpec) {
         self.spec = spec
@@ -24,16 +26,27 @@ final class KeyboardKeyControl: UIControl {
         accessibilityTraits = .keyboardKey
         clipsToBounds = false
 
+        interactionControl.isAccessibilityElement = false
+        interactionControl.addAction(UIAction { [weak self] _ in
+            self?.handleTouchDown()
+        }, for: .touchDown)
+        interactionControl.addAction(UIAction { [weak self] _ in
+            self?.handleTouchUpInside()
+        }, for: .touchUpInside)
+        interactionControl.addAction(UIAction { [weak self] _ in
+            self?.handleTouchCancelled()
+        }, for: [.touchCancel, .touchUpOutside])
+
         label.textAlignment = .center
         label.adjustsFontSizeToFitWidth = true
         label.minimumScaleFactor = 0.7
         label.isUserInteractionEnabled = false
-        addSubview(label)
+        interactionControl.addSubview(label)
 
         iconView.contentMode = .scaleAspectFit
         iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(weight: .medium)
         iconView.isUserInteractionEnabled = false
-        addSubview(iconView)
+        interactionControl.addSubview(iconView)
     }
 
     @available(*, unavailable)
@@ -45,6 +58,7 @@ final class KeyboardKeyControl: UIControl {
         super.layoutSubviews()
         surfaceView?.frame = bounds
         surfaceView?.layer.cornerRadius = CGFloat(theme.cornerRadius)
+        interactionControl.frame = bounds
 
         let contentInset = max(6, bounds.height * 0.2)
         label.frame = bounds.insetBy(dx: 5, dy: contentInset * 0.5)
@@ -77,30 +91,16 @@ final class KeyboardKeyControl: UIControl {
         iconView.isHidden = iconView.image == nil
 
         layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = Float(theme.shadowOpacity)
-        layer.shadowRadius = CGFloat(theme.shadowRadius)
+        layer.shadowOpacity = usesNativeGlassInteraction ? 0 : Float(theme.shadowOpacity)
+        layer.shadowRadius = usesNativeGlassInteraction ? 0 : CGFloat(theme.shadowRadius)
         layer.shadowOffset = CGSize(width: 0, height: 1)
         setNeedsLayout()
     }
 
-    override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-        let began = super.beginTracking(touch, with: event)
-        guard began else { return false }
-        setPressed(true, animated: true)
+    override func accessibilityActivate() -> Bool {
         onEvent?(KeyboardKeyEvent(key: spec, phase: .pressed))
-        return true
-    }
-
-    override func endTracking(_ touch: UITouch?, with event: UIEvent?) {
-        super.endTracking(touch, with: event)
-        setPressed(false, animated: true)
         onEvent?(KeyboardKeyEvent(key: spec, phase: .released))
-    }
-
-    override func cancelTracking(with event: UIEvent?) {
-        super.cancelTracking(with: event)
-        setPressed(false, animated: true)
-        onEvent?(KeyboardKeyEvent(key: spec, phase: .cancelled))
+        return true
     }
 
     private var displayedLabel: String {
@@ -150,32 +150,64 @@ final class KeyboardKeyControl: UIControl {
         surfaceView?.removeFromSuperview()
 
         let view: UIView
+        let contentView: UIView
         if #available(iOS 26.0, *),
            theme.material == .glass,
            !UIAccessibility.isReduceTransparencyEnabled {
             let effect = UIGlassEffect(style: .regular)
-            effect.isInteractive = false
-            effect.tintColor = color.withAlphaComponent(opacity)
-            view = UIVisualEffectView(effect: effect)
+            effect.isInteractive = true
+            effect.tintColor = color.withAlphaComponent(glassTintAlpha(for: opacity))
+            let effectView = UIVisualEffectView(effect: effect)
+            view = effectView
+            contentView = effectView.contentView
+            usesNativeGlassInteraction = true
         } else {
             let fallback = UIView()
             fallback.backgroundColor = color.withAlphaComponent(opacity)
             view = fallback
+            contentView = fallback
+            usesNativeGlassInteraction = false
         }
 
-        view.isUserInteractionEnabled = false
+        view.isUserInteractionEnabled = true
         view.layer.cornerCurve = .continuous
         view.layer.cornerRadius = CGFloat(theme.cornerRadius)
-        view.layer.borderWidth = CGFloat(theme.borderWidth)
+        view.layer.borderWidth = usesNativeGlassInteraction ? 0 : CGFloat(theme.borderWidth)
         view.layer.borderColor = theme.border
             .uiColor(for: traitCollection)
             .cgColor
         view.clipsToBounds = true
         insertSubview(view, at: 0)
+        contentView.addSubview(interactionControl)
         surfaceView = view
     }
 
+    private func glassTintAlpha(for opacity: CGFloat) -> CGFloat {
+        // Glass already supplies translucency and contrast. Theme opacity only
+        // adjusts a restrained tint so it does not turn the material into a fill.
+        let clamped = min(max(opacity, 0), 1)
+        let base: CGFloat = spec.role.isSpecial ? 0.12 : 0.06
+        let range: CGFloat = spec.role.isSpecial ? 0.26 : 0.22
+        return base + clamped * range
+    }
+
+    private func handleTouchDown() {
+        setPressed(true, animated: true)
+        onEvent?(KeyboardKeyEvent(key: spec, phase: .pressed))
+    }
+
+    private func handleTouchUpInside() {
+        setPressed(false, animated: true)
+        onEvent?(KeyboardKeyEvent(key: spec, phase: .released))
+    }
+
+    private func handleTouchCancelled() {
+        setPressed(false, animated: true)
+        onEvent?(KeyboardKeyEvent(key: spec, phase: .cancelled))
+    }
+
     private func setPressed(_ pressed: Bool, animated: Bool) {
+        guard !usesNativeGlassInteraction else { return }
         let updates = {
             self.transform = pressed
                 ? CGAffineTransform(scaleX: self.theme.pressedScale, y: self.theme.pressedScale)

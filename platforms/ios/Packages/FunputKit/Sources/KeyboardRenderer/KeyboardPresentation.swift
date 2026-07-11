@@ -51,17 +51,21 @@ public struct KeyboardKeyEvent: Sendable {
 
 @MainActor
 public enum KeyboardMetrics {
+    public static let phonePortraitBaseHeight: CGFloat = 304
+    public static let phoneLandscapeBaseHeight: CGFloat = 236
+    public static let padBaseHeight: CGFloat = 324
+
     public static func recommendedHeight(
         for traits: UITraitCollection,
         scale: CGFloat = 1
     ) -> CGFloat {
         let baseHeight: CGFloat
         if traits.userInterfaceIdiom == .pad {
-            baseHeight = 300
+            baseHeight = padBaseHeight
         } else if traits.verticalSizeClass == .compact {
-            baseHeight = 220
+            baseHeight = phoneLandscapeBaseHeight
         } else {
-            baseHeight = 280
+            baseHeight = phonePortraitBaseHeight
         }
         return baseHeight * min(max(scale, 0.85), 1.15)
     }
