@@ -8,7 +8,8 @@ final class KeyboardToolbarView: UIView {
     var onEvent: ((KeyboardKeyEvent) -> Void)?
 
     private let brandLabel = UILabel()
-    private let suggestions = UIStackView()
+    private let suggestionsContainer = UIView()
+    private var suggestionLabels: [UILabel] = []
     private let emojiButton = UIButton(type: .system)
     private let settingsButton = UIButton(type: .system)
     private let emojiSpec = KeySpec(
@@ -33,18 +34,15 @@ final class KeyboardToolbarView: UIView {
         brandLabel.layer.cornerCurve = .continuous
         addSubview(brandLabel)
 
-        suggestions.axis = .horizontal
-        suggestions.distribution = .fillEqually
-        suggestions.alignment = .fill
-        suggestions.spacing = 1
+        addSubview(suggestionsContainer)
         ["xin", "chào", "bạn"].forEach { text in
             let label = UILabel()
             label.text = text
             label.textAlignment = .center
             label.font = .systemFont(ofSize: 14, weight: .medium)
-            suggestions.addArrangedSubview(label)
+            suggestionsContainer.addSubview(label)
+            suggestionLabels.append(label)
         }
-        addSubview(suggestions)
 
         configure(emojiButton, symbol: "face.smiling", spec: emojiSpec)
         configure(settingsButton, symbol: "gearshape", spec: settingsSpec)
@@ -71,12 +69,13 @@ final class KeyboardToolbarView: UIView {
             width: itemSize,
             height: itemSize
         )
-        suggestions.frame = CGRect(
+        suggestionsContainer.frame = CGRect(
             x: brandLabel.frame.maxX + 6,
             y: 0,
-            width: max(1, emojiButton.frame.minX - brandLabel.frame.maxX - 12),
+            width: max(0, emojiButton.frame.minX - brandLabel.frame.maxX - 12),
             height: bounds.height
         )
+        layoutSuggestionLabels()
         brandLabel.layer.cornerRadius = itemSize / 2
     }
 
@@ -88,9 +87,25 @@ final class KeyboardToolbarView: UIView {
         brandLabel.backgroundColor = accent
         emojiButton.tintColor = label
         settingsButton.tintColor = label
-        suggestions.arrangedSubviews
-            .compactMap { $0 as? UILabel }
-            .forEach { $0.textColor = secondary }
+        suggestionLabels.forEach { $0.textColor = secondary }
+    }
+
+    private func layoutSuggestionLabels() {
+        guard !suggestionLabels.isEmpty else { return }
+
+        let spacing: CGFloat = 1
+        let totalSpacing = spacing * CGFloat(suggestionLabels.count - 1)
+        let labelWidth = max(0, suggestionsContainer.bounds.width - totalSpacing)
+            / CGFloat(suggestionLabels.count)
+
+        for (index, label) in suggestionLabels.enumerated() {
+            label.frame = CGRect(
+                x: CGFloat(index) * (labelWidth + spacing),
+                y: 0,
+                width: labelWidth,
+                height: suggestionsContainer.bounds.height
+            )
+        }
     }
 
     private func configure(_ button: UIButton, symbol: String, spec: KeySpec) {

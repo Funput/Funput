@@ -23,16 +23,6 @@ final class KeyboardViewController: UIInputViewController {
         updatePreferredHeight()
     }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        updateInputModeKeyVisibility()
-    }
-
-    override func textDidChange(_ textInput: UITextInput?) {
-        super.textDidChange(textInput)
-        updateInputModeKeyVisibility()
-    }
-
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
         coordinator.animate { [weak self] _ in
@@ -56,15 +46,6 @@ final class KeyboardViewController: UIInputViewController {
         constraint.priority = .init(999)
         constraint.isActive = true
         heightConstraint = constraint
-    }
-
-    private func updateInputModeKeyVisibility() {
-        let shouldShowInputModeKey = needsInputModeSwitchKey
-        guard keyboardView.presentation.showsInputModeKey != shouldShowInputModeKey else { return }
-
-        var presentation = keyboardView.presentation
-        presentation.showsInputModeKey = shouldShowInputModeKey
-        keyboardView.presentation = presentation
     }
 
     private func updatePreferredHeight() {

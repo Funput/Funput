@@ -100,31 +100,31 @@ public struct KeyboardThemeTokens: Hashable, Sendable {
     public static let funputGlass = KeyboardThemeTokens(
         material: .glass,
         backgroundStart: AdaptiveThemeColor(
-            light: ThemeRGBA(hex: 0xEEF2F7, alpha: 0.96),
+            light: ThemeRGBA(hex: 0xCAD4E0, alpha: 0.98),
             dark: ThemeRGBA(hex: 0x151A26, alpha: 0.96)
         ),
         backgroundEnd: AdaptiveThemeColor(
-            light: ThemeRGBA(hex: 0xDCE4EE, alpha: 0.96),
+            light: ThemeRGBA(hex: 0xB8C5D4, alpha: 0.98),
             dark: ThemeRGBA(hex: 0x090D18, alpha: 0.98)
         ),
         characterKey: AdaptiveThemeColor(
             light: ThemeRGBA(hex: 0xFFFFFF),
-            dark: ThemeRGBA(hex: 0xFFFFFF)
+            dark: ThemeRGBA(hex: 0x263142)
         ),
         specialKey: AdaptiveThemeColor(
-            light: ThemeRGBA(hex: 0xD9E0E8),
-            dark: ThemeRGBA(hex: 0xFFFFFF)
+            light: ThemeRGBA(hex: 0xAAB7C7),
+            dark: ThemeRGBA(hex: 0x3A4658)
         ),
         border: AdaptiveThemeColor(
-            light: ThemeRGBA(hex: 0xFFFFFF, alpha: 0.65),
-            dark: ThemeRGBA(hex: 0xFFFFFF, alpha: 0.26)
+            light: ThemeRGBA(hex: 0x718096, alpha: 0.45),
+            dark: ThemeRGBA(hex: 0x94A3B8, alpha: 0.36)
         ),
         label: AdaptiveThemeColor(
-            light: ThemeRGBA(hex: 0x15171A),
+            light: ThemeRGBA(hex: 0x111318),
             dark: ThemeRGBA(hex: 0xF7F9FF)
         ),
         secondaryLabel: AdaptiveThemeColor(
-            light: ThemeRGBA(hex: 0x59616C),
+            light: ThemeRGBA(hex: 0x414957),
             dark: ThemeRGBA(hex: 0xC8D0DE)
         ),
         accent: AdaptiveThemeColor(
@@ -132,7 +132,7 @@ public struct KeyboardThemeTokens: Hashable, Sendable {
             dark: ThemeRGBA(hex: 0xC8A951)
         ),
         keyOpacity: 0.72,
-        specialKeyOpacity: 0.58,
+        specialKeyOpacity: 0.82,
         cornerRadius: 10,
         borderWidth: 0.5,
         shadowOpacity: 0.16,

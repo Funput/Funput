@@ -20,6 +20,7 @@ struct KeyboardLabView: View {
             .padding()
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        .preferredColorScheme(previewStyle.colorScheme)
     }
 
     private var intro: some View {
@@ -104,7 +105,7 @@ struct KeyboardLabView: View {
         var theme = KeyboardThemeTokens.funputGlass
         theme.cornerRadius = cornerRadius
         theme.keyOpacity = keyOpacity
-        theme.specialKeyOpacity = max(0.25, keyOpacity - 0.14)
+        theme.specialKeyOpacity = min(1, keyOpacity + 0.1)
 
         return KeyboardPresentation(
             layout: .funputQWERTY,
@@ -152,6 +153,14 @@ private enum PreviewStyle: String, CaseIterable, Identifiable {
     var interfaceStyle: UIUserInterfaceStyle {
         switch self {
         case .system: .unspecified
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
         case .light: .light
         case .dark: .dark
         }

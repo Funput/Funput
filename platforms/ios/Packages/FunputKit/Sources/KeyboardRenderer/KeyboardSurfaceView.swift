@@ -13,9 +13,8 @@ public final class KeyboardSurfaceView: UIView {
 
     private let gradientLayer = CAGradientLayer()
     private let toolbarView = KeyboardToolbarView()
+    private let contentHost = UIView()
     private var keyControls: [String: KeyboardKeyControl] = [:]
-    private var hostContainer: UIView?
-    private var contentHost = UIView()
 
     public init(presentation: KeyboardPresentation = KeyboardPresentation()) {
         self.presentation = presentation
@@ -41,7 +40,6 @@ public final class KeyboardSurfaceView: UIView {
     public override func layoutSubviews() {
         super.layoutSubviews()
         gradientLayer.frame = bounds
-        hostContainer?.frame = bounds
         contentHost.frame = bounds
 
         guard bounds.width > 0, bounds.height > 0 else { return }
@@ -66,7 +64,8 @@ public final class KeyboardSurfaceView: UIView {
     private func commonInit() {
         clipsToBounds = true
         layer.addSublayer(gradientLayer)
-        installContentHost()
+        addSubview(contentHost)
+        contentHost.addSubview(toolbarView)
         toolbarView.onEvent = { [weak self] event in self?.onKeyEvent?(event) }
         rebuildKeys()
         applyTheme()
@@ -80,7 +79,6 @@ public final class KeyboardSurfaceView: UIView {
     }
 
     @objc private func accessibilityAppearanceDidChange() {
-        installContentHost()
         applyTheme()
         setNeedsLayout()
     }
@@ -90,37 +88,9 @@ public final class KeyboardSurfaceView: UIView {
             oldValue.showsInputModeKey != presentation.showsInputModeKey {
             rebuildKeys()
         }
-        if oldValue.theme.material != presentation.theme.material {
-            installContentHost()
-        }
         applyTheme()
         invalidateIntrinsicContentSize()
         setNeedsLayout()
-    }
-
-    private func installContentHost() {
-        let views = [toolbarView] + Array(keyControls.values)
-        views.forEach { $0.removeFromSuperview() }
-        hostContainer?.removeFromSuperview()
-
-        if #available(iOS 26.0, *),
-           presentation.theme.material == .glass,
-           !UIAccessibility.isReduceTransparencyEnabled {
-            let containerEffect = UIGlassContainerEffect()
-            containerEffect.spacing = presentation.sizing.horizontalGap
-            let container = UIVisualEffectView(effect: containerEffect)
-            insertSubview(container, at: 0)
-            hostContainer = container
-            contentHost = container.contentView
-        } else {
-            let container = UIView()
-            insertSubview(container, at: 0)
-            hostContainer = container
-            contentHost = container
-        }
-
-        contentHost.addSubview(toolbarView)
-        keyControls.values.forEach(contentHost.addSubview)
     }
 
     private func rebuildKeys() {
