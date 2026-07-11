@@ -46,17 +46,20 @@ struct StandardLayoutParityTests {
         #expect(keys[2].horizontalSwipeAction == .toggleLanguage)
     }
 
-    @Test("Toolbar contract matches Android", arguments: KeyboardInputMethod.allCases)
+    @Test("Toolbar exposes method and optional system switchers", arguments: KeyboardInputMethod.allCases)
     func toolbar(method: KeyboardInputMethod) {
         let standard = StandardKeyboardLayouts.letters(method)
-        #expect(standard.toolbar?.keys.map(\.role) == [.settings, .emoji])
+        #expect(standard.toolbar?.keys.map(\.role) == [.inputMethod, .settings, .emoji])
+        #expect(standard.toolbar?.inputMethodKey.label == (method == .vni ? "V" : "T"))
 
         let layout = KeyboardLayoutResolver.resolve(
             inputMethod: method,
             mode: .letters,
             showsSystemInputModeKey: true
         )
-        #expect(layout.toolbar?.keys.map(\.role) == [.systemInputMode, .settings, .emoji])
+        #expect(layout.toolbar?.keys.map(\.role) == [
+            .inputMethod, .systemInputMode, .settings, .emoji,
+        ])
         #expect(layout.toolbar?.systemInputModeKey?.role == .systemInputMode)
         #expect(!layout.rows.flatMap(\.keys).contains { $0.role == .systemInputMode })
     }

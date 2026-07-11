@@ -7,7 +7,7 @@ import UIKit
 final class KeyboardToolbarView: UIView {
     var onEvent: ((KeyboardKeyEvent) -> Void)?
 
-    private let brandLabel = UILabel()
+    private let inputMethodButton = UIButton(type: .system)
     private let systemButton = UIButton(type: .system)
     private let settingsButton = UIButton(type: .system)
     private let emojiButton = UIButton(type: .system)
@@ -15,12 +15,7 @@ final class KeyboardToolbarView: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        brandLabel.text = "F"
-        brandLabel.textAlignment = .center
-        brandLabel.font = .systemFont(ofSize: 17, weight: .black)
-        brandLabel.layer.cornerCurve = .continuous
-        addSubview(brandLabel)
-
+        configureInputMethodButton()
         configure(systemButton, symbol: "globe", role: .systemInputMode)
         configure(settingsButton, symbol: "gearshape", role: .settings)
         configure(emojiButton, symbol: "face.smiling", role: .emoji)
@@ -35,7 +30,7 @@ final class KeyboardToolbarView: UIView {
         super.layoutSubviews()
         let itemSize = min(36, bounds.height)
         let originY = (bounds.height - itemSize) / 2
-        brandLabel.frame = CGRect(x: 0, y: originY, width: itemSize, height: itemSize)
+        inputMethodButton.frame = CGRect(x: 0, y: originY, width: itemSize, height: itemSize)
         emojiButton.frame = CGRect(
             x: bounds.width - itemSize,
             y: originY,
@@ -44,7 +39,7 @@ final class KeyboardToolbarView: UIView {
         )
         settingsButton.frame = frame(before: emojiButton.frame, size: itemSize)
         systemButton.frame = frame(before: settingsButton.frame, size: itemSize)
-        brandLabel.layer.cornerRadius = itemSize / 2
+        inputMethodButton.layer.cornerRadius = itemSize / 2
     }
 
     func apply(
@@ -54,6 +49,8 @@ final class KeyboardToolbarView: UIView {
     ) {
         self.spec = spec
         isHidden = spec == nil
+        inputMethodButton.setTitle(spec?.inputMethodKey.label, for: .normal)
+        inputMethodButton.accessibilityLabel = spec?.inputMethodKey.accessibilityLabel
         systemButton.isHidden = spec?.systemInputModeKey == nil
         systemButton.accessibilityLabel = spec?.systemInputModeKey?.accessibilityLabel
         settingsButton.accessibilityLabel = spec?.settingsKey.accessibilityLabel
@@ -61,8 +58,8 @@ final class KeyboardToolbarView: UIView {
 
         let accent = theme.accent.uiColor(for: traits)
         let label = theme.label.uiColor(for: traits)
-        brandLabel.textColor = traits.userInterfaceStyle == .dark ? .black : .white
-        brandLabel.backgroundColor = accent
+        inputMethodButton.setTitleColor(traits.userInterfaceStyle == .dark ? .black : .white, for: .normal)
+        inputMethodButton.backgroundColor = accent
         [systemButton, settingsButton, emojiButton].forEach { $0.tintColor = label }
     }
 
@@ -77,8 +74,19 @@ final class KeyboardToolbarView: UIView {
         addSubview(button)
     }
 
+    private func configureInputMethodButton() {
+        inputMethodButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .bold)
+        inputMethodButton.layer.cornerCurve = .continuous
+        inputMethodButton.accessibilityTraits = .keyboardKey
+        inputMethodButton.addAction(UIAction { [weak self] _ in
+            self?.emit(.inputMethod)
+        }, for: .touchUpInside)
+        addSubview(inputMethodButton)
+    }
+
     private func emit(_ role: KeyRole) {
         let key: KeySpec? = switch role {
+        case .inputMethod: spec?.inputMethodKey
         case .systemInputMode: spec?.systemInputModeKey
         case .settings: spec?.settingsKey
         case .emoji: spec?.emojiKey

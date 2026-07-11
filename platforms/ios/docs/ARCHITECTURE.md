@@ -168,6 +168,7 @@ platforms/ios/
 │   └── FunputKit/                  # Một local Swift package, nhiều target
 │       ├── Sources/
 │       │   ├── FunputEngine/       # Typed Swift wrapper quanh FunputCore
+│       │   ├── KeyboardInput/      # Key semantics và document commands
 │       │   ├── FunputShared/
 │       │   ├── KeyboardLayout/
 │       │   ├── KeyboardRenderer/
@@ -197,6 +198,9 @@ flowchart LR
     App --> Persistence["ThemePersistence"]
     App --> Store["ThemeStoreKit"]
     Keyboard["Keyboard Extension"] --> Shared
+    Keyboard --> Input["KeyboardInput"]
+    Input --> Engine["FunputEngine"]
+    Input --> Layout
     Keyboard --> Layout["KeyboardLayout"]
     Keyboard --> Renderer
     Keyboard --> Runtime["ThemeRuntime"]

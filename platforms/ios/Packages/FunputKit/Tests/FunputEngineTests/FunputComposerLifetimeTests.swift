@@ -1,4 +1,4 @@
-#if canImport(FunputCore)
+#if os(iOS) && canImport(FunputCore)
 import Foundation
 @testable import FunputEngine
 import Testing
@@ -17,7 +17,6 @@ private final class ReleaseSpy: @unchecked Sendable {
         lock.withLock { handles }
     }
 }
-#endif
 
 @MainActor
 struct FunputComposerLifetimeTests {
@@ -56,3 +55,4 @@ struct FunputComposerLifetimeTests {
         }
     }
 }
+#endif

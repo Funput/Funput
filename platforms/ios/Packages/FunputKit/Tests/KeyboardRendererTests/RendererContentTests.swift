@@ -45,20 +45,21 @@ struct RendererContentTests {
         }
     }
 
-    @Test("Toolbar renders brand and optional system switcher")
+    @Test("Toolbar renders method and optional system switchers")
     func toolbarContent() {
         let toolbar = KeyboardToolbarView()
-        toolbar.apply(spec: .withSystemInputMode, theme: .funputGlass, traits: traits)
+        toolbar.apply(spec: .withSystemInputMode(for: .vni), theme: .funputGlass, traits: traits)
 
         #expect(!toolbar.isHidden)
-        #expect(visibleLabels(in: toolbar).contains("F"))
+        #expect(visibleButtons(in: toolbar).first?.title(for: .normal) == "V")
         #expect(visibleButtons(in: toolbar).compactMap(\.accessibilityLabel) == [
-            "Chuyển bàn phím", "Cài đặt", "Biểu tượng cảm xúc",
+            "VNI. Chuyển sang Telex", "Chuyển bàn phím", "Cài đặt", "Biểu tượng cảm xúc",
         ])
 
-        toolbar.apply(spec: .standard, theme: .funputGlass, traits: traits)
+        toolbar.apply(spec: .standard(for: .telex), theme: .funputGlass, traits: traits)
+        #expect(visibleButtons(in: toolbar).first?.title(for: .normal) == "T")
         #expect(visibleButtons(in: toolbar).compactMap(\.accessibilityLabel) == [
-            "Cài đặt", "Biểu tượng cảm xúc",
+            "Telex. Chuyển sang VNI", "Cài đặt", "Biểu tượng cảm xúc",
         ])
 
         toolbar.apply(spec: nil, theme: .funputGlass, traits: traits)

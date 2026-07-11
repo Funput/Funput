@@ -23,7 +23,7 @@ private extension KeyboardLayout {
         return KeyboardLayout(
             id: "\(id)-system-switcher",
             inputMethod: inputMethod,
-            toolbar: .withSystemInputMode,
+            toolbar: .withSystemInputMode(for: inputMethod),
             rows: rows
         )
     }

@@ -22,7 +22,7 @@ public struct KeyboardLayout: Hashable, Sendable {
     public init(
         id: String,
         inputMethod: KeyboardInputMethod = .telex,
-        toolbar: KeyboardToolbarSpec? = .standard,
+        toolbar: KeyboardToolbarSpec?,
         rows: [KeyboardRow]
     ) {
         precondition(!id.isEmpty, "Keyboard layout id must not be empty")

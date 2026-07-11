@@ -8,7 +8,7 @@ func qwertyLayout(
     KeyboardLayout(
         id: id,
         inputMethod: inputMethod,
-        toolbar: showsToolbar ? .standard : nil,
+        toolbar: showsToolbar ? .standard(for: inputMethod) : nil,
         rows: leadingRows + [
             characterRow("qwertyuiop"),
             characterRow("asdfghjkl", inset: 0.5),

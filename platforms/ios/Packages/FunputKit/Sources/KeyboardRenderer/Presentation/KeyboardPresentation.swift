@@ -3,14 +3,6 @@ import KeyboardLayout
 import ThemeSchema
 import UIKit
 
-public enum ShiftState: Hashable, Sendable {
-    case lowercase
-    case uppercase
-    case capsLocked
-
-    public var isUppercase: Bool { self != .lowercase }
-}
-
 public struct KeyboardPresentation: Hashable, Sendable {
     public var layout: KeyboardLayout
     public var sizing: KeyboardSizingProfile

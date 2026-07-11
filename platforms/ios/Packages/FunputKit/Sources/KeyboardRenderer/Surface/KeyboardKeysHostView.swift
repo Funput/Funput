@@ -46,6 +46,7 @@ final class KeyboardKeysHostView: UIView {
             addSubview(container)
             glassContainerView = container
             contentHost = container.contentView
+            contentHost.isUserInteractionEnabled = true
         } else {
             let host = UIView()
             addSubview(host)

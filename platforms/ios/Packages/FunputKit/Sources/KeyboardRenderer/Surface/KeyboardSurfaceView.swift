@@ -101,7 +101,7 @@ public final class KeyboardSurfaceView: UIView {
         let specs = presentation.layout.rows.flatMap(\.keys)
         keyControls = Dictionary(uniqueKeysWithValues: specs.map { spec in
             let control = KeyboardKeyControl(spec: spec)
-            control.onEvent = { [weak self] event in self?.handle(event) }
+            control.onEvent = { [weak self] event in self?.onKeyEvent?(event) }
             return (spec.id, control)
         })
         keysHost.install(Array(keyControls.values))
@@ -120,13 +120,5 @@ public final class KeyboardSurfaceView: UIView {
         }
     }
 
-    private func handle(_ event: KeyboardKeyEvent) {
-        if event.key.role == .shift, event.phase == .released {
-            presentation.shiftState = presentation.shiftState == .lowercase
-                ? .uppercase
-                : .lowercase
-        }
-        onKeyEvent?(event)
-    }
 }
 #endif

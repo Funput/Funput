@@ -32,6 +32,7 @@ final class KeyboardKeySurfaceView: UIView {
         configure(result.view, theme: theme, traits: traits)
         insertSubview(result.view, at: 0)
         result.contentView.addSubview(content)
+        result.contentView.isUserInteractionEnabled = true
         renderedView = result.view
         configureShadow(theme: theme)
         setNeedsLayout()

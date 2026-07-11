@@ -12,6 +12,9 @@ final class KeyboardKeyControl: UIControl {
     private let contentView = KeyboardKeyContentView()
     private let surface = KeyboardKeySurfaceView()
     private var theme = KeyboardThemeTokens.funputGlass
+    private var appliedSurfaceTheme: KeyboardThemeTokens?
+    private var appliedInterfaceStyle: UIUserInterfaceStyle?
+    private var appliedReduceTransparency: Bool?
 
     init(spec: KeySpec) {
         self.spec = spec
@@ -38,7 +41,7 @@ final class KeyboardKeyControl: UIControl {
 
     func apply(presentation: KeyboardPresentation, traits: UITraitCollection) {
         theme = presentation.theme
-        surface.apply(theme: theme, spec: spec, traits: traits, content: interactionControl)
+        applySurfaceIfNeeded(traits: traits)
         contentView.apply(spec: spec, presentation: presentation, traits: traits)
         setNeedsLayout()
     }
@@ -63,6 +66,7 @@ final class KeyboardKeyControl: UIControl {
     }
 
     private func configureInteraction() {
+        contentView.isUserInteractionEnabled = false
         interactionControl.addAction(UIAction { [weak self] _ in
             self?.handleTouch(.pressed)
         }, for: .touchDown)
@@ -72,6 +76,17 @@ final class KeyboardKeyControl: UIControl {
         interactionControl.addAction(UIAction { [weak self] _ in
             self?.handleTouch(.cancelled)
         }, for: [.touchCancel, .touchUpOutside])
+    }
+
+    private func applySurfaceIfNeeded(traits: UITraitCollection) {
+        let reduceTransparency = UIAccessibility.isReduceTransparencyEnabled
+        guard appliedSurfaceTheme != theme
+                || appliedInterfaceStyle != traits.userInterfaceStyle
+                || appliedReduceTransparency != reduceTransparency else { return }
+        surface.apply(theme: theme, spec: spec, traits: traits, content: interactionControl)
+        appliedSurfaceTheme = theme
+        appliedInterfaceStyle = traits.userInterfaceStyle
+        appliedReduceTransparency = reduceTransparency
     }
 
     private func handleTouch(_ phase: KeyboardKeyEvent.Phase) {

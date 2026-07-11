@@ -7,6 +7,7 @@ let package = Package(
     platforms: [.iOS(.v18)],
     products: [
         .library(name: "FunputEngine", targets: ["FunputEngine"]),
+        .library(name: "KeyboardInput", targets: ["KeyboardInput"]),
         .library(name: "KeyboardLayout", targets: ["KeyboardLayout"]),
         .library(name: "ThemeSchema", targets: ["ThemeSchema"]),
         .library(name: "KeyboardRenderer", targets: ["KeyboardRenderer"]),
@@ -21,6 +22,10 @@ let package = Package(
             dependencies: [
                 .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
             ]
+        ),
+        .target(
+            name: "KeyboardInput",
+            dependencies: ["FunputEngine", "KeyboardLayout"]
         ),
         .target(name: "KeyboardLayout"),
         .target(name: "ThemeSchema"),
@@ -39,6 +44,10 @@ let package = Package(
         .testTarget(
             name: "FunputEngineTests",
             dependencies: ["FunputEngine"]
+        ),
+        .testTarget(
+            name: "KeyboardInputTests",
+            dependencies: ["KeyboardInput", "KeyboardLayout"]
         ),
     ]
 )

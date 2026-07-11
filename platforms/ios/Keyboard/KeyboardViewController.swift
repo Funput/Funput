@@ -5,16 +5,19 @@
 //  Created by P-Code Dynamics on 11/7/26.
 //
 
+import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
 import UIKit
 
 final class KeyboardViewController: UIInputViewController {
-    private let keyboardView = KeyboardSurfaceView()
+    let inputCoordinator = KeyboardInputCoordinator(inputMethod: .vni)
+    let keyboardView = KeyboardSurfaceView()
     private var heightConstraint: NSLayoutConstraint?
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        updateInputPresentation()
         installKeyboardView()
     }
 
@@ -32,7 +35,9 @@ final class KeyboardViewController: UIInputViewController {
 
     private func installKeyboardView() {
         keyboardView.translatesAutoresizingMaskIntoConstraints = false
-        keyboardView.onKeyEvent = { _ in }
+        keyboardView.onKeyEvent = { [weak self] event in
+            self?.handleKeyEvent(event)
+        }
         view.addSubview(keyboardView)
 
         NSLayoutConstraint.activate([
@@ -50,7 +55,7 @@ final class KeyboardViewController: UIInputViewController {
         heightConstraint = constraint
     }
 
-    private func updatePreferredHeight() {
+    func updatePreferredHeight() {
         heightConstraint?.constant = KeyboardMetrics.recommendedHeight(
             for: keyboardView.presentation.layout,
             traits: traitCollection,

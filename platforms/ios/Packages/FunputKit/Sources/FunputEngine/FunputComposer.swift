@@ -1,4 +1,4 @@
-#if canImport(FunputCore)
+#if os(iOS) && canImport(FunputCore)
 import FunputCore
 
 /// Main-actor Swift ownership boundary around one Rust composition engine.
