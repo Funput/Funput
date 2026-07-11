@@ -167,6 +167,7 @@ platforms/ios/
 ├── Packages/
 │   └── FunputKit/                  # Một local Swift package, nhiều target
 │       ├── Sources/
+│       │   ├── FunputEngine/       # Typed Swift wrapper quanh FunputCore
 │       │   ├── FunputShared/
 │       │   ├── KeyboardLayout/
 │       │   ├── KeyboardRenderer/
@@ -289,7 +290,7 @@ Các đặc tính C ABI hiện có phù hợp với iOS:
 ```text
 aarch64-apple-ios
 aarch64-apple-ios-sim
-x86_64-apple-ios       # Chỉ giữ nếu còn CI/Intel simulator
+x86_64-apple-ios
 ```
 
 Artifact được đóng gói thành:
@@ -302,45 +303,79 @@ FunputCore.xcframework/
 │   └── Headers/
 │       ├── funput.h
 │       └── module.modulemap
-└── ios-arm64-simulator/
-    ├── libfunput_ffi.a
-    └── Headers/
-        ├── funput.h
-        └── module.modulemap
+└── ios-arm64_x86_64-simulator/
+│   ├── libfunput_ffi-simulator.a
+│   └── Headers/
+│       ├── funput.h
+│       └── module.modulemap
 ```
 
 ### Build từ source
 
-Máy build cần Xcode command-line tools, Rust stable và `rustup`. Từ workspace root:
+Máy build cần Xcode command-line tools, Rust stable và `rustup`. Với clean clone,
+chạy bootstrap trước khi mở hoặc build project:
+
+```bash
+platforms/ios/Scripts/bootstrap-ios.sh
+```
+
+Bootstrap build XCFramework trước khi Xcode resolve local package. Khi chỉ cần
+rebuild native artifact, chạy:
 
 ```bash
 platforms/ios/Scripts/build-ffi.sh
 ```
 
-Script build `funput-ffi` với Cargo lockfile cho device và Apple Silicon
-simulator, sau đó tạo `platforms/ios/Frameworks/FunputCore.xcframework`.
+Script build `funput-ffi` với Cargo lockfile cho device và universal simulator,
+sau đó tạo
+`platforms/ios/Frameworks/FunputCore.xcframework`.
 Có thể đặt output tạm cho CI bằng `FUNPUT_FFI_OUTPUT=/path/to/output`.
 XCFramework là generated artifact và không được commit; source of truth gồm
 Rust crate, `funput.h`, module map và build script.
 
+`FunputCore` chỉ có iOS slices. Vì vậy `swift test` trên macOS host không chạy
+các integration tests của `FunputEngine`. Dùng script iOS Simulator chính thức:
+
+```bash
+platforms/ios/Scripts/test-funput-kit.sh
+```
+
+Script tự chọn một iOS Simulator khả dụng. Có thể override cho local hoặc CI:
+
+```bash
+FUNPUT_IOS_TEST_DESTINATION='platform=iOS Simulator,id=<SIMULATOR_UDID>' \
+  platforms/ios/Scripts/test-funput-kit.sh
+```
+
+Shared scheme `Funput` gọi `build-ffi.sh` trước mọi Release build/archive.
+Vì Cargo build incremental, source Rust mới luôn được link mà không rebuild
+không cần thiết. CI vẫn phải gọi script trực tiếp trước `xcodebuild`, không dựa
+riêng vào scheme pre-action.
+
+### Swift module boundary
+
+`FunputCore` là binary target chứa C ABI generated. Product `FunputEngine` là
+API duy nhất Swift consumer được dùng: typed input method, tone style, action
+và result. C handle, `FunputResult` raw và tuple UTF-32 chỉ tồn tại bên trong
+module này.
+
 ### Lifetime và threading
 
-- Một engine handle cho mỗi `KeyboardViewController`.
-- Tạo handle khi controller khởi tạo, free đúng một lần khi deinit.
-- Xử lý input trên main thread; không chuyển engine giữa actor/thread.
+- Một `FunputComposer` giữ đúng một engine handle cho mỗi `KeyboardViewController`.
+- `FunputComposer` là `@MainActor`, tạo handle khi init và free đúng một lần khi deinit.
+- Không conform wrapper thành `Sendable` hoặc chuyển instance giữa actor/thread.
 - Reset engine khi đổi field, caret/selection thay đổi hoặc context mất đồng bộ.
 
 ### Áp kết quả vào document
 
 ```swift
-func apply(_ result: FunputResult, to proxy: UITextDocumentProxy) {
-    for _ in 0..<result.backspace {
+func apply(_ result: FunputCompositionResult, to proxy: UITextDocumentProxy) {
+    for _ in 0..<result.deleteCount {
         proxy.deleteBackward()
     }
 
-    let output = FunputComposer.output(of: result)
-    if !output.isEmpty {
-        proxy.insertText(output)
+    if !result.text.isEmpty {
+        proxy.insertText(result.text)
     }
 }
 ```
@@ -659,7 +694,9 @@ Rust format/clippy/test
     → archive validation
 ```
 
-Generated `XCFramework` có thể được build trong CI thay vì commit binary, miễn quy trình local và release cho kết quả tái lập. Quyết định commit artifact hay không cần được ghi thành ADR riêng khi script build hoàn tất.
+Generated `XCFramework` không được commit. Local clean clone dùng
+`bootstrap-ios.sh`; Release scheme tự rebuild artifact; CI gọi `build-ffi.sh`
+trước package resolution và `xcodebuild`.
 
 ---
 

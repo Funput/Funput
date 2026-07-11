@@ -6,11 +6,22 @@ let package = Package(
     name: "FunputKit",
     platforms: [.iOS(.v18)],
     products: [
+        .library(name: "FunputEngine", targets: ["FunputEngine"]),
         .library(name: "KeyboardLayout", targets: ["KeyboardLayout"]),
         .library(name: "ThemeSchema", targets: ["ThemeSchema"]),
         .library(name: "KeyboardRenderer", targets: ["KeyboardRenderer"]),
     ],
     targets: [
+        .binaryTarget(
+            name: "FunputCore",
+            path: "../../Frameworks/FunputCore.xcframework"
+        ),
+        .target(
+            name: "FunputEngine",
+            dependencies: [
+                .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
+            ]
+        ),
         .target(name: "KeyboardLayout"),
         .target(name: "ThemeSchema"),
         .target(
@@ -24,6 +35,10 @@ let package = Package(
         .testTarget(
             name: "KeyboardRendererTests",
             dependencies: ["KeyboardLayout", "KeyboardRenderer", "ThemeSchema"]
+        ),
+        .testTarget(
+            name: "FunputEngineTests",
+            dependencies: ["FunputEngine"]
         ),
     ]
 )

@@ -11,7 +11,8 @@ OUTPUT="${FUNPUT_FFI_OUTPUT:-$IOS_ROOT/Frameworks/FunputCore.xcframework}"
 HEADER="$REPO_ROOT/crates/funput-ffi/include/funput.h"
 MODULE_MAP="$IOS_ROOT/Frameworks/FunputCore.modulemap"
 DEVICE_TARGET="aarch64-apple-ios"
-SIMULATOR_TARGET="aarch64-apple-ios-sim"
+SIMULATOR_ARM_TARGET="aarch64-apple-ios-sim"
+SIMULATOR_X86_TARGET="x86_64-apple-ios"
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_ROOT/target}"
 case "$CARGO_TARGET_DIR" in
     /*) ;;
@@ -36,6 +37,7 @@ require_file() {
 require_command cargo
 require_command rustup
 require_command xcodebuild
+require_command lipo
 require_file "$HEADER"
 require_file "$MODULE_MAP"
 case "$OUTPUT" in
@@ -46,7 +48,11 @@ case "$OUTPUT" in
         ;;
 esac
 
-for target in "$DEVICE_TARGET" "$SIMULATOR_TARGET"; do
+for target in \
+    "$DEVICE_TARGET" \
+    "$SIMULATOR_ARM_TARGET" \
+    "$SIMULATOR_X86_TARGET"
+do
     rustup target add "$target"
     cargo build \
         --locked \
@@ -57,9 +63,11 @@ for target in "$DEVICE_TARGET" "$SIMULATOR_TARGET"; do
 done
 
 DEVICE_LIBRARY="$CARGO_TARGET_DIR/$DEVICE_TARGET/release/libfunput_ffi.a"
-SIMULATOR_LIBRARY="$CARGO_TARGET_DIR/$SIMULATOR_TARGET/release/libfunput_ffi.a"
+SIMULATOR_ARM_LIBRARY="$CARGO_TARGET_DIR/$SIMULATOR_ARM_TARGET/release/libfunput_ffi.a"
+SIMULATOR_X86_LIBRARY="$CARGO_TARGET_DIR/$SIMULATOR_X86_TARGET/release/libfunput_ffi.a"
 require_file "$DEVICE_LIBRARY"
-require_file "$SIMULATOR_LIBRARY"
+require_file "$SIMULATOR_ARM_LIBRARY"
+require_file "$SIMULATOR_X86_LIBRARY"
 
 TEMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/funput-ffi.XXXXXX")"
 STAGED_OUTPUT="${OUTPUT%.xcframework}.tmp.$$.xcframework"
@@ -82,6 +90,12 @@ HEADERS="$TEMP_ROOT/Headers"
 mkdir -p "$HEADERS" "$(dirname -- "$OUTPUT")"
 cp "$HEADER" "$HEADERS/funput.h"
 cp "$MODULE_MAP" "$HEADERS/module.modulemap"
+
+SIMULATOR_LIBRARY="$TEMP_ROOT/libfunput_ffi-simulator.a"
+lipo -create \
+    "$SIMULATOR_ARM_LIBRARY" \
+    "$SIMULATOR_X86_LIBRARY" \
+    -output "$SIMULATOR_LIBRARY"
 
 rm -rf "$STAGED_OUTPUT" "$BACKUP_OUTPUT"
 xcodebuild -create-xcframework \

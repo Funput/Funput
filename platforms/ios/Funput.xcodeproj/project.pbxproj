@@ -14,6 +14,7 @@
 		FA2600000000000000000204 /* KeyboardLayout in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000111 /* KeyboardLayout */; };
 		FA2600000000000000000205 /* ThemeSchema in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000112 /* ThemeSchema */; };
 		FA2600000000000000000206 /* KeyboardRenderer in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000113 /* KeyboardRenderer */; };
+		FA2600000000000000000207 /* FunputEngine in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000114 /* FunputEngine */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -126,6 +127,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA2600000000000000000207 /* FunputEngine in Frameworks */,
 				FA2600000000000000000206 /* KeyboardRenderer in Frameworks */,
 				FA2600000000000000000205 /* ThemeSchema in Frameworks */,
 				FA2600000000000000000204 /* KeyboardLayout in Frameworks */,
@@ -250,6 +252,7 @@
 			);
 			name = Keyboard;
 			packageProductDependencies = (
+				FA2600000000000000000114 /* FunputEngine */,
 				FA2600000000000000000111 /* KeyboardLayout */,
 				FA2600000000000000000112 /* ThemeSchema */,
 				FA2600000000000000000113 /* KeyboardRenderer */,
@@ -814,6 +817,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
 			productName = KeyboardRenderer;
+		};
+		FA2600000000000000000114 /* FunputEngine */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = FunputEngine;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
