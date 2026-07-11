@@ -8,6 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		5FB3C7F83001F87500CE4906 /* Keyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5FB3C7F13001F87500CE4906 /* Keyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FA2600000000000000000201 /* KeyboardLayout in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000101 /* KeyboardLayout */; };
+		FA2600000000000000000202 /* ThemeSchema in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000102 /* ThemeSchema */; };
+		FA2600000000000000000203 /* KeyboardRenderer in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000103 /* KeyboardRenderer */; };
+		FA2600000000000000000204 /* KeyboardLayout in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000111 /* KeyboardLayout */; };
+		FA2600000000000000000205 /* ThemeSchema in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000112 /* ThemeSchema */; };
+		FA2600000000000000000206 /* KeyboardRenderer in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000113 /* KeyboardRenderer */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +102,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA2600000000000000000203 /* KeyboardRenderer in Frameworks */,
+				FA2600000000000000000202 /* ThemeSchema in Frameworks */,
+				FA2600000000000000000201 /* KeyboardLayout in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -117,6 +126,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA2600000000000000000206 /* KeyboardRenderer in Frameworks */,
+				FA2600000000000000000205 /* ThemeSchema in Frameworks */,
+				FA2600000000000000000204 /* KeyboardLayout in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,6 +179,9 @@
 			);
 			name = Funput;
 			packageProductDependencies = (
+				FA2600000000000000000101 /* KeyboardLayout */,
+				FA2600000000000000000102 /* ThemeSchema */,
+				FA2600000000000000000103 /* KeyboardRenderer */,
 			);
 			productName = Funput;
 			productReference = 5FB3C7B73001F78300CE4906 /* Funput.app */;
@@ -235,6 +250,9 @@
 			);
 			name = Keyboard;
 			packageProductDependencies = (
+				FA2600000000000000000111 /* KeyboardLayout */,
+				FA2600000000000000000112 /* ThemeSchema */,
+				FA2600000000000000000113 /* KeyboardRenderer */,
 			);
 			productName = Keyboard;
 			productReference = 5FB3C7F13001F87500CE4906 /* Keyboard.appex */;
@@ -275,6 +293,9 @@
 			);
 			mainGroup = 5FB3C7AE3001F78300CE4906;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FA2600000000000000000001 /* XCLocalSwiftPackageReference "FunputKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5FB3C7B83001F78300CE4906 /* Products */;
 			projectDirPath = "";
@@ -755,6 +776,46 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		FA2600000000000000000001 /* XCLocalSwiftPackageReference "FunputKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/FunputKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FA2600000000000000000101 /* KeyboardLayout */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "FunputKit" */;
+			productName = KeyboardLayout;
+		};
+		FA2600000000000000000102 /* ThemeSchema */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "FunputKit" */;
+			productName = ThemeSchema;
+		};
+		FA2600000000000000000103 /* KeyboardRenderer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "FunputKit" */;
+			productName = KeyboardRenderer;
+		};
+		FA2600000000000000000111 /* KeyboardLayout */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "FunputKit" */;
+			productName = KeyboardLayout;
+		};
+		FA2600000000000000000112 /* ThemeSchema */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "FunputKit" */;
+			productName = ThemeSchema;
+		};
+		FA2600000000000000000113 /* KeyboardRenderer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "FunputKit" */;
+			productName = KeyboardRenderer;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5FB3C7AF3001F78300CE4906 /* Project object */;
 }

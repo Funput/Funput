@@ -21,7 +21,7 @@ DerivedData
 ._*
 
 # Swift Package Manager
-/.build
+.build/
 .swiftpm
 
 # Rust FFI static lib — rebuilt from source by scripts/build-ffi.sh on every

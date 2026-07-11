@@ -5,56 +5,62 @@
 //  Created by P-Code Dynamics on 11/7/26.
 //
 
+import KeyboardLayout
+import KeyboardRenderer
 import UIKit
 
-class KeyboardViewController: UIInputViewController {
-
-    @IBOutlet var nextKeyboardButton: UIButton!
-
-    override func updateViewConstraints() {
-        super.updateViewConstraints()
-
-        // Add custom view sizing constraints here
-    }
+final class KeyboardViewController: UIInputViewController {
+    private let keyboardView = KeyboardSurfaceView()
+    private var heightConstraint: NSLayoutConstraint?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Perform custom UI setup here
-        self.nextKeyboardButton = UIButton(type: .system)
-
-        self.nextKeyboardButton.setTitle(NSLocalizedString("Next Keyboard", comment: "Title for 'Next Keyboard' button"), for: [])
-        self.nextKeyboardButton.sizeToFit()
-        self.nextKeyboardButton.translatesAutoresizingMaskIntoConstraints = false
-
-        self.nextKeyboardButton.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
-
-        self.view.addSubview(self.nextKeyboardButton)
-
-        self.nextKeyboardButton.leftAnchor.constraint(equalTo: self.view.leftAnchor).isActive = true
-        self.nextKeyboardButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor).isActive = true
+        installKeyboardView()
+        updatePresentation()
     }
 
     override func viewWillLayoutSubviews() {
-        self.nextKeyboardButton.isHidden = !self.needsInputModeSwitchKey
         super.viewWillLayoutSubviews()
+        updatePresentation()
+        updatePreferredHeight()
     }
 
-    override func textWillChange(_ textInput: UITextInput?) {
-        // The app is about to change the document's contents. Perform any preparation here.
-    }
-
-    override func textDidChange(_ textInput: UITextInput?) {
-        // The app has just changed the document's contents, the document context has been updated.
-
-        var textColor: UIColor
-        let proxy = self.textDocumentProxy
-        if proxy.keyboardAppearance == UIKeyboardAppearance.dark {
-            textColor = UIColor.white
-        } else {
-            textColor = UIColor.black
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        coordinator.animate { [weak self] _ in
+            self?.updatePreferredHeight()
         }
-        self.nextKeyboardButton.setTitleColor(textColor, for: [])
     }
 
+    private func installKeyboardView() {
+        keyboardView.translatesAutoresizingMaskIntoConstraints = false
+        keyboardView.onKeyEvent = { _ in }
+        view.addSubview(keyboardView)
+
+        NSLayoutConstraint.activate([
+            keyboardView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            keyboardView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            keyboardView.topAnchor.constraint(equalTo: view.topAnchor),
+            keyboardView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
+
+        let constraint = view.heightAnchor.constraint(equalToConstant: 280)
+        constraint.priority = .init(999)
+        constraint.isActive = true
+        heightConstraint = constraint
+    }
+
+    private func updatePresentation() {
+        var presentation = keyboardView.presentation
+        presentation.layout = .funputQWERTY
+        presentation.showsInputModeKey = needsInputModeSwitchKey
+        keyboardView.presentation = presentation
+    }
+
+    private func updatePreferredHeight() {
+        heightConstraint?.constant = KeyboardMetrics.recommendedHeight(
+            for: traitCollection,
+            scale: keyboardView.presentation.sizing.heightScale
+        )
+    }
 }
