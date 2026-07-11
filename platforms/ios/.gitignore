@@ -1,0 +1,30 @@
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+*.xccheckout
+*.moved-aside
+DerivedData
+*.xcuserstate
+
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Swift Package Manager
+/.build
+.swiftpm
+
+# Rust FFI static lib — rebuilt from source by scripts/build-ffi.sh on every
+# Xcode build (Run Script phase, before Compile Sources), so a committed copy
+# just churns the working tree and bloats history.
+Vendor/
