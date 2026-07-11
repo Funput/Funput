@@ -54,6 +54,12 @@ impl FieldComposer {
             self.engine.clear();
         } else {
             self.engine.process_char(c);
+            if self.engine.buffer().is_empty() {
+                // The engine passed the key through (e.g. a digit starting a word — a
+                // number, not Vietnamese). It won't show up in the buffer, so fold it
+                // into the committed text directly.
+                self.committed.push(c);
+            }
         }
         self.current()
     }
