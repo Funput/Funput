@@ -12,7 +12,11 @@ enum KeyboardKeyContentStyle {
         let name: String?
         switch role {
         case .shift:
-            name = shiftState.isUppercase ? "shift.fill" : "shift"
+            name = switch shiftState {
+            case .lowercase: "shift"
+            case .uppercase: "shift.fill"
+            case .capsLocked: "capslock.fill"
+            }
         case .backspace:
             name = "delete.left"
         case .systemInputMode:

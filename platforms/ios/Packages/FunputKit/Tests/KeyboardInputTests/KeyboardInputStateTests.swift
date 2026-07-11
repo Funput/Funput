@@ -41,5 +41,36 @@ struct KeyboardInputStateTests {
 
         #expect(coordinator.state.shiftState == .uppercase)
     }
+
+    @Test("Double-tapping Shift enables Caps Lock until Shift is tapped again")
+    func capsLock() {
+        var time = 10.0
+        let coordinator = KeyboardInputCoordinator(shiftClock: { time })
+        let document = TestKeyboardDocument()
+
+        coordinator.handle(testKey(.shift), document: document)
+        time += 0.1
+        coordinator.handle(testKey(.shift), document: document)
+        type("xi", with: coordinator, into: document)
+
+        #expect(document.text == "XI")
+        #expect(coordinator.state.shiftState == .capsLocked)
+
+        coordinator.handle(testKey(.shift), document: document)
+        #expect(coordinator.state.shiftState == .lowercase)
+    }
+
+    @Test("Layout navigation switches between letters and symbol pages")
+    func layoutNavigation() {
+        let coordinator = KeyboardInputCoordinator()
+        let document = TestKeyboardDocument()
+
+        coordinator.handle(testKey(.symbols), document: document)
+        #expect(coordinator.state.layoutMode == .symbolsPrimary)
+        coordinator.handle(testKey(.moreSymbols), document: document)
+        #expect(coordinator.state.layoutMode == .symbolsSecondary)
+        coordinator.handle(testKey(.letters), document: document)
+        #expect(coordinator.state.layoutMode == .letters)
+    }
 }
 #endif

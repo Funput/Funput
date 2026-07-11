@@ -23,9 +23,11 @@ struct AlphabeticSurfaceTests {
     func shiftIcon() {
         let lower = KeyboardKeyContentStyle.icon(for: .shift, shiftState: .lowercase)
         let upper = KeyboardKeyContentStyle.icon(for: .shift, shiftState: .uppercase)
+        let locked = KeyboardKeyContentStyle.icon(for: .shift, shiftState: .capsLocked)
 
         #expect(lower?.isEqual(UIImage(systemName: "shift")) == true)
         #expect(upper?.isEqual(UIImage(systemName: "shift.fill")) == true)
+        #expect(locked?.isEqual(UIImage(systemName: "capslock.fill")) == true)
     }
 
     @Test("Character hit testing reaches its interaction control")

@@ -13,11 +13,16 @@ import UIKit
 final class KeyboardViewController: UIInputViewController {
     let inputCoordinator = KeyboardInputCoordinator(inputMethod: .vni)
     let keyboardView = KeyboardSurfaceView()
+    var resolvedTextInputTraits = ResolvedTextInputTraits(
+        editorMode: .text,
+        enterAction: .newLine,
+        initialLayoutMode: .letters
+    )
     private var heightConstraint: NSLayoutConstraint?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        updateInputPresentation()
+        updateTextInputTraits(force: true)
         installKeyboardView()
     }
 

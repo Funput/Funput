@@ -21,13 +21,13 @@ extension KeyboardViewController {
         var presentation = keyboardView.presentation
         presentation.layout = KeyboardLayoutResolver.resolve(
             inputMethod: state.inputMethod,
-            mode: .letters,
-            editorMode: .text,
+            mode: state.layoutMode,
+            editorMode: state.editorMode,
             showsSystemInputModeKey: needsInputModeSwitchKey
         )
         presentation.shiftState = state.shiftState
         presentation.language = .vietnamese
-        presentation.enterAction = .newLine
+        presentation.enterAction = state.enterAction
         keyboardView.presentation = presentation
         updatePreferredHeight()
     }
