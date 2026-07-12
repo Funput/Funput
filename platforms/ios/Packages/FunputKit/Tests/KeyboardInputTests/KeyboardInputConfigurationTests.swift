@@ -41,5 +41,15 @@ struct KeyboardInputConfigurationTests {
         type("as", with: coordinator, into: document)
         #expect(document.text == "as")
     }
+
+    @Test("Default configuration keeps traditional tone placement")
+    func defaultUsesTraditionalTone() {
+        let coordinator = KeyboardInputCoordinator()
+        coordinator.apply(.default)
+        let document = TestKeyboardDocument()
+        type("hoa", with: coordinator, into: document)
+        type("2", role: .vniModifier, with: coordinator, into: document)
+        #expect(document.text == "hòa") // traditional; the modern style would yield "hoà"
+    }
 }
 #endif

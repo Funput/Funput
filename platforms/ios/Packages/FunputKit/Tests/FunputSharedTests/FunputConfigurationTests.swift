@@ -4,11 +4,16 @@ import KeyboardLayout
 import FunputShared
 
 struct FunputConfigurationTests {
-    @Test("Default matches the keyboard's historical hardcoded behavior")
+    @Test("Default mirrors the engine Session defaults (unchanged typing behavior)")
     func defaults() {
         let config = FunputConfiguration.default
-        #expect(config.inputMethod == .vni)
+        #expect(config.inputMethod == .vni) // iOS overrides the engine's Telex default
         #expect(config.language == .vietnamese)
+        #expect(config.toneStyle == .traditional) // funput-engine Session::new()
+        #expect(config.spellCheck == false)
+        #expect(config.smartRestore == true)
+        #expect(config.eagerRestore == true)
+        #expect(config.autoCapitalize == false)
         #expect(config.selectedThemeID == FunputConfiguration.defaultThemeID)
         #expect(config.isHapticFeedbackEnabled)
     }
