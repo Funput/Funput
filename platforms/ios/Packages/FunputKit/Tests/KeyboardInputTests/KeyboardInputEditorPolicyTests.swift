@@ -10,7 +10,7 @@ struct KeyboardInputEditorPolicyTests {
         for mode in [KeyboardEditorMode.email, .url, .password] {
             let coordinator = KeyboardInputCoordinator(inputMethod: .telex)
             let document = TestKeyboardDocument()
-            coordinator.updateContext(editorMode: mode, enterAction: .done)
+            coordinator.updateContext(inputContext(editorMode: mode, enterAction: .done))
 
             type("as", with: coordinator, into: document)
 
@@ -24,7 +24,7 @@ struct KeyboardInputEditorPolicyTests {
     func searchComposition() {
         let coordinator = KeyboardInputCoordinator(inputMethod: .telex)
         let document = TestKeyboardDocument()
-        coordinator.updateContext(editorMode: .search, enterAction: .search)
+        coordinator.updateContext(inputContext(editorMode: .search, enterAction: .search))
 
         type("as", with: coordinator, into: document)
 
@@ -37,7 +37,7 @@ struct KeyboardInputEditorPolicyTests {
         for mode in KeyboardEditorMode.allCases {
             let coordinator = KeyboardInputCoordinator()
             let document = TestKeyboardDocument()
-            coordinator.updateContext(editorMode: mode, enterAction: .done)
+            coordinator.updateContext(inputContext(editorMode: mode, enterAction: .done))
 
             type("7", with: coordinator, into: document)
             coordinator.handle(testKey(.enter), document: document)
@@ -50,7 +50,7 @@ struct KeyboardInputEditorPolicyTests {
     func keypadNavigation() {
         let coordinator = KeyboardInputCoordinator()
         let document = TestKeyboardDocument()
-        coordinator.updateContext(editorMode: .numberDecimal, enterAction: .done)
+        coordinator.updateContext(inputContext(editorMode: .numberDecimal, enterAction: .done))
 
         coordinator.handle(testKey(.symbols), document: document)
 
@@ -63,7 +63,7 @@ struct KeyboardInputEditorPolicyTests {
         let document = TestKeyboardDocument()
         type("a", with: coordinator, into: document)
 
-        coordinator.updateContext(editorMode: .email, enterAction: .done)
+        coordinator.updateContext(inputContext(editorMode: .email, enterAction: .done))
         type("s", with: coordinator, into: document)
 
         #expect(document.text == "as")
@@ -77,11 +77,11 @@ struct KeyboardInputEditorPolicyTests {
         let document = TestKeyboardDocument()
         type("a", with: coordinator, into: document)
 
-        coordinator.updateContext(
+        coordinator.updateContext(inputContext(
             editorMode: .text,
             enterAction: .newLine,
             initialLayoutMode: .symbolsPrimary
-        )
+        ))
         coordinator.handle(testKey(.letters), document: document)
         type("s", with: coordinator, into: document)
 

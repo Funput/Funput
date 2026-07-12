@@ -9,6 +9,7 @@ public final class KeyboardInputCoordinator {
 
     let composer: FunputComposer
     var shiftController: ShiftStateController
+    var documentSynchronizer = KeyboardDocumentSynchronizer()
 
     public init(
         inputMethod: KeyboardInputMethod = .vni,
@@ -17,7 +18,11 @@ public final class KeyboardInputCoordinator {
             ProcessInfo.processInfo.systemUptime
         }
     ) {
-        state = KeyboardInputState(inputMethod: inputMethod, shiftState: .lowercase)
+        state = KeyboardInputState(
+            inputMethod: inputMethod,
+            shiftState: .lowercase,
+            autocapitalization: .none
+        )
         composer = FunputComposer()
         shiftController = ShiftStateController(
             doubleTapInterval: shiftDoubleTapInterval,
@@ -27,6 +32,20 @@ public final class KeyboardInputCoordinator {
     }
 
     public func handle(_ key: KeySpec, document: any KeyboardDocument) {
+        synchronizeBeforeInput(document)
+        let mutatesDocument = key.role.mutatesDocument
+        if mutatesDocument {
+            documentSynchronizer.beginMutation()
+        }
+        defer {
+            if mutatesDocument {
+                finishDocumentMutation(
+                    document,
+                    preserveOneShotShift: key.role != .character
+                )
+            }
+        }
+
         switch key.role {
         case .character:
             input(characterText(for: key), document: document)
@@ -54,6 +73,17 @@ public final class KeyboardInputCoordinator {
             updateLayoutMode(.letters)
         default:
             break
+        }
+    }
+}
+
+private extension KeyRole {
+    var mutatesDocument: Bool {
+        switch self {
+        case .character, .vniModifier, .punctuation, .space, .enter, .backspace:
+            true
+        default:
+            false
         }
     }
 }

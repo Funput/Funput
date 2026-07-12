@@ -41,8 +41,8 @@ struct KeyboardInputLanguageTests {
         let document = TestKeyboardDocument()
         coordinator.toggleLanguage()
 
-        coordinator.updateContext(editorMode: .email, enterAction: .done)
-        coordinator.updateContext(editorMode: .text, enterAction: .newLine)
+        coordinator.updateContext(inputContext(editorMode: .email, enterAction: .done))
+        coordinator.updateContext(inputContext(editorMode: .text, enterAction: .newLine))
         type("as", with: coordinator, into: document)
 
         #expect(coordinator.state.language == .english)
@@ -54,8 +54,8 @@ struct KeyboardInputLanguageTests {
         let coordinator = KeyboardInputCoordinator(inputMethod: .telex)
         let document = TestKeyboardDocument()
 
-        coordinator.updateContext(editorMode: .email, enterAction: .done)
-        coordinator.updateContext(editorMode: .text, enterAction: .newLine)
+        coordinator.updateContext(inputContext(editorMode: .email, enterAction: .done))
+        coordinator.updateContext(inputContext(editorMode: .text, enterAction: .newLine))
         type("as", with: coordinator, into: document)
 
         #expect(document.text == "á")

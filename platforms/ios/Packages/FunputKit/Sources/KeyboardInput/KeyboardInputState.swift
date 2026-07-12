@@ -7,6 +7,7 @@ public struct KeyboardInputState: Equatable, Sendable {
     public let editorMode: KeyboardEditorMode
     public let enterAction: KeyboardEnterAction
     public let language: KeyboardLanguage
+    public let autocapitalization: KeyboardAutocapitalizationMode
 
     public init(
         inputMethod: KeyboardInputMethod,
@@ -14,7 +15,8 @@ public struct KeyboardInputState: Equatable, Sendable {
         layoutMode: KeyboardLayoutMode = .letters,
         editorMode: KeyboardEditorMode = .text,
         enterAction: KeyboardEnterAction = .newLine,
-        language: KeyboardLanguage = .vietnamese
+        language: KeyboardLanguage = .vietnamese,
+        autocapitalization: KeyboardAutocapitalizationMode = .sentences
     ) {
         self.inputMethod = inputMethod
         self.shiftState = shiftState
@@ -22,6 +24,7 @@ public struct KeyboardInputState: Equatable, Sendable {
         self.editorMode = editorMode
         self.enterAction = enterAction
         self.language = language
+        self.autocapitalization = autocapitalization
     }
 
     public var usesVietnameseComposition: Bool {

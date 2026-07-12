@@ -2,25 +2,25 @@
 import KeyboardLayout
 
 extension KeyboardInputCoordinator {
-    public func updateContext(
-        editorMode: KeyboardEditorMode,
-        enterAction: KeyboardEnterAction,
-        initialLayoutMode: KeyboardLayoutMode = .letters
-    ) {
-        let editorChanged = state.editorMode != editorMode
-        let layoutChanged = state.layoutMode != initialLayoutMode
-        guard editorChanged || layoutChanged || state.enterAction != enterAction else { return }
+    /// Applies all traits resolved from the current UIKit text input.
+    public func updateContext(_ context: KeyboardInputContext) {
+        let editorChanged = state.editorMode != context.editorMode
+        let layoutChanged = state.layoutMode != context.initialLayoutMode
+        let capitalizationChanged = state.autocapitalization != context.autocapitalization
+        let inputContextChanged = editorChanged || layoutChanged || capitalizationChanged
+        guard inputContextChanged || state.enterAction != context.enterAction else { return }
 
-        let inputContextChanged = editorChanged || layoutChanged
         if inputContextChanged {
             composer.clear()
             shiftController.resetTapSequence()
+            documentSynchronizer.invalidate()
         }
         replaceState(
             shiftState: inputContextChanged ? .lowercase : state.shiftState,
-            layoutMode: initialLayoutMode,
-            editorMode: editorMode,
-            enterAction: enterAction
+            layoutMode: context.initialLayoutMode,
+            editorMode: context.editorMode,
+            enterAction: context.enterAction,
+            autocapitalization: context.autocapitalization
         )
         if inputContextChanged {
             composer.setEnabled(state.usesVietnameseComposition)
@@ -54,6 +54,8 @@ extension KeyboardInputCoordinator {
 
     public func prepareForSystemInputModeChange() {
         composer.clear()
+        shiftController.resetTapSequence()
+        documentSynchronizer.invalidate()
     }
 
     func updateLayoutMode(_ mode: KeyboardLayoutMode) {
@@ -67,7 +69,8 @@ extension KeyboardInputCoordinator {
         layoutMode: KeyboardLayoutMode? = nil,
         editorMode: KeyboardEditorMode? = nil,
         enterAction: KeyboardEnterAction? = nil,
-        language: KeyboardLanguage? = nil
+        language: KeyboardLanguage? = nil,
+        autocapitalization: KeyboardAutocapitalizationMode? = nil
     ) {
         state = KeyboardInputState(
             inputMethod: inputMethod ?? state.inputMethod,
@@ -75,7 +78,8 @@ extension KeyboardInputCoordinator {
             layoutMode: layoutMode ?? state.layoutMode,
             editorMode: editorMode ?? state.editorMode,
             enterAction: enterAction ?? state.enterAction,
-            language: language ?? state.language
+            language: language ?? state.language,
+            autocapitalization: autocapitalization ?? state.autocapitalization
         )
     }
 }
