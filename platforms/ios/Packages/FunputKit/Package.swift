@@ -42,7 +42,8 @@ let package = Package(
         ),
         .target(
             name: "KeyboardRenderer",
-            dependencies: ["KeyboardLayout", "ThemeSchema"]
+            dependencies: ["KeyboardLayout", "ThemeSchema"],
+            resources: [.process("Resources")]
         ),
         .target(
             name: "KeyboardConfiguration",
