@@ -25,8 +25,6 @@ enum KeyboardKeyContentStyle {
             name = "return"
         case .emoji:
             name = "face.smiling"
-        case .settings:
-            name = "gearshape"
         default:
             name = nil
         }

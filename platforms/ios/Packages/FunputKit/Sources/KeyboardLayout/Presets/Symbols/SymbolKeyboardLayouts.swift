@@ -54,7 +54,7 @@ public enum SymbolKeyboardLayouts {
         KeyboardLayout(
             id: "\(id)-\(inputMethod.rawValue)\(secure ? "-secure" : "")",
             inputMethod: inputMethod,
-            toolbar: secure ? nil : .standard(for: inputMethod),
+            toolbar: secure ? nil : .standard,
             rows: rows
         )
     }

@@ -1,4 +1,4 @@
-public enum KeyboardInputMethod: String, CaseIterable, Hashable, Sendable {
+public enum KeyboardInputMethod: String, CaseIterable, Hashable, Sendable, Codable {
     case telex
     case vni
 }
@@ -9,7 +9,7 @@ public enum KeyboardLayoutMode: String, CaseIterable, Hashable, Sendable {
     case symbolsSecondary
 }
 
-public enum KeyboardLanguage: String, CaseIterable, Hashable, Sendable {
+public enum KeyboardLanguage: String, CaseIterable, Hashable, Sendable, Codable {
     case vietnamese
     case english
 

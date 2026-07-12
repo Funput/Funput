@@ -1,0 +1,54 @@
+import Testing
+import ThemeSchema
+import ThemeRuntime
+
+struct ThemeRuntimeResolveTests {
+    @Test("Bundled Funput Glass resolves to the renderer default")
+    func funputGlassParity() {
+        #expect(ThemeRuntime.resolve(.funputGlass) == ResolvedTheme.funputGlass)
+    }
+
+    @Test("Standard context preserves the authored material")
+    func standardKeepsMaterial() {
+        #expect(ThemeRuntime.resolve(.funputGlass).material == .glass)
+        #expect(ThemeRuntime.resolve(.classicLight).material == .translucent)
+    }
+
+    @Test("Reduce Transparency downgrades every material to solid")
+    func reduceTransparencyForcesSolid() {
+        let context = ThemeResolveContext(reduceTransparency: true)
+        #expect(ThemeRuntime.resolve(.funputGlass, context: context).material == .solid)
+        #expect(ThemeRuntime.resolve(.classicLight, context: context).material == .solid)
+    }
+
+    @Test("Out-of-range metrics are clamped into safe ranges")
+    func clampsMetrics() {
+        let wild = KeyboardTheme(
+            id: "test.wild",
+            metadata: ThemeMetadata(name: "Wild", author: "Test"),
+            material: .solid,
+            palette: BundledThemes.default.palette,
+            metrics: ThemeMetrics(
+                keyOpacity: 4,
+                specialKeyOpacity: -1,
+                cornerRadius: 999,
+                borderWidth: 50,
+                shadowOpacity: 9,
+                shadowRadius: 500,
+                pressedScale: 0.1,
+                pressedOpacityMultiplier: 8,
+                fontScale: 12
+            )
+        )
+        let resolved = ThemeRuntime.resolve(wild)
+        #expect(resolved.keyOpacity == 1)
+        #expect(resolved.specialKeyOpacity == 0)
+        #expect(resolved.cornerRadius == 28)
+        #expect(resolved.borderWidth == 4)
+        #expect(resolved.shadowOpacity == 1)
+        #expect(resolved.shadowRadius == 24)
+        #expect(resolved.pressedScale == 0.8)
+        #expect(resolved.pressedOpacityMultiplier == 1.5)
+        #expect(resolved.fontScale == 1.4)
+    }
+}

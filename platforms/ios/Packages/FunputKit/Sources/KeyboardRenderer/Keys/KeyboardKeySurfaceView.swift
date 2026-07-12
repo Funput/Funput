@@ -10,7 +10,7 @@ final class KeyboardKeySurfaceView: UIView {
     private var usesNativeInteraction = false
 
     func apply(
-        theme: KeyboardThemeTokens,
+        theme: ResolvedTheme,
         spec: KeySpec,
         traits: UITraitCollection,
         content: UIView
@@ -54,7 +54,7 @@ final class KeyboardKeySurfaceView: UIView {
         ).cgPath
     }
 
-    func setPressed(_ pressed: Bool, theme: KeyboardThemeTokens, animated: Bool) {
+    func setPressed(_ pressed: Bool, theme: ResolvedTheme, animated: Bool) {
         guard !usesNativeInteraction else { return }
         let updates = {
             self.transform = pressed
@@ -77,7 +77,7 @@ final class KeyboardKeySurfaceView: UIView {
     }
 
     private func makeSurface(
-        theme: KeyboardThemeTokens,
+        theme: ResolvedTheme,
         color: UIColor,
         opacity: CGFloat
     ) -> (view: UIView, contentView: UIView, isNativeGlass: Bool) {
@@ -102,7 +102,7 @@ final class KeyboardKeySurfaceView: UIView {
 
     private func configure(
         _ view: UIView,
-        theme: KeyboardThemeTokens,
+        theme: ResolvedTheme,
         traits: UITraitCollection
     ) {
         if #available(iOS 26.0, *), usesNativeInteraction {
@@ -117,7 +117,7 @@ final class KeyboardKeySurfaceView: UIView {
         view.layer.borderColor = theme.border.uiColor(for: traits).cgColor
     }
 
-    private func configureShadow(theme: KeyboardThemeTokens) {
+    private func configureShadow(theme: ResolvedTheme) {
         layer.shadowColor = UIColor.black.cgColor
         layer.shadowOpacity = usesNativeInteraction ? 0 : Float(theme.shadowOpacity)
         layer.shadowRadius = usesNativeInteraction ? 0 : theme.shadowRadius

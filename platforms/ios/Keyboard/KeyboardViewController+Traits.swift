@@ -4,6 +4,7 @@ import UIKit
 extension KeyboardViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        reloadConfiguration()
         updateTextInputTraits(force: true)
         synchronizeDocument(event: .activated)
     }

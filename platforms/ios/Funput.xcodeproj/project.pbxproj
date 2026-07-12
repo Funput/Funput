@@ -16,6 +16,11 @@
 		FA2600000000000000000206 /* KeyboardRenderer in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000113 /* KeyboardRenderer */; };
 		FA2600000000000000000207 /* FunputEngine in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000114 /* FunputEngine */; };
 		FA2600000000000000000208 /* KeyboardInput in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000115 /* KeyboardInput */; };
+		FA2600000000000000000209 /* FunputShared in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000116 /* FunputShared */; };
+		FA260000000000000000020A /* ThemeRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000117 /* ThemeRuntime */; };
+		FA260000000000000000020B /* KeyboardConfiguration in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000118 /* KeyboardConfiguration */; };
+		FA260000000000000000020C /* FunputShared in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000104 /* FunputShared */; };
+		FA260000000000000000020D /* KeyboardConfiguration in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000105 /* KeyboardConfiguration */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,6 +109,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA260000000000000000020D /* KeyboardConfiguration in Frameworks */,
+				FA260000000000000000020C /* FunputShared in Frameworks */,
 				FA2600000000000000000203 /* KeyboardRenderer in Frameworks */,
 				FA2600000000000000000202 /* ThemeSchema in Frameworks */,
 				FA2600000000000000000201 /* KeyboardLayout in Frameworks */,
@@ -133,6 +140,9 @@
 				FA2600000000000000000206 /* KeyboardRenderer in Frameworks */,
 				FA2600000000000000000205 /* ThemeSchema in Frameworks */,
 				FA2600000000000000000204 /* KeyboardLayout in Frameworks */,
+				FA2600000000000000000209 /* FunputShared in Frameworks */,
+				FA260000000000000000020A /* ThemeRuntime in Frameworks */,
+				FA260000000000000000020B /* KeyboardConfiguration in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -186,6 +196,8 @@
 				FA2600000000000000000101 /* KeyboardLayout */,
 				FA2600000000000000000102 /* ThemeSchema */,
 				FA2600000000000000000103 /* KeyboardRenderer */,
+				FA2600000000000000000104 /* FunputShared */,
+				FA2600000000000000000105 /* KeyboardConfiguration */,
 			);
 			productName = Funput;
 			productReference = 5FB3C7B73001F78300CE4906 /* Funput.app */;
@@ -259,6 +271,9 @@
 				FA2600000000000000000111 /* KeyboardLayout */,
 				FA2600000000000000000112 /* ThemeSchema */,
 				FA2600000000000000000113 /* KeyboardRenderer */,
+				FA2600000000000000000116 /* FunputShared */,
+				FA2600000000000000000117 /* ThemeRuntime */,
+				FA2600000000000000000118 /* KeyboardConfiguration */,
 			);
 			productName = Keyboard;
 			productReference = 5FB3C7F13001F87500CE4906 /* Keyboard.appex */;
@@ -539,7 +554,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2026.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.funput.funput;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -574,7 +589,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2026.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.funput.funput;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -690,7 +705,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2026.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.funput.funput.Keyboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -720,7 +735,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2026.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.funput.funput.Keyboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -806,6 +821,16 @@
 			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
 			productName = KeyboardRenderer;
 		};
+		FA2600000000000000000104 /* FunputShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = FunputShared;
+		};
+		FA2600000000000000000105 /* KeyboardConfiguration */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = KeyboardConfiguration;
+		};
 		FA2600000000000000000111 /* KeyboardLayout */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
@@ -830,6 +855,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
 			productName = KeyboardInput;
+		};
+		FA2600000000000000000116 /* FunputShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = FunputShared;
+		};
+		FA2600000000000000000117 /* ThemeRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = ThemeRuntime;
+		};
+		FA2600000000000000000118 /* KeyboardConfiguration */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = KeyboardConfiguration;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

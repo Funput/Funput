@@ -30,7 +30,7 @@ final class KeyboardBackdropView: UIVisualEffectView {
         gradientLayer.frame = bounds
     }
 
-    func apply(theme: KeyboardThemeTokens, traits: UITraitCollection) {
+    func apply(theme: ResolvedTheme, traits: UITraitCollection) {
         let reducesTransparency = UIAccessibility.isReduceTransparencyEnabled
 
         if #available(iOS 26.0, *),

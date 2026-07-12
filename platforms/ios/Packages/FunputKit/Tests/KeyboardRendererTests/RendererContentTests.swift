@@ -45,21 +45,20 @@ struct RendererContentTests {
         }
     }
 
-    @Test("Toolbar renders method and optional system switchers")
+    @Test("Toolbar renders the brand logo and switcher buttons")
     func toolbarContent() {
         let toolbar = KeyboardToolbarView()
-        toolbar.apply(spec: .withSystemInputMode(for: .vni), theme: .funputGlass, traits: traits)
+        toolbar.apply(spec: .withSystemInputMode, theme: .funputGlass, traits: traits)
 
+        // The logo is a decorative image view, so only the switcher buttons show.
         #expect(!toolbar.isHidden)
-        #expect(visibleButtons(in: toolbar).first?.title(for: .normal) == "V")
         #expect(visibleButtons(in: toolbar).compactMap(\.accessibilityLabel) == [
-            "VNI. Chuyển sang Telex", "Chuyển bàn phím", "Cài đặt", "Biểu tượng cảm xúc",
+            "Chuyển bàn phím", "Biểu tượng cảm xúc",
         ])
 
-        toolbar.apply(spec: .standard(for: .telex), theme: .funputGlass, traits: traits)
-        #expect(visibleButtons(in: toolbar).first?.title(for: .normal) == "T")
+        toolbar.apply(spec: .standard, theme: .funputGlass, traits: traits)
         #expect(visibleButtons(in: toolbar).compactMap(\.accessibilityLabel) == [
-            "Telex. Chuyển sang VNI", "Cài đặt", "Biểu tượng cảm xúc",
+            "Biểu tượng cảm xúc",
         ])
 
         toolbar.apply(spec: nil, theme: .funputGlass, traits: traits)
@@ -71,14 +70,14 @@ struct RendererContentTests {
         let toolbar = KeyboardToolbarView()
         var events: [KeyboardKeyEvent] = []
         toolbar.onEvent = { events.append($0) }
-        toolbar.apply(spec: .standard(for: .vni), theme: .funputGlass, traits: traits)
+        toolbar.apply(spec: .standard, theme: .funputGlass, traits: traits)
 
-        let button = visibleButtons(in: toolbar)[0]
-        button.sendActions(for: .touchDown)
-        button.sendActions(for: .touchUpInside)
+        let emojiButton = visibleButtons(in: toolbar)[0]
+        emojiButton.sendActions(for: .touchDown)
+        emojiButton.sendActions(for: .touchUpInside)
 
         #expect(events.map(\.phase) == [.pressed, .released])
-        #expect(events.map(\.key.role) == [.inputMethod, .inputMethod])
+        #expect(events.map(\.key.role) == [.emoji, .emoji])
     }
 
     private func renderedControl(_ key: KeySpec) -> KeyboardKeyControl {

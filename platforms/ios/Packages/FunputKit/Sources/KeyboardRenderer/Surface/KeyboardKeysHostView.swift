@@ -60,7 +60,7 @@ final class KeyboardKeysHostView: UIView {
         setNeedsLayout()
     }
 
-    private func shouldUseGlass(for theme: KeyboardThemeTokens) -> Bool {
+    private func shouldUseGlass(for theme: ResolvedTheme) -> Bool {
         guard theme.material == .glass,
               !UIAccessibility.isReduceTransparencyEnabled else { return false }
         if #available(iOS 26.0, *) { return true }

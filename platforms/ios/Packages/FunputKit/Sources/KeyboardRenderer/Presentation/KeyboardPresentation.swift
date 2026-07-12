@@ -6,7 +6,7 @@ import UIKit
 public struct KeyboardPresentation: Hashable, Sendable {
     public var layout: KeyboardLayout
     public var sizing: KeyboardSizingProfile
-    public var theme: KeyboardThemeTokens
+    public var theme: ResolvedTheme
     public var shiftState: ShiftState
     public var language: KeyboardLanguage
     public var enterAction: KeyboardEnterAction
@@ -16,7 +16,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
     public init(
         layout: KeyboardLayout = .funputQWERTY,
         sizing: KeyboardSizingProfile = .default,
-        theme: KeyboardThemeTokens = .funputGlass,
+        theme: ResolvedTheme = .funputGlass,
         shiftState: ShiftState = .lowercase,
         language: KeyboardLanguage = .vietnamese,
         enterAction: KeyboardEnterAction = .newLine,
