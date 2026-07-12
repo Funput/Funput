@@ -11,16 +11,23 @@ struct AdaptiveGlassCard<Content: View>: View {
 
     var body: some View {
         if #available(iOS 26, *) {
-            content
+            cardContent
                 .padding(18)
                 .glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
         } else {
-            content
+            cardContent
                 .padding(18)
                 .background(
                     .regularMaterial,
                     in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 )
         }
+    }
+
+    private var cardContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            content
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
