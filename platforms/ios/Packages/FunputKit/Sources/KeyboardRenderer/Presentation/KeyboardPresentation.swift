@@ -38,6 +38,7 @@ public struct KeyboardKeyEvent: Sendable {
     public enum Phase: Equatable, Sendable {
         case pressed
         case repeated
+        case swiped(KeySwipeAction)
         case released
         case cancelled
     }

@@ -38,7 +38,7 @@ public final class KeyboardInputCoordinator {
         case .enter:
             input("\n", document: document)
         case .backspace:
-            if state.editorMode.supportsVietnameseComposition {
+            if state.usesVietnameseComposition {
                 composer.backspace()
             }
             document.deleteBackward()

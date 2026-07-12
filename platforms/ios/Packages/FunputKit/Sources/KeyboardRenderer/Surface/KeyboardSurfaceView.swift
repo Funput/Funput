@@ -10,6 +10,7 @@ public final class KeyboardSurfaceView: UIView {
     }
 
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
+    public var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
 
     private let backdropView = KeyboardBackdropView()
     private let toolbarView = KeyboardToolbarView()
@@ -84,6 +85,9 @@ public final class KeyboardSurfaceView: UIView {
         contentHost.addSubview(toolbarView)
         addSubview(previewView)
         toolbarView.onEvent = { [weak self] event in self?.route(event, from: nil) }
+        toolbarView.onSystemInputModeEvent = { [weak self] source, event in
+            self?.onSystemInputModeEvent?(source, event)
+        }
         rebuildKeys()
         applyPresentation()
 

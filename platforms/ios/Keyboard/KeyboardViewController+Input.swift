@@ -5,10 +5,15 @@ import UIKit
 
 extension KeyboardViewController {
     func handleKeyEvent(_ event: KeyboardKeyEvent) {
+        guard event.key.role != .systemInputMode else { return }
         switch event.phase {
         case .released, .repeated:
             break
         case .pressed, .cancelled:
+            return
+        case .swiped(.toggleLanguage):
+            inputCoordinator.toggleLanguage()
+            updateInputPresentation()
             return
         }
 
@@ -31,7 +36,7 @@ extension KeyboardViewController {
             showsSystemInputModeKey: needsInputModeSwitchKey
         )
         presentation.shiftState = state.shiftState
-        presentation.language = .vietnamese
+        presentation.language = state.language
         presentation.enterAction = state.enterAction
         presentation.showsKeyPreviews = !state.editorMode.isPassword
         keyboardView.presentation = presentation

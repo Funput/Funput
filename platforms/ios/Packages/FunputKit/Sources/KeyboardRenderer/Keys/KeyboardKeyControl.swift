@@ -15,6 +15,7 @@ final class KeyboardKeyControl: UIControl {
     private var appliedSurfaceTheme: KeyboardThemeTokens?
     private var appliedInterfaceStyle: UIUserInterfaceStyle?
     private var appliedReduceTransparency: Bool?
+    private var swipeTracker = KeySwipeGestureTracker()
 
     init(spec: KeySpec) {
         self.spec = spec
@@ -43,6 +44,7 @@ final class KeyboardKeyControl: UIControl {
         theme = presentation.theme
         applySurfaceIfNeeded(traits: traits)
         contentView.apply(spec: spec, presentation: presentation, traits: traits)
+        applyAccessibilityActions(presentation: presentation)
         setNeedsLayout()
     }
 
@@ -77,6 +79,38 @@ final class KeyboardKeyControl: UIControl {
         interactionControl.addAction(UIAction { [weak self] _ in
             self?.handleTouch(.cancelled)
         }, for: [.touchCancel, .touchDragExit, .touchUpOutside])
+        if spec.horizontalSwipeAction != nil {
+            let recognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+            recognizer.cancelsTouchesInView = false
+            recognizer.maximumNumberOfTouches = 1
+            interactionControl.addGestureRecognizer(recognizer)
+        }
+    }
+
+    @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
+        if recognizer.state == .began {
+            swipeTracker.reset()
+        }
+        guard recognizer.state == .changed || recognizer.state == .ended,
+              let action = swipeTracker.update(
+                  translation: recognizer.translation(in: interactionControl),
+                  action: spec.horizontalSwipeAction
+              ) else { return }
+        emit(.swiped(action))
+    }
+
+    private func applyAccessibilityActions(presentation: KeyboardPresentation) {
+        guard let action = spec.horizontalSwipeAction else {
+            accessibilityCustomActions = nil
+            return
+        }
+        let target = presentation.language == .vietnamese ? "Tiếng Anh" : "Tiếng Việt"
+        accessibilityCustomActions = [
+            UIAccessibilityCustomAction(name: "Chuyển sang \(target)") { [weak self] _ in
+                self?.emit(.swiped(action))
+                return self != nil
+            },
+        ]
     }
 
     private func applySurfaceIfNeeded(traits: UITraitCollection) {

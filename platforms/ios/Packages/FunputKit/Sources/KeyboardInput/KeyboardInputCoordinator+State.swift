@@ -22,6 +22,9 @@ extension KeyboardInputCoordinator {
             editorMode: editorMode,
             enterAction: enterAction
         )
+        if inputContextChanged {
+            composer.setEnabled(state.usesVietnameseComposition)
+        }
     }
 
     func consumeOneShotShift() {
@@ -41,6 +44,18 @@ extension KeyboardInputCoordinator {
         replaceState(inputMethod: next)
     }
 
+    public func toggleLanguage() {
+        guard state.editorMode.supportsVietnameseComposition else { return }
+        composer.clear()
+        let next: KeyboardLanguage = state.language == .vietnamese ? .english : .vietnamese
+        replaceState(language: next)
+        composer.setEnabled(state.usesVietnameseComposition)
+    }
+
+    public func prepareForSystemInputModeChange() {
+        composer.clear()
+    }
+
     func updateLayoutMode(_ mode: KeyboardLayoutMode) {
         guard !state.editorMode.usesKeypad, state.layoutMode != mode else { return }
         replaceState(layoutMode: mode)
@@ -51,14 +66,16 @@ extension KeyboardInputCoordinator {
         shiftState: ShiftState? = nil,
         layoutMode: KeyboardLayoutMode? = nil,
         editorMode: KeyboardEditorMode? = nil,
-        enterAction: KeyboardEnterAction? = nil
+        enterAction: KeyboardEnterAction? = nil,
+        language: KeyboardLanguage? = nil
     ) {
         state = KeyboardInputState(
             inputMethod: inputMethod ?? state.inputMethod,
             shiftState: shiftState ?? state.shiftState,
             layoutMode: layoutMode ?? state.layoutMode,
             editorMode: editorMode ?? state.editorMode,
-            enterAction: enterAction ?? state.enterAction
+            enterAction: enterAction ?? state.enterAction,
+            language: language ?? state.language
         )
     }
 }

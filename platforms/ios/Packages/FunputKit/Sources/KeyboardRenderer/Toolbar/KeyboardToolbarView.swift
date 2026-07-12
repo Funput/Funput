@@ -6,6 +6,7 @@ import UIKit
 @MainActor
 final class KeyboardToolbarView: UIView {
     var onEvent: ((KeyboardKeyEvent) -> Void)?
+    var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
 
     private let inputMethodButton = UIButton(type: .system)
     private let systemButton = UIButton(type: .system)
@@ -71,6 +72,13 @@ final class KeyboardToolbarView: UIView {
         button.setImage(UIImage(systemName: symbol), for: .normal)
         button.accessibilityTraits = .keyboardKey
         configureInteraction(button, role: role)
+        if role == .systemInputMode {
+            button.addTarget(
+                self,
+                action: #selector(handleSystemInputModeEvent(_:with:)),
+                for: .allTouchEvents
+            )
+        }
         addSubview(button)
     }
 
@@ -104,6 +112,10 @@ final class KeyboardToolbarView: UIView {
         }
         guard let key else { return }
         onEvent?(KeyboardKeyEvent(key: key, phase: phase))
+    }
+
+    @objc private func handleSystemInputModeEvent(_ sender: UIView, with event: UIEvent) {
+        onSystemInputModeEvent?(sender, event)
     }
 }
 #endif

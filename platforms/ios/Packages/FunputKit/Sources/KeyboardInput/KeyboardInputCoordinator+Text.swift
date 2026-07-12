@@ -4,7 +4,7 @@ import KeyboardLayout
 
 extension KeyboardInputCoordinator {
     func input(_ text: String, document: any KeyboardDocument) {
-        guard state.editorMode.supportsVietnameseComposition else {
+        guard state.usesVietnameseComposition else {
             document.insertText(text)
             return
         }

@@ -17,6 +17,7 @@ final class KeyboardSurfaceInteractionController {
     }
     private(set) var activeKey: KeySpec?
     private var hapticsEnabled = true
+    private var didSwipeActiveKey = false
 
     init(
         onEvent: @escaping (KeyboardKeyEvent) -> Void,
@@ -35,6 +36,7 @@ final class KeyboardSurfaceInteractionController {
         sourceFrame: CGRect?,
         presentation: KeyboardPresentation
     ) {
+        hapticsEnabled = presentation.isHapticFeedbackEnabled
         switch event.phase {
         case .pressed:
             begin(event.key, sourceFrame: sourceFrame, presentation: presentation)
@@ -44,6 +46,8 @@ final class KeyboardSurfaceInteractionController {
             cancel(event.key)
         case .repeated:
             break
+        case .swiped:
+            handleSwipe(event)
         }
     }
 
@@ -53,6 +57,7 @@ final class KeyboardSurfaceInteractionController {
         }
         repeatController.cancel()
         activeKey = nil
+        didSwipeActiveKey = false
         onPreview(nil, nil)
     }
 
@@ -65,6 +70,7 @@ final class KeyboardSurfaceInteractionController {
             cancelAll()
         }
         activeKey = key
+        didSwipeActiveKey = false
         hapticsEnabled = presentation.isHapticFeedbackEnabled
         performHaptic(for: key.role)
         if presentation.showsKeyPreviews {
@@ -78,8 +84,10 @@ final class KeyboardSurfaceInteractionController {
 
     private func finish(_ key: KeySpec) {
         guard activeKey?.id == key.id else { return }
-        let suppressRelease = key.role == .backspace && repeatController.finish()
+        let suppressRelease = didSwipeActiveKey
+            || (key.role == .backspace && repeatController.finish())
         activeKey = nil
+        didSwipeActiveKey = false
         onPreview(nil, nil)
         if !suppressRelease {
             onEvent(KeyboardKeyEvent(key: key, phase: .released))
@@ -90,6 +98,7 @@ final class KeyboardSurfaceInteractionController {
         guard activeKey?.id == key.id else { return }
         repeatController.cancel()
         activeKey = nil
+        didSwipeActiveKey = false
         onPreview(nil, nil)
         onEvent(KeyboardKeyEvent(key: key, phase: .cancelled))
     }
@@ -100,6 +109,19 @@ final class KeyboardSurfaceInteractionController {
             haptics.perform(.deleteRepeat)
         }
         onEvent(KeyboardKeyEvent(key: key, phase: .repeated))
+    }
+
+    private func handleSwipe(_ event: KeyboardKeyEvent) {
+        if let activeKey {
+            guard activeKey.id == event.key.id else { return }
+            repeatController.cancel()
+            didSwipeActiveKey = true
+            onPreview(nil, nil)
+        }
+        if hapticsEnabled {
+            haptics.perform(.control)
+        }
+        onEvent(event)
     }
 
     private func performHaptic(for role: KeyRole) {
