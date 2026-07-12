@@ -15,6 +15,7 @@ while IFS= read -r -d '' file; do
     fi
 done < <(
     find "$ios_root" -type f \( -name '*.swift' -o -name 'Package.swift' \) \
+        -not -path '*/.agents/*' \
         -not -path '*/.build/*' -print0
 )
 
