@@ -11,8 +11,8 @@ final class KeyboardKeyControl: UIControl {
     private let interactionControl = UIControl()
     private let contentView = KeyboardKeyContentView()
     private let surface = KeyboardKeySurfaceView()
-    private var theme = KeyboardThemeTokens.funputGlass
-    private var appliedSurfaceTheme: KeyboardThemeTokens?
+    private var theme = ResolvedTheme.funputGlass
+    private var appliedSurfaceTheme: ResolvedTheme?
     private var appliedInterfaceStyle: UIUserInterfaceStyle?
     private var appliedReduceTransparency: Bool?
     private var swipeTracker = KeySwipeGestureTracker()

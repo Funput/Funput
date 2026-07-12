@@ -48,7 +48,7 @@ struct KeyboardLabConfiguration {
         sizing.horizontalGap = CGFloat(keyGap)
         sizing.verticalGap = CGFloat(keyGap + 2)
 
-        var theme = KeyboardThemeTokens.funputGlass
+        var theme = ResolvedTheme.funputGlass
         theme.cornerRadius = cornerRadius
         theme.keyOpacity = keyOpacity
         theme.specialKeyOpacity = min(1, keyOpacity + 0.1)

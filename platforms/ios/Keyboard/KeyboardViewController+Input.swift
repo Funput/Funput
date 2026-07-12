@@ -1,3 +1,5 @@
+import FunputShared
+import KeyboardConfiguration
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
@@ -38,7 +40,10 @@ extension KeyboardViewController {
         presentation.shiftState = state.shiftState
         presentation.language = state.language
         presentation.enterAction = state.enterAction
-        presentation.showsKeyPreviews = !state.editorMode.isPassword
+        presentation.theme = KeyboardPresentationFactory.resolvedTheme(for: configuration)
+        presentation.isHapticFeedbackEnabled = configuration.isHapticFeedbackEnabled
+        presentation.showsKeyPreviews = !state.editorMode.isPassword && configuration.showsKeyPreviews
+        presentation.sizing.heightScale = CGFloat(configuration.heightScale)
         keyboardView.presentation = presentation
         updatePreferredHeight()
     }

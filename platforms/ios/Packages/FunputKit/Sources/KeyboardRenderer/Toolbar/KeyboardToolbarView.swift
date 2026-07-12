@@ -45,7 +45,7 @@ final class KeyboardToolbarView: UIView {
 
     func apply(
         spec: KeyboardToolbarSpec?,
-        theme: KeyboardThemeTokens,
+        theme: ResolvedTheme,
         traits: UITraitCollection
     ) {
         self.spec = spec

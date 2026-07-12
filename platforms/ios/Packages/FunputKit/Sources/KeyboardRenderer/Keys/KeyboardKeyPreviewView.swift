@@ -77,7 +77,7 @@ final class KeyboardKeyPreviewView: UIView {
     }
 
     private func configureEffect(
-        theme: KeyboardThemeTokens,
+        theme: ResolvedTheme,
         traits: UITraitCollection
     ) {
         effectView?.removeFromSuperview()

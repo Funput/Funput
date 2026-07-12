@@ -16,6 +16,9 @@
 		FA2600000000000000000206 /* KeyboardRenderer in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000113 /* KeyboardRenderer */; };
 		FA2600000000000000000207 /* FunputEngine in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000114 /* FunputEngine */; };
 		FA2600000000000000000208 /* KeyboardInput in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000115 /* KeyboardInput */; };
+		FA2600000000000000000209 /* FunputShared in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000116 /* FunputShared */; };
+		FA260000000000000000020A /* ThemeRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000117 /* ThemeRuntime */; };
+		FA260000000000000000020B /* KeyboardConfiguration in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000118 /* KeyboardConfiguration */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -133,6 +136,9 @@
 				FA2600000000000000000206 /* KeyboardRenderer in Frameworks */,
 				FA2600000000000000000205 /* ThemeSchema in Frameworks */,
 				FA2600000000000000000204 /* KeyboardLayout in Frameworks */,
+				FA2600000000000000000209 /* FunputShared in Frameworks */,
+				FA260000000000000000020A /* ThemeRuntime in Frameworks */,
+				FA260000000000000000020B /* KeyboardConfiguration in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -259,6 +265,9 @@
 				FA2600000000000000000111 /* KeyboardLayout */,
 				FA2600000000000000000112 /* ThemeSchema */,
 				FA2600000000000000000113 /* KeyboardRenderer */,
+				FA2600000000000000000116 /* FunputShared */,
+				FA2600000000000000000117 /* ThemeRuntime */,
+				FA2600000000000000000118 /* KeyboardConfiguration */,
 			);
 			productName = Keyboard;
 			productReference = 5FB3C7F13001F87500CE4906 /* Keyboard.appex */;
@@ -830,6 +839,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
 			productName = KeyboardInput;
+		};
+		FA2600000000000000000116 /* FunputShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = FunputShared;
+		};
+		FA2600000000000000000117 /* ThemeRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = ThemeRuntime;
+		};
+		FA2600000000000000000118 /* KeyboardConfiguration */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = KeyboardConfiguration;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

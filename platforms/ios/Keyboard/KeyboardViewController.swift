@@ -5,14 +5,17 @@
 //  Created by P-Code Dynamics on 11/7/26.
 //
 
+import FunputShared
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
 import UIKit
 
 final class KeyboardViewController: UIInputViewController {
-    let inputCoordinator = KeyboardInputCoordinator(inputMethod: .vni)
+    let inputCoordinator = KeyboardInputCoordinator()
     let keyboardView = KeyboardSurfaceView()
+    var configuration = FunputConfiguration.default
+    let configurationStore = FunputConfigurationStore()
     var resolvedTextInputTraits = ResolvedTextInputTraits(
         editorMode: .text,
         enterAction: .newLine,
@@ -22,8 +25,9 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        updateTextInputTraits(force: true)
         installKeyboardView()
+        reloadConfiguration()
+        updateTextInputTraits(force: true)
     }
 
     override func viewWillLayoutSubviews() {
