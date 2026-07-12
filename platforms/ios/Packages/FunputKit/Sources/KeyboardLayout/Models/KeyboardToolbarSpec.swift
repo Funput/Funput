@@ -1,20 +1,13 @@
 public struct KeyboardToolbarSpec: Hashable, Sendable {
     public let systemInputModeKey: KeySpec?
-    public let settingsKey: KeySpec
     public let emojiKey: KeySpec
 
     public var keys: [KeySpec] {
-        [systemInputModeKey, settingsKey, emojiKey].compactMap { $0 }
+        [systemInputModeKey, emojiKey].compactMap { $0 }
     }
 
     public init(systemInputModeKey: KeySpec? = nil) {
         self.systemInputModeKey = systemInputModeKey
-        settingsKey = KeySpec(
-            id: "toolbar-settings",
-            label: "",
-            role: .settings,
-            accessibilityLabel: "Cài đặt"
-        )
         emojiKey = KeySpec(
             id: "toolbar-emoji",
             label: "",

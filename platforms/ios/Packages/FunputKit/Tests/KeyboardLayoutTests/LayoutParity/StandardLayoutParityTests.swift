@@ -48,10 +48,10 @@ struct StandardLayoutParityTests {
 
     @Test("Toolbar exposes the brand logo and optional system switcher", arguments: KeyboardInputMethod.allCases)
     func toolbar(method: KeyboardInputMethod) {
-        // The brand logo is decorative, so the interactive toolbar keys are just
-        // the settings and emoji buttons (plus the globe when relevant).
+        // The brand logo is decorative, so the interactive toolbar keys are the
+        // emoji button plus the globe when relevant.
         let standard = StandardKeyboardLayouts.letters(method)
-        #expect(standard.toolbar?.keys.map(\.role) == [.settings, .emoji])
+        #expect(standard.toolbar?.keys.map(\.role) == [.emoji])
 
         let layout = KeyboardLayoutResolver.resolve(
             inputMethod: method,
@@ -59,7 +59,7 @@ struct StandardLayoutParityTests {
             showsSystemInputModeKey: true
         )
         #expect(layout.toolbar?.keys.map(\.role) == [
-            .systemInputMode, .settings, .emoji,
+            .systemInputMode, .emoji,
         ])
         #expect(layout.toolbar?.systemInputModeKey?.role == .systemInputMode)
         #expect(!layout.rows.flatMap(\.keys).contains { $0.role == .systemInputMode })

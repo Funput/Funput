@@ -10,7 +10,6 @@ final class KeyboardToolbarView: UIView {
 
     private let logoView = KeyboardBrandLogoView()
     private let systemButton = UIButton(type: .system)
-    private let settingsButton = UIButton(type: .system)
     private let emojiButton = UIButton(type: .system)
     private var spec: KeyboardToolbarSpec?
 
@@ -18,7 +17,6 @@ final class KeyboardToolbarView: UIView {
         super.init(frame: frame)
         addSubview(logoView)
         configure(systemButton, symbol: "globe", role: .systemInputMode)
-        configure(settingsButton, symbol: "gearshape", role: .settings)
         configure(emojiButton, symbol: "face.smiling", role: .emoji)
     }
 
@@ -38,8 +36,7 @@ final class KeyboardToolbarView: UIView {
             width: itemSize,
             height: itemSize
         )
-        settingsButton.frame = frame(before: emojiButton.frame, size: itemSize)
-        systemButton.frame = frame(before: settingsButton.frame, size: itemSize)
+        systemButton.frame = frame(before: emojiButton.frame, size: itemSize)
     }
 
     func apply(
@@ -51,11 +48,10 @@ final class KeyboardToolbarView: UIView {
         isHidden = spec == nil
         systemButton.isHidden = spec?.systemInputModeKey == nil
         systemButton.accessibilityLabel = spec?.systemInputModeKey?.accessibilityLabel
-        settingsButton.accessibilityLabel = spec?.settingsKey.accessibilityLabel
         emojiButton.accessibilityLabel = spec?.emojiKey.accessibilityLabel
 
         let label = theme.label.uiColor(for: traits)
-        [systemButton, settingsButton, emojiButton].forEach { $0.tintColor = label }
+        [systemButton, emojiButton].forEach { $0.tintColor = label }
     }
 
     private func frame(before frame: CGRect, size: CGFloat) -> CGRect {
@@ -91,7 +87,6 @@ final class KeyboardToolbarView: UIView {
     private func emit(_ role: KeyRole, phase: KeyboardKeyEvent.Phase) {
         let key: KeySpec? = switch role {
         case .systemInputMode: spec?.systemInputModeKey
-        case .settings: spec?.settingsKey
         case .emoji: spec?.emojiKey
         default: nil
         }
