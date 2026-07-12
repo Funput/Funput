@@ -386,6 +386,25 @@ func apply(_ result: FunputCompositionResult, to proxy: UITextDocumentProxy) {
 
 iOS custom keyboard không có marked-text API tương đương macOS IMKit. Adapter iOS phải dùng `deleteBackward()` và `insertText(_:)`, đồng thời theo dõi `documentContextBeforeInput` để phát hiện lệch state.
 
+### Đồng bộ document state
+
+`KeyboardInputCoordinator` giữ một snapshot chỉ trong memory gồm
+`documentIdentifier`, `documentContextBeforeInput` và việc có selection hay
+không. Trước mỗi phím, composition chỉ được tiếp tục khi snapshot vẫn thuộc
+cùng document, context chưa bị host thay đổi và context trước caret còn kết
+thúc bằng buffer hiện tại của Rust engine. Nếu invariant này không còn đúng,
+coordinator clear composer thay vì cố tái tạo engine state từ surrounding text.
+
+Mỗi key event ghi document là một transaction: callback UIKit re-entrant được
+bỏ qua và snapshot mới chỉ được chấp nhận sau toàn bộ chuỗi
+`deleteBackward()`/`insertText(_:)`. `textDidChange` và `selectionDidChange`
+được dùng để phát hiện edit hoặc caret movement từ host. Khi proxy trả về
+`nil` cho context, keyboard vẫn cho phép composition do chính nó tạo và dựa
+vào document identity cùng lifecycle callback để reset an toàn.
+
+Snapshot không dùng `documentContextAfterInput`, không được log, persist hoặc
+ghi vào App Group. Context chỉ phục vụ so sánh đồng bộ trong process keyboard.
+
 ---
 
 ## 9. Liquid Glass và design system
