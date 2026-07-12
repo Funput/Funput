@@ -57,10 +57,7 @@ public final class KeyboardInputCoordinator {
         case .enter:
             input("\n", document: document)
         case .backspace:
-            if state.usesVietnameseComposition {
-                composer.backspace()
-            }
-            document.deleteBackward()
+            performDeleteBackward(document: document)
         case .shift:
             toggleShift()
         case .inputMethod:

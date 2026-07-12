@@ -14,6 +14,9 @@ import UIKit
 final class KeyboardViewController: UIInputViewController {
     let inputCoordinator = KeyboardInputCoordinator()
     let keyboardView = KeyboardSurfaceView()
+    let emojiView = EmojiKeyboardView()
+    let emojiRecentsStore = EmojiRecentsStore()
+    var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     let configurationStore = FunputConfigurationStore()
     var resolvedTextInputTraits = ResolvedTextInputTraits(
@@ -53,12 +56,17 @@ final class KeyboardViewController: UIInputViewController {
             self?.handleSystemInputModeEvent(from: source, event: event)
         }
         view.addSubview(keyboardView)
+        installEmojiView()
 
         NSLayoutConstraint.activate([
             keyboardView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             keyboardView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             keyboardView.topAnchor.constraint(equalTo: view.topAnchor),
             keyboardView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            emojiView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            emojiView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            emojiView.topAnchor.constraint(equalTo: view.topAnchor),
+            emojiView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
 
         let constraint = view.heightAnchor.constraint(
@@ -76,4 +84,9 @@ final class KeyboardViewController: UIInputViewController {
             scale: keyboardView.presentation.sizing.heightScale
         )
     }
+}
+
+enum KeyboardSurface {
+    case funput
+    case emoji
 }

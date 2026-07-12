@@ -7,4 +7,7 @@ public enum FunputAppGroup {
 
     /// Defaults key under which the encoded ``FunputConfiguration`` is stored.
     public static let configurationKey = "configuration"
+
+    /// Defaults key for the keyboard's most recently used emoji.
+    public static let emojiRecentsKey = "emoji-recents"
 }

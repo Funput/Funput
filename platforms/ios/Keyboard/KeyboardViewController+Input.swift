@@ -19,6 +19,11 @@ extension KeyboardViewController {
             return
         }
 
+        if event.key.role == .emoji {
+            showEmoji()
+            return
+        }
+
         let previousState = inputCoordinator.state
         let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
         inputCoordinator.handle(event.key, document: document)
@@ -45,6 +50,11 @@ extension KeyboardViewController {
         presentation.showsKeyPreviews = !state.editorMode.isPassword && configuration.showsKeyPreviews
         presentation.sizing.heightScale = CGFloat(configuration.heightScale)
         keyboardView.presentation = presentation
+        if presentation.layout.toolbar == nil {
+            showFunput()
+        } else if displayedSurface == .emoji {
+            refreshEmojiPresentation()
+        }
         updatePreferredHeight()
     }
 }
