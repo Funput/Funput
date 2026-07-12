@@ -40,7 +40,7 @@ extension KeyboardViewController {
             inputMethod: state.inputMethod,
             mode: state.layoutMode,
             editorMode: state.editorMode,
-            showsSystemInputModeKey: needsInputModeSwitchKey
+            showsSystemInputModeKey: true
         )
         presentation.shiftState = state.shiftState
         presentation.language = state.language
