@@ -39,6 +39,8 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func installKeyboardView() {
+        view.isOpaque = false
+        view.backgroundColor = .clear
         keyboardView.translatesAutoresizingMaskIntoConstraints = false
         keyboardView.onKeyEvent = { [weak self] event in
             self?.handleKeyEvent(event)

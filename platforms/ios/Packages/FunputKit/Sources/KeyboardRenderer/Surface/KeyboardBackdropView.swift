@@ -5,9 +5,13 @@ import UIKit
 @MainActor
 final class KeyboardBackdropView: UIVisualEffectView {
     private let gradientLayer = CAGradientLayer()
+    private(set) var usesHostMaterial = false
 
     override init(effect: UIVisualEffect?) {
         super.init(effect: effect)
+        isOpaque = false
+        backgroundColor = .clear
+        contentView.backgroundColor = .clear
         isUserInteractionEnabled = false
         contentView.layer.addSublayer(gradientLayer)
     }
@@ -28,6 +32,20 @@ final class KeyboardBackdropView: UIVisualEffectView {
 
     func apply(theme: KeyboardThemeTokens, traits: UITraitCollection) {
         let reducesTransparency = UIAccessibility.isReduceTransparencyEnabled
+
+        if #available(iOS 26.0, *),
+           theme.material == .glass,
+           !reducesTransparency {
+            // Let the keyboard host's system material show through. Adding another
+            // blur or gradient here produces a seam above the globe/dictation bar.
+            usesHostMaterial = true
+            effect = nil
+            gradientLayer.isHidden = true
+            return
+        }
+
+        usesHostMaterial = false
+        gradientLayer.isHidden = false
         effect = reducesTransparency ? nil : UIBlurEffect(style: .systemChromeMaterial)
 
         let startColor = theme.backgroundStart.uiColor(for: traits)

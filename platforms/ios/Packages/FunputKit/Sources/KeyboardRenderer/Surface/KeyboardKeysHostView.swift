@@ -19,10 +19,10 @@ final class KeyboardKeysHostView: UIView {
     func apply(presentation: KeyboardPresentation) {
         let shouldUseGlass = shouldUseGlass(for: presentation.theme)
         guard contentHost.superview == nil || shouldUseGlass != usesGlassContainer else {
-            updateSpacing(presentation.sizing)
+            updateSpacing()
             return
         }
-        rebuildHost(useGlass: shouldUseGlass, sizing: presentation.sizing)
+        rebuildHost(useGlass: shouldUseGlass)
     }
 
     override func layoutSubviews() {
@@ -33,7 +33,7 @@ final class KeyboardKeysHostView: UIView {
         }
     }
 
-    private func rebuildHost(useGlass: Bool, sizing: KeyboardSizingProfile) {
+    private func rebuildHost(useGlass: Bool) {
         glassContainerView?.removeFromSuperview()
         if glassContainerView == nil {
             contentHost.removeFromSuperview()
@@ -41,8 +41,9 @@ final class KeyboardKeysHostView: UIView {
 
         if useGlass, #available(iOS 26.0, *) {
             let effect = UIGlassContainerEffect()
-            effect.spacing = containerSpacing(sizing)
+            effect.spacing = containerSpacing
             let container = UIVisualEffectView(effect: effect)
+            container.tintColor = .clear
             addSubview(container)
             glassContainerView = container
             contentHost = container.contentView
@@ -66,14 +67,16 @@ final class KeyboardKeysHostView: UIView {
         return false
     }
 
-    private func containerSpacing(_ sizing: KeyboardSizingProfile) -> CGFloat {
-        max(0, min(sizing.horizontalGap, sizing.verticalGap) - 1)
+    private var containerSpacing: CGFloat {
+        // Keys have a stable layout and should remain distinct. The container still
+        // gives every glass surface one sampling region and consistent adaptation.
+        0
     }
 
-    private func updateSpacing(_ sizing: KeyboardSizingProfile) {
+    private func updateSpacing() {
         if #available(iOS 26.0, *),
            let effect = glassContainerView?.effect as? UIGlassContainerEffect {
-            effect.spacing = containerSpacing(sizing)
+            effect.spacing = containerSpacing
         }
     }
 }

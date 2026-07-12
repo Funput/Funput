@@ -24,7 +24,6 @@ final class KeyboardKeySurfaceView: UIView {
 
         let result = makeSurface(
             theme: theme,
-            spec: spec,
             color: color,
             opacity: normalAlpha
         )
@@ -44,7 +43,11 @@ final class KeyboardKeySurfaceView: UIView {
     }
 
     func updateShape(cornerRadius: Double) {
-        renderedView?.layer.cornerRadius = cornerRadius
+        if #available(iOS 26.0, *), usesNativeInteraction {
+            renderedView?.cornerConfiguration = .corners(radius: .fixed(cornerRadius))
+        } else {
+            renderedView?.layer.cornerRadius = cornerRadius
+        }
         layer.shadowPath = UIBezierPath(
             roundedRect: bounds,
             cornerRadius: cornerRadius
@@ -75,7 +78,6 @@ final class KeyboardKeySurfaceView: UIView {
 
     private func makeSurface(
         theme: KeyboardThemeTokens,
-        spec: KeySpec,
         color: UIColor,
         opacity: CGFloat
     ) -> (view: UIView, contentView: UIView, isNativeGlass: Bool) {
@@ -84,8 +86,12 @@ final class KeyboardKeySurfaceView: UIView {
            !UIAccessibility.isReduceTransparencyEnabled {
             let effect = UIGlassEffect(style: .regular)
             effect.isInteractive = true
-            effect.tintColor = color.withAlphaComponent(tintAlpha(for: spec, opacity: opacity))
+            // A glass container shares adaptation across its children. Keep every
+            // key's material neutral so a prominent key cannot tint the group after
+            // the keyboard extension is deactivated and activated again.
+            effect.tintColor = .clear
             let view = UIVisualEffectView(effect: effect)
+            view.tintColor = .clear
             return (view, view.contentView, true)
         }
 
@@ -99,11 +105,16 @@ final class KeyboardKeySurfaceView: UIView {
         theme: KeyboardThemeTokens,
         traits: UITraitCollection
     ) {
-        view.layer.cornerCurve = .continuous
-        view.layer.cornerRadius = theme.cornerRadius
+        if #available(iOS 26.0, *), usesNativeInteraction {
+            view.cornerConfiguration = .corners(radius: .fixed(theme.cornerRadius))
+            view.clipsToBounds = false
+        } else {
+            view.layer.cornerCurve = .continuous
+            view.layer.cornerRadius = theme.cornerRadius
+            view.clipsToBounds = true
+        }
         view.layer.borderWidth = usesNativeInteraction ? 0 : theme.borderWidth
         view.layer.borderColor = theme.border.uiColor(for: traits).cgColor
-        view.clipsToBounds = true
     }
 
     private func configureShadow(theme: KeyboardThemeTokens) {
@@ -113,10 +124,5 @@ final class KeyboardKeySurfaceView: UIView {
         layer.shadowOffset = CGSize(width: 0, height: 1)
     }
 
-    private func tintAlpha(for spec: KeySpec, opacity: CGFloat) -> CGFloat {
-        let base: CGFloat = spec.role.isSpecial ? 0.12 : 0.06
-        let range: CGFloat = spec.role.isSpecial ? 0.26 : 0.22
-        return base + opacity * range
-    }
 }
 #endif

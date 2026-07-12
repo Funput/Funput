@@ -78,7 +78,11 @@ public final class KeyboardSurfaceView: UIView {
 
     private func configureView() {
         clipsToBounds = true
+        isOpaque = false
         backgroundColor = .clear
+        // A keyboard extension can inherit the host application's tint. Glass
+        // surfaces define their own semantic tint and must not inherit that value.
+        tintColor = .clear
         addSubview(backdropView)
         addSubview(contentHost)
         contentHost.addSubview(keysHost)

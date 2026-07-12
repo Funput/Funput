@@ -7,6 +7,7 @@ import UIKit
 final class KeyboardKeyPreviewView: UIView {
     private let label = UILabel()
     private var effectView: UIVisualEffectView?
+    private var usesNativeGlass = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -30,7 +31,11 @@ final class KeyboardKeyPreviewView: UIView {
         super.layoutSubviews()
         effectView?.frame = bounds
         label.frame = bounds
-        effectView?.layer.cornerRadius = 12
+        if #available(iOS 26.0, *), usesNativeGlass {
+            effectView?.cornerConfiguration = .corners(radius: .fixed(12))
+        } else {
+            effectView?.layer.cornerRadius = 12
+        }
     }
 
     func show(
@@ -82,13 +87,23 @@ final class KeyboardKeyPreviewView: UIView {
            !UIAccessibility.isReduceTransparencyEnabled {
             let glass = UIGlassEffect(style: .regular)
             glass.isInteractive = false
-            glass.tintColor = theme.characterKey.uiColor(for: traits)
+            glass.tintColor = .clear
             effect = glass
+            usesNativeGlass = true
         } else {
             effect = UIBlurEffect(style: .systemMaterial)
+            usesNativeGlass = false
         }
         let view = UIVisualEffectView(effect: effect)
-        view.clipsToBounds = true
+        if #available(iOS 26.0, *), usesNativeGlass {
+            view.tintColor = .clear
+            view.cornerConfiguration = .corners(radius: .fixed(12))
+            view.clipsToBounds = false
+        } else {
+            view.layer.cornerCurve = .continuous
+            view.layer.cornerRadius = 12
+            view.clipsToBounds = true
+        }
         insertSubview(view, at: 0)
         addSubview(label)
         effectView = view
