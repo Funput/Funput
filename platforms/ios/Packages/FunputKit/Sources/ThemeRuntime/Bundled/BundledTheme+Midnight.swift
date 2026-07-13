@@ -8,35 +8,35 @@ public extension KeyboardTheme {
         material: .glass,
         palette: ThemePalette(
             backgroundStart: AdaptiveThemeColor(
-                light: ThemeRGBA(hex: 0x3A3A4C, alpha: 0.55),
+                light: ThemeRGBA(hex: 0xE9E7F5, alpha: 0.86),
                 dark: ThemeRGBA(hex: 0x1A1A2E, alpha: 0.6)
             ),
             backgroundEnd: AdaptiveThemeColor(
-                light: ThemeRGBA(hex: 0x2A2A3C, alpha: 0.5),
+                light: ThemeRGBA(hex: 0xD4D0EA, alpha: 0.78),
                 dark: ThemeRGBA(hex: 0x0A0A16, alpha: 0.66)
             ),
             characterKey: AdaptiveThemeColor(
-                light: ThemeRGBA(hex: 0x4A4A5C),
+                light: ThemeRGBA(hex: 0xFFFFFF),
                 dark: ThemeRGBA(hex: 0x2A2A3E)
             ),
             specialKey: AdaptiveThemeColor(
-                light: ThemeRGBA(hex: 0x3A3A4C),
+                light: ThemeRGBA(hex: 0xC9C4DF),
                 dark: ThemeRGBA(hex: 0x1E1E30)
             ),
             border: AdaptiveThemeColor(
-                light: ThemeRGBA(hex: 0xFFFFFF, alpha: 0.16),
+                light: ThemeRGBA(hex: 0x4B456C, alpha: 0.24),
                 dark: ThemeRGBA(hex: 0xFFFFFF, alpha: 0.12)
             ),
             label: AdaptiveThemeColor(
-                light: ThemeRGBA(hex: 0xFFFFFF),
+                light: ThemeRGBA(hex: 0x171426),
                 dark: ThemeRGBA(hex: 0xFFFFFF)
             ),
             secondaryLabel: AdaptiveThemeColor(
-                light: ThemeRGBA(hex: 0xEBEBF5, alpha: 0.7),
+                light: ThemeRGBA(hex: 0x4B4564, alpha: 0.78),
                 dark: ThemeRGBA(hex: 0xEBEBF5, alpha: 0.6)
             ),
             accent: AdaptiveThemeColor(
-                light: ThemeRGBA(hex: 0x7B61FF),
+                light: ThemeRGBA(hex: 0x5B4BC4),
                 dark: ThemeRGBA(hex: 0x9B81FF)
             )
         ),
