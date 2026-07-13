@@ -9,13 +9,12 @@ final class TestKeyboardDocument: KeyboardDocument {
     var documentIdentifier = UUID()
     var hasSelection = false
     var exposesContext = true
+    var delaysContextUpdates = false
+    private var reportedText = ""
 
-    var snapshot: KeyboardDocumentSnapshot {
-        KeyboardDocumentSnapshot(
-            documentIdentifier: documentIdentifier,
-            contextBeforeInput: exposesContext ? text : nil,
-            hasSelection: hasSelection
-        )
+    var contextBeforeInput: String? {
+        guard exposesContext else { return nil }
+        return delaysContextUpdates ? reportedText : text
     }
 
     func insertText(_ text: String) {
@@ -30,6 +29,11 @@ final class TestKeyboardDocument: KeyboardDocument {
 
     func replaceTextExternally(with text: String) {
         self.text = text
+        reportedText = text
+    }
+
+    func publishContext() {
+        reportedText = text
     }
 }
 

@@ -13,8 +13,8 @@ extension KeyboardInputCoordinator {
         synchronizeBeforeInput(document)
         documentSynchronizer.beginMutation()
         composer.clear()
-        document.insertText(text)
-        finishDocumentMutation(document, preserveOneShotShift: true)
+        insertDocumentText(text, document: document)
+        finishDocumentMutation(preserveOneShotShift: true)
     }
 
     /// Deletes one document element while preserving coordinator synchronization.
@@ -22,14 +22,14 @@ extension KeyboardInputCoordinator {
         synchronizeBeforeInput(document)
         documentSynchronizer.beginMutation()
         performDeleteBackward(document: document)
-        finishDocumentMutation(document, preserveOneShotShift: true)
+        finishDocumentMutation(preserveOneShotShift: true)
     }
 
     func performDeleteBackward(document: any KeyboardDocument) {
         if state.usesVietnameseComposition {
             composer.backspace()
         }
-        document.deleteBackward()
+        deleteDocumentBackward(document)
     }
 }
 #endif

@@ -78,7 +78,7 @@ final class KeyboardKeyControl: UIControl {
         }, for: .touchUpInside)
         interactionControl.addAction(UIAction { [weak self] _ in
             self?.handleTouch(.cancelled)
-        }, for: [.touchCancel, .touchDragExit, .touchUpOutside])
+        }, for: [.touchCancel, .touchUpOutside])
         if spec.horizontalSwipeAction != nil {
             let recognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
             recognizer.cancelsTouchesInView = false

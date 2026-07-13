@@ -67,5 +67,20 @@ struct KeyboardDocumentSynchronizationTests {
 
         #expect(document.text == "á")
     }
+
+    @Test("A delayed document proxy does not break rapid composition")
+    func delayedProxyContext() {
+        let coordinator = KeyboardInputCoordinator(inputMethod: .telex)
+        let document = TestKeyboardDocument()
+        document.delaysContextUpdates = true
+
+        type("as", with: coordinator, into: document)
+
+        #expect(document.text == "á")
+        document.publishContext()
+        coordinator.synchronizeDocument(document, event: .textChanged)
+        type("n", with: coordinator, into: document)
+        #expect(document.text == "án")
+    }
 }
 #endif

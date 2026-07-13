@@ -5,14 +5,14 @@ import KeyboardLayout
 extension KeyboardInputCoordinator {
     func input(_ text: String, document: any KeyboardDocument) {
         guard state.usesVietnameseComposition else {
-            document.insertText(text)
+            insertDocumentText(text, document: document)
             return
         }
 
         for scalar in text.unicodeScalars {
             let result = composer.process(scalar)
             if result.action == .none {
-                document.insertText(String(scalar))
+                insertDocumentText(String(scalar), document: document)
             } else {
                 apply(result, document: document)
             }
@@ -24,10 +24,10 @@ extension KeyboardInputCoordinator {
         document: any KeyboardDocument
     ) {
         for _ in 0..<result.deleteCount {
-            document.deleteBackward()
+            deleteDocumentBackward(document)
         }
         if !result.text.isEmpty {
-            document.insertText(result.text)
+            insertDocumentText(result.text, document: document)
         }
     }
 
