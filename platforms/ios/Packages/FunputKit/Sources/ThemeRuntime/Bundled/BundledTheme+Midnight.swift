@@ -43,7 +43,7 @@ public extension KeyboardTheme {
         metrics: ThemeMetrics(
             keyOpacity: 0.8,
             specialKeyOpacity: 0.9,
-            cornerRadius: 12,
+            cornerRadius: 6,
             borderWidth: 0.5,
             shadowOpacity: 0.25,
             shadowRadius: 3,

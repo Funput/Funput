@@ -8,6 +8,14 @@ struct ThemeRuntimeResolveTests {
         #expect(ThemeRuntime.resolve(.funputGlass) == ResolvedTheme.funputGlass)
     }
 
+    @Test("Bundled themes share the Classic key corner radius")
+    func bundledKeyCornerRadius() {
+        let classicRadius = ThemeRuntime.resolve(.classicLight).cornerRadius
+
+        #expect(ThemeRuntime.resolve(.funputGlass).cornerRadius == classicRadius)
+        #expect(ThemeRuntime.resolve(.midnight).cornerRadius == classicRadius)
+    }
+
     @Test("Standard context preserves the authored material")
     func standardKeepsMaterial() {
         #expect(ThemeRuntime.resolve(.funputGlass).material == .glass)
