@@ -2,11 +2,18 @@
 import KeyboardLayout
 import UIKit
 
+/// Turns raw key touch phases into input events. Supports rollover: several keys
+/// can be held at once while typing fast, each committing on its own release.
 @MainActor
 final class KeyboardSurfaceInteractionController {
     typealias PreviewHandler = (_ key: KeySpec?, _ sourceFrame: CGRect?) -> Void
 
-    private let haptics = KeyboardHaptics()
+    private struct HeldKey {
+        let spec: KeySpec
+        var didSwipe = false
+    }
+
+    private let haptics: KeyboardHaptics
     private let onEvent: (KeyboardKeyEvent) -> Void
     private let onPreview: PreviewHandler
     private let repeatScheduler: BackspaceRepeatController.Scheduler
@@ -15,16 +22,20 @@ final class KeyboardSurfaceInteractionController {
     ) { [weak self] in
         self?.repeatBackspace()
     }
-    private(set) var activeKey: KeySpec?
+    private var heldKeys: [HeldKey] = []  // press order; newest drives the preview
+    private var backspaceKeyID: String?
+    private var previewKeyID: String?
     private var hapticsEnabled = true
-    private var didSwipeActiveKey = false
+    var activeKey: KeySpec? { heldKeys.last?.spec }
 
     init(
+        feedbackView: UIView = UIView(),
         onEvent: @escaping (KeyboardKeyEvent) -> Void,
         onPreview: @escaping PreviewHandler,
         repeatScheduler: @escaping BackspaceRepeatController.Scheduler =
             BackspaceRepeatController.schedule
     ) {
+        haptics = KeyboardHaptics(view: feedbackView)
         self.onEvent = onEvent
         self.onPreview = onPreview
         self.repeatScheduler = repeatScheduler
@@ -52,13 +63,13 @@ final class KeyboardSurfaceInteractionController {
     }
 
     func cancelAll() {
-        if let activeKey {
-            onEvent(KeyboardKeyEvent(key: activeKey, phase: .cancelled))
+        let released = heldKeys
+        heldKeys.removeAll()
+        clearBackspaceRepeat()
+        clearPreview()
+        for held in released {
+            onEvent(KeyboardKeyEvent(key: held.spec, phase: .cancelled))
         }
-        repeatController.cancel()
-        activeKey = nil
-        didSwipeActiveKey = false
-        onPreview(nil, nil)
     }
 
     private func begin(
@@ -66,67 +77,74 @@ final class KeyboardSurfaceInteractionController {
         sourceFrame: CGRect?,
         presentation: KeyboardPresentation
     ) {
-        if activeKey != nil {
-            cancelAll()
+        heldKeys.append(HeldKey(spec: key))
+        if hapticsEnabled, let type = KeyHapticTypeMapper.map(key.role) {
+            haptics.perform(type)
         }
-        activeKey = key
-        didSwipeActiveKey = false
-        hapticsEnabled = presentation.isHapticFeedbackEnabled
-        performHaptic(for: key.role)
+        if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
         if presentation.showsKeyPreviews {
+            previewKeyID = key.id
             onPreview(key, sourceFrame)
         }
         if key.role == .backspace {
+            backspaceKeyID = key.id
             repeatController.start()
         }
         onEvent(KeyboardKeyEvent(key: key, phase: .pressed))
     }
 
     private func finish(_ key: KeySpec) {
-        guard activeKey?.id == key.id else { return }
-        let suppressRelease = didSwipeActiveKey
-            || (key.role == .backspace && repeatController.finish())
-        activeKey = nil
-        didSwipeActiveKey = false
-        onPreview(nil, nil)
-        if !suppressRelease {
+        guard let held = release(key.id) else { return }
+        let wasRepeating = key.role == .backspace && repeatController.finish()
+        if key.role == .backspace { backspaceKeyID = nil }
+        if !(held.didSwipe || wasRepeating) {
             onEvent(KeyboardKeyEvent(key: key, phase: .released))
         }
     }
 
     private func cancel(_ key: KeySpec) {
-        guard activeKey?.id == key.id else { return }
-        repeatController.cancel()
-        activeKey = nil
-        didSwipeActiveKey = false
-        onPreview(nil, nil)
+        guard release(key.id) != nil else { return }
+        if key.role == .backspace { clearBackspaceRepeat() }
         onEvent(KeyboardKeyEvent(key: key, phase: .cancelled))
     }
 
-    private func repeatBackspace() {
-        guard let key = activeKey, key.role == .backspace else { return }
-        if hapticsEnabled {
-            haptics.perform(.deleteRepeat)
-        }
-        onEvent(KeyboardKeyEvent(key: key, phase: .repeated))
-    }
-
     private func handleSwipe(_ event: KeyboardKeyEvent) {
-        if let activeKey {
-            guard activeKey.id == event.key.id else { return }
-            repeatController.cancel()
-            didSwipeActiveKey = true
-            onPreview(nil, nil)
+        if let index = heldKeys.firstIndex(where: { $0.spec.id == event.key.id }) {
+            heldKeys[index].didSwipe = true
+            if event.key.id == backspaceKeyID { clearBackspaceRepeat() }
+            if event.key.id == previewKeyID { clearPreview() }
+        } else if !heldKeys.isEmpty {
+            return
         }
-        if hapticsEnabled {
-            haptics.perform(.control)
-        }
+        if hapticsEnabled { haptics.perform(.control) }
         onEvent(event)
     }
 
-    private func performHaptic(for role: KeyRole) {
-        guard hapticsEnabled, let type = KeyHapticTypeMapper.map(role) else { return }
-        haptics.perform(type)
+    private func repeatBackspace() {
+        guard let id = backspaceKeyID,
+              let held = heldKeys.first(where: { $0.spec.id == id }) else { return }
+        if hapticsEnabled { haptics.perform(.deleteRepeat) }
+        onEvent(KeyboardKeyEvent(key: held.spec, phase: .repeated))
+    }
+
+    @discardableResult
+    private func release(_ id: String) -> HeldKey? {
+        guard let index = heldKeys.firstIndex(where: { $0.spec.id == id }) else {
+            return nil
+        }
+        let held = heldKeys.remove(at: index)
+        if id == previewKeyID { clearPreview() }
+        return held
+    }
+
+    private func clearBackspaceRepeat() {
+        repeatController.cancel()
+        backspaceKeyID = nil
+    }
+
+    private func clearPreview() {
+        previewKeyID = nil
+        onPreview(nil, nil)
     }
 }
 #endif

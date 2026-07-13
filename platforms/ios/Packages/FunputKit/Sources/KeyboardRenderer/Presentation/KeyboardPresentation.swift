@@ -11,6 +11,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
     public var language: KeyboardLanguage
     public var enterAction: KeyboardEnterAction
     public var isHapticFeedbackEnabled: Bool
+    public var isKeySoundEnabled: Bool
     public var showsKeyPreviews: Bool
 
     public init(
@@ -21,6 +22,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
         language: KeyboardLanguage = .vietnamese,
         enterAction: KeyboardEnterAction = .newLine,
         isHapticFeedbackEnabled: Bool = true,
+        isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true
     ) {
         self.layout = layout
@@ -30,6 +32,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
         self.language = language
         self.enterAction = enterAction
         self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
+        self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
     }
 }

@@ -102,9 +102,10 @@ struct FunputTests {
     }
 }
 
-private final class SettingsTestStore: FunputConfigurationStoring {
+final class SettingsTestStore: FunputConfigurationStoring {
     var configuration: FunputConfiguration
     var acceptsSaves: Bool
+    private(set) var saveCount = 0
 
     init(configuration: FunputConfiguration, acceptsSaves: Bool = true) {
         self.configuration = configuration
@@ -114,6 +115,7 @@ private final class SettingsTestStore: FunputConfigurationStoring {
     func load() -> FunputConfiguration { configuration }
 
     func save(_ configuration: FunputConfiguration) -> Bool {
+        saveCount += 1
         guard acceptsSaves else { return false }
         self.configuration = configuration
         return true

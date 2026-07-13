@@ -44,7 +44,7 @@ public extension KeyboardTheme {
         metrics: ThemeMetrics(
             keyOpacity: 0.72,
             specialKeyOpacity: 0.82,
-            cornerRadius: 10,
+            cornerRadius: 6,
             borderWidth: 0.5,
             shadowOpacity: 0.16,
             shadowRadius: 2,

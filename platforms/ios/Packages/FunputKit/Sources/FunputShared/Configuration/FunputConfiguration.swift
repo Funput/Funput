@@ -16,6 +16,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var autoCapitalize: Bool
     public var selectedThemeID: String
     public var isHapticFeedbackEnabled: Bool
+    public var isKeySoundEnabled: Bool
     public var showsKeyPreviews: Bool
     public var heightScale: Double
     public var schemaVersion: Int
@@ -23,7 +24,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     enum CodingKeys: String, CodingKey {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
         case eagerRestore, autoCapitalize, selectedThemeID
-        case isHapticFeedbackEnabled, showsKeyPreviews, heightScale, schemaVersion
+        case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
+        case heightScale, schemaVersion
     }
 
     public init(
@@ -35,7 +37,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         eagerRestore: Bool = true,
         autoCapitalize: Bool = false,
         selectedThemeID: String = FunputConfiguration.defaultThemeID,
-        isHapticFeedbackEnabled: Bool = true,
+        isHapticFeedbackEnabled: Bool = false,
+        isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
         heightScale: Double = 1,
         schemaVersion: Int = FunputConfiguration.currentSchemaVersion
@@ -49,6 +52,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.autoCapitalize = autoCapitalize
         self.selectedThemeID = selectedThemeID
         self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
+        self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
         self.heightScale = heightScale
         self.schemaVersion = schemaVersion
@@ -59,5 +63,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 1
+    public static let currentSchemaVersion = 3
 }

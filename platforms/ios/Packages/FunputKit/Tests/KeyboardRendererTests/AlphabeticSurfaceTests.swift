@@ -88,7 +88,7 @@ struct AlphabeticSurfaceTests {
         #expect(letterEffect?.tintColor?.cgColor.alpha == 0)
         #expect(enterEffect?.tintColor?.cgColor.alpha == 0)
         #expect(containerEffect?.spacing == 0)
-        #expect(glassViews(in: letter).first?.cornerConfiguration == .corners(radius: .fixed(10)))
+        #expect(glassViews(in: letter).first?.cornerConfiguration == .corners(radius: .fixed(6)))
     }
 
     @Test("Liquid Glass uses the keyboard host material as its backdrop")

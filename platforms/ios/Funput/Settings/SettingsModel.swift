@@ -3,22 +3,22 @@ import KeyboardLayout
 import Observation
 import SwiftUI
 
-protocol FunputConfigurationStoring {
-    func load() -> FunputConfiguration
-    func save(_ configuration: FunputConfiguration) -> Bool
-}
-
-extension FunputConfigurationStore: FunputConfigurationStoring {}
-
 @MainActor @Observable
 final class SettingsModel {
     private(set) var configuration: FunputConfiguration
+    private(set) var hasFullAccess: Bool
     var showsSaveError = false
     private let store: any FunputConfigurationStoring
+    private let accessStore: any KeyboardAccessStateReading
 
-    init(store: any FunputConfigurationStoring) {
+    init(
+        store: any FunputConfigurationStoring,
+        accessStore: any KeyboardAccessStateReading = KeyboardAccessStateStore()
+    ) {
         self.store = store
+        self.accessStore = accessStore
         configuration = store.load()
+        hasFullAccess = accessStore.hasObservedFullAccess
     }
 
     var inputMethodLabel: String { configuration.inputMethod.settingsTitle }
@@ -27,6 +27,7 @@ final class SettingsModel {
 
     func reload() {
         configuration = store.load()
+        hasFullAccess = accessStore.hasObservedFullAccess
     }
 
     func update<Value>(_ keyPath: WritableKeyPath<FunputConfiguration, Value>, to value: Value) {
@@ -43,6 +44,19 @@ final class SettingsModel {
         Binding(
             get: { self.configuration[keyPath: keyPath] },
             set: { self.update(keyPath, to: $0) }
+        )
+    }
+
+    func fullAccessBinding(
+        _ keyPath: WritableKeyPath<FunputConfiguration, Bool>,
+        requestAccess: @escaping () -> Void
+    ) -> Binding<Bool> {
+        Binding(
+            get: { self.configuration[keyPath: keyPath] },
+            set: { enabled in
+                if enabled && !self.hasFullAccess { requestAccess() }
+                else { self.update(keyPath, to: enabled) }
+            }
         )
     }
 
@@ -72,9 +86,4 @@ extension KeyboardInputMethod {
 
 extension ToneStyleOption {
     var settingsTitle: String { self == .traditional ? "Truyền thống" : "Hiện đại" }
-}
-
-struct PreviewConfigurationStore: FunputConfigurationStoring {
-    func load() -> FunputConfiguration { .default }
-    func save(_ configuration: FunputConfiguration) -> Bool { true }
 }

@@ -18,6 +18,7 @@ public final class KeyboardSurfaceView: UIView {
     private let keysHost = KeyboardKeysHostView()
     let previewView = KeyboardKeyPreviewView()
     lazy var interactionController = KeyboardSurfaceInteractionController(
+        feedbackView: self,
         onEvent: { [weak self] event in self?.onKeyEvent?(event) },
         onPreview: { [weak self] key, frame in self?.updatePreview(key, sourceFrame: frame) }
     )
@@ -133,6 +134,7 @@ public final class KeyboardSurfaceView: UIView {
 
     private func applyPresentation() {
         backdropView.apply(theme: presentation.theme, traits: traitCollection)
+        previewView.apply(theme: presentation.theme, traits: traitCollection)
         keysHost.apply(presentation: presentation)
         toolbarView.apply(
             spec: presentation.layout.toolbar,

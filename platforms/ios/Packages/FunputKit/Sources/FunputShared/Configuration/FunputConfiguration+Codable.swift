@@ -15,9 +15,17 @@ extension FunputConfiguration {
         config.autoCapitalize = try container.decodeIfPresent(Bool.self, forKey: .autoCapitalize) ?? config.autoCapitalize
         config.selectedThemeID = try container.decodeIfPresent(String.self, forKey: .selectedThemeID) ?? config.selectedThemeID
         config.isHapticFeedbackEnabled = try container.decodeIfPresent(Bool.self, forKey: .isHapticFeedbackEnabled) ?? config.isHapticFeedbackEnabled
+        config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
         config.schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? config.schemaVersion
+        if config.schemaVersion < 2 {
+            config.isHapticFeedbackEnabled = false
+        }
+        if config.schemaVersion < 3 {
+            config.isKeySoundEnabled = false
+            config.schemaVersion = 3
+        }
         self = config
     }
 }

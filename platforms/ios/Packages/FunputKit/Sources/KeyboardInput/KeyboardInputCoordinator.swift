@@ -40,7 +40,6 @@ public final class KeyboardInputCoordinator {
         defer {
             if mutatesDocument {
                 finishDocumentMutation(
-                    document,
                     preserveOneShotShift: key.role != .character
                 )
             }

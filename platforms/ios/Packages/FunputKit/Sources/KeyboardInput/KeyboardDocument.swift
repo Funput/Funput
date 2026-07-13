@@ -19,9 +19,25 @@ public struct KeyboardDocumentSnapshot: Equatable, Sendable {
 
 @MainActor
 public protocol KeyboardDocument {
+    var documentIdentifier: UUID { get }
+    /// The text before the caret. On iOS this is a cross-process read, so the
+    /// hot typing path fetches only the individual fields it needs.
+    var contextBeforeInput: String? { get }
+    var hasSelection: Bool { get }
     /// A transient snapshot. Callers must not persist or log its text context.
     var snapshot: KeyboardDocumentSnapshot { get }
 
     func insertText(_ text: String)
     func deleteBackward()
+}
+
+public extension KeyboardDocument {
+    /// A convenience snapshot for callers outside the latency-sensitive input path.
+    var snapshot: KeyboardDocumentSnapshot {
+        KeyboardDocumentSnapshot(
+            documentIdentifier: documentIdentifier,
+            contextBeforeInput: contextBeforeInput,
+            hasSelection: hasSelection
+        )
+    }
 }

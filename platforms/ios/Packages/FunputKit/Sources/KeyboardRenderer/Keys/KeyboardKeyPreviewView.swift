@@ -8,6 +8,10 @@ final class KeyboardKeyPreviewView: UIView {
     private let label = UILabel()
     private var effectView: UIVisualEffectView?
     private var usesNativeGlass = false
+    private var appliedTheme: ResolvedTheme?
+    private var appliedInterfaceStyle: UIUserInterfaceStyle?
+    private var appliedReduceTransparency: Bool?
+    private var visibilityGeneration = 0
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -45,8 +49,9 @@ final class KeyboardKeyPreviewView: UIView {
         traits: UITraitCollection,
         containerBounds: CGRect
     ) {
+        visibilityGeneration += 1
         guard isEligible(key.role), !key.label.isEmpty else {
-            hide()
+            hideImmediately()
             return
         }
 
@@ -55,19 +60,32 @@ final class KeyboardKeyPreviewView: UIView {
             for: key,
             shiftState: presentation.shiftState
         )
-        let width = max(52, sourceFrame.width + 10)
-        let height: CGFloat = 62
+        let safeBounds = containerBounds.insetBy(dx: 6, dy: 4)
+        let width = min(max(52, sourceFrame.width + 10), safeBounds.width)
+        let height = min(62, safeBounds.height)
         let originX = min(
-            max(containerBounds.minX, sourceFrame.midX - width / 2),
-            containerBounds.maxX - width
+            max(safeBounds.minX, sourceFrame.midX - width / 2),
+            safeBounds.maxX - width
         )
-        let originY = max(containerBounds.minY, sourceFrame.minY - height + 8)
+        let originY = max(safeBounds.minY, sourceFrame.minY - height + 8)
         frame = CGRect(x: originX, y: originY, width: width, height: height)
         isHidden = false
         setNeedsLayout()
     }
 
     func hide() {
+        let generation = visibilityGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.09) { [weak self] in
+            guard let self, self.visibilityGeneration == generation else { return }
+            self.hideImmediately()
+        }
+    }
+
+    func apply(theme: ResolvedTheme, traits: UITraitCollection) {
+        configureEffect(theme: theme, traits: traits)
+    }
+
+    private func hideImmediately() {
         isHidden = true
         label.text = nil
     }
@@ -80,11 +98,16 @@ final class KeyboardKeyPreviewView: UIView {
         theme: ResolvedTheme,
         traits: UITraitCollection
     ) {
+        let reduceTransparency = UIAccessibility.isReduceTransparencyEnabled
+        label.textColor = theme.label.uiColor(for: traits)
+        guard appliedTheme != theme
+                || appliedInterfaceStyle != traits.userInterfaceStyle
+                || appliedReduceTransparency != reduceTransparency else { return }
         effectView?.removeFromSuperview()
         let effect: UIVisualEffect
         if #available(iOS 26.0, *),
            theme.material == .glass,
-           !UIAccessibility.isReduceTransparencyEnabled {
+           !reduceTransparency {
             let glass = UIGlassEffect(style: .regular)
             glass.isInteractive = false
             glass.tintColor = .clear
@@ -107,7 +130,9 @@ final class KeyboardKeyPreviewView: UIView {
         insertSubview(view, at: 0)
         addSubview(label)
         effectView = view
-        label.textColor = theme.label.uiColor(for: traits)
+        appliedTheme = theme
+        appliedInterfaceStyle = traits.userInterfaceStyle
+        appliedReduceTransparency = reduceTransparency
     }
 }
 #endif

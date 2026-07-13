@@ -16,6 +16,7 @@ final class KeyboardViewController: UIInputViewController {
     let keyboardView = KeyboardSurfaceView()
     let emojiView = EmojiKeyboardView()
     let emojiRecentsStore = EmojiRecentsStore()
+    let accessStateStore = KeyboardAccessStateStore()
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     let configurationStore = FunputConfigurationStore()
