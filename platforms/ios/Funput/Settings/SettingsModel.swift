@@ -3,13 +3,6 @@ import KeyboardLayout
 import Observation
 import SwiftUI
 
-protocol FunputConfigurationStoring {
-    func load() -> FunputConfiguration
-    func save(_ configuration: FunputConfiguration) -> Bool
-}
-
-extension FunputConfigurationStore: FunputConfigurationStoring {}
-
 @MainActor @Observable
 final class SettingsModel {
     private(set) var configuration: FunputConfiguration
@@ -72,9 +65,4 @@ extension KeyboardInputMethod {
 
 extension ToneStyleOption {
     var settingsTitle: String { self == .traditional ? "Truyền thống" : "Hiện đại" }
-}
-
-struct PreviewConfigurationStore: FunputConfigurationStoring {
-    func load() -> FunputConfiguration { .default }
-    func save(_ configuration: FunputConfiguration) -> Bool { true }
 }

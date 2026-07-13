@@ -1,7 +1,15 @@
 {
-  "fill" : {
-    "solid" : "extended-gray:1.00000,1.00000"
-  },
+  "fill-specializations" : [
+    {
+      "value" : {
+        "solid" : "extended-gray:1.00000,1.00000"
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : "system-dark"
+    }
+  ],
   "groups" : [
     {
       "layers" : [
@@ -18,6 +26,7 @@
           "name" : "transparent"
         }
       ],
+      "name" : "Default",
       "shadow" : {
         "kind" : "neutral",
         "opacity" : 0.5
