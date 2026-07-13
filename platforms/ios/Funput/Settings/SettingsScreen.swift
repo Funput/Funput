@@ -1,11 +1,14 @@
 import FunputShared
 import SwiftUI
+import UIKit
 
 struct SettingsScreen: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openURL) private var openURL
     @State private var model: SettingsModel
     @State private var picker: SettingsPicker?
     @State private var confirmsReset = false
+    @State private var requestsHapticAccess = false
 
     init(store: any FunputConfigurationStoring = FunputConfigurationStore()) {
         _model = State(initialValue: SettingsModel(store: store))
@@ -46,8 +49,8 @@ struct SettingsScreen: View {
             SettingsSectionCard(title: "Phản hồi", systemImage: "hand.tap") {
                 SettingsToggleRow(
                     title: "Rung khi gõ",
-                    summary: "Tạo phản hồi xúc giác nhẹ khi chạm phím.",
-                    isOn: model.boolBinding(\.isHapticFeedbackEnabled)
+                    summary: "Yêu cầu Cho phép truy cập đầy đủ khi bật.",
+                    isOn: model.hapticBinding { requestsHapticAccess = true }
                 )
                 SettingsToggleRow(
                     title: "Xem trước phím",
@@ -68,6 +71,15 @@ struct SettingsScreen: View {
             Button("Đóng", role: .cancel) {}
         } message: {
             Text("Funput đã giữ nguyên giá trị trước đó. Vui lòng thử lại.")
+        }
+        .alert("Cho phép truy cập đầy đủ", isPresented: $requestsHapticAccess) {
+            Button("Hủy", role: .cancel) {}
+            Button("Mở Cài đặt") {
+                model.update(\.isHapticFeedbackEnabled, to: true)
+                openURL(URL(string: UIApplication.openSettingsURLString)!)
+            }
+        } message: {
+            Text("Để rung hoạt động, hãy mở Funput trong Cài đặt, chọn Bàn phím và bật Cho phép truy cập đầy đủ.")
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.reload() }

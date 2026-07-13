@@ -18,6 +18,10 @@ extension FunputConfiguration {
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
         config.schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? config.schemaVersion
+        if config.schemaVersion < 2 {
+            config.isHapticFeedbackEnabled = false
+            config.schemaVersion = 2
+        }
         self = config
     }
 }

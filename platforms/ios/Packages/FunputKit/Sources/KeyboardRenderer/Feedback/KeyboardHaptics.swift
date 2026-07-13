@@ -3,11 +3,19 @@ import UIKit
 
 @MainActor
 final class KeyboardHaptics {
-    private let light = UIImpactFeedbackGenerator(style: .light)
-    private let soft = UIImpactFeedbackGenerator(style: .soft)
-    private let rigid = UIImpactFeedbackGenerator(style: .rigid)
-    private let medium = UIImpactFeedbackGenerator(style: .medium)
-    private let repeatSelection = UISelectionFeedbackGenerator()
+    private let light: UIImpactFeedbackGenerator
+    private let soft: UIImpactFeedbackGenerator
+    private let rigid: UIImpactFeedbackGenerator
+    private let medium: UIImpactFeedbackGenerator
+    private let repeatSelection: UISelectionFeedbackGenerator
+
+    init(view: UIView) {
+        light = UIImpactFeedbackGenerator(style: .light, view: view)
+        soft = UIImpactFeedbackGenerator(style: .soft, view: view)
+        rigid = UIImpactFeedbackGenerator(style: .rigid, view: view)
+        medium = UIImpactFeedbackGenerator(style: .medium, view: view)
+        repeatSelection = UISelectionFeedbackGenerator(view: view)
+    }
 
     func prepare() {
         light.prepare()
@@ -20,18 +28,24 @@ final class KeyboardHaptics {
     func perform(_ type: KeyboardHapticType) {
         switch type {
         case .keyPress:
-            light.impactOccurred(intensity: 0.55)
+            impact(light, intensity: 0.55)
         case .space:
-            soft.impactOccurred(intensity: 0.6)
+            impact(soft, intensity: 0.6)
         case .control:
-            rigid.impactOccurred(intensity: 0.55)
+            impact(rigid, intensity: 0.55)
         case .delete:
-            medium.impactOccurred(intensity: 0.65)
+            impact(medium, intensity: 0.65)
         case .deleteRepeat:
             repeatSelection.selectionChanged()
+            repeatSelection.prepare()
         case .submit:
-            medium.impactOccurred(intensity: 0.8)
+            impact(medium, intensity: 0.8)
         }
+    }
+
+    private func impact(_ generator: UIImpactFeedbackGenerator, intensity: CGFloat) {
+        generator.impactOccurred(intensity: intensity)
+        generator.prepare()
     }
 }
 #endif

@@ -18,6 +18,7 @@ public final class KeyboardSurfaceView: UIView {
     private let keysHost = KeyboardKeysHostView()
     let previewView = KeyboardKeyPreviewView()
     lazy var interactionController = KeyboardSurfaceInteractionController(
+        feedbackView: self,
         onEvent: { [weak self] event in self?.onKeyEvent?(event) },
         onPreview: { [weak self] key, frame in self?.updatePreview(key, sourceFrame: frame) }
     )

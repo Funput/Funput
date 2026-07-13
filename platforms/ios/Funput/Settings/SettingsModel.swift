@@ -39,6 +39,16 @@ final class SettingsModel {
         )
     }
 
+    func hapticBinding(requestAccess: @escaping () -> Void) -> Binding<Bool> {
+        Binding(
+            get: { self.configuration.isHapticFeedbackEnabled },
+            set: { enabled in
+                if enabled { requestAccess() }
+                else { self.update(\.isHapticFeedbackEnabled, to: false) }
+            }
+        )
+    }
+
     var heightBinding: Binding<Double> {
         Binding(
             get: { self.configuration.heightScale },

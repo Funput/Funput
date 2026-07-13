@@ -35,7 +35,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         eagerRestore: Bool = true,
         autoCapitalize: Bool = false,
         selectedThemeID: String = FunputConfiguration.defaultThemeID,
-        isHapticFeedbackEnabled: Bool = true,
+        isHapticFeedbackEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
         heightScale: Double = 1,
         schemaVersion: Int = FunputConfiguration.currentSchemaVersion
@@ -59,5 +59,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 1
+    public static let currentSchemaVersion = 2
 }

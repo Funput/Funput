@@ -13,7 +13,7 @@ final class KeyboardSurfaceInteractionController {
         var didSwipe = false
     }
 
-    private let haptics = KeyboardHaptics()
+    private let haptics: KeyboardHaptics
     private let onEvent: (KeyboardKeyEvent) -> Void
     private let onPreview: PreviewHandler
     private let repeatScheduler: BackspaceRepeatController.Scheduler
@@ -26,15 +26,16 @@ final class KeyboardSurfaceInteractionController {
     private var backspaceKeyID: String?
     private var previewKeyID: String?
     private var hapticsEnabled = true
-
     var activeKey: KeySpec? { heldKeys.last?.spec }
 
     init(
+        feedbackView: UIView = UIView(),
         onEvent: @escaping (KeyboardKeyEvent) -> Void,
         onPreview: @escaping PreviewHandler,
         repeatScheduler: @escaping BackspaceRepeatController.Scheduler =
             BackspaceRepeatController.schedule
     ) {
+        haptics = KeyboardHaptics(view: feedbackView)
         self.onEvent = onEvent
         self.onPreview = onPreview
         self.repeatScheduler = repeatScheduler
@@ -126,7 +127,6 @@ final class KeyboardSurfaceInteractionController {
         onEvent(KeyboardKeyEvent(key: held.spec, phase: .repeated))
     }
 
-    /// Drops a held key and clears its preview (repeat is cleared by the caller).
     @discardableResult
     private func release(_ id: String) -> HeldKey? {
         guard let index = heldKeys.firstIndex(where: { $0.spec.id == id }) else {
