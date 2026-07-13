@@ -47,6 +47,7 @@ extension KeyboardViewController {
         presentation.enterAction = state.enterAction
         presentation.theme = KeyboardPresentationFactory.resolvedTheme(for: configuration)
         presentation.isHapticFeedbackEnabled = configuration.isHapticFeedbackEnabled
+        presentation.isKeySoundEnabled = configuration.isKeySoundEnabled
         presentation.showsKeyPreviews = !state.editorMode.isPassword && configuration.showsKeyPreviews
         presentation.sizing.heightScale = CGFloat(configuration.heightScale)
         keyboardView.presentation = presentation

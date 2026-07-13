@@ -7,6 +7,12 @@ protocol FunputConfigurationStoring {
 
 extension FunputConfigurationStore: FunputConfigurationStoring {}
 
+protocol KeyboardAccessStateReading {
+    var hasObservedFullAccess: Bool { get }
+}
+
+extension KeyboardAccessStateStore: KeyboardAccessStateReading {}
+
 struct PreviewConfigurationStore: FunputConfigurationStoring {
     var configuration = FunputConfiguration.default
 

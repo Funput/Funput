@@ -1,9 +1,11 @@
+import FunputShared
 import KeyboardInput
 import UIKit
 
 extension KeyboardViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        if hasFullAccess { accessStateStore.recordFullAccess() }
         reloadConfiguration()
         updateTextInputTraits(force: true)
         synchronizeDocument(event: .activated)

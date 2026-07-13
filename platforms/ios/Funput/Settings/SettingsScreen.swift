@@ -9,6 +9,7 @@ struct SettingsScreen: View {
     @State private var picker: SettingsPicker?
     @State private var confirmsReset = false
     @State private var requestsHapticAccess = false
+    @State private var requestsSoundAccess = false
 
     init(store: any FunputConfigurationStoring = FunputConfigurationStore()) {
         _model = State(initialValue: SettingsModel(store: store))
@@ -50,7 +51,16 @@ struct SettingsScreen: View {
                 SettingsToggleRow(
                     title: "Rung khi gõ",
                     summary: "Yêu cầu Cho phép truy cập đầy đủ khi bật.",
-                    isOn: model.hapticBinding { requestsHapticAccess = true }
+                    isOn: model.fullAccessBinding(\.isHapticFeedbackEnabled) {
+                        requestsHapticAccess = true
+                    }
+                )
+                SettingsToggleRow(
+                    title: "Âm thanh khi gõ",
+                    summary: "Phát tiếng click bàn phím khi chạm phím.",
+                    isOn: model.fullAccessBinding(\.isKeySoundEnabled) {
+                        requestsSoundAccess = true
+                    }
                 )
                 SettingsToggleRow(
                     title: "Xem trước phím",
@@ -80,6 +90,15 @@ struct SettingsScreen: View {
             }
         } message: {
             Text("Để rung hoạt động, hãy mở Funput trong Cài đặt, chọn Bàn phím và bật Cho phép truy cập đầy đủ.")
+        }
+        .alert("Cho phép truy cập đầy đủ", isPresented: $requestsSoundAccess) {
+            Button("Hủy", role: .cancel) {}
+            Button("Mở Cài đặt") {
+                model.update(\.isKeySoundEnabled, to: true)
+                openURL(URL(string: UIApplication.openSettingsURLString)!)
+            }
+        } message: {
+            Text("Để phát âm thanh khi gõ, hãy mở Funput trong Cài đặt, chọn Bàn phím và bật Cho phép truy cập đầy đủ.")
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.reload() }

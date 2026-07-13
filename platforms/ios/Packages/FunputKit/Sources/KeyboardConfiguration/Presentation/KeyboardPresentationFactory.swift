@@ -28,6 +28,7 @@ public enum KeyboardPresentationFactory {
             theme: resolvedTheme(for: configuration),
             language: configuration.language,
             isHapticFeedbackEnabled: configuration.isHapticFeedbackEnabled,
+            isKeySoundEnabled: configuration.isKeySoundEnabled,
             showsKeyPreviews: configuration.showsKeyPreviews
         )
     }

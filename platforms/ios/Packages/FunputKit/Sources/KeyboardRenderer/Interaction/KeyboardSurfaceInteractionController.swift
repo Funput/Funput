@@ -81,6 +81,7 @@ final class KeyboardSurfaceInteractionController {
         if hapticsEnabled, let type = KeyHapticTypeMapper.map(key.role) {
             haptics.perform(type)
         }
+        if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
         if presentation.showsKeyPreviews {
             previewKeyID = key.id
             onPreview(key, sourceFrame)
@@ -94,7 +95,6 @@ final class KeyboardSurfaceInteractionController {
 
     private func finish(_ key: KeySpec) {
         guard let held = release(key.id) else { return }
-        // Read repeat state before clearing so a held backspace suppresses release.
         let wasRepeating = key.role == .backspace && repeatController.finish()
         if key.role == .backspace { backspaceKeyID = nil }
         if !(held.didSwipe || wasRepeating) {

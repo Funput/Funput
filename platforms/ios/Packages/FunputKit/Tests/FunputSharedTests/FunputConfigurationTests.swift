@@ -16,6 +16,7 @@ struct FunputConfigurationTests {
         #expect(config.autoCapitalize == false)
         #expect(config.selectedThemeID == FunputConfiguration.defaultThemeID)
         #expect(!config.isHapticFeedbackEnabled)
+        #expect(!config.isKeySoundEnabled)
     }
 
     @Test("Configuration survives a JSON round-trip")
@@ -40,11 +41,12 @@ struct FunputConfigurationTests {
         #expect(decoded.showsKeyPreviews == FunputConfiguration.default.showsKeyPreviews)
     }
 
-    @Test("Version 1 disables haptics until full access is requested")
+    @Test("Legacy feedback settings migrate to safe defaults")
     func migratesHapticDefault() throws {
         let data = Data(#"{"isHapticFeedbackEnabled":true,"schemaVersion":1}"#.utf8)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(!decoded.isHapticFeedbackEnabled)
-        #expect(decoded.schemaVersion == 2)
+        #expect(!decoded.isKeySoundEnabled)
+        #expect(decoded.schemaVersion == 3)
     }
 }

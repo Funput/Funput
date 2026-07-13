@@ -10,4 +10,7 @@ public enum FunputAppGroup {
 
     /// Defaults key for the keyboard's most recently used emoji.
     public static let emojiRecentsKey = "emoji-recents"
+
+    /// Set by the keyboard after iOS confirms that Full Access is active.
+    public static let observedFullAccessKey = "observed-full-access"
 }
