@@ -133,6 +133,7 @@ public final class KeyboardSurfaceView: UIView {
 
     private func applyPresentation() {
         backdropView.apply(theme: presentation.theme, traits: traitCollection)
+        previewView.apply(theme: presentation.theme, traits: traitCollection)
         keysHost.apply(presentation: presentation)
         toolbarView.apply(
             spec: presentation.layout.toolbar,
