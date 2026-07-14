@@ -21,7 +21,9 @@ struct AppScreen<Content: View>: View {
             .ignoresSafeArea()
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 18) {
+                // These are short forms. Keeping every glass card mounted avoids
+                // an iOS 26 LazyVStack/glass layout loop while scrolling.
+                VStack(alignment: .leading, spacing: 18) {
                     content
                 }
                 .frame(maxWidth: 720)

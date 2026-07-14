@@ -14,6 +14,7 @@ public enum ThemeRuntime {
     ) -> ResolvedTheme {
         let palette = theme.palette
         let metrics = theme.metrics
+        let geometry = theme.geometry
         return ResolvedTheme(
             material: resolvedMaterial(theme.material, context: context),
             backgroundStart: palette.backgroundStart,
@@ -32,7 +33,11 @@ public enum ThemeRuntime {
             shadowRadius: MetricClamp.shadowRadius(metrics.shadowRadius),
             pressedScale: MetricClamp.pressedScale(metrics.pressedScale),
             pressedOpacityMultiplier: MetricClamp.pressedOpacityMultiplier(metrics.pressedOpacityMultiplier),
-            fontScale: MetricClamp.fontScale(metrics.fontScale)
+            fontScale: MetricClamp.fontScale(metrics.fontScale),
+            keycapHeightScale: MetricClamp.keycapHeight(geometry.keycapHeightScale),
+            horizontalPadding: MetricClamp.horizontalPadding(geometry.horizontalPadding),
+            horizontalGap: MetricClamp.horizontalGap(geometry.horizontalGap),
+            verticalGap: MetricClamp.verticalGap(geometry.verticalGap)
         )
     }
 

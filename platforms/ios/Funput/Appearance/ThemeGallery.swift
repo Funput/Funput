@@ -1,8 +1,11 @@
 import SwiftUI
+import ThemeRuntime
 import ThemeSchema
 
 struct ThemeGallery: View {
     let model: AppearanceModel
+    let onEdit: (String) -> Void
+    let onDelete: (String) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -32,7 +35,10 @@ struct ThemeGallery: View {
                         presentation: model.presentation(for: theme.id),
                         interfaceStyle: model.previewMode.interfaceStyle,
                         isPreviewed: theme.id == model.previewThemeID,
-                        isApplied: theme.id == model.appliedThemeID
+                        isApplied: theme.id == model.appliedThemeID,
+                        isCustom: model.catalog.customTheme(id: theme.id) != nil,
+                        editAction: { onEdit(theme.id) },
+                        deleteAction: { onDelete(theme.id) }
                     ) {
                         withAnimation(.easeInOut(duration: 0.2)) { model.selectTheme(theme.id) }
                     }

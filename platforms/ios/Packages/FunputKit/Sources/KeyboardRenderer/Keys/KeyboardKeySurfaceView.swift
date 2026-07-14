@@ -55,7 +55,6 @@ final class KeyboardKeySurfaceView: UIView {
     }
 
     func setPressed(_ pressed: Bool, theme: ResolvedTheme, animated: Bool) {
-        guard !usesNativeInteraction else { return }
         let updates = {
             self.transform = pressed
                 ? CGAffineTransform(scaleX: theme.pressedScale, y: theme.pressedScale)
@@ -85,7 +84,7 @@ final class KeyboardKeySurfaceView: UIView {
            theme.material == .glass,
            !UIAccessibility.isReduceTransparencyEnabled {
             let effect = UIGlassEffect(style: .regular)
-            effect.isInteractive = true
+            effect.isInteractive = false
             // A glass container shares adaptation across its children. Keep every
             // key's material neutral so a prominent key cannot tint the group after
             // the keyboard extension is deactivated and activated again.

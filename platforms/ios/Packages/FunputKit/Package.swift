@@ -38,7 +38,7 @@ let package = Package(
         .target(name: "ThemeSchema"),
         .target(
             name: "ThemeRuntime",
-            dependencies: ["ThemeSchema"]
+            dependencies: ["ThemeSchema", "FunputShared"]
         ),
         .target(
             name: "KeyboardRenderer",

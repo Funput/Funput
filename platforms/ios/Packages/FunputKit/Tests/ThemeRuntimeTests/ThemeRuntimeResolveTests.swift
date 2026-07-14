@@ -51,12 +51,29 @@ struct ThemeRuntimeResolveTests {
         let resolved = ThemeRuntime.resolve(wild)
         #expect(resolved.keyOpacity == 1)
         #expect(resolved.specialKeyOpacity == 0)
-        #expect(resolved.cornerRadius == 28)
+        #expect(resolved.cornerRadius == 20)
         #expect(resolved.borderWidth == 4)
         #expect(resolved.shadowOpacity == 1)
         #expect(resolved.shadowRadius == 24)
         #expect(resolved.pressedScale == 0.8)
         #expect(resolved.pressedOpacityMultiplier == 1.5)
         #expect(resolved.fontScale == 1.4)
+    }
+
+    @Test("Geometry is clamped to MVP safe ranges")
+    func clampsGeometry() {
+        var wild = BundledThemes.default
+        wild.geometry = ThemeGeometry(
+            keycapHeightScale: 0,
+            horizontalPadding: 99,
+            horizontalGap: -5,
+            verticalGap: 50
+        )
+        let resolved = ThemeRuntime.resolve(wild)
+
+        #expect(resolved.keycapHeightScale == 0.82)
+        #expect(resolved.horizontalPadding == 16)
+        #expect(resolved.horizontalGap == 2)
+        #expect(resolved.verticalGap == 12)
     }
 }

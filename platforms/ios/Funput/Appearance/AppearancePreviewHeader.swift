@@ -47,3 +47,20 @@ struct AppearanceApplyButton: View {
         .accessibilityIdentifier("appearance.apply")
     }
 }
+
+struct AppearanceCustomizeButton: View {
+    let isCustom: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(
+                isCustom ? "Chỉnh sửa theme" : "Tạo bản tùy chỉnh",
+                systemImage: isCustom ? "slider.horizontal.3" : "plus.square.on.square"
+            )
+            .frame(maxWidth: .infinity, minHeight: 32)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityIdentifier("appearance.customize")
+    }
+}

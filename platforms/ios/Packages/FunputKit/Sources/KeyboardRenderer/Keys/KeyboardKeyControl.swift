@@ -22,8 +22,8 @@ final class KeyboardKeyControl: UIControl {
         super.init(frame: .zero)
         configureAccessibility()
         configureInteraction()
-        interactionControl.addSubview(contentView)
         insertSubview(surface, at: 0)
+        addSubview(interactionControl)
     }
 
     @available(*, unavailable)
@@ -33,10 +33,15 @@ final class KeyboardKeyControl: UIControl {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        surface.frame = bounds
+        let keycapHeight = bounds.height * theme.keycapHeightScale
+        surface.frame = CGRect(
+            x: 0,
+            y: (bounds.height - keycapHeight) / 2,
+            width: bounds.width,
+            height: keycapHeight
+        )
         interactionControl.frame = bounds
-
-        contentView.frame = bounds
+        contentView.frame = surface.bounds
         surface.updateShape(cornerRadius: theme.cornerRadius)
     }
 
@@ -118,7 +123,7 @@ final class KeyboardKeyControl: UIControl {
         guard appliedSurfaceTheme != theme
                 || appliedInterfaceStyle != traits.userInterfaceStyle
                 || appliedReduceTransparency != reduceTransparency else { return }
-        surface.apply(theme: theme, spec: spec, traits: traits, content: interactionControl)
+        surface.apply(theme: theme, spec: spec, traits: traits, content: contentView)
         appliedSurfaceTheme = theme
         appliedInterfaceStyle = traits.userInterfaceStyle
         appliedReduceTransparency = reduceTransparency

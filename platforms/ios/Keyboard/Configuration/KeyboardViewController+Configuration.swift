@@ -1,5 +1,6 @@
 import FunputShared
 import KeyboardInput
+import ThemeRuntime
 import UIKit
 
 extension KeyboardViewController {
@@ -10,6 +11,7 @@ extension KeyboardViewController {
     /// activation (not per keystroke) keeps the hot path free of I/O.
     func reloadConfiguration() {
         configuration = configurationStore.load()
+        themeCatalog = ThemeCatalog(customThemes: customThemeStore.load())
         inputCoordinator.apply(configuration)
         updateInputPresentation()
     }

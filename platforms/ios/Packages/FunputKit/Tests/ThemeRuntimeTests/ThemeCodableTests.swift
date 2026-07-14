@@ -22,4 +22,34 @@ struct ThemeCodableTests {
         #expect(BundledThemes.theme(id: BundledThemes.default.id) == .funputGlass)
         #expect(BundledThemes.theme(id: "does.not.exist") == nil)
     }
+
+    @Test("Schema v1 without geometry receives current defaults")
+    func migratesV1Geometry() throws {
+        let encoded = try JSONEncoder().encode(BundledThemes.default)
+        var object = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        object["schemaVersion"] = 1
+        object.removeValue(forKey: "geometry")
+        let data = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(KeyboardTheme.self, from: data)
+        #expect(decoded.schemaVersion == 1)
+        #expect(decoded.geometry == .default)
+    }
+
+    @Test("Custom theme survives a JSON round-trip")
+    func customRoundTrip() throws {
+        var custom = CustomKeyboardTheme(
+            baseTheme: .midnight,
+            uuid: UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")!
+        )
+        custom.theme.geometry = ThemeGeometry(
+            keycapHeightScale: 0.88,
+            horizontalPadding: 12,
+            horizontalGap: 4,
+            verticalGap: 9
+        )
+
+        let data = try JSONEncoder().encode(custom)
+        #expect(try JSONDecoder().decode(CustomKeyboardTheme.self, from: data) == custom)
+    }
 }

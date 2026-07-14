@@ -13,4 +13,7 @@ public enum FunputAppGroup {
 
     /// Set by the keyboard after iOS confirms that Full Access is active.
     public static let observedFullAccessKey = "observed-full-access"
+
+    /// Encoded custom keyboard themes shared with the extension.
+    public static let customThemesKey = "custom-themes"
 }

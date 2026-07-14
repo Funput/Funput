@@ -10,52 +10,64 @@ import UIKit
 final class AppearanceModel {
     private(set) var configuration: FunputConfiguration
     private(set) var appliedThemeID: String
+    private(set) var customThemes: [CustomKeyboardTheme]
     var previewThemeID: String
     var previewMode = AppearancePreviewMode.light
     var showsSaveError = false
 
     private let store: any FunputConfigurationStoring
+    let customStore: any CustomThemeStoring
     private var didSetInitialMode = false
 
-    init(store: any FunputConfigurationStoring) {
+    init(
+        store: any FunputConfigurationStoring,
+        customStore: any CustomThemeStoring = CustomThemeStore()
+    ) {
         self.store = store
-        let configuration = store.load()
-        let themeID = Self.validThemeID(configuration.selectedThemeID)
-        self.configuration = configuration
+        self.customStore = customStore
+        let loadedConfiguration = store.load()
+        let loadedThemes = customStore.load()
+        configuration = loadedConfiguration
+        customThemes = loadedThemes
+        let catalog = ThemeCatalog(customThemes: loadedThemes)
+        let themeID = catalog.theme(id: loadedConfiguration.selectedThemeID)?.id
+            ?? FunputConfiguration.defaultThemeID
         appliedThemeID = themeID
         previewThemeID = themeID
     }
 
-    var themes: [KeyboardTheme] { BundledThemes.all }
-    var previewTheme: KeyboardTheme { BundledThemes.theme(id: previewThemeID) ?? BundledThemes.default }
+    var catalog: ThemeCatalog { ThemeCatalog(customThemes: customThemes) }
+    var themes: [KeyboardTheme] { catalog.all }
+    var previewTheme: KeyboardTheme {
+        catalog.theme(id: previewThemeID) ?? BundledThemes.default
+    }
+    var previewCustomTheme: CustomKeyboardTheme? {
+        catalog.customTheme(id: previewThemeID)
+    }
     var isPreviewApplied: Bool { previewThemeID == appliedThemeID }
 
     var previewPresentation: KeyboardPresentation {
-        KeyboardPreviewPresentation.make(configuration: previewConfiguration)
+        KeyboardPreviewPresentation.make(
+            configuration: previewConfiguration,
+            catalog: catalog
+        )
     }
 
     func presentation(for themeID: String) -> KeyboardPresentation {
         var candidate = configuration
-        candidate.selectedThemeID = Self.validThemeID(themeID)
+        candidate.selectedThemeID = validThemeID(themeID)
         candidate.heightScale = 1
-        return KeyboardPreviewPresentation.make(configuration: candidate)
+        return KeyboardPreviewPresentation.make(configuration: candidate, catalog: catalog)
     }
 
-    func selectTheme(_ id: String) {
-        previewThemeID = Self.validThemeID(id)
-    }
-
-    func applyPreview() {
-        commit(themeID: previewThemeID)
-    }
-
-    func resetTheme() {
-        commit(themeID: FunputConfiguration.defaultThemeID)
-    }
+    func selectTheme(_ id: String) { previewThemeID = validThemeID(id) }
+    func applyPreview() { commit(themeID: previewThemeID) }
+    func resetTheme() { commit(themeID: FunputConfiguration.defaultThemeID) }
 
     func reload() {
         configuration = store.load()
-        appliedThemeID = Self.validThemeID(configuration.selectedThemeID)
+        customThemes = customStore.load()
+        appliedThemeID = validThemeID(configuration.selectedThemeID)
         previewThemeID = appliedThemeID
     }
 
@@ -79,20 +91,33 @@ final class AppearanceModel {
         return candidate
     }
 
-    private func commit(themeID: String) {
+    func commit(themeID: String) {
         var candidate = configuration
-        candidate.selectedThemeID = Self.validThemeID(themeID)
-        guard store.save(candidate) else {
-            showsSaveError = true
-            return
-        }
+        candidate.selectedThemeID = validThemeID(themeID)
+        guard store.save(candidate) else { showsSaveError = true; return }
         configuration = candidate
         appliedThemeID = candidate.selectedThemeID
         previewThemeID = candidate.selectedThemeID
     }
 
-    private static func validThemeID(_ id: String) -> String {
-        BundledThemes.theme(id: id)?.id ?? FunputConfiguration.defaultThemeID
+    func validThemeID(_ id: String) -> String {
+        catalog.theme(id: id)?.id ?? FunputConfiguration.defaultThemeID
+    }
+
+    func refreshCustomThemes() {
+        customThemes = customStore.load()
+    }
+
+    func replaceAppliedTheme(with themeID: String) -> Bool {
+        var candidate = configuration
+        candidate.selectedThemeID = themeID
+        guard store.save(candidate) else {
+            showsSaveError = true
+            return false
+        }
+        configuration = candidate
+        appliedThemeID = themeID
+        return true
     }
 }
 
