@@ -15,6 +15,7 @@ import ThemeSchema
 /// stays legible even while previewing the light interface style.
 struct KeyboardPreview: UIViewRepresentable {
     var presentation: KeyboardPresentation
+    var backgroundImageData: Data? = nil
     var interfaceStyle: UIUserInterfaceStyle = .unspecified
     var isInteractive = false
 
@@ -28,7 +29,11 @@ struct KeyboardPreview: UIViewRepresentable {
         if view.overrideUserInterfaceStyle != interfaceStyle {
             view.overrideUserInterfaceStyle = interfaceStyle
         }
-        view.apply(presentation: presentation, isInteractive: isInteractive)
+        view.apply(
+            presentation: presentation,
+            backgroundImageData: backgroundImageData,
+            isInteractive: isInteractive
+        )
     }
 }
 
@@ -38,6 +43,7 @@ final class KeyboardPreviewSurface: UIView {
     let surface = KeyboardSurfaceView()
     private var appliedPresentation: KeyboardPresentation?
     private var appliedInteraction: Bool?
+    private var appliedImageData: Data?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -54,7 +60,11 @@ final class KeyboardPreviewSurface: UIView {
         surface.frame = bounds
     }
 
-    func apply(presentation: KeyboardPresentation, isInteractive: Bool) {
+    func apply(
+        presentation: KeyboardPresentation,
+        backgroundImageData: Data?,
+        isInteractive: Bool
+    ) {
         let backdrop = backdropColor(for: presentation.theme)
         if backgroundColor != backdrop { backgroundColor = backdrop }
         if appliedInteraction != isInteractive {
@@ -66,6 +76,10 @@ final class KeyboardPreviewSurface: UIView {
         if appliedPresentation != presentation {
             surface.presentation = presentation
             appliedPresentation = presentation
+        }
+        if appliedImageData != backgroundImageData {
+            surface.backgroundImage = backgroundImageData.flatMap(UIImage.init(data:))
+            appliedImageData = backgroundImageData
         }
     }
 

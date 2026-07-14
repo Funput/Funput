@@ -19,6 +19,7 @@ final class KeyboardViewController: UIInputViewController {
     let emojiRecentsStore = EmojiRecentsStore()
     let accessStateStore = KeyboardAccessStateStore()
     let customThemeStore = CustomThemeStore()
+    let themeAssetStore = ThemeAssetStore()
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     var themeCatalog = ThemeCatalog()

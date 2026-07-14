@@ -15,6 +15,7 @@ public struct KeyboardTheme: Codable, Hashable, Sendable, Identifiable {
     public var colorEffects: ThemeColorEffects
     public var surfaceEffects: ThemeSurfaceEffects
     public var gradientDirection: ThemeGradientDirection
+    public var backgroundEffects: ThemeBackgroundEffects
 
     public init(
         id: String,
@@ -26,7 +27,8 @@ public struct KeyboardTheme: Codable, Hashable, Sendable, Identifiable {
         geometry: ThemeGeometry = .default,
         colorEffects: ThemeColorEffects? = nil,
         surfaceEffects: ThemeSurfaceEffects = .default,
-        gradientDirection: ThemeGradientDirection = .default
+        gradientDirection: ThemeGradientDirection = .default,
+        backgroundEffects: ThemeBackgroundEffects = .default
     ) {
         self.id = id
         self.schemaVersion = schemaVersion
@@ -38,11 +40,12 @@ public struct KeyboardTheme: Codable, Hashable, Sendable, Identifiable {
         self.colorEffects = colorEffects ?? ThemeColorEffects(pressedOverlay: palette.accent)
         self.surfaceEffects = surfaceEffects
         self.gradientDirection = gradientDirection
+        self.backgroundEffects = backgroundEffects
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, schemaVersion, metadata, material, palette, metrics, geometry, colorEffects
-        case surfaceEffects, gradientDirection
+        case surfaceEffects, gradientDirection, backgroundEffects
     }
 
     public init(from decoder: Decoder) throws {
@@ -62,6 +65,10 @@ public struct KeyboardTheme: Codable, Hashable, Sendable, Identifiable {
             ThemeGradientDirection.self,
             forKey: .gradientDirection
         ) ?? .default
+        backgroundEffects = try values.decodeIfPresent(
+            ThemeBackgroundEffects.self,
+            forKey: .backgroundEffects
+        ) ?? .default
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -76,9 +83,10 @@ public struct KeyboardTheme: Codable, Hashable, Sendable, Identifiable {
         try values.encode(colorEffects, forKey: .colorEffects)
         try values.encode(surfaceEffects, forKey: .surfaceEffects)
         try values.encode(gradientDirection, forKey: .gradientDirection)
+        try values.encode(backgroundEffects, forKey: .backgroundEffects)
     }
 
     /// The schema version emitted by this build. Bump when the on-disk shape
     /// changes and add a migration in `ThemeRuntime`.
-    public static let currentSchemaVersion = 5
+    public static let currentSchemaVersion = 6
 }

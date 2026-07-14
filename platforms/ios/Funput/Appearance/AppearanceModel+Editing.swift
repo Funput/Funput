@@ -1,7 +1,9 @@
+import Foundation
 import FunputShared
 import KeyboardRenderer
 import ThemeRuntime
 import ThemeSchema
+import UIKit
 
 extension AppearanceModel {
     func editorRequest() -> ThemeEditorRequest {
@@ -21,18 +23,27 @@ extension AppearanceModel {
                 isNew: true,
                 baseTheme: base,
                 customTheme: custom,
-                previewMode: previewMode
+                previewMode: previewMode,
+                sourceImageData: nil,
+                renderedImageData: nil
             )
         case .edit(let customID):
             let custom = catalog.customTheme(id: customID)
                 ?? CustomKeyboardTheme(baseTheme: BundledThemes.default)
             let base = catalog.baseTheme(for: custom)
+            let assetID = custom.theme.backgroundEffects.image?.assetID
+            let source = assetID.flatMap(assetStore.sourceData)
+            let rendered = assetID.flatMap(assetStore.renderedData)
             return ThemeEditorDraft(
                 initialTheme: custom,
                 isNew: false,
                 baseTheme: base,
                 customTheme: custom,
-                previewMode: previewMode
+                previewMode: previewMode,
+                sourceImageData: source,
+                renderedImageData: rendered,
+                imageDataIsValid: source.flatMap(UIImage.init(data:)) != nil
+                    && rendered.flatMap(UIImage.init(data:)) != nil
             )
         }
     }
@@ -49,12 +60,26 @@ extension AppearanceModel {
         var custom = draft.customTheme
         custom.theme.metadata.name = draft.trimmedName
         custom.theme.schemaVersion = KeyboardTheme.currentSchemaVersion
-        guard draft.canSave, customStore.upsert(custom) else {
+        guard draft.canSave else { showsSaveError = true; return false }
+        let oldAssetID = draft.initialTheme.theme.backgroundEffects.image?.assetID
+        var newAssetID: String?
+        if draft.needsAssetSave {
+            guard let source = draft.sourceImageData,
+                  let rendered = draft.renderedImageData,
+                  let savedID = assetStore.save(source: source, rendered: rendered, id: UUID())
+            else { showsSaveError = true; return false }
+            newAssetID = savedID
+            custom.theme.backgroundEffects.image?.assetID = savedID
+        }
+        guard customStore.upsert(custom) else {
+            if let newAssetID { _ = assetStore.delete(assetID: newAssetID) }
             showsSaveError = true
             return false
         }
         refreshCustomThemes()
         previewThemeID = custom.id
+        let currentID = custom.theme.backgroundEffects.image?.assetID
+        if let oldAssetID, oldAssetID != currentID { _ = assetStore.delete(assetID: oldAssetID) }
         return true
     }
 
@@ -68,6 +93,9 @@ extension AppearanceModel {
             if appliedThemeID == baseID { _ = replaceAppliedTheme(with: custom.id) }
             showsSaveError = true
             return false
+        }
+        if let assetID = custom.theme.backgroundEffects.image?.assetID {
+            _ = assetStore.delete(assetID: assetID)
         }
         refreshCustomThemes()
         previewThemeID = baseID

@@ -5,7 +5,6 @@ import SwiftUI
 import ThemeRuntime
 import ThemeSchema
 import UIKit
-
 @MainActor @Observable
 final class AppearanceModel {
     private(set) var configuration: FunputConfiguration
@@ -17,14 +16,18 @@ final class AppearanceModel {
 
     private let store: any FunputConfigurationStoring
     let customStore: any CustomThemeStoring
+    let assetStore: any ThemeAssetStoring
     private var didSetInitialMode = false
+    private var imageDataCache: [String: Data] = [:]
 
     init(
         store: any FunputConfigurationStoring,
-        customStore: any CustomThemeStoring = CustomThemeStore()
+        customStore: any CustomThemeStoring = CustomThemeStore(),
+        assetStore: any ThemeAssetStoring = PreviewThemeAssetStore()
     ) {
         self.store = store
         self.customStore = customStore
+        self.assetStore = assetStore
         let loadedConfiguration = store.load()
         let loadedThemes = customStore.load()
         configuration = loadedConfiguration
@@ -34,6 +37,7 @@ final class AppearanceModel {
             ?? FunputConfiguration.defaultThemeID
         appliedThemeID = themeID
         previewThemeID = themeID
+        cleanupAssets()
     }
 
     var catalog: ThemeCatalog { ThemeCatalog(customThemes: customThemes) }
@@ -65,6 +69,7 @@ final class AppearanceModel {
     func resetTheme() { commit(themeID: FunputConfiguration.defaultThemeID) }
 
     func reload() {
+        imageDataCache.removeAll()
         configuration = store.load()
         customThemes = customStore.load()
         appliedThemeID = validThemeID(configuration.selectedThemeID)
@@ -106,6 +111,7 @@ final class AppearanceModel {
 
     func refreshCustomThemes() {
         customThemes = customStore.load()
+        cleanupAssets()
     }
 
     func replaceAppliedTheme(with themeID: String) -> Bool {
@@ -119,8 +125,21 @@ final class AppearanceModel {
         appliedThemeID = themeID
         return true
     }
-}
 
+    func imageData(for theme: KeyboardTheme) -> Data? {
+        guard let id = theme.backgroundEffects.image?.assetID else { return nil }
+        if let cached = imageDataCache[id] { return cached }
+        let data = assetStore.renderedData(for: id)
+        guard let data, UIImage(data: data) != nil else { return nil }
+        imageDataCache[id] = data
+        return data
+    }
+
+    private func cleanupAssets() {
+        let ids = Set(customThemes.compactMap { $0.theme.backgroundEffects.image?.assetID })
+        assetStore.cleanup(referencedAssetIDs: ids)
+    }
+}
 enum AppearancePreviewMode: String, CaseIterable, Identifiable {
     case light
     case dark

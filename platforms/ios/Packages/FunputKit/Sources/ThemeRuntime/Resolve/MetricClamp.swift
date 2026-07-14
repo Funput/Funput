@@ -14,6 +14,9 @@ enum MetricClamp {
     static func horizontalPadding(_ value: Double) -> Double { clamp(value, 2, 16) }
     static func horizontalGap(_ value: Double) -> Double { clamp(value, 2, 10) }
     static func verticalGap(_ value: Double) -> Double { clamp(value, 3, 12) }
+    static func imageFocalPoint(_ value: Double) -> Double { unit(value) }
+    static func imageZoom(_ value: Double) -> Double { clamp(value, 1, 4) }
+    static func imageBlur(_ value: Double) -> Double { clamp(value, 0, 24) }
 
     private static func clamp(_ value: Double, _ lower: Double, _ upper: Double) -> Double {
         min(max(value, lower), upper)

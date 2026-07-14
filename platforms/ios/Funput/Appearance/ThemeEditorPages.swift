@@ -29,9 +29,17 @@ private struct ThemeEditorTabPage: View {
                     ThemeGeometryControls(draft: $draft)
                     ThemeResetButton(draft: $draft)
                 case .background:
+                    ThemeBackgroundModeControls(draft: $draft)
                     ThemeMaterialControls(draft: $draft)
-                    ThemeBackgroundControls(draft: $draft)
-                    ThemeBackgroundStyleControls(draft: $draft)
+                    if draft.customTheme.theme.backgroundEffects.mode == .gradient {
+                        ThemeBackgroundControls(draft: $draft)
+                        ThemeBackgroundStyleControls(draft: $draft)
+                    } else {
+                        ThemeImageControls(draft: $draft)
+                        if draft.customTheme.theme.backgroundEffects.image != nil {
+                            ThemeImageOverlayControls(draft: $draft)
+                        }
+                    }
                 case .keys:
                     ThemeKeyColorControls(draft: $draft)
                     ThemeKeyOpacityControls(draft: $draft)

@@ -14,9 +14,14 @@ struct AppearanceScreen: View {
 
     init(
         store: any FunputConfigurationStoring = FunputConfigurationStore(),
-        customStore: any CustomThemeStoring = CustomThemeStore()
+        customStore: any CustomThemeStoring = CustomThemeStore(),
+        assetStore: any ThemeAssetStoring = ThemeAssetStore()
     ) {
-        _model = State(initialValue: AppearanceModel(store: store, customStore: customStore))
+        _model = State(initialValue: AppearanceModel(
+            store: store,
+            customStore: customStore,
+            assetStore: assetStore
+        ))
     }
 
     var body: some View {
@@ -24,6 +29,7 @@ struct AppearanceScreen: View {
             AppearancePreviewHeader(mode: model.previewModeBinding)
             KeyboardPreview(
                 presentation: model.previewPresentation,
+                backgroundImageData: model.imageData(for: model.previewTheme),
                 interfaceStyle: model.previewMode.interfaceStyle,
                 isInteractive: true
             )
@@ -86,14 +92,22 @@ struct AppearanceScreen: View {
 
 #Preview("Giao diện · Light") {
     NavigationStack {
-        AppearanceScreen(store: PreviewConfigurationStore(), customStore: PreviewCustomThemeStore())
+        AppearanceScreen(
+            store: PreviewConfigurationStore(),
+            customStore: PreviewCustomThemeStore(),
+            assetStore: PreviewThemeAssetStore()
+        )
     }
         .preferredColorScheme(.light)
 }
 
 #Preview("Giao diện · Dark") {
     NavigationStack {
-        AppearanceScreen(store: PreviewConfigurationStore(), customStore: PreviewCustomThemeStore())
+        AppearanceScreen(
+            store: PreviewConfigurationStore(),
+            customStore: PreviewCustomThemeStore(),
+            assetStore: PreviewThemeAssetStore()
+        )
     }
         .preferredColorScheme(.dark)
 }

@@ -1,6 +1,8 @@
 import FunputShared
 import KeyboardInput
+import KeyboardRenderer
 import ThemeRuntime
+import ThemeSchema
 import UIKit
 
 extension KeyboardViewController {
@@ -12,6 +14,12 @@ extension KeyboardViewController {
     func reloadConfiguration() {
         configuration = configurationStore.load()
         themeCatalog = ThemeCatalog(customThemes: customThemeStore.load())
+        let theme = themeCatalog.theme(id: configuration.selectedThemeID)
+        let assetID = theme?.backgroundEffects.image?.assetID
+        let data = assetID.flatMap(themeAssetStore.renderedData)
+        let image = data.flatMap(UIImage.init(data:))
+        keyboardView.backgroundImage = image
+        emojiView.backgroundImage = image
         inputCoordinator.apply(configuration)
         updateInputPresentation()
     }

@@ -40,7 +40,8 @@ public enum ThemeRuntime {
             verticalGap: MetricClamp.verticalGap(geometry.verticalGap),
             colorEffects: theme.colorEffects,
             surfaceEffects: theme.surfaceEffects,
-            gradientDirection: theme.gradientDirection
+            gradientDirection: theme.gradientDirection,
+            backgroundEffects: resolvedBackground(theme.backgroundEffects)
         )
     }
 
@@ -59,5 +60,33 @@ public enum ThemeRuntime {
         context: ThemeResolveContext
     ) -> Double {
         context.reduceTransparency ? 1 : MetricClamp.unit(opacity)
+    }
+
+    private static func resolvedBackground(
+        _ effects: ThemeBackgroundEffects
+    ) -> ThemeBackgroundEffects {
+        guard var image = effects.image else { return effects }
+        image.focalX = MetricClamp.imageFocalPoint(image.focalX)
+        image.focalY = MetricClamp.imageFocalPoint(image.focalY)
+        image.zoom = MetricClamp.imageZoom(image.zoom)
+        image.blurRadius = MetricClamp.imageBlur(image.blurRadius)
+        return ThemeBackgroundEffects(
+            mode: effects.mode,
+            image: image,
+            overlay: clamped(effects.overlay)
+        )
+    }
+
+    private static func clamped(_ color: AdaptiveThemeColor) -> AdaptiveThemeColor {
+        AdaptiveThemeColor(light: clamped(color.light), dark: clamped(color.dark))
+    }
+
+    private static func clamped(_ color: ThemeRGBA) -> ThemeRGBA {
+        ThemeRGBA(
+            red: MetricClamp.unit(color.red),
+            green: MetricClamp.unit(color.green),
+            blue: MetricClamp.unit(color.blue),
+            alpha: MetricClamp.unit(color.alpha)
+        )
     }
 }

@@ -57,6 +57,15 @@ final class FunputUITests: XCTestCase {
         for _ in 0..<2 where !backgroundOpacity.isHittable { backgroundScroll.swipeUp() }
         XCTAssertTrue(backgroundOpacity.isHittable)
         backgroundOpacity.adjust(toNormalizedSliderPosition: 0.5)
+        let backgroundMode = app.segmentedControls["themeEditor.backgroundMode"]
+        for _ in 0..<6 where !backgroundMode.isHittable { backgroundScroll.swipeDown() }
+        backgroundMode.buttons["Ảnh"].tap()
+        let imagePicker = app.buttons["themeEditor.imagePicker"]
+        for _ in 0..<4 where !imagePicker.isHittable { backgroundScroll.swipeUp() }
+        XCTAssertTrue(imagePicker.isHittable)
+        XCTAssertFalse(app.buttons["themeEditor.save"].isEnabled)
+        for _ in 0..<4 where !backgroundMode.isHittable { backgroundScroll.swipeDown() }
+        backgroundMode.buttons["Gradient"].tap()
         tabs.buttons["Phím & chữ"].tap()
         XCTAssertTrue(shadowToggle.isHittable)
         XCTAssertEqual(preview.frame.minY, previewFrame.minY, accuracy: 1)

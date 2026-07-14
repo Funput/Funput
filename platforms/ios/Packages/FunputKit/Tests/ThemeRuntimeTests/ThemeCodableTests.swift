@@ -53,6 +53,20 @@ struct ThemeCodableTests {
         custom.theme.surfaceEffects.glassBorderOverrideEnabled = true
         custom.theme.surfaceEffects.glassShadowOverrideEnabled = true
         custom.theme.gradientDirection = .horizontal
+        custom.theme.backgroundEffects = ThemeBackgroundEffects(
+            mode: .image,
+            image: ThemeBackgroundImage(
+                assetID: "wallpaper",
+                focalX: 0.2,
+                focalY: 0.8,
+                zoom: 2.5,
+                blurRadius: 12
+            ),
+            overlay: AdaptiveThemeColor(
+                light: ThemeRGBA(hex: 0xFFFFFF, alpha: 0.15),
+                dark: ThemeRGBA(hex: 0x000000, alpha: 0.25)
+            )
+        )
 
         let data = try JSONEncoder().encode(custom)
         #expect(try JSONDecoder().decode(CustomKeyboardTheme.self, from: data) == custom)
@@ -96,5 +110,17 @@ struct ThemeCodableTests {
 
         let decoded = try JSONDecoder().decode(KeyboardTheme.self, from: data)
         #expect(decoded.gradientDirection == .diagonalRight)
+    }
+
+    @Test("Schema v5 receives the gradient background default")
+    func migratesV5Background() throws {
+        let encoded = try JSONEncoder().encode(BundledThemes.default)
+        var object = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        object["schemaVersion"] = 5
+        object.removeValue(forKey: "backgroundEffects")
+        let data = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(KeyboardTheme.self, from: data)
+        #expect(decoded.backgroundEffects == .default)
     }
 }

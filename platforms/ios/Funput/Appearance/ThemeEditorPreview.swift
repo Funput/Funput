@@ -23,6 +23,7 @@ struct ThemeEditorPreview: View {
             }
             KeyboardPreview(
                 presentation: presentation,
+                backgroundImageData: draft.renderedImageData,
                 interfaceStyle: draft.previewMode.interfaceStyle,
                 isInteractive: true
             )

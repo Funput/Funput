@@ -24,6 +24,28 @@ struct ThemeRendererColorTests {
         #expect(gradient.colors?.count == 2)
     }
 
+    @Test("Image background replaces gradient and applies adaptive overlay")
+    func imageBackground() throws {
+        var theme = ResolvedTheme.funputGlass
+        theme.backgroundEffects = ThemeBackgroundEffects(
+            mode: .image,
+            image: ThemeBackgroundImage(assetID: "fixture", focalX: 0.2, zoom: 2),
+            overlay: AdaptiveThemeColor(
+                light: ThemeRGBA(hex: 0xFFFFFF, alpha: 0.35),
+                dark: ThemeRGBA(hex: 0x000000, alpha: 0.6)
+            )
+        )
+        let backdrop = KeyboardBackdropView()
+        backdrop.frame = CGRect(x: 0, y: 0, width: 390, height: 300)
+        backdrop.apply(theme: theme, traits: traits, image: UIImage(systemName: "photo"))
+        backdrop.layoutIfNeeded()
+
+        let image = try #require(backdrop.subviews.compactMap { $0 as? UIImageView }.first)
+        #expect(!image.isHidden)
+        #expect(backdrop.contentView.isHidden)
+        #expect(backdrop.subviews.last?.backgroundColor?.cgColor.alpha == 0.35)
+    }
+
     @Test("Glass key tint uses a bounded independent color layer")
     func glassKeyTint() throws {
         let tint = KeyboardKeyTintView()

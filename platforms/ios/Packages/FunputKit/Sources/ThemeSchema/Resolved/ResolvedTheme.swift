@@ -29,6 +29,7 @@ public struct ResolvedTheme: Hashable, Sendable {
     public var colorEffects: ThemeColorEffects
     public var surfaceEffects: ThemeSurfaceEffects
     public var gradientDirection: ThemeGradientDirection
+    public var backgroundEffects: ThemeBackgroundEffects
 
     public init(
         material: KeyboardMaterial,
@@ -55,7 +56,8 @@ public struct ResolvedTheme: Hashable, Sendable {
         verticalGap: Double = 7,
         colorEffects: ThemeColorEffects? = nil,
         surfaceEffects: ThemeSurfaceEffects = .default,
-        gradientDirection: ThemeGradientDirection = .default
+        gradientDirection: ThemeGradientDirection = .default,
+        backgroundEffects: ThemeBackgroundEffects = .default
     ) {
         self.material = material
         self.backgroundStart = backgroundStart
@@ -82,5 +84,6 @@ public struct ResolvedTheme: Hashable, Sendable {
         self.colorEffects = colorEffects ?? ThemeColorEffects(pressedOverlay: accent)
         self.surfaceEffects = surfaceEffects
         self.gradientDirection = gradientDirection
+        self.backgroundEffects = backgroundEffects
     }
 }

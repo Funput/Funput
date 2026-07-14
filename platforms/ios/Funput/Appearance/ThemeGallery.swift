@@ -33,6 +33,7 @@ struct ThemeGallery: View {
                     ThemeCard(
                         theme: theme,
                         presentation: model.presentation(for: theme.id),
+                        backgroundImageData: model.imageData(for: theme),
                         interfaceStyle: model.previewMode.interfaceStyle,
                         isPreviewed: theme.id == model.previewThemeID,
                         isApplied: theme.id == model.appliedThemeID,

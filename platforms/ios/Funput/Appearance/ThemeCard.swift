@@ -5,6 +5,7 @@ import ThemeSchema
 struct ThemeCard: View {
     let theme: KeyboardTheme
     let presentation: KeyboardPresentation
+    let backgroundImageData: Data?
     let interfaceStyle: UIUserInterfaceStyle
     let isPreviewed: Bool
     let isApplied: Bool
@@ -21,7 +22,11 @@ struct ThemeCard: View {
         ZStack {
             InteractiveGlassCard(isSelected: isPreviewed) {
                 VStack(alignment: .leading, spacing: 10) {
-                    KeyboardPreview(presentation: presentation, interfaceStyle: interfaceStyle)
+                    KeyboardPreview(
+                        presentation: presentation,
+                        backgroundImageData: backgroundImageData,
+                        interfaceStyle: interfaceStyle
+                    )
                         .id(interfaceStyle)
                         .frame(height: 204)
                         .clipShape(.rect(cornerRadius: 16))

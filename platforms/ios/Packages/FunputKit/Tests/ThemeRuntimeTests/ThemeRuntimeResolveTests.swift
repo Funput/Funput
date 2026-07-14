@@ -105,4 +105,33 @@ struct ThemeRuntimeResolveTests {
 
         #expect(ThemeRuntime.resolve(theme).gradientDirection == .vertical)
     }
+
+    @Test("Background image geometry and overlay components are clamped")
+    func clampsImageBackground() {
+        var theme = BundledThemes.default
+        theme.backgroundEffects = ThemeBackgroundEffects(
+            mode: .image,
+            image: ThemeBackgroundImage(
+                assetID: "asset",
+                focalX: -2,
+                focalY: 9,
+                zoom: 8,
+                blurRadius: 90
+            ),
+            overlay: AdaptiveThemeColor(
+                light: ThemeRGBA(red: -1, green: 2, blue: 0.5, alpha: 3),
+                dark: ThemeRGBA(red: 0, green: 0, blue: 0, alpha: -1)
+            )
+        )
+
+        let background = ThemeRuntime.resolve(theme).backgroundEffects
+        #expect(background.image?.focalX == 0)
+        #expect(background.image?.focalY == 1)
+        #expect(background.image?.zoom == 4)
+        #expect(background.image?.blurRadius == 24)
+        #expect(background.overlay.light.red == 0)
+        #expect(background.overlay.light.green == 1)
+        #expect(background.overlay.light.alpha == 1)
+        #expect(background.overlay.dark.alpha == 0)
+    }
 }

@@ -13,16 +13,24 @@ enum ThemeEditorRequest: Identifiable {
     }
 }
 
-struct ThemeEditorDraft: Equatable {
+struct ThemeEditorDraft {
     let initialTheme: CustomKeyboardTheme
     let isNew: Bool
     let baseTheme: KeyboardTheme
     var customTheme: CustomKeyboardTheme
     var previewMode: AppearancePreviewMode
+    var sourceImageData: Data?
+    var renderedImageData: Data?
+    var needsAssetSave = false
+    var imageDataIsValid = false
 
-    var isDirty: Bool { customTheme != initialTheme }
+    var isDirty: Bool { customTheme != initialTheme || needsAssetSave }
     var trimmedName: String { customTheme.theme.metadata.name.trimmingCharacters(in: .whitespacesAndNewlines) }
-    var canSave: Bool { (1...40).contains(trimmedName.count) }
+    var canSave: Bool {
+        let validName = (1...40).contains(trimmedName.count)
+        let background = customTheme.theme.backgroundEffects
+        return validName && (background.mode != .image || (background.image != nil && imageDataIsValid))
+    }
 
     mutating func resetToBase() {
         customTheme.theme.geometry = baseTheme.geometry
@@ -30,6 +38,11 @@ struct ThemeEditorDraft: Equatable {
         customTheme.theme.colorEffects = baseTheme.colorEffects
         customTheme.theme.surfaceEffects = baseTheme.surfaceEffects
         customTheme.theme.gradientDirection = baseTheme.gradientDirection
+        customTheme.theme.backgroundEffects = baseTheme.backgroundEffects
+        sourceImageData = nil
+        renderedImageData = nil
+        needsAssetSave = false
+        imageDataIsValid = false
         customTheme.theme.material = baseTheme.material
         customTheme.theme.metrics.keyOpacity = baseTheme.metrics.keyOpacity
         customTheme.theme.metrics.specialKeyOpacity = baseTheme.metrics.specialKeyOpacity
