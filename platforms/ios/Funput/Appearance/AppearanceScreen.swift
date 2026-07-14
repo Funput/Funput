@@ -41,12 +41,12 @@ struct AppearanceScreen: View {
             .shadow(color: .black.opacity(0.14), radius: 16, y: 8)
             .accessibilityLabel("Bản xem trước bàn phím \(model.previewTheme.metadata.name)")
 
-            AppearanceApplyButton(isApplied: model.isPreviewApplied) {
-                model.applyPreview()
-            }
-            AppearanceCustomizeButton(isCustom: model.previewCustomTheme != nil) {
-                editorRequest = model.editorRequest()
-            }
+            AppearanceThemeActionBar(
+                isApplied: model.isPreviewApplied,
+                isCustom: model.previewCustomTheme != nil,
+                apply: model.applyPreview,
+                customize: { editorRequest = model.editorRequest() }
+            )
 
             ThemeGallery(
                 model: model,

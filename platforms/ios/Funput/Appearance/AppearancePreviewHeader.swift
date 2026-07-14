@@ -26,41 +26,62 @@ struct AppearancePreviewHeader: View {
     }
 }
 
-struct AppearanceApplyButton: View {
+struct AppearanceThemeActionBar: View {
     let isApplied: Bool
-    let action: () -> Void
+    let isCustom: Bool
+    let apply: () -> Void
+    let customize: () -> Void
 
     var body: some View {
+        if #available(iOS 26, *) {
+            GlassEffectContainer(spacing: 12) {
+                actions
+            }
+        } else {
+            actions
+        }
+    }
+
+    private var actions: some View {
+        HStack(spacing: 10) {
+            if isApplied {
+                Label("Đang dùng", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("appearance.appliedStatus")
+            }
+            Spacer(minLength: 8)
+            customizeButton
+            if !isApplied {
+                applyButton
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder private var customizeButton: some View {
+        let button = Button(action: customize) {
+            Label(isCustom ? "Chỉnh sửa" : "Tùy chỉnh", systemImage: isCustom ? "pencil" : "slider.horizontal.3")
+        }
+        .accessibilityIdentifier("appearance.customize")
+
+        if #available(iOS 26, *) {
+            button.buttonStyle(.glass)
+        } else {
+            button.buttonStyle(.bordered)
+        }
+    }
+
+    @ViewBuilder private var applyButton: some View {
+        let button = Button(action: apply) {
+            Label("Áp dụng", systemImage: "paintbrush.fill")
+        }
+        .accessibilityIdentifier("appearance.apply")
+
         if #available(iOS 26, *) {
             button.buttonStyle(.glassProminent)
         } else {
             button.buttonStyle(.borderedProminent)
         }
-    }
-
-    private var button: some View {
-        Button(action: action) {
-            Label(isApplied ? "Đang sử dụng" : "Áp dụng theme", systemImage: isApplied ? "checkmark" : "paintbrush.fill")
-                .frame(maxWidth: .infinity, minHeight: 32)
-        }
-        .disabled(isApplied)
-        .accessibilityIdentifier("appearance.apply")
-    }
-}
-
-struct AppearanceCustomizeButton: View {
-    let isCustom: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Label(
-                isCustom ? "Chỉnh sửa theme" : "Tạo bản tùy chỉnh",
-                systemImage: isCustom ? "slider.horizontal.3" : "plus.square.on.square"
-            )
-            .frame(maxWidth: .infinity, minHeight: 32)
-        }
-        .buttonStyle(.bordered)
-        .accessibilityIdentifier("appearance.customize")
     }
 }
