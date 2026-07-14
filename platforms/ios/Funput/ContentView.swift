@@ -8,8 +8,19 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var showsLaunchExperience = true
+
     var body: some View {
-        AppShellView()
+        ZStack {
+            AppShellView()
+            if showsLaunchExperience {
+                FunputLaunchExperience {
+                    showsLaunchExperience = false
+                }
+                .transition(.opacity)
+                .zIndex(1)
+            }
+        }
     }
 }
 

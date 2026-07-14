@@ -28,13 +28,13 @@ struct FunputTests {
         #expect(presentation.theme == .funputGlass)
     }
 
-    @Test("Version metadata includes version and build")
+    @Test("Version metadata presents the public version only")
     func versionMetadata() {
         let label = AppMetadata.versionLabel(from: [
             "CFBundleShortVersionString": "1.2.3",
             "CFBundleVersion": "45",
         ])
-        #expect(label == "Phiên bản 1.2.3 (45)")
+        #expect(label == "Phiên bản 1.2.3")
         #expect(AppMetadata.versionLabel(from: [:]) == "Phiên bản đang phát triển")
     }
 

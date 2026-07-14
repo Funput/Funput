@@ -14,6 +14,7 @@ public final class EmojiKeyboardView: UIView {
     var sections: [(category: EmojiCategory, items: [EmojiItem])] = []
     var selectedCategory = EmojiCategory.smileysPeople
     var theme = ResolvedTheme.funputGlass
+    public var backgroundImage: UIImage? { didSet { applyTheme() } }
     private let catalog: EmojiCatalog
 
     public init(catalog: EmojiCatalog = .bundled) {
@@ -103,7 +104,7 @@ public final class EmojiKeyboardView: UIView {
 
     private func applyTheme() {
         let label = theme.label.uiColor(for: traitCollection)
-        backdropView.apply(theme: theme, traits: traitCollection)
+        backdropView.apply(theme: theme, traits: traitCollection, image: backgroundImage)
         bottomBar.apply(color: label, selected: selectedCategory)
         collectionView.reloadData()
     }

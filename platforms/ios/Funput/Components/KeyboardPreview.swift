@@ -3,6 +3,7 @@ import KeyboardConfiguration
 import KeyboardLayout
 import KeyboardRenderer
 import SwiftUI
+import ThemeRuntime
 import ThemeSchema
 
 /// Hosts the production ``KeyboardSurfaceView`` for in-app previews.
@@ -14,6 +15,7 @@ import ThemeSchema
 /// stays legible even while previewing the light interface style.
 struct KeyboardPreview: UIViewRepresentable {
     var presentation: KeyboardPresentation
+    var backgroundImageData: Data? = nil
     var interfaceStyle: UIUserInterfaceStyle = .unspecified
     var isInteractive = false
 
@@ -24,8 +26,14 @@ struct KeyboardPreview: UIViewRepresentable {
     }
 
     func updateUIView(_ view: KeyboardPreviewSurface, context: Context) {
-        view.overrideUserInterfaceStyle = interfaceStyle
-        view.apply(presentation: presentation, isInteractive: isInteractive)
+        if view.overrideUserInterfaceStyle != interfaceStyle {
+            view.overrideUserInterfaceStyle = interfaceStyle
+        }
+        view.apply(
+            presentation: presentation,
+            backgroundImageData: backgroundImageData,
+            isInteractive: isInteractive
+        )
     }
 }
 
@@ -33,6 +41,9 @@ struct KeyboardPreview: UIViewRepresentable {
 /// for the keyboard host so clear glass keys have an in-context backdrop.
 final class KeyboardPreviewSurface: UIView {
     let surface = KeyboardSurfaceView()
+    private var appliedPresentation: KeyboardPresentation?
+    private var appliedInteraction: Bool?
+    private var appliedImageData: Data?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -49,12 +60,27 @@ final class KeyboardPreviewSurface: UIView {
         surface.frame = bounds
     }
 
-    func apply(presentation: KeyboardPresentation, isInteractive: Bool) {
-        backgroundColor = backdropColor(for: presentation.theme)
-        surface.isUserInteractionEnabled = isInteractive
-        surface.accessibilityElementsHidden = !isInteractive
-        surface.accessibilityElements = isInteractive ? nil : []
-        surface.presentation = presentation
+    func apply(
+        presentation: KeyboardPresentation,
+        backgroundImageData: Data?,
+        isInteractive: Bool
+    ) {
+        let backdrop = backdropColor(for: presentation.theme)
+        if backgroundColor != backdrop { backgroundColor = backdrop }
+        if appliedInteraction != isInteractive {
+            surface.isUserInteractionEnabled = isInteractive
+            surface.accessibilityElementsHidden = !isInteractive
+            surface.accessibilityElements = isInteractive ? nil : []
+            appliedInteraction = isInteractive
+        }
+        if appliedPresentation != presentation {
+            surface.presentation = presentation
+            appliedPresentation = presentation
+        }
+        if appliedImageData != backgroundImageData {
+            surface.backgroundImage = backgroundImageData.flatMap(UIImage.init(data:))
+            appliedImageData = backgroundImageData
+        }
     }
 
     /// The theme's resolved background for the current style, forced opaque so the
@@ -71,13 +97,18 @@ final class KeyboardPreviewSurface: UIView {
 enum KeyboardPreviewPresentation {
     static func make(
         configuration: FunputConfiguration,
-        showsSystemInputModeKey: Bool = true
+        showsSystemInputModeKey: Bool = true,
+        catalog: ThemeCatalog = ThemeCatalog()
     ) -> KeyboardPresentation {
         let layout = KeyboardLayoutResolver.resolve(
             inputMethod: configuration.inputMethod,
             mode: .letters,
             showsSystemInputModeKey: showsSystemInputModeKey
         )
-        return KeyboardPresentationFactory.make(from: configuration, layout: layout)
+        return KeyboardPresentationFactory.make(
+            from: configuration,
+            layout: layout,
+            catalog: catalog
+        )
     }
 }

@@ -22,6 +22,14 @@ public struct ResolvedTheme: Hashable, Sendable {
     public var pressedScale: Double
     public var pressedOpacityMultiplier: Double
     public var fontScale: Double
+    public var keycapHeightScale: Double
+    public var horizontalPadding: Double
+    public var horizontalGap: Double
+    public var verticalGap: Double
+    public var colorEffects: ThemeColorEffects
+    public var surfaceEffects: ThemeSurfaceEffects
+    public var gradientDirection: ThemeGradientDirection
+    public var backgroundEffects: ThemeBackgroundEffects
 
     public init(
         material: KeyboardMaterial,
@@ -41,7 +49,15 @@ public struct ResolvedTheme: Hashable, Sendable {
         shadowRadius: Double,
         pressedScale: Double,
         pressedOpacityMultiplier: Double,
-        fontScale: Double
+        fontScale: Double,
+        keycapHeightScale: Double = 1,
+        horizontalPadding: Double = 6,
+        horizontalGap: Double = 5,
+        verticalGap: Double = 7,
+        colorEffects: ThemeColorEffects? = nil,
+        surfaceEffects: ThemeSurfaceEffects = .default,
+        gradientDirection: ThemeGradientDirection = .default,
+        backgroundEffects: ThemeBackgroundEffects = .default
     ) {
         self.material = material
         self.backgroundStart = backgroundStart
@@ -61,5 +77,13 @@ public struct ResolvedTheme: Hashable, Sendable {
         self.pressedScale = pressedScale
         self.pressedOpacityMultiplier = pressedOpacityMultiplier
         self.fontScale = fontScale
+        self.keycapHeightScale = keycapHeightScale
+        self.horizontalPadding = horizontalPadding
+        self.horizontalGap = horizontalGap
+        self.verticalGap = verticalGap
+        self.colorEffects = colorEffects ?? ThemeColorEffects(pressedOverlay: accent)
+        self.surfaceEffects = surfaceEffects
+        self.gradientDirection = gradientDirection
+        self.backgroundEffects = backgroundEffects
     }
 }

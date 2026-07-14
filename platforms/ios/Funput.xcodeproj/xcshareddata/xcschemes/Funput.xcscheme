@@ -58,6 +58,16 @@
                ReferencedContainer = "container:Funput.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5FB3C7CD3001F78400CE4906"
+               BuildableName = "FunputUITests.xctest"
+               BlueprintName = "FunputUITests"
+               ReferencedContainer = "container:Funput.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

@@ -17,7 +17,6 @@ struct SettingsScreen: View {
 
     var body: some View {
         AppScreen {
-            SettingsHero()
             KeyboardSetupCard()
             SettingsSectionCard(title: "Bàn phím", systemImage: "keyboard") {
                 SettingsSelectionRow(option: .inputMethod, value: model.inputMethodLabel) { picker = .inputMethod }

@@ -18,14 +18,19 @@ public enum KeyboardPresentationFactory {
     /// such as the in-app theme preview.
     public static func make(
         from configuration: FunputConfiguration,
-        layout: KeyboardLayout = .funputQWERTY
+        layout: KeyboardLayout = .funputQWERTY,
+        catalog: ThemeCatalog = ThemeCatalog()
     ) -> KeyboardPresentation {
         var sizing = KeyboardSizingProfile.default
         sizing.heightScale = CGFloat(configuration.heightScale)
+        let theme = resolvedTheme(for: configuration, catalog: catalog)
+        sizing.horizontalPadding = CGFloat(theme.horizontalPadding)
+        sizing.horizontalGap = CGFloat(theme.horizontalGap)
+        sizing.verticalGap = CGFloat(theme.verticalGap)
         return KeyboardPresentation(
             layout: layout,
             sizing: sizing,
-            theme: resolvedTheme(for: configuration),
+            theme: theme,
             language: configuration.language,
             isHapticFeedbackEnabled: configuration.isHapticFeedbackEnabled,
             isKeySoundEnabled: configuration.isKeySoundEnabled,
@@ -35,8 +40,11 @@ public enum KeyboardPresentationFactory {
 
     /// Resolves the configuration's selected bundled theme, honoring Reduce
     /// Transparency. Falls back to the bundled default for an unknown id.
-    public static func resolvedTheme(for configuration: FunputConfiguration) -> ResolvedTheme {
-        let authored = BundledThemes.theme(id: configuration.selectedThemeID) ?? BundledThemes.default
+    public static func resolvedTheme(
+        for configuration: FunputConfiguration,
+        catalog: ThemeCatalog = ThemeCatalog()
+    ) -> ResolvedTheme {
+        let authored = catalog.theme(id: configuration.selectedThemeID) ?? BundledThemes.default
         let context = ThemeResolveContext(
             reduceTransparency: UIAccessibility.isReduceTransparencyEnabled
         )

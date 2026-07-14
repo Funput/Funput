@@ -9,6 +9,7 @@ import FunputShared
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
+import ThemeRuntime
 import UIKit
 
 final class KeyboardViewController: UIInputViewController {
@@ -17,8 +18,11 @@ final class KeyboardViewController: UIInputViewController {
     let emojiView = EmojiKeyboardView()
     let emojiRecentsStore = EmojiRecentsStore()
     let accessStateStore = KeyboardAccessStateStore()
+    let customThemeStore = CustomThemeStore()
+    let themeAssetStore = ThemeAssetStore()
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
+    var themeCatalog = ThemeCatalog()
     let configurationStore = FunputConfigurationStore()
     var resolvedTextInputTraits = ResolvedTextInputTraits(
         editorMode: .text,

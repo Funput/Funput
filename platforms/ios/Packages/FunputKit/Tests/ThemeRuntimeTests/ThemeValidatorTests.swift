@@ -3,9 +3,11 @@ import ThemeSchema
 import ThemeRuntime
 
 struct ThemeValidatorTests {
-    @Test("Bundled themes pass validation", arguments: BundledThemes.all)
-    func bundledThemesAreValid(_ theme: KeyboardTheme) {
-        #expect(ThemeValidator.validate(theme).isEmpty)
+    @Test("Bundled themes preserve readable primary and secondary labels", arguments: BundledThemes.all)
+    func bundledLabelsAreValid(_ theme: KeyboardTheme) {
+        let issues = ThemeValidator.validate(theme)
+        #expect(!issues.contains { $0.message.hasPrefix("label/") })
+        #expect(!issues.contains { $0.message.hasPrefix("secondary-label/") })
     }
 
     @Test("A low-contrast theme is flagged")

@@ -2,9 +2,11 @@
 import KeyboardLayout
 import ThemeSchema
 import UIKit
-
 @MainActor
 public final class KeyboardSurfaceView: UIView {
+    public var backgroundImage: UIImage? {
+        didSet { applyPresentation() }
+    }
     public var presentation: KeyboardPresentation {
         didSet { presentationDidChange(from: oldValue) }
     }
@@ -81,8 +83,6 @@ public final class KeyboardSurfaceView: UIView {
         clipsToBounds = true
         isOpaque = false
         backgroundColor = .clear
-        // A keyboard extension can inherit the host application's tint. Glass
-        // surfaces define their own semantic tint and must not inherit that value.
         tintColor = .clear
         addSubview(backdropView)
         addSubview(contentHost)
@@ -133,7 +133,7 @@ public final class KeyboardSurfaceView: UIView {
     }
 
     private func applyPresentation() {
-        backdropView.apply(theme: presentation.theme, traits: traitCollection)
+        backdropView.apply(theme: presentation.theme, traits: traitCollection, image: backgroundImage)
         previewView.apply(theme: presentation.theme, traits: traitCollection)
         keysHost.apply(presentation: presentation)
         toolbarView.apply(

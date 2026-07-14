@@ -93,4 +93,28 @@ struct KeyboardGeometryTests {
         #expect(resolved.keys.allSatisfy { $0.frame.width > 0 && $0.frame.height > 0 })
         #expect(resolved.keys.allSatisfy { $0.frame.maxX <= 390.5 && $0.frame.maxY <= height + 0.5 })
     }
+
+    @Test("Theme geometry extremes neither overflow nor overlap", arguments: [
+        (2.0, 2.0, 3.0),
+        (16.0, 10.0, 12.0),
+    ])
+    func themeGeometryExtremes(padding: Double, horizontalGap: Double, verticalGap: Double) {
+        var sizing = KeyboardSizingProfile.default
+        sizing.horizontalPadding = padding
+        sizing.horizontalGap = horizontalGap
+        sizing.verticalGap = verticalGap
+        let size = CGSize(width: 393, height: 304)
+        let resolved = KeyboardGeometry.resolve(layout: .funputQWERTY, size: size, sizing: sizing)
+
+        #expect(resolved.keys.allSatisfy {
+            $0.frame.minX >= 0 && $0.frame.minY >= 0
+                && $0.frame.maxX <= size.width + 0.5
+                && $0.frame.maxY <= size.height + 0.5
+        })
+        for row in resolved.rows {
+            for pair in zip(row, row.dropFirst()) {
+                #expect(pair.0.frame.maxX <= pair.1.frame.minX)
+            }
+        }
+    }
 }

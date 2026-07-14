@@ -1,6 +1,7 @@
 import FunputShared
 import KeyboardRenderer
 import SwiftUI
+import ThemeRuntime
 import ThemeSchema
 
 struct AppearanceScreen: View {
@@ -8,9 +9,19 @@ struct AppearanceScreen: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: AppearanceModel
     @State private var confirmsReset = false
+    @State private var confirmsDelete = false
+    @State private var editorRequest: ThemeEditorRequest?
 
-    init(store: any FunputConfigurationStoring = FunputConfigurationStore()) {
-        _model = State(initialValue: AppearanceModel(store: store))
+    init(
+        store: any FunputConfigurationStoring = FunputConfigurationStore(),
+        customStore: any CustomThemeStoring = CustomThemeStore(),
+        assetStore: any ThemeAssetStoring = ThemeAssetStore()
+    ) {
+        _model = State(initialValue: AppearanceModel(
+            store: store,
+            customStore: customStore,
+            assetStore: assetStore
+        ))
     }
 
     var body: some View {
@@ -18,6 +29,7 @@ struct AppearanceScreen: View {
             AppearancePreviewHeader(mode: model.previewModeBinding)
             KeyboardPreview(
                 presentation: model.previewPresentation,
+                backgroundImageData: model.imageData(for: model.previewTheme),
                 interfaceStyle: model.previewMode.interfaceStyle,
                 isInteractive: true
             )
@@ -29,16 +41,29 @@ struct AppearanceScreen: View {
             .shadow(color: .black.opacity(0.14), radius: 16, y: 8)
             .accessibilityLabel("Bản xem trước bàn phím \(model.previewTheme.metadata.name)")
 
-            AppearanceApplyButton(isApplied: model.isPreviewApplied) {
-                model.applyPreview()
-            }
+            AppearanceThemeActionBar(
+                isApplied: model.isPreviewApplied,
+                isCustom: model.previewCustomTheme != nil,
+                apply: model.applyPreview,
+                customize: { editorRequest = model.editorRequest() }
+            )
 
-            ThemeGallery(model: model)
+            ThemeGallery(
+                model: model,
+                onEdit: { editorRequest = .edit(customThemeID: $0) },
+                onDelete: { id in
+                    model.selectTheme(id)
+                    confirmsDelete = true
+                }
+            )
             AppearanceResetCard(isDefault: model.appliedThemeID == FunputConfiguration.defaultThemeID) {
                 confirmsReset = true
             }
         }
         .navigationTitle("Giao diện")
+        .sheet(item: $editorRequest) { request in
+            ThemeEditor(model: model, request: request)
+        }
         .alert("Không thể lưu giao diện", isPresented: model.saveErrorBinding) {
             Button("Đóng", role: .cancel) {}
         } message: {
@@ -48,6 +73,11 @@ struct AppearanceScreen: View {
             Button("Khôi phục", role: .destructive) { model.resetTheme() }
         } message: {
             Text("Các cài đặt bộ gõ khác sẽ được giữ nguyên.")
+        }
+        .confirmationDialog("Xóa theme custom?", isPresented: $confirmsDelete) {
+            Button("Xóa", role: .destructive) { _ = model.deletePreviewCustomTheme() }
+        } message: {
+            Text("Nếu theme đang được dùng, Funput sẽ chuyển về theme hệ thống gốc.")
         }
         .onAppear { model.setInitialMode(for: colorScheme) }
         .onChange(of: scenePhase) { _, phase in
@@ -61,11 +91,23 @@ struct AppearanceScreen: View {
 }
 
 #Preview("Giao diện · Light") {
-    NavigationStack { AppearanceScreen(store: PreviewConfigurationStore()) }
+    NavigationStack {
+        AppearanceScreen(
+            store: PreviewConfigurationStore(),
+            customStore: PreviewCustomThemeStore(),
+            assetStore: PreviewThemeAssetStore()
+        )
+    }
         .preferredColorScheme(.light)
 }
 
 #Preview("Giao diện · Dark") {
-    NavigationStack { AppearanceScreen(store: PreviewConfigurationStore()) }
+    NavigationStack {
+        AppearanceScreen(
+            store: PreviewConfigurationStore(),
+            customStore: PreviewCustomThemeStore(),
+            assetStore: PreviewThemeAssetStore()
+        )
+    }
         .preferredColorScheme(.dark)
 }

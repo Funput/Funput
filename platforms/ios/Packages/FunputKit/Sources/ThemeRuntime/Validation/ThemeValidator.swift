@@ -14,16 +14,21 @@ public enum ThemeValidator {
     }
 
     private static func contrastIssues(_ palette: ThemePalette) -> [ThemeIssue] {
-        let appearances: [(String, ThemeRGBA, ThemeRGBA)] = [
-            ("light", palette.label.light, palette.characterKey.light),
-            ("dark", palette.label.dark, palette.characterKey.dark),
+        let pairs: [(String, AdaptiveThemeColor, AdaptiveThemeColor)] = [
+            ("label/character-key", palette.label, palette.characterKey),
+            ("label/special-key", palette.label, palette.specialKey),
+            ("secondary-label/character-key", palette.secondaryLabel, palette.characterKey),
+            ("accent/special-key", palette.accent, palette.specialKey),
         ]
-        return appearances.compactMap { appearance, label, key in
-            guard ContrastRatio.between(label, key) < minimumLabelContrast else { return nil }
-            return ThemeIssue(
-                kind: .lowContrast,
-                message: "Label vs character-key contrast is too low in the \(appearance) appearance."
-            )
+        return pairs.flatMap { role, foreground, background in
+            [("light", foreground.light, background.light),
+             ("dark", foreground.dark, background.dark)].compactMap { mode, text, key in
+                guard ContrastRatio.between(text, key) < minimumLabelContrast else { return nil }
+                return ThemeIssue(
+                    kind: .lowContrast,
+                    message: "\(role) contrast is too low in the \(mode) appearance."
+                )
+            }
         }
     }
 }

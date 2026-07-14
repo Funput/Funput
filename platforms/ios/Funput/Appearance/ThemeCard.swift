@@ -5,9 +5,13 @@ import ThemeSchema
 struct ThemeCard: View {
     let theme: KeyboardTheme
     let presentation: KeyboardPresentation
+    let backgroundImageData: Data?
     let interfaceStyle: UIUserInterfaceStyle
     let isPreviewed: Bool
     let isApplied: Bool
+    let isCustom: Bool
+    let editAction: () -> Void
+    let deleteAction: () -> Void
     let action: () -> Void
 
     /// Fixed width so the horizontal gallery snaps per card and the mini keyboard
@@ -18,7 +22,11 @@ struct ThemeCard: View {
         ZStack {
             InteractiveGlassCard(isSelected: isPreviewed) {
                 VStack(alignment: .leading, spacing: 10) {
-                    KeyboardPreview(presentation: presentation, interfaceStyle: interfaceStyle)
+                    KeyboardPreview(
+                        presentation: presentation,
+                        backgroundImageData: backgroundImageData,
+                        interfaceStyle: interfaceStyle
+                    )
                         .id(interfaceStyle)
                         .frame(height: 204)
                         .clipShape(.rect(cornerRadius: 16))
@@ -50,17 +58,20 @@ struct ThemeCard: View {
             .accessibilityIdentifier("appearance.theme.\(theme.id)")
         }
         .frame(width: cardWidth)
+        .overlay(alignment: .topTrailing) {
+            if isCustom { actionsMenu.padding(12) }
+        }
     }
 
     @ViewBuilder private var statusIcon: some View {
         if isApplied {
-            Image(systemName: "checkmark.circle.fill")
+            Label("Đang dùng", systemImage: "checkmark.circle.fill")
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.tint)
-                .accessibilityHidden(true)
         } else if isPreviewed {
-            Image(systemName: "eye.fill")
+            Label("Xem trước", systemImage: "eye.fill")
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.tint)
-                .accessibilityHidden(true)
         }
     }
 
@@ -68,5 +79,22 @@ struct ThemeCard: View {
         if isApplied { return "Đang sử dụng" }
         if isPreviewed { return "Đang xem trước" }
         return "Chưa chọn"
+    }
+
+    private var actionsMenu: some View {
+        Menu {
+            Button("Chỉnh sửa", systemImage: "slider.horizontal.3", action: editAction)
+            Button("Xóa", systemImage: "trash", role: .destructive, action: deleteAction)
+                .accessibilityIdentifier("themeEditor.delete")
+        } label: {
+            Image(systemName: "ellipsis.circle.fill")
+                .font(.title3)
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(.primary, .ultraThinMaterial)
+                .padding(8)
+                .contentShape(.circle)
+        }
+        .accessibilityLabel("Tùy chọn theme \(theme.metadata.name)")
+        .accessibilityIdentifier("appearance.theme.\(theme.id).menu")
     }
 }

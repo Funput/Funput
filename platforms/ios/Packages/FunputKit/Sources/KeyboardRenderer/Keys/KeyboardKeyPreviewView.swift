@@ -6,7 +6,7 @@ import UIKit
 @MainActor
 final class KeyboardKeyPreviewView: UIView {
     private let label = UILabel()
-    private var effectView: UIVisualEffectView?
+    private var surfaceView: UIView?
     private var usesNativeGlass = false
     private var appliedTheme: ResolvedTheme?
     private var appliedInterfaceStyle: UIUserInterfaceStyle?
@@ -33,12 +33,12 @@ final class KeyboardKeyPreviewView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        effectView?.frame = bounds
+        surfaceView?.frame = bounds
         label.frame = bounds
         if #available(iOS 26.0, *), usesNativeGlass {
-            effectView?.cornerConfiguration = .corners(radius: .fixed(12))
+            surfaceView?.cornerConfiguration = .corners(radius: .fixed(12))
         } else {
-            effectView?.layer.cornerRadius = 12
+            surfaceView?.layer.cornerRadius = 12
         }
     }
 
@@ -103,21 +103,14 @@ final class KeyboardKeyPreviewView: UIView {
         guard appliedTheme != theme
                 || appliedInterfaceStyle != traits.userInterfaceStyle
                 || appliedReduceTransparency != reduceTransparency else { return }
-        effectView?.removeFromSuperview()
-        let effect: UIVisualEffect
-        if #available(iOS 26.0, *),
-           theme.material == .glass,
-           !reduceTransparency {
-            let glass = UIGlassEffect(style: .regular)
-            glass.isInteractive = false
-            glass.tintColor = .clear
-            effect = glass
-            usesNativeGlass = true
-        } else {
-            effect = UIBlurEffect(style: .systemMaterial)
-            usesNativeGlass = false
-        }
-        let view = UIVisualEffectView(effect: effect)
+        surfaceView?.removeFromSuperview()
+        let result = KeyboardKeyPreviewSurfaceFactory.make(
+            theme: theme,
+            traits: traits,
+            reducesTransparency: reduceTransparency
+        )
+        let view = result.view
+        usesNativeGlass = result.usesNativeGlass
         if #available(iOS 26.0, *), usesNativeGlass {
             view.tintColor = .clear
             view.cornerConfiguration = .corners(radius: .fixed(12))
@@ -129,7 +122,7 @@ final class KeyboardKeyPreviewView: UIView {
         }
         insertSubview(view, at: 0)
         addSubview(label)
-        effectView = view
+        surfaceView = view
         appliedTheme = theme
         appliedInterfaceStyle = traits.userInterfaceStyle
         appliedReduceTransparency = reduceTransparency

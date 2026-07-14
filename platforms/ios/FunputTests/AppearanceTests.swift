@@ -13,7 +13,10 @@ struct AppearanceTests {
     func invalidThemeFallback() {
         var configuration = FunputConfiguration.default
         configuration.selectedThemeID = "missing"
-        let model = AppearanceModel(store: SettingsTestStore(configuration: configuration))
+        let model = AppearanceModel(
+            store: SettingsTestStore(configuration: configuration),
+            customStore: ThemeTestStore()
+        )
 
         #expect(model.appliedThemeID == FunputConfiguration.defaultThemeID)
         #expect(model.previewThemeID == FunputConfiguration.defaultThemeID)
@@ -22,7 +25,7 @@ struct AppearanceTests {
     @Test("Selecting previews without saving")
     func previewBeforeApply() {
         let store = SettingsTestStore(configuration: .default)
-        let model = AppearanceModel(store: store)
+        let model = AppearanceModel(store: store, customStore: ThemeTestStore())
 
         model.selectTheme(KeyboardTheme.midnight.id)
 
@@ -37,7 +40,7 @@ struct AppearanceTests {
         configuration.inputMethod = .telex
         configuration.heightScale = 1.12
         let store = SettingsTestStore(configuration: configuration)
-        let model = AppearanceModel(store: store)
+        let model = AppearanceModel(store: store, customStore: ThemeTestStore())
 
         model.selectTheme(KeyboardTheme.midnight.id)
         model.applyPreview()
@@ -51,7 +54,7 @@ struct AppearanceTests {
     @Test("Failed apply retains applied theme and draft")
     func failedApply() {
         let store = SettingsTestStore(configuration: .default, acceptsSaves: false)
-        let model = AppearanceModel(store: store)
+        let model = AppearanceModel(store: store, customStore: ThemeTestStore())
         model.selectTheme(KeyboardTheme.midnight.id)
 
         model.applyPreview()
@@ -67,7 +70,7 @@ struct AppearanceTests {
         configuration.selectedThemeID = KeyboardTheme.midnight.id
         configuration.smartRestore = false
         let store = SettingsTestStore(configuration: configuration)
-        let model = AppearanceModel(store: store)
+        let model = AppearanceModel(store: store, customStore: ThemeTestStore())
 
         model.resetTheme()
 
@@ -78,7 +81,7 @@ struct AppearanceTests {
     @Test("Reload synchronizes themes without changing preview mode")
     func reload() {
         let store = SettingsTestStore(configuration: .default)
-        let model = AppearanceModel(store: store)
+        let model = AppearanceModel(store: store, customStore: ThemeTestStore())
         model.previewMode = .dark
         store.configuration.selectedThemeID = KeyboardTheme.classicLight.id
 
@@ -91,7 +94,10 @@ struct AppearanceTests {
 
     @Test("Catalog and preview use production themes")
     func catalogAndPreview() {
-        let model = AppearanceModel(store: SettingsTestStore(configuration: .default))
+        let model = AppearanceModel(
+            store: SettingsTestStore(configuration: .default),
+            customStore: ThemeTestStore()
+        )
         let ids = model.themes.map(\.id)
 
         #expect(ids == BundledThemes.all.map(\.id))

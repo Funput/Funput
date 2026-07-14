@@ -8,6 +8,8 @@ final class KeyboardKeySurfaceView: UIView {
     private var renderedView: UIView?
     private var normalAlpha: CGFloat = 1
     private var usesNativeInteraction = false
+    private let tintView = KeyboardKeyTintView()
+    private let borderLayer = KeyboardKeyBorderLayer()
 
     func apply(
         theme: ResolvedTheme,
@@ -30,9 +32,23 @@ final class KeyboardKeySurfaceView: UIView {
         usesNativeInteraction = result.isNativeGlass
         configure(result.view, theme: theme, traits: traits)
         insertSubview(result.view, at: 0)
+        result.contentView.addSubview(tintView)
         result.contentView.addSubview(content)
         result.contentView.isUserInteractionEnabled = true
+        tintView.apply(
+            theme: theme,
+            specIsSpecial: spec.role.isSpecial,
+            traits: traits,
+            usesNativeGlass: usesNativeInteraction
+        )
+        tintView.setPressed(false)
         renderedView = result.view
+        if borderLayer.superlayer == nil { layer.addSublayer(borderLayer) }
+        borderLayer.apply(
+            theme: theme,
+            traits: traits,
+            usesNativeGlass: usesNativeInteraction
+        )
         configureShadow(theme: theme)
         setNeedsLayout()
     }
@@ -40,6 +56,8 @@ final class KeyboardKeySurfaceView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         renderedView?.frame = bounds
+        tintView.frame = tintView.superview?.bounds ?? bounds
+        borderLayer.update(in: bounds)
     }
 
     func updateShape(cornerRadius: Double) {
@@ -52,17 +70,18 @@ final class KeyboardKeySurfaceView: UIView {
             roundedRect: bounds,
             cornerRadius: cornerRadius
         ).cgPath
+        borderLayer.update(in: bounds, cornerRadius: cornerRadius)
     }
 
     func setPressed(_ pressed: Bool, theme: ResolvedTheme, animated: Bool) {
-        guard !usesNativeInteraction else { return }
         let updates = {
             self.transform = pressed
                 ? CGAffineTransform(scaleX: theme.pressedScale, y: theme.pressedScale)
                 : .identity
-            self.renderedView?.alpha = pressed
-                ? min(1, self.normalAlpha * theme.pressedOpacityMultiplier)
-                : 1
+            self.tintView.setPressed(pressed)
+            self.renderedView?.alpha = self.tintView.hasPressedOverlay
+                ? 1
+                : (pressed ? min(1, self.normalAlpha * theme.pressedOpacityMultiplier) : 1)
         }
         guard animated, !UIAccessibility.isReduceMotionEnabled else {
             updates()
@@ -85,7 +104,7 @@ final class KeyboardKeySurfaceView: UIView {
            theme.material == .glass,
            !UIAccessibility.isReduceTransparencyEnabled {
             let effect = UIGlassEffect(style: .regular)
-            effect.isInteractive = true
+            effect.isInteractive = false
             // A glass container shares adaptation across its children. Keep every
             // key's material neutral so a prominent key cannot tint the group after
             // the keyboard extension is deactivated and activated again.
@@ -113,14 +132,15 @@ final class KeyboardKeySurfaceView: UIView {
             view.layer.cornerRadius = theme.cornerRadius
             view.clipsToBounds = true
         }
-        view.layer.borderWidth = usesNativeInteraction ? 0 : theme.borderWidth
-        view.layer.borderColor = theme.border.uiColor(for: traits).cgColor
+        view.layer.borderWidth = 0
     }
 
     private func configureShadow(theme: ResolvedTheme) {
         layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = usesNativeInteraction ? 0 : Float(theme.shadowOpacity)
-        layer.shadowRadius = usesNativeInteraction ? 0 : theme.shadowRadius
+        let hidesGlassShadow = usesNativeInteraction
+            && !theme.surfaceEffects.glassShadowOverrideEnabled
+        layer.shadowOpacity = hidesGlassShadow ? 0 : Float(theme.shadowOpacity)
+        layer.shadowRadius = hidesGlassShadow ? 0 : theme.shadowRadius
         layer.shadowOffset = CGSize(width: 0, height: 1)
     }
 

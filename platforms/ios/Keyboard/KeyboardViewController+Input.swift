@@ -42,14 +42,19 @@ extension KeyboardViewController {
             editorMode: state.editorMode,
             showsSystemInputModeKey: true
         )
+        let themed = KeyboardPresentationFactory.make(
+            from: configuration,
+            layout: presentation.layout,
+            catalog: themeCatalog
+        )
+        presentation.sizing = themed.sizing
         presentation.shiftState = state.shiftState
         presentation.language = state.language
         presentation.enterAction = state.enterAction
-        presentation.theme = KeyboardPresentationFactory.resolvedTheme(for: configuration)
+        presentation.theme = themed.theme
         presentation.isHapticFeedbackEnabled = configuration.isHapticFeedbackEnabled
         presentation.isKeySoundEnabled = configuration.isKeySoundEnabled
         presentation.showsKeyPreviews = !state.editorMode.isPassword && configuration.showsKeyPreviews
-        presentation.sizing.heightScale = CGFloat(configuration.heightScale)
         keyboardView.presentation = presentation
         if presentation.layout.toolbar == nil {
             showFunput()
