@@ -18,8 +18,8 @@
 ---
 
 **Funput** is an open-source Vietnamese input method released for macOS,
-Windows, and Linux. Android is in closed testing on Google Play, with iOS
-planned next. Every platform shares the same processing core to provide
+Windows, and Linux. Android is in closed testing on Google Play, while iOS is
+in TestFlight beta. Every platform shares the same processing core to provide
 consistent typing behavior across operating systems.
 
 ## Get started
@@ -36,23 +36,24 @@ consistent typing behavior across operating systems.
   </a>
 </p>
 
-## Supported platforms
+## Install by platform
 
-<p align="center">
-  <img src="https://img.shields.io/badge/macOS-Released-22C55E?style=for-the-badge&logo=apple&logoColor=white" alt="macOS: released">
-  <img src="https://img.shields.io/badge/Windows-Released-22C55E?style=for-the-badge&logo=windows&logoColor=white" alt="Windows: released">
-  <img src="https://img.shields.io/badge/Linux-Released-22C55E?style=for-the-badge&logo=linux&logoColor=white" alt="Linux: released">
-  <br>
-  <img src="https://img.shields.io/badge/Android-Closed_testing-EAB308?style=for-the-badge&logo=android&logoColor=white" alt="Android: closed testing">
-  <img src="https://img.shields.io/badge/iOS-Planned-555555?style=for-the-badge&logo=apple&logoColor=white" alt="iOS: planned">
-</p>
+| Platform | Status | Install |
+|---|---|---|
+| macOS | Released | [Download the latest release](https://github.com/Funput/Funput/releases/latest) |
+| Windows | Released | [Download the latest release](https://github.com/Funput/Funput/releases/latest) |
+| Linux | Released | [Read the installation guide](https://docs.funput.app/) |
+| Android | Closed testing | Public enrollment is not available yet |
+| iOS | TestFlight beta | [Join the TestFlight beta](https://testflight.apple.com/join/E8YRd3sy) |
 
 ## Interface
 
 <p align="center">
-  <img src="assets/screenshot/screenshot-macos.png" width="900" alt="Funput settings interface on macOS">
+  <img src="assets/screenshot/screenshot-ios.png" height="420" alt="Funput keyboard on iOS">
+  &nbsp;&nbsp;
+  <img src="assets/screenshot/screenshot-macos.png" height="420" alt="Funput settings interface on macOS">
   <br>
-  <sub>Configure the input method, tone placement, and smart typing features on macOS.</sub>
+  <sub>Funput on iOS and the settings experience on macOS.</sub>
 </p>
 
 ## Performance

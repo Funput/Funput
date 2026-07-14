@@ -1,0 +1,4 @@
+module FunputCore {
+    header "funput.h"
+    export *
+}

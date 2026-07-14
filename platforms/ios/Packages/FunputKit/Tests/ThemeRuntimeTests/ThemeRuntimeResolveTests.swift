@@ -1,0 +1,137 @@
+import Testing
+import ThemeSchema
+import ThemeRuntime
+
+struct ThemeRuntimeResolveTests {
+    @Test("Bundled Funput Glass resolves to the renderer default")
+    func funputGlassParity() {
+        #expect(ThemeRuntime.resolve(.funputGlass) == ResolvedTheme.funputGlass)
+    }
+
+    @Test("Bundled themes share the Classic key corner radius")
+    func bundledKeyCornerRadius() {
+        let classicRadius = ThemeRuntime.resolve(.classicLight).cornerRadius
+
+        #expect(ThemeRuntime.resolve(.funputGlass).cornerRadius == classicRadius)
+        #expect(ThemeRuntime.resolve(.midnight).cornerRadius == classicRadius)
+    }
+
+    @Test("Standard context preserves the authored material")
+    func standardKeepsMaterial() {
+        #expect(ThemeRuntime.resolve(.funputGlass).material == .glass)
+        #expect(ThemeRuntime.resolve(.classicLight).material == .translucent)
+    }
+
+    @Test("Reduce Transparency downgrades every material to solid")
+    func reduceTransparencyForcesSolid() {
+        let context = ThemeResolveContext(reduceTransparency: true)
+        #expect(ThemeRuntime.resolve(.funputGlass, context: context).material == .solid)
+        #expect(ThemeRuntime.resolve(.classicLight, context: context).material == .solid)
+        #expect(ThemeRuntime.resolve(.funputGlass, context: context).keyOpacity == 1)
+        #expect(ThemeRuntime.resolve(.funputGlass, context: context).specialKeyOpacity == 1)
+    }
+
+    @Test("Out-of-range metrics are clamped into safe ranges")
+    func clampsMetrics() {
+        let wild = KeyboardTheme(
+            id: "test.wild",
+            metadata: ThemeMetadata(name: "Wild", author: "Test"),
+            material: .solid,
+            palette: BundledThemes.default.palette,
+            metrics: ThemeMetrics(
+                keyOpacity: 4,
+                specialKeyOpacity: -1,
+                cornerRadius: 999,
+                borderWidth: 50,
+                shadowOpacity: 9,
+                shadowRadius: 500,
+                pressedScale: 0.1,
+                pressedOpacityMultiplier: 8,
+                fontScale: 12
+            )
+        )
+        let resolved = ThemeRuntime.resolve(wild)
+        #expect(resolved.keyOpacity == 1)
+        #expect(resolved.specialKeyOpacity == 0)
+        #expect(resolved.cornerRadius == 20)
+        #expect(resolved.borderWidth == 4)
+        #expect(resolved.shadowOpacity == 1)
+        #expect(resolved.shadowRadius == 24)
+        #expect(resolved.pressedScale == 0.8)
+        #expect(resolved.pressedOpacityMultiplier == 1.5)
+        #expect(resolved.fontScale == 1.4)
+    }
+
+    @Test("Geometry is clamped to MVP safe ranges")
+    func clampsGeometry() {
+        var wild = BundledThemes.default
+        wild.geometry = ThemeGeometry(
+            keycapHeightScale: 0,
+            horizontalPadding: 99,
+            horizontalGap: -5,
+            verticalGap: 50
+        )
+        let resolved = ThemeRuntime.resolve(wild)
+
+        #expect(resolved.keycapHeightScale == 0.82)
+        #expect(resolved.horizontalPadding == 16)
+        #expect(resolved.horizontalGap == 2)
+        #expect(resolved.verticalGap == 12)
+    }
+
+    @Test("Color effects pass through runtime resolution")
+    func resolvesColorEffects() {
+        var theme = BundledThemes.default
+        theme.colorEffects.glassBackgroundTintEnabled = true
+        theme.colorEffects.glassKeyTintEnabled = true
+        theme.colorEffects.pressedOverlayEnabled = true
+
+        #expect(ThemeRuntime.resolve(theme).colorEffects == theme.colorEffects)
+    }
+
+    @Test("Surface effects pass through runtime resolution")
+    func resolvesSurfaceEffects() {
+        var theme = BundledThemes.default
+        theme.surfaceEffects.glassBorderOverrideEnabled = true
+        theme.surfaceEffects.glassShadowOverrideEnabled = true
+
+        #expect(ThemeRuntime.resolve(theme).surfaceEffects == theme.surfaceEffects)
+    }
+
+    @Test("Gradient direction passes through runtime resolution")
+    func resolvesGradientDirection() {
+        var theme = BundledThemes.default
+        theme.gradientDirection = .vertical
+
+        #expect(ThemeRuntime.resolve(theme).gradientDirection == .vertical)
+    }
+
+    @Test("Background image geometry and overlay components are clamped")
+    func clampsImageBackground() {
+        var theme = BundledThemes.default
+        theme.backgroundEffects = ThemeBackgroundEffects(
+            mode: .image,
+            image: ThemeBackgroundImage(
+                assetID: "asset",
+                focalX: -2,
+                focalY: 9,
+                zoom: 8,
+                blurRadius: 90
+            ),
+            overlay: AdaptiveThemeColor(
+                light: ThemeRGBA(red: -1, green: 2, blue: 0.5, alpha: 3),
+                dark: ThemeRGBA(red: 0, green: 0, blue: 0, alpha: -1)
+            )
+        )
+
+        let background = ThemeRuntime.resolve(theme).backgroundEffects
+        #expect(background.image?.focalX == 0)
+        #expect(background.image?.focalY == 1)
+        #expect(background.image?.zoom == 4)
+        #expect(background.image?.blurRadius == 24)
+        #expect(background.overlay.light.red == 0)
+        #expect(background.overlay.light.green == 1)
+        #expect(background.overlay.light.alpha == 1)
+        #expect(background.overlay.dark.alpha == 0)
+    }
+}
