@@ -76,4 +76,14 @@ struct ThemeRuntimeResolveTests {
         #expect(resolved.horizontalGap == 2)
         #expect(resolved.verticalGap == 12)
     }
+
+    @Test("Color effects pass through runtime resolution")
+    func resolvesColorEffects() {
+        var theme = BundledThemes.default
+        theme.colorEffects.glassBackgroundTintEnabled = true
+        theme.colorEffects.glassKeyTintEnabled = true
+        theme.colorEffects.pressedOverlayEnabled = true
+
+        #expect(ThemeRuntime.resolve(theme).colorEffects == theme.colorEffects)
+    }
 }

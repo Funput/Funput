@@ -37,7 +37,8 @@ public enum ThemeRuntime {
             keycapHeightScale: MetricClamp.keycapHeight(geometry.keycapHeightScale),
             horizontalPadding: MetricClamp.horizontalPadding(geometry.horizontalPadding),
             horizontalGap: MetricClamp.horizontalGap(geometry.horizontalGap),
-            verticalGap: MetricClamp.verticalGap(geometry.verticalGap)
+            verticalGap: MetricClamp.verticalGap(geometry.verticalGap),
+            colorEffects: theme.colorEffects
         )
     }
 

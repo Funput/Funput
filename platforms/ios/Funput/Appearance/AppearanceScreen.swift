@@ -56,7 +56,7 @@ struct AppearanceScreen: View {
         }
         .navigationTitle("Giao diện")
         .sheet(item: $editorRequest) { request in
-            ThemeGeometryEditor(model: model, request: request)
+            ThemeEditor(model: model, request: request)
         }
         .alert("Không thể lưu giao diện", isPresented: model.saveErrorBinding) {
             Button("Đóng", role: .cancel) {}

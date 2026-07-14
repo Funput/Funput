@@ -48,8 +48,25 @@ struct ThemeCodableTests {
             horizontalGap: 4,
             verticalGap: 9
         )
+        custom.theme.colorEffects.glassKeyTintEnabled = true
+        custom.theme.colorEffects.pressedOverlayEnabled = true
 
         let data = try JSONEncoder().encode(custom)
         #expect(try JSONDecoder().decode(CustomKeyboardTheme.self, from: data) == custom)
+    }
+
+    @Test("Schema v2 receives disabled color effects seeded from accent")
+    func migratesV2ColorEffects() throws {
+        let encoded = try JSONEncoder().encode(BundledThemes.default)
+        var object = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        object["schemaVersion"] = 2
+        object.removeValue(forKey: "colorEffects")
+        let data = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(KeyboardTheme.self, from: data)
+        #expect(!decoded.colorEffects.glassBackgroundTintEnabled)
+        #expect(!decoded.colorEffects.glassKeyTintEnabled)
+        #expect(!decoded.colorEffects.pressedOverlayEnabled)
+        #expect(decoded.colorEffects.pressedOverlay == decoded.palette.accent)
     }
 }

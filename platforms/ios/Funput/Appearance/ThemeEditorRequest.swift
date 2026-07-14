@@ -23,4 +23,12 @@ struct ThemeEditorDraft: Equatable {
     var isDirty: Bool { customTheme != initialTheme }
     var trimmedName: String { customTheme.theme.metadata.name.trimmingCharacters(in: .whitespacesAndNewlines) }
     var canSave: Bool { (1...40).contains(trimmedName.count) }
+
+    mutating func resetToBase() {
+        customTheme.theme.geometry = baseTheme.geometry
+        customTheme.theme.palette = baseTheme.palette
+        customTheme.theme.colorEffects = baseTheme.colorEffects
+        customTheme.theme.metrics.cornerRadius = baseTheme.metrics.cornerRadius
+        customTheme.theme.metrics.pressedScale = baseTheme.metrics.pressedScale
+    }
 }

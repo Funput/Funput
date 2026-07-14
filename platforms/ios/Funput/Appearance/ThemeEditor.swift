@@ -2,11 +2,12 @@ import KeyboardRenderer
 import SwiftUI
 import ThemeSchema
 
-struct ThemeGeometryEditor: View {
+struct ThemeEditor: View {
     @Environment(\.dismiss) private var dismiss
     let model: AppearanceModel
     @State private var draft: ThemeEditorDraft
     @State private var confirmsCancel = false
+    @State private var selectedTab = ThemeEditorTab.general
 
     init(model: AppearanceModel, request: ThemeEditorRequest) {
         self.model = model
@@ -15,20 +16,19 @@ struct ThemeGeometryEditor: View {
 
     var body: some View {
         NavigationStack {
-            AppScreen {
-                AppearancePreviewHeader(mode: $draft.previewMode)
-                KeyboardPreview(
-                    presentation: model.presentation(for: draft),
-                    interfaceStyle: draft.previewMode.interfaceStyle,
-                    isInteractive: true
-                )
-                .id(draft.previewMode)
-                .frame(height: previewHeight)
-                .clipShape(.rect(cornerRadius: 22))
-                .shadow(color: .black.opacity(0.14), radius: 16, y: 8)
-                ThemeEditorNameCard(name: $draft.customTheme.theme.metadata.name)
-                ThemeGeometryControls(draft: $draft)
-                resetButton
+            ZStack {
+                ThemeEditorBackground()
+                GeometryReader { proxy in
+                    VStack(spacing: 0) {
+                        ThemeEditorPreview(
+                            draft: $draft,
+                            presentation: model.presentation(for: draft),
+                            availableHeight: proxy.size.height
+                        )
+                        ThemeEditorTabBar(selection: $selectedTab)
+                        ThemeEditorPages(selection: $selectedTab, draft: $draft)
+                    }
+                }
             }
             .navigationTitle(draft.isNew ? "Tạo theme" : "Chỉnh sửa theme")
             .navigationBarTitleDisplayMode(.inline)
@@ -43,10 +43,6 @@ struct ThemeGeometryEditor: View {
         }
     }
 
-    private var previewHeight: CGFloat {
-        KeyboardMetrics.phonePortraitHeight(for: model.presentation(for: draft).layout)
-    }
-
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
             Button("Hủy") { draft.isDirty ? (confirmsCancel = true) : dismiss() }
@@ -56,15 +52,5 @@ struct ThemeGeometryEditor: View {
                 .disabled(!draft.canSave)
                 .accessibilityIdentifier("themeEditor.save")
         }
-    }
-
-    private var resetButton: some View {
-        Button("Khôi phục theme gốc", systemImage: "arrow.counterclockwise") {
-            draft.customTheme.theme.geometry = draft.baseTheme.geometry
-            draft.customTheme.theme.metrics.cornerRadius = draft.baseTheme.metrics.cornerRadius
-        }
-        .buttonStyle(.bordered)
-        .frame(maxWidth: .infinity)
-        .accessibilityIdentifier("themeEditor.reset")
     }
 }

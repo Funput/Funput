@@ -26,6 +26,7 @@ public struct ResolvedTheme: Hashable, Sendable {
     public var horizontalPadding: Double
     public var horizontalGap: Double
     public var verticalGap: Double
+    public var colorEffects: ThemeColorEffects
 
     public init(
         material: KeyboardMaterial,
@@ -49,7 +50,8 @@ public struct ResolvedTheme: Hashable, Sendable {
         keycapHeightScale: Double = 1,
         horizontalPadding: Double = 6,
         horizontalGap: Double = 5,
-        verticalGap: Double = 7
+        verticalGap: Double = 7,
+        colorEffects: ThemeColorEffects? = nil
     ) {
         self.material = material
         self.backgroundStart = backgroundStart
@@ -73,5 +75,6 @@ public struct ResolvedTheme: Hashable, Sendable {
         self.horizontalPadding = horizontalPadding
         self.horizontalGap = horizontalGap
         self.verticalGap = verticalGap
+        self.colorEffects = colorEffects ?? ThemeColorEffects(pressedOverlay: accent)
     }
 }

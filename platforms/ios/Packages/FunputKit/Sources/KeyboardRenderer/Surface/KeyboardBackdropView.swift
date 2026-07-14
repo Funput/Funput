@@ -40,7 +40,10 @@ final class KeyboardBackdropView: UIVisualEffectView {
             // blur or gradient here produces a seam above the globe/dictation bar.
             usesHostMaterial = true
             effect = nil
-            gradientLayer.isHidden = true
+            gradientLayer.isHidden = !theme.colorEffects.glassBackgroundTintEnabled
+            if theme.colorEffects.glassBackgroundTintEnabled {
+                applyGradient(theme: theme, traits: traits, opaque: false)
+            }
             return
         }
 
@@ -48,11 +51,19 @@ final class KeyboardBackdropView: UIVisualEffectView {
         gradientLayer.isHidden = false
         effect = reducesTransparency ? nil : UIBlurEffect(style: .systemChromeMaterial)
 
+        applyGradient(theme: theme, traits: traits, opaque: reducesTransparency)
+    }
+
+    private func applyGradient(
+        theme: ResolvedTheme,
+        traits: UITraitCollection,
+        opaque: Bool
+    ) {
         let startColor = theme.backgroundStart.uiColor(for: traits)
         let endColor = theme.backgroundEnd.uiColor(for: traits)
         gradientLayer.colors = [
-            resolved(startColor, opaque: reducesTransparency).cgColor,
-            resolved(endColor, opaque: reducesTransparency).cgColor,
+            resolved(startColor, opaque: opaque).cgColor,
+            resolved(endColor, opaque: opaque).cgColor,
         ]
         gradientLayer.locations = [0, 1]
         gradientLayer.startPoint = CGPoint(x: 0.08, y: 0)

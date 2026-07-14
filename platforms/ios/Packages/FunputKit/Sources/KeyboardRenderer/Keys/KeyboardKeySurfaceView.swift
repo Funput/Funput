@@ -8,6 +8,7 @@ final class KeyboardKeySurfaceView: UIView {
     private var renderedView: UIView?
     private var normalAlpha: CGFloat = 1
     private var usesNativeInteraction = false
+    private let tintView = KeyboardKeyTintView()
 
     func apply(
         theme: ResolvedTheme,
@@ -30,8 +31,16 @@ final class KeyboardKeySurfaceView: UIView {
         usesNativeInteraction = result.isNativeGlass
         configure(result.view, theme: theme, traits: traits)
         insertSubview(result.view, at: 0)
+        result.contentView.addSubview(tintView)
         result.contentView.addSubview(content)
         result.contentView.isUserInteractionEnabled = true
+        tintView.apply(
+            theme: theme,
+            specIsSpecial: spec.role.isSpecial,
+            traits: traits,
+            usesNativeGlass: usesNativeInteraction
+        )
+        tintView.setPressed(false)
         renderedView = result.view
         configureShadow(theme: theme)
         setNeedsLayout()
@@ -40,6 +49,7 @@ final class KeyboardKeySurfaceView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         renderedView?.frame = bounds
+        tintView.frame = tintView.superview?.bounds ?? bounds
     }
 
     func updateShape(cornerRadius: Double) {
@@ -59,9 +69,10 @@ final class KeyboardKeySurfaceView: UIView {
             self.transform = pressed
                 ? CGAffineTransform(scaleX: theme.pressedScale, y: theme.pressedScale)
                 : .identity
-            self.renderedView?.alpha = pressed
-                ? min(1, self.normalAlpha * theme.pressedOpacityMultiplier)
-                : 1
+            self.tintView.setPressed(pressed)
+            self.renderedView?.alpha = self.tintView.hasPressedOverlay
+                ? 1
+                : (pressed ? min(1, self.normalAlpha * theme.pressedOpacityMultiplier) : 1)
         }
         guard animated, !UIAccessibility.isReduceMotionEnabled else {
             updates()
