@@ -36,23 +36,24 @@ một lõi xử lý để giữ hành vi gõ nhất quán.
   </a>
 </p>
 
-## Nền tảng hỗ trợ
+## Cài đặt theo nền tảng
 
-<p align="center">
-  <img src="https://img.shields.io/badge/macOS-Đã_phát_hành-22C55E?style=for-the-badge&logo=apple&logoColor=white" alt="macOS">
-  <img src="https://img.shields.io/badge/Windows-Đã_phát_hành-22C55E?style=for-the-badge&logo=windows&logoColor=white" alt="Windows">
-  <img src="https://img.shields.io/badge/Linux-Đã_phát_hành-22C55E?style=for-the-badge&logo=linux&logoColor=white" alt="Linux">
-  <br>
-  <img src="https://img.shields.io/badge/Android-Kiểm_thử_khép_kín-EAB308?style=for-the-badge&logo=android&logoColor=white" alt="Android">
-  <img src="https://img.shields.io/badge/iOS-TestFlight_beta-2563EB?style=for-the-badge&logo=apple&logoColor=white" alt="iOS: TestFlight beta">
-</p>
+| Nền tảng | Trạng thái | Cài đặt |
+|---|---|---|
+| macOS | Đã phát hành | [Tải bản mới nhất](https://github.com/Funput/Funput/releases/latest) |
+| Windows | Đã phát hành | [Tải bản mới nhất](https://github.com/Funput/Funput/releases/latest) |
+| Linux | Đã phát hành | [Xem hướng dẫn](https://docs.funput.app/) |
+| Android | Kiểm thử khép kín | Chưa mở đăng ký công khai |
+| iOS | TestFlight beta | [Tham gia TestFlight](https://testflight.apple.com/join/E8YRd3sy) |
 
 ## Giao diện
 
 <p align="center">
-  <img src="assets/screenshot/screenshot-macos.png" width="900" alt="Giao diện cài đặt Funput trên macOS">
+  <img src="assets/screenshot/screenshot-ios.png" height="420" alt="Bàn phím Funput trên iOS">
+  &nbsp;&nbsp;
+  <img src="assets/screenshot/screenshot-macos.png" height="420" alt="Giao diện cài đặt Funput trên macOS">
   <br>
-  <sub>Tuỳ chỉnh phương thức gõ, kiểu đặt dấu và các tính năng thông minh trên macOS.</sub>
+  <sub>Bàn phím Funput trên iOS và giao diện cài đặt trên macOS.</sub>
 </p>
 
 ## Hiệu năng
