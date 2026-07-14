@@ -28,7 +28,14 @@ struct ThemeEditorDraft: Equatable {
         customTheme.theme.geometry = baseTheme.geometry
         customTheme.theme.palette = baseTheme.palette
         customTheme.theme.colorEffects = baseTheme.colorEffects
+        customTheme.theme.surfaceEffects = baseTheme.surfaceEffects
+        customTheme.theme.material = baseTheme.material
+        customTheme.theme.metrics.keyOpacity = baseTheme.metrics.keyOpacity
+        customTheme.theme.metrics.specialKeyOpacity = baseTheme.metrics.specialKeyOpacity
         customTheme.theme.metrics.cornerRadius = baseTheme.metrics.cornerRadius
+        customTheme.theme.metrics.borderWidth = baseTheme.metrics.borderWidth
+        customTheme.theme.metrics.shadowOpacity = baseTheme.metrics.shadowOpacity
+        customTheme.theme.metrics.shadowRadius = baseTheme.metrics.shadowRadius
         customTheme.theme.metrics.pressedScale = baseTheme.metrics.pressedScale
     }
 }

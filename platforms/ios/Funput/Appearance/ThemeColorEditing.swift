@@ -3,7 +3,7 @@ import ThemeSchema
 
 enum ThemeColorRole: String, CaseIterable {
     case backgroundStart, backgroundEnd, characterKey, specialKey
-    case label, secondaryLabel, accent, pressedOverlay
+    case border, label, secondaryLabel, accent, pressedOverlay
 
     var keyPath: WritableKeyPath<ThemePalette, AdaptiveThemeColor>? {
         switch self {
@@ -11,6 +11,7 @@ enum ThemeColorRole: String, CaseIterable {
         case .backgroundEnd: \ThemePalette.backgroundEnd
         case .characterKey: \ThemePalette.characterKey
         case .specialKey: \ThemePalette.specialKey
+        case .border: \ThemePalette.border
         case .label: \ThemePalette.label
         case .secondaryLabel: \ThemePalette.secondaryLabel
         case .accent: \ThemePalette.accent
@@ -40,6 +41,9 @@ extension ThemeEditorDraft {
         }
         if role == .characterKey || role == .specialKey {
             customTheme.theme.colorEffects.glassKeyTintEnabled = true
+        }
+        if role == .border && customTheme.theme.material == .glass {
+            customTheme.theme.surfaceEffects.glassBorderOverrideEnabled = true
         }
     }
 

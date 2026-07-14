@@ -50,6 +50,8 @@ struct ThemeCodableTests {
         )
         custom.theme.colorEffects.glassKeyTintEnabled = true
         custom.theme.colorEffects.pressedOverlayEnabled = true
+        custom.theme.surfaceEffects.glassBorderOverrideEnabled = true
+        custom.theme.surfaceEffects.glassShadowOverrideEnabled = true
 
         let data = try JSONEncoder().encode(custom)
         #expect(try JSONDecoder().decode(CustomKeyboardTheme.self, from: data) == custom)
@@ -68,5 +70,18 @@ struct ThemeCodableTests {
         #expect(!decoded.colorEffects.glassKeyTintEnabled)
         #expect(!decoded.colorEffects.pressedOverlayEnabled)
         #expect(decoded.colorEffects.pressedOverlay == decoded.palette.accent)
+    }
+
+    @Test("Schema v3 receives disabled Glass surface overrides")
+    func migratesV3SurfaceEffects() throws {
+        let encoded = try JSONEncoder().encode(BundledThemes.default)
+        var object = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        object["schemaVersion"] = 3
+        object.removeValue(forKey: "surfaceEffects")
+        let data = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(KeyboardTheme.self, from: data)
+        #expect(!decoded.surfaceEffects.glassBorderOverrideEnabled)
+        #expect(!decoded.surfaceEffects.glassShadowOverrideEnabled)
     }
 }

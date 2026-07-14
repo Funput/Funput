@@ -15,7 +15,7 @@ struct ThemeBackgroundControls: View {
     }
 }
 
-struct ThemeKeyTextControls: View {
+struct ThemeKeyColorControls: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
@@ -27,6 +27,13 @@ struct ThemeKeyTextControls: View {
             ],
             draft: $draft
         )
+    }
+}
+
+struct ThemeTextColorControls: View {
+    @Binding var draft: ThemeEditorDraft
+
+    var body: some View {
         ThemeColorCard(
             title: "Chữ và icon",
             options: [

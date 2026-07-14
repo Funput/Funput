@@ -29,9 +29,14 @@ private struct ThemeEditorTabPage: View {
                     ThemeGeometryControls(draft: $draft)
                     ThemeResetButton(draft: $draft)
                 case .background:
+                    ThemeMaterialControls(draft: $draft)
                     ThemeBackgroundControls(draft: $draft)
                 case .keys:
-                    ThemeKeyTextControls(draft: $draft)
+                    ThemeKeyColorControls(draft: $draft)
+                    ThemeKeyOpacityControls(draft: $draft)
+                    ThemeBorderControls(draft: $draft)
+                    ThemeTextColorControls(draft: $draft)
+                    ThemeShadowControls(draft: $draft)
                     ThemeContrastWarnings(draft: draft)
                 case .pressed:
                     ThemePressedControls(draft: $draft)

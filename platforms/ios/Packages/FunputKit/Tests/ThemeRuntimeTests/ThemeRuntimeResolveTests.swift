@@ -27,6 +27,8 @@ struct ThemeRuntimeResolveTests {
         let context = ThemeResolveContext(reduceTransparency: true)
         #expect(ThemeRuntime.resolve(.funputGlass, context: context).material == .solid)
         #expect(ThemeRuntime.resolve(.classicLight, context: context).material == .solid)
+        #expect(ThemeRuntime.resolve(.funputGlass, context: context).keyOpacity == 1)
+        #expect(ThemeRuntime.resolve(.funputGlass, context: context).specialKeyOpacity == 1)
     }
 
     @Test("Out-of-range metrics are clamped into safe ranges")
@@ -85,5 +87,14 @@ struct ThemeRuntimeResolveTests {
         theme.colorEffects.pressedOverlayEnabled = true
 
         #expect(ThemeRuntime.resolve(theme).colorEffects == theme.colorEffects)
+    }
+
+    @Test("Surface effects pass through runtime resolution")
+    func resolvesSurfaceEffects() {
+        var theme = BundledThemes.default
+        theme.surfaceEffects.glassBorderOverrideEnabled = true
+        theme.surfaceEffects.glassShadowOverrideEnabled = true
+
+        #expect(ThemeRuntime.resolve(theme).surfaceEffects == theme.surfaceEffects)
     }
 }

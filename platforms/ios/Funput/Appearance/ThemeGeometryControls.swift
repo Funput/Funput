@@ -53,7 +53,7 @@ struct ThemeGeometryControls: View {
     }
 }
 
-enum ThemeMetricFormat: Equatable { case points, percent }
+enum ThemeMetricFormat: Equatable { case points, quarterPoints, percent }
 
 struct ThemeMetricSlider: View {
     let title: String
@@ -77,7 +77,11 @@ struct ThemeMetricSlider: View {
     }
 
     private var valueLabel: String {
-        format == .percent ? "\(Int((value * 100).rounded()))%" : "\(Int(value.rounded())) pt"
+        switch format {
+        case .percent: "\(Int((value * 100).rounded()))%"
+        case .points: "\(Int(value.rounded())) pt"
+        case .quarterPoints: "\(value.formatted(.number.precision(.fractionLength(0...2)))) pt"
+        }
     }
 
     private var identifier: String {

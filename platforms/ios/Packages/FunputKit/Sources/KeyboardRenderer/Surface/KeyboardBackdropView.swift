@@ -49,9 +49,9 @@ final class KeyboardBackdropView: UIVisualEffectView {
 
         usesHostMaterial = false
         gradientLayer.isHidden = false
-        effect = reducesTransparency ? nil : UIBlurEffect(style: .systemChromeMaterial)
-
-        applyGradient(theme: theme, traits: traits, opaque: reducesTransparency)
+        let isSolid = theme.material == .solid || reducesTransparency
+        effect = isSolid ? nil : UIBlurEffect(style: .systemChromeMaterial)
+        applyGradient(theme: theme, traits: traits, opaque: isSolid)
     }
 
     private func applyGradient(

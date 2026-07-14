@@ -9,6 +9,7 @@ final class KeyboardKeySurfaceView: UIView {
     private var normalAlpha: CGFloat = 1
     private var usesNativeInteraction = false
     private let tintView = KeyboardKeyTintView()
+    private let borderLayer = KeyboardKeyBorderLayer()
 
     func apply(
         theme: ResolvedTheme,
@@ -42,6 +43,12 @@ final class KeyboardKeySurfaceView: UIView {
         )
         tintView.setPressed(false)
         renderedView = result.view
+        if borderLayer.superlayer == nil { layer.addSublayer(borderLayer) }
+        borderLayer.apply(
+            theme: theme,
+            traits: traits,
+            usesNativeGlass: usesNativeInteraction
+        )
         configureShadow(theme: theme)
         setNeedsLayout()
     }
@@ -50,6 +57,7 @@ final class KeyboardKeySurfaceView: UIView {
         super.layoutSubviews()
         renderedView?.frame = bounds
         tintView.frame = tintView.superview?.bounds ?? bounds
+        borderLayer.update(in: bounds)
     }
 
     func updateShape(cornerRadius: Double) {
@@ -62,6 +70,7 @@ final class KeyboardKeySurfaceView: UIView {
             roundedRect: bounds,
             cornerRadius: cornerRadius
         ).cgPath
+        borderLayer.update(in: bounds, cornerRadius: cornerRadius)
     }
 
     func setPressed(_ pressed: Bool, theme: ResolvedTheme, animated: Bool) {
@@ -123,14 +132,15 @@ final class KeyboardKeySurfaceView: UIView {
             view.layer.cornerRadius = theme.cornerRadius
             view.clipsToBounds = true
         }
-        view.layer.borderWidth = usesNativeInteraction ? 0 : theme.borderWidth
-        view.layer.borderColor = theme.border.uiColor(for: traits).cgColor
+        view.layer.borderWidth = 0
     }
 
     private func configureShadow(theme: ResolvedTheme) {
         layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = usesNativeInteraction ? 0 : Float(theme.shadowOpacity)
-        layer.shadowRadius = usesNativeInteraction ? 0 : theme.shadowRadius
+        let hidesGlassShadow = usesNativeInteraction
+            && !theme.surfaceEffects.glassShadowOverrideEnabled
+        layer.shadowOpacity = hidesGlassShadow ? 0 : Float(theme.shadowOpacity)
+        layer.shadowRadius = hidesGlassShadow ? 0 : theme.shadowRadius
         layer.shadowOffset = CGSize(width: 0, height: 1)
     }
 

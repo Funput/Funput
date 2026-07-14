@@ -52,7 +52,15 @@ struct ThemeColorEditingTests {
         draft.customTheme.theme.geometry.horizontalGap = 10
         draft.customTheme.theme.palette.characterKey = solid(.red)
         draft.customTheme.theme.colorEffects.glassKeyTintEnabled = true
+        draft.customTheme.theme.surfaceEffects.glassBorderOverrideEnabled = true
+        draft.customTheme.theme.surfaceEffects.glassShadowOverrideEnabled = true
+        draft.customTheme.theme.material = .solid
+        draft.customTheme.theme.metrics.keyOpacity = 0.30
+        draft.customTheme.theme.metrics.specialKeyOpacity = 0.35
         draft.customTheme.theme.metrics.cornerRadius = 18
+        draft.customTheme.theme.metrics.borderWidth = 4
+        draft.customTheme.theme.metrics.shadowOpacity = 0.5
+        draft.customTheme.theme.metrics.shadowRadius = 12
         draft.customTheme.theme.metrics.pressedScale = 0.90
 
         draft.resetToBase()
@@ -61,7 +69,14 @@ struct ThemeColorEditingTests {
         #expect(draft.customTheme.theme.geometry == draft.baseTheme.geometry)
         #expect(draft.customTheme.theme.palette == draft.baseTheme.palette)
         #expect(draft.customTheme.theme.colorEffects == draft.baseTheme.colorEffects)
+        #expect(draft.customTheme.theme.surfaceEffects == draft.baseTheme.surfaceEffects)
+        #expect(draft.customTheme.theme.material == draft.baseTheme.material)
+        #expect(draft.customTheme.theme.metrics.keyOpacity == draft.baseTheme.metrics.keyOpacity)
+        #expect(draft.customTheme.theme.metrics.specialKeyOpacity == draft.baseTheme.metrics.specialKeyOpacity)
         #expect(draft.customTheme.theme.metrics.cornerRadius == draft.baseTheme.metrics.cornerRadius)
+        #expect(draft.customTheme.theme.metrics.borderWidth == draft.baseTheme.metrics.borderWidth)
+        #expect(draft.customTheme.theme.metrics.shadowOpacity == draft.baseTheme.metrics.shadowOpacity)
+        #expect(draft.customTheme.theme.metrics.shadowRadius == draft.baseTheme.metrics.shadowRadius)
         #expect(draft.customTheme.theme.metrics.pressedScale == draft.baseTheme.metrics.pressedScale)
     }
 
@@ -83,7 +98,10 @@ struct ThemeColorEditingTests {
     }
 
     private func makeDraft() -> ThemeEditorDraft {
-        let model = AppearanceModel(store: SettingsTestStore(configuration: .default))
+        let model = AppearanceModel(
+            store: SettingsTestStore(configuration: .default),
+            customStore: ThemeTestStore()
+        )
         return model.makeDraft(for: .create(baseThemeID: KeyboardTheme.funputGlass.id))
     }
 

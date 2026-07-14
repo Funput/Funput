@@ -25,8 +25,8 @@ public enum ThemeRuntime {
             label: palette.label,
             secondaryLabel: palette.secondaryLabel,
             accent: palette.accent,
-            keyOpacity: MetricClamp.unit(metrics.keyOpacity),
-            specialKeyOpacity: MetricClamp.unit(metrics.specialKeyOpacity),
+            keyOpacity: resolvedOpacity(metrics.keyOpacity, context: context),
+            specialKeyOpacity: resolvedOpacity(metrics.specialKeyOpacity, context: context),
             cornerRadius: MetricClamp.cornerRadius(metrics.cornerRadius),
             borderWidth: MetricClamp.borderWidth(metrics.borderWidth),
             shadowOpacity: MetricClamp.unit(metrics.shadowOpacity),
@@ -38,7 +38,8 @@ public enum ThemeRuntime {
             horizontalPadding: MetricClamp.horizontalPadding(geometry.horizontalPadding),
             horizontalGap: MetricClamp.horizontalGap(geometry.horizontalGap),
             verticalGap: MetricClamp.verticalGap(geometry.verticalGap),
-            colorEffects: theme.colorEffects
+            colorEffects: theme.colorEffects,
+            surfaceEffects: theme.surfaceEffects
         )
     }
 
@@ -50,5 +51,12 @@ public enum ThemeRuntime {
         context: ThemeResolveContext
     ) -> KeyboardMaterial {
         context.reduceTransparency ? .solid : material
+    }
+
+    private static func resolvedOpacity(
+        _ opacity: Double,
+        context: ThemeResolveContext
+    ) -> Double {
+        context.reduceTransparency ? 1 : MetricClamp.unit(opacity)
     }
 }
