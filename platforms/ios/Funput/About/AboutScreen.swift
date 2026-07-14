@@ -5,28 +5,24 @@ struct AboutScreen: View {
 
     var body: some View {
         AppScreen {
-            AdaptiveGlassCard {
-                VStack(alignment: .leading, spacing: 18) {
-                    FunputIdentityView()
-                    Text("Funput mang đến trải nghiệm gõ tiếng Việt nhanh, rõ ràng và riêng tư.")
-                        .foregroundStyle(.secondary)
-                    Divider()
-                    Label(versionLabel, systemImage: "shippingbox")
-                        .font(.subheadline)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            AboutHero(versionLabel: versionLabel)
 
-            AdaptiveGlassCard {
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("Được xây dựng cho cộng đồng", systemImage: "heart.fill")
-                        .font(.headline)
-                    Text("Funput là dự án mã nguồn mở, tập trung vào trải nghiệm nhập liệu tiếng Việt.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            AboutLinkSection(
+                title: "Tìm hiểu",
+                systemImage: "safari.fill",
+                destinations: AboutDestination.discovery
+            )
+            AboutLinkSection(
+                title: "Cộng đồng & hỗ trợ",
+                systemImage: "person.2.fill",
+                destinations: AboutDestination.support
+            )
+            AboutLinkSection(
+                title: "Quyền riêng tư",
+                systemImage: "hand.raised.fill",
+                destinations: AboutDestination.legal
+            )
+            AboutCommunityFooter()
         }
         .navigationTitle("Giới thiệu")
     }
