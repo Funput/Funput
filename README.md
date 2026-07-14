@@ -19,8 +19,8 @@
 
 **Funput** là bộ gõ tiếng Việt mã nguồn mở, hiện đã phát hành trên macOS,
 Windows và Linux; phiên bản Android đang kiểm thử khép kín trên Google Play,
-và dự kiến hỗ trợ iOS. Mọi nền tảng dùng chung một lõi xử lý để giữ hành vi
-gõ nhất quán.
+còn phiên bản iOS đang ở giai đoạn TestFlight beta. Mọi nền tảng dùng chung
+một lõi xử lý để giữ hành vi gõ nhất quán.
 
 ## Bắt đầu
 
@@ -44,7 +44,7 @@ gõ nhất quán.
   <img src="https://img.shields.io/badge/Linux-Đã_phát_hành-22C55E?style=for-the-badge&logo=linux&logoColor=white" alt="Linux">
   <br>
   <img src="https://img.shields.io/badge/Android-Kiểm_thử_khép_kín-EAB308?style=for-the-badge&logo=android&logoColor=white" alt="Android">
-  <img src="https://img.shields.io/badge/iOS-Đã_lên_kế_hoạch-555555?style=for-the-badge&logo=apple&logoColor=white" alt="iOS">
+  <img src="https://img.shields.io/badge/iOS-TestFlight_beta-2563EB?style=for-the-badge&logo=apple&logoColor=white" alt="iOS: TestFlight beta">
 </p>
 
 ## Giao diện
