@@ -31,6 +31,7 @@ private struct ThemeEditorTabPage: View {
                 case .background:
                     ThemeMaterialControls(draft: $draft)
                     ThemeBackgroundControls(draft: $draft)
+                    ThemeBackgroundStyleControls(draft: $draft)
                 case .keys:
                     ThemeKeyColorControls(draft: $draft)
                     ThemeKeyOpacityControls(draft: $draft)

@@ -55,6 +55,7 @@ struct ThemeColorEditingTests {
         draft.customTheme.theme.surfaceEffects.glassBorderOverrideEnabled = true
         draft.customTheme.theme.surfaceEffects.glassShadowOverrideEnabled = true
         draft.customTheme.theme.material = .solid
+        draft.customTheme.theme.gradientDirection = .horizontal
         draft.customTheme.theme.metrics.keyOpacity = 0.30
         draft.customTheme.theme.metrics.specialKeyOpacity = 0.35
         draft.customTheme.theme.metrics.cornerRadius = 18
@@ -71,6 +72,7 @@ struct ThemeColorEditingTests {
         #expect(draft.customTheme.theme.colorEffects == draft.baseTheme.colorEffects)
         #expect(draft.customTheme.theme.surfaceEffects == draft.baseTheme.surfaceEffects)
         #expect(draft.customTheme.theme.material == draft.baseTheme.material)
+        #expect(draft.customTheme.theme.gradientDirection == draft.baseTheme.gradientDirection)
         #expect(draft.customTheme.theme.metrics.keyOpacity == draft.baseTheme.metrics.keyOpacity)
         #expect(draft.customTheme.theme.metrics.specialKeyOpacity == draft.baseTheme.metrics.specialKeyOpacity)
         #expect(draft.customTheme.theme.metrics.cornerRadius == draft.baseTheme.metrics.cornerRadius)

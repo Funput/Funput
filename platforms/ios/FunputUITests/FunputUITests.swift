@@ -31,6 +31,10 @@ final class FunputUITests: XCTestCase {
         XCTAssertEqual(preview.frame.minY, previewFrame.minY, accuracy: 1)
 
         let tabs = app.segmentedControls["themeEditor.tabs"]
+        tabs.buttons["Nền"].tap()
+        let material = app.segmentedControls["themeEditor.material"]
+        XCTAssertTrue(material.waitForExistence(timeout: 5))
+        material.buttons["Liquid Glass"].tap()
         tabs.buttons["Phím & chữ"].tap()
         let keyScroll = app.scrollViews["themeEditor.scroll.keys"]
         let shadowToggle = app.switches["themeEditor.glassShadowOverride"]
@@ -42,10 +46,17 @@ final class FunputUITests: XCTestCase {
         shadowRadius.adjust(toNormalizedSliderPosition: 0.5)
 
         tabs.buttons["Nền"].tap()
-        let material = app.segmentedControls["themeEditor.material"]
-        XCTAssertTrue(material.waitForExistence(timeout: 5))
         material.buttons["Solid"].tap()
         material.buttons["Liquid Glass"].tap()
+        let backgroundScroll = app.scrollViews["themeEditor.scroll.background"]
+        let direction = app.segmentedControls["themeEditor.gradientDirection"]
+        for _ in 0..<4 where !direction.isHittable { backgroundScroll.swipeUp() }
+        XCTAssertTrue(direction.isHittable)
+        direction.buttons["Dọc"].tap()
+        let backgroundOpacity = app.sliders["themeEditor.backgroundStartOpacity"]
+        for _ in 0..<2 where !backgroundOpacity.isHittable { backgroundScroll.swipeUp() }
+        XCTAssertTrue(backgroundOpacity.isHittable)
+        backgroundOpacity.adjust(toNormalizedSliderPosition: 0.5)
         tabs.buttons["Phím & chữ"].tap()
         XCTAssertTrue(shadowToggle.isHittable)
         XCTAssertEqual(preview.frame.minY, previewFrame.minY, accuracy: 1)

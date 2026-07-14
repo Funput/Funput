@@ -65,9 +65,10 @@ final class KeyboardBackdropView: UIVisualEffectView {
             resolved(startColor, opaque: opaque).cgColor,
             resolved(endColor, opaque: opaque).cgColor,
         ]
+        let points = theme.gradientDirection.layerPoints
         gradientLayer.locations = [0, 1]
-        gradientLayer.startPoint = CGPoint(x: 0.08, y: 0)
-        gradientLayer.endPoint = CGPoint(x: 0.92, y: 1)
+        gradientLayer.startPoint = points.start
+        gradientLayer.endPoint = points.end
     }
 
     private func resolved(_ color: UIColor, opaque: Bool) -> UIColor {

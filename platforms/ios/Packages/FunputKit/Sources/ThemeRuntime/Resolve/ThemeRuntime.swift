@@ -39,7 +39,8 @@ public enum ThemeRuntime {
             horizontalGap: MetricClamp.horizontalGap(geometry.horizontalGap),
             verticalGap: MetricClamp.verticalGap(geometry.verticalGap),
             colorEffects: theme.colorEffects,
-            surfaceEffects: theme.surfaceEffects
+            surfaceEffects: theme.surfaceEffects,
+            gradientDirection: theme.gradientDirection
         )
     }
 

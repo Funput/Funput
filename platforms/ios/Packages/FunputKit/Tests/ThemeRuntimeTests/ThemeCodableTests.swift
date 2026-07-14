@@ -52,6 +52,7 @@ struct ThemeCodableTests {
         custom.theme.colorEffects.pressedOverlayEnabled = true
         custom.theme.surfaceEffects.glassBorderOverrideEnabled = true
         custom.theme.surfaceEffects.glassShadowOverrideEnabled = true
+        custom.theme.gradientDirection = .horizontal
 
         let data = try JSONEncoder().encode(custom)
         #expect(try JSONDecoder().decode(CustomKeyboardTheme.self, from: data) == custom)
@@ -83,5 +84,17 @@ struct ThemeCodableTests {
         let decoded = try JSONDecoder().decode(KeyboardTheme.self, from: data)
         #expect(!decoded.surfaceEffects.glassBorderOverrideEnabled)
         #expect(!decoded.surfaceEffects.glassShadowOverrideEnabled)
+    }
+
+    @Test("Schema v4 receives the legacy diagonal gradient direction")
+    func migratesV4GradientDirection() throws {
+        let encoded = try JSONEncoder().encode(BundledThemes.default)
+        var object = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        object["schemaVersion"] = 4
+        object.removeValue(forKey: "gradientDirection")
+        let data = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(KeyboardTheme.self, from: data)
+        #expect(decoded.gradientDirection == .diagonalRight)
     }
 }

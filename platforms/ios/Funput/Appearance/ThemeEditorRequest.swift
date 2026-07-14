@@ -29,6 +29,7 @@ struct ThemeEditorDraft: Equatable {
         customTheme.theme.palette = baseTheme.palette
         customTheme.theme.colorEffects = baseTheme.colorEffects
         customTheme.theme.surfaceEffects = baseTheme.surfaceEffects
+        customTheme.theme.gradientDirection = baseTheme.gradientDirection
         customTheme.theme.material = baseTheme.material
         customTheme.theme.metrics.keyOpacity = baseTheme.metrics.keyOpacity
         customTheme.theme.metrics.specialKeyOpacity = baseTheme.metrics.specialKeyOpacity

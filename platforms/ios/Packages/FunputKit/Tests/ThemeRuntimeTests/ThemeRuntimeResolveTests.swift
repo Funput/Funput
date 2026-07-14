@@ -97,4 +97,12 @@ struct ThemeRuntimeResolveTests {
 
         #expect(ThemeRuntime.resolve(theme).surfaceEffects == theme.surfaceEffects)
     }
+
+    @Test("Gradient direction passes through runtime resolution")
+    func resolvesGradientDirection() {
+        var theme = BundledThemes.default
+        theme.gradientDirection = .vertical
+
+        #expect(ThemeRuntime.resolve(theme).gradientDirection == .vertical)
+    }
 }

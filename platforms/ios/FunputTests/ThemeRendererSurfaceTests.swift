@@ -32,6 +32,21 @@ struct ThemeRendererSurfaceTests {
         #expect(!backdrop.usesHostMaterial)
     }
 
+    @Test("Backdrop applies every authored gradient direction", arguments: ThemeGradientDirection.allCases)
+    func gradientDirection(_ direction: ThemeGradientDirection) throws {
+        var theme = ResolvedTheme.funputGlass
+        theme.material = .translucent
+        theme.gradientDirection = direction
+        let backdrop = KeyboardBackdropView()
+        backdrop.apply(theme: theme, traits: traits)
+        let gradient = try #require(backdrop.contentView.layer.sublayers?
+            .compactMap { $0 as? CAGradientLayer }.first)
+        let expected = direction.layerPoints
+
+        #expect(gradient.startPoint == expected.start)
+        #expect(gradient.endPoint == expected.end)
+    }
+
     @Test("Glass border and shadow require explicit overrides")
     func glassOverrides() throws {
         guard #available(iOS 26, *) else { return }
