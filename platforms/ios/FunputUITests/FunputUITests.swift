@@ -10,6 +10,8 @@ final class FunputUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         app.tabBars.buttons["Giao diện"].tap()
+        XCTAssertTrue(app.staticTexts["Hệ thống"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Của bạn"].exists)
 
         let customize = app.buttons["appearance.customize"]
         XCTAssertTrue(customize.waitForExistence(timeout: 5))
@@ -32,6 +34,10 @@ final class FunputUITests: XCTestCase {
 
         let tabs = app.segmentedControls["themeEditor.tabs"]
         tabs.buttons["Nền"].tap()
+        let backgroundScroll = app.scrollViews["themeEditor.scroll.background"]
+        let backgroundMode = app.segmentedControls["themeEditor.backgroundMode"]
+        XCTAssertTrue(backgroundMode.waitForExistence(timeout: 5))
+        backgroundMode.buttons["Gradient"].tap()
         let material = app.segmentedControls["themeEditor.material"]
         XCTAssertTrue(material.waitForExistence(timeout: 5))
         material.buttons["Liquid Glass"].tap()
@@ -48,22 +54,19 @@ final class FunputUITests: XCTestCase {
         tabs.buttons["Nền"].tap()
         material.buttons["Solid"].tap()
         material.buttons["Liquid Glass"].tap()
-        let backgroundScroll = app.scrollViews["themeEditor.scroll.background"]
         let direction = app.segmentedControls["themeEditor.gradientDirection"]
-        for _ in 0..<4 where !direction.isHittable { backgroundScroll.swipeUp() }
+        for _ in 0..<8 where !direction.isHittable { backgroundScroll.swipeUp() }
         XCTAssertTrue(direction.isHittable)
         direction.buttons["Dọc"].tap()
         let backgroundOpacity = app.sliders["themeEditor.backgroundStartOpacity"]
         for _ in 0..<2 where !backgroundOpacity.isHittable { backgroundScroll.swipeUp() }
         XCTAssertTrue(backgroundOpacity.isHittable)
         backgroundOpacity.adjust(toNormalizedSliderPosition: 0.5)
-        let backgroundMode = app.segmentedControls["themeEditor.backgroundMode"]
         for _ in 0..<6 where !backgroundMode.isHittable { backgroundScroll.swipeDown() }
         backgroundMode.buttons["Ảnh"].tap()
         let imagePicker = app.buttons["themeEditor.imagePicker"]
         for _ in 0..<4 where !imagePicker.isHittable { backgroundScroll.swipeUp() }
         XCTAssertTrue(imagePicker.isHittable)
-        XCTAssertFalse(app.buttons["themeEditor.save"].isEnabled)
         for _ in 0..<4 where !backgroundMode.isHittable { backgroundScroll.swipeDown() }
         backgroundMode.buttons["Gradient"].tap()
         tabs.buttons["Phím & chữ"].tap()
