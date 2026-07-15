@@ -1,124 +1,54 @@
-//! Single source of truth for Vietnamese vowel glyphs (base + tone variants).
+//! Vietnamese vowel queries (base + tone variants), O(1) per call.
+//!
+//! These run on every keystroke — often once per buffer character — so each
+//! query is a single lookup in the compile-time table built in [`table`]: no
+//! family-list scan, no case folding, no allocation. The human-readable vowel
+//! inventory lives in [`table`] as the single source of truth.
 
-/// One vowel family: base (no tone) + five tone marks (sắc, huyền, hỏi, ngã, nặng).
-struct VowelFamily {
-    base: char,
-    tones: [char; 5],
-}
+mod table;
 
-const VOWEL_FAMILIES: &[VowelFamily] = &[
-    VowelFamily {
-        base: 'a',
-        tones: ['á', 'à', 'ả', 'ã', 'ạ'],
-    },
-    VowelFamily {
-        base: 'ă',
-        tones: ['ắ', 'ằ', 'ẳ', 'ẵ', 'ặ'],
-    },
-    VowelFamily {
-        base: 'â',
-        tones: ['ấ', 'ầ', 'ẩ', 'ẫ', 'ậ'],
-    },
-    VowelFamily {
-        base: 'e',
-        tones: ['é', 'è', 'ẻ', 'ẽ', 'ẹ'],
-    },
-    VowelFamily {
-        base: 'ê',
-        tones: ['ế', 'ề', 'ể', 'ễ', 'ệ'],
-    },
-    VowelFamily {
-        base: 'i',
-        tones: ['í', 'ì', 'ỉ', 'ĩ', 'ị'],
-    },
-    VowelFamily {
-        base: 'o',
-        tones: ['ó', 'ò', 'ỏ', 'õ', 'ọ'],
-    },
-    VowelFamily {
-        base: 'ô',
-        tones: ['ố', 'ồ', 'ổ', 'ỗ', 'ộ'],
-    },
-    VowelFamily {
-        base: 'ơ',
-        tones: ['ớ', 'ờ', 'ở', 'ỡ', 'ợ'],
-    },
-    VowelFamily {
-        base: 'u',
-        tones: ['ú', 'ù', 'ủ', 'ũ', 'ụ'],
-    },
-    VowelFamily {
-        base: 'ư',
-        tones: ['ứ', 'ừ', 'ử', 'ữ', 'ự'],
-    },
-    VowelFamily {
-        base: 'y',
-        tones: ['ý', 'ỳ', 'ỷ', 'ỹ', 'ỵ'],
-    },
-];
-
-fn fold_lower(c: char) -> char {
-    char::to_lowercase(c).next().unwrap_or(c)
-}
-
-fn with_case(template: char, reference: char) -> char {
-    if reference.is_uppercase() {
-        char::to_uppercase(template).next().unwrap_or(template)
-    } else {
-        template
-    }
-}
-
-fn family_of(c: char) -> Option<&'static VowelFamily> {
-    let lower = fold_lower(c);
-    VOWEL_FAMILIES
-        .iter()
-        .find(|family| family.base == lower || family.tones.contains(&lower))
-}
+use table::{entry, glyph};
 
 /// Returns true if `c` is a vowel (ASCII or precomposed Vietnamese).
 pub fn is_vowel(c: char) -> bool {
-    family_of(c).is_some()
+    entry(c).is_some()
 }
 
 /// Strip tone from a vowel, keeping shape (e.g. `á` → `a`, `ấ` → `â`).
 pub fn vowel_stem(c: char) -> Option<char> {
-    let family = family_of(c)?;
-    Some(with_case(family.base, c))
+    let e = entry(c)?;
+    Some(glyph(e.family, 0, e.upper))
 }
 
-/// Apply tone by index: 0 = sắc … 4 = nặng.
+/// Apply tone by index: 0 = sắc … 4 = nặng. `base` must be toneless (`a`, `ơ`,
+/// …); a vowel already carrying a tone yields `None`.
 pub fn toned_vowel(base: char, tone_index: usize) -> Option<char> {
-    let lower = fold_lower(base);
-    let family = VOWEL_FAMILIES.iter().find(|f| f.base == lower)?;
-    let toned = *family.tones.get(tone_index)?;
-    Some(with_case(toned, base))
+    let e = entry(base)?;
+    if e.index != 0 || tone_index >= 5 {
+        return None;
+    }
+    Some(glyph(e.family, tone_index + 1, e.upper))
 }
 
 /// Tone index on a vowel, if any (0 = sắc … 4 = nặng).
 pub fn tone_index_on_vowel(c: char) -> Option<usize> {
-    let lower = fold_lower(c);
-    let family = family_of(c)?;
-    if lower == family.base {
-        return None;
-    }
-    family.tones.iter().position(|&t| t == lower)
+    entry(c)?.index.checked_sub(1)
 }
 
 #[cfg(test)]
 mod tests {
+    use super::table::VOWEL_FAMILIES;
     use super::*;
 
     #[test]
     fn table_covers_all_stems_and_tones() {
         for family in VOWEL_FAMILIES {
-            assert!(is_vowel(family.base));
-            for &toned in &family.tones {
+            let (base, tones) = (family[0], &family[1..]);
+            assert!(is_vowel(base));
+            for (i, &toned) in tones.iter().enumerate() {
                 assert!(is_vowel(toned));
-                assert_eq!(vowel_stem(toned), Some(family.base));
-            }
-            for (i, &toned) in family.tones.iter().enumerate() {
-                assert_eq!(toned_vowel(family.base, i), Some(toned));
+                assert_eq!(vowel_stem(toned), Some(base));
+                assert_eq!(toned_vowel(base, i), Some(toned));
                 assert_eq!(tone_index_on_vowel(toned), Some(i));
             }
         }
@@ -129,5 +59,22 @@ mod tests {
         assert_eq!(toned_vowel('A', 0), Some('Á'));
         assert_eq!(vowel_stem('Ắ'), Some('Ă'));
         assert_eq!(tone_index_on_vowel('Ứ'), Some(0));
+    }
+
+    #[test]
+    fn toned_input_rejected_by_toned_vowel() {
+        // `toned_vowel` takes a toneless base; re-toning goes through
+        // `vowel_stem` first (see `marks::apply_tone_to_vowel`).
+        assert_eq!(toned_vowel('á', 1), None);
+        assert_eq!(toned_vowel('a', 5), None); // tone index out of range
+    }
+
+    #[test]
+    fn non_vowels_rejected() {
+        for ch in ['b', 'đ', 'Đ', '9', ' '] {
+            assert!(!is_vowel(ch), "{ch}");
+            assert_eq!(vowel_stem(ch), None, "{ch}");
+            assert_eq!(tone_index_on_vowel(ch), None, "{ch}");
+        }
     }
 }
