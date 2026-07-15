@@ -8,7 +8,7 @@ use super::{models, settings_window};
 use crate::compose::FieldComposer;
 use crate::config_transfer::{self, ImportSummary};
 use crate::settings::{FlipHotkey, Hotkey, Method, ToneStyle};
-use crate::{commands, shell, Compose, SettingsWindow};
+use crate::{commands, recorder, shell, Compose, SettingsWindow};
 
 thread_local! {
     /// Vietnamese composer for the gõ tắt expansion field (UI thread only).
@@ -43,6 +43,7 @@ pub(super) fn wire(window: &SettingsWindow) {
             if let Some(window) = weak.upgrade() {
                 window.set_hotkey(value);
                 window.set_hotkey_caps(models::caps(hotkey));
+                window.set_hotkey_conflict(false);
             }
         }
     });
@@ -54,8 +55,35 @@ pub(super) fn wire(window: &SettingsWindow) {
             if let Some(window) = weak.upgrade() {
                 window.set_flip_hotkey(value);
                 window.set_flip_hotkey_caps(models::flip_caps(hotkey));
+                window.set_flip_hotkey_conflict(false);
             }
         }
+    });
+
+    let weak = window.as_weak();
+    window.on_record_combo(move |kind, text, ctrl, alt, shift, win| {
+        let Some(recorded) = recorder::record(&text, ctrl, alt, shift, win) else {
+            return false; // no Ctrl/Alt/Win, or no VK for this key — recorder shows the hint
+        };
+        let Some(window) = weak.upgrade() else {
+            return false;
+        };
+        match kind.as_str() {
+            "toggle" => {
+                commands::set_toggle_combo(recorded.combo.clone());
+                window.set_hotkey("custom".into());
+                window.set_hotkey_caps(models::combo_caps(&recorded.combo));
+                window.set_hotkey_conflict(recorded.system_conflict);
+            }
+            "flip" => {
+                commands::set_flip_combo(recorded.combo.clone());
+                window.set_flip_hotkey("custom".into());
+                window.set_flip_hotkey_caps(models::combo_caps(&recorded.combo));
+                window.set_flip_hotkey_conflict(recorded.system_conflict);
+            }
+            _ => return false,
+        }
+        true
     });
 
     window.on_set_smart(commands::set_smart_restore);
@@ -81,7 +109,10 @@ pub(super) fn wire(window: &SettingsWindow) {
 fn wire_config_transfer(window: &SettingsWindow) {
     window.on_export_config(|| {
         let Some(path) = rfd::FileDialog::new()
-            .set_file_name(format!("Funput-config-{}.json", config_transfer::today_stamp()))
+            .set_file_name(format!(
+                "Funput-config-{}.json",
+                config_transfer::today_stamp()
+            ))
             .add_filter("JSON", &["json"])
             .save_file()
         else {
@@ -94,7 +125,10 @@ fn wire_config_transfer(window: &SettingsWindow) {
 
     let weak = window.as_weak();
     window.on_import_config(move || {
-        let Some(path) = rfd::FileDialog::new().add_filter("JSON", &["json"]).pick_file() else {
+        let Some(path) = rfd::FileDialog::new()
+            .add_filter("JSON", &["json"])
+            .pick_file()
+        else {
             return;
         };
         match commands::import_config(&path) {

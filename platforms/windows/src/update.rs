@@ -31,7 +31,8 @@ const PUBLIC_ED_KEY: &str = "wDWk569Lmn9WmjPn1ZwHMTp/KW+nfaaNIvtrYSV9nHU=";
 
 /// Fixed update feed. The `latest/download` path always redirects to the asset on
 /// the most recent (non-prerelease) GitHub Release.
-const FEED_URL: &str = "https://github.com/Funput/Funput/releases/latest/download/funput-windows.json";
+const FEED_URL: &str =
+    "https://github.com/Funput/Funput/releases/latest/download/funput-windows.json";
 
 /// The version this build reports — the single source of truth stamped from the
 /// release tag into `Cargo.toml`.
@@ -182,7 +183,9 @@ fn verify_with_key(bytes: &[u8], ed_signature: &str, public_key_b64: &str) -> Re
         .ok_or(Error::BadSignature)?;
     let verifying_key = VerifyingKey::from_bytes(&key_bytes).map_err(|_| Error::BadSignature)?;
 
-    let sig_bytes = BASE64.decode(ed_signature).map_err(|_| Error::BadSignature)?;
+    let sig_bytes = BASE64
+        .decode(ed_signature)
+        .map_err(|_| Error::BadSignature)?;
     let signature = Signature::from_slice(&sig_bytes).map_err(|_| Error::BadSignature)?;
 
     verifying_key

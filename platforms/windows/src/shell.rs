@@ -9,7 +9,9 @@ use std::sync::{Mutex, OnceLock};
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
 use funput_engine::{Engine, ImeResult};
 
-use crate::settings::{ExcludedApp, FlipHotkey, Hotkey, Method, Settings, Shortcut, ToneStyle};
+use crate::settings::{
+    ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, Settings, Shortcut, ToneStyle,
+};
 
 /// Tag stamped into `dwExtraInfo` of every event we synthesize via `SendInput`, so
 /// the hook can recognize and ignore its own injected keystrokes (no re-entrancy).
@@ -116,6 +118,14 @@ pub fn toggle_hotkey() -> Hotkey {
 }
 pub fn flip_hotkey() -> FlipHotkey {
     with(|s| s.settings.flip_hotkey)
+}
+/// The user-recorded toggle combo, if one is set (overrides the preset).
+pub fn toggle_combo() -> Option<KeyCombo> {
+    with(|s| s.settings.toggle_combo.clone())
+}
+/// The user-recorded flip combo, if one is set (overrides the preset).
+pub fn flip_combo() -> Option<KeyCombo> {
+    with(|s| s.settings.flip_combo.clone())
 }
 pub fn is_composing() -> bool {
     with(|s| !s.engine.buffer().is_empty())
@@ -271,9 +281,19 @@ pub fn arm_capitalization() {
     with(|s| s.engine.arm_capitalization());
 }
 
+/// Picking a preset also clears any recorded custom combo — the two are
+/// alternatives, and the combo (when present) always wins in the hook.
 pub fn set_toggle_hotkey(hotkey: Hotkey) {
     with(|s| {
         s.settings.toggle_hotkey = hotkey;
+        s.settings.toggle_combo = None;
+        s.settings.save();
+    });
+}
+
+pub fn set_toggle_combo(combo: KeyCombo) {
+    with(|s| {
+        s.settings.toggle_combo = Some(combo);
         s.settings.save();
     });
 }
@@ -281,6 +301,14 @@ pub fn set_toggle_hotkey(hotkey: Hotkey) {
 pub fn set_flip_hotkey(hotkey: FlipHotkey) {
     with(|s| {
         s.settings.flip_hotkey = hotkey;
+        s.settings.flip_combo = None;
+        s.settings.save();
+    });
+}
+
+pub fn set_flip_combo(combo: KeyCombo) {
+    with(|s| {
+        s.settings.flip_combo = Some(combo);
         s.settings.save();
     });
 }

@@ -68,7 +68,7 @@ pub fn install() {
 
     // Keep the tray icon/tooltip in sync when VI/EN flips from the keyboard hotkey
     // or per-app auto-switch — both fire on this (hook) thread.
-    hook::set_on_toggle(|on| refresh(on));
+    hook::set_on_toggle(refresh);
 }
 
 /// Drain pending tray + menu events. Call after each `DispatchMessageW` so the

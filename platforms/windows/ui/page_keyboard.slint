@@ -2,14 +2,39 @@
 
 import { Palette } from "std-widgets.slint";
 import { Theme, Card, Row, Segmented, KeyCap } from "theme.slint";
+import { RecorderPanel } from "recorder.slint";
 
 export component KeyboardPage inherits VerticalLayout {
     in property <string> hotkey;
     in property <[string]> hotkey-caps;
+    in property <bool> hotkey-conflict;
     in property <string> flip-hotkey;
     in property <[string]> flip-hotkey-caps;
+    in property <bool> flip-hotkey-conflict;
     callback pick-hotkey(string);
     callback pick-flip-hotkey(string);
+    // Recorder result → Rust (kind, key text, ctrl, alt, shift, win). Returns
+    // true when the combo was accepted and stored.
+    callback record-combo(string, string, bool, bool, bool, bool) -> bool;
+
+    private property <string> rec-kind: "toggle";
+    private property <int> rec-reset-token: 0;
+
+    recorder-popup := PopupWindow {
+        x: (root.width - 300px) / 2;
+        y: 96px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+        panel := RecorderPanel {
+            kind: root.rec-kind;
+            reset-token: root.rec-reset-token;
+            recorded(kind, text, ctrl, alt, shift, win) => {
+                root.record-combo(kind, text, ctrl, alt, shift, win)
+            }
+            done => {
+                recorder-popup.close();
+            }
+        }
+    }
 
     spacing: Theme.sp-md;
     Text { text: "Phím chuyển VI / EN"; font-size: 20px; font-weight: 700; color: Palette.foreground; }
@@ -22,9 +47,18 @@ export component KeyboardPage inherits VerticalLayout {
                     { id: "ctrl_backtick", label: "Ctrl `" },
                     { id: "ctrl_space", label: "Ctrl Space" },
                     { id: "alt_shift", label: "Alt Shift" },
+                    { id: "custom", label: "Tùy chỉnh…" },
                 ];
                 current: root.hotkey;
-                changed(v) => { root.pick-hotkey(v); }
+                changed(v) => {
+                    if v == "custom" {
+                        root.rec-kind = "toggle";
+                        root.rec-reset-token += 1;
+                        recorder-popup.show();
+                    } else {
+                        root.pick-hotkey(v);
+                    }
+                }
             }
         }
         Rectangle { height: 1px; background: Palette.border; }
@@ -33,6 +67,15 @@ export component KeyboardPage inherits VerticalLayout {
             HorizontalLayout {
                 spacing: Theme.sp-xs;
                 for cap in root.hotkey-caps: KeyCap { label: cap; }
+            }
+        }
+        if root.hotkey-conflict: Row {
+            title: "";
+            Text {
+                text: "⚠ Trùng phím tắt hệ thống — Windows có thể xử lý song song.";
+                font-size: 12px;
+                color: #c27803;
+                wrap: word-wrap;
             }
         }
     }
@@ -47,9 +90,18 @@ export component KeyboardPage inherits VerticalLayout {
                     { id: "off", label: "Tắt" },
                     { id: "ctrl_shift_z", label: "Ctrl Shift Z" },
                     { id: "ctrl_shift_x", label: "Ctrl Shift X" },
+                    { id: "custom", label: "Tùy chỉnh…" },
                 ];
                 current: root.flip-hotkey;
-                changed(v) => { root.pick-flip-hotkey(v); }
+                changed(v) => {
+                    if v == "custom" {
+                        root.rec-kind = "flip";
+                        root.rec-reset-token += 1;
+                        recorder-popup.show();
+                    } else {
+                        root.pick-flip-hotkey(v);
+                    }
+                }
             }
         }
         Rectangle { height: 1px; background: Palette.border; }
@@ -58,6 +110,15 @@ export component KeyboardPage inherits VerticalLayout {
             HorizontalLayout {
                 spacing: Theme.sp-xs;
                 for cap in root.flip-hotkey-caps: KeyCap { label: cap; }
+            }
+        }
+        if root.flip-hotkey-conflict: Row {
+            title: "";
+            Text {
+                text: "⚠ Trùng phím tắt hệ thống — Windows có thể xử lý song song.";
+                font-size: 12px;
+                color: #c27803;
+                wrap: word-wrap;
             }
         }
     }

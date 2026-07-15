@@ -17,15 +17,13 @@ pub fn allow_dark_menus() {
     const ALLOW_DARK: i32 = 1;
 
     unsafe {
-        // Null-terminated literal → PCSTR, without relying on the `s!` macro path.
-        let Ok(uxtheme) = LoadLibraryA(PCSTR(b"uxtheme.dll\0".as_ptr())) else {
+        let Ok(uxtheme) = LoadLibraryA(PCSTR(c"uxtheme.dll".as_ptr().cast())) else {
             return;
         };
         // The two uxtheme functions are exported by ordinal only (no public names),
         // so look them up via MAKEINTRESOURCE-style ordinal pointers.
         if let Some(proc) = GetProcAddress(uxtheme, PCSTR(135 as *const u8)) {
-            let set_preferred_app_mode: extern "system" fn(i32) -> i32 =
-                std::mem::transmute(proc);
+            let set_preferred_app_mode: extern "system" fn(i32) -> i32 = std::mem::transmute(proc);
             set_preferred_app_mode(ALLOW_DARK);
         }
         if let Some(proc) = GetProcAddress(uxtheme, PCSTR(136 as *const u8)) {

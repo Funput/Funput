@@ -2,11 +2,15 @@
 //! binds to. Field names serialize to camelCase — unchanged from the Tauri build,
 //! so an existing settings file keeps loading after the Slint migration.
 
+mod combo;
+
 use std::fs;
 use std::path::PathBuf;
 
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
 use serde::{Deserialize, Serialize};
+
+pub use combo::KeyCombo;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -192,10 +196,17 @@ pub struct Settings {
     #[serde(default)]
     pub auto_capitalize: bool,
     pub toggle_hotkey: Hotkey,
+    /// User-recorded toggle combo ("Tùy chỉnh") — overrides `toggle_hotkey` when
+    /// present; picking a preset clears it. Absent in older settings files.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toggle_combo: Option<KeyCombo>,
     /// Hotkey to flip the word being composed VN↔raw. `#[serde(default)]` (Off) keeps
     /// older settings files loadable.
     #[serde(default)]
     pub flip_hotkey: FlipHotkey,
+    /// User-recorded flip combo — overrides `flip_hotkey` when present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flip_combo: Option<KeyCombo>,
     pub launch_at_login: bool,
     pub has_completed_onboarding: bool,
     /// Apps that default to English on focus. `#[serde(default)]` keeps older
@@ -219,7 +230,9 @@ impl Default for Settings {
             spell_check: false,
             auto_capitalize: false,
             toggle_hotkey: Hotkey::CtrlBacktick,
+            toggle_combo: None,
             flip_hotkey: FlipHotkey::Off,
+            flip_combo: None,
             launch_at_login: false,
             has_completed_onboarding: false,
             excluded_apps: Vec::new(),

@@ -84,6 +84,40 @@ fn ctrl_presets_match_exact_modifiers_only() {
 }
 
 #[test]
+fn combo_requires_exact_modifier_set() {
+    let combo = KeyCombo {
+        vk: 0x56, // V
+        ctrl: true,
+        alt: false,
+        shift: true,
+        win: false,
+        label: "V".into(),
+    };
+    assert!(matches_combo(
+        VIRTUAL_KEY(0x56),
+        m(true, false, true, false),
+        &combo
+    ));
+    // Missing or extra modifiers → no match.
+    assert!(!matches_combo(
+        VIRTUAL_KEY(0x56),
+        m(true, false, false, false),
+        &combo
+    ));
+    assert!(!matches_combo(
+        VIRTUAL_KEY(0x56),
+        m(true, true, true, false),
+        &combo
+    ));
+    // Different main key → no match.
+    assert!(!matches_combo(
+        VIRTUAL_KEY(0x58),
+        m(true, false, true, false),
+        &combo
+    ));
+}
+
+#[test]
 fn flip_matches_ctrl_shift_letter() {
     let ctrl_shift = m(true, false, true, false);
     assert!(is_flip(

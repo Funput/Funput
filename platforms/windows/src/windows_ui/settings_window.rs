@@ -6,7 +6,7 @@ use slint::{ComponentHandle, Weak};
 
 use super::models;
 use super::settings_callbacks;
-use crate::{commands, shell, SettingsWindow};
+use crate::{commands, recorder, shell, SettingsWindow};
 
 thread_local! {
     static WINDOW: RefCell<Option<Weak<SettingsWindow>>> = const { RefCell::new(None) };
@@ -34,10 +34,31 @@ pub(super) fn populate(window: &SettingsWindow) {
     let settings = shell::snapshot();
     window.set_method(settings.method.id().into());
     window.set_tone_style(settings.tone_style.id().into());
-    window.set_hotkey(settings.toggle_hotkey.id().into());
-    window.set_hotkey_caps(models::caps(settings.toggle_hotkey));
-    window.set_flip_hotkey(settings.flip_hotkey.id().into());
-    window.set_flip_hotkey_caps(models::flip_caps(settings.flip_hotkey));
+    match &settings.toggle_combo {
+        // A recorded combo overrides the preset — the segmented shows "custom".
+        Some(combo) => {
+            window.set_hotkey("custom".into());
+            window.set_hotkey_caps(models::combo_caps(combo));
+            window.set_hotkey_conflict(recorder::system_conflict(combo));
+        }
+        None => {
+            window.set_hotkey(settings.toggle_hotkey.id().into());
+            window.set_hotkey_caps(models::caps(settings.toggle_hotkey));
+            window.set_hotkey_conflict(false);
+        }
+    }
+    match &settings.flip_combo {
+        Some(combo) => {
+            window.set_flip_hotkey("custom".into());
+            window.set_flip_hotkey_caps(models::combo_caps(combo));
+            window.set_flip_hotkey_conflict(recorder::system_conflict(combo));
+        }
+        None => {
+            window.set_flip_hotkey(settings.flip_hotkey.id().into());
+            window.set_flip_hotkey_caps(models::flip_caps(settings.flip_hotkey));
+            window.set_flip_hotkey_conflict(false);
+        }
+    }
     window.set_smart_restore(settings.smart_restore);
     window.set_eager_restore(settings.eager_restore);
     window.set_spell_check(settings.spell_check);

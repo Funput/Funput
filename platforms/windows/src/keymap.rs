@@ -10,7 +10,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 };
 use windows::Win32::UI::WindowsAndMessaging::KBDLLHOOKSTRUCT;
 
-use crate::settings::{FlipHotkey, Hotkey};
+use crate::settings::{FlipHotkey, Hotkey, KeyCombo};
 
 fn async_down(vk: VIRTUAL_KEY) -> bool {
     (unsafe { GetAsyncKeyState(vk.0 as i32) } as u16 & 0x8000) != 0
@@ -60,6 +60,17 @@ pub fn is_toggle(vk: VIRTUAL_KEY, mods: Mods, hotkey: Hotkey) -> bool {
             alt && shift && !mods.ctrl && !mods.win && (vk == VK_SHIFT || vk == VK_MENU)
         }
     }
+}
+
+/// Whether this keydown matches a user-recorded combo: the main key plus the
+/// *exact* modifier set (a combo's main key is never a modifier, so the async
+/// modifier state is already settled by the time it fires).
+pub fn matches_combo(vk: VIRTUAL_KEY, mods: Mods, combo: &KeyCombo) -> bool {
+    normalize_vk(vk).0 == combo.vk
+        && mods.ctrl == combo.ctrl
+        && mods.alt == combo.alt
+        && mods.shift == combo.shift
+        && mods.win == combo.win
 }
 
 /// Whether this keydown matches the configured flip hotkey. Letter virtual-keys are

@@ -39,7 +39,12 @@ pub fn set_on_toggle(f: impl Fn(bool) + Send + Sync + 'static) {
 pub fn run() {
     unsafe {
         let hmod = GetModuleHandleW(None).unwrap_or_default();
-        let hook = SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_proc), Some(HINSTANCE(hmod.0)), 0);
+        let hook = SetWindowsHookExW(
+            WH_KEYBOARD_LL,
+            Some(keyboard_proc),
+            Some(HINSTANCE(hmod.0)),
+            0,
+        );
         if hook.is_err() {
             eprintln!("Funput: failed to install keyboard hook: {hook:?}");
             return;
@@ -50,7 +55,8 @@ pub fn run() {
         // `KeyKind::Flush` path) — otherwise the next keystroke diffs against a stale
         // word at the new caret and corrupts neighbouring text. Delivered to this
         // thread's message pump, so it shares the engine via `shell` like the others.
-        let mouse_hook = SetWindowsHookExW(WH_MOUSE_LL, Some(mouse_proc), Some(HINSTANCE(hmod.0)), 0);
+        let mouse_hook =
+            SetWindowsHookExW(WH_MOUSE_LL, Some(mouse_proc), Some(HINSTANCE(hmod.0)), 0);
         if mouse_hook.is_err() {
             // Non-fatal: typing still works, only mouse-click flush is unavailable.
             eprintln!("Funput: failed to install mouse hook: {mouse_hook:?}");
@@ -205,7 +211,12 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
     let vk = VIRTUAL_KEY(kbd.vkCode as u16);
     let mods = keymap::read_mods();
 
-    if keymap::is_toggle(vk, mods, shell::toggle_hotkey()) {
+    // A recorded custom combo overrides the preset; otherwise match the preset.
+    let toggle_hit = match shell::toggle_combo() {
+        Some(combo) => keymap::matches_combo(vk, mods, &combo),
+        None => keymap::is_toggle(vk, mods, shell::toggle_hotkey()),
+    };
+    if toggle_hit {
         let on = shell::toggle_enabled_hotkey();
         if let Some(cb) = ON_TOGGLE.get() {
             cb(on);
@@ -225,7 +236,11 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
 
     // Flip the word being composed VN↔raw. Same inject path as composing; swallow
     // the hotkey even on a no-op so it never leaks to the app.
-    if keymap::is_flip(vk, mods, shell::flip_hotkey()) {
+    let flip_hit = match shell::flip_combo() {
+        Some(combo) => keymap::matches_combo(vk, mods, &combo),
+        None => keymap::is_flip(vk, mods, shell::flip_hotkey()),
+    };
+    if flip_hit {
         let plan = plan_inject(&shell::flip_composing());
         if !plan.is_noop() {
             if shell::foreground_is_chrome() {
@@ -262,8 +277,8 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
         }
         KeyKind::Flush => {
             shell::clear(); // commit what is shown; nav/Enter/Tab/shortcut passes
-            // Enter starts a new line → arm auto-capitalize (no-op unless the feature
-            // is on). The engine never sees the newline itself on this path.
+                            // Enter starts a new line → arm auto-capitalize (no-op unless the feature
+                            // is on). The engine never sees the newline itself on this path.
             if vk == VK_RETURN {
                 shell::arm_capitalization();
             }

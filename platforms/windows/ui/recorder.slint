@@ -1,0 +1,124 @@
+// The "Tùy chỉnh" shortcut recorder panel: hold Ctrl/Alt/Win and press a key.
+// Mirrors the macOS ShortcutRecorder popover — live preview of held modifiers,
+// Esc cancels, red hint when the combo lacks a required modifier. Validation
+// and storage happen in Rust (`recorder::record`) behind the `recorded`
+// callback; this panel only captures the event.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, KeyCap } from "theme.slint";
+
+export component RecorderPanel inherits Rectangle {
+    // "toggle" | "flip" — passed back so one recorder serves both hotkeys.
+    in property <string> kind;
+    // Rust validates & stores; returns true when the combo was accepted.
+    callback recorded(string, string, bool, bool, bool, bool) -> bool;
+    // Fired when the popup should close (combo stored, or Esc).
+    callback done();
+    // The popup instance is reused. Its owner increments this before every show
+    // so stale validation/modifier state does not leak into the next recording.
+    in property <int> reset-token;
+    changed reset-token => {
+        root.invalid = false;
+        root.held-ctrl = false;
+        root.held-alt = false;
+        root.held-shift = false;
+        root.held-win = false;
+    }
+
+    private property <bool> invalid: false;
+    private property <bool> held-ctrl: false;
+    private property <bool> held-alt: false;
+    private property <bool> held-shift: false;
+    private property <bool> held-win: false;
+
+    width: 300px;
+    height: layout.preferred-height;
+    background: Theme.window-base;
+    border-radius: Theme.r-card;
+    border-width: 1px;
+    border-color: Theme.card-border;
+    drop-shadow-blur: 22px;
+    drop-shadow-color: Theme.shadow;
+
+    FocusScope {
+        init => {
+            self.focus();
+        }
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.done();
+                return accept;
+            }
+            // A modifier's own keydown lands here too — feed the live preview.
+            if event.text == Key.Control || event.text == Key.ControlR
+                || event.text == Key.Shift || event.text == Key.ShiftR
+                || event.text == Key.Alt || event.text == Key.AltGr
+                || event.text == Key.Meta || event.text == Key.MetaR {
+                // Slint exposes AltGr separately on Windows, while the low-level
+                // Win32 hook observes it as Ctrl+Alt. Preserve that exact modifier
+                // set so the recorded combo can match later.
+                root.held-ctrl = event.modifiers.control
+                    || event.text == Key.Control || event.text == Key.ControlR
+                    || event.text == Key.AltGr;
+                root.held-alt = event.modifiers.alt
+                    || event.text == Key.Alt || event.text == Key.AltGr;
+                root.held-shift = event.modifiers.shift
+                    || event.text == Key.Shift || event.text == Key.ShiftR;
+                root.held-win = event.modifiers.meta
+                    || event.text == Key.Meta || event.text == Key.MetaR;
+                root.invalid = false;
+                return accept;
+            }
+            if root.recorded(root.kind, event.text,
+                event.modifiers.control || root.held-ctrl,
+                event.modifiers.alt || root.held-alt,
+                event.modifiers.shift || root.held-shift,
+                event.modifiers.meta || root.held-win) {
+                root.done();
+            } else {
+                root.invalid = true;
+            }
+            accept
+        }
+        key-released(event) => {
+            root.held-ctrl = event.modifiers.control
+                && event.text != Key.Control && event.text != Key.ControlR
+                && event.text != Key.AltGr;
+            root.held-alt = event.modifiers.alt
+                && event.text != Key.Alt && event.text != Key.AltGr;
+            root.held-shift = event.modifiers.shift
+                && event.text != Key.Shift && event.text != Key.ShiftR;
+            root.held-win = event.modifiers.meta
+                && event.text != Key.Meta && event.text != Key.MetaR;
+            accept
+        }
+
+        layout := VerticalLayout {
+            padding: Theme.sp-md;
+            spacing: Theme.sp-sm;
+            Text {
+                text: "Nhấn tổ hợp phím mới";
+                font-size: 14px;
+                font-weight: 700;
+                color: Palette.foreground;
+            }
+            HorizontalLayout {
+                spacing: Theme.sp-xs;
+                alignment: start;
+                if root.held-ctrl: KeyCap { label: "Ctrl"; }
+                if root.held-alt: KeyCap { label: "Alt"; }
+                if root.held-shift: KeyCap { label: "Shift"; }
+                if root.held-win: KeyCap { label: "Win"; }
+                KeyCap { label: "?"; }
+            }
+            Text {
+                text: root.invalid
+                    ? "Cần kèm Ctrl / Alt / Win (Shift đơn lẻ là gõ thường)"
+                    : "Giữ Ctrl / Alt / Win rồi nhấn phím · Esc để huỷ";
+                font-size: 12px;
+                color: root.invalid ? #d13438 : Theme.subtle;
+                wrap: word-wrap;
+            }
+        }
+    }
+}

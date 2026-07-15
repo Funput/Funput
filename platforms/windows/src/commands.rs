@@ -6,7 +6,7 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use crate::config_transfer::{self, ConfigError, ImportSummary};
-use crate::settings::{ExcludedApp, FlipHotkey, Hotkey, Method, ToneStyle};
+use crate::settings::{ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
 use crate::update::{self, Manifest};
 use crate::{shell, windows_ui};
 
@@ -40,6 +40,14 @@ pub fn set_toggle_hotkey(hotkey: Hotkey) {
 
 pub fn set_flip_hotkey(hotkey: FlipHotkey) {
     shell::set_flip_hotkey(hotkey);
+}
+
+pub fn set_toggle_combo(combo: KeyCombo) {
+    shell::set_toggle_combo(combo);
+}
+
+pub fn set_flip_combo(combo: KeyCombo) {
+    shell::set_flip_combo(combo);
 }
 
 pub fn complete_onboarding() {
