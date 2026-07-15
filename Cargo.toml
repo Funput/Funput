@@ -9,13 +9,14 @@ members = [
     "crates/funput-term",
     "crates/funput-desktop",
 ]
-# The Windows shell pulls in `tauri` + the `windows` crate, which only build on a
-# Windows target. Keep it out of the default workspace so `cargo test --workspace`
-# stays green on macOS/Linux dev machines; build it from its own dir on Windows.
+# Platform shells excluded from the default workspace so `cargo test --workspace`
+# stays green on every dev machine; each is built from its own dir on its own OS.
+# NOTE: excluded packages do NOT inherit the [profile.release] below — each keeps
+# an equivalent profile in its own manifest.
 exclude = [
-    "platforms/windows/src-tauri",
-    # GTK4 Settings app: links system gtk4/libadwaita (Linux-only). Build from its
-    # own dir on Linux so `cargo test --workspace` stays green on macOS/Windows.
+    # Windows shell: pulls in slint + the `windows` crate (Windows target only).
+    "platforms/windows",
+    # GTK4 Settings app: links system gtk4/libadwaita (Linux only).
     "platforms/linux/settings-gtk",
 ]
 
@@ -24,3 +25,14 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 authors = ["Funput"]
+
+# Shipped on all five platforms, so the release profile optimizes for speed first
+# and binary size second (measured: libfunput_ffi.dylib 477 KB → 369 KB).
+#
+# Do NOT set `panic = "abort"`: the FFI/JNI boundaries rely on `catch_unwind` to
+# turn an engine panic into a dropped keystroke instead of killing the host IME
+# process (see funput-ffi/src/support.rs).
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = "symbols"

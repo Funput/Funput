@@ -63,9 +63,9 @@ release build:
 
 | Component / API | Measured scope | Telex | VNI |
 |---|---|---:|---:|
-| [`funput-core::apply`](crates/funput-core) | Telex/VNI transformation core | 0.230 µs/key | 0.204 µs/key |
-| [`funput-engine::Engine::process_char`](crates/funput-engine) | Full pipeline (boundaries + English restore) | 0.52 µs/key | 0.49 µs/key |
-| [`funput-ffi::{funput_process_char, funput_buffer}`](crates/funput-ffi) | Engine through the C ABI + composed-buffer reads | 0.55 µs/key | 0.51 µs/key |
+| [`funput-core::apply`](crates/funput-core) | Telex/VNI transformation core | 0.054 µs/key | 0.047 µs/key |
+| [`funput-engine::Engine::process_char`](crates/funput-engine) | Full pipeline (boundaries + English restore) | 0.11 µs/key | 0.10 µs/key |
+| [`funput-ffi::{funput_process_char, funput_buffer}`](crates/funput-ffi) | Engine through the C ABI + composed-buffer reads | 0.12 µs/key | 0.11 µs/key |
 
 > Measured from a release build on an Apple M-series machine; covers Funput's own
 > processing only (excludes OS keyboard-event delivery and host-app rendering).

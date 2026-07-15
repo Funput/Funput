@@ -26,12 +26,13 @@ their corresponding directories in `target/criterion/`.
 
 | Metric | Result |
 |---|---|
-| Compose latency (core `apply`) | **~0.23 µs / keystroke** (Telex), ~0.20 µs (VNI) |
-| Compose throughput | **> 4 million keystrokes / second** |
-| Full engine path (`process_char`, incl. boundary + English-restore) | **~0.52 µs / keystroke** (~1.9 M/s) |
-| **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.55 µs / keystroke** |
+| Compose latency (core `apply`) | **~0.05 µs / keystroke** (Telex), ~0.05 µs (VNI) |
+| Compose throughput | **> 18 million keystrokes / second** |
+| Full engine path (`process_char`, incl. boundary + English-restore) | **~0.11 µs / keystroke** (~8.9 M/s) |
+| **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.12 µs / keystroke** |
 | `size_of::<Engine>` (per-field session state) | **136 bytes** |
-| Release FFI shared lib (`libfunput_ffi.dylib`) | ~0.46 MB |
+| Heap allocations per keystroke (with or without spell-check) | **~1** (~7 B) |
+| Release FFI shared lib (`libfunput_ffi.dylib`, LTO + stripped) | ~0.37 MB |
 
 A human types a few keys per second; Funput answers each in **sub-microsecond**
 time, i.e. millions of times faster than needed — composition is never the
@@ -44,7 +45,7 @@ The `latency` bench drives the **real C ABI a platform shell uses** for every ke
 `funput_buffer` (copies the composed text back out to render the marked text). This
 is the layer the pure-core bench skips.
 
-Key finding: it lands at **~0.55 µs/keystroke — essentially identical to the engine
+Key finding: it lands at **~0.12 µs/keystroke — essentially identical to the engine
 alone**, so the FFI boundary (handle indirection + by-value result + UTF-32 copy)
 adds negligible cost.
 
@@ -59,8 +60,13 @@ Footprint check:
 
 ```sh
 cargo test -p funput-engine -- --nocapture engine_struct_size   # prints size_of::<Engine>
+cargo test -p funput-engine --test alloc_budget -- --nocapture  # heap allocs per keystroke (budget-guarded)
 ls -lh target/release/libfunput_ffi.dylib                       # after: cargo build --release -p funput-ffi
 ```
+
+The `alloc_budget` test doubles as a regression guard: it fails if a change adds
+heap allocations to the keystroke hot path beyond the committed budget, and its
+budgets are ratcheted down as allocation-removal work lands.
 
 ## B2 — Coverage (round-trip)
 

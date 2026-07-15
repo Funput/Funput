@@ -79,7 +79,10 @@ fn main() {
     let proc = (allocs() - b) - ctor;
 
     println!("=== allocations (heap ops) ===");
-    println!("Engine::new()+set_method : {:.2} / engine", ctor as f64 / reps as f64);
+    println!(
+        "Engine::new()+set_method : {:.2} / engine",
+        ctor as f64 / reps as f64
+    );
     println!(
         "process_char             : {:.3} allocs/key   ({} keys, {} composing)",
         proc as f64 / (reps * n) as f64,
@@ -116,13 +119,16 @@ fn main() {
             if is_boundary(k) {
                 buf.clear();
             } else {
-                buf = apply_checked(&buf, k, InputMethod::Telex, ToneStyle::Traditional, false).text;
+                buf =
+                    apply_checked(&buf, k, InputMethod::Telex, ToneStyle::Traditional, false).text;
             }
         }
         black_box(&buf);
     }) / letters as f64;
 
-    let composed = ["tôi", "yêu", "tiếng", "việt", "đẹp", "nước", "trời", "không"];
+    let composed = [
+        "tôi", "yêu", "tiếng", "việt", "đẹp", "nước", "trời", "không",
+    ];
     let invalid_ns = time(t, || {
         for b in composed {
             black_box(is_definitely_invalid(black_box(b)));

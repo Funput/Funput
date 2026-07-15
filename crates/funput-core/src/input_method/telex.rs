@@ -22,7 +22,7 @@
 //! 5. Tone keys `s` / `f` / `r` / `x` / `j`
 //! 6. Normal character
 
-use crate::composition::apply::uo_pair_in_vowel_cluster;
+use crate::composition::uo_horn::uo_pair_in_vowel_cluster;
 use crate::input_method::KeyAction;
 use crate::unicode::marks::{Tone, is_vowel, tone_on_vowel, vowel_stem};
 use crate::unicode::shapes::{VowelShape, shape_on_vowel, shape_target_index, strip_shape};

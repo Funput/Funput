@@ -85,7 +85,8 @@ pub struct TransformResult {
 ///     }
 /// );
 /// ```
-pub use validation::syllable::{is_complete_syllable, is_definitely_invalid, is_valid};
+pub use validation::reachability::is_definitely_invalid;
+pub use validation::syllable::{is_complete_syllable, is_valid};
 
 pub fn apply(
     buffer: &str,

@@ -1,13 +1,16 @@
 //! Syllable-structure validation for modifier keys (tone / shape / stroke).
 //!
 //! Decides whether a modifier should apply, be ignored, or pass through as a
-//! literal key (non-Vietnamese structure the engine restores later).
+//! literal key (non-Vietnamese structure the engine restores later). Hot path:
+//! everything works on the borrowed [`SyllableParts`] view — the only
+//! allocation left is the rhyme string built at a word boundary.
 
-use std::sync::LazyLock;
-
-use crate::unicode::marks::{Tone, tone_on_vowel, vowel_stem};
-use crate::validation::parse::{is_valid_onset, parse_syllable};
-use crate::validation::rhyme::{self, is_valid_rhyme};
+use crate::unicode::marks::{Tone, vowel_stem};
+use crate::validation::coda::{
+    STOP_CODAS, VALID_CODAS, coda_in, normalized_coda, nucleus_tone, toneless_rhyme,
+};
+use crate::validation::parse::{SyllableParts, is_valid_onset, parse_syllable};
+use crate::validation::rhyme::is_valid_rhyme;
 
 /// Result of validating a modifier keystroke against the current buffer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -20,76 +23,50 @@ pub enum ModifierValidation {
     PassThrough,
 }
 
-const VALID_CODAS: &[&str] = &["", "c", "ch", "m", "n", "ng", "nh", "p", "t"];
-
-/// Stop (oral plosive) codas. A syllable ending in one of these may only carry
-/// the sắc or nặng tone — a Vietnamese phonotactic rule. This is what tells
-/// English `text` (→ `tẽt`, ngã + `t`) apart from real syllables like `tét`.
-const STOP_CODAS: &[&str] = &["c", "ch", "p", "t"];
-
-/// The tone carried by the nucleus (at most one toned vowel), if any.
-fn nucleus_tone(nucleus: &str) -> Option<Tone> {
-    nucleus.chars().find_map(tone_on_vowel)
-}
-
-/// Toneless rhyme (vần) = nucleus with tones stripped (shape kept) + coda, lowercased.
-/// `tiền` → `iên`, `trường` → `ương`.
-fn toneless_rhyme(nucleus: &str, coda: &str) -> String {
-    let mut rhyme = String::new();
-    for ch in nucleus.chars() {
-        let stem = vowel_stem(ch).unwrap_or(ch);
-        rhyme.extend(char::to_lowercase(stem));
-    }
-    rhyme.push_str(&coda.to_lowercase());
-    rhyme
-}
-
-fn violates_ckg_spelling(onset: &str, nucleus: &str) -> bool {
-    let Some(first) = nucleus.chars().next().and_then(vowel_stem) else {
+fn violates_ckg_spelling(onset: &str, parts: &SyllableParts) -> bool {
+    let Some(first) = parts.nucleus_chars().next().and_then(vowel_stem) else {
         return false;
     };
-    let stem = char::to_lowercase(first).next().unwrap_or(first);
+    let stem = first.to_lowercase().next().unwrap_or(first);
 
-    match onset.to_lowercase().as_str() {
-        "c" => !matches!(stem, 'a' | 'ă' | 'â' | 'o' | 'ô' | 'ơ' | 'u' | 'ư'),
-        // Native `k` precedes only front vowels (kẻ, kê, kim, kỳ), but loanwords and
-        // toponyms break this freely — `Kông` (Hồng Kông), `Kenya`, `Kang` — and a
-        // back-vowel `k` is distinct enough from English that allowing it costs little.
-        // So `k` is exempt from the pairing rule (the rhyme check still applies).
-        "k" => false,
+    if onset.eq_ignore_ascii_case("c") {
+        !matches!(stem, 'a' | 'ă' | 'â' | 'o' | 'ô' | 'ơ' | 'u' | 'ư')
+    } else if onset.eq_ignore_ascii_case("g") {
         // `g` + `i` is the valid `gi` digraph (gì, gìn); `g` + e/ê uses `gh`.
-        "g" => !matches!(stem, 'a' | 'ă' | 'â' | 'o' | 'ô' | 'ơ' | 'u' | 'ư' | 'i'),
-        "gh" => !matches!(stem, 'e' | 'ê' | 'i'),
-        "ngh" => !matches!(stem, 'e' | 'ê' | 'i'),
-        _ => false,
+        !matches!(stem, 'a' | 'ă' | 'â' | 'o' | 'ô' | 'ơ' | 'u' | 'ư' | 'i')
+    } else if onset.eq_ignore_ascii_case("gh") || onset.eq_ignore_ascii_case("ngh") {
+        !matches!(stem, 'e' | 'ê' | 'i')
+    } else {
+        // Native `k` precedes only front vowels (kẻ, kê, kim, kỳ), but loanwords
+        // and toponyms break this freely — `Kông` (Hồng Kông), `Kenya` — and a
+        // back-vowel `k` is distinct enough from English that allowing it costs
+        // little. So `k` is exempt (the rhyme check still applies).
+        false
     }
 }
 
 fn validate_modifier(buffer: &str) -> ModifierValidation {
     let parts = parse_syllable(buffer);
 
-    if parts.invalid_onset
-        || (!parts.onset.is_empty() && !is_valid_onset(&parts.onset.to_lowercase()))
-    {
+    if parts.invalid_onset || !is_valid_onset(parts.onset) {
         return ModifierValidation::PassThrough;
     }
-
-    if parts.nucleus.is_empty() {
+    if parts.nucleus_chars().next().is_none() {
         return ModifierValidation::Ignored;
     }
-
-    if violates_ckg_spelling(&parts.onset, &parts.nucleus) {
+    if violates_ckg_spelling(parts.onset, &parts) {
         return ModifierValidation::PassThrough;
     }
 
     // Two or more trailing consonants can't form a Vietnamese coda → likely an
     // English word, pass the key through. A single trailing consonant is allowed
     // (the user may still be typing, e.g. "mix" → "mĩx").
-    let coda_lower = parts.coda.to_lowercase();
-    if parts.coda.chars().count() >= 2 && !VALID_CODAS.contains(&coda_lower.as_str()) {
-        return ModifierValidation::PassThrough;
+    if parts.coda_chars().nth(1).is_some() {
+        match normalized_coda(&parts) {
+            Some((coda, len)) if coda_in(VALID_CODAS, &coda[..len]) => {}
+            _ => return ModifierValidation::PassThrough,
+        }
     }
-
     ModifierValidation::Allow
 }
 
@@ -123,20 +100,6 @@ pub fn is_valid(buffer: &str) -> bool {
     matches!(validate_modifier(buffer), ModifierValidation::Allow)
 }
 
-/// Central Highlands (Tây Nguyên) toponyms borrowed from Ê Đê / Jarai / Bahnar /
-/// M'Nông write the final /k/ stop as `k` (`Đắk`, `Lắk`, `Plắk`), which is
-/// allophonic with Vietnamese final `c`. Treat a lone trailing `k` as `c` for
-/// validation so these names pass without broadening the general coda inventory
-/// (which would wrongly accept English `book`, `look`, …). A multi-letter coda
-/// (`ck`) is left untouched, so `rock`/`back` are unaffected.
-fn normalize_ethnic_coda(coda: &str) -> &str {
-    if coda.eq_ignore_ascii_case("k") {
-        "c"
-    } else {
-        coda
-    }
-}
-
 /// Returns true if `buffer` is a *complete* valid Vietnamese syllable.
 ///
 /// **Strict**: the coda must be a real Vietnamese final (`c ch m n ng nh p t`),
@@ -146,229 +109,36 @@ fn normalize_ethnic_coda(coda: &str) -> &str {
 /// `côl` (cool), `tẽt` (text).
 pub fn is_complete_syllable(buffer: &str) -> bool {
     let parts = parse_syllable(buffer);
-    let coda = normalize_ethnic_coda(&parts.coda);
+    let Some((coda, coda_len)) = normalized_coda(&parts) else {
+        return false;
+    };
+    let coda = &coda[..coda_len];
 
     let structure_ok = !parts.invalid_onset
-        && (parts.onset.is_empty() || is_valid_onset(&parts.onset.to_lowercase()))
-        && !parts.nucleus.is_empty()
-        && !violates_ckg_spelling(&parts.onset, &parts.nucleus)
-        && VALID_CODAS.contains(&coda.to_lowercase().as_str());
+        && is_valid_onset(parts.onset)
+        && parts.nucleus_chars().next().is_some()
+        && !violates_ckg_spelling(parts.onset, &parts)
+        && coda_in(VALID_CODAS, coda);
     if !structure_ok {
         return false;
     }
 
     // The nucleus+coda must be a real Vietnamese rhyme (Level 2): keeps `việt`,
     // `trường` … but reverts structurally-ok-but-nonexistent rhymes.
-    if !is_valid_rhyme(&toneless_rhyme(&parts.nucleus, coda)) {
+    if !is_valid_rhyme(&toneless_rhyme(&parts, coda)) {
         return false;
     }
 
     // Phonotactics: a stop coda only allows sắc / nặng. Flags `tẽt` (English
     // "text"), `bèct`, etc. as not-a-syllable so the engine restores the raw word.
-    if STOP_CODAS.contains(&coda.to_lowercase().as_str()) {
-        return matches!(nucleus_tone(&parts.nucleus), Some(Tone::Sac | Tone::Nang));
+    if coda_in(STOP_CODAS, coda) {
+        return matches!(
+            nucleus_tone(parts.nucleus_chars()),
+            Some(Tone::Sac | Tone::Nang)
+        );
     }
-
     true
 }
 
-/// Plain base of a vowel — tone **and** shape stripped (`ớ`→`o`, `ẽ`→`e`, `ư`→`u`).
-/// Non-vowels pass through lowercased.
-fn plain_base(c: char) -> char {
-    let stem = vowel_stem(c).unwrap_or(c);
-    match char::to_lowercase(stem).next().unwrap_or(stem) {
-        'ă' | 'â' => 'a',
-        'ê' => 'e',
-        'ô' | 'ơ' => 'o',
-        'ư' => 'u',
-        other => other,
-    }
-}
-
-/// Strip tone and shape from every char (`ướng` → `uong`).
-fn deshape(s: &str) -> String {
-    s.chars().map(plain_base).collect()
-}
-
-/// The rhyme inventory with tone/shape stripped, built once. Lets
-/// [`is_definitely_invalid`] test reachability without re-`deshape`-ing all ~166
-/// rhymes (a `String` allocation each) on every keystroke.
-static DESHAPED_RHYMES: LazyLock<Vec<String>> =
-    LazyLock::new(|| rhyme::all().iter().map(|r| deshape(r)).collect());
-
-/// True when `buffer` can **no longer** become a valid Vietnamese syllable by
-/// typing more — used for *eager* English restore (flip back to the raw
-/// keystrokes the instant a word is unrecoverable, without waiting for a boundary):
-/// `tẽt`→`text` on the closing `t`, `caé`→`case` on the `e`, `luuỷ`→`luxury`.
-///
-/// Conservative. The rhyme so far is compared **deshaped** against the deshaped
-/// rhyme inventory, so a plain vowel still awaiting its shape stays alive (`ưo`
-/// matches `ươ…`, so typing `nước` via `nuwowcs` is never interrupted). Dead when:
-/// 1. The deshaped nucleus+coda is not a prefix of any rhyme: `ae`, `uuy`, `ad`.
-/// 2. A **stop** coda already carries a *wrong* tone — huyền / hỏi / ngã: `tẽt`.
-///    (A stop coda with no tone yet stays alive — the tone follows the coda.)
-pub fn is_definitely_invalid(buffer: &str) -> bool {
-    let parts = parse_syllable(buffer);
-    if parts.nucleus.is_empty() {
-        return false; // still building the onset
-    }
-
-    let coda = normalize_ethnic_coda(&parts.coda);
-    let rhyme_query = format!("{}{}", deshape(&parts.nucleus), deshape(coda));
-    let reachable = DESHAPED_RHYMES
-        .iter()
-        .any(|r| r.starts_with(&rhyme_query));
-    if !reachable {
-        return true;
-    }
-
-    if STOP_CODAS.contains(&coda.to_lowercase().as_str()) {
-        return matches!(
-            nucleus_tone(&parts.nucleus),
-            Some(Tone::Huyen | Tone::Hoi | Tone::Nga)
-        );
-    }
-    false
-}
-
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn validate_tone_cases() {
-        assert_eq!(validate_tone("ng"), ModifierValidation::Ignored);
-        assert_eq!(validate_tone("text"), ModifierValidation::PassThrough);
-        assert_eq!(validate_tone("mix"), ModifierValidation::Allow);
-        assert_eq!(validate_tone("ma"), ModifierValidation::Allow);
-        assert_eq!(validate_tone("zt"), ModifierValidation::PassThrough);
-    }
-
-    #[test]
-    fn validate_stroke_cases() {
-        assert_eq!(validate_stroke("d"), ModifierValidation::Allow);
-        // A d anywhere in the buffer allows the stroke: dang9 → đang, GD9 → GĐ.
-        assert_eq!(validate_stroke("dang"), ModifierValidation::Allow);
-        assert_eq!(validate_stroke("GD"), ModifierValidation::Allow);
-        assert_eq!(validate_stroke("x"), ModifierValidation::Ignored);
-        assert_eq!(validate_stroke("bag"), ModifierValidation::Ignored);
-    }
-
-    #[test]
-    fn is_valid_cases() {
-        assert!(is_valid("má"));
-        assert!(is_valid("ma"));
-        assert!(!is_valid("ábc"));
-        assert!(!is_valid("text"));
-    }
-
-    #[test]
-    fn is_complete_syllable_cases() {
-        // Complete Vietnamese syllables. `k` + `y` (kỳ/ký/kỹ) and the triphthong
-        // `ngoài` are regression guards for tone-placement / ckg-spelling fixes.
-        for ok in [
-            "má",
-            "ma",
-            "tét",
-            "việt",
-            "trường",
-            "quá",
-            "ăn",
-            "nhanh",
-            "kỳ",
-            "ký",
-            "kỹ",
-            "ngoài",
-        ] {
-            assert!(is_complete_syllable(ok), "{ok} should be complete");
-        }
-        // Invalid finals — a finished word ending in a non-Vietnamese coda.
-        for bad in ["cảd", "côl", "máz", "hảd", "ng", "abc", "text"] {
-            assert!(!is_complete_syllable(bad), "{bad} should be incomplete");
-        }
-        // Stricter than `is_valid`: single trailing `d`/`z` is lenient-valid but
-        // not a complete syllable.
-        assert!(is_valid("cảd"));
-        assert!(!is_complete_syllable("cảd"));
-    }
-
-    #[test]
-    fn real_syllables_are_complete() {
-        // Broad battery of real Vietnamese syllables (incl. hard rhymes). A failure
-        // means the rhyme table is missing an entry — add it to `rhyme.rs`.
-        let words = "\
-            a ba cá chè dê đi em gà gh ghê gì hoa khô là mẹ nó ô phở quà rể sữa tô \
-            uô(no) việt nghĩa người trường nước được rượu hươu khuya khuỷu quýnh quyên \
-            nguyệt khuếch doanh hoạch bâng khuâng ngoằn ngoèo tuềnh toàng xoèn xoẹt \
-            muốn muống thuốc nhuộm tuốt cướp lướt mượn đường riêng tiếng chuông \
-            anh ánh ách inh tính kịch lệnh xanh sạch huỳnh quỳnh xoong(no) \
-            hoàng khoảng nguyên nguyền quyết tuyết duyên xuân xuất bâng khuâng \
-            ngoắt ngoéo ngoạm ngoạp ngoạc ngoắc loắt choắt \
-            cằn nhằn lẳng lặng phưng phức nưng nửng \
-            tay hai cao sau cau mây đây kẹo kêu cừu mưu líu xíu";
-        for w in words.split_whitespace() {
-            if w.ends_with("(no)") {
-                continue;
-            }
-            // skip onset-only fragments used as spacers
-            if w == "gh" {
-                continue;
-            }
-            assert!(
-                is_complete_syllable(w),
-                "{w} (rhyme {:?}) should be a complete syllable",
-                {
-                    let p = parse_syllable(w);
-                    toneless_rhyme(&p.nucleus, &p.coda)
-                }
-            );
-        }
-    }
-
-    #[test]
-    fn definitely_invalid_detects_dead_ends() {
-        // Dead ends — unreachable rhyme (incl. open clusters), or stop coda +
-        // wrong (huyền/hỏi/ngã) tone.
-        for dead in ["tẽt", "tèt", "cảd", "máz", "pèect", "ábc", "caé", "luuỷ"] {
-            assert!(is_definitely_invalid(dead), "{dead} should be a dead end");
-        }
-        // Alive: still typing, already valid, OR a stop coda awaiting its tone
-        // (`nuoc`/`nươc`/`côt` → user types the tone after the coda).
-        for alive in [
-            "tẽ", "te", "ng", "ngh", "cả", "cản", "việt", "má", "trươ", "nuoc", "nươc", "côt",
-            "tét",
-        ] {
-            assert!(!is_definitely_invalid(alive), "{alive} should stay alive");
-        }
-    }
-
-    #[test]
-    fn stop_coda_only_allows_sac_or_nang() {
-        // Legal: stop coda with sắc or nặng.
-        for ok in ["tét", "tẹt", "sách", "học", "đẹp", "việt", "nước"] {
-            assert!(is_complete_syllable(ok), "{ok} should be complete");
-        }
-        // Illegal: stop coda with ngang / huyền / hỏi / ngã — the signal that
-        // catches English words like `text` (→ `tẽt`) or `coot` (→ `côt`).
-        for bad in ["tẽt", "tèt", "tẻt", "côt", "sàch", "mãc"] {
-            assert!(!is_complete_syllable(bad), "{bad} should be incomplete");
-        }
-        // Sonorant codas keep all tones legal.
-        for ok in ["làng", "mển", "ngã", "cũng"] {
-            assert!(is_complete_syllable(ok), "{ok} should be complete");
-        }
-    }
-
-    #[test]
-    fn ckg_spelling() {
-        assert_eq!(validate_tone("ke"), ModifierValidation::Allow);
-        // `k` is exempt from the pairing rule for loanwords/toponyms (Kông, Kenya).
-        assert_eq!(validate_tone("ka"), ModifierValidation::Allow);
-        assert_eq!(validate_tone("ca"), ModifierValidation::Allow);
-        // `c`+front still needs `k`; `ge` would need `gh` — these stay restricted.
-        assert_eq!(validate_tone("ce"), ModifierValidation::PassThrough);
-        assert_eq!(validate_tone("ge"), ModifierValidation::PassThrough);
-        // `gi` digraph stays valid.
-        assert_eq!(validate_tone("gi"), ModifierValidation::Allow);
-    }
-}
+mod tests;

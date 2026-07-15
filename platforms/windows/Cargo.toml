@@ -58,7 +58,23 @@ windows = { version = "0.62", features = [
     "Win32_System_Threading",
 ] }
 
+# Size-first for the shell (the slint UI dominates the binary), speed-first for
+# the shared IME crates below — the per-keystroke hot path keeps full
+# optimization. Matches the root workspace profile (excluded packages do not
+# inherit it). Do NOT set `panic = "abort"` — repo-wide rule, see the root
+# workspace Cargo.toml.
 [profile.release]
 opt-level = "s"
-lto = true
-strip = true
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+
+# The shared engine hot path (funput-core/engine/desktop) stays speed-optimized.
+[profile.release.package.funput-core]
+opt-level = 3
+
+[profile.release.package.funput-engine]
+opt-level = 3
+
+[profile.release.package.funput-desktop]
+opt-level = 3
