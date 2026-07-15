@@ -24,3 +24,14 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 authors = ["Funput"]
+
+# Shipped on all five platforms, so the release profile optimizes for speed first
+# and binary size second (measured: libfunput_ffi.dylib 477 KB → 369 KB).
+#
+# Do NOT set `panic = "abort"`: the FFI/JNI boundaries rely on `catch_unwind` to
+# turn an engine panic into a dropped keystroke instead of killing the host IME
+# process (see funput-ffi/src/support.rs).
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
