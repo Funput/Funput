@@ -30,8 +30,10 @@ export component SettingsWindow inherits Window {
     in property <string> tone-style;
     in property <string> hotkey;
     in property <[string]> hotkey-caps;
+    in property <bool> hotkey-conflict;
     in property <string> flip-hotkey;
     in property <[string]> flip-hotkey-caps;
+    in property <bool> flip-hotkey-conflict;
     in-out property <bool> smart-restore;
     in-out property <bool> eager-restore;
     in-out property <bool> spell-check;
@@ -51,6 +53,8 @@ export component SettingsWindow inherits Window {
     callback pick-tone(string);
     callback pick-hotkey(string);
     callback pick-flip-hotkey(string);
+    // Custom shortcut recorder (kind, key text, ctrl, alt, shift, win) -> accepted.
+    callback record-combo(string, string, bool, bool, bool, bool) -> bool;
     callback set-smart(bool);
     callback set-eager(bool);
     callback set-spell(bool);
@@ -158,10 +162,13 @@ export component SettingsWindow inherits Window {
                 if root.active == "keyboard": KeyboardPage {
                     hotkey: root.hotkey;
                     hotkey-caps: root.hotkey-caps;
+                    hotkey-conflict: root.hotkey-conflict;
                     flip-hotkey: root.flip-hotkey;
                     flip-hotkey-caps: root.flip-hotkey-caps;
+                    flip-hotkey-conflict: root.flip-hotkey-conflict;
                     pick-hotkey(v) => { root.pick-hotkey(v); }
                     pick-flip-hotkey(v) => { root.pick-flip-hotkey(v); }
+                    record-combo(k, t, c, a, s, w) => { root.record-combo(k, t, c, a, s, w) }
                 }
 
                 if root.active == "smart": SmartPage {

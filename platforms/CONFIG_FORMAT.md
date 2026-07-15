@@ -72,14 +72,23 @@ one machine imports on another. macOS is the first implementation
 
 ### `platform.windows`
 
-Windows uses **hotkey presets** (not raw key codes) and identifies apps by exe name,
-so its block differs from macOS:
+Windows supports both hotkey presets and user-recorded virtual-key combinations,
+and identifies apps by exe name, so its block differs from macOS:
 
 ```json
 "platform": {
   "windows": {
     "toggleHotkey": "ctrl_backtick",
+    "toggleCombo": {
+      "vk": 86,
+      "ctrl": true,
+      "alt": false,
+      "shift": true,
+      "win": false,
+      "label": "V"
+    },
     "flipHotkey": "off",
+    "flipCombo": null,
     "excludedApps": [ { "id": "code.exe", "name": "VS Code" } ]
   }
 }
@@ -88,10 +97,15 @@ so its block differs from macOS:
 | Field | Notes |
 |---|---|
 | `toggleHotkey` | Preset id: `ctrl_backtick` \| `ctrl_space` \| `alt_shift`. |
+| `toggleCombo` | Optional recorded combo `{ vk, ctrl, alt, shift, win, label }`; when present, overrides `toggleHotkey`. |
 | `flipHotkey` | Preset id: `off` \| `ctrl_shift_z` \| `ctrl_shift_x`. |
+| `flipCombo` | Optional recorded combo; when present, overrides `flipHotkey`. |
 | `excludedApps[]` | `{ id (lowercased exe name), name }`. Unioned by `id`. |
 
-Windows-only, applied only when running on Windows.
+`vk` is the Win32 virtual-key captured using the user's active keyboard layout;
+`label` is persisted for display. These fields are Windows-only and are applied
+only when running on Windows. Older readers ignore the unknown combo fields, and
+Linux continues to read only `platform.linux`.
 
 ### `platform.linux`
 

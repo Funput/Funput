@@ -38,7 +38,7 @@ pub fn record(text: &str, ctrl: bool, alt: bool, shift: bool, win: bool) -> Opti
         win,
         label,
     };
-    let system_conflict = is_system_shortcut(&combo);
+    let system_conflict = system_conflict(&combo);
     Some(Recorded {
         combo,
         system_conflict,
@@ -81,10 +81,11 @@ fn special_key(ch: char) -> Option<(u16, &'static str)> {
     function_key(ch)
 }
 
-/// F1–F12 (Slint assigns them contiguous code points; VK_F1 = 0x70).
+/// F1–F24 (Slint assigns them contiguous code points; VK_F1 = 0x70).
 fn function_key(ch: char) -> Option<(u16, &'static str)> {
-    const LABELS: [&str; 12] = [
-        "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+    const LABELS: [&str; 24] = [
+        "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14",
+        "F15", "F16", "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24",
     ];
     let offset = (ch as u32).checked_sub(char::from(Key::F1) as u32)?;
     let label = LABELS.get(offset as usize)?;
@@ -105,8 +106,9 @@ fn vk_for_char(ch: char) -> Option<u16> {
 
 /// Combos Windows itself acts on. Recording them still works, but the OS will
 /// fight the hotkey (layout switcher, window menu, task switcher), so the UI
-/// shows a warning.
-fn is_system_shortcut(c: &KeyCombo) -> bool {
+/// shows a warning — here at record time, and in `populate()` when Settings
+/// reopens with a conflicting combo persisted.
+pub fn system_conflict(c: &KeyCombo) -> bool {
     // Win+<anything> is OS-reserved almost without exception (Win+Space is the
     // layout switcher — the exact conflict this feature exists to avoid).
     if c.win {
@@ -117,4 +119,37 @@ fn is_system_shortcut(c: &KeyCombo) -> bool {
         || (c.vk == 0x20 && alt_only && !c.shift) // Alt+Space window menu
         || (c.vk == 0x1B && c.ctrl) // Ctrl+Esc opens Start
         || (c.vk == 0x2E && c.ctrl && c.alt) // Ctrl+Alt+Del (unhookable anyway)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn maps_special_and_all_function_keys() {
+        assert_eq!(special_key(char::from(Key::Space)), Some((0x20, "Space")));
+        assert_eq!(special_key(char::from(Key::LeftArrow)), Some((0x25, "←")));
+        assert_eq!(function_key(char::from(Key::F1)), Some((0x70, "F1")));
+        assert_eq!(function_key(char::from(Key::F12)), Some((0x7B, "F12")));
+        assert_eq!(function_key(char::from(Key::F24)), Some((0x87, "F24")));
+    }
+
+    #[test]
+    fn rejects_shift_only_but_accepts_a_real_modifier() {
+        assert!(record("V", false, false, true, false).is_none());
+        let recorded = record(" ", true, false, true, false).unwrap();
+        assert_eq!(recorded.combo.vk, 0x20);
+        assert!(recorded.combo.ctrl);
+        assert!(recorded.combo.shift);
+        assert_eq!(recorded.combo.label, "Space");
+    }
+
+    #[test]
+    fn flags_system_shortcuts_without_blocking_them() {
+        let win_space = record(" ", false, false, false, true).unwrap();
+        assert!(win_space.system_conflict);
+
+        let ctrl_space = record(" ", true, false, false, false).unwrap();
+        assert!(!ctrl_space.system_conflict);
+    }
 }

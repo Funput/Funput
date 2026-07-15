@@ -12,7 +12,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 
-use crate::settings::{ExcludedApp, FlipHotkey, Hotkey, Method, Settings, Shortcut, ToneStyle};
+use crate::settings::{
+    ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, Settings, Shortcut, ToneStyle,
+};
 
 const SCHEMA_ID: &str = "app.funput.config";
 const CURRENT_VERSION: u32 = 1;
@@ -80,8 +82,14 @@ pub struct Platform {
 pub struct WindowsBlock {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub toggle_hotkey: Option<String>, // Hotkey preset id
+    /// User-recorded toggle combo; overrides the preset when present.
+    #[serde(default)]
+    pub toggle_combo: Option<KeyCombo>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub flip_hotkey: Option<String>, // FlipHotkey preset id
+    /// User-recorded flip combo; overrides the preset when present.
+    #[serde(default)]
+    pub flip_combo: Option<KeyCombo>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub excluded_apps: Option<Vec<ExcludedApp>>,
 }
@@ -134,13 +142,18 @@ pub fn to_document(s: &Settings) -> ConfigDocument {
         shortcuts: Some(
             s.shortcuts
                 .iter()
-                .map(|sc| PortableShortcut { trigger: sc.trigger.clone(), expansion: sc.expansion.clone() })
+                .map(|sc| PortableShortcut {
+                    trigger: sc.trigger.clone(),
+                    expansion: sc.expansion.clone(),
+                })
                 .collect(),
         ),
         platform: Some(Platform {
             windows: Some(WindowsBlock {
                 toggle_hotkey: Some(s.toggle_hotkey.id().to_string()),
+                toggle_combo: s.toggle_combo.clone(),
                 flip_hotkey: Some(s.flip_hotkey.id().to_string()),
+                flip_combo: s.flip_combo.clone(),
                 excluded_apps: Some(s.excluded_apps.clone()),
             }),
         }),
@@ -150,19 +163,34 @@ pub fn to_document(s: &Settings) -> ConfigDocument {
 /// Merge a document into `s`. Non-destructive: overwrites present fields, merges
 /// shortcuts by trigger, unions excluded apps, and never deletes existing data.
 pub fn apply(s: &mut Settings, doc: &ConfigDocument) -> ImportSummary {
-    let mut summary = ImportSummary { newer_version: doc.version > CURRENT_VERSION, ..Default::default() };
+    let mut summary = ImportSummary {
+        newer_version: doc.version > CURRENT_VERSION,
+        ..Default::default()
+    };
 
     if let Some(prefs) = &doc.preferences {
         if let Some(v) = &prefs.input_method {
-            if let Some(m) = Method::from_id(v) { s.method = m; }
+            if let Some(m) = Method::from_id(v) {
+                s.method = m;
+            }
         }
         if let Some(v) = &prefs.tone_style {
-            if let Some(t) = ToneStyle::from_id(v) { s.tone_style = t; }
+            if let Some(t) = ToneStyle::from_id(v) {
+                s.tone_style = t;
+            }
         }
-        if let Some(v) = prefs.smart_english_restore { s.smart_restore = v; }
-        if let Some(v) = prefs.eager_restore { s.eager_restore = v; }
-        if let Some(v) = prefs.spell_check { s.spell_check = v; }
-        if let Some(v) = prefs.auto_capitalize { s.auto_capitalize = v; }
+        if let Some(v) = prefs.smart_english_restore {
+            s.smart_restore = v;
+        }
+        if let Some(v) = prefs.eager_restore {
+            s.eager_restore = v;
+        }
+        if let Some(v) = prefs.spell_check {
+            s.spell_check = v;
+        }
+        if let Some(v) = prefs.auto_capitalize {
+            s.auto_capitalize = v;
+        }
     }
 
     if let Some(incoming) = &doc.shortcuts {
@@ -173,7 +201,10 @@ pub fn apply(s: &mut Settings, doc: &ConfigDocument) -> ImportSummary {
                     summary.shortcuts_updated += 1;
                 }
             } else {
-                s.shortcuts.push(Shortcut { trigger: item.trigger.clone(), expansion: item.expansion.clone() });
+                s.shortcuts.push(Shortcut {
+                    trigger: item.trigger.clone(),
+                    expansion: item.expansion.clone(),
+                });
                 summary.shortcuts_added += 1;
             }
         }
@@ -182,10 +213,24 @@ pub fn apply(s: &mut Settings, doc: &ConfigDocument) -> ImportSummary {
     // Platform-specific block: apply only the one matching this OS (Windows).
     if let Some(win) = doc.platform.as_ref().and_then(|p| p.windows.as_ref()) {
         if let Some(v) = &win.toggle_hotkey {
-            if let Some(h) = Hotkey::from_id(v) { s.toggle_hotkey = h; }
+            if let Some(h) = Hotkey::from_id(v) {
+                s.toggle_hotkey = h;
+            }
         }
         if let Some(v) = &win.flip_hotkey {
-            if let Some(h) = FlipHotkey::from_id(v) { s.flip_hotkey = h; }
+            if let Some(h) = FlipHotkey::from_id(v) {
+                s.flip_hotkey = h;
+            }
+        }
+        // Combos ride along explicitly: a file with a recorded combo restores it
+        // (and it overrides the preset, matching the live settings semantics). A
+        // file without combos leaves any locally recorded one untouched
+        // (non-destructive merge, like every other field).
+        if let Some(combo) = &win.toggle_combo {
+            s.toggle_combo = Some(combo.clone());
+        }
+        if let Some(combo) = &win.flip_combo {
+            s.flip_combo = Some(combo.clone());
         }
         if let Some(apps) = &win.excluded_apps {
             for app in apps {
@@ -202,8 +247,7 @@ pub fn apply(s: &mut Settings, doc: &ConfigDocument) -> ImportSummary {
 
 /// Write the current settings as a pretty-printed interchange file.
 pub fn export_to(path: &Path, s: &Settings) -> std::io::Result<()> {
-    let json = serde_json::to_string_pretty(&to_document(s))
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+    let json = serde_json::to_string_pretty(&to_document(s)).map_err(std::io::Error::other)?;
     fs::write(path, json)
 }
 
@@ -252,13 +296,47 @@ mod tests {
     use super::*;
     use crate::settings::Settings;
 
+    fn v_combo() -> KeyCombo {
+        KeyCombo {
+            vk: 0x56,
+            ctrl: true,
+            alt: false,
+            shift: true,
+            win: false,
+            label: "V".into(),
+        }
+    }
+
+    fn x_combo() -> KeyCombo {
+        KeyCombo {
+            vk: 0x58,
+            ctrl: true,
+            alt: true,
+            shift: false,
+            win: false,
+            label: "X".into(),
+        }
+    }
+
     #[test]
     fn round_trip_preserves_state() {
-        let mut a = Settings::default();
-        a.method = Method::Telex;
-        a.tone_style = ToneStyle::Modern;
-        a.shortcuts = vec![Shortcut { trigger: "vn".into(), expansion: "Việt Nam".into() }];
-        a.excluded_apps = vec![ExcludedApp { id: "code.exe".into(), name: "VS Code".into() }];
+        let a = Settings {
+            method: Method::Telex,
+            tone_style: ToneStyle::Modern,
+            toggle_hotkey: Hotkey::AltShift,
+            toggle_combo: Some(v_combo()),
+            flip_hotkey: FlipHotkey::CtrlShiftZ,
+            flip_combo: Some(x_combo()),
+            shortcuts: vec![Shortcut {
+                trigger: "vn".into(),
+                expansion: "Việt Nam".into(),
+            }],
+            excluded_apps: vec![ExcludedApp {
+                id: "code.exe".into(),
+                name: "VS Code".into(),
+            }],
+            ..Settings::default()
+        };
 
         let json = serde_json::to_string(&to_document(&a)).unwrap();
         let mut b = Settings::default();
@@ -267,15 +345,48 @@ mod tests {
 
         assert_eq!(b.method, Method::Telex);
         assert_eq!(b.tone_style, ToneStyle::Modern);
+        assert_eq!(b.toggle_hotkey, Hotkey::AltShift);
+        assert_eq!(b.toggle_combo, Some(v_combo()));
+        assert_eq!(b.flip_hotkey, FlipHotkey::CtrlShiftZ);
+        assert_eq!(b.flip_combo, Some(x_combo()));
         assert_eq!(b.shortcuts.len(), 1);
         assert_eq!(b.shortcuts[0].expansion, "Việt Nam");
         assert_eq!(b.excluded_apps.len(), 1);
     }
 
     #[test]
+    fn export_writes_empty_combo_fields_as_null() {
+        let json = serde_json::to_string(&to_document(&Settings::default())).unwrap();
+        assert!(json.contains("\"toggleCombo\":null"), "{json}");
+        assert!(json.contains("\"flipCombo\":null"), "{json}");
+    }
+
+    #[test]
+    fn legacy_file_without_combos_keeps_local_combo() {
+        // Pre-combo export (only preset ids): imports cleanly and does not wipe a
+        // locally recorded combo (non-destructive merge).
+        let legacy = r#"{"schema":"app.funput.config","version":1,
+            "platform":{"windows":{"toggleHotkey":"ctrl_space","flipHotkey":"off"}}}"#;
+        let mut s = Settings {
+            toggle_combo: Some(v_combo()),
+            ..Settings::default()
+        };
+        let doc: ConfigDocument = serde_json::from_str(legacy).unwrap();
+        let summary = apply(&mut s, &doc);
+        assert!(summary.applied_platform);
+        assert_eq!(s.toggle_hotkey, Hotkey::CtrlSpace);
+        assert_eq!(s.toggle_combo, Some(v_combo()));
+    }
+
+    #[test]
     fn merges_shortcuts_by_trigger() {
-        let mut s = Settings::default();
-        s.shortcuts = vec![Shortcut { trigger: "vn".into(), expansion: "old".into() }];
+        let mut s = Settings {
+            shortcuts: vec![Shortcut {
+                trigger: "vn".into(),
+                expansion: "old".into(),
+            }],
+            ..Settings::default()
+        };
         let doc: ConfigDocument = serde_json::from_str(
             r#"{"schema":"app.funput.config","version":1,"shortcuts":[{"trigger":"vn","expansion":"Việt Nam"},{"trigger":"kg","expansion":"không"}]}"#,
         )
@@ -284,7 +395,14 @@ mod tests {
         assert_eq!(summary.shortcuts_added, 1);
         assert_eq!(summary.shortcuts_updated, 1);
         assert_eq!(s.shortcuts.len(), 2);
-        assert_eq!(s.shortcuts.iter().find(|x| x.trigger == "vn").unwrap().expansion, "Việt Nam");
+        assert_eq!(
+            s.shortcuts
+                .iter()
+                .find(|x| x.trigger == "vn")
+                .unwrap()
+                .expansion,
+            "Việt Nam"
+        );
     }
 
     #[test]
@@ -309,7 +427,8 @@ mod tests {
 
     #[test]
     fn rejects_foreign_schema() {
-        let doc: ConfigDocument = serde_json::from_str(r#"{"schema":"something.else","version":1}"#).unwrap();
+        let doc: ConfigDocument =
+            serde_json::from_str(r#"{"schema":"something.else","version":1}"#).unwrap();
         assert_ne!(doc.schema, SCHEMA_ID);
     }
 }
