@@ -40,7 +40,7 @@ extension KeyboardViewController {
             inputMethod: state.inputMethod,
             mode: state.layoutMode,
             editorMode: state.editorMode,
-            showsSystemInputModeKey: true,
+            showsSystemInputModeKey: configuration.showsGlobeKey,
             showsNumberRow: configuration.showsNumberRow
         )
         let themed = KeyboardPresentationFactory.make(

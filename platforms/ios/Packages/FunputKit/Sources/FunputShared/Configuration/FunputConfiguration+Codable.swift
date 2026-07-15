@@ -18,6 +18,7 @@ extension FunputConfiguration {
         config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.showsNumberRow = try container.decodeIfPresent(Bool.self, forKey: .showsNumberRow) ?? config.showsNumberRow
+        config.showsGlobeKey = try container.decodeIfPresent(Bool.self, forKey: .showsGlobeKey) ?? config.showsGlobeKey
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
         config.schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? config.schemaVersion
         if config.schemaVersion < 2 {
@@ -30,6 +31,10 @@ extension FunputConfiguration {
         if config.schemaVersion < 4 {
             config.showsNumberRow = false
             config.schemaVersion = 4
+        }
+        if config.schemaVersion < 5 {
+            config.showsGlobeKey = false
+            config.schemaVersion = 5
         }
         self = config
     }

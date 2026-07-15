@@ -97,13 +97,12 @@ final class KeyboardPreviewSurface: UIView {
 enum KeyboardPreviewPresentation {
     static func make(
         configuration: FunputConfiguration,
-        showsSystemInputModeKey: Bool = true,
         catalog: ThemeCatalog = ThemeCatalog()
     ) -> KeyboardPresentation {
         let layout = KeyboardLayoutResolver.resolve(
             inputMethod: configuration.inputMethod,
             mode: .letters,
-            showsSystemInputModeKey: showsSystemInputModeKey,
+            showsSystemInputModeKey: configuration.showsGlobeKey,
             showsNumberRow: configuration.showsNumberRow
         )
         return KeyboardPresentationFactory.make(
