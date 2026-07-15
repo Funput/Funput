@@ -1,8 +1,12 @@
 //! Key → funput-core → ImeResult orchestration.
+//!
+//! Hot path: the common keystroke (a pure append the app echoes itself) takes
+//! the zero-allocation pass-through exit; session strings (`vn_form`, `keys`)
+//! are refilled in place so their capacity is reused across keystrokes.
 
 use funput_core::{TransformKind, apply_checked, is_definitely_invalid};
 
-use crate::diff::diff;
+use crate::diff::common_prefix_bytes;
 use crate::flip::RestoreOverride;
 use crate::result::ImeResult;
 use crate::session::Session;
@@ -27,7 +31,8 @@ pub(crate) fn process(session: &mut Session, key: char) -> ImeResult {
 
     // Remember the Vietnamese composition before an eager restore can collapse the
     // buffer to raw keys, so the flip hotkey can recover it after a restore.
-    session.vn_form = composed.clone();
+    session.vn_form.clear();
+    session.vn_form.push_str(&composed);
 
     // A manual flip pins which form is displayed for the rest of the word, overriding
     // the automatic restore decision below.
@@ -52,22 +57,28 @@ pub(crate) fn process(session: &mut Session, key: char) -> ImeResult {
         }
     };
 
-    let (backspace, output) = diff(&session.buffer, &new_buffer);
+    // A pure append of the typed key passes through — the app echoes it itself,
+    // so there is nothing to inject (and nothing to allocate).
+    let prefix = common_prefix_bytes(&session.buffer, &new_buffer);
+    let pass_through =
+        prefix == session.buffer.len() && new_buffer[prefix..].chars().eq(std::iter::once(key));
+    let instruction = if pass_through {
+        ImeResult::none()
+    } else {
+        let backspace = session.buffer[prefix..].chars().count();
+        ImeResult::send(backspace, new_buffer[prefix..].to_string())
+    };
     session.buffer = new_buffer;
 
     // A revert is itself a restore to raw, so keep `keys` in sync — otherwise a
     // later word boundary sees `keys != buffer` and re-restores the stale original
     // keystrokes (e.g. `mixx` revert → `mix`, then Space → wrongly `mixx`).
     if result.kind == TransformKind::Reverted {
-        session.keys = session.buffer.clone();
+        session.keys.clear();
+        session.keys.push_str(&session.buffer);
     }
 
-    // A pure append of the typed key passes through — the app echoes it itself.
-    if backspace == 0 && output.chars().eq(std::iter::once(key)) {
-        ImeResult::none()
-    } else {
-        ImeResult::send(backspace, output)
-    }
+    instruction
 }
 
 #[cfg(test)]

@@ -18,12 +18,13 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use funput_engine::Engine;
 
-/// Measured baseline (2026-07, after the zero-alloc core rewrite): 3.9 allocs /
-/// 39 B per keystroke, with or without spell-check (identical in debug and
-/// release). Budgets leave a little headroom for legitimate feature work;
-/// ratchet them down as hot-path optimizations land.
-const MAX_ALLOCS_PER_KEY: f64 = 6.0;
-const MAX_BYTES_PER_KEY: f64 = 64.0;
+/// Measured baseline (2026-07, after the zero-alloc core + engine rewrite):
+/// 1.1 allocs / 7 B per keystroke, with or without spell-check (identical in
+/// debug and release) — essentially just the composed-text `String` the core
+/// API returns. Budgets leave a little headroom for legitimate feature work;
+/// ratchet them down if the hot path sheds its last allocation.
+const MAX_ALLOCS_PER_KEY: f64 = 2.0;
+const MAX_BYTES_PER_KEY: f64 = 24.0;
 
 static ALLOCS: AtomicUsize = AtomicUsize::new(0);
 static BYTES: AtomicUsize = AtomicUsize::new(0);

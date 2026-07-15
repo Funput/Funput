@@ -358,7 +358,11 @@ fn word_start_digit_passes_through() {
         engine.set_method(method);
         let result = engine.process_char('1');
         assert_eq!(result.action, Action::None, "{method:?}");
-        assert_eq!(engine.buffer(), "", "{method:?}: a leading digit must not compose");
+        assert_eq!(
+            engine.buffer(),
+            "",
+            "{method:?}: a leading digit must not compose"
+        );
     }
 }
 

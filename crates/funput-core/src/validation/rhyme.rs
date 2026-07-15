@@ -35,9 +35,18 @@ const VALID_RHYMES: &[&str] = &[
     "ach", "êch", "ich", "uêch", "oach", "uych",
 ];
 
+/// The inventory sorted once for O(log n) membership checks. [`VALID_RHYMES`]
+/// itself stays grouped by coda — that grouping is the human-readable
+/// documentation of the inventory.
+static SORTED_RHYMES: std::sync::LazyLock<Vec<&'static str>> = std::sync::LazyLock::new(|| {
+    let mut sorted = VALID_RHYMES.to_vec();
+    sorted.sort_unstable();
+    sorted
+});
+
 /// True if `rhyme` (toneless, lowercase) is a valid Vietnamese rhyme.
 pub fn is_valid_rhyme(rhyme: &str) -> bool {
-    VALID_RHYMES.contains(&rhyme)
+    SORTED_RHYMES.binary_search(&rhyme).is_ok()
 }
 
 /// The full toneless rhyme inventory (for prefix/reachability checks).
@@ -65,6 +74,14 @@ mod tests {
     fn nonexistent_rhymes_absent() {
         for bad in ["eg", "id", "ub", "az", "onk", "erf"] {
             assert!(!is_valid_rhyme(bad), "{bad} should not be a rhyme");
+        }
+    }
+
+    #[test]
+    fn binary_search_covers_the_whole_inventory() {
+        // The sorted view must agree with the source table for every entry.
+        for rhyme in all() {
+            assert!(is_valid_rhyme(rhyme), "{rhyme} missing from sorted view");
         }
     }
 }

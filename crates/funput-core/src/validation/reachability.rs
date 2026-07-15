@@ -28,19 +28,31 @@ fn plain_base(c: char) -> char {
     }
 }
 
-/// The rhyme inventory with tone/shape stripped, built once. Lets
-/// [`is_definitely_invalid`] test reachability without re-deshaping all ~166
-/// rhymes on every keystroke.
+/// The rhyme inventory with tone/shape stripped, deshaped and sorted once.
+/// Lets [`is_definitely_invalid`] test reachability in O(log n) without
+/// re-deshaping all ~166 rhymes on every keystroke.
 static DESHAPED_RHYMES: LazyLock<Vec<String>> = LazyLock::new(|| {
-    rhyme::all()
+    let mut deshaped: Vec<String> = rhyme::all()
         .iter()
         .map(|r| r.chars().map(plain_base).collect())
-        .collect()
+        .collect();
+    deshaped.sort_unstable();
+    deshaped
 });
 
 fn starts_with(rhyme: &str, prefix: &[char]) -> bool {
     let mut chars = rhyme.chars();
     prefix.iter().all(|&p| chars.next() == Some(p))
+}
+
+/// True if some rhyme starts with `prefix`. The inventory is sorted, so all
+/// candidates form a contiguous range beginning at the first entry ≥ `prefix`;
+/// checking that single entry suffices.
+fn any_rhyme_with_prefix(prefix: &[char]) -> bool {
+    let rhymes = &*DESHAPED_RHYMES;
+    let first = rhymes
+        .partition_point(|r| r.chars().cmp(prefix.iter().copied()) == std::cmp::Ordering::Less);
+    rhymes.get(first).is_some_and(|r| starts_with(r, prefix))
 }
 
 /// True when `buffer` can **no longer** become a valid Vietnamese syllable by
@@ -74,10 +86,7 @@ pub fn is_definitely_invalid(buffer: &str) -> bool {
         len += 1;
     }
 
-    if !DESHAPED_RHYMES
-        .iter()
-        .any(|r| starts_with(r, &query[..len]))
-    {
+    if !any_rhyme_with_prefix(&query[..len]) {
         return true;
     }
 
