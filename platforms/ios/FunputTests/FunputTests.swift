@@ -64,6 +64,23 @@ struct FunputTests {
         #expect(model.configuration.heightScale == 0.85)
     }
 
+    @Test("Number row preference is editable for Telex and locked on for VNI")
+    func numberRowPreference() {
+        var configuration = FunputConfiguration.default
+        configuration.inputMethod = .telex
+        let model = SettingsModel(store: SettingsTestStore(configuration: configuration))
+        #expect(!model.isNumberRowLocked)
+        #expect(!model.numberRowBinding.wrappedValue)
+        model.numberRowBinding.wrappedValue = true
+        #expect(model.configuration.showsNumberRow)
+
+        model.update(\.inputMethod, to: .vni)
+        #expect(model.isNumberRowLocked)
+        #expect(model.numberRowBinding.wrappedValue)
+        model.numberRowBinding.wrappedValue = false
+        #expect(model.configuration.showsNumberRow)
+    }
+
     @Test("Settings retain prior values when saving fails")
     func settingsSaveFailure() {
         let store = SettingsTestStore(configuration: .default, acceptsSaves: false)

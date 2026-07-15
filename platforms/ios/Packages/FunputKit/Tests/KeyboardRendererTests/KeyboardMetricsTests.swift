@@ -52,6 +52,27 @@ struct KeyboardMetricsTests {
         expectHeight(layout, traits: phonePortrait, scale: 2, expected: 304 * 1.15)
     }
 
+    @Test("Compact Telex pages share one height below the standard family")
+    func compactFamilyHeight() {
+        let compact = KeyboardLayoutMode.allCases.map { mode in
+            KeyboardLayoutResolver.resolve(
+                inputMethod: .telex,
+                mode: mode,
+                showsNumberRow: false
+            )
+        }
+        for traits in [phonePortrait, phoneLandscape, padPortrait] {
+            let heights = compact.map {
+                KeyboardMetrics.recommendedHeight(for: $0, traits: traits)
+            }
+            #expect(Set(heights).count == 1)
+            #expect(heights[0] < KeyboardMetrics.recommendedHeight(
+                for: StandardKeyboardLayouts.letters(.telex),
+                traits: traits
+            ))
+        }
+    }
+
     @Test("Surface intrinsic height follows presentation layout")
     func intrinsicHeightUpdates() {
         let surface = KeyboardSurfaceView(

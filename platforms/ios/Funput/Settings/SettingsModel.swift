@@ -24,6 +24,7 @@ final class SettingsModel {
     var inputMethodLabel: String { configuration.inputMethod.settingsTitle }
     var languageLabel: String { configuration.language.displayLabel }
     var toneStyleLabel: String { configuration.toneStyle.settingsTitle }
+    var isNumberRowLocked: Bool { configuration.inputMethod == .vni }
 
     func reload() {
         configuration = store.load()
@@ -44,6 +45,16 @@ final class SettingsModel {
         Binding(
             get: { self.configuration[keyPath: keyPath] },
             set: { self.update(keyPath, to: $0) }
+        )
+    }
+
+    var numberRowBinding: Binding<Bool> {
+        Binding(
+            get: { self.isNumberRowLocked || self.configuration.showsNumberRow },
+            set: { enabled in
+                guard !self.isNumberRowLocked else { return }
+                self.update(\.showsNumberRow, to: enabled)
+            }
         )
     }
 

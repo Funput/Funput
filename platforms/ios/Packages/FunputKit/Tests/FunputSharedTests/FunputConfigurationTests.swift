@@ -17,6 +17,8 @@ struct FunputConfigurationTests {
         #expect(config.selectedThemeID == FunputConfiguration.defaultThemeID)
         #expect(!config.isHapticFeedbackEnabled)
         #expect(!config.isKeySoundEnabled)
+        #expect(!config.showsNumberRow)
+        #expect(config.schemaVersion == 4)
     }
 
     @Test("Configuration survives a JSON round-trip")
@@ -25,6 +27,7 @@ struct FunputConfigurationTests {
         config.inputMethod = .telex
         config.toneStyle = .traditional
         config.spellCheck = false
+        config.showsNumberRow = true
         config.heightScale = 1.1
         let data = try JSONEncoder().encode(config)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
@@ -39,6 +42,7 @@ struct FunputConfigurationTests {
         #expect(decoded.language == FunputConfiguration.default.language)
         #expect(decoded.selectedThemeID == FunputConfiguration.defaultThemeID)
         #expect(decoded.showsKeyPreviews == FunputConfiguration.default.showsKeyPreviews)
+        #expect(!decoded.showsNumberRow)
     }
 
     @Test("Legacy feedback settings migrate to safe defaults")
@@ -47,6 +51,15 @@ struct FunputConfigurationTests {
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(!decoded.isHapticFeedbackEnabled)
         #expect(!decoded.isKeySoundEnabled)
-        #expect(decoded.schemaVersion == 3)
+        #expect(!decoded.showsNumberRow)
+        #expect(decoded.schemaVersion == 4)
+    }
+
+    @Test("Schema 3 migrates to the compact Telex default")
+    func migratesNumberRowDefault() throws {
+        let data = Data(#"{"showsNumberRow":true,"schemaVersion":3}"#.utf8)
+        let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
+        #expect(!decoded.showsNumberRow)
+        #expect(decoded.schemaVersion == 4)
     }
 }

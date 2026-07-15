@@ -17,6 +17,7 @@ extension FunputConfiguration {
         config.isHapticFeedbackEnabled = try container.decodeIfPresent(Bool.self, forKey: .isHapticFeedbackEnabled) ?? config.isHapticFeedbackEnabled
         config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
+        config.showsNumberRow = try container.decodeIfPresent(Bool.self, forKey: .showsNumberRow) ?? config.showsNumberRow
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
         config.schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? config.schemaVersion
         if config.schemaVersion < 2 {
@@ -25,6 +26,10 @@ extension FunputConfiguration {
         if config.schemaVersion < 3 {
             config.isKeySoundEnabled = false
             config.schemaVersion = 3
+        }
+        if config.schemaVersion < 4 {
+            config.showsNumberRow = false
+            config.schemaVersion = 4
         }
         self = config
     }
