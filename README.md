@@ -62,9 +62,9 @@ Lõi xử lý viết bằng Rust. Chi phí mỗi phím, đo bằng Criterion tr�
 
 | Thành phần / API | Phạm vi đo | Telex | VNI |
 |---|---|---:|---:|
-| [`funput-core::apply`](crates/funput-core) | Lõi biến đổi Telex/VNI | 0,230 µs/phím | 0,204 µs/phím |
-| [`funput-engine::Engine::process_char`](crates/funput-engine) | Pipeline đầy đủ (boundary + English restore) | 0,52 µs/phím | 0,49 µs/phím |
-| [`funput-ffi::{funput_process_char, funput_buffer}`](crates/funput-ffi) | Engine qua C ABI + đọc composed buffer | 0,55 µs/phím | 0,51 µs/phím |
+| [`funput-core::apply`](crates/funput-core) | Lõi biến đổi Telex/VNI | 0,054 µs/phím | 0,047 µs/phím |
+| [`funput-engine::Engine::process_char`](crates/funput-engine) | Pipeline đầy đủ (boundary + English restore) | 0,11 µs/phím | 0,10 µs/phím |
+| [`funput-ffi::{funput_process_char, funput_buffer}`](crates/funput-ffi) | Engine qua C ABI + đọc composed buffer | 0,12 µs/phím | 0,11 µs/phím |
 
 > Đo trên release build, máy Apple M-series; chỉ gồm phần xử lý của Funput (không
 > tính OS chuyển sự kiện bàn phím hay app đích render). Số phụ thuộc phần cứng —
