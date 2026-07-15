@@ -19,15 +19,20 @@ DEST_RESOURCES="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
 BUILD_DIR="$DERIVED_FILE_DIR/launcher"
 
 # Sign the launcher with the same identity Xcode is using for this build, so it is
-# valid nested code. With code signing disabled (e.g. CI dry runs) fall back to
-# ad-hoc; Xcode re-signs the whole product afterwards anyway.
-if [ "${CODE_SIGNING_ALLOWED:-YES}" = "NO" ] || [ -z "${EXPANDED_CODE_SIGN_IDENTITY_NAME:-}" ]; then
+# valid nested code. Sign by the certificate *hash* (EXPANDED_CODE_SIGN_IDENTITY):
+# the human-readable name is ambiguous when the keychain holds two certs with the
+# same subject (e.g. a renewed "Apple Development" cert) and codesign then refuses
+# it. The name is still passed so build-launcher.sh can pick the per-identity
+# signing policy (hardened runtime / timestamp). With code signing disabled (e.g.
+# CI dry runs) fall back to ad-hoc; Xcode re-signs the whole product afterwards.
+if [ "${CODE_SIGNING_ALLOWED:-YES}" = "NO" ] || [ -z "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
     LAUNCHER_SIGN_ID="-"
 else
-    LAUNCHER_SIGN_ID="$EXPANDED_CODE_SIGN_IDENTITY_NAME"
+    LAUNCHER_SIGN_ID="$EXPANDED_CODE_SIGN_IDENTITY"
 fi
 
-"$SCRIPTS/build-launcher.sh" "$BUILD_DIR" "${MARKETING_VERSION:-0.0.0}" "$LAUNCHER_SIGN_ID" >/dev/null
+"$SCRIPTS/build-launcher.sh" "$BUILD_DIR" "${MARKETING_VERSION:-0.0.0}" \
+    "$LAUNCHER_SIGN_ID" "${EXPANDED_CODE_SIGN_IDENTITY_NAME:-}" >/dev/null
 
 mkdir -p "$DEST_RESOURCES"
 rm -rf "$DEST_RESOURCES/Funput.app"

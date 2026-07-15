@@ -8,20 +8,23 @@
 # funput://settings to the input method (opening its Settings window) and exits.
 # See Launcher/main.swift.
 #
-#   build-launcher.sh <out-dir> <version> [sign-identity]
+#   build-launcher.sh <out-dir> <version> [sign-identity] [sign-name]
 #
-# Writes <out-dir>/Funput.app. sign-identity defaults to "-" (ad-hoc). Signing
-# adapts to the identity so the launcher is valid as nested code of the app:
+# Writes <out-dir>/Funput.app. sign-identity defaults to "-" (ad-hoc) and may be a
+# certificate hash (never ambiguous) or a name. sign-name defaults to
+# sign-identity and only selects the signing *policy*, so the launcher is valid
+# as nested code of the app:
 #   "-" / empty          -> ad-hoc (no hardened runtime, no timestamp)
 #   "Developer ID …"     -> hardened runtime + secure timestamp (notarizable)
 #   anything else (dev)  -> hardened runtime, no network timestamp
 # Normally invoked from the Xcode "Embed Launcher" build phase (embed-launcher.sh),
-# which passes the build's own code-signing identity.
+# which passes the build's own code-signing identity hash + name.
 set -eu
 
 OUT="$1"
 VERSION="$2"
 SIGN_ID="${3:--}"
+SIGN_NAME="${4:-$SIGN_ID}"
 
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$DIR/Launcher"
@@ -59,8 +62,9 @@ if [ -f "$ICON_SRC" ] && command -v iconutil >/dev/null 2>&1; then
     rm -rf "$ICONSET"
 fi
 
-# Sign (see header for the per-identity policy).
-case "$SIGN_ID" in
+# Sign — policy picked from the identity *name*, signing done with $SIGN_ID
+# (see header for the per-identity policy).
+case "$SIGN_NAME" in
     "" | "-")
         codesign --force --sign "-" "$APP" ;;
     "Developer ID"*)
