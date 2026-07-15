@@ -3,16 +3,17 @@
 //! [`apply_action`] is method-agnostic; only the input-method classifier differs.
 
 use crate::composition::apply::{
-    apply_shape_key, apply_stroke, apply_tone_key, complete_uo_horn_for_continuation,
-    ends_with_open_uo_horn, remove_tone, shape_apply_target_exists,
+    apply_shape_key, apply_stroke, apply_tone_key, remove_tone, shape_apply_target_exists,
 };
 use crate::composition::revert::{try_revert_shape, try_revert_stroke, try_revert_tone};
+use crate::composition::uo_horn::{complete_uo_horn_for_continuation, ends_with_open_uo_horn};
 use crate::input_method::KeyAction;
 use crate::input_method::telex;
 use crate::input_method::vni;
 use crate::unicode::tone_position::reposition_existing_tone;
+use crate::validation::reachability::is_definitely_invalid;
 use crate::validation::syllable::{
-    ModifierValidation, is_definitely_invalid, validate_shape, validate_stroke, validate_tone,
+    ModifierValidation, validate_shape, validate_stroke, validate_tone,
 };
 use crate::{ToneStyle, TransformKind, TransformResult};
 

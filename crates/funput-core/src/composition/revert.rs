@@ -6,16 +6,19 @@
 //! [`apply_action`]: crate::composition::transform::apply_action
 
 use crate::ToneStyle;
+use crate::composition::uo_horn::try_revert_uo_compound;
 use crate::unicode::marks::{Tone, tone_on_vowel, vowel_stem};
-use crate::unicode::shapes::{VowelShape, shape_on_vowel, shaped_vowel_index, strip_shape};
+use crate::unicode::shapes::{VowelShape, shaped_vowel_index, strip_shape};
 use crate::unicode::tone_position::tone_vowel_index;
 
+/// Copy of `buffer` with the char at `char_idx` replaced (single allocation).
+/// An out-of-range index returns the buffer unchanged.
 pub(crate) fn replace_char_at(buffer: &str, char_idx: usize, new_ch: char) -> String {
-    let mut chars: Vec<char> = buffer.chars().collect();
-    if let Some(slot) = chars.get_mut(char_idx) {
-        *slot = new_ch;
+    let mut replaced = String::with_capacity(buffer.len() + new_ch.len_utf8());
+    for (i, ch) in buffer.chars().enumerate() {
+        replaced.push(if i == char_idx { new_ch } else { ch });
     }
-    chars.into_iter().collect()
+    replaced
 }
 
 /// Revert `đ`/`Đ` back to `d`/`D` when stroke key `9` is pressed again, matching
@@ -23,10 +26,17 @@ pub(crate) fn replace_char_at(buffer: &str, char_idx: usize, new_ch: char) -> St
 ///
 /// [`apply_stroke`]: crate::composition::apply::apply_stroke
 pub fn try_revert_stroke(buffer: &str) -> Option<String> {
-    let mut chars: Vec<char> = buffer.chars().collect();
-    let idx = chars.iter().rposition(|c| matches!(c, 'đ' | 'Đ'))?;
-    chars[idx] = if chars[idx] == 'đ' { 'd' } else { 'D' };
-    Some(chars.into_iter().collect())
+    let (offset, struck) = buffer
+        .char_indices()
+        .rev()
+        .find(|&(_, c)| matches!(c, 'đ' | 'Đ'))?;
+    let plain = if struck == 'đ' { 'd' } else { 'D' };
+
+    let mut reverted = String::with_capacity(buffer.len());
+    reverted.push_str(&buffer[..offset]);
+    reverted.push(plain);
+    reverted.push_str(&buffer[offset + struck.len_utf8()..]);
+    Some(reverted)
 }
 
 /// Revert tone when the same tone key is pressed on the toned vowel. Uses the
@@ -39,35 +49,6 @@ pub fn try_revert_tone(buffer: &str, tone: Tone, style: ToneStyle) -> Option<Str
     }
     let unstemmed = vowel_stem(vowel)?;
     Some(replace_char_at(buffer, vowel_idx, unstemmed))
-}
-
-fn ends_with_plain_shaped_uo(buffer: &str) -> bool {
-    let chars: Vec<char> = buffer.chars().collect();
-    if chars.len() < 2 {
-        return false;
-    }
-    let u = chars[chars.len() - 2];
-    let o = chars[chars.len() - 1];
-    shape_on_vowel(u) == Some(VowelShape::Horn)
-        && shape_on_vowel(o) == Some(VowelShape::Horn)
-        && tone_on_vowel(u).is_none()
-        && tone_on_vowel(o).is_none()
-        && strip_shape(u).is_some_and(|c| c.eq_ignore_ascii_case(&'u'))
-        && strip_shape(o).is_some_and(|c| c.eq_ignore_ascii_case(&'o'))
-}
-
-fn try_revert_uo_compound(buffer: &str) -> Option<String> {
-    if !ends_with_plain_shaped_uo(buffer) {
-        return None;
-    }
-
-    let mut chars: Vec<char> = buffer.chars().collect();
-    let len = chars.len();
-    let u = chars[len - 2];
-    let o = chars[len - 1];
-    chars[len - 2] = strip_shape(u)?;
-    chars[len - 1] = strip_shape(o)?;
-    Some(chars.into_iter().collect())
 }
 
 /// Revert shape when the same shape key is pressed on the shaped vowel.

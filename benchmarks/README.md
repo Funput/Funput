@@ -31,7 +31,7 @@ their corresponding directories in `target/criterion/`.
 | Full engine path (`process_char`, incl. boundary + English-restore) | **~0.52 µs / keystroke** (~1.9 M/s) |
 | **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.55 µs / keystroke** |
 | `size_of::<Engine>` (per-field session state) | **136 bytes** |
-| Heap allocations per keystroke (default / spell-check on) | **~12 / ~14** (~134 / ~148 B) |
+| Heap allocations per keystroke (with or without spell-check) | **~4** (~39 B) |
 | Release FFI shared lib (`libfunput_ffi.dylib`, LTO + stripped) | ~0.37 MB |
 
 A human types a few keys per second; Funput answers each in **sub-microsecond**
