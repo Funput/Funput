@@ -3,10 +3,10 @@
 
 use funput_desktop::{KeyEvent, Mods};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    GetAsyncKeyState, GetKeyState, GetKeyboardLayout, ToUnicodeEx, VIRTUAL_KEY, VK_BACK, VK_CAPITAL,
-    VK_CONTROL, VK_DELETE, VK_DOWN, VK_END, VK_ESCAPE, VK_HOME, VK_INSERT, VK_LEFT, VK_LWIN,
-    VK_MENU, VK_NEXT, VK_OEM_3, VK_PRIOR, VK_RETURN, VK_RIGHT, VK_RWIN, VK_SHIFT, VK_SPACE, VK_TAB,
-    VK_UP,
+    GetAsyncKeyState, GetKeyState, GetKeyboardLayout, ToUnicodeEx, VIRTUAL_KEY, VK_BACK,
+    VK_CAPITAL, VK_CONTROL, VK_DELETE, VK_DOWN, VK_END, VK_ESCAPE, VK_HOME, VK_INSERT, VK_LCONTROL,
+    VK_LEFT, VK_LMENU, VK_LSHIFT, VK_LWIN, VK_MENU, VK_NEXT, VK_OEM_3, VK_PRIOR, VK_RCONTROL,
+    VK_RETURN, VK_RIGHT, VK_RMENU, VK_RSHIFT, VK_RWIN, VK_SHIFT, VK_SPACE, VK_TAB, VK_UP,
 };
 use windows::Win32::UI::WindowsAndMessaging::KBDLLHOOKSTRUCT;
 
@@ -26,19 +26,46 @@ pub fn read_mods() -> Mods {
     }
 }
 
-/// Whether this keydown matches the configured VI/EN toggle hotkey.
+/// Fold side-specific modifier virtual-keys back to their generic codes. The
+/// low-level hook always delivers the side-specific keys (`VK_LSHIFT`,
+/// `VK_RMENU`, …), never the generic `VK_SHIFT`/`VK_MENU`/`VK_CONTROL` an app
+/// sees after message translation — comparing against the generics without this
+/// fold can never match (the original Alt+Shift preset bug).
+fn normalize_vk(vk: VIRTUAL_KEY) -> VIRTUAL_KEY {
+    match vk {
+        VK_LSHIFT | VK_RSHIFT => VK_SHIFT,
+        VK_LCONTROL | VK_RCONTROL => VK_CONTROL,
+        VK_LMENU | VK_RMENU => VK_MENU,
+        VK_RWIN => VK_LWIN,
+        other => other,
+    }
+}
+
+/// Whether this keydown matches the configured VI/EN toggle hotkey. Presets
+/// match their exact modifier set, so nearby combos (e.g. Ctrl+Shift+Space)
+/// still reach the focused app.
 pub fn is_toggle(vk: VIRTUAL_KEY, mods: Mods, hotkey: Hotkey) -> bool {
+    let vk = normalize_vk(vk);
     match hotkey {
-        Hotkey::CtrlBacktick => mods.ctrl && !mods.alt && !mods.win && vk == VK_OEM_3,
-        Hotkey::CtrlSpace => mods.ctrl && !mods.alt && !mods.win && vk == VK_SPACE,
-        // Modifier-only combo: fires on the second modifier's keydown.
-        Hotkey::AltShift => mods.alt && mods.shift && (vk == VK_SHIFT || vk == VK_MENU),
+        Hotkey::CtrlBacktick => {
+            mods.ctrl && !mods.alt && !mods.win && !mods.shift && vk == VK_OEM_3
+        }
+        Hotkey::CtrlSpace => mods.ctrl && !mods.alt && !mods.win && !mods.shift && vk == VK_SPACE,
+        // Modifier-only combo: fires on the second modifier's keydown. The async
+        // key state may not yet include the key this very event is delivering,
+        // so the pressed key itself also counts as held.
+        Hotkey::AltShift => {
+            let alt = mods.alt || vk == VK_MENU;
+            let shift = mods.shift || vk == VK_SHIFT;
+            alt && shift && !mods.ctrl && !mods.win && (vk == VK_SHIFT || vk == VK_MENU)
+        }
     }
 }
 
 /// Whether this keydown matches the configured flip hotkey. Letter virtual-keys are
 /// their ASCII uppercase codes (`Z` = 0x5A, `X` = 0x58).
 pub fn is_flip(vk: VIRTUAL_KEY, mods: Mods, hotkey: FlipHotkey) -> bool {
+    let vk = normalize_vk(vk);
     let ctrl_shift = mods.ctrl && mods.shift && !mods.alt && !mods.win;
     match hotkey {
         FlipHotkey::Off => false,
@@ -50,8 +77,19 @@ pub fn is_flip(vk: VIRTUAL_KEY, mods: Mods, hotkey: FlipHotkey) -> bool {
 fn is_navigation(vk: VIRTUAL_KEY) -> bool {
     if matches!(
         vk,
-        VK_RETURN | VK_TAB | VK_ESCAPE | VK_LEFT | VK_RIGHT | VK_UP | VK_DOWN | VK_HOME | VK_END
-            | VK_PRIOR | VK_NEXT | VK_DELETE | VK_INSERT
+        VK_RETURN
+            | VK_TAB
+            | VK_ESCAPE
+            | VK_LEFT
+            | VK_RIGHT
+            | VK_UP
+            | VK_DOWN
+            | VK_HOME
+            | VK_END
+            | VK_PRIOR
+            | VK_NEXT
+            | VK_DELETE
+            | VK_INSERT
     ) {
         return true;
     }
@@ -88,3 +126,6 @@ pub fn to_key_event(kbd: &KBDLLHOOKSTRUCT) -> KeyEvent {
         is_navigation: is_navigation(vk),
     }
 }
+
+#[cfg(test)]
+mod tests;
