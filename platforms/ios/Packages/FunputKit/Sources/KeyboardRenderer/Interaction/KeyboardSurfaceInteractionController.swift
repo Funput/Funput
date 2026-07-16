@@ -8,11 +8,6 @@ import UIKit
 final class KeyboardSurfaceInteractionController {
     typealias PreviewHandler = (_ key: KeySpec?, _ sourceFrame: CGRect?) -> Void
 
-    private struct HeldKey {
-        let spec: KeySpec
-        var didSwipe = false
-    }
-
     private let haptics: KeyboardHaptics
     private let onEvent: (KeyboardKeyEvent) -> Void
     private let onPreview: PreviewHandler
@@ -22,11 +17,11 @@ final class KeyboardSurfaceInteractionController {
     ) { [weak self] in
         self?.repeatBackspace()
     }
-    private var heldKeys: [HeldKey] = []  // press order; newest drives the preview
+    private var commitQueue = KeyboardPressCommitQueue()
     private var backspaceKeyID: String?
     private var previewKeyID: String?
     private var hapticsEnabled = true
-    var activeKey: KeySpec? { heldKeys.last?.spec }
+    var activeKey: KeySpec? { commitQueue.activeKey }
 
     init(
         feedbackView: UIView = UIView(),
@@ -63,13 +58,10 @@ final class KeyboardSurfaceInteractionController {
     }
 
     func cancelAll() {
-        let released = heldKeys
-        heldKeys.removeAll()
+        commitQueue.cancelAll()
         clearBackspaceRepeat()
         clearPreview()
-        for held in released {
-            onEvent(KeyboardKeyEvent(key: held.spec, phase: .cancelled))
-        }
+        flushCompletedKeys()
     }
 
     private func begin(
@@ -77,7 +69,7 @@ final class KeyboardSurfaceInteractionController {
         sourceFrame: CGRect?,
         presentation: KeyboardPresentation
     ) {
-        heldKeys.append(HeldKey(spec: key))
+        commitQueue.append(key)
         if hapticsEnabled, let type = KeyHapticTypeMapper.map(key.role) {
             haptics.perform(type)
         }
@@ -94,47 +86,55 @@ final class KeyboardSurfaceInteractionController {
     }
 
     private func finish(_ key: KeySpec) {
-        guard let held = release(key.id) else { return }
+        guard commitQueue.hasPendingKey(id: key.id) else { return }
         let wasRepeating = key.role == .backspace && repeatController.finish()
         if key.role == .backspace { backspaceKeyID = nil }
-        if !(held.didSwipe || wasRepeating) {
-            onEvent(KeyboardKeyEvent(key: key, phase: .released))
-        }
+        commitQueue.complete(id: key.id, as: wasRepeating ? .suppressed : .released)
+        if key.id == previewKeyID { clearPreview() }
+        flushCompletedKeys()
     }
 
     private func cancel(_ key: KeySpec) {
-        guard release(key.id) != nil else { return }
+        guard commitQueue.complete(id: key.id, as: .cancelled) else { return }
         if key.role == .backspace { clearBackspaceRepeat() }
-        onEvent(KeyboardKeyEvent(key: key, phase: .cancelled))
+        if key.id == previewKeyID { clearPreview() }
+        flushCompletedKeys()
     }
 
     private func handleSwipe(_ event: KeyboardKeyEvent) {
-        if let index = heldKeys.firstIndex(where: { $0.spec.id == event.key.id }) {
-            heldKeys[index].didSwipe = true
+        if commitQueue.hasPendingKey(id: event.key.id) {
+            guard case let .swiped(action) = event.phase else { return }
+            commitQueue.complete(id: event.key.id, as: .swiped(action))
             if event.key.id == backspaceKeyID { clearBackspaceRepeat() }
             if event.key.id == previewKeyID { clearPreview() }
-        } else if !heldKeys.isEmpty {
+        } else if !commitQueue.isEmpty {
+            return
+        } else {
+            // Accessibility can invoke the action without a preceding touch.
+            if hapticsEnabled { haptics.perform(.control) }
+            onEvent(event)
             return
         }
         if hapticsEnabled { haptics.perform(.control) }
-        onEvent(event)
+        flushCompletedKeys()
     }
 
     private func repeatBackspace() {
         guard let id = backspaceKeyID,
-              let held = heldKeys.first(where: { $0.spec.id == id }) else { return }
+              commitQueue.bufferRepeat(for: id) else { return }
         if hapticsEnabled { haptics.perform(.deleteRepeat) }
-        onEvent(KeyboardKeyEvent(key: held.spec, phase: .repeated))
+        flushCompletedKeys()
     }
 
-    @discardableResult
-    private func release(_ id: String) -> HeldKey? {
-        guard let index = heldKeys.firstIndex(where: { $0.spec.id == id }) else {
-            return nil
+    private func flushCompletedKeys() {
+        while let action = commitQueue.popReadyAction() {
+            switch action {
+            case let .event(event):
+                onEvent(event)
+            case .suppressed:
+                continue
+            }
         }
-        let held = heldKeys.remove(at: index)
-        if id == previewKeyID { clearPreview() }
-        return held
     }
 
     private func clearBackspaceRepeat() {

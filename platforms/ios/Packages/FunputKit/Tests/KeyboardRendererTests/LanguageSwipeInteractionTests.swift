@@ -33,6 +33,39 @@ struct LanguageSwipeInteractionTests {
         #expect(events.map(\.phase) == [.pressed, .swiped(.toggleLanguage)])
     }
 
+    @Test("Language swipe waits behind an earlier pressed key")
+    func swipePreservesPressOrder() {
+        var events: [KeyboardKeyEvent] = []
+        let controller = KeyboardSurfaceInteractionController(
+            onEvent: { events.append($0) },
+            onPreview: { _, _ in }
+        )
+        var presentation = KeyboardPresentation()
+        presentation.isHapticFeedbackEnabled = false
+        let character = KeySpec(id: "a", label: "a", role: .character)
+        let space = KeySpec(
+            id: "space",
+            label: "Tiếng Việt",
+            role: .space,
+            horizontalSwipeAction: .toggleLanguage
+        )
+
+        controller.handle(event(character, .pressed), sourceFrame: nil, presentation: presentation)
+        controller.handle(event(space, .pressed), sourceFrame: nil, presentation: presentation)
+        controller.handle(
+            event(space, .swiped(.toggleLanguage)),
+            sourceFrame: nil,
+            presentation: presentation
+        )
+        #expect(!events.contains { $0.phase == .swiped(.toggleLanguage) })
+
+        controller.handle(event(character, .released), sourceFrame: nil, presentation: presentation)
+        controller.handle(event(space, .released), sourceFrame: nil, presentation: presentation)
+
+        #expect(events.suffix(2).map(\.phase) == [.released, .swiped(.toggleLanguage)])
+        #expect(events.suffix(2).map(\.key.id) == [character.id, space.id])
+    }
+
     @Test("Space exposes a language toggle accessibility action")
     func accessibilityAction() {
         let layout = StandardKeyboardLayouts.letters(.vni)

@@ -10,6 +10,17 @@ final class KeyboardKeysHostView: UIView {
     private var usesGlassContainer = false
     private var controls: [KeyboardKeyControl] = []
 
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isMultipleTouchEnabled = true
+        contentHost.isMultipleTouchEnabled = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     func install(_ controls: [KeyboardKeyControl]) {
         self.controls.forEach { $0.removeFromSuperview() }
         self.controls = controls
@@ -48,8 +59,10 @@ final class KeyboardKeysHostView: UIView {
             glassContainerView = container
             contentHost = container.contentView
             contentHost.isUserInteractionEnabled = true
+            contentHost.isMultipleTouchEnabled = true
         } else {
             let host = UIView()
+            host.isMultipleTouchEnabled = true
             addSubview(host)
             glassContainerView = nil
             contentHost = host

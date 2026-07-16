@@ -80,6 +80,7 @@ public final class KeyboardSurfaceView: UIView {
     }
 
     private func configureView() {
+        isMultipleTouchEnabled = true
         clipsToBounds = true
         isOpaque = false
         backgroundColor = .clear
@@ -145,6 +146,5 @@ public final class KeyboardSurfaceView: UIView {
             $0.apply(presentation: presentation, traits: traitCollection)
         }
     }
-
 }
 #endif
