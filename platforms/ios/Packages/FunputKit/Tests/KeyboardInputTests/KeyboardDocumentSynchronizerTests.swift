@@ -38,6 +38,65 @@ struct KeyboardDocumentSynchronizerTests {
         #expect(synchronizer.snapshot?.contextBeforeInput == "á")
     }
 
+    @Test("An echo older than the current burst is still authored, not an external edit")
+    func echoOlderThanBurst() {
+        let identifier = UUID()
+        var synchronizer = KeyboardDocumentSynchronizer()
+        synchronizer.accept(KeyboardDocumentSnapshot(
+            documentIdentifier: identifier,
+            contextBeforeInput: "",
+            hasSelection: false
+        ))
+
+        for text in ["h", "o", "6"] {
+            synchronizer.beginMutation()
+            synchronizer.recordInsertion(text)
+            _ = synchronizer.finishMutation()
+        }
+
+        // The host echoes the state from BEFORE the burst (textDidChange lags
+        // fast typing). Treating it as external resets composition mid-word.
+        let consumed = synchronizer.consumeAuthoredTextChange(
+            documentIdentifier: identifier,
+            contextBeforeInput: ""
+        )
+        #expect(consumed)
+        #expect(synchronizer.snapshot?.contextBeforeInput == "ho6")
+    }
+
+    @Test("nil and empty contexts describe the same (empty) document")
+    func nilAndEmptyContextsAreEquivalent() {
+        let identifier = UUID()
+        var synchronizer = KeyboardDocumentSynchronizer()
+        synchronizer.accept(KeyboardDocumentSnapshot(
+            documentIdentifier: identifier,
+            contextBeforeInput: nil, // hosts report empty docs as nil or ""
+            hasSelection: false
+        ))
+
+        synchronizer.beginMutation()
+        synchronizer.recordInsertion("a")
+        _ = synchronizer.finishMutation()
+
+        // The first delayed callback can still report the pre-insertion nil
+        // context. It must be retained in the authored ring as well.
+        let consumedPreMutation = synchronizer.consumeAuthoredTextChange(
+            documentIdentifier: identifier,
+            contextBeforeInput: nil
+        )
+        #expect(consumedPreMutation)
+        #expect(synchronizer.snapshot?.contextBeforeInput == "a")
+
+        // The shadow after inserting into a nil-context document must be the
+        // inserted text, so the host's echo of it is recognized as authored.
+        #expect(synchronizer.snapshot?.contextBeforeInput == "a")
+        let consumed = synchronizer.consumeAuthoredTextChange(
+            documentIdentifier: identifier,
+            contextBeforeInput: "a"
+        )
+        #expect(consumed)
+    }
+
     @Test("Shadow context remains bounded while retaining the newest text")
     func boundedShadowContext() {
         var synchronizer = KeyboardDocumentSynchronizer()
@@ -80,6 +139,8 @@ struct KeyboardDocumentSynchronizerTests {
             contextBeforeInput: synchronizer.snapshot?.contextBeforeInput
         )
         #expect(consumed)
-        #expect(synchronizer.pendingAuthoredContextCount == 0)
+        // A current callback is not a monotonic watermark: UIKit can still
+        // deliver an older callback that was already queued behind it.
+        #expect(synchronizer.pendingAuthoredContextCount == 256)
     }
 }

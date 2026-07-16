@@ -81,7 +81,10 @@ struct KeyboardInteractionTests {
             }
         }
 
-        #expect(events.filter { $0.phase == .released }.count == 2_000)
+        let presses = events.filter { $0.phase == .pressed }.map(\.key.id)
+        let releases = events.filter { $0.phase == .released }.map(\.key.id)
+        #expect(releases.count == 2_000)
+        #expect(releases.elementsEqual(presses))
         #expect(!events.contains { $0.phase == .cancelled })
         #expect(controller.activeKey == nil)
     }

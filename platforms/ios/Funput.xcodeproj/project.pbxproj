@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		5FB3C7F83001F87500CE4906 /* Keyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5FB3C7F13001F87500CE4906 /* Keyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		5FEF3E313009341000B5155D /* KeyboardInput in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000121 /* KeyboardInput */; };
 		FA2600000000000000000201 /* KeyboardLayout in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000101 /* KeyboardLayout */; };
 		FA2600000000000000000202 /* ThemeSchema in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000102 /* ThemeSchema */; };
 		FA2600000000000000000203 /* KeyboardRenderer in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000103 /* KeyboardRenderer */; };
@@ -121,6 +122,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5FEF3E313009341000B5155D /* KeyboardInput in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -221,6 +223,7 @@
 			);
 			name = FunputTests;
 			packageProductDependencies = (
+				FA2600000000000000000121 /* KeyboardInput */,
 			);
 			productName = FunputTests;
 			productReference = 5FB3C7C43001F78400CE4906 /* FunputTests.xctest */;
@@ -876,6 +879,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
 			productName = KeyboardConfiguration;
+		};
+		FA2600000000000000000121 /* KeyboardInput */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = KeyboardInput;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

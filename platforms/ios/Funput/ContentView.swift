@@ -11,6 +11,18 @@ struct ContentView: View {
     @State private var showsLaunchExperience = true
 
     var body: some View {
+#if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uitest-typing-harness") {
+            TypingHarnessView()
+        } else {
+            appContent
+        }
+#else
+        appContent
+#endif
+    }
+
+    private var appContent: some View {
         ZStack {
             AppShellView()
             if showsLaunchExperience {
