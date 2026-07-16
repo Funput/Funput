@@ -16,7 +16,7 @@ final class KeyboardScheduledAction {
 }
 
 @MainActor
-final class BackspaceRepeatController {
+final class KeyRepeatController {
     typealias Scheduler = @MainActor (
         _ delay: TimeInterval,
         _ action: @escaping @MainActor () -> Void
@@ -33,7 +33,7 @@ final class BackspaceRepeatController {
     init(
         initialDelay: TimeInterval = 0.4,
         repeatInterval: TimeInterval = 0.05,
-        schedule: @escaping Scheduler = BackspaceRepeatController.schedule,
+        schedule: @escaping Scheduler = KeyRepeatController.schedule,
         onRepeat: @escaping () -> Void
     ) {
         precondition(initialDelay > 0)
@@ -72,9 +72,7 @@ final class BackspaceRepeatController {
     }
 
     private func scheduleNext(after delay: TimeInterval) {
-        scheduledAction = schedule(delay) { [weak self] in
-            self?.tick()
-        }
+        scheduledAction = schedule(delay) { [weak self] in self?.tick() }
     }
 
     static func schedule(

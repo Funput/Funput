@@ -11,14 +11,13 @@ final class KeyboardSurfaceInteractionController {
     private let haptics: KeyboardHaptics
     private let onEvent: (KeyboardKeyEvent) -> Void
     private let onPreview: PreviewHandler
-    private let repeatScheduler: BackspaceRepeatController.Scheduler
-    private lazy var repeatController = BackspaceRepeatController(
+    private let repeatScheduler: KeyRepeatController.Scheduler
+    private lazy var repeatCoordinator = KeyboardRepeatCoordinator(
         schedule: repeatScheduler
-    ) { [weak self] in
-        self?.repeatBackspace()
+    ) { [weak self] key in
+        self?.repeatKey(key)
     }
     private var commitQueue = KeyboardPressCommitQueue()
-    private var backspaceKeyID: String?
     private var previewKeyID: String?
     private var hapticsEnabled = true
     var activeKey: KeySpec? { commitQueue.activeKey }
@@ -27,8 +26,8 @@ final class KeyboardSurfaceInteractionController {
         feedbackView: UIView = UIView(),
         onEvent: @escaping (KeyboardKeyEvent) -> Void,
         onPreview: @escaping PreviewHandler,
-        repeatScheduler: @escaping BackspaceRepeatController.Scheduler =
-            BackspaceRepeatController.schedule
+        repeatScheduler: @escaping KeyRepeatController.Scheduler =
+            KeyRepeatController.schedule
     ) {
         haptics = KeyboardHaptics(view: feedbackView)
         self.onEvent = onEvent
@@ -59,7 +58,7 @@ final class KeyboardSurfaceInteractionController {
 
     func cancelAll() {
         commitQueue.cancelAll()
-        clearBackspaceRepeat()
+        repeatCoordinator.cancelAll()
         clearPreview()
         flushCompletedKeys()
     }
@@ -78,17 +77,13 @@ final class KeyboardSurfaceInteractionController {
             previewKeyID = key.id
             onPreview(key, sourceFrame)
         }
-        if key.role == .backspace {
-            backspaceKeyID = key.id
-            repeatController.start()
-        }
+        repeatCoordinator.start(key)
         onEvent(KeyboardKeyEvent(key: key, phase: .pressed))
     }
 
     private func finish(_ key: KeySpec) {
         guard commitQueue.hasPendingKey(id: key.id) else { return }
-        let wasRepeating = key.role == .backspace && repeatController.finish()
-        if key.role == .backspace { backspaceKeyID = nil }
+        let wasRepeating = repeatCoordinator.finish(key)
         commitQueue.complete(id: key.id, as: wasRepeating ? .suppressed : .released)
         if key.id == previewKeyID { clearPreview() }
         flushCompletedKeys()
@@ -96,7 +91,7 @@ final class KeyboardSurfaceInteractionController {
 
     private func cancel(_ key: KeySpec) {
         guard commitQueue.complete(id: key.id, as: .cancelled) else { return }
-        if key.role == .backspace { clearBackspaceRepeat() }
+        repeatCoordinator.cancel(key)
         if key.id == previewKeyID { clearPreview() }
         flushCompletedKeys()
     }
@@ -105,7 +100,7 @@ final class KeyboardSurfaceInteractionController {
         if commitQueue.hasPendingKey(id: event.key.id) {
             guard case let .swiped(action) = event.phase else { return }
             commitQueue.complete(id: event.key.id, as: .swiped(action))
-            if event.key.id == backspaceKeyID { clearBackspaceRepeat() }
+            repeatCoordinator.cancel(event.key)
             if event.key.id == previewKeyID { clearPreview() }
         } else if !commitQueue.isEmpty {
             return
@@ -119,10 +114,12 @@ final class KeyboardSurfaceInteractionController {
         flushCompletedKeys()
     }
 
-    private func repeatBackspace() {
-        guard let id = backspaceKeyID,
-              commitQueue.bufferRepeat(for: id) else { return }
-        if hapticsEnabled { haptics.perform(.deleteRepeat) }
+    private func repeatKey(_ key: KeySpec) {
+        guard commitQueue.bufferRepeat(for: key.id) else {
+            repeatCoordinator.cancel(key)
+            return
+        }
+        if hapticsEnabled, key.role == .backspace { haptics.perform(.deleteRepeat) }
         flushCompletedKeys()
     }
 
@@ -135,11 +132,6 @@ final class KeyboardSurfaceInteractionController {
                 continue
             }
         }
-    }
-
-    private func clearBackspaceRepeat() {
-        repeatController.cancel()
-        backspaceKeyID = nil
     }
 
     private func clearPreview() {

@@ -4,8 +4,8 @@ import Foundation
 import Testing
 
 @MainActor
-struct BackspaceRepeatControllerTests {
-    @Test("Quick tap keeps one release action")
+struct KeyRepeatControllerTests {
+    @Test("Quick tap does not enter repeat mode")
     func quickTap() {
         let scheduler = TestRepeatScheduler()
         var repeats = 0
@@ -52,8 +52,8 @@ struct BackspaceRepeatControllerTests {
     private func makeController(
         scheduler: TestRepeatScheduler,
         onRepeat: @escaping () -> Void
-    ) -> BackspaceRepeatController {
-        BackspaceRepeatController(
+    ) -> KeyRepeatController {
+        KeyRepeatController(
             initialDelay: 0.4,
             repeatInterval: 0.05,
             schedule: scheduler.schedule,
