@@ -12,7 +12,8 @@ extension KeyboardViewController {
     /// containing app take effect the next time the keyboard appears. Reading on
     /// activation (not per keystroke) keeps the hot path free of I/O.
     func reloadConfiguration() {
-        configuration = configurationStore.load()
+        configuration = FunputUITestConfigurationOverrideStore().load()
+            ?? configurationStore.load()
         themeCatalog = ThemeCatalog(customThemes: customThemeStore.load())
         let theme = themeCatalog.theme(id: configuration.selectedThemeID)
         let assetID = theme?.backgroundEffects.image?.assetID

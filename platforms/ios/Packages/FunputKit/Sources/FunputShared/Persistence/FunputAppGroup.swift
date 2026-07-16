@@ -8,6 +8,10 @@ public enum FunputAppGroup {
     /// Defaults key under which the encoded ``FunputConfiguration`` is stored.
     public static let configurationKey = "configuration"
 
+    /// Short-lived configuration used only by the containing app's UI-test
+    /// typing harness. Kept separate so automation never overwrites settings.
+    public static let uiTestConfigurationOverrideKey = "ui-test-configuration-override"
+
     /// Defaults key for the keyboard's most recently used emoji.
     public static let emojiRecentsKey = "emoji-recents"
 

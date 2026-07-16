@@ -1,9 +1,8 @@
 import XCTest
 
 /// End-to-end Vietnamese typing through the real Funput keyboard extension,
-/// one sequential tap per key. The single-touch baseline: if this fails, the
-/// problem is not rollover-related (see RolloverTypingUITests for the
-/// overlapping-touch variant that models real fast typing).
+/// one sequential tap per key. This covers the supported deterministic
+/// end-to-end UI automation path.
 ///
 /// Launches the app in its typing-harness mode (`-uitest-typing-harness`),
 /// switches the system keyboard to Funput, then taps out the shared VNI
@@ -14,13 +13,24 @@ import XCTest
 /// after installing the app so the extension is in the enabled-keyboards list.
 /// On a real device, enable the keyboard in Settings first.
 final class VietnameseTypingUITests: XCTestCase {
+    private var app: XCUIApplication!
+
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
 
+    override func tearDownWithError() throws {
+        app?.terminate()
+        let cleanupApp = XCUIApplication()
+        cleanupApp.launchArguments = ["-uitest-clear-configuration-override"]
+        cleanupApp.launch()
+        cleanupApp.terminate()
+        app = nil
+    }
+
     @MainActor
     func testVNIParagraphAtHumanSpeedCommitsExactly() throws {
-        let app = XCUIApplication()
+        app = XCUIApplication()
         app.launchArguments += ["-uitest-typing-harness"]
         app.launch()
 

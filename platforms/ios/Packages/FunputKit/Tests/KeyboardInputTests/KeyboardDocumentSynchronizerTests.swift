@@ -78,6 +78,15 @@ struct KeyboardDocumentSynchronizerTests {
         synchronizer.recordInsertion("a")
         _ = synchronizer.finishMutation()
 
+        // The first delayed callback can still report the pre-insertion nil
+        // context. It must be retained in the authored ring as well.
+        let consumedPreMutation = synchronizer.consumeAuthoredTextChange(
+            documentIdentifier: identifier,
+            contextBeforeInput: nil
+        )
+        #expect(consumedPreMutation)
+        #expect(synchronizer.snapshot?.contextBeforeInput == "a")
+
         // The shadow after inserting into a nil-context document must be the
         // inserted text, so the host's echo of it is recognized as authored.
         #expect(synchronizer.snapshot?.contextBeforeInput == "a")
@@ -130,6 +139,8 @@ struct KeyboardDocumentSynchronizerTests {
             contextBeforeInput: synchronizer.snapshot?.contextBeforeInput
         )
         #expect(consumed)
-        #expect(synchronizer.pendingAuthoredContextCount == 0)
+        // A current callback is not a monotonic watermark: UIKit can still
+        // deliver an older callback that was already queued behind it.
+        #expect(synchronizer.pendingAuthoredContextCount == 256)
     }
 }

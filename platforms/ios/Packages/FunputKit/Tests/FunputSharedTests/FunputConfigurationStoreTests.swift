@@ -38,3 +38,32 @@ struct FunputConfigurationStoreTests {
         body(FunputConfigurationStore(defaults: defaults), defaults)
     }
 }
+
+struct FunputUITestConfigurationOverrideStoreTests {
+    @Test("UI-test override is separate, expiring, and clearable")
+    func lifecycle() {
+        let suiteName = "test.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let realStore = FunputConfigurationStore(defaults: defaults)
+        var real = FunputConfiguration.default
+        real.inputMethod = .telex
+        #expect(realStore.save(real))
+
+        let overrideStore = FunputUITestConfigurationOverrideStore(defaults: defaults)
+        var override = FunputConfiguration.default
+        override.eagerRestore = false
+        let now = Date(timeIntervalSince1970: 1_000)
+        #expect(overrideStore.save(override, expiresAt: now.addingTimeInterval(60)))
+        #expect(overrideStore.load(now: now) == override)
+        #expect(realStore.load() == real)
+
+        #expect(overrideStore.load(now: now.addingTimeInterval(61)) == nil)
+        #expect(realStore.load() == real)
+
+        #expect(overrideStore.save(override, expiresAt: now.addingTimeInterval(60)))
+        overrideStore.clear()
+        #expect(overrideStore.load(now: now) == nil)
+    }
+}

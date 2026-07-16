@@ -15,15 +15,10 @@ struct TypingHarnessView: View {
             .onAppear(perform: Self.forceDeterministicConfiguration)
     }
 
-    /// Pin the shared keyboard configuration to the exact engine setup the UI
-    /// test's expected output was generated with (`funput dev run -m vni`).
-    /// VNI + these flags equal `FunputConfiguration.default`, which is also
-    /// what the extension falls back to when Full Access (and thus the App
-    /// Group) is unavailable — so the test behaves the same either way.
-    /// Theme and feedback fields are left untouched.
+    /// Pin the keyboard to the exact engine setup used to generate the test's
+    /// expected output, without overwriting the user's persisted settings.
     static func forceDeterministicConfiguration() {
-        let store = FunputConfigurationStore()
-        var configuration = store.load()
+        var configuration = FunputConfiguration.default
         configuration.inputMethod = .vni
         configuration.language = .vietnamese
         configuration.toneStyle = .traditional
@@ -31,7 +26,12 @@ struct TypingHarnessView: View {
         configuration.smartRestore = true
         configuration.eagerRestore = false
         configuration.autoCapitalize = false
-        store.save(configuration)
+        configuration.showsNumberRow = false
+        configuration.showsGlobeKey = false
+        FunputUITestConfigurationOverrideStore().save(
+            configuration,
+            expiresAt: Date().addingTimeInterval(10 * 60)
+        )
     }
 }
 
