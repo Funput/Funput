@@ -19,7 +19,16 @@ final class RolloverTypingUITests: XCTestCase {
 
     @MainActor
     func testVNIParagraphWithTwoThumbRolloverCommitsExactly() throws {
+        #if targetEnvironment(simulator)
+        throw XCTSkip("""
+        The simulator's synthesis daemon corrupts overlapping pointer \
+        playback (phantom up/down/cancel transitions) — run this test on a \
+        real device. On the simulator, rollover is covered in-process by \
+        FunputTests/RolloverTouchPipelineTests.
+        """)
+        #else
         try runParagraph(allowOverlap: true)
+        #endif
     }
 
     /// Control experiment: identical synthesizer, timings, and jitter, but
@@ -78,12 +87,12 @@ final class RolloverTypingUITests: XCTestCase {
     ///  - at most two fingers are down at once (two thumbs)
     ///  - a repeated key waits for its own previous release (one physical key
     ///    cannot be pressed twice concurrently)
-    /// Event timings quantized to a 60 Hz frame land in the same frame when
-    /// closer than ~17 ms, and the system may then deliver them in either
-    /// order — that would scramble text without any app bug. Real rolls have
-    /// ≥30 ms between releases anyway, so keep every ordered pair of downs
-    /// and ups at least this far apart.
-    private static let minEventSeparation: TimeInterval = 0.025
+    /// Events delivered within one ~17 ms digitizer frame can reach the app
+    /// in either order; keeping ordered pairs of downs and ups two frames
+    /// apart guarantees the frame boundary can never merge or reorder them —
+    /// a same-frame swap would scramble text without any app bug. Real rolls
+    /// have ≥30 ms between releases anyway.
+    private static let minEventSeparation: TimeInterval = 0.034
 
     private func planStrokes(
         for chunk: String,

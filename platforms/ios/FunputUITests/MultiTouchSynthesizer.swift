@@ -50,6 +50,15 @@ enum MultiTouchSynthesizer {
             name: "funput-rollover-typing",
             interfaceOrientation: UIInterfaceOrientation.portrait.rawValue
         )
+        // One pointer path per keystroke. KNOWN LIMITATION: the simulator's
+        // synthesis daemon plays overlapping paths back corrupted (phantom
+        // up/down/cancel transitions; backboardd logs "touch down without
+        // previous range event") no matter how the paths are constructed —
+        // per-key paths, keepalive moves, tick-aligned grids, and two
+        // stable multi-press pointers were all tried and all garble.
+        // Sequential (non-overlapping) paths play back correctly, so the
+        // no-overlap control test guards this synthesizer on the simulator
+        // and the overlap variant is device-only (see RolloverTypingUITests).
         for stroke in strokes {
             let pathType = unsafeBitCast(pathClass, to: PointerEventPathInit.Type.self)
             let path = pathType.init(touchAt: stroke.point, offset: stroke.downOffset)

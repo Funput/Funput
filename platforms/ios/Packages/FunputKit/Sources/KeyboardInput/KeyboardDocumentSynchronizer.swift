@@ -22,6 +22,12 @@ struct KeyboardDocumentSynchronizer {
 
     mutating func beginMutation() {
         snapshotBeforeMutation = snapshot
+        // textDidChange lags fast typing, so the host may echo the state from
+        // BEFORE this mutation. Keep it acknowledgeable: an unmatched echo
+        // reads as an external edit and resets composition mid-word.
+        if let context = snapshot?.contextBeforeInput {
+            appendAuthoredContext(context)
+        }
         isApplyingMutation = true
     }
 
@@ -34,9 +40,10 @@ struct KeyboardDocumentSynchronizer {
 
     mutating func recordInsertion(_ text: String) {
         guard !text.isEmpty, let current = snapshot else { return }
-        let context = current.contextBeforeInput.map {
-            String(($0 + text).suffix(Self.shadowContextLimit))
-        }
+        // nil base context = empty document; the shadow must stay matchable.
+        let context = String(
+            ((current.contextBeforeInput ?? "") + text).suffix(Self.shadowContextLimit)
+        )
         updateAuthoredSnapshot(from: current, contextBeforeInput: context)
     }
 
@@ -133,16 +140,11 @@ struct KeyboardDocumentSynchronizer {
         nextAuthoredContextIndex = 0
     }
 
+    // Hosts report an empty document as either nil or "" — same state.
     private func contextsMatch(_ expected: String?, _ actual: String?) -> Bool {
-        switch (expected, actual) {
-        case (nil, nil):
-            true
-        case let (expected?, actual?):
-            expected == actual
-                || (!expected.isEmpty && !actual.isEmpty
-                    && (expected.hasSuffix(actual) || actual.hasSuffix(expected)))
-        default:
-            false
-        }
+        let expected = expected ?? "", actual = actual ?? ""
+        return expected == actual
+            || (!expected.isEmpty && !actual.isEmpty
+                && (expected.hasSuffix(actual) || actual.hasSuffix(expected)))
     }
 }
