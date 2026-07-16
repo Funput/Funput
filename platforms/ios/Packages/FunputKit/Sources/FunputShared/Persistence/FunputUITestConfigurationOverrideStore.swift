@@ -1,3 +1,4 @@
+#if DEBUG
 import Foundation
 
 /// A short-lived, separately stored configuration for end-to-end UI tests.
@@ -53,3 +54,4 @@ public struct FunputUITestConfigurationOverrideStore {
         defaults.removeObject(forKey: key)
     }
 }
+#endif

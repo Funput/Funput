@@ -39,6 +39,7 @@ struct FunputConfigurationStoreTests {
     }
 }
 
+#if DEBUG
 struct FunputUITestConfigurationOverrideStoreTests {
     @Test("UI-test override is separate, expiring, and clearable")
     func lifecycle() {
@@ -67,3 +68,4 @@ struct FunputUITestConfigurationOverrideStoreTests {
         #expect(overrideStore.load(now: now) == nil)
     }
 }
+#endif

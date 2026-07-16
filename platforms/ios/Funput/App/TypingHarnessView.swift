@@ -1,3 +1,4 @@
+#if DEBUG
 import FunputShared
 import KeyboardLayout
 import SwiftUI
@@ -66,3 +67,4 @@ private struct HarnessTextView: UIViewRepresentable {
 #Preview {
     TypingHarnessView()
 }
+#endif
