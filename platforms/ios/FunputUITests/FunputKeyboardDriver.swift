@@ -26,19 +26,23 @@ enum FunputKeyboardDriver {
                 .firstMatch
             guard globe.waitForExistence(timeout: 3) else { break }
             globe.tap()
-            if sentinel.waitForExistence(timeout: 3) { return true }
+            // Generous window: the extension's first launch after a simulator
+            // boot can take several seconds, and tapping the globe again
+            // before it settles would hop straight past Funput.
+            if sentinel.waitForExistence(timeout: 10) { return true }
         }
         return false
     }
 
-    /// Resolve every unique character in `keys` to a screen coordinate once,
-    /// up front. Tapping cached coordinates keeps the per-keystroke cost flat
-    /// (no accessibility re-query per tap) and avoids matching the typed text
-    /// itself, which after a while contains the same letters as the keycaps.
-    static func resolveKeyCoordinates(
+    /// Resolve every unique character in `keys` to its keycap's screen frame
+    /// once, up front. Working from cached frames keeps the per-keystroke cost
+    /// flat (no accessibility re-query per tap) and avoids matching the typed
+    /// text itself, which after a while contains the same letters as the
+    /// keycaps. Frames are stable while typing — the layout never moves.
+    static func resolveKeyFrames(
         _ app: XCUIApplication, for keys: String
-    ) -> [Character: XCUICoordinate] {
-        var taps: [Character: XCUICoordinate] = [:]
+    ) -> [Character: CGRect] {
+        var frames: [Character: CGRect] = [:]
         for character in Set(keys) {
             let label: String
             var exactLabel = true
@@ -55,15 +59,19 @@ enum FunputKeyboardDriver {
                 element.waitForExistence(timeout: 3),
                 "key '\(character)' (label \"\(label)\") not found on the Funput keyboard"
             )
-            // Absolute screen coordinate: element-relative XCUICoordinates
-            // re-resolve their element on every tap, which is slow and can go
-            // stale mid-run; the keycap frames never move while typing.
-            let frame = element.frame
-            taps[character] = app
-                .coordinate(withNormalizedOffset: .zero)
+            frames[character] = element.frame
+        }
+        return frames
+    }
+
+    /// Key-center coordinates for sequential single-touch typing.
+    static func resolveKeyCoordinates(
+        _ app: XCUIApplication, for keys: String
+    ) -> [Character: XCUICoordinate] {
+        resolveKeyFrames(app, for: keys).mapValues { frame in
+            app.coordinate(withNormalizedOffset: .zero)
                 .withOffset(CGVector(dx: frame.midX, dy: frame.midY))
         }
-        return taps
     }
 
     /// A keycap in the keyboard area. Prefers real `.key` elements; falls back
@@ -99,5 +107,12 @@ struct SplitMix64 {
         z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
         z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
         return UInt32((z ^ (z >> 31)) % UInt64(bound))
+    }
+
+    /// Uniform value in `range` (millisecond-ish granularity is plenty for
+    /// touch timing and placement jitter).
+    mutating func next(in range: ClosedRange<Double>) -> Double {
+        range.lowerBound
+            + (range.upperBound - range.lowerBound) * Double(next(upTo: 10_000)) / 10_000
     }
 }
