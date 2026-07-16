@@ -137,17 +137,22 @@ pub fn method_and_tone() -> (InputMethod, CoreToneStyle) {
     with(|s| (s.settings.method.core(), s.settings.tone_style.core()))
 }
 
-/// True when the most-recently-focused app is Google Chrome. Used to route text
-/// injection through the Delete-primer path that works around Chrome's omnibox
-/// autocomplete eating synthesized Backspaces. `recent[0]` is the current
-/// foreground app (it is pushed there by the foreground hook). Chrome Beta/Dev/
-/// Canary also report `chrome.exe`; Edge (`msedge.exe`) and Brave (`brave.exe`)
+/// Browsers whose URL bar inline-autofills a *selected* suffix that eats a
+/// synthesized Backspace (Chrome's omnibox, Firefox's address bar). Chrome
+/// Beta/Dev/Canary also report `chrome.exe`; Firefox Developer Edition/Nightly
+/// also report `firefox.exe`. Edge (`msedge.exe`) and Brave (`brave.exe`)
 /// deliberately do not match — they are unaffected.
-pub fn foreground_is_chrome() -> bool {
+const URLBAR_AUTOFILL_BROWSERS: [&str; 2] = ["chrome.exe", "firefox.exe"];
+
+/// True when the most-recently-focused app is a browser whose URL bar autofill
+/// swallows synthesized Backspaces. Used to route text injection through the
+/// Delete-primer path (see `inject::send_plan_primed`). `recent[0]` is the
+/// current foreground app (it is pushed there by the foreground hook).
+pub fn foreground_has_urlbar_autofill() -> bool {
     with(|s| {
         s.recent
             .first()
-            .map(|a| a.id == "chrome.exe")
+            .map(|a| URLBAR_AUTOFILL_BROWSERS.contains(&a.id.as_str()))
             .unwrap_or(false)
     })
 }

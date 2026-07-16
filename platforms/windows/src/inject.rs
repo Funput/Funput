@@ -77,7 +77,8 @@ fn raw_send(inputs: &[INPUT]) {
 }
 
 /// Send the deletions then the new text as one atomic `SendInput` batch. This is
-/// the default path used for every app except Chrome (see [`send_plan_chrome`]).
+/// the default path used for every app except browsers with URL-bar autofill
+/// (see [`send_plan_primed`]).
 pub fn send_plan(plan: &InjectPlan) {
     if plan.is_noop() {
         return;
@@ -88,25 +89,26 @@ pub fn send_plan(plan: &InjectPlan) {
 }
 
 /// Like [`send_plan`] but prepends a single `Delete` press before the deletions,
-/// for Chrome's omnibox.
+/// for URL bars with inline autofill (Chrome's omnibox, Firefox's address bar).
 ///
-/// The omnibox shows an inline-autocomplete *suffix that is selected* (e.g. after
+/// Those URL bars show an inline-autofill *suffix that is selected* (e.g. after
 /// "bo" it displays "bo[okmarks]"). A Backspace fired against that selection deletes
 /// the **selection**, not the base character, so the vowel we meant to replace
 /// survives and the new glyph piles on top: "bộ" → "boộ". The leading `Delete`
-/// dismisses that autocomplete selection first; the Backspaces then bite real
-/// characters. When there is no autocomplete and the caret sits at the end of the
+/// dismisses that autofill selection first; the Backspaces then bite real
+/// characters. When there is no autofill and the caret sits at the end of the
 /// field (the normal case while typing), `Delete` is a no-op, so this stays safe.
 ///
-/// Sent as one synchronous `SendInput` batch — autocomplete is recomputed
+/// Sent as one synchronous `SendInput` batch — autofill is recomputed
 /// asynchronously, so it will not re-appear between the `Delete` and the Backspaces
 /// within a single burst. Only used when `backspaces > 0` (a pure insert has no
 /// Backspace to lose).
 ///
-/// Caveat: in a Chrome **web** field the omnibox autocomplete does not exist, so the
+/// Caveat: in a **web** field the URL-bar autofill does not exist, so the
 /// `Delete` is wanted only at end-of-text; if the caret is in the middle of existing
-/// text it will eat the following character. See `shell::foreground_is_chrome`.
-pub fn send_plan_chrome(plan: &InjectPlan) {
+/// text it will eat the following character. See
+/// `shell::foreground_has_urlbar_autofill`.
+pub fn send_plan_primed(plan: &InjectPlan) {
     if plan.is_noop() {
         return;
     }
