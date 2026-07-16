@@ -243,8 +243,8 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
     if flip_hit {
         let plan = plan_inject(&shell::flip_composing());
         if !plan.is_noop() {
-            if shell::foreground_is_chrome() {
-                inject::send_plan_chrome(&plan);
+            if shell::foreground_has_urlbar_autofill() {
+                inject::send_plan_primed(&plan);
             } else {
                 inject::send_plan(&plan);
             }
@@ -258,11 +258,12 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
             if plan.is_noop() {
                 false // Action::None — the literal key reaches the app
             } else {
-                // Chrome's omnibox eats a Backspace to clear its autocomplete
-                // selection, so it gets a Delete primer first (see
-                // inject::send_plan_chrome); everything else takes the direct path.
-                if shell::foreground_is_chrome() {
-                    inject::send_plan_chrome(&plan);
+                // Chrome's omnibox and Firefox's address bar eat a Backspace to
+                // clear their autofill selection, so they get a Delete primer
+                // first (see inject::send_plan_primed); everything else takes
+                // the direct path.
+                if shell::foreground_has_urlbar_autofill() {
+                    inject::send_plan_primed(&plan);
                 } else {
                     inject::send_plan(&plan); // delete + retype the composed text
                 }
