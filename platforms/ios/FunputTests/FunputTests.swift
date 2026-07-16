@@ -25,7 +25,12 @@ struct FunputTests {
         let presentation = KeyboardPreviewPresentation.make(configuration: configuration)
         #expect(presentation.layout.inputMethod == .vni)
         #expect(!presentation.layout.rows.isEmpty)
+        #expect(presentation.layout.toolbar?.systemInputModeKey == nil)
         #expect(presentation.theme == .funputGlass)
+
+        configuration.showsGlobeKey = true
+        let withGlobe = KeyboardPreviewPresentation.make(configuration: configuration)
+        #expect(withGlobe.layout.toolbar?.systemInputModeKey?.role == .systemInputMode)
     }
 
     @Test("Version metadata presents the public version only")
@@ -62,6 +67,23 @@ struct FunputTests {
         #expect(model.configuration.heightScale == 1.15)
         model.heightBinding.wrappedValue = 0
         #expect(model.configuration.heightScale == 0.85)
+    }
+
+    @Test("Number row preference is editable for Telex and locked on for VNI")
+    func numberRowPreference() {
+        var configuration = FunputConfiguration.default
+        configuration.inputMethod = .telex
+        let model = SettingsModel(store: SettingsTestStore(configuration: configuration))
+        #expect(!model.isNumberRowLocked)
+        #expect(!model.numberRowBinding.wrappedValue)
+        model.numberRowBinding.wrappedValue = true
+        #expect(model.configuration.showsNumberRow)
+
+        model.update(\.inputMethod, to: .vni)
+        #expect(model.isNumberRowLocked)
+        #expect(model.numberRowBinding.wrappedValue)
+        model.numberRowBinding.wrappedValue = false
+        #expect(model.configuration.showsNumberRow)
     }
 
     @Test("Settings retain prior values when saving fails")

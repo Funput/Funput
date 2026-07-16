@@ -18,6 +18,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var isHapticFeedbackEnabled: Bool
     public var isKeySoundEnabled: Bool
     public var showsKeyPreviews: Bool
+    public var showsNumberRow: Bool
+    public var showsGlobeKey: Bool
     public var heightScale: Double
     public var schemaVersion: Int
 
@@ -25,7 +27,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
         case eagerRestore, autoCapitalize, selectedThemeID
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
-        case heightScale, schemaVersion
+        case showsNumberRow, showsGlobeKey, heightScale, schemaVersion
     }
 
     public init(
@@ -40,6 +42,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         isHapticFeedbackEnabled: Bool = false,
         isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
+        showsNumberRow: Bool = false,
+        showsGlobeKey: Bool = false,
         heightScale: Double = 1,
         schemaVersion: Int = FunputConfiguration.currentSchemaVersion
     ) {
@@ -54,6 +58,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
         self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
+        self.showsNumberRow = showsNumberRow
+        self.showsGlobeKey = showsGlobeKey
         self.heightScale = heightScale
         self.schemaVersion = schemaVersion
     }
@@ -63,5 +69,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 3
+    public static let currentSchemaVersion = 5
 }

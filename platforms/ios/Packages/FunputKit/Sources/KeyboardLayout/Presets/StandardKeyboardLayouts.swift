@@ -1,9 +1,13 @@
 public enum StandardKeyboardLayouts {
-    public static func letters(_ inputMethod: KeyboardInputMethod) -> KeyboardLayout {
-        qwertyLayout(
-            id: "qwerty-\(inputMethod.rawValue)",
+    public static func letters(
+        _ inputMethod: KeyboardInputMethod,
+        showsNumberRow: Bool = true
+    ) -> KeyboardLayout {
+        let hasNumberRow = inputMethod == .vni || showsNumberRow
+        return qwertyLayout(
+            id: "qwerty-\(inputMethod.rawValue)\(hasNumberRow ? "" : "-compact")",
             inputMethod: inputMethod,
-            leadingRows: [topNumberRowForLetters(inputMethod)],
+            leadingRows: hasNumberRow ? [topNumberRowForLetters(inputMethod)] : [],
             actionKeys: standardActionRow().keys
         )
     }

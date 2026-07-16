@@ -3,15 +3,27 @@ public enum KeyboardLayoutResolver {
         inputMethod: KeyboardInputMethod,
         mode: KeyboardLayoutMode,
         editorMode: KeyboardEditorMode = .text,
-        showsSystemInputModeKey: Bool = false
+        showsSystemInputModeKey: Bool = false,
+        showsNumberRow: Bool = true
     ) -> KeyboardLayout {
+        let usesCompactLayout = editorMode == .text
+            && inputMethod == .telex
+            && !showsNumberRow
         let layout = switch mode {
         case .letters:
-            EditorKeyboardLayouts.resolve(inputMethod, editorMode: editorMode)
+            EditorKeyboardLayouts.resolve(
+                inputMethod,
+                editorMode: editorMode,
+                showsNumberRow: showsNumberRow
+            )
         case .symbolsPrimary:
-            SymbolKeyboardLayouts.primary(inputMethod, secure: editorMode.isPassword)
+            usesCompactLayout
+                ? CompactSymbolKeyboardLayouts.primary(inputMethod)
+                : SymbolKeyboardLayouts.primary(inputMethod, secure: editorMode.isPassword)
         case .symbolsSecondary:
-            SymbolKeyboardLayouts.secondary(inputMethod, secure: editorMode.isPassword)
+            usesCompactLayout
+                ? CompactSymbolKeyboardLayouts.secondary(inputMethod)
+                : SymbolKeyboardLayouts.secondary(inputMethod, secure: editorMode.isPassword)
         }
         return layout.withSystemInputModeKey(showsSystemInputModeKey)
     }

@@ -1,11 +1,12 @@
 public enum EditorKeyboardLayouts {
     public static func resolve(
         _ inputMethod: KeyboardInputMethod,
-        editorMode: KeyboardEditorMode
+        editorMode: KeyboardEditorMode,
+        showsNumberRow: Bool = true
     ) -> KeyboardLayout {
         switch editorMode {
         case .text:
-            StandardKeyboardLayouts.letters(inputMethod)
+            StandardKeyboardLayouts.letters(inputMethod, showsNumberRow: showsNumberRow)
         case .search:
             webLayout(prefix: "search", inputMethod: inputMethod, supportsLanguageSwipe: true)
         case .email:
