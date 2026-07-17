@@ -52,13 +52,8 @@ fn variants(base: &str) -> Vec<String> {
     result
 }
 
-fn pending_w_precedes_stroke(keys: &str) -> bool {
-    keys.get(..3)
-        .is_some_and(|prefix| prefix.eq_ignore_ascii_case("dwd"))
-}
-
 #[test]
-fn snapshots_current_multi_intent_gap() {
+fn all_bounded_multi_intent_orders_converge() {
     for case in [
         Case {
             skeleton: "duocj",
@@ -79,15 +74,10 @@ fn snapshots_current_multi_intent_gap() {
     ] {
         for style in [ToneStyle::Traditional, ToneStyle::Modern] {
             for keys in variants(case.skeleton) {
-                let expected = if pending_w_precedes_stroke(&keys) {
-                    keys.as_str()
-                } else {
-                    case.target
-                };
                 assert_eq!(
                     type_keys(&keys, style),
-                    expected,
-                    "baseline changed: {keys}"
+                    case.target,
+                    "did not converge: {keys}"
                 );
             }
         }
@@ -95,7 +85,7 @@ fn snapshots_current_multi_intent_gap() {
 }
 
 #[test]
-fn snapshots_tones_and_uppercase_gap() {
+fn tones_and_uppercase_converge() {
     for (skeleton, target) in [
         ("dans", "đắn"),
         ("danf", "đằn"),
@@ -105,12 +95,7 @@ fn snapshots_tones_and_uppercase_gap() {
         ("DUOCJ", "ĐƯỢC"),
     ] {
         for keys in variants(skeleton) {
-            let expected = if pending_w_precedes_stroke(&keys) {
-                keys.as_str()
-            } else {
-                target
-            };
-            assert_eq!(type_keys(&keys, ToneStyle::Traditional), expected, "{keys}");
+            assert_eq!(type_keys(&keys, ToneStyle::Traditional), target, "{keys}");
         }
     }
 }
