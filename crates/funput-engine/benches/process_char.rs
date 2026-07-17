@@ -17,6 +17,8 @@ const TELEX: &str =
 const VNI: &str = "To6i ye6u tie6ng1 Vie6t5. Ho6m nay tro7i2 nu7o7c1 dde9p5. Ban co1 khoe3 kho6ng?";
 const TELEX_CIRCUMFLEX_CANONICAL: &str = "Chaan chaanf deem hoom chaats. Chaan!";
 const TELEX_CIRCUMFLEX_FREE: &str = "Chana chanaf deme homo chatas. Chana!";
+const TELEX_W_CANONICAL: &str = "Lawms conw mowif truowngf nguwowif. Muaw uuw thuowr quowis!";
+const TELEX_W_DEFERRED: &str = "Lwams cown mwoif trwuongf ngwuoif. Mwua uwu thwuor quwois!";
 
 fn run(input: &str, method: InputMethod) {
     let mut engine = Engine::new();
@@ -43,6 +45,15 @@ fn bench(c: &mut Criterion) {
     ] {
         group.throughput(Throughput::Elements(input.chars().count() as u64));
         group.bench_function(BenchmarkId::new("circumflex", name), |b| {
+            b.iter(|| run(black_box(input), InputMethod::Telex))
+        });
+    }
+    for (name, input) in [
+        ("canonical", TELEX_W_CANONICAL),
+        ("deferred", TELEX_W_DEFERRED),
+    ] {
+        group.throughput(Throughput::Elements(input.chars().count() as u64));
+        group.bench_function(BenchmarkId::new("w-permutation", name), |b| {
             b.iter(|| run(black_box(input), InputMethod::Telex))
         });
     }
