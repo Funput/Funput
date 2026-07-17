@@ -10,6 +10,7 @@ use crate::validation::coda::{
     STOP_CODAS, VALID_CODAS, coda_in, normalized_coda, nucleus_tone, toneless_rhyme,
 };
 use crate::validation::parse::{SyllableParts, is_valid_onset, parse_syllable};
+use crate::validation::reachability::{has_shaped_rhyme_prefix, is_definitely_invalid_parts};
 use crate::validation::rhyme::is_valid_rhyme;
 
 /// Result of validating a modifier keystroke against the current buffer.
@@ -47,14 +48,17 @@ fn violates_ckg_spelling(onset: &str, parts: &SyllableParts) -> bool {
 
 fn validate_modifier(buffer: &str) -> ModifierValidation {
     let parts = parse_syllable(buffer);
+    validate_parts(&parts)
+}
 
+fn validate_parts(parts: &SyllableParts<'_>) -> ModifierValidation {
     if parts.invalid_onset || !is_valid_onset(parts.onset) {
         return ModifierValidation::PassThrough;
     }
     if parts.nucleus_chars().next().is_none() {
         return ModifierValidation::Ignored;
     }
-    if violates_ckg_spelling(parts.onset, &parts) {
+    if violates_ckg_spelling(parts.onset, parts) {
         return ModifierValidation::PassThrough;
     }
 
@@ -62,12 +66,21 @@ fn validate_modifier(buffer: &str) -> ModifierValidation {
     // English word, pass the key through. A single trailing consonant is allowed
     // (the user may still be typing, e.g. "mix" → "mĩx").
     if parts.coda_chars().nth(1).is_some() {
-        match normalized_coda(&parts) {
+        match normalized_coda(parts) {
             Some((coda, len)) if coda_in(VALID_CODAS, &coda[..len]) => {}
             _ => return ModifierValidation::PassThrough,
         }
     }
     ModifierValidation::Allow
+}
+
+/// Validate a newly shaped candidate in one parse: orthographic structure, the
+/// exact shaped-rhyme prefix, and tone/coda reachability must all agree.
+pub(crate) fn is_viable_shape_candidate(buffer: &str) -> bool {
+    let parts = parse_syllable(buffer);
+    matches!(validate_parts(&parts), ModifierValidation::Allow)
+        && has_shaped_rhyme_prefix(&parts)
+        && !is_definitely_invalid_parts(&parts)
 }
 
 /// Validate tone key (1–5) against the current buffer.

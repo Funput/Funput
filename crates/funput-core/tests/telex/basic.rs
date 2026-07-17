@@ -87,6 +87,53 @@ fn telex_free_position_marks() {
 }
 
 #[test]
+fn telex_free_position_circumflex() {
+    for (canonical, free, expected) in [
+        ("chaan", "chana", "chân"),
+        ("deem", "deme", "dêm"),
+        ("hoom", "homo", "hôm"),
+    ] {
+        assert_eq!(type_keys(canonical), expected);
+        assert_eq!(type_keys(free), expected);
+    }
+
+    for (tone_after, tone_before, expected) in [
+        ("chanas", "chasna", "chấn"),
+        ("chanaf", "chafna", "chần"),
+        ("chanar", "charna", "chẩn"),
+        ("chanax", "chaxna", "chẫn"),
+        ("chanaj", "chajna", "chận"),
+    ] {
+        assert_eq!(type_keys(tone_after), expected);
+        assert_eq!(type_keys(tone_before), expected);
+    }
+
+    // A tone may be pending before the first vowel and becomes unambiguous once
+    // the free-position circumflex resolves the syllable.
+    assert_eq!(type_keys("chfana"), "chần");
+
+    // A stop coda without a tone is reachable, not complete: the later sắc key
+    // must still be able to finish the syllable.
+    assert_eq!(type_keys("chatas"), "chất");
+
+    // Open rhymes and two-letter codas use the same resolver as simple codas.
+    assert_eq!(type_keys("asa"), "ấ");
+    assert_eq!(type_keys("efe"), "ề");
+    assert_eq!(type_keys("oso"), "ố");
+    assert_eq!(type_keys("kenhe"), "kênh");
+    assert_eq!(type_keys("congo"), "công");
+
+    assert_eq!(type_keys("Chana"), "Chân");
+    assert_eq!(type_keys("CHANA"), "CHÂN");
+    assert_eq!(type_keys("chanaa"), "chana");
+}
+
+#[test]
+fn telex_free_position_circumflex_keeps_existing_regressions() {
+    assert_eq!(type_keys("booong"), "boong");
+}
+
+#[test]
 fn telex_validation_and_pass_through() {
     // A tone letter with no vowel to land on is kept literally, not dropped.
     assert_eq!(

@@ -43,6 +43,8 @@ fn modern_tone_style_oa_oe_uy() {
     assert_eq!(run_modern(InputMethod::Telex, "hoanf"), "hoàn");
     assert_eq!(run_modern(InputMethod::Telex, "ngoaif"), "ngoài");
     assert_eq!(run_modern(InputMethod::Vni, "tru7o7n2g"), "trường");
+    // A free-position circumflex preserves an existing tone under both styles.
+    assert_eq!(run_modern(InputMethod::Telex, "chafna"), "chần");
 }
 
 #[test]
@@ -51,6 +53,7 @@ fn traditional_keeps_oa_oe_uy_on_first_vowel() {
     assert_eq!(run(InputMethod::Telex, "hoaf"), "hòa");
     assert_eq!(run(InputMethod::Telex, "thuyr"), "thủy");
     assert_eq!(run(InputMethod::Telex, "khoer"), "khỏe");
+    assert_eq!(run(InputMethod::Telex, "chafna"), "chần");
 }
 
 #[test]

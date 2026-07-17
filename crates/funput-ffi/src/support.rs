@@ -59,5 +59,8 @@ pub(crate) fn copy_codepoints(dst: &mut [u32], chars: impl Iterator<Item = char>
 
 /// Decode UTF-32 codepoints into a `String`, skipping invalid scalars.
 pub(crate) fn decode_codepoints(codepoints: &[u32]) -> String {
-    codepoints.iter().filter_map(|&c| char::from_u32(c)).collect()
+    codepoints
+        .iter()
+        .filter_map(|&c| char::from_u32(c))
+        .collect()
 }

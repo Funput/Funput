@@ -7,7 +7,7 @@
 //! | `s` / `f` / `r` / `x` / `j` | sắc / huyền / hỏi / ngã / nặng |
 //! | `z` | remove tone mark (xóa dấu) |
 //! | `dd` | stroke `đ` |
-//! | `aa` / `ee` / `oo` | circumflex on `a` / `e` / `o` |
+//! | repeated `a` / `e` / `o` | circumflex, adjacent or later in the syllable |
 //! | `w` after `a` | breve `ă` |
 //! | `w` after `o` / `u` | horn `ơ` / `ư` |
 //! | `w` after `uo` | horn compound `ươ` |
@@ -16,14 +16,13 @@
 //!
 //! 1. Stroke `đ` — adjacent `dd`, `đ`+`d` revert, or a `d`/`đ` already past the
 //!    nucleus so the `d` can be typed anywhere in the syllable (`dược`+`d` → `được`)
-//! 2. Digraph shape (`aa`, `ee`, `oo`) on plain vowels
+//! 2. Circumflex (`aa`, `ee`, `oo`), adjacent or later in the syllable
 //! 3. `w` — `uo` compound before single `o` / `u` / `a`; shaped-vowel revert
-//! 4. Shape revert (`â`+`a`, …)
-//! 5. Tone keys `s` / `f` / `r` / `x` / `j`
-//! 6. Normal character
+//! 4. Tone keys `s` / `f` / `r` / `x` / `j`
+//! 5. Normal character
 
 use crate::composition::uo_horn::uo_pair_in_vowel_cluster;
-use crate::input_method::KeyAction;
+use crate::input_method::{CircumflexStem, KeyAction};
 use crate::unicode::marks::{Tone, is_vowel, tone_on_vowel, vowel_stem};
 use crate::unicode::shapes::{VowelShape, shape_on_vowel, shape_target_index, strip_shape};
 
@@ -44,7 +43,7 @@ pub fn classify_key(buffer: &str, key: char) -> KeyAction {
     if let Some(action) = classify_stroke(buffer, key) {
         return action;
     }
-    if let Some(action) = classify_digraph(buffer, key) {
+    if let Some(action) = classify_circumflex(buffer, key) {
         return action;
     }
     if key.eq_ignore_ascii_case(&'w')
@@ -52,13 +51,74 @@ pub fn classify_key(buffer: &str, key: char) -> KeyAction {
     {
         return action;
     }
-    if let Some(action) = classify_revert_circumflex(buffer, key) {
-        return action;
-    }
     if key.eq_ignore_ascii_case(&'z') {
         return KeyAction::RemoveTone;
     }
     classify_tone(buffer, key).unwrap_or(KeyAction::Normal)
+}
+
+/// Classify adjacent, revert, and free-position `aa`/`ee`/`oo` in one pass.
+/// Returning early for non-vowel keys makes the added capability free on the
+/// consonant/tone hot path and avoids scanning the buffer twice for vowel keys.
+#[inline]
+fn classify_circumflex(buffer: &str, key: char) -> Option<KeyAction> {
+    let stem = CircumflexStem::from_key(key)?;
+    let stem_char = stem.as_char();
+
+    if let Some(last) = last_char(buffer) {
+        if is_plain_vowel(last, stem_char) {
+            return Some(KeyAction::Shape(VowelShape::Circumflex));
+        }
+        if shape_on_vowel(last) == Some(VowelShape::Circumflex) {
+            let plain = strip_shape(last).unwrap_or(last);
+            if vowel_stem(plain).is_some_and(|base| base.eq_ignore_ascii_case(&stem_char)) {
+                return Some(KeyAction::Shape(VowelShape::Circumflex));
+            }
+        }
+    }
+
+    classify_free_circumflex(buffer, stem)
+}
+
+/// A repeated `a`/`e`/`o` may modify the matching nucleus vowel even after a
+/// tone or coda (`chan` + `a` → `chân`). Classification only establishes that a
+/// matching target exists; the composition layer builds and validates the exact
+/// candidate before consuming the key.
+#[inline]
+fn classify_free_circumflex(buffer: &str, stem: CircumflexStem) -> Option<KeyAction> {
+    let stem_char = stem.as_char();
+
+    // The overwhelmingly common path is an ASCII onset/nucleus. Check it in one
+    // reverse pass; fall back to Unicode vowel tables only if a composed scalar
+    // appears before a matching ASCII target.
+    let mut ascii = true;
+    for byte in buffer.bytes().rev() {
+        if !byte.is_ascii() {
+            ascii = false;
+            break;
+        }
+        if !byte.is_ascii_alphabetic() {
+            return None;
+        }
+        if byte.eq_ignore_ascii_case(&(stem_char as u8)) {
+            return Some(KeyAction::FreeCircumflex(stem));
+        }
+    }
+    if ascii {
+        return None;
+    }
+
+    buffer
+        .chars()
+        .rev()
+        .take_while(|ch| ch.is_alphabetic())
+        .find(|&vowel| {
+            let shape = shape_on_vowel(vowel);
+            let plain = strip_shape(vowel).unwrap_or(vowel);
+            matches!(shape, None | Some(VowelShape::Circumflex))
+                && vowel_stem(plain).is_some_and(|target| target.eq_ignore_ascii_case(&stem_char))
+        })
+        .map(|_| KeyAction::FreeCircumflex(stem))
 }
 
 fn last_char(buffer: &str) -> Option<char> {
@@ -188,31 +248,6 @@ fn classify_stroke(buffer: &str, key: char) -> Option<KeyAction> {
     None
 }
 
-fn classify_digraph(buffer: &str, key: char) -> Option<KeyAction> {
-    let last = last_char(buffer)?;
-
-    for base in ['a', 'e', 'o'] {
-        if is_plain_vowel(last, base) && key.eq_ignore_ascii_case(&base) {
-            return Some(KeyAction::Shape(VowelShape::Circumflex));
-        }
-    }
-
-    None
-}
-
-fn classify_revert_circumflex(buffer: &str, key: char) -> Option<KeyAction> {
-    let last = last_char(buffer)?;
-    if shape_on_vowel(last) != Some(VowelShape::Circumflex) {
-        return None;
-    }
-    let plain = strip_shape(last)?;
-    if key.eq_ignore_ascii_case(&plain) {
-        Some(KeyAction::Shape(VowelShape::Circumflex))
-    } else {
-        None
-    }
-}
-
 /// Tone keys (`s` `f` `r` `x` `j`) are ordinary Latin letters too, so only treat
 /// one as a tone when there is a vowel to receive it. With no vowel the key stays
 /// a literal character — a leading `f`/`j`, a consonant onset (`tr`), or an
@@ -267,6 +302,33 @@ mod tests {
             classify_key("o", 'o'),
             KeyAction::Shape(VowelShape::Circumflex)
         );
+    }
+
+    #[test]
+    fn classify_free_position_circumflex() {
+        assert_eq!(
+            classify_key("chan", 'a'),
+            KeyAction::FreeCircumflex(CircumflexStem::A)
+        );
+        assert_eq!(
+            classify_key("dèm", 'e'),
+            KeyAction::FreeCircumflex(CircumflexStem::E)
+        );
+        assert_eq!(
+            classify_key("hom", 'O'),
+            KeyAction::FreeCircumflex(CircumflexStem::O)
+        );
+        assert_eq!(
+            classify_key("camer", 'a'),
+            KeyAction::FreeCircumflex(CircumflexStem::A)
+        );
+        assert_eq!(classify_key("chan", 'i'), KeyAction::Normal);
+        assert_eq!(classify_key("cha n", 'a'), KeyAction::Normal);
+    }
+
+    #[test]
+    fn key_action_stays_compact() {
+        assert!(std::mem::size_of::<KeyAction>() <= 2);
     }
 
     #[test]

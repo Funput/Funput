@@ -14,6 +14,37 @@ pub mod vni;
 use crate::unicode::marks::Tone;
 use crate::unicode::shapes::VowelShape;
 
+/// Exact Telex vowel stem targeted by a free-position circumflex.
+///
+/// A compact enum keeps [`KeyAction`] at its original small size on the hot path.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CircumflexStem {
+    A,
+    E,
+    O,
+}
+
+impl CircumflexStem {
+    #[inline]
+    pub(crate) fn from_key(key: char) -> Option<Self> {
+        match key.to_ascii_lowercase() {
+            'a' => Some(Self::A),
+            'e' => Some(Self::E),
+            'o' => Some(Self::O),
+            _ => None,
+        }
+    }
+
+    #[inline]
+    pub(crate) fn as_char(self) -> char {
+        match self {
+            Self::A => 'a',
+            Self::E => 'e',
+            Self::O => 'o',
+        }
+    }
+}
+
 /// What a keystroke means, independent of input method.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeyAction {
@@ -23,6 +54,11 @@ pub enum KeyAction {
     Tone(Tone),
     /// Vowel shape (mũ / móc / trần).
     Shape(VowelShape),
+    /// A circumflex requested by a repeated Telex vowel away from its target.
+    ///
+    /// Carries the exact ASCII stem so composition never guesses between several
+    /// shapeable vowels in the nucleus (`a`, `e`, and `o` all accept a circumflex).
+    FreeCircumflex(CircumflexStem),
     /// Remove the tone mark from the syllable, keeping shapes (VNI `0`, Telex `z`).
     RemoveTone,
     /// Ordinary character — appended as-is.

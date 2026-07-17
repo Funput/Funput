@@ -5,6 +5,7 @@
 use crate::composition::apply::{
     apply_shape_key, apply_stroke, apply_tone_key, remove_tone, shape_apply_target_exists,
 };
+use crate::composition::free_circumflex::apply_free_circumflex;
 use crate::composition::revert::{try_revert_shape, try_revert_stroke, try_revert_tone};
 use crate::composition::uo_horn::{complete_uo_horn_for_continuation, ends_with_open_uo_horn};
 use crate::input_method::KeyAction;
@@ -145,6 +146,9 @@ pub(crate) fn apply_action(
             let result = validation_gate(buffer, key, validate_shape(buffer))
                 .unwrap_or_else(|| apply_shape_key(buffer, shape));
             spell_check_gate(buffer, key, spell_check, result)
+        }
+        KeyAction::FreeCircumflex(stem) => {
+            apply_free_circumflex(buffer, key, stem.as_char(), style)
         }
         KeyAction::RemoveTone => match remove_tone(buffer) {
             // Tone stripped (keeps shape): `viết` + `z`/`0` → `viêt`.
