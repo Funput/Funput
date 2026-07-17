@@ -18,7 +18,7 @@ pub(crate) fn apply_action(
     spell_check: bool,
 ) -> TransformResult {
     match action {
-        KeyAction::Stroke => stroke(buffer, key, spell_check),
+        KeyAction::Stroke => stroke(buffer, key, style, spell_check),
         KeyAction::Tone(value) => tone(buffer, key, value, style, spell_check),
         KeyAction::Shape(value) => shape(buffer, key, value, spell_check),
         KeyAction::FreeCircumflex(stem) => {
@@ -34,13 +34,24 @@ pub(crate) fn apply_action(
     }
 }
 
-fn stroke(buffer: &str, key: char, checked: bool) -> TransformResult {
+fn stroke(buffer: &str, key: char, style: ToneStyle, checked: bool) -> TransformResult {
+    if !ends_with_stroke_target(buffer) {
+        let result = resolve(buffer, ModifierIntent::Stroke { key }, style).into_result();
+        return gates::spell_check(buffer, key, checked, result);
+    }
     if let Some(text) = try_revert_stroke(buffer) {
         return reverted(append(&text, key));
     }
     let result = gates::validation(buffer, key, validate_stroke(buffer))
         .unwrap_or_else(|| apply_stroke(buffer));
     gates::spell_check(buffer, key, checked, result)
+}
+
+fn ends_with_stroke_target(buffer: &str) -> bool {
+    buffer
+        .chars()
+        .last()
+        .is_some_and(|ch| matches!(ch, 'd' | 'D' | 'đ' | 'Đ'))
 }
 
 fn tone(
