@@ -24,3 +24,7 @@ mod parity;
 mod properties;
 #[path = "telex/regression.rs"]
 mod regression;
+#[path = "telex/w_collisions.rs"]
+mod w_collisions;
+#[path = "telex/w_permutations.rs"]
+mod w_permutations;

@@ -24,6 +24,11 @@ Criterion writes an interactive HTML summary to
 `target/criterion/report/index.html`. Individual benchmark reports live under
 their corresponding directories in `target/criterion/`.
 
+Telex V2 baseline (`telex_v2_w_before`, same machine/toolchain): core Telex
+**19.39 M keys/s**, engine **9.01 M keys/s**, and C FFI **8.23 M keys/s**.
+The V2 suites add equal-length `w-permutation/canonical` and
+`w-permutation/deferred` inputs without renaming these common-path IDs.
+
 | Metric | Result |
 |---|---|
 | Compose latency (core `apply`) | **~0.05 µs / keystroke** (Telex), ~0.05 µs (VNI) |
