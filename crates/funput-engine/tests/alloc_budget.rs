@@ -63,6 +63,8 @@ const TELEX_TEXT: &str =
 /// changing the number of processed keys.
 const CANONICAL_CIRCUMFLEX: &str = "chaan chaanf deem hoom chaats Chaan ";
 const FREE_CIRCUMFLEX: &str = "chana chanaf deme homo chatas Chana ";
+const CANONICAL_W: &str = "lawms cown mowif muaw ";
+const DEFERRED_W: &str = "lwams cwon mwoif mwua ";
 
 /// Type `text` through `engine`, returning (allocs, bytes) attributed to it.
 fn measure(engine: &mut Engine, text: &str) -> (usize, usize) {
@@ -126,4 +128,14 @@ fn keystroke_alloc_budget() {
         "free-position circumflex added allocation events: canonical={canonical:?}, free={free:?}"
     );
     assert_counts_within_budget("free-position circumflex", FREE_CIRCUMFLEX, free.0, free.1);
+
+    engine.clear();
+    let canonical_w = measure(&mut engine, CANONICAL_W);
+    engine.clear();
+    let deferred_w = measure(&mut engine, DEFERRED_W);
+    assert!(
+        deferred_w.0 <= canonical_w.0,
+        "w allocs: {canonical_w:?} vs {deferred_w:?}"
+    );
+    assert_counts_within_budget("deferred w", DEFERRED_W, deferred_w.0, deferred_w.1);
 }

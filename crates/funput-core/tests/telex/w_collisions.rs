@@ -11,8 +11,8 @@ fn snapshots_leading_w_and_latin_collisions() {
     for literal in ["was", "wow", "win"] {
         assert_eq!(type_keys(literal), literal);
     }
-    assert_eq!(type_keys("swift"), "swìt", "engine restores this to swift");
-    assert_eq!(type_keys("swan"), "swan", "V2 target: săn");
+    assert_eq!(type_keys("swift"), "swift");
+    assert_eq!(type_keys("swan"), "săn");
 }
 
 #[test]
