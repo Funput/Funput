@@ -43,6 +43,9 @@ pub(super) fn classify(buffer: &str) -> Option<KeyAction> {
             };
         }
         if plain(last, 'o') || plain(last, 'u') {
+            if plain(last, 'u') && ends_with_qu_glide(buffer) {
+                return None;
+            }
             return horn();
         }
     }
@@ -53,6 +56,12 @@ pub(super) fn classify(buffer: &str) -> Option<KeyAction> {
         return horn();
     }
     None
+}
+
+fn ends_with_qu_glide(buffer: &str) -> bool {
+    let mut chars = buffer.chars().rev();
+    chars.next().is_some_and(|ch| plain(ch, 'u'))
+        && chars.next().is_some_and(|ch| ch.eq_ignore_ascii_case(&'q'))
 }
 
 fn horn() -> Option<KeyAction> {

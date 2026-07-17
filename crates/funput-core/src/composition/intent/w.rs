@@ -1,5 +1,4 @@
-use crate::composition::apply::apply_shape_key;
-use crate::composition::uo_horn::uo_pair_in_vowel_cluster;
+use crate::composition::uo_horn::{apply_uo_compound_in_place, uo_pair_in_vowel_cluster};
 use crate::input_method::KeyAction;
 use crate::input_method::telex::classify_w;
 use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, tone_on_vowel};
@@ -9,15 +8,24 @@ use crate::validation::syllable::is_viable_shape_candidate;
 use super::IntentResolution;
 
 /// Exactly one non-leading `w` before the first vowel is a deferred modifier.
+#[inline(always)]
 pub(crate) fn has_pending(buffer: &str) -> bool {
+    let bytes = buffer.as_bytes();
+    if bytes.len() < 2 || (!bytes.contains(&b'w') && !bytes.contains(&b'W')) {
+        return false;
+    }
     let mut count = 0;
+    let mut previous = None;
     for (index, ch) in buffer.chars().enumerate() {
-        if is_vowel(ch) {
+        let qu_glide = previous.is_some_and(|prev: char| prev.eq_ignore_ascii_case(&'q'))
+            && ch.eq_ignore_ascii_case(&'u');
+        if is_vowel(ch) && !qu_glide {
             break;
         }
         if index > 0 && ch.eq_ignore_ascii_case(&'w') {
             count += 1;
         }
+        previous = Some(ch);
     }
     count == 1
 }
@@ -42,8 +50,7 @@ pub(super) fn resolve(buffer: &str, key: char) -> IntentResolution {
 
 fn apply_in_place(text: &mut String, shape: crate::unicode::shapes::VowelShape) -> bool {
     if uo_pair_in_vowel_cluster(text).is_some() {
-        *text = apply_shape_key(text, shape).text;
-        return true;
+        return apply_uo_compound_in_place(text);
     }
     let Some(index) = shape_target_index(text, shape) else {
         return false;

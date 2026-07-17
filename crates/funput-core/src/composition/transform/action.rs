@@ -3,7 +3,7 @@ use crate::composition::apply::{
 };
 use crate::composition::intent::{ModifierIntent, resolve};
 use crate::composition::revert::{try_revert_shape, try_revert_stroke, try_revert_tone};
-use crate::composition::uo_horn::ends_with_open_uo_horn;
+use crate::composition::uo_horn::{ends_with_open_uo_horn, normalize_horned_uo_open};
 use crate::input_method::KeyAction;
 use crate::validation::syllable::{validate_shape, validate_stroke, validate_tone};
 use crate::{ToneStyle, TransformKind, TransformResult};
@@ -23,6 +23,9 @@ pub(crate) fn apply_action(
         KeyAction::Shape(value) => shape(buffer, key, value, spell_check),
         KeyAction::FreeCircumflex(stem) => {
             resolve(buffer, ModifierIntent::Circumflex { stem, key }, style).into_result()
+        }
+        KeyAction::DeferredW => {
+            resolve(buffer, ModifierIntent::DeferredW { key }, style).into_result()
         }
         KeyAction::RemoveTone => {
             remove_tone(buffer).map_or_else(|| pending(append(buffer, key)), applied)
@@ -47,6 +50,8 @@ fn tone(
     style: ToneStyle,
     checked: bool,
 ) -> TransformResult {
+    let normalized = normalize_horned_uo_open(buffer);
+    let buffer = normalized.as_deref().unwrap_or(buffer);
     if let Some(text) = try_revert_tone(buffer, tone, style) {
         return reverted(append(&text, key));
     }
