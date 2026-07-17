@@ -24,6 +24,12 @@ pub enum CircumflexStem {
     O,
 }
 
+impl From<CircumflexStem> for char {
+    fn from(value: CircumflexStem) -> Self {
+        value.as_char()
+    }
+}
+
 impl CircumflexStem {
     #[inline]
     pub(crate) fn from_key(key: char) -> Option<Self> {
