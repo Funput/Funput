@@ -18,12 +18,16 @@ mod parity_data;
 mod basic;
 #[path = "telex/corpus.rs"]
 mod corpus;
+#[path = "telex/multi_intent_spec.rs"]
+mod multi_intent_spec;
 #[path = "telex/parity.rs"]
 mod parity;
 #[path = "telex/properties.rs"]
 mod properties;
 #[path = "telex/regression.rs"]
 mod regression;
+#[path = "telex/stroke_collisions.rs"]
+mod stroke_collisions;
 #[path = "telex/w_collisions.rs"]
 mod w_collisions;
 #[path = "telex/w_permutations.rs"]
