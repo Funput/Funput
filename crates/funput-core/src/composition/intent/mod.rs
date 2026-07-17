@@ -4,6 +4,7 @@
 mod candidate;
 mod circumflex;
 mod target;
+mod w;
 
 use crate::input_method::CircumflexStem;
 use crate::{ToneStyle, TransformKind, TransformResult};
@@ -11,13 +12,13 @@ use crate::{ToneStyle, TransformKind, TransformResult};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ModifierIntent {
     Circumflex { stem: CircumflexStem, key: char },
+    DeferredW { key: char },
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum IntentResolution {
     Applied(String),
     Reverted(String),
-    #[expect(dead_code, reason = "reserved for the deferred-w V2 client")]
     Deferred(String),
     Literal(String),
 }
@@ -27,8 +28,11 @@ pub(crate) fn resolve(buffer: &str, intent: ModifierIntent, style: ToneStyle) ->
         ModifierIntent::Circumflex { stem, key } => {
             circumflex::resolve(buffer, char::from(stem), key, style)
         }
+        ModifierIntent::DeferredW { key } => w::resolve(buffer, key),
     }
 }
+
+pub(crate) use w::has_pending;
 
 impl IntentResolution {
     pub(crate) fn into_result(self) -> TransformResult {

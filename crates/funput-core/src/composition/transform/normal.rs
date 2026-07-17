@@ -1,3 +1,4 @@
+use crate::composition::intent::{ModifierIntent, has_pending, resolve};
 use crate::composition::uo_horn::complete_uo_horn_for_continuation;
 use crate::unicode::tone_position::reposition_existing_tone;
 use crate::{ToneStyle, TransformKind, TransformResult};
@@ -5,6 +6,9 @@ use crate::{ToneStyle, TransformKind, TransformResult};
 use super::append;
 
 pub(super) fn apply(buffer: &str, key: char, style: ToneStyle) -> TransformResult {
+    if has_pending(buffer) {
+        return resolve(buffer, ModifierIntent::DeferredW { key }, style).into_result();
+    }
     if let Some(completed) = complete_uo_horn_for_continuation(buffer, key) {
         return repositioned_or(completed, style, TransformKind::Applied);
     }

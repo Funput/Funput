@@ -34,6 +34,17 @@ fn assert_baseline(case: &Case, style: ToneStyle) {
     }
 }
 
+fn assert_converges(case: &Case, style: ToneStyle) {
+    for boundary in 1..=case.base.chars().count() {
+        let keys = insert_w(case.base, boundary);
+        assert_eq!(
+            type_keys(&keys, style),
+            case.target,
+            "did not converge: {keys}"
+        );
+    }
+}
+
 #[test]
 fn snapshots_breve_and_single_horn_permutations() {
     for case in [
@@ -53,7 +64,7 @@ fn snapshots_breve_and_single_horn_permutations() {
             current: &["mwòi", "mời", "mời", "mời"],
         },
     ] {
-        assert_baseline(&case, ToneStyle::Traditional);
+        assert_converges(&case, ToneStyle::Traditional);
     }
 }
 
@@ -64,8 +75,8 @@ fn snapshots_compound_permutations() {
             base: "truongf",
             target: "trường",
             current: &[
-                "twruongf",
-                "trwuongf",
+                "trừong",
+                "trừong",
                 "trừong",
                 "trường",
                 "trường",
@@ -76,12 +87,12 @@ fn snapshots_compound_permutations() {
         Case {
             base: "nguoif",
             target: "người",
-            current: &["nwguoif", "ngwuòi", "ngừoi", "người", "người", "ngưòi"],
+            current: &["ngừoi", "ngừoi", "ngừoi", "người", "người", "ngưòi"],
         },
         Case {
             base: "mua",
             target: "mưa",
-            current: &["mwua", "mưa", "mưa"],
+            current: &["mưa", "mưa", "mưa"],
         },
         Case {
             base: "uu",
@@ -91,12 +102,12 @@ fn snapshots_compound_permutations() {
         Case {
             base: "thuor",
             target: "thuở",
-            current: &["twhuor", "thwủo", "thửo", "thuở", "thửo"],
+            current: &["thửo", "thửo", "thửo", "thuở", "thửo"],
         },
         Case {
             base: "quois",
             target: "quới",
-            current: &["qwuois", "quói", "quới", "quới", "qưói"],
+            current: &["quới", "quói", "quới", "quới", "qưói"],
         },
     ] {
         assert_baseline(&case, ToneStyle::Traditional);
@@ -112,21 +123,12 @@ fn snapshots_all_tones_case_and_styles() {
         ("lanx", "lẵn"),
         ("lanj", "lặn"),
     ] {
-        let current = [
-            insert_w(base, 1),
-            target.into(),
-            target.into(),
-            target.into(),
-        ];
         for style in [ToneStyle::Traditional, ToneStyle::Modern] {
             for boundary in 1..=base.chars().count() {
-                assert_eq!(
-                    type_keys(&insert_w(base, boundary), style),
-                    current[boundary - 1]
-                );
+                assert_eq!(type_keys(&insert_w(base, boundary), style), target);
             }
         }
     }
-    assert_eq!(type_keys("LWAMS", ToneStyle::Traditional), "LWAMS");
+    assert_eq!(type_keys("LWAMS", ToneStyle::Traditional), "LẮM");
     assert_eq!(type_keys("LAWMS", ToneStyle::Traditional), "LẮM");
 }
