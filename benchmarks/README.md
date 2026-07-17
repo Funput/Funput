@@ -28,15 +28,19 @@ Telex V2 baseline (`telex_v2_w_before`, same machine/toolchain): core Telex
 **19.39 M keys/s**, engine **9.01 M keys/s**, and C FFI **8.23 M keys/s**.
 The V2 suites add equal-length `w-permutation/canonical` and
 `w-permutation/deferred` inputs without renaming these common-path IDs.
+Final median latency changed by **+0.85% core**, **+0.69% engine**, and
+**+1.53% FFI**, all inside the 3% regression gate.
 
 | Metric | Result |
 |---|---|
 | Compose latency (core `apply`) | **~0.05 µs / keystroke** (Telex), ~0.05 µs (VNI) |
-| Compose throughput | **~19.0 million keystrokes / second** |
+| Compose throughput | **~19.1 million keystrokes / second** |
 | Free-position `aa/ee/oo` compose throughput | **~18.4 million keystrokes / second** |
-| Full engine path (`process_char`, incl. boundary + English-restore) | **~0.12 µs / keystroke** (~8.5 M/s) |
+| Full engine path (`process_char`, incl. boundary + English-restore) | **~0.11 µs / keystroke** (~8.8 M/s) |
 | Free-position `aa/ee/oo` through the full engine | **~0.09 µs / keystroke** (~10.6 M/s) |
-| **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.12 µs / keystroke** (~8.5 M/s) |
+| Free-order `w`, core canonical / deferred | **~16.3 / 14.8 M keys/s** |
+| Free-order `w`, engine canonical / deferred | **~8.0 / 6.9 M keys/s** |
+| **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.12 µs / keystroke** (~8.1 M/s) |
 | `size_of::<Engine>` (per-field session state) | **136 bytes** |
 | Heap allocations per keystroke (with or without spell-check) | **~1** (~7 B) |
 | Release FFI shared lib (`libfunput_ffi.dylib`, LTO + stripped) | ~0.37 MB |

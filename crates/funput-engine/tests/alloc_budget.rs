@@ -63,8 +63,8 @@ const TELEX_TEXT: &str =
 /// changing the number of processed keys.
 const CANONICAL_CIRCUMFLEX: &str = "chaan chaanf deem hoom chaats Chaan ";
 const FREE_CIRCUMFLEX: &str = "chana chanaf deme homo chatas Chana ";
-const CANONICAL_W: &str = "lawms cown mowif muaw ";
-const DEFERRED_W: &str = "lwams cwon mwoif mwua ";
+const CANONICAL_W: &str = "lawms cown mowif muaw truowngf nguwowif ";
+const DEFERRED_W: &str = "lwams cwon mwoif mwua trwuongf ngwuoif ";
 
 /// Type `text` through `engine`, returning (allocs, bytes) attributed to it.
 fn measure(engine: &mut Engine, text: &str) -> (usize, usize) {
@@ -83,7 +83,9 @@ fn assert_counts_within_budget(label: &str, text: &str, allocs: usize, bytes: us
     let keys = text.chars().count() as f64;
     let allocs_per_key = allocs as f64 / keys;
     let bytes_per_key = bytes as f64 / keys;
-    println!("{label}: {allocs_per_key:.1} allocs/key, {bytes_per_key:.0} bytes/key");
+    println!(
+        "{label}: {allocs_per_key:.1} allocs/key, {bytes_per_key:.0} bytes/key ({allocs}, {bytes})"
+    );
     assert!(
         allocs_per_key <= MAX_ALLOCS_PER_KEY,
         "{label}: {allocs_per_key:.1} allocs/key exceeds the {MAX_ALLOCS_PER_KEY} budget \

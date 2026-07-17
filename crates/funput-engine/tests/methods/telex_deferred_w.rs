@@ -45,3 +45,42 @@ fn literal_and_boundary_cases_do_not_leak() {
         "lw a "
     );
 }
+
+fn insert_w(base: &str, boundary: usize) -> String {
+    let offset = base
+        .char_indices()
+        .nth(boundary)
+        .map_or(base.len(), |pair| pair.0);
+    format!("{}w{}", &base[..offset], &base[offset..])
+}
+
+#[test]
+fn compound_permutations_converge_through_engine() {
+    for (base, expected) in [
+        ("truongf", "trường"),
+        ("nguoif", "người"),
+        ("mua", "mưa"),
+        ("uu", "ưu"),
+        ("thuor", "thuở"),
+        ("quois", "quới"),
+    ] {
+        for boundary in 1..=base.chars().count() {
+            let keys = insert_w(base, boundary);
+            assert_eq!(
+                crate::support::app_text(InputMethod::Telex, &keys),
+                expected,
+                "{keys}"
+            );
+        }
+    }
+}
+
+#[test]
+fn compound_resolution_preserves_raw_keys() {
+    let mut engine = Engine::new();
+    for key in "trwuongf".chars() {
+        engine.process_char(key);
+    }
+    assert_eq!(engine.buffer(), "trường");
+    assert_eq!(engine.keys(), "trwuongf");
+}

@@ -13,7 +13,7 @@ pub use tone::tone_from_key;
 /// Classify a Telex keystroke into a method-agnostic action.
 pub fn classify_key(buffer: &str, key: char) -> KeyAction {
     if crate::composition::intent::has_pending(buffer) {
-        return KeyAction::Normal;
+        return KeyAction::DeferredW;
     }
     if let Some(action) = stroke::classify(buffer, key) {
         return action;

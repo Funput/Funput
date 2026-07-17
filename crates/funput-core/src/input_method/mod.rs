@@ -65,6 +65,8 @@ pub enum KeyAction {
     /// Carries the exact ASCII stem so composition never guesses between several
     /// shapeable vowels in the nucleus (`a`, `e`, and `o` all accept a circumflex).
     FreeCircumflex(CircumflexStem),
+    /// Continue a `w` intent represented by a literal marker in the buffer.
+    DeferredW,
     /// Remove the tone mark from the syllable, keeping shapes (VNI `0`, Telex `z`).
     RemoveTone,
     /// Ordinary character — appended as-is.
