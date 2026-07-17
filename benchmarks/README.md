@@ -27,9 +27,11 @@ their corresponding directories in `target/criterion/`.
 | Metric | Result |
 |---|---|
 | Compose latency (core `apply`) | **~0.05 µs / keystroke** (Telex), ~0.05 µs (VNI) |
-| Compose throughput | **> 18 million keystrokes / second** |
-| Full engine path (`process_char`, incl. boundary + English-restore) | **~0.11 µs / keystroke** (~8.9 M/s) |
-| **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.12 µs / keystroke** |
+| Compose throughput | **~19.0 million keystrokes / second** |
+| Free-position `aa/ee/oo` compose throughput | **~18.4 million keystrokes / second** |
+| Full engine path (`process_char`, incl. boundary + English-restore) | **~0.12 µs / keystroke** (~8.5 M/s) |
+| Free-position `aa/ee/oo` through the full engine | **~0.09 µs / keystroke** (~10.6 M/s) |
+| **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.12 µs / keystroke** (~8.5 M/s) |
 | `size_of::<Engine>` (per-field session state) | **136 bytes** |
 | Heap allocations per keystroke (with or without spell-check) | **~1** (~7 B) |
 | Release FFI shared lib (`libfunput_ffi.dylib`, LTO + stripped) | ~0.37 MB |
@@ -37,6 +39,10 @@ their corresponding directories in `target/criterion/`.
 A human types a few keys per second; Funput answers each in **sub-microsecond**
 time, i.e. millions of times faster than needed — composition is never the
 bottleneck.
+
+The core and engine suites also contain equal-length canonical/free-position
+circumflex pairs (`chaan`/`chana`, `hoom`/`homo`, …). They keep the ordinary
+typing benchmark stable while measuring the extra candidate validation directly.
 
 ### What "end-to-end" measures (and what it doesn't)
 

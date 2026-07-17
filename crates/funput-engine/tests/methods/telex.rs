@@ -55,3 +55,45 @@ fn telex_truowng_complex() {
         "trương"
     );
 }
+
+#[test]
+fn telex_free_position_circumflex_sends_minimal_diff() {
+    let (buffer, results) = crate::support::type_keys(InputMethod::Telex, "chana");
+    assert_eq!(buffer, "chân");
+    let result = &results[4];
+    assert_eq!(result.action, Action::Send);
+    assert_eq!(result.backspace, 2);
+    assert_eq!(result.output, "ân");
+}
+
+#[test]
+fn telex_free_position_circumflex_preserves_raw_keys_and_flips() {
+    let mut engine = funput_engine::Engine::new();
+    for key in "homo".chars() {
+        engine.process_char(key);
+    }
+    assert_eq!(engine.buffer(), "hôm");
+    assert_eq!(engine.keys(), "homo");
+
+    let raw = engine.flip_composing();
+    assert_eq!(raw.action, Action::Send);
+    assert_eq!(engine.buffer(), "homo");
+
+    let vietnamese = engine.flip_composing();
+    assert_eq!(vietnamese.action, Action::Send);
+    assert_eq!(engine.buffer(), "hôm");
+
+    engine.flip_composing();
+    let space = engine.process_char(' ');
+    assert_eq!(space.action, Action::None);
+    assert!(engine.buffer().is_empty());
+    assert!(engine.keys().is_empty());
+}
+
+#[test]
+fn telex_free_position_circumflex_restores_non_vietnamese_runs() {
+    assert_eq!(
+        crate::support::app_text(InputMethod::Telex, "camera banana "),
+        "camera banana "
+    );
+}

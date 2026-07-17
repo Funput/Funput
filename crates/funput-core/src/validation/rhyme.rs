@@ -49,6 +49,22 @@ pub fn is_valid_rhyme(rhyme: &str) -> bool {
     SORTED_RHYMES.binary_search(&rhyme).is_ok()
 }
 
+/// Whether any valid shaped rhyme starts with `prefix`.
+///
+/// Used by free-position shape candidates, where deshaping would over-accept an
+/// impossible rhyme such as `ôe` merely because plain `oe` exists.
+pub(crate) fn has_prefix(prefix: &[char]) -> bool {
+    let first = SORTED_RHYMES.partition_point(|rhyme| {
+        rhyme.chars().cmp(prefix.iter().copied()) == std::cmp::Ordering::Less
+    });
+    SORTED_RHYMES.get(first).is_some_and(|rhyme| {
+        let mut chars = rhyme.chars();
+        prefix
+            .iter()
+            .all(|&expected| chars.next() == Some(expected))
+    })
+}
+
 /// The full toneless rhyme inventory (for prefix/reachability checks).
 pub fn all() -> &'static [&'static str] {
     VALID_RHYMES
@@ -83,5 +99,12 @@ mod tests {
         for rhyme in all() {
             assert!(is_valid_rhyme(rhyme), "{rhyme} missing from sorted view");
         }
+    }
+
+    #[test]
+    fn shaped_prefix_distinguishes_oe_from_nonexistent_o_circumflex_e() {
+        assert!(has_prefix(&['o', 'e']));
+        assert!(!has_prefix(&['ô', 'e']));
+        assert!(has_prefix(&['â', 't']));
     }
 }

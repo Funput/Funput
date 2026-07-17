@@ -23,8 +23,8 @@
 //! panic in the engine is caught at the boundary and turned into a no-op result —
 //! it never unwinds into the host (which would abort the whole IME process).
 
-mod config;
 mod compose;
+mod config;
 mod shortcuts;
 mod support;
 mod types;

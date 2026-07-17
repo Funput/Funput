@@ -59,6 +59,11 @@ static ALLOCATOR: CountingAlloc = CountingAlloc;
 const TELEX_TEXT: &str =
     "Tooi yeeu tieesng Vieejt. Hoom nay troiwf nuwowcs ddepj. Go~ text nhanh! ";
 
+/// Equal-length canonical/free-position pairs isolate the new resolver without
+/// changing the number of processed keys.
+const CANONICAL_CIRCUMFLEX: &str = "chaan chaanf deem hoom chaats Chaan ";
+const FREE_CIRCUMFLEX: &str = "chana chanaf deme homo chatas Chana ";
+
 /// Type `text` through `engine`, returning (allocs, bytes) attributed to it.
 fn measure(engine: &mut Engine, text: &str) -> (usize, usize) {
     let before_allocs = ALLOCS.load(Ordering::Relaxed);
@@ -72,9 +77,8 @@ fn measure(engine: &mut Engine, text: &str) -> (usize, usize) {
     )
 }
 
-fn assert_within_budget(label: &str, engine: &mut Engine) {
-    let keys = TELEX_TEXT.chars().count() as f64;
-    let (allocs, bytes) = measure(engine, TELEX_TEXT);
+fn assert_counts_within_budget(label: &str, text: &str, allocs: usize, bytes: usize) {
+    let keys = text.chars().count() as f64;
     let allocs_per_key = allocs as f64 / keys;
     let bytes_per_key = bytes as f64 / keys;
     println!("{label}: {allocs_per_key:.1} allocs/key, {bytes_per_key:.0} bytes/key");
@@ -88,6 +92,11 @@ fn assert_within_budget(label: &str, engine: &mut Engine) {
         "{label}: {bytes_per_key:.0} bytes/key exceeds the {MAX_BYTES_PER_KEY} budget \
          — a change added heap traffic to the keystroke hot path"
     );
+}
+
+fn assert_within_budget(label: &str, engine: &mut Engine) {
+    let (allocs, bytes) = measure(engine, TELEX_TEXT);
+    assert_counts_within_budget(label, TELEX_TEXT, allocs, bytes);
 }
 
 #[test]
@@ -105,4 +114,16 @@ fn keystroke_alloc_budget() {
 
     engine.set_spell_check(true);
     assert_within_budget("spell-check on", &mut engine);
+
+    engine.set_spell_check(false);
+    engine.clear();
+    let canonical = measure(&mut engine, CANONICAL_CIRCUMFLEX);
+    engine.clear();
+    let free = measure(&mut engine, FREE_CIRCUMFLEX);
+    println!("circumflex pairs: canonical={canonical:?}, free-position={free:?}");
+    assert!(
+        free.0 <= canonical.0,
+        "free-position circumflex added allocation events: canonical={canonical:?}, free={free:?}"
+    );
+    assert_counts_within_budget("free-position circumflex", FREE_CIRCUMFLEX, free.0, free.1);
 }
