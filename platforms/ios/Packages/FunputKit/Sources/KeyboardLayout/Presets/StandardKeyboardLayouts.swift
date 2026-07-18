@@ -8,7 +8,8 @@ public enum StandardKeyboardLayouts {
             id: "qwerty-\(inputMethod.rawValue)\(hasNumberRow ? "" : "-compact")",
             inputMethod: inputMethod,
             leadingRows: hasNumberRow ? [topNumberRowForLetters(inputMethod)] : [],
-            actionKeys: standardActionRow().keys
+            actionKeys: standardActionRow().keys,
+            showsTelexHints: inputMethod == .telex
         )
     }
 }
