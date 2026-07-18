@@ -35,6 +35,10 @@ Telex V3 baseline (`telex_v3_multi_before`, same machine/toolchain): core Telex
 **19.43 M keys/s**, engine **8.99 M keys/s**, and C FFI **8.31 M keys/s**.
 V3 keeps these common-path IDs unchanged and measures canonical/multi-intent
 `w + dd` sequences separately.
+Final V3 median latency changed by **-2.31% core**, **-0.78% engine**, and
+**-0.90% FFI**. Paired canonical/pending-`w` throughput is **17.25/16.74 M
+keys/s** in core and **8.92/8.92 M keys/s** through the engine. Both paired
+paths use 43 allocation events; the existing allocation budgets remain unchanged.
 
 | Metric | Result |
 |---|---|

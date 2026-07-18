@@ -18,6 +18,9 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use funput_engine::Engine;
 
+#[path = "alloc_budget/pairs.rs"]
+mod pairs;
+
 /// Measured baseline (2026-07, after the zero-alloc core + engine rewrite):
 /// 1.1 allocs / 7 B per keystroke, with or without spell-check (identical in
 /// debug and release) — essentially just the composed-text `String` the core
@@ -58,13 +61,6 @@ static ALLOCATOR: CountingAlloc = CountingAlloc;
 /// boundaries, and an English word (`text`) to exercise eager restore.
 const TELEX_TEXT: &str =
     "Tooi yeeu tieesng Vieejt. Hoom nay troiwf nuwowcs ddepj. Go~ text nhanh! ";
-
-/// Equal-length canonical/free-position pairs isolate the new resolver without
-/// changing the number of processed keys.
-const CANONICAL_CIRCUMFLEX: &str = "chaan chaanf deem hoom chaats Chaan ";
-const FREE_CIRCUMFLEX: &str = "chana chanaf deme homo chatas Chana ";
-const CANONICAL_W: &str = "lawms cown mowif muaw truowngf nguwowif ";
-const DEFERRED_W: &str = "lwams cwon mwoif mwua trwuongf ngwuoif ";
 
 /// Type `text` through `engine`, returning (allocs, bytes) attributed to it.
 fn measure(engine: &mut Engine, text: &str) -> (usize, usize) {
@@ -120,24 +116,5 @@ fn keystroke_alloc_budget() {
     assert_within_budget("spell-check on", &mut engine);
 
     engine.set_spell_check(false);
-    engine.clear();
-    let canonical = measure(&mut engine, CANONICAL_CIRCUMFLEX);
-    engine.clear();
-    let free = measure(&mut engine, FREE_CIRCUMFLEX);
-    println!("circumflex pairs: canonical={canonical:?}, free-position={free:?}");
-    assert!(
-        free.0 <= canonical.0,
-        "free-position circumflex added allocation events: canonical={canonical:?}, free={free:?}"
-    );
-    assert_counts_within_budget("free-position circumflex", FREE_CIRCUMFLEX, free.0, free.1);
-
-    engine.clear();
-    let canonical_w = measure(&mut engine, CANONICAL_W);
-    engine.clear();
-    let deferred_w = measure(&mut engine, DEFERRED_W);
-    assert!(
-        deferred_w.0 <= canonical_w.0,
-        "w allocs: {canonical_w:?} vs {deferred_w:?}"
-    );
-    assert_counts_within_budget("deferred w", DEFERRED_W, deferred_w.0, deferred_w.1);
+    pairs::assert_paired_allocations(&mut engine);
 }
