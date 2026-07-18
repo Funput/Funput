@@ -1,6 +1,6 @@
 [Addon]
 Name=Funput
-Comment=Vietnamese input method (Telex & VNI)
+Comment=Vietnamese input method (Telex, Full Telex & VNI)
 Category=InputMethod
 Version=5.0.0
 Type=SharedLibrary

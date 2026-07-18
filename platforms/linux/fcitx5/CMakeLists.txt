@@ -34,6 +34,8 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../common"
 # --- Fcitx5 addon -> libfunput.so ------------------------------------------
 add_library(funput MODULE
     src/funput_engine.cpp
+    src/funput_input.cpp
+    src/funput_controls.cpp
 )
 add_dependencies(funput funput_ffi)
 
@@ -102,7 +104,7 @@ set(FUNPUT_VERSION "${PROJECT_VERSION}" CACHE STRING "Package version")
 set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 set(CPACK_PACKAGE_NAME "funput")
 set(CPACK_PACKAGE_VERSION "${FUNPUT_VERSION}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Vietnamese input method (Telex & VNI) — Fcitx5 addon")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Vietnamese input method (Telex, Full Telex & VNI) — Fcitx5 addon")
 set(CPACK_PACKAGE_CONTACT "Funput <hello@funput.app>")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Funput <hello@funput.app>")
 set(CPACK_DEBIAN_PACKAGE_SECTION "utils")

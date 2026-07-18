@@ -9,7 +9,9 @@ use adw::prelude::*;
 use adw::Application;
 use gtk::{Align, Justification, Orientation};
 
-use crate::settings::{Method, Settings};
+use crate::settings::Settings;
+
+mod method_picker;
 
 const STEPS: u32 = 4;
 
@@ -24,7 +26,7 @@ pub fn build(app: &Application) -> adw::Window {
     let carousel = adw::Carousel::new();
     carousel.set_vexpand(true);
     carousel.append(&welcome_step());
-    carousel.append(&method_step());
+    carousel.append(&method_picker::step());
     carousel.append(&how_step());
     carousel.append(&ready_step());
 
@@ -49,7 +51,11 @@ pub fn build(app: &Application) -> adw::Window {
         let next = next.clone();
         Rc::new(move |idx: u32| {
             back.set_visible(idx > 0);
-            next.set_label(if idx + 1 < STEPS { "Tiếp tục" } else { "Bắt đầu" });
+            next.set_label(if idx + 1 < STEPS {
+                "Tiếp tục"
+            } else {
+                "Bắt đầu"
+            });
         })
     };
     update(0);
@@ -125,37 +131,6 @@ fn welcome_step() -> gtk::Box {
         "Chào mừng đến Funput",
         "Gõ tiếng Việt ở mọi nơi trên Linux — miễn phí, mã nguồn mở.",
     )
-}
-
-fn method_step() -> gtk::Box {
-    let b = step("⌨️", "Chọn kiểu gõ", "Có thể đổi bất cứ lúc nào trong Cài đặt.");
-
-    let s = Settings::load();
-    let telex = gtk::ToggleButton::with_label("Telex");
-    let vni = gtk::ToggleButton::with_label("VNI");
-    vni.set_group(Some(&telex));
-    match s.method {
-        Method::Telex => telex.set_active(true),
-        Method::Vni => vni.set_active(true),
-    }
-    telex.connect_toggled(|btn| {
-        if btn.is_active() {
-            Settings::update(|s| s.method = Method::Telex);
-        }
-    });
-    vni.connect_toggled(|btn| {
-        if btn.is_active() {
-            Settings::update(|s| s.method = Method::Vni);
-        }
-    });
-
-    let picker = gtk::Box::new(Orientation::Horizontal, 0);
-    picker.add_css_class("linked");
-    picker.set_halign(Align::Center);
-    picker.append(&telex);
-    picker.append(&vni);
-    b.append(&picker);
-    b
 }
 
 fn how_step() -> gtk::Box {

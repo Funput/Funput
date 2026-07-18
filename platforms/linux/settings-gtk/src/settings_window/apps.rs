@@ -18,7 +18,9 @@ pub(super) fn page() -> PreferencesPage {
 
     let excluded_group = PreferencesGroup::builder()
         .title("Ứng dụng bỏ qua")
-        .description("Mặc định tiếng Anh khi vào các app này — vẫn bật lại tiếng Việt bằng phím tắt.")
+        .description(
+            "Mặc định tiếng Anh khi vào các app này — vẫn bật lại tiếng Việt bằng phím tắt.",
+        )
         .build();
     let recent_group = PreferencesGroup::builder().title("App gần đây").build();
     page.add(&excluded_group);
@@ -102,7 +104,10 @@ pub(super) fn page() -> PreferencesPage {
                         .title(app.name.as_str())
                         .subtitle(app.id.as_str())
                         .build();
-                    let btn = Button::builder().label("Thêm").valign(Align::Center).build();
+                    let btn = Button::builder()
+                        .label("Thêm")
+                        .valign(Align::Center)
+                        .build();
                     btn.add_css_class("flat");
                     let app = app.clone();
                     let rebuild_cb = rebuild.clone();
