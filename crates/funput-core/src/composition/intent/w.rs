@@ -34,18 +34,31 @@ pub(super) fn resolve(buffer: &str, key: char) -> IntentResolution {
     let Some(w_offset) = pending_offset(buffer) else {
         return IntentResolution::Literal(appended(buffer, key));
     };
+    if matches!(key, 'd' | 'D') && has_only_stroke_target(buffer, w_offset) {
+        return super::stroke::resolve(buffer, key);
+    }
     let mut candidate = String::with_capacity(buffer.len() + key.len_utf8() + 2);
     candidate.push_str(&buffer[..w_offset]);
     candidate.push_str(&buffer[w_offset + 1..]);
     candidate.push(key);
 
     let Some(KeyAction::Shape(shape)) = classify_w(&candidate) else {
-        return raw(buffer, key, candidate);
+        return raw(buffer, key, w_offset, candidate);
     };
     if apply_in_place(&mut candidate, shape) && is_viable_shape_candidate(&candidate) {
         return IntentResolution::Applied(candidate);
     }
-    raw(buffer, key, candidate)
+    raw(buffer, key, w_offset, candidate)
+}
+
+fn has_only_stroke_target(buffer: &str, w_offset: usize) -> bool {
+    let mut chars = buffer[..w_offset]
+        .chars()
+        .chain(buffer[w_offset + 1..].chars());
+    chars
+        .next()
+        .is_some_and(|ch| matches!(ch, 'd' | 'D' | 'đ' | 'Đ'))
+        && chars.next().is_none()
 }
 
 fn apply_in_place(text: &mut String, shape: crate::unicode::shapes::VowelShape) -> bool {
@@ -81,8 +94,20 @@ fn pending_offset(buffer: &str) -> Option<usize> {
         .map(|(offset, _)| offset)
 }
 
-fn raw(buffer: &str, key: char, mut reusable: String) -> IntentResolution {
+fn raw(buffer: &str, key: char, w_offset: usize, mut reusable: String) -> IntentResolution {
     reusable.clear();
+    if has_only_stroke_target(buffer, w_offset) && buffer.contains(['đ', 'Đ']) {
+        for ch in buffer.chars() {
+            reusable.push(match ch {
+                'đ' => 'd',
+                'Đ' => 'D',
+                _ => ch,
+            });
+        }
+        reusable.push(if buffer.contains('Đ') { 'D' } else { 'd' });
+        reusable.push(key);
+        return IntentResolution::Deferred(reusable);
+    }
     reusable.push_str(buffer);
     reusable.push(key);
     IntentResolution::Deferred(reusable)
@@ -106,5 +131,20 @@ mod tests {
         assert!(!has_pending("w"));
         assert!(!has_pending("lww"));
         assert!(!has_pending("law"));
+    }
+
+    #[test]
+    fn pending_marker_allows_one_stroke_intent() {
+        assert_eq!(resolve("dw", 'd'), IntentResolution::Applied("đw".into()));
+        assert_eq!(resolve("dW", 'D'), IntentResolution::Applied("đW".into()));
+        assert_eq!(resolve("đw", 'd'), IntentResolution::Reverted("dwd".into()));
+        assert_eq!(
+            resolve("gdw", 'd'),
+            IntentResolution::Deferred("gdwd".into())
+        );
+        assert_eq!(
+            resolve("đw", 'e'),
+            IntentResolution::Deferred("dwde".into())
+        );
     }
 }

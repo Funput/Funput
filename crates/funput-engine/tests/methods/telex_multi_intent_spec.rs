@@ -1,12 +1,14 @@
 use funput_core::InputMethod;
 
 #[test]
-fn snapshots_current_pending_w_then_stroke_gap() {
-    for literal in ["dwduocj", "dwduongf", "dwdon", "dwdoif"] {
-        assert_eq!(
-            crate::support::app_text(InputMethod::Telex, literal),
-            literal
-        );
+fn pending_w_then_stroke_converges() {
+    for (keys, output) in [
+        ("dwduocj", "được"),
+        ("dwduongf", "đường"),
+        ("dwdon", "đơn"),
+        ("dwdoif", "đời"),
+    ] {
+        assert_eq!(crate::support::app_text(InputMethod::Telex, keys), output);
     }
 }
 
