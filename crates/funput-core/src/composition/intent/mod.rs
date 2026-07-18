@@ -3,6 +3,7 @@
 
 mod candidate;
 mod circumflex;
+mod stroke;
 mod target;
 mod w;
 
@@ -12,6 +13,7 @@ use crate::{ToneStyle, TransformKind, TransformResult};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ModifierIntent {
     Circumflex { stem: CircumflexStem, key: char },
+    Stroke { key: char },
     DeferredW { key: char },
 }
 
@@ -28,6 +30,7 @@ pub(crate) fn resolve(buffer: &str, intent: ModifierIntent, style: ToneStyle) ->
         ModifierIntent::Circumflex { stem, key } => {
             circumflex::resolve(buffer, char::from(stem), key, style)
         }
+        ModifierIntent::Stroke { key } => stroke::resolve(buffer, key),
         ModifierIntent::DeferredW { key } => w::resolve(buffer, key),
     }
 }
