@@ -1,3 +1,4 @@
+#if canImport(UIKit)
 @testable import KeyboardRenderer
 import KeyboardLayout
 import Testing
@@ -132,3 +133,4 @@ struct ThemeRendererSurfaceTests {
         )
     }
 }
+#endif

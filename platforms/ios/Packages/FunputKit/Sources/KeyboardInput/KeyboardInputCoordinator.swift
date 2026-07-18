@@ -32,10 +32,12 @@ public final class KeyboardInputCoordinator {
     }
 
     public func handle(_ key: KeySpec, document: any KeyboardDocument) {
+        let signpostID = KeyboardInputSignposts.begin("CoordinatorHandle")
+        defer { KeyboardInputSignposts.end("CoordinatorHandle", signpostID) }
         synchronizeBeforeInput(document)
         let mutatesDocument = key.role.mutatesDocument
         if mutatesDocument {
-            documentSynchronizer.beginMutation()
+            documentSynchronizer.beginMutation(closesEpoch: key.role.closesCompositionEpoch)
         }
         defer {
             if mutatesDocument {
@@ -80,6 +82,13 @@ private extension KeyRole {
             true
         default:
             false
+        }
+    }
+
+    var closesCompositionEpoch: Bool {
+        switch self {
+        case .space, .punctuation, .enter: true
+        default: false
         }
     }
 }

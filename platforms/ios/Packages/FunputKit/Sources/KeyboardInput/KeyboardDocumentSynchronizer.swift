@@ -7,27 +7,36 @@ public enum KeyboardDocumentEvent: Equatable, Sendable {
     case selectionChanged
 }
 
+/// Maintains a bounded local shadow and a generation-scoped ledger of contexts
+/// authored by Funput. Exact normalized matching acknowledges delayed UIKit
+/// echoes without allowing arbitrary old suffixes to keep composition alive.
 @MainActor
 struct KeyboardDocumentSynchronizer {
-    private static let shadowContextLimit = 128
-    private static let authoredContextLimit = 256
+    static let shadowContextLimit = 128
+    static let epochContextLimit = 64
+    static let retainedPreviousContextLimit = 32
 
-    private(set) var snapshot: KeyboardDocumentSnapshot?
+    struct EchoEpoch {
+        let generation: UInt64
+        var contexts: [String] = []
+    }
+
+    var snapshot: KeyboardDocumentSnapshot?
     private(set) var isApplyingMutation = false
-    private var snapshotBeforeMutation: KeyboardDocumentSnapshot?
-    private var authoredContexts: [String?] = []
-    private var nextAuthoredContextIndex = 0
+    var snapshotBeforeMutation: KeyboardDocumentSnapshot?
+    var currentEpoch = EchoEpoch(generation: 0)
+    var previousEpoch: EchoEpoch?
+    var nextGeneration: UInt64 = 1
+    var closesEpochAfterMutation = false
 
-    var pendingAuthoredContextCount: Int { authoredContexts.count }
+    var pendingAuthoredContextCount: Int {
+        currentEpoch.contexts.count + (previousEpoch?.contexts.count ?? 0)
+    }
 
-    mutating func beginMutation() {
+    mutating func beginMutation(closesEpoch: Bool = false) {
         snapshotBeforeMutation = snapshot
-        // textDidChange lags fast typing, so the host may echo the state from
-        // BEFORE this mutation. Keep it acknowledgeable: an unmatched echo
-        // reads as an external edit and resets composition mid-word.
+        closesEpochAfterMutation = closesEpoch
         if let snapshot {
-            // Preserve nil too: UIKit uses it for an empty document, and the
-            // first delayed callback can echo that pre-insertion state.
             appendAuthoredContext(snapshot.contextBeforeInput)
         }
         isApplyingMutation = true
@@ -35,116 +44,72 @@ struct KeyboardDocumentSynchronizer {
 
     mutating func finishMutation() -> (snapshot: KeyboardDocumentSnapshot, changed: Bool)? {
         isApplyingMutation = false
-        defer { snapshotBeforeMutation = nil }
+        defer {
+            snapshotBeforeMutation = nil
+            if closesEpochAfterMutation { closeCurrentEpoch() }
+            closesEpochAfterMutation = false
+        }
         guard let snapshot else { return nil }
         return (snapshot, snapshotBeforeMutation != snapshot)
     }
 
     mutating func recordInsertion(_ text: String) {
         guard !text.isEmpty, let current = snapshot else { return }
-        // nil base context = empty document; the shadow must stay matchable.
-        let context = String(
-            ((current.contextBeforeInput ?? "") + text).suffix(Self.shadowContextLimit)
-        )
+        let context = normalize((current.contextBeforeInput ?? "") + text)
         updateAuthoredSnapshot(from: current, contextBeforeInput: context)
     }
 
     mutating func recordDeletion() {
         guard let current = snapshot else { return }
-        var context = current.contextBeforeInput
-        if !current.hasSelection, context?.isEmpty == false {
-            context?.removeLast()
-        }
+        var context = normalize(current.contextBeforeInput)
+        if !current.hasSelection, !context.isEmpty { context.removeLast() }
         updateAuthoredSnapshot(from: current, contextBeforeInput: context)
     }
 
-    /// Returns true for callbacks produced by mutations already reflected in the
-    /// local shadow document. Intermediate delete/insert callbacks are ignored
-    /// until the host reaches the final shadow context.
     mutating func consumeAuthoredTextChange(
         documentIdentifier: UUID,
         contextBeforeInput: String?
     ) -> Bool {
         guard let snapshot,
               snapshot.documentIdentifier == documentIdentifier else { return false }
-        if contextsMatch(snapshot.contextBeforeInput, contextBeforeInput) {
-            return true
-        }
-        return authoredContexts.contains {
-            contextsMatch($0, contextBeforeInput)
-        }
+        let context = normalize(contextBeforeInput)
+        if normalize(snapshot.contextBeforeInput) == context { return true }
+        return currentEpoch.contexts.contains(context)
+            || previousEpoch?.contexts.contains(context) == true
     }
 
-    mutating func accept(_ snapshot: KeyboardDocumentSnapshot) {
-        self.snapshot = snapshot
-        clearAuthoredContexts()
+    mutating func accept(
+        _ snapshot: KeyboardDocumentSnapshot,
+        preservingAuthoredEchoes: Bool = false
+    ) {
+        self.snapshot = normalized(snapshot)
+        guard !preservingAuthoredEchoes else { return }
+        resetEchoLedger()
     }
 
     mutating func invalidate() {
         snapshot = nil
         isApplyingMutation = false
         snapshotBeforeMutation = nil
-        clearAuthoredContexts()
+        closesEpochAfterMutation = false
+        resetEchoLedger()
     }
 
     func requiresCompositionReset(
         for current: KeyboardDocumentSnapshot,
         composerBuffer: String
     ) -> Bool {
+        let current = normalized(current)
         guard let previous = snapshot else {
             return !contextContainsBuffer(current.contextBeforeInput, composerBuffer)
         }
-        if previous.documentIdentifier != current.documentIdentifier {
-            return true
-        }
-        if current.hasSelection, !composerBuffer.isEmpty {
-            return true
-        }
+        if previous.documentIdentifier != current.documentIdentifier { return true }
+        if current.hasSelection, !composerBuffer.isEmpty { return true }
         guard !composerBuffer.isEmpty else { return false }
-        if let oldContext = previous.contextBeforeInput,
-           let newContext = current.contextBeforeInput,
-           oldContext != newContext {
+        if normalize(previous.contextBeforeInput) != normalize(current.contextBeforeInput) {
             return true
         }
         return !contextContainsBuffer(current.contextBeforeInput, composerBuffer)
     }
 
-    private func contextContainsBuffer(_ context: String?, _ buffer: String) -> Bool {
-        guard !buffer.isEmpty, let context else { return true }
-        return context.hasSuffix(buffer)
-    }
-
-    private mutating func updateAuthoredSnapshot(
-        from current: KeyboardDocumentSnapshot,
-        contextBeforeInput: String?
-    ) {
-        snapshot = KeyboardDocumentSnapshot(
-            documentIdentifier: current.documentIdentifier,
-            contextBeforeInput: contextBeforeInput,
-            hasSelection: false
-        )
-        appendAuthoredContext(contextBeforeInput)
-    }
-
-    private mutating func appendAuthoredContext(_ context: String?) {
-        if authoredContexts.count < Self.authoredContextLimit {
-            authoredContexts.append(context)
-            return
-        }
-        authoredContexts[nextAuthoredContextIndex] = context
-        nextAuthoredContextIndex = (nextAuthoredContextIndex + 1)
-            % Self.authoredContextLimit
-    }
-
-    private mutating func clearAuthoredContexts() {
-        authoredContexts.removeAll(keepingCapacity: true)
-        nextAuthoredContextIndex = 0
-    }
-
-    // Hosts report an empty document as either nil or "" — same state.
-    private func contextsMatch(_ expected: String?, _ actual: String?) -> Bool {
-        let expected = expected ?? "", actual = actual ?? ""
-        return expected == actual
-            || (!expected.isEmpty && actual.hasSuffix(expected))
-    }
 }

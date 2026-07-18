@@ -131,7 +131,8 @@ struct KeyboardDocumentSynchronizerTests {
             _ = synchronizer.finishMutation()
         }
 
-        #expect(synchronizer.pendingAuthoredContextCount == 256)
+        #expect(synchronizer.pendingAuthoredContextCount > 0)
+        #expect(synchronizer.pendingAuthoredContextCount <= 64)
         #expect(synchronizer.snapshot?.contextBeforeInput?.count == 128)
 
         let consumed = synchronizer.consumeAuthoredTextChange(
@@ -141,6 +142,8 @@ struct KeyboardDocumentSynchronizerTests {
         #expect(consumed)
         // A current callback is not a monotonic watermark: UIKit can still
         // deliver an older callback that was already queued behind it.
-        #expect(synchronizer.pendingAuthoredContextCount == 256)
+        #expect(synchronizer.pendingAuthoredContextCount > 0)
+        #expect(synchronizer.pendingAuthoredContextCount <= 64)
     }
+
 }

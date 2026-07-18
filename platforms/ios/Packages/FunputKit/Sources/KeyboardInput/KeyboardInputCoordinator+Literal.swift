@@ -11,7 +11,7 @@ extension KeyboardInputCoordinator {
     public func insertLiteral(_ text: String, document: any KeyboardDocument) {
         guard !text.isEmpty else { return }
         synchronizeBeforeInput(document)
-        documentSynchronizer.beginMutation()
+        documentSynchronizer.beginMutation(closesEpoch: true)
         composer.clear()
         insertDocumentText(text, document: document)
         finishDocumentMutation(preserveOneShotShift: true)

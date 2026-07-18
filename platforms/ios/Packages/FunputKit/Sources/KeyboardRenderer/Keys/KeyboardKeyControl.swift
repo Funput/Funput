@@ -16,6 +16,7 @@ final class KeyboardKeyControl: UIControl {
     private var appliedInterfaceStyle: UIUserInterfaceStyle?
     private var appliedReduceTransparency: Bool?
     private var swipeTracker = KeySwipeGestureTracker()
+    var role: KeyRole { spec.role }
 
     init(spec: KeySpec) {
         self.spec = spec
@@ -57,6 +58,11 @@ final class KeyboardKeyControl: UIControl {
         emit(.pressed)
         emit(.released)
         return true
+    }
+
+    func setPressed(_ pressed: Bool, presentation: KeyboardPresentation?) {
+        guard let presentation else { return }
+        surface.setPressed(pressed, theme: presentation.theme, animated: true)
     }
 
     private func configureAccessibility() {

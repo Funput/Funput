@@ -28,31 +28,41 @@ let package = Package(
         ),
         .target(
             name: "KeyboardInput",
-            dependencies: ["FunputEngine", "KeyboardLayout", "FunputShared"]
+            dependencies: [
+                .target(name: "FunputEngine"),
+                .target(name: "KeyboardLayout"),
+                .target(name: "FunputShared"),
+            ]
         ),
         .target(name: "KeyboardLayout"),
         .target(
             name: "FunputShared",
-            dependencies: ["KeyboardLayout"]
+            dependencies: [.target(name: "KeyboardLayout")]
         ),
         .target(name: "ThemeSchema"),
         .target(
             name: "ThemeRuntime",
-            dependencies: ["ThemeSchema", "FunputShared"]
+            dependencies: [
+                .target(name: "ThemeSchema"),
+                .target(name: "FunputShared"),
+            ]
         ),
         .target(
             name: "KeyboardRenderer",
-            dependencies: ["KeyboardLayout", "ThemeSchema"],
+            dependencies: [
+                .target(name: "KeyboardLayout"),
+                .target(name: "ThemeSchema"),
+            ],
             resources: [.process("Resources")]
         ),
         .target(
             name: "KeyboardConfiguration",
             dependencies: [
-                "FunputShared",
-                "ThemeRuntime",
-                "ThemeSchema",
-                "KeyboardRenderer",
-                "KeyboardLayout",
+                .target(name: "FunputShared"),
+                .target(name: "ThemeRuntime"),
+                .target(name: "ThemeSchema"),
+                .target(name: "KeyboardRenderer"),
+                .target(name: "KeyboardLayout"),
             ]
         ),
         .testTarget(

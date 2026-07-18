@@ -46,12 +46,16 @@ extension KeyboardInputCoordinator {
     }
 
     func insertDocumentText(_ text: String, document: any KeyboardDocument) {
+        let signpostID = KeyboardInputSignposts.begin("ProxyInsert")
         document.insertText(text)
+        KeyboardInputSignposts.end("ProxyInsert", signpostID)
         documentSynchronizer.recordInsertion(text)
     }
 
     func deleteDocumentBackward(_ document: any KeyboardDocument) {
+        let signpostID = KeyboardInputSignposts.begin("ProxyDelete")
         document.deleteBackward()
+        KeyboardInputSignposts.end("ProxyDelete", signpostID)
         documentSynchronizer.recordDeletion()
     }
 
@@ -69,7 +73,10 @@ extension KeyboardInputCoordinator {
         if mustReset {
             resetCompositionState()
         }
-        documentSynchronizer.accept(snapshot)
+        documentSynchronizer.accept(
+            snapshot,
+            preservingAuthoredEchoes: event != .activated
+        )
         if event == .activated || snapshotChanged {
             synchronizeCapitalization(
                 with: snapshot,

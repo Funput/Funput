@@ -19,6 +19,8 @@ extension KeyboardViewController {
         configuration = configurationStore.load()
 #endif
         themeCatalog = ThemeCatalog(customThemes: customThemeStore.load())
+        cachedPresentationConfiguration = nil
+        cachedThemedPresentation = nil
         let theme = themeCatalog.theme(id: configuration.selectedThemeID)
         let assetID = theme?.backgroundEffects.image?.assetID
         let data = assetID.flatMap(themeAssetStore.renderedData)

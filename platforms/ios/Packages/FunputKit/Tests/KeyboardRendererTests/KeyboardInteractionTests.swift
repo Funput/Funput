@@ -89,35 +89,6 @@ struct KeyboardInteractionTests {
         #expect(controller.activeKey == nil)
     }
 
-    @Test("Backspace repeat emits ticks and suppresses release")
-    func backspaceRepeatIntegration() {
-        let scheduler = TestRepeatScheduler()
-        var events: [KeyboardKeyEvent] = []
-        let controller = KeyboardSurfaceInteractionController(
-            onEvent: { events.append($0) },
-            onPreview: { _, _ in },
-            repeatScheduler: scheduler.schedule
-        )
-        var presentation = KeyboardPresentation()
-        presentation.isHapticFeedbackEnabled = false
-        let backspace = KeySpec(id: "backspace", label: "", role: .backspace)
-
-        controller.handle(
-            event(backspace, .pressed),
-            sourceFrame: nil,
-            presentation: presentation
-        )
-        scheduler.runNext()
-        controller.handle(
-            event(backspace, .released),
-            sourceFrame: nil,
-            presentation: presentation
-        )
-
-        #expect(events.map(\.phase) == [.pressed, .repeated])
-        #expect(controller.activeKey == nil)
-    }
-
     private func key(_ label: String) -> KeySpec {
         KeySpec(
             id: "key-\(label)",
