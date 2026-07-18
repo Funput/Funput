@@ -122,7 +122,9 @@ fn update_indicators(status: Status, vi_color: &str) {
     let vi_en = if status.enabled { "VI" } else { "EN" };
     let method = match status.method {
         InputMethod::Telex => "Telex",
+        InputMethod::TelexAdvanced => "Telex Advanced",
         InputMethod::Vni => "VNI",
+        _ => "Other",
     };
     let _ = set_title(&mut out, &format!("Funput · {vi_en} · {method}"));
     let _ = set_cursor_cue(&mut out, status.enabled, vi_color);

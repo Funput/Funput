@@ -14,14 +14,17 @@ use crate::session::Session;
 /// Apply one keystroke to `session` and return platform instructions.
 ///
 /// `session.keys` already includes `key` (pushed by the caller).
-pub(crate) fn process(session: &mut Session, key: char) -> ImeResult {
-    let result = apply_checked(
+pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: bool) -> ImeResult {
+    let mut result = apply_checked(
         &session.buffer,
         key,
         session.method,
         session.tone_style,
         session.spell_check,
     );
+    if capitalize_shortcut && result.kind == TransformKind::Applied {
+        uppercase_direct_vowel(&mut result.text);
+    }
 
     // Buffer after composing this key (the engine appends literally on Ignored).
     let composed = match result.kind {
@@ -81,56 +84,17 @@ pub(crate) fn process(session: &mut Session, key: char) -> ImeResult {
     instruction
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::result::Action;
-    use funput_core::InputMethod;
-
-    #[test]
-    fn pending_appends_literal() {
-        let mut session = Session::new();
-        let result = process(&mut session, 'a');
-        assert_eq!(result.action, Action::None);
-        assert_eq!(session.buffer, "a");
-    }
-
-    #[test]
-    fn applied_tone_telex() {
-        let mut session = Session::new();
-        process(&mut session, 'a');
-        let result = process(&mut session, 's');
-        assert_eq!(result.action, Action::Send);
-        assert_eq!(result.backspace, 1);
-        assert_eq!(result.output, "á");
-        assert_eq!(session.buffer, "á");
-    }
-
-    #[test]
-    fn ignored_appends_literal_vni() {
-        let mut session = Session::new();
-        session.method = InputMethod::Vni;
-        session.buffer.push_str("ng");
-        session.keys.push_str("ng1"); // caller pushes the key before pipeline runs
-        let result = process(&mut session, '1');
-        assert_eq!(result.action, Action::None);
-        assert_eq!(session.buffer, "ng1");
-    }
-
-    #[test]
-    fn eager_restore_on_dead_end() {
-        // Telex "text": "tẽ" is still valid, but the closing "t" makes "tẽt" a
-        // dead end → restore to the raw keys immediately (no boundary needed).
-        let mut session = Session::new();
-        for key in "tex".chars() {
-            session.keys.push(key);
-            process(&mut session, key);
-        }
-        assert_eq!(session.buffer, "tẽ");
-
-        session.keys.push('t');
-        let result = process(&mut session, 't');
-        assert_eq!(result.action, Action::Send);
-        assert_eq!(session.buffer, "text");
-    }
+fn uppercase_direct_vowel(text: &mut String) {
+    let Some(first) = text.chars().next() else {
+        return;
+    };
+    let uppercase = match first {
+        'ư' => 'Ư',
+        'ơ' => 'Ơ',
+        _ => return,
+    };
+    text.replace_range(..first.len_utf8(), uppercase.encode_utf8(&mut [0; 4]));
 }
+
+#[cfg(test)]
+mod tests;

@@ -4,6 +4,8 @@ mod support;
 
 #[path = "methods/telex.rs"]
 mod telex;
+#[path = "methods/telex_advanced.rs"]
+mod telex_advanced;
 #[path = "methods/telex_deferred_w.rs"]
 mod telex_deferred_w;
 #[path = "methods/telex_multi_intent_spec.rs"]

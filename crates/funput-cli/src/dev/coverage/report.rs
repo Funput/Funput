@@ -7,8 +7,7 @@ use super::MethodResult;
 pub(super) fn print_human(
     corpus: &Path,
     syllables: &[String],
-    telex: &MethodResult,
-    vni: &MethodResult,
+    results: &[MethodResult],
     show_mismatches: usize,
 ) {
     println!(
@@ -16,7 +15,7 @@ pub(super) fn print_human(
         syllables.len(),
         corpus.display()
     );
-    for r in [telex, vni] {
+    for r in results {
         println!(
             "  {:<6} {:.2}%  ({} wrong of {})",
             r.label,
@@ -26,7 +25,7 @@ pub(super) fn print_human(
         );
     }
     if show_mismatches > 0 {
-        for r in [telex, vni] {
+        for r in results {
             if r.mismatches.is_empty() {
                 continue;
             }
@@ -38,12 +37,7 @@ pub(super) fn print_human(
     }
 }
 
-pub(super) fn print_json(
-    corpus: &Path,
-    syllables: &[String],
-    telex: &MethodResult,
-    vni: &MethodResult,
-) {
+pub(super) fn print_json(corpus: &Path, syllables: &[String], results: &[MethodResult]) {
     let one = |r: &MethodResult| {
         format!(
             "{{\"total\":{},\"covered\":{},\"coverage\":{:.4}}}",
@@ -52,13 +46,21 @@ pub(super) fn print_json(
             pct(r.covered, r.total) / 100.0
         )
     };
+    let methods = results
+        .iter()
+        .map(|result| format!("\"{}\":{}", json_key(result.label), one(result)))
+        .collect::<Vec<_>>()
+        .join(",");
     println!(
-        "{{\"corpus\":\"{}\",\"syllables\":{},\"telex\":{},\"vni\":{}}}",
+        "{{\"corpus\":\"{}\",\"syllables\":{},{}}}",
         json_escape(&corpus.display().to_string()),
         syllables.len(),
-        one(telex),
-        one(vni)
+        methods
     );
+}
+
+fn json_key(label: &str) -> String {
+    label.to_ascii_lowercase().replace(' ', "_")
 }
 
 fn pct(covered: usize, total: usize) -> f64 {

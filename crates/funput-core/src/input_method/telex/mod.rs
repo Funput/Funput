@@ -1,14 +1,19 @@
 //! Telex key classification. Modifier-specific classifiers stay isolated so the
 //! common dispatch remains small and its priority is explicit.
 
+mod advanced;
 mod circumflex;
 mod stroke;
 mod tone;
 mod w;
 
-use crate::input_method::KeyAction;
+use crate::input_method::{AdvancedAction, KeyAction};
 
 pub use tone::tone_from_key;
+
+pub fn classify_advanced_key(buffer: &str, key: char) -> AdvancedAction {
+    advanced::classify(buffer, key)
+}
 
 /// Classify a Telex keystroke into a method-agnostic action.
 pub fn classify_key(buffer: &str, key: char) -> KeyAction {

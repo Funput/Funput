@@ -36,8 +36,9 @@ pub use compose::{
     funput_flip_composing, funput_process_char,
 };
 pub use config::{
-    funput_set_auto_capitalize, funput_set_eager_restore, funput_set_enabled, funput_set_method,
-    funput_set_smart_restore, funput_set_spell_check, funput_set_tone_style,
+    METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, funput_set_auto_capitalize,
+    funput_set_eager_restore, funput_set_enabled, funput_set_method, funput_set_smart_restore,
+    funput_set_spell_check, funput_set_tone_style,
 };
 pub use shortcuts::{funput_add_shortcut, funput_clear_shortcuts};
 pub use types::{ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputResult};

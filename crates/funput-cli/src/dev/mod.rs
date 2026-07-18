@@ -36,7 +36,7 @@ pub enum DevCommand {
         #[command(flatten)]
         opts: CommonOpts,
     },
-    /// Round-trip coverage check over a Vietnamese corpus (Telex & VNI).
+    /// Round-trip coverage check over a Vietnamese corpus (Telex, Advanced & VNI).
     Coverage {
         /// Corpus file (one word per line). Defaults to `benchmarks/sample.txt`.
         corpus: Option<PathBuf>,

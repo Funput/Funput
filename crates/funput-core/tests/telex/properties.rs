@@ -11,6 +11,10 @@ fn telex(keys: &str) -> String {
     type_keys(InputMethod::Telex, keys)
 }
 
+fn advanced(keys: &str) -> String {
+    type_keys(InputMethod::TelexAdvanced, keys)
+}
+
 proptest! {
     /// Any run of letters/digits composes without panicking, and composition never
     /// produces more characters than were typed — diacritics/shapes only *combine*
@@ -28,6 +32,21 @@ proptest! {
     #[test]
     fn deterministic(keys in "[a-zA-Z0-9]{0,24}") {
         prop_assert_eq!(telex(&keys), telex(&keys));
+    }
+
+    /// Full Telex adds punctuation-like shortcut keys, but retains the same safety
+    /// and determinism invariants as the standard classifier.
+    #[test]
+    fn advanced_never_panics_or_grows(keys in "[a-zA-Z0-9\\[\\]{}]{0,24}") {
+        let output = advanced(&keys);
+        prop_assert!(output.chars().count() <= keys.chars().count());
+        prop_assert_eq!(&output, &advanced(&keys));
+    }
+
+    /// Braces remain outside Full Telex and must survive arbitrary literal runs.
+    #[test]
+    fn advanced_braces_are_literal(keys in "[{}]{0,16}") {
+        prop_assert_eq!(advanced(&keys), keys);
     }
 
     /// A run of consonants that are not Telex modifiers (no tone `s/f/r/x/j`, no shape

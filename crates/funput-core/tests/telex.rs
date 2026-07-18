@@ -14,6 +14,8 @@ mod cases;
 mod parity_data;
 
 // Test modules.
+#[path = "telex/advanced.rs"]
+mod advanced;
 #[path = "telex/basic.rs"]
 mod basic;
 #[path = "telex/corpus.rs"]

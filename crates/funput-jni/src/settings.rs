@@ -15,13 +15,17 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
     method: jint,
 ) {
     safe((), || {
-        let method = if method == 1 {
-            InputMethod::Vni
-        } else {
-            InputMethod::Telex
-        };
+        let method = decode_method(method);
         registry::with_mut(handle, |engine| engine.set_method(method));
     });
+}
+
+pub(crate) fn decode_method(method: jint) -> InputMethod {
+    match method {
+        1 => InputMethod::Vni,
+        2 => InputMethod::TelexAdvanced,
+        _ => InputMethod::Telex,
+    }
 }
 
 #[unsafe(no_mangle)]
@@ -85,4 +89,41 @@ fn update(handle: jlong, operation: impl FnOnce(&mut funput_engine::Engine)) {
     safe((), || {
         registry::with_mut(handle, operation);
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn type_on(handle: i64, wire_method: jint, keys: &str) -> String {
+        registry::with_mut(handle, |engine| {
+            engine.set_method(decode_method(wire_method));
+            for key in keys.chars() {
+                engine.process_char(key);
+            }
+            engine.buffer().to_owned()
+        })
+        .expect("registered engine")
+    }
+
+    #[test]
+    fn method_wire_values_are_stable_and_unknown_is_safe() {
+        assert_eq!(decode_method(0), InputMethod::Telex);
+        assert_eq!(decode_method(1), InputMethod::Vni);
+        assert_eq!(decode_method(2), InputMethod::TelexAdvanced);
+        assert_eq!(decode_method(-1), InputMethod::Telex);
+        assert_eq!(decode_method(99), InputMethod::Telex);
+    }
+
+    #[test]
+    fn persisted_advanced_id_survives_registry_relaunch() {
+        let persisted_method = 2;
+        let first = registry::create();
+        assert_eq!(type_on(first, persisted_method, "t["), "tư");
+        registry::destroy(first);
+
+        let relaunched = registry::create();
+        assert_eq!(type_on(relaunched, persisted_method, "m]"), "mơ");
+        registry::destroy(relaunched);
+    }
 }

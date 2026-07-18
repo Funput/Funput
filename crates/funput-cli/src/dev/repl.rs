@@ -13,7 +13,9 @@ use super::sim::simulate;
 pub fn run(method: InputMethod, steps: bool) {
     let name = match method {
         InputMethod::Telex => "telex",
+        InputMethod::TelexAdvanced => "telex-advanced",
         InputMethod::Vni => "vni",
+        _ => "other",
     };
     // Banner on stderr so stdout stays clean for piping.
     eprintln!("funput repl [{name}] — type a line then Enter; :q or Ctrl-D to quit.");
