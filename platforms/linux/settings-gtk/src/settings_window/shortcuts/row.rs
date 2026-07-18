@@ -60,10 +60,10 @@ fn bind_edit(index: usize, entry: &EntryRow, expander: ExpanderRow, trigger: boo
 }
 
 fn bind_focus(index: usize, entry: &EntryRow, trigger: bool) {
-    let entry = entry.clone();
+    let entry_for_leave = entry.clone();
     let focus = gtk::EventControllerFocus::new();
     focus.connect_leave(move |_| {
-        let text = entry.text().to_string();
+        let text = entry_for_leave.text().to_string();
         Settings::update(move |settings| {
             if let Some(item) = settings.shortcuts.get_mut(index) {
                 if trigger {
