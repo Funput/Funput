@@ -74,7 +74,7 @@ final class SettingsModel {
     var heightBinding: Binding<Double> {
         Binding(
             get: { self.configuration.heightScale },
-            set: { self.update(\.heightScale, to: min(max($0, 0.85), 1.15)) }
+            set: { self.update(\.heightScale, to: min(max($0, 0.85), 1.2)) }
         )
     }
 

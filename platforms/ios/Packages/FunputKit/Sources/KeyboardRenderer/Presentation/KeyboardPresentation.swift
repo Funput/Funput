@@ -108,7 +108,7 @@ public enum KeyboardMetrics {
             + standardRowHeight * rowCount
             + rowGap * CGFloat(max(layout.rows.count - 1, 0))
             + (layout.toolbar == nil ? 0 : toolbarChrome)
-        return targetHeight * min(max(scale, 0.85), 1.15)
+        return targetHeight * min(max(scale, 0.85), 1.2)
     }
 }
 

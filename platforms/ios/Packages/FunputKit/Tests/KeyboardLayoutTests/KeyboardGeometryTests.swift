@@ -76,7 +76,7 @@ struct KeyboardGeometryTests {
 
     @Test("Customization extremes remain valid", arguments: [
         (0.85, 3.0),
-        (1.15, 10.0),
+        (1.2, 10.0),
     ])
     func customizationExtremes(heightScale: Double, gap: Double) {
         var sizing = KeyboardSizingProfile.default
