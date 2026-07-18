@@ -7,16 +7,16 @@ one machine imports on another. macOS is the first implementation
 
 ## Design rules
 
-- **Portable vs platform-specific.** `preferences` and `shortcuts` apply on every
-  platform. Anything tied to one OS (hotkey key codes, app identifiers) lives under
-  `platform.<name>` and is applied **only** when running that platform.
-- **Stable enums.** Enum values are lowercase strings (`"telex"`, `"modern"`), not
-  internal numeric rawValues.
+- **Portable vs platform-specific.** `preferences` and `shortcuts` use portable wire
+  values, although a platform may not expose every input method. Anything tied to
+  one OS lives under `platform.<name>` and applies **only** on that platform.
+- **Stable enums.** Enum values are lowercase strings (`"telex_advanced"`,
+  `"modern"`), not internal numeric rawValues.
 - **Non-destructive import (merge).** Import never deletes user data:
   - `shortcuts` merge by `trigger`; an incoming entry overwrites the expansion of a
     matching trigger and new triggers are appended. Nothing is removed.
-  - `preferences` overwrite the matching setting; fields absent from the file are
-    left untouched.
+  - Supported `preferences` overwrite the matching setting. Missing or unsupported
+    enum values leave the existing local preference untouched.
   - `platform.<current>` hotkeys apply only when present; `excludedApps` are unioned
     by id.
 - **Forward compatible.** Unknown keys are ignored. Missing optional fields are
@@ -34,7 +34,7 @@ one machine imports on another. macOS is the first implementation
   "source": { "platform": "macos", "appVersion": "1.2026.42" },
 
   "preferences": {
-    "inputMethod": "telex",          // "telex" | "vni"
+    "inputMethod": "telex",          // "telex" | "telex_advanced" | "vni"
     "toneStyle": "traditional",      // "traditional" | "modern"
     "smartEnglishRestore": true,
     "eagerRestore": true,
@@ -64,7 +64,8 @@ one machine imports on another. macOS is the first implementation
 | `version` | — | Format version (currently `1`). Required. |
 | `exportedAt` | — | ISO-8601 timestamp. Metadata only. |
 | `source` | — | `platform` + `appVersion` that produced the file. Metadata only. |
-| `preferences.*` | ✅ | Typing options; each is optional and applied only if present. |
+| `preferences.inputMethod` | ✅ | `telex`, `telex_advanced`, or `vni`. Advanced Telex is currently desktop-only and exposed on macOS; unsupported consumers keep their current selection. |
+| `preferences.*` | ✅ | Other typing options; each is optional and applied only if present. |
 | `shortcuts[]` | ✅ | `{ trigger, expansion }`. Local UUIDs are dropped; recreated on import. |
 | `platform.macos.toggleShortcut` | ❌ | `KeyCombo` (`keyCode` is AppKit-specific). Applied only on macOS, only if present. |
 | `platform.macos.flipShortcut` | ❌ | `KeyCombo` or `null`. Applied only on macOS, only if present. |

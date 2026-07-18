@@ -17,7 +17,7 @@ final class FunputComposer {
     }
 
     func setMethod(_ method: InputMethod) {
-        funput_set_method(handle, UInt8(method.rawValue))
+        funput_set_method(handle, method.ffiValue)
     }
 
     /// Tone-mark placement style (traditional `hòa` vs modern `hoà`).

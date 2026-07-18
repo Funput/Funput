@@ -11,7 +11,7 @@ struct InputMethodPane: View {
             GlassCard {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     Picker("Phương thức", selection: $settings.inputMethod) {
-                        ForEach(InputMethod.allCases) { method in
+                        ForEach(InputMethod.displayCases) { method in
                             Text(method.displayName).tag(method)
                         }
                     }

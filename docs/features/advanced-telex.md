@@ -2,10 +2,11 @@
 
 ## Trạng thái
 
-V5 đã hiện thực core/engine và chuẩn bị C FFI/JNI. Tích hợp UI, persistence và
-selection trên từng platform thuộc kế hoạch tiếp theo. Tên hiển thị là **Telex
-nâng cao**; tên kỹ thuật là `TelexAdvanced` và giá trị cấu hình ổn định dự kiến là
-`telex_advanced`.
+V5 đã hiện thực core/engine và C FFI/JNI. macOS là platform đầu tiên expose UI,
+persistence và selection; Windows/Linux sẽ tích hợp sau. Đây là tính năng desktop:
+iOS/Android không expose hoặc persist mode này, còn wire ID `2` trong FFI/JNI vẫn
+được giữ dormant. Tên hiển thị là **Telex nâng cao**; tên kỹ thuật là
+`TelexAdvanced` và giá trị cấu hình ổn định là `telex_advanced`.
 
 ## Mục tiêu
 
@@ -91,11 +92,11 @@ Việc đổi mode phải clear composition đang dở để không trộn seman
 
 ### FFI và JNI
 
-Mode mới cần được truyền qua biên platform:
+Mode mới dùng mapping ổn định qua biên platform:
 
 - Rust: thêm `InputMethod::TelexAdvanced` theo thay đổi API có phối hợp.
-- C FFI: giữ `0 = Telex`, `1 = VNI`, thêm `2 = TelexAdvanced`.
-- JNI: dùng cùng mapping `0/1/2`.
+- C FFI: giữ `0 = Telex`, `1 = VNI`, thêm `2 = TelexAdvanced`; macOS dùng ID `2`.
+- JNI: giữ cùng mapping `0/1/2`, nhưng ID `2` chưa được Android expose.
 - Giá trị không nhận diện vẫn fallback về Telex để tương thích ngược.
 
 Không cần thêm state riêng nếu enum `InputMethod` vẫn vừa layout hiện tại; phải kiểm
@@ -103,12 +104,13 @@ chứng lại `size_of::<Engine>()` và ABI tests.
 
 ### Platform
 
-Mỗi platform không tự hiện thực quy tắc gõ. Platform chỉ cần:
+Platform không tự hiện thực quy tắc gõ. macOS hiển thị **Telex**, **Telex nâng
+cao**, **VNI** theo thứ tự đó, persist `telex_advanced`, migrate cấu hình integer cũ
+và truyền mode qua C FFI. Windows/Linux sẽ làm tương tự trong plan riêng.
 
-1. Hiển thị lựa chọn **Telex**, **Telex nâng cao**, **VNI**.
-2. Persist `telex_advanced` và migrate cấu hình cũ về đúng mode cũ.
-3. Truyền mode xuống engine qua Rust trực tiếp, C FFI hoặc JNI.
-4. Cập nhật Export/Import config và kiểm thử selection/wiring.
+iOS/Android không thêm UI, persistence hoặc wiring cho mode này. Khi một consumer
+không hỗ trợ đọc `telex_advanced`, nó phải giữ input method hiện tại thay vì ép về
+một method khác.
 
 Config interchange mở rộng `preferences.inputMethod` thành:
 
@@ -125,8 +127,8 @@ Config interchange mở rộng `preferences.inputMethod` thành:
 - Core, engine và FFI common-path không chậm quá 3% so với baseline trước V5.
 - Viet74K đạt 100% với cả Telex canonical và Full Telex shortcut encoding.
 - Không nới allocation budget hiện tại; kiểm tra lại kích thước Engine và ABI.
-- Core, engine, C FFI và JNI dùng cùng behavior và wire mapping; platform wiring
-  sẽ được kiểm chứng trong kế hoạch tích hợp riêng.
+- Core, engine, C FFI và JNI dùng cùng behavior và wire mapping; macOS đã tích hợp
+  selection qua C FFI, Windows/Linux làm sau và mobile giữ mapping dormant.
 
 ## Ngoài phạm vi V5
 
