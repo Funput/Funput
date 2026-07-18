@@ -25,9 +25,10 @@ pub(super) fn open() {
 
     let weak = window.as_weak();
     window.on_pick_method(move |value| {
-        if let Some(method) = Method::from_id(&value) {
-            commands::set_method(method);
-        }
+        let Some(method) = Method::from_id(&value) else {
+            return;
+        };
+        commands::set_method(method);
         if let Some(window) = weak.upgrade() {
             window.set_method(value);
         }

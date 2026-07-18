@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "lowercase")]
 pub enum Method {
     Telex,
+    #[serde(rename = "telex_advanced")]
+    TelexAdvanced,
     Vni,
 }
 
@@ -12,14 +14,15 @@ impl Method {
     pub fn core(self) -> InputMethod {
         match self {
             Self::Telex => InputMethod::Telex,
+            Self::TelexAdvanced => InputMethod::TelexAdvanced,
             Self::Vni => InputMethod::Vni,
         }
     }
 
-    /// Compile-only compatibility until Windows exposes Telex Advanced.
     pub fn from_core(method: InputMethod) -> Self {
         match method {
-            InputMethod::Telex | InputMethod::TelexAdvanced => Self::Telex,
+            InputMethod::Telex => Self::Telex,
+            InputMethod::TelexAdvanced => Self::TelexAdvanced,
             InputMethod::Vni => Self::Vni,
             _ => unreachable!("Windows must integrate a newly added input method"),
         }
@@ -28,6 +31,7 @@ impl Method {
     pub fn id(self) -> &'static str {
         match self {
             Self::Telex => "telex",
+            Self::TelexAdvanced => "telex_advanced",
             Self::Vni => "vni",
         }
     }
@@ -35,6 +39,7 @@ impl Method {
     pub fn from_id(id: &str) -> Option<Self> {
         match id {
             "telex" => Some(Self::Telex),
+            "telex_advanced" => Some(Self::TelexAdvanced),
             "vni" => Some(Self::Vni),
             _ => None,
         }
