@@ -39,7 +39,11 @@ endif()
 set(IBUS_ENGINE_PATH "${IBUS_LIBEXECDIR}/ibus-engine-funput")
 
 # --- IBus engine executable -> ibus-engine-funput --------------------------
-add_executable(ibus-engine-funput src/main.cpp src/engine.cpp)
+add_executable(ibus-engine-funput
+    src/main.cpp
+    src/engine.cpp
+    src/engine_input.cpp
+    src/engine_runtime.cpp)
 add_dependencies(ibus-engine-funput funput_ffi)
 
 # funput_linux_common carries the FFI include dir + the .so transitively.
@@ -101,7 +105,7 @@ endif()
 set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 set(CPACK_PACKAGE_NAME "funput-ibus")
 set(CPACK_PACKAGE_VERSION "${FUNPUT_VERSION}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Vietnamese input method (Telex & VNI) — IBus engine")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Vietnamese input method (Telex, Full Telex & VNI) — IBus engine")
 set(CPACK_PACKAGE_CONTACT "Funput <hello@funput.app>")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Funput <hello@funput.app>")
 set(CPACK_DEBIAN_PACKAGE_SECTION "utils")

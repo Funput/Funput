@@ -29,7 +29,11 @@ fn is_fcitx5_active() -> bool {
     // the bus check comes first).
     ["GTK_IM_MODULE", "QT_IM_MODULE", "XMODIFIERS"]
         .iter()
-        .any(|var| std::env::var(var).map(|v| v.contains("fcitx")).unwrap_or(false))
+        .any(|var| {
+            std::env::var(var)
+                .map(|v| v.contains("fcitx"))
+                .unwrap_or(false)
+        })
 }
 
 /// Ask the session bus daemon whether `name` currently has an owner.

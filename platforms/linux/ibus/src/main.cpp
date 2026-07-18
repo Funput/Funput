@@ -29,7 +29,7 @@ IBusFactory *g_factory = nullptr;
 IBusComponent *makeComponent() {
     IBusComponent *component = ibus_component_new(
         "org.freedesktop.IBus.Funput",
-        "Funput Vietnamese Input Method (Telex & VNI)",
+        "Funput Vietnamese Input Method (Telex, Full Telex & VNI)",
         FUNPUT_VERSION,
         "MIT",
         "Funput",
@@ -40,7 +40,7 @@ IBusComponent *makeComponent() {
     IBusEngineDesc *engine = ibus_engine_desc_new(
         "funput",                  // name
         "Funput",                  // longname
-        "Vietnamese Telex & VNI",  // description
+        "Vietnamese Telex, Full Telex & VNI",  // description
         "vi",                      // language
         "MIT",                     // license
         "Funput",                 // author
