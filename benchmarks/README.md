@@ -31,6 +31,11 @@ The V2 suites add equal-length `w-permutation/canonical` and
 Final median latency changed by **+0.85% core**, **+0.69% engine**, and
 **+1.53% FFI**, all inside the 3% regression gate.
 
+Telex V3 baseline (`telex_v3_multi_before`, same machine/toolchain): core Telex
+**19.43 M keys/s**, engine **8.99 M keys/s**, and C FFI **8.31 M keys/s**.
+V3 keeps these common-path IDs unchanged and measures canonical/multi-intent
+`w + dd` sequences separately.
+
 | Metric | Result |
 |---|---|
 | Compose latency (core `apply`) | **~0.05 µs / keystroke** (Telex), ~0.05 µs (VNI) |
