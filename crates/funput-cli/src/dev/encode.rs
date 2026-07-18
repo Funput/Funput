@@ -2,6 +2,8 @@
 //! that would produce it. Self-contained (Unicode NFD), used by the coverage check
 //! to round-trip a corpus: `text → encode → engine → text`.
 
+mod advanced;
+
 use unicode_normalization::UnicodeNormalization;
 
 use funput_core::InputMethod;
@@ -31,10 +33,10 @@ pub fn encode(text: &str, method: InputMethod) -> String {
         // the `oo`→`ô` digraph. Typing a third `o` escapes it (`booong`→`boong`), so
         // when a plain `o` (bare `o`, any tone — but not `ô`/`ơ`) immediately follows
         // another plain `o`, emit the extra escape key before encoding it.
-        if method == InputMethod::Telex && i > 0 && is_plain_o(ch) && is_plain_o(chars[i - 1]) {
+        if method.is_telex_family() && i > 0 && is_plain_o(ch) && is_plain_o(chars[i - 1]) {
             out.push(if ch.is_uppercase() { 'O' } else { 'o' });
         }
-        encode_char(ch, method, &mut out);
+        encode_char(ch, i, method, &mut out);
     }
     out
 }
@@ -47,7 +49,7 @@ fn is_plain_o(ch: char) -> bool {
         && !marks.any(|m| matches!(m, '\u{0302}' | '\u{031B}'))
 }
 
-fn encode_char(ch: char, method: InputMethod, out: &mut String) {
+fn encode_char(ch: char, index: usize, method: InputMethod, out: &mut String) {
     // `đ`/`Đ` do not decompose under NFD — handle the stroke explicitly.
     match ch {
         'đ' => return push_stroke(method, 'd', out),
@@ -57,7 +59,6 @@ fn encode_char(ch: char, method: InputMethod, out: &mut String) {
 
     let marks: Vec<char> = ch.nfd().collect();
     let base = marks[0];
-    out.push(base);
 
     let mut shape = None;
     let mut tone = None;
@@ -75,12 +76,17 @@ fn encode_char(ch: char, method: InputMethod, out: &mut String) {
         }
     }
 
-    // Shape first, then tone — order is method-defined, not the NFD order.
-    if let Some(s) = shape {
-        push_shape(method, base, s, out);
+    // Full Telex shortcuts replace both the base vowel and its shape key.
+    if !advanced::push_shortcut(method, index, base, shape, out) {
+        out.push(base);
+        if let Some(s) = shape {
+            push_shape(method, base, s, out);
+        }
     }
-    if let Some(t) = tone {
-        out.push(tone_key(method, t));
+    if let Some(t) = tone
+        && let Some(key) = tone_key(method, t)
+    {
+        out.push(key);
     }
 }
 
@@ -88,15 +94,16 @@ fn encode_char(ch: char, method: InputMethod, out: &mut String) {
 fn push_stroke(method: InputMethod, d: char, out: &mut String) {
     out.push(d);
     match method {
-        InputMethod::Telex => out.push('d'),
+        InputMethod::Telex | InputMethod::TelexAdvanced => out.push('d'),
         InputMethod::Vni => out.push('9'),
+        _ => {}
     }
 }
 
 fn push_shape(method: InputMethod, base: char, shape: Shape, out: &mut String) {
     match method {
         // Telex: circumflex doubles the vowel (`aa`→â); breve/horn use `w`.
-        InputMethod::Telex => match shape {
+        InputMethod::Telex | InputMethod::TelexAdvanced => match shape {
             Shape::Circumflex => out.push(base.to_ascii_lowercase()),
             Shape::Breve | Shape::Horn => out.push('w'),
         },
@@ -106,68 +113,29 @@ fn push_shape(method: InputMethod, base: char, shape: Shape, out: &mut String) {
             Shape::Breve => '8',
             Shape::Horn => '7',
         }),
+        _ => {}
     }
 }
 
-fn tone_key(method: InputMethod, tone: Tone) -> char {
+fn tone_key(method: InputMethod, tone: Tone) -> Option<char> {
     match method {
-        InputMethod::Telex => match tone {
+        InputMethod::Telex | InputMethod::TelexAdvanced => Some(match tone {
             Tone::Acute => 's',
             Tone::Grave => 'f',
             Tone::Hook => 'r',
             Tone::Tilde => 'x',
             Tone::Dot => 'j',
-        },
-        InputMethod::Vni => match tone {
+        }),
+        InputMethod::Vni => Some(match tone {
             Tone::Acute => '1',
             Tone::Grave => '2',
             Tone::Hook => '3',
             Tone::Tilde => '4',
             Tone::Dot => '5',
-        },
+        }),
+        _ => None,
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use funput_core::ToneStyle;
-
-    use super::super::sim::{SimConfig, simulate_with};
-    use super::*;
-
-    /// The meaningful property: encoding a word and typing it back reproduces it.
-    /// Smart-restore off to isolate pure composition.
-    fn roundtrip(word: &str, method: InputMethod) -> String {
-        let keys = encode(word, method);
-        let config = SimConfig {
-            method,
-            tone_style: ToneStyle::Traditional,
-            smart_restore: false,
-            spell_check: false,
-        };
-        simulate_with(config, &keys).app_text
-    }
-
-    // Words chosen to be tone-style-invariant (no oa/oe/uy glide) so both Telex and
-    // VNI round-trip exactly under the traditional style.
-    const WORDS: &[&str] = &[
-        "đầu", "việt", "nước", "Đắk", "nam", "tiếng", "người", "được", "rượu", "nghiêng", "Ô",
-        "khuỷu",
-        // `oo` loanwords: the double-o escapes the Telex `oo`→`ô` digraph.
-        "boong", "xoong", "soóc", "moóc", "voọc", "coong",
-    ];
-
-    #[test]
-    fn telex_roundtrip() {
-        for &w in WORDS {
-            assert_eq!(roundtrip(w, InputMethod::Telex), w, "telex: {w}");
-        }
-    }
-
-    #[test]
-    fn vni_roundtrip() {
-        for &w in WORDS {
-            assert_eq!(roundtrip(w, InputMethod::Vni), w, "vni: {w}");
-        }
-    }
-}
+mod tests;

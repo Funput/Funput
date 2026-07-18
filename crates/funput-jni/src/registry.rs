@@ -78,4 +78,18 @@ mod tests {
         assert_eq!(buffer.as_deref(), Some("ánh"));
         destroy(handle);
     }
+
+    #[test]
+    fn advanced_telex_runs_through_registry_handle() {
+        let handle = create();
+        let buffer = with_mut(handle, |engine| {
+            engine.set_method(InputMethod::TelexAdvanced);
+            for key in "tr[]ngf".chars() {
+                engine.process_char(key);
+            }
+            engine.buffer().to_owned()
+        });
+        assert_eq!(buffer.as_deref(), Some("trường"));
+        destroy(handle);
+    }
 }

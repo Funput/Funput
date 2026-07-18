@@ -29,7 +29,7 @@ struct ConfigDocument: Codable {
     /// config-key helpers) so the format is stable across platforms. Every field is
     /// optional: on import we overwrite only the ones present.
     struct Preferences: Codable {
-        var inputMethod: String?     // "telex" | "vni"
+        var inputMethod: String?     // "telex" | "telex_advanced" | "vni"
         var toneStyle: String?       // "traditional" | "modern"
         var smartEnglishRestore: Bool?
         var eagerRestore: Bool?
@@ -82,19 +82,10 @@ extension ConfigDocument {
 // MARK: - Enum ↔ stable config-key mapping
 
 extension InputMethod {
-    var configKey: String {
-        switch self {
-        case .telex: "telex"
-        case .vni: "vni"
-        }
-    }
+    var configKey: String { rawValue }
 
     init?(configKey: String) {
-        switch configKey {
-        case "telex": self = .telex
-        case "vni": self = .vni
-        default: return nil
-        }
+        self.init(rawValue: configKey)
     }
 }
 

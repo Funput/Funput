@@ -9,19 +9,22 @@ use funput_core::{InputMethod, ToneStyle};
 use crate::FunputEngine;
 use crate::support;
 
-const METHOD_VNI: u8 = 1;
+pub const METHOD_TELEX: u8 = 0;
+pub const METHOD_VNI: u8 = 1;
+pub const METHOD_TELEX_ADVANCED: u8 = 2;
 const TONE_STYLE_MODERN: u8 = 1;
 
-/// Set the input method: `0 = Telex`, `1 = VNI` (any other value = Telex).
+/// Set the input method: `0 = Telex`, `1 = VNI`, `2 = Telex Advanced`.
+/// Any other value falls back to standard Telex.
 ///
 /// # Safety
 /// `engine` must be a valid handle or null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_set_method(engine: *mut FunputEngine, method: u8) {
-    let method = if method == METHOD_VNI {
-        InputMethod::Vni
-    } else {
-        InputMethod::Telex
+    let method = match method {
+        METHOD_VNI => InputMethod::Vni,
+        METHOD_TELEX_ADVANCED => InputMethod::TelexAdvanced,
+        _ => InputMethod::Telex,
     };
     unsafe { support::with_engine_mut(engine, |e| e.set_method(method)) }
 }

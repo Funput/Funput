@@ -5,11 +5,19 @@ use crate::result::Action;
 #[test]
 fn boundary_character_inventory() {
     for key in [' ', '\n', '\t', ',', '.', '!', '?', ')', '-', '"'] {
-        assert!(is_word_boundary(key));
+        assert!(is_word_boundary(funput_core::InputMethod::Telex, key));
     }
     for key in ['a', 'z', 'A', '1', '9'] {
-        assert!(!is_word_boundary(key));
+        assert!(!is_word_boundary(funput_core::InputMethod::Telex, key));
     }
+    assert!(!is_word_boundary(
+        funput_core::InputMethod::TelexAdvanced,
+        '['
+    ));
+    assert!(!is_word_boundary(
+        funput_core::InputMethod::TelexAdvanced,
+        ']'
+    ));
 }
 
 #[test]

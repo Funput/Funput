@@ -8,6 +8,8 @@ const W_CANONICAL: &str = "lawms cown mowif muaw truowngf nguwowif ";
 const W_DEFERRED: &str = "lwams cwon mwoif mwua trwuongf ngwuoif ";
 const MULTI_CANONICAL: &str = "ddwuocj ddwuongf ddwon ddwoif ";
 const MULTI_W_FIRST: &str = "dwduocj dwduongf dwdon dwdoif ";
+const FULL_CANONICAL: &str = "uw uwf tuw mow truwowngf nguwowif uwngfs";
+const FULL_SHORTCUTS: &str = "w wf t[ m] tr[]ngf ng[]if wngf WWindowws";
 
 fn measure_pair(
     engine: &mut Engine,
@@ -42,4 +44,20 @@ pub(super) fn assert_paired_allocations(engine: &mut Engine) {
     assert_pair("deferred w", W_DEFERRED, canonical, alternate);
     let (canonical, alternate) = measure_pair(engine, MULTI_CANONICAL, MULTI_W_FIRST);
     assert_pair("multi-intent", MULTI_W_FIRST, canonical, alternate);
+
+    engine.clear();
+    let canonical = measure(engine, FULL_CANONICAL);
+    engine.clear();
+    engine.set_method(funput_core::InputMethod::TelexAdvanced);
+    let shortcuts = measure(engine, FULL_SHORTCUTS);
+    assert_eq!(
+        FULL_CANONICAL.chars().count(),
+        FULL_SHORTCUTS.chars().count(),
+        "allocation pair must have equal keystroke counts"
+    );
+    assert!(
+        shortcuts.0 <= canonical.0,
+        "Full Telex added allocation events: {canonical:?} vs {shortcuts:?}"
+    );
+    assert_counts_within_budget("Full Telex", FULL_SHORTCUTS, shortcuts.0, shortcuts.1);
 }

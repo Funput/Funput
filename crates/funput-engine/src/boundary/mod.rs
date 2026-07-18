@@ -6,8 +6,9 @@ use crate::flip::RestoreOverride;
 use crate::result::ImeResult;
 use crate::session::Session;
 
-pub(crate) fn is_word_boundary(key: char) -> bool {
-    key.is_whitespace() || key.is_ascii_punctuation()
+pub(crate) fn is_word_boundary(method: InputMethod, key: char) -> bool {
+    let full_telex_shortcut = method.is_advanced_telex() && matches!(key, '[' | ']');
+    !full_telex_shortcut && (key.is_whitespace() || key.is_ascii_punctuation())
 }
 
 pub(crate) fn should_restore(session: &Session) -> bool {
@@ -22,7 +23,7 @@ pub(crate) fn should_restore(session: &Session) -> bool {
 }
 
 fn keystrokes_intend_vietnamese(session: &Session) -> bool {
-    let unresolved_w = session.method == InputMethod::Telex && session.buffer.contains(['w', 'W']);
+    let unresolved_w = session.method.is_telex_family() && session.buffer.contains(['w', 'W']);
     (session.buffer.contains(['đ', 'Đ']) && !unresolved_w)
         || session.keys.contains(|c: char| c.is_ascii_digit())
 }

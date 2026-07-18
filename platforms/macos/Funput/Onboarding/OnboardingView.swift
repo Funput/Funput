@@ -59,7 +59,7 @@ struct OnboardingView: View {
                               subtitle: "Có thể đổi bất cứ lúc nào trong Cài đặt.") {
             VStack(spacing: Theme.Spacing.md) {
                 Picker("Phương thức", selection: $settings.inputMethod) {
-                    ForEach(InputMethod.allCases) { Text($0.displayName).tag($0) }
+                    ForEach(InputMethod.displayCases) { Text($0.displayName).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()

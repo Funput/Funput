@@ -21,29 +21,11 @@
 
 mod composition;
 mod input_method;
+mod options;
 mod unicode;
 mod validation;
 
-/// Input method selector — the engine passes this on each [`apply`] call.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum InputMethod {
-    /// VNI digit modifiers (`1`–`9`).
-    Vni,
-    /// Telex letter modifiers (`s`/`f`/`r`/`x`/`j`, `aa`/`dd`/`w`, …).
-    Telex,
-}
-
-/// Tone-mark placement style — where the tone lands on an open glide-initial
-/// diphthong (`oa`, `oe`, `uy`). The only syllables on which the two styles
-/// disagree; everything else is identical.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum ToneStyle {
-    /// "Kiểu cũ": tone on the first vowel — `hòa`, `khỏe`, `thúy`.
-    #[default]
-    Traditional,
-    /// "Kiểu mới": tone on the main (second) vowel — `hoà`, `khoẻ`, `thuý`.
-    Modern,
-}
+pub use options::{InputMethod, ToneStyle};
 
 /// Result kind for a single keystroke transform.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -88,6 +70,7 @@ pub struct TransformResult {
 pub use validation::reachability::is_definitely_invalid;
 pub use validation::syllable::{is_complete_syllable, is_valid};
 
+#[inline]
 pub fn apply(
     buffer: &str,
     key: char,
@@ -103,6 +86,7 @@ pub fn apply(
 /// result can still become a real Vietnamese syllable; otherwise the modifier key
 /// is passed through as a literal character (UniKey-style strict diacritics).
 /// `spell_check = false` reproduces [`apply`] exactly.
+#[inline]
 pub fn apply_checked(
     buffer: &str,
     key: char,
@@ -110,11 +94,15 @@ pub fn apply_checked(
     tone_style: ToneStyle,
     spell_check: bool,
 ) -> TransformResult {
+    if method == InputMethod::Telex {
+        return composition::transform::apply_telex(buffer, key, tone_style, spell_check);
+    }
     match method {
         InputMethod::Vni => composition::transform::apply_vni(buffer, key, tone_style, spell_check),
-        InputMethod::Telex => {
-            composition::transform::apply_telex(buffer, key, tone_style, spell_check)
+        InputMethod::TelexAdvanced => {
+            composition::transform::apply_advanced_telex(buffer, key, tone_style, spell_check)
         }
+        InputMethod::Telex => unreachable!("handled by the Telex fast path"),
     }
 }
 

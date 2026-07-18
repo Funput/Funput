@@ -40,16 +40,21 @@ Final V3 median latency changed by **-2.31% core**, **-0.78% engine**, and
 keys/s** in core and **8.92/8.92 M keys/s** through the engine. Both paired
 paths use 43 allocation events; the existing allocation budgets remain unchanged.
 
+Telex V5 measurements and the dedicated Full Telex pairs are recorded in
+[`results/telex-v5.md`](results/telex-v5.md).
+
 | Metric | Result |
 |---|---|
 | Compose latency (core `apply`) | **~0.05 µs / keystroke** (Telex), ~0.05 µs (VNI) |
-| Compose throughput | **~19.1 million keystrokes / second** |
+| Compose throughput | **~20.57 million keystrokes / second** |
 | Free-position `aa/ee/oo` compose throughput | **~18.4 million keystrokes / second** |
-| Full engine path (`process_char`, incl. boundary + English-restore) | **~0.11 µs / keystroke** (~8.8 M/s) |
+| Full engine path (`process_char`, incl. boundary + English-restore) | **~0.11 µs / keystroke** (~9.48 M/s) |
 | Free-position `aa/ee/oo` through the full engine | **~0.09 µs / keystroke** (~10.6 M/s) |
 | Free-order `w`, core canonical / deferred | **~16.3 / 14.8 M keys/s** |
 | Free-order `w`, engine canonical / deferred | **~8.0 / 6.9 M keys/s** |
-| **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.12 µs / keystroke** (~8.1 M/s) |
+| Full Telex same-output core canonical / Full | **17.02 / 27.18 M keys/s** |
+| Full Telex same-output engine canonical / Full | **7.73 / 8.54 M keys/s** |
+| **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.11 µs / keystroke** (~8.78 M/s) |
 | `size_of::<Engine>` (per-field session state) | **136 bytes** |
 | Heap allocations per keystroke (with or without spell-check) | **~1** (~7 B) |
 | Release FFI shared lib (`libfunput_ffi.dylib`, LTO + stripped) | ~0.37 MB |
@@ -112,12 +117,15 @@ cargo run --release -p funput-cli -- dev coverage benchmarks/.corpus/Viet74K.txt
 cargo run --release -p funput-cli -- dev coverage benchmarks/.corpus/Viet74K.txt --json
 ```
 
-| Corpus | Syllables | Telex | VNI |
-|---|---|---|---|
-| Viet74K (full) | 8,956 | **100%** | **100%** |
-| `sample.txt` | 137 | **100%** | **100%** |
+| Corpus | Syllables | Telex | Adv. canonical | Adv. Full | VNI |
+|---|---:|---:|---:|---:|---:|
+| Viet74K (full) | 8,956 | **100%** | **100%** | **100%** | **100%** |
+| `sample.txt` | 137 | **100%** | **100%** | **100%** | **100%** |
 
-Every structurally valid syllable round-trips under both methods. The one Telex
+The Full encoder emits leading `w`, `[` and `]`; canonical parity proves that
+TelexAdvanced also inherits every standard Telex sequence.
+
+Every structurally valid syllable round-trips under all reported profiles. The one Telex
 subtlety — the `oo`→`ô` digraph in genuine double-`o` loanwords (`boong`, `xoong`,
 `soóc`) — is handled exactly the way a user types them: a third `o` escapes the
 digraph (`booong`→`boong`), which the encoder emits. VNI has no digraphs.

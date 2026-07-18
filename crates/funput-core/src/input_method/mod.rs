@@ -14,6 +14,20 @@ pub mod vni;
 use crate::unicode::marks::Tone;
 use crate::unicode::shapes::VowelShape;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TelexShortcut {
+    LeadingW,
+    RepeatedW,
+    HornU,
+    HornO,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AdvancedAction {
+    Standard(KeyAction),
+    Shortcut(TelexShortcut),
+}
+
 /// Exact Telex vowel stem targeted by a free-position circumflex.
 ///
 /// A compact enum keeps [`KeyAction`] at its original small size on the hot path.

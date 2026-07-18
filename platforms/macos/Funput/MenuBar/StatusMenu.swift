@@ -18,7 +18,7 @@ struct StatusMenu: View {
         Divider()
 
         Picker("Phương thức gõ", selection: $settings.inputMethod) {
-            ForEach(InputMethod.allCases) { method in
+            ForEach(InputMethod.displayCases) { method in
                 Text(method.displayName).tag(method)
             }
         }

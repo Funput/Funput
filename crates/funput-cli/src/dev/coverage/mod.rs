@@ -7,6 +7,8 @@
 
 mod corpus;
 mod report;
+#[cfg(test)]
+mod tests;
 
 use std::path::Path;
 
@@ -29,8 +31,8 @@ fn composed(keys: &str, method: InputMethod) -> String {
 
 /// Does `syllable` reproduce when encoded and typed back under `method`?
 /// Checks both tone styles.
-fn round_trips(syllable: &str, method: InputMethod) -> bool {
-    let keys = encode(syllable, method);
+fn round_trips(syllable: &str, encoding: InputMethod, method: InputMethod) -> bool {
+    let keys = encode(syllable, encoding);
     [ToneStyle::Traditional, ToneStyle::Modern]
         .iter()
         .any(|&style| {
@@ -44,7 +46,7 @@ fn round_trips(syllable: &str, method: InputMethod) -> bool {
         })
 }
 
-struct MethodResult {
+pub(super) struct MethodResult {
     label: &'static str,
     total: usize,
     covered: usize,
@@ -53,6 +55,7 @@ struct MethodResult {
 
 fn evaluate(
     syllables: &[String],
+    encoding: InputMethod,
     method: InputMethod,
     label: &'static str,
     keep_mismatches: usize,
@@ -60,10 +63,10 @@ fn evaluate(
     let mut covered = 0;
     let mut mismatches = Vec::new();
     for s in syllables {
-        if round_trips(s, method) {
+        if round_trips(s, encoding, method) {
             covered += 1;
         } else if mismatches.len() < keep_mismatches {
-            mismatches.push((s.clone(), composed(&encode(s, method), method)));
+            mismatches.push((s.clone(), composed(&encode(s, encoding), method)));
         }
     }
     MethodResult {
@@ -86,13 +89,41 @@ pub fn run(
         syllables.truncate(n);
     }
 
-    let telex = evaluate(&syllables, InputMethod::Telex, "Telex", show_mismatches);
-    let vni = evaluate(&syllables, InputMethod::Vni, "VNI", show_mismatches);
+    let results = [
+        evaluate(
+            &syllables,
+            InputMethod::Telex,
+            InputMethod::Telex,
+            "Telex",
+            show_mismatches,
+        ),
+        evaluate(
+            &syllables,
+            InputMethod::Telex,
+            InputMethod::TelexAdvanced,
+            "Advanced canonical",
+            show_mismatches,
+        ),
+        evaluate(
+            &syllables,
+            InputMethod::TelexAdvanced,
+            InputMethod::TelexAdvanced,
+            "Advanced Full",
+            show_mismatches,
+        ),
+        evaluate(
+            &syllables,
+            InputMethod::Vni,
+            InputMethod::Vni,
+            "VNI",
+            show_mismatches,
+        ),
+    ];
 
     if json {
-        report::print_json(corpus_path, &syllables, &telex, &vni);
+        report::print_json(corpus_path, &syllables, &results);
     } else {
-        report::print_human(corpus_path, &syllables, &telex, &vni, show_mismatches);
+        report::print_human(corpus_path, &syllables, &results, show_mismatches);
     }
     Ok(())
 }

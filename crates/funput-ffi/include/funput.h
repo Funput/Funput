@@ -10,6 +10,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define METHOD_TELEX 0
+
+#define METHOD_VNI 1
+
+#define METHOD_TELEX_ADVANCED 2
+
 /**
  * Max output codepoints carried inline. Generous enough for English-restore of
  * long words; longer output is truncated (practically never happens).
@@ -60,68 +66,6 @@ FunputEngine *funput_engine_new(void);
  * `engine` must come from [`funput_engine_new`] and not be freed already.
  */
 void funput_engine_free(FunputEngine *engine);
-
-/**
- * Set the input method: `0 = Telex`, `1 = VNI` (any other value = Telex).
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_method(FunputEngine *engine, uint8_t method);
-
-/**
- * Set the tone-mark placement style: `0 = Traditional` (`hòa`), `1 = Modern`
- * (`hoà`) — any other value = Traditional.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_tone_style(FunputEngine *engine, uint8_t style);
-
-/**
- * Enable or disable Vietnamese composition.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_enabled(FunputEngine *engine, bool enabled);
-
-/**
- * Toggle auto-restore of non-Vietnamese words to their raw Latin keystrokes
- * (`card` stays `card`). When off, the composed buffer is always kept.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_smart_restore(FunputEngine *engine, bool on);
-
-/**
- * Toggle eager restore — flip to raw keys the instant a word dead-ends instead of
- * waiting for a word boundary. Only applies while smart restore is on.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_eager_restore(FunputEngine *engine, bool on);
-
-/**
- * Toggle spell-check ("Kiểm tra chính tả") — only place a diacritic when the result
- * can still become a real Vietnamese syllable, otherwise keep the modifier key as a
- * literal. Off by default.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_spell_check(FunputEngine *engine, bool on);
-
-/**
- * Toggle auto-capitalize ("Tự động viết hoa") — uppercase the first letter of a word
- * that starts a sentence. Off by default; a no-op while off.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_auto_capitalize(FunputEngine *engine, bool on);
 
 /**
  * Arm capitalization for the next word — call on text-field focus so the first
@@ -186,6 +130,69 @@ FunputResult funput_backspace(FunputEngine *engine);
  * `engine` must be a valid handle or null.
  */
 FunputResult funput_flip_composing(FunputEngine *engine);
+
+/**
+ * Set the input method: `0 = Telex`, `1 = VNI`, `2 = Telex Advanced`.
+ * Any other value falls back to standard Telex.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_method(FunputEngine *engine, uint8_t method);
+
+/**
+ * Set the tone-mark placement style: `0 = Traditional` (`hòa`), `1 = Modern`
+ * (`hoà`) — any other value = Traditional.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_tone_style(FunputEngine *engine, uint8_t style);
+
+/**
+ * Enable or disable Vietnamese composition.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_enabled(FunputEngine *engine, bool enabled);
+
+/**
+ * Toggle auto-restore of non-Vietnamese words to their raw Latin keystrokes
+ * (`card` stays `card`). When off, the composed buffer is always kept.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_smart_restore(FunputEngine *engine, bool on);
+
+/**
+ * Toggle eager restore — flip to raw keys the instant a word dead-ends instead of
+ * waiting for a word boundary. Only applies while smart restore is on.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_eager_restore(FunputEngine *engine, bool on);
+
+/**
+ * Toggle spell-check ("Kiểm tra chính tả") — only place a diacritic when the result
+ * can still become a real Vietnamese syllable, otherwise keep the modifier key as a
+ * literal. Off by default.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_spell_check(FunputEngine *engine, bool on);
+
+/**
+ * Toggle auto-capitalize ("Tự động viết hoa") — uppercase the first letter of a word
+ * that starts a sentence. Off by default; a no-op while off.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_auto_capitalize(FunputEngine *engine, bool on);
 
 /**
  * Define a text-expansion shortcut (gõ tắt): typing `trigger` then a word boundary
