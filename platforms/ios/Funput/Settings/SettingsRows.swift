@@ -58,12 +58,12 @@ struct SettingsHeightRow: View {
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
-            Slider(value: $value, in: 0.85...1.15, step: 0.01) {
+            Slider(value: $value, in: 0.85...1.2, step: 0.01) {
                 Text("Chiều cao bàn phím")
             } minimumValueLabel: {
                 Text("85%").font(.caption2)
             } maximumValueLabel: {
-                Text("115%").font(.caption2)
+                Text("120%").font(.caption2)
             }
             .tint(.accentColor)
         }

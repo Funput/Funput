@@ -1,12 +1,24 @@
 import Foundation
 
-func characterKey(_ character: Character) -> KeySpec {
+private let telexKeyHints: [Character: (glyph: String, description: String)] = [
+    "s": ("´", "dấu sắc"),
+    "f": ("`", "dấu huyền"),
+    "r": ("̉", "dấu hỏi"),
+    "x": ("˜", "dấu ngã"),
+    "j": ("̣", "dấu nặng"),
+    "z": ("×", "xóa dấu"),
+]
+
+func characterKey(_ character: Character, showsTelexHint: Bool = false) -> KeySpec {
     let label = String(character)
+    let hint = showsTelexHint ? telexKeyHints[character] : nil
     return KeySpec(
         id: "character-\(character)",
         label: label,
         role: .character,
-        shiftedLabel: label.uppercased()
+        shiftedLabel: label.uppercased(),
+        secondaryLabel: hint?.glyph,
+        accessibilityLabel: hint.map { "\(label.uppercased()), \($0.description)" }
     )
 }
 
@@ -26,13 +38,22 @@ func specialKey(
     )
 }
 
-func characterRow(_ characters: String, inset: CGFloat = 0) -> KeyboardRow {
-    KeyboardRow(keys: characters.map(characterKey), horizontalInsetUnits: inset)
+func characterRow(
+    _ characters: String,
+    inset: CGFloat = 0,
+    showsTelexHints: Bool = false
+) -> KeyboardRow {
+    KeyboardRow(
+        keys: characters.map { characterKey($0, showsTelexHint: showsTelexHints) },
+        horizontalInsetUnits: inset
+    )
 }
 
-func bottomCharacterRow() -> KeyboardRow {
+func bottomCharacterRow(showsTelexHints: Bool = false) -> KeyboardRow {
     var keys = [specialKey("shift", "", .shift, weight: 1.5, accessibilityLabel: "Shift")]
-    keys.append(contentsOf: "zxcvbnm".map(characterKey))
+    keys.append(contentsOf: "zxcvbnm".map {
+        characterKey($0, showsTelexHint: showsTelexHints)
+    })
     keys.append(specialKey("backspace", "", .backspace, weight: 1.5, accessibilityLabel: "Xóa"))
     return KeyboardRow(keys: keys)
 }

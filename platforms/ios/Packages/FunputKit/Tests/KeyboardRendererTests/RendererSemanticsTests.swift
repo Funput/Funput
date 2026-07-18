@@ -28,6 +28,18 @@ struct RendererSemanticsTests {
         }
     }
 
+    @Test("Telex hints render above lowercase and uppercase character labels")
+    func telexHintsFollowShiftPresentation() throws {
+        let layout = StandardKeyboardLayouts.letters(.telex)
+        let key = try #require(layout.rows.flatMap(\.keys).first { $0.label == "s" })
+        for shiftState in [ShiftState.lowercase, .uppercase, .capsLocked] {
+            let presentation = KeyboardPresentation(layout: layout, shiftState: shiftState)
+            let renderedLabels = labels(in: renderedControl(key: key, presentation: presentation))
+            #expect(renderedLabels.contains("´"))
+            #expect(renderedLabels.contains(shiftState.isUppercase ? "S" : "s"))
+        }
+    }
+
     @Test("Language-aware Space shows swipe affordances")
     func languageSpace() {
         let layout = StandardKeyboardLayouts.letters(.telex)

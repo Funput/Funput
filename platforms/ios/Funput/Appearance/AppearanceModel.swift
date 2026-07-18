@@ -60,7 +60,7 @@ final class AppearanceModel {
     func presentation(for themeID: String) -> KeyboardPresentation {
         var candidate = configuration
         candidate.selectedThemeID = validThemeID(themeID)
-        candidate.heightScale = 1
+        candidate.heightScale = FunputConfiguration.default.heightScale
         return KeyboardPreviewPresentation.make(configuration: candidate, catalog: catalog)
     }
 

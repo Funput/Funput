@@ -56,6 +56,14 @@ struct EditorLayoutParityTests {
         #expect(space(layout).horizontalSwipeAction == nil)
     }
 
+    @Test("Telex hints stay out of specialized QWERTY editors")
+    func specializedEditorsHideTelexHints() {
+        for mode in [KeyboardEditorMode.search, .email, .url, .password] {
+            let keys = resolve(mode, method: .telex).rows.flatMap(\.keys)
+            #expect(keys.allSatisfy { $0.secondaryLabel == nil })
+        }
+    }
+
     private func resolve(
         _ mode: KeyboardEditorMode,
         method: KeyboardInputMethod = .vni

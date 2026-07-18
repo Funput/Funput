@@ -44,7 +44,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         showsKeyPreviews: Bool = true,
         showsNumberRow: Bool = false,
         showsGlobeKey: Bool = false,
-        heightScale: Double = 1,
+        heightScale: Double = 1.1,
         schemaVersion: Int = FunputConfiguration.currentSchemaVersion
     ) {
         self.inputMethod = inputMethod

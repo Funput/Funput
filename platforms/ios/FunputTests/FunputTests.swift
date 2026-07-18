@@ -64,7 +64,7 @@ struct FunputTests {
     func settingsHeightLimits() {
         let model = SettingsModel(store: SettingsTestStore(configuration: .default))
         model.heightBinding.wrappedValue = 2
-        #expect(model.configuration.heightScale == 1.15)
+        #expect(model.configuration.heightScale == 1.2)
         model.heightBinding.wrappedValue = 0
         #expect(model.configuration.heightScale == 0.85)
     }

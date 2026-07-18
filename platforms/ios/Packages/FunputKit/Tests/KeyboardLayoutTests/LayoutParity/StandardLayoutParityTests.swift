@@ -14,6 +14,20 @@ struct StandardLayoutParityTests {
         #expect(keys.allSatisfy { $0.role == .character && $0.secondaryLabel == nil })
     }
 
+    @Test("Telex tone keys expose the expected hints without changing semantics")
+    func telexToneHints() {
+        let keys = StandardKeyboardLayouts.letters(.telex).rows.flatMap(\.keys)
+        let hinted = Dictionary(uniqueKeysWithValues: keys.compactMap { key in
+            key.secondaryLabel.map { (key.label, $0) }
+        })
+        #expect(hinted == ["s": "´", "f": "`", "r": "̉", "x": "˜", "j": "̣", "z": "×"])
+        #expect(keys.filter { hinted[$0.label] != nil }.allSatisfy {
+            $0.role == .character && $0.widthWeight == 1 && $0.id == "character-\($0.label)"
+        })
+        #expect(keys.first { $0.label == "s" }?.accessibilityLabel == "S, dấu sắc")
+        #expect(keys.first { $0.label == "z" }?.accessibilityLabel == "Z, xóa dấu")
+    }
+
     @Test("VNI top row exposes modifier hints")
     func vniHints() {
         let keys = StandardKeyboardLayouts.letters(.vni).rows[0].keys

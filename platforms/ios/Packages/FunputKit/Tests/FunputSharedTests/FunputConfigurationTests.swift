@@ -19,6 +19,7 @@ struct FunputConfigurationTests {
         #expect(!config.isKeySoundEnabled)
         #expect(!config.showsNumberRow)
         #expect(!config.showsGlobeKey)
+        #expect(config.heightScale == 1.1)
         #expect(config.schemaVersion == 5)
     }
 
