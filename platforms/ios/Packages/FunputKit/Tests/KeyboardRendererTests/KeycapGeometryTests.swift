@@ -1,3 +1,4 @@
+#if canImport(UIKit)
 @testable import KeyboardRenderer
 import KeyboardLayout
 import Testing
@@ -28,3 +29,4 @@ struct KeycapGeometryTests {
         #expect(hitArea.frame == control.bounds)
     }
 }
+#endif

@@ -3,6 +3,7 @@ import KeyboardConfiguration
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
+import os
 import UIKit
 
 extension KeyboardViewController {
@@ -24,6 +25,21 @@ extension KeyboardViewController {
             return
         }
 
+        let signpostID = OSSignpostID(log: KeyboardControllerSignpost.log)
+        os_signpost(
+            .begin,
+            log: KeyboardControllerSignpost.log,
+            name: "KeyHandler",
+            signpostID: signpostID
+        )
+        defer {
+            os_signpost(
+                .end,
+                log: KeyboardControllerSignpost.log,
+                name: "KeyHandler",
+                signpostID: signpostID
+            )
+        }
         let previousState = inputCoordinator.state
         let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
         inputCoordinator.handle(event.key, document: document)
@@ -34,6 +50,21 @@ extension KeyboardViewController {
     }
 
     func updateInputPresentation() {
+        let signpostID = OSSignpostID(log: KeyboardControllerSignpost.log)
+        os_signpost(
+            .begin,
+            log: KeyboardControllerSignpost.log,
+            name: "PresentationUpdate",
+            signpostID: signpostID
+        )
+        defer {
+            os_signpost(
+                .end,
+                log: KeyboardControllerSignpost.log,
+                name: "PresentationUpdate",
+                signpostID: signpostID
+            )
+        }
         let state = inputCoordinator.state
         var presentation = keyboardView.presentation
         presentation.layout = KeyboardLayoutResolver.resolve(
@@ -43,11 +74,7 @@ extension KeyboardViewController {
             showsSystemInputModeKey: configuration.showsGlobeKey,
             showsNumberRow: configuration.showsNumberRow
         )
-        let themed = KeyboardPresentationFactory.make(
-            from: configuration,
-            layout: presentation.layout,
-            catalog: themeCatalog
-        )
+        let themed = configuredThemedPresentation()
         presentation.sizing = themed.sizing
         presentation.shiftState = state.shiftState
         presentation.language = state.language
@@ -64,4 +91,22 @@ extension KeyboardViewController {
         }
         updatePreferredHeight()
     }
+
+    private func configuredThemedPresentation() -> KeyboardPresentation {
+        if cachedPresentationConfiguration == configuration,
+           let cachedThemedPresentation {
+            return cachedThemedPresentation
+        }
+        let value = KeyboardPresentationFactory.make(
+            from: configuration,
+            catalog: themeCatalog
+        )
+        cachedPresentationConfiguration = configuration
+        cachedThemedPresentation = value
+        return value
+    }
+}
+
+private enum KeyboardControllerSignpost {
+    static let log = OSLog(subsystem: "app.funput.keyboard", category: "Controller")
 }

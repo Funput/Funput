@@ -10,7 +10,9 @@ extension KeyboardInputCoordinator {
         }
 
         for scalar in text.unicodeScalars {
+            let signpostID = KeyboardInputSignposts.begin("ComposerFFI")
             let result = composer.process(scalar)
+            KeyboardInputSignposts.end("ComposerFFI", signpostID)
             if result.action == .none {
                 insertDocumentText(String(scalar), document: document)
             } else {

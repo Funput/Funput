@@ -1,3 +1,4 @@
+#if canImport(UIKit)
 @testable import KeyboardRenderer
 import Testing
 import UIKit
@@ -30,3 +31,4 @@ struct ThemeImageCropTests {
         }
     }
 }
+#endif

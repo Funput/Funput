@@ -1,3 +1,4 @@
+#if canImport(UIKit)
 @testable import KeyboardRenderer
 import KeyboardLayout
 import Testing
@@ -124,3 +125,4 @@ private extension UIColor {
         return zip(a, b).allSatisfy { abs($0 - $1) < 0.01 }
     }
 }
+#endif

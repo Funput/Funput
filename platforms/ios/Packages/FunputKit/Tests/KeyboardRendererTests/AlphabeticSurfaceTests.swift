@@ -68,6 +68,23 @@ struct AlphabeticSurfaceTests {
         #expect(updatedEffects == originalEffects)
     }
 
+    @Test("Shift updates content without rebuilding key controls")
+    func shiftPreservesKeyControls() {
+        let layout = StandardKeyboardLayouts.letters(.vni)
+        let surface = KeyboardSurfaceView(presentation: KeyboardPresentation(layout: layout))
+        surface.frame = CGRect(x: 0, y: 0, width: 390, height: 304)
+        surface.layoutIfNeeded()
+        let before = Set(accessibleControls(in: surface).map(ObjectIdentifier.init))
+
+        var presentation = surface.presentation
+        presentation.shiftState = .uppercase
+        surface.presentation = presentation
+        surface.layoutIfNeeded()
+        let after = Set(accessibleControls(in: surface).map(ObjectIdentifier.init))
+
+        #expect(before == after)
+    }
+
     @Test("Liquid Glass keys use native adaptive styling")
     func nativeGlassStyling() {
         guard #available(iOS 26.0, *) else { return }

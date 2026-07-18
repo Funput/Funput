@@ -14,17 +14,27 @@ public final class KeyboardSurfaceView: UIView {
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
 
-    private let backdropView = KeyboardBackdropView()
-    private let toolbarView = KeyboardToolbarView()
-    private let contentHost = UIView()
-    private let keysHost = KeyboardKeysHostView()
+    let backdropView = KeyboardBackdropView()
+    let toolbarView = KeyboardToolbarView()
+    let contentHost = UIView()
+    let keysHost = KeyboardKeysHostView()
+    let touchOverlay = KeyboardTouchOverlayView()
     let previewView = KeyboardKeyPreviewView()
     lazy var interactionController = KeyboardSurfaceInteractionController(
         feedbackView: self,
         onEvent: { [weak self] event in self?.onKeyEvent?(event) },
-        onPreview: { [weak self] key, frame in self?.updatePreview(key, sourceFrame: frame) }
+        onPreview: { [weak self] key, frame in self?.updatePreview(key, sourceFrame: frame) },
+        onHighlight: { [weak self] key, highlighted in
+            self?.keyControls[key.id]?.setPressed(highlighted, presentation: self?.presentation)
+        }
     )
-    private var keyControls: [String: KeyboardKeyControl] = [:]
+    var keyControls: [String: KeyboardKeyControl] = [:]
+    var geometryCache: (
+        size: CGSize,
+        layout: KeyboardLayout,
+        sizing: KeyboardSizingProfile,
+        value: ResolvedKeyboard
+    )?
 
     public init(presentation: KeyboardPresentation = KeyboardPresentation()) {
         self.presentation = presentation
@@ -53,17 +63,15 @@ public final class KeyboardSurfaceView: UIView {
         backdropView.frame = bounds
         contentHost.frame = bounds
         keysHost.frame = bounds
+        touchOverlay.frame = bounds
 
         guard bounds.width > 0, bounds.height > 0 else { return }
-        let geometry = KeyboardGeometry.resolve(
-            layout: presentation.layout,
-            size: bounds.size,
-            sizing: presentation.sizing
-        )
+        let geometry = resolvedGeometry()
         toolbarView.frame = geometry.toolbarFrame ?? .zero
         geometry.keys.forEach { key in
             keyControls[key.spec.id]?.frame = key.frame
         }
+        touchOverlay.updateGeometry(geometry)
     }
 
     public override func traitCollectionDidChange(_ previousTraits: UITraitCollection?) {
@@ -75,12 +83,14 @@ public final class KeyboardSurfaceView: UIView {
     public override func didMoveToWindow() {
         super.didMoveToWindow()
         if window == nil {
+            touchOverlay.cancelAllTrackedTouches()
             interactionController.cancelAll()
         }
     }
 
     private func configureView() {
         isMultipleTouchEnabled = true
+        contentHost.isMultipleTouchEnabled = true
         clipsToBounds = true
         isOpaque = false
         backgroundColor = .clear
@@ -89,7 +99,9 @@ public final class KeyboardSurfaceView: UIView {
         addSubview(contentHost)
         contentHost.addSubview(keysHost)
         contentHost.addSubview(toolbarView)
+        contentHost.addSubview(touchOverlay)
         addSubview(previewView)
+        configureTouchOverlay()
         toolbarView.onEvent = { [weak self] event in self?.route(event, from: nil) }
         toolbarView.onSystemInputModeEvent = { [weak self] source, event in
             self?.onSystemInputModeEvent?(source, event)
@@ -110,41 +122,5 @@ public final class KeyboardSurfaceView: UIView {
         setNeedsLayout()
     }
 
-    private func presentationDidChange(from oldValue: KeyboardPresentation) {
-        if oldValue.layout != presentation.layout {
-            interactionController.cancelAll()
-            rebuildKeys()
-        }
-        applyPresentation()
-        invalidateIntrinsicContentSize()
-        setNeedsLayout()
-    }
-
-    private func rebuildKeys() {
-        keyControls.values.forEach { $0.removeFromSuperview() }
-        let specs = presentation.layout.rows.flatMap(\.keys)
-        keyControls = Dictionary(uniqueKeysWithValues: specs.map { spec in
-            let control = KeyboardKeyControl(spec: spec)
-            control.onEvent = { [weak self, weak control] event in
-                self?.route(event, from: control)
-            }
-            return (spec.id, control)
-        })
-        keysHost.install(Array(keyControls.values))
-    }
-
-    private func applyPresentation() {
-        backdropView.apply(theme: presentation.theme, traits: traitCollection, image: backgroundImage)
-        previewView.apply(theme: presentation.theme, traits: traitCollection)
-        keysHost.apply(presentation: presentation)
-        toolbarView.apply(
-            spec: presentation.layout.toolbar,
-            theme: presentation.theme,
-            traits: traitCollection
-        )
-        keyControls.values.forEach {
-            $0.apply(presentation: presentation, traits: traitCollection)
-        }
-    }
 }
 #endif

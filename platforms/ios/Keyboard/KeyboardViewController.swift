@@ -23,6 +23,8 @@ final class KeyboardViewController: UIInputViewController {
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     var themeCatalog = ThemeCatalog()
+    var cachedPresentationConfiguration: FunputConfiguration?
+    var cachedThemedPresentation: KeyboardPresentation?
     let configurationStore = FunputConfigurationStore()
     var resolvedTextInputTraits = ResolvedTextInputTraits(
         editorMode: .text,
