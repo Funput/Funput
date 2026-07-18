@@ -1,7 +1,8 @@
-// Settings → "Kiểu gõ": input method (Telex/VNI) + tone-mark placement style.
+// Settings → "Kiểu gõ": input method + tone-mark placement style.
 
 import { Palette } from "std-widgets.slint";
 import { Theme, Card, Row, Segmented } from "theme.slint";
+import { MethodSelector } from "method_selector.slint";
 
 export component InputPage inherits VerticalLayout {
     in property <string> method;
@@ -14,13 +15,14 @@ export component InputPage inherits VerticalLayout {
     Card {
         Row {
             title: "Phương thức";
-            subtitle: root.method == "telex"
-                ? "Dấu bằng chữ cái — aa→â, ow→ơ, as→á, dd→đ"
-                : "Dấu bằng chữ số — a6→â, o7→ơ, a1→á, d9→đ";
-            Segmented {
-                options: [{ id: "telex", label: "Telex" }, { id: "vni", label: "VNI" }];
-                current: root.method;
-                changed(v) => { root.pick-method(v); }
+            subtitle: root.method == "telex_advanced"
+                ? "Full Telex — [→ư, ]→ơ, w đầu từ→ư"
+                : (root.method == "telex"
+                    ? "Dấu bằng chữ cái — aa→â, ow→ơ, as→á, dd→đ"
+                    : "Dấu bằng chữ số — a6→â, o7→ơ, a1→á, d9→đ");
+            MethodSelector {
+                method: root.method;
+                picked(value) => { root.pick-method(value); }
             }
         }
     }

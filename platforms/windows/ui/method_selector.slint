@@ -1,0 +1,16 @@
+// Shared input-method selector. Display order is independent from persisted IDs.
+
+import { Segmented } from "theme.slint";
+
+export component MethodSelector inherits Segmented {
+    in property <string> method;
+    callback picked(string);
+
+    options: [
+        { id: "telex", label: "Telex" },
+        { id: "telex_advanced", label: "Telex nâng cao" },
+        { id: "vni", label: "VNI" },
+    ];
+    current: root.method;
+    changed(value) => { root.picked(value); }
+}

@@ -2,8 +2,9 @@
 // Rust (`windows_ui.rs`) sets the properties and handles the callbacks.
 
 import { Palette, Button, Switch } from "std-widgets.slint";
-import { Theme, Card, Segmented, KeyCap, Dot } from "theme.slint";
+import { Theme, Card, KeyCap, Dot } from "theme.slint";
 import { Backdrop } from "backdrop.slint";
+import { OnboardingMethodStep } from "onboarding_method.slint";
 
 export component OnboardingWindow inherits Window {
     title: "Chào mừng đến Funput";
@@ -52,23 +53,9 @@ export component OnboardingWindow inherits Window {
                         }
                     }
 
-                    if root.step == 1: VerticalLayout {
-                        alignment: center;
-                        spacing: Theme.sp-sm;
-                        HorizontalLayout {
-                            alignment: center;
-                            Image { source: @image-url("icons/keyboard.svg"); colorize: Theme.accent; width: 42px; height: 42px; }
-                        }
-                        Text { text: "Chọn kiểu gõ"; font-size: 20px; font-weight: 700; horizontal-alignment: center; color: Palette.foreground; }
-                        Text { text: "Có thể đổi bất cứ lúc nào trong Cài đặt."; font-size: 14px; horizontal-alignment: center; color: Theme.subtle; }
-                        HorizontalLayout {
-                            alignment: center;
-                            Segmented {
-                                options: [{ id: "telex", label: "Telex" }, { id: "vni", label: "VNI" }];
-                                current: root.method;
-                                changed(v) => { root.pick-method(v); }
-                            }
-                        }
+                    if root.step == 1: OnboardingMethodStep {
+                        method: root.method;
+                        pick-method(value) => { root.pick-method(value); }
                     }
 
                     if root.step == 2: VerticalLayout {

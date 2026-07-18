@@ -6,7 +6,9 @@
 //! icon are provided by Fcitx5/IBus themselves. Replaces the retired Tauri shell.
 
 #[cfg(not(target_os = "linux"))]
-compile_error!("funput-settings builds only on Linux (the typing engine ships as a Fcitx5/IBus shell).");
+compile_error!(
+    "funput-settings builds only on Linux (the typing engine ships as a Fcitx5/IBus shell)."
+);
 
 mod config_transfer;
 mod framework;

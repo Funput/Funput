@@ -6,12 +6,15 @@
 
 #include <cstdint>
 
+#include "settings.h"
+
 namespace funput {
 
 // ASCII whitespace or punctuation; digits excluded (VNI uses them as tone
 // modifiers). Mirrors funput_core's rule and the macOS shell.
-inline bool isBoundary(char32_t s) {
+inline bool isBoundary(char32_t s, Method method) {
     if (s > 0x7F) return false;
+    if ((s == U'[' || s == U']') && method == Method::TelexAdvanced) return false;
     if (s == U' ' || s == U'\t' || s == U'\n' || s == U'\r') return true;
     const uint32_t v = static_cast<uint32_t>(s);
     return (v >= 0x21 && v <= 0x2F) || (v >= 0x3A && v <= 0x40) ||

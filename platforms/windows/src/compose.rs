@@ -12,6 +12,7 @@ use funput_engine::Engine;
 /// reset folds the buffer into `committed`.
 pub struct FieldComposer {
     engine: Engine,
+    method: InputMethod,
     committed: String,
 }
 
@@ -22,6 +23,7 @@ impl FieldComposer {
         engine.set_smart_restore(false);
         Self {
             engine,
+            method: InputMethod::Telex,
             committed: String::new(),
         }
     }
@@ -33,6 +35,7 @@ impl FieldComposer {
     /// Start a fresh composition with `text` already in the field (focus-in), applying
     /// the user's current method/tone so it matches global typing.
     pub fn reset(&mut self, text: &str, method: InputMethod, tone: ToneStyle) {
+        self.method = method;
         self.engine.set_method(method);
         self.engine.set_tone_style(tone);
         self.engine.clear();
@@ -47,7 +50,7 @@ impl FieldComposer {
         if !is_text(c) {
             return self.current();
         }
-        if c.is_whitespace() || c.is_ascii_punctuation() {
+        if c.is_whitespace() || (c.is_ascii_punctuation() && !self.is_advanced_shortcut(c)) {
             // Word boundary: fold the composed word + this separator into committed.
             self.committed.push_str(self.engine.buffer());
             self.committed.push(c);
@@ -72,6 +75,10 @@ impl FieldComposer {
             self.engine.on_backspace();
         }
         self.current()
+    }
+
+    fn is_advanced_shortcut(&self, c: char) -> bool {
+        self.method == InputMethod::TelexAdvanced && matches!(c, '[' | ']')
     }
 }
 

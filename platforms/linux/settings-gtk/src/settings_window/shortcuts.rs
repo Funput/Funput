@@ -11,6 +11,8 @@ use gtk::{Align, Button};
 
 use crate::settings::{Settings, Shortcut};
 
+mod row;
+
 pub(super) fn page() -> PreferencesPage {
     let page = PreferencesPage::builder()
         .title("Gõ tắt")
@@ -53,7 +55,7 @@ pub(super) fn page() -> PreferencesPage {
 
             let mut last: Option<(ExpanderRow, EntryRow)> = None;
             for (i, sc) in s.shortcuts.iter().enumerate() {
-                let (expander, trigger) = build_row(i, sc, &rebuild);
+                let (expander, trigger) = row::build(i, sc, &rebuild);
                 group.add(&expander);
                 rows.borrow_mut().push(expander.clone().upcast());
                 last = Some((expander, trigger));
@@ -97,109 +99,4 @@ pub(super) fn page() -> PreferencesPage {
 
     rebuild_impl();
     page
-}
-
-/// One shortcut as an expander: header shows `trigger → expansion`, expanded body has
-/// the two editable fields. Edits persist by index and update the header live (no
-/// rebuild, so the field keeps focus). Returns the trigger entry for focusing.
-fn build_row(
-    index: usize,
-    sc: &Shortcut,
-    rebuild: &Rc<RefCell<Option<Rc<dyn Fn()>>>>,
-) -> (ExpanderRow, EntryRow) {
-    let expander = ExpanderRow::builder()
-        .title(if sc.trigger.is_empty() { "Gõ tắt mới" } else { sc.trigger.as_str() })
-        .subtitle(sc.expansion.as_str())
-        .build();
-
-    // Set the initial text before connecting `changed`, so seeding a row doesn't
-    // trigger a persist. (`text` is an Editable-interface property, not on the builder.)
-    let trigger_row = EntryRow::builder().title("Chữ tắt").build();
-    let expansion_row = EntryRow::builder().title("Bung thành").build();
-    trigger_row.set_text(sc.trigger.as_str());
-    expansion_row.set_text(sc.expansion.as_str());
-
-    {
-        let expander = expander.clone();
-        trigger_row.connect_changed(move |entry| {
-            let text = entry.text().to_string();
-            let title = if text.is_empty() { "Gõ tắt mới".to_string() } else { text.clone() };
-            Settings::update(move |s| {
-                if let Some(item) = s.shortcuts.get_mut(index) {
-                    item.trigger = text;
-                }
-            });
-            expander.set_title(&title);
-        });
-    }
-    {
-        let expander = expander.clone();
-        expansion_row.connect_changed(move |entry| {
-            let text = entry.text().to_string();
-            let subtitle = text.clone();
-            Settings::update(move |s| {
-                if let Some(item) = s.shortcuts.get_mut(index) {
-                    item.expansion = text;
-                }
-            });
-            expander.set_subtitle(&subtitle);
-        });
-    }
-
-    // `connect_changed` only sees *committed* text. An async IME (IBus) commits the
-    // last preedit word on focus-out, after the final `changed` — so persist the
-    // fully-committed text again when each field loses focus. Without this, typing
-    // "Việt Nam" then switching away could save just "Việt".
-    {
-        let entry = trigger_row.clone();
-        let focus = gtk::EventControllerFocus::new();
-        focus.connect_leave(move |_| {
-            let text = entry.text().to_string();
-            Settings::update(move |s| {
-                if let Some(item) = s.shortcuts.get_mut(index) {
-                    item.trigger = text;
-                }
-            });
-        });
-        trigger_row.add_controller(focus);
-    }
-    {
-        let entry = expansion_row.clone();
-        let focus = gtk::EventControllerFocus::new();
-        focus.connect_leave(move |_| {
-            let text = entry.text().to_string();
-            Settings::update(move |s| {
-                if let Some(item) = s.shortcuts.get_mut(index) {
-                    item.expansion = text;
-                }
-            });
-        });
-        expansion_row.add_controller(focus);
-    }
-
-    expander.add_row(&trigger_row);
-    expander.add_row(&expansion_row);
-
-    let del = Button::builder()
-        .icon_name("user-trash-symbolic")
-        .valign(Align::Center)
-        .tooltip_text("Xoá gõ tắt")
-        .build();
-    del.add_css_class("flat");
-    {
-        let rebuild = rebuild.clone();
-        del.connect_clicked(move |_| {
-            Settings::update(move |s| {
-                if index < s.shortcuts.len() {
-                    s.shortcuts.remove(index);
-                }
-            });
-            if let Some(f) = rebuild.borrow().as_ref() {
-                f();
-            }
-        });
-    }
-    expander.add_suffix(&del);
-
-    (expander, trigger_row)
 }

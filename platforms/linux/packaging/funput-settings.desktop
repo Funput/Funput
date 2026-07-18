@@ -2,7 +2,7 @@
 Type=Application
 Name=Funput
 GenericName=Vietnamese Input Method Settings
-Comment=Configure Funput — Telex & VNI Vietnamese typing
+Comment=Configure Funput — Telex, Full Telex & VNI Vietnamese typing
 Exec=funput-settings
 Icon=funput
 Terminal=false

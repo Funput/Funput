@@ -1,26 +1,22 @@
 //! Settings callbacks and live model synchronization.
 
-use std::cell::RefCell;
+use slint::ComponentHandle;
 
-use slint::{ComponentHandle, Model};
-
-use super::{models, settings_window};
-use crate::compose::FieldComposer;
-use crate::config_transfer::{self, ImportSummary};
 use crate::settings::{FlipHotkey, Hotkey, Method, ToneStyle};
-use crate::{commands, recorder, shell, Compose, SettingsWindow};
+use crate::{commands, recorder, SettingsWindow};
 
-thread_local! {
-    /// Vietnamese composer for the gõ tắt expansion field (UI thread only).
-    static COMPOSER: RefCell<FieldComposer> = RefCell::new(FieldComposer::new());
-}
+use super::models;
+
+mod config;
+mod content;
 
 pub(super) fn wire(window: &SettingsWindow) {
     let weak = window.as_weak();
     window.on_pick_method(move |value| {
-        if let Some(method) = Method::from_id(&value) {
-            commands::set_method(method);
-        }
+        let Some(method) = Method::from_id(&value) else {
+            return;
+        };
+        commands::set_method(method);
         if let Some(window) = weak.upgrade() {
             window.set_method(value);
         }
@@ -92,165 +88,12 @@ pub(super) fn wire(window: &SettingsWindow) {
     window.on_set_auto_cap(commands::set_auto_capitalize);
     window.on_set_launch(commands::set_launch_at_login);
 
-    wire_apps(window);
-    wire_shortcuts(window);
-    wire_composer(window);
+    content::wire(window);
 
     window.on_open_link(|url| commands::open_url(url.as_str()));
     window.on_check_update(commands::check_for_updates);
     window.on_install_update(commands::install_update);
     window.on_relaunch_now(commands::relaunch_after_update);
 
-    wire_config_transfer(window);
-}
-
-/// Export/Import cấu hình. Native file dialogs (rfd) run modally on the UI thread;
-/// after a successful import the whole window is re-populated from the new state.
-fn wire_config_transfer(window: &SettingsWindow) {
-    window.on_export_config(|| {
-        let Some(path) = rfd::FileDialog::new()
-            .set_file_name(format!(
-                "Funput-config-{}.json",
-                config_transfer::today_stamp()
-            ))
-            .add_filter("JSON", &["json"])
-            .save_file()
-        else {
-            return;
-        };
-        if let Err(err) = commands::export_config(&path) {
-            message(&format!("Không xuất được cấu hình: {err}"));
-        }
-    });
-
-    let weak = window.as_weak();
-    window.on_import_config(move || {
-        let Some(path) = rfd::FileDialog::new()
-            .add_filter("JSON", &["json"])
-            .pick_file()
-        else {
-            return;
-        };
-        match commands::import_config(&path) {
-            Ok(summary) => {
-                if let Some(window) = weak.upgrade() {
-                    settings_window::populate(&window);
-                }
-                message(&import_message(&summary));
-            }
-            Err(err) => message(&err.to_string()),
-        }
-    });
-}
-
-fn message(text: &str) {
-    rfd::MessageDialog::new()
-        .set_title("Cấu hình")
-        .set_description(text)
-        .show();
-}
-
-fn import_message(summary: &ImportSummary) -> String {
-    let mut lines = vec!["Đã áp các tuỳ chọn gõ.".to_string()];
-    if summary.shortcuts_added > 0 || summary.shortcuts_updated > 0 {
-        lines.push(format!(
-            "Gõ tắt: thêm {}, cập nhật {}.",
-            summary.shortcuts_added, summary.shortcuts_updated
-        ));
-    } else {
-        lines.push("Không có gõ tắt mới.".to_string());
-    }
-    if summary.applied_platform {
-        lines.push("Đã áp phím tắt và danh sách app bỏ qua.".to_string());
-    }
-    if summary.newer_version {
-        lines.push("Lưu ý: tệp từ phiên bản mới hơn — một số mục có thể bị bỏ qua.".to_string());
-    }
-    lines.join("\n")
-}
-
-fn wire_apps(window: &SettingsWindow) {
-    let weak = window.as_weak();
-    window.on_add_app(move |id| {
-        if let Some(app) = shell::recent_apps()
-            .into_iter()
-            .find(|app| app.id == id.as_str())
-        {
-            commands::add_excluded_app(app);
-        }
-        if let Some(window) = weak.upgrade() {
-            settings_window::refresh_apps(&window);
-        }
-    });
-
-    let weak = window.as_weak();
-    window.on_remove_app(move |id| {
-        commands::remove_excluded_app(&id);
-        if let Some(window) = weak.upgrade() {
-            settings_window::refresh_apps(&window);
-        }
-    });
-}
-
-fn wire_shortcuts(window: &SettingsWindow) {
-    let weak = window.as_weak();
-    window.on_add_shortcut(move || {
-        commands::add_shortcut();
-        if let Some(window) = weak.upgrade() {
-            window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
-        }
-    });
-
-    let weak = window.as_weak();
-    window.on_remove_shortcut(move |index| {
-        commands::remove_shortcut(index.max(0) as usize);
-        if let Some(window) = weak.upgrade() {
-            window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
-        }
-    });
-
-    let weak = window.as_weak();
-    window.on_edit_trigger(move |index, text| {
-        let index = index.max(0) as usize;
-        commands::set_shortcut_trigger(index, text.to_string());
-        if let Some(window) = weak.upgrade() {
-            let model = window.get_shortcuts();
-            if let Some(mut entry) = model.row_data(index) {
-                entry.trigger = text;
-                model.set_row_data(index, entry);
-            }
-        }
-    });
-
-    let weak = window.as_weak();
-    window.on_edit_expansion(move |index, text| {
-        let index = index.max(0) as usize;
-        commands::set_shortcut_expansion(index, text.to_string());
-        if let Some(window) = weak.upgrade() {
-            let model = window.get_shortcuts();
-            if let Some(mut entry) = model.row_data(index) {
-                entry.expansion = text;
-                model.set_row_data(index, entry);
-            }
-        }
-    });
-}
-
-fn wire_composer(window: &SettingsWindow) {
-    let compose = window.global::<Compose>();
-    compose.on_reset(|text| {
-        let (method, tone) = shell::method_and_tone();
-        COMPOSER.with(|composer| composer.borrow_mut().reset(text.as_str(), method, tone));
-    });
-    compose.on_key(|text| {
-        let character = text.chars().next().unwrap_or('\0');
-        COMPOSER
-            .with(|composer| composer.borrow_mut().key(character))
-            .into()
-    });
-    compose.on_backspace(|| {
-        COMPOSER
-            .with(|composer| composer.borrow_mut().backspace())
-            .into()
-    });
+    config::wire(window);
 }

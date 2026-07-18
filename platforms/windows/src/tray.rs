@@ -1,51 +1,42 @@
-//! Tray icon + menu, built on the standalone `tray-icon` crate (no WebView2).
-//! Left-click toggles Tiếng Việt (VI/EN) like Unikey; the icon reflects the state
-//! (color = VI, monochrome white = EN). Right-click opens the menu: pick Telex/VNI,
-//! settings, guide, quit.
-//!
-//! This lives on the keyboard-hook thread (the one running a Win32 message loop):
-//! `install()` creates the tray there, and `drain_events()` — called after each
-//! message dispatch — reacts to clicks/menu picks. Settings and Onboarding are
-//! launched as short-lived child processes so the tray process stays lightweight.
+//! Native tray menu hosted on the keyboard-hook thread's Win32 message loop.
 
 use std::cell::RefCell;
 
 use funput_core::InputMethod;
-use tray_icon::menu::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem};
+use tray_icon::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem};
 use tray_icon::{Icon, MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent};
 
 use crate::{hook, shell, windows_ui};
+
+mod method_menu;
+use method_menu::MethodMenu;
 
 const TRAY_PNG: &[u8] = include_bytes!("../icons/tray.png"); // VI: original color icon
 const TRAY_MONO_PNG: &[u8] = include_bytes!("../icons/tray-mono.png"); // EN: monochrome white
 
 struct TrayState {
     tray: TrayIcon,
-    vni: CheckMenuItem,
-    telex: CheckMenuItem,
+    methods: MethodMenu,
 }
 
 thread_local! {
     static TRAY: RefCell<Option<TrayState>> = const { RefCell::new(None) };
 }
 
-/// Build the tray icon + menu on the current thread. Must run on a thread with a
-/// Win32 message loop (the hook thread) so menu/click messages are delivered.
+/// Build the tray on the current keyboard-hook thread.
 pub fn install() {
     let on = shell::enabled();
     let method = shell::method();
 
-    let vni = CheckMenuItem::with_id("vni", "VNI", true, method == InputMethod::Vni, None);
-    let telex = CheckMenuItem::with_id("telex", "Telex", true, method == InputMethod::Telex, None);
+    let methods = MethodMenu::new(method);
     let settings = MenuItem::with_id("settings", "Cài đặt…", true, None);
     let guide = MenuItem::with_id("guide", "Hướng dẫn", true, None);
     let update = MenuItem::with_id("check-update", "Kiểm tra cập nhật…", true, None);
     let quit = MenuItem::with_id("quit", "Thoát", true, None);
 
     let menu = Menu::new();
+    methods.append_to(&menu);
     menu.append_items(&[
-        &vni,
-        &telex,
         &PredefinedMenuItem::separator(),
         &settings,
         &guide,
@@ -64,7 +55,7 @@ pub fn install() {
         .build()
         .expect("build tray icon");
 
-    TRAY.with(|c| *c.borrow_mut() = Some(TrayState { tray, vni, telex }));
+    TRAY.with(|c| *c.borrow_mut() = Some(TrayState { tray, methods }));
 
     // Keep the tray icon/tooltip in sync when VI/EN flips from the keyboard hotkey
     // or per-app auto-switch — both fire on this (hook) thread.
@@ -87,15 +78,13 @@ pub fn drain_events() {
     }
 
     while let Ok(ev) = MenuEvent::receiver().try_recv() {
-        match ev.id.0.as_str() {
-            "vni" => {
-                shell::set_method(InputMethod::Vni);
-                set_checks(true, false);
-            }
-            "telex" => {
-                shell::set_method(InputMethod::Telex);
-                set_checks(false, true);
-            }
+        let id = ev.id.0.as_str();
+        if let Some(method) = method_menu::method_for_id(id) {
+            shell::set_method(method);
+            sync_method(method);
+            continue;
+        }
+        match id {
             "settings" => {
                 windows_ui::launch_settings(false);
             }
@@ -118,7 +107,7 @@ pub fn drain_events() {
 /// changed the config file and the background engine reloaded it.
 pub fn sync_from_shell() {
     let method = shell::method();
-    set_checks(method == InputMethod::Vni, method == InputMethod::Telex);
+    sync_method(method);
     refresh(shell::enabled());
 }
 
@@ -133,11 +122,10 @@ fn refresh(on: bool) {
     });
 }
 
-fn set_checks(vni: bool, telex: bool) {
+fn sync_method(method: InputMethod) {
     TRAY.with(|c| {
         if let Some(s) = c.borrow().as_ref() {
-            s.vni.set_checked(vni);
-            s.telex.set_checked(telex);
+            s.methods.sync(method);
         }
     });
 }
@@ -153,6 +141,6 @@ fn tooltip(enabled: bool) -> String {
     if enabled {
         "Funput — Tiếng Việt (VI)".to_string()
     } else {
-        "Funput — Tắt (EN)".to_string()
+        "Funput — Tiếng Anh (EN)".to_string()
     }
 }

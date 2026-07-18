@@ -1,17 +1,10 @@
-//! "Kiểu gõ" page: input method (Telex/VNI) and tone-mark placement style.
+//! "Kiểu gõ" page: input method and tone-mark placement style.
 
 use adw::prelude::*;
 use adw::{ComboRow, PreferencesGroup, PreferencesPage};
 use gtk::StringList;
 
 use crate::settings::{Method, Settings, ToneStyle};
-
-fn method_blurb(m: Method) -> &'static str {
-    match m {
-        Method::Telex => "Dấu bằng chữ cái — aa→â, ow→ơ, as→á, dd→đ",
-        Method::Vni => "Dấu bằng chữ số — a6→â, o7→ơ, a1→á, d9→đ",
-    }
-}
 
 fn tone_blurb(t: ToneStyle) -> &'static str {
     match t {
@@ -30,17 +23,14 @@ pub(super) fn page() -> PreferencesPage {
 
     let method_row = ComboRow::builder()
         .title("Phương thức")
-        .model(&StringList::new(&["Telex", "VNI"]))
+        .model(&StringList::new(&Method::ALL.map(Method::label)))
         .build();
-    method_row.set_selected(match s.method {
-        Method::Telex => 0,
-        Method::Vni => 1,
-    });
-    method_row.set_subtitle(method_blurb(s.method));
+    method_row.set_selected(s.method.index());
+    method_row.set_subtitle(s.method.description());
     method_row.connect_selected_notify(|row| {
-        let m = if row.selected() == 0 { Method::Telex } else { Method::Vni };
-        row.set_subtitle(method_blurb(m));
-        Settings::update(|s| s.method = m);
+        let method = Method::from_index(row.selected());
+        row.set_subtitle(method.description());
+        Settings::update(|settings| settings.method = method);
     });
     group.add(&method_row);
 

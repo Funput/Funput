@@ -46,7 +46,11 @@ pub(super) fn page() -> PreferencesPage {
         .build();
     let flip_row = ComboRow::builder()
         .title("Phím lật từ vừa gõ")
-        .model(&StringList::new(&["Tắt", "Ctrl + Shift + Z", "Ctrl + Shift + X"]))
+        .model(&StringList::new(&[
+            "Tắt",
+            "Ctrl + Shift + Z",
+            "Ctrl + Shift + X",
+        ]))
         .build();
     flip_row.set_selected(match s.flip_hotkey {
         FlipHotkey::CtrlShiftZ => 1,
