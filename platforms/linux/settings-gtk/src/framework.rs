@@ -11,7 +11,6 @@
 use gtk::gio;
 use gtk::gio::prelude::*;
 use gtk::glib;
-use gtk::glib::prelude::*; // ToVariant / FromVariant
 
 /// True when per-app auto-switch is available, i.e. Fcitx5 is the active IME.
 pub fn per_app_supported() -> bool {
