@@ -39,6 +39,7 @@ extension KeyboardViewController {
     func refreshEmojiPresentation() {
         emojiView.apply(
             theme: keyboardView.presentation.theme,
+            blendsSystemEdge: keyboardView.presentation.blendsSystemEdge,
             recent: emojiRecentsStore.load().compactMap(emojiItem)
         )
     }

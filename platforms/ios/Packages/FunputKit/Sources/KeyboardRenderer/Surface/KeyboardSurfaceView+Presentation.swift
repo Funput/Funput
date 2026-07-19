@@ -7,6 +7,7 @@ extension KeyboardSurfaceView {
         let layoutChanged = oldValue.layout != presentation.layout
         let sizingChanged = oldValue.sizing != presentation.sizing
         let themeChanged = oldValue.theme != presentation.theme
+        let edgeBlendChanged = oldValue.blendsSystemEdge != presentation.blendsSystemEdge
         if layoutChanged {
             touchOverlay.cancelAllTrackedTouches()
             interactionController.cancelAll()
@@ -16,6 +17,7 @@ extension KeyboardSurfaceView {
         if layoutChanged || themeChanged {
             applyPresentation()
         } else {
+            if edgeBlendChanged { applyBackdropPresentation() }
             var roles = Set<KeyRole>()
             if oldValue.shiftState != presentation.shiftState {
                 roles.formUnion([.character, .shift, .vniModifier])
@@ -47,7 +49,7 @@ extension KeyboardSurfaceView {
     }
 
     func applyPresentation() {
-        backdropView.apply(theme: presentation.theme, traits: traitCollection, image: backgroundImage)
+        applyBackdropPresentation()
         previewView.apply(theme: presentation.theme, traits: traitCollection)
         keysHost.apply(presentation: presentation)
         toolbarView.apply(
@@ -58,6 +60,15 @@ extension KeyboardSurfaceView {
         keyControls.values.forEach {
             $0.apply(presentation: presentation, traits: traitCollection)
         }
+    }
+
+    func applyBackdropPresentation() {
+        backdropView.apply(
+            theme: presentation.theme,
+            traits: traitCollection,
+            image: backgroundImage,
+            blendsSystemEdge: presentation.blendsSystemEdge
+        )
     }
 
     func applyPresentation(to roles: Set<KeyRole>) {

@@ -7,6 +7,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
     public var layout: KeyboardLayout
     public var sizing: KeyboardSizingProfile
     public var theme: ResolvedTheme
+    public var blendsSystemEdge: Bool
     public var shiftState: ShiftState
     public var language: KeyboardLanguage
     public var enterAction: KeyboardEnterAction
@@ -18,6 +19,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
         layout: KeyboardLayout = .funputQWERTY,
         sizing: KeyboardSizingProfile = .default,
         theme: ResolvedTheme = .funputGlass,
+        blendsSystemEdge: Bool = false,
         shiftState: ShiftState = .lowercase,
         language: KeyboardLanguage = .vietnamese,
         enterAction: KeyboardEnterAction = .newLine,
@@ -28,6 +30,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
         self.layout = layout
         self.sizing = sizing
         self.theme = theme
+        self.blendsSystemEdge = blendsSystemEdge
         self.shiftState = shiftState
         self.language = language
         self.enterAction = enterAction

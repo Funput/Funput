@@ -13,6 +13,7 @@ final class KeyboardKeyContentView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         [label, secondaryLabel].forEach(configureLabel)
+        secondaryLabel.textAlignment = .right
         configureIcon()
         spacebarView.isUserInteractionEnabled = false
         addSubview(spacebarView)
@@ -25,21 +26,14 @@ final class KeyboardKeyContentView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        let inset = max(6, bounds.height * 0.2)
-        label.frame = bounds.insetBy(dx: 5, dy: inset * 0.5)
-        iconView.frame = bounds.insetBy(dx: inset, dy: inset)
+        let frames = KeyboardKeyContentGeometry.frames(
+            in: bounds,
+            hintLineHeight: secondaryLabel.font.lineHeight
+        )
+        label.frame = frames.primaryLabel
+        iconView.frame = frames.icon
+        secondaryLabel.frame = frames.hint
         spacebarView.frame = bounds
-
-        let hintHeight = bounds.height * 0.32
-        secondaryLabel.frame = CGRect(x: 2, y: 2, width: bounds.width - 4, height: hintHeight)
-        if !secondaryLabel.isHidden {
-            label.frame = CGRect(
-                x: 4,
-                y: hintHeight * 0.7,
-                width: bounds.width - 8,
-                height: bounds.height - hintHeight * 0.7 - 2
-            )
-        }
     }
 
     func apply(

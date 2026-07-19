@@ -5,11 +5,14 @@ import UIKit
 @MainActor
 final class KeyboardBackdropView: UIView {
     private let materialView = UIVisualEffectView()
+    private let themedView = UIView()
     private let imageView = UIImageView()
     private let gradientView = UIView()
     private let overlayView = UIView()
     private let gradientLayer = CAGradientLayer()
+    private let edgeMaskLayer = CAGradientLayer()
     private var theme = ResolvedTheme.funputGlass
+    private var blendsSystemEdge = false
     private(set) var usesHostMaterial = false
     var contentView: UIView { gradientView }
     var effect: UIVisualEffect? { materialView.effect }
@@ -18,7 +21,13 @@ final class KeyboardBackdropView: UIView {
         super.init(frame: frame)
         isOpaque = false
         isUserInteractionEnabled = false
-        [materialView, imageView, gradientView, overlayView].forEach(addSubview)
+        addSubview(materialView)
+        addSubview(themedView)
+        [imageView, gradientView, overlayView].forEach(themedView.addSubview)
+        themedView.layer.cornerRadius = 18
+        themedView.layer.cornerCurve = .continuous
+        themedView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        themedView.layer.masksToBounds = true
         gradientView.layer.addSublayer(gradientLayer)
         imageView.clipsToBounds = true
         imageView.contentMode = .scaleToFill
@@ -31,13 +40,21 @@ final class KeyboardBackdropView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        [materialView, imageView, gradientView, overlayView].forEach { $0.frame = bounds }
+        [materialView, themedView].forEach { $0.frame = bounds }
+        [imageView, gradientView, overlayView].forEach { $0.frame = themedView.bounds }
         gradientLayer.frame = bounds
+        updateEdgeMask()
         updateImageCrop()
     }
 
-    func apply(theme: ResolvedTheme, traits: UITraitCollection, image: UIImage? = nil) {
+    func apply(
+        theme: ResolvedTheme,
+        traits: UITraitCollection,
+        image: UIImage? = nil,
+        blendsSystemEdge: Bool = false
+    ) {
         self.theme = theme
+        self.blendsSystemEdge = blendsSystemEdge
         imageView.image = image
         let usesImage = theme.backgroundEffects.mode == .image && image != nil
         imageView.isHidden = !usesImage
@@ -51,6 +68,8 @@ final class KeyboardBackdropView: UIView {
         } else {
             applyGradient(theme: theme, traits: traits)
         }
+        themedView.layer.mask = blendsSystemEdge ? edgeMaskLayer : nil
+        updateEdgeMask()
     }
 
     private func configureMaterial(theme: ResolvedTheme, usesImage: Bool) {
@@ -94,6 +113,19 @@ final class KeyboardBackdropView: UIView {
 
     private func resolved(_ color: UIColor, opaque: Bool) -> UIColor {
         opaque ? color.withAlphaComponent(1) : color
+    }
+
+    private func updateEdgeMask() {
+        guard blendsSystemEdge, bounds.height > 0 else { return }
+        edgeMaskLayer.frame = themedView.bounds
+        edgeMaskLayer.colors = [
+            UIColor.white.cgColor,
+            UIColor.white.cgColor,
+            UIColor.clear.cgColor,
+        ]
+        edgeMaskLayer.locations = KeyboardSystemEdgeBlend.locations(for: bounds.height)
+        edgeMaskLayer.startPoint = CGPoint(x: 0.5, y: 0)
+        edgeMaskLayer.endPoint = CGPoint(x: 0.5, y: 1)
     }
 }
 #endif

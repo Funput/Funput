@@ -31,6 +31,8 @@ public enum KeyboardPresentationFactory {
             layout: layout,
             sizing: sizing,
             theme: theme,
+            blendsSystemEdge: selectedTheme(for: configuration, catalog: catalog).id
+                != BundledThemes.default.id,
             language: configuration.language,
             isHapticFeedbackEnabled: configuration.isHapticFeedbackEnabled,
             isKeySoundEnabled: configuration.isKeySoundEnabled,
@@ -44,11 +46,18 @@ public enum KeyboardPresentationFactory {
         for configuration: FunputConfiguration,
         catalog: ThemeCatalog = ThemeCatalog()
     ) -> ResolvedTheme {
-        let authored = catalog.theme(id: configuration.selectedThemeID) ?? BundledThemes.default
+        let authored = selectedTheme(for: configuration, catalog: catalog)
         let context = ThemeResolveContext(
             reduceTransparency: UIAccessibility.isReduceTransparencyEnabled
         )
         return ThemeRuntime.resolve(authored, context: context)
+    }
+
+    private static func selectedTheme(
+        for configuration: FunputConfiguration,
+        catalog: ThemeCatalog
+    ) -> KeyboardTheme {
+        catalog.theme(id: configuration.selectedThemeID) ?? BundledThemes.default
     }
 }
 #endif
