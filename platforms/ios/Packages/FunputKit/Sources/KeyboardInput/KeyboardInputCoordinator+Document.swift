@@ -50,6 +50,7 @@ extension KeyboardInputCoordinator {
         document.insertText(text)
         KeyboardInputSignposts.end("ProxyInsert", signpostID)
         documentSynchronizer.recordInsertion(text)
+        if tracksPersonalSuggestions { suggestionTracker.recordInsertion(text) }
     }
 
     func deleteDocumentBackward(_ document: any KeyboardDocument) {
@@ -57,12 +58,14 @@ extension KeyboardInputCoordinator {
         document.deleteBackward()
         KeyboardInputSignposts.end("ProxyDelete", signpostID)
         documentSynchronizer.recordDeletion()
+        if tracksPersonalSuggestions { suggestionTracker.recordDeletion() }
     }
 
     private func reconcile(
         _ snapshot: KeyboardDocumentSnapshot,
         event: KeyboardDocumentEvent
     ) {
+        suggestionTracker.reset()
         let previous = documentSynchronizer.snapshot
         let documentChanged = previous?.documentIdentifier != snapshot.documentIdentifier
         let snapshotChanged = previous != snapshot

@@ -1,3 +1,4 @@
+import Foundation
 import KeyboardLayout
 
 extension FunputConfiguration {
@@ -20,6 +21,8 @@ extension FunputConfiguration {
         config.showsNumberRow = try container.decodeIfPresent(Bool.self, forKey: .showsNumberRow) ?? config.showsNumberRow
         config.showsGlobeKey = try container.decodeIfPresent(Bool.self, forKey: .showsGlobeKey) ?? config.showsGlobeKey
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
+        config.personalSuggestionsEnabled = try container.decodeIfPresent(Bool.self, forKey: .personalSuggestionsEnabled) ?? config.personalSuggestionsEnabled
+        config.personalSuggestionResetToken = try container.decodeIfPresent(UUID.self, forKey: .personalSuggestionResetToken)
         config.schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? config.schemaVersion
         if config.schemaVersion < 2 {
             config.isHapticFeedbackEnabled = false
@@ -35,6 +38,9 @@ extension FunputConfiguration {
         if config.schemaVersion < 5 {
             config.showsGlobeKey = false
             config.schemaVersion = 5
+        }
+        if config.schemaVersion < 6 {
+            config.schemaVersion = 6
         }
         self = config
     }

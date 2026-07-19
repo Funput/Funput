@@ -23,6 +23,7 @@ extension KeyboardViewController {
     func showEmoji() {
         guard keyboardView.presentation.layout.toolbar != nil else { return }
         inputCoordinator.prepareForLiteralInput()
+        clearPersonalSuggestions()
         displayedSurface = .emoji
         keyboardView.isHidden = true
         emojiView.isHidden = false

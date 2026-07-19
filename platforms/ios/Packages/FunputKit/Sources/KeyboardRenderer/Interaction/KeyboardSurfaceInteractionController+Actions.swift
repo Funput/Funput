@@ -1,8 +1,14 @@
 #if canImport(UIKit)
 import KeyboardLayout
 import os
+import UIKit
 
 extension KeyboardSurfaceInteractionController {
+    func performSuggestionFeedback(presentation: KeyboardPresentation) {
+        if presentation.isHapticFeedbackEnabled { haptics.perform(.control) }
+        if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
+    }
+
     func finishSwipe(token: TouchToken, state: TouchState, action: KeySwipeAction) {
         touches.removeValue(forKey: token)
         if let key = state.currentKey { setHighlighted(key, false) }

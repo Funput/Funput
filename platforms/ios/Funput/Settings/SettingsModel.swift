@@ -38,7 +38,13 @@ final class SettingsModel {
     }
 
     func reset() {
-        commit(.default)
+        var defaults = FunputConfiguration.default
+        defaults.personalSuggestionResetToken = configuration.personalSuggestionResetToken
+        commit(defaults)
+    }
+
+    func requestPersonalSuggestionReset() {
+        update(\.personalSuggestionResetToken, to: UUID())
     }
 
     func boolBinding(_ keyPath: WritableKeyPath<FunputConfiguration, Bool>) -> Binding<Bool> {

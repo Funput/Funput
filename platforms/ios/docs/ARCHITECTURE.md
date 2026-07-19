@@ -662,6 +662,17 @@ App Store yêu cầu keyboard vẫn hoạt động khi không có Full Access. V
 - `documentContextBeforeInput` chỉ dùng trong memory để đồng bộ state.
 - Privacy policy phải mô tả rõ extension và dữ liệu được/không được xử lý.
 
+### Personal Suggestions
+
+- Chỉ học token được tạo bởi chính mutation `insertText`/`deleteBackward` của Funput;
+  không học document context, selection, autocorrection hoặc nội dung có sẵn của host.
+- Không Full Access dùng lexicon in-memory. Khi có quyền, snapshot và journal nằm
+  trong `PersonalSuggestions/` của App Group, được loại khỏi device backup.
+- Extension là writer duy nhất. Containing app chỉ gửi reset token qua cấu hình;
+  lỗi open/query/flush/reset luôn trả empty/no-op và không ảnh hưởng Telex/VNI.
+- Prefix, candidate và từ đã học không được ghi log, signpost, telemetry hoặc mạng.
+  Signpost chỉ chứa generation, phase, candidate count và duration.
+
 ---
 
 ## 16. Testing và đo hiệu năng

@@ -7,6 +7,7 @@ let package = Package(
     platforms: [.iOS(.v18)],
     products: [
         .library(name: "FunputEngine", targets: ["FunputEngine"]),
+        .library(name: "PersonalSuggestions", targets: ["PersonalSuggestions"]),
         .library(name: "KeyboardInput", targets: ["KeyboardInput"]),
         .library(name: "KeyboardLayout", targets: ["KeyboardLayout"]),
         .library(name: "FunputShared", targets: ["FunputShared"]),
@@ -22,6 +23,12 @@ let package = Package(
         ),
         .target(
             name: "FunputEngine",
+            dependencies: [
+                .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
+            ]
+        ),
+        .target(
+            name: "PersonalSuggestions",
             dependencies: [
                 .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
             ]
@@ -95,6 +102,10 @@ let package = Package(
         .testTarget(
             name: "FunputEngineTests",
             dependencies: ["FunputEngine"]
+        ),
+        .testTarget(
+            name: "PersonalSuggestionsTests",
+            dependencies: ["PersonalSuggestions"]
         ),
         .testTarget(
             name: "KeyboardInputTests",
