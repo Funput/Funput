@@ -14,6 +14,7 @@ public final class EmojiKeyboardView: UIView {
     var sections: [(category: EmojiCategory, items: [EmojiItem])] = []
     var selectedCategory = EmojiCategory.smileysPeople
     var theme = ResolvedTheme.funputGlass
+    var blendsSystemEdge = false
     public var backgroundImage: UIImage? { didSet { applyTheme() } }
     private let catalog: EmojiCatalog
 
@@ -44,8 +45,13 @@ public final class EmojiKeyboardView: UIView {
         applyTheme()
     }
 
-    public func apply(theme: ResolvedTheme, recent: [EmojiItem]) {
+    public func apply(
+        theme: ResolvedTheme,
+        blendsSystemEdge: Bool = false,
+        recent: [EmojiItem]
+    ) {
         self.theme = theme
+        self.blendsSystemEdge = blendsSystemEdge
         reload(recent: recent)
         applyTheme()
     }
@@ -104,7 +110,12 @@ public final class EmojiKeyboardView: UIView {
 
     private func applyTheme() {
         let label = theme.label.uiColor(for: traitCollection)
-        backdropView.apply(theme: theme, traits: traitCollection, image: backgroundImage)
+        backdropView.apply(
+            theme: theme,
+            traits: traitCollection,
+            image: backgroundImage,
+            blendsSystemEdge: blendsSystemEdge
+        )
         bottomBar.apply(color: label, selected: selectedCategory)
         collectionView.reloadData()
     }

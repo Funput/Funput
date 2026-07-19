@@ -82,6 +82,7 @@ extension KeyboardViewController {
         presentation.language = state.language
         presentation.enterAction = state.enterAction
         presentation.theme = themed.theme
+        presentation.blendsSystemEdge = themed.blendsSystemEdge
         presentation.isHapticFeedbackEnabled = configuration.isHapticFeedbackEnabled
         presentation.isKeySoundEnabled = configuration.isKeySoundEnabled
         presentation.showsKeyPreviews = !state.editorMode.isPassword && configuration.showsKeyPreviews

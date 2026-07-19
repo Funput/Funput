@@ -13,14 +13,18 @@ struct KeyboardPresentationFactoryTests {
     func selectedThemeResolves() {
         var config = FunputConfiguration.default
         config.selectedThemeID = "app.funput.theme.midnight"
-        #expect(KeyboardPresentationFactory.make(from: config).theme == resolved(.midnight))
+        let presentation = KeyboardPresentationFactory.make(from: config)
+        #expect(presentation.theme == resolved(.midnight))
+        #expect(presentation.blendsSystemEdge)
     }
 
     @Test("Unknown theme id falls back to the bundled default")
     func unknownThemeFallsBack() {
         var config = FunputConfiguration.default
         config.selectedThemeID = "does.not.exist"
-        #expect(KeyboardPresentationFactory.resolvedTheme(for: config) == resolved(BundledThemes.default))
+        let presentation = KeyboardPresentationFactory.make(from: config)
+        #expect(presentation.theme == resolved(BundledThemes.default))
+        #expect(!presentation.blendsSystemEdge)
     }
 
     @Test("Configuration flags map onto the presentation")
@@ -45,6 +49,7 @@ struct KeyboardPresentationFactoryTests {
     @Test("Default configuration id matches the default bundled theme")
     func defaultThemeIdMatchesBundled() {
         #expect(FunputConfiguration.defaultThemeID == BundledThemes.default.id)
+        #expect(!KeyboardPresentationFactory.make(from: .default).blendsSystemEdge)
     }
 
     @Test("Custom geometry maps into presentation sizing")
