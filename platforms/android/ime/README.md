@@ -29,6 +29,6 @@ composition, and keep both symbol pages free of candidate and emoji UI.
 `setComposingText()`. JNI is intentionally narrow: one synchronous call per text
 key, no network or storage, and safe registry IDs instead of native pointers.
 
-The system-keyboard globe appears only when Android reports another input method
-is available. Switching finishes the active composition before handing control
-to `InputMethodService.switchToNextInputMethod()`.
+The system-keyboard globe is intentionally always hidden until its interaction
+is revisited in a later plan. The dormant switch callback remains isolated from
+the typing path.

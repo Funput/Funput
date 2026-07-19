@@ -144,7 +144,6 @@ class FunputInputMethodService : InputMethodService() {
             sizingProfile = settings.sizingProfile,
             keyboardTheme = descriptor.theme,
             keyboardThemeBackgroundImage = descriptor.backgroundImage,
-            systemInputMethodSwitcherVisible = systemInputMethodSwitcher.isAvailable(),
         )
     }
 }
