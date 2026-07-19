@@ -15,6 +15,7 @@ internal data class EditorInfoPolicy(
     val isMultiline: Boolean,
     val suggestionSource: ImeSuggestionSource,
     val allowsPersonalizedLearning: Boolean,
+    val allowsPersonalSuggestions: Boolean,
 ) {
     val showsSuggestionBar: Boolean get() = suggestionSource != ImeSuggestionSource.NONE
 
@@ -26,6 +27,7 @@ internal data class EditorInfoPolicy(
             isMultiline = false,
             suggestionSource = ImeSuggestionSource.FUNPUT,
             allowsPersonalizedLearning = true,
+            allowsPersonalSuggestions = true,
         )
     }
 }

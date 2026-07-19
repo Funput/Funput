@@ -11,4 +11,5 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 funput-core = { path = "../funput-core" }
 funput-engine = { path = "../funput-engine" }
+funput-suggestions = { path = "../funput-suggestions" }
 jni = "0.22.4"

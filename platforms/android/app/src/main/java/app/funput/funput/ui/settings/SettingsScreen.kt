@@ -31,6 +31,7 @@ import app.funput.funput.ui.settings.feedback.FeedbackSettingsSection
 import app.funput.funput.ui.settings.keyboard.KeyboardSettingsSection
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 import app.funput.funput.ui.settings.smart.SmartSettingsSection
+import app.funput.funput.ui.settings.smart.PersonalSuggestionSettingsSection
 
 @Composable
 internal fun SettingsScreen(
@@ -45,6 +46,7 @@ internal fun SettingsScreen(
     soundsEnabled: Boolean,
     smartRestoreEnabled: Boolean,
     spellCheckEnabled: Boolean,
+    personalSuggestionsEnabled: Boolean,
     versionName: String,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
@@ -54,6 +56,8 @@ internal fun SettingsScreen(
     onSoundsChanged: (Boolean) -> Unit,
     onSmartRestoreChanged: (Boolean) -> Unit,
     onSpellCheckChanged: (Boolean) -> Unit,
+    onPersonalSuggestionsChanged: (Boolean) -> Unit,
+    onResetPersonalSuggestions: () -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
     onOpenThemeGallery: () -> Unit,
@@ -95,6 +99,13 @@ internal fun SettingsScreen(
                     spellCheckEnabled = spellCheckEnabled,
                     onSmartRestoreChanged = onSmartRestoreChanged,
                     onSpellCheckChanged = onSpellCheckChanged,
+                )
+            }
+            item(key = "personal-suggestions") {
+                PersonalSuggestionSettingsSection(
+                    enabled = personalSuggestionsEnabled,
+                    onEnabledChanged = onPersonalSuggestionsChanged,
+                    onReset = onResetPersonalSuggestions,
                 )
             }
             item(key = "appearance") {

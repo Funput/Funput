@@ -7,6 +7,8 @@ import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
 import app.funput.funput.ime.settings.KeyboardSizingSettings
 import app.funput.funput.ime.settings.KeyboardThemeSettings
+import app.funput.funput.ime.settings.PersonalSuggestionPreferences
+import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.SmartCompositionSettings
 import app.funput.funput.ime.settings.ToneStyle
@@ -21,6 +23,7 @@ internal class ImeSettingsController(
     private val engine: VietnameseEngine,
     private val onInputMethodChanged: (KeyboardInputMethod) -> Unit,
     private val onViewSettingsChanged: () -> Unit,
+    private val onPersonalSuggestionsChanged: (PersonalSuggestionPreferences) -> Unit,
 ) {
     var inputMethod = InputMethodSettings.DefaultInputMethod
         private set
@@ -41,6 +44,7 @@ internal class ImeSettingsController(
         KeyboardSizingSettings(context).profile.collectIn(scope, ::applySizingProfile)
         KeyboardThemeSettings(context).themeId.collectIn(scope, ::applyKeyboardTheme)
         KeyboardFeedbackSettings(context).preferences.collectIn(scope, ::applyFeedback)
+        PersonalSuggestionSettings(context).preferences.collectIn(scope, onPersonalSuggestionsChanged)
     }
 
     private fun applyInputMethod(value: KeyboardInputMethod) {

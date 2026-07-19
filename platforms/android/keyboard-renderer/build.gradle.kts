@@ -24,3 +24,7 @@ dependencies {
     implementation(libs.androidx.customview)
     testImplementation(libs.junit)
 }
+
+androidComponents.beforeVariants {
+    (it as com.android.build.api.variant.HasUnitTestBuilder).enableUnitTest = true
+}

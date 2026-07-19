@@ -67,12 +67,12 @@ class KeyboardLayoutsTest {
     }
 
     @Test
-    fun emojiToolbarIsShownWithoutSuggestionStrip() {
+    fun suggestionToolbarKeepsSettingsAndEmojiUtilities() {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             val bar = requireNotNull(KeyboardLayouts.forInputMethod(inputMethod).suggestionBar)
             assertEquals(KeyRole.SETTINGS, bar.settingsKey.role)
             assertEquals(KeyRole.EMOJI, bar.emojiKey.role)
-            assertFalse(bar.suggestionsEnabled)
+            assertTrue(bar.suggestionsEnabled)
         }
     }
 

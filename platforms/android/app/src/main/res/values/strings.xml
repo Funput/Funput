@@ -87,6 +87,14 @@
     <string name="settings_sounds_title">Âm thanh phím</string>
     <string name="settings_smart_restore_title">Tự khôi phục từ tiếng Anh</string>
     <string name="settings_spell_check_title">Kiểm tra chính tả</string>
+    <string name="settings_personal_suggestions_section">Gợi ý cá nhân</string>
+    <string name="settings_personal_suggestions_title">Gợi ý từ cá nhân</string>
+    <string name="settings_personal_suggestions_description">Chỉ học chữ Funput gõ và lưu trên thiết bị.</string>
+    <string name="settings_personal_suggestions_reset">Xóa từ đã học</string>
+    <string name="settings_personal_suggestions_reset_title">Xóa các từ đã học?</string>
+    <string name="settings_personal_suggestions_reset_body">Funput sẽ xóa toàn bộ từ cá nhân đã học trên thiết bị này.</string>
+    <string name="settings_personal_suggestions_reset_confirm">Xóa từ</string>
+    <string name="settings_personal_suggestions_reset_cancel">Giữ lại</string>
     <string name="settings_version_title">Phiên bản</string>
     <string name="settings_website_title">Website</string>
     <string name="settings_website_display">funput.app</string>

@@ -1,5 +1,4 @@
 package app.funput.funput.ui
-
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
@@ -23,6 +22,8 @@ import app.funput.funput.ime.settings.KeyboardSizingSettings
 import app.funput.funput.ime.settings.KeyboardThemeSettings
 import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.SmartCompositionSettings
+import app.funput.funput.ime.settings.PersonalSuggestionPreferences
+import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.settings.ToneStyleSettings
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.store.customKeyboardThemeStore
@@ -40,7 +41,6 @@ import app.funput.funput.ui.theme.gallery.ThemeGalleryScreen
 import app.funput.funput.ui.theme.localizedName
 import app.funput.funput.ui.theme.resolveDarkTheme
 import kotlinx.coroutines.launch
-
 @Composable
 fun FunputApp() {
     val context = LocalContext.current
@@ -51,6 +51,7 @@ fun FunputApp() {
     val appearanceSettings = remember(context) { AppearanceSettings(context) }
     val feedbackSettings = remember(context) { KeyboardFeedbackSettings(context) }
     val smartCompositionSettings = remember(context) { SmartCompositionSettings(context) }
+    val personalSuggestionSettings = remember(context) { PersonalSuggestionSettings(context) }
     val versionName = remember(context) { AppVersionProvider.versionName(context) }
     val keyboardSetupStatus = rememberKeyboardSetupStatus()
     val inputMethod by inputSettings.inputMethod.collectAsState(InputMethodSettings.DefaultInputMethod)
@@ -60,6 +61,7 @@ fun FunputApp() {
     val appearanceMode by appearanceSettings.mode.collectAsState(AppearanceSettings.DefaultMode)
     val feedback by feedbackSettings.preferences.collectAsState(KeyboardFeedbackPreferences.Default)
     val smartComposition by smartCompositionSettings.preferences.collectAsState(SmartCompositionPreferences.Default)
+    val personalSuggestions by personalSuggestionSettings.preferences.collectAsState(PersonalSuggestionPreferences.Default)
     val scope = rememberCoroutineScope()
     val darkTheme = appearanceMode.resolveDarkTheme(isSystemInDarkTheme())
     val websiteUrl = stringResource(R.string.settings_website_url)
@@ -71,9 +73,7 @@ fun FunputApp() {
     val installedThemes = remember(themeRepository, themeCatalogRevision) { themeRepository.themes }
     val keyboardThemeLabel = themeRepository.resolve(keyboardThemeId).localizedName()
     var editingThemeId by remember { mutableStateOf<KeyboardThemeId?>(null) }
-
     BackHandler(enabled = navigator.canNavigateBack) { navigator.navigateBack() }
-
     FunputTheme(appearanceMode = appearanceMode) {
         SyncSystemBarAppearance(darkTheme = darkTheme)
         Surface(modifier = Modifier.fillMaxSize()) {
@@ -90,6 +90,7 @@ fun FunputApp() {
                     soundsEnabled = feedback.soundsEnabled,
                     smartRestoreEnabled = smartComposition.smartRestoreEnabled,
                     spellCheckEnabled = smartComposition.spellCheckEnabled,
+                    personalSuggestionsEnabled = personalSuggestions.enabled,
                     versionName = versionName,
                     onInputMethodSelected = { method -> scope.launch { inputSettings.setInputMethod(method) } },
                     onToneStyleSelected = { style -> scope.launch { toneStyleSettings.setToneStyle(style) } },
@@ -103,6 +104,9 @@ fun FunputApp() {
                     onSpellCheckChanged = { enabled ->
                         scope.launch { smartCompositionSettings.setSpellCheckEnabled(enabled) }
                     },
+                    onPersonalSuggestionsChanged = { enabled -> scope.launch {
+                        personalSuggestionSettings.setEnabled(enabled) } },
+                    onResetPersonalSuggestions = { scope.launch { personalSuggestionSettings.requestReset() } },
                     onEnableKeyboard = context::openKeyboardSettings,
                     onSelectKeyboard = context::showKeyboardPicker,
                     onOpenThemeGallery = { navigator.navigate(AppDestination.THEME_GALLERY) },

@@ -109,6 +109,14 @@ class KeyboardInteractionControllerTest {
     }
 
     @Test
+    fun accessibilitySuggestionUsesValidatedCallbackOnce() {
+        controller.onAccessibilitySuggestion("suggestion-1")
+
+        assertEquals(listOf(SuggestionSelection(1, "chào")), selections)
+        assertEquals(listOf(KeyboardHapticType.CONTROL), haptics)
+    }
+
+    @Test
     fun pointerDownEmitsHapticForEachTargetType() {
         controller.onPointerStarted(3, space.id, 100f, 50f)
         controller.onPointerStarted(4, settings.id, 100f, 50f)

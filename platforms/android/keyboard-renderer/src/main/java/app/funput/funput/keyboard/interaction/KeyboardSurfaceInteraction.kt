@@ -60,6 +60,9 @@ internal class KeyboardSurfaceInteraction(
 
     fun onTouchEvent(event: MotionEvent): KeyboardTouchHandler.Result = touchHandler.onTouchEvent(event)
 
+    fun performAccessibilitySuggestionClick(targetId: String) =
+        controller.onAccessibilitySuggestion(targetId)
+
     fun performAccessibilityClick(keyId: String, eventTimeMillis: Long) =
         controller.onAccessibilityClick(keyId, eventTimeMillis)
 

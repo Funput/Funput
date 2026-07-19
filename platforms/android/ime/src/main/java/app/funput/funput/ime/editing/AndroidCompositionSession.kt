@@ -12,6 +12,7 @@ internal class AndroidCompositionSession(
 ) {
     var composingText: String = ""
         private set
+    private var completedToken: String? = null
 
     val isComposing: Boolean get() = composingText.isNotEmpty()
 
@@ -20,6 +21,7 @@ internal class AndroidCompositionSession(
     fun setEnabled(enabled: Boolean) = engine.setEnabled(enabled)
 
     fun input(connection: InputConnection?, text: String): Boolean {
+        completedToken = null
         if (connection == null || text.isEmpty()) return false
         val codePoint = text.singleCodePointOrNull() ?: return commitRaw(connection, text)
         return if (CompositionBoundary.isBoundary(codePoint)) {
@@ -30,6 +32,7 @@ internal class AndroidCompositionSession(
     }
 
     fun backspace(connection: InputConnection?): Boolean {
+        completedToken = null
         if (connection == null || !isComposing) return false
         composingText = engine.backspace()
         return connection.setComposingText(composingTextFactory(composingText), CursorAfterText)
@@ -42,7 +45,18 @@ internal class AndroidCompositionSession(
 
     fun reset() {
         composingText = ""
+        completedToken = null
         engine.clear()
+    }
+
+    fun takeCompletedToken(): String? = completedToken.also { completedToken = null }
+
+    fun acceptSuggestion(connection: InputConnection, prefix: String, candidate: String): Boolean {
+        if (composingText != prefix) return false
+        composingText = ""
+        completedToken = null
+        engine.clear()
+        return connection.commitText("$candidate ", CursorAfterText)
     }
 
     private fun commitBoundary(
@@ -50,7 +64,9 @@ internal class AndroidCompositionSession(
         text: String,
         codePoint: Int,
     ): Boolean {
+        val previous = composingText
         val replacement = engine.processBoundary(codePoint)
+        completedToken = replacement?.removeSuffix(text)?.ifEmpty { null } ?: previous.ifEmpty { null }
         composingText = ""
         if (replacement != null) return connection.commitText(replacement, CursorAfterText)
         connection.finishComposingText()

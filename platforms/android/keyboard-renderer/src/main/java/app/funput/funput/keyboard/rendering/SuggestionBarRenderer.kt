@@ -5,6 +5,8 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
+import android.text.TextPaint
+import android.text.TextUtils
 import androidx.core.graphics.withSave
 import app.funput.funput.keyboard.interaction.PressedKeyState
 import app.funput.funput.keyboard.interaction.SuggestionTargetIds
@@ -15,9 +17,8 @@ import app.funput.funput.theme.LocalKeyboardThemeCatalog
 
 internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val labelPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     }
@@ -28,9 +29,6 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
 
     fun updateTheme(theme: KeyboardTheme) {
         this.theme = theme
-        fillPaint.color = theme.keyColor
-        borderPaint.color = theme.keyBorderColor
-        borderPaint.strokeWidth = metrics.dp(theme.keyBorderWidthDp)
         dividerPaint.color = theme.secondaryLabelColor and 0x00FFFFFF or DividerAlpha
         labelPaint.color = theme.labelColor
     }
@@ -41,15 +39,9 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         suggestions: List<String>,
         pressedTargets: PressedKeyState,
     ) {
+        if (suggestions.isEmpty()) return
         val bounds = suggestionBar.suggestionsBounds
         val radius = metrics.dp(theme.keyCornerRadiusDp)
-        drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
-        canvas.drawRoundRect(drawingRect, radius, radius, fillPaint)
-        if (theme.keyBorderWidthDp > 0f) {
-            canvas.drawRoundRect(drawingRect, radius, radius, borderPaint)
-        }
-        if (suggestions.isEmpty()) return
-
         drawPressedSegments(canvas, bounds, radius, suggestions.size, pressedTargets)
         labelPaint.textSize = metrics.sp(SuggestionLabelSizeSp)
         labelPaint.getFontMetrics(fontMetrics)
@@ -57,8 +49,14 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         val baseline = bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
         suggestions.forEachIndexed { index, suggestion ->
             if (index > 0) drawDivider(canvas, bounds, bounds.left + segmentWidth * index)
-            canvas.drawText(
+            val label = TextUtils.ellipsize(
                 suggestion,
+                labelPaint,
+                segmentWidth - metrics.dp(LabelHorizontalInsetDp * 2f),
+                TextUtils.TruncateAt.END,
+            ).toString()
+            canvas.drawText(
+                label,
                 bounds.left + segmentWidth * (index + 0.5f),
                 baseline,
                 labelPaint,
@@ -87,7 +85,6 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
                 }
             }
         }
-        fillPaint.color = theme.keyColor
     }
 
     private fun drawDivider(canvas: Canvas, bounds: KeyBounds, x: Float) {
@@ -104,5 +101,6 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         const val SuggestionLabelSizeSp = 14f
         const val DividerInsetDp = 9f
         const val DividerAlpha = 0x33000000
+        const val LabelHorizontalInsetDp = 8f
     }
 }
