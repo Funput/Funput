@@ -20,12 +20,14 @@ struct ThemeGallery: View {
                 themes: BundledThemes.all,
                 isCustom: false
             )
-            section(
-                title: "Của bạn",
-                identifier: "custom",
-                themes: model.customThemes.map(\.theme),
-                isCustom: true
-            )
+            if !model.customThemes.isEmpty {
+                section(
+                    title: "Của bạn",
+                    identifier: "custom",
+                    themes: model.customThemes.map(\.theme),
+                    isCustom: true
+                )
+            }
         }
     }
 
@@ -39,40 +41,24 @@ struct ThemeGallery: View {
             Text(title)
                 .font(.subheadline.weight(.semibold))
                 .accessibilityIdentifier("appearance.section.\(identifier)")
-            carousel(themes: themes, isCustom: isCustom)
-        }
-    }
-
-    @ViewBuilder private func carousel(
-        themes: [KeyboardTheme],
-        isCustom: Bool
-    ) -> some View {
-        if #available(iOS 26, *) {
-            GlassEffectContainer(spacing: 16) {
-                scroller(themes: themes, isCustom: isCustom)
-            }
-        } else {
-            scroller(themes: themes, isCustom: isCustom)
+            scroller(themes: themes, isCustom: isCustom, identifier: identifier)
         }
     }
 
     private func scroller(
         themes: [KeyboardTheme],
-        isCustom: Bool
+        isCustom: Bool,
+        identifier: String
     ) -> some View {
-        ScrollView(.horizontal) {
+        ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
-                if themes.isEmpty {
-                    ThemeGalleryEmptyCard()
-                } else {
-                    ForEach(themes) { theme in themeCard(theme, isCustom: isCustom) }
-                }
+                ForEach(themes) { theme in themeCard(theme, isCustom: isCustom) }
             }
             .scrollTargetLayout()
             .padding(.vertical, 4)
         }
         .scrollTargetBehavior(.viewAligned)
-        .scrollIndicators(.hidden)
+        .accessibilityIdentifier("appearance.carousel.\(identifier)")
     }
 
     private func themeCard(_ theme: KeyboardTheme, isCustom: Bool) -> some View {
