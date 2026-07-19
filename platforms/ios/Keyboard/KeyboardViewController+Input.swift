@@ -16,6 +16,7 @@ extension KeyboardViewController {
             return
         case .swiped(.toggleLanguage):
             inputCoordinator.toggleLanguage()
+            clearPersonalSuggestions()
             updateInputPresentation()
             return
         }
@@ -43,6 +44,7 @@ extension KeyboardViewController {
         let previousState = inputCoordinator.state
         let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
         inputCoordinator.handle(event.key, document: document)
+        publishPersonalSuggestionUpdate()
 
         if inputCoordinator.state != previousState {
             updateInputPresentation()

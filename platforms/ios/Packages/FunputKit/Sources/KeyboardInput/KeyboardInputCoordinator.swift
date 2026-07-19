@@ -10,6 +10,9 @@ public final class KeyboardInputCoordinator {
     let composer: FunputComposer
     var shiftController: ShiftStateController
     var documentSynchronizer = KeyboardDocumentSynchronizer()
+    var suggestionTracker = AuthoredTokenTracker()
+    var personalSuggestionsEnabled = true
+    var suggestionTrackingActive = true
 
     public init(
         inputMethod: KeyboardInputMethod = .vni,

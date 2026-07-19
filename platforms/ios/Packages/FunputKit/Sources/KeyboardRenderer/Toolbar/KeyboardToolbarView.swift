@@ -7,10 +7,12 @@ import UIKit
 final class KeyboardToolbarView: UIView {
     var onEvent: ((KeyboardKeyEvent) -> Void)?
     var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
+    var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
 
     private let logoView = KeyboardBrandLogoView()
     private let systemButton = UIButton(type: .system)
     private let emojiButton = UIButton(type: .system)
+    private let suggestionBar = KeyboardSuggestionBarView()
     private var spec: KeyboardToolbarSpec?
 
     override init(frame: CGRect) {
@@ -18,6 +20,8 @@ final class KeyboardToolbarView: UIView {
         addSubview(logoView)
         configure(systemButton, symbol: "globe", role: .systemInputMode)
         configure(emojiButton, symbol: "face.smiling", role: .emoji)
+        suggestionBar.onSelection = { [weak self] in self?.onSuggestionSelected?($0) }
+        addSubview(suggestionBar)
     }
 
     @available(*, unavailable)
@@ -37,6 +41,13 @@ final class KeyboardToolbarView: UIView {
             height: itemSize
         )
         systemButton.frame = frame(before: emojiButton.frame, size: itemSize)
+        let controlsMinX = systemButton.isHidden ? emojiButton.frame.minX : systemButton.frame.minX
+        suggestionBar.frame = CGRect(
+            x: logoView.frame.maxX + 6,
+            y: 0,
+            width: max(0, controlsMinX - logoView.frame.maxX - 12),
+            height: bounds.height
+        )
     }
 
     func apply(
@@ -52,6 +63,11 @@ final class KeyboardToolbarView: UIView {
 
         let label = theme.label.uiColor(for: traits)
         [systemButton, emojiButton].forEach { $0.tintColor = label }
+        suggestionBar.apply(theme: theme, traits: traits)
+    }
+
+    func updateSuggestions(_ candidates: [KeyboardSuggestionCandidate]) {
+        suggestionBar.update(candidates)
     }
 
     private func frame(before frame: CGRect, size: CGFloat) -> CGRect {

@@ -13,6 +13,7 @@ public final class KeyboardSurfaceView: UIView {
 
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
+    public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
 
     let backdropView = KeyboardBackdropView()
     let toolbarView = KeyboardToolbarView()
@@ -106,6 +107,11 @@ public final class KeyboardSurfaceView: UIView {
         toolbarView.onSystemInputModeEvent = { [weak self] source, event in
             self?.onSystemInputModeEvent?(source, event)
         }
+        toolbarView.onSuggestionSelected = { [weak self] candidate in
+            guard let self else { return }
+            interactionController.performSuggestionFeedback(presentation: presentation)
+            onSuggestionSelected?(candidate)
+        }
         rebuildKeys()
         applyPresentation()
 
@@ -115,6 +121,10 @@ public final class KeyboardSurfaceView: UIView {
             name: UIAccessibility.reduceTransparencyStatusDidChangeNotification,
             object: nil
         )
+    }
+
+    public func updateSuggestions(_ candidates: [KeyboardSuggestionCandidate]) {
+        toolbarView.updateSuggestions(candidates)
     }
 
     @objc private func accessibilityAppearanceDidChange() {

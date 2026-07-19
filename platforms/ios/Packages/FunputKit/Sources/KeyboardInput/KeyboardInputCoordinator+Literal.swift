@@ -5,6 +5,7 @@ extension KeyboardInputCoordinator {
         composer.clear()
         shiftController.resetTapSequence()
         documentSynchronizer.invalidate()
+        resetPersonalSuggestionTracking()
     }
 
     /// Inserts text exactly as supplied, bypassing Vietnamese composition.

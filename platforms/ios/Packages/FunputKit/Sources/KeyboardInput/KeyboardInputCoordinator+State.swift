@@ -14,6 +14,7 @@ extension KeyboardInputCoordinator {
             composer.clear()
             shiftController.resetTapSequence()
             documentSynchronizer.invalidate()
+            resetPersonalSuggestionTracking()
         }
         replaceState(
             shiftState: inputContextChanged ? .lowercase : state.shiftState,
@@ -41,12 +42,14 @@ extension KeyboardInputCoordinator {
         let next: KeyboardInputMethod = state.inputMethod == .vni ? .telex : .vni
         composer.clear()
         composer.setInputMethod(next.engineMethod)
+        resetPersonalSuggestionTracking()
         replaceState(inputMethod: next)
     }
 
     public func toggleLanguage() {
         guard state.editorMode.supportsVietnameseComposition else { return }
         composer.clear()
+        resetPersonalSuggestionTracking()
         let next: KeyboardLanguage = state.language == .vietnamese ? .english : .vietnamese
         replaceState(language: next)
         composer.setEnabled(state.usesVietnameseComposition)
@@ -56,6 +59,7 @@ extension KeyboardInputCoordinator {
         composer.clear()
         shiftController.resetTapSequence()
         documentSynchronizer.invalidate()
+        resetPersonalSuggestionTracking()
     }
 
     func updateLayoutMode(_ mode: KeyboardLayoutMode) {
@@ -81,6 +85,9 @@ extension KeyboardInputCoordinator {
             language: language ?? state.language,
             autocapitalization: autocapitalization ?? state.autocapitalization
         )
+        suggestionTrackingActive = personalSuggestionsEnabled
+            && state.language == .vietnamese
+            && state.editorMode.supportsVietnameseComposition
     }
 }
 #endif

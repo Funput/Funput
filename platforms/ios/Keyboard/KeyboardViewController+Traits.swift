@@ -40,6 +40,7 @@ extension KeyboardViewController {
         let previousState = inputCoordinator.state
         let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
         inputCoordinator.synchronizeDocument(document, event: event)
+        publishPersonalSuggestionUpdate()
         if inputCoordinator.state != previousState {
             updateInputPresentation()
         }

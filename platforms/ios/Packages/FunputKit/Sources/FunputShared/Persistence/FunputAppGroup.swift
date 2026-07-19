@@ -19,6 +19,12 @@ public enum FunputAppGroup {
     /// Set by the keyboard after iOS confirms that Full Access is active.
     public static let observedFullAccessKey = "observed-full-access"
 
+    /// Reset command acknowledged only by the keyboard extension writer.
+    public static let personalSuggestionAppliedResetKey = "personal-suggestion-applied-reset"
+
+    /// Directory containing the private Rust snapshot and journal.
+    public static let personalSuggestionsDirectory = "PersonalSuggestions"
+
     /// Encoded custom keyboard themes shared with the extension.
     public static let customThemesKey = "custom-themes"
 }

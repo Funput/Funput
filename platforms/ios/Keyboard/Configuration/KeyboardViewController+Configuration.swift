@@ -28,6 +28,7 @@ extension KeyboardViewController {
         keyboardView.backgroundImage = image
         emojiView.backgroundImage = image
         inputCoordinator.apply(configuration)
+        configurePersonalSuggestions()
         updateInputPresentation()
     }
 }

@@ -20,6 +20,7 @@ final class KeyboardViewController: UIInputViewController {
     let accessStateStore = KeyboardAccessStateStore()
     let customThemeStore = CustomThemeStore()
     let themeAssetStore = ThemeAssetStore()
+    let personalSuggestionService = PersonalSuggestionService()
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     var themeCatalog = ThemeCatalog()
@@ -36,6 +37,7 @@ final class KeyboardViewController: UIInputViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         installKeyboardView()
+        installPersonalSuggestions()
         reloadConfiguration()
         updateTextInputTraits(force: true)
     }

@@ -20,6 +20,8 @@ public extension KeyboardInputCoordinator {
         composer.setAutoCapitalize(configuration.autoCapitalize)
         shiftController.resetTapSequence()
         documentSynchronizer.invalidate()
+        personalSuggestionsEnabled = configuration.personalSuggestionsEnabled
+        resetPersonalSuggestionTracking()
         replaceState(inputMethod: configuration.inputMethod, language: configuration.language)
         composer.setEnabled(state.usesVietnameseComposition)
     }

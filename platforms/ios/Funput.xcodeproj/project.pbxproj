@@ -27,6 +27,8 @@
 		FA2600000000000000000210 /* FunputShared in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000124 /* FunputShared */; };
 		FA2600000000000000000211 /* ThemeRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000125 /* ThemeRuntime */; };
 		FA2600000000000000000212 /* ThemeSchema in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000126 /* ThemeSchema */; };
+		FA2600000000000000000213 /* PersonalSuggestions in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000119 /* PersonalSuggestions */; };
+		FA2600000000000000000214 /* PersonalSuggestions in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000127 /* PersonalSuggestions */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -127,6 +129,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA2600000000000000000214 /* PersonalSuggestions in Frameworks */,
 				5FEF3E313009341000B5155D /* KeyboardInput in Frameworks */,
 				FA260000000000000000020E /* KeyboardLayout in Frameworks */,
 				FA260000000000000000020F /* KeyboardRenderer in Frameworks */,
@@ -147,6 +150,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA2600000000000000000213 /* PersonalSuggestions in Frameworks */,
 				FA2600000000000000000208 /* KeyboardInput in Frameworks */,
 				FA2600000000000000000207 /* FunputEngine in Frameworks */,
 				FA2600000000000000000206 /* KeyboardRenderer in Frameworks */,
@@ -233,6 +237,7 @@
 			);
 			name = FunputTests;
 			packageProductDependencies = (
+				FA2600000000000000000127 /* PersonalSuggestions */,
 				FA2600000000000000000121 /* KeyboardInput */,
 				FA2600000000000000000122 /* KeyboardLayout */,
 				FA2600000000000000000123 /* KeyboardRenderer */,
@@ -284,6 +289,7 @@
 			);
 			name = Keyboard;
 			packageProductDependencies = (
+				FA2600000000000000000119 /* PersonalSuggestions */,
 				FA2600000000000000000115 /* KeyboardInput */,
 				FA2600000000000000000114 /* FunputEngine */,
 				FA2600000000000000000111 /* KeyboardLayout */,
@@ -897,6 +903,11 @@
 			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
 			productName = KeyboardConfiguration;
 		};
+		FA2600000000000000000119 /* PersonalSuggestions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = PersonalSuggestions;
+		};
 		FA2600000000000000000121 /* KeyboardInput */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
@@ -926,6 +937,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
 			productName = ThemeSchema;
+		};
+		FA2600000000000000000127 /* PersonalSuggestions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = PersonalSuggestions;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

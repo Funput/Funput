@@ -10,6 +10,7 @@ struct SettingsScreen: View {
     @State private var confirmsReset = false
     @State private var requestsHapticAccess = false
     @State private var requestsSoundAccess = false
+    @State private var confirmsSuggestionReset = false
 
     init(store: any FunputConfigurationStoring = FunputConfigurationStore()) {
         _model = State(initialValue: SettingsModel(store: store))
@@ -52,6 +53,10 @@ struct SettingsScreen: View {
                     isOn: model.boolBinding(\.autoCapitalize)
                 )
             }
+            PersonalSuggestionSettingsCard(
+                isEnabled: model.boolBinding(\.personalSuggestionsEnabled),
+                reset: { confirmsSuggestionReset = true }
+            )
             SettingsSectionCard(title: "Phản hồi", systemImage: "hand.tap") {
                 SettingsToggleRow(
                     title: "Rung khi gõ",
@@ -81,6 +86,13 @@ struct SettingsScreen: View {
             Button("Khôi phục", role: .destructive) { model.reset() }
         } message: {
             Text("Các tùy chỉnh bộ gõ hiện tại sẽ bị thay thế.")
+        }
+        .confirmationDialog("Xóa toàn bộ từ đã học?", isPresented: $confirmsSuggestionReset) {
+            Button("Xóa từ đã học", role: .destructive) {
+                model.requestPersonalSuggestionReset()
+            }
+        } message: {
+            Text("Lệnh xóa được thực hiện cục bộ khi Funput mở bàn phím lần tiếp theo.")
         }
         .alert("Không thể lưu cài đặt", isPresented: model.saveErrorBinding) {
             Button("Đóng", role: .cancel) {}

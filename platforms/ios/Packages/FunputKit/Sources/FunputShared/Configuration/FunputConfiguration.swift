@@ -1,3 +1,4 @@
+import Foundation
 import KeyboardLayout
 
 /// The durable, user-facing settings shared between the containing app and the
@@ -21,13 +22,16 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var showsNumberRow: Bool
     public var showsGlobeKey: Bool
     public var heightScale: Double
+    public var personalSuggestionsEnabled: Bool
+    public var personalSuggestionResetToken: UUID?
     public var schemaVersion: Int
 
     enum CodingKeys: String, CodingKey {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
         case eagerRestore, autoCapitalize, selectedThemeID
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
-        case showsNumberRow, showsGlobeKey, heightScale, schemaVersion
+        case showsNumberRow, showsGlobeKey, heightScale
+        case personalSuggestionsEnabled, personalSuggestionResetToken, schemaVersion
     }
 
     public init(
@@ -45,6 +49,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         showsNumberRow: Bool = false,
         showsGlobeKey: Bool = false,
         heightScale: Double = 1.1,
+        personalSuggestionsEnabled: Bool = true,
+        personalSuggestionResetToken: UUID? = nil,
         schemaVersion: Int = FunputConfiguration.currentSchemaVersion
     ) {
         self.inputMethod = inputMethod
@@ -61,6 +67,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.showsNumberRow = showsNumberRow
         self.showsGlobeKey = showsGlobeKey
         self.heightScale = heightScale
+        self.personalSuggestionsEnabled = personalSuggestionsEnabled
+        self.personalSuggestionResetToken = personalSuggestionResetToken
         self.schemaVersion = schemaVersion
     }
 
@@ -69,5 +77,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 5
+    public static let currentSchemaVersion = 6
 }
