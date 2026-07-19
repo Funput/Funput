@@ -26,6 +26,10 @@
 mod compose;
 mod config;
 mod shortcuts;
+mod suggestion_query;
+mod suggestion_store;
+mod suggestion_types;
+mod suggestions;
 mod support;
 mod types;
 
@@ -41,6 +45,19 @@ pub use config::{
     funput_set_spell_check, funput_set_tone_style,
 };
 pub use shortcuts::{funput_add_shortcut, funput_clear_shortcuts};
+pub use suggestion_query::{funput_suggestion_learn, funput_suggestion_query};
+pub use suggestion_store::{
+    funput_suggestion_compact, funput_suggestion_flush, funput_suggestion_reset,
+    funput_suggestion_stats,
+};
+pub use suggestion_types::{
+    FunputSuggestionCandidate, FunputSuggestionResult, FunputSuggestionStats, SUGGESTION_CAP,
+    SUGGESTION_CHARS_CAP,
+};
+pub use suggestions::{
+    FunputSuggestionEngine, funput_suggestion_engine_free, funput_suggestion_engine_new_in_memory,
+    funput_suggestion_engine_open,
+};
 pub use types::{ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputResult};
 
 /// Opaque IME engine handle for C callers. Create with [`funput_engine_new`],

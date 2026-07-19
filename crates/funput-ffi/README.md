@@ -22,6 +22,10 @@ tự map keycode → char). Mọi hàm **null-safe** (handle null / codepoint kh
 (`catch_unwind`), nên panic trong engine bị chặn tại biên và trả kết quả no-op — **không bao giờ**
 unwind sang host (điều sẽ abort cả tiến trình IME).
 
+Personal suggestion dùng một opaque handle riêng (`FunputSuggestionEngine`). Query trả tối đa ba
+candidate UTF-32 bằng POD; open/learn/flush/compact/reset lỗi đều trả null, `false` hoặc kết quả rỗng.
+Handle này chỉ được gọi tuần tự trên worker của platform và không tham gia đường compose.
+
 ```c
 typedef struct FunputEngine FunputEngine;   // opaque handle
 
@@ -93,6 +97,8 @@ src/lib.rs          # module root: opaque FunputEngine + new/free + re-export su
 src/config.rs       # 7 setter: method/tone_style/enabled/smart|eager_restore/spell/autocap
 src/compose.rs      # process_char/backspace/flip_composing/clear/arm/buffer
 src/shortcuts.rs    # add_shortcut/clear_shortcuts (gõ tắt)
+src/suggestions.rs  # personal suggestion handle + API fail-silent
+src/suggestion_types.rs # POD top-3 candidate/stats
 src/support.rs      # safe(): catch_unwind guard cho biên C
 src/types.rs        # #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 cbindgen.toml
@@ -109,7 +115,7 @@ Lưu ý edition 2024: dùng `#[unsafe(no_mangle)]` và `unsafe { }` tường min
 
 ## Phụ thuộc & ai gọi
 
-- `funput-ffi → funput-engine → funput-core`.
+- `funput-ffi → funput-engine → funput-core`, và `funput-ffi → funput-suggestions` độc lập.
 - Consumer: `platforms/macos` (Swift, bridging header) và `platforms/linux/fcitx5` (C++,
   `ffi_handle.h`). **Không** dùng: `funput-cli`, Windows shell (đều link engine trực tiếp).
 
