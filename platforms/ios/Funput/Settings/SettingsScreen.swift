@@ -18,7 +18,9 @@ struct SettingsScreen: View {
 
     var body: some View {
         AppScreen {
-            KeyboardSetupCard()
+            KeyboardSetupCard(hasFullAccess: model.hasFullAccess) {
+                openURL(URL(string: UIApplication.openSettingsURLString)!)
+            }
             SettingsSectionCard(title: "Bàn phím", systemImage: "keyboard") {
                 SettingsSelectionRow(option: .inputMethod, value: model.inputMethodLabel) { picker = .inputMethod }
                 SettingsToggleRow(
