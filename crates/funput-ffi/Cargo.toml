@@ -12,9 +12,11 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 [dependencies]
 funput-core = { path = "../funput-core" }
 funput-engine = { path = "../funput-engine" }
+funput-suggestions = { path = "../funput-suggestions" }
 
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
+tempfile = "3.27.0"
 
 [[bench]]
 name = "latency"
@@ -22,4 +24,8 @@ harness = false
 
 [[bench]]
 name = "advanced_telex"
+harness = false
+
+[[bench]]
+name = "suggestions"
 harness = false

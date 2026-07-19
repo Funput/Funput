@@ -16,6 +16,10 @@
 
 #define METHOD_TELEX_ADVANCED 2
 
+#define SUGGESTION_CAP 3
+
+#define SUGGESTION_CHARS_CAP 32
+
 /**
  * Max output codepoints carried inline. Generous enough for English-restore of
  * long words; longer output is truncated (practically never happens).
@@ -38,6 +42,12 @@
 typedef struct FunputEngine FunputEngine;
 
 /**
+ * Opaque, single-owner personal suggestion handle. It is independent from the
+ * Vietnamese composition engine and must be driven from a serial worker.
+ */
+typedef struct FunputSuggestionEngine FunputSuggestionEngine;
+
+/**
  * Result of one keystroke, returned by value (POD, no allocation, no free).
  *
  * `chars[0..count]` are the output codepoints (UTF-32) to inject after deleting
@@ -49,6 +59,27 @@ typedef struct {
     uint32_t count;
     uint32_t chars[CHARS_CAP];
 } FunputResult;
+
+typedef struct {
+    uint32_t count;
+    uint32_t chars[SUGGESTION_CHARS_CAP];
+} FunputSuggestionCandidate;
+
+typedef struct {
+    uint32_t count;
+    FunputSuggestionCandidate candidates[SUGGESTION_CAP];
+} FunputSuggestionResult;
+
+typedef struct {
+    uint32_t words;
+    uint32_t promoted_words;
+    uint32_t exact_nodes;
+    uint32_t folded_nodes;
+    uint32_t pending_mutations;
+    uint64_t journal_bytes;
+    uint64_t estimated_heap_bytes;
+    uint64_t last_snapshot_bytes;
+} FunputSuggestionStats;
 
 #ifdef __cplusplus
 extern "C" {
@@ -225,6 +256,74 @@ void funput_add_shortcut(FunputEngine *engine,
  * `engine` must be a valid handle or null.
  */
 void funput_clear_shortcuts(FunputEngine *engine);
+
+FunputSuggestionEngine *funput_suggestion_engine_new_in_memory(void);
+
+/**
+ * Open a local store from a UTF-8 path. Failure returns null without logging.
+ *
+ * # Safety
+ * `path` must point to `path_len` readable bytes, or be null.
+ */
+FunputSuggestionEngine *funput_suggestion_engine_open(const uint8_t *path, uintptr_t path_len);
+
+/**
+ * # Safety
+ * `engine` must be a live suggestion handle or null.
+ */
+void funput_suggestion_engine_free(FunputSuggestionEngine *engine);
+
+/**
+ * Record one completed UTF-32 token. Returns false for invalid input or failure.
+ *
+ * # Safety
+ * `token` must point to `token_len` readable codepoints, or be null.
+ */
+bool funput_suggestion_learn(FunputSuggestionEngine *engine,
+                             const uint32_t *token,
+                             uintptr_t token_len);
+
+/**
+ * Return at most three UTF-32 candidates by value. Any failure returns empty.
+ *
+ * # Safety
+ * `prefix` must point to `prefix_len` readable codepoints, or be null.
+ */
+FunputSuggestionResult funput_suggestion_query(const FunputSuggestionEngine *engine,
+                                               const uint32_t *prefix,
+                                               uintptr_t prefix_len);
+
+/**
+ * Flush pending learned tokens to the journal.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used concurrently.
+ */
+bool funput_suggestion_flush(FunputSuggestionEngine *engine);
+
+/**
+ * Replace the journal with a compact crash-safe snapshot.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used concurrently.
+ */
+bool funput_suggestion_compact(FunputSuggestionEngine *engine);
+
+/**
+ * Remove all learned words from memory and local persistence.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used concurrently.
+ */
+bool funput_suggestion_reset(FunputSuggestionEngine *engine);
+
+/**
+ * Return counters and byte estimates without exposing learned text.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used concurrently.
+ */
+FunputSuggestionStats funput_suggestion_stats(const FunputSuggestionEngine *engine);
 
 #ifdef __cplusplus
 }  // extern "C"

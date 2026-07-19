@@ -22,6 +22,10 @@ yields a `None` result) and **panic-safe**: every entry point that touches the e
 `support::safe()` (`catch_unwind`), so a panic in the engine is caught at the boundary and turned into a
 no-op result — it **never** unwinds into the host (which would abort the whole IME process).
 
+Personal suggestions use a separate opaque `FunputSuggestionEngine` handle. Queries return at most
+three UTF-32 candidates as a POD; open/learn/flush/compact/reset failures return null, `false`, or an
+empty result. Platforms drive this handle serially on a worker, never from the composition path.
+
 ```c
 typedef struct FunputEngine FunputEngine;   // opaque handle
 
@@ -94,6 +98,8 @@ src/lib.rs          # module root: opaque FunputEngine + new/free + re-export su
 src/config.rs       # 7 setters: method/tone_style/enabled/smart|eager_restore/spell/autocap
 src/compose.rs      # process_char/backspace/flip_composing/clear/arm/buffer
 src/shortcuts.rs    # add_shortcut/clear_shortcuts (text expansion, "gõ tắt")
+src/suggestions.rs  # fail-silent personal suggestion handle/API
+src/suggestion_types.rs # fixed top-3 candidate/stats PODs
 src/support.rs      # safe(): catch_unwind guard for the C boundary
 src/types.rs        # #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 cbindgen.toml
@@ -110,7 +116,7 @@ Edition 2024 note: use `#[unsafe(no_mangle)]` and explicit `unsafe { }` around `
 
 ## Dependencies & callers
 
-- `funput-ffi → funput-engine → funput-core`.
+- `funput-ffi → funput-engine → funput-core`, plus independent `funput-ffi → funput-suggestions`.
 - Consumers: `platforms/macos` (Swift, bridging header) and `platforms/linux/fcitx5` (C++,
   `ffi_handle.h`). **Not** used by: `funput-cli`, the Windows shell (both link the engine directly).
 

@@ -7,7 +7,12 @@ tab_width = 4
 style = "type"
 
 [export]
-include = ["FunputResult"]
+include = [
+    "FunputResult",
+    "FunputSuggestionCandidate",
+    "FunputSuggestionResult",
+    "FunputSuggestionStats",
+]
 
 [parse]
 parse_deps = false

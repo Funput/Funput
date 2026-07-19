@@ -484,6 +484,8 @@ dependencies = [
  "criterion",
  "funput-core",
  "funput-engine",
+ "funput-suggestions",
+ "tempfile",
 ]
 
 [[package]]
@@ -493,6 +495,16 @@ dependencies = [
  "funput-core",
  "funput-engine",
  "jni",
+]
+
+[[package]]
+name = "funput-suggestions"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "proptest",
+ "tempfile",
+ "unicode-normalization",
 ]
 
 [[package]]
