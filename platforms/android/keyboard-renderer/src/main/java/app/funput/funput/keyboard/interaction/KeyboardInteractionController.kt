@@ -80,6 +80,12 @@ internal class KeyboardInteractionController(
         dispatchTarget(keyId, key, selection = null, eventTimeMillis)
     }
 
+    fun onAccessibilitySuggestion(targetId: String) {
+        val selection = suggestionSelection(targetId) ?: return
+        KeyHapticTypeMapper.forTarget(key = null, isSuggestion = true)?.let(onHapticFeedback)
+        onSuggestionSelected(selection)
+    }
+
     fun setLanguage(value: KeyboardLanguage) {
         if (language == value) return
         language = value

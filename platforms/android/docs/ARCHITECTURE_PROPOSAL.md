@@ -1,7 +1,7 @@
 # Đề xuất kiến trúc Funput cho Android
 
 > Trạng thái: Bản đề xuất để thảo luận, chưa phải đặc tả đóng băng  
-> Cập nhật: 30/06/2026  
+> Cập nhật: 19/07/2026
 > Phạm vi: Bàn phím tiếng Việt Funput trên Android, sử dụng lại Rust core hiện có
 
 ## 1. Tóm tắt quyết định
@@ -638,6 +638,14 @@ Activity và service cùng process trong MVP sẽ đơn giản nhất. Settings 
 
 Nếu sau này tách IME sang process riêng để tăng isolation, không dựa vào SharedPreferences multi-process. Khi đó dùng một contract IPC/ContentProvider rõ ràng hoặc file snapshot atomic được thiết kế riêng.
 
+### 15.4. Personal Suggestions
+
+- `funput-suggestions` sở hữu lexicon độc lập với composer; JNI dùng handle riêng và chỉ chạy trên một `HandlerThread` tuần tự.
+- IME chỉ học token do chính Funput tạo từ composing buffer cuối cùng, không đọc host context để học.
+- Lookup chạy hoàn toàn trong memory; snapshot và journal nằm tại `noBackupFilesDir/PersonalSuggestions`, không tham gia cloud backup.
+- Query được coalesce theo generation. Kết quả cũ, lỗi JNI/I/O hoặc store hỏng đều trở thành danh sách rỗng và không được chặn luồng gõ.
+- Password, email, URI, keypad, `NO_SUGGESTIONS`, `NO_PERSONALIZED_LEARNING` và host autocomplete không dùng personal lexicon.
+
 ## 16. Privacy và security
 
 Keyboard là loại ứng dụng có mức độ tin cậy đặc biệt. Privacy phải là tính năng sản phẩm nổi bật.
@@ -650,6 +658,7 @@ Keyboard là loại ứng dụng có mức độ tin cậy đặc biệt. Privac
 - Không gửi network request từ input pipeline.
 - Password field không candidate, preview hoặc learning.
 - Không lưu surrounding text để debug.
+- Personal lexicon không có network, telemetry hoặc đồng bộ cross-device; trace chỉ dùng tên section cố định và counter số.
 - Theme package không chạy code.
 - Theme URL và package phải xác minh TLS, hash và signature.
 

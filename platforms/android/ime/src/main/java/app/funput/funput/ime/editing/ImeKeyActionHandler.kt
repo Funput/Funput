@@ -14,6 +14,7 @@ internal class ImeKeyActionHandler(
     private val enterCommand: () -> ImeEditCommand,
 ) {
     private var compositionAllowed = true
+    private val suggestionTracker = AuthoredTokenTracker()
 
     var language: KeyboardLanguage = KeyboardLanguage.VIETNAMESE
         private set
@@ -23,6 +24,7 @@ internal class ImeKeyActionHandler(
         composition.reset()
         composition.setInputMethod(inputMethod)
         composition.setEnabled(usesComposition)
+        suggestionTracker.reset()
     }
 
     fun onKeyAction(action: KeyAction) {
@@ -43,24 +45,52 @@ internal class ImeKeyActionHandler(
 
     fun onEmojiSelected(emoji: String) = commitExternalText(emoji)
 
-    fun onSuggestionSelected(selection: SuggestionSelection) = commitExternalText(selection.text)
-
-    fun finish() = composition.finish(connection())
+    fun finish() {
+        composition.finish(connection())
+        suggestionTracker.reset()
+    }
 
     fun onSelectionChanged(newStart: Int, newEnd: Int, composingEnd: Int) {
         if (composition.isComposing && (newStart != composingEnd || newEnd != composingEnd)) finish()
     }
 
+    fun takeSuggestionUpdate(): AuthoredSuggestionUpdate = suggestionTracker.consume()
+
+    fun acceptSuggestion(candidate: String, prefix: String): Boolean {
+        if (!usesComposition || composition.composingText != prefix) return false
+        val current = connection() ?: return false
+        if (!current.getSelectedText(0).isNullOrEmpty()) return false
+        val suffix = current.getTextBeforeCursor(prefix.length, 0)?.toString() ?: return false
+        if (!suffix.endsWith(prefix)) return false
+        current.beginBatchEdit()
+        val accepted = try {
+            composition.acceptSuggestion(current, prefix, candidate)
+        } finally {
+            current.endBatchEdit()
+        }
+        if (accepted) suggestionTracker.accepted(candidate)
+        return accepted
+    }
+
     private fun inputText(text: String) {
         if (usesComposition) {
-            composition.input(connection(), text)
+            val current = connection()
+            if (current == null) return suggestionTracker.reset()
+            composition.input(current, text)
+            updateSuggestionTracker()
         } else {
             execute(ImeEditCommand.CommitText(text))
+            suggestionTracker.reset()
         }
     }
 
     private fun backspace() {
-        if (!composition.backspace(connection())) execute(ImeEditCommand.DeleteBackward)
+        if (!composition.backspace(connection())) {
+            execute(ImeEditCommand.DeleteBackward)
+            suggestionTracker.reset()
+        } else {
+            updateSuggestionTracker()
+        }
     }
 
     private fun enter() {
@@ -78,6 +108,7 @@ internal class ImeKeyActionHandler(
         finish()
         language = value
         composition.setEnabled(usesComposition)
+        suggestionTracker.reset()
     }
 
     private fun commitExternalText(text: String) {
@@ -91,6 +122,10 @@ internal class ImeKeyActionHandler(
 
     private val usesComposition: Boolean
         get() = compositionAllowed && language == KeyboardLanguage.VIETNAMESE
+
+    private fun updateSuggestionTracker() {
+        suggestionTracker.update(composition.composingText, composition.takeCompletedToken())
+    }
 
     private companion object {
         val NewLineCommand = ImeEditCommand.CommitText("\n")

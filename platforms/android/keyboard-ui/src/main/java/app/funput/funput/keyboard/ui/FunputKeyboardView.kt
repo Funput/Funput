@@ -76,6 +76,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         }
         keyboardSurface.visibility = View.GONE
         panel.visibility = View.VISIBLE
+        callbacks.dispatchPanelChanged(KeyboardPanel.EMOJI)
     }
 
     fun showSymbolsPanel(mode: KeyboardLayoutMode = KeyboardLayoutMode.SYMBOLS_PRIMARY) {
@@ -85,6 +86,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         keyboardSurface.layoutMode = mode
         keyboardSurface.visibility = View.VISIBLE
         syncSuggestions()
+        callbacks.dispatchPanelChanged(KeyboardPanel.SYMBOLS)
     }
 
     fun showLettersPanel() {
@@ -93,6 +95,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         keyboardSurface.layoutMode = KeyboardLayoutMode.LETTERS
         keyboardSurface.visibility = View.VISIBLE
         syncSuggestions()
+        callbacks.dispatchPanelChanged(KeyboardPanel.LETTERS)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

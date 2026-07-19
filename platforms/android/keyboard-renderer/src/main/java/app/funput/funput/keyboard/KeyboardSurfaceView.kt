@@ -1,5 +1,4 @@
 package app.funput.funput.keyboard
-
 import android.content.Context
 import android.graphics.Canvas
 import android.os.SystemClock
@@ -23,8 +22,6 @@ import app.funput.funput.keyboard.surface.KeyboardSurfaceLayoutState
 import app.funput.funput.keyboard.surface.KeyboardSurfaceRenderController
 import app.funput.funput.keyboard.surface.createKeyboardSurfaceInteraction
 import kotlin.math.roundToInt
-
-/** Low-allocation keyboard surface that coordinates Android's [View] lifecycle. */
 class KeyboardSurfaceView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -46,7 +43,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var keyboardTheme by render::keyboardTheme
     var keyboardThemeBackgroundImage by render::keyboardThemeBackgroundImage
     var sizingProfile: KeyboardSizingProfile by render::sizingProfile
-    var suggestions: List<String> by render::suggestions
+    var suggestions: List<String>
+        get() = render.suggestions
+        set(value) = suggestionState.update(value)
     var enterAction by render::enterAction
     val callbacks = KeyboardCallbacks()
     var shiftState: ShiftState
@@ -59,6 +58,11 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     private val accessibility = KeyboardSurfaceAccessibilityController(
         host = this,
         activate = ::performAccessibilityClick,
+    )
+    private val suggestionState = KeyboardSurfaceSuggestionState(
+        density = { resources.displayMetrics.density },
+        keyboard = { resolvedKeyboard },
+        apply = { values -> render.suggestions = values; refreshAccessibilitySnapshot() },
     )
     private val interaction: KeyboardSurfaceInteraction = createKeyboardSurfaceInteraction(
         host = this,
@@ -78,8 +82,6 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         interaction = interaction,
         dispatchAccessibilityHover = accessibility::dispatchHover,
     )
-
-    /** Enables touch and accessibility actions; disable for a read-only theme preview. */
     var interactionEnabled: Boolean
         get() = events.enabled
         set(value) {
@@ -121,11 +123,11 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     }
     private fun resolveGeometry() {
         resolvedKeyboard = layoutState.layout.resolveGeometry(
-            width = width,
-            height = height,
+            width = width, height = height,
             density = resources.displayMetrics.density,
             profile = sizingProfile,
         )
+        suggestionState.geometryChanged()
         refreshAccessibilitySnapshot()
     }
     private fun updateKeyboardLayout() {
@@ -134,10 +136,14 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         resolveGeometry()
         invalidate()
     }
-    private fun performAccessibilityClick(keyId: String) =
-        interaction.performAccessibilityClick(keyId, SystemClock.uptimeMillis())
+    private fun performAccessibilityClick(keyId: String) {
+        val selection = render.suggestions.selectionForTarget(keyId)
+        if (selection != null) interaction.performAccessibilitySuggestionClick(keyId) else {
+            interaction.performAccessibilityClick(keyId, SystemClock.uptimeMillis())
+        }
+    }
     private fun invalidateAccessibility() = refreshAccessibilitySnapshot()
     private fun refreshAccessibilitySnapshot() {
-        accessibility.refresh(resolvedKeyboard, shiftState)
+        accessibility.refresh(resolvedKeyboard, shiftState, render.suggestions)
     }
 }

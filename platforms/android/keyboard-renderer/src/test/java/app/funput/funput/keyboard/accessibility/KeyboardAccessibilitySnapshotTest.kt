@@ -51,10 +51,21 @@ class KeyboardAccessibilitySnapshotTest {
         assertEquals(key, snapshot.node(key.virtualId))
     }
 
+    @Test
+    fun `personal candidates are exposed as full height virtual nodes`() {
+        val snapshot = snapshot(suggestions = listOf("xin", "chào", "bạn"))
+        val candidates = snapshot.nodes.filter { it.keyId.startsWith("suggestion-") }
+
+        assertEquals(listOf("Gợi ý, xin", "Gợi ý, chào", "Gợi ý, bạn"), candidates.map { it.label })
+        assertEquals(3, candidates.size)
+        assertTrue(candidates.all { it.hitBounds.height > 0f })
+    }
+
     private fun snapshot(
         shiftState: ShiftState = ShiftState.OFF,
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
         systemSwitcherVisible: Boolean = false,
+        suggestions: List<String> = emptyList(),
     ): KeyboardAccessibilitySnapshot {
         val profile = KeyboardSizingProfile.Normal
         val layout = KeyboardLayoutResolver.resolve(
@@ -69,6 +80,6 @@ class KeyboardAccessibilitySnapshotTest {
             density = 1f,
             profile = profile,
         ))
-        return KeyboardAccessibilitySnapshot(keyboard, shiftState)
+        return KeyboardAccessibilitySnapshot(keyboard, shiftState, suggestions)
     }
 }

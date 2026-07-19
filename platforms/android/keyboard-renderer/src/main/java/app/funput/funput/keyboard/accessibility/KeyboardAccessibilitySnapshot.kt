@@ -4,24 +4,34 @@ import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.interaction.SuggestionTargetIds
 
 /** Immutable virtual-node snapshot consumed by TalkBack and unit tests. */
 internal class KeyboardAccessibilitySnapshot(
     keyboard: ResolvedKeyboard,
     shiftState: ShiftState,
+    suggestions: List<String> = emptyList(),
 ) {
-    val nodes: List<KeyboardAccessibilityNode> = keyboard.keys
-        .filterNot { it.spec.role == KeyRole.PLACEHOLDER }
-        .mapIndexed { index, key ->
+    val nodes: List<KeyboardAccessibilityNode> = buildList {
+        keyboard.keys.filterNot { it.spec.role == KeyRole.PLACEHOLDER }.forEach { key ->
             KeyboardAccessibilityNode(
-                virtualId = index,
+                virtualId = size,
                 keyId = key.spec.id,
                 label = key.accessibilityLabel(shiftState),
                 bounds = key.bounds,
                 hitBounds = key.hitBounds,
                 selected = key.spec.role == KeyRole.SHIFT && shiftState != ShiftState.OFF,
-            )
+            ).let(::add)
         }
+        val bounds = keyboard.suggestionBar?.suggestionsBounds
+        if (bounds != null && suggestions.isNotEmpty()) {
+            val width = bounds.width / suggestions.size
+            suggestions.forEachIndexed { index, text ->
+                val segment = KeyBounds(bounds.left + width * index, bounds.top, bounds.left + width * (index + 1), bounds.bottom)
+                add(KeyboardAccessibilityNode(size, SuggestionTargetIds.id(index), "Gợi ý, $text", segment, segment, false))
+            }
+        }
+    }
 
     fun node(virtualId: Int): KeyboardAccessibilityNode? = nodes.getOrNull(virtualId)
 

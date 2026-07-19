@@ -9,14 +9,16 @@ import app.funput.funput.ime.editing.ImeEditorRuntime
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
+import app.funput.funput.ime.settings.PersonalSuggestionSettings
+import app.funput.funput.ime.suggestions.PersonalSuggestionService
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
-import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 /** System entry point that owns the Funput keyboard view inside the IME window. */
 class FunputInputMethodService : InputMethodService() {
@@ -29,10 +31,18 @@ class FunputInputMethodService : InputMethodService() {
     private lateinit var actionHandler: ImeKeyActionHandler
     private lateinit var editorRuntime: ImeEditorRuntime
     private lateinit var settings: ImeSettingsController
+    private lateinit var suggestionService: PersonalSuggestionService
+    private lateinit var suggestionSettings: PersonalSuggestionSettings
 
     override fun onCreate() {
         super.onCreate()
         nativeEngine = NativeVietnameseEngine()
+        suggestionSettings = PersonalSuggestionSettings(this)
+        suggestionService = PersonalSuggestionService(
+            context = this,
+            show = { values -> keyboardView?.suggestions = values },
+            acknowledgeReset = { token -> serviceScope.launch { suggestionSettings.acknowledgeReset(token) } },
+        )
         editorRuntime = ImeEditorRuntime(
             cursorCapsMode = { modes -> currentInputConnection?.getCursorCapsMode(modes) ?: 0 },
             currentShiftState = { keyboardView?.shiftState ?: ShiftState.OFF },
@@ -50,28 +60,27 @@ class FunputInputMethodService : InputMethodService() {
             engine = nativeEngine,
             onInputMethodChanged = ::restartComposition,
             onViewSettingsChanged = { keyboardView?.let(::updateInputView) },
+            onPersonalSuggestionsChanged = suggestionService::configure,
         )
         settings.observe(this, serviceScope)
     }
-
     override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
         keyboardView = view
         updateInputView(view)
-        bindCallbacks(view)
+        ImeKeyboardCallbackBinder.bind(view, actionHandler, editorRuntime, suggestionService,
+            systemInputMethodSwitcher)
     }
-
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         editorRuntime.configure(attribute)
         actionHandler.start(settings.inputMethod, editorRuntime.policy.editorMode.supportsVietnameseComposition)
+        suggestionService.start(editorRuntime.policy)
     }
-
     override fun onStartInputView(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInputView(attribute, restarting)
         keyboardView?.let(::updateInputView)
         editorRuntime.updateCapitalization(preserveCapsLock = false)
     }
-
     override fun onUpdateSelection(
         oldSelStart: Int,
         oldSelEnd: Int,
@@ -80,25 +89,30 @@ class FunputInputMethodService : InputMethodService() {
         candidatesStart: Int,
         candidatesEnd: Int,
     ) {
-        super.onUpdateSelection(
-            oldSelStart,
-            oldSelEnd,
-            newSelStart,
-            newSelEnd,
-            candidatesStart,
-            candidatesEnd,
-        )
+        super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
+            candidatesStart, candidatesEnd)
         actionHandler.onSelectionChanged(newSelStart, newSelEnd, candidatesEnd)
+        suggestionService.consume(actionHandler.takeSuggestionUpdate())
         editorRuntime.updateCapitalization()
     }
-
     override fun onDisplayCompletions(completions: Array<out CompletionInfo>?) =
         editorRuntime.updateCompletions(completions)
 
     override fun onFinishInput() {
         actionHandler.finish()
         editorRuntime.finish()
+        suggestionService.finish()
         super.onFinishInput()
+    }
+
+    override fun onWindowHidden() {
+        suggestionService.flush()
+        super.onWindowHidden()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        suggestionService.flush()
+        super.onTrimMemory(level)
     }
 
     override fun onDestroy() {
@@ -106,25 +120,17 @@ class FunputInputMethodService : InputMethodService() {
         actionHandler.finish()
         editorRuntime.finish()
         keyboardView = null
+        suggestionService.close()
         // super.onDestroy() re-enters onFinishInput() while input is still open, which
         // routes back through the engine; close it only after the framework is done.
         super.onDestroy()
         nativeEngine.close()
     }
 
-    private fun bindCallbacks(view: FunputKeyboardView) = with(view.callbacks) {
-        onKeyAction = actionHandler::onKeyAction
-        onInputMethodSwitchRequested = {
-            actionHandler.finish()
-            systemInputMethodSwitcher.switch()
-        }
-        onEmojiSelected = actionHandler::onEmojiSelected
-        onSuggestionSelected = ::onSuggestionSelected
-    }
-
     private fun restartComposition(method: KeyboardInputMethod) {
         actionHandler.finish()
         actionHandler.start(method, editorRuntime.policy.editorMode.supportsVietnameseComposition)
+        suggestionService.start(editorRuntime.policy)
         keyboardView?.inputMethod = method
     }
 
@@ -140,11 +146,5 @@ class FunputInputMethodService : InputMethodService() {
             keyboardThemeBackgroundImage = descriptor.backgroundImage,
             systemInputMethodSwitcherVisible = systemInputMethodSwitcher.isAvailable(),
         )
-    }
-
-    private fun onSuggestionSelected(selection: SuggestionSelection) {
-        if (!editorRuntime.selectCompletion(selection, actionHandler::finish)) {
-            actionHandler.onSuggestionSelected(selection)
-        }
     }
 }

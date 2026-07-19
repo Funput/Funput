@@ -87,12 +87,12 @@ class AndroidCompositionSessionTest {
     }
 }
 
-private fun testSession(engine: VietnameseEngine) = AndroidCompositionSession(
+internal fun testSession(engine: VietnameseEngine) = AndroidCompositionSession(
     engine = engine,
     composingTextFactory = { text -> text },
 )
 
-private class ScriptedEngine(
+internal class ScriptedEngine(
     private val processed: ArrayDeque<String>,
     private val boundaryOutput: String? = null,
     private val backspaceOutput: String = "",
@@ -115,7 +115,7 @@ private class ScriptedEngine(
     override fun close() = Unit
 }
 
-private class RecordingConnection {
+internal class RecordingConnection {
     val composingTexts = mutableListOf<String>()
     val committedTexts = mutableListOf<String>()
     var finishCount = 0

@@ -52,6 +52,7 @@ class EditorInfoPolicyResolverTest {
         )
 
         assertFalse(policy.allowsPersonalizedLearning)
+        assertFalse(policy.allowsPersonalSuggestions)
         assertEquals(ImeSuggestionSource.FUNPUT, policy.suggestionSource)
     }
 
@@ -66,6 +67,27 @@ class EditorInfoPolicyResolverTest {
         assertEquals(0, policy.capitalizationModes)
         assertEquals(ImeSuggestionSource.NONE, policy.suggestionSource)
         assertFalse(policy.allowsPersonalizedLearning)
+        assertFalse(policy.allowsPersonalSuggestions)
+    }
+
+    @Test
+    fun `URI keeps Funput composition but disables personal suggestions`() {
+        val policy = resolve(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
+
+        assertEquals(ImeSuggestionSource.FUNPUT, policy.suggestionSource)
+        assertFalse(policy.allowsPersonalSuggestions)
+    }
+
+    @Test
+    fun `plain text enables personal suggestions`() {
+        assertTrue(resolve(InputType.TYPE_CLASS_TEXT).allowsPersonalSuggestions)
+    }
+
+    @Test
+    fun `email disables personal suggestions`() {
+        val inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+
+        assertFalse(resolve(inputType).allowsPersonalSuggestions)
     }
 
     private fun resolve(inputType: Int, imeOptions: Int = EditorInfo.IME_ACTION_NONE) =

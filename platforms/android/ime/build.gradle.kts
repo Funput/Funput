@@ -41,6 +41,11 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 }
 
+androidComponents.beforeVariants {
+    (it as com.android.build.api.variant.HasUnitTestBuilder).enableUnitTest = true
+    (it as com.android.build.api.variant.HasAndroidTestBuilder).enableAndroidTest = true
+}
+
 androidComponents.onVariants { variant ->
     val profile = if (variant.buildType == "release") "release" else "debug"
     rustTargets.forEach { (targetName, target) ->
@@ -60,6 +65,9 @@ androidComponents.onVariants { variant ->
                 rustWorkspace.resolve("Cargo.lock"),
                 fileTree(rustWorkspace.resolve("crates/funput-core")) { include("Cargo.toml", "src/**/*.rs") },
                 fileTree(rustWorkspace.resolve("crates/funput-engine")) { include("Cargo.toml", "src/**/*.rs") },
+                fileTree(rustWorkspace.resolve("crates/funput-suggestions")) {
+                    include("Cargo.toml", "src/**/*.rs")
+                },
                 fileTree(rustWorkspace.resolve("crates/funput-jni")) { include("Cargo.toml", "src/**/*.rs") },
             )
         }
