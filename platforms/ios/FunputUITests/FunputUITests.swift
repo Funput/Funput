@@ -9,9 +9,8 @@ final class FunputUITests: XCTestCase {
     func testThemeEditorScrollAndControlsRemainResponsive() throws {
         let app = XCUIApplication()
         app.launch()
-        app.tabBars.buttons["Giao diện"].tap()
+        openAppearance(in: app)
         XCTAssertTrue(app.staticTexts["Hệ thống"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Của bạn"].exists)
 
         let customize = app.buttons["appearance.customize"]
         XCTAssertTrue(customize.waitForExistence(timeout: 5))
@@ -88,6 +87,31 @@ final class FunputUITests: XCTestCase {
         XCTAssertTrue(app.textFields["themeEditor.name"].isHittable)
         XCTAssertEqual(preview.frame.minY, previewFrame.minY, accuracy: 1)
         XCTAssertTrue(app.buttons["themeEditor.save"].isEnabled)
+    }
+
+    @MainActor
+    func testThemeGalleryScrollsAndHidesEmptyCustomSection() throws {
+        let app = XCUIApplication()
+        app.launch()
+        openAppearance(in: app)
+        XCTAssertTrue(app.staticTexts["Hệ thống"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Của bạn"].exists)
+
+        let carousel = app.scrollViews["appearance.carousel.system"]
+        XCTAssertTrue(carousel.waitForExistence(timeout: 5))
+        let firstTheme = app.buttons["appearance.theme.app.funput.theme.glass"]
+        XCTAssertTrue(firstTheme.waitForExistence(timeout: 5))
+        let initialX = firstTheme.frame.minX
+        carousel.swipeLeft()
+        XCTAssertLessThan(firstTheme.frame.minX, initialX - 20)
+    }
+
+    private func openAppearance(in app: XCUIApplication) {
+        let tab = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Giao diện"))
+            .firstMatch
+        XCTAssertTrue(tab.waitForExistence(timeout: 5))
+        tab.tap()
     }
 
     @MainActor
