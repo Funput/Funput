@@ -17,7 +17,6 @@ import app.funput.funput.theme.LocalKeyboardThemeCatalog
 
 internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val labelPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
@@ -30,9 +29,6 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
 
     fun updateTheme(theme: KeyboardTheme) {
         this.theme = theme
-        fillPaint.color = theme.keyColor
-        borderPaint.color = theme.keyBorderColor
-        borderPaint.strokeWidth = metrics.dp(theme.keyBorderWidthDp)
         dividerPaint.color = theme.secondaryLabelColor and 0x00FFFFFF or DividerAlpha
         labelPaint.color = theme.labelColor
     }
@@ -43,15 +39,9 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         suggestions: List<String>,
         pressedTargets: PressedKeyState,
     ) {
+        if (suggestions.isEmpty()) return
         val bounds = suggestionBar.suggestionsBounds
         val radius = metrics.dp(theme.keyCornerRadiusDp)
-        drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
-        canvas.drawRoundRect(drawingRect, radius, radius, fillPaint)
-        if (theme.keyBorderWidthDp > 0f) {
-            canvas.drawRoundRect(drawingRect, radius, radius, borderPaint)
-        }
-        if (suggestions.isEmpty()) return
-
         drawPressedSegments(canvas, bounds, radius, suggestions.size, pressedTargets)
         labelPaint.textSize = metrics.sp(SuggestionLabelSizeSp)
         labelPaint.getFontMetrics(fontMetrics)
@@ -95,7 +85,6 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
                 }
             }
         }
-        fillPaint.color = theme.keyColor
     }
 
     private fun drawDivider(canvas: Canvas, bounds: KeyBounds, x: Float) {
