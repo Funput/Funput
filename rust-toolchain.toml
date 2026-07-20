@@ -1,0 +1,5 @@
+# Pin the toolchain so contributors and CI build with the same compiler.
+# Edition 2024 needs a recent stable; bump deliberately, not per-machine.
+[toolchain]
+channel = "1.97.1"
+components = ["rustfmt", "clippy"]

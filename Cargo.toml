@@ -27,6 +27,20 @@ edition = "2024"
 license = "MIT"
 authors = ["Funput"]
 
+# Shared lint policy — every member opts in via `[lints] workspace = true`.
+# CI escalates warnings to errors (`cargo clippy -- -D warnings`); the denies
+# below are invariants that must hold even in local builds.
+[workspace.lints.rust]
+# FFI/JNI code must wrap each pointer deref in its own `unsafe` block with a
+# SAFETY rationale; a blanket-unsafe fn body would hide new ones.
+unsafe_op_in_unsafe_fn = "deny"
+
+[workspace.lints.clippy]
+# Debug/placeholder constructs must never ship in the engine of five platforms.
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"
+
 # Shipped on all five platforms, so the release profile optimizes for speed first
 # and binary size second (measured: libfunput_ffi.dylib 477 KB → 369 KB).
 #
