@@ -1,8 +1,9 @@
 use funput_suggestions::LearnOutcome;
 
-use crate::suggestion_types::FunputSuggestionResult;
-use crate::suggestions::{FunputSuggestionEngine, codepoints_from_raw};
 use crate::support::safe;
+
+use super::engine::{FunputSuggestionEngine, codepoints_from_raw};
+use super::types::FunputSuggestionResult;
 
 /// Record one completed UTF-32 token. Returns false for invalid input or failure.
 ///
