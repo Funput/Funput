@@ -5,13 +5,17 @@
 //! everything works on the borrowed [`SyllableParts`] view — the only
 //! allocation left is the rhyme string built at a word boundary.
 
-use crate::unicode::marks::{Tone, vowel_stem};
+mod spelling;
+
+use crate::unicode::marks::Tone;
 use crate::validation::coda::{
     STOP_CODAS, VALID_CODAS, coda_in, normalized_coda, nucleus_tone, toneless_rhyme,
 };
 use crate::validation::parse::{SyllableParts, is_valid_onset, parse_syllable};
 use crate::validation::reachability::{has_shaped_rhyme_prefix, is_definitely_invalid_parts};
 use crate::validation::rhyme::is_valid_rhyme;
+
+use spelling::violates_ckg_spelling;
 
 /// Result of validating a modifier keystroke against the current buffer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -22,28 +26,6 @@ pub enum ModifierValidation {
     Ignored,
     /// Non-Vietnamese structure — append key literally (engine restores later).
     PassThrough,
-}
-
-fn violates_ckg_spelling(onset: &str, parts: &SyllableParts) -> bool {
-    let Some(first) = parts.nucleus_chars().next().and_then(vowel_stem) else {
-        return false;
-    };
-    let stem = first.to_lowercase().next().unwrap_or(first);
-
-    if onset.eq_ignore_ascii_case("c") {
-        !matches!(stem, 'a' | 'ă' | 'â' | 'o' | 'ô' | 'ơ' | 'u' | 'ư')
-    } else if onset.eq_ignore_ascii_case("g") {
-        // `g` + `i` is the valid `gi` digraph (gì, gìn); `g` + e/ê uses `gh`.
-        !matches!(stem, 'a' | 'ă' | 'â' | 'o' | 'ô' | 'ơ' | 'u' | 'ư' | 'i')
-    } else if onset.eq_ignore_ascii_case("gh") || onset.eq_ignore_ascii_case("ngh") {
-        !matches!(stem, 'e' | 'ê' | 'i')
-    } else {
-        // Native `k` precedes only front vowels (kẻ, kê, kim, kỳ), but loanwords
-        // and toponyms break this freely — `Kông` (Hồng Kông), `Kenya` — and a
-        // back-vowel `k` is distinct enough from English that allowing it costs
-        // little. So `k` is exempt (the rhyme check still applies).
-        false
-    }
 }
 
 fn validate_modifier(buffer: &str) -> ModifierValidation {
