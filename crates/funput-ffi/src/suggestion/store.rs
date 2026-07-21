@@ -1,6 +1,7 @@
-use crate::suggestion_types::FunputSuggestionStats;
-use crate::suggestions::{FunputSuggestionEngine, with_mut};
 use crate::support::safe;
+
+use super::engine::{FunputSuggestionEngine, with_mut};
+use super::types::FunputSuggestionStats;
 
 /// Flush pending learned tokens to the journal.
 ///

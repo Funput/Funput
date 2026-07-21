@@ -41,10 +41,7 @@ pub(super) struct Entry {
 
 /// Decode the table entry for `c`, or `None` when it is not a Vietnamese vowel.
 pub(super) fn entry(c: char) -> Option<Entry> {
-    let packed = match slot(c as usize) {
-        Some(s) => TABLE[s],
-        None => return None,
-    };
+    let packed = TABLE[slot(c as usize)?];
     let v = packed.checked_sub(1)? as usize;
     Some(Entry {
         family: v / 12,

@@ -4,7 +4,7 @@ use jni::EnvUnowned;
 use jni::objects::{JLongArray, JObjectArray, JString};
 use jni::sys::{jlong, jlongArray, jobjectArray};
 
-use crate::suggestion_registry;
+use super::registry;
 use crate::support::{JavaObject, neutral, safe};
 
 #[unsafe(no_mangle)]
@@ -18,7 +18,7 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
         let result = env
             .with_env(|env| -> jni::errors::Result<_> {
                 let text = prefix.try_to_string(env)?;
-                let words = suggestion_registry::with(handle, |engine| {
+                let words = registry::with(handle, |engine| {
                     engine
                         .suggest(&text)
                         .iter()
@@ -48,7 +48,7 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
     handle: jlong,
 ) -> jlongArray {
     safe(std::ptr::null_mut(), || {
-        let values = suggestion_registry::with(handle, |engine| {
+        let values = registry::with(handle, |engine| {
             let stats = engine.stats();
             [
                 stats.words as i64,

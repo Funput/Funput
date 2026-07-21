@@ -5,7 +5,7 @@ use jni::EnvUnowned;
 use jni::objects::JString;
 use jni::sys::{jboolean, jlong};
 
-use crate::suggestion_registry;
+use super::registry;
 use crate::support::{JavaObject, neutral, safe};
 
 #[unsafe(no_mangle)]
@@ -20,7 +20,7 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
         if text.is_empty() {
             return false;
         }
-        suggestion_registry::with_mut(handle, |engine| {
+        registry::with_mut(handle, |engine| {
             !matches!(engine.learn(&text), LearnOutcome::Ignored)
         })
         .unwrap_or(false)
@@ -36,8 +36,7 @@ macro_rules! store_operation {
             handle: jlong,
         ) -> jboolean {
             safe(false, || {
-                suggestion_registry::with_mut(handle, |engine| engine.$operation().is_ok())
-                    .unwrap_or(false)
+                registry::with_mut(handle, |engine| engine.$operation().is_ok()).unwrap_or(false)
             })
         }
     };

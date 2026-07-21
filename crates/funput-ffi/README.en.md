@@ -98,8 +98,9 @@ src/lib.rs          # module root: opaque FunputEngine + new/free + re-export su
 src/config.rs       # 7 setters: method/tone_style/enabled/smart|eager_restore/spell/autocap
 src/compose.rs      # process_char/backspace/flip_composing/clear/arm/buffer
 src/shortcuts.rs    # add_shortcut/clear_shortcuts (text expansion, "gõ tắt")
-src/suggestions.rs  # fail-silent personal suggestion handle/API
-src/suggestion_types.rs # fixed top-3 candidate/stats PODs
+src/suggestion/     # personal suggestions: engine.rs (handle new/open/free),
+                    #   query.rs (learn/query), store.rs (flush/compact/reset/stats),
+                    #   types.rs (fixed top-3 candidate/stats PODs)
 src/support.rs      # safe(): catch_unwind guard for the C boundary
 src/types.rs        # #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 cbindgen.toml
