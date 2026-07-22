@@ -34,16 +34,39 @@ struct SettingsPage<Content: View>: View {
     }
 }
 
+/// A quick-stat card on the Overview pane. When `action` is provided, the whole
+/// card becomes a button that jumps to the related settings pane (with a
+/// trailing chevron as the tap affordance); otherwise it stays a plain,
+/// non-interactive readout.
 struct SettingsMetric: View {
     let title: String
     let value: String
     let systemImage: String
+    var action: (() -> Void)? = nil
 
     var body: some View {
+        if let action {
+            Button(action: action) { card }
+                .buttonStyle(.plain)
+                .help("Mở \(title)")
+        } else {
+            card
+        }
+    }
+
+    private var card: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Image(systemName: systemImage)
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(.tint)
+            HStack {
+                Image(systemName: systemImage)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.tint)
+                if action != nil {
+                    Spacer(minLength: Theme.Spacing.xs)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+            }
             Text(value)
                 .font(.title3.bold())
                 .lineLimit(1)

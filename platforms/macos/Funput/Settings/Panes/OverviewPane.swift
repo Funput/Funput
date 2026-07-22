@@ -2,6 +2,8 @@ import SwiftUI
 
 struct OverviewPane: View {
     @Environment(AppSettings.self) private var settings
+    /// Lets the metric cards jump to their related sidebar destination.
+    @Binding var selection: SettingsDestination?
 
     var body: some View {
         @Bindable var settings = settings
@@ -12,21 +14,30 @@ struct OverviewPane: View {
 
                 VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                     HStack(spacing: Theme.Spacing.md) {
+                        // "Phương thức" has no dedicated page of its own (the
+                        // actual picker lives in the sidebar's quick control),
+                        // so this links to the closest related pane instead.
                         SettingsMetric(
                             title: "Phương thức",
                             value: settings.inputMethod.displayName,
                             systemImage: "keyboard"
-                        )
+                        ) {
+                            selection = .typing
+                        }
                         SettingsMetric(
                             title: "Gõ tắt",
                             value: "\(settings.shortcuts.count)",
                             systemImage: "text.append"
-                        )
+                        ) {
+                            selection = .textShortcuts
+                        }
                         SettingsMetric(
                             title: "Ứng dụng bỏ qua",
                             value: "\(settings.excludedApps.count)",
                             systemImage: "app.badge"
-                        )
+                        ) {
+                            selection = .applications
+                        }
                     }
 
                     SettingsSurface {
@@ -71,7 +82,8 @@ struct OverviewPane: View {
 }
 
 #Preview {
-    OverviewPane()
+    @Previewable @State var selection: SettingsDestination? = .overview
+    OverviewPane(selection: $selection)
         .environment(AppSettings.shared)
         .frame(width: 740, height: 680)
 }

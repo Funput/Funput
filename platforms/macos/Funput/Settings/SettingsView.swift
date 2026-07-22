@@ -46,7 +46,7 @@ struct SettingsView: View {
     @ViewBuilder private var destinationView: some View {
         switch selection ?? .overview {
         case .overview:
-            OverviewPane()
+            OverviewPane(selection: $selection)
         case .typing:
             TypingPane()
         case .keyboardShortcuts:
