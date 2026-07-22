@@ -28,7 +28,7 @@ struct MenuBarControlCenter: View {
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Chuyển tiếng Việt / tiếng Anh")
+                Text("Chế độ nhập")
                     .font(.callout.weight(.semibold))
                 Text("Có thể dùng phím tắt \(settings.toggleShortcut.keyCaps.joined(separator: " + "))")
                     .font(.caption)
@@ -47,7 +47,7 @@ struct MenuBarControlCenter: View {
 
     private func methodSelector(selection: Binding<InputMethod>) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Phương thức gõ")
+            Text("Kiểu gõ")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             GlassMethodSelector(selection: selection, compact: true)

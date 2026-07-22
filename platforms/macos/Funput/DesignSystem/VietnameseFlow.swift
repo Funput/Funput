@@ -82,19 +82,13 @@ struct OverviewHero: View {
             .overlay {
                 HStack(spacing: Theme.Spacing.xl) {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                        Text("FUNPUT CONTROL CENTER")
+                        Text("BỘ GÕ TIẾNG VIỆT ĐA NỀN TẢNG")
                             .font(.caption.weight(.bold))
                             .tracking(1.5)
                             .foregroundStyle(.white.opacity(0.7))
-                        Text("Gõ là \"Fun\",\nInput là chuẩn.")
+                        Text("Gõ là \"Fun\"\nInput là chuẩn")
                             .font(.system(size: 30, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                        Label(
-                            settings.vietnameseEnabled ? "Funput đang bật" : "Funput đang tạm dừng",
-                            systemImage: settings.vietnameseEnabled ? "checkmark.circle.fill" : "pause.circle.fill"
-                        )
-                        .font(.callout.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.82))
                     }
 
                     Spacer(minLength: Theme.Spacing.md)

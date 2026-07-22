@@ -118,7 +118,7 @@ private struct SidebarQuickInputControl: View {
                 .textCase(.uppercase)
 
             HStack(spacing: Theme.Spacing.sm) {
-                Picker("Phương thức gõ", selection: $settings.inputMethod) {
+                Picker("Kiểu gõ", selection: $settings.inputMethod) {
                     ForEach(InputMethod.displayCases) { method in
                         Text(method.displayName).tag(method)
                     }
@@ -134,7 +134,7 @@ private struct SidebarQuickInputControl: View {
                 // height instead of matching the segmented "Chế độ nhập" control.
                 .padding(.horizontal, Theme.Spacing.sm)
                 .glassEffect(.regular.interactive(), in: .rect(cornerRadius: Theme.Radius.control))
-                .accessibilityLabel("Phương thức gõ")
+                .accessibilityLabel("Kiểu gõ")
                 .accessibilityValue(settings.inputMethod.displayName)
 
                 // Custom Liquid Glass toggle instead of Picker(.segmented): the native

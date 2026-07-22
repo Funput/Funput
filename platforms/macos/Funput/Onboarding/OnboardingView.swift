@@ -73,7 +73,7 @@ struct OnboardingView: View {
 
     private var methodStep: some View {
         @Bindable var settings = settings
-        return OnboardingStep(icon: "keyboard", title: "Chọn phương thức gõ",
+        return OnboardingStep(icon: "keyboard", title: "Chọn kiểu gõ",
                               subtitle: "Có thể đổi bất cứ lúc nào trong Cài đặt.") {
             VStack(spacing: Theme.Spacing.md) {
                 GlassMethodSelector(selection: $settings.inputMethod)

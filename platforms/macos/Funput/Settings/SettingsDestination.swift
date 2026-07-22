@@ -26,7 +26,7 @@ enum SettingsDestination: String, CaseIterable, Identifiable, Hashable {
     var subtitle: String {
         switch self {
         case .overview: "Trạng thái và thiết lập chung của Funput."
-        case .typing: "Phương thức gõ, cách đặt dấu và xử lý thông minh."
+        case .typing: "Kiểu gõ, cách đặt dấu và xử lý thông minh."
         case .keyboardShortcuts: "Điều khiển Funput mà không rời bàn phím."
         case .textShortcuts: "Mở rộng chuỗi gõ thành nội dung thường dùng."
         case .applications: "Chọn ứng dụng luôn sử dụng tiếng Anh."
