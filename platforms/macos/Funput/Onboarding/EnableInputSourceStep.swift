@@ -70,8 +70,9 @@ struct EnableInputSourceStep: View {
         HStack(alignment: .top, spacing: Theme.Spacing.sm) {
             Text("\(n)")
                 .font(.caption.bold())
+                .foregroundStyle(.tint)
                 .frame(width: 20, height: 20)
-                .glassEffect(.regular, in: .circle)
+                .background(.tint.opacity(0.12), in: .circle)
             Text(text)
             Spacer()
         }
@@ -86,6 +87,8 @@ struct EnableInputSourceStep: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.top, Theme.Spacing.xs)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(isEnabled ? "Funput đã được bật" : "Chưa phát hiện Funput")
     }
 
     private func openInputSources() {

@@ -7,6 +7,7 @@ import SwiftUI
 /// requires a ⌃/⌥/⌘ modifier.
 struct ShortcutRecorder: View {
     @Binding var combo: KeyCombo?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Whether the shortcut can be cleared (off). Disable for shortcuts that must
     /// always have a value, e.g. the VI/EN toggle.
     var allowOff = true
@@ -27,13 +28,9 @@ struct ShortcutRecorder: View {
             Button { recording = true } label: {
                 Label(combo == nil ? "Đặt phím" : "Đổi", systemImage: "pencil")
                     .font(.callout.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.vertical, Theme.Spacing.xs + 2)
-                    .glassEffect(.regular.interactive(), in: .capsule)
-                    .contentShape(.capsule)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.glass)
+            .controlSize(.small)
             .popover(isPresented: $recording, arrowEdge: .bottom) {
                 recordingPopover
                     .onAppear(perform: startRecording)
@@ -61,7 +58,7 @@ struct ShortcutRecorder: View {
 
             ShortcutCaps(caps: previewCaps)
                 .frame(minHeight: 30)
-                .animation(.easeOut(duration: 0.1), value: held)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.1), value: held)
 
             Text(invalid ? "Cần kèm ⌃ / ⌥ / ⌘" : "Giữ ⌃ / ⌥ / ⌘ rồi nhấn phím · ⎋ để huỷ")
                 .font(.caption)

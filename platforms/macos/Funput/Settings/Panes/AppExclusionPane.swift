@@ -9,8 +9,8 @@ struct AppExclusionPane: View {
     @Environment(AppSettings.self) private var settings
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            GlassCard {
+        Group {
+            Section("Ứng dụng luôn dùng tiếng Anh") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     SettingsRow(
                         title: "Ứng dụng bỏ qua",

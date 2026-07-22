@@ -4,18 +4,35 @@ import SwiftUI
 struct OnboardingView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var step = 0
 
     private let stepCount = 4
 
     var body: some View {
-        VStack(spacing: 0) {
-            content
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(Theme.Spacing.xl)
-            footer
+        ZStack {
+            Rectangle().fill(.windowBackground)
+            VietnameseFlowBackground()
+                .opacity(step == 0 ? 1 : 0)
+
+            VStack(spacing: 0) {
+                ScrollView {
+                    content
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 380)
+                        .padding(Theme.Spacing.xl)
+                }
+                OnboardingFooter(step: $step, stepCount: stepCount, onComplete: complete)
+            }
         }
-        .frame(width: 580, height: 500)
+        // `.windowResizability(.contentSize)` on the onboarding Window sizes the
+        // window to this frame; ScrollView itself doesn't propagate its content's
+        // natural height upward, so the number here is what actually determines
+        // the window height. 500 was too short for the busiest step (3
+        // instructions + button + status row in EnableInputSourceStep), causing
+        // the ScrollView to always show a scrollbar even at default text size.
+        .frame(minWidth: 580, minHeight: 600)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: step == 0)
     }
 
     @ViewBuilder private var content: some View {
@@ -28,8 +45,8 @@ struct OnboardingView: View {
             methodStep
         default:
             OnboardingStep(icon: "checkmark.seal.fill", title: "Sẵn sàng!",
-                           subtitle: "Chọn Funput từ menu bàn phím (trên thanh menu) và bắt đầu gõ.") {
-                EmptyView()
+                           subtitle: "Chọn Funput từ menu bàn phím trên thanh menu và bắt đầu gõ.") {
+                readySummary
             }
         }
     }
@@ -42,9 +59,10 @@ struct OnboardingView: View {
             VStack(spacing: Theme.Spacing.sm) {
                 Text("Chào mừng đến Funput")
                     .font(.largeTitle.bold())
+                    .foregroundStyle(.white)
                 Text("Gõ tiếng Việt ở mọi nơi trên máy Mac — miễn phí, mã nguồn mở.")
                     .font(.title3)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.78))
                     .multilineTextAlignment(.center)
             }
             Spacer(minLength: 0)
@@ -55,78 +73,34 @@ struct OnboardingView: View {
 
     private var methodStep: some View {
         @Bindable var settings = settings
-        return OnboardingStep(icon: "keyboard", title: "Chọn phương thức gõ",
+        return OnboardingStep(icon: "keyboard", title: "Chọn kiểu gõ",
                               subtitle: "Có thể đổi bất cứ lúc nào trong Cài đặt.") {
             VStack(spacing: Theme.Spacing.md) {
-                Picker("Phương thức", selection: $settings.inputMethod) {
-                    ForEach(InputMethod.displayCases) { Text($0.displayName).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+                GlassMethodSelector(selection: $settings.inputMethod)
                 Text(settings.inputMethod.blurb)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: 360)
+            .frame(maxWidth: 420)
         }
     }
 
-    private var footer: some View {
-        HStack {
-            if step > 0 {
-                Button("Quay lại") { step -= 1 }
-                    .buttonStyle(.glass)
-            }
-            Spacer()
-            HStack(spacing: 6) {
-                ForEach(0..<stepCount, id: \.self) { i in
-                    Circle()
-                        .fill(i == step ? AnyShapeStyle(.tint) : AnyShapeStyle(.quaternary))
-                        .frame(width: 7, height: 7)
-                }
-            }
-            Spacer()
-            Button(step < stepCount - 1 ? "Tiếp tục" : "Bắt đầu dùng") {
-                if step < stepCount - 1 {
-                    step += 1
-                } else {
-                    settings.hasCompletedOnboarding = true
-                    dismiss()
-                }
-            }
-            .buttonStyle(.glassProminent)
-            .keyboardShortcut(.defaultAction)
+    private var readySummary: some View {
+        HStack(spacing: Theme.Spacing.lg) {
+            Label(settings.inputMethod.displayName, systemImage: "keyboard")
+            Divider().frame(height: 22)
+            Label("VI / EN", systemImage: "globe")
+            ShortcutCaps(caps: settings.toggleShortcut.keyCaps)
         }
-        .padding(Theme.Spacing.lg)
+        .font(.callout.weight(.semibold))
+        .padding(.horizontal, Theme.Spacing.lg)
+        .padding(.vertical, Theme.Spacing.md)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
     }
-}
 
-/// Consistent step layout: hero icon + title + subtitle + custom content.
-struct OnboardingStep<Content: View>: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            Spacer(minLength: 0)
-            Image(systemName: icon)
-                .font(.system(size: 72))
-                .foregroundStyle(.tint)
-                .symbolRenderingMode(.hierarchical)
-            VStack(spacing: Theme.Spacing.sm) {
-                Text(title).font(.largeTitle.bold())
-                Text(subtitle)
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            content
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: 440)
-        .frame(maxWidth: .infinity)
+    private func complete() {
+        settings.hasCompletedOnboarding = true
+        dismiss()
     }
 }
 

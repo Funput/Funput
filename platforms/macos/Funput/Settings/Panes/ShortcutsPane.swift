@@ -9,8 +9,8 @@ struct ShortcutsPane: View {
     var body: some View {
         @Bindable var settings = settings
 
-        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            GlassCard {
+        Group {
+            Section("Danh sách gõ tắt") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     SettingsRow(
                         title: "Gõ tắt",
@@ -20,6 +20,12 @@ struct ShortcutsPane: View {
                         Button(action: addRow) {
                             Label("Thêm", systemImage: "plus")
                         }
+                        .disabled(!canAddRow)
+                        .help(
+                            canAddRow
+                                ? "Thêm gõ tắt mới"
+                                : "Điền đầy đủ trigger và nội dung của dòng hiện tại trước khi thêm dòng mới"
+                        )
                     }
 
                     if settings.shortcuts.isEmpty {
@@ -37,9 +43,8 @@ struct ShortcutsPane: View {
                 }
             }
 
-            GlassCard {
+            Section("Mẹo") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    SectionHeader(title: "Mẹo")
                     Text("Trigger khớp đúng chuỗi phím bạn gõ và **phân biệt hoa/thường** — `vn` khác `VN`. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -81,14 +86,15 @@ struct ShortcutsPane: View {
             if isDuplicate {
                 Text("Trùng trigger — dòng dưới sẽ được dùng.")
                     .font(.caption2)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Theme.accent)
             }
         }
         .padding(.vertical, Theme.Spacing.xs)
     }
 
     private func field(text: Binding<String>, placeholder: String, monospaced: Bool, invalid: Bool) -> some View {
-        TextField(placeholder, text: text)
+        TextField("", text: text, prompt: Text(placeholder))
+            .labelsHidden()
             .textFieldStyle(.plain)
             .font(.system(.body, design: monospaced ? .monospaced : .default))
             .padding(.horizontal, Theme.Spacing.sm)
@@ -96,11 +102,19 @@ struct ShortcutsPane: View {
             .background(.quaternary, in: RoundedRectangle(cornerRadius: Theme.Radius.control))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.control)
-                    .strokeBorder(invalid ? Color.orange : .clear, lineWidth: 1)
+                    .strokeBorder(invalid ? Theme.accent : .clear, lineWidth: 1)
             )
     }
 
     // MARK: - Helpers
+
+    /// "Thêm" is only enabled when the list is empty, or the last row already
+    /// has both a trigger and an expansion — avoids piling up empty/half-filled
+    /// rows before finishing the current one.
+    private var canAddRow: Bool {
+        guard let last = settings.shortcuts.last else { return true }
+        return !last.trigger.isEmpty && !last.expansion.isEmpty
+    }
 
     /// Triggers (non-empty) that appear on more than one row — flagged so the user
     /// knows the engine map keeps only the last one.

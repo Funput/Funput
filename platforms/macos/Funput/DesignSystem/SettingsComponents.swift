@@ -1,18 +1,6 @@
 import SwiftUI
 
-/// A rounded Liquid Glass container for grouping content.
-struct GlassCard<Content: View>: View {
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        content
-            .padding(Theme.Spacing.lg)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .glassEffect(.regular, in: .rect(cornerRadius: Theme.Radius.card))
-    }
-}
-
-/// A labelled settings row: title + optional subtitle on the left, control on the right.
+/// A labelled settings row with its control aligned on the trailing edge.
 struct SettingsRow<Control: View>: View {
     let title: String
     var subtitle: String? = nil
@@ -43,19 +31,7 @@ struct SettingsRow<Control: View>: View {
     }
 }
 
-/// A small section title above a group of rows/cards.
-struct SectionHeader: View {
-    let title: String
-
-    var body: some View {
-        Text(title)
-            .font(.headline)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-/// A keyboard key rendered as a glass keycap (for shortcut display).
+/// A keyboard keycap in the content layer.
 struct KeyCap: View {
     let label: String
 
@@ -65,11 +41,10 @@ struct KeyCap: View {
             .monospacedDigit()
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .glassEffect(.regular, in: .rect(cornerRadius: 6))
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 }
 
-/// Horizontal stack of keycaps for a shortcut (`⌃` `\`).
 struct ShortcutCaps: View {
     let caps: [String]
 
@@ -80,13 +55,15 @@ struct ShortcutCaps: View {
     }
 }
 
-#Preview("Glass components") {
+#Preview("Settings components") {
     VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-        SectionHeader(title: "Preview")
-        GlassCard {
+        SettingsSurface {
             VStack(spacing: Theme.Spacing.sm) {
                 SettingsRow(title: "Một tuỳ chọn", subtitle: "Mô tả ngắn", systemImage: "sparkles") {
-                    Toggle("", isOn: .constant(true)).labelsHidden()
+                    Toggle("Một tuỳ chọn", isOn: .constant(true))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .tint(Theme.accent)
                 }
                 SettingsRow(title: "Phím chuyển") {
                     ShortcutCaps(caps: ["⌃", "\\"])
