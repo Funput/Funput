@@ -23,11 +23,12 @@ struct SettingsView: View {
         .sheet(item: $presentation) { item in
             switch item {
             case .about:
+                // No outer padding: the hero background now bleeds to the
+                // sheet's edges instead of sitting inset inside a card.
                 AboutPane()
                     .environment(settings)
                     .environment(updater)
                     .frame(width: 460)
-                    .padding(Theme.Spacing.xl)
             }
         }
         .alert(
