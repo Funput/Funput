@@ -20,6 +20,12 @@ struct ShortcutsPane: View {
                         Button(action: addRow) {
                             Label("Thêm", systemImage: "plus")
                         }
+                        .disabled(!canAddRow)
+                        .help(
+                            canAddRow
+                                ? "Thêm gõ tắt mới"
+                                : "Điền đầy đủ trigger và nội dung của dòng hiện tại trước khi thêm dòng mới"
+                        )
                     }
 
                     if settings.shortcuts.isEmpty {
@@ -101,6 +107,14 @@ struct ShortcutsPane: View {
     }
 
     // MARK: - Helpers
+
+    /// "Thêm" is only enabled when the list is empty, or the last row already
+    /// has both a trigger and an expansion — avoids piling up empty/half-filled
+    /// rows before finishing the current one.
+    private var canAddRow: Bool {
+        guard let last = settings.shortcuts.last else { return true }
+        return !last.trigger.isEmpty && !last.expansion.isEmpty
+    }
 
     /// Triggers (non-empty) that appear on more than one row — flagged so the user
     /// knows the engine map keeps only the last one.
