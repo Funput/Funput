@@ -35,6 +35,19 @@ jobs:
       - name: Cache cargo build
         uses: Swatinem/rust-cache@v2
 
+      - name: Check Swift file size
+        working-directory: platforms/macos
+        run: bash ./scripts/check-swift-loc.sh
+
+      - name: Run macOS tests
+        working-directory: platforms/macos
+        run: |
+          xcodebuild test \
+            -project Funput.xcodeproj \
+            -scheme Funput \
+            -destination 'platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO
+
       - name: Import Developer ID certificate
         env:
           CERT_P12: ${{ secrets.DEVELOPER_ID_CERT_P12 }}

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A labelled settings row: title + optional subtitle on the left, control on the right.
+/// A labelled settings row with its control aligned on the trailing edge.
 struct SettingsRow<Control: View>: View {
     let title: String
     var subtitle: String? = nil
@@ -31,7 +31,6 @@ struct SettingsRow<Control: View>: View {
     }
 }
 
-/// A small section title above a group of rows/cards.
 struct SectionHeader: View {
     let title: String
 
@@ -43,7 +42,7 @@ struct SectionHeader: View {
     }
 }
 
-/// A keyboard keycap in the content layer (not an interactive glass control).
+/// A keyboard keycap in the content layer.
 struct KeyCap: View {
     let label: String
 
@@ -57,7 +56,6 @@ struct KeyCap: View {
     }
 }
 
-/// Horizontal stack of keycaps for a shortcut (`⌃` `\`).
 struct ShortcutCaps: View {
     let caps: [String]
 

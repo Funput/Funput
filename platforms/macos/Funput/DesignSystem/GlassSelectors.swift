@@ -3,7 +3,6 @@ import SwiftUI
 struct GlassMethodSelector: View {
     @Binding var selection: InputMethod
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Namespace private var glassNamespace
 
     var compact = false
 
@@ -14,7 +13,13 @@ struct GlassMethodSelector: View {
                     Button {
                         select(method)
                     } label: {
-                        Text(compact ? compactTitle(for: method) : method.displayName)
+                        HStack(spacing: Theme.Spacing.xs) {
+                            Text(compact ? compactTitle(for: method) : method.displayName)
+                            if method == selection {
+                                Image(systemName: "checkmark")
+                                    .font(.caption.bold())
+                            }
+                        }
                             .font(.callout.weight(.semibold))
                             .padding(.horizontal, compact ? 10 : Theme.Spacing.md)
                             .padding(.vertical, compact ? 6 : 8)
@@ -28,8 +33,8 @@ struct GlassMethodSelector: View {
                             .interactive(),
                         in: .capsule
                     )
-                    .glassEffectID(method.id, in: glassNamespace)
                     .accessibilityAddTraits(method == selection ? .isSelected : [])
+                    .accessibilityValue(method == selection ? "Đã chọn" : "Chưa chọn")
                 }
             }
         }
@@ -73,7 +78,6 @@ enum AutomationSection: String, CaseIterable, Identifiable {
 struct GlassAutomationSelector: View {
     @Binding var selection: AutomationSection
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Namespace private var glassNamespace
 
     var body: some View {
         GlassEffectContainer(spacing: Theme.Spacing.sm) {
@@ -82,7 +86,13 @@ struct GlassAutomationSelector: View {
                     Button {
                         select(section)
                     } label: {
-                        Label(section.title, systemImage: section.systemImage)
+                        HStack(spacing: Theme.Spacing.sm) {
+                            Label(section.title, systemImage: section.systemImage)
+                            if section == selection {
+                                Image(systemName: "checkmark")
+                                    .font(.caption.bold())
+                            }
+                        }
                             .font(.callout.weight(.semibold))
                             .padding(.horizontal, Theme.Spacing.md)
                             .padding(.vertical, 8)
@@ -96,8 +106,8 @@ struct GlassAutomationSelector: View {
                             .interactive(),
                         in: .capsule
                     )
-                    .glassEffectID(section.id, in: glassNamespace)
                     .accessibilityAddTraits(section == selection ? .isSelected : [])
+                    .accessibilityValue(section == selection ? "Đã chọn" : "Chưa chọn")
                 }
             }
         }

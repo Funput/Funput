@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AutomationPane: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var section = AutomationSection.shortcuts
 
     var body: some View {
@@ -16,7 +17,7 @@ struct AutomationPane: View {
                         AppExclusionPane()
                     }
                 }
-                .transition(.opacity.combined(with: .scale(scale: 0.985)))
+                .transition(reduceMotion ? .identity : .opacity.combined(with: .scale(scale: 0.985)))
             }
         }
     }

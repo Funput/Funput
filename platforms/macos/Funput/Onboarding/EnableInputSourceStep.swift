@@ -87,6 +87,8 @@ struct EnableInputSourceStep: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.top, Theme.Spacing.xs)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(isEnabled ? "Funput đã được bật" : "Chưa phát hiện Funput")
     }
 
     private func openInputSources() {

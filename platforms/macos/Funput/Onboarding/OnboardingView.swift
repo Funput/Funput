@@ -16,13 +16,16 @@ struct OnboardingView: View {
                 .opacity(step == 0 ? 1 : 0)
 
             VStack(spacing: 0) {
-                content
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(Theme.Spacing.xl)
-                footer
+                ScrollView {
+                    content
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 380)
+                        .padding(Theme.Spacing.xl)
+                }
+                OnboardingFooter(step: $step, stepCount: stepCount, onComplete: complete)
             }
         }
-        .frame(width: 580, height: 500)
+        .frame(minWidth: 580, minHeight: 500)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: step == 0)
     }
 
@@ -89,64 +92,9 @@ struct OnboardingView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
     }
 
-    private var footer: some View {
-        GlassEffectContainer(spacing: Theme.Spacing.md) {
-            HStack {
-                if step > 0 {
-                    Button("Quay lại") { step -= 1 }
-                        .buttonStyle(.glass)
-                }
-                Spacer()
-                HStack(spacing: 6) {
-                    ForEach(0..<stepCount, id: \.self) { i in
-                        Circle()
-                            .fill(i == step ? AnyShapeStyle(.tint) : AnyShapeStyle(.quaternary))
-                            .frame(width: 7, height: 7)
-                    }
-                }
-                Spacer()
-                Button(step < stepCount - 1 ? "Tiếp tục" : "Bắt đầu dùng") {
-                    if step < stepCount - 1 {
-                        step += 1
-                    } else {
-                        settings.hasCompletedOnboarding = true
-                        dismiss()
-                    }
-                }
-                .buttonStyle(.glassProminent)
-                .keyboardShortcut(.defaultAction)
-            }
-        }
-        .padding(Theme.Spacing.lg)
-    }
-}
-
-/// Consistent step layout: hero icon + title + subtitle + custom content.
-struct OnboardingStep<Content: View>: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            Spacer(minLength: 0)
-            Image(systemName: icon)
-                .font(.system(size: 72))
-                .foregroundStyle(.tint)
-                .symbolRenderingMode(.hierarchical)
-            VStack(spacing: Theme.Spacing.sm) {
-                Text(title).font(.largeTitle.bold())
-                Text(subtitle)
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            content
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: 440)
-        .frame(maxWidth: .infinity)
+    private func complete() {
+        settings.hasCompletedOnboarding = true
+        dismiss()
     }
 }
 

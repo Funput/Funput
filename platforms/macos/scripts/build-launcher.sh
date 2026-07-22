@@ -28,7 +28,7 @@ SIGN_NAME="${4:-$SIGN_ID}"
 
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$DIR/Launcher"
-DEPLOY_TARGET="26.5"
+DEPLOY_TARGET="26.0"
 APP="$OUT/Funput.app"
 
 rm -rf "$APP"
