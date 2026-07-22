@@ -7,7 +7,7 @@ struct KeyboardPane: View {
         @Bindable var settings = settings
 
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            GlassCard {
+            SettingsSurface {
                 SettingsRow(
                     title: "Phím chuyển Việt / Anh",
                     subtitle: "Nhấn để tạm tắt gõ tiếng Việt. Bấm rồi nhấn tổ hợp kèm ⌃/⌥/⌘.",
@@ -23,7 +23,7 @@ struct KeyboardPane: View {
                 }
             }
 
-            GlassCard {
+            SettingsSurface {
                 SettingsRow(
                     title: "Phím lật từ vừa gõ",
                     subtitle: "Đổi từ đang gõ giữa tiếng Việt và chữ gốc (card ⇄ cải). Bấm rồi nhấn tổ hợp kèm ⌃/⌥/⌘.",

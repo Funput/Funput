@@ -1,17 +1,5 @@
 import SwiftUI
 
-/// A rounded Liquid Glass container for grouping content.
-struct GlassCard<Content: View>: View {
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        content
-            .padding(Theme.Spacing.lg)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .glassEffect(.regular, in: .rect(cornerRadius: Theme.Radius.card))
-    }
-}
-
 /// A labelled settings row: title + optional subtitle on the left, control on the right.
 struct SettingsRow<Control: View>: View {
     let title: String
@@ -55,7 +43,7 @@ struct SectionHeader: View {
     }
 }
 
-/// A keyboard key rendered as a glass keycap (for shortcut display).
+/// A keyboard keycap in the content layer (not an interactive glass control).
 struct KeyCap: View {
     let label: String
 
@@ -65,7 +53,7 @@ struct KeyCap: View {
             .monospacedDigit()
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .glassEffect(.regular, in: .rect(cornerRadius: 6))
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 }
 
@@ -80,13 +68,16 @@ struct ShortcutCaps: View {
     }
 }
 
-#Preview("Glass components") {
+#Preview("Settings components") {
     VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
         SectionHeader(title: "Preview")
-        GlassCard {
+        SettingsSurface {
             VStack(spacing: Theme.Spacing.sm) {
                 SettingsRow(title: "Một tuỳ chọn", subtitle: "Mô tả ngắn", systemImage: "sparkles") {
-                    Toggle("", isOn: .constant(true)).labelsHidden()
+                    Toggle("Một tuỳ chọn", isOn: .constant(true))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .tint(Theme.accent)
                 }
                 SettingsRow(title: "Phím chuyển") {
                     ShortcutCaps(caps: ["⌃", "\\"])

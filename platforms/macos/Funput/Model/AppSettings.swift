@@ -88,7 +88,9 @@ final class AppSettings {
 
     @ObservationIgnored private let defaults: UserDefaults
 
-    private init(defaults: UserDefaults = .standard) {
+    /// Injectable defaults keep the preference mapping testable without touching
+    /// the user's real Funput configuration. Production uses `.standard` above.
+    init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         defaults.register(defaults: [
             Keys.smartEnglishRestore: true,

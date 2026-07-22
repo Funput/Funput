@@ -10,7 +10,7 @@ struct ShortcutsPane: View {
         @Bindable var settings = settings
 
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            GlassCard {
+            SettingsSurface {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     SettingsRow(
                         title: "Gõ tắt",
@@ -37,7 +37,7 @@ struct ShortcutsPane: View {
                 }
             }
 
-            GlassCard {
+            SettingsSurface {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                     SectionHeader(title: "Mẹo")
                     Text("Trigger khớp đúng chuỗi phím bạn gõ và **phân biệt hoa/thường** — `vn` khác `VN`. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh.")
@@ -81,7 +81,7 @@ struct ShortcutsPane: View {
             if isDuplicate {
                 Text("Trùng trigger — dòng dưới sẽ được dùng.")
                     .font(.caption2)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Theme.accent)
             }
         }
         .padding(.vertical, Theme.Spacing.xs)
@@ -96,7 +96,7 @@ struct ShortcutsPane: View {
             .background(.quaternary, in: RoundedRectangle(cornerRadius: Theme.Radius.control))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.control)
-                    .strokeBorder(invalid ? Color.orange : .clear, lineWidth: 1)
+                    .strokeBorder(invalid ? Theme.accent : .clear, lineWidth: 1)
             )
     }
 

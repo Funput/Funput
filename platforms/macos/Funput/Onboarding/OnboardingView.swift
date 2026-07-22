@@ -4,18 +4,26 @@ import SwiftUI
 struct OnboardingView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var step = 0
 
     private let stepCount = 4
 
     var body: some View {
-        VStack(spacing: 0) {
-            content
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(Theme.Spacing.xl)
-            footer
+        ZStack {
+            Rectangle().fill(.windowBackground)
+            VietnameseFlowBackground()
+                .opacity(step == 0 ? 1 : 0)
+
+            VStack(spacing: 0) {
+                content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(Theme.Spacing.xl)
+                footer
+            }
         }
         .frame(width: 580, height: 500)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: step == 0)
     }
 
     @ViewBuilder private var content: some View {
@@ -28,8 +36,8 @@ struct OnboardingView: View {
             methodStep
         default:
             OnboardingStep(icon: "checkmark.seal.fill", title: "Sẵn sàng!",
-                           subtitle: "Chọn Funput từ menu bàn phím (trên thanh menu) và bắt đầu gõ.") {
-                EmptyView()
+                           subtitle: "Chọn Funput từ menu bàn phím trên thanh menu và bắt đầu gõ.") {
+                readySummary
             }
         }
     }
@@ -42,9 +50,10 @@ struct OnboardingView: View {
             VStack(spacing: Theme.Spacing.sm) {
                 Text("Chào mừng đến Funput")
                     .font(.largeTitle.bold())
+                    .foregroundStyle(.white)
                 Text("Gõ tiếng Việt ở mọi nơi trên máy Mac — miễn phí, mã nguồn mở.")
                     .font(.title3)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.78))
                     .multilineTextAlignment(.center)
             }
             Spacer(minLength: 0)
@@ -58,44 +67,55 @@ struct OnboardingView: View {
         return OnboardingStep(icon: "keyboard", title: "Chọn phương thức gõ",
                               subtitle: "Có thể đổi bất cứ lúc nào trong Cài đặt.") {
             VStack(spacing: Theme.Spacing.md) {
-                Picker("Phương thức", selection: $settings.inputMethod) {
-                    ForEach(InputMethod.displayCases) { Text($0.displayName).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+                GlassMethodSelector(selection: $settings.inputMethod)
                 Text(settings.inputMethod.blurb)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: 360)
+            .frame(maxWidth: 420)
         }
     }
 
+    private var readySummary: some View {
+        HStack(spacing: Theme.Spacing.lg) {
+            Label(settings.inputMethod.displayName, systemImage: "keyboard")
+            Divider().frame(height: 22)
+            Label("VI / EN", systemImage: "globe")
+            ShortcutCaps(caps: settings.toggleShortcut.keyCaps)
+        }
+        .font(.callout.weight(.semibold))
+        .padding(.horizontal, Theme.Spacing.lg)
+        .padding(.vertical, Theme.Spacing.md)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+    }
+
     private var footer: some View {
-        HStack {
-            if step > 0 {
-                Button("Quay lại") { step -= 1 }
-                    .buttonStyle(.glass)
-            }
-            Spacer()
-            HStack(spacing: 6) {
-                ForEach(0..<stepCount, id: \.self) { i in
-                    Circle()
-                        .fill(i == step ? AnyShapeStyle(.tint) : AnyShapeStyle(.quaternary))
-                        .frame(width: 7, height: 7)
+        GlassEffectContainer(spacing: Theme.Spacing.md) {
+            HStack {
+                if step > 0 {
+                    Button("Quay lại") { step -= 1 }
+                        .buttonStyle(.glass)
                 }
-            }
-            Spacer()
-            Button(step < stepCount - 1 ? "Tiếp tục" : "Bắt đầu dùng") {
-                if step < stepCount - 1 {
-                    step += 1
-                } else {
-                    settings.hasCompletedOnboarding = true
-                    dismiss()
+                Spacer()
+                HStack(spacing: 6) {
+                    ForEach(0..<stepCount, id: \.self) { i in
+                        Circle()
+                            .fill(i == step ? AnyShapeStyle(.tint) : AnyShapeStyle(.quaternary))
+                            .frame(width: 7, height: 7)
+                    }
                 }
+                Spacer()
+                Button(step < stepCount - 1 ? "Tiếp tục" : "Bắt đầu dùng") {
+                    if step < stepCount - 1 {
+                        step += 1
+                    } else {
+                        settings.hasCompletedOnboarding = true
+                        dismiss()
+                    }
+                }
+                .buttonStyle(.glassProminent)
+                .keyboardShortcut(.defaultAction)
             }
-            .buttonStyle(.glassProminent)
-            .keyboardShortcut(.defaultAction)
         }
         .padding(Theme.Spacing.lg)
     }

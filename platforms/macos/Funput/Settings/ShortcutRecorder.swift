@@ -27,13 +27,9 @@ struct ShortcutRecorder: View {
             Button { recording = true } label: {
                 Label(combo == nil ? "Đặt phím" : "Đổi", systemImage: "pencil")
                     .font(.callout.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.vertical, Theme.Spacing.xs + 2)
-                    .glassEffect(.regular.interactive(), in: .capsule)
-                    .contentShape(.capsule)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.glass)
+            .controlSize(.small)
             .popover(isPresented: $recording, arrowEdge: .bottom) {
                 recordingPopover
                     .onAppear(perform: startRecording)

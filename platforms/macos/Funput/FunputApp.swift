@@ -49,13 +49,14 @@ struct FunputApp: App {
 
     var body: some Scene {
         MenuBarExtra(isInserted: menuBarBinding) {
-            StatusMenu()
+            MenuBarControlCenter()
                 .environment(settings)
                 .environment(updater)
         } label: {
             MenuBarLabel()
                 .environment(settings)
         }
+        .menuBarExtraStyle(.window)
 
         Window("Funput Settings", id: WindowID.settings) {
             SettingsView()

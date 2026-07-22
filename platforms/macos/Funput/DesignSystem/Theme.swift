@@ -2,6 +2,10 @@ import SwiftUI
 
 /// Spacing / radius / sizing tokens, so the whole app stays visually consistent.
 enum Theme {
+    /// The single semantic brand tint, defined in Assets.xcassets so controls
+    /// never depend on hardcoded SwiftUI colors.
+    static let accent = Color("AccentColor")
+
     enum Spacing {
         static let xs: CGFloat = 4
         static let sm: CGFloat = 8
@@ -17,7 +21,8 @@ enum Theme {
     }
 
     /// Standard size for the Settings window content.
-    static let settingsMinWidth: CGFloat = 720
-    static let settingsMinHeight: CGFloat = 460
-    static let sidebarWidth: CGFloat = 200
+    static let settingsMinWidth: CGFloat = 960
+    static let settingsMinHeight: CGFloat = 680
+    static let sidebarWidth: CGFloat = 220
+    static let contentMaxWidth: CGFloat = 800
 }

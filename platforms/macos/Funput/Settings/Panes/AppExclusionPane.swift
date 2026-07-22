@@ -10,7 +10,7 @@ struct AppExclusionPane: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            GlassCard {
+            SettingsSurface {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     SettingsRow(
                         title: "Ứng dụng bỏ qua",
