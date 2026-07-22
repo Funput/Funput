@@ -23,6 +23,6 @@ enum Theme {
     /// Standard size for the Settings window content.
     static let settingsMinWidth: CGFloat = 960
     static let settingsMinHeight: CGFloat = 680
-    static let sidebarWidth: CGFloat = 220
+    static let sidebarWidth: CGFloat = 240
     static let contentMaxWidth: CGFloat = 800
 }

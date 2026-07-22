@@ -9,8 +9,8 @@ struct ShortcutsPane: View {
     var body: some View {
         @Bindable var settings = settings
 
-        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            SettingsSurface {
+        Group {
+            Section("Danh sách gõ tắt") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     SettingsRow(
                         title: "Gõ tắt",
@@ -37,9 +37,8 @@ struct ShortcutsPane: View {
                 }
             }
 
-            SettingsSurface {
+            Section("Mẹo") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    SectionHeader(title: "Mẹo")
                     Text("Trigger khớp đúng chuỗi phím bạn gõ và **phân biệt hoa/thường** — `vn` khác `VN`. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -88,7 +87,8 @@ struct ShortcutsPane: View {
     }
 
     private func field(text: Binding<String>, placeholder: String, monospaced: Bool, invalid: Bool) -> some View {
-        TextField(placeholder, text: text)
+        TextField("", text: text, prompt: Text(placeholder))
+            .labelsHidden()
             .textFieldStyle(.plain)
             .font(.system(.body, design: monospaced ? .monospaced : .default))
             .padding(.horizontal, Theme.Spacing.sm)

@@ -3,17 +3,23 @@ import SwiftUI
 enum SettingsDestination: String, CaseIterable, Identifiable, Hashable {
     case overview
     case typing
-    case automation
-    case shortcuts
+    case keyboardShortcuts
+    case textShortcuts
+    case applications
 
     var id: String { rawValue }
+
+    static let general: [Self] = [.overview]
+    static let vietnameseTyping: [Self] = [.typing, .keyboardShortcuts]
+    static let automation: [Self] = [.textShortcuts, .applications]
 
     var title: String {
         switch self {
         case .overview: "Tổng quan"
-        case .typing: "Nhập liệu"
-        case .automation: "Tự động hóa"
-        case .shortcuts: "Phím tắt"
+        case .typing: "Cách gõ"
+        case .keyboardShortcuts: "Phím tắt"
+        case .textShortcuts: "Gõ tắt"
+        case .applications: "Ứng dụng"
         }
     }
 
@@ -21,8 +27,9 @@ enum SettingsDestination: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .overview: "Trạng thái và thiết lập chung của Funput."
         case .typing: "Phương thức gõ, cách đặt dấu và xử lý thông minh."
-        case .automation: "Gõ tắt và quy tắc riêng cho từng ứng dụng."
-        case .shortcuts: "Điều khiển Funput mà không rời bàn phím."
+        case .keyboardShortcuts: "Điều khiển Funput mà không rời bàn phím."
+        case .textShortcuts: "Mở rộng chuỗi gõ thành nội dung thường dùng."
+        case .applications: "Chọn ứng dụng luôn sử dụng tiếng Anh."
         }
     }
 
@@ -30,8 +37,9 @@ enum SettingsDestination: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .overview: "square.grid.2x2"
         case .typing: "character.cursor.ibeam"
-        case .automation: "wand.and.sparkles"
-        case .shortcuts: "command"
+        case .keyboardShortcuts: "command"
+        case .textShortcuts: "text.append"
+        case .applications: "app.badge"
         }
     }
 }

@@ -10,18 +10,16 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationSplitView {
-            SettingsSidebar(selection: $selection)
-        } detail: {
-            destinationView
-        }
-        .tint(Theme.accent)
-        .toolbar {
-            SettingsToolbar(
+            SettingsSidebar(
+                selection: $selection,
                 onImport: importConfig,
                 onExport: exportConfig,
                 onAbout: showAbout
             )
+        } detail: {
+            destinationView
         }
+        .tint(Theme.accent)
         .sheet(item: $presentation) { item in
             switch item {
             case .about:
@@ -51,11 +49,17 @@ struct SettingsView: View {
             OverviewPane()
         case .typing:
             TypingPane()
-        case .automation:
-            AutomationPane()
-        case .shortcuts:
-            SettingsPage(destination: .shortcuts) {
+        case .keyboardShortcuts:
+            SettingsPage(destination: .keyboardShortcuts) {
                 KeyboardPane()
+            }
+        case .textShortcuts:
+            SettingsPage(destination: .textShortcuts) {
+                ShortcutsPane()
+            }
+        case .applications:
+            SettingsPage(destination: .applications) {
+                AppExclusionPane()
             }
         }
     }

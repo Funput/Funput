@@ -2,10 +2,10 @@ import XCTest
 @testable import Funput
 
 final class SettingsDestinationTests: XCTestCase {
-    func testControlCenterHasExactlyFourDestinations() {
+    func testSettingsHasExpectedDestinations() {
         XCTAssertEqual(
             SettingsDestination.allCases,
-            [.overview, .typing, .automation, .shortcuts]
+            [.overview, .typing, .keyboardShortcuts, .textShortcuts, .applications]
         )
     }
 
@@ -15,5 +15,14 @@ final class SettingsDestinationTests: XCTestCase {
             XCTAssertFalse(destination.subtitle.isEmpty)
             XCTAssertFalse(destination.systemImage.isEmpty)
         }
+    }
+
+    func testSidebarGroupsCoverEveryDestinationExactlyOnce() {
+        let grouped = SettingsDestination.general
+            + SettingsDestination.vietnameseTyping
+            + SettingsDestination.automation
+
+        XCTAssertEqual(grouped.count, SettingsDestination.allCases.count)
+        XCTAssertEqual(Set(grouped), Set(SettingsDestination.allCases))
     }
 }

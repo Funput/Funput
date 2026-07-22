@@ -86,7 +86,7 @@ struct OverviewHero: View {
                             .font(.caption.weight(.bold))
                             .tracking(1.5)
                             .foregroundStyle(.white.opacity(0.7))
-                        Text("Gõ tiếng Việt,\nthật tự nhiên.")
+                        Text("Gõ là \"Fun\",\nInput là chuẩn.")
                             .font(.system(size: 30, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
                         Label(

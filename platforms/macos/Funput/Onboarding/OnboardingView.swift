@@ -25,7 +25,13 @@ struct OnboardingView: View {
                 OnboardingFooter(step: $step, stepCount: stepCount, onComplete: complete)
             }
         }
-        .frame(minWidth: 580, minHeight: 500)
+        // `.windowResizability(.contentSize)` on the onboarding Window sizes the
+        // window to this frame; ScrollView itself doesn't propagate its content's
+        // natural height upward, so the number here is what actually determines
+        // the window height. 500 was too short for the busiest step (3
+        // instructions + button + status row in EnableInputSourceStep), causing
+        // the ScrollView to always show a scrollbar even at default text size.
+        .frame(minWidth: 580, minHeight: 600)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: step == 0)
     }
 

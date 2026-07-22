@@ -31,17 +31,6 @@ struct SettingsRow<Control: View>: View {
     }
 }
 
-struct SectionHeader: View {
-    let title: String
-
-    var body: some View {
-        Text(title)
-            .font(.headline)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
 /// A keyboard keycap in the content layer.
 struct KeyCap: View {
     let label: String
@@ -68,7 +57,6 @@ struct ShortcutCaps: View {
 
 #Preview("Settings components") {
     VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-        SectionHeader(title: "Preview")
         SettingsSurface {
             VStack(spacing: Theme.Spacing.sm) {
                 SettingsRow(title: "Một tuỳ chọn", subtitle: "Mô tả ngắn", systemImage: "sparkles") {

@@ -8,7 +8,7 @@ struct MenuBarControlCenter: View {
         VStack(spacing: Theme.Spacing.md) {
             MenuBarStatusHeader()
             methodSelector(selection: $settings.inputMethod)
-            shortcutSummary
+            shortcutSummary(isVietnameseEnabled: $settings.vietnameseEnabled)
             MenuBarActionCluster()
         }
         .padding(Theme.Spacing.md)
@@ -17,7 +17,10 @@ struct MenuBarControlCenter: View {
         .background(.windowBackground)
     }
 
-    private var shortcutSummary: some View {
+    // Trailing control reuses the same Settings-sidebar `GlassLanguageToggle`
+    // (instead of a passive `ShortcutCaps` display) so the panel offers a real
+    // EN/VI switch here too. The shortcut itself moves into the subtitle text.
+    private func shortcutSummary(isVietnameseEnabled: Binding<Bool>) -> some View {
         HStack(spacing: Theme.Spacing.md) {
             Image(systemName: "command")
                 .font(.title3)
@@ -25,15 +28,15 @@ struct MenuBarControlCenter: View {
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Chuyển Việt / Anh")
+                Text("Chuyển tiếng Việt / tiếng Anh")
                     .font(.callout.weight(.semibold))
-                Text("Dùng được cả khi cửa sổ Funput đóng")
+                Text("Có thể dùng phím tắt \(settings.toggleShortcut.keyCaps.joined(separator: " + "))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
-            ShortcutCaps(caps: settings.toggleShortcut.keyCaps)
+            GlassLanguageToggle(isVietnameseEnabled: isVietnameseEnabled)
         }
         .padding(Theme.Spacing.md)
         .background(
@@ -44,18 +47,16 @@ struct MenuBarControlCenter: View {
 
     private func methodSelector(selection: Binding<InputMethod>) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack {
-                Text("Phương thức gõ")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text(settings.inputMethod.blurb)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
+            Text("Phương thức gõ")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
             GlassMethodSelector(selection: selection, compact: true)
         }
+        // The blurb HStack used to have a trailing Spacer that stretched this
+        // section to the panel's full width; now that it's gone, the VStack
+        // shrinks to its content and the parent's default `.center` alignment
+        // centers it. Claim full width explicitly and keep leading alignment.
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

@@ -6,12 +6,12 @@ struct MenuBarStatusHeader: View {
     var body: some View {
         VietnameseFlowBackground()
             .overlay {
-                HStack(spacing: Theme.Spacing.md) {
-                    status
-                    Spacer(minLength: 0)
-                    toggle
-                }
-                .padding(Theme.Spacing.lg)
+                // The EN/VI toggle used to live here, but `shortcutSummary` in
+                // `MenuBarControlCenter` now has its own `GlassLanguageToggle`,
+                // so this header stays a pure status readout.
+                status
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(Theme.Spacing.lg)
             }
             .frame(height: 116)
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
@@ -30,20 +30,5 @@ struct MenuBarStatusHeader: View {
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.74))
         }
-    }
-
-    private var toggle: some View {
-        Button {
-            settings.vietnameseEnabled.toggle()
-        } label: {
-            Text(settings.vietnameseEnabled ? "VI" : "EN")
-                .font(.title3.bold())
-                .frame(width: 44, height: 32)
-        }
-        .buttonStyle(.glassProminent)
-        .tint(settings.vietnameseEnabled ? Theme.accent : .gray)
-        .keyboardShortcut(settings.toggleShortcut.keyboardShortcut)
-        .help(settings.vietnameseEnabled ? "Tạm dừng tiếng Việt" : "Bật tiếng Việt")
-        .accessibilityLabel(settings.vietnameseEnabled ? "Tắt gõ tiếng Việt" : "Bật gõ tiếng Việt")
     }
 }
