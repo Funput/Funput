@@ -253,8 +253,8 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
     }
 
     match classify(&keymap::to_key_event(kbd)) {
-        KeyKind::Compose(c) => {
-            let plan = plan_inject(&shell::process_char(c));
+        KeyKind::Compose(c, source) => {
+            let plan = plan_inject(&shell::process_key(c, source));
             if plan.is_noop() {
                 false // Action::None — the literal key reaches the app
             } else {
