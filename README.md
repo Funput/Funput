@@ -17,10 +17,9 @@
 
 ---
 
-**Funput** là bộ gõ tiếng Việt mã nguồn mở, hiện đã phát hành trên macOS,
-Windows và Linux; phiên bản Android đang kiểm thử khép kín trên Google Play,
-còn phiên bản iOS đang ở giai đoạn TestFlight beta. Mọi nền tảng dùng chung
-một lõi xử lý để giữ hành vi gõ nhất quán.
+**Funput** là bộ gõ tiếng Việt mã nguồn mở — nhẹ, tập trung vào quyền riêng tư,
+thiết kế riêng cho từng hệ điều hành. Gõ Telex hoặc VNI trên iOS, Android, macOS,
+Windows và Linux. Mọi nền tảng dùng chung một lõi xử lý để giữ hành vi gõ nhất quán.
 
 ## Bắt đầu
 
@@ -40,11 +39,11 @@ một lõi xử lý để giữ hành vi gõ nhất quán.
 
 | Nền tảng | Trạng thái | Cài đặt |
 |---|---|---|
+| iOS | Đã phát hành | [Tải trên App Store](https://apps.apple.com/vn/app/id6788829996) |
 | macOS | Đã phát hành | [Tải bản mới nhất](https://github.com/Funput/Funput/releases/latest) |
 | Windows | Đã phát hành | [Tải bản mới nhất](https://github.com/Funput/Funput/releases/latest) |
 | Linux | Đã phát hành | [Xem hướng dẫn](https://docs.funput.app/) |
 | Android | Kiểm thử khép kín | Chưa mở đăng ký công khai |
-| iOS | TestFlight beta | [Tham gia TestFlight](https://testflight.apple.com/join/E8YRd3sy) |
 
 ## Giao diện
 

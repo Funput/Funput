@@ -17,10 +17,10 @@
 
 ---
 
-**Funput** is an open-source Vietnamese input method released for macOS,
-Windows, and Linux. Android is in closed testing on Google Play, while iOS is
-in TestFlight beta. Every platform shares the same processing core to provide
-consistent typing behavior across operating systems.
+**Funput** is an open-source Vietnamese input method — lightweight, privacy-focused,
+and designed for each operating system. Type with Telex or VNI on iOS, Android,
+macOS, Windows, and Linux. Every platform shares the same processing core for
+consistent typing behavior.
 
 ## Get started
 
@@ -40,11 +40,11 @@ consistent typing behavior across operating systems.
 
 | Platform | Status | Install |
 |---|---|---|
+| iOS | Released | [Get it on the App Store](https://apps.apple.com/vn/app/id6788829996) |
 | macOS | Released | [Download the latest release](https://github.com/Funput/Funput/releases/latest) |
 | Windows | Released | [Download the latest release](https://github.com/Funput/Funput/releases/latest) |
 | Linux | Released | [Read the installation guide](https://docs.funput.app/) |
 | Android | Closed testing | Public enrollment is not available yet |
-| iOS | TestFlight beta | [Join the TestFlight beta](https://testflight.apple.com/join/E8YRd3sy) |
 
 ## Interface
 
