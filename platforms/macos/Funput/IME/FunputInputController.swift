@@ -82,6 +82,12 @@ final class FunputInputController: IMKInputController {
             return false
         }
 
+        // Numeric-keypad digits are literal numbers, never VNI tone/shape modifiers:
+        // commit the current word and insert the digit, like a word boundary.
+        if isNumpadDigit(event, scalar) {
+            return commitBoundary(scalar, into: client, source: .numpad)
+        }
+
         if InputEventPolicy.isBoundary(scalar, method: AppSettings.shared.inputMethod) {
             return commitBoundary(scalar, into: client)
         }

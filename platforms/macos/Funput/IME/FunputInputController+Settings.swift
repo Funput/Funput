@@ -32,4 +32,12 @@ extension FunputInputController {
         if (0xF700...0xF8FF).contains(value) { return true }
         return value < 0x20 && scalar != "\t" && scalar != "\n" && scalar != "\r"
     }
+
+    /// A digit typed on the numeric keypad. In VNI these must stay literal numbers
+    /// rather than act as tone/shape modifiers, so they are committed like a word
+    /// boundary (see `commitBoundary(_:into:source:)`). Keypad arrows / Enter also set
+    /// `.numericPad` but carry non-digit scalars already filtered by `isNonTextKey`.
+    func isNumpadDigit(_ event: NSEvent, _ scalar: Unicode.Scalar) -> Bool {
+        event.modifierFlags.contains(.numericPad) && (0x30...0x39).contains(scalar.value)
+    }
 }

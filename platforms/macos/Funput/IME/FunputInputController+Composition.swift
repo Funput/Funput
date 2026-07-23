@@ -20,14 +20,18 @@ extension FunputInputController {
         composer.clear()
     }
 
-    func commitBoundary(_ scalar: Unicode.Scalar, into client: IMKTextInput) -> Bool {
+    func commitBoundary(
+        _ scalar: Unicode.Scalar,
+        into client: IMKTextInput,
+        source: FunputComposer.KeySource = .standard
+    ) -> Bool {
         let pre = composer.buffer()
         guard !pre.isEmpty else {
-            if AppSettings.shared.autoCapitalizeEnabled { _ = composer.process(scalar) }
+            if AppSettings.shared.autoCapitalizeEnabled { _ = composer.process(scalar, source: source) }
             return false
         }
 
-        let result = composer.process(scalar)
+        let result = composer.process(scalar, source: source)
         let word = result.action == ACTION_SEND
             ? String(FunputComposer.output(of: result).dropLast())
             : pre
