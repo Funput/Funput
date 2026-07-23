@@ -22,7 +22,8 @@ EngineState *stateOf(IBusEngine *engine);
 void applySettings(EngineState *state);
 void updatePreedit(IBusEngine *engine, EngineState *state);
 void commitBuffer(IBusEngine *engine, EngineState *state);
-bool handleBoundary(IBusEngine *engine, EngineState *state, char32_t scalar);
+bool handleBoundary(IBusEngine *engine, EngineState *state, char32_t scalar,
+                    funput::KeySource source = funput::KeySource::Standard);
 bool matchesToggle(EngineState *state, guint keyval, guint modifiers);
 bool matchesFlip(EngineState *state, guint keyval, guint modifiers);
 void toggleEnabled(IBusEngine *engine, EngineState *state);

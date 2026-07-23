@@ -21,6 +21,13 @@ inline bool isBoundary(char32_t s, Method method) {
            (v >= 0x5B && v <= 0x60) || (v >= 0x7B && v <= 0x7E);
 }
 
+// A numeric-keypad digit, identified by its X11 keysym KP_0..KP_9 (0xff80+0x30 =
+// 0xffb0 .. 0xffb9). Shared by Fcitx5 (FcitxKey_KP_0) and IBus (IBUS_KEY_KP_0),
+// whose keysym values are identical. These only reach the shell as digits while
+// NumLock is on; NumLock off turns them into arrows/Home/End (keysym→unicode 0).
+// A numpad digit must stay a literal number, so the shell tags it KeySource::Numpad.
+inline bool isNumpadDigitKeysym(uint32_t keysym) { return keysym >= 0xffb0 && keysym <= 0xffb9; }
+
 } // namespace funput
 
 #endif // FUNPUT_BOUNDARY_H

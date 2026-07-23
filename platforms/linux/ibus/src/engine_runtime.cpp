@@ -37,15 +37,16 @@ void commitBuffer(IBusEngine *engine, EngineState *state) {
     }
 }
 
-bool handleBoundary(IBusEngine *engine, EngineState *state, char32_t scalar) {
+bool handleBoundary(IBusEngine *engine, EngineState *state, char32_t scalar,
+                    funput::KeySource source) {
     const std::string before = state->handle.buffer();
     if (before.empty()) {
         if (state->settings.autoCapitalize) {
-            state->handle.process(static_cast<uint32_t>(scalar));
+            state->handle.process(static_cast<uint32_t>(scalar), source);
         }
         return false;
     }
-    const FunputResult result = state->handle.process(static_cast<uint32_t>(scalar));
+    const FunputResult result = state->handle.process(static_cast<uint32_t>(scalar), source);
     std::string word = before;
     if (result.action == ACTION_SEND) {
         word = funput::Handle::output(result);

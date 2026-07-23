@@ -13,6 +13,14 @@
 
 namespace funput {
 
+// Physical origin of a key, mirroring funput-engine's `KeySource`. A numpad digit
+// is tagged Numpad so the engine keeps it a literal number instead of composing a
+// VNI tone/shape modifier. Values match the C `SOURCE_*` constants in funput.h.
+enum class KeySource : uint32_t {
+    Standard = SOURCE_STANDARD,
+    Numpad = SOURCE_NUMPAD,
+};
+
 // Decode a UTF-8 string into Unicode scalars (the inverse of appendUtf8). Invalid
 // bytes are skipped. Used to marshal gõ tắt strings to the FFI's uint32_t arrays.
 inline std::vector<uint32_t> decodeUtf8(const std::string &s) {
@@ -114,7 +122,11 @@ public:
         funput_add_shortcut(engine_, t.data(), t.size(), e.data(), e.size());
     }
 
-    FunputResult process(uint32_t codepoint) { return funput_process_char(engine_, codepoint); }
+    // Feed one Unicode scalar tagged with its physical key source; a numpad digit
+    // (source == KeySource::Numpad) is kept a literal number, not a VNI modifier.
+    FunputResult process(uint32_t codepoint, KeySource source = KeySource::Standard) {
+        return funput_process_key(engine_, codepoint, static_cast<uint32_t>(source));
+    }
     FunputResult backspace() { return funput_backspace(engine_); }
 
     // Flip the word being composed between its Vietnamese form and its raw keys.

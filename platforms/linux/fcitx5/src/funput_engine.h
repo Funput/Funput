@@ -36,7 +36,8 @@ private:
     void updatePreedit(fcitx::InputContext *ic);  // show buffer() as underlined preedit
     void clearPreedit(fcitx::InputContext *ic);
     void commitBuffer(fcitx::InputContext *ic);   // commit buffer(), end composition
-    bool handleBoundary(fcitx::InputContext *ic, char32_t scalar);
+    bool handleBoundary(fcitx::InputContext *ic, char32_t scalar,
+                        funput::KeySource source = funput::KeySource::Standard);
     bool matchesToggle(const fcitx::Key &key) const;
     bool matchesFlip(const fcitx::Key &key) const;
     void toggleEnabled(fcitx::InputContext *ic);

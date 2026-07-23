@@ -35,13 +35,14 @@ void FunputEngine::commitBuffer(fcitx::InputContext *context) {
     if (!buffer.empty()) context->commitString(buffer);
 }
 
-bool FunputEngine::handleBoundary(fcitx::InputContext *context, char32_t scalar) {
+bool FunputEngine::handleBoundary(fcitx::InputContext *context, char32_t scalar,
+                                  funput::KeySource source) {
     const std::string before = handle_.buffer();
     if (before.empty()) {
-        if (settings_.autoCapitalize) handle_.process(static_cast<uint32_t>(scalar));
+        if (settings_.autoCapitalize) handle_.process(static_cast<uint32_t>(scalar), source);
         return false;
     }
-    const FunputResult result = handle_.process(static_cast<uint32_t>(scalar));
+    const FunputResult result = handle_.process(static_cast<uint32_t>(scalar), source);
     std::string word = before;
     if (result.action == ACTION_SEND) {
         word = funput::Handle::output(result);
@@ -90,6 +91,13 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
             handle_.armCapitalization();
         }
         commitBuffer(context);
+        return;
+    }
+    // A numpad digit is a literal number, not a VNI tone/shape: commit the current
+    // word and emit the digit, like a word boundary (mirrors the macOS shell).
+    if (funput::isNumpadDigitKeysym(static_cast<uint32_t>(key.sym()))) {
+        if (handleBoundary(context, static_cast<char32_t>(scalar), funput::KeySource::Numpad))
+            event.filterAndAccept();
         return;
     }
     if (funput::isBoundary(static_cast<char32_t>(scalar), settings_.method)) {
