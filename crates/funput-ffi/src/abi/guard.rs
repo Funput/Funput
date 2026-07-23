@@ -1,6 +1,10 @@
-//! Shared helpers for the C ABI boundary: a panic guard, null-safe handle access,
-//! and UTF-32 ↔ `char` marshalling — folded into one place so every export stays a
-//! thin, well-documented wrapper.
+//! Panic guard + null-safe handle access for the C ABI boundary.
+//!
+//! Every export runs its body through [`safe`], so an engine panic is caught here
+//! and turned into a no-op result instead of unwinding into the host (Swift/C++) —
+//! which would abort the whole IME process. [`with_engine_mut`] / [`with_engine_ref`]
+//! fold that guard together with the null-handle check so each export stays a thin,
+//! uniform wrapper.
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
@@ -40,27 +44,4 @@ pub(crate) unsafe fn with_engine_ref<R: Default>(
     safe(R::default(), || {
         unsafe { engine.as_ref() }.map_or_else(R::default, |e| op(&e.inner))
     })
-}
-
-/// Write `chars` into `dst` as UTF-32, up to `dst.len()`; returns the count written.
-/// The single truncating copy behind both `FunputResult::from_ime` and
-/// `funput_buffer`.
-pub(crate) fn copy_codepoints(dst: &mut [u32], chars: impl Iterator<Item = char>) -> usize {
-    let mut n = 0;
-    for ch in chars {
-        if n >= dst.len() {
-            break;
-        }
-        dst[n] = ch as u32;
-        n += 1;
-    }
-    n
-}
-
-/// Decode UTF-32 codepoints into a `String`, skipping invalid scalars.
-pub(crate) fn decode_codepoints(codepoints: &[u32]) -> String {
-    codepoints
-        .iter()
-        .filter_map(|&c| char::from_u32(c))
-        .collect()
 }

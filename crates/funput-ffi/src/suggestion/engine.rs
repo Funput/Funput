@@ -4,7 +4,7 @@ use std::slice;
 
 use funput_suggestions::{SuggestionConfig, SuggestionEngine};
 
-use crate::support::safe;
+use crate::abi::safe;
 
 /// Opaque, single-owner personal suggestion handle. It is independent from the
 /// Vietnamese composition engine and must be driven from a serial worker.

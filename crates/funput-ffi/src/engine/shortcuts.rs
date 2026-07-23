@@ -1,7 +1,7 @@
 //! Text-expansion shortcut (gõ tắt) table sync over the C ABI.
 
-use crate::FunputEngine;
-use crate::support;
+use super::FunputEngine;
+use crate::abi;
 
 /// Define a text-expansion shortcut (gõ tắt): typing `trigger` then a word boundary
 /// injects `expansion` (`vn` → `Việt Nam`). Both strings are passed as UTF-32
@@ -27,7 +27,7 @@ pub unsafe extern "C" fn funput_add_shortcut(
     expansion_len: usize,
 ) {
     unsafe {
-        support::with_engine_mut(engine, |e| {
+        abi::with_engine_mut(engine, |e| {
             let trigger = string_from_utf32(trigger, trigger_len);
             let expansion = string_from_utf32(expansion, expansion_len);
             e.add_shortcut(trigger, expansion);
@@ -42,7 +42,7 @@ pub unsafe extern "C" fn funput_add_shortcut(
 /// `engine` must be a valid handle or null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_clear_shortcuts(engine: *mut FunputEngine) {
-    unsafe { support::with_engine_mut(engine, |e| e.clear_shortcuts()) }
+    unsafe { abi::with_engine_mut(engine, |e| e.clear_shortcuts()) }
 }
 
 /// Decode `len` UTF-32 codepoints at `ptr` into a `String`, skipping invalid
@@ -54,5 +54,5 @@ unsafe fn string_from_utf32(ptr: *const u32, len: usize) -> String {
     if ptr.is_null() {
         return String::new();
     }
-    support::decode_codepoints(unsafe { std::slice::from_raw_parts(ptr, len) })
+    abi::decode_codepoints(unsafe { std::slice::from_raw_parts(ptr, len) })
 }

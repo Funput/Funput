@@ -2,7 +2,7 @@
 
 use funput_engine::{Action, ImeResult};
 
-use crate::support;
+use crate::abi;
 
 /// Max output codepoints carried inline. Generous enough for English-restore of
 /// long words; longer output is truncated (practically never happens).
@@ -46,7 +46,7 @@ impl FunputResult {
         };
 
         let mut chars = [0u32; CHARS_CAP];
-        let count = support::copy_codepoints(&mut chars, result.output.chars());
+        let count = abi::copy_codepoints(&mut chars, result.output.chars());
 
         Self {
             action,
@@ -59,7 +59,7 @@ impl FunputResult {
     /// Output codepoints as a `String` — test helper.
     #[cfg(test)]
     pub(crate) fn output_string(&self) -> String {
-        support::decode_codepoints(&self.chars[..self.count as usize])
+        abi::decode_codepoints(&self.chars[..self.count as usize])
     }
 }
 

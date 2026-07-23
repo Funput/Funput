@@ -26,10 +26,6 @@
 
 #define METHOD_TELEX_ADVANCED 2
 
-#define SUGGESTION_CAP 3
-
-#define SUGGESTION_CHARS_CAP 32
-
 /**
  * Max output codepoints carried inline. Generous enough for English-restore of
  * long words; longer output is truncated (practically never happens).
@@ -44,6 +40,10 @@
 #define ACTION_SEND 1
 
 #define ACTION_RESTORE 2
+
+#define SUGGESTION_CAP 3
+
+#define SUGGESTION_CHARS_CAP 32
 
 /**
  * Opaque IME engine handle for C callers. Create with [`funput_engine_new`],

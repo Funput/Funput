@@ -1,4 +1,4 @@
-use crate::support::safe;
+use crate::abi::safe;
 
 use super::engine::{FunputSuggestionEngine, with_mut};
 use super::types::FunputSuggestionStats;
