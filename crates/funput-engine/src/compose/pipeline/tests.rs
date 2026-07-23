@@ -1,5 +1,5 @@
 use super::*;
-use crate::result::Action;
+use crate::Action;
 use funput_core::InputMethod;
 
 #[test]

@@ -1,8 +1,8 @@
 use super::*;
-use crate::boundary::{on_word_boundary, should_restore};
-use crate::flip::RestoreOverride;
-use crate::result::Action;
-use crate::session::Session;
+use crate::Action;
+use crate::compose::RestoreOverride;
+use crate::compose::boundary::{on_word_boundary, should_restore};
+use crate::model::Session;
 
 #[test]
 fn restore_decision_uses_completed_structure() {

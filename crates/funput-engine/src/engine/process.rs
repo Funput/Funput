@@ -1,12 +1,25 @@
-use crate::{Engine, ImeResult, boundary, pipeline};
+use crate::compose::{boundary, pipeline};
+use crate::{Engine, ImeResult, KeySource};
 
 impl Engine {
-    /// Process one Unicode scalar and return the platform edit instruction.
+    /// Process one Unicode scalar from the main keyboard. Shorthand for
+    /// [`Engine::process_key`] with [`KeySource::Standard`].
     pub fn process_char(&mut self, key: char) -> ImeResult {
+        self.process_key(key, KeySource::Standard)
+    }
+
+    /// Process one Unicode scalar tagged with its physical [`KeySource`], returning
+    /// the platform edit instruction.
+    ///
+    /// A numpad digit is emitted as a literal number: it ends the current word like
+    /// a boundary (committing or restoring the buffer) instead of acting as a VNI
+    /// tone/shape modifier. Every other key behaves exactly as [`Engine::process_char`].
+    pub fn process_key(&mut self, key: char, source: KeySource) -> ImeResult {
         if !self.session.enabled {
             return ImeResult::none();
         }
-        if boundary::is_word_boundary(self.session.method, key) {
+        if source.forces_literal_digit(key) || boundary::is_word_boundary(self.session.method, key)
+        {
             return boundary::on_word_boundary(&mut self.session, key);
         }
         let (compose_key, capitalize_shortcut) = self.prepare_key(key);

@@ -2,38 +2,22 @@
 //!
 //! Transform rules stay in core; this crate owns raw keys, composition state,
 //! boundaries, restore, Flip, backspace, and minimal text diffs.
+//!
+//! # Layout
+//!
+//! The source is grouped by concern so the crate stays approachable as it grows:
+//!
+//! - `engine/` — the public [`Engine`] facade: configuration, key processing, and
+//!   editing (backspace / flip). This is the whole caller-facing surface.
+//! - `compose/` — the internal composition pipeline (keystroke → [`ImeResult`]):
+//!   word boundaries, English restore, Flip, and buffer diffs.
+//! - `model/` — the data types that flow through: session state, the input
+//!   [`KeySource`], and the platform [`ImeResult`] / [`Action`].
 
-mod boundary;
-mod config;
-mod diff;
-mod editing;
-mod flip;
-mod input;
-mod pipeline;
-mod result;
-mod session;
+mod compose;
+mod engine;
+mod model;
 
-pub use result::{Action, ImeResult};
-
-use session::Session;
-
-/// Vietnamese IME engine — single source of truth for composition state.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Engine {
-    session: Session,
-}
-
-impl Engine {
-    /// New engine with composition enabled and standard Telex selected.
-    pub fn new() -> Self {
-        Self {
-            session: Session::new(),
-        }
-    }
-}
-
-impl Default for Engine {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+pub use engine::Engine;
+pub use model::key_source::KeySource;
+pub use model::result::{Action, ImeResult};

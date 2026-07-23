@@ -1,6 +1,6 @@
 use super::*;
-use crate::boundary::{is_word_boundary, on_word_boundary};
-use crate::result::Action;
+use crate::Action;
+use crate::compose::boundary::{is_word_boundary, on_word_boundary};
 
 #[test]
 fn boundary_character_inventory() {

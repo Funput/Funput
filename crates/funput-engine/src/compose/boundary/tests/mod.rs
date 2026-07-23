@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use funput_core::{InputMethod, ToneStyle};
 
-use super::super::*;
+use crate::model::Session;
 
 fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
     Session {

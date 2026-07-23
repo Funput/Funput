@@ -1,5 +1,5 @@
-use crate::flip;
-use crate::{Engine, ImeResult, diff};
+use crate::compose::{diff, flip};
+use crate::{Engine, ImeResult};
 
 impl Engine {
     /// Synchronize engine state after a Backspace passed through to the host app.
