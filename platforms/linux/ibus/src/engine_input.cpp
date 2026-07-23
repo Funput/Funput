@@ -36,6 +36,14 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
         commitBuffer(engine, state);
         return FALSE;
     }
+    // A numpad digit is a literal number, not a VNI tone/shape: commit the current
+    // word and emit the digit, like a word boundary (mirrors the macOS shell).
+    if (funput::isNumpadDigitKeysym(keyval)) {
+        return handleBoundary(engine, state, static_cast<char32_t>(scalar),
+                              funput::KeySource::Numpad)
+                   ? TRUE
+                   : FALSE;
+    }
     if (funput::isBoundary(static_cast<char32_t>(scalar), state->settings.method)) {
         return handleBoundary(engine, state, static_cast<char32_t>(scalar)) ? TRUE : FALSE;
     }

@@ -5,7 +5,7 @@
 //! rather than inline in `src/lib.rs`.
 
 use funput_core::InputMethod;
-use funput_engine::{Action, Engine, ImeResult};
+use funput_engine::{Action, Engine, ImeResult, KeySource};
 
 #[test]
 fn engine_new_defaults() {
@@ -401,4 +401,58 @@ fn word_after_leading_digit_still_composes() {
         engine.process_char(key);
     }
     assert_eq!(engine.buffer(), "mèo");
+}
+
+// ---- Numpad digits stay literal numbers (VNI) ----
+
+fn vni_engine() -> Engine {
+    let mut e = Engine::new();
+    e.set_method(InputMethod::Vni);
+    e
+}
+
+/// A numpad digit after a vowel is a literal number, not a tone: it commits the
+/// word and passes the number through, unlike the top-row digit which adds nặng.
+#[test]
+fn vni_numpad_digit_is_literal_not_tone() {
+    let mut engine = vni_engine();
+    engine.process_char('a'); // composing "a"
+    let result = engine.process_key('5', KeySource::Numpad);
+    assert_eq!(engine.buffer(), ""); // committed; no nặng applied
+    assert_eq!(result.action, Action::None); // number passes through to the app
+}
+
+/// Same keystroke from the main keyboard keeps its VNI-modifier role.
+#[test]
+fn vni_top_row_digit_still_applies_tone() {
+    let mut engine = vni_engine();
+    engine.process_char('a');
+    engine.process_key('5', KeySource::Standard); // == process_char('5')
+    assert_eq!(engine.buffer(), "ạ");
+}
+
+/// A numpad digit commits a finished word untouched (no tone reshuffle).
+#[test]
+fn vni_numpad_digit_commits_current_word() {
+    let mut engine = vni_engine();
+    for key in ['c', 'h', 'a', 'o'] {
+        engine.process_char(key);
+    }
+    engine.process_char('2'); // huyền → "chào"
+    assert_eq!(engine.buffer(), "chào");
+    let result = engine.process_key('5', KeySource::Numpad);
+    assert_eq!(engine.buffer(), ""); // "chào" committed, "5" is literal
+    assert_eq!(result.action, Action::None);
+}
+
+/// The rule holds for every VNI digit role, including `0` (remove-tone) and the
+/// shape digits `6`–`8`.
+#[test]
+fn vni_numpad_covers_all_digit_roles() {
+    for digit in ['0', '6', '7', '8', '9'] {
+        let mut engine = vni_engine();
+        engine.process_char('a');
+        engine.process_key(digit, KeySource::Numpad);
+        assert_eq!(engine.buffer(), "", "numpad {digit} should not modify 'a'");
+    }
 }

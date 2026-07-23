@@ -6,10 +6,10 @@
 
 use funput_core::{TransformKind, apply_checked, is_definitely_invalid};
 
-use crate::diff::common_prefix_bytes;
-use crate::flip::RestoreOverride;
-use crate::result::ImeResult;
-use crate::session::Session;
+use crate::ImeResult;
+use crate::compose::RestoreOverride;
+use crate::compose::diff::common_prefix_bytes;
+use crate::model::Session;
 
 /// Apply one keystroke to `session` and return platform instructions.
 ///

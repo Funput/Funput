@@ -1,7 +1,7 @@
 //! Translate a Windows low-level keyboard event into the host-neutral
 //! [`funput_desktop::KeyEvent`] the classifier understands.
 
-use funput_desktop::{KeyEvent, Mods};
+use funput_desktop::{KeyEvent, KeySource, Mods};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetAsyncKeyState, GetKeyState, GetKeyboardLayout, ToUnicodeEx, VIRTUAL_KEY, VK_BACK,
     VK_CAPITAL, VK_CONTROL, VK_DELETE, VK_DOWN, VK_END, VK_ESCAPE, VK_HOME, VK_INSERT, VK_LCONTROL,
@@ -128,6 +128,18 @@ fn translate_char(kbd: &KBDLLHOOKSTRUCT) -> Option<char> {
     }
 }
 
+/// Where the key physically sits. Numpad digits report `VK_NUMPAD0..=VK_NUMPAD9`
+/// (0x60..=0x69) — only while NumLock is on, which is exactly when they produce a
+/// digit — so the engine can keep them literal numbers instead of VNI modifiers.
+/// (NumLock off makes those keys arrows/Home/End, handled as navigation upstream.)
+fn key_source(vk: VIRTUAL_KEY) -> KeySource {
+    if (0x60..=0x69).contains(&vk.0) {
+        KeySource::Numpad
+    } else {
+        KeySource::Standard
+    }
+}
+
 pub fn to_key_event(kbd: &KBDLLHOOKSTRUCT) -> KeyEvent {
     let vk = VIRTUAL_KEY(kbd.vkCode as u16);
     KeyEvent {
@@ -135,6 +147,7 @@ pub fn to_key_event(kbd: &KBDLLHOOKSTRUCT) -> KeyEvent {
         ch: translate_char(kbd),
         is_backspace: vk == VK_BACK,
         is_navigation: is_navigation(vk),
+        source: key_source(vk),
     }
 }
 

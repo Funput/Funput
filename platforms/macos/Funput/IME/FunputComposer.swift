@@ -82,10 +82,20 @@ final class FunputComposer {
         return Self.scalars(out, count)
     }
 
-    /// Feed one Unicode scalar; returns the platform instruction.
+    /// Physical origin of a key, mirroring the engine's `KeySource`. Raw values
+    /// match the C `SOURCE_STANDARD` / `SOURCE_NUMPAD` constants in `funput.h`. A
+    /// numpad digit is kept a literal number instead of a VNI tone/shape modifier.
+    enum KeySource: UInt32 {
+        case standard = 0 // SOURCE_STANDARD
+        case numpad = 1 // SOURCE_NUMPAD
+    }
+
+    /// Feed one Unicode scalar tagged with its physical `source`; returns the
+    /// platform instruction. Defaults to the main keyboard, so existing call sites
+    /// are unchanged.
     @discardableResult
-    func process(_ scalar: Unicode.Scalar) -> FunputResult {
-        funput_process_char(handle, scalar.value)
+    func process(_ scalar: Unicode.Scalar, source: KeySource = .standard) -> FunputResult {
+        funput_process_key(handle, scalar.value, source.rawValue)
     }
 
     /// Drop the last composed character (in-composition Backspace).

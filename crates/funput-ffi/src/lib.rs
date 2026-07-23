@@ -33,8 +33,8 @@ mod types;
 use funput_engine::Engine;
 
 pub use compose::{
-    funput_arm_capitalization, funput_backspace, funput_buffer, funput_clear,
-    funput_flip_composing, funput_process_char,
+    SOURCE_NUMPAD, SOURCE_STANDARD, funput_arm_capitalization, funput_backspace, funput_buffer,
+    funput_clear, funput_flip_composing, funput_process_char, funput_process_key,
 };
 pub use config::{
     METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, funput_set_auto_capitalize,

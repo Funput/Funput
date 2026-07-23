@@ -2,9 +2,9 @@
 
 use funput_core::{InputMethod, is_complete_syllable};
 
-use crate::flip::RestoreOverride;
-use crate::result::ImeResult;
-use crate::session::Session;
+use crate::ImeResult;
+use crate::compose::RestoreOverride;
+use crate::model::Session;
 
 pub(crate) fn is_word_boundary(method: InputMethod, key: char) -> bool {
     let full_telex_shortcut = method.is_advanced_telex() && matches!(key, '[' | ']');

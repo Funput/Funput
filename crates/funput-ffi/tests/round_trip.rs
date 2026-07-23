@@ -1,9 +1,9 @@
 //! Round-trip tests: drive the `extern "C"` API exactly like a C caller would.
 
 use funput_ffi::{
-    ACTION_NONE, ACTION_SEND, FunputResult, funput_add_shortcut, funput_backspace, funput_buffer,
-    funput_clear, funput_clear_shortcuts, funput_engine_free, funput_engine_new,
-    funput_process_char, funput_set_method,
+    ACTION_NONE, ACTION_SEND, FunputResult, SOURCE_NUMPAD, funput_add_shortcut, funput_backspace,
+    funput_buffer, funput_clear, funput_clear_shortcuts, funput_engine_free, funput_engine_new,
+    funput_process_char, funput_process_key, funput_set_method,
 };
 
 fn output(result: &FunputResult) -> String {
@@ -132,6 +132,23 @@ fn buffer_reflects_marked_text() {
         assert_eq!(read_buffer(engine), "á"); // tone applied in place
 
         funput_clear(engine);
+        assert_eq!(read_buffer(engine), "");
+
+        funput_engine_free(engine);
+    }
+}
+
+#[test]
+fn numpad_digit_stays_literal_in_vni() {
+    unsafe {
+        let engine = funput_engine_new();
+        funput_set_method(engine, 1); // VNI
+
+        funput_process_char(engine, 'a' as u32);
+        // Top-row '1' would make "á"; the numpad '1' is a literal number instead:
+        // the word commits and the digit passes through (ACTION_NONE, empty buffer).
+        let result = funput_process_key(engine, '1' as u32, SOURCE_NUMPAD);
+        assert_eq!(result.action, ACTION_NONE);
         assert_eq!(read_buffer(engine), "");
 
         funput_engine_free(engine);

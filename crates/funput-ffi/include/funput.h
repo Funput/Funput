@@ -10,6 +10,16 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+/**
+ * [`funput_process_key`] source: main keyboard — digits may act as VNI modifiers.
+ */
+#define SOURCE_STANDARD 0
+
+/**
+ * [`funput_process_key`] source: numeric keypad — a digit is always a literal number.
+ */
+#define SOURCE_NUMPAD 1
+
 #define METHOD_TELEX 0
 
 #define METHOD_VNI 1
@@ -116,7 +126,9 @@ void funput_arm_capitalization(FunputEngine *engine);
 void funput_clear(FunputEngine *engine);
 
 /**
- * Process one Unicode scalar. Returns the platform instruction by value.
+ * Process one Unicode scalar from the main keyboard. Returns the platform
+ * instruction by value. Shorthand for [`funput_process_key`] with
+ * [`SOURCE_STANDARD`].
  *
  * A null handle or invalid `codepoint` yields [`FunputResult::none`].
  *
@@ -124,6 +136,21 @@ void funput_clear(FunputEngine *engine);
  * `engine` must be a valid handle or null.
  */
 FunputResult funput_process_char(FunputEngine *engine, uint32_t codepoint);
+
+/**
+ * Process one Unicode scalar tagged with the physical key `source`
+ * ([`SOURCE_STANDARD`] or [`SOURCE_NUMPAD`]). Returns the platform instruction by
+ * value.
+ *
+ * A numpad digit (`SOURCE_NUMPAD` + `0`–`9`) is emitted as a literal number and
+ * ends the current word instead of applying a VNI tone/shape. A null handle or
+ * invalid `codepoint` yields [`FunputResult::none`]; an unknown `source` is
+ * treated as [`SOURCE_STANDARD`].
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+FunputResult funput_process_key(FunputEngine *engine, uint32_t codepoint, uint32_t source);
 
 /**
  * Copy the current composed buffer (the text the host shows as marked/underlined

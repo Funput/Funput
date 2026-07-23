@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
-use funput_engine::{Engine, ImeResult};
+use funput_engine::{Engine, ImeResult, KeySource};
 
 use crate::settings::{
     ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, Settings, Shortcut, ToneStyle,
@@ -449,8 +449,10 @@ pub fn apply_for_app(id: &str) -> Option<bool> {
 
 // --- composition driving (called from the hook) ----------------------------
 
-pub fn process_char(c: char) -> ImeResult {
-    with(|s| s.engine.process_char(c))
+/// Feed one character to the engine, tagged with its physical [`KeySource`] so a
+/// numpad digit stays a literal number instead of acting as a VNI modifier.
+pub fn process_key(c: char, source: KeySource) -> ImeResult {
+    with(|s| s.engine.process_key(c, source))
 }
 
 /// Flip the word being composed VN↔raw; returns the delete+inject to apply.

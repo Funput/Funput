@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use funput_core::{InputMethod, ToneStyle};
 
-use crate::flip::RestoreOverride;
+use crate::compose::RestoreOverride;
 
 /// Mutable session held by [`crate::Engine`]. Internal — not part of the public API.
 #[derive(Debug, Clone, PartialEq, Eq)]

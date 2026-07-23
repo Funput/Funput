@@ -9,6 +9,8 @@
 
 use funput_engine::{Action, ImeResult};
 
+pub use funput_engine::KeySource;
+
 /// What to emit to the focused app for an [`ImeResult`]: delete `backspaces`
 /// characters, then type `units` (the UTF-16 code units of the composed output).
 ///
@@ -74,14 +76,19 @@ pub struct KeyEvent {
     /// Caret-moving or non-text key: arrows, Home/End, PageUp/Down, Esc, Delete,
     /// Insert, F-keys, Enter, Tab.
     pub is_navigation: bool,
+    /// Where the key physically came from. A numpad digit carries
+    /// [`KeySource::Numpad`] so the engine keeps it a literal number instead of a
+    /// VNI tone/shape modifier; ordinary keys are [`KeySource::Standard`].
+    pub source: KeySource,
 }
 
 /// What the shell should do with a key while Vietnamese mode is on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeyKind {
     /// Feed this character to the engine (printable text key, incl. space/punct —
-    /// the engine itself decides word boundaries).
-    Compose(char),
+    /// the engine itself decides word boundaries). Carries the key's [`KeySource`]
+    /// so a numpad digit is composed as a literal number.
+    Compose(char, KeySource),
     /// Backspace pressed — call `engine.backspace()` and apply its result.
     Backspace,
     /// Flush the composition (commit/clear) and let the key pass through —
@@ -105,7 +112,7 @@ pub fn classify(ev: &KeyEvent) -> KeyKind {
         return KeyKind::Flush;
     }
     match ev.ch {
-        Some(c) => KeyKind::Compose(c),
+        Some(c) => KeyKind::Compose(c, ev.source),
         None => KeyKind::PassThrough,
     }
 }
@@ -121,6 +128,7 @@ mod tests {
             ch,
             is_backspace: false,
             is_navigation: false,
+            source: KeySource::Standard,
         }
     }
 
@@ -159,9 +167,19 @@ mod tests {
 
     #[test]
     fn classify_printable_composes() {
-        assert_eq!(classify(&key(Some('a'))), KeyKind::Compose('a'));
-        assert_eq!(classify(&key(Some(' '))), KeyKind::Compose(' ')); // boundary → engine decides
-        assert_eq!(classify(&key(Some('1'))), KeyKind::Compose('1'));
+        let std = KeySource::Standard;
+        assert_eq!(classify(&key(Some('a'))), KeyKind::Compose('a', std));
+        assert_eq!(classify(&key(Some(' '))), KeyKind::Compose(' ', std)); // boundary → engine decides
+        assert_eq!(classify(&key(Some('1'))), KeyKind::Compose('1', std));
+    }
+
+    #[test]
+    fn classify_preserves_numpad_source() {
+        // A numpad digit reaches the engine tagged as `Numpad` so it stays a literal
+        // number; the top-row digit stays `Standard` (a VNI modifier).
+        let mut ev = key(Some('1'));
+        ev.source = KeySource::Numpad;
+        assert_eq!(classify(&ev), KeyKind::Compose('1', KeySource::Numpad));
     }
 
     #[test]
@@ -175,7 +193,7 @@ mod tests {
     fn classify_shift_still_composes() {
         let mut ev = key(Some('A'));
         ev.mods.shift = true;
-        assert_eq!(classify(&ev), KeyKind::Compose('A'));
+        assert_eq!(classify(&ev), KeyKind::Compose('A', KeySource::Standard));
     }
 
     #[test]
