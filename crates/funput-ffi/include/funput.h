@@ -70,6 +70,25 @@ typedef struct {
     uint32_t chars[CHARS_CAP];
 } FunputResult;
 
+/**
+ * A whole engine configuration passed by value over the C ABI — the six user
+ * options. `enabled` and the gõ tắt shortcut table have their own functions.
+ */
+typedef struct {
+    /**
+     * `0 = Telex`, `1 = VNI`, `2 = Telex Advanced` (see `METHOD_*`).
+     */
+    uint8_t method;
+    /**
+     * `0 = Traditional`, `1 = Modern`.
+     */
+    uint8_t tone_style;
+    bool smart_restore;
+    bool eager_restore;
+    bool spell_check;
+    bool auto_capitalize;
+} FunputConfig;
+
 typedef struct {
     uint32_t count;
     uint32_t chars[SUGGESTION_CHARS_CAP];
@@ -206,6 +225,17 @@ void funput_set_method(FunputEngine *engine, uint8_t method);
  * `engine` must be a valid handle or null.
  */
 void funput_set_tone_style(FunputEngine *engine, uint8_t style);
+
+/**
+ * Apply a whole [`FunputConfig`] at once — the batch equivalent of the individual
+ * `funput_set_*` functions, with the same side effects (a method change clears the
+ * composition; auto-capitalize off resets its tracking). `funput_set_enabled` and
+ * the shortcut table are separate and left untouched.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_configure(FunputEngine *engine, FunputConfig config);
 
 /**
  * Enable or disable Vietnamese composition.

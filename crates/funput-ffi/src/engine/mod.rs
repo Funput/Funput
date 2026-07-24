@@ -22,9 +22,9 @@ pub use compose::{
     funput_clear, funput_flip_composing, funput_process_char, funput_process_key,
 };
 pub use config::{
-    METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, funput_set_auto_capitalize,
-    funput_set_eager_restore, funput_set_enabled, funput_set_method, funput_set_smart_restore,
-    funput_set_spell_check, funput_set_tone_style,
+    FunputConfig, METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, funput_configure,
+    funput_set_auto_capitalize, funput_set_eager_restore, funput_set_enabled, funput_set_method,
+    funput_set_smart_restore, funput_set_spell_check, funput_set_tone_style,
 };
 pub use result::{ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputResult};
 pub use shortcuts::{funput_add_shortcut, funput_clear_shortcuts};

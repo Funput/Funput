@@ -2,9 +2,27 @@ use std::collections::HashMap;
 
 use funput_core::{InputMethod, ToneStyle};
 
-use crate::Engine;
+use crate::{Engine, EngineConfig};
 
 impl Engine {
+    /// Apply a whole [`EngineConfig`] at once — the batch equivalent of the
+    /// individual `set_*` methods, preserving their side effects (a method change
+    /// clears the in-progress word; turning auto-capitalize off resets its tracking).
+    /// `enabled` and the gõ tắt shortcuts are separate and left untouched.
+    pub fn configure(&mut self, config: EngineConfig) {
+        self.set_method(config.method);
+        self.set_tone_style(config.tone_style);
+        self.set_smart_restore(config.smart_restore);
+        self.set_eager_restore(config.eager_restore);
+        self.set_spell_check(config.spell_check);
+        self.set_auto_capitalize(config.auto_capitalize);
+    }
+
+    /// The current engine configuration (method, tone style, and the feature toggles).
+    pub fn config(&self) -> &EngineConfig {
+        &self.session.config
+    }
+
     pub fn set_enabled(&mut self, enabled: bool) {
         self.session.enabled = enabled;
     }

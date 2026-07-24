@@ -8,6 +8,7 @@ style = "type"
 
 [export]
 include = [
+    "FunputConfig",
     "FunputResult",
     "FunputSuggestionCandidate",
     "FunputSuggestionResult",
