@@ -42,12 +42,17 @@ struct ComposerConfiguration: Equatable {
 
 extension FunputComposer {
     func apply(_ configuration: ComposerConfiguration) {
-        setMethod(configuration.inputMethod)
-        setToneStyle(configuration.toneStyle)
+        configure(
+            FunputConfig(
+                method: configuration.inputMethod.ffiValue,
+                tone_style: UInt8(configuration.toneStyle.rawValue),
+                smart_restore: configuration.smartEnglishRestore,
+                eager_restore: configuration.eagerRestore,
+                spell_check: configuration.spellCheckEnabled,
+                auto_capitalize: configuration.autoCapitalizeEnabled
+            )
+        )
+        // `enabled` is a runtime toggle, not part of the batch config.
         setEnabled(configuration.enabled)
-        setSmartRestore(configuration.smartEnglishRestore)
-        setEagerRestore(configuration.eagerRestore)
-        setSpellCheck(configuration.spellCheckEnabled)
-        setAutoCapitalize(configuration.autoCapitalizeEnabled)
     }
 }
