@@ -2,10 +2,8 @@
 //! cannot resolve a key.
 
 mod candidate;
-mod circumflex;
-mod stroke;
+mod kinds;
 mod target;
-mod w;
 
 use crate::input_method::CircumflexStem;
 use crate::{ToneStyle, TransformKind, TransformResult};
@@ -28,14 +26,14 @@ pub(crate) enum IntentResolution {
 pub(crate) fn resolve(buffer: &str, intent: ModifierIntent, style: ToneStyle) -> IntentResolution {
     match intent {
         ModifierIntent::Circumflex { stem, key } => {
-            circumflex::resolve(buffer, char::from(stem), key, style)
+            kinds::circumflex::resolve(buffer, char::from(stem), key, style)
         }
-        ModifierIntent::Stroke { key } => stroke::resolve(buffer, key),
-        ModifierIntent::DeferredW { key } => w::resolve(buffer, key),
+        ModifierIntent::Stroke { key } => kinds::stroke::resolve(buffer, key),
+        ModifierIntent::DeferredW { key } => kinds::w::resolve(buffer, key),
     }
 }
 
-pub(crate) use w::has_pending;
+pub(crate) use kinds::w::has_pending;
 
 impl IntentResolution {
     pub(crate) fn into_result(self) -> TransformResult {

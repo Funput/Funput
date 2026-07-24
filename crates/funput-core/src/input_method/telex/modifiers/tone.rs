@@ -13,7 +13,7 @@ pub fn tone_from_key(key: char) -> Option<Tone> {
     }
 }
 
-pub(super) fn classify(buffer: &str, key: char) -> Option<KeyAction> {
+pub(crate) fn classify(buffer: &str, key: char) -> Option<KeyAction> {
     buffer
         .chars()
         .any(is_vowel)

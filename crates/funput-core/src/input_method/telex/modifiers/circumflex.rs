@@ -2,7 +2,7 @@ use crate::input_method::{CircumflexStem, KeyAction};
 use crate::unicode::marks::{tone_on_vowel, vowel_stem};
 use crate::unicode::shapes::{VowelShape, shape_on_vowel, strip_shape};
 
-use super::last_char;
+use super::super::last_char;
 
 fn is_plain_stem(ch: char, stem: char) -> bool {
     vowel_stem(ch).is_some_and(|value| value.eq_ignore_ascii_case(&stem))
@@ -10,7 +10,7 @@ fn is_plain_stem(ch: char, stem: char) -> bool {
         && shape_on_vowel(ch).is_none()
 }
 
-pub(super) fn classify(buffer: &str, key: char) -> Option<KeyAction> {
+pub(crate) fn classify(buffer: &str, key: char) -> Option<KeyAction> {
     let stem = CircumflexStem::from_key(key)?;
     let stem_char = stem.as_char();
     if let Some(last) = last_char(buffer) {
