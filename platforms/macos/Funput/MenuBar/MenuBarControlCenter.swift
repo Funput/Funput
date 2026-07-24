@@ -8,7 +8,14 @@ struct MenuBarControlCenter: View {
         VStack(spacing: Theme.Spacing.md) {
             MenuBarStatusHeader()
             methodSelector(selection: $settings.inputMethod)
-            shortcutSummary(isVietnameseEnabled: $settings.vietnameseEnabled)
+            // Route writes through `setVietnameseFromUI` so the choice binds to the
+            // app the user returns to (not lost to the per-app default on refocus).
+            shortcutSummary(
+                isVietnameseEnabled: Binding(
+                    get: { settings.vietnameseEnabled },
+                    set: { settings.setVietnameseFromUI($0) }
+                )
+            )
             MenuBarActionCluster()
         }
         .padding(Theme.Spacing.md)
