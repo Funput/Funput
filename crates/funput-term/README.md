@@ -67,7 +67,7 @@ Interposer trong suốt: chỉ **chặn phím chữ ASCII** để soạn, mọi 
 escape/mouse/paste).
 
 ```
-stdin  ─raw bytes─► input::Classifier ─► engine ─► inject::result_bytes ─► PTY ─► child
+stdin  ─raw bytes─► classify::Classifier ─► engine ─► inject::result_bytes ─► PTY ─► child
 stdout ◄─────────── output: scan alt-screen ◄──────────────────────────── PTY ◄─ child
         runtime::run: spawn child trong PTY, chờ exit; thread SIGWINCH→resize; RawModeGuard (RAII)
 ```
@@ -86,9 +86,10 @@ src/
 ├── lib.rs                # khai báo module: runtime · config · install · terminal
 ├── runtime/              # interposer: spawn PTY, shuttle bytes, soạn tiếng Việt
 │   ├── mod.rs            #   run() orchestration (spawn PTY, threads, indicators); từ chối command rỗng
-│   ├── driver.rs         #   forward_input (seam THUẦN, có test) + Status + other_method
-│   ├── input.rs          #   THUẦN: Classifier byte → ByteKind (Printable/Control/Escape/Utf8/Toggle/CycleMethod/Paste)
-│   ├── inject.rs         #   THUẦN: result_bytes(char, &ImeResult) → bytes (None→phím; Send/Restore→DEL×bs + UTF-8)
+│   ├── driver/           #   nhánh input: đọc → classify → compose → inject
+│   │   ├── mod.rs        #     forward_input (seam THUẦN, có test) + Status + other_method
+│   │   ├── classify.rs   #     THUẦN: Classifier byte → ByteKind (Printable/Control/Escape/Utf8/Toggle/CycleMethod/Paste)
+│   │   └── inject.rs     #     THUẦN: result_bytes(char, &ImeResult) → bytes (None→phím; Send/Restore→DEL×bs + UTF-8)
 │   ├── output.rs         #   forward_output + AltScreenScanner (ESC[?1049h/l, chịu được chunk bị cắt)
 │   ├── resize.rs         #   spawn_resize_thread (Unix SIGWINCH / non-Unix poll)
 │   └── state.rs          #   SharedState: enabled (toggle) + alt_screen (atomics)
@@ -105,7 +106,7 @@ src/
     └── snippet.rs        #   snippet(shell, aliases) + parse_alias
 ```
 
-`input` / `inject` / `forward_input` / `config` / `install` **thuần, không I/O thật** → unit-test bằng
+`classify` / `inject` / `forward_input` / `config` / `install` **thuần, không I/O thật** → unit-test bằng
 pipe in-memory hoặc input dạng chuỗi.
 
 ### Quy tắc xử lý (trong `forward_input`)
@@ -118,7 +119,7 @@ pipe in-memory hoặc input dạng chuỗi.
 - Tab/LF/CR (ranh giới từ) khi đang soạn → `engine.process_char(boundary)`: `None` → forward byte;
   ngược lại → `result_bytes` (English-restore chạy trước khi phím tới child).
 - Còn lại (escape / utf8 / control khác / printable lúc đã tắt) → `engine.clear()` + forward thô.
-- `input.rs` theo dõi state machine ESC → CSI/SS3 để mũi tên/Alt-combo không bị nhầm là chữ.
+- `classify.rs` theo dõi state machine ESC → CSI/SS3 để mũi tên/Alt-combo không bị nhầm là chữ.
 
 ### Robustness
 
@@ -131,7 +132,7 @@ pipe in-memory hoặc input dạng chuỗi.
   SIGWINCH) poll `crossterm::size` mỗi ~120ms, đổi thì `master.resize`.
 - Alt-screen: `output.rs` thấy `ESC[?1049h` → set `state.alt_screen` → input passthrough (vim/less
   không bị soạn).
-- Bracketed paste: `input.rs` thấy `ESC[200~` → `in_paste` → nội dung dán phân loại `Paste`
+- Bracketed paste: `classify.rs` thấy `ESC[200~` → `in_paste` → nội dung dán phân loại `Paste`
   (forward thô) tới `ESC[201~`. Chịu được marker bị cắt qua nhiều chunk; buffer tham số CSI có giới hạn.
 - Title qua mux: `terminal/indicator.rs::detect_mux` đọc `$TMUX`/`$STY`/`$TERM`; `title_sequence` bọc DCS passthrough
   cho tmux (nhân đôi ESC) và screen.

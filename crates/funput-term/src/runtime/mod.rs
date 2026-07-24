@@ -12,8 +12,6 @@ use crate::config::TermConfig;
 use crate::terminal::{RawModeGuard, set_cursor_cue, set_title};
 
 mod driver;
-mod inject;
-mod input;
 mod output;
 mod resize;
 mod state;

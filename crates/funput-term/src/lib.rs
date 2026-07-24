@@ -11,9 +11,9 @@
 //! and CLI flags (see [`config`]). [`install`] wires it into the user's shell.
 //!
 //! The umbrella `funput` binary (`funput-cli`) depends on this crate and dispatches
-//! to [`runtime`], [`config`], and [`install`]. The terminal primitives
-//! ([`terminal`]) and the interposer plumbing (`runtime`'s `input`, `inject`,
-//! `output`, `state`) stay crate-internal.
+//! to [`runtime`], [`config`], and [`install`]. The terminal primitives (`terminal`)
+//! and the interposer plumbing (`runtime`'s `driver` — with its byte `classify` and
+//! `inject` helpers — plus `output` and `state`) stay crate-internal.
 
 pub mod config;
 pub mod install;
