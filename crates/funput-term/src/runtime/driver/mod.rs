@@ -8,10 +8,13 @@ use std::io::{self, Read, Write};
 use funput_core::InputMethod;
 use funput_engine::{Action, Engine};
 
-use super::inject::result_bytes;
-use super::input::{ByteKind, Classifier};
 use super::state::SharedState;
 use crate::config::TermConfig;
+use classify::{ByteKind, Classifier};
+use inject::result_bytes;
+
+mod classify;
+mod inject;
 
 /// The user-visible composition state, reported whenever it changes so the caller
 /// can refresh the indicators (window title + cursor cue).

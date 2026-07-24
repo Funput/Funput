@@ -69,7 +69,7 @@ A transparent interposer: it only **intercepts printable ASCII letters** to comp
 is forwarded raw (escape/mouse/paste untouched).
 
 ```
-stdin  ─raw bytes─► input::Classifier ─► engine ─► inject::result_bytes ─► PTY ─► child
+stdin  ─raw bytes─► classify::Classifier ─► engine ─► inject::result_bytes ─► PTY ─► child
 stdout ◄─────────── output: scan alt-screen ◄──────────────────────────── PTY ◄─ child
         runtime::run: spawn child in the PTY, await exit; SIGWINCH→resize thread; RawModeGuard (RAII)
 ```
@@ -88,9 +88,10 @@ src/
 ├── lib.rs                # module declarations: runtime · config · install · terminal
 ├── runtime/              # interposer: spawn the PTY, shuttle bytes, compose Vietnamese
 │   ├── mod.rs            #   run() orchestration (spawn PTY, threads, indicators); rejects an empty command
-│   ├── driver.rs         #   forward_input (PURE seam, tested) + Status + other_method
-│   ├── input.rs          #   PURE: Classifier byte → ByteKind (Printable/Control/Escape/Utf8/Toggle/CycleMethod/Paste)
-│   ├── inject.rs         #   PURE: result_bytes(char, &ImeResult) → bytes (None→key; Send/Restore→DEL×bs + UTF-8)
+│   ├── driver/           #   input branch: read → classify → compose → inject
+│   │   ├── mod.rs        #     forward_input (PURE seam, tested) + Status + other_method
+│   │   ├── classify.rs   #     PURE: Classifier byte → ByteKind (Printable/Control/Escape/Utf8/Toggle/CycleMethod/Paste)
+│   │   └── inject.rs     #     PURE: result_bytes(char, &ImeResult) → bytes (None→key; Send/Restore→DEL×bs + UTF-8)
 │   ├── output.rs         #   forward_output + AltScreenScanner (ESC[?1049h/l, tolerates split chunks)
 │   ├── resize.rs         #   spawn_resize_thread (Unix SIGWINCH / non-Unix poll)
 │   └── state.rs          #   SharedState: enabled (toggle) + alt_screen (atomics)
@@ -107,7 +108,7 @@ src/
     └── snippet.rs        #   snippet(shell, aliases) + parse_alias
 ```
 
-`input` / `inject` / `forward_input` / `config` / `install` are **pure, no real I/O** → unit-tested
+`classify` / `inject` / `forward_input` / `config` / `install` are **pure, no real I/O** → unit-tested
 with in-memory pipes or string inputs.
 
 ### Processing rules (in `forward_input`)
@@ -120,7 +121,7 @@ with in-memory pipes or string inputs.
 - Tab/LF/CR (word boundary) while composing → `engine.process_char(boundary)`: `None` → forward the byte;
   otherwise → `result_bytes` (English-restore runs before the key reaches the child).
 - Everything else (escape / utf8 / other control / printable while disabled) → `engine.clear()` + forward raw.
-- `input.rs` tracks the ESC → CSI/SS3 state machine so arrows/Alt-combos aren't mistaken for letters.
+- `classify.rs` tracks the ESC → CSI/SS3 state machine so arrows/Alt-combos aren't mistaken for letters.
 
 ### Robustness
 
@@ -134,7 +135,7 @@ with in-memory pipes or string inputs.
   SIGWINCH) polls `crossterm::size` every ~120ms and calls `master.resize` on change.
 - Alt-screen: `output.rs` sees `ESC[?1049h` → sets `state.alt_screen` → input passthrough (vim/less
   aren't composed).
-- Bracketed paste: `input.rs` sees `ESC[200~` → `in_paste` → pasted content classified as `Paste`
+- Bracketed paste: `classify.rs` sees `ESC[200~` → `in_paste` → pasted content classified as `Paste`
   (forwarded raw) until `ESC[201~`. Tolerates a marker split across chunks; the CSI parameter buffer is bounded.
 - Title through a mux: `terminal/indicator.rs::detect_mux` reads `$TMUX`/`$STY`/`$TERM`;
   `title_sequence` wraps DCS passthrough for tmux (doubling ESC) and screen.
