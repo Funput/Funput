@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::engine::{JOURNAL_COMPACT_BYTES, SuggestionEngine};
+use super::{JOURNAL_COMPACT_BYTES, SuggestionEngine};
 
 impl SuggestionEngine {
     pub fn flush(&mut self) -> io::Result<()> {

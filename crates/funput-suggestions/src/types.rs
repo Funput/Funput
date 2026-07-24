@@ -1,4 +1,4 @@
-use crate::trie::TOP_K;
+use crate::index::TOP_K;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LearnOutcome {

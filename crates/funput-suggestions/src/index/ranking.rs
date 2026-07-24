@@ -1,4 +1,4 @@
-use crate::trie::NONE;
+use super::trie::NONE;
 use crate::types::WordRecord;
 
 pub(crate) fn ranks_before(left: u32, right: u32, words: &[WordRecord]) -> bool {

@@ -1,4 +1,5 @@
-use crate::engine::{PENDING_LIMIT, SuggestionEngine};
+use super::{PENDING_LIMIT, SuggestionEngine};
+use crate::index::normalize;
 use crate::types::{LearnOutcome, WordRecord};
 
 impl SuggestionEngine {
@@ -7,7 +8,7 @@ impl SuggestionEngine {
     }
 
     pub(crate) fn learn_inner(&mut self, token: &str, record_pending: bool) -> LearnOutcome {
-        let normalized = crate::normalize::exact(token);
+        let normalized = normalize::exact(token);
         let length = normalized.chars().count();
         if length == 0
             || length > self.config.max_token_scalars
@@ -68,8 +69,8 @@ impl SuggestionEngine {
     pub(crate) fn index_word(&mut self, word_id: u32) {
         let word = &self.words[word_id as usize].text;
         self.exact
-            .insert(crate::normalize::exact_chars(word), word_id, &self.words);
-        let folded = crate::normalize::folded(word);
+            .insert(normalize::exact_chars(word), word_id, &self.words);
+        let folded = normalize::folded(word);
         if folded != *word {
             self.folded.insert(folded.chars(), word_id, &self.words);
         }
