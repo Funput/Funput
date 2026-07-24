@@ -5,8 +5,8 @@ use jni::EnvUnowned;
 use jni::objects::JString;
 use jni::sys::{jint, jlong};
 
-use crate::registry;
-use crate::support::{JavaObject, string_result};
+use super::registry;
+use crate::abi::{JavaObject, string_result};
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeProcess<

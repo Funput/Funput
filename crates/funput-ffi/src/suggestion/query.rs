@@ -1,6 +1,6 @@
 use funput_suggestions::LearnOutcome;
 
-use crate::support::safe;
+use crate::abi::safe;
 
 use super::engine::{FunputSuggestionEngine, codepoints_from_raw};
 use super::types::FunputSuggestionResult;

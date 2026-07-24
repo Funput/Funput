@@ -5,7 +5,7 @@ use jni::objects::JString;
 use jni::sys::jlong;
 
 use super::registry;
-use crate::support::{JavaObject, neutral, safe};
+use crate::abi::{JavaObject, neutral, safe};
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeCreate(

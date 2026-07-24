@@ -60,7 +60,7 @@ Header sinh bằng **cbindgen** (đã commit). Regen sau khi đổi `extern "C"`
 bash scripts/gen-header.sh    # cần: cargo install cbindgen
 ```
 
-## Marshalling (`src/types.rs`)
+## Marshalling (`src/engine/result.rs`)
 
 `FunputResult::from_ime(&ImeResult)`:
 - `Action::{None, Send, Restore}` → `0 / 1 / 2`.
@@ -93,15 +93,18 @@ IMKInputController.handle (Swift)
 ## Cấu trúc & build
 
 ```
-src/lib.rs          # module root: opaque FunputEngine + new/free + re-export surface
-src/config.rs       # 7 setter: method/tone_style/enabled/smart|eager_restore/spell/autocap
-src/compose.rs      # process_char/backspace/flip_composing/clear/arm/buffer
-src/shortcuts.rs    # add_shortcut/clear_shortcuts (gõ tắt)
-src/suggestion/     # personal suggestions: engine.rs (handle new/open/free),
-                    #   query.rs (learn/query), store.rs (flush/compact/reset/stats),
-                    #   types.rs (POD top-3 candidate/stats)
-src/support.rs      # safe(): catch_unwind guard cho biên C
-src/types.rs        # #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
+src/lib.rs          # crate root: docs + module tree + re-export surface phẳng (C)
+src/engine/         # C API composition (FunputEngine)
+                    #   mod.rs      opaque FunputEngine + new/free + re-export nhóm
+                    #   compose.rs  process_char/key, buffer, backspace, flip, clear, arm
+                    #   config.rs   7 setter: method/tone_style/enabled/smart|eager/spell/autocap
+                    #   shortcuts.rs add_shortcut/clear_shortcuts (gõ tắt)
+                    #   result.rs   #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
+src/suggestion/     # C API personal suggestions (FunputSuggestionEngine)
+                    #   engine.rs (handle new/open/free), query.rs (learn/query),
+                    #   store.rs (flush/compact/reset/stats), types.rs (POD candidate/stats)
+src/abi/            # plumbing C-ABI dùng chung
+                    #   guard.rs safe(): catch_unwind + null-handle; codec.rs UTF-32 marshalling
 cbindgen.toml
 scripts/gen-header.sh
 include/funput.h     # GENERATED (committed)
@@ -128,5 +131,5 @@ cargo clippy -p funput-ffi --all-targets -- -D warnings
 cargo build -p funput-ffi && ls target/debug/libfunput_ffi.*   # .a .dylib .rlib
 ```
 
-`src/types.rs` (unit: `from_ime`, truncate > 64) + `tests/round_trip.rs` (gọi `extern "C"` như C
+`src/engine/result.rs` (unit: `from_ime`, truncate > 64) + `tests/round_trip.rs` (gọi `extern "C"` như C
 caller: Telex/VNI/English-restore, null-safety, surrogate).

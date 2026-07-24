@@ -4,8 +4,8 @@ use funput_core::{InputMethod, ToneStyle};
 use jni::EnvUnowned;
 use jni::sys::{jboolean, jint, jlong};
 
-use crate::registry;
-use crate::support::{JavaObject, safe};
+use super::registry;
+use crate::abi::{JavaObject, safe};
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeSetMethod(

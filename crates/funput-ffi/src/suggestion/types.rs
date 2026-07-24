@@ -1,6 +1,6 @@
 use funput_suggestions::{SuggestionSet, SuggestionStats};
 
-use crate::support;
+use crate::abi;
 
 pub const SUGGESTION_CAP: usize = 3;
 pub const SUGGESTION_CHARS_CAP: usize = 32;
@@ -33,7 +33,7 @@ impl FunputSuggestionResult {
         let mut result = Self::default();
         for (index, text) in set.iter().take(SUGGESTION_CAP).enumerate() {
             let candidate = &mut result.candidates[index];
-            candidate.count = support::copy_codepoints(&mut candidate.chars, text.chars()) as u32;
+            candidate.count = abi::copy_codepoints(&mut candidate.chars, text.chars()) as u32;
             result.count += 1;
         }
         result
