@@ -4,10 +4,10 @@ import InputMethodKit
 extension FunputInputController {
     func applyPerAppDefault() {
         let settings = AppSettings.shared
-        guard !settings.excludedApps.isEmpty else { return }
         let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
-        let vietnamese = !settings.isExcluded(front)
-        guard settings.vietnameseEnabled != vietnamese else { return }
+        guard let vietnamese = settings.resolveVietnamese(for: front),
+            settings.vietnameseEnabled != vietnamese
+        else { return }
         settings.vietnameseEnabled = vietnamese
         composer.setEnabled(vietnamese)
     }
@@ -51,7 +51,12 @@ extension FunputInputController {
 
     func toggleEnabled() {
         let settings = AppSettings.shared
-        settings.vietnameseEnabled.toggle()
+        // The hotkey fires while the target app is focused, so the choice pins to
+        // that app — the per-app default won't revert it on the next focus change.
+        settings.pinVietnamese(
+            !settings.vietnameseEnabled,
+            to: NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        )
         composer.setEnabled(settings.vietnameseEnabled)
     }
 

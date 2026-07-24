@@ -140,7 +140,14 @@ private struct SidebarQuickInputControl: View {
                 // Custom Liquid Glass toggle instead of Picker(.segmented): the native
                 // segmented control only tints its selected segment while the window
                 // is key/active, so `Theme.accent` wouldn't show reliably here.
-                GlassLanguageToggle(isVietnameseEnabled: $settings.vietnameseEnabled)
+                // Route writes through `setVietnameseFromUI` so the choice binds to
+                // the app the user returns to (not lost to the per-app default).
+                GlassLanguageToggle(
+                    isVietnameseEnabled: Binding(
+                        get: { settings.vietnameseEnabled },
+                        set: { settings.setVietnameseFromUI($0) }
+                    )
+                )
             }
         }
     }

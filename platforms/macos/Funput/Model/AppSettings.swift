@@ -81,6 +81,14 @@ final class AppSettings {
     /// the table to the engine (instead of doing it on every keystroke). Not persisted.
     @ObservationIgnored private(set) var shortcutsRevision = 0
 
+    /// Manual VI/EN choices per app id. A toggle (hotkey or Funput's own UI) pins the
+    /// choice for that app, winning over the exclusion-list default on later focus
+    /// changes — parity with the Windows shell's override map. Session-only.
+    @ObservationIgnored var vietnameseOverrides: [String: Bool] = [:]
+    /// A VI/EN choice made from Funput's own UI while our window held focus — bound
+    /// to the next app the user returns to (see `resolveVietnamese`). Session-only.
+    @ObservationIgnored var pendingVietnameseOverride: Bool?
+
     /// Bumped when an external `funput://settings` request arrives (the /Applications
     /// launcher, opened from Spotlight). Observed by the menu bar label, which opens
     /// the Settings window. Not persisted.

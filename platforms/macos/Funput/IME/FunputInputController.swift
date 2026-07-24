@@ -106,10 +106,11 @@ final class FunputInputController: IMKInputController {
         if let client = sender as? IMKTextInput { commit(into: client) }
     }
 
-    /// Focus moved into this client. Apply the per-app default: apps on the exclusion
-    /// list switch to English, every other app switches to Vietnamese. This updates
-    /// `vietnameseEnabled` (so the menu bar reflects it immediately) and the user can
-    /// still toggle manually afterwards until focus changes again.
+    /// Focus moved into this client. Apply the per-app resolution: a manual VI/EN
+    /// choice pinned for this app wins; otherwise apps on the exclusion list switch
+    /// to English and every other app to Vietnamese. This updates `vietnameseEnabled`
+    /// (so the menu bar reflects it immediately); a manual toggle stays pinned for
+    /// the app it was made in (see `AppSettings.resolveVietnamese`).
     override func activateServer(_ sender: Any!) {
         super.activateServer(sender)
         applyPerAppDefault()
