@@ -18,9 +18,9 @@ pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: boo
     let mut result = apply_checked(
         &session.buffer,
         key,
-        session.method,
-        session.tone_style,
-        session.spell_check,
+        session.config.method,
+        session.config.tone_style,
+        session.config.spell_check,
     );
     if capitalize_shortcut && result.kind == TransformKind::Applied {
         uppercase_direct_vowel(&mut result.text);
@@ -47,8 +47,8 @@ pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: boo
         // smart + eager toggles. Skip on Reverted (a deliberate user restore) and when
         // nothing was transformed (`keys == composed`, e.g. a literal digit `ng1`).
         None => {
-            if session.smart_restore
-                && session.eager_restore
+            if session.config.smart_restore
+                && session.config.eager_restore
                 && result.kind != TransformKind::Reverted
                 && session.keys != composed
                 && is_definitely_invalid(&composed)

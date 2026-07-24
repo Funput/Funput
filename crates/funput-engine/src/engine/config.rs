@@ -15,38 +15,38 @@ impl Engine {
 
     /// Change input method and discard any composition using the old grammar.
     pub fn set_method(&mut self, method: InputMethod) {
-        if self.session.method != method {
+        if self.session.config.method != method {
             self.session.clear();
-            self.session.method = method;
+            self.session.config.method = method;
         }
     }
 
     pub fn method(&self) -> InputMethod {
-        self.session.method
+        self.session.config.method
     }
 
     pub fn set_tone_style(&mut self, style: ToneStyle) {
-        self.session.tone_style = style;
+        self.session.config.tone_style = style;
     }
 
     pub fn tone_style(&self) -> ToneStyle {
-        self.session.tone_style
+        self.session.config.tone_style
     }
 
     pub fn set_smart_restore(&mut self, on: bool) {
-        self.session.smart_restore = on;
+        self.session.config.smart_restore = on;
     }
 
     pub fn set_eager_restore(&mut self, on: bool) {
-        self.session.eager_restore = on;
+        self.session.config.eager_restore = on;
     }
 
     pub fn set_spell_check(&mut self, on: bool) {
-        self.session.spell_check = on;
+        self.session.config.spell_check = on;
     }
 
     pub fn set_auto_capitalize(&mut self, on: bool) {
-        self.session.auto_capitalize = on;
+        self.session.config.auto_capitalize = on;
         if !on {
             self.session.cap_armed = false;
             self.session.cap_sentence_ended = false;
@@ -54,7 +54,7 @@ impl Engine {
     }
 
     pub fn arm_capitalization(&mut self) {
-        if self.session.auto_capitalize {
+        if self.session.config.auto_capitalize {
             self.session.cap_armed = true;
         }
     }

@@ -15,7 +15,7 @@ pub(crate) fn should_restore(session: &Session) -> bool {
     if session.restore_override == Some(RestoreOverride::ForceVietnamese) {
         return false;
     }
-    session.smart_restore
+    session.config.smart_restore
         && !session.buffer.is_empty()
         && session.keys != session.buffer
         && !is_complete_syllable(&session.buffer)
@@ -23,7 +23,8 @@ pub(crate) fn should_restore(session: &Session) -> bool {
 }
 
 fn keystrokes_intend_vietnamese(session: &Session) -> bool {
-    let unresolved_w = session.method.is_telex_family() && session.buffer.contains(['w', 'W']);
+    let unresolved_w =
+        session.config.method.is_telex_family() && session.buffer.contains(['w', 'W']);
     (session.buffer.contains(['đ', 'Đ']) && !unresolved_w)
         || session.keys.contains(|c: char| c.is_ascii_digit())
 }
@@ -44,7 +45,7 @@ fn shortcut_expansion(session: &Session, boundary_key: char) -> Option<ImeResult
 }
 
 fn update_caps_on_boundary(session: &mut Session, key: char) {
-    if !session.auto_capitalize {
+    if !session.config.auto_capitalize {
         return;
     }
     match key {
