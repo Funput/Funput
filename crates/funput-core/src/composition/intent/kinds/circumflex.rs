@@ -5,11 +5,11 @@ use crate::unicode::marks::Tone;
 use crate::unicode::shapes::{VowelShape, shape_on_vowel, strip_shape};
 use crate::validation::syllable::is_viable_shape_candidate;
 
-use super::IntentResolution;
-use super::candidate;
-use super::target::{Target, rightmost_stem};
+use super::super::IntentResolution;
+use super::super::candidate;
+use super::super::target::{Target, rightmost_stem};
 
-pub(super) fn resolve(buffer: &str, stem: char, key: char, style: ToneStyle) -> IntentResolution {
+pub(crate) fn resolve(buffer: &str, stem: char, key: char, style: ToneStyle) -> IntentResolution {
     let Some(target) = rightmost_stem(buffer, stem) else {
         return literal(buffer, key, None);
     };

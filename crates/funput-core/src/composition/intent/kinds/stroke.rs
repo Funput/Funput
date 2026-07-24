@@ -2,9 +2,9 @@ use crate::TransformKind;
 use crate::composition::apply::apply_stroke;
 use crate::composition::revert::try_revert_stroke;
 
-use super::IntentResolution;
+use super::super::IntentResolution;
 
-pub(super) fn resolve(buffer: &str, key: char) -> IntentResolution {
+pub(crate) fn resolve(buffer: &str, key: char) -> IntentResolution {
     if let Some(mut text) = try_revert_stroke(buffer) {
         text.push(key);
         return IntentResolution::Reverted(text);

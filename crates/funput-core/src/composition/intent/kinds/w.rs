@@ -5,7 +5,7 @@ use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, tone_on_vowel};
 use crate::unicode::shapes::{apply_shape_to_vowel, shape_target_index};
 use crate::validation::syllable::is_viable_shape_candidate;
 
-use super::IntentResolution;
+use super::super::IntentResolution;
 
 /// Exactly one non-leading `w` before the first vowel is a deferred modifier.
 #[inline(always)]
@@ -30,7 +30,7 @@ pub(crate) fn has_pending(buffer: &str) -> bool {
     count == 1
 }
 
-pub(super) fn resolve(buffer: &str, key: char) -> IntentResolution {
+pub(crate) fn resolve(buffer: &str, key: char) -> IntentResolution {
     let Some(w_offset) = pending_offset(buffer) else {
         return IntentResolution::Literal(appended(buffer, key));
     };

@@ -1,7 +1,7 @@
 use crate::input_method::KeyAction;
 use crate::unicode::marks::is_vowel;
 
-use super::last_char;
+use super::super::last_char;
 
 fn target_before_vowel(buffer: &str) -> bool {
     let mut seen_d = false;
@@ -15,7 +15,7 @@ fn target_before_vowel(buffer: &str) -> bool {
     false
 }
 
-pub(super) fn classify(buffer: &str, key: char) -> Option<KeyAction> {
+pub(crate) fn classify(buffer: &str, key: char) -> Option<KeyAction> {
     if !key.eq_ignore_ascii_case(&'d') {
         return None;
     }
