@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::ranking::ranks_before;
+use super::ranking::ranks_before;
 use crate::types::WordRecord;
 
 pub(crate) const NONE: u32 = u32::MAX;

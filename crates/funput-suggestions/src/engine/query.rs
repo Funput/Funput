@@ -1,25 +1,24 @@
 use std::array;
 
-use crate::engine::SuggestionEngine;
-use crate::trie::{NONE, TOP_K};
+use super::SuggestionEngine;
+use crate::index::{NONE, TOP_K, normalize};
 use crate::types::{SuggestionSet, SuggestionStats, WordRecord};
 
 impl SuggestionEngine {
     pub fn suggest(&self, prefix: &str) -> SuggestionSet<'_> {
-        let scalar_count = crate::normalize::exact_chars(prefix).count();
+        let scalar_count = normalize::exact_chars(prefix).count();
         if scalar_count == 0 || scalar_count > self.config.max_token_scalars {
             return SuggestionSet {
                 items: [None; TOP_K],
                 len: 0,
             };
         }
-        let exact = self.exact.find(crate::normalize::exact_chars(prefix));
-        let differs =
-            crate::normalize::folded_chars(prefix).ne(crate::normalize::exact_chars(prefix));
+        let exact = self.exact.find(normalize::exact_chars(prefix));
+        let differs = normalize::folded_chars(prefix).ne(normalize::exact_chars(prefix));
         let folded = if differs {
             [NONE; TOP_K]
         } else {
-            self.folded.find(crate::normalize::folded_chars(prefix))
+            self.folded.find(normalize::folded_chars(prefix))
         };
 
         let mut ids = [NONE; TOP_K];

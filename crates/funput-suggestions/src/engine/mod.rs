@@ -1,9 +1,21 @@
+//! The [`SuggestionEngine`] facade — its state, lifecycle (`in_memory` / `open`),
+//! and capacity policy — plus the behaviours split by concern into [`learning`]
+//! (learn), [`query`] (suggest/stats), and [`durability`] (flush/compact/reset).
+
+mod config;
+mod durability;
+mod learning;
+mod query;
+
+pub use config::SuggestionConfig;
+
 use std::io;
 use std::path::Path;
 
-use crate::config::{SuggestionConfig, sanitize};
+use config::sanitize;
+
+use crate::index::ArenaTrie;
 use crate::persistence::Store;
-use crate::trie::ArenaTrie;
 use crate::types::WordRecord;
 
 pub(crate) const PENDING_LIMIT: usize = 256;
