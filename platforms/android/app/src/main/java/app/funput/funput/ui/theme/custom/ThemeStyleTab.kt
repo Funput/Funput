@@ -6,32 +6,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.funput.funput.theme.KeyboardThemeDescriptor
-import app.funput.funput.theme.KeyboardThemeId
 
 @Composable
 internal fun ThemeStyleTab(
+    state: ThemeDraftState,
     baseThemes: List<KeyboardThemeDescriptor>,
-    selectedBaseThemeId: KeyboardThemeId,
-    accentColor: Int,
-    keyBackgroundOpacity: Float,
-    onBaseThemeSelected: (KeyboardThemeId) -> Unit,
-    onAccentSelected: (Int) -> Unit,
-    onKeyBackgroundOpacityChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(18.dp), modifier = modifier) {
         BaseThemeSelector(
             themes = baseThemes,
-            selectedThemeId = selectedBaseThemeId,
-            onSelected = onBaseThemeSelected,
+            selectedThemeId = state.baseTheme.id,
+            onSelected = { id -> state.baseThemeValue = id.value },
         )
         AccentColorSelector(
-            selectedColor = accentColor,
-            onSelected = onAccentSelected,
+            selectedColor = state.accentColor,
+            onSelected = { color -> state.accentColor = color },
         )
         KeyBackgroundOpacitySelector(
-            opacity = keyBackgroundOpacity,
-            onOpacityChange = onKeyBackgroundOpacityChange,
+            opacity = state.keyBackgroundOpacity,
+            onOpacityChange = { opacity -> state.keyBackgroundOpacity = opacity },
         )
     }
 }

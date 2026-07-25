@@ -7,6 +7,7 @@ import app.funput.funput.theme.KeyboardThemeOrigin
 import app.funput.funput.theme.KeyboardThemes
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertThrows
 import org.junit.Rule
@@ -70,6 +71,46 @@ class CustomThemeFileStoreTest {
 
         assertThrows(IllegalArgumentException::class.java) {
             store.upsertTheme(builtInTheme)
+        }
+    }
+
+    @Test
+    fun loadThemesReadsAThemeSavedByAnEarlierBuild() {
+        val directory = temporaryFolder.newFolder("themes")
+        val theme = customTheme(KeyboardThemeId.of("custom.ocean"), "Ocean")
+        writeLegacyTheme(directory, theme)
+
+        assertEquals(theme, CustomThemeFileStore(directory).loadThemes().single())
+    }
+
+    @Test
+    fun upsertThemeMigratesALegacyThemeToJsonAndRemovesTheOldFile() {
+        val directory = temporaryFolder.newFolder("themes")
+        val store = CustomThemeFileStore(directory)
+        val theme = customTheme(KeyboardThemeId.of("custom.ocean"), "Ocean")
+        writeLegacyTheme(directory, theme)
+
+        store.upsertTheme(store.loadThemes().single().copy(name = "Ocean 2"))
+
+        assertTrue(File(directory, "custom.ocean.json").exists())
+        assertFalse(File(directory, "custom.ocean.properties").exists())
+        assertEquals("Ocean 2", store.loadThemes().single().name)
+    }
+
+    @Test
+    fun deleteThemeRemovesALegacyThemeFile() {
+        val directory = temporaryFolder.newFolder("themes")
+        val theme = customTheme(KeyboardThemeId.of("custom.ocean"), "Ocean")
+        writeLegacyTheme(directory, theme)
+
+        assertTrue(CustomThemeFileStore(directory).deleteTheme(theme.id))
+
+        assertEquals(emptyList<KeyboardThemeDescriptor>(), CustomThemeFileStore(directory).loadThemes())
+    }
+
+    private fun writeLegacyTheme(directory: File, theme: KeyboardThemeDescriptor) {
+        File(directory, "${theme.id.value}.properties").outputStream().use { output ->
+            KeyboardThemeDescriptorPropertiesCodec.encode(theme, output)
         }
     }
 

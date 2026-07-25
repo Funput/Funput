@@ -31,7 +31,7 @@ class CustomThemeBuilder(
             origin = KeyboardThemeOrigin.CUSTOM,
             baseThemeId = draft.baseThemeId,
             backgroundImage = draft.backgroundImage,
-            theme = draft.overrides.applyTo(baseTheme.theme),
+            theme = draft.theme,
         )
     }
 }

@@ -21,4 +21,5 @@ android {
 dependencies {
     implementation(project(":theme-runtime"))
     testImplementation(libs.junit)
+    testImplementation(libs.json)
 }

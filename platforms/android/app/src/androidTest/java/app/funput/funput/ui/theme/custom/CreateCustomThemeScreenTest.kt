@@ -26,11 +26,13 @@ class CreateCustomThemeScreenTest {
     @Test
     fun createsDraftFromFormState() {
         var savedDraft: CustomThemeDraft? = null
+        val baseThemes = BuiltInKeyboardThemeSource.loadThemes()
+        val lightTheme = baseThemes.single { theme -> theme.id == KeyboardThemeId.Light }
 
         compose.setContent {
             FunputTheme {
                 CreateCustomThemeScreen(
-                    baseThemes = BuiltInKeyboardThemeSource.loadThemes(),
+                    baseThemes = baseThemes,
                     onSave = { draft -> savedDraft = draft },
                     onBack = {},
                 )
@@ -48,12 +50,12 @@ class CreateCustomThemeScreenTest {
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)
             assertEquals(KeyboardThemeId.Light, savedDraft?.baseThemeId)
-            assertEquals(AccentPresets[3].argb, savedDraft?.overrides?.accentColor)
-            assertEquals(
-                DefaultKeyBackgroundOpacity,
-                savedDraft?.overrides?.keyBackgroundOpacity ?: -1f,
-                0.001f,
-            )
+            // The draft now carries resolved tokens, so assert the theme the editor produced.
+            val expected = CustomThemeOverrides(
+                accentColor = AccentPresets[3].argb,
+                keyBackgroundOpacity = DefaultKeyBackgroundOpacity,
+            ).applyTo(lightTheme.theme)
+            assertEquals(expected, savedDraft?.theme)
         }
     }
 
@@ -91,8 +93,9 @@ class CreateCustomThemeScreenTest {
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)
             assertEquals(KeyboardThemeId.Light, savedDraft?.baseThemeId)
-            assertEquals(AccentPresets[2].argb, savedDraft?.overrides?.accentColor)
-            assertEquals(0.5f, savedDraft?.overrides?.keyBackgroundOpacity ?: -1f, 0.01f)
+            assertEquals(AccentPresets[2].argb, savedDraft?.theme?.accentColor)
+            // Opening and saving without touching a control must not drift the key opacity.
+            assertEquals(editingTheme.theme.keyColor, savedDraft?.theme?.keyColor)
         }
     }
 }

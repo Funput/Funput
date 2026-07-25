@@ -13,22 +13,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
-import app.funput.funput.theme.KeyboardThemeBackgroundImage
 import app.funput.funput.theme.KeyboardThemeDescriptor
-import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.store.custom.CustomThemeDraft
-import app.funput.funput.theme.store.custom.CustomThemeOverrides
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,36 +31,13 @@ internal fun CreateCustomThemeScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var name by rememberSaveable(editingTheme?.id?.value) { mutableStateOf(editingTheme.initialThemeName()) }
-    var baseThemeValue by rememberSaveable(editingTheme?.id?.value) {
-        mutableStateOf(editingTheme.initialBaseThemeValue())
-    }
-    var accentColor by rememberSaveable(editingTheme?.id?.value) {
-        mutableStateOf(editingTheme.initialAccentColor())
-    }
-    var backgroundImageSource by rememberSaveable(editingTheme?.id?.value) {
-        mutableStateOf(editingTheme.initialBackgroundImageSource())
-    }
-    var imageOpacity by rememberSaveable(editingTheme?.id?.value) {
-        mutableFloatStateOf(editingTheme.initialBackgroundImageOpacity())
-    }
-    var keyBackgroundOpacity by rememberSaveable(editingTheme?.id?.value) {
-        mutableFloatStateOf(editingTheme.initialKeyBackgroundOpacity())
-    }
-    val fallbackTheme = baseThemes.first()
-    val baseTheme = baseThemes.find { theme -> theme.id.value == baseThemeValue } ?: fallbackTheme
-    val previewTheme = remember(baseTheme, accentColor, keyBackgroundOpacity) {
-        CustomThemeOverrides(
-            accentColor = accentColor,
-            keyBackgroundOpacity = keyBackgroundOpacity,
-        ).applyTo(baseTheme.theme)
-    }
+    val state = rememberThemeDraftState(baseThemes, editingTheme)
     val imagePicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia(),
     ) { uri ->
         uri?.let {
             context.persistBackgroundImageAccess(it)
-            backgroundImageSource = it.toString()
+            state.backgroundImageSource = it.toString()
         }
     }
 
@@ -97,39 +65,13 @@ internal fun CreateCustomThemeScreen(
         },
     ) { padding ->
         CreateCustomThemeForm(
-            name = name,
+            state = state,
             baseThemes = baseThemes,
-            selectedBaseThemeId = baseTheme.id,
-            accentColor = accentColor,
-            keyBackgroundOpacity = keyBackgroundOpacity,
-            backgroundImageSource = backgroundImageSource,
-            imageOpacity = imageOpacity,
-            previewTheme = previewTheme,
             contentPadding = padding,
-            onNameChange = { name = it },
-            onBaseThemeSelected = { id -> baseThemeValue = id.value },
-            onAccentSelected = { color -> accentColor = color },
-            onKeyBackgroundOpacityChange = { opacity -> keyBackgroundOpacity = opacity },
-            onImageOpacityChange = { opacity -> imageOpacity = opacity },
             onChooseBackgroundImage = {
                 imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             },
-            onRemoveBackgroundImage = { backgroundImageSource = null },
-            onSave = {
-                onSave(
-                    CustomThemeDraft(
-                        name = name,
-                        baseThemeId = baseTheme.id,
-                        backgroundImage = backgroundImageSource?.let { source ->
-                            KeyboardThemeBackgroundImage(source = source, opacity = imageOpacity)
-                        },
-                        overrides = CustomThemeOverrides(
-                            accentColor = accentColor,
-                            keyBackgroundOpacity = keyBackgroundOpacity,
-                        ),
-                    ),
-                )
-            },
+            onSave = { onSave(state.toDraft()) },
         )
     }
 }

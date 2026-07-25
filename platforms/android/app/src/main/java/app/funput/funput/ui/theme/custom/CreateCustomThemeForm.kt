@@ -18,28 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
-import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.KeyboardThemeDescriptor
-import app.funput.funput.theme.KeyboardThemeId
 
 @Composable
 internal fun CreateCustomThemeForm(
-    name: String,
+    state: ThemeDraftState,
     baseThemes: List<KeyboardThemeDescriptor>,
-    selectedBaseThemeId: KeyboardThemeId,
-    accentColor: Int,
-    keyBackgroundOpacity: Float,
-    backgroundImageSource: String?,
-    imageOpacity: Float,
-    previewTheme: KeyboardTheme,
     contentPadding: PaddingValues,
-    onNameChange: (String) -> Unit,
-    onBaseThemeSelected: (KeyboardThemeId) -> Unit,
-    onAccentSelected: (Int) -> Unit,
-    onKeyBackgroundOpacityChange: (Float) -> Unit,
-    onImageOpacityChange: (Float) -> Unit,
     onChooseBackgroundImage: () -> Unit,
-    onRemoveBackgroundImage: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -56,9 +42,9 @@ internal fun CreateCustomThemeForm(
     ) {
         item(key = "preview") {
             CreateThemePreviewHeader(
-                previewTheme = previewTheme,
-                backgroundImageSource = backgroundImageSource,
-                imageOpacity = imageOpacity,
+                previewTheme = state.theme,
+                backgroundImageSource = state.backgroundImageSource,
+                imageOpacity = state.imageOpacity,
             )
         }
         item(key = "tabs") {
@@ -71,31 +57,20 @@ internal fun CreateCustomThemeForm(
         item(key = selectedTab.name) {
             CreateThemeTabContent(
                 selectedTab = selectedTab,
-                name = name,
+                state = state,
                 baseThemes = baseThemes,
-                selectedBaseThemeId = selectedBaseThemeId,
-                accentColor = accentColor,
-                keyBackgroundOpacity = keyBackgroundOpacity,
-                backgroundImageSource = backgroundImageSource,
-                imageOpacity = imageOpacity,
-                onNameChange = onNameChange,
-                onBaseThemeSelected = onBaseThemeSelected,
-                onAccentSelected = onAccentSelected,
-                onKeyBackgroundOpacityChange = onKeyBackgroundOpacityChange,
-                onImageOpacityChange = onImageOpacityChange,
                 onChooseBackgroundImage = onChooseBackgroundImage,
-                onRemoveBackgroundImage = onRemoveBackgroundImage,
             )
         }
         item(key = "save") {
             Button(
-                enabled = name.trim().isNotEmpty(),
+                enabled = state.canSave,
                 onClick = onSave,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.custom_theme_save))
             }
-            if (name.trim().isEmpty()) {
+            if (!state.canSave) {
                 Text(
                     text = stringResource(R.string.custom_theme_save_hint),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -105,41 +80,4 @@ internal fun CreateCustomThemeForm(
             }
         }
     }
-}
-
-@Composable
-private fun CreateThemeTabContent(
-    selectedTab: CreateThemeEditorTab,
-    name: String,
-    baseThemes: List<KeyboardThemeDescriptor>,
-    selectedBaseThemeId: KeyboardThemeId,
-    accentColor: Int,
-    keyBackgroundOpacity: Float,
-    backgroundImageSource: String?,
-    imageOpacity: Float,
-    onNameChange: (String) -> Unit,
-    onBaseThemeSelected: (KeyboardThemeId) -> Unit,
-    onAccentSelected: (Int) -> Unit,
-    onKeyBackgroundOpacityChange: (Float) -> Unit,
-    onImageOpacityChange: (Float) -> Unit,
-    onChooseBackgroundImage: () -> Unit,
-    onRemoveBackgroundImage: () -> Unit,
-) = when (selectedTab) {
-    CreateThemeEditorTab.Style -> ThemeStyleTab(
-        baseThemes = baseThemes,
-        selectedBaseThemeId = selectedBaseThemeId,
-        accentColor = accentColor,
-        keyBackgroundOpacity = keyBackgroundOpacity,
-        onBaseThemeSelected = onBaseThemeSelected,
-        onAccentSelected = onAccentSelected,
-        onKeyBackgroundOpacityChange = onKeyBackgroundOpacityChange,
-    )
-    CreateThemeEditorTab.Background -> BackgroundImagePlaceholder(
-        imageSelected = backgroundImageSource != null,
-        opacity = imageOpacity,
-        onOpacityChange = onImageOpacityChange,
-        onChooseImage = onChooseBackgroundImage,
-        onRemoveImage = onRemoveBackgroundImage,
-    )
-    CreateThemeEditorTab.Info -> ThemeInfoTab(name = name, onNameChange = onNameChange)
 }
