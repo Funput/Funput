@@ -89,9 +89,26 @@ internal class ImeKeyActionHandler(
 
     private fun backspace() {
         if (!composition.backspace(connection())) {
-            execute(ImeEditCommand.DeleteBackward)
-            if (usesComposition) composition.reopenPreviousWord(connection())
-            suggestionTracker.reset()
+            // Delete the previous grapheme and (when Vietnamese) re-open the word
+            // behind the caret as one batch. Two top-level edits would each fire
+            // onUpdateSelection; the first arrives with candidatesEnd=-1 after
+            // reopen has already set isComposing, and onSelectionChanged finishes
+            // the composition we just restored — which is exactly the real-device
+            // failure unit tests miss (they never invoke onSelectionChanged).
+            val current = connection()
+            if (current != null && usesComposition) {
+                current.beginBatchEdit()
+                try {
+                    execute(ImeEditCommand.DeleteBackward)
+                    composition.reopenPreviousWord(current)
+                } finally {
+                    current.endBatchEdit()
+                }
+                if (composition.isComposing) updateSuggestionTracker() else suggestionTracker.reset()
+            } else {
+                execute(ImeEditCommand.DeleteBackward)
+                suggestionTracker.reset()
+            }
         } else {
             updateSuggestionTracker()
         }
