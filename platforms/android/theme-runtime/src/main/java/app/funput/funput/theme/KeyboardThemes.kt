@@ -1,65 +1,67 @@
 package app.funput.funput.theme
 
-/** Named keyboard theme presets. */
+/**
+ * Named keyboard theme presets.
+ *
+ * Both presets are built from the same Funput accent gold, which is the only saturated color on
+ * the keyboard and appears in exactly three places: the leading suggestion, the held key, and
+ * Enter. Preset names describe the design; the persisted identifiers in [KeyboardThemeId] stay
+ * `dark` and `light` because they are what the appearance setting stores on device.
+ */
 object KeyboardThemes {
-    val Dark: KeyboardTheme = KeyboardTheme(
-        backgroundStartColor = 0xFF000000.toInt(),
-        backgroundEndColor = 0xFF000000.toInt(),
-        keyColor = 0xFF2C2C2C.toInt(),
-        specialKeyColor = 0xFF353535.toInt(),
-        keyBorderColor = 0xFF2C2C2C.toInt(),
-        keyShadowColor = 0x00000000,
-        pressedKeyColor = 0xFF404040.toInt(),
-        pressedKeyBorderColor = 0xFF404040.toInt(),
-        activatedKeyColor = 0xFF454545.toInt(),
-        activatedKeyBorderColor = 0xFF454545.toInt(),
-        labelColor = 0xFFE0E0E0.toInt(),
-        secondaryLabelColor = 0xFFA8A8A8.toInt(),
-        accentColor = 0xFFC8A951.toInt(),
-        keyCornerRadiusDp = 8f,
-        keyBorderWidthDp = 0f,
-        keyShadowOffsetDp = 0f,
-        pressedKeyShadowOffsetDp = 0f,
-    )
+    private const val AccentGold = 0xFFC8A951.toInt()
 
-    val Light: KeyboardTheme = KeyboardTheme(
-        backgroundStartColor = 0xFFEDEDED.toInt(),
-        backgroundEndColor = 0xFFEDEDED.toInt(),
-        keyColor = 0xFFFFFFFF.toInt(),
-        specialKeyColor = 0xFFE1E3E6.toInt(),
-        keyBorderColor = 0xFFE1E3E6.toInt(),
+    /** Dark preset. Drops key plates entirely and lets the glyphs carry the layout. */
+    val Ink: KeyboardTheme = KeyboardTheme(
+        backgroundStartColor = 0xFF121013.toInt(),
+        backgroundEndColor = 0xFF0A0A0C.toInt(),
+        keyColor = 0x00000000,
+        specialKeyColor = 0x00000000,
+        keyBorderColor = 0x00000000,
         keyShadowColor = 0x00000000,
-        pressedKeyColor = 0xFFD6D6D6.toInt(),
-        pressedKeyBorderColor = 0xFFD6D6D6.toInt(),
-        activatedKeyColor = 0xFFCECECE.toInt(),
-        activatedKeyBorderColor = 0xFFCECECE.toInt(),
-        labelColor = 0xFF1F1F1F.toInt(),
-        secondaryLabelColor = 0xFF757575.toInt(),
-        accentColor = 0xFFC8A951.toInt(),
-        keyCornerRadiusDp = 8f,
-        keyBorderWidthDp = 0f,
-        keyShadowOffsetDp = 0f,
-        pressedKeyShadowOffsetDp = 0f,
-    )
-
-    /** Legacy glass preset kept for reference while migrating themes. */
-    internal val Aurora: KeyboardTheme = KeyboardTheme(
-        backgroundStartColor = 0xFF12182B.toInt(),
-        backgroundEndColor = 0xFF090D18.toInt(),
-        keyColor = 0x2EFFFFFF,
-        specialKeyColor = 0x4AFFFFFF,
-        keyBorderColor = 0x3DFFFFFF,
-        keyShadowColor = 0x52000000,
-        pressedKeyColor = 0x668DB8FF,
-        pressedKeyBorderColor = 0xCCBBD2FF.toInt(),
-        activatedKeyColor = 0x478DB8FF,
-        activatedKeyBorderColor = 0x998DB8FF.toInt(),
-        labelColor = 0xFFF7F9FF.toInt(),
-        secondaryLabelColor = 0xB8E2E8F7.toInt(),
-        accentColor = 0xFF8DB8FF.toInt(),
-        keyCornerRadiusDp = 11f,
+        pressedKeyColor = 0x38C8A951,
+        pressedKeyBorderColor = 0x8CC8A951.toInt(),
+        activatedKeyColor = 0x30C8A951,
+        activatedKeyBorderColor = 0x8CC8A951.toInt(),
+        labelColor = 0xFFF2F2F6.toInt(),
+        secondaryLabelColor = 0xFF83838E.toInt(),
+        accentColor = AccentGold,
+        keyCornerRadiusDp = 13f,
         keyBorderWidthDp = 0.75f,
-        keyShadowOffsetDp = 2f,
-        pressedKeyShadowOffsetDp = 0.5f,
+        keyShadowOffsetDp = 0f,
+        pressedKeyShadowOffsetDp = 0f,
+        specialLabelColor = 0xFF83838E.toInt(),
+        accentKeyColor = AccentGold,
+        accentLabelColor = 0xFF17110A.toInt(),
+        popupSurfaceColor = 0xFF1E1C18.toInt(),
+        suggestionHighlightColor = 0xFFE3C371.toInt(),
+        pressedKeyScale = 1.06f,
+    )
+
+    /** Light preset. Warm paper ground, white keycaps, and a single crisp contact shadow. */
+    val Paper: KeyboardTheme = KeyboardTheme(
+        backgroundStartColor = 0xFFF3EFE7.toInt(),
+        backgroundEndColor = 0xFFE8E2D6.toInt(),
+        keyColor = 0xFFFFFFFF.toInt(),
+        specialKeyColor = 0xFFDED7C9.toInt(),
+        keyBorderColor = 0x00000000,
+        keyShadowColor = 0x29352C1E,
+        pressedKeyColor = AccentGold,
+        pressedKeyBorderColor = 0x00000000,
+        activatedKeyColor = AccentGold,
+        activatedKeyBorderColor = 0x00000000,
+        labelColor = 0xFF1C1913.toInt(),
+        secondaryLabelColor = 0xFF6B6459.toInt(),
+        accentColor = 0xFFB08F32.toInt(),
+        keyCornerRadiusDp = 10f,
+        keyBorderWidthDp = 0f,
+        keyShadowOffsetDp = 1.5f,
+        pressedKeyShadowOffsetDp = 0f,
+        specialLabelColor = 0xFF4C463A.toInt(),
+        accentKeyColor = 0xFFB08F32.toInt(),
+        accentLabelColor = 0xFFFFF9EA.toInt(),
+        popupSurfaceColor = 0xFFFFFFFF.toInt(),
+        suggestionHighlightColor = 0xFF8A6D18.toInt(),
+        pressedKeyScale = 1f,
     )
 }

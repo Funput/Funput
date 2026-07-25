@@ -23,7 +23,7 @@ internal class UtilityKeyIconRenderer(private val metrics: RenderMetrics) {
     private val settingsViewport = RectF(0f, 0f, 24f, 24f)
 
     fun updateTheme(theme: KeyboardTheme) {
-        paint.color = theme.labelColor
+        paint.color = theme.specialLabelColor
         paint.strokeWidth = metrics.dp(1.7f)
     }
 

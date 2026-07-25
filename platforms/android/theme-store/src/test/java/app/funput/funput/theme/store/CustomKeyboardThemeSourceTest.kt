@@ -28,7 +28,7 @@ class CustomKeyboardThemeSourceTest {
         name = id.value,
         author = "Tester",
         origin = origin,
-        theme = KeyboardThemes.Dark,
+        theme = KeyboardThemes.Ink,
     )
 }
 

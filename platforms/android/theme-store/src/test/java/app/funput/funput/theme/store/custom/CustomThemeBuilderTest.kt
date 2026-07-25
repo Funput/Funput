@@ -34,6 +34,22 @@ class CustomThemeBuilderTest {
         assertEquals(baseTheme.id, descriptor.baseThemeId)
         assertEquals(draft.backgroundImage, descriptor.backgroundImage)
         assertEquals(OceanAccent, descriptor.theme.accentColor)
+        // Ink draws no key plates, so reducing key opacity must not conjure one.
+        assertEquals(0, descriptor.theme.keyColor ushr AlphaShift)
+        assertEquals(0, descriptor.theme.specialKeyColor ushr AlphaShift)
+    }
+
+    @Test
+    fun buildScalesKeyOpacityAgainstAnOpaqueBase() {
+        val paperTheme = LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.Light)
+        val draft = CustomThemeDraft(
+            name = "Ocean",
+            baseThemeId = paperTheme.id,
+            overrides = CustomThemeOverrides(keyBackgroundOpacity = KeyOpacity),
+        )
+
+        val descriptor = builder.build(draft, paperTheme, existingThemeIds = emptySet())
+
         assertEquals(KeyAlpha, descriptor.theme.keyColor ushr AlphaShift)
         assertEquals(KeyAlpha, descriptor.theme.specialKeyColor ushr AlphaShift)
     }

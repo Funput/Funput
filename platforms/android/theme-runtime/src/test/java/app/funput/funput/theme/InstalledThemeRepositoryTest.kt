@@ -14,7 +14,7 @@ class InstalledThemeRepositoryTest {
             listOf(KeyboardThemeId.Dark, KeyboardThemeId.Light),
             repository.themes.map(KeyboardThemeDescriptor::id),
         )
-        assertSame(KeyboardThemes.Dark, repository.defaultTheme.theme)
+        assertSame(KeyboardThemes.Ink, repository.defaultTheme.theme)
     }
 
     @Test
@@ -75,6 +75,6 @@ class InstalledThemeRepositoryTest {
                 source = "content://funput-themes/sunset",
                 opacity = 0.72f,
             ),
-            theme = KeyboardThemes.Light,
+            theme = KeyboardThemes.Paper,
         )
 }

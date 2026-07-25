@@ -28,8 +28,8 @@
     <string name="settings_key_size_normal">Vừa</string>
     <string name="settings_key_size_large">Lớn</string>
     <string name="settings_keyboard_theme_title">Chủ đề bàn phím</string>
-    <string name="settings_keyboard_theme_dark">Tối</string>
-    <string name="settings_keyboard_theme_light">Sáng</string>
+    <string name="settings_keyboard_theme_dark">Ink</string>
+    <string name="settings_keyboard_theme_light">Paper</string>
     <string name="theme_gallery_title">Chủ đề bàn phím</string>
     <string name="theme_gallery_description">Chọn phong cách phù hợp với cách bạn gõ.</string>
     <string name="theme_gallery_back_description">Quay lại</string>

@@ -37,7 +37,7 @@ class ThemeGalleryScreenTest {
             author = "Me",
             origin = KeyboardThemeOrigin.CUSTOM,
             baseThemeId = KeyboardThemeId.Dark,
-            theme = KeyboardThemes.Dark,
+            theme = KeyboardThemes.Ink,
         )
 
         compose.setContent {

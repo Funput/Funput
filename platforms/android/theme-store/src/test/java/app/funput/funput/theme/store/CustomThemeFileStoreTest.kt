@@ -84,6 +84,6 @@ class CustomThemeFileStoreTest {
                 source = "content://funput-themes/${id.value}",
                 opacity = 0.64f,
             ),
-            theme = KeyboardThemes.Light,
+            theme = KeyboardThemes.Paper,
         )
 }

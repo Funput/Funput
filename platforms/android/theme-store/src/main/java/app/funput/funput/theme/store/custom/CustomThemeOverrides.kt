@@ -23,9 +23,14 @@ data class CustomThemeOverrides(
             activatedKeyColor = baseTheme.activatedKeyColor.withOpacity(keyBackgroundOpacity),
         )
 
+    /**
+     * Scales the existing alpha instead of replacing it, so the control only ever reduces what
+     * the base theme already draws. A base whose key surfaces are fully transparent stays
+     * plateless rather than gaining opaque black keys at the slider's default position.
+     */
     private fun Int.withOpacity(opacity: Float?): Int {
         if (opacity == null) return this
-        val alpha = (opacity * MaxAlpha).roundToInt().coerceIn(0, MaxAlpha)
+        val alpha = ((this ushr AlphaShift) * opacity).roundToInt().coerceIn(0, MaxAlpha)
         return (this and RgbMask) or (alpha shl AlphaShift)
     }
 }

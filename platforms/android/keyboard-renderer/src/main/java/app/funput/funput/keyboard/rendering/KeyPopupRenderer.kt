@@ -40,7 +40,7 @@ internal class KeyPopupRenderer(private val metrics: RenderMetrics) {
         drawingRect.offset(0f, metrics.dp(ShadowOffsetDp))
         canvas.drawRoundRect(drawingRect, radius, radius, shadowPaint)
         drawingRect.offset(0f, -metrics.dp(ShadowOffsetDp))
-        fillPaint.color = theme.keyColor
+        fillPaint.color = theme.popupSurfaceColor
         canvas.drawRoundRect(drawingRect, radius, radius, fillPaint)
         drawBorder(canvas, theme, radius)
         drawLabel(canvas, key, bounds.centerX, bounds.centerY, theme, shiftState)
