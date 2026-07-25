@@ -37,7 +37,10 @@ final class KeyboardSurfaceInteractionController {
     var repeatTouch: TouchToken?
     var hapticsEnabled = true
     var legacyTokensByKeyID: [String: [TouchToken]] = [:]
-    var nextLegacyToken: TouchToken = 1 << 63
+    /// Toolbar and accessibility presses are minted from here up, which keeps them
+    /// distinguishable from the overlay's tokens without a second bookkeeping map.
+    static let firstLegacyToken: TouchToken = 1 << 63
+    var nextLegacyToken: TouchToken = KeyboardSurfaceInteractionController.firstLegacyToken
 
     var activeKey: KeySpec? { commitQueue.activeKey }
     var queueDepth: Int { commitQueue.depth }
