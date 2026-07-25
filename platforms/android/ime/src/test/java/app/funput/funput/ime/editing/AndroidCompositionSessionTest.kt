@@ -1,9 +1,8 @@
 package app.funput.funput.ime.editing
 
 import android.view.inputmethod.InputConnection
+import app.funput.funput.ime.nativebridge.EngineConfiguration
 import app.funput.funput.ime.nativebridge.VietnameseEngine
-import app.funput.funput.ime.settings.ToneStyle
-import app.funput.funput.keyboard.model.KeyboardInputMethod
 import java.lang.reflect.Proxy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -77,13 +76,13 @@ class AndroidCompositionSessionTest {
     }
 
     @Test
-    fun `input method is forwarded to the native engine adapter`() {
+    fun `enabled state is forwarded to the native engine adapter`() {
         val engine = ScriptedEngine(ArrayDeque())
         val session = testSession(engine)
 
-        session.setInputMethod(KeyboardInputMethod.TELEX)
+        session.setEnabled(false)
 
-        assertEquals(KeyboardInputMethod.TELEX, engine.inputMethod)
+        assertEquals(false, engine.enabled)
     }
 }
 
@@ -97,20 +96,20 @@ internal class ScriptedEngine(
     private val boundaryOutput: String? = null,
     private val backspaceOutput: String = "",
 ) : VietnameseEngine {
-    var inputMethod = KeyboardInputMethod.VNI
+    var configuration: EngineConfiguration? = null
+        private set
+    var enabled: Boolean? = null
         private set
 
     override fun process(codePoint: Int): String = processed.removeFirst()
     override fun processBoundary(codePoint: Int): String? = boundaryOutput
     override fun backspace(): String = backspaceOutput
-    override fun setInputMethod(method: KeyboardInputMethod) {
-        inputMethod = method
+    override fun configure(configuration: EngineConfiguration) {
+        this.configuration = configuration
     }
-    override fun setToneStyle(style: ToneStyle) = Unit
-    override fun setEnabled(enabled: Boolean) = Unit
-    override fun setSpellCheck(enabled: Boolean) = Unit
-    override fun setSmartRestore(enabled: Boolean) = Unit
-    override fun setEagerRestore(enabled: Boolean) = Unit
+    override fun setEnabled(enabled: Boolean) {
+        this.enabled = enabled
+    }
     override fun clear() = Unit
     override fun close() = Unit
 }

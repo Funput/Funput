@@ -1,10 +1,9 @@
 package app.funput.funput.ime.editing
 
 import android.view.inputmethod.InputConnection
+import app.funput.funput.ime.nativebridge.EngineConfiguration
 import app.funput.funput.ime.nativebridge.VietnameseEngine
-import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.model.KeyAction
-import app.funput.funput.keyboard.model.KeyboardInputMethod
 import java.lang.reflect.Proxy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -22,7 +21,7 @@ class ImeKeyActionHandlerTest {
             enterCommand = { ImeEditCommand.CommitText("\n") },
         )
 
-        handler.start(KeyboardInputMethod.TELEX, allowComposition = false)
+        handler.start(allowComposition = false)
         handler.onKeyAction(KeyAction.Input("character-s", "s"))
 
         assertFalse(engine.enabledValue)
@@ -38,12 +37,8 @@ private class RecordingEngine : VietnameseEngine {
     override fun process(codePoint: Int): String = "".also { processCount++ }
     override fun processBoundary(codePoint: Int): String? = null
     override fun backspace(): String = ""
-    override fun setInputMethod(method: KeyboardInputMethod) = Unit
-    override fun setToneStyle(style: ToneStyle) = Unit
+    override fun configure(configuration: EngineConfiguration) = Unit
     override fun setEnabled(enabled: Boolean) { enabledValue = enabled }
-    override fun setSpellCheck(enabled: Boolean) = Unit
-    override fun setSmartRestore(enabled: Boolean) = Unit
-    override fun setEagerRestore(enabled: Boolean) = Unit
     override fun clear() = Unit
     override fun close() = Unit
 }

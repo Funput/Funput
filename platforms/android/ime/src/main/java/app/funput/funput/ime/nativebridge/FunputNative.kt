@@ -9,12 +9,19 @@ internal object FunputNative {
     external fun nativeCreate(): Long
     external fun nativeDestroy(handle: Long)
     external fun nativeClear(handle: Long)
-    external fun nativeSetMethod(handle: Long, method: Int)
-    external fun nativeSetToneStyle(handle: Long, style: Int)
+    /** Applies every durable engine option in one crossing (see [EngineConfiguration]). */
+    external fun nativeConfigure(
+        handle: Long,
+        method: Int,
+        toneStyle: Int,
+        smartRestore: Boolean,
+        eagerRestore: Boolean,
+        spellCheck: Boolean,
+        autoCapitalize: Boolean,
+    )
+
+    /** Runtime VI/EN state — flipped per field and by the language key, not durable config. */
     external fun nativeSetEnabled(handle: Long, enabled: Boolean)
-    external fun nativeSetSpellCheck(handle: Long, enabled: Boolean)
-    external fun nativeSetSmartRestore(handle: Long, enabled: Boolean)
-    external fun nativeSetEagerRestore(handle: Long, enabled: Boolean)
     external fun nativeProcess(handle: Long, codePoint: Int): String
     external fun nativeBoundary(handle: Long, codePoint: Int): String
     external fun nativeBackspace(handle: Long): String

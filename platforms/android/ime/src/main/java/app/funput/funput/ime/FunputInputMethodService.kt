@@ -73,7 +73,7 @@ class FunputInputMethodService : InputMethodService() {
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         editorRuntime.configure(attribute)
-        actionHandler.start(settings.inputMethod, editorRuntime.policy.editorMode.supportsVietnameseComposition)
+        actionHandler.start(editorRuntime.policy.editorMode.supportsVietnameseComposition)
         suggestionService.start(editorRuntime.policy)
     }
     override fun onStartInputView(attribute: EditorInfo, restarting: Boolean) {
@@ -129,7 +129,7 @@ class FunputInputMethodService : InputMethodService() {
 
     private fun restartComposition(method: KeyboardInputMethod) {
         actionHandler.finish()
-        actionHandler.start(method, editorRuntime.policy.editorMode.supportsVietnameseComposition)
+        actionHandler.start(editorRuntime.policy.editorMode.supportsVietnameseComposition)
         suggestionService.start(editorRuntime.policy)
         keyboardView?.inputMethod = method
     }
