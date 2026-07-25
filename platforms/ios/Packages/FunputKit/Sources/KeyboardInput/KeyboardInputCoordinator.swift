@@ -62,6 +62,7 @@ public final class KeyboardInputCoordinator {
             input("\n", document: document)
         case .backspace:
             performDeleteBackward(document: document)
+            reopenPreviousWord()
         case .shift:
             toggleShift()
         case .inputMethod:

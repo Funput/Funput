@@ -2,9 +2,9 @@
 
 use funput_ffi::{
     ACTION_NONE, ACTION_SEND, FunputConfig, FunputResult, SOURCE_NUMPAD, funput_add_shortcut,
-    funput_backspace, funput_buffer, funput_clear, funput_clear_shortcuts, funput_configure,
-    funput_engine_free, funput_engine_new, funput_process_char, funput_process_key,
-    funput_set_method,
+    funput_adopt, funput_backspace, funput_buffer, funput_clear, funput_clear_shortcuts,
+    funput_configure, funput_engine_free, funput_engine_new, funput_process_char,
+    funput_process_key, funput_set_method,
 };
 
 fn output(result: &FunputResult) -> String {
@@ -175,6 +175,35 @@ fn numpad_digit_stays_literal_in_vni() {
         assert_eq!(result.action, ACTION_NONE);
         assert_eq!(read_buffer(engine), "");
 
+        funput_engine_free(engine);
+    }
+}
+
+/// Re-opening a committed word over the C ABI: the host passes the word as UTF-32,
+/// the engine takes it only when it is a syllable, and the next key edits it in place.
+#[test]
+fn adopt_reopens_a_committed_word() {
+    fn adopt(engine: *mut funput_ffi::FunputEngine, word: &str) -> bool {
+        let scalars: Vec<u32> = word.chars().map(u32::from).collect();
+        unsafe { funput_adopt(engine, scalars.as_ptr(), scalars.len()) }
+    }
+
+    unsafe {
+        let engine = funput_engine_new();
+        funput_set_method(engine, 0); // Telex
+
+        assert!(adopt(engine, "chào"));
+        assert_eq!(read_buffer(engine), "chào");
+        funput_process_char(engine, 's' as u32); // sắc replaces huyền
+        assert_eq!(read_buffer(engine), "cháo");
+
+        // Not a syllable: refused, and the composition is left as it was.
+        funput_clear(engine);
+        assert!(!adopt(engine, "text"));
+        assert_eq!(read_buffer(engine), "");
+
+        // Null word is treated as empty, never a crash.
+        assert!(!funput_adopt(engine, std::ptr::null(), 4));
         funput_engine_free(engine);
     }
 }

@@ -50,6 +50,19 @@ public final class FunputComposer {
         funput_set_method(handle, method.rawValue)
     }
 
+    /// Re-opens an already-committed `word` as the live composition, so the next
+    /// keystroke edits it (Backspace back onto `chào`, then `s` gives `cháo`).
+    ///
+    /// Returns false when the word is not a Vietnamese syllable — the caller must then
+    /// leave the document alone.
+    @discardableResult
+    public func adopt(_ word: String) -> Bool {
+        let scalars = word.unicodeScalars.map(\.value)
+        return scalars.withUnsafeBufferPointer { buffer in
+            funput_adopt(handle, buffer.baseAddress, UInt(buffer.count))
+        }
+    }
+
     public func setEnabled(_ enabled: Bool) {
         funput_set_enabled(handle, enabled)
     }

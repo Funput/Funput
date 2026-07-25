@@ -25,3 +25,16 @@ pub(crate) fn decode_codepoints(codepoints: &[u32]) -> String {
         .filter_map(|&c| char::from_u32(c))
         .collect()
 }
+
+/// Decode `len` UTF-32 codepoints at `ptr` into a `String`, skipping invalid scalars.
+/// A null pointer yields an empty string. The single entry point for every export
+/// that takes text from the host.
+///
+/// # Safety
+/// `ptr` must point to at least `len` `u32` values, or be null.
+pub(crate) unsafe fn string_from_utf32(ptr: *const u32, len: usize) -> String {
+    if ptr.is_null() {
+        return String::new();
+    }
+    decode_codepoints(unsafe { std::slice::from_raw_parts(ptr, len) })
+}

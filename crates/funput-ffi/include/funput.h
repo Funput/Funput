@@ -145,11 +145,9 @@ void funput_arm_capitalization(FunputEngine *engine);
 void funput_clear(FunputEngine *engine);
 
 /**
- * Process one Unicode scalar from the main keyboard. Returns the platform
- * instruction by value. Shorthand for [`funput_process_key`] with
- * [`SOURCE_STANDARD`].
- *
- * A null handle or invalid `codepoint` yields [`FunputResult::none`].
+ * Process one Unicode scalar from the main keyboard — [`funput_process_key`] with
+ * [`SOURCE_STANDARD`]. A null handle or invalid `codepoint` yields
+ * [`FunputResult::none`].
  *
  * # Safety
  * `engine` must be a valid handle or null.
@@ -185,11 +183,9 @@ FunputResult funput_process_key(FunputEngine *engine, uint32_t codepoint, uint32
 uintptr_t funput_buffer(const FunputEngine *engine, uint32_t *out, uintptr_t cap);
 
 /**
- * Backspace inside the current composition: drop the last composed character so
- * the next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`).
- *
- * Returns a no-op result — the host passes the Backspace through to delete one
- * character in the app.
+ * Backspace inside the current composition: drop the last composed character so the
+ * next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`). Returns a
+ * no-op result — the host passes the Backspace through to delete its own character.
  *
  * # Safety
  * `engine` must be a valid handle or null.
@@ -207,6 +203,18 @@ FunputResult funput_backspace(FunputEngine *engine);
  * `engine` must be a valid handle or null.
  */
 FunputResult funput_flip_composing(FunputEngine *engine);
+
+/**
+ * Re-open an already-committed word as the live composition, so the next keystroke
+ * edits it (Backspace back onto `chào`, then `s` gives `cháo`). `word` is UTF-32, as in
+ * [`funput_add_shortcut`](crate::funput_add_shortcut). Returns whether it was taken —
+ * only a complete Vietnamese syllable is, so leave the document alone on `false`.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null; `word` must point to `len` `u32` values or
+ * be null.
+ */
+bool funput_adopt(FunputEngine *engine, const uint32_t *word, uintptr_t len);
 
 /**
  * Set the input method: `0 = Telex`, `1 = VNI`, `2 = Telex Advanced`.

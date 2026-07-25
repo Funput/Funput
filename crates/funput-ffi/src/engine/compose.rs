@@ -40,11 +40,9 @@ pub unsafe extern "C" fn funput_clear(engine: *mut FunputEngine) {
     unsafe { abi::with_engine_mut(engine, |e| e.clear()) }
 }
 
-/// Process one Unicode scalar from the main keyboard. Returns the platform
-/// instruction by value. Shorthand for [`funput_process_key`] with
-/// [`SOURCE_STANDARD`].
-///
-/// A null handle or invalid `codepoint` yields [`FunputResult::none`].
+/// Process one Unicode scalar from the main keyboard — [`funput_process_key`] with
+/// [`SOURCE_STANDARD`]. A null handle or invalid `codepoint` yields
+/// [`FunputResult::none`].
 ///
 /// # Safety
 /// `engine` must be a valid handle or null.
@@ -107,11 +105,9 @@ pub unsafe extern "C" fn funput_buffer(
     }
 }
 
-/// Backspace inside the current composition: drop the last composed character so
-/// the next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`).
-///
-/// Returns a no-op result — the host passes the Backspace through to delete one
-/// character in the app.
+/// Backspace inside the current composition: drop the last composed character so the
+/// next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`). Returns a
+/// no-op result — the host passes the Backspace through to delete its own character.
 ///
 /// # Safety
 /// `engine` must be a valid handle or null.
@@ -131,4 +127,24 @@ pub unsafe extern "C" fn funput_backspace(engine: *mut FunputEngine) -> FunputRe
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_flip_composing(engine: *mut FunputEngine) -> FunputResult {
     unsafe { abi::with_engine_mut(engine, |e| FunputResult::from_ime(&e.flip_composing())) }
+}
+
+/// Re-open an already-committed word as the live composition, so the next keystroke
+/// edits it (Backspace back onto `chào`, then `s` gives `cháo`). `word` is UTF-32, as in
+/// [`funput_add_shortcut`](crate::funput_add_shortcut). Returns whether it was taken —
+/// only a complete Vietnamese syllable is, so leave the document alone on `false`.
+///
+/// # Safety
+/// `engine` must be a valid handle or null; `word` must point to `len` `u32` values or
+/// be null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_adopt(
+    engine: *mut FunputEngine,
+    word: *const u32,
+    len: usize,
+) -> bool {
+    unsafe {
+        let text = abi::string_from_utf32(word, len);
+        abi::with_engine_mut(engine, |e| e.adopt(&text))
+    }
 }

@@ -28,8 +28,8 @@ pub unsafe extern "C" fn funput_add_shortcut(
 ) {
     unsafe {
         abi::with_engine_mut(engine, |e| {
-            let trigger = string_from_utf32(trigger, trigger_len);
-            let expansion = string_from_utf32(expansion, expansion_len);
+            let trigger = abi::string_from_utf32(trigger, trigger_len);
+            let expansion = abi::string_from_utf32(expansion, expansion_len);
             e.add_shortcut(trigger, expansion);
         })
     }
@@ -43,16 +43,4 @@ pub unsafe extern "C" fn funput_add_shortcut(
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_clear_shortcuts(engine: *mut FunputEngine) {
     unsafe { abi::with_engine_mut(engine, |e| e.clear_shortcuts()) }
-}
-
-/// Decode `len` UTF-32 codepoints at `ptr` into a `String`, skipping invalid
-/// scalars. A null pointer yields an empty string.
-///
-/// # Safety
-/// `ptr` must point to at least `len` `u32` values, or be null.
-unsafe fn string_from_utf32(ptr: *const u32, len: usize) -> String {
-    if ptr.is_null() {
-        return String::new();
-    }
-    abi::decode_codepoints(unsafe { std::slice::from_raw_parts(ptr, len) })
 }
