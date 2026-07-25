@@ -9,5 +9,7 @@
 mod codec;
 mod guard;
 
-pub(crate) use codec::{copy_codepoints, decode_codepoints};
+#[cfg(test)]
+pub(crate) use codec::decode_codepoints;
+pub(crate) use codec::{copy_codepoints, string_from_utf32};
 pub(crate) use guard::{safe, with_engine_mut, with_engine_ref};

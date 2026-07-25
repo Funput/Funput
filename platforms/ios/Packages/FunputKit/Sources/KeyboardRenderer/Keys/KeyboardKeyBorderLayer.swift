@@ -4,7 +4,10 @@ import UIKit
 
 @MainActor
 final class KeyboardKeyBorderLayer: CAShapeLayer {
-    private var pathCornerRadius: CGFloat = 0
+    // CoreAnimation clones layers off the main thread, so the `init(layer:)` override
+    // below inherits the superclass's nonisolated context and cannot touch isolated
+    // storage. Only that clone reads this; every write comes from the main actor.
+    private nonisolated(unsafe) var pathCornerRadius: CGFloat = 0
 
     override init() {
         super.init()

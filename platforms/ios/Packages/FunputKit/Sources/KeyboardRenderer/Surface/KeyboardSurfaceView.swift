@@ -75,12 +75,6 @@ public final class KeyboardSurfaceView: UIView {
         touchOverlay.updateGeometry(geometry)
     }
 
-    public override func traitCollectionDidChange(_ previousTraits: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraits)
-        guard previousTraits?.userInterfaceStyle != traitCollection.userInterfaceStyle else { return }
-        applyPresentation()
-    }
-
     public override func didMoveToWindow() {
         super.didMoveToWindow()
         if window == nil {
@@ -90,6 +84,11 @@ public final class KeyboardSurfaceView: UIView {
     }
 
     private func configureView() {
+        // Fires only on a light/dark change, which is the guard the deprecated
+        // `traitCollectionDidChange` had to write by hand.
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
+            view.applyPresentation()
+        }
         isMultipleTouchEnabled = true
         contentHost.isMultipleTouchEnabled = true
         clipsToBounds = true

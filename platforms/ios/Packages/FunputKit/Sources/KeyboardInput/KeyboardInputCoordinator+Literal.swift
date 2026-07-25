@@ -32,5 +32,26 @@ extension KeyboardInputCoordinator {
         }
         deleteDocumentBackward(document)
     }
+
+    /// Re-opens the word the caret now sits behind, so the next keystroke retones it
+    /// (`chào` ⌫ then `s` gives `cháo`).
+    ///
+    /// Called only from the keyboard's Backspace key — never from `deleteBackward`,
+    /// which is the literal path and must not start composing.
+    ///
+    /// The document is deliberately left untouched: on iOS the composer buffer mirrors
+    /// committed text at the tail of the document, so seeding it with a word that is
+    /// already there satisfies the synchronizer's "buffer is a suffix of the context"
+    /// invariant on its own. Everything is read from the synchronizer's shadow — no
+    /// document read, and immune to a proxy that reports stale text.
+    func reopenPreviousWord() {
+        guard state.usesVietnameseComposition,
+            composer.buffer().isEmpty,
+            let snapshot = documentSynchronizer.snapshot,
+            !snapshot.hasSelection,
+            let word = snapshot.contextBeforeInput?.wordBeforeCursor()
+        else { return }
+        composer.adopt(word) // refused unless it is a Vietnamese syllable
+    }
 }
 #endif
