@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// Per-app VI/EN resolution — the macOS port of the Windows shell's override map
 /// (`platforms/windows/src/shell.rs`). A manual toggle is pinned per app for the
@@ -37,5 +38,12 @@ extension AppSettings {
     func setVietnameseFromUI(_ on: Bool) {
         vietnameseEnabled = on
         pendingVietnameseOverride = on
+    }
+
+    /// Binding for the VI/EN switches in Funput's own UI. Writes route through
+    /// [`setVietnameseFromUI`] rather than assigning `vietnameseEnabled` directly, so
+    /// every switch shares that binding semantic instead of restating it per call site.
+    var vietnameseUIBinding: Binding<Bool> {
+        Binding(get: { self.vietnameseEnabled }, set: { self.setVietnameseFromUI($0) })
     }
 }
