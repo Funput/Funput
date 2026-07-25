@@ -44,18 +44,52 @@ data class KeyboardTheme(
     val suggestionHighlightColor: Int = labelColor,
     /** How much a key surface grows while held, as a multiplier of its resting size. */
     val pressedKeyScale: Float = 1f,
+    /**
+     * Scales the alpha of character key surfaces at draw time.
+     *
+     * Kept apart from the key colors so a theme can dim every key at once without the authored
+     * colors being rewritten, and so repeatedly moving the control cannot compound.
+     */
+    val keyOpacity: Float = 1f,
+    /** The same, for modifier keys. */
+    val specialKeyOpacity: Float = 1f,
+    /**
+     * Shrinks the drawn key inside its touch target.
+     *
+     * The hit area never changes, which is what keeps a theme from altering where a key can be
+     * pressed; only the painted surface moves inward.
+     */
+    val keycapInsetDp: Float = 0f,
+    val backgroundGradientDirection: KeyboardThemeGradientDirection =
+        KeyboardThemeGradientDirection.Default,
+    /**
+     * Separator between suggestions.
+     *
+     * The renderer used to force this to the secondary label color at a fixed low alpha. The
+     * default reproduces exactly that, so themes saved before the token existed keep the divider
+     * they were designed with instead of gaining an opaque line.
+     */
+    val suggestionDividerColor: Int =
+        (secondaryLabelColor and RgbMask) or LegacyDividerAlpha,
+    /** Shadow under the magnified key preview, previously a hardcoded black. */
+    val popupShadowColor: Int = DefaultPopupShadowColor,
 ) {
     init {
         require(keyCornerRadiusDp >= 0f) { "Key corner radius must not be negative" }
         require(keyBorderWidthDp >= 0f) { "Key border width must not be negative" }
         require(keyShadowOffsetDp >= 0f) { "Key shadow offset must not be negative" }
         require(pressedKeyShadowOffsetDp >= 0f) { "Pressed key shadow offset must not be negative" }
-        require(pressedKeyScale in 1f..MaxPressedKeyScale) {
-            "Pressed key scale must be between 1 and $MaxPressedKeyScale"
+        require(pressedKeyScale in MetricClamp.PressedKeyScale) {
+            "Pressed key scale must be within ${MetricClamp.PressedKeyScale}"
         }
+        require(keyOpacity in MetricClamp.Opacity) { "Key opacity must be within 0..1" }
+        require(specialKeyOpacity in MetricClamp.Opacity) { "Special key opacity must be within 0..1" }
+        require(keycapInsetDp >= 0f) { "Keycap inset must not be negative" }
     }
 
     private companion object {
-        const val MaxPressedKeyScale = 1.5f
+        const val DefaultPopupShadowColor = 0x40000000
+        const val RgbMask = 0x00FFFFFF
+        const val LegacyDividerAlpha = 0x33000000
     }
 }

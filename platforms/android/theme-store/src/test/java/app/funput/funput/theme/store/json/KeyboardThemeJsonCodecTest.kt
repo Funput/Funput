@@ -1,6 +1,8 @@
 package app.funput.funput.theme.store.json
 
 import app.funput.funput.theme.KeyboardThemeBackgroundImage
+import app.funput.funput.theme.KeyboardThemeGradientDirection
+import app.funput.funput.theme.MetricClamp
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.KeyboardThemeOrigin
@@ -44,6 +46,12 @@ class KeyboardThemeJsonCodecTest {
             "popupSurfaceColor",
             "suggestionHighlightColor",
             "pressedKeyScale",
+            "keyOpacity",
+            "specialKeyOpacity",
+            "keycapInsetDp",
+            "backgroundGradientDirection",
+            "suggestionDividerColor",
+            "popupShadowColor",
         ).forEach(theme::remove)
         json.remove("schemaVersion")
 
@@ -61,7 +69,7 @@ class KeyboardThemeJsonCodecTest {
     @Test
     fun decodeIgnoresTokensWrittenByANewerBuild() {
         val json = JSONObject(KeyboardThemeJsonCodec.encode(descriptor()))
-        json.getJSONObject("theme").put("keycapInsetDp", 3.5)
+        json.getJSONObject("theme").put("aTokenThisBuildDoesNotKnow", 3.5)
         json.put("schemaVersion", KeyboardThemeJsonCodec.SchemaVersion + 1)
 
         assertEquals(KeyboardThemes.Ink, KeyboardThemeJsonCodec.decode(json.toString()).theme)
@@ -81,6 +89,38 @@ class KeyboardThemeJsonCodecTest {
 
         assertNull(decoded.baseThemeId)
         assertNull(decoded.backgroundImage)
+    }
+
+    @Test
+    fun decodeCoercesOutOfRangeNumbersInsteadOfThrowing() {
+        val json = JSONObject(KeyboardThemeJsonCodec.encode(descriptor()))
+        json.getJSONObject("theme").apply {
+            put("keyCornerRadiusDp", 9999.0)
+            put("keyBorderWidthDp", -5.0)
+            put("pressedKeyScale", 12.0)
+            put("keyOpacity", 4.0)
+            put("keycapInsetDp", -3.0)
+        }
+
+        val theme = KeyboardThemeJsonCodec.decode(json.toString()).theme
+
+        // A hand-edited or downloaded theme must never be able to break the renderer.
+        assertEquals(MetricClamp.CornerRadiusDp.endInclusive, theme.keyCornerRadiusDp, 0f)
+        assertEquals(MetricClamp.BorderWidthDp.start, theme.keyBorderWidthDp, 0f)
+        assertEquals(MetricClamp.PressedKeyScale.endInclusive, theme.pressedKeyScale, 0f)
+        assertEquals(MetricClamp.Opacity.endInclusive, theme.keyOpacity, 0f)
+        assertEquals(MetricClamp.KeycapInsetDp.start, theme.keycapInsetDp, 0f)
+    }
+
+    @Test
+    fun decodeFallsBackToTheDefaultGradientDirectionOnAnUnknownValue() {
+        val json = JSONObject(KeyboardThemeJsonCodec.encode(descriptor()))
+        json.getJSONObject("theme").put("backgroundGradientDirection", "SPIRAL")
+
+        assertEquals(
+            KeyboardThemeGradientDirection.Default,
+            KeyboardThemeJsonCodec.decode(json.toString()).theme.backgroundGradientDirection,
+        )
     }
 
     @Test

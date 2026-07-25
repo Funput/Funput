@@ -6,6 +6,7 @@ import android.graphics.RectF
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.theme.KeyboardTheme
+import kotlin.math.roundToInt
 
 /**
  * Paints the plate behind a key: shadow, fill, and border.
@@ -37,7 +38,7 @@ internal class KeySurfacePainter(private val metrics: RenderMetrics) {
         if (!fillColor.isVisible && !hasBorder) return
 
         val radius = metrics.dp(theme.keyCornerRadiusDp)
-        setDrawingRect(key, if (isPressed) theme.pressedKeyScale else 1f)
+        setDrawingRect(key, theme, if (isPressed) theme.pressedKeyScale else 1f)
         drawShadow(canvas, theme, radius, isPressed)
         if (fillColor.isVisible) {
             fillPaint.color = fillColor
@@ -59,17 +60,44 @@ internal class KeySurfacePainter(private val metrics: RenderMetrics) {
         drawingRect.offset(0f, -offset)
     }
 
-    private fun setDrawingRect(key: ResolvedKey, scale: Float) {
+    /**
+     * Shapes the painted rectangle only. [ResolvedKey.bounds] is what hit testing reads, so it is
+     * never touched here — a theme can shrink how a key looks but not where it can be pressed.
+     */
+    private fun setDrawingRect(key: ResolvedKey, theme: KeyboardTheme, scale: Float) {
         val bounds = key.bounds
         drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
+        val inset = metrics.dp(theme.keycapInsetDp)
+        if (inset > 0f) {
+            // Never inset so far that the key vanishes, however the theme was authored.
+            val limit = minOf(bounds.width, bounds.height) / MaxInsetDivisor
+            drawingRect.inset(minOf(inset, limit), minOf(inset, limit))
+        }
         if (scale == 1f) return
         drawingRect.inset(
-            -bounds.width * (scale - 1f) / 2f,
-            -bounds.height * (scale - 1f) / 2f,
+            -drawingRect.width() * (scale - 1f) / 2f,
+            -drawingRect.height() * (scale - 1f) / 2f,
         )
     }
 
+    /**
+     * The surface color, dimmed by the theme's opacity control.
+     *
+     * The control scales the authored alpha rather than replacing it, so a theme whose keys are a
+     * faint wash stays a faint wash, and a plateless theme stays plateless.
+     */
     private fun fillColor(
+        key: ResolvedKey,
+        theme: KeyboardTheme,
+        isPressed: Boolean,
+        isActivated: Boolean,
+    ): Int {
+        val opacity =
+            if (key.spec.role.isSpecial) theme.specialKeyOpacity else theme.keyOpacity
+        return baseFillColor(key, theme, isPressed, isActivated).scaleAlpha(opacity)
+    }
+
+    private fun baseFillColor(
         key: ResolvedKey,
         theme: KeyboardTheme,
         isPressed: Boolean,
@@ -90,4 +118,16 @@ internal class KeySurfacePainter(private val metrics: RenderMetrics) {
         }
 
     private val Int.isVisible: Boolean get() = this ushr 24 != 0
+
+    private fun Int.scaleAlpha(factor: Float): Int {
+        if (factor >= 1f) return this
+        val alpha = ((this ushr 24) * factor).roundToInt().coerceIn(0, MaxAlpha)
+        return (this and RgbMask) or (alpha shl 24)
+    }
+
+    private companion object {
+        const val MaxAlpha = 255
+        const val RgbMask = 0x00FFFFFF
+        const val MaxInsetDivisor = 4f
+    }
 }

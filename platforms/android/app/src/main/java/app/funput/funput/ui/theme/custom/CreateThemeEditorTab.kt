@@ -11,6 +11,7 @@ import app.funput.funput.R
 internal enum class CreateThemeEditorTab(val titleRes: Int) {
     Style(R.string.custom_theme_tab_style),
     Colors(R.string.custom_theme_tab_colors),
+    Metrics(R.string.custom_theme_tab_metrics),
     Background(R.string.custom_theme_tab_background),
     Info(R.string.custom_theme_tab_info),
 }

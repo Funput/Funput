@@ -3,6 +3,7 @@ package app.funput.funput.ui.theme.custom
 import androidx.compose.runtime.Composable
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.theme.custom.color.ThemeColorTab
+import app.funput.funput.ui.theme.custom.metrics.ThemeMetricsTab
 
 /**
  * Routes the selected editor tab to its card stack.
@@ -27,6 +28,10 @@ internal fun CreateThemeTabContent(
         onColorChange = { role, color ->
             state.updateTheme { theme -> role.write(theme, color) }
         },
+    )
+    CreateThemeEditorTab.Metrics -> ThemeMetricsTab(
+        theme = state.theme,
+        onThemeChange = { transform -> state.updateTheme(transform) },
     )
     CreateThemeEditorTab.Background -> BackgroundImagePlaceholder(
         imageSelected = state.backgroundImageSource != null,

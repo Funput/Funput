@@ -40,7 +40,9 @@ internal enum class ThemeColorRole(
     PressedKeyBorder(ThemeColorGroup.Advanced, R.string.custom_theme_color_pressed_key_border),
     ActivatedKeyBorder(ThemeColorGroup.Advanced, R.string.custom_theme_color_activated_key_border),
     PopupSurface(ThemeColorGroup.Advanced, R.string.custom_theme_color_popup_surface),
-    KeyShadow(ThemeColorGroup.Advanced, R.string.custom_theme_color_key_shadow);
+    KeyShadow(ThemeColorGroup.Advanced, R.string.custom_theme_color_key_shadow),
+    SuggestionDivider(ThemeColorGroup.Advanced, R.string.custom_theme_color_suggestion_divider),
+    PopupShadow(ThemeColorGroup.Advanced, R.string.custom_theme_color_popup_shadow);
 
     fun read(theme: KeyboardTheme): Int = when (this) {
         BackgroundStart -> theme.backgroundStartColor
@@ -61,6 +63,8 @@ internal enum class ThemeColorRole(
         ActivatedKeyBorder -> theme.activatedKeyBorderColor
         PopupSurface -> theme.popupSurfaceColor
         KeyShadow -> theme.keyShadowColor
+        SuggestionDivider -> theme.suggestionDividerColor
+        PopupShadow -> theme.popupShadowColor
     }
 
     fun write(theme: KeyboardTheme, color: Int): KeyboardTheme = when (this) {
@@ -82,5 +86,7 @@ internal enum class ThemeColorRole(
         ActivatedKeyBorder -> theme.copy(activatedKeyBorderColor = color)
         PopupSurface -> theme.copy(popupSurfaceColor = color)
         KeyShadow -> theme.copy(keyShadowColor = color)
+        SuggestionDivider -> theme.copy(suggestionDividerColor = color)
+        PopupShadow -> theme.copy(popupShadowColor = color)
     }
 }

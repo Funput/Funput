@@ -29,7 +29,7 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
 
     fun updateTheme(theme: KeyboardTheme) {
         this.theme = theme
-        dividerPaint.color = theme.secondaryLabelColor and 0x00FFFFFF or DividerAlpha
+        dividerPaint.color = theme.suggestionDividerColor
     }
 
     fun draw(
@@ -102,7 +102,6 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     private companion object {
         const val SuggestionLabelSizeSp = 14f
         const val DividerInsetDp = 9f
-        const val DividerAlpha = 0x33000000
         const val LabelHorizontalInsetDp = 8f
     }
 }

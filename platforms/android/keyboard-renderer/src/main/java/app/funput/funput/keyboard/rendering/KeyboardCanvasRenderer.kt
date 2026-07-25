@@ -37,11 +37,12 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
                 backgroundPaint.shader = null
                 backgroundPaint.color = theme.backgroundStartColor
             } else {
+                val direction = theme.backgroundGradientDirection
                 backgroundPaint.shader = LinearGradient(
-                    0f,
-                    0f,
-                    width.toFloat(),
-                    height.toFloat(),
+                    direction.startX * width,
+                    direction.startY * height,
+                    direction.endX * width,
+                    direction.endY * height,
                     theme.backgroundStartColor,
                     theme.backgroundEndColor,
                     Shader.TileMode.CLAMP,
