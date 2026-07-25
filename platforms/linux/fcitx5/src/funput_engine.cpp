@@ -21,14 +21,9 @@ void FunputEngine::onSettingsChanged() {
 }
 
 void FunputEngine::applySettings() {
-    handle_.setMethod(static_cast<uint8_t>(settings_.method));
-    handle_.setToneStyle(static_cast<uint8_t>(settings_.toneStyle));
+    handle_.configure(settings_);
     effectiveEnabled_ = settings_.enabled;
     handle_.setEnabled(effectiveEnabled_);
-    handle_.setSmartRestore(settings_.smartRestore);
-    handle_.setEagerRestore(settings_.eagerRestore);
-    handle_.setSpellCheck(settings_.spellCheck);
-    handle_.setAutoCapitalize(settings_.autoCapitalize);
     handle_.clearShortcuts();
     for (const auto &[trigger, expansion] : settings_.shortcuts) {
         handle_.addShortcut(trigger, expansion);
