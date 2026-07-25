@@ -8,6 +8,38 @@ public enum FunputToneStyle: UInt8, CaseIterable, Sendable {
     case modern = 1
 }
 
+/// The engine's durable user options, applied in one call by
+/// ``FunputComposer/configure(_:)``.
+///
+/// Typed counterpart of the C ABI's `FunputConfig`, so callers outside `FunputEngine`
+/// never touch the C layer. The runtime state — whether Vietnamese composition is
+/// currently on (``FunputComposer/setEnabled(_:)``) and a mid-session method switch
+/// (``FunputComposer/setInputMethod(_:)``) — is deliberately not part of this type.
+public struct FunputCompositionOptions: Equatable, Sendable {
+    public var inputMethod: FunputInputMethod
+    public var toneStyle: FunputToneStyle
+    public var smartRestore: Bool
+    public var eagerRestore: Bool
+    public var spellCheck: Bool
+    public var autoCapitalize: Bool
+
+    public init(
+        inputMethod: FunputInputMethod,
+        toneStyle: FunputToneStyle,
+        smartRestore: Bool,
+        eagerRestore: Bool,
+        spellCheck: Bool,
+        autoCapitalize: Bool
+    ) {
+        self.inputMethod = inputMethod
+        self.toneStyle = toneStyle
+        self.smartRestore = smartRestore
+        self.eagerRestore = eagerRestore
+        self.spellCheck = spellCheck
+        self.autoCapitalize = autoCapitalize
+    }
+}
+
 public enum FunputCompositionAction: UInt8, Sendable {
     case none = 0
     case send = 1
