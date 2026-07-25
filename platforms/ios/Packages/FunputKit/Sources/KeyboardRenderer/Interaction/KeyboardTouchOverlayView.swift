@@ -18,8 +18,7 @@ final class KeyboardTouchOverlayView: UIView {
     private static let outerTolerance: CGFloat = 12
     private var keys: [ResolvedKey] = []
     private var trackingBounds = CGRect.null
-    private var tokens: [ObjectIdentifier: TouchToken] = [:]
-    private var nextToken: TouchToken = 1
+    private var ledger = KeyboardTouchTokenLedger()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -27,7 +26,6 @@ final class KeyboardTouchOverlayView: UIView {
         isOpaque = false
         backgroundColor = .clear
         isAccessibilityElement = false
-        tokens.reserveCapacity(10)
     }
 
     @available(*, unavailable)
@@ -52,11 +50,11 @@ final class KeyboardTouchOverlayView: UIView {
         for touch in touches {
             let point = touch.location(in: self)
             guard let hit = hit(at: point) else { continue }
-            let identifier = ObjectIdentifier(touch)
-            guard tokens[identifier] == nil else { continue }
-            let token = nextToken
-            nextToken &+= 1
-            tokens[identifier] = token
+            let (token, stale) = ledger.beginToken(for: touch)
+            // Retire a stale mapping rather than skipping the press as a duplicate:
+            // UIKit recycles touch objects, so a leftover entry must never cost the
+            // user a keystroke.
+            if let stale { onCancel?(stale) }
             onBegin?(token, hit, point)
         }
         reconcile(event)
@@ -64,7 +62,7 @@ final class KeyboardTouchOverlayView: UIView {
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
-            guard let token = tokens[ObjectIdentifier(touch)] else { continue }
+            guard let token = ledger.token(for: touch) else { continue }
             let point = touch.location(in: self)
             onMove?(token, trackingBounds.contains(point) ? hit(at: point) : nil, point)
         }
@@ -73,8 +71,7 @@ final class KeyboardTouchOverlayView: UIView {
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
-            let identifier = ObjectIdentifier(touch)
-            guard let token = tokens.removeValue(forKey: identifier) else { continue }
+            guard let token = ledger.removeToken(for: touch) else { continue }
             let point = touch.location(in: self)
             onMove?(token, trackingBounds.contains(point) ? hit(at: point) : nil, point)
             onEnd?(token)
@@ -84,16 +81,14 @@ final class KeyboardTouchOverlayView: UIView {
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
-            guard let token = tokens.removeValue(forKey: ObjectIdentifier(touch)) else { continue }
+            guard let token = ledger.removeToken(for: touch) else { continue }
             onCancel?(token)
         }
         reconcile(event)
     }
 
     func cancelAllTrackedTouches() {
-        let active = Array(tokens.values)
-        tokens.removeAll(keepingCapacity: true)
-        active.forEach { onCancel?($0) }
+        ledger.removeAllTokens().forEach { onCancel?($0) }
         onReconcile?([])
     }
 
@@ -118,17 +113,11 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     private func reconcile(_ event: UIEvent?) {
-        guard let allTouches = event?.allTouches else {
-            onReconcile?(Set(tokens.values))
+        guard let event, let allTouches = event.allTouches else {
+            onReconcile?(ledger.trackedTokens)
             return
         }
-        let activeIdentifiers = Set(allTouches.lazy.filter {
-            $0.phase == .began || $0.phase == .moved || $0.phase == .stationary
-        }.map { ObjectIdentifier($0) })
-        let activeTokens = Set(tokens.compactMap { identifier, token in
-            activeIdentifiers.contains(identifier) ? token : nil
-        })
-        onReconcile?(activeTokens)
+        onReconcile?(ledger.survivors(in: allTouches, at: event.timestamp))
     }
 }
 #endif

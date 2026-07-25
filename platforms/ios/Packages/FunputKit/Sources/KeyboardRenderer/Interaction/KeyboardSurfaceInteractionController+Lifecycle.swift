@@ -27,7 +27,12 @@ extension KeyboardSurfaceInteractionController {
     }
 
     func reconcileActiveTouches(_ activeTokens: Set<TouchToken>) {
-        let orphaned = Set(touches.keys).subtracting(activeTokens)
+        // Toolbar and accessibility presses never reach the overlay, so they are
+        // absent from `activeTokens` by construction and must not be read as
+        // abandoned — an unrelated keycap touch would otherwise cancel them.
+        let orphaned = Set(touches.keys)
+            .subtracting(activeTokens)
+            .filter { $0 < Self.firstLegacyToken }
         for token in orphaned { cancelTouch(token: token) }
     }
 
