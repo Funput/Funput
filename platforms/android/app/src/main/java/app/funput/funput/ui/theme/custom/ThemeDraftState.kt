@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -13,14 +12,14 @@ import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.KeyboardThemeBackgroundImage
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.store.custom.CustomThemeDraft
-import app.funput.funput.theme.store.custom.CustomThemeOverrides
+import app.funput.funput.theme.store.json.KeyboardThemeJson
 
 /**
  * Every editable value in the theme editor, in one place.
  *
- * The editor grows a control at a time, and threading each one through the screen, the form and
- * the tab switch as its own parameter and callback does not scale. Controls read and write this
- * holder directly, so adding a knob touches the holder and the one card that shows it.
+ * [theme] holds the tokens directly rather than deriving them from a base plus a couple of knobs,
+ * so a control can address any token without the state holder growing a field per control. The
+ * base theme is now only a starting point and the target of "restore the original theme".
  */
 @Stable
 internal class ThemeDraftState(
@@ -29,22 +28,25 @@ internal class ThemeDraftState(
 ) {
     var name by mutableStateOf(editingTheme.initialThemeName())
     var baseThemeValue by mutableStateOf(editingTheme.initialBaseThemeValue())
-    var accentColor by mutableIntStateOf(editingTheme.initialAccentColor())
-    var keyBackgroundOpacity by mutableFloatStateOf(editingTheme.initialKeyBackgroundOpacity())
+        private set
+    var theme by mutableStateOf(editingTheme?.theme ?: initialBaseTheme().theme)
     var backgroundImageSource by mutableStateOf(editingTheme.initialBackgroundImageSource())
     var imageOpacity by mutableFloatStateOf(editingTheme.initialBackgroundImageOpacity())
 
     val baseTheme: KeyboardThemeDescriptor
-        get() = baseThemes.find { theme -> theme.id.value == baseThemeValue } ?: baseThemes.first()
-
-    /** Resolved tokens for both the live preview and the saved theme, so they cannot diverge. */
-    val theme: KeyboardTheme
-        get() = CustomThemeOverrides(
-            accentColor = accentColor,
-            keyBackgroundOpacity = keyBackgroundOpacity,
-        ).applyTo(baseTheme.theme)
+        get() = baseThemes.find { it.id.value == baseThemeValue } ?: baseThemes.first()
 
     val canSave: Boolean get() = name.trim().isNotEmpty()
+
+    /** Switching base replaces every token, which is also how "restore the original" works. */
+    fun selectBaseTheme(value: String) {
+        baseThemeValue = value
+        theme = baseTheme.theme
+    }
+
+    fun updateTheme(transform: (KeyboardTheme) -> KeyboardTheme) {
+        theme = transform(theme)
+    }
 
     fun toDraft(): CustomThemeDraft = CustomThemeDraft(
         theme = theme,
@@ -55,6 +57,9 @@ internal class ThemeDraftState(
         },
     )
 
+    private fun initialBaseTheme(): KeyboardThemeDescriptor =
+        baseThemes.find { it.id.value == baseThemeValue } ?: baseThemes.first()
+
     internal companion object {
         fun saver(
             baseThemes: List<KeyboardThemeDescriptor>,
@@ -64,8 +69,7 @@ internal class ThemeDraftState(
                 listOf(
                     state.name,
                     state.baseThemeValue,
-                    state.accentColor,
-                    state.keyBackgroundOpacity,
+                    KeyboardThemeJson.encode(state.theme),
                     state.backgroundImageSource,
                     state.imageOpacity,
                 )
@@ -74,10 +78,9 @@ internal class ThemeDraftState(
                 ThemeDraftState(baseThemes, editingTheme).apply {
                     name = values[0] as String
                     baseThemeValue = values[1] as String
-                    accentColor = values[2] as Int
-                    keyBackgroundOpacity = values[3] as Float
-                    backgroundImageSource = values[4] as String?
-                    imageOpacity = values[5] as Float
+                    theme = KeyboardThemeJson.decode(values[2] as String)
+                    backgroundImageSource = values[3] as String?
+                    imageOpacity = values[4] as Float
                 }
             },
         )

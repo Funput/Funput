@@ -13,7 +13,6 @@ import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.KeyboardThemeOrigin
 import app.funput.funput.theme.store.custom.CustomThemeDraft
-import app.funput.funput.theme.store.custom.CustomThemeOverrides
 import app.funput.funput.ui.theme.FunputTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -50,12 +49,8 @@ class CreateCustomThemeScreenTest {
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)
             assertEquals(KeyboardThemeId.Light, savedDraft?.baseThemeId)
-            // The draft now carries resolved tokens, so assert the theme the editor produced.
-            val expected = CustomThemeOverrides(
-                accentColor = AccentPresets[3].argb,
-                keyBackgroundOpacity = DefaultKeyBackgroundOpacity,
-            ).applyTo(lightTheme.theme)
-            assertEquals(expected, savedDraft?.theme)
+            // The draft carries resolved tokens, so assert the theme the editor produced.
+            assertEquals(lightTheme.theme.withAccent(AccentPresets[3].argb), savedDraft?.theme)
         }
     }
 
@@ -71,10 +66,7 @@ class CreateCustomThemeScreenTest {
             author = "Me",
             origin = KeyboardThemeOrigin.CUSTOM,
             baseThemeId = KeyboardThemeId.Light,
-            theme = CustomThemeOverrides(
-                accentColor = AccentPresets[2].argb,
-                keyBackgroundOpacity = 0.5f,
-            ).applyTo(lightTheme.theme),
+            theme = lightTheme.theme.withAccent(AccentPresets[2].argb),
         )
 
         compose.setContent {

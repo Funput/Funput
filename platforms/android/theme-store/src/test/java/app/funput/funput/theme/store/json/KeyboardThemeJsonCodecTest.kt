@@ -83,6 +83,14 @@ class KeyboardThemeJsonCodecTest {
         assertNull(decoded.backgroundImage)
     }
 
+    @Test
+    fun bareThemeTextRoundTripsThroughThePublicHelper() {
+        assertEquals(
+            KeyboardThemes.Paper,
+            KeyboardThemeJson.decode(KeyboardThemeJson.encode(KeyboardThemes.Paper)),
+        )
+    }
+
     private fun descriptor(
         baseThemeId: KeyboardThemeId? = null,
         backgroundImage: KeyboardThemeBackgroundImage? = null,

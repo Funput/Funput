@@ -17,15 +17,11 @@ internal fun ThemeStyleTab(
         BaseThemeSelector(
             themes = baseThemes,
             selectedThemeId = state.baseTheme.id,
-            onSelected = { id -> state.baseThemeValue = id.value },
+            onSelected = { id -> state.selectBaseTheme(id.value) },
         )
         AccentColorSelector(
-            selectedColor = state.accentColor,
-            onSelected = { color -> state.accentColor = color },
-        )
-        KeyBackgroundOpacitySelector(
-            opacity = state.keyBackgroundOpacity,
-            onOpacityChange = { opacity -> state.keyBackgroundOpacity = opacity },
+            selectedColor = state.theme.accentColor,
+            onSelected = { color -> state.updateTheme { theme -> theme.withAccent(color) } },
         )
     }
 }
