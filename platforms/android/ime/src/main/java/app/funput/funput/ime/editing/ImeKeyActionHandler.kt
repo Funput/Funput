@@ -19,10 +19,13 @@ internal class ImeKeyActionHandler(
     var language: KeyboardLanguage = KeyboardLanguage.VIETNAMESE
         private set
 
-    fun start(inputMethod: KeyboardInputMethod, allowComposition: Boolean = true) {
+    /**
+     * The input method is not applied here: `ImeSettingsController` owns engine
+     * configuration and has already pushed it (see its `applyEngineConfiguration`).
+     */
+    fun start(allowComposition: Boolean = true) {
         compositionAllowed = allowComposition
         composition.reset()
-        composition.setInputMethod(inputMethod)
         composition.setEnabled(usesComposition)
         suggestionTracker.reset()
     }

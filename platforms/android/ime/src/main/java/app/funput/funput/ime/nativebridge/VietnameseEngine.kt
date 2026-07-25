@@ -3,14 +3,27 @@ package app.funput.funput.ime.nativebridge
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 
+/**
+ * The engine's durable options, applied as one batch by [VietnameseEngine.configure].
+ *
+ * [autoCapitalize] stays off on Android: sentence capitalization is handled at the
+ * keyboard layer by `AutoCapitalizationController` (shift state driven by the editor's
+ * `CAP_MODE_*` flags), so enabling it in the engine too would capitalize twice.
+ */
+internal data class EngineConfiguration(
+    val inputMethod: KeyboardInputMethod,
+    val toneStyle: ToneStyle,
+    val smartRestore: Boolean,
+    val eagerRestore: Boolean,
+    val spellCheck: Boolean,
+    val autoCapitalize: Boolean = false,
+)
+
 /** Platform-independent contract consumed by Android's composition adapter. */
 internal interface VietnameseEngine : AutoCloseable {
-    fun setInputMethod(method: KeyboardInputMethod)
-    fun setToneStyle(style: ToneStyle)
+    /** Single writer for durable configuration; see [EngineConfiguration]. */
+    fun configure(configuration: EngineConfiguration)
     fun setEnabled(enabled: Boolean)
-    fun setSpellCheck(enabled: Boolean)
-    fun setSmartRestore(enabled: Boolean)
-    fun setEagerRestore(enabled: Boolean)
     fun process(codePoint: Int): String
     fun processBoundary(codePoint: Int): String?
     fun backspace(): String
@@ -23,28 +36,20 @@ internal class NativeVietnameseEngine : VietnameseEngine {
         check(it != InvalidHandle) { "Unable to create Funput native engine" }
     }
 
-    override fun setInputMethod(method: KeyboardInputMethod) = withHandle { value ->
-        FunputNative.nativeSetMethod(value, method.nativeValue)
-    }
-
-    override fun setToneStyle(style: ToneStyle) = withHandle { value ->
-        FunputNative.nativeSetToneStyle(value, style.nativeValue)
+    override fun configure(configuration: EngineConfiguration) = withHandle { value ->
+        FunputNative.nativeConfigure(
+            value,
+            configuration.inputMethod.nativeValue,
+            configuration.toneStyle.nativeValue,
+            configuration.smartRestore,
+            configuration.eagerRestore,
+            configuration.spellCheck,
+            configuration.autoCapitalize,
+        )
     }
 
     override fun setEnabled(enabled: Boolean) = withHandle { value ->
         FunputNative.nativeSetEnabled(value, enabled)
-    }
-
-    override fun setSpellCheck(enabled: Boolean) = withHandle { value ->
-        FunputNative.nativeSetSpellCheck(value, enabled)
-    }
-
-    override fun setSmartRestore(enabled: Boolean) = withHandle { value ->
-        FunputNative.nativeSetSmartRestore(value, enabled)
-    }
-
-    override fun setEagerRestore(enabled: Boolean) = withHandle { value ->
-        FunputNative.nativeSetEagerRestore(value, enabled)
     }
 
     override fun process(codePoint: Int): String = withHandle { value ->

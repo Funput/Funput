@@ -16,8 +16,6 @@ internal class AndroidCompositionSession(
 
     val isComposing: Boolean get() = composingText.isNotEmpty()
 
-    fun setInputMethod(method: KeyboardInputMethod) = engine.setInputMethod(method)
-
     fun setEnabled(enabled: Boolean) = engine.setEnabled(enabled)
 
     fun input(connection: InputConnection?, text: String): Boolean {

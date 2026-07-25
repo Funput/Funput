@@ -1,6 +1,7 @@
 package app.funput.funput.ime
 
 import android.content.Context
+import app.funput.funput.ime.nativebridge.EngineConfiguration
 import app.funput.funput.ime.nativebridge.VietnameseEngine
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
@@ -34,8 +35,11 @@ internal class ImeSettingsController(
     var feedback = KeyboardFeedbackPreferences.Default
         private set
 
-    private var toneStyle: ToneStyle? = null
-    private var smartComposition: SmartCompositionPreferences? = null
+    // Seeded with the same defaults the settings flows fall back to, so the engine
+    // configuration below is always complete — no option has to be invented when one
+    // flow emits before the others.
+    private var toneStyle = ToneStyleSettings.DefaultToneStyle
+    private var smartComposition = SmartCompositionPreferences.Default
 
     fun observe(context: Context, scope: CoroutineScope) {
         InputMethodSettings(context).inputMethod.collectIn(scope, ::applyInputMethod)
@@ -50,21 +54,39 @@ internal class ImeSettingsController(
     private fun applyInputMethod(value: KeyboardInputMethod) {
         if (value == inputMethod) return
         inputMethod = value
+        // Configure first: the session restart below rebuilds composition state and
+        // must see the engine already switched to the new grammar.
+        applyEngineConfiguration()
         onInputMethodChanged(value)
     }
 
     private fun applyToneStyle(value: ToneStyle) {
         if (value == toneStyle) return
         toneStyle = value
-        engine.setToneStyle(value)
+        applyEngineConfiguration()
     }
 
     private fun applySmartComposition(value: SmartCompositionPreferences) {
         if (value == smartComposition) return
         smartComposition = value
-        engine.setSpellCheck(value.spellCheckEnabled)
-        engine.setSmartRestore(value.smartRestoreEnabled)
-        engine.setEagerRestore(value.smartRestoreEnabled)
+        applyEngineConfiguration()
+    }
+
+    /**
+     * The single writer of engine configuration: every settings flow above funnels
+     * here, so the engine can never end up with a half-applied set of options.
+     */
+    private fun applyEngineConfiguration() {
+        engine.configure(
+            EngineConfiguration(
+                inputMethod = inputMethod,
+                toneStyle = toneStyle,
+                // One "smart restore" switch drives both restore behaviors on Android.
+                smartRestore = smartComposition.smartRestoreEnabled,
+                eagerRestore = smartComposition.smartRestoreEnabled,
+                spellCheck = smartComposition.spellCheckEnabled,
+            )
+        )
     }
 
     private fun applySizingProfile(value: KeyboardSizingProfile) {
