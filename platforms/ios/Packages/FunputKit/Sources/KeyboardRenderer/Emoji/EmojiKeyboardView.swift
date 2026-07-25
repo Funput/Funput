@@ -39,12 +39,6 @@ public final class EmojiKeyboardView: UIView {
         bottomBar.frame = CGRect(x: 0, y: bounds.height - barHeight, width: bounds.width, height: barHeight)
     }
 
-    public override func traitCollectionDidChange(_ previousTraits: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraits)
-        guard previousTraits?.userInterfaceStyle != traitCollection.userInterfaceStyle else { return }
-        applyTheme()
-    }
-
     public func apply(
         theme: ResolvedTheme,
         blendsSystemEdge: Bool = false,
@@ -68,6 +62,11 @@ public final class EmojiKeyboardView: UIView {
     }
 
     private func configureView() {
+        // Fires only on a light/dark change, which is the guard the deprecated
+        // `traitCollectionDidChange` had to write by hand.
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
+            view.applyTheme()
+        }
         clipsToBounds = true
         backgroundColor = .clear
         collectionView.backgroundColor = .clear
