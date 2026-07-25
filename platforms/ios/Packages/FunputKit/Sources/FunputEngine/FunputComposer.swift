@@ -27,32 +27,31 @@ public final class FunputComposer {
         releaseHandle(handle)
     }
 
+    /// Applies every durable option in one FFI call. Same side effects the per-option
+    /// setters had: a method change clears the composition, and turning
+    /// auto-capitalize off resets its tracking.
+    public func configure(_ options: FunputCompositionOptions) {
+        funput_configure(
+            handle,
+            FunputConfig(
+                method: options.inputMethod.rawValue,
+                tone_style: options.toneStyle.rawValue,
+                smart_restore: options.smartRestore,
+                eager_restore: options.eagerRestore,
+                spell_check: options.spellCheck,
+                auto_capitalize: options.autoCapitalize
+            )
+        )
+    }
+
+    /// Switches the input method on its own, for the keyboard's Telex/VNI key — the
+    /// rest of the configuration is untouched.
     public func setInputMethod(_ method: FunputInputMethod) {
         funput_set_method(handle, method.rawValue)
     }
 
-    public func setToneStyle(_ style: FunputToneStyle) {
-        funput_set_tone_style(handle, style.rawValue)
-    }
-
     public func setEnabled(_ enabled: Bool) {
         funput_set_enabled(handle, enabled)
-    }
-
-    public func setSmartRestore(_ enabled: Bool) {
-        funput_set_smart_restore(handle, enabled)
-    }
-
-    public func setEagerRestore(_ enabled: Bool) {
-        funput_set_eager_restore(handle, enabled)
-    }
-
-    public func setSpellCheck(_ enabled: Bool) {
-        funput_set_spell_check(handle, enabled)
-    }
-
-    public func setAutoCapitalize(_ enabled: Bool) {
-        funput_set_auto_capitalize(handle, enabled)
     }
 
     public func armCapitalization() {

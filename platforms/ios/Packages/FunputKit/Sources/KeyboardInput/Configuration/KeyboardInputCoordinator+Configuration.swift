@@ -12,12 +12,16 @@ public extension KeyboardInputCoordinator {
     /// language chosen here can still be toggled at runtime afterward.
     func apply(_ configuration: FunputConfiguration) {
         composer.clear()
-        composer.setInputMethod(configuration.inputMethod.engineMethod)
-        composer.setToneStyle(configuration.toneStyle.engineToneStyle)
-        composer.setSpellCheck(configuration.spellCheck)
-        composer.setSmartRestore(configuration.smartRestore)
-        composer.setEagerRestore(configuration.eagerRestore)
-        composer.setAutoCapitalize(configuration.autoCapitalize)
+        composer.configure(
+            FunputCompositionOptions(
+                inputMethod: configuration.inputMethod.engineMethod,
+                toneStyle: configuration.toneStyle.engineToneStyle,
+                smartRestore: configuration.smartRestore,
+                eagerRestore: configuration.eagerRestore,
+                spellCheck: configuration.spellCheck,
+                autoCapitalize: configuration.autoCapitalize
+            )
+        )
         shiftController.resetTapSequence()
         documentSynchronizer.invalidate()
         personalSuggestionsEnabled = configuration.personalSuggestionsEnabled
