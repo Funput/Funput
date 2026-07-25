@@ -10,6 +10,10 @@ import UIKit
 /// phase alone therefore cannot tell "lifted, delivery pending" from "abandoned":
 /// a touch is only given up once UIKit stops listing it, or once a *later* event
 /// still reports it finished. Anything stricter cancels a real keystroke.
+///
+/// Touch delivery is main-thread only, and reading `UITouch.phase` requires the
+/// main actor, so the whole ledger is isolated to it.
+@MainActor
 struct KeyboardTouchTokenLedger {
     typealias TouchToken = KeyboardPressCommitQueue.TouchToken
 
