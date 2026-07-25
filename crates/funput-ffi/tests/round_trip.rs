@@ -1,9 +1,10 @@
 //! Round-trip tests: drive the `extern "C"` API exactly like a C caller would.
 
 use funput_ffi::{
-    ACTION_NONE, ACTION_SEND, FunputResult, SOURCE_NUMPAD, funput_add_shortcut, funput_backspace,
-    funput_buffer, funput_clear, funput_clear_shortcuts, funput_engine_free, funput_engine_new,
-    funput_process_char, funput_process_key, funput_set_method,
+    ACTION_NONE, ACTION_SEND, FunputConfig, FunputResult, SOURCE_NUMPAD, funput_add_shortcut,
+    funput_backspace, funput_buffer, funput_clear, funput_clear_shortcuts, funput_configure,
+    funput_engine_free, funput_engine_new, funput_process_char, funput_process_key,
+    funput_set_method,
 };
 
 fn output(result: &FunputResult) -> String {
@@ -117,6 +118,29 @@ fn read_buffer(engine: *const funput_ffi::FunputEngine) -> String {
         .iter()
         .filter_map(|&c| char::from_u32(c))
         .collect()
+}
+
+#[test]
+fn configure_applies_config_by_value() {
+    unsafe {
+        let engine = funput_engine_new();
+        // One call sets the whole config; method = VNI (1) so `a1` composes `á`.
+        funput_configure(
+            engine,
+            FunputConfig {
+                method: 1, // VNI
+                tone_style: 0,
+                smart_restore: true,
+                eager_restore: true,
+                spell_check: false,
+                auto_capitalize: false,
+            },
+        );
+        funput_process_char(engine, 'a' as u32);
+        funput_process_char(engine, '1' as u32);
+        assert_eq!(read_buffer(engine), "á");
+        funput_engine_free(engine);
+    }
 }
 
 #[test]

@@ -15,7 +15,7 @@
 use std::path::PathBuf;
 
 use funput_core::{InputMethod, ToneStyle};
-use funput_engine::Engine;
+use funput_engine::{Engine, EngineConfig};
 
 use crate::terminal::DEFAULT_VI_CURSOR_COLOR;
 
@@ -95,12 +95,14 @@ impl TermConfig {
     /// Push the engine-affecting options into a fresh engine. Replaces the whole
     /// shortcut table so repeated calls stay consistent.
     pub fn apply_to(&self, engine: &mut Engine) {
-        engine.set_method(self.method);
-        engine.set_tone_style(self.tone_style);
-        engine.set_smart_restore(self.smart_restore);
-        engine.set_eager_restore(self.eager_restore);
-        engine.set_spell_check(self.spell_check);
-        engine.set_auto_capitalize(self.auto_capitalize);
+        engine.configure(EngineConfig {
+            method: self.method,
+            tone_style: self.tone_style,
+            smart_restore: self.smart_restore,
+            eager_restore: self.eager_restore,
+            spell_check: self.spell_check,
+            auto_capitalize: self.auto_capitalize,
+        });
         engine.clear_shortcuts();
         for (trigger, expansion) in &self.shortcuts {
             engine.add_shortcut(trigger.clone(), expansion.clone());

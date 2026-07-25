@@ -19,5 +19,6 @@ mod engine;
 mod model;
 
 pub use engine::Engine;
+pub use model::EngineConfig;
 pub use model::key_source::KeySource;
 pub use model::result::{Action, ImeResult};

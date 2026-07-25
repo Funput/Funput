@@ -4,8 +4,8 @@
 //! These exercise only the public API, so they live here as integration tests
 //! rather than inline in `src/lib.rs`.
 
-use funput_core::InputMethod;
-use funput_engine::{Action, Engine, ImeResult, KeySource};
+use funput_core::{InputMethod, ToneStyle};
+use funput_engine::{Action, Engine, EngineConfig, ImeResult, KeySource};
 
 #[test]
 fn engine_new_defaults() {
@@ -455,4 +455,41 @@ fn vni_numpad_covers_all_digit_roles() {
         engine.process_key(digit, KeySource::Numpad);
         assert_eq!(engine.buffer(), "", "numpad {digit} should not modify 'a'");
     }
+}
+
+// ---- configure(): the batch config API (mirrors the individual set_* methods) ----
+
+#[test]
+fn configure_applies_all_options() {
+    let mut engine = Engine::new();
+    engine.configure(EngineConfig {
+        method: InputMethod::Vni,
+        tone_style: ToneStyle::Modern,
+        smart_restore: false,
+        eager_restore: false,
+        spell_check: true,
+        auto_capitalize: true,
+    });
+    assert_eq!(engine.method(), InputMethod::Vni);
+    assert_eq!(engine.tone_style(), ToneStyle::Modern);
+    let config = engine.config();
+    assert_eq!(config.method, InputMethod::Vni);
+    assert!(config.spell_check && config.auto_capitalize);
+    assert!(!config.smart_restore && !config.eager_restore);
+}
+
+/// `configure` keeps the `set_*` side effect: switching method mid-word clears the
+/// in-progress composition.
+#[test]
+fn configure_method_change_clears_composition() {
+    let mut engine = Engine::new(); // Telex
+    for key in "chaof".chars() {
+        engine.process_char(key);
+    }
+    assert_eq!(engine.buffer(), "chào");
+    engine.configure(EngineConfig {
+        method: InputMethod::Vni,
+        ..EngineConfig::default()
+    });
+    assert_eq!(engine.buffer(), ""); // method change discarded the old-grammar word
 }
