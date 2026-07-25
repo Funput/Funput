@@ -24,6 +24,13 @@ internal interface VietnameseEngine : AutoCloseable {
     /** Single writer for durable configuration; see [EngineConfiguration]. */
     fun configure(configuration: EngineConfiguration)
     fun setEnabled(enabled: Boolean)
+
+    /**
+     * Re-opens an already-committed [word] as the live composition so the next
+     * keystroke edits it. Returns false when the word is not a Vietnamese syllable —
+     * the caller must then leave the document alone.
+     */
+    fun adopt(word: String): Boolean
     fun process(codePoint: Int): String
     fun processBoundary(codePoint: Int): String?
     fun backspace(): String
@@ -50,6 +57,10 @@ internal class NativeVietnameseEngine : VietnameseEngine {
 
     override fun setEnabled(enabled: Boolean) = withHandle { value ->
         FunputNative.nativeSetEnabled(value, enabled)
+    }
+
+    override fun adopt(word: String): Boolean = withHandle { value ->
+        FunputNative.nativeAdopt(value, word)
     }
 
     override fun process(codePoint: Int): String = withHandle { value ->

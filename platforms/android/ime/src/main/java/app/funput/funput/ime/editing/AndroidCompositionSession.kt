@@ -82,6 +82,33 @@ internal class AndroidCompositionSession(
         }
     }
 
+    /**
+     * Re-opens the word the caret now sits behind, so the next keystroke edits it
+     * instead of typing a literal letter (`chào` ⌫ then `s` gives `cháo`).
+     *
+     * Called only from the Backspace path that did *not* have a live composition, so
+     * typing never pays for it. Uses one bounded [wordBeforeCursor] read, on a
+     * keystroke where the editor is already being consulted, and
+     * asks the engine before touching the document, so a non-Vietnamese word is left
+     * exactly as it was.
+     */
+    fun reopenPreviousWord(connection: InputConnection?): Boolean {
+        if (connection == null || isComposing) return false
+        if (!connection.getSelectedText(0).isNullOrEmpty()) return false
+        val word = connection.wordBeforeCursor() ?: return false
+        if (!engine.adopt(word)) return false
+
+        connection.beginBatchEdit()
+        val reopened = try {
+            connection.deleteSurroundingText(word.length, 0) &&
+                connection.setComposingText(composingTextFactory(word), CursorAfterText)
+        } finally {
+            connection.endBatchEdit()
+        }
+        if (reopened) composingText = word else engine.clear()
+        return reopened
+    }
+
     private fun commitRaw(connection: InputConnection, text: String): Boolean {
         finish(connection)
         return connection.commitText(text, CursorAfterText)

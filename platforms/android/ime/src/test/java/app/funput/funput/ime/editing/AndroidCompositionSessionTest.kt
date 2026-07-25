@@ -100,12 +100,19 @@ internal class ScriptedEngine(
         private set
     var enabled: Boolean? = null
         private set
+    /** Words this fake accepts for re-opening; mirrors the engine's syllable gate. */
+    var adoptable: Set<String> = emptySet()
+    var adopted: String? = null
+        private set
 
     override fun process(codePoint: Int): String = processed.removeFirst()
     override fun processBoundary(codePoint: Int): String? = boundaryOutput
     override fun backspace(): String = backspaceOutput
     override fun configure(configuration: EngineConfiguration) {
         this.configuration = configuration
+    }
+    override fun adopt(word: String): Boolean = adoptable.contains(word).also {
+        if (it) adopted = word
     }
     override fun setEnabled(enabled: Boolean) {
         this.enabled = enabled
