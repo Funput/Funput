@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
-use funput_engine::{Engine, ImeResult, KeySource};
+use funput_engine::{Engine, EngineConfig, ImeResult, KeySource};
 
 use crate::settings::{
     ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, Settings, Shortcut, ToneStyle,
@@ -40,15 +40,25 @@ struct Shell {
 static SHELL: OnceLock<Mutex<Shell>> = OnceLock::new();
 
 fn apply_to_engine(engine: &mut Engine, s: &Settings) {
-    engine.set_method(s.method.core());
-    engine.set_tone_style(s.tone_style.core());
+    sync_engine_config(engine, s);
     engine.set_enabled(s.enabled);
-    engine.set_smart_restore(s.smart_restore);
-    engine.set_eager_restore(s.eager_restore);
-    engine.set_spell_check(s.spell_check);
-    engine.set_auto_capitalize(s.auto_capitalize);
     push_shortcuts(engine, &s.shortcuts);
     engine.clear();
+}
+
+/// Push the six engine options from `settings` in one call. `settings` is the single
+/// source of truth, so every per-setting entry point below just mutates its field and
+/// re-syncs — the engine can never drift from what was persisted. `enabled` and the
+/// gõ tắt table are separate (see [`set_enabled_state`] / [`push_shortcuts`]).
+fn sync_engine_config(engine: &mut Engine, s: &Settings) {
+    engine.configure(EngineConfig {
+        method: s.method.core(),
+        tone_style: s.tone_style.core(),
+        smart_restore: s.smart_restore,
+        eager_restore: s.eager_restore,
+        spell_check: s.spell_check,
+        auto_capitalize: s.auto_capitalize,
+    });
 }
 
 /// Replace the engine's gõ tắt table with `shortcuts` (empty triggers are skipped by
@@ -231,50 +241,44 @@ pub fn set_enabled(on: bool) {
 }
 
 pub fn set_method(method: InputMethod) {
+    // Spelled out rather than routed through `update_config` so the extra `clear()`
+    // happens under the *same* lock: the hook thread must never see the new method
+    // with a buffer still composed under the old grammar.
     with(|s| {
         s.settings.method = Method::from_core(method);
-        s.engine.set_method(method);
+        sync_engine_config(&mut s.engine, &s.settings);
         s.engine.clear();
         s.settings.save();
     });
 }
 
 pub fn set_tone_style(style: CoreToneStyle) {
-    with(|s| {
-        s.settings.tone_style = ToneStyle::from_core(style);
-        s.engine.set_tone_style(style);
-        s.settings.save();
-    });
+    update_config(|s| s.tone_style = ToneStyle::from_core(style));
 }
 
 pub fn set_smart_restore(on: bool) {
-    with(|s| {
-        s.settings.smart_restore = on;
-        s.engine.set_smart_restore(on);
-        s.settings.save();
-    });
+    update_config(|s| s.smart_restore = on);
 }
 
 pub fn set_eager_restore(on: bool) {
-    with(|s| {
-        s.settings.eager_restore = on;
-        s.engine.set_eager_restore(on);
-        s.settings.save();
-    });
+    update_config(|s| s.eager_restore = on);
 }
 
 pub fn set_spell_check(on: bool) {
-    with(|s| {
-        s.settings.spell_check = on;
-        s.engine.set_spell_check(on);
-        s.settings.save();
-    });
+    update_config(|s| s.spell_check = on);
 }
 
 pub fn set_auto_capitalize(on: bool) {
+    update_config(|s| s.auto_capitalize = on);
+}
+
+/// Mutate one engine option in `settings`, then re-sync the whole config and persist.
+/// Folding the three steps here keeps every toggle above a single line and makes it
+/// impossible to change a setting without pushing it to the engine.
+fn update_config(edit: impl FnOnce(&mut Settings)) {
     with(|s| {
-        s.settings.auto_capitalize = on;
-        s.engine.set_auto_capitalize(on);
+        edit(&mut s.settings);
+        sync_engine_config(&mut s.engine, &s.settings);
         s.settings.save();
     });
 }
