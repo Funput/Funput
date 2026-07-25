@@ -5,14 +5,9 @@
 namespace funput_ibus {
 
 void applySettings(EngineState *state) {
-    state->handle.setMethod(static_cast<uint8_t>(state->settings.method));
-    state->handle.setToneStyle(static_cast<uint8_t>(state->settings.toneStyle));
+    state->handle.configure(state->settings);
     state->effectiveEnabled = state->settings.enabled;
     state->handle.setEnabled(state->effectiveEnabled);
-    state->handle.setSmartRestore(state->settings.smartRestore);
-    state->handle.setEagerRestore(state->settings.eagerRestore);
-    state->handle.setSpellCheck(state->settings.spellCheck);
-    state->handle.setAutoCapitalize(state->settings.autoCapitalize);
     state->handle.clearShortcuts();
     for (const auto &[trigger, expansion] : state->settings.shortcuts) {
         state->handle.addShortcut(trigger, expansion);
