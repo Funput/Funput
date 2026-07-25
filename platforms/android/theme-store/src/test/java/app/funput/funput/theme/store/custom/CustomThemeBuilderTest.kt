@@ -7,6 +7,7 @@ import app.funput.funput.theme.LocalKeyboardThemeCatalog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import kotlin.math.roundToInt
 
 class CustomThemeBuilderTest {
     private val builder = CustomThemeBuilder()
@@ -34,7 +35,26 @@ class CustomThemeBuilderTest {
         assertEquals(baseTheme.id, descriptor.baseThemeId)
         assertEquals(draft.backgroundImage, descriptor.backgroundImage)
         assertEquals(OceanAccent, descriptor.theme.accentColor)
-        // Ink draws no key plates, so reducing key opacity must not conjure one.
+        // The control scales what the base already draws rather than assigning a flat alpha.
+        assertEquals(
+            ((baseTheme.theme.keyColor ushr AlphaShift) * KeyOpacity).roundToInt(),
+            descriptor.theme.keyColor ushr AlphaShift,
+        )
+    }
+
+    @Test
+    fun buildKeepsATransparentKeySurfaceTransparent() {
+        val platelessBase = baseTheme.copy(
+            theme = baseTheme.theme.copy(keyColor = 0x00000000, specialKeyColor = 0x00000000),
+        )
+        val draft = CustomThemeDraft(
+            name = "Ocean",
+            baseThemeId = platelessBase.id,
+            overrides = CustomThemeOverrides(keyBackgroundOpacity = KeyOpacity),
+        )
+
+        val descriptor = builder.build(draft, platelessBase, existingThemeIds = emptySet())
+
         assertEquals(0, descriptor.theme.keyColor ushr AlphaShift)
         assertEquals(0, descriptor.theme.specialKeyColor ushr AlphaShift)
     }

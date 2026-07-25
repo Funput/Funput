@@ -11,29 +11,34 @@ package app.funput.funput.theme
 object KeyboardThemes {
     private const val AccentGold = 0xFFC8A951.toInt()
 
-    /** Dark preset. Drops key plates entirely and lets the glyphs carry the layout. */
+    /**
+     * Dark preset. Borderless, with key plates carried by a faint white wash rather than a solid
+     * color: translucency keeps the plates reading correctly over the background gradient, and
+     * over a background image if one is set. Modifier keys wash in at half the strength of the
+     * alphabet so the letters stay dominant while every key still shows its touch area.
+     */
     val Ink: KeyboardTheme = KeyboardTheme(
         backgroundStartColor = 0xFF121013.toInt(),
         backgroundEndColor = 0xFF0A0A0C.toInt(),
-        keyColor = 0x00000000,
-        specialKeyColor = 0x00000000,
+        keyColor = 0x14FFFFFF,
+        specialKeyColor = 0x0AFFFFFF,
         keyBorderColor = 0x00000000,
         keyShadowColor = 0x00000000,
-        pressedKeyColor = 0x38C8A951,
-        pressedKeyBorderColor = 0x8CC8A951.toInt(),
-        activatedKeyColor = 0x30C8A951,
-        activatedKeyBorderColor = 0x8CC8A951.toInt(),
+        pressedKeyColor = 0x59C8A951,
+        pressedKeyBorderColor = 0x00000000,
+        activatedKeyColor = 0x3DC8A951,
+        activatedKeyBorderColor = 0x00000000,
         labelColor = 0xFFF2F2F6.toInt(),
         secondaryLabelColor = 0xFF83838E.toInt(),
         accentColor = AccentGold,
-        keyCornerRadiusDp = 13f,
-        keyBorderWidthDp = 0.75f,
+        keyCornerRadiusDp = 12f,
+        keyBorderWidthDp = 0f,
         keyShadowOffsetDp = 0f,
         pressedKeyShadowOffsetDp = 0f,
         specialLabelColor = 0xFF83838E.toInt(),
         accentKeyColor = AccentGold,
         accentLabelColor = 0xFF17110A.toInt(),
-        popupSurfaceColor = 0xFF1E1C18.toInt(),
+        popupSurfaceColor = 0xFF232026.toInt(),
         suggestionHighlightColor = 0xFFE3C371.toInt(),
         pressedKeyScale = 1.06f,
     )
