@@ -2,19 +2,21 @@ use std::collections::HashMap;
 
 use funput_core::{InputMethod, ToneStyle};
 
-use crate::model::Session;
+use crate::model::{EngineConfig, Session};
 
 fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
     Session {
         enabled: true,
-        method,
-        tone_style: ToneStyle::Traditional,
+        config: EngineConfig {
+            method,
+            tone_style: ToneStyle::Traditional,
+            smart_restore: true,
+            eager_restore: true,
+            spell_check: false,
+            auto_capitalize: false,
+        },
         buffer: buffer.into(),
         keys: keys.into(),
-        smart_restore: true,
-        eager_restore: true,
-        spell_check: false,
-        auto_capitalize: false,
         cap_sentence_ended: false,
         cap_armed: false,
         shortcuts: HashMap::new(),

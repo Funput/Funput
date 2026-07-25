@@ -24,7 +24,7 @@ fn applied_tone_telex() {
 #[test]
 fn ignored_appends_literal_vni() {
     let mut session = Session::new();
-    session.method = InputMethod::Vni;
+    session.config.method = InputMethod::Vni;
     session.buffer.push_str("ng");
     session.keys.push_str("ng1");
     let result = process(&mut session, '1', false);

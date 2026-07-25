@@ -18,7 +18,8 @@ impl Engine {
         if !self.session.enabled {
             return ImeResult::none();
         }
-        if source.forces_literal_digit(key) || boundary::is_word_boundary(self.session.method, key)
+        if source.forces_literal_digit(key)
+            || boundary::is_word_boundary(self.session.config.method, key)
         {
             return boundary::on_word_boundary(&mut self.session, key);
         }
@@ -36,7 +37,7 @@ impl Engine {
     }
 
     fn prepare_key(&mut self, key: char) -> (char, bool) {
-        if !self.session.auto_capitalize || !self.session.buffer.is_empty() {
+        if !self.session.config.auto_capitalize || !self.session.buffer.is_empty() {
             return (key, false);
         }
         let armed = self.session.cap_armed;
@@ -48,7 +49,7 @@ impl Engine {
         if key.is_alphabetic() {
             return (key.to_ascii_uppercase(), false);
         }
-        let shortcut = self.session.method.is_advanced_telex() && matches!(key, '[' | ']');
+        let shortcut = self.session.config.method.is_advanced_telex() && matches!(key, '[' | ']');
         (key, shortcut)
     }
 }
