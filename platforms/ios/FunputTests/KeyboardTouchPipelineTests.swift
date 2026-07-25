@@ -31,7 +31,7 @@ struct KeyboardTouchPipelineTests {
         #expect(!driver.events.contains { $0.phase == .released })
     }
 
-    @Test("Missing terminal event is reconciled without blocking successors")
+    @Test("A press UIKit abandons still commits, and does not block successors")
     func orphanedTouchDoesNotBlock() {
         let driver = KeyboardTouchTestDriver()
         let a = key("a"), b = key("b")
@@ -41,7 +41,10 @@ struct KeyboardTouchPipelineTests {
         driver.reconcile(activeTokens: [2])
         driver.end(token: 2)
 
-        #expect(driver.events.suffix(2).map(\.phase) == [.cancelled, .released])
+        // Losing the terminal event is UIKit's failure, not the user changing
+        // their mind: the finger was on "a", so "a" is typed. The queue drains in
+        // touch-down order either way.
+        #expect(driver.events.suffix(2).map(\.phase) == [.released, .released])
         #expect(driver.events.suffix(2).map(\.key.id) == [a.id, b.id])
         #expect(driver.queueDepth == 0)
     }

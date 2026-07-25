@@ -51,11 +51,9 @@ struct KeyboardTouchTokenLedger {
         return tokens.removeValue(forKey: identifier)
     }
 
-    mutating func removeAllTokens() -> [TouchToken] {
-        let tracked = Array(tokens.values)
+    mutating func removeAllTokens() {
         tokens.removeAll(keepingCapacity: true)
         finishedSince.removeAll(keepingCapacity: true)
-        return tracked
     }
 
     /// Forgets the touches UIKit has stopped reporting and returns the survivors.

@@ -9,7 +9,7 @@ extension KeyboardSurfaceView {
         let themeChanged = oldValue.theme != presentation.theme
         let edgeBlendChanged = oldValue.blendsSystemEdge != presentation.blendsSystemEdge
         if layoutChanged {
-            touchOverlay.cancelAllTrackedTouches()
+            touchOverlay.forgetTrackedTouches()
             interactionController.cancelAll()
             rebuildKeys()
         }
@@ -103,7 +103,7 @@ extension KeyboardSurfaceView {
             self?.interactionController.endTouch(token: token)
         }
         touchOverlay.onCancel = { [weak self] token in
-            self?.interactionController.cancelTouch(token: token)
+            self?.interactionController.cancelTouch(token: token, reason: .system)
         }
         touchOverlay.onReconcile = { [weak self] active in
             self?.interactionController.reconcileActiveTouches(active)

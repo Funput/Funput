@@ -78,7 +78,7 @@ public final class KeyboardSurfaceView: UIView {
     public override func didMoveToWindow() {
         super.didMoveToWindow()
         if window == nil {
-            touchOverlay.cancelAllTrackedTouches()
+            touchOverlay.forgetTrackedTouches()
             interactionController.cancelAll()
         }
     }
