@@ -87,9 +87,12 @@ final class KeyboardTouchOverlayView: UIView {
         reconcile(event)
     }
 
-    func cancelAllTrackedTouches() {
-        ledger.removeAllTokens().forEach { onCancel?($0) }
-        onReconcile?([])
+    /// Drops the overlay's bookkeeping without reporting anything upward. Both
+    /// call sites pair this with the controller's own `cancelAll()`, which is what
+    /// discards the pending presses; reporting them as cancellations instead would
+    /// now commit them.
+    func forgetTrackedTouches() {
+        ledger.removeAllTokens()
     }
 
     func resolvedHit(at point: CGPoint) -> Hit? {

@@ -12,14 +12,28 @@ final class KeyboardSurfaceInteractionController {
     typealias PreviewHandler = (_ key: KeySpec?, _ sourceFrame: CGRect?) -> Void
     typealias HighlightHandler = (_ key: KeySpec, _ highlighted: Bool) -> Void
 
+    /// Why a tracked touch is ending without a release.
+    enum Cancellation {
+        /// UIKit took the touch away, or stopped reporting it. The user did press.
+        case system
+        /// The user lifted or dragged off on purpose.
+        case userIntent
+    }
+
     struct TouchState {
         let initialKey: KeySpec
         let startPoint: CGPoint
         var currentKey: KeySpec?
         var currentFrame: CGRect?
         var swipeTracker = KeySwipeGestureTracker()
+        /// Set once the finger travels past `tapSlop`, which separates a tap from a
+        /// gesture that merely started on a keycap.
+        var hasWandered = false
         let signpostID: OSSignpostID
     }
+
+    /// Half the swipe threshold: past this a touch is no longer a tap.
+    static let tapSlop: CGFloat = 16
 
     let haptics: KeyboardHaptics
     let onEvent: (KeyboardKeyEvent) -> Void

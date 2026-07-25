@@ -53,6 +53,12 @@ extension KeyboardSurfaceInteractionController {
     ) {
         guard var state = touches[token] else { return }
         hapticsEnabled = presentation.isHapticFeedbackEnabled
+        if !state.hasWandered {
+            let dx = point.x - state.startPoint.x
+            let dy = point.y - state.startPoint.y
+            let slop = KeyboardSurfaceInteractionController.tapSlop
+            state.hasWandered = dx * dx + dy * dy > slop * slop
+        }
         if let action = state.swipeTracker.update(
             translation: CGPoint(x: point.x - state.startPoint.x, y: point.y - state.startPoint.y),
             action: state.initialKey.horizontalSwipeAction
