@@ -16,39 +16,15 @@ final class FunputComposer {
         funput_engine_free(handle)
     }
 
-    func setMethod(_ method: InputMethod) {
-        funput_set_method(handle, method.ffiValue)
-    }
-
-    /// Tone-mark placement style (traditional `hòa` vs modern `hoà`).
-    func setToneStyle(_ style: ToneStyle) {
-        funput_set_tone_style(handle, UInt8(style.rawValue))
-    }
-
     func setEnabled(_ enabled: Bool) {
         funput_set_enabled(handle, enabled)
     }
 
-    /// Auto-restore non-Vietnamese words to their raw Latin keystrokes.
-    func setSmartRestore(_ on: Bool) {
-        funput_set_smart_restore(handle, on)
-    }
-
-    /// Restore the instant a word dead-ends, without waiting for a word boundary.
-    func setEagerRestore(_ on: Bool) {
-        funput_set_eager_restore(handle, on)
-    }
-
-    /// Spell-check ("Kiểm tra chính tả"): only place a diacritic when it forms a
-    /// valid Vietnamese syllable, otherwise keep the modifier key literal.
-    func setSpellCheck(_ on: Bool) {
-        funput_set_spell_check(handle, on)
-    }
-
-    /// Auto-capitalize ("Tự động viết hoa"): uppercase the first letter at the start
-    /// of a sentence.
-    func setAutoCapitalize(_ on: Bool) {
-        funput_set_auto_capitalize(handle, on)
+    /// Apply the whole engine configuration (method, tone style, and the feature
+    /// toggles) in one FFI call — the batch equivalent of the former per-option
+    /// setters. `enabled` is a separate runtime toggle (see `setEnabled`).
+    func configure(_ config: FunputConfig) {
+        funput_configure(handle, config)
     }
 
     /// Arm capitalization for the next word (call on focus so the first letter typed
