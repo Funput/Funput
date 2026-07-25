@@ -1,0 +1,25 @@
+---
+description: Funput Android – always-on project conventions
+globs:
+alwaysApply: true
+---
+
+# Funput Android
+
+Funput là IME tiếng Việt mã nguồn mở. Module Android là lớp UI/IME bao quanh
+lõi `funput-engine` (Rust) dùng chung với macOS, kết nối qua JNI/UniFFI.
+
+**Giới hạn cứng**
+- Mỗi file Kotlin / Rust-glue ≤ 150 dòng. Tách theo trách nhiệm, không xuống
+  dòng gian lận để né giới hạn.
+- Tối đa 5 file / thư mục. Đến file thứ 6 → tạo subfolder theo tên
+  sub-concern, không để phẳng.
+
+**Nguyên tắc**
+- Kiến trúc module theo feature, sạch
+- Không viết lại logic ngữ âm / đặt dấu bằng Kotlin — logic đó chỉ tồn tại
+  một nơi (Rust), gọi qua FFI bridge.
+- Chuẩn OSS: mọi public symbol có 1 dòng KDoc; không TODO trống, phải gắn
+  link issue.
+- Ưu tiên composition hơn inheritance; sealed type hơn enum-with-when cho
+  domain state.
