@@ -49,7 +49,7 @@ enum InputMethod: String, CaseIterable, Identifiable, Codable {
 }
 
 /// Tone-mark placement style. Raw value matches `funput_core`
-/// (`Traditional = 0`, `Modern = 1`), so it passes straight to `funput_set_tone_style`.
+/// (`Traditional = 0`, `Modern = 1`), so it passes straight into `FunputConfig`.
 enum ToneStyle: Int, CaseIterable, Identifiable, Codable {
     case traditional = 0
     case modern = 1

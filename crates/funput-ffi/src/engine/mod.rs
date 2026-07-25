@@ -23,8 +23,7 @@ pub use compose::{
 };
 pub use config::{
     FunputConfig, METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, funput_configure,
-    funput_set_auto_capitalize, funput_set_eager_restore, funput_set_enabled, funput_set_method,
-    funput_set_smart_restore, funput_set_spell_check, funput_set_tone_style,
+    funput_set_enabled, funput_set_method,
 };
 pub use result::{ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputResult};
 pub use shortcuts::{funput_add_shortcut, funput_clear_shortcuts};

@@ -112,9 +112,9 @@ fn keystroke_alloc_budget() {
 
     assert_within_budget("default settings", &mut engine);
 
-    engine.set_spell_check(true);
+    engine.update_config(|c| c.spell_check = true);
     assert_within_budget("spell-check on", &mut engine);
 
-    engine.set_spell_check(false);
+    engine.update_config(|c| c.spell_check = false);
     pairs::assert_paired_allocations(&mut engine);
 }

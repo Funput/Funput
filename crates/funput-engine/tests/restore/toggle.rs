@@ -27,7 +27,7 @@ fn defaults_restore_eagerly() {
 fn smart_off_keeps_composed_word() {
     // No restore at all: the composed Vietnamese form is kept even for English.
     let mut e = telex();
-    e.set_smart_restore(false);
+    e.update_config(|c| c.smart_restore = false);
     typed(&mut e, "text");
     assert_eq!(e.buffer(), "tẽt"); // not restored mid-word
     let space = e.process_char(' ');
@@ -38,7 +38,7 @@ fn smart_off_keeps_composed_word() {
 fn eager_off_restores_only_at_boundary() {
     // Smart on, eager off: keep composing mid-word, restore when the word ends.
     let mut e = telex();
-    e.set_eager_restore(false);
+    e.update_config(|c| c.eager_restore = false);
     typed(&mut e, "text");
     assert_eq!(e.buffer(), "tẽt"); // no instant restore
     let space = e.process_char(' ');
@@ -51,8 +51,8 @@ fn toggles_do_not_disturb_valid_vietnamese() {
     // A real syllable is kept regardless of the toggles.
     for (smart, eager) in [(true, true), (true, false), (false, false)] {
         let mut e = telex();
-        e.set_smart_restore(smart);
-        e.set_eager_restore(eager);
+        e.update_config(|c| c.smart_restore = smart);
+        e.update_config(|c| c.eager_restore = eager);
         typed(&mut e, "vieejt");
         assert_eq!(e.buffer(), "việt");
     }

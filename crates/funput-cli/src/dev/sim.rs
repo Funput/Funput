@@ -58,9 +58,9 @@ pub fn simulate(method: InputMethod, input: &str) -> Simulation {
 pub fn simulate_with(config: SimConfig, input: &str) -> Simulation {
     let mut engine = Engine::new();
     engine.set_method(config.method);
-    engine.set_tone_style(config.tone_style);
-    engine.set_smart_restore(config.smart_restore);
-    engine.set_spell_check(config.spell_check);
+    engine.update_config(|c| c.tone_style = config.tone_style);
+    engine.update_config(|c| c.smart_restore = config.smart_restore);
+    engine.update_config(|c| c.spell_check = config.spell_check);
 
     let mut app_text = String::new();
     let mut steps = Vec::new();

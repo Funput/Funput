@@ -5,17 +5,32 @@ use funput_core::{InputMethod, ToneStyle};
 use crate::{Engine, EngineConfig};
 
 impl Engine {
-    /// Apply a whole [`EngineConfig`] at once — the batch equivalent of the
-    /// individual `set_*` methods, preserving their side effects (a method change
-    /// clears the in-progress word; turning auto-capitalize off resets its tracking).
+    /// Apply a whole [`EngineConfig`] — the entry point platform shells use to push
+    /// their settings.
+    ///
+    /// Two side effects: switching input method discards a word composed under the
+    /// old grammar, and turning auto-capitalize off drops its pending state.
     /// `enabled` and the gõ tắt shortcuts are separate and left untouched.
     pub fn configure(&mut self, config: EngineConfig) {
-        self.set_method(config.method);
-        self.set_tone_style(config.tone_style);
-        self.set_smart_restore(config.smart_restore);
-        self.set_eager_restore(config.eager_restore);
-        self.set_spell_check(config.spell_check);
-        self.set_auto_capitalize(config.auto_capitalize);
+        let method_changed = self.session.config.method != config.method;
+        let auto_capitalize_off = !config.auto_capitalize;
+        self.session.config = config;
+        if method_changed {
+            self.session.clear();
+        }
+        if auto_capitalize_off {
+            self.session.cap_armed = false;
+            self.session.cap_sentence_ended = false;
+        }
+    }
+
+    /// Change part of the configuration, keeping the rest — for callers that flip one
+    /// option rather than pushing a whole config (a settings field, a dev tool, a
+    /// test). Routes through [`Engine::configure`], so the same side effects apply.
+    pub fn update_config(&mut self, edit: impl FnOnce(&mut EngineConfig)) {
+        let mut config = self.session.config.clone();
+        edit(&mut config);
+        self.configure(config);
     }
 
     /// The current engine configuration (method, tone style, and the feature toggles).
@@ -31,44 +46,19 @@ impl Engine {
         self.session.enabled
     }
 
-    /// Change input method and discard any composition using the old grammar.
+    /// Switch input method on its own, discarding any composition typed under the old
+    /// grammar. Kept as a dedicated call because the iOS and Android keyboards flip the
+    /// method at runtime from their Telex/VNI key, outside any settings change.
     pub fn set_method(&mut self, method: InputMethod) {
-        if self.session.config.method != method {
-            self.session.clear();
-            self.session.config.method = method;
-        }
+        self.update_config(|config| config.method = method);
     }
 
     pub fn method(&self) -> InputMethod {
         self.session.config.method
     }
 
-    pub fn set_tone_style(&mut self, style: ToneStyle) {
-        self.session.config.tone_style = style;
-    }
-
     pub fn tone_style(&self) -> ToneStyle {
         self.session.config.tone_style
-    }
-
-    pub fn set_smart_restore(&mut self, on: bool) {
-        self.session.config.smart_restore = on;
-    }
-
-    pub fn set_eager_restore(&mut self, on: bool) {
-        self.session.config.eager_restore = on;
-    }
-
-    pub fn set_spell_check(&mut self, on: bool) {
-        self.session.config.spell_check = on;
-    }
-
-    pub fn set_auto_capitalize(&mut self, on: bool) {
-        self.session.config.auto_capitalize = on;
-        if !on {
-            self.session.cap_armed = false;
-            self.session.cap_sentence_ended = false;
-        }
     }
 
     pub fn arm_capitalization(&mut self) {

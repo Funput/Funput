@@ -99,7 +99,7 @@ fn inherited_pending_intent_restores_at_boundary() {
 #[test]
 fn capitalization_backspace_and_method_switch_stay_synchronized() {
     let mut engine = engine();
-    engine.set_auto_capitalize(true);
+    engine.update_config(|c| c.auto_capitalize = true);
     engine.arm_capitalization();
     engine.process_char('[');
     assert_eq!(engine.buffer(), "Ư");

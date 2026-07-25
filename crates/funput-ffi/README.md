@@ -39,11 +39,15 @@ typedef struct {
 FunputEngine *funput_engine_new(void);
 void          funput_engine_free(FunputEngine *engine);
 
-void          funput_set_method(FunputEngine *engine, uint8_t method);      // 0=Telex, 1=VNI
-void          funput_set_tone_style(FunputEngine *engine, uint8_t style);   // 0=Traditional, 1=Modern
-void          funput_set_enabled(FunputEngine *engine, bool enabled);
-void          funput_set_smart_restore(FunputEngine *engine, bool on);
-void          funput_set_eager_restore(FunputEngine *engine, bool on);
+typedef struct {                 // toàn bộ tuỳ chọn, truyền theo giá trị
+    uint8_t method;              //   0=Telex, 1=VNI, 2=Telex Advanced
+    uint8_t tone_style;          //   0=Traditional, 1=Modern
+    bool smart_restore, eager_restore, spell_check, auto_capitalize;
+} FunputConfig;
+
+void          funput_configure(FunputEngine *engine, FunputConfig config);   // áp cả cụm
+void          funput_set_method(FunputEngine *engine, uint8_t method);       // đổi kiểu gõ lúc chạy
+void          funput_set_enabled(FunputEngine *engine, bool enabled);        // VI/EN lúc chạy
 void          funput_clear(FunputEngine *engine);                            // ranh giới từ / đổi focus
 
 FunputResult  funput_process_char(FunputEngine *engine, uint32_t codepoint);
@@ -97,7 +101,7 @@ src/lib.rs          # crate root: docs + module tree + re-export surface phẳng
 src/engine/         # C API composition (FunputEngine)
                     #   mod.rs      opaque FunputEngine + new/free + re-export nhóm
                     #   compose.rs  process_char/key, buffer, backspace, flip, clear, arm
-                    #   config.rs   7 setter: method/tone_style/enabled/smart|eager/spell/autocap
+                    #   config.rs   FunputConfig + configure() + set_method/set_enabled
                     #   shortcuts.rs add_shortcut/clear_shortcuts (gõ tắt)
                     #   result.rs   #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 src/suggestion/     # C API personal suggestions (FunputSuggestionEngine)
