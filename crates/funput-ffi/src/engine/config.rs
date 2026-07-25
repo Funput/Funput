@@ -44,17 +44,6 @@ pub unsafe extern "C" fn funput_set_method(engine: *mut FunputEngine, method: u8
     unsafe { abi::with_engine_mut(engine, |e| e.set_method(method)) }
 }
 
-/// Set the tone-mark placement style: `0 = Traditional` (`hòa`), `1 = Modern`
-/// (`hoà`) — any other value = Traditional.
-///
-/// # Safety
-/// `engine` must be a valid handle or null.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn funput_set_tone_style(engine: *mut FunputEngine, style: u8) {
-    let style = decode_tone_style(style);
-    unsafe { abi::with_engine_mut(engine, |e| e.set_tone_style(style)) }
-}
-
 /// A whole engine configuration passed by value over the C ABI — the six user
 /// options. `enabled` and the gõ tắt shortcut table have their own functions.
 #[repr(C)]
@@ -97,45 +86,4 @@ pub unsafe extern "C" fn funput_configure(engine: *mut FunputEngine, config: Fun
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_set_enabled(engine: *mut FunputEngine, enabled: bool) {
     unsafe { abi::with_engine_mut(engine, |e| e.set_enabled(enabled)) }
-}
-
-/// Toggle auto-restore of non-Vietnamese words to their raw Latin keystrokes
-/// (`card` stays `card`). When off, the composed buffer is always kept.
-///
-/// # Safety
-/// `engine` must be a valid handle or null.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn funput_set_smart_restore(engine: *mut FunputEngine, on: bool) {
-    unsafe { abi::with_engine_mut(engine, |e| e.set_smart_restore(on)) }
-}
-
-/// Toggle eager restore — flip to raw keys the instant a word dead-ends instead of
-/// waiting for a word boundary. Only applies while smart restore is on.
-///
-/// # Safety
-/// `engine` must be a valid handle or null.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn funput_set_eager_restore(engine: *mut FunputEngine, on: bool) {
-    unsafe { abi::with_engine_mut(engine, |e| e.set_eager_restore(on)) }
-}
-
-/// Toggle spell-check ("Kiểm tra chính tả") — only place a diacritic when the result
-/// can still become a real Vietnamese syllable, otherwise keep the modifier key as a
-/// literal. Off by default.
-///
-/// # Safety
-/// `engine` must be a valid handle or null.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn funput_set_spell_check(engine: *mut FunputEngine, on: bool) {
-    unsafe { abi::with_engine_mut(engine, |e| e.set_spell_check(on)) }
-}
-
-/// Toggle auto-capitalize ("Tự động viết hoa") — uppercase the first letter of a word
-/// that starts a sentence. Off by default; a no-op while off.
-///
-/// # Safety
-/// `engine` must be a valid handle or null.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn funput_set_auto_capitalize(engine: *mut FunputEngine, on: bool) {
-    unsafe { abi::with_engine_mut(engine, |e| e.set_auto_capitalize(on)) }
 }

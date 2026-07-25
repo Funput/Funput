@@ -218,15 +218,6 @@ FunputResult funput_flip_composing(FunputEngine *engine);
 void funput_set_method(FunputEngine *engine, uint8_t method);
 
 /**
- * Set the tone-mark placement style: `0 = Traditional` (`hòa`), `1 = Modern`
- * (`hoà`) — any other value = Traditional.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_tone_style(FunputEngine *engine, uint8_t style);
-
-/**
  * Apply a whole [`FunputConfig`] at once — the batch equivalent of the individual
  * `funput_set_*` functions, with the same side effects (a method change clears the
  * composition; auto-capitalize off resets its tracking). `funput_set_enabled` and
@@ -244,43 +235,6 @@ void funput_configure(FunputEngine *engine, FunputConfig config);
  * `engine` must be a valid handle or null.
  */
 void funput_set_enabled(FunputEngine *engine, bool enabled);
-
-/**
- * Toggle auto-restore of non-Vietnamese words to their raw Latin keystrokes
- * (`card` stays `card`). When off, the composed buffer is always kept.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_smart_restore(FunputEngine *engine, bool on);
-
-/**
- * Toggle eager restore — flip to raw keys the instant a word dead-ends instead of
- * waiting for a word boundary. Only applies while smart restore is on.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_eager_restore(FunputEngine *engine, bool on);
-
-/**
- * Toggle spell-check ("Kiểm tra chính tả") — only place a diacritic when the result
- * can still become a real Vietnamese syllable, otherwise keep the modifier key as a
- * literal. Off by default.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_spell_check(FunputEngine *engine, bool on);
-
-/**
- * Toggle auto-capitalize ("Tự động viết hoa") — uppercase the first letter of a word
- * that starts a sentence. Off by default; a no-op while off.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_auto_capitalize(FunputEngine *engine, bool on);
 
 /**
  * Define a text-expansion shortcut (gõ tắt): typing `trigger` then a word boundary

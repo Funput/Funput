@@ -6,7 +6,8 @@
 //!   safe no-op.
 //! - [`lifecycle`] — `nativeCreate` / `nativeDestroy` / `nativeClear`.
 //! - [`composition`] — `nativeProcess` / `nativeBoundary` / `nativeBackspace`.
-//! - [`settings`] — `nativeSetMethod` / `nativeSetToneStyle` / the boolean toggles.
+//! - [`settings`] — `nativeConfigure` (the durable options in one call) and
+//!   `nativeSetEnabled` (runtime VI/EN).
 //!
 //! Exports link by `#[no_mangle]` symbol name, so their module location is
 //! invisible to the Android runtime.

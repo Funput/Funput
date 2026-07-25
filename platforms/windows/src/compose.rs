@@ -20,7 +20,7 @@ impl FieldComposer {
     pub fn new() -> Self {
         let mut engine = Engine::new();
         // A config field keeps what the user composes (no English auto-restore).
-        engine.set_smart_restore(false);
+        engine.update_config(|c| c.smart_restore = false);
         Self {
             engine,
             method: InputMethod::Telex,
@@ -37,7 +37,7 @@ impl FieldComposer {
     pub fn reset(&mut self, text: &str, method: InputMethod, tone: ToneStyle) {
         self.method = method;
         self.engine.set_method(method);
-        self.engine.set_tone_style(tone);
+        self.engine.update_config(|c| c.tone_style = tone);
         self.engine.clear();
         self.committed = text.to_string();
     }

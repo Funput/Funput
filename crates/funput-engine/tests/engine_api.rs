@@ -54,7 +54,7 @@ fn type_word(engine: &mut Engine, word: &str) -> String {
 #[test]
 fn spell_check_off_keeps_legacy_diacritic() {
     let mut engine = Engine::new();
-    engine.set_smart_restore(false);
+    engine.update_config(|c| c.smart_restore = false);
     // Default: spell-check off → `tetf` composes `tèt` (huyền) as before, even
     // though a stop coda may only carry sắc / nặng.
     assert_eq!(type_word(&mut engine, "tetf"), "tèt");
@@ -63,8 +63,8 @@ fn spell_check_off_keeps_legacy_diacritic() {
 #[test]
 fn spell_check_on_blocks_invalid_syllable() {
     let mut engine = Engine::new();
-    engine.set_smart_restore(false);
-    engine.set_spell_check(true);
+    engine.update_config(|c| c.smart_restore = false);
+    engine.update_config(|c| c.spell_check = true);
     // `tèt` is not a real syllable → the huyền key stays a literal: `tetf`.
     assert_eq!(type_word(&mut engine, "tetf"), "tetf");
     // Real syllables are unaffected.
@@ -76,7 +76,7 @@ fn spell_check_on_blocks_invalid_syllable() {
 
 fn engine_autocap() -> Engine {
     let mut e = Engine::new();
-    e.set_auto_capitalize(true);
+    e.update_config(|c| c.auto_capitalize = true);
     e
 }
 
