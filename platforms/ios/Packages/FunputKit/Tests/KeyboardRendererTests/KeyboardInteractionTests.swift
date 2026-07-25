@@ -29,7 +29,10 @@ struct KeyboardInteractionTests {
         #expect(events.map(\.phase) == [.pressed, .pressed, .released, .released])
         #expect(events.map(\.key.id) == ["key-a", "key-b", "key-a", "key-b"])
         #expect(controller.activeKey == nil)
-        #expect(previews == ["key-a", "key-b", nil])
+        // The preview always follows the newest live touch, so releasing "a" while "b"
+        // is still held re-points it at "b" (hence "key-b" twice) before the last
+        // release clears it.
+        #expect(previews == ["key-a", "key-b", "key-b", nil])
     }
 
     @Test("Sustained rollover never cancels or drops a release")

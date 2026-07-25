@@ -23,7 +23,7 @@ struct PersonalSuggestionToolbarTests {
         #expect(buttons.contains { $0.accessibilityLabel == "Biểu tượng cảm xúc" })
         let suggestion = buttons.first { $0.accessibilityLabel == "Gợi ý, từ0" }
         #expect(suggestion != nil)
-        suggestion?.sendActions(for: .touchUpInside)
+        suggestion.map(tap)
         #expect(selected == [values[0]])
     }
 
@@ -49,6 +49,20 @@ struct PersonalSuggestionToolbarTests {
 
     private func candidates(_ count: Int) -> [KeyboardSuggestionCandidate] {
         (0..<count).map { KeyboardSuggestionCandidate(text: "từ\($0)", generation: 7) }
+    }
+
+    /// Fire a control's registered `touchUpInside` actions.
+    ///
+    /// `UIControl.sendActions(for:)` dispatches through `UIApplication.shared`, which a
+    /// SwiftPM test bundle has no host app for — the actions are silently dropped. So
+    /// invoke the target/action pairs the control actually holds.
+    private func tap(_ control: UIControl) {
+        for target in control.allTargets {
+            let actions = control.actions(forTarget: target, forControlEvent: .touchUpInside)
+            for action in actions ?? [] {
+                _ = (target as AnyObject).perform(Selector(action), with: control)
+            }
+        }
     }
 
     private func visibleButtons(in view: UIView) -> [UIButton] {
