@@ -38,6 +38,7 @@ private class RecordingEngine : VietnameseEngine {
     override fun processBoundary(codePoint: Int): String? = null
     override fun backspace(): String = ""
     override fun configure(configuration: EngineConfiguration) = Unit
+    override fun adopt(word: String): Boolean = false
     override fun setEnabled(enabled: Boolean) { enabledValue = enabled }
     override fun clear() = Unit
     override fun close() = Unit

@@ -99,6 +99,39 @@ fn assert_within_budget(label: &str, engine: &mut Engine) {
     assert_counts_within_budget(label, TELEX_TEXT, allocs, bytes);
 }
 
+/// Re-opening a committed word (Android's Backspace path) costs one small allocation
+/// per call, and only that one.
+///
+/// Measured: 1 alloc / 8 B, entirely from the `is_complete_syllable` gate — its
+/// `toneless_rhyme` builds the rhyme string, the one allocation `funput-core`'s
+/// validation makes. The engine already pays it once per word boundary, and `adopt`
+/// runs once per Backspace-onto-a-word, so it is proportionate. The point of the
+/// budget is the *rest*: seeding buffer/keys/vn_form must stay in-place refills, so
+/// swapping them for `to_string()` (three more allocations) trips this.
+const MAX_ADOPT_ALLOCS_PER_CALL: usize = 1;
+
+fn assert_adopt_within_budget(engine: &mut Engine) {
+    engine.clear();
+    assert!(engine.adopt("chào")); // first call may still grow a string's capacity
+    engine.clear();
+
+    let calls = 64;
+    let before_allocs = ALLOCS.load(Ordering::Relaxed);
+    let before_bytes = BYTES.load(Ordering::Relaxed);
+    for _ in 0..calls {
+        std::hint::black_box(engine.adopt("chào"));
+    }
+    let allocs = ALLOCS.load(Ordering::Relaxed) - before_allocs;
+    let bytes = BYTES.load(Ordering::Relaxed) - before_bytes;
+    println!("adopt: {allocs} allocs, {bytes} bytes over {calls} calls");
+    assert!(
+        allocs <= calls * MAX_ADOPT_ALLOCS_PER_CALL,
+        "adopt allocated {allocs} times over {calls} calls (budget \
+         {MAX_ADOPT_ALLOCS_PER_CALL}/call) — it must refill the session strings in \
+         place instead of building new ones"
+    );
+}
+
 #[test]
 fn keystroke_alloc_budget() {
     let mut engine = Engine::new();
@@ -116,5 +149,6 @@ fn keystroke_alloc_budget() {
     assert_within_budget("spell-check on", &mut engine);
 
     engine.update_config(|c| c.spell_check = false);
+    assert_adopt_within_budget(&mut engine);
     pairs::assert_paired_allocations(&mut engine);
 }

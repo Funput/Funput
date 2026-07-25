@@ -22,6 +22,9 @@ internal object FunputNative {
 
     /** Runtime VI/EN state — flipped per field and by the language key, not durable config. */
     external fun nativeSetEnabled(handle: Long, enabled: Boolean)
+    /** Re-opens an already-committed word for editing; false when it is not adoptable. */
+    external fun nativeAdopt(handle: Long, word: String): Boolean
+
     external fun nativeProcess(handle: Long, codePoint: Int): String
     external fun nativeBoundary(handle: Long, codePoint: Int): String
     external fun nativeBackspace(handle: Long): String

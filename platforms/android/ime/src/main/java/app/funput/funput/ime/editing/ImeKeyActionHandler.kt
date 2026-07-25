@@ -90,6 +90,7 @@ internal class ImeKeyActionHandler(
     private fun backspace() {
         if (!composition.backspace(connection())) {
             execute(ImeEditCommand.DeleteBackward)
+            if (usesComposition) composition.reopenPreviousWord(connection())
             suggestionTracker.reset()
         } else {
             updateSuggestionTracker()

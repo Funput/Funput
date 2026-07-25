@@ -3,10 +3,28 @@
 use funput_engine::Action;
 use jni::EnvUnowned;
 use jni::objects::JString;
-use jni::sys::{jint, jlong};
+use jni::sys::{jboolean, jint, jlong};
 
 use super::registry;
-use crate::abi::{JavaObject, string_result};
+use crate::abi::{JavaObject, neutral, safe, string_result};
+
+/// Re-open an already-committed word as the live composition, so the next keystroke
+/// edits it (Backspace back onto `chào`, then `s` gives `cháo`).
+///
+/// Returns whether the word was taken — only a complete Vietnamese syllable is, so the
+/// caller must leave the document untouched when this is `false`.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeAdopt(
+    mut env: EnvUnowned<'_>,
+    _this: JavaObject<'_>,
+    handle: jlong,
+    word: JString<'_>,
+) -> jboolean {
+    safe(false, || {
+        let text = neutral(env.with_env(|env| word.try_to_string(env)).into_outcome());
+        registry::with_mut(handle, |engine| engine.adopt(&text)).unwrap_or(false)
+    })
+}
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeProcess<
