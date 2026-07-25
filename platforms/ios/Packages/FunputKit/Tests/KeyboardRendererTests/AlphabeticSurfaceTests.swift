@@ -30,23 +30,23 @@ struct AlphabeticSurfaceTests {
         #expect(locked?.isEqual(UIImage(systemName: "capslock.fill")) == true)
     }
 
-    @Test("Character hit testing reaches its interaction control")
-    func characterHitTesting() {
+    /// One overlay receives every touch (so a finger can slide between keys), and the
+    /// key is resolved from geometry; keycap controls only render and carry a11y.
+    @Test("A touch on a keycap is routed to that key through the touch overlay")
+    func characterHitTesting() throws {
         let layout = StandardKeyboardLayouts.letters(.vni)
         let surface = KeyboardSurfaceView(presentation: KeyboardPresentation(layout: layout))
         surface.frame = CGRect(x: 0, y: 0, width: 390, height: 304)
         surface.layoutIfNeeded()
 
-        let key = accessibleControls(in: surface).first {
-            $0.accessibilityLabel == "a"
-        }
-        let point = key.map {
-            $0.convert(CGPoint(x: $0.bounds.midX, y: $0.bounds.midY), to: surface)
-        }
-        let hitView = point.flatMap { surface.hitTest($0, with: nil) }
+        let keys = accessibleControls(in: surface)
+        let key = try #require(keys.first { $0.accessibilityLabel == "a" })
+        let point = key.convert(CGPoint(x: key.bounds.midX, y: key.bounds.midY), to: surface)
 
-        #expect(key != nil)
-        #expect(hitView is UIControl)
+        // The overlay is the topmost interactive view there, and it resolves the point
+        // back to the key the user aimed at.
+        #expect(surface.hitTest(point, with: nil) === surface.touchOverlay)
+        #expect(surface.touchOverlay.resolvedHit(at: point)?.key.id == "character-a")
     }
 
     @Test("Shift preserves Liquid Glass surfaces")
