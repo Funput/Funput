@@ -7,6 +7,7 @@ import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
 import app.funput.funput.ime.settings.KeyboardSizingSettings
+import app.funput.funput.ime.settings.KeyboardThemeSelection
 import app.funput.funput.ime.settings.KeyboardThemeSettings
 import app.funput.funput.ime.settings.PersonalSuggestionPreferences
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
@@ -30,7 +31,7 @@ internal class ImeSettingsController(
         private set
     var sizingProfile = KeyboardSizingSettings.DefaultProfile
         private set
-    var keyboardThemeId = KeyboardThemeSettings.DefaultThemeId
+    var themeSelection = KeyboardThemeSettings.DefaultSelection
         private set
     var feedback = KeyboardFeedbackPreferences.Default
         private set
@@ -46,7 +47,7 @@ internal class ImeSettingsController(
         ToneStyleSettings(context).toneStyle.collectIn(scope, ::applyToneStyle)
         SmartCompositionSettings(context).preferences.collectIn(scope, ::applySmartComposition)
         KeyboardSizingSettings(context).profile.collectIn(scope, ::applySizingProfile)
-        KeyboardThemeSettings(context).themeId.collectIn(scope, ::applyKeyboardTheme)
+        KeyboardThemeSettings(context).selection.collectIn(scope, ::applyThemeSelection)
         KeyboardFeedbackSettings(context).preferences.collectIn(scope, ::applyFeedback)
         PersonalSuggestionSettings(context).preferences.collectIn(scope, onPersonalSuggestionsChanged)
     }
@@ -95,9 +96,9 @@ internal class ImeSettingsController(
         onViewSettingsChanged()
     }
 
-    private fun applyKeyboardTheme(value: KeyboardThemeId) {
-        if (value == keyboardThemeId) return
-        keyboardThemeId = value
+    private fun applyThemeSelection(value: KeyboardThemeSelection) {
+        if (value == themeSelection) return
+        themeSelection = value
         onViewSettingsChanged()
     }
 

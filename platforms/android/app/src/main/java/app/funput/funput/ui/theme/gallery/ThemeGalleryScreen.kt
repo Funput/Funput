@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
+import app.funput.funput.ime.settings.KeyboardThemeSlot
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.KeyboardThemeOrigin
@@ -34,7 +35,11 @@ import app.funput.funput.theme.KeyboardThemeOrigin
 internal fun ThemeGalleryScreen(
     themes: List<KeyboardThemeDescriptor>,
     selectedThemeId: KeyboardThemeId,
+    followsAppearance: Boolean,
+    activeSlot: KeyboardThemeSlot,
     onThemeSelected: (KeyboardThemeId) -> Unit,
+    onFollowsAppearanceChange: (Boolean) -> Unit,
+    onSlotSelected: (KeyboardThemeSlot) -> Unit,
     onCreateTheme: () -> Unit,
     onEditTheme: (KeyboardThemeId) -> Unit,
     onDeleteTheme: (KeyboardThemeId) -> Unit,
@@ -77,6 +82,14 @@ internal fun ThemeGalleryScreen(
                     text = stringResource(R.string.theme_gallery_description),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyLarge,
+                )
+            }
+            item(key = "appearance") {
+                ThemeAppearanceControls(
+                    followsAppearance = followsAppearance,
+                    activeSlot = activeSlot,
+                    onFollowsAppearanceChange = onFollowsAppearanceChange,
+                    onSlotSelected = onSlotSelected,
                 )
             }
             item(key = "system-themes") {

@@ -12,6 +12,7 @@ import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
 import app.funput.funput.ime.settings.KeyboardSizingSettings
+import app.funput.funput.ime.settings.KeyboardThemeSelection
 import app.funput.funput.ime.settings.KeyboardThemeSettings
 import app.funput.funput.ime.settings.PersonalSuggestionPreferences
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
@@ -42,7 +43,7 @@ internal class FunputSettingsState(
     val inputMethod: KeyboardInputMethod,
     val toneStyle: ToneStyle,
     val keySizeProfile: KeyboardSizingProfile,
-    val keyboardThemeId: KeyboardThemeId,
+    val themeSelection: KeyboardThemeSelection,
     val appearanceMode: AppearanceMode,
     val feedback: KeyboardFeedbackPreferences,
     val smartComposition: SmartCompositionPreferences,
@@ -64,7 +65,8 @@ internal fun rememberFunputSettings(): FunputSettingsState {
     val inputMethod by input.inputMethod.collectAsState(InputMethodSettings.DefaultInputMethod)
     val toneStyle by toneStyleStore.toneStyle.collectAsState(ToneStyleSettings.DefaultToneStyle)
     val keySizeProfile by sizing.profile.collectAsState(KeyboardSizingSettings.DefaultProfile)
-    val keyboardThemeId by keyboardTheme.themeId.collectAsState(KeyboardThemeSettings.DefaultThemeId)
+    val themeSelection by keyboardTheme.selection
+        .collectAsState(KeyboardThemeSettings.DefaultSelection)
     val appearanceMode by appearance.mode.collectAsState(AppearanceSettings.DefaultMode)
     val feedback by feedbackStore.preferences.collectAsState(KeyboardFeedbackPreferences.Default)
     val smartComposition by smartCompositionStore.preferences
@@ -84,7 +86,7 @@ internal fun rememberFunputSettings(): FunputSettingsState {
         inputMethod = inputMethod,
         toneStyle = toneStyle,
         keySizeProfile = keySizeProfile,
-        keyboardThemeId = keyboardThemeId,
+        themeSelection = themeSelection,
         appearanceMode = appearanceMode,
         feedback = feedback,
         smartComposition = smartComposition,

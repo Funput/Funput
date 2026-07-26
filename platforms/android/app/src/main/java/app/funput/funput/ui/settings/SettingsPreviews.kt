@@ -55,7 +55,6 @@ private fun SettingsPreview(
             inputMethod = KeyboardInputMethod.VNI,
             toneStyle = ToneStyle.TRADITIONAL,
             keySizeProfile = KeyboardSizingProfile.Normal,
-            keyboardThemeId = KeyboardThemeId.Dark,
             keyboardThemeLabel = "Tối",
             appearanceMode = appearanceMode,
             hapticsEnabled = true,

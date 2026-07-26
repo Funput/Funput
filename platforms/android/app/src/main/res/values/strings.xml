@@ -33,6 +33,10 @@
     <string name="theme_gallery_title">Chủ đề bàn phím</string>
     <string name="theme_gallery_description">Chọn phong cách phù hợp với cách bạn gõ.</string>
     <string name="theme_gallery_back_description">Quay lại</string>
+    <string name="theme_gallery_follow_appearance">Theo chế độ hệ thống</string>
+    <string name="theme_gallery_follow_appearance_description">Chọn một theme cho chế độ sáng và một cho chế độ tối.</string>
+    <string name="theme_gallery_slot_light">Chế độ sáng</string>
+    <string name="theme_gallery_slot_dark">Chế độ tối</string>
     <string name="theme_gallery_system_section">Theme hệ thống</string>
     <string name="theme_gallery_user_section">Theme của bạn</string>
     <string name="theme_gallery_selected">Đang sử dụng</string>
