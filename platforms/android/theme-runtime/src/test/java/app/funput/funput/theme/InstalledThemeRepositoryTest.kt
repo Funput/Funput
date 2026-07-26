@@ -15,6 +15,7 @@ class InstalledThemeRepositoryTest {
                 KeyboardThemeId.Dark,
                 KeyboardThemeId.Light,
                 KeyboardThemeId.GlassDark,
+                KeyboardThemeId.GlassLight,
             ),
             repository.themes.map(KeyboardThemeDescriptor::id),
         )

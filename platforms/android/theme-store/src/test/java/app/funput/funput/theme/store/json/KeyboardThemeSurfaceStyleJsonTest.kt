@@ -20,10 +20,9 @@ class KeyboardThemeSurfaceStyleJsonTest {
 
     @Test
     fun glassKeySurfaceStyleRoundTrips() {
-        assertEquals(
-            KeyboardThemes.GlassDark,
-            KeyboardThemeJson.decode(KeyboardThemeJson.encode(KeyboardThemes.GlassDark)),
-        )
+        listOf(KeyboardThemes.GlassDark, KeyboardThemes.GlassLight).forEach { theme ->
+            assertEquals(theme, KeyboardThemeJson.decode(KeyboardThemeJson.encode(theme)))
+        }
     }
 
     @Test

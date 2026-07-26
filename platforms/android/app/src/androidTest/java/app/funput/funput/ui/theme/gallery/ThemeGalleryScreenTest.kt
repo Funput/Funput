@@ -68,14 +68,14 @@ class ThemeGalleryScreenTest {
         compose.onNodeWithTag("dark").assertIsSelected()
         compose.onNodeWithTag("light").assertIsNotSelected().performClick()
         compose.onNodeWithTag(SystemThemesTag)
-            .performScrollToNode(hasTestTag(KeyboardThemeId.GlassDark.value))
-        compose.onNodeWithTag(KeyboardThemeId.GlassDark.value)
+            .performScrollToNode(hasTestTag(KeyboardThemeId.GlassLight.value))
+        compose.onNodeWithTag(KeyboardThemeId.GlassLight.value)
             .assertIsNotSelected()
             .performClick()
         compose.onNodeWithContentDescription("Quay lại").performClick()
 
         compose.runOnIdle {
-            assertEquals(KeyboardThemeId.GlassDark, selectedThemeId)
+            assertEquals(KeyboardThemeId.GlassLight, selectedThemeId)
             assertEquals(customTheme.id, editedThemeId)
             assertEquals(customTheme.id, deletedThemeId)
             assertTrue(createRequested)

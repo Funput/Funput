@@ -29,5 +29,13 @@ object BuiltInKeyboardThemeSource : InstalledThemeSource {
             origin = KeyboardThemeOrigin.BUILT_IN,
             theme = KeyboardThemes.GlassDark,
         ),
+        KeyboardThemeDescriptor(
+            id = KeyboardThemeId.GlassLight,
+            version = 1,
+            name = "Glass Light",
+            author = FunputAuthor,
+            origin = KeyboardThemeOrigin.BUILT_IN,
+            theme = KeyboardThemes.GlassLight,
+        ),
     )
 }
