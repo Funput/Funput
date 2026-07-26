@@ -42,6 +42,19 @@ internal class ImeSettingsController(
     private var toneStyle = ToneStyleSettings.DefaultToneStyle
     private var smartComposition = SmartCompositionPreferences.Default
 
+    init {
+        // Push the defaults before any flow reports anything.
+        //
+        // Each apply* below ignores a value equal to the one already held, and on a fresh
+        // install every stored setting *is* the default — so nothing would ever reach the
+        // engine, which would keep composing with its own built-in defaults. Those are not the
+        // same defaults: the engine starts on Telex while this app starts on VNI, so the
+        // keyboard silently ignored VNI keystrokes until the user changed the setting to
+        // something else and back. Configuring once up front keeps the two sides in agreement
+        // no matter which defaults either of them picks later.
+        applyEngineConfiguration()
+    }
+
     fun observe(context: Context, scope: CoroutineScope) {
         InputMethodSettings(context).inputMethod.collectIn(scope, ::applyInputMethod)
         ToneStyleSettings(context).toneStyle.collectIn(scope, ::applyToneStyle)
