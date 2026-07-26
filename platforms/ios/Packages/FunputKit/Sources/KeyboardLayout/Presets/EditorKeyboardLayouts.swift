@@ -65,12 +65,10 @@ public enum EditorKeyboardLayouts {
                 middleID,
                 middleLabel,
                 .punctuation,
-                weight: 1.7,
                 accessibilityLabel: middleAccessibility
             ),
-            supportsLanguageSwipe ? standardSpaceKey(weight: 3.7) : asciiSpaceKey(weight: 3.7),
+            supportsLanguageSwipe ? standardSpaceKey() : asciiSpaceKey(weight: 5.8),
             specialKey("period", ".", .punctuation, accessibilityLabel: "Dấu chấm"),
-            specialKey("dot-com", ".com", .punctuation, weight: 1.7, accessibilityLabel: "Chấm com"),
             specialKey("enter", "", .enter, weight: 1.7, accessibilityLabel: "Enter"),
         ]
     }

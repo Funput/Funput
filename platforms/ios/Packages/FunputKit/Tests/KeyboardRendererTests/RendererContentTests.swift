@@ -22,7 +22,7 @@ struct RendererContentTests {
             (primary.rows[3].keys[0], "=\\<"),
             (secondary.rows[3].keys[0], "?123"),
             (primary.rows[4].keys[0], "ABC"),
-            (email.rows[4].keys[4], ".com"),
+            (email.rows[4].keys[1], "@"),
         ]
 
         for (key, expected) in cases {
