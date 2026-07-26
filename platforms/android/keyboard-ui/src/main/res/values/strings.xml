@@ -3,4 +3,7 @@
     <string name="emoji_panel_letters" translatable="false">ABC</string>
     <string name="emoji_panel_letters_description">Return to letters</string>
     <string name="emoji_panel_backspace_description">Backspace</string>
+    <string name="emoji_panel_loading">Loading emoji…</string>
+    <string name="emoji_panel_empty">No emoji available</string>
+    <string name="emoji_search_empty">No matching emoji</string>
 </resources>

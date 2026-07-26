@@ -38,6 +38,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var inputMethod: KeyboardInputMethod by layoutState::inputMethod
     var layoutMode: KeyboardLayoutMode by layoutState::layoutMode
     var editorMode: KeyboardEditorMode by layoutState::editorMode
+    var layoutOverride: app.funput.funput.keyboard.model.KeyboardLayout? by layoutState::layoutOverride
     var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
     var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
     var keyboardTheme by render::keyboardTheme

@@ -38,7 +38,13 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         val isActivated = key.spec.role == KeyRole.SHIFT && shiftState.isActive
         surfacePainter.draw(canvas, key, theme, isPressed, isActivated)
         when {
-            key.spec.role == KeyRole.SPACE -> spacebarRenderer.draw(canvas, key, theme, language)
+            key.spec.role == KeyRole.SPACE -> spacebarRenderer.draw(
+                canvas,
+                key,
+                theme,
+                language,
+                customLabel = key.spec.spaceLabelOverride,
+            )
             !iconRenderer.draw(canvas, key, shiftState, enterAction) ->
                 drawLabels(canvas, key, theme, shiftState)
         }

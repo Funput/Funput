@@ -9,12 +9,16 @@ data class KeySpec(
     val secondaryLabel: String? = null,
     val accessibilityLabel: String = label,
     val horizontalSwipeAction: KeySwipeAction? = null,
+    val spaceLabelOverride: String? = null,
 ) {
     init {
         require(id.isNotBlank()) { "Key id must not be blank" }
         require(widthWeight > 0f) { "Key width weight must be positive" }
         require(shiftedLabel == null || shiftedLabel.isNotEmpty()) { "Shifted label must not be empty" }
         require(accessibilityLabel.isNotBlank()) { "Accessibility label must not be blank" }
+        require(spaceLabelOverride == null || spaceLabelOverride.isNotBlank()) {
+            "Space label override must not be blank"
+        }
     }
 }
 

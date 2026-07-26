@@ -26,6 +26,7 @@ internal class SpacebarContentRenderer(private val metrics: RenderMetrics) {
         key: ResolvedKey,
         theme: KeyboardTheme,
         language: KeyboardLanguage,
+        customLabel: String? = null,
     ) {
         labelPaint.color = theme.secondaryLabelColor
         labelPaint.textSize = metrics.sp(LabelSizeSp)
@@ -33,7 +34,9 @@ internal class SpacebarContentRenderer(private val metrics: RenderMetrics) {
         val centerX = key.bounds.centerX
         val centerY = key.bounds.centerY
         val baseline = centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
-        canvas.drawText(language.displayLabel, centerX, baseline, labelPaint)
+        canvas.drawText(customLabel ?: language.displayLabel, centerX, baseline, labelPaint)
+
+        if (customLabel != null) return
 
         chevronPaint.color = (theme.secondaryLabelColor and 0x00FFFFFF) or ChevronAlpha
         val offset = min(key.bounds.width * 0.34f, metrics.dp(MaxChevronOffsetDp))

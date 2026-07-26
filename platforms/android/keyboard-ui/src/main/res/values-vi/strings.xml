@@ -2,4 +2,7 @@
 <resources>
     <string name="emoji_panel_letters_description">Quay lại bàn phím chữ</string>
     <string name="emoji_panel_backspace_description">Xóa lùi</string>
+    <string name="emoji_panel_loading">Đang tải biểu tượng…</string>
+    <string name="emoji_panel_empty">Không có biểu tượng</string>
+    <string name="emoji_search_empty">Không tìm thấy biểu tượng</string>
 </resources>

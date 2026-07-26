@@ -15,3 +15,14 @@ CLDR source: https://github.com/unicode-org/cldr/tree/release-48
 
 Regenerate by passing `emoji-test.txt`, the output path, `--cldr-root` pointing
 to a CLDR 48.2 checkout, and `--cldr-version 48.2`.
+
+The iOS resource is the canonical generated output. Android's
+`keyboard-ui:syncEmojiCatalog` task copies those exact bytes into its generated
+assets, and `keyboard-ui:verifyEmojiCatalogParity` runs before every Android
+build. Regeneration therefore uses one command:
+
+```sh
+platforms/ios/Scripts/generate-emoji-catalog.py emoji-test.txt \
+  platforms/ios/Packages/FunputKit/Sources/KeyboardRenderer/Resources/EmojiCatalog.json \
+  --cldr-root cldr --cldr-version 48.2
+```

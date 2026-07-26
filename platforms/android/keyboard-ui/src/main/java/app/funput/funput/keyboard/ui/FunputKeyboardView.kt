@@ -58,7 +58,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     var hapticsEnabled: Boolean by feedbackController::hapticsEnabled
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
     private val safeArea = KeyboardSafeAreaController(this)
-    init {
+    init { KeyboardComposeLifecycle.install(this)
         addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::handleKeyAction
         keyboardSurface.callbacks.onSettingsRequested = ::openSettings
