@@ -4,9 +4,12 @@ set -eu
 
 export PATH="$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-# Xcode exports these Swift-only settings to scheme pre-actions. Its bundled
-# xcrun warns about them when Rust asks for the iPhoneOS SDK path.
-unset SWIFT_DEBUG_INFORMATION_FORMAT SWIFT_DEBUG_INFORMATION_VERSION
+# Xcode exports these to scheme pre-actions: the Swift-only settings its bundled
+# xcrun rejects, and XCODE_DEVELOPER_DIR_PATH, which it exports empty. Both make
+# xcrun/xcodebuild write to stderr while Rust asks for the iPhoneOS SDK path, and
+# rustc reports any such output as a warning against the crate it is building.
+unset SWIFT_DEBUG_INFORMATION_FORMAT SWIFT_DEBUG_INFORMATION_VERSION \
+    XCODE_DEVELOPER_DIR_PATH
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 IOS_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
