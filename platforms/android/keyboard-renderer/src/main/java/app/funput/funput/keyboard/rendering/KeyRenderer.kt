@@ -20,8 +20,8 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
     private val iconRenderer = KeyIconRenderer(metrics)
     private val spacebarRenderer = SpacebarContentRenderer(metrics)
 
-    fun updateTheme(theme: KeyboardTheme) {
-        surfacePainter.updateTheme(theme)
+    fun updateTheme(theme: KeyboardTheme, width: Int, height: Int) {
+        surfacePainter.updateTheme(theme, width, height)
         iconRenderer.updateTheme(theme)
     }
 

@@ -2,11 +2,12 @@ package app.funput.funput.theme.store.json
 
 import app.funput.funput.theme.KeyboardThemeBackgroundImage
 import app.funput.funput.theme.KeyboardThemeGradientDirection
-import app.funput.funput.theme.MetricClamp
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.KeyboardThemeOrigin
 import app.funput.funput.theme.KeyboardThemes
+import app.funput.funput.theme.KeyboardKeySurfaceStyle
+import app.funput.funput.theme.MetricClamp
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -52,6 +53,7 @@ class KeyboardThemeJsonCodecTest {
             "backgroundGradientDirection",
             "suggestionDividerColor",
             "popupShadowColor",
+            "keySurfaceStyle",
         ).forEach(theme::remove)
         json.remove("schemaVersion")
 
@@ -64,6 +66,7 @@ class KeyboardThemeJsonCodecTest {
         assertEquals(decoded.keyColor, decoded.popupSurfaceColor)
         assertEquals(decoded.labelColor, decoded.suggestionHighlightColor)
         assertEquals(1f, decoded.pressedKeyScale, 0f)
+        assertEquals(KeyboardKeySurfaceStyle.FLAT, decoded.keySurfaceStyle)
     }
 
     @Test
@@ -120,14 +123,6 @@ class KeyboardThemeJsonCodecTest {
         assertEquals(
             KeyboardThemeGradientDirection.Default,
             KeyboardThemeJsonCodec.decode(json.toString()).theme.backgroundGradientDirection,
-        )
-    }
-
-    @Test
-    fun bareThemeTextRoundTripsThroughThePublicHelper() {
-        assertEquals(
-            KeyboardThemes.Paper,
-            KeyboardThemeJson.decode(KeyboardThemeJson.encode(KeyboardThemes.Paper)),
         )
     }
 

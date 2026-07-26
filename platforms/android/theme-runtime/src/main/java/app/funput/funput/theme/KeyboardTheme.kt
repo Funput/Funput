@@ -73,6 +73,13 @@ data class KeyboardTheme(
         (secondaryLabelColor and RgbMask) or LegacyDividerAlpha,
     /** Shadow under the magnified key preview, previously a hardcoded black. */
     val popupShadowColor: Int = DefaultPopupShadowColor,
+    /**
+     * Surface treatment for key plates.
+     *
+     * Flat preserves the original fill-and-border renderer. Glass adds a cached directional rim
+     * and a pressed halo without changing the authored colors or key geometry.
+     */
+    val keySurfaceStyle: KeyboardKeySurfaceStyle = KeyboardKeySurfaceStyle.Default,
 ) {
     init {
         require(keyCornerRadiusDp >= 0f) { "Key corner radius must not be negative" }
