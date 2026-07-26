@@ -28,7 +28,7 @@ final class EmojiCell: UICollectionViewCell {
     func apply(_ item: EmojiItem) {
         label.text = item.glyph
         isAccessibilityElement = true
-        accessibilityLabel = item.name
+        accessibilityLabel = item.localizedName ?? item.name
         accessibilityTraits = .keyboardKey
     }
 }

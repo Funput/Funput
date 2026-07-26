@@ -1,7 +1,7 @@
 import Foundation
 
 public extension EmojiCatalog {
-    static let empty = EmojiCatalog(version: "", emojis: [])
+    static let empty = EmojiCatalog(version: "", annotationVersion: "", emojis: [])
 
     static let bundled: EmojiCatalog = {
         guard let url = Bundle.module.url(forResource: "EmojiCatalog", withExtension: "json"),

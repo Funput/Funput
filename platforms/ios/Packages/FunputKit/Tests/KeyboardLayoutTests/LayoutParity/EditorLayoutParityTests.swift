@@ -1,3 +1,4 @@
+import CoreGraphics
 import KeyboardLayout
 import Testing
 
@@ -18,17 +19,17 @@ struct EditorLayoutParityTests {
         }
     }
 
-    @Test("Email layout matches Android", arguments: KeyboardInputMethod.allCases)
+    @Test("Email keeps a full-width space", arguments: KeyboardInputMethod.allCases)
     func email(method: KeyboardInputMethod) {
         assertWebContract(resolve(.email, method: method), middleKey: "@", supportsLanguageSwipe: false)
     }
 
-    @Test("Search preserves web keys and supports Vietnamese", arguments: KeyboardInputMethod.allCases)
+    @Test("Search keeps a full-width space and supports Vietnamese", arguments: KeyboardInputMethod.allCases)
     func search(method: KeyboardInputMethod) {
         assertWebContract(resolve(.search, method: method), middleKey: "/", supportsLanguageSwipe: true)
     }
 
-    @Test("URL preserves English web input", arguments: KeyboardInputMethod.allCases)
+    @Test("URL keeps a full-width space with English web input", arguments: KeyboardInputMethod.allCases)
     func url(method: KeyboardInputMethod) {
         assertWebContract(resolve(.url, method: method), middleKey: "/", supportsLanguageSwipe: false)
     }
@@ -39,6 +40,25 @@ struct EditorLayoutParityTests {
             let search = resolve(.search, method: method).rows[4].keys
             let url = resolve(.url, method: method).rows[4].keys
             #expect(search.map(\.widthWeight) == url.map(\.widthWeight))
+        }
+    }
+
+    @Test("Specialized QWERTY spaces match text geometry")
+    func fullWidthSpaceGeometry() {
+        let sizes = [
+            CGSize(width: 320, height: 238),
+            CGSize(width: 390, height: 304),
+            CGSize(width: 568, height: 236),
+            CGSize(width: 744, height: 324),
+        ]
+        for method in KeyboardInputMethod.allCases {
+            let text = resolve(.text, method: method)
+            for mode in [KeyboardEditorMode.search, .email, .url, .password] {
+                let specialized = resolve(mode, method: method)
+                for size in sizes {
+                    #expect(abs(spaceWidth(specialized, size) - spaceWidth(text, size)) <= 0.5)
+                }
+            }
         }
     }
 
@@ -81,11 +101,11 @@ struct EditorLayoutParityTests {
         #expect(layout.rows[0].keys.allSatisfy { $0.role == .character && $0.widthWeight == 1 })
         let action = layout.rows[4].keys
         let spaceLabel = supportsLanguageSwipe ? "Tiếng Việt" : "English"
-        #expect(action.map(\.label) == ["?123", middleKey, spaceLabel, ".", ".com", ""])
+        #expect(action.map(\.label) == ["?123", middleKey, spaceLabel, ".", ""])
         #expect(action.map(\.role) == [
-            .symbols, .punctuation, .space, .punctuation, .punctuation, .enter,
+            .symbols, .punctuation, .space, .punctuation, .enter,
         ])
-        #expect(action.map(\.widthWeight) == [1.7, 1.7, 3.7, 1, 1.7, 1.7])
+        #expect(action.map(\.widthWeight) == [1.7, 1, 5.8, 1, 1.7])
         #expect(space(layout).horizontalSwipeAction == (
             supportsLanguageSwipe ? .toggleLanguage : nil
         ))
@@ -93,5 +113,10 @@ struct EditorLayoutParityTests {
 
     private func space(_ layout: KeyboardLayout) -> KeySpec {
         layout.rows.flatMap(\.keys).first { $0.role == .space }!
+    }
+
+    private func spaceWidth(_ layout: KeyboardLayout, _ size: CGSize) -> CGFloat {
+        KeyboardGeometry.resolve(layout: layout, size: size, sizing: .default)
+            .keys.first { $0.spec.role == .space }!.frame.width
     }
 }

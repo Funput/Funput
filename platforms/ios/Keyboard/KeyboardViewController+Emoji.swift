@@ -32,14 +32,14 @@ extension KeyboardViewController {
 
     func showFunput() {
         displayedSurface = .funput
+        emojiView.reset()
         emojiView.isHidden = true
         keyboardView.isHidden = false
     }
 
     func refreshEmojiPresentation() {
         emojiView.apply(
-            theme: keyboardView.presentation.theme,
-            blendsSystemEdge: keyboardView.presentation.blendsSystemEdge,
+            presentation: keyboardView.presentation,
             recent: emojiRecentsStore.load().compactMap(emojiItem)
         )
     }
