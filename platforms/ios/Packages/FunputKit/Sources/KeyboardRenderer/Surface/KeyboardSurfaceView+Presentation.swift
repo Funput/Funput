@@ -86,6 +86,7 @@ extension KeyboardSurfaceView {
                 key: hit.key,
                 point: point,
                 sourceFrame: hit.frame,
+                containerBounds: bounds,
                 presentation: presentation
             )
         }

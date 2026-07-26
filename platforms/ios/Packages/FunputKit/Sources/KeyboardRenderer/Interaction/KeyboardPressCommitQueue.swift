@@ -13,6 +13,7 @@ struct KeyboardPressCommitQueue {
         case cancelled
         case suppressed
         case swiped(KeySwipeAction)
+        case alternate(KeyAlternate)
     }
 
     enum ReadyAction {
@@ -101,6 +102,8 @@ struct KeyboardPressCommitQueue {
             return .suppressed
         case let .swiped(action):
             return .event(KeyboardKeyEvent(key: first.key, phase: .swiped(action)))
+        case let .alternate(alternate):
+            return .event(KeyboardKeyEvent(key: first.key, phase: .alternateSelected(alternate)))
         }
     }
 

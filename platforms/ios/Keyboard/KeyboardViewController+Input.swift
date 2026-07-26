@@ -9,9 +9,12 @@ import UIKit
 extension KeyboardViewController {
     func handleKeyEvent(_ event: KeyboardKeyEvent) {
         guard event.key.role != .systemInputMode else { return }
+        let alternate: KeyAlternate?
         switch event.phase {
         case .released, .repeated:
-            break
+            alternate = nil
+        case let .alternateSelected(value):
+            alternate = value
         case .pressed, .cancelled:
             return
         case .swiped(.toggleLanguage):
@@ -43,7 +46,11 @@ extension KeyboardViewController {
         }
         let previousState = inputCoordinator.state
         let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
-        inputCoordinator.handle(event.key, document: document)
+        if let alternate {
+            inputCoordinator.handleAlternate(alternate, from: event.key, document: document)
+        } else {
+            inputCoordinator.handle(event.key, document: document)
+        }
         publishPersonalSuggestionUpdate()
 
         if inputCoordinator.state != previousState {

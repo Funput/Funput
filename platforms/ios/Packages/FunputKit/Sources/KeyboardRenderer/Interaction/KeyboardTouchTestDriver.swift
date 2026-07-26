@@ -10,6 +10,7 @@ import UIKit
 public final class KeyboardTouchTestDriver {
     private final class EventBox {
         var values: [KeyboardKeyEvent] = []
+        var alternateCenters: [CGPoint] = []
     }
 
     @MainActor
@@ -59,18 +60,37 @@ public final class KeyboardTouchTestDriver {
         controller = KeyboardSurfaceInteractionController(
             onEvent: { box.values.append($0) },
             onPreview: { _, _ in },
+            onAlternatePreview: { _, layout, _ in
+                guard let layout else {
+                    box.alternateCenters = []
+                    return
+                }
+                box.alternateCenters = layout.itemFrames.map {
+                    CGPoint(
+                        x: $0.midX + layout.frame.minX,
+                        y: $0.midY + layout.frame.minY
+                    )
+                }
+            },
             repeatScheduler: { delay, action in
                 repeatScheduler.schedule(delay, action)
             }
         )
     }
 
-    public func begin(token: UInt64, key: KeySpec, point: CGPoint = .zero) {
+    public func begin(
+        token: UInt64,
+        key: KeySpec,
+        point: CGPoint = .zero,
+        sourceFrame: CGRect? = nil,
+        containerBounds: CGRect = .zero
+    ) {
         controller.beginTouch(
             token: token,
             key: key,
             point: point,
-            sourceFrame: nil,
+            sourceFrame: sourceFrame,
+            containerBounds: containerBounds,
             presentation: presentation
         )
     }
@@ -91,6 +111,10 @@ public final class KeyboardTouchTestDriver {
 
     public func runNextRepeat() {
         repeatScheduler.runNext()
+    }
+
+    public func alternateCenter(at index: Int) -> CGPoint? {
+        box.alternateCenters.indices.contains(index) ? box.alternateCenters[index] : nil
     }
 
     public func reconcile(activeTokens: Set<UInt64>) {

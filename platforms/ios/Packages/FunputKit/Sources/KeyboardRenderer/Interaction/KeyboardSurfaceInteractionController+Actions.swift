@@ -4,6 +4,25 @@ import os
 import UIKit
 
 extension KeyboardSurfaceInteractionController {
+    func activateAlternates(for token: TouchToken) {
+        guard var state = touches[token],
+              !state.hasWandered,
+              state.currentKey?.id == state.initialKey.id,
+              let sourceFrame = state.currentFrame,
+              !state.initialKey.alternates.isEmpty else { return }
+        state.alternateLayout = .resolve(
+            count: state.initialKey.alternates.count,
+            sourceFrame: sourceFrame,
+            bounds: state.containerBounds
+        )
+        state.selectedAlternateIndex = 0
+        if let key = state.currentKey { setHighlighted(key, false) }
+        state.currentKey = nil
+        touches[token] = state
+        if hapticsEnabled { haptics.perform(.control) }
+        refreshPreview()
+    }
+
     func performSuggestionFeedback(presentation: KeyboardPresentation) {
         if presentation.isHapticFeedbackEnabled { haptics.perform(.control) }
         if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
@@ -60,9 +79,22 @@ extension KeyboardSurfaceInteractionController {
     }
 
     func refreshPreview() {
-        guard let token = touches.keys.max(),
-              let state = touches[token],
-              let key = state.currentKey else {
+        let alternateToken = touches.keys
+            .filter { touches[$0]?.alternateLayout != nil }
+            .max()
+        guard let token = alternateToken ?? touches.keys.max(),
+              let state = touches[token] else {
+            onPreview(nil, nil)
+            onAlternatePreview(nil, nil, nil)
+            return
+        }
+        if let layout = state.alternateLayout {
+            onPreview(nil, nil)
+            onAlternatePreview(state.initialKey, layout, state.selectedAlternateIndex)
+            return
+        }
+        onAlternatePreview(nil, nil, nil)
+        guard let key = state.currentKey else {
             onPreview(nil, nil)
             return
         }

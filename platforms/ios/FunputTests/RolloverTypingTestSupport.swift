@@ -59,7 +59,7 @@ final class RolloverTypingTestStack {
             switch event.phase {
             case .released, .repeated:
                 coordinator.handle(event.key, document: document)
-            case .pressed, .cancelled, .swiped:
+            case .pressed, .cancelled, .swiped, .alternateSelected:
                 break
             }
         }

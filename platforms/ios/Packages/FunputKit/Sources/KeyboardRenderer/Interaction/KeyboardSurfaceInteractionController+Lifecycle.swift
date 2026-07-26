@@ -5,20 +5,28 @@ import UIKit
 extension KeyboardSurfaceInteractionController {
     func endTouch(token: TouchToken) {
         guard let state = touches.removeValue(forKey: token) else { return }
+        alternateHoldController.cancel(for: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         let wasRepeating = repeatTouch == token && repeatController.finish()
         if repeatTouch == token { repeatTouch = nil }
-        commitQueue.complete(
-            token: token,
-            as: state.currentKey == nil ? .cancelled : (wasRepeating ? .suppressed : .released)
-        )
-        endSignpost(state, token: token, phase: state.currentKey == nil ? 2 : 1)
+        let completion: KeyboardPressCommitQueue.Completion
+        if let index = state.selectedAlternateIndex,
+           state.alternateLayout != nil,
+           state.initialKey.alternates.indices.contains(index) {
+            completion = .alternate(state.initialKey.alternates[index])
+        } else {
+            completion = state.currentKey == nil
+                ? .cancelled : (wasRepeating ? .suppressed : .released)
+        }
+        commitQueue.complete(token: token, as: completion)
+        endSignpost(state, token: token, phase: completion.isCommit ? 1 : 2)
         refreshPreview()
         flushCompletedKeys()
     }
 
     func cancelTouch(token: TouchToken, reason: Cancellation) {
         guard let state = touches.removeValue(forKey: token) else { return }
+        alternateHoldController.cancel(for: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         let wasRepeating = repeatTouch == token && repeatController.finish()
         if repeatTouch == token { repeatTouch = nil }
@@ -67,6 +75,7 @@ extension KeyboardSurfaceInteractionController {
     /// Teardown: the surface is going away, so pending presses are discarded
     /// rather than routed through `cancelTouch`, which would honour them.
     func cancelAll() {
+        alternateHoldController.cancelAll()
         for (token, state) in touches {
             if let key = state.currentKey { setHighlighted(key, false) }
             endSignpost(state, token: token, phase: 2)
@@ -79,43 +88,13 @@ extension KeyboardSurfaceInteractionController {
         legacyTokensByKeyID.removeAll(keepingCapacity: true)
     }
 
-    func handle(
-        _ event: KeyboardKeyEvent,
-        sourceFrame: CGRect?,
-        presentation: KeyboardPresentation
-    ) {
-        switch event.phase {
-        case .pressed:
-            let token = nextLegacyToken
-            nextLegacyToken &+= 1
-            legacyTokensByKeyID[event.key.id, default: []].append(token)
-            beginTouch(
-                token: token,
-                key: event.key,
-                point: sourceFrame.map { CGPoint(x: $0.midX, y: $0.midY) } ?? .zero,
-                sourceFrame: sourceFrame,
-                presentation: presentation
-            )
-        case .released:
-            if let token = takeLegacyToken(for: event.key.id) { endTouch(token: token) }
-        case .cancelled:
-            // The toolbar and accessibility controls report drag-off and system
-            // cancellation through one action, so this path cannot tell them apart
-            // and keeps discarding the press.
-            if let token = takeLegacyToken(for: event.key.id) {
-                cancelTouch(token: token, reason: .userIntent)
-            }
-        case let .swiped(action):
-            if let token = legacyTokensByKeyID[event.key.id]?.first,
-               let state = touches[token] {
-                finishSwipe(token: token, state: state, action: action)
-                _ = takeLegacyToken(for: event.key.id)
-            } else if commitQueue.isEmpty {
-                if presentation.isHapticFeedbackEnabled { haptics.perform(.space) }
-                onEvent(event)
-            }
-        case .repeated:
-            break
+}
+
+private extension KeyboardPressCommitQueue.Completion {
+    var isCommit: Bool {
+        switch self {
+        case .released, .alternate, .swiped: true
+        case .cancelled, .suppressed: false
         }
     }
 }

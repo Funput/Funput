@@ -9,6 +9,7 @@ extension KeyboardSurfaceInteractionController {
         key: KeySpec,
         point: CGPoint,
         sourceFrame: CGRect?,
+        containerBounds: CGRect = .zero,
         presentation: KeyboardPresentation
     ) {
         guard touches[token] == nil else { return }
@@ -19,6 +20,9 @@ extension KeyboardSurfaceInteractionController {
             startPoint: point,
             currentKey: key,
             currentFrame: sourceFrame,
+            containerBounds: containerBounds,
+            alternateLayout: nil,
+            selectedAlternateIndex: nil,
             signpostID: signpostID
         )
         commitQueue.append(token: token, key: key)
@@ -40,6 +44,9 @@ extension KeyboardSurfaceInteractionController {
             repeatTouch = token
             repeatController.start()
         }
+        if !key.alternates.isEmpty, sourceFrame != nil, !containerBounds.isEmpty {
+            alternateHoldController.start(for: token)
+        }
         if presentation.showsKeyPreviews { refreshPreview() }
         onEvent(KeyboardKeyEvent(key: key, phase: .pressed))
     }
@@ -53,11 +60,22 @@ extension KeyboardSurfaceInteractionController {
     ) {
         guard var state = touches[token] else { return }
         hapticsEnabled = presentation.isHapticFeedbackEnabled
+        if let layout = state.alternateLayout {
+            let next = layout.index(at: point)
+            if next != state.selectedAlternateIndex, hapticsEnabled {
+                haptics.perform(.control)
+            }
+            state.selectedAlternateIndex = next
+            touches[token] = state
+            refreshPreview()
+            return
+        }
         if !state.hasWandered {
             let dx = point.x - state.startPoint.x
             let dy = point.y - state.startPoint.y
             let slop = KeyboardSurfaceInteractionController.tapSlop
             state.hasWandered = dx * dx + dy * dy > slop * slop
+            if state.hasWandered { alternateHoldController.cancel(for: token) }
         }
         if let action = state.swipeTracker.update(
             translation: CGPoint(x: point.x - state.startPoint.x, y: point.y - state.startPoint.y),
@@ -90,6 +108,7 @@ extension KeyboardSurfaceInteractionController {
             commitQueue.update(token: token, key: target)
         }
         if repeatTouch == token, target?.role != state.initialKey.role { clearKeyRepeat() }
+        if target?.id != state.initialKey.id { alternateHoldController.cancel(for: token) }
         touches[token] = state
         if presentation.showsKeyPreviews { refreshPreview() }
     }

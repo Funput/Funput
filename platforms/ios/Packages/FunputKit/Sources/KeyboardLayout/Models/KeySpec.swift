@@ -9,6 +9,7 @@ public struct KeySpec: Hashable, Sendable, Identifiable {
     public let secondaryLabel: String?
     public let accessibilityLabel: String
     public let horizontalSwipeAction: KeySwipeAction?
+    public let alternates: [KeyAlternate]
 
     public init(
         id: String,
@@ -18,7 +19,8 @@ public struct KeySpec: Hashable, Sendable, Identifiable {
         shiftedLabel: String? = nil,
         secondaryLabel: String? = nil,
         accessibilityLabel: String? = nil,
-        horizontalSwipeAction: KeySwipeAction? = nil
+        horizontalSwipeAction: KeySwipeAction? = nil,
+        alternates: [KeyAlternate] = []
     ) {
         precondition(!id.isEmpty, "Key id must not be empty")
         precondition(widthWeight > 0, "Key width weight must be positive")
@@ -31,5 +33,6 @@ public struct KeySpec: Hashable, Sendable, Identifiable {
         self.secondaryLabel = secondaryLabel
         self.accessibilityLabel = accessibilityLabel ?? label
         self.horizontalSwipeAction = horizontalSwipeAction
+        self.alternates = alternates
     }
 }
