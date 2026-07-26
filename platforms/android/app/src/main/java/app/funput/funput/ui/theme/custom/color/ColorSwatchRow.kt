@@ -36,20 +36,24 @@ internal fun ColorSwatchRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier
-            .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .semantics { contentDescription = description }
-            .padding(vertical = 10.dp, horizontal = 4.dp),
+            .padding(vertical = 9.dp, horizontal = 8.dp),
     ) {
         // A transparent color would otherwise be an invisible row, so the border marks the area.
         Column(
             modifier = Modifier
-                .size(28.dp)
+                .size(24.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(Color(color))
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)),
         ) {}
-        Text(text = label, style = MaterialTheme.typography.bodyMedium)
+        // Two of these sit side by side, so a long role name wraps instead of being clipped.
+        Text(
+            text = label,
+            maxLines = 2,
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
 }

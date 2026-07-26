@@ -38,18 +38,17 @@ class CreateCustomThemeScreenTest {
             }
         }
 
+        // The name lives in the title bar, so saving no longer means visiting another tab.
         compose.onNodeWithText("Lưu theme").assertIsNotEnabled()
-        compose.onNodeWithText("Thông tin").performClick()
         compose.onNodeWithTag("custom-theme-name").performTextInput("Ocean")
-        compose.onNodeWithText("Phong cách").performClick()
-        compose.onNodeWithText("Sáng").performClick().assertIsSelected()
+        compose.onNodeWithText("Khôi phục").performClick()
+        compose.onNodeWithText(lightTheme.name).performClick()
         compose.onNodeWithContentDescription("Xanh biển").performClick().assertIsSelected()
         compose.onNodeWithText("Lưu theme").performClick()
 
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)
             assertEquals(KeyboardThemeId.Light, savedDraft?.baseThemeId)
-            // The draft carries resolved tokens, so assert the theme the editor produced.
             assertEquals(lightTheme.theme.withAccent(AccentPresets[3].argb), savedDraft?.theme)
         }
     }
@@ -85,9 +84,8 @@ class CreateCustomThemeScreenTest {
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)
             assertEquals(KeyboardThemeId.Light, savedDraft?.baseThemeId)
-            assertEquals(AccentPresets[2].argb, savedDraft?.theme?.accentColor)
-            // Opening and saving without touching a control must not drift the key opacity.
-            assertEquals(editingTheme.theme.keyColor, savedDraft?.theme?.keyColor)
+            // Opening and saving without touching a control must not drift any token.
+            assertEquals(editingTheme.theme, savedDraft?.theme)
         }
     }
 }

@@ -1,33 +1,34 @@
 package app.funput.funput.ui.theme.custom
 
 import androidx.compose.runtime.Composable
-import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.theme.custom.background.ThemeBackgroundTab
 import app.funput.funput.ui.theme.custom.color.ThemeColorTab
 import app.funput.funput.ui.theme.custom.metrics.ThemeMetricsTab
 
 /**
- * Routes the selected editor tab to its card stack.
+ * Routes the selected editor tab to its controls.
  *
  * Tabs read and write [ThemeDraftState] directly, so a new control lands in one tab file and
- * nowhere else. Keeping the switch here rather than inside the form means neither this file nor
- * the form grows a parameter per knob.
+ * nowhere else.
  */
 @Composable
 internal fun CreateThemeTabContent(
     selectedTab: CreateThemeEditorTab,
     state: ThemeDraftState,
-    baseThemes: List<KeyboardThemeDescriptor>,
     onChooseBackgroundImage: () -> Unit,
 ) = when (selectedTab) {
-    CreateThemeEditorTab.Style -> ThemeStyleTab(
-        state = state,
-        baseThemes = baseThemes,
-    )
     CreateThemeEditorTab.Colors -> ThemeColorTab(
         theme = state.theme,
         onColorChange = { role, color ->
             state.updateTheme { theme -> role.write(theme, color) }
+        },
+        accentShortcut = {
+            // The accent presets stay at the top of the color list as a one-tap starting point;
+            // they write the whole accent family, which the individual role pickers do not.
+            AccentColorSelector(
+                selectedColor = state.theme.accentColor,
+                onSelected = { color -> state.updateTheme { theme -> theme.withAccent(color) } },
+            )
         },
     )
     CreateThemeEditorTab.Metrics -> ThemeMetricsTab(
@@ -37,9 +38,5 @@ internal fun CreateThemeTabContent(
     CreateThemeEditorTab.Background -> ThemeBackgroundTab(
         state = state,
         onChooseImage = onChooseBackgroundImage,
-    )
-    CreateThemeEditorTab.Info -> ThemeInfoTab(
-        name = state.name,
-        onNameChange = { name -> state.name = name },
     )
 }

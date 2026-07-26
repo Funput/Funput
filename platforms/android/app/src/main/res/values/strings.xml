@@ -63,7 +63,10 @@
     <string name="custom_theme_tab_info">Thông tin</string>
     <string name="custom_theme_info_title">Thông tin theme</string>
     <string name="custom_theme_info_description">Đặt tên dễ nhớ để tìm lại trong Theme Gallery.</string>
-    <string name="custom_theme_base_title">Base theme</string>
+    <string name="custom_theme_base_title">Bắt đầu lại từ</string>
+    <string name="custom_theme_restore">Khôi phục</string>
+    <string name="custom_theme_cancel">Hủy</string>
+    <string name="custom_theme_name_hint">Tên theme</string>
     <string name="custom_theme_accent_title">Màu nhấn</string>
     <string name="custom_theme_tab_colors">Màu sắc</string>
     <string name="custom_theme_contrast_title">Tương phản thấp</string>
@@ -98,7 +101,7 @@
     <string name="custom_theme_color_key_shadow">Bóng phím</string>
     <string name="custom_theme_color_suggestion_divider">Đường phân cách gợi ý</string>
     <string name="custom_theme_color_popup_shadow">Bóng ô xem trước phím</string>
-    <string name="custom_theme_tab_metrics">Kích thước</string>
+    <string name="custom_theme_tab_metrics">Hình khối</string>
     <string name="custom_theme_metrics_shape">Hình khối phím</string>
     <string name="custom_theme_metrics_surface">Bề mặt</string>
     <string name="custom_theme_metrics_background">Nền</string>
@@ -115,7 +118,7 @@
     <string name="custom_theme_gradient_vertical">Dọc</string>
     <string name="custom_theme_gradient_diagonal_down">Chéo xuống</string>
     <string name="custom_theme_gradient_diagonal_up">Chéo lên</string>
-    <string name="custom_theme_metric_dp">%1$s: %2$.1f dp</string>
+    <string name="custom_theme_metric_dp">%1$s: %2$.0f</string>
     <string name="custom_theme_metric_percent">%1$s: %2$d%%</string>
     <string name="custom_theme_color_picker_hex">Mã màu</string>
     <string name="custom_theme_color_picker_alpha">Độ hiện: %1$d%%</string>
