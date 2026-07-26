@@ -22,7 +22,7 @@ struct FunputConfigurationTests {
         #expect(config.heightScale == 1.1)
         #expect(config.personalSuggestionsEnabled)
         #expect(config.personalSuggestionResetToken == nil)
-        #expect(config.schemaVersion == 6)
+        #expect(config.schemaVersion == 7)
     }
 
     @Test("Configuration survives a JSON round-trip")
@@ -60,7 +60,7 @@ struct FunputConfigurationTests {
         #expect(!decoded.isKeySoundEnabled)
         #expect(!decoded.showsNumberRow)
         #expect(!decoded.showsGlobeKey)
-        #expect(decoded.schemaVersion == 6)
+        #expect(decoded.schemaVersion == 7)
     }
 
     @Test("Schema 3 migrates to the compact Telex default")
@@ -69,7 +69,7 @@ struct FunputConfigurationTests {
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(!decoded.showsNumberRow)
         #expect(!decoded.showsGlobeKey)
-        #expect(decoded.schemaVersion == 6)
+        #expect(decoded.schemaVersion == 7)
     }
 
     @Test("Schema 4 migrates to a hidden Globe key")
@@ -77,6 +77,6 @@ struct FunputConfigurationTests {
         let data = Data(#"{"showsGlobeKey":true,"schemaVersion":4}"#.utf8)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(!decoded.showsGlobeKey)
-        #expect(decoded.schemaVersion == 6)
+        #expect(decoded.schemaVersion == 7)
     }
 }

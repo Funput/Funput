@@ -39,9 +39,16 @@ extension KeyboardInputCoordinator {
     }
 
     func toggleInputMethod() {
-        let next: KeyboardInputMethod = state.inputMethod == .vni ? .telex : .vni
+        let next: KeyboardInputMethod
+        if state.inputMethod == .vni {
+            next = preferredTelexMethod
+        } else {
+            preferredTelexMethod = state.inputMethod
+            next = .vni
+        }
         composer.clear()
         composer.setInputMethod(next.engineMethod)
+        documentSynchronizer.invalidate()
         resetPersonalSuggestionTracking()
         replaceState(inputMethod: next)
     }

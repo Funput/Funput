@@ -1,6 +1,14 @@
 public enum KeyboardInputMethod: String, CaseIterable, Hashable, Sendable, Codable {
     case telex
+    case telexAdvanced = "telex_advanced"
     case vni
+
+    public var isTelexFamily: Bool {
+        switch self {
+        case .telex, .telexAdvanced: true
+        case .vni: false
+        }
+    }
 }
 
 public enum KeyboardLayoutMode: String, CaseIterable, Hashable, Sendable {

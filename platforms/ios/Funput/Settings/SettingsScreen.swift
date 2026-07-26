@@ -25,7 +25,7 @@ struct SettingsScreen: View {
                 SettingsSelectionRow(option: .inputMethod, value: model.inputMethodLabel) { picker = .inputMethod }
                 SettingsToggleRow(
                     title: "Hàng phím số",
-                    summary: "Hiển thị 0–9 khi dùng Telex. VNI luôn cần hàng số để nhập dấu.",
+                    summary: "Hiển thị 0–9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.",
                     isOn: model.numberRowBinding
                 )
                 .disabled(model.isNumberRowLocked)

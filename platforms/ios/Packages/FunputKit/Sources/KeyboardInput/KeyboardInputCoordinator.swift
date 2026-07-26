@@ -13,6 +13,7 @@ public final class KeyboardInputCoordinator {
     var suggestionTracker = AuthoredTokenTracker()
     var personalSuggestionsEnabled = true
     var suggestionTrackingActive = true
+    var preferredTelexMethod: KeyboardInputMethod
 
     public init(
         inputMethod: KeyboardInputMethod = .vni,
@@ -21,6 +22,7 @@ public final class KeyboardInputCoordinator {
             ProcessInfo.processInfo.systemUptime
         }
     ) {
+        preferredTelexMethod = inputMethod.isTelexFamily ? inputMethod : .telex
         state = KeyboardInputState(
             inputMethod: inputMethod,
             shiftState: .lowercase,
@@ -40,7 +42,9 @@ public final class KeyboardInputCoordinator {
         synchronizeBeforeInput(document)
         let mutatesDocument = key.role.mutatesDocument
         if mutatesDocument {
-            documentSynchronizer.beginMutation(closesEpoch: key.role.closesCompositionEpoch)
+            documentSynchronizer.beginMutation(
+                closesEpoch: closesCompositionEpoch(for: key)
+            )
         }
         defer {
             if mutatesDocument {
@@ -77,6 +81,18 @@ public final class KeyboardInputCoordinator {
             break
         }
     }
+
+    private func closesCompositionEpoch(for key: KeySpec) -> Bool {
+        if state.inputMethod == .telexAdvanced,
+           key.role == .punctuation,
+           (key.label == "[" || key.label == "]") {
+            return false
+        }
+        return switch key.role {
+        case .space, .punctuation, .enter: true
+        default: false
+        }
+    }
 }
 
 private extension KeyRole {
@@ -88,19 +104,13 @@ private extension KeyRole {
             false
         }
     }
-
-    var closesCompositionEpoch: Bool {
-        switch self {
-        case .space, .punctuation, .enter: true
-        default: false
-        }
-    }
 }
 
 extension KeyboardInputMethod {
     var engineMethod: FunputInputMethod {
         switch self {
         case .telex: .telex
+        case .telexAdvanced: .telexAdvanced
         case .vni: .vni
         }
     }
