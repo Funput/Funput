@@ -7,19 +7,19 @@ object BuiltInKeyboardThemeSource : InstalledThemeSource {
     override fun loadThemes(): List<KeyboardThemeDescriptor> = listOf(
         KeyboardThemeDescriptor(
             id = KeyboardThemeId.Dark,
-            version = 1,
-            name = "Dark",
+            version = 2,
+            name = "Ink",
             author = FunputAuthor,
             origin = KeyboardThemeOrigin.BUILT_IN,
-            theme = KeyboardThemes.Dark,
+            theme = KeyboardThemes.Ink,
         ),
         KeyboardThemeDescriptor(
             id = KeyboardThemeId.Light,
-            version = 1,
-            name = "Light",
+            version = 2,
+            name = "Paper",
             author = FunputAuthor,
             origin = KeyboardThemeOrigin.BUILT_IN,
-            theme = KeyboardThemes.Light,
+            theme = KeyboardThemes.Paper,
         ),
     )
 }

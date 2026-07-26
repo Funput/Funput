@@ -11,7 +11,7 @@ import app.funput.funput.theme.KeyboardTheme
 /** Draws the enlarged key preview above a pressed printable key. */
 internal class KeyPopupRenderer(private val metrics: RenderMetrics) {
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = PopupShadowColor }
+    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
@@ -37,10 +37,11 @@ internal class KeyPopupRenderer(private val metrics: RenderMetrics) {
         )
         val radius = metrics.dp(theme.keyCornerRadiusDp)
         drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
+        shadowPaint.color = theme.popupShadowColor
         drawingRect.offset(0f, metrics.dp(ShadowOffsetDp))
         canvas.drawRoundRect(drawingRect, radius, radius, shadowPaint)
         drawingRect.offset(0f, -metrics.dp(ShadowOffsetDp))
-        fillPaint.color = theme.keyColor
+        fillPaint.color = theme.popupSurfaceColor
         canvas.drawRoundRect(drawingRect, radius, radius, fillPaint)
         drawBorder(canvas, theme, radius)
         drawLabel(canvas, key, bounds.centerX, bounds.centerY, theme, shiftState)
@@ -77,6 +78,5 @@ internal class KeyPopupRenderer(private val metrics: RenderMetrics) {
         const val AnchorOverlapDp = 6f
         const val ShadowOffsetDp = 2f
         const val LabelSizeSp = 30f
-        const val PopupShadowColor = 0x40000000
     }
 }

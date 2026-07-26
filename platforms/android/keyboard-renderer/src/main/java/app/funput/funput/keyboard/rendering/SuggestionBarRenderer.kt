@@ -29,8 +29,7 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
 
     fun updateTheme(theme: KeyboardTheme) {
         this.theme = theme
-        dividerPaint.color = theme.secondaryLabelColor and 0x00FFFFFF or DividerAlpha
-        labelPaint.color = theme.labelColor
+        dividerPaint.color = theme.suggestionDividerColor
     }
 
     fun draw(
@@ -49,6 +48,9 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         val baseline = bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
         suggestions.forEachIndexed { index, suggestion ->
             if (index > 0) drawDivider(canvas, bounds, bounds.left + segmentWidth * index)
+            // The leading candidate is the highest ranked one, so the theme accents it.
+            labelPaint.color =
+                if (index == 0) theme.suggestionHighlightColor else theme.labelColor
             val label = TextUtils.ellipsize(
                 suggestion,
                 labelPaint,
@@ -100,7 +102,6 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     private companion object {
         const val SuggestionLabelSizeSp = 14f
         const val DividerInsetDp = 9f
-        const val DividerAlpha = 0x33000000
         const val LabelHorizontalInsetDp = 8f
     }
 }

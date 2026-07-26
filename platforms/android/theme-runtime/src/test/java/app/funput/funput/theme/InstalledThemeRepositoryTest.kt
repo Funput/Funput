@@ -14,7 +14,7 @@ class InstalledThemeRepositoryTest {
             listOf(KeyboardThemeId.Dark, KeyboardThemeId.Light),
             repository.themes.map(KeyboardThemeDescriptor::id),
         )
-        assertSame(KeyboardThemes.Dark, repository.defaultTheme.theme)
+        assertSame(KeyboardThemes.Ink, repository.defaultTheme.theme)
     }
 
     @Test
@@ -43,6 +43,40 @@ class InstalledThemeRepositoryTest {
         installedThemes = listOf(customTheme(customThemeId))
 
         assertEquals(customThemeId, repository.find(customThemeId)?.id)
+    }
+
+    @Test
+    fun snapshotReadsSourcesOnceAndThenStopsTouchingThem() {
+        var loads = 0
+        val repository = InstalledThemeRepository(
+            BuiltInKeyboardThemeSource,
+            InstalledThemeSource {
+                loads += 1
+                emptyList()
+            },
+        )
+
+        val catalog = repository.snapshot()
+        repeat(5) { catalog.resolve(KeyboardThemeId.Dark) }
+
+        assertEquals(1, loads)
+    }
+
+    @Test
+    fun eachDirectAccessorStillReReadsSoSeparateProcessesCannotGoStale() {
+        var loads = 0
+        val repository = InstalledThemeRepository(
+            BuiltInKeyboardThemeSource,
+            InstalledThemeSource {
+                loads += 1
+                emptyList()
+            },
+        )
+
+        repository.resolve(KeyboardThemeId.Dark)
+        repository.resolve(KeyboardThemeId.Dark)
+
+        assertEquals(2, loads)
     }
 
     @Test
@@ -75,6 +109,6 @@ class InstalledThemeRepositoryTest {
                 source = "content://funput-themes/sunset",
                 opacity = 0.72f,
             ),
-            theme = KeyboardThemes.Light,
+            theme = KeyboardThemes.Paper,
         )
 }

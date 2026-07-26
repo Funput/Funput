@@ -39,7 +39,6 @@ internal fun SettingsScreen(
     inputMethod: KeyboardInputMethod,
     toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
-    keyboardThemeId: KeyboardThemeId,
     keyboardThemeLabel: String,
     appearanceMode: AppearanceMode,
     hapticsEnabled: Boolean,

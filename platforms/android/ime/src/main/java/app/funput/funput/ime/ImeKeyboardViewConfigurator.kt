@@ -7,8 +7,35 @@ import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.ui.FunputKeyboardView
+import app.funput.funput.theme.InstalledThemeRepository
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.KeyboardThemeBackgroundImage
+
+/**
+ * Pushes the current settings and editor state onto the keyboard view.
+ *
+ * The theme is resolved here rather than by the service so the appearance the keyboard is being
+ * drawn for is always passed in explicitly, instead of being read from ambient state at whichever
+ * moment the view happens to be refreshed.
+ */
+internal fun FunputKeyboardView.applyImeState(
+    settings: ImeSettingsController,
+    policy: EditorInfoPolicy,
+    currentLanguage: KeyboardLanguage,
+    themeRepository: InstalledThemeRepository,
+    darkAppearance: Boolean,
+) {
+    val descriptor = themeRepository.resolveForAppearance(settings.themeSelection, darkAppearance)
+    configureForEditor(
+        inputMethod = settings.inputMethod,
+        policy = policy,
+        currentLanguage = currentLanguage,
+        feedback = settings.feedback,
+        sizingProfile = settings.sizingProfile,
+        keyboardTheme = descriptor.theme,
+        keyboardThemeBackgroundImage = descriptor.backgroundImage,
+    )
+}
 
 internal fun FunputKeyboardView.configureForEditor(
     inputMethod: KeyboardInputMethod,

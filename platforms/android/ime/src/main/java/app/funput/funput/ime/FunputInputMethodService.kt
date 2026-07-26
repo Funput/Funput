@@ -1,5 +1,6 @@
 package app.funput.funput.ime
 
+import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.view.inputmethod.CompletionInfo
@@ -27,34 +28,27 @@ class FunputInputMethodService : InputMethodService() {
     private val systemInputMethodSwitcher by lazy { SystemInputMethodSwitcher(this) }
     private val themeRepository by lazy { installedImeThemeRepository() }
     private var keyboardView: FunputKeyboardView? = null
-    private lateinit var nativeEngine: NativeVietnameseEngine
-    private lateinit var actionHandler: ImeKeyActionHandler
-    private lateinit var editorRuntime: ImeEditorRuntime
+    private lateinit var session: ImeEditingSession
     private lateinit var settings: ImeSettingsController
-    private lateinit var suggestionService: PersonalSuggestionService
-    private lateinit var suggestionSettings: PersonalSuggestionSettings
+
+    private val nativeEngine get() = session.nativeEngine
+    private val actionHandler get() = session.actionHandler
+    private val editorRuntime get() = session.editorRuntime
+    private val suggestionService get() = session.suggestionService
 
     override fun onCreate() {
         super.onCreate()
-        nativeEngine = NativeVietnameseEngine()
-        suggestionSettings = PersonalSuggestionSettings(this)
-        suggestionService = PersonalSuggestionService(
+        session = createImeEditingSession(
             context = this,
-            show = { values -> keyboardView?.suggestions = values },
-            acknowledgeReset = { token -> serviceScope.launch { suggestionSettings.acknowledgeReset(token) } },
-        )
-        editorRuntime = ImeEditorRuntime(
+            editor = editor,
+            connection = { currentInputConnection },
             cursorCapsMode = { modes -> currentInputConnection?.getCursorCapsMode(modes) ?: 0 },
             currentShiftState = { keyboardView?.shiftState ?: ShiftState.OFF },
             updateShiftState = { state -> keyboardView?.shiftState = state },
-            connection = { currentInputConnection },
-            onSuggestionsChanged = { suggestions -> keyboardView?.suggestions = suggestions },
-        )
-        actionHandler = ImeKeyActionHandler(
-            composition = AndroidCompositionSession(nativeEngine),
-            editor = editor,
-            connection = { currentInputConnection },
-            enterCommand = { editorRuntime.policy.editorAction.command },
+            showSuggestions = { values -> keyboardView?.suggestions = values },
+            acknowledgeReset = { token ->
+                serviceScope.launch { session.suggestionSettings.acknowledgeReset(token) }
+            },
         )
         settings = ImeSettingsController(
             engine = nativeEngine,
@@ -99,9 +93,7 @@ class FunputInputMethodService : InputMethodService() {
         editorRuntime.updateCompletions(completions)
 
     override fun onFinishInput() {
-        actionHandler.finish()
-        editorRuntime.finish()
-        suggestionService.finish()
+        session.finishInput()
         super.onFinishInput()
     }
 
@@ -134,16 +126,18 @@ class FunputInputMethodService : InputMethodService() {
         keyboardView?.inputMethod = method
     }
 
-    private fun updateInputView(view: FunputKeyboardView) {
-        val descriptor = themeRepository.resolve(settings.keyboardThemeId)
-        view.configureForEditor(
-            inputMethod = settings.inputMethod,
-            policy = editorRuntime.policy,
-            currentLanguage = actionHandler.language,
-            feedback = settings.feedback,
-            sizingProfile = settings.sizingProfile,
-            keyboardTheme = descriptor.theme,
-            keyboardThemeBackgroundImage = descriptor.backgroundImage,
-        )
+    // Switching the system between light and dark changes which theme applies, and no settings
+    // flow fires for it because nothing the user stored has changed.
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        keyboardView?.let(::updateInputView)
     }
+
+    private fun updateInputView(view: FunputKeyboardView) = view.applyImeState(
+        settings = settings,
+        policy = editorRuntime.policy,
+        currentLanguage = actionHandler.language,
+        themeRepository = themeRepository,
+        darkAppearance = isDarkAppearance(),
+    )
 }

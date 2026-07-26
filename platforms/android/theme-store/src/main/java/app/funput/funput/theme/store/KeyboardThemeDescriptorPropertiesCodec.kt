@@ -65,8 +65,18 @@ internal object KeyboardThemeDescriptorPropertiesCodec {
         setProperty("theme.keyBorderWidthDp", theme.keyBorderWidthDp.toString())
         setProperty("theme.keyShadowOffsetDp", theme.keyShadowOffsetDp.toString())
         setProperty("theme.pressedKeyShadowOffsetDp", theme.pressedKeyShadowOffsetDp.toString())
+        setProperty("theme.specialLabelColor", theme.specialLabelColor.toString())
+        setProperty("theme.accentKeyColor", theme.accentKeyColor.toString())
+        setProperty("theme.accentLabelColor", theme.accentLabelColor.toString())
+        setProperty("theme.popupSurfaceColor", theme.popupSurfaceColor.toString())
+        setProperty("theme.suggestionHighlightColor", theme.suggestionHighlightColor.toString())
+        setProperty("theme.pressedKeyScale", theme.pressedKeyScale.toString())
     }
 
+    /**
+     * Tokens added after a theme was saved fall back to the value they derive from, so a custom
+     * theme written by an older build keeps decoding without a format migration.
+     */
     private fun Properties.theme(): KeyboardTheme = KeyboardTheme(
         backgroundStartColor = int("theme.backgroundStartColor"),
         backgroundEndColor = int("theme.backgroundEndColor"),
@@ -85,6 +95,15 @@ internal object KeyboardThemeDescriptorPropertiesCodec {
         keyBorderWidthDp = float("theme.keyBorderWidthDp"),
         keyShadowOffsetDp = float("theme.keyShadowOffsetDp"),
         pressedKeyShadowOffsetDp = float("theme.pressedKeyShadowOffsetDp"),
+        specialLabelColor = optionalInt("theme.specialLabelColor", int("theme.labelColor")),
+        accentKeyColor = optionalInt("theme.accentKeyColor", int("theme.specialKeyColor")),
+        accentLabelColor = optionalInt("theme.accentLabelColor", int("theme.accentColor")),
+        popupSurfaceColor = optionalInt("theme.popupSurfaceColor", int("theme.keyColor")),
+        suggestionHighlightColor = optionalInt(
+            "theme.suggestionHighlightColor",
+            int("theme.labelColor"),
+        ),
+        pressedKeyScale = optionalFloat("theme.pressedKeyScale", 1f),
     )
 
     private fun Properties.backgroundImageOrNull(): KeyboardThemeBackgroundImage? {
@@ -101,6 +120,12 @@ internal object KeyboardThemeDescriptorPropertiesCodec {
     private fun Properties.int(key: String): Int = string(key).toInt()
 
     private fun Properties.float(key: String): Float = string(key).toFloat()
+
+    private fun Properties.optionalInt(key: String, fallback: Int): Int =
+        getProperty(key)?.toInt() ?: fallback
+
+    private fun Properties.optionalFloat(key: String, fallback: Float): Float =
+        getProperty(key)?.toFloat() ?: fallback
 
     private fun Properties.optionalThemeId(key: String): KeyboardThemeId? =
         getProperty(key)?.let(KeyboardThemeId::of)

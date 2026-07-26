@@ -13,7 +13,6 @@ import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.KeyboardThemeOrigin
 import app.funput.funput.theme.store.custom.CustomThemeDraft
-import app.funput.funput.theme.store.custom.CustomThemeOverrides
 import app.funput.funput.ui.theme.FunputTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -26,34 +25,31 @@ class CreateCustomThemeScreenTest {
     @Test
     fun createsDraftFromFormState() {
         var savedDraft: CustomThemeDraft? = null
+        val baseThemes = BuiltInKeyboardThemeSource.loadThemes()
+        val lightTheme = baseThemes.single { theme -> theme.id == KeyboardThemeId.Light }
 
         compose.setContent {
             FunputTheme {
                 CreateCustomThemeScreen(
-                    baseThemes = BuiltInKeyboardThemeSource.loadThemes(),
+                    baseThemes = baseThemes,
                     onSave = { draft -> savedDraft = draft },
                     onBack = {},
                 )
             }
         }
 
+        // The name lives in the title bar, so saving no longer means visiting another tab.
         compose.onNodeWithText("Lưu theme").assertIsNotEnabled()
-        compose.onNodeWithText("Thông tin").performClick()
         compose.onNodeWithTag("custom-theme-name").performTextInput("Ocean")
-        compose.onNodeWithText("Phong cách").performClick()
-        compose.onNodeWithText("Sáng").performClick().assertIsSelected()
+        compose.onNodeWithText("Khôi phục").performClick()
+        compose.onNodeWithText(lightTheme.name).performClick()
         compose.onNodeWithContentDescription("Xanh biển").performClick().assertIsSelected()
         compose.onNodeWithText("Lưu theme").performClick()
 
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)
             assertEquals(KeyboardThemeId.Light, savedDraft?.baseThemeId)
-            assertEquals(AccentPresets[3].argb, savedDraft?.overrides?.accentColor)
-            assertEquals(
-                DefaultKeyBackgroundOpacity,
-                savedDraft?.overrides?.keyBackgroundOpacity ?: -1f,
-                0.001f,
-            )
+            assertEquals(lightTheme.theme.withAccent(AccentPresets[3].argb), savedDraft?.theme)
         }
     }
 
@@ -69,10 +65,7 @@ class CreateCustomThemeScreenTest {
             author = "Me",
             origin = KeyboardThemeOrigin.CUSTOM,
             baseThemeId = KeyboardThemeId.Light,
-            theme = CustomThemeOverrides(
-                accentColor = AccentPresets[2].argb,
-                keyBackgroundOpacity = 0.5f,
-            ).applyTo(lightTheme.theme),
+            theme = lightTheme.theme.withAccent(AccentPresets[2].argb),
         )
 
         compose.setContent {
@@ -91,8 +84,8 @@ class CreateCustomThemeScreenTest {
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)
             assertEquals(KeyboardThemeId.Light, savedDraft?.baseThemeId)
-            assertEquals(AccentPresets[2].argb, savedDraft?.overrides?.accentColor)
-            assertEquals(0.5f, savedDraft?.overrides?.keyBackgroundOpacity ?: -1f, 0.01f)
+            // Opening and saving without touching a control must not drift any token.
+            assertEquals(editingTheme.theme, savedDraft?.theme)
         }
     }
 }

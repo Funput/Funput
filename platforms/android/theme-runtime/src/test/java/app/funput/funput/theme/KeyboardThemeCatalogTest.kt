@@ -21,17 +21,17 @@ class KeyboardThemeCatalogTest {
     @Test
     fun localCatalogUsesDarkAsDefault() {
         assertEquals(KeyboardThemeId.Dark, LocalKeyboardThemeCatalog.defaultTheme.id)
-        assertSame(KeyboardThemes.Dark, LocalKeyboardThemeCatalog.defaultTheme.theme)
+        assertSame(KeyboardThemes.Ink, LocalKeyboardThemeCatalog.defaultTheme.theme)
     }
 
     @Test
     fun resolveReturnsKnownThemeAndFallsBackForUnknownTheme() {
         assertSame(
-            KeyboardThemes.Light,
+            KeyboardThemes.Paper,
             LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.Light).theme,
         )
         assertSame(
-            KeyboardThemes.Dark,
+            KeyboardThemes.Ink,
             LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.of("future-theme")).theme,
         )
     }

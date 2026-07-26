@@ -17,7 +17,7 @@ internal class NavigationKeyIconRenderer(private val metrics: RenderMetrics) {
     private val path = Path()
 
     fun updateTheme(theme: KeyboardTheme) {
-        paint.color = theme.labelColor
+        paint.color = theme.specialLabelColor
         paint.strokeWidth = metrics.dp(1.7f)
     }
 

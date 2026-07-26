@@ -1,6 +1,7 @@
 package app.funput.funput.ui.theme.gallery
 
 import androidx.compose.ui.test.assertIsSelected
+import app.funput.funput.ime.settings.KeyboardThemeSlot
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -37,7 +38,7 @@ class ThemeGalleryScreenTest {
             author = "Me",
             origin = KeyboardThemeOrigin.CUSTOM,
             baseThemeId = KeyboardThemeId.Dark,
-            theme = KeyboardThemes.Dark,
+            theme = KeyboardThemes.Ink,
         )
 
         compose.setContent {
@@ -45,7 +46,11 @@ class ThemeGalleryScreenTest {
                 ThemeGalleryScreen(
                     themes = repository.themes + customTheme,
                     selectedThemeId = selectedThemeId,
+                    followsAppearance = false,
+                    activeSlot = KeyboardThemeSlot.SINGLE,
                     onThemeSelected = { selectedThemeId = it },
+                    onFollowsAppearanceChange = {},
+                    onSlotSelected = {},
                     onCreateTheme = { createRequested = true },
                     onEditTheme = { themeId -> editedThemeId = themeId },
                     onDeleteTheme = { themeId -> deletedThemeId = themeId },

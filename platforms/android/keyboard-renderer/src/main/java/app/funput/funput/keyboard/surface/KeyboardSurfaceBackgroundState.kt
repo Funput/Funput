@@ -8,7 +8,10 @@ internal class KeyboardSurfaceBackgroundState(
     context: Context,
     private val invalidate: () -> Unit,
 ) {
-    private val loader = KeyboardBackgroundImageLoader(context.contentResolver)
+    private val loader = KeyboardBackgroundImageLoader(
+        contentResolver = context.contentResolver,
+        density = context.resources.displayMetrics.density,
+    )
     var image: KeyboardThemeBackgroundImage? = null
         private set
     val bitmap get() = loader.bitmap
@@ -16,7 +19,7 @@ internal class KeyboardSurfaceBackgroundState(
     fun update(image: KeyboardThemeBackgroundImage?) {
         if (this.image == image) return
         this.image = image
-        loader.load(image?.source, invalidate)
+        loader.load(image?.source, image?.blurRadiusDp ?: 0f, invalidate)
         invalidate()
     }
 

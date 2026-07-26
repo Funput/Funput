@@ -12,7 +12,11 @@ class CustomThemeInstallerTest {
     fun installBuildsAndStoresCustomTheme() {
         val store = RecordingCustomThemeStore()
         val baseTheme = LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.Light)
-        val draft = CustomThemeDraft(name = "Ocean", baseThemeId = baseTheme.id)
+        val draft = CustomThemeDraft(
+            theme = baseTheme.theme,
+            name = "Ocean",
+            baseThemeId = baseTheme.id,
+        )
 
         val descriptor = CustomThemeInstaller(store).install(
             draft = draft,

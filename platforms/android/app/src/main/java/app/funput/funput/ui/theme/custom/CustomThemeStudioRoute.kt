@@ -3,6 +3,7 @@ package app.funput.funput.ui.theme.custom
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import app.funput.funput.ime.settings.KeyboardThemeSettings
+import app.funput.funput.ime.settings.KeyboardThemeSlot
 import app.funput.funput.theme.BuiltInKeyboardThemeSource
 import app.funput.funput.theme.InstalledThemeRepository
 import app.funput.funput.theme.KeyboardThemeDescriptor
@@ -18,6 +19,7 @@ internal fun CustomThemeStudioRoute(
     editingThemeId: KeyboardThemeId?,
     themeRepository: InstalledThemeRepository,
     saveHandler: CustomThemeSaveHandler,
+    activeSlot: KeyboardThemeSlot,
     onDone: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -26,7 +28,7 @@ internal fun CustomThemeStudioRoute(
         editingTheme = editingThemeId?.let(themeRepository::find),
         onSave = { draft ->
             scope.launch {
-                saveHandler.save(draft, editingThemeId)
+                saveHandler.save(draft, editingThemeId, activeSlot)
                 onDone()
             }
         },
@@ -39,7 +41,11 @@ internal class CustomThemeSaveHandler(
     private val installer: CustomThemeInstaller,
     private val themeSettings: KeyboardThemeSettings,
 ) {
-    suspend fun save(draft: CustomThemeDraft, editingThemeId: KeyboardThemeId?): KeyboardThemeDescriptor {
+    suspend fun save(
+        draft: CustomThemeDraft,
+        editingThemeId: KeyboardThemeId?,
+        slot: KeyboardThemeSlot,
+    ): KeyboardThemeDescriptor {
         val descriptor = withContext(Dispatchers.IO) {
             val baseTheme = themeRepository.resolve(draft.baseThemeId)
             editingThemeId?.let { themeId ->
@@ -50,7 +56,7 @@ internal class CustomThemeSaveHandler(
                 existingThemeIds = themeRepository.themes.map { theme -> theme.id }.toSet(),
             )
         }
-        themeSettings.setTheme(descriptor.id)
+        themeSettings.setTheme(descriptor.id, slot)
         return descriptor
     }
 }

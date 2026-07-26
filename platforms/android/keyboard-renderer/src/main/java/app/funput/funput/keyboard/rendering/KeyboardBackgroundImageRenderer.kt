@@ -10,6 +10,9 @@ import kotlin.math.roundToInt
 
 internal class KeyboardBackgroundImageRenderer {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val overlayPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val destination = RectF()
+    private val source = Rect()
 
     fun draw(
         canvas: Canvas,
@@ -20,20 +23,21 @@ internal class KeyboardBackgroundImageRenderer {
     ) {
         if (bitmap == null || backgroundImage == null || width <= 0 || height <= 0) return
         paint.alpha = (backgroundImage.opacity * MaxAlpha).roundToInt().coerceIn(0, MaxAlpha)
-        canvas.drawBitmap(bitmap, sourceRect(bitmap, width, height), RectF(0f, 0f, width.toFloat(), height.toFloat()), paint)
-    }
-
-    private fun sourceRect(bitmap: Bitmap, width: Int, height: Int): Rect {
-        val targetRatio = width.toFloat() / height.toFloat()
-        val bitmapRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
-        return if (bitmapRatio > targetRatio) {
-            val cropWidth = (bitmap.height * targetRatio).roundToInt()
-            val left = (bitmap.width - cropWidth) / 2
-            Rect(left, 0, left + cropWidth, bitmap.height)
-        } else {
-            val cropHeight = (bitmap.width / targetRatio).roundToInt()
-            val top = (bitmap.height - cropHeight) / 2
-            Rect(0, top, bitmap.width, top + cropHeight)
+        destination.set(0f, 0f, width.toFloat(), height.toFloat())
+        val crop = BackgroundImageCrop.sourceRect(
+            imageWidth = bitmap.width,
+            imageHeight = bitmap.height,
+            targetWidth = width,
+            targetHeight = height,
+            framing = backgroundImage,
+        )
+        source.set(crop.left, crop.top, crop.right, crop.bottom)
+        canvas.drawBitmap(bitmap, source, destination, paint)
+        // Drawn after the image and before the keys, which is what makes it a legibility wash
+        // rather than a tint on the whole keyboard.
+        if (backgroundImage.overlayColor ushr 24 != 0) {
+            overlayPaint.color = backgroundImage.overlayColor
+            canvas.drawRect(destination, overlayPaint)
         }
     }
 }
