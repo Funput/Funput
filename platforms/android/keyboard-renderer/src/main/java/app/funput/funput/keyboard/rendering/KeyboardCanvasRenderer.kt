@@ -31,7 +31,6 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         this.theme = theme
         keyRenderer.updateTheme(theme, width, height)
         suggestionBarRenderer.updateTheme(theme)
-        toolbarLogoRenderer.updateTheme(theme)
         if (width > 0 && height > 0) {
             if (theme.backgroundStartColor == theme.backgroundEndColor) {
                 backgroundPaint.shader = null

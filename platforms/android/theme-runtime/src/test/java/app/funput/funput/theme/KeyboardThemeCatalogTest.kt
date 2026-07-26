@@ -35,6 +35,15 @@ class KeyboardThemeCatalogTest {
     }
 
     @Test
+    fun bundledThemesShareTheIosKeyShape() {
+        LocalKeyboardThemeCatalog.themes.forEach { descriptor ->
+            assertEquals(6f, descriptor.theme.keyCornerRadiusDp, 0f)
+            assertEquals(0f, descriptor.theme.keyBorderWidthDp, 0f)
+            assertEquals(0, descriptor.theme.keyBorderColor ushr 24)
+        }
+    }
+
+    @Test
     fun resolveReturnsKnownThemeAndFallsBackForUnknownTheme() {
         assertSame(
             KeyboardThemes.Paper,
