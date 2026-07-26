@@ -21,10 +21,14 @@ public final class KeyboardSurfaceView: UIView {
     let keysHost = KeyboardKeysHostView()
     let touchOverlay = KeyboardTouchOverlayView()
     let previewView = KeyboardKeyPreviewView()
+    let alternatePaletteView = KeyboardAlternatePaletteView()
     lazy var interactionController = KeyboardSurfaceInteractionController(
         feedbackView: self,
         onEvent: { [weak self] event in self?.onKeyEvent?(event) },
         onPreview: { [weak self] key, frame in self?.updatePreview(key, sourceFrame: frame) },
+        onAlternatePreview: { [weak self] key, layout, selectedIndex in
+            self?.updateAlternates(key, layout: layout, selectedIndex: selectedIndex)
+        },
         onHighlight: { [weak self] key, highlighted in
             self?.keyControls[key.id]?.setPressed(highlighted, presentation: self?.presentation)
         }
@@ -101,6 +105,7 @@ public final class KeyboardSurfaceView: UIView {
         contentHost.addSubview(toolbarView)
         contentHost.addSubview(touchOverlay)
         addSubview(previewView)
+        addSubview(alternatePaletteView)
         configureTouchOverlay()
         toolbarView.onEvent = { [weak self] event in self?.route(event, from: nil) }
         toolbarView.onSystemInputModeEvent = { [weak self] source, event in

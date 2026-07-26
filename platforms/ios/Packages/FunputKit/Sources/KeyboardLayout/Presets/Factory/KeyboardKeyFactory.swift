@@ -9,7 +9,11 @@ private let telexKeyHints: [Character: (glyph: String, description: String)] = [
     "z": ("×", "xóa dấu"),
 ]
 
-func characterKey(_ character: Character, showsTelexHint: Bool = false) -> KeySpec {
+func characterKey(
+    _ character: Character,
+    showsTelexHint: Bool = false,
+    supportsVietnameseAlternates: Bool = false
+) -> KeySpec {
     let label = String(character)
     let hint = showsTelexHint ? telexKeyHints[character] : nil
     return KeySpec(
@@ -18,7 +22,9 @@ func characterKey(_ character: Character, showsTelexHint: Bool = false) -> KeySp
         role: .character,
         shiftedLabel: label.uppercased(),
         secondaryLabel: hint?.glyph,
-        accessibilityLabel: hint.map { "\(label.uppercased()), \($0.description)" }
+        accessibilityLabel: hint.map { "\(label.uppercased()), \($0.description)" },
+        alternates: supportsVietnameseAlternates
+            ? VietnameseKeyAlternates.values(for: character) : []
     )
 }
 
@@ -41,18 +47,32 @@ func specialKey(
 func characterRow(
     _ characters: String,
     inset: CGFloat = 0,
-    showsTelexHints: Bool = false
+    showsTelexHints: Bool = false,
+    supportsVietnameseAlternates: Bool = false
 ) -> KeyboardRow {
     KeyboardRow(
-        keys: characters.map { characterKey($0, showsTelexHint: showsTelexHints) },
+        keys: characters.map {
+            characterKey(
+                $0,
+                showsTelexHint: showsTelexHints,
+                supportsVietnameseAlternates: supportsVietnameseAlternates
+            )
+        },
         horizontalInsetUnits: inset
     )
 }
 
-func bottomCharacterRow(showsTelexHints: Bool = false) -> KeyboardRow {
+func bottomCharacterRow(
+    showsTelexHints: Bool = false,
+    supportsVietnameseAlternates: Bool = false
+) -> KeyboardRow {
     var keys = [specialKey("shift", "", .shift, weight: 1.5, accessibilityLabel: "Shift")]
     keys.append(contentsOf: "zxcvbnm".map {
-        characterKey($0, showsTelexHint: showsTelexHints)
+        characterKey(
+            $0,
+            showsTelexHint: showsTelexHints,
+            supportsVietnameseAlternates: supportsVietnameseAlternates
+        )
     })
     keys.append(specialKey("backspace", "", .backspace, weight: 1.5, accessibilityLabel: "Xóa"))
     return KeyboardRow(keys: keys)

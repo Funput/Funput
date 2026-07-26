@@ -10,6 +10,11 @@ import UIKit
 final class KeyboardSurfaceInteractionController {
     typealias TouchToken = KeyboardPressCommitQueue.TouchToken
     typealias PreviewHandler = (_ key: KeySpec?, _ sourceFrame: CGRect?) -> Void
+    typealias AlternatePreviewHandler = (
+        _ key: KeySpec?,
+        _ layout: KeyboardAlternatePaletteLayout?,
+        _ selectedIndex: Int?
+    ) -> Void
     typealias HighlightHandler = (_ key: KeySpec, _ highlighted: Bool) -> Void
 
     /// Why a tracked touch is ending without a release.
@@ -25,6 +30,9 @@ final class KeyboardSurfaceInteractionController {
         let startPoint: CGPoint
         var currentKey: KeySpec?
         var currentFrame: CGRect?
+        let containerBounds: CGRect
+        var alternateLayout: KeyboardAlternatePaletteLayout?
+        var selectedAlternateIndex: Int?
         var swipeTracker = KeySwipeGestureTracker()
         /// Set once the finger travels past `tapSlop`, which separates a tap from a
         /// gesture that merely started on a keycap.
@@ -38,12 +46,18 @@ final class KeyboardSurfaceInteractionController {
     let haptics: KeyboardHaptics
     let onEvent: (KeyboardKeyEvent) -> Void
     let onPreview: PreviewHandler
+    let onAlternatePreview: AlternatePreviewHandler
     let onHighlight: HighlightHandler
     let repeatScheduler: BackspaceRepeatController.Scheduler
     lazy var repeatController = BackspaceRepeatController(
         schedule: repeatScheduler
     ) { [weak self] in
         self?.repeatActiveKey()
+    }
+    lazy var alternateHoldController = AlternateHoldController(
+        schedule: repeatScheduler
+    ) { [weak self] token in
+        self?.activateAlternates(for: token)
     }
     var commitQueue = KeyboardPressCommitQueue()
     var touches: [TouchToken: TouchState] = [:]
@@ -63,6 +77,7 @@ final class KeyboardSurfaceInteractionController {
         feedbackView: UIView = UIView(),
         onEvent: @escaping (KeyboardKeyEvent) -> Void,
         onPreview: @escaping PreviewHandler,
+        onAlternatePreview: @escaping AlternatePreviewHandler = { _, _, _ in },
         onHighlight: @escaping HighlightHandler = { _, _ in },
         repeatScheduler: @escaping BackspaceRepeatController.Scheduler =
             BackspaceRepeatController.schedule
@@ -70,6 +85,7 @@ final class KeyboardSurfaceInteractionController {
         haptics = KeyboardHaptics(view: feedbackView)
         self.onEvent = onEvent
         self.onPreview = onPreview
+        self.onAlternatePreview = onAlternatePreview
         self.onHighlight = onHighlight
         self.repeatScheduler = repeatScheduler
         touches.reserveCapacity(10)

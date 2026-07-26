@@ -82,6 +82,19 @@ public final class KeyboardInputCoordinator {
         }
     }
 
+    public func handleAlternate(
+        _ alternate: KeyAlternate,
+        from key: KeySpec,
+        document: any KeyboardDocument
+    ) {
+        guard key.role == .character else { return }
+        synchronizeBeforeInput(document)
+        documentSynchronizer.beginMutation()
+        input(alternate.text(for: state.shiftState), document: document)
+        consumeOneShotShift()
+        finishDocumentMutation(preserveOneShotShift: false)
+    }
+
     private func closesCompositionEpoch(for key: KeySpec) -> Bool {
         if state.inputMethod == .telexAdvanced,
            key.role == .punctuation,

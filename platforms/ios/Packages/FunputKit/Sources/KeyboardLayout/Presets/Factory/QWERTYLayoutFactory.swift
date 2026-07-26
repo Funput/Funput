@@ -4,6 +4,7 @@ func qwertyLayout(
     leadingRows: [KeyboardRow] = [],
     actionKeys: [KeySpec],
     showsTelexHints: Bool = false,
+    supportsVietnameseAlternates: Bool = false,
     showsToolbar: Bool = true
 ) -> KeyboardLayout {
     let displaysTelexHints = showsTelexHints && inputMethod.isTelexFamily
@@ -12,9 +13,21 @@ func qwertyLayout(
         inputMethod: inputMethod,
         toolbar: showsToolbar ? .standard : nil,
         rows: leadingRows + [
-            characterRow("qwertyuiop", showsTelexHints: displaysTelexHints),
-            characterRow("asdfghjkl", inset: 0.5, showsTelexHints: displaysTelexHints),
-            bottomCharacterRow(showsTelexHints: displaysTelexHints),
+            characterRow(
+                "qwertyuiop",
+                showsTelexHints: displaysTelexHints,
+                supportsVietnameseAlternates: supportsVietnameseAlternates
+            ),
+            characterRow(
+                "asdfghjkl",
+                inset: 0.5,
+                showsTelexHints: displaysTelexHints,
+                supportsVietnameseAlternates: supportsVietnameseAlternates
+            ),
+            bottomCharacterRow(
+                showsTelexHints: displaysTelexHints,
+                supportsVietnameseAlternates: supportsVietnameseAlternates
+            ),
             KeyboardRow(keys: actionKeys),
         ]
     )

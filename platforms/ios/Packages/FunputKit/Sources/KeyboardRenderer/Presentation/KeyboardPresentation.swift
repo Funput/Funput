@@ -45,6 +45,7 @@ public struct KeyboardKeyEvent: Sendable {
         case pressed
         case repeated
         case swiped(KeySwipeAction)
+        case alternateSelected(KeyAlternate)
         case released
         case cancelled
     }

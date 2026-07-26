@@ -8,7 +8,12 @@ public enum EditorKeyboardLayouts {
         case .text:
             StandardKeyboardLayouts.letters(inputMethod, showsNumberRow: showsNumberRow)
         case .search:
-            webLayout(prefix: "search", inputMethod: inputMethod, supportsLanguageSwipe: true)
+            webLayout(
+                prefix: "search",
+                inputMethod: inputMethod,
+                supportsLanguageSwipe: true,
+                supportsVietnameseAlternates: true
+            )
         case .email:
             emailLayout(inputMethod)
         case .url:
@@ -36,7 +41,8 @@ public enum EditorKeyboardLayouts {
     private static func webLayout(
         prefix: String,
         inputMethod: KeyboardInputMethod,
-        supportsLanguageSwipe: Bool = false
+        supportsLanguageSwipe: Bool = false,
+        supportsVietnameseAlternates: Bool = false
     ) -> KeyboardLayout {
         qwertyLayout(
             id: "qwerty-\(prefix)-\(inputMethod.rawValue)",
@@ -49,7 +55,8 @@ public enum EditorKeyboardLayouts {
                 middleLabel: "/",
                 middleAccessibility: "Dấu gạch chéo",
                 supportsLanguageSwipe: supportsLanguageSwipe
-            )
+            ),
+            supportsVietnameseAlternates: supportsVietnameseAlternates
         )
     }
 

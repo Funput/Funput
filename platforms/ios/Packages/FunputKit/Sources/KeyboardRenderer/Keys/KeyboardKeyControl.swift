@@ -111,17 +111,12 @@ final class KeyboardKeyControl: UIControl {
     }
 
     private func applyAccessibilityActions(presentation: KeyboardPresentation) {
-        guard let action = spec.horizontalSwipeAction else {
-            accessibilityCustomActions = nil
-            return
+        accessibilityCustomActions = KeyboardKeyAccessibilityActions.make(
+            spec: spec,
+            presentation: presentation
+        ) { [weak self] phase in
+            self?.emit(phase)
         }
-        let target = presentation.language == .vietnamese ? "Tiếng Anh" : "Tiếng Việt"
-        accessibilityCustomActions = [
-            UIAccessibilityCustomAction(name: "Chuyển sang \(target)") { [weak self] _ in
-                self?.emit(.swiped(action))
-                return self != nil
-            },
-        ]
     }
 
     private func applySurfaceIfNeeded(traits: UITraitCollection) {
