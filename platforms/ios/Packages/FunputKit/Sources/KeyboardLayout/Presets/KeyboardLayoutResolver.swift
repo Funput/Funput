@@ -7,7 +7,7 @@ public enum KeyboardLayoutResolver {
         showsNumberRow: Bool = true
     ) -> KeyboardLayout {
         let usesCompactLayout = editorMode == .text
-            && inputMethod == .telex
+            && inputMethod.isTelexFamily
             && !showsNumberRow
         let layout = switch mode {
         case .letters:

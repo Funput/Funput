@@ -9,7 +9,7 @@ public enum StandardKeyboardLayouts {
             inputMethod: inputMethod,
             leadingRows: hasNumberRow ? [topNumberRowForLetters(inputMethod)] : [],
             actionKeys: standardActionRow().keys,
-            showsTelexHints: inputMethod == .telex
+            showsTelexHints: inputMethod.isTelexFamily
         )
     }
 }

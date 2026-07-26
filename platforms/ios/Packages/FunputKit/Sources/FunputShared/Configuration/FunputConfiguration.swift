@@ -77,5 +77,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 6
+    public static let currentSchemaVersion = 7
 }

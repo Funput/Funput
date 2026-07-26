@@ -6,7 +6,7 @@ func qwertyLayout(
     showsTelexHints: Bool = false,
     showsToolbar: Bool = true
 ) -> KeyboardLayout {
-    let displaysTelexHints = showsTelexHints && inputMethod == .telex
+    let displaysTelexHints = showsTelexHints && inputMethod.isTelexFamily
     return KeyboardLayout(
         id: id,
         inputMethod: inputMethod,

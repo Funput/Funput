@@ -42,6 +42,9 @@ extension FunputConfiguration {
         if config.schemaVersion < 6 {
             config.schemaVersion = 6
         }
+        if config.schemaVersion < 7 {
+            config.schemaVersion = 7
+        }
         self = config
     }
 }

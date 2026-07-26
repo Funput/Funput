@@ -1,6 +1,7 @@
 public enum FunputInputMethod: UInt8, CaseIterable, Sendable {
     case telex = 0
     case vni = 1
+    case telexAdvanced = 2
 }
 
 public enum FunputToneStyle: UInt8, CaseIterable, Sendable {

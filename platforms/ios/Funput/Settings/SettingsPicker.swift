@@ -48,7 +48,7 @@ extension SettingsPicker {
             KeyboardInputMethod.allCases.map { value in
                 SettingsChoice(
                     id: value.rawValue, title: value.settingsTitle,
-                    summary: value == .vni ? "Dùng các phím số để nhập dấu." : "Dùng tổ hợp chữ để nhập dấu.",
+                    summary: value.settingsSummary,
                     isSelected: model.configuration.inputMethod == value,
                     select: { model.update(\.inputMethod, to: value) }
                 )

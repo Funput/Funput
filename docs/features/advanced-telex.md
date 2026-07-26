@@ -2,9 +2,9 @@
 
 ## Trạng thái
 
-V5 đã hiện thực core/engine và C FFI/JNI. macOS, Windows và Linux expose UI,
-persistence và selection. Đây là tính năng desktop: iOS/Android không
-expose hoặc persist mode này, còn wire ID `2` trong FFI/JNI vẫn được giữ dormant.
+V5 đã hiện thực core/engine và C FFI/JNI. macOS, Windows, Linux và iOS expose UI,
+persistence và selection. Android chưa expose hoặc persist mode này, còn wire ID `2`
+trong JNI vẫn được giữ dormant.
 Tên hiển thị là **Telex nâng cao**; tên kỹ thuật là `TelexAdvanced` và giá trị cấu
 hình ổn định là `telex_advanced`.
 
@@ -104,13 +104,14 @@ chứng lại `size_of::<Engine>()` và ABI tests.
 
 ### Platform
 
-Platform không tự hiện thực quy tắc gõ. macOS, Windows và Linux hiển thị **Telex**,
-**Telex nâng cao**, **VNI** theo thứ tự đó và persist `telex_advanced`. macOS và
-hai backend Linux (Fcitx5/IBus) truyền mode qua C FFI; Windows dùng trực tiếp Rust engine.
+Platform không tự hiện thực quy tắc gõ. macOS, Windows, Linux và iOS hiển thị
+**Telex**, **Telex nâng cao**, **VNI** theo thứ tự đó và persist `telex_advanced`.
+macOS, iOS và hai backend Linux (Fcitx5/IBus) truyền mode qua C FFI; Windows dùng
+trực tiếp Rust engine.
 
-iOS/Android không thêm UI, persistence hoặc wiring cho mode này. Khi một consumer
-không hỗ trợ đọc `telex_advanced`, nó phải giữ input method hiện tại thay vì ép về
-một method khác.
+Android chưa thêm UI, persistence hoặc wiring cho mode này. Khi một consumer không
+hỗ trợ đọc `telex_advanced`, nó phải giữ input method hiện tại thay vì ép về một
+method khác.
 
 Config interchange mở rộng `preferences.inputMethod` thành:
 
@@ -127,8 +128,8 @@ Config interchange mở rộng `preferences.inputMethod` thành:
 - Core, engine và FFI common-path không chậm quá 3% so với baseline trước V5.
 - Viet74K đạt 100% với cả Telex canonical và Full Telex shortcut encoding.
 - Không nới allocation budget hiện tại; kiểm tra lại kích thước Engine và ABI.
-- Core, engine, C FFI và JNI dùng cùng behavior và wire mapping; macOS, Windows và
-  Linux đã tích hợp selection, còn mobile giữ mapping dormant.
+- Core, engine, C FFI và JNI dùng cùng behavior và wire mapping; macOS, Windows,
+  Linux và iOS đã tích hợp selection, còn Android giữ mapping dormant.
 
 ## Ngoài phạm vi V5
 

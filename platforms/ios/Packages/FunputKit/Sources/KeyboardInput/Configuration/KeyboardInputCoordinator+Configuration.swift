@@ -12,6 +12,9 @@ public extension KeyboardInputCoordinator {
     /// language chosen here can still be toggled at runtime afterward.
     func apply(_ configuration: FunputConfiguration) {
         composer.clear()
+        if configuration.inputMethod.isTelexFamily {
+            preferredTelexMethod = configuration.inputMethod
+        }
         composer.configure(
             FunputCompositionOptions(
                 inputMethod: configuration.inputMethod.engineMethod,
