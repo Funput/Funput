@@ -9,6 +9,12 @@ import app.funput.funput.keyboard.model.KeyboardLayoutMode
 
 /** Owns layout-affecting state and rebuilds the immutable layout when it changes. */
 internal class KeyboardSurfaceLayoutState(private val onLayoutChanged: () -> Unit) {
+    var layoutOverride: KeyboardLayout? = null
+        set(value) {
+            if (field == value) return
+            field = value
+            refresh()
+        }
     var inputMethod = KeyboardInputMethod.TELEX
         set(value) {
             if (field == value) return
@@ -48,7 +54,7 @@ internal class KeyboardSurfaceLayoutState(private val onLayoutChanged: () -> Uni
         onLayoutChanged()
     }
 
-    private fun resolve() = KeyboardLayoutResolver.resolve(
+    private fun resolve() = layoutOverride ?: KeyboardLayoutResolver.resolve(
         inputMethod = inputMethod,
         mode = layoutMode,
         editorMode = editorMode,

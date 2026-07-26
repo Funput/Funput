@@ -15,6 +15,7 @@ import app.funput.funput.ime.suggestions.PersonalSuggestionService
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.ui.FunputKeyboardView
+import app.funput.funput.keyboard.ui.emoji.EmojiCatalogPreloader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -63,6 +64,7 @@ class FunputInputMethodService : InputMethodService() {
         updateInputView(view)
         ImeKeyboardCallbackBinder.bind(view, actionHandler, editorRuntime, suggestionService,
             systemInputMethodSwitcher)
+        EmojiCatalogPreloader.schedule(view)
     }
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)

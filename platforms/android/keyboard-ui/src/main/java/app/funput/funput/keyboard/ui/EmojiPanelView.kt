@@ -1,14 +1,29 @@
 package app.funput.funput.keyboard.ui
 
 import android.content.Context
-import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
-import android.view.ContextThemeWrapper
+import android.view.View
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.KeyboardHaptics
 import app.funput.funput.keyboard.KeyboardSounds
 import app.funput.funput.keyboard.model.KeyAction
+import app.funput.funput.keyboard.ui.emoji.EmojiBottomBarView
+import app.funput.funput.keyboard.ui.emoji.EmojiBrowserView
+import app.funput.funput.keyboard.ui.emoji.EmojiCatalog
+import app.funput.funput.keyboard.ui.emoji.EmojiCatalogLoader
+import app.funput.funput.keyboard.ui.emoji.EmojiItem
+import app.funput.funput.keyboard.ui.emoji.EmojiLoadingView
+import app.funput.funput.keyboard.ui.emoji.EmojiPanelPalette
+import app.funput.funput.keyboard.ui.emoji.EmojiRecentsStore
+import app.funput.funput.keyboard.ui.emoji.EmojiSearchContentView
+import app.funput.funput.keyboard.ui.emoji.EmojiSearchController
+import app.funput.funput.keyboard.ui.emoji.EmojiSearchHeaderView
+import app.funput.funput.keyboard.ui.emoji.EmojiSearchIndex
+import app.funput.funput.keyboard.ui.emoji.EmojiSearchMode
+import app.funput.funput.keyboard.ui.emoji.EmojiSearchState
 import app.funput.funput.theme.KeyboardTheme
 
 internal class EmojiPanelView @JvmOverloads constructor(
@@ -22,60 +37,108 @@ internal class EmojiPanelView @JvmOverloads constructor(
         get() = isHapticFeedbackEnabled
         set(value) {
             isHapticFeedbackEnabled = value
-            picker.hapticsEnabled = value
+            search.updateFeedback(value, soundsEnabled)
         }
     var soundsEnabled: Boolean
         get() = isSoundEffectsEnabled
-        set(value) { isSoundEffectsEnabled = value }
+        set(value) {
+            isSoundEffectsEnabled = value
+            search.updateFeedback(hapticsEnabled, value)
+        }
+    private val header = EmojiSearchHeaderView(context)
+    private val browser = EmojiBrowserView(context)
+    private val search = EmojiSearchContentView(context)
+    private val bottom = EmojiBottomBarView(context)
+    private val loading = EmojiLoadingView(context)
+    private val content = FrameLayout(context)
+    private val divider = View(context)
+    private val recents = EmojiRecentsStore(context)
+    private var catalog = EmojiCatalog.Empty
+    private var index = EmojiSearchIndex(emptyList())
+    private lateinit var palette: EmojiPanelPalette
+    private val controller = EmojiSearchController(::renderSearch)
 
-    private val picker = ScrollableEmojiPickerView(
-        ContextThemeWrapper(context, R.style.Theme_Funput_EmojiPicker),
-    )
-    private val toolbar = EmojiPanelToolbar(context)
-
-    init {
+    init { KeyboardComposeLifecycle.install(this)
         orientation = VERTICAL
-        picker.setBackgroundColor(Color.TRANSPARENT)
-        picker.setOnEmojiPickedListener { emoji ->
-            haptic(KeyboardHapticType.KEY_PRESS)
-            sound(KeyboardHapticType.KEY_PRESS)
-            onEmojiSelected(emoji)
+        content.addView(browser, matchParent())
+        content.addView(search, matchParent())
+        content.addView(loading, matchParent())
+        addView(header, LayoutParams(LayoutParams.MATCH_PARENT, dp(46)))
+        addView(content, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
+        addView(divider, LayoutParams(LayoutParams.MATCH_PARENT, dp(1)))
+        addView(bottom, LayoutParams(LayoutParams.MATCH_PARENT, dp(46)))
+        wireActions()
+        EmojiCatalogLoader.load(context) { content ->
+            catalog = content.catalog
+            index = content.searchIndex
+            if (catalog.emojis.isEmpty()) loading.showEmpty()
+            loading.visibility = if (catalog.emojis.isEmpty()) VISIBLE else GONE
+            refreshBrowser()
+            renderSearch(controller.state)
         }
-        toolbar.onLettersRequested = {
-            haptic(KeyboardHapticType.CONTROL)
-            sound(KeyboardHapticType.CONTROL)
-            onLettersRequested()
-        }
-        toolbar.onBackspaceRequested = {
-            haptic(KeyboardHapticType.DELETE)
-            sound(KeyboardHapticType.DELETE)
-            onBackspaceRequested(KeyAction.Backspace)
-        }
-        addView(picker, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
-        addView(pickerDivider(), LayoutParams(LayoutParams.MATCH_PARENT, dp(1)))
-        addView(toolbar, LayoutParams(LayoutParams.MATCH_PARENT, dp(52)))
     }
 
     fun updateTheme(theme: KeyboardTheme) {
-        background = EmojiPanelBackgrounds.panel(theme)
-        toolbar.updateTheme(theme)
+        palette = EmojiPanelPalette.from(theme)
+        background = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(palette.backgroundStart, palette.backgroundEnd),
+        )
+        divider.setBackgroundColor(palette.divider)
+        loading.updatePalette(palette)
+        header.render(controller.state, palette)
+        browser.updatePalette(palette)
+        bottom.updatePalette(palette)
+        search.updateTheme(theme)
+        renderSearch(controller.state)
     }
 
-    override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
-        super.onSizeChanged(width, height, oldWidth, oldHeight)
-        val widthDp = width / resources.displayMetrics.density
-        picker.emojiGridColumns = EmojiGridColumns.forWidth(widthDp)
+    override fun onVisibilityChanged(changedView: View, visibility: Int) {
+        super.onVisibilityChanged(changedView, visibility)
+        if (changedView === this && visibility != VISIBLE) controller.reset()
     }
 
-    private fun pickerDivider() = android.view.View(context).apply {
-        setBackgroundColor(0x33FFFFFF)
+    private fun wireActions() {
+        header.onSearchRequested = controller::begin
+        header.onClearRequested = controller::clear
+        header.onCancelRequested = controller::cancel
+        browser.onEmojiSelected = ::select
+        browser.onCategoryChanged = bottom::setSelected
+        bottom.onCategoryRequested = browser::scrollTo
+        bottom.onLettersRequested = onLetters@{ feedback(KeyboardHapticType.CONTROL); onLettersRequested() }
+        bottom.onBackspaceRequested = { feedback(KeyboardHapticType.DELETE); onBackspaceRequested(KeyAction.Backspace) }
+        search.onEmojiSelected = ::select
+        search.onInput = controller::input
+        search.onSpace = controller::space
+        search.onBackspace = controller::backspace
+        search.onDone = controller::done
+        search.onCancel = controller::cancel
     }
 
-    private fun haptic(type: KeyboardHapticType) {
+    private fun select(item: EmojiItem) {
+        feedback(KeyboardHapticType.KEY_PRESS)
+        recents.record(item.glyph)
+        onEmojiSelected(item.glyph)
+        refreshBrowser()
+    }
+
+    private fun refreshBrowser() = browser.submit(catalog, recents.glyphs())
+
+    private fun renderSearch(state: EmojiSearchState) {
+        if (!::palette.isInitialized) return
+        val browsing = state.mode == EmojiSearchMode.BROWSING
+        browser.visibility = if (browsing) VISIBLE else GONE
+        search.visibility = if (browsing) GONE else VISIBLE
+        bottom.visibility = if (browsing) VISIBLE else GONE
+        divider.visibility = bottom.visibility
+        header.render(state, palette)
+        search.render(state, index.search(state.query), palette)
+    }
+
+    private fun feedback(type: KeyboardHapticType) {
         KeyboardHaptics.perform(this, type)
+        KeyboardSounds.perform(this, type)
     }
-
-    private fun sound(type: KeyboardHapticType) = KeyboardSounds.perform(this, type)
-
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
+    private fun matchParent() = FrameLayout.LayoutParams(-1, -1)
 }
