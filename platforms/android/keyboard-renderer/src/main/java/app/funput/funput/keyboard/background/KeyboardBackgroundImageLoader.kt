@@ -6,32 +6,43 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 internal class KeyboardBackgroundImageLoader(
     private val contentResolver: ContentResolver,
+    private val density: Float,
     private val maxBitmapSizePx: Int = 1200,
 ) {
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
     private var generation = 0
-    private var currentSource: String? = null
+    private var currentRequest: Request? = null
     var bitmap: Bitmap? = null
         private set
 
-    fun load(source: String?, onLoaded: () -> Unit) {
-        if (source == currentSource) return
-        currentSource = source
+    /**
+     * The blur radius is part of the request, not just the source.
+     *
+     * Blur is baked into the bitmap so it costs nothing per frame, which means changing the radius
+     * has to produce a new decode — keying only on the source would leave the slider inert.
+     */
+    fun load(source: String?, blurRadiusDp: Float, onLoaded: () -> Unit) {
+        val request = source?.let { Request(it, blurRadiusDp) }
+        if (request == currentRequest) return
+        currentRequest = request
         generation += 1
         bitmap = null
-        if (source == null) {
+        if (request == null) {
             onLoaded()
             return
         }
         val requestGeneration = generation
         executor.execute {
-            val decoded = decodeBitmap(source)
+            val decoded = decodeBitmap(request.source)?.let { decoded ->
+                BitmapBlur.applied(decoded, request.blurRadiusDp, density)
+            }
             mainHandler.post {
                 if (requestGeneration != generation) return@post
                 bitmap = decoded
@@ -47,14 +58,21 @@ internal class KeyboardBackgroundImageLoader(
     }
 
     private fun decodeBitmap(source: String): Bitmap? = runCatching {
-        val uri = Uri.parse(source)
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+        openStream(source)?.use { BitmapFactory.decodeStream(it, null, bounds) }
         val options = BitmapFactory.Options().apply {
             inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight)
         }
-        contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) }
+        openStream(source)?.use { BitmapFactory.decodeStream(it, null, options) }
     }.getOrNull()
+
+    /** Stored assets are plain paths; a theme saved before the asset store holds a content URI. */
+    private fun openStream(source: String) =
+        if (source.startsWith("/")) {
+            File(source).takeIf(File::exists)?.inputStream()
+        } else {
+            contentResolver.openInputStream(Uri.parse(source))
+        }
 
     private fun sampleSize(width: Int, height: Int): Int {
         var sample = 1
@@ -63,4 +81,6 @@ internal class KeyboardBackgroundImageLoader(
         }
         return sample
     }
+
+    private data class Request(val source: String, val blurRadiusDp: Float)
 }

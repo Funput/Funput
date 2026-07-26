@@ -2,6 +2,7 @@ package app.funput.funput.ui.theme.custom
 
 import androidx.compose.runtime.Composable
 import app.funput.funput.theme.KeyboardThemeDescriptor
+import app.funput.funput.ui.theme.custom.background.ThemeBackgroundTab
 import app.funput.funput.ui.theme.custom.color.ThemeColorTab
 import app.funput.funput.ui.theme.custom.metrics.ThemeMetricsTab
 
@@ -33,12 +34,9 @@ internal fun CreateThemeTabContent(
         theme = state.theme,
         onThemeChange = { transform -> state.updateTheme(transform) },
     )
-    CreateThemeEditorTab.Background -> BackgroundImagePlaceholder(
-        imageSelected = state.backgroundImageSource != null,
-        opacity = state.imageOpacity,
-        onOpacityChange = { opacity -> state.imageOpacity = opacity },
+    CreateThemeEditorTab.Background -> ThemeBackgroundTab(
+        state = state,
         onChooseImage = onChooseBackgroundImage,
-        onRemoveImage = { state.backgroundImageSource = null },
     )
     CreateThemeEditorTab.Info -> ThemeInfoTab(
         name = state.name,

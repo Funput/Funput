@@ -29,7 +29,12 @@ internal object KeyboardThemeJsonCodec {
                 "backgroundImage",
                 JSONObject()
                     .put("source", background.source)
-                    .put("opacity", background.opacity.toDouble()),
+                    .put("opacity", background.opacity.toDouble())
+                    .put("focalX", background.focalX.toDouble())
+                    .put("focalY", background.focalY.toDouble())
+                    .put("zoom", background.zoom.toDouble())
+                    .put("blurRadiusDp", background.blurRadiusDp.toDouble())
+                    .put("overlayColor", background.overlayColor),
             )
         }
         put("theme", KeyboardThemeTokenJson.encode(descriptor.theme))
@@ -51,10 +56,27 @@ internal object KeyboardThemeJsonCodec {
         )
     }
 
+    // Framing values are coerced for the same reason the theme metrics are: this data can come
+    // from a file the app did not write.
     private fun JSONObject.backgroundImage() = KeyboardThemeBackgroundImage(
         source = getString("source"),
-        opacity = getDouble("opacity").toFloat(),
+        opacity = getDouble("opacity").toFloat().coerceIn(0f, 1f),
+        focalX = framing("focalX", KeyboardThemeBackgroundImage.CenterFocus, FocusRange),
+        focalY = framing("focalY", KeyboardThemeBackgroundImage.CenterFocus, FocusRange),
+        zoom = framing("zoom", KeyboardThemeBackgroundImage.MinZoom, ZoomRange),
+        blurRadiusDp = framing("blurRadiusDp", 0f, BlurRange),
+        overlayColor = optInt("overlayColor", KeyboardThemeBackgroundImage.Transparent),
     )
+
+    private fun JSONObject.framing(
+        key: String,
+        fallback: Float,
+        range: ClosedFloatingPointRange<Float>,
+    ): Float = optDouble(key, fallback.toDouble()).toFloat().coerceIn(range)
+
+    private val FocusRange = KeyboardThemeBackgroundImage.FocusRange
+    private val ZoomRange = KeyboardThemeBackgroundImage.ZoomRange
+    private val BlurRange = KeyboardThemeBackgroundImage.BlurRange
 
     private const val IndentSpaces = 2
 }

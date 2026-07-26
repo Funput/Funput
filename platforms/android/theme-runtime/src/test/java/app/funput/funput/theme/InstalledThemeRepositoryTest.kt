@@ -46,6 +46,40 @@ class InstalledThemeRepositoryTest {
     }
 
     @Test
+    fun snapshotReadsSourcesOnceAndThenStopsTouchingThem() {
+        var loads = 0
+        val repository = InstalledThemeRepository(
+            BuiltInKeyboardThemeSource,
+            InstalledThemeSource {
+                loads += 1
+                emptyList()
+            },
+        )
+
+        val catalog = repository.snapshot()
+        repeat(5) { catalog.resolve(KeyboardThemeId.Dark) }
+
+        assertEquals(1, loads)
+    }
+
+    @Test
+    fun eachDirectAccessorStillReReadsSoSeparateProcessesCannotGoStale() {
+        var loads = 0
+        val repository = InstalledThemeRepository(
+            BuiltInKeyboardThemeSource,
+            InstalledThemeSource {
+                loads += 1
+                emptyList()
+            },
+        )
+
+        repository.resolve(KeyboardThemeId.Dark)
+        repository.resolve(KeyboardThemeId.Dark)
+
+        assertEquals(2, loads)
+    }
+
+    @Test
     fun repositoryRejectsDuplicateThemeIdentifiersAcrossSources() {
         val repository = InstalledThemeRepository(
             BuiltInKeyboardThemeSource,

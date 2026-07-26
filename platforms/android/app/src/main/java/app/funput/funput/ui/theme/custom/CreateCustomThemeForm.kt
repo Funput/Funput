@@ -43,8 +43,7 @@ internal fun CreateCustomThemeForm(
         item(key = "preview") {
             CreateThemePreviewHeader(
                 previewTheme = state.theme,
-                backgroundImageSource = state.backgroundImageSource,
-                imageOpacity = state.imageOpacity,
+                backgroundImage = state.backgroundImage,
             )
         }
         item(key = "tabs") {

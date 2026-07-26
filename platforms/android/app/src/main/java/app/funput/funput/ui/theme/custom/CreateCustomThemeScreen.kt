@@ -13,6 +13,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -20,6 +22,10 @@ import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.store.custom.CustomThemeDraft
+import app.funput.funput.theme.store.themeAssetStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,12 +38,17 @@ internal fun CreateCustomThemeScreen(
 ) {
     val context = LocalContext.current
     val state = rememberThemeDraftState(baseThemes, editingTheme)
+    val assetStore = remember(context) { context.themeAssetStore() }
+    val scope = rememberCoroutineScope()
     val imagePicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia(),
     ) { uri ->
-        uri?.let {
-            context.persistBackgroundImageAccess(it)
-            state.backgroundImageSource = it.toString()
+        uri ?: return@rememberLauncherForActivityResult
+        // Copy the bytes in rather than keeping the picker's URI: the grant can be revoked and
+        // the user can delete the photo, either of which would leave the theme with no image.
+        scope.launch {
+            val stored = withContext(Dispatchers.IO) { assetStore.store(context, uri) }
+            stored?.let(state::selectBackgroundImage)
         }
     }
 

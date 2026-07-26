@@ -22,8 +22,7 @@ import app.funput.funput.ui.theme.KeyboardThemePreview
 @Composable
 internal fun CreateThemePreviewHeader(
     previewTheme: KeyboardTheme,
-    backgroundImageSource: String?,
-    imageOpacity: Float,
+    backgroundImage: KeyboardThemeBackgroundImage?,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -49,9 +48,7 @@ internal fun CreateThemePreviewHeader(
             )
             KeyboardThemePreview(
                 theme = previewTheme,
-                backgroundImage = backgroundImageSource?.let { source ->
-                    KeyboardThemeBackgroundImage(source = source, opacity = imageOpacity)
-                },
+                backgroundImage = backgroundImage,
                 modifier = Modifier
                     .padding(top = 14.dp)
                     .fillMaxWidth()

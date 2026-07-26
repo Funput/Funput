@@ -13,17 +13,10 @@ import androidx.compose.runtime.setValue
 import app.funput.funput.ime.settings.KeyboardThemeSlot
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import app.funput.funput.R
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.store.customKeyboardThemeStore
-import app.funput.funput.ui.keyboard.openKeyboardSettings
-import app.funput.funput.ui.keyboard.openWebsite
-import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.navigation.AppDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
-import app.funput.funput.ui.settings.SettingsScreen
-import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
 import app.funput.funput.ui.theme.custom.rememberCustomThemeServices
@@ -35,22 +28,22 @@ import kotlinx.coroutines.launch
 fun FunputApp() {
     val context = LocalContext.current
     val settings = rememberFunputSettings()
-    val versionName = remember(context) { AppVersionProvider.versionName(context) }
-    val keyboardSetupStatus = rememberKeyboardSetupStatus()
     val scope = rememberCoroutineScope()
     val darkTheme = settings.appearanceMode.resolveDarkTheme(isSystemInDarkTheme())
-    val websiteUrl = stringResource(R.string.settings_website_url)
     val navigator = rememberAppNavigator()
     val customThemeStore = remember(context) { context.customKeyboardThemeStore() }
     val themeRepository = remember(customThemeStore) { installedThemeRepository(customThemeStore) }
     val customThemeServices =
         rememberCustomThemeServices(themeRepository, customThemeStore, settings.keyboardTheme)
     var themeCatalogRevision by remember { mutableStateOf(0) }
-    val installedThemes = remember(themeRepository, themeCatalogRevision) { themeRepository.themes }
+    // One read of the theme sources per catalog change. Asking the repository directly would hit
+    // disk again on every recomposition, since it deliberately keeps no cache of its own.
+    val themeCatalog = remember(themeRepository, themeCatalogRevision) { themeRepository.snapshot() }
+    val installedThemes = themeCatalog.themes
     // The keyboard follows the system appearance, not the app's own light/dark preference, so
     // the summary has to be read against the system to match what the user will actually see.
     val effectiveThemeId = settings.themeSelection.resolve(isSystemInDarkTheme())
-    val keyboardThemeLabel = themeRepository.resolve(effectiveThemeId).localizedName()
+    val keyboardThemeLabel = themeCatalog.resolve(effectiveThemeId).localizedName()
     var editingThemeId by remember { mutableStateOf<KeyboardThemeId?>(null) }
     // Which slot the gallery assigns to. Pinned to SINGLE unless the user opted into following
     // the system, so nothing about the flow changes for someone who never turns it on.
@@ -65,45 +58,10 @@ fun FunputApp() {
         SyncSystemBarAppearance(darkTheme = darkTheme)
         Surface(modifier = Modifier.fillMaxSize()) {
             when (navigator.currentDestination) {
-                AppDestination.SETTINGS -> SettingsScreen(
-                    keyboardSetupStatus = keyboardSetupStatus,
-                    inputMethod = settings.inputMethod,
-                    toneStyle = settings.toneStyle,
-                    keySizeProfile = settings.keySizeProfile,
+                AppDestination.SETTINGS -> SettingsRoute(
+                    settings = settings,
                     keyboardThemeLabel = keyboardThemeLabel,
-                    appearanceMode = settings.appearanceMode,
-                    hapticsEnabled = settings.feedback.hapticsEnabled,
-                    soundsEnabled = settings.feedback.soundsEnabled,
-                    smartRestoreEnabled = settings.smartComposition.smartRestoreEnabled,
-                    spellCheckEnabled = settings.smartComposition.spellCheckEnabled,
-                    personalSuggestionsEnabled = settings.personalSuggestions.enabled,
-                    versionName = versionName,
-                    onInputMethodSelected = { method -> scope.launch { settings.input.setInputMethod(method) } },
-                    onToneStyleSelected = { style -> scope.launch { settings.toneStyleStore.setToneStyle(style) } },
-                    onKeySizeSelected = { profile -> scope.launch { settings.sizing.setProfile(profile) } },
-                    onAppearanceSelected = { mode -> scope.launch { settings.appearance.setMode(mode) } },
-                    onHapticsChanged = { enabled ->
-                        scope.launch { settings.feedbackStore.setHapticsEnabled(enabled) }
-                    },
-                    onSoundsChanged = { enabled ->
-                        scope.launch { settings.feedbackStore.setSoundsEnabled(enabled) }
-                    },
-                    onSmartRestoreChanged = { enabled ->
-                        scope.launch { settings.smartCompositionStore.setSmartRestoreEnabled(enabled) }
-                    },
-                    onSpellCheckChanged = { enabled ->
-                        scope.launch { settings.smartCompositionStore.setSpellCheckEnabled(enabled) }
-                    },
-                    onPersonalSuggestionsChanged = { enabled ->
-                        scope.launch { settings.personalSuggestionStore.setEnabled(enabled) }
-                    },
-                    onResetPersonalSuggestions = {
-                        scope.launch { settings.personalSuggestionStore.requestReset() }
-                    },
-                    onEnableKeyboard = context::openKeyboardSettings,
-                    onSelectKeyboard = context::showKeyboardPicker,
                     onOpenThemeGallery = { navigator.navigate(AppDestination.THEME_GALLERY) },
-                    onOpenWebsite = { context.openWebsite(websiteUrl) },
                 )
                 AppDestination.THEME_GALLERY -> ThemeGalleryScreen(
                     themes = installedThemes,

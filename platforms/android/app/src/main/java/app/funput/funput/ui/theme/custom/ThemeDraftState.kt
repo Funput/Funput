@@ -30,8 +30,7 @@ internal class ThemeDraftState(
     var baseThemeValue by mutableStateOf(editingTheme.initialBaseThemeValue())
         private set
     var theme by mutableStateOf(editingTheme?.theme ?: initialBaseTheme().theme)
-    var backgroundImageSource by mutableStateOf(editingTheme.initialBackgroundImageSource())
-    var imageOpacity by mutableFloatStateOf(editingTheme.initialBackgroundImageOpacity())
+    var backgroundImage by mutableStateOf(editingTheme?.backgroundImage)
 
     val baseTheme: KeyboardThemeDescriptor
         get() = baseThemes.find { it.id.value == baseThemeValue } ?: baseThemes.first()
@@ -48,13 +47,25 @@ internal class ThemeDraftState(
         theme = transform(theme)
     }
 
+    /** Applies a framing change; a no-op when no image has been chosen yet. */
+    fun updateBackgroundImage(
+        transform: (KeyboardThemeBackgroundImage) -> KeyboardThemeBackgroundImage,
+    ) {
+        backgroundImage = backgroundImage?.let(transform)
+    }
+
+    fun selectBackgroundImage(source: String) {
+        backgroundImage = KeyboardThemeBackgroundImage(
+            source = source,
+            opacity = backgroundImage?.opacity ?: DefaultBackgroundImageOpacity,
+        )
+    }
+
     fun toDraft(): CustomThemeDraft = CustomThemeDraft(
         theme = theme,
         name = name,
         baseThemeId = baseTheme.id,
-        backgroundImage = backgroundImageSource?.let { source ->
-            KeyboardThemeBackgroundImage(source = source, opacity = imageOpacity)
-        },
+        backgroundImage = backgroundImage,
     )
 
     private fun initialBaseTheme(): KeyboardThemeDescriptor =
@@ -66,12 +77,18 @@ internal class ThemeDraftState(
             editingTheme: KeyboardThemeDescriptor?,
         ) = listSaver<ThemeDraftState, Any?>(
             save = { state ->
+                val image = state.backgroundImage
                 listOf(
                     state.name,
                     state.baseThemeValue,
                     KeyboardThemeJson.encode(state.theme),
-                    state.backgroundImageSource,
-                    state.imageOpacity,
+                    image?.source,
+                    image?.opacity ?: 0f,
+                    image?.focalX ?: 0f,
+                    image?.focalY ?: 0f,
+                    image?.zoom ?: KeyboardThemeBackgroundImage.MinZoom,
+                    image?.blurRadiusDp ?: 0f,
+                    image?.overlayColor ?: KeyboardThemeBackgroundImage.Transparent,
                 )
             },
             restore = { values ->
@@ -79,8 +96,17 @@ internal class ThemeDraftState(
                     name = values[0] as String
                     baseThemeValue = values[1] as String
                     theme = KeyboardThemeJson.decode(values[2] as String)
-                    backgroundImageSource = values[3] as String?
-                    imageOpacity = values[4] as Float
+                    backgroundImage = (values[3] as String?)?.let { source ->
+                        KeyboardThemeBackgroundImage(
+                            source = source,
+                            opacity = values[4] as Float,
+                            focalX = values[5] as Float,
+                            focalY = values[6] as Float,
+                            zoom = values[7] as Float,
+                            blurRadiusDp = values[8] as Float,
+                            overlayColor = values[9] as Int,
+                        )
+                    }
                 }
             },
         )

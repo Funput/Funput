@@ -64,7 +64,8 @@ object KeyboardThemes {
         pressedKeyShadowOffsetDp = 0f,
         specialLabelColor = 0xFF4C463A.toInt(),
         accentKeyColor = 0xFFB08F32.toInt(),
-        accentLabelColor = 0xFFFFF9EA.toInt(),
+        // Dark rather than cream: cream on this gold measures 2.9:1, under the readability bar.
+        accentLabelColor = 0xFF17110A.toInt(),
         popupSurfaceColor = 0xFFFFFFFF.toInt(),
         suggestionHighlightColor = 0xFF8A6D18.toInt(),
         pressedKeyScale = 1f,

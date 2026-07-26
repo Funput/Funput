@@ -46,7 +46,7 @@ internal fun ThemeColorTab(
                 ThemeColorRole.entries
                     .filter { role -> role.group == group }
                     .forEach { role ->
-                        ColorRoleRow(
+                        ColorSwatchRow(
                             label = stringResource(role.labelRes),
                             color = role.read(theme),
                             onClick = { editing = role },
@@ -54,6 +54,7 @@ internal fun ThemeColorTab(
                     }
             }
         }
+        ThemeContrastWarnings(theme)
     }
 
     editing?.let { role ->
@@ -68,34 +69,4 @@ internal fun ThemeColorTab(
             },
         )
     }
-}
-
-@Composable
-private fun ColorRoleRow(label: String, color: Int, onClick: () -> Unit) {
-    val description = stringResource(R.string.custom_theme_color_edit_description, label)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .semantics { contentDescription = description }
-            .padding(vertical = 10.dp, horizontal = 4.dp),
-    ) {
-        Swatch(color)
-        Text(text = label, style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-@Composable
-private fun Swatch(color: Int) {
-    // A transparent token would otherwise be an invisible row, so the border marks the area.
-    Column(
-        modifier = Modifier
-            .size(28.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(color))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)),
-    ) {}
 }
