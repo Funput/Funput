@@ -10,6 +10,7 @@ class ThemeValidatorTest {
     fun bundledThemesAreReadable() {
         assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.Ink))
         assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.Paper))
+        assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.GlassDark))
     }
 
     @Test

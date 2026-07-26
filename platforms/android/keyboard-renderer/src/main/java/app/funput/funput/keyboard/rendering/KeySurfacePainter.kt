@@ -5,6 +5,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole
+import app.funput.funput.theme.KeyboardKeySurfaceStyle
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.roundToInt
 
@@ -19,10 +20,12 @@ internal class KeySurfacePainter(private val metrics: RenderMetrics) {
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val drawingRect = RectF()
+    private val glassPainter = GlassKeySurfacePainter(metrics)
 
-    fun updateTheme(theme: KeyboardTheme) {
+    fun updateTheme(theme: KeyboardTheme, width: Int, height: Int) {
         shadowPaint.color = theme.keyShadowColor
         borderPaint.strokeWidth = metrics.dp(theme.keyBorderWidthDp)
+        glassPainter.updateTheme(theme, width, height)
     }
 
     fun draw(
@@ -40,11 +43,19 @@ internal class KeySurfacePainter(private val metrics: RenderMetrics) {
         val radius = metrics.dp(theme.keyCornerRadiusDp)
         setDrawingRect(key, theme, if (isPressed) theme.pressedKeyScale else 1f)
         drawShadow(canvas, theme, radius, isPressed)
+        if (theme.keySurfaceStyle == KeyboardKeySurfaceStyle.GLASS && isPressed) {
+            glassPainter.drawPressedHalo(canvas, drawingRect, radius, theme)
+        }
         if (fillColor.isVisible) {
             fillPaint.color = fillColor
             canvas.drawRoundRect(drawingRect, radius, radius, fillPaint)
         }
         if (hasBorder) {
+            borderPaint.shader = if (theme.keySurfaceStyle == KeyboardKeySurfaceStyle.GLASS) {
+                glassPainter.borderShader(isPressed, isActivated)
+            } else {
+                null
+            }
             borderPaint.color = borderColor
             canvas.drawRoundRect(drawingRect, radius, radius, borderPaint)
         }

@@ -11,7 +11,11 @@ class InstalledThemeRepositoryTest {
         val repository = InstalledThemeRepository.builtIn()
 
         assertEquals(
-            listOf(KeyboardThemeId.Dark, KeyboardThemeId.Light),
+            listOf(
+                KeyboardThemeId.Dark,
+                KeyboardThemeId.Light,
+                KeyboardThemeId.GlassDark,
+            ),
             repository.themes.map(KeyboardThemeDescriptor::id),
         )
         assertSame(KeyboardThemes.Ink, repository.defaultTheme.theme)

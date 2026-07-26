@@ -1,13 +1,15 @@
 package app.funput.funput.ui.theme.gallery
 
 import androidx.compose.ui.test.assertIsSelected
-import app.funput.funput.ime.settings.KeyboardThemeSlot
 import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
+import app.funput.funput.ime.settings.KeyboardThemeSlot
 import app.funput.funput.theme.InstalledThemeRepository
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
@@ -65,10 +67,15 @@ class ThemeGalleryScreenTest {
         compose.onNodeWithText("Xóa theme").performClick()
         compose.onNodeWithTag("dark").assertIsSelected()
         compose.onNodeWithTag("light").assertIsNotSelected().performClick()
+        compose.onNodeWithTag(SystemThemesTag)
+            .performScrollToNode(hasTestTag(KeyboardThemeId.GlassDark.value))
+        compose.onNodeWithTag(KeyboardThemeId.GlassDark.value)
+            .assertIsNotSelected()
+            .performClick()
         compose.onNodeWithContentDescription("Quay lại").performClick()
 
         compose.runOnIdle {
-            assertEquals(KeyboardThemeId.Light, selectedThemeId)
+            assertEquals(KeyboardThemeId.GlassDark, selectedThemeId)
             assertEquals(customTheme.id, editedThemeId)
             assertEquals(customTheme.id, deletedThemeId)
             assertTrue(createRequested)

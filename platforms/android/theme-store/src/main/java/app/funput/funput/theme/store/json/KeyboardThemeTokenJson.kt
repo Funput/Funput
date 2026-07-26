@@ -2,6 +2,7 @@ package app.funput.funput.theme.store.json
 
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.KeyboardThemeGradientDirection
+import app.funput.funput.theme.KeyboardKeySurfaceStyle
 import app.funput.funput.theme.MetricClamp
 import org.json.JSONObject
 
@@ -52,6 +53,7 @@ internal object KeyboardThemeTokenJson {
         put("backgroundGradientDirection", theme.backgroundGradientDirection.name)
         put("suggestionDividerColor", theme.suggestionDividerColor)
         put("popupShadowColor", theme.popupShadowColor)
+        put("keySurfaceStyle", theme.keySurfaceStyle.name)
     }
 
     fun decode(json: JSONObject): KeyboardTheme {
@@ -93,6 +95,9 @@ internal object KeyboardThemeTokenJson {
             ),
             suggestionDividerColor = json.optInt("suggestionDividerColor", secondaryLabelColor),
             popupShadowColor = json.optInt("popupShadowColor", DefaultPopupShadowColor),
+            keySurfaceStyle = KeyboardKeySurfaceStyle.parseOrDefault(
+                json.optString("keySurfaceStyle").takeIf(String::isNotEmpty),
+            ),
         )
     }
 

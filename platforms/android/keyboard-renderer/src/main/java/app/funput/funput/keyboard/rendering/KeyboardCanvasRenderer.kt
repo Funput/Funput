@@ -29,7 +29,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
 
     fun updateTheme(theme: KeyboardTheme, width: Int, height: Int) {
         this.theme = theme
-        keyRenderer.updateTheme(theme)
+        keyRenderer.updateTheme(theme, width, height)
         suggestionBarRenderer.updateTheme(theme)
         toolbarLogoRenderer.updateTheme(theme)
         if (width > 0 && height > 0) {
