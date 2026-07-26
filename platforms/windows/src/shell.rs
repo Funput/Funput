@@ -150,9 +150,10 @@ pub fn method_and_tone() -> (InputMethod, CoreToneStyle) {
 /// Browsers whose URL bar inline-autofills a *selected* suffix that eats a
 /// synthesized Backspace (Chrome's omnibox, Firefox's address bar). Chrome
 /// Beta/Dev/Canary also report `chrome.exe`; Firefox Developer Edition/Nightly
-/// also report `firefox.exe`. Edge (`msedge.exe`) and Brave (`brave.exe`)
-/// deliberately do not match — they are unaffected.
-const URLBAR_AUTOFILL_BROWSERS: [&str; 2] = ["chrome.exe", "firefox.exe"];
+/// also report `firefox.exe`. Zen (Firefox fork) reports `zen.exe`. Edge
+/// (`msedge.exe`) and Brave (`brave.exe`) deliberately do not match — they
+/// are unaffected.
+const URLBAR_AUTOFILL_BROWSERS: [&str; 3] = ["chrome.exe", "firefox.exe", "zen.exe"];
 
 /// True when the most-recently-focused app is a browser whose URL bar autofill
 /// swallows synthesized Backspaces. Used to route text injection through the
