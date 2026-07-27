@@ -1,7 +1,41 @@
-use crate::unicode::marks::{apply_tone_to_vowel, tone_on_vowel};
-use crate::unicode::shapes::{VowelShape, apply_shape_to_vowel, strip_shape};
+use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, tone_on_vowel};
+use crate::unicode::shapes::{
+    VowelShape, apply_shape_to_vowel, base_vowel, shape_on_vowel, strip_shape,
+};
 
 use super::pair::{horned_uo_suffix, open_uo_suffix};
+
+/// Drop the stray `u` of a `ưu` that a vowel key continues past.
+///
+/// `ưu` is a closed rhyme: across Viet74K's 73 901 entries, 658 contain it and
+/// **none** carry another letter after it. So a vowel arriving here means the `u`
+/// was never part of the rhyme — it is the literal keystroke left over when a
+/// horn key already produced the `ư` on its own. Dropping it hands the syllable
+/// back to the ordinary horn compound: `trưu` + `o` → `trưo` → `trươ` → `trường`.
+///
+/// This is what lets a horn typed *before* the nucleus still reach `ươ`, whether
+/// it came from Full Telex's leading `w` (`trwuongf`), the `[` shortcut
+/// (`tr[uongf`) or VNI's `7`.
+pub(crate) fn drop_stray_u_after_horn_u(buffer: &str, key: char) -> Option<String> {
+    if !is_vowel(key) {
+        return None;
+    }
+    let mut chars = buffer.char_indices().rev();
+    let (u_offset, u) = chars.next()?;
+    if !matches!(u, 'u' | 'U') {
+        return None;
+    }
+    let (_, horn) = chars.next()?;
+    if shape_on_vowel(horn) != Some(VowelShape::Horn)
+        || !base_vowel(horn).is_some_and(|base| base.eq_ignore_ascii_case(&'u'))
+    {
+        return None;
+    }
+    let mut text = String::with_capacity(u_offset + key.len_utf8());
+    text.push_str(&buffer[..u_offset]);
+    text.push(key);
+    Some(text)
+}
 
 #[inline]
 pub(crate) fn complete_uo_horn_for_continuation(buffer: &str, key: char) -> Option<String> {
