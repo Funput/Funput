@@ -1,5 +1,4 @@
-use crate::unicode::marks::vowel_stem;
-use crate::unicode::shapes::{VowelShape, shape_on_vowel, strip_shape};
+use crate::unicode::shapes::base_vowel;
 
 #[derive(Debug, Clone, Copy)]
 pub(super) struct Target {
@@ -15,11 +14,9 @@ pub(super) fn rightmost_stem(buffer: &str, stem: char) -> Option<Target> {
             target = None;
             continue;
         }
-        if !matches!(shape_on_vowel(vowel), None | Some(VowelShape::Circumflex)) {
-            continue;
-        }
-        let plain = strip_shape(vowel).unwrap_or(vowel);
-        if vowel_stem(plain).is_some_and(|value| value.eq_ignore_ascii_case(&stem)) {
+        // Compared on the base letter, so a vowel that already carries a trần/móc
+        // is still a mũ target and switches shape (`chặn` + `a` → `chận`).
+        if base_vowel(vowel).is_some_and(|value| value.eq_ignore_ascii_case(&stem)) {
             target = Some(Target {
                 char_index,
                 byte_offset,

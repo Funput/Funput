@@ -94,6 +94,25 @@ fn vni_shape_basic() {
 }
 
 #[test]
+fn vni_shape_switch() {
+    let keys = |k| crate::support::type_keys(InputMethod::Vni, k);
+    // 6/7/8 on a vowel that already carries a different shape switches it.
+    assert_eq!(keys("a86"), "â");
+    assert_eq!(keys("a68"), "ă");
+    assert_eq!(keys("o76"), "ô");
+    assert_eq!(keys("o67"), "ơ");
+    // Free position, tone preserved: chặn + 6 → chận, chận + 8 → chặn.
+    assert_eq!(keys("cha8n56"), "chận");
+    assert_eq!(keys("cha6n58"), "chặn");
+    // Shapes the base letter does not have are still a no-op: `a` has no móc,
+    // so `7` is ignored here (unchanged — the engine restores the raw run).
+    assert_eq!(keys("a67"), "â");
+    // Same digit twice is still the revert.
+    assert_eq!(keys("a66"), "a6");
+    assert_eq!(keys("a88"), "a8");
+}
+
+#[test]
 fn vni_shape_syllables() {
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "uo7"), "uơ");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "uo73"), "uở");

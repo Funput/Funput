@@ -1,7 +1,7 @@
 use crate::composition::uo_horn::uo_pair_in_vowel_cluster;
 use crate::input_method::KeyAction;
 use crate::unicode::marks::{is_vowel, tone_on_vowel, vowel_stem};
-use crate::unicode::shapes::{VowelShape, shape_on_vowel, shape_target_index};
+use crate::unicode::shapes::{VowelShape, base_vowel, shape_on_vowel, shape_target_index};
 
 use super::super::last_char;
 
@@ -31,8 +31,11 @@ pub(crate) fn classify(buffer: &str) -> Option<KeyAction> {
     if is_vowel(last) {
         if let Some(shape) = shape_on_vowel(last) {
             return match shape {
+                // Same shape again: the revert (`aww` → `aw`), resolved downstream.
                 VowelShape::Breve | VowelShape::Horn => Some(KeyAction::Shape(shape)),
-                VowelShape::Circumflex => None,
+                // A mũ switches to the trần/móc its base letter takes (`âw` → `ă`,
+                // `ôw` → `ơ`); `ê` has neither, so the key stays a normal letter.
+                VowelShape::Circumflex => w_shape_for(last),
             };
         }
         if plain(last, 'a') {
@@ -66,4 +69,13 @@ fn ends_with_qu_glide(buffer: &str) -> bool {
 
 fn horn() -> Option<KeyAction> {
     Some(KeyAction::Shape(VowelShape::Horn))
+}
+
+/// The trần/móc that `vowel`'s base letter can take: `a` → ă, `o`/`u` → ơ/ư.
+fn w_shape_for(vowel: char) -> Option<KeyAction> {
+    match base_vowel(vowel)?.to_ascii_lowercase() {
+        'a' => Some(KeyAction::Shape(VowelShape::Breve)),
+        'o' | 'u' => horn(),
+        _ => None,
+    }
 }

@@ -44,6 +44,34 @@ fn telex_reposition() {
 }
 
 #[test]
+fn telex_shape_switch() {
+    // A shape key aimed at a vowel that already carries a *different* shape
+    // switches it, rather than stalling and dropping the syllable back to raw
+    // keys. `w` is the trần/móc key, `a`/`o` the mũ keys for their base letter.
+    assert_eq!(type_keys("awa"), "â");
+    assert_eq!(type_keys("aaw"), "ă");
+    assert_eq!(type_keys("owo"), "ô");
+    assert_eq!(type_keys("oow"), "ơ");
+
+    // The switch key may sit anywhere in the syllable, and the tone rides along.
+    assert_eq!(type_keys("chawnja"), "chận"); // chặn + a
+    assert_eq!(type_keys("chanajw"), "chặn"); // chận + w
+    assert_eq!(type_keys("chaajw"), "chặ");
+    assert_eq!(type_keys("conwo"), "côn");
+    assert_eq!(type_keys("conow"), "cơn");
+
+    // Only shapes the base letter actually has: `ê` takes neither trần nor móc,
+    // so `w` stays a literal key here (the engine restores the raw run).
+    assert_eq!(type_keys("eew"), "êw");
+
+    // The *same* key twice is still the revert, not a switch.
+    assert_eq!(type_keys("aaa"), "aa");
+    assert_eq!(type_keys("aww"), "aw");
+    assert_eq!(type_keys("uww"), "uw");
+    assert_eq!(type_keys("chanaa"), "chana");
+}
+
+#[test]
 fn telex_revert() {
     // Double modifier restores raw keystrokes: strip diacritic + append the key.
     assert_eq!(type_keys("ass"), "as");

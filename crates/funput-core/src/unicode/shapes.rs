@@ -24,9 +24,23 @@ pub fn apply_shape(base: char, shape: VowelShape) -> Option<char> {
 }
 
 /// Apply a shape to any vowel, stripping an existing tone first.
+///
+/// A vowel already carrying a *different* shape is re-shaped from its base
+/// letter, so the shape keys switch instead of stalling: `ặ` + mũ → `ậ`
+/// (`chặn` + `a` → `chận`), `ậ` + trần → `ặ`. Asking for the shape the vowel
+/// already has returns `None` — that is the revert case (`ă` + `w` → `aw`),
+/// which callers resolve before they reach here.
 pub fn apply_shape_to_vowel(vowel: char, shape: VowelShape) -> Option<char> {
-    let stem = vowel_stem(vowel)?;
-    apply_shape(stem, shape)
+    if shape_on_vowel(vowel) == Some(shape) {
+        return None;
+    }
+    apply_shape(base_vowel(vowel)?, shape)
+}
+
+/// Vowel stripped of both tone and shape (`ặ` → `a`, `ế` → `e`, `á` → `a`).
+pub(crate) fn base_vowel(vowel: char) -> Option<char> {
+    let stem = vowel_stem(vowel)?; // tone off, shape kept
+    Some(strip_shape(stem).unwrap_or(stem))
 }
 
 /// Index of the last vowel that can *receive* `shape` (for applying 6/7/8).
