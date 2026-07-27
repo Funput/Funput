@@ -3,6 +3,7 @@ use crate::composition::replace_char_at;
 use crate::input_method::telex::tone_from_key;
 use crate::unicode::marks::Tone;
 use crate::unicode::shapes::{VowelShape, shape_on_vowel, strip_shape};
+use crate::unicode::tone_position::reposition_existing_tone;
 use crate::validation::syllable::is_viable_shape_candidate;
 
 use super::super::IntentResolution;
@@ -19,6 +20,13 @@ pub(crate) fn resolve(buffer: &str, stem: char, key: char, style: ToneStyle) -> 
 
     let mut text = String::with_capacity(buffer.len() + 2);
     candidate::build(&mut text, buffer, target, None);
+    // The new mũ makes the shaped vowel the tonal nucleus, so a tone already
+    // placed on another vowel has to follow it: `duỵ` + `et` + `e` → `duyệt`,
+    // not `duỵêt`. Without the move the candidate is also mis-spelled and would
+    // fail the viability check below, dropping the key as a literal.
+    if let Some(moved) = reposition_existing_tone(&text, style) {
+        text = moved;
+    }
     if is_viable_shape_candidate(&text) {
         return IntentResolution::Applied(text);
     }
