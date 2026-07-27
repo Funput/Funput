@@ -23,7 +23,8 @@ Telex nâng cao phải giữ nguyên toàn bộ tính năng Telex V1–V3:
 
 - Telex chuẩn: tone, `z`, `aa/ee/oo`, `aw/ow/uw`, `dd`.
 - Free-position `aa/ee/oo`, tone convergence và non-adjacent revert.
-- Deferred `w`, chuẩn hóa `ươ/ưa/ưu` và Vietnamese-first sau onset.
+- Chuẩn hóa `ươ/ưa/ưu` và Vietnamese-first sau onset. Deferred `w` **sau onset**
+  là ngoại lệ — xem "Leading `w` và deferred `w`" bên dưới.
 - Hội tụ bounded multi-intent `w + dd`.
 - Traditional/Modern tone placement.
 - Spell check, smart/eager restore, raw keys, Flip và sticky Latin.
@@ -37,7 +38,7 @@ Mọi regression test của Telex hiện tại phải chạy lại cho Telex nâ
 |---|---|---|
 | `[` | `ư` | `t[` → `tư` |
 | `]` | `ơ` | `m]` → `mơ` |
-| `w` ở đầu từ hoặc đứng riêng | `ư` | `w` → `ư`, `wf` → `ừ` |
+| `w` khi âm tiết chưa có nguyên âm | `ư` | `w` → `ư`, `wf` → `ừ`, `th` + `w` → `thư` |
 
 Các phím mới phải kết hợp với pipeline hiện tại:
 
@@ -54,8 +55,54 @@ Tone nhập sau đó vẫn dùng quy tắc Traditional/Modern hiện tại.
 gán behavior cho `{` và `}`; hai phím này tiếp tục là ký tự literal cho đến khi có
 quyết định sản phẩm riêng.
 
-Nhấn `w` lần hai dùng semantics revert hiện có: `w → ư`, `ww → w`. Raw keystrokes
-phải luôn được giữ để Flip khôi phục chính xác input ban đầu.
+Nhấn `w` lần hai dùng semantics revert hiện có: `w → ư`, `ww → w`. Revert giữ lại
+onset đứng trước, nên `sww → sw` và `thww → thw`; Latin run vẫn escape được.
+Raw keystrokes phải luôn được giữ để Flip khôi phục chính xác input ban đầu.
+
+### Leading `w` và deferred `w`
+
+`w` là phím `ư` ở **mọi vị trí âm tiết chưa có nguyên âm**, không chỉ ở ký tự đầu:
+`thw` → `thư`, `nhwng` → `nhưng`, `thwongf` → `thường`, `ngwoif` → `người`.
+
+Hệ quả: `w` sau onset không còn là deferred `w` (pending horn chờ nguyên âm phía
+sau) trong Telex nâng cao. Telex thường **không đổi**.
+
+Vần `ươ` — nhóm lớn nhất — vẫn về đích nhờ chuẩn hoá `ưu` (mục kế tiếp):
+
+| Input | Telex | Telex nâng cao |
+|---|---|---|
+| `thw` | `thw` | `thư` |
+| `thwongf` | `thờng` | `thường` |
+| `nhwng` | `nhwng` | `nhưng` |
+| `trwuongf` | `trường` | `trường` |
+| `dwduocj` | `được` | `được` |
+| `cwon` | `cơn` | `cươn` |
+| `lwams` | `lắm` | `lứam` |
+
+Chênh lệch còn lại chỉ xảy ra khi `w` gõ **ngay sau onset** và nhắm tới trần/móc
+của một nguyên âm phía sau **không** thuộc cặp `uo`: `cwon`, `lwams`, `nwux`,
+`gwiux`. Đây là ambiguity không gỡ được — `lưa`/`cưa` là âm tiết hợp lệ, nên không
+phân biệt được với `lắm`/`cơn`. Các từ này vẫn gõ được ở mọi vị trí tự do khác
+(`conw`, `lamws`, `nuwx`) và bằng cách gõ canonical.
+
+`q` được loại khỏi luật: không có âm tiết `qư`, nên `w` sau `q` đứng một mình vẫn
+là trần thường (`qwuangj` → `quặng`).
+
+### Chuẩn hoá `ưu` + nguyên âm
+
+`ưu` là vần đóng. Kiểm chứng trên Viet74K (73.901 mục): 658 từ chứa `ưu`, **không
+từ nào** có ký tự nào đi sau. Nên một nguyên âm đến sau `ưu` chứng tỏ chữ `u` chưa
+bao giờ thuộc vần — nó là keystroke thừa còn lại khi phím móc đã tự tạo ra `ư`.
+
+Bỏ chữ `u` đó rồi trả âm tiết về cho horn compound thông thường:
+
+```text
+trưu + o  →  trưo  →  trươ  →  trường
+```
+
+Luật này nằm ở `uo_horn` nên dùng chung cho mọi cách tạo ra `ư` sớm: leading `w`
+của Telex nâng cao (`trwuongf`), shortcut `[` (`tr[uongf`) và `7` của VNI
+(`tru7uong2`). Nó đồng thời sửa một lỗi có sẵn: `tr[uongf` trước đây ra `trừuong`.
 
 ## So sánh hai mode
 

@@ -12,9 +12,7 @@ pub(super) fn classify(buffer: &str, key: char) -> AdvancedAction {
     match key {
         '[' => AdvancedAction::Shortcut(TelexShortcut::HornU),
         ']' => AdvancedAction::Shortcut(TelexShortcut::HornO),
-        'w' | 'W' if buffer.is_empty() || standalone_horn_u(buffer) => {
-            AdvancedAction::Shortcut(TelexShortcut::LeadingW)
-        }
+        'w' | 'W' if leading_w(buffer) => AdvancedAction::Shortcut(TelexShortcut::LeadingW),
         'w' | 'W' if ends_with_w_after_vowel(buffer) => {
             AdvancedAction::Shortcut(TelexShortcut::RepeatedW)
         }
@@ -30,8 +28,27 @@ fn ends_with_w_after_vowel(buffer: &str) -> bool {
         && buffer.chars().any(is_vowel)
 }
 
-fn standalone_horn_u(buffer: &str) -> bool {
-    matches!(buffer, "ư" | "Ư")
+/// Full Telex `w` stands in for `ư` as long as the syllable has no nucleus for
+/// it to modify: `w` → `ư`, and equally `th` + `w` → `thư`. It also owns the
+/// undo of that `ư` (`thư` + `w` → `thw`), which is what keeps a Latin run
+/// escapable — `swwap` → `swap`.
+fn leading_w(buffer: &str) -> bool {
+    onset_only(buffer) || horn_u_after_onset(buffer)
+}
+
+/// No nucleus yet: the buffer is empty or a bare onset cluster.
+///
+/// A lone `q` is excluded — no Vietnamese syllable reads `qư`, `q` is always
+/// followed by the `u` glide, so a `w` there is the ordinary trần/móc waiting on
+/// the vowel behind it (`qwuangj` → `quặng`).
+fn onset_only(buffer: &str) -> bool {
+    !matches!(buffer, "q" | "Q") && !buffer.chars().any(is_vowel)
+}
+
+/// An onset plus the single `ư` a leading `w` just produced — the undo target.
+fn horn_u_after_onset(buffer: &str) -> bool {
+    let mut chars = buffer.chars();
+    matches!(chars.next_back(), Some('ư' | 'Ư')) && !chars.any(is_vowel)
 }
 
 #[cfg(test)]

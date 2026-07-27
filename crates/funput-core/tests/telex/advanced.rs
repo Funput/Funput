@@ -41,10 +41,108 @@ fn tone_styles_and_existing_telex_converge() {
         }
         assert_eq!(buffer, "trường");
     }
-    for keys in ["chana", "trwuongf", "dwduocj", "booong"] {
+    for keys in ["chana", "booong"] {
         assert_eq!(
             typed(keys),
             crate::support::type_keys(InputMethod::Telex, keys)
+        );
+    }
+}
+
+#[test]
+fn leading_w_covers_the_whole_onset() {
+    // `w` is the `ư` key wherever the syllable still lacks a nucleus, not only at
+    // position 0 — the same rule `[` already follows.
+    for (keys, output) in [
+        ("thw", "thư"),
+        ("Thw", "Thư"),
+        ("THW", "THƯ"),
+        ("nhwng", "nhưng"),
+        ("thwongf", "thường"),
+        ("ngwoif", "người"),
+        ("chwa", "chưa"),
+        ("thws", "thứ"),
+        ("cwuf", "cừu"),
+    ] {
+        assert_eq!(typed(keys), output, "{keys}");
+    }
+
+    // A second `w` puts the literal key back and keeps the onset, so a Latin run
+    // stays escapable: `sww` → `sw`, not the bare `w` the old rule produced.
+    for (keys, output) in [("sww", "sw"), ("thww", "thw"), ("ww", "w"), ("thWW", "thW")] {
+        assert_eq!(typed(keys), output, "{keys}");
+    }
+}
+
+#[test]
+fn leading_w_still_reaches_the_uo_horn() {
+    // The leading `w` consumes the key as `ư`, so it can no longer be the pending
+    // horn that plain Telex resolves against a later `uo`. The `ưu` re-parse in
+    // `uo_horn` covers the gap — the stray `u` is dropped and the compound
+    // completes as usual, so these keep composing exactly as in plain Telex.
+    for (keys, output) in [
+        ("trwuongf", "trường"),
+        ("dwduocj", "được"),
+        ("thwuong", "thương"),
+        ("nwuocs", "nước"),
+        ("ngwuowif", "người"),
+        ("bwuoms", "bướm"),
+        ("chwua", "chưa"),
+        ("hwuou", "hươu"),
+        ("mwuownj", "mượn"),
+    ] {
+        assert_eq!(typed(keys), output, "{keys}");
+        assert_eq!(
+            crate::support::type_keys(InputMethod::Telex, keys),
+            output,
+            "plain {keys}"
+        );
+    }
+
+    // The same re-parse fixes the `[` shortcut, which never reached `ươ` before.
+    assert_eq!(typed("tr[uongf"), "trường");
+    assert_eq!(typed("tr[ongf"), "trường");
+    assert_eq!(typed("tr[]ngf"), "trường");
+
+    // `ưu` itself is untouched — it is a closed rhyme, so only a *following*
+    // vowel marks the `u` as stray.
+    for (keys, output) in [
+        ("cwuf", "cừu"),
+        ("hwuu", "hưu"),
+        ("lwuu", "lưu"),
+        ("c[uf", "cừu"),
+        ("tr[uf", "trừu"),
+    ] {
+        assert_eq!(typed(keys), output, "{keys}");
+    }
+}
+
+#[test]
+fn leading_w_skips_the_q_onset() {
+    // No syllable reads `qư`, so `w` after a lone `q` stays the ordinary trần.
+    assert_eq!(typed("qwuangj"), "quặng");
+    assert_eq!(typed("quawngj"), "quặng");
+    assert_eq!(typed("quangwj"), "quặng");
+}
+
+#[test]
+fn leading_w_loses_the_onset_placed_non_uo_horn() {
+    // Remaining divergence, documented in docs/features/advanced-telex.md: when a
+    // `w` typed straight after the onset was meant as the trần/móc of a *later*
+    // vowel that is not the `uo` compound, Full Telex now reads it as `ư`. Those
+    // words stay reachable through every other free position (`conw`, `lamws`).
+    assert_eq!(typed("cwon"), "cươn"); // plain Telex: cơn
+    assert_eq!(typed("lwams"), "lứam"); // plain Telex: lắm
+    assert_eq!(typed("nwux"), "nữu"); // plain Telex: nữ
+    for (keys, output) in [("conw", "cơn"), ("lamws", "lắm"), ("nuwx", "nữ")] {
+        assert_eq!(typed(keys), output, "{keys}");
+    }
+    // Plain Telex keeps the deferred `w` in every position.
+    for (keys, output) in [("cwon", "cơn"), ("lwams", "lắm"), ("nwux", "nữ")] {
+        assert_eq!(
+            crate::support::type_keys(InputMethod::Telex, keys),
+            output,
+            "plain {keys}"
         );
     }
 }

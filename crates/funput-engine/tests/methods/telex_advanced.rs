@@ -89,11 +89,20 @@ fn brackets_are_boundaries_only_outside_advanced_telex() {
 }
 
 #[test]
-fn inherited_pending_intent_restores_at_boundary() {
+fn unresolvable_composition_restores_at_boundary() {
+    // `h` + `w` takes the `ư`, then `d` leaves it unspellable — the raw run comes
+    // back at the word boundary, as in plain Telex.
+    assert_eq!(
+        crate::support::app_text(InputMethod::TelexAdvanced, "hwd "),
+        "hwd "
+    );
+    // `dwd` does resolve here: `w` is the `ư` key and `d` is the stroke, so Full
+    // Telex commits `đư` where plain Telex restores the pending `w` as `dwd`.
     assert_eq!(
         crate::support::app_text(InputMethod::TelexAdvanced, "dwd "),
-        "dwd "
+        "đư "
     );
+    assert_eq!(crate::support::app_text(InputMethod::Telex, "dwd "), "dwd ");
 }
 
 #[test]

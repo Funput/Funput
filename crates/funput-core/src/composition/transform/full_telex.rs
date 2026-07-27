@@ -15,8 +15,14 @@ pub(super) fn apply(
             text: buffer.to_owned(),
         };
     }
-    if shortcut == TelexShortcut::LeadingW && !buffer.is_empty() {
-        let text = if buffer == "Ư" { "W" } else { "w" }.to_owned();
+    // `w` on the `ư` a leading `w` produced puts the literal key back, keeping the
+    // onset in front of it: `ư` → `w`, `thư` → `thw`, `sư` → `sw`.
+    if shortcut == TelexShortcut::LeadingW
+        && let Some((prefix, horn_u)) = split_trailing_horn_u(buffer)
+    {
+        let mut text = String::with_capacity(prefix.len() + 1);
+        text.push_str(prefix);
+        text.push(if horn_u == 'Ư' { 'W' } else { 'w' });
         return TransformResult {
             kind: TransformKind::Reverted,
             text,
@@ -37,6 +43,15 @@ pub(super) fn apply(
         text,
     };
     gates::spell_check(buffer, key, spell_check, result)
+}
+
+/// Split a buffer that ends in `ư`/`Ư` into the part before it and that vowel.
+fn split_trailing_horn_u(buffer: &str) -> Option<(&str, char)> {
+    let horn_u = buffer
+        .chars()
+        .next_back()
+        .filter(|c| matches!(c, 'ư' | 'Ư'))?;
+    Some((&buffer[..buffer.len() - horn_u.len_utf8()], horn_u))
 }
 
 #[cfg(test)]
