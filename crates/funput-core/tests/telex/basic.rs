@@ -123,6 +123,25 @@ fn telex_free_position_circumflex() {
     assert_eq!(type_keys("kenhe"), "kênh");
     assert_eq!(type_keys("congo"), "công");
 
+    // The mũ may land on a vowel that is not the one already carrying the tone:
+    // in `uyê` the tone belongs on `ê`, so the free-position circumflex has to
+    // pull it across ("duyjete" → duyệt, not duỵêt).
+    for (tone_after, tone_before, expected) in [
+        ("duyeetj", "duyjete", "duyệt"),
+        ("chuyeenj", "chuyjene", "chuyện"),
+        ("tuyeets", "tuysete", "tuyết"),
+        ("nguyeenx", "nguyxene", "nguyễn"),
+    ] {
+        assert_eq!(type_keys(tone_after), expected);
+        assert_eq!(type_keys(tone_before), expected);
+    }
+
+    // A repeated tone key still undoes the tone once the mark has been pulled
+    // across, and every order of the pulled mark converges on the same undo.
+    for keys in ["duyeetjj", "duyjetej", "duyjeetj", "duyejtej"] {
+        assert_eq!(type_keys(keys), "duyêtj", "{keys}");
+    }
+
     assert_eq!(type_keys("Chana"), "Chân");
     assert_eq!(type_keys("CHANA"), "CHÂN");
     assert_eq!(type_keys("chanaa"), "chana");
