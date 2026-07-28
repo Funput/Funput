@@ -6,6 +6,7 @@ import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.toKeyAction
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 
 /** Applies keyboard modifier state before forwarding semantic actions to the host. */
 internal class KeyboardActionDispatcher(
@@ -31,6 +32,11 @@ internal class KeyboardActionDispatcher(
     }
 
     fun repeatBackspace() = onAction(KeyAction.Backspace)
+
+    fun dispatchAlternate(key: KeySpec, alternate: KeyAlternate) {
+        onAction(KeyAction.Input(key.id, alternate.textFor(shiftState)))
+        if (shiftController.consumeAfter(key.role)) onShiftStateChanged()
+    }
 
     fun toggleLanguage(language: KeyboardLanguage) = onAction(KeyAction.ToggleLanguage(language))
 

@@ -61,6 +61,25 @@ class KeyboardAccessibilitySnapshotTest {
         assertTrue(candidates.all { it.hitBounds.height > 0f })
     }
 
+    @Test
+    fun `letter alternates become shifted TalkBack actions`() {
+        val actions = snapshot(shiftState = ShiftState.ON).nodes
+            .first { it.keyId == "character-a" }.alternateActions
+
+        assertEquals("Chọn A", actions.first().label)
+        assertTrue(actions.any { it.label == "Chọn Ắ" })
+        assertTrue(actions.any { it.label == "Chọn Ậ" })
+        assertEquals(18, actions.size)
+    }
+
+    @Test
+    fun `excluded editors expose no alternate actions`() {
+        val node = snapshot(editorMode = KeyboardEditorMode.URL).nodes
+            .first { it.keyId == "character-a" }
+
+        assertTrue(node.alternateActions.isEmpty())
+    }
+
     private fun snapshot(
         shiftState: ShiftState = ShiftState.OFF,
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,

@@ -18,6 +18,7 @@ object KeyboardLayouts {
         inputMethod = inputMethod,
         leadingRows = listOf(topNumberRowForLetters(inputMethod)),
         actionKeys = standardActionKeys(),
+        supportsVietnameseAlternates = true,
     )
 
     private fun standardActionKeys() = listOf(

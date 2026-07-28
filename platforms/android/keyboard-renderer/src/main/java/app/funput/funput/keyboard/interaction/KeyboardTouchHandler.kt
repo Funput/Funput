@@ -8,7 +8,9 @@ internal class KeyboardTouchHandler(
     onPressedStateChanged: () -> Unit,
     private val onPointerStarted: (pointerId: Int, keyId: String?, x: Float, y: Float) -> Unit,
     private val onPointerKeyChanged: (pointerId: Int, keyId: String?) -> Unit,
+    private val onPointerMoved: (pointerId: Int, keyId: String?, x: Float, y: Float) -> Unit,
     private val onKeyReleased: (pointerId: Int, keyId: String?, x: Float, y: Float, eventTimeMillis: Long) -> Unit,
+    private val isPointerCaptured: (pointerId: Int) -> Boolean,
     private val onCancelled: () -> Unit,
     private val requestParentIntercept: (disallow: Boolean) -> Unit,
 ) : PressedKeyState {
@@ -44,6 +46,8 @@ internal class KeyboardTouchHandler(
         onCancelled()
     }
 
+    fun capture(pointerId: Int) = pointerSession.suspend(pointerId)
+
     private fun handleDown(event: MotionEvent): Result {
         val handled = startPointer(event, event.actionIndex)
         if (handled) requestParentIntercept(true)
@@ -58,14 +62,21 @@ internal class KeyboardTouchHandler(
 
     private fun update(event: MotionEvent, pointerIndex: Int): Boolean {
         val pointerId = event.getPointerId(pointerIndex)
+        val x = event.getX(pointerIndex)
+        val y = event.getY(pointerIndex)
+        if (isPointerCaptured(pointerId)) {
+            onPointerMoved(pointerId, null, x, y)
+            return true
+        }
         val previousKeyId = pointerSession.keyForPointer(pointerId)
         val handled = pointerSession.update(
             pointerId = pointerId,
-            x = event.getX(pointerIndex),
-            y = event.getY(pointerIndex),
+            x = x,
+            y = y,
         )
         val currentKeyId = pointerSession.keyForPointer(pointerId)
         if (previousKeyId != currentKeyId) onPointerKeyChanged(pointerId, currentKeyId)
+        onPointerMoved(pointerId, currentKeyId, x, y)
         return handled
     }
 

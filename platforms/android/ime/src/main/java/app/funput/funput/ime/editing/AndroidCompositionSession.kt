@@ -2,8 +2,10 @@ package app.funput.funput.ime.editing
 
 import android.text.SpannableString
 import android.view.inputmethod.InputConnection
+import app.funput.funput.ime.editing.composition.CompositionBoundary
+import app.funput.funput.ime.editing.composition.CursorAfterText
+import app.funput.funput.ime.editing.composition.singleCodePointOrNull
 import app.funput.funput.ime.nativebridge.VietnameseEngine
-import app.funput.funput.keyboard.model.KeyboardInputMethod
 
 /** Maps the shared engine buffer onto Android's composing-text primitives. */
 internal class AndroidCompositionSession(
@@ -141,26 +143,6 @@ internal class AndroidCompositionSession(
         return connection.commitText(text, CursorAfterText)
     }
 
-    private fun String.singleCodePointOrNull(): Int? {
-        val first = codePointAt(0)
-        return first.takeIf { Character.charCount(it) == length }
-    }
-
-    private companion object {
-        const val CursorAfterText = 1
-    }
 }
 
 private fun unstyledComposingText(text: String): CharSequence = SpannableString(text)
-
-/** Mirrors the shared engine's current word-boundary contract. */
-internal object CompositionBoundary {
-    fun isBoundary(codePoint: Int): Boolean =
-        Character.isWhitespace(codePoint) || codePoint.isAsciiPunctuation()
-
-    private fun Int.isAsciiPunctuation(): Boolean =
-        this in 0x21..0x2F ||
-            this in 0x3A..0x40 ||
-            this in 0x5B..0x60 ||
-            this in 0x7B..0x7E
-}

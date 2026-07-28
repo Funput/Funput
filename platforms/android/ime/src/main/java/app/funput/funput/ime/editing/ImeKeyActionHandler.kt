@@ -5,6 +5,7 @@ import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.SuggestionSelection
+import app.funput.funput.ime.editing.backspace.ImeBackspaceHandler
 
 /** Routes semantic keyboard actions through composition or direct editor commands. */
 internal class ImeKeyActionHandler(
@@ -15,6 +16,14 @@ internal class ImeKeyActionHandler(
 ) {
     private var compositionAllowed = true
     private val suggestionTracker = AuthoredTokenTracker()
+    private val backspaceHandler = ImeBackspaceHandler(
+        composition = composition,
+        editor = editor,
+        connection = connection,
+        usesComposition = { usesComposition },
+        onCompositionChanged = ::updateSuggestionTracker,
+        onCompositionCleared = suggestionTracker::reset,
+    )
 
     var language: KeyboardLanguage = KeyboardLanguage.VIETNAMESE
         private set
@@ -38,7 +47,7 @@ internal class ImeKeyActionHandler(
         when (action) {
             is KeyAction.Input -> inputText(action.text)
             KeyAction.Space -> inputText(" ")
-            KeyAction.Backspace -> backspace()
+            KeyAction.Backspace -> backspaceHandler.perform()
             KeyAction.Enter -> enter()
             is KeyAction.ToggleLanguage -> toggleLanguage(action.language)
             is KeyAction.Shift,
@@ -93,33 +102,6 @@ internal class ImeKeyActionHandler(
         } else {
             execute(ImeEditCommand.CommitText(text))
             suggestionTracker.reset()
-        }
-    }
-
-    private fun backspace() {
-        if (!composition.backspace(connection())) {
-            // Delete the previous grapheme and (when Vietnamese) re-open the word
-            // behind the caret as one batch. Two top-level edits would each fire
-            // onUpdateSelection; the first arrives with candidatesEnd=-1 after
-            // reopen has already set isComposing, and onSelectionChanged finishes
-            // the composition we just restored — which is exactly the real-device
-            // failure unit tests miss (they never invoke onSelectionChanged).
-            val current = connection()
-            if (current != null && usesComposition) {
-                current.beginBatchEdit()
-                try {
-                    execute(ImeEditCommand.DeleteBackward)
-                    composition.reopenPreviousWord(current)
-                } finally {
-                    current.endBatchEdit()
-                }
-                if (composition.isComposing) updateSuggestionTracker() else suggestionTracker.reset()
-            } else {
-                execute(ImeEditCommand.DeleteBackward)
-                suggestionTracker.reset()
-            }
-        } else {
-            updateSuggestionTracker()
         }
     }
 

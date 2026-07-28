@@ -7,6 +7,7 @@ import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeySwipeAction
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.SuggestionSelection
+import app.funput.funput.keyboard.layout.KeyBounds
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -42,6 +43,10 @@ class KeyboardInteractionControllerTest {
         cancel = {},
         doubleTapTimeoutMillis = 300L,
         density = 1f,
+        keyBounds = { KeyBounds(80f, 100f, 120f, 140f) },
+        surfaceBounds = { KeyBounds(0f, 0f, 320f, 260f) },
+        touchSlop = 8f,
+        onPointerCaptured = {},
     )
 
     @Test

@@ -9,12 +9,14 @@ import app.funput.funput.keyboard.model.ShiftState
 internal class KeyboardSurfaceAccessibilityController(
     host: View,
     activate: (String) -> Unit,
+    activateAlternate: (String, Int) -> Unit,
 ) {
     private var snapshot: KeyboardAccessibilitySnapshot? = null
     private val delegate = KeyboardAccessibilityDelegate(
         host = host,
         snapshot = { snapshot },
         activate = activate,
+        activateAlternate = activateAlternate,
     )
 
     fun dispatchHover(event: MotionEvent): Boolean = delegate.dispatchHover(event)

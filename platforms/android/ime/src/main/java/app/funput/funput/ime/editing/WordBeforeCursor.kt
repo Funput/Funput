@@ -1,6 +1,7 @@
 package app.funput.funput.ime.editing
 
 import android.view.inputmethod.InputConnection
+import app.funput.funput.ime.editing.composition.CompositionBoundary
 
 /** Longest Vietnamese syllable is 7 characters (`nghiêng`); this leaves slack. */
 private const val WordLookback = 12

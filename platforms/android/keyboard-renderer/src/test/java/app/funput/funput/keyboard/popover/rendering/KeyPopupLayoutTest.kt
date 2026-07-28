@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.rendering
+package app.funput.funput.keyboard.popover.rendering
 
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedKey

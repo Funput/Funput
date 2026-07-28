@@ -8,6 +8,7 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
 import app.funput.funput.keyboard.model.KeyboardRow
 import app.funput.funput.keyboard.model.SuggestionBarSpec
+import app.funput.funput.keyboard.popover.model.VietnameseKeyAlternates
 
 internal fun qwertyLayout(
     id: String,
@@ -15,6 +16,7 @@ internal fun qwertyLayout(
     leadingRows: List<KeyboardRow> = emptyList(),
     actionKeys: List<KeySpec>,
     showSuggestionBar: Boolean = KeyboardFeatures.EmojiToolbarEnabled,
+    supportsVietnameseAlternates: Boolean = false,
 ): KeyboardLayout = KeyboardLayout(
     id = id,
     inputMethod = inputMethod,
@@ -25,9 +27,9 @@ internal fun qwertyLayout(
     },
     rows = buildList {
         addAll(leadingRows)
-        add(characterRow("qwertyuiop"))
-        add(characterRow("asdfghjkl", horizontalInsetUnits = 0.5f))
-        add(bottomCharacterRow())
+        add(characterRow("qwertyuiop", supportsVietnameseAlternates = supportsVietnameseAlternates))
+        add(characterRow("asdfghjkl", 0.5f, supportsVietnameseAlternates))
+        add(bottomCharacterRow(supportsVietnameseAlternates))
         add(KeyboardRow(actionKeys))
     },
 )
@@ -57,25 +59,34 @@ internal fun specialKey(
     accessibilityLabel: String = label,
 ) = KeySpec(id, label, role, widthWeight, accessibilityLabel = accessibilityLabel)
 
-private fun characterRow(characters: String, horizontalInsetUnits: Float = 0f) = KeyboardRow(
-    keys = characters.map(::characterKey),
+private fun characterRow(
+    characters: String,
+    horizontalInsetUnits: Float = 0f,
+    supportsVietnameseAlternates: Boolean = false,
+) = KeyboardRow(
+    keys = characters.map { characterKey(it, supportsVietnameseAlternates) },
     horizontalInsetUnits = horizontalInsetUnits,
 )
 
-private fun bottomCharacterRow() = KeyboardRow(
+private fun bottomCharacterRow(supportsVietnameseAlternates: Boolean) = KeyboardRow(
     keys = buildList {
         add(specialKey("shift", "", KeyRole.SHIFT, 1.5f, "Shift"))
-        addAll("zxcvbnm".map(::characterKey))
+        addAll("zxcvbnm".map { characterKey(it, supportsVietnameseAlternates) })
         add(specialKey("backspace", "", KeyRole.BACKSPACE, 1.5f, "Backspace"))
     },
 )
 
-private fun characterKey(character: Char) = KeySpec(
+private fun characterKey(character: Char, supportsVietnameseAlternates: Boolean) = KeySpec(
     id = "character-$character",
     label = character.toString(),
     role = KeyRole.CHARACTER,
     shiftedLabel = character.uppercaseChar().toString(),
     accessibilityLabel = character.toString(),
+    alternates = if (supportsVietnameseAlternates) {
+        VietnameseKeyAlternates.valuesFor(character)
+    } else {
+        emptyList()
+    },
 )
 
 internal fun keyboardToolbarSpec() = SuggestionBarSpec(

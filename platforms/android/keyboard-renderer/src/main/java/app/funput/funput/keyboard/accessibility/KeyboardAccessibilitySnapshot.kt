@@ -5,6 +5,8 @@ import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.interaction.SuggestionTargetIds
+import app.funput.funput.keyboard.popover.accessibility.AlternateAccessibilityAction
+import app.funput.funput.keyboard.popover.accessibility.alternateAccessibilityActions
 
 /** Immutable virtual-node snapshot consumed by TalkBack and unit tests. */
 internal class KeyboardAccessibilitySnapshot(
@@ -21,6 +23,7 @@ internal class KeyboardAccessibilitySnapshot(
                 bounds = key.bounds,
                 hitBounds = key.hitBounds,
                 selected = key.spec.role == KeyRole.SHIFT && shiftState != ShiftState.OFF,
+                alternateActions = key.spec.alternateAccessibilityActions(shiftState),
             ).let(::add)
         }
         val bounds = keyboard.suggestionBar?.suggestionsBounds
@@ -46,6 +49,7 @@ internal data class KeyboardAccessibilityNode(
     val bounds: KeyBounds,
     val hitBounds: KeyBounds,
     val selected: Boolean,
+    val alternateActions: List<AlternateAccessibilityAction> = emptyList(),
 )
 
 private fun app.funput.funput.keyboard.layout.ResolvedKey.accessibilityLabel(

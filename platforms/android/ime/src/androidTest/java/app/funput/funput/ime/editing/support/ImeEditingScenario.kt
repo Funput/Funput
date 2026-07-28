@@ -12,6 +12,8 @@ import app.funput.funput.ime.editing.ImeEditCommand
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
+import app.funput.funput.ime.nativebridge.EngineConfiguration
+import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 
@@ -62,7 +64,16 @@ internal class ImeEditingScenario private constructor(
                 connection = { host.connection },
                 enterCommand = { ImeEditCommand.CommitText("\n") },
             )
-            handler.start(inputMethod, allowComposition)
+            engine.configure(
+                EngineConfiguration(
+                    inputMethod = inputMethod,
+                    toneStyle = ToneStyle.TRADITIONAL,
+                    smartRestore = true,
+                    eagerRestore = true,
+                    spellCheck = true,
+                ),
+            )
+            handler.start(allowComposition = allowComposition)
             return ImeEditingScenario(host, engine, composition, handler)
         }
     }

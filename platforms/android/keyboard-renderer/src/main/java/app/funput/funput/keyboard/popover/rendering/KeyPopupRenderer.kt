@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.rendering
+package app.funput.funput.keyboard.popover.rendering
 
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -7,6 +7,7 @@ import android.graphics.Typeface
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.theme.KeyboardTheme
+import app.funput.funput.keyboard.rendering.RenderMetrics
 
 /** Draws the enlarged key preview above a pressed printable key. */
 internal class KeyPopupRenderer(private val metrics: RenderMetrics) {
