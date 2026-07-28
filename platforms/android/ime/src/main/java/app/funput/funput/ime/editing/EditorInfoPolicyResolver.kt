@@ -11,6 +11,7 @@ internal object EditorInfoPolicyResolver {
         imeOptions = info.imeOptions,
         actionLabel = info.actionLabel,
         actionId = info.actionId,
+        packageName = info.packageName,
     )
 
     internal fun resolve(
@@ -18,6 +19,7 @@ internal object EditorInfoPolicyResolver {
         imeOptions: Int,
         actionLabel: CharSequence? = null,
         actionId: Int = 0,
+        packageName: String? = null,
     ): EditorInfoPolicy {
         val editorMode = EditorInfoKeyboardModeResolver.resolve(inputType)
         val isText = inputType and InputType.TYPE_MASK_CLASS == InputType.TYPE_CLASS_TEXT
@@ -33,6 +35,7 @@ internal object EditorInfoPolicyResolver {
             allowsPersonalizedLearning = learningAllowed,
             allowsPersonalSuggestions = source == ImeSuggestionSource.FUNPUT &&
                 learningAllowed && !isUri(inputType) && !isEmail(inputType),
+            compositionRenderMode = CompositionCompatibilityPolicy.renderMode(packageName),
         )
     }
 

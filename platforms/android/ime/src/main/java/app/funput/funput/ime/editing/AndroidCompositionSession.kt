@@ -10,13 +10,20 @@ internal class AndroidCompositionSession(
     private val engine: VietnameseEngine,
     private val composingTextFactory: (String) -> CharSequence = ::unstyledComposingText,
 ) {
+    private val documentEditor = CompositionDocumentEditor(composingTextFactory)
+    private var renderMode = CompositionRenderMode.COMPOSING
     var composingText: String = ""
         private set
     private var completedToken: String? = null
+    private var recentCompletedToken: String? = null
 
     val isComposing: Boolean get() = composingText.isNotEmpty()
 
     fun setEnabled(enabled: Boolean) = engine.setEnabled(enabled)
+
+    fun setRenderMode(value: CompositionRenderMode) {
+        renderMode = value
+    }
 
     fun input(connection: InputConnection?, text: String): Boolean {
         completedToken = null
@@ -25,6 +32,7 @@ internal class AndroidCompositionSession(
         return if (CompositionBoundary.isBoundary(codePoint)) {
             commitBoundary(connection, text, codePoint)
         } else {
+            recentCompletedToken = null
             updateComposing(connection, engine.process(codePoint), text)
         }
     }
@@ -32,18 +40,20 @@ internal class AndroidCompositionSession(
     fun backspace(connection: InputConnection?): Boolean {
         completedToken = null
         if (connection == null || !isComposing) return false
+        val previous = composingText
         composingText = engine.backspace()
-        return connection.setComposingText(composingTextFactory(composingText), CursorAfterText)
+        return documentEditor.update(connection, renderMode, previous, composingText)
     }
 
     fun finish(connection: InputConnection?) {
-        if (isComposing) connection?.finishComposingText()
+        documentEditor.finish(connection, renderMode, isComposing)
         reset()
     }
 
     fun reset() {
         composingText = ""
         completedToken = null
+        recentCompletedToken = null
         engine.clear()
     }
 
@@ -51,10 +61,11 @@ internal class AndroidCompositionSession(
 
     fun acceptSuggestion(connection: InputConnection, prefix: String, candidate: String): Boolean {
         if (composingText != prefix) return false
+        val accepted = documentEditor.acceptSuggestion(connection, renderMode, prefix, candidate)
         composingText = ""
         completedToken = null
         engine.clear()
-        return connection.commitText("$candidate ", CursorAfterText)
+        return accepted
     }
 
     private fun commitBoundary(
@@ -65,10 +76,9 @@ internal class AndroidCompositionSession(
         val previous = composingText
         val replacement = engine.processBoundary(codePoint)
         completedToken = replacement?.removeSuffix(text)?.ifEmpty { null } ?: previous.ifEmpty { null }
+        recentCompletedToken = completedToken
         composingText = ""
-        if (replacement != null) return connection.commitText(replacement, CursorAfterText)
-        connection.finishComposingText()
-        return connection.commitText(text, CursorAfterText)
+        return documentEditor.commitBoundary(connection, renderMode, previous, replacement, text)
     }
 
     private fun updateComposing(
@@ -76,9 +86,10 @@ internal class AndroidCompositionSession(
         buffer: String,
         rawText: String,
     ): Boolean {
+        val previous = composingText
         composingText = buffer
         return if (buffer.isEmpty()) commitRaw(connection, rawText) else {
-            connection.setComposingText(composingTextFactory(buffer), CursorAfterText)
+            documentEditor.update(connection, renderMode, previous, buffer)
         }
     }
 
@@ -95,19 +106,35 @@ internal class AndroidCompositionSession(
     fun reopenPreviousWord(connection: InputConnection?): Boolean {
         if (connection == null || isComposing) return false
         if (!connection.getSelectedText(0).isNullOrEmpty()) return false
-        val word = connection.wordBeforeCursor() ?: return false
-        if (!engine.adopt(word)) return false
+        val word = listOfNotNull(connection.wordBeforeCursor(), recentCompletedToken)
+            .distinct()
+            .firstOrNull(engine::adopt)
+            ?: return false
+        recentCompletedToken = null
 
         connection.beginBatchEdit()
         val reopened = try {
-            connection.deleteSurroundingText(word.length, 0) &&
-                connection.setComposingText(composingTextFactory(word), CursorAfterText)
+            documentEditor.reopenWord(connection, renderMode, word)
         } finally {
             connection.endBatchEdit()
         }
         if (reopened) composingText = word else engine.clear()
         return reopened
     }
+
+    fun ownsSelection(
+        connection: InputConnection?,
+        selectionStart: Int,
+        selectionEnd: Int,
+        composingEnd: Int,
+    ): Boolean = documentEditor.ownsSelection(
+        connection,
+        renderMode,
+        composingText,
+        selectionStart,
+        selectionEnd,
+        composingEnd,
+    )
 
     private fun commitRaw(connection: InputConnection, text: String): Boolean {
         finish(connection)

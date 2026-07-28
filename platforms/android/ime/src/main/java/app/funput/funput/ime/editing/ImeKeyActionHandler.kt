@@ -23,9 +23,13 @@ internal class ImeKeyActionHandler(
      * The input method is not applied here: `ImeSettingsController` owns engine
      * configuration and has already pushed it (see its `applyEngineConfiguration`).
      */
-    fun start(allowComposition: Boolean = true) {
+    fun start(
+        allowComposition: Boolean = true,
+        renderMode: CompositionRenderMode = CompositionRenderMode.COMPOSING,
+    ) {
         compositionAllowed = allowComposition
         composition.reset()
+        composition.setRenderMode(renderMode)
         composition.setEnabled(usesComposition)
         suggestionTracker.reset()
     }
@@ -54,7 +58,12 @@ internal class ImeKeyActionHandler(
     }
 
     fun onSelectionChanged(newStart: Int, newEnd: Int, composingEnd: Int) {
-        if (composition.isComposing && (newStart != composingEnd || newEnd != composingEnd)) finish()
+        if (
+            composition.isComposing &&
+            !composition.ownsSelection(connection(), newStart, newEnd, composingEnd)
+        ) {
+            finish()
+        }
     }
 
     fun takeSuggestionUpdate(): AuthoredSuggestionUpdate = suggestionTracker.consume()
