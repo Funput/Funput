@@ -15,6 +15,7 @@ let package = Package(
         .library(name: "ThemeRuntime", targets: ["ThemeRuntime"]),
         .library(name: "KeyboardRenderer", targets: ["KeyboardRenderer"]),
         .library(name: "KeyboardConfiguration", targets: ["KeyboardConfiguration"]),
+        .library(name: "KeyboardTouchCore", targets: ["KeyboardTouchCore"]),
     ],
     targets: [
         .binaryTarget(
@@ -72,6 +73,7 @@ let package = Package(
                 .target(name: "KeyboardLayout"),
             ]
         ),
+        .target(name: "KeyboardTouchCore"),
         .testTarget(
             name: "KeyboardLayoutTests",
             dependencies: ["KeyboardLayout"]
@@ -110,6 +112,10 @@ let package = Package(
         .testTarget(
             name: "KeyboardInputTests",
             dependencies: ["KeyboardInput", "KeyboardLayout", "FunputShared"]
+        ),
+        .testTarget(
+            name: "KeyboardTouchCoreTests",
+            dependencies: ["KeyboardTouchCore"]
         ),
     ]
 )
