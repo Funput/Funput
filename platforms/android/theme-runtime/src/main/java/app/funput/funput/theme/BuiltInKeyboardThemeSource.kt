@@ -37,5 +37,13 @@ object BuiltInKeyboardThemeSource : InstalledThemeSource {
             origin = KeyboardThemeOrigin.BUILT_IN,
             theme = KeyboardThemes.GlassLight,
         ),
+        KeyboardThemeDescriptor(
+            id = KeyboardThemeId.Slate,
+            version = 1,
+            name = "Slate",
+            author = FunputAuthor,
+            origin = KeyboardThemeOrigin.BUILT_IN,
+            theme = KeyboardThemes.Slate,
+        ),
     )
 }

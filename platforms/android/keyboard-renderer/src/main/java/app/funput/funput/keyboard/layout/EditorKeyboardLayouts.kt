@@ -42,13 +42,10 @@ internal object EditorKeyboardLayouts {
             leadingRows = listOf(
                 topNumberRow(TopNumberRowMode.PLAIN_CHARACTER, pageId = "email-${method.name.lowercase()}"),
             ),
-            actionKeys = listOf(
-                specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
-                specialKey("at", "@", KeyRole.PUNCTUATION, 1.7f, "At sign"),
-                asciiSpaceKey(3.7f),
-                specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Period"),
-                specialKey("dot-com", ".com", KeyRole.PUNCTUATION, 1.7f, "Dot com"),
-                specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
+            actionKeys = webActionKeys(
+                middleId = "at",
+                middleLabel = "@",
+                middleAccessibilityLabel = "At sign",
             ),
         )
     }
@@ -76,13 +73,22 @@ internal object EditorKeyboardLayouts {
         leadingRows = listOf(
             topNumberRow(TopNumberRowMode.PLAIN_CHARACTER, pageId = "$idPrefix-${inputMethod.name.lowercase()}"),
         ),
-        actionKeys = listOf(
-            specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
-            specialKey("slash", "/", KeyRole.PUNCTUATION, 1.7f, "Slash"),
-            asciiSpaceKey(3.7f),
-            specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Period"),
-            specialKey("dot-com", ".com", KeyRole.PUNCTUATION, 1.7f, "Dot com"),
-            specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
+        actionKeys = webActionKeys(
+            middleId = "slash",
+            middleLabel = "/",
+            middleAccessibilityLabel = "Slash",
         ),
+    )
+
+    private fun webActionKeys(
+        middleId: String,
+        middleLabel: String,
+        middleAccessibilityLabel: String,
+    ) = listOf(
+        specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
+        specialKey(middleId, middleLabel, KeyRole.PUNCTUATION, accessibilityLabel = middleAccessibilityLabel),
+        asciiSpaceKey(5.8f),
+        specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Period"),
+        specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
     )
 }

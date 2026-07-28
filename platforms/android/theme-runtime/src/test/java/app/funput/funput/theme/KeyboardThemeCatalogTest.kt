@@ -14,16 +14,12 @@ class KeyboardThemeCatalogTest {
                 KeyboardThemeId.Light,
                 KeyboardThemeId.GlassDark,
                 KeyboardThemeId.GlassLight,
+                KeyboardThemeId.Slate,
             ),
             LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::id),
         )
         assertEquals(
-            listOf(
-                KeyboardThemeOrigin.BUILT_IN,
-                KeyboardThemeOrigin.BUILT_IN,
-                KeyboardThemeOrigin.BUILT_IN,
-                KeyboardThemeOrigin.BUILT_IN,
-            ),
+            List(5) { KeyboardThemeOrigin.BUILT_IN },
             LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::origin),
         )
     }
@@ -60,6 +56,10 @@ class KeyboardThemeCatalogTest {
         assertSame(
             KeyboardThemes.GlassLight,
             LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.GlassLight).theme,
+        )
+        assertSame(
+            KeyboardThemes.Slate,
+            LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.Slate).theme,
         )
     }
 

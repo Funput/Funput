@@ -12,6 +12,7 @@ class ThemeValidatorTest {
         assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.Paper))
         assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.GlassDark))
         assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.GlassLight))
+        assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.Slate))
     }
 
     @Test

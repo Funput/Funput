@@ -18,26 +18,43 @@ class EditorKeyboardLayoutsTest {
 
             assertEquals(5, layout.rows.size)
             assertEquals("1234567890", layout.rows.first().keys.joinToString("") { it.label })
-            assertEquals(listOf("@", ".", ".com"), actionLabels(layout).filter { it in EmailLabels })
+            assertEquals(listOf("@", "."), actionLabels(layout).filter { it in EmailLabels })
             assertNull(layout.rows.last().keys.first { it.id == "space" }.horizontalSwipeAction)
         }
     }
 
     @Test
-    fun `search layout exposes slash and domain punctuation with top number row`() {
+    fun `search layout exposes slash and period with top number row`() {
         val layout = resolve(KeyboardInputMethod.VNI, KeyboardEditorMode.SEARCH)
 
         assertEquals(5, layout.rows.size)
         assertEquals("1234567890", layout.rows.first().keys.joinToString("") { it.label })
-        assertEquals(listOf("/", ".", ".com"), actionLabels(layout).filter { it in UrlLabels })
+        assertEquals(listOf("/", "."), actionLabels(layout).filter { it in UrlLabels })
     }
 
     @Test
-    fun `URL layout exposes slash and domain punctuation with top number row`() {
+    fun `URL layout exposes slash and period with top number row`() {
         val layout = resolve(KeyboardInputMethod.VNI, KeyboardEditorMode.URL)
 
         assertEquals(5, layout.rows.size)
-        assertEquals(listOf("/", ".", ".com"), actionLabels(layout).filter { it in UrlLabels })
+        assertEquals(listOf("/", "."), actionLabels(layout).filter { it in UrlLabels })
+    }
+
+    @Test
+    fun `web editor layouts give space the same width as iOS`() {
+        val editorModes = listOf(
+            KeyboardEditorMode.EMAIL,
+            KeyboardEditorMode.SEARCH,
+            KeyboardEditorMode.URL,
+        )
+
+        KeyboardInputMethod.entries.forEach { method ->
+            editorModes.forEach { editorMode ->
+                val space = resolve(method, editorMode).rows.last().keys.first { it.role == KeyRole.SPACE }
+
+                assertEquals("$method $editorMode", 5.8f, space.widthWeight)
+            }
+        }
     }
 
     @Test

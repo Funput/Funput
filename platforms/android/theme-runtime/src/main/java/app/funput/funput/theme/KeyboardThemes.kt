@@ -11,6 +11,9 @@ package app.funput.funput.theme
 object KeyboardThemes {
     private const val AccentGold = 0xFFC8A951.toInt()
 
+    /** Dark blue-grey preset with solid Gboard-inspired key surfaces and a teal Enter key. */
+    val Slate: KeyboardTheme = SlateKeyboardTheme
+
     /**
      * Dark preset. Borderless, with key plates carried by a faint white wash rather than a solid
      * color: translucency keeps the plates reading correctly over the background gradient, and
