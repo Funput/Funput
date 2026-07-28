@@ -1,5 +1,8 @@
 #if canImport(UIKit)
 import KeyboardLayout
+#if DEBUG
+import KeyboardTouchUIKit
+#endif
 import ThemeSchema
 import UIKit
 @MainActor
@@ -22,9 +25,12 @@ public final class KeyboardSurfaceView: UIView {
     let touchOverlay = KeyboardTouchOverlayView()
     let previewView = KeyboardKeyPreviewView()
     let alternatePaletteView = KeyboardAlternatePaletteView()
+#if DEBUG
+    let touchShadow = KeyboardTouchShadowPipeline()
+#endif
     lazy var interactionController = KeyboardSurfaceInteractionController(
         feedbackView: self,
-        onEvent: { [weak self] event in self?.onKeyEvent?(event) },
+        onEvent: { [weak self] event in self?.handleInteractionEvent(event) },
         onPreview: { [weak self] key, frame in self?.updatePreview(key, sourceFrame: frame) },
         onAlternatePreview: { [weak self] key, layout, selectedIndex in
             self?.updateAlternates(key, layout: layout, selectedIndex: selectedIndex)
@@ -77,6 +83,9 @@ public final class KeyboardSurfaceView: UIView {
             keyControls[key.spec.id]?.frame = key.frame
         }
         touchOverlay.updateGeometry(geometry)
+#if DEBUG
+        touchShadow.updateGeometry(geometry)
+#endif
     }
 
     public override func didMoveToWindow() {
@@ -84,6 +93,9 @@ public final class KeyboardSurfaceView: UIView {
         if window == nil {
             touchOverlay.forgetTrackedTouches()
             interactionController.cancelAll()
+#if DEBUG
+            resetTouchShadow()
+#endif
         }
     }
 
@@ -107,6 +119,9 @@ public final class KeyboardSurfaceView: UIView {
         addSubview(previewView)
         addSubview(alternatePaletteView)
         configureTouchOverlay()
+#if DEBUG
+        configureTouchShadow()
+#endif
         toolbarView.onEvent = { [weak self] event in self?.route(event, from: nil) }
         toolbarView.onSystemInputModeEvent = { [weak self] source, event in
             self?.onSystemInputModeEvent?(source, event)
@@ -125,15 +140,6 @@ public final class KeyboardSurfaceView: UIView {
             name: UIAccessibility.reduceTransparencyStatusDidChangeNotification,
             object: nil
         )
-    }
-
-    public func updateSuggestions(_ candidates: [KeyboardSuggestionCandidate]) {
-        toolbarView.updateSuggestions(candidates)
-    }
-
-    @objc private func accessibilityAppearanceDidChange() {
-        applyPresentation()
-        setNeedsLayout()
     }
 
 }

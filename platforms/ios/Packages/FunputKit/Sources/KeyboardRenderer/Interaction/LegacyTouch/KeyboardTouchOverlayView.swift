@@ -19,6 +19,9 @@ final class KeyboardTouchOverlayView: UIView {
     private var keys: [ResolvedKey] = []
     private var trackingBounds = CGRect.null
     private var ledger = KeyboardTouchTokenLedger()
+#if DEBUG
+    let shadowCapture = KeyboardTouchShadowCaptureBridge()
+#endif
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -47,6 +50,9 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+#if DEBUG
+        shadowCapture.capture(touches, phase: .began, in: self)
+#endif
         for touch in touches {
             let point = touch.location(in: self)
             guard let hit = hit(at: point) else { continue }
@@ -61,6 +67,9 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+#if DEBUG
+        shadowCapture.capture(touches, phase: .moved, in: self)
+#endif
         for touch in touches {
             guard let token = ledger.token(for: touch) else { continue }
             let point = touch.location(in: self)
@@ -70,6 +79,9 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+#if DEBUG
+        shadowCapture.capture(touches, phase: .ended, in: self)
+#endif
         for touch in touches {
             guard let token = ledger.removeToken(for: touch) else { continue }
             let point = touch.location(in: self)
@@ -80,6 +92,9 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+#if DEBUG
+        shadowCapture.capture(touches, phase: .cancelled, in: self)
+#endif
         for touch in touches {
             guard let token = ledger.removeToken(for: touch) else { continue }
             onCancel?(token)
@@ -94,6 +109,12 @@ final class KeyboardTouchOverlayView: UIView {
     func forgetTrackedTouches() {
         ledger.removeAllTokens()
     }
+
+#if DEBUG
+    func resetShadowCapture() {
+        shadowCapture.reset()
+    }
+#endif
 
     func resolvedHit(at point: CGPoint) -> Hit? {
         hit(at: point)

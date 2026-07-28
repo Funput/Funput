@@ -7,7 +7,11 @@ readonly max_files="${MAX_FILES_PER_DIRECTORY:-5}"
 readonly ios_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly roots=(
     "$ios_root/Packages/FunputKit/Sources/KeyboardTouchCore"
+    "$ios_root/Packages/FunputKit/Sources/KeyboardTouchUIKit"
     "$ios_root/Packages/FunputKit/Tests/KeyboardTouchCoreTests"
+    "$ios_root/Packages/FunputKit/Tests/KeyboardTouchUIKitTests"
+    "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Interaction"
+    "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Surface"
 )
 violations=0
 
@@ -41,9 +45,9 @@ for root in "${roots[@]}"; do
 done
 
 if (( violations != 0 )); then
-    printf 'KeyboardTouchCore source layout check failed.\n' >&2
+    printf 'Keyboard touch source layout check failed.\n' >&2
     exit 1
 fi
 
-printf 'KeyboardTouchCore layout passed (≤%s lines, ≤%s files per directory).\n' \
+printf 'Keyboard touch layout passed (≤%s lines, ≤%s files per directory).\n' \
     "$max_lines" "$max_files"

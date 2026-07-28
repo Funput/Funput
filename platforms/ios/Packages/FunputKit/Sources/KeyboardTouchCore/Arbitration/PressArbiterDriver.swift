@@ -27,17 +27,34 @@ public final class PressArbiterDriver<Payload: Sendable> {
 
     @discardableResult
     public func begin(_ contactID: ContactID) -> Bool {
-        let inserted = arbiter.begin(contactID, at: clock())
+        begin(contactID, at: clock())
+    }
+
+    @discardableResult
+    public func begin(_ contactID: ContactID, at timestamp: TimeInterval) -> Bool {
+        let inserted = arbiter.begin(contactID, at: timestamp)
         refreshSchedule()
         return inserted
     }
 
     public func resolve(_ contactID: ContactID, payload: Payload) {
-        process(arbiter.resolve(contactID, payload: payload, at: clock()))
+        resolve(contactID, payload: payload, at: clock())
+    }
+
+    public func resolve(
+        _ contactID: ContactID,
+        payload: Payload,
+        at timestamp: TimeInterval
+    ) {
+        process(arbiter.resolve(contactID, payload: payload, at: timestamp))
     }
 
     public func cancel(_ contactID: ContactID) {
-        process(arbiter.cancel(contactID, at: clock()))
+        cancel(contactID, at: clock())
+    }
+
+    public func cancel(_ contactID: ContactID, at timestamp: TimeInterval) {
+        process(arbiter.cancel(contactID, at: timestamp))
     }
 
     public func reset() {
