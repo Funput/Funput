@@ -90,6 +90,25 @@ class EditorInfoPolicyResolverTest {
         assertFalse(resolve(inputType).allowsPersonalSuggestions)
     }
 
-    private fun resolve(inputType: Int, imeOptions: Int = EditorInfo.IME_ACTION_NONE) =
-        EditorInfoPolicyResolver.resolve(inputType, imeOptions)
+    @Test
+    fun `editor package compatibility is included in resolved policy`() {
+        assertEquals(
+            CompositionRenderMode.COMMITTED,
+            resolve(InputType.TYPE_CLASS_TEXT, packageName = "com.facebook.katana").compositionRenderMode,
+        )
+    }
+
+    @Test
+    fun `other editors keep native composing text`() {
+        assertEquals(
+            CompositionRenderMode.COMPOSING,
+            resolve(InputType.TYPE_CLASS_TEXT, packageName = "com.android.chrome").compositionRenderMode,
+        )
+    }
+
+    private fun resolve(
+        inputType: Int,
+        imeOptions: Int = EditorInfo.IME_ACTION_NONE,
+        packageName: String? = null,
+    ) = EditorInfoPolicyResolver.resolve(inputType, imeOptions, packageName = packageName)
 }

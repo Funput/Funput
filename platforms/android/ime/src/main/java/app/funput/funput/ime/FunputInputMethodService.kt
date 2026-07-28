@@ -69,7 +69,7 @@ class FunputInputMethodService : InputMethodService() {
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         editorRuntime.configure(attribute)
-        actionHandler.start(editorRuntime.policy.editorMode.supportsVietnameseComposition)
+        startActionHandler()
         suggestionService.start(editorRuntime.policy)
     }
     override fun onStartInputView(attribute: EditorInfo, restarting: Boolean) {
@@ -123,9 +123,16 @@ class FunputInputMethodService : InputMethodService() {
 
     private fun restartComposition(method: KeyboardInputMethod) {
         actionHandler.finish()
-        actionHandler.start(editorRuntime.policy.editorMode.supportsVietnameseComposition)
+        startActionHandler()
         suggestionService.start(editorRuntime.policy)
         keyboardView?.inputMethod = method
+    }
+
+    private fun startActionHandler() {
+        actionHandler.start(
+            allowComposition = editorRuntime.policy.editorMode.supportsVietnameseComposition,
+            renderMode = editorRuntime.policy.compositionRenderMode,
+        )
     }
 
     // Switching the system between light and dark changes which theme applies, and no settings

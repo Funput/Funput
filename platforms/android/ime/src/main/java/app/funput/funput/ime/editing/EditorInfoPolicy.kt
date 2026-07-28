@@ -16,6 +16,7 @@ internal data class EditorInfoPolicy(
     val suggestionSource: ImeSuggestionSource,
     val allowsPersonalizedLearning: Boolean,
     val allowsPersonalSuggestions: Boolean,
+    val compositionRenderMode: CompositionRenderMode,
 ) {
     val showsSuggestionBar: Boolean get() = suggestionSource != ImeSuggestionSource.NONE
 
@@ -28,6 +29,7 @@ internal data class EditorInfoPolicy(
             suggestionSource = ImeSuggestionSource.FUNPUT,
             allowsPersonalizedLearning = true,
             allowsPersonalSuggestions = true,
+            compositionRenderMode = CompositionRenderMode.COMPOSING,
         )
     }
 }
