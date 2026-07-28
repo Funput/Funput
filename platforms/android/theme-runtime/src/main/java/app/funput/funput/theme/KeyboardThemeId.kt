@@ -19,6 +19,7 @@ value class KeyboardThemeId private constructor(val value: String) {
         val Light: KeyboardThemeId = KeyboardThemeId("light")
         val GlassDark: KeyboardThemeId = KeyboardThemeId("glass-dark")
         val GlassLight: KeyboardThemeId = KeyboardThemeId("glass-light")
+        val Slate: KeyboardThemeId = KeyboardThemeId("slate")
         val Default: KeyboardThemeId = Dark
 
         /** Creates an identifier or throws when [value] is not safe to persist. */

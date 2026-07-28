@@ -28,6 +28,7 @@ class EmojiPanelInstrumentedTest {
                     KeyboardThemes.Paper,
                     KeyboardThemes.GlassDark,
                     KeyboardThemes.GlassLight,
+                    KeyboardThemes.Slate,
                 ).forEach(panel::updateTheme)
             }
         }

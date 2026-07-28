@@ -12,6 +12,7 @@ class EmojiPanelPaletteTest {
             KeyboardThemes.Paper,
             KeyboardThemes.GlassDark,
             KeyboardThemes.GlassLight,
+            KeyboardThemes.Slate,
         )
         themes.forEach { theme ->
             val palette = EmojiPanelPalette.from(theme)
