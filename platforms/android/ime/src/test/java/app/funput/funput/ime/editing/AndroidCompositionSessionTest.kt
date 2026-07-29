@@ -1,6 +1,7 @@
 package app.funput.funput.ime.editing
 
 import android.view.inputmethod.InputConnection
+import app.funput.funput.ime.editing.composition.CompositionBoundary
 import app.funput.funput.ime.nativebridge.EngineConfiguration
 import app.funput.funput.ime.nativebridge.VietnameseEngine
 import java.lang.reflect.Proxy

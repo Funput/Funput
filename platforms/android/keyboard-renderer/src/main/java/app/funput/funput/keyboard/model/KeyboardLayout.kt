@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.model
 
+import app.funput.funput.keyboard.popover.model.KeyAlternate
+
 data class KeySpec(
     val id: String,
     val label: String,
@@ -10,6 +12,7 @@ data class KeySpec(
     val accessibilityLabel: String = label,
     val horizontalSwipeAction: KeySwipeAction? = null,
     val spaceLabelOverride: String? = null,
+    val alternates: List<KeyAlternate> = emptyList(),
 ) {
     init {
         require(id.isNotBlank()) { "Key id must not be blank" }

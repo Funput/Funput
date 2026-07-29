@@ -78,6 +78,7 @@ internal object EditorKeyboardLayouts {
             middleLabel = "/",
             middleAccessibilityLabel = "Slash",
         ),
+        supportsVietnameseAlternates = idPrefix == "search",
     )
 
     private fun webActionKeys(

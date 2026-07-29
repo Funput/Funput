@@ -30,6 +30,10 @@ internal class PointerKeySession(
         if (pressedKeys.clear()) onPressedStateChanged()
     }
 
+    fun suspend(pointerId: Int) {
+        if (pressedKeys.release(pointerId)) onPressedStateChanged()
+    }
+
     fun keyForPointer(pointerId: Int): String? = pressedKeys.keyForPointer(pointerId)
 
     override fun isPressed(keyId: String): Boolean = pressedKeys.isPressed(keyId)

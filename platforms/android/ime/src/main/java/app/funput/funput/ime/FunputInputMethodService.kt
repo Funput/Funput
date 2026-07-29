@@ -98,12 +98,10 @@ class FunputInputMethodService : InputMethodService() {
         session.finishInput()
         super.onFinishInput()
     }
-
     override fun onWindowHidden() {
         suggestionService.flush()
         super.onWindowHidden()
     }
-
     override fun onTrimMemory(level: Int) {
         suggestionService.flush()
         super.onTrimMemory(level)

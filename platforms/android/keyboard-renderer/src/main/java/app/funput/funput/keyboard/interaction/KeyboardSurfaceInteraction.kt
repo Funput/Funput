@@ -7,6 +7,8 @@ import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
+import app.funput.funput.keyboard.layout.KeyBounds
+import app.funput.funput.keyboard.popover.interaction.AlternateSelectionPreview
 
 /** Wires Android touch routing to renderer-independent keyboard interaction state. */
 internal class KeyboardSurfaceInteraction(
@@ -25,7 +27,11 @@ internal class KeyboardSurfaceInteraction(
     requestParentIntercept: (disallow: Boolean) -> Unit,
     doubleTapTimeoutMillis: Long,
     density: Float,
+    touchSlop: Float,
+    keyBounds: (keyId: String) -> KeyBounds?,
+    surfaceBounds: () -> KeyBounds,
 ) : PressedKeyState {
+    private lateinit var touchHandler: KeyboardTouchHandler
     private val controller = KeyboardInteractionController(
         keySpec = keySpec,
         suggestionSelection = suggestionSelection,
@@ -40,19 +46,28 @@ internal class KeyboardSurfaceInteraction(
         cancel = cancel,
         doubleTapTimeoutMillis = doubleTapTimeoutMillis,
         density = density,
+        touchSlop = touchSlop,
+        keyBounds = keyBounds,
+        surfaceBounds = surfaceBounds,
+        onPointerCaptured = { pointerId -> touchHandler.capture(pointerId) },
     )
-    private val touchHandler = KeyboardTouchHandler(
-        keyAt = keyAt,
-        onPressedStateChanged = onVisualStateChanged,
-        onPointerStarted = controller::onPointerStarted,
-        onPointerKeyChanged = controller::onPointerKeyChanged,
-        onKeyReleased = controller::onKeyReleased,
-        onCancelled = controller::cancel,
-        requestParentIntercept = requestParentIntercept,
-    )
+    init {
+        touchHandler = KeyboardTouchHandler(
+            keyAt = keyAt,
+            onPressedStateChanged = onVisualStateChanged,
+            onPointerStarted = controller::onPointerStarted,
+            onPointerKeyChanged = controller::onPointerKeyChanged,
+            onPointerMoved = controller::onPointerMoved,
+            onKeyReleased = controller::onKeyReleased,
+            isPointerCaptured = controller::isAlternateCaptured,
+            onCancelled = controller::cancel,
+            requestParentIntercept = requestParentIntercept,
+        )
+    }
 
     val shiftState: ShiftState get() = controller.shiftState
     val language: KeyboardLanguage get() = controller.language
+    val alternatePreview: AlternateSelectionPreview? get() = controller.alternatePreview
 
     fun setLanguage(value: KeyboardLanguage) = controller.setLanguage(value)
 
@@ -65,6 +80,9 @@ internal class KeyboardSurfaceInteraction(
 
     fun performAccessibilityClick(keyId: String, eventTimeMillis: Long) =
         controller.onAccessibilityClick(keyId, eventTimeMillis)
+
+    fun performAccessibilityAlternate(keyId: String, index: Int) =
+        controller.onAccessibilityAlternate(keyId, index)
 
     fun clear() = touchHandler.clear()
 
