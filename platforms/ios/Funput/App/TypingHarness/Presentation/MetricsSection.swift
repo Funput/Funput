@@ -32,6 +32,16 @@ struct MetricsSection: View {
                 value.maximumArbiterDepth
             )
             metric("Arbiter bypass", value.arbiterBypassCount)
+            metric("Primary committed", value.primaryCommitted)
+            metric("Legacy fallback", value.legacyFallback)
+            metric("Legacy release suppressed", value.legacyReleaseSuppressed)
+            metric("Primary system cancelled", value.primarySystemCancelled)
+            metric("Commit gate violation", value.commitGateViolation)
+            metric("Duplicate prevented", value.duplicateCommitPrevented)
+            metric(
+                "Max capture → commit (ms)",
+                value.maximumCaptureToCommitLatencyMilliseconds
+            )
             metric("Max emission delay (ms)", value.maximumEmissionDelayMilliseconds)
             metric(
                 "Delay >40 / >120 ms",

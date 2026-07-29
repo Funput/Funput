@@ -12,6 +12,10 @@ struct KeyboardTouchDiagnosticMetricsTests {
 
         metrics.emissionDelayedOver120Milliseconds = 1
         #expect(metrics.hasShadowRegression)
+
+        metrics = .init()
+        metrics.commitGateViolation = 1
+        #expect(metrics.hasShadowRegression)
     }
 }
 #endif

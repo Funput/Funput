@@ -7,9 +7,7 @@ import ThemeSchema
 import UIKit
 @MainActor
 public final class KeyboardSurfaceView: UIView {
-    public var backgroundImage: UIImage? {
-        didSet { applyPresentation() }
-    }
+    public var backgroundImage: UIImage? { didSet { applyPresentation() } }
     public var presentation: KeyboardPresentation {
         didSet { presentationDidChange(from: oldValue) }
     }
@@ -17,6 +15,7 @@ public final class KeyboardSurfaceView: UIView {
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
     public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
+    public internal(set) var touchPipelineMode = KeyboardTouchPipelineMode.legacy
 
     let backdropView = KeyboardBackdropView()
     let toolbarView = KeyboardToolbarView()
@@ -28,9 +27,19 @@ public final class KeyboardSurfaceView: UIView {
 #if DEBUG
     let touchShadow = KeyboardTouchShadowPipeline()
 #endif
+    var pendingTouchPipelineMode: KeyboardTouchPipelineMode?
+    lazy var primaryTouch = KeyboardPrimaryTouchCoordinator {
+        [weak self] event in self?.onKeyEvent?(event)
+    }
     lazy var interactionController = KeyboardSurfaceInteractionController(
         feedbackView: self,
         onEvent: { [weak self] event in self?.handleInteractionEvent(event) },
+        onContactEvent: { [weak self] token, event in
+            self?.handleContactInteractionEvent(token: token, event: event)
+        },
+        onPromoteToLegacy: { [weak self] token in
+            self?.promoteContactToLegacy(token)
+        },
         onPreview: { [weak self] key, frame in self?.updatePreview(key, sourceFrame: frame) },
         onAlternatePreview: { [weak self] key, layout, selectedIndex in
             self?.updateAlternates(key, layout: layout, selectedIndex: selectedIndex)
@@ -46,7 +55,6 @@ public final class KeyboardSurfaceView: UIView {
         sizing: KeyboardSizingProfile,
         value: ResolvedKeyboard
     )?
-
     public init(presentation: KeyboardPresentation = KeyboardPresentation()) {
         self.presentation = presentation
         super.init(frame: .zero)
@@ -83,6 +91,7 @@ public final class KeyboardSurfaceView: UIView {
             keyControls[key.spec.id]?.frame = key.frame
         }
         touchOverlay.updateGeometry(geometry)
+        primaryTouch.updateGeometry(geometry)
 #if DEBUG
         touchShadow.updateGeometry(geometry)
 #endif
@@ -93,9 +102,7 @@ public final class KeyboardSurfaceView: UIView {
         if window == nil {
             touchOverlay.forgetTrackedTouches()
             interactionController.cancelAll()
-#if DEBUG
-            resetTouchShadow()
-#endif
+            resetTouchPipeline()
         }
     }
 
@@ -119,9 +126,7 @@ public final class KeyboardSurfaceView: UIView {
         addSubview(previewView)
         addSubview(alternatePaletteView)
         configureTouchOverlay()
-#if DEBUG
-        configureTouchShadow()
-#endif
+        configureTouchPipeline()
         toolbarView.onEvent = { [weak self] event in self?.route(event, from: nil) }
         toolbarView.onSystemInputModeEvent = { [weak self] source, event in
             self?.onSystemInputModeEvent?(source, event)
@@ -141,6 +146,5 @@ public final class KeyboardSurfaceView: UIView {
             object: nil
         )
     }
-
 }
 #endif

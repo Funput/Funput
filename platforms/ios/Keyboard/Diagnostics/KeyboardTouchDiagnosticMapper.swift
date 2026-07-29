@@ -37,6 +37,14 @@ extension KeyboardTouchDiagnosticMetrics {
             snapshot.emissionDelayedOver40Milliseconds
         emissionDelayedOver120Milliseconds =
             snapshot.emissionDelayedOver120Milliseconds
+        primaryCommitted = snapshot.primaryCommitted
+        legacyFallback = snapshot.legacyFallback
+        legacyReleaseSuppressed = snapshot.legacyReleaseSuppressed
+        primarySystemCancelled = snapshot.primarySystemCancelled
+        commitGateViolation = snapshot.commitGateViolation
+        duplicateCommitPrevented = snapshot.duplicateCommitPrevented
+        maximumCaptureToCommitLatencyMilliseconds =
+            snapshot.maximumCaptureToCommitLatencyMilliseconds
     }
 }
 #endif

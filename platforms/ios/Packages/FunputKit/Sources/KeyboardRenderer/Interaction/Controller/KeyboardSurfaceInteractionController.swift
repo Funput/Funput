@@ -16,6 +16,9 @@ final class KeyboardSurfaceInteractionController {
         _ selectedIndex: Int?
     ) -> Void
     typealias HighlightHandler = (_ key: KeySpec, _ highlighted: Bool) -> Void
+    typealias ContactEventHandler = (
+        _ token: TouchToken, _ event: KeyboardKeyEvent
+    ) -> Void
 
     /// Why a tracked touch is ending without a release.
     enum Cancellation {
@@ -45,6 +48,8 @@ final class KeyboardSurfaceInteractionController {
 
     let haptics: KeyboardHaptics
     let onEvent: (KeyboardKeyEvent) -> Void
+    let onContactEvent: ContactEventHandler
+    let onPromoteToLegacy: (TouchToken) -> Void
     let onPreview: PreviewHandler
     let onAlternatePreview: AlternatePreviewHandler
     let onHighlight: HighlightHandler
@@ -76,6 +81,8 @@ final class KeyboardSurfaceInteractionController {
     init(
         feedbackView: UIView = UIView(),
         onEvent: @escaping (KeyboardKeyEvent) -> Void,
+        onContactEvent: ContactEventHandler? = nil,
+        onPromoteToLegacy: @escaping (TouchToken) -> Void = { _ in },
         onPreview: @escaping PreviewHandler,
         onAlternatePreview: @escaping AlternatePreviewHandler = { _, _, _ in },
         onHighlight: @escaping HighlightHandler = { _, _ in },
@@ -84,6 +91,8 @@ final class KeyboardSurfaceInteractionController {
     ) {
         haptics = KeyboardHaptics(view: feedbackView)
         self.onEvent = onEvent
+        self.onContactEvent = onContactEvent ?? { _, event in onEvent(event) }
+        self.onPromoteToLegacy = onPromoteToLegacy
         self.onPreview = onPreview
         self.onAlternatePreview = onAlternatePreview
         self.onHighlight = onHighlight
@@ -92,6 +101,7 @@ final class KeyboardSurfaceInteractionController {
         haptics.prepare()
     }
 
+    var activeTouchCount: Int { touches.count }
 }
 
 enum KeyboardTouchSignpost {

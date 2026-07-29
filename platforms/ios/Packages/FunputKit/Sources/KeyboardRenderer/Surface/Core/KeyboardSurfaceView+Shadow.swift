@@ -16,28 +16,93 @@ extension KeyboardSurfaceView {
         onKeyEvent?(event)
     }
 
+    func handleContactInteractionEvent(
+        token: UInt64,
+        event: KeyboardKeyEvent
+    ) {
 #if DEBUG
-    func configureTouchShadow() {
-        touchOverlay.shadowCapture.onSamples = { [weak self] samples in
+        recordLegacyDiagnostic(event)
+#endif
+        if touchPipelineMode == .primaryFastTap {
+            if let output = primaryTouch.handleLegacy(token: token, event: event) {
+                onKeyEvent?(output)
+            }
+        } else {
+            onKeyEvent?(event)
+        }
+        applyPendingTouchPipelineModeIfIdle()
+    }
+
+    func configureTouchPipeline() {
+        touchOverlay.onSamples = { [weak self] samples in
             guard let self else { return }
+#if DEBUG
             samples.forEach(touchShadow.consume)
+#endif
+            if touchPipelineMode == .primaryFastTap {
+                samples.forEach(primaryTouch.consume)
+            }
         }
-        touchOverlay.shadowCapture.onUnknownCallback = { [weak self] in
+        touchOverlay.onUnknownCapture = { [weak self] in
+#if DEBUG
             self?.touchShadow.recordUnknownCaptureCallback()
+#endif
         }
     }
 
-    func resetTouchShadow() {
-        touchOverlay.resetShadowCapture()
-        touchShadow.reset()
+    func promoteContactToLegacy(_ token: UInt64) {
+        primaryTouch.promote(token: token)
+#if DEBUG
+        touchShadow.promoteToLegacy(token)
+#endif
     }
 
+    func resetTouchPipeline() {
+        primaryTouch.reset()
+#if DEBUG
+        touchShadow.reset()
+#endif
+    }
+
+#if DEBUG
     var touchShadowResolvedCount: Int {
         touchShadow.trace.metrics.shadowResolved
     }
 
     var touchShadowMatchCount: Int {
         touchShadow.trace.metrics.matched
+    }
+#endif
+
+    @discardableResult
+    public func setTouchPipelineMode(_ mode: KeyboardTouchPipelineMode) -> Bool {
+#if !DEBUG
+        guard mode == .legacy else { return false }
+#endif
+        pendingTouchPipelineMode = mode
+        return applyPendingTouchPipelineModeIfIdle()
+    }
+
+    @discardableResult
+    func applyPendingTouchPipelineModeIfIdle() -> Bool {
+        guard interactionController.activeTouchCount == 0,
+              primaryTouch.activeContactCount == 0,
+              let mode = pendingTouchPipelineMode else { return false }
+        pendingTouchPipelineMode = nil
+        guard mode != touchPipelineMode else { return true }
+        primaryTouch.reset()
+        touchOverlay.setPipelineMode(mode)
+        touchPipelineMode = mode
+        return true
+    }
+
+#if DEBUG
+    private func recordLegacyDiagnostic(_ event: KeyboardKeyEvent) {
+        switch event.phase {
+        case .released: touchShadow.recordLegacyRelease(event.key)
+        case .cancelled: touchShadow.recordLegacyCancellation(event.key)
+        default: break
+        }
     }
 #endif
 

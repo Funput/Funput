@@ -10,6 +10,7 @@ readonly roots=(
     "$ios_root/Packages/FunputKit/Sources/KeyboardTouchUIKit"
     "$ios_root/Packages/FunputKit/Tests/KeyboardTouchCoreTests"
     "$ios_root/Packages/FunputKit/Tests/KeyboardTouchUIKitTests"
+    "$ios_root/Packages/FunputKit/Tests/KeyboardRendererTests/PrimaryTouch"
     "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Interaction"
     "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Surface"
     "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Diagnostics"

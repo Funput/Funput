@@ -10,6 +10,7 @@ extension KeyboardSurfaceInteractionController {
               state.currentKey?.id == state.initialKey.id,
               let sourceFrame = state.currentFrame,
               !state.initialKey.alternates.isEmpty else { return }
+        onPromoteToLegacy(token)
         state.alternateLayout = .resolve(
             count: state.initialKey.alternates.count,
             sourceFrame: sourceFrame,
@@ -29,6 +30,7 @@ extension KeyboardSurfaceInteractionController {
     }
 
     func finishSwipe(token: TouchToken, state: TouchState, action: KeySwipeAction) {
+        onPromoteToLegacy(token)
         touches.removeValue(forKey: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         if repeatTouch == token { clearKeyRepeat() }
@@ -44,6 +46,7 @@ extension KeyboardSurfaceInteractionController {
               let state = touches[token],
               state.initialKey.role == .backspace || state.initialKey.role == .space,
               commitQueue.bufferRepeat(for: token) else { return }
+        onPromoteToLegacy(token)
         if hapticsEnabled { haptics.perform(.deleteRepeat) }
         flushCompletedKeys()
     }
@@ -60,7 +63,7 @@ extension KeyboardSurfaceInteractionController {
     func flushCompletedKeys() {
         while let action = commitQueue.popReadyAction() {
             switch action {
-            case let .event(event): onEvent(event)
+            case let .event(token, event): onContactEvent(token, event)
             case .suppressed: continue
             }
         }

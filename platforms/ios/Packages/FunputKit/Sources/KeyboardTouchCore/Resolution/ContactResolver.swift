@@ -39,6 +39,11 @@ public struct ContactResolver<Payload: Sendable>: Sendable {
         states.removeAll(keepingCapacity: true)
     }
 
+    @discardableResult
+    public mutating func discard(_ contactID: ContactID) -> Bool {
+        states.removeValue(forKey: contactID) != nil
+    }
+
     private mutating func begin(
         _ sample: ContactSample,
         payload: Payload?

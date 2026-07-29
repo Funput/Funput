@@ -1,6 +1,6 @@
 # Funput iOS Input Pipeline 2.0
 
-> **Trạng thái:** Phase 1, Phase 2 và Phase 2.5 Debug validation đã hiện thực  
+> **Trạng thái:** Phase 1–2.5 và Phase 3A Debug primary fast tap đã hiện thực
 > **Phạm vi:** Xử lý phím trong custom keyboard extension trên iOS/iPadOS  
 > **Ngày:** 29/07/2026  
 > **Thay thế dự kiến:** Touch ledger, orphan reconciliation và commit queue hiện tại  
@@ -795,12 +795,25 @@ Ngưỡng ban đầu, cần hiệu chỉnh sau baseline:
 - Legacy vẫn là nguồn commit duy nhất và toàn bộ harness/reporter bị loại khỏi
   Release bằng conditional compilation.
 
-### Phase 3 — New touch pipeline
+### Phase 3A — Primary fast tap
 
-- Feature flag cho phép pipeline mới phát semantic actions.
-- Giữ document coordinator hiện tại.
-- Chạy device matrix.
-- Có kill switch về pipeline cũ trong development builds.
+- `KeyboardFastTapPipeline` là implementation duy nhất cho resolver, geometry
+  snapshot và arbiter; shadow và primary không fork thuật toán.
+- Debug session chọn `.legacy` hoặc `.primaryFastTap`, mặc định primary trong
+  device harness. Release vẫn khởi tạo `.legacy`.
+- Primary commit character, VNI modifier và punctuation. Space, repeat,
+  alternate, swipe và control keys tiếp tục đi qua legacy.
+- Capture adapter cấp `ContactID` dùng chung cho pipeline và interaction
+  controller; primary mode không dùng ledger hoặc `UIEvent.allTouches`.
+- Contact-aware gate suppress legacy release sau primary commit. Gesture
+  promotion hủy primary contact trước khi legacy phát action.
+- UIKit system cancellation trong primary lane không được đổi thành release.
+
+### Phase 3B — Full touch pipeline
+
+- Chuyển repeat, alternate, space swipe và control semantics sang resolver mới.
+- Chạy device matrix 60 Hz/120 Hz trước khi bật Release.
+- Giữ kill switch cho đến khi toàn bộ acceptance gates xanh.
 
 ### Phase 4 — Transaction writer
 
@@ -847,7 +860,8 @@ Packages/FunputKit/
 ├── Sources/KeyboardTouchUIKit/
 │   ├── Capture/                 # UITouch → value samples
 │   ├── Geometry/                # revisioned immutable snapshots
-│   └── Shadow/                  # arbiter bridge, comparator và trace
+│   ├── FastTap/                 # shared resolver/arbiter pipeline
+│   └── Shadow/                  # comparator và numeric trace
 ├── Sources/FunputShared/Persistence/
 │   ├── Configuration/
 │   ├── Diagnostics/             # Debug session, report, store, publisher
@@ -861,9 +875,13 @@ Packages/FunputKit/
 │   └── Resolution/              # 3 files
 └── Tests/KeyboardTouchUIKitTests/
     ├── Capture/
+    ├── FastTap/
     ├── Shadow/
     └── Support/
 ```
+
+Primary routing nằm trong `KeyboardRenderer/Interaction/PrimaryTouch`; tests
+tương ứng nằm trong `KeyboardRendererTests/PrimaryTouch`.
 
 Các target app/extension được nhóm riêng:
 

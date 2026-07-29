@@ -32,6 +32,10 @@ public struct KeyboardGeometrySnapshot: Sendable {
     }
 
     public func hit(at point: CGPoint) -> ShadowKeyIdentity? {
+        touchHit(at: point)?.identity
+    }
+
+    public func touchHit(at point: CGPoint) -> KeyboardTouchHit? {
         guard trackingBounds.contains(point) else { return nil }
         var closest: Entry?
         var closestDistance = CGFloat.greatestFiniteMagnitude
@@ -45,7 +49,9 @@ public struct KeyboardGeometrySnapshot: Sendable {
                 closestDistance = distance
             }
         }
-        return closest?.identity
+        return closest.map {
+            KeyboardTouchHit(identity: $0.identity, key: $0.key.spec, frame: $0.key.frame)
+        }
     }
 
     public func identity(for key: KeySpec) -> ShadowKeyIdentity? {

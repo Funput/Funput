@@ -9,19 +9,21 @@ public final class KeyboardTouchShadowPipeline {
     private let configuration: KeyboardTouchShadowConfiguration
     let clock: PressArbiterDriver<ShadowKeyIdentity>.Clock
     private let schedule: DeadlineSchedule
-    var resolver: ContactResolver<ShadowKeyIdentity>
     var comparator: KeyboardTouchShadowComparator
-    private var currentGeometry: KeyboardGeometrySnapshot?
-    var geometries: [ContactID: KeyboardGeometrySnapshot] = [:]
     var beganAt: [ContactID: TimeInterval] = [:]
     var resolvedAt: [ContactID: TimeInterval] = [:]
     var tiedContacts: Set<ContactID> = []
     private var ignoredContacts: Set<ContactID> = []
-    private var nextGeometryRevision: UInt64 = 1
-    lazy var arbiter = PressArbiterDriver<ShadowKeyIdentity>(
-        configuration: configuration.arbiter,
+    lazy var fastTap = KeyboardFastTapPipeline(
+        eligibleRoles: [.character, .vniModifier, .punctuation, .space],
+        recoveringTapSlopRoles: [.character, .vniModifier, .punctuation],
+        resolverConfiguration: configuration.resolver,
+        arbiterConfiguration: configuration.arbiter,
         clock: clock,
-        schedule: schedule
+        schedule: schedule,
+        onResolved: { [weak self] id, timestamp in
+            self?.resolvedAt[id] = timestamp
+        }
     ) { [weak self] emission in
         self?.recordShadow(emission)
     }
@@ -37,7 +39,6 @@ public final class KeyboardTouchShadowPipeline {
         self.clock = clock
         self.schedule = schedule
         trace = KeyboardTouchShadowTrace()
-        resolver = ContactResolver(configuration: configuration.resolver)
         comparator = KeyboardTouchShadowComparator(
             configuration: configuration,
             clock: clock,
@@ -46,17 +47,13 @@ public final class KeyboardTouchShadowPipeline {
         )
     }
 
-    public var activeContactCount: Int { resolver.activeContactCount }
+    public var activeContactCount: Int { fastTap.activeContactCount }
 
     public func updateGeometry(_ geometry: ResolvedKeyboard) {
-        guard currentGeometry?.geometry != geometry else { return }
-        if activeContactCount > 0 { trace.record(.layoutChangedWhileActive) }
-        precondition(nextGeometryRevision < UInt64.max)
-        currentGeometry = KeyboardGeometrySnapshot(
-            revision: nextGeometryRevision,
-            geometry: geometry
-        )
-        nextGeometryRevision += 1
+        let wasActive = activeContactCount > 0
+        if fastTap.updateGeometry(geometry), wasActive {
+            trace.record(.layoutChangedWhileActive)
+        }
     }
 
     public func consume(_ sample: ContactSample) {
@@ -67,49 +64,38 @@ public final class KeyboardTouchShadowPipeline {
             }
             return
         }
-        let geometry = sample.phase == .began
-            ? currentGeometry : geometries[sample.id]
-        let identity = geometry?.hit(at: sample.location)
-        let eligibleHit = identity.flatMap { Self.isEligible($0.role) ? $0 : nil }
-        let resolution = resolver.consume(sample, hit: eligibleHit)
-        switch resolution {
+        switch fastTap.consume(sample) {
         case .began:
-            guard let geometry else { return }
-            geometries[sample.id] = geometry
             recordTimestamp(sample)
             trace.record(.capturedBegan)
-            _ = arbiter.begin(sample.id, at: sample.timestamp)
             observeArbiterState()
-        case let .resolved(id, payload, metadata):
-            finish(id)
-            if metadata.exceededTapSlop, payload.role == .space {
-                trace.recordCancellation(.exceededTapSlop)
-                arbiter.cancel(id, at: sample.timestamp)
-                observeArbiterState()
-                return
-            }
+        case let .resolved(id, metadata):
+            finishTimestamp(id)
             if metadata.exceededTapSlop { trace.record(.recoveredTapSlop) }
-            resolvedAt[id] = sample.timestamp
-            arbiter.resolve(id, payload: payload, at: sample.timestamp)
             observeArbiterState()
-        case let .cancelled(id, reason):
-            finish(id)
+        case let .fallback(id, reason):
+            finishTimestamp(id)
             resolvedAt.removeValue(forKey: id)
-            trace.recordCancellation(reason)
-            arbiter.cancel(id, at: sample.timestamp)
+            trace.recordCancellation(reason.contactReason)
             observeArbiterState()
-        case let .noOp(reason):
+        case let .cancelled(id):
+            finishTimestamp(id)
+            trace.recordCancellation(.system)
+            observeArbiterState()
+        case let .ignored(reason):
             if reason == .beganOutside {
                 ignoredContacts.insert(sample.id)
             } else if reason == .unknownContact {
                 trace.record(.resolverUnknown)
             }
+        case .tracking:
+            break
         }
     }
 
     public func recordLegacyRelease(_ key: KeySpec) {
         guard Self.isEligible(key.role),
-              let identity = currentGeometry?.identity(for: key) else { return }
+              let identity = fastTap.identity(for: key) else { return }
         comparator.recordLegacy(identity)
     }
 
@@ -122,22 +108,38 @@ public final class KeyboardTouchShadowPipeline {
         trace.record(.captureUnknown)
     }
 
+    public func promoteToLegacy(_ rawContactID: UInt64) {
+        let id = ContactID(rawValue: rawContactID)
+        guard fastTap.promoteToLegacy(id, at: clock()) else { return }
+        finishTimestamp(id)
+        resolvedAt.removeValue(forKey: id)
+        ignoredContacts.insert(id)
+        observeArbiterState()
+    }
+
     public func reset() {
-        arbiter.reset()
+        fastTap.reset()
         comparator.reset()
-        resolver.reset()
-        geometries.removeAll(keepingCapacity: true)
         beganAt.removeAll(keepingCapacity: true)
         resolvedAt.removeAll(keepingCapacity: true)
         tiedContacts.removeAll(keepingCapacity: true)
         ignoredContacts.removeAll(keepingCapacity: true)
-        currentGeometry = nil
     }
 
     static func isEligible(_ role: KeyRole) -> Bool {
         switch role {
         case .character, .vniModifier, .punctuation, .space: true
         default: false
+        }
+    }
+}
+
+private extension KeyboardFastTapFallback {
+    var contactReason: ContactCancellationReason {
+        switch self {
+        case .exceededDuration: .exceededDuration
+        case .endedOutside: .endedOutside
+        case .exceededTapSlop: .exceededTapSlop
         }
     }
 }

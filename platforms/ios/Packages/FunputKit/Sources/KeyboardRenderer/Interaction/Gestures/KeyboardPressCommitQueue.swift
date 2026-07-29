@@ -17,7 +17,7 @@ struct KeyboardPressCommitQueue {
     }
 
     enum ReadyAction {
-        case event(KeyboardKeyEvent)
+        case event(TouchToken, KeyboardKeyEvent)
         case suppressed
     }
 
@@ -88,22 +88,31 @@ struct KeyboardPressCommitQueue {
         let first = entries[head]
         if first.bufferedRepeatCount > 0 {
             entries[head].bufferedRepeatCount -= 1
-            return .event(KeyboardKeyEvent(key: first.key, phase: .repeated))
+            return .event(
+                first.token,
+                KeyboardKeyEvent(key: first.key, phase: .repeated)
+            )
         }
         guard let completion = first.completion else { return nil }
         head += 1
         compactIfNeeded()
         switch completion {
         case .released:
-            return .event(KeyboardKeyEvent(key: first.key, phase: .released))
+            return .event(first.token, KeyboardKeyEvent(key: first.key, phase: .released))
         case .cancelled:
-            return .event(KeyboardKeyEvent(key: first.key, phase: .cancelled))
+            return .event(first.token, KeyboardKeyEvent(key: first.key, phase: .cancelled))
         case .suppressed:
             return .suppressed
         case let .swiped(action):
-            return .event(KeyboardKeyEvent(key: first.key, phase: .swiped(action)))
+            return .event(
+                first.token,
+                KeyboardKeyEvent(key: first.key, phase: .swiped(action))
+            )
         case let .alternate(alternate):
-            return .event(KeyboardKeyEvent(key: first.key, phase: .alternateSelected(alternate)))
+            return .event(
+                first.token,
+                KeyboardKeyEvent(key: first.key, phase: .alternateSelected(alternate))
+            )
         }
     }
 

@@ -5,6 +5,7 @@ public extension KeyboardSurfaceView {
     var touchDiagnosticSnapshot: KeyboardTouchDiagnosticSnapshot {
         let state = touchShadow.diagnosticState
         let metrics = state.metrics
+        let primary = primaryTouch.metrics
         return KeyboardTouchDiagnosticSnapshot(
             capturedBegan: metrics.capturedBegan,
             shadowResolved: metrics.shadowResolved,
@@ -38,9 +39,22 @@ public extension KeyboardSurfaceView {
                 metrics.emissionDelayedOver40Milliseconds,
             emissionDelayedOver120Milliseconds:
                 metrics.emissionDelayedOver120Milliseconds,
-            activeContactCount: state.activeContactCount,
-            pendingComparisonCount: state.pendingComparisonCount,
+            primaryCommitted: primary.primaryCommitted,
+            legacyFallback: primary.legacyFallback,
+            legacyReleaseSuppressed: primary.legacyReleaseSuppressed,
+            primarySystemCancelled: primary.primarySystemCancelled,
+            commitGateViolation: primary.commitGateViolation,
+            duplicateCommitPrevented: primary.duplicateCommitPrevented,
+            maximumCaptureToCommitLatencyMilliseconds:
+                primary.maximumCaptureToCommitLatencyMilliseconds,
+            activeContactCount: max(
+                state.activeContactCount, primaryTouch.activeContactCount
+            ),
+            pendingComparisonCount:
+                state.pendingComparisonCount + primaryTouch.pendingContactCount,
             isSettled: state.isSettled
+                && primaryTouch.activeContactCount == 0
+                && primaryTouch.pendingContactCount == 0
         )
     }
 
@@ -51,11 +65,18 @@ public extension KeyboardSurfaceView {
             guard let self else { return }
             observer?(touchDiagnosticSnapshot)
         }
+        primaryTouch.observe { [weak self] _ in
+            guard let self else { return }
+            observer?(touchDiagnosticSnapshot)
+        }
     }
 
     @discardableResult
     func resetTouchDiagnosticsIfIdle() -> Bool {
-        touchShadow.resetDiagnosticsIfIdle()
+        guard primaryTouch.activeContactCount == 0,
+              touchShadow.resetDiagnosticsIfIdle() else { return false }
+        primaryTouch.reset()
+        return true
     }
 }
 #endif

@@ -1,5 +1,7 @@
 #if canImport(UIKit)
 import KeyboardLayout
+import KeyboardTouchCore
+import KeyboardTouchUIKit
 import UIKit
 
 /// One multi-touch surface for all keycaps. Central tracking lets a finger move
@@ -14,14 +16,15 @@ final class KeyboardTouchOverlayView: UIView {
     var onEnd: ((TouchToken) -> Void)?
     var onCancel: ((TouchToken) -> Void)?
     var onReconcile: ((Set<TouchToken>) -> Void)?
+    var onSamples: (([ContactSample]) -> Void)?
+    var onUnknownCapture: (() -> Void)?
+    private(set) var pipelineMode = KeyboardTouchPipelineMode.legacy
 
     private static let outerTolerance: CGFloat = 12
     private var keys: [ResolvedKey] = []
     private var trackingBounds = CGRect.null
     private var ledger = KeyboardTouchTokenLedger()
-#if DEBUG
-    let shadowCapture = KeyboardTouchShadowCaptureBridge()
-#endif
+    let captureAdapter = UIKitTouchCaptureAdapter()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -50,9 +53,8 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-#if DEBUG
-        shadowCapture.capture(touches, phase: .began, in: self)
-#endif
+        if capturePrimary(touches, phase: .began) { return }
+        captureShadow(touches, phase: .began)
         for touch in touches {
             let point = touch.location(in: self)
             guard let hit = hit(at: point) else { continue }
@@ -67,9 +69,8 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-#if DEBUG
-        shadowCapture.capture(touches, phase: .moved, in: self)
-#endif
+        if capturePrimary(touches, phase: .moved) { return }
+        captureShadow(touches, phase: .moved)
         for touch in touches {
             guard let token = ledger.token(for: touch) else { continue }
             let point = touch.location(in: self)
@@ -79,9 +80,8 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-#if DEBUG
-        shadowCapture.capture(touches, phase: .ended, in: self)
-#endif
+        if capturePrimary(touches, phase: .ended) { return }
+        captureShadow(touches, phase: .ended)
         for touch in touches {
             guard let token = ledger.removeToken(for: touch) else { continue }
             let point = touch.location(in: self)
@@ -92,9 +92,8 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-#if DEBUG
-        shadowCapture.capture(touches, phase: .cancelled, in: self)
-#endif
+        if capturePrimary(touches, phase: .cancelled) { return }
+        captureShadow(touches, phase: .cancelled)
         for touch in touches {
             guard let token = ledger.removeToken(for: touch) else { continue }
             onCancel?(token)
@@ -108,13 +107,15 @@ final class KeyboardTouchOverlayView: UIView {
     /// now commit them.
     func forgetTrackedTouches() {
         ledger.removeAllTokens()
+        captureAdapter.reset()
     }
 
-#if DEBUG
-    func resetShadowCapture() {
-        shadowCapture.reset()
+    func setPipelineMode(_ mode: KeyboardTouchPipelineMode) {
+        guard pipelineMode != mode else { return }
+        ledger.removeAllTokens()
+        captureAdapter.reset()
+        pipelineMode = mode
     }
-#endif
 
     func resolvedHit(at point: CGPoint) -> Hit? {
         hit(at: point)

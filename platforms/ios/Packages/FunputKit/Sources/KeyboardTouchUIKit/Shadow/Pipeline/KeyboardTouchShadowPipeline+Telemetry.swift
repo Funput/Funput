@@ -10,17 +10,16 @@ extension KeyboardTouchShadowPipeline {
         beganAt[sample.id] = sample.timestamp
     }
 
-    func finish(_ id: ContactID) {
-        geometries.removeValue(forKey: id)
+    func finishTimestamp(_ id: ContactID) {
         beganAt.removeValue(forKey: id)
     }
 
-    func recordShadow(_ emission: PressEmission<ShadowKeyIdentity>) {
+    func recordShadow(_ emission: PressEmission<KeyboardTouchHit>) {
         if let terminalTime = resolvedAt.removeValue(forKey: emission.contactID) {
             trace.recordEmissionDelay(max(0, clock() - terminalTime))
         }
         comparator.recordShadow(
-            emission.payload,
+            emission.payload.identity,
             timestampTie: tiedContacts.remove(emission.contactID) != nil
         )
         observeArbiterState()
@@ -28,9 +27,9 @@ extension KeyboardTouchShadowPipeline {
 
     func observeArbiterState() {
         trace.observePipeline(
-            activeContacts: resolver.activeContactCount,
-            arbiterDepth: arbiter.orderedContactCount + arbiter.heldContactCount,
-            bypassCount: arbiter.bypassedContactCount
+            activeContacts: fastTap.activeContactCount,
+            arbiterDepth: fastTap.orderedContactCount + fastTap.heldContactCount,
+            bypassCount: fastTap.bypassedContactCount
         )
     }
 }

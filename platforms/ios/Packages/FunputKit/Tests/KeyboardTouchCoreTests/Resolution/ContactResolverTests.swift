@@ -95,4 +95,23 @@ struct ContactResolverTests {
                 == .noOp(.unknownContact)
         )
     }
+
+    @Test func discardHandsOffOnlyTheRequestedContact() {
+        var resolver = ContactResolver<String>()
+        _ = resolver.consume(contactSample(1, .began, at: 0), hit: "A")
+        _ = resolver.consume(contactSample(2, .began, at: 0.01), hit: "B")
+        let discarded = resolver.discard(.init(rawValue: 1))
+        let duplicate = resolver.discard(.init(rawValue: 1))
+        #expect(discarded)
+        #expect(!duplicate)
+        #expect(resolver.activeContactCount == 1)
+        #expect(
+            resolver.consume(contactSample(2, .ended, at: 0.1), hit: "B")
+                == .resolved(
+                    .init(rawValue: 2),
+                    "B",
+                    .init(exceededTapSlop: false)
+                )
+        )
+    }
 }

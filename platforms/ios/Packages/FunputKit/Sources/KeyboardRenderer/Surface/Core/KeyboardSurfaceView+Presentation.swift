@@ -11,6 +11,7 @@ extension KeyboardSurfaceView {
         if layoutChanged {
             touchOverlay.forgetTrackedTouches()
             interactionController.cancelAll()
+            resetTouchPipeline()
             rebuildKeys()
         }
         if layoutChanged || sizingChanged { geometryCache = nil }

@@ -108,6 +108,18 @@ struct KeyboardTouchShadowDiagnosticsTests {
         #expect(metrics.unknownCallback == 2)
     }
 
+    @Test("Gesture promotion removes the contact from shadow comparison")
+    func gesturePromotion() {
+        let (pipeline, clock) = fixture()
+        consume(pipeline, clock, shadowSample(1, .began, 0, .init(x: 10, y: 20)))
+        pipeline.promoteToLegacy(1)
+        consume(pipeline, clock, shadowSample(1, .ended, 0.4, .init(x: 10, y: 20)))
+
+        #expect(pipeline.trace.metrics.shadowResolved == 0)
+        #expect(pipeline.trace.metrics.outOfScopeCallback == 1)
+        #expect(pipeline.diagnosticState.activeContactCount == 0)
+    }
+
     private func fixture() -> (KeyboardTouchShadowPipeline, ShadowTestClock) {
         let clock = ShadowTestClock()
         let pipeline = KeyboardTouchShadowPipeline(

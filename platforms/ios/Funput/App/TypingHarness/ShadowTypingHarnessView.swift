@@ -7,7 +7,6 @@ struct ShadowTypingHarnessView: View {
     @StateObject private var model = ShadowTypingHarnessModel()
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
-
     var body: some View {
         NavigationStack {
             Form {
@@ -31,9 +30,15 @@ struct ShadowTypingHarnessView: View {
 
     private var setupSection: some View {
         Section("Session") {
-            Picker("Input method", selection: $model.selectedMethod) {
-                ForEach(ShadowTypingFixture.all) { fixture in
-                    Text(fixture.title).tag(fixture.inputMethod)
+            Group {
+                Picker("Input method", selection: $model.selectedMethod) {
+                    ForEach(ShadowTypingFixture.all) { fixture in
+                        Text(fixture.title).tag(fixture.inputMethod)
+                    }
+                }
+                Picker("Touch pipeline", selection: $model.selectedPipeline) {
+                    Text("Primary fast tap").tag(KeyboardTouchDiagnosticPipelineMode.primaryFastTap)
+                    Text("Legacy").tag(KeyboardTouchDiagnosticPipelineMode.legacy)
                 }
             }
             .disabled(

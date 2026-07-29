@@ -29,6 +29,13 @@ public struct KeyboardTouchDiagnosticMetrics: Codable, Equatable, Sendable {
     public var maximumEmissionDelayMilliseconds = 0
     public var emissionDelayedOver40Milliseconds = 0
     public var emissionDelayedOver120Milliseconds = 0
+    public var primaryCommitted = 0
+    public var legacyFallback = 0
+    public var legacyReleaseSuppressed = 0
+    public var primarySystemCancelled = 0
+    public var commitGateViolation = 0
+    public var duplicateCommitPrevented = 0
+    public var maximumCaptureToCommitLatencyMilliseconds = 0
 
     public init() {}
 
@@ -40,6 +47,7 @@ public struct KeyboardTouchDiagnosticMetrics: Codable, Equatable, Sendable {
         shadowMissing > 0 || orderMismatch > 0 || unknownCallback > 0
             || droppedForCapacity > 0 || cancellationDisagreement > 0
             || emissionDelayedOver120Milliseconds > 0
+            || primarySystemCancelled > 0 || commitGateViolation > 0
     }
 }
 #endif

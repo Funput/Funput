@@ -48,7 +48,7 @@ extension KeyboardSurfaceInteractionController {
             alternateHoldController.start(for: token)
         }
         if presentation.showsKeyPreviews { refreshPreview() }
-        onEvent(KeyboardKeyEvent(key: key, phase: .pressed))
+        onContactEvent(token, KeyboardKeyEvent(key: key, phase: .pressed))
     }
 
     func moveTouch(
