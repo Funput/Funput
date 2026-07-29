@@ -65,6 +65,12 @@ public final class PressArbiterDriver<Payload: Sendable> {
         arbiter.reset()
     }
 
+    public var orderedContactCount: Int { arbiter.ordered.count }
+    public var heldContactCount: Int { arbiter.detached.count }
+    public var bypassedContactCount: UInt64 {
+        arbiter.bypassedContactCount
+    }
+
     private func process(_ emissions: [PressEmission<Payload>]) {
         emissions.forEach(onEmit)
         refreshSchedule()

@@ -18,6 +18,7 @@ public struct PressArbiter<Payload: Sendable>: Sendable {
     var detached: [ContactID: Entry] = [:]
     var blockedDeadline: TimeInterval?
     var nextIntentSequence: UInt64 = 1
+    public internal(set) var bypassedContactCount: UInt64 = 0
 
     public init(configuration: PressArbiterConfiguration = .default) {
         self.configuration = configuration
@@ -78,6 +79,7 @@ public struct PressArbiter<Payload: Sendable>: Sendable {
         ordered.removeAll(keepingCapacity: true)
         detached.removeAll(keepingCapacity: true)
         blockedDeadline = nil
+        bypassedContactCount = 0
     }
 
     func entryIndex(for contactID: ContactID) -> Int? {

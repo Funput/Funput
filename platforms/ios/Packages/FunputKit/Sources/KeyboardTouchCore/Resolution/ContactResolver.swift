@@ -72,18 +72,24 @@ public struct ContactResolver<Payload: Sendable>: Sendable {
         }
         update(&state, sample: sample, payload: payload)
         let duration = max(0, sample.timestamp - state.beganAt)
-        guard !state.exceededTapSlop,
-              duration <= configuration.maximumTapDuration,
-              let payload = state.currentPayload
-        else { return .cancelled(sample.id) }
-        return .resolved(sample.id, payload)
+        if duration > configuration.maximumTapDuration {
+            return .cancelled(sample.id, .exceededDuration)
+        }
+        guard let payload = state.currentPayload else {
+            return .cancelled(sample.id, .endedOutside)
+        }
+        return .resolved(
+            sample.id,
+            payload,
+            ContactResolutionMetadata(exceededTapSlop: state.exceededTapSlop)
+        )
     }
 
     private mutating func cancel(_ id: ContactID) -> ContactResolution<Payload> {
         guard states.removeValue(forKey: id) != nil else {
             return .noOp(.unknownContact)
         }
-        return .cancelled(id)
+        return .cancelled(id, .system)
     }
 
     private func update(

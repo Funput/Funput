@@ -22,6 +22,7 @@ extension PressArbiter {
                 }
                 ordered.removeFirst()
                 detached[first.contactID] = first
+                bypassedContactCount &+= 1
             }
         }
         blockedDeadline = nil

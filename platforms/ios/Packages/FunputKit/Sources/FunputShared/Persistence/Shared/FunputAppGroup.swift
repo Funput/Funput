@@ -11,6 +11,8 @@ public enum FunputAppGroup {
 #if DEBUG
     /// Short-lived configuration used only by the debug UI-test harness.
     public static let uiTestConfigurationOverrideKey = "ui-test-configuration-override"
+    public static let touchDiagnosticSessionKey = "touch-diagnostic-session"
+    public static let touchDiagnosticReportKey = "touch-diagnostic-report"
 #endif
 
     /// Defaults key for the keyboard's most recently used emoji.

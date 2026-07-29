@@ -9,6 +9,9 @@ extension KeyboardViewController {
         reloadConfiguration()
         updateTextInputTraits(force: true)
         synchronizeDocument(event: .activated)
+#if DEBUG
+        touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
+#endif
     }
 
     override func textWillChange(_ textInput: (any UITextInput)?) {

@@ -20,6 +20,9 @@ final class KeyboardTouchShadowComparator {
     private var scheduled: ScheduledDeadline?
     private var generation: UInt64 = 0
 
+    var pendingCount: Int { legacy.count + shadow.count }
+    var isSettled: Bool { pendingCount == 0 && scheduled == nil }
+
     init(
         configuration: KeyboardTouchShadowConfiguration,
         clock: @escaping PressArbiterDriver<ShadowKeyIdentity>.Clock,
@@ -33,18 +36,19 @@ final class KeyboardTouchShadowComparator {
     }
 
     func recordLegacy(_ identity: ShadowKeyIdentity) {
-        trace.record(.legacyReleased)
         if remove(identity, from: &awaitingLegacy) {
+            trace.record(.legacyReleased)
             trace.record(.legacyLate)
             return
         }
         legacy.append(Pending(identity: identity, observedAt: clock(), hasTimestampTie: false))
+        trace.record(.legacyReleased)
         reconcile()
     }
 
     func recordShadow(_ identity: ShadowKeyIdentity, timestampTie: Bool) {
-        trace.record(.shadowResolved)
         if remove(identity, from: &awaitingShadow) {
+            trace.record(.shadowResolved)
             trace.record(.shadowLate)
             return
         }
@@ -53,6 +57,7 @@ final class KeyboardTouchShadowComparator {
             observedAt: clock(),
             hasTimestampTie: timestampTie
         ))
+        trace.record(.shadowResolved)
         reconcile()
     }
 

@@ -9,7 +9,11 @@ struct ContactResolverTests {
         #expect(resolver.consume(contactSample(1, .began, at: 0), hit: "A") == .began(.init(rawValue: 1)))
         #expect(
             resolver.consume(contactSample(1, .ended, at: 0.1), hit: "A")
-                == .resolved(.init(rawValue: 1), "A")
+                == .resolved(
+                    .init(rawValue: 1),
+                    "A",
+                    .init(exceededTapSlop: false)
+                )
         )
         #expect(resolver.activeContactCount == 0)
     }
@@ -27,28 +31,36 @@ struct ContactResolverTests {
             resolver.consume(
                 contactSample(1, .ended, at: 0.1, point: CGPoint(x: 20, y: 0)),
                 hit: "B"
-            ) == .resolved(.init(rawValue: 1), "B")
+            ) == .resolved(
+                .init(rawValue: 1),
+                "B",
+                .init(exceededTapSlop: false)
+            )
         )
     }
 
-    @Test func cancelsWanderedLongAndOutsideTaps() {
+    @Test func recoversWanderedTapAndCancelsLongAndOutsideTaps() {
         var resolver = ContactResolver<String>()
         _ = resolver.consume(contactSample(1, .began, at: 0), hit: "A")
         #expect(
             resolver.consume(
                 contactSample(1, .ended, at: 0.1, point: CGPoint(x: 17, y: 0)),
                 hit: "B"
-            ) == .cancelled(.init(rawValue: 1))
+            ) == .resolved(
+                .init(rawValue: 1),
+                "B",
+                .init(exceededTapSlop: true)
+            )
         )
         _ = resolver.consume(contactSample(2, .began, at: 1), hit: "A")
         #expect(
             resolver.consume(contactSample(2, .ended, at: 1.301), hit: "A")
-                == .cancelled(.init(rawValue: 2))
+                == .cancelled(.init(rawValue: 2), .exceededDuration)
         )
         _ = resolver.consume(contactSample(3, .began, at: 2), hit: "A")
         #expect(
             resolver.consume(contactSample(3, .ended, at: 2.1), hit: nil)
-                == .cancelled(.init(rawValue: 3))
+                == .cancelled(.init(rawValue: 3), .endedOutside)
         )
     }
 
@@ -74,7 +86,7 @@ struct ContactResolverTests {
         #expect(resolver.activeContactCount == 2)
         #expect(
             resolver.consume(contactSample(2, .cancelled, at: 0.02), hit: nil)
-                == .cancelled(.init(rawValue: 2))
+                == .cancelled(.init(rawValue: 2), .system)
         )
         resolver.reset()
         #expect(resolver.activeContactCount == 0)

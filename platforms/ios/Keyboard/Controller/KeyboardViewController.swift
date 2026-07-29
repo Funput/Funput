@@ -27,6 +27,11 @@ final class KeyboardViewController: UIInputViewController {
     var cachedPresentationConfiguration: FunputConfiguration?
     var cachedThemedPresentation: KeyboardPresentation?
     let configurationStore = FunputConfigurationStore()
+#if DEBUG
+    lazy var touchDiagnosticsReporter = KeyboardTouchDiagnosticsReporter(
+        surface: keyboardView
+    )
+#endif
     var resolvedTextInputTraits = ResolvedTextInputTraits(
         editorMode: .text,
         enterAction: .newLine,
@@ -40,6 +45,13 @@ final class KeyboardViewController: UIInputViewController {
         installPersonalSuggestions()
         reloadConfiguration()
         updateTextInputTraits(force: true)
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+#if DEBUG
+        touchDiagnosticsReporter.finish()
+#endif
     }
 
     override func viewWillLayoutSubviews() {

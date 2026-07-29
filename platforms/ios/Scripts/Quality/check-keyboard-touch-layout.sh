@@ -12,6 +12,16 @@ readonly roots=(
     "$ios_root/Packages/FunputKit/Tests/KeyboardTouchUIKitTests"
     "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Interaction"
     "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Surface"
+    "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Diagnostics"
+    "$ios_root/Packages/FunputKit/Sources/FunputShared/Persistence"
+    "$ios_root/Packages/FunputKit/Tests/FunputSharedTests/Diagnostics"
+    "$ios_root/Funput/App/Launch"
+    "$ios_root/Funput/App/Shell"
+    "$ios_root/Funput/App/TypingHarness"
+    "$ios_root/FunputTests/TypingHarness"
+    "$ios_root/Keyboard/Controller"
+    "$ios_root/Keyboard/Diagnostics"
+    "$ios_root/Keyboard/Support"
 )
 violations=0
 

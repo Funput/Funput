@@ -12,7 +12,9 @@ struct ContentView: View {
 
     var body: some View {
 #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-uitest-typing-harness") {
+        if ProcessInfo.processInfo.arguments.contains("-device-shadow-harness") {
+            ShadowTypingHarnessView()
+        } else if ProcessInfo.processInfo.arguments.contains("-uitest-typing-harness") {
             TypingHarnessView()
         } else {
             appContent
