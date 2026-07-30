@@ -491,10 +491,9 @@ Toàn bộ mutations của transaction phải được apply liền nhau.
 ```swift
 @MainActor
 final class KeyboardDocumentWriter {
-    func apply(
-        _ transaction: InputTransaction,
-        to proxy: any UITextDocumentProxy
-    ) {
+    let proxy: any UITextDocumentProxy
+
+    func apply(_ transaction: InputTransaction) {
         // Apply all mutations synchronously.
     }
 }
@@ -504,8 +503,7 @@ Writer chịu trách nhiệm:
 
 - signpost transaction;
 - gọi `deleteBackward`/`insertText`;
-- cập nhật local document shadow;
-- phát post-commit notification.
+- copy snapshot từ proxy thành value type.
 
 Writer không:
 
@@ -535,15 +533,17 @@ External mutation:
 
 ## 12. Deferred Effects
 
-Sau document commit, pipeline tạo một `PostCommitEffects`:
+Sau document commit, pipeline trả về `KeyboardPostCommitEffects`:
 
 ```swift
-struct PostCommitEffects {
-    var presentationUpdate: PresentationUpdate?
-    var suggestionUpdate: KeyboardSuggestionInputUpdate?
-    var feedback: KeyboardFeedback?
+struct KeyboardPostCommitEffects {
+    let presentationChanged: Bool
+    let suggestionsChanged: Bool
 }
 ```
+
+Controller áp dụng effects đúng một lần sau khi `writer.apply` đã trả về.
+Feedback của touch vẫn thuộc renderer và không chen vào mutation loop.
 
 ### 12.1. Suggestions
 
@@ -819,12 +819,6 @@ Ngưỡng ban đầu, cần hiệu chỉnh sau baseline:
 - Manual device acceptance được dồn sau Phase 5; Phase 3B chỉ chạy automated
   regression, Debug/Release build và quality gates.
 
-### Phase 4 — Transaction writer
-
-- Chuyển composition result thành `InputTransaction`.
-- Cô lập `UITextDocumentProxy` trong `KeyboardDocumentWriter`.
-- Tách post-commit effects.
-
 ### Phase 3C — V2-only cleanup
 
 - Xóa mode switch và toàn bộ legacy keycap pipeline.
@@ -834,6 +828,21 @@ Ngưỡng ban đầu, cần hiệu chỉnh sau baseline:
 - `KeyboardTouchContactRegistry` bảo vệ exactly-once trong một V2 ownership lane.
 - Toolbar và accessibility tiếp tục đi thẳng qua semantic router.
 - Harness không còn lựa chọn pipeline; mọi session luôn đo V2.
+
+### Phase 4 — Transaction writer
+
+- Đã thay mutation API cũ bằng `InputTransaction` và
+  `KeyboardDocumentWriting`; không có compatibility writer.
+- `InputTransactionBuilder` coalesce mutations liền kề, sequence chỉ được cấp
+  khi action thực sự có mutation.
+- Coordinator stage toàn bộ mutation lên document shadow, tính resulting state,
+  rồi gọi writer đúng một lần trên `MainActor`.
+- `KeyboardDocumentWriter` là nơi duy nhất giữ `UITextDocumentProxy`; writer
+  apply đồng bộ theo thứ tự và chỉ signpost metadata dạng số.
+- Suggestion tracker, presentation, suggestion UI và emoji recents chỉ chạy sau
+  khi writer hoàn thành.
+- Lifecycle synchronization đọc snapshot chính thức từ writer và trả
+  `KeyboardPostCommitEffects`.
 
 ---
 
@@ -896,8 +905,29 @@ Funput/App/
 
 Keyboard/
 ├── Controller/
-├── Diagnostics/                 # Debug reporter và mapper
-└── Support/
+├── Document/                    # concrete writer và numeric signpost
+└── Diagnostics/                 # Debug reporter và mapper
+```
+
+Transaction boundary được nhóm riêng:
+
+```text
+Packages/FunputKit/
+├── Sources/KeyboardInput/
+│   ├── Coordinator/
+│   ├── Transactions/
+│   ├── Document/
+│   ├── State/
+│   ├── PersonalSuggestions/
+│   ├── Configuration/
+│   └── Diagnostics/
+└── Tests/KeyboardInputTests/
+    ├── Composition/
+    ├── Transactions/
+    ├── Document/
+    ├── Coordinator/
+    ├── Suggestions/
+    └── Support/
 ```
 
 Renderer V2 được nhóm theo `Capture`, `Controller`, `Gestures`, `V2Touch`,
