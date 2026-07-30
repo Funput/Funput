@@ -1,9 +1,9 @@
 use crate::ToneStyle;
 use crate::composition::replace_char_at;
 use crate::input_method::telex::tone_from_key;
+use crate::orthography::reposition_existing_tone;
 use crate::unicode::marks::Tone;
 use crate::unicode::shapes::{VowelShape, shape_on_vowel, strip_shape};
-use crate::unicode::tone_position::reposition_existing_tone;
 use crate::validation::syllable::is_viable_shape_candidate;
 
 use super::super::IntentResolution;

@@ -22,6 +22,7 @@
 mod composition;
 mod input_method;
 mod options;
+mod orthography;
 mod unicode;
 mod validation;
 

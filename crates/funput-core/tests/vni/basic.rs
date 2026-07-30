@@ -280,6 +280,35 @@ fn vni_qu_gi_onset_tone_placement() {
 }
 
 #[test]
+fn vni_tone_digit_before_the_nucleus_reaches_the_glide_onsets() {
+    // The digit parks on the glide (`gí`, `qú`) and moves once the nucleus lands.
+    for (keys, expected) in [
+        ("gi1a", "giá"),
+        ("gi2a", "già"),
+        ("gi3a", "giả"),
+        ("gi4a", "giã"),
+        ("gi5a", "giạ"),
+        ("gi1o", "gió"),
+        ("gi1ao", "giáo"),
+        ("gi1an", "gián"),
+        ("qu1a", "quá"),
+        ("qu2a", "quà"),
+        ("qu1y", "quý"),
+        ("qu1an", "quán"),
+        // A shape arriving after the tone still takes it along.
+        ("gi1e6ng", "giếng"),
+        ("qu1oc6", "quốc"),
+        ("qu2yen6", "quyền"),
+    ] {
+        assert_eq!(
+            crate::support::type_keys(InputMethod::Vni, keys),
+            expected,
+            "{keys}"
+        );
+    }
+}
+
+#[test]
 fn vni_shaped_vowel_takes_tone() {
     // A vowel carrying mũ/móc/trần receives the tone, wherever it sits.
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "lay61"), "lấy");

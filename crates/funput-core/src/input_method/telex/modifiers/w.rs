@@ -1,5 +1,6 @@
 use crate::composition::uo_horn::uo_pair_in_vowel_cluster;
 use crate::input_method::KeyAction;
+use crate::orthography::glide::{self, Glide};
 use crate::unicode::marks::{is_vowel, tone_on_vowel, vowel_stem};
 use crate::unicode::shapes::{VowelShape, base_vowel, shape_on_vowel, shape_target_index};
 
@@ -12,15 +13,16 @@ fn plain(ch: char, stem: char) -> bool {
 }
 
 fn ends_with_ua_target(buffer: &str) -> bool {
-    let mut rev = buffer.chars().rev();
-    if !rev.next().is_some_and(|ch| plain(ch, 'a')) {
+    let mut rev = buffer.char_indices().rev();
+    if !rev.next().is_some_and(|(_, ch)| plain(ch, 'a')) {
         return false;
     }
-    let is_u = rev
-        .next()
-        .and_then(vowel_stem)
-        .is_some_and(|stem| matches!(stem, 'u' | 'U' | 'ư' | 'Ư'));
-    is_u && !matches!(rev.next(), Some('q' | 'Q'))
+    let Some((u_offset, u)) = rev.next() else {
+        return false;
+    };
+    let is_u = vowel_stem(u).is_some_and(|stem| matches!(stem, 'u' | 'U' | 'ư' | 'Ư'));
+    // `qua` is onset + `a`: no `ua` pair for the horn to target.
+    is_u && glide::at(buffer, u_offset) != Some(Glide::Qu)
 }
 
 pub(crate) fn classify(buffer: &str) -> Option<KeyAction> {
@@ -62,9 +64,14 @@ pub(crate) fn classify(buffer: &str) -> Option<KeyAction> {
 }
 
 fn ends_with_qu_glide(buffer: &str) -> bool {
-    let mut chars = buffer.chars().rev();
-    chars.next().is_some_and(|ch| plain(ch, 'u'))
-        && chars.next().is_some_and(|ch| ch.eq_ignore_ascii_case(&'q'))
+    let Some((u_offset, _)) = buffer
+        .char_indices()
+        .next_back()
+        .filter(|&(_, ch)| plain(ch, 'u'))
+    else {
+        return false;
+    };
+    glide::at(buffer, u_offset) == Some(Glide::Qu)
 }
 
 fn horn() -> Option<KeyAction> {

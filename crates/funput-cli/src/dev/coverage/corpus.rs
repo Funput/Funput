@@ -27,6 +27,19 @@ const CORPUS_NOISE: &[&str] = &[
     "ngườí",
     "ngồí",
     "phổí",
+    "gìặt", // giặt
+    "gĩữ",  // giữ
+    // Tone on the **onset glide** — the `u` of `qu` / the `i` of `gi` belongs to the
+    // onset and never carries the tone, so these are misspellings of `quỳ`, `quý`,
+    // `quỹ`, `quỵ`, `giạ`. `is_complete_syllable` already rejects them (see
+    // `orthography::glide::onset_holds_tone`); listing them keeps the exclusion
+    // auditable and catches the regression if that check is ever loosened.
+    "qùy",
+    "qúy",
+    "qũy",
+    "qụy",
+    "gịa",
+    "gỵa",
     // Tone on the wrong vowel (engine produces the correctly-placed spelling).
     "ngươí",
     "ngóeo",

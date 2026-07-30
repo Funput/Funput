@@ -1,5 +1,5 @@
 use crate::composition::uo_horn::{complete_uo_horn_for_continuation, drop_stray_u_after_horn_u};
-use crate::unicode::tone_position::reposition_existing_tone;
+use crate::orthography::reposition_existing_tone;
 use crate::{ToneStyle, TransformKind, TransformResult};
 
 use super::append;

@@ -3,16 +3,14 @@
 //! Hot path: runs on every normal keystroke, so the cluster analysis is a
 //! single allocation-free pass; only an actual reposition builds a `String`.
 
-mod cluster;
-
-use cluster::{modern_open_pair_takes_second, scan_cluster, tone_offset_in_cluster};
+use super::cluster::{modern_open_pair_takes_second, scan_cluster, tone_offset_in_cluster};
 
 use crate::ToneStyle;
 use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, tone_on_vowel, vowel_stem};
 use crate::unicode::shapes::{VowelShape, apply_shape};
 
 /// Char index where a tone mark should be placed, for the given placement `style`.
-pub fn tone_vowel_index(buffer: &str, style: ToneStyle) -> Option<usize> {
+pub(crate) fn tone_vowel_index(buffer: &str, style: ToneStyle) -> Option<usize> {
     let cluster = scan_cluster(buffer)?;
 
     // A vowel carrying mũ/móc/trần (â ê ô ơ ư ă) takes the tone. For `ươ` (two
@@ -40,7 +38,7 @@ pub fn tone_vowel_index(buffer: &str, style: ToneStyle) -> Option<usize> {
 /// Plain `e` preceded by `i` forms the rising diphthong written with a circumflex
 /// (`viết`, `giết`), so the tone lands on `ê`. This covers both the `i` nucleus of
 /// `viet` and the `i` that is part of the `gi` onset of `giet`.
-pub fn tone_target_vowel(buffer: &str, vowel_idx: usize) -> Option<char> {
+pub(crate) fn tone_target_vowel(buffer: &str, vowel_idx: usize) -> Option<char> {
     // Chars at vowel_idx - 1, vowel_idx, vowel_idx + 1, in one pass.
     let (mut prev, mut vowel, mut next) = (None, None, None);
     for (i, ch) in buffer.chars().enumerate() {
@@ -88,7 +86,13 @@ pub fn tone_target_vowel(buffer: &str, vowel_idx: usize) -> Option<char> {
 }
 
 /// If a tone exists on the wrong vowel, move it to the correct position for `style`.
-pub fn reposition_existing_tone(buffer: &str, style: ToneStyle) -> Option<String> {
+///
+/// Only the *position* is revisited, never the tonal base of a tone that already
+/// sits right. That is deliberate: where the user put the tone key disambiguates
+/// the two `gi` + `e` + coda rhymes that structure alone cannot separate — before
+/// the coda keeps plain `e` (`giefm` → `gièm`), after it promotes to `ê`
+/// (`giemf` → `giềm`). Both are real words.
+pub(crate) fn reposition_existing_tone(buffer: &str, style: ToneStyle) -> Option<String> {
     // Cheap scan first: most keystrokes carry no tone yet, and this runs on
     // every normal key — bail out without any cluster analysis or allocation.
     let (current, current_ch, tone) = buffer
@@ -116,6 +120,3 @@ pub fn reposition_existing_tone(buffer: &str, style: ToneStyle) -> Option<String
     }
     Some(moved)
 }
-
-#[cfg(test)]
-mod tests;
