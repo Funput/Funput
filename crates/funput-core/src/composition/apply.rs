@@ -7,9 +7,9 @@
 
 use crate::composition::replace_char_at;
 use crate::composition::uo_horn::{apply_uo_compound, uo_pair_in_vowel_cluster};
+use crate::orthography::{tone_target_vowel, tone_vowel_index};
 use crate::unicode::marks::{Tone, apply_tone_to_vowel, stroke_d, tone_on_vowel, vowel_stem};
 use crate::unicode::shapes::{VowelShape, apply_shape_to_vowel, shape_target_index};
-use crate::unicode::tone_position::{tone_target_vowel, tone_vowel_index};
 use crate::{ToneStyle, TransformKind, TransformResult};
 
 fn ignored(buffer: &str) -> TransformResult {

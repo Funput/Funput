@@ -1,5 +1,6 @@
 //! One-pass, allocation-free scan of the nucleus vowel cluster.
 
+use crate::orthography::glide;
 use crate::unicode::marks::{is_vowel, vowel_stem};
 use crate::unicode::shapes::shape_on_vowel;
 
@@ -18,28 +19,19 @@ pub(super) struct ClusterScan {
     pub(super) has_coda: bool,
 }
 
-/// True if `vowel`, preceded by `prev`, is the onset glide of `qu`/`gi` (the
-/// `u`/`i` belongs to the leading consonant, not the tonal nucleus).
-fn is_onset_glide(prev: Option<char>, vowel: char) -> bool {
-    let Some(prev) = prev else {
-        return false;
-    };
-    (vowel.eq_ignore_ascii_case(&'u') && prev.eq_ignore_ascii_case(&'q'))
-        || (vowel.eq_ignore_ascii_case(&'i') && prev.eq_ignore_ascii_case(&'g'))
-}
-
 pub(super) fn scan_cluster(buffer: &str) -> Option<ClusterScan> {
-    let mut before = None; // char immediately before the cluster
+    let mut onset = buffer; // everything before the cluster
     let mut start = 0;
     let mut len = 0;
     let mut vowels = [None; 3]; // first three cluster vowels
     let mut last_shaped = None;
     let mut has_coda = false;
 
-    for (i, ch) in buffer.chars().enumerate() {
+    for (i, (offset, ch)) in buffer.char_indices().enumerate() {
         if is_vowel(ch) {
             if len == 0 {
                 start = i;
+                onset = &buffer[..offset];
             }
             if len < vowels.len() {
                 vowels[len] = Some(ch);
@@ -51,16 +43,15 @@ pub(super) fn scan_cluster(buffer: &str) -> Option<ClusterScan> {
         } else if len > 0 {
             has_coda = true;
             break;
-        } else {
-            before = Some(ch);
         }
     }
 
     // Drop the onset glide of `qu`/`gi` when a real nucleus vowel follows
     // (e.g. `qua` → tone on `a`, `gia` → tone on `a`), but keep it when it is
-    // the only vowel (e.g. `gì`, `gìn`). A glide is a plain `u`/`i` — never
-    // shaped — so `last_shaped` is unaffected.
-    if len >= 2 && is_onset_glide(before, vowels[0]?) {
+    // the only vowel (e.g. `gì`, `gìn`). The glide may itself carry a transient
+    // tone here (`gí` + `a`), which is exactly what [`glide::after`] sees through;
+    // it is never *shaped*, so `last_shaped` is unaffected either way.
+    if len >= 2 && glide::after(onset, vowels[0]?).is_some() {
         start += 1;
         len -= 1;
         vowels = [vowels[1], vowels[2], None];

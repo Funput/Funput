@@ -1,3 +1,4 @@
+use crate::orthography::glide::{self, Glide};
 use crate::unicode::marks::{Tone, apply_tone_to_vowel, tone_on_vowel, vowel_stem};
 use crate::unicode::shapes::{VowelShape, apply_shape_to_vowel};
 
@@ -66,10 +67,12 @@ pub(crate) fn apply_uo_compound_in_place(text: &mut String) -> bool {
 fn compound_target(buffer: &str) -> Option<(usize, usize, bool)> {
     let (u_index, o_index) = uo_pair_in_vowel_cluster(buffer)?;
     let continued = o_index + 1 < buffer.chars().count();
-    let qu_glide = u_index > 0
-        && buffer
-            .chars()
-            .nth(u_index - 1)
-            .is_some_and(|ch| ch.eq_ignore_ascii_case(&'q'));
+    // The `u` of `qu` is onset, not part of a `ươ` compound — only the `o` horns
+    // (`quở`, `quơ`), never the glide.
+    let u_offset = buffer
+        .char_indices()
+        .nth(u_index)
+        .map_or(buffer.len(), |(offset, _)| offset);
+    let qu_glide = glide::at(buffer, u_offset) == Some(Glide::Qu);
     Some((u_index, o_index, continued && !qu_glide))
 }

@@ -1,6 +1,7 @@
 use crate::composition::uo_horn::{apply_uo_compound_in_place, uo_pair_in_vowel_cluster};
 use crate::input_method::KeyAction;
 use crate::input_method::telex::classify_w;
+use crate::orthography::glide;
 use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, tone_on_vowel};
 use crate::unicode::shapes::{apply_shape_to_vowel, shape_target_index};
 use crate::validation::syllable::is_viable_shape_candidate;
@@ -15,17 +16,15 @@ pub(crate) fn has_pending(buffer: &str) -> bool {
         return false;
     }
     let mut count = 0;
-    let mut previous = None;
-    for (index, ch) in buffer.chars().enumerate() {
-        let qu_glide = previous.is_some_and(|prev: char| prev.eq_ignore_ascii_case(&'q'))
-            && ch.eq_ignore_ascii_case(&'u');
-        if is_vowel(ch) && !qu_glide {
+    for (offset, ch) in buffer.char_indices() {
+        // An onset glide is not the nucleus, so the marker is still "before the
+        // vowel" past it: `quw` + `own` → `quơn`, `giw` + `of` → `giờ`.
+        if is_vowel(ch) && glide::at(buffer, offset).is_none() {
             break;
         }
-        if index > 0 && ch.eq_ignore_ascii_case(&'w') {
+        if offset > 0 && ch.eq_ignore_ascii_case(&'w') {
             count += 1;
         }
-        previous = Some(ch);
     }
     count == 1
 }

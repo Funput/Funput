@@ -30,6 +30,8 @@ mod properties;
 mod regression;
 #[path = "telex/stroke_collisions.rs"]
 mod stroke_collisions;
+#[path = "telex/tone_permutations.rs"]
+mod tone_permutations;
 #[path = "telex/w_collisions.rs"]
 mod w_collisions;
 #[path = "telex/w_permutations.rs"]

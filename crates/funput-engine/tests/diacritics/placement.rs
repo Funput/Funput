@@ -57,6 +57,26 @@ fn traditional_keeps_oa_oe_uy_on_first_vowel() {
 }
 
 #[test]
+fn glide_onsets_survive_a_tone_typed_before_the_nucleus() {
+    // A tone parked on the `gi`/`qu` glide must keep parsing as that onset. When
+    // it did not, `gío` read as `g` + rhyme `io` — no such Vietnamese rhyme — and
+    // eager English restore threw the whole word back to raw keys (`giso`).
+    for (method, keys, expected) in [
+        (InputMethod::Telex, "giso", "gió"),
+        (InputMethod::Telex, "gifo", "giò"),
+        (InputMethod::Telex, "gisa", "giá"),
+        (InputMethod::Telex, "qusa", "quá"),
+        (InputMethod::Telex, "qusy", "quý"),
+        (InputMethod::Vni, "gi1o", "gió"),
+        (InputMethod::Vni, "qu1a", "quá"),
+    ] {
+        assert_eq!(run(method, keys), expected, "{keys}");
+    }
+    // The restore itself still works for words that really are not Vietnamese.
+    assert_eq!(run(InputMethod::Telex, "text"), "text");
+}
+
+#[test]
 fn uu_diphthong_horns_first_vowel() {
     // The `ưu` falling diphthong horns the first `u`, so the tone lands on `ư`
     // regardless of whether the horn key comes before or after the second `u`.
