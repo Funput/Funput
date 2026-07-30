@@ -13,9 +13,9 @@ struct KeyboardAlternateInputTests {
     ])
     func composition(method: KeyboardInputMethod) {
         let coordinator = KeyboardInputCoordinator(inputMethod: method)
-        let document = TestKeyboardDocument()
+        let document = TestKeyboardWriter()
         type("t", with: coordinator, into: document)
-        coordinator.handleAlternate(alternate("ế"), from: sourceKey(), document: document)
+        coordinator.handleAlternate(alternate("ế"), from: sourceKey(), writer: document)
         type("t", with: coordinator, into: document)
 
         #expect(document.text == "tết")
@@ -25,9 +25,9 @@ struct KeyboardAlternateInputTests {
     @Test("English mode inserts the selected Unicode character directly")
     func english() {
         let coordinator = KeyboardInputCoordinator(inputMethod: .telex)
-        let document = TestKeyboardDocument()
+        let document = TestKeyboardWriter()
         coordinator.toggleLanguage()
-        coordinator.handleAlternate(alternate("ư"), from: sourceKey(), document: document)
+        coordinator.handleAlternate(alternate("ư"), from: sourceKey(), writer: document)
         #expect(document.text == "ư")
         #expect(coordinator.composer.buffer().isEmpty)
     }
@@ -35,9 +35,9 @@ struct KeyboardAlternateInputTests {
     @Test("Alternate consumes one-shot Shift")
     func oneShotShift() {
         let coordinator = KeyboardInputCoordinator(inputMethod: .telex)
-        let document = TestKeyboardDocument()
-        coordinator.handle(testKey(.shift), document: document)
-        coordinator.handleAlternate(alternate("á"), from: sourceKey(), document: document)
+        let document = TestKeyboardWriter()
+        coordinator.handle(testKey(.shift), writer: document)
+        coordinator.handleAlternate(alternate("á"), from: sourceKey(), writer: document)
         #expect(document.text == "Á")
         #expect(coordinator.state.shiftState == .lowercase)
     }

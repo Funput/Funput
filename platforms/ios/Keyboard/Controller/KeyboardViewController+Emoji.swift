@@ -45,25 +45,22 @@ extension KeyboardViewController {
     }
 
     private func insertEmoji(_ item: EmojiItem) {
-        let previousState = inputCoordinator.state
-        let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
-        inputCoordinator.insertLiteral(item.glyph, document: document)
+        let effects = inputCoordinator.insertLiteral(
+            item.glyph,
+            writer: makeDocumentWriter()
+        )
         _ = emojiRecentsStore.record(
             EmojiRecent(glyph: item.glyph, name: item.name, category: item.category.rawValue)
         )
         refreshEmojiPresentation()
-        if inputCoordinator.state != previousState {
-            updateInputPresentation()
-        }
+        applyPostCommitEffects(effects)
     }
 
     private func deleteFromEmojiKeyboard() {
-        let previousState = inputCoordinator.state
-        let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
-        inputCoordinator.deleteBackward(document: document)
-        if inputCoordinator.state != previousState {
-            updateInputPresentation()
-        }
+        let effects = inputCoordinator.deleteBackward(
+            writer: makeDocumentWriter()
+        )
+        applyPostCommitEffects(effects)
     }
 
     private func emojiItem(_ recent: EmojiRecent) -> EmojiItem? {

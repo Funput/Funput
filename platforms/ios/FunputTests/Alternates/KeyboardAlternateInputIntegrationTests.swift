@@ -12,30 +12,30 @@ struct KeyboardAlternateInputIntegrationTests {
     ])
     func composition(method: KeyboardInputMethod) {
         let coordinator = KeyboardInputCoordinator(inputMethod: method)
-        let document = AlternateTestDocument()
-        type("t", coordinator: coordinator, document: document)
+        let document = ScriptedWriter()
+        type("t", coordinator: coordinator, writer: document)
         coordinator.handleAlternate(
             KeyAlternate(text: "ế"),
             from: KeySpec(id: "e", label: "e", role: .character),
-            document: document
+            writer: document
         )
-        type("t", coordinator: coordinator, document: document)
+        type("t", coordinator: coordinator, writer: document)
         #expect(document.text == "tết")
     }
 
     @Test("English mode inserts Unicode and one-shot Shift is consumed")
     func languageAndShift() {
         let coordinator = KeyboardInputCoordinator(inputMethod: .telex)
-        let document = AlternateTestDocument()
+        let document = ScriptedWriter()
         coordinator.toggleLanguage()
         coordinator.handle(
             KeySpec(id: "shift", label: "", role: .shift),
-            document: document
+            writer: document
         )
         coordinator.handleAlternate(
             KeyAlternate(text: "ư"),
             from: KeySpec(id: "u", label: "u", role: .character),
-            document: document
+            writer: document
         )
         #expect(document.text == "Ư")
         #expect(coordinator.state.shiftState == .lowercase)
@@ -44,7 +44,7 @@ struct KeyboardAlternateInputIntegrationTests {
     private func type(
         _ text: String,
         coordinator: KeyboardInputCoordinator,
-        document: AlternateTestDocument
+        writer: ScriptedWriter
     ) {
         for character in text {
             coordinator.handle(
@@ -53,24 +53,8 @@ struct KeyboardAlternateInputIntegrationTests {
                     label: String(character),
                     role: .character
                 ),
-                document: document
+                writer: writer
             )
         }
-    }
-}
-
-@MainActor
-private final class AlternateTestDocument: KeyboardDocument {
-    var text = ""
-    let documentIdentifier = UUID()
-    var contextBeforeInput: String? { text }
-    let hasSelection = false
-
-    func insertText(_ text: String) {
-        self.text.append(text)
-    }
-
-    func deleteBackward() {
-        if !text.isEmpty { text.removeLast() }
     }
 }

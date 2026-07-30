@@ -19,8 +19,12 @@ extension KeyboardViewController {
             return
         case .swiped(.toggleLanguage):
             inputCoordinator.toggleLanguage()
-            clearPersonalSuggestions()
-            updateInputPresentation()
+            applyPostCommitEffects(
+                .init(
+                    presentationChanged: true,
+                    suggestionsChanged: true
+                )
+            )
             return
         }
 
@@ -44,18 +48,18 @@ extension KeyboardViewController {
                 signpostID: signpostID
             )
         }
-        let previousState = inputCoordinator.state
-        let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
+        let writer = makeDocumentWriter()
+        let effects: KeyboardPostCommitEffects
         if let alternate {
-            inputCoordinator.handleAlternate(alternate, from: event.key, document: document)
+            effects = inputCoordinator.handleAlternate(
+                alternate,
+                from: event.key,
+                writer: writer
+            )
         } else {
-            inputCoordinator.handle(event.key, document: document)
+            effects = inputCoordinator.handle(event.key, writer: writer)
         }
-        publishPersonalSuggestionUpdate()
-
-        if inputCoordinator.state != previousState {
-            updateInputPresentation()
-        }
+        applyPostCommitEffects(effects)
     }
 
     func updateInputPresentation() {

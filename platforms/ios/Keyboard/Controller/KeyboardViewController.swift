@@ -32,7 +32,7 @@ final class KeyboardViewController: UIInputViewController {
         surface: keyboardView
     )
 #endif
-    var resolvedTextInputTraits = ResolvedTextInputTraits(
+    var resolvedTextInputTraits = KeyboardInputContext(
         editorMode: .text,
         enterAction: .newLine,
         initialLayoutMode: .letters

@@ -8,8 +8,10 @@ readonly ios_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly roots=(
     "$ios_root/Packages/FunputKit/Sources/KeyboardTouchCore"
     "$ios_root/Packages/FunputKit/Sources/KeyboardTouchUIKit"
+    "$ios_root/Packages/FunputKit/Sources/KeyboardInput"
     "$ios_root/Packages/FunputKit/Tests/KeyboardTouchCoreTests"
     "$ios_root/Packages/FunputKit/Tests/KeyboardTouchUIKitTests"
+    "$ios_root/Packages/FunputKit/Tests/KeyboardInputTests"
     "$ios_root/Packages/FunputKit/Tests/KeyboardRendererTests/V2Touch"
     "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Interaction"
     "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Surface"
@@ -20,9 +22,10 @@ readonly roots=(
     "$ios_root/Funput/App/Shell"
     "$ios_root/Funput/App/TypingHarness"
     "$ios_root/FunputTests/TypingHarness"
+    "$ios_root/FunputTests"
     "$ios_root/Keyboard/Controller"
+    "$ios_root/Keyboard/Document"
     "$ios_root/Keyboard/Diagnostics"
-    "$ios_root/Keyboard/Support"
 )
 violations=0
 

@@ -8,7 +8,7 @@ extension KeyboardViewController {
         if hasFullAccess { accessStateStore.recordFullAccess() }
         reloadConfiguration()
         updateTextInputTraits(force: true)
-        synchronizeDocument(event: .activated)
+        synchronizeInputDocument(event: .activated)
 #if DEBUG
         touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
 #endif
@@ -22,16 +22,16 @@ extension KeyboardViewController {
     override func textDidChange(_ textInput: (any UITextInput)?) {
         super.textDidChange(textInput)
         updateTextInputTraits()
-        synchronizeDocument(event: .textChanged)
+        synchronizeInputDocument(event: .textChanged)
     }
 
     override func selectionDidChange(_ textInput: (any UITextInput)?) {
         super.selectionDidChange(textInput)
-        synchronizeDocument(event: .selectionChanged)
+        synchronizeInputDocument(event: .selectionChanged)
     }
 
     func updateTextInputTraits(force: Bool = false) {
-        let resolved = TextInputTraitsResolver.resolve(textDocumentProxy)
+        let resolved = makeDocumentWriter().inputContext
         guard force || resolved != resolvedTextInputTraits else { return }
 
         resolvedTextInputTraits = resolved
@@ -39,13 +39,4 @@ extension KeyboardViewController {
         updateInputPresentation()
     }
 
-    private func synchronizeDocument(event: KeyboardDocumentEvent) {
-        let previousState = inputCoordinator.state
-        let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
-        inputCoordinator.synchronizeDocument(document, event: event)
-        publishPersonalSuggestionUpdate()
-        if inputCoordinator.state != previousState {
-            updateInputPresentation()
-        }
-    }
 }

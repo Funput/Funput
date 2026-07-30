@@ -10,7 +10,7 @@ struct AdvancedTelexInputTests {
     func configuration() {
         let coordinator = KeyboardInputCoordinator()
         coordinator.apply(FunputConfiguration(inputMethod: .telexAdvanced))
-        let document = TestKeyboardDocument()
+        let document = TestKeyboardWriter()
 
         typeAdvanced("tr[]ngf", with: coordinator, into: document)
 
@@ -21,18 +21,18 @@ struct AdvancedTelexInputTests {
     @Test("Runtime toggle returns to the preferred Telex variant")
     func preferredToggle() {
         let coordinator = KeyboardInputCoordinator(inputMethod: .telexAdvanced)
-        let document = TestKeyboardDocument()
+        let document = TestKeyboardWriter()
 
-        coordinator.handle(testKey(.inputMethod), document: document)
+        coordinator.handle(testKey(.inputMethod), writer: document)
         #expect(coordinator.state.inputMethod == .vni)
-        coordinator.handle(testKey(.inputMethod), document: document)
+        coordinator.handle(testKey(.inputMethod), writer: document)
         #expect(coordinator.state.inputMethod == .telexAdvanced)
     }
 
     @Test("Brackets remain inside the delayed synchronization epoch")
     func delayedBracketEchoes() {
         let coordinator = KeyboardInputCoordinator(inputMethod: .telexAdvanced)
-        let document = TestKeyboardDocument()
+        let document = TestKeyboardWriter()
         document.delaysContextUpdates = true
         document.publishContext()
 
@@ -49,7 +49,7 @@ struct AdvancedTelexInputTests {
     func bracketsStayLiteral() {
         for method in [KeyboardInputMethod.telex, .vni] {
             let coordinator = KeyboardInputCoordinator(inputMethod: method)
-            let document = TestKeyboardDocument()
+            let document = TestKeyboardWriter()
             type("[", role: .punctuation, with: coordinator, into: document)
             type("]", role: .punctuation, with: coordinator, into: document)
             #expect(document.text == "[]")
@@ -59,7 +59,7 @@ struct AdvancedTelexInputTests {
     private func typeAdvanced(
         _ keys: String,
         with coordinator: KeyboardInputCoordinator,
-        into document: TestKeyboardDocument
+        into document: TestKeyboardWriter
     ) {
         for character in keys {
             let role: KeyRole = character == "[" || character == "]"

@@ -15,9 +15,9 @@ struct ShadowTypingFixtureReplayTests {
             coordinator.apply(
                 ShadowTypingFixture.configuration(for: fixture.inputMethod)
             )
-            let document = FixtureKeyboardDocument()
+            let document = ScriptedWriter()
             for character in fixture.rawSequence {
-                coordinator.handle(key(for: character), document: document)
+                coordinator.handle(key(for: character), writer: document)
             }
             #expect(document.text == ShadowTypingFixture.expected)
         }
@@ -57,19 +57,4 @@ struct ShadowTypingFixtureReplayTests {
     }
 }
 
-@MainActor
-private final class FixtureKeyboardDocument: KeyboardDocument {
-    private(set) var text = ""
-    var contextBeforeInput: String? { text }
-    var hasSelection = false
-    let documentIdentifier = UUID()
-
-    func insertText(_ value: String) {
-        text.append(value)
-    }
-
-    func deleteBackward() {
-        if !text.isEmpty { text.removeLast() }
-    }
-}
 #endif
