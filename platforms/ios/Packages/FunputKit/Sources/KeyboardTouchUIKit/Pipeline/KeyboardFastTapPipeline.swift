@@ -5,7 +5,7 @@ import KeyboardTouchCore
 @MainActor
 public final class KeyboardFastTapPipeline {
     public typealias EmissionHandler = @MainActor (
-        PressEmission<KeyboardTouchHit>
+        PressEmission<KeyboardTouchAction>
     ) -> Void
     public typealias ResolutionHandler = @MainActor (
         ContactID, TimeInterval
@@ -13,15 +13,16 @@ public final class KeyboardFastTapPipeline {
 
     private let eligibleRoles: Set<KeyRole>
     let recoveringTapSlopRoles: Set<KeyRole>
-    private let clock: PressArbiterDriver<KeyboardTouchHit>.Clock
+    private let clock: PressArbiterDriver<KeyboardTouchAction>.Clock
     private let schedule: DeadlineSchedule
     private var resolver: ContactResolver<KeyboardTouchHit>
     private var currentGeometry: KeyboardGeometrySnapshot?
     var geometries: [ContactID: KeyboardGeometrySnapshot] = [:]
+    var initialHits: [ContactID: KeyboardTouchHit] = [:]
     private var nextGeometryRevision: UInt64 = 1
     private let onEmit: EmissionHandler
     let onResolved: ResolutionHandler
-    lazy var arbiter = PressArbiterDriver<KeyboardTouchHit>(
+    lazy var arbiter = PressArbiterDriver<KeyboardTouchAction>(
         configuration: arbiterConfiguration,
         clock: clock,
         schedule: schedule,
@@ -34,7 +35,7 @@ public final class KeyboardFastTapPipeline {
         recoveringTapSlopRoles: Set<KeyRole>,
         resolverConfiguration: ContactResolverConfiguration = .default,
         arbiterConfiguration: PressArbiterConfiguration = .default,
-        clock: @escaping PressArbiterDriver<KeyboardTouchHit>.Clock = {
+        clock: @escaping PressArbiterDriver<KeyboardTouchAction>.Clock = {
             ProcessInfo.processInfo.systemUptime
         },
         schedule: @escaping DeadlineSchedule = RunLoopDeadlineScheduler.schedule,
@@ -60,6 +61,10 @@ public final class KeyboardFastTapPipeline {
         currentGeometry?.identity(for: key)
     }
 
+    public func initialHit(for contactID: ContactID) -> KeyboardTouchHit? {
+        initialHits[contactID]
+    }
+
     @discardableResult
     public func updateGeometry(_ geometry: ResolvedKeyboard) -> Bool {
         guard currentGeometry?.geometry != geometry else { return false }
@@ -75,7 +80,8 @@ public final class KeyboardFastTapPipeline {
     public func consume(_ sample: ContactSample) -> KeyboardFastTapDisposition {
         let geometry = sample.phase == .began
             ? currentGeometry : geometries[sample.id]
-        let hit = geometry?.touchHit(at: sample.location)
+        let currentHit = geometry?.touchHit(at: sample.location)
+        let hit = lockedHit(for: sample.id, current: currentHit)
         let eligibleHit = hit.flatMap {
             eligibleRoles.contains($0.key.role) ? $0 : nil
         }
@@ -88,8 +94,36 @@ public final class KeyboardFastTapPipeline {
         _ contactID: ContactID,
         at timestamp: TimeInterval
     ) -> Bool {
-        guard resolver.discard(contactID) else { return false }
+        detach(contactID, at: timestamp)
+    }
+
+    @discardableResult
+    public func claimForGesture(_ contactID: ContactID) -> Bool {
+        resolver.discard(contactID)
+    }
+
+    @discardableResult
+    public func resolveGesture(
+        _ contactID: ContactID,
+        action: KeyboardTouchAction,
+        at timestamp: TimeInterval
+    ) -> Bool {
+        guard geometries.removeValue(forKey: contactID) != nil else { return false }
+        initialHits.removeValue(forKey: contactID)
+        arbiter.resolve(contactID, payload: action, at: timestamp)
+        return true
+    }
+
+    @discardableResult
+    public func detach(
+        _ contactID: ContactID,
+        at timestamp: TimeInterval
+    ) -> Bool {
+        let existed = resolver.discard(contactID)
+            || geometries[contactID] != nil
+        guard existed else { return false }
         geometries.removeValue(forKey: contactID)
+        initialHits.removeValue(forKey: contactID)
         arbiter.cancel(contactID, at: timestamp)
         return true
     }
@@ -98,5 +132,16 @@ public final class KeyboardFastTapPipeline {
         arbiter.reset()
         resolver.reset()
         geometries.removeAll(keepingCapacity: true)
+        initialHits.removeAll(keepingCapacity: true)
+    }
+
+    private func lockedHit(
+        for id: ContactID,
+        current: KeyboardTouchHit?
+    ) -> KeyboardTouchHit? {
+        guard let initial = initialHits[id],
+              initial.key.horizontalSwipeAction != nil,
+              current != nil else { return current }
+        return initial
     }
 }

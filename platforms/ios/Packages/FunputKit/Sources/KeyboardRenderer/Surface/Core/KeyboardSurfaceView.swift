@@ -11,11 +11,10 @@ public final class KeyboardSurfaceView: UIView {
     public var presentation: KeyboardPresentation {
         didSet { presentationDidChange(from: oldValue) }
     }
-
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
     public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
-    public internal(set) var touchPipelineMode = KeyboardTouchPipelineMode.legacy
+    public internal(set) var touchPipelineMode = KeyboardTouchPipelineMode.v2
 
     let backdropView = KeyboardBackdropView()
     let toolbarView = KeyboardToolbarView()
@@ -29,7 +28,7 @@ public final class KeyboardSurfaceView: UIView {
 #endif
     var pendingTouchPipelineMode: KeyboardTouchPipelineMode?
     lazy var primaryTouch = KeyboardPrimaryTouchCoordinator {
-        [weak self] event in self?.onKeyEvent?(event)
+        [weak self] event in self?.handleV2Event(event)
     }
     lazy var interactionController = KeyboardSurfaceInteractionController(
         feedbackView: self,
@@ -37,8 +36,8 @@ public final class KeyboardSurfaceView: UIView {
         onContactEvent: { [weak self] token, event in
             self?.handleContactInteractionEvent(token: token, event: event)
         },
-        onPromoteToLegacy: { [weak self] token in
-            self?.promoteContactToLegacy(token)
+        onClaimGesture: { [weak self] token, kind in
+            self?.claimContactGesture(token, kind: kind)
         },
         onPreview: { [weak self] key, frame in self?.updatePreview(key, sourceFrame: frame) },
         onAlternatePreview: { [weak self] key, layout, selectedIndex in
@@ -107,8 +106,7 @@ public final class KeyboardSurfaceView: UIView {
     }
 
     private func configureView() {
-        // Fires only on a light/dark change, which is the guard the deprecated
-        // `traitCollectionDidChange` had to write by hand.
+        // Fires only for light/dark changes.
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
             view.applyPresentation()
         }
@@ -127,6 +125,8 @@ public final class KeyboardSurfaceView: UIView {
         addSubview(alternatePaletteView)
         configureTouchOverlay()
         configureTouchPipeline()
+        touchOverlay.setPipelineMode(.v2)
+        interactionController.usesLegacyTouchOutput = false
         toolbarView.onEvent = { [weak self] event in self?.route(event, from: nil) }
         toolbarView.onSystemInputModeEvent = { [weak self] source, event in
             self?.onSystemInputModeEvent?(source, event)

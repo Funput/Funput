@@ -10,7 +10,7 @@ extension KeyboardSurfaceInteractionController {
               state.currentKey?.id == state.initialKey.id,
               let sourceFrame = state.currentFrame,
               !state.initialKey.alternates.isEmpty else { return }
-        onPromoteToLegacy(token)
+        onClaimGesture(token, .alternate)
         state.alternateLayout = .resolve(
             count: state.initialKey.alternates.count,
             sourceFrame: sourceFrame,
@@ -23,14 +23,17 @@ extension KeyboardSurfaceInteractionController {
         if hapticsEnabled { haptics.perform(.control) }
         refreshPreview()
     }
-
     func performSuggestionFeedback(presentation: KeyboardPresentation) {
         if presentation.isHapticFeedbackEnabled { haptics.perform(.control) }
         if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
     }
 
     func finishSwipe(token: TouchToken, state: TouchState, action: KeySwipeAction) {
-        onPromoteToLegacy(token)
+        onClaimGesture(token, .swipe)
+        if !usesLegacyTouchOutput {
+            finishV2Swipe(token: token, state: state, action: action)
+            return
+        }
         touches.removeValue(forKey: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         if repeatTouch == token { clearKeyRepeat() }
@@ -42,16 +45,27 @@ extension KeyboardSurfaceInteractionController {
     }
 
     func repeatActiveKey() {
-        guard let token = repeatTouch,
-              let state = touches[token],
-              state.initialKey.role == .backspace || state.initialKey.role == .space,
-              commitQueue.bufferRepeat(for: token) else { return }
-        onPromoteToLegacy(token)
+        guard let token = repeatTouch, let state = touches[token],
+              state.initialKey.role == .backspace || state.initialKey.role == .space
+        else { return }
+        if !usesLegacyTouchOutput {
+            onClaimGesture(token, .repeatKey)
+            let event = KeyboardKeyEvent(key: state.initialKey, phase: .repeated)
+            onContactEvent(token, event)
+            if hapticsEnabled { haptics.perform(.deleteRepeat) }
+            return
+        }
+        guard commitQueue.bufferRepeat(for: token) else { return }
+        onClaimGesture(token, .repeatKey)
         if hapticsEnabled { haptics.perform(.deleteRepeat) }
         flushCompletedKeys()
     }
 
     func finishRepeatedTouch(token: TouchToken, state: TouchState) {
+        if !usesLegacyTouchOutput {
+            finishV2RepeatedTouch(token: token, state: state)
+            return
+        }
         touches.removeValue(forKey: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         commitQueue.complete(token: token, as: .suppressed)

@@ -1,7 +1,7 @@
 #if canImport(UIKit)
 import KeyboardLayout
 import KeyboardTouchCore
-
+import KeyboardTouchUIKit
 struct KeyboardTouchCommitGate {
     enum Ownership {
         case primaryPending
@@ -9,21 +9,21 @@ struct KeyboardTouchCommitGate {
         case primaryCancelled
         case legacy
     }
-
     struct State {
         let key: KeySpec
         var ownership: Ownership
     }
-
     enum Decision: Equatable {
         case emit
         case suppress
     }
-
     private var states: [ContactID: State] = [:]
     var metrics = KeyboardPrimaryTouchMetrics()
     var pendingCount: Int { states.count }
 
+    func isPrimaryPending(_ id: ContactID) -> Bool {
+        states[id]?.ownership == .primaryPending
+    }
     mutating func begin(_ id: ContactID, key: KeySpec, primary: Bool) {
         guard states[id] == nil else {
             metrics.commitGateViolation += 1
@@ -34,7 +34,6 @@ struct KeyboardTouchCommitGate {
             ownership: primary ? .primaryPending : .legacy
         )
     }
-
     mutating func promote(_ id: ContactID) {
         guard var state = states[id] else {
             metrics.commitGateViolation += 1
@@ -45,8 +44,10 @@ struct KeyboardTouchCommitGate {
         states[id] = state
         metrics.legacyFallback += 1
     }
-
-    mutating func primaryCommit(_ id: ContactID) -> Bool {
+    mutating func primaryCommit(
+        _ id: ContactID,
+        action: KeyboardTouchAction
+    ) -> Bool {
         guard var state = states[id] else {
             metrics.commitGateViolation += 1
             return false
@@ -58,10 +59,36 @@ struct KeyboardTouchCommitGate {
         state.ownership = .primaryCommitted
         states[id] = state
         metrics.primaryCommitted += 1
+        switch action {
+        case .released:
+            metrics.releaseCommitted += 1
+            if state.key.role.isControl { metrics.controlCommitted += 1 }
+        case .alternate:
+            metrics.alternateCommitted += 1
+        case .swiped:
+            metrics.swipeCommitted += 1
+        case .repeated, .cancelled:
+            break
+        }
         return true
     }
+    mutating func emitRepeat(_ id: ContactID) -> Bool {
+        guard let state = states[id],
+              state.ownership == .primaryPending else {
+            metrics.gestureConflict += 1
+            return false
+        }
+        metrics.repeatEmitted += 1
+        return true
+    }
+    mutating func finishWithoutCommit(_ id: ContactID) {
+        states.removeValue(forKey: id)
+    }
 
-    mutating func cancelPrimary(_ id: ContactID) -> KeySpec? {
+    mutating func cancelPrimary(
+        _ id: ContactID,
+        countSystem: Bool = true
+    ) -> KeySpec? {
         guard var state = states[id],
               state.ownership == .primaryPending else {
             metrics.commitGateViolation += 1
@@ -69,7 +96,7 @@ struct KeyboardTouchCommitGate {
         }
         state.ownership = .primaryCancelled
         states[id] = state
-        metrics.primarySystemCancelled += 1
+        if countSystem { metrics.primarySystemCancelled += 1 }
         return state.key
     }
 
@@ -105,7 +132,6 @@ struct KeyboardTouchCommitGate {
         metrics = KeyboardPrimaryTouchMetrics()
     }
 }
-
 private extension KeyboardKeyEvent.Phase {
     var isGesture: Bool {
         switch self {

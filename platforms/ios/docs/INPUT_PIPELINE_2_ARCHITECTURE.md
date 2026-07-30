@@ -811,9 +811,14 @@ Ngưỡng ban đầu, cần hiệu chỉnh sau baseline:
 
 ### Phase 3B — Full touch pipeline
 
-- Chuyển repeat, alternate, space swipe và control semantics sang resolver mới.
-- Chạy device matrix 60 Hz/120 Hz trước khi bật Release.
-- Giữ kill switch cho đến khi toàn bộ acceptance gates xanh.
+- V2 nhận toàn bộ keycap role; normal tap không còn giới hạn fast-tap 300 ms.
+- Release mặc định `.v2`; `.legacy` còn là kill switch nội bộ đến Phase 5.
+- Repeat Backspace/Space dùng lane riêng với timing 400/50 ms và suppress release.
+- Alternate và Space swipe claim contact trước output rồi resolve qua cùng arbiter.
+- Controller legacy chỉ giữ presentation/gesture recognition trong V2;
+  `KeyboardPressCommitQueue` và reconciliation chỉ chạy ở `.legacy`.
+- Manual device acceptance được dồn sau Phase 5; Phase 3B chỉ chạy automated
+  regression, Debug/Release build và quality gates.
 
 ### Phase 4 — Transaction writer
 
@@ -860,7 +865,7 @@ Packages/FunputKit/
 ├── Sources/KeyboardTouchUIKit/
 │   ├── Capture/                 # UITouch → value samples
 │   ├── Geometry/                # revisioned immutable snapshots
-│   ├── FastTap/                 # shared resolver/arbiter pipeline
+│   ├── Pipeline/                # shared resolver/arbiter và semantic actions
 │   └── Shadow/                  # comparator và numeric trace
 ├── Sources/FunputShared/Persistence/
 │   ├── Configuration/
@@ -875,13 +880,13 @@ Packages/FunputKit/
 │   └── Resolution/              # 3 files
 └── Tests/KeyboardTouchUIKitTests/
     ├── Capture/
-    ├── FastTap/
+    ├── Pipeline/
     ├── Shadow/
     └── Support/
 ```
 
-Primary routing nằm trong `KeyboardRenderer/Interaction/PrimaryTouch`; tests
-tương ứng nằm trong `KeyboardRendererTests/PrimaryTouch`.
+V2 routing nằm trong `KeyboardRenderer/Interaction/V2Touch`; tests tương ứng
+nằm trong `KeyboardRendererTests/V2Touch`.
 
 Các target app/extension được nhóm riêng:
 
@@ -957,13 +962,15 @@ Các mục này phải được giải quyết bằng prototype và đo thiết 
 
 1. Rollover window tối ưu là bao nhiêu trên 60 Hz và 120 Hz?
 2. Held contact được phân loại dựa trên duration đơn thuần hay kết hợp movement/role?
-3. Space/backspace repeat có đi qua arbiter chung hay một repeat lane riêng?
-4. Alternate selection có giữ original intent sequence hay commit tại selection time?
+3. Đã khóa: Space/backspace repeat dùng repeat lane riêng.
+4. Đã khóa: alternate giữ intent sequence trong bounded window; contact đã held
+   thì commit theo terminal time.
 5. Layout request nào có thể apply visual-only mà không tăng geometry revision?
 6. Có cần tách `KeyboardTouch` thành SwiftPM target riêng hay chỉ là folder/boundary?
 7. Device trace sẽ được xuất từ test harness bằng cách nào mà không yêu cầu Full Access?
 
-Không merge implementation production trước khi các câu hỏi 1–4 có test và kết quả thiết bị.
+Device acceptance cho các quyết định timing còn lại được dồn về cuối V2 theo
+chiến lược triển khai nhanh; legacy chỉ bị xóa ở Phase 5.
 
 ---
 

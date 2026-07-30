@@ -39,8 +39,25 @@ struct MetricsSection: View {
             metric("Commit gate violation", value.commitGateViolation)
             metric("Duplicate prevented", value.duplicateCommitPrevented)
             metric(
+                "Release / repeat",
+                value.releaseCommitted,
+                value.repeatEmitted
+            )
+            metric(
+                "Alternate / swipe",
+                value.alternateCommitted,
+                value.swipeCommitted
+            )
+            metric("Control committed", value.controlCommitted)
+            metric("Gesture conflict", value.gestureConflict)
+            metric("Stale timer", value.staleTimerCallback)
+            metric(
                 "Max capture → commit (ms)",
                 value.maximumCaptureToCommitLatencyMilliseconds
+            )
+            metric(
+                "Max terminal → emission (ms)",
+                value.maximumTerminalToEmissionLatencyMilliseconds
             )
             metric("Max emission delay (ms)", value.maximumEmissionDelayMilliseconds)
             metric(

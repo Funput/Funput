@@ -5,6 +5,10 @@ import UIKit
 extension KeyboardSurfaceInteractionController {
     func endTouch(token: TouchToken) {
         guard let state = touches.removeValue(forKey: token) else { return }
+        if !usesLegacyTouchOutput {
+            finishV2Touch(token: token, state: state)
+            return
+        }
         alternateHoldController.cancel(for: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         let wasRepeating = repeatTouch == token && repeatController.finish()
@@ -26,6 +30,10 @@ extension KeyboardSurfaceInteractionController {
 
     func cancelTouch(token: TouchToken, reason: Cancellation) {
         guard let state = touches.removeValue(forKey: token) else { return }
+        if !usesLegacyTouchOutput {
+            cancelV2Touch(token: token, state: state)
+            return
+        }
         alternateHoldController.cancel(for: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         let wasRepeating = repeatTouch == token && repeatController.finish()
@@ -63,6 +71,7 @@ extension KeyboardSurfaceInteractionController {
     }
 
     func reconcileActiveTouches(_ activeTokens: Set<TouchToken>) {
+        guard usesLegacyTouchOutput else { return }
         // Toolbar and accessibility presses never reach the overlay, so they are
         // absent from `activeTokens` by construction and must not be read as
         // abandoned — an unrelated keycap touch would otherwise cancel them.
@@ -81,10 +90,10 @@ extension KeyboardSurfaceInteractionController {
             endSignpost(state, token: token, phase: 2)
         }
         touches.removeAll(keepingCapacity: true)
-        commitQueue.cancelAll()
+        if usesLegacyTouchOutput { commitQueue.cancelAll() }
         clearKeyRepeat()
         refreshPreview()
-        flushCompletedKeys()
+        if usesLegacyTouchOutput { flushCompletedKeys() }
         legacyTokensByKeyID.removeAll(keepingCapacity: true)
     }
 

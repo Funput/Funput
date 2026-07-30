@@ -10,7 +10,7 @@ struct KeyboardTouchDiagnosticSessionTests {
         let session = KeyboardTouchDiagnosticSession(
             inputMethod: .vni,
             phase: .guided,
-            pipelineMode: .primaryFastTap,
+            pipelineMode: .v2,
             generation: 7
         )
         let encoded = try JSONEncoder().encode(session)
@@ -23,6 +23,16 @@ struct KeyboardTouchDiagnosticSessionTests {
             from: JSONSerialization.data(withJSONObject: json)
         )
         #expect(legacy.pipelineMode == .legacy)
+    }
+
+    @Test("Phase 3A mode decodes as V2")
+    func primaryFastTapCompatibility() throws {
+        let data = Data(#""primaryFastTap""#.utf8)
+        let mode = try JSONDecoder().decode(
+            KeyboardTouchDiagnosticPipelineMode.self,
+            from: data
+        )
+        #expect(mode == .v2)
     }
 }
 #endif

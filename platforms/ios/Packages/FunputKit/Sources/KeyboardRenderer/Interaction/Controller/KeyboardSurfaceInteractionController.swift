@@ -19,6 +19,11 @@ final class KeyboardSurfaceInteractionController {
     typealias ContactEventHandler = (
         _ token: TouchToken, _ event: KeyboardKeyEvent
     ) -> Void
+    enum GestureClaim: Equatable {
+        case alternate
+        case repeatKey
+        case swipe
+    }
 
     /// Why a tracked touch is ending without a release.
     enum Cancellation {
@@ -49,7 +54,7 @@ final class KeyboardSurfaceInteractionController {
     let haptics: KeyboardHaptics
     let onEvent: (KeyboardKeyEvent) -> Void
     let onContactEvent: ContactEventHandler
-    let onPromoteToLegacy: (TouchToken) -> Void
+    let onClaimGesture: (TouchToken, GestureClaim) -> Void
     let onPreview: PreviewHandler
     let onAlternatePreview: AlternatePreviewHandler
     let onHighlight: HighlightHandler
@@ -69,6 +74,7 @@ final class KeyboardSurfaceInteractionController {
     var highlightCounts: [String: Int] = [:]
     var repeatTouch: TouchToken?
     var hapticsEnabled = true
+    var usesLegacyTouchOutput = true
     var legacyTokensByKeyID: [String: [TouchToken]] = [:]
     /// Toolbar and accessibility presses are minted from here up, which keeps them
     /// distinguishable from the overlay's tokens without a second bookkeeping map.
@@ -82,7 +88,7 @@ final class KeyboardSurfaceInteractionController {
         feedbackView: UIView = UIView(),
         onEvent: @escaping (KeyboardKeyEvent) -> Void,
         onContactEvent: ContactEventHandler? = nil,
-        onPromoteToLegacy: @escaping (TouchToken) -> Void = { _ in },
+        onClaimGesture: @escaping (TouchToken, GestureClaim) -> Void = { _, _ in },
         onPreview: @escaping PreviewHandler,
         onAlternatePreview: @escaping AlternatePreviewHandler = { _, _, _ in },
         onHighlight: @escaping HighlightHandler = { _, _ in },
@@ -92,7 +98,7 @@ final class KeyboardSurfaceInteractionController {
         haptics = KeyboardHaptics(view: feedbackView)
         self.onEvent = onEvent
         self.onContactEvent = onContactEvent ?? { _, event in onEvent(event) }
-        self.onPromoteToLegacy = onPromoteToLegacy
+        self.onClaimGesture = onClaimGesture
         self.onPreview = onPreview
         self.onAlternatePreview = onAlternatePreview
         self.onHighlight = onHighlight

@@ -36,6 +36,14 @@ public struct KeyboardTouchDiagnosticMetrics: Codable, Equatable, Sendable {
     public var commitGateViolation = 0
     public var duplicateCommitPrevented = 0
     public var maximumCaptureToCommitLatencyMilliseconds = 0
+    public var releaseCommitted = 0
+    public var repeatEmitted = 0
+    public var alternateCommitted = 0
+    public var swipeCommitted = 0
+    public var controlCommitted = 0
+    public var gestureConflict = 0
+    public var staleTimerCallback = 0
+    public var maximumTerminalToEmissionLatencyMilliseconds = 0
 
     public init() {}
 
@@ -48,6 +56,7 @@ public struct KeyboardTouchDiagnosticMetrics: Codable, Equatable, Sendable {
             || droppedForCapacity > 0 || cancellationDisagreement > 0
             || emissionDelayedOver120Milliseconds > 0
             || primarySystemCancelled > 0 || commitGateViolation > 0
+            || gestureConflict > 0 || staleTimerCallback > 0
     }
 }
 #endif

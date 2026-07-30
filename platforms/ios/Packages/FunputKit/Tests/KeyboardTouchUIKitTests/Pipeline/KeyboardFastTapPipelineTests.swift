@@ -77,7 +77,7 @@ struct KeyboardFastTapPipelineTests {
             recoveringTapSlopRoles: [.character, .vniModifier, .punctuation],
             clock: { clock.now },
             schedule: { delay, action in clock.schedule(delay: delay, action: action) },
-            onEmit: { emissions.keys.append($0.payload.key.id) }
+            onEmit: { emissions.keys.append($0.payload.hit.key.id) }
         )
         pipeline.updateGeometry(shadowGeometry().0)
         return PipelineFixture(pipeline: pipeline, clock: clock, emissions: emissions)

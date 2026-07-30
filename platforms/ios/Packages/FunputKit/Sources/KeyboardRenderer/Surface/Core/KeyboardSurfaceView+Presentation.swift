@@ -103,9 +103,13 @@ extension KeyboardSurfaceView {
         }
         touchOverlay.onEnd = { [weak self] token in
             self?.interactionController.endTouch(token: token)
+            self?.primaryTouch.finishUIKitContact(token)
+            _ = self?.applyPendingTouchPipelineModeIfIdle()
         }
         touchOverlay.onCancel = { [weak self] token in
             self?.interactionController.cancelTouch(token: token, reason: .system)
+            self?.primaryTouch.finishUIKitContact(token)
+            _ = self?.applyPendingTouchPipelineModeIfIdle()
         }
         touchOverlay.onReconcile = { [weak self] active in
             self?.interactionController.reconcileActiveTouches(active)

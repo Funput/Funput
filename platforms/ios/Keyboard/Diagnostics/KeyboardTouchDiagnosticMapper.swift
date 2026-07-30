@@ -45,6 +45,15 @@ extension KeyboardTouchDiagnosticMetrics {
         duplicateCommitPrevented = snapshot.duplicateCommitPrevented
         maximumCaptureToCommitLatencyMilliseconds =
             snapshot.maximumCaptureToCommitLatencyMilliseconds
+        releaseCommitted = snapshot.releaseCommitted
+        repeatEmitted = snapshot.repeatEmitted
+        alternateCommitted = snapshot.alternateCommitted
+        swipeCommitted = snapshot.swipeCommitted
+        controlCommitted = snapshot.controlCommitted
+        gestureConflict = snapshot.gestureConflict
+        staleTimerCallback = snapshot.staleTimerCallback
+        maximumTerminalToEmissionLatencyMilliseconds =
+            snapshot.maximumTerminalToEmissionLatencyMilliseconds
     }
 }
 #endif

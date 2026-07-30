@@ -11,6 +11,7 @@ struct KeyboardRolloverStressTests {
         presentation.isHapticFeedbackEnabled = false
         presentation.showsKeyPreviews = false
         let surface = KeyboardSurfaceView(presentation: presentation)
+        #expect(surface.setTouchPipelineMode(.legacy))
         #expect(surface.isMultipleTouchEnabled)
         var events: [KeyboardKeyEvent] = []
         surface.onKeyEvent = { events.append($0) }
@@ -51,6 +52,7 @@ struct KeyboardRolloverStressTests {
         presentation.isHapticFeedbackEnabled = false
         presentation.showsKeyPreviews = false
         let surface = KeyboardSurfaceView(presentation: presentation)
+        #expect(surface.setTouchPipelineMode(.legacy))
         var events: [KeyboardKeyEvent] = []
         surface.onKeyEvent = { events.append($0) }
 

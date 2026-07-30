@@ -36,6 +36,14 @@ public struct KeyboardTouchDiagnosticSnapshot: Equatable, Sendable {
     public let commitGateViolation: Int
     public let duplicateCommitPrevented: Int
     public let maximumCaptureToCommitLatencyMilliseconds: Int
+    public let releaseCommitted: Int
+    public let repeatEmitted: Int
+    public let alternateCommitted: Int
+    public let swipeCommitted: Int
+    public let controlCommitted: Int
+    public let gestureConflict: Int
+    public let staleTimerCallback: Int
+    public let maximumTerminalToEmissionLatencyMilliseconds: Int
     public let activeContactCount: Int
     public let pendingComparisonCount: Int
     public let isSettled: Bool

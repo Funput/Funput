@@ -9,7 +9,27 @@ public enum KeyboardTouchDiagnosticPhase: String, Codable, Sendable {
 
 public enum KeyboardTouchDiagnosticPipelineMode: String, Codable, Sendable {
     case legacy
-    case primaryFastTap
+    case v2
+
+    @available(*, deprecated, renamed: "v2")
+    public static var primaryFastTap: Self { .v2 }
+
+    public init(from decoder: Decoder) throws {
+        let value = try decoder.singleValueContainer().decode(String.self)
+        switch value {
+        case "legacy": self = .legacy
+        case "v2", "primaryFastTap": self = .v2
+        default:
+            throw DecodingError.dataCorrupted(
+                .init(codingPath: decoder.codingPath, debugDescription: "Unknown pipeline mode")
+            )
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var value = encoder.singleValueContainer()
+        try value.encode(rawValue)
+    }
 }
 
 public struct KeyboardTouchDiagnosticSession: Codable, Equatable, Sendable {

@@ -18,10 +18,10 @@ struct ShadowTypingPipelineModeTests {
             accessCheck: { true }
         )
 
-        #expect(model.selectedPipeline == .primaryFastTap)
+        #expect(model.selectedPipeline == .v2)
         model.startGuided()
         let session = try #require(diagnostics.activeSession())
-        #expect(session.pipelineMode == .primaryFastTap)
+        #expect(session.pipelineMode == .v2)
     }
 }
 #endif

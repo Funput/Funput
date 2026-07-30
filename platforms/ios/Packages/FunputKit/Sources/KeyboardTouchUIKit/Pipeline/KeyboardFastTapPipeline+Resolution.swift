@@ -14,20 +14,27 @@ extension KeyboardFastTapPipeline {
                 return .ignored(.beganOutside)
             }
             geometries[id] = geometry
+            initialHits[id] = hit
             _ = arbiter.begin(id, at: sample.timestamp)
             return .began(id, hit)
         case let .resolved(id, hit, metadata):
             geometries.removeValue(forKey: id)
+            initialHits.removeValue(forKey: id)
             if metadata.exceededTapSlop,
                !recoveringTapSlopRoles.contains(hit.key.role) {
                 arbiter.cancel(id, at: sample.timestamp)
                 return .fallback(id, .exceededTapSlop)
             }
             onResolved(id, sample.timestamp)
-            arbiter.resolve(id, payload: hit, at: sample.timestamp)
+            arbiter.resolve(
+                id,
+                payload: .released(hit),
+                at: sample.timestamp
+            )
             return .resolved(id, metadata)
         case let .cancelled(id, reason):
             geometries.removeValue(forKey: id)
+            initialHits.removeValue(forKey: id)
             arbiter.cancel(id, at: sample.timestamp)
             return disposition(id: id, reason: reason)
         case let .noOp(reason):

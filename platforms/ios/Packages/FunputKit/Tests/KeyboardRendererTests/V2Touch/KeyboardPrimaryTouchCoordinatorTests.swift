@@ -8,8 +8,8 @@ import Testing
 
 @MainActor
 struct KeyboardPrimaryTouchCoordinatorTests {
-    @Test("Primary commit wins and legacy release is suppressed")
-    func primaryCommit() {
+    @Test("V2 commits a release and settles ownership")
+    func v2Commit() {
         var output: [KeyboardKeyEvent] = []
         let clock = TestNow()
         let coordinator = KeyboardPrimaryTouchCoordinator(
@@ -20,20 +20,17 @@ struct KeyboardPrimaryTouchCoordinatorTests {
         coordinator.consume(sample(1, .began, 0, x: 10))
         clock.value = 0.1
         coordinator.consume(sample(1, .ended, 0.1, x: 10))
+        coordinator.finishUIKitContact(1)
 
         #expect(output.map(\.key.id) == ["a"])
-        #expect(coordinator.handleLegacy(
-            token: 1,
-            event: KeyboardKeyEvent(key: key("a"), phase: .released)
-        ) == nil)
         #expect(coordinator.metrics.primaryCommitted == 1)
-        #expect(coordinator.metrics.legacyReleaseSuppressed == 1)
+        #expect(coordinator.metrics.releaseCommitted == 1)
         #expect(coordinator.metrics.maximumCaptureToCommitLatencyMilliseconds == 100)
         #expect(coordinator.pendingContactCount == 0)
     }
 
-    @Test("Duration fallback and cancellation retain safe ownership")
-    func fallbackAndCancellation() {
+    @Test("Long holds release while system cancellation never commits")
+    func durationAndCancellation() {
         var output: [KeyboardKeyEvent] = []
         let clock = TestNow()
         let coordinator = KeyboardPrimaryTouchCoordinator(
@@ -44,15 +41,15 @@ struct KeyboardPrimaryTouchCoordinatorTests {
         coordinator.consume(sample(1, .began, 0, x: 10))
         clock.value = 0.301
         coordinator.consume(sample(1, .ended, 0.301, x: 10))
-        let released = KeyboardKeyEvent(key: key("a"), phase: .released)
-        #expect(coordinator.handleLegacy(token: 1, event: released) != nil)
+        coordinator.finishUIKitContact(1)
+        #expect(output.map(\.phase) == [.released])
 
         coordinator.consume(sample(2, .began, 1, x: 10))
         coordinator.consume(sample(2, .cancelled, 1.1, x: 10))
+        coordinator.finishUIKitContact(2)
         #expect(output.last?.phase == .cancelled)
-        #expect(coordinator.handleLegacy(token: 2, event: released) == nil)
-        #expect(coordinator.metrics.legacyFallback == 1)
         #expect(coordinator.metrics.primarySystemCancelled == 1)
+        #expect(coordinator.pendingContactCount == 0)
     }
 
     private func geometry() -> ResolvedKeyboard {

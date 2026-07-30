@@ -2,6 +2,13 @@
 import UIKit
 
 extension KeyboardSurfaceView {
+    func handleV2Event(_ event: KeyboardKeyEvent) {
+#if DEBUG
+        recordLegacyDiagnostic(event)
+#endif
+        onKeyEvent?(event)
+    }
+
     func handleInteractionEvent(_ event: KeyboardKeyEvent) {
 #if DEBUG
         switch event.phase {
@@ -23,8 +30,8 @@ extension KeyboardSurfaceView {
 #if DEBUG
         recordLegacyDiagnostic(event)
 #endif
-        if touchPipelineMode == .primaryFastTap {
-            if let output = primaryTouch.handleLegacy(token: token, event: event) {
+        if touchPipelineMode == .v2 {
+            if let output = primaryTouch.handleInteraction(token: token, event: event) {
                 onKeyEvent?(output)
             }
         } else {
@@ -39,7 +46,7 @@ extension KeyboardSurfaceView {
 #if DEBUG
             samples.forEach(touchShadow.consume)
 #endif
-            if touchPipelineMode == .primaryFastTap {
+            if touchPipelineMode == .v2 {
                 samples.forEach(primaryTouch.consume)
             }
         }
@@ -50,8 +57,11 @@ extension KeyboardSurfaceView {
         }
     }
 
-    func promoteContactToLegacy(_ token: UInt64) {
-        primaryTouch.promote(token: token)
+    func claimContactGesture(
+        _ token: UInt64,
+        kind: KeyboardSurfaceInteractionController.GestureClaim
+    ) {
+        primaryTouch.claim(token: token, kind: kind)
 #if DEBUG
         touchShadow.promoteToLegacy(token)
 #endif
@@ -76,9 +86,6 @@ extension KeyboardSurfaceView {
 
     @discardableResult
     public func setTouchPipelineMode(_ mode: KeyboardTouchPipelineMode) -> Bool {
-#if !DEBUG
-        guard mode == .legacy else { return false }
-#endif
         pendingTouchPipelineMode = mode
         return applyPendingTouchPipelineModeIfIdle()
     }
@@ -92,6 +99,7 @@ extension KeyboardSurfaceView {
         guard mode != touchPipelineMode else { return true }
         primaryTouch.reset()
         touchOverlay.setPipelineMode(mode)
+        interactionController.usesLegacyTouchOutput = mode == .legacy
         touchPipelineMode = mode
         return true
     }

@@ -2,6 +2,7 @@
 @testable import KeyboardRenderer
 import KeyboardLayout
 import KeyboardTouchCore
+import KeyboardTouchUIKit
 import Testing
 
 struct KeyboardTouchCommitGateTests {
@@ -12,7 +13,7 @@ struct KeyboardTouchCommitGateTests {
         let key = key("a")
         gate.begin(id, key: key, primary: true)
 
-        let committed = gate.primaryCommit(id)
+        let committed = gate.primaryCommit(id, action: action(key))
         let legacy = gate.legacy(id, event: event(key, .released))
         #expect(committed)
         #expect(legacy == .suppress)
@@ -73,7 +74,7 @@ struct KeyboardTouchCommitGateTests {
         for rawID in 1...100_000 {
             let id = ContactID(rawValue: UInt64(rawID))
             gate.begin(id, key: key, primary: true)
-            _ = gate.primaryCommit(id)
+            _ = gate.primaryCommit(id, action: action(key))
             _ = gate.legacy(id, event: event(key, .released))
         }
         #expect(gate.pendingCount == 0)
@@ -94,6 +95,16 @@ struct KeyboardTouchCommitGateTests {
         _ phase: KeyboardKeyEvent.Phase
     ) -> KeyboardKeyEvent {
         KeyboardKeyEvent(key: key, phase: phase)
+    }
+
+    private func action(_ key: KeySpec) -> KeyboardTouchAction {
+        .released(
+            KeyboardTouchHit(
+                identity: .init(geometryRevision: 1, ordinal: 0, role: key.role),
+                key: key,
+                frame: .zero
+            )
+        )
     }
 }
 #endif

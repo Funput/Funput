@@ -37,7 +37,7 @@ struct ShadowTypingHarnessView: View {
                     }
                 }
                 Picker("Touch pipeline", selection: $model.selectedPipeline) {
-                    Text("Primary fast tap").tag(KeyboardTouchDiagnosticPipelineMode.primaryFastTap)
+                    Text("Touch Pipeline V2").tag(KeyboardTouchDiagnosticPipelineMode.v2)
                     Text("Legacy").tag(KeyboardTouchDiagnosticPipelineMode.legacy)
                 }
             }

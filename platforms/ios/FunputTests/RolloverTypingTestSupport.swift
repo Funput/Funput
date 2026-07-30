@@ -44,6 +44,7 @@ final class RolloverTypingTestStack {
         presentation.isHapticFeedbackEnabled = false
         presentation.isKeySoundEnabled = false
         stack.surface = KeyboardSurfaceView(presentation: presentation)
+        XCTAssertTrue(stack.surface.setTouchPipelineMode(.legacy))
         stack.surface.frame = CGRect(x: 0, y: 574, width: 402, height: 300)
         stack.window.rootViewController?.view.addSubview(stack.surface)
         stack.window.layoutIfNeeded()

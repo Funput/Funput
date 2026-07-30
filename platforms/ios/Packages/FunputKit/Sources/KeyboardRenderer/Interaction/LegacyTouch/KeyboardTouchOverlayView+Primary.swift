@@ -7,7 +7,7 @@ extension KeyboardTouchOverlayView {
         _ touches: Set<UITouch>,
         phase: ContactPhase
     ) -> Bool {
-        guard pipelineMode == .primaryFastTap else { return false }
+        guard pipelineMode == .v2 else { return false }
         let samples = capture(touches, phase: phase)
         onSamples?(samples)
         routePrimary(samples)

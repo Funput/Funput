@@ -4,6 +4,10 @@ import UIKit
 
 extension KeyboardSurfaceView {
     func route(_ event: KeyboardKeyEvent, from sourceView: UIView?) {
+        if touchPipelineMode == .v2 {
+            handleV2Event(event)
+            return
+        }
         let sourceFrame = sourceView.map {
             $0.convert($0.bounds, to: self)
         }

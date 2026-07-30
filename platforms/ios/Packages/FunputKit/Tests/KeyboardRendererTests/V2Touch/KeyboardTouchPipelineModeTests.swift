@@ -9,7 +9,7 @@ struct KeyboardTouchPipelineModeTests {
     @Test("Mode request waits until active controller contact ends")
     func deferredSwitch() {
         let surface = KeyboardSurfaceView()
-        #expect(surface.setTouchPipelineMode(.primaryFastTap))
+        #expect(surface.setTouchPipelineMode(.v2))
         let key = KeySpec(id: "a", label: "a", role: .character)
         surface.interactionController.beginTouch(
             token: 1,
@@ -20,14 +20,15 @@ struct KeyboardTouchPipelineModeTests {
         )
 
         #expect(!surface.setTouchPipelineMode(.legacy))
-        #expect(surface.touchPipelineMode == .primaryFastTap)
+        #expect(surface.touchPipelineMode == .v2)
         surface.interactionController.endTouch(token: 1)
+        #expect(surface.applyPendingTouchPipelineModeIfIdle())
         #expect(surface.touchPipelineMode == .legacy)
     }
 
-    @Test("Release-compatible surface defaults to legacy")
+    @Test("Surface defaults to V2")
     func defaultMode() {
-        #expect(KeyboardSurfaceView().touchPipelineMode == .legacy)
+        #expect(KeyboardSurfaceView().touchPipelineMode == .v2)
     }
 
     @Test("Primary overlay uses captured contact ID without reconciliation")
@@ -35,7 +36,7 @@ struct KeyboardTouchPipelineModeTests {
         let recorder = OverlayTouchRecorder()
         var samples: [ContactSample] = []
         recorder.overlay.onSamples = { samples.append(contentsOf: $0) }
-        recorder.overlay.setPipelineMode(.primaryFastTap)
+        recorder.overlay.setPipelineMode(.v2)
         let touch = recorder.touch(at: OverlayTouchRecorder.keyAPoint)
 
         recorder.began(touch, at: 0)

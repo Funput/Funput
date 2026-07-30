@@ -29,8 +29,8 @@ final class KeyboardTouchDiagnosticsReporter {
         guard hasFullAccess,
               let session = store.activeSession()
         else { return }
-        let mode: KeyboardTouchPipelineMode = session.pipelineMode == .primaryFastTap
-            ? .primaryFastTap : .legacy
+        let mode: KeyboardTouchPipelineMode = session.pipelineMode == .v2
+            ? .v2 : .legacy
         guard surface.setTouchPipelineMode(mode),
               surface.resetTouchDiagnosticsIfIdle()
         else { return }
@@ -62,7 +62,7 @@ final class KeyboardTouchDiagnosticsReporter {
         publisher = nil
         session = nil
         generation &+= 1
-        _ = surface.setTouchPipelineMode(.legacy)
+        _ = surface.setTouchPipelineMode(.v2)
     }
 
     private func receive(

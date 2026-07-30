@@ -14,12 +14,12 @@ extension KeyboardTouchShadowPipeline {
         beganAt.removeValue(forKey: id)
     }
 
-    func recordShadow(_ emission: PressEmission<KeyboardTouchHit>) {
+    func recordShadow(_ emission: PressEmission<KeyboardTouchAction>) {
         if let terminalTime = resolvedAt.removeValue(forKey: emission.contactID) {
             trace.recordEmissionDelay(max(0, clock() - terminalTime))
         }
         comparator.recordShadow(
-            emission.payload.identity,
+            emission.payload.hit.identity,
             timestampTie: tiedContacts.remove(emission.contactID) != nil
         )
         observeArbiterState()

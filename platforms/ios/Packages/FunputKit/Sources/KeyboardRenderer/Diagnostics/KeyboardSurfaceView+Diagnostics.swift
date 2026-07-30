@@ -47,6 +47,15 @@ public extension KeyboardSurfaceView {
             duplicateCommitPrevented: primary.duplicateCommitPrevented,
             maximumCaptureToCommitLatencyMilliseconds:
                 primary.maximumCaptureToCommitLatencyMilliseconds,
+            releaseCommitted: primary.releaseCommitted,
+            repeatEmitted: primary.repeatEmitted,
+            alternateCommitted: primary.alternateCommitted,
+            swipeCommitted: primary.swipeCommitted,
+            controlCommitted: primary.controlCommitted,
+            gestureConflict: primary.gestureConflict,
+            staleTimerCallback: primary.staleTimerCallback,
+            maximumTerminalToEmissionLatencyMilliseconds:
+                primary.maximumTerminalToEmissionLatencyMilliseconds,
             activeContactCount: max(
                 state.activeContactCount, primaryTouch.activeContactCount
             ),
