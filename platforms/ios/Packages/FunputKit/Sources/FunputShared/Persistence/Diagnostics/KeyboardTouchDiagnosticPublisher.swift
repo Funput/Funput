@@ -62,13 +62,13 @@ public final class KeyboardTouchDiagnosticPublisher {
     public func submit(
         metrics: KeyboardTouchDiagnosticMetrics,
         activeContactCount: Int,
-        pendingComparisonCount: Int,
+        pendingContactCount: Int,
         isSettled: Bool
     ) {
         latest = State(
             metrics: metrics,
             active: activeContactCount,
-            pending: pendingComparisonCount,
+            pending: pendingContactCount,
             settled: isSettled
         )
         guard deadline == nil else { return }
@@ -112,7 +112,7 @@ public final class KeyboardTouchDiagnosticPublisher {
             observedAt: now,
             metrics: state.metrics,
             activeContactCount: state.active,
-            pendingComparisonCount: state.pending,
+            pendingContactCount: state.pending,
             isSettled: state.settled,
             device: device
         ))

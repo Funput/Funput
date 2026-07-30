@@ -8,32 +8,20 @@ struct MetricsSection: View {
     var body: some View {
         let value = report.metrics
         Section("Live metrics · #\(report.sequence)") {
-            metric("Matched", value.matched)
-            metric(
-                "Actual missing / late",
-                value.outputMissing + value.outputLate
-            )
-            metric("Shadow missing", value.shadowMissing)
-            metric("Reorder", value.orderMismatch)
-            metric("Cancellation", value.cancellationDisagreement)
-            metric("Cancel system", value.cancelledSystem)
-            metric("Cancel slop / duration", value.cancelledTapSlop + value.cancelledDuration)
+            metric("Captured / committed", value.capturedContacts, value.committedContacts)
+            metric("Cancelled / system", value.cancelledContacts, value.systemCancelled)
             metric("Recovered slop", value.recoveredTapSlop)
-            metric("Cancel outside", value.cancelledOutside)
+            metric("Began / ended outside", value.beganOutside, value.endedOutside)
             metric(
                 "Unknown capture / resolver",
                 value.captureUnknownCallback + value.resolverUnknownCallback
             )
-            metric("Out of scope", value.outOfScopeCallback)
-            metric("Dropped", value.droppedForCapacity)
             metric(
                 "Max contacts / arbiter depth",
                 value.maximumConcurrentContacts,
                 value.maximumArbiterDepth
             )
             metric("Arbiter bypass", value.arbiterBypassCount)
-            metric("V2 committed", value.v2Committed)
-            metric("System cancelled", value.systemCancelled)
             metric("Ownership violation", value.ownershipViolation)
             metric(
                 "Release / repeat",
@@ -56,7 +44,6 @@ struct MetricsSection: View {
                 "Max terminal → emission (ms)",
                 value.maximumTerminalToEmissionLatencyMilliseconds
             )
-            metric("Max emission delay (ms)", value.maximumEmissionDelayMilliseconds)
             metric(
                 "Delay >40 / >120 ms",
                 value.emissionDelayedOver40Milliseconds,
@@ -64,9 +51,9 @@ struct MetricsSection: View {
             )
             metric(
                 "Active / pending",
-                report.activeContactCount + report.pendingComparisonCount
+                report.activeContactCount + report.pendingContactCount
             )
-            metric("Timestamp tie", value.timestampTie)
+            metric("Timestamp tie contacts", value.timestampTieContacts)
         }
     }
 

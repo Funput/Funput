@@ -4,35 +4,21 @@ import KeyboardLayout
 public struct KeyboardGeometrySnapshot: Sendable {
     private struct Entry: Sendable {
         let key: ResolvedKey
-        let identity: ShadowKeyIdentity
     }
 
     public let revision: UInt64
     public let geometry: ResolvedKeyboard
     private let entries: [Entry]
     private let trackingBounds: CGRect
-    private let identitiesByKeyID: [String: ShadowKeyIdentity]
 
     public init(revision: UInt64, geometry: ResolvedKeyboard) {
         self.revision = revision
         self.geometry = geometry
-        var identities: [String: ShadowKeyIdentity] = [:]
-        entries = geometry.keys.enumerated().map { ordinal, key in
-            let identity = ShadowKeyIdentity(
-                geometryRevision: revision,
-                ordinal: ordinal,
-                role: key.spec.role
-            )
-            identities[key.spec.id] = identity
-            return Entry(key: key, identity: identity)
+        entries = geometry.keys.map { key in
+            Entry(key: key)
         }
-        identitiesByKeyID = identities
         let union = geometry.keys.reduce(CGRect.null) { $0.union($1.frame) }
         trackingBounds = union.insetBy(dx: -12, dy: -12)
-    }
-
-    public func hit(at point: CGPoint) -> ShadowKeyIdentity? {
-        touchHit(at: point)?.identity
     }
 
     public func touchHit(at point: CGPoint) -> KeyboardTouchHit? {
@@ -50,11 +36,7 @@ public struct KeyboardGeometrySnapshot: Sendable {
             }
         }
         return closest.map {
-            KeyboardTouchHit(identity: $0.identity, key: $0.key.spec, frame: $0.key.frame)
+            KeyboardTouchHit(key: $0.key.spec, frame: $0.key.frame)
         }
-    }
-
-    public func identity(for key: KeySpec) -> ShadowKeyIdentity? {
-        identitiesByKeyID[key.id]
     }
 }

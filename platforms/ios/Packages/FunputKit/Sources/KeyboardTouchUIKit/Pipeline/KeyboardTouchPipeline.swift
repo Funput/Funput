@@ -21,11 +21,13 @@ public final class KeyboardTouchPipeline {
     var initialHits: [ContactID: KeyboardTouchHit] = [:]
     private var nextGeometryRevision: UInt64 = 1
     private let onEmit: EmissionHandler
+    private let onStaleDeadline: @MainActor () -> Void
     let onResolved: ResolutionHandler
     lazy var arbiter = PressArbiterDriver<KeyboardTouchAction>(
         configuration: arbiterConfiguration,
         clock: clock,
         schedule: schedule,
+        onStaleDeadline: onStaleDeadline,
         onEmit: onEmit
     )
     private let arbiterConfiguration: PressArbiterConfiguration
@@ -40,6 +42,7 @@ public final class KeyboardTouchPipeline {
         },
         schedule: @escaping DeadlineSchedule = RunLoopDeadlineScheduler.schedule,
         onResolved: @escaping ResolutionHandler = { _, _ in },
+        onStaleDeadline: @escaping @MainActor () -> Void = {},
         onEmit: @escaping EmissionHandler
     ) {
         self.eligibleRoles = eligibleRoles
@@ -48,6 +51,7 @@ public final class KeyboardTouchPipeline {
         self.clock = clock
         self.schedule = schedule
         self.onResolved = onResolved
+        self.onStaleDeadline = onStaleDeadline
         self.onEmit = onEmit
         resolver = ContactResolver(configuration: resolverConfiguration)
     }
@@ -56,10 +60,6 @@ public final class KeyboardTouchPipeline {
     public var orderedContactCount: Int { arbiter.orderedContactCount }
     public var heldContactCount: Int { arbiter.heldContactCount }
     public var bypassedContactCount: UInt64 { arbiter.bypassedContactCount }
-
-    public func identity(for key: KeySpec) -> ShadowKeyIdentity? {
-        currentGeometry?.identity(for: key)
-    }
 
     public func initialHit(for contactID: ContactID) -> KeyboardTouchHit? {
         initialHits[contactID]

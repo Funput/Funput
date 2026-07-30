@@ -6,7 +6,7 @@ import Testing
 @testable import Funput
 
 @MainActor
-struct ShadowTypingHarnessModelTests {
+struct KeyboardTouchAcceptanceModelTests {
     @Test("Guided session configures mode and classifies exact output")
     func guidedPass() throws {
         try withHarness { model, diagnostics, overrides in
@@ -22,7 +22,7 @@ struct ShadowTypingHarnessModelTests {
                 model.text = step.expected
                 model.checkGuidedStep(now: now)
             }
-            #expect(model.stage == .guidedSettling)
+            #expect(model.stage == .settling)
             #expect(diagnostics.save(
                 cleanReport(session, sequence: 2),
                 now: now.addingTimeInterval(0.01)
@@ -54,34 +54,6 @@ struct ShadowTypingHarnessModelTests {
         }
     }
 
-    @Test("Classification distinguishes legacy and shadow failures")
-    func classification() {
-        let session = KeyboardTouchDiagnosticSession(
-            inputMethod: .vni,
-            phase: .guided,
-            generation: 1
-        )
-        var legacyMetrics = KeyboardTouchDiagnosticMetrics()
-        legacyMetrics.outputMissing = 1
-        let legacy = report(session, metrics: legacyMetrics)
-        let legacyResult = ShadowHarnessResult.make(
-            text: "wrong",
-            report: legacy,
-            exactMatch: false
-        )
-        #expect(legacyResult.classification == .outputDivergence)
-        #expect(legacyResult.firstMismatchIndex == 0)
-
-        var shadowMetrics = KeyboardTouchDiagnosticMetrics()
-        shadowMetrics.shadowMissing = 1
-        let shadow = report(session, metrics: shadowMetrics)
-        #expect(ShadowHarnessResult.make(
-            text: ShadowTypingFixture.expected,
-            report: shadow,
-            exactMatch: true
-        ).classification == .shadowRegression)
-    }
-
     @Test("Free stress expires at sixty seconds and supports early stop")
     func freeTimer() throws {
         try withHarness { model, diagnostics, _ in
@@ -90,31 +62,34 @@ struct ShadowTypingHarnessModelTests {
             #expect(model.stage == .free)
             #expect(model.freeSecondsRemaining == 60)
             model.tick(now: now.addingTimeInterval(60))
+            #expect(model.stage == .settling)
+            model.tick(now: now.addingTimeInterval(61))
             #expect(model.stage == .freeResult)
 
-            model.startFree(now: now.addingTimeInterval(61))
+            model.startFree(now: now.addingTimeInterval(62))
             let replacement = try #require(
-                diagnostics.activeSession(now: now.addingTimeInterval(61))
+                diagnostics.activeSession(now: now.addingTimeInterval(62))
             )
             #expect(replacement.phase == .free)
-            model.stopFree()
+            model.stopFree(now: now.addingTimeInterval(62))
+            model.tick(now: now.addingTimeInterval(63))
             #expect(model.stage == .freeResult)
         }
     }
 
     private func withHarness(
         _ body: (
-            ShadowTypingHarnessModel,
+            KeyboardTouchAcceptanceModel,
             KeyboardTouchDiagnosticStore,
             FunputUITestConfigurationOverrideStore
         ) throws -> Void
     ) throws {
-        let name = "test.shadow-harness.\(UUID())"
+        let name = "test.touch-acceptance.\(UUID())"
         let defaults = UserDefaults(suiteName: name)!
         defer { defaults.removePersistentDomain(forName: name) }
         let diagnostics = KeyboardTouchDiagnosticStore(defaults: defaults)
         let overrides = FunputUITestConfigurationOverrideStore(defaults: defaults)
-        let model = ShadowTypingHarnessModel(
+        let model = KeyboardTouchAcceptanceModel(
             diagnosticStore: diagnostics,
             overrideStore: overrides,
             accessCheck: { true }
@@ -130,7 +105,7 @@ private func cleanReport(
     report(session, metrics: .init(), sequence: sequence)
 }
 
-private func report(
+func report(
     _ session: KeyboardTouchDiagnosticSession,
     metrics: KeyboardTouchDiagnosticMetrics,
     sequence: UInt64 = 1
@@ -142,7 +117,7 @@ private func report(
         observedAt: session.startedAt,
         metrics: metrics,
         activeContactCount: 0,
-        pendingComparisonCount: 0,
+        pendingContactCount: 0,
         isSettled: true,
         device: .init(model: "test", operatingSystem: "test", maximumFramesPerSecond: 60)
     )

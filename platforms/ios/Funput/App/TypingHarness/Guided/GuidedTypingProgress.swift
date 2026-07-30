@@ -1,5 +1,5 @@
 #if DEBUG
-struct ShadowGuidedProgress: Equatable {
+struct GuidedTypingProgress: Equatable {
     enum Outcome: Equatable {
         case retry
         case advanced
@@ -10,7 +10,7 @@ struct ShadowGuidedProgress: Equatable {
     private(set) var verifiedText = ""
     private(set) var mismatchIndex: Int?
 
-    func step(in fixture: ShadowTypingFixture) -> ShadowTypingStep {
+    func step(in fixture: KeyboardTouchAcceptanceFixture) -> AcceptanceTypingStep {
         fixture.steps[currentIndex]
     }
 
@@ -22,11 +22,11 @@ struct ShadowGuidedProgress: Equatable {
 
     mutating func check(
         _ actual: String,
-        fixture: ShadowTypingFixture
+        fixture: KeyboardTouchAcceptanceFixture
     ) -> Outcome {
         let current = step(in: fixture)
         guard actual == current.expected else {
-            mismatchIndex = ShadowHarnessResult.mismatchIndex(
+            mismatchIndex = KeyboardTouchAcceptanceResult.mismatchIndex(
                 actual,
                 current.expected
             )

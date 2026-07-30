@@ -3,7 +3,7 @@ import KeyboardLayout
 import KeyboardTouchCore
 import KeyboardTouchUIKit
 
-extension KeyboardV2TouchCoordinator {
+extension KeyboardTouchCoordinator {
     static let touchRoles: Set<KeyRole> = [
         .character, .vniModifier, .punctuation, .shift, .backspace,
         .symbols, .moreSymbols, .letters, .inputMethod, .systemInputMode,
@@ -13,16 +13,35 @@ extension KeyboardV2TouchCoordinator {
     func consume(_ sample: ContactSample) {
         switch pipeline.consume(sample) {
         case let .began(id, hit):
+            recordTimestampTie(id, at: sample.timestamp)
             beganAt[id] = sample.timestamp
             hits[id] = hit
             registry.begin(id, key: hit.key)
-        case let .fallback(id, _):
+            registry.metrics.capturedContacts += 1
+        case let .resolved(_, metadata):
+            if metadata.exceededTapSlop {
+                registry.metrics.recoveredTapSlop += 1
+            }
+        case let .fallback(id, reason):
+            if reason == .endedOutside { registry.metrics.endedOutside += 1 }
             cancel(id, emit: true, system: false)
         case let .cancelled(id):
             cancel(id, emit: true, system: true)
-        case .ignored, .tracking, .resolved:
+        case let .ignored(reason):
+            switch reason {
+            case .unknownContact:
+                registry.metrics.resolverUnknownCallback += 1
+            case .beganOutside:
+                registry.metrics.beganOutside += 1
+            case .duplicateBegin:
+                registry.metrics.ownershipViolation += 1
+            case .updated:
+                break
+            }
+        case .tracking:
             break
         }
+        observePipelineState()
         notify()
     }
 
@@ -41,6 +60,9 @@ extension KeyboardV2TouchCoordinator {
             return
         }
         claims[id] = kind
+        if kind == .repeatKey {
+            registry.metrics.repeatClaimedContacts += 1
+        }
         notify()
     }
 

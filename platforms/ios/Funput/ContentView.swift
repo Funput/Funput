@@ -12,8 +12,8 @@ struct ContentView: View {
 
     var body: some View {
 #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-device-shadow-harness") {
-            ShadowTypingHarnessView()
+        if ProcessInfo.processInfo.arguments.contains("-device-touch-acceptance") {
+            KeyboardTouchAcceptanceView()
         } else if ProcessInfo.processInfo.arguments.contains("-uitest-typing-harness") {
             TypingHarnessView()
         } else {

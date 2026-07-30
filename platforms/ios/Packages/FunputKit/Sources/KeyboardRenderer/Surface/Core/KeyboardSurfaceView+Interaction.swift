@@ -4,7 +4,7 @@ import UIKit
 
 extension KeyboardSurfaceView {
     func route(_ event: KeyboardKeyEvent, from sourceView: UIView?) {
-        handleV2Event(event)
+        emitTouchEvent(event)
     }
 
     func updatePreview(_ key: KeySpec?, sourceFrame: CGRect?) {

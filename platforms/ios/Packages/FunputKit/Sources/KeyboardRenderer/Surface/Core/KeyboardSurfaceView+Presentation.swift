@@ -103,11 +103,11 @@ extension KeyboardSurfaceView {
         }
         touchOverlay.onEnd = { [weak self] token in
             self?.interactionController.endTouch(token: token)
-            self?.v2Touch.finishUIKitContact(token)
+            self?.touchCoordinator.finishUIKitContact(token)
         }
         touchOverlay.onCancel = { [weak self] token in
             self?.interactionController.cancelTouch(token: token)
-            self?.v2Touch.finishUIKitContact(token)
+            self?.touchCoordinator.finishUIKitContact(token)
         }
     }
 

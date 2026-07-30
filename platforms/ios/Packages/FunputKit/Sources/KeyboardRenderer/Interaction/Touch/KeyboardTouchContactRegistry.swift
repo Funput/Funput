@@ -10,7 +10,7 @@ struct KeyboardTouchContactRegistry {
     }
 
     private var states: [ContactID: State] = [:]
-    var metrics = KeyboardV2TouchMetrics()
+    var metrics = KeyboardTouchMetrics()
     var pendingCount: Int { states.count }
 
     func isPending(_ id: ContactID) -> Bool {
@@ -35,7 +35,7 @@ struct KeyboardTouchContactRegistry {
         }
         state.terminal = true
         states[id] = state
-        metrics.v2Committed += 1
+        metrics.committedContacts += 1
         switch action {
         case .released:
             metrics.releaseCommitted += 1
@@ -63,6 +63,7 @@ struct KeyboardTouchContactRegistry {
         }
         state.terminal = true
         states[id] = state
+        metrics.cancelledContacts += 1
         if system { metrics.systemCancelled += 1 }
         return state.key
     }
@@ -73,7 +74,7 @@ struct KeyboardTouchContactRegistry {
 
     mutating func reset() {
         states.removeAll(keepingCapacity: true)
-        metrics = KeyboardV2TouchMetrics()
+        metrics = KeyboardTouchMetrics()
     }
 }
 #endif

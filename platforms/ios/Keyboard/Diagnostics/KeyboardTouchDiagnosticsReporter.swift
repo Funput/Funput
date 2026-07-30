@@ -78,7 +78,7 @@ final class KeyboardTouchDiagnosticsReporter {
         publisher?.submit(
             metrics: KeyboardTouchDiagnosticMetrics(snapshot),
             activeContactCount: snapshot.activeContactCount,
-            pendingComparisonCount: snapshot.pendingComparisonCount,
+            pendingContactCount: snapshot.pendingContactCount,
             isSettled: snapshot.isSettled
         )
     }

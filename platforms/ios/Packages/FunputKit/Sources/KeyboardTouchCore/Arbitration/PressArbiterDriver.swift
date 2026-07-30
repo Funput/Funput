@@ -9,6 +9,7 @@ public final class PressArbiterDriver<Payload: Sendable> {
     private let clock: Clock
     private let schedule: DeadlineSchedule
     private let onEmit: EmissionHandler
+    private let onStaleDeadline: @MainActor () -> Void
     private var scheduledAction: ScheduledDeadline?
     private var scheduledDeadline: TimeInterval?
     private var scheduleGeneration: UInt64 = 0
@@ -17,11 +18,13 @@ public final class PressArbiterDriver<Payload: Sendable> {
         configuration: PressArbiterConfiguration = .default,
         clock: @escaping Clock = { ProcessInfo.processInfo.systemUptime },
         schedule: @escaping DeadlineSchedule = RunLoopDeadlineScheduler.schedule,
+        onStaleDeadline: @escaping @MainActor () -> Void = {},
         onEmit: @escaping EmissionHandler
     ) {
         arbiter = PressArbiter(configuration: configuration)
         self.clock = clock
         self.schedule = schedule
+        self.onStaleDeadline = onStaleDeadline
         self.onEmit = onEmit
     }
 
@@ -90,7 +93,10 @@ public final class PressArbiterDriver<Payload: Sendable> {
     }
 
     private func deadlineFired(generation: UInt64) {
-        guard generation == scheduleGeneration else { return }
+        guard generation == scheduleGeneration else {
+            onStaleDeadline()
+            return
+        }
         scheduledAction = nil
         scheduledDeadline = nil
         process(arbiter.advance(to: clock()))

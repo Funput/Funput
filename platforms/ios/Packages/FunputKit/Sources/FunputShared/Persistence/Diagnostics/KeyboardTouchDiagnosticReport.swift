@@ -20,7 +20,7 @@ public struct KeyboardTouchDiagnosticReport: Codable, Equatable, Sendable {
     public let observedAt: Date
     public let metrics: KeyboardTouchDiagnosticMetrics
     public let activeContactCount: Int
-    public let pendingComparisonCount: Int
+    public let pendingContactCount: Int
     public let isSettled: Bool
     public let device: KeyboardTouchDiagnosticDevice
 
@@ -31,7 +31,7 @@ public struct KeyboardTouchDiagnosticReport: Codable, Equatable, Sendable {
         observedAt: Date,
         metrics: KeyboardTouchDiagnosticMetrics,
         activeContactCount: Int,
-        pendingComparisonCount: Int,
+        pendingContactCount: Int,
         isSettled: Bool,
         device: KeyboardTouchDiagnosticDevice
     ) {
@@ -41,7 +41,7 @@ public struct KeyboardTouchDiagnosticReport: Codable, Equatable, Sendable {
         self.observedAt = observedAt
         self.metrics = metrics
         self.activeContactCount = activeContactCount
-        self.pendingComparisonCount = pendingComparisonCount
+        self.pendingContactCount = pendingContactCount
         self.isSettled = isSettled
         self.device = device
     }

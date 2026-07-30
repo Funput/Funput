@@ -3,11 +3,11 @@ import Testing
 @testable import Funput
 
 @MainActor
-struct ShadowGuidedProgressTests {
+struct GuidedTypingProgressTests {
     @Test("Wrong phrase stays in place and retry clears only the error")
     func retry() {
-        let fixture = ShadowTypingFixture.all[0]
-        var progress = ShadowGuidedProgress()
+        let fixture = KeyboardTouchAcceptanceFixture.all[0]
+        var progress = GuidedTypingProgress()
 
         #expect(progress.check("sai", fixture: fixture) == .retry)
         #expect(progress.currentIndex == 0)
@@ -20,8 +20,8 @@ struct ShadowGuidedProgressTests {
 
     @Test("Correct phrases advance and reconstruct the full paragraph")
     func completes() {
-        let fixture = ShadowTypingFixture.all[1]
-        var progress = ShadowGuidedProgress()
+        let fixture = KeyboardTouchAcceptanceFixture.all[1]
+        var progress = GuidedTypingProgress()
 
         for (index, step) in fixture.steps.enumerated() {
             let outcome = progress.check(step.expected, fixture: fixture)
@@ -32,7 +32,7 @@ struct ShadowGuidedProgressTests {
                 #expect(progress.currentIndex == index + 1)
             }
         }
-        #expect(progress.verifiedText == ShadowTypingFixture.expected)
+        #expect(progress.verifiedText == KeyboardTouchAcceptanceFixture.expected)
     }
 }
 #endif

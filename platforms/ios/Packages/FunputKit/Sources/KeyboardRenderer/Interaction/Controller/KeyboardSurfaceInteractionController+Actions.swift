@@ -30,7 +30,7 @@ extension KeyboardSurfaceInteractionController {
 
     func finishSwipe(token: TouchToken, state: TouchState, action: KeySwipeAction) {
         onClaimGesture(token, .swipe)
-        finishV2Swipe(token: token, state: state, action: action)
+        completeSwipe(token: token, state: state, action: action)
     }
 
     func repeatActiveKey() {
@@ -44,7 +44,7 @@ extension KeyboardSurfaceInteractionController {
     }
 
     func finishRepeatedTouch(token: TouchToken, state: TouchState) {
-        finishV2RepeatedTouch(token: token, state: state)
+        completeRepeatedTouch(token: token, state: state)
     }
 
     func setHighlighted(_ key: KeySpec, _ highlighted: Bool) {

@@ -13,7 +13,7 @@ struct KeyboardTouchDiagnosticPrivacyTests {
             startedAt: Date(timeIntervalSince1970: 20)
         )
         var metrics = KeyboardTouchDiagnosticMetrics()
-        metrics.matched = 42
+        metrics.capturedContacts = 42
         let report = KeyboardTouchDiagnosticReport(
             sessionID: session.id,
             generation: session.generation,
@@ -21,7 +21,7 @@ struct KeyboardTouchDiagnosticPrivacyTests {
             observedAt: session.startedAt,
             metrics: metrics,
             activeContactCount: 1,
-            pendingComparisonCount: 2,
+            pendingContactCount: 2,
             isSettled: false,
             device: .init(
                 model: "iPhone",

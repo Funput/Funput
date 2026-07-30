@@ -3,21 +3,21 @@ import Foundation
 import FunputShared
 import KeyboardLayout
 
-struct ShadowTypingStep: Equatable {
+struct AcceptanceTypingStep: Equatable {
     let expected: String
     let rawSequence: String
 }
 
-struct ShadowTypingFixture: Identifiable, Equatable {
+struct KeyboardTouchAcceptanceFixture: Identifiable, Equatable {
     let inputMethod: KeyboardInputMethod
     let rawSteps: [String]
 
     var id: KeyboardInputMethod { inputMethod }
     var rawSequence: String { rawSteps.joined(separator: " ") }
-    var steps: [ShadowTypingStep] {
+    var steps: [AcceptanceTypingStep] {
         precondition(rawSteps.count == Self.expectedSteps.count)
         return zip(Self.expectedSteps, rawSteps).map {
-            ShadowTypingStep(expected: $0, rawSequence: $1)
+            AcceptanceTypingStep(expected: $0, rawSequence: $1)
         }
     }
 
@@ -79,7 +79,9 @@ struct ShadowTypingFixture: Identifiable, Equatable {
         ),
     ]
 
-    static func configuration(for method: KeyboardInputMethod) -> FunputConfiguration {
+    static func configuration(
+        for method: KeyboardInputMethod
+    ) -> FunputConfiguration {
         var value = FunputConfiguration.default
         value.inputMethod = method
         value.language = .vietnamese
@@ -94,55 +96,4 @@ struct ShadowTypingFixture: Identifiable, Equatable {
     }
 }
 
-enum ShadowHarnessClassification: String, Equatable {
-    case pass = "Pass"
-    case outputDivergence = "Output divergence captured"
-    case shadowRegression = "Shadow regression"
-}
-
-struct ShadowHarnessResult: Equatable {
-    let classification: ShadowHarnessClassification
-    let exactMatch: Bool?
-    let characterCount: Int
-    let firstMismatchIndex: Int?
-
-    static func make(
-        text: String,
-        report: KeyboardTouchDiagnosticReport?,
-        exactMatch: Bool?
-    ) -> Self {
-        let unresolved = report.map {
-            !$0.isSettled || $0.activeContactCount > 0
-                || $0.pendingComparisonCount > 0
-        } ?? true
-        let shadowBad = unresolved
-            || (report?.metrics.hasShadowRegression ?? true)
-        let outputBad = exactMatch == false
-            || (report?.metrics.outputMissing ?? 0) > 0
-            || (report?.metrics.outputLate ?? 0) > 0
-        let classification: ShadowHarnessClassification = shadowBad
-            ? .shadowRegression : (outputBad ? .outputDivergence : .pass)
-        return Self(
-            classification: classification,
-            exactMatch: exactMatch,
-            characterCount: text.count,
-            firstMismatchIndex: exactMatch == false
-                ? Self.mismatchIndex(text, ShadowTypingFixture.expected) : nil
-        )
-    }
-
-    static func mismatchIndex(_ actual: String, _ expected: String) -> Int? {
-        let actual = Array(actual)
-        let expected = Array(expected)
-        let common = zip(actual, expected).prefix { $0 == $1 }.count
-        return common == max(actual.count, expected.count) ? nil : common
-    }
-}
-
-extension KeyboardTouchDiagnosticReport {
-    var numericJSON: String? {
-        guard let data = try? JSONEncoder().encode(self) else { return nil }
-        return String(data: data, encoding: .utf8)
-    }
-}
 #endif

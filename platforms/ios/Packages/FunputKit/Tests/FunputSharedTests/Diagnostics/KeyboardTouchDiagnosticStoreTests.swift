@@ -88,7 +88,7 @@ private func makeReport(
         observedAt: session.startedAt,
         metrics: .init(),
         activeContactCount: 0,
-        pendingComparisonCount: 0,
+        pendingContactCount: 0,
         isSettled: true,
         device: .init(model: "iPhone", operatingSystem: "TestOS", maximumFramesPerSecond: 120)
     )

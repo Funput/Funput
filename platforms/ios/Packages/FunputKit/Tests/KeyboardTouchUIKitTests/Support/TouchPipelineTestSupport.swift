@@ -4,7 +4,7 @@ import KeyboardTouchCore
 import UIKit
 
 @MainActor
-final class ShadowTestClock {
+final class TouchTestClock {
     struct Job {
         let id: UInt64
         let deadline: TimeInterval
@@ -34,7 +34,7 @@ final class ShadowTestClock {
     }
 }
 
-func shadowGeometry() -> (ResolvedKeyboard, KeySpec, KeySpec) {
+func touchGeometry() -> (ResolvedKeyboard, KeySpec, KeySpec) {
     let a = KeySpec(id: "a", label: "a", role: .character)
     let b = KeySpec(id: "b", label: "b", role: .character)
     return (
@@ -51,7 +51,7 @@ func shadowGeometry() -> (ResolvedKeyboard, KeySpec, KeySpec) {
     )
 }
 
-func shadowSample(
+func touchSample(
     _ id: UInt64,
     _ phase: ContactPhase,
     _ timestamp: TimeInterval,

@@ -24,7 +24,11 @@ struct PressArbiterDriverTests {
     func staleTimerDoesNotEmit() {
         let scheduler = TestDeadlineScheduler()
         var output: [String] = []
-        let driver = makeDriver(scheduler) { output.append($0.payload) }
+        var staleCount = 0
+        let driver = makeDriver(
+            scheduler,
+            onStale: { staleCount += 1 }
+        ) { output.append($0.payload) }
         driver.begin(contact(1))
         driver.begin(contact(2))
         driver.resolve(contact(2), payload: "B")
@@ -34,6 +38,7 @@ struct PressArbiterDriverTests {
         #expect(output == ["A", "B"])
         scheduler.fireIncludingCancelled(at: 0)
         #expect(output == ["A", "B"])
+        #expect(staleCount == 1)
     }
 
     @Test("Reset cancels scheduled work and ignores its stale callback")
@@ -54,12 +59,14 @@ struct PressArbiterDriverTests {
 
     private func makeDriver(
         _ scheduler: TestDeadlineScheduler,
+        onStale: @escaping @MainActor () -> Void = {},
         onEmit: @escaping @MainActor (PressEmission<String>) -> Void
     ) -> PressArbiterDriver<String> {
         PressArbiterDriver(
             configuration: PressArbiterConfiguration(rolloverWindow: 0.04),
             clock: { scheduler.now },
             schedule: scheduler.schedule,
+            onStaleDeadline: onStale,
             onEmit: onEmit
         )
     }

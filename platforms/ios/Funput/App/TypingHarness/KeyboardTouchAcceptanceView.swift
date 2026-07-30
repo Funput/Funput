@@ -2,9 +2,8 @@
 import FunputShared
 import SwiftUI
 import UIKit
-
-struct ShadowTypingHarnessView: View {
-    @StateObject private var model = ShadowTypingHarnessModel()
+struct KeyboardTouchAcceptanceView: View {
+    @StateObject private var model = KeyboardTouchAcceptanceModel()
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
@@ -19,7 +18,7 @@ struct ShadowTypingHarnessView: View {
                     }
                 }
             }
-            .navigationTitle("Touch Shadow")
+            .navigationTitle("Touch Acceptance")
             .onAppear { model.appear() }
             .onDisappear { model.disappear() }
             .onChange(of: scenePhase) { _, phase in
@@ -31,17 +30,18 @@ struct ShadowTypingHarnessView: View {
     private var setupSection: some View {
         Section("Session") {
             Picker("Input method", selection: $model.selectedMethod) {
-                ForEach(ShadowTypingFixture.all) { fixture in
+                ForEach(KeyboardTouchAcceptanceFixture.all) { fixture in
                     Text(fixture.title).tag(fixture.inputMethod)
                 }
             }
             .disabled(
-                model.stage == .guided
-                    || model.stage == .guidedSettling
+                model.stage == .guided || model.stage == .settling
+                    || model.stage == .gestures
                     || model.stage == .free
             )
             if !model.hasFullAccess {
-                Label("Cần bật Full Access để nhận live report.", systemImage: "exclamationmark.triangle")
+                Label("Cần bật Full Access để nhận live report.",
+                      systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.orange)
                 Button("Mở Cài đặt") {
                     openURL(URL(string: UIApplication.openSettingsURLString)!)
@@ -49,7 +49,6 @@ struct ShadowTypingHarnessView: View {
             }
         }
     }
-
     @ViewBuilder
     private var stageContent: some View {
         switch model.stage {
@@ -61,21 +60,36 @@ struct ShadowTypingHarnessView: View {
             }
         case .guided:
             guidedSection
-        case .guidedSettling:
+        case .settling:
             Section("Đang tổng hợp") {
                 ProgressView()
-                Text("Chờ shadow report settle, tối đa 1 giây.")
+                Text("Chờ production report settle, tối đa 1 giây.")
             }
         case .guidedResult:
             resultSection
             Section {
-                Button("Start 60-second Free Stress") { model.startFree() }
+                Button("Start Gesture Check") { model.startGestures() }
                 Button("Đổi input method") { model.returnToSetup() }
+            }
+        case .gestures:
+            Section("Gesture check") {
+                Text("Thực hiện ≥1 alternate, ≥2 repeat, ≥2 Space swipe"
+                    + " và ≥4 control.")
+                textField
+                Button("Finish Gesture Check") { model.finishGestures() }
+            }
+        case .gestureResult:
+            resultSection
+            Section {
+                Button("Start 60-second Free Stress") { model.startFree() }
+                Button("Retry Gesture Check") { model.startGestures() }
             }
         case .free:
             Section("Free stress · \(model.freeSecondsRemaining)s") {
                 textField
-                Button("Stop Early", role: .destructive) { model.stopFree() }
+                Button("Stop Early", role: .destructive) {
+                    model.stopFree()
+                }
             }
         case .freeResult:
             resultSection
@@ -85,26 +99,21 @@ struct ShadowTypingHarnessView: View {
             }
         }
     }
-
     private var guidedSection: some View {
         let step = model.guidedStep
         return Section(
             "Guided \(model.guidedProgress.currentIndex + 1)/\(model.fixture.steps.count)"
         ) {
-            ProgressView(
-                value: Double(model.guidedProgress.currentIndex + 1),
-                total: Double(model.fixture.steps.count)
-            )
+            ProgressView(value: Double(model.guidedProgress.currentIndex + 1),
+                         total: Double(model.fixture.steps.count))
             LabeledContent("Kết quả cần có", value: step.expected)
             Text(step.rawSequence)
                 .font(.system(.body, design: .monospaced))
                 .textSelection(.enabled)
             textField
             if let mismatch = model.guidedProgress.mismatchIndex {
-                Label(
-                    "Chưa khớp từ ký tự \(mismatch + 1). Hãy thử lại cụm này.",
-                    systemImage: "xmark.circle"
-                )
+                Label("Chưa khớp từ ký tự \(mismatch + 1). Hãy thử lại cụm này.",
+                      systemImage: "xmark.circle")
                 .foregroundStyle(.orange)
                 Button("Retry current phrase") { model.retryGuidedStep() }
             } else {
@@ -112,12 +121,10 @@ struct ShadowTypingHarnessView: View {
             }
         }
     }
-
     private var textField: some View {
-        ShadowTypingTextView(text: $model.text, wantsFocus: $model.wantsFocus)
+        AcceptanceTextView(text: $model.text, wantsFocus: $model.wantsFocus)
             .frame(minHeight: 180)
     }
-
     private var resultSection: some View {
         Section("Result") {
             if let result = model.result {
@@ -133,9 +140,8 @@ struct ShadowTypingHarnessView: View {
             }
         }
     }
-
     private func selectNextMethod() {
-        let methods = ShadowTypingFixture.all.map(\.inputMethod)
+        let methods = KeyboardTouchAcceptanceFixture.all.map(\.inputMethod)
         let index = methods.firstIndex(of: model.selectedMethod) ?? 0
         model.selectedMethod = methods[(index + 1) % methods.count]
         model.returnToSetup()

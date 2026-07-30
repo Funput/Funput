@@ -7,29 +7,29 @@ import Testing
 @testable import Funput
 
 @MainActor
-struct ShadowTypingFixtureReplayTests {
+struct KeyboardTouchAcceptanceFixtureReplayTests {
     @Test("Checked-in reverse-encoder fixtures replay through production coordinator")
     func replayAllModes() {
-        for fixture in ShadowTypingFixture.all {
+        for fixture in KeyboardTouchAcceptanceFixture.all {
             let coordinator = KeyboardInputCoordinator()
             coordinator.apply(
-                ShadowTypingFixture.configuration(for: fixture.inputMethod)
+                KeyboardTouchAcceptanceFixture.configuration(for: fixture.inputMethod)
             )
             let document = ScriptedWriter()
             for character in fixture.rawSequence {
                 coordinator.handle(key(for: character), writer: document)
             }
-            #expect(document.text == ShadowTypingFixture.expected)
+            #expect(document.text == KeyboardTouchAcceptanceFixture.expected)
         }
     }
 
     @Test("Advanced Telex uses shortcut forms")
     func advancedUsesShortcuts() throws {
         let advanced = try #require(
-            ShadowTypingFixture.all.first { $0.inputMethod == .telexAdvanced }
+            KeyboardTouchAcceptanceFixture.all.first { $0.inputMethod == .telexAdvanced }
         )
         let telex = try #require(
-            ShadowTypingFixture.all.first { $0.inputMethod == .telex }
+            KeyboardTouchAcceptanceFixture.all.first { $0.inputMethod == .telex }
         )
         #expect(advanced.rawSequence != telex.rawSequence)
         #expect(advanced.rawSequence.contains("["))

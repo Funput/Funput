@@ -12,7 +12,7 @@ readonly roots=(
     "$ios_root/Packages/FunputKit/Tests/KeyboardTouchCoreTests"
     "$ios_root/Packages/FunputKit/Tests/KeyboardTouchUIKitTests"
     "$ios_root/Packages/FunputKit/Tests/KeyboardInputTests"
-    "$ios_root/Packages/FunputKit/Tests/KeyboardRendererTests/V2Touch"
+    "$ios_root/Packages/FunputKit/Tests/KeyboardRendererTests/Touch"
     "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Interaction"
     "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Surface"
     "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer/Diagnostics"
@@ -57,6 +57,21 @@ for root in "${roots[@]}"; do
         fi
     done < <(find "$root" -type f -name '*.swift' -print0)
 done
+
+readonly banned_pattern='V2Touch|KeyboardV2|v2Touch|KeyboardTouchShadow|device-shadow-harness|shadowMissing|legacyMissing'
+readonly name_roots=(
+    "$ios_root/Packages/FunputKit/Sources/KeyboardRenderer"
+    "$ios_root/Packages/FunputKit/Sources/KeyboardTouchUIKit"
+    "$ios_root/Packages/FunputKit/Tests/KeyboardRendererTests"
+    "$ios_root/Packages/FunputKit/Tests/KeyboardTouchUIKitTests"
+    "$ios_root/Funput/App/TypingHarness"
+    "$ios_root/FunputTests/TypingHarness"
+    "$ios_root/Keyboard/Diagnostics"
+)
+if rg -n "$banned_pattern" "${name_roots[@]}"; then
+    printf 'Retired touch-pipeline identifier found.\n' >&2
+    violations=1
+fi
 
 if (( violations != 0 )); then
     printf 'Keyboard touch source layout check failed.\n' >&2

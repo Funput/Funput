@@ -2,7 +2,7 @@
 import KeyboardLayout
 
 extension KeyboardSurfaceInteractionController {
-    func finishV2Touch(token: TouchToken, state: TouchState) {
+    func finishTrackedTouch(token: TouchToken, state: TouchState) {
         alternateHoldController.cancel(for: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         let wasRepeating = repeatTouch == token && repeatController.finish()
@@ -27,7 +27,7 @@ extension KeyboardSurfaceInteractionController {
         refreshPreview()
     }
 
-    func cancelV2Touch(token: TouchToken, state: TouchState) {
+    func cancelTrackedTouch(token: TouchToken, state: TouchState) {
         alternateHoldController.cancel(for: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         _ = repeatTouch == token && repeatController.finish()
@@ -40,7 +40,7 @@ extension KeyboardSurfaceInteractionController {
         refreshPreview()
     }
 
-    func finishV2Swipe(
+    func completeSwipe(
         token: TouchToken,
         state: TouchState,
         action: KeySwipeAction
@@ -57,7 +57,7 @@ extension KeyboardSurfaceInteractionController {
         refreshPreview()
     }
 
-    func finishV2RepeatedTouch(token: TouchToken, state: TouchState) {
+    func completeRepeatedTouch(token: TouchToken, state: TouchState) {
         touches.removeValue(forKey: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         endSignpost(state, token: token, phase: 1)

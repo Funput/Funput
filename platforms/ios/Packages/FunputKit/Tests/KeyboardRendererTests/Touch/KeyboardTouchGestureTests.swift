@@ -6,7 +6,7 @@ import KeyboardTouchCore
 import Testing
 
 @MainActor
-struct KeyboardV2GestureTests {
+struct KeyboardTouchGestureTests {
     @Test("Repeat uses its own lane and suppresses base release")
     func repeatLane() {
         let fixture = Fixture(key: key("delete", .backspace))
@@ -25,7 +25,7 @@ struct KeyboardV2GestureTests {
         #expect(fixture.coordinator.pendingContactCount == 0)
     }
 
-    @Test("Alternate and swipe are terminal V2 actions")
+    @Test("Alternate and swipe are terminal touch actions")
     func alternateAndSwipe() {
         let alternate = Fixture(key: key("a", .character))
         alternate.begin()
@@ -62,7 +62,7 @@ struct KeyboardV2GestureTests {
             fixture.coordinator.consume(fixture.sample(.ended, at: 0.1))
             fixture.coordinator.finishUIKitContact(1)
             #expect(fixture.output.map(\.phase) == [.released])
-            #expect(fixture.coordinator.metrics.v2Committed == 1)
+            #expect(fixture.coordinator.metrics.committedContacts == 1)
         }
     }
 
@@ -82,14 +82,14 @@ private final class Fixture {
     }
 
     let key: KeySpec
-    let coordinator: KeyboardV2TouchCoordinator
+    let coordinator: KeyboardTouchCoordinator
     private let box = EventBox()
     var output: [KeyboardKeyEvent] { box.values }
 
     init(key: KeySpec) {
         self.key = key
         let eventBox = box
-        coordinator = KeyboardV2TouchCoordinator { eventBox.values.append($0) }
+        coordinator = KeyboardTouchCoordinator { eventBox.values.append($0) }
         coordinator.updateGeometry(
             ResolvedKeyboard(
                 size: .init(width: 50, height: 50),

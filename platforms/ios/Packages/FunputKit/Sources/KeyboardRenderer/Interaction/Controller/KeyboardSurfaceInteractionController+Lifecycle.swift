@@ -5,12 +5,12 @@ import UIKit
 extension KeyboardSurfaceInteractionController {
     func endTouch(token: TouchToken) {
         guard let state = touches.removeValue(forKey: token) else { return }
-        finishV2Touch(token: token, state: state)
+        finishTrackedTouch(token: token, state: state)
     }
 
     func cancelTouch(token: TouchToken) {
         guard let state = touches.removeValue(forKey: token) else { return }
-        cancelV2Touch(token: token, state: state)
+        cancelTrackedTouch(token: token, state: state)
     }
 
     /// Teardown: the surface is going away, so pending presses are discarded

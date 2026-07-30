@@ -2,7 +2,7 @@
 import SwiftUI
 import UIKit
 
-struct ShadowTypingTextView: UIViewRepresentable {
+struct AcceptanceTextView: UIViewRepresentable {
     @Binding var text: String
     @Binding var wantsFocus: Bool
 
@@ -13,7 +13,7 @@ struct ShadowTypingTextView: UIViewRepresentable {
     func makeUIView(context: Context) -> UITextView {
         let view = UITextView()
         view.delegate = context.coordinator
-        view.accessibilityIdentifier = "deviceShadowHarness.field"
+        view.accessibilityIdentifier = "deviceTouchAcceptance.field"
         view.font = .preferredFont(forTextStyle: .title3)
         view.autocorrectionType = .no
         view.autocapitalizationType = .none

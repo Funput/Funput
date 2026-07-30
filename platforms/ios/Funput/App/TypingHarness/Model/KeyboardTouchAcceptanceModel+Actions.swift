@@ -3,9 +3,11 @@ import Foundation
 import FunputShared
 
 @MainActor
-extension ShadowTypingHarnessModel {
+extension KeyboardTouchAcceptanceModel {
     func startGuided(now: Date = Date()) {
         guidedProgress.reset()
+        guidedClassification = nil
+        gestureClassification = nil
         begin(.guided, now: now)
     }
 
@@ -35,16 +37,19 @@ extension ShadowTypingHarnessModel {
         freeSecondsRemaining = 60
     }
 
-    func stopFree() {
+    func startGestures(now: Date = Date()) {
+        begin(.gestures, now: now)
+    }
+
+    func finishGestures(now: Date = Date()) {
+        guard stage == .gestures else { return }
+        beginSettlement(.gestures, now: now)
+    }
+
+    func stopFree(now: Date = Date()) {
         guard stage == .free else { return }
-        wantsFocus = false
         freeDeadline = nil
-        result = ShadowHarnessResult.make(
-            text: text,
-            report: report,
-            exactMatch: nil
-        )
-        stage = .freeResult
+        beginSettlement(.free, now: now)
     }
 
     func returnToSetup() {
@@ -54,8 +59,13 @@ extension ShadowTypingHarnessModel {
     }
 
     private func finishGuided(now: Date) {
+        beginSettlement(.guided, now: now)
+    }
+
+    private func beginSettlement(_ value: Settlement, now: Date) {
         wantsFocus = false
-        stage = .guidedSettling
+        stage = .settling
+        settlement = value
         report = diagnosticStore.report(now: now)
         settlementAfterSequence = report?.sequence ?? 0
         settlementDeadline = now.addingTimeInterval(1)
@@ -83,10 +93,14 @@ extension ShadowTypingHarnessModel {
             expiresAt: expiry
         )
         guard overrideStore.save(
-            ShadowTypingFixture.configuration(for: selectedMethod),
+            KeyboardTouchAcceptanceFixture.configuration(for: selectedMethod),
             expiresAt: expiry
         ), diagnosticStore.start(session) else { return }
-        stage = phase == .guided ? .guided : .free
+        switch phase {
+        case .guided: stage = .guided
+        case .gestures: stage = .gestures
+        case .free: stage = .free
+        }
         DispatchQueue.main.async { [weak self] in self?.wantsFocus = true }
     }
 }

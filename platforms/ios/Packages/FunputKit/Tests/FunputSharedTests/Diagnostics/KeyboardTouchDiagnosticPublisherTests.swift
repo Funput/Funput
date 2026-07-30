@@ -14,18 +14,18 @@ struct KeyboardTouchDiagnosticPublisherTests {
 
         for value in 1 ... 1_000 {
             var metrics = KeyboardTouchDiagnosticMetrics()
-            metrics.matched = value
+            metrics.capturedContacts = value
             publisher.submit(
                 metrics: metrics,
                 activeContactCount: 0,
-                pendingComparisonCount: 0,
+                pendingContactCount: 0,
                 isSettled: true
             )
         }
         #expect(reports.isEmpty)
         clock.advance(by: 0)
         #expect(reports.count == 1)
-        #expect(reports[0].metrics.matched == 1_000)
+        #expect(reports[0].metrics.capturedContacts == 1_000)
     }
 
     @Test("Final flush writes immediately and cancels stale timer")
@@ -36,7 +36,7 @@ struct KeyboardTouchDiagnosticPublisherTests {
         publisher.submit(
             metrics: .init(),
             activeContactCount: 1,
-            pendingComparisonCount: 2,
+            pendingContactCount: 2,
             isSettled: false
         )
         publisher.finalFlush()
@@ -44,7 +44,7 @@ struct KeyboardTouchDiagnosticPublisherTests {
 
         #expect(reports.count == 1)
         #expect(reports[0].activeContactCount == 1)
-        #expect(reports[0].pendingComparisonCount == 2)
+        #expect(reports[0].pendingContactCount == 2)
     }
 
     @Test("Invalidation drops pending callback")
@@ -55,7 +55,7 @@ struct KeyboardTouchDiagnosticPublisherTests {
         publisher.submit(
             metrics: .init(),
             activeContactCount: 0,
-            pendingComparisonCount: 0,
+            pendingContactCount: 0,
             isSettled: true
         )
         publisher.invalidate()

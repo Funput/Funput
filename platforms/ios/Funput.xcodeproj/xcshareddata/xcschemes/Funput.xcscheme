@@ -92,7 +92,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-device-shadow-harness"
+            argument = "-device-touch-acceptance"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

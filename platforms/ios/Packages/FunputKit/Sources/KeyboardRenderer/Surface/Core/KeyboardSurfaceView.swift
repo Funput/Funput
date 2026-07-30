@@ -1,8 +1,5 @@
 #if canImport(UIKit)
 import KeyboardLayout
-#if DEBUG
-import KeyboardTouchUIKit
-#endif
 import ThemeSchema
 import UIKit
 @MainActor
@@ -22,15 +19,12 @@ public final class KeyboardSurfaceView: UIView {
     let touchOverlay = KeyboardTouchOverlayView()
     let previewView = KeyboardKeyPreviewView()
     let alternatePaletteView = KeyboardAlternatePaletteView()
-#if DEBUG
-    let touchShadow = KeyboardTouchShadowPipeline()
-#endif
-    lazy var v2Touch = KeyboardV2TouchCoordinator {
-        [weak self] event in self?.handleV2Event(event)
+    lazy var touchCoordinator = KeyboardTouchCoordinator {
+        [weak self] event in self?.emitTouchEvent(event)
     }
     lazy var interactionController = KeyboardSurfaceInteractionController(
         feedbackView: self,
-        onEvent: { [weak self] event in self?.handleV2Event(event) },
+        onEvent: { [weak self] event in self?.emitTouchEvent(event) },
         onContactEvent: { [weak self] token, event in
             self?.handleContactInteractionEvent(token: token, event: event)
         },
@@ -88,10 +82,7 @@ public final class KeyboardSurfaceView: UIView {
             keyControls[key.spec.id]?.frame = key.frame
         }
         touchOverlay.updateGeometry(geometry)
-        v2Touch.updateGeometry(geometry)
-#if DEBUG
-        touchShadow.updateGeometry(geometry)
-#endif
+        touchCoordinator.updateGeometry(geometry)
     }
 
     public override func didMoveToWindow() {

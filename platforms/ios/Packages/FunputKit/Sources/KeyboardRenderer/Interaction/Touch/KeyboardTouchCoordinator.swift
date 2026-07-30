@@ -5,8 +5,8 @@ import KeyboardTouchCore
 import KeyboardTouchUIKit
 
 @MainActor
-final class KeyboardV2TouchCoordinator {
-    typealias Observer = @MainActor (KeyboardV2TouchMetrics) -> Void
+final class KeyboardTouchCoordinator {
+    typealias Observer = @MainActor (KeyboardTouchMetrics) -> Void
 
     let clock: @MainActor () -> TimeInterval
     let onEvent: @MainActor (KeyboardKeyEvent) -> Void
@@ -16,6 +16,7 @@ final class KeyboardV2TouchCoordinator {
     var hits: [ContactID: KeyboardTouchHit] = [:]
     var claims: [ContactID: KeyboardSurfaceInteractionController.GestureClaim] = [:]
     var finishedUIKitContacts: Set<ContactID> = []
+    var tiedContacts: Set<ContactID> = []
     private var observer: Observer?
     lazy var pipeline = KeyboardTouchPipeline(
         eligibleRoles: Self.touchRoles,
@@ -25,6 +26,10 @@ final class KeyboardV2TouchCoordinator {
         ),
         clock: clock,
         onResolved: { [weak self] id, time in self?.terminalAt[id] = time },
+        onStaleDeadline: { [weak self] in
+            self?.registry.metrics.staleTimerCallback += 1
+            self?.notify()
+        },
         onEmit: { [weak self] in self?.commit($0) }
     )
 
@@ -40,10 +45,14 @@ final class KeyboardV2TouchCoordinator {
 
     var activeContactCount: Int { pipeline.activeContactCount }
     var pendingContactCount: Int { registry.pendingCount }
-    var metrics: KeyboardV2TouchMetrics { registry.metrics }
+    var metrics: KeyboardTouchMetrics { registry.metrics }
 
     func updateGeometry(_ geometry: ResolvedKeyboard) {
-        pipeline.updateGeometry(geometry)
+        let wasActive = activeContactCount > 0
+        if pipeline.updateGeometry(geometry), wasActive {
+            registry.metrics.layoutChangedWhileActive += 1
+            notify()
+        }
     }
 
     func observe(_ observer: Observer?) {
@@ -59,6 +68,12 @@ final class KeyboardV2TouchCoordinator {
         hits.removeAll(keepingCapacity: true)
         claims.removeAll(keepingCapacity: true)
         finishedUIKitContacts.removeAll(keepingCapacity: true)
+        tiedContacts.removeAll(keepingCapacity: true)
+        notify()
+    }
+
+    func recordUnknownCaptureCallback() {
+        registry.metrics.captureUnknownCallback += 1
         notify()
     }
 
@@ -81,25 +96,6 @@ final class KeyboardV2TouchCoordinator {
         notify()
     }
 
-    private func recordLatency(_ id: ContactID) {
-        if let began = beganAt[id] {
-            registry.metrics.maximumCaptureToCommitLatencyMilliseconds = max(
-                registry.metrics.maximumCaptureToCommitLatencyMilliseconds,
-                milliseconds(since: began)
-            )
-        }
-        if let terminal = terminalAt[id] {
-            registry.metrics.maximumTerminalToEmissionLatencyMilliseconds = max(
-                registry.metrics.maximumTerminalToEmissionLatencyMilliseconds,
-                milliseconds(since: terminal)
-            )
-        }
-    }
-
-    private func milliseconds(since time: TimeInterval) -> Int {
-        max(0, Int(((clock() - time) * 1_000).rounded()))
-    }
-
     func notify() { observer?(metrics) }
 
     func clear(_ id: ContactID) {
@@ -109,6 +105,8 @@ final class KeyboardV2TouchCoordinator {
         beganAt.removeValue(forKey: id)
         terminalAt.removeValue(forKey: id)
         finishedUIKitContacts.remove(id)
+        tiedContacts.remove(id)
     }
+
 }
 #endif

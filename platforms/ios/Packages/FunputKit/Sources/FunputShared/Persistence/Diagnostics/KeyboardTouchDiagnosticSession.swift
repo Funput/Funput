@@ -4,6 +4,7 @@ import KeyboardLayout
 
 public enum KeyboardTouchDiagnosticPhase: String, Codable, Sendable {
     case guided
+    case gestures
     case free
 }
 

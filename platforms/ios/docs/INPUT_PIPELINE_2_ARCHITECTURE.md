@@ -1,6 +1,6 @@
 # Funput iOS Input Pipeline 2.0
 
-> **Trạng thái:** Phase 1–3C đã hiện thực; V2 là touch pipeline duy nhất
+> **Trạng thái:** Phase 1–5 đã hiện thực; production chỉ có một touch pipeline
 > **Phạm vi:** Xử lý phím trong custom keyboard extension trên iOS/iPadOS  
 > **Ngày:** 30/07/2026
 > **Đã thay thế:** Touch ledger, orphan reconciliation và commit queue
@@ -810,24 +810,24 @@ Ngưỡng ban đầu, cần hiệu chỉnh sau baseline:
 
 ### Phase 3B — Full touch pipeline
 
-- V2 nhận toàn bộ keycap role; normal tap không còn giới hạn fast-tap 300 ms.
-- Release dùng V2.
+- Pipeline mới nhận toàn bộ keycap role; normal tap không còn giới hạn 300 ms.
+- Release dùng pipeline mới.
 - Repeat Backspace/Space dùng lane riêng với timing 400/50 ms và suppress release.
 - Alternate và Space swipe claim contact trước output rồi resolve qua cùng arbiter.
 - Interaction controller chỉ giữ presentation và gesture recognition; document
-  output thuộc V2 coordinator.
+  output thuộc touch coordinator.
 - Manual device acceptance được dồn sau Phase 5; Phase 3B chỉ chạy automated
   regression, Debug/Release build và quality gates.
 
-### Phase 3C — V2-only cleanup
+### Phase 3C — Single-pipeline cleanup
 
 - Xóa mode switch và toàn bộ legacy keycap pipeline.
 - Xóa `KeyboardTouchTokenLedger`, orphan reconciliation,
   `KeyboardPressCommitQueue` và system-cancellation-as-release workaround.
 - `UIKitTouchCaptureAdapter` là nguồn identity duy nhất cho keycap touch.
-- `KeyboardTouchContactRegistry` bảo vệ exactly-once trong một V2 ownership lane.
+- `KeyboardTouchContactRegistry` bảo vệ exactly-once trong một ownership lane.
 - Toolbar và accessibility tiếp tục đi thẳng qua semantic router.
-- Harness không còn lựa chọn pipeline; mọi session luôn đo V2.
+- Harness không còn lựa chọn pipeline.
 
 ### Phase 4 — Transaction writer
 
@@ -843,6 +843,14 @@ Ngưỡng ban đầu, cần hiệu chỉnh sau baseline:
   khi writer hoàn thành.
 - Lifecycle synchronization đọc snapshot chính thức từ writer và trả
   `KeyboardPostCommitEffects`.
+
+### Phase 5 — Final cleanup và acceptance
+
+- Production dùng `KeyboardTouchCoordinator` và `KeyboardTouchPipeline`.
+- Debug không còn shadow comparator hoặc pipeline chạy song song.
+- Route `-device-touch-acceptance` đọc trực tiếp production counters.
+- Guided VNI hỗ trợ retry; Gesture check và Free Stress dùng session riêng.
+- Report chỉ chứa số, UUID, timestamps và metadata thiết bị.
 
 ---
 
@@ -873,7 +881,6 @@ Packages/FunputKit/
 │   ├── Capture/                 # UITouch → value samples
 │   ├── Geometry/                # revisioned immutable snapshots
 │   ├── Pipeline/                # shared resolver/arbiter và semantic actions
-│   └── Shadow/                  # comparator và numeric trace
 ├── Sources/FunputShared/Persistence/
 │   ├── Configuration/
 │   ├── Diagnostics/             # Debug session, report, store, publisher
@@ -888,12 +895,11 @@ Packages/FunputKit/
 └── Tests/KeyboardTouchUIKitTests/
     ├── Capture/
     ├── Pipeline/
-    ├── Shadow/
     └── Support/
 ```
 
-V2 routing nằm trong `KeyboardRenderer/Interaction/V2Touch`; tests tương ứng
-nằm trong `KeyboardRendererTests/V2Touch`.
+Production routing nằm trong `KeyboardRenderer/Interaction/Touch`; tests tương
+ứng nằm trong `KeyboardRendererTests/Touch`.
 
 Các target app/extension được nhóm riêng:
 
@@ -930,7 +936,7 @@ Packages/FunputKit/
     └── Support/
 ```
 
-Renderer V2 được nhóm theo `Capture`, `Controller`, `Gestures`, `V2Touch`,
+Renderer được nhóm theo `Capture`, `Controller`, `Gestures`, `Touch`,
 `Surface/Core`, `Surface/Presentation` và `Surface/Keys`. Boundary bắt buộc:
 
 - touch không import engine;
@@ -972,10 +978,10 @@ Mitigation:
 - không background hóa document mutation;
 - không cho UI/suggestion work chen giữa transaction.
 
-### 18.4. Shadow diagnostics chỉ tồn tại trong Debug
+### 18.4. Acceptance diagnostics chỉ tồn tại trong Debug
 
-Shadow comparator quan sát V2 output trong development builds và không sở hữu
-document commit. Release không khởi tạo reporter hoặc đọc App Group diagnostics.
+Harness quan sát production counters và không sở hữu document commit. Release
+không khởi tạo reporter hoặc đọc App Group diagnostics.
 
 ---
 
@@ -992,7 +998,7 @@ Các mục này phải được giải quyết bằng prototype và đo thiết 
 6. Có cần tách `KeyboardTouch` thành SwiftPM target riêng hay chỉ là folder/boundary?
 7. Device trace sẽ được xuất từ test harness bằng cách nào mà không yêu cầu Full Access?
 
-Device acceptance cho các quyết định timing còn lại được dồn về cuối V2 theo
+Device acceptance cho các quyết định timing còn lại được dồn về Phase 5 theo
 chiến lược triển khai nhanh. Git branch là rollback boundary; runtime không còn
 giữ hai touch implementations.
 
@@ -1003,7 +1009,7 @@ giữ hai touch implementations.
 Input Pipeline 2.0 hoàn tất khi:
 
 - invariants trong tài liệu được encode thành tests;
-- shadow comparison không còn divergence không giải thích được;
+- production telemetry không có anomaly;
 - device acceptance matrix đạt zero loss/duplicate;
 - pause-after-rollover không còn giữ tail keys;
 - layout/theme/suggestion changes không hủy active touch;

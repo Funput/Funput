@@ -7,12 +7,12 @@ import KeyboardTouchCore
 import Testing
 
 @MainActor
-struct KeyboardV2TouchCoordinatorTests {
-    @Test("V2 commits a release and settles ownership")
-    func v2Commit() {
+struct KeyboardTouchCoordinatorTests {
+    @Test("Touch pipeline commits a release and settles ownership")
+    func commitContact() {
         var output: [KeyboardKeyEvent] = []
         let clock = TestNow()
-        let coordinator = KeyboardV2TouchCoordinator(
+        let coordinator = KeyboardTouchCoordinator(
             clock: { clock.value },
             onEvent: { output.append($0) }
         )
@@ -23,7 +23,7 @@ struct KeyboardV2TouchCoordinatorTests {
         coordinator.finishUIKitContact(1)
 
         #expect(output.map(\.key.id) == ["a"])
-        #expect(coordinator.metrics.v2Committed == 1)
+        #expect(coordinator.metrics.committedContacts == 1)
         #expect(coordinator.metrics.releaseCommitted == 1)
         #expect(coordinator.metrics.maximumCaptureToCommitLatencyMilliseconds == 100)
         #expect(coordinator.pendingContactCount == 0)
@@ -33,7 +33,7 @@ struct KeyboardV2TouchCoordinatorTests {
     func durationAndCancellation() {
         var output: [KeyboardKeyEvent] = []
         let clock = TestNow()
-        let coordinator = KeyboardV2TouchCoordinator(
+        let coordinator = KeyboardTouchCoordinator(
             clock: { clock.value },
             onEvent: { output.append($0) }
         )
@@ -49,6 +49,28 @@ struct KeyboardV2TouchCoordinatorTests {
         coordinator.finishUIKitContact(2)
         #expect(output.last?.phase == .cancelled)
         #expect(coordinator.metrics.systemCancelled == 1)
+        #expect(coordinator.pendingContactCount == 0)
+    }
+
+    @Test("Production metrics observe, settle, and reset directly")
+    func directMetrics() {
+        let coordinator = KeyboardTouchCoordinator(onEvent: { _ in })
+        var observations: [KeyboardTouchMetrics] = []
+        coordinator.observe { observations.append($0) }
+        coordinator.updateGeometry(geometry())
+        coordinator.consume(sample(1, .began, 1, x: 10))
+        coordinator.consume(sample(2, .began, 1, x: 10))
+        coordinator.recordUnknownCaptureCallback()
+
+        #expect(coordinator.metrics.capturedContacts == 2)
+        #expect(coordinator.metrics.timestampTieContacts == 2)
+        #expect(coordinator.metrics.maximumConcurrentContacts == 2)
+        #expect(coordinator.metrics.captureUnknownCallback == 1)
+        #expect(!observations.isEmpty)
+
+        coordinator.reset()
+        #expect(coordinator.metrics == .init())
+        #expect(coordinator.activeContactCount == 0)
         #expect(coordinator.pendingContactCount == 0)
     }
 

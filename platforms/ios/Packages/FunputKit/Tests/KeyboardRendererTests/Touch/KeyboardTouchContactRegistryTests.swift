@@ -6,7 +6,7 @@ import KeyboardTouchUIKit
 import Testing
 
 struct KeyboardTouchContactRegistryTests {
-    @Test("V2 release emits exactly once")
+    @Test("Touch release emits exactly once")
     func exactlyOnce() {
         var registry = KeyboardTouchContactRegistry()
         let id = ContactID(rawValue: 1)
@@ -17,7 +17,7 @@ struct KeyboardTouchContactRegistryTests {
         let duplicate = registry.commit(id, action: action(key))
         #expect(first)
         #expect(!duplicate)
-        #expect(registry.metrics.v2Committed == 1)
+        #expect(registry.metrics.committedContacts == 1)
         #expect(registry.metrics.ownershipViolation == 1)
         registry.finish(id)
         #expect(registry.pendingCount == 0)
@@ -39,7 +39,7 @@ struct KeyboardTouchContactRegistryTests {
         #expect(registry.pendingCount == 0)
     }
 
-    @Test("One hundred thousand V2 transitions remain exactly once")
+    @Test("One hundred thousand touch transitions remain exactly once")
     func deterministicStress() {
         var registry = KeyboardTouchContactRegistry()
         let key = key("a")
@@ -50,7 +50,7 @@ struct KeyboardTouchContactRegistryTests {
             registry.finish(id)
         }
         #expect(registry.pendingCount == 0)
-        #expect(registry.metrics.v2Committed == 100_000)
+        #expect(registry.metrics.committedContacts == 100_000)
         #expect(registry.metrics.ownershipViolation == 0)
     }
 
@@ -64,7 +64,6 @@ struct KeyboardTouchContactRegistryTests {
     private func action(_ key: KeySpec) -> KeyboardTouchAction {
         .released(
             KeyboardTouchHit(
-                identity: .init(geometryRevision: 1, ordinal: 0, role: key.role),
                 key: key,
                 frame: .zero
             )
