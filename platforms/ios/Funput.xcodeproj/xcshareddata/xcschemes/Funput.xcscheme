@@ -93,7 +93,7 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "-device-touch-acceptance"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>

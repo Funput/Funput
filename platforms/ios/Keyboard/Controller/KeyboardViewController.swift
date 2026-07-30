@@ -37,7 +37,8 @@ final class KeyboardViewController: UIInputViewController {
         enterAction: .newLine,
         initialLayoutMode: .letters
     )
-    private var heightConstraint: NSLayoutConstraint?
+    private let heightController = KeyboardHeightController()
+    private var isKeyboardVisible = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -47,6 +48,17 @@ final class KeyboardViewController: UIInputViewController {
         updateTextInputTraits(force: true)
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        isKeyboardVisible = true
+        activatePreferredHeight()
+    }
+
+    func deactivatePreferredHeight() {
+        isKeyboardVisible = false
+        heightController.deactivate()
+    }
+
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
 #if DEBUG
@@ -54,15 +66,12 @@ final class KeyboardViewController: UIInputViewController {
 #endif
     }
 
-    override func viewWillLayoutSubviews() {
-        super.viewWillLayoutSubviews()
-        updatePreferredHeight()
-    }
-
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
-        coordinator.animate { [weak self] _ in
-            self?.updatePreferredHeight()
+        let shouldReactivate = heightController.deactivate()
+        coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+            guard let self, shouldReactivate, isKeyboardVisible else { return }
+            activatePreferredHeight()
         }
     }
 
@@ -90,19 +99,20 @@ final class KeyboardViewController: UIInputViewController {
             emojiView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
 
-        let constraint = view.heightAnchor.constraint(
-            equalToConstant: KeyboardMetrics.phonePortraitBaseHeight
-        )
-        constraint.priority = .init(999)
-        constraint.isActive = true
-        heightConstraint = constraint
+        heightController.install(on: view)
     }
 
     func updatePreferredHeight() {
-        heightConstraint?.constant = KeyboardMetrics.recommendedHeight(
-            for: keyboardView.presentation.layout,
-            traits: traitCollection,
-            scale: keyboardView.presentation.sizing.heightScale
+        heightController.update(
+            for: keyboardView.presentation,
+            traits: traitCollection
+        )
+    }
+
+    private func activatePreferredHeight() {
+        heightController.activate(
+            for: keyboardView.presentation,
+            traits: traitCollection
         )
     }
 }
