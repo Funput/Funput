@@ -27,9 +27,11 @@ pub(crate) fn is_valid_onset(onset: &str) -> bool {
     onset.is_empty()
         || onset == "đ"
         || onset == "Đ"
-        || glide::in_onset(onset).is_some()
         || VALID_ONSETS.iter().any(|o| onset.eq_ignore_ascii_case(o))
         || ETHNIC_ONSETS.iter().any(|o| onset.eq_ignore_ascii_case(o))
+        // Last: plain `qu`/`gi` already matched above, so this only rescues the
+        // toned transient (`qú`, `gí`) and stays off the common path.
+        || glide::in_onset(onset).is_some()
 }
 
 /// Split `buffer` into (onset, rest, invalid_onset).

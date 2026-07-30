@@ -85,9 +85,13 @@ pub(crate) fn tone_target_vowel(buffer: &str, vowel_idx: usize) -> Option<char> 
     apply_shape(stem, VowelShape::Circumflex)
 }
 
-/// Re-place an existing tone for `style`: move it to the right vowel, and update
-/// that vowel's tonal base when the rhyme has since resolved (`gié` + `m` →
-/// `giếm`, where the arriving coda turns open `ie` into the `iê` diphthong).
+/// If a tone exists on the wrong vowel, move it to the correct position for `style`.
+///
+/// Only the *position* is revisited, never the tonal base of a tone that already
+/// sits right. That is deliberate: where the user put the tone key disambiguates
+/// the two `gi` + `e` + coda rhymes that structure alone cannot separate — before
+/// the coda keeps plain `e` (`giefm` → `gièm`), after it promotes to `ê`
+/// (`giemf` → `giềm`). Both are real words.
 pub(crate) fn reposition_existing_tone(buffer: &str, style: ToneStyle) -> Option<String> {
     // Cheap scan first: most keystrokes carry no tone yet, and this runs on
     // every normal key — bail out without any cluster analysis or allocation.
@@ -97,21 +101,20 @@ pub(crate) fn reposition_existing_tone(buffer: &str, style: ToneStyle) -> Option
         .find_map(|(i, ch)| tone_on_vowel(ch).map(|t| (i, ch, t)))?;
 
     let desired = tone_vowel_index(buffer, style)?;
-    let desired_ch = buffer.chars().nth(desired)?;
-    let tone_base = tone_target_vowel(buffer, desired).unwrap_or(desired_ch);
-    let toned = apply_tone_to_vowel(tone_base, tone)?;
-    // Right vowel, right glyph — nothing to do, and nothing allocated.
-    if current == desired && toned == current_ch {
+    if current == desired {
         return None;
     }
 
     let old_stem = vowel_stem(current_ch)?;
+    let desired_ch = buffer.chars().nth(desired)?;
+    let tone_base = tone_target_vowel(buffer, desired).unwrap_or(desired_ch);
+    let toned = apply_tone_to_vowel(tone_base, tone)?;
+
     let mut moved = String::with_capacity(buffer.len() + toned.len_utf8());
     for (i, ch) in buffer.chars().enumerate() {
-        // `desired` first: the two coincide when only the tonal base changed.
         moved.push(match i {
-            _ if i == desired => toned,
             _ if i == current => old_stem,
+            _ if i == desired => toned,
             _ => ch,
         });
     }

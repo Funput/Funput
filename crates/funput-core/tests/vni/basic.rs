@@ -295,8 +295,8 @@ fn vni_tone_digit_before_the_nucleus_reaches_the_glide_onsets() {
         ("qu2a", "quà"),
         ("qu1y", "quý"),
         ("qu1an", "quán"),
-        // The rhyme can still resolve afterwards: `ie` → `iê`, and shapes.
-        ("gi1eng", "giếng"),
+        // A shape arriving after the tone still takes it along.
+        ("gi1e6ng", "giếng"),
         ("qu1oc6", "quốc"),
         ("qu2yen6", "quyền"),
     ] {

@@ -8,6 +8,7 @@
 mod modifier;
 mod spelling;
 
+use crate::orthography::glide;
 use crate::unicode::marks::Tone;
 use crate::validation::coda::{
     STOP_CODAS, VALID_CODAS, coda_in, normalized_coda, nucleus_tone, toneless_rhyme,
@@ -60,6 +61,9 @@ pub fn is_complete_syllable(buffer: &str) -> bool {
 
     let structure_ok = !parts.invalid_onset
         && is_valid_onset(parts.onset)
+        // A tone parked on the `qu`/`gi` glide is a mid-composition transient, not
+        // a finished syllable: `qúy` is a misspelling of `quý`.
+        && !glide::onset_holds_tone(parts.onset)
         && parts.nucleus_chars().next().is_some()
         && !violates_ckg_spelling(parts.onset, &parts)
         && coda_in(VALID_CODAS, coda);

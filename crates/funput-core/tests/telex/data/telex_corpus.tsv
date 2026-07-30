@@ -174,15 +174,20 @@ quja	quạ
 qusy	quý
 qufy	quỳ
 qusan	quán
-# The rhyme can still resolve after the tone lands: open `ie` → `iê`, shapes.
-gisem	giếm
-giseng	giếng
-giset	giết
+# A shape arriving after the tone still takes it along.
 qusee	quế
 qusooc	quốc
 qusyeen	quyến
 gisaay	giấy
 qusaan	quấn
+# --- gi + e + coda: the tone key's position picks the rhyme ---
+# Structure alone cannot separate these — both are real words — so the composer
+# reads the tone key's position: before the coda keeps plain `e`, after it promotes
+# to `ê`. Repositioning must never second-guess a tone that already sits right.
+giefm	gièm
+giemf	giềm
+giejp	giẹp
+giepj	giệp
 # --- guard: a lone glide vowel IS the nucleus, and `ng` is not a `gi` onset ---
 gif	gì
 gifn	gìn

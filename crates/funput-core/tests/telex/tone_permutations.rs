@@ -65,7 +65,7 @@ const GLIDE_ONSETS: &[Case] = &[
         target: "giản",
     },
     Case {
-        base: "gieng",
+        base: "gieeng",
         tone: 's',
         target: "giếng",
     },
@@ -164,6 +164,29 @@ fn lone_glide_vowel_keeps_the_tone() {
 fn plain_onsets_still_converge() {
     for case in PLAIN_ONSETS {
         assert_converges(case, ToneStyle::Traditional);
+    }
+}
+
+/// The one place free tone placement deliberately does **not** converge.
+///
+/// `gi` + `e` + coda spells two different real words and structure cannot tell
+/// them apart, so the composer reads the tone key's position instead: typed before
+/// the coda it keeps plain `e`, typed after it promotes to `ê`. Repositioning must
+/// therefore leave a correctly-placed tone's base alone — asserted here so the
+/// distinction is not "simplified away" as an inconsistency.
+#[test]
+fn gi_plus_e_uses_tone_position_to_pick_the_rhyme() {
+    for (keys, expected) in [
+        ("giefm", "gièm"), // gièm pha — tone before the coda
+        ("giemf", "giềm"), // tone after the coda
+        ("giejp", "giẹp"),
+        ("giepj", "giệp"),
+    ] {
+        assert_eq!(type_keys(keys, ToneStyle::Traditional), expected, "{keys}");
+    }
+    // Typing the `ê` explicitly is unambiguous, so that form converges everywhere.
+    for keys in ["gieengs", "gieesng", "gieseng", "giseeng"] {
+        assert_eq!(type_keys(keys, ToneStyle::Traditional), "giếng", "{keys}");
     }
 }
 
