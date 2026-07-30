@@ -3,16 +3,14 @@
 //! Hot path: runs on every normal keystroke, so the cluster analysis is a
 //! single allocation-free pass; only an actual reposition builds a `String`.
 
-mod cluster;
-
-use cluster::{modern_open_pair_takes_second, scan_cluster, tone_offset_in_cluster};
+use super::cluster::{modern_open_pair_takes_second, scan_cluster, tone_offset_in_cluster};
 
 use crate::ToneStyle;
 use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, tone_on_vowel, vowel_stem};
 use crate::unicode::shapes::{VowelShape, apply_shape};
 
 /// Char index where a tone mark should be placed, for the given placement `style`.
-pub fn tone_vowel_index(buffer: &str, style: ToneStyle) -> Option<usize> {
+pub(crate) fn tone_vowel_index(buffer: &str, style: ToneStyle) -> Option<usize> {
     let cluster = scan_cluster(buffer)?;
 
     // A vowel carrying mũ/móc/trần (â ê ô ơ ư ă) takes the tone. For `ươ` (two
@@ -40,7 +38,7 @@ pub fn tone_vowel_index(buffer: &str, style: ToneStyle) -> Option<usize> {
 /// Plain `e` preceded by `i` forms the rising diphthong written with a circumflex
 /// (`viết`, `giết`), so the tone lands on `ê`. This covers both the `i` nucleus of
 /// `viet` and the `i` that is part of the `gi` onset of `giet`.
-pub fn tone_target_vowel(buffer: &str, vowel_idx: usize) -> Option<char> {
+pub(crate) fn tone_target_vowel(buffer: &str, vowel_idx: usize) -> Option<char> {
     // Chars at vowel_idx - 1, vowel_idx, vowel_idx + 1, in one pass.
     let (mut prev, mut vowel, mut next) = (None, None, None);
     for (i, ch) in buffer.chars().enumerate() {
@@ -87,8 +85,10 @@ pub fn tone_target_vowel(buffer: &str, vowel_idx: usize) -> Option<char> {
     apply_shape(stem, VowelShape::Circumflex)
 }
 
-/// If a tone exists on the wrong vowel, move it to the correct position for `style`.
-pub fn reposition_existing_tone(buffer: &str, style: ToneStyle) -> Option<String> {
+/// Re-place an existing tone for `style`: move it to the right vowel, and update
+/// that vowel's tonal base when the rhyme has since resolved (`gié` + `m` →
+/// `giếm`, where the arriving coda turns open `ie` into the `iê` diphthong).
+pub(crate) fn reposition_existing_tone(buffer: &str, style: ToneStyle) -> Option<String> {
     // Cheap scan first: most keystrokes carry no tone yet, and this runs on
     // every normal key — bail out without any cluster analysis or allocation.
     let (current, current_ch, tone) = buffer
@@ -97,25 +97,23 @@ pub fn reposition_existing_tone(buffer: &str, style: ToneStyle) -> Option<String
         .find_map(|(i, ch)| tone_on_vowel(ch).map(|t| (i, ch, t)))?;
 
     let desired = tone_vowel_index(buffer, style)?;
-    if current == desired {
+    let desired_ch = buffer.chars().nth(desired)?;
+    let tone_base = tone_target_vowel(buffer, desired).unwrap_or(desired_ch);
+    let toned = apply_tone_to_vowel(tone_base, tone)?;
+    // Right vowel, right glyph — nothing to do, and nothing allocated.
+    if current == desired && toned == current_ch {
         return None;
     }
 
     let old_stem = vowel_stem(current_ch)?;
-    let desired_ch = buffer.chars().nth(desired)?;
-    let tone_base = tone_target_vowel(buffer, desired).unwrap_or(desired_ch);
-    let toned = apply_tone_to_vowel(tone_base, tone)?;
-
     let mut moved = String::with_capacity(buffer.len() + toned.len_utf8());
     for (i, ch) in buffer.chars().enumerate() {
+        // `desired` first: the two coincide when only the tonal base changed.
         moved.push(match i {
-            _ if i == current => old_stem,
             _ if i == desired => toned,
+            _ if i == current => old_stem,
             _ => ch,
         });
     }
     Some(moved)
 }
-
-#[cfg(test)]
-mod tests;

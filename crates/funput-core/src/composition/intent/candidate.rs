@@ -1,7 +1,7 @@
 use crate::ToneStyle;
+use crate::orthography::{tone_target_vowel, tone_vowel_index};
 use crate::unicode::marks::{Tone, apply_tone_to_vowel, tone_on_vowel};
 use crate::unicode::shapes::{VowelShape, apply_shape_to_vowel};
-use crate::unicode::tone_position::{tone_target_vowel, tone_vowel_index};
 
 use super::target::Target;
 

@@ -147,3 +147,44 @@ chieus	chiếu
 yeeu	yêu
 nhieuf	nhiều
 tieeu	tiêu
+
+# --- gi/qu onset: tone key typed before the nucleus (regression for the glide) ---
+# The tone parks on the glide as a transient and must move once the nucleus lands.
+gisa	giá
+gifa	già
+gira	giả
+gixa	giã
+gija	giạ
+giso	gió
+gifo	giò
+giro	giỏ
+gijo	giọ
+gisu	giú
+gixu	giũ
+gise	gié
+gire	giẻ
+gisao	giáo
+gisan	gián
+gifow	giờ
+giwof	giờ
+qusa	quá
+qufa	quà
+qura	quả
+quja	quạ
+qusy	quý
+qufy	quỳ
+qusan	quán
+# The rhyme can still resolve after the tone lands: open `ie` → `iê`, shapes.
+gisem	giếm
+giseng	giếng
+giset	giết
+qusee	quế
+qusooc	quốc
+qusyeen	quyến
+gisaay	giấy
+qusaan	quấn
+# --- guard: a lone glide vowel IS the nucleus, and `ng` is not a `gi` onset ---
+gif	gì
+gifn	gìn
+ngias	ngía
+nghiax	nghĩa

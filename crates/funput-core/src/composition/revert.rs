@@ -7,9 +7,9 @@
 
 use crate::ToneStyle;
 use crate::composition::uo_horn::try_revert_uo_compound;
+use crate::orthography::tone_vowel_index;
 use crate::unicode::marks::{Tone, tone_on_vowel, vowel_stem};
 use crate::unicode::shapes::{VowelShape, shaped_vowel_index, strip_shape};
-use crate::unicode::tone_position::tone_vowel_index;
 
 /// Copy of `buffer` with the char at `char_idx` replaced (single allocation).
 /// An out-of-range index returns the buffer unchanged.

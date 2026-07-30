@@ -1,3 +1,4 @@
+use crate::orthography::glide::{self, Glide};
 use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, tone_on_vowel};
 use crate::unicode::shapes::{
     VowelShape, apply_shape_to_vowel, base_vowel, shape_on_vowel, strip_shape,
@@ -50,9 +51,9 @@ pub(crate) fn complete_uo_horn_for_continuation(buffer: &str, key: char) -> Opti
         byte if byte.is_ascii() => return None,
         _ => {}
     }
-    let (u_offset, u, before) = open_uo_suffix(buffer)?;
-    if before.is_some_and(|ch| ch.eq_ignore_ascii_case(&'q')) {
-        return None;
+    let (u_offset, u) = open_uo_suffix(buffer)?;
+    if glide::at(buffer, u_offset) == Some(Glide::Qu) {
+        return None; // `quo` is onset + `o`, not a `uo` pair awaiting its horn
     }
     let shaped = apply_shape_to_vowel(u, VowelShape::Horn)?;
     Some(replace_and_append(buffer, u_offset, u, shaped, key))

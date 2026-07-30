@@ -30,17 +30,17 @@ pub(crate) fn uo_pair_in_vowel_cluster(buffer: &str) -> Option<(usize, usize)> {
     None
 }
 
-pub(super) fn open_uo_suffix(buffer: &str) -> Option<(usize, char, Option<char>)> {
+/// Trailing plain `u` + horned `o` (`thưo`-style, before the pair resolves).
+pub(super) fn open_uo_suffix(buffer: &str) -> Option<(usize, char)> {
     if buffer.as_bytes().last().is_none_or(u8::is_ascii) {
         return None;
     }
     let mut chars = buffer.char_indices().rev();
     let (_, o) = chars.next()?;
     let (u_offset, u) = chars.next()?;
-    let before = chars.next().map(|(_, ch)| ch);
     let plain_u = plain_stem(u, 'u');
     let horned_o = shape_on_vowel(o) == Some(VowelShape::Horn);
-    (plain_u && horned_o).then_some((u_offset, u, before))
+    (plain_u && horned_o).then_some((u_offset, u))
 }
 
 pub(super) fn horned_uo_suffix(buffer: &str) -> Option<(usize, char, usize, char)> {
