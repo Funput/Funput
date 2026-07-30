@@ -78,7 +78,6 @@ extension ShadowTypingHarnessModel {
         let session = KeyboardTouchDiagnosticSession(
             inputMethod: selectedMethod,
             phase: phase,
-            pipelineMode: selectedPipeline,
             generation: generation,
             startedAt: now,
             expiresAt: expiry

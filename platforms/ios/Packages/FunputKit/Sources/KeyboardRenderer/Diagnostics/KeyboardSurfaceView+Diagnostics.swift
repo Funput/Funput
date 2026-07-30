@@ -5,19 +5,19 @@ public extension KeyboardSurfaceView {
     var touchDiagnosticSnapshot: KeyboardTouchDiagnosticSnapshot {
         let state = touchShadow.diagnosticState
         let metrics = state.metrics
-        let primary = primaryTouch.metrics
+        let v2 = v2Touch.metrics
         return KeyboardTouchDiagnosticSnapshot(
             capturedBegan: metrics.capturedBegan,
             shadowResolved: metrics.shadowResolved,
-            legacyReleased: metrics.legacyReleased,
+            outputReleased: metrics.outputReleased,
             matched: metrics.matched,
             orderMismatch: metrics.orderMismatch,
-            legacyMissing: metrics.legacyMissing,
+            outputMissing: metrics.outputMissing,
             shadowMissing: metrics.shadowMissing,
-            legacyLate: metrics.legacyLate,
+            outputLate: metrics.outputLate,
             shadowLate: metrics.shadowLate,
             shadowCancelled: metrics.shadowCancelled,
-            legacyCancelled: metrics.legacyCancelled,
+            outputCancelled: metrics.outputCancelled,
             cancelledSystem: metrics.cancelledSystem,
             cancelledTapSlop: metrics.cancelledTapSlop,
             recoveredTapSlop: metrics.recoveredTapSlop,
@@ -39,31 +39,28 @@ public extension KeyboardSurfaceView {
                 metrics.emissionDelayedOver40Milliseconds,
             emissionDelayedOver120Milliseconds:
                 metrics.emissionDelayedOver120Milliseconds,
-            primaryCommitted: primary.primaryCommitted,
-            legacyFallback: primary.legacyFallback,
-            legacyReleaseSuppressed: primary.legacyReleaseSuppressed,
-            primarySystemCancelled: primary.primarySystemCancelled,
-            commitGateViolation: primary.commitGateViolation,
-            duplicateCommitPrevented: primary.duplicateCommitPrevented,
+            v2Committed: v2.v2Committed,
+            systemCancelled: v2.systemCancelled,
+            ownershipViolation: v2.ownershipViolation,
             maximumCaptureToCommitLatencyMilliseconds:
-                primary.maximumCaptureToCommitLatencyMilliseconds,
-            releaseCommitted: primary.releaseCommitted,
-            repeatEmitted: primary.repeatEmitted,
-            alternateCommitted: primary.alternateCommitted,
-            swipeCommitted: primary.swipeCommitted,
-            controlCommitted: primary.controlCommitted,
-            gestureConflict: primary.gestureConflict,
-            staleTimerCallback: primary.staleTimerCallback,
+                v2.maximumCaptureToCommitLatencyMilliseconds,
+            releaseCommitted: v2.releaseCommitted,
+            repeatEmitted: v2.repeatEmitted,
+            alternateCommitted: v2.alternateCommitted,
+            swipeCommitted: v2.swipeCommitted,
+            controlCommitted: v2.controlCommitted,
+            gestureConflict: v2.gestureConflict,
+            staleTimerCallback: v2.staleTimerCallback,
             maximumTerminalToEmissionLatencyMilliseconds:
-                primary.maximumTerminalToEmissionLatencyMilliseconds,
+                v2.maximumTerminalToEmissionLatencyMilliseconds,
             activeContactCount: max(
-                state.activeContactCount, primaryTouch.activeContactCount
+                state.activeContactCount, v2Touch.activeContactCount
             ),
             pendingComparisonCount:
-                state.pendingComparisonCount + primaryTouch.pendingContactCount,
+                state.pendingComparisonCount + v2Touch.pendingContactCount,
             isSettled: state.isSettled
-                && primaryTouch.activeContactCount == 0
-                && primaryTouch.pendingContactCount == 0
+                && v2Touch.activeContactCount == 0
+                && v2Touch.pendingContactCount == 0
         )
     }
 
@@ -74,7 +71,7 @@ public extension KeyboardSurfaceView {
             guard let self else { return }
             observer?(touchDiagnosticSnapshot)
         }
-        primaryTouch.observe { [weak self] _ in
+        v2Touch.observe { [weak self] _ in
             guard let self else { return }
             observer?(touchDiagnosticSnapshot)
         }
@@ -82,9 +79,9 @@ public extension KeyboardSurfaceView {
 
     @discardableResult
     func resetTouchDiagnosticsIfIdle() -> Bool {
-        guard primaryTouch.activeContactCount == 0,
+        guard v2Touch.activeContactCount == 0,
               touchShadow.resetDiagnosticsIfIdle() else { return false }
-        primaryTouch.reset()
+        v2Touch.reset()
         return true
     }
 }

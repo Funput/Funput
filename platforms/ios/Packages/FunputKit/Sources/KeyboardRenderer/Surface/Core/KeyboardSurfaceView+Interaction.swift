@@ -4,18 +4,7 @@ import UIKit
 
 extension KeyboardSurfaceView {
     func route(_ event: KeyboardKeyEvent, from sourceView: UIView?) {
-        if touchPipelineMode == .v2 {
-            handleV2Event(event)
-            return
-        }
-        let sourceFrame = sourceView.map {
-            $0.convert($0.bounds, to: self)
-        }
-        interactionController.handle(
-            event,
-            sourceFrame: sourceFrame,
-            presentation: presentation
-        )
+        handleV2Event(event)
     }
 
     func updatePreview(_ key: KeySpec?, sourceFrame: CGRect?) {

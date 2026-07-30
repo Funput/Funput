@@ -12,7 +12,6 @@ final class ShadowTypingHarnessModel: ObservableObject {
     }
 
     @Published var selectedMethod: KeyboardInputMethod = .vni
-    @Published var selectedPipeline = KeyboardTouchDiagnosticPipelineMode.v2
     @Published var stage: Stage = .setup
     @Published var text = ""
     @Published var wantsFocus = false

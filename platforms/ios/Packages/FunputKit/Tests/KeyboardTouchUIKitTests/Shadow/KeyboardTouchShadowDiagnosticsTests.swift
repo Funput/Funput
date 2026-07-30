@@ -41,7 +41,7 @@ struct KeyboardTouchShadowDiagnosticsTests {
         clock.advance(to: 0.221)
         #expect(pipeline.diagnosticState.pendingComparisonCount == 0)
         #expect(pipeline.diagnosticState.isSettled)
-        #expect(pipeline.trace.metrics.legacyMissing == 1)
+        #expect(pipeline.trace.metrics.outputMissing == 1)
     }
 
     @Test("Cancellation counters retain the resolver reason")
@@ -112,7 +112,7 @@ struct KeyboardTouchShadowDiagnosticsTests {
     func gesturePromotion() {
         let (pipeline, clock) = fixture()
         consume(pipeline, clock, shadowSample(1, .began, 0, .init(x: 10, y: 20)))
-        pipeline.promoteToLegacy(1)
+        pipeline.excludeFromComparison(1)
         consume(pipeline, clock, shadowSample(1, .ended, 0.4, .init(x: 10, y: 20)))
 
         #expect(pipeline.trace.metrics.shadowResolved == 0)

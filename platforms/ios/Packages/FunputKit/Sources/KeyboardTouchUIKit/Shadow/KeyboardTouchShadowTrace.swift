@@ -15,12 +15,12 @@ public final class KeyboardTouchShadowTrace {
         switch event {
         case .capturedBegan: metrics.capturedBegan += 1
         case .shadowResolved: metrics.shadowResolved += 1
-        case .legacyReleased: metrics.legacyReleased += 1
+        case .outputReleased: metrics.outputReleased += 1
         case .matched: metrics.matched += 1
         case .orderMismatch: metrics.orderMismatch += 1
-        case .legacyMissing: metrics.legacyMissing += 1
+        case .outputMissing: metrics.outputMissing += 1
         case .shadowMissing: metrics.shadowMissing += 1
-        case .legacyLate: metrics.legacyLate += 1
+        case .outputLate: metrics.outputLate += 1
         case .shadowLate: metrics.shadowLate += 1
         case .cancelledSystem:
             metrics.shadowCancelled += 1
@@ -35,7 +35,7 @@ public final class KeyboardTouchShadowTrace {
         case .cancelledOutside:
             metrics.shadowCancelled += 1
             metrics.cancelledOutside += 1
-        case .legacyCancelled: metrics.legacyCancelled += 1
+        case .outputCancelled: metrics.outputCancelled += 1
         case .timestampTie: metrics.timestampTie += 1
         case .captureUnknown: metrics.captureUnknownCallback += 1
         case .resolverUnknown: metrics.resolverUnknownCallback += 1
@@ -101,7 +101,7 @@ public final class KeyboardTouchShadowTrace {
         switch event {
         case .matched: metrics.matched
         case .orderMismatch: metrics.orderMismatch
-        case .legacyMissing: metrics.legacyMissing
+        case .outputMissing: metrics.outputMissing
         case .shadowMissing: metrics.shadowMissing
         default: 1
         }

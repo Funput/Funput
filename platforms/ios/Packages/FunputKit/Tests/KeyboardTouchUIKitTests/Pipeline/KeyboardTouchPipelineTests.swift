@@ -5,7 +5,7 @@ import KeyboardTouchUIKit
 import Testing
 
 @MainActor
-struct KeyboardFastTapPipelineTests {
+struct KeyboardTouchPipelineTests {
     @Test("Reverse release and deadline preserve bounded ordering")
     func orderingAndProgress() {
         let fixture = makePipeline()
@@ -55,7 +55,7 @@ struct KeyboardFastTapPipelineTests {
     func cancellation() {
         let fixture = makePipeline()
         consume(fixture, shadowSample(1, .began, 0, .init(x: 10, y: 20)))
-        #expect(fixture.pipeline.promoteToLegacy(.init(rawValue: 1), at: 0.1))
+        #expect(fixture.pipeline.exclude(.init(rawValue: 1), at: 0.1))
         consume(fixture, shadowSample(1, .ended, 0.2, .init(x: 10, y: 20)))
 
         consume(fixture, shadowSample(2, .began, 1, .init(x: 10, y: 20)))
@@ -72,7 +72,7 @@ struct KeyboardFastTapPipelineTests {
     private func makePipeline() -> PipelineFixture {
         let clock = ShadowTestClock()
         let emissions = EmissionBox()
-        let pipeline = KeyboardFastTapPipeline(
+        let pipeline = KeyboardTouchPipeline(
             eligibleRoles: [.character, .vniModifier, .punctuation],
             recoveringTapSlopRoles: [.character, .vniModifier, .punctuation],
             clock: { clock.now },
@@ -87,7 +87,7 @@ struct KeyboardFastTapPipelineTests {
     private func consume(
         _ fixture: PipelineFixture,
         _ sample: ContactSample
-    ) -> KeyboardFastTapDisposition {
+    ) -> KeyboardTouchDisposition {
         fixture.clock.now = sample.timestamp
         return fixture.pipeline.consume(sample)
     }
@@ -95,7 +95,7 @@ struct KeyboardFastTapPipelineTests {
 
 @MainActor
 private struct PipelineFixture {
-    let pipeline: KeyboardFastTapPipeline
+    let pipeline: KeyboardTouchPipeline
     let clock: ShadowTestClock
     let emissions: EmissionBox
 }

@@ -1,19 +1,19 @@
 enum KeyboardTouchShadowEvent: Int32 {
     case capturedBegan = 1
     case shadowResolved
-    case legacyReleased
+    case outputReleased
     case matched
     case orderMismatch
-    case legacyMissing
+    case outputMissing
     case shadowMissing
-    case legacyLate
+    case outputLate
     case shadowLate
     case cancelledSystem
     case cancelledTapSlop
     case recoveredTapSlop
     case cancelledDuration
     case cancelledOutside
-    case legacyCancelled
+    case outputCancelled
     case timestampTie
     case captureUnknown
     case resolverUnknown

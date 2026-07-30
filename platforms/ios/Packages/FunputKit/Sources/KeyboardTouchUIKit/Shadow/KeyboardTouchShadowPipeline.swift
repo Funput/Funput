@@ -14,7 +14,7 @@ public final class KeyboardTouchShadowPipeline {
     var resolvedAt: [ContactID: TimeInterval] = [:]
     var tiedContacts: Set<ContactID> = []
     private var ignoredContacts: Set<ContactID> = []
-    lazy var fastTap = KeyboardFastTapPipeline(
+    lazy var touchPipeline = KeyboardTouchPipeline(
         eligibleRoles: [.character, .vniModifier, .punctuation, .space],
         recoveringTapSlopRoles: [.character, .vniModifier, .punctuation],
         resolverConfiguration: configuration.resolver,
@@ -47,11 +47,11 @@ public final class KeyboardTouchShadowPipeline {
         )
     }
 
-    public var activeContactCount: Int { fastTap.activeContactCount }
+    public var activeContactCount: Int { touchPipeline.activeContactCount }
 
     public func updateGeometry(_ geometry: ResolvedKeyboard) {
         let wasActive = activeContactCount > 0
-        if fastTap.updateGeometry(geometry), wasActive {
+        if touchPipeline.updateGeometry(geometry), wasActive {
             trace.record(.layoutChangedWhileActive)
         }
     }
@@ -64,7 +64,7 @@ public final class KeyboardTouchShadowPipeline {
             }
             return
         }
-        switch fastTap.consume(sample) {
+        switch touchPipeline.consume(sample) {
         case .began:
             recordTimestamp(sample)
             trace.record(.capturedBegan)
@@ -93,24 +93,24 @@ public final class KeyboardTouchShadowPipeline {
         }
     }
 
-    public func recordLegacyRelease(_ key: KeySpec) {
+    public func recordActualRelease(_ key: KeySpec) {
         guard Self.isEligible(key.role),
-              let identity = fastTap.identity(for: key) else { return }
-        comparator.recordLegacy(identity)
+              let identity = touchPipeline.identity(for: key) else { return }
+        comparator.recordActual(identity)
     }
 
-    public func recordLegacyCancellation(_ key: KeySpec) {
+    public func recordActualCancellation(_ key: KeySpec) {
         guard Self.isEligible(key.role) else { return }
-        trace.record(.legacyCancelled)
+        trace.record(.outputCancelled)
     }
 
     public func recordUnknownCaptureCallback() {
         trace.record(.captureUnknown)
     }
 
-    public func promoteToLegacy(_ rawContactID: UInt64) {
+    public func excludeFromComparison(_ rawContactID: UInt64) {
         let id = ContactID(rawValue: rawContactID)
-        guard fastTap.promoteToLegacy(id, at: clock()) else { return }
+        guard touchPipeline.exclude(id, at: clock()) else { return }
         finishTimestamp(id)
         resolvedAt.removeValue(forKey: id)
         ignoredContacts.insert(id)
@@ -118,7 +118,7 @@ public final class KeyboardTouchShadowPipeline {
     }
 
     public func reset() {
-        fastTap.reset()
+        touchPipeline.reset()
         comparator.reset()
         beganAt.removeAll(keepingCapacity: true)
         resolvedAt.removeAll(keepingCapacity: true)
@@ -134,7 +134,7 @@ public final class KeyboardTouchShadowPipeline {
     }
 }
 
-private extension KeyboardFastTapFallback {
+private extension KeyboardTouchFallback {
     var contactReason: ContactCancellationReason {
         switch self {
         case .exceededDuration: .exceededDuration

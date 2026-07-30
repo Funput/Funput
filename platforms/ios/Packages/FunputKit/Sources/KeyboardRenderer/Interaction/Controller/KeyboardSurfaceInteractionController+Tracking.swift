@@ -25,9 +25,6 @@ extension KeyboardSurfaceInteractionController {
             selectedAlternateIndex: nil,
             signpostID: signpostID
         )
-        if usesLegacyTouchOutput {
-            commitQueue.append(token: token, key: key)
-        }
         os_signpost(
             .begin,
             log: KeyboardTouchSignpost.log,
@@ -35,7 +32,7 @@ extension KeyboardSurfaceInteractionController {
             signpostID: signpostID,
             "token=%{public}llu depth=%{public}d",
             token,
-            commitQueue.depth
+            touches.count
         )
         setHighlighted(key, true)
         if hapticsEnabled, let type = KeyHapticTypeMapper.map(key.role) {
@@ -107,9 +104,6 @@ extension KeyboardSurfaceInteractionController {
         state.currentFrame = sourceFrame
         if let target {
             setHighlighted(target, true)
-            if usesLegacyTouchOutput {
-                commitQueue.update(token: token, key: target)
-            }
         }
         if repeatTouch == token, target?.role != state.initialKey.role { clearKeyRepeat() }
         if target?.id != state.initialKey.id { alternateHoldController.cancel(for: token) }

@@ -27,9 +27,10 @@ extension KeyboardTouchShadowPipeline {
 
     func observeArbiterState() {
         trace.observePipeline(
-            activeContacts: fastTap.activeContactCount,
-            arbiterDepth: fastTap.orderedContactCount + fastTap.heldContactCount,
-            bypassCount: fastTap.bypassedContactCount
+            activeContacts: touchPipeline.activeContactCount,
+            arbiterDepth:
+                touchPipeline.orderedContactCount + touchPipeline.heldContactCount,
+            bypassCount: touchPipeline.bypassedContactCount
         )
     }
 }

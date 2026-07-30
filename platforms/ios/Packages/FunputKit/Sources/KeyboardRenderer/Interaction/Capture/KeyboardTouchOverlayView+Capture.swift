@@ -3,21 +3,13 @@ import KeyboardTouchCore
 import UIKit
 
 extension KeyboardTouchOverlayView {
-    func capturePrimary(
+    func captureAndRoute(
         _ touches: Set<UITouch>,
         phase: ContactPhase
-    ) -> Bool {
-        guard pipelineMode == .v2 else { return false }
+    ) {
         let samples = capture(touches, phase: phase)
         onSamples?(samples)
-        routePrimary(samples)
-        return true
-    }
-
-    func captureShadow(_ touches: Set<UITouch>, phase: ContactPhase) {
-#if DEBUG
-        onSamples?(capture(touches, phase: phase))
-#endif
+        route(samples)
     }
 
     private func capture(
@@ -35,7 +27,7 @@ extension KeyboardTouchOverlayView {
         return samples
     }
 
-    private func routePrimary(_ samples: [ContactSample]) {
+    private func route(_ samples: [ContactSample]) {
         for sample in samples {
             let token = sample.id.rawValue
             let hit = resolvedHit(at: sample.location)

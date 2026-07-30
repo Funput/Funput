@@ -7,12 +7,12 @@ import KeyboardTouchCore
 import Testing
 
 @MainActor
-struct KeyboardPrimaryTouchCoordinatorTests {
+struct KeyboardV2TouchCoordinatorTests {
     @Test("V2 commits a release and settles ownership")
     func v2Commit() {
         var output: [KeyboardKeyEvent] = []
         let clock = TestNow()
-        let coordinator = KeyboardPrimaryTouchCoordinator(
+        let coordinator = KeyboardV2TouchCoordinator(
             clock: { clock.value },
             onEvent: { output.append($0) }
         )
@@ -23,7 +23,7 @@ struct KeyboardPrimaryTouchCoordinatorTests {
         coordinator.finishUIKitContact(1)
 
         #expect(output.map(\.key.id) == ["a"])
-        #expect(coordinator.metrics.primaryCommitted == 1)
+        #expect(coordinator.metrics.v2Committed == 1)
         #expect(coordinator.metrics.releaseCommitted == 1)
         #expect(coordinator.metrics.maximumCaptureToCommitLatencyMilliseconds == 100)
         #expect(coordinator.pendingContactCount == 0)
@@ -33,7 +33,7 @@ struct KeyboardPrimaryTouchCoordinatorTests {
     func durationAndCancellation() {
         var output: [KeyboardKeyEvent] = []
         let clock = TestNow()
-        let coordinator = KeyboardPrimaryTouchCoordinator(
+        let coordinator = KeyboardV2TouchCoordinator(
             clock: { clock.value },
             onEvent: { output.append($0) }
         )
@@ -48,7 +48,7 @@ struct KeyboardPrimaryTouchCoordinatorTests {
         coordinator.consume(sample(2, .cancelled, 1.1, x: 10))
         coordinator.finishUIKitContact(2)
         #expect(output.last?.phase == .cancelled)
-        #expect(coordinator.metrics.primarySystemCancelled == 1)
+        #expect(coordinator.metrics.systemCancelled == 1)
         #expect(coordinator.pendingContactCount == 0)
     }
 

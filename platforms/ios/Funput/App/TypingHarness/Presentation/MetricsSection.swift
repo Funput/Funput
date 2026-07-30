@@ -10,8 +10,8 @@ struct MetricsSection: View {
         Section("Live metrics · #\(report.sequence)") {
             metric("Matched", value.matched)
             metric(
-                "Legacy missing / late",
-                value.legacyMissing + value.legacyLate
+                "Actual missing / late",
+                value.outputMissing + value.outputLate
             )
             metric("Shadow missing", value.shadowMissing)
             metric("Reorder", value.orderMismatch)
@@ -32,12 +32,9 @@ struct MetricsSection: View {
                 value.maximumArbiterDepth
             )
             metric("Arbiter bypass", value.arbiterBypassCount)
-            metric("Primary committed", value.primaryCommitted)
-            metric("Legacy fallback", value.legacyFallback)
-            metric("Legacy release suppressed", value.legacyReleaseSuppressed)
-            metric("Primary system cancelled", value.primarySystemCancelled)
-            metric("Commit gate violation", value.commitGateViolation)
-            metric("Duplicate prevented", value.duplicateCommitPrevented)
+            metric("V2 committed", value.v2Committed)
+            metric("System cancelled", value.systemCancelled)
+            metric("Ownership violation", value.ownershipViolation)
             metric(
                 "Release / repeat",
                 value.releaseCommitted,

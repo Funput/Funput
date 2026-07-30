@@ -3,7 +3,7 @@ import KeyboardLayout
 import KeyboardTouchCore
 
 @MainActor
-public final class KeyboardFastTapPipeline {
+public final class KeyboardTouchPipeline {
     public typealias EmissionHandler = @MainActor (
         PressEmission<KeyboardTouchAction>
     ) -> Void
@@ -77,7 +77,7 @@ public final class KeyboardFastTapPipeline {
         return true
     }
 
-    public func consume(_ sample: ContactSample) -> KeyboardFastTapDisposition {
+    public func consume(_ sample: ContactSample) -> KeyboardTouchDisposition {
         let geometry = sample.phase == .began
             ? currentGeometry : geometries[sample.id]
         let currentHit = geometry?.touchHit(at: sample.location)
@@ -90,7 +90,7 @@ public final class KeyboardFastTapPipeline {
     }
 
     @discardableResult
-    public func promoteToLegacy(
+    public func exclude(
         _ contactID: ContactID,
         at timestamp: TimeInterval
     ) -> Bool {

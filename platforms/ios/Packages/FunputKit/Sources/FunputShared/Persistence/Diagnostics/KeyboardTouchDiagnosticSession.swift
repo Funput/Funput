@@ -7,36 +7,10 @@ public enum KeyboardTouchDiagnosticPhase: String, Codable, Sendable {
     case free
 }
 
-public enum KeyboardTouchDiagnosticPipelineMode: String, Codable, Sendable {
-    case legacy
-    case v2
-
-    @available(*, deprecated, renamed: "v2")
-    public static var primaryFastTap: Self { .v2 }
-
-    public init(from decoder: Decoder) throws {
-        let value = try decoder.singleValueContainer().decode(String.self)
-        switch value {
-        case "legacy": self = .legacy
-        case "v2", "primaryFastTap": self = .v2
-        default:
-            throw DecodingError.dataCorrupted(
-                .init(codingPath: decoder.codingPath, debugDescription: "Unknown pipeline mode")
-            )
-        }
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var value = encoder.singleValueContainer()
-        try value.encode(rawValue)
-    }
-}
-
 public struct KeyboardTouchDiagnosticSession: Codable, Equatable, Sendable {
     public let id: UUID
     public let inputMethod: KeyboardInputMethod
     public let phase: KeyboardTouchDiagnosticPhase
-    public let pipelineMode: KeyboardTouchDiagnosticPipelineMode
     public let generation: UInt64
     public let startedAt: Date
     public let expiresAt: Date
@@ -45,7 +19,6 @@ public struct KeyboardTouchDiagnosticSession: Codable, Equatable, Sendable {
         id: UUID = UUID(),
         inputMethod: KeyboardInputMethod,
         phase: KeyboardTouchDiagnosticPhase,
-        pipelineMode: KeyboardTouchDiagnosticPipelineMode = .legacy,
         generation: UInt64,
         startedAt: Date = Date(),
         expiresAt: Date? = nil
@@ -53,7 +26,6 @@ public struct KeyboardTouchDiagnosticSession: Codable, Equatable, Sendable {
         self.id = id
         self.inputMethod = inputMethod
         self.phase = phase
-        self.pipelineMode = pipelineMode
         self.generation = generation
         self.startedAt = startedAt
         self.expiresAt = expiresAt ?? startedAt.addingTimeInterval(15 * 60)
@@ -64,7 +36,7 @@ public struct KeyboardTouchDiagnosticSession: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, inputMethod, phase, pipelineMode, generation, startedAt, expiresAt
+        case id, inputMethod, phase, generation, startedAt, expiresAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -72,10 +44,6 @@ public struct KeyboardTouchDiagnosticSession: Codable, Equatable, Sendable {
         id = try values.decode(UUID.self, forKey: .id)
         inputMethod = try values.decode(KeyboardInputMethod.self, forKey: .inputMethod)
         phase = try values.decode(KeyboardTouchDiagnosticPhase.self, forKey: .phase)
-        pipelineMode = try values.decodeIfPresent(
-            KeyboardTouchDiagnosticPipelineMode.self,
-            forKey: .pipelineMode
-        ) ?? .legacy
         generation = try values.decode(UInt64.self, forKey: .generation)
         startedAt = try values.decode(Date.self, forKey: .startedAt)
         expiresAt = try values.decode(Date.self, forKey: .expiresAt)

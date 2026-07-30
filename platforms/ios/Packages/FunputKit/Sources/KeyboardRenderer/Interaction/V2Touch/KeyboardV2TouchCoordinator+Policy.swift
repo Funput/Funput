@@ -3,7 +3,7 @@ import KeyboardLayout
 import KeyboardTouchCore
 import KeyboardTouchUIKit
 
-extension KeyboardPrimaryTouchCoordinator {
+extension KeyboardV2TouchCoordinator {
     static let touchRoles: Set<KeyRole> = [
         .character, .vniModifier, .punctuation, .shift, .backspace,
         .symbols, .moreSymbols, .letters, .inputMethod, .systemInputMode,
@@ -15,7 +15,7 @@ extension KeyboardPrimaryTouchCoordinator {
         case let .began(id, hit):
             beganAt[id] = sample.timestamp
             hits[id] = hit
-            gate.begin(id, key: hit.key, primary: true)
+            registry.begin(id, key: hit.key)
         case let .fallback(id, _):
             cancel(id, emit: true, system: false)
         case let .cancelled(id):
@@ -36,7 +36,7 @@ extension KeyboardPrimaryTouchCoordinator {
             ? pipeline.detach(id, at: clock())
             : pipeline.claimForGesture(id)
         guard accepted else {
-            gate.metrics.gestureConflict += 1
+            registry.metrics.gestureConflict += 1
             notify()
             return
         }
@@ -53,7 +53,7 @@ extension KeyboardPrimaryTouchCoordinator {
         case .pressed:
             return event
         case .repeated:
-            return gate.emitRepeat(id) ? event : nil
+            return registry.emitRepeat(id) ? event : nil
         case let .alternateSelected(value):
             resolve(id, action: hits[id].map { .alternate($0, value) })
         case let .swiped(action):
@@ -61,7 +61,7 @@ extension KeyboardPrimaryTouchCoordinator {
         case .cancelled:
             cancelClaim(id)
         case .released:
-            gate.metrics.commitGateViolation += 1
+            registry.metrics.ownershipViolation += 1
         }
         notify()
         return nil
@@ -70,19 +70,19 @@ extension KeyboardPrimaryTouchCoordinator {
     func finishUIKitContact(_ token: UInt64) {
         let id = ContactID(rawValue: token)
         finishedUIKitContacts.insert(id)
-        if !gate.isPrimaryPending(id) { clear(id) }
+        if !registry.isPending(id) { clear(id) }
         notify()
     }
 
     private func resolve(_ id: ContactID, action: KeyboardTouchAction?) {
         guard let action else {
-            gate.metrics.gestureConflict += 1
+            registry.metrics.gestureConflict += 1
             return
         }
         let now = clock()
         terminalAt[id] = now
         if !pipeline.resolveGesture(id, action: action, at: now) {
-            gate.metrics.gestureConflict += 1
+            registry.metrics.gestureConflict += 1
         }
     }
 
@@ -90,7 +90,7 @@ extension KeyboardPrimaryTouchCoordinator {
         guard let claim = claims[id] else { return }
         _ = pipeline.detach(id, at: clock())
         if claim == .repeatKey {
-            gate.finishWithoutCommit(id)
+            registry.finish(id)
         } else {
             cancel(id, emit: true)
         }

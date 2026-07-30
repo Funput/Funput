@@ -8,22 +8,19 @@ import UIKit
 /// across keys without depending on button-style `touchUpInside` delivery.
 @MainActor
 final class KeyboardTouchOverlayView: UIView {
-    typealias TouchToken = KeyboardPressCommitQueue.TouchToken
+    typealias TouchToken = UInt64
     typealias Hit = (key: KeySpec, frame: CGRect)
 
     var onBegin: ((TouchToken, Hit, CGPoint) -> Void)?
     var onMove: ((TouchToken, Hit?, CGPoint) -> Void)?
     var onEnd: ((TouchToken) -> Void)?
     var onCancel: ((TouchToken) -> Void)?
-    var onReconcile: ((Set<TouchToken>) -> Void)?
     var onSamples: (([ContactSample]) -> Void)?
     var onUnknownCapture: (() -> Void)?
-    private(set) var pipelineMode = KeyboardTouchPipelineMode.legacy
 
     private static let outerTolerance: CGFloat = 12
     private var keys: [ResolvedKey] = []
     private var trackingBounds = CGRect.null
-    private var ledger = KeyboardTouchTokenLedger()
     let captureAdapter = UIKitTouchCaptureAdapter()
 
     override init(frame: CGRect) {
@@ -53,52 +50,19 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if capturePrimary(touches, phase: .began) { return }
-        captureShadow(touches, phase: .began)
-        for touch in touches {
-            let point = touch.location(in: self)
-            guard let hit = hit(at: point) else { continue }
-            let (token, stale) = ledger.beginToken(for: touch)
-            // Retire a stale mapping rather than skipping the press as a duplicate:
-            // UIKit recycles touch objects, so a leftover entry must never cost the
-            // user a keystroke.
-            if let stale { onCancel?(stale) }
-            onBegin?(token, hit, point)
-        }
-        reconcile(event)
+        captureAndRoute(touches, phase: .began)
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if capturePrimary(touches, phase: .moved) { return }
-        captureShadow(touches, phase: .moved)
-        for touch in touches {
-            guard let token = ledger.token(for: touch) else { continue }
-            let point = touch.location(in: self)
-            onMove?(token, trackingBounds.contains(point) ? hit(at: point) : nil, point)
-        }
-        reconcile(event)
+        captureAndRoute(touches, phase: .moved)
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if capturePrimary(touches, phase: .ended) { return }
-        captureShadow(touches, phase: .ended)
-        for touch in touches {
-            guard let token = ledger.removeToken(for: touch) else { continue }
-            let point = touch.location(in: self)
-            onMove?(token, trackingBounds.contains(point) ? hit(at: point) : nil, point)
-            onEnd?(token)
-        }
-        reconcile(event)
+        captureAndRoute(touches, phase: .ended)
     }
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if capturePrimary(touches, phase: .cancelled) { return }
-        captureShadow(touches, phase: .cancelled)
-        for touch in touches {
-            guard let token = ledger.removeToken(for: touch) else { continue }
-            onCancel?(token)
-        }
-        reconcile(event)
+        captureAndRoute(touches, phase: .cancelled)
     }
 
     /// Drops the overlay's bookkeeping without reporting anything upward. Both
@@ -106,15 +70,7 @@ final class KeyboardTouchOverlayView: UIView {
     /// discards the pending presses; reporting them as cancellations instead would
     /// now commit them.
     func forgetTrackedTouches() {
-        ledger.removeAllTokens()
         captureAdapter.reset()
-    }
-
-    func setPipelineMode(_ mode: KeyboardTouchPipelineMode) {
-        guard pipelineMode != mode else { return }
-        ledger.removeAllTokens()
-        captureAdapter.reset()
-        pipelineMode = mode
     }
 
     func resolvedHit(at point: CGPoint) -> Hit? {
@@ -137,12 +93,5 @@ final class KeyboardTouchOverlayView: UIView {
         return best.map { ($0.spec, $0.frame) }
     }
 
-    private func reconcile(_ event: UIEvent?) {
-        guard let event, let allTouches = event.allTouches else {
-            onReconcile?(ledger.trackedTokens)
-            return
-        }
-        onReconcile?(ledger.survivors(in: allTouches, at: event.timestamp))
-    }
 }
 #endif

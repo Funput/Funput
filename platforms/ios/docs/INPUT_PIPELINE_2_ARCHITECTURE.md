@@ -1,9 +1,9 @@
 # Funput iOS Input Pipeline 2.0
 
-> **Trạng thái:** Phase 1–2.5 và Phase 3A Debug primary fast tap đã hiện thực
+> **Trạng thái:** Phase 1–3C đã hiện thực; V2 là touch pipeline duy nhất
 > **Phạm vi:** Xử lý phím trong custom keyboard extension trên iOS/iPadOS  
-> **Ngày:** 29/07/2026  
-> **Thay thế dự kiến:** Touch ledger, orphan reconciliation và commit queue hiện tại  
+> **Ngày:** 30/07/2026
+> **Đã thay thế:** Touch ledger, orphan reconciliation và commit queue
 > **Không thay thế:** Rust engine, layout definitions, theme renderer, settings và personal suggestion engine
 
 ---
@@ -792,12 +792,11 @@ Ngưỡng ban đầu, cần hiệu chỉnh sau baseline:
 - Telemetry đo trực tiếp maximum concurrent contacts, maximum arbiter depth, số
   contact được bypass và độ trễ touch-up → shadow emission (>40 ms, >120 ms).
   Chỉ ngưỡng >120 ms được tính là shadow regression.
-- Legacy vẫn là nguồn commit duy nhất và toàn bộ harness/reporter bị loại khỏi
-  Release bằng conditional compilation.
+- Harness/reporter bị loại khỏi Release bằng conditional compilation.
 
 ### Phase 3A — Primary fast tap
 
-- `KeyboardFastTapPipeline` là implementation duy nhất cho resolver, geometry
+- `KeyboardTouchPipeline` là implementation duy nhất cho resolver, geometry
   snapshot và arbiter; shadow và primary không fork thuật toán.
 - Debug session chọn `.legacy` hoặc `.primaryFastTap`, mặc định primary trong
   device harness. Release vẫn khởi tạo `.legacy`.
@@ -812,11 +811,11 @@ Ngưỡng ban đầu, cần hiệu chỉnh sau baseline:
 ### Phase 3B — Full touch pipeline
 
 - V2 nhận toàn bộ keycap role; normal tap không còn giới hạn fast-tap 300 ms.
-- Release mặc định `.v2`; `.legacy` còn là kill switch nội bộ đến Phase 5.
+- Release dùng V2.
 - Repeat Backspace/Space dùng lane riêng với timing 400/50 ms và suppress release.
 - Alternate và Space swipe claim contact trước output rồi resolve qua cùng arbiter.
-- Controller legacy chỉ giữ presentation/gesture recognition trong V2;
-  `KeyboardPressCommitQueue` và reconciliation chỉ chạy ở `.legacy`.
+- Interaction controller chỉ giữ presentation và gesture recognition; document
+  output thuộc V2 coordinator.
 - Manual device acceptance được dồn sau Phase 5; Phase 3B chỉ chạy automated
   regression, Debug/Release build và quality gates.
 
@@ -826,16 +825,15 @@ Ngưỡng ban đầu, cần hiệu chỉnh sau baseline:
 - Cô lập `UITextDocumentProxy` trong `KeyboardDocumentWriter`.
 - Tách post-commit effects.
 
-### Phase 5 — Remove legacy
+### Phase 3C — V2-only cleanup
 
-Sau khi acceptance gates xanh:
-
-- xóa `KeyboardTouchTokenLedger`;
-- xóa orphan reconciliation;
-- xóa legacy touch token routing cho keycaps;
-- xóa `KeyboardPressCommitQueue`;
-- xóa system-cancellation-as-release workaround;
-- giữ accessibility activation qua semantic router riêng.
+- Xóa mode switch và toàn bộ legacy keycap pipeline.
+- Xóa `KeyboardTouchTokenLedger`, orphan reconciliation,
+  `KeyboardPressCommitQueue` và system-cancellation-as-release workaround.
+- `UIKitTouchCaptureAdapter` là nguồn identity duy nhất cho keycap touch.
+- `KeyboardTouchContactRegistry` bảo vệ exactly-once trong một V2 ownership lane.
+- Toolbar và accessibility tiếp tục đi thẳng qua semantic router.
+- Harness không còn lựa chọn pipeline; mọi session luôn đo V2.
 
 ---
 
@@ -902,7 +900,7 @@ Keyboard/
 └── Support/
 ```
 
-Renderer legacy được tái nhóm theo `Controller`, `Gestures`, `LegacyTouch`,
+Renderer V2 được nhóm theo `Capture`, `Controller`, `Gestures`, `V2Touch`,
 `Surface/Core`, `Surface/Presentation` và `Surface/Keys`. Boundary bắt buộc:
 
 - touch không import engine;
@@ -944,15 +942,10 @@ Mitigation:
 - không background hóa document mutation;
 - không cho UI/suggestion work chen giữa transaction.
 
-### 18.4. Migration song song tăng độ phức tạp tạm thời
+### 18.4. Shadow diagnostics chỉ tồn tại trong Debug
 
-Shadow mode giữ hai pipelines trong development builds.
-
-Mitigation:
-
-- pipeline mới không commit khi shadow;
-- feature flag compile-time;
-- xóa legacy ngay sau acceptance thay vì duy trì lâu dài.
+Shadow comparator quan sát V2 output trong development builds và không sở hữu
+document commit. Release không khởi tạo reporter hoặc đọc App Group diagnostics.
 
 ---
 
@@ -970,7 +963,8 @@ Các mục này phải được giải quyết bằng prototype và đo thiết 
 7. Device trace sẽ được xuất từ test harness bằng cách nào mà không yêu cầu Full Access?
 
 Device acceptance cho các quyết định timing còn lại được dồn về cuối V2 theo
-chiến lược triển khai nhanh; legacy chỉ bị xóa ở Phase 5.
+chiến lược triển khai nhanh. Git branch là rollback boundary; runtime không còn
+giữ hai touch implementations.
 
 ---
 

@@ -5,19 +5,19 @@ import KeyboardTouchCore
 import KeyboardTouchUIKit
 
 @MainActor
-final class KeyboardPrimaryTouchCoordinator {
-    typealias Observer = @MainActor (KeyboardPrimaryTouchMetrics) -> Void
+final class KeyboardV2TouchCoordinator {
+    typealias Observer = @MainActor (KeyboardV2TouchMetrics) -> Void
 
     let clock: @MainActor () -> TimeInterval
     let onEvent: @MainActor (KeyboardKeyEvent) -> Void
-    var gate = KeyboardTouchCommitGate()
+    var registry = KeyboardTouchContactRegistry()
     var beganAt: [ContactID: TimeInterval] = [:]
     var terminalAt: [ContactID: TimeInterval] = [:]
     var hits: [ContactID: KeyboardTouchHit] = [:]
     var claims: [ContactID: KeyboardSurfaceInteractionController.GestureClaim] = [:]
     var finishedUIKitContacts: Set<ContactID> = []
     private var observer: Observer?
-    lazy var pipeline = KeyboardFastTapPipeline(
+    lazy var pipeline = KeyboardTouchPipeline(
         eligibleRoles: Self.touchRoles,
         recoveringTapSlopRoles: Self.touchRoles,
         resolverConfiguration: .init(
@@ -39,8 +39,8 @@ final class KeyboardPrimaryTouchCoordinator {
     }
 
     var activeContactCount: Int { pipeline.activeContactCount }
-    var pendingContactCount: Int { gate.pendingCount }
-    var metrics: KeyboardPrimaryTouchMetrics { gate.metrics }
+    var pendingContactCount: Int { registry.pendingCount }
+    var metrics: KeyboardV2TouchMetrics { registry.metrics }
 
     func updateGeometry(_ geometry: ResolvedKeyboard) {
         pipeline.updateGeometry(geometry)
@@ -53,7 +53,7 @@ final class KeyboardPrimaryTouchCoordinator {
 
     func reset() {
         pipeline.reset()
-        gate.reset()
+        registry.reset()
         beganAt.removeAll(keepingCapacity: true)
         terminalAt.removeAll(keepingCapacity: true)
         hits.removeAll(keepingCapacity: true)
@@ -63,13 +63,13 @@ final class KeyboardPrimaryTouchCoordinator {
     }
 
     func cancel(_ id: ContactID, emit: Bool, system: Bool = true) {
-        if let key = gate.cancelPrimary(id, countSystem: system), emit {
+        if let key = registry.cancel(id, system: system), emit {
             onEvent(KeyboardKeyEvent(key: key, phase: .cancelled))
         }
     }
 
     private func commit(_ emission: PressEmission<KeyboardTouchAction>) {
-        guard gate.primaryCommit(
+        guard registry.commit(
             emission.contactID,
             action: emission.payload
         ) else { return }
@@ -83,14 +83,14 @@ final class KeyboardPrimaryTouchCoordinator {
 
     private func recordLatency(_ id: ContactID) {
         if let began = beganAt[id] {
-            gate.metrics.maximumCaptureToCommitLatencyMilliseconds = max(
-                gate.metrics.maximumCaptureToCommitLatencyMilliseconds,
+            registry.metrics.maximumCaptureToCommitLatencyMilliseconds = max(
+                registry.metrics.maximumCaptureToCommitLatencyMilliseconds,
                 milliseconds(since: began)
             )
         }
         if let terminal = terminalAt[id] {
-            gate.metrics.maximumTerminalToEmissionLatencyMilliseconds = max(
-                gate.metrics.maximumTerminalToEmissionLatencyMilliseconds,
+            registry.metrics.maximumTerminalToEmissionLatencyMilliseconds = max(
+                registry.metrics.maximumTerminalToEmissionLatencyMilliseconds,
                 milliseconds(since: terminal)
             )
         }
@@ -103,7 +103,7 @@ final class KeyboardPrimaryTouchCoordinator {
     func notify() { observer?(metrics) }
 
     func clear(_ id: ContactID) {
-        gate.finishWithoutCommit(id)
+        registry.finish(id)
         claims.removeValue(forKey: id)
         hits.removeValue(forKey: id)
         beganAt.removeValue(forKey: id)

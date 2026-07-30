@@ -2,15 +2,15 @@
 public struct KeyboardTouchDiagnosticSnapshot: Equatable, Sendable {
     public let capturedBegan: Int
     public let shadowResolved: Int
-    public let legacyReleased: Int
+    public let outputReleased: Int
     public let matched: Int
     public let orderMismatch: Int
-    public let legacyMissing: Int
+    public let outputMissing: Int
     public let shadowMissing: Int
-    public let legacyLate: Int
+    public let outputLate: Int
     public let shadowLate: Int
     public let shadowCancelled: Int
-    public let legacyCancelled: Int
+    public let outputCancelled: Int
     public let cancelledSystem: Int
     public let cancelledTapSlop: Int
     public let recoveredTapSlop: Int
@@ -29,12 +29,9 @@ public struct KeyboardTouchDiagnosticSnapshot: Equatable, Sendable {
     public let maximumEmissionDelayMilliseconds: Int
     public let emissionDelayedOver40Milliseconds: Int
     public let emissionDelayedOver120Milliseconds: Int
-    public let primaryCommitted: Int
-    public let legacyFallback: Int
-    public let legacyReleaseSuppressed: Int
-    public let primarySystemCancelled: Int
-    public let commitGateViolation: Int
-    public let duplicateCommitPrevented: Int
+    public let v2Committed: Int
+    public let systemCancelled: Int
+    public let ownershipViolation: Int
     public let maximumCaptureToCommitLatencyMilliseconds: Int
     public let releaseCommitted: Int
     public let repeatEmitted: Int
@@ -49,7 +46,7 @@ public struct KeyboardTouchDiagnosticSnapshot: Equatable, Sendable {
     public let isSettled: Bool
 
     public var cancellationDisagreement: Int {
-        abs(shadowCancelled - legacyCancelled)
+        abs(shadowCancelled - outputCancelled)
     }
 }
 #endif

@@ -1,12 +1,12 @@
 import KeyboardTouchCore
 
 @MainActor
-extension KeyboardFastTapPipeline {
+extension KeyboardTouchPipeline {
     func handle(
         _ resolution: ContactResolution<KeyboardTouchHit>,
         sample: ContactSample,
         geometry: KeyboardGeometrySnapshot?
-    ) -> KeyboardFastTapDisposition {
+    ) -> KeyboardTouchDisposition {
         switch resolution {
         case let .began(id):
             guard let geometry,
@@ -46,7 +46,7 @@ extension KeyboardFastTapPipeline {
     private func disposition(
         id: ContactID,
         reason: ContactCancellationReason
-    ) -> KeyboardFastTapDisposition {
+    ) -> KeyboardTouchDisposition {
         switch reason {
         case .system: .cancelled(id)
         case .exceededDuration: .fallback(id, .exceededDuration)

@@ -7,15 +7,15 @@ extension KeyboardTouchDiagnosticMetrics {
         self.init()
         capturedBegan = snapshot.capturedBegan
         shadowResolved = snapshot.shadowResolved
-        legacyReleased = snapshot.legacyReleased
+        outputReleased = snapshot.outputReleased
         matched = snapshot.matched
         orderMismatch = snapshot.orderMismatch
-        legacyMissing = snapshot.legacyMissing
+        outputMissing = snapshot.outputMissing
         shadowMissing = snapshot.shadowMissing
-        legacyLate = snapshot.legacyLate
+        outputLate = snapshot.outputLate
         shadowLate = snapshot.shadowLate
         shadowCancelled = snapshot.shadowCancelled
-        legacyCancelled = snapshot.legacyCancelled
+        outputCancelled = snapshot.outputCancelled
         cancelledSystem = snapshot.cancelledSystem
         cancelledTapSlop = snapshot.cancelledTapSlop
         recoveredTapSlop = snapshot.recoveredTapSlop
@@ -37,12 +37,9 @@ extension KeyboardTouchDiagnosticMetrics {
             snapshot.emissionDelayedOver40Milliseconds
         emissionDelayedOver120Milliseconds =
             snapshot.emissionDelayedOver120Milliseconds
-        primaryCommitted = snapshot.primaryCommitted
-        legacyFallback = snapshot.legacyFallback
-        legacyReleaseSuppressed = snapshot.legacyReleaseSuppressed
-        primarySystemCancelled = snapshot.primarySystemCancelled
-        commitGateViolation = snapshot.commitGateViolation
-        duplicateCommitPrevented = snapshot.duplicateCommitPrevented
+        v2Committed = snapshot.v2Committed
+        systemCancelled = snapshot.systemCancelled
+        ownershipViolation = snapshot.ownershipViolation
         maximumCaptureToCommitLatencyMilliseconds =
             snapshot.maximumCaptureToCommitLatencyMilliseconds
         releaseCommitted = snapshot.releaseCommitted

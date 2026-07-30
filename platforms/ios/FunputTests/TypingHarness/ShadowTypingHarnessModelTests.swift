@@ -62,14 +62,14 @@ struct ShadowTypingHarnessModelTests {
             generation: 1
         )
         var legacyMetrics = KeyboardTouchDiagnosticMetrics()
-        legacyMetrics.legacyMissing = 1
+        legacyMetrics.outputMissing = 1
         let legacy = report(session, metrics: legacyMetrics)
         let legacyResult = ShadowHarnessResult.make(
             text: "wrong",
             report: legacy,
             exactMatch: false
         )
-        #expect(legacyResult.classification == .legacyDivergence)
+        #expect(legacyResult.classification == .outputDivergence)
         #expect(legacyResult.firstMismatchIndex == 0)
 
         var shadowMetrics = KeyboardTouchDiagnosticMetrics()

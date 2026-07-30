@@ -8,7 +8,7 @@ import UIKit
 /// finger can move between keycaps before it commits.
 @MainActor
 final class KeyboardSurfaceInteractionController {
-    typealias TouchToken = KeyboardPressCommitQueue.TouchToken
+    typealias TouchToken = UInt64
     typealias PreviewHandler = (_ key: KeySpec?, _ sourceFrame: CGRect?) -> Void
     typealias AlternatePreviewHandler = (
         _ key: KeySpec?,
@@ -23,14 +23,6 @@ final class KeyboardSurfaceInteractionController {
         case alternate
         case repeatKey
         case swipe
-    }
-
-    /// Why a tracked touch is ending without a release.
-    enum Cancellation {
-        /// UIKit took the touch away, or stopped reporting it. The user did press.
-        case system
-        /// The user lifted or dragged off on purpose.
-        case userIntent
     }
 
     struct TouchState {
@@ -69,20 +61,14 @@ final class KeyboardSurfaceInteractionController {
     ) { [weak self] token in
         self?.activateAlternates(for: token)
     }
-    var commitQueue = KeyboardPressCommitQueue()
     var touches: [TouchToken: TouchState] = [:]
     var highlightCounts: [String: Int] = [:]
     var repeatTouch: TouchToken?
     var hapticsEnabled = true
-    var usesLegacyTouchOutput = true
-    var legacyTokensByKeyID: [String: [TouchToken]] = [:]
-    /// Toolbar and accessibility presses are minted from here up, which keeps them
-    /// distinguishable from the overlay's tokens without a second bookkeeping map.
-    static let firstLegacyToken: TouchToken = 1 << 63
-    var nextLegacyToken: TouchToken = KeyboardSurfaceInteractionController.firstLegacyToken
-
-    var activeKey: KeySpec? { commitQueue.activeKey }
-    var queueDepth: Int { commitQueue.depth }
+    var activeKey: KeySpec? {
+        repeatTouch.flatMap { touches[$0]?.currentKey }
+    }
+    var queueDepth: Int { touches.count }
 
     init(
         feedbackView: UIView = UIView(),

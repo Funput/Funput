@@ -62,7 +62,7 @@ struct KeyboardV2GestureTests {
             fixture.coordinator.consume(fixture.sample(.ended, at: 0.1))
             fixture.coordinator.finishUIKitContact(1)
             #expect(fixture.output.map(\.phase) == [.released])
-            #expect(fixture.coordinator.metrics.primaryCommitted == 1)
+            #expect(fixture.coordinator.metrics.v2Committed == 1)
         }
     }
 
@@ -82,14 +82,14 @@ private final class Fixture {
     }
 
     let key: KeySpec
-    let coordinator: KeyboardPrimaryTouchCoordinator
+    let coordinator: KeyboardV2TouchCoordinator
     private let box = EventBox()
     var output: [KeyboardKeyEvent] { box.values }
 
     init(key: KeySpec) {
         self.key = key
         let eventBox = box
-        coordinator = KeyboardPrimaryTouchCoordinator { eventBox.values.append($0) }
+        coordinator = KeyboardV2TouchCoordinator { eventBox.values.append($0) }
         coordinator.updateGeometry(
             ResolvedKeyboard(
                 size: .init(width: 50, height: 50),

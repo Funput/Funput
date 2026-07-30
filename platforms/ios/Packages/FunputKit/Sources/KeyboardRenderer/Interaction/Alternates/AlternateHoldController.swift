@@ -3,7 +3,7 @@ import Foundation
 
 @MainActor
 final class AlternateHoldController {
-    typealias TouchToken = KeyboardPressCommitQueue.TouchToken
+    typealias TouchToken = UInt64
     typealias Scheduler = BackspaceRepeatController.Scheduler
 
     private let delay: TimeInterval

@@ -14,7 +14,6 @@ public final class KeyboardSurfaceView: UIView {
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
     public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
-    public internal(set) var touchPipelineMode = KeyboardTouchPipelineMode.v2
 
     let backdropView = KeyboardBackdropView()
     let toolbarView = KeyboardToolbarView()
@@ -26,13 +25,12 @@ public final class KeyboardSurfaceView: UIView {
 #if DEBUG
     let touchShadow = KeyboardTouchShadowPipeline()
 #endif
-    var pendingTouchPipelineMode: KeyboardTouchPipelineMode?
-    lazy var primaryTouch = KeyboardPrimaryTouchCoordinator {
+    lazy var v2Touch = KeyboardV2TouchCoordinator {
         [weak self] event in self?.handleV2Event(event)
     }
     lazy var interactionController = KeyboardSurfaceInteractionController(
         feedbackView: self,
-        onEvent: { [weak self] event in self?.handleInteractionEvent(event) },
+        onEvent: { [weak self] event in self?.handleV2Event(event) },
         onContactEvent: { [weak self] token, event in
             self?.handleContactInteractionEvent(token: token, event: event)
         },
@@ -90,7 +88,7 @@ public final class KeyboardSurfaceView: UIView {
             keyControls[key.spec.id]?.frame = key.frame
         }
         touchOverlay.updateGeometry(geometry)
-        primaryTouch.updateGeometry(geometry)
+        v2Touch.updateGeometry(geometry)
 #if DEBUG
         touchShadow.updateGeometry(geometry)
 #endif
@@ -125,8 +123,6 @@ public final class KeyboardSurfaceView: UIView {
         addSubview(alternatePaletteView)
         configureTouchOverlay()
         configureTouchPipeline()
-        touchOverlay.setPipelineMode(.v2)
-        interactionController.usesLegacyTouchOutput = false
         toolbarView.onEvent = { [weak self] event in self?.route(event, from: nil) }
         toolbarView.onSystemInputModeEvent = { [weak self] source, event in
             self?.onSystemInputModeEvent?(source, event)

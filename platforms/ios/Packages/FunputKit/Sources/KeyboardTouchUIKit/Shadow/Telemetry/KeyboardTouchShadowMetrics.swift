@@ -1,15 +1,15 @@
 public struct KeyboardTouchShadowMetrics: Equatable, Sendable {
     public internal(set) var capturedBegan = 0
     public internal(set) var shadowResolved = 0
-    public internal(set) var legacyReleased = 0
+    public internal(set) var outputReleased = 0
     public internal(set) var matched = 0
     public internal(set) var orderMismatch = 0
-    public internal(set) var legacyMissing = 0
+    public internal(set) var outputMissing = 0
     public internal(set) var shadowMissing = 0
-    public internal(set) var legacyLate = 0
+    public internal(set) var outputLate = 0
     public internal(set) var shadowLate = 0
     public internal(set) var shadowCancelled = 0
-    public internal(set) var legacyCancelled = 0
+    public internal(set) var outputCancelled = 0
     public internal(set) var cancelledSystem = 0
     public internal(set) var cancelledTapSlop = 0
     public internal(set) var recoveredTapSlop = 0
@@ -35,6 +35,6 @@ public struct KeyboardTouchShadowMetrics: Equatable, Sendable {
     }
 
     public var cancellationDisagreement: Int {
-        abs(shadowCancelled - legacyCancelled)
+        abs(shadowCancelled - outputCancelled)
     }
 }

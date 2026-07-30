@@ -30,15 +30,9 @@ struct ShadowTypingHarnessView: View {
 
     private var setupSection: some View {
         Section("Session") {
-            Group {
-                Picker("Input method", selection: $model.selectedMethod) {
-                    ForEach(ShadowTypingFixture.all) { fixture in
-                        Text(fixture.title).tag(fixture.inputMethod)
-                    }
-                }
-                Picker("Touch pipeline", selection: $model.selectedPipeline) {
-                    Text("Touch Pipeline V2").tag(KeyboardTouchDiagnosticPipelineMode.v2)
-                    Text("Legacy").tag(KeyboardTouchDiagnosticPipelineMode.legacy)
+            Picker("Input method", selection: $model.selectedMethod) {
+                ForEach(ShadowTypingFixture.all) { fixture in
+                    Text(fixture.title).tag(fixture.inputMethod)
                 }
             }
             .disabled(

@@ -13,10 +13,10 @@ struct KeyboardTouchShadowComparatorTests {
         let (pipeline, clock, a, _) = fixture()
         tap(pipeline, clock, id: 1, point: .init(x: 10, y: 20), at: 0)
         clock.advance(to: 0.221)
-        #expect(pipeline.trace.metrics.legacyMissing == 1)
+        #expect(pipeline.trace.metrics.outputMissing == 1)
 
-        pipeline.recordLegacyRelease(a)
-        #expect(pipeline.trace.metrics.legacyLate == 1)
+        pipeline.recordActualRelease(a)
+        #expect(pipeline.trace.metrics.outputLate == 1)
         #expect(pipeline.trace.metrics.orderMismatch == 0)
     }
 
@@ -24,8 +24,8 @@ struct KeyboardTouchShadowComparatorTests {
         let (pipeline, clock, a, b) = fixture()
         tap(pipeline, clock, id: 1, point: .init(x: 10, y: 20), at: 0)
         tap(pipeline, clock, id: 2, point: .init(x: 70, y: 20), at: 0.11)
-        pipeline.recordLegacyRelease(b)
-        pipeline.recordLegacyRelease(a)
+        pipeline.recordActualRelease(b)
+        pipeline.recordActualRelease(a)
         #expect(pipeline.trace.metrics.orderMismatch == 1)
     }
 
@@ -35,8 +35,8 @@ struct KeyboardTouchShadowComparatorTests {
         send(pipeline, clock, shadowSample(2, .began, 0, .init(x: 70, y: 20)))
         send(pipeline, clock, shadowSample(1, .ended, 0.1, .init(x: 10, y: 20)))
         send(pipeline, clock, shadowSample(2, .ended, 0.1, .init(x: 70, y: 20)))
-        pipeline.recordLegacyRelease(a)
-        pipeline.recordLegacyRelease(b)
+        pipeline.recordActualRelease(a)
+        pipeline.recordActualRelease(b)
 
         #expect(pipeline.trace.metrics.timestampTie == 2)
         #expect(pipeline.trace.metrics.orderMismatch == 0)
@@ -48,8 +48,8 @@ struct KeyboardTouchShadowComparatorTests {
         send(pipeline, clock, shadowSample(2, .began, 0, .init(x: 70, y: 20)))
         send(pipeline, clock, shadowSample(1, .ended, 0.1, .init(x: 10, y: 20)))
         send(pipeline, clock, shadowSample(2, .ended, 0.1, .init(x: 70, y: 20)))
-        pipeline.recordLegacyRelease(b)
-        pipeline.recordLegacyRelease(a)
+        pipeline.recordActualRelease(b)
+        pipeline.recordActualRelease(a)
 
         #expect(pipeline.trace.metrics.timestampTie == 1)
         #expect(pipeline.trace.metrics.orderMismatch == 0)

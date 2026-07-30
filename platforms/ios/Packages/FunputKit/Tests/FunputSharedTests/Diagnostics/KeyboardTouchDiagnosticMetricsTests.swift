@@ -14,7 +14,7 @@ struct KeyboardTouchDiagnosticMetricsTests {
         #expect(metrics.hasShadowRegression)
 
         metrics = .init()
-        metrics.commitGateViolation = 1
+        metrics.ownershipViolation = 1
         #expect(metrics.hasShadowRegression)
     }
 }

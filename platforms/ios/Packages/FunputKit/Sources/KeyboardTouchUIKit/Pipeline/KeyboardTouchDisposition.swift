@@ -1,16 +1,16 @@
 import KeyboardTouchCore
 
-public enum KeyboardFastTapFallback: Equatable, Sendable {
+public enum KeyboardTouchFallback: Equatable, Sendable {
     case exceededDuration
     case endedOutside
     case exceededTapSlop
 }
 
-public enum KeyboardFastTapDisposition: Sendable {
+public enum KeyboardTouchDisposition: Sendable {
     case began(ContactID, KeyboardTouchHit)
     case tracking(ContactID)
     case resolved(ContactID, ContactResolutionMetadata)
-    case fallback(ContactID, KeyboardFastTapFallback)
+    case fallback(ContactID, KeyboardTouchFallback)
     case cancelled(ContactID)
     case ignored(ContactResolutionNoOp)
 }

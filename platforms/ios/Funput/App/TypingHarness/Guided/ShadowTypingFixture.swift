@@ -96,7 +96,7 @@ struct ShadowTypingFixture: Identifiable, Equatable {
 
 enum ShadowHarnessClassification: String, Equatable {
     case pass = "Pass"
-    case legacyDivergence = "Legacy divergence captured"
+    case outputDivergence = "Output divergence captured"
     case shadowRegression = "Shadow regression"
 }
 
@@ -117,11 +117,11 @@ struct ShadowHarnessResult: Equatable {
         } ?? true
         let shadowBad = unresolved
             || (report?.metrics.hasShadowRegression ?? true)
-        let legacyBad = exactMatch == false
-            || (report?.metrics.legacyMissing ?? 0) > 0
-            || (report?.metrics.legacyLate ?? 0) > 0
+        let outputBad = exactMatch == false
+            || (report?.metrics.outputMissing ?? 0) > 0
+            || (report?.metrics.outputLate ?? 0) > 0
         let classification: ShadowHarnessClassification = shadowBad
-            ? .shadowRegression : (legacyBad ? .legacyDivergence : .pass)
+            ? .shadowRegression : (outputBad ? .outputDivergence : .pass)
         return Self(
             classification: classification,
             exactMatch: exactMatch,

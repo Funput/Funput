@@ -4,21 +4,7 @@ import UIKit
 extension KeyboardSurfaceView {
     func handleV2Event(_ event: KeyboardKeyEvent) {
 #if DEBUG
-        recordLegacyDiagnostic(event)
-#endif
-        onKeyEvent?(event)
-    }
-
-    func handleInteractionEvent(_ event: KeyboardKeyEvent) {
-#if DEBUG
-        switch event.phase {
-        case .released:
-            touchShadow.recordLegacyRelease(event.key)
-        case .cancelled:
-            touchShadow.recordLegacyCancellation(event.key)
-        case .pressed, .repeated, .swiped, .alternateSelected:
-            break
-        }
+        recordActualDiagnostic(event)
 #endif
         onKeyEvent?(event)
     }
@@ -28,16 +14,11 @@ extension KeyboardSurfaceView {
         event: KeyboardKeyEvent
     ) {
 #if DEBUG
-        recordLegacyDiagnostic(event)
+        recordActualDiagnostic(event)
 #endif
-        if touchPipelineMode == .v2 {
-            if let output = primaryTouch.handleInteraction(token: token, event: event) {
-                onKeyEvent?(output)
-            }
-        } else {
-            onKeyEvent?(event)
+        if let output = v2Touch.handleInteraction(token: token, event: event) {
+            onKeyEvent?(output)
         }
-        applyPendingTouchPipelineModeIfIdle()
     }
 
     func configureTouchPipeline() {
@@ -46,9 +27,7 @@ extension KeyboardSurfaceView {
 #if DEBUG
             samples.forEach(touchShadow.consume)
 #endif
-            if touchPipelineMode == .v2 {
-                samples.forEach(primaryTouch.consume)
-            }
+            samples.forEach(v2Touch.consume)
         }
         touchOverlay.onUnknownCapture = { [weak self] in
 #if DEBUG
@@ -61,14 +40,14 @@ extension KeyboardSurfaceView {
         _ token: UInt64,
         kind: KeyboardSurfaceInteractionController.GestureClaim
     ) {
-        primaryTouch.claim(token: token, kind: kind)
+        v2Touch.claim(token: token, kind: kind)
 #if DEBUG
-        touchShadow.promoteToLegacy(token)
+        touchShadow.excludeFromComparison(token)
 #endif
     }
 
     func resetTouchPipeline() {
-        primaryTouch.reset()
+        v2Touch.reset()
 #if DEBUG
         touchShadow.reset()
 #endif
@@ -84,31 +63,11 @@ extension KeyboardSurfaceView {
     }
 #endif
 
-    @discardableResult
-    public func setTouchPipelineMode(_ mode: KeyboardTouchPipelineMode) -> Bool {
-        pendingTouchPipelineMode = mode
-        return applyPendingTouchPipelineModeIfIdle()
-    }
-
-    @discardableResult
-    func applyPendingTouchPipelineModeIfIdle() -> Bool {
-        guard interactionController.activeTouchCount == 0,
-              primaryTouch.activeContactCount == 0,
-              let mode = pendingTouchPipelineMode else { return false }
-        pendingTouchPipelineMode = nil
-        guard mode != touchPipelineMode else { return true }
-        primaryTouch.reset()
-        touchOverlay.setPipelineMode(mode)
-        interactionController.usesLegacyTouchOutput = mode == .legacy
-        touchPipelineMode = mode
-        return true
-    }
-
 #if DEBUG
-    private func recordLegacyDiagnostic(_ event: KeyboardKeyEvent) {
+    private func recordActualDiagnostic(_ event: KeyboardKeyEvent) {
         switch event.phase {
-        case .released: touchShadow.recordLegacyRelease(event.key)
-        case .cancelled: touchShadow.recordLegacyCancellation(event.key)
+        case .released: touchShadow.recordActualRelease(event.key)
+        case .cancelled: touchShadow.recordActualCancellation(event.key)
         default: break
         }
     }

@@ -30,57 +30,21 @@ extension KeyboardSurfaceInteractionController {
 
     func finishSwipe(token: TouchToken, state: TouchState, action: KeySwipeAction) {
         onClaimGesture(token, .swipe)
-        if !usesLegacyTouchOutput {
-            finishV2Swipe(token: token, state: state, action: action)
-            return
-        }
-        touches.removeValue(forKey: token)
-        if let key = state.currentKey { setHighlighted(key, false) }
-        if repeatTouch == token { clearKeyRepeat() }
-        commitQueue.complete(token: token, as: .swiped(action))
-        endSignpost(state, token: token, phase: 3)
-        if hapticsEnabled { haptics.perform(.control) }
-        refreshPreview()
-        flushCompletedKeys()
+        finishV2Swipe(token: token, state: state, action: action)
     }
 
     func repeatActiveKey() {
         guard let token = repeatTouch, let state = touches[token],
               state.initialKey.role == .backspace || state.initialKey.role == .space
         else { return }
-        if !usesLegacyTouchOutput {
-            onClaimGesture(token, .repeatKey)
-            let event = KeyboardKeyEvent(key: state.initialKey, phase: .repeated)
-            onContactEvent(token, event)
-            if hapticsEnabled { haptics.perform(.deleteRepeat) }
-            return
-        }
-        guard commitQueue.bufferRepeat(for: token) else { return }
         onClaimGesture(token, .repeatKey)
+        let event = KeyboardKeyEvent(key: state.initialKey, phase: .repeated)
+        onContactEvent(token, event)
         if hapticsEnabled { haptics.perform(.deleteRepeat) }
-        flushCompletedKeys()
     }
 
     func finishRepeatedTouch(token: TouchToken, state: TouchState) {
-        if !usesLegacyTouchOutput {
-            finishV2RepeatedTouch(token: token, state: state)
-            return
-        }
-        touches.removeValue(forKey: token)
-        if let key = state.currentKey { setHighlighted(key, false) }
-        commitQueue.complete(token: token, as: .suppressed)
-        endSignpost(state, token: token, phase: 1)
-        refreshPreview()
-        flushCompletedKeys()
-    }
-
-    func flushCompletedKeys() {
-        while let action = commitQueue.popReadyAction() {
-            switch action {
-            case let .event(token, event): onContactEvent(token, event)
-            case .suppressed: continue
-            }
-        }
+        finishV2RepeatedTouch(token: token, state: state)
     }
 
     func setHighlighted(_ key: KeySpec, _ highlighted: Bool) {
@@ -123,17 +87,6 @@ extension KeyboardSurfaceInteractionController {
         repeatTouch = nil
     }
 
-    func takeLegacyToken(for keyID: String) -> TouchToken? {
-        guard var tokens = legacyTokensByKeyID[keyID], !tokens.isEmpty else { return nil }
-        let token = tokens.removeFirst()
-        if tokens.isEmpty {
-            legacyTokensByKeyID.removeValue(forKey: keyID)
-        } else {
-            legacyTokensByKeyID[keyID] = tokens
-        }
-        return token
-    }
-
     func endSignpost(_ state: TouchState, token: TouchToken, phase: Int) {
         os_signpost(
             .end,
@@ -143,7 +96,7 @@ extension KeyboardSurfaceInteractionController {
             "token=%{public}llu phase=%{public}d depth=%{public}d",
             token,
             phase,
-            commitQueue.depth
+            touches.count
         )
     }
 }

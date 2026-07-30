@@ -16,8 +16,8 @@ struct KeyboardTouchShadowOrderingTests {
         consume(pipeline, clock, shadowSample(2, .began, 0.01, .init(x: 70, y: 20)))
         consume(pipeline, clock, shadowSample(2, .ended, 0.02, .init(x: 70, y: 20)))
         consume(pipeline, clock, shadowSample(1, .ended, 0.03, .init(x: 10, y: 20)))
-        pipeline.recordLegacyRelease(a)
-        pipeline.recordLegacyRelease(b)
+        pipeline.recordActualRelease(a)
+        pipeline.recordActualRelease(b)
 
         #expect(pipeline.trace.metrics.matched == 2)
         #expect(pipeline.trace.metrics.orderMismatch == 0)
@@ -33,7 +33,7 @@ struct KeyboardTouchShadowOrderingTests {
         consume(pipeline, clock, shadowSample(2, .began, 0.01, .init(x: 70, y: 20)))
         consume(pipeline, clock, shadowSample(2, .ended, 0.02, .init(x: 70, y: 20)))
         clock.advance(to: 0.061)
-        pipeline.recordLegacyRelease(b)
+        pipeline.recordActualRelease(b)
 
         #expect(pipeline.trace.metrics.shadowResolved == 1)
         #expect(pipeline.trace.metrics.matched == 1)
