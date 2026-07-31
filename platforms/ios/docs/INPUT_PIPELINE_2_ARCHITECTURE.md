@@ -107,6 +107,8 @@ Thiết kế này dựa trên các contract chính thức sau:
 
 Apple không cung cấp contract rằng thứ tự duyệt một `Set<UITouch>` là thứ tự người dùng nhấn. Vì vậy pipeline phải tự lưu intent timestamp và sequence ngay tại `touchesBegan`.
 
+Capture layer sort batch theo `(timestamp, x, y)` trước khi cấp `ContactID`. Việc này **không** khôi phục thứ tự vật lý — nó chỉ làm một lần chạy có thể tái lập, để test và trace không phụ thuộc thứ tự hash của `Set`.
+
 ---
 
 ## 4. Mục tiêu
@@ -267,6 +269,18 @@ Không có:
 - tự tạo `released` từ system cancellation;
 - controller-wide `cancelAll()` khi presentation đổi.
 
+Mỗi callback chạy ba pha theo đúng thứ tự:
+
+```text
+recognize  → presentation + gesture claim (onBegin / onMove)
+commit     → pipeline consume sample
+finish     → terminal bookkeeping (onEnd / onCancel)
+```
+
+Recognize phải đi trước commit: một swipe vượt ngưỡng ở move cuối cùng — move đó được giao kèm sample `.ended`. Nếu commit chạy trước, phím bên dưới đã vào document rồi gesture mới claim, nên spacebar chèn dấu cách và toggle ngôn ngữ mất. Finish đi sau cùng để controller chỉ tháo contact khi press của nó đã được tính.
+
+Sau khi một contact bị gesture claim, resolver không còn track nó, nên các callback tiếp theo trả `unknownContact`. Đó là trạng thái mong đợi, không phải regression, và không được tính vào `resolverUnknownCallback`.
+
 ### 7.3. Vì sao vẫn dùng một unified touch view
 
 Hai lựa chọn đã xem xét:
@@ -307,10 +321,11 @@ stateDiagram-v2
     [*] --> Tracking: began
     Tracking --> Tracking: moved
     Tracking --> TapResolved: ended on key
+    Tracking --> TapResolved: ended outside, role recovers
     Tracking --> SwipeResolved: swipe threshold
     Tracking --> AlternateResolved: alternate selected
     Tracking --> RepeatResolved: repeat fired
-    Tracking --> Cancelled: cancelled / ended outside
+    Tracking --> Cancelled: cancelled / ended outside, role does not recover
     TapResolved --> [*]
     SwipeResolved --> [*]
     AlternateResolved --> [*]
@@ -358,6 +373,29 @@ Theme color hoặc pressed appearance có thể đổi mà không thay geometry.
 - không tự insert character.
 
 Nếu thực tế cho thấy UIKit cancellation xảy ra trong một normal fast tap, đó phải là telemetry signal và được điều tra ở view lifecycle. Không biến cancellation thành success vì điều đó có thể tạo extra Backspace, Return hoặc character mà người dùng không định nhập.
+
+### 8.4. Release recovery
+
+Một tap nhanh bằng hai ngón cái hiếm khi nhấc đúng chỗ đã chạm. Hai trường hợp drift được xử lý như nhau — commit theo phím ngón đã chạm, không hủy press:
+
+- **tap slop:** ngón trượt qua ngưỡng slop nhưng vẫn trên keycap;
+- **release outside:** ngón nhấc ra ngoài tracked geometry (union keycap nới 12pt).
+
+Trường hợp thứ hai trước đây bị hủy, và đó là đường mất phím im lặng còn lại trong touch layer. Đây **không** phải cancellation: `touchesEnded` nghĩa là người dùng đã hoàn tất intent, khác hẳn `touchesCancelled` ở §8.3.
+
+Luật theo role nằm trong một value type:
+
+```swift
+public struct KeyboardTouchRecoveryPolicy: Equatable, Sendable {
+    public let eligibleRoles: Set<KeyRole>
+    public let tapSlopRecoveringRoles: Set<KeyRole>
+    public let releaseOutsideRecoveringRoles: Set<KeyRole>
+}
+```
+
+Thêm một luật recovery mới là thêm một property ở đây, không đổi signature của pipeline.
+
+Telemetry: `endedOutside` đếm mọi release ngoài vùng, `recoveredReleaseOutside` đếm phần được giữ lại. Hai số này cho biết tần suất thật của drift trên thiết bị.
 
 ---
 
@@ -417,6 +455,23 @@ commitTime <= resolvedTime + rolloverWindow + schedulerJitter
 ```
 
 Một unresolved contact chỉ được giữ quyền ordering trong rollover window. Sau đó nó không còn là global head blocker.
+
+Khi bypass xảy ra, arbiter ghi `maximumBypassHoldSeconds` — thời gian head đã bị giữ tại thời điểm hết window. Đây là dữ liệu để chốt câu hỏi mở §19.1 và §19.2 bằng đo đạc thay vì cảm tính.
+
+### 9.6. Teardown không được nuốt press đã resolved
+
+`reset()` hủy toàn bộ state. Nếu gọi thẳng, các press đã resolved đang đợi ordering window sẽ biến mất mà không phát gì — đúng là mất phím.
+
+Vì vậy arbiter có `flushResolved()`: phát mọi press mà ngón đã nhấc, theo intent order, và **không** đụng tới contact còn active (ngón chưa nhấc thì không được commit, theo §8.3).
+
+Teardown chia hai loại:
+
+| Tình huống | Flush | Lý do |
+|---|---|---|
+| Layout đổi (`presentationDidChange`) | có | surface vẫn sống, document vẫn nhận được ký tự |
+| Keyboard biến mất (`didMoveToWindow`) | không | proxy đang mất theo |
+
+Đây là biện pháp tạm cho đến khi deferred layout gate ở §5.4.3 được hiện thực; gate đó vẫn là mục tiêu đúng, vì nó loại bỏ hẳn teardown giữa chừng thay vì cứu vãn nó.
 
 ### 9.5. Exact timestamp ties
 
@@ -521,6 +576,10 @@ Phân biệt:
 
 - **authored mutation:** thay đổi do transaction Funput vừa apply;
 - **external mutation:** người dùng/host app thay đổi document hoặc selection.
+
+Host acknowledge một insertion qua **cả hai** callback: text đổi và caret dời. Khi gõ nhanh, các echo này tới sau phím kế tiếp, nên `selectionDidChange` mang context cũ hơn shadow. Vì vậy cả hai callback đều phải đi qua echo ledger; chỉ dùng ledger cho `textDidChange` sẽ khiến một selection echo trễ bị hiểu là external edit, `composer` bị clear giữa từ, và modifier tiếp theo rơi ra dạng literal — đúng triệu chứng ở §2.1.
+
+Ngoại lệ: khi snapshot báo `hasSelection`, callback luôn được xử lý như external. Người dùng thật sự đang bôi đen thì composition phải đóng.
 
 External mutation:
 
