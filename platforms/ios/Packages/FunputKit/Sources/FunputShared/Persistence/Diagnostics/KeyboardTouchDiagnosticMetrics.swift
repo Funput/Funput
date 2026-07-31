@@ -8,12 +8,15 @@ public struct KeyboardTouchDiagnosticMetrics: Codable, Equatable, Sendable {
     public var resolverUnknownCallback = 0
     public var beganOutside = 0
     public var endedOutside = 0
+    public var recoveredReleaseOutside = 0
     public var recoveredTapSlop = 0
+    public var flushedOnLayoutChange = 0
     public var layoutChangedWhileActive = 0
     public var timestampTieContacts = 0
     public var maximumConcurrentContacts = 0
     public var maximumArbiterDepth = 0
     public var arbiterBypassCount = 0
+    public var maximumBypassHoldMilliseconds = 0
     public var ownershipViolation = 0
     public var releaseCommitted = 0
     public var repeatEmitted = 0
