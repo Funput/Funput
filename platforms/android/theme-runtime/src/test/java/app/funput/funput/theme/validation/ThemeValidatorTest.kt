@@ -1,18 +1,23 @@
 package app.funput.funput.theme.validation
 
+import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemes
+import app.funput.funput.theme.LocalKeyboardThemeCatalog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ThemeValidatorTest {
+    /** Reads the catalog rather than a list, so a preset cannot ship without being measured. */
     @Test
     fun bundledThemesAreReadable() {
-        assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.Ink))
-        assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.Paper))
-        assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.GlassDark))
-        assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.GlassLight))
-        assertEquals(emptyList<ThemeIssue>(), ThemeValidator.validate(KeyboardThemes.Slate))
+        LocalKeyboardThemeCatalog.themes.forEach { descriptor: KeyboardThemeDescriptor ->
+            assertEquals(
+                "${descriptor.name} pairs colors the reader cannot resolve",
+                emptyList<ThemeIssue>(),
+                ThemeValidator.validate(descriptor.theme),
+            )
+        }
     }
 
     @Test

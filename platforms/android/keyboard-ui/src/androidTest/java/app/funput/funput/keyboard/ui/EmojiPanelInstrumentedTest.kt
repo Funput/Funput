@@ -9,7 +9,9 @@ import app.funput.funput.keyboard.ui.emoji.EmojiPanelPalette
 import app.funput.funput.keyboard.ui.emoji.EmojiSearchContentView
 import app.funput.funput.keyboard.ui.emoji.EmojiSearchMode
 import app.funput.funput.keyboard.ui.emoji.EmojiSearchState
+import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemes
+import app.funput.funput.theme.LocalKeyboardThemeCatalog
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -23,13 +25,9 @@ class EmojiPanelInstrumentedTest {
                 val panel = EmojiPanelView(activity)
                 parent.addView(panel, LinearLayout.LayoutParams(-1, -1))
                 activity.setContentView(parent)
-                listOf(
-                    KeyboardThemes.Ink,
-                    KeyboardThemes.Paper,
-                    KeyboardThemes.GlassDark,
-                    KeyboardThemes.GlassLight,
-                    KeyboardThemes.Slate,
-                ).forEach(panel::updateTheme)
+                LocalKeyboardThemeCatalog.themes
+                    .map(KeyboardThemeDescriptor::theme)
+                    .forEach(panel::updateTheme)
             }
         }
     }
