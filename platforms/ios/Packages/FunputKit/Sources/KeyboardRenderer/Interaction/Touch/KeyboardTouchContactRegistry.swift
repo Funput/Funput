@@ -72,9 +72,15 @@ struct KeyboardTouchContactRegistry {
         states.removeValue(forKey: id)
     }
 
-    mutating func reset() {
+    /// Starts a fresh metrics session.
+    ///
+    /// `flushedOnLayoutChange` counts the resets themselves, so it has to be carried across
+    /// one or the very reset it measures would erase the evidence. The caller decides: a
+    /// layout swap carries, a new diagnostics session starts from zero.
+    mutating func reset(carryingFlushCount flushed: Int = 0) {
         states.removeAll(keepingCapacity: true)
         metrics = KeyboardTouchMetrics()
+        metrics.flushedOnLayoutChange = flushed
     }
 }
 #endif

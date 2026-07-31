@@ -11,7 +11,9 @@ extension KeyboardSurfaceView {
         if layoutChanged {
             touchOverlay.forgetTrackedTouches()
             interactionController.cancelAll()
-            resetTouchPipeline()
+            // The surface survives a layout swap, so presses whose finger already lifted still
+            // belong in the document. Only contacts still down are discarded.
+            resetTouchPipeline(flushingResolvedPresses: true)
             rebuildKeys()
         }
         if layoutChanged || sizingChanged { geometryCache = nil }

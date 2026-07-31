@@ -1,112 +1,73 @@
 #if canImport(UIKit)
 @testable import KeyboardRenderer
-import CoreGraphics
-import Foundation
 import KeyboardLayout
-import KeyboardTouchCore
 import Testing
 
 @MainActor
 struct KeyboardTouchCoordinatorTests {
     @Test("Touch pipeline commits a release and settles ownership")
     func commitContact() {
-        var output: [KeyboardKeyEvent] = []
-        let clock = TestNow()
-        let coordinator = KeyboardTouchCoordinator(
-            clock: { clock.value },
-            onEvent: { output.append($0) }
-        )
-        coordinator.updateGeometry(geometry())
-        coordinator.consume(sample(1, .began, 0, x: 10))
-        clock.value = 0.1
-        coordinator.consume(sample(1, .ended, 0.1, x: 10))
-        coordinator.finishUIKitContact(1)
+        let fixture = KeyboardTouchFixture.adjacentKeys()
+        fixture.begin(x: 10, at: 0)
+        fixture.clock.now = 0.1
+        fixture.end(x: 10, at: 0.1)
 
-        #expect(output.map(\.key.id) == ["a"])
-        #expect(coordinator.metrics.committedContacts == 1)
-        #expect(coordinator.metrics.releaseCommitted == 1)
-        #expect(coordinator.metrics.maximumCaptureToCommitLatencyMilliseconds == 100)
-        #expect(coordinator.pendingContactCount == 0)
+        #expect(fixture.output.map(\.key.id) == ["a"])
+        #expect(fixture.coordinator.metrics.committedContacts == 1)
+        #expect(fixture.coordinator.metrics.releaseCommitted == 1)
+        #expect(
+            fixture.coordinator.metrics.maximumCaptureToCommitLatencyMilliseconds == 100
+        )
+        #expect(fixture.coordinator.pendingContactCount == 0)
     }
 
     @Test("Long holds release while system cancellation never commits")
     func durationAndCancellation() {
-        var output: [KeyboardKeyEvent] = []
-        let clock = TestNow()
-        let coordinator = KeyboardTouchCoordinator(
-            clock: { clock.value },
-            onEvent: { output.append($0) }
-        )
-        coordinator.updateGeometry(geometry())
-        coordinator.consume(sample(1, .began, 0, x: 10))
-        clock.value = 0.301
-        coordinator.consume(sample(1, .ended, 0.301, x: 10))
-        coordinator.finishUIKitContact(1)
-        #expect(output.map(\.phase) == [.released])
+        let fixture = KeyboardTouchFixture.adjacentKeys()
+        fixture.begin(x: 10, at: 0)
+        fixture.clock.now = 0.301
+        fixture.end(x: 10, at: 0.301)
+        #expect(fixture.output.map(\.phase) == [.released])
 
-        coordinator.consume(sample(2, .began, 1, x: 10))
-        coordinator.consume(sample(2, .cancelled, 1.1, x: 10))
-        coordinator.finishUIKitContact(2)
-        #expect(output.last?.phase == .cancelled)
-        #expect(coordinator.metrics.systemCancelled == 1)
-        #expect(coordinator.pendingContactCount == 0)
+        fixture.begin(id: 2, x: 10, at: 1)
+        fixture.coordinator.consume(fixture.sample(.cancelled, id: 2, x: 10, at: 1.1))
+        fixture.coordinator.finishUIKitContact(2)
+
+        #expect(fixture.output.last?.phase == .cancelled)
+        #expect(fixture.coordinator.metrics.systemCancelled == 1)
+        #expect(fixture.coordinator.pendingContactCount == 0)
     }
 
     @Test("Production metrics observe, settle, and reset directly")
     func directMetrics() {
-        let coordinator = KeyboardTouchCoordinator(onEvent: { _ in })
+        let fixture = KeyboardTouchFixture.adjacentKeys()
         var observations: [KeyboardTouchMetrics] = []
-        coordinator.observe { observations.append($0) }
-        coordinator.updateGeometry(geometry())
-        coordinator.consume(sample(1, .began, 1, x: 10))
-        coordinator.consume(sample(2, .began, 1, x: 10))
-        coordinator.recordUnknownCaptureCallback()
+        fixture.coordinator.observe { observations.append($0) }
+        // Both contacts report the same timestamp, which is what a tie looks like.
+        fixture.begin(id: 1, x: 10, at: 1)
+        fixture.begin(id: 2, x: 10, at: 1)
+        fixture.coordinator.recordUnknownCaptureCallback()
 
-        #expect(coordinator.metrics.capturedContacts == 2)
-        #expect(coordinator.metrics.timestampTieContacts == 2)
-        #expect(coordinator.metrics.maximumConcurrentContacts == 2)
-        #expect(coordinator.metrics.captureUnknownCallback == 1)
+        #expect(fixture.coordinator.metrics.capturedContacts == 2)
+        #expect(fixture.coordinator.metrics.timestampTieContacts == 2)
+        #expect(fixture.coordinator.metrics.maximumConcurrentContacts == 2)
+        #expect(fixture.coordinator.metrics.captureUnknownCallback == 1)
         #expect(!observations.isEmpty)
 
-        coordinator.reset()
-        #expect(coordinator.metrics == .init())
-        #expect(coordinator.activeContactCount == 0)
-        #expect(coordinator.pendingContactCount == 0)
+        fixture.coordinator.reset()
+        #expect(fixture.coordinator.metrics == .init())
+        #expect(fixture.coordinator.activeContactCount == 0)
+        #expect(fixture.coordinator.pendingContactCount == 0)
     }
 
-    private func geometry() -> ResolvedKeyboard {
-        ResolvedKeyboard(
-            size: .init(width: 100, height: 50),
-            toolbarFrame: nil,
-            rows: [[ResolvedKey(
-                spec: key("a"),
-                frame: .init(x: 0, y: 0, width: 45, height: 50)
-            )]]
-        )
-    }
+    @Test("Distinct timestamps are not counted as ties")
+    func distinctTimestampsAreNotTies() {
+        let fixture = KeyboardTouchFixture.adjacentKeys()
+        fixture.begin(id: 1, x: 10, at: 1)
+        fixture.begin(id: 2, x: 60, at: 1.01)
 
-    private func key(_ id: String) -> KeySpec {
-        KeySpec(id: id, label: id, role: .character)
+        #expect(fixture.coordinator.metrics.capturedContacts == 2)
+        #expect(fixture.coordinator.metrics.timestampTieContacts == 0)
     }
-
-    private func sample(
-        _ id: UInt64,
-        _ phase: ContactPhase,
-        _ timestamp: TimeInterval,
-        x: CGFloat
-    ) -> ContactSample {
-        ContactSample(
-            id: .init(rawValue: id),
-            phase: phase,
-            timestamp: timestamp,
-            location: .init(x: x, y: 20),
-            previousLocation: .init(x: x, y: 20)
-        )
-    }
-}
-
-@MainActor
-private final class TestNow {
-    var value = TimeInterval(0)
 }
 #endif

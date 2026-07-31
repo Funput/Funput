@@ -1,15 +1,13 @@
 #if canImport(UIKit)
 @testable import KeyboardRenderer
-import Foundation
 import KeyboardLayout
-import KeyboardTouchCore
 import Testing
 
 @MainActor
 struct KeyboardTouchGestureTests {
     @Test("Repeat uses its own lane and suppresses base release")
     func repeatLane() {
-        let fixture = Fixture(key: key("delete", .backspace))
+        let fixture = KeyboardTouchFixture.singleKey(key("delete", .backspace))
         fixture.begin()
         fixture.coordinator.claim(token: 1, kind: .repeatKey)
         let repeated = fixture.event(.repeated)
@@ -27,7 +25,7 @@ struct KeyboardTouchGestureTests {
 
     @Test("Alternate and swipe are terminal touch actions")
     func alternateAndSwipe() {
-        let alternate = Fixture(key: key("a", .character))
+        let alternate = KeyboardTouchFixture.singleKey(key("a", .character))
         alternate.begin()
         alternate.coordinator.claim(token: 1, kind: .alternate)
         _ = alternate.coordinator.handleInteraction(
@@ -38,7 +36,9 @@ struct KeyboardTouchGestureTests {
         #expect(alternate.output.map(\.phase) == [.alternateSelected(.init(text: "á"))])
         #expect(alternate.coordinator.metrics.alternateCommitted == 1)
 
-        let swipe = Fixture(key: key("space", .space, swipe: .toggleLanguage))
+        let swipe = KeyboardTouchFixture.singleKey(
+            key("space", .space, swipe: .toggleLanguage)
+        )
         swipe.begin()
         swipe.coordinator.claim(token: 1, kind: .swipe)
         _ = swipe.coordinator.handleInteraction(
@@ -57,7 +57,7 @@ struct KeyboardTouchGestureTests {
             .inputMethod, .systemInputMode, .enter, .emoji,
         ]
         for role in roles {
-            let fixture = Fixture(key: key(role.rawValue, role))
+            let fixture = KeyboardTouchFixture.singleKey(key(role.rawValue, role))
             fixture.begin()
             fixture.coordinator.consume(fixture.sample(.ended, at: 0.1))
             fixture.coordinator.finishUIKitContact(1)
@@ -66,58 +66,35 @@ struct KeyboardTouchGestureTests {
         }
     }
 
+    @Test("Callbacks for a claimed contact are expected, not regressions")
+    func claimedContactCallbacks() {
+        let fixture = KeyboardTouchFixture.singleKey(key("a", .character))
+        fixture.begin()
+        fixture.coordinator.claim(token: 1, kind: .alternate)
+        fixture.coordinator.consume(fixture.sample(.moved, at: 0.1))
+        fixture.coordinator.consume(fixture.sample(.ended, at: 0.2))
+
+        #expect(fixture.coordinator.metrics.resolverUnknownCallback == 0)
+        #expect(!fixture.coordinator.metrics.hasRegression)
+    }
+
+    @Test("A claim the pipeline already committed is refused")
+    func refusedClaim() {
+        let fixture = KeyboardTouchFixture.singleKey(key("a", .character))
+        fixture.begin()
+        fixture.coordinator.consume(fixture.sample(.ended, at: 0.1))
+        fixture.coordinator.finishUIKitContact(1)
+
+        #expect(fixture.coordinator.claim(token: 1, kind: .alternate) == false)
+        #expect(fixture.coordinator.metrics.gestureConflict == 1)
+    }
+
     private func key(
         _ id: String,
         _ role: KeyRole,
         swipe: KeySwipeAction? = nil
     ) -> KeySpec {
         KeySpec(id: id, label: id, role: role, horizontalSwipeAction: swipe)
-    }
-}
-
-@MainActor
-private final class Fixture {
-    private final class EventBox {
-        var values: [KeyboardKeyEvent] = []
-    }
-
-    let key: KeySpec
-    let coordinator: KeyboardTouchCoordinator
-    private let box = EventBox()
-    var output: [KeyboardKeyEvent] { box.values }
-
-    init(key: KeySpec) {
-        self.key = key
-        let eventBox = box
-        coordinator = KeyboardTouchCoordinator { eventBox.values.append($0) }
-        coordinator.updateGeometry(
-            ResolvedKeyboard(
-                size: .init(width: 50, height: 50),
-                toolbarFrame: nil,
-                rows: [[ResolvedKey(
-                    spec: key,
-                    frame: .init(x: 0, y: 0, width: 50, height: 50)
-                )]]
-            )
-        )
-    }
-
-    func begin() {
-        coordinator.consume(sample(.began, at: 0))
-    }
-
-    func sample(_ phase: ContactPhase, at timestamp: TimeInterval) -> ContactSample {
-        ContactSample(
-            id: .init(rawValue: 1),
-            phase: phase,
-            timestamp: timestamp,
-            location: .init(x: 25, y: 25),
-            previousLocation: .init(x: 25, y: 25)
-        )
-    }
-
-    func event(_ phase: KeyboardKeyEvent.Phase) -> KeyboardKeyEvent {
-        KeyboardKeyEvent(key: key, phase: phase)
     }
 }
 #endif

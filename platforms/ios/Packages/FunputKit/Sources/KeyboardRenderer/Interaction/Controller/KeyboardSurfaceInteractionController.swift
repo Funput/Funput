@@ -46,7 +46,9 @@ final class KeyboardSurfaceInteractionController {
     let haptics: KeyboardHaptics
     let onEvent: (KeyboardKeyEvent) -> Void
     let onContactEvent: ContactEventHandler
-    let onClaimGesture: (TouchToken, GestureClaim) -> Void
+    /// Returns whether the pipeline handed the contact over. A refusal means this controller
+    /// must not emit the gesture — the press already went out through the touch pipeline.
+    let onClaimGesture: (TouchToken, GestureClaim) -> Bool
     let onPreview: PreviewHandler
     let onAlternatePreview: AlternatePreviewHandler
     let onHighlight: HighlightHandler
@@ -74,7 +76,7 @@ final class KeyboardSurfaceInteractionController {
         feedbackView: UIView = UIView(),
         onEvent: @escaping (KeyboardKeyEvent) -> Void,
         onContactEvent: ContactEventHandler? = nil,
-        onClaimGesture: @escaping (TouchToken, GestureClaim) -> Void = { _, _ in },
+        onClaimGesture: @escaping (TouchToken, GestureClaim) -> Bool = { _, _ in true },
         onPreview: @escaping PreviewHandler,
         onAlternatePreview: @escaping AlternatePreviewHandler = { _, _, _ in },
         onHighlight: @escaping HighlightHandler = { _, _ in },

@@ -29,7 +29,7 @@ public final class KeyboardSurfaceView: UIView {
             self?.handleContactInteractionEvent(token: token, event: event)
         },
         onClaimGesture: { [weak self] token, kind in
-            self?.claimContactGesture(token, kind: kind)
+            self?.claimContactGesture(token, kind: kind) ?? false
         },
         onPreview: { [weak self] key, frame in self?.updatePreview(key, sourceFrame: frame) },
         onAlternatePreview: { [weak self] key, layout, selectedIndex in
@@ -81,8 +81,9 @@ public final class KeyboardSurfaceView: UIView {
         geometry.keys.forEach { key in
             keyControls[key.spec.id]?.frame = key.frame
         }
-        touchOverlay.updateGeometry(geometry)
+        // The coordinator owns the snapshot and its revision; the overlay borrows the same one.
         touchCoordinator.updateGeometry(geometry)
+        touchOverlay.adoptGeometry(touchCoordinator.geometrySnapshot)
     }
 
     public override func didMoveToWindow() {

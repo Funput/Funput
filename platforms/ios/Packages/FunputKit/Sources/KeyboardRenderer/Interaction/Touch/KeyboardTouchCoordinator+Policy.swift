@@ -4,12 +4,6 @@ import KeyboardTouchCore
 import KeyboardTouchUIKit
 
 extension KeyboardTouchCoordinator {
-    static let touchRoles: Set<KeyRole> = [
-        .character, .vniModifier, .punctuation, .shift, .backspace,
-        .symbols, .moreSymbols, .letters, .inputMethod, .systemInputMode,
-        .space, .enter, .emoji,
-    ]
-
     func consume(_ sample: ContactSample) {
         switch pipeline.consume(sample) {
         case let .began(id, hit):
@@ -22,15 +16,19 @@ extension KeyboardTouchCoordinator {
             if metadata.exceededTapSlop {
                 registry.metrics.recoveredTapSlop += 1
             }
-        case let .fallback(id, reason):
-            if reason == .endedOutside { registry.metrics.endedOutside += 1 }
+        case let .fallback(id, _):
+            // `endedOutside` is counted by the pipeline, which also sees the recovered ones.
             cancel(id, emit: true, system: false)
         case let .cancelled(id):
             cancel(id, emit: true, system: true)
         case let .ignored(reason):
             switch reason {
             case .unknownContact:
-                registry.metrics.resolverUnknownCallback += 1
+                // A claimed gesture owns the contact, so the resolver no longer tracks it.
+                // Those callbacks are expected and must not read as a regression.
+                if claims[sample.id] == nil {
+                    registry.metrics.resolverUnknownCallback += 1
+                }
             case .beganOutside:
                 registry.metrics.beganOutside += 1
             case .duplicateBegin:
@@ -45,25 +43,30 @@ extension KeyboardTouchCoordinator {
         notify()
     }
 
+    /// Takes ownership of a contact for a gesture. Returns whether the caller may go on to
+    /// emit that gesture: a refusal means the pipeline no longer owns the contact, so emitting
+    /// anyway would drop the action and count the failure twice.
+    @discardableResult
     func claim(
         token: UInt64,
         kind: KeyboardSurfaceInteractionController.GestureClaim
-    ) {
+    ) -> Bool {
         let id = ContactID(rawValue: token)
-        guard claims[id] == nil else { return }
+        if let existing = claims[id] { return existing == kind }
         let accepted = kind == .repeatKey
             ? pipeline.detach(id, at: clock())
             : pipeline.claimForGesture(id)
         guard accepted else {
             registry.metrics.gestureConflict += 1
             notify()
-            return
+            return false
         }
         claims[id] = kind
         if kind == .repeatKey {
             registry.metrics.repeatClaimedContacts += 1
         }
         notify()
+        return true
     }
 
     func handleInteraction(
@@ -115,34 +118,6 @@ extension KeyboardTouchCoordinator {
             registry.finish(id)
         } else {
             cancel(id, emit: true)
-        }
-    }
-}
-
-extension KeyboardTouchAction {
-    var keyEvent: KeyboardKeyEvent {
-        switch self {
-        case let .released(hit):
-            KeyboardKeyEvent(key: hit.key, phase: .released)
-        case let .repeated(hit):
-            KeyboardKeyEvent(key: hit.key, phase: .repeated)
-        case let .alternate(hit, alternate):
-            KeyboardKeyEvent(key: hit.key, phase: .alternateSelected(alternate))
-        case let .swiped(hit, action):
-            KeyboardKeyEvent(key: hit.key, phase: .swiped(action))
-        case let .cancelled(hit):
-            KeyboardKeyEvent(key: hit.key, phase: .cancelled)
-        }
-    }
-}
-
-extension KeyRole {
-    var isControl: Bool {
-        switch self {
-        case .character, .vniModifier, .punctuation, .space, .backspace:
-            false
-        default:
-            true
         }
     }
 }

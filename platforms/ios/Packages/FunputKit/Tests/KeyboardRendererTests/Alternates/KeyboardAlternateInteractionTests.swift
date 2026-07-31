@@ -25,19 +25,22 @@ struct KeyboardAlternateInteractionTests {
         #expect(value.text == "á")
     }
 
-    @Test("Quick tap and early drag keep normal key semantics")
+    /// The controller owns presentation and gesture recognition only. A plain tap has no
+    /// terminal event here — `KeyboardTouchCoordinator` commits the release through the
+    /// arbiter, so emitting one from the controller too would type the key twice.
+    @Test("Quick tap and early drag stay with the touch pipeline")
     func normalTouches() {
         let quick = Subject()
         quick.begin()
         quick.controller.endTouch(token: 1)
-        #expect(quick.events.map(\.phase) == [.pressed, .released])
+        #expect(quick.events.map(\.phase) == [.pressed])
 
         let dragged = Subject()
         dragged.begin()
         dragged.move(to: CGPoint(x: 140, y: 220))
         dragged.scheduler.runNext()
         dragged.controller.endTouch(token: 1)
-        #expect(dragged.events.map(\.phase) == [.pressed, .released])
+        #expect(dragged.events.map(\.phase) == [.pressed])
         #expect(dragged.palette == nil)
     }
 

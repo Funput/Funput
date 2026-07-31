@@ -19,11 +19,9 @@ final class KeyboardTouchCoordinator {
     var tiedContacts: Set<ContactID> = []
     private var observer: Observer?
     lazy var pipeline = KeyboardTouchPipeline(
-        eligibleRoles: Self.touchRoles,
-        recoveringTapSlopRoles: Self.touchRoles,
-        resolverConfiguration: .init(
-            maximumTapDuration: .greatestFiniteMagnitude
-        ),
+        policy: Self.recoveryPolicy,
+        resolverConfiguration: Self.resolverConfiguration,
+        arbiterConfiguration: Self.arbiterConfiguration,
         clock: clock,
         onResolved: { [weak self] id, time in self?.terminalAt[id] = time },
         onStaleDeadline: { [weak self] in
@@ -47,6 +45,8 @@ final class KeyboardTouchCoordinator {
     var pendingContactCount: Int { registry.pendingCount }
     var metrics: KeyboardTouchMetrics { registry.metrics }
 
+    var geometrySnapshot: KeyboardGeometrySnapshot? { pipeline.geometrySnapshot }
+
     func updateGeometry(_ geometry: ResolvedKeyboard) {
         let wasActive = activeContactCount > 0
         if pipeline.updateGeometry(geometry), wasActive {
@@ -60,9 +60,17 @@ final class KeyboardTouchCoordinator {
         observer?(metrics)
     }
 
-    func reset() {
+    /// Tears down every contact. Pass `flushingResolvedPresses` when the surface stays alive —
+    /// a layout swap must not swallow presses whose finger already lifted. Leave it off when the
+    /// keyboard itself is going away, since the document proxy is on its way out too.
+    func reset(flushingResolvedPresses: Bool = false) {
+        // Flush first: the emissions still need the registry to claim exactly-once ownership.
+        // A teardown that does not flush is a session boundary and starts the counter over.
+        let carried = flushingResolvedPresses
+            ? registry.metrics.flushedOnLayoutChange + pipeline.flushResolvedPresses()
+            : 0
         pipeline.reset()
-        registry.reset()
+        registry.reset(carryingFlushCount: carried)
         beganAt.removeAll(keepingCapacity: true)
         terminalAt.removeAll(keepingCapacity: true)
         hits.removeAll(keepingCapacity: true)

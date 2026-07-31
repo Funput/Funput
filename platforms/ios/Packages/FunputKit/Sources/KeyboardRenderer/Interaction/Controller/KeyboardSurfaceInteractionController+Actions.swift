@@ -10,7 +10,9 @@ extension KeyboardSurfaceInteractionController {
               state.currentKey?.id == state.initialKey.id,
               let sourceFrame = state.currentFrame,
               !state.initialKey.alternates.isEmpty else { return }
-        onClaimGesture(token, .alternate)
+        // No palette at all if the pipeline already committed this press; showing one whose
+        // selection would silently vanish is worse than not offering it.
+        guard onClaimGesture(token, .alternate) else { return }
         state.alternateLayout = .resolve(
             count: state.initialKey.alternates.count,
             sourceFrame: sourceFrame,
@@ -29,7 +31,8 @@ extension KeyboardSurfaceInteractionController {
     }
 
     func finishSwipe(token: TouchToken, state: TouchState, action: KeySwipeAction) {
-        onClaimGesture(token, .swipe)
+        // A refused claim leaves the contact with the pipeline, which commits the key normally.
+        guard onClaimGesture(token, .swipe) else { return }
         completeSwipe(token: token, state: state, action: action)
     }
 
@@ -37,7 +40,7 @@ extension KeyboardSurfaceInteractionController {
         guard let token = repeatTouch, let state = touches[token],
               state.initialKey.role == .backspace || state.initialKey.role == .space
         else { return }
-        onClaimGesture(token, .repeatKey)
+        guard onClaimGesture(token, .repeatKey) else { return }
         let event = KeyboardKeyEvent(key: state.initialKey, phase: .repeated)
         onContactEvent(token, event)
         if hapticsEnabled { haptics.perform(.deleteRepeat) }

@@ -7,12 +7,15 @@ public struct KeyboardTouchMetrics: Equatable, Sendable {
     public internal(set) var resolverUnknownCallback = 0
     public internal(set) var beganOutside = 0
     public internal(set) var endedOutside = 0
+    public internal(set) var recoveredReleaseOutside = 0
     public internal(set) var recoveredTapSlop = 0
+    public internal(set) var flushedOnLayoutChange = 0
     public internal(set) var layoutChangedWhileActive = 0
     public internal(set) var timestampTieContacts = 0
     public internal(set) var maximumConcurrentContacts = 0
     public internal(set) var maximumArbiterDepth = 0
     public internal(set) var arbiterBypassCount = 0
+    public internal(set) var maximumBypassHoldMilliseconds = 0
     public internal(set) var ownershipViolation = 0
     public internal(set) var releaseCommitted = 0
     public internal(set) var repeatEmitted = 0

@@ -28,13 +28,24 @@ extension KeyboardTouchCoordinator {
             registry.metrics.maximumArbiterDepth,
             pipeline.orderedContactCount + pipeline.heldContactCount
         )
+        let statistics = pipeline.statistics
         registry.metrics.arbiterBypassCount = Int(
-            clamping: pipeline.bypassedContactCount
+            clamping: statistics.arbiter.bypassedContacts
         )
+        registry.metrics.maximumBypassHoldMilliseconds = max(
+            registry.metrics.maximumBypassHoldMilliseconds,
+            Int((statistics.arbiter.maximumBypassHoldSeconds * 1_000).rounded())
+        )
+        registry.metrics.endedOutside = statistics.releasesOutside
+        registry.metrics.recoveredReleaseOutside = statistics.recoveredReleasesOutside
     }
 
     func recordTimestampTie(_ id: ContactID, at timestamp: TimeInterval) {
         let peers = beganAt.filter { $0.value == timestamp }.map(\.key)
+        // `peers + [id]` always contains `id`, so without this guard every contact counted and
+        // the metric merely mirrored `capturedContacts`. It has to answer the open question in
+        // the architecture document (§9.5): how often UIKit really reports equal timestamps.
+        guard !peers.isEmpty else { return }
         for contact in peers + [id] where tiedContacts.insert(contact).inserted {
             registry.metrics.timestampTieContacts += 1
         }

@@ -18,9 +18,9 @@ final class KeyboardTouchOverlayView: UIView {
     var onSamples: (([ContactSample]) -> Void)?
     var onUnknownCapture: (() -> Void)?
 
-    private static let outerTolerance: CGFloat = 12
-    private var keys: [ResolvedKey] = []
-    private var trackingBounds = CGRect.null
+    /// Borrowed from the pipeline, not rebuilt: the exact snapshot new contacts commit
+    /// against, so a press can never highlight one key and commit another.
+    private var geometry: KeyboardGeometrySnapshot?
     let captureAdapter = UIKitTouchCaptureAdapter()
 
     override init(frame: CGRect) {
@@ -36,17 +36,12 @@ final class KeyboardTouchOverlayView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func updateGeometry(_ geometry: ResolvedKeyboard) {
-        keys = geometry.keys
-        let union = keys.reduce(CGRect.null) { $0.union($1.frame) }
-        trackingBounds = union.insetBy(
-            dx: -Self.outerTolerance,
-            dy: -Self.outerTolerance
-        )
+    func adoptGeometry(_ snapshot: KeyboardGeometrySnapshot?) {
+        geometry = snapshot
     }
 
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        trackingBounds.contains(point)
+        geometry?.trackingRegion.contains(point) ?? false
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -74,24 +69,7 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     func resolvedHit(at point: CGPoint) -> Hit? {
-        hit(at: point)
+        geometry?.touchHit(at: point).map { ($0.key, $0.frame) }
     }
-
-    private func hit(at point: CGPoint) -> Hit? {
-        guard trackingBounds.contains(point), !keys.isEmpty else { return nil }
-        var best: ResolvedKey?
-        var bestDistance = CGFloat.greatestFiniteMagnitude
-        for key in keys where key.spec.role != .placeholder {
-            let dx = max(max(key.frame.minX - point.x, 0), point.x - key.frame.maxX)
-            let dy = max(max(key.frame.minY - point.y, 0), point.y - key.frame.maxY)
-            let distance = dx * dx + dy * dy
-            if distance < bestDistance {
-                bestDistance = distance
-                best = key
-            }
-        }
-        return best.map { ($0.spec, $0.frame) }
-    }
-
 }
 #endif

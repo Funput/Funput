@@ -28,12 +28,14 @@ extension KeyboardSurfaceView {
     func claimContactGesture(
         _ token: UInt64,
         kind: KeyboardSurfaceInteractionController.GestureClaim
-    ) {
+    ) -> Bool {
         touchCoordinator.claim(token: token, kind: kind)
     }
 
-    func resetTouchPipeline() {
-        touchCoordinator.reset()
+    func resetTouchPipeline(flushingResolvedPresses: Bool = false) {
+        touchCoordinator.reset(
+            flushingResolvedPresses: flushingResolvedPresses
+        )
     }
 
     public func updateSuggestions(_ candidates: [KeyboardSuggestionCandidate]) {
