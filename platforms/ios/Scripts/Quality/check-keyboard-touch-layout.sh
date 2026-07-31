@@ -26,6 +26,7 @@ readonly roots=(
     "$ios_root/Keyboard/Controller"
     "$ios_root/Keyboard/Document"
     "$ios_root/Keyboard/Diagnostics"
+    "$ios_root/Keyboard/Presentation"
 )
 violations=0
 
@@ -68,7 +69,8 @@ readonly name_roots=(
     "$ios_root/FunputTests/TypingHarness"
     "$ios_root/Keyboard/Diagnostics"
 )
-if rg -n "$banned_pattern" "${name_roots[@]}"; then
+# `grep -rE` keeps the check runnable on a clean machine; ripgrep is not a prerequisite.
+if grep -rEn "$banned_pattern" "${name_roots[@]}"; then
     printf 'Retired touch-pipeline identifier found.\n' >&2
     violations=1
 fi
