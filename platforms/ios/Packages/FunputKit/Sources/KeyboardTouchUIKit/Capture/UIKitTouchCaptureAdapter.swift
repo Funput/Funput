@@ -16,7 +16,7 @@ public final class UIKitTouchCaptureAdapter {
     ) -> [ContactSample] {
         var result: [ContactSample] = []
         result.reserveCapacity(touches.count + 1)
-        for touch in touches {
+        for touch in ordered(touches, in: view) {
             switch phase {
             case .began:
                 let (contactID, stale) = identities.begin(touch)
@@ -44,6 +44,23 @@ public final class UIKitTouchCaptureAdapter {
     public func reset() {
         identities.reset()
         unknownCallbackCount = 0
+    }
+
+    /// `Set` iteration order is unspecified, so a batch delivering several touches at once would
+    /// assign contact order at random. Sorting makes a run reproducible. It does not claim to
+    /// recover the physical press order — UIKit does not carry that information for identical
+    /// timestamps (architecture document, §4.2 and §9.5).
+    private func ordered(_ touches: Set<UITouch>, in view: UIView) -> [UITouch] {
+        guard touches.count > 1 else { return Array(touches) }
+        return touches.sorted { lhs, rhs in
+            guard lhs.timestamp == rhs.timestamp else {
+                return lhs.timestamp < rhs.timestamp
+            }
+            let left = lhs.location(in: view)
+            let right = rhs.location(in: view)
+            guard left.x == right.x else { return left.x < right.x }
+            return left.y < right.y
+        }
     }
 
     private func sample(

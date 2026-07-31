@@ -17,9 +17,12 @@ public struct KeyboardGeometrySnapshot: Sendable {
         entries = geometry.keys.map { key in
             Entry(key: key)
         }
-        let union = geometry.keys.reduce(CGRect.null) { $0.union($1.frame) }
-        trackingBounds = union.insetBy(dx: -12, dy: -12)
+        trackingBounds = KeyboardTrackingBounds.resolve(for: geometry)
     }
+
+    /// The region this snapshot answers hits for. The capture view routes touches with it, so
+    /// both sides agree on what belongs to the keycaps.
+    public var trackingRegion: CGRect { trackingBounds }
 
     public func touchHit(at point: CGPoint) -> KeyboardTouchHit? {
         guard trackingBounds.contains(point) else { return nil }

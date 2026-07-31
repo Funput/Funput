@@ -1,7 +1,43 @@
 #if canImport(UIKit)
 import KeyboardLayout
 import KeyboardTouchCore
+import KeyboardTouchUIKit
 import UIKit
+
+@MainActor
+struct PipelineFixture {
+    let pipeline: KeyboardTouchPipeline
+    let clock: TouchTestClock
+    let emissions: EmissionBox
+
+    @discardableResult
+    func consume(_ sample: ContactSample) -> KeyboardTouchDisposition {
+        clock.now = sample.timestamp
+        return pipeline.consume(sample)
+    }
+}
+
+final class EmissionBox {
+    var keys: [String] = []
+}
+
+@MainActor
+func makeTouchPipeline(
+    policy: KeyboardTouchRecoveryPolicy = .recoveringAll(
+        [.character, .vniModifier, .punctuation]
+    )
+) -> PipelineFixture {
+    let clock = TouchTestClock()
+    let emissions = EmissionBox()
+    let pipeline = KeyboardTouchPipeline(
+        policy: policy,
+        clock: { clock.now },
+        schedule: { delay, action in clock.schedule(delay: delay, action: action) },
+        onEmit: { emissions.keys.append($0.payload.hit.key.id) }
+    )
+    pipeline.updateGeometry(touchGeometry().0)
+    return PipelineFixture(pipeline: pipeline, clock: clock, emissions: emissions)
+}
 
 @MainActor
 final class TouchTestClock {

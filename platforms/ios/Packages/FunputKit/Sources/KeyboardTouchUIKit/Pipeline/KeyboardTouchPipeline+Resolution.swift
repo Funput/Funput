@@ -21,7 +21,7 @@ extension KeyboardTouchPipeline {
             geometries.removeValue(forKey: id)
             initialHits.removeValue(forKey: id)
             if metadata.exceededTapSlop,
-               !recoveringTapSlopRoles.contains(hit.key.role) {
+               !policy.recoversTapSlop(hit.key.role) {
                 arbiter.cancel(id, at: sample.timestamp)
                 return .fallback(id, .exceededTapSlop)
             }

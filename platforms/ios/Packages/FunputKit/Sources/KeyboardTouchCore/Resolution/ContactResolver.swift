@@ -19,6 +19,10 @@ public struct ContactResolver<Payload: Sendable>: Sendable {
 
     public var activeContactCount: Int { states.count }
 
+    public func isTracking(_ contactID: ContactID) -> Bool {
+        states[contactID] != nil
+    }
+
     public mutating func consume(
         _ sample: ContactSample,
         hit payload: Payload?

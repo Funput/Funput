@@ -59,5 +59,28 @@ struct UIKitTouchCaptureAdapterTests {
         #expect(samples.count == 3)
         #expect(Set(samples.map(\.id)).count == 3)
     }
+
+    /// `Set` iteration order is unspecified, so a batch has to be sorted before contact IDs are
+    /// assigned. This does not recover the physical press order for identical timestamps — it
+    /// only makes a run reproducible.
+    @Test func batchIsOrderedByTimestampThenPosition() {
+        let touches = (0..<3).map { index -> ShadowStubTouch in
+            let touch = ShadowStubTouch()
+            touch.stubTimestamp = index == 0 ? 2 : 1
+            touch.stubLocation = CGPoint(x: index == 1 ? 30 : 10, y: 0)
+            return touch
+        }
+        let view = UIView()
+
+        let samples = UIKitTouchCaptureAdapter()
+            .samples(for: Set(touches), phase: .began, in: view)
+        let repeated = UIKitTouchCaptureAdapter()
+            .samples(for: Set(touches.reversed()), phase: .began, in: view)
+
+        // Timestamp 1 first; the tie breaks on x, so (10, 0) precedes (30, 0).
+        #expect(samples.map(\.timestamp) == [1, 1, 2])
+        #expect(samples.map(\.location.x) == [10, 30, 10])
+        #expect(samples.map(\.location) == repeated.map(\.location))
+    }
 }
 #endif

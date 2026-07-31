@@ -11,18 +11,19 @@ public final class KeyboardTouchPipeline {
         ContactID, TimeInterval
     ) -> Void
 
-    private let eligibleRoles: Set<KeyRole>
-    let recoveringTapSlopRoles: Set<KeyRole>
-    private let clock: PressArbiterDriver<KeyboardTouchAction>.Clock
-    private let schedule: DeadlineSchedule
-    private var resolver: ContactResolver<KeyboardTouchHit>
-    private var currentGeometry: KeyboardGeometrySnapshot?
+    let policy: KeyboardTouchRecoveryPolicy
+    var resolver: ContactResolver<KeyboardTouchHit>
+    var currentGeometry: KeyboardGeometrySnapshot?
     var geometries: [ContactID: KeyboardGeometrySnapshot] = [:]
     var initialHits: [ContactID: KeyboardTouchHit] = [:]
+    var counters = KeyboardTouchPipelineStatistics()
+    let onResolved: ResolutionHandler
+    private let clock: PressArbiterDriver<KeyboardTouchAction>.Clock
+    private let schedule: DeadlineSchedule
     private var nextGeometryRevision: UInt64 = 1
     private let onEmit: EmissionHandler
     private let onStaleDeadline: @MainActor () -> Void
-    let onResolved: ResolutionHandler
+    private let arbiterConfiguration: PressArbiterConfiguration
     lazy var arbiter = PressArbiterDriver<KeyboardTouchAction>(
         configuration: arbiterConfiguration,
         clock: clock,
@@ -30,11 +31,9 @@ public final class KeyboardTouchPipeline {
         onStaleDeadline: onStaleDeadline,
         onEmit: onEmit
     )
-    private let arbiterConfiguration: PressArbiterConfiguration
 
     public init(
-        eligibleRoles: Set<KeyRole>,
-        recoveringTapSlopRoles: Set<KeyRole>,
+        policy: KeyboardTouchRecoveryPolicy,
         resolverConfiguration: ContactResolverConfiguration = .default,
         arbiterConfiguration: PressArbiterConfiguration = .default,
         clock: @escaping PressArbiterDriver<KeyboardTouchAction>.Clock = {
@@ -45,8 +44,7 @@ public final class KeyboardTouchPipeline {
         onStaleDeadline: @escaping @MainActor () -> Void = {},
         onEmit: @escaping EmissionHandler
     ) {
-        self.eligibleRoles = eligibleRoles
-        self.recoveringTapSlopRoles = recoveringTapSlopRoles
+        self.policy = policy
         self.arbiterConfiguration = arbiterConfiguration
         self.clock = clock
         self.schedule = schedule
@@ -56,10 +54,21 @@ public final class KeyboardTouchPipeline {
         resolver = ContactResolver(configuration: resolverConfiguration)
     }
 
+    // Gauges: what is happening right now, so they are read through rather than accumulated.
     public var activeContactCount: Int { resolver.activeContactCount }
     public var orderedContactCount: Int { arbiter.orderedContactCount }
     public var heldContactCount: Int { arbiter.heldContactCount }
-    public var bypassedContactCount: UInt64 { arbiter.bypassedContactCount }
+
+    /// Everything accumulated this session, including the arbiter's own counters.
+    public var statistics: KeyboardTouchPipelineStatistics {
+        var value = counters
+        value.arbiter = arbiter.statistics
+        return value
+    }
+
+    /// The snapshot new contacts hit-test against. The capture view borrows it so both sides
+    /// share one revision instead of building a second copy of the same geometry.
+    public var geometrySnapshot: KeyboardGeometrySnapshot? { currentGeometry }
 
     public func initialHit(for contactID: ContactID) -> KeyboardTouchHit? {
         initialHits[contactID]
@@ -77,71 +86,9 @@ public final class KeyboardTouchPipeline {
         return true
     }
 
-    public func consume(_ sample: ContactSample) -> KeyboardTouchDisposition {
-        let geometry = sample.phase == .began
-            ? currentGeometry : geometries[sample.id]
-        let currentHit = geometry?.touchHit(at: sample.location)
-        let hit = lockedHit(for: sample.id, current: currentHit)
-        let eligibleHit = hit.flatMap {
-            eligibleRoles.contains($0.key.role) ? $0 : nil
-        }
-        let resolution = resolver.consume(sample, hit: eligibleHit)
-        return handle(resolution, sample: sample, geometry: geometry)
-    }
-
+    /// Commits presses whose finger already lifted. A teardown that skips this drops them.
     @discardableResult
-    public func exclude(
-        _ contactID: ContactID,
-        at timestamp: TimeInterval
-    ) -> Bool {
-        detach(contactID, at: timestamp)
-    }
-
-    @discardableResult
-    public func claimForGesture(_ contactID: ContactID) -> Bool {
-        resolver.discard(contactID)
-    }
-
-    @discardableResult
-    public func resolveGesture(
-        _ contactID: ContactID,
-        action: KeyboardTouchAction,
-        at timestamp: TimeInterval
-    ) -> Bool {
-        guard geometries.removeValue(forKey: contactID) != nil else { return false }
-        initialHits.removeValue(forKey: contactID)
-        arbiter.resolve(contactID, payload: action, at: timestamp)
-        return true
-    }
-
-    @discardableResult
-    public func detach(
-        _ contactID: ContactID,
-        at timestamp: TimeInterval
-    ) -> Bool {
-        let existed = resolver.discard(contactID)
-            || geometries[contactID] != nil
-        guard existed else { return false }
-        geometries.removeValue(forKey: contactID)
-        initialHits.removeValue(forKey: contactID)
-        arbiter.cancel(contactID, at: timestamp)
-        return true
-    }
-
-    public func reset() {
-        arbiter.reset()
-        resolver.reset()
-        geometries.removeAll(keepingCapacity: true)
-        initialHits.removeAll(keepingCapacity: true)
-    }
-
-    private func lockedHit(
-        for id: ContactID,
-        current: KeyboardTouchHit?
-    ) -> KeyboardTouchHit? {
-        guard let initial = initialHits[id],
-              initial.key.horizontalSwipeAction != nil,
-              current != nil else { return current }
-        return initial
+    public func flushResolvedPresses() -> Int {
+        arbiter.flushResolved()
     }
 }
