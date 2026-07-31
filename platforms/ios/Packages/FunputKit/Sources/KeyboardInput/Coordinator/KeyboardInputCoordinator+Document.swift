@@ -11,7 +11,8 @@ extension KeyboardInputCoordinator {
         guard !documentSynchronizer.isApplyingMutation else { return .none }
         let previousState = state
         let snapshot = writer.snapshot
-        if event == .textChanged,
+        if event.acknowledgesAuthoredEcho,
+           !snapshot.hasSelection,
            documentSynchronizer.consumeAuthoredTextChange(
                documentIdentifier: snapshot.documentIdentifier,
                contextBeforeInput: snapshot.contextBeforeInput
@@ -34,6 +35,7 @@ extension KeyboardInputCoordinator {
         writer: any KeyboardDocumentWriting,
         closesEpoch: Bool = false,
         preservesOneShotShift: Bool,
+        reopensPreviousWord: Bool = false,
         build: (inout InputTransactionBuilder) -> Void
     ) -> KeyboardPostCommitEffects {
         synchronizeBeforeInput(writer)
@@ -42,6 +44,16 @@ extension KeyboardInputCoordinator {
         var builder = InputTransactionBuilder()
         build(&builder)
         documentSynchronizer.stage(builder.mutations)
+        // Only now does the shadow describe the document after this key. Re-opening from
+        // inside `build` would read the text as it was before the deletion.
+        //
+        // The selection check has to look at the snapshot from before the mutation: staging a
+        // deletion always clears `hasSelection`, and a deletion that replaced a selection left
+        // the shadow holding text the document no longer contains.
+        if reopensPreviousWord,
+           documentSynchronizer.snapshotBeforeMutation?.hasSelection != true {
+            reopenPreviousWord()
+        }
         if let snapshot = documentSynchronizer.snapshot,
            snapshot != documentSynchronizer.snapshotBeforeMutation {
             synchronizeCapitalization(

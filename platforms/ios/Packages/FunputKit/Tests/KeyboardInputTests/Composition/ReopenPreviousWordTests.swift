@@ -80,6 +80,25 @@ struct ReopenPreviousWordTests {
         #expect(document.text == "chào méo")
     }
 
+    /// Deleting a selection leaves the shadow holding text the document no longer has, because
+    /// the shadow cannot know how much was selected. Re-opening from it would seed the composer
+    /// with a word that is not at the caret.
+    @Test("Backspace over a selection never re-opens, even mid-word")
+    func skipsWhenBackspaceReplacedASelection() {
+        let coordinator = KeyboardInputCoordinator(inputMethod: .telex)
+        let document = TestKeyboardWriter()
+        document.replaceTextExternally(with: "chào")
+        coordinator.synchronizeDocument(document, event: .textChanged)
+        document.hasSelection = true
+        coordinator.synchronizeDocument(document, event: .selectionChanged)
+
+        coordinator.handle(testKey(.backspace), writer: document)
+        document.hasSelection = false
+        type("s", with: coordinator, into: document)
+
+        #expect(document.text == "chàs")
+    }
+
     @Test("A selection is left untouched")
     func skipsWithSelection() {
         let (coordinator, document) = typedWord()

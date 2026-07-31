@@ -14,7 +14,8 @@ extension KeyboardInputCoordinator {
             return commit(
                 writer: writer,
                 closesEpoch: closesCompositionEpoch(for: key),
-                preservesOneShotShift: key.role != .character
+                preservesOneShotShift: key.role != .character,
+                reopensPreviousWord: key.role == .backspace
             ) { builder in
                 applyDocumentKey(key, builder: &builder)
             }
@@ -64,9 +65,9 @@ extension KeyboardInputCoordinator {
             input(key.label, builder: &builder)
         case .space: input(" ", builder: &builder)
         case .enter: input("\n", builder: &builder)
-        case .backspace:
-            performDeleteBackward(builder: &builder)
-            reopenPreviousWord()
+        // Re-opening the previous word is deferred to `commit`, which runs it once the
+        // shadow reflects this deletion.
+        case .backspace: performDeleteBackward(builder: &builder)
         default: break
         }
     }
