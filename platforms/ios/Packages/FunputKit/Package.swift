@@ -15,6 +15,8 @@ let package = Package(
         .library(name: "ThemeRuntime", targets: ["ThemeRuntime"]),
         .library(name: "KeyboardRenderer", targets: ["KeyboardRenderer"]),
         .library(name: "KeyboardConfiguration", targets: ["KeyboardConfiguration"]),
+        .library(name: "KeyboardTouchCore", targets: ["KeyboardTouchCore"]),
+        .library(name: "KeyboardTouchUIKit", targets: ["KeyboardTouchUIKit"]),
     ],
     targets: [
         .binaryTarget(
@@ -58,6 +60,7 @@ let package = Package(
             name: "KeyboardRenderer",
             dependencies: [
                 .target(name: "KeyboardLayout"),
+                .target(name: "KeyboardTouchUIKit"),
                 .target(name: "ThemeSchema"),
             ],
             resources: [.process("Resources")]
@@ -70,6 +73,14 @@ let package = Package(
                 .target(name: "ThemeSchema"),
                 .target(name: "KeyboardRenderer"),
                 .target(name: "KeyboardLayout"),
+            ]
+        ),
+        .target(name: "KeyboardTouchCore"),
+        .target(
+            name: "KeyboardTouchUIKit",
+            dependencies: [
+                .target(name: "KeyboardLayout"),
+                .target(name: "KeyboardTouchCore"),
             ]
         ),
         .testTarget(
@@ -110,6 +121,19 @@ let package = Package(
         .testTarget(
             name: "KeyboardInputTests",
             dependencies: ["KeyboardInput", "KeyboardLayout", "FunputShared"]
+        ),
+        .testTarget(
+            name: "KeyboardTouchCoreTests",
+            dependencies: ["KeyboardTouchCore"]
+        ),
+        .testTarget(
+            name: "KeyboardTouchUIKitTests",
+            dependencies: [
+                "KeyboardLayout",
+                "KeyboardRenderer",
+                "KeyboardTouchCore",
+                "KeyboardTouchUIKit",
+            ]
         ),
     ]
 )

@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Build latest Funput FFI for Release"
-               scriptText = "if [ &quot;$CONFIGURATION&quot; = &quot;Release&quot; ]; then&#10;    &quot;$SRCROOT/Scripts/build-ffi.sh&quot;&#10;fi">
+               scriptText = "if [ &quot;$CONFIGURATION&quot; = &quot;Release&quot; ]; then&#10;    &quot;$SRCROOT/Scripts/build-ffi.sh&quot;&#10;fi&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
@@ -90,6 +90,12 @@
             ReferencedContainer = "container:Funput.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "-device-touch-acceptance"
+            isEnabled = "NO">
+         </CommandLineArgument>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

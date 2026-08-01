@@ -35,6 +35,17 @@ struct AuthoredTokenTracker {
         }
     }
 
+    mutating func apply(_ mutations: [DocumentMutation]) {
+        for mutation in mutations {
+            switch mutation {
+            case let .deleteBackward(count):
+                for _ in 0..<count { recordDeletion() }
+            case let .insert(text):
+                recordInsertion(text)
+            }
+        }
+    }
+
     mutating func consume() -> KeyboardSuggestionInputUpdate {
         let update = KeyboardSuggestionInputUpdate(
             prefix: overflowCount == 0 ? prefix : "",

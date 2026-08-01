@@ -14,27 +14,30 @@ public extension KeyboardInputCoordinator {
     func acceptSuggestion(
         _ suggestion: String,
         replacing prefix: String,
-        document: any KeyboardDocument
-    ) -> Bool {
+        writer: any KeyboardDocumentWriting
+    ) -> KeyboardPostCommitEffects? {
         guard tracksPersonalSuggestions,
               !suggestion.isEmpty,
-              suggestionTracker.prefix == prefix else { return false }
-        synchronizeDocument(document, event: .textChanged)
-        guard suggestionTracker.prefix == prefix else { return false }
-        let snapshot = document.snapshot
+              suggestionTracker.prefix == prefix else { return nil }
+        _ = synchronizeDocument(writer, event: .textChanged)
+        guard suggestionTracker.prefix == prefix else { return nil }
+        let snapshot = writer.snapshot
         guard snapshot.documentIdentifier == documentSynchronizer.snapshot?.documentIdentifier,
               !snapshot.hasSelection,
               snapshot.contextBeforeInput.map({ $0.hasSuffix(prefix) }) ?? true else {
             suggestionTracker.reset()
-            return false
+            return nil
         }
 
-        documentSynchronizer.beginMutation(closesEpoch: true)
-        composer.clear()
-        for _ in prefix { deleteDocumentBackward(document) }
-        insertDocumentText(suggestion + " ", document: document)
-        finishDocumentMutation(preserveOneShotShift: false)
-        return true
+        return commit(
+            writer: writer,
+            closesEpoch: true,
+            preservesOneShotShift: false
+        ) { builder in
+            composer.clear()
+            builder.deleteBackward(count: prefix.count)
+            builder.insert(suggestion + " ")
+        }
     }
 }
 

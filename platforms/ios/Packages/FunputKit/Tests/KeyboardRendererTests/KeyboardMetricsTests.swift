@@ -49,6 +49,8 @@ struct KeyboardMetricsTests {
     func scaleBounds() {
         let layout = StandardKeyboardLayouts.letters(.telex)
         expectHeight(layout, traits: phonePortrait, scale: 0.5, expected: 304 * 0.85)
+        expectHeight(layout, traits: phonePortrait, scale: 0.85, expected: 304 * 0.85)
+        expectHeight(layout, traits: phonePortrait, scale: 1.2, expected: 304 * 1.2)
         expectHeight(layout, traits: phonePortrait, scale: 2, expected: 304 * 1.2)
     }
 

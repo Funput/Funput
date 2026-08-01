@@ -60,12 +60,15 @@ extension KeyboardViewController {
             clearPersonalSuggestions()
             return
         }
-        let document = TextDocumentProxyAdapter(proxy: textDocumentProxy)
-        guard inputCoordinator.acceptSuggestion(text, replacing: prefix, document: document) else {
+        guard let effects = inputCoordinator.acceptSuggestion(
+            text,
+            replacing: prefix,
+            writer: makeDocumentWriter()
+        ) else {
             clearPersonalSuggestions()
             return
         }
-        publishPersonalSuggestionUpdate()
+        applyPostCommitEffects(effects)
     }
 
     @objc func flushPersonalSuggestions() {
