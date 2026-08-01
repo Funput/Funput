@@ -1,9 +1,10 @@
 #if canImport(UIKit)
 import UIKit
 
+/// Section header shared by the emoji and kaomoji browsers.
 @MainActor
-final class EmojiSectionHeaderView: UICollectionReusableView {
-    static let reuseIdentifier = "EmojiSectionHeaderView"
+final class PanelSectionHeaderView: UICollectionReusableView {
+    static let reuseIdentifier = "PanelSectionHeaderView"
     private let label = UILabel()
 
     override init(frame: CGRect) {
@@ -23,8 +24,8 @@ final class EmojiSectionHeaderView: UICollectionReusableView {
         label.frame = bounds.insetBy(dx: 8, dy: 0)
     }
 
-    func apply(category: EmojiCategory, color: UIColor) {
-        label.text = category.accessibilityLabel
+    func apply(title: String, color: UIColor) {
+        label.text = title
         label.textColor = color
     }
 }

@@ -17,6 +17,9 @@ extension KeyboardViewController {
         emojiView.onReturn = { [weak self] in
             self?.showFunput()
         }
+        emojiView.onKaomoji = { [weak self] in
+            self?.showKaomoji()
+        }
         view.addSubview(emojiView)
     }
 
@@ -26,6 +29,7 @@ extension KeyboardViewController {
         clearPersonalSuggestions()
         displayedSurface = .emoji
         keyboardView.isHidden = true
+        kaomojiView.isHidden = true
         emojiView.isHidden = false
         refreshEmojiPresentation()
     }
@@ -34,6 +38,8 @@ extension KeyboardViewController {
         displayedSurface = .funput
         emojiView.reset()
         emojiView.isHidden = true
+        kaomojiView.reset()
+        kaomojiView.isHidden = true
         keyboardView.isHidden = false
     }
 
