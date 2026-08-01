@@ -3,10 +3,10 @@ package app.funput.funput.theme
 /**
  * Named keyboard theme presets.
  *
- * Both presets are built from the same Funput accent gold, which is the only saturated color on
- * the keyboard and appears in exactly three places: the leading suggestion, the held key, and
- * Enter. Preset names describe the design; the persisted identifiers in [KeyboardThemeId] stay
- * `dark` and `light` because they are what the appearance setting stores on device.
+ * Preset names describe the design; the persisted identifiers in [KeyboardThemeId] stay `dark` and
+ * `light` for the first pair because they are what the appearance setting stores on device. A
+ * preset that carries its own palette lives in its own file next to this one and is exposed here,
+ * so callers still have a single place to look one up.
  */
 object KeyboardThemes {
     private const val AccentGold = 0xFFC8A951.toInt()
@@ -140,4 +140,10 @@ object KeyboardThemes {
         popupShadowColor = 0x52000000,
         keySurfaceStyle = KeyboardKeySurfaceStyle.GLASS,
     )
+
+    /** Light floral preset: a blush-to-lilac gradient under near-white keycaps. */
+    val Blossom: KeyboardTheme = BlossomKeyboardTheme
+
+    /** Dark floral preset: an orchid-to-midnight gradient under translucent plates. */
+    val Orchid: KeyboardTheme = OrchidKeyboardTheme
 }

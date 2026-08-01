@@ -45,5 +45,21 @@ object BuiltInKeyboardThemeSource : InstalledThemeSource {
             origin = KeyboardThemeOrigin.BUILT_IN,
             theme = KeyboardThemes.Slate,
         ),
+        KeyboardThemeDescriptor(
+            id = KeyboardThemeId.Blossom,
+            version = 1,
+            name = "Blossom",
+            author = FunputAuthor,
+            origin = KeyboardThemeOrigin.BUILT_IN,
+            theme = KeyboardThemes.Blossom,
+        ),
+        KeyboardThemeDescriptor(
+            id = KeyboardThemeId.Orchid,
+            version = 1,
+            name = "Orchid",
+            author = FunputAuthor,
+            origin = KeyboardThemeOrigin.BUILT_IN,
+            theme = KeyboardThemes.Orchid,
+        ),
     )
 }
