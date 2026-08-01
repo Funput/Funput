@@ -3,6 +3,14 @@ import ThemeSchema
 import ThemeRuntime
 
 struct ThemeValidatorTests {
+    @Test(
+        "Signature themes pass every contrast check",
+        arguments: [KeyboardTheme.lotusSilk, .jadeCurrent]
+    )
+    func signatureThemesAreValid(_ theme: KeyboardTheme) {
+        #expect(ThemeValidator.validate(theme).isEmpty)
+    }
+
     @Test("Bundled themes preserve readable primary and secondary labels", arguments: BundledThemes.all)
     func bundledLabelsAreValid(_ theme: KeyboardTheme) {
         let issues = ThemeValidator.validate(theme)

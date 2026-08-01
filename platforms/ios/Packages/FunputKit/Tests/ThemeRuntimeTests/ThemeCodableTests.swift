@@ -14,12 +14,21 @@ struct ThemeCodableTests {
     @Test("Bundled theme identifiers are unique")
     func uniqueIdentifiers() {
         let ids = BundledThemes.all.map(\.id)
+        #expect(ids == [
+            KeyboardTheme.funputGlass.id,
+            KeyboardTheme.classicLight.id,
+            KeyboardTheme.midnight.id,
+            KeyboardTheme.lotusSilk.id,
+            KeyboardTheme.jadeCurrent.id,
+        ])
         #expect(Set(ids).count == ids.count)
     }
 
     @Test("Lookup returns the matching bundled theme, or nil")
     func lookup() {
         #expect(BundledThemes.theme(id: BundledThemes.default.id) == .funputGlass)
+        #expect(BundledThemes.theme(id: KeyboardTheme.lotusSilk.id) == .lotusSilk)
+        #expect(BundledThemes.theme(id: KeyboardTheme.jadeCurrent.id) == .jadeCurrent)
         #expect(BundledThemes.theme(id: "does.not.exist") == nil)
     }
 
