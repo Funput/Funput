@@ -13,9 +13,14 @@ void FunputEngine::updatePreedit(fcitx::InputContext *context) {
     if (!buffer.empty()) preedit.append(buffer, fcitx::TextFormatFlag::Underline);
     preedit.setCursor(static_cast<int>(buffer.size()));
     auto &panel = context->inputPanel();
-    if (context->capabilityFlags().test(fcitx::CapabilityFlag::Preedit)) {
-        panel.setClientPreedit(preedit);
-    } else {
+    // Always publish the client preedit, even for clients that cannot render one:
+    // Fcitx5 commits clientPreedit() itself when the input context loses focus
+    // (Instance's ReservedFirst focus-out watcher), which is what keeps a half-typed
+    // word from vanishing on a click into another field or window. Display is
+    // unaffected — InputContext::updatePreedit() returns early without the Preedit
+    // capability, so those clients still get the Fcitx5-drawn panel preedit below.
+    panel.setClientPreedit(preedit);
+    if (!context->capabilityFlags().test(fcitx::CapabilityFlag::Preedit)) {
         panel.setPreedit(preedit);
     }
     context->updatePreedit();

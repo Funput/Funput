@@ -64,16 +64,20 @@ void enable(IBusEngine *engine) {
     if (state->settings.reloadIfChanged()) applySettings(state);
 }
 
+// Focus loss, reset and engine switch all commit the composing word — but IBus does
+// it, not us: updatePreedit() publishes the preedit with IBUS_ENGINE_PREEDIT_COMMIT,
+// and the daemon flushes it to the client before dispatching these callbacks.
+// Committing again here would type the word twice, so only drop our own state.
 void focusOut(IBusEngine *engine) {
-    commitBuffer(engine, stateOf(engine));
+    stateOf(engine)->handle.clear();
 }
 
 void disable(IBusEngine *engine) {
-    commitBuffer(engine, stateOf(engine));
+    stateOf(engine)->handle.clear();
 }
 
 void reset(IBusEngine *engine) {
-    commitBuffer(engine, stateOf(engine));
+    stateOf(engine)->handle.clear();
 }
 
 } // namespace funput_ibus

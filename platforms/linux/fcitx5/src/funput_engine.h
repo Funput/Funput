@@ -2,7 +2,9 @@
 // using Fcitx5's preedit/commit model — the same shape as the macOS IMKit shell
 // (platforms/macos/.../FunputInputController.swift), NOT the Windows backspace-
 // injection path. The composing word is shown as underlined preedit and committed
-// on a word boundary, navigation key, focus change, or VI/EN toggle.
+// on a word boundary, navigation key, or VI/EN toggle. On focus loss Fcitx5 itself
+// commits the client preedit before calling deactivate(), so the word survives a
+// click into another field — see deactivate(), which must not commit again.
 
 #ifndef FUNPUT_ENGINE_H
 #define FUNPUT_ENGINE_H

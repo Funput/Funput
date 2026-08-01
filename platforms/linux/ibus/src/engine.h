@@ -1,8 +1,11 @@
 // IBus input-method engine for Funput. Drives `funput-engine` (via the C ABI)
 // using IBus's preedit/commit model — the same shape as the Fcitx5 addon
 // (platforms/linux/fcitx5/src/funput_engine.cpp) and the macOS IMKit shell, NOT
-// the Windows backspace-injection path. The composing word is shown as preedit
-// and committed on a word boundary, navigation key, focus change, or VI/EN toggle.
+// the Windows backspace-injection path. The composing word is shown as preedit and
+// committed on a word boundary, navigation key, or VI/EN toggle. The preedit is
+// published with IBUS_ENGINE_PREEDIT_COMMIT, so IBus itself flushes the word on
+// focus loss, reset and engine switch — see updatePreedit() in engine_runtime.cpp
+// and the focusOut()/disable()/reset() handlers, which must not commit again.
 //
 // Unlike the Fcitx5 addon (an in-process .so), an IBus engine is a separate
 // process launched by ibus-daemon over D-Bus; see main.cpp for the bus glue.

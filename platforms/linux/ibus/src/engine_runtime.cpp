@@ -19,8 +19,18 @@ void updatePreedit(IBusEngine *engine, EngineState *state) {
     const std::string buffer = state->handle.buffer();
     IBusText *text = ibus_text_new_from_string(buffer.c_str());
     const glong length = g_utf8_strlen(buffer.c_str(), -1);
-    ibus_engine_update_preedit_text(engine, text, static_cast<guint>(length),
-                                    buffer.empty() ? FALSE : TRUE);
+    // IBUS_ENGINE_PREEDIT_COMMIT, not the default CLEAR: this is what makes IBus
+    // flush a half-typed word into the client when focus moves away, instead of
+    // throwing it out. bus_input_context_{focus_out,disable,unset_engine} and
+    // _ic_reset all clear the preedit *before* calling into the engine, and only
+    // commit it first when the mode is COMMIT — so with CLEAR the word is already
+    // gone by the time focusOut()/reset() run here, and a commit from those
+    // handlers has nowhere left to go (unset_engine even disconnects our
+    // commit-text handler first). With COMMIT set, IBus owns the flush and our
+    // focus/reset handlers only drop state; see engine_input.cpp.
+    ibus_engine_update_preedit_text_with_mode(engine, text, static_cast<guint>(length),
+                                              buffer.empty() ? FALSE : TRUE,
+                                              IBUS_ENGINE_PREEDIT_COMMIT);
 }
 
 void commitBuffer(IBusEngine *engine, EngineState *state) {

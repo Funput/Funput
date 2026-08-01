@@ -1,5 +1,6 @@
 #include "funput_engine.h"
 
+#include <fcitx/event.h>
 #include <fcitx/inputcontext.h>
 
 FunputEngine::FunputEngine(fcitx::Instance *instance) : instance_(instance) {
@@ -52,7 +53,19 @@ void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContext
 }
 
 void FunputEngine::deactivate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
-    commitBuffer(event.inputContext());
+    auto *context = event.inputContext();
+    if (event.type() == fcitx::EventType::InputContextFocusOut) {
+        // The composing word is already on its way to the client: Fcitx5 commits
+        // clientPreedit() in its ReservedFirst focus-out watcher, which runs before
+        // this one, or the client commits it itself when it advertises
+        // ClientUnfocusCommit. A second commit here would duplicate the word.
+        handle_.clear();
+        clearPreedit(context);
+        return;
+    }
+    // Input-method switch (group change, capability change): nothing else flushes
+    // the preedit, so commit it ourselves.
+    commitBuffer(context);
 }
 
 FCITX_ADDON_FACTORY(FunputEngineFactory)
