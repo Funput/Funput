@@ -20,17 +20,50 @@ extension KeyboardViewController {
     /// Deliberately not called from `updateInputPresentation()`: that runs on every
     /// keystroke that moves the shift state, and the typing hot path stays free of
     /// pasteboard work.
-    func refreshClipboardOffer() {
+    func refreshClipboardOffer(
+        retriesRemaining: Int = KeyboardViewController.clipboardRetryDelays.count
+    ) {
+        let context = ClipboardOfferPolicy.Context(
+            editorMode: inputCoordinator.state.editorMode,
+            hasToolbar: keyboardView.presentation.layout.toolbar != nil,
+            hasFullAccess: hasFullAccess
+        )
+        // Checked before anything else, so a refused pasteboard read can never leave
+        // a paste invitation sitting in a password field.
+        guard ClipboardOfferPolicy.allowsOffer(context: context) else {
+            keyboardView.updateClipboardHint(nil)
+            return
+        }
+
+        let snapshot = ClipboardSnapshot(.general)
+        // iOS declines reads while the host app settles — Chrome is a frequent
+        // offender — and answers as if the pasteboard were empty. Leave whatever is
+        // on screen alone and ask again rather than believing it.
+        guard !snapshot.isIndeterminate else {
+            scheduleClipboardRetry(retriesRemaining: retriesRemaining)
+            return
+        }
+
         let offer = ClipboardOfferPolicy.offer(
-            snapshot: ClipboardSnapshot(.general),
+            snapshot: snapshot,
             lastCapturedChangeCount: clipboardStore.lastCapturedChangeCount(),
-            context: ClipboardOfferPolicy.Context(
-                editorMode: inputCoordinator.state.editorMode,
-                hasToolbar: keyboardView.presentation.layout.toolbar != nil,
-                hasFullAccess: hasFullAccess
-            )
+            context: context
         )
         keyboardView.updateClipboardHint(offer.map(Self.hint))
+    }
+
+    /// Bounded and widening: two more attempts, then leave it until the next thing
+    /// that would refresh the offer anyway.
+    static let clipboardRetryDelays: [Duration] = [.milliseconds(350), .seconds(1)]
+
+    private func scheduleClipboardRetry(retriesRemaining: Int) {
+        let index = Self.clipboardRetryDelays.count - retriesRemaining
+        guard Self.clipboardRetryDelays.indices.contains(index) else { return }
+        let delay = Self.clipboardRetryDelays[index]
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: delay)
+            self?.refreshClipboardOffer(retriesRemaining: retriesRemaining - 1)
+        }
     }
 
     private static func hint(for offer: ClipboardOffer) -> KeyboardClipboardHint {

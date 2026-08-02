@@ -19,18 +19,28 @@ public enum ClipboardOfferPolicy {
         }
     }
 
+    /// Whether the *surroundings* permit an offer at all, independent of what is on
+    /// the pasteboard.
+    ///
+    /// Split out so a reading that may have been refused by the system cannot leave a
+    /// stale chip sitting in a password field: the caller can enforce these rules
+    /// even when it has no snapshot it trusts.
+    public static func allowsOffer(context: Context) -> Bool {
+        // Full Access is what makes the pasteboard readable at all.
+        guard context.hasFullAccess else { return false }
+        // Password and PIN fields never see a paste invitation, even though the
+        // pasteboard may well hold exactly what the user wants there.
+        guard !context.editorMode.isPassword else { return false }
+        // Number and password layouts have no toolbar to host the chip.
+        return context.hasToolbar
+    }
+
     public static func offer(
         snapshot: ClipboardSnapshot,
         lastCapturedChangeCount: Int?,
         context: Context
     ) -> ClipboardOffer? {
-        // Full Access is what makes the pasteboard readable at all.
-        guard context.hasFullAccess else { return nil }
-        // Password and PIN fields never see a paste invitation, even though the
-        // pasteboard may well hold exactly what the user wants there.
-        guard !context.editorMode.isPassword else { return nil }
-        // Number and password layouts have no toolbar to host the chip.
-        guard context.hasToolbar else { return nil }
+        guard allowsOffer(context: context) else { return nil }
         // v1 is text only: an image-only pasteboard stays silent.
         guard snapshot.hasStrings else { return nil }
         // Already captured — do not invite the user to paste the same thing twice.

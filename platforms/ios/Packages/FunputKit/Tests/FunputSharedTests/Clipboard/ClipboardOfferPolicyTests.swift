@@ -89,6 +89,18 @@ struct ClipboardOfferPolicyTests {
         )
     }
 
+    /// The surroundings check has to stand on its own: the controller applies it even
+    /// when a refused pasteboard read leaves it with no snapshot to judge, which is
+    /// what keeps a stale chip out of a password field.
+    @Test("Surroundings alone rule out password fields, missing toolbar and access")
+    func surroundingsGate() {
+        #expect(ClipboardOfferPolicy.allowsOffer(context: context()))
+        #expect(!ClipboardOfferPolicy.allowsOffer(context: context(editorMode: .password)))
+        #expect(!ClipboardOfferPolicy.allowsOffer(context: context(editorMode: .pin)))
+        #expect(!ClipboardOfferPolicy.allowsOffer(context: context(hasToolbar: false)))
+        #expect(!ClipboardOfferPolicy.allowsOffer(context: context(hasFullAccess: false)))
+    }
+
     private func context(
         editorMode: KeyboardEditorMode = .text,
         hasToolbar: Bool = true,
