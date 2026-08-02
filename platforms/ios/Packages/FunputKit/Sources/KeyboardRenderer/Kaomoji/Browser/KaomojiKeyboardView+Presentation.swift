@@ -2,8 +2,8 @@
 import ThemeSchema
 import UIKit
 
-extension EmojiKeyboardView {
-    public func apply(presentation: KeyboardPresentation, recent: [EmojiItem]) {
+extension KaomojiKeyboardView {
+    public func apply(presentation: KeyboardPresentation, recent: [KaomojiItem]) {
         self.presentation = presentation
         reload(recent: recent)
         applyPresentation()
@@ -12,7 +12,7 @@ extension EmojiKeyboardView {
     public func apply(
         theme: ResolvedTheme,
         blendsSystemEdge: Bool = false,
-        recent: [EmojiItem]
+        recent: [KaomojiItem]
     ) {
         var value = presentation
         value.theme = theme
@@ -30,15 +30,8 @@ extension EmojiKeyboardView {
         bottomBar.onCategory = { [weak self] in self?.select($0, scroll: true) }
         bottomBar.onDelete = { [weak self] in self?.onDelete?() }
         bottomBar.onReturn = { [weak self] in self?.onReturn?() }
-        bottomBar.onKaomoji = { [weak self] in self?.onKaomoji?() }
-        searchHeader.onActivate = { [weak self] in self?.beginSearch() }
-        searchHeader.onClear = { [weak self] in self?.clearSearch() }
-        searchHeader.onCancel = { [weak self] in self?.resetSearch() }
-        searchResults.onSelect = { [weak self] in self?.onEmojiSelected?($0) }
-        searchKeyboard.onKeyEvent = { [weak self] in self?.handleSearchKey($0) }
-        searchKeyboard.backdropView.isHidden = true
-        [backdropView, collectionView, bottomBar, searchHeader, searchResults, searchKeyboard]
-            .forEach(addSubview)
+        bottomBar.onEmoji = { [weak self] in self?.onEmoji?() }
+        [backdropView, collectionView, bottomBar].forEach(addSubview)
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(accessibilityAppearanceDidChange),
@@ -47,42 +40,36 @@ extension EmojiKeyboardView {
         )
     }
 
-    func reload(recent: [EmojiItem]) {
-        sections = EmojiCategory.allCases.compactMap { category in
+    func reload(recent: [KaomojiItem]) {
+        sections = KaomojiCategory.allCases.compactMap { category in
             let items = category == .recent ? recent : catalog.items(in: category)
             return items.isEmpty ? nil : (category, items)
         }
         collectionView.reloadData()
         if !sections.contains(where: { $0.category == selectedCategory }) {
-            selectedCategory = sections.first?.category ?? .smileysPeople
+            selectedCategory = sections.first?.category ?? .happy
         }
     }
 
     func applyPresentation() {
-        let label = theme.label.uiColor(for: traitCollection)
         backdropView.apply(
             theme: theme,
             traits: traitCollection,
             image: backgroundImage,
             blendsSystemEdge: presentation.blendsSystemEdge
         )
-        bottomBar.apply(color: label, selected: selectedCategory)
-        searchHeader.apply(
-            query: searchQuery,
-            active: searchState != .browsing,
-            theme: theme,
-            traits: traitCollection
-        )
-        applySearchKeyboardPresentation()
-        updateSearchResults()
+        bottomBar.apply(color: theme.label.uiColor(for: traitCollection), selected: selectedCategory)
         collectionView.reloadData()
     }
 
     func configureCollection() {
         collectionView.backgroundColor = .clear
+        // The panel lays its own subviews out by frame, so an automatic safe-area
+        // inset can only push the grid out of place.
+        collectionView.contentInsetAdjustmentBehavior = .never
         collectionView.dataSource = self
         collectionView.delegate = self
-        collectionView.register(EmojiCell.self, forCellWithReuseIdentifier: EmojiCell.reuseIdentifier)
+        collectionView.register(KaomojiCell.self, forCellWithReuseIdentifier: KaomojiCell.reuseIdentifier)
         collectionView.register(
             PanelSectionHeaderView.self,
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
@@ -95,11 +82,13 @@ extension EmojiKeyboardView {
     }
 
     static func makeLayout() -> UICollectionViewLayout {
-        let layout = UICollectionViewFlowLayout()
-        layout.itemSize = CGSize(width: 44, height: 44)
-        layout.minimumInteritemSpacing = 0
-        layout.minimumLineSpacing = 2
-        layout.sectionInset = UIEdgeInsets(top: 0, left: 8, bottom: 10, right: 8)
+        let layout = KaomojiFlowLayout()
+        layout.estimatedItemSize = .zero
+        layout.minimumInteritemSpacing = interitemSpacing
+        layout.minimumLineSpacing = 6
+        layout.sectionInset = UIEdgeInsets(
+            top: 0, left: horizontalInset, bottom: 10, right: horizontalInset
+        )
         layout.headerReferenceSize = CGSize(width: 1, height: 28)
         return layout
     }

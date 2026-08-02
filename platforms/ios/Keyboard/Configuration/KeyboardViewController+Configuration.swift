@@ -27,6 +27,7 @@ extension KeyboardViewController {
         let image = data.flatMap(UIImage.init(data:))
         keyboardView.backgroundImage = image
         emojiView.backgroundImage = image
+        kaomojiView.backgroundImage = image
         inputCoordinator.apply(configuration)
         configurePersonalSuggestions()
         updateInputPresentation()
