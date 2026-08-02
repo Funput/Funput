@@ -11,7 +11,7 @@ struct PersonalSuggestionToolbarTests {
     @Test("Keeps logo utilities and emits one candidate")
     func contentAndSelection() {
         let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 360, height: 44))
-        toolbar.apply(spec: .withSystemInputMode, theme: .funputGlass, traits: .init())
+        toolbar.apply(spec: .standard, theme: .funputGlass, traits: .init())
         let values = candidates(3)
         toolbar.updateSuggestions(values)
         toolbar.layoutIfNeeded()
@@ -19,7 +19,6 @@ struct PersonalSuggestionToolbarTests {
         toolbar.onSuggestionSelected = { selected.append($0) }
 
         let buttons = visibleButtons(in: toolbar)
-        #expect(buttons.contains { $0.accessibilityLabel == "Chuyển bàn phím" })
         #expect(buttons.contains { $0.accessibilityLabel == "Biểu tượng cảm xúc" })
         let suggestion = buttons.first { $0.accessibilityLabel == "Gợi ý, từ0" }
         #expect(suggestion != nil)
@@ -39,7 +38,7 @@ struct PersonalSuggestionToolbarTests {
     @Test("Narrow toolbar keeps highest-ranked candidates that fit")
     func adaptiveWidth() {
         let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 220, height: 44))
-        toolbar.apply(spec: .withSystemInputMode, theme: .funputGlass, traits: .init())
+        toolbar.apply(spec: .standard, theme: .funputGlass, traits: .init())
         toolbar.updateSuggestions(candidates(3))
         toolbar.layoutIfNeeded()
         let labels = visibleButtons(in: toolbar).compactMap(\.accessibilityLabel)

@@ -62,13 +62,6 @@ extension KeyboardInputCoordinator {
         composer.setEnabled(state.usesVietnameseComposition)
     }
 
-    public func prepareForSystemInputModeChange() {
-        composer.clear()
-        shiftController.resetTapSequence()
-        documentSynchronizer.invalidate()
-        resetPersonalSuggestionTracking()
-    }
-
     func updateLayoutMode(_ mode: KeyboardLayoutMode) {
         guard !state.editorMode.usesKeypad, state.layoutMode != mode else { return }
         replaceState(layoutMode: mode)

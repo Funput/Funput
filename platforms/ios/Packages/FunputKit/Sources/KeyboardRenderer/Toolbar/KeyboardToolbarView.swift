@@ -6,12 +6,10 @@ import UIKit
 @MainActor
 final class KeyboardToolbarView: UIView {
     var onEvent: ((KeyboardKeyEvent) -> Void)?
-    var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
     var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
     var onClipboardPaste: ((String) -> Void)?
 
     private let logoView = KeyboardBrandLogoView()
-    private let systemButton = UIButton(type: .system)
     private let emojiButton = UIButton(type: .system)
     private let suggestionBar = KeyboardSuggestionBarView()
     private let clipboardChip = KeyboardClipboardChipView()
@@ -22,7 +20,6 @@ final class KeyboardToolbarView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         addSubview(logoView)
-        configure(systemButton, symbol: "globe", role: .systemInputMode)
         configure(emojiButton, symbol: "face.smiling", role: .emoji)
         suggestionBar.onSelection = { [weak self] in self?.onSuggestionSelected?($0) }
         clipboardChip.onPaste = { [weak self] in self?.onClipboardPaste?($0) }
@@ -47,14 +44,12 @@ final class KeyboardToolbarView: UIView {
             width: itemSize,
             height: itemSize
         )
-        systemButton.frame = frame(before: emojiButton.frame, size: itemSize)
-        let controlsMinX = systemButton.isHidden ? emojiButton.frame.minX : systemButton.frame.minX
         // Suggestions and the clipboard chip share one region and never show at the
         // same time, so they get the same frame.
         let contentRegion = CGRect(
             x: logoView.frame.maxX + 6,
             y: 0,
-            width: max(0, controlsMinX - logoView.frame.maxX - 12),
+            width: max(0, emojiButton.frame.minX - logoView.frame.maxX - 12),
             height: bounds.height
         )
         suggestionBar.frame = contentRegion
@@ -68,12 +63,9 @@ final class KeyboardToolbarView: UIView {
     ) {
         self.spec = spec
         isHidden = spec == nil
-        systemButton.isHidden = spec?.systemInputModeKey == nil
-        systemButton.accessibilityLabel = spec?.systemInputModeKey?.accessibilityLabel
         emojiButton.accessibilityLabel = spec?.emojiKey.accessibilityLabel
 
-        let label = theme.label.uiColor(for: traits)
-        [systemButton, emojiButton].forEach { $0.tintColor = label }
+        emojiButton.tintColor = theme.label.uiColor(for: traits)
         suggestionBar.apply(theme: theme, traits: traits)
         clipboardChip.apply(theme: theme, traits: traits)
     }
@@ -98,21 +90,10 @@ final class KeyboardToolbarView: UIView {
         clipboardChip.isHidden = hasSuggestions || clipboardHint == nil
     }
 
-    private func frame(before frame: CGRect, size: CGFloat) -> CGRect {
-        CGRect(x: frame.minX - size - 2, y: frame.minY, width: size, height: size)
-    }
-
     private func configure(_ button: UIButton, symbol: String, role: KeyRole) {
         button.setImage(UIImage(systemName: symbol), for: .normal)
         button.accessibilityTraits = .keyboardKey
         configureInteraction(button, role: role)
-        if role == .systemInputMode {
-            button.addTarget(
-                self,
-                action: #selector(handleSystemInputModeEvent(_:with:)),
-                for: .allTouchEvents
-            )
-        }
         addSubview(button)
     }
 
@@ -130,16 +111,11 @@ final class KeyboardToolbarView: UIView {
 
     private func emit(_ role: KeyRole, phase: KeyboardKeyEvent.Phase) {
         let key: KeySpec? = switch role {
-        case .systemInputMode: spec?.systemInputModeKey
         case .emoji: spec?.emojiKey
         default: nil
         }
         guard let key else { return }
         onEvent?(KeyboardKeyEvent(key: key, phase: phase))
-    }
-
-    @objc private func handleSystemInputModeEvent(_ sender: UIView, with event: UIEvent) {
-        onSystemInputModeEvent?(sender, event)
     }
 }
 #endif

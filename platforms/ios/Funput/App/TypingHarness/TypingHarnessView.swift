@@ -28,7 +28,6 @@ struct TypingHarnessView: View {
         configuration.eagerRestore = false
         configuration.autoCapitalize = false
         configuration.showsNumberRow = false
-        configuration.showsGlobeKey = false
         FunputUITestConfigurationOverrideStore().save(
             configuration,
             expiresAt: Date().addingTimeInterval(10 * 60)

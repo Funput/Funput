@@ -91,7 +91,6 @@ struct KeyboardTouchAcceptanceFixture: Identifiable, Equatable {
         value.eagerRestore = false
         value.autoCapitalize = false
         value.showsNumberRow = false
-        value.showsGlobeKey = false
         return value
     }
 }

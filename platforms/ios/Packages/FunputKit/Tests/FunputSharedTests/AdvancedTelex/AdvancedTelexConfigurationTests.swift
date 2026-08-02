@@ -19,7 +19,7 @@ struct AdvancedTelexConfigurationTests {
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
 
         #expect(decoded.inputMethod == .telexAdvanced)
-        #expect(decoded.schemaVersion == 7)
+        #expect(decoded.schemaVersion == 8)
     }
 
     @Test("Legacy schema preserves its input method while migrating")
@@ -30,6 +30,6 @@ struct AdvancedTelexConfigurationTests {
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
 
         #expect(decoded.inputMethod == .telex)
-        #expect(decoded.schemaVersion == 7)
+        #expect(decoded.schemaVersion == 8)
     }
 }

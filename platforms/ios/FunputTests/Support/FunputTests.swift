@@ -25,12 +25,7 @@ struct FunputTests {
         let presentation = KeyboardPreviewPresentation.make(configuration: configuration)
         #expect(presentation.layout.inputMethod == .vni)
         #expect(!presentation.layout.rows.isEmpty)
-        #expect(presentation.layout.toolbar?.systemInputModeKey == nil)
         #expect(presentation.theme == .funputGlass)
-
-        configuration.showsGlobeKey = true
-        let withGlobe = KeyboardPreviewPresentation.make(configuration: configuration)
-        #expect(withGlobe.layout.toolbar?.systemInputModeKey?.role == .systemInputMode)
     }
 
     @Test("Version metadata presents the public version only")

@@ -8,7 +8,7 @@ import KeyboardTouchUIKit
 extension KeyboardTouchCoordinator {
     static let touchRoles: Set<KeyRole> = [
         .character, .vniModifier, .punctuation, .shift, .backspace,
-        .symbols, .moreSymbols, .letters, .inputMethod, .systemInputMode,
+        .symbols, .moreSymbols, .letters, .inputMethod,
         .space, .enter, .emoji,
     ]
 

@@ -18,11 +18,10 @@ struct FunputConfigurationTests {
         #expect(!config.isHapticFeedbackEnabled)
         #expect(!config.isKeySoundEnabled)
         #expect(!config.showsNumberRow)
-        #expect(!config.showsGlobeKey)
         #expect(config.heightScale == 1.1)
         #expect(config.personalSuggestionsEnabled)
         #expect(config.personalSuggestionResetToken == nil)
-        #expect(config.schemaVersion == 7)
+        #expect(config.schemaVersion == 8)
     }
 
     @Test("Configuration survives a JSON round-trip")
@@ -32,7 +31,6 @@ struct FunputConfigurationTests {
         config.toneStyle = .traditional
         config.spellCheck = false
         config.showsNumberRow = true
-        config.showsGlobeKey = true
         config.heightScale = 1.1
         let data = try JSONEncoder().encode(config)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
@@ -48,7 +46,6 @@ struct FunputConfigurationTests {
         #expect(decoded.selectedThemeID == FunputConfiguration.defaultThemeID)
         #expect(decoded.showsKeyPreviews == FunputConfiguration.default.showsKeyPreviews)
         #expect(!decoded.showsNumberRow)
-        #expect(!decoded.showsGlobeKey)
         #expect(decoded.personalSuggestionsEnabled)
     }
 
@@ -59,8 +56,7 @@ struct FunputConfigurationTests {
         #expect(!decoded.isHapticFeedbackEnabled)
         #expect(!decoded.isKeySoundEnabled)
         #expect(!decoded.showsNumberRow)
-        #expect(!decoded.showsGlobeKey)
-        #expect(decoded.schemaVersion == 7)
+        #expect(decoded.schemaVersion == 8)
     }
 
     @Test("Schema 3 migrates to the compact Telex default")
@@ -68,15 +64,16 @@ struct FunputConfigurationTests {
         let data = Data(#"{"showsNumberRow":true,"schemaVersion":3}"#.utf8)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(!decoded.showsNumberRow)
-        #expect(!decoded.showsGlobeKey)
-        #expect(decoded.schemaVersion == 7)
+        #expect(decoded.schemaVersion == 8)
     }
 
-    @Test("Schema 4 migrates to a hidden Globe key")
-    func migratesGlobeKeyDefault() throws {
-        let data = Data(#"{"showsGlobeKey":true,"schemaVersion":4}"#.utf8)
+    /// v8 dropped `showsGlobeKey` entirely. A stored payload still carrying it must
+    /// decode without complaint rather than throwing on the unknown key.
+    @Test("A payload from before the Globe key was dropped still decodes")
+    func migratesPastGlobeKey() throws {
+        let data = Data(#"{"showsGlobeKey":true,"showsNumberRow":true,"schemaVersion":4}"#.utf8)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
-        #expect(!decoded.showsGlobeKey)
-        #expect(decoded.schemaVersion == 7)
+        #expect(decoded.showsNumberRow)
+        #expect(decoded.schemaVersion == 8)
     }
 }

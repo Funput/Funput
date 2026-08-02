@@ -86,9 +86,6 @@ final class KeyboardViewController: UIInputViewController {
         keyboardView.onKeyEvent = { [weak self] event in
             self?.handleKeyEvent(event)
         }
-        keyboardView.onSystemInputModeEvent = { [weak self] source, event in
-            self?.handleSystemInputModeEvent(from: source, event: event)
-        }
         view.addSubview(keyboardView)
         installEmojiView()
         installClipboard()

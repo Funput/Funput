@@ -71,7 +71,6 @@ struct KeyboardGeometryTests {
         let space = rows[4].keys.first { $0.role == .space }
         #expect(space?.label == "Tiếng Việt")
         #expect(space?.accessibilityLabel.contains("Vuốt") == true)
-        #expect(!rows.flatMap(\.keys).contains { $0.role == .systemInputMode })
     }
 
     @Test("Customization extremes remain valid", arguments: [

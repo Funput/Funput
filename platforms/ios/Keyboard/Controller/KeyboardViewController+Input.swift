@@ -8,7 +8,6 @@ import UIKit
 
 extension KeyboardViewController {
     func handleKeyEvent(_ event: KeyboardKeyEvent) {
-        guard event.key.role != .systemInputMode else { return }
         let alternate: KeyAlternate?
         switch event.phase {
         case .released, .repeated:
@@ -84,7 +83,6 @@ extension KeyboardViewController {
             inputMethod: state.inputMethod,
             mode: state.layoutMode,
             editorMode: state.editorMode,
-            showsSystemInputModeKey: configuration.showsGlobeKey,
             showsNumberRow: configuration.showsNumberRow
         )
         let themed = configuredThemedPresentation()

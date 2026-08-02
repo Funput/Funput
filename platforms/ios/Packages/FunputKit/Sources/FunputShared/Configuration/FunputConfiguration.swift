@@ -20,7 +20,6 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var isKeySoundEnabled: Bool
     public var showsKeyPreviews: Bool
     public var showsNumberRow: Bool
-    public var showsGlobeKey: Bool
     public var heightScale: Double
     public var personalSuggestionsEnabled: Bool
     public var personalSuggestionResetToken: UUID?
@@ -30,7 +29,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
         case eagerRestore, autoCapitalize, selectedThemeID
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
-        case showsNumberRow, showsGlobeKey, heightScale
+        case showsNumberRow, heightScale
         case personalSuggestionsEnabled, personalSuggestionResetToken, schemaVersion
     }
 
@@ -47,7 +46,6 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
         showsNumberRow: Bool = false,
-        showsGlobeKey: Bool = false,
         heightScale: Double = 1.1,
         personalSuggestionsEnabled: Bool = true,
         personalSuggestionResetToken: UUID? = nil,
@@ -65,7 +63,6 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
         self.showsNumberRow = showsNumberRow
-        self.showsGlobeKey = showsGlobeKey
         self.heightScale = heightScale
         self.personalSuggestionsEnabled = personalSuggestionsEnabled
         self.personalSuggestionResetToken = personalSuggestionResetToken
@@ -77,5 +74,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 7
+    public static let currentSchemaVersion = 8
 }

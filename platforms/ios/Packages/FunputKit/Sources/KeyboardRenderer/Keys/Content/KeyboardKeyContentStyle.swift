@@ -19,8 +19,6 @@ enum KeyboardKeyContentStyle {
             }
         case .backspace:
             name = "delete.left"
-        case .systemInputMode:
-            name = "globe"
         case .enter:
             name = "return"
         case .emoji:

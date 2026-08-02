@@ -54,7 +54,7 @@ struct KeyboardTouchGestureTests {
     func controls() {
         let roles: [KeyRole] = [
             .shift, .backspace, .symbols, .moreSymbols, .letters,
-            .inputMethod, .systemInputMode, .enter, .emoji,
+            .inputMethod, .enter, .emoji,
         ]
         for role in roles {
             let fixture = KeyboardTouchFixture.singleKey(key(role.rawValue, role))

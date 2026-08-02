@@ -9,7 +9,6 @@ public final class KeyboardSurfaceView: UIView {
         didSet { presentationDidChange(from: oldValue) }
     }
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
-    public var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
     public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
     public var onClipboardPaste: ((String) -> Void)?
 
@@ -117,9 +116,6 @@ public final class KeyboardSurfaceView: UIView {
         configureTouchOverlay()
         configureTouchPipeline()
         toolbarView.onEvent = { [weak self] event in self?.route(event, from: nil) }
-        toolbarView.onSystemInputModeEvent = { [weak self] source, event in
-            self?.onSystemInputModeEvent?(source, event)
-        }
         toolbarView.onSuggestionSelected = { [weak self] candidate in
             guard let self else { return }
             interactionController.performSuggestionFeedback(presentation: presentation)

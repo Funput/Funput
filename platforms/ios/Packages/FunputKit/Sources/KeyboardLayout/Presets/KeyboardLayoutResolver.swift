@@ -3,7 +3,6 @@ public enum KeyboardLayoutResolver {
         inputMethod: KeyboardInputMethod,
         mode: KeyboardLayoutMode,
         editorMode: KeyboardEditorMode = .text,
-        showsSystemInputModeKey: Bool = false,
         showsNumberRow: Bool = true
     ) -> KeyboardLayout {
         let usesCompactLayout = editorMode == .text
@@ -25,18 +24,6 @@ public enum KeyboardLayoutResolver {
                 ? CompactSymbolKeyboardLayouts.secondary(inputMethod)
                 : SymbolKeyboardLayouts.secondary(inputMethod, secure: editorMode.isPassword)
         }
-        return layout.withSystemInputModeKey(showsSystemInputModeKey)
-    }
-}
-
-private extension KeyboardLayout {
-    func withSystemInputModeKey(_ visible: Bool) -> KeyboardLayout {
-        guard visible, toolbar != nil else { return self }
-        return KeyboardLayout(
-            id: "\(id)-system-switcher",
-            inputMethod: inputMethod,
-            toolbar: .withSystemInputMode,
-            rows: rows
-        )
+        return layout
     }
 }

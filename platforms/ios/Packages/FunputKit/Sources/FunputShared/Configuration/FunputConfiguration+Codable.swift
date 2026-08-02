@@ -19,7 +19,6 @@ extension FunputConfiguration {
         config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.showsNumberRow = try container.decodeIfPresent(Bool.self, forKey: .showsNumberRow) ?? config.showsNumberRow
-        config.showsGlobeKey = try container.decodeIfPresent(Bool.self, forKey: .showsGlobeKey) ?? config.showsGlobeKey
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
         config.personalSuggestionsEnabled = try container.decodeIfPresent(Bool.self, forKey: .personalSuggestionsEnabled) ?? config.personalSuggestionsEnabled
         config.personalSuggestionResetToken = try container.decodeIfPresent(UUID.self, forKey: .personalSuggestionResetToken)
@@ -36,7 +35,6 @@ extension FunputConfiguration {
             config.schemaVersion = 4
         }
         if config.schemaVersion < 5 {
-            config.showsGlobeKey = false
             config.schemaVersion = 5
         }
         if config.schemaVersion < 6 {
@@ -44,6 +42,11 @@ extension FunputConfiguration {
         }
         if config.schemaVersion < 7 {
             config.schemaVersion = 7
+        }
+        // v8 dropped `showsGlobeKey`: iOS draws its own globe below a custom
+        // keyboard, so Funput's copy was a duplicate that never shipped visible.
+        if config.schemaVersion < 8 {
+            config.schemaVersion = 8
         }
         self = config
     }
