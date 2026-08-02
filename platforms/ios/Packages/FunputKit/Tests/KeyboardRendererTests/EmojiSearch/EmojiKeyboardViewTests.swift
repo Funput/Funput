@@ -23,16 +23,21 @@ struct EmojiKeyboardViewTests {
         var selected: EmojiItem?
         var deleted = false
         var returned = false
+        var openedKaomoji = false
         view.onEmojiSelected = { selected = $0 }
         view.onDelete = { deleted = true }
         view.onReturn = { returned = true }
+        view.onKaomoji = { openedKaomoji = true }
         view.collectionView(view.collectionView, didSelectItemAt: IndexPath(item: 0, section: 0))
         buttons(in: view).first { $0.accessibilityLabel == "Xóa" }?.sendActions(for: .touchUpInside)
         buttons(in: view).first { $0.accessibilityLabel == "Trở về bàn phím Funput" }?
             .sendActions(for: .touchUpInside)
+        buttons(in: view).first { $0.accessibilityLabel == "Biểu tượng kaomoji" }?
+            .sendActions(for: .touchUpInside)
         #expect(selected == smile)
         #expect(deleted)
         #expect(returned)
+        #expect(openedKaomoji)
     }
 
     @Test("Search keyboard edits only local query")

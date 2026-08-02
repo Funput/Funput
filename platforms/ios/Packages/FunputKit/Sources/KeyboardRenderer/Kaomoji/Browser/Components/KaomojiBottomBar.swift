@@ -2,35 +2,35 @@
 import UIKit
 
 @MainActor
-final class EmojiBottomBar: UIView {
+final class KaomojiBottomBar: UIView {
     var onReturn: (() -> Void)?
     var onDelete: (() -> Void)?
-    var onKaomoji: (() -> Void)?
-    var onCategory: ((EmojiCategory) -> Void)?
+    var onEmoji: (() -> Void)?
+    var onCategory: ((KaomojiCategory) -> Void)?
 
     private let returnButton = UIButton(type: .system)
-    private let kaomojiButton = UIButton(type: .system)
+    private let emojiButton = UIButton(type: .system)
     private let deleteButton = UIButton(type: .system)
     private let categoryStack = UIStackView()
     private let categoryScroll = UIScrollView()
-    private var categoryButtons: [EmojiCategory: UIButton] = [:]
+    private var categoryButtons: [KaomojiCategory: UIButton] = [:]
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         configureAction(returnButton, symbol: "keyboard", label: "Trở về bàn phím Funput") {
             [weak self] in self?.onReturn?()
         }
-        configureKaomoji()
+        configureEmoji()
         configureAction(deleteButton, symbol: "delete.left", label: "Xóa") {
             [weak self] in self?.onDelete?()
         }
         categoryStack.axis = .horizontal
         categoryStack.distribution = .fillEqually
-        EmojiCategory.allCases.forEach(configureCategory)
+        KaomojiCategory.allCases.forEach(configureCategory)
         categoryScroll.showsHorizontalScrollIndicator = false
         categoryScroll.addSubview(categoryStack)
         addSubview(returnButton)
-        addSubview(kaomojiButton)
+        addSubview(emojiButton)
         addSubview(categoryScroll)
         addSubview(deleteButton)
     }
@@ -44,7 +44,7 @@ final class EmojiBottomBar: UIView {
         super.layoutSubviews()
         let actionWidth: CGFloat = 46
         returnButton.frame = CGRect(x: 0, y: 0, width: actionWidth, height: bounds.height)
-        kaomojiButton.frame = CGRect(
+        emojiButton.frame = CGRect(
             x: actionWidth, y: 0, width: actionWidth, height: bounds.height
         )
         deleteButton.frame = CGRect(
@@ -59,35 +59,41 @@ final class EmojiBottomBar: UIView {
         categoryScroll.contentSize = categoryStack.bounds.size
     }
 
-    func apply(color: UIColor, selected: EmojiCategory) {
-        [returnButton, kaomojiButton, deleteButton].forEach { $0.tintColor = color }
+    /// A real emoji glyph rather than `face.smiling`, which would be identical to
+    /// the "Vui vẻ" category symbol sitting two buttons away.
+    private func configureEmoji() {
+        emojiButton.setTitle("😀", for: .normal)
+        emojiButton.titleLabel?.font = .systemFont(ofSize: 20)
+        emojiButton.accessibilityLabel = "Biểu tượng cảm xúc"
+        emojiButton.accessibilityTraits = .keyboardKey
+        emojiButton.addAction(
+            UIAction { [weak self] _ in self?.onEmoji?() }, for: .touchUpInside
+        )
+    }
+
+    func apply(color: UIColor, selected: KaomojiCategory) {
+        [returnButton, deleteButton].forEach { $0.tintColor = color }
         categoryButtons.forEach { category, button in
             button.tintColor = category == selected ? color : color.withAlphaComponent(0.45)
             button.accessibilityTraits = category == selected ? [.button, .selected] : .button
         }
+        revealSelectedCategory(selected)
     }
 
-    private func configureCategory(_ category: EmojiCategory) {
+    /// Ten categories do not fit the strip, so the highlighted one is scrolled into
+    /// view — otherwise browsing marks a tab the user cannot see.
+    private func revealSelectedCategory(_ category: KaomojiCategory) {
+        guard let button = categoryButtons[category], !categoryScroll.bounds.isEmpty else { return }
+        categoryScroll.scrollRectToVisible(button.frame, animated: false)
+    }
+
+    private func configureCategory(_ category: KaomojiCategory) {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: category.symbolName), for: .normal)
-        button.accessibilityLabel = category.accessibilityLabel
+        button.accessibilityLabel = category.displayName
         button.addAction(UIAction { [weak self] _ in self?.onCategory?(category) }, for: .touchUpInside)
         categoryButtons[category] = button
         categoryStack.addArrangedSubview(button)
-    }
-
-    /// Labelled with a kaomoji rather than an SF Symbol so the button says what it
-    /// opens without needing an icon nobody recognises.
-    private func configureKaomoji() {
-        kaomojiButton.setTitle("(^_^)", for: .normal)
-        kaomojiButton.titleLabel?.font = .systemFont(ofSize: 13)
-        kaomojiButton.titleLabel?.adjustsFontSizeToFitWidth = true
-        kaomojiButton.titleLabel?.minimumScaleFactor = 0.7
-        kaomojiButton.accessibilityLabel = "Biểu tượng kaomoji"
-        kaomojiButton.accessibilityTraits = .keyboardKey
-        kaomojiButton.addAction(
-            UIAction { [weak self] _ in self?.onKaomoji?() }, for: .touchUpInside
-        )
     }
 
     private func configureAction(
@@ -100,18 +106,19 @@ final class EmojiBottomBar: UIView {
     }
 }
 
-private extension EmojiCategory {
+private extension KaomojiCategory {
     var symbolName: String {
         switch self {
         case .recent: "clock"
-        case .smileysPeople: "face.smiling"
-        case .animalsNature: "pawprint"
-        case .foodDrink: "fork.knife"
-        case .activities: "sportscourt"
-        case .travelPlaces: "car"
-        case .objects: "lightbulb"
-        case .symbols: "heart"
-        case .flags: "flag"
+        case .happy: "face.smiling"
+        case .sad: "cloud.rain"
+        case .angry: "flame"
+        case .love: "heart"
+        case .surprised: "exclamationmark.bubble"
+        case .confused: "questionmark.circle"
+        case .action: "figure.run"
+        case .animal: "pawprint"
+        case .greeting: "hand.wave"
         }
     }
 }

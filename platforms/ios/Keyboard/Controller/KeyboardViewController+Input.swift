@@ -102,6 +102,8 @@ extension KeyboardViewController {
             showFunput()
         } else if displayedSurface == .emoji {
             refreshEmojiPresentation()
+        } else if displayedSurface == .kaomoji {
+            refreshKaomojiPresentation()
         }
         updatePreferredHeight()
     }

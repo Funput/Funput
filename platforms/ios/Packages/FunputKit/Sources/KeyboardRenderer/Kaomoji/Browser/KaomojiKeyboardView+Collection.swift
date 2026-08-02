@@ -1,7 +1,7 @@
 #if canImport(UIKit)
 import UIKit
 
-extension EmojiKeyboardView: UICollectionViewDataSource, UICollectionViewDelegate {
+extension KaomojiKeyboardView: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     public func numberOfSections(in collectionView: UICollectionView) -> Int {
         sections.count
     }
@@ -14,9 +14,12 @@ extension EmojiKeyboardView: UICollectionViewDataSource, UICollectionViewDelegat
         _ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath
     ) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(
-            withReuseIdentifier: EmojiCell.reuseIdentifier, for: indexPath
-        ) as? EmojiCell else { return UICollectionViewCell() }
-        cell.apply(sections[indexPath.section].items[indexPath.item])
+            withReuseIdentifier: KaomojiCell.reuseIdentifier, for: indexPath
+        ) as? KaomojiCell else { return UICollectionViewCell() }
+        cell.apply(
+            sections[indexPath.section].items[indexPath.item],
+            color: theme.label.uiColor(for: traitCollection)
+        )
         return cell
     }
 
@@ -33,14 +36,28 @@ extension EmojiKeyboardView: UICollectionViewDataSource, UICollectionViewDelegat
               ) as? PanelSectionHeaderView
         else { return UICollectionReusableView() }
         header.apply(
-            title: sections[indexPath.section].category.accessibilityLabel,
+            title: sections[indexPath.section].category.displayName,
             color: theme.secondaryLabel.uiColor(for: traitCollection)
         )
         return header
     }
 
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        onEmojiSelected?(sections[indexPath.section].items[indexPath.item])
+        onKaomojiSelected?(sections[indexPath.section].items[indexPath.item])
+    }
+
+    /// Cells are as wide as their text needs, so the flow layout packs short and
+    /// long kaomoji into ragged rows instead of a wasteful fixed grid.
+    public func collectionView(
+        _ collectionView: UICollectionView,
+        layout collectionViewLayout: UICollectionViewLayout,
+        sizeForItemAt indexPath: IndexPath
+    ) -> CGSize {
+        let item = sections[indexPath.section].items[indexPath.item]
+        return CGSize(
+            width: itemWidth(for: item.text, available: collectionView.bounds.width),
+            height: Self.itemHeight
+        )
     }
 
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -52,6 +69,23 @@ extension EmojiKeyboardView: UICollectionViewDataSource, UICollectionViewDelegat
             selectedCategory = category
             bottomBar.apply(color: theme.label.uiColor(for: traitCollection), selected: category)
         }
+    }
+
+    func itemWidth(for text: String, available: CGFloat) -> CGFloat {
+        let widest = max(available - Self.horizontalInset * 2, Self.minimumItemWidth)
+        let measured = measuredWidth(for: text) + Self.horizontalPadding
+        return min(max(measured, Self.minimumItemWidth), widest)
+    }
+
+    /// Measurements are cached because the flow layout asks for every item's size
+    /// on each invalidation, and the catalog never changes at runtime.
+    private func measuredWidth(for text: String) -> CGFloat {
+        if let cached = measuredWidths[text] { return cached }
+        let width = (text as NSString)
+            .size(withAttributes: [.font: KaomojiCell.font])
+            .width
+        measuredWidths[text] = width
+        return width
     }
 }
 #endif
