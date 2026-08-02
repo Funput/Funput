@@ -66,16 +66,26 @@ extension ClipboardKeyboardView: UICollectionViewDataSource, UICollectionViewDel
         return UISwipeActionsConfiguration(actions: [delete])
     }
 
-    /// Pinning has a visible button on the row; deleting one entry lives here so a
-    /// destructive action needs a deliberate press rather than sitting a finger-width
-    /// from "paste this".
+    /// Long-press does double duty: the card above the menu is where a one-line row
+    /// finally shows its whole clip, and the menu holds the actions that should not
+    /// sit a finger-width from "paste this".
     public func collectionView(
         _ collectionView: UICollectionView,
         contextMenuConfigurationForItemsAt indexPaths: [IndexPath],
         point: CGPoint
     ) -> UIContextMenuConfiguration? {
         guard let indexPath = indexPaths.first, let entry = entry(at: indexPath) else { return nil }
-        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+        return UIContextMenuConfiguration(
+            identifier: nil,
+            // As wide as the panel allows: the card is the only place a long clip is
+            // readable, so every point of width counts.
+            previewProvider: {
+                ClipboardPreviewController(
+                    text: entry.text,
+                    width: collectionView.bounds.width - 32
+                )
+            }
+        ) { [weak self] _ in
             UIMenu(children: [
                 UIAction(
                     title: entry.isPinned ? "Bỏ ghim" : "Ghim",
