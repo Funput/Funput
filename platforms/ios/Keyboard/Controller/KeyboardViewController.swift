@@ -17,6 +17,7 @@ final class KeyboardViewController: UIInputViewController {
     let keyboardView = KeyboardSurfaceView()
     let emojiView = EmojiKeyboardView()
     let kaomojiView = KaomojiKeyboardView()
+    let clipboardPanelView = ClipboardKeyboardView()
     let emojiRecentsStore = EmojiRecentsStore()
     let clipboardStore = ClipboardStore()
     let kaomojiRecentsStore = EmojiRecentsStore(key: FunputAppGroup.kaomojiRecentsKey)
@@ -89,6 +90,7 @@ final class KeyboardViewController: UIInputViewController {
         view.addSubview(keyboardView)
         installEmojiView()
         installClipboard()
+        installClipboardPanel()
         installKaomojiView()
 
         NSLayoutConstraint.activate([
@@ -104,6 +106,10 @@ final class KeyboardViewController: UIInputViewController {
             kaomojiView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             kaomojiView.topAnchor.constraint(equalTo: view.topAnchor),
             kaomojiView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            clipboardPanelView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            clipboardPanelView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            clipboardPanelView.topAnchor.constraint(equalTo: view.topAnchor),
+            clipboardPanelView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
 
         heightController.install(on: view)
@@ -128,4 +134,5 @@ enum KeyboardSurface {
     case funput
     case emoji
     case kaomoji
+    case clipboard
 }

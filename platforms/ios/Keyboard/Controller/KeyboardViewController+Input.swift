@@ -32,6 +32,11 @@ extension KeyboardViewController {
             return
         }
 
+        if event.key.role == .clipboard {
+            showClipboardPanel()
+            return
+        }
+
         let signpostID = OSSignpostID(log: KeyboardControllerSignpost.log)
         os_signpost(
             .begin,
@@ -102,6 +107,8 @@ extension KeyboardViewController {
             refreshEmojiPresentation()
         } else if displayedSurface == .kaomoji {
             refreshKaomojiPresentation()
+        } else if displayedSurface == .clipboard {
+            refreshClipboardPanel()
         }
         updatePreferredHeight()
     }

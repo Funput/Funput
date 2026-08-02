@@ -28,6 +28,7 @@ extension KeyboardViewController {
         keyboardView.backgroundImage = image
         emojiView.backgroundImage = image
         kaomojiView.backgroundImage = image
+        clipboardPanelView.backgroundImage = image
         inputCoordinator.apply(configuration)
         configurePersonalSuggestions()
         updateInputPresentation()

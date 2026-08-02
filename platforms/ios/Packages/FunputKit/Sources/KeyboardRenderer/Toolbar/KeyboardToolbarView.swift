@@ -10,6 +10,7 @@ final class KeyboardToolbarView: UIView {
     var onClipboardPaste: ((String) -> Void)?
 
     private let logoView = KeyboardBrandLogoView()
+    private let clipboardButton = UIButton(type: .system)
     private let emojiButton = UIButton(type: .system)
     private let suggestionBar = KeyboardSuggestionBarView()
     private let clipboardChip = KeyboardClipboardChipView()
@@ -20,6 +21,7 @@ final class KeyboardToolbarView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         addSubview(logoView)
+        configure(clipboardButton, symbol: "clipboard", role: .clipboard)
         configure(emojiButton, symbol: "face.smiling", role: .emoji)
         suggestionBar.onSelection = { [weak self] in self?.onSuggestionSelected?($0) }
         clipboardChip.onPaste = { [weak self] in self?.onClipboardPaste?($0) }
@@ -44,12 +46,22 @@ final class KeyboardToolbarView: UIView {
             width: itemSize,
             height: itemSize
         )
+        clipboardButton.frame = CGRect(
+            x: emojiButton.frame.minX - itemSize - 2,
+            y: originY,
+            width: itemSize,
+            height: itemSize
+        )
         // Suggestions and the clipboard chip share one region and never show at the
-        // same time, so they get the same frame.
+        // same time, so they get the same frame. It ends wherever the right-hand
+        // controls begin, which moves when the clipboard key steps aside.
+        let controlsMinX = clipboardButton.isHidden
+            ? emojiButton.frame.minX
+            : clipboardButton.frame.minX
         let contentRegion = CGRect(
             x: logoView.frame.maxX + 6,
             y: 0,
-            width: max(0, emojiButton.frame.minX - logoView.frame.maxX - 12),
+            width: max(0, controlsMinX - logoView.frame.maxX - 12),
             height: bounds.height
         )
         suggestionBar.frame = contentRegion
@@ -64,8 +76,10 @@ final class KeyboardToolbarView: UIView {
         self.spec = spec
         isHidden = spec == nil
         emojiButton.accessibilityLabel = spec?.emojiKey.accessibilityLabel
+        clipboardButton.accessibilityLabel = spec?.clipboardKey.accessibilityLabel
 
-        emojiButton.tintColor = theme.label.uiColor(for: traits)
+        let label = theme.label.uiColor(for: traits)
+        [emojiButton, clipboardButton].forEach { $0.tintColor = label }
         suggestionBar.apply(theme: theme, traits: traits)
         clipboardChip.apply(theme: theme, traits: traits)
     }
@@ -88,10 +102,14 @@ final class KeyboardToolbarView: UIView {
     private func arbitrateContentRegion() {
         suggestionBar.isHidden = !hasSuggestions
         clipboardChip.isHidden = hasSuggestions || clipboardHint == nil
+        // The clipboard key yields its slot too: while the user is typing, the whole
+        // toolbar belongs to suggestions.
+        clipboardButton.isHidden = hasSuggestions
+        setNeedsLayout()
     }
 
     private func configure(_ button: UIButton, symbol: String, role: KeyRole) {
-        button.setImage(UIImage(systemName: symbol), for: .normal)
+        button.setImage(KeyboardToolbarSymbol.image(symbol), for: .normal)
         button.accessibilityTraits = .keyboardKey
         configureInteraction(button, role: role)
         addSubview(button)
@@ -112,6 +130,7 @@ final class KeyboardToolbarView: UIView {
     private func emit(_ role: KeyRole, phase: KeyboardKeyEvent.Phase) {
         let key: KeySpec? = switch role {
         case .emoji: spec?.emojiKey
+        case .clipboard: spec?.clipboardKey
         default: nil
         }
         guard let key else { return }

@@ -1,11 +1,18 @@
 public struct KeyboardToolbarSpec: Hashable, Sendable {
+    public let clipboardKey: KeySpec
     public let emojiKey: KeySpec
 
     public var keys: [KeySpec] {
-        [emojiKey]
+        [clipboardKey, emojiKey]
     }
 
     public init() {
+        clipboardKey = KeySpec(
+            id: "toolbar-clipboard",
+            label: "",
+            role: .clipboard,
+            accessibilityLabel: "Lịch sử clipboard"
+        )
         emojiKey = KeySpec(
             id: "toolbar-emoji",
             label: "",

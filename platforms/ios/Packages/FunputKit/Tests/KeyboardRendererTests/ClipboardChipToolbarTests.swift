@@ -53,6 +53,46 @@ struct ClipboardChipToolbarTests {
         }
     }
 
+    /// The clipboard key sits where the globe used to. It steps aside for the same
+    /// reason the chip does: while the user is typing, the toolbar belongs to
+    /// suggestions.
+    @Test("The clipboard key yields its slot while suggestions are showing")
+    func clipboardKeyYieldsToSuggestions() throws {
+        let toolbar = makeToolbar()
+        toolbar.layoutIfNeeded()
+        let key = try #require(
+            buttons(in: toolbar).first { $0.accessibilityLabel == "Lịch sử clipboard" }
+        )
+        #expect(!key.isHidden)
+
+        toolbar.updateSuggestions([KeyboardSuggestionCandidate(text: "chào", generation: 1)])
+        #expect(key.isHidden)
+
+        toolbar.updateSuggestions([])
+        #expect(!key.isHidden)
+    }
+
+    /// SF Symbols size by cap height, so the tall clipboard glyph came out visibly
+    /// bigger than the round emoji one until it was scaled to match.
+    @Test("The clipboard key is no taller than the emoji key beside it")
+    func toolbarSymbolsShareOneHeight() throws {
+        let toolbar = makeToolbar()
+        let all = buttons(in: toolbar)
+        let clipboard = try #require(
+            all.first { $0.accessibilityLabel == "Lịch sử clipboard" }?.currentImage
+        )
+        let emoji = try #require(
+            all.first { $0.accessibilityLabel == "Biểu tượng cảm xúc" }?.currentImage
+        )
+        #expect(clipboard.size.height <= emoji.size.height + 0.5)
+    }
+
+    private func buttons(in view: UIView) -> [UIButton] {
+        view.subviews.flatMap { child in
+            (child as? UIButton).map { [$0] } ?? buttons(in: child)
+        }
+    }
+
     private func makeToolbar(height: CGFloat = 44) -> KeyboardToolbarView {
         let toolbar = KeyboardToolbarView(
             frame: CGRect(x: 0, y: 0, width: 393, height: height)

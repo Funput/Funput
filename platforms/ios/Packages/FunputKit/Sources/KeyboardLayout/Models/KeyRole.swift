@@ -12,6 +12,7 @@ public enum KeyRole: String, Hashable, Sendable {
     case space
     case enter
     case emoji
+    case clipboard
 
     public var isSpecial: Bool {
         switch self {

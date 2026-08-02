@@ -30,6 +30,7 @@ extension KeyboardViewController {
         displayedSurface = .kaomoji
         keyboardView.isHidden = true
         emojiView.isHidden = true
+        clipboardPanelView.isHidden = true
         kaomojiView.isHidden = false
         refreshKaomojiPresentation()
     }

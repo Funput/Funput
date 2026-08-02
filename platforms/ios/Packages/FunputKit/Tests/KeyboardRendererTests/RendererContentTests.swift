@@ -50,10 +50,10 @@ struct RendererContentTests {
         let toolbar = KeyboardToolbarView()
         toolbar.apply(spec: .standard, theme: .funputGlass, traits: traits)
 
-        // The logo is a decorative image view, so only the emoji button shows.
+        // The logo is a decorative image view, so the two panel keys are what show.
         #expect(!toolbar.isHidden)
         #expect(visibleButtons(in: toolbar).compactMap(\.accessibilityLabel) == [
-            "Biểu tượng cảm xúc",
+            "Lịch sử clipboard", "Biểu tượng cảm xúc",
         ])
 
         toolbar.apply(spec: nil, theme: .funputGlass, traits: traits)
@@ -61,13 +61,15 @@ struct RendererContentTests {
     }
 
     @Test("Toolbar emits press and release phases")
-    func toolbarInteraction() {
+    func toolbarInteraction() throws {
         let toolbar = KeyboardToolbarView()
         var events: [KeyboardKeyEvent] = []
         toolbar.onEvent = { events.append($0) }
         toolbar.apply(spec: .standard, theme: .funputGlass, traits: traits)
 
-        let emojiButton = visibleButtons(in: toolbar)[0]
+        let emojiButton = try #require(
+            visibleButtons(in: toolbar).first { $0.accessibilityLabel == "Biểu tượng cảm xúc" }
+        )
         emojiButton.sendActions(for: .touchDown)
         emojiButton.sendActions(for: .touchUpInside)
 
