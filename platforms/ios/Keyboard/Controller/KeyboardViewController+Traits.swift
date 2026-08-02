@@ -37,6 +37,9 @@ extension KeyboardViewController {
         resolvedTextInputTraits = resolved
         inputCoordinator.updateContext(resolved)
         updateInputPresentation()
+        // Guarded above, so this only runs when the focused field actually changed —
+        // which is exactly when the answer can flip, e.g. moving into a password box.
+        refreshClipboardOffer()
     }
 
 }

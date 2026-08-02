@@ -27,6 +27,10 @@ public enum FunputAppGroup {
     /// Directory containing the private Rust snapshot and journal.
     public static let personalSuggestionsDirectory = "PersonalSuggestions"
 
+    /// Directory holding the clipboard history file. A directory rather than a
+    /// defaults key so the contents can be excluded from device backups.
+    public static let clipboardDirectory = "Clipboard"
+
     /// Encoded custom keyboard themes shared with the extension.
     public static let customThemesKey = "custom-themes"
 }

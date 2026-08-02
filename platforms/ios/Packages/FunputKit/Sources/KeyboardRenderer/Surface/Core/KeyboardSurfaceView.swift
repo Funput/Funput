@@ -11,6 +11,7 @@ public final class KeyboardSurfaceView: UIView {
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
     public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
+    public var onClipboardPaste: ((String) -> Void)?
 
     let backdropView = KeyboardBackdropView()
     let toolbarView = KeyboardToolbarView()
@@ -123,6 +124,11 @@ public final class KeyboardSurfaceView: UIView {
             guard let self else { return }
             interactionController.performSuggestionFeedback(presentation: presentation)
             onSuggestionSelected?(candidate)
+        }
+        toolbarView.onClipboardPaste = { [weak self] text in
+            guard let self else { return }
+            interactionController.performSuggestionFeedback(presentation: presentation)
+            onClipboardPaste?(text)
         }
         rebuildKeys()
         applyPresentation()

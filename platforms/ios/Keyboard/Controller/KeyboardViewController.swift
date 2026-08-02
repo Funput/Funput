@@ -17,6 +17,7 @@ final class KeyboardViewController: UIInputViewController {
     let keyboardView = KeyboardSurfaceView()
     let emojiView = EmojiKeyboardView()
     let emojiRecentsStore = EmojiRecentsStore()
+    let clipboardStore = ClipboardStore()
     let accessStateStore = KeyboardAccessStateStore()
     let customThemeStore = CustomThemeStore()
     let themeAssetStore = ThemeAssetStore()
@@ -52,6 +53,7 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidAppear(animated)
         isKeyboardVisible = true
         activatePreferredHeight()
+        refreshClipboardOffer()
     }
 
     func deactivatePreferredHeight() {
@@ -87,6 +89,7 @@ final class KeyboardViewController: UIInputViewController {
         }
         view.addSubview(keyboardView)
         installEmojiView()
+        installClipboard()
 
         NSLayoutConstraint.activate([
             keyboardView.leadingAnchor.constraint(equalTo: view.leadingAnchor),

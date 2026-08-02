@@ -42,6 +42,10 @@ extension KeyboardSurfaceView {
         toolbarView.updateSuggestions(candidates)
     }
 
+    public func updateClipboardHint(_ hint: KeyboardClipboardHint?) {
+        toolbarView.updateClipboardHint(hint)
+    }
+
     @objc func accessibilityAppearanceDidChange() {
         applyPresentation()
         setNeedsLayout()

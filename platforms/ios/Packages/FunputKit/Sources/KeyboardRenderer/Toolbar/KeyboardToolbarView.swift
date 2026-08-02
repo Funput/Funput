@@ -8,11 +8,15 @@ final class KeyboardToolbarView: UIView {
     var onEvent: ((KeyboardKeyEvent) -> Void)?
     var onSystemInputModeEvent: ((UIView, UIEvent) -> Void)?
     var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
+    var onClipboardPaste: ((String) -> Void)?
 
     private let logoView = KeyboardBrandLogoView()
     private let systemButton = UIButton(type: .system)
     private let emojiButton = UIButton(type: .system)
     private let suggestionBar = KeyboardSuggestionBarView()
+    private let clipboardChip = KeyboardClipboardChipView()
+    private var clipboardHint: KeyboardClipboardHint?
+    private var hasSuggestions = false
     private var spec: KeyboardToolbarSpec?
 
     override init(frame: CGRect) {
@@ -21,7 +25,10 @@ final class KeyboardToolbarView: UIView {
         configure(systemButton, symbol: "globe", role: .systemInputMode)
         configure(emojiButton, symbol: "face.smiling", role: .emoji)
         suggestionBar.onSelection = { [weak self] in self?.onSuggestionSelected?($0) }
+        clipboardChip.onPaste = { [weak self] in self?.onClipboardPaste?($0) }
+        clipboardChip.isHidden = true
         addSubview(suggestionBar)
+        addSubview(clipboardChip)
     }
 
     @available(*, unavailable)
@@ -42,12 +49,16 @@ final class KeyboardToolbarView: UIView {
         )
         systemButton.frame = frame(before: emojiButton.frame, size: itemSize)
         let controlsMinX = systemButton.isHidden ? emojiButton.frame.minX : systemButton.frame.minX
-        suggestionBar.frame = CGRect(
+        // Suggestions and the clipboard chip share one region and never show at the
+        // same time, so they get the same frame.
+        let contentRegion = CGRect(
             x: logoView.frame.maxX + 6,
             y: 0,
             width: max(0, controlsMinX - logoView.frame.maxX - 12),
             height: bounds.height
         )
+        suggestionBar.frame = contentRegion
+        clipboardChip.frame = contentRegion
     }
 
     func apply(
@@ -64,10 +75,27 @@ final class KeyboardToolbarView: UIView {
         let label = theme.label.uiColor(for: traits)
         [systemButton, emojiButton].forEach { $0.tintColor = label }
         suggestionBar.apply(theme: theme, traits: traits)
+        clipboardChip.apply(theme: theme, traits: traits)
     }
 
     func updateSuggestions(_ candidates: [KeyboardSuggestionCandidate]) {
         suggestionBar.update(candidates)
+        hasSuggestions = !candidates.isEmpty
+        arbitrateContentRegion()
+    }
+
+    func updateClipboardHint(_ hint: KeyboardClipboardHint?) {
+        clipboardHint = hint
+        clipboardChip.update(hint: hint)
+        arbitrateContentRegion()
+    }
+
+    /// Suggestions win the shared region: they are about what the user is typing
+    /// right now, while the clipboard chip is a standing offer they can also reach
+    /// from the clipboard panel.
+    private func arbitrateContentRegion() {
+        suggestionBar.isHidden = !hasSuggestions
+        clipboardChip.isHidden = hasSuggestions || clipboardHint == nil
     }
 
     private func frame(before frame: CGRect, size: CGFloat) -> CGRect {
