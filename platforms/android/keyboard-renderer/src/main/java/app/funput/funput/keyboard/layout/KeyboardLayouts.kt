@@ -41,6 +41,7 @@ object KeyboardLayouts {
             },
             actionKeys = standardActionKeys(),
             supportsVietnameseAlternates = true,
+            showsTelexHints = inputMethod.isTelexFamily,
         )
     }
 

@@ -17,6 +17,7 @@ internal fun qwertyLayout(
     actionKeys: List<KeySpec>,
     showSuggestionBar: Boolean = KeyboardFeatures.EmojiToolbarEnabled,
     supportsVietnameseAlternates: Boolean = false,
+    showsTelexHints: Boolean = false,
 ): KeyboardLayout = KeyboardLayout(
     id = id,
     inputMethod = inputMethod,
@@ -27,9 +28,9 @@ internal fun qwertyLayout(
     },
     rows = buildList {
         addAll(leadingRows)
-        add(characterRow("qwertyuiop", supportsVietnameseAlternates = supportsVietnameseAlternates))
-        add(characterRow("asdfghjkl", 0.5f, supportsVietnameseAlternates))
-        add(bottomCharacterRow(supportsVietnameseAlternates))
+        add(characterRow("qwertyuiop", supportsVietnameseAlternates = supportsVietnameseAlternates, showsTelexHints = showsTelexHints))
+        add(characterRow("asdfghjkl", 0.5f, supportsVietnameseAlternates, showsTelexHints))
+        add(bottomCharacterRow(supportsVietnameseAlternates, showsTelexHints))
         add(KeyboardRow(actionKeys))
     },
 )
@@ -63,31 +64,44 @@ private fun characterRow(
     characters: String,
     horizontalInsetUnits: Float = 0f,
     supportsVietnameseAlternates: Boolean = false,
+    showsTelexHints: Boolean = false,
 ) = KeyboardRow(
-    keys = characters.map { characterKey(it, supportsVietnameseAlternates) },
+    keys = characters.map { characterKey(it, supportsVietnameseAlternates, showsTelexHints) },
     horizontalInsetUnits = horizontalInsetUnits,
 )
 
-private fun bottomCharacterRow(supportsVietnameseAlternates: Boolean) = KeyboardRow(
+private fun bottomCharacterRow(
+    supportsVietnameseAlternates: Boolean,
+    showsTelexHints: Boolean,
+) = KeyboardRow(
     keys = buildList {
         add(specialKey("shift", "", KeyRole.SHIFT, 1.5f, "Shift"))
-        addAll("zxcvbnm".map { characterKey(it, supportsVietnameseAlternates) })
+        addAll("zxcvbnm".map { characterKey(it, supportsVietnameseAlternates, showsTelexHints) })
         add(specialKey("backspace", "", KeyRole.BACKSPACE, 1.5f, "Backspace"))
     },
 )
 
-private fun characterKey(character: Char, supportsVietnameseAlternates: Boolean) = KeySpec(
-    id = "character-$character",
-    label = character.toString(),
-    role = KeyRole.CHARACTER,
-    shiftedLabel = character.uppercaseChar().toString(),
-    accessibilityLabel = character.toString(),
-    alternates = if (supportsVietnameseAlternates) {
-        VietnameseKeyAlternates.valuesFor(character)
-    } else {
-        emptyList()
-    },
-)
+private fun characterKey(
+    character: Char,
+    supportsVietnameseAlternates: Boolean,
+    showsTelexHints: Boolean,
+): KeySpec {
+    val hint = TelexKeyHints.hint(character).takeIf { showsTelexHints }
+    return KeySpec(
+        id = "character-$character",
+        label = character.toString(),
+        role = KeyRole.CHARACTER,
+        shiftedLabel = character.uppercaseChar().toString(),
+        secondaryLabel = hint?.glyph,
+        accessibilityLabel = hint?.let { TelexKeyHints.accessibilityLabel(character) }
+            ?: character.toString(),
+        alternates = if (supportsVietnameseAlternates) {
+            VietnameseKeyAlternates.valuesFor(character)
+        } else {
+            emptyList()
+        },
+    )
+}
 
 internal fun keyboardToolbarSpec() = SuggestionBarSpec(
     settingsKey = specialKey("settings", "", KeyRole.SETTINGS, accessibilityLabel = "Settings"),

@@ -53,16 +53,6 @@ class KeyboardLayoutsTest {
     }
 
     @Test
-    fun letterKeysDoNotShowSecondaryHints() {
-        val keys = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX)
-            .rows
-            .flatMap { row -> row.keys }
-            .filter { key -> key.role == KeyRole.CHARACTER && key.label.length == 1 && key.label[0].isLetter() }
-
-        assertTrue(keys.none { key -> key.secondaryLabel != null })
-    }
-
-    @Test
     fun everyLayoutUsesStableUniqueKeyIds() {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             val layout = KeyboardLayouts.forInputMethod(inputMethod)
