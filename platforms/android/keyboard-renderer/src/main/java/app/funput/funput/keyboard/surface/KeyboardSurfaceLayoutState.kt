@@ -45,6 +45,12 @@ internal class KeyboardSurfaceLayoutState(private val onLayoutChanged: () -> Uni
             field = value
             refresh()
         }
+    var showsNumberRow = true
+        set(value) {
+            if (field == value) return
+            field = value
+            refresh()
+        }
 
     var layout: KeyboardLayout = resolve()
         private set
@@ -60,5 +66,6 @@ internal class KeyboardSurfaceLayoutState(private val onLayoutChanged: () -> Uni
         editorMode = editorMode,
         suggestionsEnabled = suggestionsEnabled,
         systemInputMethodSwitcherVisible = systemInputMethodSwitcherVisible,
+        showsNumberRow = showsNumberRow,
     )
 }

@@ -23,6 +23,7 @@ internal data class KeyboardThemePreviewConfiguration(
     val shiftState: ShiftState = ShiftState.OFF,
     val sizingProfile: KeyboardSizingProfile = KeyboardSizingProfile.Normal,
     val suggestionBarEnabled: Boolean = true,
+    val showsNumberRow: Boolean = true,
     val suggestions: List<String> = emptyList(),
     val enterAction: KeyboardEnterAction = KeyboardEnterAction.Standard.NEW_LINE,
 )
@@ -71,6 +72,7 @@ private fun KeyboardSurfaceView.applyPreview(
     shiftState = configuration.shiftState
     sizingProfile = configuration.sizingProfile
     suggestionBarEnabled = configuration.suggestionBarEnabled
+    showsNumberRow = configuration.showsNumberRow
     suggestions = configuration.suggestions
     enterAction = configuration.enterAction
     systemInputMethodSwitcherVisible = false

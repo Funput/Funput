@@ -23,6 +23,8 @@
     <string name="settings_keyboard_setup_step_select">Chọn Funput khi gõ</string>
     <string name="settings_keyboard_setup_ready_hint">Gõ tiếng Việt ở bất kỳ đâu</string>
     <string name="settings_input_method_title">Kiểu gõ</string>
+    <string name="settings_number_row_title">Hàng phím số</string>
+    <string name="settings_number_row_summary">Hiển thị 0–9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.</string>
     <string name="settings_key_size_title">Kích thước phím</string>
     <string name="settings_key_size_compact">Nhỏ gọn</string>
     <string name="settings_key_size_normal">Vừa</string>

@@ -34,6 +34,7 @@ internal fun FunputKeyboardView.applyImeState(
         sizingProfile = settings.sizingProfile,
         keyboardTheme = descriptor.theme,
         keyboardThemeBackgroundImage = descriptor.backgroundImage,
+        showsNumberRow = settings.showsNumberRow,
     )
 }
 
@@ -45,9 +46,11 @@ internal fun FunputKeyboardView.configureForEditor(
     sizingProfile: KeyboardSizingProfile,
     keyboardTheme: KeyboardTheme,
     keyboardThemeBackgroundImage: KeyboardThemeBackgroundImage?,
+    showsNumberRow: Boolean,
 ) {
     showLettersPanel()
     this.inputMethod = inputMethod
+    this.showsNumberRow = showsNumberRow
     this.sizingProfile = sizingProfile
     this.keyboardTheme = keyboardTheme
     this.keyboardThemeBackgroundImage = keyboardThemeBackgroundImage
