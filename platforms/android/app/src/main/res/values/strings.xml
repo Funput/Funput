@@ -23,6 +23,8 @@
     <string name="settings_keyboard_setup_step_select">Chọn Funput khi gõ</string>
     <string name="settings_keyboard_setup_ready_hint">Gõ tiếng Việt ở bất kỳ đâu</string>
     <string name="settings_input_method_title">Kiểu gõ</string>
+    <string name="settings_number_row_title">Hàng phím số</string>
+    <string name="settings_number_row_summary">Hiển thị 0–9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.</string>
     <string name="settings_key_size_title">Kích thước phím</string>
     <string name="settings_key_size_compact">Nhỏ gọn</string>
     <string name="settings_key_size_normal">Vừa</string>
@@ -143,7 +145,11 @@
     <string name="custom_theme_save_hint">Nhập tên trong tab Thông tin để lưu theme.</string>
     <string name="custom_theme_back_description">Quay lại</string>
     <string name="input_method_telex">Telex</string>
+    <string name="input_method_telex_summary">Dùng tổ hợp chữ để nhập dấu.</string>
+    <string name="input_method_telex_advanced">Telex nâng cao</string>
+    <string name="input_method_telex_advanced_summary">Full Telex — [→ư, ]→ơ, w đầu từ→ư.</string>
     <string name="input_method_vni">VNI</string>
+    <string name="input_method_vni_summary">Dùng các phím số để nhập dấu.</string>
     <string name="settings_tone_style_title">Kiểu đặt dấu</string>
     <string name="tone_style_traditional">Truyền thống</string>
     <string name="tone_style_modern">Hiện đại</string>

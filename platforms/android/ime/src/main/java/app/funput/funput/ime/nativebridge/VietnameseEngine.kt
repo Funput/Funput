@@ -21,6 +21,10 @@ internal data class EngineConfiguration(
 
 /** Platform-independent contract consumed by Android's composition adapter. */
 internal interface VietnameseEngine : AutoCloseable {
+    /** Method currently active in the engine, used by the Android boundary adapter. */
+    val inputMethod: KeyboardInputMethod
+        get() = KeyboardInputMethod.TELEX
+
     /** Single writer for durable configuration; see [EngineConfiguration]. */
     fun configure(configuration: EngineConfiguration)
     fun setEnabled(enabled: Boolean)
@@ -42,6 +46,8 @@ internal class NativeVietnameseEngine : VietnameseEngine {
     private var handle = FunputNative.nativeCreate().also {
         check(it != InvalidHandle) { "Unable to create Funput native engine" }
     }
+    override var inputMethod = KeyboardInputMethod.TELEX
+        private set
 
     override fun configure(configuration: EngineConfiguration) = withHandle { value ->
         FunputNative.nativeConfigure(
@@ -53,6 +59,7 @@ internal class NativeVietnameseEngine : VietnameseEngine {
             configuration.spellCheck,
             configuration.autoCapitalize,
         )
+        inputMethod = configuration.inputMethod
     }
 
     override fun setEnabled(enabled: Boolean) = withHandle { value ->
@@ -86,13 +93,14 @@ internal class NativeVietnameseEngine : VietnameseEngine {
         return operation(handle)
     }
 
-    private val KeyboardInputMethod.nativeValue: Int
-        get() = when (this) {
-            KeyboardInputMethod.TELEX -> 0
-            KeyboardInputMethod.VNI -> 1
-        }
-
     private companion object {
         const val InvalidHandle = 0L
     }
 }
+
+internal val KeyboardInputMethod.nativeValue: Int
+    get() = when (this) {
+        KeyboardInputMethod.TELEX -> 0
+        KeyboardInputMethod.VNI -> 1
+        KeyboardInputMethod.TELEX_ADVANCED -> 2
+    }

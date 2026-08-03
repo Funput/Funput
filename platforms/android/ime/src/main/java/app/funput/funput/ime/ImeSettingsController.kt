@@ -9,6 +9,7 @@ import app.funput.funput.ime.settings.KeyboardFeedbackSettings
 import app.funput.funput.ime.settings.KeyboardSizingSettings
 import app.funput.funput.ime.settings.KeyboardThemeSelection
 import app.funput.funput.ime.settings.KeyboardThemeSettings
+import app.funput.funput.ime.settings.NumberRowSettings
 import app.funput.funput.ime.settings.PersonalSuggestionPreferences
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.settings.SmartCompositionPreferences
@@ -17,7 +18,6 @@ import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.ime.settings.ToneStyleSettings
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.theme.KeyboardThemeId
 import kotlinx.coroutines.CoroutineScope
 
 /** Keeps persisted IME settings synchronized with native and view state. */
@@ -34,6 +34,8 @@ internal class ImeSettingsController(
     var themeSelection = KeyboardThemeSettings.DefaultSelection
         private set
     var feedback = KeyboardFeedbackPreferences.Default
+        private set
+    var showsNumberRow = NumberRowSettings.DefaultShowsNumberRow
         private set
 
     // Seeded with the same defaults the settings flows fall back to, so the engine
@@ -62,6 +64,7 @@ internal class ImeSettingsController(
         KeyboardSizingSettings(context).profile.collectIn(scope, ::applySizingProfile)
         KeyboardThemeSettings(context).selection.collectIn(scope, ::applyThemeSelection)
         KeyboardFeedbackSettings(context).preferences.collectIn(scope, ::applyFeedback)
+        NumberRowSettings(context).showsNumberRow.collectIn(scope, ::applyShowsNumberRow)
         PersonalSuggestionSettings(context).preferences.collectIn(scope, onPersonalSuggestionsChanged)
     }
 
@@ -118,6 +121,12 @@ internal class ImeSettingsController(
     private fun applyFeedback(value: KeyboardFeedbackPreferences) {
         if (value == feedback) return
         feedback = value
+        onViewSettingsChanged()
+    }
+
+    private fun applyShowsNumberRow(value: Boolean) {
+        if (value == showsNumberRow) return
+        showsNumberRow = value
         onViewSettingsChanged()
     }
 }

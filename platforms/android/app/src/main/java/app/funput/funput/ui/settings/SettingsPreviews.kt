@@ -53,6 +53,7 @@ private fun SettingsPreview(
         SettingsScreen(
             keyboardSetupStatus = keyboardSetupStatus,
             inputMethod = KeyboardInputMethod.VNI,
+            showsNumberRow = false,
             toneStyle = ToneStyle.TRADITIONAL,
             keySizeProfile = KeyboardSizingProfile.Normal,
             keyboardThemeLabel = "Tối",
@@ -64,6 +65,7 @@ private fun SettingsPreview(
             personalSuggestionsEnabled = true,
             versionName = "1.2026.1",
             onInputMethodSelected = {},
+            onShowsNumberRowChanged = {},
             onToneStyleSelected = {},
             onKeySizeSelected = {},
             onAppearanceSelected = {},

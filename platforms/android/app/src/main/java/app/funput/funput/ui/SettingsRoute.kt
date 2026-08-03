@@ -32,6 +32,7 @@ internal fun SettingsRoute(
     SettingsScreen(
         keyboardSetupStatus = rememberKeyboardSetupStatus(),
         inputMethod = settings.inputMethod,
+        showsNumberRow = settings.showsNumberRow,
         toneStyle = settings.toneStyle,
         keySizeProfile = settings.keySizeProfile,
         keyboardThemeLabel = keyboardThemeLabel,
@@ -43,6 +44,9 @@ internal fun SettingsRoute(
         personalSuggestionsEnabled = settings.personalSuggestions.enabled,
         versionName = versionName,
         onInputMethodSelected = { method -> scope.launch { settings.input.setInputMethod(method) } },
+        onShowsNumberRowChanged = { enabled ->
+            scope.launch { settings.numberRowStore.setShowsNumberRow(enabled) }
+        },
         onToneStyleSelected = { style -> scope.launch { settings.toneStyleStore.setToneStyle(style) } },
         onKeySizeSelected = { profile -> scope.launch { settings.sizing.setProfile(profile) } },
         onAppearanceSelected = { mode -> scope.launch { settings.appearance.setMode(mode) } },

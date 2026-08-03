@@ -5,21 +5,45 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
 
 object KeyboardLayouts {
-    fun forInputMethod(inputMethod: KeyboardInputMethod): KeyboardLayout = when (inputMethod) {
-        KeyboardInputMethod.TELEX -> telex
-        KeyboardInputMethod.VNI -> vni
+    /**
+     * Builds the letters layout for [inputMethod].
+     *
+     * Factory default keeps the number row so existing geometry tests stay stable; the IME
+     * always passes the persisted preference (default off for Telex-family).
+     */
+    fun forInputMethod(
+        inputMethod: KeyboardInputMethod,
+        showsNumberRow: Boolean = true,
+    ): KeyboardLayout = when (inputMethod) {
+        KeyboardInputMethod.TELEX -> create("qwerty-telex", inputMethod, showsNumberRow)
+        KeyboardInputMethod.TELEX_ADVANCED ->
+            create("qwerty-telex-advanced", inputMethod, showsNumberRow)
+        KeyboardInputMethod.VNI -> create("qwerty-vni", inputMethod, showsNumberRow = true)
     }
 
-    val telex = create("qwerty-telex", KeyboardInputMethod.TELEX)
-    val vni = create("qwerty-vni", KeyboardInputMethod.VNI)
+    val telex = forInputMethod(KeyboardInputMethod.TELEX, showsNumberRow = true)
+    val telexAdvanced = forInputMethod(KeyboardInputMethod.TELEX_ADVANCED, showsNumberRow = true)
+    val vni = forInputMethod(KeyboardInputMethod.VNI, showsNumberRow = true)
 
-    private fun create(id: String, inputMethod: KeyboardInputMethod) = qwertyLayout(
-        id = id,
-        inputMethod = inputMethod,
-        leadingRows = listOf(topNumberRowForLetters(inputMethod)),
-        actionKeys = standardActionKeys(),
-        supportsVietnameseAlternates = true,
-    )
+    private fun create(
+        id: String,
+        inputMethod: KeyboardInputMethod,
+        showsNumberRow: Boolean,
+    ): KeyboardLayout {
+        val hasNumberRow = inputMethod == KeyboardInputMethod.VNI || showsNumberRow
+        return qwertyLayout(
+            id = if (hasNumberRow) id else "$id-compact",
+            inputMethod = inputMethod,
+            leadingRows = if (hasNumberRow) {
+                listOf(topNumberRowForLetters(inputMethod))
+            } else {
+                emptyList()
+            },
+            actionKeys = standardActionKeys(),
+            supportsVietnameseAlternates = true,
+            showsTelexHints = inputMethod.isTelexFamily,
+        )
+    }
 
     private fun standardActionKeys() = listOf(
         specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),

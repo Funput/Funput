@@ -4,19 +4,27 @@ import app.funput.funput.keyboard.model.KeyboardLayout
 
 /** Places optional toolbar actions before the higher-priority Settings and Emoji keys. */
 internal object ToolbarGeometry {
+    /**
+     * Resolves toolbar bounds.
+     *
+     * When [showSettings] is false (suggestions present), Settings yields so the suggestion
+     * region can extend to the emoji key — matching iOS utility-key arbitration.
+     */
     fun resolve(
         layout: KeyboardLayout,
         width: Float,
         spec: KeyboardGeometrySpec,
+        showSettings: Boolean = true,
     ): ResolvedSuggestionBar? {
         val bar = layout.suggestionBar ?: return null
         val top = spec.verticalPadding
         val bottom = top + spec.suggestionBarHeight
         val right = width - spec.horizontalPadding
         val emoji = boundsBefore(right, top, bottom, spec, separated = false)
-        val settings = boundsBefore(emoji.left, top, bottom, spec)
-        val system = bar.systemInputMethodKey?.let { boundsBefore(settings.left, top, bottom, spec) }
-        val controlsLeft = system?.left ?: settings.left
+        val settings = if (showSettings) boundsBefore(emoji.left, top, bottom, spec) else null
+        val systemAnchor = settings?.left ?: emoji.left
+        val system = bar.systemInputMethodKey?.let { boundsBefore(systemAnchor, top, bottom, spec) }
+        val controlsLeft = system?.left ?: settings?.left ?: emoji.left
         val logoSize = spec.suggestionBarHeight * ToolbarBrandMetrics.LogoSizeRatio
         val logoTop = top + (spec.suggestionBarHeight - logoSize) / 2f
         val logo = KeyBounds(spec.horizontalPadding, logoTop, spec.horizontalPadding + logoSize, logoTop + logoSize)
@@ -27,7 +35,7 @@ internal object ToolbarGeometry {
             logoBounds = logo,
             suggestionsBounds = KeyBounds(suggestionsLeft, top, suggestionsRight, bottom),
             systemInputMethodKey = system?.let { ResolvedKey(requireNotNull(bar.systemInputMethodKey), it) },
-            settingsKey = ResolvedKey(bar.settingsKey, settings),
+            settingsKey = settings?.let { ResolvedKey(bar.settingsKey, it) },
             emojiKey = ResolvedKey(bar.emojiKey, emoji),
             suggestionsEnabled = bar.suggestionsEnabled,
         )

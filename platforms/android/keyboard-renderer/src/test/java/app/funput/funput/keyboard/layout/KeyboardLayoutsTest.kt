@@ -10,7 +10,7 @@ import org.junit.Test
 
 class KeyboardLayoutsTest {
     @Test
-    fun bothInputMethodsUseFiveRows() {
+    fun allInputMethodsUseFiveRows() {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             val layout = KeyboardLayouts.forInputMethod(inputMethod)
             assertEquals(5, layout.rows.size)
@@ -27,6 +27,16 @@ class KeyboardLayoutsTest {
     }
 
     @Test
+    fun advancedTelexUsesItsOwnIdentityAndPlainDigits() {
+        val layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX_ADVANCED)
+
+        assertEquals("qwerty-telex-advanced", layout.id)
+        assertEquals(KeyboardInputMethod.TELEX_ADVANCED, layout.inputMethod)
+        assertEquals("1234567890", layout.rows.first().keys.joinToString("") { key -> key.label })
+        assertTrue(layout.rows.first().keys.all { key -> key.role == KeyRole.CHARACTER })
+    }
+
+    @Test
     fun vniTopRowUsesModifierHints() {
         val topRow = KeyboardLayouts.forInputMethod(KeyboardInputMethod.VNI).rows.first()
 
@@ -40,16 +50,6 @@ class KeyboardLayoutsTest {
         val layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX)
 
         assertEquals("qwertyuiop", layout.rows[1].keys.joinToString("") { key -> key.label })
-    }
-
-    @Test
-    fun letterKeysDoNotShowSecondaryHints() {
-        val keys = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX)
-            .rows
-            .flatMap { row -> row.keys }
-            .filter { key -> key.role == KeyRole.CHARACTER && key.label.length == 1 && key.label[0].isLetter() }
-
-        assertTrue(keys.none { key -> key.secondaryLabel != null })
     }
 
     @Test

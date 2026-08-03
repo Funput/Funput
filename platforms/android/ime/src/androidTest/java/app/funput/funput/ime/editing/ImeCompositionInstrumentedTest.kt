@@ -43,6 +43,47 @@ class ImeCompositionInstrumentedTest {
     }
 
     @Test
+    fun advancedTelexShortcutsComposeThroughJni() = onMainThread {
+        val cases = listOf(
+            "w" to "ư",
+            "wf" to "ừ",
+            "t[" to "tư",
+            "m]" to "mơ",
+            "tr[]ngf" to "trường",
+            "ng[]if" to "người",
+            "ww" to "w",
+            "Wf" to "Ừ",
+        )
+        cases.forEach { (keys, expected) ->
+            ImeEditingScenario.create(KeyboardInputMethod.TELEX_ADVANCED).use { scenario ->
+                scenario.handler.type(keys)
+
+                assertEquals("Failed input: $keys", expected, scenario.text)
+            }
+        }
+    }
+
+    @Test
+    fun bracketsStayLiteralOutsideAdvancedTelex() = onMainThread {
+        listOf(KeyboardInputMethod.TELEX, KeyboardInputMethod.VNI).forEach { method ->
+            ImeEditingScenario.create(method).use { scenario ->
+                scenario.handler.type("t[")
+
+                assertEquals("Failed method: $method", "t[", scenario.text)
+            }
+        }
+    }
+
+    @Test
+    fun bracesStayLiteralInAdvancedTelex() = onMainThread {
+        ImeEditingScenario.create(KeyboardInputMethod.TELEX_ADVANCED).use { scenario ->
+            scenario.handler.type("{}")
+
+            assertEquals("{}", scenario.text)
+        }
+    }
+
+    @Test
     fun backspaceEditsCompositionNotHostBuffer() = onMainThread {
         ImeEditingScenario.create().use { scenario ->
             scenario.handler.type("vieejt")

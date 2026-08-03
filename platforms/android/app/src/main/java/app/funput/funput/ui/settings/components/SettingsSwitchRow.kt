@@ -1,6 +1,7 @@
 package app.funput.funput.ui.settings.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +27,8 @@ internal fun SettingsSwitchRow(
     iconBackground: Color,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    summary: String? = null,
+    enabled: Boolean = true,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -34,6 +37,7 @@ internal fun SettingsSwitchRow(
             .heightIn(min = 62.dp)
             .toggleable(
                 value = checked,
+                enabled = enabled,
                 onValueChange = onCheckedChange,
                 role = Role.Switch,
             )
@@ -41,14 +45,28 @@ internal fun SettingsSwitchRow(
     ) {
         SettingsIcon(iconRes, iconBackground)
         Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                },
+            )
+            summary?.let { text ->
+                Text(
+                    text = text,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
         Switch(
             checked = checked,
             onCheckedChange = null,
+            enabled = enabled,
         )
     }
 }

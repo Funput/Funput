@@ -10,9 +10,10 @@ internal object EditorKeyboardLayouts {
         inputMethod: KeyboardInputMethod,
         editorMode: KeyboardEditorMode,
         suggestionsEnabled: Boolean,
+        showsNumberRow: Boolean = true,
     ): KeyboardLayout {
         val layout = when (editorMode) {
-            KeyboardEditorMode.TEXT -> KeyboardLayouts.forInputMethod(inputMethod)
+            KeyboardEditorMode.TEXT -> KeyboardLayouts.forInputMethod(inputMethod, showsNumberRow)
             KeyboardEditorMode.SEARCH -> searchLayouts.getValue(inputMethod)
             KeyboardEditorMode.EMAIL -> emailLayouts.getValue(inputMethod)
             KeyboardEditorMode.URL -> urlLayouts.getValue(inputMethod)

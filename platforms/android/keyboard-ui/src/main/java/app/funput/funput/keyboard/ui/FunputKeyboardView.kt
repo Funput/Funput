@@ -33,6 +33,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     var inputMethod: KeyboardInputMethod by keyboardSurface::inputMethod
     var editorMode: KeyboardEditorMode by keyboardSurface::editorMode
     var systemInputMethodSwitcherVisible: Boolean by keyboardSurface::systemInputMethodSwitcherVisible
+    var showsNumberRow: Boolean by keyboardSurface::showsNumberRow
     var suggestionBarEnabled: Boolean
         get() = keyboardSurface.suggestionBarEnabled
         set(value) {
@@ -102,11 +103,9 @@ class FunputKeyboardView @JvmOverloads constructor(
         val density = resources.displayMetrics.density
         val keyboardWidth = (KeyboardDimensions.DefaultWidthDp * density).roundToInt()
         val width = resolveSize(keyboardWidth + safeArea.horizontalInset, widthMeasureSpec)
+        val contentWidthDp = (width - safeArea.horizontalInset) / density
         val heightDp = KeyboardDimensions.recommendedHeightDp(
-            inputMethod = inputMethod,
-            editorMode = editorMode,
-            profile = sizingProfile,
-            widthDp = (width - safeArea.horizontalInset) / density,
+            inputMethod, editorMode, sizingProfile, contentWidthDp, showsNumberRow,
         )
         val height = resolveSize((heightDp * density).roundToInt() + safeArea.bottomInset, heightMeasureSpec)
         super.onMeasure(

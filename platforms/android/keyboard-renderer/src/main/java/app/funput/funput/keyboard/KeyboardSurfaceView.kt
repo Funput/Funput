@@ -41,6 +41,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var layoutOverride: app.funput.funput.keyboard.model.KeyboardLayout? by layoutState::layoutOverride
     var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
     var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
+    var showsNumberRow: Boolean by layoutState::showsNumberRow
     var keyboardTheme by render::keyboardTheme
     var keyboardThemeBackgroundImage by render::keyboardThemeBackgroundImage
     var sizingProfile: KeyboardSizingProfile by render::sizingProfile
@@ -67,6 +68,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         density = { resources.displayMetrics.density },
         keyboard = { resolvedKeyboard },
         apply = { values -> render.suggestions = values; accessibility.refresh() },
+        onShowSettingsChanged = { resolveGeometry() },
     )
     private val interaction: KeyboardSurfaceInteraction = createKeyboardSurfaceInteraction(
         host = this,
@@ -96,7 +98,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
         val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
-        val heightDp = KeyboardDimensions.recommendedHeightDp(inputMethod, editorMode, sizingProfile, width / density)
+        val heightDp = KeyboardDimensions.recommendedHeightDp(
+            inputMethod, editorMode, sizingProfile, width / density, showsNumberRow,
+        )
         val height = resolveSize((heightDp * density).roundToInt(), heightMeasureSpec)
         setMeasuredDimension(width, height)
     }
@@ -132,6 +136,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             width = width, height = height,
             density = resources.displayMetrics.density,
             profile = sizingProfile,
+            showSettings = suggestionState.showSettings,
         )
         suggestionState.geometryChanged()
         accessibility.refresh()

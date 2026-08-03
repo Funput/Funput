@@ -17,6 +17,7 @@ import app.funput.funput.ui.settings.components.SettingsDivider
 import app.funput.funput.ui.settings.components.SettingsGroup
 import app.funput.funput.ui.settings.components.SettingsRow
 import app.funput.funput.ui.settings.components.SettingsSectionHeader
+import app.funput.funput.ui.settings.components.SettingsSwitchRow
 import app.funput.funput.ui.settings.label
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 import app.funput.funput.ui.theme.BrandBlue
@@ -27,10 +28,12 @@ import app.funput.funput.ui.theme.BrandPurple
 internal fun KeyboardSettingsSection(
     setupStatus: KeyboardSetupStatus,
     inputMethod: KeyboardInputMethod,
+    showsNumberRow: Boolean,
     toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
     keyboardThemeLabel: String,
     onOpenPicker: (SettingsPicker) -> Unit,
+    onShowsNumberRowChanged: (Boolean) -> Unit,
     onOpenThemeGallery: () -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
@@ -52,6 +55,16 @@ internal fun KeyboardSettingsSection(
                 iconRes = R.drawable.ic_keyboard,
                 iconBackground = BrandPurple,
                 onClick = { onOpenPicker(SettingsPicker.INPUT_METHOD) },
+            )
+            SettingsDivider()
+            SettingsSwitchRow(
+                title = stringResource(R.string.settings_number_row_title),
+                summary = stringResource(R.string.settings_number_row_summary),
+                checked = !inputMethod.isTelexFamily || showsNumberRow,
+                enabled = inputMethod.isTelexFamily,
+                iconRes = R.drawable.ic_key_size,
+                iconBackground = BrandOrange,
+                onCheckedChange = onShowsNumberRowChanged,
             )
             SettingsDivider()
             SettingsRow(

@@ -16,16 +16,22 @@ object KeyboardDimensions {
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
         profile: KeyboardSizingProfile = KeyboardSizingProfile.Default,
         widthDp: Float = DefaultWidthDp,
-    ): Float = baseRecommendedHeightDp(editorMode, profile, widthDp)
+        showsNumberRow: Boolean = true,
+    ): Float = baseRecommendedHeightDp(editorMode, profile, widthDp, inputMethod, showsNumberRow)
 
     internal fun baseRecommendedHeightDp(
         editorMode: KeyboardEditorMode,
         profile: KeyboardSizingProfile = KeyboardSizingProfile.Default,
         widthDp: Float = DefaultWidthDp,
+        inputMethod: KeyboardInputMethod = KeyboardInputMethod.TELEX,
+        showsNumberRow: Boolean = true,
     ): Float = when {
         editorMode.usesKeypad -> heightForRowCount(4, false, profile, widthDp)
         editorMode.isPassword -> heightForRowCount(5, false, profile, widthDp)
-        else -> heightForRowCount(5, true, profile, widthDp)
+        else -> {
+            val compact = inputMethod.isTelexFamily && !showsNumberRow
+            heightForRowCount(if (compact) 4 else 5, true, profile, widthDp)
+        }
     }
 
     /**
