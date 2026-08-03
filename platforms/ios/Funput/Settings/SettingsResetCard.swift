@@ -3,6 +3,8 @@ import SwiftUI
 struct SettingsResetCard: View {
     let action: () -> Void
 
+    @State private var confirms = false
+
     var body: some View {
         AdaptiveGlassCard {
             VStack(alignment: .leading, spacing: 10) {
@@ -12,6 +14,18 @@ struct SettingsResetCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 resetButton
+                    // Anchored to the button rather than to the screen: iOS 26 points a
+                    // confirmation dialog at whatever presents it, so one hung off the
+                    // root view surfaces at the top instead of beside its control.
+                    .confirmationDialog(
+                        "Khôi phục cài đặt mặc định?",
+                        isPresented: $confirms,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Khôi phục", role: .destructive, action: action)
+                    } message: {
+                        Text("Các tùy chỉnh bộ gõ hiện tại sẽ bị thay thế.")
+                    }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -19,10 +33,10 @@ struct SettingsResetCard: View {
 
     @ViewBuilder private var resetButton: some View {
         if #available(iOS 26, *) {
-            Button("Khôi phục cài đặt", role: .destructive, action: action)
+            Button("Khôi phục cài đặt", role: .destructive) { confirms = true }
                 .buttonStyle(.glass)
         } else {
-            Button("Khôi phục cài đặt", role: .destructive, action: action)
+            Button("Khôi phục cài đặt", role: .destructive) { confirms = true }
                 .buttonStyle(.bordered)
         }
     }
