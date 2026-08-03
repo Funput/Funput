@@ -18,8 +18,16 @@ internal fun ToneStyle.label(): String = when (this) {
 
 @Composable
 internal fun KeyboardInputMethod.label(): String = when (this) {
-    KeyboardInputMethod.VNI -> stringResource(R.string.input_method_vni)
     KeyboardInputMethod.TELEX -> stringResource(R.string.input_method_telex)
+    KeyboardInputMethod.TELEX_ADVANCED -> stringResource(R.string.input_method_telex_advanced)
+    KeyboardInputMethod.VNI -> stringResource(R.string.input_method_vni)
+}
+
+@Composable
+internal fun KeyboardInputMethod.summary(): String = when (this) {
+    KeyboardInputMethod.TELEX -> stringResource(R.string.input_method_telex_summary)
+    KeyboardInputMethod.TELEX_ADVANCED -> stringResource(R.string.input_method_telex_advanced_summary)
+    KeyboardInputMethod.VNI -> stringResource(R.string.input_method_vni_summary)
 }
 
 @Composable
@@ -43,7 +51,9 @@ internal fun KeyboardThemeId.label(): String = when (this) {
 }
 
 @Composable
-internal fun inputMethodOptions() = KeyboardInputMethod.entries.map { PickerOption(it, it.label()) }
+internal fun inputMethodOptions() = KeyboardInputMethod.entries.map {
+    PickerOption(it, it.label(), it.summary())
+}
 
 @Composable
 internal fun toneStyleOptions() = ToneStyle.entries.map { PickerOption(it, it.label()) }

@@ -23,6 +23,7 @@ import app.funput.funput.R
 internal data class PickerOption<T>(
     val value: T,
     val label: String,
+    val summary: String? = null,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,11 +53,19 @@ internal fun <T> PreferencePickerSheet(
                         }
                         .padding(horizontal = 24.dp, vertical = 17.dp),
                 ) {
-                    Text(
-                        text = option.label,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = option.label,
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                        option.summary?.let { summary ->
+                            Text(
+                                text = summary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
                     if (option.value == selected) {
                         Icon(
                             painter = painterResource(R.drawable.ic_check),

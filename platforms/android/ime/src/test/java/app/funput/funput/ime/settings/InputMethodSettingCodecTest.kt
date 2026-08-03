@@ -12,11 +12,21 @@ class InputMethodSettingCodecTest {
     }
 
     @Test
-    fun `both supported methods round trip`() {
+    fun `all supported methods use stable persisted values`() {
+        assertEquals("telex", InputMethodSettingCodec.encode(KeyboardInputMethod.TELEX))
+        assertEquals("telex_advanced", InputMethodSettingCodec.encode(KeyboardInputMethod.TELEX_ADVANCED))
+        assertEquals("vni", InputMethodSettingCodec.encode(KeyboardInputMethod.VNI))
+
         KeyboardInputMethod.entries.forEach { method ->
             val encoded = InputMethodSettingCodec.encode(method)
 
             assertEquals(method, InputMethodSettingCodec.decode(encoded))
         }
+    }
+
+    @Test
+    fun `legacy uppercase values remain readable`() {
+        assertEquals(KeyboardInputMethod.TELEX, InputMethodSettingCodec.decode("TELEX"))
+        assertEquals(KeyboardInputMethod.VNI, InputMethodSettingCodec.decode("VNI"))
     }
 }

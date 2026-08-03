@@ -36,9 +36,16 @@ class InputMethodSettings(context: Context) {
 }
 
 internal object InputMethodSettingCodec {
-    fun encode(method: KeyboardInputMethod): String = method.name
+    fun encode(method: KeyboardInputMethod): String = when (method) {
+        KeyboardInputMethod.TELEX -> "telex"
+        KeyboardInputMethod.TELEX_ADVANCED -> "telex_advanced"
+        KeyboardInputMethod.VNI -> "vni"
+    }
 
-    fun decode(value: String?): KeyboardInputMethod =
-        KeyboardInputMethod.entries.firstOrNull { it.name == value }
-            ?: InputMethodSettings.DefaultInputMethod
+    fun decode(value: String?): KeyboardInputMethod = when (value?.lowercase()) {
+        "telex" -> KeyboardInputMethod.TELEX
+        "telex_advanced" -> KeyboardInputMethod.TELEX_ADVANCED
+        "vni" -> KeyboardInputMethod.VNI
+        else -> InputMethodSettings.DefaultInputMethod
+    }
 }

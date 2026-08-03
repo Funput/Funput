@@ -143,7 +143,11 @@
     <string name="custom_theme_save_hint">Nhập tên trong tab Thông tin để lưu theme.</string>
     <string name="custom_theme_back_description">Quay lại</string>
     <string name="input_method_telex">Telex</string>
+    <string name="input_method_telex_summary">Dùng tổ hợp chữ để nhập dấu.</string>
+    <string name="input_method_telex_advanced">Telex nâng cao</string>
+    <string name="input_method_telex_advanced_summary">Full Telex — [→ư, ]→ơ, w đầu từ→ư.</string>
     <string name="input_method_vni">VNI</string>
+    <string name="input_method_vni_summary">Dùng các phím số để nhập dấu.</string>
     <string name="settings_tone_style_title">Kiểu đặt dấu</string>
     <string name="tone_style_traditional">Truyền thống</string>
     <string name="tone_style_modern">Hiện đại</string>

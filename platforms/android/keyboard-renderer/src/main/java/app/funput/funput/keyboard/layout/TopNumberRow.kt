@@ -12,9 +12,10 @@ internal enum class TopNumberRowMode {
 }
 
 internal fun topNumberRowForLetters(inputMethod: KeyboardInputMethod): KeyboardRow {
-    val mode = when (inputMethod) {
-        KeyboardInputMethod.VNI -> TopNumberRowMode.VNI_MODIFIERS
-        KeyboardInputMethod.TELEX -> TopNumberRowMode.PLAIN_CHARACTER
+    val mode = if (inputMethod.isTelexFamily) {
+        TopNumberRowMode.PLAIN_CHARACTER
+    } else {
+        TopNumberRowMode.VNI_MODIFIERS
     }
     return topNumberRow(mode, pageId = "letters-${inputMethod.name.lowercase()}")
 }

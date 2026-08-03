@@ -21,11 +21,11 @@ app --------> keyboard-ui ----------------------> theme-runtime
 ```
 
 The app persists the Vietnamese input method with Preferences DataStore. VNI is
-the first-run default; selecting Telex in the app updates the active IME through
-the same observable setting.
+the first-run default; selecting Telex, Advanced Telex, or VNI in the app updates
+the active IME through the same observable setting.
 
 The IME owns Android composing spans while `funput-engine` remains the only
-source of truth for Telex and VNI rules.
+source of truth for Telex, Advanced Telex, and VNI rules.
 
 ## Build
 

@@ -64,7 +64,7 @@ one machine imports on another. macOS is the first implementation
 | `version` | — | Format version (currently `1`). Required. |
 | `exportedAt` | — | ISO-8601 timestamp. Metadata only. |
 | `source` | — | `platform` + `appVersion` that produced the file. Metadata only. |
-| `preferences.inputMethod` | ✅ | `telex`, `telex_advanced`, or `vni`. Advanced Telex is desktop-only and exposed on macOS/Windows; unsupported consumers keep their current selection. |
+| `preferences.inputMethod` | ✅ | `telex`, `telex_advanced`, or `vni`. Exposed on macOS, Windows, Linux, iOS, and Android; unsupported consumers keep their current selection. |
 | `preferences.*` | ✅ | Other typing options; each is optional and applied only if present. |
 | `shortcuts[]` | ✅ | `{ trigger, expansion }`. Local UUIDs are dropped; recreated on import. |
 | `platform.macos.toggleShortcut` | ❌ | `KeyCombo` (`keyCode` is AppKit-specific). Applied only on macOS, only if present. |

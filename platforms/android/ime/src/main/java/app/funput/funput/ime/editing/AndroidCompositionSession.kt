@@ -31,7 +31,7 @@ internal class AndroidCompositionSession(
         completedToken = null
         if (connection == null || text.isEmpty()) return false
         val codePoint = text.singleCodePointOrNull() ?: return commitRaw(connection, text)
-        return if (CompositionBoundary.isBoundary(codePoint)) {
+        return if (CompositionBoundary.isBoundary(codePoint, engine.inputMethod)) {
             commitBoundary(connection, text, codePoint)
         } else {
             recentCompletedToken = null

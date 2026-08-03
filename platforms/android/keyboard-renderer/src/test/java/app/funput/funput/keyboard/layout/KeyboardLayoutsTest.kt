@@ -10,7 +10,7 @@ import org.junit.Test
 
 class KeyboardLayoutsTest {
     @Test
-    fun bothInputMethodsUseFiveRows() {
+    fun allInputMethodsUseFiveRows() {
         KeyboardInputMethod.entries.forEach { inputMethod ->
             val layout = KeyboardLayouts.forInputMethod(inputMethod)
             assertEquals(5, layout.rows.size)
@@ -24,6 +24,16 @@ class KeyboardLayoutsTest {
         assertEquals("1234567890", topRow.keys.joinToString("") { key -> key.label })
         assertTrue(topRow.keys.all { key -> key.role == KeyRole.CHARACTER })
         assertTrue(topRow.keys.all { key -> key.secondaryLabel == null })
+    }
+
+    @Test
+    fun advancedTelexUsesItsOwnIdentityAndPlainDigits() {
+        val layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX_ADVANCED)
+
+        assertEquals("qwerty-telex-advanced", layout.id)
+        assertEquals(KeyboardInputMethod.TELEX_ADVANCED, layout.inputMethod)
+        assertEquals("1234567890", layout.rows.first().keys.joinToString("") { key -> key.label })
+        assertTrue(layout.rows.first().keys.all { key -> key.role == KeyRole.CHARACTER })
     }
 
     @Test

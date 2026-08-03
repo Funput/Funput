@@ -7,10 +7,12 @@ import app.funput.funput.keyboard.model.KeyboardLayout
 object KeyboardLayouts {
     fun forInputMethod(inputMethod: KeyboardInputMethod): KeyboardLayout = when (inputMethod) {
         KeyboardInputMethod.TELEX -> telex
+        KeyboardInputMethod.TELEX_ADVANCED -> telexAdvanced
         KeyboardInputMethod.VNI -> vni
     }
 
     val telex = create("qwerty-telex", KeyboardInputMethod.TELEX)
+    val telexAdvanced = create("qwerty-telex-advanced", KeyboardInputMethod.TELEX_ADVANCED)
     val vni = create("qwerty-vni", KeyboardInputMethod.VNI)
 
     private fun create(id: String, inputMethod: KeyboardInputMethod) = qwertyLayout(
