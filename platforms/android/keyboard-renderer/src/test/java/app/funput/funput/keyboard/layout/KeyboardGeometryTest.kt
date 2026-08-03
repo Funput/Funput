@@ -93,16 +93,17 @@ class KeyboardGeometryTest {
             spec = spec,
         )
         val suggestionBar = requireNotNull(keyboard.suggestionBar)
+        val settings = requireNotNull(suggestionBar.settingsKey)
 
-        assertEquals("settings", suggestionBar.settingsKey.spec.id)
+        assertEquals("settings", settings.spec.id)
         assertEquals("emoji", suggestionBar.emojiKey.spec.id)
         assertTrue(suggestionBar.logoBounds.width > 0f)
         assertTrue(suggestionBar.suggestionsBounds.left > suggestionBar.logoBounds.right)
-        assertTrue(suggestionBar.suggestionsBounds.right < suggestionBar.settingsKey.bounds.left)
-        assertTrue(suggestionBar.settingsKey.bounds.right < suggestionBar.emojiKey.bounds.left)
+        assertTrue(suggestionBar.suggestionsBounds.right < settings.bounds.left)
+        assertTrue(settings.bounds.right < suggestionBar.emojiKey.bounds.left)
         assertEquals(
-            suggestionBar.settingsKey,
-            keyboard.keyAt(suggestionBar.settingsKey.bounds.centerX, suggestionBar.settingsKey.bounds.centerY),
+            settings,
+            keyboard.keyAt(settings.bounds.centerX, settings.bounds.centerY),
         )
         assertEquals(
             suggestionBar.emojiKey,

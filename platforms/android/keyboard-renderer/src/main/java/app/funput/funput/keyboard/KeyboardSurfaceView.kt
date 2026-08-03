@@ -68,6 +68,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         density = { resources.displayMetrics.density },
         keyboard = { resolvedKeyboard },
         apply = { values -> render.suggestions = values; accessibility.refresh() },
+        onShowSettingsChanged = { resolveGeometry() },
     )
     private val interaction: KeyboardSurfaceInteraction = createKeyboardSurfaceInteraction(
         host = this,
@@ -135,6 +136,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             width = width, height = height,
             density = resources.displayMetrics.density,
             profile = sizingProfile,
+            showSettings = suggestionState.showSettings,
         )
         suggestionState.geometryChanged()
         accessibility.refresh()

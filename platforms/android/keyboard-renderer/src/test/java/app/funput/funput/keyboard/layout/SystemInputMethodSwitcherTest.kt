@@ -64,8 +64,8 @@ class SystemInputMethodSwitcherTest {
         val bar = requireNotNull(keyboard.suggestionBar)
         val system = requireNotNull(bar.systemInputMethodKey)
 
-        assertTrue(system.bounds.right < bar.settingsKey.bounds.left)
-        assertTrue(bar.settingsKey.bounds.right < bar.emojiKey.bounds.left)
+        assertTrue(system.bounds.right < requireNotNull(bar.settingsKey).bounds.left)
+        assertTrue(requireNotNull(bar.settingsKey).bounds.right < bar.emojiKey.bounds.left)
     }
 
     private fun resolve(
