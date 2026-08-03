@@ -7,10 +7,8 @@ struct SettingsScreen: View {
     @Environment(\.openURL) private var openURL
     @State private var model: SettingsModel
     @State private var picker: SettingsPicker?
-    @State private var confirmsReset = false
     @State private var requestsHapticAccess = false
     @State private var requestsSoundAccess = false
-    @State private var confirmsSuggestionReset = false
 
     init(store: any FunputConfigurationStoring = FunputConfigurationStore()) {
         _model = State(initialValue: SettingsModel(store: store))
@@ -57,7 +55,7 @@ struct SettingsScreen: View {
             }
             PersonalSuggestionSettingsCard(
                 isEnabled: model.boolBinding(\.personalSuggestionsEnabled),
-                reset: { confirmsSuggestionReset = true }
+                reset: { model.requestPersonalSuggestionReset() }
             )
             ClipboardSettingsCard(
                 isEnabled: model.boolBinding(\.clipboardEnabled),
@@ -86,22 +84,10 @@ struct SettingsScreen: View {
                     isOn: model.boolBinding(\.showsKeyPreviews)
                 )
             }
-            SettingsResetCard { confirmsReset = true }
+            SettingsResetCard { model.reset() }
         }
         .navigationTitle("Cài đặt")
         .sheet(item: $picker) { SettingsSelectionSheet(picker: $0, model: model) }
-        .confirmationDialog("Khôi phục cài đặt mặc định?", isPresented: $confirmsReset) {
-            Button("Khôi phục", role: .destructive) { model.reset() }
-        } message: {
-            Text("Các tùy chỉnh bộ gõ hiện tại sẽ bị thay thế.")
-        }
-        .confirmationDialog("Xóa toàn bộ từ đã học?", isPresented: $confirmsSuggestionReset) {
-            Button("Xóa từ đã học", role: .destructive) {
-                model.requestPersonalSuggestionReset()
-            }
-        } message: {
-            Text("Lệnh xóa được thực hiện cục bộ khi Funput mở bàn phím lần tiếp theo.")
-        }
         .alert("Không thể lưu cài đặt", isPresented: model.saveErrorBinding) {
             Button("Đóng", role: .cancel) {}
         } message: {
