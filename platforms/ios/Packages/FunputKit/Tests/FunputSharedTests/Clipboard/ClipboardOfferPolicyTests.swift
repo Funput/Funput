@@ -99,17 +99,20 @@ struct ClipboardOfferPolicyTests {
         #expect(!ClipboardOfferPolicy.allowsOffer(context: context(editorMode: .pin)))
         #expect(!ClipboardOfferPolicy.allowsOffer(context: context(hasToolbar: false)))
         #expect(!ClipboardOfferPolicy.allowsOffer(context: context(hasFullAccess: false)))
+        #expect(!ClipboardOfferPolicy.allowsOffer(context: context(isEnabled: false)))
     }
 
     private func context(
         editorMode: KeyboardEditorMode = .text,
         hasToolbar: Bool = true,
-        hasFullAccess: Bool = true
+        hasFullAccess: Bool = true,
+        isEnabled: Bool = true
     ) -> ClipboardOfferPolicy.Context {
         ClipboardOfferPolicy.Context(
             editorMode: editorMode,
             hasToolbar: hasToolbar,
-            hasFullAccess: hasFullAccess
+            hasFullAccess: hasFullAccess,
+            isEnabled: isEnabled
         )
     }
 }

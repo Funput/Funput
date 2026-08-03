@@ -16,6 +16,7 @@ final class KeyboardToolbarView: UIView {
     private let clipboardChip = KeyboardClipboardChipView()
     private var clipboardHint: KeyboardClipboardHint?
     private var hasSuggestions = false
+    private var allowsClipboardKey = true
     private var spec: KeyboardToolbarSpec?
 
     override init(frame: CGRect) {
@@ -90,6 +91,11 @@ final class KeyboardToolbarView: UIView {
         arbitrateContentRegion()
     }
 
+    func updateClipboardKeyVisible(_ visible: Bool) {
+        allowsClipboardKey = visible
+        arbitrateContentRegion()
+    }
+
     func updateClipboardHint(_ hint: KeyboardClipboardHint?) {
         clipboardHint = hint
         clipboardChip.update(hint: hint)
@@ -104,7 +110,7 @@ final class KeyboardToolbarView: UIView {
         clipboardChip.isHidden = hasSuggestions || clipboardHint == nil
         // The clipboard key yields its slot too: while the user is typing, the whole
         // toolbar belongs to suggestions.
-        clipboardButton.isHidden = hasSuggestions
+        clipboardButton.isHidden = hasSuggestions || !allowsClipboardKey
         setNeedsLayout()
     }
 

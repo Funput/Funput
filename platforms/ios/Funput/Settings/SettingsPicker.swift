@@ -5,6 +5,7 @@ enum SettingsPicker: String, Identifiable {
     case inputMethod
     case language
     case toneStyle
+    case clipboardExpiry
 
     var id: String { rawValue }
 
@@ -13,6 +14,7 @@ enum SettingsPicker: String, Identifiable {
         case .inputMethod: "Kiểu gõ"
         case .language: "Ngôn ngữ"
         case .toneStyle: "Kiểu đặt dấu"
+        case .clipboardExpiry: "Tự xoá sau"
         }
     }
 
@@ -21,6 +23,7 @@ enum SettingsPicker: String, Identifiable {
         case .inputMethod: "Cách nhập dấu tiếng Việt"
         case .language: "Ngôn ngữ chính của bàn phím"
         case .toneStyle: "Vị trí dấu trong một số vần"
+        case .clipboardExpiry: "Mục đã ghim không bao giờ tự xoá"
         }
     }
 
@@ -29,6 +32,7 @@ enum SettingsPicker: String, Identifiable {
         case .inputMethod: "character.cursor.ibeam"
         case .language: "globe.asia.australia"
         case .toneStyle: "textformat"
+        case .clipboardExpiry: "clock.arrow.trianglehead.counterclockwise.rotate.90"
         }
     }
 }
@@ -69,6 +73,14 @@ extension SettingsPicker {
                     summary: value == .traditional ? "Đặt dấu như “hoà”." : "Đặt dấu như “hòa”.",
                     isSelected: model.configuration.toneStyle == value,
                     select: { model.update(\.toneStyle, to: value) }
+                )
+            }
+        case .clipboardExpiry:
+            ClipboardExpiry.allCases.map { value in
+                SettingsChoice(
+                    id: value.rawValue, title: value.title, summary: value.summary,
+                    isSelected: model.configuration.clipboardExpiry == value,
+                    select: { model.update(\.clipboardExpiry, to: value) }
                 )
             }
         }

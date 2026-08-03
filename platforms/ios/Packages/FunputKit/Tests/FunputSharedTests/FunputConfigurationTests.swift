@@ -21,7 +21,9 @@ struct FunputConfigurationTests {
         #expect(config.heightScale == 1.1)
         #expect(config.personalSuggestionsEnabled)
         #expect(config.personalSuggestionResetToken == nil)
-        #expect(config.schemaVersion == 8)
+        #expect(config.clipboardEnabled)
+        #expect(config.clipboardExpiry == .hour)
+        #expect(config.schemaVersion == 9)
     }
 
     @Test("Configuration survives a JSON round-trip")
@@ -56,7 +58,7 @@ struct FunputConfigurationTests {
         #expect(!decoded.isHapticFeedbackEnabled)
         #expect(!decoded.isKeySoundEnabled)
         #expect(!decoded.showsNumberRow)
-        #expect(decoded.schemaVersion == 8)
+        #expect(decoded.schemaVersion == 9)
     }
 
     @Test("Schema 3 migrates to the compact Telex default")
@@ -64,7 +66,7 @@ struct FunputConfigurationTests {
         let data = Data(#"{"showsNumberRow":true,"schemaVersion":3}"#.utf8)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(!decoded.showsNumberRow)
-        #expect(decoded.schemaVersion == 8)
+        #expect(decoded.schemaVersion == 9)
     }
 
     /// v8 dropped `showsGlobeKey` entirely. A stored payload still carrying it must
@@ -74,6 +76,6 @@ struct FunputConfigurationTests {
         let data = Data(#"{"showsGlobeKey":true,"showsNumberRow":true,"schemaVersion":4}"#.utf8)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(decoded.showsNumberRow)
-        #expect(decoded.schemaVersion == 8)
+        #expect(decoded.schemaVersion == 9)
     }
 }

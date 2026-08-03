@@ -8,8 +8,6 @@ import Foundation
 /// this store is separate.
 public struct ClipboardStore {
     public static let limit = 50
-    /// Unpinned entries fall away after this long. Pinned entries never expire.
-    public static let expiry: TimeInterval = 60 * 60
 
     private struct Payload: Codable {
         var lastCapturedChangeCount: Int?
@@ -19,13 +17,20 @@ public struct ClipboardStore {
     }
 
     private let fileURL: URL?
+    /// How long an unpinned entry survives. Comes from the user's settings, so the
+    /// store carries it rather than hard-coding one.
+    private let expiry: TimeInterval
 
-    public init(directoryName: String = FunputAppGroup.clipboardDirectory) {
-        self.init(directory: AppGroupDirectory.prepare(named: directoryName))
+    public init(
+        directoryName: String = FunputAppGroup.clipboardDirectory,
+        expiry: ClipboardExpiry = .hour
+    ) {
+        self.init(directory: AppGroupDirectory.prepare(named: directoryName), expiry: expiry)
     }
 
-    public init(directory: URL?) {
+    public init(directory: URL?, expiry: ClipboardExpiry = .hour) {
         fileURL = directory?.appendingPathComponent("clipboard.json")
+        self.expiry = expiry.interval
     }
 
     /// Entries still worth showing. Pruning happens in memory: reading should not
@@ -79,7 +84,7 @@ public struct ClipboardStore {
     /// Newest first. Expired unpinned entries go, then the oldest unpinned entries
     /// go until the list fits; pinned entries are never evicted.
     private func prune(_ items: [ClipboardItem], now: Date) -> [ClipboardItem] {
-        let live = items.filter { $0.isPinned || now.timeIntervalSince($0.capturedAt) < Self.expiry }
+        let live = items.filter { $0.isPinned || now.timeIntervalSince($0.capturedAt) < expiry }
         guard live.count > Self.limit else { return live }
         var excess = live.count - Self.limit
         var kept: [ClipboardItem] = []

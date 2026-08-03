@@ -59,6 +59,12 @@ struct SettingsScreen: View {
                 isEnabled: model.boolBinding(\.personalSuggestionsEnabled),
                 reset: { confirmsSuggestionReset = true }
             )
+            ClipboardSettingsCard(
+                isEnabled: model.boolBinding(\.clipboardEnabled),
+                expiryLabel: model.clipboardExpiryLabel,
+                selectExpiry: { picker = .clipboardExpiry },
+                clear: { model.clearClipboardHistory() }
+            )
             SettingsSectionCard(title: "Phản hồi", systemImage: "hand.tap") {
                 SettingsToggleRow(
                     title: "Rung khi gõ",

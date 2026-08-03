@@ -22,6 +22,8 @@ extension FunputConfiguration {
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
         config.personalSuggestionsEnabled = try container.decodeIfPresent(Bool.self, forKey: .personalSuggestionsEnabled) ?? config.personalSuggestionsEnabled
         config.personalSuggestionResetToken = try container.decodeIfPresent(UUID.self, forKey: .personalSuggestionResetToken)
+        config.clipboardEnabled = try container.decodeIfPresent(Bool.self, forKey: .clipboardEnabled) ?? config.clipboardEnabled
+        config.clipboardExpiry = try container.decodeIfPresent(ClipboardExpiry.self, forKey: .clipboardExpiry) ?? config.clipboardExpiry
         config.schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? config.schemaVersion
         if config.schemaVersion < 2 {
             config.isHapticFeedbackEnabled = false
@@ -47,6 +49,11 @@ extension FunputConfiguration {
         // keyboard, so Funput's copy was a duplicate that never shipped visible.
         if config.schemaVersion < 8 {
             config.schemaVersion = 8
+        }
+        // v9 added the clipboard settings; a payload without them takes the defaults,
+        // which is exactly what `decodeIfPresent` above already did.
+        if config.schemaVersion < 9 {
+            config.schemaVersion = 9
         }
         self = config
     }

@@ -11,11 +11,18 @@ public enum ClipboardOfferPolicy {
         public let editorMode: KeyboardEditorMode
         public let hasToolbar: Bool
         public let hasFullAccess: Bool
+        public let isEnabled: Bool
 
-        public init(editorMode: KeyboardEditorMode, hasToolbar: Bool, hasFullAccess: Bool) {
+        public init(
+            editorMode: KeyboardEditorMode,
+            hasToolbar: Bool,
+            hasFullAccess: Bool,
+            isEnabled: Bool = true
+        ) {
             self.editorMode = editorMode
             self.hasToolbar = hasToolbar
             self.hasFullAccess = hasFullAccess
+            self.isEnabled = isEnabled
         }
     }
 
@@ -26,6 +33,8 @@ public enum ClipboardOfferPolicy {
     /// stale chip sitting in a password field: the caller can enforce these rules
     /// even when it has no snapshot it trusts.
     public static func allowsOffer(context: Context) -> Bool {
+        // The user can decline the whole feature.
+        guard context.isEnabled else { return false }
         // Full Access is what makes the pasteboard readable at all.
         guard context.hasFullAccess else { return false }
         // Password and PIN fields never see a paste invitation, even though the

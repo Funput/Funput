@@ -24,9 +24,22 @@ struct ClipboardStoreTests {
         )
         store.record(pinned, now: epoch)
 
-        let later = epoch.addingTimeInterval(ClipboardStore.expiry + 1)
+        let later = epoch.addingTimeInterval(ClipboardExpiry.hour.interval + 1)
         #expect(store.load(now: epoch).count == 2)
         #expect(store.load(now: later).map(\.text) == ["giữ"])
+    }
+
+    /// The window is a user setting now, so the store must read it from itself
+    /// rather than from one hard-coded constant.
+    @Test("A longer window keeps what a shorter one has already dropped")
+    func configurableExpiry() throws {
+        let directory = try makeDirectory()
+        let entry = item("tạm", at: epoch)
+        ClipboardStore(directory: directory, expiry: .week).record(entry, now: epoch)
+
+        let later = epoch.addingTimeInterval(ClipboardExpiry.hour.interval + 1)
+        #expect(ClipboardStore(directory: directory, expiry: .hour).load(now: later).isEmpty)
+        #expect(ClipboardStore(directory: directory, expiry: .week).load(now: later).count == 1)
     }
 
     @Test("The cap evicts the oldest unpinned entry and never a pinned one")

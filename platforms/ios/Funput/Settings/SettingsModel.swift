@@ -10,13 +10,16 @@ final class SettingsModel {
     var showsSaveError = false
     private let store: any FunputConfigurationStoring
     private let accessStore: any KeyboardAccessStateReading
+    private let clipboardStore: ClipboardStore
 
     init(
         store: any FunputConfigurationStoring,
-        accessStore: any KeyboardAccessStateReading = KeyboardAccessStateStore()
+        accessStore: any KeyboardAccessStateReading = KeyboardAccessStateStore(),
+        clipboardStore: ClipboardStore = ClipboardStore()
     ) {
         self.store = store
         self.accessStore = accessStore
+        self.clipboardStore = clipboardStore
         configuration = store.load()
         hasFullAccess = accessStore.hasObservedFullAccess
     }
@@ -24,6 +27,7 @@ final class SettingsModel {
     var inputMethodLabel: String { configuration.inputMethod.settingsTitle }
     var languageLabel: String { configuration.language.displayLabel }
     var toneStyleLabel: String { configuration.toneStyle.settingsTitle }
+    var clipboardExpiryLabel: String { configuration.clipboardExpiry.title }
     var isNumberRowLocked: Bool { configuration.inputMethod == .vni }
 
     func reload() {
@@ -45,6 +49,14 @@ final class SettingsModel {
 
     func requestPersonalSuggestionReset() {
         update(\.personalSuggestionResetToken, to: UUID())
+    }
+
+    /// Cleared straight away rather than through a token like the personal lexicon:
+    /// that store belongs to Rust and the app cannot reach it, while the clipboard
+    /// file sits in the App Group. For a privacy action, "deleted" should mean now —
+    /// not at the next keyboard launch.
+    func clearClipboardHistory() {
+        clipboardStore.clear()
     }
 
     func boolBinding(_ keyPath: WritableKeyPath<FunputConfiguration, Bool>) -> Binding<Bool> {

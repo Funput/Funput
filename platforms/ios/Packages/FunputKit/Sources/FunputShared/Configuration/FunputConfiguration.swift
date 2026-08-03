@@ -22,6 +22,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var showsNumberRow: Bool
     public var heightScale: Double
     public var personalSuggestionsEnabled: Bool
+    public var clipboardEnabled: Bool
+    public var clipboardExpiry: ClipboardExpiry
     public var personalSuggestionResetToken: UUID?
     public var schemaVersion: Int
 
@@ -30,7 +32,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case eagerRestore, autoCapitalize, selectedThemeID
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
         case showsNumberRow, heightScale
-        case personalSuggestionsEnabled, personalSuggestionResetToken, schemaVersion
+        case personalSuggestionsEnabled, personalSuggestionResetToken
+        case clipboardEnabled, clipboardExpiry, schemaVersion
     }
 
     public init(
@@ -48,6 +51,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         showsNumberRow: Bool = false,
         heightScale: Double = 1.1,
         personalSuggestionsEnabled: Bool = true,
+        clipboardEnabled: Bool = true,
+        clipboardExpiry: ClipboardExpiry = .hour,
         personalSuggestionResetToken: UUID? = nil,
         schemaVersion: Int = FunputConfiguration.currentSchemaVersion
     ) {
@@ -65,6 +70,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.showsNumberRow = showsNumberRow
         self.heightScale = heightScale
         self.personalSuggestionsEnabled = personalSuggestionsEnabled
+        self.clipboardEnabled = clipboardEnabled
+        self.clipboardExpiry = clipboardExpiry
         self.personalSuggestionResetToken = personalSuggestionResetToken
         self.schemaVersion = schemaVersion
     }
@@ -74,5 +81,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 8
+    public static let currentSchemaVersion = 9
 }

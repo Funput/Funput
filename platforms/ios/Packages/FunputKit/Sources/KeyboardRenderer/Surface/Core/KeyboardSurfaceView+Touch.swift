@@ -46,6 +46,11 @@ extension KeyboardSurfaceView {
         toolbarView.updateClipboardHint(hint)
     }
 
+    /// Turned off when the user declines the clipboard feature entirely.
+    public func updateClipboardKeyVisible(_ visible: Bool) {
+        toolbarView.updateClipboardKeyVisible(visible)
+    }
+
     @objc func accessibilityAppearanceDidChange() {
         applyPresentation()
         setNeedsLayout()

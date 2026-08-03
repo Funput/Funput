@@ -87,6 +87,21 @@ struct ClipboardChipToolbarTests {
         #expect(clipboard.size.height <= emoji.size.height + 0.5)
     }
 
+    /// Turning the feature off has to take the toolbar key with it, not just the chip.
+    @Test("Declining the feature hides the clipboard key even with no suggestions")
+    func clipboardKeyHiddenWhenDisabled() throws {
+        let toolbar = makeToolbar()
+        toolbar.updateClipboardKeyVisible(false)
+        toolbar.layoutIfNeeded()
+        let key = try #require(
+            buttons(in: toolbar).first { $0.accessibilityLabel == "Lịch sử clipboard" }
+        )
+        #expect(key.isHidden)
+
+        toolbar.updateClipboardKeyVisible(true)
+        #expect(!key.isHidden)
+    }
+
     private func buttons(in view: UIView) -> [UIButton] {
         view.subviews.flatMap { child in
             (child as? UIButton).map { [$0] } ?? buttons(in: child)

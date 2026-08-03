@@ -19,7 +19,8 @@ final class KeyboardViewController: UIInputViewController {
     let kaomojiView = KaomojiKeyboardView()
     let clipboardPanelView = ClipboardKeyboardView()
     let emojiRecentsStore = EmojiRecentsStore()
-    let clipboardStore = ClipboardStore()
+    /// Rebuilt whenever configuration changes, since it carries the chosen expiry.
+    var clipboardStore = ClipboardStore()
     let kaomojiRecentsStore = EmojiRecentsStore(key: FunputAppGroup.kaomojiRecentsKey)
     let accessStateStore = KeyboardAccessStateStore()
     let customThemeStore = CustomThemeStore()

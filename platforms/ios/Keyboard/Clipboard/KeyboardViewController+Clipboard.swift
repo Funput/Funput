@@ -26,7 +26,8 @@ extension KeyboardViewController {
         let context = ClipboardOfferPolicy.Context(
             editorMode: inputCoordinator.state.editorMode,
             hasToolbar: keyboardView.presentation.layout.toolbar != nil,
-            hasFullAccess: hasFullAccess
+            hasFullAccess: hasFullAccess,
+            isEnabled: configuration.clipboardEnabled
         )
         // Checked before anything else, so a refused pasteboard read can never leave
         // a paste invitation sitting in a password field.
@@ -78,9 +79,13 @@ extension KeyboardViewController {
         let effects = inputCoordinator.insertLiteral(text, writer: makeDocumentWriter())
         // Stamped with the live `changeCount` rather than the one the offer was built
         // from: the text just handed over is whatever is on the pasteboard now.
-        clipboardStore.record(
-            ClipboardItem(text: text, sourceChangeCount: UIPasteboard.general.changeCount)
-        )
+        // The panel can already be open when the switch is turned off, so the write
+        // is guarded here and not only where the chip is offered.
+        if configuration.clipboardEnabled {
+            clipboardStore.record(
+                ClipboardItem(text: text, sourceChangeCount: UIPasteboard.general.changeCount)
+            )
+        }
         refreshClipboardOffer()
         applyPostCommitEffects(effects)
     }
