@@ -28,6 +28,14 @@ class CompositionCompatibilityPolicyTest {
     }
 
     @Test
+    fun `OnlyOffice uses key-event committed composition`() {
+        assertEquals(
+            CompositionRenderMode.COMMITTED_KEY_DELETE,
+            CompositionCompatibilityPolicy.renderMode("com.onlyoffice.documents"),
+        )
+    }
+
+    @Test
     fun `unlisted and missing packages keep native composition`() {
         listOf(null, "com.android.chrome", "com.whatsapp").forEach { packageName ->
             assertEquals(

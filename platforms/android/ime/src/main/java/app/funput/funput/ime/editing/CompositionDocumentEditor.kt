@@ -2,20 +2,16 @@ package app.funput.funput.ime.editing
 
 import android.view.inputmethod.InputConnection
 
-internal enum class CompositionRenderMode {
-    COMPOSING,
-    COMMITTED,
-}
-
 /**
  * Applies the engine buffer without exposing host-specific behavior to the engine session.
  *
- * Most editors get Android composing text. Gecko editors get committed replacements because they
- * decorate every composing region themselves, even when the supplied text has no underline span.
+ * Most editors get Android composing text. Broken hosts get committed replacements because they
+ * ignore or decorate composing regions incorrectly.
  */
 internal class CompositionDocumentEditor(
     private val composingTextFactory: (String) -> CharSequence,
 ) {
+    private val committedWriter = CommittedBufferWriter()
     private var committedSelection: Int? = null
     private var expectedCommittedSelection: Int? = null
 
@@ -27,7 +23,9 @@ internal class CompositionDocumentEditor(
     ): Boolean = when (mode) {
         CompositionRenderMode.COMPOSING ->
             connection.setComposingText(composingTextFactory(current), CursorAfterText)
-        CompositionRenderMode.COMMITTED -> replaceBeforeCursor(connection, previous, current)
+        CompositionRenderMode.COMMITTED,
+        CompositionRenderMode.COMMITTED_KEY_DELETE,
+        -> replaceBeforeCursor(connection, mode, previous, current)
     }
 
     fun finish(connection: InputConnection?, mode: CompositionRenderMode, active: Boolean) {
@@ -48,8 +46,10 @@ internal class CompositionDocumentEditor(
                 connection.commitText(boundary, CursorAfterText)
             }
         }
-        CompositionRenderMode.COMMITTED -> {
-            if (replacement != null) replaceBeforeCursor(connection, previous, replacement)
+        CompositionRenderMode.COMMITTED,
+        CompositionRenderMode.COMMITTED_KEY_DELETE,
+        -> {
+            if (replacement != null) replaceBeforeCursor(connection, mode, previous, replacement)
             else {
                 expectCommittedSelection(previousLength = 0, currentLength = boundary.length)
                 connection.commitText(boundary, CursorAfterText)
@@ -65,8 +65,9 @@ internal class CompositionDocumentEditor(
     ): Boolean = when (mode) {
         CompositionRenderMode.COMPOSING ->
             connection.commitText("$candidate ", CursorAfterText)
-        CompositionRenderMode.COMMITTED ->
-            replaceBeforeCursor(connection, prefix, "$candidate ")
+        CompositionRenderMode.COMMITTED,
+        CompositionRenderMode.COMMITTED_KEY_DELETE,
+        -> replaceBeforeCursor(connection, mode, prefix, "$candidate ")
     }
 
     fun reopenWord(
@@ -77,7 +78,9 @@ internal class CompositionDocumentEditor(
         CompositionRenderMode.COMPOSING ->
             connection.deleteSurroundingText(word.length, 0) &&
                 connection.setComposingText(composingTextFactory(word), CursorAfterText)
-        CompositionRenderMode.COMMITTED -> true.also {
+        CompositionRenderMode.COMMITTED,
+        CompositionRenderMode.COMMITTED_KEY_DELETE,
+        -> true.also {
             committedSelection = null
             expectedCommittedSelection = null
         }
@@ -93,27 +96,24 @@ internal class CompositionDocumentEditor(
     ): Boolean = when (mode) {
         CompositionRenderMode.COMPOSING ->
             selectionStart == composingEnd && selectionEnd == composingEnd
-        CompositionRenderMode.COMMITTED -> ownsCommittedSelection(
-            connection,
-            text,
-            selectionStart,
-            selectionEnd,
-        )
+        CompositionRenderMode.COMMITTED,
+        CompositionRenderMode.COMMITTED_KEY_DELETE,
+        -> ownsCommittedSelection(connection, text, selectionStart, selectionEnd)
     }
 
     private fun replaceBeforeCursor(
         connection: InputConnection,
+        mode: CompositionRenderMode,
         previous: String,
         replacement: String,
     ): Boolean {
         expectCommittedSelection(previous.length, replacement.length)
-        connection.beginBatchEdit()
-        return try {
-            val deleted = previous.isEmpty() || connection.deleteSurroundingText(previous.length, 0)
-            deleted && (replacement.isEmpty() || connection.commitText(replacement, CursorAfterText))
-        } finally {
-            connection.endBatchEdit()
-        }
+        return committedWriter.replace(
+            connection,
+            previous,
+            replacement,
+            deleteWithKeyEvents = mode.deleteWithKeyEvents,
+        )
     }
 
     private fun ownsCommittedSelection(
