@@ -6,7 +6,7 @@ use slint::{ComponentHandle, Weak};
 
 use super::models;
 use super::settings_callbacks;
-use crate::{commands, recorder, shell, SettingsWindow};
+use crate::{commands, recorder, shell, system_accent, SettingsWindow, Theme};
 
 thread_local! {
     static WINDOW: RefCell<Option<Weak<SettingsWindow>>> = const { RefCell::new(None) };
@@ -14,12 +14,14 @@ thread_local! {
 
 pub(super) fn open() {
     if let Some(window) = current() {
+        system_accent::apply(&window.global::<Theme>());
         populate(&window);
         let _ = window.show();
         return;
     }
 
     let window = SettingsWindow::new().expect("create settings window");
+    system_accent::apply(&window.global::<Theme>());
     populate(&window);
     settings_callbacks::wire(&window);
     let _ = window.show();

@@ -1,0 +1,108 @@
+// Shared interactive chrome: rows, segmented control, keycaps, progress dots.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, SegOption } from "tokens.slint";
+
+export component KeyCap inherits Rectangle {
+    in property <string> label;
+    height: 24px;
+    border-radius: 8px;
+    background: Theme.field-bg;
+    border-width: 1px;
+    border-color: Theme.card-border;
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        Text {
+            text: root.label;
+            vertical-alignment: center;
+            font-size: Theme.font-caption;
+            font-weight: 600;
+            color: Palette.foreground;
+        }
+    }
+}
+
+export component Row {
+    in property <string> title;
+    in property <string> subtitle;
+    HorizontalLayout {
+        spacing: Theme.sp-md;
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 4px;
+            Text {
+                text: root.title;
+                font-size: Theme.font-body;
+                font-weight: 600;
+                color: Palette.foreground;
+            }
+            if root.subtitle != "": Text {
+                text: root.subtitle;
+                font-size: Theme.font-caption;
+                color: Theme.subtle;
+                wrap: word-wrap;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 0;
+            alignment: center;
+            @children
+        }
+    }
+}
+
+// Glass segmented control: selected chip is a raised frosted pill, accent text.
+export component Segmented {
+    in property <[SegOption]> options;
+    in property <string> current;
+    callback changed(string);
+    Rectangle {
+        background: Theme.track;
+        border-radius: Theme.r-control + 6px;
+        border-width: 1px;
+        border-color: Theme.divider;
+        HorizontalLayout {
+            padding: 3px;
+            spacing: 2px;
+            for opt in root.options: Rectangle {
+                background: opt.id == root.current ? Theme.nav-active : transparent;
+                border-radius: Theme.r-control;
+                border-width: opt.id == root.current ? 1px : 0px;
+                border-color: Theme.card-border;
+                drop-shadow-blur: opt.id == root.current ? 10px : 0px;
+                drop-shadow-color: Theme.shadow;
+                drop-shadow-offset-y: 2px;
+                animate background { duration: 140ms; easing: ease-out; }
+                HorizontalLayout {
+                    padding-left: 14px;
+                    padding-right: 14px;
+                    padding-top: 8px;
+                    padding-bottom: 8px;
+                    Text {
+                        text: opt.label;
+                        color: opt.id == root.current ? Theme.accent : Palette.foreground;
+                        font-size: 13px;
+                        font-weight: opt.id == root.current ? 600 : 500;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => { root.changed(opt.id); }
+                }
+            }
+        }
+    }
+}
+
+export component Dot inherits Rectangle {
+    in property <bool> on;
+    width: root.on ? 20px : 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: root.on ? Theme.accent : Theme.track;
+    animate width { duration: 160ms; easing: ease-in-out; }
+}

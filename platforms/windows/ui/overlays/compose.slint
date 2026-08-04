@@ -1,0 +1,10 @@
+// Global callbacks for in-process Vietnamese composition inside Funput's window.
+
+export global Compose {
+    // A typed character → the new full field text.
+    callback key(string) -> string;
+    // Backspace → the new full field text.
+    callback backspace() -> string;
+    // Focus-in: seed the composer with the field's current text.
+    callback reset(string);
+}

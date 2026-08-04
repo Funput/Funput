@@ -19,6 +19,7 @@ mod keymap;
 mod recorder;
 mod settings;
 mod shell;
+mod system_accent;
 mod tray;
 mod update;
 mod windows_ui;

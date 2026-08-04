@@ -1,11 +1,10 @@
 // Settings → "Giới thiệu": version, auto-update flow, and links.
 
 import { Palette, Button } from "std-widgets.slint";
-import { Theme, Card } from "theme.slint";
+import { Theme, Card } from "../../theme/mod.slint";
 
 export component AboutPage inherits VerticalLayout {
     in property <string> version;
-    // Auto-update: idle | checking | uptodate | available | downloading | ready | error
     in property <string> update-state: "idle";
     in property <string> update-version;
     in property <string> update-message;
@@ -15,23 +14,42 @@ export component AboutPage inherits VerticalLayout {
     callback relaunch-now();
 
     spacing: Theme.sp-md;
-    Text { text: "Giới thiệu"; font-size: 20px; font-weight: 700; color: Palette.foreground; }
+    Text {
+        text: "Giới thiệu";
+        font-size: Theme.font-title;
+        font-weight: 700;
+        color: Palette.foreground;
+    }
     Card {
         VerticalLayout {
             spacing: Theme.sp-sm;
             HorizontalLayout {
                 alignment: center;
                 Image {
-                    source: @image-url("../../../assets/logo.png");
+                    source: @image-url("../../../../../assets/logo.png");
                     width: 72px;
                     height: 72px;
                 }
             }
-            Text { text: "Funput"; font-size: 18px; font-weight: 700; horizontal-alignment: center; color: Palette.foreground; }
-            Text { text: "Bộ gõ tiếng Việt — miễn phí, mã nguồn mở."; font-size: 13px; horizontal-alignment: center; color: Theme.subtle; }
-            Text { text: "Phiên bản \{root.version}"; font-size: 12px; horizontal-alignment: center; color: Theme.subtle; }
-
-            // --- Cập nhật ---
+            Text {
+                text: "Funput";
+                font-size: 18px;
+                font-weight: 700;
+                horizontal-alignment: center;
+                color: Palette.foreground;
+            }
+            Text {
+                text: "Bộ gõ tiếng Việt — miễn phí, mã nguồn mở.";
+                font-size: 13px;
+                horizontal-alignment: center;
+                color: Theme.subtle;
+            }
+            Text {
+                text: "Phiên bản \{root.version}";
+                font-size: Theme.font-caption;
+                horizontal-alignment: center;
+                color: Theme.subtle;
+            }
             if root.update-state != "idle": Text {
                 text: root.update-state == "checking" ? "Đang kiểm tra…"
                     : root.update-state == "uptodate" ? "Bạn đang dùng bản mới nhất."
@@ -39,15 +57,14 @@ export component AboutPage inherits VerticalLayout {
                     : root.update-state == "downloading" ? "Đang tải bản cập nhật…"
                     : root.update-state == "ready" ? "Đã cập nhật Funput. Khởi động lại để áp dụng."
                     : root.update-message;
-                font-size: 12px;
+                font-size: Theme.font-caption;
                 horizontal-alignment: center;
                 wrap: word-wrap;
-                color: root.update-state == "error" ? #e5484d : Theme.subtle;
+                color: root.update-state == "error" ? Theme.danger : Theme.subtle;
             }
             HorizontalLayout {
                 alignment: center;
                 spacing: Theme.sp-sm;
-                // Re-checkable from idle / up-to-date / error.
                 if root.update-state != "available" && root.update-state != "downloading" && root.update-state != "ready": Button {
                     text: "Kiểm tra cập nhật…";
                     enabled: root.update-state != "checking";

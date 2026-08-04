@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use slint::{ComponentHandle, Weak};
 
 use crate::settings::Method;
-use crate::{commands, shell, OnboardingWindow};
+use crate::{commands, shell, system_accent, OnboardingWindow, Theme};
 
 thread_local! {
     static WINDOW: RefCell<Option<Weak<OnboardingWindow>>> = const { RefCell::new(None) };
@@ -13,12 +13,14 @@ thread_local! {
 
 pub(super) fn open() {
     if let Some(window) = WINDOW.with(|cell| cell.borrow().as_ref().and_then(Weak::upgrade)) {
+        system_accent::apply(&window.global::<Theme>());
         window.set_step(0);
         let _ = window.show();
         return;
     }
 
     let window = OnboardingWindow::new().expect("create onboarding window");
+    system_accent::apply(&window.global::<Theme>());
     let settings = shell::snapshot();
     window.set_method(settings.method.id().into());
     window.set_launch_at_login(settings.launch_at_login);

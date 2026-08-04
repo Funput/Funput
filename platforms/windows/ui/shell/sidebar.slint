@@ -1,0 +1,98 @@
+// Floating glass sidebar — frosted rail, soft active chip (accent text, not solid fill).
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "../theme/tokens.slint";
+
+export component Sidebar inherits Rectangle {
+    in-out property <string> active;
+    width: 208px;
+    background: transparent;
+
+    property <[{id: string, label: string, icon: image}]> nav: [
+        { id: "input", label: "Kiểu gõ", icon: @image-url("../icons/nav/primary/keyboard.svg") },
+        { id: "keyboard", label: "Phím chuyển", icon: @image-url("../icons/nav/primary/switch.svg") },
+        { id: "smart", label: "Thông minh", icon: @image-url("../icons/nav/primary/sparkles.svg") },
+        { id: "shortcuts", label: "Gõ tắt", icon: @image-url("../icons/nav/primary/shortcut.svg") },
+        { id: "apps", label: "Ứng dụng", icon: @image-url("../icons/nav/primary/apps.svg") },
+        { id: "general", label: "Chung", icon: @image-url("../icons/nav/secondary/settings.svg") },
+        { id: "about", label: "Giới thiệu", icon: @image-url("../icons/nav/secondary/info.svg") },
+    ];
+
+    VerticalLayout {
+        padding: Theme.sp-md;
+        padding-right: Theme.sp-sm;
+        Rectangle {
+            border-radius: Theme.r-shell;
+            background: Theme.sidebar-bg;
+            border-width: 1px;
+            border-color: Theme.sidebar-border;
+            drop-shadow-blur: 28px;
+            drop-shadow-color: Theme.shadow;
+            drop-shadow-offset-y: 10px;
+
+            Rectangle {
+                height: 48px;
+                y: 0px;
+                border-top-left-radius: Theme.r-shell;
+                border-top-right-radius: Theme.r-shell;
+                background: Theme.glass-sheen;
+            }
+
+            VerticalLayout {
+                padding: 14px;
+                spacing: 2px;
+                alignment: start;
+                Text {
+                    text: "Funput";
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: Palette.foreground;
+                }
+                Text {
+                    text: "Cài đặt";
+                    font-size: Theme.font-caption;
+                    color: Theme.subtle;
+                }
+                Rectangle { height: Theme.sp-md; }
+                for item in root.nav: Rectangle {
+                    height: 38px;
+                    border-radius: Theme.r-control;
+                    background: root.active == item.id
+                        ? Theme.nav-active
+                        : (nav-touch.has-hover ? Theme.nav-hover : transparent);
+                    border-width: root.active == item.id ? 1px : 0px;
+                    border-color: Theme.card-border;
+                    drop-shadow-blur: root.active == item.id ? 10px : 0px;
+                    drop-shadow-color: Theme.shadow;
+                    drop-shadow-offset-y: 2px;
+                    animate background { duration: 140ms; easing: ease-out; }
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        spacing: 10px;
+                        alignment: start;
+                        VerticalLayout {
+                            alignment: center;
+                            Image {
+                                source: item.icon;
+                                colorize: root.active == item.id ? Theme.accent : Theme.subtle;
+                                width: 16px;
+                                height: 16px;
+                            }
+                        }
+                        Text {
+                            text: item.label;
+                            vertical-alignment: center;
+                            font-size: 13px;
+                            font-weight: root.active == item.id ? 600 : 500;
+                            color: root.active == item.id ? Theme.accent : Palette.foreground;
+                        }
+                    }
+                    nav-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => { root.active = item.id; }
+                    }
+                }
+            }
+        }
+    }
+}

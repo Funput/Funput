@@ -1,0 +1,77 @@
+// Neutral liquid-glass tokens: gray stage + translucent panels.
+// Colour lives only in accent/controls — the field behind glass stays neutral.
+
+import { Palette } from "std-widgets.slint";
+
+export struct SegOption {
+    id: string,
+    label: string,
+}
+
+export struct AppEntry {
+    id: string,
+    name: string,
+}
+
+export struct ShortcutEntry {
+    trigger: string,
+    expansion: string,
+}
+
+export global Theme {
+    out property <bool> dark: Palette.color-scheme == ColorScheme.dark;
+
+    // Accent: Rust sets `accent` / `accent-text` from the Windows accent color;
+    // orange is the Slint-viewer / read-failure fallback.
+    in-out property <color> accent: #ea580c;
+    in-out property <color> accent-text: #ffffff;
+    out property <color> accent-hover: root.dark
+        ? root.accent.brighter(0.16)
+        : root.accent.darker(0.08);
+    out property <brush> accent-soft: root.accent.transparentize(0.86);
+    out property <color> warn: root.dark ? #fbbf24 : #b45309;
+    out property <color> danger: root.dark ? #fb7185 : #e11d48;
+
+    out property <length> sp-xs: 4px;
+    out property <length> sp-sm: 8px;
+    out property <length> sp-md: 16px;
+    out property <length> sp-lg: 20px;
+    out property <length> sp-xl: 28px;
+
+    out property <length> r-card: 22px;
+    out property <length> r-control: 11px;
+    out property <length> r-shell: 26px;
+
+    out property <length> font-title: 22px;
+    out property <length> font-body: 14px;
+    out property <length> font-caption: 12px;
+
+    // Neutral gray stage (no hue wash).
+    out property <brush> window-base: root.dark
+        ? @linear-gradient(180deg, #1c1c1e 0%, #161618 100%)
+        : @linear-gradient(180deg, #e8e8ea 0%, #f2f2f4 100%);
+
+    // Liquid glass fills — luminous rim + soft translucency.
+    out property <brush> card-bg: root.dark
+        ? @linear-gradient(165deg, #ffffff2e 0%, #ffffff14 55%, #ffffff0c 100%)
+        : @linear-gradient(165deg, #ffffffb8 0%, #ffffff7a 100%);
+    out property <brush> glass-sheen: root.dark
+        ? @linear-gradient(180deg, #ffffff22 0%, #ffffff00 100%)
+        : @linear-gradient(180deg, #ffffffc8 0%, #ffffff00 100%);
+    out property <color> card-border: root.dark ? #ffffff3a : #ffffffee;
+    out property <color> shadow: root.dark ? #00000080 : #00000014;
+
+    out property <brush> sidebar-bg: root.dark
+        ? @linear-gradient(180deg, #ffffff24 0%, #ffffff12 100%)
+        : @linear-gradient(180deg, #ffffffb0 0%, #ffffff78 100%);
+    out property <color> sidebar-border: root.dark ? #ffffff32 : #ffffffee;
+
+    out property <brush> track: root.dark ? #ffffff12 : #0000000d;
+    out property <brush> nav-active: root.dark ? #ffffff22 : #ffffffef;
+    out property <brush> nav-hover: root.dark ? #ffffff12 : #00000008;
+    out property <brush> field-bg: root.dark ? #ffffff14 : #ffffffc8;
+
+    out property <color> subtle: root.dark ? #a1a1a6 : #6e6e73;
+    out property <color> faint: root.dark ? #6e6e73 : #8e8e93;
+    out property <color> divider: root.dark ? #ffffff14 : #0000000f;
+}

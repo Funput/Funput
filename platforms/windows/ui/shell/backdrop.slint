@@ -1,0 +1,33 @@
+// Soft neutral luminosity behind glass — no coloured blobs, only light/depth.
+
+import { Theme } from "../theme/tokens.slint";
+
+export component Backdrop inherits Rectangle {
+    Rectangle {
+        x: -80px;
+        y: -100px;
+        width: 420px;
+        height: 360px;
+        background: Theme.dark
+            ? @radial-gradient(circle, #ffffff18 0%, #ffffff00 70%)
+            : @radial-gradient(circle, #ffffffb0 0%, #ffffff00 70%);
+    }
+    Rectangle {
+        x: parent.width - 340px;
+        y: -80px;
+        width: 400px;
+        height: 340px;
+        background: Theme.dark
+            ? @radial-gradient(circle, #ffffff12 0%, #ffffff00 70%)
+            : @radial-gradient(circle, #ffffff90 0%, #ffffff00 70%);
+    }
+    Rectangle {
+        x: parent.width / 2 - 200px;
+        y: parent.height - 280px;
+        width: 440px;
+        height: 360px;
+        background: Theme.dark
+            ? @radial-gradient(circle, #ffffff0e 0%, #ffffff00 72%)
+            : @radial-gradient(circle, #00000008 0%, #00000000 72%);
+    }
+}

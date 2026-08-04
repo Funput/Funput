@@ -1,0 +1,28 @@
+// Liquid-glass panel: translucent fill, bright rim, top sheen, soft lift.
+
+import { Theme } from "tokens.slint";
+
+export component Card inherits Rectangle {
+    border-radius: Theme.r-card;
+    background: Theme.card-bg;
+    border-width: 1px;
+    border-color: Theme.card-border;
+    drop-shadow-blur: 28px;
+    drop-shadow-color: Theme.shadow;
+    drop-shadow-offset-y: 10px;
+
+    // Specular wash along the top edge (reads as thick glass).
+    Rectangle {
+        height: 56px;
+        y: 0px;
+        border-top-left-radius: Theme.r-card;
+        border-top-right-radius: Theme.r-card;
+        background: Theme.glass-sheen;
+    }
+
+    VerticalLayout {
+        padding: Theme.sp-lg;
+        spacing: Theme.sp-md;
+        @children
+    }
+}

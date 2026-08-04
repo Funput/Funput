@@ -1,7 +1,7 @@
 // Settings → "Thông minh": English auto-restore toggles + examples.
 
 import { Palette, Switch } from "std-widgets.slint";
-import { Theme, Card, Row } from "theme.slint";
+import { Theme, Card, Row } from "../../theme/mod.slint";
 
 export component SmartPage inherits VerticalLayout {
     in-out property <bool> smart-restore;
@@ -14,7 +14,12 @@ export component SmartPage inherits VerticalLayout {
     callback set-auto-cap(bool);
 
     spacing: Theme.sp-md;
-    Text { text: "Gõ thông minh"; font-size: 20px; font-weight: 700; color: Palette.foreground; }
+    Text {
+        text: "Gõ thông minh";
+        font-size: Theme.font-title;
+        font-weight: 700;
+        color: Palette.foreground;
+    }
     Card {
         Row {
             title: "Tự khôi phục tiếng Anh";
@@ -24,7 +29,7 @@ export component SmartPage inherits VerticalLayout {
                 toggled => { root.set-smart(self.checked); }
             }
         }
-        Rectangle { height: 1px; background: Palette.border; }
+        Rectangle { height: 1px; background: Theme.divider; }
         Row {
             title: "Khôi phục tức thì";
             subtitle: "Đổi lại ngay khi từ không thể là tiếng Việt, không chờ dấu cách.";
@@ -34,7 +39,7 @@ export component SmartPage inherits VerticalLayout {
                 toggled => { root.set-eager(self.checked); }
             }
         }
-        Rectangle { height: 1px; background: Palette.border; }
+        Rectangle { height: 1px; background: Theme.divider; }
         Row {
             title: "Kiểm tra chính tả";
             subtitle: "Chỉ đặt dấu khi tạo thành âm tiết tiếng Việt hợp lệ.";
@@ -43,7 +48,7 @@ export component SmartPage inherits VerticalLayout {
                 toggled => { root.set-spell(self.checked); }
             }
         }
-        Rectangle { height: 1px; background: Palette.border; }
+        Rectangle { height: 1px; background: Theme.divider; }
         Row {
             title: "Tự động viết hoa";
             subtitle: "Viết hoa chữ đầu câu, sau dấu chấm và đầu dòng.";

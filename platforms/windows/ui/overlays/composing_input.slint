@@ -1,22 +1,9 @@
-// In-process Vietnamese composition for fields inside Funput's own window. The global
-// keyboard hook can't compose here (winit ignores synthetic input), so a TextInput
-// intercepts each real keystroke and feeds it to funput-engine through these
-// callbacks (set from Rust in windows_ui.rs).
+// Single-line field that composes Vietnamese via the Compose global.
 
 import { Palette } from "std-widgets.slint";
-import { Theme } from "theme.slint";
+import { Theme } from "../theme/tokens.slint";
+import { Compose } from "compose.slint";
 
-export global Compose {
-    // A typed character → the new full field text.
-    callback key(string) -> string;
-    // Backspace → the new full field text.
-    callback backspace() -> string;
-    // Focus-in: seed the composer with the field's current text.
-    callback reset(string);
-}
-
-// A single-line field that composes Vietnamese as you type. Styled to match the
-// Fluent LineEdit used elsewhere in Settings.
 export component ComposingInput inherits Rectangle {
     in-out property <string> text;
     in property <string> placeholder;
@@ -24,9 +11,10 @@ export component ComposingInput inherits Rectangle {
 
     height: 32px;
     border-radius: Theme.r-control;
-    background: Theme.dark ? #ffffff14 : #ffffffcc;
+    background: Theme.field-bg;
     border-width: 1px;
     border-color: ti.has-focus ? Theme.accent : Theme.card-border;
+    animate border-color { duration: 150ms; easing: ease-out; }
 
     ph := Text {
         x: 10px;
@@ -51,15 +39,9 @@ export component ComposingInput inherits Rectangle {
                 Compose.reset(self.text);
             }
         }
-        edited => {
-            root.edited(self.text);
-        }
+        edited => { root.edited(self.text); }
         key-pressed(event) => {
-            // Editing shortcuts: because we own `key-pressed` on the raw TextInput,
-            // its built-in Ctrl+A/C/V/X handling is bypassed, so wire them explicitly.
             if event.modifiers.control && !event.modifiers.alt {
-                // Slint may report Ctrl+letter as the letter ("a") or as the control
-                // character (0x01) depending on platform; accept both forms.
                 if event.text == "a" || event.text == "\u{1}" {
                     self.select-all();
                     return accept;
@@ -92,9 +74,8 @@ export component ComposingInput inherits Rectangle {
                     root.edited(self.text);
                     return accept;
                 }
-                return reject; // other Ctrl combos (e.g. Ctrl+Home) → default handling
+                return reject;
             }
-            // Alt / Win combos are shortcuts — leave them to the system.
             if event.modifiers.alt || event.modifiers.meta {
                 return reject;
             }
@@ -104,8 +85,6 @@ export component ComposingInput inherits Rectangle {
                 root.edited(self.text);
                 return accept;
             }
-            // Navigation / editing keys: let TextInput handle them, then resync so the
-            // next typed character appends to the now-current text.
             if event.text == Key.LeftArrow || event.text == Key.RightArrow
                 || event.text == Key.UpArrow || event.text == Key.DownArrow
                 || event.text == Key.Home || event.text == Key.End
@@ -114,7 +93,6 @@ export component ComposingInput inherits Rectangle {
                 Compose.reset(self.text);
                 return reject;
             }
-            // A printable character → compose.
             self.text = Compose.key(event.text);
             self.set-selection-offsets(1000000, 1000000);
             root.edited(self.text);

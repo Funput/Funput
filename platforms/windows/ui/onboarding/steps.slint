@@ -1,0 +1,118 @@
+// Onboarding step bodies for welcome, how-it-works, and ready screens.
+
+import { Palette, Switch } from "std-widgets.slint";
+import { Theme, KeyCap } from "../theme/mod.slint";
+
+export component WelcomeStep inherits VerticalLayout {
+    alignment: center;
+    spacing: Theme.sp-sm;
+    HorizontalLayout {
+        alignment: center;
+        Image {
+            source: @image-url("../../../../assets/logo.png");
+            width: 60px;
+            height: 60px;
+        }
+    }
+    Text {
+        text: "Chào mừng đến Funput";
+        font-size: Theme.font-title;
+        font-weight: 700;
+        horizontal-alignment: center;
+        color: Palette.foreground;
+    }
+    Text {
+        text: "Gõ tiếng Việt ở mọi nơi trên Windows — miễn phí, mã nguồn mở.";
+        font-size: Theme.font-body;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+        color: Theme.subtle;
+    }
+}
+
+export component HowItWorksStep inherits VerticalLayout {
+    alignment: center;
+    spacing: Theme.sp-sm;
+    HorizontalLayout {
+        alignment: center;
+        Image {
+            source: @image-url("../icons/status/bell.svg");
+            colorize: Theme.accent;
+            width: 42px;
+            height: 42px;
+        }
+    }
+    Text {
+        text: "Cách hoạt động";
+        font-size: Theme.font-title;
+        font-weight: 700;
+        horizontal-alignment: center;
+        color: Palette.foreground;
+    }
+    Text {
+        text: "Funput chạy nền ở khay hệ thống (icon FU).";
+        font-size: Theme.font-body;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+        color: Theme.subtle;
+    }
+    HorizontalLayout {
+        alignment: center;
+        spacing: Theme.sp-xs;
+        Text { text: "Nhấn"; vertical-alignment: center; font-size: Theme.font-body; color: Theme.subtle; }
+        KeyCap { label: "Ctrl"; }
+        KeyCap { label: "`"; }
+        Text { text: "để bật/tắt nhanh."; vertical-alignment: center; font-size: Theme.font-body; color: Theme.subtle; }
+    }
+    Text {
+        text: "Lưu ý: không gõ được vào ứng dụng chạy quyền Administrator.";
+        font-size: Theme.font-caption;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+        color: Theme.faint;
+    }
+}
+
+export component ReadyStep inherits VerticalLayout {
+    in-out property <bool> launch-at-login;
+    callback set-launch(bool);
+
+    alignment: center;
+    spacing: Theme.sp-sm;
+    HorizontalLayout {
+        alignment: center;
+        Image {
+            source: @image-url("../icons/status/check.svg");
+            colorize: Theme.accent;
+            width: 42px;
+            height: 42px;
+        }
+    }
+    Text {
+        text: "Sẵn sàng!";
+        font-size: Theme.font-title;
+        font-weight: 700;
+        horizontal-alignment: center;
+        color: Palette.foreground;
+    }
+    Text {
+        text: "Bật tự khởi động để Funput luôn có mặt khi bạn cần.";
+        font-size: Theme.font-body;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+        color: Theme.subtle;
+    }
+    HorizontalLayout {
+        alignment: center;
+        spacing: Theme.sp-md;
+        Text {
+            text: "Khởi động cùng Windows";
+            vertical-alignment: center;
+            color: Palette.foreground;
+        }
+        Switch {
+            checked <=> root.launch-at-login;
+            toggled => { root.set-launch(self.checked); }
+        }
+    }
+}

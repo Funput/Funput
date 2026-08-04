@@ -1,0 +1,63 @@
+// One hotkey settings block: stacked label + segmented + live keycaps.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, Card, Segmented, KeyCap, SegOption } from "../../theme/mod.slint";
+
+export component HotkeyCard inherits VerticalLayout {
+    in property <string> heading;
+    in property <string> title;
+    in property <string> subtitle;
+    in property <[SegOption]> options;
+    in property <string> current;
+    in property <[string]> caps;
+    in property <bool> conflict;
+    callback changed(string);
+
+    spacing: Theme.sp-md;
+    Text {
+        text: root.heading;
+        font-size: Theme.font-title;
+        font-weight: 700;
+        color: Palette.foreground;
+    }
+    Card {
+        Text {
+            text: root.title;
+            font-size: Theme.font-body;
+            font-weight: 600;
+            color: Palette.foreground;
+        }
+        Text {
+            text: root.subtitle;
+            font-size: Theme.font-caption;
+            color: Theme.subtle;
+            wrap: word-wrap;
+        }
+        Segmented {
+            options: root.options;
+            current: root.current;
+            changed(v) => { root.changed(v); }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        HorizontalLayout {
+            spacing: Theme.sp-sm;
+            Text {
+                text: "Đang dùng";
+                font-size: Theme.font-caption;
+                font-weight: 600;
+                color: Theme.subtle;
+                vertical-alignment: center;
+            }
+            HorizontalLayout {
+                spacing: Theme.sp-xs;
+                for cap in root.caps: KeyCap { label: cap; }
+            }
+        }
+        if root.conflict: Text {
+            text: "Trùng phím tắt hệ thống — Windows có thể xử lý song song.";
+            font-size: Theme.font-caption;
+            color: Theme.warn;
+            wrap: word-wrap;
+        }
+    }
+}
