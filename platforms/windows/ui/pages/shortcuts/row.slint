@@ -1,0 +1,55 @@
+// One shortcut row: trigger → expansion → remove.
+
+import { LineEdit } from "std-widgets.slint";
+import { Theme } from "../../theme/mod.slint";
+import { ComposingInput } from "../../overlays/composing_input.slint";
+
+export component ShortcutRow inherits HorizontalLayout {
+    in property <string> trigger;
+    in property <string> expansion;
+    callback edit-trigger(string);
+    callback edit-expansion(string);
+    callback remove();
+
+    spacing: Theme.sp-sm;
+    width: 100%;
+
+    LineEdit {
+        width: 120px;
+        placeholder-text: "Chữ tắt";
+        text: root.trigger;
+        edited(t) => { root.edit-trigger(t); }
+    }
+    VerticalLayout {
+        alignment: center;
+        Text {
+            text: "→";
+            font-size: Theme.font-body;
+            color: Theme.subtle;
+        }
+    }
+    ComposingInput {
+        horizontal-stretch: 1;
+        placeholder: "Nội dung";
+        text: root.expansion;
+        edited(t) => { root.edit-expansion(t); }
+    }
+    Rectangle {
+        width: 34px;
+        height: 34px;
+        border-radius: Theme.r-control;
+        background: del.has-hover ? Theme.nav-hover : transparent;
+        Image {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            source: @image-url("../../icons/row/trash.svg");
+            colorize: Theme.subtle;
+            width: 16px;
+            height: 16px;
+        }
+        del := TouchArea {
+            mouse-cursor: pointer;
+            clicked => { root.remove(); }
+        }
+    }
+}

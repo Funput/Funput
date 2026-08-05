@@ -1,8 +1,7 @@
-// Settings → "Gõ tắt": manage text-expansion shortcuts (`vn` → `Việt Nam`).
+// Settings → "Gõ tắt": manage text-expansion shortcuts.
 
-import { Palette, Button, LineEdit } from "std-widgets.slint";
-import { Theme, PageHeader, Section, ShortcutEntry } from "../../theme/mod.slint";
-import { ComposingInput } from "../../overlays/composing_input.slint";
+import { Theme, PageHeader, Section, PrimaryButton, ShortcutEntry } from "../../theme/mod.slint";
+import { ShortcutRow } from "row.slint";
 
 export component ShortcutsPage inherits VerticalLayout {
     in property <[ShortcutEntry]> shortcuts;
@@ -13,10 +12,11 @@ export component ShortcutsPage inherits VerticalLayout {
 
     spacing: Theme.sp-lg;
     width: 100%;
+    alignment: start;
 
     PageHeader {
         title: "Gõ tắt";
-        subtitle: "Gõ chữ tắt rồi dấu cách để bung — ví dụ vn → Việt Nam.";
+        subtitle: "Bung chữ tắt khi gõ khoảng trắng hoặc dấu câu.";
     }
 
     Section {
@@ -26,56 +26,33 @@ export component ShortcutsPage inherits VerticalLayout {
                 horizontal-stretch: 1;
                 alignment: center;
                 Text {
-                    text: "\{root.shortcuts.length} mục";
+                    text: root.shortcuts.length == 0
+                        ? "Chưa có mục nào"
+                        : "\{root.shortcuts.length} mục";
                     font-size: 13px;
                     font-weight: 600;
                     color: Theme.subtle;
                 }
             }
-            Button {
+            PrimaryButton {
                 text: "Thêm";
-                primary: true;
                 clicked => { root.add-shortcut(); }
             }
         }
+
         if root.shortcuts.length == 0: Text {
-            text: "Chưa có gõ tắt nào. Bấm “Thêm” để tạo.";
+            text: "Chưa có gõ tắt. Bấm Thêm để tạo.";
             font-size: 13px;
             color: Theme.subtle;
             wrap: word-wrap;
         }
-        for entry[i] in root.shortcuts: HorizontalLayout {
-            spacing: Theme.sp-sm;
-            LineEdit {
-                width: 120px;
-                placeholder-text: "vn";
-                text: entry.trigger;
-                edited(t) => { root.edit-trigger(i, t); }
-            }
-            VerticalLayout {
-                alignment: center;
-                Text { text: "→"; font-size: Theme.font-body; color: Theme.subtle; }
-            }
-            ComposingInput {
-                horizontal-stretch: 1;
-                placeholder: "Việt Nam";
-                text: entry.expansion;
-                edited(t) => { root.edit-expansion(i, t); }
-            }
-            Button {
-                text: "Xóa";
-                clicked => { root.remove-shortcut(i); }
-            }
-        }
-    }
 
-    Section {
-        title: "Mẹo";
-        Text {
-            text: "Trigger khớp đúng chuỗi phím và phân biệt hoa/thường (vn ≠ VN). Gõ tắt được ưu tiên hơn tự khôi phục tiếng Anh.";
-            font-size: 13px;
-            color: Palette.foreground;
-            wrap: word-wrap;
+        for entry[i] in root.shortcuts: ShortcutRow {
+            trigger: entry.trigger;
+            expansion: entry.expansion;
+            edit-trigger(t) => { root.edit-trigger(i, t); }
+            edit-expansion(t) => { root.edit-expansion(i, t); }
+            remove => { root.remove-shortcut(i); }
         }
     }
 }
