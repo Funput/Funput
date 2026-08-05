@@ -96,6 +96,10 @@ export global Theme {
     out property <brush> flyout-card: root.dark ? #ffffff17 : #ffffffd9;
     out property <color> flyout-border: root.dark ? #ffffff26 : #00000017;
 
+    // Popups float over the Mica-transparent window surface, where nothing opaque
+    // backs them: a translucent fill there shows the desktop instead of the text.
+    out property <brush> popup-base: root.dark ? #2c2c2c : #f9f9f9;
+
     // The sidebar sits directly on the backdrop, Win11 NavigationView style.
     out property <brush> sidebar-bg: transparent;
     out property <color> sidebar-border: transparent;
