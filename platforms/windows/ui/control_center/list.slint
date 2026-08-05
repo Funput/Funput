@@ -1,0 +1,80 @@
+// Hairline rows + footer action for the Control Center.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, GhostButton } from "../theme/mod.slint";
+
+component LinkRow inherits Rectangle {
+    in property <string> label;
+    in property <string> value;
+    callback clicked;
+    height: 40px;
+    HorizontalLayout {
+        spacing: 10px;
+        Text {
+            text: root.label;
+            horizontal-stretch: 1;
+            vertical-alignment: center;
+            font-size: 13px;
+            color: Palette.foreground;
+        }
+        Text {
+            text: root.value;
+            vertical-alignment: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: Theme.subtle;
+        }
+        Text {
+            text: "›";
+            vertical-alignment: center;
+            font-size: 16px;
+            color: Theme.subtle;
+        }
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+}
+
+export component CcList {
+    in property <string> hotkey-label;
+    in property <string> tone-label;
+    callback open-keyboard();
+    callback cycle-tone();
+    callback open-settings();
+
+    width: 100%;
+    VerticalLayout {
+        spacing: 10px;
+        width: 100%;
+        Rectangle {
+            width: 100%;
+            border-radius: Theme.r-shell;
+            background: Theme.card-bg;
+            border-width: 1px;
+            border-color: Theme.card-border;
+            VerticalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                padding-top: 4px;
+                padding-bottom: 4px;
+                LinkRow {
+                    label: "Phím chuyển";
+                    value: root.hotkey-label;
+                    clicked => { root.open-keyboard(); }
+                }
+                Rectangle { height: 1px; background: Theme.divider; }
+                LinkRow {
+                    label: "Kiểu đặt dấu";
+                    value: root.tone-label;
+                    clicked => { root.cycle-tone(); }
+                }
+            }
+        }
+        GhostButton {
+            text: "Mở cài đặt đầy đủ";
+            clicked => { root.open-settings(); }
+        }
+    }
+}

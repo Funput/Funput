@@ -47,6 +47,11 @@ fn main() {
             windows_ui::run_onboarding();
             return;
         }
+        Some("--control-center") => {
+            dark_mode::allow_dark_menus();
+            windows_ui::run_control_center();
+            return;
+        }
         _ => {}
     }
 

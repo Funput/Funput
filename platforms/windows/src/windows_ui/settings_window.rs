@@ -28,6 +28,11 @@ pub(super) fn open() {
     let _ = window.show();
     schedule_backdrop(window.as_weak());
     WINDOW.with(|cell| *cell.borrow_mut() = Some(window.as_weak()));
+    if let Ok(tab) = std::env::var("FUNPUT_SETTINGS_ACTIVE") {
+        if !tab.is_empty() {
+            window.set_active(tab.into());
+        }
+    }
 }
 
 /// Request a DWM backdrop once the loop has created the native window, then reveal

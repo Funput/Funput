@@ -1,0 +1,78 @@
+// Tray Control Center flyout — Acrylic panel, no title bar, quick actions only.
+
+import { Theme } from "../theme/mod.slint";
+import { CcHeader } from "header.slint";
+import { CcTiles } from "tiles.slint";
+import { CcList } from "list.slint";
+
+export component ControlCenterWindow inherits Window {
+    title: "Funput";
+    icon: @image-url("../../../../assets/logo.png");
+    no-frame: true;
+    always-on-top: true;
+    width: 340px;
+    height: 460px;
+    default-font-family: "Segoe UI Variable Text";
+    background: Theme.mica ? transparent : Theme.window-base;
+
+    in-out property <bool> enabled: true;
+    in property <string> status: "Đang gõ tiếng Việt";
+    in property <string> method-label: "Telex";
+    in-out property <bool> spell-check: true;
+    in-out property <bool> auto-capitalize: false;
+    in property <int> shortcut-count: 0;
+    in property <string> hotkey-label: "Ctrl+`";
+    in property <string> tone-label: "Truyền thống";
+
+    callback toggle-enabled(bool);
+    callback cycle-method();
+    callback toggle-spell();
+    callback toggle-cap();
+    callback open-shortcuts();
+    callback open-keyboard();
+    callback cycle-tone();
+    callback open-settings();
+    callback dismiss();
+
+    // Esc closes the flyout. FocusScope wraps content so Window has one child
+    // (multi-child Window uses VerticalLayout and shrink-wraps preferred width).
+    forward-focus: key-trap;
+    key-trap := FocusScope {
+        key-pressed(event) => {
+            if (event.text == Key.Escape) {
+                root.dismiss();
+                accept
+            } else {
+                reject
+            }
+        }
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 14px;
+            width: 100%;
+            CcHeader {
+                enabled: root.enabled;
+                status: root.status;
+                toggle-enabled(v) => { root.toggle-enabled(v); }
+            }
+            CcTiles {
+                method-label: root.method-label;
+                spell-check: root.spell-check;
+                auto-capitalize: root.auto-capitalize;
+                shortcut-count: root.shortcut-count;
+                cycle-method() => { root.cycle-method(); }
+                toggle-spell() => { root.toggle-spell(); }
+                toggle-cap() => { root.toggle-cap(); }
+                open-shortcuts() => { root.open-shortcuts(); }
+            }
+            CcList {
+                hotkey-label: root.hotkey-label;
+                tone-label: root.tone-label;
+                open-keyboard() => { root.open-keyboard(); }
+                cycle-tone() => { root.cycle-tone(); }
+                open-settings() => { root.open-settings(); }
+            }
+        }
+    }
+}
