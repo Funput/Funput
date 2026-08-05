@@ -1,51 +1,100 @@
-// One hotkey block: section label + segmented + live keycaps (no card chrome).
+// One hotkey block: icon section, hero caps, preset Segmented, customize action.
 
+import { Palette } from "std-widgets.slint";
 import { Theme, Section, Segmented, KeyCap, SegOption } from "../../theme/mod.slint";
 
 export component HotkeyBlock inherits VerticalLayout {
     in property <string> heading;
     in property <string> subtitle;
+    in property <image> icon;
     in property <[SegOption]> options;
     in property <string> current;
     in property <[string]> caps;
     in property <bool> conflict;
+    in property <bool> custom-active;
+    /// When true and caps empty, hero shows "Tắt" (flip-off) instead of blank caps.
+    in property <bool> off;
     callback changed(string);
+    callback customize();
 
     spacing: Theme.sp-sm;
     width: 100%;
 
     Section {
-        title: root.heading;
-        Text {
+        HorizontalLayout {
+            spacing: 10px;
+            if root.icon.width > 0: VerticalLayout {
+                alignment: center;
+                Image {
+                    source: root.icon;
+                    colorize: Theme.subtle;
+                    width: 18px;
+                    height: 18px;
+                }
+            }
+            Text {
+                text: root.heading;
+                font-size: 13px;
+                font-weight: 600;
+                color: Theme.subtle;
+                vertical-alignment: center;
+            }
+        }
+
+        if root.subtitle != "": Text {
             text: root.subtitle;
             font-size: Theme.font-caption;
             color: Theme.subtle;
             wrap: word-wrap;
         }
-        Segmented {
-            options: root.options;
-            current: root.current;
-            changed(v) => { root.changed(v); }
+
+        // Hero: live combo, or "Tắt" when the flip hotkey is off.
+        if root.off: Text {
+            text: "Tắt";
+            font-size: Theme.font-body;
+            font-weight: 600;
+            color: Theme.subtle;
         }
-        HorizontalLayout {
-            spacing: Theme.sp-sm;
-            Text {
-                text: "Đang dùng";
-                font-size: Theme.font-caption;
-                font-weight: 600;
-                color: Theme.subtle;
-                vertical-alignment: center;
-            }
-            HorizontalLayout {
-                spacing: Theme.sp-xs;
-                for cap in root.caps: KeyCap { label: cap; }
-            }
+        if !root.off: HorizontalLayout {
+            spacing: Theme.sp-xs;
+            for cap in root.caps: KeyCap { label: cap; }
         }
+
         if root.conflict: Text {
             text: "Trùng phím tắt hệ thống — Windows có thể xử lý song song.";
             font-size: Theme.font-caption;
             color: Theme.warn;
             wrap: word-wrap;
+        }
+
+        Segmented {
+            options: root.options;
+            current: root.current;
+            changed(v) => { root.changed(v); }
+        }
+
+        // Accent border when a recorded custom combo is active.
+        Rectangle {
+            height: 34px;
+            border-radius: Theme.r-control;
+            background: cust.has-hover ? Theme.nav-hover : transparent;
+            border-width: 1px;
+            border-color: root.custom-active ? Theme.accent : Theme.divider;
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                Text {
+                    text: "Tùy chỉnh…";
+                    color: root.custom-active ? Theme.accent-legible : Palette.foreground;
+                    font-size: 13px;
+                    font-weight: 500;
+                    vertical-alignment: center;
+                }
+            }
+            cust := TouchArea {
+                mouse-cursor: pointer;
+                clicked => { root.customize(); }
+            }
         }
     }
 }
