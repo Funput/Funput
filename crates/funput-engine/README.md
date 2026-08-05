@@ -166,8 +166,10 @@ src/
 - Phụ thuộc: chỉ `funput-core`. **Không** `serde`, không platform crate.
 - **Consumer link engine trực tiếp (Rust):** `funput-ffi`, `funput-cli`, và **Windows shell**
   (`platforms/windows/src-tauri` giữ `Engine` trong process).
-- **Qua `funput-ffi` (C ABI):** macOS (Swift IMKit) và addon Fcitx5 trên Linux (C++). Hai nền này
-  **không** link engine trực tiếp.
+- **Qua `funput-ffi` (C ABI):** macOS (Swift IMKit), iOS (Swift keyboard extension, qua
+  `FunputCore.xcframework`), addon Fcitx5 và engine IBus trên Linux (C++/C). Các nền này **không**
+  link engine trực tiếp.
+- **Qua `funput-jni`:** Android (Kotlin IME).
 
 ## Tests
 

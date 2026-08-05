@@ -2,9 +2,11 @@
 
 > **Trạng thái:** Phase 1–5 đã hiện thực; production chỉ có một touch pipeline
 > **Phạm vi:** Xử lý phím trong custom keyboard extension trên iOS/iPadOS  
-> **Ngày:** 30/07/2026
+> **Ngày:** 30/07/2026 (cập nhật 06/08/2026: §11.1 và §19.8 — mô hình commit)
 > **Đã thay thế:** Touch ledger, orphan reconciliation và commit queue
 > **Không thay thế:** Rust engine, layout definitions, theme renderer, settings và personal suggestion engine
+>
+> **Kế thừa:** [INPUT_PIPELINE_3_ARCHITECTURE.md](INPUT_PIPELINE_3_ARCHITECTURE.md) đề xuất thay `PressArbiter` + deadline scheduler bằng một journal không chặn. Tài liệu đó **chưa được hiện thực** — mọi mô tả dưới đây vẫn đúng với code hiện tại. Đọc 3.0 trước khi mở rộng tầng arbiter.
 
 ---
 
@@ -460,18 +462,27 @@ Khi bypass xảy ra, arbiter ghi `maximumBypassHoldSeconds` — thời gian head
 
 ### 9.6. Teardown không được nuốt press đã resolved
 
-`reset()` hủy toàn bộ state. Nếu gọi thẳng, các press đã resolved đang đợi ordering window sẽ biến mất mà không phát gì — đúng là mất phím.
-
-Vì vậy arbiter có `flushResolved()`: phát mọi press mà ngón đã nhấc, theo intent order, và **không** đụng tới contact còn active (ngón chưa nhấc thì không được commit, theo §8.3).
-
-Teardown chia hai loại:
-
-| Tình huống | Flush | Lý do |
-|---|---|---|
-| Layout đổi (`presentationDidChange`) | có | surface vẫn sống, document vẫn nhận được ký tự |
-| Keyboard biến mất (`didMoveToWindow`) | không | proxy đang mất theo |
-
-Đây là biện pháp tạm cho đến khi deferred layout gate ở §5.4.3 được hiện thực; gate đó vẫn là mục tiêu đúng, vì nó loại bỏ hẳn teardown giữa chừng thay vì cứu vãn nó.
+> **Đã giải quyết (06/08/2026) — mục này chỉ còn giá trị lịch sử.**
+>
+> Bản trước mô tả `flushResolved()`: khi đổi layout thì phát trước những press mà ngón đã
+> nhấc, rồi mới tháo dỡ. Tài liệu tự gọi đó là *"biện pháp tạm cho đến khi deferred layout
+> gate ở §5.4.3 được hiện thực"*.
+>
+> Cách sửa đúng đã được làm thay vì flush: **đổi layout không còn tháo dỡ contact nào.**
+> `presentationDidChange` giờ chỉ gọi `interactionController.suspendPresentation()` — xoá
+> highlight, preview và timer alternate đang chờ, nhưng giữ nguyên danh tính `UITouch`,
+> entry resolver và geometry snapshot riêng của từng contact. Ngón còn đang giữ vì thế
+> commit đúng phím nó đã chạm, kể cả khi layout đã đổi bên dưới.
+>
+> Không còn press nào bị giữ qua teardown thì không còn gì để flush. `flushResolved()`,
+> `flushResolvedPresses()` và counter `flushedOnLayoutChange` đã bị gỡ khỏi source.
+>
+> `reset()` giờ chỉ còn hai caller, và cả hai đều là kết thúc thật: keyboard rời window, và
+> phiên diagnostics bắt đầu lại. Ngón chưa nhấc thì không được commit (§8.3) — bất biến này
+> không đổi, và có test giữ cả hai chiều.
+>
+> Contact bị tháo dỡ mà chưa commit cũng chưa cancel giờ được đếm vào `contactsAbandoned`.
+> Trước đây chúng biến mất im lặng, và đó là lý do lớp bug này khó tìm đến vậy.
 
 ### 9.5. Exact timestamp ties
 
@@ -540,6 +551,12 @@ insert("ồng")
 ```
 
 Toàn bộ mutations của transaction phải được apply liền nhau.
+
+Hai case của `DocumentMutation` mô tả mô hình commit **hiện tại**, không phải giới hạn của
+iOS. `UITextDocumentProxy` có `setMarkedText(_:selectedRange:)`/`unmarkText()` từ iOS 13, nên
+một `DocumentMutation.setMarked` là khả thi về mặt API. Xem mục *Áp kết quả vào document*
+trong [ARCHITECTURE.md](ARCHITECTURE.md) để biết những gì còn chưa xác minh, và §19.8 dưới
+đây. Tài liệu này không giả định mô hình commit nào là bắt buộc.
 
 ### 11.2. Writer
 
@@ -1056,6 +1073,13 @@ Các mục này phải được giải quyết bằng prototype và đo thiết 
 5. Layout request nào có thể apply visual-only mà không tăng geometry revision?
 6. Có cần tách `KeyboardTouch` thành SwiftPM target riêng hay chỉ là folder/boundary?
 7. Device trace sẽ được xuất từ test harness bằng cách nào mà không yêu cầu Full Access?
+8. Mô hình commit: giữ `deleteBackward`+`insertText`, hay chuyển sang marked text qua
+   `setMarkedText(_:selectedRange:)`? Câu hỏi này **không** thuộc phạm vi Pipeline 2.0 —
+   pipeline dừng ở ranh giới transaction — nhưng phải được ghi nhận vì tài liệu kiến trúc
+   trước đây khẳng định sai rằng iOS không có marked-text API. Ba ẩn số phải đo trước khi
+   quyết: marked text có nằm trong `documentContextBeforeInput` không, host nào tôn trọng
+   nó, và chi phí viết lại `KeyboardDocumentSynchronizer`. Chi tiết trong
+   [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Device acceptance cho các quyết định timing còn lại được dồn về Phase 5 theo
 chiến lược triển khai nhanh. Git branch là rollback boundary; runtime không còn

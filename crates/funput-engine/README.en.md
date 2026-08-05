@@ -171,8 +171,10 @@ src/
 - Depends on: `funput-core` only. **No** `serde`, no platform crate.
 - **Consumers that link the engine directly (Rust):** `funput-ffi`, `funput-cli`, and the **Windows
   shell** (`platforms/windows/src-tauri` keeps the `Engine` in-process).
-- **Via `funput-ffi` (C ABI):** macOS (Swift IMKit) and the Fcitx5 addon on Linux (C++). Those two do
-  **not** link the engine directly.
+- **Via `funput-ffi` (C ABI):** macOS (Swift IMKit), iOS (the Swift keyboard extension, through
+  `FunputCore.xcframework`), and the Fcitx5 addon plus the IBus engine on Linux (C++/C). None of
+  these link the engine directly.
+- **Via `funput-jni`:** Android (the Kotlin IME).
 
 ## Tests
 
