@@ -1,15 +1,12 @@
-// Overview hero: brand-first VI status — no page title (sidebar already labels).
+// Overview hero: brand and tagline only — no controls (sidebar already labels).
 
 import { Palette } from "std-widgets.slint";
-import { Theme, AccentSwitch } from "../../theme/mod.slint";
+import { Theme } from "../../theme/mod.slint";
 
 export component OverviewHero inherits HorizontalLayout {
-    in-out property <bool> vi-enabled;
-    callback set-enabled(bool);
-
     spacing: Theme.sp-md;
     width: 100%;
-    alignment: center;
+    alignment: start;
 
     Image {
         source: @image-url("../../../../../assets/logo.png");
@@ -27,14 +24,10 @@ export component OverviewHero inherits HorizontalLayout {
             color: Palette.foreground;
         }
         Text {
-            text: root.vi-enabled ? "Đang gõ tiếng Việt" : "Bàn phím gốc";
+            text: "Gõ tiếng Việt ở mọi ứng dụng trên Windows.";
             font-size: Theme.font-body;
-            font-weight: 600;
-            color: root.vi-enabled ? Theme.accent-legible : Theme.subtle;
+            color: Theme.subtle;
+            wrap: word-wrap;
         }
-    }
-    AccentSwitch {
-        checked <=> root.vi-enabled;
-        toggled => { root.set-enabled(self.checked); }
     }
 }

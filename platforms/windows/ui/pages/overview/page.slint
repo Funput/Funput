@@ -1,6 +1,6 @@
 // Settings → "Tổng quan": brand hero, launch-at-login, config backup.
 
-import { Theme, Section, Row, AccentSwitch, PrimaryButton, GhostButton } from "../../theme/mod.slint";
+import { Theme, Section, Row, AccentSwitch, Segmented, PrimaryButton, GhostButton } from "../../theme/mod.slint";
 import { OverviewHero } from "hero.slint";
 
 export component OverviewPage inherits VerticalLayout {
@@ -15,9 +15,25 @@ export component OverviewPage inherits VerticalLayout {
     width: 100%;
     alignment: start;
 
-    OverviewHero {
-        vi-enabled <=> root.vi-enabled;
-        set-enabled(v) => { root.set-enabled(v); }
+    OverviewHero { }
+
+    Section {
+        title: "Chế độ gõ";
+        Row {
+            title: "Gõ tiếng Việt";
+            subtitle: root.vi-enabled
+                ? "Funput đang xử lý phím gõ."
+                : "Đang dùng bàn phím gốc.";
+            icon: @image-url("../../icons/nav/primary/switch.svg");
+            Segmented {
+                options: [
+                    { id: "en", label: "EN" },
+                    { id: "vi", label: "VI" },
+                ];
+                current: root.vi-enabled ? "vi" : "en";
+                changed(value) => { root.set-enabled(value == "vi"); }
+            }
+        }
     }
 
     Section {
