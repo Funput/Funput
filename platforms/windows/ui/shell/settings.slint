@@ -29,6 +29,7 @@ export component SettingsWindow inherits Window {
     in-out property <bool> auto-capitalize;
     in-out property <bool> launch-at-login;
     in property <[ShortcutEntry]> shortcuts;
+    in property <bool> can-add-shortcut: true;
     in property <string> version;
     in property <string> update-state: "idle";
     in property <string> update-version;
@@ -49,6 +50,7 @@ export component SettingsWindow inherits Window {
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
+    callback prune-shortcuts();
     callback open-link(string);
     callback check-update();
     callback install-update();
@@ -57,6 +59,14 @@ export component SettingsWindow inherits Window {
     callback import-config();
 
     in-out property <string> active: "typing";
+    private property <string> previous-active: "typing";
+
+    changed active => {
+        if root.previous-active == "shortcuts" && root.active != "shortcuts" {
+            root.prune-shortcuts();
+        }
+        root.previous-active = root.active;
+    }
 
     if !Theme.mica: Backdrop { }
 
@@ -81,6 +91,7 @@ export component SettingsWindow inherits Window {
             auto-capitalize <=> root.auto-capitalize;
             launch-at-login <=> root.launch-at-login;
             shortcuts: root.shortcuts;
+            can-add-shortcut: root.can-add-shortcut;
             version: root.version;
             update-state: root.update-state;
             update-version: root.update-version;

@@ -25,6 +25,7 @@ export component SettingsContent inherits ScrollView {
     in-out property <bool> auto-capitalize;
     in-out property <bool> launch-at-login;
     in property <[ShortcutEntry]> shortcuts;
+    in property <bool> can-add-shortcut: true;
     in property <string> version;
     in property <string> update-state: "idle";
     in property <string> update-version;
@@ -102,6 +103,7 @@ export component SettingsContent inherits ScrollView {
             }
             if root.active == "shortcuts": ShortcutsPage {
                 shortcuts: root.shortcuts;
+                can-add: root.can-add-shortcut;
                 add-shortcut() => { root.add-shortcut(); }
                 remove-shortcut(i) => { root.remove-shortcut(i); }
                 edit-trigger(i, t) => { root.edit-trigger(i, t); }

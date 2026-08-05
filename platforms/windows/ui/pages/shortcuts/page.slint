@@ -5,6 +5,7 @@ import { ShortcutRow } from "row.slint";
 
 export component ShortcutsPage inherits VerticalLayout {
     in property <[ShortcutEntry]> shortcuts;
+    in property <bool> can-add: true;
     callback add-shortcut();
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
@@ -36,6 +37,7 @@ export component ShortcutsPage inherits VerticalLayout {
             }
             PrimaryButton {
                 text: "Thêm";
+                enabled: root.can-add;
                 clicked => { root.add-shortcut(); }
             }
         }

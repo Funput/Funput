@@ -72,6 +72,14 @@ pub fn add_shortcut() {
     shell::add_shortcut();
 }
 
+pub fn can_add_shortcut() -> bool {
+    shell::can_add_shortcut()
+}
+
+pub fn prune_incomplete_shortcuts() {
+    shell::prune_incomplete_shortcuts();
+}
+
 pub fn remove_shortcut(index: usize) {
     shell::remove_shortcut(index);
 }
