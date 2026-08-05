@@ -1,4 +1,5 @@
-// Liquid-glass panel: translucent fill, bright rim, top sheen, soft lift.
+// Fluent card: a flat semi-opaque layer over the backdrop, delineated by a hairline
+// stroke rather than a shadow (Win11 cards are not elevated).
 
 import { Theme } from "tokens.slint";
 
@@ -7,18 +8,6 @@ export component Card inherits Rectangle {
     background: Theme.card-bg;
     border-width: 1px;
     border-color: Theme.card-border;
-    drop-shadow-blur: 28px;
-    drop-shadow-color: Theme.shadow;
-    drop-shadow-offset-y: 10px;
-
-    // Specular wash along the top edge (reads as thick glass).
-    Rectangle {
-        height: 56px;
-        y: 0px;
-        border-top-left-radius: Theme.r-card;
-        border-top-right-radius: Theme.r-card;
-        background: Theme.glass-sheen;
-    }
 
     VerticalLayout {
         padding: Theme.sp-lg;

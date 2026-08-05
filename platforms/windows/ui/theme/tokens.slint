@@ -1,5 +1,6 @@
-// Neutral liquid-glass tokens: gray stage + translucent panels.
-// Colour lives only in accent/controls — the field behind glass stays neutral.
+// Fluent (Windows 11) design tokens. Values track the WinUI ThemeResources so the
+// UI reads as native on top of the Mica backdrop: flat semi-opaque layers, hairline
+// strokes, 4/8px radii, and accent used only for selection — no gradients or glass.
 
 import { Palette } from "std-widgets.slint";
 
@@ -21,8 +22,8 @@ export struct ShortcutEntry {
 export global Theme {
     out property <bool> dark: Palette.color-scheme == ColorScheme.dark;
 
-    // Set from Rust: true when DWM composites a Mica backdrop behind the window.
-    // The UI must then leave its own background transparent for it to show.
+    // Set from Rust: true when DWM composites a Mica/Acrylic backdrop behind the
+    // window. The UI then leaves its own background transparent to reveal it.
     in-out property <bool> mica: false;
 
     // Accent: Rust sets `accent` / `accent-text` from the Windows accent color;
@@ -30,11 +31,11 @@ export global Theme {
     in-out property <color> accent: #ea580c;
     in-out property <color> accent-text: #ffffff;
     out property <color> accent-hover: root.dark
-        ? root.accent.brighter(0.16)
-        : root.accent.darker(0.08);
+        ? root.accent.brighter(0.12)
+        : root.accent.darker(0.06);
     out property <brush> accent-soft: root.accent.transparentize(0.86);
     out property <color> warn: root.dark ? #fbbf24 : #b45309;
-    out property <color> danger: root.dark ? #fb7185 : #e11d48;
+    out property <color> danger: root.dark ? #ff99a4 : #c42b1c;
 
     out property <length> sp-xs: 4px;
     out property <length> sp-sm: 8px;
@@ -42,40 +43,36 @@ export global Theme {
     out property <length> sp-lg: 20px;
     out property <length> sp-xl: 28px;
 
-    out property <length> r-card: 22px;
-    out property <length> r-control: 11px;
-    out property <length> r-shell: 26px;
+    // Fluent corner radii: 4px controls, 8px cards & flyouts.
+    out property <length> r-card: 8px;
+    out property <length> r-control: 4px;
+    out property <length> r-shell: 8px;
 
-    out property <length> font-title: 22px;
+    out property <length> font-title: 20px;
     out property <length> font-body: 14px;
     out property <length> font-caption: 12px;
 
-    // Neutral gray stage (no hue wash).
-    out property <brush> window-base: root.dark
-        ? @linear-gradient(180deg, #1c1c1e 0%, #161618 100%)
-        : @linear-gradient(180deg, #e8e8ea 0%, #f2f2f4 100%);
+    // Solid fallback background, used only when no backdrop is available (older Win10).
+    out property <brush> window-base: root.dark ? #202020 : #f3f3f3;
 
-    // Liquid glass fills — luminous rim + soft translucency.
-    out property <brush> card-bg: root.dark
-        ? @linear-gradient(165deg, #ffffff2e 0%, #ffffff14 55%, #ffffff0c 100%)
-        : @linear-gradient(165deg, #ffffffb8 0%, #ffffff7a 100%);
-    out property <brush> glass-sheen: root.dark
-        ? @linear-gradient(180deg, #ffffff22 0%, #ffffff00 100%)
-        : @linear-gradient(180deg, #ffffffc8 0%, #ffffff00 100%);
-    out property <color> card-border: root.dark ? #ffffff3a : #ffffffee;
-    out property <color> shadow: root.dark ? #00000080 : #00000014;
+    // CardBackgroundFillColorDefault — a thin layer that reads over Mica.
+    out property <brush> card-bg: root.dark ? #ffffff0d : #ffffffb3;
+    // CardStrokeColorDefault — the hairline that actually delineates the card.
+    out property <color> card-border: root.dark ? #ffffff14 : #0000000f;
+    // Flyout elevation (recorder / composing popups only — cards stay flat).
+    out property <color> shadow: root.dark ? #00000073 : #00000024;
 
-    out property <brush> sidebar-bg: root.dark
-        ? @linear-gradient(180deg, #ffffff24 0%, #ffffff12 100%)
-        : @linear-gradient(180deg, #ffffffb0 0%, #ffffff78 100%);
-    out property <color> sidebar-border: root.dark ? #ffffff32 : #ffffffee;
+    // The sidebar sits directly on the backdrop, Win11 NavigationView style.
+    out property <brush> sidebar-bg: transparent;
+    out property <color> sidebar-border: transparent;
 
-    out property <brush> track: root.dark ? #ffffff12 : #0000000d;
-    out property <brush> nav-active: root.dark ? #ffffff22 : #ffffffef;
-    out property <brush> nav-hover: root.dark ? #ffffff12 : #00000008;
-    out property <brush> field-bg: root.dark ? #ffffff14 : #ffffffc8;
+    out property <brush> track: root.dark ? #ffffff14 : #0000000d;
+    out property <brush> nav-active: root.dark ? #ffffff14 : #0000000f;
+    out property <brush> nav-hover: root.dark ? #ffffff0d : #00000008;
+    out property <brush> field-bg: root.dark ? #ffffff0f : #ffffffb3;
 
-    out property <color> subtle: root.dark ? #a1a1a6 : #6e6e73;
-    out property <color> faint: root.dark ? #6e6e73 : #8e8e93;
+    // TextFillColor Secondary / Tertiary.
+    out property <color> subtle: root.dark ? #c8c8cc : #5f5f66;
+    out property <color> faint: root.dark ? #8a8a90 : #8a8a90;
     out property <color> divider: root.dark ? #ffffff14 : #0000000f;
 }

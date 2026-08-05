@@ -1,4 +1,5 @@
-// Floating glass sidebar — frosted rail, soft active chip (accent text, not solid fill).
+// Win11 NavigationView: items sit directly on the backdrop. The selected item gets a
+// subtle fill plus a 3px accent indicator bar — foreground text/icon stay neutral.
 
 import { Palette } from "std-widgets.slint";
 import { Theme } from "../theme/tokens.slint";
@@ -19,79 +20,69 @@ export component Sidebar inherits Rectangle {
     ];
 
     VerticalLayout {
-        padding: Theme.sp-md;
-        padding-right: Theme.sp-sm;
-        Rectangle {
-            border-radius: Theme.r-shell;
-            background: Theme.sidebar-bg;
-            border-width: 1px;
-            border-color: Theme.sidebar-border;
-            drop-shadow-blur: 28px;
-            drop-shadow-color: Theme.shadow;
-            drop-shadow-offset-y: 10px;
+        padding: Theme.sp-sm;
+        padding-top: Theme.sp-md;
+        spacing: 2px;
+        alignment: start;
 
+        VerticalLayout {
+            padding-left: 12px;
+            padding-bottom: Theme.sp-sm;
+            Text {
+                text: "Funput";
+                font-size: 18px;
+                font-weight: 700;
+                color: Palette.foreground;
+            }
+            Text {
+                text: "Cài đặt";
+                font-size: Theme.font-caption;
+                color: Theme.subtle;
+            }
+        }
+
+        for item in root.nav: Rectangle {
+            height: 40px;
+            border-radius: Theme.r-control;
+            background: root.active == item.id
+                ? Theme.nav-active
+                : (nav-touch.has-hover ? Theme.nav-hover : transparent);
+            animate background { duration: 120ms; easing: ease-out; }
+
+            // Accent selection indicator — 3x16 pill flush to the left edge.
             Rectangle {
-                height: 48px;
-                y: 0px;
-                border-top-left-radius: Theme.r-shell;
-                border-top-right-radius: Theme.r-shell;
-                background: Theme.glass-sheen;
+                x: 0;
+                width: 3px;
+                height: root.active == item.id ? 16px : 0px;
+                border-radius: 1.5px;
+                background: Theme.accent;
+                animate height { duration: 140ms; easing: ease-in-out; }
             }
 
-            VerticalLayout {
-                padding: 14px;
-                spacing: 2px;
+            HorizontalLayout {
+                padding-left: 12px;
+                spacing: 12px;
                 alignment: start;
+                VerticalLayout {
+                    alignment: center;
+                    Image {
+                        source: item.icon;
+                        colorize: Palette.foreground;
+                        width: 16px;
+                        height: 16px;
+                    }
+                }
                 Text {
-                    text: "Funput";
-                    font-size: 18px;
-                    font-weight: 700;
+                    text: item.label;
+                    vertical-alignment: center;
+                    font-size: 14px;
+                    font-weight: root.active == item.id ? 600 : 400;
                     color: Palette.foreground;
                 }
-                Text {
-                    text: "Cài đặt";
-                    font-size: Theme.font-caption;
-                    color: Theme.subtle;
-                }
-                Rectangle { height: Theme.sp-md; }
-                for item in root.nav: Rectangle {
-                    height: 38px;
-                    border-radius: Theme.r-control;
-                    background: root.active == item.id
-                        ? Theme.nav-active
-                        : (nav-touch.has-hover ? Theme.nav-hover : transparent);
-                    border-width: root.active == item.id ? 1px : 0px;
-                    border-color: Theme.card-border;
-                    drop-shadow-blur: root.active == item.id ? 10px : 0px;
-                    drop-shadow-color: Theme.shadow;
-                    drop-shadow-offset-y: 2px;
-                    animate background { duration: 140ms; easing: ease-out; }
-                    HorizontalLayout {
-                        padding-left: 12px;
-                        spacing: 10px;
-                        alignment: start;
-                        VerticalLayout {
-                            alignment: center;
-                            Image {
-                                source: item.icon;
-                                colorize: root.active == item.id ? Theme.accent : Theme.subtle;
-                                width: 16px;
-                                height: 16px;
-                            }
-                        }
-                        Text {
-                            text: item.label;
-                            vertical-alignment: center;
-                            font-size: 13px;
-                            font-weight: root.active == item.id ? 600 : 500;
-                            color: root.active == item.id ? Theme.accent : Palette.foreground;
-                        }
-                    }
-                    nav-touch := TouchArea {
-                        mouse-cursor: pointer;
-                        clicked => { root.active = item.id; }
-                    }
-                }
+            }
+            nav-touch := TouchArea {
+                mouse-cursor: pointer;
+                clicked => { root.active = item.id; }
             }
         }
     }
