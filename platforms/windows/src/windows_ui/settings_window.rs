@@ -6,7 +6,7 @@ use slint::{ComponentHandle, Weak};
 
 use super::models;
 use super::settings_callbacks;
-use crate::{commands, recorder, shell, system_accent, SettingsWindow, Theme};
+use crate::{commands, mica, recorder, shell, system_accent, SettingsWindow, Theme};
 
 thread_local! {
     static WINDOW: RefCell<Option<Weak<SettingsWindow>>> = const { RefCell::new(None) };
@@ -14,18 +14,27 @@ thread_local! {
 
 pub(super) fn open() {
     if let Some(window) = current() {
-        system_accent::apply(&window.global::<Theme>());
+        dress(&window);
         populate(&window);
         let _ = window.show();
         return;
     }
 
     let window = SettingsWindow::new().expect("create settings window");
-    system_accent::apply(&window.global::<Theme>());
+    dress(&window);
     populate(&window);
     settings_callbacks::wire(&window);
     let _ = window.show();
+    // The native window only exists once shown, so the backdrop is set after.
+    mica::apply(window.window(), mica::Material::Window);
     WINDOW.with(|cell| *cell.borrow_mut() = Some(window.as_weak()));
+}
+
+/// Push the host's visual context (accent, backdrop availability) into the theme.
+fn dress(window: &SettingsWindow) {
+    let theme = window.global::<Theme>();
+    system_accent::apply(&theme);
+    theme.set_mica(mica::supported());
 }
 
 fn current() -> Option<SettingsWindow> {

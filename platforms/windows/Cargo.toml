@@ -49,6 +49,11 @@ funput-engine = { path = "../../crates/funput-engine" }
 funput-desktop = { path = "../../crates/funput-desktop" }
 
 [target.'cfg(windows)'.dependencies]
+# Slint-internal winit backend — the only route to the Win11 DWM backdrop APIs
+# (see src/mica.rs). No semver guarantee, so the version is pinned exactly and
+# must be bumped together with `slint`. `default-features = false` keeps us from
+# pulling in renderers beyond the ones `slint` already selects.
+i-slint-backend-winit = { version = "=1.17.0", default-features = false }
 windows = { version = "0.62", features = [
     "Win32_Foundation",
     "Win32_UI_WindowsAndMessaging",

@@ -10,7 +10,7 @@ export component OnboardingWindow inherits Window {
     icon: @image-url("../../../../assets/logo.png");
     width: 480px;
     height: 560px;
-    background: Theme.window-base;
+    background: Theme.mica ? transparent : Theme.window-base;
 
     in property <string> method;
     in-out property <bool> launch-at-login;
@@ -20,7 +20,8 @@ export component OnboardingWindow inherits Window {
     callback set-launch(bool);
     callback finish();
 
-    Backdrop { }
+    // Painted light/depth is only a stand-in for a real backdrop.
+    if !Theme.mica: Backdrop { }
 
     VerticalLayout {
         padding: Theme.sp-xl;

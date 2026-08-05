@@ -16,6 +16,7 @@ mod dark_mode;
 mod hook;
 mod inject;
 mod keymap;
+mod mica;
 mod recorder;
 mod settings;
 mod shell;

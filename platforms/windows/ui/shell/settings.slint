@@ -11,7 +11,7 @@ export component SettingsWindow inherits Window {
     icon: @image-url("../../../../assets/logo.png");
     width: 780px;
     height: 520px;
-    background: Theme.window-base;
+    background: Theme.mica ? transparent : Theme.window-base;
 
     in property <string> method;
     in property <string> tone-style;
@@ -60,7 +60,8 @@ export component SettingsWindow inherits Window {
     // Tray "Kiểm tra cập nhật…" can jump straight to the About tab.
     in-out property <string> active: "input";
 
-    Backdrop { }
+    // Painted light/depth is only a stand-in for a real backdrop.
+    if !Theme.mica: Backdrop { }
 
     HorizontalLayout {
         spacing: 0px;

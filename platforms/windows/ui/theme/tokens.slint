@@ -21,6 +21,10 @@ export struct ShortcutEntry {
 export global Theme {
     out property <bool> dark: Palette.color-scheme == ColorScheme.dark;
 
+    // Set from Rust: true when DWM composites a Mica backdrop behind the window.
+    // The UI must then leave its own background transparent for it to show.
+    in-out property <bool> mica: false;
+
     // Accent: Rust sets `accent` / `accent-text` from the Windows accent color;
     // orange is the Slint-viewer / read-failure fallback.
     in-out property <color> accent: #ea580c;
