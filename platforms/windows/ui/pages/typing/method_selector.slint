@@ -33,22 +33,33 @@ export component MethodSelector inherits VerticalLayout {
             ? Theme.accent-soft
             : (row-touch.has-hover ? Theme.nav-hover : transparent);
 
-        // Accent selection indicator — matches sidebar DNA.
-        Rectangle {
-            x: 0;
-            y: (parent.height - 16px) / 2;
-            width: 3px;
-            height: root.method == item.id ? 16px : 0px;
-            border-radius: 1.5px;
-            background: Theme.accent;
-            animate height { duration: 140ms; easing: ease-in-out; }
-        }
-
         HorizontalLayout {
-            padding-left: 14px;
+            padding-left: 12px;
             padding-right: 12px;
             padding-top: 10px;
             padding-bottom: 10px;
+            spacing: 12px;
+
+            // Radio: the accent fill is the selection cue for an exclusive choice.
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 9px;
+                    background: root.method == item.id ? Theme.accent : transparent;
+                    border-width: root.method == item.id ? 0px : 1.5px;
+                    border-color: Theme.divider;
+                    Rectangle {
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 3.5px;
+                        background: #ffffff;
+                        visible: root.method == item.id;
+                    }
+                }
+            }
+
             VerticalLayout {
                 spacing: 3px;
                 Text {

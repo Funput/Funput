@@ -18,6 +18,7 @@ export component SmartSection inherits VerticalLayout {
     Section {
         title: "Thông minh";
         Row {
+            icon: @image-url("../../icons/row/restore.svg");
             title: "Tự khôi phục tiếng Anh";
             subtitle: "Từ không phải tiếng Việt giữ nguyên chữ gốc.";
             AccentSwitch {
@@ -27,6 +28,7 @@ export component SmartSection inherits VerticalLayout {
         }
         Rectangle { height: 1px; background: Theme.divider; }
         Row {
+            icon: @image-url("../../icons/row/instant.svg");
             title: "Khôi phục tức thì";
             subtitle: "Đổi lại ngay khi từ không thể là tiếng Việt.";
             AccentSwitch {
@@ -37,6 +39,7 @@ export component SmartSection inherits VerticalLayout {
         }
         Rectangle { height: 1px; background: Theme.divider; }
         Row {
+            icon: @image-url("../../icons/row/spell.svg");
             title: "Kiểm tra chính tả";
             subtitle: "Chỉ đặt dấu khi tạo thành âm tiết hợp lệ.";
             AccentSwitch {
@@ -46,6 +49,7 @@ export component SmartSection inherits VerticalLayout {
         }
         Rectangle { height: 1px; background: Theme.divider; }
         Row {
+            icon: @image-url("../../icons/row/case.svg");
             title: "Tự động viết hoa";
             subtitle: "Viết hoa chữ đầu câu, sau dấu chấm và đầu dòng.";
             AccentSwitch {

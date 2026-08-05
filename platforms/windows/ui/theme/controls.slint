@@ -26,8 +26,13 @@ export component KeyCap inherits Rectangle {
 export component Row {
     in property <string> title;
     in property <string> subtitle;
+    in property <image> icon;
     HorizontalLayout {
         spacing: Theme.sp-md;
+        if root.icon.width > 0: VerticalLayout {
+            alignment: center;
+            Image { source: root.icon; colorize: Theme.subtle; width: 18px; height: 18px; }
+        }
         VerticalLayout {
             horizontal-stretch: 1;
             alignment: center;
