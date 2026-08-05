@@ -33,7 +33,7 @@ const TRAY_W: &str = "FUNPUT_TRAY_W";
 const TRAY_H: &str = "FUNPUT_TRAY_H";
 
 pub(crate) fn launch_settings(check_update: bool) {
-    launch_settings_tab(if check_update { "about" } else { "typing" }, check_update);
+    launch_settings_tab(if check_update { "about" } else { "overview" }, check_update);
 }
 
 fn launch_settings_tab(tab: &str, check_update: bool) {
@@ -107,7 +107,7 @@ pub(crate) fn reap_ui_child() {
         return;
     }
     match code {
-        control_center::EXIT_SETTINGS => launch_settings_tab("typing", false),
+        control_center::EXIT_SETTINGS => launch_settings_tab("overview", false),
         control_center::EXIT_SHORTCUTS => launch_settings_tab("shortcuts", false),
         control_center::EXIT_KEYBOARD => launch_settings_tab("keyboard", false),
         _ => {}

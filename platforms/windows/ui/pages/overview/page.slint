@@ -1,7 +1,7 @@
-// Settings → "Tổng quan": VI status, launch-at-login, backup — not a dashboard hub.
+// Settings → "Tổng quan": brand hero, launch-at-login, config backup.
 
-import { Switch, Button } from "std-widgets.slint";
-import { Theme, PageHeader, Section, Row } from "../../theme/mod.slint";
+import { Theme, Section, Row, AccentSwitch, PrimaryButton, GhostButton } from "../../theme/mod.slint";
+import { OverviewHero } from "hero.slint";
 
 export component OverviewPage inherits VerticalLayout {
     in-out property <bool> vi-enabled;
@@ -10,31 +10,23 @@ export component OverviewPage inherits VerticalLayout {
     callback set-launch(bool);
     callback export-config();
     callback import-config();
-    callback open-about();
 
     spacing: Theme.sp-lg;
     width: 100%;
+    alignment: start;
 
-    PageHeader {
-        title: "Tổng quan";
-        subtitle: "Trạng thái Funput và sao lưu cấu hình.";
+    OverviewHero {
+        vi-enabled <=> root.vi-enabled;
+        set-enabled(v) => { root.set-enabled(v); }
     }
 
     Section {
-        title: "Trạng thái";
-        Row {
-            title: "Gõ tiếng Việt";
-            subtitle: root.vi-enabled ? "Đang bật — Funput xử lý phím gõ." : "Đang tắt — bàn phím gốc.";
-            Switch {
-                checked <=> root.vi-enabled;
-                toggled => { root.set-enabled(self.checked); }
-            }
-        }
-        Rectangle { height: 1px; background: Theme.divider; }
+        title: "Hệ thống";
         Row {
             title: "Khởi động cùng Windows";
             subtitle: "Tự chạy Funput mỗi khi đăng nhập.";
-            Switch {
+            icon: @image-url("../../icons/status/power.svg");
+            AccentSwitch {
                 checked <=> root.launch-at-login;
                 toggled => { root.set-launch(self.checked); }
             }
@@ -45,8 +37,9 @@ export component OverviewPage inherits VerticalLayout {
         title: "Sao lưu";
         Row {
             title: "Xuất cấu hình";
-            subtitle: "Lưu gõ tắt và tuỳ chọn ra tệp .json.";
-            Button {
+            subtitle: "Lưu tuỳ chọn và gõ tắt ra tệp.";
+            icon: @image-url("../../icons/status/backup.svg");
+            GhostButton {
                 text: "Xuất…";
                 clicked => { root.export-config(); }
             }
@@ -54,22 +47,11 @@ export component OverviewPage inherits VerticalLayout {
         Rectangle { height: 1px; background: Theme.divider; }
         Row {
             title: "Nhập cấu hình";
-            subtitle: "Gộp gõ tắt và áp tuỳ chọn từ tệp .json.";
-            Button {
+            subtitle: "Gộp tuỳ chọn và gõ tắt từ tệp.";
+            icon: @image-url("../../icons/status/backup.svg");
+            PrimaryButton {
                 text: "Nhập…";
                 clicked => { root.import-config(); }
-            }
-        }
-    }
-
-    Section {
-        title: "Cập nhật";
-        Row {
-            title: "Phiên bản & cập nhật";
-            subtitle: "Kiểm tra bản mới trong Giới thiệu.";
-            Button {
-                text: "Mở…";
-                clicked => { root.open-about(); }
             }
         }
     }

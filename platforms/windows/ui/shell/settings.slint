@@ -58,8 +58,8 @@ export component SettingsWindow inherits Window {
     callback export-config();
     callback import-config();
 
-    in-out property <string> active: "typing";
-    private property <string> previous-active: "typing";
+    in-out property <string> active: "overview";
+    private property <string> previous-active: "overview";
 
     changed active => {
         if root.previous-active == "shortcuts" && root.active != "shortcuts" {
@@ -117,7 +117,6 @@ export component SettingsWindow inherits Window {
             relaunch-now() => { root.relaunch-now(); }
             export-config() => { root.export-config(); }
             import-config() => { root.import-config(); }
-            open-about() => { root.active = "about"; }
         }
     }
 }

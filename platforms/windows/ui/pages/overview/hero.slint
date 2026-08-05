@@ -1,0 +1,40 @@
+// Overview hero: brand-first VI status — no page title (sidebar already labels).
+
+import { Palette } from "std-widgets.slint";
+import { Theme, AccentSwitch } from "../../theme/mod.slint";
+
+export component OverviewHero inherits HorizontalLayout {
+    in-out property <bool> vi-enabled;
+    callback set-enabled(bool);
+
+    spacing: Theme.sp-md;
+    width: 100%;
+    alignment: center;
+
+    Image {
+        source: @image-url("../../../../../assets/logo.png");
+        width: 68px;
+        height: 68px;
+    }
+    VerticalLayout {
+        horizontal-stretch: 1;
+        alignment: center;
+        spacing: 6px;
+        Text {
+            text: "Funput";
+            font-size: 28px;
+            font-weight: 700;
+            color: Palette.foreground;
+        }
+        Text {
+            text: root.vi-enabled ? "Đang gõ tiếng Việt" : "Bàn phím gốc";
+            font-size: Theme.font-body;
+            font-weight: 600;
+            color: root.vi-enabled ? Theme.accent-legible : Theme.subtle;
+        }
+    }
+    AccentSwitch {
+        checked <=> root.vi-enabled;
+        toggled => { root.set-enabled(self.checked); }
+    }
+}
