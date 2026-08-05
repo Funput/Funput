@@ -1,0 +1,76 @@
+// Settings → "Tổng quan": VI status, launch-at-login, backup — not a dashboard hub.
+
+import { Switch, Button } from "std-widgets.slint";
+import { Theme, PageHeader, Section, Row } from "../../theme/mod.slint";
+
+export component OverviewPage inherits VerticalLayout {
+    in-out property <bool> vi-enabled;
+    in-out property <bool> launch-at-login;
+    callback set-enabled(bool);
+    callback set-launch(bool);
+    callback export-config();
+    callback import-config();
+    callback open-about();
+
+    spacing: Theme.sp-lg;
+    width: 100%;
+
+    PageHeader {
+        title: "Tổng quan";
+        subtitle: "Trạng thái Funput và sao lưu cấu hình.";
+    }
+
+    Section {
+        title: "Trạng thái";
+        Row {
+            title: "Gõ tiếng Việt";
+            subtitle: root.vi-enabled ? "Đang bật — Funput xử lý phím gõ." : "Đang tắt — bàn phím gốc.";
+            Switch {
+                checked <=> root.vi-enabled;
+                toggled => { root.set-enabled(self.checked); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            title: "Khởi động cùng Windows";
+            subtitle: "Tự chạy Funput mỗi khi đăng nhập.";
+            Switch {
+                checked <=> root.launch-at-login;
+                toggled => { root.set-launch(self.checked); }
+            }
+        }
+    }
+
+    Section {
+        title: "Sao lưu";
+        Row {
+            title: "Xuất cấu hình";
+            subtitle: "Lưu gõ tắt và tuỳ chọn ra tệp .json.";
+            Button {
+                text: "Xuất…";
+                clicked => { root.export-config(); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            title: "Nhập cấu hình";
+            subtitle: "Gộp gõ tắt và áp tuỳ chọn từ tệp .json.";
+            Button {
+                text: "Nhập…";
+                clicked => { root.import-config(); }
+            }
+        }
+    }
+
+    Section {
+        title: "Cập nhật";
+        Row {
+            title: "Phiên bản & cập nhật";
+            subtitle: "Kiểm tra bản mới trong Giới thiệu.";
+            Button {
+                text: "Mở…";
+                clicked => { root.open-about(); }
+            }
+        }
+    }
+}

@@ -1,7 +1,7 @@
 // Settings window chrome: glass backdrop, floating sidebar, content host.
 // Rust (`windows_ui`) sets properties and handles callbacks on this Window.
 
-import { Theme, AppEntry, ShortcutEntry } from "../theme/mod.slint";
+import { Theme, ShortcutEntry } from "../theme/mod.slint";
 import { Backdrop } from "backdrop.slint";
 import { Sidebar } from "sidebar.slint";
 import { SettingsContent } from "content.slint";
@@ -22,13 +22,12 @@ export component SettingsWindow inherits Window {
     in property <string> flip-hotkey;
     in property <[string]> flip-hotkey-caps;
     in property <bool> flip-hotkey-conflict;
+    in-out property <bool> vi-enabled: true;
     in-out property <bool> smart-restore;
     in-out property <bool> eager-restore;
     in-out property <bool> spell-check;
     in-out property <bool> auto-capitalize;
     in-out property <bool> launch-at-login;
-    in property <[AppEntry]> excluded-apps;
-    in property <[AppEntry]> recent-apps;
     in property <[ShortcutEntry]> shortcuts;
     in property <string> version;
     in property <string> update-state: "idle";
@@ -40,13 +39,12 @@ export component SettingsWindow inherits Window {
     callback pick-hotkey(string);
     callback pick-flip-hotkey(string);
     callback record-combo(string, string, bool, bool, bool, bool) -> bool;
+    callback set-enabled(bool);
     callback set-smart(bool);
     callback set-eager(bool);
     callback set-spell(bool);
     callback set-auto-cap(bool);
     callback set-launch(bool);
-    callback add-app(string);
-    callback remove-app(string);
     callback add-shortcut();
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
@@ -58,10 +56,8 @@ export component SettingsWindow inherits Window {
     callback export-config();
     callback import-config();
 
-    // Tray "Kiểm tra cập nhật…" can jump straight to the About tab.
-    in-out property <string> active: "input";
+    in-out property <string> active: "typing";
 
-    // Painted light/depth is only a stand-in for a real backdrop.
     if !Theme.mica: Backdrop { }
 
     HorizontalLayout {
@@ -78,13 +74,12 @@ export component SettingsWindow inherits Window {
             flip-hotkey: root.flip-hotkey;
             flip-hotkey-caps: root.flip-hotkey-caps;
             flip-hotkey-conflict: root.flip-hotkey-conflict;
+            vi-enabled <=> root.vi-enabled;
             smart-restore <=> root.smart-restore;
             eager-restore <=> root.eager-restore;
             spell-check <=> root.spell-check;
             auto-capitalize <=> root.auto-capitalize;
             launch-at-login <=> root.launch-at-login;
-            excluded-apps: root.excluded-apps;
-            recent-apps: root.recent-apps;
             shortcuts: root.shortcuts;
             version: root.version;
             update-state: root.update-state;
@@ -95,13 +90,12 @@ export component SettingsWindow inherits Window {
             pick-hotkey(v) => { root.pick-hotkey(v); }
             pick-flip-hotkey(v) => { root.pick-flip-hotkey(v); }
             record-combo(k, t, c, a, s, w) => { root.record-combo(k, t, c, a, s, w) }
+            set-enabled(v) => { root.set-enabled(v); }
             set-smart(v) => { root.set-smart(v); }
             set-eager(v) => { root.set-eager(v); }
             set-spell(v) => { root.set-spell(v); }
             set-auto-cap(v) => { root.set-auto-cap(v); }
             set-launch(v) => { root.set-launch(v); }
-            add-app(id) => { root.add-app(id); }
-            remove-app(id) => { root.remove-app(id); }
             add-shortcut() => { root.add-shortcut(); }
             remove-shortcut(i) => { root.remove-shortcut(i); }
             edit-trigger(i, t) => { root.edit-trigger(i, t); }
@@ -112,6 +106,7 @@ export component SettingsWindow inherits Window {
             relaunch-now() => { root.relaunch-now(); }
             export-config() => { root.export-config(); }
             import-config() => { root.import-config(); }
+            open-about() => { root.active = "about"; }
         }
     }
 }

@@ -1,14 +1,12 @@
-// Settings content host: switches the active page inside a scroll view.
+// Settings content host: one readable column, switches the active page.
 
 import { ScrollView } from "std-widgets.slint";
-import { Theme, AppEntry, ShortcutEntry } from "../theme/mod.slint";
-import { InputPage } from "../pages/input/page.slint";
+import { Theme, ShortcutEntry } from "../theme/mod.slint";
+import { OverviewPage } from "../pages/overview/page.slint";
+import { TypingPage } from "../pages/typing/page.slint";
 import { KeyboardPage } from "../pages/keyboard/page.slint";
-import { SmartPage } from "../pages/smart/page.slint";
 import { ShortcutsPage } from "../pages/shortcuts/page.slint";
-import { AppsPage } from "../pages/apps/page.slint";
-import { GeneralPage } from "../pages/system/general.slint";
-import { AboutPage } from "../pages/system/about.slint";
+import { AboutPage } from "../pages/about/page.slint";
 
 export component SettingsContent inherits ScrollView {
     in property <string> active;
@@ -20,13 +18,12 @@ export component SettingsContent inherits ScrollView {
     in property <string> flip-hotkey;
     in property <[string]> flip-hotkey-caps;
     in property <bool> flip-hotkey-conflict;
+    in-out property <bool> vi-enabled;
     in-out property <bool> smart-restore;
     in-out property <bool> eager-restore;
     in-out property <bool> spell-check;
     in-out property <bool> auto-capitalize;
     in-out property <bool> launch-at-login;
-    in property <[AppEntry]> excluded-apps;
-    in property <[AppEntry]> recent-apps;
     in property <[ShortcutEntry]> shortcuts;
     in property <string> version;
     in property <string> update-state: "idle";
@@ -38,13 +35,12 @@ export component SettingsContent inherits ScrollView {
     callback pick-hotkey(string);
     callback pick-flip-hotkey(string);
     callback record-combo(string, string, bool, bool, bool, bool) -> bool;
+    callback set-enabled(bool);
     callback set-smart(bool);
     callback set-eager(bool);
     callback set-spell(bool);
     callback set-auto-cap(bool);
     callback set-launch(bool);
-    callback add-app(string);
-    callback remove-app(string);
     callback add-shortcut();
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
@@ -55,70 +51,72 @@ export component SettingsContent inherits ScrollView {
     callback relaunch-now();
     callback export-config();
     callback import-config();
+    callback open-about();
 
-    VerticalLayout {
+    HorizontalLayout {
         padding-top: Theme.sp-lg;
         padding-right: Theme.sp-xl;
         padding-bottom: Theme.sp-xl;
         padding-left: Theme.sp-md;
-        spacing: Theme.sp-md;
         alignment: start;
 
-        if root.active == "input": InputPage {
-            method: root.method;
-            tone-style: root.tone-style;
-            pick-method(v) => { root.pick-method(v); }
-            pick-tone(v) => { root.pick-tone(v); }
-        }
-        if root.active == "keyboard": KeyboardPage {
-            hotkey: root.hotkey;
-            hotkey-caps: root.hotkey-caps;
-            hotkey-conflict: root.hotkey-conflict;
-            flip-hotkey: root.flip-hotkey;
-            flip-hotkey-caps: root.flip-hotkey-caps;
-            flip-hotkey-conflict: root.flip-hotkey-conflict;
-            pick-hotkey(v) => { root.pick-hotkey(v); }
-            pick-flip-hotkey(v) => { root.pick-flip-hotkey(v); }
-            record-combo(k, t, c, a, s, w) => { root.record-combo(k, t, c, a, s, w) }
-        }
-        if root.active == "smart": SmartPage {
-            smart-restore <=> root.smart-restore;
-            eager-restore <=> root.eager-restore;
-            spell-check <=> root.spell-check;
-            auto-capitalize <=> root.auto-capitalize;
-            set-smart(v) => { root.set-smart(v); }
-            set-eager(v) => { root.set-eager(v); }
-            set-spell(v) => { root.set-spell(v); }
-            set-auto-cap(v) => { root.set-auto-cap(v); }
-        }
-        if root.active == "shortcuts": ShortcutsPage {
-            shortcuts: root.shortcuts;
-            add-shortcut() => { root.add-shortcut(); }
-            remove-shortcut(i) => { root.remove-shortcut(i); }
-            edit-trigger(i, t) => { root.edit-trigger(i, t); }
-            edit-expansion(i, t) => { root.edit-expansion(i, t); }
-        }
-        if root.active == "apps": AppsPage {
-            excluded-apps: root.excluded-apps;
-            recent-apps: root.recent-apps;
-            add-app(id) => { root.add-app(id); }
-            remove-app(id) => { root.remove-app(id); }
-        }
-        if root.active == "general": GeneralPage {
-            launch-at-login <=> root.launch-at-login;
-            set-launch(v) => { root.set-launch(v); }
-            export-config() => { root.export-config(); }
-            import-config() => { root.import-config(); }
-        }
-        if root.active == "about": AboutPage {
-            version: root.version;
-            update-state: root.update-state;
-            update-version: root.update-version;
-            update-message: root.update-message;
-            open-link(url) => { root.open-link(url); }
-            check-update() => { root.check-update(); }
-            install-update() => { root.install-update(); }
-            relaunch-now() => { root.relaunch-now(); }
+        VerticalLayout {
+            max-width: 520px;
+            width: 100%;
+            spacing: Theme.sp-md;
+            alignment: start;
+
+            if root.active == "overview": OverviewPage {
+                vi-enabled <=> root.vi-enabled;
+                launch-at-login <=> root.launch-at-login;
+                set-enabled(v) => { root.set-enabled(v); }
+                set-launch(v) => { root.set-launch(v); }
+                export-config() => { root.export-config(); }
+                import-config() => { root.import-config(); }
+                open-about() => { root.open-about(); }
+            }
+            if root.active == "typing": TypingPage {
+                method: root.method;
+                tone-style: root.tone-style;
+                smart-restore <=> root.smart-restore;
+                eager-restore <=> root.eager-restore;
+                spell-check <=> root.spell-check;
+                auto-capitalize <=> root.auto-capitalize;
+                pick-method(v) => { root.pick-method(v); }
+                pick-tone(v) => { root.pick-tone(v); }
+                set-smart(v) => { root.set-smart(v); }
+                set-eager(v) => { root.set-eager(v); }
+                set-spell(v) => { root.set-spell(v); }
+                set-auto-cap(v) => { root.set-auto-cap(v); }
+            }
+            if root.active == "keyboard": KeyboardPage {
+                hotkey: root.hotkey;
+                hotkey-caps: root.hotkey-caps;
+                hotkey-conflict: root.hotkey-conflict;
+                flip-hotkey: root.flip-hotkey;
+                flip-hotkey-caps: root.flip-hotkey-caps;
+                flip-hotkey-conflict: root.flip-hotkey-conflict;
+                pick-hotkey(v) => { root.pick-hotkey(v); }
+                pick-flip-hotkey(v) => { root.pick-flip-hotkey(v); }
+                record-combo(k, t, c, a, s, w) => { root.record-combo(k, t, c, a, s, w) }
+            }
+            if root.active == "shortcuts": ShortcutsPage {
+                shortcuts: root.shortcuts;
+                add-shortcut() => { root.add-shortcut(); }
+                remove-shortcut(i) => { root.remove-shortcut(i); }
+                edit-trigger(i, t) => { root.edit-trigger(i, t); }
+                edit-expansion(i, t) => { root.edit-expansion(i, t); }
+            }
+            if root.active == "about": AboutPage {
+                version: root.version;
+                update-state: root.update-state;
+                update-version: root.update-version;
+                update-message: root.update-message;
+                open-link(url) => { root.open-link(url); }
+                check-update() => { root.check-update(); }
+                install-update() => { root.install-update(); }
+                relaunch-now() => { root.relaunch-now(); }
+            }
         }
     }
 }

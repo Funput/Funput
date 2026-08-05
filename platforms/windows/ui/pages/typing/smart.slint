@@ -1,9 +1,9 @@
-// Settings → "Thông minh": English auto-restore toggles + examples.
+// Smart typing toggles + short examples for the Cách gõ page.
 
 import { Palette, Switch } from "std-widgets.slint";
-import { Theme, Card, Row } from "../../theme/mod.slint";
+import { Theme, Section, Row } from "../../theme/mod.slint";
 
-export component SmartPage inherits VerticalLayout {
+export component SmartSection inherits VerticalLayout {
     in-out property <bool> smart-restore;
     in-out property <bool> eager-restore;
     in-out property <bool> spell-check;
@@ -14,16 +14,13 @@ export component SmartPage inherits VerticalLayout {
     callback set-auto-cap(bool);
 
     spacing: Theme.sp-md;
-    Text {
-        text: "Gõ thông minh";
-        font-size: Theme.font-title;
-        font-weight: 700;
-        color: Palette.foreground;
-    }
-    Card {
+    width: 100%;
+
+    Section {
+        title: "Thông minh";
         Row {
             title: "Tự khôi phục tiếng Anh";
-            subtitle: "Từ không phải tiếng Việt giữ nguyên chữ gốc (card → card, không thành cảd).";
+            subtitle: "Từ không phải tiếng Việt giữ nguyên chữ gốc (card → card).";
             Switch {
                 checked <=> root.smart-restore;
                 toggled => { root.set-smart(self.checked); }
@@ -32,7 +29,7 @@ export component SmartPage inherits VerticalLayout {
         Rectangle { height: 1px; background: Theme.divider; }
         Row {
             title: "Khôi phục tức thì";
-            subtitle: "Đổi lại ngay khi từ không thể là tiếng Việt, không chờ dấu cách.";
+            subtitle: "Đổi lại ngay khi từ không thể là tiếng Việt.";
             Switch {
                 checked <=> root.eager-restore;
                 enabled: root.smart-restore;
@@ -42,7 +39,7 @@ export component SmartPage inherits VerticalLayout {
         Rectangle { height: 1px; background: Theme.divider; }
         Row {
             title: "Kiểm tra chính tả";
-            subtitle: "Chỉ đặt dấu khi tạo thành âm tiết tiếng Việt hợp lệ.";
+            subtitle: "Chỉ đặt dấu khi tạo thành âm tiết hợp lệ.";
             Switch {
                 checked <=> root.spell-check;
                 toggled => { root.set-spell(self.checked); }
@@ -58,13 +55,11 @@ export component SmartPage inherits VerticalLayout {
             }
         }
     }
-    Card {
-        VerticalLayout {
-            spacing: Theme.sp-xs;
-            Text { text: "Ví dụ"; font-size: 13px; font-weight: 600; color: Theme.subtle; }
-            Text { text: "text → text (giữ tiếng Anh)"; font-size: 13px; color: Palette.foreground; }
-            Text { text: "tieesng → tiếng (gõ tiếng Việt)"; font-size: 13px; color: Palette.foreground; }
-            Text { text: "tetf → tetf (kiểm tra chính tả, không đặt dấu sai)"; font-size: 13px; color: Palette.foreground; }
-        }
+
+    Section {
+        title: "Ví dụ";
+        Text { text: "text → text (giữ tiếng Anh)"; font-size: 13px; color: Palette.foreground; }
+        Text { text: "tieesng → tiếng (gõ tiếng Việt)"; font-size: 13px; color: Palette.foreground; }
+        Text { text: "tetf → tetf (chính tả, không đặt dấu sai)"; font-size: 13px; color: Palette.foreground; }
     }
 }

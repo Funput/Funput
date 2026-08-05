@@ -1,11 +1,9 @@
-// One hotkey settings block: stacked label + segmented + live keycaps.
+// One hotkey block: section label + segmented + live keycaps (no card chrome).
 
-import { Palette } from "std-widgets.slint";
-import { Theme, Card, Segmented, KeyCap, SegOption } from "../../theme/mod.slint";
+import { Theme, Section, Segmented, KeyCap, SegOption } from "../../theme/mod.slint";
 
-export component HotkeyCard inherits VerticalLayout {
+export component HotkeyBlock inherits VerticalLayout {
     in property <string> heading;
-    in property <string> title;
     in property <string> subtitle;
     in property <[SegOption]> options;
     in property <string> current;
@@ -13,20 +11,11 @@ export component HotkeyCard inherits VerticalLayout {
     in property <bool> conflict;
     callback changed(string);
 
-    spacing: Theme.sp-md;
-    Text {
-        text: root.heading;
-        font-size: Theme.font-title;
-        font-weight: 700;
-        color: Palette.foreground;
-    }
-    Card {
-        Text {
-            text: root.title;
-            font-size: Theme.font-body;
-            font-weight: 600;
-            color: Palette.foreground;
-        }
+    spacing: Theme.sp-sm;
+    width: 100%;
+
+    Section {
+        title: root.heading;
         Text {
             text: root.subtitle;
             font-size: Theme.font-caption;
@@ -38,7 +27,6 @@ export component HotkeyCard inherits VerticalLayout {
             current: root.current;
             changed(v) => { root.changed(v); }
         }
-        Rectangle { height: 1px; background: Theme.divider; }
         HorizontalLayout {
             spacing: Theme.sp-sm;
             Text {

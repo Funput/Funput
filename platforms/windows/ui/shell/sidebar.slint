@@ -10,12 +10,10 @@ export component Sidebar inherits Rectangle {
     background: transparent;
 
     property <[{id: string, label: string, icon: image}]> nav: [
-        { id: "input", label: "Kiểu gõ", icon: @image-url("../icons/nav/primary/keyboard.svg") },
-        { id: "keyboard", label: "Phím chuyển", icon: @image-url("../icons/nav/primary/switch.svg") },
-        { id: "smart", label: "Thông minh", icon: @image-url("../icons/nav/primary/sparkles.svg") },
+        { id: "overview", label: "Tổng quan", icon: @image-url("../icons/nav/secondary/settings.svg") },
+        { id: "typing", label: "Cách gõ", icon: @image-url("../icons/nav/primary/keyboard.svg") },
+        { id: "keyboard", label: "Phím tắt", icon: @image-url("../icons/nav/primary/switch.svg") },
         { id: "shortcuts", label: "Gõ tắt", icon: @image-url("../icons/nav/primary/shortcut.svg") },
-        { id: "apps", label: "Ứng dụng", icon: @image-url("../icons/nav/primary/apps.svg") },
-        { id: "general", label: "Chung", icon: @image-url("../icons/nav/secondary/settings.svg") },
         { id: "about", label: "Giới thiệu", icon: @image-url("../icons/nav/secondary/info.svg") },
     ];
 

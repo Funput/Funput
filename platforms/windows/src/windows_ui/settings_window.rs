@@ -30,8 +30,17 @@ pub(super) fn open() {
     WINDOW.with(|cell| *cell.borrow_mut() = Some(window.as_weak()));
     if let Ok(tab) = std::env::var("FUNPUT_SETTINGS_ACTIVE") {
         if !tab.is_empty() {
-            window.set_active(tab.into());
+            window.set_active(remap_tab(&tab).into());
         }
+    }
+}
+
+/// Map legacy tab ids so tray/CC deep-links from older builds still land.
+fn remap_tab(tab: &str) -> &str {
+    match tab {
+        "input" | "smart" => "typing",
+        "general" | "apps" => "overview",
+        other => other,
     }
 }
 
@@ -57,7 +66,6 @@ pub(super) fn populate(window: &SettingsWindow) {
     window.set_method(settings.method.id().into());
     window.set_tone_style(settings.tone_style.id().into());
     match &settings.toggle_combo {
-        // A recorded combo overrides the preset — the segmented shows "custom".
         Some(combo) => {
             window.set_hotkey("custom".into());
             window.set_hotkey_caps(models::combo_caps(combo));
@@ -81,6 +89,7 @@ pub(super) fn populate(window: &SettingsWindow) {
             window.set_flip_hotkey_conflict(false);
         }
     }
+    window.set_vi_enabled(settings.enabled);
     window.set_smart_restore(settings.smart_restore);
     window.set_eager_restore(settings.eager_restore);
     window.set_spell_check(settings.spell_check);
@@ -90,7 +99,6 @@ pub(super) fn populate(window: &SettingsWindow) {
     window.set_update_state("idle".into());
     window.set_update_version("".into());
     window.set_update_message("".into());
-    refresh_apps(window);
     window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
 }
 
@@ -109,14 +117,4 @@ pub(super) fn open_and_check_updates() {
         window.set_active("about".into());
     }
     commands::check_for_updates();
-}
-
-pub(super) fn refresh_apps(window: &SettingsWindow) {
-    let excluded = shell::excluded_apps();
-    let addable = shell::recent_apps()
-        .into_iter()
-        .filter(|recent| !excluded.iter().any(|item| item.id == recent.id))
-        .collect::<Vec<_>>();
-    window.set_excluded_apps(models::apps(&excluded));
-    window.set_recent_apps(models::apps(&addable));
 }

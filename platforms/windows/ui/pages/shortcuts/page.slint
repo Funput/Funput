@@ -1,7 +1,7 @@
 // Settings → "Gõ tắt": manage text-expansion shortcuts (`vn` → `Việt Nam`).
 
 import { Palette, Button, LineEdit } from "std-widgets.slint";
-import { Theme, Card, ShortcutEntry } from "../../theme/mod.slint";
+import { Theme, PageHeader, Section, ShortcutEntry } from "../../theme/mod.slint";
 import { ComposingInput } from "../../overlays/composing_input.slint";
 
 export component ShortcutsPage inherits VerticalLayout {
@@ -11,38 +11,35 @@ export component ShortcutsPage inherits VerticalLayout {
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
 
-    spacing: Theme.sp-md;
-    Text {
-        text: "Gõ tắt";
-        font-size: Theme.font-title;
-        font-weight: 700;
-        color: Palette.foreground;
+    spacing: Theme.sp-lg;
+    width: 100%;
+
+    PageHeader {
+        title: "Gõ tắt";
+        subtitle: "Gõ chữ tắt rồi dấu cách để bung — ví dụ vn → Việt Nam.";
     }
-    Card {
+
+    Section {
         HorizontalLayout {
             spacing: Theme.sp-md;
             VerticalLayout {
                 horizontal-stretch: 1;
                 alignment: center;
                 Text {
-                    text: "Gõ chữ tắt rồi dấu cách để bung — ví dụ vn → Việt Nam.";
+                    text: "\{root.shortcuts.length} mục";
                     font-size: 13px;
                     font-weight: 600;
                     color: Theme.subtle;
-                    wrap: word-wrap;
                 }
             }
-            VerticalLayout {
-                alignment: center;
-                Button {
-                    text: "Thêm";
-                    primary: true;
-                    clicked => { root.add-shortcut(); }
-                }
+            Button {
+                text: "Thêm";
+                primary: true;
+                clicked => { root.add-shortcut(); }
             }
         }
         if root.shortcuts.length == 0: Text {
-            text: "Chưa có gõ tắt nào. Bấm “Thêm” để tạo — ví dụ vn → Việt Nam, kg → không.";
+            text: "Chưa có gõ tắt nào. Bấm “Thêm” để tạo.";
             font-size: 13px;
             color: Theme.subtle;
             wrap: word-wrap;
@@ -71,16 +68,14 @@ export component ShortcutsPage inherits VerticalLayout {
             }
         }
     }
-    Card {
-        VerticalLayout {
-            spacing: Theme.sp-xs;
-            Text { text: "Mẹo"; font-size: 13px; font-weight: 600; color: Theme.subtle; }
-            Text {
-                text: "Trigger khớp đúng chuỗi phím và phân biệt hoa/thường (vn ≠ VN). Gõ tắt được ưu tiên hơn tự khôi phục tiếng Anh.";
-                font-size: 13px;
-                color: Palette.foreground;
-                wrap: word-wrap;
-            }
+
+    Section {
+        title: "Mẹo";
+        Text {
+            text: "Trigger khớp đúng chuỗi phím và phân biệt hoa/thường (vn ≠ VN). Gõ tắt được ưu tiên hơn tự khôi phục tiếng Anh.";
+            font-size: 13px;
+            color: Palette.foreground;
+            wrap: word-wrap;
         }
     }
 }

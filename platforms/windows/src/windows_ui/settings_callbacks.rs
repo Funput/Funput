@@ -87,6 +87,7 @@ pub(super) fn wire(window: &SettingsWindow) {
     window.on_set_spell(commands::set_spell_check);
     window.on_set_auto_cap(commands::set_auto_capitalize);
     window.on_set_launch(commands::set_launch_at_login);
+    window.on_set_enabled(commands::set_enabled);
 
     content::wire(window);
 

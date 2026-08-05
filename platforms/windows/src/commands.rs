@@ -34,6 +34,10 @@ pub fn set_auto_capitalize(on: bool) {
     shell::set_auto_capitalize(on);
 }
 
+pub fn set_enabled(on: bool) {
+    shell::set_enabled(on);
+}
+
 pub fn set_toggle_hotkey(hotkey: Hotkey) {
     shell::set_toggle_hotkey(hotkey);
 }

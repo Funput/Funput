@@ -1,8 +1,8 @@
-// Settings → "Phím chuyển": the VI/EN toggle hotkey and flip-word hotkey.
+// Settings → "Phím tắt": VI/EN toggle hotkey and flip-word hotkey.
 
-import { Theme } from "../../theme/mod.slint";
+import { Theme, PageHeader } from "../../theme/mod.slint";
 import { RecorderPanel } from "../../overlays/recorder.slint";
-import { HotkeyCard } from "hotkey_card.slint";
+import { HotkeyBlock } from "hotkey_block.slint";
 
 export component KeyboardPage inherits VerticalLayout {
     in property <string> hotkey;
@@ -18,7 +18,8 @@ export component KeyboardPage inherits VerticalLayout {
     private property <string> rec-kind: "toggle";
     private property <int> rec-reset-token: 0;
 
-    spacing: Theme.sp-md;
+    spacing: Theme.sp-lg;
+    width: 100%;
 
     recorder-popup := PopupWindow {
         x: (root.width - 300px) / 2;
@@ -34,10 +35,14 @@ export component KeyboardPage inherits VerticalLayout {
         }
     }
 
-    HotkeyCard {
-        heading: "Phím chuyển VI / EN";
+    PageHeader {
         title: "Phím tắt";
-        subtitle: "Bật/tắt gõ tiếng Việt nhanh.";
+        subtitle: "Điều khiển Funput mà không rời bàn phím.";
+    }
+
+    HotkeyBlock {
+        heading: "Chuyển VI / EN";
+        subtitle: "Bật hoặc tắt gõ tiếng Việt.";
         options: [
             { id: "ctrl_backtick", label: "Ctrl `" },
             { id: "ctrl_space", label: "Ctrl Space" },
@@ -58,9 +63,8 @@ export component KeyboardPage inherits VerticalLayout {
         }
     }
 
-    HotkeyCard {
-        heading: "Phím lật từ vừa gõ";
-        title: "Phím tắt";
+    HotkeyBlock {
+        heading: "Lật từ vừa gõ";
         subtitle: "Đổi từ đang gõ giữa tiếng Việt và chữ gốc (card ⇄ cải).";
         options: [
             { id: "off", label: "Tắt" },

@@ -1,6 +1,6 @@
-// Fluent card: a flat semi-opaque layer over the backdrop, delineated by a hairline
-// stroke rather than a shadow (Win11 cards are not elevated).
+// Surfaces: Card (legacy), PageHeader, and Section — product-settings chrome.
 
+import { Palette } from "std-widgets.slint";
 import { Theme } from "tokens.slint";
 
 export component Card inherits Rectangle {
@@ -14,4 +14,40 @@ export component Card inherits Rectangle {
         spacing: Theme.sp-md;
         @children
     }
+}
+
+/// Page title + one supporting line. Used at the top of every settings page.
+export component PageHeader inherits VerticalLayout {
+    in property <string> title;
+    in property <string> subtitle;
+    spacing: 6px;
+    width: 100%;
+
+    Text {
+        text: root.title;
+        font-size: Theme.font-title;
+        font-weight: 700;
+        color: Palette.foreground;
+    }
+    if root.subtitle != "": Text {
+        text: root.subtitle;
+        font-size: Theme.font-caption;
+        color: Theme.subtle;
+        wrap: word-wrap;
+    }
+}
+
+/// Quiet section label + stacked controls (no card chrome).
+export component Section inherits VerticalLayout {
+    in property <string> title;
+    spacing: Theme.sp-sm;
+    width: 100%;
+
+    if root.title != "": Text {
+        text: root.title;
+        font-size: 13px;
+        font-weight: 600;
+        color: Theme.subtle;
+    }
+    @children
 }
