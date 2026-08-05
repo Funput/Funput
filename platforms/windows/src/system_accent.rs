@@ -20,7 +20,7 @@ pub fn apply(theme: &Theme) {
             let fill = Color::from_rgb_u8(r, g, b);
             (fill, contrasting_text(r, g, b))
         }
-        None => (FALLBACK, FALLBACK_TEXT),
+        None => (FALLBACK, contrasting_text(0xea, 0x58, 0x0c)),
     };
     theme.set_accent(fill);
     theme.set_accent_text(text);
@@ -102,9 +102,13 @@ fn read_highlight() -> Option<(u8, u8, u8)> {
 }
 
 fn contrasting_text(r: u8, g: u8, b: u8) -> Color {
-    // Relative luminance (sRGB, simplified).
+    // Relative luminance (sRGB).
     let lum = 0.2126 * srgb(r) + 0.7152 * srgb(g) + 0.0722 * srgb(b);
-    if lum > 0.55 {
+    // Break-even point where white and DARK_TEXT score the same WCAG ratio
+    // against this fill: (L + 0.05)² = 1.05 × (L_dark + 0.05). Anything brighter
+    // reads better with dark text — mid-luminance accents (orange, teal, lime)
+    // land above it, where white would only reach ~3.5:1.
+    if lum > 0.2 {
         DARK_TEXT
     } else {
         FALLBACK_TEXT

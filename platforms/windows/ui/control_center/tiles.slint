@@ -14,10 +14,11 @@ export component BigTile inherits Rectangle {
     min-width: 0px;
     height: 88px;
     border-radius: Theme.r-shell;
-    background: root.emphasized ? Theme.accent : Theme.card-bg;
-    border-width: root.emphasized ? 0px : 1px;
-    border-color: Theme.card-border;
-    animate background { duration: 120ms; easing: ease-out; }
+    background: root.emphasized
+        ? (touch.has-hover ? Theme.accent-hover : Theme.accent)
+        : (touch.has-hover ? Theme.nav-active : Theme.flyout-card);
+    border-width: 1px;
+    border-color: root.emphasized ? transparent : Theme.flyout-border;
 
     VerticalLayout {
         padding: 14px;
@@ -28,7 +29,7 @@ export component BigTile inherits Rectangle {
             source: root.icon;
             width: 18px;
             height: 18px;
-            colorize: root.emphasized ? Theme.accent-text : Theme.subtle;
+            colorize: root.emphasized ? Theme.accent-text : Palette.foreground;
             horizontal-alignment: left;
         }
         Rectangle { vertical-stretch: 1; }
@@ -37,14 +38,17 @@ export component BigTile inherits Rectangle {
             font-size: 14px;
             font-weight: 600;
             color: root.emphasized ? Theme.accent-text : Palette.foreground;
+            overflow: elide;
         }
         Text {
             text: root.subtitle;
-            font-size: 11px;
-            color: root.emphasized ? Theme.accent-text.transparentize(0.25) : Theme.subtle;
+            font-size: 12px;
+            // Opaque on the accent fill: any transparency drops it under 4.5:1.
+            color: root.emphasized ? Theme.accent-text : Theme.subtle;
+            overflow: elide;
         }
     }
-    TouchArea {
+    touch := TouchArea {
         width: 100%;
         height: 100%;
         mouse-cursor: pointer;

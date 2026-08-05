@@ -10,10 +10,11 @@ export component ControlCenterWindow inherits Window {
     icon: @image-url("../../../../assets/logo.png");
     no-frame: true;
     always-on-top: true;
+    // Height follows the content so the panel never shows a dead band under the
+    // footer; Windows font metrics can shift it a few px either way.
     width: 340px;
-    height: 460px;
     default-font-family: "Segoe UI Variable Text";
-    background: Theme.mica ? transparent : Theme.window-base;
+    background: Theme.mica ? Theme.flyout-base : Theme.window-base;
 
     in-out property <bool> enabled: true;
     in property <string> status: "Đang gõ tiếng Việt";

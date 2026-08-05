@@ -22,7 +22,7 @@ component LinkRow inherits Rectangle {
             vertical-alignment: center;
             font-size: 13px;
             font-weight: 600;
-            color: Theme.subtle;
+            color: Palette.foreground;
         }
         Text {
             text: "›";
@@ -51,9 +51,9 @@ export component CcList {
         Rectangle {
             width: 100%;
             border-radius: Theme.r-shell;
-            background: Theme.card-bg;
+            background: Theme.flyout-card;
             border-width: 1px;
-            border-color: Theme.card-border;
+            border-color: Theme.flyout-border;
             VerticalLayout {
                 padding-left: 14px;
                 padding-right: 14px;

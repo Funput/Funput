@@ -36,7 +36,8 @@ export component CcHeader {
                 Text {
                     text: root.status;
                     font-size: Theme.font-caption;
-                    color: root.enabled ? Theme.accent : Theme.subtle;
+                    color: root.enabled ? Theme.accent-legible : Theme.subtle;
+                    overflow: elide;
                 }
             }
             // Large VI toggle.
@@ -44,8 +45,11 @@ export component CcHeader {
                 width: 48px;
                 height: 28px;
                 border-radius: 14px;
+                // No fill animation: the flyout is created fresh on every open, and
+                // an animated background renders its first frame transparent.
                 background: root.enabled ? Theme.accent : Theme.track;
-                animate background { duration: 120ms; }
+                border-width: root.enabled ? 0px : 1px;
+                border-color: Theme.flyout-border;
                 Rectangle {
                     x: root.enabled ? parent.width - 25px : 3px;
                     y: 3px;

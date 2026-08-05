@@ -29,11 +29,17 @@ export global Theme {
     // Accent: Rust sets `accent` / `accent-text` from the Windows accent color;
     // orange is the Slint-viewer / read-failure fallback.
     in-out property <color> accent: #ea580c;
-    in-out property <color> accent-text: #ffffff;
+    // Matches what system_accent.rs derives for the orange fallback.
+    in-out property <color> accent-text: #1c1917;
     out property <color> accent-hover: root.dark
         ? root.accent.brighter(0.12)
         : root.accent.darker(0.06);
     out property <brush> accent-soft: root.accent.transparentize(0.86);
+    // Accent as *text* on a surface: the raw system accent is often too dark on
+    // dark / too light on light to pass a readable contrast ratio.
+    out property <color> accent-legible: root.dark
+        ? root.accent.brighter(0.45)
+        : root.accent.darker(0.25);
     out property <color> warn: root.dark ? #fbbf24 : #b45309;
     out property <color> danger: root.dark ? #ff99a4 : #c42b1c;
 
@@ -61,6 +67,13 @@ export global Theme {
     out property <color> card-border: root.dark ? #ffffff14 : #0000000f;
     // Flyout elevation (recorder / composing popups only — cards stay flat).
     out property <color> shadow: root.dark ? #00000073 : #00000024;
+
+    // Flyout (Control Center) layers. Acrylic only blurs what is behind it, so a
+    // near-opaque tint has to sit on top or text lands straight on the wallpaper.
+    // Matches AcrylicBackgroundFillColorDefault's high luminosity opacity.
+    out property <brush> flyout-base: root.dark ? #2b2b2beb : #f9f9f9f0;
+    out property <brush> flyout-card: root.dark ? #ffffff17 : #ffffffd9;
+    out property <color> flyout-border: root.dark ? #ffffff26 : #00000017;
 
     // The sidebar sits directly on the backdrop, Win11 NavigationView style.
     out property <brush> sidebar-bg: transparent;
