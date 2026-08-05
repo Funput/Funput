@@ -1,0 +1,58 @@
+// Onboarding step 2: tray + toggle hotkey, quiet Admin note.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, KeyCap } from "../theme/mod.slint";
+
+export component HowItWorksStep inherits VerticalLayout {
+    alignment: center;
+    spacing: Theme.sp-sm;
+
+    HorizontalLayout {
+        alignment: center;
+        Image {
+            source: @image-url("../icons/status/bell.svg");
+            colorize: Theme.accent;
+            width: 42px;
+            height: 42px;
+        }
+    }
+    Text {
+        text: "Cách hoạt động";
+        font-size: Theme.font-title;
+        font-weight: 700;
+        horizontal-alignment: center;
+        color: Palette.foreground;
+    }
+    Text {
+        text: "Funput chạy nền ở khay hệ thống.";
+        font-size: Theme.font-body;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+        color: Theme.subtle;
+    }
+    HorizontalLayout {
+        alignment: center;
+        spacing: Theme.sp-xs;
+        Text {
+            text: "Nhấn";
+            vertical-alignment: center;
+            font-size: Theme.font-body;
+            color: Theme.subtle;
+        }
+        KeyCap { label: "Ctrl"; }
+        KeyCap { label: "`"; }
+        Text {
+            text: "để bật hoặc tắt.";
+            vertical-alignment: center;
+            font-size: Theme.font-body;
+            color: Theme.subtle;
+        }
+    }
+    Text {
+        text: "Không gõ được vào ứng dụng chạy quyền Administrator.";
+        font-size: Theme.font-caption;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+        color: Theme.faint;
+    }
+}

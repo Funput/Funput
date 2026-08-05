@@ -1,4 +1,4 @@
-// Input-method step extracted from the onboarding wizard.
+// Onboarding step 1: pick input method (shared MethodSelector).
 
 import { Palette } from "std-widgets.slint";
 import { Theme } from "../theme/tokens.slint";
@@ -10,6 +10,7 @@ export component OnboardingMethodStep inherits VerticalLayout {
 
     alignment: center;
     spacing: Theme.sp-sm;
+    width: 100%;
 
     HorizontalLayout {
         alignment: center;
@@ -28,17 +29,14 @@ export component OnboardingMethodStep inherits VerticalLayout {
         color: Palette.foreground;
     }
     Text {
-        text: "Có thể đổi bất cứ lúc nào trong Cài đặt.";
+        text: "Đổi được bất cứ lúc nào trong Cài đặt.";
         font-size: Theme.font-body;
         horizontal-alignment: center;
         color: Theme.subtle;
     }
-    HorizontalLayout {
-        alignment: center;
-        MethodSelector {
-            method: root.method;
-            picked(value) => { root.pick-method(value); }
-        }
+    MethodSelector {
+        method: root.method;
+        picked(value) => { root.pick-method(value); }
     }
     Text {
         text: root.method == "telex_advanced"

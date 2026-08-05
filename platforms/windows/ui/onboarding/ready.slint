@@ -1,0 +1,51 @@
+// Onboarding step 3: ready + launch-at-login with AccentSwitch.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, AccentSwitch } from "../theme/mod.slint";
+
+export component ReadyStep inherits VerticalLayout {
+    in-out property <bool> launch-at-login;
+    callback set-launch(bool);
+
+    alignment: center;
+    spacing: Theme.sp-md;
+
+    HorizontalLayout {
+        alignment: center;
+        Image {
+            source: @image-url("../icons/status/check.svg");
+            colorize: Theme.accent;
+            width: 42px;
+            height: 42px;
+        }
+    }
+    Text {
+        text: "Sẵn sàng!";
+        font-size: Theme.font-title;
+        font-weight: 700;
+        horizontal-alignment: center;
+        color: Palette.foreground;
+    }
+    Text {
+        text: "Bật tự khởi động để Funput luôn sẵn sàng.";
+        font-size: Theme.font-body;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+        color: Theme.subtle;
+    }
+    HorizontalLayout {
+        alignment: center;
+        spacing: Theme.sp-md;
+        Text {
+            text: "Khởi động cùng Windows";
+            vertical-alignment: center;
+            font-size: Theme.font-body;
+            font-weight: 600;
+            color: Palette.foreground;
+        }
+        AccentSwitch {
+            checked <=> root.launch-at-login;
+            toggled => { root.set-launch(self.checked); }
+        }
+    }
+}
