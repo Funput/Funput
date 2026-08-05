@@ -32,19 +32,45 @@ pub fn apply(window: &slint::Window) -> bool {
     false
 }
 
-/// Transient flyout backdrop (Control Center): Acrylic first, then Mica.
+/// Transient flyout backdrop (Control Center): Acrylic first, then Mica, plus
+/// the small Win11 corner radius menus and flyouts use.
 pub fn apply_flyout(window: &slint::Window) -> bool {
     #[cfg(windows)]
     {
         use window_vibrancy::{apply_acrylic, apply_mica};
         let handle = window.window_handle();
-        if apply_acrylic(&handle, None).is_ok() {
-            return true;
-        }
-        if apply_mica(&handle, None).is_ok() {
-            return true;
-        }
+        let ok = apply_acrylic(&handle, None).is_ok() || apply_mica(&handle, None).is_ok();
+        round_flyout(window);
+        return ok;
     }
     let _ = window;
     false
+}
+
+/// Soften the `no-frame` HWND. Slint has no window-radius API; Win11 DWM does.
+#[cfg(windows)]
+fn round_flyout(window: &slint::Window) {
+    use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::Graphics::Dwm::{
+        DwmSetWindowAttribute, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_ROUNDSMALL,
+        DWM_WINDOW_CORNER_PREFERENCE,
+    };
+
+    let Ok(borrowed) = window.window_handle().window_handle() else {
+        return;
+    };
+    let RawWindowHandle::Win32(win) = borrowed.as_raw() else {
+        return;
+    };
+    let hwnd = HWND(win.hwnd.get() as *mut _);
+    let preference = DWMWCP_ROUNDSMALL;
+    let _ = unsafe {
+        DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_WINDOW_CORNER_PREFERENCE,
+            &preference as *const DWM_WINDOW_CORNER_PREFERENCE as *const _,
+            std::mem::size_of::<DWM_WINDOW_CORNER_PREFERENCE>() as u32,
+        )
+    };
 }

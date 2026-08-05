@@ -63,6 +63,9 @@ funput-desktop = { path = "../../crates/funput-desktop" }
 # Win11 Mica / Win10 Acrylic backdrop via DWM (see src/mica.rs). Takes a
 # raw-window-handle-06 handle, which Slint exposes with the matching feature.
 window-vibrancy = "0.8"
+# Same version Slint's `raw-window-handle-06` feature pulls; used to read HWND
+# for DWM corner preference on the Control Center flyout.
+raw-window-handle = "0.6.2"
 windows = { version = "0.62", features = [
     "Win32_Foundation",
     "Win32_UI_WindowsAndMessaging",
@@ -71,6 +74,7 @@ windows = { version = "0.62", features = [
     "Win32_System_LibraryLoader",
     "Win32_System_Threading",
     "Win32_System_Registry",
+    "Win32_Graphics_Dwm",
 ] }
 
 # Size-first for the shell (the slint UI dominates the binary), speed-first for
