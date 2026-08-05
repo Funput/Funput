@@ -86,9 +86,4 @@ public final class KeyboardTouchPipeline {
         return true
     }
 
-    /// Commits presses whose finger already lifted. A teardown that skips this drops them.
-    @discardableResult
-    public func flushResolvedPresses() -> Int {
-        arbiter.flushResolved()
-    }
 }

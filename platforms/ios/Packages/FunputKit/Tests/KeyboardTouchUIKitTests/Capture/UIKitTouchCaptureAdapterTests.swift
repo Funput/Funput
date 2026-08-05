@@ -30,6 +30,9 @@ struct UIKitTouchCaptureAdapterTests {
         #expect(ended[0].id == began[0].id)
     }
 
+    /// Retiring the old contact is a policy choice, not an observation. It is reported so the
+    /// field data can say whether UIKit actually recycles a `UITouch` this way — the answer
+    /// decides whether the policy stays.
     @Test func recycledObjectRetiresOldIDAndNeverReusesIt() {
         let adapter = UIKitTouchCaptureAdapter()
         let view = UIView()
@@ -42,6 +45,17 @@ struct UIKitTouchCaptureAdapterTests {
         #expect(second[0].id == first[0].id)
         #expect(second[1].phase == .began)
         #expect(second[1].id != first[0].id)
+        #expect(adapter.staleIdentityCount == 1)
+    }
+
+    @Test func aPlainSequenceReportsNoStaleIdentity() {
+        let adapter = UIKitTouchCaptureAdapter()
+        let view = UIView()
+        let touch = ShadowStubTouch()
+        _ = adapter.samples(for: [touch], phase: .began, in: view)
+        _ = adapter.samples(for: [touch], phase: .ended, in: view)
+
+        #expect(adapter.staleIdentityCount == 0)
     }
 
     @Test func unknownCallbacksAreCountedWithoutSamples() {

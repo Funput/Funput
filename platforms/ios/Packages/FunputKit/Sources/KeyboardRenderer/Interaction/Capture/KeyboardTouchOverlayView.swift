@@ -17,6 +17,7 @@ final class KeyboardTouchOverlayView: UIView {
     var onCancel: ((TouchToken) -> Void)?
     var onSamples: (([ContactSample]) -> Void)?
     var onUnknownCapture: (() -> Void)?
+    var onStaleIdentity: (() -> Void)?
 
     /// Borrowed from the pipeline, not rebuilt: the exact snapshot new contacts commit
     /// against, so a press can never highlight one key and commit another.

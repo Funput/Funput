@@ -11,12 +11,13 @@ extension KeyboardTouchDiagnosticMetrics {
         cancelledContacts = value.cancelledContacts
         systemCancelled = value.systemCancelled
         captureUnknownCallback = value.captureUnknownCallback
+        captureStaleIdentity = value.captureStaleIdentity
+        contactsAbandoned = value.contactsAbandoned
         resolverUnknownCallback = value.resolverUnknownCallback
         beganOutside = value.beganOutside
         endedOutside = value.endedOutside
         recoveredReleaseOutside = value.recoveredReleaseOutside
         recoveredTapSlop = value.recoveredTapSlop
-        flushedOnLayoutChange = value.flushedOnLayoutChange
         layoutChangedWhileActive = value.layoutChangedWhileActive
         timestampTieContacts = value.timestampTieContacts
         maximumConcurrentContacts = value.maximumConcurrentContacts

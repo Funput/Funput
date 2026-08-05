@@ -23,6 +23,9 @@ extension KeyboardSurfaceView {
         touchOverlay.onUnknownCapture = { [weak self] in
             self?.touchCoordinator.recordUnknownCaptureCallback()
         }
+        touchOverlay.onStaleIdentity = { [weak self] in
+            self?.touchCoordinator.recordStaleIdentity()
+        }
     }
 
     func claimContactGesture(
@@ -32,10 +35,8 @@ extension KeyboardSurfaceView {
         touchCoordinator.claim(token: token, kind: kind)
     }
 
-    func resetTouchPipeline(flushingResolvedPresses: Bool = false) {
-        touchCoordinator.reset(
-            flushingResolvedPresses: flushingResolvedPresses
-        )
+    func resetTouchPipeline() {
+        touchCoordinator.reset()
     }
 
     public func updateSuggestions(_ candidates: [KeyboardSuggestionCandidate]) {
