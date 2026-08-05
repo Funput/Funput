@@ -19,25 +19,10 @@ export component Sidebar inherits Rectangle {
 
     VerticalLayout {
         padding: Theme.sp-sm;
-        padding-top: Theme.sp-md;
+        // Line the first nav item up with the page title across the divider.
+        padding-top: Theme.sp-lg;
         spacing: 2px;
         alignment: start;
-
-        VerticalLayout {
-            padding-left: 12px;
-            padding-bottom: Theme.sp-sm;
-            Text {
-                text: "Funput";
-                font-size: 18px;
-                font-weight: 700;
-                color: Palette.foreground;
-            }
-            Text {
-                text: "Cài đặt";
-                font-size: Theme.font-caption;
-                color: Theme.subtle;
-            }
-        }
 
         for item in root.nav: Rectangle {
             height: 40px;
