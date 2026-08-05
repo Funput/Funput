@@ -2,9 +2,9 @@
 //! Windows embed the app icon + a DPI-aware, `asInvoker` application manifest.
 
 fn main() {
-    // Compile `ui/app.slint` into Rust. Cupertino gives the macOS-style widgets that
-    // match Funput's liquid-glass look (vs. Fluent's native Win11 widgets).
-    let config = slint_build::CompilerConfiguration::new().with_style("cupertino".into());
+    // Compile `ui/app.slint` into Rust with the Fluent style so the built-in
+    // widgets match Windows 11 (spacing, focus rings, control metrics).
+    let config = slint_build::CompilerConfiguration::new().with_style("fluent".into());
     slint_build::compile_with_config("ui/app.slint", config).expect("Slint build failed");
 
     // Embed icon + manifest only when targeting Windows (the canonical build host).

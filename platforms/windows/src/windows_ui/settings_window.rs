@@ -6,7 +6,7 @@ use slint::{ComponentHandle, Weak};
 
 use super::models;
 use super::settings_callbacks;
-use crate::{commands, mica, recorder, shell, system_accent, SettingsWindow, Theme};
+use crate::{commands, recorder, shell, system_accent, SettingsWindow, Theme};
 
 thread_local! {
     static WINDOW: RefCell<Option<Weak<SettingsWindow>>> = const { RefCell::new(None) };
@@ -14,27 +14,33 @@ thread_local! {
 
 pub(super) fn open() {
     if let Some(window) = current() {
-        dress(&window);
+        system_accent::apply(&window.global::<Theme>());
         populate(&window);
         let _ = window.show();
+        schedule_backdrop(window.as_weak());
         return;
     }
 
     let window = SettingsWindow::new().expect("create settings window");
-    dress(&window);
+    system_accent::apply(&window.global::<Theme>());
     populate(&window);
     settings_callbacks::wire(&window);
     let _ = window.show();
-    // The native window only exists once shown, so the backdrop is set after.
-    mica::apply(window.window(), mica::Material::Window);
+    schedule_backdrop(window.as_weak());
     WINDOW.with(|cell| *cell.borrow_mut() = Some(window.as_weak()));
 }
 
-/// Push the host's visual context (accent, backdrop availability) into the theme.
-fn dress(window: &SettingsWindow) {
-    let theme = window.global::<Theme>();
-    system_accent::apply(&theme);
-    theme.set_mica(mica::supported());
+/// Request a DWM backdrop once the loop has created the native window, then reveal
+/// it by flipping the window to a transparent background. Deferred because the raw
+/// handle is only valid after an event-loop turn, and the window must be created
+/// opaque so Slint does not request a DirectComposition surface (which ignores Mica).
+fn schedule_backdrop(weak: Weak<SettingsWindow>) {
+    let _ = slint::invoke_from_event_loop(move || {
+        if let Some(window) = weak.upgrade() {
+            let active = crate::mica::apply(window.window());
+            window.global::<Theme>().set_mica(active);
+        }
+    });
 }
 
 fn current() -> Option<SettingsWindow> {

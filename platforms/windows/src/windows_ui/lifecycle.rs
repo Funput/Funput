@@ -9,7 +9,7 @@ use windows::Win32::System::Threading::{
 };
 
 use super::{onboarding, settings_window};
-use crate::{mica, shell};
+use crate::shell;
 
 thread_local! {
     static UI_PROCESS: RefCell<Option<Child>> = const { RefCell::new(None) };
@@ -98,7 +98,6 @@ fn seed_recent_apps() {
 
 /// Run the only Settings window until it closes, then end the child process.
 pub(crate) fn run_settings(check_update: bool) {
-    mica::install_backend();
     seed_recent_apps();
     if check_update {
         settings_window::open_and_check_updates();
@@ -110,7 +109,6 @@ pub(crate) fn run_settings(check_update: bool) {
 
 /// Run the only Onboarding window until it closes.
 pub(crate) fn run_onboarding() {
-    mica::install_backend();
     onboarding::open();
     let _ = slint::run_event_loop();
 }

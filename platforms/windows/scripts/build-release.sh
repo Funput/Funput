@@ -10,7 +10,11 @@
 #   VERSION=1.2026.1 ./scripts/build-release.sh              # override Cargo.toml version
 #
 # On Windows (Git Bash / MSYS), omit TARGET to build the host triple (MSVC or GNU).
-# Cross-compiling from macOS/Linux requires a Windows linker (e.g. mingw-w64 for *-gnu).
+#
+# NOTE: the UI now uses Slint's Skia renderer (needed for the Mica backdrop).
+# rust-skia only ships prebuilt binaries for *-windows-msvc, and building Skia from
+# source needs a Visual C++ install — so cross-compiling to x86_64-pc-windows-gnu
+# from macOS/Linux FAILS at the Skia step. Build on Windows with build-release.ps1.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

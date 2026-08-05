@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use slint::{ComponentHandle, Weak};
 
 use crate::settings::Method;
-use crate::{commands, mica, shell, system_accent, OnboardingWindow, Theme};
+use crate::{commands, shell, system_accent, OnboardingWindow, Theme};
 
 thread_local! {
     static WINDOW: RefCell<Option<Weak<OnboardingWindow>>> = const { RefCell::new(None) };
@@ -13,14 +13,15 @@ thread_local! {
 
 pub(super) fn open() {
     if let Some(window) = WINDOW.with(|cell| cell.borrow().as_ref().and_then(Weak::upgrade)) {
-        dress(&window);
+        system_accent::apply(&window.global::<Theme>());
         window.set_step(0);
         let _ = window.show();
+        schedule_backdrop(window.as_weak());
         return;
     }
 
     let window = OnboardingWindow::new().expect("create onboarding window");
-    dress(&window);
+    system_accent::apply(&window.global::<Theme>());
     let settings = shell::snapshot();
     window.set_method(settings.method.id().into());
     window.set_launch_at_login(settings.launch_at_login);
@@ -46,14 +47,18 @@ pub(super) fn open() {
     });
 
     let _ = window.show();
-    // The native window only exists once shown, so the backdrop is set after.
-    mica::apply(window.window(), mica::Material::Window);
+    schedule_backdrop(window.as_weak());
     WINDOW.with(|cell| *cell.borrow_mut() = Some(window.as_weak()));
 }
 
-/// Push the host's visual context (accent, backdrop availability) into the theme.
-fn dress(window: &OnboardingWindow) {
-    let theme = window.global::<Theme>();
-    system_accent::apply(&theme);
-    theme.set_mica(mica::supported());
+/// Request a DWM backdrop once the loop has created the native window, then reveal
+/// it by flipping to a transparent background. See the Settings equivalent for why
+/// this is deferred and why the window must start opaque.
+fn schedule_backdrop(weak: Weak<OnboardingWindow>) {
+    let _ = slint::invoke_from_event_loop(move || {
+        if let Some(window) = weak.upgrade() {
+            let active = crate::mica::apply(window.window());
+            window.global::<Theme>().set_mica(active);
+        }
+    });
 }

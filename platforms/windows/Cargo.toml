@@ -18,9 +18,19 @@ slint-build = "1.17"
 winresource = "0.1"
 
 [dependencies]
-# Native UI. Default features bring the winit backend + FemtoVG renderer (SVG
-# decoding included); the Fluent (Windows 11) widget style is selected in build.rs.
-slint = "1.17"
+# Native UI. The Skia renderer (not the default FemtoVG) is required for the Mica
+# backdrop: FemtoVG's GL surface has no alpha channel, so transparent pixels turn
+# black instead of revealing the DWM material (see src/mica.rs). `raw-window-handle-06`
+# exposes `Window::window_handle()`, which window-vibrancy needs. The Fluent (Win11)
+# widget style is selected in build.rs.
+slint = { version = "1.17", default-features = false, features = [
+    "std",
+    "accessibility",
+    "compat-1-2",
+    "backend-winit",
+    "renderer-skia",
+    "raw-window-handle-06",
+] }
 # Tray icon + menu — the standalone crate Tauri itself wraps, so no WebView2. The
 # menu types come from tray-icon's re-exported `muda` (kept version-matched).
 tray-icon = "0.24"
@@ -49,11 +59,9 @@ funput-engine = { path = "../../crates/funput-engine" }
 funput-desktop = { path = "../../crates/funput-desktop" }
 
 [target.'cfg(windows)'.dependencies]
-# Slint-internal winit backend — the only route to the Win11 DWM backdrop APIs
-# (see src/mica.rs). No semver guarantee, so the version is pinned exactly and
-# must be bumped together with `slint`. `default-features = false` keeps us from
-# pulling in renderers beyond the ones `slint` already selects.
-i-slint-backend-winit = { version = "=1.17.0", default-features = false }
+# Win11 Mica / Win10 Acrylic backdrop via DWM (see src/mica.rs). Takes a
+# raw-window-handle-06 handle, which Slint exposes with the matching feature.
+window-vibrancy = "0.8"
 windows = { version = "0.62", features = [
     "Win32_Foundation",
     "Win32_UI_WindowsAndMessaging",
