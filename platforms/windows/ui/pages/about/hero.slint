@@ -1,0 +1,40 @@
+// About brand strip: logo + name + tagline + version (sidebar already labels the page).
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "../../theme/mod.slint";
+
+export component AboutHero inherits HorizontalLayout {
+    in property <string> version;
+
+    spacing: Theme.sp-md;
+    width: 100%;
+    alignment: center;
+
+    Image {
+        source: @image-url("../../../../../assets/logo.png");
+        width: 68px;
+        height: 68px;
+    }
+    VerticalLayout {
+        horizontal-stretch: 1;
+        alignment: center;
+        spacing: 6px;
+        Text {
+            text: "Funput";
+            font-size: 28px;
+            font-weight: 700;
+            color: Palette.foreground;
+        }
+        Text {
+            text: "Bộ gõ tiếng Việt — miễn phí, mã nguồn mở.";
+            font-size: Theme.font-body;
+            color: Theme.subtle;
+            wrap: word-wrap;
+        }
+        Text {
+            text: "Phiên bản \{root.version}";
+            font-size: Theme.font-caption;
+            color: Theme.subtle;
+        }
+    }
+}
