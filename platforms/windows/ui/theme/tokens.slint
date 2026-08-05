@@ -32,20 +32,35 @@ export global Theme {
     // fallback when no registry source answers — it cannot reach Palette itself.
     out property <brush> style-accent: Palette.accent-background;
 
-    // Accent: Rust sets `accent` / `accent-text` from the Windows accent color;
-    // orange is the Slint-viewer / read-failure fallback.
-    in-out property <color> accent: #ea580c;
-    // Matches what system_accent.rs derives for the orange fallback.
-    in-out property <color> accent-text: #1c1917;
+    // The raw Windows accent, set by system_accent.rs; orange is the
+    // Slint-viewer / read-failure fallback.
+    in-out property <color> accent-source: #ea580c;
+
+    // Never paint the raw accent: users' accents run from navy to lemon, so its
+    // lightness — and with it the only readable text colour — swings wildly.
+    // Keep the user's hue and chroma but pin the lightness to Fluent's
+    // SystemAccentColorDark1 reference, in both colour schemes, so accent fills
+    // always carry white text. (WinUI itself switches to a light shade with black
+    // text in dark mode; one text colour everywhere reads more consistently.)
+    out property <color> accent-ref: #005fb8;
+    out property <color> accent: oklch(
+        root.accent-ref.to-oklch().lightness,
+        root.accent-source.to-oklch().chroma,
+        root.accent-source.to-oklch().hue);
+    out property <color> accent-text: #ffffff;
+    // Dark mode lifts the fill on hover rather than deepening it, but only just:
+    // brightening much further drops white text below a 4.5:1 ratio.
     out property <color> accent-hover: root.dark
-        ? root.accent.brighter(0.12)
+        ? root.accent.brighter(0.08)
         : root.accent.darker(0.06);
     out property <brush> accent-soft: root.accent.transparentize(0.86);
-    // Accent as *text* on a surface: the raw system accent is often too dark on
-    // dark / too light on light to pass a readable contrast ratio.
-    out property <color> accent-legible: root.dark
-        ? root.accent.brighter(0.45)
-        : root.accent.darker(0.25);
+    // Accent as *text* on a surface needs a different lightness than accent as a
+    // fill: these are Fluent's own AccentTextFillColorPrimary references.
+    out property <color> accent-text-ref: root.dark ? #99ebff : #003e92;
+    out property <color> accent-legible: oklch(
+        root.accent-text-ref.to-oklch().lightness,
+        root.accent-source.to-oklch().chroma,
+        root.accent-source.to-oklch().hue);
     out property <color> warn: root.dark ? #fbbf24 : #b45309;
     out property <color> danger: root.dark ? #ff99a4 : #c42b1c;
 

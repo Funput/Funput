@@ -14,14 +14,12 @@ use crate::Theme;
 
 /// Orange-600 — brand colour, only reached off-Windows or if Slint has no accent.
 const FALLBACK: (u8, u8, u8) = (0xea, 0x58, 0x0c);
-const LIGHT_TEXT: Color = Color::from_rgb_u8(0xff, 0xff, 0xff);
-const DARK_TEXT: Color = Color::from_rgb_u8(0x1c, 0x19, 0x17);
 
-/// Apply the resolved accent and its readable text colour to a Theme global.
+/// Apply the resolved accent to a Theme global. The theme re-lightens it per
+/// colour scheme, so only the raw hue matters here.
 pub fn apply(theme: &Theme) {
     let (r, g, b) = resolve().unwrap_or_else(|| style_accent(theme));
-    theme.set_accent(Color::from_rgb_u8(r, g, b));
-    theme.set_accent_text(contrasting_text(r, g, b));
+    theme.set_accent_source(Color::from_rgb_u8(r, g, b));
 }
 
 /// Registry sources in descending order of fidelity. `AccentPalette` is what
@@ -42,27 +40,4 @@ fn style_accent(theme: &Theme) -> (u8, u8, u8) {
         return FALLBACK;
     }
     (color.red(), color.green(), color.blue())
-}
-
-fn contrasting_text(r: u8, g: u8, b: u8) -> Color {
-    // Relative luminance (sRGB).
-    let lum = 0.2126 * srgb(r) + 0.7152 * srgb(g) + 0.0722 * srgb(b);
-    // Break-even point where white and DARK_TEXT score the same WCAG ratio
-    // against this fill: (L + 0.05)² = 1.05 × (L_dark + 0.05). Anything brighter
-    // reads better with dark text — mid-luminance accents (orange, teal, lime)
-    // land above it, where white would only reach ~3.5:1.
-    if lum > 0.2 {
-        DARK_TEXT
-    } else {
-        LIGHT_TEXT
-    }
-}
-
-fn srgb(c: u8) -> f32 {
-    let c = c as f32 / 255.0;
-    if c <= 0.03928 {
-        c / 12.92
-    } else {
-        ((c + 0.055) / 1.055).powf(2.4)
-    }
 }
