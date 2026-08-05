@@ -26,6 +26,12 @@ export global Theme {
     // window. The UI then leaves its own background transparent to reveal it.
     in-out property <bool> mica: false;
 
+    // Slint's own take on the OS accent: the winit backend feeds
+    // DwmGetColorizationColor into the Fluent palette, which keeps the accent's
+    // hue and re-lightens it per colour scheme. Read by system_accent.rs as the
+    // fallback when no registry source answers — it cannot reach Palette itself.
+    out property <brush> style-accent: Palette.accent-background;
+
     // Accent: Rust sets `accent` / `accent-text` from the Windows accent color;
     // orange is the Slint-viewer / read-failure fallback.
     in-out property <color> accent: #ea580c;
