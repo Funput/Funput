@@ -104,3 +104,38 @@ export component Dot inherits Rectangle {
     background: root.on ? Theme.accent : Theme.track;
     animate width { duration: 160ms; easing: ease-in-out; }
 }
+
+/// Win11-style toggle that paints Theme.accent when on (std-widgets Switch does not).
+export component AccentSwitch inherits Rectangle {
+    in-out property <bool> checked;
+    in property <bool> enabled: true;
+    callback toggled;
+
+    width: 40px;
+    height: 20px;
+    border-radius: 10px;
+    opacity: root.enabled ? 1 : 0.45;
+    // No fill animation: Settings opens fresh and animated bg starts transparent.
+    background: root.checked ? Theme.accent : Theme.track;
+    border-width: root.checked ? 0px : 1px;
+    border-color: Theme.divider;
+
+    Rectangle {
+        x: root.checked ? parent.width - 17px : 2px;
+        y: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 8px;
+        background: #ffffff;
+        animate x { duration: 120ms; easing: ease-out; }
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            if root.enabled {
+                root.checked = !root.checked;
+                root.toggled();
+            }
+        }
+    }
+}
