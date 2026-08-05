@@ -18,10 +18,11 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{VIRTUAL_KEY, VK_RETURN};
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, DispatchMessageW, GetMessageW, GetWindowThreadProcessId, PostQuitMessage,
     SetWindowsHookExW, TranslateMessage, EVENT_SYSTEM_FOREGROUND, HC_ACTION, KBDLLHOOKSTRUCT, MSG,
-    WH_KEYBOARD_LL, WH_MOUSE_LL, WINEVENT_OUTOFCONTEXT, WM_KEYDOWN, WM_LBUTTONDOWN, WM_MBUTTONDOWN,
-    WM_RBUTTONDOWN, WM_SYSKEYDOWN,
+    WH_KEYBOARD_LL, WH_MOUSE_LL, WINEVENT_OUTOFCONTEXT, WM_KEYDOWN, WM_KEYUP, WM_LBUTTONDOWN,
+    WM_MBUTTONDOWN, WM_MOUSEMOVE, WM_RBUTTONDOWN, WM_SYSKEYDOWN, WM_SYSKEYUP,
 };
 
+use crate::hotkey::{self, Hit};
 use crate::{inject, keymap, shell, tray};
 
 /// Called after a Ctrl+` toggle so the tray can refresh its checkmark/icon.
@@ -182,7 +183,18 @@ unsafe extern "system" fn keyboard_proc(code: i32, wparam: WPARAM, lparam: LPARA
             return CallNextHookEx(None, code, wparam, lparam);
         }
         let msg = wparam.0 as u32;
-        if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) && handle_keydown(kbd) {
+        let down = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
+        if down || msg == WM_KEYUP || msg == WM_SYSKEYUP {
+            let vk = VIRTUAL_KEY(kbd.vkCode as u16);
+            // A modifier-only hotkey resolves on release, and the tracker has to
+            // see every event to know a plain key interrupted the gesture.
+            // Firing never swallows: eating a modifier's keyup would leave the
+            // focused app convinced the modifier is still down.
+            if let Some(hit) = hotkey::on_key_event(vk, keymap::read_mods(), down) {
+                fire(hit);
+            }
+        }
+        if down && handle_keydown(kbd) {
             return LRESULT(1); // swallow: do not pass the key to the focused app
         }
     }
@@ -192,8 +204,17 @@ unsafe extern "system" fn keyboard_proc(code: i32, wparam: WPARAM, lparam: LPARA
 /// Low-level mouse hook: a button-down click moves the text caret, so flush the
 /// in-progress composition before the next keystroke diffs against a now-stale word.
 unsafe extern "system" fn mouse_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    if code == HC_ACTION as i32 && is_caret_moving_click(wparam.0 as u32) {
-        shell::clear();
+    if code == HC_ACTION as i32 {
+        let msg = wparam.0 as u32;
+        if is_caret_moving_click(msg) {
+            shell::clear();
+        }
+        // Any deliberate mouse action ends a modifier-only gesture: Ctrl+Shift
+        // then a click is multi-select, not a hotkey. Movement is excluded — it
+        // fires on the slightest jitter and would cancel every gesture.
+        if msg != WM_MOUSEMOVE {
+            hotkey::note_other_input();
+        }
     }
     CallNextHookEx(None, code, wparam, lparam)
 }
@@ -205,23 +226,46 @@ fn is_caret_moving_click(msg: u32) -> bool {
     matches!(msg, WM_LBUTTONDOWN | WM_RBUTTONDOWN | WM_MBUTTONDOWN)
 }
 
+/// Run the hotkey that just matched. Returns false when it was not applicable
+/// after all, so the key carries on to the engine (and then to the app).
+fn fire(hit: Hit) -> bool {
+    match hit {
+        Hit::Toggle => {
+            let on = shell::toggle_enabled_hotkey();
+            if let Some(cb) = ON_TOGGLE.get() {
+                cb(on);
+            }
+            true
+        }
+        // Flip the word being composed VN↔raw. There is nothing to flip in
+        // English mode, nor in Funput's own windows, which compose in-process.
+        Hit::Flip => {
+            if !shell::enabled() || FOREGROUND_IS_FUNPUT.load(Ordering::Relaxed) {
+                return false;
+            }
+            let plan = plan_inject(&shell::flip_composing());
+            if !plan.is_noop() {
+                if shell::foreground_has_urlbar_autofill() {
+                    inject::send_plan_primed(&plan);
+                } else {
+                    inject::send_plan(&plan);
+                }
+            }
+            true // swallow even on a no-op, so the hotkey never leaks to the app
+        }
+    }
+}
+
 /// Returns true if the key should be swallowed (we injected a replacement), false
 /// to let it reach the app.
 fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
     let vk = VIRTUAL_KEY(kbd.vkCode as u16);
     let mods = keymap::read_mods();
 
-    // A recorded custom combo overrides the preset; otherwise match the preset.
-    let toggle_hit = match shell::toggle_combo() {
-        Some(combo) => keymap::matches_combo(vk, mods, &combo),
-        None => keymap::is_toggle(vk, mods, shell::toggle_hotkey()),
-    };
-    if toggle_hit {
-        let on = shell::toggle_enabled_hotkey();
-        if let Some(cb) = ON_TOGGLE.get() {
-            cb(on);
+    if let Some(hit) = hotkey::on_keydown(vk, mods) {
+        if fire(hit) {
+            return true;
         }
-        return true;
     }
 
     if !shell::enabled() {
@@ -232,24 +276,6 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
     // in-process, so the background hook must leave their keystrokes untouched.
     if FOREGROUND_IS_FUNPUT.load(Ordering::Relaxed) {
         return false;
-    }
-
-    // Flip the word being composed VN↔raw. Same inject path as composing; swallow
-    // the hotkey even on a no-op so it never leaks to the app.
-    let flip_hit = match shell::flip_combo() {
-        Some(combo) => keymap::matches_combo(vk, mods, &combo),
-        None => keymap::is_flip(vk, mods, shell::flip_hotkey()),
-    };
-    if flip_hit {
-        let plan = plan_inject(&shell::flip_composing());
-        if !plan.is_noop() {
-            if shell::foreground_has_urlbar_autofill() {
-                inject::send_plan_primed(&plan);
-            } else {
-                inject::send_plan(&plan);
-            }
-        }
-        return true;
     }
 
     match classify(&keymap::to_key_event(kbd)) {
@@ -292,7 +318,7 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use windows::Win32::UI::WindowsAndMessaging::{WM_MOUSEMOVE, WM_MOUSEWHEEL};
+    use windows::Win32::UI::WindowsAndMessaging::WM_MOUSEWHEEL;
 
     #[test]
     fn button_down_clicks_flush_composition() {

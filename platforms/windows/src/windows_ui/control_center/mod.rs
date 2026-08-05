@@ -100,7 +100,10 @@ fn position_above_tray(window: &slint::Window) {
 }
 
 fn env_f64(key: &str) -> f64 {
-    std::env::var(key).ok().and_then(|v| v.parse().ok()).unwrap_or(0.0)
+    std::env::var(key)
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(0.0)
 }
 
 pub(super) fn status_line(on: bool, method: Method) -> String {

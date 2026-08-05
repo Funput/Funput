@@ -12,12 +12,7 @@ pub(super) fn build() -> Menu {
     let update = MenuItem::with_id(UPDATE_ID, "Kiểm tra cập nhật…", true, None);
     let quit = MenuItem::with_id(QUIT_ID, "Thoát", true, None);
     let menu = Menu::new();
-    menu.append_items(&[
-        &settings,
-        &update,
-        &PredefinedMenuItem::separator(),
-        &quit,
-    ])
-    .expect("build tray menu");
+    menu.append_items(&[&settings, &update, &PredefinedMenuItem::separator(), &quit])
+        .expect("build tray menu");
     menu
 }

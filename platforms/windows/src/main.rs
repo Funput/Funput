@@ -14,6 +14,7 @@ mod compose;
 mod config_transfer;
 mod dark_mode;
 mod hook;
+mod hotkey;
 mod inject;
 mod keymap;
 mod mica;

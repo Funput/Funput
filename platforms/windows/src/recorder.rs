@@ -7,11 +7,15 @@
 //! exactly what the low-level hook will see for that physical key. This is
 //! what makes custom combos work on layouts where the fixed presets don't
 //! (e.g. `Ctrl+\`` / `VK_OEM_3` only exists on US-like layouts).
+//!
+//! A combo can also be modifiers alone (Ctrl+Shift, Alt+Shift) — the shape most
+//! Vietnamese IMEs use for the VI/EN toggle. Those carry no VK and the hook
+//! matches them on release; see [`crate::hotkey`].
 
 use slint::platform::Key;
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyboardLayout, VkKeyScanExW};
 
-use crate::settings::KeyCombo;
+use crate::settings::{KeyCombo, NO_KEY};
 
 /// A successfully recorded combo, plus whether it collides with a well-known
 /// Windows system shortcut (the UI shows a warning but does not block — the
@@ -21,27 +25,52 @@ pub struct Recorded {
     pub system_conflict: bool,
 }
 
-/// Validate + map one recorded keypress. `None` = not recordable: no
-/// Ctrl/Alt/Win held (Shift alone is normal typing — same rule as the macOS
-/// recorder), a bare modifier/control char, or a key with no VK on this layout.
+/// Validate + map one recording. An empty `text` means the user released a bare
+/// modifier gesture; otherwise it is the main key they pressed. `None` = not
+/// recordable, and the recorder shows its hint instead.
 pub fn record(text: &str, ctrl: bool, alt: bool, shift: bool, win: bool) -> Option<Recorded> {
+    let combo = if text.is_empty() {
+        modifier_only(ctrl, alt, shift, win)?
+    } else {
+        with_main_key(text, ctrl, alt, shift, win)?
+    };
+    let system_conflict = system_conflict(&combo);
+    Some(Recorded {
+        combo,
+        system_conflict,
+    })
+}
+
+/// A hotkey of nothing but modifiers (Ctrl+Shift, Alt+Shift…). At least two are
+/// required: a lone modifier is pressed constantly during ordinary typing.
+fn modifier_only(ctrl: bool, alt: bool, shift: bool, win: bool) -> Option<KeyCombo> {
+    if [ctrl, alt, shift, win].iter().filter(|held| **held).count() < 2 {
+        return None;
+    }
+    Some(KeyCombo {
+        vk: NO_KEY,
+        ctrl,
+        alt,
+        shift,
+        win,
+        label: String::new(),
+    })
+}
+
+/// A main key plus modifiers. Needs Ctrl/Alt/Win — Shift alone is normal typing
+/// (same rule as the macOS recorder) — and a key with a VK on this layout.
+fn with_main_key(text: &str, ctrl: bool, alt: bool, shift: bool, win: bool) -> Option<KeyCombo> {
     if !(ctrl || alt || win) {
         return None;
     }
-    let ch = text.chars().next()?;
-    let (vk, label) = map_key(ch)?;
-    let combo = KeyCombo {
+    let (vk, label) = map_key(text.chars().next()?)?;
+    Some(KeyCombo {
         vk,
         ctrl,
         alt,
         shift,
         win,
         label,
-    };
-    let system_conflict = system_conflict(&combo);
-    Some(Recorded {
-        combo,
-        system_conflict,
     })
 }
 
@@ -142,6 +171,16 @@ mod tests {
         assert!(recorded.combo.ctrl);
         assert!(recorded.combo.shift);
         assert_eq!(recorded.combo.label, "Space");
+    }
+
+    #[test]
+    fn records_a_bare_modifier_pair_but_not_a_lone_modifier() {
+        let ctrl_shift = record("", true, false, true, false).unwrap();
+        assert!(ctrl_shift.combo.is_modifier_only());
+        assert_eq!(ctrl_shift.combo.caps(), ["Ctrl", "Shift"]);
+        // One modifier is held constantly while typing — never a hotkey.
+        assert!(record("", true, false, false, false).is_none());
+        assert!(record("", false, false, true, false).is_none());
     }
 
     #[test]
