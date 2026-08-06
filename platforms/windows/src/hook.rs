@@ -16,14 +16,16 @@ use windows::Win32::System::Threading::{
 use windows::Win32::UI::Accessibility::{SetWinEventHook, HWINEVENTHOOK};
 use windows::Win32::UI::Input::KeyboardAndMouse::{VIRTUAL_KEY, VK_RETURN};
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, DispatchMessageW, GetMessageW, GetWindowThreadProcessId, PostQuitMessage,
+    CallNextHookEx, DispatchMessageW, GetWindowThreadProcessId, PeekMessageW, PostQuitMessage,
     SetWindowsHookExW, TranslateMessage, EVENT_SYSTEM_FOREGROUND, HC_ACTION, KBDLLHOOKSTRUCT, MSG,
-    WH_KEYBOARD_LL, WH_MOUSE_LL, WINEVENT_OUTOFCONTEXT, WM_KEYDOWN, WM_KEYUP, WM_LBUTTONDOWN,
-    WM_MBUTTONDOWN, WM_MOUSEMOVE, WM_RBUTTONDOWN, WM_SYSKEYDOWN, WM_SYSKEYUP,
+    PM_REMOVE, WH_KEYBOARD_LL, WH_MOUSE_LL, WINEVENT_OUTOFCONTEXT, WM_KEYDOWN, WM_KEYUP,
+    WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_MOUSEMOVE, WM_QUIT, WM_RBUTTONDOWN, WM_SYSKEYDOWN,
+    WM_SYSKEYUP,
 };
 
 use crate::hotkey::{self, Hit};
-use crate::{inject, keymap, shell, tray};
+use crate::instance::{self, WaitKind};
+use crate::{inject, keymap, shell, tray, windows_ui};
 
 /// Called after a Ctrl+` toggle so the tray can refresh its checkmark/icon.
 type ToggleCb = Box<dyn Fn(bool) + Send + Sync>;
@@ -79,13 +81,26 @@ pub fn run() {
         // the same pump and its events can be drained right after each dispatch.
         tray::install();
 
-        // LL keyboard + mouse + WinEvent hooks (and the tray) are delivered through
-        // this thread's message queue.
+        // Wait on the activate Event and the thread queue together so a second
+        // Funput.exe launch can open Settings even while the pump is idle.
         let mut msg = MSG::default();
-        while GetMessageW(&mut msg, None, 0, 0).as_bool() {
-            let _ = TranslateMessage(&msg);
-            DispatchMessageW(&msg);
-            tray::drain_events();
+        loop {
+            match instance::wait_activate_or_message() {
+                WaitKind::Activate => {
+                    windows_ui::launch_settings(false);
+                }
+                WaitKind::Message => {
+                    while PeekMessageW(&mut msg, None, 0, 0, PM_REMOVE).as_bool() {
+                        if msg.message == WM_QUIT {
+                            return;
+                        }
+                        let _ = TranslateMessage(&msg);
+                        DispatchMessageW(&msg);
+                        tray::drain_events();
+                    }
+                }
+                WaitKind::Failed => return,
+            }
         }
     }
 }

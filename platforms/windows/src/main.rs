@@ -16,6 +16,7 @@ mod dark_mode;
 mod hook;
 mod hotkey;
 mod inject;
+mod instance;
 mod keymap;
 mod mica;
 mod recorder;
@@ -54,6 +55,13 @@ fn main() {
             return;
         }
         _ => {}
+    }
+
+    // One tray/hook process per session. A second launch asks the primary to
+    // open Settings, then exits (UI children skip this — they use --flags above).
+    if !instance::claim() {
+        instance::signal_activate();
+        return;
     }
 
     // Let Windows draw the tray's right-click menu dark when the system is dark.
