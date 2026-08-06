@@ -6,6 +6,7 @@ import { OverviewPage } from "../pages/overview/page.slint";
 import { TypingPage } from "../pages/typing/page.slint";
 import { KeyboardPage } from "../pages/keyboard/page.slint";
 import { ShortcutsPage } from "../pages/shortcuts/page.slint";
+import { DataPage } from "../pages/data/page.slint";
 import { AboutPage } from "../pages/about/page.slint";
 
 export component SettingsContent inherits ScrollView {
@@ -67,12 +68,12 @@ export component SettingsContent inherits ScrollView {
             alignment: start;
 
             if root.active == "overview": OverviewPage {
+                method: root.method;
                 vi-enabled <=> root.vi-enabled;
                 launch-at-login <=> root.launch-at-login;
                 set-enabled(v) => { root.set-enabled(v); }
                 set-launch(v) => { root.set-launch(v); }
-                export-config() => { root.export-config(); }
-                import-config() => { root.import-config(); }
+                pick-method(v) => { root.pick-method(v); }
             }
             if root.active == "typing": TypingPage {
                 method: root.method;
@@ -106,6 +107,10 @@ export component SettingsContent inherits ScrollView {
                 remove-shortcut(i) => { root.remove-shortcut(i); }
                 edit-trigger(i, t) => { root.edit-trigger(i, t); }
                 edit-expansion(i, t) => { root.edit-expansion(i, t); }
+            }
+            if root.active == "data": DataPage {
+                export-config() => { root.export-config(); }
+                import-config() => { root.import-config(); }
             }
             if root.active == "about": AboutPage {
                 version: root.version;

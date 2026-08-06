@@ -1,15 +1,15 @@
-// Settings → "Tổng quan": brand hero, launch-at-login, config backup.
+// Settings → "Tổng quan": brand hero, VI toggle, quick method, launch-at-login.
 
-import { Theme, Section, Row, AccentSwitch, Segmented, PrimaryButton, GhostButton } from "../../theme/mod.slint";
+import { Theme, Section, Row, AccentSwitch, Segmented } from "../../theme/mod.slint";
 import { OverviewHero } from "hero.slint";
 
 export component OverviewPage inherits VerticalLayout {
+    in property <string> method;
     in-out property <bool> vi-enabled;
     in-out property <bool> launch-at-login;
     callback set-enabled(bool);
     callback set-launch(bool);
-    callback export-config();
-    callback import-config();
+    callback pick-method(string);
 
     spacing: Theme.sp-lg;
     width: 100%;
@@ -34,6 +34,21 @@ export component OverviewPage inherits VerticalLayout {
                 changed(value) => { root.set-enabled(value == "vi"); }
             }
         }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            title: "Phương thức";
+            subtitle: "Telex, Telex nâng cao hoặc VNI.";
+            icon: @image-url("../../icons/nav/primary/keyboard.svg");
+            Segmented {
+                options: [
+                    { id: "telex", label: "Telex" },
+                    { id: "telex_advanced", label: "Telex+" },
+                    { id: "vni", label: "VNI" },
+                ];
+                current: root.method;
+                changed(value) => { root.pick-method(value); }
+            }
+        }
     }
 
     Section {
@@ -45,29 +60,6 @@ export component OverviewPage inherits VerticalLayout {
             AccentSwitch {
                 checked <=> root.launch-at-login;
                 toggled => { root.set-launch(self.checked); }
-            }
-        }
-    }
-
-    Section {
-        title: "Sao lưu";
-        Row {
-            title: "Xuất cấu hình";
-            subtitle: "Lưu tuỳ chọn và gõ tắt ra tệp.";
-            icon: @image-url("../../icons/status/backup.svg");
-            GhostButton {
-                text: "Xuất…";
-                clicked => { root.export-config(); }
-            }
-        }
-        Rectangle { height: 1px; background: Theme.divider; }
-        Row {
-            title: "Nhập cấu hình";
-            subtitle: "Gộp tuỳ chọn và gõ tắt từ tệp.";
-            icon: @image-url("../../icons/status/backup.svg");
-            PrimaryButton {
-                text: "Nhập…";
-                clicked => { root.import-config(); }
             }
         }
     }

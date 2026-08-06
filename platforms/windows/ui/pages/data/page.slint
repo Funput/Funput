@@ -1,0 +1,40 @@
+// Settings → "Dữ liệu": export/import config (room to grow later).
+
+import { Theme, PageHeader, Section, Row, PrimaryButton, GhostButton } from "../../theme/mod.slint";
+
+export component DataPage inherits VerticalLayout {
+    callback export-config();
+    callback import-config();
+
+    spacing: Theme.sp-lg;
+    width: 100%;
+    alignment: start;
+
+    PageHeader {
+        title: "Dữ liệu";
+        subtitle: "Xuất và nhập cấu hình Funput.";
+    }
+
+    Section {
+        title: "Sao lưu";
+        Row {
+            title: "Xuất cấu hình";
+            subtitle: "Lưu tuỳ chọn và gõ tắt ra tệp.";
+            icon: @image-url("../../icons/status/backup.svg");
+            GhostButton {
+                text: "Xuất…";
+                clicked => { root.export-config(); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            title: "Nhập cấu hình";
+            subtitle: "Gộp tuỳ chọn và gõ tắt từ tệp.";
+            icon: @image-url("../../icons/status/backup.svg");
+            PrimaryButton {
+                text: "Nhập…";
+                clicked => { root.import-config(); }
+            }
+        }
+    }
+}
