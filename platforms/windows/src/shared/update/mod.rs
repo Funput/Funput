@@ -15,14 +15,22 @@
 //! method like on macOS), the relaunch needs no log-out — we spawn the new
 //! binary and exit. And since our own process writes the new file, it carries no
 //! Mark-of-the-Web, so the relaunch does not trip SmartScreen.
+//!
+//! # Layout
+//!
+//! - `feed` — fetching the manifest and the new `.exe` over the network.
+//! - `install` — verifying the signature, swapping the binary, relaunching.
+//!
+//! The version comparison and the shared types stay here, since both halves and
+//! the About pane need them.
 
-use std::io::Read;
-use std::time::Duration;
+mod feed;
+mod install;
 
-use base64::engine::general_purpose::STANDARD as BASE64;
-use base64::Engine;
-use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use serde::Deserialize;
+
+pub use feed::{download, fetch_manifest};
+pub use install::{relaunch, stage_and_replace, verify};
 
 /// Ed25519 public key used to verify update signatures. This MUST stay identical
 /// to `SUPublicEDKey` in the macOS `Info.plist` — both platforms are signed with
@@ -87,39 +95,6 @@ impl std::error::Error for Error {}
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// The feed URL, allowing a debug-build override (`FUNPUT_UPDATE_FEED`) so the
-/// end-to-end flow can be tested against a local manifest before tagging.
-fn feed_url() -> String {
-    #[cfg(debug_assertions)]
-    if let Ok(url) = std::env::var("FUNPUT_UPDATE_FEED") {
-        return url;
-    }
-    FEED_URL.to_string()
-}
-
-/// A shared HTTP agent with sane timeouts. Built per call (cheap) so the update
-/// thread owns it and nothing lingers on the main app.
-fn agent() -> ureq::Agent {
-    ureq::Agent::config_builder()
-        .timeout_connect(Some(Duration::from_secs(15)))
-        .timeout_recv_response(Some(Duration::from_secs(60)))
-        .build()
-        .into()
-}
-
-/// Fetch and parse the update manifest from the GitHub Release feed.
-pub fn fetch_manifest() -> Result<Manifest> {
-    let mut resp = agent()
-        .get(&feed_url())
-        .call()
-        .map_err(|e| Error::Network(e.to_string()))?;
-    // `read_to_string` caps the body at ureq's default 10MB — ample for a small
-    // JSON manifest and a guard against a runaway feed.
-    let body = resp
-        .body_mut()
-        .read_to_string()
-        .map_err(|e| Error::Network(e.to_string()))?;
-    serde_json::from_str(&body).map_err(|e| Error::BadManifest(e.to_string()))
-}
 
 /// Whether `candidate` is a strictly newer version than this build.
 pub fn is_newer(candidate: &str) -> bool {
@@ -144,73 +119,6 @@ fn version_is_newer(candidate: &str, current: &str) -> bool {
 }
 
 /// Download the `.exe` bytes, enforcing the manifest's expected length.
-pub fn download(url: &str, expected_len: u64) -> Result<Vec<u8>> {
-    let resp = agent()
-        .get(url)
-        .call()
-        .map_err(|e| Error::Network(e.to_string()))?;
-
-    let mut bytes = Vec::with_capacity(expected_len.min(MAX_DOWNLOAD_BYTES) as usize);
-    resp.into_body()
-        .into_reader()
-        .take(MAX_DOWNLOAD_BYTES)
-        .read_to_end(&mut bytes)
-        .map_err(|e| Error::Network(e.to_string()))?;
-
-    let actual = bytes.len() as u64;
-    if actual != expected_len {
-        return Err(Error::SizeMismatch {
-            expected: expected_len,
-            actual,
-        });
-    }
-    Ok(bytes)
-}
-
-/// Verify the downloaded bytes against the embedded public key. Sparkle signs the
-/// raw file with Ed25519 (libsodium), which is byte-compatible with `ed25519-dalek`.
-pub fn verify(bytes: &[u8], ed_signature: &str) -> Result<()> {
-    verify_with_key(bytes, ed_signature, PUBLIC_ED_KEY)
-}
-
-/// Inner verify that takes the public key explicitly, so tests can use their own
-/// keypair instead of the production one.
-fn verify_with_key(bytes: &[u8], ed_signature: &str, public_key_b64: &str) -> Result<()> {
-    let key_bytes = BASE64
-        .decode(public_key_b64)
-        .ok()
-        .and_then(|b| <[u8; 32]>::try_from(b).ok())
-        .ok_or(Error::BadSignature)?;
-    let verifying_key = VerifyingKey::from_bytes(&key_bytes).map_err(|_| Error::BadSignature)?;
-
-    let sig_bytes = BASE64
-        .decode(ed_signature)
-        .map_err(|_| Error::BadSignature)?;
-    let signature = Signature::from_slice(&sig_bytes).map_err(|_| Error::BadSignature)?;
-
-    verifying_key
-        .verify(bytes, &signature)
-        .map_err(|_| Error::BadSignature)
-}
-
-/// Write the verified bytes to a temp file and swap them in for the running
-/// executable. After this returns, `current_exe()` points at the new build.
-pub fn stage_and_replace(bytes: &[u8]) -> Result<()> {
-    let staged = std::env::temp_dir().join("Funput-update.exe");
-    std::fs::write(&staged, bytes).map_err(|e| Error::Replace(e.to_string()))?;
-    let result = self_replace::self_replace(&staged).map_err(|e| Error::Replace(e.to_string()));
-    // Best-effort cleanup; the swap already copied the bytes into place.
-    let _ = std::fs::remove_file(&staged);
-    result
-}
-
-/// Relaunch the (now updated) executable and exit this process. Never returns.
-pub fn relaunch() -> ! {
-    if let Ok(exe) = std::env::current_exe() {
-        let _ = std::process::Command::new(exe).spawn();
-    }
-    std::process::exit(0);
-}
 
 #[cfg(test)]
 mod tests {
