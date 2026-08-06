@@ -8,6 +8,10 @@ struct MetricsSection: View {
     var body: some View {
         let value = report.metrics
         Section("Live metrics · #\(report.sequence)") {
+            // First, because it is the only one that means a keystroke the user made and the
+            // document never saw. Everything below is context for why.
+            metric("Abandoned contacts", value.contactsAbandoned)
+            metric("Stale UITouch identity", value.captureStaleIdentity)
             metric("Captured / committed", value.capturedContacts, value.committedContacts)
             metric("Cancelled / system", value.cancelledContacts, value.systemCancelled)
             metric("Recovered slop", value.recoveredTapSlop)
