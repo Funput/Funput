@@ -1,0 +1,108 @@
+//! Getting settings into the engine, and onto disk.
+//!
+//! `settings` is the single source of truth: every write elsewhere mutates a field
+//! and then re-syncs through here, so the engine can never drift from what was
+//! persisted.
+
+use funput_config::{Settings, Shortcut};
+use funput_engine::{Engine, EngineConfig};
+
+use super::ShellState;
+
+impl ShellState {
+    /// Push everything in `settings` to the engine and start from a clean slate.
+    pub(super) fn apply_settings(&mut self) {
+        self.sync_engine_config();
+        self.engine.set_enabled(self.settings.enabled);
+        push_shortcuts(&mut self.engine, &self.settings.shortcuts);
+        self.reset_composition();
+    }
+
+    /// Push the six engine options in one call. `enabled` and the gõ tắt table are
+    /// separate (see [`ShellState::set_enabled_state`] and [`push_shortcuts`]).
+    pub(super) fn sync_engine_config(&mut self) {
+        self.engine.configure(EngineConfig {
+            method: self.settings.method.core(),
+            tone_style: self.settings.tone_style.core(),
+            smart_restore: self.settings.smart_restore,
+            eager_restore: self.settings.eager_restore,
+            spell_check: self.settings.spell_check,
+            auto_capitalize: self.settings.auto_capitalize,
+        });
+    }
+
+    /// Drop the live composition *and* the committed-text shadow together. The two
+    /// model one stretch of text around the caret, so one must never outlive the
+    /// other: a shadow left standing after the engine forgot the word would let
+    /// Backspace re-open text that is no longer where the shell thinks it is.
+    pub(super) fn reset_composition(&mut self) {
+        self.engine.clear();
+        self.tail.clear();
+    }
+
+    /// Apply a VI/EN state to both the persisted settings and the live engine.
+    /// Callers persist themselves, since some batch this with other field writes.
+    pub(super) fn set_enabled_state(&mut self, on: bool) {
+        self.settings.enabled = on;
+        self.engine.set_enabled(on);
+        // Both directions: English-mode keystrokes never reach the engine, so
+        // whatever the shadow held no longer describes the text at the caret.
+        self.reset_composition();
+    }
+
+    /// Read the settings file (defaults when it is missing, corrupt, or there is
+    /// nowhere to keep one).
+    pub(super) fn read_settings(&self) -> Settings {
+        self.settings_file
+            .as_deref()
+            .map(Settings::load_from)
+            .unwrap_or_default()
+    }
+
+    /// Persist the current settings.
+    pub(super) fn save(&self) {
+        if let Some(path) = &self.settings_file {
+            self.settings.save_to(path);
+        }
+    }
+
+    /// Reload settings written by another process (the Settings window runs as its
+    /// own). Runtime-only recent apps and per-app overrides are untouched; only
+    /// persisted state and the live engine are refreshed. Returns whether anything
+    /// actually changed, so the caller can skip refreshing its UI.
+    pub fn reload_settings(&mut self) -> bool {
+        let loaded = self.read_settings();
+        if self.settings == loaded {
+            return false;
+        }
+        self.settings = loaded;
+        self.apply_settings();
+        true
+    }
+
+    /// Replace all settings at once (config import). Applies to the live engine and
+    /// persists; another process picks the change up via [`Self::reload_settings`].
+    pub fn replace_settings(&mut self, new: Settings) {
+        self.settings = new;
+        self.apply_settings();
+        self.save();
+    }
+
+    /// Mutate one engine option, then re-sync the whole config and persist. Folding
+    /// the three steps here makes it impossible to change a setting without pushing
+    /// it to the engine.
+    pub(super) fn update_config(&mut self, edit: impl FnOnce(&mut Settings)) {
+        edit(&mut self.settings);
+        self.sync_engine_config();
+        self.save();
+    }
+}
+
+/// Replace the engine's gõ tắt table (empty triggers are skipped by the engine).
+/// The whole table is re-pushed after any edit — it's small and cheap.
+pub(super) fn push_shortcuts(engine: &mut Engine, shortcuts: &[Shortcut]) {
+    engine.clear_shortcuts();
+    for sc in shortcuts {
+        engine.add_shortcut(sc.trigger.clone(), sc.expansion.clone());
+    }
+}
