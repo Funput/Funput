@@ -63,6 +63,9 @@ fn main() {
     if canonical_exe::normalize_and_relaunch() {
         return;
     }
+    // Drop leftover Funput-<version>.exe once we are the stable binary (retries
+    // until Windows releases the lock on the process that just exited).
+    canonical_exe::cleanup_versioned_siblings();
 
     // One tray/hook process per session. A second launch asks the primary to
     // open Settings, then exits (UI children skip this — they use --flags above).
