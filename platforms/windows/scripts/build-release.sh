@@ -2,7 +2,7 @@
 # Production-like Funput.exe build for local Windows testing.
 # Mirrors CI (app/.github/workflows/build-windows.yml): `cargo build --release`
 # with the crate's release profile (opt-level=s, LTO=fat, strip), then stages
-# Funput-<version>.exe + .sha256 under build/release/.
+# Funput-<version>.exe + Funput.exe + .sha256 under build/release/.
 #
 # Usage (from platforms/windows or via path):
 #   ./scripts/build-release.sh
@@ -73,6 +73,7 @@ OUT="$ROOT/build/release"
 mkdir -p "$OUT"
 DEST="$OUT/Funput-$VERSION.exe"
 cp "$EXE" "$DEST"
+cp "$EXE" "$OUT/Funput.exe"
 
 if command -v sha256sum >/dev/null 2>&1; then
   sha256sum "$DEST" | awk '{print $1}' > "$DEST.sha256"
@@ -84,5 +85,6 @@ fi
 
 BYTES="$(wc -c < "$DEST" | tr -d ' ')"
 echo "Staged: $DEST ($BYTES bytes)"
+echo "Also:   $OUT/Funput.exe (stable name for local/autostart)"
 [ -f "$DEST.sha256" ] && echo "SHA256:  $(cat "$DEST.sha256")"
-echo "Copy Funput-$VERSION.exe to a Windows machine and run it (tray + Settings)."
+echo "Run Funput.exe (or Funput-$VERSION.exe once — it normalizes to Funput.exe)."

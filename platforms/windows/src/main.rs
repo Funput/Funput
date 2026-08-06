@@ -9,6 +9,7 @@ compile_error!("funput-windows builds only on Windows (global keyboard hook + Se
 // Slint-generated components (SettingsWindow, OnboardingWindow, AppEntry).
 slint::include_modules!();
 
+mod canonical_exe;
 mod commands;
 mod compose;
 mod config_transfer;
@@ -55,6 +56,12 @@ fn main() {
             return;
         }
         _ => {}
+    }
+
+    // Release assets are Funput-<version>.exe; settle on sibling Funput.exe before
+    // claiming the tray singleton so autostart/update keep a stable path.
+    if canonical_exe::normalize_and_relaunch() {
+        return;
     }
 
     // One tray/hook process per session. A second launch asks the primary to

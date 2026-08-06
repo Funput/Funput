@@ -1,7 +1,7 @@
 # Production-like Funput.exe build for local Windows testing.
 # Mirrors CI (app/.github/workflows/build-windows.yml): `cargo build --release`
 # with the crate's release profile (opt-level=s, LTO=fat, strip), then stages
-# Funput-<version>.exe + .sha256 under build/release/.
+# Funput-<version>.exe + Funput.exe + .sha256 under build/release/.
 #
 # Usage (Windows PowerShell 5.1 or PowerShell 7+), from platforms/windows:
 #   .\scripts\build-release.ps1
@@ -54,11 +54,13 @@ $Out = Join-Path $Root "build\release"
 New-Item -ItemType Directory -Force -Path $Out | Out-Null
 $Dest = Join-Path $Out "Funput-$Version.exe"
 Copy-Item -Force $Exe $Dest
+Copy-Item -Force $Exe (Join-Path $Out "Funput.exe")
 
 $hash = (Get-FileHash -Algorithm SHA256 $Dest).Hash.ToLowerInvariant()
 Set-Content -Path "$Dest.sha256" -Value $hash -NoNewline
 
 $bytes = (Get-Item $Dest).Length
 Write-Host "Staged: $Dest ($bytes bytes)"
+Write-Host "Also:   $(Join-Path $Out 'Funput.exe') (stable name for local/autostart)"
 Write-Host "SHA256:  $hash"
-Write-Host "Run Funput-$Version.exe to test (tray + Settings)."
+Write-Host "Run Funput.exe (or Funput-$Version.exe once — it normalizes to Funput.exe)."
