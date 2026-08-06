@@ -1,0 +1,102 @@
+// Single-line field that composes Vietnamese via the Compose global.
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "../theme/tokens.slint";
+import { Compose } from "compose.slint";
+
+export component ComposingInput inherits Rectangle {
+    in-out property <string> text;
+    in property <string> placeholder;
+    callback edited(string);
+
+    height: 32px;
+    border-radius: Theme.r-control;
+    background: Theme.field-bg;
+    border-width: 1px;
+    border-color: ti.has-focus ? Theme.accent : Theme.card-border;
+    animate border-color { duration: 150ms; easing: ease-out; }
+
+    ph := Text {
+        x: 10px;
+        height: 100%;
+        vertical-alignment: center;
+        text: root.placeholder;
+        color: Theme.subtle;
+        visible: root.text == "";
+    }
+
+    ti := TextInput {
+        x: 10px;
+        width: parent.width - 20px;
+        height: 100%;
+        vertical-alignment: center;
+        single-line: true;
+        text <=> root.text;
+        color: Palette.foreground;
+
+        changed has-focus => {
+            if self.has-focus {
+                Compose.reset(self.text);
+            }
+        }
+        edited => { root.edited(self.text); }
+        key-pressed(event) => {
+            if event.modifiers.control && !event.modifiers.alt {
+                if event.text == "a" || event.text == "\u{1}" {
+                    self.select-all();
+                    return accept;
+                }
+                if event.text == "c" || event.text == "\u{3}" {
+                    self.copy();
+                    return accept;
+                }
+                if event.text == "x" || event.text == "\u{18}" {
+                    self.cut();
+                    Compose.reset(self.text);
+                    root.edited(self.text);
+                    return accept;
+                }
+                if event.text == "v" || event.text == "\u{16}" {
+                    self.paste();
+                    Compose.reset(self.text);
+                    root.edited(self.text);
+                    return accept;
+                }
+                if event.text == "z" || event.text == "\u{1a}" {
+                    self.undo();
+                    Compose.reset(self.text);
+                    root.edited(self.text);
+                    return accept;
+                }
+                if event.text == "y" || event.text == "\u{19}" {
+                    self.redo();
+                    Compose.reset(self.text);
+                    root.edited(self.text);
+                    return accept;
+                }
+                return reject;
+            }
+            if event.modifiers.alt || event.modifiers.meta {
+                return reject;
+            }
+            if event.text == Key.Backspace {
+                self.text = Compose.backspace();
+                self.set-selection-offsets(1000000, 1000000);
+                root.edited(self.text);
+                return accept;
+            }
+            if event.text == Key.LeftArrow || event.text == Key.RightArrow
+                || event.text == Key.UpArrow || event.text == Key.DownArrow
+                || event.text == Key.Home || event.text == Key.End
+                || event.text == Key.Return || event.text == Key.Tab
+                || event.text == Key.Escape || event.text == Key.Delete {
+                Compose.reset(self.text);
+                return reject;
+            }
+            self.text = Compose.key(event.text);
+            self.set-selection-offsets(1000000, 1000000);
+            root.edited(self.text);
+            return accept;
+        }
+    }
+}

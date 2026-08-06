@@ -1,0 +1,32 @@
+// Onboarding step 0: brand-first first impression.
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "../theme/mod.slint";
+
+export component WelcomeStep inherits VerticalLayout {
+    alignment: center;
+    spacing: Theme.sp-md;
+
+    HorizontalLayout {
+        alignment: center;
+        Image {
+            source: @image-url("../../../../assets/logo.png");
+            width: 96px;
+            height: 96px;
+        }
+    }
+    Text {
+        text: "Funput";
+        font-size: 32px;
+        font-weight: 700;
+        horizontal-alignment: center;
+        color: Palette.foreground;
+    }
+    Text {
+        text: "Gõ tiếng Việt trên Windows — miễn phí, mã nguồn mở.";
+        font-size: Theme.font-body;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+        color: Theme.subtle;
+    }
+}

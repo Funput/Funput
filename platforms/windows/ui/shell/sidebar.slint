@@ -1,0 +1,73 @@
+// Win11 NavigationView: items sit directly on the backdrop. The selected item gets a
+// subtle fill plus a 3px accent indicator bar — foreground text/icon stay neutral.
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "../theme/tokens.slint";
+
+export component Sidebar inherits Rectangle {
+    in-out property <string> active;
+    width: 208px;
+    background: transparent;
+
+    property <[{id: string, label: string, icon: image}]> nav: [
+        { id: "overview", label: "Tổng quan", icon: @image-url("../icons/nav/secondary/settings.svg") },
+        { id: "typing", label: "Cách gõ", icon: @image-url("../icons/nav/primary/keyboard.svg") },
+        { id: "keyboard", label: "Phím tắt", icon: @image-url("../icons/nav/primary/switch.svg") },
+        { id: "shortcuts", label: "Gõ tắt", icon: @image-url("../icons/nav/primary/shortcut.svg") },
+        { id: "data", label: "Dữ liệu", icon: @image-url("../icons/status/backup.svg") },
+        { id: "about", label: "Giới thiệu", icon: @image-url("../icons/nav/secondary/info.svg") },
+    ];
+
+    VerticalLayout {
+        padding: Theme.sp-sm;
+        // Line the first nav item up with the page title across the divider.
+        padding-top: Theme.sp-lg;
+        spacing: 2px;
+        alignment: start;
+
+        for item in root.nav: Rectangle {
+            height: 40px;
+            border-radius: Theme.r-control;
+            background: root.active == item.id
+                ? Theme.nav-active
+                : (nav-touch.has-hover ? Theme.nav-hover : transparent);
+            animate background { duration: 120ms; easing: ease-out; }
+
+            // Accent selection indicator — 3x16 pill flush to the left edge.
+            Rectangle {
+                x: 0;
+                width: 3px;
+                height: root.active == item.id ? 16px : 0px;
+                border-radius: 1.5px;
+                background: Theme.accent;
+                animate height { duration: 140ms; easing: ease-in-out; }
+            }
+
+            HorizontalLayout {
+                padding-left: 12px;
+                spacing: 12px;
+                alignment: start;
+                VerticalLayout {
+                    alignment: center;
+                    Image {
+                        source: item.icon;
+                        colorize: Palette.foreground;
+                        width: 16px;
+                        height: 16px;
+                    }
+                }
+                Text {
+                    text: item.label;
+                    vertical-alignment: center;
+                    font-size: 14px;
+                    font-weight: root.active == item.id ? 600 : 400;
+                    color: Palette.foreground;
+                }
+            }
+            nav-touch := TouchArea {
+                mouse-cursor: pointer;
+                clicked => { root.active = item.id; }
+            }
+        }
+    }
+}

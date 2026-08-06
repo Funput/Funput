@@ -88,6 +88,14 @@ pub(super) fn wire(window: &SettingsWindow) {
     window.on_set_auto_cap(commands::set_auto_capitalize);
     window.on_set_launch(commands::set_launch_at_login);
 
+    let weak = window.as_weak();
+    window.on_set_enabled(move |on| {
+        commands::set_enabled(on);
+        if let Some(window) = weak.upgrade() {
+            window.set_vi_enabled(on);
+        }
+    });
+
     content::wire(window);
 
     window.on_open_link(|url| commands::open_url(url.as_str()));

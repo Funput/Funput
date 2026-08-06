@@ -360,19 +360,60 @@ pub fn remove_excluded_app(id: &str) {
 
 // --- shortcuts (gõ tắt) -----------------------------------------------------
 
-/// Persist `shortcuts` and re-push the table to the live engine.
+/// A row the engine and disk will keep — both sides filled (whitespace ignored).
+fn shortcut_is_complete(sc: &Shortcut) -> bool {
+    !sc.trigger.trim().is_empty() && !sc.expansion.trim().is_empty()
+}
+
+/// Persist complete rows only. Incomplete drafts stay in memory for the Settings
+/// UI so the user can finish typing; they never hit disk or the live engine.
 fn commit_shortcuts(s: &mut Shell) {
-    push_shortcuts(&mut s.engine, &s.settings.shortcuts);
+    let complete: Vec<Shortcut> = s
+        .settings
+        .shortcuts
+        .iter()
+        .filter(|sc| shortcut_is_complete(sc))
+        .cloned()
+        .collect();
+    push_shortcuts(&mut s.engine, &complete);
+    let drafts = std::mem::replace(&mut s.settings.shortcuts, complete);
     s.settings.save();
+    s.settings.shortcuts = drafts;
+}
+
+/// "Thêm" is allowed when the list is empty or the last row is already complete.
+pub fn can_add_shortcut() -> bool {
+    with(|s| {
+        s.settings
+            .shortcuts
+            .last()
+            .map_or(true, shortcut_is_complete)
+    })
 }
 
 pub fn add_shortcut() {
     with(|s| {
+        if let Some(last) = s.settings.shortcuts.last() {
+            if !shortcut_is_complete(last) {
+                return;
+            }
+        }
         s.settings.shortcuts.push(Shortcut {
             trigger: String::new(),
             expansion: String::new(),
         });
         commit_shortcuts(s);
+    });
+}
+
+/// Drop blank / half-filled drafts (e.g. when leaving the Gõ tắt page).
+pub fn prune_incomplete_shortcuts() {
+    with(|s| {
+        let before = s.settings.shortcuts.len();
+        s.settings.shortcuts.retain(shortcut_is_complete);
+        if s.settings.shortcuts.len() != before {
+            commit_shortcuts(s);
+        }
     });
 }
 

@@ -9,16 +9,21 @@ compile_error!("funput-windows builds only on Windows (global keyboard hook + Se
 // Slint-generated components (SettingsWindow, OnboardingWindow, AppEntry).
 slint::include_modules!();
 
+mod canonical_exe;
 mod commands;
 mod compose;
 mod config_transfer;
 mod dark_mode;
 mod hook;
+mod hotkey;
 mod inject;
+mod instance;
 mod keymap;
+mod mica;
 mod recorder;
 mod settings;
 mod shell;
+mod system_accent;
 mod tray;
 mod update;
 mod windows_ui;
@@ -45,7 +50,28 @@ fn main() {
             windows_ui::run_onboarding();
             return;
         }
+        Some("--control-center") => {
+            dark_mode::allow_dark_menus();
+            windows_ui::run_control_center();
+            return;
+        }
         _ => {}
+    }
+
+    // Release assets are Funput-<version>.exe; settle on sibling Funput.exe before
+    // claiming the tray singleton so autostart/update keep a stable path.
+    if canonical_exe::normalize_and_relaunch() {
+        return;
+    }
+    // Drop leftover Funput-<version>.exe once we are the stable binary (retries
+    // until Windows releases the lock on the process that just exited).
+    canonical_exe::cleanup_versioned_siblings();
+
+    // One tray/hook process per session. A second launch asks the primary to
+    // open Settings, then exits (UI children skip this — they use --flags above).
+    if !instance::claim() {
+        instance::signal_activate();
+        return;
     }
 
     // Let Windows draw the tray's right-click menu dark when the system is dark.

@@ -1,0 +1,127 @@
+// Settings content host: one readable column, switches the active page.
+
+import { ScrollView } from "std-widgets.slint";
+import { Theme, ShortcutEntry } from "../theme/mod.slint";
+import { OverviewPage } from "../pages/overview/page.slint";
+import { TypingPage } from "../pages/typing/page.slint";
+import { KeyboardPage } from "../pages/keyboard/page.slint";
+import { ShortcutsPage } from "../pages/shortcuts/page.slint";
+import { DataPage } from "../pages/data/page.slint";
+import { AboutPage } from "../pages/about/page.slint";
+
+export component SettingsContent inherits ScrollView {
+    in property <string> active;
+    in property <string> method;
+    in property <string> tone-style;
+    in property <string> hotkey;
+    in property <[string]> hotkey-caps;
+    in property <bool> hotkey-conflict;
+    in property <string> flip-hotkey;
+    in property <[string]> flip-hotkey-caps;
+    in property <bool> flip-hotkey-conflict;
+    in-out property <bool> vi-enabled;
+    in-out property <bool> smart-restore;
+    in-out property <bool> eager-restore;
+    in-out property <bool> spell-check;
+    in-out property <bool> auto-capitalize;
+    in-out property <bool> launch-at-login;
+    in property <[ShortcutEntry]> shortcuts;
+    in property <bool> can-add-shortcut: true;
+    in property <string> version;
+    in property <string> update-state: "idle";
+    in property <string> update-version;
+    in property <string> update-message;
+
+    callback pick-method(string);
+    callback pick-tone(string);
+    callback pick-hotkey(string);
+    callback pick-flip-hotkey(string);
+    callback record-combo(string, string, bool, bool, bool, bool) -> bool;
+    callback set-enabled(bool);
+    callback set-smart(bool);
+    callback set-eager(bool);
+    callback set-spell(bool);
+    callback set-auto-cap(bool);
+    callback set-launch(bool);
+    callback add-shortcut();
+    callback remove-shortcut(int);
+    callback edit-trigger(int, string);
+    callback edit-expansion(int, string);
+    callback open-link(string);
+    callback check-update();
+    callback install-update();
+    callback relaunch-now();
+    callback export-config();
+    callback import-config();
+
+    HorizontalLayout {
+        padding-top: Theme.sp-lg;
+        padding-right: Theme.sp-xl;
+        padding-bottom: Theme.sp-xl;
+        padding-left: Theme.sp-md;
+        alignment: start;
+
+        VerticalLayout {
+            max-width: 520px;
+            width: 100%;
+            spacing: Theme.sp-md;
+            alignment: start;
+
+            if root.active == "overview": OverviewPage {
+                method: root.method;
+                vi-enabled <=> root.vi-enabled;
+                launch-at-login <=> root.launch-at-login;
+                set-enabled(v) => { root.set-enabled(v); }
+                set-launch(v) => { root.set-launch(v); }
+                pick-method(v) => { root.pick-method(v); }
+            }
+            if root.active == "typing": TypingPage {
+                method: root.method;
+                tone-style: root.tone-style;
+                smart-restore <=> root.smart-restore;
+                eager-restore <=> root.eager-restore;
+                spell-check <=> root.spell-check;
+                auto-capitalize <=> root.auto-capitalize;
+                pick-method(v) => { root.pick-method(v); }
+                pick-tone(v) => { root.pick-tone(v); }
+                set-smart(v) => { root.set-smart(v); }
+                set-eager(v) => { root.set-eager(v); }
+                set-spell(v) => { root.set-spell(v); }
+                set-auto-cap(v) => { root.set-auto-cap(v); }
+            }
+            if root.active == "keyboard": KeyboardPage {
+                hotkey: root.hotkey;
+                hotkey-caps: root.hotkey-caps;
+                hotkey-conflict: root.hotkey-conflict;
+                flip-hotkey: root.flip-hotkey;
+                flip-hotkey-caps: root.flip-hotkey-caps;
+                flip-hotkey-conflict: root.flip-hotkey-conflict;
+                pick-hotkey(v) => { root.pick-hotkey(v); }
+                pick-flip-hotkey(v) => { root.pick-flip-hotkey(v); }
+                record-combo(k, t, c, a, s, w) => { root.record-combo(k, t, c, a, s, w) }
+            }
+            if root.active == "shortcuts": ShortcutsPage {
+                shortcuts: root.shortcuts;
+                can-add: root.can-add-shortcut;
+                add-shortcut() => { root.add-shortcut(); }
+                remove-shortcut(i) => { root.remove-shortcut(i); }
+                edit-trigger(i, t) => { root.edit-trigger(i, t); }
+                edit-expansion(i, t) => { root.edit-expansion(i, t); }
+            }
+            if root.active == "data": DataPage {
+                export-config() => { root.export-config(); }
+                import-config() => { root.import-config(); }
+            }
+            if root.active == "about": AboutPage {
+                version: root.version;
+                update-state: root.update-state;
+                update-version: root.update-version;
+                update-message: root.update-message;
+                open-link(url) => { root.open-link(url); }
+                check-update() => { root.check-update(); }
+                install-update() => { root.install-update(); }
+                relaunch-now() => { root.relaunch-now(); }
+            }
+        }
+    }
+}

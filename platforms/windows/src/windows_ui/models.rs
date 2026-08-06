@@ -2,8 +2,8 @@
 
 use slint::{ModelRc, SharedString, VecModel};
 
-use crate::settings::{ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Shortcut};
-use crate::{AppEntry, ShortcutEntry};
+use crate::settings::{FlipHotkey, Hotkey, KeyCombo, Shortcut};
+use crate::ShortcutEntry;
 
 pub(super) fn caps(hotkey: Hotkey) -> ModelRc<SharedString> {
     keycaps(hotkey.caps())
@@ -20,17 +20,6 @@ pub(super) fn combo_caps(combo: &KeyCombo) -> ModelRc<SharedString> {
 
 fn keycaps(caps: &[&'static str]) -> ModelRc<SharedString> {
     let rows: Vec<SharedString> = caps.iter().map(|c| (*c).into()).collect();
-    ModelRc::new(VecModel::from(rows))
-}
-
-pub(super) fn apps(apps: &[ExcludedApp]) -> ModelRc<AppEntry> {
-    let rows = apps
-        .iter()
-        .map(|app| AppEntry {
-            id: app.id.clone().into(),
-            name: app.name.clone().into(),
-        })
-        .collect::<Vec<_>>();
     ModelRc::new(VecModel::from(rows))
 }
 

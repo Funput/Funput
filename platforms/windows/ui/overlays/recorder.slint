@@ -1,0 +1,124 @@
+// Shortcut recorder popover: capture Ctrl/Alt/Win + key, or a bare modifier
+// pair such as Ctrl+Shift. Esc cancels.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, KeyCap } from "../theme/mod.slint";
+
+export component RecorderPanel inherits Rectangle {
+    in property <string> kind;
+    callback recorded(string, string, bool, bool, bool, bool) -> bool;
+    callback done();
+    in property <int> reset-token;
+    changed reset-token => { root.clear(); }
+
+    private property <bool> invalid: false;
+    // Every modifier seen down during the current gesture, not the live state:
+    // releasing one is what commits a bare pair, and by then it is already up.
+    private property <bool> held-ctrl: false;
+    private property <bool> held-alt: false;
+    private property <bool> held-shift: false;
+    private property <bool> held-win: false;
+
+    pure function is-modifier(key: string) -> bool {
+        key == Key.Control || key == Key.ControlR || key == Key.Shift || key == Key.ShiftR
+            || key == Key.Alt || key == Key.AltGr || key == Key.Meta || key == Key.MetaR
+    }
+
+    pure function held-count() -> int {
+        (root.held-ctrl ? 1 : 0) + (root.held-alt ? 1 : 0)
+            + (root.held-shift ? 1 : 0) + (root.held-win ? 1 : 0)
+    }
+
+    function clear() {
+        root.invalid = false;
+        root.held-ctrl = false;
+        root.held-alt = false;
+        root.held-shift = false;
+        root.held-win = false;
+    }
+
+    // An empty key means the gesture was modifiers only.
+    function commit(key: string) {
+        if root.recorded(root.kind, key,
+            root.held-ctrl, root.held-alt, root.held-shift, root.held-win) {
+            root.done();
+        } else {
+            root.invalid = true;
+        }
+    }
+
+    width: 300px;
+    height: layout.preferred-height;
+    background: Theme.popup-base;
+    border-radius: Theme.r-card;
+    border-width: 1px;
+    border-color: Theme.flyout-border;
+    drop-shadow-blur: 24px;
+    drop-shadow-color: Theme.shadow;
+    drop-shadow-offset-y: 8px;
+
+    FocusScope {
+        init => { self.focus(); }
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.done();
+                return accept;
+            }
+            root.held-ctrl = root.held-ctrl || event.modifiers.control
+                || event.text == Key.Control || event.text == Key.ControlR
+                || event.text == Key.AltGr;
+            root.held-alt = root.held-alt || event.modifiers.alt
+                || event.text == Key.Alt || event.text == Key.AltGr;
+            root.held-shift = root.held-shift || event.modifiers.shift
+                || event.text == Key.Shift || event.text == Key.ShiftR;
+            root.held-win = root.held-win || event.modifiers.meta
+                || event.text == Key.Meta || event.text == Key.MetaR;
+            if root.is-modifier(event.text) {
+                root.invalid = false;
+                return accept;
+            }
+            root.commit(event.text);
+            accept
+        }
+        key-released(event) => {
+            if root.is-modifier(event.text) {
+                // Mirror the runtime, which fires a bare pair on the first
+                // release: what is recorded here is exactly what will trigger.
+                if root.held-count() >= 2 {
+                    root.commit("");
+                }
+                root.clear();
+            }
+            accept
+        }
+
+        layout := VerticalLayout {
+            padding: Theme.sp-md;
+            spacing: Theme.sp-sm;
+            Text {
+                text: "Nhấn tổ hợp phím mới";
+                font-size: Theme.font-body;
+                font-weight: 700;
+                color: Palette.foreground;
+            }
+            HorizontalLayout {
+                spacing: Theme.sp-xs;
+                alignment: start;
+                if root.held-ctrl: KeyCap { label: "Ctrl"; }
+                if root.held-alt: KeyCap { label: "Alt"; }
+                if root.held-shift: KeyCap { label: "Shift"; }
+                if root.held-win: KeyCap { label: "Win"; }
+                // Two modifiers already are a hotkey, so stop asking for a key.
+                if root.held-count() < 2: KeyCap { label: "?"; }
+            }
+            Text {
+                text: root.invalid
+                    ? "Cần kèm Ctrl / Alt / Win (Shift đơn lẻ là gõ thường)"
+                    : "Nhấn 2 phím bổ trợ, hoặc Ctrl / Alt / Win kèm một phím · Esc để huỷ";
+                font-size: Theme.font-caption;
+                color: root.invalid ? Theme.danger : Theme.subtle;
+                wrap: word-wrap;
+            }
+        }
+    }
+}

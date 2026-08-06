@@ -1,0 +1,61 @@
+// Smart typing toggles for the Cách gõ page — no tips/examples block.
+
+import { Theme, Section, Row, AccentSwitch } from "../../theme/mod.slint";
+
+export component SmartSection inherits VerticalLayout {
+    in-out property <bool> smart-restore;
+    in-out property <bool> eager-restore;
+    in-out property <bool> spell-check;
+    in-out property <bool> auto-capitalize;
+    callback set-smart(bool);
+    callback set-eager(bool);
+    callback set-spell(bool);
+    callback set-auto-cap(bool);
+
+    spacing: Theme.sp-sm;
+    width: 100%;
+
+    Section {
+        title: "Thông minh";
+        Row {
+            icon: @image-url("../../icons/row/restore.svg");
+            title: "Tự khôi phục tiếng Anh";
+            subtitle: "Từ không phải tiếng Việt giữ nguyên chữ gốc.";
+            AccentSwitch {
+                checked <=> root.smart-restore;
+                toggled => { root.set-smart(root.smart-restore); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            icon: @image-url("../../icons/row/instant.svg");
+            title: "Khôi phục tức thì";
+            subtitle: "Đổi lại ngay khi từ không thể là tiếng Việt.";
+            AccentSwitch {
+                checked <=> root.eager-restore;
+                enabled: root.smart-restore;
+                toggled => { root.set-eager(root.eager-restore); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            icon: @image-url("../../icons/row/spell.svg");
+            title: "Kiểm tra chính tả";
+            subtitle: "Chỉ đặt dấu khi tạo thành âm tiết hợp lệ.";
+            AccentSwitch {
+                checked <=> root.spell-check;
+                toggled => { root.set-spell(root.spell-check); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            icon: @image-url("../../icons/row/case.svg");
+            title: "Tự động viết hoa";
+            subtitle: "Viết hoa chữ đầu câu, sau dấu chấm và đầu dòng.";
+            AccentSwitch {
+                checked <=> root.auto-capitalize;
+                toggled => { root.set-auto-cap(root.auto-capitalize); }
+            }
+        }
+    }
+}

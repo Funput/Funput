@@ -1,0 +1,61 @@
+// Custom action buttons; fill colour comes from Theme.accent (system or orange).
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "tokens.slint";
+
+export component PrimaryButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> enabled: true;
+    callback clicked;
+    height: 34px;
+    opacity: root.enabled ? 1 : 0.45;
+    border-radius: Theme.r-control;
+    background: touch.has-hover && root.enabled ? Theme.accent-hover : Theme.accent;
+    animate background { duration: 120ms; easing: ease-out; }
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        Text {
+            text: root.text;
+            color: Theme.accent-text;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            if root.enabled {
+                root.clicked();
+            }
+        }
+    }
+}
+
+export component GhostButton inherits Rectangle {
+    in property <string> text;
+    callback clicked;
+    height: 34px;
+    border-radius: Theme.r-control;
+    background: touch.has-hover ? Theme.nav-hover : transparent;
+    border-width: 1px;
+    border-color: Theme.divider;
+    animate background { duration: 120ms; }
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        Text {
+            text: root.text;
+            color: Palette.foreground;
+            font-size: 13px;
+            font-weight: 500;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+}

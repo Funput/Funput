@@ -4,6 +4,10 @@
 
 use serde::{Deserialize, Serialize};
 
+/// No main key: the combo is nothing but modifiers (Ctrl+Shift, Alt+Shift…).
+/// Zero is safe as the sentinel — it is not a valid virtual-key code.
+pub const NO_KEY: u16 = 0;
+
 /// One recorded combo: the Win32 virtual-key of the main key plus the exact
 /// modifier set. `label` is the main key's display text captured at record
 /// time, so rendering never needs a VK → name table for the user's layout.
@@ -23,6 +27,13 @@ pub struct KeyCombo {
 }
 
 impl KeyCombo {
+    /// Whether this combo is modifiers only. Those cannot fire on keydown (the
+    /// second modifier of Ctrl+Shift+T would trip them), so the hook resolves
+    /// them when the modifiers come back up instead.
+    pub fn is_modifier_only(&self) -> bool {
+        self.vk == NO_KEY
+    }
+
     /// The keycaps shown in the UI, e.g. `["Ctrl", "Shift", "V"]` — same shape
     /// as the preset `caps()` so the "Đang dùng" row renders either source.
     pub fn caps(&self) -> Vec<String> {
@@ -39,7 +50,9 @@ impl KeyCombo {
         if self.win {
             caps.push("Win".to_string());
         }
-        caps.push(self.label.clone());
+        if !self.label.is_empty() {
+            caps.push(self.label.clone());
+        }
         caps
     }
 }
@@ -75,5 +88,19 @@ mod tests {
             label: "Space".into(),
         };
         assert_eq!(combo.caps(), ["Ctrl", "Alt", "Space"]);
+    }
+
+    #[test]
+    fn modifier_only_combo_has_no_key_cap() {
+        let combo = KeyCombo {
+            vk: NO_KEY,
+            ctrl: true,
+            alt: false,
+            shift: true,
+            win: false,
+            label: String::new(),
+        };
+        assert!(combo.is_modifier_only());
+        assert_eq!(combo.caps(), ["Ctrl", "Shift"]);
     }
 }

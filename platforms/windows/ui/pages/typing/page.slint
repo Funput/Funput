@@ -1,0 +1,67 @@
+// Settings → "Cách gõ" method + tone. Smart toggles live in smart.slint.
+
+import { Theme, PageHeader, Section, Segmented } from "../../theme/mod.slint";
+import { MethodSelector } from "method_selector.slint";
+import { SmartSection } from "smart.slint";
+
+export component TypingPage inherits VerticalLayout {
+    in property <string> method;
+    in property <string> tone-style;
+    in-out property <bool> smart-restore;
+    in-out property <bool> eager-restore;
+    in-out property <bool> spell-check;
+    in-out property <bool> auto-capitalize;
+    callback pick-method(string);
+    callback pick-tone(string);
+    callback set-smart(bool);
+    callback set-eager(bool);
+    callback set-spell(bool);
+    callback set-auto-cap(bool);
+
+    spacing: Theme.sp-lg;
+    width: 100%;
+
+    PageHeader {
+        title: "Cách gõ";
+        subtitle: "Phương thức, đặt dấu và xử lý thông minh khi gõ.";
+    }
+
+    Section {
+        title: "Phương thức";
+        MethodSelector {
+            method: root.method;
+            picked(value) => { root.pick-method(value); }
+        }
+    }
+
+    Section {
+        title: "Kiểu đặt dấu";
+        Text {
+            text: root.tone-style == "modern"
+                ? "Dấu kiểu mới — hoà, khoẻ, thuý"
+                : "Dấu kiểu cũ — hòa, khỏe, thúy";
+            font-size: Theme.font-caption;
+            color: Theme.subtle;
+            wrap: word-wrap;
+        }
+        Segmented {
+            options: [
+                { id: "traditional", label: "Truyền thống" },
+                { id: "modern", label: "Hiện đại" },
+            ];
+            current: root.tone-style;
+            changed(v) => { root.pick-tone(v); }
+        }
+    }
+
+    SmartSection {
+        smart-restore <=> root.smart-restore;
+        eager-restore <=> root.eager-restore;
+        spell-check <=> root.spell-check;
+        auto-capitalize <=> root.auto-capitalize;
+        set-smart(v) => { root.set-smart(v); }
+        set-eager(v) => { root.set-eager(v); }
+        set-spell(v) => { root.set-spell(v); }
+        set-auto-cap(v) => { root.set-auto-cap(v); }
+    }
+}

@@ -1,0 +1,115 @@
+// 2×2 quick-action tiles for the Control Center flyout.
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "../theme/mod.slint";
+
+export component BigTile inherits Rectangle {
+    in property <image> icon;
+    in property <string> title;
+    in property <string> subtitle;
+    in property <bool> emphasized;
+    callback clicked;
+
+    horizontal-stretch: 1;
+    min-width: 0px;
+    height: 88px;
+    border-radius: Theme.r-shell;
+    background: root.emphasized
+        ? (touch.has-hover ? Theme.accent-hover : Theme.accent)
+        : (touch.has-hover ? Theme.nav-active : Theme.flyout-card);
+    border-width: 1px;
+    border-color: root.emphasized ? transparent : Theme.flyout-border;
+
+    VerticalLayout {
+        padding: 14px;
+        spacing: 0px;
+        width: 100%;
+        height: 100%;
+        Image {
+            source: root.icon;
+            width: 18px;
+            height: 18px;
+            colorize: root.emphasized ? Theme.accent-text : Palette.foreground;
+            horizontal-alignment: left;
+        }
+        Rectangle { vertical-stretch: 1; }
+        Text {
+            text: root.title;
+            font-size: 14px;
+            font-weight: 600;
+            color: root.emphasized ? Theme.accent-text : Palette.foreground;
+            overflow: elide;
+        }
+        Text {
+            text: root.subtitle;
+            font-size: 12px;
+            // Opaque on the accent fill: any transparency drops it under 4.5:1.
+            color: root.emphasized ? Theme.accent-text : Theme.subtle;
+            overflow: elide;
+        }
+    }
+    touch := TouchArea {
+        width: 100%;
+        height: 100%;
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+}
+
+export component CcTiles {
+    in property <string> method-label;
+    in property <bool> spell-check;
+    in property <bool> auto-capitalize;
+    in property <int> shortcut-count;
+    callback cycle-method();
+    callback toggle-spell();
+    callback toggle-cap();
+    callback open-shortcuts();
+
+    // Explicit half-width: HorizontalLayout stretch was shrink-wrapping to text.
+    private property <length> tile-w: (root.width - 12px) / 2;
+
+    width: 100%;
+    VerticalLayout {
+        spacing: 12px;
+        width: 100%;
+        HorizontalLayout {
+            spacing: 12px;
+            BigTile {
+                width: root.tile-w;
+                icon: @image-url("../icons/nav/primary/keyboard.svg");
+                title: root.method-label;
+                subtitle: "Kiểu gõ";
+                emphasized: true;
+                clicked => { root.cycle-method(); }
+            }
+            BigTile {
+                width: root.tile-w;
+                icon: @image-url("../icons/nav/primary/sparkles.svg");
+                title: "Chính tả";
+                subtitle: root.spell-check ? "Đang bật" : "Đang tắt";
+                emphasized: root.spell-check;
+                clicked => { root.toggle-spell(); }
+            }
+        }
+        HorizontalLayout {
+            spacing: 12px;
+            BigTile {
+                width: root.tile-w;
+                icon: @image-url("../icons/nav/primary/shortcut.svg");
+                title: "Gõ tắt";
+                subtitle: root.shortcut-count + " mục";
+                emphasized: root.shortcut-count > 0;
+                clicked => { root.open-shortcuts(); }
+            }
+            BigTile {
+                width: root.tile-w;
+                icon: @image-url("../icons/nav/primary/switch.svg");
+                title: "Viết hoa";
+                subtitle: root.auto-capitalize ? "Đang bật" : "Đang tắt";
+                emphasized: root.auto-capitalize;
+                clicked => { root.toggle-cap(); }
+            }
+        }
+    }
+}

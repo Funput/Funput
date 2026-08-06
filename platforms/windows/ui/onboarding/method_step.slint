@@ -1,0 +1,50 @@
+// Onboarding step 1: pick input method (shared MethodSelector).
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "../theme/tokens.slint";
+import { MethodSelector } from "../pages/typing/method_selector.slint";
+
+export component OnboardingMethodStep inherits VerticalLayout {
+    in property <string> method;
+    callback pick-method(string);
+
+    alignment: center;
+    spacing: Theme.sp-sm;
+    width: 100%;
+
+    HorizontalLayout {
+        alignment: center;
+        Image {
+            source: @image-url("../icons/nav/primary/keyboard.svg");
+            colorize: Theme.accent;
+            width: 42px;
+            height: 42px;
+        }
+    }
+    Text {
+        text: "Chọn kiểu gõ";
+        font-size: Theme.font-title;
+        font-weight: 700;
+        horizontal-alignment: center;
+        color: Palette.foreground;
+    }
+    Text {
+        text: "Đổi được bất cứ lúc nào trong Cài đặt.";
+        font-size: Theme.font-body;
+        horizontal-alignment: center;
+        color: Theme.subtle;
+    }
+    MethodSelector {
+        method: root.method;
+        picked(value) => { root.pick-method(value); }
+    }
+    Text {
+        text: root.method == "telex_advanced"
+            ? "Full Telex — [→ư, ]→ơ, w đầu từ→ư"
+            : "";
+        visible: self.text != "";
+        font-size: Theme.font-caption;
+        horizontal-alignment: center;
+        color: Theme.subtle;
+    }
+}

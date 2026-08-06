@@ -1,0 +1,60 @@
+// Settings → "Gõ tắt": manage text-expansion shortcuts.
+
+import { Theme, PageHeader, Section, PrimaryButton, ShortcutEntry } from "../../theme/mod.slint";
+import { ShortcutRow } from "row.slint";
+
+export component ShortcutsPage inherits VerticalLayout {
+    in property <[ShortcutEntry]> shortcuts;
+    in property <bool> can-add: true;
+    callback add-shortcut();
+    callback remove-shortcut(int);
+    callback edit-trigger(int, string);
+    callback edit-expansion(int, string);
+
+    spacing: Theme.sp-lg;
+    width: 100%;
+    alignment: start;
+
+    PageHeader {
+        title: "Gõ tắt";
+        subtitle: "Bung chữ tắt khi gõ khoảng trắng hoặc dấu câu.";
+    }
+
+    Section {
+        HorizontalLayout {
+            spacing: Theme.sp-md;
+            VerticalLayout {
+                horizontal-stretch: 1;
+                alignment: center;
+                Text {
+                    text: root.shortcuts.length == 0
+                        ? "Chưa có mục nào"
+                        : "\{root.shortcuts.length} mục";
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: Theme.subtle;
+                }
+            }
+            PrimaryButton {
+                text: "Thêm";
+                enabled: root.can-add;
+                clicked => { root.add-shortcut(); }
+            }
+        }
+
+        if root.shortcuts.length == 0: Text {
+            text: "Chưa có gõ tắt. Bấm Thêm để tạo.";
+            font-size: 13px;
+            color: Theme.subtle;
+            wrap: word-wrap;
+        }
+
+        for entry[i] in root.shortcuts: ShortcutRow {
+            trigger: entry.trigger;
+            expansion: entry.expansion;
+            edit-trigger(t) => { root.edit-trigger(i, t); }
+            edit-expansion(t) => { root.edit-expansion(i, t); }
+            remove => { root.remove-shortcut(i); }
+        }
+    }
+}

@@ -34,6 +34,10 @@ pub fn set_auto_capitalize(on: bool) {
     shell::set_auto_capitalize(on);
 }
 
+pub fn set_enabled(on: bool) {
+    shell::set_enabled(on);
+}
+
 pub fn set_toggle_hotkey(hotkey: Hotkey) {
     shell::set_toggle_hotkey(hotkey);
 }
@@ -66,6 +70,14 @@ pub fn remove_excluded_app(id: &str) {
 
 pub fn add_shortcut() {
     shell::add_shortcut();
+}
+
+pub fn can_add_shortcut() -> bool {
+    shell::can_add_shortcut()
+}
+
+pub fn prune_incomplete_shortcuts() {
+    shell::prune_incomplete_shortcuts();
 }
 
 pub fn remove_shortcut(index: usize) {

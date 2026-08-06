@@ -1,0 +1,70 @@
+// Control Center header: brand, live status line, VI toggle.
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "../theme/mod.slint";
+
+export component CcHeader {
+    in property <bool> enabled;
+    in property <string> status;
+    callback toggle-enabled(bool);
+
+    width: 100%;
+    VerticalLayout {
+        spacing: 6px;
+        width: 100%;
+        HorizontalLayout {
+            spacing: 10px;
+            width: 100%;
+            VerticalLayout {
+                alignment: center;
+                Image {
+                    // Sized to span the name + status lines beside it.
+                    source: @image-url("../../../../assets/logo.png");
+                    width: 38px;
+                    height: 38px;
+                }
+            }
+            VerticalLayout {
+                horizontal-stretch: 1;
+                alignment: center;
+                spacing: 2px;
+                Text {
+                    text: "Funput";
+                    font-size: 16px;
+                    font-weight: 700;
+                    color: Palette.foreground;
+                }
+                Text {
+                    text: root.status;
+                    font-size: Theme.font-caption;
+                    color: root.enabled ? Theme.accent-legible : Theme.subtle;
+                    overflow: elide;
+                }
+            }
+            // Large VI toggle.
+            Rectangle {
+                width: 48px;
+                height: 28px;
+                border-radius: 14px;
+                // No fill animation: the flyout is created fresh on every open, and
+                // an animated background renders its first frame transparent.
+                background: root.enabled ? Theme.accent : Theme.track;
+                border-width: root.enabled ? 0px : 1px;
+                border-color: Theme.flyout-border;
+                Rectangle {
+                    x: root.enabled ? parent.width - 25px : 3px;
+                    y: 3px;
+                    width: 22px;
+                    height: 22px;
+                    border-radius: 11px;
+                    background: #ffffff;
+                    animate x { duration: 120ms; easing: ease-out; }
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => { root.toggle-enabled(!root.enabled); }
+                }
+            }
+        }
+    }
+}

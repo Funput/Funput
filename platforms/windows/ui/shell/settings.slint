@@ -1,0 +1,122 @@
+// Settings window chrome: glass backdrop, floating sidebar, content host.
+// Rust (`windows_ui`) sets properties and handles callbacks on this Window.
+
+import { Theme, ShortcutEntry } from "../theme/mod.slint";
+import { Backdrop } from "backdrop.slint";
+import { Sidebar } from "sidebar.slint";
+import { SettingsContent } from "content.slint";
+
+export component SettingsWindow inherits Window {
+    title: "Funput — Cài đặt";
+    icon: @image-url("../../../../assets/logo.png");
+    width: 780px;
+    height: 520px;
+    default-font-family: "Segoe UI Variable Text";
+    background: Theme.mica ? transparent : Theme.window-base;
+
+    in property <string> method;
+    in property <string> tone-style;
+    in property <string> hotkey;
+    in property <[string]> hotkey-caps;
+    in property <bool> hotkey-conflict;
+    in property <string> flip-hotkey;
+    in property <[string]> flip-hotkey-caps;
+    in property <bool> flip-hotkey-conflict;
+    in-out property <bool> vi-enabled: true;
+    in-out property <bool> smart-restore;
+    in-out property <bool> eager-restore;
+    in-out property <bool> spell-check;
+    in-out property <bool> auto-capitalize;
+    in-out property <bool> launch-at-login;
+    in property <[ShortcutEntry]> shortcuts;
+    in property <bool> can-add-shortcut: true;
+    in property <string> version;
+    in property <string> update-state: "idle";
+    in property <string> update-version;
+    in property <string> update-message;
+
+    callback pick-method(string);
+    callback pick-tone(string);
+    callback pick-hotkey(string);
+    callback pick-flip-hotkey(string);
+    callback record-combo(string, string, bool, bool, bool, bool) -> bool;
+    callback set-enabled(bool);
+    callback set-smart(bool);
+    callback set-eager(bool);
+    callback set-spell(bool);
+    callback set-auto-cap(bool);
+    callback set-launch(bool);
+    callback add-shortcut();
+    callback remove-shortcut(int);
+    callback edit-trigger(int, string);
+    callback edit-expansion(int, string);
+    callback prune-shortcuts();
+    callback open-link(string);
+    callback check-update();
+    callback install-update();
+    callback relaunch-now();
+    callback export-config();
+    callback import-config();
+
+    in-out property <string> active: "overview";
+    private property <string> previous-active: "overview";
+
+    changed active => {
+        if root.previous-active == "shortcuts" && root.active != "shortcuts" {
+            root.prune-shortcuts();
+        }
+        root.previous-active = root.active;
+    }
+
+    if !Theme.mica: Backdrop { }
+
+    HorizontalLayout {
+        spacing: 0px;
+        padding: Theme.sp-sm;
+        Sidebar { active <=> root.active; }
+        SettingsContent {
+            active: root.active;
+            method: root.method;
+            tone-style: root.tone-style;
+            hotkey: root.hotkey;
+            hotkey-caps: root.hotkey-caps;
+            hotkey-conflict: root.hotkey-conflict;
+            flip-hotkey: root.flip-hotkey;
+            flip-hotkey-caps: root.flip-hotkey-caps;
+            flip-hotkey-conflict: root.flip-hotkey-conflict;
+            vi-enabled <=> root.vi-enabled;
+            smart-restore <=> root.smart-restore;
+            eager-restore <=> root.eager-restore;
+            spell-check <=> root.spell-check;
+            auto-capitalize <=> root.auto-capitalize;
+            launch-at-login <=> root.launch-at-login;
+            shortcuts: root.shortcuts;
+            can-add-shortcut: root.can-add-shortcut;
+            version: root.version;
+            update-state: root.update-state;
+            update-version: root.update-version;
+            update-message: root.update-message;
+            pick-method(v) => { root.pick-method(v); }
+            pick-tone(v) => { root.pick-tone(v); }
+            pick-hotkey(v) => { root.pick-hotkey(v); }
+            pick-flip-hotkey(v) => { root.pick-flip-hotkey(v); }
+            record-combo(k, t, c, a, s, w) => { root.record-combo(k, t, c, a, s, w) }
+            set-enabled(v) => { root.set-enabled(v); }
+            set-smart(v) => { root.set-smart(v); }
+            set-eager(v) => { root.set-eager(v); }
+            set-spell(v) => { root.set-spell(v); }
+            set-auto-cap(v) => { root.set-auto-cap(v); }
+            set-launch(v) => { root.set-launch(v); }
+            add-shortcut() => { root.add-shortcut(); }
+            remove-shortcut(i) => { root.remove-shortcut(i); }
+            edit-trigger(i, t) => { root.edit-trigger(i, t); }
+            edit-expansion(i, t) => { root.edit-expansion(i, t); }
+            open-link(url) => { root.open-link(url); }
+            check-update() => { root.check-update(); }
+            install-update() => { root.install-update(); }
+            relaunch-now() => { root.relaunch-now(); }
+            export-config() => { root.export-config(); }
+            import-config() => { root.import-config(); }
+        }
+    }
+}

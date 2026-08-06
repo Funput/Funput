@@ -1,0 +1,116 @@
+// Fluent (Windows 11) design tokens. Values track the WinUI ThemeResources so the
+// UI reads as native on top of the Mica backdrop: flat semi-opaque layers, hairline
+// strokes, 4/8px radii, and accent used only for selection — no gradients or glass.
+
+import { Palette } from "std-widgets.slint";
+
+export struct SegOption {
+    id: string,
+    label: string,
+}
+
+export struct AppEntry {
+    id: string,
+    name: string,
+}
+
+export struct ShortcutEntry {
+    trigger: string,
+    expansion: string,
+}
+
+export global Theme {
+    out property <bool> dark: Palette.color-scheme == ColorScheme.dark;
+
+    // Set from Rust: true when DWM composites a Mica/Acrylic backdrop behind the
+    // window. The UI then leaves its own background transparent to reveal it.
+    in-out property <bool> mica: false;
+
+    // Slint's own take on the OS accent: the winit backend feeds
+    // DwmGetColorizationColor into the Fluent palette, which keeps the accent's
+    // hue and re-lightens it per colour scheme. Read by system_accent.rs as the
+    // fallback when no registry source answers — it cannot reach Palette itself.
+    out property <brush> style-accent: Palette.accent-background;
+
+    // The raw Windows accent, set by system_accent.rs; orange is the
+    // Slint-viewer / read-failure fallback.
+    in-out property <color> accent-source: #ea580c;
+
+    // Never paint the raw accent: users' accents run from navy to lemon, so its
+    // lightness — and with it the only readable text colour — swings wildly.
+    // Keep the user's hue and chroma but pin the lightness to Fluent's
+    // SystemAccentColorDark1 reference, in both colour schemes, so accent fills
+    // always carry white text. (WinUI itself switches to a light shade with black
+    // text in dark mode; one text colour everywhere reads more consistently.)
+    out property <color> accent-ref: #005fb8;
+    out property <color> accent: oklch(
+        root.accent-ref.to-oklch().lightness,
+        root.accent-source.to-oklch().chroma,
+        root.accent-source.to-oklch().hue);
+    out property <color> accent-text: #ffffff;
+    // Dark mode lifts the fill on hover rather than deepening it, but only just:
+    // brightening much further drops white text below a 4.5:1 ratio.
+    out property <color> accent-hover: root.dark
+        ? root.accent.brighter(0.08)
+        : root.accent.darker(0.06);
+    out property <brush> accent-soft: root.accent.transparentize(0.86);
+    // Accent as *text* on a surface needs a different lightness than accent as a
+    // fill: these are Fluent's own AccentTextFillColorPrimary references.
+    out property <color> accent-text-ref: root.dark ? #99ebff : #003e92;
+    out property <color> accent-legible: oklch(
+        root.accent-text-ref.to-oklch().lightness,
+        root.accent-source.to-oklch().chroma,
+        root.accent-source.to-oklch().hue);
+    out property <color> warn: root.dark ? #fbbf24 : #b45309;
+    out property <color> danger: root.dark ? #ff99a4 : #c42b1c;
+
+    out property <length> sp-xs: 4px;
+    out property <length> sp-sm: 8px;
+    out property <length> sp-md: 16px;
+    out property <length> sp-lg: 20px;
+    out property <length> sp-xl: 28px;
+
+    // Fluent corner radii: 4px controls, 8px cards & flyouts.
+    out property <length> r-card: 8px;
+    out property <length> r-control: 4px;
+    out property <length> r-shell: 8px;
+
+    out property <length> font-title: 20px;
+    out property <length> font-body: 14px;
+    out property <length> font-caption: 12px;
+
+    // Solid fallback background, used only when no backdrop is available (older Win10).
+    out property <brush> window-base: root.dark ? #202020 : #f3f3f3;
+
+    // CardBackgroundFillColorDefault — a thin layer that reads over Mica.
+    out property <brush> card-bg: root.dark ? #ffffff0d : #ffffffb3;
+    // CardStrokeColorDefault — the hairline that actually delineates the card.
+    out property <color> card-border: root.dark ? #ffffff14 : #0000000f;
+    // Flyout elevation (recorder / composing popups only — cards stay flat).
+    out property <color> shadow: root.dark ? #00000073 : #00000024;
+
+    // Flyout (Control Center) layers. Acrylic only blurs what is behind it, so a
+    // near-opaque tint has to sit on top or text lands straight on the wallpaper.
+    // Matches AcrylicBackgroundFillColorDefault's high luminosity opacity.
+    out property <brush> flyout-base: root.dark ? #2b2b2beb : #f9f9f9f0;
+    out property <brush> flyout-card: root.dark ? #ffffff17 : #ffffffd9;
+    out property <color> flyout-border: root.dark ? #ffffff26 : #00000017;
+
+    // Popups float over the Mica-transparent window surface, where nothing opaque
+    // backs them: a translucent fill there shows the desktop instead of the text.
+    out property <brush> popup-base: root.dark ? #2c2c2c : #f9f9f9;
+
+    // The sidebar sits directly on the backdrop, Win11 NavigationView style.
+    out property <brush> sidebar-bg: transparent;
+    out property <color> sidebar-border: transparent;
+
+    out property <brush> track: root.dark ? #ffffff14 : #0000000d;
+    out property <brush> nav-active: root.dark ? #ffffff14 : #0000000f;
+    out property <brush> nav-hover: root.dark ? #ffffff0d : #00000008;
+    out property <brush> field-bg: root.dark ? #ffffff0f : #ffffffb3;
+
+    // TextFillColor Secondary / Tertiary.
+    out property <color> subtle: root.dark ? #c8c8cc : #5f5f66;
+    out property <color> faint: root.dark ? #8a8a90 : #8a8a90;
+    out property <color> divider: root.dark ? #ffffff14 : #0000000f;
+}

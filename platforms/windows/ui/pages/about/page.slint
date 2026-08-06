@@ -1,0 +1,52 @@
+// Settings → "Giới thiệu": brand, auto-update flow, and links.
+
+import { Theme, Section, GhostButton } from "../../theme/mod.slint";
+import { AboutHero } from "hero.slint";
+import { AboutUpdate } from "update.slint";
+
+export component AboutPage inherits VerticalLayout {
+    in property <string> version;
+    in property <string> update-state: "idle";
+    in property <string> update-version;
+    in property <string> update-message;
+    callback open-link(string);
+    callback check-update();
+    callback install-update();
+    callback relaunch-now();
+
+    spacing: Theme.sp-lg;
+    width: 100%;
+    alignment: start;
+
+    AboutHero {
+        version: root.version;
+    }
+
+    AboutUpdate {
+        update-state: root.update-state;
+        update-version: root.update-version;
+        update-message: root.update-message;
+        check-update => { root.check-update(); }
+        install-update => { root.install-update(); }
+        relaunch-now => { root.relaunch-now(); }
+        open-changelog => {
+            root.open-link("https://github.com/Funput/Funput/releases/latest");
+        }
+    }
+
+    Section {
+        title: "Liên kết";
+        HorizontalLayout {
+            spacing: Theme.sp-sm;
+            alignment: start;
+            GhostButton {
+                text: "GitHub";
+                clicked => { root.open-link("https://github.com/Funput/Funput"); }
+            }
+            GhostButton {
+                text: "Website";
+                clicked => { root.open-link("https://funput.app/"); }
+            }
+        }
+    }
+}

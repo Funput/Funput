@@ -1,0 +1,146 @@
+// Shared interactive chrome: rows, segmented control, keycaps, progress dots.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, SegOption } from "tokens.slint";
+
+export component KeyCap inherits Rectangle {
+    in property <string> label;
+    height: 24px;
+    border-radius: 8px;
+    background: Theme.field-bg;
+    border-width: 1px;
+    border-color: Theme.card-border;
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        Text {
+            text: root.label;
+            vertical-alignment: center;
+            font-size: Theme.font-caption;
+            font-weight: 600;
+            color: Palette.foreground;
+        }
+    }
+}
+
+export component Row {
+    in property <string> title;
+    in property <string> subtitle;
+    in property <image> icon;
+    HorizontalLayout {
+        spacing: Theme.sp-md;
+        if root.icon.width > 0: VerticalLayout {
+            alignment: center;
+            Image { source: root.icon; colorize: Theme.subtle; width: 18px; height: 18px; }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 4px;
+            Text {
+                text: root.title;
+                font-size: Theme.font-body;
+                font-weight: 600;
+                color: Palette.foreground;
+            }
+            if root.subtitle != "": Text {
+                text: root.subtitle;
+                font-size: Theme.font-caption;
+                color: Theme.subtle;
+                wrap: word-wrap;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 0;
+            alignment: center;
+            @children
+        }
+    }
+}
+
+// Fluent segmented control: the selected segment fills with the accent colour;
+// the others are quiet buttons. Flat, no elevation.
+export component Segmented {
+    in property <[SegOption]> options;
+    in property <string> current;
+    callback changed(string);
+    Rectangle {
+        background: Theme.track;
+        border-radius: Theme.r-control + 2px;
+        border-width: 1px;
+        border-color: Theme.divider;
+        HorizontalLayout {
+            padding: 3px;
+            spacing: 2px;
+            for opt in root.options: Rectangle {
+                background: opt.id == root.current
+                    ? Theme.accent
+                    : (seg-touch.has-hover ? Theme.nav-hover : transparent);
+                border-radius: Theme.r-control;
+                animate background { duration: 120ms; easing: ease-out; }
+                HorizontalLayout {
+                    padding-left: 14px;
+                    padding-right: 14px;
+                    padding-top: 8px;
+                    padding-bottom: 8px;
+                    Text {
+                        text: opt.label;
+                        color: opt.id == root.current ? Theme.accent-text : Palette.foreground;
+                        font-size: 13px;
+                        font-weight: opt.id == root.current ? 600 : 400;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+                seg-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => { root.changed(opt.id); }
+                }
+            }
+        }
+    }
+}
+
+export component Dot inherits Rectangle {
+    in property <bool> on;
+    width: root.on ? 20px : 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: root.on ? Theme.accent : Theme.track;
+    animate width { duration: 160ms; easing: ease-in-out; }
+}
+
+/// Win11-style toggle that paints Theme.accent when on (std-widgets Switch does not).
+export component AccentSwitch inherits Rectangle {
+    in-out property <bool> checked;
+    in property <bool> enabled: true;
+    callback toggled;
+
+    width: 40px;
+    height: 20px;
+    border-radius: 10px;
+    opacity: root.enabled ? 1 : 0.45;
+    // No fill animation: Settings opens fresh and animated bg starts transparent.
+    background: root.checked ? Theme.accent : Theme.track;
+    border-width: root.checked ? 0px : 1px;
+    border-color: Theme.divider;
+
+    Rectangle {
+        x: root.checked ? parent.width - 17px : 2px;
+        y: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 8px;
+        background: #ffffff;
+        animate x { duration: 120ms; easing: ease-out; }
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            if root.enabled {
+                root.checked = !root.checked;
+                root.toggled();
+            }
+        }
+    }
+}

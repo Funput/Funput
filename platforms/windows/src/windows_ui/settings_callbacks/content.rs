@@ -5,47 +5,25 @@ use slint::{ComponentHandle, Model};
 use crate::compose::FieldComposer;
 use crate::{commands, shell, Compose, SettingsWindow};
 
-use super::super::{models, settings_window};
+use super::super::models;
 
 thread_local! {
     static COMPOSER: RefCell<FieldComposer> = RefCell::new(FieldComposer::new());
 }
 
 pub(super) fn wire(window: &SettingsWindow) {
-    wire_apps(window);
     wire_shortcuts(window);
     wire_composer(window);
 }
 
-fn wire_apps(window: &SettingsWindow) {
-    let weak = window.as_weak();
-    window.on_add_app(move |id| {
-        if let Some(app) = shell::recent_apps()
-            .into_iter()
-            .find(|app| app.id == id.as_str())
-        {
-            commands::add_excluded_app(app);
-        }
-        if let Some(window) = weak.upgrade() {
-            settings_window::refresh_apps(&window);
-        }
-    });
-
-    let weak = window.as_weak();
-    window.on_remove_app(move |id| {
-        commands::remove_excluded_app(&id);
-        if let Some(window) = weak.upgrade() {
-            settings_window::refresh_apps(&window);
-        }
-    });
-}
-
 fn wire_shortcuts(window: &SettingsWindow) {
+    refresh_shortcuts_ui(window);
+
     let weak = window.as_weak();
     window.on_add_shortcut(move || {
         commands::add_shortcut();
         if let Some(window) = weak.upgrade() {
-            window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
+            refresh_shortcuts_ui(&window);
         }
     });
 
@@ -53,7 +31,7 @@ fn wire_shortcuts(window: &SettingsWindow) {
     window.on_remove_shortcut(move |index| {
         commands::remove_shortcut(index.max(0) as usize);
         if let Some(window) = weak.upgrade() {
-            window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
+            refresh_shortcuts_ui(&window);
         }
     });
 
@@ -66,6 +44,19 @@ fn wire_shortcuts(window: &SettingsWindow) {
     window.on_edit_expansion(move |index, text| {
         update_shortcut(&weak, index, text, false);
     });
+
+    let weak = window.as_weak();
+    window.on_prune_shortcuts(move || {
+        commands::prune_incomplete_shortcuts();
+        if let Some(window) = weak.upgrade() {
+            refresh_shortcuts_ui(&window);
+        }
+    });
+}
+
+fn refresh_shortcuts_ui(window: &SettingsWindow) {
+    window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
+    window.set_can_add_shortcut(commands::can_add_shortcut());
 }
 
 fn update_shortcut(
@@ -80,7 +71,9 @@ fn update_shortcut(
     } else {
         commands::set_shortcut_expansion(index, text.to_string());
     }
-    let Some(window) = weak.upgrade() else { return };
+    let Some(window) = weak.upgrade() else {
+        return;
+    };
     let model = window.get_shortcuts();
     if let Some(mut entry) = model.row_data(index) {
         if trigger {
@@ -90,6 +83,7 @@ fn update_shortcut(
         }
         model.set_row_data(index, entry);
     }
+    window.set_can_add_shortcut(commands::can_add_shortcut());
 }
 
 fn wire_composer(window: &SettingsWindow) {

@@ -1,0 +1,85 @@
+// Settings → "Phím tắt": VI/EN toggle hotkey and flip-word hotkey.
+
+import { Theme, PageHeader } from "../../theme/mod.slint";
+import { RecorderPanel } from "../../overlays/recorder.slint";
+import { HotkeyBlock } from "hotkey_block.slint";
+
+export component KeyboardPage inherits VerticalLayout {
+    in property <string> hotkey;
+    in property <[string]> hotkey-caps;
+    in property <bool> hotkey-conflict;
+    in property <string> flip-hotkey;
+    in property <[string]> flip-hotkey-caps;
+    in property <bool> flip-hotkey-conflict;
+    callback pick-hotkey(string);
+    callback pick-flip-hotkey(string);
+    callback record-combo(string, string, bool, bool, bool, bool) -> bool;
+
+    private property <string> rec-kind: "toggle";
+    private property <int> rec-reset-token: 0;
+
+    spacing: Theme.sp-lg;
+    width: 100%;
+
+    recorder-popup := PopupWindow {
+        x: (root.width - 300px) / 2;
+        y: 96px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+        RecorderPanel {
+            kind: root.rec-kind;
+            reset-token: root.rec-reset-token;
+            recorded(kind, text, ctrl, alt, shift, win) => {
+                root.record-combo(kind, text, ctrl, alt, shift, win)
+            }
+            done => { recorder-popup.close(); }
+        }
+    }
+
+    PageHeader {
+        title: "Phím tắt";
+        subtitle: "Điều khiển Funput mà không rời bàn phím.";
+    }
+
+    HotkeyBlock {
+        heading: "Chuyển VI / EN";
+        subtitle: "Bật hoặc tắt gõ tiếng Việt.";
+        icon: @image-url("../../icons/nav/primary/switch.svg");
+        options: [
+            { id: "ctrl_backtick", label: "Ctrl `" },
+            { id: "ctrl_space", label: "Ctrl Space" },
+            { id: "alt_shift", label: "Alt Shift" },
+        ];
+        current: root.hotkey;
+        caps: root.hotkey-caps;
+        conflict: root.hotkey-conflict;
+        custom-active: root.hotkey == "custom";
+        changed(v) => { root.pick-hotkey(v); }
+        customize() => {
+            root.rec-kind = "toggle";
+            root.rec-reset-token += 1;
+            recorder-popup.show();
+        }
+    }
+
+    HotkeyBlock {
+        heading: "Lật từ vừa gõ";
+        subtitle: "Đổi từ đang gõ giữa tiếng Việt và chữ gốc.";
+        icon: @image-url("../../icons/row/restore.svg");
+        options: [
+            { id: "off", label: "Tắt" },
+            { id: "ctrl_shift_z", label: "Ctrl Shift Z" },
+            { id: "ctrl_shift_x", label: "Ctrl Shift X" },
+        ];
+        current: root.flip-hotkey;
+        caps: root.flip-hotkey-caps;
+        conflict: root.flip-hotkey-conflict;
+        custom-active: root.flip-hotkey == "custom";
+        off: root.flip-hotkey == "off";
+        changed(v) => { root.pick-flip-hotkey(v); }
+        customize() => {
+            root.rec-kind = "flip";
+            root.rec-reset-token += 1;
+            recorder-popup.show();
+        }
+    }
+}

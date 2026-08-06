@@ -1,0 +1,84 @@
+// Method picker: vertical choices with per-option caption (settings + onboarding).
+
+import { Palette } from "std-widgets.slint";
+import { Theme } from "../../theme/mod.slint";
+
+export component MethodSelector inherits VerticalLayout {
+    in property <string> method;
+    callback picked(string);
+
+    spacing: 4px;
+
+    property <[{id: string, label: string, caption: string}]> choices: [
+        {
+            id: "telex",
+            label: "Telex",
+            caption: "Dấu bằng chữ cái — aa→â, ow→ơ, as→á, dd→đ",
+        },
+        {
+            id: "telex_advanced",
+            label: "Telex nâng cao",
+            caption: "Full Telex — [→ư, ]→ơ, w đầu từ→ư",
+        },
+        {
+            id: "vni",
+            label: "VNI",
+            caption: "Dấu bằng chữ số — a6→â, o7→ơ, a1→á, d9→đ",
+        },
+    ];
+
+    for item in root.choices: Rectangle {
+        border-radius: Theme.r-control;
+        background: root.method == item.id
+            ? Theme.accent-soft
+            : (row-touch.has-hover ? Theme.nav-hover : transparent);
+
+        HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            spacing: 12px;
+
+            // Radio: the accent fill is the selection cue for an exclusive choice.
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 9px;
+                    background: root.method == item.id ? Theme.accent : transparent;
+                    border-width: root.method == item.id ? 0px : 1.5px;
+                    border-color: Theme.divider;
+                    Rectangle {
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 3.5px;
+                        background: #ffffff;
+                        visible: root.method == item.id;
+                    }
+                }
+            }
+
+            VerticalLayout {
+                spacing: 3px;
+                Text {
+                    text: item.label;
+                    font-size: Theme.font-body;
+                    font-weight: root.method == item.id ? 600 : 400;
+                    color: Palette.foreground;
+                }
+                Text {
+                    text: item.caption;
+                    font-size: Theme.font-caption;
+                    color: Theme.subtle;
+                    wrap: word-wrap;
+                }
+            }
+        }
+        row-touch := TouchArea {
+            mouse-cursor: pointer;
+            clicked => { root.picked(item.id); }
+        }
+    }
+}

@@ -1,0 +1,76 @@
+// First-run onboarding: flat on Mica — brand-first welcome through ready.
+
+import { Theme, Dot, PrimaryButton, GhostButton } from "../theme/mod.slint";
+import { Backdrop } from "../shell/backdrop.slint";
+import { WelcomeStep } from "welcome.slint";
+import { OnboardingMethodStep } from "method_step.slint";
+import { HowItWorksStep } from "how.slint";
+import { ReadyStep } from "ready.slint";
+
+export component OnboardingWindow inherits Window {
+    title: "Chào mừng đến Funput";
+    icon: @image-url("../../../../assets/logo.png");
+    width: 520px;
+    height: 600px;
+    default-font-family: "Segoe UI Variable Text";
+    background: Theme.mica ? transparent : Theme.window-base;
+
+    in property <string> method;
+    in-out property <bool> launch-at-login;
+    in-out property <int> step: 0;
+
+    callback pick-method(string);
+    callback set-launch(bool);
+    callback finish();
+
+    if !Theme.mica: Backdrop { }
+
+    VerticalLayout {
+        padding: Theme.sp-xl;
+        spacing: Theme.sp-lg;
+
+        VerticalLayout {
+            vertical-stretch: 1;
+            min-height: 320px;
+            alignment: center;
+            spacing: Theme.sp-sm;
+
+            if root.step == 0: WelcomeStep { }
+            if root.step == 1: OnboardingMethodStep {
+                method: root.method;
+                pick-method(value) => { root.pick-method(value); }
+            }
+            if root.step == 2: HowItWorksStep { }
+            if root.step == 3: ReadyStep {
+                launch-at-login <=> root.launch-at-login;
+                set-launch(v) => { root.set-launch(v); }
+            }
+        }
+
+        HorizontalLayout {
+            spacing: Theme.sp-md;
+            if root.step > 0: GhostButton {
+                text: "Quay lại";
+                clicked => { root.step -= 1; }
+            }
+            Rectangle {
+                horizontal-stretch: 1;
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 6px;
+                    for i in [0, 1, 2, 3]: Dot { on: i == root.step; }
+                }
+            }
+            PrimaryButton {
+                text: root.step < 3 ? "Tiếp tục" : "Bắt đầu";
+                clicked => {
+                    if root.step < 3 {
+                        root.step += 1;
+                    } else {
+                        root.finish();
+                    }
+                }
+            }
+        }
+    }
+}
