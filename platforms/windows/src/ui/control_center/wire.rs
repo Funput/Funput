@@ -2,8 +2,9 @@
 
 use slint::ComponentHandle;
 
+use crate::shared::{commands, shell};
+use crate::ControlCenterWindow;
 use funput_config::ToneStyle;
-use crate::{commands, shell, ControlCenterWindow};
 
 use super::{
     cycle_method, method_label, request_exit, status_line, tone_label, EXIT_DISMISS, EXIT_KEYBOARD,

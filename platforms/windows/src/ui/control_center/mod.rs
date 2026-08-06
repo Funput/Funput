@@ -8,8 +8,10 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use slint::winit_030::{EventResult, WinitWindowAccessor};
 use slint::{ComponentHandle, PhysicalPosition, Weak};
 
+use crate::shared::shell;
+use crate::ui::{mica, system_accent};
+use crate::{ControlCenterWindow, Theme};
 use funput_config::{Method, ToneStyle};
-use crate::{mica, shell, system_accent, ControlCenterWindow, Theme};
 
 /// Process exit codes parent reaps to open Settings on a given tab.
 pub(super) const EXIT_DISMISS: u8 = 0;

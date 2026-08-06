@@ -6,7 +6,9 @@ use slint::{ComponentHandle, Weak};
 
 use super::models;
 use super::settings_callbacks;
-use crate::{commands, recorder, shell, system_accent, SettingsWindow, Theme};
+use crate::shared::{commands, shell};
+use crate::ui::{recorder, system_accent};
+use crate::{SettingsWindow, Theme};
 
 thread_local! {
     static WINDOW: RefCell<Option<Weak<SettingsWindow>>> = const { RefCell::new(None) };
@@ -51,7 +53,7 @@ fn remap_tab(tab: &str) -> &str {
 fn schedule_backdrop(weak: Weak<SettingsWindow>) {
     let _ = slint::invoke_from_event_loop(move || {
         if let Some(window) = weak.upgrade() {
-            let active = crate::mica::apply(window.window());
+            let active = crate::ui::mica::apply(window.window());
             window.global::<Theme>().set_mica(active);
         }
     });

@@ -6,7 +6,8 @@ use std::cell::RefCell;
 
 use tray_icon::{TrayIcon, TrayIconBuilder};
 
-use crate::{hook, shell};
+use crate::background::hook;
+use crate::shared::shell;
 
 mod events;
 mod icon;

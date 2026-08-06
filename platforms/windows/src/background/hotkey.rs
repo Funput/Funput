@@ -14,7 +14,7 @@ use std::cell::RefCell;
 use funput_desktop::Mods;
 use windows::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY;
 
-use crate::shell;
+use crate::shared::shell;
 use watcher::{Event, Watcher};
 
 /// Which hotkey fired. The caller applies its own gating (flip only acts while

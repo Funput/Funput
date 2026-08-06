@@ -38,9 +38,8 @@ pub fn claim() -> bool {
             return false;
         };
         // Clear stale last-error so ALREADY_EXISTS only reflects CreateMutexW.
-        let _ = windows::Win32::Foundation::SetLastError(
-            windows::Win32::Foundation::WIN32_ERROR(0),
-        );
+        let _ =
+            windows::Win32::Foundation::SetLastError(windows::Win32::Foundation::WIN32_ERROR(0));
         let Ok(mutex) = CreateMutexW(None, false, MUTEX_NAME) else {
             let _ = CloseHandle(event);
             return false;

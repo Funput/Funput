@@ -1,7 +1,7 @@
 //! The global low-level keyboard hook: intercepts keys, drives the engine, and
 //! injects composed text. Runs on the background process's main thread with a
 //! message loop (required for `WH_KEYBOARD_LL`). The hook callback is a bare C
-//! function, so it reaches the engine through [`crate::shell`]'s process-global state.
+//! function, so it reaches the engine through [`crate::shared::shell`]'s process-global state.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::OnceLock;
@@ -23,9 +23,11 @@ use windows::Win32::UI::WindowsAndMessaging::{
     WM_SYSKEYUP,
 };
 
-use crate::hotkey::{self, Hit};
-use crate::instance::{self, WaitKind};
-use crate::{inject, keymap, shell, tray, windows_ui};
+use crate::background::hotkey::{self, Hit};
+use crate::background::instance::{self, WaitKind};
+use crate::background::{inject, keymap, tray};
+use crate::shared::shell;
+use crate::ui;
 
 /// Called after a Ctrl+` toggle so the tray can refresh its checkmark/icon.
 type ToggleCb = Box<dyn Fn(bool) + Send + Sync>;
@@ -87,7 +89,7 @@ pub fn run() {
         loop {
             match instance::wait_activate_or_message() {
                 WaitKind::Activate => {
-                    windows_ui::launch_settings(false);
+                    ui::launch_settings(false);
                 }
                 WaitKind::Message => {
                     while PeekMessageW(&mut msg, None, 0, 0, PM_REMOVE).as_bool() {

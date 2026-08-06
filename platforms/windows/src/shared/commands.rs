@@ -1,14 +1,15 @@
-//! Plain functions the UI callbacks (`windows_ui`) and the tray invoke. Each
+//! Plain functions the UI callbacks (`crate::ui`) and the tray invoke. Each
 //! mutates the shared `shell` state (which applies to the engine + persists); a
 //! couple also apply an OS side effect (autostart registry, opening a link).
 
 use std::path::Path;
 use std::sync::Mutex;
 
+use crate::shared::shell;
+use crate::shared::update::{self, Manifest};
+use crate::ui;
 use funput_config::transfer::{self, ConfigError, ImportSummary, Source};
 use funput_config::{ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
-use crate::update::{self, Manifest};
-use crate::{shell, windows_ui};
 
 pub fn set_method(method: Method) {
     shell::set_method(method.core());
@@ -146,7 +147,7 @@ pub fn import_config(path: &Path) -> Result<ImportSummary, ConfigError> {
 //
 // All three steps run off the main thread (network + file I/O must not block the
 // Slint loop or the keyboard hook) and report progress back to the About pane via
-// `windows_ui::set_update_state` marshalled onto the event loop. The available
+// `ui::set_update_state` marshalled onto the event loop. The available
 // update is stashed between "check" and "install" so the UI callback can stay
 // argument-free.
 
@@ -193,7 +194,7 @@ pub fn install_update() {
 /// Relaunch into the freshly installed build (no log-out needed — it is a plain
 /// tray process). Never returns.
 pub fn relaunch_after_update() {
-    windows_ui::terminate_parent_for_update();
+    ui::terminate_parent_for_update();
     update::relaunch();
 }
 
@@ -201,6 +202,6 @@ pub fn relaunch_after_update() {
 fn set_update_ui(state: &str, version: &str, message: &str) {
     let (state, version, message) = (state.to_owned(), version.to_owned(), message.to_owned());
     let _ = slint::invoke_from_event_loop(move || {
-        windows_ui::set_update_state(&state, &version, &message);
+        ui::set_update_state(&state, &version, &message);
     });
 }

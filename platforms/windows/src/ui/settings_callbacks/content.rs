@@ -2,8 +2,9 @@ use std::cell::RefCell;
 
 use slint::{ComponentHandle, Model};
 
-use crate::compose::FieldComposer;
-use crate::{commands, shell, Compose, SettingsWindow};
+use crate::shared::{commands, shell};
+use crate::ui::compose::FieldComposer;
+use crate::{Compose, SettingsWindow};
 
 use super::super::models;
 
