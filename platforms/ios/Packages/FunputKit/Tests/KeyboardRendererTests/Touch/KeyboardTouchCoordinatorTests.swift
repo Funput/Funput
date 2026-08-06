@@ -55,7 +55,12 @@ struct KeyboardTouchCoordinatorTests {
         #expect(!observations.isEmpty)
 
         fixture.coordinator.reset()
-        #expect(fixture.coordinator.metrics == .init())
+        // Neither finger lifted, so the reset drops both presses. That is precisely what
+        // `contactsAbandoned` reports, and it survives the counter wipe on purpose — the
+        // reset is what produces the evidence.
+        #expect(fixture.coordinator.metrics.contactsAbandoned == 2)
+        #expect(fixture.coordinator.metrics.capturedContacts == 0)
+        #expect(fixture.coordinator.metrics.captureUnknownCallback == 0)
         #expect(fixture.coordinator.activeContactCount == 0)
         #expect(fixture.coordinator.pendingContactCount == 0)
     }

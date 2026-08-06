@@ -74,13 +74,18 @@ struct KeyboardTouchContactRegistry {
 
     /// Starts a fresh metrics session.
     ///
-    /// `flushedOnLayoutChange` counts the resets themselves, so it has to be carried across
-    /// one or the very reset it measures would erase the evidence. The caller decides: a
-    /// layout swap carries, a new diagnostics session starts from zero.
-    mutating func reset(carryingFlushCount flushed: Int = 0) {
+    /// Contacts still pending here never reached a terminal outcome, so the press behind each
+    /// one is lost. `contactsAbandoned` survives the counter wipe on purpose: this reset is
+    /// what produces the evidence, so clearing it too would erase what it just measured.
+    mutating func reset() {
+        let abandoned = states.values.count(where: { !$0.terminal })
         states.removeAll(keepingCapacity: true)
         metrics = KeyboardTouchMetrics()
-        metrics.flushedOnLayoutChange = flushed
+        metrics.contactsAbandoned = abandoned
+    }
+
+    mutating func recordStaleIdentity() {
+        metrics.captureStaleIdentity += 1
     }
 }
 #endif

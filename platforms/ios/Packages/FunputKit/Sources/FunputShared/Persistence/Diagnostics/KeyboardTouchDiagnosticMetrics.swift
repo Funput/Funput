@@ -5,12 +5,13 @@ public struct KeyboardTouchDiagnosticMetrics: Codable, Equatable, Sendable {
     public var cancelledContacts = 0
     public var systemCancelled = 0
     public var captureUnknownCallback = 0
+    public var captureStaleIdentity = 0
+    public var contactsAbandoned = 0
     public var resolverUnknownCallback = 0
     public var beganOutside = 0
     public var endedOutside = 0
     public var recoveredReleaseOutside = 0
     public var recoveredTapSlop = 0
-    public var flushedOnLayoutChange = 0
     public var layoutChangedWhileActive = 0
     public var timestampTieContacts = 0
     public var maximumConcurrentContacts = 0
@@ -38,6 +39,7 @@ public struct KeyboardTouchDiagnosticMetrics: Codable, Equatable, Sendable {
             || systemCancelled > 0 || ownershipViolation > 0
             || gestureConflict > 0 || staleTimerCallback > 0
             || emissionDelayedOver120Milliseconds > 0
+            || contactsAbandoned > 0
     }
 }
 #endif

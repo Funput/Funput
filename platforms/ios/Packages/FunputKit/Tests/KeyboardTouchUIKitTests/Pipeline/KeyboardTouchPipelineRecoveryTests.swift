@@ -45,19 +45,5 @@ struct KeyboardTouchPipelineRecoveryTests {
         #expect(fixture.pipeline.statistics.releasesOutside == 1)
         #expect(fixture.pipeline.statistics.recoveredReleasesOutside == 0)
     }
-
-    @Test("Flushing commits a blocked press without committing a finger still down")
-    func flushCommitsResolvedPressesOnly() {
-        let fixture = makeTouchPipeline()
-        fixture.consume(touchSample(1, .began, 0, .init(x: 10, y: 20)))
-        fixture.consume(touchSample(2, .began, 0.01, .init(x: 60, y: 20)))
-        fixture.consume(touchSample(2, .ended, 0.02, .init(x: 60, y: 20)))
-        // Head-of-line blocked behind contact 1, which is still down.
-        #expect(fixture.emissions.keys.isEmpty)
-
-        #expect(fixture.pipeline.flushResolvedPresses() == 1)
-        #expect(fixture.emissions.keys == ["b"])
-        #expect(fixture.pipeline.flushResolvedPresses() == 0)
-    }
 }
 #endif

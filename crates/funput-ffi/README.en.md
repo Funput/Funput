@@ -6,7 +6,8 @@ The **C ABI** boundary for `funput-engine` — lets a **non-Rust** shell drive t
 functions. The engine ships in a `.dylib`/`.so`/`.a`; the native side (Swift, C++) loads and calls it.
 
 > A **Rust** consumer (the Windows shell, `funput-cli`) links `funput-engine` directly and does **not**
-> need this crate. FFI is only for **macOS** (Swift IMKit) and the **Fcitx5 addon on Linux** (C++).
+> need this crate. FFI is for **macOS** (Swift IMKit), **iOS** (the Swift keyboard extension) and the
+> **Fcitx5 addon plus the IBus engine on Linux** (C++/C). Android goes through `funput-jni`, not this crate.
 
 ## What this crate does
 
@@ -116,8 +117,10 @@ include/funput.h     # GENERATED (committed)
 ```
 
 `crate-type = ["cdylib", "staticlib", "rlib"]`. Artifacts: macOS `libfunput_ffi.a`/`.dylib` + header
-(built via `platforms/macos/scripts/build-ffi.sh`); Windows does not use it (the shell links the engine
-directly); the Linux Fcitx5 addon links `libfunput_ffi` + includes `funput.h`.
+(built via `platforms/macos/scripts/build-ffi.sh`); iOS `FunputCore.xcframework` (built via
+`platforms/ios/Scripts/build-ffi.sh`, device + simulator slices); Windows does not use it (the shell
+links the engine directly); the Linux Fcitx5 addon and the IBus engine link `libfunput_ffi` and
+include `funput.h`.
 
 Edition 2024 note: use `#[unsafe(no_mangle)]` and explicit `unsafe { }` around `Box::from_raw` /
 `ptr.as_mut()`.
@@ -125,8 +128,10 @@ Edition 2024 note: use `#[unsafe(no_mangle)]` and explicit `unsafe { }` around `
 ## Dependencies & callers
 
 - `funput-ffi → funput-engine → funput-core`, plus independent `funput-ffi → funput-suggestions`.
-- Consumers: `platforms/macos` (Swift, bridging header) and `platforms/linux/fcitx5` (C++,
-  `ffi_handle.h`). **Not** used by: `funput-cli`, the Windows shell (both link the engine directly).
+- Consumers: `platforms/macos` (Swift, bridging header), `platforms/ios` (Swift, via
+  `FunputCore.xcframework`), `platforms/linux/fcitx5` (C++, `ffi_handle.h`) and
+  `platforms/linux/ibus` (C). **Not** used by: `funput-cli`, the Windows shell (both link the engine
+  directly), Android (via `funput-jni`).
 
 ## Tests
 

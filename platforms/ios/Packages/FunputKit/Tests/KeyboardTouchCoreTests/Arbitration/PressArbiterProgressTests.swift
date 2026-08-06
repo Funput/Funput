@@ -59,22 +59,4 @@ struct PressArbiterProgressTests {
         #expect(abs(arbiter.statistics.maximumBypassHoldSeconds - 0.06) < 0.0001)
     }
 
-    @Test("Flushing emits resolved presses in intent order and keeps active ones")
-    func flushEmitsResolvedPressesOnly() {
-        var arbiter = PressArbiter<String>(configuration: configuration)
-        arbiter.begin(contact(1), at: 0)
-        arbiter.begin(contact(2), at: 0.01)
-        arbiter.begin(contact(3), at: 0.02)
-        // Contact 1 is still down, so 2 and 3 sit behind it.
-        #expect(arbiter.resolve(contact(3), payload: "C", at: 0.03).isEmpty)
-        #expect(arbiter.resolve(contact(2), payload: "B", at: 0.031).isEmpty)
-
-        let flushed = arbiter.flushResolved()
-
-        #expect(emittedPayloads(flushed) == ["B", "C"])
-        #expect(arbiter.ordered.count == 1)
-        #expect(arbiter.flushResolved().isEmpty)
-        // The finger still down never commits; only a teardown discards it.
-        #expect(emittedPayloads(arbiter.resolve(contact(1), payload: "A", at: 0.2)) == ["A"])
-    }
 }

@@ -68,15 +68,6 @@ public final class PressArbiterDriver<Payload: Sendable> {
         arbiter.reset()
     }
 
-    /// Commits presses whose finger already lifted, then returns how many were emitted.
-    /// Call this before `reset()` so a teardown never swallows a completed press.
-    @discardableResult
-    public func flushResolved() -> Int {
-        let emissions = arbiter.flushResolved()
-        process(emissions)
-        return emissions.count
-    }
-
     public var orderedContactCount: Int { arbiter.ordered.count }
     public var heldContactCount: Int { arbiter.detached.count }
     public var statistics: PressArbiterStatistics { arbiter.statistics }

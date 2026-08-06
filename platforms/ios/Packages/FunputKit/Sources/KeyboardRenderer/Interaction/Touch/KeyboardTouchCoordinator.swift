@@ -60,17 +60,14 @@ final class KeyboardTouchCoordinator {
         observer?(metrics)
     }
 
-    /// Tears down every contact. Pass `flushingResolvedPresses` when the surface stays alive —
-    /// a layout swap must not swallow presses whose finger already lifted. Leave it off when the
-    /// keyboard itself is going away, since the document proxy is on its way out too.
-    func reset(flushingResolvedPresses: Bool = false) {
-        // Flush first: the emissions still need the registry to claim exactly-once ownership.
-        // A teardown that does not flush is a session boundary and starts the counter over.
-        let carried = flushingResolvedPresses
-            ? registry.metrics.flushedOnLayoutChange + pipeline.flushResolvedPresses()
-            : 0
+    /// Tears down every contact.
+    ///
+    /// Only two callers remain, and both are real endings: the keyboard leaving its window,
+    /// and a diagnostics session starting over. A layout swap no longer comes through here —
+    /// contacts outlive it, so there is nothing left to rescue on the way out.
+    func reset() {
         pipeline.reset()
-        registry.reset(carryingFlushCount: carried)
+        registry.reset()
         beganAt.removeAll(keepingCapacity: true)
         terminalAt.removeAll(keepingCapacity: true)
         hits.removeAll(keepingCapacity: true)
@@ -82,6 +79,11 @@ final class KeyboardTouchCoordinator {
 
     func recordUnknownCaptureCallback() {
         registry.metrics.captureUnknownCallback += 1
+        notify()
+    }
+
+    func recordStaleIdentity() {
+        registry.recordStaleIdentity()
         notify()
     }
 

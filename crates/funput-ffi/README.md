@@ -6,7 +6,8 @@ Biên **C ABI** cho `funput-engine` — để shell **không phải Rust** gọi
 trong `.dylib`/`.so`/`.a`; phía native (Swift, C++) load và gọi.
 
 > Consumer **Rust** (Windows shell, `funput-cli`) link `funput-engine` trực tiếp và **không** cần
-> crate này. FFI chỉ dành cho **macOS** (Swift IMKit) và **addon Fcitx5 trên Linux** (C++).
+> crate này. FFI dành cho **macOS** (Swift IMKit), **iOS** (Swift keyboard extension) và
+> **addon Fcitx5 + engine IBus trên Linux** (C++/C). Android đi qua `funput-jni`, không qua crate này.
 
 ## Crate này làm gì
 
@@ -115,8 +116,9 @@ include/funput.h     # GENERATED (committed)
 ```
 
 `crate-type = ["cdylib", "staticlib", "rlib"]`. Artifact: macOS `libfunput_ffi.a`/`.dylib` + header
-(build qua `platforms/macos/scripts/build-ffi.sh`); Windows không dùng (shell link engine trực
-tiếp); Linux addon Fcitx5 link `libfunput_ffi` + include `funput.h`.
+(build qua `platforms/macos/scripts/build-ffi.sh`); iOS `FunputCore.xcframework` (build qua
+`platforms/ios/Scripts/build-ffi.sh`, slice device + simulator); Windows không dùng (shell link
+engine trực tiếp); addon Fcitx5 và engine IBus trên Linux link `libfunput_ffi` + include `funput.h`.
 
 Lưu ý edition 2024: dùng `#[unsafe(no_mangle)]` và `unsafe { }` tường minh quanh
 `Box::from_raw` / `ptr.as_mut()`.
@@ -124,8 +126,10 @@ Lưu ý edition 2024: dùng `#[unsafe(no_mangle)]` và `unsafe { }` tường min
 ## Phụ thuộc & ai gọi
 
 - `funput-ffi → funput-engine → funput-core`, và `funput-ffi → funput-suggestions` độc lập.
-- Consumer: `platforms/macos` (Swift, bridging header) và `platforms/linux/fcitx5` (C++,
-  `ffi_handle.h`). **Không** dùng: `funput-cli`, Windows shell (đều link engine trực tiếp).
+- Consumer: `platforms/macos` (Swift, bridging header), `platforms/ios` (Swift, qua
+  `FunputCore.xcframework`), `platforms/linux/fcitx5` (C++, `ffi_handle.h`) và
+  `platforms/linux/ibus` (C). **Không** dùng: `funput-cli`, Windows shell (đều link engine trực
+  tiếp), Android (qua `funput-jni`).
 
 ## Tests
 

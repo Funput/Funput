@@ -24,6 +24,7 @@ extension KeyboardTouchOverlayView {
         phase: ContactPhase
     ) -> [ContactSample] {
         let unknownBefore = captureAdapter.unknownCallbackCount
+        let staleBefore = captureAdapter.staleIdentityCount
         let samples = captureAdapter.samples(
             for: touches,
             phase: phase,
@@ -31,6 +32,8 @@ extension KeyboardTouchOverlayView {
         )
         let unknown = captureAdapter.unknownCallbackCount - unknownBefore
         for _ in 0..<unknown { onUnknownCapture?() }
+        let stale = captureAdapter.staleIdentityCount - staleBefore
+        for _ in 0..<stale { onStaleIdentity?() }
         return samples
     }
 

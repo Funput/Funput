@@ -2,7 +2,7 @@
 
 > **Trạng thái:** Đề xuất kiến trúc để tham chiếu trong quá trình hiện thực
 >
-> **Cập nhật:** 11/07/2026
+> **Cập nhật:** 06/08/2026
 >
 > **Phạm vi:** Containing app, custom keyboard extension, Rust engine và hệ thống theme trên iOS/iPadOS
 
@@ -384,7 +384,52 @@ func apply(_ result: FunputCompositionResult, to proxy: UITextDocumentProxy) {
 }
 ```
 
-iOS custom keyboard không có marked-text API tương đương macOS IMKit. Adapter iOS phải dùng `deleteBackward()` và `insertText(_:)`, đồng thời theo dõi `documentContextBeforeInput` để phát hiện lệch state.
+Adapter iOS hiện dùng `deleteBackward()` + `insertText(_:)` và theo dõi
+`documentContextBeforeInput` để phát hiện lệch state. Đây là **lựa chọn hiện tại, không
+phải giới hạn nền tảng**.
+
+> **Đính chính (06/08/2026).** Bản trước của mục này viết "iOS custom keyboard không có
+> marked-text API tương đương macOS IMKit". Khẳng định đó **sai**. Không được dùng nó làm
+> tiền đề cho bất kỳ quyết định kiến trúc nào.
+
+`UITextDocumentProxy` có marked-text API từ **iOS 13** — thấp hơn deployment target iOS 18 của
+dự án, nên dùng được vô điều kiện, không cần `@available`:
+
+```swift
+func setMarkedText(_ markedText: String, selectedRange: NSRange)
+func unmarkText()
+```
+
+Apple tài liệu hoá đúng use case của Funput — nhiều phím ghép thành một ký tự — kèm ví dụ
+ghép dấu thanh, tại
+[Handling text interactions in custom keyboards](https://developer.apple.com/documentation/uikit/handling-text-interactions-in-custom-keyboards)
+(mục *Mark Text While the User is Editing*). Tham chiếu symbol:
+[`setMarkedText(_:selectedRange:)`](https://developer.apple.com/documentation/uikit/uitextdocumentproxy/setmarkedtext(_:selectedrange:)),
+[`unmarkText()`](https://developer.apple.com/documentation/uikit/uitextdocumentproxy/unmarktext()),
+[`UITextDocumentProxy`](https://developer.apple.com/documentation/uikit/uitextdocumentproxy).
+
+Nghĩa là mô hình preedit mà macOS (IMKit) và Linux (fcitx5/ibus) đang dùng, iOS về nguyên
+tắc cũng làm được. Codebase hiện **chưa gọi `setMarkedText` ở bất kỳ đâu**.
+
+Thiết kế đề xuất cho việc chuyển đổi nằm ở
+[INPUT_PIPELINE_3_ARCHITECTURE.md](INPUT_PIPELINE_3_ARCHITECTURE.md) (chưa hiện thực).
+
+Ba điều **chưa được xác minh**. Phải đo bằng prototype trước khi đổi mô hình commit — và
+cho tới khi có số đo, mục này không kết luận mô hình nào đúng hơn:
+
+1. **`documentContextBeforeInput` có chứa phần đang mark hay không.** Apple không nói.
+   Invariant "buffer của engine là hậu tố của context trước caret" ở mục *Đồng bộ document
+   state* ngay dưới phụ thuộc hoàn toàn vào câu trả lời này; nếu marked text không xuất
+   hiện trong context thì `KeyboardDocumentSynchronizer` phải viết lại.
+2. **Host nào thực sự tôn trọng marked text.** Proxy vốn đã hành xử lệch nhau giữa các host
+   — xem §18.3 của [INPUT_PIPELINE_2_ARCHITECTURE.md](INPUT_PIPELINE_2_ARCHITECTURE.md).
+   Bên Android đã phải có `CompositionCompatibilityPolicy` cho Firefox/Meta/Reddit; nhiều
+   khả năng iOS cũng cần danh sách tương tự.
+3. **Hình thức hiển thị không điều khiển được.** Apple mô tả phần ngoài `selectedRange`
+   được vẽ bằng *background color*, không phải gạch chân như composing span của Android.
+   `UITextInput` có `markedTextStyle` để tuỳ biến, nhưng `UITextDocumentProxy` **không**
+   expose property đó. Chuyển sang preedit là thay đổi nhìn thấy được với mọi người dùng,
+   nên là quyết định sản phẩm, không phải cải thiện miễn phí.
 
 ### Đồng bộ document state
 

@@ -4,12 +4,19 @@ public struct KeyboardTouchMetrics: Equatable, Sendable {
     public internal(set) var cancelledContacts = 0
     public internal(set) var systemCancelled = 0
     public internal(set) var captureUnknownCallback = 0
+    /// UIKit handed back a recycled `UITouch` whose previous contact never reached a
+    /// terminal phase. Counted rather than assumed: nothing yet proves it happens in
+    /// the field, and the answer decides whether the retire-on-recycle policy stays.
+    public internal(set) var captureStaleIdentity = 0
+    /// Contacts torn down without ever committing or cancelling. Any value above zero is
+    /// a keystroke the user made and the document never saw — no matter which code path
+    /// dropped it, including ones not written yet.
+    public internal(set) var contactsAbandoned = 0
     public internal(set) var resolverUnknownCallback = 0
     public internal(set) var beganOutside = 0
     public internal(set) var endedOutside = 0
     public internal(set) var recoveredReleaseOutside = 0
     public internal(set) var recoveredTapSlop = 0
-    public internal(set) var flushedOnLayoutChange = 0
     public internal(set) var layoutChangedWhileActive = 0
     public internal(set) var timestampTieContacts = 0
     public internal(set) var maximumConcurrentContacts = 0
@@ -37,5 +44,6 @@ public struct KeyboardTouchMetrics: Equatable, Sendable {
             || systemCancelled > 0 || ownershipViolation > 0
             || gestureConflict > 0 || staleTimerCallback > 0
             || emissionDelayedOver120Milliseconds > 0
+            || contactsAbandoned > 0
     }
 }
