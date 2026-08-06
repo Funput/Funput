@@ -1,6 +1,6 @@
 use slint::ComponentHandle;
 
-use crate::config_transfer::{self, ImportSummary};
+use funput_config::transfer::{self, ImportSummary};
 use crate::{commands, SettingsWindow};
 
 use super::super::settings_window;
@@ -10,7 +10,7 @@ pub(super) fn wire(window: &SettingsWindow) {
         let Some(path) = rfd::FileDialog::new()
             .set_file_name(format!(
                 "Funput-config-{}.json",
-                config_transfer::today_stamp()
+                transfer::today_stamp()
             ))
             .add_filter("JSON", &["json"])
             .save_file()

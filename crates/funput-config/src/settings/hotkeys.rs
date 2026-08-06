@@ -1,3 +1,8 @@
+//! The fixed hotkey presets, the alternative to a user-recorded [`super::KeyCombo`].
+//!
+//! `caps()` is the keycap list the UI renders; it is shaped like `KeyCombo::caps()`
+//! so a settings row can display either source without knowing which it has.
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

@@ -1,3 +1,10 @@
+//! The two typing choices, in the form the config stores them.
+//!
+//! Each carries three representations: the persisted serde form, a stable `id()`
+//! for the interchange document (`platforms/CONFIG_FORMAT.md`), and `core()` into
+//! the engine's own enum. The `id()` strings and the serde names are deliberately
+//! the same, so a settings file and an exported file agree.
+
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
 use serde::{Deserialize, Serialize};
 
@@ -24,7 +31,7 @@ impl Method {
             InputMethod::Telex => Self::Telex,
             InputMethod::TelexAdvanced => Self::TelexAdvanced,
             InputMethod::Vni => Self::Vni,
-            _ => unreachable!("Windows must integrate a newly added input method"),
+            _ => unreachable!("a newly added input method must be surfaced in the config too"),
         }
     }
 

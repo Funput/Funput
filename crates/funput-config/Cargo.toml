@@ -1,0 +1,16 @@
+[package]
+name = "funput-config"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Persisted Funput settings and the cross-platform config interchange document."
+
+[lints]
+workspace = true
+
+[dependencies]
+# `Method`/`ToneStyle` convert to the engine's own enums, so the wire format and
+# the engine can never drift apart.
+funput-core = { path = "../funput-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

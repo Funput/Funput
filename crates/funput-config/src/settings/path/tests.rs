@@ -1,17 +1,10 @@
 use super::*;
 use std::fs;
 
+use crate::test_support::unique_dir;
+
 fn tmp() -> PathBuf {
-    let dir = std::env::temp_dir().join(format!(
-        "funput-settings-{}-{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    fs::create_dir_all(&dir).unwrap();
-    dir
+    unique_dir("settings-path")
 }
 
 #[test]
