@@ -128,6 +128,10 @@ unsafe extern "system" fn win_event_proc(
     };
     let is_funput = id == own_exe_id().as_str();
     FOREGROUND_IS_FUNPUT.store(is_funput, Ordering::Relaxed);
+    // The caret is somewhere else entirely now, so nothing Funput has typed sits in
+    // front of it any more (mirrors the mouse-click flush). Both directions: keys
+    // typed into Funput's own windows compose in-process and never reach the engine.
+    shell::clear();
     if is_funput {
         return;
     }
@@ -312,9 +316,10 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
             }
         }
         KeyKind::Backspace => {
-            if shell::is_composing() {
-                shell::on_backspace(); // sync engine; app deletes its own char
-            }
+            // Sync Funput's model of the text; the app deletes its own char. When the
+            // deletion puts the caret back on a finished word, this re-opens it so the
+            // next keystroke retones it (`phủ` + Space + ⌫ + `s` → `phú`).
+            shell::on_backspace();
             false
         }
         KeyKind::Flush => {

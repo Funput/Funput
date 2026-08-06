@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
+use funput_desktop::CommittedTail;
 use funput_engine::{Engine, EngineConfig, ImeResult, KeySource};
 
 use crate::settings::{
@@ -22,6 +23,12 @@ const RECENT_CAP: usize = 12;
 
 struct Shell {
     engine: Engine,
+    /// Shadow of the text Funput has typed into the focused app, up to the live
+    /// composition. A hook shell cannot read the document, so this stands in for it
+    /// when Backspace should re-open a finished word (see [`on_backspace`]). It only
+    /// ever holds text this process typed, and any event that may have moved the
+    /// caret behind our back drops it — see [`reset_composition`].
+    tail: CommittedTail,
     settings: Settings,
     /// Recently-focused apps (most recent first), fed by the foreground hook. Not
     /// persisted — it's just a convenience source for the Settings UI.
@@ -39,11 +46,21 @@ struct Shell {
 
 static SHELL: OnceLock<Mutex<Shell>> = OnceLock::new();
 
-fn apply_to_engine(engine: &mut Engine, s: &Settings) {
-    sync_engine_config(engine, s);
-    engine.set_enabled(s.enabled);
-    push_shortcuts(engine, &s.shortcuts);
-    engine.clear();
+/// Push everything in `s.settings` to the engine and start from a clean slate.
+fn apply_settings(s: &mut Shell) {
+    sync_engine_config(&mut s.engine, &s.settings);
+    s.engine.set_enabled(s.settings.enabled);
+    push_shortcuts(&mut s.engine, &s.settings.shortcuts);
+    reset_composition(s);
+}
+
+/// Drop the live composition *and* the committed-text shadow together. The two
+/// model one stretch of text around the caret, so one must never outlive the other:
+/// a shadow left standing after the engine forgot the word would let Backspace
+/// re-open text that is no longer where Funput thinks it is.
+fn reset_composition(s: &mut Shell) {
+    s.engine.clear();
+    s.tail.clear();
 }
 
 /// Push the six engine options from `settings` in one call. `settings` is the single
@@ -72,16 +89,16 @@ fn push_shortcuts(engine: &mut Engine, shortcuts: &[Shortcut]) {
 
 fn shell() -> &'static Mutex<Shell> {
     SHELL.get_or_init(|| {
-        let settings = Settings::load();
-        let mut engine = Engine::new();
-        apply_to_engine(&mut engine, &settings);
-        Mutex::new(Shell {
-            engine,
-            settings,
+        let mut shell = Shell {
+            engine: Engine::new(),
+            tail: CommittedTail::new(),
+            settings: Settings::load(),
             recent: Vec::new(),
             overrides: HashMap::new(),
             pending_override: None,
-        })
+        };
+        apply_settings(&mut shell);
+        Mutex::new(shell)
     })
 }
 
@@ -95,9 +112,9 @@ fn with<R>(f: impl FnOnce(&mut Shell) -> R) -> R {
 fn set_enabled_state(s: &mut Shell, on: bool) {
     s.settings.enabled = on;
     s.engine.set_enabled(on);
-    if !on {
-        s.engine.clear();
-    }
+    // Both directions: English-mode keystrokes never reach the engine, so whatever
+    // the shadow held before the switch no longer describes the text at the caret.
+    reset_composition(s);
 }
 
 // --- reads -----------------------------------------------------------------
@@ -137,9 +154,6 @@ pub fn toggle_combo() -> Option<KeyCombo> {
 pub fn flip_combo() -> Option<KeyCombo> {
     with(|s| s.settings.flip_combo.clone())
 }
-pub fn is_composing() -> bool {
-    with(|s| !s.engine.buffer().is_empty())
-}
 
 /// The user's current input method + tone style, for the in-process composer that the
 /// Settings window's gõ tắt field uses (it can't go through the global hook).
@@ -177,8 +191,8 @@ pub fn reload_settings() -> bool {
         if s.settings == loaded {
             return false;
         }
-        apply_to_engine(&mut s.engine, &loaded);
         s.settings = loaded;
+        apply_settings(s);
         true
     })
 }
@@ -188,8 +202,8 @@ pub fn reload_settings() -> bool {
 /// `reload_settings`, exactly as it does for any single-field edit.
 pub fn replace_settings(new: Settings) {
     with(|s| {
-        apply_to_engine(&mut s.engine, &new);
         s.settings = new;
+        apply_settings(s);
         s.settings.save();
     });
 }
@@ -248,7 +262,7 @@ pub fn set_method(method: InputMethod) {
     with(|s| {
         s.settings.method = Method::from_core(method);
         sync_engine_config(&mut s.engine, &s.settings);
-        s.engine.clear();
+        reset_composition(s);
         s.settings.save();
     });
 }
@@ -497,8 +511,17 @@ pub fn apply_for_app(id: &str) -> Option<bool> {
 
 /// Feed one character to the engine, tagged with its physical [`KeySource`] so a
 /// numpad digit stays a literal number instead of acting as a VNI modifier.
+///
+/// The two `tail` calls bracket the engine: the shadow needs the composition as it
+/// stood *before* the key (a word boundary wipes it, and that is exactly the text
+/// that just became committed) and the engine's verdict *after*.
 pub fn process_key(c: char, source: KeySource) -> ImeResult {
-    with(|s| s.engine.process_key(c, source))
+    with(|s| {
+        s.tail.before_key(s.engine.buffer());
+        let result = s.engine.process_key(c, source);
+        s.tail.after_key(c, &result, s.engine.buffer());
+        result
+    })
 }
 
 /// Flip the word being composed VN↔raw; returns the delete+inject to apply.
@@ -506,14 +529,30 @@ pub fn flip_composing() -> ImeResult {
     with(|s| s.engine.flip_composing())
 }
 
-/// Sync the engine after Backspace while composing; the physical Backspace then
-/// passes through so the app deletes its own visible char (like `funput-term`).
+/// Backspace while Vietnamese mode is on. The physical key always passes through, so
+/// the app deletes its own visible char (like `funput-term`); this only keeps Funput
+/// in step with it.
+///
+/// Mid-word that means shortening the composition. With nothing composing, the
+/// character about to disappear is a committed one, and when its removal leaves the
+/// caret at the end of a finished Vietnamese word the engine re-opens that word — so
+/// `phủ` + Space + Backspace + `s` gives `phú` instead of `phủs`. The engine refuses
+/// anything that is not a complete syllable, which keeps English words and URLs
+/// literal; a refusal costs the shadow its bearings, so it starts over.
 pub fn on_backspace() {
     with(|s| {
-        s.engine.on_backspace();
+        if !s.engine.buffer().is_empty() {
+            s.engine.on_backspace();
+            return;
+        }
+        let Some(word) = s.tail.backspace() else {
+            return;
+        };
+        let adopted = s.engine.adopt(word);
+        s.tail.resolve(adopted);
     });
 }
 
 pub fn clear() {
-    with(|s| s.engine.clear());
+    with(reset_composition);
 }

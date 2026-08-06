@@ -9,10 +9,16 @@
 //!
 //! Two pure concerns: `key` (what a keystroke means — [`classify`] over a
 //! [`KeyEvent`]) and `inject` (what to emit — [`plan_inject`] into an [`InjectPlan`]).
+//!
+//! `retone` adds the one piece of state such a shell needs: a [`CommittedTail`]
+//! shadow of the text it has typed, which stands in for the document it cannot read
+//! when Backspace should re-open a finished word.
 
 mod inject;
 mod key;
+mod retone;
 
 pub use funput_engine::KeySource;
 pub use inject::{InjectPlan, plan_inject};
 pub use key::{KeyEvent, KeyKind, Mods, classify};
+pub use retone::CommittedTail;
