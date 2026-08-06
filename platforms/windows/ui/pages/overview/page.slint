@@ -31,7 +31,10 @@ export component OverviewPage inherits VerticalLayout {
                     { id: "vi", label: "VI" },
                 ];
                 current: root.vi-enabled ? "vi" : "en";
-                changed(value) => { root.set-enabled(value == "vi"); }
+                changed(value) => {
+                    root.vi-enabled = value == "vi";
+                    root.set-enabled(root.vi-enabled);
+                }
             }
         }
         Rectangle { height: 1px; background: Theme.divider; }
