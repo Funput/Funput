@@ -48,9 +48,12 @@ export component ControlCenterWindow inherits Window {
             }
         }
 
+        // One rhythm for the whole flyout: 12px between sections, 12px inset.
+        // Sections carry their own card padding, so a wider gutter here only
+        // compounds it.
         VerticalLayout {
-            padding: 16px;
-            spacing: 14px;
+            padding: Theme.sp-ms;
+            spacing: Theme.sp-ms;
             width: 100%;
             CcHeader {
                 enabled: root.enabled;
