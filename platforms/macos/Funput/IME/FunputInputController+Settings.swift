@@ -14,7 +14,14 @@ extension FunputInputController {
         lastSyncedShortcutsRevision = settings.shortcutsRevision
     }
 
-    func setMarked(_ text: String, _ client: IMKTextInput) {
+    /// Show `text` as the marked (underlined) composition. `replacementRange` defaults to
+    /// "wherever the caret is"; retoning passes a real range to swallow the committed word
+    /// it is re-opening, along with the character Backspace was deleting.
+    func setMarked(
+        _ text: String,
+        _ client: IMKTextInput,
+        replacementRange: NSRange = FunputInputController.notFound
+    ) {
         let marked = NSAttributedString(string: text, attributes: [
             .underlineStyle: NSUnderlineStyle.single.rawValue,
             .underlineColor: NSColor.labelColor,
@@ -22,7 +29,7 @@ extension FunputInputController {
         client.setMarkedText(
             marked,
             selectionRange: NSRange(location: text.utf16.count, length: 0),
-            replacementRange: Self.notFound
+            replacementRange: replacementRange
         )
     }
 

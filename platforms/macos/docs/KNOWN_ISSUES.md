@@ -1,5 +1,34 @@
 # Known Issues
 
+## Backspace does not retone in Cursor
+
+**Symptom:** `chào` + Space + ⌫ + `s` gives `cháo` in TextEdit, Notes, Mail, Safari,
+Pages, Chrome, VS Code and Slack, but stays `chàos` in Cursor. Nothing else changes:
+Backspace still deletes normally and no text is mangled.
+
+Retoning needs to know where the caret is and what word sits in front of it, which it
+asks the focused app for through `IMKTextInput` (see `Funput/IME/RetoneDocument.swift`).
+Cursor's Chromium does not expose a real document to input methods. Measured with
+`chào ` on screen and the caret at the end (temporary `os_log` in `IMKRetoneDocument`,
+read back with `log show --predicate 'category == "retone"'`):
+
+| | Cursor reports | Reality |
+|---|---|---|
+| `selectedRange()` | `(1, 0)`, and `(0, 1)` before that | `(5, 0)` |
+| `length()` | `0` | `5` |
+
+A caret at 1 in a document of length 0 is already self-contradictory, so nothing built on
+those indices can be trusted. The scan therefore refuses and the key passes through
+untouched, which is the intended failure direction.
+
+**Not fixable from Funput's side**, and not worth an app-specific workaround either: the
+committed-text shadow that the Windows shell uses (`funput_desktop::CommittedTail`) would
+still need a truthful caret index to place its replacement, so it fails here for the same
+reason. Cursor 3.15.6 ships Electron 40; VS Code 1.132 ships Electron 42 and works, so
+this should resolve itself when Cursor moves up. `defaults write
+app.funput.inputmethod.Funput retoneAfterBackspace -bool false` turns the feature off
+globally if some other app misbehaves worse than this.
+
 ## Typing silently stops working in Chromium/Electron apps on macOS 26/27 beta
 
 **Symptom:** after switching the input source to Funput (or back to it) while a

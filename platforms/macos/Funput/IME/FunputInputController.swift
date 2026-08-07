@@ -63,7 +63,9 @@ final class FunputInputController: IMKInputController {
         }
 
         if event.keyCode == KeyCode.backspace {
-            guard !composer.buffer().isEmpty else { return false }
+            // Nothing composing: the character about to disappear is a committed one, and
+            // its removal may leave the caret at the end of a finished word to re-open.
+            guard !composer.buffer().isEmpty else { return reopenPreviousWord(client, event: event) }
             composer.backspace()
             setMarked(composer.buffer(), client)
             return true
