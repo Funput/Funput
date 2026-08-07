@@ -58,6 +58,8 @@ self-replace = "1" # replace the currently running executable (crate `self_repla
 funput-core = { path = "../../crates/funput-core" }
 funput-engine = { path = "../../crates/funput-engine" }
 funput-desktop = { path = "../../crates/funput-desktop" }
+# Settings model + Export/Import document, shared with the other desktop shells.
+funput-config = { path = "../../crates/funput-config" }
 
 [target.'cfg(windows)'.dependencies]
 # Win11 Mica / Win10 Acrylic backdrop via DWM (see src/mica.rs). Takes a

@@ -9,10 +9,22 @@
 //!
 //! Two pure concerns: `key` (what a keystroke means — [`classify`] over a
 //! [`KeyEvent`]) and `inject` (what to emit — [`plan_inject`] into an [`InjectPlan`]).
+//!
+//! `retone` adds the one piece of state such a shell needs: a [`CommittedTail`]
+//! shadow of the text it has typed, which stands in for the document it cannot read
+//! when Backspace should re-open a finished word.
+
+//! `shell` then holds the state those decisions are made against — the engine,
+//! the shadow, the settings, and which app is focused — as a plain struct the
+//! platform owns and can unit-test.
 
 mod inject;
 mod key;
+mod retone;
+mod shell;
 
-pub use funput_engine::KeySource;
+pub use funput_engine::{ImeResult, KeySource};
 pub use inject::{InjectPlan, plan_inject};
 pub use key::{KeyEvent, KeyKind, Mods, classify};
+pub use retone::CommittedTail;
+pub use shell::ShellState;

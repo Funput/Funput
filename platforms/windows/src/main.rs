@@ -9,24 +9,14 @@ compile_error!("funput-windows builds only on Windows (global keyboard hook + Se
 // Slint-generated components (SettingsWindow, OnboardingWindow, AppEntry).
 slint::include_modules!();
 
-mod canonical_exe;
-mod commands;
-mod compose;
-mod config_transfer;
-mod dark_mode;
-mod hook;
-mod hotkey;
-mod inject;
-mod instance;
-mod keymap;
-mod mica;
-mod recorder;
-mod settings;
-mod shell;
-mod system_accent;
-mod tray;
-mod update;
-mod windows_ui;
+// Grouped by which of the two programs in this executable runs the code: the
+// long-lived hook/tray process, the short-lived Slint windows it spawns, and what
+// both use. See each module's own docs.
+mod background;
+mod shared;
+mod ui;
+
+use shared::{canonical_exe, commands, dark_mode, shell};
 
 fn main() {
     let mode = std::env::args().nth(1);
@@ -37,22 +27,22 @@ fn main() {
     match mode.as_deref() {
         Some("--settings") => {
             dark_mode::allow_dark_menus();
-            windows_ui::run_settings(false);
+            ui::run_settings(false);
             return;
         }
         Some("--settings-check-update") => {
             dark_mode::allow_dark_menus();
-            windows_ui::run_settings(true);
+            ui::run_settings(true);
             return;
         }
         Some("--onboarding") => {
             dark_mode::allow_dark_menus();
-            windows_ui::run_onboarding();
+            ui::run_onboarding();
             return;
         }
         Some("--control-center") => {
             dark_mode::allow_dark_menus();
-            windows_ui::run_control_center();
+            ui::run_control_center();
             return;
         }
         _ => {}
@@ -69,8 +59,8 @@ fn main() {
 
     // One tray/hook process per session. A second launch asks the primary to
     // open Settings, then exits (UI children skip this — they use --flags above).
-    if !instance::claim() {
-        instance::signal_activate();
+    if !background::instance::claim() {
+        background::instance::signal_activate();
         return;
     }
 
@@ -86,10 +76,10 @@ fn main() {
 
     // First run: launch the short-lived Onboarding UI process.
     if !settings.has_completed_onboarding {
-        windows_ui::launch_onboarding();
+        ui::launch_onboarding();
     }
 
     // The background process never initializes Slint. Its main thread is the Win32
     // message loop that owns the keyboard hook and tray icon.
-    hook::run();
+    background::hook::run();
 }

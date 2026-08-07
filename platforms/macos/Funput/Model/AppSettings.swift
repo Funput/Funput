@@ -39,6 +39,14 @@ final class AppSettings {
     var autoCapitalizeEnabled: Bool {
         didSet { defaults.set(autoCapitalizeEnabled, forKey: Keys.autoCapitalizeEnabled) }
     }
+    /// Re-open the previous word on Backspace so the next keystroke retones it
+    /// (`chào` + Space + ⌫ + `s` → `cháo`). On by default and deliberately without UI —
+    /// Windows and Android just do it too. It exists as an escape hatch for an app whose
+    /// text-input bridge misreports the document:
+    /// `defaults write app.funput.inputmethod.Funput retoneAfterBackspace -bool false`.
+    var retoneAfterBackspace: Bool {
+        didSet { defaults.set(retoneAfterBackspace, forKey: Keys.retoneAfterBackspace) }
+    }
     /// User-recorded VI/EN toggle hotkey. Defaults to `⌃\`. Read live by
     /// `FunputInputController`.
     var toggleShortcut: KeyCombo {
@@ -105,6 +113,7 @@ final class AppSettings {
             Keys.eagerRestore: true,
             Keys.showMenuBarIcon: true,
             Keys.vietnameseEnabled: true,
+            Keys.retoneAfterBackspace: true,
         ])
         inputMethod = InputMethod.persisted(defaults.object(forKey: Keys.inputMethod))
         toneStyle = ToneStyle(rawValue: defaults.integer(forKey: Keys.toneStyle)) ?? .traditional
@@ -113,6 +122,7 @@ final class AppSettings {
         eagerRestore = defaults.bool(forKey: Keys.eagerRestore)
         spellCheckEnabled = defaults.bool(forKey: Keys.spellCheckEnabled)
         autoCapitalizeEnabled = defaults.bool(forKey: Keys.autoCapitalizeEnabled)
+        retoneAfterBackspace = defaults.bool(forKey: Keys.retoneAfterBackspace)
         toggleShortcut = defaults.data(forKey: Keys.toggleShortcut)
             .flatMap { try? JSONDecoder().decode(KeyCombo.self, from: $0) } ?? .defaultToggle
         flipShortcut = defaults.data(forKey: Keys.flipShortcut)

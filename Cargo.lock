@@ -455,6 +455,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "funput-config"
+version = "0.1.0"
+dependencies = [
+ "funput-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "funput-core"
 version = "0.1.0"
 dependencies = [
@@ -466,6 +475,8 @@ dependencies = [
 name = "funput-desktop"
 version = "0.1.0"
 dependencies = [
+ "funput-config",
+ "funput-core",
  "funput-engine",
 ]
 
