@@ -4,8 +4,10 @@ use std::cell::RefCell;
 
 use slint::{ComponentHandle, Weak};
 
+use crate::shared::{commands, shell};
+use crate::ui::system_accent;
+use crate::{OnboardingWindow, Theme};
 use funput_config::Method;
-use crate::{commands, shell, system_accent, OnboardingWindow, Theme};
 
 thread_local! {
     static WINDOW: RefCell<Option<Weak<OnboardingWindow>>> = const { RefCell::new(None) };
@@ -57,7 +59,7 @@ pub(super) fn open() {
 fn schedule_backdrop(weak: Weak<OnboardingWindow>) {
     let _ = slint::invoke_from_event_loop(move || {
         if let Some(window) = weak.upgrade() {
-            let active = crate::mica::apply(window.window());
+            let active = crate::ui::mica::apply(window.window());
             window.global::<Theme>().set_mica(active);
         }
     });

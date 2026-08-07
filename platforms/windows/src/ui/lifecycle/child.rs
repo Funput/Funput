@@ -8,7 +8,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tray_icon::Rect;
 
 use super::control_center;
-use crate::{shell, tray};
+use crate::background::tray;
+use crate::shared::shell;
 
 thread_local! {
     static UI_PROCESS: RefCell<Option<(UiKind, Child)>> = const { RefCell::new(None) };
@@ -33,7 +34,10 @@ const TRAY_W: &str = "FUNPUT_TRAY_W";
 const TRAY_H: &str = "FUNPUT_TRAY_H";
 
 pub(crate) fn launch_settings(check_update: bool) {
-    launch_settings_tab(if check_update { "about" } else { "overview" }, check_update);
+    launch_settings_tab(
+        if check_update { "about" } else { "overview" },
+        check_update,
+    );
 }
 
 fn launch_settings_tab(tab: &str, check_update: bool) {

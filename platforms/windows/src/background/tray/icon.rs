@@ -3,8 +3,8 @@
 use funput_core::InputMethod;
 use tray_icon::Icon;
 
-const TRAY_PNG: &[u8] = include_bytes!("../../icons/tray.png"); // VI: brand colour
-const TRAY_MONO_PNG: &[u8] = include_bytes!("../../icons/tray-mono.png"); // EN: high-contrast white
+const TRAY_PNG: &[u8] = include_bytes!("../../../icons/tray.png"); // VI: brand colour
+const TRAY_MONO_PNG: &[u8] = include_bytes!("../../../icons/tray-mono.png"); // EN: high-contrast white
 
 /// Load the enabled (colour) or disabled (mono) 32×32 tray glyph.
 pub(super) fn make_icon(on: bool) -> Option<Icon> {

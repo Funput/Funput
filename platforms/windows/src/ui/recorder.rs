@@ -10,7 +10,7 @@
 //!
 //! A combo can also be modifiers alone (Ctrl+Shift, Alt+Shift) — the shape most
 //! Vietnamese IMEs use for the VI/EN toggle. Those carry no VK and the hook
-//! matches them on release; see [`crate::hotkey`].
+//! matches them on release; see [`crate::background::hotkey`].
 
 use slint::platform::Key;
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyboardLayout, VkKeyScanExW};

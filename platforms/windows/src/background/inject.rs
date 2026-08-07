@@ -8,7 +8,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
     KEYEVENTF_UNICODE, VIRTUAL_KEY, VK_BACK, VK_DELETE,
 };
 
-use crate::shell::INJECT_TAG;
+use crate::shared::shell::INJECT_TAG;
 
 fn vk_event(vk: VIRTUAL_KEY, up: bool) -> INPUT {
     let dw_flags = if up {

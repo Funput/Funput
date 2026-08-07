@@ -2,8 +2,8 @@
 
 use slint::{ModelRc, SharedString, VecModel};
 
-use funput_config::{FlipHotkey, Hotkey, KeyCombo, Shortcut};
 use crate::ShortcutEntry;
+use funput_config::{FlipHotkey, Hotkey, KeyCombo, Shortcut};
 
 pub(super) fn caps(hotkey: Hotkey) -> ModelRc<SharedString> {
     keycaps(hotkey.caps())

@@ -8,7 +8,7 @@ use windows::Win32::System::Threading::{
 };
 
 use super::{control_center, onboarding, settings_window};
-use crate::shell;
+use crate::shared::shell;
 
 pub(crate) use child::{
     launch_onboarding, launch_settings, reap_ui_child, terminate_children, toggle_control_center,

@@ -15,7 +15,7 @@ use funput_config::{ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Settings, Shortcu
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
 use funput_desktop::{ImeResult, KeySource, ShellState};
 
-use crate::settings_path;
+use crate::shared::settings_path;
 
 /// Tag stamped into `dwExtraInfo` of every event we synthesize via `SendInput`, so
 /// the hook can recognize and ignore its own injected keystrokes (no re-entrancy).
