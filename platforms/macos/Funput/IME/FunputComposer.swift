@@ -80,6 +80,15 @@ final class FunputComposer {
         funput_backspace(handle)
     }
 
+    /// Re-open an already-committed word as the live composition, so the next keystroke
+    /// edits it (`chào` + ⌫ then `s` gives `cháo`). Returns whether the engine took it:
+    /// only a complete Vietnamese syllable is, which keeps English words and URLs literal,
+    /// so leave the document alone on `false`.
+    func adopt(_ word: String) -> Bool {
+        let scalars = word.unicodeScalars.map(\.value)
+        return funput_adopt(handle, scalars, UInt(scalars.count))
+    }
+
     /// Flip the word being composed between its Vietnamese form and its raw
     /// keystrokes (`card` ⇄ `cải`), and back on a second call. Returns the engine
     /// result; the caller re-renders the marked text from `buffer()` when its

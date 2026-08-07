@@ -7,6 +7,7 @@ extension AppSettings {
         static let eagerRestore = "eagerRestore"
         static let spellCheckEnabled = "spellCheckEnabled"
         static let autoCapitalizeEnabled = "autoCapitalizeEnabled"
+        static let retoneAfterBackspace = "retoneAfterBackspace"
         static let toggleShortcut = "toggleShortcut"
         static let flipShortcut = "flipShortcut"
         static let launchAtLogin = "launchAtLogin"
