@@ -12,8 +12,6 @@
 //! Vietnamese IMEs use for the VI/EN toggle. Those carry no VK and the hook
 //! matches them on release; see [`crate::background::hotkey`].
 
-use slint::platform::Key;
-
 use funput_config::{KeyCombo, NO_KEY};
 
 mod keys;
@@ -97,15 +95,6 @@ pub fn system_conflict(c: &KeyCombo) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn maps_special_and_all_function_keys() {
-        assert_eq!(special_key(char::from(Key::Space)), Some((0x20, "Space")));
-        assert_eq!(special_key(char::from(Key::LeftArrow)), Some((0x25, "←")));
-        assert_eq!(function_key(char::from(Key::F1)), Some((0x70, "F1")));
-        assert_eq!(function_key(char::from(Key::F12)), Some((0x7B, "F12")));
-        assert_eq!(function_key(char::from(Key::F24)), Some((0x87, "F24")));
-    }
 
     #[test]
     fn rejects_shift_only_but_accepts_a_real_modifier() {

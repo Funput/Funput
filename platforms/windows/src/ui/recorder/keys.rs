@@ -65,3 +65,17 @@ fn vk_for_char(ch: char) -> Option<u16> {
     }
     Some((scan as u16) & 0xFF)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn maps_special_and_all_function_keys() {
+        assert_eq!(special_key(char::from(Key::Space)), Some((0x20, "Space")));
+        assert_eq!(special_key(char::from(Key::LeftArrow)), Some((0x25, "←")));
+        assert_eq!(function_key(char::from(Key::F1)), Some((0x70, "F1")));
+        assert_eq!(function_key(char::from(Key::F12)), Some((0x7B, "F12")));
+        assert_eq!(function_key(char::from(Key::F24)), Some((0x87, "F24")));
+    }
+}

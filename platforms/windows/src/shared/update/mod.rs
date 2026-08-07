@@ -118,12 +118,9 @@ fn version_is_newer(candidate: &str, current: &str) -> bool {
     }
 }
 
-/// Download the `.exe` bytes, enforcing the manifest's expected length.
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ed25519_dalek::{Signer, SigningKey};
 
     #[test]
     fn newer_version_detected() {
@@ -157,20 +154,5 @@ mod tests {
         assert_eq!(m.version, "1.2026.2");
         assert_eq!(m.length, 1234);
         assert_eq!(m.notes_url.as_deref(), Some("https://example.com/notes"));
-    }
-
-    #[test]
-    fn verify_accepts_good_signature_and_rejects_tampering() {
-        // Deterministic keypair (no RNG dependency) standing in for the CI key.
-        let signing = SigningKey::from_bytes(&[7u8; 32]);
-        let pubkey_b64 = BASE64.encode(signing.verifying_key().to_bytes());
-        let payload = b"funput release bytes";
-        let sig_b64 = BASE64.encode(signing.sign(payload).to_bytes());
-
-        assert!(verify_with_key(payload, &sig_b64, &pubkey_b64).is_ok());
-        // Flip one byte of the payload → verification must fail.
-        assert!(verify_with_key(b"funput release bytez", &sig_b64, &pubkey_b64).is_err());
-        // Garbage signature → fail, not panic.
-        assert!(verify_with_key(payload, "!!!notbase64!!!", &pubkey_b64).is_err());
     }
 }

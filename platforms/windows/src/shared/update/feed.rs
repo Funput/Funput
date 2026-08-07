@@ -42,6 +42,7 @@ pub fn fetch_manifest() -> Result<Manifest> {
     serde_json::from_str(&body).map_err(|e| Error::BadManifest(e.to_string()))
 }
 
+/// Download the `.exe` bytes, enforcing the manifest's expected length.
 pub fn download(url: &str, expected_len: u64) -> Result<Vec<u8>> {
     let resp = agent()
         .get(url)
