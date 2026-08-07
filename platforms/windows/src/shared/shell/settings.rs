@@ -1,44 +1,11 @@
-//! The process-global [`ShellState`], shared between the keyboard-hook thread, the
-//! tray, and the UI callbacks.
-//!
-//! The state itself and every rule it enforces live in `funput-desktop`; this file
-//! exists only because a `WH_KEYBOARD_LL` callback is a bare `extern "system"`
-//! function with no user pointer to carry a handle in, so the state has to be
-//! reachable from a static. Each function below is that static plus a lock.
-//!
-//! No Windows APIs here — the two Windows *facts* it does hold are the inject tag
-//! and the browser list, both explained where they are defined.
-
-use std::sync::{Mutex, OnceLock};
+//! What the Settings window and the tray call: read the current configuration,
+//! and change one piece of it. Every setter persists — see
+//! `funput_desktop::ShellState`, which owns the actual rules.
 
 use funput_config::{ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Settings, Shortcut};
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
-use funput_desktop::{ImeResult, KeySource, ShellState};
 
-use crate::shared::settings_path;
-
-/// Tag stamped into `dwExtraInfo` of every event we synthesize via `SendInput`, so
-/// the hook can recognize and ignore its own injected keystrokes (no re-entrancy).
-pub const INJECT_TAG: usize = 0x4655_4E50; // "FUNP"
-
-/// Browsers whose URL bar inline-autofills a *selected* suffix that eats a
-/// synthesized Backspace (Chrome's omnibox, Firefox's address bar). Chrome
-/// Beta/Dev/Canary also report `chrome.exe`; Firefox Developer Edition/Nightly
-/// also report `firefox.exe`. Zen (Firefox fork) reports `zen.exe`. Edge
-/// (`msedge.exe`) and Brave (`brave.exe`) deliberately do not match — they
-/// are unaffected.
-const URLBAR_AUTOFILL_BROWSERS: [&str; 3] = ["chrome.exe", "firefox.exe", "zen.exe"];
-
-static SHELL: OnceLock<Mutex<ShellState>> = OnceLock::new();
-
-fn shell() -> &'static Mutex<ShellState> {
-    SHELL.get_or_init(|| Mutex::new(ShellState::new(settings_path::settings_path())))
-}
-
-fn with<R>(f: impl FnOnce(&mut ShellState) -> R) -> R {
-    let mut guard = shell().lock().expect("shell mutex poisoned");
-    f(&mut guard)
-}
+use super::with;
 
 // --- reads -----------------------------------------------------------------
 
@@ -85,17 +52,7 @@ pub fn method_and_tone() -> (InputMethod, CoreToneStyle) {
     with(|s| (s.method(), s.tone_style()))
 }
 
-/// True when the focused app is a browser whose URL bar autofill swallows
-/// synthesized Backspaces. Used to route text injection through the Delete-primer
-/// path (see `inject::send_plan_primed`).
-pub fn foreground_has_urlbar_autofill() -> bool {
-    with(|s| {
-        s.foreground_id()
-            .is_some_and(|id| URLBAR_AUTOFILL_BROWSERS.contains(&id))
-    })
-}
-
-// --- writes ----------------------------------------------------------------
+// --- writes (each persists) ------------------------------------------------
 
 pub fn reload_settings() -> bool {
     with(|s| s.reload_settings())
@@ -103,14 +60,8 @@ pub fn reload_settings() -> bool {
 pub fn replace_settings(new: Settings) {
     with(|s| s.replace_settings(new));
 }
-pub fn seed_recent_apps(apps: Vec<ExcludedApp>) {
-    with(|s| s.set_recent_apps(apps));
-}
 pub fn toggle_enabled() -> bool {
     with(|s| s.toggle_enabled())
-}
-pub fn toggle_enabled_hotkey() -> bool {
-    with(|s| s.toggle_enabled_hotkey())
 }
 pub fn set_enabled(on: bool) {
     with(|s| s.set_enabled(on));
@@ -171,28 +122,4 @@ pub fn set_shortcut_trigger(index: usize, trigger: String) {
 }
 pub fn set_shortcut_expansion(index: usize, expansion: String) {
     with(|s| s.set_shortcut_expansion(index, expansion));
-}
-
-// --- per-app auto-switch + composition (called from the hook) ---------------
-
-pub fn note_foreground(id: String, name: String) {
-    with(|s| s.note_foreground(id, name));
-}
-pub fn apply_for_app(id: &str) -> Option<bool> {
-    with(|s| s.apply_for_app(id))
-}
-pub fn process_key(c: char, source: KeySource) -> ImeResult {
-    with(|s| s.process_key(c, source))
-}
-pub fn flip_composing() -> ImeResult {
-    with(|s| s.flip_composing())
-}
-pub fn on_backspace() {
-    with(|s| s.on_backspace());
-}
-pub fn arm_capitalization() {
-    with(|s| s.arm_capitalization());
-}
-pub fn clear() {
-    with(|s| s.clear());
 }

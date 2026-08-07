@@ -1,4 +1,10 @@
 //! Vowel shape modifiers (mũ / móc / trần) and their glyph mappings.
+//!
+//! The glyph table itself lives in [`table`].
+
+mod table;
+
+use table::{case_pair, shaped_entry};
 
 use crate::unicode::marks::{apply_tone, tone_on_vowel, vowel_stem};
 
@@ -99,58 +105,6 @@ pub(crate) fn strip_shape(vowel: char) -> Option<char> {
         Some(t) => apply_tone(unshaped, t),
         None => Some(unshaped),
     }
-}
-
-fn case_pair(base: char, lower: char, upper: char) -> char {
-    if base.is_uppercase() { upper } else { lower }
-}
-
-struct ShapedVowel {
-    shaped_lower: char,
-    base_lower: char,
-    shape: VowelShape,
-}
-
-const SHAPED_VOWELS: &[ShapedVowel] = &[
-    ShapedVowel {
-        shaped_lower: 'â',
-        base_lower: 'a',
-        shape: VowelShape::Circumflex,
-    },
-    ShapedVowel {
-        shaped_lower: 'ă',
-        base_lower: 'a',
-        shape: VowelShape::Breve,
-    },
-    ShapedVowel {
-        shaped_lower: 'ê',
-        base_lower: 'e',
-        shape: VowelShape::Circumflex,
-    },
-    ShapedVowel {
-        shaped_lower: 'ô',
-        base_lower: 'o',
-        shape: VowelShape::Circumflex,
-    },
-    ShapedVowel {
-        shaped_lower: 'ơ',
-        base_lower: 'o',
-        shape: VowelShape::Horn,
-    },
-    ShapedVowel {
-        shaped_lower: 'ư',
-        base_lower: 'u',
-        shape: VowelShape::Horn,
-    },
-];
-
-fn shaped_entry(shaped_stem: char) -> Option<&'static ShapedVowel> {
-    let lower = char::to_lowercase(shaped_stem)
-        .next()
-        .unwrap_or(shaped_stem);
-    SHAPED_VOWELS
-        .iter()
-        .find(|entry| entry.shaped_lower == lower)
 }
 
 #[cfg(test)]

@@ -1,6 +1,7 @@
 //! UI child-process launch, shutdown, and entry points.
 
 mod child;
+mod flyout;
 
 use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::System::Threading::{
@@ -10,9 +11,8 @@ use windows::Win32::System::Threading::{
 use super::{control_center, onboarding, settings_window};
 use crate::shared::shell;
 
-pub(crate) use child::{
-    launch_onboarding, launch_settings, reap_ui_child, terminate_children, toggle_control_center,
-};
+pub(crate) use child::{launch_onboarding, launch_settings, terminate_children};
+pub(crate) use flyout::{reap_ui_child, toggle_control_center};
 
 use child::{PARENT_PID_ENV, RECENT_APPS_ENV};
 
