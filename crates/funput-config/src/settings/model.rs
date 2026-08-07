@@ -1,3 +1,7 @@
+//! The persisted settings document. Field names and defaults are the on-disk
+//! contract: every `rename_all`/`default`/`skip_serializing_if` below is what an
+//! existing `settings.json` was written with, so none of them may change casually.
+
 use serde::{Deserialize, Serialize};
 
 use super::{FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
@@ -65,3 +69,6 @@ impl Default for Settings {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

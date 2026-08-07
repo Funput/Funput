@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use slint::winit_030::{EventResult, WinitWindowAccessor};
 use slint::{ComponentHandle, PhysicalPosition, Weak};
 
-use crate::settings::{Method, ToneStyle};
+use funput_config::{Method, ToneStyle};
 use crate::{mica, shell, system_accent, ControlCenterWindow, Theme};
 
 /// Process exit codes parent reaps to open Settings on a given tab.
@@ -137,7 +137,7 @@ pub(super) fn cycle_method(current: Method) -> Method {
     }
 }
 
-fn hotkey_label(s: &crate::settings::Settings) -> String {
+fn hotkey_label(s: &funput_config::Settings) -> String {
     if let Some(combo) = &s.toggle_combo {
         combo.caps().join("+")
     } else {

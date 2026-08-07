@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/funput-core",
+    "crates/funput-config",
     "crates/funput-engine",
     "crates/funput-suggestions",
     "crates/funput-cli",

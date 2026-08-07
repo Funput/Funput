@@ -2,7 +2,7 @@
 
 use slint::ComponentHandle;
 
-use crate::settings::ToneStyle;
+use funput_config::ToneStyle;
 use crate::{commands, shell, ControlCenterWindow};
 
 use super::{

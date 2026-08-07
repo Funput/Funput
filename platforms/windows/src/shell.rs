@@ -4,15 +4,17 @@
 //! No Windows APIs here.
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
 
+use funput_config::{
+    ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, Settings, Shortcut, ToneStyle,
+};
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
 use funput_desktop::CommittedTail;
 use funput_engine::{Engine, EngineConfig, ImeResult, KeySource};
 
-use crate::settings::{
-    ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, Settings, Shortcut, ToneStyle,
-};
+use crate::settings_path;
 
 /// Tag stamped into `dwExtraInfo` of every event we synthesize via `SendInput`, so
 /// the hook can recognize and ignore its own injected keystrokes (no re-entrancy).
@@ -30,6 +32,9 @@ struct Shell {
     /// caret behind our back drops it — see [`reset_composition`].
     tail: CommittedTail,
     settings: Settings,
+    /// Where `settings` is persisted, resolved once at startup. `None` when no
+    /// writable location exists at all — settings then live for this session only.
+    settings_file: Option<PathBuf>,
     /// Recently-focused apps (most recent first), fed by the foreground hook. Not
     /// persisted — it's just a convenience source for the Settings UI.
     recent: Vec<ExcludedApp>,
@@ -45,6 +50,24 @@ struct Shell {
 }
 
 static SHELL: OnceLock<Mutex<Shell>> = OnceLock::new();
+
+impl Shell {
+    /// Read the settings file (defaults when it is missing, corrupt, or there is
+    /// nowhere to keep one).
+    fn read_settings(&self) -> Settings {
+        self.settings_file
+            .as_deref()
+            .map(Settings::load_from)
+            .unwrap_or_default()
+    }
+
+    /// Persist the current settings.
+    fn save(&self) {
+        if let Some(path) = &self.settings_file {
+            self.settings.save_to(path);
+        }
+    }
+}
 
 /// Push everything in `s.settings` to the engine and start from a clean slate.
 fn apply_settings(s: &mut Shell) {
@@ -92,11 +115,13 @@ fn shell() -> &'static Mutex<Shell> {
         let mut shell = Shell {
             engine: Engine::new(),
             tail: CommittedTail::new(),
-            settings: Settings::load(),
+            settings: Settings::default(),
+            settings_file: settings_path::settings_path(),
             recent: Vec::new(),
             overrides: HashMap::new(),
             pending_override: None,
         };
+        shell.settings = shell.read_settings();
         apply_settings(&mut shell);
         Mutex::new(shell)
     })
@@ -186,8 +211,8 @@ pub fn foreground_has_urlbar_autofill() -> bool {
 /// apps and per-app overrides stay in the background process; only persisted state
 /// and the live composition engine are refreshed.
 pub fn reload_settings() -> bool {
-    let loaded = Settings::load();
     with(|s| {
+        let loaded = s.read_settings();
         if s.settings == loaded {
             return false;
         }
@@ -204,7 +229,7 @@ pub fn replace_settings(new: Settings) {
     with(|s| {
         s.settings = new;
         apply_settings(s);
-        s.settings.save();
+        s.save();
     });
 }
 
@@ -224,7 +249,7 @@ pub fn toggle_enabled() -> bool {
         let on = !s.settings.enabled;
         set_enabled_state(s, on);
         s.pending_override = Some(on);
-        s.settings.save();
+        s.save();
         on
     })
 }
@@ -240,7 +265,7 @@ pub fn toggle_enabled_hotkey() -> bool {
             s.overrides.insert(app.id.clone(), on);
         }
         s.pending_override = None;
-        s.settings.save();
+        s.save();
         on
     })
 }
@@ -251,7 +276,7 @@ pub fn set_enabled(on: bool) {
         // The Settings window holds focus while this runs, so treat it like the
         // tray: bind the choice to the next app the user returns to.
         s.pending_override = Some(on);
-        s.settings.save();
+        s.save();
     });
 }
 
@@ -263,7 +288,7 @@ pub fn set_method(method: InputMethod) {
         s.settings.method = Method::from_core(method);
         sync_engine_config(&mut s.engine, &s.settings);
         reset_composition(s);
-        s.settings.save();
+        s.save();
     });
 }
 
@@ -294,7 +319,7 @@ fn update_config(edit: impl FnOnce(&mut Settings)) {
     with(|s| {
         edit(&mut s.settings);
         sync_engine_config(&mut s.engine, &s.settings);
-        s.settings.save();
+        s.save();
     });
 }
 
@@ -311,14 +336,14 @@ pub fn set_toggle_hotkey(hotkey: Hotkey) {
     with(|s| {
         s.settings.toggle_hotkey = hotkey;
         s.settings.toggle_combo = None;
-        s.settings.save();
+        s.save();
     });
 }
 
 pub fn set_toggle_combo(combo: KeyCombo) {
     with(|s| {
         s.settings.toggle_combo = Some(combo);
-        s.settings.save();
+        s.save();
     });
 }
 
@@ -326,14 +351,14 @@ pub fn set_flip_hotkey(hotkey: FlipHotkey) {
     with(|s| {
         s.settings.flip_hotkey = hotkey;
         s.settings.flip_combo = None;
-        s.settings.save();
+        s.save();
     });
 }
 
 pub fn set_flip_combo(combo: KeyCombo) {
     with(|s| {
         s.settings.flip_combo = Some(combo);
-        s.settings.save();
+        s.save();
     });
 }
 
@@ -342,14 +367,14 @@ pub fn set_flip_combo(combo: KeyCombo) {
 pub fn set_launch_at_login(on: bool) {
     with(|s| {
         s.settings.launch_at_login = on;
-        s.settings.save();
+        s.save();
     });
 }
 
 pub fn complete_onboarding() {
     with(|s| {
         s.settings.has_completed_onboarding = true;
-        s.settings.save();
+        s.save();
     });
 }
 
@@ -357,7 +382,7 @@ pub fn add_excluded_app(app: ExcludedApp) {
     with(|s| {
         if !s.settings.excluded_apps.iter().any(|a| a.id == app.id) {
             s.settings.excluded_apps.push(app);
-            s.settings.save();
+            s.save();
         }
     });
 }
@@ -367,7 +392,7 @@ pub fn remove_excluded_app(id: &str) {
         let before = s.settings.excluded_apps.len();
         s.settings.excluded_apps.retain(|a| a.id != id);
         if s.settings.excluded_apps.len() != before {
-            s.settings.save();
+            s.save();
         }
     });
 }
@@ -391,7 +416,7 @@ fn commit_shortcuts(s: &mut Shell) {
         .collect();
     push_shortcuts(&mut s.engine, &complete);
     let drafts = std::mem::replace(&mut s.settings.shortcuts, complete);
-    s.settings.save();
+    s.save();
     s.settings.shortcuts = drafts;
 }
 
@@ -502,7 +527,7 @@ pub fn apply_for_app(id: &str) -> Option<bool> {
             return None;
         }
         set_enabled_state(s, target);
-        s.settings.save();
+        s.save();
         Some(target)
     })
 }

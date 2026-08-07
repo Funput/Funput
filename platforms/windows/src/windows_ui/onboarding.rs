@@ -4,7 +4,7 @@ use std::cell::RefCell;
 
 use slint::{ComponentHandle, Weak};
 
-use crate::settings::Method;
+use funput_config::Method;
 use crate::{commands, shell, system_accent, OnboardingWindow, Theme};
 
 thread_local! {

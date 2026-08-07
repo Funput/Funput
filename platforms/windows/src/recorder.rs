@@ -15,7 +15,7 @@
 use slint::platform::Key;
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyboardLayout, VkKeyScanExW};
 
-use crate::settings::{KeyCombo, NO_KEY};
+use funput_config::{KeyCombo, NO_KEY};
 
 /// A successfully recorded combo, plus whether it collides with a well-known
 /// Windows system shortcut (the UI shows a warning but does not block — the

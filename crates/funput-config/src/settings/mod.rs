@@ -1,10 +1,11 @@
-//! Persisted Windows settings and UI-facing configuration enums.
+//! The settings a desktop shell persists, and where it keeps them.
 
 mod combo;
 mod hotkeys;
+mod io;
 mod method;
 mod model;
-mod storage;
+pub mod path;
 
 pub use combo::{KeyCombo, NO_KEY};
 pub use hotkeys::{FlipHotkey, Hotkey};

@@ -1,5 +1,5 @@
 use super::*;
-use crate::settings::NO_KEY;
+use funput_config::NO_KEY;
 use windows::Win32::UI::Input::KeyboardAndMouse::VK_TAB;
 
 fn m(ctrl: bool, alt: bool, shift: bool, win: bool) -> Mods {

@@ -7,7 +7,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
     VK_RCONTROL, VK_RMENU, VK_RSHIFT, VK_RWIN, VK_SHIFT, VK_SPACE,
 };
 
-use crate::settings::{FlipHotkey, Hotkey, KeyCombo};
+use funput_config::{FlipHotkey, Hotkey, KeyCombo};
 
 /// Fold side-specific modifier virtual-keys back to their generic codes. The
 /// low-level hook always delivers the side-specific keys (`VK_LSHIFT`,
