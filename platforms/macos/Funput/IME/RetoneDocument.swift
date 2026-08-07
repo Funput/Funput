@@ -26,19 +26,7 @@ struct IMKRetoneDocument: RetoneDocument {
     let client: IMKTextInput
 
     func caret() -> Int? {
-        // A selection is not a caret: there Backspace deletes the selection, and no word
-        // ends up under the caret at all. Some clients report a caret this way too — Cursor
-        // answers (0,1) for an empty document — which lands on the same safe refusal.
-        let selected = client.selectedRange()
-        guard selected.location != NSNotFound, selected.length == 0 else { return nil }
-
-        // Marked text of our own would mean the indices below describe a document that is
-        // still mid-edit. Callers only get here with an empty composition, so this is a
-        // stray composition left by something else — leave it alone.
-        let marked = client.markedRange()
-        guard marked.location == NSNotFound || marked.length == 0 else { return nil }
-
-        return selected.location
+        Retone.caret(selected: client.selectedRange(), marked: client.markedRange())
     }
 
     func text(in range: NSRange) -> String? {

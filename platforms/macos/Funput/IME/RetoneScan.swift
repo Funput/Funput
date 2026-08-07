@@ -25,6 +25,28 @@ enum Retone {
         let replacement: NSRange
     }
 
+    /// Where the caret is, given what a client says about its selection and its marked
+    /// text, or nil when those answers are no basis for an edit.
+    ///
+    /// Split out from `IMKRetoneDocument` so the refusals are testable rather than only
+    /// reachable through a live app. Note this is the first of two filters a bad client
+    /// meets, not the whole defence: Cursor's `(0, 1)` — a selection where the user sees a
+    /// caret — is turned away here, while its `(1, 0)` passes and is turned away by `plan`,
+    /// which finds nothing in front of the character being deleted.
+    static func caret(selected: NSRange, marked: NSRange) -> Int? {
+        // A selection is not a caret: there Backspace deletes the selection, and no word
+        // ends up under the caret at all.
+        guard selected.location != NSNotFound, selected.length == 0 else { return nil }
+
+        // Marked text means the document is mid-edit. Callers only reach this with an empty
+        // composition of their own, so it belongs to something else — leave it alone. An
+        // empty range counts as none: clients differ on whether they say so with
+        // `NSNotFound` or with a zero length.
+        guard marked.location == NSNotFound || marked.length == 0 else { return nil }
+
+        return selected.location
+    }
+
     /// What Backspace should do, or nil to let the app delete a character the ordinary way.
     ///
     /// `adopt` is the engine, and it is asked last — only ever about a word that is really

@@ -88,6 +88,10 @@ final class RetoneTests: XCTestCase {
 
     func testThereIsNothingBeforeTheStartOfTheDocument() {
         XCTAssertNil(Retone.plan(document: FakeDocument("a", caret: 0), adopt: takeAnything))
+        // Caret 1 is also the second of Cursor's two answers (see `RetoneCaretTests`): a
+        // caret that passes the first filter, on a document whose contents it misreports.
+        // Only the character Backspace deletes lies before it, so there is no word — and
+        // the client is never asked to prove it.
         XCTAssertNil(Retone.plan(document: FakeDocument("a", caret: 1), adopt: takeAnything))
     }
 
