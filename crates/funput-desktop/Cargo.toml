@@ -10,8 +10,7 @@ workspace = true
 
 [dependencies]
 funput-engine = { path = "../funput-engine" }
-
-[dev-dependencies]
-# The retone integration test drives a real engine, and selecting Telex/VNI needs
-# `InputMethod` — a core type the engine takes but does not re-export.
+# `ShellState` owns the persisted settings and pushes them into the engine.
+funput-config = { path = "../funput-config" }
+# `InputMethod`/`ToneStyle` — core types the engine takes but does not re-export.
 funput-core = { path = "../funput-core" }
