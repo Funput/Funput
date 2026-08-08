@@ -27,7 +27,8 @@ pub mod recorder;
 pub mod system_accent;
 
 pub(crate) use lifecycle::{
-    launch_onboarding, launch_settings, reap_ui_child, run_control_center, run_onboarding,
-    run_settings, terminate_children, terminate_parent_for_update, toggle_control_center,
+    current_child_handle, launch_onboarding, launch_settings, reap_ui_child, run_control_center,
+    run_onboarding, run_settings, terminate_children, terminate_parent_for_update,
+    toggle_control_center,
 };
 pub(crate) use settings_window::set_update_state;
