@@ -28,6 +28,27 @@ struct SystemPresetRenderingTests {
         #expect(emojiLabels(in: funput) == ["Biểu tượng cảm xúc"])
     }
 
+    /// The emoji key arrived by way of a rewrite of the toolbar's layout pass, which the
+    /// Funput preset shares. These are the widths that rewrite must not have moved.
+    @Test("Hiding a control does not resize the suggestion region for other layouts")
+    func toolbarRegionIsUnchangedForFunput() {
+        let toolbar = KeyboardToolbarView()
+        toolbar.frame = CGRect(x: 0, y: 0, width: 390, height: 44)
+        toolbar.apply(spec: .standard, theme: .funputGlass, traits: traits)
+        toolbar.layoutIfNeeded()
+        let both = toolbar.suggestionBar.frame.width
+
+        // While typing, the clipboard key steps aside and the region grows by exactly
+        // that key plus the 2pt between the two — no more, no less.
+        toolbar.updateSuggestions([KeyboardSuggestionCandidate(text: "chào", generation: 1)])
+        toolbar.layoutIfNeeded()
+        let itemSize = min(36, toolbar.bounds.height)
+        #expect(abs(toolbar.suggestionBar.frame.width - (both + itemSize + 2)) <= 0.01)
+        #expect(toolbar.emojiButton.frame.maxX == toolbar.bounds.width)
+    }
+
+    private var traits: UITraitCollection { UITraitCollection(userInterfaceStyle: .dark) }
+
     private func surface(for layout: KeyboardLayout) -> KeyboardSurfaceView {
         let surface = KeyboardSurfaceView(presentation: KeyboardPresentation(layout: layout))
         surface.frame = CGRect(x: 0, y: 0, width: 390, height: 304)

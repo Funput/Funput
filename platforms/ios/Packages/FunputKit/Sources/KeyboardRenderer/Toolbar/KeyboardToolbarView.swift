@@ -46,6 +46,7 @@ final class KeyboardToolbarView: UIView {
         // them can step aside — the clipboard key while the user is typing, the emoji
         // key when the layout already carries one in its rows.
         var trailing = bounds.width
+        var placedAControl = false
         if !emojiButton.isHidden {
             emojiButton.frame = CGRect(
                 x: trailing - itemSize,
@@ -53,11 +54,15 @@ final class KeyboardToolbarView: UIView {
                 width: itemSize,
                 height: itemSize
             )
-            trailing = emojiButton.frame.minX - 2
+            trailing = emojiButton.frame.minX
+            placedAControl = true
         }
         if !clipboardButton.isHidden {
+            // The 2pt separator belongs *between* two controls, so it only applies when
+            // something was placed before this one — otherwise the content region would
+            // silently lose those 2pt whenever the clipboard key is the one to step aside.
             clipboardButton.frame = CGRect(
-                x: trailing - itemSize,
+                x: trailing - itemSize - (placedAControl ? 2 : 0),
                 y: originY,
                 width: itemSize,
                 height: itemSize
