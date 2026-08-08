@@ -46,7 +46,7 @@ extension AppSettings {
             platform: .init(macos: .init(
                 toggleShortcut: toggleShortcut,
                 flipShortcut: flipShortcut,
-                excludedApps: excludedApps
+                appLanguageMemory: appLanguageMemory.snapshot
             ))
         )
     }
@@ -107,12 +107,11 @@ extension AppSettings {
         if let mac = document.platform?.macos {
             if let toggle = mac.toggleShortcut { toggleShortcut = toggle }
             if let flip = mac.flipShortcut { flipShortcut = flip }
-            if let apps = mac.excludedApps {
-                var merged = excludedApps
-                for app in apps where !merged.contains(where: { $0.id == app.id }) {
-                    merged.append(app)
-                }
-                excludedApps = merged
+            // Newer exports carry the per-app memory directly; older ones only have
+            // the now-removed exclusion list, migrated to "remembered as English".
+            if let memory = mac.appLanguageMemory { appLanguageMemory.merge(memory) }
+            if let legacyApps = mac.excludedApps {
+                appLanguageMemory.mergeLegacyExcludedApps(legacyApps.map(\.id))
             }
             summary.appliedMacPlatform = true
         }

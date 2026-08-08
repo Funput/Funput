@@ -58,10 +58,6 @@ struct SettingsView: View {
             SettingsPage(destination: .textShortcuts) {
                 ShortcutsPane()
             }
-        case .applications:
-            SettingsPage(destination: .applications) {
-                AppExclusionPane()
-            }
         }
     }
 

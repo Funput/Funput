@@ -17,8 +17,9 @@ one machine imports on another. macOS is the first implementation
     matching trigger and new triggers are appended. Nothing is removed.
   - Supported `preferences` overwrite the matching setting. Missing or unsupported
     enum values leave the existing local preference untouched.
-  - `platform.<current>` hotkeys apply only when present; `excludedApps` are unioned
-    by id.
+  - `platform.<current>` hotkeys apply only when present; `excludedApps`
+    (Windows, Linux) and `appLanguageMemory` (macOS) are unioned by id/key —
+    existing entries win.
 - **Forward compatible.** Unknown keys are ignored. Missing optional fields are
   skipped. A file whose top-level `schema` differs from `app.funput.config` is
   rejected. A `version` newer than the reader's is accepted on a best-effort basis
@@ -50,7 +51,7 @@ one machine imports on another. macOS is the first implementation
     "macos": {
       "toggleShortcut": { "keyCode": 42, "modifiers": 262144, "label": "\\" },
       "flipShortcut": null,
-      "excludedApps": [ { "id": "com.apple.Safari", "name": "Safari" } ]
+      "appLanguageMemory": { "com.apple.Safari": false }
     }
   }
 }
@@ -69,7 +70,8 @@ one machine imports on another. macOS is the first implementation
 | `shortcuts[]` | ✅ | `{ trigger, expansion }`. Local UUIDs are dropped; recreated on import. |
 | `platform.macos.toggleShortcut` | ❌ | `KeyCombo` (`keyCode` is AppKit-specific). Applied only on macOS, only if present. |
 | `platform.macos.flipShortcut` | ❌ | `KeyCombo` or `null`. Applied only on macOS, only if present. |
-| `platform.macos.excludedApps[]` | ❌ | `{ id (bundleId), name }`. macOS-only; unioned by `id`. |
+| `platform.macos.appLanguageMemory` | ❌ | `{ bundleId: rememberedIsVietnamese }`. macOS-only per-app VI/EN memory; merged by key, existing entries win. |
+| `platform.macos.excludedApps[]` | ❌ | **Legacy, read-only.** `{ id (bundleId), name }` from the removed "always English" list. Only decoded from older exports (no longer written); each `id` is migrated into `appLanguageMemory` as English. |
 
 ### `platform.windows`
 

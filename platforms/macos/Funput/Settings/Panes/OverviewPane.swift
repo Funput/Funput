@@ -31,13 +31,6 @@ struct OverviewPane: View {
                         ) {
                             selection = .textShortcuts
                         }
-                        SettingsMetric(
-                            title: "Ứng dụng bỏ qua",
-                            value: "\(settings.excludedApps.count)",
-                            systemImage: "app.badge"
-                        ) {
-                            selection = .applications
-                        }
                     }
 
                     SettingsSurface {
