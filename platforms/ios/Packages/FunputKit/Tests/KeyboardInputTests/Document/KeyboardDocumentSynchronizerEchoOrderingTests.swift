@@ -34,6 +34,32 @@ struct KeyboardDocumentSynchronizerEchoOrderingTests {
         #expect(synchronizer.snapshot?.contextBeforeInput == "ho")
     }
 
+    @Test("An authored context stops acknowledging callbacks once no echo can be in flight")
+    func staleEchoExpires() {
+        var now = 10.0
+        let identifier = UUID()
+        var synchronizer = KeyboardDocumentSynchronizer()
+        synchronizer.clock = { now }
+        synchronizer.accept(KeyboardDocumentSnapshot(
+            documentIdentifier: identifier,
+            contextBeforeInput: "",
+            hasSelection: false
+        ))
+
+        synchronizer.beginMutation()
+        synchronizer.recordInsertion("ho")
+        _ = synchronizer.finishMutation()
+
+        now += KeyboardEchoEpoch.echoLifetime + 0.01
+        // The document really is empty again — an external edit, not a late echo of the
+        // empty context Funput saw before "ho".
+        let consumed = synchronizer.consumeAuthoredTextChange(
+            documentIdentifier: identifier,
+            contextBeforeInput: ""
+        )
+        #expect(!consumed)
+    }
+
     @Test("A shorter suffix alone is not proof that a callback was authored")
     func shorterSuffixIsExternal() {
         let identifier = UUID()

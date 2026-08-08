@@ -21,8 +21,10 @@ extension KeyboardDocumentSynchronizer {
 
     mutating func appendAuthoredContext(_ context: String?) {
         let context = normalize(context)
-        if currentEpoch.contexts.last == context { return }
-        currentEpoch.contexts.append(context)
+        if currentEpoch.contexts.last?.context == context { return }
+        currentEpoch.contexts.append(
+            KeyboardAuthoredContext(context: context, recordedAt: clock())
+        )
         if currentEpoch.contexts.count > Self.epochContextLimit {
             currentEpoch.contexts.removeFirst(16)
         }
@@ -31,8 +33,11 @@ extension KeyboardDocumentSynchronizer {
 
     mutating func closeCurrentEpoch() {
         let retained = Array(currentEpoch.contexts.suffix(Self.retainedPreviousContextLimit))
-        previousEpoch = EchoEpoch(generation: currentEpoch.generation, contexts: retained)
-        currentEpoch = EchoEpoch(generation: nextGeneration)
+        previousEpoch = KeyboardEchoEpoch(
+            generation: currentEpoch.generation,
+            contexts: retained
+        )
+        currentEpoch = KeyboardEchoEpoch(generation: nextGeneration)
         nextGeneration &+= 1
     }
 
@@ -46,7 +51,7 @@ extension KeyboardDocumentSynchronizer {
 
     mutating func resetEchoLedger() {
         previousEpoch = nil
-        currentEpoch = EchoEpoch(generation: nextGeneration)
+        currentEpoch = KeyboardEchoEpoch(generation: nextGeneration)
         nextGeneration &+= 1
     }
 

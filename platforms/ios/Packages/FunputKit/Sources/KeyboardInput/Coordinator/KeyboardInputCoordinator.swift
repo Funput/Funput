@@ -21,6 +21,9 @@ public final class KeyboardInputCoordinator {
         shiftDoubleTapInterval: TimeInterval = 0.3,
         shiftClock: @escaping () -> TimeInterval = {
             ProcessInfo.processInfo.systemUptime
+        },
+        echoClock: @escaping () -> TimeInterval = {
+            ProcessInfo.processInfo.systemUptime
         }
     ) {
         preferredTelexMethod = inputMethod.isTelexFamily ? inputMethod : .telex
@@ -34,6 +37,7 @@ public final class KeyboardInputCoordinator {
             doubleTapInterval: shiftDoubleTapInterval,
             clock: shiftClock
         )
+        documentSynchronizer.clock = echoClock
         composer.setInputMethod(inputMethod.engineMethod)
     }
 

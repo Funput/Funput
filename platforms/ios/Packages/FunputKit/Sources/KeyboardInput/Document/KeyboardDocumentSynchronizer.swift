@@ -16,16 +16,12 @@ struct KeyboardDocumentSynchronizer {
     static let epochContextLimit = 64
     static let retainedPreviousContextLimit = 32
 
-    struct EchoEpoch {
-        let generation: UInt64
-        var contexts: [String] = []
-    }
-
+    var clock: () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }
     var snapshot: KeyboardDocumentSnapshot?
     private(set) var isApplyingMutation = false
     var snapshotBeforeMutation: KeyboardDocumentSnapshot?
-    var currentEpoch = EchoEpoch(generation: 0)
-    var previousEpoch: EchoEpoch?
+    var currentEpoch = KeyboardEchoEpoch(generation: 0)
+    var previousEpoch: KeyboardEchoEpoch?
     var nextGeneration: UInt64 = 1
     var closesEpochAfterMutation = false
     var stagedAuthoredContexts: [String] = []
@@ -92,8 +88,9 @@ struct KeyboardDocumentSynchronizer {
               snapshot.documentIdentifier == documentIdentifier else { return false }
         let context = normalize(contextBeforeInput)
         if normalize(snapshot.contextBeforeInput) == context { return true }
-        return currentEpoch.contexts.contains(context)
-            || previousEpoch?.contexts.contains(context) == true
+        let horizon = clock() - KeyboardEchoEpoch.echoLifetime
+        return currentEpoch.acknowledges(context, notBefore: horizon)
+            || previousEpoch?.acknowledges(context, notBefore: horizon) == true
     }
 
     mutating func accept(
