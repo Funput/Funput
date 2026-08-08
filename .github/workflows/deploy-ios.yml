@@ -103,8 +103,48 @@ jobs:
           security default-keychain -s "$KEYCHAIN"
           rm -f "$RUNNER_TEMP/ios-cert.p12"
 
-      # Both xcodebuild (to create provisioning profiles) and altool (to upload) read
-      # the key from this directory, which is one of the locations altool searches.
+      # Xcode has read profiles from ~/Library/MobileDevice/Provisioning Profiles for
+      # years and from ~/Library/Developer/Xcode/UserData/Provisioning Profiles more
+      # recently; installing into both costs nothing and removes the question.
+      - name: Install provisioning profiles
+        env:
+          IOS_PROFILE_APP: ${{ secrets.IOS_PROFILE_APP }}
+          IOS_PROFILE_KEYBOARD: ${{ secrets.IOS_PROFILE_KEYBOARD }}
+        run: |
+          set -euo pipefail
+          OLD="$HOME/Library/MobileDevice/Provisioning Profiles"
+          NEW="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
+          mkdir -p "$OLD" "$NEW"
+          install_profile() {
+            label="$1"; value="$2"; out_var="$3"
+            tmp="$RUNNER_TEMP/$label.mobileprovision"
+            if printf '%s' "$value" | grep -q "BEGIN PROVISIONING"; then
+              printf '%s' "$value" > "$tmp"
+            else
+              printf '%s' "$value" | base64 --decode > "$tmp"
+            fi
+            # A .mobileprovision is CMS-signed; if this fails the secret is not one.
+            if ! plist=$(security cms -D -i "$tmp" 2>/dev/null); then
+              echo "::error::$label is not a .mobileprovision. Re-add it with: base64 -i <file>.mobileprovision | pbcopy"
+              exit 1
+            fi
+            uuid=$(printf '%s' "$plist" | plutil -extract UUID raw -)
+            # An App Store profile provisions no devices. A development one does, and
+            # would sail through here only to be rejected by Apple at upload.
+            if printf '%s' "$plist" | plutil -extract ProvisionedDevices raw - >/dev/null 2>&1; then
+              echo "::error::$label is a development/ad-hoc profile, not an App Store one."
+              exit 1
+            fi
+            cp "$tmp" "$OLD/$uuid.mobileprovision"
+            cp "$tmp" "$NEW/$uuid.mobileprovision"
+            echo "$out_var=$uuid" >> "$GITHUB_ENV"
+            echo "$label: $(printf '%s' "$plist" | plutil -extract Name raw -) ($uuid), expires $(printf '%s' "$plist" | plutil -extract ExpirationDate raw -)"
+          }
+          install_profile app "$IOS_PROFILE_APP" PROFILE_APP
+          install_profile keyboard "$IOS_PROFILE_KEYBOARD" PROFILE_KEYBOARD
+
+      # With manual signing the archive needs no account at all; the key is only for
+      # altool's upload, which searches this directory.
       - name: Install App Store Connect API key
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
