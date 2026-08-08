@@ -139,8 +139,13 @@ buffer to raw keys, so a flip can recover it even after a restore.
 
 ## Shortcuts / Text expansion (macro)
 
-A user-defined trigger → expansion table (`vn` → `Việt Nam`, `kg` → `không`). At a **word boundary**
-the engine matches the **raw keystrokes** (`keys`) — **case-sensitively** — against the table:
+A user-defined trigger → expansion table (`vn` → `việt nam`, `kg` → `không`). At a **word boundary**
+the engine matches the **raw keystrokes** (`keys`) against the table using **smart-case** matching:
+typing `vn`/`Vn`/`VN` all resolve to the same trigger, and the expansion is re-cased to match —
+`vn` → `việt nam`, `Vn` → `Việt Nam` (capitalize every word), `VN` → `VIỆT NAM` (all uppercase). Keys
+with a mixed case that don't fit one of those three patterns (e.g. `vNa`) fall back to an **exact**
+match only, so a deliberately mixed-case trigger (e.g. `iOS`) still works exactly as defined. See
+`classify_case`/`apply_shortcut_case` in `compose/boundary.rs`.
 
 - Hit → `Send`: delete what is displayed (`backspace = buffer.chars().count()`), insert `expansion +
   boundary key`, then `clear()`. Backspace counts the displayed buffer, so `as` → `á` (one char) is

@@ -1,4 +1,5 @@
-//! "Gõ tắt" page: manage text-expansion shortcuts (`vn` → `Việt Nam`). Each shortcut
+//! "Gõ tắt" page: manage text-expansion shortcuts (`vn` → `việt nam`, smart-cased to
+//! `Vn` → `Việt Nam` / `VN` → `VIỆT NAM` at expansion time). Each shortcut
 //! is an expander with two editable fields; edits persist by index and update the
 //! header live, while add/delete rebuild the list.
 
@@ -21,7 +22,10 @@ pub(super) fn page() -> PreferencesPage {
 
     let group = PreferencesGroup::builder()
         .title("Gõ tắt")
-        .description("Gõ chữ tắt rồi dấu cách để bung — ví dụ vn → Việt Nam. Phân biệt hoa/thường.")
+        .description(
+            "Gõ chữ tắt rồi dấu cách để bung — ví dụ vn → việt nam. Tự nhận diện hoa/thường: \
+             Vn → Việt Nam, VN → VIỆT NAM.",
+        )
         .build();
     page.add(&group);
 

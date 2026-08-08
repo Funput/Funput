@@ -1,8 +1,11 @@
 //! Text-expansion (gõ tắt) integration tests at the [`Engine`] level.
 //!
-//! A trigger matches the raw keystrokes since the last word boundary,
-//! case-sensitively, and expands at the boundary — taking priority over English
-//! restore. See `src/boundary.rs` for the matching logic.
+//! A trigger matches the raw keystrokes since the last word boundary and expands at
+//! the boundary — taking priority over English restore. Matching is smart-case: a
+//! trigger typed as lowercase, Title Case, or UPPERCASE all resolve to the same
+//! entry, and the expansion is re-cased to match. Keystrokes with a mixed case that
+//! doesn't fit one of those three patterns fall back to an exact match only. See
+//! `src/compose/boundary/mod.rs` for the matching logic.
 
 use funput_core::InputMethod;
 use funput_engine::{Action, Engine};
@@ -59,10 +62,45 @@ fn expansion_wins_over_english_restore() {
 }
 
 #[test]
-fn trigger_is_case_sensitive() {
-    // Only lowercase `vn` is defined — `VN` falls through to normal handling.
-    let text = app_text_with_shortcuts(InputMethod::Telex, &[("vn", "Việt Nam")], "VN ");
-    assert_eq!(text, "VN ");
+fn uppercase_trigger_expands_to_uppercase() {
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("vn", "việt nam")], "VN ");
+    assert_eq!(text, "VIỆT NAM ");
+}
+
+#[test]
+fn title_case_trigger_expands_to_title_case() {
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("vn", "việt nam")], "Vn ");
+    assert_eq!(text, "Việt Nam ");
+}
+
+#[test]
+fn title_case_capitalizes_every_word_in_a_multi_word_expansion() {
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("kg", "không có gì")], "Kg ");
+    assert_eq!(text, "Không Có Gì ");
+}
+
+#[test]
+fn single_uppercase_letter_trigger_capitalizes_rather_than_shouts() {
+    // A lone capital reads as "capitalize" (Title Case), not "shout the whole
+    // expansion in uppercase" — that requires 2+ uppercase letters (`VN`, not `V`).
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("v", "việt nam")], "V ");
+    assert_eq!(text, "Việt Nam ");
+}
+
+#[test]
+fn mixed_case_trigger_without_clean_pattern_falls_back_to_exact_match() {
+    // `vNa` doesn't fit lowercase/Title/UPPERCASE, so no smart-case lookup applies;
+    // since no exact `vNa` entry exists either, it falls through unchanged.
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("vn", "việt nam")], "vNa ");
+    assert_eq!(text, "vNa ");
+}
+
+#[test]
+fn deliberately_mixed_case_trigger_still_matches_exactly() {
+    // A trigger defined with intentional mixed case (e.g. a brand name) keeps working
+    // via the exact-match fallback.
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("iOS", "iPhone OS")], "iOS ");
+    assert_eq!(text, "iPhone OS ");
 }
 
 #[test]

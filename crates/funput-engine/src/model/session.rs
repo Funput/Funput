@@ -26,8 +26,10 @@ pub(crate) struct Session {
     /// when a word begins. Survives `clear()`.
     pub(crate) cap_armed: bool,
     /// Text-expansion table (gõ tắt): raw-keystroke trigger → expansion. Matched
-    /// case-sensitively against `keys` at a word boundary, before English restore.
-    /// Config that lives for the whole session — `clear()` does not touch it.
+    /// smart-case against `keys` at a word boundary, before English restore — a
+    /// trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same
+    /// entry, re-casing the expansion to match. Config that lives for the whole
+    /// session — `clear()` does not touch it.
     pub(crate) shortcuts: HashMap<String, String>,
     /// The composed Vietnamese form of the current word, captured each keystroke
     /// *before* an eager English-restore can collapse `buffer` to the raw keys. Lets
