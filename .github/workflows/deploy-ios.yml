@@ -1,0 +1,175 @@
+name: Deploy iOS
+
+# Manual only. Builds the App Store .ipa from whichever branch you run it on and
+# uploads it to App Store Connect, where it lands in TestFlight.
+#
+# Deliberately NOT wired into release.yml: every upload burns a build number
+# permanently at Apple, and iOS depends on Apple infrastructure that fails for
+# reasons unrelated to this repo (expired certificates, revoked profiles). Keeping
+# it separate means a bad day at Apple never blocks the macOS/Windows/Linux release.
+#
+# Uploading is not publishing: the build reaches TestFlight, but submitting it to
+# the App Store is still a deliberate act in App Store Connect.
+#
+# Required secrets:
+#   IOS_DIST_CERT_P12       base64 of an *Apple Distribution* .p12 (with private key).
+#                           The Developer ID cert used for macOS cannot sign this.
+#   IOS_DIST_CERT_PASSWORD  password set when exporting that .p12
+#   ASC_KEY_ID              App Store Connect API key id
+#   ASC_ISSUER_ID           App Store Connect API issuer id
+#   ASC_API_KEY_P8          base64 of the AuthKey_<ASC_KEY_ID>.p8 (downloadable once)
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version, e.g. 1.2026.66. Stamped as both the marketing version and the build number."
+        required: true
+        type: string
+      dry_run:
+        description: "Validate the .ipa with Apple but do not upload it."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One upload at a time: two concurrent runs would race for the same build number.
+concurrency:
+  group: deploy-ios
+  cancel-in-progress: false
+
+env:
+  CARGO_HTTP_MULTIPLEXING: "false"
+  CARGO_NET_RETRY: "5"
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Select latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Rust targets (device + simulator)
+        run: rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check Swift file size
+        working-directory: platforms/ios
+        run: sh ./Scripts/check-swift-loc.sh
+
+      # Builds FunputCore.xcframework and resolves packages; the tests below and the
+      # archive both need it. cargo caches, so later runs of build-ffi are cheap.
+      - name: Bootstrap native dependencies
+        working-directory: platforms/ios
+        run: sh ./Scripts/bootstrap-ios.sh
+
+      # Never ship a build the suite has not passed. The script picks whichever iOS
+      # simulator the runner image happens to provide.
+      - name: Run FunputKit tests
+        working-directory: platforms/ios
+        run: sh ./Scripts/test-funput-kit.sh
+
+      - name: Import Apple Distribution certificate
+        env:
+          CERT_P12: ${{ secrets.IOS_DIST_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/funput-ios.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/ios-cert.p12"
+          security import "$RUNNER_TEMP/ios-cert.p12" -k "$KEYCHAIN" -P "$CERT_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/xcodebuild
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" \
+            $(security list-keychains -d user | sed 's/["[:space:]]//g')
+          security default-keychain -s "$KEYCHAIN"
+          rm -f "$RUNNER_TEMP/ios-cert.p12"
+
+      # Both xcodebuild (to create provisioning profiles) and altool (to upload) read
+      # the key from this directory, which is one of the locations altool searches.
+      - name: Install App Store Connect API key
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          echo "$ASC_API_KEY_P8" | base64 --decode \
+            > "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
+          chmod 600 "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
+
+      - name: Archive and export .ipa
+        working-directory: platforms/ios
+        env:
+          VERSION: ${{ inputs.version }}
+        run: sh ./Scripts/release-ios.sh
+
+      # Validation catches the usual rejections — entitlements, icons, a build number
+      # Apple has already seen — in seconds, before pushing the whole binary.
+      - name: Validate with Apple
+        working-directory: platforms/ios
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcrun altool --validate-app -f build/release/export/Funput.ipa -t ios \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+
+      - name: Upload to App Store Connect
+        if: ${{ !inputs.dry_run }}
+        working-directory: platforms/ios
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcrun altool --upload-app -f build/release/export/Funput.ipa -t ios \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+
+      # Kept so a rejected or failed upload can be inspected, or retried by hand from
+      # Transporter without rebuilding.
+      - name: Stage artifact
+        if: always()
+        run: |
+          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          cp platforms/ios/build/release/export/Funput.ipa \
+            "$OUT/Funput-${{ inputs.version }}.ipa" 2>/dev/null || exit 0
+          shasum -a 256 "$OUT/Funput-${{ inputs.version }}.ipa" \
+            | awk '{print $1}' > "$OUT/Funput-${{ inputs.version }}.ipa.sha256"
+
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: ios
+          path: ${{ runner.temp }}/out
+          if-no-files-found: ignore
+
+      - name: Remove credentials from the runner
+        if: always()
+        run: |
+          rm -rf "$HOME/.appstoreconnect/private_keys"
+          security delete-keychain "$RUNNER_TEMP/funput-ios.keychain-db" || true
+
+      - name: Summary
+        if: success()
+        run: |
+          {
+            echo "### Funput iOS ${{ inputs.version }}"
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "Validated with Apple; **not** uploaded (dry run)."
+            else
+              echo "Uploaded to App Store Connect. Processing takes a few minutes,"
+              echo "then the build appears under TestFlight."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
