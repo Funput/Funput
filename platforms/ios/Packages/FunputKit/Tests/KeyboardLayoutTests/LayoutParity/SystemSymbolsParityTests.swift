@@ -66,6 +66,36 @@ struct SystemSymbolsParityTests {
         }
     }
 
+    @Test("The preset leaves every other editor mode untouched", arguments: KeyboardInputMethod.allCases)
+    func onlyPlainTextIsAffected(method: KeyboardInputMethod) {
+        // Search, email and URL differ from the stock keyboard along axes the preset does
+        // not describe, and the keypads have no row of this shape at all. Password and PIN
+        // additionally must keep `toolbar: nil`, which is what makes the emoji panel
+        // unreachable in a secure field — selecting the preset must not open that door.
+        for editor in KeyboardEditorMode.allCases where editor != .text {
+            for mode in KeyboardLayoutMode.allCases {
+                for showsNumberRow in [true, false] {
+                    let system = KeyboardLayoutResolver.resolve(
+                        inputMethod: method,
+                        mode: mode,
+                        editorMode: editor,
+                        showsNumberRow: showsNumberRow,
+                        preset: .system
+                    )
+                    let funput = KeyboardLayoutResolver.resolve(
+                        inputMethod: method,
+                        mode: mode,
+                        editorMode: editor,
+                        showsNumberRow: showsNumberRow,
+                        preset: .funput
+                    )
+                    #expect(system == funput)
+                    #expect(!system.rows.flatMap(\.keys).contains { $0.role == .emoji })
+                }
+            }
+        }
+    }
+
     @Test("Symbol pages ignore the number row preference", arguments: KeyboardInputMethod.allCases)
     func numberRowIndependence(method: KeyboardInputMethod) {
         // Page one always carries the digits, so unlike the Funput preset there is no
