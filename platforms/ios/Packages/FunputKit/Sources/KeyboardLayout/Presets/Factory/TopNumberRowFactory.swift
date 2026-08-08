@@ -5,10 +5,13 @@ enum TopNumberRowMode {
 }
 
 func topNumberRowForLetters(_ inputMethod: KeyboardInputMethod) -> KeyboardRow {
-    topNumberRow(
-        inputMethod == .vni ? .vniModifiers : .plainCharacter,
-        pageID: "letters-\(inputMethod.rawValue)"
-    )
+    topNumberRow(for: inputMethod, pageID: "letters-\(inputMethod.rawValue)")
+}
+
+/// The digit row for any page that composes Vietnamese, so VNI gets its tone modifiers
+/// and their hints wherever composition is live — not only on the letters page.
+func topNumberRow(for inputMethod: KeyboardInputMethod, pageID: String) -> KeyboardRow {
+    topNumberRow(inputMethod == .vni ? .vniModifiers : .plainCharacter, pageID: pageID)
 }
 
 func topNumberRow(_ mode: TopNumberRowMode, pageID: String) -> KeyboardRow {

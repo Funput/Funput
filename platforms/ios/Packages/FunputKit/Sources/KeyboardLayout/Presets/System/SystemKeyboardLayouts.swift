@@ -44,7 +44,9 @@ public enum SystemKeyboardLayouts {
         qwertyLayout(
             id: id,
             inputMethod: inputMethod,
-            leadingRows: hasNumberRow ? [topNumberRowForLetters(inputMethod)] : [],
+            leadingRows: hasNumberRow
+                ? [topNumberRow(for: inputMethod, pageID: "\(page)-\(inputMethod.rawValue)")]
+                : [],
             actionKeys: systemLettersActionRow(page: page).keys,
             showsTelexHints: inputMethod.isTelexFamily,
             supportsVietnameseAlternates: true

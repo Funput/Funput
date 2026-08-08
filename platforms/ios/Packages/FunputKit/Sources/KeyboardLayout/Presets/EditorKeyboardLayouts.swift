@@ -8,12 +8,7 @@ public enum EditorKeyboardLayouts {
         case .text:
             StandardKeyboardLayouts.letters(inputMethod, showsNumberRow: showsNumberRow)
         case .search:
-            webLayout(
-                prefix: "search",
-                inputMethod: inputMethod,
-                supportsLanguageSwipe: true,
-                supportsVietnameseAlternates: true
-            )
+            searchLayout(inputMethod)
         case .email:
             emailLayout(inputMethod)
         case .url:
@@ -38,11 +33,30 @@ public enum EditorKeyboardLayouts {
         )
     }
 
+    /// Search composes Vietnamese, so it carries the same tone hints and the same VNI
+    /// modifier row as the letters page — a field where the tones work but their hints are
+    /// hidden, and where Shift is eaten by a tone key, just behaves differently for no
+    /// reason the user can see. Only the action row keeps the web shape.
+    private static func searchLayout(_ method: KeyboardInputMethod) -> KeyboardLayout {
+        qwertyLayout(
+            id: "qwerty-search-\(method.rawValue)",
+            inputMethod: method,
+            leadingRows: [topNumberRow(for: method, pageID: "search-\(method.rawValue)")],
+            actionKeys: webActionKeys(
+                middleID: "slash",
+                middleLabel: "/",
+                middleAccessibility: "Dấu gạch chéo",
+                supportsLanguageSwipe: true
+            ),
+            showsTelexHints: method.isTelexFamily,
+            supportsVietnameseAlternates: true
+        )
+    }
+
+    /// URL fields do not compose Vietnamese, so no tone hints and plain digits.
     private static func webLayout(
         prefix: String,
-        inputMethod: KeyboardInputMethod,
-        supportsLanguageSwipe: Bool = false,
-        supportsVietnameseAlternates: Bool = false
+        inputMethod: KeyboardInputMethod
     ) -> KeyboardLayout {
         qwertyLayout(
             id: "qwerty-\(prefix)-\(inputMethod.rawValue)",
@@ -53,10 +67,8 @@ public enum EditorKeyboardLayouts {
             actionKeys: webActionKeys(
                 middleID: "slash",
                 middleLabel: "/",
-                middleAccessibility: "Dấu gạch chéo",
-                supportsLanguageSwipe: supportsLanguageSwipe
-            ),
-            supportsVietnameseAlternates: supportsVietnameseAlternates
+                middleAccessibility: "Dấu gạch chéo"
+            )
         )
     }
 
