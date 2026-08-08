@@ -103,18 +103,114 @@ jobs:
           security default-keychain -s "$KEYCHAIN"
           rm -f "$RUNNER_TEMP/ios-cert.p12"
 
-      # Both xcodebuild (to create provisioning profiles) and altool (to upload) read
-      # the key from this directory, which is one of the locations altool searches.
+      # Xcode has read profiles from ~/Library/MobileDevice/Provisioning Profiles for
+      # years and from ~/Library/Developer/Xcode/UserData/Provisioning Profiles more
+      # recently; installing into both costs nothing and removes the question.
+      - name: Install provisioning profiles
+        env:
+          IOS_PROFILE_APP: ${{ secrets.IOS_PROFILE_APP }}
+          IOS_PROFILE_KEYBOARD: ${{ secrets.IOS_PROFILE_KEYBOARD }}
+        run: |
+          set -euo pipefail
+          OLD="$HOME/Library/MobileDevice/Provisioning Profiles"
+          NEW="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
+          mkdir -p "$OLD" "$NEW"
+          install_profile() {
+            label="$1"; value="$2"; out_var="$3"
+            tmp="$RUNNER_TEMP/$label.mobileprovision"
+            if printf '%s' "$value" | grep -q "BEGIN PROVISIONING"; then
+              printf '%s' "$value" > "$tmp"
+            else
+              printf '%s' "$value" | base64 --decode > "$tmp"
+            fi
+            # A .mobileprovision is CMS-signed; if this fails the secret is not one.
+            if ! plist=$(security cms -D -i "$tmp" 2>/dev/null); then
+              echo "::error::$label is not a .mobileprovision. Re-add it with: base64 -i <file>.mobileprovision | pbcopy"
+              exit 1
+            fi
+            uuid=$(printf '%s' "$plist" | plutil -extract UUID raw -)
+            # An App Store profile provisions no devices. A development one does, and
+            # would sail through here only to be rejected by Apple at upload.
+            if printf '%s' "$plist" | plutil -extract ProvisionedDevices raw - >/dev/null 2>&1; then
+              echo "::error::$label is a development/ad-hoc profile, not an App Store one."
+              exit 1
+            fi
+            # Xcode-managed profiles are the ones Xcode creates and regenerates for
+            # itself; exportArchive refuses them under manual signing. The fix is a
+            # profile created by hand in the portal, so say that here rather than
+            # letting the export fail several minutes later.
+            if [ "$(printf '%s' "$plist" | plutil -extract IsXcodeManaged raw - 2>/dev/null || echo false)" = "true" ]; then
+              echo "::error::$label is an Xcode-managed profile, which manual signing cannot use. Create an explicit one: developer.apple.com -> Profiles -> + -> App Store Connect -> pick the App ID and the Apple Distribution certificate -> Download, then update the secret."
+              exit 1
+            fi
+            cp "$tmp" "$OLD/$uuid.mobileprovision"
+            cp "$tmp" "$NEW/$uuid.mobileprovision"
+            echo "$out_var=$uuid" >> "$GITHUB_ENV"
+            echo "$label: $(printf '%s' "$plist" | plutil -extract Name raw -) ($uuid), expires $(printf '%s' "$plist" | plutil -extract ExpirationDate raw -)"
+          }
+          install_profile app "$IOS_PROFILE_APP" PROFILE_APP
+          install_profile keyboard "$IOS_PROFILE_KEYBOARD" PROFILE_KEYBOARD
+
+      # With manual signing the archive needs no account at all; the key is only for
+      # altool's upload, which searches this directory.
       - name: Install App Store Connect API key
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
         run: |
           set -euo pipefail
+          # A secret pasted with a stray newline or space produces a bearer token Apple
+          # rejects, and the only symptom is a flat 401. Trim before anything uses the
+          # values — the key file is named after the key id.
+          ASC_KEY_ID="$(printf '%s' "$ASC_KEY_ID" | tr -d '[:space:]')"
+          ASC_ISSUER_ID="$(printf '%s' "$ASC_ISSUER_ID" | tr -d '[:space:]')"
           mkdir -p "$HOME/.appstoreconnect/private_keys"
-          echo "$ASC_API_KEY_P8" | base64 --decode \
-            > "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
-          chmod 600 "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
+          KEY="$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
+          # Take the secret either way: base64 of the .p8, or the .p8 text pasted
+          # straight in. Both are things a person reasonably ends up with.
+          if printf '%s' "$ASC_API_KEY_P8" | grep -q "BEGIN PRIVATE KEY"; then
+            printf '%s\n' "$ASC_API_KEY_P8" > "$KEY"
+          else
+            printf '%s' "$ASC_API_KEY_P8" | base64 --decode > "$KEY"
+          fi
+          chmod 600 "$KEY"
+          # macOS base64 drops characters it does not recognise and still exits 0, so
+          # a wrong secret decodes to garbage and only surfaces later as xcodebuild's
+          # "Invalid authentication key credential". Check the shape here instead.
+          if ! head -n 1 "$KEY" | grep -q "BEGIN PRIVATE KEY"; then
+            echo "::error::ASC_API_KEY_P8 is not an App Store Connect .p8 key. Set it to the file's contents, or to its base64: base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy"
+            exit 1
+          fi
+          # A PEM whose line breaks were lost still starts with BEGIN PRIVATE KEY but
+          # signs nothing, and Apple answers 401 — a long way from the cause. Parsing
+          # it here separates "the key is malformed" from "the key id, issuer or team
+          # is wrong", which are the two things a 401 can mean.
+          if ! /usr/bin/openssl pkey -in "$KEY" -noout >/dev/null 2>&1; then
+            echo "::error::ASC_API_KEY_P8 decoded to something that is not a usable private key — most likely its line breaks were lost on the way into the secret. Re-add it with: base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy"
+            exit 1
+          fi
+          # Hand the trimmed values to the later steps rather than re-reading the raw
+          # secrets there — but mask them first. GitHub redacts the exact secret string
+          # it was given; a trimmed value is a different string, so without this it
+          # would appear in clear text in the environment block every later step
+          # prints. On a public repository those logs are readable by anyone.
+          echo "::add-mask::$ASC_KEY_ID"
+          echo "::add-mask::$ASC_ISSUER_ID"
+          echo "ASC_KEY_ID=$ASC_KEY_ID" >> "$GITHUB_ENV"
+          echo "ASC_ISSUER_ID=$ASC_ISSUER_ID" >> "$GITHUB_ENV"
+          # Shapes, not values: a key id is 10 characters, an issuer id a 36-character
+          # UUID. Checking them here turns the most common cause of that 401 into a
+          # message that names it, and costs nothing when they are right.
+          if [ "${#ASC_KEY_ID}" -ne 10 ]; then
+            echo "::error::ASC_KEY_ID is ${#ASC_KEY_ID} characters; a key id is 10. It is the XXXXXXXXXX in AuthKey_XXXXXXXXXX.p8."
+            exit 1
+          fi
+          if [ "${#ASC_ISSUER_ID}" -ne 36 ]; then
+            echo "::error::ASC_ISSUER_ID is ${#ASC_ISSUER_ID} characters; an issuer id is a 36-character UUID shown above the key table in App Store Connect -> Users and Access -> Integrations. It is not the key id and not the team id."
+            exit 1
+          fi
+          echo "API key parses; key id and issuer id are the right shape."
 
       # A re-run keeps the same run number, which is what we want: a failed upload
       # never consumed a build number, so reusing it is correct.
@@ -123,8 +219,6 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
           RUN_NUMBER: ${{ github.run_number }}
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           BUILD=$(( IOS_BUILD_OFFSET + RUN_NUMBER ))
           echo "Marketing version $VERSION, build $BUILD"
@@ -134,9 +228,6 @@ jobs:
       # Apple has already seen — in seconds, before pushing the whole binary.
       - name: Validate with Apple
         working-directory: platforms/ios
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           xcrun altool --validate-app -f build/release/export/Funput.ipa -t ios \
             --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
@@ -144,9 +235,6 @@ jobs:
       - name: Upload to App Store Connect
         if: ${{ !inputs.dry_run }}
         working-directory: platforms/ios
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           xcrun altool --upload-app -f build/release/export/Funput.ipa -t ios \
             --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
@@ -173,6 +261,7 @@ jobs:
         if: always()
         run: |
           rm -rf "$HOME/.appstoreconnect/private_keys"
+          rm -f "$RUNNER_TEMP"/*.mobileprovision "$RUNNER_TEMP/ios-cert.p12"
           security delete-keychain "$RUNNER_TEMP/funput-ios.keychain-db" || true
 
       - name: Summary
