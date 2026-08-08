@@ -15,16 +15,28 @@
 //!     is applied. Hence apply runs from the event loop, and the caller flips
 //!     the transparent background afterwards.
 
-/// Long-lived window backdrop: Mica first, Acrylic fallback.
+/// Long-lived window backdrop (Settings, Onboarding): Mica, or nothing.
+///
+/// There is deliberately no Acrylic fallback here. `apply_mica` is Win11-only, but
+/// below it `apply_acrylic` still *succeeds*, through the undocumented
+/// `SetWindowCompositionAttribute` path — and that path is wrong for a window the
+/// user drags and resizes:
+///   * `window-vibrancy` documents it as making the window "lag when resizing or
+///     dragging" on Windows 10 v1903+, and DWM re-blurs the desktop behind every
+///     frame, so the whole window feels sluggish and not just while moving.
+///   * It is handed no tint (alpha is forced to 1/255), so it blurs without
+///     covering anything.
+///
+/// Reporting success would then flip `Theme.mica`, and the UI paints `transparent`
+/// and drops its own `Backdrop` — leaving a see-through, laggy window. Returning
+/// false is exactly what routes Windows 10 to the opaque fallback the shells
+/// already carry.
+///
+/// The flyout is a different case and keeps its Acrylic — see [`apply_flyout`].
 pub fn apply(window: &slint::Window) -> bool {
     #[cfg(windows)]
     {
-        use window_vibrancy::{apply_acrylic, apply_mica};
-        let handle = window.window_handle();
-        if apply_mica(&handle, None).is_ok() {
-            return true;
-        }
-        if apply_acrylic(&handle, None).is_ok() {
+        if window_vibrancy::apply_mica(window.window_handle(), None).is_ok() {
             return true;
         }
     }
@@ -34,6 +46,11 @@ pub fn apply(window: &slint::Window) -> bool {
 
 /// Transient flyout backdrop (Control Center): Acrylic first, then Mica, plus
 /// the small Win11 corner radius menus and flyouts use.
+///
+/// Acrylic stays here even on Windows 10, where [`apply`] refuses it: the flyout
+/// is `no-frame` and fixed-size, so the resize/drag lag has nothing to act on, and
+/// its own layer (`Theme.flyout-base`) is ~92% opaque, so an untinted blur behind
+/// it cannot make it see-through.
 #[cfg(windows)]
 pub fn apply_flyout(window: &slint::Window) -> bool {
     use window_vibrancy::{apply_acrylic, apply_mica};

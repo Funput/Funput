@@ -11,7 +11,9 @@ use windows::Win32::System::Threading::{
 use super::{control_center, onboarding, settings_window};
 use crate::shared::shell;
 
-pub(crate) use child::{launch_onboarding, launch_settings, terminate_children};
+pub(crate) use child::{
+    current_child_handle, launch_onboarding, launch_settings, terminate_children,
+};
 pub(crate) use flyout::{reap_ui_child, toggle_control_center};
 
 use child::{PARENT_PID_ENV, RECENT_APPS_ENV};

@@ -2,13 +2,30 @@
 //! characters, via `SendInput`. Every synthesized event carries [`INJECT_TAG`] in
 //! `dwExtraInfo` so the hook ignores them (no re-entrancy).
 
+mod modifiers;
+
 use funput_desktop::InjectPlan;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP,
     KEYEVENTF_UNICODE, VIRTUAL_KEY, VK_BACK, VK_DELETE,
 };
 
-use crate::shared::shell::INJECT_TAG;
+pub use modifiers::send_plan_unmodified;
+
+use crate::shared::shell::{self, INJECT_TAG};
+
+/// Send a plan by whichever route the focused app needs.
+///
+/// Chrome's omnibox and Firefox's address bar eat a Backspace to clear their
+/// autofill selection, so those get a Delete primer first (see
+/// [`send_plan_primed`]); everything else takes the direct path.
+pub fn send_plan_auto(plan: &InjectPlan) {
+    if shell::foreground_has_urlbar_autofill() {
+        send_plan_primed(plan);
+    } else {
+        send_plan(plan);
+    }
+}
 
 fn vk_event(vk: VIRTUAL_KEY, up: bool) -> INPUT {
     let dw_flags = if up {

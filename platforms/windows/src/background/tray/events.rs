@@ -8,9 +8,11 @@ use crate::background::hook;
 use crate::ui;
 
 /// Drain pending tray + menu events. Call after each `DispatchMessageW`.
+///
+/// Child reaping is deliberately not done here: the pump waits on the child's
+/// handle directly, so polling it once per dispatched message would only add a
+/// `try_wait` syscall to every mouse move the low-level hook delivers.
 pub(super) fn drain() {
-    ui::reap_ui_child();
-
     while let Ok(ev) = TrayIconEvent::receiver().try_recv() {
         if let TrayIconEvent::Click {
             button: MouseButton::Left,

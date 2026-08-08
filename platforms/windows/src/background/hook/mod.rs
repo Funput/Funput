@@ -90,13 +90,21 @@ pub fn run() {
         // the same pump and its events can be drained right after each dispatch.
         tray::install();
 
-        // Wait on the activate Event and the thread queue together so a second
-        // Funput.exe launch can open Settings even while the pump is idle.
+        // Wait on the activate Event, the current UI child, and the thread queue
+        // together: a second Funput.exe launch must open Settings while the pump is
+        // idle, and the Control Center reports the button the user pressed through
+        // its exit code, which reaches us only by waiting on its handle.
         let mut msg = MSG::default();
         loop {
-            match instance::wait_activate_or_message() {
+            // Re-read every turn: reaping one child can spawn the next (flyout →
+            // Settings), so the handle to wait on changes as we go.
+            let child = ui::current_child_handle();
+            match instance::wait_activate_message_or_child(child) {
                 WaitKind::Activate => {
                     ui::launch_settings(false);
+                }
+                WaitKind::ChildExited => {
+                    ui::reap_ui_child();
                 }
                 WaitKind::Message => {
                     while PeekMessageW(&mut msg, None, 0, 0, PM_REMOVE).as_bool() {
