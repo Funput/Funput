@@ -3,19 +3,22 @@
 # hand with Xcode Organizer or Transporter. The keyboard extension ships inside
 # the app, so this one archive covers both targets.
 #
-#   ./Scripts/release-ios.sh                  # versions come from the project
-#   VERSION=1.2026.66 ./Scripts/release-ios.sh  # stamp a version instead
+#   ./Scripts/release-ios.sh                            # versions come from the project
+#   VERSION=1.2026.66 ./Scripts/release-ios.sh          # stamp a marketing version
+#   VERSION=1.2026.66 BUILD=101 ./Scripts/release-ios.sh  # ...and a build number
 #
-# Without VERSION, bump the version in Xcode first — App Store Connect rejects a
-# build number it has already accepted.
+# VERSION is CFBundleShortVersionString, what users see. BUILD is CFBundleVersion,
+# which only Apple reads: it must be unique per upload and must never go backwards.
+# Overriding neither takes both from the project, in which case bump the version in
+# Xcode first — App Store Connect rejects a build number it has already accepted.
 set -eu
 
 CONFIGURATION="${CONFIGURATION:-Release}"
 SCHEME="${SCHEME:-Funput}"
 TEAM_ID="${TEAM_ID:-RSARFZ5CD3}"
 VERSION="${VERSION:-}"
-# CFBundleVersion is what App Store Connect checks for uniqueness. The calver
-# doubles as one: it is three dot-separated integers and rises with every release.
+# Defaulting to VERSION keeps a bare `VERSION=... ./release-ios.sh` self-consistent;
+# CI passes both separately.
 BUILD="${BUILD:-$VERSION}"
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
@@ -45,7 +48,10 @@ set -- -project Funput.xcodeproj -scheme "$SCHEME" \
     -archivePath "$ARCHIVE" \
     -allowProvisioningUpdates
 if [ -n "$VERSION" ]; then
-    set -- "$@" "MARKETING_VERSION=$VERSION" "CURRENT_PROJECT_VERSION=$BUILD"
+    set -- "$@" "MARKETING_VERSION=$VERSION"
+fi
+if [ -n "$BUILD" ]; then
+    set -- "$@" "CURRENT_PROJECT_VERSION=$BUILD"
 fi
 xcodebuild archive "$@"
 

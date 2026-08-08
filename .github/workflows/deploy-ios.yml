@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version, e.g. 1.2026.66. Stamped as both the marketing version and the build number."
+        description: "Marketing version, e.g. 1.2026.66 — what users see. The build number is derived from the run number."
         required: true
         type: string
       dry_run:
@@ -42,6 +42,12 @@ concurrency:
 env:
   CARGO_HTTP_MULTIPLEXING: "false"
   CARGO_NET_RETRY: "5"
+  # CFBundleVersion is derived from the run number, so re-deploying the same
+  # marketing version never collides. The offset leaves room below the first build
+  # for a future move to some other scheme; set the repository variable to raise it.
+  # Careful: renaming this workflow file resets the run counter to 1, which would
+  # push the build number *backwards* — Apple rejects that.
+  IOS_BUILD_OFFSET: ${{ vars.IOS_BUILD_OFFSET || '100' }}
 
 jobs:
   ios:
@@ -110,11 +116,17 @@ jobs:
             > "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
           chmod 600 "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
 
+      # A re-run keeps the same run number, which is what we want: a failed upload
+      # never consumed a build number, so reusing it is correct.
       - name: Archive and export .ipa
         working-directory: platforms/ios
         env:
           VERSION: ${{ inputs.version }}
-        run: ./Scripts/release-ios.sh
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          BUILD=$(( IOS_BUILD_OFFSET + RUN_NUMBER ))
+          echo "Marketing version $VERSION, build $BUILD"
+          BUILD="$BUILD" ./Scripts/release-ios.sh
 
       # Validation catches the usual rejections — entitlements, icons, a build number
       # Apple has already seen — in seconds, before pushing the whole binary.
@@ -165,7 +177,7 @@ jobs:
         if: success()
         run: |
           {
-            echo "### Funput iOS ${{ inputs.version }}"
+            echo "### Funput iOS ${{ inputs.version }} (build $(( IOS_BUILD_OFFSET + ${{ github.run_number }} )))"
             if [ "${{ inputs.dry_run }}" = "true" ]; then
               echo "Validated with Apple; **not** uploaded (dry run)."
             else
