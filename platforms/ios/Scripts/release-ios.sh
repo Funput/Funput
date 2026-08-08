@@ -33,6 +33,7 @@ PROFILE_APP="${PROFILE_APP:-}"
 PROFILE_KEYBOARD="${PROFILE_KEYBOARD:-}"
 SIGN_IDENTITY="${SIGN_IDENTITY:-Apple Distribution}"
 APP_BUNDLE_ID="${APP_BUNDLE_ID:-app.funput.funput}"
+APP_GROUP="${APP_GROUP:-group.app.funput.funput}"
 KEYBOARD_BUNDLE_ID="${KEYBOARD_BUNDLE_ID:-app.funput.funput.Keyboard}"
 MANUAL_SIGNING=
 if [ -n "$PROFILE_APP" ] && [ -n "$PROFILE_KEYBOARD" ]; then
@@ -50,16 +51,13 @@ OUT="$IOS_ROOT/build/release"
 ARCHIVE="$OUT/Funput.xcarchive"
 EXPORT="$OUT/export"
 EXPORT_OPTIONS="$OUT/ExportOptions.plist"
+IPA="$EXPORT/Funput.ipa"
 
 rm -rf "$ARCHIVE" "$EXPORT"
 mkdir -p "$OUT"
 
 run_xcodebuild() {
-    # Only automatic signing needs to reach Apple. Under manual signing the flags are
-    # dead weight, and leaving them off makes "the archive talks to nobody" true
-    # rather than merely intended.
-    if [ -z "$MANUAL_SIGNING" ] \
-        && [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -f "$ASC_KEY_PATH" ]; then
+    if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -f "$ASC_KEY_PATH" ]; then
         xcodebuild "$@" \
             -authenticationKeyPath "$ASC_KEY_PATH" \
             -authenticationKeyID "$ASC_KEY_ID" \
@@ -82,16 +80,17 @@ set -- -project Funput.xcodeproj -scheme "$SCHEME" \
     -configuration "$CONFIGURATION" \
     -destination "generic/platform=iOS" \
     -archivePath "$ARCHIVE"
-if [ -n "$MANUAL_SIGNING" ]; then
-    # A build setting given on the command line reaches every target, so there is no
-    # way to hand the app and the extension different profiles here. Archive without
-    # signing and let the export step do it: -exportArchive re-signs everything and
-    # takes a per-bundle-id profile map, which is the only place that distinction can
-    # be expressed.
-    set -- "$@" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-else
-    set -- "$@" -allowProvisioningUpdates
-fi
+# The archive is always signed, whatever the export does afterwards. Skipping it
+# also skips entitlement processing, and the App Group entitlement then never
+# reaches the binary: `UserDefaults(suiteName:)` returns nil, both sides silently
+# fall back to their own defaults, and the keyboard stops seeing the app's settings
+# — no crash, no log, just a build that quietly does not work.
+#
+# A build setting given on the command line reaches every target, so the app and the
+# extension cannot be handed different profiles here. Automatic signing resolves
+# that per target on its own; the manual profiles are for the export, which is where
+# a per-bundle-id map can be expressed.
+set -- "$@" -allowProvisioningUpdates
 if [ -n "$VERSION" ]; then
     set -- "$@" "MARKETING_VERSION=$VERSION"
 fi
@@ -134,5 +133,24 @@ if [ -z "$MANUAL_SIGNING" ]; then
     set -- "$@" -allowProvisioningUpdates
 fi
 run_xcodebuild "$@"
+
+# The App Group is what lets the keyboard read the app's settings and report Full
+# Access back to it. Losing it produces a build that installs, launches and types,
+# and is broken in a way only a person on a device would notice — so check the
+# artifact itself rather than trusting that the signing settings did their job.
+VERIFY="$OUT/verify"
+rm -rf "$VERIFY"
+mkdir -p "$VERIFY"
+unzip -q "$IPA" -d "$VERIFY"
+for bundle in "$VERIFY"/Payload/*.app "$VERIFY"/Payload/*.app/PlugIns/*.appex; do
+    [ -d "$bundle" ] || continue
+    if ! codesign -d --entitlements :- "$bundle" 2>/dev/null | grep -q "$APP_GROUP"; then
+        echo "release-ios: $(basename "$bundle") is missing the $APP_GROUP entitlement" >&2
+        echo "release-ios: the keyboard and the app would not see each other's data" >&2
+        exit 1
+    fi
+done
+rm -rf "$VERIFY"
+echo "release-ios: $APP_GROUP present in the app and the extension"
 
 echo "release-ios: wrote $EXPORT/Funput.ipa"
