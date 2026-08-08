@@ -26,4 +26,13 @@ public enum KeyboardEditorMode: String, CaseIterable, Hashable, Sendable {
     public var allowsDecimal: Bool { self == .numberDecimal || self == .numberSignedDecimal }
     public var allowsSigned: Bool { self == .numberSigned || self == .numberSignedDecimal }
     public var usesKeypad: Bool { isNumber || self == .phone || self == .pin }
+
+    /// Whether `KeyboardLayoutPreset.system` describes this mode's keyboard.
+    ///
+    /// The stock keyboard renders text and search identically — the magnifying glass on
+    /// the return key comes from the enter action, not the layout. Every other mode is
+    /// left to the Funput preset. Deliberately not folded into
+    /// `supportsVietnameseComposition`, which happens to cover the same two cases today
+    /// but answers a different question and may not track this one.
+    public var usesSystemPreset: Bool { self == .text || self == .search }
 }

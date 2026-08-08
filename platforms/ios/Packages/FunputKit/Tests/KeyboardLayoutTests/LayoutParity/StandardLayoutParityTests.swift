@@ -67,9 +67,31 @@ struct StandardLayoutParityTests {
         let standard = StandardKeyboardLayouts.letters(method)
         #expect(standard.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
 
-        let layout = KeyboardLayoutResolver.resolve(inputMethod: method, mode: .letters)
+        let layout = KeyboardLayoutResolver.resolve(
+            inputMethod: method,
+            mode: .letters,
+            preset: .funput
+        )
         #expect(layout.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
+        // Keeping emoji out of the rows is a Funput-preset invariant: the system preset
+        // deliberately places one in its action row, where Apple puts it. See
+        // `SystemLettersParityTests.actionRow`.
         #expect(!layout.rows.flatMap(\.keys).contains { $0.role == .emoji })
-        #expect(!layout.rows.flatMap(\.keys).contains { $0.role == .clipboard })
+    }
+
+    @Test("No preset puts a clipboard key in a row", arguments: KeyboardInputMethod.allCases)
+    func clipboardStaysInTheToolbar(method: KeyboardInputMethod) {
+        // `KeyboardKeyContentStyle.icon(for:)` has no `.clipboard` case, so a row-placed
+        // clipboard key would render as a blank keycap rather than fail loudly.
+        for preset in KeyboardLayoutPreset.allCases {
+            for mode in KeyboardLayoutMode.allCases {
+                let layout = KeyboardLayoutResolver.resolve(
+                    inputMethod: method,
+                    mode: mode,
+                    preset: preset
+                )
+                #expect(!layout.rows.flatMap(\.keys).contains { $0.role == .clipboard })
+            }
+        }
     }
 }

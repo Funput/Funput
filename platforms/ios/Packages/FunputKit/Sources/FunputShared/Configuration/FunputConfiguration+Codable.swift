@@ -19,6 +19,7 @@ extension FunputConfiguration {
         config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.showsNumberRow = try container.decodeIfPresent(Bool.self, forKey: .showsNumberRow) ?? config.showsNumberRow
+        config.layoutPreset = try container.decodeIfPresent(KeyboardLayoutPreset.self, forKey: .layoutPreset) ?? config.layoutPreset
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
         config.personalSuggestionsEnabled = try container.decodeIfPresent(Bool.self, forKey: .personalSuggestionsEnabled) ?? config.personalSuggestionsEnabled
         config.personalSuggestionResetToken = try container.decodeIfPresent(UUID.self, forKey: .personalSuggestionResetToken)
@@ -54,6 +55,12 @@ extension FunputConfiguration {
         // which is exactly what `decodeIfPresent` above already did.
         if config.schemaVersion < 9 {
             config.schemaVersion = 9
+        }
+        // v10 added `layoutPreset`. It defaults to `.funput`, which is exactly how every
+        // pre-v10 build rendered, so there is nothing to fix up — unlike the `< 4` rung,
+        // which stomps a value because that field's default flipped.
+        if config.schemaVersion < 10 {
+            config.schemaVersion = 10
         }
         self = config
     }

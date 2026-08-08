@@ -61,6 +61,14 @@ extension KeyboardSurfaceView {
             theme: presentation.theme,
             traits: traitCollection
         )
+        // A layout that puts an emoji key in its rows does not want a second one in the
+        // toolbar. Deriving this from the layout rather than the preset keeps the rule
+        // true for any future layout that makes the same choice.
+        toolbarView.updateEmojiKeyVisible(
+            !presentation.layout.rows.contains { row in
+                row.keys.contains { $0.role == .emoji }
+            }
+        )
         keyControls.values.forEach {
             $0.apply(presentation: presentation, traits: traitCollection)
         }

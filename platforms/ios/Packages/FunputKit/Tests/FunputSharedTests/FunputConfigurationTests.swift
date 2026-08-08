@@ -23,7 +23,8 @@ struct FunputConfigurationTests {
         #expect(config.personalSuggestionResetToken == nil)
         #expect(config.clipboardEnabled)
         #expect(config.clipboardExpiry == .hour)
-        #expect(config.schemaVersion == 9)
+        #expect(config.layoutPreset == .funput)
+        #expect(config.schemaVersion == 10)
     }
 
     @Test("Configuration survives a JSON round-trip")
@@ -34,6 +35,7 @@ struct FunputConfigurationTests {
         config.spellCheck = false
         config.showsNumberRow = true
         config.heightScale = 1.1
+        config.layoutPreset = .system
         let data = try JSONEncoder().encode(config)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(decoded == config)
@@ -49,6 +51,7 @@ struct FunputConfigurationTests {
         #expect(decoded.showsKeyPreviews == FunputConfiguration.default.showsKeyPreviews)
         #expect(!decoded.showsNumberRow)
         #expect(decoded.personalSuggestionsEnabled)
+        #expect(decoded.layoutPreset == .funput)
     }
 
     @Test("Legacy feedback settings migrate to safe defaults")
@@ -58,7 +61,7 @@ struct FunputConfigurationTests {
         #expect(!decoded.isHapticFeedbackEnabled)
         #expect(!decoded.isKeySoundEnabled)
         #expect(!decoded.showsNumberRow)
-        #expect(decoded.schemaVersion == 9)
+        #expect(decoded.schemaVersion == 10)
     }
 
     @Test("Schema 3 migrates to the compact Telex default")
@@ -66,7 +69,7 @@ struct FunputConfigurationTests {
         let data = Data(#"{"showsNumberRow":true,"schemaVersion":3}"#.utf8)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(!decoded.showsNumberRow)
-        #expect(decoded.schemaVersion == 9)
+        #expect(decoded.schemaVersion == 10)
     }
 
     /// v8 dropped `showsGlobeKey` entirely. A stored payload still carrying it must
@@ -76,6 +79,19 @@ struct FunputConfigurationTests {
         let data = Data(#"{"showsGlobeKey":true,"showsNumberRow":true,"schemaVersion":4}"#.utf8)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(decoded.showsNumberRow)
-        #expect(decoded.schemaVersion == 9)
+        #expect(decoded.schemaVersion == 10)
+    }
+
+    /// v10 added `layoutPreset`. Unlike the `< 4` rung it must not touch stored values:
+    /// upgrading users keep the layout they have been typing on, and their other
+    /// settings survive intact.
+    @Test("Schema 9 payloads keep the Funput layout preset")
+    func migratesLayoutPresetDefault() throws {
+        let data = Data(#"{"inputMethod":"telex","showsNumberRow":true,"schemaVersion":9}"#.utf8)
+        let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
+        #expect(decoded.layoutPreset == .funput)
+        #expect(decoded.inputMethod == .telex)
+        #expect(decoded.showsNumberRow)
+        #expect(decoded.schemaVersion == 10)
     }
 }

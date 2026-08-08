@@ -102,7 +102,8 @@ enum KeyboardPreviewPresentation {
         let layout = KeyboardLayoutResolver.resolve(
             inputMethod: configuration.inputMethod,
             mode: .letters,
-            showsNumberRow: configuration.showsNumberRow
+            showsNumberRow: configuration.showsNumberRow,
+            preset: configuration.layoutPreset
         )
         return KeyboardPresentationFactory.make(
             from: configuration,

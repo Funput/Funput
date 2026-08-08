@@ -11,13 +11,14 @@ final class KeyboardToolbarView: UIView {
 
     private let logoView = KeyboardBrandLogoView()
     private let clipboardButton = UIButton(type: .system)
-    private let emojiButton = UIButton(type: .system)
-    private let suggestionBar = KeyboardSuggestionBarView()
+    let emojiButton = UIButton(type: .system)
+    let suggestionBar = KeyboardSuggestionBarView()
     private let clipboardChip = KeyboardClipboardChipView()
     private var clipboardHint: KeyboardClipboardHint?
     private var hasSuggestions = false
     private var allowsClipboardKey = true
-    private var spec: KeyboardToolbarSpec?
+    private var allowsEmojiKey = true
+    var spec: KeyboardToolbarSpec?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -41,28 +42,39 @@ final class KeyboardToolbarView: UIView {
         let itemSize = min(36, bounds.height)
         let originY = (bounds.height - itemSize) / 2
         logoView.frame = CGRect(x: 0, y: originY, width: itemSize, height: itemSize)
-        emojiButton.frame = CGRect(
-            x: bounds.width - itemSize,
-            y: originY,
-            width: itemSize,
-            height: itemSize
-        )
-        clipboardButton.frame = CGRect(
-            x: emojiButton.frame.minX - itemSize - 2,
-            y: originY,
-            width: itemSize,
-            height: itemSize
-        )
+        // The right-hand controls stack inwards from the trailing edge, and either of
+        // them can step aside — the clipboard key while the user is typing, the emoji
+        // key when the layout already carries one in its rows.
+        var trailing = bounds.width
+        var placedAControl = false
+        if !emojiButton.isHidden {
+            emojiButton.frame = CGRect(
+                x: trailing - itemSize,
+                y: originY,
+                width: itemSize,
+                height: itemSize
+            )
+            trailing = emojiButton.frame.minX
+            placedAControl = true
+        }
+        if !clipboardButton.isHidden {
+            // The 2pt separator belongs *between* two controls, so it only applies when
+            // something was placed before this one — otherwise the content region would
+            // silently lose those 2pt whenever the clipboard key is the one to step aside.
+            clipboardButton.frame = CGRect(
+                x: trailing - itemSize - (placedAControl ? 2 : 0),
+                y: originY,
+                width: itemSize,
+                height: itemSize
+            )
+            trailing = clipboardButton.frame.minX
+        }
         // Suggestions and the clipboard chip share one region and never show at the
-        // same time, so they get the same frame. It ends wherever the right-hand
-        // controls begin, which moves when the clipboard key steps aside.
-        let controlsMinX = clipboardButton.isHidden
-            ? emojiButton.frame.minX
-            : clipboardButton.frame.minX
+        // same time, so they get the same frame. It ends wherever the controls begin.
         let contentRegion = CGRect(
             x: logoView.frame.maxX + 6,
             y: 0,
-            width: max(0, controlsMinX - logoView.frame.maxX - 12),
+            width: max(0, trailing - logoView.frame.maxX - 12),
             height: bounds.height
         )
         suggestionBar.frame = contentRegion
@@ -96,6 +108,11 @@ final class KeyboardToolbarView: UIView {
         arbitrateContentRegion()
     }
 
+    func updateEmojiKeyVisible(_ visible: Bool) {
+        allowsEmojiKey = visible
+        arbitrateContentRegion()
+    }
+
     func updateClipboardHint(_ hint: KeyboardClipboardHint?) {
         clipboardHint = hint
         clipboardChip.update(hint: hint)
@@ -111,36 +128,8 @@ final class KeyboardToolbarView: UIView {
         // The clipboard key yields its slot too: while the user is typing, the whole
         // toolbar belongs to suggestions.
         clipboardButton.isHidden = hasSuggestions || !allowsClipboardKey
+        emojiButton.isHidden = !allowsEmojiKey
         setNeedsLayout()
-    }
-
-    private func configure(_ button: UIButton, symbol: String, role: KeyRole) {
-        button.setImage(KeyboardToolbarSymbol.image(symbol), for: .normal)
-        button.accessibilityTraits = .keyboardKey
-        configureInteraction(button, role: role)
-        addSubview(button)
-    }
-
-    private func configureInteraction(_ button: UIButton, role: KeyRole) {
-        button.addAction(UIAction { [weak self] _ in
-            self?.emit(role, phase: .pressed)
-        }, for: .touchDown)
-        button.addAction(UIAction { [weak self] _ in
-            self?.emit(role, phase: .released)
-        }, for: .touchUpInside)
-        button.addAction(UIAction { [weak self] _ in
-            self?.emit(role, phase: .cancelled)
-        }, for: [.touchCancel, .touchDragExit, .touchUpOutside])
-    }
-
-    private func emit(_ role: KeyRole, phase: KeyboardKeyEvent.Phase) {
-        let key: KeySpec? = switch role {
-        case .emoji: spec?.emojiKey
-        case .clipboard: spec?.clipboardKey
-        default: nil
-        }
-        guard let key else { return }
-        onEvent?(KeyboardKeyEvent(key: key, phase: phase))
     }
 }
 #endif

@@ -21,6 +21,7 @@ struct SettingsScreen: View {
             }
             SettingsSectionCard(title: "Bàn phím", systemImage: "keyboard") {
                 SettingsSelectionRow(option: .inputMethod, value: model.inputMethodLabel) { picker = .inputMethod }
+                SettingsSelectionRow(option: .layoutPreset, value: model.layoutPresetLabel) { picker = .layoutPreset }
                 SettingsToggleRow(
                     title: "Hàng phím số",
                     summary: "Hiển thị 0–9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.",
