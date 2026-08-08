@@ -64,10 +64,14 @@ fn fire(hit: Hit) -> bool {
             if !shell::enabled() || FOREGROUND_IS_FUNPUT.load(Ordering::Relaxed) {
                 return false;
             }
+            // The hotkey's own modifiers are still held on this keydown, so the
+            // Backspaces must go out with them cleared — [`inject::send_plan_unmodified`].
             let plan = plan_inject(&shell::flip_composing());
-            if !plan.is_noop() {
-                send(&plan);
-            }
+            inject::send_plan_unmodified(
+                &plan,
+                keymap::read_mods(),
+                shell::foreground_has_urlbar_autofill(),
+            );
             true // swallow even on a no-op, so the hotkey never leaks to the app
         }
     }
@@ -95,13 +99,22 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
         return false;
     }
 
+    // A modifier going *down* is not a shortcut being run; which shortcut it is
+    // only becomes known when the main key lands. `classify` saw the already-held
+    // Ctrl and flushed, so Ctrl+Shift+Z destroyed the composing word on its own
+    // Shift keydown — one event before flip could act on it. Only the low-level
+    // hook reaches here: macOS sends modifier changes as `flagsChanged`, not keys.
+    if hotkey::is_modifier_key(vk) {
+        return false;
+    }
+
     match classify(&keymap::to_key_event(kbd)) {
         KeyKind::Compose(c, source) => {
             let plan = plan_inject(&shell::process_key(c, source));
             if plan.is_noop() {
                 false // Action::None — the literal key reaches the app
             } else {
-                send(&plan); // delete + retype the composed text
+                inject::send_plan_auto(&plan); // delete + retype the composed text
                 true
             }
         }
@@ -122,18 +135,5 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
             false
         }
         KeyKind::PassThrough => false,
-    }
-}
-
-/// Emit an inject plan to the focused app.
-///
-/// Chrome's omnibox and Firefox's address bar eat a Backspace to clear their
-/// autofill selection, so those get a Delete primer first (see
-/// [`inject::send_plan_primed`]); everything else takes the direct path.
-fn send(plan: &funput_desktop::InjectPlan) {
-    if shell::foreground_has_urlbar_autofill() {
-        inject::send_plan_primed(plan);
-    } else {
-        inject::send_plan(plan);
     }
 }
