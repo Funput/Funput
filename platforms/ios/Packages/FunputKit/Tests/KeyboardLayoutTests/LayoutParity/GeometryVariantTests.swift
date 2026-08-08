@@ -16,6 +16,23 @@ struct GeometryVariantTests {
         }
     }
 
+    @Test("All system-preset variants stay valid")
+    func systemPresetGeometryMatrix() {
+        for method in KeyboardInputMethod.allCases {
+            for mode in KeyboardLayoutMode.allCases {
+                for showsNumberRow in [true, false] {
+                    verify(resolve(
+                        method,
+                        mode,
+                        .text,
+                        showsNumberRow: showsNumberRow,
+                        preset: .system
+                    ))
+                }
+            }
+        }
+    }
+
     @Test("Layouts without toolbar fill the entire key surface")
     func layoutsWithoutToolbarUseFullSurface() {
         let layouts = [
@@ -60,9 +77,17 @@ struct GeometryVariantTests {
     private func resolve(
         _ method: KeyboardInputMethod,
         _ mode: KeyboardLayoutMode,
-        _ editor: KeyboardEditorMode
+        _ editor: KeyboardEditorMode,
+        showsNumberRow: Bool = true,
+        preset: KeyboardLayoutPreset = .funput
     ) -> KeyboardLayout {
-        KeyboardLayoutResolver.resolve(inputMethod: method, mode: mode, editorMode: editor)
+        KeyboardLayoutResolver.resolve(
+            inputMethod: method,
+            mode: mode,
+            editorMode: editor,
+            showsNumberRow: showsNumberRow,
+            preset: preset
+        )
     }
 
     private func geometry(_ layout: KeyboardLayout) -> ResolvedKeyboard {

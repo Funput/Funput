@@ -20,6 +20,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var isKeySoundEnabled: Bool
     public var showsKeyPreviews: Bool
     public var showsNumberRow: Bool
+    public var layoutPreset: KeyboardLayoutPreset
     public var heightScale: Double
     public var personalSuggestionsEnabled: Bool
     public var clipboardEnabled: Bool
@@ -31,7 +32,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
         case eagerRestore, autoCapitalize, selectedThemeID
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
-        case showsNumberRow, heightScale
+        case showsNumberRow, layoutPreset, heightScale
         case personalSuggestionsEnabled, personalSuggestionResetToken
         case clipboardEnabled, clipboardExpiry, schemaVersion
     }
@@ -49,6 +50,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
         showsNumberRow: Bool = false,
+        layoutPreset: KeyboardLayoutPreset = .funput,
         heightScale: Double = 1.1,
         personalSuggestionsEnabled: Bool = true,
         clipboardEnabled: Bool = true,
@@ -68,6 +70,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
         self.showsNumberRow = showsNumberRow
+        self.layoutPreset = layoutPreset
         self.heightScale = heightScale
         self.personalSuggestionsEnabled = personalSuggestionsEnabled
         self.clipboardEnabled = clipboardEnabled
@@ -81,5 +84,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 9
+    public static let currentSchemaVersion = 10
 }

@@ -3,6 +3,7 @@ import KeyboardLayout
 
 enum SettingsPicker: String, Identifiable {
     case inputMethod
+    case layoutPreset
     case language
     case toneStyle
     case clipboardExpiry
@@ -12,6 +13,7 @@ enum SettingsPicker: String, Identifiable {
     var title: String {
         switch self {
         case .inputMethod: "Kiểu gõ"
+        case .layoutPreset: "Bố cục phím"
         case .language: "Ngôn ngữ"
         case .toneStyle: "Kiểu đặt dấu"
         case .clipboardExpiry: "Tự xoá sau"
@@ -21,6 +23,7 @@ enum SettingsPicker: String, Identifiable {
     var summary: String {
         switch self {
         case .inputMethod: "Cách nhập dấu tiếng Việt"
+        case .layoutPreset: "Thứ tự và thành phần các phím"
         case .language: "Ngôn ngữ chính của bàn phím"
         case .toneStyle: "Vị trí dấu trong một số vần"
         case .clipboardExpiry: "Mục đã ghim không bao giờ tự xoá"
@@ -30,6 +33,7 @@ enum SettingsPicker: String, Identifiable {
     var systemImage: String {
         switch self {
         case .inputMethod: "character.cursor.ibeam"
+        case .layoutPreset: "square.grid.3x3"
         case .language: "globe.asia.australia"
         case .toneStyle: "textformat"
         case .clipboardExpiry: "clock.arrow.trianglehead.counterclockwise.rotate.90"
@@ -55,6 +59,15 @@ extension SettingsPicker {
                     summary: value.settingsSummary,
                     isSelected: model.configuration.inputMethod == value,
                     select: { model.update(\.inputMethod, to: value) }
+                )
+            }
+        case .layoutPreset:
+            KeyboardLayoutPreset.allCases.map { value in
+                SettingsChoice(
+                    id: value.rawValue, title: value.settingsTitle,
+                    summary: value.settingsSummary,
+                    isSelected: model.configuration.layoutPreset == value,
+                    select: { model.update(\.layoutPreset, to: value) }
                 )
             }
         case .language:

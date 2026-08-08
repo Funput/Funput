@@ -88,7 +88,8 @@ extension KeyboardViewController {
             inputMethod: state.inputMethod,
             mode: state.layoutMode,
             editorMode: state.editorMode,
-            showsNumberRow: configuration.showsNumberRow
+            showsNumberRow: configuration.showsNumberRow,
+            preset: configuration.layoutPreset
         )
         let themed = configuredThemedPresentation()
         presentation.sizing = themed.sizing
