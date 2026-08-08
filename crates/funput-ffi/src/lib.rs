@@ -18,6 +18,9 @@
 //! - `engine/` — the composition IME ([`FunputEngine`] + the `funput_*` calls).
 //! - `suggestion/` — the personal-suggestion store ([`FunputSuggestionEngine`] +
 //!   the `funput_suggestion_*` calls), independent of composition.
+//! - `app_language/` — per-app VI/EN memory ([`FunputAppLanguage`] + the
+//!   `funput_app_language_*` calls), independent of composition too; the host
+//!   wires its decision into [`funput_set_enabled`] itself.
 //! - `abi/` — the shared panic guard, null-handle check, and UTF-32 marshalling.
 //!
 //! # Safety
@@ -31,9 +34,16 @@
 //! it never unwinds into the host (which would abort the whole IME process).
 
 mod abi;
+mod app_language;
 mod engine;
 mod suggestion;
 
+pub use app_language::{
+    APP_LANG_ENGLISH, APP_LANG_UNKNOWN, APP_LANG_VIETNAMESE, FunputAppLanguage,
+    funput_app_language_clear, funput_app_language_forget, funput_app_language_free,
+    funput_app_language_new, funput_app_language_note_focus, funput_app_language_note_toggle,
+    funput_app_language_seed,
+};
 pub use engine::{
     ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputConfig, FunputEngine, FunputResult,
     METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, SOURCE_NUMPAD, SOURCE_STANDARD,

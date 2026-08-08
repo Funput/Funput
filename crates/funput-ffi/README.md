@@ -27,6 +27,15 @@ Personal suggestion dùng một opaque handle riêng (`FunputSuggestionEngine`).
 candidate UTF-32 bằng POD; open/learn/flush/compact/reset lỗi đều trả null, `false` hoặc kết quả rỗng.
 Handle này chỉ được gọi tuần tự trên worker của platform và không tham gia đường compose.
 
+Per-app VI/EN memory dùng một opaque handle riêng (`FunputAppLanguage`), cũng độc lập với
+`FunputEngine`: nó chỉ quyết định "app này nên VI hay EN", host tự gọi `funput_set_enabled` với kết
+quả. `id` là **UTF-8 bytes** (bundle id / exe name / WM_CLASS), không phải UTF-32 như văn bản soạn
+thảo — vì đây là định danh kỹ thuật, không phải chữ người dùng gõ. `funput_app_language_note_focus`
+trả `-1` (chưa từng gặp app này — host giữ nguyên trạng thái hiện tại), `0` (English) hoặc `1`
+(Vietnamese). Handle không đọc/ghi file: host tự nạp lại bộ nhớ đã lưu bằng
+`funput_app_language_seed` lúc khởi động (giống `funput_add_shortcut`), và tự lưu xuống đĩa mỗi khi
+`funput_app_language_note_toggle` trả `true`.
+
 ```c
 typedef struct FunputEngine FunputEngine;   // opaque handle
 
@@ -58,6 +67,26 @@ uintptr_t     funput_buffer(const FunputEngine *engine, uint32_t *out, uintptr_t
 
 Áp kết quả: `action == 0 (None)` → để app nhận phím như thường; ngược lại xoá `backspace` ký tự rồi
 chèn `chars[0..count]`. `funput_buffer` để platform vẽ preedit/marked text từ buffer đang soạn.
+
+```c
+typedef struct FunputAppLanguage FunputAppLanguage;   // opaque handle, độc lập FunputEngine
+
+FunputAppLanguage *funput_app_language_new(void);
+void               funput_app_language_free(FunputAppLanguage *handle);
+
+bool funput_app_language_seed(FunputAppLanguage *handle, const uint8_t *id, uintptr_t id_len, bool enabled);
+void funput_app_language_clear(FunputAppLanguage *handle);
+bool funput_app_language_forget(FunputAppLanguage *handle, const uint8_t *id, uintptr_t id_len);
+
+// -1 = chưa từng gặp app này (giữ nguyên trạng thái hiện tại), 0 = English, 1 = Vietnamese.
+int32_t funput_app_language_note_focus(const FunputAppLanguage *handle, const uint8_t *id, uintptr_t id_len);
+bool    funput_app_language_note_toggle(FunputAppLanguage *handle, const uint8_t *id, uintptr_t id_len, bool enabled);
+```
+
+Việc "biết chắc app nào đang focus khi người dùng bấm toggle" (ví dụ tray icon/cửa sổ Settings cướp
+focus) là việc của platform, không phải của handle này — platform tự resolve `id` trước khi gọi
+`funput_app_language_note_toggle`, giống cách `pending`/deferred override đã hoạt động hôm nay trên
+macOS và Windows.
 
 Header sinh bằng **cbindgen** (đã commit). Regen sau khi đổi `extern "C"` surface:
 
@@ -108,6 +137,10 @@ src/engine/         # C API composition (FunputEngine)
 src/suggestion/     # C API personal suggestions (FunputSuggestionEngine)
                     #   engine.rs (handle new/open/free), query.rs (learn/query),
                     #   store.rs (flush/compact/reset/stats), types.rs (POD candidate/stats)
+src/app_language/   # C API per-app VI/EN memory (FunputAppLanguage), độc lập FunputEngine
+                    #   handle.rs (handle new/free + marshalling UTF-8 dùng chung),
+                    #   memory.rs (seed/clear/forget), focus.rs (note_focus/note_toggle),
+                    #   types.rs (APP_LANG_UNKNOWN/ENGLISH/VIETNAMESE)
 src/abi/            # plumbing C-ABI dùng chung
                     #   guard.rs safe(): catch_unwind + null-handle; codec.rs UTF-32 marshalling
 cbindgen.toml
@@ -126,6 +159,7 @@ Lưu ý edition 2024: dùng `#[unsafe(no_mangle)]` và `unsafe { }` tường min
 ## Phụ thuộc & ai gọi
 
 - `funput-ffi → funput-engine → funput-core`, và `funput-ffi → funput-suggestions` độc lập.
+  `app_language/` không phụ thuộc `funput-engine` hay `funput-suggestions` — chỉ `std`.
 - Consumer: `platforms/macos` (Swift, bridging header), `platforms/ios` (Swift, qua
   `FunputCore.xcframework`), `platforms/linux/fcitx5` (C++, `ffi_handle.h`) và
   `platforms/linux/ibus` (C). **Không** dùng: `funput-cli`, Windows shell (đều link engine trực
@@ -140,4 +174,5 @@ cargo build -p funput-ffi && ls target/debug/libfunput_ffi.*   # .a .dylib .rlib
 ```
 
 `src/engine/result.rs` (unit: `from_ime`, truncate > 64) + `tests/round_trip.rs` (gọi `extern "C"` như C
-caller: Telex/VNI/English-restore, null-safety, surrogate).
+caller: Telex/VNI/English-restore, null-safety, surrogate). `tests/app_language.rs` kiểm cả API
+`FunputAppLanguage` theo cùng phong cách (seed/note_focus/note_toggle/forget/clear, null-safety).

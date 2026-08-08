@@ -9,14 +9,13 @@ use windows::Win32::System::Threading::{
 };
 
 use super::{control_center, onboarding, settings_window};
-use crate::shared::shell;
 
 pub(crate) use child::{
     current_child_handle, launch_onboarding, launch_settings, terminate_children,
 };
 pub(crate) use flyout::{reap_ui_child, toggle_control_center};
 
-use child::{PARENT_PID_ENV, RECENT_APPS_ENV};
+use child::PARENT_PID_ENV;
 
 /// Stop the old background tray before the updater launches the new executable.
 pub(crate) fn terminate_parent_for_update() {
@@ -36,17 +35,8 @@ pub(crate) fn terminate_parent_for_update() {
     }
 }
 
-fn seed_recent_apps() {
-    let apps = std::env::var(RECENT_APPS_ENV)
-        .ok()
-        .and_then(|json| serde_json::from_str(&json).ok())
-        .unwrap_or_default();
-    shell::seed_recent_apps(apps);
-}
-
 /// Run the only Settings window until it closes, then end the child process.
 pub(crate) fn run_settings(check_update: bool) {
-    seed_recent_apps();
     if check_update {
         settings_window::open_and_check_updates();
     } else {

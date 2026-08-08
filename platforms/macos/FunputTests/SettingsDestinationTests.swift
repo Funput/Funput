@@ -5,7 +5,7 @@ final class SettingsDestinationTests: XCTestCase {
     func testSettingsHasExpectedDestinations() {
         XCTAssertEqual(
             SettingsDestination.allCases,
-            [.overview, .typing, .keyboardShortcuts, .textShortcuts, .applications]
+            [.overview, .typing, .keyboardShortcuts, .textShortcuts]
         )
     }
 

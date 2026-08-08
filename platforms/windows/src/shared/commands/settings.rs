@@ -3,7 +3,7 @@
 //! Each one exists so a Slint callback can name a single function instead of
 //! reaching into `shell` and converting types itself.
 
-use funput_config::{ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
+use funput_config::{FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
 
 use crate::shared::shell;
 
@@ -53,14 +53,6 @@ pub fn set_flip_combo(combo: KeyCombo) {
 
 pub fn complete_onboarding() {
     shell::complete_onboarding();
-}
-
-pub fn add_excluded_app(app: ExcludedApp) {
-    shell::add_excluded_app(app);
-}
-
-pub fn remove_excluded_app(id: &str) {
-    shell::remove_excluded_app(id);
 }
 
 // --- Shortcuts (gõ tắt) -----------------------------------------------------

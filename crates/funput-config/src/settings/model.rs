@@ -2,10 +2,15 @@
 //! contract: every `rename_all`/`default`/`skip_serializing_if` below is what an
 //! existing `settings.json` was written with, so none of them may change casually.
 
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 
 use super::{FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
 
+/// One entry of the removed "always English" list. Kept only so a `settings.json`
+/// or an exported config written before the per-app memory existed still decodes —
+/// each `id` is migrated into [`Settings::app_language_memory`] as English.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExcludedApp {
@@ -42,10 +47,34 @@ pub struct Settings {
     pub flip_combo: Option<KeyCombo>,
     pub launch_at_login: bool,
     pub has_completed_onboarding: bool,
+    /// Per-app VI/EN memory, keyed by the platform's app id (on Windows, the
+    /// lowercased exe name). An app is here only because the user toggled inside
+    /// it; an absent id means "no opinion" and the auto-switch leaves the global
+    /// state alone. A `BTreeMap` so the pretty-printed file has a stable key
+    /// order — this is rewritten on every focus change that flips VI/EN.
     #[serde(default)]
+    pub app_language_memory: BTreeMap<String, bool>,
+    /// **Legacy, read-only.** Drained into `app_language_memory` by
+    /// [`Settings::load_from`], so it is always empty afterwards, and never
+    /// written back (`skip_serializing`).
+    #[serde(default, skip_serializing)]
     pub excluded_apps: Vec<ExcludedApp>,
     #[serde(default)]
     pub shortcuts: Vec<Shortcut>,
+}
+
+impl Settings {
+    /// Fold legacy "always English" app ids into the per-app memory. An id the
+    /// user has since toggled keeps its remembered choice — existing wins, the
+    /// same rule import uses.
+    pub(crate) fn remember_as_english(&mut self, ids: impl IntoIterator<Item = String>) {
+        for id in ids {
+            if id.is_empty() {
+                continue;
+            }
+            self.app_language_memory.entry(id).or_insert(false);
+        }
+    }
 }
 
 impl Default for Settings {
@@ -64,6 +93,7 @@ impl Default for Settings {
             flip_combo: None,
             launch_at_login: false,
             has_completed_onboarding: false,
+            app_language_memory: BTreeMap::new(),
             excluded_apps: Vec::new(),
             shortcuts: Vec::new(),
         }

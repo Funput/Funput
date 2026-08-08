@@ -45,7 +45,8 @@ pub fn to_document(s: &Settings, source: Source) -> ConfigDocument {
                 toggle_combo: s.toggle_combo.clone(),
                 flip_hotkey: Some(s.flip_hotkey.id().to_string()),
                 flip_combo: s.flip_combo.clone(),
-                excluded_apps: Some(s.excluded_apps.clone()),
+                app_language_memory: Some(s.app_language_memory.clone()),
+                excluded_apps: None,
             }),
         }),
     }
@@ -128,11 +129,18 @@ fn apply_windows(s: &mut Settings, win: &WindowsBlock) {
     if let Some(combo) = &win.flip_combo {
         s.flip_combo = Some(combo.clone());
     }
-    if let Some(apps) = &win.excluded_apps {
-        for app in apps {
-            if !s.excluded_apps.iter().any(|e| e.id == app.id) {
-                s.excluded_apps.push(app.clone());
+    // Both app sources merge by key with the local entry winning, so importing a
+    // colleague's file never rewrites a choice this machine's user made. Newer
+    // exports carry the memory directly; older ones only have the removed
+    // exclusion list, whose ids mean "remembered as English".
+    if let Some(memory) = &win.app_language_memory {
+        for (id, &on) in memory {
+            if !id.is_empty() {
+                s.app_language_memory.entry(id.clone()).or_insert(on);
             }
         }
+    }
+    if let Some(apps) = &win.excluded_apps {
+        s.remember_as_english(apps.iter().map(|app| app.id.clone()));
     }
 }

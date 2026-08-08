@@ -34,7 +34,7 @@ pub(super) unsafe extern "system" fn win_event_proc(
     if event != EVENT_SYSTEM_FOREGROUND {
         return;
     }
-    let Some((id, name)) = exe_of_window(hwnd) else {
+    let Some(id) = exe_of_window(hwnd) else {
         return;
     };
     let is_funput = id == own_exe_id().as_str();
@@ -48,11 +48,12 @@ pub(super) unsafe extern "system" fn win_event_proc(
     }
 
     // A Settings child persists changes to disk. Reload them as soon as focus
-    // returns to a regular app, before the next keystroke reaches the engine.
+    // returns to a regular app, before the next keystroke reaches the engine. A
+    // VI/EN flip made there is parked by the reload and lands on this app below.
     if shell::reload_settings() {
         tray::sync_from_shell();
     }
-    shell::note_foreground(id.clone(), name);
+    shell::note_foreground(id.clone());
     // Focus on a new app is the start of input: arm so the first letter is capitalized.
     shell::arm_capitalization();
     if let Some(on) = shell::apply_for_app(&id) {
@@ -71,9 +72,9 @@ fn own_exe_id() -> &'static String {
     })
 }
 
-/// Resolve a window's owning process to `(id, name)` where `id` is the lowercased
-/// exe file name (e.g. "code.exe") and `name` strips the extension (e.g. "code").
-unsafe fn exe_of_window(hwnd: HWND) -> Option<(String, String)> {
+/// Resolve a window's owning process to its app id — the lowercased exe file name
+/// (e.g. "code.exe"), which is the key the per-app VI/EN memory uses.
+unsafe fn exe_of_window(hwnd: HWND) -> Option<String> {
     if hwnd.0.is_null() {
         return None;
     }
@@ -96,11 +97,9 @@ unsafe fn exe_of_window(hwnd: HWND) -> Option<(String, String)> {
     res.ok()?;
 
     let full = String::from_utf16_lossy(&buf[..len as usize]);
-    let file = full.rsplit(['\\', '/']).next().unwrap_or("").to_string();
+    let file = full.rsplit(['\\', '/']).next().unwrap_or("");
     if file.is_empty() {
         return None;
     }
-    let id = file.to_lowercase();
-    let name = id.strip_suffix(".exe").unwrap_or(&id).to_string();
-    Some((id, name))
+    Some(file.to_lowercase())
 }

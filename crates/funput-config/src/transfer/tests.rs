@@ -1,7 +1,7 @@
+use std::collections::BTreeMap;
+
 use super::*;
-use crate::settings::{
-    ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, Settings, Shortcut, ToneStyle,
-};
+use crate::settings::{FlipHotkey, Hotkey, KeyCombo, Method, Settings, Shortcut, ToneStyle};
 
 fn source() -> Source {
     Source {
@@ -45,10 +45,7 @@ fn round_trip_preserves_state() {
             trigger: "vn".into(),
             expansion: "Việt Nam".into(),
         }],
-        excluded_apps: vec![ExcludedApp {
-            id: "code.exe".into(),
-            name: "VS Code".into(),
-        }],
+        app_language_memory: BTreeMap::from([("code.exe".to_string(), false)]),
         ..Settings::default()
     };
 
@@ -65,7 +62,54 @@ fn round_trip_preserves_state() {
     assert_eq!(b.flip_combo, Some(x_combo()));
     assert_eq!(b.shortcuts.len(), 1);
     assert_eq!(b.shortcuts[0].expansion, "Việt Nam");
-    assert_eq!(b.excluded_apps.len(), 1);
+    assert_eq!(b.app_language_memory.get("code.exe"), Some(&false));
+}
+
+/// Import never rewrites a choice this machine's user made — the same
+/// "existing wins" rule the legacy migration uses.
+#[test]
+fn app_language_memory_merges_without_overwriting_a_local_choice() {
+    let exported = Settings {
+        app_language_memory: BTreeMap::from([
+            ("code.exe".to_string(), false),
+            ("chrome.exe".to_string(), false),
+        ]),
+        ..Settings::default()
+    };
+    let json = serde_json::to_string(&to_document(&exported, source())).unwrap();
+
+    let mut local = Settings {
+        app_language_memory: BTreeMap::from([("code.exe".to_string(), true)]),
+        ..Settings::default()
+    };
+    let doc: ConfigDocument = serde_json::from_str(&json).unwrap();
+    apply(&mut local, &doc);
+
+    assert_eq!(local.app_language_memory.get("code.exe"), Some(&true));
+    assert_eq!(local.app_language_memory.get("chrome.exe"), Some(&false));
+}
+
+/// A file exported before the per-app memory existed carries only the removed
+/// exclusion list; each id has to arrive as "remembered as English".
+#[test]
+fn a_legacy_export_migrates_its_excluded_apps_to_english() {
+    let legacy = r#"{
+      "schema":"app.funput.config","version":1,
+      "platform":{"windows":{"excludedApps":[{"id":"code.exe","name":"VS Code"}]}}
+    }"#;
+    let mut s = Settings::default();
+    let doc: ConfigDocument = serde_json::from_str(legacy).unwrap();
+    apply(&mut s, &doc);
+
+    assert_eq!(s.app_language_memory.get("code.exe"), Some(&false));
+}
+
+/// The list is decode-only now: reading one must not put it back on the wire.
+#[test]
+fn export_no_longer_writes_the_legacy_exclusion_list() {
+    let json = serde_json::to_string(&to_document(&Settings::default(), source())).unwrap();
+    assert!(!json.contains("excludedApps"), "{json}");
+    assert!(json.contains("appLanguageMemory"), "{json}");
 }
 
 /// `source` is metadata the caller owns. It must reach the file verbatim — the
@@ -145,7 +189,7 @@ fn imports_macos_file_ignoring_its_platform_block() {
     assert!(!s.smart_restore);
     assert_eq!(s.shortcuts.len(), 1);
     assert!(!summary.applied_platform); // no platform.windows → nothing OS-specific applied
-    assert!(s.excluded_apps.is_empty()); // macOS bundleIds not imported
+    assert!(s.app_language_memory.is_empty()); // macOS bundleIds not imported
 }
 
 /// An enum value this build does not know must leave the local choice alone

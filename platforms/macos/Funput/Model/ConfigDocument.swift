@@ -51,7 +51,19 @@ struct ConfigDocument: Codable {
         struct MacOS: Codable {
             var toggleShortcut: KeyCombo?
             var flipShortcut: KeyCombo?
-            var excludedApps: [ExcludedApp]?
+            /// Kept only so a file exported before the per-app VI/EN memory
+            /// existed still decodes; each id is migrated to "remembered as
+            /// English" on import (see `AppLanguageMemory`). No longer written
+            /// on export — use `appLanguageMemory` instead.
+            var excludedApps: [LegacyExcludedApp]?
+            /// Per-app VI/EN memory, keyed by bundle id.
+            var appLanguageMemory: [String: Bool]?
+        }
+
+        /// Decode-only shape of the removed `ExcludedApp` model — just enough to
+        /// read an old export's `id`s for migration; `name` is ignored.
+        struct LegacyExcludedApp: Codable {
+            var id: String
         }
     }
 }

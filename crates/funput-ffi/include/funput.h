@@ -11,6 +11,22 @@
 #include <stdlib.h>
 
 /**
+ * No remembered state for this app — the host should leave the composition
+ * engine's current VI/EN state untouched.
+ */
+#define APP_LANG_UNKNOWN -1
+
+/**
+ * The app is remembered as English (Vietnamese input suppressed).
+ */
+#define APP_LANG_ENGLISH 0
+
+/**
+ * The app is remembered as Vietnamese.
+ */
+#define APP_LANG_VIETNAMESE 1
+
+/**
  * [`funput_process_key`] source: main keyboard — digits may act as VNI modifiers.
  */
 #define SOURCE_STANDARD 0
@@ -44,6 +60,14 @@
 #define SUGGESTION_CAP 3
 
 #define SUGGESTION_CHARS_CAP 32
+
+/**
+ * Opaque per-app VI/EN memory handle, independent of [`crate::FunputEngine`] —
+ * it only decides "should this app be Vietnamese", never touches composition.
+ * A single-owner handle: create with [`funput_app_language_new`], release with
+ * [`funput_app_language_free`].
+ */
+typedef struct FunputAppLanguage FunputAppLanguage;
 
 /**
  * Opaque IME engine handle for C callers. Create with [`funput_engine_new`],
@@ -113,6 +137,81 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
+
+/**
+ * Look up the remembered VI/EN state for the just-focused app `id`. Returns
+ * [`super::APP_LANG_VIETNAMESE`] / [`super::APP_LANG_ENGLISH`] when this app has
+ * a remembered choice, [`super::APP_LANG_UNKNOWN`] otherwise — the host should
+ * only call `funput_set_enabled` in the former case, leaving the composition
+ * engine's current state untouched for an app it has never seen toggled.
+ *
+ * # Safety
+ * `id` must point to at least `id_len` readable bytes, or be null.
+ */
+int32_t funput_app_language_note_focus(const FunputAppLanguage *handle,
+                                       const uint8_t *id,
+                                       uintptr_t id_len);
+
+/**
+ * Record a manual VI/EN toggle for the app the caller knows is currently
+ * focused (e.g. a hotkey pressed while that app has focus). Returns `true` on
+ * success — the host should then persist `(id, enabled)` to its own settings
+ * store, since this engine never touches disk.
+ *
+ * A toggle initiated from a surface that steals focus (a tray icon, the
+ * Settings window) is a platform-side concern: resolve the target app id
+ * there before calling this, the same way the per-app `pending`/deferred
+ * overrides already work today.
+ *
+ * # Safety
+ * `id` must point to at least `id_len` readable bytes, or be null.
+ */
+bool funput_app_language_note_toggle(FunputAppLanguage *handle,
+                                     const uint8_t *id,
+                                     uintptr_t id_len,
+                                     bool enabled);
+
+/**
+ * Create an empty per-app memory. Release it with [`funput_app_language_free`].
+ */
+FunputAppLanguage *funput_app_language_new(void);
+
+/**
+ * Free a handle created by [`funput_app_language_new`]. Null is ignored.
+ *
+ * # Safety
+ * `handle` must come from [`funput_app_language_new`] and not be freed already.
+ */
+void funput_app_language_free(FunputAppLanguage *handle);
+
+/**
+ * Load one remembered `(id, enabled)` pair — the host calls this once per row
+ * read from its own settings file at startup, mirroring
+ * [`crate::funput_add_shortcut`]. An empty or invalid `id` is ignored.
+ *
+ * # Safety
+ * `id` must point to at least `id_len` readable bytes, or be null.
+ */
+bool funput_app_language_seed(FunputAppLanguage *handle,
+                              const uint8_t *id,
+                              uintptr_t id_len,
+                              bool enabled);
+
+/**
+ * Forget every remembered app — a full reset.
+ *
+ * # Safety
+ * `handle` must come from [`super::funput_app_language_new`] or be null.
+ */
+void funput_app_language_clear(FunputAppLanguage *handle);
+
+/**
+ * Forget one app. Returns `true` if an entry was removed.
+ *
+ * # Safety
+ * `id` must point to at least `id_len` readable bytes, or be null.
+ */
+bool funput_app_language_forget(FunputAppLanguage *handle, const uint8_t *id, uintptr_t id_len);
 
 /**
  * Create a new engine. Release it with [`funput_engine_free`].

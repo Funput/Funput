@@ -74,9 +74,9 @@ impl ShellState {
         self.save();
     }
 
-    /// Flip VI/EN from the Settings window. That window holds focus while this
-    /// runs, so the choice is treated like the tray's: parked, then bound to the
-    /// next app the user returns to.
+    /// Flip VI/EN from a Funput window (the Settings pane or the tray flyout).
+    /// That window holds focus while this runs, so the choice is parked and bound
+    /// to the next app the user returns to.
     pub fn set_enabled(&mut self, on: bool) {
         self.set_enabled_state(on);
         self.pending_override = Some(on);

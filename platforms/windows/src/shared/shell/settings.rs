@@ -2,7 +2,7 @@
 //! and change one piece of it. Every setter persists — see
 //! `funput_desktop::ShellState`, which owns the actual rules.
 
-use funput_config::{ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Settings, Shortcut};
+use funput_config::{FlipHotkey, Hotkey, KeyCombo, Settings, Shortcut};
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
 
 use super::with;
@@ -11,12 +11,6 @@ use super::with;
 
 pub fn snapshot() -> Settings {
     with(|s| s.settings().clone())
-}
-pub fn excluded_apps() -> Vec<ExcludedApp> {
-    with(|s| s.excluded_apps().to_vec())
-}
-pub fn recent_apps() -> Vec<ExcludedApp> {
-    with(|s| s.recent_apps().to_vec())
 }
 pub fn shortcuts() -> Vec<Shortcut> {
     with(|s| s.shortcuts().to_vec())
@@ -60,9 +54,6 @@ pub fn reload_settings() -> bool {
 pub fn replace_settings(new: Settings) {
     with(|s| s.replace_settings(new));
 }
-pub fn toggle_enabled() -> bool {
-    with(|s| s.toggle_enabled())
-}
 pub fn set_enabled(on: bool) {
     with(|s| s.set_enabled(on));
 }
@@ -101,12 +92,6 @@ pub fn set_launch_at_login(on: bool) {
 }
 pub fn complete_onboarding() {
     with(|s| s.complete_onboarding());
-}
-pub fn add_excluded_app(app: ExcludedApp) {
-    with(|s| s.add_excluded_app(app));
-}
-pub fn remove_excluded_app(id: &str) {
-    with(|s| s.remove_excluded_app(id));
 }
 pub fn add_shortcut() {
     with(|s| s.add_shortcut());

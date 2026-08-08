@@ -6,6 +6,8 @@
 //! keys are skipped by serde, which is what lets a macOS export deliver its
 //! portable half to a Windows machine.
 
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 
 use crate::settings::{ExcludedApp, KeyCombo};
@@ -94,6 +96,13 @@ pub struct WindowsBlock {
     /// User-recorded flip combo; overrides the preset when present.
     #[serde(default)]
     pub flip_combo: Option<KeyCombo>,
+    /// Per-app VI/EN memory, keyed by lowercased exe name. Merged by key on
+    /// import — an app already remembered locally keeps its choice.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub app_language_memory: Option<BTreeMap<String, bool>>,
+    /// **Legacy, read-only.** The removed "always English" list, still decoded
+    /// from older exports so their ids migrate into `app_language_memory` as
+    /// English. Never written.
+    #[serde(default, skip_serializing)]
     pub excluded_apps: Option<Vec<ExcludedApp>>,
 }

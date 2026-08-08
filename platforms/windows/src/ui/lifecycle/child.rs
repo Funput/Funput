@@ -12,8 +12,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use windows::Win32::Foundation::HANDLE;
 
-use crate::shared::shell;
-
 thread_local! {
     pub(super) static UI_PROCESS: RefCell<Option<(UiKind, Child)>> = const { RefCell::new(None) };
 }
@@ -25,7 +23,6 @@ pub(super) enum UiKind {
     ControlCenter,
 }
 
-pub(super) const RECENT_APPS_ENV: &str = "FUNPUT_RECENT_APPS";
 pub(super) const PARENT_PID_ENV: &str = "FUNPUT_PARENT_PID";
 const SETTINGS_ACTIVE_ENV: &str = "FUNPUT_SETTINGS_ACTIVE";
 
@@ -55,10 +52,8 @@ pub(super) fn spawn_child(arg: &str, kind: UiKind, extra_env: &[(&str, &str)]) {
     let Some(exe) = std::env::current_exe().ok() else {
         return;
     };
-    let recent = serde_json::to_string(&shell::recent_apps()).unwrap_or_else(|_| "[]".into());
     let mut cmd = Command::new(exe);
     cmd.arg(arg)
-        .env(RECENT_APPS_ENV, recent)
         .env(PARENT_PID_ENV, std::process::id().to_string());
     for (key, value) in extra_env {
         cmd.env(*key, *value);
