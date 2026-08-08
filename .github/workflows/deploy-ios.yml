@@ -135,6 +135,14 @@ jobs:
               echo "::error::$label is a development/ad-hoc profile, not an App Store one."
               exit 1
             fi
+            # Xcode-managed profiles are the ones Xcode creates and regenerates for
+            # itself; exportArchive refuses them under manual signing. The fix is a
+            # profile created by hand in the portal, so say that here rather than
+            # letting the export fail several minutes later.
+            if [ "$(printf '%s' "$plist" | plutil -extract IsXcodeManaged raw - 2>/dev/null || echo false)" = "true" ]; then
+              echo "::error::$label is an Xcode-managed profile, which manual signing cannot use. Create an explicit one: developer.apple.com -> Profiles -> + -> App Store Connect -> pick the App ID and the Apple Distribution certificate -> Download, then update the secret."
+              exit 1
+            fi
             cp "$tmp" "$OLD/$uuid.mobileprovision"
             cp "$tmp" "$NEW/$uuid.mobileprovision"
             echo "$out_var=$uuid" >> "$GITHUB_ENV"
