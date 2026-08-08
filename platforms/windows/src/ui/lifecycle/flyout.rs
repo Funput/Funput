@@ -65,7 +65,13 @@ pub(crate) fn reap_ui_child() {
                 *slot = None;
                 Some(out)
             }
-            _ => None,
+            Ok(None) => None,
+            // The handle is unusable, so it will never resolve. Drop it instead of
+            // leaving it in the pump's wait set, where it would spin the loop.
+            Err(_) => {
+                *slot = None;
+                None
+            }
         }
     });
     let Some((UiKind::ControlCenter, code)) = finished else {
@@ -80,7 +86,6 @@ pub(crate) fn reap_ui_child() {
     }
     match code {
         control_center::EXIT_SETTINGS => launch_settings_tab("overview", false),
-        control_center::EXIT_SHORTCUTS => launch_settings_tab("shortcuts", false),
         control_center::EXIT_KEYBOARD => launch_settings_tab("keyboard", false),
         _ => {}
     }

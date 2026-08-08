@@ -7,9 +7,9 @@ component LinkRow inherits Rectangle {
     in property <string> label;
     in property <string> value;
     callback clicked;
-    height: 40px;
+    height: 34px;
     HorizontalLayout {
-        spacing: 10px;
+        spacing: Theme.sp-sm;
         Text {
             text: root.label;
             horizontal-stretch: 1;
@@ -46,7 +46,7 @@ export component CcList {
 
     width: 100%;
     VerticalLayout {
-        spacing: 10px;
+        spacing: Theme.sp-sm;
         width: 100%;
         Rectangle {
             width: 100%;
@@ -55,10 +55,10 @@ export component CcList {
             border-width: 1px;
             border-color: Theme.flyout-border;
             VerticalLayout {
-                padding-left: 14px;
-                padding-right: 14px;
-                padding-top: 4px;
-                padding-bottom: 4px;
+                padding-left: Theme.sp-ms;
+                padding-right: Theme.sp-ms;
+                padding-top: Theme.sp-xs;
+                padding-bottom: Theme.sp-xs;
                 LinkRow {
                     label: "Phím chuyển";
                     value: root.hotkey-label;

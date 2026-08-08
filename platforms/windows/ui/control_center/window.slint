@@ -21,7 +21,7 @@ export component ControlCenterWindow inherits Window {
     in property <string> method-label: "Telex";
     in-out property <bool> spell-check: true;
     in-out property <bool> auto-capitalize: false;
-    in property <int> shortcut-count: 0;
+    in-out property <bool> smart-restore: true;
     in property <string> hotkey-label: "Ctrl+`";
     in property <string> tone-label: "Truyền thống";
 
@@ -29,7 +29,7 @@ export component ControlCenterWindow inherits Window {
     callback cycle-method();
     callback toggle-spell();
     callback toggle-cap();
-    callback open-shortcuts();
+    callback toggle-restore();
     callback open-keyboard();
     callback cycle-tone();
     callback open-settings();
@@ -48,9 +48,12 @@ export component ControlCenterWindow inherits Window {
             }
         }
 
+        // One rhythm for the whole flyout: 12px between sections, 12px inset.
+        // Sections carry their own card padding, so a wider gutter here only
+        // compounds it.
         VerticalLayout {
-            padding: 16px;
-            spacing: 14px;
+            padding: Theme.sp-ms;
+            spacing: Theme.sp-ms;
             width: 100%;
             CcHeader {
                 enabled: root.enabled;
@@ -61,11 +64,11 @@ export component ControlCenterWindow inherits Window {
                 method-label: root.method-label;
                 spell-check: root.spell-check;
                 auto-capitalize: root.auto-capitalize;
-                shortcut-count: root.shortcut-count;
+                smart-restore: root.smart-restore;
                 cycle-method() => { root.cycle-method(); }
                 toggle-spell() => { root.toggle-spell(); }
                 toggle-cap() => { root.toggle-cap(); }
-                open-shortcuts() => { root.open-shortcuts(); }
+                toggle-restore() => { root.toggle-restore(); }
             }
             CcList {
                 hotkey-label: root.hotkey-label;

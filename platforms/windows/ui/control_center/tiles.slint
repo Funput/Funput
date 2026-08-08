@@ -12,7 +12,6 @@ export component BigTile inherits Rectangle {
 
     horizontal-stretch: 1;
     min-width: 0px;
-    height: 88px;
     border-radius: Theme.r-shell;
     background: root.emphasized
         ? (touch.has-hover ? Theme.accent-hover : Theme.accent)
@@ -20,29 +19,37 @@ export component BigTile inherits Rectangle {
     border-width: 1px;
     border-color: root.emphasized ? transparent : Theme.flyout-border;
 
+    // Height follows the content: the old fixed 88px left a dead band that the
+    // stretch spacer absorbed, which is what made the flyout read as too airy.
+    // Vertical padding is tighter than horizontal on purpose — the tile is wide
+    // and short, so side breathing room matters more than top/bottom.
     VerticalLayout {
-        padding: 14px;
+        padding-left: Theme.sp-ms;
+        padding-right: Theme.sp-ms;
+        padding-top: Theme.sp-sm;
+        padding-bottom: Theme.sp-sm;
         spacing: 0px;
         width: 100%;
-        height: 100%;
         Image {
             source: root.icon;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             colorize: root.emphasized ? Theme.accent-text : Palette.foreground;
             horizontal-alignment: left;
         }
-        Rectangle { vertical-stretch: 1; }
+        // Fixed gap instead of a stretched spacer, so the icon-to-label distance
+        // no longer grows with the tile.
+        Rectangle { height: Theme.sp-xs; }
         Text {
             text: root.title;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: root.emphasized ? Theme.accent-text : Palette.foreground;
             overflow: elide;
         }
         Text {
             text: root.subtitle;
-            font-size: 12px;
+            font-size: Theme.font-caption;
             // Opaque on the accent fill: any transparency drops it under 4.5:1.
             color: root.emphasized ? Theme.accent-text : Theme.subtle;
             overflow: elide;
@@ -60,21 +67,24 @@ export component CcTiles {
     in property <string> method-label;
     in property <bool> spell-check;
     in property <bool> auto-capitalize;
-    in property <int> shortcut-count;
+    in property <bool> smart-restore;
     callback cycle-method();
     callback toggle-spell();
     callback toggle-cap();
-    callback open-shortcuts();
+    callback toggle-restore();
 
+    // One gap value drives both the layout spacing and the half-width maths, so
+    // the columns cannot drift out of sync when the rhythm is retuned.
+    private property <length> gap: Theme.sp-sm;
     // Explicit half-width: HorizontalLayout stretch was shrink-wrapping to text.
-    private property <length> tile-w: (root.width - 12px) / 2;
+    private property <length> tile-w: (root.width - root.gap) / 2;
 
     width: 100%;
     VerticalLayout {
-        spacing: 12px;
+        spacing: root.gap;
         width: 100%;
         HorizontalLayout {
-            spacing: 12px;
+            spacing: root.gap;
             BigTile {
                 width: root.tile-w;
                 icon: @image-url("../icons/nav/primary/keyboard.svg");
@@ -93,14 +103,14 @@ export component CcTiles {
             }
         }
         HorizontalLayout {
-            spacing: 12px;
+            spacing: root.gap;
             BigTile {
                 width: root.tile-w;
-                icon: @image-url("../icons/nav/primary/shortcut.svg");
-                title: "Gõ tắt";
-                subtitle: root.shortcut-count + " mục";
-                emphasized: root.shortcut-count > 0;
-                clicked => { root.open-shortcuts(); }
+                icon: @image-url("../icons/row/restore.svg");
+                title: "Khôi phục tiếng Anh";
+                subtitle: root.smart-restore ? "Đang bật" : "Đang tắt";
+                emphasized: root.smart-restore;
+                clicked => { root.toggle-restore(); }
             }
             BigTile {
                 width: root.tile-w;

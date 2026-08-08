@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use windows::core::w;
 use windows::Win32::Foundation::{
-    CloseHandle, GetLastError, ERROR_ALREADY_EXISTS, HANDLE, WAIT_EVENT, WAIT_OBJECT_0,
+    CloseHandle, GetLastError, ERROR_ALREADY_EXISTS, HANDLE, WAIT_OBJECT_0,
 };
 use windows::Win32::System::Threading::{
     CreateEventW, CreateMutexW, OpenEventW, ResetEvent, SetEvent, WaitForSingleObject,
@@ -95,27 +95,45 @@ pub fn poll_activate() -> bool {
     }
 }
 
-/// Block until the activate event or a thread message arrives.
-pub fn wait_activate_or_message() -> WaitKind {
+/// Block until the activate event fires, the UI child exits, or a thread message
+/// arrives.
+///
+/// Waiting on `child` is what makes the flyout → Settings handoff prompt: the
+/// child reports the button pressed through its *exit code*, and a process
+/// exiting posts no window message, so without its handle the pump would sleep
+/// until unrelated input happened to wake it.
+///
+/// The handle is borrowed from the caller's `Child`. Both live on this thread and
+/// the thread parks inside this call, so it cannot be closed mid-wait.
+pub fn wait_activate_message_or_child(child: Option<HANDLE>) -> WaitKind {
     let Some(event) = activate_handle() else {
         return WaitKind::Failed;
     };
     unsafe {
-        let handles = [event];
+        // Index 0 is the activate event, index 1 the child when present, and the
+        // message queue always sits one past the last handle.
+        let mut handles = [event, HANDLE::default()];
+        let count = child.map_or(1, |handle| {
+            handles[1] = handle;
+            2
+        });
         let result = windows::Win32::UI::WindowsAndMessaging::MsgWaitForMultipleObjects(
-            Some(&handles),
+            Some(&handles[..count]),
             false,
             INFINITE,
             windows::Win32::UI::WindowsAndMessaging::QS_ALLINPUT,
         );
-        // nCount=1 → index 0 is the event; index 1 means the thread message queue.
-        if result == WAIT_OBJECT_0 {
-            let _ = ResetEvent(event);
-            WaitKind::Activate
-        } else if result == WAIT_EVENT(WAIT_OBJECT_0.0 + 1) {
-            WaitKind::Message
-        } else {
-            WaitKind::Failed
+        let Some(index) = result.0.checked_sub(WAIT_OBJECT_0.0) else {
+            return WaitKind::Failed;
+        };
+        match index as usize {
+            0 => {
+                let _ = ResetEvent(event);
+                WaitKind::Activate
+            }
+            1 if count == 2 => WaitKind::ChildExited,
+            i if i == count => WaitKind::Message,
+            _ => WaitKind::Failed,
         }
     }
 }
@@ -123,6 +141,8 @@ pub fn wait_activate_or_message() -> WaitKind {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum WaitKind {
     Activate,
+    /// The tracked UI child process ended; its exit code is ready to be reaped.
+    ChildExited,
     Message,
     Failed,
 }

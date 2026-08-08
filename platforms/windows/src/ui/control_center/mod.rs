@@ -16,7 +16,9 @@ use funput_config::{Method, ToneStyle};
 /// Process exit codes parent reaps to open Settings on a given tab.
 pub(super) const EXIT_DISMISS: u8 = 0;
 pub(super) const EXIT_SETTINGS: u8 = 10;
-pub(super) const EXIT_SHORTCUTS: u8 = 11;
+// 11 was EXIT_SHORTCUTS, dropped when the flyout's shortcut tile became the
+// smart-restore toggle. Codes stay stable so an older parent reaping a newer
+// child never mistakes one destination for another.
 pub(super) const EXIT_KEYBOARD: u8 = 12;
 
 static EXIT_CODE: AtomicU8 = AtomicU8::new(EXIT_DISMISS);
@@ -49,7 +51,7 @@ fn populate(window: &ControlCenterWindow) {
     window.set_method_label(method_label(s.method).into());
     window.set_spell_check(s.spell_check);
     window.set_auto_capitalize(s.auto_capitalize);
-    window.set_shortcut_count(shell::shortcuts().len() as i32);
+    window.set_smart_restore(s.smart_restore);
     window.set_hotkey_label(hotkey_label(&s).into());
     window.set_tone_label(tone_label(s.tone_style).into());
 }

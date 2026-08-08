@@ -66,6 +66,11 @@ pub fn on_key_event(vk: VIRTUAL_KEY, mods: Mods, down: bool) -> Option<Hit> {
     (flip_mods() == Some(gesture)).then_some(Hit::Flip)
 }
 
+/// Whether this virtual-key is a modifier (either side, generic or specific).
+pub fn is_modifier_key(vk: VIRTUAL_KEY) -> bool {
+    rules::is_modifier(vk)
+}
+
 /// Abandon the gesture in progress. Clicking or scrolling with modifiers down is
 /// a Ctrl+click or a Ctrl+wheel zoom, never a bare modifier tap.
 pub fn note_other_input() {
