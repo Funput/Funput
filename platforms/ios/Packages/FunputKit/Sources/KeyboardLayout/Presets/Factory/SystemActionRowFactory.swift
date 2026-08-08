@@ -10,16 +10,28 @@ import Foundation
 /// of weight buys on a 390pt phone. It varies by a fraction of a point across device
 /// widths, which is far below what an eye or a thumb can tell.
 enum SystemActionRowWeights {
-    /// The switch and emoji keys are equal and deliberately narrow: they are icon and
-    /// short-label keys that are rarely hit, and every point they give up goes to the
-    /// spacebar, which is the largest target on the keyboard on the stock layout too.
-    static let `switch`: CGFloat = 1.4
-    static let emoji: CGFloat = `switch`
-    private static let gap: CGFloat = 0.15
+    /// Sized to render at the same width as the Shift key above it.
+    ///
+    /// Equal weight would *not* do that: the bottom letter row is nine keys and eight
+    /// gaps totalling weight 10, this row is four keys and three gaps totalling 11.2, so
+    /// a unit of weight buys a different width in each. Solving the two for equal points
+    /// gives 1.54 on a 320pt phone and 1.58 on a 430pt one; 1.56 splits the difference
+    /// and lands within half a point everywhere.
+    static let `switch`: CGFloat = 1.56
 
-    static let enter = `switch` + emoji + gap
-    /// The row still totals 11.2, matching `standardActionRow`, so a unit of weight buys
-    /// the same width in both presets and the two remain comparable.
+    /// Narrower than the switch key: an icon carries less to read than "123"/"ABC", and
+    /// the width is better spent on the spacebar.
+    static let emoji: CGFloat = 1.4
+
+    /// Deliberately below `switch + emoji + gap`, the width that would centre the
+    /// spacebar exactly. Trading roughly 8pt of centring for 8pt of spacebar was a
+    /// judgement call about which matters more to the thumb; the spacebar therefore sits
+    /// a little right of centre. `SystemLettersParityTests.spacebarNearCentre` pins how
+    /// far, so a future change cannot drift further without saying so.
+    static let enter: CGFloat = 2.6
+
+    /// The row totals 11.2, matching `standardActionRow`, so a unit of weight buys the
+    /// same width in both presets and the two remain comparable.
     static let space = 11.2 - `switch` - emoji - enter
 }
 

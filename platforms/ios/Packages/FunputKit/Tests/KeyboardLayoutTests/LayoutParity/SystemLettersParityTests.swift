@@ -37,13 +37,10 @@ struct SystemLettersParityTests {
         #expect(keys.map(\.role) == [.symbols, .emoji, .space, .enter])
         // Compared with a tolerance: the spacebar and enter weights are derived, so an
         // exact literal match fails on the last binary digit.
-        #expect(Self.matches(keys.map(\.widthWeight), [1.4, 1.4, 5.45, 2.95]))
+        #expect(Self.matches(keys.map(\.widthWeight), [1.56, 1.4, 5.64, 2.6]))
         // The row totals what `standardActionRow` does, so a unit of weight buys the same
         // width in both presets and these numbers stay comparable across them.
         #expect(abs(keys.map(\.widthWeight).reduce(0, +) - 11.2) < 0.001)
-        // Enter spans the switch and emoji keys plus the gap between them, which is what
-        // puts the spacebar in the middle. See `centredSpacebar`.
-        #expect(keys[3].widthWeight > keys[0].widthWeight + keys[1].widthWeight)
         #expect(keys[2].horizontalSwipeAction == .toggleLanguage)
     }
 
@@ -53,11 +50,13 @@ struct SystemLettersParityTests {
             && zip(weights, expected).allSatisfy { abs($0 - $1) < 0.001 }
     }
 
-    @Test("The spacebar sits centred on screen", arguments: [320.0, 390.0, 430.0])
-    func centredSpacebar(width: Double) {
-        // The point of the enter key's width: two keys and two gaps sit left of the
-        // spacebar but only one key and one gap right of it, so without the correction
-        // the spacebar drifts left of centre — the thing that reads as "not iOS".
+    @Test("The spacebar stays near centre", arguments: [320.0, 390.0, 430.0])
+    func spacebarNearCentre(width: Double) {
+        // Two keys and two gaps sit left of the spacebar but only one key and one gap
+        // right of it, so enter has to be about as wide as both to centre it exactly.
+        // It is deliberately narrower than that, spending the difference on the spacebar,
+        // which leaves the spacebar slightly right of centre. This pins how slightly:
+        // drifting further means the trade was widened without anyone deciding to.
         let layout = SystemKeyboardLayouts.letters(.vni)
         let resolved = KeyboardGeometry.resolve(
             layout: layout,
@@ -65,7 +64,22 @@ struct SystemLettersParityTests {
             sizing: .default
         )
         let space = resolved.rows.last?.first { $0.spec.role == .space }?.frame ?? .zero
-        #expect(abs(space.midX - width / 2) <= 1)
+        let offset = space.midX - width / 2
+        #expect(offset > 0)
+        #expect(offset <= 10)
+    }
+
+    @Test("The switch key matches the Shift key width", arguments: [320.0, 390.0, 430.0])
+    func switchKeyMatchesShift(width: Double) {
+        // Different rows, different weight units — this is checked in points, not weights.
+        let resolved = KeyboardGeometry.resolve(
+            layout: SystemKeyboardLayouts.letters(.vni),
+            size: CGSize(width: width, height: 304),
+            sizing: .default
+        )
+        let shift = resolved.keys.first { $0.spec.role == .shift }?.frame.width ?? 0
+        let switchKey = resolved.keys.first { $0.spec.role == .symbols }?.frame.width ?? 0
+        #expect(abs(shift - switchKey) <= 1)
     }
 
     @Test("Telex hints survive the preset", arguments: [KeyboardInputMethod.telex, .telexAdvanced])
