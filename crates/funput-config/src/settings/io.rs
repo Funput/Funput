@@ -12,11 +12,19 @@ use super::Settings;
 
 impl Settings {
     /// Load from `path`, falling back to defaults when it is missing or corrupt.
+    ///
+    /// This is also where the removed "always English" list is migrated: each id
+    /// becomes a remembered English choice, and the field is drained so the key
+    /// disappears from disk on the next write. Re-running it before that write is
+    /// harmless — the merge keeps whatever is already remembered.
     pub fn load_from(path: &Path) -> Self {
-        fs::read_to_string(path)
+        let mut settings: Self = fs::read_to_string(path)
             .ok()
             .and_then(|json| serde_json::from_str(&json).ok())
-            .unwrap_or_default()
+            .unwrap_or_default();
+        let legacy: Vec<_> = std::mem::take(&mut settings.excluded_apps);
+        settings.remember_as_english(legacy.into_iter().map(|app| app.id));
+        settings
     }
 
     /// Write to `path`, creating its directory. Silent on failure — see above.
@@ -60,6 +68,52 @@ mod tests {
         Settings::default().save_to(&path);
 
         assert!(path.is_file());
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    /// The list a user built before per-app memory existed has to survive the
+    /// upgrade, so every entry comes back as "remembered as English".
+    #[test]
+    fn legacy_excluded_apps_migrate_to_english_on_load() {
+        let dir = tmp_dir();
+        let path = dir.join("settings.json");
+        let mut json = serde_json::to_value(Settings::default()).unwrap();
+        json["excludedApps"] = serde_json::json!([{ "id": "code.exe", "name": "VS Code" }]);
+        fs::write(&path, json.to_string()).unwrap();
+
+        let loaded = Settings::load_from(&path);
+        assert_eq!(loaded.app_language_memory.get("code.exe"), Some(&false));
+        assert!(loaded.excluded_apps.is_empty(), "drained, not kept");
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    /// An app the user has toggled since keeps that choice — migrating must not
+    /// silently force it back to English.
+    #[test]
+    fn migration_never_overwrites_a_remembered_choice() {
+        let mut settings = Settings::default();
+        settings
+            .app_language_memory
+            .insert("code.exe".to_string(), true);
+        settings.remember_as_english(["code.exe".to_string(), "chrome.exe".to_string()]);
+
+        assert_eq!(settings.app_language_memory.get("code.exe"), Some(&true));
+        assert_eq!(settings.app_language_memory.get("chrome.exe"), Some(&false));
+    }
+
+    #[test]
+    fn the_legacy_key_is_dropped_on_the_next_save() {
+        let dir = tmp_dir();
+        let path = dir.join("settings.json");
+        let mut json = serde_json::to_value(Settings::default()).unwrap();
+        json["excludedApps"] = serde_json::json!([{ "id": "code.exe", "name": "VS Code" }]);
+        fs::write(&path, json.to_string()).unwrap();
+
+        Settings::load_from(&path).save_to(&path);
+
+        let written = fs::read_to_string(&path).unwrap();
+        assert!(!written.contains("excludedApps"), "{written}");
+        assert!(written.contains("appLanguageMemory"), "{written}");
         let _ = fs::remove_dir_all(dir);
     }
 

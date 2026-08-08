@@ -16,7 +16,7 @@
 //!
 //! - `config` — pushing settings into the engine, and persistence.
 //! - `options` — the individual setting writes the Settings UI drives.
-//! - `apps` — recent apps, per-app overrides, and the VI/EN auto-switch.
+//! - `apps` — the focused app, the per-app VI/EN memory, and the auto-switch.
 //! - `shortcuts` — the gõ tắt table, including half-typed drafts.
 //! - `compose` — what the keyboard hook calls on every keystroke.
 
@@ -26,17 +26,13 @@ mod config;
 mod options;
 mod shortcuts;
 
-use std::collections::HashMap;
 use std::path::PathBuf;
 
-use funput_config::{ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Settings, Shortcut};
+use funput_config::{FlipHotkey, Hotkey, KeyCombo, Settings, Shortcut};
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
 use funput_engine::Engine;
 
 use crate::CommittedTail;
-
-/// How many recently-focused apps to keep for the Settings "recent apps" picker.
-const RECENT_CAP: usize = 12;
 
 pub struct ShellState {
     engine: Engine,
@@ -48,17 +44,13 @@ pub struct ShellState {
     /// Where `settings` is persisted, resolved once by the platform. `None` when no
     /// writable location exists — settings then live for this session only.
     settings_file: Option<PathBuf>,
-    /// Recently-focused apps (most recent first), fed by the foreground hook. Not
-    /// persisted — it's just a convenience source for the Settings UI.
-    recent: Vec<ExcludedApp>,
-    /// Per-app manual VI/EN overrides (runtime only, not persisted). A manual
-    /// toggle records the user's choice here so the per-app auto-switch honours it
-    /// on the next focus change instead of reverting to the exclusion-list default.
-    /// Keyed by the platform's app id (on Windows, the lowercased exe name).
-    overrides: HashMap<String, bool>,
+    /// The app that currently has focus, fed by the foreground hook. Not
+    /// persisted, and `None` until the first focus change.
+    foreground: Option<String>,
     /// A manual toggle whose target app isn't known yet. The tray and the Settings
     /// window steal foreground, so the choice is parked here and bound to the next
-    /// app the user focuses.
+    /// app the user focuses. Session-only: re-arming a stale choice after a
+    /// restart would be surprising, so it is never persisted.
     pending_override: Option<bool>,
 }
 
@@ -71,8 +63,7 @@ impl ShellState {
             tail: CommittedTail::new(),
             settings: Settings::default(),
             settings_file,
-            recent: Vec::new(),
-            overrides: HashMap::new(),
+            foreground: None,
             pending_override: None,
         };
         state.settings = state.read_settings();
@@ -88,14 +79,8 @@ impl ShellState {
     pub fn enabled(&self) -> bool {
         self.settings.enabled
     }
-    pub fn excluded_apps(&self) -> &[ExcludedApp] {
-        &self.settings.excluded_apps
-    }
     pub fn shortcuts(&self) -> &[Shortcut] {
         &self.settings.shortcuts
-    }
-    pub fn recent_apps(&self) -> &[ExcludedApp] {
-        &self.recent
     }
     pub fn toggle_hotkey(&self) -> Hotkey {
         self.settings.toggle_hotkey
@@ -121,7 +106,7 @@ impl ShellState {
     /// The app the user is in right now, or `None` before the first focus change.
     /// The platform uses this for per-app injection quirks.
     pub fn foreground_id(&self) -> Option<&str> {
-        self.recent.first().map(|a| a.id.as_str())
+        self.foreground.as_deref()
     }
 }
 

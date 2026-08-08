@@ -66,14 +66,21 @@ impl ShellState {
         }
     }
 
-    /// Reload settings written by another process (the Settings window runs as its
-    /// own). Runtime-only recent apps and per-app overrides are untouched; only
+    /// Reload settings written by another process (the Settings window and the
+    /// Control Center each run as their own). The focused app is untouched; only
     /// persisted state and the live engine are refreshed. Returns whether anything
     /// actually changed, so the caller can skip refreshing its UI.
     pub fn reload_settings(&mut self) -> bool {
         let loaded = self.read_settings();
         if self.settings == loaded {
             return false;
+        }
+        // A VI/EN flip made in one of those windows parked itself in *their*
+        // `ShellState`, which died with the process — so the app it was meant for
+        // never learned about it. Park it here instead and the next focus change
+        // binds it, exactly as an in-process toggle would.
+        if loaded.enabled != self.settings.enabled {
+            self.pending_override = Some(loaded.enabled);
         }
         self.settings = loaded;
         self.apply_settings();

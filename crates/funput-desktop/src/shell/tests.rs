@@ -2,17 +2,10 @@
 //! process-global mutex: which app gets Vietnamese, what a toggle made from the
 //! tray binds to, and when composition is thrown away.
 
-use funput_config::{ExcludedApp, Method, Settings};
+use funput_config::{Method, Settings};
 use funput_engine::KeySource;
 
 use super::*;
-
-fn app(id: &str) -> ExcludedApp {
-    ExcludedApp {
-        id: id.to_string(),
-        name: id.trim_end_matches(".exe").to_string(),
-    }
-}
 
 /// In memory only — no settings file, so nothing touches the disk.
 fn shell() -> ShellState {
@@ -25,54 +18,58 @@ fn shell_with(settings: Settings) -> ShellState {
     state
 }
 
+/// A shell that already remembers `(id, is_vietnamese)` for each pair.
+fn shell_remembering(entries: &[(&str, bool)]) -> ShellState {
+    let mut settings = Settings::default();
+    for (id, on) in entries {
+        settings
+            .app_language_memory
+            .insert((*id).to_string(), *on);
+    }
+    shell_with(settings)
+}
+
 // --- per-app VI/EN ---------------------------------------------------------
 
 #[test]
-fn an_empty_exclusion_list_leaves_the_global_toggle_alone() {
-    // Users who don't use the feature must keep a plain on/off switch.
+fn an_app_with_no_remembered_choice_leaves_the_toggle_alone() {
+    // Funput only replays decisions the user made; it never guesses one.
     let mut state = shell();
     assert_eq!(state.apply_for_app("code.exe"), None);
     assert!(state.enabled());
 }
 
 #[test]
-fn an_excluded_app_switches_to_english_and_back() {
-    let mut state = shell_with(Settings {
-        excluded_apps: vec![app("code.exe")],
-        ..Settings::default()
-    });
+fn a_remembered_app_switches_to_english_and_an_unseen_one_does_not_switch_back() {
+    let mut state = shell_remembering(&[("code.exe", false)]);
 
     assert_eq!(state.apply_for_app("code.exe"), Some(false));
     assert!(!state.enabled());
-    assert_eq!(state.apply_for_app("notepad.exe"), Some(true));
-    assert!(state.enabled());
+    // notepad.exe has no remembered choice, so it inherits the current state
+    // rather than being forced back to Vietnamese.
+    assert_eq!(state.apply_for_app("notepad.exe"), None);
+    assert!(!state.enabled());
 }
 
 #[test]
 fn focusing_the_same_app_twice_reports_no_change() {
-    let mut state = shell_with(Settings {
-        excluded_apps: vec![app("code.exe")],
-        ..Settings::default()
-    });
+    let mut state = shell_remembering(&[("code.exe", false)]);
     assert_eq!(state.apply_for_app("code.exe"), Some(false));
     assert_eq!(state.apply_for_app("code.exe"), None);
 }
 
-/// The tray steals foreground, so the toggle cannot bind to the app it was meant
-/// for until the user goes back to it.
+/// The flyout steals foreground, so the toggle cannot bind to the app it was
+/// meant for until the user goes back to it.
 #[test]
-fn a_tray_toggle_binds_to_the_next_app_focused() {
-    let mut state = shell_with(Settings {
-        excluded_apps: vec![app("code.exe")],
-        ..Settings::default()
-    });
+fn a_flyout_toggle_binds_to_the_next_app_focused() {
+    let mut state = shell_remembering(&[("notepad.exe", true)]);
 
-    assert!(!state.toggle_enabled(), "tray turned Vietnamese off");
-    // Returning to a *non-excluded* app would normally switch Vietnamese back on;
-    // the parked choice has to win instead.
+    state.set_enabled(false); // flyout turned Vietnamese off
+    // notepad.exe is remembered as Vietnamese, which would normally switch it back
+    // on the moment focus lands there; the parked choice has to win instead.
     assert_eq!(state.apply_for_app("notepad.exe"), None);
     assert!(!state.enabled());
-    // …and it is remembered for that app from now on.
+    // …and it replaces what notepad.exe used to remember, from now on.
     state.apply_for_app("code.exe");
     assert_eq!(state.apply_for_app("notepad.exe"), None);
     assert!(!state.enabled());
@@ -81,59 +78,96 @@ fn a_tray_toggle_binds_to_the_next_app_focused() {
 /// The hotkey fires while the target app is focused, so it binds immediately.
 #[test]
 fn a_hotkey_toggle_binds_to_the_focused_app() {
-    // The list has to be non-empty for the auto-switch to run at all — otherwise
-    // rule 3 no-ops and a remembered override has nothing to override.
-    let mut state = shell_with(Settings {
-        excluded_apps: vec![app("chrome.exe")],
-        ..Settings::default()
-    });
-    state.note_foreground("code.exe".into(), "code".into());
+    let mut state = shell();
+    state.note_foreground("code.exe".into());
 
-    // code.exe is not excluded, so it runs Vietnamese until the hotkey turns it off.
-    assert!(!state.toggle_enabled_hotkey());
-    // Another non-excluded app switches Vietnamese back on…
+    assert!(!state.toggle_enabled_hotkey(), "hotkey turned it off");
+    // An app with its own remembered choice still switches…
+    state.remember("notepad.exe", true);
     assert_eq!(state.apply_for_app("notepad.exe"), Some(true));
     // …and returning to code.exe honours the manual choice made there.
     assert_eq!(state.apply_for_app("code.exe"), Some(false), "remembered");
 }
 
 #[test]
-fn a_hotkey_toggle_clears_a_parked_tray_toggle() {
+fn a_hotkey_toggle_clears_a_parked_flyout_toggle() {
     let mut state = shell();
-    state.toggle_enabled(); // tray: parks "off"
-    state.note_foreground("code.exe".into(), "code".into());
+    state.set_enabled(false); // flyout: parks "off"
+    state.note_foreground("code.exe".into());
     state.toggle_enabled_hotkey(); // back on, and binds to code.exe
 
-    // The parked choice is gone, so a fresh app follows the list default (none).
+    // The parked choice is gone, so a fresh app has nothing to bind and nothing
+    // remembered — it is left alone.
     assert_eq!(state.apply_for_app("notepad.exe"), None);
     assert!(state.enabled());
+    assert!(!state.settings().app_language_memory.contains_key("notepad.exe"));
 }
 
-// --- recent apps -----------------------------------------------------------
+/// A parked choice that happens to match the current state still has to be
+/// written down, or it is lost the moment focus moves on.
+#[test]
+fn a_parked_choice_is_remembered_even_when_the_state_does_not_flip() {
+    let mut state = shell();
+    state.set_enabled(true); // Settings window: parks "on", state already on
+    assert_eq!(state.apply_for_app("code.exe"), None, "nothing to flip");
+    assert_eq!(state.settings().app_language_memory.get("code.exe"), Some(&true));
+}
+
+/// The Settings window and the Control Center are their own processes, so the
+/// choice they parked died with them. Picking their file up has to re-park it.
+#[test]
+fn a_flip_written_by_another_process_binds_to_the_next_app() {
+    let dir = std::env::temp_dir().join(format!("funput-reload-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("settings.json");
+
+    let mut background = ShellState::new(Some(path.clone()));
+    // Stand in for the child process: flip VI off and persist.
+    let mut child = ShellState::new(Some(path.clone()));
+    child.set_enabled(false);
+
+    assert!(background.reload_settings());
+    assert_eq!(background.apply_for_app("code.exe"), None, "already off");
+    assert_eq!(
+        background.settings().app_language_memory.get("code.exe"),
+        Some(&false),
+        "the flyout's choice bound to the app the user returned to"
+    );
+    let _ = std::fs::remove_dir_all(dir);
+}
 
 #[test]
-fn recent_apps_are_deduped_most_recent_first_and_capped() {
-    let mut state = shell();
-    for i in 0..RECENT_CAP + 5 {
-        state.note_foreground(format!("app{i}.exe"), format!("app{i}"));
-    }
-    assert_eq!(state.recent_apps().len(), RECENT_CAP);
-    assert_eq!(state.foreground_id(), Some("app16.exe"));
+fn a_remembered_choice_survives_a_restart() {
+    let dir = std::env::temp_dir().join(format!("funput-memory-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("settings.json");
 
-    state.note_foreground("app16.exe".into(), "app16".into());
+    let mut state = ShellState::new(Some(path.clone()));
+    state.note_foreground("code.exe".into());
+    state.toggle_enabled_hotkey(); // code.exe → English
+
+    let mut reopened = ShellState::new(Some(path));
     assert_eq!(
-        state.recent_apps().len(),
-        RECENT_CAP,
-        "deduped, not appended"
+        reopened.settings().app_language_memory.get("code.exe"),
+        Some(&false)
     );
+    // The global toggle reloads as English too, so drive it back on through an
+    // app remembered as Vietnamese and check code.exe still pulls it down.
+    reopened.remember("notepad.exe", true);
+    assert_eq!(reopened.apply_for_app("notepad.exe"), Some(true));
+    assert_eq!(reopened.apply_for_app("code.exe"), Some(false), "replayed");
+    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
 fn an_empty_app_id_is_ignored() {
     let mut state = shell();
-    state.note_foreground(String::new(), "ghost".into());
-    assert!(state.recent_apps().is_empty());
+    state.note_foreground(String::new());
     assert_eq!(state.foreground_id(), None);
+
+    state.set_enabled(false); // parks a choice with nowhere to land
+    assert_eq!(state.apply_for_app(""), None);
+    assert!(state.settings().app_language_memory.is_empty());
 }
 
 // --- composition lifecycle -------------------------------------------------

@@ -6,7 +6,7 @@
 #[cfg(not(windows))]
 compile_error!("funput-windows builds only on Windows (global keyboard hook + SendInput).");
 
-// Slint-generated components (SettingsWindow, OnboardingWindow, AppEntry).
+// Slint-generated components (SettingsWindow, OnboardingWindow, ShortcutEntry).
 slint::include_modules!();
 
 // Grouped by which of the two programs in this executable runs the code: the

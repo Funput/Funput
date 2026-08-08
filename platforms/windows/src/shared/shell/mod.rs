@@ -14,7 +14,6 @@ mod settings;
 
 use std::sync::{Mutex, OnceLock};
 
-use funput_config::ExcludedApp;
 use funput_desktop::{ImeResult, KeySource, ShellState};
 
 use crate::shared::settings_path;
@@ -71,8 +70,8 @@ pub fn arm_capitalization() {
 pub fn clear() {
     with(|s| s.clear());
 }
-pub fn note_foreground(id: String, name: String) {
-    with(|s| s.note_foreground(id, name));
+pub fn note_foreground(id: String) {
+    with(|s| s.note_foreground(id));
 }
 pub fn apply_for_app(id: &str) -> Option<bool> {
     with(|s| s.apply_for_app(id))
@@ -80,8 +79,4 @@ pub fn apply_for_app(id: &str) -> Option<bool> {
 /// Flip VI/EN from the keyboard hotkey; returns the new state.
 pub fn toggle_enabled_hotkey() -> bool {
     with(|s| s.toggle_enabled_hotkey())
-}
-/// Seed a UI child with the background process's runtime-only recent-app list.
-pub fn seed_recent_apps(apps: Vec<ExcludedApp>) {
-    with(|s| s.set_recent_apps(apps));
 }

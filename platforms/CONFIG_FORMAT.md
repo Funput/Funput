@@ -17,8 +17,8 @@ one machine imports on another. macOS is the first implementation
     matching trigger and new triggers are appended. Nothing is removed.
   - Supported `preferences` overwrite the matching setting. Missing or unsupported
     enum values leave the existing local preference untouched.
-  - `platform.<current>` hotkeys apply only when present; `excludedApps`
-    (Windows, Linux) and `appLanguageMemory` (macOS) are unioned by id/key —
+  - `platform.<current>` hotkeys apply only when present; `appLanguageMemory`
+    (macOS, Windows) and `excludedApps` (Linux) are unioned by key/id —
     existing entries win.
 - **Forward compatible.** Unknown keys are ignored. Missing optional fields are
   skipped. A file whose top-level `schema` differs from `app.funput.config` is
@@ -92,7 +92,7 @@ and identifies apps by exe name, so its block differs from macOS:
     },
     "flipHotkey": "off",
     "flipCombo": null,
-    "excludedApps": [ { "id": "code.exe", "name": "VS Code" } ]
+    "appLanguageMemory": { "code.exe": false }
   }
 }
 ```
@@ -103,7 +103,8 @@ and identifies apps by exe name, so its block differs from macOS:
 | `toggleCombo` | Optional recorded combo `{ vk, ctrl, alt, shift, win, label }`; when present, overrides `toggleHotkey`. |
 | `flipHotkey` | Preset id: `off` \| `ctrl_shift_z` \| `ctrl_shift_x`. |
 | `flipCombo` | Optional recorded combo; when present, overrides `flipHotkey`. |
-| `excludedApps[]` | `{ id (lowercased exe name), name }`. Unioned by `id`. |
+| `appLanguageMemory` | `{ lowercased exe name: rememberedIsVietnamese }`. Windows-only per-app VI/EN memory; merged by key, existing entries win. |
+| `excludedApps[]` | **Legacy, read-only.** `{ id (lowercased exe name), name }` from the removed "always English" list. Only decoded from older exports (no longer written); each `id` is migrated into `appLanguageMemory` as English. |
 
 `vk` is the Win32 virtual-key captured using the user's active keyboard layout;
 `label` is persisted for display. These fields are Windows-only and are applied

@@ -19,7 +19,7 @@ const FULL: &str = r#"{
   "flipCombo": { "vk": 88, "ctrl": true, "alt": true, "shift": false, "win": false, "label": "X" },
   "launchAtLogin": true,
   "hasCompletedOnboarding": true,
-  "excludedApps": [{ "id": "code.exe", "name": "VS Code" }],
+  "appLanguageMemory": { "code.exe": false, "notepad.exe": true },
   "shortcuts": [{ "trigger": "vn", "expansion": "Việt Nam" }]
 }"#;
 
@@ -40,7 +40,8 @@ fn reads_every_field_of_a_full_file() {
     assert_eq!(s.flip_combo.as_ref().map(|c| c.label.as_str()), Some("X"));
     assert!(s.launch_at_login);
     assert!(s.has_completed_onboarding);
-    assert_eq!(s.excluded_apps[0].id, "code.exe");
+    assert_eq!(s.app_language_memory.get("code.exe"), Some(&false));
+    assert_eq!(s.app_language_memory.get("notepad.exe"), Some(&true));
     assert_eq!(s.shortcuts[0].expansion, "Việt Nam");
 }
 
@@ -69,7 +70,7 @@ fn serializes_with_the_documented_key_names() {
         "\"flipHotkey\"",
         "\"launchAtLogin\"",
         "\"hasCompletedOnboarding\"",
-        "\"excludedApps\"",
+        "\"appLanguageMemory\"",
         "\"shortcuts\"",
     ] {
         assert!(json.contains(key), "missing {key} in {json}");
@@ -77,6 +78,8 @@ fn serializes_with_the_documented_key_names() {
     // Absent combos are omitted, not written as null (`skip_serializing_if`).
     assert!(!json.contains("toggleCombo"), "{json}");
     assert!(!json.contains("flipCombo"), "{json}");
+    // The exclusion list is decode-only now — reading it must not write it back.
+    assert!(!json.contains("excludedApps"), "{json}");
 }
 
 /// Every optional field carries `#[serde(default)]`, so a file from a build that
@@ -99,6 +102,6 @@ fn a_minimal_legacy_file_falls_back_to_defaults() {
     assert!(!s.auto_capitalize);
     assert_eq!(s.flip_hotkey, FlipHotkey::Off);
     assert!(s.toggle_combo.is_none());
-    assert!(s.excluded_apps.is_empty());
+    assert!(s.app_language_memory.is_empty());
     assert!(s.shortcuts.is_empty());
 }
