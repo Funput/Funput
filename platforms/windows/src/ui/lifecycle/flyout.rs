@@ -86,7 +86,6 @@ pub(crate) fn reap_ui_child() {
     }
     match code {
         control_center::EXIT_SETTINGS => launch_settings_tab("overview", false),
-        control_center::EXIT_SHORTCUTS => launch_settings_tab("shortcuts", false),
         control_center::EXIT_KEYBOARD => launch_settings_tab("keyboard", false),
         _ => {}
     }

@@ -67,11 +67,11 @@ export component CcTiles {
     in property <string> method-label;
     in property <bool> spell-check;
     in property <bool> auto-capitalize;
-    in property <int> shortcut-count;
+    in property <bool> smart-restore;
     callback cycle-method();
     callback toggle-spell();
     callback toggle-cap();
-    callback open-shortcuts();
+    callback toggle-restore();
 
     // One gap value drives both the layout spacing and the half-width maths, so
     // the columns cannot drift out of sync when the rhythm is retuned.
@@ -106,11 +106,11 @@ export component CcTiles {
             spacing: root.gap;
             BigTile {
                 width: root.tile-w;
-                icon: @image-url("../icons/nav/primary/shortcut.svg");
-                title: "Gõ tắt";
-                subtitle: root.shortcut-count + " mục";
-                emphasized: root.shortcut-count > 0;
-                clicked => { root.open-shortcuts(); }
+                icon: @image-url("../icons/row/restore.svg");
+                title: "Khôi phục tiếng Anh";
+                subtitle: root.smart-restore ? "Đang bật" : "Đang tắt";
+                emphasized: root.smart-restore;
+                clicked => { root.toggle-restore(); }
             }
             BigTile {
                 width: root.tile-w;

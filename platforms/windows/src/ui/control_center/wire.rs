@@ -8,7 +8,7 @@ use funput_config::ToneStyle;
 
 use super::{
     cycle_method, method_label, request_exit, status_line, tone_label, EXIT_DISMISS, EXIT_KEYBOARD,
-    EXIT_SETTINGS, EXIT_SHORTCUTS,
+    EXIT_SETTINGS,
 };
 
 pub(super) fn attach(window: &ControlCenterWindow) {
@@ -50,6 +50,15 @@ pub(super) fn attach(window: &ControlCenterWindow) {
     });
 
     let weak = window.as_weak();
+    window.on_toggle_restore(move || {
+        let on = !shell::snapshot().smart_restore;
+        commands::set_smart_restore(on);
+        if let Some(w) = weak.upgrade() {
+            w.set_smart_restore(on);
+        }
+    });
+
+    let weak = window.as_weak();
     window.on_cycle_tone(move || {
         let next = match shell::snapshot().tone_style {
             ToneStyle::Traditional => ToneStyle::Modern,
@@ -61,7 +70,6 @@ pub(super) fn attach(window: &ControlCenterWindow) {
         }
     });
 
-    window.on_open_shortcuts(|| request_exit(EXIT_SHORTCUTS));
     window.on_open_keyboard(|| request_exit(EXIT_KEYBOARD));
     window.on_open_settings(|| request_exit(EXIT_SETTINGS));
     window.on_dismiss(|| request_exit(EXIT_DISMISS));
