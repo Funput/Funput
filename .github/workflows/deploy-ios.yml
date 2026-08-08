@@ -191,7 +191,12 @@ jobs:
             exit 1
           fi
           # Hand the trimmed values to the later steps rather than re-reading the raw
-          # secrets there.
+          # secrets there — but mask them first. GitHub redacts the exact secret string
+          # it was given; a trimmed value is a different string, so without this it
+          # would appear in clear text in the environment block every later step
+          # prints. On a public repository those logs are readable by anyone.
+          echo "::add-mask::$ASC_KEY_ID"
+          echo "::add-mask::$ASC_ISSUER_ID"
           echo "ASC_KEY_ID=$ASC_KEY_ID" >> "$GITHUB_ENV"
           echo "ASC_ISSUER_ID=$ASC_ISSUER_ID" >> "$GITHUB_ENV"
           # Shapes, not values: a key id is 10 characters, an issuer id a 36-character
@@ -256,6 +261,7 @@ jobs:
         if: always()
         run: |
           rm -rf "$HOME/.appstoreconnect/private_keys"
+          rm -f "$RUNNER_TEMP"/*.mobileprovision "$RUNNER_TEMP/ios-cert.p12"
           security delete-keychain "$RUNNER_TEMP/funput-ios.keychain-db" || true
 
       - name: Summary
