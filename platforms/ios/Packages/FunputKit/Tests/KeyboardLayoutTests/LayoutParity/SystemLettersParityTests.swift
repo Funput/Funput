@@ -35,14 +35,22 @@ struct SystemLettersParityTests {
         let keys = SystemKeyboardLayouts.letters(method).rows.last?.keys ?? []
         #expect(keys.map(\.label) == ["123", "", "Tiếng Việt", ""])
         #expect(keys.map(\.role) == [.symbols, .emoji, .space, .enter])
-        #expect(keys.map(\.widthWeight) == [1.7, 1.5, 4.65, 3.35])
-        // Matching `standardActionRow`'s total keeps a unit of weight worth the same
-        // width in both presets, so the switch key lines up with the Funput one.
+        // Compared with a tolerance: the spacebar and enter weights are derived, so an
+        // exact literal match fails on the last binary digit.
+        #expect(Self.matches(keys.map(\.widthWeight), [1.4, 1.4, 5.45, 2.95]))
+        // The row totals what `standardActionRow` does, so a unit of weight buys the same
+        // width in both presets and these numbers stay comparable across them.
         #expect(abs(keys.map(\.widthWeight).reduce(0, +) - 11.2) < 0.001)
         // Enter spans the switch and emoji keys plus the gap between them, which is what
         // puts the spacebar in the middle. See `centredSpacebar`.
         #expect(keys[3].widthWeight > keys[0].widthWeight + keys[1].widthWeight)
         #expect(keys[2].horizontalSwipeAction == .toggleLanguage)
+    }
+
+    /// Shared by the action-row weight checks; see the comment at the first call site.
+    static func matches(_ weights: [CGFloat], _ expected: [CGFloat]) -> Bool {
+        weights.count == expected.count
+            && zip(weights, expected).allSatisfy { abs($0 - $1) < 0.001 }
     }
 
     @Test("The spacebar sits centred on screen", arguments: [320.0, 390.0, 430.0])

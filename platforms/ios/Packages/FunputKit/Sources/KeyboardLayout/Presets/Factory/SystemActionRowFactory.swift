@@ -10,21 +10,24 @@ import Foundation
 /// of weight buys on a 390pt phone. It varies by a fraction of a point across device
 /// widths, which is far below what an eye or a thumb can tell.
 enum SystemActionRowWeights {
-    static let `switch`: CGFloat = 1.7
-    static let emoji: CGFloat = 1.5
+    /// The switch and emoji keys are equal and deliberately narrow: they are icon and
+    /// short-label keys that are rarely hit, and every point they give up goes to the
+    /// spacebar, which is the largest target on the keyboard on the stock layout too.
+    static let `switch`: CGFloat = 1.4
+    static let emoji: CGFloat = `switch`
     private static let gap: CGFloat = 0.15
 
     static let enter = `switch` + emoji + gap
     /// The row still totals 11.2, matching `standardActionRow`, so a unit of weight buys
-    /// the same width in both presets and the switch key keeps the width it has there.
+    /// the same width in both presets and the two remain comparable.
     static let space = 11.2 - `switch` - emoji - enter
 }
 
 /// The emoji key the system preset places in its action row.
 ///
-/// It sits between a letter key and the switch key in width — an icon key as narrow as
-/// a letter reads as a mis-tap target. The toolbar hides its own emoji button while this
-/// key is present, so the two never appear at once; the roles route identically either way.
+/// It matches the switch key beside it, as on the stock keyboard. The toolbar hides its
+/// own emoji button while this key is present, so the two never appear at once; the
+/// roles route identically either way.
 func systemEmojiKey(page: String) -> KeySpec {
     specialKey(
         "emoji-\(page)",
