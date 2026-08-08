@@ -112,9 +112,22 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$HOME/.appstoreconnect/private_keys"
-          echo "$ASC_API_KEY_P8" | base64 --decode \
-            > "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
-          chmod 600 "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
+          KEY="$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
+          # Take the secret either way: base64 of the .p8, or the .p8 text pasted
+          # straight in. Both are things a person reasonably ends up with.
+          if printf '%s' "$ASC_API_KEY_P8" | grep -q "BEGIN PRIVATE KEY"; then
+            printf '%s\n' "$ASC_API_KEY_P8" > "$KEY"
+          else
+            printf '%s' "$ASC_API_KEY_P8" | base64 --decode > "$KEY"
+          fi
+          chmod 600 "$KEY"
+          # macOS base64 drops characters it does not recognise and still exits 0, so
+          # a wrong secret decodes to garbage and only surfaces later as xcodebuild's
+          # "Invalid authentication key credential". Check the shape here instead.
+          if ! head -n 1 "$KEY" | grep -q "BEGIN PRIVATE KEY"; then
+            echo "::error::ASC_API_KEY_P8 is not an App Store Connect .p8 key. Set it to the file's contents, or to its base64: base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy"
+            exit 1
+          fi
 
       # A re-run keeps the same run number, which is what we want: a failed upload
       # never consumed a build number, so reusing it is correct.
