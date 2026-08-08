@@ -160,6 +160,11 @@ jobs:
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
         run: |
           set -euo pipefail
+          # A secret pasted with a stray newline or space produces a bearer token Apple
+          # rejects, and the only symptom is a flat 401. Trim before anything uses the
+          # values — the key file is named after the key id.
+          ASC_KEY_ID="$(printf '%s' "$ASC_KEY_ID" | tr -d '[:space:]')"
+          ASC_ISSUER_ID="$(printf '%s' "$ASC_ISSUER_ID" | tr -d '[:space:]')"
           mkdir -p "$HOME/.appstoreconnect/private_keys"
           KEY="$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
           # Take the secret either way: base64 of the .p8, or the .p8 text pasted
@@ -185,9 +190,22 @@ jobs:
             echo "::error::ASC_API_KEY_P8 decoded to something that is not a usable private key — most likely its line breaks were lost on the way into the secret. Re-add it with: base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy"
             exit 1
           fi
-          # Lengths only — a key id is 10 characters and an issuer id is a 36-character
-          # UUID. Anything else is the 401, and this says so without printing either.
-          echo "API key parses. Key id: ${#ASC_KEY_ID} chars (expect 10). Issuer id: ${#ASC_ISSUER_ID} chars (expect 36)."
+          # Hand the trimmed values to the later steps rather than re-reading the raw
+          # secrets there.
+          echo "ASC_KEY_ID=$ASC_KEY_ID" >> "$GITHUB_ENV"
+          echo "ASC_ISSUER_ID=$ASC_ISSUER_ID" >> "$GITHUB_ENV"
+          # Shapes, not values: a key id is 10 characters, an issuer id a 36-character
+          # UUID. Checking them here turns the most common cause of that 401 into a
+          # message that names it, and costs nothing when they are right.
+          if [ "${#ASC_KEY_ID}" -ne 10 ]; then
+            echo "::error::ASC_KEY_ID is ${#ASC_KEY_ID} characters; a key id is 10. It is the XXXXXXXXXX in AuthKey_XXXXXXXXXX.p8."
+            exit 1
+          fi
+          if [ "${#ASC_ISSUER_ID}" -ne 36 ]; then
+            echo "::error::ASC_ISSUER_ID is ${#ASC_ISSUER_ID} characters; an issuer id is a 36-character UUID shown above the key table in App Store Connect -> Users and Access -> Integrations. It is not the key id and not the team id."
+            exit 1
+          fi
+          echo "API key parses; key id and issuer id are the right shape."
 
       # A re-run keeps the same run number, which is what we want: a failed upload
       # never consumed a build number, so reusing it is correct.
@@ -196,8 +214,6 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
           RUN_NUMBER: ${{ github.run_number }}
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           BUILD=$(( IOS_BUILD_OFFSET + RUN_NUMBER ))
           echo "Marketing version $VERSION, build $BUILD"
@@ -207,9 +223,6 @@ jobs:
       # Apple has already seen — in seconds, before pushing the whole binary.
       - name: Validate with Apple
         working-directory: platforms/ios
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           xcrun altool --validate-app -f build/release/export/Funput.ipa -t ios \
             --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
@@ -217,9 +230,6 @@ jobs:
       - name: Upload to App Store Connect
         if: ${{ !inputs.dry_run }}
         working-directory: platforms/ios
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           xcrun altool --upload-app -f build/release/export/Funput.ipa -t ios \
             --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
