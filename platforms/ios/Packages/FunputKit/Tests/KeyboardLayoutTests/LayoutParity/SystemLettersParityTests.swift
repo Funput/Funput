@@ -1,3 +1,4 @@
+import CoreGraphics
 import KeyboardLayout
 import Testing
 
@@ -34,11 +35,29 @@ struct SystemLettersParityTests {
         let keys = SystemKeyboardLayouts.letters(method).rows.last?.keys ?? []
         #expect(keys.map(\.label) == ["123", "", "Tiếng Việt", ""])
         #expect(keys.map(\.role) == [.symbols, .emoji, .space, .enter])
-        #expect(keys.map(\.widthWeight) == [1.7, 1.7, 6.1, 1.7])
-        // Matching `standardActionRow`'s total keeps the switch and enter keys the same
-        // width in both presets; the comma and period width goes to the spacebar.
-        #expect(keys.map(\.widthWeight).reduce(0, +) == 11.2)
+        #expect(keys.map(\.widthWeight) == [1.7, 1.5, 4.65, 3.35])
+        // Matching `standardActionRow`'s total keeps a unit of weight worth the same
+        // width in both presets, so the switch key lines up with the Funput one.
+        #expect(abs(keys.map(\.widthWeight).reduce(0, +) - 11.2) < 0.001)
+        // Enter spans the switch and emoji keys plus the gap between them, which is what
+        // puts the spacebar in the middle. See `centredSpacebar`.
+        #expect(keys[3].widthWeight > keys[0].widthWeight + keys[1].widthWeight)
         #expect(keys[2].horizontalSwipeAction == .toggleLanguage)
+    }
+
+    @Test("The spacebar sits centred on screen", arguments: [320.0, 390.0, 430.0])
+    func centredSpacebar(width: Double) {
+        // The point of the enter key's width: two keys and two gaps sit left of the
+        // spacebar but only one key and one gap right of it, so without the correction
+        // the spacebar drifts left of centre — the thing that reads as "not iOS".
+        let layout = SystemKeyboardLayouts.letters(.vni)
+        let resolved = KeyboardGeometry.resolve(
+            layout: layout,
+            size: CGSize(width: width, height: 304),
+            sizing: .default
+        )
+        let space = resolved.rows.last?.first { $0.spec.role == .space }?.frame ?? .zero
+        #expect(abs(space.midX - width / 2) <= 1)
     }
 
     @Test("Telex hints survive the preset", arguments: [KeyboardInputMethod.telex, .telexAdvanced])
