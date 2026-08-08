@@ -123,6 +123,8 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
           RUN_NUMBER: ${{ github.run_number }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           BUILD=$(( IOS_BUILD_OFFSET + RUN_NUMBER ))
           echo "Marketing version $VERSION, build $BUILD"

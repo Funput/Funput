@@ -17,6 +17,13 @@ CONFIGURATION="${CONFIGURATION:-Release}"
 SCHEME="${SCHEME:-Funput}"
 TEAM_ID="${TEAM_ID:-RSARFZ5CD3}"
 VERSION="${VERSION:-}"
+# App Store Connect API key, for `-allowProvisioningUpdates` to fetch or create the
+# signing assets. Unlike altool, xcodebuild does not look in
+# ~/.appstoreconnect/private_keys on its own — the flags have to be passed. Left
+# unset (a Mac with Xcode signed in), it uses the logged-in account instead.
+ASC_KEY_ID="${ASC_KEY_ID:-}"
+ASC_ISSUER_ID="${ASC_ISSUER_ID:-}"
+ASC_KEY_PATH="${ASC_KEY_PATH:-$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8}"
 # Defaulting to VERSION keeps a bare `VERSION=... ./release-ios.sh` self-consistent;
 # CI passes both separately.
 BUILD="${BUILD:-$VERSION}"
@@ -32,6 +39,17 @@ EXPORT_OPTIONS="$OUT/ExportOptions.plist"
 
 rm -rf "$ARCHIVE" "$EXPORT"
 mkdir -p "$OUT"
+
+run_xcodebuild() {
+    if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -f "$ASC_KEY_PATH" ]; then
+        xcodebuild "$@" \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+    else
+        xcodebuild "$@"
+    fi
+}
 
 # The Release scheme pre-action builds this too, but doing it up front fails with
 # a readable error instead of a missing-framework link error. cargo caches, so the
@@ -53,7 +71,7 @@ fi
 if [ -n "$BUILD" ]; then
     set -- "$@" "CURRENT_PROJECT_VERSION=$BUILD"
 fi
-xcodebuild archive "$@"
+run_xcodebuild archive "$@"
 
 # manageAppVersionAndBuildNumber stays false: left on, Xcode picks its own build
 # number at export time and the .ipa stops matching the project.
@@ -71,7 +89,7 @@ cat >"$EXPORT_OPTIONS" <<EOF
 </plist>
 EOF
 
-xcodebuild -exportArchive \
+run_xcodebuild -exportArchive \
     -archivePath "$ARCHIVE" \
     -exportPath "$EXPORT" \
     -exportOptionsPlist "$EXPORT_OPTIONS" \
