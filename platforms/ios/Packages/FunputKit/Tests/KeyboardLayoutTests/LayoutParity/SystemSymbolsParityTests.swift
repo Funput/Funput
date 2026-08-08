@@ -57,7 +57,7 @@ struct SystemSymbolsParityTests {
             let keys = layout.rows.last?.keys ?? []
             #expect(keys.map(\.label) == ["ABC", "", "Tiếng Việt", ""])
             #expect(keys.map(\.role) == [.letters, .emoji, .space, .enter])
-            #expect(keys.map(\.widthWeight) == [1.7, 1, 6.8, 1.7])
+            #expect(keys.map(\.widthWeight) == [1.7, 1.7, 6.1, 1.7])
             #expect(layout.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
         }
     }

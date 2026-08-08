@@ -2,14 +2,16 @@ import Foundation
 
 /// The emoji key the system preset places in its action row.
 ///
-/// The toolbar keeps its own emoji button, so this key is a second way to reach the
-/// same panel. Both are routed by role in the keyboard extension, which is why no
-/// controller change is needed — but the two must not read alike to VoiceOver.
+/// It carries the same weight as the switch key beside it, which is how the stock
+/// keyboard sizes it — an icon key at the width of a letter reads as a mis-tap target.
+/// The toolbar hides its own emoji button while this key is present, so the two never
+/// appear at once; the roles are routed identically either way.
 func systemEmojiKey(page: String) -> KeySpec {
     specialKey(
         "emoji-\(page)",
         "",
         .emoji,
+        weight: 1.7,
         accessibilityLabel: "Mở bảng biểu tượng cảm xúc"
     )
 }
@@ -35,7 +37,7 @@ func systemActionRow(
             accessibilityLabel: switchAccessibility
         ),
         systemEmojiKey(page: page),
-        standardSpaceKey(weight: 6.8),
+        standardSpaceKey(weight: 6.1),
         specialKey("enter-\(page)", "", .enter, weight: 1.7, accessibilityLabel: "Enter"),
     ])
 }

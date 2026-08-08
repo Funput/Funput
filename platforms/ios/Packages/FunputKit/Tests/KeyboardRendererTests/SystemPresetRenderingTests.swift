@@ -17,6 +17,38 @@ struct SystemPresetRenderingTests {
         #expect(KeyboardKeyContentStyle.icon(for: .emoji, shiftState: .lowercase) != nil)
     }
 
+    @Test("The toolbar drops its emoji button when a row provides one")
+    func toolbarYieldsToTheRowEmojiKey() {
+        let system = surface(for: SystemKeyboardLayouts.letters(.vni))
+        #expect(!emojiLabels(in: system).contains { $0 == "Biểu tượng cảm xúc" })
+        #expect(emojiLabels(in: system) == ["Mở bảng biểu tượng cảm xúc"])
+
+        // The Funput preset has no row emoji key, so its toolbar button stays.
+        let funput = surface(for: StandardKeyboardLayouts.letters(.vni))
+        #expect(emojiLabels(in: funput) == ["Biểu tượng cảm xúc"])
+    }
+
+    private func surface(for layout: KeyboardLayout) -> KeyboardSurfaceView {
+        let surface = KeyboardSurfaceView(presentation: KeyboardPresentation(layout: layout))
+        surface.frame = CGRect(x: 0, y: 0, width: 390, height: 304)
+        surface.layoutIfNeeded()
+        return surface
+    }
+
+    /// Accessibility labels of every visible control that opens the emoji panel,
+    /// wherever it lives — toolbar button or keycap.
+    private func emojiLabels(in view: UIView) -> [String] {
+        var labels: [String] = []
+        for subview in view.subviews where !subview.isHidden {
+            if let label = subview.accessibilityLabel, label.contains("biểu tượng cảm xúc")
+                || label.contains("Biểu tượng cảm xúc") {
+                labels.append(label)
+            }
+            labels.append(contentsOf: emojiLabels(in: subview))
+        }
+        return labels
+    }
+
     @Test("Symbol pages are shorter than the letters page when the number row shows")
     func symbolPagesAreShorter() {
         // Deliberate deviation from the stock keyboard, which keeps one height and

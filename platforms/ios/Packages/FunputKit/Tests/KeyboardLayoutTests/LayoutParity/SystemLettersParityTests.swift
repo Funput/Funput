@@ -34,7 +34,7 @@ struct SystemLettersParityTests {
         let keys = SystemKeyboardLayouts.letters(method).rows.last?.keys ?? []
         #expect(keys.map(\.label) == ["123", "", "Tiếng Việt", ""])
         #expect(keys.map(\.role) == [.symbols, .emoji, .space, .enter])
-        #expect(keys.map(\.widthWeight) == [1.7, 1, 6.8, 1.7])
+        #expect(keys.map(\.widthWeight) == [1.7, 1.7, 6.1, 1.7])
         // Matching `standardActionRow`'s total keeps the switch and enter keys the same
         // width in both presets; the comma and period width goes to the spacebar.
         #expect(keys.map(\.widthWeight).reduce(0, +) == 11.2)
@@ -55,8 +55,10 @@ struct SystemLettersParityTests {
         let layout = SystemKeyboardLayouts.letters(method)
         let rowEmoji = layout.rows.flatMap(\.keys).filter { $0.role == .emoji }
         #expect(rowEmoji.count == 1)
+        // The spec still carries a toolbar emoji key; the renderer hides its button
+        // while a row provides one. The labels stay distinct so the two never read
+        // alike should both ever be on screen.
         #expect(layout.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
-        // Two ways to the same panel is fine; two identical VoiceOver labels is not.
         let toolbarEmoji = layout.toolbar?.keys.first { $0.role == .emoji }
         #expect(rowEmoji.first?.accessibilityLabel != toolbarEmoji?.accessibilityLabel)
     }
