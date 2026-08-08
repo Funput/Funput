@@ -67,12 +67,12 @@ struct SystemSymbolsParityTests {
     }
 
     @Test("The preset leaves every other editor mode untouched", arguments: KeyboardInputMethod.allCases)
-    func onlyPlainTextIsAffected(method: KeyboardInputMethod) {
-        // Search, email and URL differ from the stock keyboard along axes the preset does
-        // not describe, and the keypads have no row of this shape at all. Password and PIN
+    func onlyTextAndSearchAreAffected(method: KeyboardInputMethod) {
+        // Email and URL differ from the stock keyboard along axes the preset does not
+        // describe, and the keypads have no row of this shape at all. Password and PIN
         // additionally must keep `toolbar: nil`, which is what makes the emoji panel
         // unreachable in a secure field — selecting the preset must not open that door.
-        for editor in KeyboardEditorMode.allCases where editor != .text {
+        for editor in KeyboardEditorMode.allCases where !editor.usesSystemPreset {
             for mode in KeyboardLayoutMode.allCases {
                 for showsNumberRow in [true, false] {
                     let system = KeyboardLayoutResolver.resolve(
