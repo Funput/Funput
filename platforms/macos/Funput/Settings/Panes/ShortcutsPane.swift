@@ -45,7 +45,7 @@ struct ShortcutsPane: View {
 
             Section("Mẹo") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    Text("Trigger khớp đúng chuỗi phím bạn gõ và **phân biệt hoa/thường** — `vn` khác `VN`. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh.")
+                    Text("Trigger tự nhận diện hoa/thường — gõ `vn`, `Vn` hay `VN` đều bung, expansion tự viết hoa tương ứng. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)

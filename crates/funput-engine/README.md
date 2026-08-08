@@ -134,8 +134,13 @@ phục được ngay cả sau khi đã restore.
 
 ## Gõ tắt / Text expansion (macro)
 
-Bảng trigger → expansion do người dùng định nghĩa (`vn` → `Việt Nam`, `kg` → `không`). Tại **ranh
-giới từ**, engine khớp **chuỗi phím thô** (`keys`) — **phân biệt hoa/thường** — với bảng gõ tắt:
+Bảng trigger → expansion do người dùng định nghĩa (`vn` → `việt nam`, `kg` → `không`). Tại **ranh
+giới từ**, engine khớp **chuỗi phím thô** (`keys`) với bảng gõ tắt theo kiểu **smart-case**: gõ
+`vn`/`Vn`/`VN` đều khớp cùng một trigger, và expansion được viết lại hoa/thường tương ứng —
+`vn` → `việt nam`, `Vn` → `Việt Nam` (hoa chữ đầu mỗi từ), `VN` → `VIỆT NAM` (hoa toàn bộ). Kiểu gõ
+hoa/thường "lộn xộn" không khớp 1 trong 3 mẫu trên (ví dụ `vNa`) chỉ được khớp **chính xác** — nhờ
+vậy trigger cố ý viết hoa/thường tuỳ ý (ví dụ `iOS`) vẫn hoạt động đúng như định nghĩa. Xem
+`classify_case`/`apply_shortcut_case` trong `compose/boundary.rs`.
 
 - Trúng → `Send`: xoá phần đang hiển thị (`backspace = buffer.chars().count()`), chèn `expansion +
   phím ranh giới`, rồi `clear()`. Backspace đếm theo buffer hiển thị nên `as` → `á` (1 ký tự) vẫn xoá

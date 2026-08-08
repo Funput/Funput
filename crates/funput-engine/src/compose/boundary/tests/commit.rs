@@ -45,11 +45,25 @@ fn shortcut_wins_and_counts_the_displayed_buffer() {
 }
 
 #[test]
-fn shortcuts_are_case_sensitive_and_keep_punctuation() {
+fn uppercase_trigger_expands_to_uppercase_expansion() {
     let mut upper = session(InputMethod::Telex, "VN", "VN");
-    upper.shortcuts.insert("vn".into(), "Việt Nam".into());
-    assert_eq!(on_word_boundary(&mut upper, ' ').action, Action::None);
+    upper.shortcuts.insert("vn".into(), "việt nam".into());
+    let result = on_word_boundary(&mut upper, ' ');
+    assert_eq!(result.action, Action::Send);
+    assert_eq!(result.output, "VIỆT NAM ");
+}
 
+#[test]
+fn mixed_case_trigger_without_clean_pattern_does_not_expand() {
+    // `vNa` doesn't fit lowercase/Title/UPPERCASE, so it isn't smart-case matched —
+    // and there's no exact `vNa` entry either.
+    let mut mixed = session(InputMethod::Telex, "vNa", "vNa");
+    mixed.shortcuts.insert("vn".into(), "Việt Nam".into());
+    assert_eq!(on_word_boundary(&mut mixed, ' ').action, Action::None);
+}
+
+#[test]
+fn shortcuts_keep_punctuation() {
     let mut punctuated = session(InputMethod::Telex, "kg", "kg");
     punctuated.shortcuts.insert("kg".into(), "không".into());
     assert_eq!(on_word_boundary(&mut punctuated, ',').output, "không,");
