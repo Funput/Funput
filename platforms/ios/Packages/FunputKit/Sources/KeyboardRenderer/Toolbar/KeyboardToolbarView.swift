@@ -9,11 +9,11 @@ final class KeyboardToolbarView: UIView {
     var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
     var onClipboardPaste: ((String) -> Void)?
 
-    let logoView = KeyboardBrandLogoView()
-    let clipboardButton = UIButton(type: .system)
+    private let logoView = KeyboardBrandLogoView()
+    private let clipboardButton = UIButton(type: .system)
     let emojiButton = UIButton(type: .system)
     let suggestionBar = KeyboardSuggestionBarView()
-    let clipboardChip = KeyboardClipboardChipView()
+    private let clipboardChip = KeyboardClipboardChipView()
     private var clipboardHint: KeyboardClipboardHint?
     private var hasSuggestions = false
     private var allowsClipboardKey = true

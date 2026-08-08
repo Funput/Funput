@@ -19,15 +19,17 @@ struct GeometryVariantTests {
     @Test("All system-preset variants stay valid")
     func systemPresetGeometryMatrix() {
         for method in KeyboardInputMethod.allCases {
-            for mode in KeyboardLayoutMode.allCases {
-                for showsNumberRow in [true, false] {
-                    verify(resolve(
-                        method,
-                        mode,
-                        .text,
-                        showsNumberRow: showsNumberRow,
-                        preset: .system
-                    ))
+            for editor in KeyboardEditorMode.allCases where editor.usesSystemPreset {
+                for mode in KeyboardLayoutMode.allCases {
+                    for showsNumberRow in [true, false] {
+                        verify(resolve(
+                            method,
+                            mode,
+                            editor,
+                            showsNumberRow: showsNumberRow,
+                            preset: .system
+                        ))
+                    }
                 }
             }
         }
