@@ -58,7 +58,7 @@ private fun SetupJourneyCard(
             connected = false,
         )
         Spacer(Modifier.height(18.dp))
-        SetupGradientButton(
+        SetupPrimaryButton(
             label = stringResource(
                 if (enabling) R.string.settings_keyboard_setup_enable_action
                 else R.string.settings_keyboard_setup_select_action,

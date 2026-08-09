@@ -37,10 +37,16 @@ internal fun AppNavigationSuite(
         navigationSuiteItems = {
             TopLevelDestination.entries.forEach { tab ->
                 val ui = tab.ui
+                val selected = tab == navigator.currentTab
                 item(
-                    selected = tab == navigator.currentTab,
+                    selected = selected,
                     onClick = { navigator.selectTab(tab) },
-                    icon = { Icon(painterResource(ui.icon), contentDescription = null) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(if (selected) ui.selectedIcon else ui.icon),
+                            contentDescription = null,
+                        )
+                    },
                     label = { Text(stringResource(ui.label)) },
                 )
             }

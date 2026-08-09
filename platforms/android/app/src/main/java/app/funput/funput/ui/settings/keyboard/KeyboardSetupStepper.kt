@@ -36,8 +36,11 @@ internal fun SetupStepRow(index: Int, state: StepState, title: String, connected
                         .width(2.dp)
                         .height(22.dp)
                         .background(
-                            if (state == StepState.DONE) Brush.verticalGradient(BrandSweep)
-                            else solidBrush(MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)),
+                            if (state == StepState.DONE) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.28f)
+                            },
                         ),
                 )
             }
@@ -46,11 +49,9 @@ internal fun SetupStepRow(index: Int, state: StepState, title: String, connected
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
-            color = if (state == StepState.UPCOMING) {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                alpha = if (state == StepState.UPCOMING) 0.7f else 1f,
+            ),
             fontWeight = if (state == StepState.ACTIVE) FontWeight.SemiBold else FontWeight.Normal,
             modifier = Modifier.padding(top = 3.dp),
         )
@@ -67,9 +68,13 @@ internal fun SetupStepBadge(state: StepState, index: Int) {
             .clip(PillShape)
             .then(
                 if (filled) {
-                    Modifier.background(Brush.linearGradient(BrandSweep))
+                    Modifier.background(MaterialTheme.colorScheme.primary)
                 } else {
-                    Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), PillShape)
+                    Modifier.border(
+                        width = 1.5.dp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.4f),
+                        shape = PillShape,
+                    )
                 },
             ),
     ) {
@@ -77,7 +82,7 @@ internal fun SetupStepBadge(state: StepState, index: Int) {
             Icon(
                 painter = painterResource(R.drawable.ic_check),
                 contentDescription = null,
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(16.dp),
             )
         } else {
@@ -85,7 +90,11 @@ internal fun SetupStepBadge(state: StepState, index: Int) {
                 text = index.toString(),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = if (filled) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (filled) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                },
             )
         }
     }

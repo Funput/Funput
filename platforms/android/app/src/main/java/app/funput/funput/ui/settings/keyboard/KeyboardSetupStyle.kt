@@ -25,13 +25,21 @@ internal val BrandSweep = listOf(BrandOrange, BrandPink, BrandPurple, BrandBlue)
 
 internal val KeyboardSetupCardShape = FunputShapes.large
 
-/** Elevated setup container: a brand-tinted wash under a gradient hairline border. */
+/**
+ * The setup container.
+ *
+ * It used to stack three decorations — a raised surface, a brand wash over it, and a rainbow
+ * hairline around that — plus a gradient button and gradient step badges. It was drowned out by
+ * eight saturated icon tiles; once those became tonal it was the only thing left shouting.
+ *
+ * What it needs is to be the one thing on the page asking for attention, and `primaryContainer`
+ * says that in the scheme's own voice — so it follows a wallpaper palette too, which a fixed
+ * rainbow never could.
+ */
 @Composable
 internal fun Modifier.heroCard(): Modifier = fillMaxWidth()
     .clip(KeyboardSetupCardShape)
-    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-    .background(Brush.linearGradient(listOf(BrandPurple.copy(alpha = 0.10f), BrandBlue.copy(alpha = 0.05f))))
-    .border(1.5.dp, Brush.linearGradient(BrandSweep), KeyboardSetupCardShape)
+    .background(MaterialTheme.colorScheme.primaryContainer)
     .padding(18.dp)
 
 /** A flat single-color [Brush], for places that only accept a gradient. */
