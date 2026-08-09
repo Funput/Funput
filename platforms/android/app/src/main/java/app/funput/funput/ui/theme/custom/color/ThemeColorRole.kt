@@ -22,6 +22,14 @@ internal enum class ThemeColorGroup(@StringRes val titleRes: Int) {
 internal enum class ThemeColorRole(
     val group: ThemeColorGroup,
     @StringRes val labelRes: Int,
+    /**
+     * The role this one takes its colour from until somebody sets it apart.
+     *
+     * [KeyboardTheme] already declares these relationships as constructor defaults, and
+     * `withAccent` maintains the accent ones. The editor used to throw that away and present every
+     * token as an independent decision, which is how six real choices looked like twenty.
+     */
+    val follows: ThemeColorRole? = null,
 ) {
     BackgroundStart(ThemeColorGroup.Background, R.string.custom_theme_color_background_start),
     BackgroundEnd(ThemeColorGroup.Background, R.string.custom_theme_color_background_end),
@@ -29,17 +37,21 @@ internal enum class ThemeColorRole(
     SpecialKey(ThemeColorGroup.Keys, R.string.custom_theme_color_special_key),
     KeyBorder(ThemeColorGroup.Keys, R.string.custom_theme_color_key_border),
     PressedKey(ThemeColorGroup.Keys, R.string.custom_theme_color_pressed_key),
-    AccentKey(ThemeColorGroup.Keys, R.string.custom_theme_color_accent_key),
     Label(ThemeColorGroup.Text, R.string.custom_theme_color_label),
-    SpecialLabel(ThemeColorGroup.Text, R.string.custom_theme_color_special_label),
     SecondaryLabel(ThemeColorGroup.Text, R.string.custom_theme_color_secondary_label),
     Accent(ThemeColorGroup.Text, R.string.custom_theme_color_accent),
+    AccentKey(ThemeColorGroup.Keys, R.string.custom_theme_color_accent_key, follows = Accent),
+    SpecialLabel(ThemeColorGroup.Text, R.string.custom_theme_color_special_label, follows = Label),
     AccentLabel(ThemeColorGroup.Text, R.string.custom_theme_color_accent_label),
-    SuggestionHighlight(ThemeColorGroup.Text, R.string.custom_theme_color_suggestion_highlight),
+    SuggestionHighlight(
+        ThemeColorGroup.Text,
+        R.string.custom_theme_color_suggestion_highlight,
+        follows = Accent,
+    ),
     ActivatedKey(ThemeColorGroup.Advanced, R.string.custom_theme_color_activated_key),
     PressedKeyBorder(ThemeColorGroup.Advanced, R.string.custom_theme_color_pressed_key_border),
     ActivatedKeyBorder(ThemeColorGroup.Advanced, R.string.custom_theme_color_activated_key_border),
-    PopupSurface(ThemeColorGroup.Advanced, R.string.custom_theme_color_popup_surface),
+    PopupSurface(ThemeColorGroup.Advanced, R.string.custom_theme_color_popup_surface, follows = Key),
     KeyShadow(ThemeColorGroup.Advanced, R.string.custom_theme_color_key_shadow),
     SuggestionDivider(ThemeColorGroup.Advanced, R.string.custom_theme_color_suggestion_divider),
     PopupShadow(ThemeColorGroup.Advanced, R.string.custom_theme_color_popup_shadow);

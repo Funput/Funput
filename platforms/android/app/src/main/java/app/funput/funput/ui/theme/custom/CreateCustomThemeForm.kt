@@ -31,10 +31,9 @@ internal fun CreateCustomThemeForm(
     contentPadding: PaddingValues,
     editingThemeId: KeyboardThemeId?,
     baseThemes: List<KeyboardThemeDescriptor>,
-    onChooseBackgroundImage: () -> Unit,
+    onOpenBackground: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedTab by rememberSaveable { mutableStateOf(CreateThemeEditorTab.Colors) }
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
 
     Column(
@@ -71,18 +70,7 @@ internal fun CreateCustomThemeForm(
                 expanded = advancedExpanded,
                 onExpandedChange = { advancedExpanded = it },
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    CreateThemeEditorTabs(
-                        selectedTab = selectedTab,
-                        onSelected = { selectedTab = it },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    CreateThemeTabContent(
-                        selectedTab = selectedTab,
-                        state = state,
-                        onChooseBackgroundImage = onChooseBackgroundImage,
-                    )
-                }
+                ThemeAdvancedControls(state = state, onOpenBackground = onOpenBackground)
             }
         }
     }
