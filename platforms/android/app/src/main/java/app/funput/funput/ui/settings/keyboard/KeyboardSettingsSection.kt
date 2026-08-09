@@ -20,6 +20,7 @@ import app.funput.funput.ui.settings.components.SettingsSectionHeader
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
 import app.funput.funput.ui.settings.label
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
+import app.funput.funput.ui.theme.Spacing
 
 @Composable
 internal fun KeyboardSettingsSection(
@@ -35,14 +36,18 @@ internal fun KeyboardSettingsSection(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsSectionHeader(stringResource(R.string.settings_section_keyboard))
+        // The setup card carries its own title and is an alert rather than a section, so it sits
+        // above the heading instead of under one. Two headings in a row — "Bàn phím" and then
+        // "Tùy chỉnh" — were naming the same thing twice.
         KeyboardSetupCard(
             status = setupStatus,
             onEnableKeyboard = onEnableKeyboard,
             onSelectKeyboard = onSelectKeyboard,
         )
-        Spacer(modifier = Modifier.height(14.dp))
-        SettingsSectionHeader(stringResource(R.string.settings_keyboard_customize_heading))
+        if (setupStatus != KeyboardSetupStatus.READY) {
+            Spacer(modifier = Modifier.height(Spacing.Large))
+        }
+        SettingsSectionHeader(stringResource(R.string.settings_section_keyboard))
         SettingsGroup(
             rows = buildList {
                 add { position ->

@@ -23,11 +23,10 @@ internal fun KeyboardSetupCard(
     onSelectKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (status == KeyboardSetupStatus.READY) {
-        SetupReadyCard(modifier)
-    } else {
-        SetupJourneyCard(status, onEnableKeyboard, onSelectKeyboard, modifier)
-    }
+    // Nothing at all once setup is done. What this said then was that there was nothing to do,
+    // which is a banner congratulating the user in perpetuity for something they did once.
+    if (status == KeyboardSetupStatus.READY) return
+    SetupJourneyCard(status, onEnableKeyboard, onSelectKeyboard, modifier)
 }
 
 @Composable
@@ -68,25 +67,3 @@ private fun SetupJourneyCard(
     }
 }
 
-@Composable
-private fun SetupReadyCard(modifier: Modifier = Modifier) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.heroCard(),
-    ) {
-        SetupStepBadge(state = StepState.DONE, index = 0)
-        Spacer(Modifier.width(14.dp))
-        Column {
-            Text(
-                text = stringResource(R.string.settings_keyboard_setup_ready),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = stringResource(R.string.settings_keyboard_setup_ready_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}

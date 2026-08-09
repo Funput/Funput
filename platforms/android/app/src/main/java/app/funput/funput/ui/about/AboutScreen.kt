@@ -1,6 +1,7 @@
 package app.funput.funput.ui.about
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -22,7 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.funput.funput.ui.theme.EntryTracker
 import app.funput.funput.ui.theme.Spacing
+import app.funput.funput.ui.theme.rememberEntryTracker
+import app.funput.funput.ui.theme.staggeredEntry
 import app.funput.funput.R
 import app.funput.funput.ui.settings.components.SettingsLinkRow
 import app.funput.funput.ui.settings.components.SettingsRowContent
@@ -53,6 +57,7 @@ internal fun AboutScreen(
         },
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { padding ->
+        val tracker = rememberEntryTracker()
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(Spacing.Section),
             contentPadding = PaddingValues(
@@ -65,11 +70,15 @@ internal fun AboutScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         ) {
-            item(key = "hero") { AboutHero(versionName) }
-            linkSection("discovery", R.string.about_section_discovery, AboutLinks.discovery, onOpenLink)
-            linkSection("support", R.string.about_section_support, AboutLinks.support, onOpenLink)
-            linkSection("legal", R.string.about_section_privacy, AboutLinks.legal, onOpenLink)
-            item(key = "footer") { AboutFooter() }
+            item(key = "hero") {
+                Box(modifier = Modifier.staggeredEntry(0, tracker)) { AboutHero(versionName) }
+            }
+            linkSection("discovery", R.string.about_section_discovery, AboutLinks.discovery, onOpenLink, 1, tracker)
+            linkSection("support", R.string.about_section_support, AboutLinks.support, onOpenLink, 2, tracker)
+            linkSection("legal", R.string.about_section_privacy, AboutLinks.legal, onOpenLink, 3, tracker)
+            item(key = "footer") {
+                Box(modifier = Modifier.staggeredEntry(4, tracker)) { AboutFooter() }
+            }
         }
     }
 }
@@ -79,10 +88,13 @@ private fun LazyListScope.linkSection(
     titleRes: Int,
     links: List<AboutLink>,
     onOpenLink: (String) -> Unit,
+    index: Int,
+    tracker: EntryTracker,
 ) = item(key = key) {
     SettingsSection(
         title = stringResource(titleRes),
         rows = links.map { link -> linkRow(link, onOpenLink) },
+        modifier = Modifier.staggeredEntry(index, tracker),
     )
 }
 

@@ -49,9 +49,17 @@ internal fun ThemeCard(
     } else {
         MaterialTheme.colorScheme.outline.copy(alpha = 0.24f)
     }
+    // Material separates layers by tone first and shadow second, so the chosen theme takes both a
+    // step up the surface scale and a shadow. A border alone reads as an outline drawn on a flat
+    // list; lifting it says this is the one in use.
     Surface(
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        color = if (selected) {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        },
+        shadowElevation = if (selected) SelectedElevation else 0.dp,
         border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
         modifier = modifier
             .fillMaxWidth()
@@ -103,3 +111,5 @@ private fun KeyboardThemeDescriptor.localizedName(): String = when (id) {
 
 /** Roughly the shape of the real keyboard: full width, a little under half as tall. */
 private const val PreviewAspect = 2.05f
+
+private val SelectedElevation = 3.dp

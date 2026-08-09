@@ -1,6 +1,7 @@
 package app.funput.funput.ui.appearance
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -21,6 +23,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -30,6 +33,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.funput.funput.ui.theme.Spacing
+import app.funput.funput.ui.theme.rememberEntryTracker
+import app.funput.funput.ui.theme.staggeredEntry
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.theme.gallery.DeleteThemeDialog
@@ -40,6 +45,11 @@ import app.funput.funput.ui.theme.gallery.DeleteThemeDialog
 internal fun AppearanceScreen(state: AppearanceScreenState, modifier: Modifier = Modifier) {
     var pendingDelete by remember { mutableStateOf<KeyboardThemeDescriptor?>(null) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val listState = rememberLazyListState()
+    val tracker = rememberEntryTracker()
+    // Extended while the list is still, folded to its icon while it moves. A button wide enough to
+    // read is a button wide enough to cover the name of whatever is scrolling past behind it.
+    val fabExtended by remember { derivedStateOf { !listState.isScrollInProgress } }
     Scaffold(
         topBar = {
             LargeTopAppBar(
@@ -54,6 +64,7 @@ internal fun AppearanceScreen(state: AppearanceScreenState, modifier: Modifier =
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = state.onCreateTheme,
+                expanded = fabExtended,
                 modifier = Modifier.testTag(CreateThemeTag),
                 icon = { Icon(painterResource(R.drawable.ic_add), contentDescription = null) },
                 text = { Text(stringResource(R.string.theme_gallery_create_title)) },
@@ -62,6 +73,7 @@ internal fun AppearanceScreen(state: AppearanceScreenState, modifier: Modifier =
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { padding ->
         LazyColumn(
+            state = listState,
             verticalArrangement = Arrangement.spacedBy(Spacing.Section),
             contentPadding = PaddingValues(
                 start = Spacing.Large,
@@ -76,14 +88,17 @@ internal fun AppearanceScreen(state: AppearanceScreenState, modifier: Modifier =
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         ) {
             item(key = "app") {
+                Box(modifier = Modifier.staggeredEntry(0, tracker)) {
                 AppAppearanceSection(
                     appearanceMode = state.appearanceMode,
                     dynamicColorEnabled = state.dynamicColorEnabled,
                     onAppearanceSelected = state.onAppearanceSelected,
                     onDynamicColorChanged = state.onDynamicColorChanged,
                 )
+                }
             }
             item(key = "keyboard-mode") {
+                Box(modifier = Modifier.staggeredEntry(1, tracker)) {
                 KeyboardModeSection(
                     followsAppearance = state.followsAppearance,
                     activeSlot = state.activeSlot,
@@ -92,6 +107,7 @@ internal fun AppearanceScreen(state: AppearanceScreenState, modifier: Modifier =
                     onFollowsAppearanceChange = state.onFollowsAppearanceChange,
                     onSlotSelected = state.onSlotSelected,
                 )
+                }
             }
             themeSection(
                 key = SystemThemesTag,
