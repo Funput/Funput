@@ -5,6 +5,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
+import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.keyboard.openKeyboardSettings
 import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.settings.SettingsScreen
@@ -20,12 +21,16 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun SettingsRoute(
     settings: FunputSettingsState,
+    keyboardTheme: KeyboardThemeDescriptor,
+    onOpenAppearance: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     SettingsScreen(
         keyboardSetupStatus = rememberKeyboardSetupStatus(),
+        keyboardTheme = keyboardTheme,
+        onOpenAppearance = onOpenAppearance,
         inputMethod = settings.inputMethod,
         showsNumberRow = settings.showsNumberRow,
         toneStyle = settings.toneStyle,

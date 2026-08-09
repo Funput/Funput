@@ -17,6 +17,7 @@ import app.funput.funput.ui.settings.components.SettingsGroup
 import app.funput.funput.ui.settings.components.SettingsIconTone
 import app.funput.funput.ui.settings.components.SettingsRow
 import app.funput.funput.ui.settings.components.SettingsSectionHeader
+import app.funput.funput.ui.settings.components.SettingsSegmentedRow
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
 import app.funput.funput.ui.settings.label
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
@@ -31,6 +32,8 @@ internal fun KeyboardSettingsSection(
     keySizeProfile: KeyboardSizingProfile,
     onOpenPicker: (SettingsPicker) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
+    onToneStyleSelected: (ToneStyle) -> Unit,
+    onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
@@ -75,27 +78,23 @@ internal fun KeyboardSettingsSection(
                         )
                     }
                 }
-                add { position ->
-                    SettingsRow(
-                        position = position,
-                        title = stringResource(R.string.settings_tone_style_title),
-                        value = toneStyle.label(),
-                        iconRes = R.drawable.ic_globe,
-                        tone = SettingsIconTone.Tertiary,
-                        onClick = { onOpenPicker(SettingsPicker.TONE_STYLE) },
-                    )
-                }
-                add { position ->
-                    SettingsRow(
-                        position = position,
-                        title = stringResource(R.string.settings_key_size_title),
-                        value = keySizeProfile.label(),
-                        iconRes = R.drawable.ic_key_size,
-                        tone = SettingsIconTone.Secondary,
-                        onClick = { onOpenPicker(SettingsPicker.KEY_SIZE) },
-                    )
-                }
             },
+        )
+        Spacer(modifier = Modifier.height(Spacing.Section))
+        SettingsSegmentedRow(
+            title = stringResource(R.string.settings_tone_style_title),
+            options = ToneStyle.entries,
+            selected = toneStyle,
+            labelOf = { style -> style.label() },
+            onSelected = onToneStyleSelected,
+        )
+        Spacer(modifier = Modifier.height(Spacing.Section))
+        SettingsSegmentedRow(
+            title = stringResource(R.string.settings_key_size_title),
+            options = KeyboardSizingProfile.Presets,
+            selected = keySizeProfile,
+            labelOf = { profile -> profile.label() },
+            onSelected = onKeySizeSelected,
         )
     }
 }

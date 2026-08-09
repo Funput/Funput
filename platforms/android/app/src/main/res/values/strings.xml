@@ -4,6 +4,7 @@
     <string name="funput_logo_description">Logo Funput</string>
     <string name="settings_title">Cài đặt</string>
     <string name="settings_tagline">Bộ gõ tiếng Việt đa nền tảng - mã nguồn mở</string>
+    <string name="settings_keyboard_hero_hint">Chạm để đổi giao diện bàn phím</string>
     <string name="settings_section_keyboard">Bàn phím</string>
     <string name="settings_section_smart">Gõ thông minh</string>
     <string name="settings_section_appearance">Giao diện</string>

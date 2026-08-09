@@ -14,12 +14,14 @@ import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsScreen(
     keyboardSetupStatus: KeyboardSetupStatus,
+    keyboardTheme: KeyboardThemeDescriptor,
     inputMethod: KeyboardInputMethod,
     showsNumberRow: Boolean,
     toneStyle: ToneStyle,
@@ -31,6 +33,7 @@ internal fun SettingsScreen(
     personalSuggestionsEnabled: Boolean,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
+    onOpenAppearance: () -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
@@ -52,6 +55,7 @@ internal fun SettingsScreen(
         SettingsScreenSections(
             contentPadding = contentPadding,
             keyboardSetupStatus = keyboardSetupStatus,
+            keyboardTheme = keyboardTheme,
             inputMethod = inputMethod,
             showsNumberRow = showsNumberRow,
             toneStyle = toneStyle,
@@ -63,6 +67,9 @@ internal fun SettingsScreen(
             personalSuggestionsEnabled = personalSuggestionsEnabled,
             onOpenPicker = { picker = it },
             onShowsNumberRowChanged = onShowsNumberRowChanged,
+            onOpenAppearance = onOpenAppearance,
+            onToneStyleSelected = onToneStyleSelected,
+            onKeySizeSelected = onKeySizeSelected,
             onHapticsChanged = onHapticsChanged,
             onSoundsChanged = onSoundsChanged,
             onSmartRestoreChanged = onSmartRestoreChanged,

@@ -19,6 +19,7 @@ import app.funput.funput.ui.appearance.AppearanceRoute
 import app.funput.funput.ui.navigation.AppDestination
 import app.funput.funput.ui.navigation.AppNavDisplay
 import app.funput.funput.ui.navigation.AppNavigationSuite
+import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
@@ -57,6 +58,13 @@ fun FunputApp() {
                 when (destination) {
                     AppDestination.SETTINGS -> SettingsRoute(
                         settings = settings,
+                        // The keyboard follows the system appearance rather than the app's own
+                        // light/dark preference, so the hero has to resolve against the system to
+                        // show what the user will actually type on.
+                        keyboardTheme = themeCatalog.resolve(
+                            settings.themeSelection.resolve(isSystemInDarkTheme()),
+                        ),
+                        onOpenAppearance = { navigator.selectTab(TopLevelDestination.APPEARANCE) },
                     )
                     AppDestination.THEME_GALLERY -> AppearanceRoute(
                         settings = settings,

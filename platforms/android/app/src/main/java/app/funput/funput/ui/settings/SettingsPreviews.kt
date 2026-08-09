@@ -7,7 +7,7 @@ import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.theme.KeyboardThemeId
+import app.funput.funput.theme.InstalledThemeRepository
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 import app.funput.funput.ui.theme.FunputTheme
 
@@ -52,6 +52,7 @@ private fun SettingsPreview(
     FunputTheme(appearanceMode = appearanceMode) {
         SettingsScreen(
             keyboardSetupStatus = keyboardSetupStatus,
+            keyboardTheme = InstalledThemeRepository.builtIn().themes.first(),
             inputMethod = KeyboardInputMethod.VNI,
             showsNumberRow = false,
             toneStyle = ToneStyle.TRADITIONAL,
@@ -63,6 +64,7 @@ private fun SettingsPreview(
             personalSuggestionsEnabled = true,
             onInputMethodSelected = {},
             onShowsNumberRowChanged = {},
+            onOpenAppearance = {},
             onToneStyleSelected = {},
             onKeySizeSelected = {},
             onHapticsChanged = {},

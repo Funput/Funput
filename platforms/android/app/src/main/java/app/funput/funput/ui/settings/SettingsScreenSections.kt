@@ -18,6 +18,8 @@ import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.settings.feedback.FeedbackSettingsSection
 import app.funput.funput.ui.settings.keyboard.KeyboardSettingsSection
+import app.funput.funput.theme.KeyboardThemeDescriptor
+import app.funput.funput.ui.settings.components.KeyboardHero
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 import app.funput.funput.ui.theme.Spacing
 import app.funput.funput.ui.theme.rememberEntryTracker
@@ -28,6 +30,7 @@ import app.funput.funput.ui.settings.smart.SmartSettingsSection
 @Composable
 internal fun SettingsScreenSections(
     keyboardSetupStatus: KeyboardSetupStatus,
+    keyboardTheme: KeyboardThemeDescriptor,
     inputMethod: KeyboardInputMethod,
     showsNumberRow: Boolean,
     toneStyle: ToneStyle,
@@ -40,6 +43,9 @@ internal fun SettingsScreenSections(
     contentPadding: PaddingValues,
     onOpenPicker: (SettingsPicker) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
+    onOpenAppearance: () -> Unit,
+    onToneStyleSelected: (ToneStyle) -> Unit,
+    onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
     onSmartRestoreChanged: (Boolean) -> Unit,
@@ -66,8 +72,13 @@ internal fun SettingsScreenSections(
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
     ) {
-        item(key = "keyboard") {
+        item(key = "hero") {
             Box(modifier = Modifier.staggeredEntry(0, tracker)) {
+                KeyboardHero(keyboardTheme, onOpenAppearance)
+            }
+        }
+        item(key = "keyboard") {
+            Box(modifier = Modifier.staggeredEntry(4, tracker)) {
                 KeyboardSettingsSection(
                     setupStatus = keyboardSetupStatus,
                     inputMethod = inputMethod,
@@ -76,13 +87,15 @@ internal fun SettingsScreenSections(
                     keySizeProfile = keySizeProfile,
                     onOpenPicker = onOpenPicker,
                     onShowsNumberRowChanged = onShowsNumberRowChanged,
+                    onToneStyleSelected = onToneStyleSelected,
+                    onKeySizeSelected = onKeySizeSelected,
                     onEnableKeyboard = onEnableKeyboard,
                     onSelectKeyboard = onSelectKeyboard,
                 )
             }
         }
         item(key = "smart") {
-            Box(modifier = Modifier.staggeredEntry(1, tracker)) {
+            Box(modifier = Modifier.staggeredEntry(2, tracker)) {
                 SmartSettingsSection(
                     smartRestoreEnabled = smartRestoreEnabled,
                     spellCheckEnabled = spellCheckEnabled,
@@ -92,7 +105,7 @@ internal fun SettingsScreenSections(
             }
         }
         item(key = "personal-suggestions") {
-            Box(modifier = Modifier.staggeredEntry(2, tracker)) {
+            Box(modifier = Modifier.staggeredEntry(3, tracker)) {
                 PersonalSuggestionSettingsSection(
                     enabled = personalSuggestionsEnabled,
                     onEnabledChanged = onPersonalSuggestionsChanged,
@@ -101,7 +114,7 @@ internal fun SettingsScreenSections(
             }
         }
         item(key = "feedback") {
-            Box(modifier = Modifier.staggeredEntry(3, tracker)) {
+            Box(modifier = Modifier.staggeredEntry(4, tracker)) {
                 FeedbackSettingsSection(
                     hapticsEnabled = hapticsEnabled,
                     soundsEnabled = soundsEnabled,

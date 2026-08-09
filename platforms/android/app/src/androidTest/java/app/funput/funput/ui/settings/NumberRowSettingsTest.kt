@@ -72,6 +72,8 @@ class NumberRowSettingsTest {
                     keySizeProfile = KeyboardSizingProfile.Normal,
                     onOpenPicker = {},
                     onShowsNumberRowChanged = onShowsNumberRowChanged,
+                    onToneStyleSelected = {},
+                    onKeySizeSelected = {},
                     onEnableKeyboard = {},
                     onSelectKeyboard = {},
                 )
