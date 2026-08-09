@@ -22,10 +22,15 @@ internal fun LazyListScope.themeSection(
     themes: List<KeyboardThemeDescriptor>,
     state: AppearanceScreenState,
     onRequestDelete: (KeyboardThemeDescriptor) -> Unit,
+    showsWhenEmpty: Boolean = false,
 ) {
-    if (themes.isEmpty()) return
+    if (themes.isEmpty() && !showsWhenEmpty) return
     // The same header the two groups above use: one screen, one way of naming a section.
     item(key = "$key-title") { SettingsSectionHeader(stringResource(titleRes)) }
+    if (themes.isEmpty()) {
+        item(key = "$key-empty") { ThemeEmptyState() }
+        return
+    }
     items(items = themes, key = { descriptor -> "$key-${descriptor.id.value}" }) { descriptor ->
         val isCustom = descriptor.origin == KeyboardThemeOrigin.CUSTOM
         ThemeCard(

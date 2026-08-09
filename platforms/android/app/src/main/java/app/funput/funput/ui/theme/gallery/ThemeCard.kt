@@ -24,6 +24,7 @@ import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.ui.navigation.sharedElementByKey
 import app.funput.funput.ui.theme.KeyboardThemePreview
+import app.funput.funput.ui.theme.Spacing
 import app.funput.funput.ui.theme.themePreviewSharedKey
 
 /**
@@ -57,7 +58,7 @@ internal fun ThemeCard(
             .testTag(descriptor.id.value)
             .selectable(selected = selected, role = Role.RadioButton, onClick = onSelected),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(Spacing.Medium)) {
             KeyboardThemePreview(
                 theme = descriptor.theme,
                 backgroundImage = descriptor.backgroundImage,
@@ -69,7 +70,7 @@ internal fun ThemeCard(
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 10.dp, start = 4.dp),
+                modifier = Modifier.padding(top = Spacing.Medium, start = Spacing.Tight),
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(2.dp),

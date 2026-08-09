@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
+import app.funput.funput.ui.theme.Spacing
 
 @Composable
 internal fun SettingsRow(
@@ -44,7 +45,7 @@ internal fun SettingsRow(
         ),
     ) {
         SettingsIcon(iconRes, tone)
-        Spacer(modifier = Modifier.width(14.dp))
+        Spacer(modifier = Modifier.width(Spacing.Medium))
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,

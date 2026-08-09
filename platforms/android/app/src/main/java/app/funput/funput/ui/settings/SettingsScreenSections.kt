@@ -1,6 +1,7 @@
 package app.funput.funput.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -15,10 +16,12 @@ import androidx.compose.ui.unit.dp
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.ui.settings.components.SettingsHero
 import app.funput.funput.ui.settings.feedback.FeedbackSettingsSection
 import app.funput.funput.ui.settings.keyboard.KeyboardSettingsSection
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
+import app.funput.funput.ui.theme.Spacing
+import app.funput.funput.ui.theme.rememberEntryTracker
+import app.funput.funput.ui.theme.staggeredEntry
 import app.funput.funput.ui.settings.smart.PersonalSuggestionSettingsSection
 import app.funput.funput.ui.settings.smart.SmartSettingsSection
 
@@ -47,57 +50,65 @@ internal fun SettingsScreenSections(
     onSelectKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val tracker = rememberEntryTracker()
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+        verticalArrangement = Arrangement.spacedBy(Spacing.Section),
         // The scaffold's padding clears the app bar and the navigation bar; the list itself keeps
         // scrolling underneath both, which is what edge-to-edge is for. Only the horizontal
         // insets are hard padding, so a landscape cutout never clips a row.
         contentPadding = PaddingValues(
-            start = 20.dp,
-            end = 20.dp,
-            top = contentPadding.calculateTopPadding() + 4.dp,
-            bottom = contentPadding.calculateBottomPadding() + 24.dp,
+            start = Spacing.Large,
+            end = Spacing.Large,
+            top = contentPadding.calculateTopPadding() + Spacing.Tight,
+            bottom = contentPadding.calculateBottomPadding() + Spacing.Section,
         ),
         modifier = modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
     ) {
-        item(key = "hero") { SettingsHero() }
         item(key = "keyboard") {
-            KeyboardSettingsSection(
-                setupStatus = keyboardSetupStatus,
-                inputMethod = inputMethod,
-                showsNumberRow = showsNumberRow,
-                toneStyle = toneStyle,
-                keySizeProfile = keySizeProfile,
-                onOpenPicker = onOpenPicker,
-                onShowsNumberRowChanged = onShowsNumberRowChanged,
-                onEnableKeyboard = onEnableKeyboard,
-                onSelectKeyboard = onSelectKeyboard,
-            )
+            Box(modifier = Modifier.staggeredEntry(0, tracker)) {
+                KeyboardSettingsSection(
+                    setupStatus = keyboardSetupStatus,
+                    inputMethod = inputMethod,
+                    showsNumberRow = showsNumberRow,
+                    toneStyle = toneStyle,
+                    keySizeProfile = keySizeProfile,
+                    onOpenPicker = onOpenPicker,
+                    onShowsNumberRowChanged = onShowsNumberRowChanged,
+                    onEnableKeyboard = onEnableKeyboard,
+                    onSelectKeyboard = onSelectKeyboard,
+                )
+            }
         }
         item(key = "smart") {
-            SmartSettingsSection(
-                smartRestoreEnabled = smartRestoreEnabled,
-                spellCheckEnabled = spellCheckEnabled,
-                onSmartRestoreChanged = onSmartRestoreChanged,
-                onSpellCheckChanged = onSpellCheckChanged,
-            )
+            Box(modifier = Modifier.staggeredEntry(1, tracker)) {
+                SmartSettingsSection(
+                    smartRestoreEnabled = smartRestoreEnabled,
+                    spellCheckEnabled = spellCheckEnabled,
+                    onSmartRestoreChanged = onSmartRestoreChanged,
+                    onSpellCheckChanged = onSpellCheckChanged,
+                )
+            }
         }
         item(key = "personal-suggestions") {
-            PersonalSuggestionSettingsSection(
-                enabled = personalSuggestionsEnabled,
-                onEnabledChanged = onPersonalSuggestionsChanged,
-                onReset = onResetPersonalSuggestions,
-            )
+            Box(modifier = Modifier.staggeredEntry(2, tracker)) {
+                PersonalSuggestionSettingsSection(
+                    enabled = personalSuggestionsEnabled,
+                    onEnabledChanged = onPersonalSuggestionsChanged,
+                    onReset = onResetPersonalSuggestions,
+                )
+            }
         }
         item(key = "feedback") {
-            FeedbackSettingsSection(
-                hapticsEnabled = hapticsEnabled,
-                soundsEnabled = soundsEnabled,
-                onHapticsChanged = onHapticsChanged,
-                onSoundsChanged = onSoundsChanged,
-            )
+            Box(modifier = Modifier.staggeredEntry(3, tracker)) {
+                FeedbackSettingsSection(
+                    hapticsEnabled = hapticsEnabled,
+                    soundsEnabled = soundsEnabled,
+                    onHapticsChanged = onHapticsChanged,
+                    onSoundsChanged = onSoundsChanged,
+                )
+            }
         }
     }
 }

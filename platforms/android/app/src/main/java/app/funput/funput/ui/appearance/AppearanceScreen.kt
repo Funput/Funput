@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.funput.funput.ui.theme.Spacing
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.theme.gallery.DeleteThemeDialog
@@ -61,11 +62,11 @@ internal fun AppearanceScreen(state: AppearanceScreenState, modifier: Modifier =
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { padding ->
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.Section),
             contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                top = padding.calculateTopPadding() + 4.dp,
+                start = Spacing.Large,
+                end = Spacing.Large,
+                top = padding.calculateTopPadding() + Spacing.Tight,
                 // Room for the floating button to sit over the end of the list rather than on it.
                 bottom = padding.calculateBottomPadding() + 96.dp,
             ),
@@ -104,6 +105,7 @@ internal fun AppearanceScreen(state: AppearanceScreenState, modifier: Modifier =
                 titleRes = R.string.theme_gallery_user_section,
                 themes = state.userThemes,
                 state = state,
+                showsWhenEmpty = true,
                 onRequestDelete = { pendingDelete = it },
             )
         }

@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import app.funput.funput.ui.theme.Spacing
 
 /**
  * The container every settings row is drawn on: its own surface, its own animated corners.
@@ -36,7 +37,7 @@ internal fun SettingsRowSurface(
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .then(modifier)
             .heightIn(min = 64.dp)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = Spacing.Large, vertical = Spacing.Medium),
         content = content,
     )
 }

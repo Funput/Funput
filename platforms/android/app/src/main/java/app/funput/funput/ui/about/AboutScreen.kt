@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.funput.funput.ui.theme.Spacing
 import app.funput.funput.R
 import app.funput.funput.ui.settings.components.SettingsLinkRow
 import app.funput.funput.ui.settings.components.SettingsRowContent
@@ -53,12 +54,12 @@ internal fun AboutScreen(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { padding ->
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.Section),
             contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                top = padding.calculateTopPadding() + 4.dp,
-                bottom = padding.calculateBottomPadding() + 24.dp,
+                start = Spacing.Large,
+                end = Spacing.Large,
+                top = padding.calculateTopPadding() + Spacing.Tight,
+                bottom = padding.calculateBottomPadding() + Spacing.Section,
             ),
             modifier = Modifier
                 .fillMaxSize()

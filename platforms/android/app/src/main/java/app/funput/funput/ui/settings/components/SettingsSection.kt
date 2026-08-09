@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.funput.funput.ui.theme.Spacing
 
 @Composable
 internal fun SettingsSectionHeader(
@@ -18,7 +19,7 @@ internal fun SettingsSectionHeader(
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(start = 16.dp, bottom = 8.dp),
+        modifier = modifier.padding(start = Spacing.Large, bottom = Spacing.Small),
     )
 }
 

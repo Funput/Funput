@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import app.funput.funput.ui.theme.Spacing
 
 /** A row that only reports a value. No click, so its corners never animate. */
 @Composable
@@ -26,7 +27,7 @@ internal fun SettingsValueRow(
         interactionSource = remember { MutableInteractionSource() },
     ) {
         SettingsIcon(iconRes, tone)
-        Spacer(modifier = Modifier.width(14.dp))
+        Spacer(modifier = Modifier.width(Spacing.Medium))
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,

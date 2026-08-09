@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
+import app.funput.funput.ui.theme.Spacing
 
 /**
  * A row that leaves the app.
@@ -54,7 +55,7 @@ internal fun SettingsLinkRow(
             .semantics { onClick(label = hint, action = null) },
     ) {
         SettingsIcon(iconRes, tone)
-        Spacer(modifier = Modifier.width(14.dp))
+        Spacer(modifier = Modifier.width(Spacing.Medium))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge)
             Text(

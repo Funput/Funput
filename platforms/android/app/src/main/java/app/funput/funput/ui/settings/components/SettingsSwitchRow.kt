@@ -18,6 +18,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import app.funput.funput.ui.theme.Spacing
 
 @Composable
 internal fun SettingsSwitchRow(
@@ -52,7 +53,7 @@ internal fun SettingsSwitchRow(
         ),
     ) {
         SettingsIcon(iconRes, tone)
-        Spacer(modifier = Modifier.width(14.dp))
+        Spacer(modifier = Modifier.width(Spacing.Medium))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
