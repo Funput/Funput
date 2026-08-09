@@ -11,6 +11,8 @@ import androidx.compose.runtime.setValue
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.KeyboardThemeBackgroundImage
 import app.funput.funput.theme.KeyboardThemeDescriptor
+import app.funput.funput.theme.hueDegrees
+import app.funput.funput.theme.tintedTowards
 import app.funput.funput.theme.store.custom.CustomThemeDraft
 import app.funput.funput.theme.store.json.KeyboardThemeJson
 
@@ -37,10 +39,26 @@ internal class ThemeDraftState(
 
     val canSave: Boolean get() = name.trim().isNotEmpty()
 
-    /** Switching base replaces every token, which is also how "restore the original" works. */
+    /** Switching what the theme is built on replaces every token. */
     fun selectBaseTheme(value: String) {
         baseThemeValue = value
         theme = baseTheme.theme
+    }
+
+    /** Throws away the edits and goes back to the base as it ships. */
+    fun restoreBase() {
+        theme = baseTheme.theme
+    }
+
+    /**
+     * Re-dyes the whole theme towards the chosen colour, then writes the accent roles themselves.
+     *
+     * Working from the current theme rather than from the base keeps whatever was changed by hand
+     * in the advanced controls. Nothing compounds: the re-dye sets an absolute hue, so picking
+     * three colours in a row lands exactly where picking the third one alone would.
+     */
+    fun applyAccent(color: Int) {
+        theme = theme.tintedTowards(color.hueDegrees(), SurfaceTint).withAccent(color)
     }
 
     fun updateTheme(transform: (KeyboardTheme) -> KeyboardTheme) {
@@ -67,6 +85,9 @@ internal class ThemeDraftState(
         baseThemeId = baseTheme.id,
         backgroundImage = backgroundImage,
     )
+
+    /** Enough to read as tinted on a near-neutral theme, not enough to read as coloured. */
+    private val SurfaceTint = 0.07f
 
     private fun initialBaseTheme(): KeyboardThemeDescriptor =
         baseThemes.find { it.id.value == baseThemeValue } ?: baseThemes.first()

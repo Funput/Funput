@@ -22,14 +22,6 @@ internal fun CreateThemeTabContent(
         onColorChange = { role, color ->
             state.updateTheme { theme -> role.write(theme, color) }
         },
-        accentShortcut = {
-            // The accent presets stay at the top of the color list as a one-tap starting point;
-            // they write the whole accent family, which the individual role pickers do not.
-            AccentColorSelector(
-                selectedColor = state.theme.accentColor,
-                onSelected = { color -> state.updateTheme { theme -> theme.withAccent(color) } },
-            )
-        },
     )
     CreateThemeEditorTab.Metrics -> ThemeMetricsTab(
         theme = state.theme,

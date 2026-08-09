@@ -48,7 +48,7 @@ internal fun CreateCustomThemeScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets.safeDrawing,
-        topBar = { ThemeStudioTopBar(state, baseThemes, onBack) },
+        topBar = { ThemeStudioTopBar(state, onBack) },
         bottomBar = {
             ThemeStudioActionBar(
                 canSave = state.canSave,
@@ -61,6 +61,7 @@ internal fun CreateCustomThemeScreen(
             state = state,
             contentPadding = padding,
             editingThemeId = editingTheme?.id,
+            baseThemes = baseThemes,
             onChooseBackgroundImage = {
                 imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             },

@@ -20,13 +20,11 @@ import app.funput.funput.theme.KeyboardTheme
 internal fun ThemeColorTab(
     theme: KeyboardTheme,
     onColorChange: (ThemeColorRole, Int) -> Unit,
-    accentShortcut: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var editing by remember { mutableStateOf<ThemeColorRole?>(null) }
 
     Column(verticalArrangement = Arrangement.spacedBy(20.dp), modifier = modifier) {
-        accentShortcut()
         ThemeColorGroup.entries.forEach { group ->
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(

@@ -1,5 +1,6 @@
 package app.funput.funput.ui.theme.custom
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
 
 /**
@@ -28,10 +30,12 @@ internal fun CreateCustomThemeForm(
     state: ThemeDraftState,
     contentPadding: PaddingValues,
     editingThemeId: KeyboardThemeId?,
+    baseThemes: List<KeyboardThemeDescriptor>,
     onChooseBackgroundImage: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(CreateThemeEditorTab.Colors) }
+    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -44,22 +48,42 @@ internal fun CreateCustomThemeForm(
             editingThemeId = editingThemeId,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
         )
-        CreateThemeEditorTabs(
-            selectedTab = selectedTab,
-            onSelected = { selectedTab = it },
-            modifier = Modifier.fillMaxWidth(),
-        )
         Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
         ) {
-            CreateThemeTabContent(
-                selectedTab = selectedTab,
-                state = state,
-                onChooseBackgroundImage = onChooseBackgroundImage,
+            // Two decisions make a whole theme: what it is built on, and one colour. Both are
+            // re-dyed through the base's own contrast relationships, so the result stays readable
+            // without the user having to check.
+            BaseThemeSelector(
+                baseThemes = baseThemes,
+                selectedValue = state.baseThemeValue,
+                onSelected = state::selectBaseTheme,
             )
+            AccentColorSelector(
+                selectedColor = state.theme.accentColor,
+                onSelected = state::applyAccent,
+            )
+            ThemeAdvancedSection(
+                expanded = advancedExpanded,
+                onExpandedChange = { advancedExpanded = it },
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    CreateThemeEditorTabs(
+                        selectedTab = selectedTab,
+                        onSelected = { selectedTab = it },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    CreateThemeTabContent(
+                        selectedTab = selectedTab,
+                        state = state,
+                        onChooseBackgroundImage = onChooseBackgroundImage,
+                    )
+                }
+            }
         }
     }
 }

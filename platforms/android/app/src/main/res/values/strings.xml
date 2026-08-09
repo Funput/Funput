@@ -66,7 +66,8 @@
     <string name="custom_theme_tab_info">Thông tin</string>
     <string name="custom_theme_info_title">Thông tin theme</string>
     <string name="custom_theme_info_description">Đặt tên dễ nhớ để tìm lại trong Theme Gallery.</string>
-    <string name="custom_theme_base_title">Bắt đầu lại từ</string>
+    <string name="custom_theme_base_title">Bắt đầu từ</string>
+    <string name="custom_theme_advanced_title">Tuỳ chỉnh nâng cao</string>
     <string name="custom_theme_restore">Khôi phục</string>
     <string name="custom_theme_cancel">Hủy</string>
     <string name="custom_theme_name_hint">Tên theme</string>
