@@ -54,7 +54,7 @@ class AppearanceScreenTest {
             }
         }
 
-        compose.onNodeWithText("Tạo theme riêng").performClick()
+        compose.onNodeWithTag(CreateThemeTag).performClick()
 
         compose.onNodeWithTag(AppearanceListTag)
             .performScrollToNode(hasTestTag(customTheme.id.value))

@@ -53,6 +53,7 @@ internal fun AppearanceScreen(state: AppearanceScreenState, modifier: Modifier =
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = state.onCreateTheme,
+                modifier = Modifier.testTag(CreateThemeTag),
                 icon = { Icon(painterResource(R.drawable.ic_add), contentDescription = null) },
                 text = { Text(stringResource(R.string.theme_gallery_create_title)) },
             )
@@ -120,5 +121,6 @@ internal fun AppearanceScreen(state: AppearanceScreenState, modifier: Modifier =
 }
 
 internal const val AppearanceListTag = "appearance-list"
+internal const val CreateThemeTag = "create-theme"
 internal const val SystemThemesTag = "system-themes"
 internal const val UserThemesTag = "user-themes"
