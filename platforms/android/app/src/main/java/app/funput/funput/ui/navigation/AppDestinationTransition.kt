@@ -12,35 +12,52 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 
 /**
- * How one destination gives way to the next: the arriving screen slides in from the side it came
- * from and the leaving one settles back a little, so depth reads as depth rather than as a cut.
+ * Picks the move to animate from what actually changed.
  *
- * The slide springs, because that is the part a finger is dragging during a predictive back and a
+ * Sliding between tabs would claim they sit next to each other in an order the user is expected to
+ * hold in their head; Material fades between them instead, and keeps sliding for going in and out
+ * of a stack, where a direction means something.
+ */
+internal fun AnimatedContentTransitionScope<AppDestination>.destinationTransition(): ContentTransform =
+    if (targetState.tab != initialState.tab) fadeThrough() else pushTransition()
+
+/** Lateral: the outgoing tab drops away and the incoming one rises, with no direction implied. */
+private fun fadeThrough(): ContentTransform =
+    (fadeIn(animationSpec = tween(FadeMillis)) + scaleIn(initialScale = FadeThroughScale))
+        .togetherWith(
+            fadeOut(animationSpec = tween(FadeMillis)) + scaleOut(targetScale = FadeThroughScale),
+        )
+
+/**
+ * In and out of a stack: the arriving screen slides in from the side it came from and the leaving
+ * one settles back, so depth reads as depth.
+ *
+ * The slide springs, because that is the part a finger drags during a predictive back and a
  * duration-based curve would fight the gesture. Fade and scale stay on a short tween — seeking a
  * spring on opacity only makes the screen flicker.
  */
-internal fun AnimatedContentTransitionScope<AppDestination>.destinationTransition(
-    forward: Boolean,
-): ContentTransform {
-    val enterEdge = if (forward) {
+private fun AnimatedContentTransitionScope<AppDestination>.pushTransition(): ContentTransform {
+    val forward = targetState.depth > initialState.depth
+    val edge = if (forward) {
         AnimatedContentTransitionScope.SlideDirection.Start
     } else {
         AnimatedContentTransitionScope.SlideDirection.End
     }
-    val enter = slideIntoContainer(enterEdge, animationSpec = SlideSpring()) +
-        fadeIn(animationSpec = tween(FadeMillis))
-    val exit = slideOutOfContainer(enterEdge, animationSpec = SlideSpring()) +
+    val enter = slideIntoContainer(edge, animationSpec = slideSpring()) +
+        fadeIn(animationSpec = tween(FadeMillis)) +
+        scaleIn(initialScale = if (forward) 1f else RestingScale)
+    val exit = slideOutOfContainer(edge, animationSpec = slideSpring()) +
         fadeOut(animationSpec = tween(FadeMillis)) +
-        if (forward) scaleOut(targetScale = RestingScale) else scaleOut(targetScale = 1f)
-    return (enter + if (forward) scaleIn(initialScale = 1f) else scaleIn(initialScale = RestingScale))
-        .togetherWith(exit)
+        scaleOut(targetScale = if (forward) RestingScale else 1f)
+    return enter togetherWith exit
 }
 
-private fun <T> SlideSpring() = spring<T>(
+private fun <T> slideSpring() = spring<T>(
     dampingRatio = Spring.DampingRatioNoBouncy,
     stiffness = Spring.StiffnessMediumLow,
 )
 
 /** How far the screen being left behind settles back. Material's own value for this move. */
 private const val RestingScale = 0.9f
+private const val FadeThroughScale = 0.94f
 private const val FadeMillis = 120

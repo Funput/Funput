@@ -10,13 +10,46 @@ class AppNavigatorTest {
     fun navigatesWithoutDuplicatingCurrentDestination() {
         val navigator = AppNavigator()
 
-        navigator.navigate(AppDestination.THEME_GALLERY)
+        navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
+        navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
+
+        assertEquals(AppDestination.CREATE_CUSTOM_THEME, navigator.currentDestination)
+        assertTrue(navigator.navigateBack())
+        assertEquals(AppDestination.THEME_GALLERY, navigator.currentDestination)
+    }
+
+    @Test
+    fun `navigating into another tab switches to it`() {
+        val navigator = AppNavigator()
+
         navigator.navigate(AppDestination.THEME_GALLERY)
 
+        assertEquals(TopLevelDestination.APPEARANCE, navigator.currentTab)
         assertEquals(AppDestination.THEME_GALLERY, navigator.currentDestination)
-        assertTrue(navigator.canNavigateBack)
+    }
+
+    @Test
+    fun `a tab keeps where it was left`() {
+        val navigator = AppNavigator()
+        navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
+
+        navigator.selectTab(TopLevelDestination.SETTINGS)
+        navigator.selectTab(TopLevelDestination.APPEARANCE)
+
+        // Half way into the appearance tab, away and back: still half way in, not at its root.
+        assertEquals(AppDestination.CREATE_CUSTOM_THEME, navigator.currentDestination)
+    }
+
+    @Test
+    fun `back empties the tab before it leaves the tab`() {
+        val navigator = AppNavigator()
+        navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
+
         assertTrue(navigator.navigateBack())
-        assertEquals(AppDestination.SETTINGS, navigator.currentDestination)
+        assertEquals(AppDestination.THEME_GALLERY, navigator.currentDestination)
+        assertTrue(navigator.navigateBack())
+        assertEquals(TopLevelDestination.SETTINGS, navigator.currentTab)
+        // At the start tab's root there is nothing left to pop; the system takes over from here.
         assertFalse(navigator.canNavigateBack)
         assertFalse(navigator.navigateBack())
     }
@@ -24,24 +57,22 @@ class AppNavigatorTest {
     @Test
     fun `previous destination is what back would reveal`() {
         val navigator = AppNavigator()
-
-        // A predictive back gesture draws this screen while the finger is still down, so it has to
-        // be readable before anything is popped.
         assertEquals(null, navigator.previousDestination)
+
         navigator.navigate(AppDestination.THEME_GALLERY)
+        // Back leaves the tab from here, so what it reveals is the start tab's own screen.
         assertEquals(AppDestination.SETTINGS, navigator.previousDestination)
+
         navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
         assertEquals(AppDestination.THEME_GALLERY, navigator.previousDestination)
     }
 
     @Test
-    fun `depth increases away from the root`() {
-        // Transitions read this to decide which way to slide. Equal or inverted depths would send
-        // a screen in from the wrong edge.
-        val depths = AppDestination.entries.map(AppDestination::depth)
-
-        assertEquals(depths.sorted(), depths)
-        assertEquals(depths.distinct(), depths)
-        assertEquals(0, AppDestination.SETTINGS.depth)
+    fun `every tab has exactly one root`() {
+        // rootOf picks the depth-zero screen of a tab and would throw on a tab that has none.
+        TopLevelDestination.entries.forEach { tab ->
+            val roots = AppDestination.entries.filter { it.tab == tab && it.depth == 0 }
+            assertEquals(listOf(AppDestination.rootOf(tab)), roots)
+        }
     }
 }

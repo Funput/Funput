@@ -60,9 +60,7 @@ internal fun AppNavDisplay(
     val stateHolder = rememberSaveableStateHolder()
     SharedTransitionLayout(modifier = modifier) {
         transition.AnimatedContent(
-            transitionSpec = {
-                destinationTransition(forward = targetState.depth > initialState.depth)
-            },
+            transitionSpec = { destinationTransition() },
         ) { destination ->
             val scopes = SharedTransitionScopes(this@SharedTransitionLayout, this)
             CompositionLocalProvider(LocalSharedTransitionScopes provides scopes) {

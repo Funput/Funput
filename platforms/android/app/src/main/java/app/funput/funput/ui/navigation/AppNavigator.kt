@@ -2,56 +2,80 @@ package app.funput.funput.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 
-/** Small restorable back stack for destinations owned by the app shell. */
+/**
+ * A back stack per tab, plus which tab is showing.
+ *
+ * One stack for the whole app cannot say what a tabbed app needs to say: switching tab is a move
+ * sideways that must not be pushed anywhere, while a tab left half way into something has to still
+ * be there on return.
+ */
 @Stable
-internal class AppNavigator private constructor(
-    initialBackStack: List<AppDestination>,
+internal class AppNavigator internal constructor(
+    initialTab: TopLevelDestination = TopLevelDestination.Start,
+    initialStacks: Map<TopLevelDestination, List<AppDestination>> = emptyMap(),
 ) {
-    private val backStack = mutableStateListOf<AppDestination>().apply {
-        addAll(initialBackStack.ifEmpty { listOf(AppDestination.SETTINGS) })
+    private val stacks = mutableStateMapOf<TopLevelDestination, List<AppDestination>>().apply {
+        TopLevelDestination.entries.forEach { tab ->
+            val restored = initialStacks[tab]?.takeIf { stack -> stack.isNotEmpty() }
+            put(tab, restored ?: listOf(AppDestination.rootOf(tab)))
+        }
     }
 
-    val currentDestination: AppDestination
-        get() = backStack.last()
+    var currentTab by mutableStateOf(initialTab)
+        private set
 
+    val currentDestination: AppDestination
+        get() = stackOf(currentTab).last()
+
+    /** Back only leaves the current tab once that tab is at its own root. */
     val canNavigateBack: Boolean
-        get() = backStack.size > 1
+        get() = stackOf(currentTab).size > 1 || currentTab != TopLevelDestination.Start
 
     /**
-     * Where back would land. A predictive back gesture has to draw that screen while the finger is
-     * still down, which means knowing it before the stack is popped.
+     * Where back would land. A predictive back gesture draws that screen while the finger is still
+     * down, which means knowing it before anything is popped.
      */
     val previousDestination: AppDestination?
-        get() = backStack.getOrNull(backStack.lastIndex - 1)
+        get() {
+            val stack = stackOf(currentTab)
+            if (stack.size > 1) return stack[stack.lastIndex - 1]
+            if (currentTab == TopLevelDestination.Start) return null
+            return stackOf(TopLevelDestination.Start).last()
+        }
 
-    constructor() : this(listOf(AppDestination.SETTINGS))
+    internal fun stackOf(tab: TopLevelDestination): List<AppDestination> = stacks.getValue(tab)
+
+    /** Switching tab keeps whatever that tab was showing. It is a move sideways, not a push. */
+    fun selectTab(tab: TopLevelDestination) {
+        currentTab = tab
+    }
 
     fun navigate(destination: AppDestination) {
-        if (destination != currentDestination) backStack += destination
+        currentTab = destination.tab
+        val stack = stackOf(destination.tab)
+        if (stack.last() != destination) stacks[destination.tab] = stack + destination
     }
 
     fun navigateBack(): Boolean {
-        if (!canNavigateBack) return false
-        backStack.removeAt(backStack.lastIndex)
-        return true
-    }
-
-    companion object {
-        val Saver: Saver<AppNavigator, ArrayList<String>> = Saver(
-            save = { navigator ->
-                ArrayList(navigator.backStack.map(AppDestination::name))
-            },
-            restore = { savedBackStack ->
-                AppNavigator(savedBackStack.map(AppDestination::valueOf))
-            },
-        )
+        val stack = stackOf(currentTab)
+        if (stack.size > 1) {
+            stacks[currentTab] = stack.dropLast(1)
+            return true
+        }
+        if (currentTab != TopLevelDestination.Start) {
+            currentTab = TopLevelDestination.Start
+            return true
+        }
+        return false
     }
 }
 
 @Composable
 internal fun rememberAppNavigator(): AppNavigator =
-    rememberSaveable(saver = AppNavigator.Saver) { AppNavigator() }
+    rememberSaveable(saver = AppNavigatorSaver) { AppNavigator() }
