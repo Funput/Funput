@@ -23,7 +23,6 @@ import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
 import app.funput.funput.ui.theme.custom.rememberCustomThemeServices
-import app.funput.funput.ui.theme.localizedName
 import app.funput.funput.ui.theme.resolveDarkTheme
 import kotlinx.coroutines.launch
 @Composable
@@ -41,11 +40,6 @@ fun FunputApp() {
     // One read of the theme sources per catalog change. Asking the repository directly would hit
     // disk again on every recomposition, since it deliberately keeps no cache of its own.
     val themeCatalog = remember(themeRepository, themeCatalogRevision) { themeRepository.snapshot() }
-    val installedThemes = themeCatalog.themes
-    // The keyboard follows the system appearance, not the app's own light/dark preference, so
-    // the summary has to be read against the system to match what the user will actually see.
-    val effectiveThemeId = settings.themeSelection.resolve(isSystemInDarkTheme())
-    val keyboardThemeLabel = themeCatalog.resolve(effectiveThemeId).localizedName()
     var editingThemeId by remember { mutableStateOf<KeyboardThemeId?>(null) }
     // Which slot the gallery assigns to. Pinned to SINGLE unless the user opted into following
     // the system, so nothing about the flow changes for someone who never turns it on.
@@ -63,8 +57,6 @@ fun FunputApp() {
                 when (destination) {
                     AppDestination.SETTINGS -> SettingsRoute(
                         settings = settings,
-                        keyboardThemeLabel = keyboardThemeLabel,
-                        onOpenThemeGallery = { navigator.navigate(AppDestination.THEME_GALLERY) },
                     )
                     AppDestination.THEME_GALLERY -> AppearanceRoute(
                         settings = settings,

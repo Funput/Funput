@@ -1,7 +1,6 @@
 package app.funput.funput.ui.settings
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -11,8 +10,6 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.settings.keyboard.KeyboardSettingsSection
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 import app.funput.funput.ui.theme.FunputTheme
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -35,24 +32,16 @@ class NumberRowSettingsTest {
     }
 
     @Test
-    fun vniLocksNumberRowOnWithoutWritingPreference() {
-        var showsNumberRow = false
-        var writes = 0
+    fun vniDoesNotOfferTheNumberRowAtAll() {
         setSection(
             inputMethod = KeyboardInputMethod.VNI,
-            showsNumberRow = showsNumberRow,
-            onShowsNumberRowChanged = {
-                showsNumberRow = it
-                writes += 1
-            },
+            showsNumberRow = false,
+            onShowsNumberRowChanged = {},
         )
 
-        compose.onNodeWithText("Hàng phím số").assertIsDisplayed().assertIsNotEnabled()
-        compose.onNodeWithText("Hàng phím số").performClick()
-        compose.runOnIdle {
-            assertFalse(showsNumberRow)
-            assertEquals(0, writes)
-        }
+        // VNI types tones with the digits, so the row can only ever be on. It used to be shown
+        // disabled, which is a line of text explaining that there is nothing to decide.
+        compose.onNodeWithText("Hàng phím số").assertDoesNotExist()
     }
 
     @Test
@@ -81,10 +70,8 @@ class NumberRowSettingsTest {
                     showsNumberRow = showsNumberRow,
                     toneStyle = ToneStyle.TRADITIONAL,
                     keySizeProfile = KeyboardSizingProfile.Normal,
-                    keyboardThemeLabel = "Ink",
                     onOpenPicker = {},
                     onShowsNumberRowChanged = onShowsNumberRowChanged,
-                    onOpenThemeGallery = {},
                     onEnableKeyboard = {},
                     onSelectKeyboard = {},
                 )

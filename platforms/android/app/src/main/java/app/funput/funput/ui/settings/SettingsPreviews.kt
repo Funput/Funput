@@ -56,7 +56,6 @@ private fun SettingsPreview(
             showsNumberRow = false,
             toneStyle = ToneStyle.TRADITIONAL,
             keySizeProfile = KeyboardSizingProfile.Normal,
-            keyboardThemeLabel = "Tối",
             hapticsEnabled = true,
             soundsEnabled = false,
             smartRestoreEnabled = true,
@@ -74,7 +73,6 @@ private fun SettingsPreview(
             onResetPersonalSuggestions = {},
             onEnableKeyboard = {},
             onSelectKeyboard = {},
-            onOpenThemeGallery = {},
         )
     }
 }

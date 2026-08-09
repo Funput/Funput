@@ -29,7 +29,6 @@ internal fun SettingsScreenSections(
     showsNumberRow: Boolean,
     toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
-    keyboardThemeLabel: String,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
     smartRestoreEnabled: Boolean,
@@ -46,7 +45,6 @@ internal fun SettingsScreenSections(
     onResetPersonalSuggestions: () -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
-    onOpenThemeGallery: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -72,10 +70,8 @@ internal fun SettingsScreenSections(
                 showsNumberRow = showsNumberRow,
                 toneStyle = toneStyle,
                 keySizeProfile = keySizeProfile,
-                keyboardThemeLabel = keyboardThemeLabel,
                 onOpenPicker = onOpenPicker,
                 onShowsNumberRowChanged = onShowsNumberRowChanged,
-                onOpenThemeGallery = onOpenThemeGallery,
                 onEnableKeyboard = onEnableKeyboard,
                 onSelectKeyboard = onSelectKeyboard,
             )

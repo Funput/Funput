@@ -30,10 +30,8 @@ internal fun KeyboardSettingsSection(
     showsNumberRow: Boolean,
     toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
-    keyboardThemeLabel: String,
     onOpenPicker: (SettingsPicker) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
-    onOpenThemeGallery: () -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
@@ -48,8 +46,8 @@ internal fun KeyboardSettingsSection(
         Spacer(modifier = Modifier.height(14.dp))
         SettingsSectionHeader(stringResource(R.string.settings_keyboard_customize_heading))
         SettingsGroup(
-            rows = listOf(
-                { position ->
+            rows = buildList {
+                add { position ->
                     SettingsRow(
                         position = position,
                         title = stringResource(R.string.settings_input_method_title),
@@ -58,20 +56,23 @@ internal fun KeyboardSettingsSection(
                         iconBackground = BrandPurple,
                         onClick = { onOpenPicker(SettingsPicker.INPUT_METHOD) },
                     )
-                },
-                { position ->
-                    SettingsSwitchRow(
-                        position = position,
-                        title = stringResource(R.string.settings_number_row_title),
-                        summary = stringResource(R.string.settings_number_row_summary),
-                        checked = !inputMethod.isTelexFamily || showsNumberRow,
-                        enabled = inputMethod.isTelexFamily,
-                        iconRes = R.drawable.ic_key_size,
-                        iconBackground = BrandOrange,
-                        onCheckedChange = onShowsNumberRowChanged,
-                    )
-                },
-                { position ->
+                }
+                // VNI types tones with the digits, so there is nothing here to decide. A switch
+                // that can only ever be on is a row that only takes up space.
+                if (inputMethod.isTelexFamily) {
+                    add { position ->
+                        SettingsSwitchRow(
+                            position = position,
+                            title = stringResource(R.string.settings_number_row_title),
+                            summary = stringResource(R.string.settings_number_row_summary),
+                            checked = showsNumberRow,
+                            iconRes = R.drawable.ic_key_size,
+                            iconBackground = BrandOrange,
+                            onCheckedChange = onShowsNumberRowChanged,
+                        )
+                    }
+                }
+                add { position ->
                     SettingsRow(
                         position = position,
                         title = stringResource(R.string.settings_tone_style_title),
@@ -80,8 +81,8 @@ internal fun KeyboardSettingsSection(
                         iconBackground = BrandBlue,
                         onClick = { onOpenPicker(SettingsPicker.TONE_STYLE) },
                     )
-                },
-                { position ->
+                }
+                add { position ->
                     SettingsRow(
                         position = position,
                         title = stringResource(R.string.settings_key_size_title),
@@ -90,18 +91,8 @@ internal fun KeyboardSettingsSection(
                         iconBackground = BrandOrange,
                         onClick = { onOpenPicker(SettingsPicker.KEY_SIZE) },
                     )
-                },
-                { position ->
-                    SettingsRow(
-                        position = position,
-                        title = stringResource(R.string.settings_keyboard_theme_title),
-                        value = keyboardThemeLabel,
-                        iconRes = R.drawable.ic_keyboard_theme,
-                        iconBackground = BrandBlue,
-                        onClick = onOpenThemeGallery,
-                    )
-                },
-            ),
+                }
+            },
         )
     }
 }

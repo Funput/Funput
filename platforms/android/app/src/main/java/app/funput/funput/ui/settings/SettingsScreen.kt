@@ -24,7 +24,6 @@ internal fun SettingsScreen(
     showsNumberRow: Boolean,
     toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
-    keyboardThemeLabel: String,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
     smartRestoreEnabled: Boolean,
@@ -42,7 +41,6 @@ internal fun SettingsScreen(
     onResetPersonalSuggestions: () -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
-    onOpenThemeGallery: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var picker by rememberSaveable { mutableStateOf<SettingsPicker?>(null) }
@@ -58,7 +56,6 @@ internal fun SettingsScreen(
             showsNumberRow = showsNumberRow,
             toneStyle = toneStyle,
             keySizeProfile = keySizeProfile,
-            keyboardThemeLabel = keyboardThemeLabel,
             hapticsEnabled = hapticsEnabled,
             soundsEnabled = soundsEnabled,
             smartRestoreEnabled = smartRestoreEnabled,
@@ -74,7 +71,6 @@ internal fun SettingsScreen(
             onResetPersonalSuggestions = onResetPersonalSuggestions,
             onEnableKeyboard = onEnableKeyboard,
             onSelectKeyboard = onSelectKeyboard,
-            onOpenThemeGallery = onOpenThemeGallery,
         )
     }
     SettingsPickerSheet(

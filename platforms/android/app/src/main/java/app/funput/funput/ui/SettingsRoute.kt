@@ -20,8 +20,6 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun SettingsRoute(
     settings: FunputSettingsState,
-    keyboardThemeLabel: String,
-    onOpenThemeGallery: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -32,7 +30,6 @@ internal fun SettingsRoute(
         showsNumberRow = settings.showsNumberRow,
         toneStyle = settings.toneStyle,
         keySizeProfile = settings.keySizeProfile,
-        keyboardThemeLabel = keyboardThemeLabel,
         hapticsEnabled = settings.feedback.hapticsEnabled,
         soundsEnabled = settings.feedback.soundsEnabled,
         smartRestoreEnabled = settings.smartComposition.smartRestoreEnabled,
@@ -64,6 +61,5 @@ internal fun SettingsRoute(
         },
         onEnableKeyboard = context::openKeyboardSettings,
         onSelectKeyboard = context::showKeyboardPicker,
-        onOpenThemeGallery = onOpenThemeGallery,
     )
 }
