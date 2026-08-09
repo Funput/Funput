@@ -43,7 +43,7 @@ internal fun ThemeGalleryScreen(
     onCreateTheme: () -> Unit,
     onEditTheme: (KeyboardThemeId) -> Unit,
     onDeleteTheme: (KeyboardThemeId) -> Unit,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     var pendingDeleteTheme by remember { mutableStateOf<KeyboardThemeDescriptor?>(null) }
@@ -59,12 +59,16 @@ internal fun ThemeGalleryScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.theme_gallery_title)) },
+                // Null once the gallery is a tab's own root: there is nothing above it to go
+                // back to, and an arrow that only leaves the tab would be lying about where it goes.
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.theme_gallery_back_description),
-                        )
+                    onBack?.let { back ->
+                        IconButton(onClick = back) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_back),
+                                contentDescription = stringResource(R.string.theme_gallery_back_description),
+                            )
+                        }
                     }
                 },
             )

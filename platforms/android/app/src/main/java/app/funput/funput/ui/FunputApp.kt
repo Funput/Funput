@@ -17,6 +17,7 @@ import app.funput.funput.theme.store.customKeyboardThemeStore
 import app.funput.funput.ui.about.AboutRoute
 import app.funput.funput.ui.navigation.AppDestination
 import app.funput.funput.ui.navigation.AppNavDisplay
+import app.funput.funput.ui.navigation.AppNavigationSuite
 import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
@@ -57,13 +58,13 @@ fun FunputApp() {
     FunputTheme(appearanceMode = settings.appearanceMode, dynamicColor = settings.dynamicColor) {
         SyncSystemBarAppearance(darkTheme = darkTheme)
         Surface(modifier = Modifier.fillMaxSize()) {
+            AppNavigationSuite(navigator) {
             AppNavDisplay(navigator) { destination ->
                 when (destination) {
                     AppDestination.SETTINGS -> SettingsRoute(
                         settings = settings,
                         keyboardThemeLabel = keyboardThemeLabel,
                         onOpenThemeGallery = { navigator.navigate(AppDestination.THEME_GALLERY) },
-                        onOpenAbout = { navigator.navigate(AppDestination.ABOUT) },
                     )
                     AppDestination.THEME_GALLERY -> ThemeGalleryScreen(
                         themes = installedThemes,
@@ -91,7 +92,7 @@ fun FunputApp() {
                                 themeCatalogRevision += 1
                             }
                         },
-                        onBack = navigator::navigateBack,
+                        onBack = null,
                     )
                     AppDestination.ABOUT -> AboutRoute()
                     AppDestination.CREATE_CUSTOM_THEME -> CustomThemeStudioRoute(
@@ -106,6 +107,7 @@ fun FunputApp() {
                         },
                     )
                 }
+            }
             }
         }
     }

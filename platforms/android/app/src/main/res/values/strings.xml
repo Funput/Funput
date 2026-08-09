@@ -177,6 +177,9 @@
     <string name="settings_website_url">https://funput.app/</string>
     <string name="settings_about_row_title">Giới thiệu</string>
     <string name="about_title">Giới thiệu</string>
+    <string name="nav_settings">Cài đặt</string>
+    <string name="nav_appearance">Giao diện</string>
+    <string name="nav_about">Giới thiệu</string>
     <string name="about_version">Phiên bản %1$s</string>
     <string name="about_section_discovery">Tìm hiểu</string>
     <string name="about_website_summary">Tin tức và thông tin về Funput</string>

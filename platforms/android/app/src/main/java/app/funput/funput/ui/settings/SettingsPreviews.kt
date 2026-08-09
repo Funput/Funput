@@ -64,7 +64,6 @@ private fun SettingsPreview(
             smartRestoreEnabled = true,
             spellCheckEnabled = false,
             personalSuggestionsEnabled = true,
-            versionName = "1.2026.1",
             onInputMethodSelected = {},
             onShowsNumberRowChanged = {},
             onToneStyleSelected = {},
@@ -80,7 +79,6 @@ private fun SettingsPreview(
             onEnableKeyboard = {},
             onSelectKeyboard = {},
             onOpenThemeGallery = {},
-            onOpenAbout = {},
         )
     }
 }

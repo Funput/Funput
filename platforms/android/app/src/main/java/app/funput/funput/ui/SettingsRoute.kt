@@ -22,11 +22,9 @@ internal fun SettingsRoute(
     settings: FunputSettingsState,
     keyboardThemeLabel: String,
     onOpenThemeGallery: () -> Unit,
-    onOpenAbout: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val versionName = AppVersionProvider.versionName(context)
 
     SettingsScreen(
         keyboardSetupStatus = rememberKeyboardSetupStatus(),
@@ -42,7 +40,6 @@ internal fun SettingsRoute(
         smartRestoreEnabled = settings.smartComposition.smartRestoreEnabled,
         spellCheckEnabled = settings.smartComposition.spellCheckEnabled,
         personalSuggestionsEnabled = settings.personalSuggestions.enabled,
-        versionName = versionName,
         onInputMethodSelected = { method -> scope.launch { settings.input.setInputMethod(method) } },
         onShowsNumberRowChanged = { enabled ->
             scope.launch { settings.numberRowStore.setShowsNumberRow(enabled) }
@@ -74,6 +71,5 @@ internal fun SettingsRoute(
         onEnableKeyboard = context::openKeyboardSettings,
         onSelectKeyboard = context::showKeyboardPicker,
         onOpenThemeGallery = onOpenThemeGallery,
-        onOpenAbout = onOpenAbout,
     )
 }

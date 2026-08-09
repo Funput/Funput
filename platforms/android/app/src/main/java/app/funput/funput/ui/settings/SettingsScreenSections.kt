@@ -16,7 +16,6 @@ import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.ui.settings.about.AboutSettingsSection
 import app.funput.funput.ui.settings.appearance.AppearanceSettingsSection
 import app.funput.funput.ui.settings.components.SettingsHero
 import app.funput.funput.ui.settings.feedback.FeedbackSettingsSection
@@ -40,7 +39,6 @@ internal fun SettingsScreenSections(
     smartRestoreEnabled: Boolean,
     spellCheckEnabled: Boolean,
     personalSuggestionsEnabled: Boolean,
-    versionName: String,
     contentPadding: PaddingValues,
     onOpenPicker: (SettingsPicker) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
@@ -54,7 +52,6 @@ internal fun SettingsScreenSections(
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
     onOpenThemeGallery: () -> Unit,
-    onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -117,12 +114,6 @@ internal fun SettingsScreenSections(
                 soundsEnabled = soundsEnabled,
                 onHapticsChanged = onHapticsChanged,
                 onSoundsChanged = onSoundsChanged,
-            )
-        }
-        item(key = "about") {
-            AboutSettingsSection(
-                versionName = versionName,
-                onOpenAbout = onOpenAbout,
             )
         }
     }

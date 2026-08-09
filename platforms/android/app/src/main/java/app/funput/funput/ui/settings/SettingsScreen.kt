@@ -32,7 +32,6 @@ internal fun SettingsScreen(
     smartRestoreEnabled: Boolean,
     spellCheckEnabled: Boolean,
     personalSuggestionsEnabled: Boolean,
-    versionName: String,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
@@ -48,7 +47,6 @@ internal fun SettingsScreen(
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
     onOpenThemeGallery: () -> Unit,
-    onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var picker by rememberSaveable { mutableStateOf<SettingsPicker?>(null) }
@@ -72,7 +70,6 @@ internal fun SettingsScreen(
             smartRestoreEnabled = smartRestoreEnabled,
             spellCheckEnabled = spellCheckEnabled,
             personalSuggestionsEnabled = personalSuggestionsEnabled,
-            versionName = versionName,
             onOpenPicker = { picker = it },
             onDynamicColorChanged = onDynamicColorChanged,
             onShowsNumberRowChanged = onShowsNumberRowChanged,
@@ -85,7 +82,6 @@ internal fun SettingsScreen(
             onEnableKeyboard = onEnableKeyboard,
             onSelectKeyboard = onSelectKeyboard,
             onOpenThemeGallery = onOpenThemeGallery,
-            onOpenAbout = onOpenAbout,
         )
     }
     SettingsPickerSheet(
