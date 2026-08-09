@@ -3,17 +3,15 @@ package app.funput.funput.ui.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.funput.funput.R
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
@@ -43,6 +41,7 @@ internal fun SettingsScreenSections(
     spellCheckEnabled: Boolean,
     personalSuggestionsEnabled: Boolean,
     versionName: String,
+    contentPadding: PaddingValues,
     onOpenPicker: (SettingsPicker) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
@@ -60,17 +59,19 @@ internal fun SettingsScreenSections(
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(18.dp),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
+        // The scaffold's padding clears the app bar and the navigation bar; the list itself keeps
+        // scrolling underneath both, which is what edge-to-edge is for. Only the horizontal
+        // insets are hard padding, so a landscape cutout never clips a row.
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            end = 20.dp,
+            top = contentPadding.calculateTopPadding() + 4.dp,
+            bottom = contentPadding.calculateBottomPadding() + 24.dp,
+        ),
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing),
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
     ) {
-        item(key = "title") {
-            Text(
-                text = stringResource(R.string.settings_title),
-                style = MaterialTheme.typography.headlineLarge,
-            )
-        }
         item(key = "hero") { SettingsHero() }
         item(key = "keyboard") {
             KeyboardSettingsSection(

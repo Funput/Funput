@@ -13,7 +13,6 @@ import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.settings.SettingsPicker
-import app.funput.funput.ui.settings.components.SettingsDivider
 import app.funput.funput.ui.settings.components.SettingsGroup
 import app.funput.funput.ui.settings.components.SettingsRow
 import app.funput.funput.ui.settings.components.SettingsSectionHeader
@@ -48,48 +47,61 @@ internal fun KeyboardSettingsSection(
         )
         Spacer(modifier = Modifier.height(14.dp))
         SettingsSectionHeader(stringResource(R.string.settings_keyboard_customize_heading))
-        SettingsGroup {
-            SettingsRow(
-                title = stringResource(R.string.settings_input_method_title),
-                value = inputMethod.label(),
-                iconRes = R.drawable.ic_keyboard,
-                iconBackground = BrandPurple,
-                onClick = { onOpenPicker(SettingsPicker.INPUT_METHOD) },
-            )
-            SettingsDivider()
-            SettingsSwitchRow(
-                title = stringResource(R.string.settings_number_row_title),
-                summary = stringResource(R.string.settings_number_row_summary),
-                checked = !inputMethod.isTelexFamily || showsNumberRow,
-                enabled = inputMethod.isTelexFamily,
-                iconRes = R.drawable.ic_key_size,
-                iconBackground = BrandOrange,
-                onCheckedChange = onShowsNumberRowChanged,
-            )
-            SettingsDivider()
-            SettingsRow(
-                title = stringResource(R.string.settings_tone_style_title),
-                value = toneStyle.label(),
-                iconRes = R.drawable.ic_globe,
-                iconBackground = BrandBlue,
-                onClick = { onOpenPicker(SettingsPicker.TONE_STYLE) },
-            )
-            SettingsDivider()
-            SettingsRow(
-                title = stringResource(R.string.settings_key_size_title),
-                value = keySizeProfile.label(),
-                iconRes = R.drawable.ic_key_size,
-                iconBackground = BrandOrange,
-                onClick = { onOpenPicker(SettingsPicker.KEY_SIZE) },
-            )
-            SettingsDivider()
-            SettingsRow(
-                title = stringResource(R.string.settings_keyboard_theme_title),
-                value = keyboardThemeLabel,
-                iconRes = R.drawable.ic_keyboard_theme,
-                iconBackground = BrandBlue,
-                onClick = onOpenThemeGallery,
-            )
-        }
+        SettingsGroup(
+            rows = listOf(
+                { position ->
+                    SettingsRow(
+                        position = position,
+                        title = stringResource(R.string.settings_input_method_title),
+                        value = inputMethod.label(),
+                        iconRes = R.drawable.ic_keyboard,
+                        iconBackground = BrandPurple,
+                        onClick = { onOpenPicker(SettingsPicker.INPUT_METHOD) },
+                    )
+                },
+                { position ->
+                    SettingsSwitchRow(
+                        position = position,
+                        title = stringResource(R.string.settings_number_row_title),
+                        summary = stringResource(R.string.settings_number_row_summary),
+                        checked = !inputMethod.isTelexFamily || showsNumberRow,
+                        enabled = inputMethod.isTelexFamily,
+                        iconRes = R.drawable.ic_key_size,
+                        iconBackground = BrandOrange,
+                        onCheckedChange = onShowsNumberRowChanged,
+                    )
+                },
+                { position ->
+                    SettingsRow(
+                        position = position,
+                        title = stringResource(R.string.settings_tone_style_title),
+                        value = toneStyle.label(),
+                        iconRes = R.drawable.ic_globe,
+                        iconBackground = BrandBlue,
+                        onClick = { onOpenPicker(SettingsPicker.TONE_STYLE) },
+                    )
+                },
+                { position ->
+                    SettingsRow(
+                        position = position,
+                        title = stringResource(R.string.settings_key_size_title),
+                        value = keySizeProfile.label(),
+                        iconRes = R.drawable.ic_key_size,
+                        iconBackground = BrandOrange,
+                        onClick = { onOpenPicker(SettingsPicker.KEY_SIZE) },
+                    )
+                },
+                { position ->
+                    SettingsRow(
+                        position = position,
+                        title = stringResource(R.string.settings_keyboard_theme_title),
+                        value = keyboardThemeLabel,
+                        iconRes = R.drawable.ic_keyboard_theme,
+                        iconBackground = BrandBlue,
+                        onClick = onOpenThemeGallery,
+                    )
+                },
+            ),
+        )
     }
 }

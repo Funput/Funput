@@ -1,19 +1,22 @@
 package app.funput.funput.ui.settings
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsScreen(
     keyboardSetupStatus: KeyboardSetupStatus,
@@ -49,8 +52,13 @@ internal fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     var picker by rememberSaveable { mutableStateOf<SettingsPicker?>(null) }
-    Box(modifier = modifier.fillMaxSize()) {
+    val scrollBehavior = rememberSettingsScrollBehavior()
+    Scaffold(
+        topBar = { SettingsTopBar(scrollBehavior) },
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+    ) { contentPadding ->
         SettingsScreenSections(
+            contentPadding = contentPadding,
             keyboardSetupStatus = keyboardSetupStatus,
             inputMethod = inputMethod,
             showsNumberRow = showsNumberRow,

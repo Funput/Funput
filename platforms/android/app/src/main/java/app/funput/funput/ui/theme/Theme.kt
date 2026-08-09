@@ -6,6 +6,11 @@ import androidx.compose.runtime.Composable
 import app.funput.funput.ime.settings.AppearanceMode
 
 /**
+ * Material 3's expressive theme would carry a spring-based motion scheme for every component, but
+ * `MaterialExpressiveTheme` is still internal to material3 1.4.0 and only public in 1.5.0-alpha.
+ * Until a stable release exposes it, components Funput owns spring on their own — see
+ * `SettingsRowShapes`.
+ *
  * @param dynamicColor whether to tint from the system wallpaper palette. Defaults to off so that
  *   previews and UI tests, which do not read the setting, always get the stable brand scheme.
  */

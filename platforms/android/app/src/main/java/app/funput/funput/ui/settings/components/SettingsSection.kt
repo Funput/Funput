@@ -1,7 +1,6 @@
 package app.funput.funput.ui.settings.components
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -19,19 +18,19 @@ internal fun SettingsSectionHeader(
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(start = 4.dp, bottom = 8.dp),
+        modifier = modifier.padding(start = 16.dp, bottom = 8.dp),
     )
 }
 
-/** Section title stays outside; grouped rows sit on a lightly tinted rounded surface. */
+/** Section title stays outside; the rows below it form one [SettingsGroup]. */
 @Composable
 internal fun SettingsSection(
     title: String,
+    rows: List<SettingsRowContent>,
     modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SettingsSectionHeader(title)
-        SettingsGroup(content = content)
+        SettingsGroup(rows)
     }
 }
