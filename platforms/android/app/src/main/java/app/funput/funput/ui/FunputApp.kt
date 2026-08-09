@@ -54,7 +54,7 @@ fun FunputApp() {
         KeyboardThemeSlot.SINGLE
     }
     BackHandler(enabled = navigator.canNavigateBack) { navigator.navigateBack() }
-    FunputTheme(appearanceMode = settings.appearanceMode) {
+    FunputTheme(appearanceMode = settings.appearanceMode, dynamicColor = settings.dynamicColor) {
         SyncSystemBarAppearance(darkTheme = darkTheme)
         Surface(modifier = Modifier.fillMaxSize()) {
             when (navigator.currentDestination) {

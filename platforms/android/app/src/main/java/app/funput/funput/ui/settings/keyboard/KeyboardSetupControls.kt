@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +25,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
+import app.funput.funput.ui.theme.FunputShapes
 
 @Composable
 internal fun SetupHeroHeader(iconRes: Int, title: String, subtitle: String) {
@@ -34,7 +34,7 @@ internal fun SetupHeroHeader(iconRes: Int, title: String, subtitle: String) {
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .clip(FunputShapes.small)
                 .background(Brush.linearGradient(BrandSweep)),
         ) {
             Icon(
@@ -63,7 +63,7 @@ internal fun SetupGradientButton(label: String, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(FunputShapes.small)
             .background(Brush.horizontalGradient(BrandSweep))
             .clickable(role = Role.Button, onClick = onClick)
             .padding(vertical = 14.dp),

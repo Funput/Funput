@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,6 +23,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
+import app.funput.funput.ui.theme.PillShape
 
 @Composable
 internal fun SetupStepRow(index: Int, state: StepState, title: String, connected: Boolean) {
@@ -64,12 +64,12 @@ internal fun SetupStepBadge(state: StepState, index: Int) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(28.dp)
-            .clip(RoundedCornerShape(50))
+            .clip(PillShape)
             .then(
                 if (filled) {
                     Modifier.background(Brush.linearGradient(BrandSweep))
                 } else {
-                    Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), RoundedCornerShape(50))
+                    Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), PillShape)
                 },
             ),
     ) {

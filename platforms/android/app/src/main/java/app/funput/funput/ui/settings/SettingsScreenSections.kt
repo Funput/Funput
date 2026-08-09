@@ -36,6 +36,7 @@ internal fun SettingsScreenSections(
     keySizeProfile: KeyboardSizingProfile,
     keyboardThemeLabel: String,
     appearanceMode: AppearanceMode,
+    dynamicColorEnabled: Boolean,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
     smartRestoreEnabled: Boolean,
@@ -43,6 +44,7 @@ internal fun SettingsScreenSections(
     personalSuggestionsEnabled: Boolean,
     versionName: String,
     onOpenPicker: (SettingsPicker) -> Unit,
+    onDynamicColorChanged: (Boolean) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
@@ -103,7 +105,9 @@ internal fun SettingsScreenSections(
         item(key = "appearance") {
             AppearanceSettingsSection(
                 appearanceMode = appearanceMode,
+                dynamicColorEnabled = dynamicColorEnabled,
                 onOpenPicker = onOpenPicker,
+                onDynamicColorChanged = onDynamicColorChanged,
             )
         }
         item(key = "feedback") {

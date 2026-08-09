@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,7 +26,7 @@ internal fun CreateThemeCard(
 ) {
     val title = stringResource(R.string.theme_gallery_create_title)
     Surface(
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.62f),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)),
         modifier = modifier
@@ -60,7 +59,7 @@ private fun CreateThemeBadge() {
     Surface(
         color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
-        shape = RoundedCornerShape(14.dp),
+        shape = MaterialTheme.shapes.small,
         modifier = Modifier.size(44.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

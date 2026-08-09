@@ -157,6 +157,8 @@
     <string name="settings_theme_system">Hệ thống</string>
     <string name="settings_theme_light">Sáng</string>
     <string name="settings_theme_dark">Tối</string>
+    <string name="settings_dynamic_color_title">Màu theo hình nền</string>
+    <string name="settings_dynamic_color_summary">Lấy màu giao diện ứng dụng từ hình nền máy.</string>
     <string name="settings_haptics_title">Rung khi nhấn phím</string>
     <string name="settings_sounds_title">Âm thanh phím</string>
     <string name="settings_smart_restore_title">Tự khôi phục từ tiếng Anh</string>

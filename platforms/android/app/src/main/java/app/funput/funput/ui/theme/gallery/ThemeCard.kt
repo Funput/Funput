@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,8 +37,8 @@ internal fun ThemeCard(
         MaterialTheme.colorScheme.outline.copy(alpha = 0.24f)
     }
     Surface(
-        shape = CardShape,
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
         modifier = modifier
             .testTag(descriptor.id.value)
@@ -55,7 +54,7 @@ internal fun ThemeCard(
                 backgroundImage = descriptor.backgroundImage,
                 modifier = Modifier
                     .height(190.dp)
-                    .clip(PreviewShape),
+                    .clip(MaterialTheme.shapes.small),
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -89,6 +88,3 @@ private fun KeyboardThemeDescriptor.localizedName(): String = when (id) {
     KeyboardThemeId.Light -> stringResource(R.string.settings_keyboard_theme_light)
     else -> name
 }
-
-private val CardShape = RoundedCornerShape(20.dp)
-private val PreviewShape = RoundedCornerShape(14.dp)

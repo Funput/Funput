@@ -4,12 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
 
 @Composable
 internal fun SettingsGroup(
@@ -19,10 +17,8 @@ internal fun SettingsGroup(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(SettingsGroupShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceContainer),
         content = content,
     )
 }
-
-private val SettingsGroupShape = RoundedCornerShape(16.dp)

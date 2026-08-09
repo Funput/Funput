@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.AppearanceSettings
+import app.funput.funput.ime.settings.DynamicColorSettings
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
@@ -37,6 +38,7 @@ internal class FunputSettingsState(
     val keyboardTheme: KeyboardThemeSettings,
     val toneStyleStore: ToneStyleSettings,
     val appearance: AppearanceSettings,
+    val dynamicColorStore: DynamicColorSettings,
     val feedbackStore: KeyboardFeedbackSettings,
     val numberRowStore: NumberRowSettings,
     val smartCompositionStore: SmartCompositionSettings,
@@ -46,6 +48,7 @@ internal class FunputSettingsState(
     val keySizeProfile: KeyboardSizingProfile,
     val themeSelection: KeyboardThemeSelection,
     val appearanceMode: AppearanceMode,
+    val dynamicColor: Boolean,
     val feedback: KeyboardFeedbackPreferences,
     val showsNumberRow: Boolean,
     val smartComposition: SmartCompositionPreferences,
@@ -62,6 +65,8 @@ internal fun rememberFunputSettings(): FunputSettingsState {
     val themeSelection by stores.keyboardTheme.selection
         .collectAsState(KeyboardThemeSettings.DefaultSelection)
     val appearanceMode by stores.appearance.mode.collectAsState(AppearanceSettings.DefaultMode)
+    val dynamicColor by stores.dynamicColorStore.enabled
+        .collectAsState(DynamicColorSettings.DefaultEnabled)
     val feedback by stores.feedbackStore.preferences.collectAsState(KeyboardFeedbackPreferences.Default)
     val showsNumberRow by stores.numberRowStore.showsNumberRow
         .collectAsState(NumberRowSettings.DefaultShowsNumberRow)
@@ -76,6 +81,7 @@ internal fun rememberFunputSettings(): FunputSettingsState {
         keyboardTheme = stores.keyboardTheme,
         toneStyleStore = stores.toneStyleStore,
         appearance = stores.appearance,
+        dynamicColorStore = stores.dynamicColorStore,
         feedbackStore = stores.feedbackStore,
         numberRowStore = stores.numberRowStore,
         smartCompositionStore = stores.smartCompositionStore,
@@ -85,6 +91,7 @@ internal fun rememberFunputSettings(): FunputSettingsState {
         keySizeProfile = keySizeProfile,
         themeSelection = themeSelection,
         appearanceMode = appearanceMode,
+        dynamicColor = dynamicColor,
         feedback = feedback,
         showsNumberRow = showsNumberRow,
         smartComposition = smartComposition,
