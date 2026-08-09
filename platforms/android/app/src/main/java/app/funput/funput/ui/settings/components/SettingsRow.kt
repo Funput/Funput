@@ -28,9 +28,8 @@ internal fun SettingsRow(
     position: RowPosition,
     title: String,
     @DrawableRes iconRes: Int,
-    iconBackground: Color,
+    tone: SettingsIconTone,
     onClick: () -> Unit,
-    iconColor: Color = Color.White,
     value: String? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -44,7 +43,7 @@ internal fun SettingsRow(
             onClick = onClick,
         ),
     ) {
-        SettingsIcon(iconRes, iconBackground, iconColor)
+        SettingsIcon(iconRes, tone)
         Spacer(modifier = Modifier.width(14.dp))
         Text(
             text = title,
@@ -71,20 +70,19 @@ internal fun SettingsRow(
 @Composable
 internal fun SettingsIcon(
     @DrawableRes iconRes: Int,
-    background: Color,
-    iconColor: Color = Color.White,
+    tone: SettingsIconTone,
 ) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(36.dp)
             .clip(MaterialTheme.shapes.small)
-            .background(background),
+            .background(tone.container),
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
-            tint = iconColor,
+            tint = tone.content,
             modifier = Modifier.size(20.dp),
         )
     }

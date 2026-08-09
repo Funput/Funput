@@ -4,9 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.ui.settings.components.SettingsSection
+import app.funput.funput.ui.settings.components.SettingsIconTone
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
-import app.funput.funput.ui.theme.BrandBlue
-import app.funput.funput.ui.theme.BrandOrange
 
 @Composable
 internal fun FeedbackSettingsSection(
@@ -24,7 +23,7 @@ internal fun FeedbackSettingsSection(
                     title = stringResource(R.string.settings_haptics_title),
                     checked = hapticsEnabled,
                     iconRes = R.drawable.ic_haptic,
-                    iconBackground = BrandBlue,
+                    tone = SettingsIconTone.Tertiary,
                     onCheckedChange = onHapticsChanged,
                 )
             },
@@ -34,7 +33,7 @@ internal fun FeedbackSettingsSection(
                     title = stringResource(R.string.settings_sounds_title),
                     checked = soundsEnabled,
                     iconRes = R.drawable.ic_sound,
-                    iconBackground = BrandOrange,
+                    tone = SettingsIconTone.Secondary,
                     onCheckedChange = onSoundsChanged,
                 )
             },

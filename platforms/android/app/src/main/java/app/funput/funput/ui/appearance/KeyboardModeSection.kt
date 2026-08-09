@@ -16,8 +16,8 @@ import app.funput.funput.R
 import app.funput.funput.ime.settings.KeyboardThemeSlot
 import app.funput.funput.ui.settings.components.SettingsGroup
 import app.funput.funput.ui.settings.components.SettingsSectionHeader
+import app.funput.funput.ui.settings.components.SettingsIconTone
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
-import app.funput.funput.ui.theme.BrandPink
 
 /**
  * Whether the keyboard carries one theme or two, and — when it carries two — which of them the
@@ -47,7 +47,7 @@ internal fun KeyboardModeSection(
                     summary = stringResource(R.string.theme_gallery_follow_appearance_description),
                     checked = followsAppearance,
                     iconRes = R.drawable.ic_appearance,
-                    iconBackground = BrandPink,
+                    tone = SettingsIconTone.Primary,
                     onCheckedChange = onFollowsAppearanceChange,
                 )
             },

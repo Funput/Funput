@@ -93,7 +93,7 @@ private fun linkRow(link: AboutLink, onOpenLink: (String) -> Unit): SettingsRowC
             title = stringResource(link.title),
             summary = stringResource(link.summary),
             iconRes = link.icon,
-            iconBackground = link.tint,
+            tone = link.tone,
             onClick = { onOpenLink(url) },
         )
     }

@@ -4,9 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.ui.settings.components.SettingsSection
+import app.funput.funput.ui.settings.components.SettingsIconTone
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
-import app.funput.funput.ui.theme.BrandBlue
-import app.funput.funput.ui.theme.BrandPurple
 
 @Composable
 internal fun SmartSettingsSection(
@@ -24,7 +23,7 @@ internal fun SmartSettingsSection(
                     title = stringResource(R.string.settings_smart_restore_title),
                     checked = smartRestoreEnabled,
                     iconRes = R.drawable.ic_globe,
-                    iconBackground = BrandPurple,
+                    tone = SettingsIconTone.Primary,
                     onCheckedChange = onSmartRestoreChanged,
                 )
             },
@@ -34,7 +33,7 @@ internal fun SmartSettingsSection(
                     title = stringResource(R.string.settings_spell_check_title),
                     checked = spellCheckEnabled,
                     iconRes = R.drawable.ic_check,
-                    iconBackground = BrandBlue,
+                    tone = SettingsIconTone.Tertiary,
                     onCheckedChange = onSpellCheckChanged,
                 )
             },

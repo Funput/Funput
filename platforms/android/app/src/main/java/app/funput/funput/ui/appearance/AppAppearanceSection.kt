@@ -16,9 +16,9 @@ import app.funput.funput.R
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ui.settings.components.SettingsGroup
 import app.funput.funput.ui.settings.components.SettingsSectionHeader
+import app.funput.funput.ui.settings.components.SettingsIconTone
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
 import app.funput.funput.ui.settings.label
-import app.funput.funput.ui.theme.BrandOrange
 import app.funput.funput.ui.theme.supportsDynamicColor
 
 /**
@@ -58,7 +58,7 @@ internal fun AppAppearanceSection(
                         summary = stringResource(R.string.settings_dynamic_color_summary),
                         checked = dynamicColorEnabled,
                         iconRes = R.drawable.ic_dynamic_color,
-                        iconBackground = BrandOrange,
+                        tone = SettingsIconTone.Secondary,
                         onCheckedChange = onDynamicColorChanged,
                     )
                 },

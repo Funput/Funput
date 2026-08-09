@@ -14,14 +14,12 @@ import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.settings.SettingsPicker
 import app.funput.funput.ui.settings.components.SettingsGroup
+import app.funput.funput.ui.settings.components.SettingsIconTone
 import app.funput.funput.ui.settings.components.SettingsRow
 import app.funput.funput.ui.settings.components.SettingsSectionHeader
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
 import app.funput.funput.ui.settings.label
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
-import app.funput.funput.ui.theme.BrandBlue
-import app.funput.funput.ui.theme.BrandOrange
-import app.funput.funput.ui.theme.BrandPurple
 
 @Composable
 internal fun KeyboardSettingsSection(
@@ -53,7 +51,7 @@ internal fun KeyboardSettingsSection(
                         title = stringResource(R.string.settings_input_method_title),
                         value = inputMethod.label(),
                         iconRes = R.drawable.ic_keyboard,
-                        iconBackground = BrandPurple,
+                        tone = SettingsIconTone.Primary,
                         onClick = { onOpenPicker(SettingsPicker.INPUT_METHOD) },
                     )
                 }
@@ -67,7 +65,7 @@ internal fun KeyboardSettingsSection(
                             summary = stringResource(R.string.settings_number_row_summary),
                             checked = showsNumberRow,
                             iconRes = R.drawable.ic_key_size,
-                            iconBackground = BrandOrange,
+                            tone = SettingsIconTone.Secondary,
                             onCheckedChange = onShowsNumberRowChanged,
                         )
                     }
@@ -78,7 +76,7 @@ internal fun KeyboardSettingsSection(
                         title = stringResource(R.string.settings_tone_style_title),
                         value = toneStyle.label(),
                         iconRes = R.drawable.ic_globe,
-                        iconBackground = BrandBlue,
+                        tone = SettingsIconTone.Tertiary,
                         onClick = { onOpenPicker(SettingsPicker.TONE_STYLE) },
                     )
                 }
@@ -88,7 +86,7 @@ internal fun KeyboardSettingsSection(
                         title = stringResource(R.string.settings_key_size_title),
                         value = keySizeProfile.label(),
                         iconRes = R.drawable.ic_key_size,
-                        iconBackground = BrandOrange,
+                        tone = SettingsIconTone.Secondary,
                         onClick = { onOpenPicker(SettingsPicker.KEY_SIZE) },
                     )
                 }

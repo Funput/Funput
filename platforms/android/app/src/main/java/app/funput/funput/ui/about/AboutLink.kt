@@ -2,19 +2,15 @@ package app.funput.funput.ui.about
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.ui.graphics.Color
 import app.funput.funput.R
-import app.funput.funput.ui.theme.BrandBlue
-import app.funput.funput.ui.theme.BrandOrange
-import app.funput.funput.ui.theme.BrandPink
-import app.funput.funput.ui.theme.BrandPurple
+import app.funput.funput.ui.settings.components.SettingsIconTone
 
 /** One outbound link on the about screen. URLs live in resources so they sit next to their labels. */
 internal data class AboutLink(
     @param:StringRes val title: Int,
     @param:StringRes val summary: Int,
     @param:DrawableRes val icon: Int,
-    val tint: Color,
+    val tone: SettingsIconTone,
     @param:StringRes val url: Int,
 )
 
@@ -28,14 +24,14 @@ internal object AboutLinks {
             title = R.string.settings_website_title,
             summary = R.string.about_website_summary,
             icon = R.drawable.ic_globe,
-            tint = BrandBlue,
+            tone = SettingsIconTone.Tertiary,
             url = R.string.settings_website_url,
         ),
         AboutLink(
             title = R.string.about_github_title,
             summary = R.string.about_github_summary,
             icon = R.drawable.ic_code,
-            tint = BrandPurple,
+            tone = SettingsIconTone.Primary,
             url = R.string.about_github_url,
         ),
     )
@@ -45,14 +41,14 @@ internal object AboutLinks {
             title = R.string.about_issues_title,
             summary = R.string.about_issues_summary,
             icon = R.drawable.ic_bug,
-            tint = BrandOrange,
+            tone = SettingsIconTone.Secondary,
             url = R.string.about_issues_url,
         ),
         AboutLink(
             title = R.string.about_contact_title,
             summary = R.string.about_contact_summary,
             icon = R.drawable.ic_mail,
-            tint = BrandPink,
+            tone = SettingsIconTone.Primary,
             url = R.string.about_contact_url,
         ),
     )
@@ -62,7 +58,7 @@ internal object AboutLinks {
             title = R.string.about_privacy_title,
             summary = R.string.about_privacy_summary,
             icon = R.drawable.ic_shield,
-            tint = BrandPurple,
+            tone = SettingsIconTone.Primary,
             url = R.string.about_privacy_url,
         ),
     )

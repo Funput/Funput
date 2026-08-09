@@ -36,7 +36,7 @@ internal fun SettingsLinkRow(
     title: String,
     summary: String,
     @DrawableRes iconRes: Int,
-    iconBackground: Color,
+    tone: SettingsIconTone,
     onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -53,7 +53,7 @@ internal fun SettingsLinkRow(
             )
             .semantics { onClick(label = hint, action = null) },
     ) {
-        SettingsIcon(iconRes, iconBackground)
+        SettingsIcon(iconRes, tone)
         Spacer(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge)

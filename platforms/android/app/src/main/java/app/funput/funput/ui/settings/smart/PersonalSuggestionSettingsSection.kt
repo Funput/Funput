@@ -11,11 +11,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
+import app.funput.funput.ui.settings.components.SettingsIconTone
 import app.funput.funput.ui.settings.components.SettingsRow
 import app.funput.funput.ui.settings.components.SettingsSection
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
-import app.funput.funput.ui.theme.BrandBlue
-import app.funput.funput.ui.theme.BrandPurple
 
 @Composable
 internal fun PersonalSuggestionSettingsSection(
@@ -36,7 +35,7 @@ internal fun PersonalSuggestionSettingsSection(
                     summary = stringResource(R.string.settings_personal_suggestions_description),
                     checked = enabled,
                     iconRes = R.drawable.ic_keyboard,
-                    iconBackground = BrandPurple,
+                    tone = SettingsIconTone.Primary,
                     onCheckedChange = onEnabledChanged,
                 )
             },
@@ -45,7 +44,7 @@ internal fun PersonalSuggestionSettingsSection(
                     position = position,
                     title = stringResource(R.string.settings_personal_suggestions_reset),
                     iconRes = R.drawable.ic_globe,
-                    iconBackground = BrandBlue,
+                    tone = SettingsIconTone.Tertiary,
                     onClick = { confirmsReset = true },
                 )
             },
