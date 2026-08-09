@@ -2,7 +2,6 @@ package app.funput.funput.ui
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.store.customKeyboardThemeStore
 import app.funput.funput.ui.navigation.AppDestination
+import app.funput.funput.ui.navigation.AppNavDisplay
 import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
@@ -53,55 +53,56 @@ fun FunputApp() {
     } else {
         KeyboardThemeSlot.SINGLE
     }
-    BackHandler(enabled = navigator.canNavigateBack) { navigator.navigateBack() }
     FunputTheme(appearanceMode = settings.appearanceMode, dynamicColor = settings.dynamicColor) {
         SyncSystemBarAppearance(darkTheme = darkTheme)
         Surface(modifier = Modifier.fillMaxSize()) {
-            when (navigator.currentDestination) {
-                AppDestination.SETTINGS -> SettingsRoute(
-                    settings = settings,
-                    keyboardThemeLabel = keyboardThemeLabel,
-                    onOpenThemeGallery = { navigator.navigate(AppDestination.THEME_GALLERY) },
-                )
-                AppDestination.THEME_GALLERY -> ThemeGalleryScreen(
-                    themes = installedThemes,
-                    selectedThemeId = settings.themeSelection.themeId(activeSlot),
-                    followsAppearance = settings.themeSelection.followsAppearance,
-                    activeSlot = activeSlot,
-                    onThemeSelected = { themeId ->
-                        scope.launch { settings.keyboardTheme.setTheme(themeId, activeSlot) }
-                    },
-                    onFollowsAppearanceChange = { follows ->
-                        scope.launch { settings.keyboardTheme.setFollowsAppearance(follows) }
-                    },
-                    onSlotSelected = { slot -> slotChoice = slot },
-                    onCreateTheme = {
-                        editingThemeId = null
-                        navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
-                    },
-                    onEditTheme = { themeId ->
-                        editingThemeId = themeId
-                        navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
-                    },
-                    onDeleteTheme = { themeId ->
-                        scope.launch {
-                            customThemeServices.deleteHandler.delete(themeId, settings.themeSelection)
+            AppNavDisplay(navigator) { destination ->
+                when (destination) {
+                    AppDestination.SETTINGS -> SettingsRoute(
+                        settings = settings,
+                        keyboardThemeLabel = keyboardThemeLabel,
+                        onOpenThemeGallery = { navigator.navigate(AppDestination.THEME_GALLERY) },
+                    )
+                    AppDestination.THEME_GALLERY -> ThemeGalleryScreen(
+                        themes = installedThemes,
+                        selectedThemeId = settings.themeSelection.themeId(activeSlot),
+                        followsAppearance = settings.themeSelection.followsAppearance,
+                        activeSlot = activeSlot,
+                        onThemeSelected = { themeId ->
+                            scope.launch { settings.keyboardTheme.setTheme(themeId, activeSlot) }
+                        },
+                        onFollowsAppearanceChange = { follows ->
+                            scope.launch { settings.keyboardTheme.setFollowsAppearance(follows) }
+                        },
+                        onSlotSelected = { slot -> slotChoice = slot },
+                        onCreateTheme = {
+                            editingThemeId = null
+                            navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
+                        },
+                        onEditTheme = { themeId ->
+                            editingThemeId = themeId
+                            navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
+                        },
+                        onDeleteTheme = { themeId ->
+                            scope.launch {
+                                customThemeServices.deleteHandler.delete(themeId, settings.themeSelection)
+                                themeCatalogRevision += 1
+                            }
+                        },
+                        onBack = navigator::navigateBack,
+                    )
+                    AppDestination.CREATE_CUSTOM_THEME -> CustomThemeStudioRoute(
+                        editingThemeId = editingThemeId,
+                        themeRepository = themeRepository,
+                        saveHandler = customThemeServices.saveHandler,
+                        activeSlot = activeSlot,
+                        onDone = {
                             themeCatalogRevision += 1
-                        }
-                    },
-                    onBack = navigator::navigateBack,
-                )
-                AppDestination.CREATE_CUSTOM_THEME -> CustomThemeStudioRoute(
-                    editingThemeId = editingThemeId,
-                    themeRepository = themeRepository,
-                    saveHandler = customThemeServices.saveHandler,
-                    activeSlot = activeSlot,
-                    onDone = {
-                        themeCatalogRevision += 1
-                        editingThemeId = null
-                        navigator.navigateBack()
-                    },
-                )
+                            editingThemeId = null
+                            navigator.navigateBack()
+                        },
+                    )
+                }
             }
         }
     }

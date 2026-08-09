@@ -60,6 +60,7 @@ internal fun CreateCustomThemeScreen(
         CreateCustomThemeForm(
             state = state,
             contentPadding = padding,
+            editingThemeId = editingTheme?.id,
             onChooseBackgroundImage = {
                 imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             },

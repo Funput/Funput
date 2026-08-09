@@ -21,7 +21,9 @@ import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
+import app.funput.funput.ui.navigation.sharedElementByKey
 import app.funput.funput.ui.theme.KeyboardThemePreview
+import app.funput.funput.ui.theme.themePreviewSharedKey
 
 @Composable
 internal fun ThemeCard(
@@ -53,6 +55,7 @@ internal fun ThemeCard(
                 theme = descriptor.theme,
                 backgroundImage = descriptor.backgroundImage,
                 modifier = Modifier
+                    .sharedElementByKey(themePreviewSharedKey(descriptor.id))
                     .height(190.dp)
                     .clip(MaterialTheme.shapes.small),
             )

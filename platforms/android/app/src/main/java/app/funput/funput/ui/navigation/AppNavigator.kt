@@ -21,6 +21,13 @@ internal class AppNavigator private constructor(
     val canNavigateBack: Boolean
         get() = backStack.size > 1
 
+    /**
+     * Where back would land. A predictive back gesture has to draw that screen while the finger is
+     * still down, which means knowing it before the stack is popped.
+     */
+    val previousDestination: AppDestination?
+        get() = backStack.getOrNull(backStack.lastIndex - 1)
+
     constructor() : this(listOf(AppDestination.SETTINGS))
 
     fun navigate(destination: AppDestination) {

@@ -14,6 +14,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.funput.funput.theme.KeyboardThemeId
 
 /**
  * Pinned preview above, scrolling controls below.
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 internal fun CreateCustomThemeForm(
     state: ThemeDraftState,
     contentPadding: PaddingValues,
+    editingThemeId: KeyboardThemeId?,
     onChooseBackgroundImage: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -39,6 +41,7 @@ internal fun CreateCustomThemeForm(
         ThemeStudioPreview(
             theme = state.theme,
             backgroundImage = state.backgroundImage,
+            editingThemeId = editingThemeId,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
         )
         CreateThemeEditorTabs(

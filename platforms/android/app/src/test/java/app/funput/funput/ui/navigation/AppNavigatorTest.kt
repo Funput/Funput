@@ -20,4 +20,28 @@ class AppNavigatorTest {
         assertFalse(navigator.canNavigateBack)
         assertFalse(navigator.navigateBack())
     }
+
+    @Test
+    fun `previous destination is what back would reveal`() {
+        val navigator = AppNavigator()
+
+        // A predictive back gesture draws this screen while the finger is still down, so it has to
+        // be readable before anything is popped.
+        assertEquals(null, navigator.previousDestination)
+        navigator.navigate(AppDestination.THEME_GALLERY)
+        assertEquals(AppDestination.SETTINGS, navigator.previousDestination)
+        navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
+        assertEquals(AppDestination.THEME_GALLERY, navigator.previousDestination)
+    }
+
+    @Test
+    fun `depth increases away from the root`() {
+        // Transitions read this to decide which way to slide. Equal or inverted depths would send
+        // a screen in from the wrong edge.
+        val depths = AppDestination.entries.map(AppDestination::depth)
+
+        assertEquals(depths.sorted(), depths)
+        assertEquals(depths.distinct(), depths)
+        assertEquals(0, AppDestination.SETTINGS.depth)
+    }
 }
