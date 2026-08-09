@@ -6,7 +6,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.ui.keyboard.openKeyboardSettings
-import app.funput.funput.ui.keyboard.openWebsite
 import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.settings.SettingsScreen
 import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
@@ -23,10 +22,10 @@ internal fun SettingsRoute(
     settings: FunputSettingsState,
     keyboardThemeLabel: String,
     onOpenThemeGallery: () -> Unit,
+    onOpenAbout: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val websiteUrl = stringResource(R.string.settings_website_url)
     val versionName = AppVersionProvider.versionName(context)
 
     SettingsScreen(
@@ -75,6 +74,6 @@ internal fun SettingsRoute(
         onEnableKeyboard = context::openKeyboardSettings,
         onSelectKeyboard = context::showKeyboardPicker,
         onOpenThemeGallery = onOpenThemeGallery,
-        onOpenWebsite = { context.openWebsite(websiteUrl) },
+        onOpenAbout = onOpenAbout,
     )
 }

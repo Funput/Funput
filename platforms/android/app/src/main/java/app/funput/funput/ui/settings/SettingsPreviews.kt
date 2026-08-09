@@ -80,7 +80,7 @@ private fun SettingsPreview(
             onEnableKeyboard = {},
             onSelectKeyboard = {},
             onOpenThemeGallery = {},
-            onOpenWebsite = {},
+            onOpenAbout = {},
         )
     }
 }

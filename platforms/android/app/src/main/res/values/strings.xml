@@ -175,4 +175,26 @@
     <string name="settings_website_title">Website</string>
     <string name="settings_website_display">funput.app</string>
     <string name="settings_website_url">https://funput.app/</string>
+    <string name="settings_about_row_title">Giới thiệu</string>
+    <string name="about_title">Giới thiệu</string>
+    <string name="about_version">Phiên bản %1$s</string>
+    <string name="about_section_discovery">Tìm hiểu</string>
+    <string name="about_website_summary">Tin tức và thông tin về Funput</string>
+    <string name="about_github_title">GitHub</string>
+    <string name="about_github_summary">Xem mã nguồn Funput/Funput</string>
+    <string name="about_github_url">https://github.com/Funput/Funput</string>
+    <string name="about_section_support">Cộng đồng &amp; hỗ trợ</string>
+    <string name="about_issues_title">Báo lỗi</string>
+    <string name="about_issues_summary">Gửi phản hồi trên GitHub Issues</string>
+    <string name="about_issues_url">https://github.com/Funput/Funput/issues</string>
+    <string name="about_contact_title">Liên hệ</string>
+    <string name="about_contact_summary">hello@funput.app</string>
+    <string name="about_contact_url">mailto:hello@funput.app</string>
+    <string name="about_section_privacy">Quyền riêng tư</string>
+    <string name="about_privacy_title">Chính sách quyền riêng tư</string>
+    <string name="about_privacy_summary">Cách Funput bảo vệ dữ liệu của bạn</string>
+    <string name="about_privacy_url">https://funput.app/privacy</string>
+    <string name="about_footer_title">Được xây dựng cho cộng đồng</string>
+    <string name="about_footer_body">Funput là dự án mã nguồn mở &amp; miễn phí cho tất cả mọi người.</string>
+    <string name="about_external_link">Mở liên kết ngoài</string>
 </resources>

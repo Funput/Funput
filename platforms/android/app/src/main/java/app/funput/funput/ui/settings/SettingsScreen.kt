@@ -48,7 +48,7 @@ internal fun SettingsScreen(
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
     onOpenThemeGallery: () -> Unit,
-    onOpenWebsite: () -> Unit,
+    onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var picker by rememberSaveable { mutableStateOf<SettingsPicker?>(null) }
@@ -85,7 +85,7 @@ internal fun SettingsScreen(
             onEnableKeyboard = onEnableKeyboard,
             onSelectKeyboard = onSelectKeyboard,
             onOpenThemeGallery = onOpenThemeGallery,
-            onOpenWebsite = onOpenWebsite,
+            onOpenAbout = onOpenAbout,
         )
     }
     SettingsPickerSheet(

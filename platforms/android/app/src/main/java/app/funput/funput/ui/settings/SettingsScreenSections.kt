@@ -54,7 +54,7 @@ internal fun SettingsScreenSections(
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
     onOpenThemeGallery: () -> Unit,
-    onOpenWebsite: () -> Unit,
+    onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -122,7 +122,7 @@ internal fun SettingsScreenSections(
         item(key = "about") {
             AboutSettingsSection(
                 versionName = versionName,
-                onOpenWebsite = onOpenWebsite,
+                onOpenAbout = onOpenAbout,
             )
         }
     }

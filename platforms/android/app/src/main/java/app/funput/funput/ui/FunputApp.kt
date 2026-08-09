@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.store.customKeyboardThemeStore
+import app.funput.funput.ui.about.AboutRoute
 import app.funput.funput.ui.navigation.AppDestination
 import app.funput.funput.ui.navigation.AppNavDisplay
 import app.funput.funput.ui.navigation.rememberAppNavigator
@@ -62,6 +63,7 @@ fun FunputApp() {
                         settings = settings,
                         keyboardThemeLabel = keyboardThemeLabel,
                         onOpenThemeGallery = { navigator.navigate(AppDestination.THEME_GALLERY) },
+                        onOpenAbout = { navigator.navigate(AppDestination.ABOUT) },
                     )
                     AppDestination.THEME_GALLERY -> ThemeGalleryScreen(
                         themes = installedThemes,
@@ -91,6 +93,7 @@ fun FunputApp() {
                         },
                         onBack = navigator::navigateBack,
                     )
+                    AppDestination.ABOUT -> AboutRoute()
                     AppDestination.CREATE_CUSTOM_THEME -> CustomThemeStudioRoute(
                         editingThemeId = editingThemeId,
                         themeRepository = themeRepository,

@@ -1,7 +1,6 @@
 package app.funput.funput.ui.settings.about
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.ui.settings.components.SettingsRow
@@ -10,10 +9,16 @@ import app.funput.funput.ui.settings.components.SettingsValueRow
 import app.funput.funput.ui.theme.BrandBlue
 import app.funput.funput.ui.theme.BrandOrange
 
+/**
+ * What is left of the old About section: the version, and the way through to the about screen.
+ *
+ * The links that used to sit here moved to that screen. This row goes away once the tab bar lands
+ * and makes the destination reachable on its own.
+ */
 @Composable
 internal fun AboutSettingsSection(
     versionName: String,
-    onOpenWebsite: () -> Unit,
+    onOpenAbout: () -> Unit,
 ) {
     SettingsSection(
         title = stringResource(R.string.settings_section_about),
@@ -30,12 +35,10 @@ internal fun AboutSettingsSection(
             { position ->
                 SettingsRow(
                     position = position,
-                    title = stringResource(R.string.settings_website_title),
-                    value = stringResource(R.string.settings_website_display),
-                    iconRes = R.drawable.ic_globe,
+                    title = stringResource(R.string.settings_about_row_title),
+                    iconRes = R.drawable.ic_heart,
                     iconBackground = BrandOrange,
-                    iconColor = Color(0xFF3D2200),
-                    onClick = onOpenWebsite,
+                    onClick = onOpenAbout,
                 )
             },
         ),
