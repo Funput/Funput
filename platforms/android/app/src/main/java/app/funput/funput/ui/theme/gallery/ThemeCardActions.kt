@@ -5,15 +5,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -22,6 +27,13 @@ import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.ui.theme.PillShape
 
+/**
+ * The badge for the theme in use, and — for a theme the user made — an overflow menu.
+ *
+ * Editing and deleting used to be two text buttons on the face of every custom card. That put a
+ * destructive action one tap from a card whose whole job is to be tapped, and it crowded out the
+ * name it sat next to.
+ */
 @Composable
 internal fun ThemeActions(
     title: String,
@@ -30,30 +42,56 @@ internal fun ThemeActions(
     onDelete: (() -> Unit)?,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        onEdit?.let {
-            ActionButton(R.string.theme_gallery_edit, editDescription(title), MaterialTheme.colorScheme.primary, it)
-        }
-        onDelete?.let {
-            ActionButton(R.string.theme_gallery_delete, deleteDescription(title), MaterialTheme.colorScheme.error, it)
-        }
         if (selected) SelectedBadge()
+        if (onEdit != null || onDelete != null) {
+            Spacer(modifier = Modifier.width(4.dp))
+            ThemeOverflowMenu(title, onEdit, onDelete)
+        }
     }
 }
 
 @Composable
-private fun ActionButton(
-    labelRes: Int,
-    description: String,
-    color: Color,
-    onClick: () -> Unit,
-) {
-    TextButton(onClick = onClick) {
-        Text(
-            text = stringResource(labelRes),
-            color = color,
-            modifier = Modifier.semantics { contentDescription = description },
+private fun ThemeOverflowMenu(title: String, onEdit: (() -> Unit)?, onDelete: (() -> Unit)?) {
+    var expanded by remember { mutableStateOf(false) }
+    val description = stringResource(R.string.theme_gallery_more_description, title)
+    IconButton(
+        onClick = { expanded = true },
+        modifier = Modifier.semantics { contentDescription = description },
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_more_vert),
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
         )
     }
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        onEdit?.let { edit ->
+            MenuAction(R.string.theme_gallery_edit, editDescription(title), MaterialTheme.colorScheme.onSurface) {
+                expanded = false
+                edit()
+            }
+        }
+        onDelete?.let { delete ->
+            MenuAction(R.string.theme_gallery_delete, deleteDescription(title), MaterialTheme.colorScheme.error) {
+                expanded = false
+                delete()
+            }
+        }
+    }
+}
+
+@Composable
+private fun MenuAction(
+    labelRes: Int,
+    description: String,
+    color: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit,
+) {
+    DropdownMenuItem(
+        text = { Text(text = stringResource(labelRes), color = color) },
+        onClick = onClick,
+        modifier = Modifier.semantics { contentDescription = description },
+    )
 }
 
 @Composable

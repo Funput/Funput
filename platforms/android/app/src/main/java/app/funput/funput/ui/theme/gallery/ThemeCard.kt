@@ -4,7 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.MaterialTheme
@@ -14,9 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardThemeDescriptor
@@ -25,6 +26,13 @@ import app.funput.funput.ui.navigation.sharedElementByKey
 import app.funput.funput.ui.theme.KeyboardThemePreview
 import app.funput.funput.ui.theme.themePreviewSharedKey
 
+/**
+ * One theme, at the width of the keyboard it is previewing.
+ *
+ * A keyboard fills the screen edge to edge, so a preview narrower than the card it sits in has to
+ * squash it to fit and stops looking like the thing being chosen. At full width the aspect matches
+ * the real keyboard and the keys stay readable.
+ */
 @Composable
 internal fun ThemeCard(
     descriptor: KeyboardThemeDescriptor,
@@ -35,7 +43,9 @@ internal fun ThemeCard(
     modifier: Modifier = Modifier,
 ) {
     val title = descriptor.localizedName()
-    val borderColor = if (selected) MaterialTheme.colorScheme.primary else {
+    val borderColor = if (selected) {
+        MaterialTheme.colorScheme.primary
+    } else {
         MaterialTheme.colorScheme.outline.copy(alpha = 0.24f)
     }
     Surface(
@@ -43,12 +53,9 @@ internal fun ThemeCard(
         color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
         modifier = modifier
+            .fillMaxWidth()
             .testTag(descriptor.id.value)
-            .selectable(
-                selected = selected,
-                role = Role.RadioButton,
-                onClick = onSelected,
-            ),
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelected),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             KeyboardThemePreview(
@@ -56,12 +63,13 @@ internal fun ThemeCard(
                 backgroundImage = descriptor.backgroundImage,
                 modifier = Modifier
                     .sharedElementByKey(themePreviewSharedKey(descriptor.id))
-                    .height(190.dp)
+                    .fillMaxWidth()
+                    .aspectRatio(PreviewAspect)
                     .clip(MaterialTheme.shapes.small),
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 12.dp, start = 2.dp, end = 2.dp),
+                modifier = Modifier.padding(top = 10.dp, start = 4.dp),
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -91,3 +99,6 @@ private fun KeyboardThemeDescriptor.localizedName(): String = when (id) {
     KeyboardThemeId.Light -> stringResource(R.string.settings_keyboard_theme_light)
     else -> name
 }
+
+/** Roughly the shape of the real keyboard: full width, a little under half as tall. */
+private const val PreviewAspect = 2.05f

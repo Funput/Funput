@@ -43,6 +43,7 @@
     <string name="theme_gallery_user_section">Theme của bạn</string>
     <string name="theme_gallery_selected">Đang sử dụng</string>
     <string name="theme_gallery_edit">Sửa</string>
+    <string name="theme_gallery_more_description">Tuỳ chọn cho theme %1$s</string>
     <string name="theme_gallery_edit_description">Sửa theme %1$s</string>
     <string name="theme_gallery_delete">Xóa</string>
     <string name="theme_gallery_delete_description">Xóa theme %1$s</string>
@@ -179,6 +180,11 @@
     <string name="about_title">Giới thiệu</string>
     <string name="nav_settings">Cài đặt</string>
     <string name="nav_appearance">Giao diện</string>
+    <string name="appearance_section_app">Ứng dụng</string>
+    <string name="appearance_section_keyboard">Bàn phím</string>
+    <string name="appearance_slot_assigning">Đang gán cho</string>
+    <string name="appearance_slot_light_named">Sáng · %1$s</string>
+    <string name="appearance_slot_dark_named">Tối · %1$s</string>
     <string name="nav_about">Giới thiệu</string>
     <string name="about_version">Phiên bản %1$s</string>
     <string name="about_section_discovery">Tìm hiểu</string>

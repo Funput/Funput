@@ -33,8 +33,6 @@ internal fun SettingsRoute(
         toneStyle = settings.toneStyle,
         keySizeProfile = settings.keySizeProfile,
         keyboardThemeLabel = keyboardThemeLabel,
-        appearanceMode = settings.appearanceMode,
-        dynamicColorEnabled = settings.dynamicColor,
         hapticsEnabled = settings.feedback.hapticsEnabled,
         soundsEnabled = settings.feedback.soundsEnabled,
         smartRestoreEnabled = settings.smartComposition.smartRestoreEnabled,
@@ -46,10 +44,6 @@ internal fun SettingsRoute(
         },
         onToneStyleSelected = { style -> scope.launch { settings.toneStyleStore.setToneStyle(style) } },
         onKeySizeSelected = { profile -> scope.launch { settings.sizing.setProfile(profile) } },
-        onAppearanceSelected = { mode -> scope.launch { settings.appearance.setMode(mode) } },
-        onDynamicColorChanged = { enabled ->
-            scope.launch { settings.dynamicColorStore.setEnabled(enabled) }
-        },
         onHapticsChanged = { enabled ->
             scope.launch { settings.feedbackStore.setHapticsEnabled(enabled) }
         },

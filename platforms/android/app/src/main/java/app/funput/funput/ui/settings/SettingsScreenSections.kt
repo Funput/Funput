@@ -12,11 +12,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.ui.settings.appearance.AppearanceSettingsSection
 import app.funput.funput.ui.settings.components.SettingsHero
 import app.funput.funput.ui.settings.feedback.FeedbackSettingsSection
 import app.funput.funput.ui.settings.keyboard.KeyboardSettingsSection
@@ -32,8 +30,6 @@ internal fun SettingsScreenSections(
     toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
     keyboardThemeLabel: String,
-    appearanceMode: AppearanceMode,
-    dynamicColorEnabled: Boolean,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
     smartRestoreEnabled: Boolean,
@@ -41,7 +37,6 @@ internal fun SettingsScreenSections(
     personalSuggestionsEnabled: Boolean,
     contentPadding: PaddingValues,
     onOpenPicker: (SettingsPicker) -> Unit,
-    onDynamicColorChanged: (Boolean) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
@@ -98,14 +93,6 @@ internal fun SettingsScreenSections(
                 enabled = personalSuggestionsEnabled,
                 onEnabledChanged = onPersonalSuggestionsChanged,
                 onReset = onResetPersonalSuggestions,
-            )
-        }
-        item(key = "appearance") {
-            AppearanceSettingsSection(
-                appearanceMode = appearanceMode,
-                dynamicColorEnabled = dynamicColorEnabled,
-                onOpenPicker = onOpenPicker,
-                onDynamicColorChanged = onDynamicColorChanged,
             )
         }
         item(key = "feedback") {

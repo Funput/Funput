@@ -26,11 +26,9 @@ class AdvancedTelexSettingsTest {
                     inputMethod = selected,
                     toneStyle = ToneStyle.TRADITIONAL,
                     keySizeProfile = KeyboardSizingProfile.Default,
-                    appearanceMode = AppearanceMode.SYSTEM,
                     onInputMethodSelected = { selected = it },
                     onToneStyleSelected = {},
                     onKeySizeSelected = {},
-                    onAppearanceSelected = {},
                     onDismiss = {},
                 )
             }

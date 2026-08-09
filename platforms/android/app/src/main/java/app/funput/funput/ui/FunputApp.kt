@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.store.customKeyboardThemeStore
 import app.funput.funput.ui.about.AboutRoute
+import app.funput.funput.ui.appearance.AppearanceRoute
 import app.funput.funput.ui.navigation.AppDestination
 import app.funput.funput.ui.navigation.AppNavDisplay
 import app.funput.funput.ui.navigation.AppNavigationSuite
@@ -22,7 +23,6 @@ import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
 import app.funput.funput.ui.theme.custom.rememberCustomThemeServices
-import app.funput.funput.ui.theme.gallery.ThemeGalleryScreen
 import app.funput.funput.ui.theme.localizedName
 import app.funput.funput.ui.theme.resolveDarkTheme
 import kotlinx.coroutines.launch
@@ -66,17 +66,10 @@ fun FunputApp() {
                         keyboardThemeLabel = keyboardThemeLabel,
                         onOpenThemeGallery = { navigator.navigate(AppDestination.THEME_GALLERY) },
                     )
-                    AppDestination.THEME_GALLERY -> ThemeGalleryScreen(
-                        themes = installedThemes,
-                        selectedThemeId = settings.themeSelection.themeId(activeSlot),
-                        followsAppearance = settings.themeSelection.followsAppearance,
+                    AppDestination.THEME_GALLERY -> AppearanceRoute(
+                        settings = settings,
+                        catalog = themeCatalog,
                         activeSlot = activeSlot,
-                        onThemeSelected = { themeId ->
-                            scope.launch { settings.keyboardTheme.setTheme(themeId, activeSlot) }
-                        },
-                        onFollowsAppearanceChange = { follows ->
-                            scope.launch { settings.keyboardTheme.setFollowsAppearance(follows) }
-                        },
                         onSlotSelected = { slot -> slotChoice = slot },
                         onCreateTheme = {
                             editingThemeId = null
@@ -92,7 +85,6 @@ fun FunputApp() {
                                 themeCatalogRevision += 1
                             }
                         },
-                        onBack = null,
                     )
                     AppDestination.ABOUT -> AboutRoute()
                     AppDestination.CREATE_CUSTOM_THEME -> CustomThemeStudioRoute(
