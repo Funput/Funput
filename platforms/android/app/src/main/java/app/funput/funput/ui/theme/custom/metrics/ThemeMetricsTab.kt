@@ -21,14 +21,14 @@ import androidx.compose.ui.unit.dp
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.MetricClamp
 
+/** Page "Chung": the shape of the thing, as answers rather than numbers. */
 @Composable
-internal fun ThemeMetricsTab(
+internal fun ThemeGeneralMetrics(
     theme: KeyboardTheme,
     onThemeChange: ((KeyboardTheme) -> KeyboardTheme) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var fineTuning by rememberSaveable { mutableStateOf(false) }
-
     Column(verticalArrangement = Arrangement.spacedBy(18.dp), modifier = modifier) {
         PresetRow(
             titleRes = R.string.custom_theme_shape_title,
@@ -62,46 +62,6 @@ internal fun ThemeMetricsTab(
                     onChange = { value -> onThemeChange { it.copy(keycapInsetDp = value) } },
                     hint = stringResource(R.string.custom_theme_metric_keycap_inset_hint),
                 )
-                ThemePercentSlider(
-                    label = stringResource(R.string.custom_theme_metric_pressed_scale),
-                    value = theme.pressedKeyScale,
-                    range = MetricClamp.PressedKeyScale,
-                    onChange = { value -> onThemeChange { it.copy(pressedKeyScale = value) } },
-                )
-            }
-            MetricSection(R.string.custom_theme_metrics_surface) {
-                ThemeDpSlider(
-                    label = stringResource(R.string.custom_theme_metric_border_width),
-                    value = theme.keyBorderWidthDp,
-                    range = MetricClamp.BorderWidthDp,
-                    onChange = { value -> onThemeChange { it.copy(keyBorderWidthDp = value) } },
-                )
-                ThemeDpSlider(
-                    label = stringResource(R.string.custom_theme_metric_shadow_offset),
-                    value = theme.keyShadowOffsetDp,
-                    range = MetricClamp.ShadowOffsetDp,
-                    onChange = { value -> onThemeChange { it.copy(keyShadowOffsetDp = value) } },
-                )
-                ThemePercentSlider(
-                    label = stringResource(R.string.custom_theme_metric_key_opacity),
-                    value = theme.keyOpacity,
-                    range = MetricClamp.Opacity,
-                    onChange = { value -> onThemeChange { it.copy(keyOpacity = value) } },
-                )
-                ThemePercentSlider(
-                    label = stringResource(R.string.custom_theme_metric_special_key_opacity),
-                    value = theme.specialKeyOpacity,
-                    range = MetricClamp.Opacity,
-                    onChange = { value -> onThemeChange { it.copy(specialKeyOpacity = value) } },
-                )
-            }
-            MetricSection(R.string.custom_theme_metrics_background) {
-                GradientDirectionSelector(
-                    selected = theme.backgroundGradientDirection,
-                    onSelected = { direction ->
-                        onThemeChange { it.copy(backgroundGradientDirection = direction) }
-                    },
-                )
             }
         }
     }
@@ -130,7 +90,7 @@ private fun <T> PresetRow(
 }
 
 @Composable
-private fun MetricSection(titleRes: Int, content: @Composable () -> Unit) {
+internal fun MetricSection(titleRes: Int, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = stringResource(titleRes),

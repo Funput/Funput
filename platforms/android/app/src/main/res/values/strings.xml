@@ -62,7 +62,7 @@
     <string name="custom_theme_preview_title">Xem trước trực tiếp</string>
     <string name="custom_theme_preview_subtitle">Thấy ngay cảm giác gõ trước khi lưu theme.</string>
     <string name="custom_theme_tab_style">Phong cách</string>
-    <string name="custom_theme_tab_background">Ảnh nền</string>
+    <string name="custom_theme_tab_background">Nền</string>
     <string name="custom_theme_tab_info">Thông tin</string>
     <string name="custom_theme_info_title">Thông tin theme</string>
     <string name="custom_theme_info_description">Đặt tên dễ nhớ để tìm lại trong Theme Gallery.</string>
@@ -82,6 +82,10 @@
     <string name="custom_theme_relief_deep">Nổi rõ</string>
     <string name="custom_theme_metrics_fine_tune">Tinh chỉnh từng thông số</string>
     <string name="custom_theme_background_row">Ảnh nền</string>
+    <string name="custom_theme_tab_general">Chung</string>
+    <string name="custom_theme_tab_keys">Phím &amp; chữ</string>
+    <string name="custom_theme_tab_pressed">Khi nhấn</string>
+    <string name="custom_theme_group_gradient">Màu nền</string>
     <string name="custom_theme_background_none">Chưa chọn</string>
     <string name="custom_theme_background_set">Đã chọn</string>
     <string name="custom_theme_restore">Khôi phục</string>
