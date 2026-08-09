@@ -64,9 +64,9 @@ private fun Int.tinted(hueDegrees: Float, minimumSaturation: Float): Int {
 
 private val Int.alpha: Int get() = this ushr 24
 
-private data class Hsl(val hue: Float, val saturation: Float, val lightness: Float)
+internal data class Hsl(val hue: Float, val saturation: Float, val lightness: Float)
 
-private fun Int.toHsl(): Hsl {
+internal fun Int.toHsl(): Hsl {
     val red = ((this shr 16) and Mask) / MaxChannel
     val green = ((this shr 8) and Mask) / MaxChannel
     val blue = (this and Mask) / MaxChannel

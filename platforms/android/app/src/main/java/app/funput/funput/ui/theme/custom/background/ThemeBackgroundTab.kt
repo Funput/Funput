@@ -55,6 +55,10 @@ private fun ChosenImageControls(
 ) {
     var editingOverlay by remember { mutableStateOf(false) }
 
+    val bitmap by rememberBackgroundBitmap(image.source)
+    val palette by rememberImagePalette(bitmap)
+    ImagePaletteRow(colours = palette, onSelected = state::applyAccent)
+
     BackgroundFocusPicker(
         source = image.source,
         focalX = image.focalX,

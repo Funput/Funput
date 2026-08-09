@@ -82,6 +82,9 @@
     <string name="custom_theme_relief_deep">Nổi rõ</string>
     <string name="custom_theme_metrics_fine_tune">Tinh chỉnh từng thông số</string>
     <string name="custom_theme_background_row">Ảnh nền</string>
+    <string name="custom_theme_palette_title">Màu lấy từ ảnh</string>
+    <string name="custom_theme_palette_hint">Chạm để nhuộm cả theme theo màu đó.</string>
+    <string name="custom_theme_palette_apply">Dùng màu này cho theme</string>
     <string name="custom_theme_tab_general">Chung</string>
     <string name="custom_theme_tab_keys">Phím &amp; chữ</string>
     <string name="custom_theme_tab_pressed">Khi nhấn</string>
