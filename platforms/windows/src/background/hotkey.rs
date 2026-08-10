@@ -51,11 +51,10 @@ pub fn on_keydown(vk: VIRTUAL_KEY, mods: Mods) -> Option<Hit> {
 /// the engine goes on to swallow — a swallowed keystroke still means the user
 /// was typing a shortcut, not tapping a bare modifier pair.
 pub fn on_key_event(vk: VIRTUAL_KEY, mods: Mods, down: bool) -> Option<Hit> {
-    let event = match (rules::is_modifier(vk), down) {
-        (true, true) => Event::ModifierDown,
-        (true, false) => Event::ModifierUp,
-        (false, true) => Event::OtherDown,
-        (false, false) => return None, // an ordinary key coming up changes nothing
+    let event = match (rules::mod_bit(vk), down) {
+        (Some(bit), down) => Event::Modifier { bit, down },
+        (None, true) => Event::OtherDown,
+        (None, false) => return None, // an ordinary key coming up changes nothing
     };
     let held = rules::mods_with(vk, mods, down);
     let gesture = WATCHER.with(|w| w.borrow_mut().feed(event, held))?;
