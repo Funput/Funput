@@ -96,6 +96,18 @@ class ImeCompositionInstrumentedTest {
     }
 
     @Test
+    fun clipboardCommitsWholeAndVietnameseCompositionContinues() = onMainThread {
+        ImeEditingScenario.create().use { scenario ->
+            scenario.handler.type("vieejt")
+            scenario.handler.onClipboardSelected(" Việt,\\\nline ")
+            scenario.handler.type("as")
+
+            assertEquals("việt Việt,\\\nline á", scenario.text)
+            assertTrue(scenario.composition.isComposing)
+        }
+    }
+
+    @Test
     fun backspaceEditsCompositionNotHostBuffer() = onMainThread {
         ImeEditingScenario.create().use { scenario ->
             scenario.handler.type("vieejt")

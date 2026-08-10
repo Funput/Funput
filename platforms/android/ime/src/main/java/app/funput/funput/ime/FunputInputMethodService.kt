@@ -5,13 +5,7 @@ import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.view.inputmethod.CompletionInfo
 import android.view.inputmethod.EditorInfo
-import app.funput.funput.ime.editing.AndroidCompositionSession
-import app.funput.funput.ime.editing.ImeEditorRuntime
-import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
-import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
-import app.funput.funput.ime.settings.PersonalSuggestionSettings
-import app.funput.funput.ime.suggestions.PersonalSuggestionService
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.ui.FunputKeyboardView
@@ -41,6 +35,7 @@ class FunputInputMethodService : InputMethodService() {
         super.onCreate()
         session = createImeEditingSession(
             context = this,
+            scope = serviceScope,
             editor = editor,
             connection = { currentInputConnection },
             cursorCapsMode = { modes -> currentInputConnection?.getCursorCapsMode(modes) ?: 0 },
@@ -69,13 +64,19 @@ class FunputInputMethodService : InputMethodService() {
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         editorRuntime.configure(attribute)
-        startActionHandler()
+        session.startActionHandler()
         suggestionService.start(editorRuntime.policy)
     }
     override fun onStartInputView(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInputView(attribute, restarting)
         keyboardView?.let(::updateInputView)
+        session.startInputView(editorRuntime.policy)
         editorRuntime.updateCapitalization(preserveCapsLock = false)
+    }
+
+    override fun onFinishInputView(finishingInput: Boolean) {
+        session.finishInputView()
+        super.onFinishInputView(finishingInput)
     }
     override fun onUpdateSelection(
         oldSelStart: Int,
@@ -99,7 +100,7 @@ class FunputInputMethodService : InputMethodService() {
         super.onFinishInput()
     }
     override fun onWindowHidden() {
-        suggestionService.flush()
+        session.windowHidden()
         super.onWindowHidden()
     }
     override fun onTrimMemory(level: Int) {
@@ -108,11 +109,11 @@ class FunputInputMethodService : InputMethodService() {
     }
 
     override fun onDestroy() {
+        session.close()
         serviceScope.cancel()
         actionHandler.finish()
         editorRuntime.finish()
         keyboardView = null
-        suggestionService.close()
         // super.onDestroy() re-enters onFinishInput() while input is still open, which
         // routes back through the engine; close it only after the framework is done.
         super.onDestroy()
@@ -121,16 +122,9 @@ class FunputInputMethodService : InputMethodService() {
 
     private fun restartComposition(method: KeyboardInputMethod) {
         actionHandler.finish()
-        startActionHandler()
+        session.startActionHandler()
         suggestionService.start(editorRuntime.policy)
         keyboardView?.inputMethod = method
-    }
-
-    private fun startActionHandler() {
-        actionHandler.start(
-            allowComposition = editorRuntime.policy.editorMode.supportsVietnameseComposition,
-            renderMode = editorRuntime.policy.compositionRenderMode,
-        )
     }
 
     // Switching the system between light and dark changes which theme applies, and no settings

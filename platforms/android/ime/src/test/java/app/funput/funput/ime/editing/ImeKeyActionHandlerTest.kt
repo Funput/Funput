@@ -28,6 +28,22 @@ class ImeKeyActionHandlerTest {
         assertEquals(0, engine.processCount)
         assertEquals(listOf("s"), connection.committedTexts)
     }
+
+    @Test
+    fun `clipboard selection finishes composition and commits exact text once`() {
+        val connection = RecordingCommitConnection()
+        val handler = ImeKeyActionHandler(
+            composition = AndroidCompositionSession(RecordingEngine()),
+            editor = InputConnectionEditor(),
+            connection = { connection.proxy },
+            enterCommand = { ImeEditCommand.CommitText("\n") },
+        )
+        handler.start()
+        handler.onClipboardSelected(" Việt,\\\nline ")
+
+        assertEquals(listOf(" Việt,\\\nline "), connection.committedTexts)
+        assertEquals(AuthoredSuggestionUpdate.Empty, handler.takeSuggestionUpdate())
+    }
 }
 
 private class RecordingEngine : VietnameseEngine {
