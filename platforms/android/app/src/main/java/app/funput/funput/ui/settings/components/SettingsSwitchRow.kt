@@ -26,7 +26,6 @@ internal fun SettingsSwitchRow(
     title: String,
     checked: Boolean,
     @DrawableRes iconRes: Int,
-    tone: SettingsIconTone,
     onCheckedChange: (Boolean) -> Unit,
     summary: String? = null,
     enabled: Boolean = true,
@@ -52,7 +51,7 @@ internal fun SettingsSwitchRow(
             },
         ),
     ) {
-        SettingsIcon(iconRes, tone)
+        SettingsIcon(iconRes)
         Spacer(modifier = Modifier.width(Spacing.Medium))
         Column(modifier = Modifier.weight(1f)) {
             Text(

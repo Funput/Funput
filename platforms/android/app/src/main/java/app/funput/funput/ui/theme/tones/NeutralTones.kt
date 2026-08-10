@@ -11,7 +11,10 @@ import androidx.compose.ui.graphics.Color
  */
 internal object NeutralTones {
     val T0 = Color(0xFF000000)
+    val T3 = Color(0xFF100905)
     val T4 = Color(0xFF130D08)
+    val T8 = Color(0xFF1E1610)
+    val T14 = Color(0xFF2A221C)
     val T6 = Color(0xFF19120C)
     val T10 = Color(0xFF221A14)
     val T12 = Color(0xFF261E18)

@@ -40,6 +40,7 @@ internal val KeyboardSetupCardShape = FunputShapes.large
 internal fun Modifier.heroCard(): Modifier = fillMaxWidth()
     .clip(KeyboardSetupCardShape)
     .background(MaterialTheme.colorScheme.primaryContainer)
+    .border(1.dp, MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f), KeyboardSetupCardShape)
     .padding(18.dp)
 
 /** A flat single-color [Brush], for places that only accept a gradient. */

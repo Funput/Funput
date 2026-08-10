@@ -37,7 +37,8 @@ private fun SetupJourneyCard(
     modifier: Modifier = Modifier,
 ) {
     val enabling = status == KeyboardSetupStatus.NOT_ENABLED
-    Column(modifier = modifier.heroCard()) {
+    WatermarkedCard(modifier = modifier.heroCard()) {
+      Column {
         SetupHeroHeader(
             iconRes = R.drawable.ic_keyboard,
             title = stringResource(R.string.settings_keyboard_setup_heading),
@@ -65,5 +66,6 @@ private fun SetupJourneyCard(
             onClick = if (enabling) onEnableKeyboard else onSelectKeyboard,
         )
     }
+  }
 }
 

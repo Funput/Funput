@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -16,7 +17,6 @@ import app.funput.funput.R
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ui.settings.components.SettingsGroup
 import app.funput.funput.ui.settings.components.SettingsSectionHeader
-import app.funput.funput.ui.settings.components.SettingsIconTone
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
 import app.funput.funput.ui.settings.label
 import app.funput.funput.ui.theme.supportsDynamicColor
@@ -45,6 +45,10 @@ internal fun AppAppearanceSection(
                     selected = mode == appearanceMode,
                     onClick = { onAppearanceSelected(mode) },
                     shape = SegmentedButtonDefaults.itemShape(index, AppearanceMode.entries.size),
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
                     label = { Text(mode.label()) },
                 )
             }
@@ -58,7 +62,6 @@ internal fun AppAppearanceSection(
                         summary = stringResource(R.string.settings_dynamic_color_summary),
                         checked = dynamicColorEnabled,
                         iconRes = R.drawable.ic_dynamic_color,
-                        tone = SettingsIconTone.Secondary,
                         onCheckedChange = onDynamicColorChanged,
                     )
                 },

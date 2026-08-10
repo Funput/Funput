@@ -29,7 +29,6 @@ internal fun SettingsRow(
     position: RowPosition,
     title: String,
     @DrawableRes iconRes: Int,
-    tone: SettingsIconTone,
     onClick: () -> Unit,
     value: String? = null,
 ) {
@@ -44,7 +43,7 @@ internal fun SettingsRow(
             onClick = onClick,
         ),
     ) {
-        SettingsIcon(iconRes, tone)
+        SettingsIcon(iconRes)
         Spacer(modifier = Modifier.width(Spacing.Medium))
         Text(
             text = title,
@@ -71,19 +70,18 @@ internal fun SettingsRow(
 @Composable
 internal fun SettingsIcon(
     @DrawableRes iconRes: Int,
-    tone: SettingsIconTone,
 ) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(36.dp)
             .clip(MaterialTheme.shapes.small)
-            .background(tone.container),
+            .background(SettingsIconTone.Container),
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
-            tint = tone.content,
+            tint = SettingsIconTone.Content,
             modifier = Modifier.size(20.dp),
         )
     }

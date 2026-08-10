@@ -20,13 +20,12 @@ internal fun SettingsValueRow(
     title: String,
     value: String,
     @DrawableRes iconRes: Int,
-    tone: SettingsIconTone,
 ) {
     SettingsRowSurface(
         position = position,
         interactionSource = remember { MutableInteractionSource() },
     ) {
-        SettingsIcon(iconRes, tone)
+        SettingsIcon(iconRes)
         Spacer(modifier = Modifier.width(Spacing.Medium))
         Text(
             text = title,

@@ -11,7 +11,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
-import app.funput.funput.ui.settings.components.SettingsIconTone
 import app.funput.funput.ui.settings.components.SettingsRow
 import app.funput.funput.ui.settings.components.SettingsSection
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
@@ -35,7 +34,6 @@ internal fun PersonalSuggestionSettingsSection(
                     summary = stringResource(R.string.settings_personal_suggestions_description),
                     checked = enabled,
                     iconRes = R.drawable.ic_keyboard,
-                    tone = SettingsIconTone.Primary,
                     onCheckedChange = onEnabledChanged,
                 )
             },
@@ -44,7 +42,6 @@ internal fun PersonalSuggestionSettingsSection(
                     position = position,
                     title = stringResource(R.string.settings_personal_suggestions_reset),
                     iconRes = R.drawable.ic_globe,
-                    tone = SettingsIconTone.Tertiary,
                     onClick = { confirmsReset = true },
                 )
             },

@@ -14,7 +14,6 @@ import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.settings.SettingsPicker
 import app.funput.funput.ui.settings.components.SettingsGroup
-import app.funput.funput.ui.settings.components.SettingsIconTone
 import app.funput.funput.ui.settings.components.SettingsRow
 import app.funput.funput.ui.settings.components.SettingsSectionHeader
 import app.funput.funput.ui.settings.components.SettingsSegmentedRow
@@ -59,7 +58,6 @@ internal fun KeyboardSettingsSection(
                         title = stringResource(R.string.settings_input_method_title),
                         value = inputMethod.label(),
                         iconRes = R.drawable.ic_keyboard,
-                        tone = SettingsIconTone.Primary,
                         onClick = { onOpenPicker(SettingsPicker.INPUT_METHOD) },
                     )
                 }
@@ -73,7 +71,6 @@ internal fun KeyboardSettingsSection(
                             summary = stringResource(R.string.settings_number_row_summary),
                             checked = showsNumberRow,
                             iconRes = R.drawable.ic_key_size,
-                            tone = SettingsIconTone.Secondary,
                             onCheckedChange = onShowsNumberRowChanged,
                         )
                     }

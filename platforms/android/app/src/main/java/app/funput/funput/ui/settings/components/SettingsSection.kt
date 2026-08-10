@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.funput.funput.ui.theme.Spacing
 
 @Composable
@@ -16,12 +17,17 @@ internal fun SettingsSectionHeader(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
+        // Uppercase and tracked out. It is the difference between a page that was typed and a page
+        // that was set, and it costs two properties.
+        text = title.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        letterSpacing = SectionTracking,
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier.padding(start = Spacing.Large, bottom = Spacing.Small),
     )
 }
+
+private val SectionTracking = 1.2.sp
 
 /** Section title stays outside; the rows below it form one [SettingsGroup]. */
 @Composable

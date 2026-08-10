@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -40,6 +41,12 @@ internal fun <T> SettingsSegmentedRow(
                     selected = option == selected,
                     onClick = { onSelected(option) },
                     shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                    // Material picks the secondary family here, which is a second accent on a
+                    // page that now has one.
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
                     label = { Text(labelOf(option)) },
                 )
             }
