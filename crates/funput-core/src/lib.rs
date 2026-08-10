@@ -8,7 +8,8 @@
 //! The public surface is intentionally minimal for `funput-engine`:
 //! [`InputMethod`], [`TransformKind`], [`TransformResult`], [`apply`], and the
 //! syllable-structure checks [`is_valid`] (lenient) / [`is_complete_syllable`]
-//! (strict, for word boundaries).
+//! (strict, for word boundaries) / [`is_reopenable_syllable`] (re-opening a
+//! committed word for editing).
 //! Breaking changes require semver coordination with the engine.
 //!
 //! # Contract
@@ -69,7 +70,7 @@ pub struct TransformResult {
 /// );
 /// ```
 pub use validation::reachability::is_definitely_invalid;
-pub use validation::syllable::{is_complete_syllable, is_valid};
+pub use validation::syllable::{is_complete_syllable, is_reopenable_syllable, is_valid};
 
 #[inline]
 pub fn apply(

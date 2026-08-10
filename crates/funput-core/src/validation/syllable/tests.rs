@@ -127,6 +127,26 @@ fn stop_coda_only_allows_sac_or_nang() {
 }
 
 #[test]
+fn reopenable_accepts_a_stop_coda_awaiting_its_tone() {
+    // The words this exists for: committed without a tone, re-opened so the next
+    // tone key finishes them (`chuc` + `s` → `chúc`).
+    for ok in [
+        "chuc", "tich", "hoc", "dat", "viêt", "nươc", "chào", "phủ", "ma",
+    ] {
+        assert!(is_reopenable_syllable(ok), "{ok} should be re-openable");
+    }
+    // A wrong tone on a stop coda, or no syllable at all, stays refused — those are
+    // the English words the gate is there to protect.
+    for bad in ["", "tẽt", "tèt", "côl", "cảd", "text", "hello", "chào bạn"] {
+        assert!(!is_reopenable_syllable(bad), "{bad} should be refused");
+    }
+    // Strictly looser than `is_complete_syllable`, never the other way round.
+    for w in ["chuc", "tét", "tẽt", "ma", "text"] {
+        assert!(!is_complete_syllable(w) || is_reopenable_syllable(w));
+    }
+}
+
+#[test]
 fn ckg_spelling() {
     assert_eq!(validate_tone("ke"), ModifierValidation::Allow);
     // `k` is exempt from the pairing rule for loanwords/toponyms (Kông, Kenya).

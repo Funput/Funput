@@ -3,7 +3,7 @@ import Foundation
 /// Re-opening a finished word after Backspace: `chào` + Space + ⌫ then `s` gives `cháo`.
 ///
 /// The engine decides *whether* — `FunputComposer.adopt` refuses anything that is not a
-/// complete Vietnamese syllable, which keeps English words and URLs literal. This type only
+/// Vietnamese syllable, which keeps English words and URLs literal. This type only
 /// works out *which* word the caret is about to land on, and which stretch of the document
 /// has to be handed over for it.
 ///
