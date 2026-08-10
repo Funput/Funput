@@ -76,7 +76,13 @@ pub fn note_foreground(id: String) {
 pub fn apply_for_app(id: &str) -> Option<bool> {
     with(|s| s.apply_for_app(id))
 }
-/// Flip VI/EN from the keyboard hotkey; returns the new state.
+/// Flip VI/EN from the keyboard hotkey; returns the new state. In memory only —
+/// [`save_settings`] finishes the job off the hook.
 pub fn toggle_enabled_hotkey() -> bool {
     with(|s| s.toggle_enabled_hotkey())
+}
+/// Persist what a hotkey toggle changed. Runs on the message pump, never in the
+/// hook: see [`crate::background::hook`]'s `toggle` module.
+pub fn save_settings() {
+    with(|s| s.save_settings());
 }

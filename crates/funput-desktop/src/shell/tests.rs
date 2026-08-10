@@ -150,7 +150,8 @@ fn a_remembered_choice_survives_a_restart() {
 
     let mut state = ShellState::new(Some(path.clone()));
     state.note_foreground("code.exe".into());
-    state.toggle_enabled_hotkey(); // code.exe → English
+    state.toggle_enabled_hotkey(); // code.exe → English, in memory…
+    state.save_settings(); // …and on disk, the step the hook defers
 
     let mut reopened = ShellState::new(Some(path));
     assert_eq!(

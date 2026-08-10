@@ -15,7 +15,7 @@ use windows::Win32::System::Threading::{
 use windows::Win32::UI::Accessibility::HWINEVENTHOOK;
 use windows::Win32::UI::WindowsAndMessaging::{GetWindowThreadProcessId, EVENT_SYSTEM_FOREGROUND};
 
-use super::{FOREGROUND_IS_FUNPUT, ON_TOGGLE};
+use super::{toggle, FOREGROUND_IS_FUNPUT};
 use crate::background::tray;
 use crate::shared::shell;
 
@@ -57,9 +57,7 @@ pub(super) unsafe extern "system" fn win_event_proc(
     // Focus on a new app is the start of input: arm so the first letter is capitalized.
     shell::arm_capitalization();
     if let Some(on) = shell::apply_for_app(&id) {
-        if let Some(cb) = ON_TOGGLE.get() {
-            cb(on); // keep tray checkmark / tooltip in sync with the auto-switch
-        }
+        toggle::notify(on); // keep tray checkmark / tooltip in sync with the auto-switch
     }
 }
 

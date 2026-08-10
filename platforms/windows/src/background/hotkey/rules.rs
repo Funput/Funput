@@ -27,7 +27,21 @@ fn normalize_vk(vk: VIRTUAL_KEY) -> VIRTUAL_KEY {
 /// Whether the key is a modifier, i.e. one that can only ever be part of a
 /// gesture resolved on release.
 pub fn is_modifier(vk: VIRTUAL_KEY) -> bool {
-    matches!(normalize_vk(vk), VK_CONTROL | VK_MENU | VK_SHIFT | VK_LWIN)
+    mod_bit(vk).is_some()
+}
+
+/// This key's own modifier bit, or `None` when it is not a modifier. Both sides
+/// fold to the same bit, so Left Ctrl down + Right Ctrl up is still one Ctrl.
+pub fn mod_bit(vk: VIRTUAL_KEY) -> Option<Mods> {
+    let mut bit = Mods::default();
+    match normalize_vk(vk) {
+        VK_CONTROL => bit.ctrl = true,
+        VK_MENU => bit.alt = true,
+        VK_SHIFT => bit.shift = true,
+        VK_LWIN => bit.win = true,
+        _ => return None,
+    }
+    Some(bit)
 }
 
 /// `mods` with this event's own key forced to `down`. `GetAsyncKeyState` lags
