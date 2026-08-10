@@ -1,144 +1,81 @@
 package app.funput.funput.keyboard.ui
 
 import android.content.Context
-import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.LinearLayout
-import app.funput.funput.keyboard.KeyboardHapticType
-import app.funput.funput.keyboard.KeyboardHaptics
-import app.funput.funput.keyboard.KeyboardSounds
+import androidx.core.view.isVisible
 import app.funput.funput.keyboard.model.KeyAction
-import app.funput.funput.keyboard.ui.emoji.EmojiBottomBarView
-import app.funput.funput.keyboard.ui.emoji.EmojiBrowserView
-import app.funput.funput.keyboard.ui.emoji.EmojiCatalog
-import app.funput.funput.keyboard.ui.emoji.EmojiCatalogLoader
-import app.funput.funput.keyboard.ui.emoji.EmojiItem
-import app.funput.funput.keyboard.ui.emoji.EmojiLoadingView
-import app.funput.funput.keyboard.ui.emoji.EmojiPanelPalette
-import app.funput.funput.keyboard.ui.emoji.EmojiRecentsStore
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchContentView
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchController
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchHeaderView
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchIndex
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchMode
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchState
+import app.funput.funput.keyboard.ui.emoji.panel.EmojiBrowserPanelView
+import app.funput.funput.keyboard.ui.kaomoji.panel.KaomojiPanelView
 import app.funput.funput.theme.KeyboardTheme
 
 internal class EmojiPanelView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-) : LinearLayout(context, attrs) {
+) : FrameLayout(context, attrs) {
     var onEmojiSelected: (String) -> Unit = {}
     var onLettersRequested: () -> Unit = {}
     var onBackspaceRequested: (KeyAction) -> Unit = {}
     var hapticsEnabled: Boolean
-        get() = isHapticFeedbackEnabled
+        get() = emoji.hapticsEnabled
         set(value) {
-            isHapticFeedbackEnabled = value
-            search.updateFeedback(value, soundsEnabled)
+            emoji.hapticsEnabled = value
+            kaomoji.hapticsEnabled = value
         }
     var soundsEnabled: Boolean
-        get() = isSoundEffectsEnabled
+        get() = emoji.soundsEnabled
         set(value) {
-            isSoundEffectsEnabled = value
-            search.updateFeedback(hapticsEnabled, value)
+            emoji.soundsEnabled = value
+            kaomoji.soundsEnabled = value
         }
-    private val header = EmojiSearchHeaderView(context)
-    private val browser = EmojiBrowserView(context)
-    private val search = EmojiSearchContentView(context)
-    private val bottom = EmojiBottomBarView(context)
-    private val loading = EmojiLoadingView(context)
-    private val content = FrameLayout(context)
-    private val divider = View(context)
-    private val recents = EmojiRecentsStore(context)
-    private var catalog = EmojiCatalog.Empty
-    private var index = EmojiSearchIndex(emptyList())
-    private lateinit var palette: EmojiPanelPalette
-    private val controller = EmojiSearchController(::renderSearch)
+    private val emoji = EmojiBrowserPanelView(context)
+    private val kaomoji = KaomojiPanelView(context)
 
-    init { KeyboardComposeLifecycle.install(this)
-        orientation = VERTICAL
-        content.addView(browser, matchParent())
-        content.addView(search, matchParent())
-        content.addView(loading, matchParent())
-        addView(header, LayoutParams(LayoutParams.MATCH_PARENT, dp(46)))
-        addView(content, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
-        addView(divider, LayoutParams(LayoutParams.MATCH_PARENT, dp(1)))
-        addView(bottom, LayoutParams(LayoutParams.MATCH_PARENT, dp(46)))
+    init {
+        KeyboardComposeLifecycle.install(this)
+        addView(emoji, matchParent())
+        addView(kaomoji, matchParent())
         wireActions()
-        EmojiCatalogLoader.load(context) { content ->
-            catalog = content.catalog
-            index = content.searchIndex
-            if (catalog.emojis.isEmpty()) loading.showEmpty()
-            loading.visibility = if (catalog.emojis.isEmpty()) VISIBLE else GONE
-            refreshBrowser()
-            renderSearch(controller.state)
-        }
+        showEmojiPanel()
     }
 
     fun updateTheme(theme: KeyboardTheme) {
-        palette = EmojiPanelPalette.from(theme)
-        background = GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            intArrayOf(palette.backgroundStart, palette.backgroundEnd),
-        )
-        divider.setBackgroundColor(palette.divider)
-        loading.updatePalette(palette)
-        header.render(controller.state, palette)
-        browser.updatePalette(palette)
-        bottom.updatePalette(palette)
-        search.updateTheme(theme)
-        renderSearch(controller.state)
+        emoji.updateTheme(theme)
+        kaomoji.updateTheme(theme)
     }
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
-        if (changedView === this && visibility != VISIBLE) controller.reset()
+        if (changedView === this && visibility != VISIBLE) {
+            emoji.reset()
+            kaomoji.reset()
+            showEmojiPanel()
+        }
     }
 
     private fun wireActions() {
-        header.onSearchRequested = controller::begin
-        header.onClearRequested = controller::clear
-        header.onCancelRequested = controller::cancel
-        browser.onEmojiSelected = ::select
-        browser.onCategoryChanged = bottom::setSelected
-        bottom.onCategoryRequested = browser::scrollTo
-        bottom.onLettersRequested = onLetters@{ feedback(KeyboardHapticType.CONTROL); onLettersRequested() }
-        bottom.onBackspaceRequested = { feedback(KeyboardHapticType.DELETE); onBackspaceRequested(KeyAction.Backspace) }
-        search.onEmojiSelected = ::select
-        search.onInput = controller::input
-        search.onSpace = controller::space
-        search.onBackspace = controller::backspace
-        search.onDone = controller::done
-        search.onCancel = controller::cancel
+        emoji.onEmojiSelected = { onEmojiSelected(it) }
+        emoji.onLettersRequested = { onLettersRequested() }
+        emoji.onBackspaceRequested = { onBackspaceRequested(it) }
+        emoji.onKaomojiRequested = ::showKaomojiPanel
+        kaomoji.onKaomojiSelected = { onEmojiSelected(it) }
+        kaomoji.onLettersRequested = { onLettersRequested() }
+        kaomoji.onBackspaceRequested = { onBackspaceRequested(it) }
+        kaomoji.onEmojiRequested = ::showEmojiPanel
     }
 
-    private fun select(item: EmojiItem) {
-        feedback(KeyboardHapticType.KEY_PRESS)
-        recents.record(item.glyph)
-        onEmojiSelected(item.glyph)
-        refreshBrowser()
+    internal fun showEmojiPanel() {
+        kaomoji.visibility = GONE
+        emoji.visibility = VISIBLE
     }
 
-    private fun refreshBrowser() = browser.submit(catalog, recents.glyphs())
-
-    private fun renderSearch(state: EmojiSearchState) {
-        if (!::palette.isInitialized) return
-        val browsing = state.mode == EmojiSearchMode.BROWSING
-        browser.visibility = if (browsing) VISIBLE else GONE
-        search.visibility = if (browsing) GONE else VISIBLE
-        bottom.visibility = if (browsing) VISIBLE else GONE
-        divider.visibility = bottom.visibility
-        header.render(state, palette)
-        search.render(state, index.search(state.query), palette)
+    internal fun showKaomojiPanel() {
+        emoji.visibility = GONE
+        kaomoji.visibility = VISIBLE
     }
 
-    private fun feedback(type: KeyboardHapticType) {
-        KeyboardHaptics.perform(this, type)
-        KeyboardSounds.perform(this, type)
-    }
-    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
-    private fun matchParent() = FrameLayout.LayoutParams(-1, -1)
+    internal val isShowingKaomoji: Boolean get() = kaomoji.isVisible
+
+    private fun matchParent() = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
 }

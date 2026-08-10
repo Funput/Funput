@@ -1,8 +1,8 @@
-package app.funput.funput.keyboard.ui.emoji
+package app.funput.funput.keyboard.ui.panel
 
 import app.funput.funput.theme.KeyboardTheme
 
-internal data class EmojiPanelPalette(
+internal data class KeyboardPanelPalette(
     val backgroundStart: Int,
     val backgroundEnd: Int,
     val label: Int,
@@ -13,7 +13,7 @@ internal data class EmojiPanelPalette(
     val buttonSurface: Int,
 ) {
     companion object {
-        fun from(theme: KeyboardTheme) = EmojiPanelPalette(
+        fun from(theme: KeyboardTheme) = KeyboardPanelPalette(
             backgroundStart = theme.backgroundStartColor,
             backgroundEnd = theme.backgroundEndColor,
             label = theme.labelColor,

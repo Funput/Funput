@@ -27,17 +27,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelComposeView
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 
-internal class EmojiBottomBarView(context: Context) : EmojiComposeView(context) {
+internal class EmojiBottomBarView(context: Context) : KeyboardPanelComposeView(context) {
     var onLettersRequested: () -> Unit = {}
+    var onKaomojiRequested: () -> Unit = {}
     var onBackspaceRequested: () -> Unit = {}
     var onCategoryRequested: (EmojiCategory) -> Unit = {}
-    private var palette by mutableStateOf<EmojiPanelPalette?>(null)
+    private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
     private var selectedCategory by mutableStateOf(EmojiCategory.SMILEYS_PEOPLE)
 
     init { setContent { Content() } }
 
-    fun updatePalette(value: EmojiPanelPalette) { palette = value }
+    fun updatePalette(value: KeyboardPanelPalette) { palette = value }
     fun setSelected(value: EmojiCategory) { selectedCategory = value }
 
     @Composable
@@ -46,6 +49,9 @@ internal class EmojiBottomBarView(context: Context) : EmojiComposeView(context) 
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             Action("ABC", "Về bàn phím", colors.label, Modifier.width(52.dp)) {
                 onLettersRequested()
+            }
+            Action("(^_^)", "Biểu tượng kaomoji", colors.label, Modifier.width(46.dp)) {
+                onKaomojiRequested()
             }
             LazyRow(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                 items(EmojiCategory.entries, key = EmojiCategory::name) { category ->

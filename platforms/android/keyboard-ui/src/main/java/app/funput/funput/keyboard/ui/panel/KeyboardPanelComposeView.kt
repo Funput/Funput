@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.ui.emoji
+package app.funput.funput.keyboard.ui.panel
 
 import android.content.Context
 import android.widget.FrameLayout
@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 
-internal open class EmojiComposeView(context: Context) : FrameLayout(context) {
+internal open class KeyboardPanelComposeView(context: Context) : FrameLayout(context) {
     private val composeView = ComposeView(context)
 
     init {

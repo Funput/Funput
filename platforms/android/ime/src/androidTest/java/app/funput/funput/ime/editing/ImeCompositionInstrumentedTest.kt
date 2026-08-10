@@ -84,6 +84,18 @@ class ImeCompositionInstrumentedTest {
     }
 
     @Test
+    fun kaomojiCommitsWholeAndVietnameseCompositionContinues() = onMainThread {
+        ImeEditingScenario.create().use { scenario ->
+            scenario.handler.type("vieejt")
+            scenario.handler.onEmojiSelected(" ¯\\_(ツ)_/¯ ")
+            scenario.handler.type("as")
+
+            assertEquals("việt ¯\\_(ツ)_/¯ á", scenario.text)
+            assertTrue(scenario.composition.isComposing)
+        }
+    }
+
+    @Test
     fun backspaceEditsCompositionNotHostBuffer() = onMainThread {
         ImeEditingScenario.create().use { scenario ->
             scenario.handler.type("vieejt")

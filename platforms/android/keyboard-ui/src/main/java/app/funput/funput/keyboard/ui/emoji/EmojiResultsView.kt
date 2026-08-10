@@ -16,8 +16,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelComposeView
 
-internal class EmojiResultsView(context: Context) : EmojiComposeView(context) {
+internal class EmojiResultsView(context: Context) : KeyboardPanelComposeView(context) {
     var onEmojiSelected: (EmojiItem) -> Unit = {}
     private var items by mutableStateOf(emptyList<EmojiItem>())
     private var vertical by mutableStateOf(false)

@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import app.funput.funput.keyboard.ui.R
 
 internal class EmojiLoadingView(context: Context) : LinearLayout(context) {
@@ -29,7 +30,7 @@ internal class EmojiLoadingView(context: Context) : LinearLayout(context) {
         label.setText(R.string.emoji_panel_empty)
     }
 
-    fun updatePalette(palette: EmojiPanelPalette) {
+    fun updatePalette(palette: KeyboardPanelPalette) {
         progress.indeterminateTintList = ColorStateList.valueOf(palette.accent)
         label.setTextColor(palette.secondaryLabel)
     }
