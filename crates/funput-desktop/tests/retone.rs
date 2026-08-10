@@ -133,6 +133,24 @@ fn only_the_word_at_the_caret_is_reopened() {
     assert_eq!(shell.app, "chào phú");
 }
 
+/// The reported bug: a word whose stop coda (`c`, `ch`, `p`, `t`) never got its tone
+/// is committed exactly as typed, so re-opening it has to work too.
+#[test]
+fn a_word_committed_before_its_tone_is_reopened() {
+    for (keys, tone, expected) in [
+        ("chuc ", 's', "chúc"),
+        ("tich ", 's', "tích"),
+        ("hoc ", 'j', "học"),
+        ("dat ", 'j', "dạt"),
+    ] {
+        let mut shell = Shell::new(InputMethod::Telex);
+        shell.type_str(keys);
+        shell.backspace();
+        shell.key(tone);
+        assert_eq!(shell.app, expected, "typing {keys:?} then ⌫ then {tone:?}");
+    }
+}
+
 /// The engine only adopts real Vietnamese syllables, so an English word keeps
 /// taking literal letters after it.
 #[test]

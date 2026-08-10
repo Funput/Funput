@@ -61,6 +61,23 @@ fn adopts_a_toneless_syllable_and_adds_a_tone() {
     assert_eq!(engine.buffer(), "chào");
 }
 
+/// A stop coda (`p t c ch`) with no tone yet is not a *complete* syllable, but it is
+/// exactly what a committed word looks like before its tone: `chuc` + Space + ⌫ + `s`
+/// has to give `chúc`, not `chucs`.
+#[test]
+fn adopts_a_syllable_still_missing_its_stop_coda_tone() {
+    for (word, key, expected) in [
+        ("chuc", 's', "chúc"),
+        ("tich", 's', "tích"),
+        ("hoc", 'j', "học"),
+    ] {
+        let mut engine = engine(InputMethod::Telex);
+        assert!(engine.adopt(word), "should adopt {word:?}");
+        engine.process_char(key);
+        assert_eq!(engine.buffer(), expected);
+    }
+}
+
 /// Anything that is not a Vietnamese syllable is refused, so English words and URLs
 /// never silently become editable.
 #[test]

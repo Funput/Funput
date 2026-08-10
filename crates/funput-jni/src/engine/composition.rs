@@ -11,8 +11,9 @@ use crate::abi::{JavaObject, neutral, safe, string_result};
 /// Re-open an already-committed word as the live composition, so the next keystroke
 /// edits it (Backspace back onto `chào`, then `s` gives `cháo`).
 ///
-/// Returns whether the word was taken — only a complete Vietnamese syllable is, so the
-/// caller must leave the document untouched when this is `false`.
+/// Returns whether the word was taken — only a Vietnamese syllable is, including one
+/// still missing the tone its stop coda needs (`chuc` → `chúc`), so the caller must
+/// leave the document untouched when this is `false`.
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeAdopt(
     mut env: EnvUnowned<'_>,
