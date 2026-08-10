@@ -2,7 +2,6 @@ package app.funput.funput.keyboard.ui
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View
 import android.widget.FrameLayout
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.KeyboardDimensions
@@ -14,6 +13,7 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelCoordinator
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.roundToInt
 
@@ -23,12 +23,19 @@ class FunputKeyboardView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
 ) : FrameLayout(context, attrs, defStyleAttr) {
-    private val panelController = KeyboardPanelController()
     private val keyboardSurface = KeyboardSurfaceView(context)
-    private var emojiPanel: EmojiPanelView? = null
-    private val feedbackController = KeyboardFeedbackController(keyboardSurface) { emojiPanel }
     val callbacks = FunputKeyboardCallbacks()
-    val activePanel: KeyboardPanel get() = panelController.activePanel
+    private val panelCoordinator = KeyboardPanelCoordinator(
+        keyboardSurface = keyboardSurface,
+        createEmojiPanel = ::createEmojiPanel,
+        attachPanel = { addView(it, matchParentLayoutParams()) },
+        onPanelChanged = callbacks::dispatchPanelChanged,
+        syncSuggestions = ::syncSuggestions,
+    )
+    private val feedbackController = KeyboardFeedbackController(keyboardSurface) {
+        panelCoordinator.loadedEmojiPanel
+    }
+    val activePanel: KeyboardPanel get() = panelCoordinator.activePanel
     var shiftState: ShiftState by keyboardSurface::shiftState
     var inputMethod: KeyboardInputMethod by keyboardSurface::inputMethod
     var editorMode: KeyboardEditorMode by keyboardSurface::editorMode
@@ -45,7 +52,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         get() = keyboardSurface.keyboardTheme
         set(value) {
             keyboardSurface.keyboardTheme = value
-            emojiPanel?.updateTheme(value)
+            panelCoordinator.updateTheme(value)
             setBackgroundColor(value.backgroundEndColor)
         }
     var keyboardThemeBackgroundImage by keyboardSurface::keyboardThemeBackgroundImage
@@ -69,35 +76,13 @@ class FunputKeyboardView @JvmOverloads constructor(
         safeArea.install()
     }
 
-    fun showEmojiPanel() {
-        if (!panelController.show(KeyboardPanel.EMOJI)) return
-        val panel = emojiPanel ?: createEmojiPanel().also {
-            emojiPanel = it
-            addView(it, matchParentLayoutParams())
-        }
-        keyboardSurface.visibility = View.GONE
-        panel.visibility = View.VISIBLE
-        callbacks.dispatchPanelChanged(KeyboardPanel.EMOJI)
-    }
+    fun showEmojiPanel(): Unit = panelCoordinator.showEmoji()
 
     fun showSymbolsPanel(mode: KeyboardLayoutMode = KeyboardLayoutMode.SYMBOLS_PRIMARY) {
-        require(mode != KeyboardLayoutMode.LETTERS) { "Symbols panel requires a symbols layout" }
-        panelController.show(KeyboardPanel.SYMBOLS)
-        emojiPanel?.visibility = View.GONE
-        keyboardSurface.layoutMode = mode
-        keyboardSurface.visibility = View.VISIBLE
-        syncSuggestions()
-        callbacks.dispatchPanelChanged(KeyboardPanel.SYMBOLS)
+        panelCoordinator.showSymbols(mode)
     }
 
-    fun showLettersPanel() {
-        if (!panelController.show(KeyboardPanel.LETTERS)) return
-        emojiPanel?.visibility = View.GONE
-        keyboardSurface.layoutMode = KeyboardLayoutMode.LETTERS
-        keyboardSurface.visibility = View.VISIBLE
-        syncSuggestions()
-        callbacks.dispatchPanelChanged(KeyboardPanel.LETTERS)
-    }
+    fun showLettersPanel(): Unit = panelCoordinator.showLetters()
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
