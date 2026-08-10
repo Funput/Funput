@@ -1,0 +1,42 @@
+name: CI
+
+# The pull-request gate. Nothing here builds or ships — the release workflows own
+# that. This only checks that the Rust workspace stays formatted, lint-clean,
+# tested and inside the per-file line budget.
+#
+# The toolchain comes from rust-toolchain.toml (1.97.1 + rustfmt + clippy), so
+# bumping the pin moves CI with it. The two excluded shells
+# (platforms/windows, platforms/linux/settings-gtk) need system libraries and are
+# covered by the release builds instead.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace
+
+      - name: Line budget
+        run: bash scripts/check-loc.sh
