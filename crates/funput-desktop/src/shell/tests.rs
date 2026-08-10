@@ -22,9 +22,7 @@ fn shell_with(settings: Settings) -> ShellState {
 fn shell_remembering(entries: &[(&str, bool)]) -> ShellState {
     let mut settings = Settings::default();
     for (id, on) in entries {
-        settings
-            .app_language_memory
-            .insert((*id).to_string(), *on);
+        settings.app_language_memory.insert((*id).to_string(), *on);
     }
     shell_with(settings)
 }
@@ -100,7 +98,12 @@ fn a_hotkey_toggle_clears_a_parked_flyout_toggle() {
     // remembered — it is left alone.
     assert_eq!(state.apply_for_app("notepad.exe"), None);
     assert!(state.enabled());
-    assert!(!state.settings().app_language_memory.contains_key("notepad.exe"));
+    assert!(
+        !state
+            .settings()
+            .app_language_memory
+            .contains_key("notepad.exe")
+    );
 }
 
 /// A parked choice that happens to match the current state still has to be
@@ -110,7 +113,10 @@ fn a_parked_choice_is_remembered_even_when_the_state_does_not_flip() {
     let mut state = shell();
     state.set_enabled(true); // Settings window: parks "on", state already on
     assert_eq!(state.apply_for_app("code.exe"), None, "nothing to flip");
-    assert_eq!(state.settings().app_language_memory.get("code.exe"), Some(&true));
+    assert_eq!(
+        state.settings().app_language_memory.get("code.exe"),
+        Some(&true)
+    );
 }
 
 /// The Settings window and the Control Center are their own processes, so the
