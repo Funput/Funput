@@ -12,7 +12,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
 };
 
-use super::{FOREGROUND_IS_FUNPUT, ON_TOGGLE};
+use super::{toggle, FOREGROUND_IS_FUNPUT};
 use crate::background::hotkey::{self, Hit};
 use crate::background::{inject, keymap};
 use crate::shared::shell;
@@ -51,11 +51,11 @@ pub(super) unsafe extern "system" fn keyboard_proc(
 /// after all, so the key carries on to the engine (and then to the app).
 fn fire(hit: Hit) -> bool {
     match hit {
+        // The flip must land before the next keystroke; writing it down and
+        // repainting the tray must not happen here at all — see [`toggle`].
         Hit::Toggle => {
-            let on = shell::toggle_enabled_hotkey();
-            if let Some(cb) = ON_TOGGLE.get() {
-                cb(on);
-            }
+            shell::toggle_enabled_hotkey();
+            toggle::defer();
             true
         }
         // Flip the word being composed VN↔raw. There is nothing to flip in

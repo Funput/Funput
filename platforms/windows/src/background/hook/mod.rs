@@ -12,9 +12,9 @@
 mod foreground;
 mod keyboard;
 mod mouse;
+mod toggle;
 
 use std::sync::atomic::AtomicBool;
-use std::sync::OnceLock;
 
 use windows::Win32::Foundation::HINSTANCE;
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
@@ -29,18 +29,12 @@ use crate::background::instance::{self, WaitKind};
 use crate::background::tray;
 use crate::ui;
 
-/// Called after a Ctrl+` toggle so the tray can refresh its checkmark/icon.
-type ToggleCb = Box<dyn Fn(bool) + Send + Sync>;
-static ON_TOGGLE: OnceLock<ToggleCb> = OnceLock::new();
+pub use toggle::set_on_toggle;
 
 /// Whether the focused window belongs to Funput itself. Written by [`foreground`],
 /// read by [`keyboard`]: our own Settings fields compose in-process, so the global
 /// hook must leave their keystrokes alone.
 static FOREGROUND_IS_FUNPUT: AtomicBool = AtomicBool::new(false);
-
-pub fn set_on_toggle(f: impl Fn(bool) + Send + Sync + 'static) {
-    let _ = ON_TOGGLE.set(Box::new(f));
-}
 
 /// Install the hooks and tray on the current thread, then run their Win32 message
 /// pump until the tray's Quit command posts `WM_QUIT`.
@@ -110,6 +104,14 @@ pub fn run() {
                     while PeekMessageW(&mut msg, None, 0, 0, PM_REMOVE).as_bool() {
                         if msg.message == WM_QUIT {
                             return;
+                        }
+                        // The toggle work the hook refused to do itself. Posted to
+                        // the thread, so it has no window and dispatching would
+                        // drop it — and the null `hwnd` is what tells it apart
+                        // from a window message that happens to share the number.
+                        if msg.message == toggle::WM_TOGGLED && msg.hwnd.0.is_null() {
+                            toggle::run_pending();
+                            continue;
                         }
                         let _ = TranslateMessage(&msg);
                         DispatchMessageW(&msg);

@@ -27,6 +27,11 @@ impl ShellState {
     /// Flip VI/EN from the keyboard hotkey; returns the new state. Unlike the tray,
     /// the hotkey fires while the target app is focused, so the choice binds to
     /// that app immediately and clears any stale pending override.
+    ///
+    /// In memory only. The caller persists with [`Self::save_settings`] once it is
+    /// somewhere it can afford to block: on Windows this runs inside the low-level
+    /// keyboard hook, and a hook callback that overruns `LowLevelHooksTimeout` is
+    /// silently unhooked by the OS — a file write cannot promise to beat it.
     pub fn toggle_enabled_hotkey(&mut self) -> bool {
         let on = !self.settings.enabled;
         self.set_enabled_state(on);
@@ -34,8 +39,14 @@ impl ShellState {
             self.remember(&id, on);
         }
         self.pending_override = None;
-        self.save();
         on
+    }
+
+    /// Write down what [`Self::toggle_enabled_hotkey`] changed. Split out because
+    /// it is the one write in this file whose caller may have to postpone it; the
+    /// rest happen where blocking is free.
+    pub fn save_settings(&self) {
+        self.save();
     }
 
     /// Record the app that just took focus, so a hotkey toggle knows what to bind
