@@ -1,7 +1,6 @@
 package app.funput.funput.ui.settings.components
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -9,6 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.funput.funput.ui.theme.Spacing
 
 @Composable
 internal fun SettingsSectionHeader(
@@ -16,22 +17,27 @@ internal fun SettingsSectionHeader(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
+        // Uppercase and tracked out. It is the difference between a page that was typed and a page
+        // that was set, and it costs two properties.
+        text = title.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        letterSpacing = SectionTracking,
         color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(start = 4.dp, bottom = 8.dp),
+        modifier = modifier.padding(start = Spacing.Large, bottom = Spacing.Small),
     )
 }
 
-/** Section title stays outside; grouped rows sit on a lightly tinted rounded surface. */
+private val SectionTracking = 1.2.sp
+
+/** Section title stays outside; the rows below it form one [SettingsGroup]. */
 @Composable
 internal fun SettingsSection(
     title: String,
+    rows: List<SettingsRowContent>,
     modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SettingsSectionHeader(title)
-        SettingsGroup(content = content)
+        SettingsGroup(rows)
     }
 }

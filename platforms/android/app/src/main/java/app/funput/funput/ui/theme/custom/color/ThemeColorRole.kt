@@ -3,6 +3,11 @@ package app.funput.funput.ui.theme.custom.color
 import androidx.annotation.StringRes
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardTheme
+import app.funput.funput.ui.theme.custom.ThemeEditorTab
+import app.funput.funput.ui.theme.custom.color.ThemeColorGroup.Advanced as Detail
+import app.funput.funput.ui.theme.custom.color.ThemeColorGroup.Background as Bg
+import app.funput.funput.ui.theme.custom.color.ThemeColorGroup.Keys as Keys
+import app.funput.funput.ui.theme.custom.color.ThemeColorGroup.Text as Text
 
 /** The sections the editor groups color roles into. */
 internal enum class ThemeColorGroup(@StringRes val titleRes: Int) {
@@ -21,28 +26,37 @@ internal enum class ThemeColorGroup(@StringRes val titleRes: Int) {
  */
 internal enum class ThemeColorRole(
     val group: ThemeColorGroup,
+    val tab: ThemeEditorTab,
     @StringRes val labelRes: Int,
+    /**
+     * The role this one takes its colour from until somebody sets it apart.
+     *
+     * [KeyboardTheme] already declares these relationships as constructor defaults, and
+     * `withAccent` maintains the accent ones. The editor used to throw that away and present every
+     * token as an independent decision, which is how six real choices looked like twenty.
+     */
+    val follows: ThemeColorRole? = null,
 ) {
-    BackgroundStart(ThemeColorGroup.Background, R.string.custom_theme_color_background_start),
-    BackgroundEnd(ThemeColorGroup.Background, R.string.custom_theme_color_background_end),
-    Key(ThemeColorGroup.Keys, R.string.custom_theme_color_key),
-    SpecialKey(ThemeColorGroup.Keys, R.string.custom_theme_color_special_key),
-    KeyBorder(ThemeColorGroup.Keys, R.string.custom_theme_color_key_border),
-    PressedKey(ThemeColorGroup.Keys, R.string.custom_theme_color_pressed_key),
-    AccentKey(ThemeColorGroup.Keys, R.string.custom_theme_color_accent_key),
-    Label(ThemeColorGroup.Text, R.string.custom_theme_color_label),
-    SpecialLabel(ThemeColorGroup.Text, R.string.custom_theme_color_special_label),
-    SecondaryLabel(ThemeColorGroup.Text, R.string.custom_theme_color_secondary_label),
-    Accent(ThemeColorGroup.Text, R.string.custom_theme_color_accent),
-    AccentLabel(ThemeColorGroup.Text, R.string.custom_theme_color_accent_label),
-    SuggestionHighlight(ThemeColorGroup.Text, R.string.custom_theme_color_suggestion_highlight),
-    ActivatedKey(ThemeColorGroup.Advanced, R.string.custom_theme_color_activated_key),
-    PressedKeyBorder(ThemeColorGroup.Advanced, R.string.custom_theme_color_pressed_key_border),
-    ActivatedKeyBorder(ThemeColorGroup.Advanced, R.string.custom_theme_color_activated_key_border),
-    PopupSurface(ThemeColorGroup.Advanced, R.string.custom_theme_color_popup_surface),
-    KeyShadow(ThemeColorGroup.Advanced, R.string.custom_theme_color_key_shadow),
-    SuggestionDivider(ThemeColorGroup.Advanced, R.string.custom_theme_color_suggestion_divider),
-    PopupShadow(ThemeColorGroup.Advanced, R.string.custom_theme_color_popup_shadow);
+    BackgroundStart(Bg, ThemeEditorTab.Background, R.string.custom_theme_color_background_start),
+    BackgroundEnd(Bg, ThemeEditorTab.Background, R.string.custom_theme_color_background_end),
+    Key(Keys, ThemeEditorTab.Keys, R.string.custom_theme_color_key),
+    SpecialKey(Keys, ThemeEditorTab.Keys, R.string.custom_theme_color_special_key),
+    KeyBorder(Keys, ThemeEditorTab.Keys, R.string.custom_theme_color_key_border),
+    Label(Text, ThemeEditorTab.Keys, R.string.custom_theme_color_label),
+    SecondaryLabel(Text, ThemeEditorTab.Keys, R.string.custom_theme_color_secondary_label),
+    Accent(Text, ThemeEditorTab.Keys, R.string.custom_theme_color_accent),
+    AccentKey(Keys, ThemeEditorTab.Keys, R.string.custom_theme_color_accent_key, Accent),
+    SpecialLabel(Text, ThemeEditorTab.Keys, R.string.custom_theme_color_special_label, Label),
+    AccentLabel(Text, ThemeEditorTab.Keys, R.string.custom_theme_color_accent_label),
+    SuggestionHighlight(Text, ThemeEditorTab.Keys, R.string.custom_theme_color_suggestion_highlight, Accent),
+    PressedKey(Keys, ThemeEditorTab.Pressed, R.string.custom_theme_color_pressed_key),
+    PressedKeyBorder(Keys, ThemeEditorTab.Pressed, R.string.custom_theme_color_pressed_key_border),
+    ActivatedKey(Detail, ThemeEditorTab.Pressed, R.string.custom_theme_color_activated_key),
+    ActivatedKeyBorder(Detail, ThemeEditorTab.Pressed, R.string.custom_theme_color_activated_key_border),
+    PopupSurface(Detail, ThemeEditorTab.Keys, R.string.custom_theme_color_popup_surface, Key),
+    KeyShadow(Detail, ThemeEditorTab.Keys, R.string.custom_theme_color_key_shadow),
+    SuggestionDivider(Detail, ThemeEditorTab.Keys, R.string.custom_theme_color_suggestion_divider),
+    PopupShadow(Detail, ThemeEditorTab.Keys, R.string.custom_theme_color_popup_shadow);
 
     fun read(theme: KeyboardTheme): Int = when (this) {
         BackgroundStart -> theme.backgroundStartColor

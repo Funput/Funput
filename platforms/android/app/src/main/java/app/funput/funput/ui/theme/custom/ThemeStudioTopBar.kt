@@ -1,8 +1,6 @@
 package app.funput.funput.ui.theme.custom
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -13,17 +11,12 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
-import app.funput.funput.theme.KeyboardThemeDescriptor
 
 /**
  * Title bar carrying the theme name and the restore action.
@@ -36,11 +29,8 @@ import app.funput.funput.theme.KeyboardThemeDescriptor
 @Composable
 internal fun ThemeStudioTopBar(
     state: ThemeDraftState,
-    baseThemes: List<KeyboardThemeDescriptor>,
     onBack: () -> Unit,
 ) {
-    var restoreOpen by remember { mutableStateOf(false) }
-
     TopAppBar(
         title = {
             TextField(
@@ -68,22 +58,11 @@ internal fun ThemeStudioTopBar(
                 )
             }
         },
+        // Restoring means "undo what I changed", and nothing else. Choosing what the theme is
+        // built on is a decision of its own, and it is now the first thing on the screen.
         actions = {
-            TextButton(onClick = { restoreOpen = true }) {
+            TextButton(onClick = state::restoreBase) {
                 Text(stringResource(R.string.custom_theme_restore))
-            }
-            // Choosing a base and restoring one are the same operation — both replace every
-            // token — so they are one control rather than two that would contradict each other.
-            DropdownMenu(expanded = restoreOpen, onDismissRequest = { restoreOpen = false }) {
-                baseThemes.forEach { descriptor ->
-                    DropdownMenuItem(
-                        text = { Text(descriptor.name) },
-                        onClick = {
-                            state.selectBaseTheme(descriptor.id.value)
-                            restoreOpen = false
-                        },
-                    )
-                }
             }
         },
     )

@@ -1,12 +1,13 @@
 package app.funput.funput.ui.theme.custom
 
-import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import app.funput.funput.theme.BuiltInKeyboardThemeSource
 import app.funput.funput.theme.KeyboardThemeDescriptor
@@ -15,6 +16,7 @@ import app.funput.funput.theme.KeyboardThemeOrigin
 import app.funput.funput.theme.store.custom.CustomThemeDraft
 import app.funput.funput.ui.theme.FunputTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -38,10 +40,11 @@ class CreateCustomThemeScreenTest {
             }
         }
 
-        // The name lives in the title bar, so saving no longer means visiting another tab.
-        compose.onNodeWithText("Lưu theme").assertIsNotEnabled()
+        // A new theme arrives named, so saving is never blocked on the least interesting decision.
+        compose.onNodeWithText("Lưu theme").assertIsEnabled()
+        compose.onNodeWithTag("custom-theme-name").performTextClearance()
         compose.onNodeWithTag("custom-theme-name").performTextInput("Ocean")
-        compose.onNodeWithText("Khôi phục").performClick()
+        // Base and accent are the first two things on the page now, not a dropdown behind restore.
         compose.onNodeWithText(lightTheme.name).performClick()
         compose.onNodeWithContentDescription("Xanh biển").performClick().assertIsSelected()
         compose.onNodeWithText("Lưu theme").performClick()
@@ -49,7 +52,10 @@ class CreateCustomThemeScreenTest {
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)
             assertEquals(KeyboardThemeId.Light, savedDraft?.baseThemeId)
-            assertEquals(lightTheme.theme.withAccent(AccentPresets[3].argb), savedDraft?.theme)
+            // The re-dye is proved against every base and hue in ThemeRecolorTest; what this test
+            // is for is that the accent the user tapped is the accent that got saved.
+            assertEquals(AccentPresets[3].argb, savedDraft?.theme?.accentColor)
+            assertNotEquals(lightTheme.theme, savedDraft?.theme)
         }
     }
 

@@ -3,47 +3,48 @@ package app.funput.funput.ui.settings.components
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
+import app.funput.funput.ui.theme.Spacing
 
 @Composable
 internal fun SettingsRow(
+    position: RowPosition,
     title: String,
     @DrawableRes iconRes: Int,
-    iconBackground: Color,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    iconColor: Color = Color.White,
     value: String? = null,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 62.dp)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+    val interactionSource = remember { MutableInteractionSource() }
+    SettingsRowSurface(
+        position = position,
+        interactionSource = interactionSource,
+        modifier = Modifier.clickable(
+            interactionSource = interactionSource,
+            indication = ripple(),
+            role = Role.Button,
+            onClick = onClick,
+        ),
     ) {
-        SettingsIcon(iconRes, iconBackground, iconColor)
-        Spacer(modifier = Modifier.width(12.dp))
+        SettingsIcon(iconRes)
+        Spacer(modifier = Modifier.width(Spacing.Medium))
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
@@ -69,20 +70,18 @@ internal fun SettingsRow(
 @Composable
 internal fun SettingsIcon(
     @DrawableRes iconRes: Int,
-    background: Color,
-    iconColor: Color = Color.White,
 ) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(34.dp)
-            .clip(RoundedCornerShape(9.dp))
-            .background(background),
+            .size(36.dp)
+            .clip(MaterialTheme.shapes.small)
+            .background(SettingsIconTone.Container),
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
-            tint = iconColor,
+            tint = SettingsIconTone.Content,
             modifier = Modifier.size(20.dp),
         )
     }

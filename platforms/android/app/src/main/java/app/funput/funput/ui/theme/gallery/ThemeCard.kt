@@ -4,10 +4,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -15,15 +15,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
+import app.funput.funput.ui.navigation.sharedElementByKey
 import app.funput.funput.ui.theme.KeyboardThemePreview
+import app.funput.funput.ui.theme.Spacing
+import app.funput.funput.ui.theme.themePreviewSharedKey
 
+/**
+ * One theme, at the width of the keyboard it is previewing.
+ *
+ * A keyboard fills the screen edge to edge, so a preview narrower than the card it sits in has to
+ * squash it to fit and stops looking like the thing being chosen. At full width the aspect matches
+ * the real keyboard and the keys stay readable.
+ */
 @Composable
 internal fun ThemeCard(
     descriptor: KeyboardThemeDescriptor,
@@ -34,32 +44,41 @@ internal fun ThemeCard(
     modifier: Modifier = Modifier,
 ) {
     val title = descriptor.localizedName()
-    val borderColor = if (selected) MaterialTheme.colorScheme.primary else {
+    val borderColor = if (selected) {
+        MaterialTheme.colorScheme.primary
+    } else {
         MaterialTheme.colorScheme.outline.copy(alpha = 0.24f)
     }
+    // Material separates layers by tone first and shadow second, so the chosen theme takes both a
+    // step up the surface scale and a shadow. A border alone reads as an outline drawn on a flat
+    // list; lifting it says this is the one in use.
     Surface(
-        shape = CardShape,
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.large,
+        color = if (selected) {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        },
+        shadowElevation = if (selected) SelectedElevation else 0.dp,
         border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
         modifier = modifier
+            .fillMaxWidth()
             .testTag(descriptor.id.value)
-            .selectable(
-                selected = selected,
-                role = Role.RadioButton,
-                onClick = onSelected,
-            ),
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelected),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(Spacing.Medium)) {
             KeyboardThemePreview(
                 theme = descriptor.theme,
                 backgroundImage = descriptor.backgroundImage,
                 modifier = Modifier
-                    .height(190.dp)
-                    .clip(PreviewShape),
+                    .sharedElementByKey(themePreviewSharedKey(descriptor.id))
+                    .fillMaxWidth()
+                    .aspectRatio(PreviewAspect)
+                    .clip(MaterialTheme.shapes.small),
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 12.dp, start = 2.dp, end = 2.dp),
+                modifier = Modifier.padding(top = Spacing.Medium, start = Spacing.Tight),
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -90,5 +109,7 @@ private fun KeyboardThemeDescriptor.localizedName(): String = when (id) {
     else -> name
 }
 
-private val CardShape = RoundedCornerShape(20.dp)
-private val PreviewShape = RoundedCornerShape(14.dp)
+/** Roughly the shape of the real keyboard: full width, a little under half as tall. */
+private const val PreviewAspect = 2.05f
+
+private val SelectedElevation = 3.dp

@@ -7,7 +7,7 @@ import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.theme.KeyboardThemeId
+import app.funput.funput.theme.InstalledThemeRepository
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 import app.funput.funput.ui.theme.FunputTheme
 
@@ -52,23 +52,21 @@ private fun SettingsPreview(
     FunputTheme(appearanceMode = appearanceMode) {
         SettingsScreen(
             keyboardSetupStatus = keyboardSetupStatus,
+            keyboardTheme = InstalledThemeRepository.builtIn().themes.first(),
             inputMethod = KeyboardInputMethod.VNI,
             showsNumberRow = false,
             toneStyle = ToneStyle.TRADITIONAL,
             keySizeProfile = KeyboardSizingProfile.Normal,
-            keyboardThemeLabel = "Tối",
-            appearanceMode = appearanceMode,
             hapticsEnabled = true,
             soundsEnabled = false,
             smartRestoreEnabled = true,
             spellCheckEnabled = false,
             personalSuggestionsEnabled = true,
-            versionName = "1.2026.1",
             onInputMethodSelected = {},
             onShowsNumberRowChanged = {},
+            onOpenAppearance = {},
             onToneStyleSelected = {},
             onKeySizeSelected = {},
-            onAppearanceSelected = {},
             onHapticsChanged = {},
             onSoundsChanged = {},
             onSmartRestoreChanged = {},
@@ -77,8 +75,6 @@ private fun SettingsPreview(
             onResetPersonalSuggestions = {},
             onEnableKeyboard = {},
             onSelectKeyboard = {},
-            onOpenThemeGallery = {},
-            onOpenWebsite = {},
         )
     }
 }

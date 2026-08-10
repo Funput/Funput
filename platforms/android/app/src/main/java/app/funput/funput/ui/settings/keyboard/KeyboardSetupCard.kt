@@ -23,11 +23,10 @@ internal fun KeyboardSetupCard(
     onSelectKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (status == KeyboardSetupStatus.READY) {
-        SetupReadyCard(modifier)
-    } else {
-        SetupJourneyCard(status, onEnableKeyboard, onSelectKeyboard, modifier)
-    }
+    // Nothing at all once setup is done. What this said then was that there was nothing to do,
+    // which is a banner congratulating the user in perpetuity for something they did once.
+    if (status == KeyboardSetupStatus.READY) return
+    SetupJourneyCard(status, onEnableKeyboard, onSelectKeyboard, modifier)
 }
 
 @Composable
@@ -38,7 +37,8 @@ private fun SetupJourneyCard(
     modifier: Modifier = Modifier,
 ) {
     val enabling = status == KeyboardSetupStatus.NOT_ENABLED
-    Column(modifier = modifier.heroCard()) {
+    WatermarkedCard(modifier = modifier.heroCard()) {
+      Column {
         SetupHeroHeader(
             iconRes = R.drawable.ic_keyboard,
             title = stringResource(R.string.settings_keyboard_setup_heading),
@@ -58,7 +58,7 @@ private fun SetupJourneyCard(
             connected = false,
         )
         Spacer(Modifier.height(18.dp))
-        SetupGradientButton(
+        SetupPrimaryButton(
             label = stringResource(
                 if (enabling) R.string.settings_keyboard_setup_enable_action
                 else R.string.settings_keyboard_setup_select_action,
@@ -66,27 +66,6 @@ private fun SetupJourneyCard(
             onClick = if (enabling) onEnableKeyboard else onSelectKeyboard,
         )
     }
+  }
 }
 
-@Composable
-private fun SetupReadyCard(modifier: Modifier = Modifier) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.heroCard(),
-    ) {
-        SetupStepBadge(state = StepState.DONE, index = 0)
-        Spacer(Modifier.width(14.dp))
-        Column {
-            Text(
-                text = stringResource(R.string.settings_keyboard_setup_ready),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = stringResource(R.string.settings_keyboard_setup_ready_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}

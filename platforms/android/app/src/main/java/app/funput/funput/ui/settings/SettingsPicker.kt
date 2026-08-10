@@ -4,5 +4,4 @@ internal enum class SettingsPicker {
     INPUT_METHOD,
     TONE_STYLE,
     KEY_SIZE,
-    APPEARANCE,
 }

@@ -1,39 +1,41 @@
 package app.funput.funput.ui.settings
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsScreen(
     keyboardSetupStatus: KeyboardSetupStatus,
+    keyboardTheme: KeyboardThemeDescriptor,
     inputMethod: KeyboardInputMethod,
     showsNumberRow: Boolean,
     toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
-    keyboardThemeLabel: String,
-    appearanceMode: AppearanceMode,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
     smartRestoreEnabled: Boolean,
     spellCheckEnabled: Boolean,
     personalSuggestionsEnabled: Boolean,
-    versionName: String,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
+    onOpenAppearance: () -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
-    onAppearanceSelected: (AppearanceMode) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
     onSmartRestoreChanged: (Boolean) -> Unit,
@@ -42,28 +44,32 @@ internal fun SettingsScreen(
     onResetPersonalSuggestions: () -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
-    onOpenThemeGallery: () -> Unit,
-    onOpenWebsite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var picker by rememberSaveable { mutableStateOf<SettingsPicker?>(null) }
-    Box(modifier = modifier.fillMaxSize()) {
+    val scrollBehavior = rememberSettingsScrollBehavior()
+    Scaffold(
+        topBar = { SettingsTopBar(scrollBehavior) },
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+    ) { contentPadding ->
         SettingsScreenSections(
+            contentPadding = contentPadding,
             keyboardSetupStatus = keyboardSetupStatus,
+            keyboardTheme = keyboardTheme,
             inputMethod = inputMethod,
             showsNumberRow = showsNumberRow,
             toneStyle = toneStyle,
             keySizeProfile = keySizeProfile,
-            keyboardThemeLabel = keyboardThemeLabel,
-            appearanceMode = appearanceMode,
             hapticsEnabled = hapticsEnabled,
             soundsEnabled = soundsEnabled,
             smartRestoreEnabled = smartRestoreEnabled,
             spellCheckEnabled = spellCheckEnabled,
             personalSuggestionsEnabled = personalSuggestionsEnabled,
-            versionName = versionName,
             onOpenPicker = { picker = it },
             onShowsNumberRowChanged = onShowsNumberRowChanged,
+            onOpenAppearance = onOpenAppearance,
+            onToneStyleSelected = onToneStyleSelected,
+            onKeySizeSelected = onKeySizeSelected,
             onHapticsChanged = onHapticsChanged,
             onSoundsChanged = onSoundsChanged,
             onSmartRestoreChanged = onSmartRestoreChanged,
@@ -72,8 +78,6 @@ internal fun SettingsScreen(
             onResetPersonalSuggestions = onResetPersonalSuggestions,
             onEnableKeyboard = onEnableKeyboard,
             onSelectKeyboard = onSelectKeyboard,
-            onOpenThemeGallery = onOpenThemeGallery,
-            onOpenWebsite = onOpenWebsite,
         )
     }
     SettingsPickerSheet(
@@ -81,11 +85,9 @@ internal fun SettingsScreen(
         inputMethod = inputMethod,
         toneStyle = toneStyle,
         keySizeProfile = keySizeProfile,
-        appearanceMode = appearanceMode,
         onInputMethodSelected = onInputMethodSelected,
         onToneStyleSelected = onToneStyleSelected,
         onKeySizeSelected = onKeySizeSelected,
-        onAppearanceSelected = onAppearanceSelected,
         onDismiss = { picker = null },
     )
 }
