@@ -21,8 +21,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.funput.funput.R
+import app.funput.funput.keyboard.layout.KeyboardSizingProfile
+import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.theme.KeyboardThemePreview
+import app.funput.funput.ui.theme.KeyboardThemePreviewConfiguration
 import app.funput.funput.ui.theme.Spacing
 import app.funput.funput.ui.theme.localizedName
 
@@ -37,9 +40,15 @@ import app.funput.funput.ui.theme.localizedName
 @Composable
 internal fun KeyboardHero(
     descriptor: KeyboardThemeDescriptor,
+    inputMethod: KeyboardInputMethod,
+    sizingProfile: KeyboardSizingProfile,
+    showsNumberRow: Boolean,
     onOpenAppearance: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Five rows need more height than four. A fixed ratio squashed the number row in rather than
+    // making room for it, which made the preview a picture of a keyboard nobody has.
+    val numberRow = showsNumberRow || !inputMethod.isTelexFamily
     Surface(
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -54,9 +63,17 @@ internal fun KeyboardHero(
             KeyboardThemePreview(
                 theme = descriptor.theme,
                 backgroundImage = descriptor.backgroundImage,
+                // Every keyboard setting on this page shows up here. A preview that ignored them
+                // would be a picture of a keyboard rather than a picture of yours — and the size
+                // presets differ by 8% of height, which is only readable at this width.
+                configuration = KeyboardThemePreviewConfiguration(
+                    inputMethod = inputMethod,
+                    sizingProfile = sizingProfile,
+                    showsNumberRow = numberRow,
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(PreviewAspect)
+                    .aspectRatio(if (numberRow) NumberRowAspect else PreviewAspect)
                     .clip(MaterialTheme.shapes.small),
             )
             Row(
@@ -87,3 +104,6 @@ internal fun KeyboardHero(
 
 /** Roughly the shape of the real keyboard: full width, a little under half as tall. */
 private const val PreviewAspect = 2.05f
+
+/** The same keyboard with a fifth row on top of it. */
+private const val NumberRowAspect = 1.72f

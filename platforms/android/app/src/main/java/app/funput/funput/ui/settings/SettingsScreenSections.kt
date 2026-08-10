@@ -74,7 +74,13 @@ internal fun SettingsScreenSections(
     ) {
         item(key = "hero") {
             Box(modifier = Modifier.staggeredEntry(0, tracker)) {
-                KeyboardHero(keyboardTheme, onOpenAppearance)
+                KeyboardHero(
+                    descriptor = keyboardTheme,
+                    inputMethod = inputMethod,
+                    sizingProfile = keySizeProfile,
+                    showsNumberRow = showsNumberRow,
+                    onOpenAppearance = onOpenAppearance,
+                )
             }
         }
         item(key = "keyboard") {
