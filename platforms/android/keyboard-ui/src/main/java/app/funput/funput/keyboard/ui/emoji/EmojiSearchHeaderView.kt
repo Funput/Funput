@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.TextView
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 
 internal class EmojiSearchHeaderView(context: Context) : FrameLayout(context) {
     var onSearchRequested: () -> Unit = {}
@@ -40,7 +41,7 @@ internal class EmojiSearchHeaderView(context: Context) : FrameLayout(context) {
         addView(cancel, LayoutParams(dp(54), dp(46), Gravity.END))
     }
 
-    fun render(state: EmojiSearchState, palette: EmojiPanelPalette) {
+    fun render(state: EmojiSearchState, palette: KeyboardPanelPalette) {
         val browsing = state.mode == EmojiSearchMode.BROWSING
         cancel.visibility = if (browsing) GONE else VISIBLE
         clear.visibility = if (!browsing && state.query.isNotEmpty()) VISIBLE else GONE

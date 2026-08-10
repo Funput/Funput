@@ -24,13 +24,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelComposeView
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-internal class EmojiBrowserView(context: Context) : EmojiComposeView(context) {
+internal class EmojiBrowserView(context: Context) : KeyboardPanelComposeView(context) {
     var onEmojiSelected: (EmojiItem) -> Unit = {}
     var onCategoryChanged: (EmojiCategory) -> Unit = {}
     private var sections by mutableStateOf(EmojiSections(emptyList()))
-    private var palette by mutableStateOf<EmojiPanelPalette?>(null)
+    private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
     private var requestedCategory by mutableStateOf<EmojiCategory?>(null)
     private var requestId by mutableIntStateOf(0)
 
@@ -40,11 +42,15 @@ internal class EmojiBrowserView(context: Context) : EmojiComposeView(context) {
         sections = EmojiSections.from(catalog, recents)
     }
 
-    fun updatePalette(value: EmojiPanelPalette) { palette = value }
+    fun updatePalette(value: KeyboardPanelPalette) { palette = value }
 
     fun scrollTo(category: EmojiCategory) {
         requestedCategory = category
         requestId++
+    }
+
+    fun reset() {
+        scrollTo(sections.values.firstOrNull()?.category ?: EmojiCategory.SMILEYS_PEOPLE)
     }
 
     @androidx.compose.runtime.Composable

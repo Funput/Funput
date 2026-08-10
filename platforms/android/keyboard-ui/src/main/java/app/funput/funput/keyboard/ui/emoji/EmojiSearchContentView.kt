@@ -15,11 +15,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.model.KeyAction
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelComposeView
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.ui.R
 import app.funput.funput.theme.KeyboardTheme
 
-internal class EmojiSearchContentView(context: Context) : EmojiComposeView(context) {
+internal class EmojiSearchContentView(context: Context) : KeyboardPanelComposeView(context) {
     var onEmojiSelected: (EmojiItem) -> Unit = {}
     var onInput: (String) -> Unit = {}
     var onSpace: () -> Unit = {}
@@ -28,7 +30,7 @@ internal class EmojiSearchContentView(context: Context) : EmojiComposeView(conte
     var onCancel: () -> Unit = {}
     private var state by mutableStateOf(EmojiSearchState())
     private var items by mutableStateOf(emptyList<EmojiItem>())
-    private var palette by mutableStateOf<EmojiPanelPalette?>(null)
+    private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
     private var theme by mutableStateOf<KeyboardTheme?>(null)
     private var haptics by mutableStateOf(true)
     private var sounds by mutableStateOf(true)
@@ -53,7 +55,7 @@ internal class EmojiSearchContentView(context: Context) : EmojiComposeView(conte
     fun render(
         state: EmojiSearchState,
         items: List<EmojiItem>,
-        palette: EmojiPanelPalette,
+        palette: KeyboardPanelPalette,
     ) {
         this.state = state
         this.items = items

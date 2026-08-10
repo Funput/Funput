@@ -5,7 +5,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import app.funput.funput.keyboard.ui.emoji.EmojiPanelPalette
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import app.funput.funput.keyboard.ui.emoji.EmojiSearchContentView
 import app.funput.funput.keyboard.ui.emoji.EmojiSearchMode
 import app.funput.funput.keyboard.ui.emoji.EmojiSearchState
@@ -13,6 +13,8 @@ import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemes
 import app.funput.funput.theme.LocalKeyboardThemeCatalog
 import org.junit.Test
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
@@ -44,11 +46,27 @@ class EmojiPanelInstrumentedTest {
                     render(
                         EmojiSearchState(EmojiSearchMode.EDITING, "smile"),
                         emptyList(),
-                        EmojiPanelPalette.from(theme),
+                        KeyboardPanelPalette.from(theme),
                     )
                 }
                 root.addView(search, FrameLayout.LayoutParams(-1, -1))
                 activity.setContentView(root)
+            }
+        }
+    }
+
+    @Test
+    fun panelNavigatesBetweenEmojiAndKaomojiWithoutChangingHostPanel() {
+        ActivityScenario.launch(EmojiTestActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val panel = EmojiPanelView(activity).apply { updateTheme(KeyboardThemes.GlassDark) }
+                activity.setContentView(panel)
+
+                assertFalse(panel.isShowingKaomoji)
+                panel.showKaomojiPanel()
+                assertTrue(panel.isShowingKaomoji)
+                panel.showEmojiPanel()
+                assertFalse(panel.isShowingKaomoji)
             }
         }
     }
