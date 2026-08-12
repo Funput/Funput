@@ -5,7 +5,8 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
     VIRTUAL_KEY, VK_CONTROL, VK_LWIN, VK_MENU, VK_SHIFT,
 };
 
-use super::{raw_send, send_plan, vk_event};
+use super::events::{raw_send, vk_event};
+use super::send_plan;
 
 /// Send a plan with the currently-held modifiers momentarily released.
 ///
