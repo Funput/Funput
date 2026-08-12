@@ -58,6 +58,7 @@ internal object SymbolLayouts {
         suggestionBar = if (KeyboardFeatures.EmojiToolbarEnabled && !secure) {
             SuggestionBarSpec(
                 settingsKey = specialKey("settings-$id", "", KeyRole.SETTINGS, accessibilityLabel = "Settings"),
+                clipboardKey = specialKey("clipboard-$id", "", KeyRole.CLIPBOARD, accessibilityLabel = "Clipboard"),
                 emojiKey = specialKey("emoji-$id", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
                 suggestionsEnabled = KeyboardFeatures.SuggestionsEnabled && suggestionsEnabled,
             )

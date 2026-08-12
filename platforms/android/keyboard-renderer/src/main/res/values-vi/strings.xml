@@ -5,4 +5,5 @@
     <string name="clipboard_hint_link">Đã sao chép một liên kết</string>
     <string name="clipboard_hint_sensitive">Đã sao chép nội dung nhạy cảm</string>
     <string name="clipboard_paste_accessibility">Dán, %1$s</string>
+    <string name="clipboard_open_accessibility">Lịch sử bảng nhớ tạm</string>
 </resources>

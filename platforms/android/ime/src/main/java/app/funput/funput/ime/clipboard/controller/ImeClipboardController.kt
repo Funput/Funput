@@ -1,5 +1,4 @@
 package app.funput.funput.ime.clipboard.controller
-
 import app.funput.funput.ime.clipboard.model.ClipboardEntry
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.clipboard.persistence.ClipboardHistoryStore
@@ -111,6 +110,7 @@ internal class ImeClipboardController(
         stop()
         scope.cancel()
     }
+    fun historyCleared() { suppressOffer = false; refreshOffer() }
     private fun reconcileObservation() {
         val shouldObserve = active && prefs.enabled
         if (shouldObserve && observation == null) {

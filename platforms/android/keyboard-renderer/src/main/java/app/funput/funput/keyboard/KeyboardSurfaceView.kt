@@ -5,7 +5,6 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import app.funput.funput.keyboard.interaction.interactionTargetAt
-import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.KeyBounds
@@ -41,6 +40,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var layoutOverride: app.funput.funput.keyboard.model.KeyboardLayout? by layoutState::layoutOverride
     var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
     var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
+    var clipboardKeyVisible: Boolean = false; set(value) { if (field != value) { field = value; resolveGeometry() } }
     var showsNumberRow: Boolean by layoutState::showsNumberRow
     var keyboardTheme by render::keyboardTheme
     var keyboardThemeBackgroundImage by render::keyboardThemeBackgroundImage
@@ -74,7 +74,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         apply = { values -> render.suggestions = values; accessibility.refresh() },
         onShowSettingsChanged = { resolveGeometry() },
     )
-    private val interaction: KeyboardSurfaceInteraction = createKeyboardSurfaceInteraction(
+    private val interaction: app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction = createKeyboardSurfaceInteraction(
         host = this,
         callbacks = callbacks,
         keyAt = { x, y -> resolvedKeyboard?.interactionTargetAt(
@@ -114,8 +114,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         render.updateSize(width, height)
     }
     override fun onDraw(canvas: Canvas) { super.onDraw(canvas)
-        resolvedKeyboard?.let { render.draw(canvas, it, interaction, shiftState, language, editorMode) }
-    }
+        resolvedKeyboard?.let { render.draw(canvas, it, interaction, shiftState, language, editorMode) } }
     override fun onTouchEvent(event: MotionEvent): Boolean = events.dispatchTouch(event, ::performClick)
     override fun dispatchHoverEvent(event: MotionEvent): Boolean =
         events.dispatchHover(event) { super.dispatchHoverEvent(event) }
@@ -137,6 +136,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             density = resources.displayMetrics.density,
             profile = sizingProfile,
             showSettings = suggestionState.showSettings,
+            showClipboard = clipboardKeyVisible && suggestionState.showSettings,
         )
         suggestionState.geometryChanged()
         accessibility.refresh()

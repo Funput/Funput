@@ -2,6 +2,8 @@ package app.funput.funput.keyboard.interaction
 
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.layout.KeyBounds
+import app.funput.funput.keyboard.model.KeyRole
+import app.funput.funput.keyboard.model.KeySpec
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -10,7 +12,7 @@ class ClipboardInteractionControllerTest {
     fun `touch and accessibility dispatch clipboard exactly once with control feedback`() {
         var requests = 0
         val haptics = mutableListOf<KeyboardHapticType>()
-        val controller = controller({ requests++ }, haptics::add)
+        val controller = controller({ requests++ }, {}, haptics::add)
 
         controller.onPointerStarted(1, ClipboardTargetId, 40f, 20f)
         controller.onKeyReleased(1, ClipboardTargetId, 40f, 20f, 10L)
@@ -20,16 +22,26 @@ class ClipboardInteractionControllerTest {
         assertEquals(listOf(KeyboardHapticType.CONTROL, KeyboardHapticType.CONTROL), haptics)
     }
 
+    @Test
+    fun `toolbar clipboard key opens panel exactly once`() {
+        var requests = 0
+        val controller = controller({}, { requests++ }, {})
+        controller.onKeyReleased(1, "clipboard", 40f, 20f, 10L)
+        assertEquals(1, requests)
+    }
+
     private fun controller(
         onClipboard: () -> Unit,
+        onPanel: () -> Unit,
         onHaptic: (KeyboardHapticType) -> Unit,
     ) = KeyboardInteractionController(
-        keySpec = { null },
+        keySpec = { id -> KeySpec(id, "", KeyRole.CLIPBOARD, accessibilityLabel = "Clipboard") },
         suggestionSelection = { null },
         onAction = {},
         onSettingsRequested = {},
         onEmojiRequested = {},
         onClipboardRequested = onClipboard,
+        onClipboardPanelRequested = onPanel,
         onSuggestionSelected = {},
         onHapticFeedback = onHaptic,
         onVisualStateChanged = {},

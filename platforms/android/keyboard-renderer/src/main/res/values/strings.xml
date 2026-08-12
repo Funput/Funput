@@ -5,4 +5,5 @@
     <string name="clipboard_hint_link">Copied a link</string>
     <string name="clipboard_hint_sensitive">Copied sensitive content</string>
     <string name="clipboard_paste_accessibility">Paste, %1$s</string>
+    <string name="clipboard_open_accessibility">Clipboard history</string>
 </resources>

@@ -5,6 +5,7 @@ import android.view.MotionEvent
 import android.view.View
 import app.funput.funput.keyboard.accessibility.KeyboardSurfaceAccessibilityController
 import app.funput.funput.keyboard.KeyboardClipboardHint
+import app.funput.funput.keyboard.R
 import app.funput.funput.keyboard.accessibilityLabel
 import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.selectionForTarget
@@ -36,6 +37,7 @@ internal class KeyboardSurfaceAccessibilityBinding(
         shiftState(),
         suggestions(),
         clipboardHint().takeIf { suggestions().isEmpty() }?.accessibilityLabel(resources),
+        resources.getString(R.string.clipboard_open_accessibility),
     )
 
     private fun activate(keyId: String) {

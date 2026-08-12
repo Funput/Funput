@@ -15,13 +15,14 @@ internal class KeyboardAccessibilitySnapshot(
     shiftState: ShiftState,
     suggestions: List<String> = emptyList(),
     clipboardLabel: String? = null,
+    clipboardKeyLabel: String? = null,
 ) {
     val nodes: List<KeyboardAccessibilityNode> = buildList {
         keyboard.keys.filterNot { it.spec.role == KeyRole.PLACEHOLDER }.forEach { key ->
             KeyboardAccessibilityNode(
                 virtualId = size,
                 keyId = key.spec.id,
-                label = key.accessibilityLabel(shiftState),
+                label = key.accessibilityLabel(shiftState, clipboardKeyLabel),
                 bounds = key.bounds,
                 hitBounds = key.hitBounds,
                 selected = key.spec.role == KeyRole.SHIFT && shiftState != ShiftState.OFF,
@@ -58,8 +59,9 @@ internal data class KeyboardAccessibilityNode(
 
 private fun app.funput.funput.keyboard.layout.ResolvedKey.accessibilityLabel(
     shiftState: ShiftState,
-): String = if (spec.role == KeyRole.CHARACTER && shiftState.isActive) {
-    spec.shiftedLabel ?: spec.accessibilityLabel
-} else {
-    spec.accessibilityLabel
+    clipboardKeyLabel: String?,
+): String = when {
+    spec.role == KeyRole.CLIPBOARD && clipboardKeyLabel != null -> clipboardKeyLabel
+    spec.role == KeyRole.CHARACTER && shiftState.isActive -> spec.shiftedLabel ?: spec.accessibilityLabel
+    else -> spec.accessibilityLabel
 }

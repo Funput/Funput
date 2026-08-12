@@ -15,6 +15,9 @@ import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelCoordinator
+import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
+import app.funput.funput.keyboard.ui.panel.FunputPanelFactory
+import app.funput.funput.keyboard.ui.panel.KeyboardClipboardPanelState
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.roundToInt
 
@@ -26,20 +29,31 @@ class FunputKeyboardView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
     private val keyboardSurface = KeyboardSurfaceView(context)
     val callbacks = FunputKeyboardCallbacks()
+    private val clipboardState = KeyboardClipboardPanelState(
+        keyboardSurface, { editorMode }, { activePanel }, ::showLettersPanel,
+    )
+    private val panelFactory = FunputPanelFactory(
+        context, callbacks, { keyboardSurface.keyboardTheme },
+        { keyboardSurface.isHapticFeedbackEnabled }, { keyboardSurface.isSoundEffectsEnabled },
+        clipboardState, ::showLettersPanel,
+    )
     private val panelCoordinator = KeyboardPanelCoordinator(
         keyboardSurface = keyboardSurface,
-        createEmojiPanel = ::createEmojiPanel,
+        createEmojiPanel = panelFactory::createEmoji,
+        createClipboardPanel = panelFactory::createClipboard,
         attachPanel = { addView(it, matchParentLayoutParams()) },
         onPanelChanged = callbacks::dispatchPanelChanged,
         syncSuggestions = ::syncSuggestions,
     )
-    private val feedbackController = KeyboardFeedbackController(keyboardSurface) {
-        panelCoordinator.loadedEmojiPanel
-    }
+    private val feedbackController = KeyboardFeedbackController(
+        keyboardSurface, { panelCoordinator.loadedEmojiPanel }, { panelCoordinator.loadedClipboardPanel },
+    )
     val activePanel: KeyboardPanel get() = panelCoordinator.activePanel
     var shiftState: ShiftState by keyboardSurface::shiftState
     var inputMethod: KeyboardInputMethod by keyboardSurface::inputMethod
-    var editorMode: KeyboardEditorMode by keyboardSurface::editorMode
+    var editorMode: KeyboardEditorMode
+        get() = keyboardSurface.editorMode
+        set(value) { keyboardSurface.editorMode = value; clipboardState.editorModeChanged() }
     var systemInputMethodSwitcherVisible: Boolean by keyboardSurface::systemInputMethodSwitcherVisible
     var showsNumberRow: Boolean by keyboardSurface::showsNumberRow
     var suggestionBarEnabled: Boolean
@@ -64,6 +78,9 @@ class FunputKeyboardView @JvmOverloads constructor(
             syncSuggestions()
         }
     var clipboardHint: KeyboardClipboardHint? by keyboardSurface::clipboardHint
+    var clipboardPanelEnabled: Boolean by clipboardState::enabled
+    var clipboardEntries: List<KeyboardClipboardEntry> by clipboardState::entries
+    var clipboardHistoryLoading: Boolean by clipboardState::loading
     var language: KeyboardLanguage by keyboardSurface::language
     var hapticsEnabled: Boolean by feedbackController::hapticsEnabled
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
@@ -75,11 +92,17 @@ class FunputKeyboardView @JvmOverloads constructor(
         keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
         keyboardSurface.callbacks.onEmojiRequested = ::openEmojiFromKeyboard
         keyboardSurface.callbacks.onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest
+        keyboardSurface.callbacks.onClipboardPanelRequested = ::showClipboardPanel
         setBackgroundColor(keyboardTheme.backgroundEndColor)
         safeArea.install()
     }
 
     fun showEmojiPanel(): Unit = panelCoordinator.showEmoji()
+    fun showClipboardPanel() {
+        if (!clipboardState.available() || activePanel == KeyboardPanel.CLIPBOARD) return
+        panelCoordinator.showClipboard()
+        callbacks.dispatchClipboardPanelOpened()
+    }
 
     fun showSymbolsPanel(mode: KeyboardLayoutMode = KeyboardLayoutMode.SYMBOLS_PRIMARY) {
         panelCoordinator.showSymbols(mode)
@@ -121,15 +144,6 @@ class FunputKeyboardView @JvmOverloads constructor(
     private fun syncSuggestions() {
         val visible = activePanel == KeyboardPanel.LETTERS && suggestionBarEnabled
         keyboardSurface.suggestions = suggestions.takeIf { visible }.orEmpty()
-    }
-
-    private fun createEmojiPanel() = EmojiPanelView(context).apply {
-        updateTheme(keyboardTheme)
-        hapticsEnabled = this@FunputKeyboardView.hapticsEnabled
-        soundsEnabled = this@FunputKeyboardView.soundsEnabled
-        onEmojiSelected = callbacks::dispatchEmoji
-        onBackspaceRequested = callbacks::dispatch
-        onLettersRequested = ::showLettersPanel
     }
 
     private fun matchParentLayoutParams() = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)

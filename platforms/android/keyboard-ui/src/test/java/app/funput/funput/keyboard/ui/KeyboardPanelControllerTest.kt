@@ -17,7 +17,9 @@ class KeyboardPanelControllerTest {
         assertEquals(KeyboardPanel.SYMBOLS, controller.activePanel)
         assertTrue(controller.show(KeyboardPanel.EMOJI))
         assertEquals(KeyboardPanel.EMOJI, controller.activePanel)
-        assertFalse(controller.show(KeyboardPanel.EMOJI))
+        assertTrue(controller.show(KeyboardPanel.CLIPBOARD))
+        assertEquals(KeyboardPanel.CLIPBOARD, controller.activePanel)
+        assertFalse(controller.show(KeyboardPanel.CLIPBOARD))
         assertTrue(controller.show(KeyboardPanel.LETTERS))
         assertFalse(controller.show(KeyboardPanel.LETTERS))
     }

@@ -1,5 +1,4 @@
 package app.funput.funput.keyboard.interaction
-
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
@@ -11,13 +10,13 @@ import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionController
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionPreview
-/** Coordinates touch-driven behaviors without coupling them to the Android view lifecycle. */
 internal class KeyboardInteractionController(
     private val keySpec: (keyId: String) -> KeySpec?,
     private val suggestionSelection: (targetId: String) -> SuggestionSelection?,
     onAction: (KeyAction) -> Unit,
     private val onSettingsRequested: () -> Unit,
     private val onEmojiRequested: () -> Unit,
+    private val onClipboardPanelRequested: () -> Unit = {},
     private val onClipboardRequested: () -> Unit = {},
     private val onSuggestionSelected: (SuggestionSelection) -> Unit,
     private val onHapticFeedback: (KeyboardHapticType) -> Unit,
@@ -143,6 +142,7 @@ internal class KeyboardInteractionController(
             selection != null -> onSuggestionSelected(selection)
             keyId == ClipboardTargetId -> onClipboardRequested()
             key?.role == KeyRole.SETTINGS -> onSettingsRequested()
+            key?.role == KeyRole.CLIPBOARD -> onClipboardPanelRequested()
             key?.role == KeyRole.EMOJI -> onEmojiRequested()
             keyId != null -> actionDispatcher.dispatch(keyId, eventTimeMillis)
         }

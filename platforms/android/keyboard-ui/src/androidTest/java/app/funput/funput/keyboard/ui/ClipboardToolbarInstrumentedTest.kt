@@ -10,11 +10,16 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.funput.funput.keyboard.KeyboardClipboardHint
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.R
+import app.funput.funput.keyboard.ui.clipboard.ClipboardPanelView
+import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 import app.funput.funput.theme.KeyboardThemes
+import java.time.Instant
+import java.util.UUID
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -70,6 +75,34 @@ class ClipboardToolbarInstrumentedTest {
         }
     }
 
+    @Test
+    fun clipboardPanelIsLazyReusedAndRendersEveryThemeAtNarrowWidth() = withKeyboard { keyboard ->
+        var opened = 0
+        keyboard.callbacks.onClipboardPanelOpened = { opened++ }
+        keyboard.clipboardPanelEnabled = true
+        keyboard.clipboardEntries = listOf(
+            KeyboardClipboardEntry(UUID.randomUUID(), " Việt,\\\n 😀 ", Instant.now(), true),
+        )
+        assertTrue((0 until keyboard.childCount).none { keyboard.getChildAt(it) is ClipboardPanelView })
+        keyboard.showClipboardPanel()
+        val panel = (0 until keyboard.childCount).map(keyboard::getChildAt)
+            .filterIsInstance<ClipboardPanelView>().single()
+        assertEquals(KeyboardPanel.CLIPBOARD, keyboard.activePanel)
+        assertEquals(1, opened)
+        keyboard.showLettersPanel()
+        keyboard.showClipboardPanel()
+        assertSame(panel, (0 until keyboard.childCount).map(keyboard::getChildAt)
+            .filterIsInstance<ClipboardPanelView>().single())
+        assertEquals(2, opened)
+        keyboard.measure(exactly(320), exactly(420))
+        keyboard.layout(0, 0, 320, 420)
+        listOf(
+            KeyboardThemes.Slate, KeyboardThemes.Ink, KeyboardThemes.Paper,
+            KeyboardThemes.GlassDark, KeyboardThemes.GlassLight,
+            KeyboardThemes.Blossom, KeyboardThemes.Orchid,
+        ).forEach { theme -> keyboard.keyboardTheme = theme; keyboard.bitmap() }
+    }
+
     private fun withKeyboard(assertions: (FunputKeyboardView) -> Unit) {
         ActivityScenario.launch(EmojiTestActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
@@ -85,6 +118,9 @@ class ClipboardToolbarInstrumentedTest {
 
     private fun FunputKeyboardView.surface() = getChildAt(0) as KeyboardSurfaceView
     private fun KeyboardSurfaceView.bitmap() = Bitmap.createBitmap(
+        width, height, Bitmap.Config.ARGB_8888,
+    ).also { draw(Canvas(it)) }
+    private fun FunputKeyboardView.bitmap() = Bitmap.createBitmap(
         width, height, Bitmap.Config.ARGB_8888,
     ).also { draw(Canvas(it)) }
     private fun exactly(size: Int) = View.MeasureSpec.makeMeasureSpec(size, View.MeasureSpec.EXACTLY)

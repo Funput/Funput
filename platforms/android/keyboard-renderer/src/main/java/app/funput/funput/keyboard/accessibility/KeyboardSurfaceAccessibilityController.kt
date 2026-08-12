@@ -26,9 +26,10 @@ internal class KeyboardSurfaceAccessibilityController(
         shiftState: ShiftState,
         suggestions: List<String> = emptyList(),
         clipboardLabel: String? = null,
+        clipboardKeyLabel: String? = null,
     ) {
         snapshot = keyboard?.let {
-            KeyboardAccessibilitySnapshot(it, shiftState, suggestions, clipboardLabel)
+            KeyboardAccessibilitySnapshot(it, shiftState, suggestions, clipboardLabel, clipboardKeyLabel)
         }
         delegate.invalidateRoot()
     }

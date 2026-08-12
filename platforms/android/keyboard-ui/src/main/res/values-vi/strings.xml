@@ -5,4 +5,19 @@
     <string name="emoji_panel_loading">Đang tải biểu tượng…</string>
     <string name="emoji_panel_empty">Không có biểu tượng</string>
     <string name="emoji_search_empty">Không tìm thấy biểu tượng</string>
+    <string name="clipboard_pinned">Đã ghim</string>
+    <string name="clipboard_recent">Gần đây</string>
+    <string name="clipboard_empty_title">Chưa có gì trong lịch sử</string>
+    <string name="clipboard_empty_detail">Sao chép văn bản rồi chạm nút Dán trên thanh công cụ. Lịch sử chỉ lưu những gì bạn đã dán qua Funput.</string>
+    <string name="clipboard_loading">Đang tải lịch sử bảng nhớ tạm</string>
+    <string name="clipboard_just_now">Vừa xong</string>
+    <string name="clipboard_minutes_ago">%1$d phút trước</string>
+    <string name="clipboard_hours_ago">%1$d giờ trước</string>
+    <string name="clipboard_days_ago">%1$d ngày trước</string>
+    <string name="clipboard_pin">Ghim</string>
+    <string name="clipboard_unpin">Bỏ ghim</string>
+    <string name="clipboard_delete">Xoá</string>
+    <string name="clipboard_clear_all">Xoá tất cả</string>
+    <string name="clipboard_return">Trở về bàn phím Funput</string>
+    <string name="clipboard_preview">Xem nội dung bảng nhớ tạm</string>
 </resources>
