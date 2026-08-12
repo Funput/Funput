@@ -22,7 +22,11 @@ internal class ClipboardKeyIconRenderer(private val metrics: RenderMetrics) {
     }
 
     fun draw(canvas: Canvas, key: ResolvedKey) {
-        val height = min(key.bounds.height * 0.5f, metrics.dp(22f))
+        val iconHeight = min(
+            min(key.bounds.width, key.bounds.height) * IconSizeRatio,
+            metrics.dp(MaxIconHeightDp),
+        )
+        val height = iconHeight / IconEnvelopeRatio
         val width = height * 0.76f
         body.set(
             key.bounds.centerX - width / 2f,
@@ -39,5 +43,11 @@ internal class ClipboardKeyIconRenderer(private val metrics: RenderMetrics) {
             body.top + height * 0.18f,
         )
         canvas.drawRoundRect(clip, metrics.dp(2f), metrics.dp(2f), paint)
+    }
+
+    private companion object {
+        const val IconSizeRatio = 0.42f
+        const val IconEnvelopeRatio = 1.04f
+        const val MaxIconHeightDp = 19f
     }
 }
