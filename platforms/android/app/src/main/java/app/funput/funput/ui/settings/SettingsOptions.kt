@@ -3,12 +3,13 @@ package app.funput.funput.ui.settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
-import app.funput.funput.ui.settings.components.PickerOption
+import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.theme.KeyboardThemeId
+import app.funput.funput.ui.settings.components.PickerOption
 
 @Composable
 internal fun ToneStyle.label(): String = when (this) {
@@ -63,3 +64,22 @@ internal fun appearanceOptions() = AppearanceMode.entries.map { PickerOption(it,
 
 @Composable
 internal fun keySizeOptions() = KeyboardSizingProfile.Presets.map { PickerOption(it, it.label()) }
+
+@Composable
+internal fun ClipboardExpiry.label(): String = when (this) {
+    ClipboardExpiry.HOUR -> stringResource(R.string.settings_clipboard_expiry_hour)
+    ClipboardExpiry.DAY -> stringResource(R.string.settings_clipboard_expiry_day)
+    ClipboardExpiry.WEEK -> stringResource(R.string.settings_clipboard_expiry_week)
+}
+
+@Composable
+private fun ClipboardExpiry.summary(): String = when (this) {
+    ClipboardExpiry.HOUR -> stringResource(R.string.settings_clipboard_expiry_hour_summary)
+    ClipboardExpiry.DAY -> stringResource(R.string.settings_clipboard_expiry_day_summary)
+    ClipboardExpiry.WEEK -> stringResource(R.string.settings_clipboard_expiry_week_summary)
+}
+
+@Composable
+internal fun clipboardExpiryOptions() = ClipboardExpiry.entries.map {
+    PickerOption(it, it.label(), it.summary())
+}

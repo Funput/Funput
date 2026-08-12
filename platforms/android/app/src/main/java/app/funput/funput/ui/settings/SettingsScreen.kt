@@ -10,7 +10,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.ime.clipboard.model.ClipboardExpiry
+import app.funput.funput.ime.settings.ClipboardPreferences
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -31,6 +32,7 @@ internal fun SettingsScreen(
     smartRestoreEnabled: Boolean,
     spellCheckEnabled: Boolean,
     personalSuggestionsEnabled: Boolean,
+    clipboardPreferences: ClipboardPreferences,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
     onOpenAppearance: () -> Unit,
@@ -41,6 +43,9 @@ internal fun SettingsScreen(
     onSmartRestoreChanged: (Boolean) -> Unit,
     onSpellCheckChanged: (Boolean) -> Unit,
     onPersonalSuggestionsChanged: (Boolean) -> Unit,
+    onClipboardEnabledChanged: (Boolean) -> Unit,
+    onClipboardExpirySelected: (ClipboardExpiry) -> Unit,
+    onClearClipboardHistory: () -> Unit,
     onResetPersonalSuggestions: () -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
@@ -65,6 +70,7 @@ internal fun SettingsScreen(
             smartRestoreEnabled = smartRestoreEnabled,
             spellCheckEnabled = spellCheckEnabled,
             personalSuggestionsEnabled = personalSuggestionsEnabled,
+            clipboardPreferences = clipboardPreferences,
             onOpenPicker = { picker = it },
             onShowsNumberRowChanged = onShowsNumberRowChanged,
             onOpenAppearance = onOpenAppearance,
@@ -75,6 +81,8 @@ internal fun SettingsScreen(
             onSmartRestoreChanged = onSmartRestoreChanged,
             onSpellCheckChanged = onSpellCheckChanged,
             onPersonalSuggestionsChanged = onPersonalSuggestionsChanged,
+            onClipboardEnabledChanged = onClipboardEnabledChanged,
+            onClearClipboardHistory = onClearClipboardHistory,
             onResetPersonalSuggestions = onResetPersonalSuggestions,
             onEnableKeyboard = onEnableKeyboard,
             onSelectKeyboard = onSelectKeyboard,
@@ -85,9 +93,11 @@ internal fun SettingsScreen(
         inputMethod = inputMethod,
         toneStyle = toneStyle,
         keySizeProfile = keySizeProfile,
+        clipboardExpiry = clipboardPreferences.expiry,
         onInputMethodSelected = onInputMethodSelected,
         onToneStyleSelected = onToneStyleSelected,
         onKeySizeSelected = onKeySizeSelected,
+        onClipboardExpirySelected = onClipboardExpirySelected,
         onDismiss = { picker = null },
     )
 }

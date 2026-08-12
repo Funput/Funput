@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,6 +32,7 @@ internal fun SettingsRow(
     @DrawableRes iconRes: Int,
     onClick: () -> Unit,
     value: String? = null,
+    summary: String? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     SettingsRowSurface(
@@ -45,11 +47,16 @@ internal fun SettingsRow(
     ) {
         SettingsIcon(iconRes)
         Spacer(modifier = Modifier.width(Spacing.Medium))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+            summary?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
         value?.let {
             Text(
                 text = it,
@@ -70,18 +77,20 @@ internal fun SettingsRow(
 @Composable
 internal fun SettingsIcon(
     @DrawableRes iconRes: Int,
+    containerColor: Color = SettingsIconTone.Container,
+    contentColor: Color = SettingsIconTone.Content,
 ) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(36.dp)
             .clip(MaterialTheme.shapes.small)
-            .background(SettingsIconTone.Container),
+            .background(containerColor),
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
-            tint = SettingsIconTone.Content,
+            tint = contentColor,
             modifier = Modifier.size(20.dp),
         )
     }

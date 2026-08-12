@@ -3,14 +3,15 @@ package app.funput.funput.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import app.funput.funput.R
+import app.funput.funput.ime.clipboard.persistence.ClipboardHistoryStore
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.keyboard.openKeyboardSettings
 import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.settings.SettingsScreen
 import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Binds the settings screen to the persisted settings.
@@ -40,6 +41,7 @@ internal fun SettingsRoute(
         smartRestoreEnabled = settings.smartComposition.smartRestoreEnabled,
         spellCheckEnabled = settings.smartComposition.spellCheckEnabled,
         personalSuggestionsEnabled = settings.personalSuggestions.enabled,
+        clipboardPreferences = settings.clipboard,
         onInputMethodSelected = { method -> scope.launch { settings.input.setInputMethod(method) } },
         onShowsNumberRowChanged = { enabled ->
             scope.launch { settings.numberRowStore.setShowsNumberRow(enabled) }
@@ -60,6 +62,17 @@ internal fun SettingsRoute(
         },
         onPersonalSuggestionsChanged = { enabled ->
             scope.launch { settings.personalSuggestionStore.setEnabled(enabled) }
+        },
+        onClipboardEnabledChanged = { enabled ->
+            scope.launch { settings.clipboardStore.setEnabled(enabled) }
+        },
+        onClipboardExpirySelected = { expiry ->
+            scope.launch { settings.clipboardStore.setExpiry(expiry) }
+        },
+        onClearClipboardHistory = {
+            scope.launch {
+                withContext(Dispatchers.IO) { ClipboardHistoryStore.from(context).clear() }
+            }
         },
         onResetPersonalSuggestions = {
             scope.launch { settings.personalSuggestionStore.requestReset() }

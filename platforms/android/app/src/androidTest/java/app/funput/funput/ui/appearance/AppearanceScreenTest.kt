@@ -2,13 +2,17 @@ package app.funput.funput.ui.appearance
 
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.KeyboardThemeOrigin
@@ -101,8 +105,11 @@ class AppearanceScreenTest {
 
         // The chip has to say which theme it holds: tapping a card means a different thing
         // depending on which slot is active, so the slot cannot be the only thing on screen.
+        compose.onNodeWithTag(AppearanceListTag)
+            .performScrollToNode(hasText("Tối · Ink"))
         compose.onNodeWithText("Sáng · Paper").assertIsSelected()
-        compose.onNodeWithText("Tối · Ink").performClick()
+        compose.onNode(hasText("Tối · Ink") and hasClickAction())
+            .performSemanticsAction(SemanticsActions.OnClick)
 
         compose.runOnIdle {
             assertEquals(app.funput.funput.ime.settings.KeyboardThemeSlot.DARK, chosenSlot)

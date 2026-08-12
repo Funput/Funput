@@ -3,7 +3,7 @@ package app.funput.funput.ui.settings
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -26,9 +26,11 @@ class AdvancedTelexSettingsTest {
                     inputMethod = selected,
                     toneStyle = ToneStyle.TRADITIONAL,
                     keySizeProfile = KeyboardSizingProfile.Default,
+                    clipboardExpiry = ClipboardExpiry.HOUR,
                     onInputMethodSelected = { selected = it },
                     onToneStyleSelected = {},
                     onKeySizeSelected = {},
+                    onClipboardExpirySelected = {},
                     onDismiss = {},
                 )
             }

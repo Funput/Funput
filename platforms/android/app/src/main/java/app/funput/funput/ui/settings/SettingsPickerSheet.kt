@@ -3,6 +3,7 @@ package app.funput.funput.ui.settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
+import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -14,9 +15,11 @@ internal fun SettingsPickerSheet(
     inputMethod: KeyboardInputMethod,
     toneStyle: ToneStyle,
     keySizeProfile: KeyboardSizingProfile,
+    clipboardExpiry: ClipboardExpiry,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
+    onClipboardExpirySelected: (ClipboardExpiry) -> Unit,
     onDismiss: () -> Unit,
 ) {
     when (picker) {
@@ -39,6 +42,13 @@ internal fun SettingsPickerSheet(
             options = keySizeOptions(),
             selected = keySizeProfile,
             onSelected = onKeySizeSelected,
+            onDismiss = onDismiss,
+        )
+        SettingsPicker.CLIPBOARD_EXPIRY -> PreferencePickerSheet(
+            title = stringResource(R.string.settings_clipboard_expiry_title),
+            options = clipboardExpiryOptions(),
+            selected = clipboardExpiry,
+            onSelected = onClipboardExpirySelected,
             onDismiss = onDismiss,
         )
         null -> Unit

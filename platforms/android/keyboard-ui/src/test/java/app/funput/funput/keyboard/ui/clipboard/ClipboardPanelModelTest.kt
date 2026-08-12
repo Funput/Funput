@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.ui.clipboard
 
+import app.funput.funput.keyboard.ui.clipboard.row.shouldRevealClipboardAction
 import java.time.Instant
 import java.util.UUID
 import org.junit.Assert.assertEquals
@@ -34,6 +35,13 @@ class ClipboardPanelModelTest {
         assertEquals("1 m", ClipboardRowText.relativeTime(now.minusSeconds(60), now, strings))
         assertEquals("1 h", ClipboardRowText.relativeTime(now.minusSeconds(3_600), now, strings))
         assertEquals("1 d", ClipboardRowText.relativeTime(now.minusSeconds(86_400), now, strings))
+    }
+
+    @Test
+    fun `swipe settles open without treating a partial swipe as deletion`() {
+        assertEquals(false, shouldRevealClipboardAction(-43f, 88f))
+        assertEquals(true, shouldRevealClipboardAction(-44f, 88f))
+        assertEquals(true, shouldRevealClipboardAction(-88f, 88f))
     }
 
     private fun entry(text: String, second: Long, pinned: Boolean) = KeyboardClipboardEntry(

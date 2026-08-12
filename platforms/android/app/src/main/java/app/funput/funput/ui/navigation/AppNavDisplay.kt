@@ -14,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.flow.Flow
 
 /**
  * Draws the current destination and animates the moves between them.
@@ -45,7 +44,9 @@ internal fun AppNavDisplay(
     PredictiveBackHandler(enabled = navigator.canNavigateBack) { progress ->
         val previous = navigator.previousDestination ?: return@PredictiveBackHandler
         try {
-            progress.seek(previous, transitionState)
+            progress.collect { event ->
+                transitionState.seekTo(fraction = event.progress, targetState = previous)
+            }
             navigator.navigateBack()
         } catch (cancelled: CancellationException) {
             // The user let go before committing, so walk the transition back to where it started.
@@ -68,11 +69,4 @@ internal fun AppNavDisplay(
             }
         }
     }
-}
-
-private suspend fun Flow<androidx.activity.BackEventCompat>.seek(
-    previous: AppDestination,
-    transitionState: SeekableTransitionState<AppDestination>,
-) {
-    collect { event -> transitionState.seekTo(fraction = event.progress, targetState = previous) }
 }
