@@ -44,8 +44,11 @@ fn falls_back_to_appdata_when_exe_not_writable() {
     let _ = fs::remove_dir_all(root);
 }
 
+/// A beside-exe install ignores AppData completely — it is neither copied from nor
+/// touched, and a missing beside-exe file stays missing until something saves it.
+/// An AppData file left over from an older install is simply not this install's.
 #[test]
-fn migrates_appdata_once_when_beside_exe_is_missing() {
+fn an_appdata_file_is_never_read_or_copied() {
     let root = tmp();
     let exe = root.join("exe");
     let app_dir = root.join("app");
@@ -56,28 +59,14 @@ fn migrates_appdata_once_when_beside_exe_is_missing() {
 
     let path = resolve(None, Some(&exe), true, Some(&app)).unwrap();
     assert_eq!(path, exe.join(FILE));
-    assert_eq!(
-        fs::read_to_string(&path).unwrap(),
-        fs::read_to_string(&app).unwrap()
+    assert!(
+        !path.exists(),
+        "resolve must not create the beside-exe file"
     );
-    // AppData is left in place.
-    assert!(app.is_file());
-    let _ = fs::remove_dir_all(root);
-}
-
-#[test]
-fn does_not_overwrite_existing_beside_exe_file() {
-    let root = tmp();
-    let exe = root.join("exe");
-    let app_dir = root.join("app");
-    let app = app_dir.join(FILE);
-    let beside = exe.join(FILE);
-    fs::create_dir_all(&exe).unwrap();
-    fs::create_dir_all(&app_dir).unwrap();
-    fs::write(&beside, "beside").unwrap();
-    fs::write(&app, "appdata").unwrap();
-
-    let path = resolve(None, Some(&exe), true, Some(&app)).unwrap();
-    assert_eq!(fs::read_to_string(path).unwrap(), "beside");
+    assert_eq!(
+        fs::read_to_string(&app).unwrap(),
+        r#"{"method":"vni","enabled":true}"#,
+        "the AppData file must be left untouched"
+    );
     let _ = fs::remove_dir_all(root);
 }
