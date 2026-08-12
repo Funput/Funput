@@ -55,6 +55,21 @@ class ImeClipboardControllerRaceTest {
         assertTrue(fixture.store.load().isEmpty())
         fixture.close()
     }
+
+    @Test
+    fun `disabling clipboard while reading prevents commit`() {
+        val fixture = RaceFixture()
+        fixture.start()
+        fixture.controller.pasteCurrent()
+        assertTrue(fixture.gateway.readStarted.await(2, TimeUnit.SECONDS))
+        fixture.disable()
+        fixture.gateway.releaseRead.countDown()
+        fixture.awaitIoIdle()
+
+        assertTrue(fixture.committed.isEmpty())
+        assertTrue(fixture.store.load().isEmpty())
+        fixture.close()
+    }
 }
 
 private class RaceFixture {
@@ -64,9 +79,10 @@ private class RaceFixture {
     val gateway = BlockingGateway()
     val store = ClipboardHistoryStore(directory)
     val committed = mutableListOf<String>()
+    private val preferences = MutableStateFlow(ClipboardPreferences.Default)
     val controller = ImeClipboardController(
         parentScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
-        preferences = MutableStateFlow(ClipboardPreferences.Default),
+        preferences = preferences,
         gateway = gateway,
         storeFactory = { ClipboardHistoryStore(directory, it) },
         commitText = committed::add,
@@ -84,6 +100,8 @@ private class RaceFixture {
         executor.execute(idle::countDown)
         assertTrue(idle.await(2, TimeUnit.SECONDS))
     }
+
+    fun disable() { preferences.value = ClipboardPreferences.Default.copy(enabled = false) }
 
     fun close() {
         controller.close()

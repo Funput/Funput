@@ -5,6 +5,7 @@ import app.funput.funput.ime.clipboard.persistence.ClipboardHistoryStore
 import app.funput.funput.ime.settings.ClipboardPreferences
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import java.nio.file.Files
+import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -55,6 +56,29 @@ class ImeClipboardHistoryControllerTest {
         fixture.close()
     }
 
+    @Test
+    fun `expiry change reloads an open panel from the replacement store`() {
+        val prefs = MutableStateFlow(ClipboardPreferences.Default)
+        val fixture = fixture(prefs)
+        val old = ClipboardEntry(
+            text = "old", sourceToken = "old",
+            capturedAt = Instant.now().minusSeconds(7_200),
+        )
+        ClipboardHistoryStore(
+            fixture.storeDirectory, app.funput.funput.ime.clipboard.model.ClipboardExpiry.WEEK,
+        ).record(old)
+        fixture.controller.start(KeyboardEditorMode.TEXT)
+        fixture.controller.open()
+        assertTrue(fixture.controller.state.value.entries.isEmpty())
+
+        prefs.value = ClipboardPreferences.Default.copy(
+            expiry = app.funput.funput.ime.clipboard.model.ClipboardExpiry.WEEK,
+        )
+
+        assertEquals(listOf(old.id), fixture.controller.state.value.entries.map { it.id })
+        fixture.close()
+    }
+
     private fun fixture(
         prefs: MutableStateFlow<ClipboardPreferences> = MutableStateFlow(ClipboardPreferences.Default),
     ): Fixture {
@@ -67,7 +91,7 @@ class ImeClipboardHistoryControllerTest {
             { fixture.committed += it }, {}, { fixture.prepared += 1 },
             { fixture.cleared += 1 }, Dispatchers.Unconfined,
         )
-        fixture = Fixture(controller, store, scope)
+        fixture = Fixture(controller, store, scope, directory)
         return fixture
     }
 
@@ -77,6 +101,7 @@ class ImeClipboardHistoryControllerTest {
         val controller: ImeClipboardHistoryController,
         val store: ClipboardHistoryStore,
         val scope: CoroutineScope,
+        val storeDirectory: java.io.File,
         val committed: MutableList<String> = mutableListOf(),
         var prepared: Int = 0,
         var cleared: Int = 0,

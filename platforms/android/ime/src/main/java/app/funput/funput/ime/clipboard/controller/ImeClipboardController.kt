@@ -3,10 +3,10 @@ import app.funput.funput.ime.clipboard.model.ClipboardEntry
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.clipboard.persistence.ClipboardHistoryStore
 import app.funput.funput.ime.clipboard.platform.ClipboardGateway
-import app.funput.funput.ime.clipboard.platform.ClipboardObservation
 import app.funput.funput.ime.clipboard.platform.ClipboardReadResult
 import app.funput.funput.ime.clipboard.policy.ClipboardOffer
 import app.funput.funput.ime.clipboard.policy.ClipboardOfferPolicy
+import app.funput.funput.ime.clipboard.policy.matches
 import app.funput.funput.ime.settings.ClipboardPreferences
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,38 +37,35 @@ internal class ImeClipboardController(
     val offer: StateFlow<ClipboardOffer?> = mutableOffer.asStateFlow()
     private var prefs = ClipboardPreferences.Default
     private var store = storeFactory(prefs.expiry)
-    private var editorMode = KeyboardEditorMode.TEXT
-    private var active = false
-    private var generation = 0L
+    private val session = ClipboardSessionGuard()
     private var suppressOffer = false
-    private var observation: ClipboardObservation? = null
+    private val observation = ClipboardObservationSlot()
     private var refreshJob: Job? = null
     private var pasteJob: Job? = null
     init {
         scope.launch {
             preferences.collect { value ->
+                if (value == prefs) return@collect
                 prefs = value
                 store = storeFactory(value.expiry)
+                session.invalidate()
+                pasteJob?.cancel()
                 reconcileObservation()
                 refreshOffer()
             }
         }
     }
     fun start(mode: KeyboardEditorMode) {
-        active = true
-        editorMode = mode
+        session.start(mode)
         suppressOffer = false
-        generation += 1
         reconcileObservation()
         refreshOffer()
     }
     fun stop() {
-        active = false
-        generation += 1
+        session.stop()
         refreshJob?.cancel()
         pasteJob?.cancel()
-        observation?.close()
-        observation = null
+        observation.close()
         mutableOffer.value = null
     }
     fun pasteCurrent(onResult: (ClipboardPasteResult) -> Unit = {}) {
@@ -78,23 +75,26 @@ internal class ImeClipboardController(
         if (expected == null || !ClipboardOfferPolicy.allowsClipboard(policy)) {
             return onResult(ClipboardPasteResult.BLOCKED)
         }
-        val pasteGeneration = generation
+        val pasteGeneration = session.token
+        val pasteStore = store
         mutableOffer.value = null
         pasteJob = scope.launch {
             val read = withContext(ioDispatcher) { gateway.readText(MaxTextLength) }
-            if (!canCommit(pasteGeneration)) return@launch onResult(ClipboardPasteResult.CHANGED)
+            if (!canCommit(pasteGeneration, pasteStore)) {
+                return@launch onResult(ClipboardPasteResult.CHANGED)
+            }
             if (read is ClipboardReadResult.Success) {
-                if (expected.sourceToken != null && expected.sourceToken != read.sourceToken) {
+                if (!expected.matches(read)) {
                     refreshOffer()
                     return@launch onResult(ClipboardPasteResult.CHANGED)
                 }
                 commitText(read.text)
                 afterCommit()
-                if (!read.isSensitive && prefs.enabled) withContext(ioDispatcher) {
-                    store.record(ClipboardEntry(
+                if (!read.isSensitive && canCommit(pasteGeneration, pasteStore)) {
+                    withContext(ioDispatcher) { pasteStore.record(ClipboardEntry(
                         text = read.text,
                         sourceToken = read.sourceToken,
-                    ))
+                    )) }
                 }
                 suppressOffer = true
                 onResult(ClipboardPasteResult.PASTED)
@@ -106,45 +106,44 @@ internal class ImeClipboardController(
             refreshOffer()
         }
     }
-    fun close() {
-        stop()
-        scope.cancel()
-    }
+    fun close() { stop(); scope.cancel() }
     fun historyCleared() { suppressOffer = false; refreshOffer() }
     private fun reconcileObservation() {
-        val shouldObserve = active && prefs.enabled
-        if (shouldObserve && observation == null) {
-            observation = gateway.observe {
-                generation += 1
+        val shouldObserve = session.isActive && prefs.enabled
+        if (shouldObserve) {
+            observation.open(scope, gateway::observe, {
+                session.isActive && prefs.enabled
+            }) {
+                session.invalidate()
                 suppressOffer = false
                 refreshOffer()
             }
-        } else if (!shouldObserve && observation != null) {
-            observation?.close()
-            observation = null
+        } else {
+            observation.close()
             mutableOffer.value = null
         }
     }
-
     private fun refreshOffer() {
         refreshJob?.cancel()
         if (suppressOffer || !ClipboardOfferPolicy.allowsClipboard(policyContext())) {
             mutableOffer.value = null
             return
         }
-        val refreshGeneration = generation
+        val refreshGeneration = session.token
+        val refreshStore = store
         val snapshot = gateway.snapshot()
         refreshJob = scope.launch {
-            val token = withContext(ioDispatcher) { store.lastCapturedSourceToken() }
-            if (refreshGeneration == generation) {
+            val token = withContext(ioDispatcher) { refreshStore.lastCapturedSourceToken() }
+            if (session.matches(refreshGeneration) && store === refreshStore) {
                 mutableOffer.value = ClipboardOfferPolicy.offer(snapshot, token, policyContext())
             }
         }
     }
-
-    private fun canCommit(value: Long) = value == generation &&
-        ClipboardOfferPolicy.allowsClipboard(policyContext())
-
-    private fun policyContext() = ClipboardOfferPolicy.Context(prefs.enabled, active, editorMode)
+    private fun canCommit(value: Long, expectedStore: ClipboardHistoryStore) =
+        session.matches(value) && store === expectedStore &&
+            ClipboardOfferPolicy.allowsClipboard(policyContext())
+    private fun policyContext() = ClipboardOfferPolicy.Context(
+        prefs.enabled, session.isActive, session.editorMode,
+    )
     private companion object { const val MaxTextLength = 100_000 }
 }

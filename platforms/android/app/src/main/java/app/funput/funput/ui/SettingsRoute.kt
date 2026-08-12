@@ -1,7 +1,11 @@
 package app.funput.funput.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import app.funput.funput.ime.clipboard.persistence.ClipboardHistoryStore
 import app.funput.funput.theme.KeyboardThemeDescriptor
@@ -10,6 +14,7 @@ import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.settings.SettingsScreen
 import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -27,6 +32,7 @@ internal fun SettingsRoute(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var clipboardClearJob by remember { mutableStateOf<Job?>(null) }
 
     SettingsScreen(
         keyboardSetupStatus = rememberKeyboardSetupStatus(),
@@ -70,8 +76,10 @@ internal fun SettingsRoute(
             scope.launch { settings.clipboardStore.setExpiry(expiry) }
         },
         onClearClipboardHistory = {
-            scope.launch {
-                withContext(Dispatchers.IO) { ClipboardHistoryStore.from(context).clear() }
+            if (clipboardClearJob?.isActive != true) {
+                clipboardClearJob = scope.launch {
+                    withContext(Dispatchers.IO) { ClipboardHistoryStore.from(context).clear() }
+                }
             }
         },
         onResetPersonalSuggestions = {
