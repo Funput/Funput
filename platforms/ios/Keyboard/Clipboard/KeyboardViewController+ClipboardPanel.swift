@@ -33,7 +33,6 @@ extension KeyboardViewController {
 
     func showClipboardPanel() {
         guard keyboardView.presentation.layout.toolbar != nil else { return }
-        launchTrace.recordPanelFirstOpen(.clipboard)
         inputCoordinator.prepareForLiteralInput()
         clearPersonalSuggestions()
         displayedSurface = .clipboard

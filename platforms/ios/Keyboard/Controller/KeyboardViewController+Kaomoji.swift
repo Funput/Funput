@@ -25,7 +25,6 @@ extension KeyboardViewController {
 
     func showKaomoji() {
         guard keyboardView.presentation.layout.toolbar != nil else { return }
-        launchTrace.recordPanelFirstOpen(.kaomoji)
         inputCoordinator.prepareForLiteralInput()
         clearPersonalSuggestions()
         displayedSurface = .kaomoji

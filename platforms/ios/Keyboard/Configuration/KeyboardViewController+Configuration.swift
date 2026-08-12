@@ -12,8 +12,6 @@ extension KeyboardViewController {
     /// containing app take effect the next time the keyboard appears. Reading on
     /// activation (not per keystroke) keeps the hot path free of I/O.
     func reloadConfiguration() {
-        launchTrace.beginConfigurationLoad()
-        defer { launchTrace.endConfigurationLoad() }
 #if DEBUG
         configuration = FunputUITestConfigurationOverrideStore().load()
             ?? configurationStore.load()
