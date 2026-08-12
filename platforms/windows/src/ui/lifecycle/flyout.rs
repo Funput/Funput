@@ -56,23 +56,10 @@ pub(crate) fn toggle_control_center(rect: Rect) {
 pub(crate) fn reap_ui_child() {
     let finished = UI_PROCESS.with(|cell| {
         let mut slot = cell.borrow_mut();
-        let Some((kind, child)) = slot.as_mut() else {
-            return None;
-        };
-        match child.try_wait() {
-            Ok(Some(status)) => {
-                let out = (*kind, status.code().unwrap_or(0) as u8);
-                *slot = None;
-                Some(out)
-            }
-            Ok(None) => None,
-            // The handle is unusable, so it will never resolve. Drop it instead of
-            // leaving it in the pump's wait set, where it would spin the loop.
-            Err(_) => {
-                *slot = None;
-                None
-            }
-        }
+        let (kind, child) = slot.as_mut()?;
+        let out = (*kind, child.exit_code()? as u8);
+        *slot = None; // dropping it here is what closes the process handle
+        Some(out)
     });
     let Some((UiKind::ControlCenter, code)) = finished else {
         return;

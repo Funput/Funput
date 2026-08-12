@@ -2,6 +2,7 @@
 
 mod child;
 mod flyout;
+mod process;
 
 use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::System::Threading::{
