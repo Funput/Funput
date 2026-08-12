@@ -13,11 +13,12 @@ import ThemeRuntime
 import UIKit
 
 final class KeyboardViewController: UIInputViewController {
+    let launchTrace = KeyboardLaunchTrace()
     let inputCoordinator = KeyboardInputCoordinator()
     let keyboardView = KeyboardSurfaceView()
-    let emojiView = EmojiKeyboardView()
-    let kaomojiView = KaomojiKeyboardView()
-    let clipboardPanelView = ClipboardKeyboardView()
+    let emojiView = KeyboardLaunchTrace.makePanel(.emoji, EmojiKeyboardView())
+    let kaomojiView = KeyboardLaunchTrace.makePanel(.kaomoji, KaomojiKeyboardView())
+    let clipboardPanelView = KeyboardLaunchTrace.makePanel(.clipboard, ClipboardKeyboardView())
     let emojiRecentsStore = EmojiRecentsStore()
     /// Rebuilt whenever configuration changes, since it carries the chosen expiry.
     var clipboardStore = ClipboardStore()
@@ -46,11 +47,13 @@ final class KeyboardViewController: UIInputViewController {
     private var isKeyboardVisible = false
 
     override func viewDidLoad() {
+        launchTrace.beginViewDidLoad()
         super.viewDidLoad()
         installKeyboardView()
         installPersonalSuggestions()
         reloadConfiguration()
         updateTextInputTraits(force: true)
+        launchTrace.endViewDidLoad()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -58,6 +61,7 @@ final class KeyboardViewController: UIInputViewController {
         isKeyboardVisible = true
         activatePreferredHeight()
         refreshClipboardOffer()
+        launchTrace.finish()
     }
 
     func deactivatePreferredHeight() {
@@ -131,7 +135,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 }
 
-enum KeyboardSurface {
+enum KeyboardSurface: String {
     case funput
     case emoji
     case kaomoji

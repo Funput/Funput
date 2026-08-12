@@ -25,6 +25,7 @@ extension KeyboardViewController {
 
     func showEmoji() {
         guard keyboardView.presentation.layout.toolbar != nil else { return }
+        launchTrace.recordPanelFirstOpen(.emoji)
         inputCoordinator.prepareForLiteralInput()
         clearPersonalSuggestions()
         displayedSurface = .emoji
