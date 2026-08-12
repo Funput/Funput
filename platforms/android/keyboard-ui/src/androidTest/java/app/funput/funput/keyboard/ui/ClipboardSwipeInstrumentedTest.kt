@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.ui
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
@@ -21,8 +23,9 @@ class ClipboardSwipeInstrumentedTest {
         var removals = 0
         ActivityScenario.launch(EmojiTestActivity::class.java).use { scenario ->
             lateinit var panel: ClipboardPanelView
+            lateinit var keyboard: FunputKeyboardView
             scenario.onActivity { activity ->
-                val keyboard = FunputKeyboardView(activity).apply {
+                keyboard = FunputKeyboardView(activity).apply {
                     keyboardTheme = KeyboardThemes.Slate
                     clipboardPanelEnabled = true
                     clipboardEntries = listOf(entry())
@@ -38,6 +41,16 @@ class ClipboardSwipeInstrumentedTest {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().waitForIdleSync()
             scenario.onActivity { swipeRowLeft(panel) }
             SystemClock.sleep(300)
+            assertEquals(0, removals)
+            scenario.onActivity {
+                listOf(
+                    KeyboardThemes.Slate, KeyboardThemes.Ink, KeyboardThemes.Paper,
+                    KeyboardThemes.GlassDark, KeyboardThemes.GlassLight,
+                    KeyboardThemes.Blossom, KeyboardThemes.Orchid,
+                ).forEach { theme -> keyboard.keyboardTheme = theme; render(keyboard) }
+                swipeRowVertically(panel)
+            }
+            SystemClock.sleep(100)
             assertEquals(0, removals)
             scenario.onActivity { tapDelete(panel) }
             SystemClock.sleep(100)
@@ -55,6 +68,11 @@ class ClipboardSwipeInstrumentedTest {
         gesture(view, view.width - 44f * density, 44f * density, view.width - 44f * density, 44f * density)
     }
 
+    private fun swipeRowVertically(view: View) {
+        val density = view.resources.displayMetrics.density
+        gesture(view, view.width / 2f, 44f * density, view.width / 2f, 120f * density)
+    }
+
     private fun gesture(view: View, startX: Float, startY: Float, endX: Float, endY: Float) {
         val downTime = SystemClock.uptimeMillis()
         listOf(
@@ -65,5 +83,8 @@ class ClipboardSwipeInstrumentedTest {
     }
 
     private fun entry() = KeyboardClipboardEntry(UUID.randomUUID(), "Clipboard item", Instant.now(), false)
+    private fun render(view: View) = Bitmap.createBitmap(
+        view.width, view.height, Bitmap.Config.ARGB_8888,
+    ).also { view.draw(Canvas(it)) }
     private fun exactly(size: Int) = View.MeasureSpec.makeMeasureSpec(size, View.MeasureSpec.EXACTLY)
 }
