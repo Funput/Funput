@@ -151,6 +151,53 @@ fn a_word_committed_before_its_tone_is_reopened() {
     }
 }
 
+/// The same bug one step earlier: a word committed before its *vowel shape*. `dien`
+/// is `diên` without the circumflex, so the shape, stroke and tone keys all have to
+/// reach it — `dien` + Space + ⌫ + `d` gives `đien`, not `diend`.
+#[test]
+fn a_word_committed_before_its_vowel_shape_is_reopened() {
+    for (keys, modifier, expected) in [
+        ("dien ", 'd', "đien"),
+        ("vien ", 'e', "viên"),
+        ("thuo ", 'w', "thuơ"),
+        ("nuoc ", 'w', "nươc"),
+        ("cuu ", 'w', "cưu"),
+    ] {
+        let mut shell = Shell::new(InputMethod::Telex);
+        shell.type_str(keys);
+        shell.backspace();
+        shell.key(modifier);
+        assert_eq!(
+            shell.app, expected,
+            "typing {keys:?} then ⌫ then {modifier:?}"
+        );
+    }
+}
+
+/// VNI reaches a re-opened word the same way — the gate is the engine's, not Telex's.
+#[test]
+fn a_word_awaiting_its_shape_is_reopened_in_vni_too() {
+    let mut shell = Shell::new(InputMethod::Vni);
+    shell.type_str("vien ");
+    shell.backspace();
+    shell.key('6'); // VNI circumflex
+    assert_eq!(shell.app, "viên");
+}
+
+/// The looser gate stops at the word boundary: an English word that happens to look
+/// like an unshaped rhyme is still restored when the next boundary arrives.
+#[test]
+fn an_english_word_that_looks_unshaped_is_restored_at_the_boundary() {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.type_str("true ");
+    assert_eq!(shell.app, "true ");
+
+    shell.backspace();
+    shell.key('s');
+    shell.key(' ');
+    assert_eq!(shell.app, "trues ");
+}
+
 /// The engine only adopts real Vietnamese syllables, so an English word keeps
 /// taking literal letters after it.
 #[test]

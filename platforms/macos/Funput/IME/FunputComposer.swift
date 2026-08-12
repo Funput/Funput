@@ -82,8 +82,8 @@ final class FunputComposer {
 
     /// Re-open an already-committed word as the live composition, so the next keystroke
     /// edits it (`chào` + ⌫ then `s` gives `cháo`). Returns whether the engine took it:
-    /// only a Vietnamese syllable is — including one still missing the tone its stop coda
-    /// needs (`chuc` → `chúc`) — which keeps English words and URLs literal, so leave the
+    /// only a Vietnamese syllable is — including one still missing a diacritic (`chuc` →
+    /// `chúc`, `dien` → `diên`) — which keeps English words and URLs literal, so leave the
     /// document alone on `false`.
     func adopt(_ word: String) -> Bool {
         let scalars = word.unicodeScalars.map(\.value)

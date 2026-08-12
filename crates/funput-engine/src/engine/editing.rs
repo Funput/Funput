@@ -9,10 +9,11 @@ impl Engine {
     /// (Android: Backspace over the space after `chào`, then `s` gives `cháo`).
     ///
     /// Returns whether `text` was taken. Only a Vietnamese syllable is — including
-    /// one still missing the tone its stop coda requires (`chuc` + `s` → `chúc`),
-    /// which is how a word looks when the user commits it before typing the tone.
-    /// English words and URLs never become editable; the host should leave the
-    /// document untouched when this is `false`.
+    /// one still missing a diacritic, whether the tone its stop coda requires
+    /// (`chuc` + `s` → `chúc`) or its vowel shape (`dien` + `e` → `diên`), which is
+    /// how a word looks when the user commits it before finishing it. English words
+    /// and URLs never become editable; the host should leave the document untouched
+    /// when this is `false`.
     ///
     /// The raw keystrokes that produced `text` are gone, so they are seeded from the
     /// text itself — the same state `on_backspace` leaves behind. Composition only
