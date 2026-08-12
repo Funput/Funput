@@ -31,8 +31,10 @@ pub fn dir_is_writable(dir: &Path) -> bool {
 /// 2. `<exe_dir>/settings.json` when `exe_writable`
 /// 3. else `appdata` (`%APPDATA%\Funput\settings.json`)
 ///
-/// When choosing the beside-exe path and the file is missing, copy from `appdata`
-/// once so an existing install keeps its settings (`appdata` is left in place).
+/// Picking a location is all this does — it never reads, writes or copies a file.
+/// A beside-exe path that does not exist yet simply starts from defaults; the
+/// `appdata` file is only ever *used in place*, when the exe directory refuses
+/// writes.
 pub fn resolve(
     env: Option<PathBuf>,
     exe_dir: Option<&Path>,
@@ -43,11 +45,7 @@ pub fn resolve(
         return Some(path);
     }
     if let Some(dir) = exe_dir.filter(|_| exe_writable) {
-        let path = dir.join(FILE);
-        if let Some(src) = appdata.filter(|p| p.is_file() && !path.exists()) {
-            let _ = fs::copy(src, &path);
-        }
-        return Some(path);
+        return Some(dir.join(FILE));
     }
     appdata.map(Path::to_path_buf)
 }
