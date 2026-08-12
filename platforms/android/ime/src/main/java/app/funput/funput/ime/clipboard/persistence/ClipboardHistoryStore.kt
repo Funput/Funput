@@ -4,6 +4,7 @@ import android.content.Context
 import app.funput.funput.ime.clipboard.model.ClipboardEntry
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import java.io.File
+import java.nio.file.Path
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -16,13 +17,24 @@ import java.util.concurrent.ConcurrentHashMap
  * @param directory Private directory that will contain `clipboard.json`.
  * @param expiry Retention applied to unpinned entries.
  */
-class ClipboardHistoryStore(
+class ClipboardHistoryStore private constructor(
     directory: File,
     private val expiry: ClipboardExpiry = ClipboardExpiry.Default,
+    private val file: AtomicJsonFile,
 ) {
     private val historyFile = File(directory, FileName)
-    private val file = AtomicJsonFile(historyFile)
     private val lock = ClipboardStoreLocks.forFile(historyFile)
+
+    constructor(
+        directory: File,
+        expiry: ClipboardExpiry = ClipboardExpiry.Default,
+    ) : this(directory, expiry, AtomicJsonFile(File(directory, FileName)))
+
+    internal constructor(
+        directory: File,
+        expiry: ClipboardExpiry,
+        replace: (Path, Path) -> Unit,
+    ) : this(directory, expiry, AtomicJsonFile(File(directory, FileName), replace))
 
     /** Returns live entries in newest-first order without rewriting expired data. */
     fun load(now: Instant = Instant.now()): List<ClipboardEntry> = synchronized(lock) {
@@ -39,8 +51,7 @@ class ClipboardHistoryStore(
         synchronized(lock) {
             val current = read()
             val items = prune(listOf(entry) + current.items.filter { it.text != entry.text }, now)
-            write(ClipboardHistoryPayload(entry.sourceToken, items))
-            items
+            persistedItems(current, ClipboardHistoryPayload(entry.sourceToken, items), now)
         }
 
     /** Pins or unpins an entry and returns the resulting live history. */
@@ -56,8 +67,7 @@ class ClipboardHistoryStore(
             this[index] = this[index].copy(isPinned = isPinned)
         }
         val items = prune(changed, now)
-        write(current.copy(items = items))
-        items
+        persistedItems(current, current.copy(items = items), now)
     }
 
     /** Removes one entry while preserving the last captured source token. */
@@ -65,12 +75,13 @@ class ClipboardHistoryStore(
         synchronized(lock) {
             val current = read()
             val items = prune(current.items.filter { it.id != id }, now)
-            write(current.copy(items = items))
-            items
+            persistedItems(current, current.copy(items = items), now)
         }
 
     /** Clears every entry, including pinned items, and resets the captured source token. */
-    fun clear() = synchronized(lock) {
+    fun clear() { clearPersisted() }
+
+    internal fun clearPersisted(): Boolean = synchronized(lock) {
         write(ClipboardHistoryPayload.Empty)
     }
 
@@ -78,12 +89,18 @@ class ClipboardHistoryStore(
         ?.let { runCatching { ClipboardHistoryJsonCodec.decode(it) }.getOrNull() }
         ?: ClipboardHistoryPayload.Empty
 
-    private fun write(payload: ClipboardHistoryPayload) {
+    private fun write(payload: ClipboardHistoryPayload) = runCatching {
         file.write(ClipboardHistoryJsonCodec.encode(payload))
-    }
+    }.getOrDefault(false)
+
+    private fun persistedItems(
+        current: ClipboardHistoryPayload,
+        changed: ClipboardHistoryPayload,
+        now: Instant,
+    ) = if (write(changed)) changed.items else prune(current.items, now)
 
     private fun prune(items: List<ClipboardEntry>, now: Instant): List<ClipboardEntry> {
-        val live = items.filter { it.isPinned || it.capturedAt.plus(expiry.duration).isAfter(now) }
+        val live = items.filter { it.isPinned || isLive(it.capturedAt, now) }
         var excess = live.size - Limit
         if (excess <= 0) return live
         val kept = ArrayList<ClipboardEntry>(live.size)
@@ -92,6 +109,11 @@ class ClipboardHistoryStore(
         }
         return kept.asReversed()
     }
+
+    private fun isLive(capturedAt: Instant, now: Instant): Boolean =
+        capturedAt.isAfter(now) || runCatching {
+            capturedAt.plus(expiry.duration).isAfter(now)
+        }.getOrDefault(false)
 
     /** Creates stores in the app-private directory excluded from Android backup. */
     companion object {

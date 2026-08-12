@@ -20,4 +20,17 @@ class ClipboardSourceTokenTest {
         assertEquals(87, first.length)
         assertNotEquals(first, ClipboardSourceToken.fromText("Việt,\\\n"))
     }
+
+    @Test
+    fun `fallback cache enriches matching metadata until invalidated`() {
+        val cache = ClipboardFallbackTokenCache()
+        val snapshot = ClipboardSnapshot(ClipboardContentKind.TEXT, false, null)
+        cache.remember(snapshot, "hash")
+
+        assertEquals("hash", cache.enrich(snapshot).sourceToken)
+        assertNull(cache.enrich(snapshot.copy(kind = ClipboardContentKind.LINK)).sourceToken)
+        assertNull(cache.enrich(snapshot.copy(isSensitive = true)).sourceToken)
+        cache.invalidate()
+        assertNull(cache.enrich(snapshot).sourceToken)
+    }
 }

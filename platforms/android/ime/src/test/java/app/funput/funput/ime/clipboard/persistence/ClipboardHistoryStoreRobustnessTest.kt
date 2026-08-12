@@ -1,7 +1,9 @@
 package app.funput.funput.ime.clipboard.persistence
 
+import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import java.io.File
 import java.io.IOException
+import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import org.junit.Assert.assertEquals
@@ -33,8 +35,25 @@ class ClipboardHistoryStoreRobustnessTest {
         val notDirectory = parent.resolve("blocked").apply { writeText("file") }
         val store = ClipboardHistoryStore(notDirectory)
 
-        assertEquals(1, store.record(clipboardEntry("rơi"), ClipboardEpoch).size)
+        assertTrue(store.record(clipboardEntry("rơi"), ClipboardEpoch).isEmpty())
         assertTrue(store.load(ClipboardEpoch).isEmpty())
+    }
+
+    @Test
+    fun `failed mutations return the payload that remains persisted`() {
+        val directory = temporaryClipboardDirectory()
+        val original = clipboardEntry("cũ", sourceToken = "old")
+        ClipboardHistoryStore(directory).record(original, ClipboardEpoch)
+        val failing = ClipboardHistoryStore(directory, ClipboardExpiry.HOUR) { _, _ ->
+            throw IOException("failed")
+        }
+
+        assertEquals(listOf(original), failing.record(clipboardEntry("mới"), ClipboardEpoch))
+        assertEquals(listOf(original), failing.setPinned(true, original.id, ClipboardEpoch))
+        assertEquals(listOf(original), failing.remove(original.id, ClipboardEpoch))
+        assertFalse(failing.clearPersisted())
+        assertEquals(listOf(original), ClipboardHistoryStore(directory).load(ClipboardEpoch))
+        assertEquals("old", ClipboardHistoryStore(directory).lastCapturedSourceToken())
     }
 
     @Test
@@ -45,6 +64,8 @@ class ClipboardHistoryStoreRobustnessTest {
 
         assertFalse(file.write("new"))
         assertEquals("old", destination.readText())
+        val files = requireNotNull(destination.parentFile).list()
+        assertEquals(listOf("clipboard.json"), requireNotNull(files).toList())
     }
 
     @Test
@@ -57,6 +78,16 @@ class ClipboardHistoryStoreRobustnessTest {
         val later = ClipboardEpoch.plusSeconds(3_601)
         assertTrue(ClipboardHistoryStore(directory).load(later).isEmpty())
         assertEquals(storedJson, file.readText())
+    }
+
+    @Test
+    fun `extreme future timestamp cannot overflow expiry pruning`() {
+        val directory = temporaryClipboardDirectory()
+        val entry = clipboardEntry("future").copy(capturedAt = Instant.MAX)
+        val store = ClipboardHistoryStore(directory)
+
+        assertTrue(store.record(entry, ClipboardEpoch).isEmpty())
+        assertTrue(store.load(ClipboardEpoch).isEmpty())
     }
 
     @Test

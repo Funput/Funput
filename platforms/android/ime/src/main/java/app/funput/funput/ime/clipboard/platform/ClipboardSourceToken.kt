@@ -16,3 +16,33 @@ internal object ClipboardSourceToken {
     private fun ByteArray.toHex(): String =
         joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
 }
+
+internal class ClipboardFallbackTokenCache {
+    private var cached: Pair<ClipboardMetadata, String>? = null
+
+    @Synchronized
+    fun enrich(snapshot: ClipboardSnapshot): ClipboardSnapshot {
+        if (snapshot.sourceToken != null) {
+            cached = null
+            return snapshot
+        }
+        val token = cached?.takeIf { it.first == snapshot.metadata }?.second
+        return snapshot.copy(sourceToken = token)
+    }
+
+    @Synchronized
+    fun remember(snapshot: ClipboardSnapshot, token: String) {
+        if (snapshot.sourceToken == null) cached = snapshot.metadata to token
+    }
+
+    @Synchronized
+    fun invalidate() { cached = null }
+}
+
+private data class ClipboardMetadata(
+    val kind: ClipboardContentKind?,
+    val isSensitive: Boolean,
+)
+
+private val ClipboardSnapshot.metadata
+    get() = ClipboardMetadata(kind, isSensitive)

@@ -27,6 +27,7 @@ internal object ClipboardOfferPolicy {
                 else -> ClipboardOfferKind.TEXT
             },
             sourceToken = value.sourceToken,
+            contentKind = value.kind,
         )
     }
 
