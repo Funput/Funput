@@ -11,7 +11,6 @@ import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionController
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionPreview
-
 /** Coordinates touch-driven behaviors without coupling them to the Android view lifecycle. */
 internal class KeyboardInteractionController(
     private val keySpec: (keyId: String) -> KeySpec?,
@@ -19,6 +18,7 @@ internal class KeyboardInteractionController(
     onAction: (KeyAction) -> Unit,
     private val onSettingsRequested: () -> Unit,
     private val onEmojiRequested: () -> Unit,
+    private val onClipboardRequested: () -> Unit = {},
     private val onSuggestionSelected: (SuggestionSelection) -> Unit,
     private val onHapticFeedback: (KeyboardHapticType) -> Unit,
     private val onVisualStateChanged: () -> Unit,
@@ -69,7 +69,8 @@ internal class KeyboardInteractionController(
         private set
     fun onPointerStarted(pointerId: Int, keyId: String?, x: Float, y: Float) {
         val key = keyId?.let(keySpec)
-        KeyHapticTypeMapper.forTarget(key, keyId?.let(suggestionSelection) != null)?.let(onHapticFeedback)
+        val isToolbarContent = keyId?.let(suggestionSelection) != null || keyId == ClipboardTargetId
+        KeyHapticTypeMapper.forTarget(key, isToolbarContent)?.let(onHapticFeedback)
         swipeGestures.start(pointerId, key, x, y)
         alternateSelection.start(pointerId, key, x, y)
     }
@@ -97,6 +98,10 @@ internal class KeyboardInteractionController(
         }
     }
     fun onAccessibilityClick(keyId: String, eventTimeMillis: Long) {
+        if (keyId == ClipboardTargetId) {
+            onHapticFeedback(KeyboardHapticType.CONTROL)
+            return onClipboardRequested()
+        }
         val key = keySpec(keyId) ?: return
         KeyHapticTypeMapper.forTarget(key, isSuggestion = false)?.let(onHapticFeedback)
         dispatchTarget(keyId, key, selection = null, eventTimeMillis)
@@ -112,27 +117,22 @@ internal class KeyboardInteractionController(
         KeyHapticTypeMapper.forTarget(key = null, isSuggestion = true)?.let(onHapticFeedback)
         onSuggestionSelected(selection)
     }
-
     fun setLanguage(value: KeyboardLanguage) {
         if (language == value) return
         language = value
         onVisualStateChanged()
         onSemanticStateChanged()
     }
-
     fun setShiftState(value: ShiftState) = actionDispatcher.setShiftState(value)
-
     fun cancel() {
         alternateSelection.cancelAll()
         backspaceRepeat.cancelAll()
         swipeGestures.cancel()
     }
-
     fun reset() {
         cancel()
         actionDispatcher.reset()
     }
-
     private fun dispatchTarget(
         keyId: String?,
         key: KeySpec?,
@@ -141,6 +141,7 @@ internal class KeyboardInteractionController(
     ) {
         when {
             selection != null -> onSuggestionSelected(selection)
+            keyId == ClipboardTargetId -> onClipboardRequested()
             key?.role == KeyRole.SETTINGS -> onSettingsRequested()
             key?.role == KeyRole.EMOJI -> onEmojiRequested()
             keyId != null -> actionDispatcher.dispatch(keyId, eventTimeMillis)

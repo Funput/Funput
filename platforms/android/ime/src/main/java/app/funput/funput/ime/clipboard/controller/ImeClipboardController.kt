@@ -36,12 +36,12 @@ internal class ImeClipboardController(
     private val scope = CoroutineScope(parentScope.coroutineContext + job)
     private val mutableOffer = MutableStateFlow<ClipboardOffer?>(null)
     val offer: StateFlow<ClipboardOffer?> = mutableOffer.asStateFlow()
-
     private var prefs = ClipboardPreferences.Default
     private var store = storeFactory(prefs.expiry)
     private var editorMode = KeyboardEditorMode.TEXT
     private var active = false
     private var generation = 0L
+    private var suppressOffer = false
     private var observation: ClipboardObservation? = null
     private var refreshJob: Job? = null
     private var pasteJob: Job? = null
@@ -55,15 +55,14 @@ internal class ImeClipboardController(
             }
         }
     }
-
     fun start(mode: KeyboardEditorMode) {
         active = true
         editorMode = mode
+        suppressOffer = false
         generation += 1
         reconcileObservation()
         refreshOffer()
     }
-
     fun stop() {
         active = false
         generation += 1
@@ -73,7 +72,6 @@ internal class ImeClipboardController(
         observation = null
         mutableOffer.value = null
     }
-
     fun pasteCurrent(onResult: (ClipboardPasteResult) -> Unit = {}) {
         if (pasteJob?.isActive == true) return onResult(ClipboardPasteResult.BUSY)
         val expected = mutableOffer.value
@@ -99,24 +97,26 @@ internal class ImeClipboardController(
                         sourceToken = read.sourceToken,
                     ))
                 }
+                suppressOffer = true
                 onResult(ClipboardPasteResult.PASTED)
             } else {
-                onResult(read.toPasteResult())
+                val result = read.toPasteResult()
+                suppressOffer = result == ClipboardPasteResult.TOO_LARGE
+                onResult(result)
             }
             refreshOffer()
         }
     }
-
     fun close() {
         stop()
         scope.cancel()
     }
-
     private fun reconcileObservation() {
         val shouldObserve = active && prefs.enabled
         if (shouldObserve && observation == null) {
             observation = gateway.observe {
                 generation += 1
+                suppressOffer = false
                 refreshOffer()
             }
         } else if (!shouldObserve && observation != null) {
@@ -128,7 +128,7 @@ internal class ImeClipboardController(
 
     private fun refreshOffer() {
         refreshJob?.cancel()
-        if (!ClipboardOfferPolicy.allowsClipboard(policyContext())) {
+        if (suppressOffer || !ClipboardOfferPolicy.allowsClipboard(policyContext())) {
             mutableOffer.value = null
             return
         }

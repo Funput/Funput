@@ -61,6 +61,20 @@ class KeyboardInteractionTargetsTest {
     }
 
     @Test
+    fun clipboardUsesWholeContentRegionOnlyWhenSuggestionsAreEmpty() {
+        val bounds = requireNotNull(keyboard.suggestionBar).suggestionsBounds
+
+        assertEquals(
+            ClipboardTargetId,
+            keyboard.interactionTargetAt(bounds.right - 1f, bounds.centerY, 0, clipboardVisible = true),
+        )
+        assertEquals(
+            SuggestionTargetIds.id(1),
+            keyboard.interactionTargetAt(bounds.centerX, bounds.centerY, 3, clipboardVisible = true),
+        )
+    }
+
+    @Test
     fun targetResolvesBackToSelectionData() {
         val suggestions = listOf("mình", "chào", "bạn")
 

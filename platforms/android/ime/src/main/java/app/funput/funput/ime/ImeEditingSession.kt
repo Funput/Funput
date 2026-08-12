@@ -5,6 +5,7 @@ import android.view.inputmethod.InputConnection
 import app.funput.funput.ime.clipboard.controller.ImeClipboardController
 import app.funput.funput.ime.clipboard.persistence.ClipboardHistoryStore
 import app.funput.funput.ime.clipboard.platform.AndroidClipboardGateway
+import app.funput.funput.ime.clipboard.ui.ImeClipboardUiBinding
 import app.funput.funput.ime.editing.AndroidCompositionSession
 import app.funput.funput.ime.editing.EditorInfoPolicy
 import app.funput.funput.ime.editing.ImeEditorRuntime
@@ -15,6 +16,7 @@ import app.funput.funput.ime.settings.ClipboardSettings
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.ui.FunputKeyboardView
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -31,6 +33,7 @@ internal class ImeEditingSession(
     val suggestionService: PersonalSuggestionService,
     val suggestionSettings: PersonalSuggestionSettings,
     val clipboardController: ImeClipboardController,
+    val clipboardUiBinding: ImeClipboardUiBinding,
 ) {
     fun startActionHandler() {
         actionHandler.start(
@@ -52,12 +55,15 @@ internal class ImeEditingSession(
 
     fun finishInputView() = clipboardController.stop()
 
+    fun bindClipboard(view: FunputKeyboardView) = clipboardUiBinding.attach(view)
+
     fun windowHidden() {
         clipboardController.stop()
         suggestionService.flush()
     }
 
     fun close() {
+        clipboardUiBinding.close()
         clipboardController.close()
         suggestionService.close()
     }
@@ -101,6 +107,7 @@ internal fun createImeEditingSession(
         commitText = actionHandler::onClipboardSelected,
         afterCommit = { suggestionService.consume(actionHandler.takeSuggestionUpdate()) },
     )
+    val clipboardUiBinding = ImeClipboardUiBinding(context, scope, clipboardController)
     return ImeEditingSession(
         nativeEngine = nativeEngine,
         editorRuntime = editorRuntime,
@@ -108,5 +115,6 @@ internal fun createImeEditingSession(
         suggestionService = suggestionService,
         suggestionSettings = PersonalSuggestionSettings(context),
         clipboardController = clipboardController,
+        clipboardUiBinding = clipboardUiBinding,
     )
 }

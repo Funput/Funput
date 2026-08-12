@@ -59,6 +59,7 @@ class ImeClipboardControllerTest {
         assertEquals(listOf("clipboard"), fixture.committed)
         assertTrue(fixture.store.load().isEmpty())
         assertNull(fixture.store.lastCapturedSourceToken())
+        assertNull(fixture.controller.offer.value)
     }
 
     @Test
@@ -77,6 +78,7 @@ class ImeClipboardControllerTest {
         fixture.controller.pasteCurrent { result = it }
         assertEquals(ClipboardPasteResult.TOO_LARGE, result)
         assertTrue(fixture.committed.isEmpty())
+        assertNull(fixture.controller.offer.value)
     }
 
     @Test
@@ -99,7 +101,7 @@ class ImeClipboardControllerTest {
     }
 }
 
-private class Fixture(text: String = "clipboard", sensitive: Boolean = false) {
+internal class Fixture(text: String = "clipboard", sensitive: Boolean = false) {
     val preferences = MutableStateFlow(ClipboardPreferences.Default)
     val gateway = FakeClipboardGateway(text, sensitive)
     private val directory = Files.createTempDirectory("clipboard-controller").toFile()
@@ -117,7 +119,7 @@ private class Fixture(text: String = "clipboard", sensitive: Boolean = false) {
     )
 }
 
-private class FakeClipboardGateway(text: String, sensitive: Boolean) : ClipboardGateway {
+internal class FakeClipboardGateway(text: String, sensitive: Boolean) : ClipboardGateway {
     var snapshotValue = ClipboardSnapshot(ClipboardContentKind.TEXT, sensitive, Token)
     var readResult: ClipboardReadResult = success(text, sensitive)
     var snapshotCount = 0

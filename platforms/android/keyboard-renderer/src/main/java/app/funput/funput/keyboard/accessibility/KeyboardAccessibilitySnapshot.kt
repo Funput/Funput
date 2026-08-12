@@ -5,6 +5,7 @@ import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.interaction.SuggestionTargetIds
+import app.funput.funput.keyboard.interaction.ClipboardTargetId
 import app.funput.funput.keyboard.popover.accessibility.AlternateAccessibilityAction
 import app.funput.funput.keyboard.popover.accessibility.alternateAccessibilityActions
 
@@ -13,6 +14,7 @@ internal class KeyboardAccessibilitySnapshot(
     keyboard: ResolvedKeyboard,
     shiftState: ShiftState,
     suggestions: List<String> = emptyList(),
+    clipboardLabel: String? = null,
 ) {
     val nodes: List<KeyboardAccessibilityNode> = buildList {
         keyboard.keys.filterNot { it.spec.role == KeyRole.PLACEHOLDER }.forEach { key ->
@@ -33,6 +35,8 @@ internal class KeyboardAccessibilitySnapshot(
                 val segment = KeyBounds(bounds.left + width * index, bounds.top, bounds.left + width * (index + 1), bounds.bottom)
                 add(KeyboardAccessibilityNode(size, SuggestionTargetIds.id(index), "Gợi ý, $text", segment, segment, false))
             }
+        } else if (bounds != null && clipboardLabel != null) {
+            add(KeyboardAccessibilityNode(size, ClipboardTargetId, clipboardLabel, bounds, bounds, false))
         }
     }
 

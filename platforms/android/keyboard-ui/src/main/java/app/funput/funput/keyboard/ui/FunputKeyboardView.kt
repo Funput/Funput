@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.widget.FrameLayout
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.KeyboardDimensions
+import app.funput.funput.keyboard.KeyboardClipboardHint
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardEnterAction
@@ -62,6 +63,7 @@ class FunputKeyboardView @JvmOverloads constructor(
             field = value
             syncSuggestions()
         }
+    var clipboardHint: KeyboardClipboardHint? by keyboardSurface::clipboardHint
     var language: KeyboardLanguage by keyboardSurface::language
     var hapticsEnabled: Boolean by feedbackController::hapticsEnabled
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
@@ -72,6 +74,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         keyboardSurface.callbacks.onSettingsRequested = ::openSettings
         keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
         keyboardSurface.callbacks.onEmojiRequested = ::openEmojiFromKeyboard
+        keyboardSurface.callbacks.onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest
         setBackgroundColor(keyboardTheme.backgroundEndColor)
         safeArea.install()
     }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="clipboard_paste">Paste</string>
+    <string name="clipboard_hint_text">Copied text</string>
+    <string name="clipboard_hint_link">Copied a link</string>
+    <string name="clipboard_hint_sensitive">Copied sensitive content</string>
+    <string name="clipboard_paste_accessibility">Paste, %1$s</string>
+</resources>

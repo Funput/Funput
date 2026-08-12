@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Canvas
 import app.funput.funput.keyboard.interaction.PressedKeyState
+import app.funput.funput.keyboard.KeyboardClipboardHint
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.KeyboardEditorMode
@@ -28,6 +29,7 @@ internal class KeyboardSurfaceRenderController(
         onSizingChanged = { renderer.updateSizing(it); requestLayout(); resolveGeometry(); invalidate() },
         onBackgroundImageChanged = background::update,
         onSuggestionsChanged = invalidate,
+        onClipboardHintChanged = invalidate,
         onEnterActionChanged = invalidate,
     )
 
@@ -35,6 +37,7 @@ internal class KeyboardSurfaceRenderController(
     var keyboardThemeBackgroundImage by presentation::keyboardThemeBackgroundImage
     var sizingProfile: KeyboardSizingProfile by presentation::sizingProfile
     var suggestions: List<String> by presentation::suggestions
+    var clipboardHint: KeyboardClipboardHint? by presentation::clipboardHint
     var enterAction by presentation::enterAction
 
     init {
@@ -62,6 +65,7 @@ internal class KeyboardSurfaceRenderController(
         background.image,
         background.bitmap,
         suggestions,
+        clipboardHint,
         pressedKeys,
         shiftState,
         language,

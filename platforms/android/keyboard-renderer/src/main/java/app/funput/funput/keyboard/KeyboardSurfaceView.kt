@@ -48,6 +48,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var suggestions: List<String>
         get() = render.suggestions
         set(value) = suggestionState.update(value)
+    var clipboardHint: KeyboardClipboardHint?
+        get() = render.clipboardHint
+        set(value) { render.clipboardHint = value; accessibility.refresh() }
     var enterAction by render::enterAction
     val callbacks = KeyboardCallbacks()
     var shiftState: ShiftState
@@ -63,6 +66,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         keyboard = { resolvedKeyboard },
         shiftState = { shiftState },
         suggestions = { render.suggestions },
+        clipboardHint = { render.clipboardHint },
     )
     private val suggestionState = KeyboardSurfaceSuggestionState(
         density = { resources.displayMetrics.density },
@@ -73,7 +77,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     private val interaction: KeyboardSurfaceInteraction = createKeyboardSurfaceInteraction(
         host = this,
         callbacks = callbacks,
-        keyAt = { x, y -> resolvedKeyboard?.interactionTargetAt(x, y, suggestions.size) },
+        keyAt = { x, y -> resolvedKeyboard?.interactionTargetAt(
+            x, y, suggestions.size, clipboardHint != null && suggestions.isEmpty(),
+        ) },
         keySpec = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.spec },
         suggestionSelection = { id -> suggestions.selectionForTarget(id) },
         onHapticFeedback = { type ->
@@ -92,9 +98,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     )
     var interactionEnabled: Boolean
         get() = events.enabled
-        set(value) {
-            events.setEnabled(value)
-        }
+        set(value) = events.setEnabled(value)
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
         val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
@@ -109,10 +113,8 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         resolveGeometry()
         render.updateSize(width, height)
     }
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        val keyboard = resolvedKeyboard ?: return
-        render.draw(canvas, keyboard, interaction, shiftState, language, editorMode)
+    override fun onDraw(canvas: Canvas) { super.onDraw(canvas)
+        resolvedKeyboard?.let { render.draw(canvas, it, interaction, shiftState, language, editorMode) }
     }
     override fun onTouchEvent(event: MotionEvent): Boolean = events.dispatchTouch(event, ::performClick)
     override fun dispatchHoverEvent(event: MotionEvent): Boolean =
@@ -122,10 +124,8 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         super.performClick()
         return true
     }
-    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
-        super.onWindowFocusChanged(hasWindowFocus)
-        if (!hasWindowFocus) interaction.clear()
-    }
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) { super.onWindowFocusChanged(hasWindowFocus)
+        if (!hasWindowFocus) interaction.clear() }
     override fun onDetachedFromWindow() {
         interaction.clear()
         render.clear()

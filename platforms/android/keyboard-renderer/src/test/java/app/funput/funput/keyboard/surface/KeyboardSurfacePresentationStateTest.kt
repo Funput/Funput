@@ -24,4 +24,19 @@ class KeyboardSurfacePresentationStateTest {
         assertEquals(0, themeChanges)
         assertEquals(0, sizingChanges)
     }
+
+    @Test
+    fun `clipboard hint invalidates only when its metadata changes`() {
+        var changes = 0
+        val state = KeyboardSurfacePresentationState(
+            onThemeChanged = {}, onSizingChanged = {}, onBackgroundImageChanged = {},
+            onSuggestionsChanged = {}, onClipboardHintChanged = { changes++ },
+            onEnterActionChanged = {},
+        )
+        state.clipboardHint = app.funput.funput.keyboard.KeyboardClipboardHint.TEXT
+        state.clipboardHint = app.funput.funput.keyboard.KeyboardClipboardHint.TEXT
+        state.clipboardHint = app.funput.funput.keyboard.KeyboardClipboardHint.SENSITIVE
+
+        assertEquals(2, changes)
+    }
 }

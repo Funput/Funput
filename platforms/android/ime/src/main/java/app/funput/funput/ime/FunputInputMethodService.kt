@@ -59,6 +59,7 @@ class FunputInputMethodService : InputMethodService() {
         updateInputView(view)
         ImeKeyboardCallbackBinder.bind(view, actionHandler, editorRuntime, suggestionService,
             systemInputMethodSwitcher)
+        session.bindClipboard(view)
         EmojiCatalogPreloader.schedule(view)
     }
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {

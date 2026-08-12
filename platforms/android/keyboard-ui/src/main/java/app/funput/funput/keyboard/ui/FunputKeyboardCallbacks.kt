@@ -11,6 +11,7 @@ class FunputKeyboardCallbacks {
     var onEmojiPanelOpened: (() -> Unit)? = null
     var onPanelChanged: ((KeyboardPanel) -> Unit)? = null
     var onEmojiSelected: ((String) -> Unit)? = null
+    var onClipboardPasteRequested: (() -> Unit)? = null
     var onSuggestionSelected: ((SuggestionSelection) -> Unit)? = null
 
     internal fun dispatch(action: KeyAction) {
@@ -35,6 +36,10 @@ class FunputKeyboardCallbacks {
 
     internal fun dispatchEmoji(emoji: String) {
         onEmojiSelected?.invoke(emoji)
+    }
+
+    internal fun dispatchClipboardPasteRequest() {
+        onClipboardPasteRequested?.invoke()
     }
 
     internal fun dispatchSuggestion(selection: SuggestionSelection) {

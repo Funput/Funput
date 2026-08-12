@@ -7,6 +7,7 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Shader
 import app.funput.funput.keyboard.interaction.PressedKeyState
+import app.funput.funput.keyboard.KeyboardClipboardHint
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardEnterAction
@@ -28,6 +29,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
     private val keyPopupRenderer = KeyPopupRenderer(metrics)
     private val alternatePaletteRenderer = AlternatePaletteRenderer(metrics)
     private val suggestionBarRenderer = SuggestionBarRenderer(metrics)
+    private val clipboardChipRenderer = ClipboardChipRenderer(resources, metrics)
     private val toolbarLogoRenderer = ToolbarLogoRenderer(resources)
     private val backgroundImageRenderer = KeyboardBackgroundImageRenderer()
     private var theme: KeyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
@@ -36,6 +38,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         this.theme = theme
         keyRenderer.updateTheme(theme, width, height)
         suggestionBarRenderer.updateTheme(theme)
+        clipboardChipRenderer.updateTheme(theme)
         if (width > 0 && height > 0) {
             if (theme.backgroundStartColor == theme.backgroundEndColor) {
                 backgroundPaint.shader = null
@@ -67,6 +70,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         backgroundImage: KeyboardThemeBackgroundImage?,
         backgroundBitmap: Bitmap?,
         suggestions: List<String>,
+        clipboardHint: KeyboardClipboardHint?,
         pressedKeys: PressedKeyState,
         shiftState: ShiftState,
         language: KeyboardLanguage,
@@ -78,6 +82,9 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         keyboard.suggestionBar?.let { bar ->
             if (bar.suggestionsEnabled) {
                 suggestionBarRenderer.draw(canvas, bar, suggestions, pressedKeys)
+            }
+            if (suggestions.isEmpty() && clipboardHint != null) {
+                clipboardChipRenderer.draw(canvas, bar.suggestionsBounds, clipboardHint, pressedKeys)
             }
             toolbarLogoRenderer.draw(canvas, bar.logoBounds)
         }
