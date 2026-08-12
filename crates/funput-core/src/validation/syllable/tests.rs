@@ -1,6 +1,7 @@
 use super::*;
 use crate::validation::coda::{MAX_CODA, normalized_coda, toneless_rhyme};
 use crate::validation::reachability::is_definitely_invalid;
+use crate::validation::rhyme::{VALID_RHYMES, plain_base};
 
 #[test]
 fn validate_tone_cases() {
@@ -143,6 +144,48 @@ fn reopenable_accepts_a_stop_coda_awaiting_its_tone() {
     // Strictly looser than `is_complete_syllable`, never the other way round.
     for w in ["chuc", "tét", "tẽt", "ma", "text"] {
         assert!(!is_complete_syllable(w) || is_reopenable_syllable(w));
+    }
+}
+
+#[test]
+fn reopenable_accepts_a_rhyme_awaiting_its_vowel_shape() {
+    // Committed before the shape keys landed: the rhyme exists in Vietnamese only
+    // *shaped*, so the word is unfinished rather than foreign — `dien` + `e` →
+    // `diên`, `thuo` + `w` → `thuơ`, `nuoc` + `w` → `nươc`.
+    for ok in [
+        "dien", "vien", "thuo", "nuoc", "muon", "duong", "tuoi", "cuu", "tue", "chuyen", "diêu",
+        "nuóc",
+    ] {
+        assert!(is_reopenable_syllable(ok), "{ok} should be re-openable");
+    }
+    // Deshaping matches a *whole* rhyme, never a prefix of one: no Vietnamese rhyme
+    // is spelled `ie`, so English `die`/`lie`/`tie` stay literal.
+    for bad in ["die", "lie", "tie", "chuye", "nghie"] {
+        assert!(!is_reopenable_syllable(bad), "{bad} should be refused");
+    }
+    // Shape alone never excuses a stop coda carrying a tone it cannot have.
+    for bad in ["nuõc", "diẽt"] {
+        assert!(!is_reopenable_syllable(bad), "{bad} should be refused");
+    }
+    // And the loosened gate never loosens the word-boundary one: an unshaped rhyme
+    // is not a word, so English restore at Space is untouched.
+    for w in ["dien", "thuo", "nuoc", "tue"] {
+        assert!(!is_complete_syllable(w), "{w} is not a finished word");
+    }
+}
+
+/// The rule behind the two tests above, swept across the whole inventory rather than
+/// a handful of reported words: **every** Vietnamese rhyme, spelled the way the user's
+/// keystrokes leave it before any diacritic key lands, can be re-opened. Whatever the
+/// engine committed early, Backspace hands it back.
+#[test]
+fn every_rhyme_is_reopenable_before_its_diacritics_land() {
+    for rhyme in VALID_RHYMES {
+        let bare: String = rhyme.chars().map(plain_base).collect();
+        assert!(
+            is_reopenable_syllable(&bare),
+            "{rhyme} spelled {bare:?} should be re-openable"
+        );
     }
 }
 

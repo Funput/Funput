@@ -15,7 +15,7 @@ use crate::validation::coda::{
 };
 use crate::validation::parse::{is_valid_onset, parse_syllable};
 use crate::validation::reachability::{has_shaped_rhyme_prefix, is_definitely_invalid_parts};
-use crate::validation::rhyme::is_valid_rhyme;
+use crate::validation::rhyme::{is_valid_rhyme, matches_deshaped};
 
 use modifier::{ModifierKind, validate_parts};
 use spelling::violates_ckg_spelling;
@@ -47,22 +47,26 @@ pub fn is_valid(buffer: &str) -> bool {
 
 /// How a finished buffer sits against Vietnamese syllable structure.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-enum SyllableShape {
-    /// Not a Vietnamese syllable, and no tone can make it one: `cảd` (card),
+enum SyllableStatus {
+    /// Not a Vietnamese syllable, and no diacritic can make it one: `cảd` (card),
     /// `côl` (cool), `tẽt` (text).
     Invalid,
-    /// Structurally a syllable, but its **stop coda** (`p t c ch`) still carries
-    /// no tone, and Vietnamese requires sắc or nặng there: `chuc`, `tich`, `nuoc`.
-    /// Not a word yet — one tone key away from being one.
-    AwaitingTone,
+    /// Structurally a syllable, but still short of the **diacritics** the word
+    /// needs — which is exactly how a word looks when the user commits it before
+    /// finishing it. Three ways that happens:
+    /// - a **stop coda** (`p t c ch`) with no tone, where Vietnamese requires sắc
+    ///   or nặng: `chuc` → `chúc`, `tich` → `tích`;
+    /// - a rhyme that only exists shaped: `dien` → `diên`, `thuo` → `thuơ`;
+    /// - both at once: `nuoc` → `nước`.
+    AwaitingDiacritic,
     /// A real Vietnamese syllable as it stands: `chào`, `việt`, `ma`, `tét`.
     Complete,
 }
 
-fn classify(buffer: &str) -> SyllableShape {
+fn classify(buffer: &str) -> SyllableStatus {
     let parts = parse_syllable(buffer);
     let Some((coda, coda_len)) = normalized_coda(&parts) else {
-        return SyllableShape::Invalid;
+        return SyllableStatus::Invalid;
     };
     let coda = &coda[..coda_len];
 
@@ -75,26 +79,33 @@ fn classify(buffer: &str) -> SyllableShape {
         && !violates_ckg_spelling(parts.onset, &parts)
         && coda_in(VALID_CODAS, coda);
     if !structure_ok {
-        return SyllableShape::Invalid;
+        return SyllableStatus::Invalid;
     }
 
     // The nucleus+coda must be a real Vietnamese rhyme (Level 2): keeps `việt`,
-    // `trường` … but reverts structurally-ok-but-nonexistent rhymes.
-    if !is_valid_rhyme(&toneless_rhyme(&parts, coda)) {
-        return SyllableShape::Invalid;
-    }
+    // `trường` … but reverts structurally-ok-but-nonexistent rhymes. A rhyme that
+    // exists only *shaped* is that same rhyme with its shape keys still to come —
+    // `ien` is `iên` minus the circumflex — so it is unfinished, not wrong.
+    let rhyme = toneless_rhyme(&parts, coda);
+    let status = if is_valid_rhyme(&rhyme) {
+        SyllableStatus::Complete
+    } else if matches_deshaped(&rhyme) {
+        SyllableStatus::AwaitingDiacritic
+    } else {
+        return SyllableStatus::Invalid;
+    };
 
     // Phonotactics: a stop coda only allows sắc / nặng. A wrong tone (huyền / hỏi /
     // ngã) is what catches English `text` (→ `tẽt`) or `coot` (→ `côt`); no tone at
     // all is the un-toned form of a real word, which a tone key can still complete.
     if coda_in(STOP_CODAS, coda) {
         return match nucleus_tone(parts.nucleus_chars()) {
-            Some(Tone::Sac | Tone::Nang) => SyllableShape::Complete,
-            None => SyllableShape::AwaitingTone,
-            Some(_) => SyllableShape::Invalid,
+            Some(Tone::Sac | Tone::Nang) => status,
+            None => SyllableStatus::AwaitingDiacritic,
+            Some(_) => SyllableStatus::Invalid,
         };
     }
-    SyllableShape::Complete
+    status
 }
 
 /// Returns true if `buffer` is a *complete* valid Vietnamese syllable.
@@ -105,19 +116,20 @@ fn classify(buffer: &str) -> SyllableShape {
 /// the raw word when a finished word is *not* a complete syllable: `cảd` (card),
 /// `côl` (cool), `tẽt` (text).
 pub fn is_complete_syllable(buffer: &str) -> bool {
-    matches!(classify(buffer), SyllableShape::Complete)
+    matches!(classify(buffer), SyllableStatus::Complete)
 }
 
 /// Returns true if a committed `buffer` may be re-opened as a live composition
 /// (`Engine::adopt`, after Backspace puts the caret back on it).
 ///
-/// Looser than [`is_complete_syllable`] in exactly one place: a stop coda still
-/// **awaiting its tone** counts. Those words are the whole point of re-opening —
-/// `chuc` + `s` → `chúc`, `tich` + `s` → `tích` — and they are what the engine
-/// itself leaves on screen when the user commits before typing the tone. Still
-/// strict enough to keep English words and URLs literal (`hello`, `text`, `tẽt`).
+/// Looser than [`is_complete_syllable`] in exactly one place: a syllable still
+/// **awaiting a diacritic** counts — a missing tone (`chuc` + `s` → `chúc`), a
+/// missing vowel shape (`dien` + `e` → `diên`), or both (`nuoc` + `w` → `nươc`).
+/// Those words are the whole point of re-opening: they are what the engine itself
+/// leaves on screen when the user commits before finishing the word. Still strict
+/// enough to keep English words and URLs literal (`hello`, `text`, `tẽt`, `die`).
 pub fn is_reopenable_syllable(buffer: &str) -> bool {
-    !matches!(classify(buffer), SyllableShape::Invalid)
+    !matches!(classify(buffer), SyllableStatus::Invalid)
 }
 
 #[cfg(test)]

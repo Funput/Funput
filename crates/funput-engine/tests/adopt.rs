@@ -78,12 +78,58 @@ fn adopts_a_syllable_still_missing_its_stop_coda_tone() {
     }
 }
 
+/// The same story one step earlier: a word committed before its *vowel shape* — the
+/// rhyme only exists in Vietnamese shaped (`ien` is `iên` without its circumflex), so
+/// re-opening has to hand it back to the shape and stroke keys too.
+#[test]
+fn adopts_a_syllable_still_missing_its_vowel_shape() {
+    for (word, key, expected) in [
+        ("vien", 'e', "viên"),   // circumflex
+        ("thuo", 'w', "thuơ"),   // horn
+        ("dien", 'd', "đien"),   // stroke
+        ("nuoc", 'w', "nươc"),   // shape while the tone is still missing too
+        ("duong", 'w', "dương"), // ươ pair
+        ("cuu", 'w', "cưu"),
+    ] {
+        let mut engine = engine(InputMethod::Telex);
+        assert!(engine.adopt(word), "should adopt {word:?}");
+        engine.process_char(key);
+        assert_eq!(engine.buffer(), expected, "{word:?} + {key:?}");
+    }
+}
+
+/// The invariant behind every case above: re-opening a word puts the engine in the
+/// state it would have been in had the word never been committed. Whatever the next
+/// key does to a live composition, it does to a re-opened one.
+#[test]
+fn a_reopened_word_edits_exactly_like_a_live_one() {
+    for (word, key) in [
+        ("vien", 'e'),
+        ("thuo", 'w'),
+        ("dien", 'd'),
+        ("nuoc", 's'),
+        ("chuc", 's'),
+        ("tuoi", 'o'),
+    ] {
+        let mut adopted = engine(InputMethod::Telex);
+        assert!(adopted.adopt(word), "should adopt {word:?}");
+        adopted.process_char(key);
+
+        let mut typed = engine(InputMethod::Telex);
+        type_into(&mut typed, word);
+        typed.process_char(key);
+
+        assert_eq!(adopted.buffer(), typed.buffer(), "{word:?} + {key:?}");
+    }
+}
+
 /// Anything that is not a Vietnamese syllable is refused, so English words and URLs
-/// never silently become editable.
+/// never silently become editable. `die` is the near miss: no Vietnamese rhyme is
+/// spelled `ie`, however many diacritics you add.
 #[test]
 fn refuses_text_that_is_not_a_syllable() {
     let mut engine = engine(InputMethod::Telex);
-    for text in ["", "text", "tẽt", "hello", "funput.app", "chào bạn"] {
+    for text in ["", "text", "tẽt", "hello", "die", "funput.app", "chào bạn"] {
         assert!(!engine.adopt(text), "should not adopt {text:?}");
         assert_eq!(engine.buffer(), "", "buffer must stay empty after refusing");
     }
