@@ -5,7 +5,8 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
     VIRTUAL_KEY, VK_CONTROL, VK_LWIN, VK_MENU, VK_SHIFT,
 };
 
-use super::{raw_send, send_plan, send_plan_primed, vk_event};
+use super::events::{raw_send, vk_event};
+use super::send_plan;
 
 /// Send a plan with the currently-held modifiers momentarily released.
 ///
@@ -18,17 +19,10 @@ use super::{raw_send, send_plan, send_plan_primed, vk_event};
 /// them. Restoring matters: without it, a user holding Ctrl+Shift to flip a second
 /// time would find the chord no longer matches, because the OS would believe those
 /// keys had come up.
-pub fn send_plan_unmodified(plan: &InjectPlan, held: Mods, primed: bool) {
+pub fn send_plan_unmodified(plan: &InjectPlan, held: Mods) {
     if plan.is_noop() {
         return;
     }
-    let send = || {
-        if primed {
-            send_plan_primed(plan)
-        } else {
-            send_plan(plan)
-        }
-    };
     let down: Vec<VIRTUAL_KEY> = [
         held.ctrl.then_some(VK_CONTROL),
         held.alt.then_some(VK_MENU),
@@ -39,12 +33,12 @@ pub fn send_plan_unmodified(plan: &InjectPlan, held: Mods, primed: bool) {
     .flatten()
     .collect();
     if down.is_empty() {
-        send();
+        send_plan(plan);
         return;
     }
 
     let events = |up: bool| -> Vec<_> { down.iter().map(|&vk| vk_event(vk, up)).collect() };
     raw_send(&events(true));
-    send();
+    send_plan(plan);
     raw_send(&events(false));
 }
