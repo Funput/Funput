@@ -67,11 +67,7 @@ fn fire(hit: Hit) -> bool {
             // The hotkey's own modifiers are still held on this keydown, so the
             // Backspaces must go out with them cleared — [`inject::send_plan_unmodified`].
             let plan = plan_inject(&shell::flip_composing());
-            inject::send_plan_unmodified(
-                &plan,
-                keymap::read_mods(),
-                shell::foreground_has_urlbar_autofill(),
-            );
+            inject::send_plan_unmodified(&plan, keymap::read_mods());
             true // swallow even on a no-op, so the hotkey never leaks to the app
         }
     }
@@ -114,7 +110,7 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
             if plan.is_noop() {
                 false // Action::None — the literal key reaches the app
             } else {
-                inject::send_plan_auto(&plan); // delete + retype the composed text
+                inject::send_plan(&plan); // delete + retype the composed text
                 true
             }
         }

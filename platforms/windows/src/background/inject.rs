@@ -1,31 +1,22 @@
 //! Emit an [`InjectPlan`] to the focused app: Backspace presses, then Unicode
 //! characters, via `SendInput`. Every synthesized event carries [`INJECT_TAG`] in
 //! `dwExtraInfo` so the hook ignores them (no re-entrancy).
+//!
+//! Backspace is the only deletion key that ever goes out, never `Delete`.
+//! Everything a plan replaces sits *behind* the caret, so an injection must be
+//! incapable of touching what is in front of it — see [`send_plan`].
 
 mod modifiers;
 
 use funput_desktop::InjectPlan;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP,
-    KEYEVENTF_UNICODE, VIRTUAL_KEY, VK_BACK, VK_DELETE,
+    KEYEVENTF_UNICODE, VIRTUAL_KEY, VK_BACK,
 };
 
 pub use modifiers::send_plan_unmodified;
 
-use crate::shared::shell::{self, INJECT_TAG};
-
-/// Send a plan by whichever route the focused app needs.
-///
-/// Chrome's omnibox and Firefox's address bar eat a Backspace to clear their
-/// autofill selection, so those get a Delete primer first (see
-/// [`send_plan_primed`]); everything else takes the direct path.
-pub fn send_plan_auto(plan: &InjectPlan) {
-    if shell::foreground_has_urlbar_autofill() {
-        send_plan_primed(plan);
-    } else {
-        send_plan(plan);
-    }
-}
+use crate::shared::shell::INJECT_TAG;
 
 fn vk_event(vk: VIRTUAL_KEY, up: bool) -> INPUT {
     let dw_flags = if up {
@@ -93,9 +84,34 @@ fn raw_send(inputs: &[INPUT]) {
     unsafe { SendInput(inputs, std::mem::size_of::<INPUT>() as i32) };
 }
 
-/// Send the deletions then the new text as one atomic `SendInput` batch. This is
-/// the default path used for every app except browsers with URL-bar autofill
-/// (see [`send_plan_primed`]).
+/// Send the deletions then the new text as one atomic `SendInput` batch. The only
+/// injection route there is: every app takes it, and it reaches no further than the
+/// `backspaces` characters behind the caret.
+///
+/// # Why there is no `Delete` primer
+///
+/// Chrome's omnibox and Firefox's address bar inline-autofill a *selected* suffix —
+/// "go" displays as "go[ogle.com]" — and a Backspace fired at that selection deletes
+/// the **selection** instead of the base character, so the new glyph piles on top:
+/// "go" + `w` gives "goơ" rather than "gơ".
+///
+/// A leading `Delete` press dismisses that selection, and those browsers were once
+/// routed through one. It cannot stay: `Delete` is harmless only with the caret at
+/// end-of-text, and nothing here can tell an autofill selection apart from ordinary
+/// text in front of the caret — a hook shell cannot read the document. In a browser
+/// *page* field, where no omnibox autofill exists, the primer therefore ate the
+/// character to the right on every injected keystroke, so moving the caret back into
+/// a finished line to insert a word silently destroyed the text after it.
+///
+/// Narrowing the primer to the URL bar would need the focused *control*, which
+/// Windows will not give up: Chrome draws its whole UI in one HWND, so
+/// `GetGUIThreadInfo` reports that top-level window for the omnibox and for a page
+/// field alike, with no caret. Only UI Automation can tell them apart, and a
+/// `WH_KEYBOARD_LL` callback cannot afford a cross-process COM call.
+///
+/// So the pile-on is left standing for now — it is one visibly wrong syllable in an
+/// address bar, where the primer was deleting text the user wrote and never typed
+/// over.
 pub fn send_plan(plan: &InjectPlan) {
     if plan.is_noop() {
         return;
@@ -105,38 +121,56 @@ pub fn send_plan(plan: &InjectPlan) {
     raw_send(&inputs);
 }
 
-/// Like [`send_plan`] but prepends a single `Delete` press before the deletions,
-/// for URL bars with inline autofill (Chrome's omnibox, Firefox's address bar).
-///
-/// Those URL bars show an inline-autofill *suffix that is selected* (e.g. after
-/// "bo" it displays "bo[okmarks]"). A Backspace fired against that selection deletes
-/// the **selection**, not the base character, so the vowel we meant to replace
-/// survives and the new glyph piles on top: "bộ" → "boộ". The leading `Delete`
-/// dismisses that autofill selection first; the Backspaces then bite real
-/// characters. When there is no autofill and the caret sits at the end of the
-/// field (the normal case while typing), `Delete` is a no-op, so this stays safe.
-///
-/// Sent as one synchronous `SendInput` batch — autofill is recomputed
-/// asynchronously, so it will not re-appear between the `Delete` and the Backspaces
-/// within a single burst. Only used when `backspaces > 0` (a pure insert has no
-/// Backspace to lose).
-///
-/// Caveat: in a **web** field the URL-bar autofill does not exist, so the
-/// `Delete` is wanted only at end-of-text; if the caret is in the middle of existing
-/// text it will eat the following character. See
-/// `shell::foreground_has_urlbar_autofill`.
-pub fn send_plan_primed(plan: &InjectPlan) {
-    if plan.is_noop() {
-        return;
+#[cfg(test)]
+mod tests {
+    use windows::Win32::UI::Input::KeyboardAndMouse::VK_DELETE;
+
+    use super::*;
+
+    /// The batch [`send_plan`] would emit, as `(wVk, wScan, keyup)` per event.
+    /// Built from the same two halves rather than by calling `send_plan`, which
+    /// would `SendInput` into whatever window the test runner has focused.
+    fn batch(backspaces: usize, output: &str) -> Vec<(u16, u16, bool)> {
+        let units: Vec<u16> = output.encode_utf16().collect();
+        let mut inputs = deletions(backspaces);
+        inputs.extend(text(&units));
+        inputs
+            .iter()
+            .map(|i| {
+                let ki = unsafe { i.Anonymous.ki };
+                (ki.wVk.0, ki.wScan, (ki.dwFlags.0 & KEYEVENTF_KEYUP.0) != 0)
+            })
+            .collect()
     }
-    if plan.backspaces == 0 {
-        send_plan(plan); // nothing to lose to autocomplete; plain insert
-        return;
+
+    #[test]
+    fn plan_is_backspaces_then_text() {
+        assert_eq!(
+            batch(2, "ơ"),
+            vec![
+                (VK_BACK.0, 0, false),
+                (VK_BACK.0, 0, true),
+                (VK_BACK.0, 0, false),
+                (VK_BACK.0, 0, true),
+                (0, 'ơ' as u16, false),
+                (0, 'ơ' as u16, true),
+            ]
+        );
     }
-    let mut inputs = Vec::with_capacity(2 + plan.backspaces * 2 + plan.units.len() * 2);
-    inputs.push(vk_event(VK_DELETE, false)); // dismiss the inline-autocomplete selection
-    inputs.push(vk_event(VK_DELETE, true));
-    inputs.extend(deletions(plan.backspaces));
-    inputs.extend(text(&plan.units));
-    raw_send(&inputs);
+
+    #[test]
+    fn nothing_deletes_forward() {
+        // The regression this file guards: a plan only ever describes characters
+        // *behind* the caret, so no batch may carry a key that removes what is in
+        // front of it. A `Delete` primer here once cost one character of existing
+        // text per keystroke typed into the middle of a line — see [`send_plan`].
+        for (backspaces, output) in [(0, "à"), (1, "ộ"), (3, "card ")] {
+            let emitted = batch(backspaces, output);
+            assert!(
+                emitted.iter().all(|&(vk, ..)| vk != VK_DELETE.0),
+                "forward delete in plan ({backspaces}, {output:?})"
+            );
+            assert_eq!(emitted.len(), (backspaces + output.chars().count()) * 2);
+        }
+    }
 }

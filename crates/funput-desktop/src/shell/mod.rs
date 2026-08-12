@@ -104,7 +104,7 @@ impl ShellState {
     }
 
     /// The app the user is in right now, or `None` before the first focus change.
-    /// The platform uses this for per-app injection quirks.
+    /// What a hotkey toggle binds its VI/EN choice to.
     pub fn foreground_id(&self) -> Option<&str> {
         self.foreground.as_deref()
     }
