@@ -11,5 +11,6 @@ extension KeyboardViewController {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         flushPersonalSuggestions()
+        releaseHiddenSupplementarySurfaces()
     }
 }

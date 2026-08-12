@@ -21,6 +21,18 @@ struct KaomojiCatalogTests {
         #expect(catalog.items.allSatisfy { $0.category != .recent })
     }
 
+    @Test("Bundled access loads independently owned catalog storage")
+    func bundledCatalogStorage() {
+        let first = KaomojiCatalog.bundled
+        let second = KaomojiCatalog.bundled
+        let sharesStorage = first.items.withUnsafeBufferPointer { firstBuffer in
+            second.items.withUnsafeBufferPointer { secondBuffer in
+                firstBuffer.baseAddress == secondBuffer.baseAddress
+            }
+        }
+        #expect(!sharesStorage)
+    }
+
     /// Section order is a product decision, not an accident of the enum: recents
     /// lead, and "Yêu thương" sits directly after "Vui vẻ".
     @Test("Category order puts recents first and love next to happy")

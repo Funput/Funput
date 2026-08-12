@@ -5,9 +5,12 @@ import KeyboardRenderer
 import UIKit
 
 extension KeyboardViewController {
-    func installKaomojiView() {
-        kaomojiView.translatesAutoresizingMaskIntoConstraints = false
-        kaomojiView.isHidden = true
+    @discardableResult
+    func ensureKaomojiView() -> KaomojiKeyboardView {
+        if let kaomojiView {
+            return kaomojiView
+        }
+        let kaomojiView = KeyboardLaunchTrace.makePanel(.kaomoji, KaomojiKeyboardView())
         kaomojiView.onKaomojiSelected = { [weak self] item in
             self?.insertKaomoji(item)
         }
@@ -20,25 +23,25 @@ extension KeyboardViewController {
         kaomojiView.onEmoji = { [weak self] in
             self?.showEmoji()
         }
-        view.addSubview(kaomojiView)
+        kaomojiView.backgroundImage = cachedBackgroundImage
+        self.kaomojiView = kaomojiView
+        attachSupplementarySurface(kaomojiView)
+        return kaomojiView
     }
 
     func showKaomoji() {
-        guard keyboardView.presentation.layout.toolbar != nil else { return }
+        guard currentPresentation.layout.toolbar != nil else { return }
         launchTrace.recordPanelFirstOpen(.kaomoji)
+        ensureKaomojiView()
         inputCoordinator.prepareForLiteralInput()
         clearPersonalSuggestions()
-        displayedSurface = .kaomoji
-        keyboardView.isHidden = true
-        emojiView.isHidden = true
-        clipboardPanelView.isHidden = true
-        kaomojiView.isHidden = false
         refreshKaomojiPresentation()
+        switchSurface(to: .kaomoji)
     }
 
     func refreshKaomojiPresentation() {
-        kaomojiView.apply(
-            presentation: keyboardView.presentation,
+        kaomojiView?.apply(
+            presentation: currentPresentation,
             recent: kaomojiRecentsStore.load().compactMap(kaomojiItem)
         )
     }

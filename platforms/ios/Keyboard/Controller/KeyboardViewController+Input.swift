@@ -83,7 +83,7 @@ extension KeyboardViewController {
             )
         }
         let state = inputCoordinator.state
-        var presentation = keyboardView.presentation
+        var presentation = currentPresentation
         presentation.layout = KeyboardLayoutResolver.resolve(
             inputMethod: state.inputMethod,
             mode: state.layoutMode,
@@ -101,6 +101,7 @@ extension KeyboardViewController {
         presentation.isHapticFeedbackEnabled = configuration.isHapticFeedbackEnabled
         presentation.isKeySoundEnabled = configuration.isKeySoundEnabled
         presentation.showsKeyPreviews = !state.editorMode.isPassword && configuration.showsKeyPreviews
+        currentPresentation = presentation
         keyboardView.presentation = presentation
         if presentation.layout.toolbar == nil {
             showFunput()

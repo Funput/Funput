@@ -25,7 +25,7 @@ extension KeyboardViewController {
     ) {
         let context = ClipboardOfferPolicy.Context(
             editorMode: inputCoordinator.state.editorMode,
-            hasToolbar: keyboardView.presentation.layout.toolbar != nil,
+            hasToolbar: currentPresentation.layout.toolbar != nil,
             hasFullAccess: hasFullAccess,
             isEnabled: configuration.clipboardEnabled
         )

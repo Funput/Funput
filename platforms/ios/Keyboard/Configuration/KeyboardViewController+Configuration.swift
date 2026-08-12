@@ -27,10 +27,11 @@ extension KeyboardViewController {
         let assetID = theme?.backgroundEffects.image?.assetID
         let data = assetID.flatMap(themeAssetStore.renderedData)
         let image = data.flatMap(UIImage.init(data:))
+        cachedBackgroundImage = image
         keyboardView.backgroundImage = image
-        emojiView.backgroundImage = image
-        kaomojiView.backgroundImage = image
-        clipboardPanelView.backgroundImage = image
+        emojiView?.backgroundImage = image
+        kaomojiView?.backgroundImage = image
+        clipboardPanelView?.backgroundImage = image
         clipboardStore = ClipboardStore(expiry: configuration.clipboardExpiry)
         keyboardView.updateClipboardKeyVisible(configuration.clipboardEnabled)
         inputCoordinator.apply(configuration)

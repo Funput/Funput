@@ -16,9 +16,9 @@ final class KeyboardViewController: UIInputViewController {
     let launchTrace = KeyboardLaunchTrace()
     let inputCoordinator = KeyboardInputCoordinator()
     let keyboardView = KeyboardSurfaceView()
-    let emojiView = KeyboardLaunchTrace.makePanel(.emoji, EmojiKeyboardView())
-    let kaomojiView = KeyboardLaunchTrace.makePanel(.kaomoji, KaomojiKeyboardView())
-    let clipboardPanelView = KeyboardLaunchTrace.makePanel(.clipboard, ClipboardKeyboardView())
+    var emojiView: EmojiKeyboardView?
+    var kaomojiView: KaomojiKeyboardView?
+    var clipboardPanelView: ClipboardKeyboardView?
     let emojiRecentsStore = EmojiRecentsStore()
     /// Rebuilt whenever configuration changes, since it carries the chosen expiry.
     var clipboardStore = ClipboardStore()
@@ -30,6 +30,8 @@ final class KeyboardViewController: UIInputViewController {
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     var themeCatalog = ThemeCatalog()
+    var currentPresentation = KeyboardPresentation()
+    var cachedBackgroundImage: UIImage?
     var cachedPresentationConfiguration: FunputConfiguration?
     var cachedThemedPresentation: KeyboardPresentation?
     let configurationStore = FunputConfigurationStore()
@@ -93,28 +95,13 @@ final class KeyboardViewController: UIInputViewController {
             self?.handleKeyEvent(event)
         }
         view.addSubview(keyboardView)
-        installEmojiView()
         installClipboard()
-        installClipboardPanel()
-        installKaomojiView()
 
         NSLayoutConstraint.activate([
             keyboardView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             keyboardView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             keyboardView.topAnchor.constraint(equalTo: view.topAnchor),
             keyboardView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            emojiView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            emojiView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            emojiView.topAnchor.constraint(equalTo: view.topAnchor),
-            emojiView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            kaomojiView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            kaomojiView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            kaomojiView.topAnchor.constraint(equalTo: view.topAnchor),
-            kaomojiView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            clipboardPanelView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            clipboardPanelView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            clipboardPanelView.topAnchor.constraint(equalTo: view.topAnchor),
-            clipboardPanelView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
 
         heightController.install(on: view)
@@ -122,14 +109,14 @@ final class KeyboardViewController: UIInputViewController {
 
     func updatePreferredHeight() {
         heightController.update(
-            for: keyboardView.presentation,
+            for: currentPresentation,
             traits: traitCollection
         )
     }
 
     private func activatePreferredHeight() {
         heightController.activate(
-            for: keyboardView.presentation,
+            for: currentPresentation,
             traits: traitCollection
         )
     }
