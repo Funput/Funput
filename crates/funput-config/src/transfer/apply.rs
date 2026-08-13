@@ -29,6 +29,7 @@ pub fn to_document(s: &Settings, source: Source) -> ConfigDocument {
             eager_restore: Some(s.eager_restore),
             spell_check: Some(s.spell_check),
             auto_capitalize: Some(s.auto_capitalize),
+            shortcuts_enabled: Some(s.shortcuts_enabled),
         }),
         shortcuts: Some(
             s.shortcuts
@@ -91,6 +92,9 @@ fn apply_preferences(s: &mut Settings, prefs: &Preferences) {
     }
     if let Some(v) = prefs.auto_capitalize {
         s.auto_capitalize = v;
+    }
+    if let Some(v) = prefs.shortcuts_enabled {
+        s.shortcuts_enabled = v;
     }
 }
 

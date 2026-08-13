@@ -88,6 +88,7 @@ pub(super) fn wire(window: &SettingsWindow) {
     window.on_set_eager(commands::set_eager_restore);
     window.on_set_spell(commands::set_spell_check);
     window.on_set_auto_cap(commands::set_auto_capitalize);
+    window.on_set_shortcuts_enabled(commands::set_shortcuts_enabled);
     window.on_set_launch(commands::set_launch_at_login);
 
     let weak = window.as_weak();

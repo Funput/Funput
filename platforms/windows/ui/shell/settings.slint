@@ -31,6 +31,7 @@ export component SettingsWindow inherits Window {
     in-out property <bool> launch-at-login;
     in property <[ShortcutEntry]> shortcuts;
     in property <bool> can-add-shortcut: true;
+    in-out property <bool> shortcuts-enabled;
     in property <string> version;
     in property <string> update-state: "idle";
     in property <string> update-version;
@@ -52,6 +53,7 @@ export component SettingsWindow inherits Window {
     callback set-auto-cap(bool);
     callback set-launch(bool);
     callback add-shortcut();
+    callback set-shortcuts-enabled(bool);
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
@@ -98,6 +100,7 @@ export component SettingsWindow inherits Window {
             launch-at-login <=> root.launch-at-login;
             shortcuts: root.shortcuts;
             can-add-shortcut: root.can-add-shortcut;
+            shortcuts-enabled <=> root.shortcuts-enabled;
             version: root.version;
             update-state: root.update-state;
             update-version: root.update-version;
@@ -114,6 +117,7 @@ export component SettingsWindow inherits Window {
             set-auto-cap(v) => { root.set-auto-cap(v); }
             set-launch(v) => { root.set-launch(v); }
             add-shortcut() => { root.add-shortcut(); }
+            set-shortcuts-enabled(v) => { root.set-shortcuts-enabled(v); }
             remove-shortcut(i) => { root.remove-shortcut(i); }
             edit-trigger(i, t) => { root.edit-trigger(i, t); }
             edit-expansion(i, t) => { root.edit-expansion(i, t); }

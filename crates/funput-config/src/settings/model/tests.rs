@@ -105,3 +105,35 @@ fn a_minimal_legacy_file_falls_back_to_defaults() {
     assert!(s.app_language_memory.is_empty());
     assert!(s.shortcuts.is_empty());
 }
+
+/// The gõ tắt switch is the one added field whose absent value must not be `false`:
+/// a file written before it existed belongs to someone with a working table, and
+/// defaulting off would leave them wondering why their shortcuts died.
+#[test]
+fn a_file_without_the_shortcut_switch_still_expands() {
+    let legacy = r#"{
+      "method": "vni",
+      "enabled": true,
+      "smartRestore": true,
+      "eagerRestore": true,
+      "toggleHotkey": "ctrl_backtick",
+      "launchAtLogin": false,
+      "hasCompletedOnboarding": false,
+      "shortcuts": [{ "trigger": "vn", "expansion": "Việt Nam" }]
+    }"#;
+    let s: Settings = serde_json::from_str(legacy).expect("legacy settings.json must decode");
+
+    assert!(s.shortcuts_enabled);
+    assert_eq!(s.shortcuts.len(), 1);
+}
+
+#[test]
+fn the_shortcut_switch_round_trips_when_turned_off() {
+    let s = Settings {
+        shortcuts_enabled: false,
+        ..Settings::default()
+    };
+    let text = serde_json::to_string(&s).expect("serialize");
+    let back: Settings = serde_json::from_str(&text).expect("deserialize");
+    assert!(!back.shortcuts_enabled);
+}

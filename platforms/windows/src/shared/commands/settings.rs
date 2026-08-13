@@ -31,6 +31,10 @@ pub fn set_auto_capitalize(on: bool) {
     shell::set_auto_capitalize(on);
 }
 
+pub fn set_shortcuts_enabled(on: bool) {
+    shell::set_shortcuts_enabled(on);
+}
+
 pub fn set_enabled(on: bool) {
     shell::set_enabled(on);
 }

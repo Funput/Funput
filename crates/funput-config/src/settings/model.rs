@@ -61,6 +61,15 @@ pub struct Settings {
     pub excluded_apps: Vec<ExcludedApp>,
     #[serde(default)]
     pub shortcuts: Vec<Shortcut>,
+    /// Whether the gõ tắt table expands. Defaults to **on**, including for a file
+    /// written before this field existed — those users have a working table and
+    /// would otherwise find it silently dead after an update.
+    #[serde(default = "shortcuts_enabled_default")]
+    pub shortcuts_enabled: bool,
+}
+
+fn shortcuts_enabled_default() -> bool {
+    true
 }
 
 impl Settings {
@@ -96,6 +105,7 @@ impl Default for Settings {
             app_language_memory: BTreeMap::new(),
             excluded_apps: Vec::new(),
             shortcuts: Vec::new(),
+            shortcuts_enabled: true,
         }
     }
 }

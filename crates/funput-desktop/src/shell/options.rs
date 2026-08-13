@@ -37,6 +37,12 @@ impl ShellState {
         self.update_config(|s| s.auto_capitalize = on);
     }
 
+    /// Turn gõ tắt expansion on or off. The table itself is left alone, so the rows
+    /// are still there — and still editable — while it is off.
+    pub fn set_shortcuts_enabled(&mut self, on: bool) {
+        self.update_config(|s| s.shortcuts_enabled = on);
+    }
+
     /// Picking a preset also clears any recorded custom combo — the two are
     /// alternatives, and the combo (when present) always wins in the hook.
     pub fn set_toggle_hotkey(&mut self, hotkey: Hotkey) {

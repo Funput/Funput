@@ -26,6 +26,12 @@ pub struct EngineConfig {
     /// Auto-capitalize ("Tự động viết hoa"): uppercase the first letter of a word at
     /// the start of a sentence. Off by default.
     pub auto_capitalize: bool,
+    /// Whether the gõ tắt table expands at all ("Bật gõ tắt"). On by default.
+    ///
+    /// A switch rather than an empty table, so turning the feature off for a moment
+    /// — to type a word that collides with a trigger — costs nothing and gives the
+    /// rows back untouched.
+    pub shortcuts_enabled: bool,
 }
 
 impl Default for EngineConfig {
@@ -37,6 +43,7 @@ impl Default for EngineConfig {
             eager_restore: true,
             spell_check: false,
             auto_capitalize: false,
+            shortcuts_enabled: true,
         }
     }
 }

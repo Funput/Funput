@@ -64,6 +64,10 @@ pub struct Preferences {
     pub spell_check: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_capitalize: Option<bool>,
+    /// Whether the gõ tắt rows carried in `shortcuts` actually expand. Portable
+    /// because it is a typing preference, not a per-OS one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcuts_enabled: Option<bool>,
 }
 
 /// Comparable and printable because it is also what [`crate::unikey`] parses a

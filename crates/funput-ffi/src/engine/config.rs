@@ -75,6 +75,12 @@ pub unsafe extern "C" fn funput_configure(engine: *mut FunputEngine, config: Fun
         eager_restore: config.eager_restore,
         spell_check: config.spell_check,
         auto_capitalize: config.auto_capitalize,
+        // Not in `FunputConfig`: this struct crosses the C ABI by value, and the
+        // Swift side declaring it is built separately, so growing it here would
+        // mismatch silently until every consumer is rebuilt. The hosts on this ABI
+        // have no gõ tắt switch yet, and `true` is what they behaved as before —
+        // give them a dedicated setter when one of them grows the feature.
+        shortcuts_enabled: true,
     };
     unsafe { abi::with_engine_mut(engine, |e| e.configure(cfg)) }
 }

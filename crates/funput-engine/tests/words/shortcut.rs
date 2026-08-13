@@ -149,3 +149,58 @@ fn re_adding_trigger_overwrites() {
         Some("Vietnam")
     );
 }
+
+/// Drive `keys` with gõ tắt switched off, otherwise identical to
+/// [`app_text_with_shortcuts`].
+fn app_text_with_shortcuts_off(shortcuts: &[(&str, &str)], keys: &str) -> String {
+    let mut engine = Engine::new();
+    engine.update_config(|config| config.shortcuts_enabled = false);
+    for (trigger, expansion) in shortcuts {
+        engine.add_shortcut(*trigger, *expansion);
+    }
+    let mut app = String::new();
+    for key in keys.chars() {
+        let r = engine.process_char(key);
+        match r.action {
+            Action::None => app.push(key),
+            Action::Send => {
+                for _ in 0..r.backspace {
+                    app.pop();
+                }
+                app.push_str(&r.output);
+            }
+            Action::Restore => unreachable!("Restore not implemented yet"),
+        }
+    }
+    app
+}
+
+#[test]
+fn the_switch_stops_expansion_without_touching_the_table() {
+    let text = app_text_with_shortcuts_off(&[("vn", "Việt Nam")], "vn ");
+    assert_eq!(text, "vn ", "the trigger must stay as typed");
+}
+
+#[test]
+fn a_word_that_is_not_a_trigger_still_composes_with_the_switch_off() {
+    // Turning gõ tắt off must not disturb ordinary Vietnamese composition.
+    let text = app_text_with_shortcuts_off(&[("vn", "Việt Nam")], "chaof ");
+    assert_eq!(text, "chào ");
+}
+
+#[test]
+fn the_table_survives_the_switch_so_flipping_back_costs_nothing() {
+    let mut engine = Engine::new();
+    engine.add_shortcut("vn", "Việt Nam");
+    engine.update_config(|config| config.shortcuts_enabled = false);
+    assert_eq!(
+        engine.shortcuts().get("vn").map(String::as_str),
+        Some("Việt Nam"),
+        "the rows must outlive the switch"
+    );
+    engine.update_config(|config| config.shortcuts_enabled = true);
+    for key in "vn ".chars() {
+        engine.process_char(key);
+    }
+    assert_eq!(engine.shortcuts().len(), 1);
+}
