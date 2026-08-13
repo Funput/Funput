@@ -75,6 +75,9 @@ pub fn set_spell_check(on: bool) {
 pub fn set_auto_capitalize(on: bool) {
     with(|s| s.set_auto_capitalize(on));
 }
+pub fn set_shortcuts_enabled(on: bool) {
+    with(|s| s.set_shortcuts_enabled(on));
+}
 pub fn set_toggle_hotkey(hotkey: Hotkey) {
     with(|s| s.set_toggle_hotkey(hotkey));
 }

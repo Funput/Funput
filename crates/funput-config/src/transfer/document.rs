@@ -64,9 +64,15 @@ pub struct Preferences {
     pub spell_check: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_capitalize: Option<bool>,
+    /// Whether the gõ tắt rows carried in `shortcuts` actually expand. Portable
+    /// because it is a typing preference, not a per-OS one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcuts_enabled: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize)]
+/// Comparable and printable because it is also what [`crate::unikey`] parses a
+/// UniKey macro table into, and those rows are asserted on directly in tests.
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PortableShortcut {
     pub trigger: String,
     pub expansion: String,

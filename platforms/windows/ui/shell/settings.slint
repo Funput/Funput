@@ -5,6 +5,7 @@ import { Theme, ShortcutEntry } from "../theme/mod.slint";
 import { Backdrop } from "backdrop.slint";
 import { Sidebar } from "sidebar.slint";
 import { SettingsContent } from "content.slint";
+import { Notice } from "notice.slint";
 
 export component SettingsWindow inherits Window {
     title: "Funput — Cài đặt";
@@ -30,10 +31,15 @@ export component SettingsWindow inherits Window {
     in-out property <bool> launch-at-login;
     in property <[ShortcutEntry]> shortcuts;
     in property <bool> can-add-shortcut: true;
+    in-out property <bool> shortcuts-enabled;
     in property <string> version;
     in property <string> update-state: "idle";
     in property <string> update-version;
     in property <string> update-message;
+    in-out property <bool> notice-open;
+    in property <string> notice-title;
+    in property <string> notice-body;
+    in property <bool> notice-danger;
 
     callback pick-method(string);
     callback pick-tone(string);
@@ -47,6 +53,7 @@ export component SettingsWindow inherits Window {
     callback set-auto-cap(bool);
     callback set-launch(bool);
     callback add-shortcut();
+    callback set-shortcuts-enabled(bool);
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
@@ -57,6 +64,7 @@ export component SettingsWindow inherits Window {
     callback relaunch-now();
     callback export-config();
     callback import-config();
+    callback import-unikey();
 
     in-out property <string> active: "overview";
     private property <string> previous-active: "overview";
@@ -92,6 +100,7 @@ export component SettingsWindow inherits Window {
             launch-at-login <=> root.launch-at-login;
             shortcuts: root.shortcuts;
             can-add-shortcut: root.can-add-shortcut;
+            shortcuts-enabled <=> root.shortcuts-enabled;
             version: root.version;
             update-state: root.update-state;
             update-version: root.update-version;
@@ -108,6 +117,7 @@ export component SettingsWindow inherits Window {
             set-auto-cap(v) => { root.set-auto-cap(v); }
             set-launch(v) => { root.set-launch(v); }
             add-shortcut() => { root.add-shortcut(); }
+            set-shortcuts-enabled(v) => { root.set-shortcuts-enabled(v); }
             remove-shortcut(i) => { root.remove-shortcut(i); }
             edit-trigger(i, t) => { root.edit-trigger(i, t); }
             edit-expansion(i, t) => { root.edit-expansion(i, t); }
@@ -117,6 +127,17 @@ export component SettingsWindow inherits Window {
             relaunch-now() => { root.relaunch-now(); }
             export-config() => { root.export-config(); }
             import-config() => { root.import-config(); }
+            import-unikey() => { root.import-unikey(); }
+        }
+    }
+
+    // Last child, so it draws over the sidebar as well as the page.
+    if root.notice-open: Notice {
+        title: root.notice-title;
+        body: root.notice-body;
+        danger: root.notice-danger;
+        dismissed => {
+            root.notice-open = false;
         }
     }
 }

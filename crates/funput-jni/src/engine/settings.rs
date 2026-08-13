@@ -34,6 +34,11 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
         eager_restore,
         spell_check,
         auto_capitalize,
+        // Not a parameter: the JNI symbol name encodes the Java signature, so an
+        // extra argument would stop Kotlin finding this function at all until the
+        // `external fun` is changed to match. Android has no gõ tắt switch yet, and
+        // `true` is how it behaved before there was one.
+        shortcuts_enabled: true,
     };
     update(handle, |engine| engine.configure(config));
 }

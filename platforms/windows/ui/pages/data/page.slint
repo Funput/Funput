@@ -1,10 +1,11 @@
-// Settings → "Dữ liệu": export/import config (room to grow later).
+// Settings → "Dữ liệu": export/import config, and bringing a UniKey table over.
 
 import { Theme, PageHeader, Section, Row, PrimaryButton, GhostButton } from "../../theme/mod.slint";
 
 export component DataPage inherits VerticalLayout {
     callback export-config();
     callback import-config();
+    callback import-unikey();
 
     spacing: Theme.sp-lg;
     width: 100%;
@@ -12,7 +13,7 @@ export component DataPage inherits VerticalLayout {
 
     PageHeader {
         title: "Dữ liệu";
-        subtitle: "Xuất và nhập cấu hình Funput.";
+        subtitle: "Xuất, nhập cấu hình Funput và chuyển gõ tắt từ UniKey.";
     }
 
     Section {
@@ -34,6 +35,19 @@ export component DataPage inherits VerticalLayout {
             PrimaryButton {
                 text: "Nhập…";
                 clicked => { root.import-config(); }
+            }
+        }
+    }
+
+    Section {
+        title: "Chuyển từ UniKey";
+        Row {
+            title: "Nhập bảng gõ tắt UniKey";
+            subtitle: "Đọc ukmacro.txt và gộp vào bảng gõ tắt hiện có.";
+            icon: @image-url("../../icons/status/backup.svg");
+            GhostButton {
+                text: "Chọn tệp…";
+                clicked => { root.import-unikey(); }
             }
         }
     }

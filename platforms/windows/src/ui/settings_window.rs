@@ -102,6 +102,7 @@ pub(super) fn populate(window: &SettingsWindow) {
     window.set_update_version("".into());
     window.set_update_message("".into());
     window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
+    window.set_shortcuts_enabled(settings.shortcuts_enabled);
     window.set_can_add_shortcut(commands::can_add_shortcut());
 }
 

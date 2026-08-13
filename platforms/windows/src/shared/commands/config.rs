@@ -1,8 +1,12 @@
-//! Export and import of the shared config document.
+//! Export and import of the shared config document, and importing a UniKey
+//! gõ tắt table.
 
 use std::path::Path;
 
-use funput_config::transfer::{self, ConfigError, ImportSummary, Source};
+use funput_config::transfer::{
+    self, ConfigDocument, ConfigError, ImportSummary, Source, SCHEMA_ID,
+};
+use funput_config::unikey::{self, MacroError};
 
 use crate::shared::shell;
 
@@ -22,6 +26,30 @@ pub fn export_config(path: &Path) -> std::io::Result<()> {
 pub fn import_config(path: &Path) -> Result<ImportSummary, ConfigError> {
     let mut settings = shell::snapshot();
     let summary = transfer::import_file(path, &mut settings)?;
+    shell::replace_settings(settings);
+    Ok(summary)
+}
+
+/// Merge a UniKey `ukmacro.txt` into the live gõ tắt table.
+///
+/// The parsed rows are wrapped in a document carrying nothing else, so
+/// [`transfer::apply`] does the merging — same rule as importing a Funput config
+/// (a repeated trigger takes the incoming expansion, rows absent from the file
+/// survive) and the same counters back. Restating that here would be a second copy
+/// of a rule that has to stay identical in both places.
+pub fn import_unikey_macros(path: &Path) -> Result<ImportSummary, MacroError> {
+    let shortcuts = unikey::read_macro_file(path)?;
+    let document = ConfigDocument {
+        schema: SCHEMA_ID.to_string(),
+        version: transfer::CURRENT_VERSION,
+        exported_at: None,
+        source: None,
+        preferences: None,
+        shortcuts: Some(shortcuts),
+        platform: None,
+    };
+    let mut settings = shell::snapshot();
+    let summary = transfer::apply(&mut settings, &document);
     shell::replace_settings(settings);
     Ok(summary)
 }

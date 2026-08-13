@@ -18,8 +18,9 @@ impl ShellState {
         self.reset_composition();
     }
 
-    /// Push the six engine options in one call. `enabled` and the gõ tắt table are
-    /// separate (see [`ShellState::set_enabled_state`] and [`push_shortcuts`]).
+    /// Push the engine options in one call. `enabled` and the gõ tắt *rows* are
+    /// separate (see [`ShellState::set_enabled_state`] and [`push_shortcuts`]); the
+    /// switch that decides whether those rows expand is an option and rides here.
     pub(super) fn sync_engine_config(&mut self) {
         self.engine.configure(EngineConfig {
             method: self.settings.method.core(),
@@ -28,6 +29,7 @@ impl ShellState {
             eager_restore: self.settings.eager_restore,
             spell_check: self.settings.spell_check,
             auto_capitalize: self.settings.auto_capitalize,
+            shortcuts_enabled: self.settings.shortcuts_enabled,
         });
     }
 

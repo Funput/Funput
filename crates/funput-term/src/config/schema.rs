@@ -73,6 +73,8 @@ pub(super) struct FileSettings {
     pub(super) auto_capitalize: bool,
     #[serde(default)]
     pub(super) shortcuts: Vec<Shortcut>,
+    #[serde(default = "default_true")]
+    pub(super) shortcuts_enabled: bool,
 }
 
 fn default_true() -> bool {

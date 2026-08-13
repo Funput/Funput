@@ -94,7 +94,9 @@ fn apply_shortcut_case(expansion: &str, case: ShortcutCase) -> String {
 }
 
 fn shortcut_expansion(session: &Session, boundary_key: char) -> Option<ImeResult> {
-    if session.keys.is_empty() {
+    // Gated here rather than by clearing the table: the rows stay loaded, so the
+    // switch is instant in both directions and nothing has to be re-pushed.
+    if !session.config.shortcuts_enabled || session.keys.is_empty() {
         return None;
     }
     let case = classify_case(&session.keys);

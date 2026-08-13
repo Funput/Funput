@@ -12,6 +12,9 @@
 //!   made of, where the file lives ([`settings::path`]), and reading/writing it.
 //! - `transfer` — the versioned interchange document behind Export/Import,
 //!   specified in `platforms/CONFIG_FORMAT.md`.
+//! - `unikey` — reading UniKey's gõ tắt table, so a user switching over does not
+//!   retype it. Its rows come out as `transfer`'s own shape, which lets the import
+//!   reuse that module's merge rule instead of restating it.
 //!
 //! # Two things that stay with the platform
 //!
@@ -22,6 +25,7 @@
 
 pub mod settings;
 pub mod transfer;
+pub mod unikey;
 
 #[cfg(test)]
 mod test_support;

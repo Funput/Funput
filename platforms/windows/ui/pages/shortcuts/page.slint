@@ -1,15 +1,17 @@
 // Settings → "Gõ tắt": manage text-expansion shortcuts.
 
-import { Theme, PageHeader, Section, PrimaryButton, ShortcutEntry } from "../../theme/mod.slint";
+import { Theme, PageHeader, Section, Row, AccentSwitch, PrimaryButton, ShortcutEntry } from "../../theme/mod.slint";
 import { ShortcutRow } from "row.slint";
 
 export component ShortcutsPage inherits VerticalLayout {
     in property <[ShortcutEntry]> shortcuts;
     in property <bool> can-add: true;
+    in-out property <bool> shortcuts-enabled;
     callback add-shortcut();
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
+    callback set-shortcuts-enabled(bool);
 
     spacing: Theme.sp-lg;
     width: 100%;
@@ -18,6 +20,20 @@ export component ShortcutsPage inherits VerticalLayout {
     PageHeader {
         title: "Gõ tắt";
         subtitle: "Bung chữ tắt khi gõ khoảng trắng hoặc dấu câu — tự nhận diện hoa/thường: vn → việt nam, Vn → Việt Nam, VN → VIỆT NAM.";
+    }
+
+    Section {
+        Row {
+            // The page's own sidebar mark, so the switch reads as governing the
+            // whole feature rather than one option among several.
+            icon: @image-url("../../icons/nav/primary/shortcut.svg");
+            title: "Bật gõ tắt";
+            subtitle: "Tắt để tạm gõ nguyên chữ tắt — bảng bên dưới vẫn giữ nguyên.";
+            AccentSwitch {
+                checked <=> root.shortcuts-enabled;
+                toggled => { root.set-shortcuts-enabled(root.shortcuts-enabled); }
+            }
+        }
     }
 
     Section {
