@@ -1,6 +1,7 @@
 import KeyboardLayout
 import KeyboardRenderer
 import Testing
+import ThemeSchema
 import UIKit
 
 @MainActor
@@ -41,6 +42,37 @@ struct KeyboardPresentationHotPathTests {
         let after = Set(effectViews(in: surface).map(ObjectIdentifier.init))
         #expect(!before.isEmpty)
         #expect(before == after)
+    }
+
+    @Test("Batched theme and background preserve key controls")
+    func batchedThemeAndBackground() throws {
+        let surface = KeyboardSurfaceView()
+        let before = Set(keyControls(in: surface).map(ObjectIdentifier.init))
+        let image = try #require(UIImage(systemName: "circle.fill"))
+        var presentation = surface.presentation
+        presentation.theme.material = .solid
+
+        surface.apply(presentation: presentation, backgroundImage: image)
+
+        #expect(surface.presentation == presentation)
+        #expect(surface.backgroundImage === image)
+        #expect(Set(keyControls(in: surface).map(ObjectIdentifier.init)) == before)
+    }
+
+    @Test("Layout replacement rebuilds controls only for a real change")
+    func layoutReplacement() {
+        let surface = KeyboardSurfaceView()
+        let before = Set(keyControls(in: surface).map(ObjectIdentifier.init))
+        var presentation = surface.presentation
+        presentation.layout = PasswordKeyboardLayouts.pin(.vni)
+
+        surface.apply(presentation: presentation, backgroundImage: nil)
+        let replaced = Set(keyControls(in: surface).map(ObjectIdentifier.init))
+        surface.apply(presentation: presentation, backgroundImage: nil)
+
+        #expect(!before.isEmpty)
+        #expect(before != replaced)
+        #expect(Set(keyControls(in: surface).map(ObjectIdentifier.init)) == replaced)
     }
 
     private func keyControls(in view: UIView) -> [UIControl] {

@@ -82,8 +82,7 @@ extension KeyboardViewController {
         )
     }
 
-    func applyBackgroundImage(_ image: UIImage?) {
-        keyboardView.backgroundImage = image
+    func applyBackgroundImageToSupplementarySurfaces(_ image: UIImage?) {
         emojiView?.backgroundImage = image
         kaomojiView?.backgroundImage = image
         clipboardPanelView?.backgroundImage = image

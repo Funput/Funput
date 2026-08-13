@@ -8,12 +8,13 @@ import PersonalSuggestions
 import UIKit
 
 extension KeyboardViewController {
-    func installPersonalSuggestions() {
-        personalSuggestionService.onCandidates = { [weak self] generation, candidates in
+    func installPersonalSuggestions(on surface: KeyboardSurfaceView) {
+        personalSuggestionService.onCandidates = {
+            [weak self, weak surface] generation, candidates in
             guard let self, activationState.accepts(generation) else { return }
-            keyboardView.updateSuggestions(candidates)
+            surface?.updateSuggestions(candidates)
         }
-        keyboardView.onSuggestionSelected = { [weak self] candidate in
+        surface.onSuggestionSelected = { [weak self] candidate in
             self?.acceptPersonalSuggestion(candidate)
         }
         NotificationCenter.default.addObserver(

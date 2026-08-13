@@ -3,7 +3,10 @@ import KeyboardLayout
 import UIKit
 
 extension KeyboardSurfaceView {
-    func presentationDidChange(from oldValue: KeyboardPresentation) {
+    func presentationDidChange(
+        from oldValue: KeyboardPresentation,
+        backgroundChanged: Bool = false
+    ) {
         let layoutChanged = oldValue.layout != presentation.layout
         let sizingChanged = oldValue.sizing != presentation.sizing
         let themeChanged = oldValue.theme != presentation.theme
@@ -21,7 +24,7 @@ extension KeyboardSurfaceView {
         if layoutChanged || themeChanged {
             applyPresentation()
         } else {
-            if edgeBlendChanged { applyBackdropPresentation() }
+            if edgeBlendChanged || backgroundChanged { applyBackdropPresentation() }
             var roles = Set<KeyRole>()
             if oldValue.shiftState != presentation.shiftState {
                 roles.formUnion([.character, .shift, .vniModifier])
@@ -40,6 +43,9 @@ extension KeyboardSurfaceView {
     }
 
     func rebuildKeys() {
+#if DEBUG
+        keyRebuildCount += 1
+#endif
         keyControls.values.forEach { $0.removeFromSuperview() }
         let specs = presentation.layout.rows.flatMap(\.keys)
         keyControls = Dictionary(uniqueKeysWithValues: specs.map { spec in
@@ -53,6 +59,9 @@ extension KeyboardSurfaceView {
     }
 
     func applyPresentation() {
+#if DEBUG
+        presentationApplyCount += 1
+#endif
         applyBackdropPresentation()
         previewView.apply(theme: presentation.theme, traits: traitCollection)
         keysHost.apply(presentation: presentation)

@@ -6,8 +6,8 @@ import KeyboardRenderer
 import UIKit
 
 extension KeyboardViewController {
-    func installClipboard() {
-        keyboardView.onClipboardPaste = { [weak self] text in
+    func installClipboard(on surface: KeyboardSurfaceView) {
+        surface.onClipboardPaste = { [weak self] text in
             self?.pasteFromClipboard(text)
         }
     }

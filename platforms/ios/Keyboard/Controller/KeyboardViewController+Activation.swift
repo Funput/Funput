@@ -68,9 +68,13 @@ extension KeyboardViewController {
         currentPresentation = payload.presentation
         clipboardStore = ClipboardStore(expiry: configuration.clipboardExpiry)
         launchTrace.measure("SurfaceApply") {
-            keyboardView.updateClipboardKeyVisible(configuration.clipboardEnabled)
-            applyPresentationToSurfaces(payload.presentation)
-            applyBackgroundImage(payload.backgroundImage)
+            let primary = applyPrimarySurface(
+                presentation: payload.presentation,
+                backgroundImage: payload.backgroundImage
+            )
+            primary.updateClipboardKeyVisible(configuration.clipboardEnabled)
+            applyPresentationToSupplementarySurfaces(payload.presentation)
+            applyBackgroundImageToSupplementarySurfaces(payload.backgroundImage)
         }
         configurePersonalSuggestions(
             hasFullAccess: payload.source.hasFullAccess,

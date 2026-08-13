@@ -70,6 +70,10 @@ final class KeyboardLaunchTrace {
         os_signpost(.event, log: Self.log, name: "HeightReady")
     }
 
+    func recordPrimarySurfaceCreated() {
+        os_signpost(.event, log: Self.log, name: "PrimarySurfaceCreated")
+    }
+
     func recordBootstrapSnapshot(hit: Bool) {
         os_signpost(
             .event, log: Self.log, name: "BootstrapSnapshot",

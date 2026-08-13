@@ -18,7 +18,8 @@ import UIKit
 final class KeyboardViewController: UIInputViewController {
     let launchTrace = KeyboardLaunchTrace()
     let inputCoordinator = KeyboardInputCoordinator()
-    let keyboardView = KeyboardSurfaceView()
+    lazy var keyboardView = makePrimarySurface()
+    var hasPrimarySurface = false
     var emojiView: EmojiKeyboardView?
     var kaomojiView: KaomojiKeyboardView?
     var clipboardPanelView: ClipboardKeyboardView?
@@ -62,8 +63,9 @@ final class KeyboardViewController: UIInputViewController {
     override func viewDidLoad() {
         launchTrace.beginViewDidLoad()
         super.viewDidLoad()
-        installKeyboardView()
-        installPersonalSuggestions()
+        view.isOpaque = false
+        view.backgroundColor = .clear
+        heightController.install(on: view)
         launchTrace.endViewDidLoad()
     }
 
@@ -98,26 +100,6 @@ final class KeyboardViewController: UIInputViewController {
             updatePreferredHeight()
             activatePreferredHeight()
         }
-    }
-
-    private func installKeyboardView() {
-        view.isOpaque = false
-        view.backgroundColor = .clear
-        keyboardView.translatesAutoresizingMaskIntoConstraints = false
-        keyboardView.onKeyEvent = { [weak self] event in
-            self?.handleKeyEvent(event)
-        }
-        view.addSubview(keyboardView)
-        installClipboard()
-
-        NSLayoutConstraint.activate([
-            keyboardView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            keyboardView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            keyboardView.topAnchor.constraint(equalTo: view.topAnchor),
-            keyboardView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-        ])
-
-        heightController.install(on: view)
     }
 
     func updatePreferredHeight() {

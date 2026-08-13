@@ -116,6 +116,12 @@ extension KeyboardViewController {
 
     func applyPresentationToSurfaces(_ presentation: KeyboardPresentation) {
         keyboardView.presentation = presentation
+        applyPresentationToSupplementarySurfaces(presentation)
+    }
+
+    func applyPresentationToSupplementarySurfaces(
+        _ presentation: KeyboardPresentation
+    ) {
         if presentation.layout.toolbar == nil {
             showFunput()
         } else if displayedSurface == .emoji {
