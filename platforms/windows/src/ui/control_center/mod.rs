@@ -1,5 +1,6 @@
 //! Tray Control Center flyout (short-lived Slint child process).
 
+mod placement;
 mod wire;
 
 use std::cell::Cell;
@@ -85,21 +86,19 @@ fn watch_focus_loss(weak: Weak<ControlCenterWindow>) {
 }
 
 fn position_above_tray(window: &slint::Window) {
-    let tray_x = env_f64("FUNPUT_TRAY_X");
-    let tray_y = env_f64("FUNPUT_TRAY_Y");
-    let tray_w = env_f64("FUNPUT_TRAY_W").max(1.0);
-    let tray_h = env_f64("FUNPUT_TRAY_H");
+    let tray = placement::Rect::from_size(
+        env_f64("FUNPUT_TRAY_X"),
+        env_f64("FUNPUT_TRAY_Y"),
+        env_f64("FUNPUT_TRAY_W").max(1.0),
+        env_f64("FUNPUT_TRAY_H"),
+    );
     let size = window.size();
-    let pw = f64::from(size.width);
-    let ph = f64::from(size.height);
-    let mut x = (tray_x + tray_w / 2.0 - pw / 2.0).round() as i32;
-    let mut y = (tray_y - ph - 8.0).round() as i32;
-    if y < 8 {
-        y = (tray_y + tray_h + 8.0).round() as i32;
-    }
-    if x < 8 {
-        x = 8;
-    }
+    let (x, y) = placement::anchor(
+        tray,
+        placement::work_area(tray),
+        f64::from(size.width),
+        f64::from(size.height),
+    );
     window.set_position(PhysicalPosition::new(x, y));
 }
 
