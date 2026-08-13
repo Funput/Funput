@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.surface
 
 import app.funput.funput.keyboard.SuggestionNormalizer
+import app.funput.funput.keyboard.KeyboardClipboardHint
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.theme.KeyboardTheme
@@ -13,6 +14,7 @@ internal class KeyboardSurfacePresentationState(
     private val onSizingChanged: (KeyboardSizingProfile) -> Unit,
     private val onBackgroundImageChanged: (KeyboardThemeBackgroundImage?) -> Unit,
     private val onSuggestionsChanged: () -> Unit,
+    private val onClipboardHintChanged: () -> Unit = {},
     private val onEnterActionChanged: () -> Unit,
 ) {
     var keyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
@@ -39,6 +41,12 @@ internal class KeyboardSurfacePresentationState(
             if (field == normalized) return
             field = normalized
             onSuggestionsChanged()
+        }
+    var clipboardHint: KeyboardClipboardHint? = null
+        set(value) {
+            if (field == value) return
+            field = value
+            onClipboardHintChanged()
         }
     var enterAction: KeyboardEnterAction = KeyboardEnterAction.Standard.NEW_LINE
         set(value) {

@@ -105,6 +105,7 @@ private fun characterKey(
 
 internal fun keyboardToolbarSpec() = SuggestionBarSpec(
     settingsKey = specialKey("settings", "", KeyRole.SETTINGS, accessibilityLabel = "Settings"),
+    clipboardKey = specialKey("clipboard", "", KeyRole.CLIPBOARD, accessibilityLabel = "Clipboard"),
     emojiKey = specialKey("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
     suggestionsEnabled = KeyboardFeatures.SuggestionsEnabled,
 )

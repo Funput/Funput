@@ -8,6 +8,8 @@ class KeyboardCallbacks {
     var onKeyAction: ((KeyAction) -> Unit)? = null
     var onSettingsRequested: (() -> Unit)? = null
     var onEmojiRequested: (() -> Unit)? = null
+    var onClipboardPanelRequested: (() -> Unit)? = null
+    var onClipboardPasteRequested: (() -> Unit)? = null
     var onSuggestionSelected: ((SuggestionSelection) -> Unit)? = null
 
     internal fun dispatch(action: KeyAction) {
@@ -20,6 +22,14 @@ class KeyboardCallbacks {
 
     internal fun dispatchEmojiRequest() {
         onEmojiRequested?.invoke()
+    }
+
+    internal fun dispatchClipboardPasteRequest() {
+        onClipboardPasteRequested?.invoke()
+    }
+
+    internal fun dispatchClipboardPanelRequest() {
+        onClipboardPanelRequested?.invoke()
     }
 
     internal fun dispatchSuggestion(selection: SuggestionSelection) {

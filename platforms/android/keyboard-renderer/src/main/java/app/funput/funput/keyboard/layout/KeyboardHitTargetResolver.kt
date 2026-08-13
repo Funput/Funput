@@ -30,59 +30,29 @@ internal object KeyboardHitTargetResolver {
         keyboard: ResolvedKeyboard,
         bar: ResolvedSuggestionBar,
     ): ResolvedSuggestionBar {
-        val settings = bar.settingsKey
-        val systemKey = bar.systemInputMethodKey?.let { key ->
-            resolveToolbarKey(
-                keyboard = keyboard,
-                key = key,
-                left = if (bar.suggestionsEnabled) {
-                    midpoint(bar.suggestionsBounds.right, key.bounds.left)
-                } else {
-                    key.bounds.left
-                },
-                right = midpoint(
-                    key.bounds.right,
-                    settings?.bounds?.left ?: bar.emojiKey.bounds.left,
-                ),
-            )
-        }
-        val resolvedSettings = settings?.let { key ->
-            resolveToolbarKey(
-                keyboard = keyboard,
-                key = key,
-                left = systemKey?.let { midpoint(it.bounds.right, key.bounds.left) }
-                    ?: settingsHitLeft(bar, key),
-                right = midpoint(key.bounds.right, bar.emojiKey.bounds.left),
-            )
-        }
-        return bar.copy(
-            systemInputMethodKey = systemKey,
-            settingsKey = resolvedSettings,
-            emojiKey = resolveToolbarKey(
-                keyboard = keyboard,
-                key = bar.emojiKey,
-                left = emojiHitLeft(bar, systemKey, resolvedSettings),
-                right = keyboard.width,
-            ),
+        val controls = listOfNotNull(
+            bar.systemInputMethodKey, bar.settingsKey, bar.clipboardKey, bar.emojiKey,
         )
-    }
-
-    private fun settingsHitLeft(bar: ResolvedSuggestionBar, settings: ResolvedKey): Float =
-        if (bar.suggestionsEnabled) {
-            midpoint(bar.suggestionsBounds.right, settings.bounds.left)
-        } else {
-            midpoint(bar.logoBounds.right, settings.bounds.left)
+        val resolvedControls = controls.mapIndexed { index, key ->
+            val left = if (index > 0) {
+                midpoint(controls[index - 1].bounds.right, key.bounds.left)
+            } else if (bar.suggestionsEnabled) {
+                midpoint(bar.suggestionsBounds.right, key.bounds.left)
+            } else {
+                key.bounds.left
+            }
+            val right = controls.getOrNull(index + 1)
+                ?.let { midpoint(key.bounds.right, it.bounds.left) } ?: keyboard.width
+            resolveToolbarKey(keyboard, key, left, right)
         }
-
-    private fun emojiHitLeft(
-        bar: ResolvedSuggestionBar,
-        systemKey: ResolvedKey?,
-        settings: ResolvedKey?,
-    ): Float = when {
-        settings != null -> midpoint(settings.bounds.right, bar.emojiKey.bounds.left)
-        systemKey != null -> midpoint(systemKey.bounds.right, bar.emojiKey.bounds.left)
-        bar.suggestionsEnabled -> midpoint(bar.suggestionsBounds.right, bar.emojiKey.bounds.left)
-        else -> bar.emojiKey.bounds.left
+        fun lookup(key: ResolvedKey?): ResolvedKey? =
+            key?.let { target -> resolvedControls.first { it.spec.id == target.spec.id } }
+        return bar.copy(
+            systemInputMethodKey = lookup(bar.systemInputMethodKey),
+            settingsKey = lookup(bar.settingsKey),
+            clipboardKey = lookup(bar.clipboardKey),
+            emojiKey = requireNotNull(lookup(bar.emojiKey)),
+        )
     }
 
     private fun resolveToolbarKey(

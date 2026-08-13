@@ -6,4 +6,19 @@
     <string name="emoji_panel_loading">Loading emoji…</string>
     <string name="emoji_panel_empty">No emoji available</string>
     <string name="emoji_search_empty">No matching emoji</string>
+    <string name="clipboard_pinned">Pinned</string>
+    <string name="clipboard_recent">Recent</string>
+    <string name="clipboard_empty_title">Nothing in history</string>
+    <string name="clipboard_empty_detail">Copy text, then tap Paste in the toolbar. History only saves content pasted through Funput.</string>
+    <string name="clipboard_loading">Loading clipboard history</string>
+    <string name="clipboard_just_now">Just now</string>
+    <string name="clipboard_minutes_ago">%1$d minutes ago</string>
+    <string name="clipboard_hours_ago">%1$d hours ago</string>
+    <string name="clipboard_days_ago">%1$d days ago</string>
+    <string name="clipboard_pin">Pin</string>
+    <string name="clipboard_unpin">Unpin</string>
+    <string name="clipboard_delete">Delete</string>
+    <string name="clipboard_clear_all">Clear all</string>
+    <string name="clipboard_return">Return to Funput keyboard</string>
+    <string name="clipboard_preview">Clipboard preview</string>
 </resources>

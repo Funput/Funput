@@ -43,12 +43,16 @@ data class KeyboardRow(
 data class SuggestionBarSpec(
     val settingsKey: KeySpec,
     val emojiKey: KeySpec,
+    val clipboardKey: KeySpec? = null,
     val systemInputMethodKey: KeySpec? = null,
     val suggestionsEnabled: Boolean = true,
 ) {
     init {
         require(settingsKey.role == KeyRole.SETTINGS) { "Toolbar settings action must be a settings key" }
         require(emojiKey.role == KeyRole.EMOJI) { "Toolbar emoji action must be an emoji key" }
+        require(clipboardKey == null || clipboardKey.role == KeyRole.CLIPBOARD) {
+            "Toolbar clipboard action must be a clipboard key"
+        }
         require(systemInputMethodKey == null || systemInputMethodKey.role == KeyRole.SYSTEM_INPUT_METHOD) {
             "Toolbar input-method action must be a system input-method key"
         }
@@ -67,6 +71,7 @@ data class KeyboardLayout(
 
         val keyIds = buildList {
             suggestionBar?.settingsKey?.let { add(it.id) }
+            suggestionBar?.clipboardKey?.let { add(it.id) }
             suggestionBar?.emojiKey?.let { add(it.id) }
             suggestionBar?.systemInputMethodKey?.let { add(it.id) }
             rows.forEach { row -> addAll(row.keys.map(KeySpec::id)) }

@@ -61,6 +61,8 @@ internal class ImeKeyActionHandler(
 
     fun onEmojiSelected(emoji: String) = commitExternalText(emoji)
 
+    fun onClipboardSelected(text: String) = commitExternalText(text)
+
     fun finish() {
         composition.finish(connection())
         suggestionTracker.reset()

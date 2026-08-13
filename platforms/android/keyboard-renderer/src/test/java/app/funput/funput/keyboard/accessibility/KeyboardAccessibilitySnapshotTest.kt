@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.accessibility
 
 import app.funput.funput.keyboard.KeyboardDimensions
+import app.funput.funput.keyboard.interaction.ClipboardTargetId
 import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.resolveGeometry
@@ -62,6 +63,20 @@ class KeyboardAccessibilitySnapshotTest {
     }
 
     @Test
+    fun `clipboard is one accessible node and suggestions take priority`() {
+        val clipboard = snapshot(clipboardLabel = "Dán, Đã sao chép văn bản")
+        val withSuggestions = snapshot(
+            suggestions = listOf("xin"),
+            clipboardLabel = "Dán, Đã sao chép văn bản",
+        )
+
+        assertEquals("Dán, Đã sao chép văn bản", clipboard.nodes.single {
+            it.keyId == ClipboardTargetId
+        }.label)
+        assertFalse(withSuggestions.nodes.any { it.keyId == ClipboardTargetId })
+    }
+
+    @Test
     fun `letter alternates become shifted TalkBack actions`() {
         val actions = snapshot(shiftState = ShiftState.ON).nodes
             .first { it.keyId == "character-a" }.alternateActions
@@ -85,6 +100,7 @@ class KeyboardAccessibilitySnapshotTest {
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
         systemSwitcherVisible: Boolean = false,
         suggestions: List<String> = emptyList(),
+        clipboardLabel: String? = null,
     ): KeyboardAccessibilitySnapshot {
         val profile = KeyboardSizingProfile.Normal
         val layout = KeyboardLayoutResolver.resolve(
@@ -99,6 +115,6 @@ class KeyboardAccessibilitySnapshotTest {
             density = 1f,
             profile = profile,
         ))
-        return KeyboardAccessibilitySnapshot(keyboard, shiftState, suggestions)
+        return KeyboardAccessibilitySnapshot(keyboard, shiftState, suggestions, clipboardLabel)
     }
 }

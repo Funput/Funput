@@ -10,11 +10,13 @@ import app.funput.funput.theme.KeyboardTheme
 internal class KeyIconRenderer(metrics: RenderMetrics) {
     private val navigationIcons = NavigationKeyIconRenderer(metrics)
     private val utilityIcons = UtilityKeyIconRenderer(metrics)
+    private val clipboardIcon = ClipboardKeyIconRenderer(metrics)
     private val enterContent = EnterKeyContentRenderer(metrics)
 
     fun updateTheme(theme: KeyboardTheme) {
         navigationIcons.updateTheme(theme)
         utilityIcons.updateTheme(theme)
+        clipboardIcon.updateTheme(theme)
         enterContent.updateTheme(theme)
     }
 
@@ -31,6 +33,7 @@ internal class KeyIconRenderer(metrics: RenderMetrics) {
             KeyRole.BACKSPACE -> utilityIcons.drawBackspace(canvas, key)
             KeyRole.SYSTEM_INPUT_METHOD -> utilityIcons.drawSystemInputMethod(canvas, key)
             KeyRole.SETTINGS -> utilityIcons.drawSettings(canvas, key)
+            KeyRole.CLIPBOARD -> clipboardIcon.draw(canvas, key)
             KeyRole.EMOJI -> utilityIcons.drawEmoji(canvas, key)
             else -> return false
         }

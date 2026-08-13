@@ -13,19 +13,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.funput.funput.ime.settings.ClipboardPreferences
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.ui.settings.clipboard.clipboardSettingsItem
+import app.funput.funput.ui.settings.components.KeyboardHero
 import app.funput.funput.ui.settings.feedback.FeedbackSettingsSection
 import app.funput.funput.ui.settings.keyboard.KeyboardSettingsSection
-import app.funput.funput.theme.KeyboardThemeDescriptor
-import app.funput.funput.ui.settings.components.KeyboardHero
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
+import app.funput.funput.ui.settings.smart.PersonalSuggestionSettingsSection
+import app.funput.funput.ui.settings.smart.SmartSettingsSection
 import app.funput.funput.ui.theme.Spacing
 import app.funput.funput.ui.theme.rememberEntryTracker
 import app.funput.funput.ui.theme.staggeredEntry
-import app.funput.funput.ui.settings.smart.PersonalSuggestionSettingsSection
-import app.funput.funput.ui.settings.smart.SmartSettingsSection
+import app.funput.funput.theme.KeyboardThemeDescriptor
 
 @Composable
 internal fun SettingsScreenSections(
@@ -40,6 +42,7 @@ internal fun SettingsScreenSections(
     smartRestoreEnabled: Boolean,
     spellCheckEnabled: Boolean,
     personalSuggestionsEnabled: Boolean,
+    clipboardPreferences: ClipboardPreferences,
     contentPadding: PaddingValues,
     onOpenPicker: (SettingsPicker) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
@@ -51,6 +54,8 @@ internal fun SettingsScreenSections(
     onSmartRestoreChanged: (Boolean) -> Unit,
     onSpellCheckChanged: (Boolean) -> Unit,
     onPersonalSuggestionsChanged: (Boolean) -> Unit,
+    onClipboardEnabledChanged: (Boolean) -> Unit,
+    onClearClipboardHistory: () -> Unit,
     onResetPersonalSuggestions: () -> Unit,
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
@@ -119,8 +124,15 @@ internal fun SettingsScreenSections(
                 )
             }
         }
+        clipboardSettingsItem(
+            preferences = clipboardPreferences,
+            tracker = tracker,
+            onEnabledChanged = onClipboardEnabledChanged,
+            onOpenExpiry = { onOpenPicker(SettingsPicker.CLIPBOARD_EXPIRY) },
+            onClear = onClearClipboardHistory,
+        )
         item(key = "feedback") {
-            Box(modifier = Modifier.staggeredEntry(4, tracker)) {
+            Box(modifier = Modifier.staggeredEntry(5, tracker)) {
                 FeedbackSettingsSection(
                     hapticsEnabled = hapticsEnabled,
                     soundsEnabled = soundsEnabled,

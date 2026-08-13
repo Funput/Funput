@@ -12,6 +12,7 @@ object KeyboardGeometry {
         height: Float,
         spec: KeyboardGeometrySpec,
         showSettings: Boolean = true,
+        showClipboard: Boolean = false,
     ): ResolvedKeyboard {
         require(width > 0f) { "Keyboard width must be positive" }
         require(height > 0f) { "Keyboard height must be positive" }
@@ -37,7 +38,9 @@ object KeyboardGeometry {
             verticalGap = verticalMetrics.verticalGap,
         )
 
-        val suggestionBar = ToolbarGeometry.resolve(layout, width, resolvedSpec, showSettings)
+        val suggestionBar = ToolbarGeometry.resolve(
+            layout, width, resolvedSpec, showSettings, showClipboard,
+        )
         val rowsTop = suggestionBar?.bounds?.bottom?.plus(resolvedSpec.suggestionBarGap)
             ?: spec.verticalPadding
         val rowsTopOffset = rowsTop

@@ -2,6 +2,7 @@ package app.funput.funput.ui
 
 import android.content.Context
 import app.funput.funput.ime.settings.AppearanceSettings
+import app.funput.funput.ime.settings.ClipboardSettings
 import app.funput.funput.ime.settings.DynamicColorSettings
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
@@ -19,6 +20,7 @@ internal class FunputSettingsStores(context: Context) {
     val keyboardTheme = KeyboardThemeSettings(context)
     val toneStyleStore = ToneStyleSettings(context)
     val appearance = AppearanceSettings(context)
+    val clipboard = ClipboardSettings(context)
     val dynamicColorStore = DynamicColorSettings(context)
     val feedbackStore = KeyboardFeedbackSettings(context)
     val numberRowStore = NumberRowSettings(context)

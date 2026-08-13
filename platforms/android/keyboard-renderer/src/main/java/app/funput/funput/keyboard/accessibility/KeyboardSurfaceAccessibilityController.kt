@@ -21,8 +21,16 @@ internal class KeyboardSurfaceAccessibilityController(
 
     fun dispatchHover(event: MotionEvent): Boolean = delegate.dispatchHover(event)
 
-    fun refresh(keyboard: ResolvedKeyboard?, shiftState: ShiftState, suggestions: List<String> = emptyList()) {
-        snapshot = keyboard?.let { KeyboardAccessibilitySnapshot(it, shiftState, suggestions) }
+    fun refresh(
+        keyboard: ResolvedKeyboard?,
+        shiftState: ShiftState,
+        suggestions: List<String> = emptyList(),
+        clipboardLabel: String? = null,
+        clipboardKeyLabel: String? = null,
+    ) {
+        snapshot = keyboard?.let {
+            KeyboardAccessibilitySnapshot(it, shiftState, suggestions, clipboardLabel, clipboardKeyLabel)
+        }
         delegate.invalidateRoot()
     }
 }

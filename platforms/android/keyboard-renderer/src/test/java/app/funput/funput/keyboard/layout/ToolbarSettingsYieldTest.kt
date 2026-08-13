@@ -36,18 +36,31 @@ class ToolbarSettingsYieldTest {
 
     @Test
     fun showingSettingsKeepsSettingsBeforeEmoji() {
-        val bar = requireNotNull(resolve(showSettings = true).suggestionBar)
+        val bar = requireNotNull(resolve(showSettings = true, showClipboard = true).suggestionBar)
         val settings = requireNotNull(bar.settingsKey)
+        val clipboard = requireNotNull(bar.clipboardKey)
 
         assertTrue(bar.suggestionsBounds.right < settings.bounds.left)
-        assertTrue(settings.bounds.right < bar.emojiKey.bounds.left)
+        assertTrue(settings.bounds.right < clipboard.bounds.left)
+        assertTrue(clipboard.bounds.right < bar.emojiKey.bounds.left)
     }
 
-    private fun resolve(showSettings: Boolean) = KeyboardGeometry.resolve(
+    @Test
+    fun clipboardDoesNotMoveEmojiAndYieldsWithSuggestions() {
+        val hidden = requireNotNull(resolve(true, false).suggestionBar)
+        val shown = requireNotNull(resolve(true, true).suggestionBar)
+        assertNull(hidden.clipboardKey)
+        assertNotNull(shown.clipboardKey)
+        assertEquals(hidden.emojiKey.bounds, shown.emojiKey.bounds)
+        assertTrue(hidden.suggestionsBounds.width > shown.suggestionsBounds.width)
+    }
+
+    private fun resolve(showSettings: Boolean, showClipboard: Boolean = false) = KeyboardGeometry.resolve(
         layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX),
         width = 1080f,
         height = 726f,
         spec = spec,
         showSettings = showSettings,
+        showClipboard = showClipboard,
     )
 }

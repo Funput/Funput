@@ -18,6 +18,7 @@ internal fun KeySpec.toKeyAction(shiftState: ShiftState): KeyAction? = when (rol
     KeyRole.LETTERS -> KeyAction.Letters
     KeyRole.SYSTEM_INPUT_METHOD -> KeyAction.SwitchInputMethod
     KeyRole.SETTINGS,
+    KeyRole.CLIPBOARD,
     KeyRole.EMOJI,
     -> null
     KeyRole.SPACE -> KeyAction.Space

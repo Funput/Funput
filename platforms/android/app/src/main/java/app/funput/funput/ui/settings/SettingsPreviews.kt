@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import app.funput.funput.ime.settings.AppearanceMode
+import app.funput.funput.ime.settings.ClipboardPreferences
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -62,6 +63,7 @@ private fun SettingsPreview(
             smartRestoreEnabled = true,
             spellCheckEnabled = false,
             personalSuggestionsEnabled = true,
+            clipboardPreferences = ClipboardPreferences.Default,
             onInputMethodSelected = {},
             onShowsNumberRowChanged = {},
             onOpenAppearance = {},
@@ -72,6 +74,9 @@ private fun SettingsPreview(
             onSmartRestoreChanged = {},
             onSpellCheckChanged = {},
             onPersonalSuggestionsChanged = {},
+            onClipboardEnabledChanged = {},
+            onClipboardExpirySelected = {},
+            onClearClipboardHistory = {},
             onResetPersonalSuggestions = {},
             onEnableKeyboard = {},
             onSelectKeyboard = {},

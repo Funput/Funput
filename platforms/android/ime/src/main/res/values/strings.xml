@@ -2,4 +2,6 @@
 <resources>
     <string name="funput_ime_name" translatable="false">Funput</string>
     <string name="funput_ime_subtype_vietnamese">Vietnamese</string>
+    <string name="clipboard_paste_too_large">Copied content is too long to paste</string>
+    <string name="clipboard_paste_failed">Couldn’t paste copied content</string>
 </resources>

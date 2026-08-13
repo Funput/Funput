@@ -14,14 +14,18 @@ internal object SuggestionTargetIds {
     }
 }
 
+internal const val ClipboardTargetId = "clipboard-paste"
+
 internal fun ResolvedKeyboard.interactionTargetAt(
     x: Float,
     y: Float,
     suggestionCount: Int,
+    clipboardVisible: Boolean = false,
 ): String? {
     keyAt(x, y)?.let { return it.spec.id }
     val bar = suggestionBar ?: return null
-    if (suggestionCount <= 0 || !bar.suggestionsBounds.contains(x, y)) return null
+    if (!bar.suggestionsBounds.contains(x, y)) return null
+    if (suggestionCount <= 0) return ClipboardTargetId.takeIf { clipboardVisible }
 
     val bounds = bar.suggestionsBounds
     val segmentWidth = bounds.width / suggestionCount
