@@ -78,6 +78,9 @@ windows = { version = "0.62", features = [
     "Win32_System_Registry",
     "Win32_Security",
     "Win32_Graphics_Dwm",
+    # Monitor work area, so the Control Center flyout can be kept on screen next to
+    # a tray icon that sits in a corner (see ui/control_center/placement.rs).
+    "Win32_Graphics_Gdi",
 ] }
 
 # Size-first for the shell (the slint UI dominates the binary), speed-first for
