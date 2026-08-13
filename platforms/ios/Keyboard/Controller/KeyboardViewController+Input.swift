@@ -12,7 +12,7 @@ extension KeyboardViewController {
             from: configuration,
             catalog: themeCatalog
         )
-        updateInputPresentation()
+        _ = applyInputPresentation()
     }
 
     func handleKeyEvent(_ event: KeyboardKeyEvent) {
@@ -75,7 +75,13 @@ extension KeyboardViewController {
     }
 
     func updateInputPresentation() {
-        guard let themed = cachedThemedPresentation else { return }
+        guard applyInputPresentation() else { return }
+        updatePreferredHeight()
+    }
+
+    @discardableResult
+    private func applyInputPresentation() -> Bool {
+        guard let themed = cachedThemedPresentation else { return false }
         let signpostID = OSSignpostID(log: KeyboardControllerSignpost.log)
         os_signpost(
             .begin,
@@ -120,7 +126,7 @@ extension KeyboardViewController {
         } else if displayedSurface == .clipboard {
             refreshClipboardPanel()
         }
-        updatePreferredHeight()
+        return true
     }
 }
 

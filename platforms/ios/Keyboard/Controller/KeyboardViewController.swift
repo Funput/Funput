@@ -60,8 +60,6 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        isKeyboardVisible = true
-        activatePreferredHeight()
         refreshClipboardOffer()
         launchTrace.finish()
     }
@@ -83,6 +81,7 @@ final class KeyboardViewController: UIInputViewController {
         let shouldReactivate = heightController.deactivate()
         coordinator.animate(alongsideTransition: nil) { [weak self] _ in
             guard let self, shouldReactivate, isKeyboardVisible else { return }
+            updatePreferredHeight()
             activatePreferredHeight()
         }
     }
@@ -114,11 +113,14 @@ final class KeyboardViewController: UIInputViewController {
         )
     }
 
+    func activatePreferredHeightForAppearance() {
+        updatePreferredHeight()
+        isKeyboardVisible = true
+        activatePreferredHeight()
+    }
+
     private func activatePreferredHeight() {
-        heightController.activate(
-            for: currentPresentation,
-            traits: traitCollection
-        )
+        heightController.activate()
     }
 }
 

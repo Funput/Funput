@@ -10,6 +10,7 @@ extension KeyboardViewController {
         applyConfigurationForActivation()
         prepareActivationPresentation()
         applyCachedBackgroundImage()
+        activatePreferredHeightForAppearance()
 #if DEBUG
         touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
 #endif
