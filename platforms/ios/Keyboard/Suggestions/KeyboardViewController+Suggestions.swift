@@ -4,6 +4,7 @@ import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
 import os
+import PersonalSuggestions
 import UIKit
 
 extension KeyboardViewController {

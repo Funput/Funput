@@ -27,7 +27,6 @@ extension KeyboardViewController {
         cancelClipboardRetry()
         let generation = activationState.begin()
         let source = loadActivationSource(hasFullAccess: hasFullAccess)
-        if source.hasFullAccess { accessStateStore.recordFullAccess() }
 
         launchTrace.measure("EngineConfiguration") {
             inputCoordinator.apply(source.configuration)

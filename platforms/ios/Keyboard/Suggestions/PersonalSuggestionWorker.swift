@@ -3,7 +3,7 @@ import FunputShared
 import os
 import PersonalSuggestions
 
-final class PersonalSuggestionWorker: @unchecked Sendable {
+final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Sendable {
     typealias Query = PersonalSuggestionQueryRequest
 
     private let queue = DispatchQueue(label: "app.funput.keyboard.personal-suggestions")
@@ -26,12 +26,12 @@ final class PersonalSuggestionWorker: @unchecked Sendable {
         flushTimer.cancel()
     }
 
-    func configure(enabled: Bool, hasFullAccess: Bool, resetToken: UUID?) {
+    func configure(_ configuration: PersonalSuggestionWorkerConfiguration) {
         queue.async { [weak self] in
             self?.applyConfiguration(
-                enabled: enabled,
-                requestedURL: hasFullAccess ? Self.prepareStoreURL() : nil,
-                resetToken: resetToken
+                enabled: configuration.enabled,
+                requestedURL: configuration.hasFullAccess ? Self.prepareStoreURL() : nil,
+                resetToken: configuration.resetToken
             )
         }
     }

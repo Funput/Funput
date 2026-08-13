@@ -10,6 +10,7 @@ import KeyboardConfiguration
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
+import PersonalSuggestions
 import ThemeRuntime
 import ThemeSchema
 import UIKit
@@ -28,7 +29,9 @@ final class KeyboardViewController: UIInputViewController {
     let accessStateStore = KeyboardAccessStateStore()
     let customThemeStore = CustomThemeStore()
     let themeAssetStore = ThemeAssetStore()
-    let personalSuggestionService = PersonalSuggestionService()
+    let personalSuggestionService = PersonalSuggestionService {
+        PersonalSuggestionWorker(onResult: $0)
+    }
     let activationState = KeyboardActivationState()
     let backgroundImageCache = KeyboardBackgroundAssetCache<UIImage>()
     let bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
@@ -66,8 +69,12 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        refreshClipboardOffer()
         launchTrace.finish()
+        if hasFullAccess { accessStateStore.recordFullAccess() }
+#if DEBUG
+        touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
+#endif
+        refreshClipboardOffer()
         repairBootstrapSnapshotIfNeeded()
     }
 

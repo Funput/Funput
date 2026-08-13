@@ -6,9 +6,6 @@ extension KeyboardViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         activateKeyboardForAppearance()
-#if DEBUG
-        touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
-#endif
     }
 
     override func textWillChange(_ textInput: (any UITextInput)?) {
