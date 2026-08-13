@@ -66,7 +66,9 @@ pub struct Preferences {
     pub auto_capitalize: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize)]
+/// Comparable and printable because it is also what [`crate::unikey`] parses a
+/// UniKey macro table into, and those rows are asserted on directly in tests.
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PortableShortcut {
     pub trigger: String,
     pub expansion: String,

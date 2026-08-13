@@ -1,0 +1,97 @@
+// A result notice drawn inside the window, replacing the Win32 message box the
+// config actions used to raise. A `rfd::MessageDialog` is a system dialog: square
+// corners, system font, its own grey — none of the Fluent tokens the rest of this
+// window is built from, and it ignores the Mica backdrop entirely.
+//
+// Sits directly under `Window` so it covers the sidebar too, gated by `if` at the
+// call site rather than `visible` so it costs nothing and takes no hits when closed.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, PrimaryButton } from "../theme/mod.slint";
+
+export component Notice inherits Rectangle {
+    in property <string> title;
+    in property <string> body;
+    /// Paints the title in the danger colour — a failure the user has to read,
+    /// rather than a summary they can wave away.
+    in property <bool> danger;
+    callback dismissed();
+
+    // Scrim: dims the page and, with the TouchArea below, is what makes this modal
+    // rather than merely on top.
+    background: Theme.dark ? #0000008c : #00000040;
+
+    TouchArea {
+        clicked => {
+            root.dismissed();
+        }
+    }
+
+    // A modal that only closes by mouse is a trap for anyone who just typed a path
+    // into the file dialog. Focus is taken on `init` because the notice appears
+    // without the user aiming at it, so there is nothing else to hand focus over.
+    keys := FocusScope {
+        init => {
+            self.focus();
+        }
+        key-pressed(event) => {
+            if event.text == Key.Escape || event.text == Key.Return {
+                root.dismissed();
+                return accept;
+            }
+            reject
+        }
+    }
+
+    Rectangle {
+        // Clamped so a long summary wraps instead of stretching edge to edge, and
+        // still fits when the window is narrow.
+        width: min(400px, root.width - 2 * Theme.sp-xl);
+        height: card.preferred-height;
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+
+        // `popup-base` is opaque on purpose: this floats over a Mica-transparent
+        // window, where a translucent fill would show the desktop through the text.
+        background: Theme.popup-base;
+        border-radius: Theme.r-card;
+        border-width: 1px;
+        border-color: Theme.card-border;
+        drop-shadow-color: Theme.shadow;
+        drop-shadow-blur: 24px;
+        drop-shadow-offset-y: 8px;
+
+        // Swallows clicks on the card so they do not reach the scrim and dismiss it.
+        TouchArea { }
+
+        card := VerticalLayout {
+            padding: Theme.sp-lg;
+            spacing: Theme.sp-ms;
+
+            Text {
+                // Title size, not body size: at the same 14px as the line below it
+                // the two read as one paragraph and the notice has no shape.
+                text: root.title;
+                font-size: Theme.font-title;
+                font-weight: 700;
+                color: root.danger ? Theme.danger : Palette.foreground;
+                wrap: word-wrap;
+            }
+            Text {
+                text: root.body;
+                font-size: Theme.font-body;
+                color: Theme.subtle;
+                wrap: word-wrap;
+            }
+            HorizontalLayout {
+                alignment: end;
+                PrimaryButton {
+                    text: "OK";
+                    clicked => {
+                        root.dismissed();
+                    }
+                }
+            }
+        }
+    }
+}

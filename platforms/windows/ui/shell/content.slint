@@ -53,6 +53,7 @@ export component SettingsContent inherits ScrollView {
     callback relaunch-now();
     callback export-config();
     callback import-config();
+    callback import-unikey();
 
     HorizontalLayout {
         padding-top: Theme.sp-lg;
@@ -111,6 +112,7 @@ export component SettingsContent inherits ScrollView {
             if root.active == "data": DataPage {
                 export-config() => { root.export-config(); }
                 import-config() => { root.import-config(); }
+                import-unikey() => { root.import-unikey(); }
             }
             if root.active == "about": AboutPage {
                 version: root.version;
