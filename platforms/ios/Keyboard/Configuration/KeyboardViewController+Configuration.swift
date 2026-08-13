@@ -1,54 +1,53 @@
 import FunputShared
-import KeyboardInput
+import KeyboardConfiguration
 import KeyboardRenderer
 import ThemeRuntime
 import ThemeSchema
 import UIKit
 
 extension KeyboardViewController {
-    /// Reads the shared configuration once per activation. Presentation and
-    /// engine updates are deliberately coordinated by `viewWillAppear`.
-    func reloadConfiguration() {
+    func loadActivationSource(hasFullAccess: Bool) -> KeyboardActivationSource {
         launchTrace.beginConfigurationLoad()
-        defer { launchTrace.endConfigurationLoad() }
 #if DEBUG
-        configuration = FunputUITestConfigurationOverrideStore().load()
+        let configuration = FunputUITestConfigurationOverrideStore().load()
             ?? configurationStore.load()
 #else
-        configuration = configurationStore.load()
+        let configuration = configurationStore.load()
 #endif
-        themeCatalog = ThemeCatalog(customThemes: customThemeStore.load())
-        cachedThemedPresentation = nil
-        selectedTheme = themeCatalog.theme(id: configuration.selectedThemeID)
-            ?? BundledThemes.default
-        updateCachedBackgroundImage(assetID: selectedTheme.backgroundEffects.image?.assetID)
-    }
-
-    func applyConfigurationForActivation() {
-        clipboardStore = ClipboardStore(expiry: configuration.clipboardExpiry)
-        keyboardView.updateClipboardKeyVisible(configuration.clipboardEnabled)
-        inputCoordinator.apply(configuration)
-        applyTextInputTraits(force: true)
-        // Reconcile before rendering so activation cannot trigger a second
-        // presentation pass for capitalization or secure-field state.
-        _ = inputCoordinator.synchronizeDocument(
-            makeDocumentWriter(),
-            event: .activated
+        let customThemes = customThemeStore.load()
+        launchTrace.endConfigurationLoad()
+        let resolved = launchTrace.measure("ThemeResolve") {
+            KeyboardActivationThemeResolver.resolve(
+                configuration: configuration,
+                customThemes: customThemes
+            )
+        }
+        return KeyboardActivationSource(
+            configuration: configuration,
+            catalog: resolved.catalog,
+            selectedTheme: resolved.selectedTheme,
+            hasFullAccess: hasFullAccess
         )
-        configurePersonalSuggestions()
     }
 
-    func applyCachedBackgroundImage() {
-        keyboardView.backgroundImage = cachedBackgroundImage
-        emojiView?.backgroundImage = cachedBackgroundImage
-        kaomojiView?.backgroundImage = cachedBackgroundImage
-        clipboardPanelView?.backgroundImage = cachedBackgroundImage
+    func applyBackgroundImage(_ image: UIImage?) {
+        keyboardView.backgroundImage = image
+        emojiView?.backgroundImage = image
+        kaomojiView?.backgroundImage = image
+        clipboardPanelView?.backgroundImage = image
     }
 
-    private func updateCachedBackgroundImage(assetID: String?) {
-        guard assetID != cachedBackgroundAssetID else { return }
-        cachedBackgroundAssetID = assetID
-        let data = assetID.flatMap(themeAssetStore.renderedData)
-        cachedBackgroundImage = data.flatMap(UIImage.init(data:))
+    func loadBackgroundImage(assetID: String?) -> UIImage? {
+        backgroundImageCache.resolve(
+            assetID: assetID,
+            load: { id in
+                launchTrace.measure("AssetRead") {
+                    themeAssetStore.renderedData(for: id)
+                }
+            },
+            decode: { data in
+                launchTrace.measure("AssetDecode") { UIImage(data: data) }
+            }
+        )
     }
 }

@@ -1,5 +1,4 @@
 import FunputShared
-import KeyboardConfiguration
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
@@ -7,14 +6,6 @@ import os
 import UIKit
 
 extension KeyboardViewController {
-    func prepareActivationPresentation() {
-        cachedThemedPresentation = KeyboardPresentationFactory.make(
-            from: configuration,
-            catalog: themeCatalog
-        )
-        _ = applyInputPresentation()
-    }
-
     func handleKeyEvent(_ event: KeyboardKeyEvent) {
         let alternate: KeyAlternate?
         switch event.phase {
@@ -82,23 +73,32 @@ extension KeyboardViewController {
     @discardableResult
     private func applyInputPresentation() -> Bool {
         guard let themed = cachedThemedPresentation else { return false }
-        let signpostID = OSSignpostID(log: KeyboardControllerSignpost.log)
+        let presentation = makeInputPresentation(
+            configuration: configuration,
+            themed: themed
+        )
+        currentPresentation = presentation
+        applyPresentationToSurfaces(presentation)
+        return true
+    }
+
+    func makeInputPresentation(
+        configuration: FunputConfiguration,
+        themed: KeyboardPresentation
+    ) -> KeyboardPresentation {
+        let identifier = OSSignpostID(log: KeyboardControllerSignpost.log)
         os_signpost(
-            .begin,
-            log: KeyboardControllerSignpost.log,
-            name: "PresentationUpdate",
-            signpostID: signpostID
+            .begin, log: KeyboardControllerSignpost.log,
+            name: "PresentationUpdate", signpostID: identifier
         )
         defer {
             os_signpost(
-                .end,
-                log: KeyboardControllerSignpost.log,
-                name: "PresentationUpdate",
-                signpostID: signpostID
+                .end, log: KeyboardControllerSignpost.log,
+                name: "PresentationUpdate", signpostID: identifier
             )
         }
         let state = inputCoordinator.state
-        var presentation = currentPresentation
+        var presentation = themed
         presentation.layout = KeyboardLayoutResolver.resolve(
             inputMethod: state.inputMethod,
             mode: state.layoutMode,
@@ -106,16 +106,15 @@ extension KeyboardViewController {
             showsNumberRow: configuration.showsNumberRow,
             preset: configuration.layoutPreset
         )
-        presentation.sizing = themed.sizing
         presentation.shiftState = state.shiftState
         presentation.language = state.language
         presentation.enterAction = state.enterAction
-        presentation.theme = themed.theme
-        presentation.blendsSystemEdge = themed.blendsSystemEdge
-        presentation.isHapticFeedbackEnabled = configuration.isHapticFeedbackEnabled
-        presentation.isKeySoundEnabled = configuration.isKeySoundEnabled
-        presentation.showsKeyPreviews = !state.editorMode.isPassword && configuration.showsKeyPreviews
-        currentPresentation = presentation
+        presentation.showsKeyPreviews = !state.editorMode.isPassword
+            && configuration.showsKeyPreviews
+        return presentation
+    }
+
+    func applyPresentationToSurfaces(_ presentation: KeyboardPresentation) {
         keyboardView.presentation = presentation
         if presentation.layout.toolbar == nil {
             showFunput()
@@ -126,10 +125,9 @@ extension KeyboardViewController {
         } else if displayedSurface == .clipboard {
             refreshClipboardPanel()
         }
-        return true
     }
 }
 
-private enum KeyboardControllerSignpost {
+enum KeyboardControllerSignpost {
     static let log = OSLog(subsystem: "app.funput.keyboard", category: "Controller")
 }

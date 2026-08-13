@@ -1,14 +1,16 @@
+import FunputShared
+import KeyboardConfiguration
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
-import FunputShared
 import os
 import UIKit
 
 extension KeyboardViewController {
     func installPersonalSuggestions() {
-        personalSuggestionService.onCandidates = { [weak self] candidates in
-            self?.keyboardView.updateSuggestions(candidates)
+        personalSuggestionService.onCandidates = { [weak self] generation, candidates in
+            guard let self, activationState.accepts(generation) else { return }
+            keyboardView.updateSuggestions(candidates)
         }
         keyboardView.onSuggestionSelected = { [weak self] candidate in
             self?.acceptPersonalSuggestion(candidate)
@@ -21,11 +23,15 @@ extension KeyboardViewController {
         )
     }
 
-    func configurePersonalSuggestions() {
+    func configurePersonalSuggestions(
+        hasFullAccess: Bool,
+        activationGeneration: UInt64
+    ) {
         personalSuggestionService.configure(
             enabled: configuration.personalSuggestionsEnabled,
             hasFullAccess: hasFullAccess,
-            resetToken: configuration.personalSuggestionResetToken
+            resetToken: configuration.personalSuggestionResetToken,
+            activationGeneration: activationGeneration
         )
         publishPersonalSuggestionUpdate()
     }

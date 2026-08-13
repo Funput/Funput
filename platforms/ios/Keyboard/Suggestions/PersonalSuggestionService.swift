@@ -6,7 +6,7 @@ import PersonalSuggestions
 
 @MainActor
 final class PersonalSuggestionService {
-    var onCandidates: (([KeyboardSuggestionCandidate]) -> Void)?
+    var onCandidates: ((UInt64, [KeyboardSuggestionCandidate]) -> Void)?
 
     private lazy var worker = PersonalSuggestionWorker { [weak self] request, candidates in
         DispatchQueue.main.async {
@@ -17,9 +17,16 @@ final class PersonalSuggestionService {
     private var prefix = ""
     private var visibleCandidates: [KeyboardSuggestionCandidate] = []
     private var enabled = true
+    private var activationGeneration: UInt64 = 0
 
-    func configure(enabled: Bool, hasFullAccess: Bool, resetToken: UUID?) {
+    func configure(
+        enabled: Bool,
+        hasFullAccess: Bool,
+        resetToken: UUID?,
+        activationGeneration: UInt64
+    ) {
         self.enabled = enabled
+        self.activationGeneration = activationGeneration
         worker.configure(
             enabled: enabled,
             hasFullAccess: hasFullAccess,
@@ -54,7 +61,7 @@ final class PersonalSuggestionService {
         generation &+= 1
         prefix = nextPrefix
         visibleCandidates = []
-        onCandidates?([])
+        publish([])
         guard !prefix.isEmpty else { return }
         worker.query(.init(prefix: prefix, generation: generation))
     }
@@ -70,7 +77,7 @@ final class PersonalSuggestionService {
         generation &+= 1
         prefix = ""
         visibleCandidates = []
-        onCandidates?([])
+        publish([])
     }
 
     func flush() {
@@ -89,7 +96,7 @@ final class PersonalSuggestionService {
             )
         }
         visibleCandidates = values
-        onCandidates?(values)
+        publish(values)
         os_signpost(
             .event,
             log: PersonalSuggestionSignposts.log,
@@ -98,5 +105,9 @@ final class PersonalSuggestionService {
             generation,
             values.count
         )
+    }
+
+    private func publish(_ candidates: [KeyboardSuggestionCandidate]) {
+        onCandidates?(activationGeneration, candidates)
     }
 }

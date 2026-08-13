@@ -5,12 +5,7 @@ import UIKit
 extension KeyboardViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if hasFullAccess { accessStateStore.recordFullAccess() }
-        reloadConfiguration()
-        applyConfigurationForActivation()
-        prepareActivationPresentation()
-        applyCachedBackgroundImage()
-        activatePreferredHeightForAppearance()
+        activateKeyboardForAppearance()
 #if DEBUG
         touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
 #endif

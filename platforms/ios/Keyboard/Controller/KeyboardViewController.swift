@@ -6,6 +6,7 @@
 //
 
 import FunputShared
+import KeyboardConfiguration
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
@@ -28,13 +29,14 @@ final class KeyboardViewController: UIInputViewController {
     let customThemeStore = CustomThemeStore()
     let themeAssetStore = ThemeAssetStore()
     let personalSuggestionService = PersonalSuggestionService()
+    let activationState = KeyboardActivationState()
+    let backgroundImageCache = KeyboardBackgroundAssetCache<UIImage>()
+    var clipboardRetryTask: Task<Void, Never>?
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     var themeCatalog = ThemeCatalog()
     var selectedTheme: KeyboardTheme = BundledThemes.default
     var currentPresentation = KeyboardPresentation()
-    var cachedBackgroundAssetID: String?
-    var cachedBackgroundImage: UIImage?
     var cachedThemedPresentation: KeyboardPresentation?
     let configurationStore = FunputConfigurationStore()
 #if DEBUG
@@ -49,6 +51,8 @@ final class KeyboardViewController: UIInputViewController {
     )
     private let heightController = KeyboardHeightController()
     private var isKeyboardVisible = false
+
+    var cachedBackgroundImage: UIImage? { backgroundImageCache.value }
 
     override func viewDidLoad() {
         launchTrace.beginViewDidLoad()
@@ -117,6 +121,7 @@ final class KeyboardViewController: UIInputViewController {
         updatePreferredHeight()
         isKeyboardVisible = true
         activatePreferredHeight()
+        launchTrace.recordHeightReady()
     }
 
     private func activatePreferredHeight() {

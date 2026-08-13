@@ -36,6 +36,19 @@ struct ThemeAssetStoreTests {
         #expect(store.renderedData(for: orphan) == nil)
     }
 
+    @Test("Missing assets and unavailable App Groups fail closed")
+    func unavailableStorage() {
+        let root = temporaryRoot()
+        let missingStore = ThemeAssetStore(root: root)
+        #expect(missingStore.renderedData(for: "missing") == nil)
+
+        let unavailableStore = ThemeAssetStore(
+            suiteName: "invalid.app.group.\(UUID().uuidString)"
+        )
+        #expect(unavailableStore.renderedData(for: "asset") == nil)
+        #expect(unavailableStore.save(source: Data([1]), rendered: Data([2])) == nil)
+    }
+
     private func temporaryRoot() -> URL {
         FileManager.default.temporaryDirectory
             .appendingPathComponent("ThemeAssetStoreTests-\(UUID().uuidString)")

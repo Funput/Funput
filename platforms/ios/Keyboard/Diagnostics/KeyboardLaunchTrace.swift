@@ -57,6 +57,19 @@ final class KeyboardLaunchTrace {
         end("ConfigurationLoad", identifier: &configurationID)
     }
 
+    func measure<Value>(
+        _ name: StaticString,
+        operation: () throws -> Value
+    ) rethrows -> Value {
+        var identifier: OSSignpostID? = begin(name)
+        defer { end(name, identifier: &identifier) }
+        return try operation()
+    }
+
+    func recordHeightReady() {
+        os_signpost(.event, log: Self.log, name: "HeightReady")
+    }
+
     func recordFirstLayout(size: CGSize) {
         guard !didRecordFirstLayout, size.width > 0, size.height > 0 else { return }
         didRecordFirstLayout = true
