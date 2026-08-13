@@ -11,6 +11,7 @@ struct KeyboardActivationSource {
     let catalog: ThemeCatalog
     let selectedTheme: KeyboardTheme
     let hasFullAccess: Bool
+    let repairSnapshot: KeyboardBootstrapSnapshot?
 }
 
 private struct KeyboardActivationPayload {
@@ -63,6 +64,7 @@ extension KeyboardViewController {
         configuration = payload.source.configuration
         themeCatalog = payload.source.catalog
         selectedTheme = payload.source.selectedTheme
+        pendingBootstrapRepair = payload.source.repairSnapshot
         cachedThemedPresentation = payload.themedPresentation
         currentPresentation = payload.presentation
         clipboardStore = ClipboardStore(expiry: configuration.clipboardExpiry)

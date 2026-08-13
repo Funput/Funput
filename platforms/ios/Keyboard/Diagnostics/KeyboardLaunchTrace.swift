@@ -70,6 +70,17 @@ final class KeyboardLaunchTrace {
         os_signpost(.event, log: Self.log, name: "HeightReady")
     }
 
+    func recordBootstrapSnapshot(hit: Bool) {
+        os_signpost(
+            .event, log: Self.log, name: "BootstrapSnapshot",
+            "result=%{public}@", hit ? "hit" : "fallback"
+        )
+    }
+
+    func recordCustomThemeCatalogLoad() {
+        os_signpost(.event, log: Self.log, name: "CustomThemeCatalogLoad")
+    }
+
     func recordFirstLayout(size: CGSize) {
         guard !didRecordFirstLayout, size.width > 0, size.height > 0 else { return }
         didRecordFirstLayout = true

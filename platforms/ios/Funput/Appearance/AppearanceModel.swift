@@ -14,7 +14,8 @@ final class AppearanceModel {
     var previewMode = AppearancePreviewMode.light
     var showsSaveError = false
 
-    private let store: any FunputConfigurationStoring
+    let store: any FunputConfigurationStoring
+    let bootstrap: any KeyboardBootstrapSynchronizing
     let customStore: any CustomThemeStoring
     let assetStore: any ThemeAssetStoring
     private var didSetInitialMode = false
@@ -23,11 +24,13 @@ final class AppearanceModel {
     init(
         store: any FunputConfigurationStoring,
         customStore: any CustomThemeStoring = CustomThemeStore(),
-        assetStore: any ThemeAssetStoring = PreviewThemeAssetStore()
+        assetStore: any ThemeAssetStoring = PreviewThemeAssetStore(),
+        bootstrap: any KeyboardBootstrapSynchronizing = NoopKeyboardBootstrapSynchronizer()
     ) {
         self.store = store
         self.customStore = customStore
         self.assetStore = assetStore
+        self.bootstrap = bootstrap
         let loadedConfiguration = store.load()
         let loadedThemes = customStore.load()
         configuration = loadedConfiguration
@@ -96,15 +99,6 @@ final class AppearanceModel {
         return candidate
     }
 
-    func commit(themeID: String) {
-        var candidate = configuration
-        candidate.selectedThemeID = validThemeID(themeID)
-        guard store.save(candidate) else { showsSaveError = true; return }
-        configuration = candidate
-        appliedThemeID = candidate.selectedThemeID
-        previewThemeID = candidate.selectedThemeID
-    }
-
     func validThemeID(_ id: String) -> String {
         catalog.theme(id: id)?.id ?? FunputConfiguration.defaultThemeID
     }
@@ -114,16 +108,13 @@ final class AppearanceModel {
         cleanupAssets()
     }
 
-    func replaceAppliedTheme(with themeID: String) -> Bool {
-        var candidate = configuration
-        candidate.selectedThemeID = themeID
-        guard store.save(candidate) else {
-            showsSaveError = true
-            return false
-        }
+    func acceptPersistedConfiguration(
+        _ candidate: FunputConfiguration,
+        updatesPreview: Bool
+    ) {
         configuration = candidate
-        appliedThemeID = themeID
-        return true
+        appliedThemeID = candidate.selectedThemeID
+        if updatesPreview { previewThemeID = candidate.selectedThemeID }
     }
 
     func imageData(for theme: KeyboardTheme) -> Data? {

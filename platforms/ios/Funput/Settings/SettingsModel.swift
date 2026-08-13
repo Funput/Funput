@@ -9,15 +9,21 @@ final class SettingsModel {
     private(set) var hasFullAccess: Bool
     var showsSaveError = false
     private let store: any FunputConfigurationStoring
+    private let customStore: any CustomThemeStoring
+    private let bootstrap: any KeyboardBootstrapSynchronizing
     private let accessStore: any KeyboardAccessStateReading
     private let clipboardStore: ClipboardStore
 
     init(
         store: any FunputConfigurationStoring,
+        customStore: any CustomThemeStoring = PreviewCustomThemeStore(),
+        bootstrap: any KeyboardBootstrapSynchronizing = NoopKeyboardBootstrapSynchronizer(),
         accessStore: any KeyboardAccessStateReading = KeyboardAccessStateStore(),
         clipboardStore: ClipboardStore = ClipboardStore()
     ) {
         self.store = store
+        self.customStore = customStore
+        self.bootstrap = bootstrap
         self.accessStore = accessStore
         self.clipboardStore = clipboardStore
         configuration = store.load()
@@ -102,7 +108,16 @@ final class SettingsModel {
     }
 
     private func commit(_ candidate: FunputConfiguration) {
+        let previous = configuration
         guard store.save(candidate) else {
+            showsSaveError = true
+            return
+        }
+        guard bootstrap.save(
+            configuration: candidate,
+            customThemes: customStore.load()
+        ) else {
+            _ = store.save(previous)
             showsSaveError = true
             return
         }

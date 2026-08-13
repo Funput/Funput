@@ -15,12 +15,14 @@ struct AppearanceScreen: View {
     init(
         store: any FunputConfigurationStoring = FunputConfigurationStore(),
         customStore: any CustomThemeStoring = CustomThemeStore(),
-        assetStore: any ThemeAssetStoring = ThemeAssetStore()
+        assetStore: any ThemeAssetStoring = ThemeAssetStore(),
+        bootstrap: any KeyboardBootstrapSynchronizing = KeyboardBootstrapSynchronizer()
     ) {
         _model = State(initialValue: AppearanceModel(
             store: store,
             customStore: customStore,
-            assetStore: assetStore
+            assetStore: assetStore,
+            bootstrap: bootstrap
         ))
     }
 
@@ -95,7 +97,8 @@ struct AppearanceScreen: View {
         AppearanceScreen(
             store: PreviewConfigurationStore(),
             customStore: PreviewCustomThemeStore(),
-            assetStore: PreviewThemeAssetStore()
+            assetStore: PreviewThemeAssetStore(),
+            bootstrap: NoopKeyboardBootstrapSynchronizer()
         )
     }
         .preferredColorScheme(.light)
@@ -106,7 +109,8 @@ struct AppearanceScreen: View {
         AppearanceScreen(
             store: PreviewConfigurationStore(),
             customStore: PreviewCustomThemeStore(),
-            assetStore: PreviewThemeAssetStore()
+            assetStore: PreviewThemeAssetStore(),
+            bootstrap: NoopKeyboardBootstrapSynchronizer()
         )
     }
         .preferredColorScheme(.dark)

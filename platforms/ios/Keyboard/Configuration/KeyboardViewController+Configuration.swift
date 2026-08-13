@@ -8,14 +8,44 @@ import UIKit
 extension KeyboardViewController {
     func loadActivationSource(hasFullAccess: Bool) -> KeyboardActivationSource {
         launchTrace.beginConfigurationLoad()
+        defer { launchTrace.endConfigurationLoad() }
 #if DEBUG
-        let configuration = FunputUITestConfigurationOverrideStore().load()
-            ?? configurationStore.load()
-#else
-        let configuration = configurationStore.load()
+        if let override = FunputUITestConfigurationOverrideStore().load() {
+            return makeFallbackSource(
+                configuration: override,
+                hasFullAccess: hasFullAccess,
+                repairsSnapshot: false
+            )
+        }
 #endif
+        if let snapshot = try? bootstrapSnapshotStore.load() {
+            launchTrace.recordBootstrapSnapshot(hit: true)
+            return makeSnapshotSource(snapshot, hasFullAccess: hasFullAccess)
+        }
+        launchTrace.recordBootstrapSnapshot(hit: false)
+        return makeFallbackSource(
+            configuration: configurationStore.load(),
+            hasFullAccess: hasFullAccess,
+            repairsSnapshot: true
+        )
+    }
+
+    func repairBootstrapSnapshotIfNeeded() {
+        guard let snapshot = pendingBootstrapRepair else { return }
+        pendingBootstrapRepair = nil
+        let store = bootstrapSnapshotStore
+        Task.detached(priority: .utility) {
+            try? store.repairIfNeeded(snapshot)
+        }
+    }
+
+    private func makeFallbackSource(
+        configuration: FunputConfiguration,
+        hasFullAccess: Bool,
+        repairsSnapshot: Bool
+    ) -> KeyboardActivationSource {
+        launchTrace.recordCustomThemeCatalogLoad()
         let customThemes = customThemeStore.load()
-        launchTrace.endConfigurationLoad()
         let resolved = launchTrace.measure("ThemeResolve") {
             KeyboardActivationThemeResolver.resolve(
                 configuration: configuration,
@@ -26,7 +56,29 @@ extension KeyboardViewController {
             configuration: configuration,
             catalog: resolved.catalog,
             selectedTheme: resolved.selectedTheme,
-            hasFullAccess: hasFullAccess
+            hasFullAccess: hasFullAccess,
+            repairSnapshot: repairsSnapshot ? KeyboardBootstrapSnapshot.make(
+                configuration: configuration,
+                customThemes: customThemes
+            ) : nil
+        )
+    }
+
+    private func makeSnapshotSource(
+        _ snapshot: KeyboardBootstrapSnapshot,
+        hasFullAccess: Bool
+    ) -> KeyboardActivationSource {
+        let bundled = BundledThemes.theme(id: snapshot.selectedTheme.id) != nil
+        let customThemes = bundled ? [] : [CustomKeyboardTheme(
+            baseThemeID: BundledThemes.default.id,
+            theme: snapshot.selectedTheme
+        )]
+        return KeyboardActivationSource(
+            configuration: snapshot.configuration,
+            catalog: ThemeCatalog(customThemes: customThemes),
+            selectedTheme: snapshot.selectedTheme,
+            hasFullAccess: hasFullAccess,
+            repairSnapshot: nil
         )
     }
 

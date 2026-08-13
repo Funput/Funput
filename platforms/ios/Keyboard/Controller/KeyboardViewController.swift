@@ -31,7 +31,9 @@ final class KeyboardViewController: UIInputViewController {
     let personalSuggestionService = PersonalSuggestionService()
     let activationState = KeyboardActivationState()
     let backgroundImageCache = KeyboardBackgroundAssetCache<UIImage>()
+    let bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
     var clipboardRetryTask: Task<Void, Never>?
+    var pendingBootstrapRepair: KeyboardBootstrapSnapshot?
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     var themeCatalog = ThemeCatalog()
@@ -66,6 +68,7 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidAppear(animated)
         refreshClipboardOffer()
         launchTrace.finish()
+        repairBootstrapSnapshotIfNeeded()
     }
 
     func deactivatePreferredHeight() {

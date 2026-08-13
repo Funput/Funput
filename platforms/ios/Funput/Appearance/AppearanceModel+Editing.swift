@@ -61,6 +61,7 @@ extension AppearanceModel {
         custom.theme.metadata.name = draft.trimmedName
         custom.theme.schemaVersion = KeyboardTheme.currentSchemaVersion
         guard draft.canSave else { showsSaveError = true; return false }
+        let previous = customThemes.first { $0.id == custom.id }
         let oldAssetID = draft.initialTheme.theme.backgroundEffects.image?.assetID
         var newAssetID: String?
         if draft.needsAssetSave {
@@ -76,6 +77,16 @@ extension AppearanceModel {
             showsSaveError = true
             return false
         }
+        let updatedThemes = customStore.load()
+        guard bootstrap.save(
+            configuration: configuration,
+            customThemes: updatedThemes
+        ) else {
+            restoreThemeMutation(previous: previous, mutatedID: custom.id)
+            if let newAssetID { _ = assetStore.delete(assetID: newAssetID) }
+            showsSaveError = true
+            return false
+        }
         refreshCustomThemes()
         previewThemeID = custom.id
         let currentID = custom.theme.backgroundEffects.image?.assetID
@@ -86,14 +97,32 @@ extension AppearanceModel {
     func deletePreviewCustomTheme() -> Bool {
         guard let custom = previewCustomTheme else { return false }
         let baseID = catalog.baseTheme(for: custom).id
-        if appliedThemeID == custom.id {
-            guard replaceAppliedTheme(with: baseID) else { return false }
+        let previousConfiguration = configuration
+        var candidate = configuration
+        let replacesAppliedTheme = appliedThemeID == custom.id
+        if replacesAppliedTheme {
+            candidate.selectedThemeID = baseID
+            guard store.save(candidate) else {
+                showsSaveError = true
+                return false
+            }
         }
         guard customStore.delete(id: custom.id) else {
-            if appliedThemeID == baseID { _ = replaceAppliedTheme(with: custom.id) }
+            if replacesAppliedTheme { _ = store.save(previousConfiguration) }
             showsSaveError = true
             return false
         }
+        let remainingThemes = customStore.load()
+        guard bootstrap.save(
+            configuration: candidate,
+            customThemes: remainingThemes
+        ) else {
+            _ = customStore.upsert(custom)
+            if replacesAppliedTheme { _ = store.save(previousConfiguration) }
+            showsSaveError = true
+            return false
+        }
+        acceptPersistedConfiguration(candidate, updatesPreview: false)
         if let assetID = custom.theme.backgroundEffects.image?.assetID {
             _ = assetStore.delete(assetID: assetID)
         }

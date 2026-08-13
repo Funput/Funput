@@ -1,5 +1,6 @@
 import FunputShared
 import SwiftUI
+import ThemeRuntime
 import UIKit
 
 struct SettingsScreen: View {
@@ -10,8 +11,16 @@ struct SettingsScreen: View {
     @State private var requestsHapticAccess = false
     @State private var requestsSoundAccess = false
 
-    init(store: any FunputConfigurationStoring = FunputConfigurationStore()) {
-        _model = State(initialValue: SettingsModel(store: store))
+    init(
+        store: any FunputConfigurationStoring = FunputConfigurationStore(),
+        customStore: any CustomThemeStoring = CustomThemeStore(),
+        bootstrap: any KeyboardBootstrapSynchronizing = KeyboardBootstrapSynchronizer()
+    ) {
+        _model = State(initialValue: SettingsModel(
+            store: store,
+            customStore: customStore,
+            bootstrap: bootstrap
+        ))
     }
 
     var body: some View {
@@ -119,11 +128,23 @@ struct SettingsScreen: View {
 }
 
 #Preview("Cài đặt · Light") {
-    NavigationStack { SettingsScreen(store: PreviewConfigurationStore()) }
+    NavigationStack {
+        SettingsScreen(
+            store: PreviewConfigurationStore(),
+            customStore: PreviewCustomThemeStore(),
+            bootstrap: NoopKeyboardBootstrapSynchronizer()
+        )
+    }
         .preferredColorScheme(.light)
 }
 
 #Preview("Cài đặt · Dark") {
-    NavigationStack { SettingsScreen(store: PreviewConfigurationStore()) }
+    NavigationStack {
+        SettingsScreen(
+            store: PreviewConfigurationStore(),
+            customStore: PreviewCustomThemeStore(),
+            bootstrap: NoopKeyboardBootstrapSynchronizer()
+        )
+    }
         .preferredColorScheme(.dark)
 }
