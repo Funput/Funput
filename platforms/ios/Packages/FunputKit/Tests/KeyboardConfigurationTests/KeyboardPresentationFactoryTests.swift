@@ -74,6 +74,24 @@ struct KeyboardPresentationFactoryTests {
         #expect(presentation.theme.keycapHeightScale == 0.86)
     }
 
+    @Test("Custom image theme keeps its asset in the first presentation")
+    func customImageTheme() {
+        var custom = CustomKeyboardTheme(baseTheme: .classicLight)
+        custom.theme.backgroundEffects = ThemeBackgroundEffects(
+            mode: .image,
+            image: ThemeBackgroundImage(assetID: "activation-image")
+        )
+        var config = FunputConfiguration.default
+        config.selectedThemeID = custom.id
+
+        let presentation = KeyboardPresentationFactory.make(
+            from: config,
+            catalog: ThemeCatalog(customThemes: [custom])
+        )
+        #expect(presentation.theme.backgroundEffects.mode == .image)
+        #expect(presentation.theme.backgroundEffects.image?.assetID == "activation-image")
+    }
+
     private func resolved(_ theme: KeyboardTheme) -> ResolvedTheme {
         ThemeRuntime.resolve(
             theme,

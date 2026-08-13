@@ -10,6 +10,7 @@ import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
 import ThemeRuntime
+import ThemeSchema
 import UIKit
 
 final class KeyboardViewController: UIInputViewController {
@@ -30,9 +31,10 @@ final class KeyboardViewController: UIInputViewController {
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     var themeCatalog = ThemeCatalog()
+    var selectedTheme: KeyboardTheme = BundledThemes.default
     var currentPresentation = KeyboardPresentation()
+    var cachedBackgroundAssetID: String?
     var cachedBackgroundImage: UIImage?
-    var cachedPresentationConfiguration: FunputConfiguration?
     var cachedThemedPresentation: KeyboardPresentation?
     let configurationStore = FunputConfigurationStore()
 #if DEBUG
@@ -53,8 +55,6 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidLoad()
         installKeyboardView()
         installPersonalSuggestions()
-        reloadConfiguration()
-        updateTextInputTraits(force: true)
         launchTrace.endViewDidLoad()
     }
 

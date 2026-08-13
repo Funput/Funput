@@ -7,8 +7,9 @@ extension KeyboardViewController {
         super.viewWillAppear(animated)
         if hasFullAccess { accessStateStore.recordFullAccess() }
         reloadConfiguration()
-        updateTextInputTraits(force: true)
-        synchronizeInputDocument(event: .activated)
+        applyConfigurationForActivation()
+        prepareActivationPresentation()
+        applyCachedBackgroundImage()
 #if DEBUG
         touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
 #endif
@@ -30,16 +31,22 @@ extension KeyboardViewController {
         synchronizeInputDocument(event: .selectionChanged)
     }
 
-    func updateTextInputTraits(force: Bool = false) {
-        let resolved = makeDocumentWriter().inputContext
-        guard force || resolved != resolvedTextInputTraits else { return }
-
-        resolvedTextInputTraits = resolved
-        inputCoordinator.updateContext(resolved)
+    func updateTextInputTraits() {
+        guard applyTextInputTraits() else { return }
         updateInputPresentation()
         // Guarded above, so this only runs when the focused field actually changed —
         // which is exactly when the answer can flip, e.g. moving into a password box.
         refreshClipboardOffer()
+    }
+
+    @discardableResult
+    func applyTextInputTraits(force: Bool = false) -> Bool {
+        let resolved = makeDocumentWriter().inputContext
+        guard force || resolved != resolvedTextInputTraits else { return false }
+
+        resolvedTextInputTraits = resolved
+        inputCoordinator.updateContext(resolved)
+        return true
     }
 
 }

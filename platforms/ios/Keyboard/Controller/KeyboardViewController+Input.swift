@@ -7,6 +7,14 @@ import os
 import UIKit
 
 extension KeyboardViewController {
+    func prepareActivationPresentation() {
+        cachedThemedPresentation = KeyboardPresentationFactory.make(
+            from: configuration,
+            catalog: themeCatalog
+        )
+        updateInputPresentation()
+    }
+
     func handleKeyEvent(_ event: KeyboardKeyEvent) {
         let alternate: KeyAlternate?
         switch event.phase {
@@ -67,6 +75,7 @@ extension KeyboardViewController {
     }
 
     func updateInputPresentation() {
+        guard let themed = cachedThemedPresentation else { return }
         let signpostID = OSSignpostID(log: KeyboardControllerSignpost.log)
         os_signpost(
             .begin,
@@ -91,7 +100,6 @@ extension KeyboardViewController {
             showsNumberRow: configuration.showsNumberRow,
             preset: configuration.layoutPreset
         )
-        let themed = configuredThemedPresentation()
         presentation.sizing = themed.sizing
         presentation.shiftState = state.shiftState
         presentation.language = state.language
@@ -113,20 +121,6 @@ extension KeyboardViewController {
             refreshClipboardPanel()
         }
         updatePreferredHeight()
-    }
-
-    private func configuredThemedPresentation() -> KeyboardPresentation {
-        if cachedPresentationConfiguration == configuration,
-           let cachedThemedPresentation {
-            return cachedThemedPresentation
-        }
-        let value = KeyboardPresentationFactory.make(
-            from: configuration,
-            catalog: themeCatalog
-        )
-        cachedPresentationConfiguration = configuration
-        cachedThemedPresentation = value
-        return value
     }
 }
 
