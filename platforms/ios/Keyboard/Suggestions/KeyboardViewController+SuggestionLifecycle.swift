@@ -15,5 +15,6 @@ extension KeyboardViewController {
         super.didReceiveMemoryWarning()
         flushPersonalSuggestions()
         releaseHiddenSupplementarySurfaces()
+        releaseBackgroundImageIfHidden()
     }
 }

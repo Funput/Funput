@@ -2,21 +2,13 @@ import KeyboardRenderer
 import UIKit
 
 extension KeyboardViewController {
-    func applyPrimarySurface(
-        presentation: KeyboardPresentation,
-        backgroundImage: UIImage?
-    ) -> KeyboardSurfaceView {
-        if hasPrimarySurface {
-            keyboardView.apply(
-                presentation: presentation,
-                backgroundImage: backgroundImage
-            )
-        } else {
-            _ = keyboardView
-        }
-        return keyboardView
-    }
-
+    /// Builds the primary surface from whatever `currentPresentation` holds.
+    ///
+    /// The only caller is the `keyboardView` lazy initializer, and the only thing that
+    /// touches `keyboardView` first is `applyPresentationToSurfaces`, which assigns
+    /// `currentPresentation` on the line before. Creation therefore always sees the
+    /// final presentation — unlike the previous `applyPrimarySurface`, which took a
+    /// presentation it then ignored on the creation path.
     func makePrimarySurface() -> KeyboardSurfaceView {
         launchTrace.measure("PrimarySurfaceCreation") {
             let surface = KeyboardSurfaceView(

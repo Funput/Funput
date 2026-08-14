@@ -58,4 +58,37 @@ struct KeyboardActivationTests {
         #expect(cache.resolve(assetID: "asset", load: { _ in corrupt }, decode: decode) == nil)
         #expect(cache.assetID == nil)
     }
+
+    @Test("A changed variant misses, an unchanged one is served from cache")
+    func variantKeyedCache() {
+        let cache = KeyboardBackgroundAssetCache<String>()
+        var decodes = 0
+        let decode: (Data) -> String? = { data in
+            decodes += 1
+            return String(data: data, encoding: .utf8)
+        }
+        let load: (String) -> Data? = { Data($0.utf8) }
+
+        #expect(cache.resolve(assetID: "a", variant: 440, load: load, decode: decode) == "a")
+        #expect(cache.resolve(assetID: "a", variant: 440, load: load, decode: decode) == "a")
+        #expect(decodes == 1)
+
+        #expect(cache.resolve(assetID: "a", variant: 880, load: load, decode: decode) == "a")
+        #expect(decodes == 2)
+        #expect(cache.variant == 880)
+    }
+
+    @Test("Clearing drops the value so the next resolve decodes again")
+    func clearForcesReload() {
+        let cache = KeyboardBackgroundAssetCache<String>()
+        let decode: (Data) -> String? = { String(data: $0, encoding: .utf8) }
+        let load: (String) -> Data? = { Data($0.utf8) }
+        #expect(cache.resolve(assetID: "a", variant: 440, load: load, decode: decode) == "a")
+
+        cache.clear()
+
+        #expect(cache.value == nil)
+        #expect(cache.assetID == nil)
+        #expect(cache.variant == 0)
+    }
 }

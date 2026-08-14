@@ -71,7 +71,7 @@ extension KeyboardViewController {
     }
 
     @discardableResult
-    private func applyInputPresentation() -> Bool {
+    func applyInputPresentation() -> Bool {
         guard let themed = cachedThemedPresentation else { return false }
         let presentation = makeInputPresentation(
             configuration: configuration,

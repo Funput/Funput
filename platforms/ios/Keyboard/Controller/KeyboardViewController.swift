@@ -38,6 +38,8 @@ final class KeyboardViewController: UIInputViewController {
     let bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
     var clipboardRetryTask: Task<Void, Never>?
     var pendingBootstrapRepair: KeyboardBootstrapSnapshot?
+    var adoptedIdentity: KeyboardActivationIdentity?
+    var resolvedBackgroundRequest: KeyboardBackgroundRequest?
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     var themeCatalog = ThemeCatalog()
@@ -56,7 +58,7 @@ final class KeyboardViewController: UIInputViewController {
         initialLayoutMode: .letters
     )
     private let heightController = KeyboardHeightController()
-    private var isKeyboardVisible = false
+    private(set) var isKeyboardVisible = false
 
     var cachedBackgroundImage: UIImage? { backgroundImageCache.value }
 
@@ -66,6 +68,13 @@ final class KeyboardViewController: UIInputViewController {
         view.isOpaque = false
         view.backgroundColor = .clear
         heightController.install(on: view)
+        // The height only tracks the size class, and `viewWillTransition` alone misses
+        // every change that is not a rotation of an already-visible keyboard.
+        registerForTraitChanges([UITraitVerticalSizeClass.self]) {
+            (controller: KeyboardViewController, _) in
+            controller.updatePreferredHeight()
+        }
+        bootstrapKeyboard()
         launchTrace.endViewDidLoad()
     }
 
@@ -114,6 +123,15 @@ final class KeyboardViewController: UIInputViewController {
         isKeyboardVisible = true
         activatePreferredHeight()
         launchTrace.recordHeightReady()
+    }
+
+    /// Puts the height in place before the host ever lays the keyboard out.
+    ///
+    /// Without this the constraint stays inactive until the end of `viewWillAppear`,
+    /// and Auto Layout stretches the view to the whole host container in the meantime.
+    func activatePreferredHeightForBootstrap() {
+        updatePreferredHeight()
+        activatePreferredHeight()
     }
 
     private func activatePreferredHeight() {

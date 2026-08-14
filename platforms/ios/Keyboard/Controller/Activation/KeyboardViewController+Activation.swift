@@ -14,12 +14,10 @@ struct KeyboardActivationSource {
     let repairSnapshot: KeyboardBootstrapSnapshot?
 }
 
-private struct KeyboardActivationPayload {
-    let source: KeyboardActivationSource
-    let themedPresentation: KeyboardPresentation
-    let presentation: KeyboardPresentation
-    let backgroundImage: UIImage?
-    let generation: UInt64
+/// What a presentation is built from, so an unchanged activation can skip the rebuild.
+struct KeyboardActivationIdentity: Equatable {
+    let configuration: FunputConfiguration
+    let selectedTheme: KeyboardTheme
 }
 
 extension KeyboardViewController {
@@ -36,49 +34,47 @@ extension KeyboardViewController {
                 event: .activated
             )
         }
-        let themed = KeyboardPresentationFactory.make(
-            from: source.configuration,
-            catalog: source.catalog
-        )
-        let presentation = makeInputPresentation(
-            configuration: source.configuration,
-            themed: themed
-        )
-        let image = loadBackgroundImage(
-            assetID: source.selectedTheme.backgroundEffects.image?.assetID
-        )
-        commitActivation(
-            KeyboardActivationPayload(
-                source: source,
-                themedPresentation: themed,
-                presentation: presentation,
-                backgroundImage: image,
-                generation: generation
-            )
-        )
+        adopt(source)
+        // A panel left open in the previous host is not where the next one should
+        // start; without this the keyboard comes back on emoji instead of letters.
+        showFunput()
         activatePreferredHeightForAppearance()
+        configurePersonalSuggestions(
+            hasFullAccess: source.hasFullAccess,
+            activationGeneration: generation
+        )
     }
 
-    private func commitActivation(_ payload: KeyboardActivationPayload) {
-        configuration = payload.source.configuration
-        themeCatalog = payload.source.catalog
-        selectedTheme = payload.source.selectedTheme
-        pendingBootstrapRepair = payload.source.repairSnapshot
-        cachedThemedPresentation = payload.themedPresentation
-        currentPresentation = payload.presentation
-        clipboardStore = ClipboardStore(expiry: configuration.clipboardExpiry)
-        launchTrace.measure("SurfaceApply") {
-            let primary = applyPrimarySurface(
-                presentation: payload.presentation,
-                backgroundImage: payload.backgroundImage
-            )
-            primary.updateClipboardKeyVisible(configuration.clipboardEnabled)
-            applyPresentationToSupplementarySurfaces(payload.presentation)
-            applyBackgroundImageToSupplementarySurfaces(payload.backgroundImage)
-        }
-        configurePersonalSuggestions(
-            hasFullAccess: payload.source.hasFullAccess,
-            activationGeneration: payload.generation
+    /// Installs one activation's configuration, theme and presentation.
+    ///
+    /// Rebuilding the themed presentation means resolving the theme and re-reading the
+    /// accessibility state, so an activation that changed nothing only refreshes the
+    /// input-driven half of the presentation.
+    func adopt(_ source: KeyboardActivationSource) {
+        pendingBootstrapRepair = source.repairSnapshot
+        let identity = KeyboardActivationIdentity(
+            configuration: source.configuration,
+            selectedTheme: source.selectedTheme
         )
+        if adoptedIdentity != identity {
+            adoptedIdentity = identity
+            configuration = source.configuration
+            themeCatalog = source.catalog
+            selectedTheme = source.selectedTheme
+            cachedThemedPresentation = KeyboardPresentationFactory.make(
+                from: source.configuration,
+                catalog: source.catalog
+            )
+            clipboardStore = ClipboardStore(expiry: source.configuration.clipboardExpiry)
+        }
+        launchTrace.measure("SurfaceApply") {
+            applyInputPresentation()
+            keyboardView.updateClipboardKeyVisible(configuration.clipboardEnabled)
+            // A theme swap changes the backdrop without changing the layout, which on
+            // its own would not schedule the layout pass that picks the new one up.
+            // Clearing first also gives a failed decode one retry per activation.
+            resolvedBackgroundRequest = nil
+            refreshBackgroundImage()
+        }
     }
 }

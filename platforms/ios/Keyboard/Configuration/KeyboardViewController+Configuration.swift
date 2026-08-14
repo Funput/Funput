@@ -88,16 +88,19 @@ extension KeyboardViewController {
         clipboardPanelView?.backgroundImage = image
     }
 
-    func loadBackgroundImage(assetID: String?) -> UIImage? {
+    func loadBackgroundImage(assetID: String?, pixelBudget: Int) -> UIImage? {
         backgroundImageCache.resolve(
             assetID: assetID,
+            variant: pixelBudget,
             load: { id in
                 launchTrace.measure("AssetRead") {
                     themeAssetStore.renderedData(for: id)
                 }
             },
             decode: { data in
-                launchTrace.measure("AssetDecode") { UIImage(data: data) }
+                launchTrace.measure("AssetDecode") {
+                    KeyboardBackgroundImageDecoder.decode(data, maxPixelSize: pixelBudget)
+                }
             }
         )
     }
