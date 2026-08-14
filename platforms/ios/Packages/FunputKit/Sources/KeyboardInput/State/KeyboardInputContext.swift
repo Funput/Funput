@@ -30,11 +30,16 @@ public struct KeyboardInputContext: Equatable, Sendable {
 import UIKit
 
 public enum KeyboardInputContextResolver {
+    /// - Parameter autoCapitalizeEnabled: the user's "Tự viết hoa" preference. It
+    ///   belongs here rather than deeper in the coordinator because the effective
+    ///   capitalization mode is exactly what this type resolves; the coordinator then
+    ///   stays a state machine driven by one context.
     public static func resolve(
         keyboardType: UIKeyboardType,
         returnKeyType: UIReturnKeyType,
         isSecureTextEntry: Bool,
-        autocapitalizationType: UITextAutocapitalizationType = .sentences
+        autocapitalizationType: UITextAutocapitalizationType = .sentences,
+        autoCapitalizeEnabled: Bool = true
     ) -> KeyboardInputContext {
         KeyboardInputContext(
             editorMode: editorMode(
@@ -43,7 +48,10 @@ public enum KeyboardInputContextResolver {
             ),
             enterAction: enterAction(returnKeyType),
             initialLayoutMode: .letters,
-            autocapitalization: autocapitalization(autocapitalizationType)
+            autocapitalization: autocapitalization(
+                autocapitalizationType,
+                enabled: autoCapitalizeEnabled
+            )
         )
     }
 
@@ -85,16 +93,22 @@ public enum KeyboardInputContextResolver {
         }
     }
 
+    /// A disabled preference silences the convenience modes but not `allCharacters`:
+    /// a field that insists on upper case is stating a requirement about its content,
+    /// not offering something the user asked to turn off.
     private static func autocapitalization(
-        _ type: UITextAutocapitalizationType
+        _ type: UITextAutocapitalizationType,
+        enabled: Bool
     ) -> KeyboardAutocapitalizationMode {
-        switch type {
+        let mode: KeyboardAutocapitalizationMode = switch type {
         case .none: .none
         case .words: .words
         case .sentences: .sentences
         case .allCharacters: .allCharacters
         @unknown default: .sentences
         }
+        guard !enabled else { return mode }
+        return mode == .allCharacters ? .allCharacters : .none
     }
 }
 #endif

@@ -25,6 +25,10 @@ extension KeyboardViewController {
         cancelClipboardRetry()
         let generation = activationState.begin()
         let source = loadActivationSource(hasFullAccess: hasFullAccess)
+        // Ahead of the engine block: resolving the field's traits reads the
+        // "Tự viết hoa" preference, and the document sync that follows turns those
+        // traits into the initial Shift state.
+        adoptConfiguration(source)
 
         launchTrace.measure("EngineConfiguration") {
             inputCoordinator.apply(source.configuration)
@@ -34,7 +38,7 @@ extension KeyboardViewController {
                 event: .activated
             )
         }
-        adopt(source)
+        applyAdoptedPresentation()
         // A panel left open in the previous host is not where the next one should
         // start; without this the keyboard comes back on emoji instead of letters.
         showFunput()
@@ -45,28 +49,30 @@ extension KeyboardViewController {
         )
     }
 
-    /// Installs one activation's configuration, theme and presentation.
+    /// Installs one activation's configuration and theme.
     ///
     /// Rebuilding the themed presentation means resolving the theme and re-reading the
-    /// accessibility state, so an activation that changed nothing only refreshes the
-    /// input-driven half of the presentation.
-    func adopt(_ source: KeyboardActivationSource) {
+    /// accessibility state, so an activation that changed nothing keeps the last one.
+    func adoptConfiguration(_ source: KeyboardActivationSource) {
         pendingBootstrapRepair = source.repairSnapshot
         let identity = KeyboardActivationIdentity(
             configuration: source.configuration,
             selectedTheme: source.selectedTheme
         )
-        if adoptedIdentity != identity {
-            adoptedIdentity = identity
-            configuration = source.configuration
-            themeCatalog = source.catalog
-            selectedTheme = source.selectedTheme
-            cachedThemedPresentation = KeyboardPresentationFactory.make(
-                from: source.configuration,
-                catalog: source.catalog
-            )
-            clipboardStore = ClipboardStore(expiry: source.configuration.clipboardExpiry)
-        }
+        guard adoptedIdentity != identity else { return }
+        adoptedIdentity = identity
+        configuration = source.configuration
+        themeCatalog = source.catalog
+        selectedTheme = source.selectedTheme
+        cachedThemedPresentation = KeyboardPresentationFactory.make(
+            from: source.configuration,
+            catalog: source.catalog
+        )
+        clipboardStore = ClipboardStore(expiry: source.configuration.clipboardExpiry)
+    }
+
+    /// Folds the adopted configuration and the live input state onto the surfaces.
+    func applyAdoptedPresentation() {
         launchTrace.measure("SurfaceApply") {
             applyInputPresentation()
             keyboardView.updateClipboardKeyVisible(configuration.clipboardEnabled)

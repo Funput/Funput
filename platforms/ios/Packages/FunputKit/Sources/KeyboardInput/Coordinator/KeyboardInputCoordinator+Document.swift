@@ -123,10 +123,10 @@ extension KeyboardInputCoordinator {
         guard !snapshot.hasSelection else { return }
         if preserveCapsLock, state.shiftState == .capsLocked { return }
         if preserveOneShotShift, state.shiftState == .uppercase { return }
-        guard let uppercase = KeyboardCapitalizationResolver.shouldUppercase(
+        let uppercase = KeyboardCapitalizationResolver.shouldUppercase(
             mode: state.autocapitalization,
             contextBeforeInput: snapshot.contextBeforeInput
-        ) else { return }
+        )
         replaceState(shiftState: uppercase ? .uppercase : .lowercase)
     }
 }

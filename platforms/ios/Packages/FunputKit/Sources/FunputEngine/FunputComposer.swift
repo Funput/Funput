@@ -67,9 +67,10 @@ public final class FunputComposer {
         funput_set_enabled(handle, enabled)
     }
 
-    public func armCapitalization() {
-        funput_arm_capitalization(handle)
-    }
+    // No `armCapitalization()`. The engine's sentence tracker exists for the shells
+    // that only see keystrokes; the iOS keyboard draws its own keys, so case follows
+    // the Shift state, which is driven from the document context instead. See
+    // KeyboardCapitalizationOwnershipTests.
 
     public func clear() {
         funput_clear(handle)

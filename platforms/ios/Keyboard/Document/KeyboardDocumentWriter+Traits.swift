@@ -2,12 +2,13 @@ import KeyboardInput
 import UIKit
 
 extension KeyboardDocumentWriter {
-    var inputContext: KeyboardInputContext {
+    func inputContext(autoCapitalizeEnabled: Bool) -> KeyboardInputContext {
         KeyboardInputContextResolver.resolve(
             keyboardType: proxy.keyboardType ?? .default,
             returnKeyType: proxy.returnKeyType ?? .default,
             isSecureTextEntry: proxy.isSecureTextEntry ?? false,
-            autocapitalizationType: proxy.autocapitalizationType ?? .sentences
+            autocapitalizationType: proxy.autocapitalizationType ?? .sentences,
+            autoCapitalizeEnabled: autoCapitalizeEnabled
         )
     }
 }
