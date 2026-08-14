@@ -27,9 +27,7 @@
     <string name="settings_number_row_title">Hàng phím số</string>
     <string name="settings_number_row_summary">Hiển thị 0–9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.</string>
     <string name="settings_key_size_title">Kích thước phím</string>
-    <string name="settings_key_size_compact">Nhỏ gọn</string>
-    <string name="settings_key_size_normal">Vừa</string>
-    <string name="settings_key_size_large">Lớn</string>
+    <string name="settings_percent_value">%1$d%%</string>
     <string name="settings_keyboard_theme_dark">Ink</string>
     <string name="settings_keyboard_theme_light">Paper</string>
     <string name="theme_gallery_title">Chủ đề bàn phím</string>

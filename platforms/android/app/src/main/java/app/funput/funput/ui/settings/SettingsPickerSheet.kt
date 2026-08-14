@@ -5,7 +5,6 @@ import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.ToneStyle
-import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.settings.components.PreferencePickerSheet
 
@@ -14,11 +13,9 @@ internal fun SettingsPickerSheet(
     picker: SettingsPicker?,
     inputMethod: KeyboardInputMethod,
     toneStyle: ToneStyle,
-    keySizeProfile: KeyboardSizingProfile,
     clipboardExpiry: ClipboardExpiry,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
-    onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     onClipboardExpirySelected: (ClipboardExpiry) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -35,13 +32,6 @@ internal fun SettingsPickerSheet(
             options = toneStyleOptions(),
             selected = toneStyle,
             onSelected = onToneStyleSelected,
-            onDismiss = onDismiss,
-        )
-        SettingsPicker.KEY_SIZE -> PreferencePickerSheet(
-            title = stringResource(R.string.settings_key_size_title),
-            options = keySizeOptions(),
-            selected = keySizeProfile,
-            onSelected = onKeySizeSelected,
             onDismiss = onDismiss,
         )
         SettingsPicker.CLIPBOARD_EXPIRY -> PreferencePickerSheet(

@@ -92,11 +92,9 @@ internal fun SettingsScreen(
         picker = picker,
         inputMethod = inputMethod,
         toneStyle = toneStyle,
-        keySizeProfile = keySizeProfile,
         clipboardExpiry = clipboardPreferences.expiry,
         onInputMethodSelected = onInputMethodSelected,
         onToneStyleSelected = onToneStyleSelected,
-        onKeySizeSelected = onKeySizeSelected,
         onClipboardExpirySelected = onClipboardExpirySelected,
         onDismiss = { picker = null },
     )

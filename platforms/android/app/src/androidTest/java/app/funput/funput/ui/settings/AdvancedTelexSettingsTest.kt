@@ -5,7 +5,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.ToneStyle
-import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.theme.FunputTheme
 import org.junit.Assert.assertEquals
@@ -25,11 +24,9 @@ class AdvancedTelexSettingsTest {
                     picker = SettingsPicker.INPUT_METHOD,
                     inputMethod = selected,
                     toneStyle = ToneStyle.TRADITIONAL,
-                    keySizeProfile = KeyboardSizingProfile.Default,
                     clipboardExpiry = ClipboardExpiry.HOUR,
                     onInputMethodSelected = { selected = it },
                     onToneStyleSelected = {},
-                    onKeySizeSelected = {},
                     onClipboardExpirySelected = {},
                     onDismiss = {},
                 )

@@ -6,7 +6,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.ToneStyle
-import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.settings.SettingsPicker
 import app.funput.funput.ui.settings.SettingsPickerSheet
@@ -28,11 +27,9 @@ class ClipboardExpiryPickerTest {
                     picker = SettingsPicker.CLIPBOARD_EXPIRY,
                     inputMethod = KeyboardInputMethod.TELEX,
                     toneStyle = ToneStyle.TRADITIONAL,
-                    keySizeProfile = KeyboardSizingProfile.Normal,
                     clipboardExpiry = selected,
                     onInputMethodSelected = {},
                     onToneStyleSelected = {},
-                    onKeySizeSelected = {},
                     onClipboardExpirySelected = { selected = it },
                     onDismiss = {},
                 )

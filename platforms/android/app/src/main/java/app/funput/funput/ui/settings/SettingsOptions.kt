@@ -6,7 +6,6 @@ import app.funput.funput.R
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
-import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.ui.settings.components.PickerOption
@@ -39,13 +38,6 @@ internal fun AppearanceMode.label(): String = when (this) {
 }
 
 @Composable
-internal fun KeyboardSizingProfile.label(): String = when (id) {
-    KeyboardSizingProfile.Compact.id -> stringResource(R.string.settings_key_size_compact)
-    KeyboardSizingProfile.Large.id -> stringResource(R.string.settings_key_size_large)
-    else -> stringResource(R.string.settings_key_size_normal)
-}
-
-@Composable
 internal fun KeyboardThemeId.label(): String = when (this) {
     KeyboardThemeId.Light -> stringResource(R.string.settings_keyboard_theme_light)
     else -> stringResource(R.string.settings_keyboard_theme_dark)
@@ -61,9 +53,6 @@ internal fun toneStyleOptions() = ToneStyle.entries.map { PickerOption(it, it.la
 
 @Composable
 internal fun appearanceOptions() = AppearanceMode.entries.map { PickerOption(it, it.label()) }
-
-@Composable
-internal fun keySizeOptions() = KeyboardSizingProfile.Presets.map { PickerOption(it, it.label()) }
 
 @Composable
 internal fun ClipboardExpiry.label(): String = when (this) {
