@@ -36,17 +36,21 @@ struct ThemeAssetStoreTests {
         #expect(store.renderedData(for: orphan) == nil)
     }
 
-    @Test("Missing assets and unavailable App Groups fail closed")
+    @Test("Missing assets and unavailable storage fail closed")
     func unavailableStorage() {
-        let root = temporaryRoot()
-        let missingStore = ThemeAssetStore(root: root)
+        let missingStore = ThemeAssetStore(root: temporaryRoot())
         #expect(missingStore.renderedData(for: "missing") == nil)
+        #expect(missingStore.sourceData(for: "missing") == nil)
 
-        let unavailableStore = ThemeAssetStore(
-            suiteName: "invalid.app.group.\(UUID().uuidString)"
-        )
+        // A bogus App Group identifier used to stand in for an unavailable container,
+        // but a simulator returns a usable container for any identifier, so the store
+        // happily saved and the expectation failed. `root: nil` is the same state
+        // reached deterministically on both simulator and device.
+        let unavailableStore = ThemeAssetStore(root: nil)
         #expect(unavailableStore.renderedData(for: "asset") == nil)
+        #expect(unavailableStore.sourceData(for: "asset") == nil)
         #expect(unavailableStore.save(source: Data([1]), rendered: Data([2])) == nil)
+        #expect(!unavailableStore.delete(assetID: "asset"))
     }
 
     private func temporaryRoot() -> URL {
