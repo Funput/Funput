@@ -31,7 +31,7 @@ internal object KeyboardHitTargetResolver {
         bar: ResolvedSuggestionBar,
     ): ResolvedSuggestionBar {
         val controls = listOfNotNull(
-            bar.systemInputMethodKey, bar.settingsKey, bar.clipboardKey, bar.emojiKey,
+            bar.systemInputMethodKey, bar.clipboardKey, bar.emojiKey,
         )
         val resolvedControls = controls.mapIndexed { index, key ->
             val left = if (index > 0) {
@@ -49,7 +49,6 @@ internal object KeyboardHitTargetResolver {
             key?.let { target -> resolvedControls.first { it.spec.id == target.spec.id } }
         return bar.copy(
             systemInputMethodKey = lookup(bar.systemInputMethodKey),
-            settingsKey = lookup(bar.settingsKey),
             clipboardKey = lookup(bar.clipboardKey),
             emojiKey = requireNotNull(lookup(bar.emojiKey)),
         )

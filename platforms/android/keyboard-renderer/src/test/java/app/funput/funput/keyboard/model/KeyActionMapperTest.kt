@@ -42,7 +42,6 @@ class KeyActionMapperTest {
 
     @Test
     fun nonActionKeysDoNotMapToAKeyAction() {
-        assertNull(key(KeyRole.SETTINGS).toKeyAction(ShiftState.OFF))
         assertNull(key(KeyRole.EMOJI).toKeyAction(ShiftState.OFF))
         assertNull(key(KeyRole.PLACEHOLDER).toKeyAction(ShiftState.OFF))
     }

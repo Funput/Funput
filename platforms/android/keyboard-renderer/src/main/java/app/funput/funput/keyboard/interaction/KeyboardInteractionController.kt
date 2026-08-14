@@ -14,7 +14,6 @@ internal class KeyboardInteractionController(
     private val keySpec: (keyId: String) -> KeySpec?,
     private val suggestionSelection: (targetId: String) -> SuggestionSelection?,
     onAction: (KeyAction) -> Unit,
-    private val onSettingsRequested: () -> Unit,
     private val onEmojiRequested: () -> Unit,
     private val onClipboardPanelRequested: () -> Unit = {},
     private val onClipboardRequested: () -> Unit = {},
@@ -141,7 +140,6 @@ internal class KeyboardInteractionController(
         when {
             selection != null -> onSuggestionSelected(selection)
             keyId == ClipboardTargetId -> onClipboardRequested()
-            key?.role == KeyRole.SETTINGS -> onSettingsRequested()
             key?.role == KeyRole.CLIPBOARD -> onClipboardPanelRequested()
             key?.role == KeyRole.EMOJI -> onEmojiRequested()
             keyId != null -> actionDispatcher.dispatch(keyId, eventTimeMillis)

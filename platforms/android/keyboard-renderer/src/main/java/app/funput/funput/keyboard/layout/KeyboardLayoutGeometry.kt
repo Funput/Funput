@@ -7,7 +7,6 @@ internal fun KeyboardLayout.resolveGeometry(
     height: Int,
     density: Float,
     profile: KeyboardSizingProfile = KeyboardSizingProfile.Default,
-    showSettings: Boolean = true,
     showClipboard: Boolean = false,
 ): ResolvedKeyboard? {
     if (width <= 0 || height <= 0) return null
@@ -16,7 +15,6 @@ internal fun KeyboardLayout.resolveGeometry(
         width = width.toFloat(),
         height = height.toFloat(),
         spec = KeyboardGeometrySpec.fromProfile(density, profile),
-        showSettings = showSettings,
         showClipboard = showClipboard,
     )
 }

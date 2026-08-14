@@ -7,14 +7,13 @@ internal object ToolbarGeometry {
     /**
      * Resolves toolbar bounds.
      *
-     * When [showSettings] is false (suggestions present), Settings yields so the suggestion
+     * When [showClipboard] is false (suggestions present), Clipboard yields so the suggestion
      * region can extend to the emoji key — matching iOS utility-key arbitration.
      */
     fun resolve(
         layout: KeyboardLayout,
         width: Float,
         spec: KeyboardGeometrySpec,
-        showSettings: Boolean = true,
         showClipboard: Boolean = false,
     ): ResolvedSuggestionBar? {
         val bar = layout.suggestionBar ?: return null
@@ -27,11 +26,9 @@ internal object ToolbarGeometry {
         } else {
             null
         }
-        val settingsAnchor = clipboard?.left ?: emoji.left
-        val settings = if (showSettings) boundsBefore(settingsAnchor, top, bottom, spec) else null
-        val systemAnchor = settings?.left ?: clipboard?.left ?: emoji.left
+        val systemAnchor = clipboard?.left ?: emoji.left
         val system = bar.systemInputMethodKey?.let { boundsBefore(systemAnchor, top, bottom, spec) }
-        val controlsLeft = system?.left ?: settings?.left ?: clipboard?.left ?: emoji.left
+        val controlsLeft = system?.left ?: clipboard?.left ?: emoji.left
         val logoSize = spec.suggestionBarHeight * ToolbarBrandMetrics.LogoSizeRatio
         val logoTop = top + (spec.suggestionBarHeight - logoSize) / 2f
         val logo = KeyBounds(spec.horizontalPadding, logoTop, spec.horizontalPadding + logoSize, logoTop + logoSize)
@@ -42,7 +39,6 @@ internal object ToolbarGeometry {
             logoBounds = logo,
             suggestionsBounds = KeyBounds(suggestionsLeft, top, suggestionsRight, bottom),
             systemInputMethodKey = system?.let { ResolvedKey(requireNotNull(bar.systemInputMethodKey), it) },
-            settingsKey = settings?.let { ResolvedKey(bar.settingsKey, it) },
             clipboardKey = clipboard?.let { ResolvedKey(requireNotNull(bar.clipboardKey), it) },
             emojiKey = ResolvedKey(bar.emojiKey, emoji),
             suggestionsEnabled = bar.suggestionsEnabled,

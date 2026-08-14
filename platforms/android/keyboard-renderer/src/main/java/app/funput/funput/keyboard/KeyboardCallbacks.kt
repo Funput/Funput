@@ -6,7 +6,6 @@ import app.funput.funput.keyboard.model.SuggestionSelection
 /** Host callbacks emitted by the keyboard surface. */
 class KeyboardCallbacks {
     var onKeyAction: ((KeyAction) -> Unit)? = null
-    var onSettingsRequested: (() -> Unit)? = null
     var onEmojiRequested: (() -> Unit)? = null
     var onClipboardPanelRequested: (() -> Unit)? = null
     var onClipboardPasteRequested: (() -> Unit)? = null
@@ -14,10 +13,6 @@ class KeyboardCallbacks {
 
     internal fun dispatch(action: KeyAction) {
         onKeyAction?.invoke(action)
-    }
-
-    internal fun dispatchSettingsRequest() {
-        onSettingsRequested?.invoke()
     }
 
     internal fun dispatchEmojiRequest() {
