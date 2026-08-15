@@ -33,6 +33,11 @@
 
 #include "compose/composer/composer.h"
 
+#include <vector>
+
+#include "compose/key/boundary.h"
+#include "ffi/utf8.h"
+
 namespace funput {
 
 ComposePlan Composer::planFromResult(const FunputResult &result) {
@@ -40,6 +45,29 @@ ComposePlan Composer::planFromResult(const FunputResult &result) {
     // a composition, so the app types it itself. Mirrors `plan_inject`'s None arm.
     if (result.action == ACTION_NONE) return ComposePlan::passThrough();
     return ComposePlan::replace(result.backspace, Handle::output(result));
+}
+
+bool Composer::adoptWordBeforeBackspace(const std::string &textBeforeCaret) {
+    if (!nonPreedit_ || !effectiveEnabled_) return false;
+    std::vector<uint32_t> chars = decodeUtf8(textBeforeCaret);
+    if (chars.empty()) return false;
+    // The app has not deleted it yet, so drop it here to see where the caret lands.
+    chars.pop_back();
+
+    size_t start = chars.size();
+    while (start > 0 && !isBoundary(static_cast<char32_t>(chars[start - 1]), settings_.method)) {
+        --start;
+    }
+    // The caret landed on a separator, not on a word — nothing to re-open. Mirrors
+    // `CommittedTail::backspace` on Windows, which is the same rule sourced from a
+    // shadow copy because a hook shell has no document to read.
+    if (start == chars.size()) return false;
+
+    std::string word;
+    for (size_t i = start; i < chars.size(); ++i) appendUtf8(word, chars[i]);
+    // The engine refuses anything that is not a Vietnamese syllable, which is what
+    // keeps English words and URLs literal.
+    return handle_.adopt(word);
 }
 
 ComposePlan Composer::endComposition(bool consumed) {

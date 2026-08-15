@@ -23,6 +23,7 @@ add_executable(funput_linux_tests
     compose/composer/keys_tests.cpp
     compose/composer/state_tests.cpp
     compose/composer/nonpreedit_tests.cpp
+    compose/composer/retone_tests.cpp
     ffi/utf8_tests.cpp
     settings/settings_tests.cpp)
 

@@ -65,6 +65,21 @@ public:
     void setNonPreedit(bool on) { nonPreedit_ = on; }
     bool nonPreedit() const { return nonPreedit_; }
 
+    // Whether a word is being composed right now. The shells ask before deciding
+    // whether a Backspace is shortening a live word or eating a committed one.
+    bool isComposing() const { return !handle_.buffer().empty(); }
+
+    // A Backspace is about to delete the last character of `textBeforeCaret` (the
+    // shell passes the document as it stands *now*; the app has not acted yet). If
+    // that leaves the caret at the end of a finished Vietnamese word, re-open it so
+    // the next keystroke can still fix its tone — `phủ` Space Backspace `s` gives
+    // `phú`. Returns whether a word was taken; nothing is written to the document
+    // either way, so a false costs nothing.
+    //
+    // Only for non-preedit, where the word really is in the document. A preedit
+    // shell has nothing to re-open: Backspace there shortens the composition.
+    bool adoptWordBeforeBackspace(const std::string &textBeforeCaret);
+
     // --- settings & VI/EN -----------------------------------------------------
 
     // Re-read the settings file only if its mtime moved; returns true if any value
