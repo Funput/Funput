@@ -1,4 +1,4 @@
-#include "settings_watch.h"
+#include "settings/watch.h"
 
 #include <cstring>
 #include <filesystem>
@@ -7,7 +7,7 @@
 #include <sys/inotify.h>
 #include <unistd.h>
 
-#include "settings.h"
+#include "settings/settings.h"
 
 namespace funput {
 

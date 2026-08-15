@@ -1,4 +1,4 @@
-#include "engine_internal.h"
+#include "engine/internal.h"
 
 #include <glib-unix.h>
 
@@ -25,8 +25,8 @@ namespace {
 
 gboolean settingsChanged(gint, GIOCondition, gpointer data) {
     auto *state = FUNPUT_ENGINE(data)->state;
-    if (state->watcher.drain() && state->settings.reload()) {
-        funput_ibus::applySettings(state);
+    if (state->watcher.drain() && state->composer.reloadSettings()) {
+        state->composer.applySettings();
     }
     return G_SOURCE_CONTINUE;
 }
@@ -34,8 +34,9 @@ gboolean settingsChanged(gint, GIOCondition, gpointer data) {
 } // namespace
 
 static void ibus_funput_engine_init(IBusFunputEngine *self) {
+    // The composer pushes its (default) settings into the engine as it is built;
+    // the file itself is read on the first focusIn()/enable().
     self->state = new funput_ibus::EngineState();
-    funput_ibus::applySettings(self->state);
     if (self->state->watcher.fd() >= 0) {
         self->state->watcherSource =
             g_unix_fd_add(self->state->watcher.fd(), G_IO_IN, settingsChanged, self);

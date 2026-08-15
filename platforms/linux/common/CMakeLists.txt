@@ -3,7 +3,7 @@
 # the build of the Rust cdylib itself. Framework-agnostic.
 #
 # Each shell `add_subdirectory()`s this and links `funput_linux_common`, inheriting
-# (PUBLIC) the include dir for "settings.h"/"ffi_handle.h"/"boundary.h", the FFI
+# (PUBLIC) the include dir that roots "settings/…", "ffi/…" and "compose/…", the FFI
 # header path for "funput.h", and the built libfunput_ffi.so. The shells only add
 # their own framework deps, the $ORIGIN rpath, and install the .so next to their
 # own binary (paths exposed below as cache vars).
@@ -30,7 +30,17 @@ add_custom_command(
 add_custom_target(funput_ffi DEPENDS "${FUNPUT_FFI_SO}")
 
 # --- Shared static lib ------------------------------------------------------
-add_library(funput_linux_common STATIC settings.cpp settings_io.cpp settings_watch.cpp)
+# `compose/` is the framework-free composition state machine: the shells hand it a
+# normalized KeyEvent and perform the ComposePlan it returns. It links no Fcitx5 or
+# IBus symbol, which is what lets common/tests exercise the typing rules on a
+# machine with neither framework installed.
+add_library(funput_linux_common STATIC
+    settings/lookup.cpp
+    settings/io.cpp
+    settings/watch.cpp
+    compose/key/classify.cpp
+    compose/composer/keys.cpp
+    compose/composer/state.cpp)
 target_compile_features(funput_linux_common PUBLIC cxx_std_17)
 # This static lib is linked into shared objects (the Fcitx5 addon MODULE) and PIE
 # executables (the IBus engine), so its objects must be position-independent.
@@ -44,3 +54,13 @@ target_include_directories(funput_linux_common PUBLIC
 target_link_libraries(funput_linux_common PUBLIC
     nlohmann_json::nlohmann_json
     "${FUNPUT_FFI_SO}")
+
+# --- Unit tests (opt-in) ----------------------------------------------------
+# OFF by default so the packaging projects (fcitx5/, ibus/) and distro packagers
+# never build them — and never need the test framework, which is fetched from the
+# network. Turn them on through the platforms/linux superproject:
+#   cmake -S platforms/linux -B build/tests -DFUNPUT_BUILD_TESTS=ON
+option(FUNPUT_BUILD_TESTS "Build the shared Linux unit tests" OFF)
+if(FUNPUT_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
