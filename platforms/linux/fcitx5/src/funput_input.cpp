@@ -26,6 +26,16 @@ funput::KeyEvent toKeyEvent(const fcitx::Key &key) {
     return ev;
 }
 
+// Is the client holding a selection right now? Non-preedit repairs the document by
+// deleting backwards from the caret, and with a selection live that delete takes the
+// highlighted text instead — the browser-autofill hazard question 5 of the probe
+// went looking for. It never caught one in 93 commits, but "not seen" is not
+// "cannot happen" and the price is the user's own words.
+bool hasSelection(fcitx::InputContext *context) {
+    const auto &surrounding = context->surroundingText();
+    return surrounding.isValid() && surrounding.cursor() != surrounding.anchor();
+}
+
 } // namespace
 
 void FunputEngine::updatePreedit(fcitx::InputContext *context, const std::string &text) {
@@ -71,13 +81,25 @@ void FunputEngine::applyPlan(fcitx::InputContext *context, const funput::Compose
         }
         break;
     case funput::Effect::Replace:
-        // Non-preedit's document repair: delete `plan.deleteChars` characters, then
-        // commit `plan.text`. Not reachable yet — nothing calls
-        // `Composer::setNonPreedit()`, so the composer never emits this. Performing
-        // it needs more than the two calls it looks like: the probe showed that
-        // issuing writes without waiting for the client to confirm the previous one
-        // destroys the user's text, so this arm arrives together with that
-        // serialization rather than ahead of it.
+        // Non-preedit's document repair: take back what the last keystroke wrote,
+        // then write what this one produced. Both counts are in characters — the
+        // engine hands out characters and deleteSurroundingText takes characters, so
+        // nothing converts between them anywhere along the way.
+        if (plan.deleteChars > 0) {
+            if (hasSelection(context)) {
+                // Deleting now would take the user's highlighted text instead of our
+                // own. Give up on the repair *and* the composition: leaving the
+                // engine believing it owns a word it could not correct would send the
+                // next keystroke's delete into text we never wrote.
+                composer_.discard();
+                break;
+            }
+            context->deleteSurroundingText(-static_cast<int>(plan.deleteChars), plan.deleteChars);
+        }
+        if (!plan.text.empty()) {
+            funput::probe::noteCommit(context, plan.text);
+            context->commitString(plan.text);
+        }
         break;
     }
 }
