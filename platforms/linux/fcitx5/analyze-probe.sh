@@ -38,6 +38,22 @@ jq -r 'select(.ev=="commit") | [(.app // "<UNKNOWN>"), (.before.selection // fal
     sort | uniq -c | awk 'BEGIN{print "count\tapp\tselection_live"}{print $1"\t"$2"\t"$3}' | column -t
 
 echo
+echo "== Q6: the write self-test (Ctrl+Alt+P) =="
+if jq -e 'select(.ev=="selftest")' "$LOG" >/dev/null 2>&1; then
+    jq -r 'select(.ev=="selftest")
+           | [.step, (.drift // "" | tostring), (.reason // "")] | @tsv' "$LOG" | column -t
+    echo
+    echo "  start/wrote/deleted/ordered/done  = the write path works end to end"
+    echo "  write-failed                      = commitString never landed"
+    echo "  delete-failed drift=+5            = deleteSurroundingText did nothing"
+    echo "  delete-failed drift=+2 or +4      = it counted BYTES, not characters"
+    echo "  delete-failed drift<0             = it ate the user's own text"
+    echo "  order-failed                      = commit/delete/commit lost its order"
+else
+    echo "  (never run — press Ctrl+Alt+P with the caret in a scratch field)"
+fi
+
+echo
 echo "== commits with no surrounding update at all (client never answered) =="
 jq -r '[inputs] | . as $all
        | ($all | map(select(.ev=="commit")) | length) as $commits

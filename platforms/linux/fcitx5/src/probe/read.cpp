@@ -28,31 +28,13 @@ constexpr NamedFlag kFlags[] = {
     {"Disable", fcitx::CapabilityFlag::Disable},
 };
 
-// Byte offset of the `chars`-th codepoint, or npos past the end. Fcitx5 reports the
-// cursor in characters while the text is UTF-8, so comparing "the text before the
-// caret" needs this conversion — without it every field with trailing content
-// reports a false mismatch.
-size_t byteOffsetOfChar(const std::string &text, size_t chars) {
-    size_t offset = 0;
-    for (size_t seen = 0; seen < chars; ++seen) {
-        if (offset >= text.size()) return std::string::npos;
-        do {
-            ++offset;
-        } while (offset < text.size() &&
-                 (static_cast<unsigned char>(text[offset]) & 0xC0) == 0x80);
-    }
-    return offset;
-}
-
 // Does the text in front of the caret now end with what we committed? Anything else
 // means the client's surrounding text cannot be trusted as a verification signal —
 // which decides whether non-preedit can self-check or has to run blind.
 bool endsWithCommit(fcitx::InputContext *ic, const std::string &committed) {
-    const auto &text = ic->surroundingText();
-    if (!text.isValid()) return false;
-    const size_t caret = byteOffsetOfChar(text.text(), text.cursor());
-    if (caret == std::string::npos || caret < committed.size()) return false;
-    return text.text().compare(caret - committed.size(), committed.size(), committed) == 0;
+    const std::string before = detail::textBeforeCursor(ic);
+    if (before.size() < committed.size()) return false;
+    return before.compare(before.size() - committed.size(), committed.size(), committed) == 0;
 }
 
 } // namespace
@@ -64,6 +46,8 @@ void noteFocus(fcitx::InputContext *ic) {
         if (ic->capabilityFlags().test(flag)) caps.push_back(name);
     }
     lastCommit().pending = false;
+    // The field changed under any running self-test; its baseline is meaningless now.
+    cancelSelfTest();
     write({
         {"ev", "focus"},
         // Empty under Wayland text-input-v3, which carries no app id — question 4.
@@ -90,6 +74,9 @@ void noteCommit(fcitx::InputContext *ic, const std::string &text) {
 
 void noteSurroundingUpdate(fcitx::InputContext *ic) {
     if (!enabled() || ic == nullptr) return;
+    // The self-test reads this update before we log it, so its own steps appear in
+    // the log in the order they happened.
+    advanceSelfTest(ic);
     nlohmann::json record{{"ev", "surrounding"}, {"app", ic->program()}, {"after", snapshot(ic)}};
     if (detail::LastCommit &last = lastCommit(); last.pending) {
         record["dtMs"] = std::chrono::duration_cast<std::chrono::milliseconds>(

@@ -37,7 +37,8 @@ add_library(funput MODULE
     src/funput_input.cpp
     src/funput_controls.cpp
     src/probe/log.cpp
-    src/probe/record.cpp
+    src/probe/read.cpp
+    src/probe/write.cpp
 )
 # So the probe can be included as "probe/probe.h" from src/.
 target_include_directories(funput PRIVATE src)

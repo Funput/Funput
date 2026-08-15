@@ -78,6 +78,13 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     // them, and each framework reports them differently.
     if (event.isRelease()) return;
 
+    // Ctrl+Alt+P, and only with FUNPUT_PROBE=1 — see src/probe/probe.h. Checked
+    // ahead of the composer so the chord never reaches the typing rules.
+    if (funput::probe::maybeStartSelfTest(event)) {
+        event.filterAndAccept();
+        return;
+    }
+
     const funput::ComposePlan plan = composer_.onKey(toKeyEvent(event.key()));
     applyPlan(event.inputContext(), plan);
     if (plan.consumed) event.filterAndAccept();

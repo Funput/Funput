@@ -50,6 +50,21 @@ void write(nlohmann::json record) {
     if (out) out << record.dump() << '\n';
 }
 
+std::string textBeforeCursor(fcitx::InputContext *ic) {
+    const auto &surrounding = ic->surroundingText();
+    if (!surrounding.isValid()) return {};
+    const std::string &text = surrounding.text();
+    // Walk `cursor` codepoints to find where the caret is in bytes.
+    size_t offset = 0;
+    for (unsigned int seen = 0; seen < surrounding.cursor(); ++seen) {
+        if (offset >= text.size()) return text;
+        do {
+            ++offset;
+        } while (offset < text.size() && (static_cast<unsigned char>(text[offset]) & 0xC0) == 0x80);
+    }
+    return text.substr(0, offset);
+}
+
 nlohmann::json snapshot(fcitx::InputContext *ic) {
     const auto &surrounding = ic->surroundingText();
     if (!surrounding.isValid()) return nlohmann::json{{"valid", false}};

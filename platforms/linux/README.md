@@ -111,8 +111,18 @@ Type Vietnamese normally for a while, across the apps you care about — browser
 address bar and search box, a terminal, an editor, a chat app, a password field,
 GTK and Qt both. Then:
 
+Then, with the caret in a **scratch field** you don't mind disturbing, press
+**Ctrl+Alt+P**. That runs the write self-test: it commits `aếb`, deletes exactly
+those three characters, and then does a commit/delete/commit burst. A working client
+ends where it started, so nothing appears on screen; a broken one leaves the debris
+there, which is the answer. Press again to rerun.
+
+`aếb` is not arbitrary — `ế` is one character but three bytes, and
+`deleteSurroundingText` counts characters. An ASCII-only check would pass on a
+client that counts bytes and then corrupt Vietnamese in real use.
+
 ```bash
-platforms/linux/fcitx5/src/probe/analyze.sh
+platforms/linux/fcitx5/analyze-probe.sh
 ```
 
 It reports, per app: which capabilities the client claims, whether surrounding text

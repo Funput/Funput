@@ -21,6 +21,12 @@ void write(nlohmann::json record);
 // The surrounding text as the client currently reports it, or `valid: false`.
 nlohmann::json snapshot(fcitx::InputContext *ic);
 
+// The UTF-8 text in front of the caret, or empty when the client reports nothing
+// usable. Fcitx5 gives the cursor in *characters* while the text is UTF-8, so this
+// is the one place that conversion lives — comparing raw strings without it reports
+// a false mismatch in any field that has content after the caret.
+std::string textBeforeCursor(fcitx::InputContext *ic);
+
 // What we last committed, so a surrounding-text update can be diffed against it.
 // Typing is serial, so one slot is enough — no per-context bookkeeping.
 struct LastCommit {
