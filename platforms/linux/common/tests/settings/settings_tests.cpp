@@ -47,6 +47,7 @@ TEST_CASE("reload parses every field from its wire name") {
         "eagerRestore": false,
         "spellCheck": true,
         "autoCapitalize": true,
+        "nonPreedit": true,
         "toggleHotkey": "ctrl_space",
         "flipHotkey": "ctrl_shift_x",
         "excludedApps": [{"id": "firefox"}, {"id": "code"}],
@@ -62,6 +63,7 @@ TEST_CASE("reload parses every field from its wire name") {
     CHECK_FALSE(settings.eagerRestore);
     CHECK(settings.spellCheck);
     CHECK(settings.autoCapitalize);
+    CHECK(settings.nonPreedit);
     CHECK(settings.toggleHotkey == Hotkey::CtrlSpace);
     CHECK(settings.flipHotkey == FlipHotkey::CtrlShiftX);
     CHECK(settings.excludedAppIds == std::vector<std::string>{"firefox", "code"});

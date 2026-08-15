@@ -40,6 +40,7 @@ pub(super) fn to_document(settings: &Settings) -> ConfigDocument {
                 toggle_hotkey: Some(hotkey_key(settings.toggle_hotkey).to_string()),
                 flip_hotkey: Some(flip_key(settings.flip_hotkey).to_string()),
                 excluded_apps: Some(settings.excluded_apps.clone()),
+                non_preedit: Some(settings.non_preedit),
             }),
         }),
     }
@@ -116,6 +117,12 @@ fn merge_linux(settings: &mut Settings, doc: &ConfigDocument, summary: &mut Impo
     }
     if let Some(hotkey) = linux.flip_hotkey.as_deref().and_then(flip_from_key) {
         settings.flip_hotkey = hotkey;
+    }
+    // Absent means "the exporter had nothing to say", not "turn it off" — the format's
+    // non-destructive-import rule, and the difference between carrying a setting and
+    // silently resetting it.
+    if let Some(value) = linux.non_preedit {
+        settings.non_preedit = value;
     }
     if let Some(apps) = &linux.excluded_apps {
         for app in apps {

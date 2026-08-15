@@ -40,7 +40,8 @@ add_library(funput_linux_common STATIC
     settings/watch.cpp
     compose/key/classify.cpp
     compose/composer/keys.cpp
-    compose/composer/state.cpp)
+    compose/composer/state.cpp
+    compose/composer/nonpreedit.cpp)
 target_compile_features(funput_linux_common PUBLIC cxx_std_17)
 # This static lib is linked into shared objects (the Fcitx5 addon MODULE) and PIE
 # executables (the IBus engine), so its objects must be position-independent.

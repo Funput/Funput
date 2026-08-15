@@ -35,6 +35,7 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../common"
 add_library(funput MODULE
     src/funput_engine.cpp
     src/funput_input.cpp
+    src/funput_client.cpp
     src/funput_controls.cpp
 )
 add_dependencies(funput funput_ffi)

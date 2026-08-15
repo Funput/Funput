@@ -23,6 +23,11 @@ impl Settings {
             .unwrap_or_default()
     }
 
+    /// Serializes this struct over the whole file, unlike the addon's C++ writer,
+    /// which merges into what is already there. So every key the addon owns has to
+    /// exist on [`Settings`] even when this app shows no control for it — one that
+    /// does not is deleted from the user's settings the next time anything here is
+    /// saved. `non_preedit` is carried for exactly that reason.
     pub fn save(&self) {
         let Some(path) = settings_path() else {
             return;

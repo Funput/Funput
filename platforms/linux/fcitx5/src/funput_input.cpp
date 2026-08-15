@@ -1,11 +1,8 @@
-// The Fcitx5 side of one keystroke: normalize the key, hand it to the composer,
-// perform the plan. The typing rules themselves live in common/compose/.
+// The Fcitx5 side of one keystroke: normalize the key, hand it to the composer, then
+// let funput_client.cpp perform the plan. The typing rules themselves live in
+// common/compose/.
 
 #include "funput_engine.h"
-
-#include <fcitx/inputpanel.h>
-#include <fcitx/text.h>
-#include <fcitx/userinterface.h>
 
 namespace {
 
@@ -24,55 +21,43 @@ funput::KeyEvent toKeyEvent(const fcitx::Key &key) {
     return ev;
 }
 
+// The document in front of the caret, as UTF-8. Fcitx5 reports the cursor in
+// characters while the text is UTF-8, so the two have to be reconciled here —
+// slicing by the cursor as if it were a byte offset cuts Vietnamese in half.
+std::string textBeforeCaret(fcitx::InputContext *context) {
+    const auto &surrounding = context->surroundingText();
+    if (!surrounding.isValid()) return {};
+    const std::vector<uint32_t> chars = funput::decodeUtf8(surrounding.text());
+    std::string out;
+    for (size_t i = 0; i < chars.size() && i < surrounding.cursor(); ++i) {
+        funput::appendUtf8(out, chars[i]);
+    }
+    return out;
+}
+
 } // namespace
-
-void FunputEngine::updatePreedit(fcitx::InputContext *context, const std::string &text) {
-    fcitx::Text preedit;
-    if (!text.empty()) preedit.append(text, fcitx::TextFormatFlag::Underline);
-    preedit.setCursor(static_cast<int>(text.size()));
-    auto &panel = context->inputPanel();
-    // Always publish the client preedit, even for clients that cannot render one:
-    // Fcitx5 commits clientPreedit() itself when the input context loses focus
-    // (Instance's ReservedFirst focus-out watcher), which is what keeps a half-typed
-    // word from vanishing on a click into another field or window. Display is
-    // unaffected — InputContext::updatePreedit() returns early without the Preedit
-    // capability, so those clients still get the Fcitx5-drawn panel preedit below.
-    panel.setClientPreedit(preedit);
-    if (!context->capabilityFlags().test(fcitx::CapabilityFlag::Preedit)) {
-        panel.setPreedit(preedit);
-    }
-    context->updatePreedit();
-    context->updateUserInterface(fcitx::UserInterfaceComponent::InputPanel);
-}
-
-void FunputEngine::clearPreedit(fcitx::InputContext *context) {
-    context->inputPanel().reset();
-    context->updatePreedit();
-    context->updateUserInterface(fcitx::UserInterfaceComponent::InputPanel);
-}
-
-void FunputEngine::applyPlan(fcitx::InputContext *context, const funput::ComposePlan &plan) {
-    switch (plan.effect) {
-    case funput::Effect::None:
-        break;
-    case funput::Effect::Preedit:
-        updatePreedit(context, plan.text);
-        break;
-    case funput::Effect::Commit:
-        // Always drop the preedit first; an empty text then means the composition
-        // ended without producing anything.
-        clearPreedit(context);
-        if (!plan.text.empty()) context->commitString(plan.text);
-        break;
-    }
-}
 
 void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &event) {
     // Releases never reach the composer: nothing in the typing rules depends on
     // them, and each framework reports them differently.
     if (event.isRelease()) return;
 
-    const funput::ComposePlan plan = composer_.onKey(toKeyEvent(event.key()));
+    const funput::KeyEvent ev = toKeyEvent(event.key());
+    // A Backspace with nothing composing is about to eat a *committed* character. In
+    // non-preedit the word it lands in is right there in the document, so read it now
+    // — the composer decides afterwards whether it is a Vietnamese syllable worth
+    // re-opening. Asking `classify()` rather than testing the keysym keeps
+    // Ctrl+Backspace (delete word) out of this: that is a shortcut, not a Backspace.
+    const bool reopen = composer_.nonPreedit() && !composer_.isComposing() &&
+                        funput::classify(ev, composer_.settings()) == funput::KeyKind::Backspace;
+    const std::string before = reopen ? textBeforeCaret(event.inputContext()) : std::string();
+
+    const funput::ComposePlan plan = composer_.onKey(ev);
     applyPlan(event.inputContext(), plan);
     if (plan.consumed) event.filterAndAccept();
+
+    // After the plan, and never writing anything itself: the key passes through, the
+    // app deletes its own character, and the engine simply takes ownership of what is
+    // left so the next keystroke can edit it.
+    if (reopen) composer_.adoptWordBeforeBackspace(before);
 }

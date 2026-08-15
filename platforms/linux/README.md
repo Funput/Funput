@@ -18,6 +18,7 @@ common/                 Framework-free C++ shared by both shells
       composer.h              The state machine (engine + settings + VI/EN)
       keys.cpp                onKey(): the keystroke decision tree
       state.cpp               Settings, VI/EN, and the non-key exits
+      nonpreedit.cpp          Commit-as-you-type mode, and re-opening a word
   settings/               ~/.config/Funput/settings.json
     settings.h              The model every shell reads
     lookup.cpp              Where the file lives; app exclusion
@@ -28,6 +29,8 @@ common/                 Framework-free C++ shared by both shells
     utf8.h                  UTF-8 <-> UTF-32 marshalling
   tests/                  doctest, in a tree mirroring the above
 fcitx5/src/             Fcitx5 addon -> libfunput.so
+  funput_input.cpp        One keystroke: normalize, ask the composer
+  funput_client.cpp       The other half: how a plan reaches the client
 ibus/src/               IBus engine -> ibus-engine-funput
   engine.h                The public GObject type
   engine/                 internal.h, object.cpp, callbacks.cpp, client.cpp
@@ -95,6 +98,56 @@ under `fcitx5/` or `ibus/` still wants a local build before merging.
 
 Every file here is held to 150 lines by `scripts/check-loc.sh`, test files included.
 
+## Non-preedit mode
+
+Off by default. Set `"nonPreedit": true` in `~/.config/Funput/settings.json`; there is
+no UI yet, and the settings watcher picks it up live.
+
+Instead of parking the composing word in a preedit, each keystroke commits into the
+document and repairs what the previous one wrote — `Effect::Replace` carries "delete
+N characters, then commit this". That is the instruction the Windows hook shell
+already performs (`crates/funput-desktop/src/inject.rs`), and N comes straight from
+the engine as `FunputResult::backspace`, so the platforms stay one behaviour rather
+than three. Backspacing onto a finished word re-opens it, so `phủ` Space Backspace
+`s` gives `phú`; Windows keeps a shadow copy of what it typed to manage that
+(`retone.rs`), while here the document can simply be read.
+
+Chosen per input context, and only when `surroundingText().isValid()`.
+
+### What was measured, and what follows from it
+
+On GNOME/Wayland, where Fcitx5 is reached through its **ibus** frontend and GNOME
+Shell is the client for every application:
+
+- **Capability flags lie in both directions.** Contexts report `SurroundingText`
+  absent while it works perfectly, and some report `caps: []` — not even `Preedit` —
+  while preedit plainly works. Nothing is gated on them; `isValid()` decides instead.
+- **`program()` is always `gnome-shell`**, never the real app, so a per-app policy
+  there would be actively wrong rather than merely unavailable.
+- **`deleteSurroundingText` counts characters, not bytes** — verified with `ế`, one
+  character and three bytes. `ComposePlan::deleteChars` is a character count end to
+  end for that reason, and an ASCII-only test would not have caught the difference.
+- **The client answers only 61% of commits**, and the channel dies and revives within
+  one session, so nothing may wait on it.
+- **A commit/delete/commit burst issued with no gap destroys the user's text**: `;;;`
+  came back as `;;y` in all nine attempts.
+- **But typing cannot produce that burst.** A `Replace` needs a keystroke that makes
+  the engine rewrite its tail. Consecutive ones were never closer than 49ms, and
+  holding a key down does not help — after the second press the engine stops
+  rewriting and the repeats pass straight through, leaving 500ms between `Replace`es
+  under auto-repeat, ten times slower than typing by hand.
+
+The last three together are why **writes are deliberately not serialized**. Waiting
+for the client to confirm one write before issuing the next would cost ~25ms per
+keystroke and stall outright on the commits it never answers — a certain cost against
+a failure real typing cannot reach. Reconsider only if something starts issuing
+several `Replace`es for one keystroke.
+
+A selection live at delete time would take the highlighted text instead of ours, so
+`funput_client.cpp` abandons both the repair and the composition when it sees one.
+Measuring never caught a live selection in 93 commits, so that guard is reasoned
+rather than measured.
+
 ## Known gaps
 
 - **Per-app auto-EN is Fcitx5-only.** `Composer::applyPerAppDefault()` exists for
@@ -107,6 +160,16 @@ Every file here is held to 150 lines by `scripts/check-loc.sh`, test files inclu
 - **Preedit loses a half-typed word in some clients on focus change.** Both shells
   hand the flush to their framework (see the comments in `deactivate()` and
   `updatePreedit()`); clients that drop the preedit instead of committing it lose
-  the word anyway. A non-preedit mode — commit as you type, repair with
-  `deleteSurroundingText` — is the intended fix, and `ComposePlan`'s `Effect` enum
-  is where it will slot in.
+  the word anyway. Non-preedit above is the fix, so this now only bites where that
+  mode is unavailable — every IBus client, and any Fcitx5 client that reports no
+  surrounding text.
+- **Non-preedit is Fcitx5-only.** IBus has `ibus_engine_delete_surrounding_text`, so
+  it is not closed to the mode in principle, but none of the measurements above were
+  taken against it and its `Effect::Replace` arm refuses rather than guess with the
+  user's text.
+- **The Settings app rewrites `settings.json` wholesale.** Unlike the addon's merging
+  writer, it serializes its own struct over the file, so a key it does not know is
+  deleted the next time the user changes anything there. Every setting the addon owns
+  needs a field in `settings-gtk`'s `Settings` too, and the two have to ship in the
+  same release — a shipped addon paired with an older Settings app silently loses the
+  new setting.

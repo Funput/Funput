@@ -36,6 +36,13 @@ void applyPlan(IBusEngine *engine, const funput::ComposePlan &plan) {
             ibus_engine_commit_text(engine, ibus_text_new_from_string(plan.text.c_str()));
         }
         break;
+    case funput::Effect::Replace:
+        // Non-preedit's document repair. Not reachable: this shell never calls
+        // `Composer::setNonPreedit()`. IBus has `ibus_engine_delete_surrounding_text`,
+        // so the mode is not closed to it in principle — but what makes the mode safe
+        // was measured against Fcitx5 only, and nothing here has been measured yet.
+        // Enabling it before that would be guessing with the user's text.
+        break;
     }
 }
 

@@ -122,7 +122,8 @@ Fcitx5 `program()`/WM_CLASS, not exe name:
   "linux": {
     "toggleHotkey": "ctrl_backtick",
     "flipHotkey": "off",
-    "excludedApps": [ { "id": "code", "name": "VS Code" } ]
+    "excludedApps": [ { "id": "code", "name": "VS Code" } ],
+    "nonPreedit": false
   }
 }
 ```
@@ -132,6 +133,7 @@ Fcitx5 `program()`/WM_CLASS, not exe name:
 | `toggleHotkey` | Preset id: `ctrl_backtick` \| `ctrl_space` \| `alt_shift`. |
 | `flipHotkey` | Preset id: `off` \| `ctrl_shift_z` \| `ctrl_shift_x`. |
 | `excludedApps[]` | `{ id (WM_CLASS / program name), name }`. Unioned by `id`. |
+| `nonPreedit` | Commit as you type instead of showing a preedit. Fcitx5 only; absent leaves the local value untouched. |
 
 Linux-only, applied only when running on Linux. Note: Windows and Linux hotkey
 presets are identical, but each still reads only its own block (exe names ≠
