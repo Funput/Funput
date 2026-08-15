@@ -1,8 +1,7 @@
 package app.funput.funput.keyboard.layout
 
-/** Density-independent keyboard geometry preset shared by renderer and future Settings. */
+/** Density-independent keyboard geometry, scaled by a single user-chosen factor. */
 data class KeyboardSizingProfile(
-    val id: String,
     val horizontalPaddingDp: Float = 6f,
     val verticalPaddingDp: Float = 6f,
     val horizontalGapRatio: Float = 0.11f,
@@ -22,25 +21,53 @@ data class KeyboardSizingProfile(
     }
 
     companion object {
-        val Compact = KeyboardSizingProfile(
-            id = "compact",
-            heightScale = 0.92f,
-            labelScale = 0.92f,
-        )
+        /** The range Settings offers, matching the iOS slider so the two platforms agree. */
+        const val MinScale = 0.85f
+        const val MaxScale = 1.2f
+        const val DefaultScale = 1.08f
 
-        val Normal = KeyboardSizingProfile(id = "normal")
+        /**
+         * The tallest a keyboard is allowed to grow in landscape on a phone.
+         *
+         * A phone rotated on its side has far less height to spend than it does upright, so the
+         * ceiling here sits below even the old fixed default ("Large", 1.08) — the old default
+         * was tuned for portrait and was already tall for a landscape phone strip. Tablets keep
+         * their full landscape height because they have the height to spare; see
+         * [constrainedForLandscape].
+         */
+        const val PhoneLandscapeMaxScale = 0.92f
 
-        val Large = KeyboardSizingProfile(
-            id = "large",
-            heightScale = 1.08f,
-            labelScale = 1.04f,
-        )
+        val Normal = scaled(1f)
 
-        val Default: KeyboardSizingProfile = Large
+        val Default: KeyboardSizingProfile = scaled(DefaultScale)
 
-        val Presets: List<KeyboardSizingProfile> = listOf(Compact, Normal, Large)
+        /**
+         * The profile for a height scale, clamped to the offered range.
+         *
+         * Labels follow the keys one for one: a key that grows by 8% with text that stays put
+         * reads as a key with too much padding rather than as a larger key.
+         */
+        fun scaled(scale: Float): KeyboardSizingProfile {
+            val clamped = scale.coerceIn(MinScale, MaxScale)
+            return KeyboardSizingProfile(
+                heightScale = clamped,
+                labelScale = BaseLabelScale + (clamped - 1f),
+            )
+        }
 
-        fun fromId(id: String?): KeyboardSizingProfile =
-            Presets.firstOrNull { it.id == id } ?: Default
+        private const val BaseLabelScale = 0.96f
     }
+
+    /**
+     * This profile, or the phone-landscape ceiling if it would grow taller than that.
+     *
+     * Only a landscape phone is constrained — a tablet has the height to spare even sideways,
+     * and portrait always honors the full slider on both.
+     */
+    fun constrainedForLandscape(isPhoneLandscape: Boolean): KeyboardSizingProfile =
+        if (isPhoneLandscape && heightScale > PhoneLandscapeMaxScale) {
+            scaled(PhoneLandscapeMaxScale)
+        } else {
+            this
+        }
 }

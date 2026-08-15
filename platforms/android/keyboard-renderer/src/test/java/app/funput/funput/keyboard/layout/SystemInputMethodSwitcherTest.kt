@@ -27,7 +27,6 @@ class SystemInputMethodSwitcherTest {
 
         assertEquals(original.rows.last(), switched.rows.last())
         assertEquals(KeyRole.SYSTEM_INPUT_METHOD, bar.systemInputMethodKey?.role)
-        assertEquals(KeyRole.SETTINGS, bar.settingsKey.role)
         assertEquals(KeyRole.EMOJI, bar.emojiKey.role)
         assertTrue(switched.id.endsWith("-system-switcher"))
     }
@@ -52,7 +51,7 @@ class SystemInputMethodSwitcherTest {
     }
 
     @Test
-    fun `toolbar keeps settings and emoji ahead of switcher`() {
+    fun `toolbar keeps emoji ahead of switcher`() {
         val layout = resolve(visible = true)
         val height = KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI)
         val keyboard = KeyboardGeometry.resolve(
@@ -64,8 +63,7 @@ class SystemInputMethodSwitcherTest {
         val bar = requireNotNull(keyboard.suggestionBar)
         val system = requireNotNull(bar.systemInputMethodKey)
 
-        assertTrue(system.bounds.right < requireNotNull(bar.settingsKey).bounds.left)
-        assertTrue(requireNotNull(bar.settingsKey).bounds.right < bar.emojiKey.bounds.left)
+        assertTrue(system.bounds.right < bar.emojiKey.bounds.left)
     }
 
     private fun resolve(

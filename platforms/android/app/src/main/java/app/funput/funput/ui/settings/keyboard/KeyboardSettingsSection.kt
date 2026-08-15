@@ -14,6 +14,7 @@ import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.settings.SettingsPicker
 import app.funput.funput.ui.settings.components.SettingsGroup
+import app.funput.funput.ui.settings.components.SettingsPercentSliderRow
 import app.funput.funput.ui.settings.components.SettingsRow
 import app.funput.funput.ui.settings.components.SettingsSectionHeader
 import app.funput.funput.ui.settings.components.SettingsSegmentedRow
@@ -86,12 +87,11 @@ internal fun KeyboardSettingsSection(
             onSelected = onToneStyleSelected,
         )
         Spacer(modifier = Modifier.height(Spacing.Section))
-        SettingsSegmentedRow(
+        SettingsPercentSliderRow(
             title = stringResource(R.string.settings_key_size_title),
-            options = KeyboardSizingProfile.Presets,
-            selected = keySizeProfile,
-            labelOf = { profile -> profile.label() },
-            onSelected = onKeySizeSelected,
+            value = keySizeProfile.heightScale,
+            range = KeyboardSizingProfile.MinScale..KeyboardSizingProfile.MaxScale,
+            onValueSettled = { scale -> onKeySizeSelected(KeyboardSizingProfile.scaled(scale)) },
         )
     }
 }

@@ -88,7 +88,6 @@ class FunputKeyboardView @JvmOverloads constructor(
     init { KeyboardComposeLifecycle.install(this)
         addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::handleKeyAction
-        keyboardSurface.callbacks.onSettingsRequested = ::openSettings
         keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
         keyboardSurface.callbacks.onEmojiRequested = ::openEmojiFromKeyboard
         keyboardSurface.callbacks.onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest
@@ -124,8 +123,6 @@ class FunputKeyboardView @JvmOverloads constructor(
             MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
         )
     }
-
-    private fun openSettings() = context.openFunputSettings()
 
     private fun openEmojiFromKeyboard() {
         if (editorMode.isPassword) return

@@ -11,7 +11,6 @@ enum class KeyRole {
     MORE_SYMBOLS,
     LETTERS,
     SYSTEM_INPUT_METHOD,
-    SETTINGS,
     CLIPBOARD,
     EMOJI,
     SPACE,

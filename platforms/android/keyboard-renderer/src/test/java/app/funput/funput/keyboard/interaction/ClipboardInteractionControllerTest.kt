@@ -38,7 +38,6 @@ class ClipboardInteractionControllerTest {
         keySpec = { id -> KeySpec(id, "", KeyRole.CLIPBOARD, accessibilityLabel = "Clipboard") },
         suggestionSelection = { null },
         onAction = {},
-        onSettingsRequested = {},
         onEmojiRequested = {},
         onClipboardRequested = onClipboard,
         onClipboardPanelRequested = onPanel,

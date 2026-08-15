@@ -29,11 +29,17 @@ class KeyboardGeometryProfileTest {
     }
 
     @Test
-    fun sizingPresetsScaleKeyboardHeight() {
+    fun sizingScaleChangesKeyboardHeight() {
         val method = KeyboardInputMethod.TELEX
         val normal = KeyboardDimensions.recommendedHeightDp(method, profile = KeyboardSizingProfile.Normal)
-        val compact = KeyboardDimensions.recommendedHeightDp(method, profile = KeyboardSizingProfile.Compact)
-        val large = KeyboardDimensions.recommendedHeightDp(method, profile = KeyboardSizingProfile.Large)
+        val compact = KeyboardDimensions.recommendedHeightDp(
+            method,
+            profile = KeyboardSizingProfile.scaled(0.92f),
+        )
+        val large = KeyboardDimensions.recommendedHeightDp(
+            method,
+            profile = KeyboardSizingProfile.scaled(1.08f),
+        )
 
         assertTrue(compact < normal)
         assertTrue(large > normal)

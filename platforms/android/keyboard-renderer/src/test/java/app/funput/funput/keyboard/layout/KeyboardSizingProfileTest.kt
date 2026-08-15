@@ -1,28 +1,47 @@
 package app.funput.funput.keyboard.layout
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
 import org.junit.Test
 
 class KeyboardSizingProfileTest {
     @Test
-    fun defaultProfileIsLarge() {
-        assertSame(KeyboardSizingProfile.Large, KeyboardSizingProfile.Default)
-    }
-
-    @Test
-    fun presetsExposeDistinctHeightScales() {
-        assertEquals(0.92f, KeyboardSizingProfile.Compact.heightScale)
+    fun defaultSitsAboveNormalAndInsideTheOfferedRange() {
+        assertEquals(KeyboardSizingProfile.DefaultScale, KeyboardSizingProfile.Default.heightScale)
         assertEquals(1f, KeyboardSizingProfile.Normal.heightScale)
-        assertEquals(1.08f, KeyboardSizingProfile.Large.heightScale)
+        assertEquals(0.96f, KeyboardSizingProfile.Normal.labelScale, 0.0001f)
     }
 
     @Test
-    fun fromIdResolvesKnownPresetsAndFallsBackToDefault() {
-        assertSame(KeyboardSizingProfile.Compact, KeyboardSizingProfile.fromId("compact"))
-        assertSame(KeyboardSizingProfile.Normal, KeyboardSizingProfile.fromId("normal"))
-        assertSame(KeyboardSizingProfile.Large, KeyboardSizingProfile.fromId("large"))
-        assertSame(KeyboardSizingProfile.Default, KeyboardSizingProfile.fromId(null))
-        assertSame(KeyboardSizingProfile.Default, KeyboardSizingProfile.fromId("unknown"))
+    fun scaledClampsToTheOfferedRange() {
+        assertEquals(
+            KeyboardSizingProfile.MinScale,
+            KeyboardSizingProfile.scaled(0.1f).heightScale,
+        )
+        assertEquals(
+            KeyboardSizingProfile.MaxScale,
+            KeyboardSizingProfile.scaled(9f).heightScale,
+        )
+    }
+
+    @Test
+    fun labelsFollowTheKeyHeight() {
+        assertEquals(1.04f, KeyboardSizingProfile.scaled(1.08f).labelScale, 0.0001f)
+        assertEquals(0.88f, KeyboardSizingProfile.scaled(0.92f).labelScale, 0.0001f)
+    }
+
+    @Test
+    fun phoneLandscapeClampsDownToItsCeiling() {
+        val tall = KeyboardSizingProfile.scaled(1.2f)
+        assertEquals(
+            KeyboardSizingProfile.PhoneLandscapeMaxScale,
+            tall.constrainedForLandscape(isPhoneLandscape = true).heightScale,
+        )
+        assertEquals(1.2f, tall.constrainedForLandscape(isPhoneLandscape = false).heightScale)
+    }
+
+    @Test
+    fun phoneLandscapeLeavesSmallerScalesUntouched() {
+        val small = KeyboardSizingProfile.scaled(0.85f)
+        assertEquals(small, small.constrainedForLandscape(isPhoneLandscape = true))
     }
 }

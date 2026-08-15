@@ -84,7 +84,6 @@ class EditorKeyboardLayoutsTest {
         )
         val bar = requireNotNull(layout.suggestionBar)
 
-        assertEquals(KeyRole.SETTINGS, bar.settingsKey.role)
         assertEquals(KeyRole.EMOJI, bar.emojiKey.role)
         assertFalse(bar.suggestionsEnabled)
     }

@@ -26,7 +26,6 @@ internal fun createKeyboardSurfaceInteraction(
     keySpec = keySpec,
     suggestionSelection = suggestionSelection,
     onAction = callbacks::dispatch,
-    onSettingsRequested = callbacks::dispatchSettingsRequest,
     onEmojiRequested = callbacks::dispatchEmojiRequest,
     onClipboardPanelRequested = callbacks::dispatchClipboardPanelRequest,
     onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest,

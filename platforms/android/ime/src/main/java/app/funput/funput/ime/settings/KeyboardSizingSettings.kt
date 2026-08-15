@@ -36,7 +36,21 @@ class KeyboardSizingSettings(context: Context) {
 }
 
 internal object KeyboardSizingSettingCodec {
-    fun encode(profile: KeyboardSizingProfile): String = profile.id
+    fun encode(profile: KeyboardSizingProfile): String = profile.heightScale.toString()
 
-    fun decode(value: String?): KeyboardSizingProfile = KeyboardSizingProfile.fromId(value)
+    /**
+     * Reads the stored height scale.
+     *
+     * The setting used to be one of three preset ids, so those still decode — an install that
+     * picked a size before the slider shipped keeps the size it was given.
+     */
+    fun decode(value: String?): KeyboardSizingProfile = when (value) {
+        "compact" -> KeyboardSizingProfile.scaled(0.92f)
+        "normal" -> KeyboardSizingProfile.scaled(1f)
+        "large" -> KeyboardSizingProfile.scaled(1.08f)
+        else -> value?.toFloatOrNull()
+            ?.takeIf { it.isFinite() }
+            ?.let(KeyboardSizingProfile::scaled)
+            ?: KeyboardSizingSettings.DefaultProfile
+    }
 }

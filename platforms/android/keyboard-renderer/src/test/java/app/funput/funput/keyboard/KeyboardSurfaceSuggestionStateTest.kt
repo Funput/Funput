@@ -13,7 +13,7 @@ import org.junit.Test
 
 class KeyboardSurfaceSuggestionStateTest {
     @Test
-    fun emptyToNonEmptyFlipsShowSettingsAndRebuildsGeometry() {
+    fun emptyToNonEmptyFlipsUtilityKeysVisibleAndRebuildsGeometry() {
         var geometryRebuilds = 0
         var applied = emptyList<String>()
         var keyboard = keyboardWithSuggestionsWidth(500f)
@@ -21,19 +21,19 @@ class KeyboardSurfaceSuggestionStateTest {
             density = { 1f },
             keyboard = { keyboard },
             apply = { applied = it },
-            onShowSettingsChanged = {
+            onUtilityKeysVisibilityChanged = {
                 geometryRebuilds += 1
                 keyboard = keyboardWithSuggestionsWidth(700f)
                 // Mimic KeyboardSurfaceView.resolveGeometry -> geometryChanged.
             },
         )
 
-        assertTrue(state.showSettings)
+        assertTrue(state.utilityKeysVisible)
         state.update(listOf("xin", "chào"))
         // Caller must invoke geometryChanged after rebuild, same as the surface view.
         state.geometryChanged()
 
-        assertFalse(state.showSettings)
+        assertFalse(state.utilityKeysVisible)
         assertEquals(1, geometryRebuilds)
         assertEquals(listOf("xin", "chào"), applied)
     }
@@ -46,7 +46,7 @@ class KeyboardSurfaceSuggestionStateTest {
             density = { 1f },
             keyboard = { keyboardWithSuggestionsWidth(900f) },
             apply = { applied = it },
-            onShowSettingsChanged = { geometryRebuilds += 1 },
+            onUtilityKeysVisibilityChanged = { geometryRebuilds += 1 },
         )
 
         state.update(listOf("a", "b"))
@@ -54,24 +54,24 @@ class KeyboardSurfaceSuggestionStateTest {
         state.update(listOf("a", "b", "c"))
 
         assertEquals(1, geometryRebuilds)
-        assertFalse(state.showSettings)
+        assertFalse(state.utilityKeysVisible)
         assertEquals(listOf("a", "b", "c"), applied)
     }
 
     @Test
-    fun clearingCandidatesShowsSettingsAgain() {
+    fun clearingCandidatesShowsUtilityKeysAgain() {
         var geometryRebuilds = 0
         val state = KeyboardSurfaceSuggestionState(
             density = { 3f },
             keyboard = { keyboardWithSuggestionsWidth(500f) },
             apply = {},
-            onShowSettingsChanged = { geometryRebuilds += 1 },
+            onUtilityKeysVisibilityChanged = { geometryRebuilds += 1 },
         )
 
         state.update(listOf("xin"))
         state.update(emptyList())
 
-        assertTrue(state.showSettings)
+        assertTrue(state.utilityKeysVisible)
         assertEquals(2, geometryRebuilds)
     }
 
@@ -88,7 +88,6 @@ class KeyboardSurfaceSuggestionStateTest {
                 logoBounds = KeyBounds(0f, 0f, 80f, 80f),
                 suggestionsBounds = KeyBounds(90f, 0f, 90f + width, 100f),
                 systemInputMethodKey = null,
-                settingsKey = null,
                 emojiKey = emoji,
                 suggestionsEnabled = true,
             ),

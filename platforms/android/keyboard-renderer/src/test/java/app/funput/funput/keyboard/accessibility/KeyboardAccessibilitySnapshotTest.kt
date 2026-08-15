@@ -38,7 +38,6 @@ class KeyboardAccessibilitySnapshotTest {
     fun `toolbar and system switcher are exposed as virtual nodes`() {
         val snapshot = snapshot(systemSwitcherVisible = true)
 
-        assertTrue(snapshot.nodes.any { it.keyId == "settings" })
         assertTrue(snapshot.nodes.any { it.keyId == "emoji" })
         assertTrue(snapshot.nodes.any { it.keyId == "system-input-method" })
     }

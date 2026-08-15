@@ -51,7 +51,6 @@ class SymbolLayoutsTest {
             listOf(KeyboardLayoutMode.SYMBOLS_PRIMARY, KeyboardLayoutMode.SYMBOLS_SECONDARY).forEach { mode ->
                 val layout = KeyboardLayoutResolver.resolve(inputMethod, mode)
                 val ids = buildList {
-                    layout.suggestionBar?.settingsKey?.id?.let(::add)
                     layout.suggestionBar?.emojiKey?.id?.let(::add)
                     addAll(layout.rows.flattenedKeys().map { it.id })
                 }
@@ -70,7 +69,6 @@ class SymbolLayoutsTest {
         )
 
         val bar = requireNotNull(layout.suggestionBar)
-        assertEquals(KeyRole.SETTINGS, bar.settingsKey.role)
         assertEquals(KeyRole.EMOJI, bar.emojiKey.role)
         assertFalse(bar.suggestionsEnabled)
         val space = layout.rows.last().keys.first { it.role == KeyRole.SPACE }

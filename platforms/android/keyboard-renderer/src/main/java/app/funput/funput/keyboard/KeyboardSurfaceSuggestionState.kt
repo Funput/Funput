@@ -5,27 +5,27 @@ import app.funput.funput.keyboard.layout.ResolvedKeyboard
 /**
  * Normalizes suggestion candidates and refreshes visible capacity.
  *
- * When candidates flip between empty and non-empty, [onShowSettingsChanged] rebuilds
- * toolbar geometry so Settings can yield space to suggestions.
+ * When candidates flip between empty and non-empty, [onUtilityKeysVisibilityChanged] rebuilds
+ * toolbar geometry so utility keys (e.g. Clipboard) can yield space to suggestions.
  */
 internal class KeyboardSurfaceSuggestionState(
     private val density: () -> Float,
     private val keyboard: () -> ResolvedKeyboard?,
     private val apply: (List<String>) -> Unit,
-    private val onShowSettingsChanged: (Boolean) -> Unit = {},
+    private val onUtilityKeysVisibilityChanged: (Boolean) -> Unit = {},
 ) {
     private var requested = emptyList<String>()
 
-    /** True when the toolbar should keep the Settings key (no suggestion candidates). */
-    var showSettings: Boolean = true
+    /** True when the toolbar has room to keep utility keys (no suggestion candidates). */
+    var utilityKeysVisible: Boolean = true
         private set
 
     fun update(values: List<String>) {
         requested = SuggestionNormalizer.normalize(values)
-        val nextShowSettings = requested.isEmpty()
-        if (nextShowSettings != showSettings) {
-            showSettings = nextShowSettings
-            onShowSettingsChanged(nextShowSettings)
+        val nextUtilityKeysVisible = requested.isEmpty()
+        if (nextUtilityKeysVisible != utilityKeysVisible) {
+            utilityKeysVisible = nextUtilityKeysVisible
+            onUtilityKeysVisibilityChanged(nextUtilityKeysVisible)
             return
         }
         refresh()

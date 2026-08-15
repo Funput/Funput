@@ -8,7 +8,6 @@ import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 class FunputKeyboardCallbacks {
     var onKeyAction: ((KeyAction) -> Unit)? = null
     var onInputMethodSwitchRequested: (() -> Unit)? = null
-    var onSettingsRequested: (() -> Unit)? = null
     var onEmojiPanelOpened: (() -> Unit)? = null
     var onPanelChanged: ((KeyboardPanel) -> Unit)? = null
     var onEmojiSelected: ((String) -> Unit)? = null
@@ -26,10 +25,6 @@ class FunputKeyboardCallbacks {
 
     internal fun dispatchInputMethodSwitchRequest() {
         onInputMethodSwitchRequested?.invoke()
-    }
-
-    internal fun dispatchSettingsRequest() {
-        onSettingsRequested?.invoke()
     }
 
     internal fun dispatchEmojiPanelOpened() {

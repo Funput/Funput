@@ -8,7 +8,6 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.SuggestionSelection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class KeyboardInteractionTargetsTest {
@@ -81,44 +80,6 @@ class KeyboardInteractionTargetsTest {
         assertEquals(
             SuggestionSelection(index = 1, text = "chào"),
             suggestions.selectionForTarget(SuggestionTargetIds.id(1)),
-        )
-    }
-
-    @Test
-    fun settingsStillResolvesAsAKeyTarget() {
-        val settings = requireNotNull(requireNotNull(keyboard.suggestionBar).settingsKey)
-
-        assertEquals(
-            settings.spec.id,
-            keyboard.interactionTargetAt(settings.bounds.centerX, settings.bounds.centerY, suggestionCount = 0),
-        )
-    }
-
-    @Test
-    fun settingsYieldsWhenSuggestionsArePresent() {
-        val yielded = KeyboardGeometry.resolve(
-            layout = qwertyLayout(
-                id = "test-suggestions",
-                inputMethod = KeyboardInputMethod.TELEX,
-                actionKeys = KeyboardLayouts.telex.rows.last().keys,
-                showSuggestionBar = true,
-            ).copy(
-                suggestionBar = requireNotNull(KeyboardLayouts.telex.suggestionBar).copy(
-                    suggestionsEnabled = true,
-                ),
-            ),
-            width = 1080f,
-            height = 726f,
-            spec = spec,
-            showSettings = false,
-        )
-        val bar = requireNotNull(yielded.suggestionBar)
-
-        assertNull(bar.settingsKey)
-        assertTrue(bar.suggestionsBounds.right > requireNotNull(keyboard.suggestionBar).suggestionsBounds.right)
-        assertEquals(
-            bar.emojiKey.spec.id,
-            yielded.interactionTargetAt(bar.emojiKey.bounds.centerX, bar.emojiKey.bounds.centerY, SuggestionCount),
         )
     }
 
