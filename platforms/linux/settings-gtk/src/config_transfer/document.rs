@@ -68,6 +68,8 @@ pub(super) struct LinuxBlock {
     pub flip_hotkey: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub excluded_apps: Option<Vec<ExcludedApp>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub non_preedit: Option<bool>,
 }
 
 #[derive(Default)]

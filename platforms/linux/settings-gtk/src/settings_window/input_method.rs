@@ -1,7 +1,7 @@
 //! "Kiểu gõ" page: input method and tone-mark placement style.
 
 use adw::prelude::*;
-use adw::{ComboRow, PreferencesGroup, PreferencesPage};
+use adw::{ComboRow, PreferencesGroup, PreferencesPage, SwitchRow};
 use gtk::StringList;
 
 use crate::settings::{Method, Settings, ToneStyle};
@@ -55,5 +55,36 @@ pub(super) fn page() -> PreferencesPage {
     group.add(&tone_row);
 
     page.add(&group);
+    // How the word reaches the app, which is a different question from which keys
+    // produce it — hence its own group rather than a third row above.
+    if let Some(delivery) = delivery_group(&s) {
+        page.add(&delivery);
+    }
     page
+}
+
+/// The non-preedit switch, or `None` on a framework that cannot perform it. Hidden
+/// rather than shown greyed out, the same call the per-app page makes: a control that
+/// does nothing is worse than no control. See `crate::framework`.
+fn delivery_group(s: &Settings) -> Option<PreferencesGroup> {
+    if !crate::framework::non_preedit_supported() {
+        return None;
+    }
+    let group = PreferencesGroup::builder()
+        .title("Cách chữ vào ứng dụng")
+        .build();
+    let row = SwitchRow::builder()
+        .title("Gõ thẳng vào ứng dụng (thử nghiệm)")
+        .subtitle(
+            "Chữ đi thẳng vào tài liệu thay vì nằm ở dòng gạch chân, nên không mất khi \
+             đổi cửa sổ giữa chừng. Ứng dụng nào không hỗ trợ thì tự quay về cách cũ.",
+        )
+        .active(s.non_preedit)
+        .build();
+    row.connect_active_notify(|row| {
+        let on = row.is_active();
+        Settings::update(|s| s.non_preedit = on);
+    });
+    group.add(&row);
+    Some(group)
 }

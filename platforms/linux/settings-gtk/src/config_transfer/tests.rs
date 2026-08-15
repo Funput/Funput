@@ -15,6 +15,7 @@ fn round_trip_preserves_state() {
             id: "code".into(),
             name: "VS Code".into(),
         }],
+        non_preedit: true,
         ..Settings::default()
     };
     assert_eq!(
@@ -29,6 +30,24 @@ fn round_trip_preserves_state() {
     assert_eq!(imported.toggle_hotkey, Hotkey::AltShift);
     assert_eq!(imported.shortcuts.len(), 1);
     assert_eq!(imported.excluded_apps.len(), 1);
+    assert!(imported.non_preedit);
+}
+
+#[test]
+fn a_document_without_non_preedit_leaves_it_alone() {
+    // Import never deletes: a file exported before the setting existed — or by a
+    // platform that has no such mode — must not read as "turn it off".
+    let mut settings = Settings {
+        non_preedit: true,
+        ..Settings::default()
+    };
+    let doc = serde_json::from_str(
+        r#"{"schema":"app.funput.config","version":1,"platform":{"linux":{"toggleHotkey":"alt_shift"}}}"#,
+    )
+    .unwrap();
+    apply(&mut settings, &doc);
+    assert_eq!(settings.toggle_hotkey, Hotkey::AltShift); // the block was read
+    assert!(settings.non_preedit); // and this survived it
 }
 
 #[test]
