@@ -81,7 +81,7 @@ struct KeyboardDocumentSynchronizer {
     }
 
     mutating func consumeAuthoredTextChange(
-        documentIdentifier: UUID,
+        documentIdentifier: UUID?,
         contextBeforeInput: String?
     ) -> Bool {
         guard let snapshot,
