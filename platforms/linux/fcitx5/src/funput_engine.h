@@ -56,9 +56,6 @@ private:
 
     fcitx::Instance *instance_;
     funput::Composer composer_;
-    // Phase 0 diagnostics for the non-preedit work; null unless FUNPUT_PROBE=1.
-    // See src/probe/probe.h — this whole member goes away with that directory.
-    std::unique_ptr<fcitx::HandlerTableEntry<fcitx::EventHandler>> probeWatch_;
     // Program() of the most recently focused app, so a live settings reload can
     // re-apply the per-app default without waiting for the next focus-in.
     std::string lastProgram_;

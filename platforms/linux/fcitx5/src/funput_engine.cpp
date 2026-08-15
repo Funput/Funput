@@ -3,19 +3,7 @@
 #include <fcitx/event.h>
 #include <fcitx/inputcontext.h>
 
-#include "probe/probe.h"
-
 FunputEngine::FunputEngine(fcitx::Instance *instance) : instance_(instance) {
-    if (funput::probe::enabled()) {
-        // The client publishes surrounding text on its own schedule, so the only way
-        // to measure how late it is relative to our commit is to watch for it.
-        probeWatch_ = instance_->watchEvent(
-            fcitx::EventType::InputContextSurroundingTextUpdated,
-            fcitx::EventWatcherPhase::Default, [](fcitx::Event &event) {
-                auto &contextEvent = static_cast<fcitx::InputContextEvent &>(event);
-                funput::probe::noteSurroundingUpdate(contextEvent.inputContext());
-            });
-    }
     if (settingsWatcher_.fd() >= 0) {
         settingsWatch_ = instance_->eventLoop().addIOEvent(
             settingsWatcher_.fd(), fcitx::IOEventFlag::In,
@@ -60,7 +48,6 @@ void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContext
     lastSurroundingOk_ = event.inputContext()->surroundingText().isValid();
     applyNonPreeditMode();
     noteRecentApp(lastProgram_);
-    funput::probe::noteFocus(event.inputContext());
 }
 
 void FunputEngine::deactivate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {

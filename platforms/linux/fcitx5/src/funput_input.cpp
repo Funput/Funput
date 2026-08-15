@@ -4,8 +4,6 @@
 
 #include "funput_engine.h"
 
-#include "probe/probe.h"
-
 namespace {
 
 // Fcitx5's key -> the composer's normalized one. Its keysyms are X11 keysyms, the
@@ -43,13 +41,6 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     // Releases never reach the composer: nothing in the typing rules depends on
     // them, and each framework reports them differently.
     if (event.isRelease()) return;
-
-    // Ctrl+Alt+P, and only with FUNPUT_PROBE=1 — see src/probe/probe.h. Checked
-    // ahead of the composer so the chord never reaches the typing rules.
-    if (funput::probe::maybeStartSelfTest(event)) {
-        event.filterAndAccept();
-        return;
-    }
 
     const funput::KeyEvent ev = toKeyEvent(event.key());
     // A Backspace with nothing composing is about to eat a *committed* character. In

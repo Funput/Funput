@@ -8,15 +8,13 @@
 #include <fcitx/text.h>
 #include <fcitx/userinterface.h>
 
-#include "probe/probe.h"
-
 namespace {
 
 // Is the client holding a selection right now? Non-preedit repairs the document by
 // deleting backwards from the caret, and with a selection live that delete takes the
-// highlighted text instead — the browser-autofill hazard question 5 of the probe went
-// looking for. It never caught one in 93 commits, but "not seen" is not "cannot
-// happen" and the price is the user's own words.
+// highlighted text instead — the browser-autofill hazard. Measuring never caught a
+// live selection in 93 commits, but "not seen" is not "cannot happen" and the price
+// is the user's own words, so this guard is reasoned rather than observed.
 bool hasSelection(fcitx::InputContext *context) {
     const auto &surrounding = context->surroundingText();
     return surrounding.isValid() && surrounding.cursor() != surrounding.anchor();
@@ -61,8 +59,6 @@ void FunputEngine::applyPlan(fcitx::InputContext *context, const funput::Compose
         // ended without producing anything.
         clearPreedit(context);
         if (!plan.text.empty()) {
-            // Snapshot before the client sees it — see src/probe/probe.h.
-            funput::probe::noteCommit(context, plan.text);
             context->commitString(plan.text);
         }
         break;
@@ -83,7 +79,6 @@ void FunputEngine::applyPlan(fcitx::InputContext *context, const funput::Compose
             context->deleteSurroundingText(-static_cast<int>(plan.deleteChars), plan.deleteChars);
         }
         if (!plan.text.empty()) {
-            funput::probe::noteCommit(context, plan.text);
             context->commitString(plan.text);
         }
         break;

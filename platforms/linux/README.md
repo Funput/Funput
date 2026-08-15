@@ -145,66 +145,8 @@ several `Replace`es for one keystroke.
 
 A selection live at delete time would take the highlighted text instead of ours, so
 `funput_client.cpp` abandons both the repair and the composition when it sees one.
-The probe never caught a live selection in 93 commits, so that guard is reasoned
+Measuring never caught a live selection in 93 commits, so that guard is reasoned
 rather than measured.
-
-## Surrounding-text probe (temporary)
-
-Phase 0 of the non-preedit work: measure whether clients report surrounding text
-correctly and in time, before designing against a guess. **Off unless
-`FUNPUT_PROBE=1`** — a normal install pays nothing and behaves identically.
-
-Install the addon, then restart Fcitx5 with the probe on:
-
-```bash
-pkill fcitx5; FUNPUT_PROBE=1 fcitx5 -d
-```
-
-Type Vietnamese normally for a while, across the apps you care about — browser
-address bar and search box, a terminal, an editor, a chat app, a password field,
-GTK and Qt both. Then:
-
-Then, with the caret in a **scratch field** you don't mind disturbing, **type
-`;;;p`**. That runs the write self-test: it commits `aếb`, deletes exactly those
-three characters, and then does a commit/delete/commit burst. A working client ends
-where it started, so only the `;;;` you typed remain on screen; a broken one leaves
-the debris beside them, which is the answer. Type it again to rerun.
-
-It is a typed sequence rather than a hotkey because GNOME Shell on Wayland swallows
-Ctrl+Alt chords before the input method sees them — the first attempt logged nothing
-at all. Typed text cannot be intercepted that way. Ctrl+Alt+P still works wherever it
-survives, and every Ctrl+Alt chord that does arrive is logged as `chord-seen`.
-
-`aếb` is not arbitrary — `ế` is one character but three bytes, and
-`deleteSurroundingText` counts characters. An ASCII-only check would pass on a
-client that counts bytes and then corrupt Vietnamese in real use.
-
-```bash
-platforms/linux/fcitx5/analyze-probe.sh
-```
-
-It reports, per app: which capabilities the client claims, whether surrounding text
-matched what we committed, how late it arrived, and whether a selection was live at
-commit time (the browser-autofill hazard). Log defaults to
-`~/.config/Funput/probe.jsonl`; override with `FUNPUT_PROBE_LOG`. Needs `jq`.
-
-`src/probe/` is throwaway — delete it once the questions in `probe.h` are answered.
-
-### What the probe has already established
-
-Measured on GNOME/Wayland, where Fcitx5 is reached through its **ibus** frontend and
-GNOME Shell is the client for every application:
-
-- **Capability flags are unusable there.** Contexts report `SurroundingText` absent
-  while surrounding text works perfectly, and some report `caps: []` — not even
-  `Preedit` — while preedit is plainly working. Nothing may be gated on them.
-- **`program()` is useless there too**: always `gnome-shell`, never the real app. So
-  a per-app policy is not merely unavailable, it would be actively wrong.
-- **When surrounding text answers, it is exact and fast** — every match correct, and
-  under 15ms. Verification does not have to wait for an idle moment.
-- **But the channel dies and revives within one session.** A terminal that answered
-  every commit in one run answered none in another. So a mode cannot be decided once
-  and remembered; it has to be re-earned per commit.
 
 ## Known gaps
 

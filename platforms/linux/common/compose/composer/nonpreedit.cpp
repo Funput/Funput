@@ -14,8 +14,8 @@
 //
 // # What the mode assumes of its shell
 //
-// Measured on GNOME/Wayland with the surrounding-text probe (see the Fcitx5
-// shell's README section), because the answers are not obvious:
+// Measured on GNOME/Wayland, because the answers are not obvious. The full set and
+// what follows from each is in platforms/linux/README.md:
 //
 //   - `deleteSurroundingText` counts **characters**, not bytes — verified with `ế`,
 //     one character and three bytes. `deleteChars` is therefore a character count
