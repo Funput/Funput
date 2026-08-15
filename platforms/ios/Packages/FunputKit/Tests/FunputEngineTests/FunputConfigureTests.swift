@@ -66,25 +66,11 @@ struct FunputConfigureTests {
         #expect(unchecked.buffer() == "tèt")
     }
 
-    @Test("Configure applies auto-capitalize")
-    func autoCapitalize() {
-        let composer = FunputComposer()
-        composer.configure(options(autoCapitalize: true))
-        composer.armCapitalization()
-        for scalar in "viet".unicodeScalars {
-            composer.process(scalar)
-        }
-        #expect(composer.buffer() == "Viet")
-
-        // Off (the default) leaves the first letter alone.
-        let plain = FunputComposer()
-        plain.configure(options())
-        plain.armCapitalization()
-        for scalar in "viet".unicodeScalars {
-            plain.process(scalar)
-        }
-        #expect(plain.buffer() == "viet")
-    }
+    // No auto-capitalize test here any more. It only ever exercised
+    // `armCapitalization()`, which iOS never called and which is now gone: case on
+    // this platform comes from the Shift state, covered by
+    // KeyboardCapitalizationOwnershipTests. The engine's own sentence tracker is
+    // covered where it is used from, in crates/funput-engine/tests/engine_api.rs.
 
     @Test("Configure applies eager restore")
     func eagerRestore() {

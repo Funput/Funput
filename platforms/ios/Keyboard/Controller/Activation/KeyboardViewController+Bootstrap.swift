@@ -24,9 +24,10 @@ extension KeyboardViewController {
         // The layout depends on the input method, so the engine has to know the
         // configuration before the first presentation is built, or bootstrap would
         // size the keyboard for the wrong one and `viewWillAppear` would resize it.
+        adoptConfiguration(source)
         inputCoordinator.apply(source.configuration)
         applyTextInputTraits(force: true)
-        adopt(source)
+        applyAdoptedPresentation()
         activatePreferredHeightForBootstrap()
     }
 }

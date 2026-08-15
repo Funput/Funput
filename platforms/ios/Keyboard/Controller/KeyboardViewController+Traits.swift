@@ -34,7 +34,9 @@ extension KeyboardViewController {
 
     @discardableResult
     func applyTextInputTraits(force: Bool = false) -> Bool {
-        let resolved = makeDocumentWriter().inputContext
+        let resolved = makeDocumentWriter().inputContext(
+            autoCapitalizeEnabled: configuration.autoCapitalize
+        )
         guard force || resolved != resolvedTextInputTraits else { return false }
 
         resolvedTextInputTraits = resolved

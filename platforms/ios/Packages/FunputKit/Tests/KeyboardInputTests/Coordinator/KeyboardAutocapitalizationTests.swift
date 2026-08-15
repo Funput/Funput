@@ -17,16 +17,47 @@ struct KeyboardAutocapitalizationTests {
         assertShift(.lowercase, mode: .sentences, context: "Hello")
     }
 
-    @Test("Nil context preserves the current Shift state")
-    func unavailableContext() {
-        let (coordinator, document) = makeCoordinator(mode: .sentences, context: "text")
-        coordinator.handle(testKey(.shift), writer: document)
+    /// `UITextDocumentProxy` reports "nothing precedes the caret" as nil, which is what
+    /// an empty field looks like — measured in a web view where the system keyboard
+    /// capitalized and Funput did not. Treating it as unknown left the very first
+    /// character of every document lowercase.
+    @Test("Nil context is the start of the document, so Shift arms")
+    func unavailableContextStartsSentence() {
+        let (coordinator, document) = makeCoordinator(mode: .sentences, context: "")
         document.exposesContext = false
 
-        coordinator.synchronizeDocument(document, event: .textChanged)
+        coordinator.synchronizeDocument(document, event: .activated)
 
         #expect(coordinator.state.shiftState == .uppercase)
     }
+
+    @Test("The first typed character of an empty document is upper case")
+    func firstCharacterOfEmptyDocument() {
+        let (coordinator, document) = makeCoordinator(mode: .sentences, context: "")
+
+        type("a", with: coordinator, into: document)
+
+        #expect(document.text == "A")
+    }
+
+    @Test("A character after a sentence terminator is upper case")
+    func characterAfterSentenceTerminator() {
+        let (coordinator, document) = makeCoordinator(mode: .sentences, context: "Xin chao. ")
+
+        type("t", with: coordinator, into: document)
+
+        #expect(document.text == "Xin chao. T")
+    }
+
+    @Test("Nothing capitalizes when the field opted out")
+    func optedOutFieldStaysLowercase() {
+        let (coordinator, document) = makeCoordinator(mode: .none, context: "")
+
+        type("a", with: coordinator, into: document)
+
+        #expect(document.text == "a")
+    }
+
 
     @Test("All-characters mode rearms Shift after every character")
     func allCharacters() {

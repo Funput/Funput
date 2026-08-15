@@ -13,7 +13,7 @@ struct FunputConfigurationTests {
         #expect(config.spellCheck == false)
         #expect(config.smartRestore == true)
         #expect(config.eagerRestore == true)
-        #expect(config.autoCapitalize == false)
+        #expect(config.autoCapitalize == true) // iOS overrides the engine's off default
         #expect(config.selectedThemeID == FunputConfiguration.defaultThemeID)
         #expect(!config.isHapticFeedbackEnabled)
         #expect(!config.isKeySoundEnabled)

@@ -7,7 +7,8 @@ import KeyboardLayout
 final class TestKeyboardWriter: KeyboardDocumentWriting {
     private(set) var text = ""
     private(set) var transactions: [InputTransaction] = []
-    var documentIdentifier = UUID()
+    /// Optional so tests can reproduce a host that has not bound a document yet.
+    var documentIdentifier: UUID? = UUID()
     var hasSelection = false
     var exposesContext = true
     var delaysContextUpdates = false

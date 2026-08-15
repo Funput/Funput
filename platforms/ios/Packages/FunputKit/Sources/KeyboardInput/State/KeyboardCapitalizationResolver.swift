@@ -1,18 +1,24 @@
 enum KeyboardCapitalizationResolver {
+    /// - Parameter contextBeforeInput: `nil` is how `UITextDocumentProxy` reports that
+    ///   nothing precedes the caret, so it means the same thing as `""`: the start of
+    ///   the document, which is the start of a sentence and of a word. Reading it as
+    ///   "unknown" and leaving the shift state untouched is what left the very first
+    ///   character lowercase — measured in an empty field where the system keyboard
+    ///   capitalized and Funput did not.
     static func shouldUppercase(
         mode: KeyboardAutocapitalizationMode,
         contextBeforeInput: String?
-    ) -> Bool? {
-        guard let contextBeforeInput else { return nil }
+    ) -> Bool {
+        let context = contextBeforeInput ?? ""
         return switch mode {
         case .none:
             false
         case .allCharacters:
             true
         case .words:
-            contextBeforeInput.last.map { !$0.isLetter && !$0.isNumber } ?? true
+            context.last.map { !$0.isLetter && !$0.isNumber } ?? true
         case .sentences:
-            startsSentence(contextBeforeInput)
+            startsSentence(context)
         }
     }
 

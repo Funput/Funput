@@ -44,7 +44,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         spellCheck: Bool = false,
         smartRestore: Bool = true,
         eagerRestore: Bool = true,
-        autoCapitalize: Bool = false,
+        autoCapitalize: Bool = true,
         selectedThemeID: String = FunputConfiguration.defaultThemeID,
         isHapticFeedbackEnabled: Bool = false,
         isKeySoundEnabled: Bool = false,
