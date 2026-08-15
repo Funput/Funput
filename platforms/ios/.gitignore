@@ -26,3 +26,6 @@ DerivedData
 
 # Rust FFI XCFramework — generated locally or in CI from committed Rust sources.
 Frameworks/FunputCore.xcframework/
+
+# Logs
+logs/
