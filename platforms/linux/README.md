@@ -18,6 +18,7 @@ common/                 Framework-free C++ shared by both shells
       composer.h              The state machine (engine + settings + VI/EN)
       keys.cpp                onKey(): the keystroke decision tree
       state.cpp               Settings, VI/EN, and the non-key exits
+      nonpreedit.cpp          Commit-as-you-type mode (off; no shell performs it yet)
   settings/               ~/.config/Funput/settings.json
     settings.h              The model every shell reads
     lookup.cpp              Where the file lives; app exclusion

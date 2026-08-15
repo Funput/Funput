@@ -70,6 +70,15 @@ void FunputEngine::applyPlan(fcitx::InputContext *context, const funput::Compose
             context->commitString(plan.text);
         }
         break;
+    case funput::Effect::Replace:
+        // Non-preedit's document repair: delete `plan.deleteChars` characters, then
+        // commit `plan.text`. Not reachable yet — nothing calls
+        // `Composer::setNonPreedit()`, so the composer never emits this. Performing
+        // it needs more than the two calls it looks like: the probe showed that
+        // issuing writes without waiting for the client to confirm the previous one
+        // destroys the user's text, so this arm arrives together with that
+        // serialization rather than ahead of it.
+        break;
     }
 }
 
