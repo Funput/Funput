@@ -36,7 +36,11 @@ add_library(funput MODULE
     src/funput_engine.cpp
     src/funput_input.cpp
     src/funput_controls.cpp
+    src/probe/log.cpp
+    src/probe/record.cpp
 )
+# So the probe can be included as "probe/probe.h" from src/.
+target_include_directories(funput PRIVATE src)
 add_dependencies(funput funput_ffi)
 
 # funput_linux_common carries the FFI include dir + the .so transitively.

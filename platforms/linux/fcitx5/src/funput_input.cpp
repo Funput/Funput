@@ -7,6 +7,8 @@
 #include <fcitx/text.h>
 #include <fcitx/userinterface.h>
 
+#include "probe/probe.h"
+
 namespace {
 
 // Fcitx5's key -> the composer's normalized one. Its keysyms are X11 keysyms, the
@@ -62,7 +64,11 @@ void FunputEngine::applyPlan(fcitx::InputContext *context, const funput::Compose
         // Always drop the preedit first; an empty text then means the composition
         // ended without producing anything.
         clearPreedit(context);
-        if (!plan.text.empty()) context->commitString(plan.text);
+        if (!plan.text.empty()) {
+            // Snapshot before the client sees it — see src/probe/probe.h.
+            funput::probe::noteCommit(context, plan.text);
+            context->commitString(plan.text);
+        }
         break;
     }
 }

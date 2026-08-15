@@ -95,6 +95,33 @@ under `fcitx5/` or `ibus/` still wants a local build before merging.
 
 Every file here is held to 150 lines by `scripts/check-loc.sh`, test files included.
 
+## Surrounding-text probe (temporary)
+
+Phase 0 of the non-preedit work: measure whether clients report surrounding text
+correctly and in time, before designing against a guess. **Off unless
+`FUNPUT_PROBE=1`** — a normal install pays nothing and behaves identically.
+
+Install the addon, then restart Fcitx5 with the probe on:
+
+```bash
+pkill fcitx5; FUNPUT_PROBE=1 fcitx5 -d
+```
+
+Type Vietnamese normally for a while, across the apps you care about — browser
+address bar and search box, a terminal, an editor, a chat app, a password field,
+GTK and Qt both. Then:
+
+```bash
+platforms/linux/fcitx5/src/probe/analyze.sh
+```
+
+It reports, per app: which capabilities the client claims, whether surrounding text
+matched what we committed, how late it arrived, and whether a selection was live at
+commit time (the browser-autofill hazard). Log defaults to
+`~/.config/Funput/probe.jsonl`; override with `FUNPUT_PROBE_LOG`. Needs `jq`.
+
+`src/probe/` is throwaway — delete it once the questions in `probe.h` are answered.
+
 ## Known gaps
 
 - **Per-app auto-EN is Fcitx5-only.** `Composer::applyPerAppDefault()` exists for
