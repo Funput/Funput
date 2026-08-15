@@ -4,12 +4,9 @@
 // Driven by the surrounding-text updates the client sends back, because every write
 // is asynchronous — each step fires the next one only once the previous landed.
 
-#include "probe/internal.h"
-#include "probe/probe.h"
+#include "probe/support/internal.h"
 
-#include <fcitx-utils/keysym.h>
-
-namespace funput::probe {
+namespace funput::probe::detail {
 
 namespace {
 
@@ -51,7 +48,7 @@ void enter(Step step) {
 void report(const char *step, nlohmann::json extra) {
     extra["ev"] = "selftest";
     extra["step"] = step;
-    detail::write(std::move(extra));
+    write(std::move(extra));
 }
 
 // Bytes gained (positive) or lost (negative) against the baseline. Leftovers mean
@@ -69,32 +66,25 @@ void cancelSelfTest() {
     }
 }
 
-bool maybeStartSelfTest(fcitx::KeyEvent &event) {
-    if (!enabled() || event.isRelease()) return false;
-    const fcitx::Key key = event.key();
-    const auto states = key.states();
-    if (!states.test(fcitx::KeyState::Ctrl) || !states.test(fcitx::KeyState::Alt)) return false;
-    if (key.sym() != FcitxKey_p && key.sym() != FcitxKey_P) return false;
-
-    auto *ic = event.inputContext();
+void startSelfTest(fcitx::InputContext *ic) {
+    if (ic == nullptr) return;
     if (!ic->surroundingText().isValid()) {
         // Without a readable document there is nothing to compare against, and a
         // blind delete is exactly what this is meant to avoid.
         report("refused", {{"reason", "no surrounding text"}});
         enter(Step::Idle);
-        return true;
+        return;
     }
-    state().baseline = detail::textBeforeCursor(ic);
+    state().baseline = textBeforeCursor(ic);
     enter(Step::AwaitWrite);
     report("start", {{"baselineLen", state().baseline.size()}});
     ic->commitString(kProbeText);
-    return true;
 }
 
 void advanceSelfTest(fcitx::InputContext *ic) {
     SelfTest &test = state();
     if (test.step == Step::Idle) return;
-    const std::string now = detail::textBeforeCursor(ic);
+    const std::string now = textBeforeCursor(ic);
     const std::string &base = test.baseline;
     const bool exhausted = ++test.updates >= kMaxUpdatesPerStep;
 
@@ -146,4 +136,4 @@ void advanceSelfTest(fcitx::InputContext *ic) {
     }
 }
 
-} // namespace funput::probe
+} // namespace funput::probe::detail

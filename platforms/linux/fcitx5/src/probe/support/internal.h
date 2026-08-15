@@ -1,5 +1,6 @@
-// Shared between the probe's two halves: log.cpp owns the file and the snapshot,
-// record.cpp owns what each event means. See probe.h.
+// Shared inside the probe: support/log.cpp owns the file and the snapshot, read.cpp
+// owns what each observed event means, write.cpp runs the self-test, trigger.cpp
+// decides when to start it. See probe.h.
 
 #ifndef FUNPUT_PROBE_INTERNAL_H
 #define FUNPUT_PROBE_INTERNAL_H
@@ -35,6 +36,18 @@ struct LastCommit {
     bool pending = false;
 };
 LastCommit &lastCommit();
+
+// --- the self-test, driven from trigger.cpp and read.cpp ---------------------
+
+// Take a baseline and write the probe text. Refuses (and says so) when the client
+// reports no surrounding text, since a blind delete is what this exists to avoid.
+void startSelfTest(fcitx::InputContext *ic);
+
+// Advance a running self-test on a surrounding-text update. No-op when none runs.
+void advanceSelfTest(fcitx::InputContext *ic);
+
+// Abandon any running self-test (the focused field changed under it).
+void cancelSelfTest();
 
 } // namespace funput::probe::detail
 

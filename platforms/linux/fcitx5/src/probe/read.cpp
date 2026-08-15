@@ -1,12 +1,15 @@
 // What each observed event contributes to the five questions in probe.h.
 
-#include "probe/internal.h"
+#include "probe/support/internal.h"
 #include "probe/probe.h"
 
 namespace funput::probe {
 
+using detail::advanceSelfTest;
+using detail::cancelSelfTest;
 using detail::lastCommit;
 using detail::snapshot;
+using detail::textBeforeCursor;
 using detail::write;
 
 namespace {
@@ -32,7 +35,7 @@ constexpr NamedFlag kFlags[] = {
 // means the client's surrounding text cannot be trusted as a verification signal —
 // which decides whether non-preedit can self-check or has to run blind.
 bool endsWithCommit(fcitx::InputContext *ic, const std::string &committed) {
-    const std::string before = detail::textBeforeCursor(ic);
+    const std::string before = textBeforeCursor(ic);
     if (before.size() < committed.size()) return false;
     return before.compare(before.size() - committed.size(), committed.size(), committed) == 0;
 }

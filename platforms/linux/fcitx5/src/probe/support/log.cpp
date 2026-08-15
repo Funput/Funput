@@ -1,6 +1,6 @@
 // Where the probe writes, and how it reads the client's surrounding text.
 
-#include "probe/internal.h"
+#include "probe/support/internal.h"
 #include "probe/probe.h"
 
 #include <cstdlib>

@@ -38,11 +38,12 @@ jq -r 'select(.ev=="commit") | [(.app // "<UNKNOWN>"), (.before.selection // fal
     sort | uniq -c | awk 'BEGIN{print "count\tapp\tselection_live"}{print $1"\t"$2"\t"$3}' | column -t
 
 echo
-echo "== Q6: the write self-test (Ctrl+Alt+P) =="
+echo "== Q6: the write self-test (type ;;;p) =="
 if jq -e 'select(.ev=="selftest")' "$LOG" >/dev/null 2>&1; then
     jq -r 'select(.ev=="selftest")
-           | [.step, (.drift // "" | tostring), (.reason // "")] | @tsv' "$LOG" | column -t
+           | [.step, (.drift // .sym // "" | tostring), (.reason // "")] | @tsv' "$LOG" | column -t
     echo
+    echo "  chord-seen                        = a Ctrl+Alt chord DID reach us (sym in col 2)"
     echo "  start/wrote/deleted/ordered/done  = the write path works end to end"
     echo "  write-failed                      = commitString never landed"
     echo "  delete-failed drift=+5            = deleteSurroundingText did nothing"

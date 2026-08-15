@@ -58,22 +58,27 @@ void noteSurroundingUpdate(fcitx::InputContext *ic);
 
 // --- the write self-test (question 6) ---------------------------------------
 //
-// Triggered by **Ctrl+Alt+P**, never automatically: a broken write path leaves
-// visible debris in the document, so the user has to ask for it with the caret in a
-// scratch field. A working run writes and then removes exactly what it wrote, so it
-// leaves no trace — and the debris of a failing run is itself the answer.
+// Never automatic: a broken write path leaves visible debris in the document, so the
+// user has to ask for it with the caret in a scratch field. A working run writes and
+// then removes exactly what it wrote, leaving no trace — and the debris of a failing
+// run is itself the answer. Triggering again always restarts, which is how a run
+// that stalled waiting for an update the client never sent returns to a known state.
 //
-// Pressing again always restarts, which is how a run that stalled waiting for an
-// update the client never sent gets back to a known state.
+// Triggered by **typing `;;;p`**, not by a chord. The first attempt used Ctrl+Alt+P
+// and logged nothing at all — not even the "refused" branch — which means GNOME
+// Shell on Wayland swallows the chord before it reaches the input method. Typed text
+// cannot be intercepted that way: delivering it *is* what an input method is for, so
+// the sequence works the same on X11, Wayland, GNOME and KDE alike.
+//
+// The leading `;;;` land in the document and stay there. Removing them would need
+// `deleteSurroundingText` — the very thing under test — and they are useful anyway:
+// a non-empty baseline also proves the delete does not run past what it wrote.
+//
+// Ctrl+Alt+P still works where it survives, and every Ctrl+Alt chord is logged, so
+// the next run says definitively whether such chords arrive at all.
 
 // Start the self-test if this key is the trigger. True when the key was consumed.
 bool maybeStartSelfTest(fcitx::KeyEvent &event);
-
-// Advance a running self-test. No-op when none is running.
-void advanceSelfTest(fcitx::InputContext *ic);
-
-// Abandon any running self-test (the focused field changed under it).
-void cancelSelfTest();
 
 } // namespace funput::probe
 
