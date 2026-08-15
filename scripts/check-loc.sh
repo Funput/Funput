@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Enforce the 150-lines-of-code budget for Rust source files.
+# Enforce the 150-lines-of-code budget for Rust and Linux C++ source files.
 #
 # Counts each file's lines up to its inline `#[cfg(test)]` module (tests
 # colocated at the end of a file don't count against the budget). Whole-file
 # test modules (`tests.rs`, `src/**/tests/`) and integration tests/benches/
-# examples are exempt by construction.
+# examples are exempt by construction. The marker never appears in C++, so those
+# files are simply counted whole — including their unit tests, which keeps one
+# test file to one subject.
 #
 # Covers the shared crates *and* the platform shells. The platform shells are
 # excluded from the cargo workspace (each links a heavy OS-only dependency), so
@@ -28,12 +30,18 @@ while IFS= read -r file; do
         violations=$((violations + 1))
     fi
 done < <(
-    # `platforms/*/src` would miss platforms/linux/settings-gtk/src, which sits one
-    # level deeper; match any `src` dir under platforms instead. `target/` is
-    # excluded explicitly — it holds generated .rs files from build scripts.
-    find crates/*/src platforms -path '*/src/*' -name '*.rs' \
-        -not -name 'tests.rs' -not -path '*/tests/*' -not -path '*/target/*' |
-        sort -u
+    {
+        # `platforms/*/src` would miss platforms/linux/settings-gtk/src, which sits
+        # one level deeper; match any `src` dir under platforms instead. `target/`
+        # is excluded explicitly — it holds generated .rs files from build scripts.
+        find crates/*/src platforms -path '*/src/*' -name '*.rs' \
+            -not -name 'tests.rs' -not -path '*/tests/*' -not -path '*/target/*'
+        # The Linux shells and the code they share. Not under a `src/` dir in the
+        # `common/` case, so this needs its own pass. `build/` is CMake/CPack
+        # output, and `_deps/` inside it is the fetched test framework.
+        find platforms/linux \( -name '*.h' -o -name '*.cpp' \) \
+            -not -path '*/build/*' -not -path '*/target/*'
+    } | sort -u
 )
 
 if [ "$violations" -gt 0 ]; then

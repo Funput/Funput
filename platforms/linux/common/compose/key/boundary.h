@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-#include "settings.h"
+#include "settings/settings.h"
 
 namespace funput {
 

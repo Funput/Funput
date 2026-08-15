@@ -4,7 +4,7 @@
 // the Windows backspace-injection path. The composing word is shown as preedit and
 // committed on a word boundary, navigation key, or VI/EN toggle. The preedit is
 // published with IBUS_ENGINE_PREEDIT_COMMIT, so IBus itself flushes the word on
-// focus loss, reset and engine switch — see updatePreedit() in engine_runtime.cpp
+// focus loss, reset and engine switch — see updatePreedit() in engine/client.cpp
 // and the focusOut()/disable()/reset() handlers, which must not commit again.
 //
 // Unlike the Fcitx5 addon (an in-process .so), an IBus engine is a separate

@@ -40,3 +40,26 @@ jobs:
 
       - name: Line budget
         run: bash scripts/check-loc.sh
+
+  # The shared Linux code (platforms/linux/common): the settings bridge and the
+  # composition state machine both shells drive. It links no Fcitx5 or IBus symbol,
+  # so this needs neither framework installed — just CMake, nlohmann/json and cargo
+  # for the funput-ffi cdylib the tests call across the C ABI.
+  linux-common:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build deps
+        run: sudo apt-get update && sudo apt-get install -y cmake nlohmann-json3-dev
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Configure
+        run: cmake -S platforms/linux -B platforms/linux/build/tests -DFUNPUT_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build platforms/linux/build/tests --parallel
+
+      - name: Test
+        run: ctest --test-dir platforms/linux/build/tests --output-on-failure

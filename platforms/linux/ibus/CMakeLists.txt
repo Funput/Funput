@@ -41,9 +41,11 @@ set(IBUS_ENGINE_PATH "${IBUS_LIBEXECDIR}/ibus-engine-funput")
 # --- IBus engine executable -> ibus-engine-funput --------------------------
 add_executable(ibus-engine-funput
     src/main.cpp
-    src/engine.cpp
-    src/engine_input.cpp
-    src/engine_runtime.cpp)
+    src/engine/object.cpp
+    src/engine/callbacks.cpp
+    src/engine/client.cpp)
+# So src/engine/*.cpp can reach the public "engine.h" one level up.
+target_include_directories(ibus-engine-funput PRIVATE src)
 add_dependencies(ibus-engine-funput funput_ffi)
 
 # funput_linux_common carries the FFI include dir + the .so transitively.

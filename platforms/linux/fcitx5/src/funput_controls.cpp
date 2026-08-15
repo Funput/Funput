@@ -1,43 +1,13 @@
+// Bookkeeping that is neither typing nor framework plumbing: the recent-apps list
+// the Settings window offers when the user picks apps to exclude.
+
 #include "funput_engine.h"
 
 #include <fstream>
-#include <sstream>
 
-#include <fcitx-utils/keysym.h>
 #include <nlohmann/json.hpp>
 
-bool FunputEngine::matchesToggle(const fcitx::Key &key) const {
-    const auto states = key.states();
-    switch (settings_.toggleHotkey) {
-    case funput::Hotkey::CtrlBacktick:
-        return states.test(fcitx::KeyState::Ctrl) && key.sym() == FcitxKey_grave;
-    case funput::Hotkey::CtrlSpace:
-        return states.test(fcitx::KeyState::Ctrl) && key.sym() == FcitxKey_space;
-    case funput::Hotkey::AltShift: return false;
-    }
-    return false;
-}
-
-bool FunputEngine::matchesFlip(const fcitx::Key &key) const {
-    const auto states = key.states();
-    if (!states.test(fcitx::KeyState::Ctrl) || !states.test(fcitx::KeyState::Shift)) return false;
-    switch (settings_.flipHotkey) {
-    case funput::FlipHotkey::CtrlShiftZ:
-        return key.sym() == FcitxKey_z || key.sym() == FcitxKey_Z;
-    case funput::FlipHotkey::CtrlShiftX:
-        return key.sym() == FcitxKey_x || key.sym() == FcitxKey_X;
-    case funput::FlipHotkey::Off: return false;
-    }
-    return false;
-}
-
-void FunputEngine::toggleEnabled(fcitx::InputContext *context) {
-    commitBuffer(context);
-    effectiveEnabled_ = !effectiveEnabled_;
-    settings_.enabled = effectiveEnabled_;
-    handle_.setEnabled(effectiveEnabled_);
-    settings_.save();
-}
+#include "settings/settings.h"
 
 void FunputEngine::noteRecentApp(const std::string &program) {
     if (program.empty()) return;

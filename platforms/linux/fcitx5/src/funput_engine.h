@@ -1,10 +1,16 @@
-// Fcitx5 input method addon for Funput. Drives `funput-engine` (via the C ABI)
-// using Fcitx5's preedit/commit model — the same shape as the macOS IMKit shell
-// (platforms/macos/.../FunputInputController.swift), NOT the Windows backspace-
-// injection path. The composing word is shown as underlined preedit and committed
-// on a word boundary, navigation key, or VI/EN toggle. On focus loss Fcitx5 itself
-// commits the client preedit before calling deactivate(), so the word survives a
-// click into another field — see deactivate(), which must not commit again.
+// Fcitx5 input method addon for Funput.
+//
+// A thin adapter over `funput::Composer` (platforms/linux/common/compose/), which
+// holds the typing rules and is shared with the IBus shell. This file only
+// translates: `fcitx::KeyEvent` in, `funput::ComposePlan` out, performed against
+// the input context.
+//
+// The composing word is shown as underlined preedit and committed on a word
+// boundary, navigation key, or VI/EN toggle — the same shape as the macOS IMKit
+// shell (platforms/macos/.../FunputInputController.swift), NOT the Windows
+// backspace-injection path. On focus loss Fcitx5 itself commits the client preedit
+// before calling deactivate(), so the word survives a click into another field —
+// see deactivate(), which must not commit again.
 
 #ifndef FUNPUT_ENGINE_H
 #define FUNPUT_ENGINE_H
@@ -20,9 +26,8 @@
 #include <fcitx-utils/event.h>
 #include <fcitx-utils/key.h>
 
-#include "ffi_handle.h"
-#include "settings.h"
-#include "settings_watch.h"
+#include "compose/composer/composer.h"
+#include "settings/watch.h"
 
 class FunputEngine : public fcitx::InputMethodEngineV2 {
 public:
@@ -34,29 +39,18 @@ public:
     void deactivate(const fcitx::InputMethodEntry &entry, fcitx::InputContextEvent &event) override;
 
 private:
-    void applySettings();                         // push settings_ into the engine
-    void updatePreedit(fcitx::InputContext *ic);  // show buffer() as underlined preedit
+    // Perform one plan against the client: show a preedit, or drop the preedit and
+    // commit. Swallowing the key is the caller's job — only keyEvent() can.
+    void applyPlan(fcitx::InputContext *ic, const funput::ComposePlan &plan);
+    void updatePreedit(fcitx::InputContext *ic, const std::string &text);
     void clearPreedit(fcitx::InputContext *ic);
-    void commitBuffer(fcitx::InputContext *ic);   // commit buffer(), end composition
-    bool handleBoundary(fcitx::InputContext *ic, char32_t scalar,
-                        funput::KeySource source = funput::KeySource::Standard);
-    bool matchesToggle(const fcitx::Key &key) const;
-    bool matchesFlip(const fcitx::Key &key) const;
-    void toggleEnabled(fcitx::InputContext *ic);
-    // Per-app auto-switch (mirrors the macOS shell): excluded apps default to
-    // English on focus, every other app to Vietnamese. No-op when the list is empty.
-    void applyPerAppDefault(const std::string &program);
     void noteRecentApp(const std::string &program); // record for the Settings picker
     // Reload settings live when the watcher fires (Settings app wrote the file), and
     // re-apply the per-app default for the currently-focused app.
     void onSettingsChanged();
 
     fcitx::Instance *instance_;
-    funput::Handle handle_;
-    funput::Settings settings_;
-    // Runtime VI/EN actually in effect. Starts from settings_.enabled but is driven
-    // per-app on focus; the toggle overrides it until the next focus change.
-    bool effectiveEnabled_ = true;
+    funput::Composer composer_;
     // Program() of the most recently focused app, so a live settings reload can
     // re-apply the per-app default without waiting for the next focus-in.
     std::string lastProgram_;
