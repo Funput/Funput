@@ -5,10 +5,9 @@
 //  Created by P-Code Dynamics on 11/7/26.
 //
 
-#if DEBUG
 import FunputShared
-#endif
 import SwiftUI
+import ThemeRuntime
 
 @main
 struct FunputApp: App {
@@ -18,6 +17,10 @@ struct FunputApp: App {
             FunputUITestConfigurationOverrideStore().clear()
         }
 #endif
+        _ = KeyboardBootstrapSynchronizer().save(
+            configuration: FunputConfigurationStore().load(),
+            customThemes: CustomThemeStore().load()
+        )
     }
 
     var body: some Scene {

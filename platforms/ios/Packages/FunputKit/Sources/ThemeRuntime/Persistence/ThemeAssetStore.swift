@@ -11,7 +11,12 @@ public struct ThemeAssetStore: Sendable {
         root = container?.appendingPathComponent("ThemeAssets", isDirectory: true)
     }
 
-    public init(root: URL) { self.root = root }
+    /// - Parameter root: `nil` models an unavailable container, which every operation
+    ///   has to fail closed on. Constructing that state directly is the only reliable
+    ///   way to reach it from a test: a simulator hands out a usable container for any
+    ///   App Group identifier, so going through `init(suiteName:)` with a bogus one
+    ///   exercises the happy path instead.
+    public init(root: URL?) { self.root = root }
 
     public func save(source: Data, rendered: Data, id: UUID = UUID()) -> String? {
         guard let root else { return nil }

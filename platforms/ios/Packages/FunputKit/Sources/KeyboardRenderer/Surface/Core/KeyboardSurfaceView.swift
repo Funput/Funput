@@ -4,9 +4,27 @@ import ThemeSchema
 import UIKit
 @MainActor
 public final class KeyboardSurfaceView: UIView {
-    public var backgroundImage: UIImage? { didSet { applyPresentation() } }
+    var backgroundImageState: UIImage?
+    var presentationState: KeyboardPresentation
+#if DEBUG
+    var keyRebuildCount = 0
+    var presentationApplyCount = 0
+#endif
+    public var backgroundImage: UIImage? {
+        get { backgroundImageState }
+        set {
+            guard backgroundImageState !== newValue else { return }
+            backgroundImageState = newValue
+            applyBackdropPresentation()
+        }
+    }
     public var presentation: KeyboardPresentation {
-        didSet { presentationDidChange(from: oldValue) }
+        get { presentationState }
+        set {
+            let oldValue = presentationState
+            presentationState = newValue
+            presentationDidChange(from: oldValue)
+        }
     }
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
@@ -46,8 +64,12 @@ public final class KeyboardSurfaceView: UIView {
         sizing: KeyboardSizingProfile,
         value: ResolvedKeyboard
     )?
-    public init(presentation: KeyboardPresentation = KeyboardPresentation()) {
-        self.presentation = presentation
+    public init(
+        presentation: KeyboardPresentation = KeyboardPresentation(),
+        backgroundImage: UIImage? = nil
+    ) {
+        presentationState = presentation
+        backgroundImageState = backgroundImage
         super.init(frame: .zero)
         configureView()
     }
@@ -95,46 +117,5 @@ public final class KeyboardSurfaceView: UIView {
         }
     }
 
-    private func configureView() {
-        // Fires only for light/dark changes.
-        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
-            view.applyPresentation()
-        }
-        isMultipleTouchEnabled = true
-        contentHost.isMultipleTouchEnabled = true
-        clipsToBounds = true
-        isOpaque = false
-        backgroundColor = .clear
-        tintColor = .clear
-        addSubview(backdropView)
-        addSubview(contentHost)
-        contentHost.addSubview(keysHost)
-        contentHost.addSubview(toolbarView)
-        contentHost.addSubview(touchOverlay)
-        addSubview(previewView)
-        addSubview(alternatePaletteView)
-        configureTouchOverlay()
-        configureTouchPipeline()
-        toolbarView.onEvent = { [weak self] event in self?.route(event, from: nil) }
-        toolbarView.onSuggestionSelected = { [weak self] candidate in
-            guard let self else { return }
-            interactionController.performSuggestionFeedback(presentation: presentation)
-            onSuggestionSelected?(candidate)
-        }
-        toolbarView.onClipboardPaste = { [weak self] text in
-            guard let self else { return }
-            interactionController.performSuggestionFeedback(presentation: presentation)
-            onClipboardPaste?(text)
-        }
-        rebuildKeys()
-        applyPresentation()
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(accessibilityAppearanceDidChange),
-            name: UIAccessibility.reduceTransparencyStatusDidChangeNotification,
-            object: nil
-        )
-    }
 }
 #endif

@@ -6,18 +6,23 @@
 //
 
 import FunputShared
+import KeyboardConfiguration
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
+import PersonalSuggestions
 import ThemeRuntime
+import ThemeSchema
 import UIKit
 
 final class KeyboardViewController: UIInputViewController {
+    let launchTrace = KeyboardLaunchTrace()
     let inputCoordinator = KeyboardInputCoordinator()
-    let keyboardView = KeyboardSurfaceView()
-    let emojiView = EmojiKeyboardView()
-    let kaomojiView = KaomojiKeyboardView()
-    let clipboardPanelView = ClipboardKeyboardView()
+    lazy var keyboardView = makePrimarySurface()
+    var hasPrimarySurface = false
+    var emojiView: EmojiKeyboardView?
+    var kaomojiView: KaomojiKeyboardView?
+    var clipboardPanelView: ClipboardKeyboardView?
     let emojiRecentsStore = EmojiRecentsStore()
     /// Rebuilt whenever configuration changes, since it carries the chosen expiry.
     var clipboardStore = ClipboardStore()
@@ -25,11 +30,21 @@ final class KeyboardViewController: UIInputViewController {
     let accessStateStore = KeyboardAccessStateStore()
     let customThemeStore = CustomThemeStore()
     let themeAssetStore = ThemeAssetStore()
-    let personalSuggestionService = PersonalSuggestionService()
+    let personalSuggestionService = PersonalSuggestionService {
+        PersonalSuggestionWorker(onResult: $0)
+    }
+    let activationState = KeyboardActivationState()
+    let backgroundImageCache = KeyboardBackgroundAssetCache<UIImage>()
+    let bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
+    var clipboardRetryTask: Task<Void, Never>?
+    var pendingBootstrapRepair: KeyboardBootstrapSnapshot?
+    var adoptedIdentity: KeyboardActivationIdentity?
+    var resolvedBackgroundRequest: KeyboardBackgroundRequest?
     var displayedSurface = KeyboardSurface.funput
     var configuration = FunputConfiguration.default
     var themeCatalog = ThemeCatalog()
-    var cachedPresentationConfiguration: FunputConfiguration?
+    var selectedTheme: KeyboardTheme = BundledThemes.default
+    var currentPresentation = KeyboardPresentation()
     var cachedThemedPresentation: KeyboardPresentation?
     let configurationStore = FunputConfigurationStore()
 #if DEBUG
@@ -43,21 +58,35 @@ final class KeyboardViewController: UIInputViewController {
         initialLayoutMode: .letters
     )
     private let heightController = KeyboardHeightController()
-    private var isKeyboardVisible = false
+    private(set) var isKeyboardVisible = false
+
+    var cachedBackgroundImage: UIImage? { backgroundImageCache.value }
 
     override func viewDidLoad() {
+        launchTrace.beginViewDidLoad()
         super.viewDidLoad()
-        installKeyboardView()
-        installPersonalSuggestions()
-        reloadConfiguration()
-        updateTextInputTraits(force: true)
+        view.isOpaque = false
+        view.backgroundColor = .clear
+        heightController.install(on: view)
+        // The height only tracks the size class, and `viewWillTransition` alone misses
+        // every change that is not a rotation of an already-visible keyboard.
+        registerForTraitChanges([UITraitVerticalSizeClass.self]) {
+            (controller: KeyboardViewController, _) in
+            controller.updatePreferredHeight()
+        }
+        bootstrapKeyboard()
+        launchTrace.endViewDidLoad()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        isKeyboardVisible = true
-        activatePreferredHeight()
+        launchTrace.finish()
+        if hasFullAccess { accessStateStore.recordFullAccess() }
+#if DEBUG
+        touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
+#endif
         refreshClipboardOffer()
+        repairBootstrapSnapshotIfNeeded()
     }
 
     func deactivatePreferredHeight() {
@@ -77,61 +106,40 @@ final class KeyboardViewController: UIInputViewController {
         let shouldReactivate = heightController.deactivate()
         coordinator.animate(alongsideTransition: nil) { [weak self] _ in
             guard let self, shouldReactivate, isKeyboardVisible else { return }
+            updatePreferredHeight()
             activatePreferredHeight()
         }
     }
 
-    private func installKeyboardView() {
-        view.isOpaque = false
-        view.backgroundColor = .clear
-        keyboardView.translatesAutoresizingMaskIntoConstraints = false
-        keyboardView.onKeyEvent = { [weak self] event in
-            self?.handleKeyEvent(event)
-        }
-        view.addSubview(keyboardView)
-        installEmojiView()
-        installClipboard()
-        installClipboardPanel()
-        installKaomojiView()
-
-        NSLayoutConstraint.activate([
-            keyboardView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            keyboardView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            keyboardView.topAnchor.constraint(equalTo: view.topAnchor),
-            keyboardView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            emojiView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            emojiView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            emojiView.topAnchor.constraint(equalTo: view.topAnchor),
-            emojiView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            kaomojiView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            kaomojiView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            kaomojiView.topAnchor.constraint(equalTo: view.topAnchor),
-            kaomojiView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            clipboardPanelView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            clipboardPanelView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            clipboardPanelView.topAnchor.constraint(equalTo: view.topAnchor),
-            clipboardPanelView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-        ])
-
-        heightController.install(on: view)
-    }
-
     func updatePreferredHeight() {
         heightController.update(
-            for: keyboardView.presentation,
+            for: currentPresentation,
             traits: traitCollection
         )
+    }
+
+    func activatePreferredHeightForAppearance() {
+        updatePreferredHeight()
+        isKeyboardVisible = true
+        activatePreferredHeight()
+        launchTrace.recordHeightReady()
+    }
+
+    /// Puts the height in place before the host ever lays the keyboard out.
+    ///
+    /// Without this the constraint stays inactive until the end of `viewWillAppear`,
+    /// and Auto Layout stretches the view to the whole host container in the meantime.
+    func activatePreferredHeightForBootstrap() {
+        updatePreferredHeight()
+        activatePreferredHeight()
     }
 
     private func activatePreferredHeight() {
-        heightController.activate(
-            for: keyboardView.presentation,
-            traits: traitCollection
-        )
+        heightController.activate()
     }
 }
 
-enum KeyboardSurface {
+enum KeyboardSurface: String {
     case funput
     case emoji
     case kaomoji

@@ -1,38 +1,107 @@
 import FunputShared
-import KeyboardInput
+import KeyboardConfiguration
 import KeyboardRenderer
 import ThemeRuntime
 import ThemeSchema
 import UIKit
 
 extension KeyboardViewController {
-    /// Reloads shared configuration and applies it to the engine and surface.
-    ///
-    /// Called on load and on every activation so preference changes made in the
-    /// containing app take effect the next time the keyboard appears. Reading on
-    /// activation (not per keystroke) keeps the hot path free of I/O.
-    func reloadConfiguration() {
+    func loadActivationSource(hasFullAccess: Bool) -> KeyboardActivationSource {
+        launchTrace.beginConfigurationLoad()
+        defer { launchTrace.endConfigurationLoad() }
 #if DEBUG
-        configuration = FunputUITestConfigurationOverrideStore().load()
-            ?? configurationStore.load()
-#else
-        configuration = configurationStore.load()
+        if let override = FunputUITestConfigurationOverrideStore().load() {
+            return makeFallbackSource(
+                configuration: override,
+                hasFullAccess: hasFullAccess,
+                repairsSnapshot: false
+            )
+        }
 #endif
-        themeCatalog = ThemeCatalog(customThemes: customThemeStore.load())
-        cachedPresentationConfiguration = nil
-        cachedThemedPresentation = nil
-        let theme = themeCatalog.theme(id: configuration.selectedThemeID)
-        let assetID = theme?.backgroundEffects.image?.assetID
-        let data = assetID.flatMap(themeAssetStore.renderedData)
-        let image = data.flatMap(UIImage.init(data:))
-        keyboardView.backgroundImage = image
-        emojiView.backgroundImage = image
-        kaomojiView.backgroundImage = image
-        clipboardPanelView.backgroundImage = image
-        clipboardStore = ClipboardStore(expiry: configuration.clipboardExpiry)
-        keyboardView.updateClipboardKeyVisible(configuration.clipboardEnabled)
-        inputCoordinator.apply(configuration)
-        configurePersonalSuggestions()
-        updateInputPresentation()
+        if let snapshot = try? bootstrapSnapshotStore.load() {
+            launchTrace.recordBootstrapSnapshot(hit: true)
+            return makeSnapshotSource(snapshot, hasFullAccess: hasFullAccess)
+        }
+        launchTrace.recordBootstrapSnapshot(hit: false)
+        return makeFallbackSource(
+            configuration: configurationStore.load(),
+            hasFullAccess: hasFullAccess,
+            repairsSnapshot: true
+        )
+    }
+
+    func repairBootstrapSnapshotIfNeeded() {
+        guard let snapshot = pendingBootstrapRepair else { return }
+        pendingBootstrapRepair = nil
+        let store = bootstrapSnapshotStore
+        Task.detached(priority: .utility) {
+            try? store.repairIfNeeded(snapshot)
+        }
+    }
+
+    private func makeFallbackSource(
+        configuration: FunputConfiguration,
+        hasFullAccess: Bool,
+        repairsSnapshot: Bool
+    ) -> KeyboardActivationSource {
+        launchTrace.recordCustomThemeCatalogLoad()
+        let customThemes = customThemeStore.load()
+        let resolved = launchTrace.measure("ThemeResolve") {
+            KeyboardActivationThemeResolver.resolve(
+                configuration: configuration,
+                customThemes: customThemes
+            )
+        }
+        return KeyboardActivationSource(
+            configuration: configuration,
+            catalog: resolved.catalog,
+            selectedTheme: resolved.selectedTheme,
+            hasFullAccess: hasFullAccess,
+            repairSnapshot: repairsSnapshot ? KeyboardBootstrapSnapshot.make(
+                configuration: configuration,
+                customThemes: customThemes
+            ) : nil
+        )
+    }
+
+    private func makeSnapshotSource(
+        _ snapshot: KeyboardBootstrapSnapshot,
+        hasFullAccess: Bool
+    ) -> KeyboardActivationSource {
+        let bundled = BundledThemes.theme(id: snapshot.selectedTheme.id) != nil
+        let customThemes = bundled ? [] : [CustomKeyboardTheme(
+            baseThemeID: BundledThemes.default.id,
+            theme: snapshot.selectedTheme
+        )]
+        return KeyboardActivationSource(
+            configuration: snapshot.configuration,
+            catalog: ThemeCatalog(customThemes: customThemes),
+            selectedTheme: snapshot.selectedTheme,
+            hasFullAccess: hasFullAccess,
+            repairSnapshot: nil
+        )
+    }
+
+    func applyBackgroundImageToSupplementarySurfaces(_ image: UIImage?) {
+        emojiView?.backgroundImage = image
+        kaomojiView?.backgroundImage = image
+        clipboardPanelView?.backgroundImage = image
+    }
+
+    func loadBackgroundImage(assetID: String?, pixelBudget: Int) -> UIImage? {
+        backgroundImageCache.resolve(
+            assetID: assetID,
+            variant: pixelBudget,
+            load: { id in
+                launchTrace.measure("AssetRead") {
+                    themeAssetStore.renderedData(for: id)
+                }
+            },
+            decode: { data in
+                launchTrace.measure("AssetDecode") {
+                    KeyboardBackgroundImageDecoder.decode(data, maxPixelSize: pixelBudget)
+                }
+            }
+        )
     }
 }

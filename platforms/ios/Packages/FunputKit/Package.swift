@@ -33,6 +33,8 @@ let package = Package(
             name: "PersonalSuggestions",
             dependencies: [
                 .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
+                .target(name: "KeyboardInput"),
+                .target(name: "KeyboardRenderer"),
             ]
         ),
         .target(

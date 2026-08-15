@@ -22,6 +22,18 @@ struct EmojiCatalogTests {
         #expect(index.search("cho").contains { $0.glyph == "🐕" })
     }
 
+    @Test("Bundled access loads independently owned catalog storage")
+    func bundledCatalogStorage() {
+        let first = EmojiCatalog.bundled
+        let second = EmojiCatalog.bundled
+        let sharesStorage = first.emojis.withUnsafeBufferPointer { firstBuffer in
+            second.emojis.withUnsafeBufferPointer { secondBuffer in
+                firstBuffer.baseAddress == secondBuffer.baseAddress
+            }
+        }
+        #expect(!sharesStorage)
+    }
+
     @Test("Legacy schema decodes with empty localization metadata")
     func legacyData() throws {
         let data = Data(

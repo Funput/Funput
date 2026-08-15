@@ -1,12 +1,13 @@
 import FunputShared
+import KeyboardConfiguration
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
 import UIKit
 
 extension KeyboardViewController {
-    func installClipboard() {
-        keyboardView.onClipboardPaste = { [weak self] text in
+    func installClipboard(on surface: KeyboardSurfaceView) {
+        surface.onClipboardPaste = { [weak self] text in
             self?.pasteFromClipboard(text)
         }
     }
@@ -23,9 +24,10 @@ extension KeyboardViewController {
     func refreshClipboardOffer(
         retriesRemaining: Int = KeyboardViewController.clipboardRetryDelays.count
     ) {
+        cancelClipboardRetry()
         let context = ClipboardOfferPolicy.Context(
             editorMode: inputCoordinator.state.editorMode,
-            hasToolbar: keyboardView.presentation.layout.toolbar != nil,
+            hasToolbar: currentPresentation.layout.toolbar != nil,
             hasFullAccess: hasFullAccess,
             isEnabled: configuration.clipboardEnabled
         )
@@ -59,12 +61,22 @@ extension KeyboardViewController {
 
     private func scheduleClipboardRetry(retriesRemaining: Int) {
         let index = Self.clipboardRetryDelays.count - retriesRemaining
-        guard Self.clipboardRetryDelays.indices.contains(index) else { return }
+        guard Self.clipboardRetryDelays.indices.contains(index),
+              activationState.isActive else { return }
         let delay = Self.clipboardRetryDelays[index]
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: delay)
-            self?.refreshClipboardOffer(retriesRemaining: retriesRemaining - 1)
+        let generation = activationState.generation
+        clipboardRetryTask = Task { @MainActor [weak self] in
+            do { try await Task.sleep(for: delay) }
+            catch { return }
+            guard let self, activationState.accepts(generation) else { return }
+            clipboardRetryTask = nil
+            refreshClipboardOffer(retriesRemaining: retriesRemaining - 1)
         }
+    }
+
+    func cancelClipboardRetry() {
+        clipboardRetryTask?.cancel()
+        clipboardRetryTask = nil
     }
 
     private static func hint(for offer: ClipboardOffer) -> KeyboardClipboardHint {

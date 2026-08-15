@@ -25,14 +25,9 @@ final class KeyboardHeightController {
         heightConstraint = constraint
     }
 
-    func activate(
-        for presentation: KeyboardPresentation,
-        traits: UITraitCollection
-    ) {
-        update(for: presentation, traits: traits)
-
-        guard let heightConstraint else {
-            assertionFailure("Install the keyboard height controller before activating it.")
+    func activate() {
+        guard let heightConstraint, requestedHeight != nil else {
+            assertionFailure("Install and update the keyboard height before activating it.")
             return
         }
         guard !heightConstraint.isActive else { return }

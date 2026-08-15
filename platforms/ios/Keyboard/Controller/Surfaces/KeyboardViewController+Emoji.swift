@@ -5,9 +5,12 @@ import KeyboardRenderer
 import UIKit
 
 extension KeyboardViewController {
-    func installEmojiView() {
-        emojiView.translatesAutoresizingMaskIntoConstraints = false
-        emojiView.isHidden = true
+    @discardableResult
+    func ensureEmojiView() -> EmojiKeyboardView {
+        if let emojiView {
+            return emojiView
+        }
+        let emojiView = KeyboardLaunchTrace.makePanel(.emoji, EmojiKeyboardView())
         emojiView.onEmojiSelected = { [weak self] item in
             self?.insertEmoji(item)
         }
@@ -20,35 +23,32 @@ extension KeyboardViewController {
         emojiView.onKaomoji = { [weak self] in
             self?.showKaomoji()
         }
-        view.addSubview(emojiView)
+        emojiView.backgroundImage = cachedBackgroundImage
+        self.emojiView = emojiView
+        attachSupplementarySurface(emojiView)
+        return emojiView
     }
 
     func showEmoji() {
-        guard keyboardView.presentation.layout.toolbar != nil else { return }
+        guard currentPresentation.layout.toolbar != nil else { return }
+        launchTrace.recordPanelFirstOpen(.emoji)
+        ensureEmojiView()
         inputCoordinator.prepareForLiteralInput()
         clearPersonalSuggestions()
-        displayedSurface = .emoji
-        keyboardView.isHidden = true
-        kaomojiView.isHidden = true
-        clipboardPanelView.isHidden = true
-        emojiView.isHidden = false
         refreshEmojiPresentation()
+        switchSurface(to: .emoji)
     }
 
     func showFunput() {
-        displayedSurface = .funput
-        emojiView.reset()
-        emojiView.isHidden = true
-        kaomojiView.reset()
-        kaomojiView.isHidden = true
-        clipboardPanelView.reset()
-        clipboardPanelView.isHidden = true
-        keyboardView.isHidden = false
+        emojiView?.reset()
+        kaomojiView?.reset()
+        clipboardPanelView?.reset()
+        switchSurface(to: .funput)
     }
 
     func refreshEmojiPresentation() {
-        emojiView.apply(
-            presentation: keyboardView.presentation,
+        emojiView?.apply(
+            presentation: currentPresentation,
             recent: emojiRecentsStore.load().compactMap(emojiItem)
         )
     }

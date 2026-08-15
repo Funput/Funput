@@ -5,9 +5,12 @@ import KeyboardRenderer
 import UIKit
 
 extension KeyboardViewController {
-    func installClipboardPanel() {
-        clipboardPanelView.translatesAutoresizingMaskIntoConstraints = false
-        clipboardPanelView.isHidden = true
+    @discardableResult
+    func ensureClipboardPanelView() -> ClipboardKeyboardView {
+        if let clipboardPanelView {
+            return clipboardPanelView
+        }
+        let clipboardPanelView = KeyboardLaunchTrace.makePanel(.clipboard, ClipboardKeyboardView())
         clipboardPanelView.onSelect = { [weak self] entry in
             self?.pasteFromHistory(entry)
         }
@@ -28,24 +31,25 @@ extension KeyboardViewController {
         clipboardPanelView.onReturn = { [weak self] in
             self?.showFunput()
         }
-        view.addSubview(clipboardPanelView)
+        clipboardPanelView.backgroundImage = cachedBackgroundImage
+        self.clipboardPanelView = clipboardPanelView
+        attachSupplementarySurface(clipboardPanelView)
+        return clipboardPanelView
     }
 
     func showClipboardPanel() {
-        guard keyboardView.presentation.layout.toolbar != nil else { return }
+        guard currentPresentation.layout.toolbar != nil else { return }
+        launchTrace.recordPanelFirstOpen(.clipboard)
+        ensureClipboardPanelView()
         inputCoordinator.prepareForLiteralInput()
         clearPersonalSuggestions()
-        displayedSurface = .clipboard
-        keyboardView.isHidden = true
-        emojiView.isHidden = true
-        kaomojiView.isHidden = true
-        clipboardPanelView.isHidden = false
         refreshClipboardPanel()
+        switchSurface(to: .clipboard)
     }
 
     func refreshClipboardPanel() {
-        clipboardPanelView.apply(
-            presentation: keyboardView.presentation,
+        clipboardPanelView?.apply(
+            presentation: currentPresentation,
             entries: clipboardStore.load().map(Self.entry),
             hasFullAccess: hasFullAccess
         )

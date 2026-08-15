@@ -1,5 +1,6 @@
 import Foundation
 import FunputShared
+import KeyboardConfiguration
 import ThemeRuntime
 import ThemeSchema
 
@@ -33,6 +34,44 @@ protocol ThemeAssetStoring {
 }
 
 extension ThemeAssetStore: ThemeAssetStoring {}
+
+protocol KeyboardBootstrapSynchronizing {
+    func save(
+        configuration: FunputConfiguration,
+        customThemes: [CustomKeyboardTheme]
+    ) -> Bool
+}
+
+struct KeyboardBootstrapSynchronizer: KeyboardBootstrapSynchronizing {
+    private let store: KeyboardBootstrapSnapshotStore
+
+    init(store: KeyboardBootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()) {
+        self.store = store
+    }
+
+    func save(
+        configuration: FunputConfiguration,
+        customThemes: [CustomKeyboardTheme]
+    ) -> Bool {
+        let snapshot = KeyboardBootstrapSnapshot.make(
+            configuration: configuration,
+            customThemes: customThemes
+        )
+        do {
+            try store.save(snapshot)
+            return true
+        } catch {
+            return false
+        }
+    }
+}
+
+struct NoopKeyboardBootstrapSynchronizer: KeyboardBootstrapSynchronizing {
+    func save(
+        configuration: FunputConfiguration,
+        customThemes: [CustomKeyboardTheme]
+    ) -> Bool { true }
+}
 
 struct PreviewConfigurationStore: FunputConfigurationStoring {
     var configuration = FunputConfiguration.default
