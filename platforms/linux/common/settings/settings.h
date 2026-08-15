@@ -34,6 +34,11 @@ struct Settings {
     // Auto-capitalize ("Tự động viết hoa"): uppercase the first letter at the start of
     // a sentence. Off by default.
     bool autoCapitalize = false;
+    // Non-preedit: build the word in the document and repair it with a delete,
+    // instead of showing a preedit. Off by default. No shell performs it yet, so
+    // turning this on changes nothing today — see
+    // common/compose/composer/nonpreedit.cpp for what it will ask of one.
+    bool nonPreedit = false;
     Hotkey toggleHotkey = Hotkey::CtrlBacktick;
     FlipHotkey flipHotkey = FlipHotkey::Off;
     // App identifiers (fcitx5 program() / WM_CLASS) that default to English on

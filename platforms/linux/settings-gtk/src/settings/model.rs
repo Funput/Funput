@@ -113,6 +113,10 @@ pub struct Settings {
     pub spell_check: bool,
     #[serde(default)]
     pub auto_capitalize: bool,
+    /// Read and written but not shown: no shell performs non-preedit yet. Carried
+    /// so `save()` does not drop it — see the note there.
+    #[serde(default)]
+    pub non_preedit: bool,
     pub toggle_hotkey: Hotkey,
     #[serde(default)]
     pub flip_hotkey: FlipHotkey,
@@ -134,6 +138,7 @@ impl Default for Settings {
             eager_restore: true,
             spell_check: false,
             auto_capitalize: false,
+            non_preedit: false,
             toggle_hotkey: Hotkey::CtrlBacktick,
             flip_hotkey: FlipHotkey::Off,
             launch_at_login: false,

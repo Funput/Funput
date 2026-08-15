@@ -107,3 +107,28 @@ TEST_CASE("the mode is off unless it is asked for") {
     CHECK(composer.onKey(ascii('t')).effect == Effect::Preedit);
     CHECK(type(composer, "ieengs").text == "tiếng");
 }
+
+TEST_CASE("the setting decides the mode") {
+    Settings settings;
+    settings.method = Method::Telex;
+    settings.nonPreedit = true;
+
+    Composer composer(settings);
+    CHECK(composer.nonPreedit());
+    CHECK(composer.onKey(ascii('t')).effect != Effect::Preedit);
+}
+
+TEST_CASE("changing the setting drops the half-typed word") {
+    Settings settings;
+    settings.method = Method::Telex;
+    settings.nonPreedit = true;
+    Composer composer(settings);
+    type(composer, "tieeng");
+
+    // Switching mid-word: the document holds `tiêng` and the preedit path knows
+    // nothing about it, so the composition has to go rather than be handed over.
+    composer.settings().nonPreedit = false;
+    composer.applySettings();
+    CHECK(!composer.nonPreedit());
+    CHECK(composer.flush().text.empty());
+}

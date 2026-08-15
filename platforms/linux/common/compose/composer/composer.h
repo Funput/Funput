@@ -55,10 +55,13 @@ public:
     // --- non-preedit ----------------------------------------------------------
 
     // Build the word in the document instead of in a preedit: every keystroke
-    // emits an [Effect::Replace] that repairs what the previous one wrote. Off by
-    // default, and nothing outside the tests turns it on yet — the settings key and
-    // the Fcitx5 implementation are separate changes. See nonpreedit.cpp for what
-    // the mode assumes of its shell.
+    // emits an [Effect::Replace] that repairs what the previous one wrote. See
+    // nonpreedit.cpp for what the mode assumes of its shell.
+    //
+    // `applySettings()` seeds this from `Settings::nonPreedit`; the setter is the
+    // per-context override on top of it, for a shell that finds a client the mode
+    // cannot be run against. No shell performs an [Effect::Replace] yet, so turning
+    // it on changes nothing outside the tests.
     void setNonPreedit(bool on) { nonPreedit_ = on; }
     bool nonPreedit() const { return nonPreedit_; }
 
@@ -107,6 +110,7 @@ private:
     // driven per-app on focus; a manual toggle overrides it until the next focus
     // change.
     bool effectiveEnabled_ = true;
+    // Likewise the mode actually in effect, seeded from `settings_.nonPreedit`.
     bool nonPreedit_ = false;
 };
 

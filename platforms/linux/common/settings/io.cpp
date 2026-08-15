@@ -84,6 +84,7 @@ bool Settings::reload() {
     eagerRestore = data.value("eagerRestore", eagerRestore);
     spellCheck = data.value("spellCheck", spellCheck);
     autoCapitalize = data.value("autoCapitalize", autoCapitalize);
+    nonPreedit = data.value("nonPreedit", nonPreedit);
     toggleHotkey = parseHotkey(data.value("toggleHotkey", std::string(hotkeyString(toggleHotkey))));
     flipHotkey = parseFlip(data.value("flipHotkey", std::string(flipString(flipHotkey))));
     excludedAppIds.clear();
@@ -107,9 +108,9 @@ bool Settings::reload() {
     return method != previous.method || toneStyle != previous.toneStyle ||
            enabled != previous.enabled || smartRestore != previous.smartRestore ||
            eagerRestore != previous.eagerRestore || spellCheck != previous.spellCheck ||
-           autoCapitalize != previous.autoCapitalize || toggleHotkey != previous.toggleHotkey ||
-           flipHotkey != previous.flipHotkey || excludedAppIds != previous.excludedAppIds ||
-           shortcuts != previous.shortcuts;
+           autoCapitalize != previous.autoCapitalize || nonPreedit != previous.nonPreedit ||
+           toggleHotkey != previous.toggleHotkey || flipHotkey != previous.flipHotkey ||
+           excludedAppIds != previous.excludedAppIds || shortcuts != previous.shortcuts;
 }
 
 void Settings::save() const {
@@ -127,6 +128,7 @@ void Settings::save() const {
     data["eagerRestore"] = eagerRestore;
     data["spellCheck"] = spellCheck;
     data["autoCapitalize"] = autoCapitalize;
+    data["nonPreedit"] = nonPreedit;
     data["toggleHotkey"] = hotkeyString(toggleHotkey);
     data["flipHotkey"] = flipString(flipHotkey);
     std::ofstream output(file, std::ios::trunc);
