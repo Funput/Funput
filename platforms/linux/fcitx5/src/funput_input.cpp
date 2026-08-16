@@ -21,20 +21,6 @@ funput::KeyEvent toKeyEvent(const fcitx::Key &key) {
     return ev;
 }
 
-// The document in front of the caret, as UTF-8. Fcitx5 reports the cursor in
-// characters while the text is UTF-8, so the two have to be reconciled here —
-// slicing by the cursor as if it were a byte offset cuts Vietnamese in half.
-std::string textBeforeCaret(fcitx::InputContext *context) {
-    const auto &surrounding = context->surroundingText();
-    if (!surrounding.isValid()) return {};
-    const std::vector<uint32_t> chars = funput::decodeUtf8(surrounding.text());
-    std::string out;
-    for (size_t i = 0; i < chars.size() && i < surrounding.cursor(); ++i) {
-        funput::appendUtf8(out, chars[i]);
-    }
-    return out;
-}
-
 } // namespace
 
 void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &event) {
@@ -49,7 +35,7 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     // same text a Backspace needs below.
     const bool nonPreedit = composer_.nonPreedit();
     const std::string before = nonPreedit ? textBeforeCaret(event.inputContext()) : std::string();
-    if (nonPreedit) composer_.observeDocument(before);
+    if (nonPreedit) composer_.observeDocument(before, hasSelection(event.inputContext()));
 
     // A Backspace with nothing composing is about to eat a *committed* character. In
     // non-preedit the word it lands in is right there in the document, so the composer

@@ -4,11 +4,25 @@
 
 #include "funput_engine.h"
 
+#include <vector>
+
 #include <fcitx/inputpanel.h>
 #include <fcitx/text.h>
 #include <fcitx/userinterface.h>
 
-namespace {
+// The document in front of the caret, as UTF-8. Fcitx5 reports the cursor in
+// characters while the text is UTF-8, so the two have to be reconciled here —
+// slicing by the cursor as if it were a byte offset cuts Vietnamese in half.
+std::string textBeforeCaret(fcitx::InputContext *context) {
+    const auto &surrounding = context->surroundingText();
+    if (!surrounding.isValid()) return {};
+    const std::vector<uint32_t> chars = funput::decodeUtf8(surrounding.text());
+    std::string out;
+    for (size_t i = 0; i < chars.size() && i < surrounding.cursor(); ++i) {
+        funput::appendUtf8(out, chars[i]);
+    }
+    return out;
+}
 
 // Is the client holding a selection right now? Non-preedit repairs the document by
 // deleting backwards from the caret, and with a selection live that delete takes the
@@ -19,8 +33,6 @@ bool hasSelection(fcitx::InputContext *context) {
     const auto &surrounding = context->surroundingText();
     return surrounding.isValid() && surrounding.cursor() != surrounding.anchor();
 }
-
-} // namespace
 
 void FunputEngine::updatePreedit(fcitx::InputContext *context, const std::string &text) {
     fcitx::Text preedit;

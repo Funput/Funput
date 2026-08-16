@@ -9,55 +9,6 @@
 
 namespace funput {
 
-namespace {
-
-// Drop the last `count` characters. Characters, not bytes — the same unit
-// `deleteChars` is in, and the same reason.
-std::string dropLast(const std::string &text, uint32_t count) {
-    std::vector<uint32_t> chars = decodeUtf8(text);
-    const size_t keep = count < chars.size() ? chars.size() - count : 0;
-    std::string out;
-    for (size_t i = 0; i < keep; ++i) appendUtf8(out, chars[i]);
-    return out;
-}
-
-} // namespace
-
-// --- NonPreeditState ---------------------------------------------------------
-
-void NonPreeditState::reset() {
-    refused = false;
-    retoneAllowed = true;
-    lastDoc.clear();
-    repairText.clear();
-    repairDeleted = 0;
-    repairAfterAdopt = false;
-    justAdopted = false;
-}
-
-void NonPreeditState::noteRepair(uint32_t deleted, const std::string &text) {
-    repairDeleted = deleted;
-    repairText = text;
-    repairAfterAdopt = justAdopted;
-    justAdopted = false;
-}
-
-Verdict NonPreeditState::observe(const std::string &document) {
-    Verdict verdict = Verdict::Unknown;
-    if (!repairText.empty()) {
-        const std::string dropped = lastDoc + repairText;
-        const std::string applied = dropLast(lastDoc, repairDeleted) + repairText;
-        if (document == dropped && dropped != applied) {
-            verdict = repairAfterAdopt ? Verdict::RefuseRetone : Verdict::RefuseMode;
-        }
-        repairText.clear();
-        repairDeleted = 0;
-        repairAfterAdopt = false;
-    }
-    lastDoc = document;
-    return verdict;
-}
-
 // --- Composer ----------------------------------------------------------------
 
 void Composer::setNonPreedit(bool on) {
@@ -70,7 +21,8 @@ void Composer::onFocusChanged() {
     nonPreedit_.reset();
 }
 
-void Composer::observeDocument(const std::string &textBeforeCaret) {
+void Composer::observeDocument(const std::string &textBeforeCaret, bool selectionLive) {
+    nonPreedit_.selectionLive = selectionLive;
     switch (nonPreedit_.observe(textBeforeCaret)) {
     case Verdict::Unknown:
         return;
@@ -90,16 +42,50 @@ void Composer::observeDocument(const std::string &textBeforeCaret) {
     discard();
 }
 
-ComposePlan Composer::planFromResult(const FunputResult &result) {
+ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed) {
     // ACTION_NONE means the engine produced nothing to show: the key was not part of a
-    // composition, so the app types it itself. The app's own edit is not something this
-    // can predict, so any pending expectation is void.
+    // composition, so the app types `typed` itself. That is still a change to the
+    // document, and a predictable one — recorded as "delete nothing, append this" so
+    // the next reading can confirm the document is being followed. Without it, the
+    // space that ends a word would leave us out of sync exactly when the Backspace
+    // after it wants to know. A repair that deletes nothing can never produce a
+    // verdict, so this cannot accuse anyone.
     if (result.action == ACTION_NONE) {
-        nonPreedit_.noteRepair(0, {});
+        std::string text;
+        if (typed != 0) appendUtf8(text, static_cast<uint32_t>(typed));
+        nonPreedit_.noteRepair(0, text);
         return ComposePlan::passThrough();
     }
     nonPreedit_.noteRepair(result.backspace, Handle::output(result));
     return ComposePlan::replace(nonPreedit_.repairDeleted, nonPreedit_.repairText);
+}
+
+ComposePlan Composer::backspaceOutsideWord() {
+    // In non-preedit, do the deleting rather than letting the key through.
+    //
+    // Letting the app do it is what breaks re-toning on Chrome's address bar: the app
+    // edits behind our back, and the repair issued on the next keystroke is discarded.
+    // Ordinary repairs are honoured there, so keeping the deletion on that same channel
+    // keeps the whole word on a path the client has already shown it will follow. It
+    // also mirrors Windows, which deletes with synthetic Backspace presses rather than
+    // asking the app — one ordered channel, no request anyone can decline.
+    //
+    // Only with positive evidence that the document being read is current. The
+    // selection flag alone is not enough: it comes from the same cache, and in
+    // Chrome's address bar that cache had not yet reported a fresh mouse selection —
+    // so the key was taken over, the delete was refused, and Backspace appeared to do
+    // nothing until pressed a second time. A confirmed repair is the proof; when the
+    // client says nothing this simply declines, which costs re-toning rather than the
+    // far commoner select-and-delete.
+    //
+    // Note this repair cannot be verified afterwards. It carries no text, so "applied"
+    // and "dropped" read as the same document, which is the silent-client signature. A
+    // client that refuses it will simply appear to ignore Backspace.
+    if (!nonPreedit_.on || !nonPreedit_.inSync || nonPreedit_.selectionLive ||
+        nonPreedit_.lastDoc.empty()) {
+        return ComposePlan::passThrough();
+    }
+    return ComposePlan::replace(1, {});
 }
 
 ComposePlan Composer::endComposition(bool consumed) {

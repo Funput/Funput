@@ -64,7 +64,7 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
     // shell's keyEvent().
     const bool nonPreedit = state->composer.nonPreedit();
     const std::string before = nonPreedit ? textBeforeCaret(engine) : std::string();
-    if (nonPreedit) state->composer.observeDocument(before);
+    if (nonPreedit) state->composer.observeDocument(before, hasSelection(engine));
 
     const bool reopen = state->composer.nonPreedit() && !state->composer.isComposing() &&
                         funput::classify(ev, state->composer.settings()) ==

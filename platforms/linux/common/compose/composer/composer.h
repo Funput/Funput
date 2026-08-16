@@ -74,7 +74,7 @@ public:
     // The document in front of the caret as it stands now, before this keystroke.
     // Checks that the previous repair landed, and stands down as narrowly as the
     // failure allows — see nonpreedit.cpp.
-    void observeDocument(const std::string &textBeforeCaret);
+    void observeDocument(const std::string &textBeforeCaret, bool selectionLive = false);
 
     // Whether a word is being composed right now. The shells ask before deciding
     // whether a Backspace is shortening a live word or eating a committed one.
@@ -120,7 +120,9 @@ private:
     // --- non-preedit (nonpreedit.cpp) -----------------------------------------
 
     // One engine result as a document repair.
-    ComposePlan planFromResult(const FunputResult &result);
+    ComposePlan planFromResult(const FunputResult &result, char32_t typed);
+    // A Backspace with nothing composing: who removes the character.
+    ComposePlan backspaceOutsideWord();
     // End the composition without committing: in non-preedit the word is already
     // in the document, so only the engine state is dropped.
     ComposePlan endComposition(bool consumed);

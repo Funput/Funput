@@ -35,7 +35,7 @@ ComposePlan Composer::onBoundary(char32_t scalar, KeySource source) {
     // The engine's output already ends with the boundary character, and the word in
     // front of it is already in the document — so the repair covers both at once,
     // with none of the splicing the preedit path needs below.
-    if (nonPreedit_.on) return planFromResult(result);
+    if (nonPreedit_.on) return planFromResult(result, scalar);
     std::string word = before;
     if (result.action == ACTION_SEND) {
         word = Handle::output(result);
@@ -64,7 +64,7 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
         // composing) leaves the client alone.
         const FunputResult result = handle_.flipComposing();
         if (result.action == ACTION_NONE) return ComposePlan::swallow();
-        if (nonPreedit_.on) return planFromResult(result);
+        if (nonPreedit_.on) return planFromResult(result, 0);
         return ComposePlan::preedit(handle_.buffer());
     }
 
@@ -76,7 +76,7 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
     case KeyKind::Backspace:
         // The composing word shortens and the key is swallowed. With nothing
         // composing the key passes through, so the app deletes its own character.
-        if (handle_.buffer().empty()) return ComposePlan::passThrough();
+        if (handle_.buffer().empty()) return backspaceOutsideWord();
         handle_.backspace();
         // Non-preedit: the character stands in the document, so the key passes
         // through and the app deletes its own — the engine is only kept in step.
@@ -101,7 +101,7 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
 
     case KeyKind::Compose: {
         const FunputResult result = handle_.process(static_cast<uint32_t>(ev.ch));
-        if (nonPreedit_.on) return planFromResult(result);
+        if (nonPreedit_.on) return planFromResult(result, ev.ch);
         // The engine can swallow a character without composing anything (a lone
         // modifier key in VNI, say); with nothing to show, the key passes through.
         if (handle_.buffer().empty()) return ComposePlan::passThrough();

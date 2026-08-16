@@ -29,6 +29,11 @@
 #include "compose/composer/composer.h"
 #include "settings/watch.h"
 
+// Reading the focused client. Defined in funput_client.cpp beside the writing half —
+// talking to the client is one concern, whichever direction it goes.
+std::string textBeforeCaret(fcitx::InputContext *context);
+bool hasSelection(fcitx::InputContext *context);
+
 class FunputEngine : public fcitx::InputMethodEngineV2 {
 public:
     explicit FunputEngine(fcitx::Instance *instance);

@@ -37,8 +37,21 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
+
+#include "ffi/utf8.h"
 
 namespace funput {
+
+// Drop the last `count` characters. Characters, not bytes — the same unit
+// `deleteChars` is in, and the same reason.
+inline std::string dropLast(const std::string &text, uint32_t count) {
+    std::vector<uint32_t> chars = decodeUtf8(text);
+    const size_t keep = count < chars.size() ? chars.size() - count : 0;
+    std::string out;
+    for (size_t i = 0; i < keep; ++i) appendUtf8(out, chars[i]);
+    return out;
+}
 
 // What the last repair turned out to be worth.
 enum class Verdict : uint8_t {
@@ -60,6 +73,15 @@ struct NonPreeditState {
     bool on = false;
     bool refused = false;
     bool retoneAllowed = true;
+    // Whether the client is holding a selection. Only the shell can see this, and the
+    // Backspace path below needs it: taking a Backspace over while text is selected
+    // would swallow the key the user pressed to delete that selection.
+    bool selectionLive = false;
+    // Whether the last repair was seen to land. Distinct from "no verdict", which also
+    // covers a client that has said nothing — see `observe()`. Only a confirmation
+    // proves the document we are holding is current, and only then is it safe to take
+    // a Backspace over instead of letting the app perform it.
+    bool inSync = false;
 
     // The document as last seen and the repair last written into it — enough to say
     // what it should read now, and what it would read had the delete been dropped.
@@ -72,14 +94,49 @@ struct NonPreeditState {
     bool justAdopted = false;
 
     // A new input context: whatever the last client did says nothing about this one.
-    void reset();
+    // `on` survives — that is the shell's decision, not something learned here.
+    void reset() {
+        refused = false;
+        retoneAllowed = true;
+        selectionLive = false;
+        inSync = false;
+        lastDoc.clear();
+        repairText.clear();
+        repairDeleted = 0;
+        repairAfterAdopt = false;
+        justAdopted = false;
+    }
 
     // Record a repair just emitted, so the next reading can be judged against it.
-    void noteRepair(uint32_t deleted, const std::string &text);
+    void noteRepair(uint32_t deleted, const std::string &text) {
+        repairDeleted = deleted;
+        repairText = text;
+        repairAfterAdopt = justAdopted;
+        justAdopted = false;
+    }
 
     // Judge `document` against that record and forget it either way — one reading is
     // all a repair gets. Also remembers `document` as the latest.
-    Verdict observe(const std::string &document);
+    Verdict observe(const std::string &document) {
+        Verdict verdict = Verdict::Unknown;
+        if (!repairText.empty()) {
+            const std::string dropped = lastDoc + repairText;
+            const std::string applied = dropLast(lastDoc, repairDeleted) + repairText;
+            inSync = document == applied;
+            if (document == dropped && dropped != applied) {
+                verdict = repairAfterAdopt ? Verdict::RefuseRetone : Verdict::RefuseMode;
+            }
+            repairText.clear();
+            repairDeleted = 0;
+            repairAfterAdopt = false;
+        } else {
+            // Nothing was written, so nothing was confirmed. A document that moved on
+            // its own — the user clicking, or selecting with the mouse — lands here.
+            inSync = false;
+        }
+        lastDoc = document;
+        return verdict;
+    }
 };
 
 } // namespace funput
