@@ -40,11 +40,64 @@
 
 namespace funput {
 
+namespace {
+
+// Drop the last `count` characters. Characters, not bytes — the same unit
+// `deleteChars` is in, and the same reason.
+std::string dropLast(const std::string &text, uint32_t count) {
+    std::vector<uint32_t> chars = decodeUtf8(text);
+    const size_t keep = count < chars.size() ? chars.size() - count : 0;
+    std::string out;
+    for (size_t i = 0; i < keep; ++i) appendUtf8(out, chars[i]);
+    return out;
+}
+
+} // namespace
+
 ComposePlan Composer::planFromResult(const FunputResult &result) {
     // ACTION_NONE means the engine produced nothing to show: the key was not part of
-    // a composition, so the app types it itself. Mirrors `plan_inject`'s None arm.
-    if (result.action == ACTION_NONE) return ComposePlan::passThrough();
-    return ComposePlan::replace(result.backspace, Handle::output(result));
+    // a composition, so the app types it itself. The app's own edit is not something
+    // this can predict, so any pending expectation is void.
+    if (result.action == ACTION_NONE) {
+        lastRepairText_.clear();
+        lastRepairDeleted_ = 0;
+        return ComposePlan::passThrough();
+    }
+    // Remember what was asked for, so the next observation can say whether it landed.
+    lastRepairDeleted_ = result.backspace;
+    lastRepairText_ = Handle::output(result);
+    return ComposePlan::replace(lastRepairDeleted_, lastRepairText_);
+}
+
+void Composer::observeDocument(const std::string &textBeforeCaret) {
+    // Three readings are possible after a repair, and they are different strings —
+    // which is the whole reason this check can exist at all:
+    //
+    //   the repair applied      the document reads `lastDoc_` minus N, plus the text
+    //   the delete was ignored  it reads `lastDoc_` plus the text — the client took
+    //                           the commit and dropped the deleteSurroundingText
+    //   the client is silent    it still reads `lastDoc_`, having told us nothing yet
+    //
+    // Only the middle one is a verdict. Treating "not what I expected" as failure
+    // would disable the mode on the 61% of commits that go unanswered — curing one
+    // broken client by breaking the feature for everyone. Anything that matches none
+    // of the three (the user clicked elsewhere, the app edited itself) is no verdict
+    // either: forget the expectation and carry on.
+    if (!lastRepairText_.empty()) {
+        const std::string ignored = lastDoc_ + lastRepairText_;
+        if (textBeforeCaret == ignored && ignored != dropLast(lastDoc_, lastRepairDeleted_) +
+                                                        lastRepairText_) {
+            // This client commits but will not delete, so every repair from here would
+            // append instead of replace. Drop the composition too: the engine believes
+            // it owns a word the document does not have, and the next delete would aim
+            // at text Funput never wrote.
+            nonPreedit_ = false;
+            discard();
+        }
+        lastRepairText_.clear();
+        lastRepairDeleted_ = 0;
+    }
+    lastDoc_ = textBeforeCaret;
 }
 
 bool Composer::adoptWordBeforeBackspace(const std::string &textBeforeCaret) {

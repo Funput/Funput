@@ -151,6 +151,28 @@ keystroke and stall outright on the commits it never answers — a certain cost 
 a failure real typing cannot reach. Reconsider only if something starts issuing
 several `Replace`es for one keystroke.
 
+Not waiting before a write is not the same as never checking after one, though, and
+conflating the two let Chrome's address bar corrupt text for a while: it takes the
+commit and drops the `deleteSurroundingText` beside it, so `phủ` became `phủú`. The
+check costs nothing because the shells already read the document each keystroke. After
+a `Replace{N, T}` issued against document `D`, the next reading can only be one of
+three strings, and they differ:
+
+| Reading | Meaning |
+|---|---|
+| `D` less N characters, then `T` | it worked |
+| `D` then `T` | the client dropped the delete — turn the mode off for this client |
+| `D` | the client has not answered yet — no verdict |
+
+Only the middle one is a verdict, and that restraint is the point: treating "not what
+I expected" as failure would disable the mode on the 61% of commits that go
+unanswered, curing one broken client by breaking the feature for everyone. Anything
+matching none of the three is no verdict either. `Composer::observeDocument()` holds
+this; the shells only hand it the text.
+
+The cost is that detection is one beat late, so the first word is still mangled before
+the mode stands down. Catching it sooner would mean writing probe text into the user's
+document, which is not on the table.
 
 A selection live at delete time would take the highlighted text instead of ours, so
 both shells abandon the repair *and* the composition when they see one (`applyPlan`
@@ -196,8 +218,13 @@ client reported cursor 4 for `phủ ` (five bytes) and 3 for `phủ` (four).
   hand the flush to their framework (see the comments in `deactivate()` and
   `updatePreedit()`); clients that drop the preedit instead of committing it lose
   the word anyway. Non-preedit above is the fix on both shells, so this now only bites
-  where that mode cannot run: a client that reports no surrounding text, and anyone who
-  leaves the mode off.
+  where that mode cannot run: a client that reports no surrounding text, one that
+  ignores `deleteSurroundingText`, and anyone who leaves the mode off.
+- **Chrome's address bar cannot take non-preedit.** It accepts a commit and discards
+  the delete next to it, on both shells. The check above catches it and falls back
+  after one mangled word — a real cost, and the reason a client fixing this would be
+  worth more than any further work here. Ordinary text fields inside the same Chrome
+  are fine.
 - **The Settings app rewrites `settings.json` wholesale.** Unlike the addon's merging
   writer, it serializes its own struct over the file, so a key it does not know is
   deleted the next time the user changes anything there. Every setting the addon owns

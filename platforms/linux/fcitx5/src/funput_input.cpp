@@ -43,14 +43,21 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     if (event.isRelease()) return;
 
     const funput::KeyEvent ev = toKeyEvent(event.key());
+    // One read of the document, used twice. It lets the composer check that its last
+    // repair actually landed — a client that takes commits but drops deletes turns
+    // the mode off rather than appending to the user's text forever — and it is the
+    // same text a Backspace needs below.
+    const bool nonPreedit = composer_.nonPreedit();
+    const std::string before = nonPreedit ? textBeforeCaret(event.inputContext()) : std::string();
+    if (nonPreedit) composer_.observeDocument(before);
+
     // A Backspace with nothing composing is about to eat a *committed* character. In
-    // non-preedit the word it lands in is right there in the document, so read it now
-    // — the composer decides afterwards whether it is a Vietnamese syllable worth
-    // re-opening. Asking `classify()` rather than testing the keysym keeps
-    // Ctrl+Backspace (delete word) out of this: that is a shortcut, not a Backspace.
+    // non-preedit the word it lands in is right there in the document, so the composer
+    // is offered it and decides whether it is a Vietnamese syllable worth re-opening.
+    // Asking `classify()` rather than testing the keysym keeps Ctrl+Backspace (delete
+    // word) out of this: that is a shortcut, not a Backspace.
     const bool reopen = composer_.nonPreedit() && !composer_.isComposing() &&
                         funput::classify(ev, composer_.settings()) == funput::KeyKind::Backspace;
-    const std::string before = reopen ? textBeforeCaret(event.inputContext()) : std::string();
 
     const funput::ComposePlan plan = composer_.onKey(ev);
     applyPlan(event.inputContext(), plan);

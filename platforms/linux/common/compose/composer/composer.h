@@ -60,10 +60,15 @@ public:
     //
     // `applySettings()` seeds this from `Settings::nonPreedit`; the setter is the
     // per-context override on top of it, for a shell that finds a client the mode
-    // cannot be run against. No shell performs an [Effect::Replace] yet, so turning
-    // it on changes nothing outside the tests.
+    // cannot be run against.
     void setNonPreedit(bool on) { nonPreedit_ = on; }
     bool nonPreedit() const { return nonPreedit_; }
+
+    // The document in front of the caret as it stands now, before this keystroke.
+    // Checks that the previous repair actually landed and turns the mode off for a
+    // client that ignored it — see nonpreedit.cpp for how such a client is told apart
+    // from one that is merely slow to answer.
+    void observeDocument(const std::string &textBeforeCaret);
 
     // Whether a word is being composed right now. The shells ask before deciding
     // whether a Backspace is shortening a live word or eating a committed one.
@@ -127,6 +132,12 @@ private:
     bool effectiveEnabled_ = true;
     // Likewise the mode actually in effect, seeded from `settings_.nonPreedit`.
     bool nonPreedit_ = false;
+    // Non-preedit's evidence that the client is doing as it is told: the document as
+    // last seen, plus the repair last written into it. Together they say what the
+    // document should read now, and what it would read had the delete been ignored.
+    std::string lastDoc_;
+    std::string lastRepairText_;
+    uint32_t lastRepairDeleted_ = 0;
 };
 
 } // namespace funput
