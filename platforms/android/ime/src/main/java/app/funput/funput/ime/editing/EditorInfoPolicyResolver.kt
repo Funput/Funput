@@ -23,7 +23,7 @@ internal object EditorInfoPolicyResolver {
     ): EditorInfoPolicy {
         val editorMode = EditorInfoKeyboardModeResolver.resolve(inputType)
         val isText = inputType and InputType.TYPE_MASK_CLASS == InputType.TYPE_CLASS_TEXT
-        val source = suggestionSource(inputType, isText, editorMode.isPassword)
+        val source = suggestionSource(editorMode.isPassword)
         val learningAllowed = !editorMode.isPassword &&
             !(imeOptions has EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
         return EditorInfoPolicy(
@@ -33,8 +33,7 @@ internal object EditorInfoPolicyResolver {
             isMultiline = isText && inputType has InputType.TYPE_TEXT_FLAG_MULTI_LINE,
             suggestionSource = source,
             allowsPersonalizedLearning = learningAllowed,
-            allowsPersonalSuggestions = source == ImeSuggestionSource.FUNPUT &&
-                learningAllowed && !isUri(inputType) && !isEmail(inputType),
+            allowsPersonalSuggestions = source == ImeSuggestionSource.FUNPUT,
             compositionRenderMode = CompositionCompatibilityPolicy.renderMode(packageName),
         )
     }
@@ -48,25 +47,8 @@ internal object EditorInfoPolicyResolver {
         return modes
     }
 
-    private fun suggestionSource(
-        inputType: Int,
-        isText: Boolean,
-        isPassword: Boolean,
-    ): ImeSuggestionSource = when {
-        !isText || isPassword -> ImeSuggestionSource.NONE
-        inputType has InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS -> ImeSuggestionSource.NONE
-        inputType has InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE -> ImeSuggestionSource.EDITOR
-        else -> ImeSuggestionSource.FUNPUT
-    }
-
-    private fun isUri(inputType: Int): Boolean =
-        inputType and InputType.TYPE_MASK_VARIATION == InputType.TYPE_TEXT_VARIATION_URI
-
-    private fun isEmail(inputType: Int): Boolean {
-        val variation = inputType and InputType.TYPE_MASK_VARIATION
-        return variation == InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS ||
-            variation == InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS
-    }
+    private fun suggestionSource(isPassword: Boolean) =
+        if (isPassword) ImeSuggestionSource.NONE else ImeSuggestionSource.FUNPUT
 
     private infix fun Int.has(flag: Int): Boolean = this and flag != 0
 }

@@ -7,7 +7,7 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -30,7 +30,7 @@ class NumberKeyboardLayoutsTest {
         assertEquals(KeyRole.PLACEHOLDER, layout.rows[2].keys[3].role)
         assertEquals(KeyRole.PLACEHOLDER, layout.rows[3].keys[0].role)
         assertEquals(KeyRole.PLACEHOLDER, layout.rows[3].keys[2].role)
-        assertNull(layout.suggestionBar)
+        assertNotNull(layout.suggestionBar)
         assertEquals(4, layout.rows.size)
     }
 
@@ -53,22 +53,21 @@ class NumberKeyboardLayoutsTest {
     }
 
     @Test
-    fun `numeric geometry gives rows the full area without hidden toolbar`() {
+    fun `numeric geometry includes the suggestion toolbar`() {
         val mode = KeyboardEditorMode.NUMBER_SIGNED_DECIMAL
         val layout = resolve(mode)
         val spec = KeyboardGeometrySpec.fromDensity(1f)
         val height = KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, mode)
         val keyboard = KeyboardGeometry.resolve(layout, 360f, height, spec)
 
-        assertNull(keyboard.suggestionBar)
-        assertEquals(spec.verticalPadding, keyboard.rows.first().first().bounds.top)
+        assertNotNull(keyboard.suggestionBar)
         assertEquals(height - spec.verticalPadding, keyboard.rows.last().first().bounds.bottom, 0.5f)
-        assertFalse(keyboard.keys.any { it.spec.id == "emoji" })
+        assertTrue(keyboard.keys.any { it.spec.id == "emoji" })
     }
 
     @Test
     fun `all numeric modes disable composition and use four row keypad height`() {
-        val expectedHeight = KeyboardDimensions.heightForRowCount(rowCount = 4, hasSuggestionBar = false)
+        val expectedHeight = KeyboardDimensions.heightForRowCount(rowCount = 4, hasSuggestionBar = true)
         KeyboardEditorMode.entries.filter { it.isNumber }.forEach { mode ->
             assertFalse(mode.supportsVietnameseComposition)
             assertEquals(expectedHeight, KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, mode))

@@ -17,14 +17,14 @@ internal object EditorKeyboardLayouts {
             KeyboardEditorMode.SEARCH -> searchLayouts.getValue(inputMethod)
             KeyboardEditorMode.EMAIL -> emailLayouts.getValue(inputMethod)
             KeyboardEditorMode.URL -> urlLayouts.getValue(inputMethod)
-            KeyboardEditorMode.PHONE -> PhoneKeyboardLayouts.resolve(inputMethod)
+            KeyboardEditorMode.PHONE -> PhoneKeyboardLayouts.resolve(inputMethod, suggestionsEnabled)
             KeyboardEditorMode.PASSWORD -> PasswordKeyboardLayouts.text(inputMethod)
             KeyboardEditorMode.PIN -> PasswordKeyboardLayouts.pin(inputMethod)
             KeyboardEditorMode.NUMBER,
             KeyboardEditorMode.NUMBER_DECIMAL,
             KeyboardEditorMode.NUMBER_SIGNED,
             KeyboardEditorMode.NUMBER_SIGNED_DECIMAL,
-            -> NumberKeyboardLayouts.resolve(inputMethod, editorMode)
+            -> NumberKeyboardLayouts.resolve(inputMethod, editorMode, suggestionsEnabled)
         }
         return if (suggestionsEnabled || layout.suggestionBar == null) {
             layout

@@ -6,12 +6,16 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
 
 internal object NumberKeyboardLayouts {
-    fun resolve(inputMethod: KeyboardInputMethod, mode: KeyboardEditorMode): KeyboardLayout {
+    fun resolve(
+        inputMethod: KeyboardInputMethod,
+        mode: KeyboardEditorMode,
+        suggestionsEnabled: Boolean,
+    ): KeyboardLayout {
         require(mode.isNumber) { "Number layout requires a numeric editor mode" }
         return KeyboardLayout(
             id = "number-${mode.name.lowercase()}-${inputMethod.name.lowercase()}",
             inputMethod = inputMethod,
-            suggestionBar = null,
+            suggestionBar = keyboardToolbarSpec().copy(suggestionsEnabled = suggestionsEnabled),
             rows = listOf(
                 keypadRow(keypadDigit('1'), keypadDigit('2'), keypadDigit('3'), backspace()),
                 keypadRow(keypadDigit('4'), keypadDigit('5'), keypadDigit('6'), enter()),

@@ -40,6 +40,7 @@ internal class ImeEditingSession(
     fun startActionHandler() {
         actionHandler.start(
             allowComposition = editorRuntime.policy.editorMode.supportsVietnameseComposition,
+            allowSuggestions = editorRuntime.policy.allowsPersonalSuggestions,
             renderMode = editorRuntime.policy.compositionRenderMode,
         )
     }

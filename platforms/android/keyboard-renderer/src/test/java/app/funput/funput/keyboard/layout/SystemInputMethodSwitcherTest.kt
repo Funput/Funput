@@ -32,10 +32,10 @@ class SystemInputMethodSwitcherTest {
     }
 
     @Test
-    fun `keypad without toolbar does not add low priority switcher`() {
+    fun `keypad toolbar accepts low priority switcher`() {
         val switched = resolve(visible = true, editorMode = KeyboardEditorMode.PHONE)
 
-        assertEquals(null, switched.suggestionBar)
+        assertEquals(KeyRole.SYSTEM_INPUT_METHOD, switched.suggestionBar?.systemInputMethodKey?.role)
         assertFalse(switched.rows.flatMap { it.keys }.any { it.role == KeyRole.SYSTEM_INPUT_METHOD })
     }
 

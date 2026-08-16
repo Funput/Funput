@@ -51,4 +51,27 @@ class AuthoredTokenTrackerTest {
         assertEquals("Việt", tracker.consume().completedToken)
         assertNull(tracker.consume().completedToken)
     }
+
+    @Test
+    fun `direct input tracks letters digits boundaries and backspace`() {
+        val tracker = AuthoredTokenTracker()
+
+        tracker.input("ab12")
+        tracker.backspace()
+        assertEquals("ab1", tracker.consume().prefix)
+        tracker.input(" ")
+
+        assertEquals(AuthoredSuggestionUpdate("", "ab1"), tracker.consume())
+    }
+
+    @Test
+    fun `oversized direct token stays suppressed through its boundary`() {
+        val tracker = AuthoredTokenTracker()
+
+        tracker.input("a".repeat(33))
+        tracker.backspace()
+        tracker.input(" ")
+
+        assertEquals(AuthoredSuggestionUpdate.Empty, tracker.consume())
+    }
 }

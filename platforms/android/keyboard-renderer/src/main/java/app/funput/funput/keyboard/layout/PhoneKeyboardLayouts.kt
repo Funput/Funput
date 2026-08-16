@@ -5,10 +5,10 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
 
 internal object PhoneKeyboardLayouts {
-    fun resolve(inputMethod: KeyboardInputMethod) = KeyboardLayout(
+    fun resolve(inputMethod: KeyboardInputMethod, suggestionsEnabled: Boolean) = KeyboardLayout(
         id = "phone-${inputMethod.name.lowercase()}",
         inputMethod = inputMethod,
-        suggestionBar = null,
+        suggestionBar = keyboardToolbarSpec().copy(suggestionsEnabled = suggestionsEnabled),
         rows = listOf(
             keypadRow(keypadDigit('1'), keypadDigit('2'), keypadDigit('3'), backspace()),
             keypadRow(keypadDigit('4'), keypadDigit('5'), keypadDigit('6'), enter()),
