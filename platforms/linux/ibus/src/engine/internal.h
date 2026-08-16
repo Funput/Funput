@@ -33,6 +33,14 @@ struct EngineState {
     // therefore cannot be true at focus-in the way Fcitx5's `isValid()` can — only
     // once the client has spoken at least once.
     bool sawSurroundingText = false;
+    // The client's last surrounding text, kept rather than read back on demand.
+    // `ibus_engine_get_surrounding_text` hands out null here even right after the
+    // client has sent a perfectly good string, so the only reliable copy is the one
+    // that arrives in `set_surrounding_text`. Holding it also removes any question of
+    // how fresh the framework's own cache is.
+    std::string surroundingText;
+    guint surroundingCursor = 0;  // in characters
+    guint surroundingAnchor = 0;
 };
 
 EngineState *stateOf(IBusEngine *engine);
@@ -56,6 +64,10 @@ bool hasSelection(IBusEngine *engine);
 // setting is shared with the Fcitx5 shell, which is the only one that can perform an
 // `Effect::Replace` today.
 void applyNonPreeditMode(IBusEngine *engine);
+
+// Tell the client this engine wants surrounding text. Per input context, not per
+// engine, so it has to be re-asked on every focus.
+void requestSurroundingText(IBusEngine *engine);
 
 gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint keycode, guint modifiers);
 void focusIn(IBusEngine *engine);

@@ -12,29 +12,22 @@ namespace funput_ibus {
 std::string textBeforeCaret(IBusEngine *engine) {
     // Nothing has arrived yet, so whatever the base class would hand back is stale or
     // empty — either way not something to delete against.
-    if (!stateOf(engine)->sawSurroundingText) return {};
-    IBusText *text = nullptr;
-    guint cursor = 0;
-    ibus_engine_get_surrounding_text(engine, &text, &cursor, nullptr);
-    const gchar *raw = text != nullptr ? ibus_text_get_text(text) : nullptr;
-    if (raw == nullptr) return {};
-    // `cursor` is taken as a count of characters, which is what
-    // ibus_engine_get_surrounding_text documents — note the vfunc spells the same
-    // argument `cursor_index`, so the two halves of the API disagree in wording. The
-    // g_debug line in callbacks.cpp is there to settle it against a real client; a
-    // byte offset used as a character count cuts `ế` in half.
-    const std::vector<uint32_t> chars = funput::decodeUtf8(raw);
+    const EngineState *state = stateOf(engine);
+    if (!state->sawSurroundingText) return {};
+    // The cursor is a count of characters — measured, not assumed: the client reported
+    // 4 for `phủ ` (five bytes) and 3 for `phủ` (four). Slicing by it as if it were a
+    // byte offset would cut `ế` in half.
+    const std::vector<uint32_t> chars = funput::decodeUtf8(state->surroundingText);
     std::string out;
-    for (size_t i = 0; i < chars.size() && i < cursor; ++i) funput::appendUtf8(out, chars[i]);
+    for (size_t i = 0; i < chars.size() && i < state->surroundingCursor; ++i) {
+        funput::appendUtf8(out, chars[i]);
+    }
     return out;
 }
 
 bool hasSelection(IBusEngine *engine) {
-    if (!stateOf(engine)->sawSurroundingText) return false;
-    guint cursor = 0;
-    guint anchor = 0;
-    ibus_engine_get_surrounding_text(engine, nullptr, &cursor, &anchor);
-    return cursor != anchor;
+    const EngineState *state = stateOf(engine);
+    return state->sawSurroundingText && state->surroundingCursor != state->surroundingAnchor;
 }
 
 void updatePreedit(IBusEngine *engine, const std::string &text) {
