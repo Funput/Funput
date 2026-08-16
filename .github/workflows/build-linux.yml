@@ -88,11 +88,20 @@ jobs:
         run: |
           # Fail fast instead of shipping a broken package. `--simulate` forces apt
           # to parse the .deb metadata through its own reader.
-          find platforms/linux/build -name '*.deb' | while read -r f; do
+          #
+          # One simulation for the whole set rather than one per package: the shells
+          # Depend on funput-settings at this exact version, and resolving a shell on
+          # its own would fail on a dependency sitting right there in the same build.
+          # CPack also leaves a staging copy under _CPack_Packages/, excluded because
+          # naming the same package twice in one apt command is an error.
+          mapfile -t debs < <(
+            find platforms/linux/build -name '*.deb' -not -path '*/_CPack_Packages/*' | sort
+          )
+          for f in "${debs[@]}"; do
             echo "== $f =="
             dpkg-deb --info "$f" >/dev/null
-            sudo apt-get install --simulate "./$f" >/dev/null
           done
+          sudo apt-get install --simulate "${debs[@]/#/./}" >/dev/null
 
       - name: Stage artifact
         run: |
