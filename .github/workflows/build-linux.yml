@@ -78,6 +78,11 @@ jobs:
             cmake --build "platforms/linux/build/$fw" --parallel
             ( cd "platforms/linux/build/$fw" && cpack -G DEB )
           done
+          # The Settings app, its launcher and its icons, packaged once. Both shells
+          # Depend on it at this exact version, so it ships whichever they asked for.
+          cmake -S platforms/linux/settings-gtk -B platforms/linux/build/settings-gtk \
+            -DFUNPUT_VERSION="$V"
+          ( cd platforms/linux/build/settings-gtk && cpack -G DEB )
 
       - name: Verify .debs (apt can parse them)
         run: |
@@ -221,6 +226,11 @@ jobs:
             cmake --build "platforms/linux/build/$fw" --parallel
             ( cd "platforms/linux/build/$fw" && cpack -G RPM )
           done
+          # The Settings app, its launcher and its icons, packaged once. Both shells
+          # Depend on it at this exact version, so it ships whichever they asked for.
+          cmake -S platforms/linux/settings-gtk -B platforms/linux/build/settings-gtk \
+            -DFUNPUT_VERSION="$V"
+          ( cd platforms/linux/build/settings-gtk && cpack -G RPM )
 
       - name: Verify .rpms (rpm can parse them)
         run: |

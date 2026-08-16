@@ -35,7 +35,8 @@ fcitx5/src/             Fcitx5 addon -> libfunput.so
 ibus/src/               IBus engine -> ibus-engine-funput
   engine.h                The public GObject type
   engine/                 internal.h, object.cpp, callbacks.cpp, client.cpp
-settings-gtk/           GTK4 + libadwaita Settings app (its own cargo crate)
+settings-gtk/           GTK4 + libadwaita Settings app (its own cargo crate,
+                        and its own package — see Build)
 packaging/              .desktop file, apt/dnf repo metadata
 ```
 
@@ -73,6 +74,18 @@ FUNPUT_FRAMEWORK=all platforms/linux/build.sh
 `FUNPUT_FRAMEWORK` takes `fcitx5`, `ibus` or `all`; `FUNPUT_PKG` takes `deb` or
 `rpm` (default: whichever the host supports). Each shell is its own top-level CMake
 project, so they package independently.
+
+Three packages come out, not two. `funput` (Fcitx5) and `funput-ibus` each hold their
+own addon, and **`funput-settings`** holds the GUI, its launcher and its icons. Those
+four files used to be shipped by both shells, which meant dpkg refused to unpack the
+second one — identical contents are still a file conflict, so installing both was
+simply impossible on Debian/Ubuntu. `funput-settings` is built whichever framework you
+asked for, since both depend on it.
+
+That dependency is pinned to the exact version (`funput-settings (= <version>)`), and
+that is the part worth keeping: the Settings app rewrites `settings.json` from its own
+struct, so a copy older than the addon deletes settings the addon has since learned.
+The package manager now refuses the mismatch that used to cause it.
 
 ## Tests
 
@@ -266,6 +279,10 @@ client reported cursor 4 for `phủ ` (five bytes) and 3 for `phủ` (four).
 - **The Settings app rewrites `settings.json` wholesale.** Unlike the addon's merging
   writer, it serializes its own struct over the file, so a key it does not know is
   deleted the next time the user changes anything there. Every setting the addon owns
-  needs a field in `settings-gtk`'s `Settings` too, and the two have to ship in the
-  same release — a shipped addon paired with an older Settings app silently loses the
-  new setting.
+  still needs a field in `settings-gtk`'s `Settings` too. The *release* half of this is
+  no longer a matter of remembering — the shells depend on `funput-settings` at their
+  exact version — but a field left out of the struct is still silent data loss, and
+  nothing checks for that.
+- **No AppStream metainfo.** `funput-settings` ships a `.desktop` entry but no
+  `metainfo.xml`, so it has no entry in GNOME Software or KDE Discover and distro
+  reviewers will ask for one before packaging it downstream.

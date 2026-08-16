@@ -22,7 +22,7 @@ include(GNUInstallDirs)
 # --- Shared Linux code (settings reader + FFI wrapper + Rust cdylib build) --
 # Lives in platforms/linux/common, shared with the Fcitx5 shell. Owns building
 # libfunput_ffi.so and exposes (PUBLIC) the common headers, funput.h, and the .so
-# to link — plus the FUNPUT_ROOT / FUNPUT_FFI_SO cache vars used below.
+# to link — plus the FUNPUT_FFI_SO cache var used below.
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../common"
                  "${CMAKE_BINARY_DIR}/common")
 
@@ -77,37 +77,6 @@ configure_file(data/funput.xml.in funput.xml @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/funput.xml"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/ibus/component")
 
-# Engine icon (referenced as Icon=funput). Ship the scalable SVG so ibus-setup
-# and the GNOME panel render it crisp at any requested size; the 512px PNG goes in
-# its real size bucket. (The old 512px-logo-in-128x128/ made loaders draw it
-# oversized — it overflowed the ibus-setup window.)
-if(EXISTS "${FUNPUT_ROOT}/assets/svg/funput_logo.svg")
-    install(FILES "${FUNPUT_ROOT}/assets/svg/funput_logo.svg"
-            RENAME funput.svg
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps")
-endif()
-if(EXISTS "${FUNPUT_ROOT}/assets/logo.png")
-    install(FILES "${FUNPUT_ROOT}/assets/logo.png"
-            RENAME funput.png
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps")
-endif()
-
-# --- GTK4 Settings app (built separately by cargo) -------------------------
-# Self-contained packaging: an IBus-only user still gets the Settings GUI. The
-# shared funput-common package that would de-dup this is deferred to a later PR.
-set(FUNPUT_SETTINGS_BIN
-    "${CMAKE_CURRENT_SOURCE_DIR}/../settings-gtk/target/release/funput-settings"
-    CACHE FILEPATH "Path to the built GTK4 Settings binary")
-
-if(EXISTS "${FUNPUT_SETTINGS_BIN}")
-    install(PROGRAMS "${FUNPUT_SETTINGS_BIN}" DESTINATION "${CMAKE_INSTALL_BINDIR}")
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../packaging/funput-settings.desktop"
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
-else()
-    message(WARNING "funput-settings binary not found at ${FUNPUT_SETTINGS_BIN}; "
-                    "packaging the IBus engine only (no Settings GUI).")
-endif()
-
 # --- Packaging (CPack: .deb + .rpm) ----------------------------------------
 # FUNPUT_VERSION is defined near the top (project() default; CI overrides with
 # -DFUNPUT_VERSION=<tag>).
@@ -120,7 +89,13 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Funput <hello@funput.app>")
 set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/Funput/Funput")
 # ibus must be present; the rest are picked up automatically via shlibdeps.
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "ibus")
+# `funput-settings` is pinned to the exact same version, not merely required. The
+# Settings app writes settings.json by serializing its whole struct, so a copy older
+# than this addon deletes any key the addon has learned since — a data loss that bit
+# twice during development. Documentation asked for them to ship together; this makes
+# the package manager enforce it.
+set(CPACK_DEBIAN_PACKAGE_DEPENDS
+    "ibus, funput-settings (= ${FUNPUT_VERSION})")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 # Architecture from the build host (amd64 / arm64 / …); mirror it in the filename
 # so an arm64 build isn't mislabelled "amd64".
@@ -144,7 +119,7 @@ set(CPACK_RPM_PACKAGE_LICENSE "MIT")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/System")
 set(CPACK_RPM_PACKAGE_URL "https://github.com/Funput/Funput")
 # ibus must be present; AUTOREQ picks up the shared-lib deps automatically.
-set(CPACK_RPM_PACKAGE_REQUIRES "ibus")
+set(CPACK_RPM_PACKAGE_REQUIRES "ibus, funput-settings = ${FUNPUT_VERSION}")
 set(CPACK_RPM_PACKAGE_AUTOREQ ON)
 # RPM arch names differ from dpkg's (x86_64/aarch64, not amd64/arm64); take them
 # from the native build host. dpkg is absent on Fedora, so this is independent of

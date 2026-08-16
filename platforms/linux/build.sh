@@ -6,6 +6,9 @@
 # Usage: platforms/linux/build.sh [build-dir]
 #   FUNPUT_FRAMEWORK=fcitx5|ibus|all   which shell(s) to package (default: all)
 #   FUNPUT_PKG=deb|rpm                 package format (default: auto from host)
+#   FUNPUT_VERSION=<version>           package version (default: the one in CMake);
+#                                      CI passes the git tag. Set it locally to test an
+#                                      upgrade over an installed release.
 #
 # Each shell builds into <build-dir>/<framework>/ and yields its own package:
 # fcitx5 → funput_<ver>_<arch>.deb, ibus → funput-ibus_<ver>_<arch>.deb
@@ -28,6 +31,10 @@ if [ -z "${PKG}" ]; then
 fi
 CPACK_GEN="$(echo "${PKG}" | tr '[:lower:]' '[:upper:]')"  # deb→DEB, rpm→RPM
 
+# Unquoted on purpose below: empty must expand to no argument at all.
+VERSION_ARG=""
+if [ -n "${FUNPUT_VERSION:-}" ]; then VERSION_ARG="-DFUNPUT_VERSION=${FUNPUT_VERSION}"; fi
+
 # Shared steps (run once, reused by every shell).
 echo "==> [1/2] Rust core (funput-ffi cdylib)"
 cargo build --release -p funput-ffi --manifest-path "${APP_ROOT}/Cargo.toml"
@@ -41,10 +48,22 @@ cargo build --release --manifest-path "${HERE}/settings-gtk/Cargo.toml"
 build_shell() {
     local name="$1" out="${BUILD_DIR}/$1"
     echo "==> ${name} shell + .${PKG} (CMake/CPack)"
-    cmake -S "${HERE}/${name}" -B "${out}" -DCMAKE_BUILD_TYPE=Release
+    cmake -S "${HERE}/${name}" -B "${out}" -DCMAKE_BUILD_TYPE=Release ${VERSION_ARG}
     cmake --build "${out}" --parallel
     ( cd "${out}" && cpack -G "${CPACK_GEN}" )
 }
+
+# The Settings app, its launcher and its icons, as their own package. Always built,
+# whichever shell was asked for: both now depend on it at this exact version, and it
+# owns the files they used to ship a copy of each — which dpkg refused to unpack twice.
+build_settings() {
+    local out="${BUILD_DIR}/settings-gtk"
+    echo "==> Settings package (.${PKG})"
+    cmake -S "${HERE}/settings-gtk" -B "${out}" ${VERSION_ARG}
+    ( cd "${out}" && cpack -G "${CPACK_GEN}" )
+}
+
+build_settings
 
 case "${FRAMEWORK}" in
     fcitx5) build_shell fcitx5 ;;
