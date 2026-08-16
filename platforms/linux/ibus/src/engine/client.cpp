@@ -70,11 +70,26 @@ void applyPlan(IBusEngine *engine, const funput::ComposePlan &plan) {
         }
         break;
     case funput::Effect::Replace:
-        // Non-preedit's document repair. Not reachable: this shell never calls
-        // `Composer::setNonPreedit()`. IBus has `ibus_engine_delete_surrounding_text`,
-        // so the mode is not closed to it in principle — but what makes the mode safe
-        // was measured against Fcitx5 only, and nothing here has been measured yet.
-        // Enabling it before that would be guessing with the user's text.
+        // Non-preedit's document repair: take back what the last keystroke wrote, then
+        // write what this one produced. Both counts are characters —
+        // `ibus_engine_delete_surrounding_text` takes `nchars`, and the cursor this
+        // shell reads back was measured to be a character count too, so no conversion
+        // sits between them.
+        if (plan.deleteChars > 0) {
+            // Same reasoning as the Fcitx5 shell's arm in fcitx5/src/funput_client.cpp:
+            // deleting under a live selection eats the user's highlighted text, and
+            // abandoning only the delete would double the word or desynchronise the
+            // engine from the document. So the composition goes too.
+            if (hasSelection(engine)) {
+                stateOf(engine)->composer.discard();
+                break;
+            }
+            ibus_engine_delete_surrounding_text(engine, -static_cast<gint>(plan.deleteChars),
+                                                plan.deleteChars);
+        }
+        if (!plan.text.empty()) {
+            ibus_engine_commit_text(engine, ibus_text_new_from_string(plan.text.c_str()));
+        }
         break;
     }
 }

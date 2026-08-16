@@ -25,22 +25,30 @@ funput::KeyEvent toKeyEvent(guint keyval, guint modifiers) {
 } // namespace
 
 void applyNonPreeditMode(IBusEngine *engine) {
-    // Always off, for now. `settings.json` is shared with the Fcitx5 shell, so a user
-    // who turned non-preedit on there arrives here with it set — and `applyPlan()`
-    // below still refuses an `Effect::Replace`. Inheriting the flag would make the
-    // composer emit repairs this shell drops on the floor: plain letters would still
-    // pass through and appear, while every tone key silently vanished.
-    //
-    // Becomes a real decision once this shell can perform a repair. Until then the
-    // honest answer is no, and it has to be said out loud rather than left to a
-    // default, because the default lives in shared code.
-    stateOf(engine)->composer.setNonPreedit(false);
+    EngineState *state = stateOf(engine);
+    // Never mid-word. The two modes disagree about where the composing word lives —
+    // one has it in a preedit, the other in the document — so flipping under one
+    // leaves the engine and the client describing different things. Deferring until
+    // the word ends is also what lets `setNonPreedit()` be a bare assignment here,
+    // where `applySettings()` has to clear the engine.
+    if (state->composer.isComposing()) return;
+    // The setting asks; the client decides. `sawSurroundingText` rather than the
+    // capability bit for the reason spelled out in internal.h, and it can only become
+    // true after the client has spoken — which is why this is re-evaluated on every
+    // keystroke rather than settled once at focus-in the way the Fcitx5 shell can.
+    state->composer.setNonPreedit(state->composer.settings().nonPreedit &&
+                                  state->sawSurroundingText);
 }
 
 gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifiers) {
     // Releases never reach the composer: nothing in the typing rules depends on
     // them, and each framework reports them differently.
     if (modifiers & IBUS_RELEASE_MASK) return FALSE;
+
+    // Between words, re-ask whether this client can take a document repair. The answer
+    // changes during a focus — surrounding text only starts arriving once the client
+    // answers — so unlike Fcitx5 there is no single moment early enough to settle it.
+    applyNonPreeditMode(engine);
 
     EngineState *state = stateOf(engine);
     const funput::ComposePlan plan = state->composer.onKey(toKeyEvent(keyval, modifiers));
