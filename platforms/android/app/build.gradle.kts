@@ -15,8 +15,8 @@ android {
         applicationId = "app.funput.funput"
         minSdk = 26
         targetSdk = 37
-        versionCode = 23
-        versionName = "1.2026.67"
+        versionCode = 24
+        versionName = "1.2026.68"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
