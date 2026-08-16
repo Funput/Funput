@@ -2,6 +2,8 @@
 
 #include "engine/internal.h"
 
+#include <cstring>
+
 namespace funput_ibus {
 
 namespace {
@@ -35,6 +37,9 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
 
 void focusIn(IBusEngine *engine) {
     EngineState *state = stateOf(engine);
+    // A different client, which has said nothing yet. Whatever the last one did tells
+    // us nothing about this one.
+    state->sawSurroundingText = false;
     if (state->composer.reloadSettingsIfChanged()) state->composer.applySettings();
     if (state->composer.settings().autoCapitalize) state->composer.armCapitalization();
     // No per-app VI/EN default here: unlike Fcitx5's InputContext::program(), IBus
@@ -44,6 +49,31 @@ void focusIn(IBusEngine *engine) {
 void enable(IBusEngine *engine) {
     EngineState *state = stateOf(engine);
     if (state->composer.reloadSettingsIfChanged()) state->composer.applySettings();
+    // Yes, a "get" whose result is thrown away. Calling it here with null out-params
+    // is how IBus takes an engine's registration for surrounding text — its own
+    // documentation says it "must be called in the enable handler". Without it the
+    // client never sends any, and everything that reads the document is dead. Fcitx5
+    // needs no such handshake, which is why this has no counterpart over there.
+    ibus_engine_get_surrounding_text(engine, nullptr, nullptr, nullptr);
+}
+
+void setSurroundingText(IBusEngine *engine, IBusText *text, guint cursorPos, guint anchorPos) {
+    // Chain up first: the base class is what caches the text, so skipping this leaves
+    // `ibus_engine_get_surrounding_text` returning nothing for the rest of the session.
+    // Reached through `g_type_class_peek_parent` rather than G_DEFINE_TYPE's
+    // `ibus_funput_engine_parent_class`, which is static to object.cpp.
+    auto *parent = IBUS_ENGINE_CLASS(g_type_class_peek_parent(G_OBJECT_GET_CLASS(engine)));
+    if (parent->set_surrounding_text != nullptr) {
+        parent->set_surrounding_text(engine, text, cursorPos, anchorPos);
+    }
+    stateOf(engine)->sawSurroundingText = true;
+    // Off unless G_MESSAGES_DEBUG asks for it. Two questions this answers on a real
+    // session: whether the registration above worked at all (any line means yes), and
+    // whether `cursorPos` counts characters or bytes — `tiếng` is 5 of one and 7 of
+    // the other, and the IBus headers disagree with themselves about which it is.
+    const gchar *raw = text != nullptr ? ibus_text_get_text(text) : nullptr;
+    g_debug("funput: surrounding bytes=%zu cursor=%u anchor=%u",
+            raw != nullptr ? strlen(raw) : 0, cursorPos, anchorPos);
 }
 
 // Focus loss, reset and engine switch all commit the composing word — but IBus does

@@ -63,4 +63,5 @@ static void ibus_funput_engine_class_init(IBusFunputEngineClass *klass) {
     engine->enable = funput_ibus::enable;
     engine->disable = funput_ibus::disable;
     engine->reset = funput_ibus::reset;
+    engine->set_surrounding_text = funput_ibus::setSurroundingText;
 }
