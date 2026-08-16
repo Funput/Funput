@@ -12,22 +12,57 @@ internal data class AuthoredSuggestionUpdate(
 internal class AuthoredTokenTracker {
     private var prefix = ""
     private var completedToken: String? = null
+    private var directOverflow = false
 
     fun update(composingText: String, completed: String?) {
+        directOverflow = false
         prefix = composingText.takeIf(::isValidToken).orEmpty()
         completedToken = completed?.takeIf { isValidToken(it) && scalarCount(it) >= MinimumLength }
     }
 
     fun accepted(candidate: String) {
+        directOverflow = false
         prefix = ""
         completedToken = candidate.takeIf(::isValidToken)
+    }
+
+    fun input(text: String) {
+        var index = 0
+        while (index < text.length) {
+            val codePoint = text.codePointAt(index)
+            if (isTokenScalar(codePoint)) {
+                if (!directOverflow && scalarCount(prefix) < MaximumLength) {
+                    prefix += String(Character.toChars(codePoint))
+                } else {
+                    prefix = ""
+                    completedToken = null
+                    directOverflow = true
+                }
+            } else {
+                completedToken = prefix.takeIf {
+                    !directOverflow && scalarCount(it) >= MinimumLength
+                }
+                prefix = ""
+                directOverflow = false
+            }
+            index += Character.charCount(codePoint)
+        }
+    }
+
+    fun backspace() {
+        if (directOverflow || prefix.isEmpty()) return
+        prefix = prefix.dropLast(Character.charCount(prefix.codePointBefore(prefix.length)))
+        completedToken = null
     }
 
     fun consume(): AuthoredSuggestionUpdate = AuthoredSuggestionUpdate(prefix, completedToken).also {
         completedToken = null
     }
 
+    fun currentPrefix(): String = prefix
+
     fun reset() {
+        directOverflow = false
         prefix = ""
         completedToken = null
     }
@@ -38,7 +73,7 @@ internal class AuthoredTokenTracker {
         var count = 0
         while (index < text.length && count <= MaximumLength) {
             val codePoint = text.codePointAt(index)
-            if (!Character.isLetter(codePoint) && !isCombiningMark(codePoint)) return false
+            if (!isTokenScalar(codePoint)) return false
             index += Character.charCount(codePoint)
             count += 1
         }
@@ -46,6 +81,9 @@ internal class AuthoredTokenTracker {
     }
 
     private fun scalarCount(text: String): Int = text.codePointCount(0, text.length)
+
+    private fun isTokenScalar(codePoint: Int) =
+        Character.isLetterOrDigit(codePoint) || isCombiningMark(codePoint)
 
     private fun isCombiningMark(codePoint: Int): Boolean = when (Character.getType(codePoint)) {
         Character.NON_SPACING_MARK.toInt(),

@@ -15,11 +15,13 @@ web punctuation while retaining Vietnamese composition because the same field
 accepts both addresses and natural-language search queries.
 
 `EditorInfoPolicyResolver` also owns capitalization, multiline, suggestion
-source, and personalized-learning policy. Auto-capitalization follows the
-editor's live cursor caps mode; app-provided completions are transient and are
-committed with `commitCompletion()` instead of being retained as Funput data.
+source, and personalized-learning policy. Funput suggestions are available in
+every non-password editor, even when the host requests its own completions or
+sets `NO_SUGGESTIONS`. Auto-capitalization follows the editor's live cursor caps
+mode; `NO_PERSONALIZED_LEARNING` still prevents the focused editor from adding
+tokens to Funput's local data.
 
-Number editors receive a suggestion-free 4×4 keypad. Minus appears only for the
+Number editors receive a 4×4 keypad below the suggestion toolbar. Minus appears only for the
 signed flag; period and comma appear only for the decimal flag.
 Phone editors use a matching 4×4 dial pad with direct `+`, `*`, and `#` keys.
 Text and numeric password variations use suggestion-free layouts, bypass

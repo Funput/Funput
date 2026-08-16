@@ -15,7 +15,6 @@ internal object ImeKeyboardCallbackBinder {
     ) = with(view.callbacks) {
         onKeyAction = { action ->
             handler.onKeyAction(action)
-            suggestions.updateLanguage(handler.language)
             suggestions.consume(handler.takeSuggestionUpdate())
         }
         onInputMethodSwitchRequested = {

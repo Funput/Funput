@@ -1,8 +1,9 @@
 package app.funput.funput.keyboard.layout
 
 import app.funput.funput.keyboard.KeyboardDimensions
-import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyRole
+import app.funput.funput.keyboard.model.KeySwipeAction
+import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import org.junit.Assert.assertEquals
@@ -26,18 +27,22 @@ class EditorKeyboardLayoutsTest {
     @Test
     fun `search layout exposes slash and period with top number row`() {
         val layout = resolve(KeyboardInputMethod.VNI, KeyboardEditorMode.SEARCH)
+        val space = layout.rows.last().keys.first { it.id == "space" }
 
         assertEquals(5, layout.rows.size)
         assertEquals("1234567890", layout.rows.first().keys.joinToString("") { it.label })
         assertEquals(listOf("/", "."), actionLabels(layout).filter { it in UrlLabels })
+        assertEquals(KeySwipeAction.TOGGLE_LANGUAGE, space.horizontalSwipeAction)
     }
 
     @Test
     fun `URL layout exposes slash and period with top number row`() {
         val layout = resolve(KeyboardInputMethod.VNI, KeyboardEditorMode.URL)
+        val space = layout.rows.last().keys.first { it.id == "space" }
 
         assertEquals(5, layout.rows.size)
         assertEquals(listOf("/", "."), actionLabels(layout).filter { it in UrlLabels })
+        assertNull(space.horizontalSwipeAction)
     }
 
     @Test

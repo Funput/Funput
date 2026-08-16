@@ -7,7 +7,6 @@ import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.ImeSuggestionSource
 import app.funput.funput.ime.settings.PersonalSuggestionPreferences
 import app.funput.funput.ime.settings.pendingReset
-import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.ui.KeyboardPanel
 
@@ -24,7 +23,6 @@ internal class PersonalSuggestionService(
     }.getOrNull()
     private var preferences = PersonalSuggestionPreferences.Default
     private var policy = EditorInfoPolicy.Default
-    private var language = KeyboardLanguage.VIETNAMESE
     private var panel = KeyboardPanel.LETTERS
     private var session = 0L
     private var generation = 0L
@@ -57,11 +55,6 @@ internal class PersonalSuggestionService(
         session += 1
         clear()
         worker?.flush()
-    }
-
-    fun updateLanguage(value: KeyboardLanguage) {
-        language = value
-        if (value != KeyboardLanguage.VIETNAMESE) clear()
     }
 
     fun updatePanel(value: KeyboardPanel) {
@@ -100,7 +93,7 @@ internal class PersonalSuggestionService(
 
     private fun eligible() = preferences.enabled && policy.allowsPersonalSuggestions &&
         policy.suggestionSource == ImeSuggestionSource.FUNPUT &&
-        language == KeyboardLanguage.VIETNAMESE && panel == KeyboardPanel.LETTERS
+        panel == KeyboardPanel.LETTERS
 
     private fun reject(): Boolean = false.also { clear() }
 

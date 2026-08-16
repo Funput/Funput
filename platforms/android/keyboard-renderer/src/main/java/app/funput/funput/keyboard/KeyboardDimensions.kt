@@ -26,7 +26,8 @@ object KeyboardDimensions {
         inputMethod: KeyboardInputMethod = KeyboardInputMethod.TELEX,
         showsNumberRow: Boolean = true,
     ): Float = when {
-        editorMode.usesKeypad -> heightForRowCount(4, false, profile, widthDp)
+        editorMode == KeyboardEditorMode.PIN -> heightForRowCount(4, false, profile, widthDp)
+        editorMode.usesKeypad -> heightForRowCount(4, true, profile, widthDp)
         editorMode.isPassword -> heightForRowCount(5, false, profile, widthDp)
         else -> {
             val compact = inputMethod.isTelexFamily && !showsNumberRow

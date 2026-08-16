@@ -30,18 +30,18 @@ class EditorInfoPolicyResolverTest {
     }
 
     @Test
-    fun `no suggestions hides candidate UI`() {
+    fun `host no suggestions flag does not suppress Funput candidates`() {
         val inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
 
-        assertEquals(ImeSuggestionSource.NONE, resolve(inputType).suggestionSource)
-        assertFalse(resolve(inputType).showsSuggestionBar)
+        assertEquals(ImeSuggestionSource.FUNPUT, resolve(inputType).suggestionSource)
+        assertTrue(resolve(inputType).showsSuggestionBar)
     }
 
     @Test
-    fun `editor autocomplete uses editor supplied completions`() {
+    fun `editor autocomplete does not replace Funput candidates`() {
         val inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE
 
-        assertEquals(ImeSuggestionSource.EDITOR, resolve(inputType).suggestionSource)
+        assertEquals(ImeSuggestionSource.FUNPUT, resolve(inputType).suggestionSource)
     }
 
     @Test
@@ -52,7 +52,7 @@ class EditorInfoPolicyResolverTest {
         )
 
         assertFalse(policy.allowsPersonalizedLearning)
-        assertFalse(policy.allowsPersonalSuggestions)
+        assertTrue(policy.allowsPersonalSuggestions)
         assertEquals(ImeSuggestionSource.FUNPUT, policy.suggestionSource)
     }
 
@@ -71,11 +71,11 @@ class EditorInfoPolicyResolverTest {
     }
 
     @Test
-    fun `URI keeps Funput composition but disables personal suggestions`() {
+    fun `URI enables Funput composition and personal suggestions`() {
         val policy = resolve(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
 
         assertEquals(ImeSuggestionSource.FUNPUT, policy.suggestionSource)
-        assertFalse(policy.allowsPersonalSuggestions)
+        assertTrue(policy.allowsPersonalSuggestions)
     }
 
     @Test
@@ -84,10 +84,20 @@ class EditorInfoPolicyResolverTest {
     }
 
     @Test
-    fun `email disables personal suggestions`() {
+    fun `email enables personal suggestions`() {
         val inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
 
-        assertFalse(resolve(inputType).allowsPersonalSuggestions)
+        assertTrue(resolve(inputType).allowsPersonalSuggestions)
+    }
+
+    @Test
+    fun `number and phone editors enable personal suggestions`() {
+        listOf(InputType.TYPE_CLASS_NUMBER, InputType.TYPE_CLASS_PHONE).forEach { inputType ->
+            val policy = resolve(inputType)
+
+            assertEquals(ImeSuggestionSource.FUNPUT, policy.suggestionSource)
+            assertTrue(policy.allowsPersonalSuggestions)
+        }
     }
 
     @Test

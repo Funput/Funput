@@ -17,14 +17,14 @@ internal object EditorKeyboardLayouts {
             KeyboardEditorMode.SEARCH -> searchLayouts.getValue(inputMethod)
             KeyboardEditorMode.EMAIL -> emailLayouts.getValue(inputMethod)
             KeyboardEditorMode.URL -> urlLayouts.getValue(inputMethod)
-            KeyboardEditorMode.PHONE -> PhoneKeyboardLayouts.resolve(inputMethod)
+            KeyboardEditorMode.PHONE -> PhoneKeyboardLayouts.resolve(inputMethod, suggestionsEnabled)
             KeyboardEditorMode.PASSWORD -> PasswordKeyboardLayouts.text(inputMethod)
             KeyboardEditorMode.PIN -> PasswordKeyboardLayouts.pin(inputMethod)
             KeyboardEditorMode.NUMBER,
             KeyboardEditorMode.NUMBER_DECIMAL,
             KeyboardEditorMode.NUMBER_SIGNED,
             KeyboardEditorMode.NUMBER_SIGNED_DECIMAL,
-            -> NumberKeyboardLayouts.resolve(inputMethod, editorMode)
+            -> NumberKeyboardLayouts.resolve(inputMethod, editorMode, suggestionsEnabled)
         }
         return if (suggestionsEnabled || layout.suggestionBar == null) {
             layout
@@ -68,28 +68,33 @@ internal object EditorKeyboardLayouts {
     private fun webNavigationLayout(
         idPrefix: String,
         inputMethod: KeyboardInputMethod,
-    ): KeyboardLayout = qwertyLayout(
-        id = "qwerty-$idPrefix-${inputMethod.name.lowercase()}",
-        inputMethod = inputMethod,
-        leadingRows = listOf(
-            topNumberRow(TopNumberRowMode.PLAIN_CHARACTER, pageId = "$idPrefix-${inputMethod.name.lowercase()}"),
-        ),
-        actionKeys = webActionKeys(
-            middleId = "slash",
-            middleLabel = "/",
-            middleAccessibilityLabel = "Slash",
-        ),
-        supportsVietnameseAlternates = idPrefix == "search",
-    )
+    ): KeyboardLayout {
+        val supportsVietnamese = idPrefix == "search"
+        return qwertyLayout(
+            id = "qwerty-$idPrefix-${inputMethod.name.lowercase()}",
+            inputMethod = inputMethod,
+            leadingRows = listOf(
+                topNumberRow(TopNumberRowMode.PLAIN_CHARACTER, pageId = "$idPrefix-${inputMethod.name.lowercase()}"),
+            ),
+            actionKeys = webActionKeys(
+                middleId = "slash",
+                middleLabel = "/",
+                middleAccessibilityLabel = "Slash",
+                supportsVietnamese = supportsVietnamese,
+            ),
+            supportsVietnameseAlternates = supportsVietnamese,
+        )
+    }
 
     private fun webActionKeys(
         middleId: String,
         middleLabel: String,
         middleAccessibilityLabel: String,
+        supportsVietnamese: Boolean = false,
     ) = listOf(
         specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
         specialKey(middleId, middleLabel, KeyRole.PUNCTUATION, accessibilityLabel = middleAccessibilityLabel),
-        asciiSpaceKey(5.8f),
+        if (supportsVietnamese) standardSpaceKey(5.8f) else asciiSpaceKey(5.8f),
         specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Period"),
         specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
     )
