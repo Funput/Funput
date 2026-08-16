@@ -27,7 +27,7 @@ include(GNUInstallDirs)
 # --- Shared Linux code (settings reader + FFI wrapper + Rust cdylib build) --
 # Lives in platforms/linux/common, shared with the IBus shell. Owns building
 # libfunput_ffi.so and exposes (PUBLIC) the common headers, funput.h, and the .so
-# to link — plus the FUNPUT_ROOT / FUNPUT_FFI_SO cache vars used below.
+# to link — plus the FUNPUT_FFI_SO cache var used below.
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../common"
                  "${CMAKE_BINARY_DIR}/common")
 
@@ -68,35 +68,6 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/funput-addon.conf"
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/funput.conf"
         DESTINATION "${FCITX_INSTALL_PKGDATADIR}/inputmethod")
 
-# Tray / input-method icon (referenced as Icon=funput). Ship the scalable SVG so
-# it renders crisp at any size; the 512px PNG goes in its real size bucket.
-if(EXISTS "${FUNPUT_ROOT}/assets/svg/funput_logo.svg")
-    install(FILES "${FUNPUT_ROOT}/assets/svg/funput_logo.svg"
-            RENAME funput.svg
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps")
-endif()
-if(EXISTS "${FUNPUT_ROOT}/assets/logo.png")
-    install(FILES "${FUNPUT_ROOT}/assets/logo.png"
-            RENAME funput.png
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps")
-endif()
-
-# --- GTK4 Settings app (built separately by cargo) -------------------------
-# The GUI binary + its launcher. Built before this CMake runs (see build.sh);
-# if it isn't present we still package the addon alone (typing works without it).
-set(FUNPUT_SETTINGS_BIN
-    "${CMAKE_CURRENT_SOURCE_DIR}/../settings-gtk/target/release/funput-settings"
-    CACHE FILEPATH "Path to the built GTK4 Settings binary")
-
-if(EXISTS "${FUNPUT_SETTINGS_BIN}")
-    install(PROGRAMS "${FUNPUT_SETTINGS_BIN}" DESTINATION "${CMAKE_INSTALL_BINDIR}")
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../packaging/funput-settings.desktop"
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
-else()
-    message(WARNING "funput-settings binary not found at ${FUNPUT_SETTINGS_BIN}; "
-                    "packaging the Fcitx5 addon only (no Settings GUI).")
-endif()
-
 # --- Packaging (CPack: .deb + .rpm) ----------------------------------------
 # CI overrides this from the git tag (-DFUNPUT_VERSION=...); otherwise project().
 set(FUNPUT_VERSION "${PROJECT_VERSION}" CACHE STRING "Package version")
@@ -111,7 +82,13 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Funput <hello@funput.app>")
 set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/Funput/Funput")
 # fcitx5 must be present; the rest are picked up automatically.
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "fcitx5")
+# `funput-settings` is pinned to the exact same version, not merely required. The
+# Settings app writes settings.json by serializing its whole struct, so a copy older
+# than this addon deletes any key the addon has learned since — a data loss that bit
+# twice during development. Documentation asked for them to ship together; this makes
+# the package manager enforce it.
+set(CPACK_DEBIAN_PACKAGE_DEPENDS
+    "fcitx5, funput-settings (= ${FUNPUT_VERSION})")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 # Architecture from the build host (amd64 / arm64 / …). CPack sets the control
 # field from this; mirror it in the filename so an arm64 build isn't mislabelled
@@ -137,7 +114,7 @@ set(CPACK_RPM_PACKAGE_LICENSE "MIT")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/System")
 set(CPACK_RPM_PACKAGE_URL "https://github.com/Funput/Funput")
 # fcitx5 must be present; AUTOREQ picks up the shared-lib deps automatically.
-set(CPACK_RPM_PACKAGE_REQUIRES "fcitx5")
+set(CPACK_RPM_PACKAGE_REQUIRES "fcitx5, funput-settings = ${FUNPUT_VERSION}")
 set(CPACK_RPM_PACKAGE_AUTOREQ ON)
 # RPM arch names differ from dpkg's (x86_64/aarch64, not amd64/arm64); take them
 # from the native build host. dpkg is absent on Fedora, so this is independent of
