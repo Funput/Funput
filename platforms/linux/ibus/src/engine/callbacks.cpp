@@ -24,6 +24,19 @@ funput::KeyEvent toKeyEvent(guint keyval, guint modifiers) {
 
 } // namespace
 
+void applyNonPreeditMode(IBusEngine *engine) {
+    // Always off, for now. `settings.json` is shared with the Fcitx5 shell, so a user
+    // who turned non-preedit on there arrives here with it set — and `applyPlan()`
+    // below still refuses an `Effect::Replace`. Inheriting the flag would make the
+    // composer emit repairs this shell drops on the floor: plain letters would still
+    // pass through and appear, while every tone key silently vanished.
+    //
+    // Becomes a real decision once this shell can perform a repair. Until then the
+    // honest answer is no, and it has to be said out loud rather than left to a
+    // default, because the default lives in shared code.
+    stateOf(engine)->composer.setNonPreedit(false);
+}
+
 gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifiers) {
     // Releases never reach the composer: nothing in the typing rules depends on
     // them, and each framework reports them differently.
@@ -41,6 +54,7 @@ void focusIn(IBusEngine *engine) {
     // us nothing about this one.
     state->sawSurroundingText = false;
     if (state->composer.reloadSettingsIfChanged()) state->composer.applySettings();
+    applyNonPreeditMode(engine);
     if (state->composer.settings().autoCapitalize) state->composer.armCapitalization();
     // No per-app VI/EN default here: unlike Fcitx5's InputContext::program(), IBus
     // hands the engine no app identity. See platforms/linux/README.md.
@@ -49,6 +63,7 @@ void focusIn(IBusEngine *engine) {
 void enable(IBusEngine *engine) {
     EngineState *state = stateOf(engine);
     if (state->composer.reloadSettingsIfChanged()) state->composer.applySettings();
+    applyNonPreeditMode(engine);
     // Yes, a "get" whose result is thrown away. Calling it here with null out-params
     // is how IBus takes an engine's registration for surrounding text — its own
     // documentation says it "must be called in the enable handler". Without it the

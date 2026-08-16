@@ -51,6 +51,12 @@ void updatePreedit(IBusEngine *engine, const std::string &text);
 std::string textBeforeCaret(IBusEngine *engine);
 bool hasSelection(IBusEngine *engine);
 
+// Decide whether the composer may build the word in the document. Must run after
+// every `applySettings()`, which seeds the mode from the setting alone — and the
+// setting is shared with the Fcitx5 shell, which is the only one that can perform an
+// `Effect::Replace` today.
+void applyNonPreeditMode(IBusEngine *engine);
+
 gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint keycode, guint modifiers);
 void focusIn(IBusEngine *engine);
 void focusOut(IBusEngine *engine);

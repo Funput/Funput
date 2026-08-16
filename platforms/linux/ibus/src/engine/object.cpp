@@ -27,6 +27,9 @@ gboolean settingsChanged(gint, GIOCondition, gpointer data) {
     auto *state = FUNPUT_ENGINE(data)->state;
     if (state->watcher.drain() && state->composer.reloadSettings()) {
         state->composer.applySettings();
+        // applySettings() reseeds the mode from the file, so the veto has to be
+        // re-stated — the third and last place it can be lost.
+        funput_ibus::applyNonPreeditMode(IBUS_ENGINE(data));
     }
     return G_SOURCE_CONTINUE;
 }

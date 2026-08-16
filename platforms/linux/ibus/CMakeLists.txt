@@ -56,10 +56,17 @@ target_link_libraries(ibus-engine-funput PRIVATE
     PkgConfig::IBUS
     funput_linux_common)
 
-# libfunput_ffi.so is installed next to the engine binary; resolve it via $ORIGIN.
+# Installed, libfunput_ffi.so sits next to the engine binary, so $ORIGIN finds it.
+# In the build tree it does not, and this binary is meant to be run from there —
+# `ibus-engine-funput` with no arguments registers itself with a running ibus-daemon
+# for debugging. So point BUILD_RPATH at the cargo output instead of forcing the
+# install RPATH onto the build-tree binary, the same way common/tests does it. CMake
+# drops the build RPATH when installing, so the shipped binary still resolves via
+# $ORIGIN alone.
+get_filename_component(_ffi_dir "${FUNPUT_FFI_SO}" DIRECTORY)
 set_target_properties(ibus-engine-funput PROPERTIES
     INSTALL_RPATH "$ORIGIN"
-    BUILD_WITH_INSTALL_RPATH ON)
+    BUILD_RPATH "${_ffi_dir}")
 
 # --- Install ---------------------------------------------------------------
 install(TARGETS ibus-engine-funput DESTINATION "${IBUS_LIBEXECDIR}")
