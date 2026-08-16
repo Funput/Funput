@@ -1,35 +1,4 @@
-// Non-preedit mode: build the word in the document instead of in a preedit.
-//
-// A preedit can be lost. Some clients drop it rather than commit it when focus
-// moves away, and the half-typed word goes with it (see "Known gaps" in
-// platforms/linux/README.md). Committing each keystroke as it is typed and
-// repairing the previous one removes the thing that can be lost.
-//
-// This is not a new idea in this codebase — it is what the Windows shell already
-// does. `crates/funput-desktop/src/inject.rs` turns an engine result into "delete N
-// characters, then type this", and the engine hands out that N itself as
-// `FunputResult::backspace`. So this file does not diff strings against the
-// document: it forwards the same numbers, and Linux, Windows and macOS stay one
-// behaviour rather than three.
-//
-// # What the mode assumes of its shell
-//
-// Measured on GNOME/Wayland, because the answers are not obvious. The full set and
-// what follows from each is in platforms/linux/README.md:
-//
-//   - `deleteSurroundingText` counts **characters**, not bytes — verified with `ế`,
-//     one character and three bytes. `deleteChars` is therefore a character count
-//     all the way down, with no conversion anywhere.
-//   - Writes must be **serialized**. A commit/delete/commit burst issued without
-//     waiting for the client to confirm the previous write destroyed text the user
-//     had typed (`;;;` came back as `;;y`) in every one of nine attempts. A plan is
-//     only safe to perform once the previous one is known to have landed; the shell
-//     owns that, and nothing here may assume otherwise.
-//   - Capability flags and `program()` are unreliable there, so neither this file
-//     nor its callers may gate on them.
-//
-// The composer does not know whether the shell can honour any of that, which is why
-// the mode is off unless something turns it on.
+// Non-preedit mode. What it is and how a client is judged: nonpreedit.h.
 
 #include "compose/composer/composer.h"
 
@@ -54,54 +23,94 @@ std::string dropLast(const std::string &text, uint32_t count) {
 
 } // namespace
 
-ComposePlan Composer::planFromResult(const FunputResult &result) {
-    // ACTION_NONE means the engine produced nothing to show: the key was not part of
-    // a composition, so the app types it itself. The app's own edit is not something
-    // this can predict, so any pending expectation is void.
-    if (result.action == ACTION_NONE) {
-        lastRepairText_.clear();
-        lastRepairDeleted_ = 0;
-        return ComposePlan::passThrough();
+// --- NonPreeditState ---------------------------------------------------------
+
+void NonPreeditState::reset() {
+    refused = false;
+    retoneAllowed = true;
+    lastDoc.clear();
+    repairText.clear();
+    repairDeleted = 0;
+    repairAfterAdopt = false;
+    justAdopted = false;
+}
+
+void NonPreeditState::noteRepair(uint32_t deleted, const std::string &text) {
+    repairDeleted = deleted;
+    repairText = text;
+    repairAfterAdopt = justAdopted;
+    justAdopted = false;
+}
+
+Verdict NonPreeditState::observe(const std::string &document) {
+    Verdict verdict = Verdict::Unknown;
+    if (!repairText.empty()) {
+        const std::string dropped = lastDoc + repairText;
+        const std::string applied = dropLast(lastDoc, repairDeleted) + repairText;
+        if (document == dropped && dropped != applied) {
+            verdict = repairAfterAdopt ? Verdict::RefuseRetone : Verdict::RefuseMode;
+        }
+        repairText.clear();
+        repairDeleted = 0;
+        repairAfterAdopt = false;
     }
-    // Remember what was asked for, so the next observation can say whether it landed.
-    lastRepairDeleted_ = result.backspace;
-    lastRepairText_ = Handle::output(result);
-    return ComposePlan::replace(lastRepairDeleted_, lastRepairText_);
+    lastDoc = document;
+    return verdict;
+}
+
+// --- Composer ----------------------------------------------------------------
+
+void Composer::setNonPreedit(bool on) {
+    // A client already caught dropping a delete stays refused until the next context,
+    // whatever the shell asks for. IBus asks on every keystroke.
+    nonPreedit_.on = on && !nonPreedit_.refused;
+}
+
+void Composer::onFocusChanged() {
+    nonPreedit_.reset();
 }
 
 void Composer::observeDocument(const std::string &textBeforeCaret) {
-    // Three readings are possible after a repair, and they are different strings —
-    // which is the whole reason this check can exist at all:
-    //
-    //   the repair applied      the document reads `lastDoc_` minus N, plus the text
-    //   the delete was ignored  it reads `lastDoc_` plus the text — the client took
-    //                           the commit and dropped the deleteSurroundingText
-    //   the client is silent    it still reads `lastDoc_`, having told us nothing yet
-    //
-    // Only the middle one is a verdict. Treating "not what I expected" as failure
-    // would disable the mode on the 61% of commits that go unanswered — curing one
-    // broken client by breaking the feature for everyone. Anything that matches none
-    // of the three (the user clicked elsewhere, the app edited itself) is no verdict
-    // either: forget the expectation and carry on.
-    if (!lastRepairText_.empty()) {
-        const std::string ignored = lastDoc_ + lastRepairText_;
-        if (textBeforeCaret == ignored && ignored != dropLast(lastDoc_, lastRepairDeleted_) +
-                                                        lastRepairText_) {
-            // This client commits but will not delete, so every repair from here would
-            // append instead of replace. Drop the composition too: the engine believes
-            // it owns a word the document does not have, and the next delete would aim
-            // at text Funput never wrote.
-            nonPreedit_ = false;
-            discard();
-        }
-        lastRepairText_.clear();
-        lastRepairDeleted_ = 0;
+    switch (nonPreedit_.observe(textBeforeCaret)) {
+    case Verdict::Unknown:
+        return;
+    case Verdict::RefuseRetone:
+        // Ordinary repairs still land here; only the one issued straight after the app
+        // handled its own Backspace was dropped. Standing the whole mode down would
+        // throw away something that works, so only re-toning goes.
+        nonPreedit_.retoneAllowed = false;
+        break;
+    case Verdict::RefuseMode:
+        nonPreedit_.refused = true;
+        nonPreedit_.on = false;
+        break;
     }
-    lastDoc_ = textBeforeCaret;
+    // Either way the engine is holding a word the document does not have, and the next
+    // delete would aim at text Funput never wrote.
+    discard();
+}
+
+ComposePlan Composer::planFromResult(const FunputResult &result) {
+    // ACTION_NONE means the engine produced nothing to show: the key was not part of a
+    // composition, so the app types it itself. The app's own edit is not something this
+    // can predict, so any pending expectation is void.
+    if (result.action == ACTION_NONE) {
+        nonPreedit_.noteRepair(0, {});
+        return ComposePlan::passThrough();
+    }
+    nonPreedit_.noteRepair(result.backspace, Handle::output(result));
+    return ComposePlan::replace(nonPreedit_.repairDeleted, nonPreedit_.repairText);
+}
+
+ComposePlan Composer::endComposition(bool consumed) {
+    // Nothing to commit. The word reached the document one keystroke at a time, so
+    // committing it here would type the whole word a second time.
+    handle_.clear();
+    return consumed ? ComposePlan::swallow() : ComposePlan::passThrough();
 }
 
 bool Composer::adoptWordBeforeBackspace(const std::string &textBeforeCaret) {
-    if (!nonPreedit_ || !effectiveEnabled_) return false;
+    if (!nonPreedit_.on || !nonPreedit_.retoneAllowed || !effectiveEnabled_) return false;
     std::vector<uint32_t> chars = decodeUtf8(textBeforeCaret);
     if (chars.empty()) return false;
     // The app has not deleted it yet, so drop it here to see where the caret lands.
@@ -120,14 +129,10 @@ bool Composer::adoptWordBeforeBackspace(const std::string &textBeforeCaret) {
     for (size_t i = start; i < chars.size(); ++i) appendUtf8(word, chars[i]);
     // The engine refuses anything that is not a Vietnamese syllable, which is what
     // keeps English words and URLs literal.
-    return handle_.adopt(word);
-}
-
-ComposePlan Composer::endComposition(bool consumed) {
-    // Nothing to commit. The word reached the document one keystroke at a time, so
-    // committing it here would type the whole word a second time.
-    handle_.clear();
-    return consumed ? ComposePlan::swallow() : ComposePlan::passThrough();
+    if (!handle_.adopt(word)) return false;
+    // The repair this arms is the one a client like Chrome's address bar drops.
+    nonPreedit_.justAdopted = true;
+    return true;
 }
 
 } // namespace funput

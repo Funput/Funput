@@ -19,6 +19,7 @@
 
 #include <string>
 
+#include "compose/composer/nonpreedit.h"
 #include "compose/key/classify.h"
 #include "compose/plan.h"
 #include "ffi/handle.h"
@@ -59,30 +60,30 @@ public:
     // nonpreedit.cpp for what the mode assumes of its shell.
     //
     // `applySettings()` seeds this from `Settings::nonPreedit`; the setter is the
-    // per-context override on top of it, for a shell that finds a client the mode
-    // cannot be run against.
-    void setNonPreedit(bool on) { nonPreedit_ = on; }
-    bool nonPreedit() const { return nonPreedit_; }
+    // per-context override on top of it. It cannot revive a mode a client has already
+    // been caught breaking — see [NonPreeditState].
+    void setNonPreedit(bool on);
+    bool nonPreedit() const { return nonPreedit_.on; }
+
+    // A new input context took focus. Clears what was learned about the last client,
+    // which is the only thing that lets a mode stood down for one client be tried
+    // again in the next. Kept apart from `setNonPreedit()` on purpose: IBus calls that
+    // on every keystroke, so clearing there would erase a verdict immediately.
+    void onFocusChanged();
 
     // The document in front of the caret as it stands now, before this keystroke.
-    // Checks that the previous repair actually landed and turns the mode off for a
-    // client that ignored it — see nonpreedit.cpp for how such a client is told apart
-    // from one that is merely slow to answer.
+    // Checks that the previous repair landed, and stands down as narrowly as the
+    // failure allows — see nonpreedit.cpp.
     void observeDocument(const std::string &textBeforeCaret);
 
     // Whether a word is being composed right now. The shells ask before deciding
     // whether a Backspace is shortening a live word or eating a committed one.
     bool isComposing() const { return !handle_.buffer().empty(); }
 
-    // A Backspace is about to delete the last character of `textBeforeCaret` (the
-    // shell passes the document as it stands *now*; the app has not acted yet). If
-    // that leaves the caret at the end of a finished Vietnamese word, re-open it so
-    // the next keystroke can still fix its tone — `phủ` Space Backspace `s` gives
-    // `phú`. Returns whether a word was taken; nothing is written to the document
-    // either way, so a false costs nothing.
-    //
-    // Only for non-preedit, where the word really is in the document. A preedit
-    // shell has nothing to re-open: Backspace there shortens the composition.
+    // A Backspace is about to delete the last character of `textBeforeCaret`; if that
+    // leaves the caret at the end of a finished Vietnamese word, re-open it so the next
+    // keystroke can still fix its tone. Returns whether a word was taken — nothing is
+    // written either way, so a refusal costs nothing. See nonpreedit.cpp.
     bool adoptWordBeforeBackspace(const std::string &textBeforeCaret);
 
     // --- settings & VI/EN -----------------------------------------------------
@@ -130,14 +131,8 @@ private:
     // driven per-app on focus; a manual toggle overrides it until the next focus
     // change.
     bool effectiveEnabled_ = true;
-    // Likewise the mode actually in effect, seeded from `settings_.nonPreedit`.
-    bool nonPreedit_ = false;
-    // Non-preedit's evidence that the client is doing as it is told: the document as
-    // last seen, plus the repair last written into it. Together they say what the
-    // document should read now, and what it would read had the delete been ignored.
-    std::string lastDoc_;
-    std::string lastRepairText_;
-    uint32_t lastRepairDeleted_ = 0;
+    // The mode in effect plus what has been learned about this client.
+    NonPreeditState nonPreedit_;
 };
 
 } // namespace funput

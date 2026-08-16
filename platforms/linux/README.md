@@ -167,8 +167,19 @@ three strings, and they differ:
 Only the middle one is a verdict, and that restraint is the point: treating "not what
 I expected" as failure would disable the mode on the 61% of commits that go
 unanswered, curing one broken client by breaking the feature for everyone. Anything
-matching none of the three is no verdict either. `Composer::observeDocument()` holds
-this; the shells only hand it the text.
+matching none of the three is no verdict either. `NonPreeditState` in
+`common/compose/composer/nonpreedit.h` holds this; the shells only hand it the text.
+
+A verdict stands down as narrowly as the failure allows. A dropped repair that
+followed a **re-opened word** costs only re-toning, because that is the only thing
+observed to fail — Chrome's address bar takes ordinary repairs perfectly well and
+discards just the one issued straight after it handled a Backspace itself. Any other
+dropped repair costs the whole mode.
+
+The verdict is a latch, not a variable. A shell may re-assert the mode — IBus does, on
+every keystroke — and must not be able to revive one a client has already been caught
+breaking; only `Composer::onFocusChanged()` clears it, because a new client is a new
+question.
 
 The cost is that detection is one beat late, so the first word is still mangled before
 the mode stands down. Catching it sooner would mean writing probe text into the user's
@@ -220,11 +231,11 @@ client reported cursor 4 for `phủ ` (five bytes) and 3 for `phủ` (four).
   the word anyway. Non-preedit above is the fix on both shells, so this now only bites
   where that mode cannot run: a client that reports no surrounding text, one that
   ignores `deleteSurroundingText`, and anyone who leaves the mode off.
-- **Chrome's address bar cannot take non-preedit.** It accepts a commit and discards
-  the delete next to it, on both shells. The check above catches it and falls back
-  after one mangled word — a real cost, and the reason a client fixing this would be
-  worth more than any further work here. Ordinary text fields inside the same Chrome
-  are fine.
+- **Chrome's address bar cannot re-tone.** Ordinary repairs land there, but one issued
+  straight after it handles a Backspace itself is discarded, so `phủ` ⌫ `s` gives
+  `phủú`. The check above catches it and gives up re-toning for that context, keeping
+  the rest of the mode; one word is still mangled first. Ordinary text fields inside
+  the same Chrome are unaffected.
 - **The Settings app rewrites `settings.json` wholesale.** Unlike the addon's merging
   writer, it serializes its own struct over the file, so a key it does not know is
   deleted the next time the user changes anything there. Every setting the addon owns

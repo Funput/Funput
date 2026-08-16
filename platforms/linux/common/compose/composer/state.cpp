@@ -44,7 +44,7 @@ void Composer::applySettings() {
     // surrounding text has to stay on the preedit). The `handle_.clear()` below is
     // what makes a mid-word change safe — the half-typed word is dropped rather
     // than left for the other mode to finish in a way it cannot.
-    nonPreedit_ = settings_.nonPreedit;
+    setNonPreedit(settings_.nonPreedit);
     handle_.setEnabled(effectiveEnabled_);
     // The engine holds a runtime mirror of the gõ tắt table: replace it wholesale
     // rather than diffing, since the table is small and the source of truth is the

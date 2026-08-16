@@ -84,6 +84,10 @@ void focusIn(IBusEngine *engine) {
     // A different client, which has said nothing yet. Whatever the last one did tells
     // us nothing about this one.
     state->sawSurroundingText = false;
+    // A new client: forget whether the last one could be trusted with a repair. Kept
+    // out of applyNonPreeditMode(), which runs every keystroke — clearing there would
+    // wipe a verdict the moment it was reached.
+    state->composer.onFocusChanged();
     requestSurroundingText(engine);
     if (state->composer.reloadSettingsIfChanged()) state->composer.applySettings();
     applyNonPreeditMode(engine);

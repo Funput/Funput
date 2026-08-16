@@ -15,13 +15,27 @@ using namespace funput::test;
 
 namespace {
 
-// What the address bar does: the commit lands, the delete is thrown away.
+// A client that drops every delete.
 void applyIgnoringDeletes(std::string &document, const ComposePlan &plan, char key) {
     if (plan.effect != Effect::Replace) {
         applyPlan(document, plan, key);
         return;
     }
     document += plan.text;
+}
+
+// Type until the mode or re-toning is refused, feeding the client each plan. Returns
+// the document as that client left it.
+std::string typeUntilRefused(Composer &composer, const std::string &keys,
+                             void (*client)(std::string &, const ComposePlan &, char)) {
+    std::string document;
+    for (char c : keys) {
+        composer.observeDocument(document);
+        if (!composer.nonPreedit()) break;
+        client(document, composer.onKey(ascii(c)), c);
+    }
+    composer.observeDocument(document);
+    return document;
 }
 
 } // namespace
@@ -93,6 +107,23 @@ TEST_CASE("a repair with nothing to delete is not a failure") {
     }
     composer.observeDocument(document);
 
+    CHECK(composer.nonPreedit());
+}
+
+TEST_CASE("a refusal sticks until the next context") {
+    Composer composer = composerFor(Method::Telex);
+    composer.setNonPreedit(true);
+    typeUntilRefused(composer, "tieengs", applyIgnoringDeletes);
+    REQUIRE_FALSE(composer.nonPreedit());
+
+    // What IBus does on every keystroke. Before the latch this revived the mode one
+    // key after it had been stood down, so the verdict was worth nothing there.
+    composer.setNonPreedit(true);
+    CHECK_FALSE(composer.nonPreedit());
+
+    // A new client is a new question, and the only thing that reopens it.
+    composer.onFocusChanged();
+    composer.setNonPreedit(true);
     CHECK(composer.nonPreedit());
 }
 

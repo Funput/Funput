@@ -11,6 +11,19 @@
 using namespace funput;
 using namespace funput::test;
 
+namespace {
+
+// A client that takes the commit and drops the delete beside it.
+void applyIgnoringDeletes(std::string &document, const ComposePlan &plan, char key) {
+    if (plan.effect != Effect::Replace) {
+        applyPlan(document, plan, key);
+        return;
+    }
+    document += plan.text;
+}
+
+} // namespace
+
 TEST_CASE("backspace re-opens the finished word so its tone can be fixed") {
     Composer composer = composerFor(Method::Telex);
     composer.setNonPreedit(true);
@@ -52,3 +65,31 @@ TEST_CASE("re-opening is a non-preedit affair only") {
     CHECK_FALSE(composer.adoptWordBeforeBackspace("phủ "));
 }
 
+TEST_CASE("a client that only drops the repair after a re-open keeps the mode") {
+    Composer composer = composerFor(Method::Telex);
+    composer.setNonPreedit(true);
+
+    // Chrome's address bar: ordinary repairs land, so type a word the honest way.
+    std::string document;
+    for (char c : std::string("tieengs ")) {
+        composer.observeDocument(document);
+        applyPlan(document, composer.onKey(ascii(c)), c);
+    }
+    REQUIRE(document == "tiếng ");
+
+    // Backspace over the space, re-open the word, then let the repair that follows be
+    // dropped — which is the one that client discards.
+    composer.observeDocument(document);
+    composer.onKey(bare(keysym::BackSpace));
+    REQUIRE(composer.adoptWordBeforeBackspace(document));
+    document = "tiếng";
+
+    composer.observeDocument(document);
+    applyIgnoringDeletes(document, composer.onKey(ascii('f')), 'f');
+    composer.observeDocument(document);
+
+    // Only re-toning is given up. Typing straight into the document still works here,
+    // and throwing that away too would cost more than the failure did.
+    CHECK(composer.nonPreedit());
+    CHECK_FALSE(composer.adoptWordBeforeBackspace("tiếng "));
+}

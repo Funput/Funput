@@ -43,6 +43,8 @@ void FunputEngine::reset(const fcitx::InputMethodEntry &, fcitx::InputContextEve
 void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
     if (composer_.reloadSettingsIfChanged()) composer_.applySettings();
     if (composer_.settings().autoCapitalize) composer_.armCapitalization();
+    // A new client: forget whether the last one could be trusted with a repair.
+    composer_.onFocusChanged();
     lastProgram_ = event.inputContext()->program();
     composer_.applyPerAppDefault(lastProgram_);
     lastSurroundingOk_ = event.inputContext()->surroundingText().isValid();

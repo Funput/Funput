@@ -15,7 +15,7 @@ ComposePlan Composer::commitBuffer(bool consumed) {
     // Non-preedit typed the word into the document as it went, so there is nothing
     // left to commit. This one early-out covers every exit that funnels through
     // here: flush(), toggleEnabled(), a shortcut and a caret key.
-    if (nonPreedit_) return endComposition(consumed);
+    if (nonPreedit_.on) return endComposition(consumed);
     std::string buffer = handle_.buffer();
     handle_.clear();
     // An empty buffer still yields Effect::Commit — with no text that means "drop
@@ -35,7 +35,7 @@ ComposePlan Composer::onBoundary(char32_t scalar, KeySource source) {
     // The engine's output already ends with the boundary character, and the word in
     // front of it is already in the document — so the repair covers both at once,
     // with none of the splicing the preedit path needs below.
-    if (nonPreedit_) return planFromResult(result);
+    if (nonPreedit_.on) return planFromResult(result);
     std::string word = before;
     if (result.action == ACTION_SEND) {
         word = Handle::output(result);
@@ -64,7 +64,7 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
         // composing) leaves the client alone.
         const FunputResult result = handle_.flipComposing();
         if (result.action == ACTION_NONE) return ComposePlan::swallow();
-        if (nonPreedit_) return planFromResult(result);
+        if (nonPreedit_.on) return planFromResult(result);
         return ComposePlan::preedit(handle_.buffer());
     }
 
@@ -81,7 +81,7 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
         // Non-preedit: the character stands in the document, so the key passes
         // through and the app deletes its own — the engine is only kept in step.
         // Same division of labour as `ShellState::on_backspace` on Windows.
-        if (nonPreedit_) return ComposePlan::passThrough();
+        if (nonPreedit_.on) return ComposePlan::passThrough();
         return ComposePlan::preedit(handle_.buffer());
 
     case KeyKind::NonText:
@@ -101,7 +101,7 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
 
     case KeyKind::Compose: {
         const FunputResult result = handle_.process(static_cast<uint32_t>(ev.ch));
-        if (nonPreedit_) return planFromResult(result);
+        if (nonPreedit_.on) return planFromResult(result);
         // The engine can swallow a character without composing anything (a lone
         // modifier key in VNI, say); with nothing to show, the key passes through.
         if (handle_.buffer().empty()) return ComposePlan::passThrough();
