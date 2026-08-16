@@ -100,8 +100,9 @@ Every file here is held to 150 lines by `scripts/check-loc.sh`, test files inclu
 
 ## Non-preedit mode
 
-Off by default. Set `"nonPreedit": true` in `~/.config/Funput/settings.json`; there is
-no UI yet, and the settings watcher picks it up live.
+Off by default; the switch is in Settings under **Kiểu gõ**, or set
+`"nonPreedit": true` in `~/.config/Funput/settings.json` directly. Either way the
+settings watcher picks it up live, with no restart. Both shells perform it.
 
 Instead of parking the composing word in a preedit, each keystroke commits into the
 document and repairs what the previous one wrote — `Effect::Replace` carries "delete
@@ -112,7 +113,13 @@ than three. Backspacing onto a finished word re-opens it, so `phủ` Space Backs
 `s` gives `phú`; Windows keeps a shadow copy of what it typed to manage that
 (`retone.rs`), while here the document can simply be read.
 
-Chosen per input context, and only when `surroundingText().isValid()`.
+Whether it engages is decided per input context, and the two shells cannot decide it
+the same way. Fcitx5 settles it once at focus-in, from `surroundingText().isValid()`.
+IBus has no such question to ask that early — surrounding text only starts arriving
+after the client answers — so it re-asks between words, on any keystroke with nothing
+composing. Never mid-word in either shell: the modes disagree about where the
+composing word lives, and switching under one leaves the engine and the client
+describing different things.
 
 ### What was measured, and what follows from it
 
@@ -121,7 +128,8 @@ Shell is the client for every application:
 
 - **Capability flags lie in both directions.** Contexts report `SurroundingText`
   absent while it works perfectly, and some report `caps: []` — not even `Preedit` —
-  while preedit plainly works. Nothing is gated on them; `isValid()` decides instead.
+  while preedit plainly works. Neither shell gates on them; what the client actually
+  does decides instead.
 - **`program()` is always `gnome-shell`**, never the real app, so a per-app policy
   there would be actively wrong rather than merely unavailable.
 - **`deleteSurroundingText` counts characters, not bytes** — verified with `ế`, one
@@ -143,10 +151,37 @@ keystroke and stall outright on the commits it never answers — a certain cost 
 a failure real typing cannot reach. Reconsider only if something starts issuing
 several `Replace`es for one keystroke.
 
+
 A selection live at delete time would take the highlighted text instead of ours, so
-`funput_client.cpp` abandons both the repair and the composition when it sees one.
-Measuring never caught a live selection in 93 commits, so that guard is reasoned
-rather than measured.
+both shells abandon the repair *and* the composition when they see one (`applyPlan`
+in `fcitx5/src/funput_client.cpp` and `ibus/src/engine/client.cpp`). Abandoning only
+the delete would double the word; abandoning it silently would leave the engine owning
+a word it could not correct, aiming the next keystroke's delete at text Funput never
+wrote. Measuring never caught a live selection in 93 commits, so that guard is
+reasoned rather than measured.
+
+### On the IBus side
+
+Three API facts, each of which cost several rounds to find, and none of which the
+headers tell you:
+
+- **Registering for surrounding text is per input context, not per engine.** IBus
+  documents `ibus_engine_get_surrounding_text()` with null out-params as the way to
+  register and says to call it "in the enable handler" — but enable fires once, and an
+  engine that only asks there receives nothing for the rest of the session. It has to
+  be asked again on every focus-in. Until that was found, non-preedit had never once
+  engaged on IBus, while looking as though it had.
+- **Reading it back does not work.** `ibus_engine_get_surrounding_text()` returns a
+  null text immediately after the client has sent a perfectly good string. The only
+  reliable copy is the one arriving in the `set_surrounding_text` vfunc, so the engine
+  keeps it in `EngineState` — which also means no question of how stale a framework
+  cache is.
+- **`g_debug` reaches nobody.** ibus-daemon points a spawned engine's stdio at
+  `/dev/null` no matter how the daemon itself was started, so diagnostics here have to
+  be written to a file, the way the Fcitx5 probe once did.
+
+The character count was confirmed a second time from this side, without inference: the
+client reported cursor 4 for `phủ ` (five bytes) and 3 for `phủ` (four).
 
 ## Known gaps
 
@@ -160,13 +195,9 @@ rather than measured.
 - **Preedit loses a half-typed word in some clients on focus change.** Both shells
   hand the flush to their framework (see the comments in `deactivate()` and
   `updatePreedit()`); clients that drop the preedit instead of committing it lose
-  the word anyway. Non-preedit above is the fix, so this now only bites where that
-  mode is unavailable — every IBus client, and any Fcitx5 client that reports no
-  surrounding text.
-- **Non-preedit is Fcitx5-only.** IBus has `ibus_engine_delete_surrounding_text`, so
-  it is not closed to the mode in principle, but none of the measurements above were
-  taken against it and its `Effect::Replace` arm refuses rather than guess with the
-  user's text.
+  the word anyway. Non-preedit above is the fix on both shells, so this now only bites
+  where that mode cannot run: a client that reports no surrounding text, and anyone who
+  leaves the mode off.
 - **The Settings app rewrites `settings.json` wholesale.** Unlike the addon's merging
   writer, it serializes its own struct over the file, so a key it does not know is
   deleted the next time the user changes anything there. Every setting the addon owns

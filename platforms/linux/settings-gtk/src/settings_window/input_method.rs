@@ -57,19 +57,15 @@ pub(super) fn page() -> PreferencesPage {
     page.add(&group);
     // How the word reaches the app, which is a different question from which keys
     // produce it — hence its own group rather than a third row above.
-    if let Some(delivery) = delivery_group(&s) {
-        page.add(&delivery);
-    }
+    page.add(&delivery_group(&s));
     page
 }
 
-/// The non-preedit switch, or `None` on a framework that cannot perform it. Hidden
-/// rather than shown greyed out, the same call the per-app page makes: a control that
-/// does nothing is worse than no control. See `crate::framework`.
-fn delivery_group(s: &Settings) -> Option<PreferencesGroup> {
-    if !crate::framework::non_preedit_supported() {
-        return None;
-    }
+/// The non-preedit switch. Unlike the per-app page, this is shown on every framework:
+/// both Linux shells perform an `Effect::Replace`, and a client that cannot report
+/// surrounding text simply keeps the preedit, so the switch is never a control that
+/// does nothing.
+fn delivery_group(s: &Settings) -> PreferencesGroup {
     let group = PreferencesGroup::builder()
         .title("Cách chữ vào ứng dụng")
         .build();
@@ -86,5 +82,5 @@ fn delivery_group(s: &Settings) -> Option<PreferencesGroup> {
         Settings::update(|s| s.non_preedit = on);
     });
     group.add(&row);
-    Some(group)
+    group
 }

@@ -17,17 +17,6 @@ pub fn per_app_supported() -> bool {
     is_fcitx5_active()
 }
 
-/// True when non-preedit typing is available. Only the Fcitx5 shell performs an
-/// `Effect::Replace`; the IBus engine refuses it, having none of the measurements
-/// that made it safe there (see platforms/linux/README.md).
-///
-/// A separate predicate from [`per_app_supported`] on purpose: two unrelated features
-/// happen to share one condition today, and folding them into one name would make
-/// them painful to tell apart the day they stop sharing it.
-pub fn non_preedit_supported() -> bool {
-    is_fcitx5_active()
-}
-
 fn is_fcitx5_active() -> bool {
     // Authoritative: the Fcitx5 daemon owns this well-known name on the session bus
     // while it is running.
