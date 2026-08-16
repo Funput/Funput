@@ -58,8 +58,22 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
     applyNonPreeditMode(engine);
 
     EngineState *state = stateOf(engine);
-    const funput::ComposePlan plan = state->composer.onKey(toKeyEvent(keyval, modifiers));
+    const funput::KeyEvent ev = toKeyEvent(keyval, modifiers);
+    // A Backspace with nothing composing is about to eat a *committed* character, and
+    // in non-preedit the word it lands in is sitting in the document. Read it before
+    // the app acts; the composer decides afterwards whether it is worth re-opening.
+    // Same wiring, same order, as the Fcitx5 shell's keyEvent().
+    const bool reopen = state->composer.nonPreedit() && !state->composer.isComposing() &&
+                        funput::classify(ev, state->composer.settings()) ==
+                            funput::KeyKind::Backspace;
+    const std::string before = reopen ? textBeforeCaret(engine) : std::string();
+
+    const funput::ComposePlan plan = state->composer.onKey(ev);
     applyPlan(engine, plan);
+
+    // Writes nothing itself: the key passes through, the app deletes its own
+    // character, and the engine just takes ownership of the word left behind.
+    if (reopen) state->composer.adoptWordBeforeBackspace(before);
     return plan.consumed ? TRUE : FALSE;
 }
 
