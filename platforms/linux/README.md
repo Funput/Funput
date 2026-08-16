@@ -18,7 +18,8 @@ common/                 Framework-free C++ shared by both shells
       composer.h              The state machine (engine + settings + VI/EN)
       keys.cpp                onKey(): the keystroke decision tree
       state.cpp               Settings, VI/EN, and the non-key exits
-      nonpreedit.cpp          Commit-as-you-type mode, and re-opening a word
+      nonpreedit.h            Commit-as-you-type: the mode, and judging a client
+      nonpreedit.cpp          What the composer does with that judgement
   settings/               ~/.config/Funput/settings.json
     settings.h              The model every shell reads
     lookup.cpp              Where the file lives; app exclusion
@@ -30,7 +31,7 @@ common/                 Framework-free C++ shared by both shells
   tests/                  doctest, in a tree mirroring the above
 fcitx5/src/             Fcitx5 addon -> libfunput.so
   funput_input.cpp        One keystroke: normalize, ask the composer
-  funput_client.cpp       The other half: how a plan reaches the client
+  funput_client.cpp       Talking to the client, both directions
 ibus/src/               IBus engine -> ibus-engine-funput
   engine.h                The public GObject type
   engine/                 internal.h, object.cpp, callbacks.cpp, client.cpp
@@ -113,6 +114,22 @@ than three. Backspacing onto a finished word re-opens it, so `phủ` Space Backs
 `s` gives `phú`; Windows keeps a shadow copy of what it typed to manage that
 (`retone.rs`), while here the document can simply be read.
 
+A Backspace with nothing composing is performed by *us*, not passed to the app, so the
+deletion travels the same channel as every other repair. Letting the app do it is what
+broke re-toning in Chrome's address bar: the app edited behind our back and then
+discarded the repair issued on the next keystroke. It is only taken over on positive
+evidence that the document being read is current — a change we predicted and then saw
+land, whether that was a repair or a plain character the app typed itself. Without that
+evidence the key goes through, which is what keeps a mouse selection deletable: the
+selection flag comes from the same cache and had not caught up, so on the strength of
+that alone the key was swallowed and Backspace appeared dead until pressed twice.
+
+That repair cannot be checked afterwards. It carries no text, so "applied" and
+"dropped" read as the same document — the silent-client signature below — and a client
+that refuses it will simply appear to ignore Backspace. A Backspace *inside* a word is
+still left to the app; the same hazard applies in principle, but nothing has been seen
+to fail there.
+
 Whether it engages is decided per input context, and the two shells cannot decide it
 the same way. Fcitx5 settles it once at focus-in, from `surroundingText().isValid()`.
 IBus has no such question to ask that early — surrounding text only starts arriving
@@ -152,9 +169,11 @@ a failure real typing cannot reach. Reconsider only if something starts issuing
 several `Replace`es for one keystroke.
 
 Not waiting before a write is not the same as never checking after one, though, and
-conflating the two let Chrome's address bar corrupt text for a while: it takes the
-commit and drops the `deleteSurroundingText` beside it, so `phủ` became `phủú`. The
-check costs nothing because the shells already read the document each keystroke. After
+conflating the two let Chrome's address bar corrupt text for a while: it took the
+commit and dropped the `deleteSurroundingText` beside it, so `phủ` came out `phủú`.
+That particular case is gone — the Backspace is no longer the app's to handle — but the
+check earned its place and stays, because the next client of this kind will not
+announce itself. It costs nothing: the shells already read the document each keystroke. After
 a `Replace{N, T}` issued against document `D`, the next reading can only be one of
 three strings, and they differ:
 
@@ -170,11 +189,10 @@ unanswered, curing one broken client by breaking the feature for everyone. Anyth
 matching none of the three is no verdict either. `NonPreeditState` in
 `common/compose/composer/nonpreedit.h` holds this; the shells only hand it the text.
 
-A verdict stands down as narrowly as the failure allows. A dropped repair that
-followed a **re-opened word** costs only re-toning, because that is the only thing
-observed to fail — Chrome's address bar takes ordinary repairs perfectly well and
-discards just the one issued straight after it handled a Backspace itself. Any other
-dropped repair costs the whole mode.
+A verdict stands down as narrowly as the failure allows. A dropped repair that followed
+a **re-opened word** costs only re-toning: that was the one shape ever observed to fail,
+in an address bar that took ordinary repairs perfectly well. Any other dropped repair
+costs the whole mode, since nothing it writes can then be trusted.
 
 The verdict is a latch, not a variable. A shell may re-assert the mode — IBus does, on
 every keystroke — and must not be able to revive one a client has already been caught
@@ -231,11 +249,20 @@ client reported cursor 4 for `phủ ` (five bytes) and 3 for `phủ` (four).
   the word anyway. Non-preedit above is the fix on both shells, so this now only bites
   where that mode cannot run: a client that reports no surrounding text, one that
   ignores `deleteSurroundingText`, and anyone who leaves the mode off.
-- **Chrome's address bar cannot re-tone.** Ordinary repairs land there, but one issued
-  straight after it handles a Backspace itself is discarded, so `phủ` ⌫ `s` gives
-  `phủú`. The check above catches it and gives up re-toning for that context, keeping
-  the rest of the mode; one word is still mangled first. Ordinary text fields inside
-  the same Chrome are unaffected.
+- **Chrome shows no preedit at all.** Commits reach it fine — non-preedit works
+  throughout, address bar included — but nothing that needs the client to draw and
+  manage a composition does. Chrome is a native Wayland client here, so that path runs
+  through `zwp_text_input_v3`; the same session shows preedit working normally in other
+  apps, so this is Chrome's end and nothing in Funput can reach it. **Non-preedit is
+  the answer for Chrome**, which is the shape the mode was built for.
+- **Re-toning after Backspace is non-preedit only.** In preedit mode Backspace just
+  shortens the composition, so `phủ` ␣ ⌫ `s` types a literal `s` — while macOS, Windows
+  and Android all re-open the word. macOS manages it with one atomic
+  `setMarkedText(replacementRange:)`, replacing the word and the deleted character in a
+  single edit; neither Fcitx5 nor IBus has that, so a port would be delete-then-preedit,
+  with the gap between them that this file spends so long on. Worth doing, and worth
+  copying macOS's two guards when it is done: a setting of its own, and skipping key
+  auto-repeat so holding Backspace does not re-open a word per repeat.
 - **The Settings app rewrites `settings.json` wholesale.** Unlike the addon's merging
   writer, it serializes its own struct over the file, so a key it does not know is
   deleted the next time the user changes anything there. Every setting the addon owns
