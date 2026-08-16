@@ -80,13 +80,13 @@ internal class KeyboardInteractionController(
         alternateSelection.move(pointerId, keyId, x, y)
     fun onKeyReleased(pointerId: Int, keyId: String?, x: Float, y: Float, eventTimeMillis: Long) {
         if (alternateSelection.finish(pointerId, x, y)) {
-            swipeGestures.finish(pointerId, null, x, y)
+            swipeGestures.finish(pointerId, x, y)
             return
         }
         val selection = keyId?.let(suggestionSelection)
         val key = keyId?.let(keySpec)
         val isBackspace = key?.role == KeyRole.BACKSPACE
-        val swipeAction = swipeGestures.finish(pointerId, key, x, y)
+        val swipeAction = swipeGestures.finish(pointerId, x, y)
         if (backspaceRepeat.finish(pointerId, isBackspace)) return
         if (swipeAction == KeySwipeAction.TOGGLE_LANGUAGE) {
             setLanguage(language.toggled())

@@ -22,7 +22,7 @@ class KeySwipeGestureTrackerTest {
 
         assertEquals(
             KeySwipeAction.TOGGLE_LANGUAGE,
-            tracker.finish(pointerId = 3, key = space, x = 140f, y = 52f),
+            tracker.finish(pointerId = 3, x = 140f, y = 52f),
         )
     }
 
@@ -32,7 +32,7 @@ class KeySwipeGestureTrackerTest {
 
         assertEquals(
             KeySwipeAction.TOGGLE_LANGUAGE,
-            tracker.finish(pointerId = 3, key = space, x = 60f, y = 48f),
+            tracker.finish(pointerId = 3, x = 60f, y = 48f),
         )
     }
 
@@ -40,22 +40,24 @@ class KeySwipeGestureTrackerTest {
     fun movementBelowThresholdIsATap() {
         tracker.start(pointerId = 3, key = space, x = 100f, y = 50f)
 
-        assertNull(tracker.finish(pointerId = 3, key = space, x = 120f, y = 50f))
+        assertNull(tracker.finish(pointerId = 3, x = 120f, y = 50f))
     }
 
     @Test
     fun verticalMovementIsNotAHorizontalSwipe() {
         tracker.start(pointerId = 3, key = space, x = 100f, y = 50f)
 
-        assertNull(tracker.finish(pointerId = 3, key = space, x = 135f, y = 90f))
+        assertNull(tracker.finish(pointerId = 3, x = 135f, y = 90f))
     }
 
     @Test
-    fun releaseOverAnotherKeyDoesNotTriggerSwipe() {
-        val comma = KeySpec("comma", ",", KeyRole.PUNCTUATION)
+    fun releaseOverAnotherKeyStillTriggersSwipeStartedFromSpace() {
         tracker.start(pointerId = 3, key = space, x = 100f, y = 50f)
 
-        assertNull(tracker.finish(pointerId = 3, key = comma, x = 140f, y = 50f))
+        assertEquals(
+            KeySwipeAction.TOGGLE_LANGUAGE,
+            tracker.finish(pointerId = 3, x = 140f, y = 50f),
+        )
     }
 
     @Test
@@ -65,7 +67,7 @@ class KeySwipeGestureTrackerTest {
 
         tracker.cancel()
 
-        assertNull(tracker.finish(pointerId = 3, key = space, x = 140f, y = 50f))
-        assertNull(tracker.finish(pointerId = 11, key = space, x = 160f, y = 50f))
+        assertNull(tracker.finish(pointerId = 3, x = 140f, y = 50f))
+        assertNull(tracker.finish(pointerId = 11, x = 160f, y = 50f))
     }
 }

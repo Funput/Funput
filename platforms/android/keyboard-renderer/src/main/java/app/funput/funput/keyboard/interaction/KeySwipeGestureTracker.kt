@@ -4,7 +4,7 @@ import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeySwipeAction
 import kotlin.math.abs
 
-/** Recognizes deliberate horizontal swipes that begin and end on the same key. */
+/** Recognizes deliberate horizontal swipes that begin on a key with a swipe action. */
 internal class KeySwipeGestureTracker(private val thresholdPx: Float) {
     private val startsByPointerId = mutableMapOf<Int, SwipeStart>()
 
@@ -17,13 +17,12 @@ internal class KeySwipeGestureTracker(private val thresholdPx: Float) {
         if (action == null) {
             startsByPointerId.remove(pointerId)
         } else {
-            startsByPointerId[pointerId] = SwipeStart(key.id, action, x, y)
+            startsByPointerId[pointerId] = SwipeStart(action, x, y)
         }
     }
 
-    fun finish(pointerId: Int, key: KeySpec?, x: Float, y: Float): KeySwipeAction? {
+    fun finish(pointerId: Int, x: Float, y: Float): KeySwipeAction? {
         val start = startsByPointerId.remove(pointerId) ?: return null
-        if (key?.id != start.keyId) return null
 
         val horizontalDistance = abs(x - start.x)
         val verticalDistance = abs(y - start.y)
@@ -40,14 +39,13 @@ internal class KeySwipeGestureTracker(private val thresholdPx: Float) {
     fun cancel() = startsByPointerId.clear()
 
     private data class SwipeStart(
-        val keyId: String,
         val action: KeySwipeAction,
         val x: Float,
         val y: Float,
     )
 
     companion object {
-        private const val ThresholdDp = 32f
+        private const val ThresholdDp = 24f
         private const val HorizontalDominanceRatio = 1.25f
 
         fun fromDensity(density: Float): KeySwipeGestureTracker {

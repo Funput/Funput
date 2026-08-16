@@ -24,9 +24,10 @@ class KeyboardInteractionControllerTest {
         role = KeyRole.SPACE,
         horizontalSwipeAction = KeySwipeAction.TOGGLE_LANGUAGE,
     )
+    private val comma = KeySpec("comma", ",", KeyRole.PUNCTUATION)
     private val emoji = KeySpec("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji")
     private val controller = KeyboardInteractionController(
-        keySpec = { id -> listOf(space, emoji).firstOrNull { it.id == id } },
+        keySpec = { id -> listOf(space, comma, emoji).firstOrNull { it.id == id } },
         suggestionSelection = { id ->
             SuggestionSelection(1, "chào").takeIf { id == "suggestion-1" }
         },
@@ -73,6 +74,15 @@ class KeyboardInteractionControllerTest {
 
         assertEquals(KeyboardLanguage.VIETNAMESE, controller.language)
         assertEquals(KeyAction.ToggleLanguage(KeyboardLanguage.VIETNAMESE), actions.last())
+    }
+
+    @Test
+    fun spaceSwipeCanEndOverAnAdjacentKey() {
+        controller.onPointerStarted(3, space.id, 100f, 50f)
+        controller.onKeyReleased(3, comma.id, 140f, 50f, eventTimeMillis = 100L)
+
+        assertEquals(KeyboardLanguage.ENGLISH, controller.language)
+        assertEquals(KeyAction.ToggleLanguage(KeyboardLanguage.ENGLISH), actions.single())
     }
 
     @Test
