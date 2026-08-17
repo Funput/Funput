@@ -74,7 +74,11 @@ internal object EditorKeyboardLayouts {
             id = "qwerty-$idPrefix-${inputMethod.name.lowercase()}",
             inputMethod = inputMethod,
             leadingRows = listOf(
-                topNumberRow(TopNumberRowMode.PLAIN_CHARACTER, pageId = "$idPrefix-${inputMethod.name.lowercase()}"),
+                topNumberRowFor(
+                    inputMethod,
+                    pageId = "$idPrefix-${inputMethod.name.lowercase()}",
+                    composesVietnamese = supportsVietnamese,
+                ),
             ),
             actionKeys = webActionKeys(
                 middleId = "slash",
@@ -83,6 +87,7 @@ internal object EditorKeyboardLayouts {
                 supportsVietnamese = supportsVietnamese,
             ),
             supportsVietnameseAlternates = supportsVietnamese,
+            showsTelexHints = supportsVietnamese && inputMethod.isTelexFamily,
         )
     }
 

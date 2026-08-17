@@ -48,9 +48,20 @@ class TelexToneHintsLayoutTest {
     }
 
     @Test
-    fun specializedEditorsHideTelexHints() {
+    fun searchEditorsKeepTelexHints() {
+        // A browser address bar arrives as SEARCH and still composes Vietnamese, so the hints hold.
+        assertToneHints(
+            KeyboardLayoutResolver.resolve(
+                inputMethod = KeyboardInputMethod.TELEX,
+                mode = KeyboardLayoutMode.LETTERS,
+                editorMode = KeyboardEditorMode.SEARCH,
+            ),
+        )
+    }
+
+    @Test
+    fun nonComposingEditorsHideTelexHints() {
         listOf(
-            KeyboardEditorMode.SEARCH,
             KeyboardEditorMode.EMAIL,
             KeyboardEditorMode.URL,
             KeyboardEditorMode.PASSWORD,
