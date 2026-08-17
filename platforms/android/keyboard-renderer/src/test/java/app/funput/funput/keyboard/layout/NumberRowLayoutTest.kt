@@ -78,4 +78,37 @@ class NumberRowLayoutTest {
 
         assertTrue(compact < full)
     }
+
+    @Test
+    fun webEditorsKeepFullHeightWhenNumberRowIsOff() {
+        for (editorMode in listOf(
+            KeyboardEditorMode.URL,
+            KeyboardEditorMode.SEARCH,
+            KeyboardEditorMode.EMAIL,
+        )) {
+            val layout = KeyboardLayoutResolver.resolve(
+                inputMethod = KeyboardInputMethod.TELEX,
+                mode = KeyboardLayoutMode.LETTERS,
+                editorMode = editorMode,
+                showsNumberRow = false,
+            )
+            val height = KeyboardDimensions.recommendedHeightDp(
+                KeyboardInputMethod.TELEX,
+                editorMode,
+                showsNumberRow = false,
+            )
+
+            assertEquals("$editorMode keeps its own number row", 5, layout.rows.size)
+            assertEquals(
+                "$editorMode height must fit $editorMode rows",
+                KeyboardDimensions.recommendedHeightDp(
+                    KeyboardInputMethod.TELEX,
+                    editorMode,
+                    showsNumberRow = true,
+                ),
+                height,
+                0.001f,
+            )
+        }
+    }
 }

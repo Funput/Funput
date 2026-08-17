@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard
 
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
+import app.funput.funput.keyboard.layout.usesCompactLetterRows
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 
@@ -30,7 +31,7 @@ object KeyboardDimensions {
         editorMode.usesKeypad -> heightForRowCount(4, true, profile, widthDp)
         editorMode.isPassword -> heightForRowCount(5, false, profile, widthDp)
         else -> {
-            val compact = inputMethod.isTelexFamily && !showsNumberRow
+            val compact = usesCompactLetterRows(inputMethod, editorMode, showsNumberRow)
             heightForRowCount(if (compact) 4 else 5, true, profile, widthDp)
         }
     }

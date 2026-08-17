@@ -16,9 +16,7 @@ internal object KeyboardLayoutResolver {
         systemInputMethodSwitcherVisible: Boolean = false,
         showsNumberRow: Boolean = true,
     ): KeyboardLayout {
-        val usesCompact = editorMode == KeyboardEditorMode.TEXT &&
-            inputMethod.isTelexFamily &&
-            !showsNumberRow
+        val usesCompact = usesCompactLetterRows(inputMethod, editorMode, showsNumberRow)
         val layout = when (mode) {
             KeyboardLayoutMode.LETTERS -> EditorKeyboardLayouts.resolve(
                 inputMethod = inputMethod,
