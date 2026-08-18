@@ -27,9 +27,9 @@ class ClipboardSettingsSectionTest {
             onOpenExpiry = { openedExpiry = true },
         )
 
-        compose.onNodeWithText("LỊCH SỬ CLIPBOARD").assertExists()
+        compose.onNodeWithText("LỊCH SỬ BẢNG NHỚ TẠM").assertExists()
         compose.onNodeWithText("1 ngày").assertExists()
-        compose.onNodeWithText("Lưu lịch sử clipboard").performClick()
+        compose.onNodeWithText("Lưu lịch sử bảng nhớ tạm").performClick()
         compose.onNodeWithText("Tự xoá sau").performClick()
 
         compose.runOnIdle {
@@ -44,7 +44,7 @@ class ClipboardSettingsSectionTest {
         setSection(onClear = { clearCount += 1 })
 
         compose.onNodeWithText("Xoá tất cả").performClick()
-        compose.onNodeWithText("Xoá toàn bộ lịch sử clipboard?").assertExists()
+        compose.onNodeWithText("Xoá toàn bộ lịch sử bảng nhớ tạm?").assertExists()
         compose.runOnIdle { assertEquals(0, clearCount) }
         compose.onNodeWithText("Giữ lại").performClick()
         compose.runOnIdle { assertEquals(0, clearCount) }

@@ -46,10 +46,10 @@ internal fun standardSpaceKey(widthWeight: Float = 5.8f) = KeySpec(
 
 internal fun asciiSpaceKey(widthWeight: Float) = KeySpec(
     id = "space",
-    label = "English",
+    label = "Tiếng Anh",
     role = KeyRole.SPACE,
     widthWeight = widthWeight,
-    accessibilityLabel = "Space",
+    accessibilityLabel = "Dấu cách",
 )
 
 internal fun specialKey(
@@ -77,7 +77,7 @@ private fun bottomCharacterRow(
     keys = buildList {
         add(specialKey("shift", "", KeyRole.SHIFT, 1.5f, "Shift"))
         addAll("zxcvbnm".map { characterKey(it, supportsVietnameseAlternates, showsTelexHints) })
-        add(specialKey("backspace", "", KeyRole.BACKSPACE, 1.5f, "Backspace"))
+        add(specialKey("backspace", "", KeyRole.BACKSPACE, 1.5f, "Xóa"))
     },
 )
 
@@ -104,7 +104,7 @@ private fun characterKey(
 }
 
 internal fun keyboardToolbarSpec() = SuggestionBarSpec(
-    clipboardKey = specialKey("clipboard", "", KeyRole.CLIPBOARD, accessibilityLabel = "Clipboard"),
-    emojiKey = specialKey("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
+    clipboardKey = specialKey("clipboard", "", KeyRole.CLIPBOARD, accessibilityLabel = "Lịch sử clipboard"),
+    emojiKey = specialKey("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Biểu tượng cảm xúc"),
     suggestionsEnabled = KeyboardFeatures.SuggestionsEnabled,
 )

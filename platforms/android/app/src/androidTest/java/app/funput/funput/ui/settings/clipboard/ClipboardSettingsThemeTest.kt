@@ -43,7 +43,7 @@ class ClipboardSettingsThemeTest {
                 }
             }
         }
-        compose.onNodeWithText("Lưu lịch sử clipboard").assertIsDisplayed()
+        compose.onNodeWithText("Lưu lịch sử bảng nhớ tạm").assertIsDisplayed()
         compose.onNodeWithText("1 tuần").assertIsDisplayed()
         compose.onNodeWithText("Xoá tất cả").assertIsDisplayed()
     }

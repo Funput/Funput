@@ -57,8 +57,8 @@ internal object SymbolLayouts {
         inputMethod = inputMethod,
         suggestionBar = if (KeyboardFeatures.EmojiToolbarEnabled && !secure) {
             SuggestionBarSpec(
-                clipboardKey = specialKey("clipboard-$id", "", KeyRole.CLIPBOARD, accessibilityLabel = "Clipboard"),
-                emojiKey = specialKey("emoji-$id", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
+                clipboardKey = specialKey("clipboard-$id", "", KeyRole.CLIPBOARD, accessibilityLabel = "Lịch sử clipboard"),
+                emojiKey = specialKey("emoji-$id", "", KeyRole.EMOJI, accessibilityLabel = "Biểu tượng cảm xúc"),
                 suggestionsEnabled = KeyboardFeatures.SuggestionsEnabled && suggestionsEnabled,
             )
         } else {
@@ -78,28 +78,28 @@ internal object SymbolLayouts {
         symbols: List<String>,
     ) = KeyboardRow(
         keys = buildList {
-            add(specialKey("switch-$page", switchLabel, switchRole, 1.5f, "Switch symbol page"))
+            add(specialKey("switch-$page", switchLabel, switchRole, 1.5f, "Chuyển trang ký hiệu"))
             addAll(symbols.mapIndexed { index, label -> symbolKey(page, 3, index, label) })
-            add(specialKey("backspace-$page", "", KeyRole.BACKSPACE, 1.5f, "Backspace"))
+            add(specialKey("backspace-$page", "", KeyRole.BACKSPACE, 1.5f, "Xóa"))
         },
     )
 
     private fun actionRow(page: String, secure: Boolean) = KeyboardRow(
         keys = listOf(
-            specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.7f, "Letters"),
-            specialKey("comma-$page", ",", KeyRole.PUNCTUATION),
+            specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.7f, "Chữ cái"),
+            specialKey("comma-$page", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
             symbolSpace(page, secure),
-            specialKey("period-$page", ".", KeyRole.PUNCTUATION),
+            specialKey("period-$page", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
             specialKey("enter-$page", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
     )
 
     private fun symbolSpace(page: String, secure: Boolean) = KeySpec(
         id = "space-$page",
-        label = if (secure) "English" else "Tiếng Việt",
+        label = if (secure) "Tiếng Anh" else "Tiếng Việt",
         role = KeyRole.SPACE,
         widthWeight = 5.8f,
-        accessibilityLabel = if (secure) "Space" else "Dấu cách. Vuốt để đổi ngôn ngữ",
+        accessibilityLabel = if (secure) "Dấu cách" else "Dấu cách. Vuốt để đổi ngôn ngữ",
         horizontalSwipeAction = KeySwipeAction.TOGGLE_LANGUAGE.takeUnless { secure },
     )
 

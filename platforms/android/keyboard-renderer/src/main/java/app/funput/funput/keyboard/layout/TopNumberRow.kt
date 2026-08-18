@@ -37,9 +37,9 @@ internal fun topNumberRowFor(
 internal fun topNumberRow(mode: TopNumberRowMode, pageId: String): KeyboardRow {
     val hints = listOf("´", "`", "̉", "˜", "̣", "ˆ", "+", "˘", "đ", "×")
     val descriptions = listOf(
-        "Sắc tone", "Huyền tone", "Hỏi tone", "Ngã tone", "Nặng tone",
-        "Circumflex modifier", "Horn modifier", "Breve modifier",
-        "D stroke modifier", "Remove tone",
+        "Dấu sắc", "Dấu huyền", "Dấu hỏi", "Dấu ngã", "Dấu nặng",
+        "Dấu mũ", "Dấu móc", "Dấu trăng",
+        "Chữ đ", "Xóa dấu",
     )
     return KeyboardRow(
         keys = (0..9).map { index ->

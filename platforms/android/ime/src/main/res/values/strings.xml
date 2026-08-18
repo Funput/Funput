@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="funput_ime_name" translatable="false">Funput</string>
-    <string name="funput_ime_subtype_vietnamese">Vietnamese</string>
-    <string name="clipboard_paste_too_large">Copied content is too long to paste</string>
-    <string name="clipboard_paste_failed">Couldn’t paste copied content</string>
+    <string name="funput_ime_subtype_vietnamese">Tiếng Việt</string>
+    <string name="clipboard_paste_too_large">Nội dung đã sao chép quá dài để dán</string>
+    <string name="clipboard_paste_failed">Không thể dán nội dung đã sao chép</string>
 </resources>

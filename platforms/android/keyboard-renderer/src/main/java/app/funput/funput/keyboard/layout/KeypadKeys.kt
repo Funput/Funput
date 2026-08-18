@@ -31,5 +31,5 @@ internal fun keypadEmpty(position: String) = KeySpec(
     id = "placeholder-$position",
     label = "",
     role = KeyRole.PLACEHOLDER,
-    accessibilityLabel = "Empty keypad position",
+    accessibilityLabel = "Vị trí trống",
 )
