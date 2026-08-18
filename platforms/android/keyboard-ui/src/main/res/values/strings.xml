@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="emoji_panel_letters" translatable="false">ABC</string>
-    <string name="emoji_panel_letters_description">Return to letters</string>
-    <string name="emoji_panel_backspace_description">Backspace</string>
-    <string name="emoji_panel_loading">Loading emoji…</string>
-    <string name="emoji_panel_empty">No emoji available</string>
-    <string name="emoji_search_empty">No matching emoji</string>
-    <string name="clipboard_pinned">Pinned</string>
-    <string name="clipboard_recent">Recent</string>
-    <string name="clipboard_empty_title">Nothing in history</string>
-    <string name="clipboard_empty_detail">Copy text, then tap Paste in the toolbar. History only saves content pasted through Funput.</string>
-    <string name="clipboard_loading">Loading clipboard history</string>
-    <string name="clipboard_just_now">Just now</string>
-    <string name="clipboard_minutes_ago">%1$d minutes ago</string>
-    <string name="clipboard_hours_ago">%1$d hours ago</string>
-    <string name="clipboard_days_ago">%1$d days ago</string>
-    <string name="clipboard_pin">Pin</string>
-    <string name="clipboard_unpin">Unpin</string>
-    <string name="clipboard_delete">Delete</string>
-    <string name="clipboard_clear_all">Clear all</string>
-    <string name="clipboard_return">Return to Funput keyboard</string>
-    <string name="clipboard_preview">Clipboard preview</string>
+    <string name="emoji_panel_letters_description">Quay lại bàn phím chữ</string>
+    <string name="emoji_panel_backspace_description">Xóa lùi</string>
+    <string name="emoji_panel_loading">Đang tải biểu tượng…</string>
+    <string name="emoji_panel_empty">Không có biểu tượng</string>
+    <string name="emoji_search_empty">Không tìm thấy biểu tượng</string>
+    <string name="clipboard_pinned">Đã ghim</string>
+    <string name="clipboard_recent">Gần đây</string>
+    <string name="clipboard_empty_title">Chưa có gì trong lịch sử</string>
+    <string name="clipboard_empty_detail">Sao chép văn bản rồi chạm nút Dán trên thanh công cụ. Lịch sử chỉ lưu những gì bạn đã dán qua Funput.</string>
+    <string name="clipboard_loading">Đang tải lịch sử bảng nhớ tạm</string>
+    <string name="clipboard_just_now">Vừa xong</string>
+    <string name="clipboard_minutes_ago">%1$d phút trước</string>
+    <string name="clipboard_hours_ago">%1$d giờ trước</string>
+    <string name="clipboard_days_ago">%1$d ngày trước</string>
+    <string name="clipboard_pin">Ghim</string>
+    <string name="clipboard_unpin">Bỏ ghim</string>
+    <string name="clipboard_delete">Xoá</string>
+    <string name="clipboard_clear_all">Xoá tất cả</string>
+    <string name="clipboard_return">Trở về bàn phím Funput</string>
+    <string name="clipboard_preview">Xem nội dung bảng nhớ tạm</string>
 </resources>

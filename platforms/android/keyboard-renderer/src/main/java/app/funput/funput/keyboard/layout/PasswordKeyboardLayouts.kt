@@ -10,10 +10,10 @@ internal object PasswordKeyboardLayouts {
         inputMethod = inputMethod,
         leadingRows = listOf(keypadRow(*"1234567890".map(::keypadDigit).toTypedArray())),
         actionKeys = listOf(
-            specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
-            specialKey("comma", ",", KeyRole.PUNCTUATION),
+            specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Ký hiệu"),
+            specialKey("comma", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
             asciiSpaceKey(5.8f),
-            specialKey("period", ".", KeyRole.PUNCTUATION),
+            specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
             specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
         showSuggestionBar = false,
@@ -36,6 +36,6 @@ internal object PasswordKeyboardLayouts {
         ),
     )
 
-    private fun backspace() = keypadCommand("backspace", KeyRole.BACKSPACE, "Backspace")
+    private fun backspace() = keypadCommand("backspace", KeyRole.BACKSPACE, "Xóa")
     private fun enter() = keypadCommand("enter", KeyRole.ENTER, "Enter")
 }

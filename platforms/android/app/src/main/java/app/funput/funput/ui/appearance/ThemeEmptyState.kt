@@ -17,7 +17,7 @@ import app.funput.funput.R
 import app.funput.funput.ui.theme.Spacing
 
 /**
- * What "Theme của bạn" says before there is one.
+ * What "Chủ đề của bạn" says before there is one.
  *
  * The section used to vanish entirely when empty, which left the floating button offering to make
  * a thing with no indication of where it would land — and no answer to "have I made any yet?".

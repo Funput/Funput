@@ -46,10 +46,10 @@ object KeyboardLayouts {
     }
 
     private fun standardActionKeys() = listOf(
-        specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
-        specialKey("comma", ",", KeyRole.PUNCTUATION),
+        specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Ký hiệu"),
+        specialKey("comma", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
         standardSpaceKey(),
-        specialKey("period", ".", KeyRole.PUNCTUATION),
+        specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
         specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
     )
 }

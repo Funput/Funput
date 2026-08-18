@@ -64,11 +64,11 @@ class AppearanceScreenTest {
             .performScrollToNode(hasTestTag(customTheme.id.value))
         // Edit and delete live behind the card's overflow menu, which has to be opened each time:
         // choosing an item closes it.
-        compose.onNodeWithContentDescription("Tuỳ chọn cho theme Ocean").performClick()
-        compose.onNodeWithContentDescription("Sửa theme Ocean").performClick()
-        compose.onNodeWithContentDescription("Tuỳ chọn cho theme Ocean").performClick()
-        compose.onNodeWithContentDescription("Xóa theme Ocean").performClick()
-        compose.onNodeWithText("Xóa theme").performClick()
+        compose.onNodeWithContentDescription("Tuỳ chọn cho chủ đề Ocean").performClick()
+        compose.onNodeWithContentDescription("Sửa chủ đề Ocean").performClick()
+        compose.onNodeWithContentDescription("Tuỳ chọn cho chủ đề Ocean").performClick()
+        compose.onNodeWithContentDescription("Xóa chủ đề Ocean").performClick()
+        compose.onNodeWithText("Xóa chủ đề").performClick()
 
         compose.onNodeWithTag(AppearanceListTag)
             .performScrollToNode(hasTestTag(KeyboardThemeId.Dark.value))

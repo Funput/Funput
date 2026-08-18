@@ -16,18 +16,18 @@ internal object PhoneKeyboardLayouts {
                 keypadDigit('7'),
                 keypadDigit('8'),
                 keypadDigit('9'),
-                phoneKey("plus", "+", "Plus"),
+                phoneKey("plus", "+", "Dấu cộng"),
             ),
             keypadRow(
-                phoneKey("star", "*", "Star"),
+                phoneKey("star", "*", "Dấu sao"),
                 keypadDigit('0'),
-                phoneKey("hash", "#", "Hash"),
+                phoneKey("hash", "#", "Dấu thăng"),
                 keypadEmpty("phone"),
             ),
         ),
     )
 
-    private fun backspace() = keypadCommand("backspace", KeyRole.BACKSPACE, "Backspace")
+    private fun backspace() = keypadCommand("backspace", KeyRole.BACKSPACE, "Xóa")
     private fun enter() = keypadCommand("enter", KeyRole.ENTER, "Enter")
     private fun phoneKey(id: String, value: String, label: String) = keypadText(id, value, label)
 }

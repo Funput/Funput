@@ -63,8 +63,8 @@ internal object CompactSymbolLayouts {
         id = id + suggestionSuffix(suggestionsEnabled),
         inputMethod = inputMethod,
         suggestionBar = SuggestionBarSpec(
-            clipboardKey = specialKey("clipboard-$id", "", KeyRole.CLIPBOARD, accessibilityLabel = "Clipboard"),
-            emojiKey = specialKey("emoji-$id", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
+            clipboardKey = specialKey("clipboard-$id", "", KeyRole.CLIPBOARD, accessibilityLabel = "Lịch sử clipboard"),
+            emojiKey = specialKey("emoji-$id", "", KeyRole.EMOJI, accessibilityLabel = "Biểu tượng cảm xúc"),
             suggestionsEnabled = KeyboardFeatures.SuggestionsEnabled && suggestionsEnabled,
         ).takeIf { KeyboardFeatures.EmojiToolbarEnabled },
         rows = rows,
@@ -88,7 +88,7 @@ internal object CompactSymbolLayouts {
         symbols: List<String>,
     ) = KeyboardRow(
         keys = buildList {
-            add(specialKey("switch-$page", switchLabel, switchRole, 1.5f, "Switch symbol page"))
+            add(specialKey("switch-$page", switchLabel, switchRole, 1.5f, "Chuyển trang ký hiệu"))
             addAll(
                 symbols.mapIndexed { index, label ->
                     KeySpec(
@@ -99,16 +99,16 @@ internal object CompactSymbolLayouts {
                     )
                 },
             )
-            add(specialKey("backspace-$page", "", KeyRole.BACKSPACE, 1.5f, "Backspace"))
+            add(specialKey("backspace-$page", "", KeyRole.BACKSPACE, 1.5f, "Xóa"))
         },
     )
 
     private fun actionRow(page: String) = KeyboardRow(
         keys = listOf(
-            specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.7f, "Letters"),
-            specialKey("comma-$page", ",", KeyRole.PUNCTUATION),
+            specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.7f, "Chữ cái"),
+            specialKey("comma-$page", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
             standardSpaceKey(),
-            specialKey("period-$page", ".", KeyRole.PUNCTUATION),
+            specialKey("period-$page", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
             specialKey("enter-$page", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
     )

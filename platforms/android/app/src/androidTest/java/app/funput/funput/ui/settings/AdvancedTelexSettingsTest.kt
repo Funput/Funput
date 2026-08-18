@@ -36,7 +36,7 @@ class AdvancedTelexSettingsTest {
         compose.onNodeWithText("Telex").assertExists()
         compose.onNodeWithText("Dùng tổ hợp chữ để nhập dấu.").assertExists()
         compose.onNodeWithText("Telex nâng cao").assertExists()
-        compose.onNodeWithText("Full Telex — [→ư, ]→ơ, w đầu từ→ư.").assertExists()
+        compose.onNodeWithText("Gõ [ thành ư, ] thành ơ; w đầu từ thành ư.").assertExists()
         compose.onNodeWithText("VNI").assertExists()
         compose.onNodeWithText("Dùng các phím số để nhập dấu.").assertExists()
         compose.onNodeWithText("Telex nâng cao").performClick()

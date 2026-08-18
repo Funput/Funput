@@ -25,22 +25,22 @@ internal object NumberKeyboardLayouts {
         )
     }
 
-    private fun backspace() = keypadCommand("backspace", KeyRole.BACKSPACE, "Backspace")
+    private fun backspace() = keypadCommand("backspace", KeyRole.BACKSPACE, "Xóa")
     private fun enter() = keypadCommand("enter", KeyRole.ENTER, "Enter")
     private fun sign(mode: KeyboardEditorMode) = if (mode.allowsSigned) {
-        keypadText("minus", "-", "Minus")
+        keypadText("minus", "-", "Dấu trừ")
     } else {
         keypadEmpty("sign")
     }
 
     private fun period(mode: KeyboardEditorMode) = if (mode.allowsDecimal) {
-        keypadText("period", ".", "Decimal point")
+        keypadText("period", ".", "Dấu thập phân")
     } else {
         keypadEmpty("period")
     }
 
     private fun comma(mode: KeyboardEditorMode) = if (mode.allowsDecimal) {
-        keypadText("comma", ",", "Decimal comma")
+        keypadText("comma", ",", "Dấu phẩy thập phân")
     } else {
         keypadEmpty("comma")
     }

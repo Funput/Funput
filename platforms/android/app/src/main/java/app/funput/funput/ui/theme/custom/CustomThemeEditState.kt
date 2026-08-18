@@ -12,7 +12,7 @@ import app.funput.funput.theme.KeyboardThemeId
 internal fun KeyboardThemeDescriptor?.initialThemeName(): String =
     this?.name ?: DefaultCustomThemeName
 
-internal const val DefaultCustomThemeName = "Theme của tôi"
+internal const val DefaultCustomThemeName = "Chủ đề của tôi"
 
 internal fun KeyboardThemeDescriptor?.initialBaseThemeValue(): String =
     this?.baseThemeId?.value ?: KeyboardThemeId.Default.value

@@ -20,5 +20,5 @@ private fun systemInputMethodSwitcher() = KeySpec(
     id = "system-input-method",
     label = "",
     role = KeyRole.SYSTEM_INPUT_METHOD,
-    accessibilityLabel = "Switch keyboard",
+    accessibilityLabel = "Đổi bàn phím",
 )

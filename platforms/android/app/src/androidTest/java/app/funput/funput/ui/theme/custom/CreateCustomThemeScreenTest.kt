@@ -41,13 +41,13 @@ class CreateCustomThemeScreenTest {
         }
 
         // A new theme arrives named, so saving is never blocked on the least interesting decision.
-        compose.onNodeWithText("Lưu theme").assertIsEnabled()
+        compose.onNodeWithText("Lưu chủ đề").assertIsEnabled()
         compose.onNodeWithTag("custom-theme-name").performTextClearance()
         compose.onNodeWithTag("custom-theme-name").performTextInput("Ocean")
         // Base and accent are the first two things on the page now, not a dropdown behind restore.
         compose.onNodeWithText(lightTheme.name).performClick()
         compose.onNodeWithContentDescription("Xanh biển").performClick().assertIsSelected()
-        compose.onNodeWithText("Lưu theme").performClick()
+        compose.onNodeWithText("Lưu chủ đề").performClick()
 
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)
@@ -85,7 +85,7 @@ class CreateCustomThemeScreenTest {
             }
         }
 
-        compose.onNodeWithText("Lưu theme").performClick()
+        compose.onNodeWithText("Lưu chủ đề").performClick()
 
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)

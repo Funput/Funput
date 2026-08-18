@@ -46,7 +46,7 @@ internal object EditorKeyboardLayouts {
             actionKeys = webActionKeys(
                 middleId = "at",
                 middleLabel = "@",
-                middleAccessibilityLabel = "At sign",
+                middleAccessibilityLabel = "A còng",
             ),
         )
     }
@@ -83,7 +83,7 @@ internal object EditorKeyboardLayouts {
             actionKeys = webActionKeys(
                 middleId = "slash",
                 middleLabel = "/",
-                middleAccessibilityLabel = "Slash",
+                middleAccessibilityLabel = "Dấu gạch chéo",
                 supportsVietnamese = supportsVietnamese,
             ),
             supportsVietnameseAlternates = supportsVietnamese,
@@ -97,10 +97,10 @@ internal object EditorKeyboardLayouts {
         middleAccessibilityLabel: String,
         supportsVietnamese: Boolean = false,
     ) = listOf(
-        specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Symbols"),
+        specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Ký hiệu"),
         specialKey(middleId, middleLabel, KeyRole.PUNCTUATION, accessibilityLabel = middleAccessibilityLabel),
         if (supportsVietnamese) standardSpaceKey(5.8f) else asciiSpaceKey(5.8f),
-        specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Period"),
+        specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
         specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
     )
 }
