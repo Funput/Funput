@@ -47,18 +47,29 @@
                 <string>app.funput.inputmethod.Funput.Vietnamese</string>
                 <key>TISIntendedLanguage</key>
                 <string>vi</string>
-                <key>tsInputModeAlternateMenuTitle</key>
-                <string>Funput (Tiếng Việt)</string>
+                <key>TISIconLabels</key>
+                <dict>
+                    <key>Primary</key>
+                    <string>VI</string>
+                </dict>
+                <key>tsInputModeCharacterRepertoireKey</key>
+                <array>
+                    <string>Latn</string>
+                </array>
+                <key>tsInputModeDefaultStateKey</key>
+                <true/>
                 <key>tsInputModeIsVisibleKey</key>
                 <true/>
                 <key>tsInputModeMenuIconFileKey</key>
                 <string>MenuIcon.tiff</string>
-                <key>tsInputModeKeyEquivalentKey</key>
-                <string></string>
-                <key>tsInputModeKeyEquivalentModifiersKey</key>
-                <integer>0</integer>
+                <key>tsInputModePaletteIconFileKey</key>
+                <string>MenuIcon.tiff</string>
                 <key>tsInputModePrimaryInScriptKey</key>
                 <true/>
+                <!-- smUnicodeScript is the traditional IMK script token (Ainu, Tamil).
+                     Roman/Latin key translation is declared via Latn repertoire below,
+                     not smRoman — claiming smRoman would compete with the system ABC
+                     keyboard as the primary Roman input source. -->
                 <key>tsInputModeScriptKey</key>
                 <string>smUnicodeScript</string>
             </dict>
@@ -74,14 +85,10 @@
     <string>FunputInputController</string>
     <key>InputMethodServerDelegateClass</key>
     <string>FunputInputController</string>
-    <key>LSApplicationCategoryType</key>
-    <string>public.app-category.productivity</string>
     <key>LSMinimumSystemVersion</key>
     <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
     <key>LSUIElement</key>
     <true/>
-    <key>NSHumanReadableCopyright</key>
-    <string></string>
     <!-- Sparkle auto-update. Feed is the appcast.xml asset attached to the latest
          GitHub Release. Checks are manual-only (no background polling). -->
     <key>SUFeedURL</key>
@@ -92,12 +99,22 @@
     <false/>
     <key>SUAllowsAutomaticUpdates</key>
     <false/>
-    <key>tsInputMethodCharacterRepertoireKey</key>
-    <array>
-        <string>vi</string>
-    </array>
     <key>TISIconIsTemplate</key>
     <true/>
+    <key>TISInputSourceID</key>
+    <string>app.funput.inputmethod.Funput</string>
+    <key>TISIntendedLanguage</key>
+    <string>vi</string>
+    <!-- ISO 15924 script code for the text this IME produces (cf. Taml for
+         Apple's Tamil IM, Hans for Simplified Chinese). Do not put the language
+         code `vi` here; language belongs in TISIntendedLanguage. Note this key
+         does not pick the physical layout: Funput ships no keyboard layout of its
+         own, so the system keeps the user's current ASCII-capable one (ABC, US,
+         AZERTY, …) — the layout Keyboard Viewer shows. -->
+    <key>tsInputMethodCharacterRepertoireKey</key>
+    <array>
+        <string>Latn</string>
+    </array>
     <key>tsInputMethodIconFileKey</key>
     <string>MenuIcon.tiff</string>
 </dict>
