@@ -6,7 +6,7 @@ data class KeyboardSizingProfile(
     val verticalPaddingDp: Float = 6f,
     val horizontalGapRatio: Float = 0.11f,
     val verticalGapRatio: Float = 0.16f,
-    val keyAspectRatio: Float = 0.75f,
+    val keyAspectRatio: Float = DefaultKeyAspectRatio,
     val heightScale: Float = 1f,
     val labelScale: Float = 0.96f,
 ) {
@@ -21,6 +21,16 @@ data class KeyboardSizingProfile(
     }
 
     companion object {
+        /**
+         * Key width over row pitch, calibrated so 100% lands on Gboard's untouched default.
+         *
+         * Measured on a 1440x3200 phone at density 3.75 (384dp wide): Gboard rows sit on a 189.5px
+         * pitch, and at the previous 0.75 this keyboard produced 184px — about 3% short, which read
+         * as Funput being the smaller keyboard at the same nominal size. The slider still spans
+         * [MinScale]..[MaxScale] around this baseline.
+         */
+        const val DefaultKeyAspectRatio = 0.73f
+
         /** The range Settings offers, matching the iOS slider so the two platforms agree. */
         const val MinScale = 0.85f
         const val MaxScale = 1.2f
