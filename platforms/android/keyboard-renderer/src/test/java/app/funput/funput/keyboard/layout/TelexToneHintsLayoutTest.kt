@@ -30,9 +30,25 @@ class TelexToneHintsLayoutTest {
     }
 
     @Test
-    fun compactTelexStillShowsToneHints() {
-        assertToneHints(
-            KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX, showsNumberRow = false),
+    fun compactTelexKeepsToneHintsBesideItsDigitHints() {
+        // With the number row hidden the top row also carries digits, so `r` reads "hỏi 4"
+        // and its nine neighbours gain a hint they do not have on the full layout.
+        val layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX, showsNumberRow = false)
+        val hinted = letterKeys(layout)
+            .filter { it.secondaryLabel != null }
+            .associate { it.label to it.secondaryLabel }
+
+        expectedHints.forEach { (label, glyph) ->
+            val hint = requireNotNull(hinted[label]) { label }
+            assertTrue(label, hint.startsWith(glyph))
+        }
+        assertEquals("̉ 4", hinted["r"])
+        assertEquals("´", hinted["s"])
+        // Only the top row and the tone keys are hinted; the rest stay bare.
+        assertTrue(
+            letterKeys(layout)
+                .filter { it.label !in expectedHints && it.label !in TopRowLabels }
+                .all { it.secondaryLabel == null },
         )
     }
 
@@ -97,6 +113,10 @@ class TelexToneHintsLayoutTest {
         letterKeys.filter { it.label !in expectedHints }.forEach { key ->
             assertNull(key.secondaryLabel)
         }
+    }
+
+    private companion object {
+        val TopRowLabels = "qwertyuiop".map(Char::toString)
     }
 
     private fun letterKeys(layout: app.funput.funput.keyboard.model.KeyboardLayout) =

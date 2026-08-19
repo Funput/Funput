@@ -2,6 +2,7 @@ package app.funput.funput.keyboard.popover.rendering
 
 import app.funput.funput.keyboard.layout.KeyBounds
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -14,18 +15,60 @@ class AlternatePaletteLayoutTest {
         val layout = resolve(18, KeyBounds(102f, 198f, 138f, 242f))
 
         assertEquals(18, layout.itemBounds.size)
-        assertEquals(9, layout.itemBounds.count { it.top == layout.itemBounds.first().top })
         assertTrue(layout.bounds.left >= 6f)
         assertTrue(layout.bounds.right <= 384f)
         assertTrue(layout.bounds.top >= 4f)
     }
 
     @Test
-    fun `palette uses below placement when top has no room`() {
-        val source = KeyBounds(60f, 8f, 100f, 48f)
-        val layout = resolve(12, source)
+    fun `the palette rises from the key instead of dropping below it`() {
+        listOf(62f, 111f, 160f, 209f).forEach { top ->
+            val source = KeyBounds(156f, top, 192f, top + 40f)
+            val layout = resolve(13, source)
 
-        assertTrue(layout.bounds.top > source.bottom)
+            assertTrue("$top", layout.bounds.top < source.top)
+            assertTrue("$top", layout.bounds.left >= 6f && layout.bounds.right <= 384f)
+        }
+    }
+
+    @Test
+    fun `the palette wraps into at most three rows instead of running wide`() {
+        listOf(62f, 209f).forEach { top ->
+            val source = KeyBounds(156f, top, 192f, top + 40f)
+            listOf(13, 18, 19).forEach { count ->
+                val layout = resolve(count, source)
+                val rows = layout.itemBounds.map { it.top }.distinct().size
+
+                assertTrue("$count", rows in 2..3)
+                assertTrue("$count", layout.bounds.width <= surface.width * 0.8f)
+            }
+        }
+    }
+
+    @Test
+    fun `short sets stay on one row`() {
+        val layout = resolve(2, KeyBounds(156f, 160f, 192f, 200f))
+
+        assertEquals(1, layout.itemBounds.map { it.top }.distinct().size)
+        assertEquals(2, layout.itemBounds.size)
+    }
+
+    @Test
+    fun `a palette clamped over its key keeps the default until the finger travels`() {
+        // Nineteen alternates cannot fit above a top-row key, so the palette covers it.
+        val source = KeyBounds(300f, 62f, 336f, 102f)
+        val layout = resolve(19, source)
+        val startX = source.centerX
+        val startY = source.centerY
+
+        assertTrue(layout.overlapsSource)
+        assertEquals(0, layout.selectionAt(startX, startY, startX, startY, 1f))
+        assertEquals(0, layout.selectionAt(startX + 6f, startY, startX, startY, 1f))
+        // The cell sitting over the key stays reachable once the finger has moved.
+        val covering = layout.indexAt(startX, startY, 1f)
+        assertNotEquals(null, covering)
+        assertNotEquals(0, covering)
+        assertEquals(covering, layout.selectionAt(startX, startY, startX, startY + 60f, 1f))
     }
 
     @Test

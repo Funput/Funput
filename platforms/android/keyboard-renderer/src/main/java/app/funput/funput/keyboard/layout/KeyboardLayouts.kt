@@ -31,7 +31,7 @@ object KeyboardLayouts {
         showsNumberRow: Boolean,
     ): KeyboardLayout {
         val hasNumberRow = inputMethod == KeyboardInputMethod.VNI || showsNumberRow
-        return qwertyLayout(
+        val layout = qwertyLayout(
             id = if (hasNumberRow) id else "$id-compact",
             inputMethod = inputMethod,
             leadingRows = if (hasNumberRow) {
@@ -43,6 +43,9 @@ object KeyboardLayouts {
             supportsVietnameseAlternates = true,
             showsTelexHints = inputMethod.isTelexFamily,
         )
+        // Digits move onto the top row only when no row of their own is on screen.
+        if (hasNumberRow || !inputMethod.isTelexFamily) return layout
+        return CompactDigitAlternates.decorate(layout)
     }
 
     private fun standardActionKeys() = listOf(

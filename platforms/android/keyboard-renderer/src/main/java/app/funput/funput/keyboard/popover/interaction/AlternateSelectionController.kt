@@ -55,7 +55,7 @@ internal class AlternateSelectionController(
             }
             return
         }
-        val next = layout.indexAt(x, y, density)
+        val next = layout.selectionAt(x, y, session.startX, session.startY, density)
         if (next != session.selectedIndex) {
             session.selectedIndex = next
             onFeedback()
@@ -67,7 +67,7 @@ internal class AlternateSelectionController(
         val session = sessions.remove(pointerId) ?: return false
         cancel(session.task)
         val layout = session.layout ?: return false
-        val index = layout.indexAt(x, y, density)
+        val index = layout.selectionAt(x, y, session.startX, session.startY, density)
         index?.let { session.key.alternates.getOrNull(it) }?.let {
             onSelected(session.key, it)
         }
