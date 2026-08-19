@@ -3,6 +3,7 @@ package app.funput.funput.keyboard.popover.interaction
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 import app.funput.funput.keyboard.popover.model.VietnameseKeyAlternates
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -37,6 +38,21 @@ class AlternateSelectionControllerTest {
         startAndActivate()
         assertTrue(controller.finish(1, 120f, 220f))
         assertEquals(listOf("a"), selected)
+    }
+
+    @Test
+    fun `hold release on a compact top-row key selects its digit`() {
+        val digitKey = key.copy(
+            id = "character-u",
+            label = "u",
+            alternates = listOf(KeyAlternate("7", accessibilityLabel = "Số 7")) +
+                VietnameseKeyAlternates.valuesFor('u'),
+        )
+        controller.start(1, digitKey, 120f, 220f)
+        scheduler.run()
+
+        assertTrue(controller.finish(1, 120f, 220f))
+        assertEquals(listOf("7"), selected)
     }
 
     @Test

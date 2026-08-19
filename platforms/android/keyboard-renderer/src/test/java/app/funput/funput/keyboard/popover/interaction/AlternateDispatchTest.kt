@@ -29,6 +29,14 @@ class AlternateDispatchTest {
     }
 
     @Test
+    fun `a digit alternate stays a digit under shift`() {
+        dispatcher.setShiftState(ShiftState.CAPS_LOCK)
+        dispatcher.dispatchAlternate(key, KeyAlternate("7", accessibilityLabel = "Số 7"))
+
+        assertEquals(KeyAction.Input(key.id, "7"), actions.single())
+    }
+
+    @Test
     fun `caps lock remains active after alternate`() {
         dispatcher.setShiftState(ShiftState.CAPS_LOCK)
         dispatcher.dispatchAlternate(key, KeyAlternate("ư"))

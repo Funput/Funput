@@ -25,6 +25,24 @@ class AlternateCompositionTest {
     }
 
     @Test
+    fun `digit alternate goes through composition like the number row`() {
+        // The compact top row offers its digit as the first alternate. It must take the same
+        // path a real digit key takes — through the engine — not a literal commit.
+        val connection = RecordingConnection()
+        val handler = ImeKeyActionHandler(
+            composition = testSession(ScriptedEngine(ArrayDeque(listOf("2")))),
+            editor = InputConnectionEditor(),
+            connection = { connection.proxy },
+            enterCommand = { ImeEditCommand.CommitText("\n") },
+        )
+        handler.start()
+        handler.onKeyAction(KeyAction.Input("character-w", "2"))
+
+        assertEquals(listOf("2"), connection.composingTexts)
+        assertEquals(emptyList<String>(), connection.committedTexts)
+    }
+
+    @Test
     fun `English mode commits precomposed alternate directly`() {
         val connection = RecordingConnection()
         val handler = ImeKeyActionHandler(
