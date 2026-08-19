@@ -60,7 +60,7 @@ extension KeyboardSurfaceInteractionController {
         guard var state = touches[token] else { return }
         hapticsEnabled = presentation.isHapticFeedbackEnabled
         if let layout = state.alternateLayout {
-            let next = layout.index(at: point)
+            let next = layout.selection(at: point, from: state.startPoint)
             if next != state.selectedAlternateIndex, hapticsEnabled {
                 haptics.perform(.control)
             }

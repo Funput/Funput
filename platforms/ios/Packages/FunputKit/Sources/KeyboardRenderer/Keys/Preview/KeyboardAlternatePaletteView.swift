@@ -62,6 +62,9 @@ final class KeyboardAlternatePaletteView: UIView {
             let label = UILabel()
             label.font = .systemFont(ofSize: 22)
             label.textAlignment = .center
+            // Cells narrow when the palette widens to fit above a top-row key.
+            label.adjustsFontSizeToFitWidth = true
+            label.minimumScaleFactor = 0.7
             label.layer.cornerCurve = .continuous
             label.layer.cornerRadius = 8
             addSubview(label)

@@ -32,6 +32,18 @@ struct KeyboardAlternateInputTests {
         #expect(coordinator.composer.buffer().isEmpty)
     }
 
+    @Test("Digit alternate types the number without disturbing the word", arguments: [
+        KeyboardInputMethod.telex,
+        .telexAdvanced,
+    ])
+    func digit(method: KeyboardInputMethod) {
+        let coordinator = KeyboardInputCoordinator(inputMethod: method)
+        let document = TestKeyboardWriter()
+        for character in "nam " { type(String(character), with: coordinator, into: document) }
+        coordinator.handleAlternate(alternate("2"), from: sourceKey(), writer: document)
+        #expect(document.text == "nam 2")
+    }
+
     @Test("Alternate consumes one-shot Shift")
     func oneShotShift() {
         let coordinator = KeyboardInputCoordinator(inputMethod: .telex)

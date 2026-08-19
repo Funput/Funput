@@ -40,6 +40,16 @@ struct RendererSemanticsTests {
         }
     }
 
+    @Test("Compact top row renders its digit hints")
+    func compactDigitHints() throws {
+        let layout = StandardKeyboardLayouts.letters(.telex, showsNumberRow: false)
+        let key = try #require(layout.rows.flatMap(\.keys).first { $0.label == "u" })
+        let presentation = KeyboardPresentation(layout: layout)
+        let renderedLabels = labels(in: renderedControl(key: key, presentation: presentation))
+        #expect(renderedLabels.contains("7"))
+        #expect(renderedLabels.contains("u"))
+    }
+
     @Test("Language-aware Space shows swipe affordances")
     func languageSpace() {
         let layout = StandardKeyboardLayouts.letters(.telex)

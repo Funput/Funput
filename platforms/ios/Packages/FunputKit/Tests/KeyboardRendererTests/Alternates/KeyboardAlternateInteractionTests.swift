@@ -44,6 +44,21 @@ struct KeyboardAlternateInteractionTests {
         #expect(dragged.palette == nil)
     }
 
+    @Test("Holding a compact top-row key releases its pre-selected digit")
+    func selectDefaultDigit() {
+        let subject = Subject(key: Subject.digitKey)
+        subject.begin()
+        subject.scheduler.runNext()
+        subject.controller.endTouch(token: 1)
+
+        guard let phase = subject.events.last?.phase,
+              case let .alternateSelected(value) = phase else {
+            Issue.record("Expected alternate selection")
+            return
+        }
+        #expect(value.text == "7")
+    }
+
     @Test("Leaving the palette cancels the alternate release")
     func cancelOutside() {
         let subject = Subject()
@@ -66,13 +81,25 @@ private final class Subject {
         onAlternatePreview: { [weak self] _, layout, _ in self?.palette = layout },
         repeatScheduler: scheduler.schedule
     )
-    let key = KeySpec(
+    let key: KeySpec
+
+    init(key: KeySpec = Subject.toneKey) {
+        self.key = key
+    }
+
+    static let toneKey = KeySpec(
         id: "a",
         label: "a",
         role: .character,
         shiftedLabel: "A",
         alternates: VietnameseKeyAlternates.values(for: "a")
     )
+    /// The compact top row leads its palette with the digit, so a hold that never moves
+    /// resolves to the number rather than to the letter.
+    static let digitKey = StandardKeyboardLayouts
+        .letters(.telex, showsNumberRow: false)
+        .rows.flatMap(\.keys)
+        .first { $0.label == "u" }!
     var presentation: KeyboardPresentation {
         var value = KeyboardPresentation()
         value.isHapticFeedbackEnabled = false
