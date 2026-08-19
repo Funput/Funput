@@ -59,8 +59,8 @@ class KeyboardInteractionControllerTest {
 
     @Test
     fun accessibilityClickUsesTheSameSemanticDispatch() {
-        controller.onAccessibilityClick("emoji", eventTimeMillis = 100L)
-        controller.onAccessibilityClick("space", eventTimeMillis = 101L)
+        controller.emitClick("emoji", eventTimeMillis = 100L)
+        controller.emitClick("space", eventTimeMillis = 101L)
 
         assertEquals(1, emojiRequestCount)
         assertEquals(KeyAction.Space, actions.single())
@@ -113,7 +113,7 @@ class KeyboardInteractionControllerTest {
 
     @Test
     fun accessibilitySuggestionUsesValidatedCallbackOnce() {
-        controller.onAccessibilitySuggestion("suggestion-1")
+        controller.emitSuggestion("suggestion-1")
 
         assertEquals(listOf(SuggestionSelection(1, "chào")), selections)
         assertEquals(listOf(KeyboardHapticType.CONTROL), haptics)

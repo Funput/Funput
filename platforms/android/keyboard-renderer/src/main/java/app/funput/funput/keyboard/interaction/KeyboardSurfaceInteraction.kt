@@ -61,30 +61,33 @@ internal class KeyboardSurfaceInteraction(
             onPointerKeyChanged = controller::onPointerKeyChanged,
             onPointerMoved = controller::onPointerMoved,
             onKeyReleased = controller::onKeyReleased,
-            isPointerCaptured = controller::isAlternateCaptured,
+            isPointerCaptured = controller::isPointerCaptured,
             onCancelled = controller::cancel,
             requestParentIntercept = requestParentIntercept,
         )
     }
 
     val shiftState: ShiftState get() = controller.shiftState
-    val language: KeyboardLanguage get() = controller.language
+    var language: KeyboardLanguage
+        get() = controller.language
+        set(value) = controller.setLanguage(value)
+    var areSmartGesturesEnabled by controller::areSmartGesturesEnabled
     val alternatePreview: AlternateSelectionPreview? get() = controller.alternatePreview
-
-    fun setLanguage(value: KeyboardLanguage) = controller.setLanguage(value)
 
     fun setShiftState(value: ShiftState) = controller.setShiftState(value)
 
     fun onTouchEvent(event: MotionEvent): KeyboardTouchHandler.Result = touchHandler.onTouchEvent(event)
 
     fun performAccessibilitySuggestionClick(targetId: String) =
-        controller.onAccessibilitySuggestion(targetId)
+        controller.emitSuggestion(targetId)
 
     fun performAccessibilityClick(keyId: String, eventTimeMillis: Long) =
-        controller.onAccessibilityClick(keyId, eventTimeMillis)
+        controller.emitClick(keyId, eventTimeMillis)
 
     fun performAccessibilityAlternate(keyId: String, index: Int) =
-        controller.onAccessibilityAlternate(keyId, index)
+        controller.emitAlternate(keyId, index)
+
+    fun performAccessibilityAction(action: KeyAction) = controller.emitAction(action)
 
     fun clear() = touchHandler.clear()
 

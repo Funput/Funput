@@ -135,11 +135,8 @@ class FunputInputMethodService : InputMethodService() {
         keyboardView?.let(::updateInputView)
     }
 
-    private fun updateInputView(view: FunputKeyboardView) = view.applyImeState(
-        settings = settings,
-        policy = editorRuntime.policy,
-        currentLanguage = actionHandler.language,
-        themeRepository = themeRepository,
-        darkAppearance = isDarkAppearance(),
-    )
+    private fun updateInputView(view: FunputKeyboardView) {
+        view.applyImeState(settings, editorRuntime.policy, actionHandler.language, themeRepository, isDarkAppearance())
+        actionHandler.smartGesturesEnabled = view.areSmartGesturesEnabled
+    }
 }

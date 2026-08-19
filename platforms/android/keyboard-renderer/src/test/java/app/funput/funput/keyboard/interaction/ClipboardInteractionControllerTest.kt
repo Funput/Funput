@@ -16,7 +16,7 @@ class ClipboardInteractionControllerTest {
 
         controller.onPointerStarted(1, ClipboardTargetId, 40f, 20f)
         controller.onKeyReleased(1, ClipboardTargetId, 40f, 20f, 10L)
-        controller.onAccessibilityClick(ClipboardTargetId, 11L)
+        controller.emitClick(ClipboardTargetId, 11L)
 
         assertEquals(2, requests)
         assertEquals(listOf(KeyboardHapticType.CONTROL, KeyboardHapticType.CONTROL), haptics)

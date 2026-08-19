@@ -56,9 +56,8 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var shiftState: ShiftState
         get() = interaction.shiftState
         set(value) = interaction.setShiftState(value)
-    var language: KeyboardLanguage
-        get() = interaction.language
-        set(value) = interaction.setLanguage(value)
+    var language: KeyboardLanguage get() = interaction.language; set(value) { interaction.language = value }
+    var areSmartGesturesEnabled: Boolean get() = interaction.areSmartGesturesEnabled; set(value) { interaction.areSmartGesturesEnabled = value }
     private var resolvedKeyboard: ResolvedKeyboard? = null
     private val accessibility = KeyboardSurfaceAccessibilityBinding(
         host = this,
