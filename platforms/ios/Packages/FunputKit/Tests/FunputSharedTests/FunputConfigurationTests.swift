@@ -24,7 +24,7 @@ struct FunputConfigurationTests {
         #expect(config.clipboardEnabled)
         #expect(config.clipboardExpiry == .hour)
         #expect(config.layoutPreset == .funput)
-        #expect(config.schemaVersion == 10)
+        #expect(config.schemaVersion == 11)
     }
 
     @Test("Configuration survives a JSON round-trip")
@@ -61,7 +61,7 @@ struct FunputConfigurationTests {
         #expect(!decoded.isHapticFeedbackEnabled)
         #expect(!decoded.isKeySoundEnabled)
         #expect(!decoded.showsNumberRow)
-        #expect(decoded.schemaVersion == 10)
+        #expect(decoded.schemaVersion == 11)
     }
 
     @Test("Schema 3 migrates to the compact Telex default")
@@ -69,7 +69,7 @@ struct FunputConfigurationTests {
         let data = Data(#"{"showsNumberRow":true,"schemaVersion":3}"#.utf8)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(!decoded.showsNumberRow)
-        #expect(decoded.schemaVersion == 10)
+        #expect(decoded.schemaVersion == 11)
     }
 
     /// v8 dropped `showsGlobeKey` entirely. A stored payload still carrying it must
@@ -79,7 +79,7 @@ struct FunputConfigurationTests {
         let data = Data(#"{"showsGlobeKey":true,"showsNumberRow":true,"schemaVersion":4}"#.utf8)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(decoded.showsNumberRow)
-        #expect(decoded.schemaVersion == 10)
+        #expect(decoded.schemaVersion == 11)
     }
 
     /// v10 added `layoutPreset`. Unlike the `< 4` rung it must not touch stored values:
@@ -92,6 +92,6 @@ struct FunputConfigurationTests {
         #expect(decoded.layoutPreset == .funput)
         #expect(decoded.inputMethod == .telex)
         #expect(decoded.showsNumberRow)
-        #expect(decoded.schemaVersion == 10)
+        #expect(decoded.schemaVersion == 11)
     }
 }

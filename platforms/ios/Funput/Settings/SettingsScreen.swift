@@ -73,27 +73,16 @@ struct SettingsScreen: View {
                 selectExpiry: { picker = .clipboardExpiry },
                 clear: { model.clearClipboardHistory() }
             )
-            SettingsSectionCard(title: "Phản hồi", systemImage: "hand.tap") {
-                SettingsToggleRow(
-                    title: "Rung khi gõ",
-                    summary: "Yêu cầu Cho phép truy cập đầy đủ khi bật.",
-                    isOn: model.fullAccessBinding(\.isHapticFeedbackEnabled) {
-                        requestsHapticAccess = true
-                    }
-                )
-                SettingsToggleRow(
-                    title: "Âm thanh khi gõ",
-                    summary: "Phát tiếng click bàn phím khi chạm phím.",
-                    isOn: model.fullAccessBinding(\.isKeySoundEnabled) {
-                        requestsSoundAccess = true
-                    }
-                )
-                SettingsToggleRow(
-                    title: "Xem trước phím",
-                    summary: "Hiện ký tự phóng lớn khi bạn chạm phím.",
-                    isOn: model.boolBinding(\.showsKeyPreviews)
-                )
-            }
+            FeedbackSettingsCard(
+                haptics: model.fullAccessBinding(\.isHapticFeedbackEnabled) {
+                    requestsHapticAccess = true
+                },
+                sound: model.fullAccessBinding(\.isKeySoundEnabled) {
+                    requestsSoundAccess = true
+                },
+                keyPreviews: model.boolBinding(\.showsKeyPreviews)
+            )
+            GestureSettingsCard(isEnabled: model.boolBinding(\.smartGesturesEnabled))
             SettingsResetCard { model.reset() }
         }
         .navigationTitle("Cài đặt")

@@ -18,6 +18,7 @@ extension FunputConfiguration {
         config.isHapticFeedbackEnabled = try container.decodeIfPresent(Bool.self, forKey: .isHapticFeedbackEnabled) ?? config.isHapticFeedbackEnabled
         config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
+        config.smartGesturesEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartGesturesEnabled) ?? config.smartGesturesEnabled
         config.showsNumberRow = try container.decodeIfPresent(Bool.self, forKey: .showsNumberRow) ?? config.showsNumberRow
         config.layoutPreset = try container.decodeIfPresent(KeyboardLayoutPreset.self, forKey: .layoutPreset) ?? config.layoutPreset
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
@@ -61,6 +62,11 @@ extension FunputConfiguration {
         // which stomps a value because that field's default flipped.
         if config.schemaVersion < 10 {
             config.schemaVersion = 10
+        }
+        // v11 added `smartGesturesEnabled`, defaulting to on for everyone: the gestures
+        // it covers are what iOS users already expect from the system keyboard.
+        if config.schemaVersion < 11 {
+            config.schemaVersion = 11
         }
         self = config
     }

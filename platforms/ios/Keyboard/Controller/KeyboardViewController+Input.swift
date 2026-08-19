@@ -111,6 +111,8 @@ extension KeyboardViewController {
         presentation.enterAction = state.enterAction
         presentation.showsKeyPreviews = !state.editorMode.isPassword
             && configuration.showsKeyPreviews
+        presentation.areSmartGesturesEnabled = !state.editorMode.isPassword
+            && configuration.smartGesturesEnabled
         return presentation
     }
 
