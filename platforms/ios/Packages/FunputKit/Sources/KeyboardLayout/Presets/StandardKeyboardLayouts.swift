@@ -4,7 +4,7 @@ public enum StandardKeyboardLayouts {
         showsNumberRow: Bool = true
     ) -> KeyboardLayout {
         let hasNumberRow = inputMethod == .vni || showsNumberRow
-        return qwertyLayout(
+        let layout = qwertyLayout(
             id: "qwerty-\(inputMethod.rawValue)\(hasNumberRow ? "" : "-compact")",
             inputMethod: inputMethod,
             leadingRows: hasNumberRow ? [topNumberRowForLetters(inputMethod)] : [],
@@ -12,6 +12,9 @@ public enum StandardKeyboardLayouts {
             showsTelexHints: inputMethod.isTelexFamily,
             supportsVietnameseAlternates: true
         )
+        // Digits move onto the top row only when no row of their own is on screen.
+        guard !hasNumberRow, inputMethod.isTelexFamily else { return layout }
+        return CompactDigitAlternates.decorate(layout)
     }
 }
 
