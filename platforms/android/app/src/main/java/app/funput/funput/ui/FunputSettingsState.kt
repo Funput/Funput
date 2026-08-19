@@ -24,6 +24,7 @@ import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.SmartCompositionSettings
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.ime.settings.ToneStyleSettings
+import app.funput.funput.ime.settings.gestures.SmartGestureSettings
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 
@@ -45,6 +46,7 @@ internal class FunputSettingsState(
     val feedbackStore: KeyboardFeedbackSettings,
     val numberRowStore: NumberRowSettings,
     val smartCompositionStore: SmartCompositionSettings,
+    val smartGestureStore: SmartGestureSettings,
     val personalSuggestionStore: PersonalSuggestionSettings,
     val inputMethod: KeyboardInputMethod,
     val toneStyle: ToneStyle,
@@ -55,6 +57,7 @@ internal class FunputSettingsState(
     val dynamicColor: Boolean,
     val feedback: KeyboardFeedbackPreferences,
     val showsNumberRow: Boolean,
+    val smartGesturesEnabled: Boolean,
     val smartComposition: SmartCompositionPreferences,
     val personalSuggestions: PersonalSuggestionPreferences,
 )
@@ -75,6 +78,8 @@ internal fun rememberFunputSettings(): FunputSettingsState {
     val feedback by stores.feedbackStore.preferences.collectAsState(KeyboardFeedbackPreferences.Default)
     val showsNumberRow by stores.numberRowStore.showsNumberRow
         .collectAsState(NumberRowSettings.DefaultShowsNumberRow)
+    val smartGesturesEnabled by stores.smartGestureStore.enabled
+        .collectAsState(SmartGestureSettings.DefaultEnabled)
     val smartComposition by stores.smartCompositionStore.preferences
         .collectAsState(SmartCompositionPreferences.Default)
     val personalSuggestions by stores.personalSuggestionStore.preferences
@@ -91,6 +96,7 @@ internal fun rememberFunputSettings(): FunputSettingsState {
         feedbackStore = stores.feedbackStore,
         numberRowStore = stores.numberRowStore,
         smartCompositionStore = stores.smartCompositionStore,
+        smartGestureStore = stores.smartGestureStore,
         personalSuggestionStore = stores.personalSuggestionStore,
         inputMethod = inputMethod,
         toneStyle = toneStyle,
@@ -101,6 +107,7 @@ internal fun rememberFunputSettings(): FunputSettingsState {
         dynamicColor = dynamicColor,
         feedback = feedback,
         showsNumberRow = showsNumberRow,
+        smartGesturesEnabled = smartGesturesEnabled,
         smartComposition = smartComposition,
         personalSuggestions = personalSuggestions,
     )

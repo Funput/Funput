@@ -48,6 +48,7 @@ internal fun SettingsRoute(
         spellCheckEnabled = settings.smartComposition.spellCheckEnabled,
         personalSuggestionsEnabled = settings.personalSuggestions.enabled,
         clipboardPreferences = settings.clipboard,
+        smartGesturesEnabled = settings.smartGesturesEnabled,
         onInputMethodSelected = { method -> scope.launch { settings.input.setInputMethod(method) } },
         onShowsNumberRowChanged = { enabled ->
             scope.launch { settings.numberRowStore.setShowsNumberRow(enabled) }
@@ -59,6 +60,9 @@ internal fun SettingsRoute(
         },
         onSoundsChanged = { enabled ->
             scope.launch { settings.feedbackStore.setSoundsEnabled(enabled) }
+        },
+        onSmartGesturesChanged = { enabled ->
+            scope.launch { settings.smartGestureStore.setEnabled(enabled) }
         },
         onSmartRestoreChanged = { enabled ->
             scope.launch { settings.smartCompositionStore.setSmartRestoreEnabled(enabled) }
