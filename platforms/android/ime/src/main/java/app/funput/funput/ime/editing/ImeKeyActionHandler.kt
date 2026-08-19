@@ -4,6 +4,7 @@ import android.view.inputmethod.InputConnection
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.ime.editing.backspace.ImeBackspaceHandler
+import app.funput.funput.ime.editing.gestures.ImeGestureEditor
 
 /** Routes semantic keyboard actions through composition or direct editor commands. */
 internal class ImeKeyActionHandler(
@@ -15,6 +16,10 @@ internal class ImeKeyActionHandler(
     private var compositionAllowed = true
     private var suggestionsAllowed = true
     private val suggestions = ImeSuggestionSession(composition, connection)
+    private val gestures = ImeGestureEditor(
+        composition, editor, connection, ::backspace,
+    ) { if (suggestionsAllowed) suggestions.reset() }
+    var smartGesturesEnabled: Boolean by gestures::enabled
     private val backspaceHandler = ImeBackspaceHandler(
         composition = composition,
         editor = editor,
@@ -42,9 +47,11 @@ internal class ImeKeyActionHandler(
         composition.setRenderMode(renderMode)
         composition.setEnabled(usesComposition)
         suggestions.reset()
+        gestures.reset()
     }
 
     fun onKeyAction(action: KeyAction) {
+        if (gestures.consume(action)) return
         when (action) {
             is KeyAction.Input -> inputText(action.text)
             KeyAction.Space -> inputText(" ")
@@ -52,6 +59,8 @@ internal class ImeKeyActionHandler(
             KeyAction.Enter -> enter()
             is KeyAction.ToggleLanguage -> toggleLanguage(action.language)
             is KeyAction.Shift,
+            is KeyAction.MoveCursor,
+            KeyAction.DeleteWord,
             KeyAction.Symbols,
             KeyAction.MoreSymbols,
             KeyAction.Letters,
@@ -67,6 +76,7 @@ internal class ImeKeyActionHandler(
     fun finish() {
         composition.finish(connection())
         suggestions.reset()
+        gestures.reset()
     }
 
     fun onSelectionChanged(newStart: Int, newEnd: Int, composingEnd: Int) {
@@ -111,7 +121,7 @@ internal class ImeKeyActionHandler(
 
     private fun enter() {
         val command = enterCommand()
-        if (usesComposition && command == NewLineCommand) {
+        if (usesComposition && command == ImeEditCommand.CommitText("\n")) {
             composition.input(connection(), "\n")
         } else {
             if (usesComposition) finish()
@@ -137,8 +147,4 @@ internal class ImeKeyActionHandler(
 
     private val usesComposition: Boolean
         get() = compositionAllowed && language == KeyboardLanguage.VIETNAMESE
-
-    private companion object {
-        val NewLineCommand = ImeEditCommand.CommitText("\n")
-    }
 }

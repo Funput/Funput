@@ -19,6 +19,8 @@ sealed interface KeyAction {
     data object Letters : KeyAction
     data object SwitchInputMethod : KeyAction
     data object Space : KeyAction
+    data object DeleteWord : KeyAction
+    data class MoveCursor(val offset: Int) : KeyAction
     data object Enter : KeyAction
     data class ToggleLanguage(val language: KeyboardLanguage) : KeyAction
 }

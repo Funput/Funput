@@ -12,6 +12,8 @@ internal fun KeyAction.toImeEditCommand(
     KeyAction.Backspace -> ImeEditCommand.DeleteBackward
     is KeyAction.Shift,
     is KeyAction.ToggleLanguage,
+    is KeyAction.MoveCursor,
+    KeyAction.DeleteWord,
     KeyAction.Symbols,
     KeyAction.MoreSymbols,
     KeyAction.Letters,
