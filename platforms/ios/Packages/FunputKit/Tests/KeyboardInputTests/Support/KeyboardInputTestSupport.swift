@@ -6,6 +6,9 @@ import KeyboardLayout
 @MainActor
 final class TestKeyboardWriter: KeyboardDocumentWriting {
     private(set) var text = ""
+    /// Character index of the caret. Defaults to the end of the text on every external
+    /// replacement, which is where the pre-trackpad model implicitly kept it.
+    private(set) var caret = 0
     private(set) var transactions: [InputTransaction] = []
     /// Optional so tests can reproduce a host that has not bound a document yet.
     var documentIdentifier: UUID? = UUID()
@@ -18,10 +21,14 @@ final class TestKeyboardWriter: KeyboardDocumentWriting {
         KeyboardDocumentSnapshot(
             documentIdentifier: documentIdentifier,
             contextBeforeInput: exposesContext
-                ? (delaysContextUpdates ? reportedText : text)
+                ? (delaysContextUpdates ? reportedText : textBeforeCaret)
                 : nil,
             hasSelection: hasSelection
         )
+    }
+
+    var textBeforeCaret: String {
+        caret == text.count ? text : String(text.prefix(caret))
     }
 
     func apply(_ transaction: InputTransaction) {
@@ -29,20 +36,40 @@ final class TestKeyboardWriter: KeyboardDocumentWriting {
         for mutation in transaction.mutations {
             switch mutation {
             case let .deleteBackward(count):
-                for _ in 0..<count where !text.isEmpty { text.removeLast() }
+                for _ in 0..<count where caret > 0 {
+                    if caret == text.count {
+                        text.removeLast()
+                    } else {
+                        text.remove(at: text.index(text.startIndex, offsetBy: caret - 1))
+                    }
+                    caret -= 1
+                }
             case let .insert(inserted):
-                text.append(inserted)
+                // Appending is the overwhelmingly common case and the only one the
+                // hundred-thousand-key stress test can afford; indexing is O(n).
+                if caret == text.count {
+                    text.append(inserted)
+                } else {
+                    text.insert(
+                        contentsOf: inserted,
+                        at: text.index(text.startIndex, offsetBy: caret)
+                    )
+                }
+                caret += inserted.count
+            case let .moveCursor(offset):
+                caret = min(max(0, caret + offset), text.count)
             }
         }
     }
 
     func replaceTextExternally(with text: String) {
         self.text = text
+        caret = text.count
         reportedText = text
     }
 
     func publishContext() {
-        reportedText = text
+        reportedText = textBeforeCaret
     }
 }
 

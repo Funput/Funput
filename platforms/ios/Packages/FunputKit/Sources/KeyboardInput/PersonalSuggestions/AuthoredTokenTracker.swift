@@ -42,6 +42,10 @@ struct AuthoredTokenTracker {
                 for _ in 0..<count { recordDeletion() }
             case let .insert(text):
                 recordInsertion(text)
+            case .moveCursor:
+                // The caret left the token being tracked; nothing typed here is a word any
+                // more, so the prefix is abandoned rather than continued.
+                reset()
             }
         }
     }

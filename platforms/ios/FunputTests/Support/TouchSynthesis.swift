@@ -22,6 +22,9 @@ func accessibleControls(in view: UIView) -> [UIControl] {
 @MainActor
 final class ScriptedWriter: KeyboardDocumentWriting {
     private(set) var text = ""
+    /// Character index of the caret; the trackpad gesture is the only thing that moves it
+    /// away from the end of the text.
+    private(set) var caret = 0
     let documentIdentifier = UUID()
     /// When set, `contextBeforeInput` reports this instead of `text`,
     /// simulating a stale host callback. Cleared by the test after delivery.
@@ -30,22 +33,41 @@ final class ScriptedWriter: KeyboardDocumentWriting {
     var snapshot: KeyboardDocumentSnapshot {
         .init(
             documentIdentifier: documentIdentifier,
-            contextBeforeInput: reportedContext ?? text,
+            contextBeforeInput: reportedContext
+                ?? (caret == text.count ? text : String(text.prefix(caret))),
             hasSelection: false
         )
     }
 
     func replaceTextExternally(with text: String) {
         self.text = text
+        caret = text.count
     }
 
     func apply(_ transaction: InputTransaction) {
         for mutation in transaction.mutations {
             switch mutation {
             case let .deleteBackward(count):
-                for _ in 0..<count where !text.isEmpty { text.removeLast() }
+                for _ in 0..<count where caret > 0 {
+                    if caret == text.count {
+                        text.removeLast()
+                    } else {
+                        text.remove(at: text.index(text.startIndex, offsetBy: caret - 1))
+                    }
+                    caret -= 1
+                }
             case let .insert(inserted):
-                text += inserted
+                if caret == text.count {
+                    text += inserted
+                } else {
+                    text.insert(
+                        contentsOf: inserted,
+                        at: text.index(text.startIndex, offsetBy: caret)
+                    )
+                }
+                caret += inserted.count
+            case let .moveCursor(offset):
+                caret = min(max(0, caret + offset), text.count)
             }
         }
     }

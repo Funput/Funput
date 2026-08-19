@@ -60,6 +60,10 @@ final class KeyboardDocumentWriter: KeyboardDocumentWriting {
             case let .insert(text):
                 guard !text.isEmpty else { continue }
                 proxy.insertText(text)
+            case let .moveCursor(offset):
+                // The proxy clamps at both ends of the document and reports nothing back,
+                // so the caret position is never inferred here — it is re-read from the host.
+                proxy.adjustTextPosition(byCharacterOffset: offset)
             }
         }
         os_signpost(
