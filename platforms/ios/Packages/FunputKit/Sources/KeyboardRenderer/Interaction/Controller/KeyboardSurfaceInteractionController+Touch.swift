@@ -4,6 +4,15 @@ import KeyboardLayout
 extension KeyboardSurfaceInteractionController {
     func finishTrackedTouch(token: TouchToken, state: TouchState) {
         alternateHoldController.cancel(for: token)
+        spaceHoldController.cancel(for: token)
+        if state.ratchet != nil {
+            finishWordRatchet(token: token, state: state)
+            return
+        }
+        if state.claimedGesture?.detachesContact == true {
+            completeGestureTouch(token: token, state: state)
+            return
+        }
         if let key = state.currentKey { setHighlighted(key, false) }
         let wasRepeating = repeatTouch == token && repeatController.finish()
         if repeatTouch == token { repeatTouch = nil }
@@ -29,6 +38,7 @@ extension KeyboardSurfaceInteractionController {
 
     func cancelTrackedTouch(token: TouchToken, state: TouchState) {
         alternateHoldController.cancel(for: token)
+        spaceHoldController.cancel(for: token)
         if let key = state.currentKey { setHighlighted(key, false) }
         _ = repeatTouch == token && repeatController.finish()
         if repeatTouch == token { repeatTouch = nil }

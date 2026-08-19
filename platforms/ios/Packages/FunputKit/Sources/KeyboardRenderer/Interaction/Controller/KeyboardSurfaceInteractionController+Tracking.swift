@@ -23,6 +23,7 @@ extension KeyboardSurfaceInteractionController {
             containerBounds: containerBounds,
             alternateLayout: nil,
             selectedAlternateIndex: nil,
+            smartGestures: presentation.areSmartGesturesEnabled,
             signpostID: signpostID
         )
         os_signpost(
@@ -41,7 +42,13 @@ extension KeyboardSurfaceInteractionController {
         if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
         if repeatTouch == nil, key.role == .backspace || key.role == .space {
             repeatTouch = token
-            repeatController.start()
+            let holdsForTrackpad = presentation.areSmartGesturesEnabled && key.role == .space
+            repeatController.start(
+                initialDelay: holdsForTrackpad
+                    ? KeyboardSurfaceInteractionController.smartSpaceRepeatDelay
+                    : nil
+            )
+            if holdsForTrackpad { spaceHoldController.start(for: token) }
         }
         if !key.alternates.isEmpty, sourceFrame != nil, !containerBounds.isEmpty {
             alternateHoldController.start(for: token)
@@ -59,6 +66,14 @@ extension KeyboardSurfaceInteractionController {
     ) {
         guard var state = touches[token] else { return }
         hapticsEnabled = presentation.isHapticFeedbackEnabled
+        if state.trackpad != nil {
+            updateSpaceTrackpad(token: token, translation: translation(for: state, at: point))
+            return
+        }
+        if state.ratchet != nil {
+            updateWordRatchet(token: token, translation: translation(for: state, at: point))
+            return
+        }
         if let layout = state.alternateLayout {
             let next = layout.selection(at: point, from: state.startPoint)
             if next != state.selectedAlternateIndex, hapticsEnabled {
@@ -74,10 +89,25 @@ extension KeyboardSurfaceInteractionController {
             let dy = point.y - state.startPoint.y
             let slop = KeyboardSurfaceInteractionController.tapSlop
             state.hasWandered = dx * dx + dy * dy > slop * slop
-            if state.hasWandered { alternateHoldController.cancel(for: token) }
+            if state.hasWandered {
+                alternateHoldController.cancel(for: token)
+                // A finger that travels this far before the hold fires is swiping, not
+                // holding: cancelling here is what keeps a quick swipe on the spacebar a
+                // language toggle rather than a caret pan.
+                if !state.holdArmed { spaceHoldController.cancel(for: token) }
+            }
+        }
+        let travel = translation(for: state, at: point)
+        if activateSpaceTrackpad(token: token, translation: travel) {
+            updateSpaceTrackpad(token: token, translation: travel)
+            return
+        }
+        if activateWordRatchet(token: token, translation: travel) {
+            updateWordRatchet(token: token, translation: travel)
+            return
         }
         if let action = state.swipeTracker.update(
-            translation: CGPoint(x: point.x - state.startPoint.x, y: point.y - state.startPoint.y),
+            translation: travel,
             action: state.initialKey.horizontalSwipeAction
         ) {
             touches[token] = state
@@ -109,6 +139,10 @@ extension KeyboardSurfaceInteractionController {
         if target?.id != state.initialKey.id { alternateHoldController.cancel(for: token) }
         touches[token] = state
         if presentation.showsKeyPreviews { refreshPreview() }
+    }
+
+    func translation(for state: TouchState, at point: CGPoint) -> CGPoint {
+        CGPoint(x: point.x - state.startPoint.x, y: point.y - state.startPoint.y)
     }
 }
 #endif

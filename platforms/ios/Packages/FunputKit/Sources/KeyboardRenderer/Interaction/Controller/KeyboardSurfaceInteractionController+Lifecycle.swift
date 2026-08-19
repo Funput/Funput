@@ -17,6 +17,7 @@ extension KeyboardSurfaceInteractionController {
     /// rather than routed through `cancelTouch`, which would honour them.
     func cancelAll() {
         alternateHoldController.cancelAll()
+        spaceHoldController.cancelAll()
         for (token, state) in touches {
             if let key = state.currentKey { setHighlighted(key, false) }
             endSignpost(state, token: token, phase: 2)

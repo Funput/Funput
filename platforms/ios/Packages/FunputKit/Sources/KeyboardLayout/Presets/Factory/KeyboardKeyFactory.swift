@@ -84,7 +84,8 @@ func standardSpaceKey(weight: CGFloat = 5.8) -> KeySpec {
         label: "Tiếng Việt",
         role: .space,
         widthWeight: weight,
-        accessibilityLabel: "Dấu cách. Vuốt để đổi Tiếng Việt và Tiếng Anh",
+        accessibilityLabel: "Dấu cách. Vuốt để đổi Tiếng Việt và Tiếng Anh. "
+            + "Giữ rồi kéo để di chuyển con trỏ",
         horizontalSwipeAction: .toggleLanguage
     )
 }
