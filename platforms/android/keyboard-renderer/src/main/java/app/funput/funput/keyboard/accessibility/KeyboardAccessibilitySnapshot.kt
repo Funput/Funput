@@ -16,6 +16,7 @@ internal class KeyboardAccessibilitySnapshot(
     suggestions: List<String> = emptyList(),
     clipboardLabel: String? = null,
     clipboardKeyLabel: String? = null,
+    smartGesturesEnabled: Boolean = true,
 ) {
     val nodes: List<KeyboardAccessibilityNode> = buildList {
         keyboard.keys.filterNot { it.spec.role == KeyRole.PLACEHOLDER }.forEach { key ->
@@ -27,6 +28,7 @@ internal class KeyboardAccessibilitySnapshot(
                 hitBounds = key.hitBounds,
                 selected = key.spec.role == KeyRole.SHIFT && shiftState != ShiftState.OFF,
                 alternateActions = key.spec.alternateAccessibilityActions(shiftState),
+                customActions = SmartGestureAccessibility.actions(key.spec.role, smartGesturesEnabled),
             ).let(::add)
         }
         val bounds = keyboard.suggestionBar?.suggestionsBounds
@@ -55,6 +57,7 @@ internal data class KeyboardAccessibilityNode(
     val hitBounds: KeyBounds,
     val selected: Boolean,
     val alternateActions: List<AlternateAccessibilityAction> = emptyList(),
+    val customActions: List<SmartGestureAccessibility.Action> = emptyList(),
 )
 
 private fun app.funput.funput.keyboard.layout.ResolvedKey.accessibilityLabel(

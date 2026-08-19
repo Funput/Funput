@@ -4,6 +4,7 @@ import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
 import app.funput.funput.keyboard.accessibility.KeyboardSurfaceAccessibilityController
+import app.funput.funput.keyboard.accessibility.SmartGestureAccessibility
 import app.funput.funput.keyboard.KeyboardClipboardHint
 import app.funput.funput.keyboard.R
 import app.funput.funput.keyboard.accessibilityLabel
@@ -28,6 +29,11 @@ internal class KeyboardSurfaceAccessibilityBinding(
         activateAlternate = { keyId, index ->
             interaction().performAccessibilityAlternate(keyId, index)
         },
+        activateCustom = { actionId ->
+            SmartGestureAccessibility.keyAction(actionId)?.let {
+                interaction().performAccessibilityAction(it)
+            }
+        },
     )
 
     fun dispatchHover(event: MotionEvent): Boolean = controller.dispatchHover(event)
@@ -38,6 +44,7 @@ internal class KeyboardSurfaceAccessibilityBinding(
         suggestions(),
         clipboardHint().takeIf { suggestions().isEmpty() }?.accessibilityLabel(resources),
         resources.getString(R.string.clipboard_open_accessibility),
+        interaction().areSmartGesturesEnabled,
     )
 
     private fun activate(keyId: String) {
