@@ -26,6 +26,8 @@ public extension KeyboardInputCoordinator {
             )
         )
         shiftController.resetTapSequence()
+        spaceTapTracker.reset()
+        smartGesturesEnabled = configuration.smartGesturesEnabled
         documentSynchronizer.invalidate()
         personalSuggestionsEnabled = configuration.personalSuggestionsEnabled
         resetPersonalSuggestionTracking()

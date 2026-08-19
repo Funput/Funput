@@ -57,13 +57,15 @@ extension KeyboardInputCoordinator {
         _ key: KeySpec,
         builder: inout InputTransactionBuilder
     ) {
+        if key.role != .space { spaceTapTracker.reset() }
         switch key.role {
         case .character:
             input(characterText(for: key), builder: &builder)
             consumeOneShotShift()
         case .vniModifier, .punctuation:
             input(key.label, builder: &builder)
-        case .space: input(" ", builder: &builder)
+        case .space:
+            if !applySmartSpace(builder: &builder) { input(" ", builder: &builder) }
         case .enter: input("\n", builder: &builder)
         // Re-opening the previous word is deferred to `commit`, which runs it once the
         // shadow reflects this deletion.
