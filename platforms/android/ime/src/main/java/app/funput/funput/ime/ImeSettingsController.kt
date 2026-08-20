@@ -16,6 +16,7 @@ import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.SmartCompositionSettings
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.ime.settings.ToneStyleSettings
+import app.funput.funput.ime.settings.gestures.SmartGestureSettings
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +37,8 @@ internal class ImeSettingsController(
     var feedback = KeyboardFeedbackPreferences.Default
         private set
     var showsNumberRow = NumberRowSettings.DefaultShowsNumberRow
+        private set
+    var smartGesturesEnabled = SmartGestureSettings.DefaultEnabled
         private set
 
     // Seeded with the same defaults the settings flows fall back to, so the engine
@@ -65,6 +68,7 @@ internal class ImeSettingsController(
         KeyboardThemeSettings(context).selection.collectIn(scope, ::applyThemeSelection)
         KeyboardFeedbackSettings(context).preferences.collectIn(scope, ::applyFeedback)
         NumberRowSettings(context).showsNumberRow.collectIn(scope, ::applyShowsNumberRow)
+        SmartGestureSettings(context).enabled.collectIn(scope, ::applySmartGestures)
         PersonalSuggestionSettings(context).preferences.collectIn(scope, onPersonalSuggestionsChanged)
     }
 
@@ -127,6 +131,12 @@ internal class ImeSettingsController(
     private fun applyShowsNumberRow(value: Boolean) {
         if (value == showsNumberRow) return
         showsNumberRow = value
+        onViewSettingsChanged()
+    }
+
+    private fun applySmartGestures(value: Boolean) {
+        if (value == smartGesturesEnabled) return
+        smartGesturesEnabled = value
         onViewSettingsChanged()
     }
 }

@@ -26,6 +26,7 @@ internal fun FunputKeyboardView.applyImeState(
     darkAppearance: Boolean,
 ) {
     val descriptor = themeRepository.resolveForAppearance(settings.themeSelection, darkAppearance)
+    areSmartGesturesEnabled = settings.smartGesturesEnabled && !policy.editorMode.isPassword
     configureForEditor(
         inputMethod = settings.inputMethod,
         policy = policy,

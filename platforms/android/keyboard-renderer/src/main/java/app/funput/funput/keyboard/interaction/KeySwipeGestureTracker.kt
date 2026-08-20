@@ -36,6 +36,10 @@ internal class KeySwipeGestureTracker(private val thresholdPx: Float) {
         }
     }
 
+    fun forget(pointerId: Int) {
+        startsByPointerId.remove(pointerId)
+    }
+
     fun cancel() = startsByPointerId.clear()
 
     private data class SwipeStart(

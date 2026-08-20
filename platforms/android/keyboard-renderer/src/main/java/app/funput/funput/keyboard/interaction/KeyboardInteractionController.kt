@@ -10,10 +10,11 @@ import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionController
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionPreview
+import app.funput.funput.keyboard.interaction.gestures.SmartGestureCoordinator
 internal class KeyboardInteractionController(
     private val keySpec: (keyId: String) -> KeySpec?,
     private val suggestionSelection: (targetId: String) -> SuggestionSelection?,
-    onAction: (KeyAction) -> Unit,
+    private val onAction: (KeyAction) -> Unit,
     private val onEmojiRequested: () -> Unit,
     private val onClipboardPanelRequested: () -> Unit = {},
     private val onClipboardRequested: () -> Unit = {},
@@ -48,6 +49,11 @@ internal class KeyboardInteractionController(
         },
     )
     private val swipeGestures = KeySwipeGestureTracker.fromDensity(density)
+    private val gestures = SmartGestureCoordinator(
+        density, schedule, cancel, onAction, onHapticFeedback, onPointerCaptured,
+        { backspaceRepeat.hasRepeated }, { id -> backspaceRepeat.update(id, false) },
+    )
+    var areSmartGesturesEnabled by gestures::enabled
     private val alternateSelection = AlternateSelectionController(
         keyBounds = keyBounds,
         surfaceBounds = surfaceBounds,
@@ -62,7 +68,8 @@ internal class KeyboardInteractionController(
     )
     val shiftState: ShiftState get() = actionDispatcher.shiftState
     val alternatePreview: AlternateSelectionPreview? get() = alternateSelection.preview
-    fun isAlternateCaptured(pointerId: Int): Boolean = alternateSelection.isCaptured(pointerId)
+    fun isPointerCaptured(pointerId: Int) =
+        alternateSelection.isCaptured(pointerId) || gestures.isCaptured(pointerId)
     var language: KeyboardLanguage = KeyboardLanguage.VIETNAMESE
         private set
     fun onPointerStarted(pointerId: Int, keyId: String?, x: Float, y: Float) {
@@ -71,23 +78,29 @@ internal class KeyboardInteractionController(
         KeyHapticTypeMapper.forTarget(key, isToolbarContent)?.let(onHapticFeedback)
         swipeGestures.start(pointerId, key, x, y)
         alternateSelection.start(pointerId, key, x, y)
+        gestures.onStarted(pointerId, key, x, y)
     }
     fun onPointerKeyChanged(pointerId: Int, keyId: String?) {
         val isBackspace = keyId != null && keySpec(keyId)?.role == KeyRole.BACKSPACE
         backspaceRepeat.update(pointerId, isBackspace)
     }
-    fun onPointerMoved(pointerId: Int, keyId: String?, x: Float, y: Float) =
-        alternateSelection.move(pointerId, keyId, x, y)
+    fun onPointerMoved(pointerId: Int, keyId: String?, x: Float, y: Float) {
+        if (!gestures.onMoved(pointerId, x, y)) alternateSelection.move(pointerId, keyId, x, y)
+    }
     fun onKeyReleased(pointerId: Int, keyId: String?, x: Float, y: Float, eventTimeMillis: Long) {
         if (alternateSelection.finish(pointerId, x, y)) {
-            swipeGestures.finish(pointerId, x, y)
+            swipeGestures.forget(pointerId)
+            gestures.forget(pointerId)
+            return
+        }
+        if (gestures.onReleased(pointerId)) {
+            swipeGestures.forget(pointerId)
             return
         }
         val selection = keyId?.let(suggestionSelection)
         val key = keyId?.let(keySpec)
-        val isBackspace = key?.role == KeyRole.BACKSPACE
         val swipeAction = swipeGestures.finish(pointerId, x, y)
-        if (backspaceRepeat.finish(pointerId, isBackspace)) return
+        if (backspaceRepeat.finish(pointerId, key?.role == KeyRole.BACKSPACE)) return
         if (swipeAction == KeySwipeAction.TOGGLE_LANGUAGE) {
             setLanguage(language.toggled())
             actionDispatcher.toggleLanguage(language)
@@ -95,42 +108,30 @@ internal class KeyboardInteractionController(
             dispatchTarget(keyId, key, selection, eventTimeMillis)
         }
     }
-    fun onAccessibilityClick(keyId: String, eventTimeMillis: Long) {
-        if (keyId == ClipboardTargetId) {
-            onHapticFeedback(KeyboardHapticType.CONTROL)
-            return onClipboardRequested()
-        }
+    fun emitClick(keyId: String, eventTimeMillis: Long) {
+        KeyHapticTypeMapper.forTarget(keySpec(keyId), keyId == ClipboardTargetId)?.let(onHapticFeedback)
+        dispatchTarget(keyId, keySpec(keyId), null, eventTimeMillis)
+    }
+    fun emitAlternate(keyId: String, index: Int) {
         val key = keySpec(keyId) ?: return
-        KeyHapticTypeMapper.forTarget(key, isSuggestion = false)?.let(onHapticFeedback)
-        dispatchTarget(keyId, key, selection = null, eventTimeMillis)
+        key.alternates.getOrNull(index)?.let { actionDispatcher.dispatchAlternate(key, it) }
     }
-    fun onAccessibilityAlternate(keyId: String, index: Int) {
-        val key = keySpec(keyId) ?: return
-        val alternate = key.alternates.getOrNull(index) ?: return
-        onHapticFeedback(KeyboardHapticType.CONTROL)
-        actionDispatcher.dispatchAlternate(key, alternate)
+    fun emitSuggestion(targetId: String) = suggestionSelection(targetId)?.let {
+        onHapticFeedback(KeyboardHapticType.CONTROL); onSuggestionSelected(it)
     }
-    fun onAccessibilitySuggestion(targetId: String) {
-        val selection = suggestionSelection(targetId) ?: return
-        KeyHapticTypeMapper.forTarget(key = null, isSuggestion = true)?.let(onHapticFeedback)
-        onSuggestionSelected(selection)
-    }
+    fun emitAction(action: KeyAction) = onAction(action)
     fun setLanguage(value: KeyboardLanguage) {
         if (language == value) return
-        language = value
-        onVisualStateChanged()
-        onSemanticStateChanged()
+        language = value.also { onVisualStateChanged(); onSemanticStateChanged() }
     }
     fun setShiftState(value: ShiftState) = actionDispatcher.setShiftState(value)
     fun cancel() {
         alternateSelection.cancelAll()
         backspaceRepeat.cancelAll()
         swipeGestures.cancel()
+        gestures.cancelAll()
     }
-    fun reset() {
-        cancel()
-        actionDispatcher.reset()
-    }
+    fun reset() { cancel(); actionDispatcher.reset() }
     private fun dispatchTarget(
         keyId: String?,
         key: KeySpec?,

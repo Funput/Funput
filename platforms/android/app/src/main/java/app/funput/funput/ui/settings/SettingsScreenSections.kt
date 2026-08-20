@@ -24,6 +24,7 @@ import app.funput.funput.ui.settings.keyboard.KeyboardSettingsSection
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 import app.funput.funput.ui.settings.smart.PersonalSuggestionSettingsSection
 import app.funput.funput.ui.settings.smart.SmartSettingsSection
+import app.funput.funput.ui.settings.smart.gestureSettingsItem
 import app.funput.funput.ui.theme.Spacing
 import app.funput.funput.ui.theme.rememberEntryTracker
 import app.funput.funput.ui.theme.staggeredEntry
@@ -43,6 +44,7 @@ internal fun SettingsScreenSections(
     spellCheckEnabled: Boolean,
     personalSuggestionsEnabled: Boolean,
     clipboardPreferences: ClipboardPreferences,
+    smartGesturesEnabled: Boolean,
     contentPadding: PaddingValues,
     onOpenPicker: (SettingsPicker) -> Unit,
     onShowsNumberRowChanged: (Boolean) -> Unit,
@@ -51,6 +53,7 @@ internal fun SettingsScreenSections(
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     onHapticsChanged: (Boolean) -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
+    onSmartGesturesChanged: (Boolean) -> Unit,
     onSmartRestoreChanged: (Boolean) -> Unit,
     onSpellCheckChanged: (Boolean) -> Unit,
     onPersonalSuggestionsChanged: (Boolean) -> Unit,
@@ -64,9 +67,6 @@ internal fun SettingsScreenSections(
     val tracker = rememberEntryTracker()
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(Spacing.Section),
-        // The scaffold's padding clears the app bar and the navigation bar; the list itself keeps
-        // scrolling underneath both, which is what edge-to-edge is for. Only the horizontal
-        // insets are hard padding, so a landscape cutout never clips a row.
         contentPadding = PaddingValues(
             start = Spacing.Large,
             end = Spacing.Large,
@@ -141,5 +141,6 @@ internal fun SettingsScreenSections(
                 )
             }
         }
+        gestureSettingsItem(smartGesturesEnabled, tracker, onSmartGesturesChanged)
     }
 }

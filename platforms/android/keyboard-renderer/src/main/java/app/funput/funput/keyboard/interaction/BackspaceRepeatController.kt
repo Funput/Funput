@@ -10,7 +10,8 @@ internal class BackspaceRepeatController(
 ) {
     private val pointerIds = linkedSetOf<Int>()
     private var activePointerId: Int? = null
-    private var hasRepeated = false
+    var hasRepeated = false
+        private set
     private val repeatTask = object : Runnable {
         override fun run() {
             if (activePointerId == null) return

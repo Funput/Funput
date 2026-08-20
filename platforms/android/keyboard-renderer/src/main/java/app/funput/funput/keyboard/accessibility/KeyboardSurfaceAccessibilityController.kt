@@ -10,6 +10,7 @@ internal class KeyboardSurfaceAccessibilityController(
     host: View,
     activate: (String) -> Unit,
     activateAlternate: (String, Int) -> Unit,
+    activateCustom: (Int) -> Unit,
 ) {
     private var snapshot: KeyboardAccessibilitySnapshot? = null
     private val delegate = KeyboardAccessibilityDelegate(
@@ -17,6 +18,7 @@ internal class KeyboardSurfaceAccessibilityController(
         snapshot = { snapshot },
         activate = activate,
         activateAlternate = activateAlternate,
+        activateCustom = activateCustom,
     )
 
     fun dispatchHover(event: MotionEvent): Boolean = delegate.dispatchHover(event)
@@ -27,9 +29,12 @@ internal class KeyboardSurfaceAccessibilityController(
         suggestions: List<String> = emptyList(),
         clipboardLabel: String? = null,
         clipboardKeyLabel: String? = null,
+        smartGesturesEnabled: Boolean = true,
     ) {
         snapshot = keyboard?.let {
-            KeyboardAccessibilitySnapshot(it, shiftState, suggestions, clipboardLabel, clipboardKeyLabel)
+            KeyboardAccessibilitySnapshot(
+                it, shiftState, suggestions, clipboardLabel, clipboardKeyLabel, smartGesturesEnabled,
+            )
         }
         delegate.invalidateRoot()
     }

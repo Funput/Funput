@@ -9,5 +9,11 @@ internal sealed interface ImeEditCommand {
     }
 
     data object DeleteBackward : ImeEditCommand
+    data class DeleteSurrounding(val beforeLength: Int) : ImeEditCommand {
+        init {
+            require(beforeLength > 0) { "Deleted span must be positive" }
+        }
+    }
+    data class MoveCursor(val offset: Int) : ImeEditCommand
     data class PerformEditorAction(val actionId: Int) : ImeEditCommand
 }

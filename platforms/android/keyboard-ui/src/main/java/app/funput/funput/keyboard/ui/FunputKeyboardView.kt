@@ -82,6 +82,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     var clipboardEntries: List<KeyboardClipboardEntry> by clipboardState::entries
     var clipboardHistoryLoading: Boolean by clipboardState::loading
     var language: KeyboardLanguage by keyboardSurface::language
+    var areSmartGesturesEnabled by keyboardSurface::areSmartGesturesEnabled
     var hapticsEnabled: Boolean by feedbackController::hapticsEnabled
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
     private val safeArea = KeyboardSafeAreaController(this)

@@ -12,6 +12,7 @@ import app.funput.funput.ime.settings.NumberRowSettings
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.settings.SmartCompositionSettings
 import app.funput.funput.ime.settings.ToneStyleSettings
+import app.funput.funput.ime.settings.gestures.SmartGestureSettings
 
 /** Remembers the DataStore wrappers used by [rememberFunputSettings]. */
 internal class FunputSettingsStores(context: Context) {
@@ -25,5 +26,6 @@ internal class FunputSettingsStores(context: Context) {
     val feedbackStore = KeyboardFeedbackSettings(context)
     val numberRowStore = NumberRowSettings(context)
     val smartCompositionStore = SmartCompositionSettings(context)
+    val smartGestureStore = SmartGestureSettings(context)
     val personalSuggestionStore = PersonalSuggestionSettings(context)
 }

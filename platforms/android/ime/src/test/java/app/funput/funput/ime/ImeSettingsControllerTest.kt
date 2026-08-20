@@ -18,7 +18,9 @@ class ImeSettingsControllerTest {
             onInputMethodChanged = {},
             onViewSettingsChanged = {},
             onPersonalSuggestionsChanged = {},
-        )
+        ).also { controller ->
+            assertEquals(true, controller.smartGesturesEnabled)
+        }
 
         // On a fresh install every stored setting equals its default, so no flow reports a
         // change and nothing else would ever configure the engine. Without this the engine kept
