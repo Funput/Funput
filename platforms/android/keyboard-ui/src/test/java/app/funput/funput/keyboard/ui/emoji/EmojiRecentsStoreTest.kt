@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.ui.emoji
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -17,5 +18,10 @@ class EmojiRecentsStoreTest {
     @Test fun `history is capped at thirty`() {
         val value = (0..40).joinToString(",") { "emoji-$it" }
         assertEquals(30, EmojiRecentsStore.decode(value).size)
+    }
+
+    @Test fun `selection from recent category keeps existing order`() {
+        assertFalse(EmojiRecentsStore.shouldRecord(EmojiCategory.RECENT))
+        assertTrue(EmojiRecentsStore.shouldRecord(EmojiCategory.SMILEYS_PEOPLE))
     }
 }

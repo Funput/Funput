@@ -18,6 +18,9 @@ internal class EmojiRecentsStore(context: Context) {
         const val Key = "pref_key_recent_emoji"
         const val Limit = 30
 
+        internal fun shouldRecord(sourceCategory: EmojiCategory): Boolean =
+            sourceCategory != EmojiCategory.RECENT
+
         internal fun decode(value: String?): List<String> = value.orEmpty()
             .split(',')
             .map(String::trim)

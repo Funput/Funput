@@ -29,7 +29,7 @@ import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 internal class EmojiBrowserView(context: Context) : KeyboardPanelComposeView(context) {
-    var onEmojiSelected: (EmojiItem) -> Unit = {}
+    var onEmojiSelected: (EmojiItem, EmojiCategory) -> Unit = { _, _ -> }
     var onCategoryChanged: (EmojiCategory) -> Unit = {}
     private var sections by mutableStateOf(EmojiSections(emptyList()))
     private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
@@ -84,8 +84,10 @@ internal class EmojiBrowserView(context: Context) : KeyboardPanelComposeView(con
                             TextStyle(Color(colors.secondaryLabel), fontSize = 13.sp),
                         )
                     }
-                    items(section.items, key = { "${section.category.name}:${it.glyph}" }) {
-                        EmojiCell(it, Modifier.fillMaxWidth(), onEmojiSelected)
+                    items(section.items, key = { "${section.category.name}:${it.glyph}" }) { item ->
+                        EmojiCell(item, Modifier.fillMaxWidth()) {
+                            onEmojiSelected(item, section.category)
+                        }
                     }
                 }
             }
