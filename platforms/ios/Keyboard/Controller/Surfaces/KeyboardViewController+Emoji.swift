@@ -14,6 +14,9 @@ extension KeyboardViewController {
         emojiView.onEmojiSelected = { [weak self] item in
             self?.insertEmoji(item)
         }
+        emojiView.onRecentEmojiSelected = { [weak self] item in
+            self?.insertEmoji(item, recordRecent: false)
+        }
         emojiView.onDelete = { [weak self] in
             self?.deleteFromEmojiKeyboard()
         }
@@ -53,15 +56,17 @@ extension KeyboardViewController {
         )
     }
 
-    private func insertEmoji(_ item: EmojiItem) {
+    private func insertEmoji(_ item: EmojiItem, recordRecent: Bool = true) {
         let effects = inputCoordinator.insertLiteral(
             item.glyph,
             writer: makeDocumentWriter()
         )
-        _ = emojiRecentsStore.record(
-            EmojiRecent(glyph: item.glyph, name: item.name, category: item.category.rawValue)
-        )
-        refreshEmojiPresentation()
+        if recordRecent {
+            _ = emojiRecentsStore.record(
+                EmojiRecent(glyph: item.glyph, name: item.name, category: item.category.rawValue)
+            )
+            refreshEmojiPresentation()
+        }
         applyPostCommitEffects(effects)
     }
 
