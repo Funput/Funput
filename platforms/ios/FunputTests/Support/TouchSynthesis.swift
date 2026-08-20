@@ -25,6 +25,9 @@ final class ScriptedWriter: KeyboardDocumentWriting {
     /// Character index of the caret; the trackpad gesture is the only thing that moves it
     /// away from the end of the text.
     private(set) var caret = 0
+    /// `text.count` walks the whole string, and the hundred-thousand-key stress tests ask
+    /// for it on every keystroke. Maintained alongside every mutation instead.
+    private var textCount = 0
     let documentIdentifier = UUID()
     /// When set, `contextBeforeInput` reports this instead of `text`,
     /// simulating a stale host callback. Cleared by the test after delivery.
@@ -34,14 +37,15 @@ final class ScriptedWriter: KeyboardDocumentWriting {
         .init(
             documentIdentifier: documentIdentifier,
             contextBeforeInput: reportedContext
-                ?? (caret == text.count ? text : String(text.prefix(caret))),
+                ?? (caret == textCount ? text : String(text.prefix(caret))),
             hasSelection: false
         )
     }
 
     func replaceTextExternally(with text: String) {
         self.text = text
-        caret = text.count
+        textCount = text.count
+        caret = textCount
     }
 
     func apply(_ transaction: InputTransaction) {
@@ -49,15 +53,16 @@ final class ScriptedWriter: KeyboardDocumentWriting {
             switch mutation {
             case let .deleteBackward(count):
                 for _ in 0..<count where caret > 0 {
-                    if caret == text.count {
+                    if caret == textCount {
                         text.removeLast()
                     } else {
                         text.remove(at: text.index(text.startIndex, offsetBy: caret - 1))
                     }
                     caret -= 1
+                    textCount -= 1
                 }
             case let .insert(inserted):
-                if caret == text.count {
+                if caret == textCount {
                     text += inserted
                 } else {
                     text.insert(
@@ -65,9 +70,11 @@ final class ScriptedWriter: KeyboardDocumentWriting {
                         at: text.index(text.startIndex, offsetBy: caret)
                     )
                 }
-                caret += inserted.count
+                let insertedCount = inserted.count
+                caret += insertedCount
+                textCount += insertedCount
             case let .moveCursor(offset):
-                caret = min(max(0, caret + offset), text.count)
+                caret = min(max(0, caret + offset), textCount)
             }
         }
     }
