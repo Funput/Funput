@@ -35,6 +35,32 @@ pub fn tone_index_on_vowel(c: char) -> Option<usize> {
     entry(c)?.index.checked_sub(1)
 }
 
+/// How many families the inventory holds, derived from the table rather than
+/// written down twice. Charset tables index by family, so each one asserts its
+/// own row count against this — adding a 13th family becomes a build error
+/// instead of a silent mis-encoding.
+#[cfg(feature = "charset")]
+pub(crate) const FAMILY_COUNT: usize = table::VOWEL_FAMILIES.len();
+
+/// A vowel's coordinates: family, slot within it (0 = toneless base, 1–5 = sắc,
+/// huyền, hỏi, ngã, nặng), and case.
+///
+/// This and [`vowel_glyph`] are the whole of what charset mapping needs from the
+/// inventory. Every legacy Vietnamese encoding assigns its codes to exactly these
+/// coordinates, which is what lets a charset table be twelve rows of six rather
+/// than a list of sixty-seven glyphs.
+#[cfg(feature = "charset")]
+pub(crate) fn vowel_coords(c: char) -> Option<(usize, usize, bool)> {
+    let e = entry(c)?;
+    Some((e.family, e.index, e.upper))
+}
+
+/// The glyph at a set of coordinates — the inverse of [`vowel_coords`].
+#[cfg(feature = "charset")]
+pub(crate) fn vowel_glyph(family: usize, index: usize, upper: bool) -> Option<char> {
+    (family < FAMILY_COUNT && index < 6).then(|| glyph(family, index, upper))
+}
+
 #[cfg(test)]
 mod tests {
     use super::table::VOWEL_FAMILIES;
