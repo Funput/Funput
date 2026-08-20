@@ -19,6 +19,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var isHapticFeedbackEnabled: Bool
     public var isKeySoundEnabled: Bool
     public var showsKeyPreviews: Bool
+    /// Double-tap space, spacebar cursor panning and swipe-to-delete-word, as one switch.
+    public var smartGesturesEnabled: Bool
     public var showsNumberRow: Bool
     public var layoutPreset: KeyboardLayoutPreset
     public var heightScale: Double
@@ -32,6 +34,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
         case eagerRestore, autoCapitalize, selectedThemeID
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
+        case smartGesturesEnabled
         case showsNumberRow, layoutPreset, heightScale
         case personalSuggestionsEnabled, personalSuggestionResetToken
         case clipboardEnabled, clipboardExpiry, schemaVersion
@@ -49,6 +52,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         isHapticFeedbackEnabled: Bool = false,
         isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
+        smartGesturesEnabled: Bool = true,
         showsNumberRow: Bool = false,
         layoutPreset: KeyboardLayoutPreset = .funput,
         heightScale: Double = 1.1,
@@ -69,6 +73,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
         self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
+        self.smartGesturesEnabled = smartGesturesEnabled
         self.showsNumberRow = showsNumberRow
         self.layoutPreset = layoutPreset
         self.heightScale = heightScale
@@ -84,5 +89,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 10
+    public static let currentSchemaVersion = 11
 }

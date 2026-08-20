@@ -7,22 +7,14 @@ import UIKit
 
 extension KeyboardViewController {
     func handleKeyEvent(_ event: KeyboardKeyEvent) {
+        if handleGesturePhase(event.phase) { return }
         let alternate: KeyAlternate?
         switch event.phase {
         case .released, .repeated:
             alternate = nil
         case let .alternateSelected(value):
             alternate = value
-        case .pressed, .cancelled:
-            return
-        case .swiped(.toggleLanguage):
-            inputCoordinator.toggleLanguage()
-            applyPostCommitEffects(
-                .init(
-                    presentationChanged: true,
-                    suggestionsChanged: true
-                )
-            )
+        case .pressed, .cancelled, .swiped, .cursorMoved, .deletedWord:
             return
         }
 
@@ -111,6 +103,8 @@ extension KeyboardViewController {
         presentation.enterAction = state.enterAction
         presentation.showsKeyPreviews = !state.editorMode.isPassword
             && configuration.showsKeyPreviews
+        presentation.areSmartGesturesEnabled = !state.editorMode.isPassword
+            && configuration.smartGesturesEnabled
         return presentation
     }
 

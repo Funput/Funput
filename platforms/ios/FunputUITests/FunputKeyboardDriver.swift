@@ -74,6 +74,16 @@ enum FunputKeyboardDriver {
         }
     }
 
+    /// Frame of one keycap addressed by its accessibility label, for keys the
+    /// character-based lookup cannot name (Backspace, Shift, …).
+    static func keyFrame(
+        _ app: XCUIApplication, labeled label: String, exact: Bool = true
+    ) -> CGRect? {
+        let element = keyElement(app, labeled: label, exact: exact)
+        guard element.waitForExistence(timeout: 3) else { return nil }
+        return element.frame
+    }
+
     /// A keycap in the keyboard area. Prefers real `.key` elements; falls back
     /// to any labeled element in the lower half of the screen so the query can
     /// never land on the harness text content.

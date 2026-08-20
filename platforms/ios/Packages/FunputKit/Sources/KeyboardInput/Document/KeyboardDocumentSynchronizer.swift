@@ -76,6 +76,11 @@ struct KeyboardDocumentSynchronizer {
                 for _ in 0..<count { recordDeletion() }
             case let .insert(text):
                 recordInsertion(text)
+            case .moveCursor:
+                // The shadow holds only the text before the caret, so a move to the right
+                // would need `documentContextAfterInput`, which no snapshot carries. Drop
+                // the shadow and let the host's next change callback re-seed it.
+                invalidate()
             }
         }
     }

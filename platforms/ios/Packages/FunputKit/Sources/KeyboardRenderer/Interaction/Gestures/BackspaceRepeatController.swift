@@ -28,7 +28,7 @@ final class BackspaceRepeatController {
     private let repeatInterval: TimeInterval
     private var scheduledAction: KeyboardScheduledAction?
     private var isActive = false
-    private var hasRepeated = false
+    private(set) var hasRepeated = false
 
     init(
         initialDelay: TimeInterval = 0.4,
@@ -44,10 +44,13 @@ final class BackspaceRepeatController {
         self.onRepeat = onRepeat
     }
 
-    func start() {
+    /// - Parameter initialDelay: overrides the configured delay for this press only.
+    ///   The spacebar pushes it out so a trackpad drag has room to start before the key
+    ///   begins inserting spaces.
+    func start(initialDelay override: TimeInterval? = nil) {
         cancel()
         isActive = true
-        scheduleNext(after: initialDelay)
+        scheduleNext(after: override ?? initialDelay)
     }
 
     func finish() -> Bool {

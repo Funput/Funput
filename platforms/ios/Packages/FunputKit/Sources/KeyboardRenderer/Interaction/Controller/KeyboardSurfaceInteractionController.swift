@@ -1,4 +1,5 @@
 #if canImport(UIKit)
+import Foundation
 import KeyboardLayout
 import os
 import UIKit
@@ -23,6 +24,18 @@ final class KeyboardSurfaceInteractionController {
         case alternate
         case repeatKey
         case swipe
+        case trackpad
+        case wordDelete
+
+        /// Whether winning this claim takes the contact out of the pipeline entirely.
+        /// Detached contacts produce no key on release, which is what a gesture that has
+        /// already written to the document needs.
+        var detachesContact: Bool {
+            switch self {
+            case .repeatKey, .trackpad, .wordDelete: true
+            case .alternate, .swipe: false
+            }
+        }
     }
 
     struct TouchState {
@@ -34,6 +47,15 @@ final class KeyboardSurfaceInteractionController {
         var alternateLayout: KeyboardAlternatePaletteLayout?
         var selectedAlternateIndex: Int?
         var swipeTracker = KeySwipeGestureTracker()
+        /// Snapshotted at touch-down so a configuration change mid-press cannot flip the
+        /// state machine under a finger that is already moving.
+        var smartGestures = false
+        /// Set by the hold timer. Arming is not claiming: a resting thumb must still be
+        /// able to lift and type a space.
+        var holdArmed = false
+        var trackpad: SpaceCursorPanTracker?
+        var ratchet: BackspaceWordRatchet?
+        var claimedGesture: GestureClaim?
         /// Set once the finger travels past `tapSlop`, which separates a tap from a
         /// gesture that merely started on a keycap.
         var hasWandered = false
@@ -42,6 +64,11 @@ final class KeyboardSurfaceInteractionController {
 
     /// Half the swipe threshold: past this a touch is no longer a tap.
     static let tapSlop: CGFloat = 16
+    /// Sideways travel that turns an armed space hold into a caret pan.
+    static let trackpadActivation: CGFloat = 10
+    /// Space repeat waits this long when smart gestures are on, leaving a usable window
+    /// between the hold arming and the first inserted space.
+    static let smartSpaceRepeatDelay: TimeInterval = 0.7
 
     let haptics: KeyboardHaptics
     let onEvent: (KeyboardKeyEvent) -> Void
@@ -58,10 +85,15 @@ final class KeyboardSurfaceInteractionController {
     ) { [weak self] in
         self?.repeatActiveKey()
     }
-    lazy var alternateHoldController = AlternateHoldController(
+    lazy var alternateHoldController = KeyHoldController(
         schedule: repeatScheduler
     ) { [weak self] token in
         self?.activateAlternates(for: token)
+    }
+    lazy var spaceHoldController = KeyHoldController(
+        schedule: repeatScheduler
+    ) { [weak self] token in
+        self?.armSpaceTrackpad(for: token)
     }
     var touches: [TouchToken: TouchState] = [:]
     var highlightCounts: [String: Int] = [:]

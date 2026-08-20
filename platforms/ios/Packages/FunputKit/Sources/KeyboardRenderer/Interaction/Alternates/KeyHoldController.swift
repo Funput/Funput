@@ -1,8 +1,12 @@
 #if canImport(UIKit)
 import Foundation
 
+/// Fires once a single contact has stayed down past `delay`.
+///
+/// Shared by the alternates palette and the spacebar trackpad: both are "the finger has
+/// stopped being a tap" timers, differing only in how long they wait and what they do.
 @MainActor
-final class AlternateHoldController {
+final class KeyHoldController {
     typealias TouchToken = UInt64
     typealias Scheduler = BackspaceRepeatController.Scheduler
 

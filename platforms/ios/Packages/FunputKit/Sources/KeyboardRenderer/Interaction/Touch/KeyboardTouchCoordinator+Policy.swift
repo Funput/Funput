@@ -52,8 +52,14 @@ extension KeyboardTouchCoordinator {
         kind: KeyboardSurfaceInteractionController.GestureClaim
     ) -> Bool {
         let id = ContactID(rawValue: token)
-        if let existing = claims[id] { return existing == kind }
-        let accepted = kind == .repeatKey
+        if let existing = claims[id] {
+            // A repeating press may still be upgraded to a word rub: both are already
+            // detached, so the pipeline transition is done and only the label changes.
+            guard existing.detachesContact, kind.detachesContact else { return existing == kind }
+            claims[id] = kind
+            return true
+        }
+        let accepted = kind.detachesContact
             ? pipeline.detach(id, at: clock())
             : pipeline.claimForGesture(id)
         guard accepted else {
@@ -83,6 +89,16 @@ extension KeyboardTouchCoordinator {
             resolve(id, action: hits[id].map { .alternate($0, value) })
         case let .swiped(action):
             resolve(id, action: hits[id].map { .swiped($0, action) })
+        case .cursorMoved, .deletedWord:
+            // Written straight to the document by the gesture lane; the arbiter never
+            // produces these, so they only pass through once the contact is detached.
+            guard claims[id]?.detachesContact == true else {
+                registry.metrics.gestureConflict += 1
+                notify()
+                return nil
+            }
+            notify()
+            return event
         case .cancelled:
             cancelClaim(id)
         case .released:
@@ -114,7 +130,7 @@ extension KeyboardTouchCoordinator {
     private func cancelClaim(_ id: ContactID) {
         guard let claim = claims[id] else { return }
         _ = pipeline.detach(id, at: clock())
-        if claim == .repeatKey {
+        if claim.detachesContact {
             registry.finish(id)
         } else {
             cancel(id, emit: true)

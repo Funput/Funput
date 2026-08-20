@@ -9,6 +9,10 @@ public final class KeyboardInputCoordinator {
 
     let composer: FunputComposer
     var shiftController: ShiftStateController
+    var spaceTapTracker: SpaceTapTracker
+    /// Mirrors ``FunputConfiguration/smartGesturesEnabled`` for the gestures the engine
+    /// owns; the touch-side gestures read it from ``KeyboardPresentation`` instead.
+    public internal(set) var smartGesturesEnabled = true
     var documentSynchronizer = KeyboardDocumentSynchronizer()
     var suggestionTracker = AuthoredTokenTracker()
     var personalSuggestionsEnabled = true
@@ -20,6 +24,9 @@ public final class KeyboardInputCoordinator {
         inputMethod: KeyboardInputMethod = .vni,
         shiftDoubleTapInterval: TimeInterval = 0.3,
         shiftClock: @escaping () -> TimeInterval = {
+            ProcessInfo.processInfo.systemUptime
+        },
+        gestureClock: @escaping () -> TimeInterval = {
             ProcessInfo.processInfo.systemUptime
         },
         echoClock: @escaping () -> TimeInterval = {
@@ -37,6 +44,9 @@ public final class KeyboardInputCoordinator {
             doubleTapInterval: shiftDoubleTapInterval,
             clock: shiftClock
         )
+        // Its own clock, not `shiftClock`: a test that freezes shift's clock would
+        // otherwise turn every second space into a full stop.
+        spaceTapTracker = SpaceTapTracker(clock: gestureClock)
         documentSynchronizer.clock = echoClock
         composer.setInputMethod(inputMethod.engineMethod)
     }
