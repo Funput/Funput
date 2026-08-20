@@ -278,3 +278,19 @@ fn an_expansion_reopens_its_last_word() {
     shell.key('f');
     assert_eq!(shell.app, "Việt Nàm");
 }
+
+/// Reported: `dungh` + Space, then Backspace twice to drop the space and the stray
+/// `h`. The caret now sits at the end of `dung`, so the tone key has to reach it.
+#[test]
+fn a_refused_word_is_reopened_once_backspace_makes_it_a_syllable() {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.type_str("dungh ");
+    assert_eq!(shell.app, "dungh ");
+
+    shell.backspace(); // the space
+    shell.backspace(); // the stray `h`
+    assert_eq!(shell.app, "dung");
+
+    shell.key('s');
+    assert_eq!(shell.app, "dúng");
+}

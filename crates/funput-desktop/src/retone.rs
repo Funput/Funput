@@ -94,13 +94,14 @@ impl CommittedTail {
 
     /// What the engine did with the word from [`CommittedTail::backspace`]. `true`:
     /// it is the live composition now, so the shadow hands it over and the invariant
-    /// holds across the two. `false`: the word stays on screen with nothing tracking
-    /// it, which leaves the shadow unable to place the caret — so it starts over.
+    /// holds across the two. `false`: the word stays on screen and the shadow keeps
+    /// describing it — the deleted character was folded in by `backspace` itself, so
+    /// what remains is still a suffix of the text before the caret. Holding on is
+    /// what lets a *later* Backspace re-open the word: `dungh` + Space + ⌫⌫ leaves
+    /// the caret on `dung`, which the engine does take.
     pub fn resolve(&mut self, adopted: bool) {
         if adopted {
             self.tail.truncate(self.word_start);
-        } else {
-            self.tail.clear();
         }
     }
 
