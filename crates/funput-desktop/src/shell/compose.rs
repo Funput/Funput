@@ -31,8 +31,9 @@ impl ShellState {
     /// the caret at the end of a finished Vietnamese word the engine re-opens that
     /// word — so `phủ` + Space + Backspace + `s` gives `phú` instead of `phủs`. The
     /// engine refuses anything that is not a Vietnamese syllable, which keeps English
-    /// words and URLs literal; a refusal costs the shadow its bearings, so it
-    /// starts over.
+    /// words and URLs literal. A refusal keeps the shadow, so Backspace goes on
+    /// eating the word and re-opens it as soon as what is left *is* a syllable —
+    /// `dungh` + Space + ⌫⌫ lands on `dung`, and the next tone key reaches it.
     pub fn on_backspace(&mut self) {
         if !self.engine.buffer().is_empty() {
             self.engine.on_backspace();

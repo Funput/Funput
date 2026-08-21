@@ -105,17 +105,20 @@ fn an_expansion_offers_only_its_last_word() {
     assert_eq!(tail.backspace(), Some("Nam"));
 }
 
-/// A refused word (the engine only adopts real syllables) is left on screen with
-/// nothing tracking it, so the shadow can no longer place the caret.
+/// A refused word (the engine only adopts real syllables) stays on screen, and so
+/// does the shadow describing it: `backspace` already folded the deletion in, so
+/// the next one keeps walking back through the word — and hands over whatever
+/// shorter form the engine will take.
 #[test]
-fn a_refused_word_resets_the_shadow() {
+fn a_refused_word_keeps_the_shadow() {
     let mut tail = CommittedTail::new();
     commit(&mut tail, "chào", ' ');
-    commit(&mut tail, "hello", ' ');
+    commit(&mut tail, "dungh", ' ');
 
-    assert_eq!(tail.backspace(), Some("hello"));
-    tail.resolve(false);
-    assert_eq!(tail.backspace(), None);
+    assert_eq!(tail.backspace(), Some("dungh"));
+    tail.resolve(false); // not a syllable
+    assert_eq!(tail.backspace(), Some("dung"));
+    tail.resolve(true); // `dung` is the live composition now
 }
 
 #[test]
