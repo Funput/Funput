@@ -6,6 +6,7 @@ import UIKit
 @MainActor
 public final class EmojiKeyboardView: UIView {
     public var onEmojiSelected: ((EmojiItem) -> Void)?
+    public var onRecentEmojiSelected: ((EmojiItem) -> Void)?
     public var onDelete: (() -> Void)?
     public var onReturn: (() -> Void)?
     public var onKaomoji: (() -> Void)?

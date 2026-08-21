@@ -40,6 +40,22 @@ struct EmojiKeyboardViewTests {
         #expect(openedKaomoji)
     }
 
+    @Test("Selecting a recent emoji uses the stable-recents callback")
+    func recentSelection() {
+        let view = makeView()
+        var selectedCatalogItem: EmojiItem?
+        var selectedRecentItem: EmojiItem?
+        view.onEmojiSelected = { selectedCatalogItem = $0 }
+        view.onRecentEmojiSelected = { selectedRecentItem = $0 }
+        view.apply(theme: .funputGlass, recent: [smile])
+
+        view.collectionView(view.collectionView, didSelectItemAt: IndexPath(item: 0, section: 0))
+
+        #expect(selectedRecentItem == smile)
+        #expect(selectedCatalogItem == nil)
+        #expect(view.sections[0].items == [smile])
+    }
+
     @Test("Search keyboard edits only local query")
     func localSearchInput() {
         let view = makeView()

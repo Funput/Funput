@@ -12,7 +12,7 @@ struct AdvancedTelexSettingsTests {
 
         #expect(choices.map(\.id) == ["telex", "telex_advanced", "vni"])
         #expect(choices.map(\.title) == ["Telex", "Telex nâng cao", "VNI"])
-        #expect(choices[1].summary == "Full Telex — [→ư, ]→ơ, w đầu từ→ư.")
+        #expect(choices[1].summary == "Telex nâng cao — [→ư, ]→ơ, w đầu từ→ư.")
     }
 
     @Test("Advanced Telex persists and leaves number row editable")

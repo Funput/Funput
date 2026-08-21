@@ -40,7 +40,13 @@ extension EmojiKeyboardView: UICollectionViewDataSource, UICollectionViewDelegat
     }
 
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        onEmojiSelected?(sections[indexPath.section].items[indexPath.item])
+        let section = sections[indexPath.section]
+        let item = section.items[indexPath.item]
+        if section.category == .recent {
+            (onRecentEmojiSelected ?? onEmojiSelected)?(item)
+        } else {
+            onEmojiSelected?(item)
+        }
     }
 
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {

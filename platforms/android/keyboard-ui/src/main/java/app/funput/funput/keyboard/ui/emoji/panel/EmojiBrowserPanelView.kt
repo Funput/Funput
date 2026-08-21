@@ -13,6 +13,7 @@ import app.funput.funput.keyboard.ui.emoji.EmojiBottomBarView
 import app.funput.funput.keyboard.ui.emoji.EmojiBrowserView
 import app.funput.funput.keyboard.ui.emoji.EmojiCatalog
 import app.funput.funput.keyboard.ui.emoji.EmojiCatalogLoader
+import app.funput.funput.keyboard.ui.emoji.EmojiCategory
 import app.funput.funput.keyboard.ui.emoji.EmojiItem
 import app.funput.funput.keyboard.ui.emoji.EmojiLoadingView
 import app.funput.funput.keyboard.ui.emoji.EmojiRecentsStore
@@ -105,7 +106,7 @@ internal class EmojiBrowserPanelView(context: Context) : LinearLayout(context) {
         bottom.onLettersRequested = { feedback(KeyboardHapticType.CONTROL); onLettersRequested() }
         bottom.onKaomojiRequested = { feedback(KeyboardHapticType.CONTROL); onKaomojiRequested() }
         bottom.onBackspaceRequested = { feedback(KeyboardHapticType.DELETE); onBackspaceRequested(KeyAction.Backspace) }
-        search.onEmojiSelected = ::select
+        search.onEmojiSelected = { select(it, it.category) }
         search.onInput = controller::input
         search.onSpace = controller::space
         search.onBackspace = controller::backspace
@@ -113,11 +114,13 @@ internal class EmojiBrowserPanelView(context: Context) : LinearLayout(context) {
         search.onCancel = controller::cancel
     }
 
-    private fun select(item: EmojiItem) {
+    private fun select(item: EmojiItem, sourceCategory: EmojiCategory) {
         feedback(KeyboardHapticType.KEY_PRESS)
-        recents.record(item.glyph)
+        if (EmojiRecentsStore.shouldRecord(sourceCategory)) {
+            recents.record(item.glyph)
+            refreshBrowser()
+        }
         onEmojiSelected(item.glyph)
-        refreshBrowser()
     }
 
     private fun refreshBrowser() = browser.submit(catalog, recents.glyphs())

@@ -137,7 +137,7 @@ extension KeyboardInputMethod {
     var settingsSummary: String {
         switch self {
         case .telex: "Dùng tổ hợp chữ để nhập dấu."
-        case .telexAdvanced: "Full Telex — [→ư, ]→ơ, w đầu từ→ư."
+        case .telexAdvanced: "Telex nâng cao — [→ư, ]→ơ, w đầu từ→ư."
         case .vni: "Dùng các phím số để nhập dấu."
         }
     }
