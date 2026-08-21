@@ -163,3 +163,15 @@ fn a_real_word_encodes_to_the_bytes_a_vntime_document_holds() {
     );
     assert_eq!(to_unicode(&encoded), "Việt Nam");
 }
+
+/// A `.VnTime` document stores one byte per character, so it cannot hold `ệ` at
+/// all. Reading precomposed Unicode as TCVN3 must say so — the text comes through
+/// intact, but the count is what tells a user they picked the wrong bảng mã, and
+/// what lets `detect` tell the two apart. Without this the two charsets score
+/// identically on ordinary Vietnamese and detection is impossible.
+#[test]
+fn a_character_no_byte_could_hold_is_reported() {
+    let out = transcode("Việt Nam", Charset::Tcvn3, Charset::Unicode);
+    assert_eq!(out.text, "Việt Nam", "nothing is lost");
+    assert_eq!(out.unmapped, 1, "but `ệ` was never TCVN3");
+}

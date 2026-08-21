@@ -59,13 +59,37 @@ pub(super) fn encode(charset: Charset, atom: Atom, out: &mut String) -> bool {
 }
 
 /// Whether a charset spells text in single bytes drawn by a legacy font, so bytes
-/// read from a file are Latin-1 rather than UTF-8. Used only by
-/// [`crate::charset::decode_bytes`].
+/// read from a file are Latin-1 rather than UTF-8.
+///
+/// This and the two below are everything [`crate::charset::decode_bytes`] needs to
+/// know about the byte layer, which is why they live together down here rather
+/// than beside it.
 pub(super) fn is_byte_oriented(charset: Charset) -> bool {
     match charset {
         Charset::Unicode | Charset::UnicodeCombining => false,
         Charset::Tcvn3 | Charset::VniWindows => true,
     }
+}
+
+/// How many characters lossy UTF-8 decoding had to replace. Zero for valid input,
+/// and replacement characters the source genuinely encoded are discounted so a
+/// document that legitimately contains one is not reported as damaged.
+pub(super) fn broken_sequences(bytes: &[u8]) -> usize {
+    if std::str::from_utf8(bytes).is_ok() {
+        return 0;
+    }
+    String::from_utf8_lossy(bytes)
+        .matches(char::REPLACEMENT_CHARACTER)
+        .count()
+        .saturating_sub(genuine_replacements(bytes))
+}
+
+/// How many `U+FFFD` the bytes genuinely encode.
+fn genuine_replacements(bytes: &[u8]) -> usize {
+    bytes
+        .windows(3)
+        .filter(|window| *window == [0xEF, 0xBF, 0xBD])
+        .count()
 }
 
 #[cfg(test)]

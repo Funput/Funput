@@ -29,13 +29,16 @@
 //! ```
 
 mod codecs;
+mod detect;
 mod pivot;
 mod transcode;
 
+pub use detect::{detect, detect_bytes};
+
 /// A Vietnamese character encoding.
 ///
-/// `#[non_exhaustive]`: Unicode tổ hợp is still to come, and adding it should not
-/// break callers. Match with a wildcard arm.
+/// `#[non_exhaustive]`: VIQR, VISCII and the rest are out of scope today but not
+/// forever, and adding one should not break callers. Match with a wildcard arm.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum Charset {
@@ -87,7 +90,7 @@ pub struct Conversion {
 
 /// Convert text from one charset to another.
 ///
-/// `from` must be what the text actually is; guessing it is a separate job, and
+/// `from` must be what the text actually is; guessing it is [`detect`]'s job, and
 /// not one this function does.
 pub fn convert(text: &str, from: Charset, to: Charset) -> Conversion {
     transcode::transcode(text, from, to)
@@ -110,36 +113,13 @@ pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion {
         (bytes.iter().copied().map(char::from).collect(), 0)
     } else {
         let text = String::from_utf8_lossy(bytes).into_owned();
-        (text, broken_sequences(bytes))
+        (text, codecs::broken_sequences(bytes))
     };
     let out = convert(&text, from, Charset::Unicode);
     Conversion {
         unmapped: out.unmapped + damage,
         ..out
     }
-}
-
-/// How many characters lossy UTF-8 decoding had to replace. Zero for valid input,
-/// and replacement characters the source genuinely encoded are discounted so a
-/// document that legitimately contains one is not reported as damaged.
-fn broken_sequences(bytes: &[u8]) -> usize {
-    if std::str::from_utf8(bytes).is_ok() {
-        return 0;
-    }
-    String::from_utf8_lossy(bytes)
-        .matches(char::REPLACEMENT_CHARACTER)
-        .count()
-        .saturating_sub(genuine_replacements(bytes))
-}
-
-/// How many `U+FFFD` the bytes genuinely encode. Subtracting these is what keeps a
-/// source that legitimately contains a replacement character from being reported
-/// as damaged.
-fn genuine_replacements(bytes: &[u8]) -> usize {
-    bytes
-        .windows(3)
-        .filter(|window| *window == [0xEF, 0xBF, 0xBD])
-        .count()
 }
 
 #[cfg(test)]

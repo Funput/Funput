@@ -98,3 +98,20 @@ pub const NON_CANONICAL: &[(&str, &str, usize)] = &[
     ("ấ", "â\u{301}", 1),               // precomposed
     ("Viê\u{323}t", "Viê\u{323}t", 0),  // already canonical
 ];
+
+/// Multi-word Vietnamese for the detector, in Unicode only — the test converts
+/// them itself, so no spelling is written by hand.
+///
+/// Multi-word on purpose. Sixteen bytes are a letter in **both** legacy charsets
+/// (`0xF4` is `ụ` in TCVN3 and `ơ` in VNI), so a one-word phrase is often genuinely
+/// undecidable and would fail the test for being right. Every phrase also avoids an
+/// uppercase toned vowel, which TCVN3 cannot spell — the test skips lossy
+/// conversions anyway, but a fixture that is silently skipped tests nothing.
+pub const DETECT_PHRASES: &[&str] = &[
+    "Cộng hòa Xã hội Chủ nghĩa Việt Nam",
+    "Nghị định của Chính phủ",
+    "Hà Nội mùa thu",
+    "Tôi yêu tiếng nước tôi",
+    "Bộ Giáo dục và Đào tạo",
+    "đường phố Sài Gòn",
+];

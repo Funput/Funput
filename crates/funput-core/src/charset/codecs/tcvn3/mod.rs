@@ -39,7 +39,11 @@ pub(super) fn decode(cur: &Cursor<'_>) -> Decoded {
         },
         // Below 0x80 TCVN3 is ASCII — but an ASCII vowel still has to pick up its
         // family coordinates, or the target charset could not re-spell it.
-        _ => (Atom::from_char(c), Reading::Exact),
+        Ok(_) => (Atom::from_char(c), Reading::Exact),
+        // Above U+00FF the character is not merely unassigned: a `.VnTime`
+        // document stores one byte per character and cannot hold it at all. It
+        // still comes through — nothing is lost — but this text is not TCVN3.
+        Err(_) => (Atom::from_char(c), Reading::Unknown),
     };
     Decoded {
         atom,
