@@ -2,8 +2,11 @@
 
 ## Trạng thái
 
-Thiết kế. Tài liệu này chốt mô hình trước khi có code; nó là PR đầu tiên của tính
-năng và được review riêng.
+Đã có: khung core, **TCVN3**, **VNI-Windows**. Còn lại: Unicode tổ hợp, `detect()`,
+rồi các consumer (xem "Thứ tự hiện thực" ở cuối).
+
+Tài liệu này chốt mô hình *trước* khi có code và được review riêng; nó vẫn là nơi
+mọi quyết định thiết kế sống, nên mỗi bảng mã mới cập nhật lại nó trong cùng PR.
 
 Tên kỹ thuật là `funput_core::charset`, nằm sau cargo feature `charset` **mặc định
 tắt** — bản bàn phím iOS/Android không bao giờ biên dịch nó.
@@ -73,7 +76,7 @@ enum Atom {
     /// đ / Đ — phụ âm duy nhất mà cả ba bảng mã cũ đều gán mã riêng.
     Stroke { upper: bool },
     /// Mọi thứ khác: phụ âm ASCII, chữ số, dấu câu, ký tự nước ngoài.
-    Passthrough(char),
+    Other(char),
 }
 ```
 
@@ -86,26 +89,28 @@ Ba biến thể đó đủ cho cả bốn bảng mã. Kiểm chứng trên giấ
 |---|---|---|---|---|---|
 | `a` | `a` | `Vowel{0, 0}` | `a` | `a` | `a` |
 | `ầ` | `ầ` | `Vowel{2, 2}` | 1 byte vùng cao | `a` + 1 byte dấu | `â` + `U+0300` |
-| `ự` | `ự` | `Vowel{10, 5}` | 1 byte vùng cao | `u` + 1 byte dấu | `ư` + `U+0323` |
+| `ự` | `ự` | `Vowel{10, 5}` | 1 byte vùng cao | 1 byte nền `ư` + 1 byte dấu | `ư` + `U+0323` |
 | `Ề` | `Ề` | `Vowel{4, 2, upper}` | **không biểu diễn được** | `E` + 1 byte dấu | `Ê` + `U+0300` |
 | `đ` | `đ` | `Stroke{}` | 1 byte | 1 byte | `đ` |
-| `ng` | `ng` | 2× `Passthrough` | `ng` | `ng` | `ng` |
-| `₫` | `₫` | `Passthrough` | **không biểu diễn được** | **không biểu diễn được** | `₫` |
+| `ng` | `ng` | 2× `Other` | `ng` | `ng` | `ng` |
+| `₫` | `₫` | `Other` | **không biểu diễn được** | **không biểu diễn được** | `₫` |
 
 Nguyên âm ASCII thường (`a e i o u y`) đi qua nhánh `Vowel` với `tone = 0`, không
-qua `Passthrough` — vì VNI cần chúng làm chữ nền cho byte dấu đi sau, nên chúng phải
+qua `Other` — vì VNI cần chúng làm chữ nền cho byte dấu đi sau, nên chúng phải
 mang theo chỉ số họ.
 
 ## Bảng mã dùng chung chỉ số với `VOWEL_FAMILIES`
 
 Cả ba bảng mã cũ đều gán mã cho đúng một kho chữ: 12 họ nguyên âm × 6 ô, cộng `đ`.
-Nên mỗi bảng là `[[u8; 6]; 12]` — **12 dòng dữ liệu, không phải 67** — và chỉ số
-của nó trùng với `VOWEL_FAMILIES` ở `unicode/vowels/table.rs`.
+Nên mỗi bảng là **12 dòng dữ liệu, không phải 67**, và chỉ số của nó trùng với
+`VOWEL_FAMILIES` ở `unicode/vowels/table.rs`. Ô chứa gì thì tuỳ bảng mã: TCVN3 là
+`[[u8; 6]; 12]` (một mã một chữ), VNI-Windows là `[[(u8, u8); 6]; 12]` (byte nền
+cộng byte dấu tuỳ chọn).
 
 Điều đó cho một dòng canh trong mỗi tệp bảng:
 
 ```rust
-const _: () = assert!(TCVN3_BYTES.len() == vowels::VOWEL_FAMILY_COUNT);
+const _: () = assert!(TCVN3_BYTES.len() == vowels::FAMILY_COUNT);
 ```
 
 Ai đó thêm họ nguyên âm thứ 13 sẽ thành **lỗi build**, chứ không thành mã hoá sai
@@ -122,6 +127,12 @@ trong code — chỉ số dùng chung mới là thứ giữ hai bảng khỏi tr
 Tài liệu này cố tình **không liệt kê giá trị byte**. Chúng phải lấy từ nguồn tra cứu
 được và đối chiếu chéo lúc hiện thực, không lấy từ trí nhớ — một byte chép sai sẽ
 tạo ra mojibake mà mắt thường không bắt được trên văn bản dài.
+
+Một lưu ý thực hành, học được khi làm VNI: **đừng lấy dữ liệu qua công cụ tóm tắt
+văn bản.** Hai lần thử đầu cho ra bảng lệch hàng và hex bịa, tự mâu thuẫn ngay trong
+cùng một câu trả lời. Cách dùng được là kéo byte thô về (`gh api` + `base64 -d`) rồi
+tự ghép hai mảng bằng script — và **sinh luôn bảng Rust từ dữ liệu đó**, không chép
+tay. Chi tiết xuất xứ của từng bảng nằm trong doc của `table.rs` tương ứng.
 
 Thứ chứng minh bảng đúng là **test quét toàn bộ** trong `src/`: với mọi bộ ba
 `(family, index, upper)`, `encode` rồi `decode` phải là identity, **và** tập không
@@ -148,6 +159,54 @@ thuần, không phá API đã có.
 
 Đây là giới hạn của bảng mã, không phải lỗi của công cụ. UI phải nói thẳng điều đó,
 vì người dùng sẽ báo nó như một lỗi.
+
+## VNI-Windows: một chữ không phải một ký tự
+
+VNI viết hầu hết chữ bằng **byte nền cộng byte dấu**, nên chuyển mã làm **dịch
+ranh giới ký tự**: `Ề` đi ra thành hai. Đây là bảng mã đầu tiên phá tính chất
+"một chữ một ký tự" mà TCVN3 có, nên property test về số ký tự phải nói rõ nó chỉ
+đúng với TCVN3.
+
+Ba bộ dấu làm hết việc: *plain* `F9 F8 FB F5 EF`, *mũ* `E2` + `E1 E0 E5 E3 E4`
+(dùng chung cho `â ê ô`, phân biệt nhờ chữ nền), *trăng* `EA` + `E9 E8 FA FC EB`
+riêng cho `ă`. Hai họ `ơ`/`ư` có byte nền riêng (`F4`/`F6`) thay vì dựng trên `o`/`u`.
+
+**Hoa = mọi byte trừ `0x20`**, không ngoại lệ. Nên bảng chỉ lưu chữ thường, và
+**VNI không có khoảng trống hoa/thường nào** — nó viết được cả `Ề`, chỗ TCVN3 chịu
+thua. Tập mất mát của VNI trên kho chữ là **rỗng**.
+
+Hai ngoại lệ trong dữ liệu, là chuyện của VNI chứ không phải của bảng: họ `i` viết
+mọi thanh điệu bằng **một byte**, và riêng `ỵ` cũng vậy trong một họ mà các thanh
+khác thì không.
+
+### Đọc tham lam, và vì sao nó an toàn
+
+Giải mã lấy **khớp dài nhất**: thử cặp hai byte trước, rồi mới tới một byte. An toàn
+vì **byte dấu không bao giờ là một chữ đứng riêng** — tập nền và tập dấu rời nhau,
+nên một cặp đã khớp thì không thể vốn là hai chữ.
+
+Cách làm ngược lại — xử lý chữ một byte trước — trông tương đương nhưng **không**:
+`F4` vừa là chữ `ơ`, vừa là nền của cả năm dạng có dấu của nó, nên `ơ` sẽ bị lấy
+riêng và mọi `ớ ờ ở ỡ ợ` gãy làm đôi.
+
+### Hai chỗ nó từ chối đoán
+
+**Cặp lệch hoa/thường** (`a` kèm byte dấu hoa) không phải thứ VNI sinh ra, nhưng bộ
+chuyển đổi cẩu thả thì có. Đọc thành chữ, lấy case theo chữ nền, và **đếm vào
+`unmapped`** — cách đọc mà con người sẽ đọc, không sinh ra nguyên âm Latin-1 ma rồi
+nở thành hai byte nữa.
+
+**Họ `i` chỉ nhận byte đơn.** Vài bộ chuyển đổi ngoài đời viết `í` thành `i` + dấu
+sắc; ở đây nó đọc thành `i` rồi một dấu mồ côi, và bị đếm. Nhận cả hai cách viết sẽ
+cho một chữ hai cách viết, và bài test quét toàn kho chữ mất sức bắt lỗi bảng.
+
+### Một kiểu hỏng TCVN3 không có
+
+Ký tự đi xuyên qua (`Other`) mà code point của nó tình cờ là một byte dấu sẽ **dính
+vào chữ đứng trước** khi đọc lại: Unicode `"aø"` ra `61 F8`, đọc lại thành `à`.
+Không tránh được, vì `ø` phải đi qua nguyên vẹn theo đúng quy tắc "dạng gần nhất".
+`unmapped` khác 0 nên hợp đồng "chính xác thì đảo ngược được" vẫn đứng — và có một
+bài test ghim nó lại như hành vi **đã biết**, thay vì để ai đó phát hiện ngoài đời.
 
 ## Quy ước "Unicode tổ hợp"
 
@@ -231,7 +290,7 @@ match. Trục, driver và `detect` không đổi.
 ## API công khai
 
 ```rust
-#[non_exhaustive] pub enum Charset { Unicode, /* … */ }
+#[non_exhaustive] pub enum Charset { Unicode, Tcvn3, VniWindows, /* … */ }
 #[non_exhaustive] pub struct Conversion { pub text: String, pub unmapped: usize }
 
 pub fn convert(text: &str, from: Charset, to: Charset) -> Conversion;
@@ -256,6 +315,9 @@ Mỗi mục một PR:
 2. Khung core + **TCVN3**. Phải kèm một bảng mã thật, vì CI chạy `-D warnings` và một
    trục chỉ có codec identity là dead code. TCVN3 được chọn vì nó dùng tới cả adapter
    Latin-1 lẫn đường `unmapped`, tức kiểm chứng nhiều phần khung nhất.
-3. VNI-Windows → 4. Unicode tổ hợp → 5. `detect()`.
+3. **VNI-Windows**. Bảng mã đầu tiên có chữ dài hai ký tự, nên nó cũng là phép thử
+   thật đầu tiên cho mô hình trục: `TCVN3 ↔ VNI` chạy được mà không codec nào biết
+   codec kia.
+4. Unicode tổ hợp → 5. `detect()`.
 6. `funput-config` (sửa import UniKey) → 7. `funput convert` → 8. UI Windows →
    9. UI Linux GTK.
