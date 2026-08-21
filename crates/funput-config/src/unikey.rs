@@ -19,11 +19,15 @@
 //! merge rule and the counters instead of restating them.
 
 mod encoding;
+mod trigger;
 
 use std::fmt;
 use std::path::Path;
 
+use funput_core::charset::Charset;
+
 use crate::transfer::PortableShortcut;
+use trigger::normalize_trigger;
 
 /// Why a macro table could not be turned into shortcut rows.
 ///
@@ -33,8 +37,11 @@ use crate::transfer::PortableShortcut;
 pub enum MacroError {
     /// The file could not be opened or read at all.
     Unreadable,
-    /// Read, but the bytes are not text this can decode — most likely a legacy
-    /// 8-bit Vietnamese encoding (TCVN3, VNI-Windows).
+    /// Read, but no encoding explains the bytes.
+    ///
+    /// The legacy Vietnamese charsets **were** tried, so reaching this means
+    /// detection declined — an encoding nobody has implemented, a genuine tie, or
+    /// too little Vietnamese to judge. Not that guessing was never attempted.
     UnknownEncoding,
     /// Decoded, but held no usable `trigger:expansion` line.
     NoEntries,
@@ -44,8 +51,10 @@ impl fmt::Display for MacroError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let text = match self {
             Self::Unreadable => "Không đọc được tệp bảng gõ tắt.",
+            // Naming the charsets that were tried would rot the day another is
+            // added, and the advice is the same either way.
             Self::UnknownEncoding => {
-                "Bảng mã của tệp này không đọc được. Hãy mở lại bằng UniKey và ghi \
+                "Không nhận ra bảng mã của tệp này. Hãy mở lại bằng UniKey và ghi \
                  bảng gõ tắt ra tệp mới (Unicode)."
             }
             Self::NoEntries => "Tệp không có mục gõ tắt nào.",
@@ -56,15 +65,36 @@ impl fmt::Display for MacroError {
 
 impl std::error::Error for MacroError {}
 
+/// What a macro file yielded.
+///
+/// `#[non_exhaustive]`: the shell will want the conversion's own counts the first
+/// time a TCVN3 file with an uppercase toned vowel turns up, and that is a matter of
+/// when rather than whether.
+#[derive(Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct MacroImport {
+    pub rows: Vec<PortableShortcut>,
+    /// The charset the file turned out to be in, or `None` when nothing needed
+    /// deciding — an ASCII table reads the same either way, and claiming Unicode
+    /// there would invent a certainty nobody has.
+    ///
+    /// Worth showing the user: detection can be confidently wrong about an encoding
+    /// nobody has implemented, and naming its guess is the only warning available.
+    pub charset: Option<Charset>,
+}
+
 /// Read a UniKey macro file and turn it into shortcut rows.
-pub fn read_macro_file(path: &Path) -> Result<Vec<PortableShortcut>, MacroError> {
+pub fn read_macro_file(path: &Path) -> Result<MacroImport, MacroError> {
     let bytes = std::fs::read(path).map_err(|_| MacroError::Unreadable)?;
-    let text = encoding::decode(&bytes).ok_or(MacroError::UnknownEncoding)?;
-    let rows = parse_macros(&text);
+    let decoded = encoding::decode(&bytes).ok_or(MacroError::UnknownEncoding)?;
+    let rows = parse_macros(&decoded.text);
     if rows.is_empty() {
         return Err(MacroError::NoEntries);
     }
-    Ok(rows)
+    Ok(MacroImport {
+        rows,
+        charset: decoded.charset,
+    })
 }
 
 /// Parse the text of a macro table. Unusable lines are dropped, not reported: a
@@ -110,38 +140,6 @@ fn parse_line(line: &str) -> Option<PortableShortcut> {
         trigger,
         expansion: expansion.to_string(),
     })
-}
-
-/// Store the trigger the way the engine expects to find it.
-///
-/// `funput_engine`'s `classify_case` folds a typed word to lowercase before looking
-/// it up whenever its letters form a clean pattern, so `vn`, `Vn` and `VN` all reach
-/// a trigger stored as `vn` and re-case the expansion to match. A trigger stored in
-/// any other casing is only ever found by an exact match — so folding is what makes
-/// an imported `VN` usable, and *not* folding is what keeps a deliberate `iOS` from
-/// becoming unreachable.
-fn normalize_trigger(trigger: &str) -> String {
-    if folds_to_lowercase(trigger) {
-        trigger.to_lowercase()
-    } else {
-        trigger.to_string()
-    }
-}
-
-/// Mirrors `classify_case` returning `Some`: letters only, digits and punctuation
-/// ignored; first letter lowercase with the rest lowercase, or first letter
-/// uppercase with the rest all one case. A trigger with no letters folds to itself.
-fn folds_to_lowercase(trigger: &str) -> bool {
-    let mut letters = trigger.chars().filter(|c| c.is_alphabetic());
-    let Some(first) = letters.next() else {
-        return true;
-    };
-    let rest: Vec<char> = letters.collect();
-    if first.is_lowercase() {
-        rest.iter().all(|c| c.is_lowercase())
-    } else {
-        rest.iter().all(|c| c.is_uppercase()) || rest.iter().all(|c| c.is_lowercase())
-    }
 }
 
 #[cfg(test)]

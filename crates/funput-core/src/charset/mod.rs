@@ -88,6 +88,20 @@ pub struct Conversion {
     pub normalized: usize,
 }
 
+/// Whether a charset stores one byte per character, drawn by a legacy font.
+///
+/// The distinction a caller needs when it already knows something about the bytes.
+/// Text that failed a UTF-8 decode cannot be in a charset that is *not* byte
+/// oriented, so a caller detecting the charset of such bytes must refuse those
+/// candidates — feeding them to [`decode_bytes`] would hand back replacement
+/// characters, which is a worse answer than admitting defeat.
+///
+/// Asking this instead of naming charsets is what lets a consumer keep working when
+/// a new one is added.
+pub fn is_byte_oriented(charset: Charset) -> bool {
+    codecs::is_byte_oriented(charset)
+}
+
 /// Convert text from one charset to another.
 ///
 /// `from` must be what the text actually is; guessing it is [`detect`]'s job, and

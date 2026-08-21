@@ -2,8 +2,9 @@
 
 ## Trạng thái
 
-Đã có: khung core, cả bốn bảng mã, và `detect()`. Còn lại là các consumer —
-`funput-config`, `funput convert`, rồi UI (xem "Thứ tự hiện thực" ở cuối).
+Đã có: khung core, cả bốn bảng mã, `detect()`, và consumer đầu tiên — nhập bảng gõ
+tắt UniKey ở bảng mã cũ. Còn lại: `funput convert`, rồi UI (xem "Thứ tự hiện thực"
+ở cuối).
 
 Tài liệu này chốt mô hình *trước* khi có code và được review riêng; nó vẫn là nơi
 mọi quyết định thiết kế sống, nên mỗi bảng mã mới cập nhật lại nó trong cùng PR.
@@ -21,8 +22,8 @@ Chuyển **văn bản có sẵn** giữa các bảng mã tiếng Việt thông d
 - **Unicode tổ hợp** — theo quy ước UniKey, xem mục riêng bên dưới.
 
 Ngoài nhu cầu người dùng, tính năng này có một khách hàng nội bộ: import bảng gõ
-tắt UniKey hiện dừng ở `MacroError::UnknownEncoding` và bảo người dùng đi cài
-UniKey để dùng được Funput.
+tắt UniKey **từng** dừng ở `MacroError::UnknownEncoding` và bảo người dùng đi cài
+UniKey để dùng được Funput. Đã sửa.
 
 ## Không thuộc phạm vi
 
@@ -394,5 +395,8 @@ Mỗi mục một PR:
 5. **`detect()`**. Nó làm lộ một lỗi thật trong hai codec byte: ký tự trên `U+00FF`
    được nhận là `Exact`, nên `convert("Việt Nam", Tcvn3, Unicode)` báo 0 lỗi và ba
    bảng mã hoà nhau tuyệt đối.
-6. `funput-config` (sửa import UniKey) → 7. `funput convert` → 8. UI Windows →
-   9. UI Linux GTK.
+6. **`funput-config`** (sửa import UniKey). Consumer đầu tiên. Nó buộc `is_byte_oriented`
+   thành API công khai: byte đã trượt `from_utf8` thì không thể là bảng mã Unicode,
+   và nói điều đó mà không gọi tên bảng mã nào là thứ giữ cho consumer không phải
+   sửa khi có bảng mã mới.
+7. `funput convert` → 8. UI Windows → 9. UI Linux GTK.
