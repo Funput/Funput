@@ -37,7 +37,9 @@ pub fn send_plan_unmodified(plan: &InjectPlan, held: Mods) {
         return;
     }
 
-    let events = |up: bool| -> Vec<_> { down.iter().map(|&vk| vk_event(vk, up)).collect() };
+    // No scan code: these only have to convince Windows' own modifier state, which
+    // reads `wVk`. Backspace is the one key an app is likely to inspect itself.
+    let events = |up: bool| -> Vec<_> { down.iter().map(|&vk| vk_event(vk, 0, up)).collect() };
     raw_send(&events(true));
     send_plan(plan);
     raw_send(&events(false));

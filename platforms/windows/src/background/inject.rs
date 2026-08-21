@@ -6,13 +6,16 @@
 //! caret is never steered with an arrow key. Everything a plan replaces sits
 //! *behind* the caret, so an injection is built to be incapable of reaching what is
 //! in front of it — including when the app holds a selection there, which
-//! [`send_plan`] neutralizes without having to know that it does.
+//! [`send_plan`] neutralizes with a lead character where that can happen at all.
+//! Where that is is [`lead`]'s business, and its alone.
 
 mod events;
+mod lead;
 mod modifiers;
 
 use funput_desktop::InjectPlan;
 
+pub use lead::note_foreground;
 pub use modifiers::send_plan_unmodified;
 
 use events::{deletions, raw_send, text};
@@ -29,8 +32,7 @@ fn leading_char(units: &[u16]) -> Option<&[u16]> {
     Some(&units[..if paired { 2 } else { 1 }])
 }
 
-/// Send a plan as one atomic `SendInput` batch. The only injection route there is —
-/// no app is special-cased, and none needs to be.
+/// Send a plan as one atomic `SendInput` batch. The only injection route there is.
 ///
 /// # The ambiguous first Backspace
 ///
@@ -69,6 +71,16 @@ fn leading_char(units: &[u16]) -> Option<&[u16]> {
 /// needed to get back. A pure insert (`backspaces == 0`) skips all this: its text is
 /// already the one keystroke that neutralizes a selection.
 ///
+/// # Why the lead is not paid everywhere
+///
+/// That extra Backspace is the whole cost of the trick, and some apps cannot pay it:
+/// a text engine that drops a key arriving in the same burst as the glyph before it
+/// loses precisely the lead's own Backspace and lands one character short. CorelDRAW
+/// does exactly that. So the lead is spent only where a selection can actually turn
+/// up in front of the caret, which [`lead`] decides by asking which engine drew the
+/// window rather than which app it is — and where being wrong is free in both
+/// directions, unlike the `Delete` primer.
+///
 /// # What it does not cover
 ///
 /// The lead only holds if it leaves the app with nothing to re-select, and a batch
@@ -92,7 +104,7 @@ pub fn send_plan(plan: &InjectPlan) {
     if plan.is_noop() {
         return;
     }
-    let lead = (plan.backspaces > 0)
+    let lead = (plan.backspaces > 0 && lead::wanted())
         .then(|| leading_char(&plan.units))
         .flatten();
     let mut inputs = Vec::new();
@@ -110,14 +122,19 @@ pub fn send_plan(plan: &InjectPlan) {
 mod tests {
     use windows::Win32::UI::Input::KeyboardAndMouse::{KEYEVENTF_KEYUP, VK_BACK, VK_DELETE};
 
+    use super::events::VK_BACK_SCAN;
     use super::*;
 
     /// The batch [`send_plan`] would emit, as `(wVk, wScan, keyup)` per event.
     /// Mirrors its assembly rather than calling it, since `send_plan` ends in
     /// `SendInput` and would type into whatever window the test runner has focused.
-    fn batch(backspaces: usize, output: &str) -> Vec<(u16, u16, bool)> {
+    /// `leading` stands in for [`lead::wanted`], which the real thing reads off the
+    /// foreground app.
+    fn batch(backspaces: usize, output: &str, leading: bool) -> Vec<(u16, u16, bool)> {
         let units: Vec<u16> = output.encode_utf16().collect();
-        let lead = (backspaces > 0).then(|| leading_char(&units)).flatten();
+        let lead = (backspaces > 0 && leading)
+            .then(|| leading_char(&units))
+            .flatten();
         let mut inputs = Vec::new();
         match lead {
             Some(lead) => {
@@ -156,14 +173,14 @@ mod tests {
         // lay down the text. The lead is what makes the deletions unambiguous even
         // when the app holds a selection in front of the caret.
         assert_eq!(
-            batch(1, "ộ"),
+            batch(1, "ộ", true),
             vec![
                 (0, 'ộ' as u16, false),
                 (0, 'ộ' as u16, true),
-                (VK_BACK.0, 0, false),
-                (VK_BACK.0, 0, true),
-                (VK_BACK.0, 0, false),
-                (VK_BACK.0, 0, true),
+                (VK_BACK.0, VK_BACK_SCAN, false),
+                (VK_BACK.0, VK_BACK_SCAN, true),
+                (VK_BACK.0, VK_BACK_SCAN, false),
+                (VK_BACK.0, VK_BACK_SCAN, true),
                 (0, 'ộ' as u16, false),
                 (0, 'ộ' as u16, true),
             ]
@@ -175,26 +192,53 @@ mod tests {
         // Whatever the plan, the batch deletes exactly the characters it typed on
         // top of the ones the plan asked for — never a character more.
         for (backspaces, output) in [(1, "ộ"), (3, "card "), (7, "Việt Nam ")] {
-            let (typed, deleted) = typed_and_deleted(&batch(backspaces, output));
+            let (typed, deleted) = typed_and_deleted(&batch(backspaces, output, true));
             assert_eq!(deleted, backspaces + 1, "plan ({backspaces}, {output:?})");
             assert_eq!(typed, output.chars().count() + 1);
         }
     }
 
     #[test]
+    fn without_the_lead_a_plan_is_sent_exactly_as_written() {
+        // The regression CorelDRAW reported: its text tool drops the Backspace that
+        // arrives right behind an inserted glyph, so the lead's own Backspace never
+        // lands and "dương" (4 Backspaces + "ương") came out "duương". No lead, no
+        // extra Backspace, nothing for it to lose.
+        assert_eq!(
+            batch(4, "ương", false),
+            [
+                [
+                    (VK_BACK.0, VK_BACK_SCAN, false),
+                    (VK_BACK.0, VK_BACK_SCAN, true)
+                ]
+                .repeat(4),
+                "ương"
+                    .encode_utf16()
+                    .flat_map(|u| [(0, u, false), (0, u, true)])
+                    .collect(),
+            ]
+            .concat()
+        );
+        let (typed, deleted) = typed_and_deleted(&batch(4, "ương", false));
+        assert_eq!((typed, deleted), ("ương".chars().count(), 4));
+    }
+
+    #[test]
     fn a_pure_insert_needs_no_lead() {
         // Its own text is already the keystroke that neutralizes a selection.
-        assert_eq!(
-            batch(0, "à"),
-            vec![(0, 'à' as u16, false), (0, 'à' as u16, true)]
-        );
+        for leading in [true, false] {
+            assert_eq!(
+                batch(0, "à", leading),
+                vec![(0, 'à' as u16, false), (0, 'à' as u16, true)]
+            );
+        }
     }
 
     #[test]
     fn a_surrogate_pair_leads_with_both_halves() {
         // One character, two units: splitting it would type half a code point and
         // then spend one Backspace on something the app never rendered.
-        let emitted = batch(1, "😀x");
+        let emitted = batch(1, "😀x", true);
         let units: Vec<u16> = "😀".encode_utf16().collect();
         assert_eq!(units.len(), 2);
         assert_eq!(
@@ -216,12 +260,14 @@ mod tests {
         // front of it. A `Delete` primer here once cost one character of existing
         // text per keystroke typed into the middle of a line — see [`send_plan`].
         for (backspaces, output) in [(0, "à"), (1, "ộ"), (3, "card ")] {
-            assert!(
-                batch(backspaces, output)
-                    .iter()
-                    .all(|&(vk, ..)| vk != VK_DELETE.0),
-                "forward delete in plan ({backspaces}, {output:?})"
-            );
+            for leading in [true, false] {
+                assert!(
+                    batch(backspaces, output, leading)
+                        .iter()
+                        .all(|&(vk, ..)| vk != VK_DELETE.0),
+                    "forward delete in plan ({backspaces}, {output:?})"
+                );
+            }
         }
     }
 }
