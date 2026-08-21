@@ -198,9 +198,17 @@ fn telex_validation_and_pass_through() {
         }
     );
     // Leading `f`/`j` and English words keep every keystroke (engine restores).
-    assert_eq!(type_keys("file"), "file");
-    assert_eq!(type_keys("from"), "from");
-    assert_eq!(type_keys("just"), "just");
+    // A free-position circumflex must not swallow a leading tone letter as a
+    // parked mark (`fomo` must not become `ồm`).
+    for method in [InputMethod::Telex, InputMethod::TelexAdvanced] {
+        for keys in ["file", "from", "just", "fomo", "jomo", "food"] {
+            assert_eq!(
+                crate::support::type_keys(method, keys),
+                keys,
+                "{method:?} {keys}"
+            );
+        }
+    }
     assert_eq!(
         apply("a", 'b', InputMethod::Telex, ToneStyle::Traditional),
         TransformResult {
