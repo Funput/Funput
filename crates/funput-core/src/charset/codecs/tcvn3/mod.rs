@@ -19,7 +19,7 @@
 mod table;
 
 use crate::charset::pivot::Atom;
-use crate::charset::transcode::{Cursor, Decoded};
+use crate::charset::transcode::{Cursor, Decoded, Reading};
 
 /// Read one TCVN3 byte at the cursor.
 ///
@@ -32,19 +32,19 @@ use crate::charset::transcode::{Cursor, Decoded};
 /// charset.
 pub(super) fn decode(cur: &Cursor<'_>) -> Decoded {
     let c = cur.first();
-    let (atom, recognized) = match u8::try_from(c as u32) {
+    let (atom, reading) = match u8::try_from(c as u32) {
         Ok(byte) if byte >= 0x80 => match atom_for_byte(byte) {
-            Some(atom) => (atom, true),
-            None => (Atom::Other(c), false),
+            Some(atom) => (atom, Reading::Exact),
+            None => (Atom::Other(c), Reading::Unknown),
         },
         // Below 0x80 TCVN3 is ASCII — but an ASCII vowel still has to pick up its
         // family coordinates, or the target charset could not re-spell it.
-        _ => (Atom::from_char(c), true),
+        _ => (Atom::from_char(c), Reading::Exact),
     };
     Decoded {
         atom,
         consumed: 1,
-        recognized,
+        reading,
     }
 }
 

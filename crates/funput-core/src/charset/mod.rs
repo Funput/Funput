@@ -50,28 +50,39 @@ pub enum Charset {
     /// sit confusingly beside [`crate::InputMethod::Vni`] — a way of *typing*, not
     /// a way of storing.
     VniWindows,
+    /// Unicode tổ hợp, UniKey's convention: the shaped vowel stays precomposed and
+    /// only the **tone** rides as a combining mark, so `ậ` is `â` plus `U+0323`.
+    ///
+    /// Deliberately not called `Decomposed`: this is not NFD, which would take the
+    /// shape apart too. Reading accepts NFD anyway — see the codec — but writing
+    /// only ever produces this form.
+    UnicodeCombining,
 }
 
-/// Converted text, and how many characters did not survive it exactly.
+/// Converted text, and what happened to it on the way.
 ///
-/// `unmapped` counts characters, not bytes, and never counts *lost* text:
-/// conversion always writes something for every character, so the output holds as
-/// much as the input did. What the number says is how many places need the user's
-/// eye. A character lands there for one of two reasons:
+/// Both counts are in characters, and neither counts *lost* text: conversion
+/// always writes something for every character, so the output holds as much as the
+/// input did. A character lands in at most one of them.
 ///
-/// - the **target** cannot spell it — a `₫`, which no legacy charset has a code
-///   for, or an uppercase toned vowel, which is TCVN3's own gap rather than a
-///   general one: VNI-Windows spells those perfectly well;
-/// - the **source** never defined it, so reading it was a guess.
+/// **`unmapped`** — something was lost or guessed, so the output is not certainly
+/// equivalent to the input. Either the target cannot spell it (a `₫`, which no
+/// legacy charset has a code for; an uppercase toned vowel, which is TCVN3's own
+/// gap rather than a general one) or the source never defined it, making the
+/// reading a guess. Text read with the wrong source charset is mostly unrecognized
+/// units, so a count near the length of the input is the clearest signal there is
+/// that the user picked the wrong bảng mã.
 ///
-/// The second is worth watching. Text converted from the wrong source charset is
-/// mostly unrecognized units, so a count near the length of the input is the
-/// clearest signal there is that the user picked the wrong bảng mã.
+/// **`normalized`** — understood beyond doubt, nothing lost, only the spelling
+/// changed. Reading NFC text as Unicode tổ hợp lands here: every letter comes
+/// through intact, just written the charset's own way. Keeping it out of
+/// `unmapped` is what lets an interface say "nothing was lost" and mean it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Conversion {
     pub text: String,
     pub unmapped: usize,
+    pub normalized: usize,
 }
 
 /// Convert text from one charset to another.
@@ -84,28 +95,41 @@ pub fn convert(text: &str, from: Charset, to: Charset) -> Conversion {
 
 /// Read raw bytes in `from` and return them as Unicode.
 ///
-/// For a legacy charset the bytes are read one-to-one as code points, which is
-/// exactly how the document that produced them was stored. For [`Charset::Unicode`]
-/// they are decoded as UTF-8, and any invalid sequence becomes `U+FFFD` and counts
-/// toward `unmapped` — a caller reading a file it merely *believes* is UTF-8 gets
-/// told when it was wrong instead of silently receiving replacement characters.
+/// A byte-oriented charset's bytes are read one-to-one as code points, which is
+/// exactly how the document that produced them was stored. The rest are decoded as
+/// UTF-8, where an invalid sequence becomes `U+FFFD` — a caller reading a file it
+/// merely *believes* is UTF-8 gets told when it was wrong instead of silently
+/// receiving replacement characters.
+///
+/// Either way the text then goes through [`convert`], and the two counts add up:
+/// broken bytes and characters the charset could not place are separate problems,
+/// and a byte that causes both deserves two looks.
 pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion {
-    if codecs::is_byte_oriented(from) {
-        let text: String = bytes.iter().copied().map(char::from).collect();
-        return convert(&text, from, Charset::Unicode);
-    }
-    let Err(_) = std::str::from_utf8(bytes) else {
-        return Conversion {
-            text: String::from_utf8_lossy(bytes).into_owned(),
-            unmapped: 0,
-        };
+    let (text, damage) = if codecs::is_byte_oriented(from) {
+        // Latin-1 is total, so reading bytes as code points cannot fail.
+        (bytes.iter().copied().map(char::from).collect(), 0)
+    } else {
+        let text = String::from_utf8_lossy(bytes).into_owned();
+        (text, broken_sequences(bytes))
     };
-    let text = String::from_utf8_lossy(bytes).into_owned();
-    let unmapped = text
+    let out = convert(&text, from, Charset::Unicode);
+    Conversion {
+        unmapped: out.unmapped + damage,
+        ..out
+    }
+}
+
+/// How many characters lossy UTF-8 decoding had to replace. Zero for valid input,
+/// and replacement characters the source genuinely encoded are discounted so a
+/// document that legitimately contains one is not reported as damaged.
+fn broken_sequences(bytes: &[u8]) -> usize {
+    if std::str::from_utf8(bytes).is_ok() {
+        return 0;
+    }
+    String::from_utf8_lossy(bytes)
         .matches(char::REPLACEMENT_CHARACTER)
         .count()
-        .saturating_sub(genuine_replacements(bytes));
-    Conversion { text, unmapped }
+        .saturating_sub(genuine_replacements(bytes))
 }
 
 /// How many `U+FFFD` the bytes genuinely encode. Subtracting these is what keeps a

@@ -20,12 +20,13 @@
 //!   what it wrote is not exact. It always writes *something*; a character never
 //!   disappears in conversion.
 
+mod combining;
 mod tcvn3;
 mod vni;
 
 use super::Charset;
 use super::pivot::Atom;
-use super::transcode::{Cursor, Decoded};
+use super::transcode::{Cursor, Decoded, Reading};
 
 /// Read one unit of `charset` at the cursor.
 pub(super) fn decode(charset: Charset, cur: &Cursor<'_>) -> Decoded {
@@ -35,10 +36,11 @@ pub(super) fn decode(charset: Charset, cur: &Cursor<'_>) -> Decoded {
         Charset::Unicode => Decoded {
             atom: Atom::from_char(cur.first()),
             consumed: 1,
-            recognized: true,
+            reading: Reading::Exact,
         },
         Charset::Tcvn3 => tcvn3::decode(cur),
         Charset::VniWindows => vni::decode(cur),
+        Charset::UnicodeCombining => combining::decode(cur),
     }
 }
 
@@ -52,6 +54,7 @@ pub(super) fn encode(charset: Charset, atom: Atom, out: &mut String) -> bool {
         }
         Charset::Tcvn3 => tcvn3::encode(atom, out),
         Charset::VniWindows => vni::encode(atom, out),
+        Charset::UnicodeCombining => combining::encode(atom, out),
     }
 }
 
@@ -60,7 +63,7 @@ pub(super) fn encode(charset: Charset, atom: Atom, out: &mut String) -> bool {
 /// [`crate::charset::decode_bytes`].
 pub(super) fn is_byte_oriented(charset: Charset) -> bool {
     match charset {
-        Charset::Unicode => false,
+        Charset::Unicode | Charset::UnicodeCombining => false,
         Charset::Tcvn3 | Charset::VniWindows => true,
     }
 }
