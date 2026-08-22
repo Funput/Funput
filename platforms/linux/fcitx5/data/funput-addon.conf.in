@@ -5,5 +5,5 @@ Category=InputMethod
 Version=5.0.0
 Type=SharedLibrary
 Library=libfunput
-Configurable=False
+Configurable=True
 OnDemand=False

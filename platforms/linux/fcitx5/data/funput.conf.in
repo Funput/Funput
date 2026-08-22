@@ -4,4 +4,4 @@ Icon=funput
 Label=FU
 LangCode=vi
 Addon=funput
-Configurable=False
+Configurable=True
