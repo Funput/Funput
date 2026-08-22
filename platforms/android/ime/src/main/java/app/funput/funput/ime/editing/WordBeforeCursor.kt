@@ -13,13 +13,15 @@ private const val WordLookback = 12
  * Reads at most [WordLookback] characters: enough for any Vietnamese syllable, and
  * small enough to stay cheap on the one keystroke that asks for it.
  */
-internal fun InputConnection.wordBeforeCursor(): String? {
-    val tail = getTextBeforeCursor(WordLookback, 0)?.toString() ?: return null
-    var start = tail.length
+internal fun InputConnection.wordBeforeCursor(): String? =
+    getTextBeforeCursor(WordLookback, 0)?.wordAtEnd()
+
+internal fun CharSequence.wordAtEnd(): String? {
+    var start = length
     while (start > 0) {
-        val codePoint = tail.codePointBefore(start)
+        val codePoint = Character.codePointBefore(this, start)
         if (CompositionBoundary.isBoundary(codePoint)) break
         start -= Character.charCount(codePoint)
     }
-    return tail.substring(start).ifEmpty { null }
+    return if (start == length) null else subSequence(start, length).toString()
 }

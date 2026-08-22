@@ -1,8 +1,6 @@
 package app.funput.funput.ime.editing
 
-import android.view.inputmethod.InputConnection
 import app.funput.funput.keyboard.model.KeyAction
-import java.lang.reflect.Proxy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -86,41 +84,34 @@ class CommittedCompositionSessionTest {
         assertEquals("cháo", editor.text)
         assertEquals(0, editor.setComposingCount)
     }
-}
 
-private class CommittedEditor(
-    var text: String = "",
-    private val exposesSurroundingText: Boolean = true,
-) {
-    var setComposingCount = 0
+    @Test
+    fun `withheld surrounding text retones after backspacing a refused coda`() {
+        val editor = CommittedEditor(exposesSurroundingText = false)
+        val engine = ScriptedEngine(
+            processed = ArrayDeque(listOf("d", "du", "dun", "dung", "dungh", "dúng")),
+        ).apply { adoptable = setOf("dung") }
+        val session = testSession(engine)
+        val handler = ImeKeyActionHandler(
+            composition = session,
+            editor = InputConnectionEditor(),
+            connection = { editor.proxy },
+            enterCommand = { ImeEditCommand.CommitText("\n") },
+        )
+        handler.start(renderMode = CompositionRenderMode.COMMITTED)
 
-    val proxy: InputConnection = Proxy.newProxyInstance(
-        InputConnection::class.java.classLoader,
-        arrayOf(InputConnection::class.java),
-    ) { _, method, arguments ->
-        when (method.name) {
-            "beginBatchEdit", "endBatchEdit" -> true
-            "commitText" -> true.also { text += arguments?.first().toString() }
-            "deleteSurroundingText" -> true.also {
-                text = text.dropLast(arguments?.first() as Int)
-            }
-            "getSelectedText" -> null
-            "getTextBeforeCursor" -> {
-                val count = arguments?.first() as Int
-                if (!exposesSurroundingText || count >= GraphemeLookback) null else text.takeLast(count)
-            }
-            "deleteSurroundingTextInCodePoints" -> true.also {
-                repeat(arguments?.first() as Int) {
-                    if (text.isNotEmpty()) text = text.dropLast(1)
-                }
-            }
-            "setComposingText" -> true.also { setComposingCount++ }
-            "toString" -> "CommittedEditor"
-            else -> false
-        }
-    } as InputConnection
+        "dungh".forEach { session.input(editor.proxy, it.toString()) }
+        session.input(editor.proxy, " ")
+        handler.onKeyAction(KeyAction.Backspace)
+        handler.onSelectionChanged(newStart = 5, newEnd = 5, composingEnd = -1)
+        assertEquals("dungh", editor.text)
+        assertEquals("", session.composingText)
 
-    private companion object {
-        const val GraphemeLookback = 128
+        handler.onKeyAction(KeyAction.Backspace)
+        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingEnd = -1)
+        handler.onKeyAction(KeyAction.Input(keyId = "character-s", text = "s"))
+
+        assertEquals("dúng", editor.text)
+        assertEquals("dung", engine.adopted)
     }
 }
