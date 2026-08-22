@@ -376,6 +376,25 @@ chứng mạnh **chống lại** hai bảng mã Unicode — bằng chứng mà `
 thấy, vì lúc nó cầm được `&str` thì hư hỏng đã được vá rồi. Hai cửa **bất đồng** trên
 cùng một nội dung Latin-1; đó là bản chất, và có test ghim lại.
 
+### Cửa C ABI (`funput-ffi`, feature `charset`, mặc định tắt)
+
+Cho shell không link Rust được — macOS là ca thật. Bảng mã được gọi tên bằng **chỉ số trong
+`ALL`**, không phải hằng số riêng của FFI: viết `match charset` ngoài `funput-core` cần nhánh
+wildcard, nên bảng mã thêm sau sẽ âm thầm rơi ra ngoài. `funput_charset_count()` +
+`funput_charset_name()` đủ dựng menu. Đổi lại, **`ALL` chỉ được thêm vào cuối** — đảo thứ tự sẽ
+biến TCVN3 mà người dùng đã lưu thành VNI.
+
+Chuỗi đi qua UTF-32 + buffer của caller như phần còn lại của crate đó, nhưng **được ăn cả ngã
+không**: trả về độ dài cần thiết, và chỉ ghi khi vừa. `copy_codepoints` cắt bớt vì nó phục vụ
+buffer 64 ký tự đang gõ; ở đây đầu vào là cả văn bản, và một nửa văn bản ghi vào buffer thiếu chỗ
+tệ hơn là không ghi gì. Hai bộ đếm có mặt ngay ở lượt hỏi độ dài, nên host cảnh báo được trước khi
+cấp phát.
+
+**Chỉ cửa text.** Cửa byte không xuất ra: shell đọc *tệp* cần cả tầng giải mã (BOM UTF-16, thử
+UTF-8, và luật byte đã trượt UTF-8 thì chỉ được trả lời bằng bảng mã theo byte). Xuất ba nguyên
+thuỷ đó ra là giao phần tinh tế cho caller và để nó bị viết lại một lần mỗi nền tảng — đúng thứ
+core sinh ra để tránh. Khi có shell cần, tầng đó thuộc về core dưới dạng **một** lời gọi.
+
 ### Thứ nó không làm được
 
 Mọi phán đoán ở đây đều **tương đối**: bốn giả thuyết, cái nào khớp nhất thì thắng.

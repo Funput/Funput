@@ -142,6 +142,10 @@ src/app_language/   # per-app VI/EN memory C API (FunputAppLanguage), independen
                     #   handle.rs (handle new/free + shared UTF-8 marshalling),
                     #   memory.rs (seed/clear/forget), focus.rs (note_focus/note_toggle),
                     #   types.rs (APP_LANG_UNKNOWN/ENGLISH/VIETNAMESE)
+src/charset/       # C API charset conversion (convert + detect), behind `charset`
+                    #   mod.rs      count/name + charset indices + UTF-32 writing
+                    #   convert.rs  #[repr(C)] FunputConversion + funput_charset_convert
+                    #   detect.rs   funput_charset_detect
 src/abi/            # shared C-ABI plumbing
                     #   guard.rs safe(): catch_unwind + null-handle; codec.rs UTF-32 marshalling
 cbindgen.toml
@@ -157,6 +161,31 @@ include `funput.h`.
 
 Edition 2024 note: use `#[unsafe(no_mangle)]` and explicit `unsafe { }` around `Box::from_raw` /
 `ptr.as_mut()`.
+
+## The `charset` feature (**off** by default)
+
+Charset conversion (`funput_charset_*`) sits behind a cargo feature. The iOS and Android keyboards
+link this crate and have no use for the tables, so the default build does not carry them. CI checks
+both halves: the default library exports no `funput_charset_*` symbol, and the feature-on build still
+lints and tests clean.
+
+A desktop shell turns it on in two places — the library and the header:
+
+```bash
+cargo build -p funput-ffi --release --features charset
+cc -DFUNPUT_CHARSET ...        # the header declares them inside #ifdef FUNPUT_CHARSET
+```
+
+`platforms/macos/scripts/build-ffi.sh` does **not** enable it yet: no macOS UI calls it, and enabling
+it early only puts tables in a binary nothing reads. When that UI is written, add `--features charset`
+to the script's `cargo build` and `FUNPUT_CHARSET` to the Xcode target's
+`GCC_PREPROCESSOR_DEFINITIONS`.
+
+A charset is named by its **index** into `funput_core::charset::ALL`, not by a name the host spells
+for itself: `Charset` is `#[non_exhaustive]`, so no code outside `funput-core` can enumerate it.
+`funput_charset_count()` and `funput_charset_name()` are between them enough to build a menu, and a
+charset added later turns up in it. That list is **append-only**, so the index is safe to persist as
+the user's saved choice.
 
 ## Dependencies & callers
 

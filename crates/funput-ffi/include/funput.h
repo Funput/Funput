@@ -26,6 +26,14 @@
  */
 #define APP_LANG_VIETNAMESE 1
 
+#if defined(FUNPUT_CHARSET)
+/**
+ * [`funput_charset_detect`] when the evidence does not pick a charset out — the
+ * text is ASCII, or reads the same under every candidate. Not an error.
+ */
+#define FUNPUT_CHARSET_UNKNOWN -1
+#endif
+
 /**
  * [`funput_process_key`] source: main keyboard — digits may act as VNI modifiers.
  */
@@ -80,6 +88,34 @@ typedef struct FunputEngine FunputEngine;
  * Vietnamese composition engine and must be driven from a serial worker.
  */
 typedef struct FunputSuggestionEngine FunputSuggestionEngine;
+
+#if defined(FUNPUT_CHARSET)
+/**
+ * What a conversion produced. POD, returned by value — nothing is allocated and
+ * there is nothing to free.
+ *
+ * The two counters are separate because the problems are: `unmapped` is text that
+ * came out **wrong or guessed at**, and is the number worth putting in front of a
+ * user. `normalized` is text understood exactly whose spelling changed — converting
+ * to Unicode tổ hợp changes every toned vowel and none of it is a loss.
+ */
+typedef struct {
+    /**
+     * Codepoints the conversion produced, whether or not they fit in `out`.
+     */
+    uintptr_t len;
+    /**
+     * Characters the target charset could not represent, or represented by
+     * guessing. Non-zero means the result is worth showing the user before use.
+     */
+    uintptr_t unmapped;
+    /**
+     * Characters understood exactly whose spelling the target charset writes
+     * differently. Not a loss, and converting back returns the original.
+     */
+    uintptr_t normalized;
+} FunputConversion;
+#endif
 
 /**
  * Result of one keystroke, returned by value (POD, no allocation, no free).
@@ -213,6 +249,85 @@ void funput_app_language_clear(FunputAppLanguage *handle);
  */
 bool funput_app_language_forget(FunputAppLanguage *handle, const uint8_t *id, uintptr_t id_len);
 
+#if defined(FUNPUT_CHARSET)
+/**
+ * How many charsets there are. Valid indices run `0..funput_charset_count()`.
+ */
+uintptr_t funput_charset_count(void);
+#endif
+
+#if defined(FUNPUT_CHARSET)
+/**
+ * Write the display name of the charset at `index` into `out` as UTF-32, returning
+ * its length in codepoints. An index out of range gives 0.
+ *
+ * The name comes from core so that two platforms' menus cannot drift apart. It is
+ * the encoding's own name (`TCVN3 (ABC)`, `VNI-Windows`), which reads the same in
+ * any interface language.
+ *
+ * Sizing works the same way as [`funput_charset_convert`]: the length is returned
+ * whether or not it fit, and nothing is written unless all of it fits.
+ *
+ * # Safety
+ * `out` must point to at least `cap` writable `u32` values, or be null.
+ */
+uintptr_t funput_charset_name(uintptr_t index, uint32_t *out, uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CHARSET)
+/**
+ * Convert UTF-32 `text` from one charset to another, writing the result into `out`.
+ *
+ * `from` and `to` are indices into the charset list — see the module doc. Either
+ * one out of range yields a zeroed [`FunputConversion`], as does a panic anywhere
+ * inside.
+ *
+ * # Sizing
+ *
+ * `len` is the length of the result whether or not it fit, and **nothing is written
+ * unless all of it fits**. So a host either guesses a buffer generously and is done
+ * in one call, or passes `out = NULL, cap = 0` to learn the length and calls again.
+ * A conversion is not always shorter than its input: VNI-Windows spells most toned
+ * letters as two characters, so a guess of `text_len` is not enough.
+ *
+ * `unmapped` and `normalized` are filled in on the sizing call too, so a host can
+ * warn about what will be lost before it allocates anything.
+ *
+ * `from` must be what the text actually **is**; guessing it is
+ * [`funput_charset_detect`](super::funput_charset_detect)'s job, not this one's.
+ *
+ * # Safety
+ * `text` must point to at least `text_len` readable `u32` values, or be null.
+ * `out` must point to at least `cap` writable `u32` values, or be null.
+ */
+FunputConversion funput_charset_convert(const uint32_t *text,
+                                        uintptr_t text_len,
+                                        uintptr_t from,
+                                        uintptr_t to,
+                                        uint32_t *out,
+                                        uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CHARSET)
+/**
+ * Guess which charset `text` is written in. Returns an index into the charset
+ * list, or [`FUNPUT_CHARSET_UNKNOWN`] when the evidence does not pick one out.
+ *
+ * `FUNPUT_CHARSET_UNKNOWN` is not a failure and covers three honest situations: no
+ * evidence at all (ASCII, digits), a genuine tie between charsets that spell this
+ * text the same way, and text that reads identically under every one of them. A
+ * host should offer the user the list rather than treat it as an error.
+ *
+ * Detection reads a prefix rather than a whole document, so passing the whole text
+ * costs nothing. A host that detects on a prefix and converts the whole thing is
+ * doing the right thing.
+ *
+ * # Safety
+ * `text` must point to at least `text_len` readable `u32` values, or be null.
+ */
+int32_t funput_charset_detect(const uint32_t *text, uintptr_t text_len);
+#endif
+
 /**
  * Create a new engine. Release it with [`funput_engine_free`].
  */
@@ -306,8 +421,8 @@ FunputResult funput_flip_composing(FunputEngine *engine);
 /**
  * Re-open an already-committed word as the live composition, so the next keystroke
  * edits it (Backspace back onto `chào`, then `s` gives `cháo`). `word` is UTF-32, as in
- * [`funput_add_shortcut`](crate::funput_add_shortcut). Returns whether it was taken —
- * only a complete Vietnamese syllable is, so leave the document alone on `false`.
+ * [`funput_add_shortcut`](crate::funput_add_shortcut). Returns whether it was taken — only
+ * a Vietnamese syllable is, so leave the document alone on `false`.
  *
  * # Safety
  * `engine` must be a valid handle or null; `word` must point to `len` `u32` values or

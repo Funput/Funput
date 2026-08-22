@@ -12,6 +12,13 @@ workspace = true
 # rlib: lets the round-trip tests call the extern "C" functions in-process.
 crate-type = ["cdylib", "staticlib", "rlib"]
 
+[features]
+# Charset conversion (công cụ chuyển mã) for a desktop shell that cannot link
+# `funput-core` directly. **Off by default**: the iOS and Android keyboards link
+# this crate and have no use for the tables, so they never carry them. CI asserts
+# both halves — that the default build is free of it, and that this one compiles.
+charset = ["funput-core/charset"]
+
 [dependencies]
 funput-core = { path = "../funput-core" }
 funput-engine = { path = "../funput-engine" }
