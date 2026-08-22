@@ -3,22 +3,18 @@
 //! [`modifier`] decides whether a modifier keystroke should apply; the checks
 //! here answer the coarser question of whether a buffer *is* a Vietnamese
 //! syllable — leniently mid-typing ([`is_valid`]) or strictly at a word boundary
-//! ([`is_complete_syllable`]).
+//! ([`is_complete_syllable`]). The strict verdicts all read one [`status`] parse.
 
 mod modifier;
 mod spelling;
+mod status;
 
-use crate::orthography::glide;
-use crate::unicode::marks::Tone;
-use crate::validation::coda::{
-    STOP_CODAS, VALID_CODAS, coda_in, normalized_coda, nucleus_tone, toneless_rhyme,
-};
-use crate::validation::parse::{is_valid_onset, parse_syllable};
+use crate::unicode::shapes::shape_on_vowel;
+use crate::validation::parse::parse_syllable;
 use crate::validation::reachability::{has_shaped_rhyme_prefix, is_definitely_invalid_parts};
-use crate::validation::rhyme::{is_valid_rhyme, matches_deshaped};
 
 use modifier::{ModifierKind, validate_parts};
-use spelling::violates_ckg_spelling;
+use status::{SyllableStatus, classify};
 
 pub use modifier::{ModifierValidation, validate_shape, validate_stroke, validate_tone};
 
@@ -45,69 +41,6 @@ pub fn is_valid(buffer: &str) -> bool {
     )
 }
 
-/// How a finished buffer sits against Vietnamese syllable structure.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-enum SyllableStatus {
-    /// Not a Vietnamese syllable, and no diacritic can make it one: `cảd` (card),
-    /// `côl` (cool), `tẽt` (text).
-    Invalid,
-    /// Structurally a syllable, but still short of the **diacritics** the word
-    /// needs — which is exactly how a word looks when the user commits it before
-    /// finishing it. Three ways that happens:
-    /// - a **stop coda** (`p t c ch`) with no tone, where Vietnamese requires sắc
-    ///   or nặng: `chuc` → `chúc`, `tich` → `tích`;
-    /// - a rhyme that only exists shaped: `dien` → `diên`, `thuo` → `thuơ`;
-    /// - both at once: `nuoc` → `nước`.
-    AwaitingDiacritic,
-    /// A real Vietnamese syllable as it stands: `chào`, `việt`, `ma`, `tét`.
-    Complete,
-}
-
-fn classify(buffer: &str) -> SyllableStatus {
-    let parts = parse_syllable(buffer);
-    let Some((coda, coda_len)) = normalized_coda(&parts) else {
-        return SyllableStatus::Invalid;
-    };
-    let coda = &coda[..coda_len];
-
-    let structure_ok = !parts.invalid_onset
-        && is_valid_onset(parts.onset)
-        // A tone parked on the `qu`/`gi` glide is a mid-composition transient, not
-        // a finished syllable: `qúy` is a misspelling of `quý`.
-        && !glide::onset_holds_tone(parts.onset)
-        && parts.nucleus_chars().next().is_some()
-        && !violates_ckg_spelling(parts.onset, &parts)
-        && coda_in(VALID_CODAS, coda);
-    if !structure_ok {
-        return SyllableStatus::Invalid;
-    }
-
-    // The nucleus+coda must be a real Vietnamese rhyme (Level 2): keeps `việt`,
-    // `trường` … but reverts structurally-ok-but-nonexistent rhymes. A rhyme that
-    // exists only *shaped* is that same rhyme with its shape keys still to come —
-    // `ien` is `iên` minus the circumflex — so it is unfinished, not wrong.
-    let rhyme = toneless_rhyme(&parts, coda);
-    let status = if is_valid_rhyme(&rhyme) {
-        SyllableStatus::Complete
-    } else if matches_deshaped(&rhyme) {
-        SyllableStatus::AwaitingDiacritic
-    } else {
-        return SyllableStatus::Invalid;
-    };
-
-    // Phonotactics: a stop coda only allows sắc / nặng. A wrong tone (huyền / hỏi /
-    // ngã) is what catches English `text` (→ `tẽt`) or `coot` (→ `côt`); no tone at
-    // all is the un-toned form of a real word, which a tone key can still complete.
-    if coda_in(STOP_CODAS, coda) {
-        return match nucleus_tone(parts.nucleus_chars()) {
-            Some(Tone::Sac | Tone::Nang) => status,
-            None => SyllableStatus::AwaitingDiacritic,
-            Some(_) => SyllableStatus::Invalid,
-        };
-    }
-    status
-}
-
 /// Returns true if `buffer` is a *complete* valid Vietnamese syllable.
 ///
 /// **Strict**: the coda must be a real Vietnamese final (`c ch m n ng nh p t`),
@@ -117,6 +50,24 @@ fn classify(buffer: &str) -> SyllableStatus {
 /// `côl` (cool), `tẽt` (text).
 pub fn is_complete_syllable(buffer: &str) -> bool {
     matches!(classify(buffer), SyllableStatus::Complete)
+}
+
+/// Returns true if `buffer` is a lone shaped vowel: `ă`, `â`, `ắ`, `ậ` — one
+/// character, no onset, no coda, carrying mũ / móc / trần.
+///
+/// These are **not** complete syllables and [`is_complete_syllable`] rightly says
+/// so: `ă` and `â` never stand as an open rhyme in Vietnamese, they only appear
+/// before a coda (`ăn`, `âm`). But a *word* that is nothing but a shaped vowel is
+/// still unambiguous intent — no English word spells one, and naming the letter
+/// itself is a real thing users type. Callers deciding whether to restore raw
+/// keystrokes at a word boundary use this to keep the vowel; callers judging
+/// Vietnamese spelling must not.
+pub fn is_bare_shaped_vowel(buffer: &str) -> bool {
+    let mut chars = buffer.chars();
+    let Some(vowel) = chars.next() else {
+        return false;
+    };
+    chars.next().is_none() && shape_on_vowel(vowel).is_some()
 }
 
 /// Returns true if a committed `buffer` may be re-opened as a live composition

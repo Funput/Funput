@@ -120,6 +120,13 @@ việc này ngay khi buffer trở thành dead-end thay vì đợi dấu cách.
 Không từ điển: từ tiếng Anh tình cờ là âm tiết VN hợp lệ (`test` → `tét`) sẽ **không** auto-restore
 — đổi lại không bao giờ phá tiếng Việt đang gõ đúng (giống UniKey không từ điển).
 
+Một vài chuỗi phím là **ý định tiếng Việt rõ ràng** nên được ghim, bỏ qua kết luận của
+`is_complete_syllable`: buffer có `đ`, `keys` có chữ số (modifier của VNI *là* chữ số), và từ chỉ gồm
+đúng một nguyên âm mang dấu phụ (`funput_core::is_bare_shaped_vowel`). Trường hợp cuối cho `aw` → `ă`
+và `aa` → `â` được commit — tiếng Việt không có vần mở `ă`/`â` nên chúng không phải âm tiết hoàn
+chỉnh, nhưng gõ trơ một nguyên âm như vậy thì chỉ có thể là chủ đích, và nhờ đó Telex trả lời `Aw`
+giống VNI trả lời `A8`. Có âm đầu thì vẫn là tiếng Anh: `caw`/`law` → `că`/`lă` vẫn được restore.
+
 ## Lật VN ⇄ phím thô (flip)
 
 `flip_composing()` lật **từ đang soạn** giữa dạng tiếng Việt và chuỗi phím thô (`card` ⇄ `cải`), lật

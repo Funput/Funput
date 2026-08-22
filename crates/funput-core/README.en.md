@@ -40,10 +40,14 @@ engine.
 | `is_valid(buffer) -> bool` | Buffer **could** still be a valid VN syllable (lenient) |
 | `is_complete_syllable(buffer) -> bool` | Buffer is a **complete** VN syllable (strict) |
 | `is_definitely_invalid(buffer) -> bool` | Buffer can **definitely** never become a VN syllable |
+| `is_bare_shaped_vowel(buffer) -> bool` | Buffer is exactly one vowel carrying mũ/móc/trần (`ă`, `â`, `ắ`) |
 
-The three `is_*` functions let `funput-engine` decide whether to keep the Vietnamese text or restore the
+The `is_*` functions let `funput-engine` decide whether to keep the Vietnamese text or restore the
 raw Latin: `is_complete_syllable` is used at a word boundary; `is_definitely_invalid` drives eager
-restore (flip back the instant it is certain the word is not Vietnamese).
+restore (flip back the instant it is certain the word is not Vietnamese). `is_bare_shaped_vowel` is a
+deliberate exception at a word boundary: Vietnamese has no open `ă`/`â` rhyme so they are not
+"complete", yet an isolated shaped vowel can only have been meant — which is how Telex `aw` keeps `ă`
+just as VNI `a8` does.
 
 ```rust
 use funput_core::{apply, InputMethod, ToneStyle, TransformKind};

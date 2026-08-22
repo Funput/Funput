@@ -39,10 +39,13 @@ Bề mặt nhỏ và ổn định cho `funput-engine`. Đổi breaking cần đ�
 | `is_valid(buffer) -> bool` | Buffer **có thể** còn là âm tiết VN hợp lệ (lenient) |
 | `is_complete_syllable(buffer) -> bool` | Buffer là âm tiết VN **hoàn chỉnh** (strict) |
 | `is_definitely_invalid(buffer) -> bool` | Buffer **chắc chắn** không thể thành âm tiết VN |
+| `is_bare_shaped_vowel(buffer) -> bool` | Buffer chỉ gồm đúng một nguyên âm mang mũ/móc/trần (`ă`, `â`, `ắ`) |
 
-Ba hàm `is_*` là để `funput-engine` quyết định giữ chữ Việt hay khôi phục về Latin gốc:
+Các hàm `is_*` là để `funput-engine` quyết định giữ chữ Việt hay khôi phục về Latin gốc:
 `is_complete_syllable` dùng ở ranh giới từ; `is_definitely_invalid` dùng cho eager-restore (đổi lại
-ngay khi biết chắc không phải tiếng Việt).
+ngay khi biết chắc không phải tiếng Việt). `is_bare_shaped_vowel` là ngoại lệ có chủ đích ở ranh giới
+từ: tiếng Việt không có vần mở `ă`/`â` nên chúng không "hoàn chỉnh", nhưng gõ trơ một nguyên âm có dấu
+phụ thì chỉ có thể là chủ đích — nhờ đó Telex `aw` giữ được `ă` đúng như VNI `a8`.
 
 ```rust
 use funput_core::{apply, InputMethod, ToneStyle, TransformKind};

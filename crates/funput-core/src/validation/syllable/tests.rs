@@ -61,6 +61,25 @@ fn is_complete_syllable_cases() {
 }
 
 #[test]
+fn bare_shaped_vowel_cases() {
+    // A lone vowel carrying mũ / móc / trần, with or without a tone.
+    for ok in ["ă", "â", "Ă", "Â", "ê", "ô", "ơ", "ư", "ắ", "ậ", "Ừ"] {
+        assert!(is_bare_shaped_vowel(ok), "{ok} is a bare shaped vowel");
+    }
+    // Plain vowels carry no shape; an onset or coda means it is not bare.
+    for bad in ["", "a", "á", "A", "d", "că", "ăn", "âm", "ươ"] {
+        assert!(
+            !is_bare_shaped_vowel(bad),
+            "{bad} is not a bare shaped vowel"
+        );
+    }
+    // Deliberately independent of completeness: `ă`/`â` have no open rhyme, so
+    // the two predicates disagree here and that disagreement is the point.
+    assert!(is_bare_shaped_vowel("ă") && !is_complete_syllable("ă"));
+    assert!(is_bare_shaped_vowel("â") && !is_complete_syllable("â"));
+}
+
+#[test]
 fn real_syllables_are_complete() {
     // Broad battery of real Vietnamese syllables (incl. hard rhymes). A failure
     // means the rhyme table is missing an entry — add it to `rhyme.rs`.
