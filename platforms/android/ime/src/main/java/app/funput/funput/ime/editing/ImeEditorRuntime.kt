@@ -40,6 +40,11 @@ internal class ImeEditorRuntime(
         completions.configure(enabled = false)
     }
 
+    fun setAutoCapitalizeEnabled(enabled: Boolean) {
+        autoCapitalization.setEnabled(enabled)
+        autoCapitalization.update()
+    }
+
     fun updateCapitalization(preserveCapsLock: Boolean = true) =
         autoCapitalization.update(preserveCapsLock)
 

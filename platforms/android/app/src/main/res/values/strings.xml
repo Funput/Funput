@@ -191,6 +191,8 @@
     <string name="settings_sounds_title">Âm thanh phím</string>
     <string name="settings_smart_restore_title">Tự khôi phục từ tiếng Anh</string>
     <string name="settings_spell_check_title">Kiểm tra chính tả</string>
+    <string name="settings_auto_capitalize_title">Tự viết hoa</string>
+    <string name="settings_auto_capitalize_summary">Viết hoa ký tự đầu câu khi phù hợp.</string>
     <string name="settings_personal_suggestions_section">Gợi ý cá nhân</string>
     <string name="settings_personal_suggestions_title">Gợi ý từ cá nhân</string>
     <string name="settings_personal_suggestions_description">Chỉ học chữ Funput gõ và lưu trên thiết bị.</string>

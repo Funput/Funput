@@ -27,6 +27,7 @@ internal class ImeSettingsController(
     private val onInputMethodChanged: (KeyboardInputMethod) -> Unit,
     private val onViewSettingsChanged: () -> Unit,
     private val onPersonalSuggestionsChanged: (PersonalSuggestionPreferences) -> Unit,
+    private val onAutoCapitalizeChanged: (Boolean) -> Unit = {},
 ) {
     var inputMethod = InputMethodSettings.DefaultInputMethod
         private set
@@ -40,6 +41,7 @@ internal class ImeSettingsController(
         private set
     var smartGesturesEnabled = SmartGestureSettings.DefaultEnabled
         private set
+    val autoCapitalizeEnabled get() = smartComposition.autoCapitalizeEnabled
 
     // Seeded with the same defaults the settings flows fall back to, so the engine
     // configuration below is always complete — no option has to be invented when one
@@ -91,6 +93,7 @@ internal class ImeSettingsController(
         if (value == smartComposition) return
         smartComposition = value
         applyEngineConfiguration()
+        onAutoCapitalizeChanged(value.autoCapitalizeEnabled)
     }
 
     /**

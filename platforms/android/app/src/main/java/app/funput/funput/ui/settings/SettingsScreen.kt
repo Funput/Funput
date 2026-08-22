@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.ClipboardPreferences
+import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -29,8 +30,7 @@ internal fun SettingsScreen(
     keySizeProfile: KeyboardSizingProfile,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
-    smartRestoreEnabled: Boolean,
-    spellCheckEnabled: Boolean,
+    smartComposition: SmartCompositionPreferences,
     personalSuggestionsEnabled: Boolean,
     clipboardPreferences: ClipboardPreferences,
     smartGesturesEnabled: Boolean,
@@ -44,6 +44,7 @@ internal fun SettingsScreen(
     onSmartGesturesChanged: (Boolean) -> Unit,
     onSmartRestoreChanged: (Boolean) -> Unit,
     onSpellCheckChanged: (Boolean) -> Unit,
+    onAutoCapitalizeChanged: (Boolean) -> Unit,
     onPersonalSuggestionsChanged: (Boolean) -> Unit,
     onClipboardEnabledChanged: (Boolean) -> Unit,
     onClipboardExpirySelected: (ClipboardExpiry) -> Unit,
@@ -69,8 +70,7 @@ internal fun SettingsScreen(
             keySizeProfile = keySizeProfile,
             hapticsEnabled = hapticsEnabled,
             soundsEnabled = soundsEnabled,
-            smartRestoreEnabled = smartRestoreEnabled,
-            spellCheckEnabled = spellCheckEnabled,
+            smartComposition = smartComposition,
             personalSuggestionsEnabled = personalSuggestionsEnabled,
             clipboardPreferences = clipboardPreferences,
             smartGesturesEnabled = smartGesturesEnabled,
@@ -84,6 +84,7 @@ internal fun SettingsScreen(
             onSmartGesturesChanged = onSmartGesturesChanged,
             onSmartRestoreChanged = onSmartRestoreChanged,
             onSpellCheckChanged = onSpellCheckChanged,
+            onAutoCapitalizeChanged = onAutoCapitalizeChanged,
             onPersonalSuggestionsChanged = onPersonalSuggestionsChanged,
             onClipboardEnabledChanged = onClipboardEnabledChanged,
             onClearClipboardHistory = onClearClipboardHistory,

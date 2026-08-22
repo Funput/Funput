@@ -22,6 +22,7 @@ class SmartCompositionSettings(context: Context) {
             SmartCompositionSettingCodec.decode(
                 spellCheckEnabled = values[SpellCheckEnabledKey],
                 smartRestoreEnabled = values[SmartRestoreEnabledKey],
+                autoCapitalizeEnabled = values[AutoCapitalizeEnabledKey],
             )
         }
         .distinctUntilChanged()
@@ -34,8 +35,13 @@ class SmartCompositionSettings(context: Context) {
         dataStore.edit { it[SmartRestoreEnabledKey] = enabled }
     }
 
+    suspend fun setAutoCapitalizeEnabled(enabled: Boolean) {
+        dataStore.edit { it[AutoCapitalizeEnabledKey] = enabled }
+    }
+
     private companion object {
         val SpellCheckEnabledKey = booleanPreferencesKey("spell_check_enabled")
         val SmartRestoreEnabledKey = booleanPreferencesKey("smart_restore_enabled")
+        val AutoCapitalizeEnabledKey = booleanPreferencesKey("auto_capitalize_enabled")
     }
 }

@@ -51,6 +51,7 @@ class FunputInputMethodService : InputMethodService() {
             onInputMethodChanged = ::restartComposition,
             onViewSettingsChanged = { keyboardView?.let(::updateInputView) },
             onPersonalSuggestionsChanged = suggestionService::configure,
+            onAutoCapitalizeChanged = editorRuntime::setAutoCapitalizeEnabled,
         )
         settings.observe(this, serviceScope)
     }
@@ -65,6 +66,7 @@ class FunputInputMethodService : InputMethodService() {
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         editorRuntime.configure(attribute)
+        editorRuntime.setAutoCapitalizeEnabled(settings.autoCapitalizeEnabled)
         session.startActionHandler()
         suggestionService.start(editorRuntime.policy)
     }
