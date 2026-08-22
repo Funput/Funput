@@ -3,9 +3,19 @@ package app.funput.funput.ime
 import app.funput.funput.ime.editing.ImeEditorRuntime
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
+import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 
 internal object ImeKeyboardCallbackBinder {
+    fun dispatch(
+        handler: ImeKeyActionHandler,
+        suggestions: PersonalSuggestionService,
+        action: KeyAction,
+    ) {
+        handler.onKeyAction(action)
+        suggestions.consume(handler.takeSuggestionUpdate())
+    }
+
     fun bind(
         view: FunputKeyboardView,
         handler: ImeKeyActionHandler,
@@ -13,10 +23,7 @@ internal object ImeKeyboardCallbackBinder {
         suggestions: PersonalSuggestionService,
         switcher: SystemInputMethodSwitcher,
     ) = with(view.callbacks) {
-        onKeyAction = { action ->
-            handler.onKeyAction(action)
-            suggestions.consume(handler.takeSuggestionUpdate())
-        }
+        onKeyAction = { action -> dispatch(handler, suggestions, action) }
         onInputMethodSwitchRequested = {
             handler.finish()
             suggestions.finish()

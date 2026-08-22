@@ -16,6 +16,7 @@ import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.ClipboardSettings
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
+import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 import kotlinx.coroutines.CoroutineScope
@@ -63,6 +64,13 @@ internal class ImeEditingSession(
     fun finishInputView() { clipboardController.stop(); clipboardHistoryController.stop() }
 
     fun bindClipboard(view: FunputKeyboardView) = clipboardUiBinding.attach(view)
+
+    fun restartComposition(method: KeyboardInputMethod, view: FunputKeyboardView?) {
+        actionHandler.finish()
+        startActionHandler()
+        suggestionService.start(editorRuntime.policy)
+        view?.inputMethod = method
+    }
 
     fun windowHidden() {
         clipboardController.stop()

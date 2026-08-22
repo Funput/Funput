@@ -2,11 +2,13 @@ package app.funput.funput.ime
 
 import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
+import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.CompletionInfo
 import android.view.inputmethod.EditorInfo
 import app.funput.funput.ime.editing.InputConnectionEditor
-import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.ime.hardware.ImeHardwareKeyHandler
+import app.funput.funput.ime.hardware.toHardwareKeyStroke
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 import app.funput.funput.keyboard.ui.emoji.EmojiCatalogPreloader
@@ -25,6 +27,7 @@ class FunputInputMethodService : InputMethodService() {
     private var keyboardView: FunputKeyboardView? = null
     private lateinit var session: ImeEditingSession
     private lateinit var settings: ImeSettingsController
+    private lateinit var hardwareKeys: ImeHardwareKeyHandler
 
     private val nativeEngine get() = session.nativeEngine
     private val actionHandler get() = session.actionHandler
@@ -48,12 +51,13 @@ class FunputInputMethodService : InputMethodService() {
         )
         settings = ImeSettingsController(
             engine = nativeEngine,
-            onInputMethodChanged = ::restartComposition,
+            onInputMethodChanged = { method -> session.restartComposition(method, keyboardView) },
             onViewSettingsChanged = { keyboardView?.let(::updateInputView) },
             onPersonalSuggestionsChanged = suggestionService::configure,
             onAutoCapitalizeChanged = editorRuntime::setAutoCapitalizeEnabled,
         )
         settings.observe(this, serviceScope)
+        hardwareKeys = ImeHardwareKeyHandler.bind(session) { keyboardView?.shiftState ?: ShiftState.OFF }
     }
     override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
         keyboardView = view
@@ -123,15 +127,12 @@ class FunputInputMethodService : InputMethodService() {
         nativeEngine.close()
     }
 
-    private fun restartComposition(method: KeyboardInputMethod) {
-        actionHandler.finish()
-        session.startActionHandler()
-        suggestionService.start(editorRuntime.policy)
-        keyboardView?.inputMethod = method
-    }
+    override fun onKeyDown(keyCode: Int, event: KeyEvent) =
+        hardwareKeys.onKeyDown(event.toHardwareKeyStroke()) || super.onKeyDown(keyCode, event)
 
-    // Switching the system between light and dark changes which theme applies, and no settings
-    // flow fires for it because nothing the user stored has changed.
+    override fun onKeyUp(keyCode: Int, event: KeyEvent) =
+        hardwareKeys.onKeyUp(event.toHardwareKeyStroke()) || super.onKeyUp(keyCode, event)
+
     override fun onComputeInsets(outInsets: InputMethodService.Insets) {
         super.onComputeInsets(outInsets)
         ImeOverlayInsets.apply(outInsets, keyboardView?.overlayPadTop ?: 0)
