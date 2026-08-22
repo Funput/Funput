@@ -44,8 +44,7 @@ internal fun SettingsRoute(
         keySizeProfile = settings.keySizeProfile,
         hapticsEnabled = settings.feedback.hapticsEnabled,
         soundsEnabled = settings.feedback.soundsEnabled,
-        smartRestoreEnabled = settings.smartComposition.smartRestoreEnabled,
-        spellCheckEnabled = settings.smartComposition.spellCheckEnabled,
+        smartComposition = settings.smartComposition,
         personalSuggestionsEnabled = settings.personalSuggestions.enabled,
         clipboardPreferences = settings.clipboard,
         smartGesturesEnabled = settings.smartGesturesEnabled,
@@ -69,6 +68,9 @@ internal fun SettingsRoute(
         },
         onSpellCheckChanged = { enabled ->
             scope.launch { settings.smartCompositionStore.setSpellCheckEnabled(enabled) }
+        },
+        onAutoCapitalizeChanged = { enabled ->
+            scope.launch { settings.smartCompositionStore.setAutoCapitalizeEnabled(enabled) }
         },
         onPersonalSuggestionsChanged = { enabled ->
             scope.launch { settings.personalSuggestionStore.setEnabled(enabled) }

@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ClipboardPreferences
+import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -60,8 +61,7 @@ private fun SettingsPreview(
             keySizeProfile = KeyboardSizingProfile.Normal,
             hapticsEnabled = true,
             soundsEnabled = false,
-            smartRestoreEnabled = true,
-            spellCheckEnabled = false,
+            smartComposition = SmartCompositionPreferences.Default,
             personalSuggestionsEnabled = true,
             clipboardPreferences = ClipboardPreferences.Default,
             smartGesturesEnabled = true,
@@ -75,6 +75,7 @@ private fun SettingsPreview(
             onSmartGesturesChanged = {},
             onSmartRestoreChanged = {},
             onSpellCheckChanged = {},
+            onAutoCapitalizeChanged = {},
             onPersonalSuggestionsChanged = {},
             onClipboardEnabledChanged = {},
             onClipboardExpirySelected = {},

@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import app.funput.funput.ime.settings.ClipboardPreferences
+import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -40,8 +40,7 @@ internal fun SettingsScreenSections(
     keySizeProfile: KeyboardSizingProfile,
     hapticsEnabled: Boolean,
     soundsEnabled: Boolean,
-    smartRestoreEnabled: Boolean,
-    spellCheckEnabled: Boolean,
+    smartComposition: SmartCompositionPreferences,
     personalSuggestionsEnabled: Boolean,
     clipboardPreferences: ClipboardPreferences,
     smartGesturesEnabled: Boolean,
@@ -56,6 +55,7 @@ internal fun SettingsScreenSections(
     onSmartGesturesChanged: (Boolean) -> Unit,
     onSmartRestoreChanged: (Boolean) -> Unit,
     onSpellCheckChanged: (Boolean) -> Unit,
+    onAutoCapitalizeChanged: (Boolean) -> Unit,
     onPersonalSuggestionsChanged: (Boolean) -> Unit,
     onClipboardEnabledChanged: (Boolean) -> Unit,
     onClearClipboardHistory: () -> Unit,
@@ -108,10 +108,10 @@ internal fun SettingsScreenSections(
         item(key = "smart") {
             Box(modifier = Modifier.staggeredEntry(2, tracker)) {
                 SmartSettingsSection(
-                    smartRestoreEnabled = smartRestoreEnabled,
-                    spellCheckEnabled = spellCheckEnabled,
+                    preferences = smartComposition,
                     onSmartRestoreChanged = onSmartRestoreChanged,
                     onSpellCheckChanged = onSpellCheckChanged,
+                    onAutoCapitalizeChanged = onAutoCapitalizeChanged,
                 )
             }
         }
