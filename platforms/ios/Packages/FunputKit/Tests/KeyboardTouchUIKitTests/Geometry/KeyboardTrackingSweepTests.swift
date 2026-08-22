@@ -58,23 +58,32 @@ struct KeyboardTrackingSweepTests {
         #expect(strays.isEmpty, "\(strays.count) stray(s), first: \(strays.first as Any)")
     }
 
-    /// The region is built by padding the keycap union, so it can reach past the surface's own
-    /// bounds — and UIKit never routes a touch to a view outside those bounds. The slack that
-    /// escapes is therefore dead, and the tolerance a finger actually gets at the rim is the
-    /// layout's padding, not `outerTolerance`. Kept as an assertion so the gap between the two
-    /// numbers stays visible instead of reading as a 12pt promise.
-    @Test("Rim tolerance is bounded by the surface, not by outerTolerance")
-    func rimToleranceIsClampedByTheSurface() {
+    @Test("The tracking region reaches both surface edges")
+    func trackingReachesSurfaceEdges() {
         let (_, bounds, geometry) = makeGeometry()
         let keys = geometry.keys.map(\.frame)
         let leftmost = keys.map(\.minX).min() ?? 0
 
-        #expect(bounds.minX < 0)
-        #expect(bounds.maxX > size.width)
-        // Outside the surface the region cannot receive anything, so the usable slack on the
-        // left is the distance from the view edge to the first keycap.
+        #expect(bounds.minX <= 0)
+        #expect(bounds.maxX >= size.width)
         #expect(leftmost == 6)
         #expect(KeyboardTrackingBounds.outerTolerance == 12)
+    }
+
+    @Test("Maximum theme padding leaves no dead strip beside A or L")
+    func maximumPaddingKeepsRimsLive() {
+        let sizing = KeyboardSizingProfile(horizontalPadding: 16)
+        let geometry = KeyboardGeometry.resolve(
+            layout: KeyboardLayoutResolver.resolve(inputMethod: .vni, mode: .letters),
+            size: size,
+            sizing: sizing
+        )
+        let snapshot = KeyboardGeometrySnapshot(revision: 1, geometry: geometry)
+        let aRow = geometry.rows.first { $0.contains { $0.spec.id == "character-a" } }!
+        let y = aRow[0].frame.midY
+
+        #expect(snapshot.touchHit(at: CGPoint(x: 0.5, y: y))?.key.id == "character-a")
+        #expect(snapshot.touchHit(at: CGPoint(x: size.width - 0.5, y: y))?.key.id == "character-l")
     }
 
     private func makeGeometry() -> (KeyboardGeometrySnapshot, CGRect, ResolvedKeyboard) {

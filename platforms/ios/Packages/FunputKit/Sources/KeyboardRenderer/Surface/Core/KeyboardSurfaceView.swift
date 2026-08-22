@@ -100,9 +100,7 @@ public final class KeyboardSurfaceView: UIView {
         guard bounds.width > 0, bounds.height > 0 else { return }
         let geometry = resolvedGeometry()
         toolbarView.frame = geometry.toolbarFrame ?? .zero
-        geometry.keys.forEach { key in
-            keyControls[key.spec.id]?.frame = key.frame
-        }
+        layoutKeyControls(in: geometry)
         // The coordinator owns the snapshot and its revision; the overlay borrows the same one.
         touchCoordinator.updateGeometry(geometry)
         touchOverlay.adoptGeometry(touchCoordinator.geometrySnapshot)

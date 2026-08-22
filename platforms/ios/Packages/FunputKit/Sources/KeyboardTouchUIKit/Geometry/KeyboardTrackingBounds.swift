@@ -13,7 +13,15 @@ public enum KeyboardTrackingBounds {
     public static func resolve(for geometry: ResolvedKeyboard) -> CGRect {
         let union = geometry.keys.reduce(CGRect.null) { $0.union($1.frame) }
         guard !union.isNull else { return .null }
-        let padded = union.insetBy(dx: -outerTolerance, dy: -outerTolerance)
+        let tolerated = union.insetBy(dx: -outerTolerance, dy: -outerTolerance)
+        // Theme padding can be wider than `outerTolerance`. Always own the full horizontal
+        // surface so a thumb against either screen edge still reaches the inset A/L row.
+        let padded = CGRect(
+            x: min(0, tolerated.minX),
+            y: tolerated.minY,
+            width: max(geometry.size.width, tolerated.maxX) - min(0, tolerated.minX),
+            height: tolerated.height
+        )
         // The toolbar handles its own touches. Letting the keycap slack reach over it would
         // swallow the bottom edge of every suggestion.
         //

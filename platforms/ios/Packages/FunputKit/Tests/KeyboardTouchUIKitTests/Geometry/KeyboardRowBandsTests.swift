@@ -33,22 +33,47 @@ struct KeyboardRowBandsTests {
         #expect(snapshot.touchHit(at: CGPoint(x: 388, y: 195))?.key.id == "character-l")
     }
 
-    /// Between two rows no band contains the point, so the global nearest-key search still
-    /// decides. This is the path every row gap takes, and it must not change.
-    @Test("A point in the row gap still falls back to the nearest key")
-    func rowGapFallsBackToNearest() {
+    @Test("The gap above the inset row is split at its midpoint")
+    func upperRowGapIsSplit() {
         let snapshot = makeSnapshot()
-        // The 7pt gap between the qwerty row (…148.6) and the ASDF row (155.6…).
-        let hit = snapshot.touchHit(at: CGPoint(x: 200, y: 152))
 
-        #expect(hit != nil)
+        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: 151))?.key.id == "character-q")
+        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: 153))?.key.id == "character-a")
+        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: 151))?.key.id == "character-p")
+        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: 153))?.key.id == "character-l")
     }
 
-    private func makeSnapshot() -> KeyboardGeometrySnapshot {
+    @Test("The gap below the inset row is split at its midpoint")
+    func lowerRowGapIsSplit() {
+        let snapshot = makeSnapshot()
+
+        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: 200))?.key.id == "character-a")
+        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: 204))?.key.id == "shift")
+        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: 200))?.key.id == "character-l")
+        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: 204))?.key.id == "backspace")
+    }
+
+    @Test("Every alphabetic editor gives its side runway to A and L", arguments: [
+        KeyboardEditorMode.text, .search, .email, .url, .password,
+    ])
+    func alphabeticEditorsOwnTheirRims(editorMode: KeyboardEditorMode) {
+        let snapshot = makeSnapshot(editorMode: editorMode)
+        let row = snapshot.geometry.rows.first { $0.contains { $0.spec.id == "character-a" } }!
+        let y = row[0].frame.midY
+
+        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: y))?.key.id == "character-a")
+        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: y))?.key.id == "character-l")
+    }
+
+    private func makeSnapshot(editorMode: KeyboardEditorMode = .text) -> KeyboardGeometrySnapshot {
         KeyboardGeometrySnapshot(
             revision: 1,
             geometry: KeyboardGeometry.resolve(
-                layout: KeyboardLayoutResolver.resolve(inputMethod: .vni, mode: .letters),
+                layout: KeyboardLayoutResolver.resolve(
+                    inputMethod: .vni,
+                    mode: .letters,
+                    editorMode: editorMode
+                ),
                 size: CGSize(width: 390, height: 304),
                 sizing: KeyboardSizingProfile()
             )
