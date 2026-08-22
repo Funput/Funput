@@ -107,7 +107,7 @@ extension KeyboardSurfaceView {
                 key: hit.key,
                 point: point,
                 sourceFrame: hit.frame,
-                containerBounds: bounds,
+                containerBounds: keyboardBounds,
                 presentation: presentation
             )
         }
@@ -133,17 +133,17 @@ extension KeyboardSurfaceView {
 
     func resolvedGeometry() -> ResolvedKeyboard {
         if let cache = geometryCache,
-           cache.size == bounds.size,
+           cache.size == keyboardSize,
            cache.layout == presentation.layout,
            cache.sizing == presentation.sizing {
             return cache.value
         }
         let value = KeyboardGeometry.resolve(
             layout: presentation.layout,
-            size: bounds.size,
+            size: keyboardSize,
             sizing: presentation.sizing
         )
-        geometryCache = (bounds.size, presentation.layout, presentation.sizing, value)
+        geometryCache = (keyboardSize, presentation.layout, presentation.sizing, value)
         return value
     }
 }

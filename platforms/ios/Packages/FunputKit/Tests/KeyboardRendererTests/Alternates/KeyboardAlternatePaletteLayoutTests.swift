@@ -35,8 +35,8 @@ struct KeyboardAlternatePaletteLayoutTests {
                 sourceFrame: source,
                 bounds: bounds
             )
-            #expect(layout.frame.minY < source.minY)
-            #expect(bounds.contains(layout.frame))
+            #expect(layout.frame.maxY <= source.minY)
+            #expect(!layout.overlapsSource)
         }
     }
 
@@ -59,6 +59,21 @@ struct KeyboardAlternatePaletteLayoutTests {
         }
     }
 
+    @Test("Vietnamese diacritic keys keep the palette above a top-row hold")
+    func vietnameseTopRow() {
+        let bounds = CGRect(x: 0, y: 0, width: 390, height: 304)
+        for count in [6, 12, 18] {
+            let source = CGRect(x: 102, y: 62, width: 36, height: 40)
+            let layout = KeyboardAlternatePaletteLayout.resolve(
+                count: count,
+                sourceFrame: source,
+                bounds: bounds
+            )
+            #expect(layout.frame.maxY <= source.minY)
+            #expect(!layout.overlapsSource)
+        }
+    }
+
     @Test("Short sets stay on one row")
     func shortSets() {
         let layout = KeyboardAlternatePaletteLayout.resolve(
@@ -70,20 +85,36 @@ struct KeyboardAlternatePaletteLayoutTests {
         #expect(layout.itemFrames.count == 2)
     }
 
-    @Test("A palette clamped over its key keeps the default until the finger travels")
-    func clampedOverSource() {
-        // Nineteen alternates cannot fit above a top-row key, so the palette covers it.
+    @Test("A top-row Vietnamese catalog overflows above the surface instead of covering the key")
+    func overflowsAboveSurface() {
         let source = CGRect(x: 300, y: 62, width: 36, height: 40)
         let layout = KeyboardAlternatePaletteLayout.resolve(
             count: 19,
             sourceFrame: source,
             bounds: CGRect(x: 0, y: 0, width: 390, height: 260)
         )
-        #expect(layout.overlapsSource)
+        #expect(layout.frame.maxY <= source.minY)
+        #expect(!layout.overlapsSource)
+        #expect(layout.overflowAbove > 0)
+        let start = CGPoint(x: source.midX, y: source.midY)
+        #expect(layout.selection(at: start, from: start) == 0)
+    }
+
+    @Test("A palette overlapping its key keeps the default until the finger travels")
+    func holdSlopWhenOverlapping() {
+        let source = CGRect(x: 300, y: 62, width: 36, height: 40)
+        let layout = KeyboardAlternatePaletteLayout(
+            frame: CGRect(x: 280, y: 50, width: 76, height: 60),
+            itemFrames: [
+                CGRect(x: 2, y: 2, width: 34, height: 38),
+                CGRect(x: 38, y: 2, width: 36, height: 38),
+            ],
+            sourceFrame: source,
+            overlapsSource: true
+        )
         let start = CGPoint(x: source.midX, y: source.midY)
         #expect(layout.selection(at: start, from: start) == 0)
         #expect(layout.selection(at: CGPoint(x: start.x + 6, y: start.y), from: start) == 0)
-        // The cell sitting over the key stays reachable once the finger has moved.
         let covering = layout.index(at: start)
         #expect(covering != nil)
         #expect(covering != 0)

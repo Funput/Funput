@@ -57,7 +57,7 @@ final class KeyboardViewController: UIInputViewController {
         enterAction: .newLine,
         initialLayoutMode: .letters
     )
-    private let heightController = KeyboardHeightController()
+    let heightController = KeyboardHeightController()
     private(set) var isKeyboardVisible = false
 
     var cachedBackgroundImage: UIImage? { backgroundImageCache.value }

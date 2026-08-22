@@ -19,6 +19,13 @@ extension KeyboardViewController {
             surface.onKeyEvent = { [weak self] event in
                 self?.handleKeyEvent(event)
             }
+            surface.onOverlayPadChanged = { [weak self] pad in
+                guard let self else { return }
+                UIView.performWithoutAnimation {
+                    self.heightController.setOverlayPad(pad)
+                    self.view.layoutIfNeeded()
+                }
+            }
             installClipboard(on: surface)
             installPersonalSuggestions(on: surface)
             view.addSubview(surface)
