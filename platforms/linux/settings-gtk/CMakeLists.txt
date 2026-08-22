@@ -44,16 +44,12 @@ if(EXISTS "${FUNPUT_ROOT}/assets/svg/funput_logo.svg")
             RENAME funput.svg
             DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps")
 endif()
-# White glyph for Fcitx5's tray when Vietnamese is off (Windows tray-mono).
+# White glyph for Fcitx5's tray when Vietnamese is off, traced from
+# assets/logo/monochrome-light.png.
 if(EXISTS "${FUNPUT_ROOT}/assets/svg/funput_logo_mono.svg")
     install(FILES "${FUNPUT_ROOT}/assets/svg/funput_logo_mono.svg"
             RENAME funput-mono.svg
             DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps")
-endif()
-if(EXISTS "${FUNPUT_ROOT}/platforms/windows/icons/tray-mono.png")
-    install(FILES "${FUNPUT_ROOT}/platforms/windows/icons/tray-mono.png"
-            RENAME funput-mono.png
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/32x32/apps")
 endif()
 if(EXISTS "${FUNPUT_ROOT}/assets/logo.png")
     install(FILES "${FUNPUT_ROOT}/assets/logo.png"
