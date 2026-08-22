@@ -28,6 +28,11 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     // them, and each framework reports them differently.
     if (event.isRelease()) return;
 
+    // Between words, re-ask whether this client can take a document repair. Surrounding
+    // text often arrives only after the client answers — Calc, an empty GTK field —
+    // so unlike the old focus-in snapshot there is no single moment early enough.
+    applyNonPreeditMode();
+
     const funput::KeyEvent ev = toKeyEvent(event.key());
     // One read of the document, used twice. It lets the composer check that its last
     // repair actually landed — a client that takes commits but drops deletes turns

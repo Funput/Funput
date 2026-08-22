@@ -12,13 +12,32 @@ FunputEngine::FunputEngine(fcitx::Instance *instance) : instance_(instance) {
                 return true;
             });
     }
+    surroundingWatch_ = instance_->watchEvent(
+        fcitx::EventType::InputContextSurroundingTextUpdated,
+        fcitx::EventWatcherPhase::Default, [this](fcitx::Event &event) {
+            auto *ic = static_cast<fcitx::InputContextEvent &>(event).inputContext();
+            if (ic != instance_->lastFocusedInputContext()) return;
+            // isValid(), not CapabilityFlag::SurroundingText: on GNOME/Wayland the
+            // flag lies both ways. Empty text with cursor 0 is still valid — a blank
+            // GTK field, and the IBus shell's "the client has spoken".
+            lastSurroundingOk_ = ic->surroundingText().isValid();
+        });
 }
 
 void FunputEngine::applyNonPreeditMode() {
-    // isValid(), not CapabilityFlag::SurroundingText: on GNOME/Wayland the flag is
-    // absent on contexts whose surrounding text works perfectly and present on some
-    // that report nothing, so it decides nothing here. See platforms/linux/README.md.
+    // Never mid-word. The two modes disagree about where the composing word lives,
+    // so flipping under one leaves the engine and the client describing different
+    // things. Same gate as the IBus shell's applyNonPreeditMode().
+    if (composer_.isComposing()) return;
+    const bool wasNonPreedit = composer_.nonPreedit();
     composer_.setNonPreedit(composer_.settings().nonPreedit && lastSurroundingOk_);
+    if (wasNonPreedit || !composer_.nonPreedit()) return;
+    // Mode just turned on between words. A leftover preedit would sit as a ghost
+    // while the new mode writes into the document — same cleanup as a live settings
+    // reload, cheap if the panel is already empty.
+    if (fcitx::InputContext *context = instance_->lastFocusedInputContext()) {
+        clearPreedit(context);
+    }
 }
 
 void FunputEngine::onSettingsChanged() {
@@ -47,7 +66,9 @@ void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContext
     composer_.onFocusChanged();
     lastProgram_ = event.inputContext()->program();
     composer_.applyPerAppDefault(lastProgram_);
-    lastSurroundingOk_ = event.inputContext()->surroundingText().isValid();
+    // Like IBus `sawSurroundingText`: a new client has said nothing yet. `isValid()`
+    // here can be leftover from the previous focus, so do not snapshot it.
+    lastSurroundingOk_ = false;
     applyNonPreeditMode();
     noteRecentApp(lastProgram_);
 }

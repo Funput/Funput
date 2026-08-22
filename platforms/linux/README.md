@@ -143,13 +143,15 @@ that refuses it will simply appear to ignore Backspace. A Backspace *inside* a w
 still left to the app; the same hazard applies in principle, but nothing has been seen
 to fail there.
 
-Whether it engages is decided per input context, and the two shells cannot decide it
-the same way. Fcitx5 settles it once at focus-in, from `surroundingText().isValid()`.
-IBus has no such question to ask that early — surrounding text only starts arriving
-after the client answers — so it re-asks between words, on any keystroke with nothing
-composing. Never mid-word in either shell: the modes disagree about where the
-composing word lives, and switching under one leaves the engine and the client
-describing different things.
+Whether it engages is decided per input context. Both shells wait until the client
+has actually sent surrounding text this focus — Fcitx5 via `SurroundingTextUpdated`,
+IBus via `set_surrounding_text` — then re-ask between words, on any keystroke with
+nothing composing. Neither snapshots capability flags or a cache at focus-in: the
+text often arrives only after the client answers (Calc, an empty GTK field), and a
+stale `isValid()` from the previous focus would turn the mode on in a terminal that
+never sends updates. Never mid-word: the modes disagree about where the composing
+word lives, and switching under one leaves the engine and the client describing
+different things.
 
 ### What was measured, and what follows from it
 

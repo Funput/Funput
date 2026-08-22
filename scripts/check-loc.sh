@@ -37,10 +37,10 @@ done < <(
         find crates/*/src platforms -path '*/src/*' -name '*.rs' \
             -not -name 'tests.rs' -not -path '*/tests/*' -not -path '*/target/*'
         # The Linux shells and the code they share. Not under a `src/` dir in the
-        # `common/` case, so this needs its own pass. `build/` is CMake/CPack
-        # output, and `_deps/` inside it is the fetched test framework.
+        # `common/` case, so this needs its own pass. `build/` and `build-*` are
+        # CMake/CPack output, and `_deps/` inside them is the fetched test framework.
         find platforms/linux \( -name '*.h' -o -name '*.cpp' \) \
-            -not -path '*/build/*' -not -path '*/target/*'
+            -not -path '*/build/*' -not -path '*/build-*/*' -not -path '*/target/*'
     } | sort -u
 )
 
