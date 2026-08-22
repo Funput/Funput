@@ -61,6 +61,32 @@ funput dev coverage benchmarks/sample.txt --show-mismatches 10
 funput dev coverage benchmarks/.corpus/Viet74K.txt --json
 ```
 
+## Usage — `funput convert`
+
+Convert text between Unicode and the legacy charsets Vietnamese government paperwork still uses
+(TCVN3/`.VnTime`, VNI-Windows). It converts **text that already exists**; typing in a legacy
+charset is out of scope.
+
+```bash
+funput convert --list                            # the charsets, with the slug you type
+funput convert doc.txt --detect                  # what charset does this file look like?
+funput convert doc.txt --to unicode > new.txt    # TCVN3/VNI → Unicode, source guessed
+funput convert --to tcvn3 < new.txt > old.txt    # and back, as **bytes**, one per letter
+funput convert old.txt --from tcvn3 --to vni-windows
+```
+
+Leave `--from` off and the charset is worked out; give it and what you say wins over what was
+guessed. When nothing can be worked out — the bytes are not UTF-8 and no charset explains them —
+the command stops and asks for `--from` rather than guessing.
+
+**Standard output is the document; standard error is the talking.** `--list`/`--detect` and the
+warnings stay out of the result, so `funput convert … > out.txt` produces exactly that file.
+Converting to a legacy charset writes **one byte per letter** — that is what a `.VnTime` document
+holds; writing it as UTF-8 would produce a file Word cannot read.
+
+No charset is named in the code here: `--to tcvn3` is matched against `funput_core::charset::ALL`
+by slug, so implementing VISCII is one PR in core and this command picks it up.
+
 ## Platform simulation (`dev/sim.rs` — the heart; pure, tested)
 
 `simulate(method, input) -> Simulation { app_text, steps }` does **exactly** what a platform shell
@@ -85,6 +111,11 @@ src/
 ├── cli.rs         # Cli, Command{Term, Dev}, MethodArg(→InputMethod), CliError/CliResult
 ├── term/
 │   └── mod.rs     # args + handler for `funput term` (wrapper via funput-term + install)
+├── convert/       # `funput convert` — the charset-conversion tool
+│   ├── mod.rs     # args + the flow: read → identify → convert → write
+│   ├── source.rs  # bytes → text + charset (two doors: UTF-8 or byte-oriented)
+│   ├── sink.rs    # writes **bytes** to stdout, not text
+│   └── report.rs  # --list, --detect, loss warnings (all to stderr)
 └── dev/
     ├── mod.rs     # args + dispatch for `funput dev` (run/repl/coverage)
     ├── sim.rs     # simulate() — platform simulation; pure, tested

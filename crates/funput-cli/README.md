@@ -60,6 +60,31 @@ funput dev coverage benchmarks/sample.txt --show-mismatches 10
 funput dev coverage benchmarks/.corpus/Viet74K.txt --json
 ```
 
+## Dùng — `funput convert`
+
+Chuyển văn bản giữa Unicode và các bảng mã cũ mà văn bản Nhà nước còn dùng (TCVN3/`.VnTime`,
+VNI-Windows). Chỉ **chuyển văn bản đã có**; gõ bằng bảng mã cũ không nằm trong phạm vi.
+
+```bash
+funput convert --list                            # bảng mã + slug để gõ
+funput convert vanban.txt --detect               # đoán xem tệp này bảng mã gì
+funput convert vanban.txt --to unicode > moi.txt # TCVN3/VNI → Unicode (tự nhận diện)
+funput convert --to tcvn3 < moi.txt > cu.txt     # ngược lại, ghi ra **byte** một byte/chữ
+funput convert cu.txt --from tcvn3 --to vni-windows
+```
+
+Bỏ `--from` thì bảng mã được đoán; khai báo `--from` thì lời khai thắng phép đoán. Không đoán được
+(byte không phải UTF-8 và không bảng mã nào giải thích nổi) thì lệnh dừng và bảo dùng `--from`,
+chứ không đoán bừa.
+
+**stdout là tài liệu, stderr là lời nói.** `--list`/`--detect` và cảnh báo không lẫn vào tệp kết
+quả, nên `funput convert … > out.txt` cho ra đúng tệp đó. Chuyển sang bảng mã cũ ghi **một byte
+mỗi chữ** — đó là thứ tệp `.VnTime` chứa; ghi thành UTF-8 sẽ ra tệp Word đọc không được.
+
+Không bảng mã nào bị gọi tên trong code ở đây: `--to tcvn3` đối chiếu với
+`funput_core::charset::ALL` bằng slug, nên thêm VISCII là một PR trong core và lệnh này hưởng miễn
+phí.
+
 ## Mô phỏng platform (`dev/sim.rs` — trái tim, thuần, có test)
 
 `simulate(method, input) -> Simulation { app_text, steps }` làm **đúng** việc một platform shell làm:
@@ -84,6 +109,11 @@ src/
 ├── cli.rs         # Cli, Command{Term, Dev}, MethodArg(→InputMethod), CliError/CliResult
 ├── term/
 │   └── mod.rs     # args + handler `funput term` (wrapper qua funput-term + install)
+├── convert/       # `funput convert` — công cụ chuyển mã
+│   ├── mod.rs     # args + luồng: đọc → nhận diện → chuyển → ghi
+│   ├── source.rs  # bytes → text + bảng mã (hai cửa: UTF-8 hay theo byte)
+│   ├── sink.rs    # ghi **bytes** ra stdout (không phải text)
+│   └── report.rs  # --list, --detect, cảnh báo mất mát (đều ra stderr)
 └── dev/
     ├── mod.rs     # args + dispatch `funput dev` (run/repl/coverage)
     ├── sim.rs     # simulate() — mô phỏng platform, thuần, có test
