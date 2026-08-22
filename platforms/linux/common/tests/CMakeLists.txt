@@ -20,6 +20,7 @@ add_executable(funput_linux_tests
     main.cpp
     compose/key/boundary_tests.cpp
     compose/key/classify_tests.cpp
+    compose/key/chord_tests.cpp
     compose/composer/keys_tests.cpp
     compose/composer/state_tests.cpp
     compose/composer/nonpreedit_tests.cpp

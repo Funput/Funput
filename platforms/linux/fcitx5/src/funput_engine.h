@@ -30,6 +30,7 @@
 #include <fcitx-utils/key.h>
 
 #include "compose/composer/composer.h"
+#include "compose/key/chord.h"
 #include "settings/watch.h"
 
 // The only Fcitx5-native config: a button that opens the GTK Settings app.
@@ -76,6 +77,7 @@ private:
     fcitx::Instance *instance_;
     FunputEngineConfig config_;
     funput::Composer composer_;
+    funput::ToggleChord toggleChord_;
     // Whether the focused client has sent surrounding text this focus — the IBus
     // shell's `sawSurroundingText`. Not a snapshot of `isValid()` at focus-in: that
     // cache can be stale, and surrounding text often arrives only after the client

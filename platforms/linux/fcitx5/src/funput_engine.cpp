@@ -61,6 +61,7 @@ void FunputEngine::reset(const fcitx::InputMethodEntry &, fcitx::InputContextEve
 void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &) {
     if (composer_.reloadSettingsIfChanged()) composer_.applySettings();
     if (composer_.settings().autoCapitalize) composer_.armCapitalization();
+    toggleChord_.reset();
     // A new client: forget whether the last one could be trusted with a repair.
     composer_.onFocusChanged();
     // Like IBus `sawSurroundingText`: a new client has said nothing yet. `isValid()`

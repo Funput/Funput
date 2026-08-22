@@ -24,16 +24,23 @@ funput::KeyEvent toKeyEvent(const fcitx::Key &key) {
 } // namespace
 
 void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &event) {
+    const bool released = event.isRelease();
+    const funput::KeyEvent toggleEv = toKeyEvent(event.key());
+    if (toggleChord_.feed(toggleEv, released, composer_.settings().toggleHotkey)) {
+        applyPlan(event.inputContext(), composer_.toggleEnabled());
+        event.filterAndAccept();
+        return;
+    }
     // Releases never reach the composer: nothing in the typing rules depends on
     // them, and each framework reports them differently.
-    if (event.isRelease()) return;
+    if (released) return;
 
     // Between words, re-ask whether this client can take a document repair. Surrounding
     // text often arrives only after the client answers — Calc, an empty GTK field —
     // so unlike the old focus-in snapshot there is no single moment early enough.
     applyNonPreeditMode();
 
-    const funput::KeyEvent ev = toKeyEvent(event.key());
+    const funput::KeyEvent ev = toggleEv;
     // One read of the document, used twice. It lets the composer check that its last
     // repair actually landed — a client that takes commits but drops deletes turns
     // the mode off rather than appending to the user's text forever — and it is the

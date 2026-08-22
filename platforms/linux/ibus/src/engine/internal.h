@@ -13,6 +13,7 @@
 #include <ibus.h>
 
 #include "compose/composer/composer.h"
+#include "compose/key/chord.h"
 #include "engine.h"
 #include "settings/watch.h"
 
@@ -20,6 +21,7 @@ namespace funput_ibus {
 
 struct EngineState {
     funput::Composer composer;
+    funput::ToggleChord toggleChord;
     funput::SettingsWatcher watcher;
     guint watcherSource = 0;
     // Whether the focused client has actually sent surrounding text, as opposed to
