@@ -17,7 +17,7 @@ namespace funput {
 // Values are the stable C FFI wire IDs, independent from Settings display order.
 enum class Method : uint8_t { Telex = 0, Vni = 1, TelexAdvanced = 2 };
 enum class ToneStyle : uint8_t { Traditional = 0, Modern = 1 };
-enum class Hotkey { CtrlBacktick, CtrlSpace, AltShift };
+enum class Hotkey { CtrlBacktick, CtrlSpace, AltShift, SuperSpace, CtrlShiftSpace };
 // Hotkey to flip the word being composed VN↔raw. Presets use Ctrl+Shift+<letter>;
 // Off disables it.
 enum class FlipHotkey { Off, CtrlShiftZ, CtrlShiftX };

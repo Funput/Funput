@@ -3,15 +3,27 @@
 #include "compose/key/boundary.h"
 
 namespace funput {
+namespace {
+
+bool exact(const Mods &m, bool ctrl, bool alt, bool super, bool shift) {
+    return m.ctrl == ctrl && m.alt == alt && m.super == super && m.shift == shift;
+}
+
+} // namespace
 
 bool matchesToggle(const KeyEvent &ev, Hotkey preset) {
-    if (!ev.mods.ctrl) return false;
     switch (preset) {
-    case Hotkey::CtrlBacktick: return ev.keysym == keysym::Grave;
-    case Hotkey::CtrlSpace: return ev.keysym == keysym::Space;
-    // No keysym form: neither shell implements a bare Alt+Shift chord, which needs
-    // release-tracking rather than a key match.
-    case Hotkey::AltShift: return false;
+    case Hotkey::CtrlBacktick:
+        return exact(ev.mods, true, false, false, false) && ev.keysym == keysym::Grave;
+    case Hotkey::CtrlSpace:
+        return exact(ev.mods, true, false, false, false) && ev.keysym == keysym::Space;
+    case Hotkey::SuperSpace:
+        return exact(ev.mods, false, false, true, false) && ev.keysym == keysym::Space;
+    case Hotkey::CtrlShiftSpace:
+        return exact(ev.mods, true, false, false, true) && ev.keysym == keysym::Space;
+    // Modifier-only: both shells resolve this on release via ToggleChord.
+    case Hotkey::AltShift:
+        return false;
     }
     return false;
 }
@@ -29,8 +41,8 @@ bool matchesFlip(const KeyEvent &ev, FlipHotkey preset) {
 }
 
 KeyKind classify(const KeyEvent &ev, const Settings &settings) {
-    // Both hotkeys hold Ctrl, so they must be matched before the Shortcut test
-    // would swallow them.
+    // Both hotkeys hold a non-Shift modifier, so they must be matched before the
+    // Shortcut test would swallow them.
     if (matchesToggle(ev, settings.toggleHotkey)) return KeyKind::Toggle;
     if (matchesFlip(ev, settings.flipHotkey)) return KeyKind::Flip;
     if (ev.mods.isShortcut()) return KeyKind::Shortcut;

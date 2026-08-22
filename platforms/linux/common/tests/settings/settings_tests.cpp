@@ -128,3 +128,16 @@ TEST_CASE("save round-trips and preserves keys it does not own") {
     CHECK(raw.find("someFutureKey") != std::string::npos);
     CHECK(raw.find("excludedApps") != std::string::npos);
 }
+
+TEST_CASE("toggleHotkey parses the extra presets") {
+    writeSettingsFile(R"({"toggleHotkey": "super_space"})");
+    Settings settings;
+    REQUIRE(settings.reload());
+    CHECK(settings.toggleHotkey == Hotkey::SuperSpace);
+    writeSettingsFile(R"({"toggleHotkey": "ctrl_shift_space"})");
+    CHECK(settings.reload());
+    CHECK(settings.toggleHotkey == Hotkey::CtrlShiftSpace);
+    writeSettingsFile(R"({"toggleHotkey": "alt_shift"})");
+    CHECK(settings.reload());
+    CHECK(settings.toggleHotkey == Hotkey::AltShift);
+}

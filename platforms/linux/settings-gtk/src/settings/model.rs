@@ -61,6 +61,8 @@ pub enum Hotkey {
     CtrlBacktick,
     CtrlSpace,
     AltShift,
+    SuperSpace,
+    CtrlShiftSpace,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
