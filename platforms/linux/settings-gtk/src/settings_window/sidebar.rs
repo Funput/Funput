@@ -2,11 +2,28 @@
 //! A new page is one [`Destination`] variant plus a `ViewStack` child.
 
 mod about;
+mod tools;
 mod transfer;
 
 use adw::prelude::*;
 use adw::{ActionRow, NavigationSplitView, ViewStack, WindowTitle};
 use gtk::{ListBox, Orientation, SelectionMode};
+
+/// Switch the content pane and header. Overview status rows and the sidebar
+/// list both call this so a later shortcut (step 4) can reuse the same path.
+pub(super) fn show(
+    stack: &ViewStack,
+    split: &NavigationSplitView,
+    title: &WindowTitle,
+    dest: Destination,
+) {
+    stack.set_visible_child_name(dest.id());
+    title.set_title(dest.title());
+    if let Some(page) = split.content() {
+        page.set_title(dest.title());
+    }
+    split.set_show_content(true);
+}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum Destination {
@@ -63,14 +80,33 @@ pub(super) fn widget(
     title: &WindowTitle,
 ) -> gtk::Widget {
     let list = nav_list(stack, split, title);
-    let footer = tool_footer(window);
+    let list_sync = list.clone();
+    stack.connect_visible_child_name_notify(move |stack| {
+        sync_list(&list_sync, stack);
+    });
 
     let root = gtk::Box::new(Orientation::Vertical, 0);
     list.set_vexpand(true);
     root.append(&list);
     root.append(&gtk::Separator::new(Orientation::Horizontal));
-    root.append(&footer);
+    root.append(&tools::widget(window));
     root.upcast()
+}
+
+fn sync_list(list: &ListBox, stack: &ViewStack) {
+    let Some(name) = stack.visible_child_name() else {
+        return;
+    };
+    let mut i = 0;
+    while let Some(row) = list.row_at_index(i) {
+        if row.widget_name() == name.as_str() {
+            if list.selected_row().as_ref() != Some(&row) {
+                list.select_row(Some(&row));
+            }
+            return;
+        }
+        i += 1;
+    }
 }
 
 fn nav_list(stack: &ViewStack, split: &NavigationSplitView, title: &WindowTitle) -> ListBox {
@@ -95,12 +131,7 @@ fn nav_list(stack: &ViewStack, split: &NavigationSplitView, title: &WindowTitle)
         let Some(dest) = Destination::from_id(&row.widget_name()) else {
             return;
         };
-        stack.set_visible_child_name(dest.id());
-        title.set_title(dest.title());
-        if let Some(page) = split.content() {
-            page.set_title(dest.title());
-        }
-        split.set_show_content(true);
+        show(&stack, &split, &title, dest);
     });
     if let Some(first) = list.row_at_index(0) {
         list.select_row(Some(&first));
@@ -108,29 +139,3 @@ fn nav_list(stack: &ViewStack, split: &NavigationSplitView, title: &WindowTitle)
     list
 }
 
-fn tool_footer(window: &adw::Window) -> ListBox {
-    let list = ListBox::new();
-    list.add_css_class("navigation-sidebar");
-    list.set_selection_mode(SelectionMode::None);
-
-    let import = tool_row("Nhập cấu hình", "document-open-symbolic");
-    let export = tool_row("Xuất cấu hình", "document-save-symbolic");
-    let about_row = tool_row("Giới thiệu", "help-about-symbolic");
-    let parent = window.clone();
-    import.connect_activated(move |_| transfer::import_dialog(&parent));
-    let parent = window.clone();
-    export.connect_activated(move |_| transfer::export_dialog(&parent));
-    let parent = window.clone();
-    about_row.connect_activated(move |_| about::present(&parent));
-
-    list.append(&import);
-    list.append(&export);
-    list.append(&about_row);
-    list
-}
-
-fn tool_row(title: &str, icon: &str) -> ActionRow {
-    let row = ActionRow::builder().title(title).activatable(true).build();
-    row.add_prefix(&gtk::Image::from_icon_name(icon));
-    row
-}

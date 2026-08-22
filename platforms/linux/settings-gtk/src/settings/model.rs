@@ -113,6 +113,7 @@ pub struct Settings {
     pub toggle_hotkey: Hotkey,
     #[serde(default)]
     pub flip_hotkey: FlipHotkey,
+    /// Hidden from Settings UI; kept so wholesale `save()` does not drop the key.
     pub launch_at_login: bool,
     pub has_completed_onboarding: bool,
     #[serde(default)]

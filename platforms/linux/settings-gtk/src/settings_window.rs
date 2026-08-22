@@ -25,8 +25,16 @@ pub fn build(app: &Application) -> Window {
     window.set_application(Some(app));
 
     let stack = ViewStack::new();
+    let title = WindowTitle::new(Destination::Overview.title(), "");
+    let split = NavigationSplitView::new();
+    split.set_min_sidebar_width(200.0);
+    split.set_max_sidebar_width(240.0);
+
     for (dest, page) in [
-        (Destination::Overview, overview::page()),
+        (
+            Destination::Overview,
+            overview::page(&stack, &split, &title),
+        ),
         (Destination::Typing, typing::page()),
         (Destination::Keyboard, keyboard::page()),
         (Destination::Shortcuts, shortcuts::page()),
@@ -34,17 +42,12 @@ pub fn build(app: &Application) -> Window {
         stack.add_named(&page, Some(dest.id()));
     }
 
-    let title = WindowTitle::new(Destination::Overview.title(), "");
     let header = HeaderBar::new();
     header.set_title_widget(Some(&title));
 
     let content = ToolbarView::new();
     content.add_top_bar(&header);
     content.set_content(Some(&stack));
-
-    let split = NavigationSplitView::new();
-    split.set_min_sidebar_width(200.0);
-    split.set_max_sidebar_width(240.0);
 
     let sidebar = sidebar::widget(&stack, &split, &window, &title);
     split.set_sidebar(Some(&NavigationPage::new(&sidebar, "Cài đặt")));
