@@ -38,6 +38,7 @@ pub fn build(app: &Application) -> Window {
         (Destination::Typing, typing::page().upcast()),
         (Destination::Keyboard, keyboard::page().upcast()),
         (Destination::Shortcuts, shortcuts::page()),
+        (Destination::About, sidebar::about::page()),
     ] {
         stack.add_named(&page, Some(dest.id()));
     }

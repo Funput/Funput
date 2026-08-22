@@ -1,7 +1,7 @@
-//! Navigation destinations and the import / export / About footer.
+//! Navigation destinations and the import / export footer.
 //! A new page is one [`Destination`] variant plus a `ViewStack` child.
 
-mod about;
+pub(super) mod about;
 mod tools;
 mod transfer;
 
@@ -31,14 +31,16 @@ pub(super) enum Destination {
     Typing,
     Keyboard,
     Shortcuts,
+    About,
 }
 
 impl Destination {
-    pub(super) const ALL: [Self; 4] = [
+    pub(super) const ALL: [Self; 5] = [
         Self::Overview,
         Self::Typing,
         Self::Keyboard,
         Self::Shortcuts,
+        Self::About,
     ];
 
     pub(super) const fn id(self) -> &'static str {
@@ -47,6 +49,7 @@ impl Destination {
             Self::Typing => "typing",
             Self::Keyboard => "keyboard",
             Self::Shortcuts => "shortcuts",
+            Self::About => "about",
         }
     }
 
@@ -56,6 +59,7 @@ impl Destination {
             Self::Typing => "Cách gõ",
             Self::Keyboard => "Phím tắt",
             Self::Shortcuts => "Gõ tắt",
+            Self::About => "Giới thiệu",
         }
     }
 
@@ -65,6 +69,7 @@ impl Destination {
             Self::Typing => "input-keyboard-symbolic",
             Self::Keyboard => "preferences-desktop-keyboard-shortcuts-symbolic",
             Self::Shortcuts => "edit-find-replace-symbolic",
+            Self::About => "help-about-symbolic",
         }
     }
 

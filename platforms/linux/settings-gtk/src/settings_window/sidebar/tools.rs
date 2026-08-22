@@ -1,10 +1,10 @@
-//! Import / export / About rows at the bottom of the sidebar.
+//! Import / export rows at the bottom of the sidebar.
 
 use adw::prelude::*;
 use adw::ActionRow;
 use gtk::{ListBox, SelectionMode};
 
-use super::{about, transfer};
+use super::transfer;
 
 pub(super) fn widget(window: &adw::Window) -> ListBox {
     let list = ListBox::new();
@@ -13,17 +13,13 @@ pub(super) fn widget(window: &adw::Window) -> ListBox {
 
     let import = tool_row("Nhập cấu hình", "document-open-symbolic");
     let export = tool_row("Xuất cấu hình", "document-save-symbolic");
-    let about_row = tool_row("Giới thiệu", "help-about-symbolic");
     let parent = window.clone();
     import.connect_activated(move |_| transfer::import_dialog(&parent));
     let parent = window.clone();
     export.connect_activated(move |_| transfer::export_dialog(&parent));
-    let parent = window.clone();
-    about_row.connect_activated(move |_| about::present(&parent));
 
     list.append(&import);
     list.append(&export);
-    list.append(&about_row);
     list
 }
 

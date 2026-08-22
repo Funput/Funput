@@ -12,12 +12,12 @@ pub(super) fn group(settings: &Settings) -> PreferencesGroup {
     let group = PreferencesGroup::builder()
         .title("Gõ thẳng vào ứng dụng")
         .description(
-            "Chữ vào thẳng tài liệu thay vì dòng gạch chân — không mất khi đổi cửa sổ.",
+            "Chữ hiện ngay trong ô gõ, không nằm ở dòng gạch chân. Đổi cửa sổ giữa chừng cũng không mất chữ.",
         )
         .build();
     let row = SwitchRow::builder()
         .title("Bật gõ thẳng")
-        .subtitle("Thử nghiệm — ứng dụng không hỗ trợ thì tự quay về cách cũ.")
+        .subtitle("Đang thử nghiệm. App nào chưa hỗ trợ thì Funput tự về cách cũ.")
         .active(settings.non_preedit)
         .build();
     row.add_prefix(&gtk::Image::from_icon_name("document-edit-symbolic"));
