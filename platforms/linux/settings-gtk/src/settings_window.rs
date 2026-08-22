@@ -20,7 +20,8 @@ pub fn build(app: &Application) -> Window {
     let window = Window::builder()
         .title("Funput — Cài đặt")
         .default_width(780)
-        .default_height(520)
+        .default_height(720)
+        .icon_name("funput")
         .build();
     window.set_application(Some(app));
 

@@ -59,6 +59,7 @@ fn navigate_row(
         .subtitle(subtitle)
         .activatable(true)
         .build();
+    row.add_prefix(&gtk::Image::from_icon_name(dest.icon()));
     row.add_suffix(&gtk::Image::from_icon_name("go-next-symbolic"));
     let stack = stack.clone();
     let split = split.clone();

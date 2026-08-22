@@ -12,6 +12,9 @@ pub(super) fn group(settings: &Settings) -> PreferencesGroup {
         .subtitle("Tắt để gõ tiếng Anh.")
         .active(settings.enabled)
         .build();
+    row.add_prefix(&gtk::Image::from_icon_name(
+        "preferences-desktop-locale-symbolic",
+    ));
     row.connect_active_notify(|row| {
         let on = row.is_active();
         Settings::update(|settings| settings.enabled = on);

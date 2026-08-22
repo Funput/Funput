@@ -63,7 +63,7 @@ impl Destination {
         }
     }
 
-    const fn icon(self) -> &'static str {
+    pub(super) const fn icon(self) -> &'static str {
         match self {
             Self::Overview => "preferences-system-symbolic",
             Self::Typing => "input-keyboard-symbolic",

@@ -1,26 +1,30 @@
-//! Brand header for Tổng quan — app icon from the packaged Funput theme.
+//! Brand header for Tổng quan — same left-aligned strip as Windows / Giới thiệu.
 
 use adw::prelude::*;
-use gtk::{Align, Justification, Orientation};
+use gtk::{Align, Orientation};
 
 pub(super) fn widget() -> gtk::Widget {
-    let column = gtk::Box::new(Orientation::Vertical, 8);
-    column.set_halign(Align::Center);
-    column.set_margin_bottom(8);
+    let row = gtk::Box::new(Orientation::Horizontal, 16);
+    row.set_halign(Align::Start);
+    row.set_margin_bottom(4);
 
     let logo = gtk::Image::from_icon_name("funput");
-    logo.set_pixel_size(72);
+    logo.set_pixel_size(64);
+    logo.set_valign(Align::Center);
 
+    let text = gtk::Box::new(Orientation::Vertical, 4);
+    text.set_valign(Align::Center);
     let title = gtk::Label::new(Some("Funput"));
     title.add_css_class("title-1");
-
+    title.set_halign(Align::Start);
     let subtitle = gtk::Label::new(Some("Gõ tiếng Việt ở mọi ứng dụng trên Linux."));
     subtitle.add_css_class("dim-label");
     subtitle.set_wrap(true);
-    subtitle.set_justify(Justification::Center);
+    subtitle.set_halign(Align::Start);
+    text.append(&title);
+    text.append(&subtitle);
 
-    column.append(&logo);
-    column.append(&title);
-    column.append(&subtitle);
-    column.upcast()
+    row.append(&logo);
+    row.append(&text);
+    row.upcast()
 }

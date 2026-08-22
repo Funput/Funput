@@ -63,22 +63,34 @@ fn hero() -> gtk::Widget {
 
 fn links() -> PreferencesGroup {
     let group = PreferencesGroup::builder().title("Liên kết").build();
-    group.add(&link_row("Trang web", "Trang chủ funput.app.", WEBSITE));
-    group.add(&link_row("GitHub", "Mã nguồn của Funput.", GITHUB));
+    group.add(&link_row(
+        "Trang web",
+        "Trang chủ funput.app.",
+        "web-browser-symbolic",
+        WEBSITE,
+    ));
+    group.add(&link_row(
+        "GitHub",
+        "Mã nguồn của Funput.",
+        "folder-remote-symbolic",
+        GITHUB,
+    ));
     group.add(&link_row(
         "Báo lỗi",
         "Gửi lỗi hoặc góp ý cho nhóm làm Funput.",
+        "dialog-information-symbolic",
         ISSUES,
     ));
     group
 }
 
-fn link_row(title: &str, subtitle: &str, uri: &'static str) -> ActionRow {
+fn link_row(title: &str, subtitle: &str, icon: &str, uri: &'static str) -> ActionRow {
     let row = ActionRow::builder()
         .title(title)
         .subtitle(subtitle)
         .activatable(true)
         .build();
+    row.add_prefix(&gtk::Image::from_icon_name(icon));
     row.add_suffix(&gtk::Image::from_icon_name("adw-external-link-symbolic"));
     row.connect_activated(move |_| {
         let _ = gio::AppInfo::launch_default_for_uri(uri, None::<&gio::AppLaunchContext>);
