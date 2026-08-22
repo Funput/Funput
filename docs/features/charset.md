@@ -340,13 +340,24 @@ pub(super) fn encode(atom: Atom, out: &mut String) -> bool;
 `Charset::Unicode` không cần module riêng — nó là nhánh identity của cả hai chiều.
 
 Thêm một bảng mã nghĩa là: một biến thể `Charset`, một thư mục codec, hai nhánh
-match. Trục, driver và `detect` không đổi.
+match, một tên trong `Charset::name`, một mục trong `ALL`. Trục, driver và `detect`
+không đổi.
+
+Bốn thứ đầu do trình biên dịch đòi. Mục thứ năm thì không — thiếu nó, bảng mã mới
+biên dịch sạch nhưng không bao giờ hiện ra trong bất kỳ menu nào. Nên có một khối
+`const _: () = ...` dựng mặt nạ bit từ `ALL` rồi `assert!` rằng đủ mặt: quên là vỡ
+build, chứ không phải vỡ giao diện.
 
 ## API công khai
 
 ```rust
 #[non_exhaustive] pub enum Charset { Unicode, Tcvn3, VniWindows, UnicodeCombining }
 #[non_exhaustive] pub struct Conversion { pub text: String, pub unmapped: usize, pub normalized: usize }
+
+/// Mọi bảng mã, theo thứ tự giao diện nên bày ra. Consumer không dựng được danh sách
+/// này: `Charset` là `#[non_exhaustive]`.
+pub const ALL: [Charset; 4];
+impl Charset { pub const fn name(self) -> &'static str; }
 
 pub fn convert(text: &str, from: Charset, to: Charset) -> Conversion;
 pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion;
@@ -399,4 +410,10 @@ Mỗi mục một PR:
    thành API công khai: byte đã trượt `from_utf8` thì không thể là bảng mã Unicode,
    và nói điều đó mà không gọi tên bảng mã nào là thứ giữ cho consumer không phải
    sửa khi có bảng mã mới.
-7. `funput convert` → 8. UI Windows → 9. UI Linux GTK.
+7. **`ALL` + `Charset::name()`**. Hai thứ duy nhất consumer không tự suy ra được:
+   `Charset` là `#[non_exhaustive]`, nên code ngoài crate phải viết nhánh wildcard và
+   sẽ âm thầm bỏ sót biến thể thêm sau. Đây cũng là chỗ xoá bản sao `charset_label`
+   mà UI Windows đã phải tự viết ở bước 6 — hai cửa sổ cài đặt tự đặt tên lấy là cách
+   chúng trôi khỏi nhau.
+8. **C ABI trong `funput-ffi`** (feature `charset`, mặc định tắt) — cửa cho macOS.
+9. `funput convert` (CLI) → 10. UI Windows → 11. UI Linux GTK.

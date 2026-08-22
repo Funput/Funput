@@ -33,7 +33,10 @@ mod detect;
 mod pivot;
 mod transcode;
 
+pub use codecs::{decode_bytes, is_byte_oriented};
 pub use detect::{detect, detect_bytes};
+// `Conversion` is defined beside the loop that fills in its two counters.
+pub use transcode::Conversion;
 
 /// A Vietnamese character encoding.
 ///
@@ -62,45 +65,59 @@ pub enum Charset {
     UnicodeCombining,
 }
 
-/// Converted text, and what happened to it on the way.
-///
-/// Both counts are in characters, and neither counts *lost* text: conversion
-/// always writes something for every character, so the output holds as much as the
-/// input did. A character lands in at most one of them.
-///
-/// **`unmapped`** — something was lost or guessed, so the output is not certainly
-/// equivalent to the input. Either the target cannot spell it (a `₫`, which no
-/// legacy charset has a code for; an uppercase toned vowel, which is TCVN3's own
-/// gap rather than a general one) or the source never defined it, making the
-/// reading a guess. Text read with the wrong source charset is mostly unrecognized
-/// units, so a count near the length of the input is the clearest signal there is
-/// that the user picked the wrong bảng mã.
-///
-/// **`normalized`** — understood beyond doubt, nothing lost, only the spelling
-/// changed. Reading NFC text as Unicode tổ hợp lands here: every letter comes
-/// through intact, just written the charset's own way. Keeping it out of
-/// `unmapped` is what lets an interface say "nothing was lost" and mean it.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct Conversion {
-    pub text: String,
-    pub unmapped: usize,
-    pub normalized: usize,
+impl Charset {
+    /// What to call this charset in front of a user.
+    ///
+    /// The encoding's own name rather than interface copy — `TCVN3 (ABC)` reads the
+    /// same in any language, and these are the names UniKey uses, which is what
+    /// Vietnamese users already know them by. Keeping them here is what stops a menu
+    /// on Windows and one on Linux from drifting apart.
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Unicode => "Unicode dựng sẵn",
+            Self::Tcvn3 => "TCVN3 (ABC)",
+            Self::VniWindows => "VNI-Windows",
+            Self::UnicodeCombining => "Unicode tổ hợp",
+        }
+    }
 }
 
-/// Whether a charset stores one byte per character, drawn by a legacy font.
+/// Every charset, in the order an interface should offer them.
 ///
-/// The distinction a caller needs when it already knows something about the bytes.
-/// Text that failed a UTF-8 decode cannot be in a charset that is *not* byte
-/// oriented, so a caller detecting the charset of such bytes must refuse those
-/// candidates — feeding them to [`decode_bytes`] would hand back replacement
-/// characters, which is a worse answer than admitting defeat.
+/// A caller cannot build this list for itself: `Charset` is `#[non_exhaustive]`, so
+/// code outside this crate must write a wildcard arm and would silently miss a
+/// variant added later. [`detect`] scores exactly this list, so a charset a user can
+/// choose is one the tool can also recognise.
+pub const ALL: [Charset; 4] = [
+    Charset::Unicode,
+    Charset::Tcvn3,
+    Charset::VniWindows,
+    Charset::UnicodeCombining,
+];
+
+/// Adding a variant must break the build here rather than drop it out of every menu.
 ///
-/// Asking this instead of naming charsets is what lets a consumer keep working when
-/// a new one is added.
-pub fn is_byte_oriented(charset: Charset) -> bool {
-    codecs::is_byte_oriented(charset)
-}
+/// [`Charset::name`] already forces a name for each one; this catches the other
+/// half — a variant that has a name but never made it into [`ALL`].
+const _: () = {
+    const fn slot(charset: Charset) -> u32 {
+        match charset {
+            Charset::Unicode => 0,
+            Charset::Tcvn3 => 1,
+            Charset::VniWindows => 2,
+            Charset::UnicodeCombining => 3,
+        }
+    }
+    let (mut listed, mut i) = (0u32, 0);
+    while i < ALL.len() {
+        listed |= 1 << slot(ALL[i]);
+        i += 1;
+    }
+    assert!(
+        listed == (1 << ALL.len()) - 1,
+        "a charset is missing from ALL"
+    );
+};
 
 /// Convert text from one charset to another.
 ///
@@ -110,62 +127,43 @@ pub fn convert(text: &str, from: Charset, to: Charset) -> Conversion {
     transcode::transcode(text, from, to)
 }
 
-/// Read raw bytes in `from` and return them as Unicode.
-///
-/// A byte-oriented charset's bytes are read one-to-one as code points, which is
-/// exactly how the document that produced them was stored. The rest are decoded as
-/// UTF-8, where an invalid sequence becomes `U+FFFD` — a caller reading a file it
-/// merely *believes* is UTF-8 gets told when it was wrong instead of silently
-/// receiving replacement characters.
-///
-/// Either way the text then goes through [`convert`], and the two counts add up:
-/// broken bytes and characters the charset could not place are separate problems,
-/// and a byte that causes both deserves two looks.
-pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion {
-    let (text, damage) = if codecs::is_byte_oriented(from) {
-        // Latin-1 is total, so reading bytes as code points cannot fail.
-        (bytes.iter().copied().map(char::from).collect(), 0)
-    } else {
-        let text = String::from_utf8_lossy(bytes).into_owned();
-        (text, codecs::broken_sequences(bytes))
-    };
-    let out = convert(&text, from, Charset::Unicode);
-    Conversion {
-        unmapped: out.unmapped + damage,
-        ..out
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    /// Two menus showing the same name for different charsets, or a blank entry,
+    /// are the failures a shared list is supposed to make impossible.
     #[test]
-    fn legacy_bytes_are_read_one_to_one_as_code_points() {
-        // 0xD6 is `ệ`; the rest is ASCII. This is what a .VnTime file holds.
-        let bytes = [0x56, 0x69, 0xD6, 0x74];
-        let out = decode_bytes(&bytes, Charset::Tcvn3);
-        assert_eq!(out.text, "Việt");
-        assert_eq!(out.unmapped, 0);
+    fn every_charset_has_a_distinct_name() {
+        let mut names: Vec<&str> = ALL.iter().map(|c| c.name()).collect();
+        assert!(names.iter().all(|n| !n.is_empty()));
+
+        assert_eq!(names.len(), ALL.len());
+        names.sort_unstable();
+        names.dedup();
+        assert_eq!(names.len(), ALL.len(), "two charsets share a name");
     }
 
+    /// The two Unicode charsets are the pair a user actually has to choose between,
+    /// so neither may be called just "Unicode".
     #[test]
-    fn utf8_bytes_are_decoded_as_utf8() {
-        let out = decode_bytes("Việt".as_bytes(), Charset::Unicode);
-        assert_eq!(out.text, "Việt");
-        assert_eq!(out.unmapped, 0);
+    fn the_two_unicode_charsets_are_told_apart_by_name() {
+        assert_ne!(Charset::Unicode.name(), Charset::UnicodeCombining.name());
+        assert!(Charset::Unicode.name().contains("dựng sẵn"));
+        assert!(Charset::UnicodeCombining.name().contains("tổ hợp"));
     }
 
+    /// Anything offered in a menu has to be something the tool can also recognise —
+    /// otherwise "Tự động nhận diện" could never return what the user picked.
     #[test]
-    fn broken_utf8_is_reported_rather_than_silently_replaced() {
-        let out = decode_bytes(&[0x56, 0xFF, 0x69], Charset::Unicode);
-        assert_eq!(out.unmapped, 1);
-    }
-
-    #[test]
-    fn a_replacement_character_in_the_source_is_not_counted_as_damage() {
-        let out = decode_bytes("a\u{FFFD}b".as_bytes(), Charset::Unicode);
-        assert_eq!(out.text, "a\u{FFFD}b");
-        assert_eq!(out.unmapped, 0);
+    fn every_listed_charset_can_be_converted_to_and_from() {
+        for charset in ALL {
+            let there = convert("Việt Nam", Charset::Unicode, charset);
+            assert_eq!(
+                convert(&there.text, charset, Charset::Unicode).text,
+                "Việt Nam",
+                "{charset:?}"
+            );
+        }
     }
 }

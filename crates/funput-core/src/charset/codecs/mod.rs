@@ -1,4 +1,10 @@
-//! Where a charset says how it spells an [`Atom`] — the extension point.
+//! Where a charset says how it spells an [`Atom`] — the extension point — and the
+//! byte layer that feeds it.
+//!
+//! The second half is here because it is the same question asked one level down:
+//! *how does this charset put itself in a file?* [`decode_bytes`] and
+//! [`is_byte_oriented`] are public, and the two UTF-8 helpers below them exist only
+//! to serve the first.
 //!
 //! Adding a charset means adding a codec module here plus a [`Charset`] variant.
 //! The pivot, the driver, and every consumer stay as they are, and the compiler
@@ -14,8 +20,8 @@
 //! Each codec provides two functions:
 //!
 //! - `decode(&Cursor) -> Decoded` — read one unit at the cursor. Total: anything
-//!   the charset does not define comes back as [`Atom::Other`] with `recognized`
-//!   false, never as an error.
+//!   the charset does not define comes back as [`Atom::Other`] with a `reading` of
+//!   [`Reading::Unknown`], never as an error.
 //! - `encode(Atom, &mut String) -> bool` — write the atom, returning `false` when
 //!   what it wrote is not exact. It always writes *something*; a character never
 //!   disappears in conversion.
@@ -26,7 +32,7 @@ mod vni;
 
 use super::Charset;
 use super::pivot::Atom;
-use super::transcode::{Cursor, Decoded, Reading};
+use super::transcode::{Conversion, Cursor, Decoded, Reading};
 
 /// Read one unit of `charset` at the cursor.
 pub(super) fn decode(charset: Charset, cur: &Cursor<'_>) -> Decoded {
@@ -58,23 +64,53 @@ pub(super) fn encode(charset: Charset, atom: Atom, out: &mut String) -> bool {
     }
 }
 
-/// Whether a charset spells text in single bytes drawn by a legacy font, so bytes
-/// read from a file are Latin-1 rather than UTF-8.
+/// Whether a charset stores one byte per character, drawn by a legacy font.
 ///
-/// This and the two below are everything [`crate::charset::decode_bytes`] needs to
-/// know about the byte layer, which is why they live together down here rather
-/// than beside it.
-pub(super) fn is_byte_oriented(charset: Charset) -> bool {
+/// The distinction a caller needs when it already knows something about the bytes.
+/// Text that failed a UTF-8 decode cannot be in a charset that is *not* byte
+/// oriented, so a caller detecting the charset of such bytes must refuse those
+/// candidates — feeding them to [`decode_bytes`] would hand back replacement
+/// characters, which is a worse answer than admitting defeat.
+///
+/// Asking this instead of naming charsets is what lets a consumer keep working when
+/// a new one is added.
+pub fn is_byte_oriented(charset: Charset) -> bool {
     match charset {
         Charset::Unicode | Charset::UnicodeCombining => false,
         Charset::Tcvn3 | Charset::VniWindows => true,
     }
 }
 
+/// Read raw bytes in `from` and return them as Unicode.
+///
+/// A byte-oriented charset's bytes are read one-to-one as code points, which is
+/// exactly how the document that produced them was stored. The rest are decoded as
+/// UTF-8, where an invalid sequence becomes `U+FFFD` — a caller reading a file it
+/// merely *believes* is UTF-8 gets told when it was wrong instead of silently
+/// receiving replacement characters.
+///
+/// Either way the text then goes through [`convert`], and the two counts add up:
+/// broken bytes and characters the charset could not place are separate problems,
+/// and a byte that causes both deserves two looks.
+pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion {
+    let (text, damage) = if is_byte_oriented(from) {
+        // Latin-1 is total, so reading bytes as code points cannot fail.
+        (bytes.iter().copied().map(char::from).collect(), 0)
+    } else {
+        let text = String::from_utf8_lossy(bytes).into_owned();
+        (text, broken_sequences(bytes))
+    };
+    let out = super::convert(&text, from, Charset::Unicode);
+    Conversion {
+        unmapped: out.unmapped + damage,
+        ..out
+    }
+}
+
 /// How many characters lossy UTF-8 decoding had to replace. Zero for valid input,
 /// and replacement characters the source genuinely encoded are discounted so a
 /// document that legitimately contains one is not reported as damaged.
-pub(super) fn broken_sequences(bytes: &[u8]) -> usize {
+fn broken_sequences(bytes: &[u8]) -> usize {
     if std::str::from_utf8(bytes).is_ok() {
         return 0;
     }
