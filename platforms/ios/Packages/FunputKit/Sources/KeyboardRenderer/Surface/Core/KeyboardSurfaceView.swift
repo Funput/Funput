@@ -29,6 +29,12 @@ public final class KeyboardSurfaceView: UIView {
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
     public var onClipboardPaste: ((String) -> Void)?
+    public var onOverlayPadChanged: ((CGFloat) -> Void)?
+    var overlayPadTop: CGFloat = 0
+    var keyboardSize: CGSize {
+        CGSize(width: bounds.width, height: max(0, bounds.height - overlayPadTop))
+    }
+    var keyboardBounds: CGRect { CGRect(origin: .zero, size: keyboardSize) }
 
     let backdropView = KeyboardBackdropView()
     let toolbarView = KeyboardToolbarView()
@@ -92,12 +98,13 @@ public final class KeyboardSurfaceView: UIView {
 
     public override func layoutSubviews() {
         super.layoutSubviews()
-        backdropView.frame = bounds
-        contentHost.frame = bounds
-        keysHost.frame = bounds
-        touchOverlay.frame = bounds
+        let band = CGRect(origin: CGPoint(x: 0, y: overlayPadTop), size: keyboardSize)
+        backdropView.frame = band
+        contentHost.frame = band
+        keysHost.frame = contentHost.bounds
+        touchOverlay.frame = contentHost.bounds
 
-        guard bounds.width > 0, bounds.height > 0 else { return }
+        guard keyboardSize.width > 0, keyboardSize.height > 0 else { return }
         let geometry = resolvedGeometry()
         toolbarView.frame = geometry.toolbarFrame ?? .zero
         layoutKeyControls(in: geometry)

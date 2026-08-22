@@ -12,13 +12,14 @@ final class KeyboardHeightController {
     }
 
     private var heightConstraint: NSLayoutConstraint?
-    private var requestedHeight: CGFloat?
+    private var baseHeight: CGFloat?
+    private var overlayPad: CGFloat = 0
 
     func install(on view: UIView) {
         guard heightConstraint == nil else { return }
 
         let constraint = view.heightAnchor.constraint(
-            equalToConstant: requestedHeight ?? 0
+            equalToConstant: appliedHeight
         )
         constraint.identifier = Constants.constraintIdentifier
         constraint.priority = Constants.constraintPriority
@@ -26,7 +27,7 @@ final class KeyboardHeightController {
     }
 
     func activate() {
-        guard let heightConstraint, requestedHeight != nil else {
+        guard let heightConstraint, baseHeight != nil else {
             assertionFailure("Install and update the keyboard height before activating it.")
             return
         }
@@ -43,10 +44,17 @@ final class KeyboardHeightController {
             traits: traits,
             scale: presentation.sizing.heightScale
         )
-        guard requestedHeight != height else { return }
+        guard baseHeight != height else { return }
 
-        requestedHeight = height
-        heightConstraint?.constant = height
+        baseHeight = height
+        applyHeight()
+    }
+
+    func setOverlayPad(_ pad: CGFloat) {
+        let next = ceil(pad)
+        guard overlayPad != next else { return }
+        overlayPad = next
+        applyHeight()
     }
 
     @discardableResult
@@ -57,5 +65,14 @@ final class KeyboardHeightController {
 
         heightConstraint.isActive = false
         return true
+    }
+
+    private var appliedHeight: CGFloat { (baseHeight ?? 0) + overlayPad }
+
+    private func applyHeight() {
+        guard baseHeight != nil else { return }
+        UIView.performWithoutAnimation {
+            heightConstraint?.constant = appliedHeight
+        }
     }
 }
