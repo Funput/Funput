@@ -1,4 +1,4 @@
-//! "Phím chuyển" page: the VI/EN toggle hotkey and the flip hotkey.
+//! "Phím tắt" page: the VI/EN toggle hotkey and the flip hotkey.
 
 use adw::prelude::*;
 use adw::{ComboRow, PreferencesGroup, PreferencesPage};
@@ -9,7 +9,7 @@ use crate::settings::{FlipHotkey, Hotkey, Settings};
 pub(super) fn page() -> PreferencesPage {
     let s = Settings::load();
     let page = PreferencesPage::builder()
-        .title("Phím chuyển")
+        .title("Phím tắt")
         .icon_name("preferences-desktop-keyboard-shortcuts-symbolic")
         .build();
     let group = PreferencesGroup::builder()
