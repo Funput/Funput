@@ -9,16 +9,25 @@
 using namespace funput;
 using namespace funput::test;
 
-TEST_CASE("toggle presets need Ctrl and their own key") {
+TEST_CASE("toggle presets need their exact modifiers and key") {
     CHECK(matchesToggle(ctrl('`'), Hotkey::CtrlBacktick));
-    CHECK_FALSE(matchesToggle(ascii('`'), Hotkey::CtrlBacktick)); // no Ctrl
-    CHECK_FALSE(matchesToggle(ctrl(' '), Hotkey::CtrlBacktick));  // wrong key
+    CHECK_FALSE(matchesToggle(ascii('`'), Hotkey::CtrlBacktick));
+    CHECK_FALSE(matchesToggle(ctrl(' '), Hotkey::CtrlBacktick));
+    CHECK_FALSE(matchesToggle(ctrlShift('`'), Hotkey::CtrlBacktick));
 
     CHECK(matchesToggle(ctrl(' '), Hotkey::CtrlSpace));
     CHECK_FALSE(matchesToggle(ctrl('`'), Hotkey::CtrlSpace));
+    CHECK_FALSE(matchesToggle(ctrlShift(' '), Hotkey::CtrlSpace));
 
-    // Alt+Shift is a chord that needs release tracking; neither shell implements
-    // it, so it must never match a key press.
+    KeyEvent superSpace = ascii(' ');
+    superSpace.mods.super = true;
+    CHECK(matchesToggle(superSpace, Hotkey::SuperSpace));
+    CHECK_FALSE(matchesToggle(ctrl(' '), Hotkey::SuperSpace));
+
+    CHECK(matchesToggle(ctrlShift(' '), Hotkey::CtrlShiftSpace));
+    CHECK_FALSE(matchesToggle(ctrl(' '), Hotkey::CtrlShiftSpace));
+
+    // Alt+Shift is resolved on release by ToggleChord, never on a key press.
     CHECK_FALSE(matchesToggle(ctrl('`'), Hotkey::AltShift));
     CHECK_FALSE(matchesToggle(ctrl(' '), Hotkey::AltShift));
 }

@@ -12,6 +12,7 @@ use gtk::{Align, Justification, Orientation};
 use crate::settings::Settings;
 
 mod method_picker;
+mod welcome;
 
 const STEPS: u32 = 4;
 
@@ -25,7 +26,7 @@ pub fn build(app: &Application) -> adw::Window {
 
     let carousel = adw::Carousel::new();
     carousel.set_vexpand(true);
-    carousel.append(&welcome_step());
+    carousel.append(&welcome::step());
     carousel.append(&method_picker::step());
     carousel.append(&how_step());
     carousel.append(&ready_step());
@@ -123,14 +124,6 @@ fn step(emoji: &str, title: &str, body: &str) -> gtk::Box {
     b.append(&title_label);
     b.append(&body_label);
     b
-}
-
-fn welcome_step() -> gtk::Box {
-    step(
-        "👋",
-        "Chào mừng đến Funput",
-        "Gõ tiếng Việt ở mọi nơi trên Linux — miễn phí, mã nguồn mở.",
-    )
 }
 
 fn how_step() -> gtk::Box {

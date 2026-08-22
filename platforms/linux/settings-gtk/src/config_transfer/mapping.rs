@@ -20,6 +20,8 @@ pub(super) const fn hotkey_key(hotkey: Hotkey) -> &'static str {
         Hotkey::CtrlBacktick => "ctrl_backtick",
         Hotkey::CtrlSpace => "ctrl_space",
         Hotkey::AltShift => "alt_shift",
+        Hotkey::SuperSpace => "super_space",
+        Hotkey::CtrlShiftSpace => "ctrl_shift_space",
     }
 }
 
@@ -28,6 +30,8 @@ pub(super) fn hotkey_from_key(value: &str) -> Option<Hotkey> {
         "ctrl_backtick" => Some(Hotkey::CtrlBacktick),
         "ctrl_space" => Some(Hotkey::CtrlSpace),
         "alt_shift" => Some(Hotkey::AltShift),
+        "super_space" => Some(Hotkey::SuperSpace),
+        "ctrl_shift_space" => Some(Hotkey::CtrlShiftSpace),
         _ => None,
     }
 }

@@ -45,20 +45,6 @@ impl Method {
             _ => None,
         }
     }
-
-    pub fn index(self) -> u32 {
-        Self::ALL
-            .iter()
-            .position(|method| *method == self)
-            .unwrap_or(0) as u32
-    }
-
-    pub fn from_index(index: u32) -> Self {
-        Self::ALL
-            .get(index as usize)
-            .copied()
-            .unwrap_or(Self::Telex)
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -75,6 +61,8 @@ pub enum Hotkey {
     CtrlBacktick,
     CtrlSpace,
     AltShift,
+    SuperSpace,
+    CtrlShiftSpace,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -113,6 +101,7 @@ pub struct Settings {
     pub toggle_hotkey: Hotkey,
     #[serde(default)]
     pub flip_hotkey: FlipHotkey,
+    /// Hidden from Settings UI; kept so wholesale `save()` does not drop the key.
     pub launch_at_login: bool,
     pub has_completed_onboarding: bool,
     #[serde(default)]

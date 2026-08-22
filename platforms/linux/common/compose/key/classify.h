@@ -25,13 +25,14 @@ enum class KeyKind {
 // so the VI/EN gate lives in the composer, between `Toggle` and everything else —
 // exactly where both shells put it today.
 //
-// Toggle and Flip come first because their combos hold Ctrl (and Shift), which
-// would otherwise be swallowed by the `Shortcut` test. `Backspace` is matched on
-// its keysym before `ch` is looked at, so Ctrl+BackSpace stays a `Shortcut`.
+// Toggle and Flip come first because their combos hold a non-Shift modifier,
+// which would otherwise be swallowed by the `Shortcut` test. `Backspace` is
+// matched on its keysym before `ch` is looked at, so Ctrl+BackSpace stays a
+// `Shortcut`.
 KeyKind classify(const KeyEvent &ev, const Settings &settings);
 
-// Whether `ev` is the configured VI/EN toggle. Hotkey::AltShift has no keysym form
-// here and never matches — the shells do not implement it either.
+// Whether `ev` is the configured VI/EN toggle on key-down. Hotkey::AltShift never
+// matches here — both shells resolve it on release via ToggleChord.
 bool matchesToggle(const KeyEvent &ev, Hotkey preset);
 
 // Whether `ev` is the configured flip-composing hotkey (a Ctrl+Shift+<letter>

@@ -48,17 +48,22 @@ void applyNonPreeditMode(IBusEngine *engine) {
 }
 
 gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifiers) {
+    EngineState *state = stateOf(engine);
+    const bool released = (modifiers & IBUS_RELEASE_MASK) != 0;
+    const funput::KeyEvent ev = toKeyEvent(keyval, modifiers);
+    if (state->toggleChord.feed(ev, released, state->composer.settings().toggleHotkey)) {
+        applyPlan(engine, state->composer.toggleEnabled());
+        return TRUE;
+    }
     // Releases never reach the composer: nothing in the typing rules depends on
     // them, and each framework reports them differently.
-    if (modifiers & IBUS_RELEASE_MASK) return FALSE;
+    if (released) return FALSE;
 
     // Between words, re-ask whether this client can take a document repair. The answer
     // changes during a focus — surrounding text only starts arriving once the client
     // answers — so unlike Fcitx5 there is no single moment early enough to settle it.
     applyNonPreeditMode(engine);
 
-    EngineState *state = stateOf(engine);
-    const funput::KeyEvent ev = toKeyEvent(keyval, modifiers);
     // One read of the document, used twice: to check that the last repair landed, and
     // as the word a Backspace may re-open. Same wiring, same order, as the Fcitx5
     // shell's keyEvent().
@@ -84,6 +89,7 @@ void focusIn(IBusEngine *engine) {
     // A different client, which has said nothing yet. Whatever the last one did tells
     // us nothing about this one.
     state->sawSurroundingText = false;
+    state->toggleChord.reset();
     // A new client: forget whether the last one could be trusted with a repair. Kept
     // out of applyNonPreeditMode(), which runs every keystroke — clearing there would
     // wipe a verdict the moment it was reached.

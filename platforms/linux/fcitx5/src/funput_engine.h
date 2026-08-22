@@ -30,6 +30,7 @@
 #include <fcitx-utils/key.h>
 
 #include "compose/composer/composer.h"
+#include "compose/key/chord.h"
 #include "settings/watch.h"
 
 // The only Fcitx5-native config: a button that opens the GTK Settings app.
@@ -56,6 +57,8 @@ public:
     void reset(const fcitx::InputMethodEntry &entry, fcitx::InputContextEvent &event) override;
     void activate(const fcitx::InputMethodEntry &entry, fcitx::InputContextEvent &event) override;
     void deactivate(const fcitx::InputMethodEntry &entry, fcitx::InputContextEvent &event) override;
+    std::string subMode(const fcitx::InputMethodEntry &, fcitx::InputContext &) override;
+    std::string subModeIconImpl(const fcitx::InputMethodEntry &, fcitx::InputContext &) override;
     const fcitx::Configuration *getConfig() const override { return &config_; }
 
 private:
@@ -72,10 +75,13 @@ private:
     void applyNonPreeditMode();
     // Reload settings live when the watcher fires (Settings app wrote the file).
     void onSettingsChanged();
+    // Ask the tray (NotificationItem) to re-read subModeIcon after VI/EN flips.
+    void refreshStatus(fcitx::InputContext *ic);
 
     fcitx::Instance *instance_;
     FunputEngineConfig config_;
     funput::Composer composer_;
+    funput::ToggleChord toggleChord_;
     // Whether the focused client has sent surrounding text this focus — the IBus
     // shell's `sawSurroundingText`. Not a snapshot of `isValid()` at focus-in: that
     // cache can be stale, and surrounding text often arrives only after the client

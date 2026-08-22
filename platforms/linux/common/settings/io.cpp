@@ -35,12 +35,19 @@ const char *toneString(ToneStyle tone) {
 Hotkey parseHotkey(const std::string &value) {
     if (value == "ctrl_space") return Hotkey::CtrlSpace;
     if (value == "alt_shift") return Hotkey::AltShift;
+    if (value == "super_space") return Hotkey::SuperSpace;
+    if (value == "ctrl_shift_space") return Hotkey::CtrlShiftSpace;
     return Hotkey::CtrlBacktick;
 }
 
 const char *hotkeyString(Hotkey hotkey) {
-    if (hotkey == Hotkey::CtrlSpace) return "ctrl_space";
-    if (hotkey == Hotkey::AltShift) return "alt_shift";
+    switch (hotkey) {
+    case Hotkey::CtrlSpace: return "ctrl_space";
+    case Hotkey::AltShift: return "alt_shift";
+    case Hotkey::SuperSpace: return "super_space";
+    case Hotkey::CtrlShiftSpace: return "ctrl_shift_space";
+    case Hotkey::CtrlBacktick: return "ctrl_backtick";
+    }
     return "ctrl_backtick";
 }
 
