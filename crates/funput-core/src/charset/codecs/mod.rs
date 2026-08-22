@@ -149,4 +149,33 @@ mod tests {
         assert!(!is_byte_oriented(Charset::Unicode));
         assert!(is_byte_oriented(Charset::Tcvn3));
     }
+
+    #[test]
+    fn legacy_bytes_are_read_one_to_one_as_code_points() {
+        // 0xD6 is `ệ`; the rest is ASCII. This is what a .VnTime file holds.
+        let bytes = [0x56, 0x69, 0xD6, 0x74];
+        let out = decode_bytes(&bytes, Charset::Tcvn3);
+        assert_eq!(out.text, "Việt");
+        assert_eq!(out.unmapped, 0);
+    }
+
+    #[test]
+    fn utf8_bytes_are_decoded_as_utf8() {
+        let out = decode_bytes("Việt".as_bytes(), Charset::Unicode);
+        assert_eq!(out.text, "Việt");
+        assert_eq!(out.unmapped, 0);
+    }
+
+    #[test]
+    fn broken_utf8_is_reported_rather_than_silently_replaced() {
+        let out = decode_bytes(&[0x56, 0xFF, 0x69], Charset::Unicode);
+        assert_eq!(out.unmapped, 1);
+    }
+
+    #[test]
+    fn a_replacement_character_in_the_source_is_not_counted_as_damage() {
+        let out = decode_bytes("a\u{FFFD}b".as_bytes(), Charset::Unicode);
+        assert_eq!(out.text, "a\u{FFFD}b");
+        assert_eq!(out.unmapped, 0);
+    }
 }
