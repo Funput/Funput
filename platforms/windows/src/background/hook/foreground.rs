@@ -13,10 +13,12 @@ use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::Accessibility::HWINEVENTHOOK;
-use windows::Win32::UI::WindowsAndMessaging::{GetWindowThreadProcessId, EVENT_SYSTEM_FOREGROUND};
+use windows::Win32::UI::WindowsAndMessaging::{
+    GetClassNameW, GetWindowThreadProcessId, EVENT_SYSTEM_FOREGROUND,
+};
 
 use super::{toggle, FOREGROUND_IS_FUNPUT};
-use crate::background::tray;
+use crate::background::{inject, tray};
 use crate::shared::shell;
 
 static OWN_EXE_ID: OnceLock<String> = OnceLock::new();
@@ -34,7 +36,15 @@ pub(super) unsafe extern "system" fn win_event_proc(
     if event != EVENT_SYSTEM_FOREGROUND {
         return;
     }
-    let Some(id) = exe_of_window(hwnd) else {
+    // Whether a replacement sent to this app needs the lead character that makes its
+    // Backspaces unambiguous, or would only be hurt by the extra Backspace the lead
+    // costs — see `inject::send_plan`. Decided from the window's class first, so a
+    // window whose process cannot be resolved still updates it rather than leaving
+    // the previous app's answer standing.
+    let id = exe_of_window(hwnd);
+    inject::note_foreground(&class_of_window(hwnd), id.as_deref().unwrap_or_default());
+
+    let Some(id) = id else {
         return;
     };
     let is_funput = id == own_exe_id().as_str();
@@ -68,6 +78,18 @@ fn own_exe_id() -> &'static String {
             .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_lowercase()))
             .unwrap_or_else(|| "funput.exe".to_string())
     })
+}
+
+/// A window's class name — what the toolkit that drew it calls itself, which is how
+/// [`inject::note_foreground`] recognizes a browser engine without knowing the
+/// browser. Empty when the window is gone or has no class, which reads as "not a
+/// browser" and is the safe answer.
+unsafe fn class_of_window(hwnd: HWND) -> String {
+    // Class names are capped at 256 characters by `RegisterClass`, so this cannot
+    // truncate one that matters.
+    let mut buf = [0u16; 257];
+    let len = GetClassNameW(hwnd, &mut buf);
+    String::from_utf16_lossy(&buf[..len.max(0) as usize])
 }
 
 /// Resolve a window's owning process to its app id — the lowercased exe file name
