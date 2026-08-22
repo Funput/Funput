@@ -6,7 +6,7 @@ mod transfer;
 
 use adw::prelude::*;
 use adw::{ActionRow, NavigationSplitView, ViewStack, WindowTitle};
-use gtk::{Align, ListBox, Orientation, SelectionMode};
+use gtk::{ListBox, Orientation, SelectionMode};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum Destination {
@@ -108,26 +108,29 @@ fn nav_list(stack: &ViewStack, split: &NavigationSplitView, title: &WindowTitle)
     list
 }
 
-fn tool_footer(window: &adw::Window) -> gtk::Box {
-    let footer = gtk::Box::new(Orientation::Vertical, 0);
-    let import = tool_button("Nhập");
-    let export = tool_button("Xuất");
-    let about_btn = tool_button("Giới thiệu");
+fn tool_footer(window: &adw::Window) -> ListBox {
+    let list = ListBox::new();
+    list.add_css_class("navigation-sidebar");
+    list.set_selection_mode(SelectionMode::None);
+
+    let import = tool_row("Nhập cấu hình", "document-open-symbolic");
+    let export = tool_row("Xuất cấu hình", "document-save-symbolic");
+    let about_row = tool_row("Giới thiệu", "help-about-symbolic");
     let parent = window.clone();
-    import.connect_clicked(move |_| transfer::import_dialog(&parent));
+    import.connect_activated(move |_| transfer::import_dialog(&parent));
     let parent = window.clone();
-    export.connect_clicked(move |_| transfer::export_dialog(&parent));
+    export.connect_activated(move |_| transfer::export_dialog(&parent));
     let parent = window.clone();
-    about_btn.connect_clicked(move |_| about::present(&parent));
-    footer.append(&import);
-    footer.append(&export);
-    footer.append(&about_btn);
-    footer
+    about_row.connect_activated(move |_| about::present(&parent));
+
+    list.append(&import);
+    list.append(&export);
+    list.append(&about_row);
+    list
 }
 
-fn tool_button(label: &str) -> gtk::Button {
-    let button = gtk::Button::with_label(label);
-    button.add_css_class("flat");
-    button.set_halign(Align::Fill);
-    button
+fn tool_row(title: &str, icon: &str) -> ActionRow {
+    let row = ActionRow::builder().title(title).activatable(true).build();
+    row.add_prefix(&gtk::Image::from_icon_name(icon));
+    row
 }
