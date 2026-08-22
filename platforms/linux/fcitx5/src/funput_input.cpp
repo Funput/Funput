@@ -28,6 +28,7 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     const funput::KeyEvent toggleEv = toKeyEvent(event.key());
     if (toggleChord_.feed(toggleEv, released, composer_.settings().toggleHotkey)) {
         applyPlan(event.inputContext(), composer_.toggleEnabled());
+        refreshStatus(event.inputContext());
         event.filterAndAccept();
         return;
     }

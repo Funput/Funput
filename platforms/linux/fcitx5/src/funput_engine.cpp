@@ -2,6 +2,7 @@
 
 #include <fcitx/event.h>
 #include <fcitx/inputcontext.h>
+#include <fcitx/userinterface.h>
 
 FunputEngine::FunputEngine(fcitx::Instance *instance) : instance_(instance) {
     if (settingsWatcher_.fd() >= 0) {
@@ -45,13 +46,28 @@ void FunputEngine::onSettingsChanged() {
     const bool wasNonPreedit = composer_.nonPreedit();
     composer_.applySettings();
     applyNonPreeditMode();
-    if (composer_.nonPreedit() == wasNonPreedit) return;
-    // The mode just changed under a half-typed word. `applySettings()` dropped it
-    // from the engine, but the preedit showing it belongs to this shell — left alone
-    // it would sit on screen as a ghost while the new mode writes into the document.
     if (fcitx::InputContext *context = instance_->lastFocusedInputContext()) {
+        refreshStatus(context);
+        if (composer_.nonPreedit() == wasNonPreedit) return;
+        // The mode just changed under a half-typed word. `applySettings()` dropped
+        // it from the engine, but the preedit showing it belongs to this shell.
         clearPreedit(context);
     }
+}
+
+std::string FunputEngine::subMode(const fcitx::InputMethodEntry &,
+                                  fcitx::InputContext &) {
+    return composer_.enabled() ? "Tiếng Việt" : "Tiếng Anh";
+}
+
+std::string FunputEngine::subModeIconImpl(const fcitx::InputMethodEntry &,
+                                          fcitx::InputContext &) {
+    return composer_.enabled() ? "funput" : "funput-mono";
+}
+
+void FunputEngine::refreshStatus(fcitx::InputContext *ic) {
+    if (!ic) return;
+    ic->updateUserInterface(fcitx::UserInterfaceComponent::StatusArea, true);
 }
 
 void FunputEngine::reset(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {

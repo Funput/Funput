@@ -57,6 +57,8 @@ public:
     void reset(const fcitx::InputMethodEntry &entry, fcitx::InputContextEvent &event) override;
     void activate(const fcitx::InputMethodEntry &entry, fcitx::InputContextEvent &event) override;
     void deactivate(const fcitx::InputMethodEntry &entry, fcitx::InputContextEvent &event) override;
+    std::string subMode(const fcitx::InputMethodEntry &, fcitx::InputContext &) override;
+    std::string subModeIconImpl(const fcitx::InputMethodEntry &, fcitx::InputContext &) override;
     const fcitx::Configuration *getConfig() const override { return &config_; }
 
 private:
@@ -73,6 +75,8 @@ private:
     void applyNonPreeditMode();
     // Reload settings live when the watcher fires (Settings app wrote the file).
     void onSettingsChanged();
+    // Ask the tray (NotificationItem) to re-read subModeIcon after VI/EN flips.
+    void refreshStatus(fcitx::InputContext *ic);
 
     fcitx::Instance *instance_;
     FunputEngineConfig config_;
