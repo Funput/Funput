@@ -64,23 +64,18 @@ private:
     void applyPlan(fcitx::InputContext *ic, const funput::ComposePlan &plan);
     void updatePreedit(fcitx::InputContext *ic, const std::string &text);
     void clearPreedit(fcitx::InputContext *ic);
-    void noteRecentApp(const std::string &program); // record for the Settings picker
     // Turn non-preedit on for the focused client: the setting has to ask for it and
     // the client has to have sent surrounding text this focus, since the mode repairs
     // the document by reading it back. No-op while a word is composing — the two
     // modes disagree about where that word lives. Re-applied after every
     // `applySettings()`, which reseeds the mode from the setting alone.
     void applyNonPreeditMode();
-    // Reload settings live when the watcher fires (Settings app wrote the file), and
-    // re-apply the per-app default for the currently-focused app.
+    // Reload settings live when the watcher fires (Settings app wrote the file).
     void onSettingsChanged();
 
     fcitx::Instance *instance_;
     FunputEngineConfig config_;
     funput::Composer composer_;
-    // Program() of the most recently focused app, so a live settings reload can
-    // re-apply the per-app default without waiting for the next focus-in.
-    std::string lastProgram_;
     // Whether the focused client has sent surrounding text this focus — the IBus
     // shell's `sawSurroundingText`. Not a snapshot of `isValid()` at focus-in: that
     // cache can be stale, and surrounding text often arrives only after the client

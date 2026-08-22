@@ -61,10 +61,9 @@ pub(super) fn page() -> PreferencesPage {
     page
 }
 
-/// The non-preedit switch. Unlike the per-app page, this is shown on every framework:
-/// both Linux shells perform an `Effect::Replace`, and a client that cannot report
-/// surrounding text simply keeps the preedit, so the switch is never a control that
-/// does nothing.
+/// The non-preedit switch. Both Linux shells perform an `Effect::Replace`, and a
+/// client that cannot report surrounding text simply keeps the preedit, so the
+/// switch is never a control that does nothing.
 fn delivery_group(s: &Settings) -> PreferencesGroup {
     let group = PreferencesGroup::builder()
         .title("Cách chữ vào ứng dụng")

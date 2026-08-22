@@ -162,8 +162,9 @@ Shell is the client for every application:
   absent while it works perfectly, and some report `caps: []` — not even `Preedit` —
   while preedit plainly works. Neither shell gates on them; what the client actually
   does decides instead.
-- **`program()` is always `gnome-shell`**, never the real app, so a per-app policy
-  there would be actively wrong rather than merely unavailable.
+- **`program()` is always `gnome-shell`**, never the real app. Funput therefore
+  has no per-app VI/EN list on Linux — a policy keyed on that value would apply to
+  every client at once.
 - **`deleteSurroundingText` counts characters, not bytes** — verified with `ế`, one
   character and three bytes. `ComposePlan::deleteChars` is a character count end to
   end for that reason, and an ASCII-only test would not have caught the difference.
@@ -251,13 +252,6 @@ client reported cursor 4 for `phủ ` (five bytes) and 3 for `phủ` (four).
 
 ## Known gaps
 
-- **Per-app auto-EN is Fcitx5-only.** `Composer::applyPerAppDefault()` exists for
-  both, but only the Fcitx5 shell has an app identity to pass it
-  (`InputContext::program()`); IBus hands its engine none, so `focusIn()` does not
-  call it. `Settings::excludedAppIds` is therefore dead weight in the IBus build.
-  Fixing it means sourcing the identity elsewhere (`_NET_ACTIVE_WINDOW` +
-  `WM_CLASS` on X11), and note that Wayland's `zwp_text_input_v3` carries no app id
-  at all — so verify what `program()` actually returns before relying on it there.
 - **Preedit loses a half-typed word in some clients on focus change.** Both shells
   hand the flush to their framework (see the comments in `deactivate()` and
   `updatePreedit()`); clients that drop the preedit instead of committing it lose

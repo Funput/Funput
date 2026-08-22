@@ -39,7 +39,6 @@ pub(super) fn to_document(settings: &Settings) -> ConfigDocument {
             linux: Some(LinuxBlock {
                 toggle_hotkey: Some(hotkey_key(settings.toggle_hotkey).to_string()),
                 flip_hotkey: Some(flip_key(settings.flip_hotkey).to_string()),
-                excluded_apps: Some(settings.excluded_apps.clone()),
                 non_preedit: Some(settings.non_preedit),
             }),
         }),
@@ -123,13 +122,6 @@ fn merge_linux(settings: &mut Settings, doc: &ConfigDocument, summary: &mut Impo
     // silently resetting it.
     if let Some(value) = linux.non_preedit {
         settings.non_preedit = value;
-    }
-    if let Some(apps) = &linux.excluded_apps {
-        for app in apps {
-            if !settings.excluded_apps.iter().any(|old| old.id == app.id) {
-                settings.excluded_apps.push(app.clone());
-            }
-        }
     }
     summary.applied_platform = true;
 }

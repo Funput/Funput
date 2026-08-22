@@ -1,5 +1,5 @@
-// The composer's non-typing surface: VI/EN, the per-app default, and the two ways
-// a composition can end without a key.
+// The composer's non-typing surface: VI/EN and the two ways a composition can
+// end without a key.
 
 #include <doctest/doctest.h>
 
@@ -77,35 +77,6 @@ TEST_CASE("the flip hotkey is inert while English is on") {
     CHECK(composer.onKey(ctrlShift('z')).isNoop());
 }
 
-TEST_CASE("an excluded app defaults to English, others to Vietnamese") {
-    Settings settings;
-    settings.excludedAppIds = {"firefox", "code"};
-    Composer composer(settings);
-
-    composer.applyPerAppDefault("firefox");
-    CHECK_FALSE(composer.enabled());
-
-    composer.applyPerAppDefault("gedit");
-    CHECK(composer.enabled());
-
-    composer.applyPerAppDefault("code");
-    CHECK_FALSE(composer.enabled());
-}
-
-TEST_CASE("an unknown or empty app id falls back to the global setting") {
-    Settings settings;
-    settings.excludedAppIds = {"firefox"};
-    Composer composer(settings);
-
-    composer.applyPerAppDefault("");
-    CHECK(composer.enabled());
-
-    settings.enabled = false;
-    Composer offByDefault(settings);
-    offByDefault.applyPerAppDefault("gedit");
-    CHECK_FALSE(offByDefault.enabled());
-}
-
 TEST_CASE("applySettings pushes the method through to the engine") {
     Settings settings;
     settings.method = Method::Vni;
@@ -120,7 +91,6 @@ TEST_CASE("applySettings pushes the method through to the engine") {
 
 TEST_CASE("applySettings resets the runtime VI/EN state to the stored one") {
     Composer composer = composerFor(Method::Telex);
-    composer.applyPerAppDefault("");
     composer.onKey(ctrl('`'));
     REQUIRE_FALSE(composer.enabled());
 

@@ -44,7 +44,6 @@ void FunputEngine::onSettingsChanged() {
     if (!composer_.reloadSettings()) return;
     const bool wasNonPreedit = composer_.nonPreedit();
     composer_.applySettings();
-    composer_.applyPerAppDefault(lastProgram_);
     applyNonPreeditMode();
     if (composer_.nonPreedit() == wasNonPreedit) return;
     // The mode just changed under a half-typed word. `applySettings()` dropped it
@@ -59,18 +58,15 @@ void FunputEngine::reset(const fcitx::InputMethodEntry &, fcitx::InputContextEve
     applyPlan(event.inputContext(), composer_.flush());
 }
 
-void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
+void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &) {
     if (composer_.reloadSettingsIfChanged()) composer_.applySettings();
     if (composer_.settings().autoCapitalize) composer_.armCapitalization();
     // A new client: forget whether the last one could be trusted with a repair.
     composer_.onFocusChanged();
-    lastProgram_ = event.inputContext()->program();
-    composer_.applyPerAppDefault(lastProgram_);
     // Like IBus `sawSurroundingText`: a new client has said nothing yet. `isValid()`
     // here can be leftover from the previous focus, so do not snapshot it.
     lastSurroundingOk_ = false;
     applyNonPreeditMode();
-    noteRecentApp(lastProgram_);
 }
 
 void FunputEngine::deactivate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {

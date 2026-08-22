@@ -1,5 +1,5 @@
 use super::*;
-use crate::settings::{ExcludedApp, Hotkey, Method, Shortcut, ToneStyle};
+use crate::settings::{Hotkey, Method, Shortcut, ToneStyle};
 
 #[test]
 fn round_trip_preserves_state() {
@@ -10,10 +10,6 @@ fn round_trip_preserves_state() {
         shortcuts: vec![Shortcut {
             trigger: "vn".into(),
             expansion: "Việt Nam".into(),
-        }],
-        excluded_apps: vec![ExcludedApp {
-            id: "code".into(),
-            name: "VS Code".into(),
         }],
         non_preedit: true,
         ..Settings::default()
@@ -29,7 +25,6 @@ fn round_trip_preserves_state() {
     assert_eq!(imported.tone_style, ToneStyle::Modern);
     assert_eq!(imported.toggle_hotkey, Hotkey::AltShift);
     assert_eq!(imported.shortcuts.len(), 1);
-    assert_eq!(imported.excluded_apps.len(), 1);
     assert!(imported.non_preedit);
 }
 
@@ -85,6 +80,5 @@ fn imports_other_platforms_without_platform_state() {
         let summary = apply(&mut settings, &serde_json::from_str(json).unwrap());
         assert_eq!(settings.method, method);
         assert!(!summary.applied_platform);
-        assert!(settings.excluded_apps.is_empty());
     }
 }

@@ -68,12 +68,4 @@ ComposePlan Composer::toggleEnabled() {
     return plan;
 }
 
-void Composer::applyPerAppDefault(const std::string &program) {
-    const bool enabled = settings_.isExcluded(program) ? false : settings_.enabled;
-    if (enabled == effectiveEnabled_) return;
-    effectiveEnabled_ = enabled;
-    handle_.setEnabled(enabled);
-    handle_.clear();
-}
-
 } // namespace funput
