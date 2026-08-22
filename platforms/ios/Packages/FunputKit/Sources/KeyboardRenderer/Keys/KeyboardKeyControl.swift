@@ -2,11 +2,9 @@
 import KeyboardLayout
 import ThemeSchema
 import UIKit
-
 @MainActor
 final class KeyboardKeyControl: UIControl {
     var onEvent: ((KeyboardKeyEvent) -> Void)?
-
     private let spec: KeySpec
     private let interactionControl = UIControl()
     private let contentView = KeyboardKeyContentView()
@@ -16,6 +14,7 @@ final class KeyboardKeyControl: UIControl {
     private var appliedInterfaceStyle: UIUserInterfaceStyle?
     private var appliedReduceTransparency: Bool?
     private var swipeTracker = KeySwipeGestureTracker()
+    private var visualFrame = CGRect.zero
     var role: KeyRole { spec.role }
 
     init(spec: KeySpec) {
@@ -34,11 +33,12 @@ final class KeyboardKeyControl: UIControl {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        let keycapHeight = bounds.height * theme.keycapHeightScale
+        let visual = visualFrame.isEmpty ? bounds : visualFrame
+        let keycapHeight = visual.height * theme.keycapHeightScale
         surface.frame = CGRect(
-            x: 0,
-            y: (bounds.height - keycapHeight) / 2,
-            width: bounds.width,
+            x: visual.minX,
+            y: visual.midY - keycapHeight / 2,
+            width: visual.width,
             height: keycapHeight
         )
         interactionControl.frame = bounds
@@ -46,6 +46,11 @@ final class KeyboardKeyControl: UIControl {
         surface.updateShape(cornerRadius: theme.cornerRadius)
     }
 
+    func applyFrames(interaction: CGRect, visual: CGRect) {
+        frame = interaction
+        visualFrame = visual.offsetBy(dx: -interaction.minX, dy: -interaction.minY)
+        setNeedsLayout()
+    }
     func apply(presentation: KeyboardPresentation, traits: UITraitCollection) {
         theme = presentation.theme
         applySurfaceIfNeeded(traits: traits)
@@ -81,6 +86,9 @@ final class KeyboardKeyControl: UIControl {
     private func configureInteraction() {
         contentView.isUserInteractionEnabled = false
         interactionControl.isMultipleTouchEnabled = false
+        // The iOS 27 remote keyboard host excludes fully transparent pixels from its hit region.
+        // A nonzero alpha keeps the touch grid live without a perceptible visual change.
+        interactionControl.backgroundColor = UIColor.white.withAlphaComponent(0.001)
         interactionControl.addAction(UIAction { [weak self] _ in
             self?.handleTouch(.pressed)
         }, for: .touchDown)
