@@ -100,11 +100,6 @@ public:
     // Flip VI/EN, committing whatever was composing first, and persist the choice.
     ComposePlan toggleEnabled();
 
-    // Default this app to English when it is on the exclusion list, Vietnamese
-    // otherwise. Only the Fcitx5 shell calls this today — IBus has no app
-    // identity yet; see platforms/linux/README.md.
-    void applyPerAppDefault(const std::string &program);
-
     bool enabled() const { return effectiveEnabled_; }
     Settings &settings() { return settings_; }
     const Settings &settings() const { return settings_; }
@@ -129,9 +124,8 @@ private:
 
     Handle handle_;
     Settings settings_;
-    // The VI/EN state actually in effect. Starts from `settings_.enabled` but is
-    // driven per-app on focus; a manual toggle overrides it until the next focus
-    // change.
+    // The VI/EN state actually in effect. Starts from `settings_.enabled`; a
+    // manual toggle updates both this and the persisted setting.
     bool effectiveEnabled_ = true;
     // The mode in effect plus what has been learned about this client.
     NonPreeditState nonPreedit_;

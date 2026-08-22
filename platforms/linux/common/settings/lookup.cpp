@@ -17,12 +17,4 @@ std::string Settings::path() {
     return base + "/Funput/settings.json";
 }
 
-bool Settings::isExcluded(const std::string &program) const {
-    if (program.empty()) return false;
-    for (const auto &id : excludedAppIds) {
-        if (id == program) return true;
-    }
-    return false;
-}
-
 } // namespace funput

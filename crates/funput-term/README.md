@@ -175,4 +175,3 @@ override + ưu tiên, parse phím toggle), `install` (snippet bash/zsh/fish, ide
 
 - **Đổi kiểu đặt dấu lúc đang chạy:** đã có xoay Telex↔VNI (`Ctrl-^`); còn thiếu phím bật/tắt
   kiểu đặt dấu (traditional/modern) ngay trong phiên.
-- **Per-app profile:** dùng `excludedApps` từ settings.json để tự bật/tắt theo lệnh được bọc.

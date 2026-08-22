@@ -1,7 +1,6 @@
 #include "settings/settings.h"
 
 #include <fstream>
-#include <sstream>
 #include <sys/stat.h>
 
 #include <nlohmann/json.hpp>
@@ -87,14 +86,6 @@ bool Settings::reload() {
     nonPreedit = data.value("nonPreedit", nonPreedit);
     toggleHotkey = parseHotkey(data.value("toggleHotkey", std::string(hotkeyString(toggleHotkey))));
     flipHotkey = parseFlip(data.value("flipHotkey", std::string(flipString(flipHotkey))));
-    excludedAppIds.clear();
-    if (const auto apps = data.find("excludedApps"); apps != data.end() && apps->is_array()) {
-        for (const auto &app : *apps) {
-            if (app.is_object() && app.contains("id") && app["id"].is_string()) {
-                excludedAppIds.push_back(app["id"].get<std::string>());
-            }
-        }
-    }
     shortcuts.clear();
     if (const auto items = data.find("shortcuts"); items != data.end() && items->is_array()) {
         for (const auto &item : *items) {
@@ -110,7 +101,7 @@ bool Settings::reload() {
            eagerRestore != previous.eagerRestore || spellCheck != previous.spellCheck ||
            autoCapitalize != previous.autoCapitalize || nonPreedit != previous.nonPreedit ||
            toggleHotkey != previous.toggleHotkey || flipHotkey != previous.flipHotkey ||
-           excludedAppIds != previous.excludedAppIds || shortcuts != previous.shortcuts;
+           shortcuts != previous.shortcuts;
 }
 
 void Settings::save() const {

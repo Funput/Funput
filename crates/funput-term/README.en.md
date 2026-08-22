@@ -178,5 +178,3 @@ detection), `title_sequence` & `cursor_cue` (none/tmux/screen), state.
 
 - **Change tone-mark style at runtime:** Telex↔VNI cycling exists (`Ctrl-^`); still missing a key to
   toggle the tone-placement style (traditional/modern) within a session.
-- **Per-app profiles:** use `excludedApps` from settings.json to auto enable/disable based on the
-  wrapped command.

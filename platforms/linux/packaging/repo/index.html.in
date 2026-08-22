@@ -114,7 +114,7 @@
     <div class="opt">
       <span class="badge fcitx">Fcitx5</span>
       <b style="margin-top:.4rem">KDE, hoặc muốn đầy đủ tính năng</b>
-      <small>Per-app auto-switch. Gói <code class="inline">funput</code>.</small>
+      <small>Gói <code class="inline">funput</code>.</small>
     </div>
   </div>
 

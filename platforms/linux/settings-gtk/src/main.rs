@@ -11,7 +11,6 @@ compile_error!(
 );
 
 mod config_transfer;
-mod framework;
 mod onboarding;
 mod settings;
 mod settings_window;

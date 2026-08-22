@@ -18,8 +18,7 @@ one machine imports on another. macOS is the first implementation
   - Supported `preferences` overwrite the matching setting. Missing or unsupported
     enum values leave the existing local preference untouched.
   - `platform.<current>` hotkeys apply only when present; `appLanguageMemory`
-    (macOS, Windows) and `excludedApps` (Linux) are unioned by key/id —
-    existing entries win.
+    (macOS, Windows) is unioned by key — existing entries win.
 - **Forward compatible.** Unknown keys are ignored. Missing optional fields are
   skipped. A file whose top-level `schema` differs from `app.funput.config` is
   rejected. A `version` newer than the reader's is accepted on a best-effort basis
@@ -114,15 +113,15 @@ Linux continues to read only `platform.linux`.
 
 ### `platform.linux`
 
-Same shape as Windows (shared hotkey presets), but apps are identified by their
-Fcitx5 `program()`/WM_CLASS, not exe name:
+Same shape as Windows (shared hotkey presets). Apps are not identified: on
+GNOME/Wayland Fcitx5's `program()` is always `gnome-shell`, so a per-app list
+cannot work and is not exported.
 
 ```json
 "platform": {
   "linux": {
     "toggleHotkey": "ctrl_backtick",
     "flipHotkey": "off",
-    "excludedApps": [ { "id": "code", "name": "VS Code" } ],
     "nonPreedit": false
   }
 }
@@ -132,12 +131,12 @@ Fcitx5 `program()`/WM_CLASS, not exe name:
 |---|---|
 | `toggleHotkey` | Preset id: `ctrl_backtick` \| `ctrl_space` \| `alt_shift`. |
 | `flipHotkey` | Preset id: `off` \| `ctrl_shift_z` \| `ctrl_shift_x`. |
-| `excludedApps[]` | `{ id (WM_CLASS / program name), name }`. Unioned by `id`. |
+| `excludedApps[]` | **Removed.** Older exports may still carry `{ id, name }`; ignored on import and never written. |
 | `nonPreedit` | Commit as you type instead of showing a preedit. Both Linux shells; absent leaves the local value untouched. |
 
 Linux-only, applied only when running on Linux. Note: Windows and Linux hotkey
-presets are identical, but each still reads only its own block (exe names ≠
-WM_CLASS), so hotkeys/apps do not cross between them.
+presets are identical, but each still reads only its own block, so hotkeys do not
+cross between them.
 
 ### Not exported
 

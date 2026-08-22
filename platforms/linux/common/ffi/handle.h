@@ -28,8 +28,8 @@ enum class KeySource : uint32_t {
 };
 
 // The engine-affecting options of `settings`, as the C ABI's by-value config. The
-// runtime VI/EN state is deliberately absent: it is per-app (see `setEnabled`), not
-// a persisted preference.
+// runtime VI/EN state is deliberately absent: that is the live toggle
+// (`setEnabled`), not a persisted engine option.
 inline FunputConfig engineConfig(const Settings &s) {
     return FunputConfig{
         static_cast<uint8_t>(s.method),

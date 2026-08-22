@@ -88,13 +88,6 @@ pub enum FlipHotkey {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ExcludedApp {
-    pub id: String,
-    pub name: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Shortcut {
     pub trigger: String,
     pub expansion: String,
@@ -123,8 +116,6 @@ pub struct Settings {
     pub launch_at_login: bool,
     pub has_completed_onboarding: bool,
     #[serde(default)]
-    pub excluded_apps: Vec<ExcludedApp>,
-    #[serde(default)]
     pub shortcuts: Vec<Shortcut>,
 }
 
@@ -143,7 +134,6 @@ impl Default for Settings {
             flip_hotkey: FlipHotkey::Off,
             launch_at_login: false,
             has_completed_onboarding: false,
-            excluded_apps: Vec::new(),
             shortcuts: Vec::new(),
         }
     }

@@ -28,16 +28,6 @@ TEST_CASE("path follows XDG_CONFIG_HOME") {
     CHECK(path.rfind(std::getenv("XDG_CONFIG_HOME"), 0) == 0);
 }
 
-TEST_CASE("isExcluded matches whole ids and ignores an empty one") {
-    Settings settings;
-    settings.excludedAppIds = {"firefox", "org.gnome.Console"};
-    CHECK(settings.isExcluded("firefox"));
-    CHECK(settings.isExcluded("org.gnome.Console"));
-    CHECK_FALSE(settings.isExcluded("fire"));      // not a prefix match
-    CHECK_FALSE(settings.isExcluded("Firefox"));   // case-sensitive
-    CHECK_FALSE(settings.isExcluded(""));          // no app id known yet
-}
-
 TEST_CASE("reload parses every field from its wire name") {
     writeSettingsFile(R"({
         "method": "telex_advanced",
@@ -50,7 +40,6 @@ TEST_CASE("reload parses every field from its wire name") {
         "nonPreedit": true,
         "toggleHotkey": "ctrl_space",
         "flipHotkey": "ctrl_shift_x",
-        "excludedApps": [{"id": "firefox"}, {"id": "code"}],
         "shortcuts": [{"trigger": "vn", "expansion": "Việt Nam"}]
     })");
 
@@ -66,7 +55,6 @@ TEST_CASE("reload parses every field from its wire name") {
     CHECK(settings.nonPreedit);
     CHECK(settings.toggleHotkey == Hotkey::CtrlSpace);
     CHECK(settings.flipHotkey == FlipHotkey::CtrlShiftX);
-    CHECK(settings.excludedAppIds == std::vector<std::string>{"firefox", "code"});
     REQUIRE(settings.shortcuts.size() == 1);
     CHECK(settings.shortcuts[0].first == "vn");
     CHECK(settings.shortcuts[0].second == "Việt Nam");
@@ -113,8 +101,9 @@ TEST_CASE("unknown wire values fall back to the current setting") {
 }
 
 TEST_CASE("save round-trips and preserves keys it does not own") {
-    // excludedApps and shortcuts belong to the Settings UI: the addon reads them
-    // but must never write them back, or a toggle would wipe the user's lists.
+    // shortcuts belong to the Settings UI: the addon reads them but must never
+    // write them back, or a toggle would wipe the user's list. Leftover keys
+    // (including a retired excludedApps list) must survive a merge save too.
     writeSettingsFile(R"({
         "method": "vni",
         "excludedApps": [{"id": "firefox"}],
@@ -132,10 +121,10 @@ TEST_CASE("save round-trips and preserves keys it does not own") {
     REQUIRE(reloaded.reload());
     CHECK(reloaded.method == Method::Telex);
     CHECK_FALSE(reloaded.enabled);
-    CHECK(reloaded.excludedAppIds == std::vector<std::string>{"firefox"});
     REQUIRE(reloaded.shortcuts.size() == 1);
 
     std::ifstream in(Settings::path());
     const std::string raw((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     CHECK(raw.find("someFutureKey") != std::string::npos);
+    CHECK(raw.find("excludedApps") != std::string::npos);
 }

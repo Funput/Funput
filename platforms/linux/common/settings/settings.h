@@ -41,15 +41,9 @@ struct Settings {
     bool nonPreedit = false;
     Hotkey toggleHotkey = Hotkey::CtrlBacktick;
     FlipHotkey flipHotkey = FlipHotkey::Off;
-    // App identifiers (fcitx5 program() / WM_CLASS) that default to English on
-    // focus. Owned by the Settings UI; the addon only reads them for matching.
-    std::vector<std::string> excludedAppIds;
     // Text-expansion shortcuts (gõ tắt): (trigger, expansion) pairs. Owned by the
     // Settings UI; the addon only reads them and pushes them into the engine.
     std::vector<std::pair<std::string, std::string>> shortcuts;
-
-    // Whether `program` (fcitx5 InputContext::program()) is on the exclusion list.
-    bool isExcluded(const std::string &program) const;
 
     // Absolute path to ~/.config/Funput/settings.json (XDG-aware).
     static std::string path();

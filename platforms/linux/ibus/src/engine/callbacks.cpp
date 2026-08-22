@@ -92,8 +92,6 @@ void focusIn(IBusEngine *engine) {
     if (state->composer.reloadSettingsIfChanged()) state->composer.applySettings();
     applyNonPreeditMode(engine);
     if (state->composer.settings().autoCapitalize) state->composer.armCapitalization();
-    // No per-app VI/EN default here: unlike Fcitx5's InputContext::program(), IBus
-    // hands the engine no app identity. See platforms/linux/README.md.
 }
 
 void enable(IBusEngine *engine) {

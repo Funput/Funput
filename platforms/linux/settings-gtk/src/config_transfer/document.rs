@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::settings::ExcludedApp;
-
 pub(super) const SCHEMA_ID: &str = "app.funput.config";
 pub(super) const CURRENT_VERSION: u32 = 1;
 
@@ -66,8 +64,6 @@ pub(super) struct LinuxBlock {
     pub toggle_hotkey: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub flip_hotkey: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub excluded_apps: Option<Vec<ExcludedApp>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub non_preedit: Option<bool>,
 }
