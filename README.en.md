@@ -44,16 +44,32 @@ consistent typing behavior.
 | macOS | Released | [Download the latest release](https://github.com/Funput/Funput/releases/latest) |
 | Windows | Released | [Download the latest release](https://github.com/Funput/Funput/releases/latest) |
 | Linux | Released | [Read the installation guide](https://docs.funput.app/) |
-| Android | Closed testing | Public enrollment is not available yet |
+| Android | Closed testing | [Email to join](mailto:hello@funput.app) |
+
+Google Play requires a full **14-day** closed test with a minimum number of testers
+before production. The previous round did not meet that bar, so Funput has to run
+another 14-day loop.
+
+If you use Android and want to help get Funput onto the Play Store, email
+[hello@funput.app](mailto:hello@funput.app) (preferably from the Gmail account
+tied to Google Play). We will invite you into the closed testing track.
 
 ## Interface
 
 <p align="center">
-  <img src="assets/screenshot/screenshot-ios.png" height="420" alt="Funput keyboard on iOS">
+  <img src="assets/screenshot/ios.png" height="420" alt="Funput keyboard on iOS">
   &nbsp;&nbsp;
-  <img src="assets/screenshot/screenshot-macos.png" height="420" alt="Funput settings interface on macOS">
+  <img src="assets/screenshot/android.png" height="420" alt="Funput keyboard on Android">
   <br>
-  <sub>Funput on iOS and the settings experience on macOS.</sub>
+  <sub>Funput keyboard on iOS and Android.</sub>
+</p>
+
+<p align="center">
+  <img src="assets/screenshot/macOS.png" height="280" alt="Funput settings on macOS">
+  &nbsp;&nbsp;
+  <img src="assets/screenshot/windows.png" height="280" alt="Funput settings on Windows">
+  <br>
+  <sub>Settings on macOS and Windows.</sub>
 </p>
 
 ## Performance

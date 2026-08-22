@@ -43,16 +43,30 @@ Windows và Linux. Mọi nền tảng dùng chung một lõi xử lý để gi�
 | macOS | Đã phát hành | [Tải bản mới nhất](https://github.com/Funput/Funput/releases/latest) |
 | Windows | Đã phát hành | [Tải bản mới nhất](https://github.com/Funput/Funput/releases/latest) |
 | Linux | Đã phát hành | [Xem hướng dẫn](https://docs.funput.app/) |
-| Android | Kiểm thử khép kín | Chưa mở đăng ký công khai |
+| Android | Kiểm thử khép kín | [Gửi email để tham gia](mailto:hello@funput.app) |
+
+Google Play yêu cầu kiểm thử khép kín đủ **14 ngày** với số tester tối thiểu trước khi xuất bản. Vòng trước chưa đạt ngưỡng đó, nên Funput phải chạy lại vòng 14 ngày.
+
+Nếu bạn dùng Android và muốn giúp đưa Funput lên Play Store, hãy gửi email tới
+[hello@funput.app](mailto:hello@funput.app) (nên dùng Gmail gắn với tài khoản
+Google Play). Chúng tôi sẽ mời bạn vào nhóm kiểm thử khép kín.
 
 ## Giao diện
 
 <p align="center">
-  <img src="assets/screenshot/screenshot-ios.png" height="420" alt="Bàn phím Funput trên iOS">
+  <img src="assets/screenshot/ios.png" height="420" alt="Bàn phím Funput trên iOS">
   &nbsp;&nbsp;
-  <img src="assets/screenshot/screenshot-macos.png" height="420" alt="Giao diện cài đặt Funput trên macOS">
+  <img src="assets/screenshot/android.png" height="420" alt="Bàn phím Funput trên Android">
   <br>
-  <sub>Bàn phím Funput trên iOS và giao diện cài đặt trên macOS.</sub>
+  <sub>Bàn phím Funput trên iOS và Android.</sub>
+</p>
+
+<p align="center">
+  <img src="assets/screenshot/macOS.png" height="280" alt="Giao diện cài đặt Funput trên macOS">
+  &nbsp;&nbsp;
+  <img src="assets/screenshot/windows.png" height="280" alt="Giao diện cài đặt Funput trên Windows">
+  <br>
+  <sub>Giao diện cài đặt trên macOS và Windows.</sub>
 </p>
 
 ## Hiệu năng
