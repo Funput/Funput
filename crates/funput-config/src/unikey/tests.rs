@@ -261,3 +261,26 @@ fn a_charset_nobody_implemented_imports_as_its_nearest_neighbour() {
     assert_eq!(import.charset, Some(Charset::Tcvn3));
     assert_eq!(pairs(&import.rows), vec![("cf", "cà phờ")]);
 }
+
+/// A table of typographic shortcuts is not Vietnamese, and must not be read as
+/// though it were.
+///
+/// `µ` is TCVN3's `à` and `¶` is its `ả`, so two values in three read as syllables
+/// and the detector's majority vote carries. Judging only the values — right in
+/// principle — removed the accidental protection the triggers used to give. What
+/// stops it is that overriding a UTF-8 decode that already worked has to explain
+/// *everything*, and `°` has no TCVN3 code.
+#[test]
+fn a_symbol_table_is_not_reinterpreted_as_vietnamese() {
+    let import = read_bytes("mu:µ\npara:¶\ndeg:°\n".as_bytes()).expect("import");
+    assert_eq!(
+        pairs(&import.rows),
+        vec![("mu", "µ"), ("para", "¶"), ("deg", "°")],
+        "the symbols must survive as themselves"
+    );
+    assert_eq!(
+        import.charset,
+        Some(Charset::Unicode),
+        "read as the Unicode it decoded as, not as the charset that was declined"
+    );
+}

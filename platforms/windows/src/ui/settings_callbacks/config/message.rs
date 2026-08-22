@@ -32,10 +32,14 @@ pub(super) fn unikey_body(summary: &ImportSummary, charset: Option<Charset>) -> 
             summary.shortcuts_added, summary.shortcuts_updated
         )
     };
-    match charset.map(charset_label) {
-        Some(label) => {
-            format!("{counts}\nĐọc bằng bảng mã {label} — hãy kiểm lại nếu chữ trông lạ.")
-        }
+    // Only when the text was actually *reinterpreted*. A file that read as ordinary
+    // Unicode had nothing guessed about it, and warning on every import teaches the
+    // user to ignore the line that matters.
+    match charset.filter(|&c| c != Charset::Unicode) {
+        Some(other) => format!(
+            "{counts}\nĐọc bằng bảng mã {} — hãy kiểm lại nếu chữ trông lạ.",
+            charset_label(other)
+        ),
         None => counts,
     }
 }

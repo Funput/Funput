@@ -63,21 +63,31 @@ fn unicode_text(text: String) -> Decoded {
     // Cutting at ASCII bytes of valid UTF-8 always lands on a character boundary,
     // so the sample is valid UTF-8 too.
     let sample = std::str::from_utf8(&sample).unwrap_or(&text);
-    let Some(charset) = charset::detect(sample) else {
+    let detected = charset::detect(sample);
+    let Some(other) = detected.filter(|&c| c != Charset::Unicode) else {
         return Decoded {
             text,
-            charset: None,
+            charset: detected,
         };
     };
-    if charset == Charset::Unicode {
+
+    // Overriding a UTF-8 decode that already worked takes more than a majority
+    // vote: the reinterpretation has to explain **everything**.
+    //
+    // What this refuses is a table of typographic shortcuts. `µ` is TCVN3's `à` and
+    // `¶` is its `ả`, so two values in three read as Vietnamese and the vote
+    // carries — but `°` has no TCVN3 code at all, and that leftover is the tell.
+    // Without this, `mu:µ` imports as `mu:à`.
+    let converted = charset::convert(&text, other, Charset::Unicode);
+    if converted.unmapped > 0 {
         return Decoded {
             text,
-            charset: Some(charset),
+            charset: Some(Charset::Unicode),
         };
     }
     Decoded {
-        text: charset::convert(&text, charset, Charset::Unicode).text,
-        charset: Some(charset),
+        text: converted.text,
+        charset: Some(other),
     }
 }
 
