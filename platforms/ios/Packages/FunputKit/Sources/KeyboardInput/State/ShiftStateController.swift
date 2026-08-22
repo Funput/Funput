@@ -22,9 +22,10 @@ struct ShiftStateController {
         }
 
         let tapTime = clock()
-        if state == .uppercase,
-           let lastTapTime,
-           tapTime - lastTapTime <= doubleTapInterval {
+        // Caps Lock is a double tap from either case. Gating on `.uppercase`
+        // only locked when the first tap had come from lowercase — a sentence
+        // start that already had Shift armed just toggled twice.
+        if let lastTapTime, tapTime - lastTapTime <= doubleTapInterval {
             resetTapSequence()
             return .capsLocked
         }

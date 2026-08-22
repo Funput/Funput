@@ -42,8 +42,8 @@ struct KeyboardInputStateTests {
         #expect(coordinator.state.shiftState == .uppercase)
     }
 
-    @Test("Double-tapping Shift enables Caps Lock until Shift is tapped again")
-    func capsLock() {
+    @Test("Double-tapping Shift from lowercase enables Caps Lock until Shift is tapped again")
+    func capsLockFromLowercase() {
         var time = 10.0
         let coordinator = KeyboardInputCoordinator(shiftClock: { time })
         let document = TestKeyboardWriter()
@@ -58,6 +58,28 @@ struct KeyboardInputStateTests {
 
         coordinator.handle(testKey(.shift), writer: document)
         #expect(coordinator.state.shiftState == .lowercase)
+    }
+
+    @Test("Double-tapping Shift from uppercase enables Caps Lock")
+    func capsLockFromUppercase() {
+        var time = 10.0
+        let coordinator = KeyboardInputCoordinator(shiftClock: { time })
+        let document = TestKeyboardWriter()
+        coordinator.updateContext(inputContext(
+            editorMode: .text,
+            enterAction: .newLine,
+            autocapitalization: .sentences
+        ))
+        coordinator.synchronizeDocument(document, event: .activated)
+        #expect(coordinator.state.shiftState == .uppercase)
+
+        coordinator.handle(testKey(.shift), writer: document)
+        time += 0.1
+        coordinator.handle(testKey(.shift), writer: document)
+        type("xi", with: coordinator, into: document)
+
+        #expect(document.text == "XI")
+        #expect(coordinator.state.shiftState == .capsLocked)
     }
 
     @Test("Layout navigation switches between letters and symbol pages")
