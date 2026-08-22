@@ -13,11 +13,11 @@ internal class AndroidCompositionSession(
     private val composingTextFactory: (String) -> CharSequence = ::unstyledComposingText,
 ) {
     private val documentEditor = CompositionDocumentEditor(composingTextFactory)
+    private val committedTail = CommittedWordTail()
     private var renderMode = CompositionRenderMode.COMPOSING
     var composingText: String = ""
         private set
     private var completedToken: String? = null
-    private var recentCompletedToken: String? = null
 
     val isComposing: Boolean get() = composingText.isNotEmpty()
 
@@ -34,7 +34,6 @@ internal class AndroidCompositionSession(
         return if (CompositionBoundary.isBoundary(codePoint, engine.inputMethod)) {
             commitBoundary(connection, text, codePoint)
         } else {
-            recentCompletedToken = null
             updateComposing(connection, engine.process(codePoint), text)
         }
     }
@@ -55,7 +54,7 @@ internal class AndroidCompositionSession(
     fun reset() {
         composingText = ""
         completedToken = null
-        recentCompletedToken = null
+        committedTail.clear()
         engine.clear()
     }
 
@@ -64,6 +63,7 @@ internal class AndroidCompositionSession(
     fun acceptSuggestion(connection: InputConnection, prefix: String, candidate: String): Boolean {
         if (composingText != prefix) return false
         val accepted = documentEditor.acceptSuggestion(connection, renderMode, prefix, candidate)
+        if (accepted) committedTail.record("$candidate ")
         composingText = ""
         completedToken = null
         engine.clear()
@@ -78,7 +78,7 @@ internal class AndroidCompositionSession(
         val previous = composingText
         val replacement = engine.processBoundary(codePoint)
         completedToken = replacement?.removeSuffix(text)?.ifEmpty { null } ?: previous.ifEmpty { null }
-        recentCompletedToken = completedToken
+        committedTail.record(replacement ?: previous + text)
         composingText = ""
         return documentEditor.commitBoundary(connection, renderMode, previous, replacement, text)
     }
@@ -96,23 +96,17 @@ internal class AndroidCompositionSession(
     }
 
     /**
-     * Re-opens the word the caret now sits behind, so the next keystroke edits it
-     * instead of typing a literal letter (`chào` ⌫ then `s` gives `cháo`).
-     *
-     * Called only from the Backspace path that did *not* have a live composition, so
-     * typing never pays for it. Uses one bounded [wordBeforeCursor] read, on a
-     * keystroke where the editor is already being consulted, and
-     * asks the engine before touching the document, so a non-Vietnamese word is left
-     * exactly as it was.
+     * Re-opens the word behind the caret so the next keystroke can retone it.
+     * Walks [committedTail] when the editor withholds or stale-reads surrounding text.
      */
     fun reopenPreviousWord(connection: InputConnection?): Boolean {
         if (connection == null || isComposing) return false
         if (!connection.getSelectedText(0).isNullOrEmpty()) return false
-        val word = listOfNotNull(connection.wordBeforeCursor(), recentCompletedToken)
+        val word = listOfNotNull(committedTail.backspace(), connection.wordBeforeCursor())
             .distinct()
             .firstOrNull(engine::adopt)
-            ?: return false
-        recentCompletedToken = null
+        committedTail.resolve(word != null)
+        if (word == null) return false
 
         connection.beginBatchEdit()
         val reopened = try {

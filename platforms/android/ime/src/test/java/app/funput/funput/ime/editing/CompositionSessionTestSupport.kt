@@ -64,3 +64,48 @@ internal class RecordingConnection {
         }
     } as InputConnection
 }
+
+/**
+ * Committed-mode host that can hide surrounding text the way Reddit and similar
+ * editors do: deletes still apply, but [InputConnection.getTextBeforeCursor] is null.
+ */
+internal class CommittedEditor(
+    var text: String = "",
+    private val exposesSurroundingText: Boolean = true,
+) {
+    var setComposingCount = 0
+
+    val proxy: InputConnection = Proxy.newProxyInstance(
+        InputConnection::class.java.classLoader,
+        arrayOf(InputConnection::class.java),
+    ) { _, method, arguments ->
+        when (method.name) {
+            "beginBatchEdit", "endBatchEdit" -> true
+            "commitText" -> true.also { text += arguments?.first().toString() }
+            "deleteSurroundingText" -> true.also {
+                text = text.dropLast(arguments?.first() as Int)
+            }
+            "getSelectedText" -> null
+            "getTextBeforeCursor" -> {
+                val count = arguments?.first() as Int
+                if (!exposesSurroundingText || count >= GraphemeLookback) {
+                    null
+                } else {
+                    text.takeLast(count)
+                }
+            }
+            "deleteSurroundingTextInCodePoints" -> true.also {
+                repeat(arguments?.first() as Int) {
+                    if (text.isNotEmpty()) text = text.dropLast(1)
+                }
+            }
+            "setComposingText" -> true.also { setComposingCount++ }
+            "toString" -> "CommittedEditor"
+            else -> false
+        }
+    } as InputConnection
+
+    private companion object {
+        const val GraphemeLookback = 128
+    }
+}
