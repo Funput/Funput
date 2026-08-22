@@ -21,12 +21,13 @@ class AlternatePaletteLayoutTest {
     }
 
     @Test
-    fun `the palette rises from the key instead of dropping below it`() {
+    fun `the palette sits fully above the key including a top-row hold`() {
         listOf(62f, 111f, 160f, 209f).forEach { top ->
             val source = KeyBounds(156f, top, 192f, top + 40f)
             val layout = resolve(13, source)
 
-            assertTrue("$top", layout.bounds.top < source.top)
+            assertTrue("$top", layout.bounds.bottom <= source.top)
+            assertTrue("$top", !layout.overlapsSource)
             assertTrue("$top", layout.bounds.left >= 6f && layout.bounds.right <= 384f)
         }
     }
@@ -46,6 +47,17 @@ class AlternatePaletteLayoutTest {
     }
 
     @Test
+    fun `Vietnamese diacritic keys keep the palette above a top-row hold`() {
+        listOf(6, 12, 18).forEach { count ->
+            val source = KeyBounds(102f, 62f, 138f, 102f)
+            val layout = resolve(count, source)
+
+            assertTrue("$count", layout.bounds.bottom <= source.top)
+            assertTrue("$count", !layout.overlapsSource)
+        }
+    }
+
+    @Test
     fun `short sets stay on one row`() {
         val layout = resolve(2, KeyBounds(156f, 160f, 192f, 200f))
 
@@ -54,21 +66,37 @@ class AlternatePaletteLayoutTest {
     }
 
     @Test
-    fun `a palette clamped over its key keeps the default until the finger travels`() {
-        // Nineteen alternates cannot fit above a top-row key, so the palette covers it.
+    fun `a top-row Vietnamese catalog overflows above the surface instead of covering the key`() {
         val source = KeyBounds(300f, 62f, 336f, 102f)
         val layout = resolve(19, source)
+
+        assertTrue(layout.bounds.bottom <= source.top)
+        assertTrue(!layout.overlapsSource)
+        assertTrue(layout.overflowAbove > 0f)
+        assertEquals(0, layout.selectionAt(source.centerX, source.centerY, source.centerX, source.centerY, 1f))
+    }
+
+    @Test
+    fun `a palette overlapping its key keeps the default until the finger travels`() {
+        val source = KeyBounds(300f, 62f, 336f, 102f)
+        val covering = KeyBounds(280f, 50f, 356f, 110f)
+        val layout = AlternatePaletteLayout(
+            bounds = covering,
+            itemBounds = listOf(
+                KeyBounds(282f, 52f, 316f, 90f),
+                KeyBounds(318f, 52f, 354f, 90f),
+            ),
+            sourceBounds = source,
+            overlapsSource = true,
+        )
         val startX = source.centerX
         val startY = source.centerY
 
-        assertTrue(layout.overlapsSource)
         assertEquals(0, layout.selectionAt(startX, startY, startX, startY, 1f))
         assertEquals(0, layout.selectionAt(startX + 6f, startY, startX, startY, 1f))
-        // The cell sitting over the key stays reachable once the finger has moved.
-        val covering = layout.indexAt(startX, startY, 1f)
-        assertNotEquals(null, covering)
-        assertNotEquals(0, covering)
-        assertEquals(covering, layout.selectionAt(startX, startY, startX, startY + 60f, 1f))
+        val covered = layout.indexAt(startX, startY, 1f)
+        assertNotEquals(null, covered)
+        assertEquals(covered, layout.selectionAt(startX, startY, startX, startY + 60f, 1f))
     }
 
     @Test
