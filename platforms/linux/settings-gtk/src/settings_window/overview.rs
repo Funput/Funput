@@ -1,23 +1,20 @@
-//! "Chung" page: session preference, config backup, and About.
+//! "Tổng quan" — session preference for now. Step 3 can add status metrics here.
 
 use adw::prelude::*;
-use adw::{PreferencesGroup, PreferencesPage, PreferencesWindow, SwitchRow};
+use adw::{PreferencesGroup, PreferencesPage, SwitchRow};
 
 use crate::settings::Settings;
 
-mod about;
-mod transfer;
-
-pub(super) fn page(window: &PreferencesWindow) -> PreferencesPage {
+pub(super) fn page() -> PreferencesPage {
     let settings = Settings::load();
     let page = PreferencesPage::builder()
-        .title("Chung")
+        .title("Tổng quan")
         .icon_name("preferences-system-symbolic")
         .build();
 
     let group = PreferencesGroup::new();
-    // On Linux the engine runs inside the fcitx5/ibus daemon, whose autostart is
-    // managed by the desktop session — this toggle only persists the preference.
+    // The engine lives in the fcitx5/ibus daemon; the desktop starts that. This
+    // toggle only persists the preference until a later step can honor it.
     let row = SwitchRow::builder()
         .title("Khởi động cùng phiên đăng nhập")
         .subtitle("Bộ gõ do desktop quản lý tự khởi động; tuỳ chọn này chỉ được lưu lại.")
@@ -29,11 +26,5 @@ pub(super) fn page(window: &PreferencesWindow) -> PreferencesPage {
     });
     group.add(&row);
     page.add(&group);
-
-    page.add(&transfer::group(window));
-
-    let about_group = PreferencesGroup::new();
-    about_group.add(&about::row(window));
-    page.add(&about_group);
     page
 }

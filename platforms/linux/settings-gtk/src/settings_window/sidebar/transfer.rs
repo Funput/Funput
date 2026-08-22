@@ -1,60 +1,14 @@
+//! Import / export file dialogs. The sidebar owns the buttons; this module
+//! talks to `config_transfer` and rebuilds Settings after a successful import.
+
 use adw::prelude::*;
-use adw::{ActionRow, AlertDialog, PreferencesGroup, PreferencesWindow};
+use adw::{AlertDialog, Window};
 use gtk::gio;
 
 use crate::config_transfer::{self, ImportSummary};
 use crate::settings::Settings;
 
-pub(super) fn group(window: &PreferencesWindow) -> PreferencesGroup {
-    let group = PreferencesGroup::builder()
-        .title("Sao lưu & khôi phục")
-        .build();
-    let export = action(
-        "Xuất cấu hình",
-        "Lưu gõ tắt và tuỳ chọn ra tệp .json.",
-        "Xuất…",
-    );
-    let weak = window.downgrade();
-    export.1.connect_clicked(move |_| {
-        if let Some(window) = weak.upgrade() {
-            export_dialog(&window);
-        }
-    });
-    group.add(&export.0);
-    let import = action(
-        "Nhập cấu hình",
-        "Gộp gõ tắt và áp tuỳ chọn từ tệp .json.",
-        "Nhập…",
-    );
-    let weak = window.downgrade();
-    import.1.connect_clicked(move |_| {
-        if let Some(window) = weak.upgrade() {
-            import_dialog(&window);
-        }
-    });
-    group.add(&import.0);
-    group
-}
-
-fn action(title: &str, subtitle: &str, label: &str) -> (ActionRow, gtk::Button) {
-    let row = ActionRow::builder().title(title).subtitle(subtitle).build();
-    let button = gtk::Button::builder()
-        .label(label)
-        .valign(gtk::Align::Center)
-        .build();
-    row.add_suffix(&button);
-    row.set_activatable_widget(Some(&button));
-    (row, button)
-}
-
-fn json_filter() -> gtk::FileFilter {
-    let filter = gtk::FileFilter::new();
-    filter.set_name(Some("JSON"));
-    filter.add_suffix("json");
-    filter
-}
-
-fn export_dialog(window: &PreferencesWindow) {
+pub(super) fn export_dialog(window: &Window) {
     let dialog = gtk::FileDialog::builder()
         .title("Xuất cấu hình")
         .default_filter(&json_filter())
@@ -77,7 +31,7 @@ fn export_dialog(window: &PreferencesWindow) {
     });
 }
 
-fn import_dialog(window: &PreferencesWindow) {
+pub(super) fn import_dialog(window: &Window) {
     let dialog = gtk::FileDialog::builder()
         .title("Nhập cấu hình")
         .default_filter(&json_filter())
@@ -98,7 +52,7 @@ fn import_dialog(window: &PreferencesWindow) {
     });
 }
 
-fn finish_import(window: &PreferencesWindow, settings: Settings, summary: &ImportSummary) {
+fn finish_import(window: &Window, settings: Settings, summary: &ImportSummary) {
     settings.save();
     let text = summary_text(summary);
     if let Some(app) = window
@@ -114,10 +68,17 @@ fn finish_import(window: &PreferencesWindow, settings: Settings, summary: &Impor
     }
 }
 
-fn alert(window: &PreferencesWindow, text: &str) {
+fn alert(window: &Window, text: &str) {
     let dialog = AlertDialog::new(Some("Cấu hình"), Some(text));
     dialog.add_response("ok", "OK");
     dialog.present(Some(window));
+}
+
+fn json_filter() -> gtk::FileFilter {
+    let filter = gtk::FileFilter::new();
+    filter.set_name(Some("JSON"));
+    filter.add_suffix("json");
+    filter
 }
 
 fn summary_text(summary: &ImportSummary) -> String {
@@ -131,7 +92,7 @@ fn summary_text(summary: &ImportSummary) -> String {
         lines.push("Không có gõ tắt mới.".to_string());
     }
     if summary.applied_platform {
-        lines.push("Đã áp phím tắt và danh sách app bỏ qua.".to_string());
+        lines.push("Đã áp phím tắt Linux.".to_string());
     }
     if summary.newer_version {
         lines.push("Lưu ý: tệp từ phiên bản mới hơn — một số mục có thể bị bỏ qua.".to_string());
