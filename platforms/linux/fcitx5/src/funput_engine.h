@@ -26,6 +26,7 @@
 #include <fcitx-config/configuration.h>
 #include <fcitx-config/option.h>
 #include <fcitx-utils/event.h>
+#include <fcitx-utils/handlertable.h>
 #include <fcitx-utils/key.h>
 
 #include "compose/composer/composer.h"
@@ -65,9 +66,10 @@ private:
     void clearPreedit(fcitx::InputContext *ic);
     void noteRecentApp(const std::string &program); // record for the Settings picker
     // Turn non-preedit on for the focused client: the setting has to ask for it and
-    // the client has to report surrounding text, since the mode repairs the document
-    // by reading it back. Re-applied after every `applySettings()`, which reseeds the
-    // mode from the setting alone and so forgets the client half of that.
+    // the client has to have sent surrounding text this focus, since the mode repairs
+    // the document by reading it back. No-op while a word is composing — the two
+    // modes disagree about where that word lives. Re-applied after every
+    // `applySettings()`, which reseeds the mode from the setting alone.
     void applyNonPreeditMode();
     // Reload settings live when the watcher fires (Settings app wrote the file), and
     // re-apply the per-app default for the currently-focused app.
@@ -79,13 +81,16 @@ private:
     // Program() of the most recently focused app, so a live settings reload can
     // re-apply the per-app default without waiting for the next focus-in.
     std::string lastProgram_;
-    // Whether that app reports surrounding text. Remembered for the same reason as
-    // lastProgram_: a live settings reload has to re-decide without a focus change.
+    // Whether the focused client has sent surrounding text this focus — the IBus
+    // shell's `sawSurroundingText`. Not a snapshot of `isValid()` at focus-in: that
+    // cache can be stale, and surrounding text often arrives only after the client
+    // answers. Set by SurroundingTextUpdated; cleared on activate().
     bool lastSurroundingOk_ = false;
     // Live settings reload: an inotify fd (settingsWatcher_) wired into Fcitx5's
     // event loop (settingsWatch_).
     funput::SettingsWatcher settingsWatcher_;
     std::unique_ptr<fcitx::EventSourceIO> settingsWatch_;
+    std::unique_ptr<fcitx::HandlerTableEntry<fcitx::EventHandler>> surroundingWatch_;
 };
 
 class FunputEngineFactory : public fcitx::AddonFactory {
