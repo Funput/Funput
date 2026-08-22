@@ -28,6 +28,8 @@ class FunputKeyboardView @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : FrameLayout(context, attrs, defStyleAttr) {
     private val keyboardSurface = KeyboardSurfaceView(context)
+    private val hostBackground = KeyboardHostBackground()
+    val overlayPadTop: Int get() = keyboardSurface.overlayPadTop
     val callbacks = FunputKeyboardCallbacks()
     private val clipboardState = KeyboardClipboardPanelState(
         keyboardSurface, { editorMode }, { activePanel }, ::showLettersPanel,
@@ -68,7 +70,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         set(value) {
             keyboardSurface.keyboardTheme = value
             panelCoordinator.updateTheme(value)
-            setBackgroundColor(value.backgroundEndColor)
+            hostBackground.color = value.backgroundEndColor
         }
     var keyboardThemeBackgroundImage by keyboardSurface::keyboardThemeBackgroundImage
     var sizingProfile: KeyboardSizingProfile by keyboardSurface::sizingProfile
@@ -87,26 +89,25 @@ class FunputKeyboardView @JvmOverloads constructor(
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
     private val safeArea = KeyboardSafeAreaController(this)
     init { KeyboardComposeLifecycle.install(this)
+        background = hostBackground
+        hostBackground.attach(keyboardSurface, ::requestLayout)
         addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::handleKeyAction
         keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
         keyboardSurface.callbacks.onEmojiRequested = ::openEmojiFromKeyboard
         keyboardSurface.callbacks.onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest
         keyboardSurface.callbacks.onClipboardPanelRequested = ::showClipboardPanel
-        setBackgroundColor(keyboardTheme.backgroundEndColor)
         safeArea.install()
     }
 
     fun showEmojiPanel(): Unit = panelCoordinator.showEmoji()
     fun showClipboardPanel() {
         if (!clipboardState.available() || activePanel == KeyboardPanel.CLIPBOARD) return
-        panelCoordinator.showClipboard()
-        callbacks.dispatchClipboardPanelOpened()
+        panelCoordinator.showClipboard(); callbacks.dispatchClipboardPanelOpened()
     }
 
-    fun showSymbolsPanel(mode: KeyboardLayoutMode = KeyboardLayoutMode.SYMBOLS_PRIMARY) {
+    fun showSymbolsPanel(mode: KeyboardLayoutMode = KeyboardLayoutMode.SYMBOLS_PRIMARY) =
         panelCoordinator.showSymbols(mode)
-    }
 
     fun showLettersPanel(): Unit = panelCoordinator.showLetters()
 
@@ -118,7 +119,9 @@ class FunputKeyboardView @JvmOverloads constructor(
         val heightDp = KeyboardDimensions.recommendedHeightDp(
             inputMethod, editorMode, sizingProfile, contentWidthDp, showsNumberRow,
         )
-        val height = resolveSize((heightDp * density).roundToInt() + safeArea.bottomInset, heightMeasureSpec)
+        val height = resolveSize(
+            (heightDp * density).roundToInt() + safeArea.bottomInset + overlayPadTop, heightMeasureSpec,
+        )
         super.onMeasure(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
             MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
@@ -127,8 +130,7 @@ class FunputKeyboardView @JvmOverloads constructor(
 
     private fun openEmojiFromKeyboard() {
         if (editorMode.isPassword) return
-        showEmojiPanel()
-        callbacks.dispatchEmojiPanelOpened()
+        showEmojiPanel(); callbacks.dispatchEmojiPanelOpened()
     }
 
     private fun handleKeyAction(action: KeyAction) = when (action) {

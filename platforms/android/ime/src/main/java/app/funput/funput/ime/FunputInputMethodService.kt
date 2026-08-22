@@ -130,6 +130,11 @@ class FunputInputMethodService : InputMethodService() {
 
     // Switching the system between light and dark changes which theme applies, and no settings
     // flow fires for it because nothing the user stored has changed.
+    override fun onComputeInsets(outInsets: InputMethodService.Insets) {
+        super.onComputeInsets(outInsets)
+        ImeOverlayInsets.apply(outInsets, keyboardView?.overlayPadTop ?: 0)
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         keyboardView?.let(::updateInputView)
