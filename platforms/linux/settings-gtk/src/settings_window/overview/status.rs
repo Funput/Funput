@@ -14,22 +14,35 @@ pub(super) fn group(
 ) -> PreferencesGroup {
     let settings = Settings::load();
     let group = PreferencesGroup::builder().title("Trạng thái").build();
-    group.add(&navigate_row(
+    let method_row = navigate_row(
         "Phương thức",
         settings.method.label(),
         Destination::Typing,
         stack,
         split,
         title,
-    ));
-    group.add(&navigate_row(
+    );
+    let shortcuts_row = navigate_row(
         "Gõ tắt",
         &settings.shortcuts.len().to_string(),
         Destination::Shortcuts,
         stack,
         split,
         title,
-    ));
+    );
+    group.add(&method_row);
+    group.add(&shortcuts_row);
+
+    let method_row = method_row.clone();
+    let shortcuts_row = shortcuts_row.clone();
+    stack.connect_visible_child_name_notify(move |stack| {
+        if stack.visible_child_name().as_deref() != Some(Destination::Overview.id()) {
+            return;
+        }
+        let settings = Settings::load();
+        method_row.set_subtitle(settings.method.label());
+        shortcuts_row.set_subtitle(&settings.shortcuts.len().to_string());
+    });
     group
 }
 

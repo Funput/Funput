@@ -7,19 +7,19 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use adw::prelude::*;
-use adw::{ActionRow, EntryRow, ExpanderRow, PreferencesGroup, PreferencesPage};
+use adw::{EntryRow, ExpanderRow, PreferencesGroup, PreferencesPage};
 use gtk::{Align, Button};
 
 use crate::settings::{Settings, Shortcut};
 
+mod empty;
 mod row;
 
-pub(super) fn page() -> PreferencesPage {
-    let page = PreferencesPage::builder()
+pub(super) fn page() -> gtk::Widget {
+    let list_page = PreferencesPage::builder()
         .title("Gõ tắt")
         .icon_name("edit-find-replace-symbolic")
         .build();
-
     let group = PreferencesGroup::builder()
         .title("Gõ tắt")
         .description(
@@ -27,17 +27,16 @@ pub(super) fn page() -> PreferencesPage {
              Vn → Việt Nam, VN → VIỆT NAM.",
         )
         .build();
-    page.add(&group);
+    list_page.add(&group);
 
-    // Rows we added, removed before each rebuild (AdwPreferencesGroup has no clear).
+    let pages = gtk::Stack::new();
     let rows: Rc<RefCell<Vec<gtk::Widget>>> = Rc::new(RefCell::new(Vec::new()));
-    // Set when the user just added a row, so the rebuild expands + focuses it.
     let focus_new = Rc::new(Cell::new(false));
-    // Wrapped so the per-row delete buttons created inside the rebuild can re-run it.
     let rebuild: Rc<RefCell<Option<Rc<dyn Fn()>>>> = Rc::new(RefCell::new(None));
 
     let rebuild_impl: Rc<dyn Fn()> = {
         let group = group.clone();
+        let pages = pages.clone();
         let rows = rows.clone();
         let focus_new = focus_new.clone();
         let rebuild = rebuild.clone();
@@ -45,18 +44,12 @@ pub(super) fn page() -> PreferencesPage {
             for r in rows.borrow_mut().drain(..) {
                 group.remove(&r);
             }
-
             let s = Settings::load();
             if s.shortcuts.is_empty() {
-                let row = ActionRow::builder()
-                    .title("Chưa có gõ tắt nào")
-                    .subtitle("Bấm Thêm để tạo — ví dụ vn → Việt Nam, kg → không.")
-                    .build();
-                group.add(&row);
-                rows.borrow_mut().push(row.upcast());
+                pages.set_visible_child_name("empty");
                 return;
             }
-
+            pages.set_visible_child_name("list");
             let mut last: Option<(ExpanderRow, EntryRow)> = None;
             for (i, sc) in s.shortcuts.iter().enumerate() {
                 let (expander, trigger) = row::build(i, sc, &rebuild);
@@ -64,8 +57,6 @@ pub(super) fn page() -> PreferencesPage {
                 rows.borrow_mut().push(expander.clone().upcast());
                 last = Some((expander, trigger));
             }
-
-            // A freshly added row starts empty — open it and focus the trigger field.
             if focus_new.replace(false) {
                 if let Some((expander, trigger)) = last {
                     expander.set_expanded(true);
@@ -76,17 +67,10 @@ pub(super) fn page() -> PreferencesPage {
     };
     *rebuild.borrow_mut() = Some(rebuild_impl.clone());
 
-    // "Thêm" sits in the group header — append an empty shortcut, then rebuild.
-    let add_btn = Button::builder()
-        .icon_name("list-add-symbolic")
-        .valign(Align::Center)
-        .tooltip_text("Thêm gõ tắt")
-        .build();
-    add_btn.add_css_class("flat");
-    {
+    let add = {
         let rebuild = rebuild.clone();
         let focus_new = focus_new.clone();
-        add_btn.connect_clicked(move |_| {
+        Rc::new(move || {
             Settings::update(|s| {
                 s.shortcuts.push(Shortcut {
                     trigger: String::new(),
@@ -97,10 +81,20 @@ pub(super) fn page() -> PreferencesPage {
             if let Some(f) = rebuild.borrow().as_ref() {
                 f();
             }
-        });
-    }
+        })
+    };
+    let add_header = add.clone();
+    let add_btn = Button::builder()
+        .icon_name("list-add-symbolic")
+        .valign(Align::Center)
+        .tooltip_text("Thêm gõ tắt")
+        .build();
+    add_btn.add_css_class("flat");
+    add_btn.connect_clicked(move |_| add_header());
     group.set_header_suffix(Some(&add_btn));
 
+    pages.add_named(&empty::page(move || add()), Some("empty"));
+    pages.add_named(&list_page, Some("list"));
     rebuild_impl();
-    page
+    pages.upcast()
 }

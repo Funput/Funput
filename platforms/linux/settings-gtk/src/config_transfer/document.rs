@@ -73,5 +73,7 @@ pub struct ImportSummary {
     pub shortcuts_added: usize,
     pub shortcuts_updated: usize,
     pub applied_platform: bool,
+    /// Set on import; the Settings toast does not surface it.
+    #[allow(dead_code)]
     pub newer_version: bool,
 }

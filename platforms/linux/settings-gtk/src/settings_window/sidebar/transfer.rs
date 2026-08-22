@@ -2,10 +2,10 @@
 //! talks to `config_transfer` and rebuilds Settings after a successful import.
 
 use adw::prelude::*;
-use adw::{AlertDialog, Window};
+use adw::{AlertDialog, Toast, ToastOverlay, Window};
 use gtk::gio;
 
-use crate::config_transfer::{self, ImportSummary};
+use crate::config_transfer;
 use crate::settings::Settings;
 
 pub(super) fn export_dialog(window: &Window) {
@@ -23,10 +23,11 @@ pub(super) fn export_dialog(window: &Window) {
             return;
         };
         let Some(path) = path else { return };
+        let Some(window) = weak.upgrade() else { return };
         if let Err(error) = config_transfer::export_to(&path, &Settings::load()) {
-            if let Some(window) = weak.upgrade() {
-                alert(&window, &format!("Không xuất được cấu hình: {error}"));
-            }
+            alert(&window, &format!("Không xuất được cấu hình: {error}"));
+        } else {
+            toast(&window, "Đã xuất cấu hình.");
         }
     });
 }
@@ -46,15 +47,14 @@ pub(super) fn import_dialog(window: &Window) {
         let Some(window) = weak.upgrade() else { return };
         let mut settings = Settings::load();
         match config_transfer::import_file(&path, &mut settings) {
-            Ok(summary) => finish_import(&window, settings, &summary),
+            Ok(_) => finish_import(&window, settings),
             Err(error) => alert(&window, &error.to_string()),
         }
     });
 }
 
-fn finish_import(window: &Window, settings: Settings, summary: &ImportSummary) {
+fn finish_import(window: &Window, settings: Settings) {
     settings.save();
-    let text = summary_text(summary);
     if let Some(app) = window
         .application()
         .and_then(|app| app.downcast::<adw::Application>().ok())
@@ -62,9 +62,15 @@ fn finish_import(window: &Window, settings: Settings, summary: &ImportSummary) {
         let fresh = super::super::build(&app);
         fresh.present();
         window.close();
-        alert(&fresh, &text);
+        toast(&fresh, "Đã nhập cấu hình.");
     } else {
-        alert(window, &text);
+        toast(window, "Đã nhập cấu hình.");
+    }
+}
+
+fn toast(window: &Window, text: &str) {
+    if let Some(overlay) = window.content().and_downcast::<ToastOverlay>() {
+        overlay.add_toast(Toast::new(text));
     }
 }
 
@@ -79,23 +85,4 @@ fn json_filter() -> gtk::FileFilter {
     filter.set_name(Some("JSON"));
     filter.add_suffix("json");
     filter
-}
-
-fn summary_text(summary: &ImportSummary) -> String {
-    let mut lines = vec!["Đã áp các tuỳ chọn gõ.".to_string()];
-    if summary.shortcuts_added > 0 || summary.shortcuts_updated > 0 {
-        lines.push(format!(
-            "Gõ tắt: thêm {}, cập nhật {}.",
-            summary.shortcuts_added, summary.shortcuts_updated
-        ));
-    } else {
-        lines.push("Không có gõ tắt mới.".to_string());
-    }
-    if summary.applied_platform {
-        lines.push("Đã áp phím tắt Linux.".to_string());
-    }
-    if summary.newer_version {
-        lines.push("Lưu ý: tệp từ phiên bản mới hơn — một số mục có thể bị bỏ qua.".to_string());
-    }
-    lines.join("\n")
 }

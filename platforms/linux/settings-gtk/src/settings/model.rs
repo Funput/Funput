@@ -45,20 +45,6 @@ impl Method {
             _ => None,
         }
     }
-
-    pub fn index(self) -> u32 {
-        Self::ALL
-            .iter()
-            .position(|method| *method == self)
-            .unwrap_or(0) as u32
-    }
-
-    pub fn from_index(index: u32) -> Self {
-        Self::ALL
-            .get(index as usize)
-            .copied()
-            .unwrap_or(Self::Telex)
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]

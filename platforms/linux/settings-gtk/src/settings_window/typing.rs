@@ -1,7 +1,6 @@
-//! "Cách gõ" page: how keys become Vietnamese and how the word reaches the app.
+//! "Cách gõ" page: how keys become Vietnamese.
 //! Each group lives in `typing/` so a later option is one file plus one `page.add`.
 
-mod delivery;
 mod method;
 mod smart;
 
@@ -18,6 +17,5 @@ pub(super) fn page() -> PreferencesPage {
         .build();
     page.add(&method::group(&settings));
     page.add(&smart::group(&settings));
-    page.add(&delivery::group(&settings));
     page
 }

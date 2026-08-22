@@ -1,37 +1,51 @@
-//! Method and tone-mark placement.
+//! Method picker (radio rows) and tone-mark placement.
 
 use adw::prelude::*;
-use adw::{ComboRow, PreferencesGroup};
-use gtk::StringList;
+use adw::{ActionRow, ComboRow, PreferencesGroup};
+use gtk::{CheckButton, StringList};
 
 use crate::settings::{Method, Settings, ToneStyle};
 
 pub(super) fn group(settings: &Settings) -> PreferencesGroup {
-    let group = PreferencesGroup::new();
+    let group = PreferencesGroup::builder().title("Phương thức").build();
+    let mut radio: Option<CheckButton> = None;
+    for method in Method::ALL {
+        let check = CheckButton::new();
+        if let Some(leader) = &radio {
+            check.set_group(Some(leader));
+        } else {
+            radio = Some(check.clone());
+        }
+        check.set_active(method == settings.method);
+        check.connect_toggled(move |check| {
+            if check.is_active() {
+                Settings::update(|settings| settings.method = method);
+            }
+        });
+        let row = ActionRow::builder()
+            .title(method.label())
+            .subtitle(method.description())
+            .activatable(true)
+            .build();
+        row.add_prefix(&check);
+        row.set_activatable_widget(Some(&check));
+        group.add(&row);
+    }
+    group.add(&tone_row(settings));
+    group
+}
 
-    let method_row = ComboRow::builder()
-        .title("Phương thức")
-        .model(&StringList::new(&Method::ALL.map(Method::label)))
-        .build();
-    method_row.set_selected(settings.method.index());
-    method_row.set_subtitle(settings.method.description());
-    method_row.connect_selected_notify(|row| {
-        let method = Method::from_index(row.selected());
-        row.set_subtitle(method.description());
-        Settings::update(|settings| settings.method = method);
-    });
-    group.add(&method_row);
-
-    let tone_row = ComboRow::builder()
+fn tone_row(settings: &Settings) -> ComboRow {
+    let row = ComboRow::builder()
         .title("Kiểu đặt dấu")
         .model(&StringList::new(&["Truyền thống", "Hiện đại"]))
         .build();
-    tone_row.set_selected(match settings.tone_style {
+    row.set_selected(match settings.tone_style {
         ToneStyle::Traditional => 0,
         ToneStyle::Modern => 1,
     });
-    tone_row.set_subtitle(tone_blurb(settings.tone_style));
-    tone_row.connect_selected_notify(|row| {
+    row.set_subtitle(tone_blurb(settings.tone_style));
+    row.connect_selected_notify(|row| {
         let tone = if row.selected() == 0 {
             ToneStyle::Traditional
         } else {
@@ -40,8 +54,7 @@ pub(super) fn group(settings: &Settings) -> PreferencesGroup {
         row.set_subtitle(tone_blurb(tone));
         Settings::update(|settings| settings.tone_style = tone);
     });
-    group.add(&tone_row);
-    group
+    row
 }
 
 fn tone_blurb(tone: ToneStyle) -> &'static str {

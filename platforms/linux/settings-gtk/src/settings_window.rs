@@ -10,8 +10,8 @@ mod typing;
 
 use adw::prelude::*;
 use adw::{
-    Application, HeaderBar, NavigationPage, NavigationSplitView, ToolbarView, ViewStack, Window,
-    WindowTitle,
+    Application, HeaderBar, NavigationPage, NavigationSplitView, ToastOverlay, ToolbarView,
+    ViewStack, Window, WindowTitle,
 };
 
 use sidebar::Destination;
@@ -35,8 +35,8 @@ pub fn build(app: &Application) -> Window {
             Destination::Overview,
             overview::page(&stack, &split, &title),
         ),
-        (Destination::Typing, typing::page()),
-        (Destination::Keyboard, keyboard::page()),
+        (Destination::Typing, typing::page().upcast()),
+        (Destination::Keyboard, keyboard::page().upcast()),
         (Destination::Shortcuts, shortcuts::page()),
     ] {
         stack.add_named(&page, Some(dest.id()));
@@ -56,6 +56,8 @@ pub fn build(app: &Application) -> Window {
         Destination::Overview.title(),
     )));
 
-    window.set_content(Some(&split));
+    let overlay = ToastOverlay::new();
+    overlay.set_child(Some(&split));
+    window.set_content(Some(&overlay));
     window
 }
