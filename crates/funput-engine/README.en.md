@@ -124,6 +124,14 @@ Dictionary-free: an English word that happens to be a valid VN syllable (`test` 
 auto-restored — in exchange it never breaks correctly-typed Vietnamese (like UniKey without a
 dictionary).
 
+A few keystroke patterns are **unambiguous Vietnamese intent** and are pinned, outranking the
+`is_complete_syllable` verdict: a composed `đ` in the buffer, any digit in `keys` (VNI's modifiers
+*are* digits), and a word that is nothing but a single shaped vowel
+(`funput_core::is_bare_shaped_vowel`). That last case is what commits `aw` → `ă` and `aa` → `â`:
+Vietnamese has no open `ă`/`â` rhyme so they are not complete syllables, yet an isolated one can only
+have been meant, and it makes Telex answer `Aw` the way VNI answers `A8`. An onset still means
+English: `caw`/`law` → `că`/`lă` are restored as before.
+
 ## Flip VN ⇄ raw keys
 
 `flip_composing()` flips the **composing word** between its Vietnamese form and its raw keystrokes

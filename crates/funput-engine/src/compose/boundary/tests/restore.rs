@@ -23,6 +23,20 @@ fn explicit_vietnamese_modifiers_remain_pinned() {
 }
 
 #[test]
+fn lone_shaped_vowel_is_pinned_in_every_method() {
+    // `ă`/`â` are not complete syllables, but a word that is only the vowel was
+    // asked for explicitly — Telex must agree with what VNI's digits already do.
+    assert!(!should_restore(&session(InputMethod::Telex, "ă", "aw")));
+    assert!(!should_restore(&session(InputMethod::Telex, "Ă", "Aw")));
+    assert!(!should_restore(&session(InputMethod::Telex, "â", "aa")));
+    assert!(!should_restore(&session(InputMethod::Telex, "ắ", "aws")));
+    assert!(!should_restore(&session(InputMethod::Vni, "ă", "a8")));
+    // An onset makes it an English word again.
+    assert!(should_restore(&session(InputMethod::Telex, "că", "caw")));
+    assert!(should_restore(&session(InputMethod::Telex, "lă", "law")));
+}
+
+#[test]
 fn unresolved_multi_intent_is_not_pinned_by_stroke() {
     assert!(should_restore(&session(InputMethod::Telex, "đw", "dwd")));
 }

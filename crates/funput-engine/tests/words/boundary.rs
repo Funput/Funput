@@ -92,6 +92,27 @@ fn valid_vietnamese_kept_on_boundary() {
 }
 
 #[test]
+fn standalone_shaped_vowel_kept_on_boundary() {
+    // A word that is only a shaped vowel commits as typed, the same in both
+    // methods: `aw`/`a8` → `ă`, `aa`/`a6` → `â`.
+    for (method, keys, expected) in [
+        (InputMethod::Telex, "aw ", "ă "),
+        (InputMethod::Telex, "Aw ", "Ă "),
+        (InputMethod::Telex, "aa ", "â "),
+        (InputMethod::Telex, "aws ", "ắ "),
+        (InputMethod::Telex, "aaj ", "ậ "),
+        (InputMethod::Vni, "a8 ", "ă "),
+        (InputMethod::Vni, "a6 ", "â "),
+    ] {
+        assert_eq!(crate::support::app_text(method, keys), expected, "{keys}");
+    }
+    // Still restored once an onset makes the word plain English.
+    assert_eq!(crate::support::app_text(InputMethod::Telex, "caw "), "caw ");
+    assert_eq!(crate::support::app_text(InputMethod::Telex, "law "), "law ");
+    assert_eq!(crate::support::app_text(InputMethod::Telex, "baa "), "baa ");
+}
+
+#[test]
 fn mixed_english_and_vietnamese_words() {
     assert_eq!(
         crate::support::app_text(InputMethod::Telex, "card mas "),
