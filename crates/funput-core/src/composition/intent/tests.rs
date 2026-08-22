@@ -35,3 +35,9 @@ fn early_tone_and_non_adjacent_revert() {
         IntentResolution::Reverted("chana".into())
     );
 }
+
+#[test]
+fn leading_tone_letter_stays_a_literal_onset() {
+    assert_eq!(apply("fom", 'o'), IntentResolution::Literal("fomo".into()));
+    assert_eq!(apply("jom", 'o'), IntentResolution::Literal("jomo".into()));
+}
