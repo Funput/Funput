@@ -23,11 +23,24 @@
 #include <fcitx/inputcontext.h>
 #include <fcitx/inputmethodengine.h>
 #include <fcitx/instance.h>
+#include <fcitx-config/configuration.h>
+#include <fcitx-config/option.h>
 #include <fcitx-utils/event.h>
 #include <fcitx-utils/key.h>
 
 #include "compose/composer/composer.h"
 #include "settings/watch.h"
+
+// The only Fcitx5-native config: a button that opens the GTK Settings app.
+// Real preferences stay in ~/.config/Funput/settings.json — settings-gtk
+// rewrites that file wholesale, so they must not be duplicated as Options.
+// getConfigForInputMethod() defaults to getConfig(), so the IM's Configure
+// button in fcitx5-configtool uses this too. configtool 5.1.6+ launches the
+// command directly when ExternalOption is the only field.
+FCITX_CONFIGURATION(
+    FunputEngineConfig,
+    fcitx::ExternalOption openSettings{
+        this, "OpenSettings", "Open Funput Settings", "funput-settings"};);
 
 // Reading the focused client. Defined in funput_client.cpp beside the writing half —
 // talking to the client is one concern, whichever direction it goes.
@@ -42,6 +55,7 @@ public:
     void reset(const fcitx::InputMethodEntry &entry, fcitx::InputContextEvent &event) override;
     void activate(const fcitx::InputMethodEntry &entry, fcitx::InputContextEvent &event) override;
     void deactivate(const fcitx::InputMethodEntry &entry, fcitx::InputContextEvent &event) override;
+    const fcitx::Configuration *getConfig() const override { return &config_; }
 
 private:
     // Perform one plan against the client: show a preedit, or drop the preedit and
@@ -60,6 +74,7 @@ private:
     void onSettingsChanged();
 
     fcitx::Instance *instance_;
+    FunputEngineConfig config_;
     funput::Composer composer_;
     // Program() of the most recently focused app, so a live settings reload can
     // re-apply the per-app default without waiting for the next focus-in.
