@@ -95,7 +95,12 @@ export component ConvertFiles inherits VerticalLayout {
                 }
                 // A file nothing explained gets its own picker rather than being
                 // converted on a guess.
+                //
+                // Fixed width, because a `ComboBox` left to itself takes half the row
+                // and the file name is what the user is actually reading.
                 ComboBox {
+                    width: 200px;
+                    horizontal-stretch: 0;
                     model: root.charset-names;
                     current-index: row.index;
                     selected => { root.pick-file-source(i, self.current-index); }

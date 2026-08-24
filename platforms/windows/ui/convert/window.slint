@@ -60,15 +60,25 @@ export component ConvertWindow inherits Window {
         spacing: Theme.sp-md;
 
         HorizontalLayout {
-            alignment: space-between;
-            PageHeader {
-                title: "Chuyển mã";
-                subtitle: root.mode == "empty"
-                    ? "Chuyển văn bản giữa Unicode và các bảng mã cũ."
-                    : "";
+            spacing: Theme.sp-md;
+
+            // `PageHeader` binds `width: 100%`, which is right on a settings page —
+            // it is the only thing on the row there. Beside a button it would claim
+            // the whole width and push the button off the edge, so it gets its own
+            // box to fill and the row shares space between the two.
+            Rectangle {
+                horizontal-stretch: 1;
+                min-width: 0px;
+                PageHeader {
+                    title: "Chuyển mã";
+                    subtitle: root.mode == "empty"
+                        ? "Chuyển văn bản giữa Unicode và các bảng mã cũ."
+                        : "";
+                }
             }
             if root.mode != "empty": VerticalLayout {
                 alignment: start;
+                horizontal-stretch: 0;
                 GhostButton {
                     text: "Bắt đầu lại";
                     clicked => { root.restart(); }

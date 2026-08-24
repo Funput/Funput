@@ -23,19 +23,43 @@ pub(super) fn bytes(text: &str, from: Charset, to: Charset) -> Vec<u8> {
     charset::encode_bytes(&unicode.text, to).0
 }
 
-/// The warning line, or empty when nothing will be lost.
+/// The warning, or empty when nothing will be lost.
 ///
-/// **Names the characters**, which is the point. A count alone tells the user
-/// something is wrong without telling them where to look, and a conversion that
-/// quietly drops `Ề` from a letterhead is the failure this whole window exists to
-/// prevent. `normalized` is deliberately not mentioned: converting to Unicode tổ hợp
-/// respells every toned vowel and loses nothing, so counting it would teach people to
-/// ignore this line.
+/// **Two different problems, and they are not the same sentence.** Reading can fail —
+/// characters the *source* charset does not define, which means the wrong source was
+/// picked or the document is damaged, and the user can act on that. Writing can fail —
+/// characters the *target* cannot represent, which is a cost to accept or avoid by
+/// choosing elsewhere. Reporting only the second is what let a wrong source guess pass
+/// silently, which is the thing this window was built to stop.
+///
+/// The target line **names the characters**. A count tells someone something is wrong
+/// without telling them where to look, and a conversion that quietly drops `Ề` from a
+/// letterhead is the failure the whole window exists to prevent.
+///
+/// `normalized` is deliberately not mentioned: converting to Unicode tổ hợp respells
+/// every toned vowel and loses nothing, so counting it would teach people to ignore
+/// this line.
 pub(super) fn loss(text: &str, from: Charset, to: Charset) -> String {
     let unicode = charset::convert(text, from, Charset::Unicode);
-    let lost = unrepresentable(&unicode.text, to);
+    let mut lines = Vec::new();
+    if unicode.unmapped > 0 {
+        lines.push(format!(
+            "{} chữ không thuộc {} — có thể bảng mã nguồn chọn sai, hoặc tệp đã hỏng",
+            unicode.unmapped,
+            from.name()
+        ));
+    }
+    if let Some(line) = target_line(&unicode.text, to) {
+        lines.push(line);
+    }
+    lines.join("\n")
+}
+
+/// What the target cannot represent, named rather than counted.
+fn target_line(unicode: &str, to: Charset) -> Option<String> {
+    let lost = unrepresentable(unicode, to);
     if lost.is_empty() {
-        return String::new();
+        return None;
     }
     let shown: String = lost
         .iter()
@@ -49,11 +73,11 @@ pub(super) fn loss(text: &str, from: Charset, to: Charset) -> String {
     } else {
         String::new()
     };
-    format!(
+    Some(format!(
         "{} chữ không có trong {}:  {shown}{tail}",
         lost.len(),
         to.name()
-    )
+    ))
 }
 
 /// The distinct characters `to` cannot represent, in the order they first appear.
@@ -117,6 +141,24 @@ mod tests {
         assert!(line.contains('Ề'), "{line}");
         assert!(line.contains('₫'), "{line}");
         assert!(line.contains("TCVN3"), "{line}");
+    }
+
+    /// The gap a screenshot found. A character the *source* charset does not define
+    /// used to pass through in silence, so picking the wrong source looked like a
+    /// clean conversion. `U+0131` has no TCVN3 code.
+    #[test]
+    fn a_character_the_source_charset_does_not_define_is_reported() {
+        let line = loss("ngh\u{131}a", Charset::Tcvn3, Charset::Unicode);
+        assert!(line.contains("không thuộc"), "{line}");
+        assert!(line.contains("TCVN3"), "{line}");
+    }
+
+    /// The two problems are separate sentences, because they call for different
+    /// things: one says the source is wrong, the other says the target cannot cope.
+    #[test]
+    fn a_source_and_a_target_problem_are_reported_apart() {
+        let line = loss("ngh\u{131}a Ề", Charset::Tcvn3, Charset::Tcvn3);
+        assert_eq!(line.lines().count(), 2, "{line}");
     }
 
     /// Silent when nothing is lost, so the line keeps meaning something.
