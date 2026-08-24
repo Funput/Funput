@@ -39,8 +39,10 @@ export component ConvertEmpty inherits Rectangle {
         // charset for a whole folder, so nobody expects a batch to be read file by
         // file. It is the reason to drag more than one thing in here.
         Text {
+            // The folder name has to match `files::OUT_DIR` exactly — this sentence is
+            // a promise about where the file will be, and the user goes looking there.
             text: "Hỗ trợ chuyển đổi nhiều tệp cùng lúc, "
-                + "tệp chuyển đổi xong sẽ được lưu vào thư mục Đã chuyển đổi - cùng cấp với tệp nguồn.";
+                + "tệp chuyển đổi xong sẽ được lưu vào thư mục Đã chuyển mã — cùng cấp với tệp nguồn.";
             font-size: Theme.font-caption;
             color: Theme.subtle;
             horizontal-alignment: center;

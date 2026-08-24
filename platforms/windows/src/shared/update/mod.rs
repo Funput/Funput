@@ -94,8 +94,6 @@ impl std::error::Error for Error {}
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// The feed URL, allowing a debug-build override (`FUNPUT_UPDATE_FEED`) so the
-
 /// Whether `candidate` is a strictly newer version than this build.
 pub fn is_newer(candidate: &str) -> bool {
     version_is_newer(candidate, CURRENT_VERSION)
