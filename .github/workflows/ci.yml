@@ -38,18 +38,32 @@ jobs:
       - name: Test
         run: cargo test --workspace
 
-      # Optional features are invisible to the three steps above: with `charset`
-      # off, nothing lints or runs `funput-core/src/charset/**` and it would rot
-      # unnoticed. Same runner, so the cache is already warm and this costs one
-      # incremental build.
+      # `funput-config` enables `funput-core/charset`, and `funput-desktop` depends
+      # on it, so the three steps above resolve the feature **on** for the whole
+      # workspace. That covers the charset module — and leaves nothing checking the
+      # build *without* it, which is the shape the iOS and Android keyboards get
+      # from their `-p funput-ffi` / `-p funput-jni` scripts.
+      #
+      # So these two are the inverse of what they used to be. Naming the packages
+      # keeps `funput-config` out of the resolve graph, which is what keeps the
+      # feature off.
       #
       # Format and the line budget need no second pass: `cargo fmt` walks `mod`
       # items whatever their `cfg`, and check-loc.sh walks the filesystem.
-      - name: Clippy (charset)
-        run: cargo clippy -p funput-core --all-targets --features charset -- -D warnings
+      - name: Clippy (no charset — the mobile shape)
+        run: cargo clippy -p funput-core -p funput-ffi --all-targets -- -D warnings
 
-      - name: Test (charset)
-        run: cargo test -p funput-core --features charset
+      - name: Test (no charset — the mobile shape)
+        run: cargo test -p funput-core -p funput-ffi
+
+      # Compiling proves charset-off still builds; it does not prove the mobile
+      # artifacts are free of it. Add `funput-config` to `funput-ffi`'s dependencies
+      # and the step above stays green while the charset tables quietly land in the
+      # keyboard's cdylib. Only the dependency graph answers that.
+      - name: charset stays out of the mobile crates
+        run: |
+          ! cargo tree -p funput-ffi -e features | grep -q charset
+          ! cargo tree -p funput-jni -e features | grep -q charset
 
       - name: Line budget
         run: bash scripts/check-loc.sh
