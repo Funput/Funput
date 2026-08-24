@@ -474,4 +474,8 @@ Mỗi mục một PR:
    là đổi hợp đồng) và `encode_bytes` (ghi tệp cũ ra byte). Nó cũng là chỗ **hai cửa** lộ rõ nhất:
    tệp TCVN3 mở bằng Notepad rồi lưu lại là UTF-8 hợp lệ mà nội dung vẫn TCVN3, và đọc lại theo
    byte sẽ ra `Ã` ở chỗ tài liệu có `Ö`.
-10. UI Windows → 11. UI Linux GTK.
+10. **UI Windows** — cửa sổ Chuyển mã riêng. Bốn nước đi làm nên nét riêng, và cả bốn đều
+    mọc ra từ thứ UniKey không có (`detect` + hai bộ đếm): không hỏi bảng mã nguồn mà **nói**
+    ra; thấy trước/sau theo thời gian thực; **gọi tên** những chữ sẽ mất chứ không chỉ đếm; và
+    nhận diện **từng tệp** trong lô thay vì ép một bảng mã cho cả thư mục.
+11. UI Linux GTK.

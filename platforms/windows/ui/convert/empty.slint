@@ -1,0 +1,51 @@
+// The starting state: one target for both ways in.
+//
+// Files arrive by drop, which Slint cannot deliver — `ui/convert/drop.rs` accepts
+// them through Win32 `WM_DROPFILES` on the window handle. Nothing here listens for
+// a drop; this is only what the user is told and the two buttons that do the same
+// thing without dragging.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, PrimaryButton, GhostButton } from "../theme/mod.slint";
+
+export component ConvertEmpty inherits Rectangle {
+    callback pick-files();
+    callback paste();
+
+    vertical-stretch: 1;
+    border-radius: Theme.r-card;
+    background: Theme.card-bg;
+    border-width: 1px;
+    border-color: Theme.card-border;
+
+    VerticalLayout {
+        alignment: center;
+        spacing: Theme.sp-md;
+
+        Text {
+            text: "Thả tệp vào đây, hoặc dán văn bản";
+            font-size: Theme.font-body;
+            font-weight: 600;
+            color: Palette.foreground;
+            horizontal-alignment: center;
+        }
+        Text {
+            text: "Funput tự nhận ra bảng mã — không cần chọn nguồn.";
+            font-size: Theme.font-caption;
+            color: Theme.subtle;
+            horizontal-alignment: center;
+        }
+        HorizontalLayout {
+            alignment: center;
+            spacing: Theme.sp-sm;
+            PrimaryButton {
+                text: "Dán văn bản";
+                clicked => { root.paste(); }
+            }
+            GhostButton {
+                text: "Chọn tệp…";
+                clicked => { root.pick-files(); }
+            }
+        }
+    }
+}

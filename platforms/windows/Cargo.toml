@@ -55,7 +55,9 @@ ed25519-dalek = "3" # verify the Sparkle-compatible Ed25519 signature
 base64 = "0.22" # decode the public key + signature
 semver = "1" # compare the manifest version against CARGO_PKG_VERSION
 self-replace = "1" # replace the currently running executable (crate `self_replace`)
-funput-core = { path = "../../crates/funput-core" }
+# `charset` is spelled out rather than left to feature unification through
+# funput-config: this shell calls it directly, so it should ask for it directly.
+funput-core = { path = "../../crates/funput-core", features = ["charset"] }
 funput-engine = { path = "../../crates/funput-engine" }
 funput-desktop = { path = "../../crates/funput-desktop" }
 # Settings model + Export/Import document, shared with the other desktop shells.
@@ -81,6 +83,13 @@ windows = { version = "0.62", features = [
     # Monitor work area, so the Control Center flyout can be kept on screen next to
     # a tray icon that sits in a corner (see ui/control_center/placement.rs).
     "Win32_Graphics_Gdi",
+    # Chuyển mã window: accept dropped files (DragQueryFileW) and subclass the
+    # Slint HWND to see WM_DROPFILES, which the winit backend does not forward.
+    "Win32_UI_Shell",
+    # And write the converted text back to the clipboard.
+    "Win32_System_DataExchange",
+    "Win32_System_Memory",
+    "Win32_System_Ole",
 ] }
 
 # Size-first for the shell (the slint UI dominates the binary), speed-first for

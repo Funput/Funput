@@ -1,0 +1,111 @@
+// Chuyển mã window: paste a paragraph or drop files, see what it is, convert it.
+//
+// Three states, and the content picks which one — there is no mode switch. What the
+// user put in already says whether this is a paragraph or a batch.
+//
+// No charset is named in this package. The lists come from `charset::ALL` as plain
+// strings and everything is index-based, so implementing VISCII in core lengthens
+// these menus without a line changing here.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, PageHeader, GhostButton } from "../theme/mod.slint";
+import { ConvertEmpty } from "empty.slint";
+import { ConvertText } from "text.slint";
+import { ConvertFiles, FileRow } from "files.slint";
+
+export { FileRow }
+
+export component ConvertWindow inherits Window {
+    title: "Funput — Chuyển mã";
+    icon: @image-url("../../../../assets/logo.png");
+    preferred-width: 760px;
+    preferred-height: 560px;
+    min-width: 640px;
+    min-height: 460px;
+    default-font-family: "Segoe UI Variable Text";
+    background: Theme.mica ? transparent : Theme.window-base;
+
+    // "empty" | "text" | "files"
+    in property <string> mode: "empty";
+    // Display names from `charset::ALL`, in its order. Index is the identity.
+    in property <[string]> charset-names;
+    in-out property <int> target-index;
+
+    // Text state.
+    in-out property <string> input-text;
+    in property <string> output-text;
+    in property <int> source-index: -1;
+    in property <string> loss;
+
+    // Files state.
+    in property <[FileRow]> files;
+    in property <string> out-dir;
+    in property <string> action-label;
+    in property <bool> can-convert;
+    in property <string> progress;
+
+    callback text-changed(string);
+    callback pick-files();
+    callback paste();
+    callback pick-target(int);
+    callback pick-source(int);
+    callback pick-file-source(int, int);
+    callback copy-result();
+    callback save-result();
+    callback convert-files();
+    callback restart();
+
+    VerticalLayout {
+        padding: Theme.sp-lg;
+        spacing: Theme.sp-md;
+
+        HorizontalLayout {
+            alignment: space-between;
+            PageHeader {
+                title: "Chuyển mã";
+                subtitle: root.mode == "empty"
+                    ? "Chuyển văn bản giữa Unicode và các bảng mã cũ."
+                    : "";
+            }
+            if root.mode != "empty": VerticalLayout {
+                alignment: start;
+                GhostButton {
+                    text: "Bắt đầu lại";
+                    clicked => { root.restart(); }
+                }
+            }
+        }
+
+        if root.mode == "empty": ConvertEmpty {
+            pick-files => { root.pick-files(); }
+            paste => { root.paste(); }
+        }
+
+        if root.mode == "text": ConvertText {
+            charset-names: root.charset-names;
+            source-index: root.source-index;
+            target-index: root.target-index;
+            input-text <=> root.input-text;
+            output-text: root.output-text;
+            loss: root.loss;
+            text-changed(t) => { root.text-changed(t); }
+            pick-source(i) => { root.pick-source(i); }
+            pick-target(i) => { root.pick-target(i); }
+            copy-result => { root.copy-result(); }
+            save-result => { root.save-result(); }
+        }
+
+        if root.mode == "files": ConvertFiles {
+            charset-names: root.charset-names;
+            target-index: root.target-index;
+            files: root.files;
+            out-dir: root.out-dir;
+            action-label: root.action-label;
+            can-convert: root.can-convert;
+            progress: root.progress;
+            pick-target(i) => { root.pick-target(i); }
+            pick-file-source(row, i) => { root.pick-file-source(row, i); }
+            convert-files => { root.convert-files(); }
+        }
+    }
+}

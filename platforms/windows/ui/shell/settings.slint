@@ -65,6 +65,7 @@ export component SettingsWindow inherits Window {
     callback export-config();
     callback import-config();
     callback import-unikey();
+    callback open-convert();
 
     in-out property <string> active: "overview";
     private property <string> previous-active: "overview";
@@ -128,6 +129,7 @@ export component SettingsWindow inherits Window {
             export-config() => { root.export-config(); }
             import-config() => { root.import-config(); }
             import-unikey() => { root.import-unikey(); }
+            open-convert() => { root.open-convert(); }
         }
     }
 

@@ -15,6 +15,7 @@
 //! synthetic input — so the Vietnamese fields compose in-process via [`compose`].
 
 mod control_center;
+mod convert;
 mod lifecycle;
 mod models;
 mod onboarding;
@@ -27,8 +28,8 @@ pub mod recorder;
 pub mod system_accent;
 
 pub(crate) use lifecycle::{
-    current_child_handle, launch_onboarding, launch_settings, reap_ui_child, run_control_center,
-    run_onboarding, run_settings, terminate_children, terminate_parent_for_update,
-    toggle_control_center,
+    current_child_handle, launch_convert, launch_onboarding, launch_settings, reap_ui_child,
+    run_control_center, run_convert, run_onboarding, run_settings, terminate_children,
+    terminate_parent_for_update, toggle_control_center,
 };
 pub(crate) use settings_window::set_update_state;

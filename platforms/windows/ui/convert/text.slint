@@ -1,0 +1,121 @@
+// Text state: what you have on the left, what it will become on the right.
+//
+// The source is *stated*, not asked for — `Đây là TCVN3 (ABC)` with the picker
+// demoted to an escape hatch. That inversion is the point of the whole window: the
+// tool can read the document, so it should not make the user guess first.
+
+import { Palette, ComboBox, TextEdit } from "std-widgets.slint";
+import { Theme, PrimaryButton, GhostButton } from "../theme/mod.slint";
+
+export component ConvertText inherits VerticalLayout {
+    in property <[string]> charset-names;
+    in property <int> source-index;
+    in property <int> target-index;
+    in-out property <string> input-text;
+    in property <string> output-text;
+    in property <string> loss;
+
+    callback text-changed(string);
+    callback pick-source(int);
+    callback pick-target(int);
+    callback copy-result();
+    callback save-result();
+
+    spacing: Theme.sp-sm;
+    vertical-stretch: 1;
+
+    HorizontalLayout {
+        alignment: space-between;
+        spacing: Theme.sp-md;
+
+        HorizontalLayout {
+            spacing: Theme.sp-sm;
+            VerticalLayout {
+                alignment: center;
+                Text {
+                    text: root.source-index >= 0 ? "Đây là" : "Chưa đoán được — chọn bảng mã:";
+                    font-size: Theme.font-body;
+                    color: root.source-index >= 0 ? Theme.subtle : Theme.warn;
+                }
+            }
+            ComboBox {
+                model: root.charset-names;
+                current-index: root.source-index;
+                selected => { root.pick-source(self.current-index); }
+            }
+        }
+
+        HorizontalLayout {
+            spacing: Theme.sp-sm;
+            VerticalLayout {
+                alignment: center;
+                Text {
+                    text: "Sang";
+                    font-size: Theme.font-body;
+                    color: Theme.subtle;
+                }
+            }
+            ComboBox {
+                model: root.charset-names;
+                current-index: root.target-index;
+                selected => { root.pick-target(self.current-index); }
+            }
+        }
+    }
+
+    HorizontalLayout {
+        spacing: Theme.sp-sm;
+        vertical-stretch: 1;
+
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: Theme.sp-xs;
+            Text {
+                text: "Đang có";
+                font-size: Theme.font-caption;
+                color: Theme.subtle;
+            }
+            TextEdit {
+                text <=> root.input-text;
+                wrap: word-wrap;
+                edited => { root.text-changed(self.text); }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: Theme.sp-xs;
+            Text {
+                text: "Sẽ thành";
+                font-size: Theme.font-caption;
+                color: Theme.subtle;
+            }
+            TextEdit {
+                text: root.output-text;
+                read-only: true;
+                wrap: word-wrap;
+            }
+        }
+    }
+
+    // Only when something will actually be lost. A line that shows every time is a
+    // line people stop reading.
+    if root.loss != "": Text {
+        text: root.loss;
+        font-size: Theme.font-caption;
+        color: Theme.warn;
+        wrap: word-wrap;
+    }
+
+    HorizontalLayout {
+        alignment: end;
+        spacing: Theme.sp-sm;
+        GhostButton {
+            text: "Lưu tệp…";
+            clicked => { root.save-result(); }
+        }
+        PrimaryButton {
+            text: "Chép kết quả";
+            clicked => { root.copy-result(); }
+        }
+    }
+}

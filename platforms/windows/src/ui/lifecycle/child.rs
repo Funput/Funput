@@ -22,6 +22,7 @@ pub(super) enum UiKind {
     Settings,
     Onboarding,
     ControlCenter,
+    Convert,
 }
 
 pub(super) const PARENT_PID_ENV: &str = "FUNPUT_PARENT_PID";
@@ -42,6 +43,13 @@ pub(super) fn launch_settings_tab(tab: &str, check_update: bool) {
         "--settings"
     };
     spawn_child(arg, UiKind::Settings, &[(SETTINGS_ACTIVE_ENV, tab)]);
+}
+
+/// Open the Chuyển mã tool. Like every window here it replaces whatever is open,
+/// which is why Settings closes when this is chosen from its Dữ liệu page.
+pub(crate) fn launch_convert() {
+    terminate_children();
+    spawn_child("--convert", UiKind::Convert, &[]);
 }
 
 pub(crate) fn launch_onboarding() {
