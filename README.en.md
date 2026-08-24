@@ -3,24 +3,19 @@
 </p>
 
 <p align="center">
-  <img src="assets/logo.png" width="256" alt="Funput logo">
+  <img
+    src="assets/horizontal-lockup/gradient.png"
+    width="520"
+    alt="Funput"
+  >
 </p>
-
-<pre align="center">
-   ███████╗██╗   ██╗███╗   ██╗██████╗ ██╗   ██╗████████╗
-   ██╔════╝██║   ██║████╗  ██║██╔══██╗██║   ██║╚══██╔══╝
-█████╗  ██║   ██║██╔██╗ ██║██████╔╝██║   ██║   ██║
-██╔══╝  ██║   ██║██║╚██╗██║██╔═══╝ ██║   ██║   ██║
-██║     ╚██████╔╝██║ ╚████║██║     ╚██████╔╝   ██║
-╚═╝      ╚═════╝ ╚═╝  ╚═══╝╚═╝      ╚═════╝    ╚═╝
-</pre>
 
 ---
 
-**Funput** is an open-source Vietnamese input method — lightweight, privacy-focused,
-and designed for each operating system. Type with Telex or VNI on iOS, Android,
-macOS, Windows, and Linux. Every platform shares the same processing core for
-consistent typing behavior.
+<p align="center">
+  <strong>Funput</strong> is an open-source Vietnamese input method and keyboard that is lightweight and privacy-focused.<br>
+  It supports Telex and VNI across iOS, Android, macOS, Windows, and Linux, delivering a familiar and consistent Vietnamese typing experience across all your devices.
+</p>
 
 ## Get started
 
@@ -28,7 +23,7 @@ consistent typing behavior.
   <a href="https://github.com/Funput/Funput/releases/latest">
     <img src="https://img.shields.io/badge/Download-Latest_release-22C55E?style=for-the-badge&logo=github&logoColor=white" alt="Download the latest Funput release">
   </a>
-  <a href="https://docs.funput.app/">
+  <a href="https://docs.funput.app/docs/install/">
     <img src="https://img.shields.io/badge/Documentation-Installation_guide-2563EB?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Read the Funput installation guide">
   </a>
   <a href="https://github.com/Funput/Funput/issues">
@@ -43,16 +38,13 @@ consistent typing behavior.
 | iOS | Released | [Get it on the App Store](https://apps.apple.com/vn/app/id6788829996) |
 | macOS | Released | [Download the latest release](https://github.com/Funput/Funput/releases/latest) |
 | Windows | Released | [Download the latest release](https://github.com/Funput/Funput/releases/latest) |
-| Linux | Released | [Read the installation guide](https://docs.funput.app/) |
+| Linux | Released | [Read the installation guide](https://docs.funput.app/docs/install/linux) |
 | Android | Closed testing | [Email to join](mailto:hello@funput.app) |
 
-Google Play requires a full **14-day** closed test with a minimum number of testers
-before production. The previous round did not meet that bar, so Funput has to run
-another 14-day loop.
-
-If you use Android and want to help get Funput onto the Play Store, email
-[hello@funput.app](mailto:hello@funput.app) (preferably from the Gmail account
-tied to Google Play). We will invite you into the closed testing track.
+> [!NOTE]
+> Google Play requires a full **14-day** closed test with a minimum number of testers before production. The previous round did not meet that bar, so Funput has to run another 14-day loop.
+>
+> If you use Android and want to help get Funput onto the Play Store, email [hello@funput.app](mailto:hello@funput.app) (preferably from the Gmail account tied to Google Play). We will invite you into the closed testing track.
 
 ## Interface
 
@@ -72,22 +64,24 @@ tied to Google Play). We will invite you into the closed testing track.
   <sub>Settings on macOS and Windows.</sub>
 </p>
 
-## Performance
+## Architecture
 
-The core is written in Rust. Per-keystroke cost, measured with Criterion on a
-release build:
+All five platforms share one Rust core. Each shell talks to the core through the
+right bridge: [`funput-ffi`](crates/funput-ffi) (C ABI) for iOS, macOS, and Linux;
+[`funput-jni`](crates/funput-jni) for Android; a direct
+[`funput-engine`](crates/funput-engine) link for Windows.
 
-| Component / API | Measured scope | Telex | VNI |
-|---|---|---:|---:|
-| [`funput-core::apply`](crates/funput-core) | Telex/VNI transformation core | 0.049 µs/key | 0.042 µs/key |
-| [`funput-engine::Engine::process_char`](crates/funput-engine) | Full pipeline (boundaries + English restore) | 0.106 µs/key | 0.096 µs/key |
-| [`funput-ffi::{funput_process_char, funput_buffer}`](crates/funput-ffi) | Engine through the C ABI + composed-buffer reads | 0.114 µs/key | 0.106 µs/key |
-
-> Measured from a release build on an Apple M-series machine; covers Funput's own
-> processing only (excludes OS keyboard-event delivery and host-app rendering).
-> Numbers depend on hardware — re-run on yours.
-
-See the [benchmark methodology, source code, and reproduction instructions](benchmarks/README.md).
+<p align="center">
+  <a href="assets/design/architecture.png">
+    <img
+      src="assets/design/architecture.png"
+      width="960"
+      alt="Funput architecture: iOS, macOS, and Linux via funput-ffi; Android via funput-jni; Windows via direct link; all converging on funput-engine and funput-core"
+    >
+  </a>
+  <br>
+  <sub><a href="assets/design/architecture.png">Click for full-size image</a></sub>
+</p>
 
 ## Project status
 
