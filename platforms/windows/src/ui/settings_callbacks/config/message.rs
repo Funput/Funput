@@ -36,24 +36,14 @@ pub(super) fn unikey_body(summary: &ImportSummary, charset: Option<Charset>) -> 
     // Unicode had nothing guessed about it, and warning on every import teaches the
     // user to ignore the line that matters.
     match charset.filter(|&c| c != Charset::Unicode) {
+        // The name comes from core rather than from here: this window and the Linux
+        // settings window would otherwise each invent their own, and a charset added
+        // later would go unnamed in whichever one nobody remembered to update.
         Some(other) => format!(
             "{counts}\nĐọc bằng bảng mã {} — hãy kiểm lại nếu chữ trông lạ.",
-            charset_label(other)
+            other.name()
         ),
         None => counts,
-    }
-}
-
-/// What to call a charset in front of a user. `Charset` is `#[non_exhaustive]`, so
-/// the wildcard is required rather than a shortcut — and a charset with no name
-/// here simply goes unmentioned, which is better than a debug string.
-pub(super) fn charset_label(charset: Charset) -> &'static str {
-    match charset {
-        Charset::Unicode => "Unicode",
-        Charset::Tcvn3 => "TCVN3 (ABC)",
-        Charset::VniWindows => "VNI-Windows",
-        Charset::UnicodeCombining => "Unicode tổ hợp",
-        _ => "khác",
     }
 }
 

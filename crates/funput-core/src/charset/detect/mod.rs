@@ -23,21 +23,13 @@
 
 mod score;
 
-use super::{Charset, Conversion, convert, decode_bytes};
+use super::{ALL, Charset, Conversion, convert, decode_bytes};
 use score::{Score, score};
 
 /// How much text is enough to decide. Four full decodings run over this, and the
 /// answer stops changing long before it: a few hundred words already separate the
 /// charsets by a wide margin.
 const PREFIX: usize = 8 * 1024;
-
-/// Every charset detection considers.
-const CANDIDATES: [Charset; 4] = [
-    Charset::Unicode,
-    Charset::Tcvn3,
-    Charset::VniWindows,
-    Charset::UnicodeCombining,
-];
 
 /// Guess the charset `text` is written in, or `None` when the evidence does not
 /// pick one out.
@@ -64,7 +56,7 @@ pub fn detect_bytes(bytes: &[u8]) -> Option<Charset> {
 
 /// The candidate that explains `decoded` best, if one does.
 fn best(decoded: impl Fn(Charset) -> Conversion) -> Option<Charset> {
-    let mut ranked: Vec<(Score, Charset)> = CANDIDATES
+    let mut ranked: Vec<(Score, Charset)> = ALL
         .iter()
         .map(|&charset| (score(&decoded(charset)), charset))
         .collect();
@@ -87,35 +79,6 @@ fn prefix(text: &str) -> &str {
     }
     &text[..end]
 }
-
-/// Adding a `Charset` variant must break the build here rather than silently drop
-/// the charset out of detection.
-///
-/// [`CANDIDATES`] is an array, and an array throws away the exhaustiveness that
-/// [`super::codecs`] gets for free from its `match`. This is the array's substitute:
-/// the match below fails to compile on a fifth variant, and the assertion catches a
-/// variant that has a slot but was left out of the array.
-const _: () = {
-    const fn slot(charset: Charset) -> usize {
-        match charset {
-            Charset::Unicode => 0,
-            Charset::Tcvn3 => 1,
-            Charset::VniWindows => 2,
-            Charset::UnicodeCombining => 3,
-        }
-    }
-    let mut listed = [false; CANDIDATES.len()];
-    let mut i = 0;
-    while i < CANDIDATES.len() {
-        listed[slot(CANDIDATES[i])] = true;
-        i += 1;
-    }
-    let mut i = 0;
-    while i < listed.len() {
-        assert!(listed[i], "a charset has no entry in CANDIDATES");
-        i += 1;
-    }
-};
 
 #[cfg(test)]
 mod tests;

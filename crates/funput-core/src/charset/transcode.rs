@@ -5,9 +5,9 @@
 //! knowledge in [`crate::charset::pivot`], so this file stays the same shape no
 //! matter how many charsets exist.
 
+use super::Charset;
 use super::codecs;
 use super::pivot::Atom;
-use super::{Charset, Conversion};
 
 /// A read window onto the source, positioned at a unit boundary.
 ///
@@ -46,6 +46,32 @@ impl Cursor<'_> {
     pub(super) fn second(&self) -> Option<char> {
         self.following().next()
     }
+}
+
+/// Converted text, and what happened to it on the way.
+///
+/// Both counts are in characters, and neither counts *lost* text: conversion
+/// always writes something for every character, so the output holds as much as the
+/// input did. A character lands in at most one of them.
+///
+/// **`unmapped`** — something was lost or guessed, so the output is not certainly
+/// equivalent to the input. Either the target cannot spell it (a `₫`, which no
+/// legacy charset has a code for; an uppercase toned vowel, which is TCVN3's own
+/// gap rather than a general one) or the source never defined it, making the
+/// reading a guess. Text read with the wrong source charset is mostly unrecognized
+/// units, so a count near the length of the input is the clearest signal there is
+/// that the user picked the wrong bảng mã.
+///
+/// **`normalized`** — understood beyond doubt, nothing lost, only the spelling
+/// changed. Reading NFC text as Unicode tổ hợp lands here: every letter comes
+/// through intact, just written the charset's own way. Keeping it out of
+/// `unmapped` is what lets an interface say "nothing was lost" and mean it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct Conversion {
+    pub text: String,
+    pub unmapped: usize,
+    pub normalized: usize,
 }
 
 /// How faithfully a codec managed to read the text at the cursor.
