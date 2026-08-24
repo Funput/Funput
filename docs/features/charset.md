@@ -2,8 +2,8 @@
 
 ## Trạng thái
 
-Đã có: khung core, **TCVN3**, **VNI-Windows**. Còn lại: Unicode tổ hợp, `detect()`,
-rồi các consumer (xem "Thứ tự hiện thực" ở cuối).
+Đã có: khung core và cả bốn bảng mã — **TCVN3**, **VNI-Windows**, **Unicode tổ hợp**.
+Còn lại: `detect()`, rồi các consumer (xem "Thứ tự hiện thực" ở cuối).
 
 Tài liệu này chốt mô hình *trước* khi có code và được review riêng; nó vẫn là nơi
 mọi quyết định thiết kế sống, nên mỗi bảng mã mới cập nhật lại nó trong cùng PR.
@@ -225,18 +225,72 @@ v1 **rộng rãi khi nhận, nghiêm ngặt khi xuất**:
 - **Encode** luôn xuất theo quy ước UniKey: nguyên âm có hình dạng dựng sẵn, dấu
   thanh rời.
 
-## Ngữ nghĩa `unmapped`
+### Thứ tự dấu không cố định — và một cái bẫy chí mạng
 
-```rust
-struct Conversion { text: String, unmapped: usize }
+NFD chuẩn **không** luôn đặt dấu hình dạng trước. Bốn chữ đặt dấu thanh trước, vì
+`U+0323` (nặng) có combining class 220 còn mũ/trăng là 230:
+
+```text
+ặ = 0061 0323 0306      ậ = 0061 0323 0302
+ệ = 0065 0323 0302      ộ = 006F 0323 0302
 ```
 
-`unmapped` đếm số ký tự **không đi qua nguyên vẹn**. Một ký tự bị đếm vì một trong
-hai lý do, và chỉ đếm một lần:
+Mọi trường hợp hai dấu khác đều hình-dạng-trước (`ợ` = `006F 031B 0323`). Vì chính
+thứ tự đã lật, **nhận dấu theo thứ tự bất kỳ** vừa ít việc hơn vừa đúng hơn là mã
+hoá lại luật combining class.
+
+Cái bẫy: cách hiện thực hiển nhiên là gộp lần lượt từng dấu vào một `char`. Nó
+**hỏng**. `apply_shape_to_vowel` gọi `base_vowel`, mà hàm đó bóc **cả thanh lẫn hình
+dạng** — test của chính crate tên là `apply_shape_to_vowel_strips_tone`. Gộp NFD của
+`ậ` sẽ ra `ạ` rồi `â`, mất dấu nặng. Trúng đúng bốn chữ trên, tức là `Việt`, `một`,
+`cộng`, `nặng`.
+
+Nên codec tích dấu vào **các ô rời** rồi ghép **một lần** ở cuối. Và **ô đã đầy thì
+kết thúc chữ**: `apply_tone` *thay* dấu chứ không từ chối, nên nhận dấu thanh thứ hai
+sẽ âm thầm nuốt mất dấu thứ nhất.
+
+### Chữ nào là "đúng chính tả" của bảng mã này
+
+```text
+Exact khi: hình dạng (nếu có) nằm sẵn trong ký tự nền
+       và  thanh điệu (nếu có) đến từ một dấu rời
+```
+
+`ấ` dựng sẵn không đạt (thanh chưa tách), NFD `a`+`0302`+`0301` cũng không (hình dạng
+bị tách). Cả hai vẫn đọc đúng, vẫn được viết lại — và vào `normalized`, **không** vào
+`unmapped`. Hệ quả phải biết trước: **đọc văn bản dựng sẵn thông thường bằng bảng mã
+này cho `normalized` ≈ một trên mỗi chữ có dấu.** Đúng như vậy; `detect()` phải tính
+đến điều đó.
+
+### Thứ duy nhất nó không viết được
+
+Không có gì — đây là Unicode, nên `₫` và `日` đi qua chính xác, điều mà không bảng mã
+cũ nào làm được. Ngoại lệ duy nhất là **một dấu rời đi lạc**: viết nó sau một chữ thì
+hai thứ dính vào nhau và văn bản đọc lại thành chữ khác. Đó là bản sao của ca `ø`
+dính dấu bên VNI.
+
+## Hai bộ đếm
+
+```rust
+struct Conversion { text: String, unmapped: usize, normalized: usize }
+```
+
+Hai chuyện khác hẳn nhau, nên hai con số. Một ký tự rơi vào **nhiều nhất một** ô, và
+mất mát thắng chuẩn hoá.
+
+**`normalized`** — hiểu chắc chắn, không mất gì, **chỉ cách viết đổi**. Đọc văn bản
+dựng sẵn hay NFD bằng bảng mã tổ hợp rơi vào đây. Gộp nó vào `unmapped` sẽ khiến giao
+diện báo "N ký tự không chính xác" cho một tài liệu hoàn toàn lành lặn.
+
+**`unmapped`** — có thứ bị **mất hoặc phải đoán**. Một ký tự bị đếm vì một trong hai
+lý do:
 
 - **Bảng mã đích không viết được nó** — `Ề` trong TCVN3, hay `₫` trong bất kỳ bảng
   mã cũ nào.
 - **Bảng mã nguồn chưa từng định nghĩa nó**, nên việc đọc chỉ là phỏng đoán.
+
+Bên trong, `Decoded` mang `enum Reading { Exact, Rewritten, Unknown }` thay cho một
+cờ bool — đó là thứ cho driver biết đếm vào ô nào.
 
 Lý do thứ hai đáng giá hơn vẻ ngoài của nó. Đọc nhầm bảng mã thì hầu hết đơn vị đều
 không nhận ra được, nên một con số gần bằng độ dài văn bản chính là **tín hiệu rõ
@@ -290,8 +344,8 @@ match. Trục, driver và `detect` không đổi.
 ## API công khai
 
 ```rust
-#[non_exhaustive] pub enum Charset { Unicode, Tcvn3, VniWindows, /* … */ }
-#[non_exhaustive] pub struct Conversion { pub text: String, pub unmapped: usize }
+#[non_exhaustive] pub enum Charset { Unicode, Tcvn3, VniWindows, UnicodeCombining }
+#[non_exhaustive] pub struct Conversion { pub text: String, pub unmapped: usize, pub normalized: usize }
 
 pub fn convert(text: &str, from: Charset, to: Charset) -> Conversion;
 pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion;
@@ -318,6 +372,8 @@ Mỗi mục một PR:
 3. **VNI-Windows**. Bảng mã đầu tiên có chữ dài hai ký tự, nên nó cũng là phép thử
    thật đầu tiên cho mô hình trục: `TCVN3 ↔ VNI` chạy được mà không codec nào biết
    codec kia.
-4. Unicode tổ hợp → 5. `detect()`.
+4. **Unicode tổ hợp**. Bảng mã duy nhất không phải byte, nên nó làm lộ hai lỗi thật
+   trong `decode_bytes` và buộc `unmapped` tách làm hai.
+5. `detect()`.
 6. `funput-config` (sửa import UniKey) → 7. `funput convert` → 8. UI Windows →
    9. UI Linux GTK.

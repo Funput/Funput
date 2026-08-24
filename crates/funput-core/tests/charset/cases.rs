@@ -64,3 +64,37 @@ pub const VNI_LOSSY: &[(&str, &str, usize, &str)] = &[
     // huyền mark, so reading the result back fuses it onto the `a` before it.
     ("a\u{F8}", "a\u{F8}", 1, "à"),
 ];
+
+/// The same phrases in Unicode tổ hợp: `(Unicode, tổ hợp)`.
+///
+/// A different escaping rule applies here, and it matters. The legacy columns
+/// escape everything because their characters are Latin-1 mojibake that mean
+/// nothing on their own. This column's *bases* are real letters, so they stay
+/// literal — but every **combining mark** is always `\u{..}`, because `"ệ"` and
+/// `"ê\u{323}"` are indistinguishable on screen. A fixture that got silently
+/// precomposed would make these tests assert nothing at all.
+pub const COMBINING_EXACT: &[(&str, &str)] = &[
+    ("Việt Nam", "Viê\u{323}t Nam"),
+    ("Chào bạn", "Cha\u{300}o ba\u{323}n"),
+    ("đường", "đươ\u{300}ng"),
+    ("Nghị định", "Nghi\u{323} đi\u{323}nh"),
+    (
+        "Cộng hòa Xã hội Chủ nghĩa Việt Nam",
+        "Cô\u{323}ng ho\u{300}a Xa\u{303} hô\u{323}i Chu\u{309} nghi\u{303}a Viê\u{323}t Nam",
+    ),
+    ("Ha Noi 1945", "Ha Noi 1945"),
+];
+
+/// Spellings Unicode tổ hợp reads but does not write: `(input, what it becomes,
+/// normalized)`.
+///
+/// There is no `COMBINING_LOSSY`. This charset is Unicode — it spells everything,
+/// so its only imperfection is a source written another way, and that costs
+/// nothing. `unmapped` is zero on every row here; the count that moves is
+/// `normalized`.
+pub const NON_CANONICAL: &[(&str, &str, usize)] = &[
+    ("a\u{302}\u{301}", "â\u{301}", 1), // full NFD
+    ("a\u{323}\u{302}", "â\u{323}", 1), // full NFD, tone first
+    ("ấ", "â\u{301}", 1),               // precomposed
+    ("Viê\u{323}t", "Viê\u{323}t", 0),  // already canonical
+];

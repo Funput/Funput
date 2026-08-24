@@ -11,9 +11,9 @@ use super::{Charset, Conversion};
 
 /// A read window onto the source, positioned at a unit boundary.
 ///
-/// A codec reads as far ahead as its encoding needs and reports how much it took.
-/// TCVN3 spells every letter in one char and only ever reads [`Cursor::first`];
-/// VNI-Windows spells most of them as a base plus a mark and needs both.
+/// A codec reads as far ahead as its spelling needs and reports how much it took.
+/// TCVN3 spells every letter in one char; VNI-Windows takes a base and a mark;
+/// Unicode tổ hợp can take a base and two combining marks.
 pub(super) struct Cursor<'a> {
     rest: &'a str,
 }
@@ -28,14 +28,37 @@ impl Cursor<'_> {
             .expect("cursor built on non-empty text")
     }
 
-    /// The char after it, or `None` at the end of the text.
+    /// Everything after [`Cursor::first`].
     ///
-    /// `None` must stay distinguishable from "some byte that happens to be zero":
-    /// a codec that folds the two together will match a one-char tail against a
-    /// two-char spelling and swallow whatever comes next.
-    pub(super) fn second(&self) -> Option<char> {
-        self.rest.chars().nth(1)
+    /// An iterator rather than an index, because "take up to two more" is what the
+    /// codecs actually do — and because the moment lookahead is numbered, one
+    /// reader counts from the cursor and the next counts from the char after it.
+    /// Running out is `None`, never a sentinel: a codec that folds "no more text"
+    /// into some zero value will match a truncated tail against a longer spelling
+    /// and swallow whatever follows.
+    pub(super) fn following(&self) -> std::str::Chars<'_> {
+        let mut chars = self.rest.chars();
+        chars.next();
+        chars
     }
+
+    /// The char after the cursor, when there is one.
+    pub(super) fn second(&self) -> Option<char> {
+        self.following().next()
+    }
+}
+
+/// How faithfully a codec managed to read the text at the cursor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum Reading {
+    /// The source spelled this the way the charset spells it.
+    Exact,
+    /// Understood beyond doubt, but written another way — re-encoding will use the
+    /// charset's own spelling instead. Nothing is lost; only the spelling changes.
+    Rewritten,
+    /// The charset does not define this unit. Carrying the character through is a
+    /// guess, and the caller deserves to know it was one.
+    Unknown,
 }
 
 /// What a codec made of the text at the cursor.
@@ -44,29 +67,28 @@ pub(super) struct Decoded {
     /// How many chars this reading consumed. Must be at least 1, or the driver
     /// would not advance.
     pub(super) consumed: usize,
-    /// False when the source charset does not define this unit at all. The atom is
-    /// still usable — it carries the character through untouched — but the reading
-    /// is a guess, and the caller deserves to know.
-    pub(super) recognized: bool,
+    pub(super) reading: Reading,
 }
 
-/// Convert `text` from one charset to another, counting every character that did
-/// not survive exactly.
+/// Convert `text` from one charset to another, counting what happened to each
+/// character along the way.
 ///
-/// A character is counted once, whichever end failed it: the source charset does
-/// not define it, or the target cannot spell it. Both are things the user has to
-/// look at, and the commonest cause of the first one is picking the wrong source
-/// charset — which makes a high count the signal that they did.
+/// A character lands in at most one bucket, and loss outranks rewriting: if the
+/// target could not spell it exactly, that is what the user needs to see, however
+/// the source spelled it.
 pub(super) fn transcode(text: &str, from: Charset, to: Charset) -> Conversion {
     let mut out = String::with_capacity(text.len());
     let mut unmapped = 0;
+    let mut normalized = 0;
     let mut rest = text;
 
     while !rest.is_empty() {
         let decoded = codecs::decode(from, &Cursor { rest });
         let written_exactly = codecs::encode(to, decoded.atom, &mut out);
-        if !decoded.recognized || !written_exactly {
-            unmapped += 1;
+        match (decoded.reading, written_exactly) {
+            (_, false) | (Reading::Unknown, _) => unmapped += 1,
+            (Reading::Rewritten, true) => normalized += 1,
+            (Reading::Exact, true) => {}
         }
         rest = advance(rest, decoded.consumed);
     }
@@ -74,6 +96,7 @@ pub(super) fn transcode(text: &str, from: Charset, to: Charset) -> Conversion {
     Conversion {
         text: out,
         unmapped,
+        normalized,
     }
 }
 
@@ -111,10 +134,18 @@ mod tests {
     }
 
     #[test]
+    fn following_stops_at_the_end_rather_than_repeating() {
+        let cursor = Cursor { rest: "ab" };
+        assert_eq!(cursor.following().collect::<String>(), "b");
+        assert_eq!(Cursor { rest: "a" }.following().next(), None);
+    }
+
+    #[test]
     fn unicode_to_unicode_is_an_exact_identity() {
         let result = transcode("Chào bạn — 42₫", Charset::Unicode, Charset::Unicode);
         assert_eq!(result.text, "Chào bạn — 42₫");
         assert_eq!(result.unmapped, 0);
+        assert_eq!(result.normalized, 0);
     }
 
     #[test]

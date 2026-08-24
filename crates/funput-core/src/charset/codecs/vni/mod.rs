@@ -38,7 +38,7 @@ mod bytes;
 mod table;
 
 use crate::charset::pivot::Atom;
-use crate::charset::transcode::{Cursor, Decoded};
+use crate::charset::transcode::{Cursor, Decoded, Reading};
 
 use table::STROKE_LOWER;
 
@@ -53,7 +53,7 @@ pub(super) fn decode(cur: &Cursor<'_>) -> Decoded {
         return Decoded {
             atom: Atom::Stroke { upper: base_upper },
             consumed: 1,
-            recognized: true,
+            reading: Reading::Exact,
         };
     }
 
@@ -68,7 +68,11 @@ pub(super) fn decode(cur: &Cursor<'_>) -> Decoded {
             atom,
             consumed: 2,
             // VNI never writes a pair whose halves disagree on case.
-            recognized: base_upper == mark_upper,
+            reading: if base_upper == mark_upper {
+                Reading::Exact
+            } else {
+                Reading::Unknown
+            },
         };
     }
 
@@ -76,7 +80,7 @@ pub(super) fn decode(cur: &Cursor<'_>) -> Decoded {
         Some(atom) => Decoded {
             atom,
             consumed: 1,
-            recognized: true,
+            reading: Reading::Exact,
         },
         None => passthrough(first),
     }
@@ -89,12 +93,12 @@ fn passthrough(c: char) -> Decoded {
         Ok(byte) if byte >= 0x80 => Decoded {
             atom: Atom::Other(c),
             consumed: 1,
-            recognized: false,
+            reading: Reading::Unknown,
         },
         _ => Decoded {
             atom: Atom::from_char(c),
             consumed: 1,
-            recognized: true,
+            reading: Reading::Exact,
         },
     }
 }
