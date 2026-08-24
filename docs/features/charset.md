@@ -367,6 +367,11 @@ pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion;
 pub fn encode_bytes(text: &str, to: Charset) -> (Vec<u8>, Conversion);
 pub fn detect(text: &str) -> Option<Charset>;
 pub fn detect_bytes(bytes: &[u8]) -> Option<Charset>;
+
+mod document {
+    pub struct Document { pub text: String, pub charset: Option<Charset> }
+    pub fn read(bytes: Vec<u8>) -> Result<Document, TruncatedUtf16>;
+}
 ```
 
 Hai hàm `detect` chấm điểm bằng cách thử giải mã theo từng bảng mã rồi đếm xem kết
@@ -379,6 +384,20 @@ toàn. Hoà thì trả `None` thay vì đoán bừa.
 chứng mạnh **chống lại** hai bảng mã Unicode — bằng chứng mà `detect(&str)` không thể
 thấy, vì lúc nó cầm được `&str` thì hư hỏng đã được vá rồi. Hai cửa **bất đồng** trên
 cùng một nội dung Latin-1; đó là bản chất, và có test ghim lại.
+
+### Đọc cả tài liệu: `charset::document`
+
+`decode_bytes`/`encode_bytes` là hai cửa *một tầng*; `document::read` là tầng trên chúng, và là
+thứ một shell đọc tệp thật sự gọi. Nó xử lý BOM trước (UTF-16 là verdict, UTF-8 chỉ là gợi ý nên
+bị bóc), rồi chọn cửa: byte giải mã được UTF-8 thì xử như **text** — đó là ca tệp TCVN3 mở bằng
+Notepad rồi lưu lại, và là cách tệp cũ đến tay ta phổ biến nhất; byte không giải mã được thì đọc
+một-một và **chỉ** được trả lời bằng bảng mã theo byte.
+
+Nó **không** phải cascade của `funput-config`. Bảng gõ tắt hỏi câu chặt hơn: chỉ diễn giải lại
+khi cách đọc mới giải thích được **mọi** ký tự, vì ba dòng viết tắt là quá ít bằng chứng để lật
+một phép giải mã UTF-8 đã chạy được. Tài liệu thì khác: một trang tiếng Việt phần lớn đọc ra
+TCVN3 **là** TCVN3, và một dấu `°` lạc không chứng minh điều gì. Cùng cấu trúc, khác mức tự tin,
+nên chúng ở riêng một cách có chủ ý.
 
 ### Hai cửa byte
 
