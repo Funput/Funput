@@ -3,23 +3,19 @@
 </p>
 
 <p align="center">
-  <img src="assets/logo.png" width="256">
+  <img
+    src="assets/horizontal-lockup/gradient.png"
+    width="520"
+    alt="Funput"
+  >
 </p>
-
-<pre align="center">
-   ███████╗██╗   ██╗███╗   ██╗██████╗ ██╗   ██╗████████╗
-   ██╔════╝██║   ██║████╗  ██║██╔══██╗██║   ██║╚══██╔══╝
-█████╗  ██║   ██║██╔██╗ ██║██████╔╝██║   ██║   ██║
-██╔══╝  ██║   ██║██║╚██╗██║██╔═══╝ ██║   ██║   ██║
-██║     ╚██████╔╝██║ ╚████║██║     ╚██████╔╝   ██║
-╚═╝      ╚═════╝ ╚═╝  ╚═══╝╚═╝      ╚═════╝    ╚═╝
-</pre>
 
 ---
 
-**Funput** là bộ gõ tiếng Việt mã nguồn mở — nhẹ, tập trung vào quyền riêng tư,
-thiết kế riêng cho từng hệ điều hành. Gõ Telex hoặc VNI trên iOS, Android, macOS,
-Windows và Linux. Mọi nền tảng dùng chung một lõi xử lý để giữ hành vi gõ nhất quán.
+<p align="center">
+  <strong>Funput</strong> là bộ gõ / bàn phím tiếng Việt mã nguồn mở, nhẹ và ưu tiên quyền riêng tư.<br>
+  Hỗ trợ Telex và VNI trên iOS, Android, macOS, Windows và Linux, mang lại trải nghiệm gõ tiếng Việt quen thuộc và nhất quán trên mọi thiết bị.
+</p>
 
 ## Bắt đầu
 
@@ -27,7 +23,7 @@ Windows và Linux. Mọi nền tảng dùng chung một lõi xử lý để gi�
   <a href="https://github.com/Funput/Funput/releases/latest">
     <img src="https://img.shields.io/badge/Tải_xuống-Bản_mới_nhất-22C55E?style=for-the-badge&logo=github&logoColor=white" alt="Tải phiên bản Funput mới nhất">
   </a>
-  <a href="https://docs.funput.app/">
+  <a href="https://docs.funput.app/docs/install/">
     <img src="https://img.shields.io/badge/Tài_liệu-Hướng_dẫn_cài_đặt-2563EB?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Hướng dẫn cài đặt Funput">
   </a>
   <a href="https://github.com/Funput/Funput/issues">
@@ -42,14 +38,13 @@ Windows và Linux. Mọi nền tảng dùng chung một lõi xử lý để gi�
 | iOS | Đã phát hành | [Tải trên App Store](https://apps.apple.com/vn/app/id6788829996) |
 | macOS | Đã phát hành | [Tải bản mới nhất](https://github.com/Funput/Funput/releases/latest) |
 | Windows | Đã phát hành | [Tải bản mới nhất](https://github.com/Funput/Funput/releases/latest) |
-| Linux | Đã phát hành | [Xem hướng dẫn](https://docs.funput.app/) |
+| Linux | Đã phát hành | [Xem hướng dẫn](https://docs.funput.app/docs/install/linux) |
 | Android | Kiểm thử khép kín | [Gửi email để tham gia](mailto:hello@funput.app) |
 
-Google Play yêu cầu kiểm thử khép kín đủ **14 ngày** với số tester tối thiểu trước khi xuất bản. Vòng trước chưa đạt ngưỡng đó, nên Funput phải chạy lại vòng 14 ngày.
-
-Nếu bạn dùng Android và muốn giúp đưa Funput lên Play Store, hãy gửi email tới
-[hello@funput.app](mailto:hello@funput.app) (nên dùng Gmail gắn với tài khoản
-Google Play). Chúng tôi sẽ mời bạn vào nhóm kiểm thử khép kín.
+> [!NOTE]
+> Google Play yêu cầu kiểm thử khép kín đủ **14 ngày** với số tester tối thiểu trước khi xuất bản. Vòng trước chưa đạt ngưỡng đó, nên Funput phải chạy lại vòng 14 ngày.
+>
+> Nếu bạn dùng Android và muốn giúp đưa Funput lên Play Store, hãy gửi email tới [hello@funput.app](mailto:hello@funput.app) (nên dùng Gmail gắn với tài khoản Google Play). Chúng tôi sẽ mời bạn vào nhóm kiểm thử khép kín.
 
 ## Giao diện
 
@@ -69,21 +64,24 @@ Google Play). Chúng tôi sẽ mời bạn vào nhóm kiểm thử khép kín.
   <sub>Giao diện cài đặt trên macOS và Windows.</sub>
 </p>
 
-## Hiệu năng
+## Kiến trúc
 
-Lõi xử lý viết bằng Rust. Chi phí mỗi phím, đo bằng Criterion trên release build:
+Năm nền tảng dùng chung lõi Rust. Mỗi shell giao tiếp với core qua bridge phù hợp:
+[`funput-ffi`](crates/funput-ffi) (C ABI) cho iOS, macOS và Linux;
+[`funput-jni`](crates/funput-jni) cho Android; link trực tiếp
+[`funput-engine`](crates/funput-engine) cho Windows.
 
-| Thành phần / API | Phạm vi đo | Telex | VNI |
-|---|---|---:|---:|
-| [`funput-core::apply`](crates/funput-core) | Lõi biến đổi Telex/VNI | 0,049 µs/phím | 0,042 µs/phím |
-| [`funput-engine::Engine::process_char`](crates/funput-engine) | Pipeline đầy đủ (boundary + English restore) | 0,106 µs/phím | 0,096 µs/phím |
-| [`funput-ffi::{funput_process_char, funput_buffer}`](crates/funput-ffi) | Engine qua C ABI + đọc composed buffer | 0,114 µs/phím | 0,106 µs/phím |
-
-> Đo trên release build, máy Apple M-series; chỉ gồm phần xử lý của Funput (không
-> tính OS chuyển sự kiện bàn phím hay app đích render). Số phụ thuộc phần cứng —
-> nên chạy lại trên máy bạn.
-
-Xem [phương pháp đo benchmark](benchmarks/README.md).
+<p align="center">
+  <a href="assets/design/architecture.png">
+    <img
+      src="assets/design/architecture.png"
+      width="960"
+      alt="Kiến trúc Funput: iOS, macOS, Linux qua funput-ffi; Android qua funput-jni; Windows link trực tiếp; tất cả hội về funput-engine và funput-core"
+    >
+  </a>
+  <br>
+  <sub><a href="assets/design/architecture.png">Nhấn để xem ảnh gốc</a></sub>
+</p>
 
 ## Trạng thái
 
