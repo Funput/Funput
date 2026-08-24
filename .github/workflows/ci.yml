@@ -7,7 +7,8 @@ name: CI
 # The toolchain comes from rust-toolchain.toml (1.97.1 + rustfmt + clippy), so
 # bumping the pin moves CI with it. The two excluded shells
 # (platforms/windows, platforms/linux/settings-gtk) need system libraries and are
-# covered by the release builds instead.
+# covered by the release builds instead — build-windows.yml runs clippy and the
+# tests for the Windows shell there, since nothing in this file can reach it.
 
 on:
   pull_request:
