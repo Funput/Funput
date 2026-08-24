@@ -141,6 +141,10 @@ src/app_language/   # C API per-app VI/EN memory (FunputAppLanguage), độc l�
                     #   handle.rs (handle new/free + marshalling UTF-8 dùng chung),
                     #   memory.rs (seed/clear/forget), focus.rs (note_focus/note_toggle),
                     #   types.rs (APP_LANG_UNKNOWN/ENGLISH/VIETNAMESE)
+src/charset/       # C API chuyển mã (chuyển đổi + nhận diện), sau feature `charset`
+                    #   mod.rs      count/name + chỉ số bảng mã + ghi UTF-32
+                    #   convert.rs  #[repr(C)] FunputConversion + funput_charset_convert
+                    #   detect.rs   funput_charset_detect
 src/abi/            # plumbing C-ABI dùng chung
                     #   guard.rs safe(): catch_unwind + null-handle; codec.rs UTF-32 marshalling
 cbindgen.toml
@@ -155,6 +159,28 @@ engine trực tiếp); addon Fcitx5 và engine IBus trên Linux link `libfunput_
 
 Lưu ý edition 2024: dùng `#[unsafe(no_mangle)]` và `unsafe { }` tường minh quanh
 `Box::from_raw` / `ptr.as_mut()`.
+
+## Feature `charset` (mặc định **tắt**)
+
+Công cụ chuyển mã (`funput_charset_*`) nằm sau một cargo feature. Bàn phím iOS và Android link crate
+này và không dùng tới bảng mã, nên bản mặc định không mang chúng theo. CI kiểm cả hai nửa: bản mặc
+định **không** export symbol `funput_charset_*` nào, và bản bật feature vẫn lint/test sạch.
+
+Một shell desktop bật nó bằng hai bước — thư viện và header:
+
+```bash
+cargo build -p funput-ffi --release --features charset
+cc -DFUNPUT_CHARSET ...        # header khai báo trong #ifdef FUNPUT_CHARSET
+```
+
+`platforms/macos/scripts/build-ffi.sh` **chưa** bật feature này: chưa có UI macOS nào gọi tới, và bật
+sớm chỉ nhét bảng mã vào binary mà không ai dùng. Khi viết UI đó, thêm `--features charset` vào lệnh
+`cargo build` trong script và `FUNPUT_CHARSET` vào `GCC_PREPROCESSOR_DEFINITIONS` của target Xcode.
+
+Bảng mã được gọi tên bằng **chỉ số** trong `funput_core::charset::ALL`, không phải bằng tên host tự
+đặt: `Charset` là `#[non_exhaustive]` nên không code nào ngoài `funput-core` liệt kê được nó.
+`funput_charset_count()` + `funput_charset_name()` đủ để dựng menu, và bảng mã thêm sau tự hiện ra.
+Danh sách đó **chỉ thêm vào cuối**, nên chỉ số dùng làm lựa chọn lưu lại được.
 
 ## Phụ thuộc & ai gọi
 

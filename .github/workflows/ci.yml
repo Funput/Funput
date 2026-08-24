@@ -56,14 +56,36 @@ jobs:
       - name: Test (no charset — the mobile shape)
         run: cargo test -p funput-core -p funput-ffi
 
+      # The other half. `funput-ffi` carries the charset C ABI behind a feature of
+      # its own, and nothing above compiles it: the workspace steps do not build
+      # `funput-ffi` with it, and the two steps above are the charset-off shape by
+      # construction. Without these, the module would ship unbuilt and unlinted.
+      - name: Clippy (funput-ffi with charset)
+        run: cargo clippy -p funput-ffi --features charset --all-targets -- -D warnings
+
+      - name: Test (funput-ffi with charset)
+        run: cargo test -p funput-ffi --features charset
+
       # Compiling proves charset-off still builds; it does not prove the mobile
-      # artifacts are free of it. Add `funput-config` to `funput-ffi`'s dependencies
-      # and the step above stays green while the charset tables quietly land in the
-      # keyboard's cdylib. Only the dependency graph answers that.
+      # artifacts are free of it. Two different ways that can go wrong, so two checks.
+      #
+      # `cargo tree` catches a dependency that drags charset in unconditionally —
+      # add `funput-config` to `funput-ffi`'s dependencies and the steps above stay
+      # green while the tables quietly land in the keyboard's cdylib.
+      #
+      # It cannot catch the other one. `funput-ffi`'s own `charset` feature ending up
+      # on by default renders no edge at all, so the assertion would pass while
+      # saying nothing. Ask the library instead: a default build must export no
+      # `funput_charset_*` symbol. The line before it is a positive control — if the
+      # symbol lookup itself ever stops working, this fails loudly rather than
+      # quietly passing forever.
       - name: charset stays out of the mobile crates
         run: |
           ! cargo tree -p funput-ffi -e features | grep -q charset
           ! cargo tree -p funput-jni -e features | grep -q charset
+          cargo build -p funput-ffi
+          nm -D --defined-only target/debug/libfunput_ffi.so | grep -q funput_process_char
+          ! nm -D --defined-only target/debug/libfunput_ffi.so | grep -q funput_charset
 
       - name: Line budget
         run: bash scripts/check-loc.sh
