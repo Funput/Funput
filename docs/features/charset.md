@@ -2,8 +2,8 @@
 
 ## Trạng thái
 
-Đã có: khung core và cả bốn bảng mã — **TCVN3**, **VNI-Windows**, **Unicode tổ hợp**.
-Còn lại: `detect()`, rồi các consumer (xem "Thứ tự hiện thực" ở cuối).
+Đã có: khung core, cả bốn bảng mã, và `detect()`. Còn lại là các consumer —
+`funput-config`, `funput convert`, rồi UI (xem "Thứ tự hiện thực" ở cuối).
 
 Tài liệu này chốt mô hình *trước* khi có code và được review riêng; nó vẫn là nơi
 mọi quyết định thiết kế sống, nên mỗi bảng mã mới cập nhật lại nó trong cùng PR.
@@ -349,13 +349,30 @@ match. Trục, driver và `detect` không đổi.
 
 pub fn convert(text: &str, from: Charset, to: Charset) -> Conversion;
 pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion;
+pub fn detect(text: &str) -> Option<Charset>;
+pub fn detect_bytes(bytes: &[u8]) -> Option<Charset>;
 ```
 
-`detect(text) -> Option<Charset>` đến ở PR sau. Nó chấm điểm bằng cách thử giải mã
-theo từng bảng mã rồi đếm xem kết quả cho ra bao nhiêu âm tiết tiếng Việt hợp lệ,
-dùng `is_complete_syllable` sẵn có — giải mã sai bảng mã cho ra rác, và rác thì trượt
-bộ kiểm tra chính tả gần như hoàn toàn. Dưới ngưỡng chắc chắn thì trả `None` thay vì
-đoán bừa.
+Hai hàm `detect` chấm điểm bằng cách thử giải mã theo từng bảng mã rồi đếm xem kết
+quả cho ra bao nhiêu âm tiết tiếng Việt hợp lệ, dùng `is_complete_syllable` sẵn có —
+giải mã sai bảng mã cho ra rác, và rác thì trượt bộ kiểm tra chính tả gần như hoàn
+toàn. Hoà thì trả `None` thay vì đoán bừa.
+
+**Có hai cửa vì hai câu hỏi khác nhau.** `funput-config` cầm `&[u8]`: nhánh `None` của
+`encoding::decode` nghĩa là "không BOM, không phải UTF-8", mà chính điều đó là bằng
+chứng mạnh **chống lại** hai bảng mã Unicode — bằng chứng mà `detect(&str)` không thể
+thấy, vì lúc nó cầm được `&str` thì hư hỏng đã được vá rồi. Hai cửa **bất đồng** trên
+cùng một nội dung Latin-1; đó là bản chất, và có test ghim lại.
+
+### Thứ nó không làm được
+
+Mọi phán đoán ở đây đều **tương đối**: bốn giả thuyết, cái nào khớp nhất thì thắng.
+Một bảng mã chưa hiện thực không có giả thuyết riêng, nên nó luôn được trả lời bằng
+láng giềng gần nhất. VISCII chia sẻ chữ cái Latin-1 với TCVN3, nên văn bản VISCII bị
+báo là TCVN3 một cách tự tin và chuyển ra thứ sai một cách tinh vi.
+
+Không ngưỡng rẻ nào sửa được — cách sửa thật là hiện thực VISCII. Có test ghim hành vi
+này để người sau thấy đây là chuyện đã biết.
 
 Module nằm trong không gian tên riêng (`funput_core::charset::…`), **không** re-export
 ra gốc crate: khối "API FROZEN (Phase 8)" ở `lib.rs` liệt kê bề mặt cho
@@ -374,6 +391,8 @@ Mỗi mục một PR:
    codec kia.
 4. **Unicode tổ hợp**. Bảng mã duy nhất không phải byte, nên nó làm lộ hai lỗi thật
    trong `decode_bytes` và buộc `unmapped` tách làm hai.
-5. `detect()`.
+5. **`detect()`**. Nó làm lộ một lỗi thật trong hai codec byte: ký tự trên `U+00FF`
+   được nhận là `Exact`, nên `convert("Việt Nam", Tcvn3, Unicode)` báo 0 lỗi và ba
+   bảng mã hoà nhau tuyệt đối.
 6. `funput-config` (sửa import UniKey) → 7. `funput convert` → 8. UI Windows →
    9. UI Linux GTK.

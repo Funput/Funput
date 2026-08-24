@@ -86,20 +86,24 @@ pub(super) fn decode(cur: &Cursor<'_>) -> Decoded {
     }
 }
 
-/// A char VNI does not spell. ASCII is still classified, so an ASCII vowel keeps
-/// the family coordinates another charset would need to re-spell it.
+/// A char VNI does not spell.
+///
+/// A character above `U+00FF` is not merely unassigned — a `VNI-Times` document
+/// stores one byte per character and physically cannot hold it. So it is carried
+/// through (nothing is lost) but reported: whatever this text is, it is not VNI,
+/// and saying so is what makes a wrong-charset reading show up as a count.
 fn passthrough(c: char) -> Decoded {
-    match u8::try_from(c as u32) {
-        Ok(byte) if byte >= 0x80 => Decoded {
-            atom: Atom::Other(c),
-            consumed: 1,
-            reading: Reading::Unknown,
-        },
-        _ => Decoded {
-            atom: Atom::from_char(c),
-            consumed: 1,
-            reading: Reading::Exact,
-        },
+    let (atom, reading) = match u8::try_from(c as u32) {
+        Ok(byte) if byte >= 0x80 => (Atom::Other(c), Reading::Unknown),
+        // ASCII is still classified, so an ASCII vowel keeps the family
+        // coordinates another charset would need to re-spell it.
+        Ok(_) => (Atom::from_char(c), Reading::Exact),
+        Err(_) => (Atom::from_char(c), Reading::Unknown),
+    };
+    Decoded {
+        atom,
+        consumed: 1,
+        reading,
     }
 }
 

@@ -288,3 +288,13 @@ fn a_letter_can_be_two_characters() {
     assert_eq!(to_vni("ạ").0.chars().count(), 2);
     assert_eq!(to_vni("í").0.chars().count(), 1, "the i family is one byte");
 }
+
+/// A `VNI-Times` document stores one byte per character, so it cannot hold `ệ`.
+/// Reading precomposed Unicode as VNI reports it — see the twin test in the TCVN3
+/// codec for why detection depends on this.
+#[test]
+fn a_character_no_byte_could_hold_is_reported() {
+    let (out, unmapped) = from_vni("Việt Nam");
+    assert_eq!(out, "Việt Nam", "nothing is lost");
+    assert_eq!(unmapped, 1, "but `ệ` was never VNI");
+}

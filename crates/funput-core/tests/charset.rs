@@ -19,6 +19,8 @@
 mod cases;
 
 // Test modules.
+#[path = "charset/detect.rs"]
+mod detect;
 #[path = "charset/properties.rs"]
 mod properties;
 #[path = "charset/round_trip.rs"]

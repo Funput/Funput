@@ -2,7 +2,7 @@
 //! arbitrary byte soup, half-words, unassigned codes, marks with nothing to
 //! attach to.
 
-use funput_core::charset::{Charset, convert};
+use funput_core::charset::{Charset, convert, detect, detect_bytes};
 use proptest::prelude::*;
 
 /// Anything a legacy document could hold: one char per byte, the whole range.
@@ -26,6 +26,10 @@ const NON_PIVOT: [Charset; 3] = [
     Charset::UnicodeCombining,
 ];
 
+/// Every charset. Unlike the in-crate `CANDIDATES` array this one **cannot** be
+/// guarded by a match: `Charset` is `#[non_exhaustive]`, so code outside the crate
+/// is required to write a wildcard arm and a fifth variant would slip past it.
+/// The compile-time guard lives in `charset::detect` instead.
 const ALL: [Charset; 4] = [
     Charset::Unicode,
     Charset::Tcvn3,
@@ -152,5 +156,27 @@ proptest! {
             let reread = convert(&out.text, Charset::UnicodeCombining, Charset::UnicodeCombining);
             prop_assert_eq!(reread.normalized, 0, "wrote a spelling it would rewrite");
         }
+    }
+
+    /// Detection is total: whatever the text is, it answers rather than panicking.
+    #[test]
+    fn detect_never_panics(text in LEGACY_TEXT, combining in COMBINING_TEXT, wide in "\\PC{0,64}") {
+        for source in [&text, &combining, &wide] {
+            let _ = detect(source);
+        }
+    }
+
+    /// Same for the byte door, on bytes that were never text at all.
+    #[test]
+    fn detect_bytes_never_panics(bytes in prop::collection::vec(any::<u8>(), 0..256)) {
+        let _ = detect_bytes(&bytes);
+    }
+
+    /// Every charset spells ASCII the same way, so ASCII can never separate them.
+    /// This is what makes an English document — or a plain one — come back `None`,
+    /// and it locks that guarantee against any future change to the scoring.
+    #[test]
+    fn no_charset_is_detected_from_pure_ascii(text in "[ -~]{0,64}") {
+        prop_assert_eq!(detect(&text), None, "{:?}", text);
     }
 }
