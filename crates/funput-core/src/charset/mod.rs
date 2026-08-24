@@ -34,16 +34,22 @@ mod transcode;
 
 /// A Vietnamese character encoding.
 ///
-/// `#[non_exhaustive]`: VNI-Windows and Unicode tổ hợp are coming, and adding them
-/// should not break callers. Match with a wildcard arm.
+/// `#[non_exhaustive]`: Unicode tổ hợp is still to come, and adding it should not
+/// break callers. Match with a wildcard arm.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum Charset {
     /// Precomposed Unicode (NFC) — the pivot, and what every modern system uses.
     Unicode,
     /// TCVN3, also called ABC: the `.VnTime` encoding of Vietnamese government
-    /// documents.
+    /// documents. One byte per letter, and no code for an uppercase toned vowel.
     Tcvn3,
+    /// VNI-Windows, the `VNI-Times` encoding. Spells most letters as a base byte
+    /// plus a mark byte, so a letter is not a character and conversion moves
+    /// character boundaries. Named for the encoding rather than `Vni`, which would
+    /// sit confusingly beside [`crate::InputMethod::Vni`] — a way of *typing*, not
+    /// a way of storing.
+    VniWindows,
 }
 
 /// Converted text, and how many characters did not survive it exactly.
@@ -53,8 +59,9 @@ pub enum Charset {
 /// much as the input did. What the number says is how many places need the user's
 /// eye. A character lands there for one of two reasons:
 ///
-/// - the **target** cannot spell it — an uppercase toned vowel, which TCVN3 leaves
-///   to the `.VnTimeH` font, or a `₫`, which no legacy charset has a code for;
+/// - the **target** cannot spell it — a `₫`, which no legacy charset has a code
+///   for, or an uppercase toned vowel, which is TCVN3's own gap rather than a
+///   general one: VNI-Windows spells those perfectly well;
 /// - the **source** never defined it, so reading it was a guess.
 ///
 /// The second is worth watching. Text converted from the wrong source charset is

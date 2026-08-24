@@ -12,13 +12,13 @@ use super::{Charset, Conversion};
 /// A read window onto the source, positioned at a unit boundary.
 ///
 /// A codec reads as far ahead as its encoding needs and reports how much it took.
-/// TCVN3 only ever needs the first char; VNI's base-plus-mark pair will want a
-/// second, and adds the accessor for it then.
+/// TCVN3 spells every letter in one char and only ever reads [`Cursor::first`];
+/// VNI-Windows spells most of them as a base plus a mark and needs both.
 pub(super) struct Cursor<'a> {
     rest: &'a str,
 }
 
-impl<'a> Cursor<'a> {
+impl Cursor<'_> {
     /// The char at the cursor. Never fails: a cursor is only built on a non-empty
     /// remainder.
     pub(super) fn first(&self) -> char {
@@ -26,6 +26,15 @@ impl<'a> Cursor<'a> {
             .chars()
             .next()
             .expect("cursor built on non-empty text")
+    }
+
+    /// The char after it, or `None` at the end of the text.
+    ///
+    /// `None` must stay distinguishable from "some byte that happens to be zero":
+    /// a codec that folds the two together will match a one-char tail against a
+    /// two-char spelling and swallow whatever comes next.
+    pub(super) fn second(&self) -> Option<char> {
+        self.rest.chars().nth(1)
     }
 }
 

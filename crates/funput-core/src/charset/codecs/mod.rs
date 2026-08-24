@@ -21,6 +21,7 @@
 //!   disappears in conversion.
 
 mod tcvn3;
+mod vni;
 
 use super::Charset;
 use super::pivot::Atom;
@@ -37,6 +38,7 @@ pub(super) fn decode(charset: Charset, cur: &Cursor<'_>) -> Decoded {
             recognized: true,
         },
         Charset::Tcvn3 => tcvn3::decode(cur),
+        Charset::VniWindows => vni::decode(cur),
     }
 }
 
@@ -49,6 +51,7 @@ pub(super) fn encode(charset: Charset, atom: Atom, out: &mut String) -> bool {
             true
         }
         Charset::Tcvn3 => tcvn3::encode(atom, out),
+        Charset::VniWindows => vni::encode(atom, out),
     }
 }
 
@@ -58,7 +61,7 @@ pub(super) fn encode(charset: Charset, atom: Atom, out: &mut String) -> bool {
 pub(super) fn is_byte_oriented(charset: Charset) -> bool {
     match charset {
         Charset::Unicode => false,
-        Charset::Tcvn3 => true,
+        Charset::Tcvn3 | Charset::VniWindows => true,
     }
 }
 
