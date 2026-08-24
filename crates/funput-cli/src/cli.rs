@@ -11,6 +11,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 
 use funput_core::InputMethod;
 
+use crate::convert::ConvertArgs;
 use crate::dev::DevArgs;
 use crate::term::TermArgs;
 
@@ -31,6 +32,8 @@ pub enum Command {
     Term(TermArgs),
     /// Developer & CI tools that drive funput-engine directly.
     Dev(DevArgs),
+    /// Convert Vietnamese text between Unicode and the legacy charsets.
+    Convert(ConvertArgs),
 }
 
 /// Input method as selected on the command line. Kept at the CLI layer (a clap

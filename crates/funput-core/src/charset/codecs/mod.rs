@@ -28,9 +28,12 @@
 
 mod combining;
 mod tcvn3;
+mod utf8;
 mod vni;
 
 use super::Charset;
+use utf8::broken_sequences;
+
 use super::pivot::Atom;
 use super::transcode::{Conversion, Cursor, Decoded, Reading};
 
@@ -107,25 +110,29 @@ pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion {
     }
 }
 
-/// How many characters lossy UTF-8 decoding had to replace. Zero for valid input,
-/// and replacement characters the source genuinely encoded are discounted so a
-/// document that legitimately contains one is not reported as damaged.
-fn broken_sequences(bytes: &[u8]) -> usize {
-    if std::str::from_utf8(bytes).is_ok() {
-        return 0;
+/// Write `text` as `to` spells it, as the bytes a file should hold.
+///
+/// The mirror of [`decode_bytes`], and the call a shell makes when the user saves a
+/// converted document. A byte-oriented charset's text is code points `U+0020..=U+00FF`
+/// standing in for bytes, so writing it as UTF-8 would store two bytes per Vietnamese
+/// letter and produce a file `.VnTime` cannot read. Anything else is written as UTF-8,
+/// which is what it already is.
+///
+/// A character the target cannot represent is still written — `encode` never drops
+/// one — but it may be a character the *byte* form has no room for, and those become
+/// `?`. Every one of them is already counted in [`Conversion::unmapped`], so the
+/// caller learns about it from the same number it would check anyway.
+pub fn encode_bytes(text: &str, to: Charset) -> (Vec<u8>, Conversion) {
+    let out = super::convert(text, Charset::Unicode, to);
+    if !is_byte_oriented(to) {
+        return (out.text.as_bytes().to_vec(), out);
     }
-    String::from_utf8_lossy(bytes)
-        .matches(char::REPLACEMENT_CHARACTER)
-        .count()
-        .saturating_sub(genuine_replacements(bytes))
-}
-
-/// How many `U+FFFD` the bytes genuinely encode.
-fn genuine_replacements(bytes: &[u8]) -> usize {
-    bytes
-        .windows(3)
-        .filter(|window| *window == [0xEF, 0xBF, 0xBD])
-        .count()
+    let bytes = out
+        .text
+        .chars()
+        .map(|c| u8::try_from(c as u32).unwrap_or(b'?'))
+        .collect();
+    (bytes, out)
 }
 
 #[cfg(test)]
@@ -177,5 +184,31 @@ mod tests {
         let out = decode_bytes("a\u{FFFD}b".as_bytes(), Charset::Unicode);
         assert_eq!(out.text, "a\u{FFFD}b");
         assert_eq!(out.unmapped, 0);
+    }
+
+    /// The point of the function: a `.VnTime` file holds one byte per letter, and
+    /// writing the same text as UTF-8 would give two and a file Word cannot read.
+    #[test]
+    fn a_byte_oriented_charset_is_written_one_byte_per_letter() {
+        let (bytes, out) = encode_bytes("Việt", Charset::Tcvn3);
+        assert_eq!(bytes.len(), 4);
+        assert_eq!(out.unmapped, 0);
+        assert_eq!(decode_bytes(&bytes, Charset::Tcvn3).text, "Việt");
+    }
+
+    #[test]
+    fn a_unicode_charset_is_written_as_utf8() {
+        let (bytes, _) = encode_bytes("Việt", Charset::Unicode);
+        assert_eq!(bytes, "Việt".as_bytes());
+    }
+
+    /// `₫` has no TCVN3 code, so `encode` passes it through as itself — and a code
+    /// point above `U+00FF` has no room in a byte. It becomes `?` rather than a
+    /// truncated byte, and the caller already knows from `unmapped`.
+    #[test]
+    fn a_character_with_no_byte_to_put_it_in_becomes_a_question_mark() {
+        let (bytes, out) = encode_bytes("5₫", Charset::Tcvn3);
+        assert_eq!(bytes, b"5?");
+        assert_eq!(out.unmapped, 1);
     }
 }

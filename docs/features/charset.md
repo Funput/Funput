@@ -357,10 +357,14 @@ build, chứ không phải vỡ giao diện.
 /// Mọi bảng mã, theo thứ tự giao diện nên bày ra. Consumer không dựng được danh sách
 /// này: `Charset` là `#[non_exhaustive]`.
 pub const ALL: [Charset; 4];
-impl Charset { pub const fn name(self) -> &'static str; }
+impl Charset {
+    pub const fn name(self) -> &'static str;  // cho người đọc
+    pub const fn slug(self) -> &'static str;  // cho máy đọc — là hợp đồng, không sửa lời được
+}
 
 pub fn convert(text: &str, from: Charset, to: Charset) -> Conversion;
 pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion;
+pub fn encode_bytes(text: &str, to: Charset) -> (Vec<u8>, Conversion);
 pub fn detect(text: &str) -> Option<Charset>;
 pub fn detect_bytes(bytes: &[u8]) -> Option<Charset>;
 ```
@@ -375,6 +379,17 @@ toàn. Hoà thì trả `None` thay vì đoán bừa.
 chứng mạnh **chống lại** hai bảng mã Unicode — bằng chứng mà `detect(&str)` không thể
 thấy, vì lúc nó cầm được `&str` thì hư hỏng đã được vá rồi. Hai cửa **bất đồng** trên
 cùng một nội dung Latin-1; đó là bản chất, và có test ghim lại.
+
+### Hai cửa byte
+
+`decode_bytes` đọc tệp vào; `encode_bytes` ghi tệp ra. Cái sau không phải đối xứng cho đẹp: bảng
+mã theo byte lưu **một byte mỗi chữ**, nên ghi text của nó ra dạng UTF-8 sẽ thành hai byte mỗi chữ
+và cho ra tệp `.VnTime` đọc không được. Mọi consumer lưu tệp cũ đều cần đúng phép này, nên nó ở
+core chứ không phải viết lại ở từng nơi.
+
+Chữ mà bảng mã đích không có vẫn được ghi — `encode` không bao giờ làm rơi ký tự — nhưng có thể là
+ký tự dạng byte không chứa nổi (`₫` chẳng hạn); những chữ đó thành `?`. Chúng đã nằm trong
+`unmapped`, nên caller biết được từ chính con số nó vẫn phải xem.
 
 ### Cửa C ABI (`funput-ffi`, feature `charset`, mặc định tắt)
 
@@ -435,4 +450,9 @@ Mỗi mục một PR:
    mà UI Windows đã phải tự viết ở bước 6 — hai cửa sổ cài đặt tự đặt tên lấy là cách
    chúng trôi khỏi nhau.
 8. **C ABI trong `funput-ffi`** (feature `charset`, mặc định tắt) — cửa cho macOS.
-9. `funput convert` (CLI) → 10. UI Windows → 11. UI Linux GTK.
+9. **`funput convert`** (CLI). Consumer đầu tiên chuyển cả tài liệu, nên nó đòi hai thứ core còn
+   thiếu: `Charset::slug()` (cờ dòng lệnh cần một tên máy đọc — `name()` là chữ hiển thị, sửa lời
+   là đổi hợp đồng) và `encode_bytes` (ghi tệp cũ ra byte). Nó cũng là chỗ **hai cửa** lộ rõ nhất:
+   tệp TCVN3 mở bằng Notepad rồi lưu lại là UTF-8 hợp lệ mà nội dung vẫn TCVN3, và đọc lại theo
+   byte sẽ ra `Ã` ở chỗ tài liệu có `Ö`.
+10. UI Windows → 11. UI Linux GTK.
