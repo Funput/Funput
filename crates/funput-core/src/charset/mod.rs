@@ -30,6 +30,7 @@
 
 mod codecs;
 mod detect;
+pub mod document;
 mod identity;
 mod pivot;
 mod transcode;

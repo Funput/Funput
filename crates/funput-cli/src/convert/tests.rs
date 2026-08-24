@@ -1,12 +1,13 @@
+use funput_core::charset::document;
 use funput_core::charset::{self, Charset};
 
 use super::*;
 
 /// Everything `run` does between reading and writing, with the I/O left out.
 fn pipeline(bytes: &[u8], to: Charset) -> (Vec<u8>, usize, usize) {
-    let input = source::from_bytes(bytes.to_vec()).expect("well-formed fixture");
-    let from = input.charset.expect("fixture should be identifiable");
-    let read = charset::convert(&input.text, from, Charset::Unicode);
+    let doc = document::read(bytes.to_vec()).expect("well-formed fixture");
+    let from = doc.charset.expect("fixture should be identifiable");
+    let read = charset::convert(&doc.text, from, Charset::Unicode);
     let (out, written) = charset::encode_bytes(&read.text, to);
     (out, read.unmapped, written.unmapped)
 }
