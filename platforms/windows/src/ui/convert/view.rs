@@ -12,9 +12,9 @@
 use std::cell::RefCell;
 
 use funput_core::charset::{self, Charset};
-use slint::{ModelRc, VecModel, Weak};
+use slint::Weak;
 
-use crate::{ConvertWindow, FileRow};
+use crate::ConvertWindow;
 
 use super::{files, text};
 
@@ -60,28 +60,40 @@ pub(super) fn index_of(charset: Charset) -> Option<usize> {
 }
 
 /// Rebuild the whole window from the state.
+///
+/// **One file takes the text shape, not a one-row table.** A table earns its place
+/// when the rows differ — that is the whole point of reading a batch file by file.
+/// With one file there is nothing to compare against, and the before/after panes show
+/// what the user came to see.
 pub(super) fn refresh() {
     let Some(window) = current() else { return };
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         let target = at(state.target);
         window.set_target_index(i32::try_from(state.target).unwrap_or(0));
+        files::measure(&mut state.files, target);
 
-        if !state.files.is_empty() {
-            files::measure(&mut state.files, target);
-            show_files(&window, &state.files);
-            window.set_mode("files".into());
-        } else if state.input.is_empty() {
-            window.set_mode("empty".into());
-        } else {
-            show_text(&window, &mut state, target);
-            window.set_mode("text".into());
+        match state.files.as_slice() {
+            [] if state.input.is_empty() => window.set_mode("empty".into()),
+            [] => {
+                show_pasted(&window, &mut state, target);
+                window.set_mode("text".into());
+            }
+            [only] => {
+                files::show_one(&window, only, target);
+                window.set_mode("text".into());
+            }
+            many => {
+                files::show_many(&window, many);
+                window.set_mode("files".into());
+            }
         }
     });
 }
 
-/// The paragraph state: identify, convert, and say what it will cost.
-fn show_text(window: &ConvertWindow, state: &mut State, target: Charset) {
+/// The pasted-paragraph state: identify, convert, and say what it will cost.
+fn show_pasted(window: &ConvertWindow, state: &mut State, target: Charset) {
+    window.set_from_file(false);
     // The user's own choice outranks the guess: they are looking at the document and
     // the detector is looking at statistics.
     let source = state
@@ -99,31 +111,4 @@ fn show_text(window: &ConvertWindow, state: &mut State, target: Charset) {
     };
     window.set_output_text(text::preview(&state.input, from, target).text.into());
     window.set_loss(text::loss(&state.input, from, target).into());
-}
-
-/// The batch state: a row per file, and what the button will do.
-fn show_files(window: &ConvertWindow, entries: &[files::Entry]) {
-    let rows: Vec<FileRow> = entries
-        .iter()
-        .map(|entry| FileRow {
-            name: entry.name().into(),
-            charset: entry.charset.map(Charset::name).unwrap_or_default().into(),
-            index: entry
-                .charset
-                .and_then(index_of)
-                .and_then(|i| i32::try_from(i).ok())
-                .unwrap_or(-1),
-            note: if entry.unmapped > 0 {
-                format!("{} chữ sẽ mất", entry.unmapped).into()
-            } else {
-                slint::SharedString::new()
-            },
-        })
-        .collect();
-    window.set_files(ModelRc::new(VecModel::from(rows)));
-    window.set_out_dir(files::out_dir_label(entries).into());
-
-    let ready = files::ready(entries);
-    window.set_can_convert(ready > 0);
-    window.set_action_label(format!("Chuyển {ready} tệp").into());
 }

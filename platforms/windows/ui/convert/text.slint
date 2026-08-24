@@ -1,5 +1,11 @@
 // Text state: what you have on the left, what it will become on the right.
 //
+// Also the shape a **single** dropped file takes. A batch needs a table because no
+// two rows are alike; one file has nothing to compare against, and a one-row table
+// hides the thing the user actually wants to see — whether the Vietnamese comes out
+// right. What differs is the footer: a file is converted into the folder beside it,
+// never through a Save dialog onto itself.
+//
 // The source is *stated*, not asked for — `Đây là TCVN3 (ABC)` with the picker
 // demoted to an escape hatch. That inversion is the point of the whole window: the
 // tool can read the document, so it should not make the user guess first.
@@ -14,12 +20,17 @@ export component ConvertText inherits VerticalLayout {
     in-out property <string> input-text;
     in property <string> output-text;
     in property <string> loss;
+    // Set when the content came from a dropped file rather than the clipboard.
+    in property <bool> from-file;
+    in property <string> file-name;
+    in property <string> progress;
 
     callback text-changed(string);
     callback pick-source(int);
     callback pick-target(int);
     callback copy-result();
     callback save-result();
+    callback convert-files();
 
     spacing: Theme.sp-sm;
     vertical-stretch: 1;
@@ -71,13 +82,15 @@ export component ConvertText inherits VerticalLayout {
             horizontal-stretch: 1;
             spacing: Theme.sp-xs;
             Text {
-                text: "Đang có";
+                text: root.from-file ? root.file-name : "Đang có";
                 font-size: Theme.font-caption;
                 color: Theme.subtle;
             }
             TextEdit {
                 text <=> root.input-text;
                 wrap: word-wrap;
+                // A file is a document being converted, not a draft being written.
+                read-only: root.from-file;
                 edited => { root.text-changed(self.text); }
             }
         }
@@ -107,15 +120,30 @@ export component ConvertText inherits VerticalLayout {
     }
 
     HorizontalLayout {
-        alignment: end;
         spacing: Theme.sp-sm;
+        VerticalLayout {
+            alignment: center;
+            horizontal-stretch: 1;
+            Text {
+                text: root.progress;
+                font-size: Theme.font-caption;
+                color: Theme.subtle;
+                overflow: elide;
+            }
+        }
         GhostButton {
+            text: "Chép kết quả";
+            clicked => { root.copy-result(); }
+        }
+        if !root.from-file: PrimaryButton {
             text: "Lưu tệp…";
             clicked => { root.save-result(); }
         }
-        PrimaryButton {
-            text: "Chép kết quả";
-            clicked => { root.copy-result(); }
+        // A dropped file goes to the folder beside it under its own name, the same
+        // way a batch does — no Save dialog, and never over the original.
+        if root.from-file: PrimaryButton {
+            text: "Chuyển tệp";
+            clicked => { root.convert-files(); }
         }
     }
 }

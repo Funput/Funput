@@ -36,6 +36,9 @@ export component ConvertWindow inherits Window {
     in property <string> output-text;
     in property <int> source-index: -1;
     in property <string> loss;
+    // A single dropped file uses the text view; these say so and name it.
+    in property <bool> from-file;
+    in property <string> file-name;
 
     // Files state.
     in property <[FileRow]> files;
@@ -98,11 +101,15 @@ export component ConvertWindow inherits Window {
             input-text <=> root.input-text;
             output-text: root.output-text;
             loss: root.loss;
+            from-file: root.from-file;
+            file-name: root.file-name;
+            progress: root.progress;
             text-changed(t) => { root.text-changed(t); }
             pick-source(i) => { root.pick-source(i); }
             pick-target(i) => { root.pick-target(i); }
             copy-result => { root.copy-result(); }
             save-result => { root.save-result(); }
+            convert-files => { root.convert-files(); }
         }
 
         if root.mode == "files": ConvertFiles {

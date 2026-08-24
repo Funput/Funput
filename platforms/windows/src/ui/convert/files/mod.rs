@@ -6,14 +6,16 @@
 //! file goes through [`charset::document::read`] by itself, and one that nothing
 //! explains waits for the user instead of being swept along.
 
+mod rows;
 mod write;
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use funput_core::charset::{self, Charset, document};
 
 use super::view;
 
+pub(super) use rows::{show_many, show_one};
 pub(super) use write::{OUT_DIR, Outcome, write_all};
 
 /// One file, as read.
@@ -79,20 +81,6 @@ pub(super) fn measure(entries: &mut [Entry], target: Charset) {
 /// How many files are ready to convert — the ones a charset was settled for.
 pub(super) fn ready(entries: &[Entry]) -> usize {
     entries.iter().filter(|e| e.charset.is_some()).count()
-}
-
-/// Where the converted copies will go, for the footer to show before committing.
-pub(super) fn out_dir_label(entries: &[Entry]) -> String {
-    let mut dirs: Vec<&Path> = entries.iter().filter_map(|e| e.path.parent()).collect();
-    dirs.sort_unstable();
-    dirs.dedup();
-    match dirs.as_slice() {
-        [] => String::new(),
-        [only] => only.join(OUT_DIR).display().to_string(),
-        // Dropped from several folders: each keeps its own, so no name can collide
-        // with a same-named file from somewhere else.
-        many => format!("{OUT_DIR}\\ trong {} thư mục", many.len()),
-    }
 }
 
 /// Convert and write the batch, off the UI thread — it is file I/O over every entry.

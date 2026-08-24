@@ -35,6 +35,17 @@ export component ConvertEmpty inherits Rectangle {
             color: Theme.subtle;
             horizontal-alignment: center;
         }
+        // Worth saying out loud: the tool people are coming from takes one source
+        // charset for a whole folder, so nobody expects a batch to be read file by
+        // file. It is the reason to drag more than one thing in here.
+        Text {
+            text: "Thả cả thư mục cũng được — mỗi tệp được nhận diện riêng, "
+                + "nên kho tài liệu nhiều đời vẫn chuyển đúng.";
+            font-size: Theme.font-caption;
+            color: Theme.subtle;
+            horizontal-alignment: center;
+            wrap: word-wrap;
+        }
         HorizontalLayout {
             alignment: center;
             spacing: Theme.sp-sm;

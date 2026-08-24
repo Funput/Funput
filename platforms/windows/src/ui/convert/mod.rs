@@ -31,13 +31,16 @@ pub(super) fn open() {
     window.set_charset_names(ModelRc::new(VecModel::from(names)));
     wire(&window);
     let _ = window.show();
-    win32::accept(window.window(), dropped);
 
+    // Deferred for the same reason `mica` defers: winit has not created the native
+    // window yet when `show()` returns, so asking for the HWND here gets nothing and
+    // the drop registration silently does nothing at all.
     let weak = window.as_weak();
     let _ = slint::invoke_from_event_loop(move || {
         if let Some(window) = weak.upgrade() {
             let active = mica::apply(window.window());
             window.global::<Theme>().set_mica(active);
+            win32::accept(window.window(), dropped);
         }
     });
     WINDOW.with(|cell| *cell.borrow_mut() = Some(window.as_weak()));
@@ -55,7 +58,16 @@ fn wire(window: &ConvertWindow) {
         refresh();
     });
     window.on_pick_source(|index| {
-        STATE.with(|s| s.borrow_mut().source = usize::try_from(index).ok());
+        STATE.with(|s| {
+            let mut state = s.borrow_mut();
+            let picked = usize::try_from(index).ok();
+            // The same picker serves a pasted paragraph and a single file, so it has
+            // to land on whichever one is on screen.
+            match state.files.as_mut_slice() {
+                [only] => only.charset = picked.map(at),
+                _ => state.source = picked,
+            }
+        });
         refresh();
     });
     window.on_pick_target(|index| {
@@ -89,9 +101,20 @@ fn wire(window: &ConvertWindow) {
             dropped(paths);
         }
     });
+    // Converted from the state rather than read back off the window: the pane shows a
+    // capped preview of a long document, and copying that would hand over a document
+    // with its tail quietly missing.
     window.on_copy_result(|| {
-        if let Some(window) = current() {
-            win32::write(&window.get_output_text());
+        let converted = STATE.with(|s| {
+            let state = s.borrow();
+            let (from, input) = match state.files.as_slice() {
+                [only] => (only.charset, only.text.as_str()),
+                _ => (state.source.map(at), state.input.as_str()),
+            };
+            from.map(|from| text::preview(input, from, at(state.target)).text)
+        });
+        if let Some(converted) = converted {
+            win32::write(&converted);
         }
     });
     window.on_save_result(text::save);
