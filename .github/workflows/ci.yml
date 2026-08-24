@@ -38,6 +38,19 @@ jobs:
       - name: Test
         run: cargo test --workspace
 
+      # Optional features are invisible to the three steps above: with `charset`
+      # off, nothing lints or runs `funput-core/src/charset/**` and it would rot
+      # unnoticed. Same runner, so the cache is already warm and this costs one
+      # incremental build.
+      #
+      # Format and the line budget need no second pass: `cargo fmt` walks `mod`
+      # items whatever their `cfg`, and check-loc.sh walks the filesystem.
+      - name: Clippy (charset)
+        run: cargo clippy -p funput-core --all-targets --features charset -- -D warnings
+
+      - name: Test (charset)
+        run: cargo test -p funput-core --features charset
+
       - name: Line budget
         run: bash scripts/check-loc.sh
 

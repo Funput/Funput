@@ -7,6 +7,15 @@ license.workspace = true
 [lints]
 workspace = true
 
+# The charset tables are dead weight in a keyboard: iOS and Android have no
+# converter UI and never call this. Off by default so their builds compile
+# byte-identically to before. Enabled by the desktop consumers that need it.
+# Adds no dependencies — the zero-runtime-dependency invariant below holds either
+# way, and `cargo tree --features charset` is the one-line proof.
+[features]
+default = []
+charset = []
+
 [dependencies]
 
 [dev-dependencies]
