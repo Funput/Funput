@@ -10,6 +10,8 @@ use std::rc::Rc;
 use adw::prelude::*;
 use gtk::{gio, glib};
 
+use funput_convert::charset;
+
 use crate::convert::Convert;
 
 /// Paste the clipboard into the text pane.
@@ -38,7 +40,7 @@ pub(in crate::convert) fn copy_result(convert: &Rc<Convert>) {
         let state = convert.state.borrow();
         state
             .conversion()
-            .map(|(text, from, to)| funput_convert::preview(text, from, to).text)
+            .map(|(text, from, to)| charset::render(&charset::read(text, from), to).text)
     };
     let Some(converted) = converted else { return };
     convert.window().clipboard().set_text(&converted);
@@ -55,7 +57,7 @@ pub(in crate::convert) fn save_result(convert: &Rc<Convert>) {
         let state = convert.state.borrow();
         state
             .conversion()
-            .map(|(text, from, to)| funput_convert::bytes(text, from, to))
+            .map(|(text, from, to)| charset::render(&charset::read(text, from), to).bytes)
     };
     let Some(bytes) = bytes else { return };
 

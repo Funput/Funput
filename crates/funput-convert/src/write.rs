@@ -8,7 +8,7 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use funput_core::charset::{self, Charset};
+use funput_core::charset::{Charset, read, render};
 
 use crate::Entry;
 
@@ -19,6 +19,7 @@ use crate::Entry;
 pub const OUT_DIR: &str = "Đã chuyển mã";
 
 /// What a batch came to.
+#[non_exhaustive]
 pub struct Outcome {
     pub written: usize,
     pub skipped: usize,
@@ -47,11 +48,11 @@ pub fn write_all(entries: &[Entry], target: Charset) -> Outcome {
             outcome.skipped += 1;
             continue;
         };
-        // Through the pivot, same as everywhere else: read into Unicode, then write
-        // Unicode out as the target. `encode_bytes` is what makes a legacy target one
-        // byte per letter rather than two.
-        let unicode = charset::convert(&entry.text, from, Charset::Unicode);
-        let (bytes, _) = charset::encode_bytes(&unicode.text, target);
+        // The same two steps every consumer takes, and the same call: read the
+        // document, then render it. `render` is what makes a legacy target one byte
+        // per letter rather than two — and what makes these bytes the ones the
+        // window promised in its preview pane.
+        let bytes = render(&read(&entry.text, from), target).bytes;
         match destination(&entry.path, &mut taken)
             .and_then(|path| std::fs::write(path, &bytes).ok())
         {

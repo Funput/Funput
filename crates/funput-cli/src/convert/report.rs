@@ -3,7 +3,7 @@
 //! All of it goes to standard error, because standard output carries the converted
 //! document and `funput convert … > out.txt` has to produce exactly that file.
 
-use funput_core::charset::{self, Charset, Conversion};
+use funput_core::charset::{self, Charset, Cost};
 
 /// What to say when nothing could be guessed and nothing was declared.
 pub(super) const UNDETECTED: &str =
@@ -47,18 +47,18 @@ pub(super) fn unknown_slug(slug: &str) -> String {
 /// `normalized` is deliberately silent. Converting to Unicode tổ hợp respells every
 /// toned vowel and none of it is a loss, so counting it would train the reader to
 /// ignore this line.
-pub(super) fn losses(read: &Conversion, written: &Conversion) {
-    if read.unmapped > 0 {
+pub(super) fn losses(cost: &Cost) {
+    if cost.undefined > 0 {
         eprintln!(
             "warning: {} character(s) the source charset does not define — \
              the file may be damaged, or --from may be wrong",
-            read.unmapped
+            cost.undefined
         );
     }
-    if written.unmapped > 0 {
+    if cost.unrepresentable > 0 {
         eprintln!(
             "warning: {} character(s) the target charset cannot represent",
-            written.unmapped
+            cost.unrepresentable
         );
     }
 }

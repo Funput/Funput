@@ -9,7 +9,7 @@
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-use funput_core::charset::{self, Charset, document};
+use funput_core::charset::{Charset, document, read, render};
 
 /// One file, as read.
 #[derive(Clone)]
@@ -96,8 +96,9 @@ pub fn measure(entries: &mut [Entry], target: Charset) {
     for entry in entries {
         entry.unmapped = match entry.charset {
             Some(from) => {
-                let unicode = charset::convert(&entry.text, from, Charset::Unicode);
-                charset::convert(&unicode.text, Charset::Unicode, target).unmapped
+                render(&read(&entry.text, from), target)
+                    .cost
+                    .unrepresentable
             }
             None => 0,
         };

@@ -36,7 +36,7 @@ mod write;
 pub use funput_core::charset;
 
 pub use batch::{Entry, collect, measure, out_dir_label, ready, scan};
-pub use text::{bytes, capped, loss, preview};
+pub use text::{capped, warning};
 pub use write::{OUT_DIR, Outcome, report, write_all};
 
 /// Which of the three shapes the window is in.

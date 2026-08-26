@@ -6,7 +6,11 @@
 //! the user actually wants — whether the Vietnamese comes out right. It gets the same
 //! before/after panes a pasted paragraph does.
 
-use funput_convert::{Entry, capped, charset::Charset};
+use funput_convert::{
+    capped,
+    charset::{self, Charset},
+    Entry,
+};
 use slint::{ModelRc, VecModel};
 
 use crate::ui::convert::view;
@@ -59,7 +63,7 @@ pub(in crate::ui::convert) fn show_one(window: &ConvertWindow, entry: &Entry, ta
         window.set_loss(slint::SharedString::new());
         return;
     };
-    let converted = funput_convert::preview(&entry.text, from, target);
-    window.set_output_text(capped(&converted.text).into());
-    window.set_loss(funput_convert::loss(&entry.text, from, target).into());
+    let rendered = charset::render(&charset::read(&entry.text, from), target);
+    window.set_output_text(capped(&rendered.text).into());
+    window.set_loss(funput_convert::warning(&rendered.cost, from, target).into());
 }

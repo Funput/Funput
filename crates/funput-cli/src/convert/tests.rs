@@ -7,9 +7,12 @@ use super::*;
 fn pipeline(bytes: &[u8], to: Charset) -> (Vec<u8>, usize, usize) {
     let doc = document::read(bytes.to_vec()).expect("well-formed fixture");
     let from = doc.charset.expect("fixture should be identifiable");
-    let read = charset::convert(&doc.text, from, Charset::Unicode);
-    let (out, written) = charset::encode_bytes(&read.text, to);
-    (out, read.unmapped, written.unmapped)
+    let rendered = charset::render(&charset::read(&doc.text, from), to);
+    (
+        rendered.bytes,
+        rendered.cost.undefined,
+        rendered.cost.unrepresentable,
+    )
 }
 
 #[test]

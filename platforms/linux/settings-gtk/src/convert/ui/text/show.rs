@@ -8,6 +8,8 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 
+use funput_convert::charset;
+
 use crate::convert::state::{self, State};
 use crate::convert::ui::widget;
 use crate::convert::Convert;
@@ -69,7 +71,11 @@ impl Pane {
 /// until the picker is used — a wrong guess dressed up as a result is exactly what
 /// this window exists to prevent.
 ///
-/// The panes are capped; the conversion and both counters are not. A long document
+/// One `read`, one `render`. The right pane is `render`'s own text, which for a
+/// legacy target is its bytes read back — so what is on screen is what the file will
+/// hold, `?` and all, rather than a second conversion that happens to look similar.
+///
+/// The panes are capped; the conversion and every counter are not. A long document
 /// cannot make the window crawl, and the numbers stay honest.
 fn views(state: &State) -> (String, String, String) {
     let Some((text, from, to)) = state.conversion() else {
@@ -80,9 +86,10 @@ fn views(state: &State) -> (String, String, String) {
         let shown = funput_convert::capped(text);
         return (shown.clone(), shown, String::new());
     };
+    let rendered = charset::render(&charset::read(text, from), to);
     (
         funput_convert::capped(text),
-        funput_convert::capped(&funput_convert::preview(text, from, to).text),
-        funput_convert::loss(text, from, to),
+        funput_convert::capped(&rendered.text),
+        funput_convert::warning(&rendered.cost, from, to),
     )
 }

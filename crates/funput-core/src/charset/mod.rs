@@ -32,12 +32,14 @@ mod codecs;
 mod detect;
 pub mod document;
 mod identity;
+mod pipeline;
 mod pivot;
 mod transcode;
 
 pub use codecs::{decode_bytes, encode_bytes, is_byte_oriented};
 pub use detect::{detect, detect_bytes};
 pub use identity::{ALL, Charset};
+pub use pipeline::{Cost, Pivoted, Rendered, read, render};
 // `Conversion` is defined beside the loop that fills in its two counters.
 pub use transcode::Conversion;
 
