@@ -19,7 +19,7 @@ platform.
 
 Handle-based; kết quả trả **theo giá trị** (POD, không cần free); input là **codepoint** (platform
 tự map keycode → char). Mọi hàm **null-safe** (handle null / codepoint không hợp lệ → kết quả
-`None`) và **panic-safe**: mọi entry point chạm engine chạy trong `support::safe()`
+`None`) và **panic-safe**: mọi entry point chạm engine chạy trong `abi::safe()`
 (`catch_unwind`), nên panic trong engine bị chặn tại biên và trả kết quả no-op — **không bao giờ**
 unwind sang host (điều sẽ abort cả tiến trình IME).
 

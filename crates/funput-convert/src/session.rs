@@ -25,7 +25,7 @@ mod query;
 mod view;
 
 use crate::batch::Entry;
-use crate::{at, index_of};
+use crate::{at, clamp, index_of};
 
 pub use job::Job;
 pub use view::{Mode, Row, Unreadable, View};
@@ -71,8 +71,11 @@ impl Session {
         self.source = None;
     }
 
+    /// Clamped on the way in, not on the way out: [`View::target`] is a position a
+    /// shell feeds straight back into its own menu, so it has to be one that exists.
+    /// A host storing the index across releases is exactly why `ALL` is append-only.
     pub fn set_target(&mut self, index: usize) {
-        self.target = index;
+        self.target = clamp(index);
     }
 
     /// The source picker was used.
@@ -83,7 +86,7 @@ impl Session {
     pub fn pick_source(&mut self, index: Option<usize>) {
         match self.files.as_mut_slice() {
             [only] => only.charset = index.map(at),
-            _ => self.source = index,
+            _ => self.source = index.map(clamp),
         }
     }
 

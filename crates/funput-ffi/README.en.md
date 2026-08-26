@@ -20,7 +20,7 @@ engine and the platform.
 Handle-based; results are returned **by value** (POD, no free needed); input is a **codepoint** (the
 platform maps keycode → char itself). Every function is **null-safe** (a null handle / invalid codepoint
 yields a `None` result) and **panic-safe**: every entry point that touches the engine runs inside
-`support::safe()` (`catch_unwind`), so a panic in the engine is caught at the boundary and turned into a
+`abi::safe()` (`catch_unwind`), so a panic in the engine is caught at the boundary and turned into a
 no-op result — it **never** unwinds into the host (which would abort the whole IME process).
 
 Personal suggestions use a separate opaque `FunputSuggestionEngine` handle. Queries return at most

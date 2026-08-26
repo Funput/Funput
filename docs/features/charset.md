@@ -492,6 +492,60 @@ UTF-8, và luật byte đã trượt UTF-8 thì chỉ được trả lời bằn
 thuỷ đó ra là giao phần tinh tế cho caller và để nó bị viết lại một lần mỗi nền tảng — đúng thứ
 core sinh ra để tránh. Khi có shell cần, tầng đó thuộc về core dưới dạng **một** lời gọi.
 
+### Cửa cho cả cửa sổ — chưa viết, nhưng đã chốt hình dạng
+
+macOS cần hơn cửa text: nó cần cả cửa sổ. Thứ nó sẽ bọc là `funput_convert::Session`, và
+crate đó đã được nắn để việc bọc chỉ là cơ học — có
+`crates/funput-convert/tests/c_host.rs` lái nó **đúng theo quy ước của cửa này** để chứng
+minh, trước khi có một dòng `extern "C"` nào.
+
+Bốn điều kiện, và cả bốn đã đúng:
+
+- **Không kiểu Rust nào ở biên.** Bảng mã là chỉ số trong `ALL`; `Option<usize>` ra ngoài
+  thành `i32` với `-1` nghĩa là *chưa rõ* — một câu trả lời, không phải lỗi, y như
+  `FUNPUT_CHARSET_UNKNOWN`. Đường dẫn ra ngoài thành **tên**, không phải `PathBuf`.
+- **Không getter nào cần `&mut`.** Đó là lý do `Session` tách `refresh()` khỏi `view()`:
+  không borrow nào qua được C, nên `View` phải rã được thành từng accessor, và mỗi trường
+  phải là giá trị sở hữu chứ không phải thứ tính ra lúc hỏi.
+- **Mọi tập hợp đi được bằng chỉ số**, kèm một `_count`, và ổn định giữa hai lần `refresh`.
+- **Việc rời luồng rời dưới dạng giá trị.** `Scan` và `Job` là `Send`; `Session` ở lại.
+
+Phác hình dạng, để người làm macOS không phải thiết kế lại:
+
+```c
+FunputConvertSession *funput_convert_session_new(void);
+void funput_convert_session_free(FunputConvertSession *s);
+
+void funput_convert_set_input (FunputConvertSession*, const uint32_t *text, size_t len);
+void funput_convert_set_target(FunputConvertSession*, size_t index);
+void funput_convert_set_source(FunputConvertSession*, int32_t index);   // -1 = tự đoán
+void funput_convert_pick_row  (FunputConvertSession*, size_t row, size_t index);
+void funput_convert_set_window(FunputConvertSession*, size_t first, size_t len);
+void funput_convert_refresh   (FunputConvertSession*);   // lời gọi tốn kém — ghi rõ trong doc
+
+uint32_t funput_convert_mode(const FunputConvertSession*);
+int32_t  funput_convert_source(const FunputConvertSession*);        // -1 = chưa rõ
+int32_t  funput_convert_input_preview(const FunputConvertSession*, uint32_t *out, size_t cap);
+                                                                    // -1 = buffer của host là chủ
+size_t   funput_convert_output_preview(const FunputConvertSession*, uint32_t *out, size_t cap);
+size_t   funput_convert_warning(const FunputConvertSession*, uint32_t *out, size_t cap);
+size_t   funput_convert_row_count(const FunputConvertSession*);
+size_t   funput_convert_row_total(const FunputConvertSession*);
+int32_t  funput_convert_row_charset(const FunputConvertSession*, size_t i);
+size_t   funput_convert_row_name(const FunputConvertSession*, size_t i, uint32_t*, size_t);
+```
+
+Mọi chuỗi đi ra theo đúng luật **được ăn cả ngã không** của `write_text` ở trên. Mọi thân
+hàm nằm trong `abi::safe`. `FunputConvertOutcome` là POD mới duy nhất, và phải thêm tên
+vào `[export].include` của `cbindgen.toml`.
+
+**Một câu hỏi đã kiểm và không phải rào chắn.** Ranh giới `funput-ffi` tự tuyên bố là
+"chỉ marshal tại biên: không logic Telex/VNI, không hook/inject" — nó **không** cấm I/O
+tệp. Câu "handle không đọc/ghi file" trong README chỉ nói về `FunputAppLanguage`, và nói
+vì lý do riêng của handle đó (host tự nạp lại bằng `seed`). Cửa lô đọc và ghi tệp không
+phá vỡ gì cả: việc đọc lô nằm trong `funput-convert`, và cửa chỉ marshal lời gọi — đúng
+mô hình mục ngay trên đã lường ("tầng đó thuộc về core dưới dạng một lời gọi").
+
 ### Thứ nó không làm được
 
 Mọi phán đoán ở đây đều **tương đối**: bốn giả thuyết, cái nào khớp nhất thì thắng.
