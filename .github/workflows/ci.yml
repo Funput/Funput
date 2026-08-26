@@ -7,7 +7,8 @@ name: CI
 # The toolchain comes from rust-toolchain.toml (1.97.1 + rustfmt + clippy), so
 # bumping the pin moves CI with it. The two excluded shells
 # (platforms/windows, platforms/linux/settings-gtk) need system libraries and are
-# covered by the release builds instead.
+# covered by the release builds instead — build-windows.yml runs clippy and the
+# tests for the Windows shell there, since nothing in this file can reach it.
 
 on:
   pull_request:
@@ -79,6 +80,13 @@ jobs:
       # `funput_charset_*` symbol. The line before it is a positive control — if the
       # symbol lookup itself ever stops working, this fails loudly rather than
       # quietly passing forever.
+      #
+      # The `cargo build` looks redundant beside the steps above and is not: neither
+      # `cargo test` nor `cargo clippy` emits a cdylib, so this is the only step that
+      # produces the file being inspected. Naming `target/debug` is safe for the same
+      # reason the control exists — a default build puts it exactly there, and were it
+      # ever absent the control fails, rather than `! grep` passing on a missing file
+      # because it found nothing in nothing.
       - name: charset stays out of the mobile crates
         run: |
           ! cargo tree -p funput-ffi -e features | grep -q charset

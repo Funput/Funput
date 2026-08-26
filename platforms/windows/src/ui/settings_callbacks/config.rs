@@ -57,6 +57,10 @@ pub(super) fn wire(window: &SettingsWindow) {
         }
     });
 
+    // Opening the tool closes this window: one UI child at a time, which is the rule
+    // Settings and the flyout already follow.
+    window.on_open_convert(crate::ui::launch_convert);
+
     let weak = window.as_weak();
     window.on_import_unikey(move || {
         // UniKey writes `ukmacro.txt`, so `.txt` is the filter — but the file can

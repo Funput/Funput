@@ -41,6 +41,27 @@ jobs:
           # embedded version resource, and the About pane (CARGO_PKG_VERSION).
           node -e "const fs=require('fs');const f='platforms/windows/Cargo.toml';let s=fs.readFileSync(f,'utf8');s=s.replace(/^version = \".*\"/m,'version = \"'+process.argv[1]+'\"');fs.writeFileSync(f,s)" "$V"
 
+      # platforms/windows sits outside the cargo workspace, so ci.yml never lints or
+      # tests it. Without these two steps nothing does, and it showed: two clippy
+      # failures sat in the tree until someone ran it by hand, one of them a doc
+      # comment that a file split had cut in half.
+      #
+      # --release on both is deliberate. The default dev profile would compile slint
+      # and skia a second time; matching the profile the build already needs keeps the
+      # dependency tree shared, and the pair costs about two minutes.
+      #
+      # They run before the build so a failure does not first spend two minutes
+      # producing an executable it is about to reject. The cost of that ordering is
+      # real — a lint error now stops a release — and it is the trade for this being
+      # the only automated check the shell gets.
+      - name: Clippy (the shell's only lint gate)
+        working-directory: platforms/windows
+        run: cargo clippy --release --all-targets -- -D warnings
+
+      - name: Test
+        working-directory: platforms/windows
+        run: cargo test --release
+
       - name: Build Funput.exe
         working-directory: platforms/windows
         run: cargo build --release

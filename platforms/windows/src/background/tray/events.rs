@@ -3,7 +3,7 @@
 use tray_icon::menu::MenuEvent;
 use tray_icon::{MouseButton, MouseButtonState, TrayIconEvent};
 
-use super::menu::{QUIT_ID, SETTINGS_ID, UPDATE_ID};
+use super::menu::{CONVERT_ID, QUIT_ID, SETTINGS_ID, UPDATE_ID};
 use crate::background::hook;
 use crate::ui;
 
@@ -39,6 +39,7 @@ fn on_left_click(rect: tray_icon::Rect) {
 fn handle_menu(id: &str) {
     match id {
         SETTINGS_ID => ui::launch_settings(false),
+        CONVERT_ID => ui::launch_convert(),
         UPDATE_ID => ui::launch_settings(true),
         QUIT_ID => {
             ui::terminate_children();

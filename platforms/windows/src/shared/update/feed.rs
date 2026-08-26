@@ -8,6 +8,7 @@ use std::time::Duration;
 
 use super::{Error, Manifest, Result, FEED_URL, MAX_DOWNLOAD_BYTES};
 
+/// The feed URL, allowing a debug-build override (`FUNPUT_UPDATE_FEED`) so the
 /// end-to-end flow can be tested against a local manifest before tagging.
 fn feed_url() -> String {
     #[cfg(debug_assertions)]
