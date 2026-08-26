@@ -1,3 +1,4 @@
+import KeyboardRenderer
 import SwiftUI
 import ThemeRuntime
 import ThemeSchema
@@ -51,7 +52,7 @@ struct ThemeGallery: View {
         identifier: String
     ) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 16) {
+            LazyHStack(spacing: 16) {
                 ForEach(themes) { theme in themeCard(theme, isCustom: isCustom) }
             }
             .scrollTargetLayout()
@@ -62,9 +63,10 @@ struct ThemeGallery: View {
     }
 
     private func themeCard(_ theme: KeyboardTheme, isCustom: Bool) -> some View {
-        ThemeCard(
+        let presentation = model.presentation(for: theme.id)
+        return ThemeCard(
             theme: theme,
-            presentation: model.presentation(for: theme.id),
+            resolvedTheme: presentation.theme,
             backgroundImageData: model.imageData(for: theme),
             interfaceStyle: model.previewMode.interfaceStyle,
             isPreviewed: theme.id == model.previewThemeID,
