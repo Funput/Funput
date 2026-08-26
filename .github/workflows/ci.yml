@@ -5,10 +5,10 @@ name: CI
 # tested and inside the per-file line budget.
 #
 # The toolchain comes from rust-toolchain.toml (1.97.1 + rustfmt + clippy), so
-# bumping the pin moves CI with it. The two excluded shells
-# (platforms/windows, platforms/linux/settings-gtk) need system libraries and are
-# covered by the release builds instead — build-windows.yml runs clippy and the
-# tests for the Windows shell there, since nothing in this file can reach it.
+# bumping the pin moves CI with it. The two excluded shells need system libraries, so
+# neither is reachable from the `rust` job: the GTK4 Settings app gets a job of its own
+# below, and the Windows shell is covered by build-windows.yml, which runs clippy and
+# its tests there because nothing in this file can.
 
 on:
   pull_request:
@@ -97,6 +97,40 @@ jobs:
 
       - name: Line budget
         run: bash scripts/check-loc.sh
+
+  # The GTK4 Settings app, which also hosts the Chuyển mã window. Excluded from the
+  # cargo workspace because it links system gtk4/libadwaita, so the `rust` job above —
+  # which deliberately installs no system libraries — cannot see it. Before this job it
+  # had no gate at all: build-linux.yml only ran `cargo build --release`, at release
+  # time, so a lint failure or a broken test could sit in main for weeks.
+  #
+  # Dev profile, unlike the Windows shell's `--release`: there is no slint/skia here to
+  # recompile, so debug is faster and its cache is separate from the release build
+  # anyway. `cargo fmt --all` in the `rust` job does not reach an excluded package,
+  # which is why formatting is checked here too.
+  settings-gtk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build deps
+        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libadwaita-1-dev
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: platforms/linux/settings-gtk -> target
+
+      - name: Format
+        working-directory: platforms/linux/settings-gtk
+        run: cargo fmt -- --check
+
+      - name: Clippy
+        working-directory: platforms/linux/settings-gtk
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Test
+        working-directory: platforms/linux/settings-gtk
+        run: cargo test
 
   # The shared Linux code (platforms/linux/common): the settings bridge and the
   # composition state machine both shells drive. It links no Fcitx5 or IBus symbol,

@@ -2,9 +2,10 @@
 
 ## Trạng thái
 
-Đã có: khung core, cả bốn bảng mã, `detect()`, và consumer đầu tiên — nhập bảng gõ
-tắt UniKey ở bảng mã cũ. Còn lại: `funput convert`, rồi UI (xem "Thứ tự hiện thực"
-ở cuối).
+Đã xong toàn bộ danh sách ở "Thứ tự hiện thực" cuối tài liệu: khung core, cả bốn bảng
+mã, `detect()`, `funput-config`, C ABI, `funput convert`, và hai cửa sổ — Windows
+(Slint) và Linux (GTK4). Ruột của hai cửa sổ nằm ở **`crates/funput-convert`**, không
+phải ở từng shell; xem mục 11. Còn lại là bảng mã mới, nếu có.
 
 Tài liệu này chốt mô hình *trước* khi có code và được review riêng; nó vẫn là nơi
 mọi quyết định thiết kế sống, nên mỗi bảng mã mới cập nhật lại nó trong cùng PR.
@@ -478,4 +479,34 @@ Mỗi mục một PR:
     mọc ra từ thứ UniKey không có (`detect` + hai bộ đếm): không hỏi bảng mã nguồn mà **nói**
     ra; thấy trước/sau theo thời gian thực; **gọi tên** những chữ sẽ mất chứ không chỉ đếm; và
     nhận diện **từng tệp** trong lô thay vì ép một bảng mã cho cả thư mục.
-11. UI Linux GTK.
+11. **`crates/funput-convert`** — tách ruột của cửa sổ ra khỏi shell, **trước** khi có cửa sổ
+    thứ hai. Bốn việc trong đó không có gì là đồ hoạ (đọc lô theo từng tệp, nói ra cái giá,
+    ghi bản sao cạnh bản gốc, thuật lại), và chép chúng sang GTK sẽ đặt câu cảnh báo mất chữ,
+    luật `vanban (2).txt` và tên thư mục `Đã chuyển mã` vào hai chỗ cùng lúc. Đây là cùng
+    một phán quyết đã ra ở mục 7 cho `Charset::name()`, chỉ ở quy mô lớn hơn.
+
+    Lợi ích thứ hai lớn hơn ý định ban đầu: `platforms/windows` và
+    `platforms/linux/settings-gtk` đều nằm ngoài cargo workspace, nên `clippy --workspace`,
+    `test --workspace` và `check-loc.sh` không với tới cái nào — 11 test của cửa sổ Windows
+    chỉ chạy lúc phát hành. Đưa vào `crates/` là lần đầu chúng chạy ở mỗi PR, cho cả hai nền
+    tảng.
+12. **UI Linux GTK** — cùng ba trạng thái, cùng bốn nước đi, cùng từng câu chữ. Ba điều
+    riêng của nền tảng:
+
+    - **Không có tray.** Fcitx5 và iBus tự vẽ status icon, nên mục tray của Windows không có
+      chỗ đứng. Thay bằng hai cửa: một hàng trong Settings → Chung, và
+      `funput-convert.desktop` chạy `funput-settings --convert`. Cùng một tiến trình, cùng
+      một thể hiện — `HANDLES_COMMAND_LINE`, vì cờ mặc định của `GApplication` không chuyển
+      tiếp argv và `--convert` sẽ mất lặng lẽ.
+    - **Dựng lại từ state, có điều chỉnh.** Thuộc tính Slint là giá trị nên Windows dựng lại
+      được cả cửa sổ; tạo lại một `TextView` mỗi phím gõ thì giết focus và con trỏ. Bộ khung
+      dựng một lần, `refresh()` chỉ đặt thuộc tính, và **một** cờ `refreshing` chặn tái nhập
+      cho cả bốn tín hiệu mà chính `refresh()` phát ra — nếu không thì mỗi lần nó đặt một
+      dropdown sẽ là một `borrow_mut` lồng nhau, tức panic.
+    - **Ký tự điều khiển.** `TextBuffer` của GTK nhận cả độ dài chứ không dừng ở NUL, nên một
+      tệp cũ hỏng làm nó đo và vẽ sai phần còn lại. `capped()` khử C0 — trong lõi dùng chung,
+      nên Windows được hưởng luôn, dù ở đó chưa ai thấy.
+
+    Fcitx5 và iBus **dùng chung** cửa sổ này: nó không hỏi khung nào đang chạy, không đọc
+    `settings.json`, không nói chuyện với engine. Cả hai đã phụ thuộc gói `funput-settings`
+    tại đúng phiên bản, nên cả hai nhận nó mà không sửa một dòng C++.

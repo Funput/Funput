@@ -4,8 +4,8 @@
 
 mod keyboard;
 mod overview;
-mod sidebar;
 mod shortcuts;
+mod sidebar;
 mod typing;
 
 use adw::prelude::*;
@@ -24,6 +24,9 @@ pub fn build(app: &Application) -> Window {
         .icon_name("funput")
         .build();
     window.set_application(Some(app));
+    // `route` in main.rs finds this by name: Settings and onboarding are both
+    // `adw::Window`, so a downcast cannot tell them apart.
+    window.set_widget_name(crate::SETTINGS);
 
     let stack = ViewStack::new();
     let title = WindowTitle::new(Destination::Overview.title(), "");

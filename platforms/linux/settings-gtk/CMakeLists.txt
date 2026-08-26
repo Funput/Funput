@@ -36,6 +36,15 @@ install(PROGRAMS "${FUNPUT_SETTINGS_BIN}" DESTINATION "${CMAKE_INSTALL_BINDIR}")
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../packaging/funput-settings.desktop"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
 
+# The same binary under a second launcher (`funput-settings --convert`). Linux has no
+# tray, so the tray item Windows offers has nowhere to live; this is what stands in for
+# it, and without it the converter would only be reachable through Settings.
+#
+# No packaging changes go with it: it lands in this package, and unlike the four files
+# below it was never owned by a shell, so it needs no Replaces/Breaks.
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../packaging/funput-convert.desktop"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
+
 # Shipped here rather than with a shell because the shells reference them by name
 # (`Icon=funput`) and would otherwise each need their own copy — the very duplication
 # this package exists to remove.
