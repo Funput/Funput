@@ -1,10 +1,9 @@
-import KeyboardRenderer
 import SwiftUI
 import ThemeSchema
 
 struct ThemeCard: View {
     let theme: KeyboardTheme
-    let presentation: KeyboardPresentation
+    let resolvedTheme: ResolvedTheme
     let backgroundImageData: Data?
     let interfaceStyle: UIUserInterfaceStyle
     let isPreviewed: Bool
@@ -22,15 +21,12 @@ struct ThemeCard: View {
         ZStack {
             InteractiveGlassCard(isSelected: isPreviewed) {
                 VStack(alignment: .leading, spacing: 10) {
-                    KeyboardPreview(
-                        presentation: presentation,
+                    ThemeCardThumbnail(
+                        theme: resolvedTheme,
                         backgroundImageData: backgroundImageData,
                         interfaceStyle: interfaceStyle
                     )
-                        .id(interfaceStyle)
                         .frame(height: 204)
-                        .clipShape(.rect(cornerRadius: 16))
-                        .allowsHitTesting(false)
                         .accessibilityHidden(true)
                     HStack(spacing: 6) {
                         Text(theme.metadata.name)

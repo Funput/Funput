@@ -6,7 +6,7 @@ struct SettingsResetCard: View {
     @State private var confirms = false
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             VStack(alignment: .leading, spacing: 10) {
                 Label("Bắt đầu lại", systemImage: "arrow.counterclockwise")
                     .font(.headline)

@@ -7,7 +7,7 @@ struct ThemeContrastWarnings: View {
 
     var body: some View {
         if !warnings.isEmpty {
-            AdaptiveGlassCard {
+            ContentCard {
                 Label("Tương phản màu thấp", systemImage: "exclamationmark.triangle.fill")
                     .font(.headline)
                     .foregroundStyle(.orange)

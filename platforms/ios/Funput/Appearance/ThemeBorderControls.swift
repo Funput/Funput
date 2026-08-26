@@ -5,7 +5,7 @@ struct ThemeBorderControls: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Viền").font(.headline)
             if draft.customTheme.theme.material == .glass {
                 Toggle("Tùy chỉnh viền trên Glass", isOn: overrideBinding)

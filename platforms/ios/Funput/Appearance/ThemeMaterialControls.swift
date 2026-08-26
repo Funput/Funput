@@ -5,7 +5,7 @@ struct ThemeMaterialControls: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Material").font(.headline)
             Picker("Material", selection: $draft.customTheme.theme.material) {
                 ForEach(materials, id: \.self) { material in

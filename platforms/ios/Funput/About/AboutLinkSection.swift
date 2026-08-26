@@ -6,7 +6,7 @@ struct AboutLinkSection: View {
     let destinations: [AboutDestination]
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Label(title, systemImage: systemImage)
                 .font(.headline)
             VStack(spacing: 0) {

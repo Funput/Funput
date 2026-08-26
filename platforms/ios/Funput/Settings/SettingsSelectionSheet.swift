@@ -10,7 +10,7 @@ struct SettingsSelectionSheet: View {
             ZStack {
                 Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
                 ScrollView {
-                    AdaptiveGlassCard {
+                    ContentCard {
                         VStack(spacing: 0) {
                             ForEach(Array(picker.choices(model: model).enumerated()), id: \.element.id) { index, choice in
                                 if index > 0 { Divider() }

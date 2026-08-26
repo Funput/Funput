@@ -4,7 +4,7 @@ struct ThemeImageOverlayControls: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Lớp phủ · \(draft.previewMode.title)").font(.headline)
             ColorPicker("Màu lớp phủ", selection: color, supportsOpacity: false)
                 .accessibilityIdentifier("themeEditor.imageOverlayColor")

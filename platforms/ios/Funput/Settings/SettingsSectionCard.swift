@@ -12,7 +12,7 @@ struct SettingsSectionCard<Content: View>: View {
     }
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Label(title, systemImage: systemImage)
                 .font(.headline)
             VStack(spacing: 0) {

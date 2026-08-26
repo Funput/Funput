@@ -5,7 +5,7 @@ struct KeyboardSetupCard: View {
     let openSettings: () -> Void
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Label(title, systemImage: statusIcon)
                 .font(.headline)
                 .foregroundStyle(hasFullAccess ? Color.green : Color.primary)
