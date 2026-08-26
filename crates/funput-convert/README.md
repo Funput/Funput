@@ -21,7 +21,7 @@ từng tồn tại hai bản, mỗi shell một, rồi trôi khỏi nhau.
 
 Tiền lệ cho phần chuỗi là `funput_core::charset::Charset::name()` — nó sống trong lõi
 chính là để một menu trên Windows và một menu trên Linux không tự đặt tên lấy rồi lệch nhau.
-Hai câu trong `loss()` cùng hạng: chúng là *phát biểu về tài liệu*, không phải chrome.
+Hai câu trong `warning()` cùng hạng: chúng là *phát biểu về tài liệu*, không phải chrome.
 
 Còn một lợi ích thứ hai, lớn hơn: `platforms/windows` và `platforms/linux/settings-gtk` đều
 nằm **ngoài** cargo workspace, nên `cargo clippy --workspace`, `cargo test --workspace` và
@@ -41,10 +41,9 @@ pub use funput_core::charset;   // để consumer chỉ cần MỘT dependency
 pub enum Mode { Empty, Text, Files }
 impl Mode { pub fn of(files: &[Entry], input: &str) -> Self; }
 
-// Một đoạn văn bản
-pub fn preview(text: &str, from: Charset, to: Charset) -> Conversion;
-pub fn bytes(text: &str, from: Charset, to: Charset) -> Vec<u8>;
-pub fn loss(text: &str, from: Charset, to: Charset) -> String;
+// Một đoạn văn bản. Phép chuyển là `charset::read` + `charset::render` của core —
+// dùng chung với `funput convert`; ở đây chỉ còn câu chữ và bản cắt để hiển thị.
+pub fn warning(cost: &Cost, from: Charset, to: Charset) -> String;
 pub fn capped(text: &str) -> String;
 
 // Một lô tệp
@@ -70,7 +69,7 @@ nói sẵn đây là một đoạn văn hay một lô tệp. Và **một tệp �
 bảng một hàng**: một tệp không có gì để so sánh, nên bảng sẽ giấu mất đúng thứ người dùng
 muốn xem — tiếng Việt có ra đúng không.
 
-**`loss()` là hai câu, không phải một.** Đọc có thể hỏng (ký tự bảng mã *nguồn* không định
+**`warning()` là hai câu, không phải một.** Đọc có thể hỏng (ký tự bảng mã *nguồn* không định
 nghĩa — nghĩa là chọn sai nguồn, hoặc tệp đã hỏng) và ghi có thể hỏng (ký tự bảng mã *đích*
 không viết được — một cái giá để chấp nhận hoặc né). Chỉ báo cái thứ hai chính là thứ từng
 để một phỏng đoán nguồn sai đi qua trong im lặng. Câu phía đích **gọi tên** ký tự, tối đa

@@ -318,6 +318,45 @@ Một chữ thường hiển thị đúng thì người dùng sửa được; m�
 văn bản `.VnTime` là rác câm. Và `unmapped` cho họ biết chính xác còn bao nhiêu chỗ
 cần để mắt tới.
 
+## Hai bước, không phải một
+
+`convert` là **một lượt**: `nguồn → Atom → đích`. Đúng cho một chuỗi, sai cho một cửa
+sổ, vì hai lý do.
+
+**Cửa sổ cho xem trước khi ghi.** Byte một tệp nhận được **không** phải ký tự khung xem
+hiển thị: `encode_bytes` thu hẹp thứ không lọt vào một byte thành `?`. Cửa sổ nào xem
+bằng một lời gọi và lưu bằng một lời gọi khác thì đang hiện thứ tệp sẽ không chứa. Nên
+`render` trả **cả hai**, làm ra cùng lúc, và việc chúng khớp nhau là chuyện cấu trúc
+chứ không phải một quy ước ai đó phải nhớ giữ.
+
+**Cửa sổ đổi bảng mã đích liên tục.** Đọc nguồn là nửa tốn kém và nó không phụ thuộc
+đích, nên tách ra: `read` một lần, `render` mỗi đích.
+
+Việc tách còn sửa một chỗ tinh tế hơn. Một lượt `nguồn → đích` và hai bước
+`nguồn → Unicode → đích` **không phải cùng một phép chuyển**: vòng qua chuỗi Unicode
+thật thêm một `Atom::from_char(atom.to_char())`, vốn là identity với chữ mà bảng mã
+nguồn có định nghĩa, và **không** phải với mã nó không định nghĩa. `0xC2` của TCVN3 đi
+qua thành `Â`, mà mã TCVN3 thật của `Â` là `0xA2`. Ca VNI còn lệch cả độ dài: `0xFD` ra
+`ý`, viết lại thành hai byte.
+
+Trước khi có tầng này, cửa sổ Windows xem bằng đường một lượt và ghi bằng đường hai
+bước — nên nó **hiển thị một đằng, lưu một nẻo**, đúng lúc người dùng cần tin vào khung
+xem nhất. Có một property test trong `tests/charset/properties.rs` ghim điều duy nhất
+khiến việc gộp chúng an toàn: hai đường chỉ khác nhau ở chỗ phép **đọc đã đếm**, nên
+đổi đường không bao giờ dịch chuyển một ký tự mà người dùng chưa được cảnh báo.
+
+### `Cost` mang số, không mang câu
+
+Hai consumer cần cùng phép đo và diễn đạt khác nhau: cửa sổ **gọi tên** ký tự bằng
+tiếng Việt, terminal **đếm** chúng bằng tiếng Anh. Nên `Cost` chỉ mang số và danh sách
+`lost`, còn câu chữ sống ở từng consumer — `funput_convert::warning()` cho hai cửa sổ,
+`funput-cli/src/convert/report.rs` cho dòng lệnh.
+
+Hai con số về đích, cố ý tách: `lost.len()` là số chữ **riêng biệt** không viết được
+(thứ một menu gọi tên), `unrepresentable` là số **lần xuất hiện** (thứ một terminal
+đếm). `normalized` đếm ở phía **đọc**, vì đó là phía duy nhất thấy được nó — phép ghi
+luôn xuất phát từ Unicode dựng sẵn, vốn chỉ có một cách viết.
+
 ## Hợp đồng mở rộng
 
 Mỗi bảng mã là một module codec cung cấp đúng hai hàm:
@@ -368,6 +407,17 @@ pub fn decode_bytes(bytes: &[u8], from: Charset) -> Conversion;
 pub fn encode_bytes(text: &str, to: Charset) -> (Vec<u8>, Conversion);
 pub fn detect(text: &str) -> Option<Charset>;
 pub fn detect_bytes(bytes: &[u8]) -> Option<Charset>;
+
+// Tầng trên cho consumer chuyển cả tài liệu — xem "Hai bước, không phải một".
+#[non_exhaustive] pub struct Pivoted { pub text: String, pub undefined: usize, pub normalized: usize }
+#[non_exhaustive] pub struct Rendered { pub text: String, pub bytes: Vec<u8>, pub cost: Cost }
+#[non_exhaustive] pub struct Cost {
+    pub undefined: usize, pub lost: Vec<char>, pub unrepresentable: usize, pub normalized: usize,
+}
+impl Cost { pub fn is_clean(&self) -> bool; }
+
+pub fn read(text: &str, from: Charset) -> Pivoted;
+pub fn render(pivoted: &Pivoted, to: Charset) -> Rendered;
 
 mod document {
     pub struct Document { pub text: String, pub charset: Option<Charset> }

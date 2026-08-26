@@ -78,11 +78,12 @@ pub fn run(args: ConvertArgs) -> CliResult {
     };
 
     // Through the pivot, which is what makes this one command rather than one per
-    // pair: core reads `from` into Unicode, and writes Unicode back out as `to`.
-    let read = charset::convert(&input.text, from, Charset::Unicode);
-    let (bytes, written) = charset::encode_bytes(&read.text, to);
-    sink::write(&bytes)?;
-    report::losses(&read, &written);
+    // pair: core reads `from` into Unicode, and renders Unicode back out as `to`.
+    // The same two calls the converter windows make, so a document converted here
+    // and a document converted there cannot come out differently.
+    let rendered = charset::render(&charset::read(&input.text, from), to);
+    sink::write(&rendered.bytes)?;
+    report::losses(&rendered.cost);
     Ok(ExitCode::SUCCESS)
 }
 

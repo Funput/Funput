@@ -4,6 +4,8 @@
 //! [`funput_convert`], shared with the GTK window on Linux. What is left here is the
 //! one part that cannot be: the Save dialog.
 
+use funput_convert::charset;
+
 use super::view;
 
 /// Save the converted paragraph to a file the user picks.
@@ -12,7 +14,9 @@ use super::view;
 /// characters as UTF-8 would spend two on each and produce a file `.VnTime` cannot
 /// read back — the one mistake that would make the whole window pointless.
 pub(super) fn save() {
-    let Some(window) = view::current() else { return };
+    let Some(window) = view::current() else {
+        return;
+    };
     let (input, from, to) = view::STATE.with(|s| {
         let state = s.borrow();
         (
@@ -29,7 +33,10 @@ pub(super) fn save() {
     else {
         return;
     };
-    let message = match std::fs::write(&path, funput_convert::bytes(&input, from, to)) {
+    let message = match std::fs::write(
+        &path,
+        charset::render(&charset::read(&input, from), to).bytes,
+    ) {
         Ok(()) => format!("Đã lưu {}", path.display()),
         Err(err) => format!("Không lưu được: {err}"),
     };

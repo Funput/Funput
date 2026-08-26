@@ -26,7 +26,7 @@ use funput_convert::charset;
 use crate::ui::{mica, system_accent};
 use crate::{ConvertWindow, Theme};
 
-use view::{STATE, WINDOW, at, current, refresh};
+use view::{at, current, refresh, STATE, WINDOW};
 
 pub(super) fn open() {
     let window = ConvertWindow::new().expect("create convert window");
@@ -115,7 +115,7 @@ fn wire(window: &ConvertWindow) {
                 [only] => (only.charset, only.text.as_str()),
                 _ => (state.source.map(at), state.input.as_str()),
             };
-            from.map(|from| funput_convert::preview(input, from, at(state.target)).text)
+            from.map(|from| charset::render(&charset::read(input, from), at(state.target)).text)
         });
         if let Some(converted) = converted {
             win32::write(&converted);

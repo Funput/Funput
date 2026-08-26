@@ -15,7 +15,9 @@ pub(super) use rows::{show_many, show_one};
 
 /// Convert and write the batch, off the UI thread — it is file I/O over every entry.
 pub(super) fn convert_all() {
-    let Some(window) = view::current() else { return };
+    let Some(window) = view::current() else {
+        return;
+    };
     let (entries, target) = view::STATE.with(|s| {
         let state = s.borrow();
         (state.files.clone(), view::at(state.target))
@@ -25,7 +27,9 @@ pub(super) fn convert_all() {
     std::thread::spawn(move || {
         let outcome = funput_convert::write_all(&entries, target);
         let _ = slint::invoke_from_event_loop(move || {
-            let Some(window) = view::current() else { return };
+            let Some(window) = view::current() else {
+                return;
+            };
             window.set_progress(funput_convert::report(&outcome).into());
             window.set_can_convert(true);
         });

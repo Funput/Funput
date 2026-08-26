@@ -12,8 +12,8 @@
 use std::cell::RefCell;
 
 use funput_convert::{
-    Mode,
     charset::{self, Charset},
+    Mode,
 };
 use slint::Weak;
 
@@ -116,6 +116,10 @@ fn show_pasted(window: &ConvertWindow, state: &mut State, target: Charset) {
         window.set_loss(slint::SharedString::new());
         return;
     };
-    window.set_output_text(funput_convert::preview(&state.input, from, target).text.into());
-    window.set_loss(funput_convert::loss(&state.input, from, target).into());
+    // One read, one render. The pane shows `render`'s own text, which for a legacy
+    // target is its bytes read back — so what is on screen is what a saved file will
+    // hold rather than a second conversion that happens to look similar.
+    let rendered = charset::render(&charset::read(&state.input, from), target);
+    window.set_output_text(rendered.text.into());
+    window.set_loss(funput_convert::warning(&rendered.cost, from, target).into());
 }
