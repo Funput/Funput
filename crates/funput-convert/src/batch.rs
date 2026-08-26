@@ -6,6 +6,7 @@
 //! file goes through [`charset::document::read`] by itself, and one that nothing
 //! explains waits for the user instead of being swept along.
 
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 use funput_core::charset::{self, Charset, document};
@@ -40,15 +41,25 @@ impl Entry {
 ///
 /// Order is `read_dir` order, which is the filesystem's, not sorted: the rows carry
 /// file names and the user reads those, not positions.
+///
+/// **A path named twice is read once.** Dragging a folder and one of the files
+/// inside it is an ordinary slip, and so is letting go over a selection that already
+/// held the folder. Two rows for one file would be confusing on screen and would ask
+/// the writer for two copies of the same document.
 pub fn collect(paths: &[PathBuf]) -> Vec<PathBuf> {
+    let mut seen = HashSet::new();
     let mut out = Vec::new();
     for path in paths {
         if path.is_dir() {
             let Ok(dir) = std::fs::read_dir(path) else {
                 continue;
             };
-            out.extend(dir.flatten().map(|e| e.path()).filter(|p| p.is_file()));
-        } else {
+            for entry in dir.flatten().map(|e| e.path()).filter(|p| p.is_file()) {
+                if seen.insert(entry.clone()) {
+                    out.push(entry);
+                }
+            }
+        } else if seen.insert(path.clone()) {
             out.push(path.clone());
         }
     }
@@ -174,6 +185,19 @@ mod tests {
 
         assert_eq!(collected.len(), 1, "the nested folder was walked into");
         assert_eq!(collected[0], dir.join("top.txt"));
+    }
+
+    /// Dragging a folder and one of the files inside it is an ordinary slip. Two
+    /// rows for one document would be confusing on screen and would ask the writer
+    /// for two copies of it.
+    #[test]
+    fn a_path_named_twice_is_read_once() {
+        let dir = scratch("twice");
+        std::fs::write(dir.join("top.txt"), "việt").unwrap();
+
+        let collected = collect(&[dir.clone(), dir.join("top.txt"), dir.clone()]);
+
+        assert_eq!(collected, vec![dir.join("top.txt")]);
     }
 
     /// One folder names itself; several cannot, because each keeps its own output
