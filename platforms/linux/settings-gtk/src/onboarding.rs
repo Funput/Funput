@@ -19,6 +19,7 @@ const STEPS: u32 = 4;
 pub fn build(app: &Application) -> adw::Window {
     let window = adw::Window::builder()
         .title("Chào mừng đến Funput")
+        .icon_name("funput")
         .default_width(460)
         .default_height(560)
         .build();
