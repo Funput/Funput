@@ -58,6 +58,9 @@ fn build(app: &Application) -> Rc<Convert> {
     let window = adw::ApplicationWindow::builder()
         .application(app)
         .title("Funput — Chuyển mã")
+        // Every window this app opens carries the icon, so an X11 session and the
+        // window's own decorations get it even where the dock matches by app-id.
+        .icon_name("funput")
         .default_width(880)
         .default_height(600)
         .width_request(640)

@@ -6,5 +6,10 @@ Comment=Configure Funput — Telex, Full Telex & VNI Vietnamese typing
 Exec=funput-settings
 Icon=funput
 Terminal=false
+
+# GNOME/Wayland matches a window to its launcher by the Wayland app-id, which GTK
+# takes from the GApplication id — `app.funput.funput`, not this file's name. Without
+# this line nothing matches and the dock shows a generic icon instead of ours.
+StartupWMClass=app.funput.funput
 Categories=Utility;Settings;
 Keywords=vietnamese;telex;vni;input;gõ;tiếng việt;
