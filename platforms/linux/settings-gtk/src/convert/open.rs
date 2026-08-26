@@ -5,9 +5,9 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 use adw::Application;
+use funput_convert::Session;
 use gtk::glib;
 
-use super::state::State;
 use super::{io, ui, Convert};
 
 thread_local! {
@@ -39,6 +39,13 @@ pub fn present(app: &Application) {
     convert.window.present();
 }
 
+/// A session told how many rows this toolkit wants at a time.
+fn session() -> Session {
+    let mut session = Session::new();
+    session.set_row_window(0, ui::ROWS);
+    session
+}
+
 fn build(app: &Application) -> Rc<Convert> {
     let panes = ui::Panes::new();
     let restart = gtk::Button::with_label("Bắt đầu lại");
@@ -61,7 +68,7 @@ fn build(app: &Application) -> Rc<Convert> {
     let convert = Rc::new(Convert {
         window,
         restart,
-        state: RefCell::new(State::new()),
+        session: RefCell::new(session()),
         panes,
         refreshing: Cell::new(false),
         busy: Cell::new(false),
@@ -73,7 +80,7 @@ fn build(app: &Application) -> Rc<Convert> {
     let weak = Rc::downgrade(&convert);
     convert.restart.connect_clicked(move |_| {
         if let Some(convert) = weak.upgrade() {
-            *convert.state.borrow_mut() = State::new();
+            convert.session.borrow_mut().reset();
             convert.set_progress(String::new());
         }
     });

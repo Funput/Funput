@@ -9,23 +9,20 @@
 //! shared with the Slint window on Windows so the two cannot drift. What is here is
 //! this platform's half of it.
 //!
-//! - [`state`] — the state, and every decision made from it. The only pure file.
-//! - [`ui`] — the widget tree, and pushing the state into it.
+//! - [`ui`] — the widget tree, and pushing the view into it.
 //! - [`io`] — drag-and-drop, the clipboard, the dialogs, and getting file work off
 //!   the UI thread.
 //! - [`open`] — building the window, and reusing the one already up.
 
 mod io;
 mod open;
-mod state;
 mod ui;
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use adw::prelude::*;
-
-use state::State;
+use funput_convert::{Mode, Session};
 
 pub use open::present;
 
@@ -33,7 +30,7 @@ pub use open::present;
 pub struct Convert {
     window: adw::ApplicationWindow,
     restart: gtk::Button,
-    pub(crate) state: RefCell<State>,
+    pub(crate) session: RefCell<Session>,
     panes: ui::Panes,
     /// Set while [`Self::refresh`] is writing into widgets.
     ///
@@ -50,22 +47,21 @@ pub struct Convert {
 }
 
 impl Convert {
-    /// Rebuild the window from the state. Every callback ends here.
+    /// Rebuild the window from the session. Every callback ends here.
+    ///
+    /// Two calls, because the crate splits them: `Session::refresh` does the work —
+    /// converting the document, and every file in a batch, against the target of the
+    /// moment — and `view()` only reads it back.
     pub(crate) fn refresh(self: &Rc<Self>) {
         if self.refreshing.replace(true) {
             return;
         }
-        let mut state = self.state.borrow_mut();
-        // What each file would lose follows the target of the moment, not the target
-        // it was read under, so it is remeasured here rather than at read time. It is
-        // conversion only, no I/O, which is what makes that affordable.
-        let target = state::at(state.target);
-        funput_convert::measure(&mut state.files, target);
+        self.session.borrow_mut().refresh();
+        let session = self.session.borrow();
         // Nothing to start over from when nothing has been put in yet.
-        self.restart
-            .set_visible(state.mode() != funput_convert::Mode::Empty);
-        self.panes.refresh(self, &mut state);
-        drop(state);
+        self.restart.set_visible(session.view().mode != Mode::Empty);
+        self.panes.refresh(self, session.view());
+        drop(session);
         self.refreshing.set(false);
     }
 

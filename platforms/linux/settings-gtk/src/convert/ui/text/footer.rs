@@ -8,9 +8,9 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 
-use crate::convert::state::State;
 use crate::convert::ui::widget;
 use crate::convert::{io, Convert};
+use funput_convert::View;
 
 pub(in crate::convert) struct Footer {
     pub(in crate::convert) root: gtk::Box,
@@ -57,16 +57,12 @@ impl Footer {
         click(&self.convert_file, convert, io::convert_files);
     }
 
-    pub(in crate::convert) fn refresh(
-        &self,
-        convert: &Rc<Convert>,
-        state: &State,
-        from_file: bool,
-    ) {
-        self.save.set_visible(!from_file);
-        self.convert_file.set_visible(from_file);
+    pub(in crate::convert) fn refresh(&self, convert: &Rc<Convert>, view: &View) {
+        self.save.set_visible(!view.from_file);
+        self.convert_file.set_visible(view.from_file);
         // Nothing to copy or write until something has explained the document.
-        let ready = state.conversion().is_some();
+        let ready = view.source.is_some();
+
         self.copy.set_sensitive(ready);
         self.save.set_sensitive(ready);
         self.convert_file.set_sensitive(ready && !convert.is_busy());

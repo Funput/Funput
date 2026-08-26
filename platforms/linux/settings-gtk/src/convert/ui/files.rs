@@ -17,14 +17,17 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 
-use crate::convert::state::{self, State};
 use crate::convert::ui::widget;
 use crate::convert::{io, Convert};
+use funput_convert::View;
 
-/// How many rows to build. The counts and the writing run over the whole batch, so a
-/// capped list stays honest — it is the rebuilding of two thousand rows on every
-/// target change that is visibly slow.
-const ROWS: usize = 500;
+/// How many rows to build at once.
+///
+/// The number is the shell's call, not the crate's: a GTK `ListBox` builds every row
+/// it is handed, while Slint's model virtualizes. The counts and the writing run over
+/// the whole batch either way, so a capped list stays honest — it is rebuilding two
+/// thousand rows on every target change that is visibly slow.
+pub(in crate::convert) const ROWS: usize = 500;
 
 pub(in crate::convert) struct Pane {
     pub(in crate::convert) root: gtk::Box,
@@ -38,7 +41,7 @@ pub(in crate::convert) struct Pane {
 impl Pane {
     pub(in crate::convert) fn new() -> Self {
         let count = gtk::Label::builder().css_classes(["dim-label"]).build();
-        let target = gtk::DropDown::from_strings(&state::names());
+        let target = gtk::DropDown::from_strings(&funput_convert::charset_names());
 
         let head = gtk::Box::builder().spacing(8).build();
         head.append(&count);
@@ -86,7 +89,7 @@ impl Pane {
 
     pub(in crate::convert) fn wire(&self, convert: &Rc<Convert>) {
         widget::connect_dropdown(&self.target, convert, |convert, index| {
-            convert.state.borrow_mut().target = index;
+            convert.session.borrow_mut().set_target(index);
         });
         let weak = Rc::downgrade(convert);
         self.action.connect_clicked(move |_| {
@@ -96,21 +99,21 @@ impl Pane {
         });
     }
 
-    pub(in crate::convert) fn refresh(&self, convert: &Rc<Convert>, state: &State) {
-        let total = state.files.len();
-        self.count.set_label(&format!("{total} tệp"));
-        widget::select(&self.target, Some(state.target));
+    pub(in crate::convert) fn refresh(&self, convert: &Rc<Convert>, view: &View) {
+        self.count.set_label(&format!("{} tệp", view.rows_total));
+        widget::select(&self.target, Some(view.target));
 
         while let Some(child) = self.list.first_child() {
             self.list.remove(&child);
         }
-        for (index, entry) in state.files.iter().take(ROWS).enumerate() {
-            self.list.append(&row::build(convert, index, entry));
+        for (offset, row) in view.rows.iter().enumerate() {
+            self.list
+                .append(&row::build(convert, view.rows_first + offset, row));
         }
-        if total > ROWS {
-            let rest = total - ROWS;
+        let shown = view.rows_first + view.rows.len();
+        if shown < view.rows_total {
             let more = adw::ActionRow::builder()
-                .title(format!("và {rest} tệp khác"))
+                .title(format!("và {} tệp khác", view.rows_total - shown))
                 .css_classes(["dim-label"])
                 .build();
             self.list.append(&more);
@@ -118,16 +121,22 @@ impl Pane {
 
         // A file nothing explained is skipped, not guessed at, so the button counts
         // only what is settled — and says so, rather than promising the whole batch.
-        let ready = funput_convert::ready(&state.files);
-        self.action.set_label(&format!("Chuyển {ready} tệp"));
-        self.action.set_sensitive(ready > 0 && !convert.is_busy());
+        self.action.set_label(&format!("Chuyển {} tệp", view.ready));
+        self.action
+            .set_sensitive(view.ready > 0 && !convert.is_busy());
+
         // Before a run, the footer is a promise about where the files will land; once
         // one has happened, it is the report. Never both, and never the promise after.
+        //
+        // A file that could not be read is *named* here rather than counted — a
+        // number cannot answer "which two of my ten".
         let progress = convert.progress();
-        let footer = if progress.is_empty() {
-            format!("Lưu vào: {}", funput_convert::out_dir_label(&state.files))
-        } else {
+        let footer = if !progress.is_empty() {
             progress
+        } else if view.unreadable.is_empty() {
+            format!("Lưu vào: {}", view.out_dir)
+        } else {
+            funput_convert::unreadable_line(&view.unreadable)
         };
         self.progress.set_label(&footer);
     }

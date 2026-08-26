@@ -18,7 +18,6 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 
-use crate::convert::state;
 use crate::convert::ui::widget;
 use crate::convert::Convert;
 
@@ -35,7 +34,7 @@ pub(in crate::convert) struct Pane {
 
 impl Pane {
     pub(in crate::convert) fn new() -> Self {
-        let names = state::names();
+        let names = funput_convert::charset_names();
         let source_label = gtk::Label::builder().css_classes(["dim-label"]).build();
         let source = gtk::DropDown::from_strings(&names);
         let target = gtk::DropDown::from_strings(&names);
@@ -100,15 +99,15 @@ impl Pane {
             }
             let (start, end) = buffer.bounds();
             let typed = buffer.text(&start, &end, false).to_string();
-            convert.state.borrow_mut().set_input(typed);
+            convert.session.borrow_mut().set_input(typed);
             convert.refresh();
         });
 
         widget::connect_dropdown(&self.source, convert, |convert, index| {
-            convert.state.borrow_mut().pick_source(Some(index));
+            convert.session.borrow_mut().pick_source(Some(index));
         });
         widget::connect_dropdown(&self.target, convert, |convert, index| {
-            convert.state.borrow_mut().target = index;
+            convert.session.borrow_mut().set_target(index);
         });
         self.footer.wire(convert);
     }

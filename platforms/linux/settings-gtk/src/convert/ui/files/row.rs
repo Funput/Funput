@@ -7,29 +7,26 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 
-use crate::convert::state;
 use crate::convert::ui::widget;
+use funput_convert::Row;
+
 use crate::convert::Convert;
 
 /// One file's row: what it is, what it will cost, and its own escape hatch.
-pub(super) fn build(
-    convert: &Rc<Convert>,
-    index: usize,
-    entry: &funput_convert::Entry,
-) -> adw::ActionRow {
-    let picker = gtk::DropDown::from_strings(&state::names());
+pub(super) fn build(convert: &Rc<Convert>, index: usize, row: &Row) -> adw::ActionRow {
+    let picker = gtk::DropDown::from_strings(&funput_convert::charset_names());
     picker.set_valign(gtk::Align::Center);
-    widget::select(&picker, entry.charset.and_then(state::index_of));
+    widget::select(&picker, row.charset);
     widget::connect_dropdown(&picker, convert, move |convert, picked| {
-        convert.state.borrow_mut().pick_file_source(index, picked);
+        convert.session.borrow_mut().pick_row_source(index, picked);
     });
 
-    let row = adw::ActionRow::builder().title(entry.name()).build();
-    row.set_title_lines(1);
-    if entry.unmapped > 0 {
-        row.set_subtitle(&format!("{} chữ sẽ mất", entry.unmapped));
-        row.add_css_class("warning");
+    let built = adw::ActionRow::builder().title(&row.name).build();
+    built.set_title_lines(1);
+    if !row.note.is_empty() {
+        built.set_subtitle(&row.note);
+        built.add_css_class("warning");
     }
-    row.add_suffix(&picker);
-    row
+    built.add_suffix(&picker);
+    built
 }

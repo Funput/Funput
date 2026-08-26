@@ -82,14 +82,12 @@ pub(super) fn pick_files(convert: &Rc<Convert>) {
 fn take(convert: &Weak<Convert>, paths: Vec<PathBuf>) {
     let weak = convert.clone();
     glib::spawn_future_local(async move {
-        let entries =
-            gio::spawn_blocking(move || funput_convert::scan(&funput_convert::collect(&paths)))
-                .await;
+        let scan = gio::spawn_blocking(move || funput_convert::scan(&paths)).await;
         let Some(convert) = weak.upgrade() else {
             return;
         };
-        let Ok(entries) = entries else { return };
-        convert.state.borrow_mut().files = entries;
+        let Ok(scan) = scan else { return };
+        convert.session.borrow_mut().adopt(scan);
         convert.set_progress(String::new());
     });
 }

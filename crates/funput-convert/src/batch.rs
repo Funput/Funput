@@ -6,10 +6,16 @@
 //! file goes through [`charset::document::read`] by itself, and one that nothing
 //! explains waits for the user instead of being swept along.
 
+mod write;
+
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-use funput_core::charset::{Charset, document, read, render};
+use funput_core::charset::{Charset, document};
+
+use crate::session::Unreadable;
+
+pub use write::{OUT_DIR, Outcome, report, write_all};
 
 /// One file, as read.
 #[derive(Clone)]
@@ -19,8 +25,6 @@ pub struct Entry {
     pub text: String,
     /// `None` when nothing explained the bytes. The user picks, or it is skipped.
     pub charset: Option<Charset>,
-    /// Characters the current target cannot represent. Recomputed on target change.
-    pub unmapped: usize,
 }
 
 impl Entry {
@@ -66,42 +70,61 @@ pub fn collect(paths: &[PathBuf]) -> Vec<PathBuf> {
     out
 }
 
-/// Read every path, skipping what cannot be read at all.
+/// What a drop turned out to be: the files that could be read, and the ones that
+/// could not.
+pub struct Scan {
+    pub(crate) entries: Vec<Entry>,
+    pub(crate) unreadable: Vec<Unreadable>,
+}
+
+/// Read every path, **naming** what cannot be read rather than swallowing it.
+///
+/// Ten files dropped and eight rows shown is a question a count cannot answer, and
+/// the reason separates "fix the permissions" from "that file is not what you think
+/// it is". This used to be `.ok()?` twice.
 ///
 /// I/O bound over a folder of a few hundred documents, so a shell calls this off its
 /// UI thread — inline would hold the window still for the whole drop.
-pub fn scan(paths: &[PathBuf]) -> Vec<Entry> {
-    paths
-        .iter()
-        .filter(|path| path.is_file())
-        .filter_map(|path| {
-            let bytes = std::fs::read(path).ok()?;
-            let doc = document::read(bytes).ok()?;
-            Some(Entry {
+pub fn scan(paths: &[PathBuf]) -> Scan {
+    let mut scan = Scan {
+        entries: Vec::new(),
+        unreadable: Vec::new(),
+    };
+    for path in paths.iter().filter(|path| path.is_file()) {
+        let name = || {
+            path.file_name().map_or_else(
+                || path.display().to_string(),
+                |n| n.to_string_lossy().into_owned(),
+            )
+        };
+        match std::fs::read(path).map(document::read) {
+            Ok(Ok(doc)) => scan.entries.push(Entry {
                 path: path.clone(),
                 text: doc.text,
                 charset: doc.charset,
-                unmapped: 0,
-            })
-        })
-        .collect()
+            }),
+            // The one shape `document::read` refuses outright: a UTF-16 file whose
+            // last character is half there. Worth saying, because it means the file
+            // is truncated rather than in some charset we do not know.
+            Ok(Err(_)) => scan.unreadable.push(Unreadable {
+                name: name(),
+                reason: "tệp UTF-16 bị cắt cụt".to_string(),
+            }),
+            Err(error) => scan.unreadable.push(Unreadable {
+                name: name(),
+                reason: reason(&error),
+            }),
+        }
+    }
+    scan
 }
 
-/// Recompute what each file would lose when written as `target`.
-///
-/// Conversion only, no I/O, so this is cheap enough to run every time the target
-/// changes. The bytes are thrown away and made again at write time: keeping a
-/// converted copy of every document in memory costs more than converting twice.
-pub fn measure(entries: &mut [Entry], target: Charset) {
-    for entry in entries {
-        entry.unmapped = match entry.charset {
-            Some(from) => {
-                render(&read(&entry.text, from), target)
-                    .cost
-                    .unrepresentable
-            }
-            None => 0,
-        };
+/// Why a file would not open, in the words a user can act on.
+fn reason(error: &std::io::Error) -> String {
+    match error.kind() {
+        std::io::ErrorKind::PermissionDenied => "không có quyền đọc".to_string(),
+        std::io::ErrorKind::NotFound => "không còn ở đó nữa".to_string(),
+        _ => format!("đọc không được: {error}"),
     }
 }
 
@@ -147,45 +170,13 @@ mod tests {
         std::fs::write(dir.join("c.txt"), b"the quick brown \xFF fox jumps over it").unwrap();
 
         let paths = [dir.join("a.txt"), dir.join("b.txt"), dir.join("c.txt")];
-        let entries = scan(&paths);
+        let entries = scan(&paths).entries;
 
         assert_eq!(entries.len(), 3);
         assert_eq!(entries[0].charset, Some(Charset::Tcvn3));
         assert_eq!(entries[1].charset, Some(Charset::Unicode));
         assert_eq!(entries[2].charset, None, "nothing explains these bytes");
         assert_eq!(ready(&entries), 2, "only the two that were identified");
-    }
-
-    /// The count behind "N chữ sẽ mất", and it must follow the target rather than be
-    /// fixed at read time.
-    #[test]
-    fn what_will_be_lost_is_measured_against_the_target_of_the_moment() {
-        let dir = scratch("measure");
-        std::fs::write(dir.join("hoa.txt"), "Ổn").unwrap();
-        let mut entries = scan(&[dir.join("hoa.txt")]);
-
-        // TCVN3 has no code for an uppercase toned vowel.
-        measure(&mut entries, Charset::Tcvn3);
-        assert_eq!(entries[0].unmapped, 1);
-
-        // The same document costs nothing going somewhere that can spell it.
-        measure(&mut entries, Charset::UnicodeCombining);
-        assert_eq!(entries[0].unmapped, 0);
-    }
-
-    /// Dropping a folder of documents has to work; dropping a home directory must
-    /// not walk it. One level, and no further.
-    #[test]
-    fn a_dropped_folder_is_read_one_level_deep() {
-        let dir = scratch("folder");
-        std::fs::write(dir.join("top.txt"), "việt").unwrap();
-        std::fs::create_dir_all(dir.join("nested")).unwrap();
-        std::fs::write(dir.join("nested").join("deep.txt"), "nam").unwrap();
-
-        let collected = collect(std::slice::from_ref(&dir));
-
-        assert_eq!(collected.len(), 1, "the nested folder was walked into");
-        assert_eq!(collected[0], dir.join("top.txt"));
     }
 
     /// Dragging a folder and one of the files inside it is an ordinary slip. Two
@@ -211,7 +202,6 @@ mod tests {
             path: dir.join("x.txt"),
             text: String::new(),
             charset: None,
-            unmapped: 0,
         };
         assert!(out_dir_label(&[entry(&a)]).ends_with(crate::OUT_DIR));
         assert_eq!(
