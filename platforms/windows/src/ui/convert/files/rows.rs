@@ -6,20 +6,11 @@
 //! the user actually wants — whether the Vietnamese comes out right. It gets the same
 //! before/after panes a pasted paragraph does.
 
-use funput_core::charset::Charset;
+use funput_convert::{Entry, capped, charset::Charset};
 use slint::{ModelRc, VecModel};
 
-use crate::ui::convert::{text, view};
+use crate::ui::convert::view;
 use crate::{ConvertWindow, FileRow};
-
-use super::Entry;
-
-/// How much of a document to put in a pane.
-///
-/// Panes are for *looking* at, and nobody reads a megabyte in one. The conversion and
-/// the warning still run over the whole file — only the display is cut, so a large
-/// document cannot make the window crawl while the counts stay honest.
-const PREVIEW: usize = 20_000;
 
 /// The batch: a row per file, and what the button will do.
 pub(in crate::ui::convert) fn show_many(window: &ConvertWindow, entries: &[Entry]) {
@@ -41,9 +32,9 @@ pub(in crate::ui::convert) fn show_many(window: &ConvertWindow, entries: &[Entry
         })
         .collect();
     window.set_files(ModelRc::new(VecModel::from(rows)));
-    window.set_out_dir(out_dir_label(entries).into());
+    window.set_out_dir(funput_convert::out_dir_label(entries).into());
 
-    let ready = super::ready(entries);
+    let ready = funput_convert::ready(entries);
     window.set_can_convert(ready > 0);
     window.set_action_label(format!("Chuyển {ready} tệp").into());
 }
@@ -68,29 +59,7 @@ pub(in crate::ui::convert) fn show_one(window: &ConvertWindow, entry: &Entry, ta
         window.set_loss(slint::SharedString::new());
         return;
     };
-    let converted = text::preview(&entry.text, from, target);
+    let converted = funput_convert::preview(&entry.text, from, target);
     window.set_output_text(capped(&converted.text).into());
-    window.set_loss(text::loss(&entry.text, from, target).into());
-}
-
-/// Where the converted copies will go, for the footer to show before committing.
-pub(in crate::ui::convert) fn out_dir_label(entries: &[Entry]) -> String {
-    let mut dirs: Vec<&std::path::Path> =
-        entries.iter().filter_map(|e| e.path.parent()).collect();
-    dirs.sort_unstable();
-    dirs.dedup();
-    match dirs.as_slice() {
-        [] => String::new(),
-        [only] => only.join(super::OUT_DIR).display().to_string(),
-        // Dropped from several folders: each keeps its own, so no name can collide
-        // with a same-named file from somewhere else.
-        many => format!("{} trong {} thư mục", super::OUT_DIR, many.len()),
-    }
-}
-
-fn capped(text: &str) -> String {
-    match text.char_indices().nth(PREVIEW) {
-        Some((cut, _)) => format!("{}…", &text[..cut]),
-        None => text.to_string(),
-    }
+    window.set_loss(funput_convert::loss(&entry.text, from, target).into());
 }

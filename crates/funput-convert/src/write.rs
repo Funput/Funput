@@ -1,4 +1,4 @@
-//! Writing the converted copies out.
+//! Writing the converted copies out, and saying what happened.
 //!
 //! Never over the originals. These are the documents someone still needs, often the
 //! only copy, and a conversion tool that edits them in place is one bad guess away
@@ -9,23 +9,27 @@ use std::path::{Path, PathBuf};
 
 use funput_core::charset::{self, Charset};
 
-use super::Entry;
+use crate::Entry;
 
 /// The subfolder converted copies land in, beside the originals.
-pub(in crate::ui::convert) const OUT_DIR: &str = "Đã chuyển mã";
+///
+/// The empty state promises this name out loud, so a shell that shows the sentence
+/// must build it from here rather than spell it again.
+pub const OUT_DIR: &str = "Đã chuyển mã";
 
 /// What a batch came to.
-pub(in crate::ui::convert) struct Outcome {
-    pub(in crate::ui::convert) written: usize,
-    pub(in crate::ui::convert) skipped: usize,
-    pub(in crate::ui::convert) failed: usize,
+pub struct Outcome {
+    pub written: usize,
+    pub skipped: usize,
+    pub failed: usize,
 }
 
-/// Convert and write every entry that has a charset. Runs off the UI thread.
+/// Convert and write every entry that has a charset. I/O over every entry, so a
+/// shell calls this off its UI thread.
 ///
 /// A file with no charset is *skipped*, not guessed at — the row is still on screen
 /// with its own picker, and the user can settle it and run again.
-pub(in crate::ui::convert) fn write_all(entries: &[Entry], target: Charset) -> Outcome {
+pub fn write_all(entries: &[Entry], target: Charset) -> Outcome {
     let mut outcome = Outcome {
         written: 0,
         skipped: 0,
@@ -47,6 +51,19 @@ pub(in crate::ui::convert) fn write_all(entries: &[Entry], target: Charset) -> O
         }
     }
     outcome
+}
+
+/// What to tell the user afterwards. A skipped file is not a failure — its row is
+/// still on screen with its own picker, waiting to be settled.
+pub fn report(outcome: &Outcome) -> String {
+    let mut parts = vec![format!("Đã chuyển {} tệp", outcome.written)];
+    if outcome.skipped > 0 {
+        parts.push(format!("bỏ qua {} tệp chưa rõ bảng mã", outcome.skipped));
+    }
+    if outcome.failed > 0 {
+        parts.push(format!("{} tệp ghi không được", outcome.failed));
+    }
+    parts.join(", ")
 }
 
 /// A path in the output folder that no file occupies yet.
@@ -156,5 +173,10 @@ mod tests {
 
         assert_eq!((outcome.written, outcome.skipped), (1, 1));
         assert!(!dir.join(OUT_DIR).join("mystery.txt").exists());
+        assert!(
+            report(&outcome).contains("bỏ qua 1 tệp"),
+            "{}",
+            report(&outcome)
+        );
     }
 }
