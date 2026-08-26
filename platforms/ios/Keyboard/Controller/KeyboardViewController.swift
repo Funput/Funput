@@ -67,6 +67,7 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidLoad()
         view.isOpaque = false
         view.backgroundColor = .clear
+        inputView?.allowsSelfSizing = true
         heightController.install(on: view)
         // The height only tracks the size class, and `viewWillTransition` alone misses
         // every change that is not a rotation of an already-visible keyboard.
@@ -89,11 +90,6 @@ final class KeyboardViewController: UIInputViewController {
         repairBootstrapSnapshotIfNeeded()
     }
 
-    func deactivatePreferredHeight() {
-        isKeyboardVisible = false
-        heightController.deactivate()
-    }
-
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
 #if DEBUG
@@ -101,42 +97,24 @@ final class KeyboardViewController: UIInputViewController {
 #endif
     }
 
+    func markPreferredHeightHidden() {
+        isKeyboardVisible = false
+    }
+
+    func markPreferredHeightVisible() {
+        isKeyboardVisible = true
+    }
+
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
         let shouldReactivate = heightController.deactivate()
         coordinator.animate(alongsideTransition: nil) { [weak self] _ in
-            guard let self, shouldReactivate, isKeyboardVisible else { return }
+            guard let self, shouldReactivate else { return }
             updatePreferredHeight()
             activatePreferredHeight()
         }
     }
 
-    func updatePreferredHeight() {
-        heightController.update(
-            for: currentPresentation,
-            traits: traitCollection
-        )
-    }
-
-    func activatePreferredHeightForAppearance() {
-        updatePreferredHeight()
-        isKeyboardVisible = true
-        activatePreferredHeight()
-        launchTrace.recordHeightReady()
-    }
-
-    /// Puts the height in place before the host ever lays the keyboard out.
-    ///
-    /// Without this the constraint stays inactive until the end of `viewWillAppear`,
-    /// and Auto Layout stretches the view to the whole host container in the meantime.
-    func activatePreferredHeightForBootstrap() {
-        updatePreferredHeight()
-        activatePreferredHeight()
-    }
-
-    private func activatePreferredHeight() {
-        heightController.activate()
-    }
 }
 
 enum KeyboardSurface: String {

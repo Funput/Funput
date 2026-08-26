@@ -26,35 +26,41 @@ final class KeyboardHeightController {
         heightConstraint = constraint
     }
 
-    func activate() {
+    @discardableResult
+    func activate() -> Bool {
         guard let heightConstraint, baseHeight != nil else {
             assertionFailure("Install and update the keyboard height before activating it.")
-            return
+            return false
         }
-        guard !heightConstraint.isActive else { return }
+        guard !heightConstraint.isActive else { return false }
         heightConstraint.isActive = true
+        return true
     }
 
+    @discardableResult
     func update(
         for presentation: KeyboardPresentation,
         traits: UITraitCollection
-    ) {
+    ) -> Bool {
         let height = KeyboardMetrics.recommendedHeight(
             for: presentation.layout,
             traits: traits,
             scale: presentation.sizing.heightScale
         )
-        guard baseHeight != height else { return }
+        guard baseHeight != height else { return false }
 
         baseHeight = height
         applyHeight()
+        return true
     }
 
-    func setOverlayPad(_ pad: CGFloat) {
+    @discardableResult
+    func setOverlayPad(_ pad: CGFloat) -> Bool {
         let next = ceil(pad)
-        guard overlayPad != next else { return }
+        guard overlayPad != next else { return false }
         overlayPad = next
         applyHeight()
+        return true
     }
 
     @discardableResult

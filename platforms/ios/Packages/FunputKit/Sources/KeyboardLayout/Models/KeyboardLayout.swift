@@ -36,4 +36,10 @@ public struct KeyboardLayout: Hashable, Sendable {
         self.toolbar = toolbar
         self.rows = rows
     }
+
+    /// Whether this layout gives the user an explicit route into Funput's emoji panels.
+    public var allowsEmojiPanel: Bool {
+        toolbar?.keys.contains { $0.role == .emoji } == true
+            || rows.contains { row in row.keys.contains { $0.role == .emoji } }
+    }
 }

@@ -4,26 +4,50 @@ public enum KeyboardLayoutResolver {
         mode: KeyboardLayoutMode,
         editorMode: KeyboardEditorMode = .text,
         showsNumberRow: Bool = true,
-        preset: KeyboardLayoutPreset = .funput
+        preset: KeyboardLayoutPreset = .funput,
+        showsToolbar: Bool = true
     ) -> KeyboardLayout {
-        // The system preset describes the plain text and search keyboards, which the stock
-        // keyboard renders identically. Email and URL differ from it along other axes and
-        // the keypads have no row of this shape at all; password fields must additionally
-        // keep their toolbar-less layouts so the emoji panel stays unreachable there — an
-        // invariant this guard preserves by construction rather than by a check.
-        guard preset == .system, editorMode.usesSystemPreset else {
-            return funputLayout(
+        // The system preset describes text and search; other editors retain their
+        // specialized key rows. Toolbar visibility is applied afterwards, independently
+        // of that choice, while secure layouts remain protected by having no toolbar.
+        let layout = if preset == .system, editorMode.usesSystemPreset {
+            systemLayout(
+                inputMethod: inputMethod,
+                mode: mode,
+                editorMode: editorMode,
+                showsNumberRow: showsNumberRow
+            )
+        } else {
+            funputLayout(
                 inputMethod: inputMethod,
                 mode: mode,
                 editorMode: editorMode,
                 showsNumberRow: showsNumberRow
             )
         }
-        return systemLayout(
-            inputMethod: inputMethod,
-            mode: mode,
-            editorMode: editorMode,
-            showsNumberRow: showsNumberRow
+        guard !showsToolbar, layout.toolbar != nil else { return layout }
+        return toolbarless(layout)
+    }
+
+    /// Moves the emoji entry point into the action row before removing the toolbar.
+    /// Secure layouts and keypads arrive without a toolbar and never enter this path.
+    private static func toolbarless(_ layout: KeyboardLayout) -> KeyboardLayout {
+        var rows = layout.rows
+        if !rows.contains(where: { $0.keys.contains { $0.role == .emoji } }),
+           let actionIndex = rows.indices.last {
+            let action = rows[actionIndex]
+            var keys = action.keys
+            keys.insert(actionRowEmojiKey(page: layout.id), at: min(1, keys.count))
+            rows[actionIndex] = KeyboardRow(
+                keys: keys,
+                horizontalInsetUnits: action.horizontalInsetUnits
+            )
+        }
+        return KeyboardLayout(
+            id: "\(layout.id)-toolbarless",
+            inputMethod: layout.inputMethod,
+            toolbar: nil,
+            rows: rows
         )
     }
 
