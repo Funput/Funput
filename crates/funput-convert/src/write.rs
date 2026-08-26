@@ -5,6 +5,7 @@
 //! from destroying an archive. Every file is written into a subfolder beside where
 //! it came from, under its own name.
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use funput_core::charset::{self, Charset};
@@ -35,6 +36,12 @@ pub fn write_all(entries: &[Entry], target: Charset) -> Outcome {
         skipped: 0,
         failed: 0,
     };
+    // Names handed out so far. Asking the filesystem alone is not enough: it only
+    // knows about files that have *been written*, so a write that fails hands the
+    // same name to the next entry, and a caller that batches its writes gets every
+    // same-named file pointed at one path. Reserving is what makes the answer depend
+    // on the batch rather than on how far through it we are.
+    let mut taken = HashSet::new();
     for entry in entries {
         let Some(from) = entry.charset else {
             outcome.skipped += 1;
@@ -45,7 +52,9 @@ pub fn write_all(entries: &[Entry], target: Charset) -> Outcome {
         // byte per letter rather than two.
         let unicode = charset::convert(&entry.text, from, Charset::Unicode);
         let (bytes, _) = charset::encode_bytes(&unicode.text, target);
-        match destination(&entry.path).and_then(|path| std::fs::write(path, &bytes).ok()) {
+        match destination(&entry.path, &mut taken)
+            .and_then(|path| std::fs::write(path, &bytes).ok())
+        {
             Some(()) => outcome.written += 1,
             None => outcome.failed += 1,
         }
@@ -70,22 +79,22 @@ pub fn report(outcome: &Outcome) -> String {
 ///
 /// Creates the folder on the way. Returns `None` when the folder cannot be made —
 /// a read-only volume, or a file already sitting where the folder should go.
-fn destination(source: &Path) -> Option<PathBuf> {
+fn destination(source: &Path, taken: &mut HashSet<PathBuf>) -> Option<PathBuf> {
     let dir = source.parent()?.join(OUT_DIR);
     std::fs::create_dir_all(&dir).ok()?;
     let name = source.file_name()?;
     let candidate = dir.join(name);
-    if !candidate.exists() {
+    if !candidate.exists() && taken.insert(candidate.clone()) {
         return Some(candidate);
     }
-    Some(numbered(&dir, source))
+    Some(numbered(&dir, source, taken))
 }
 
 /// `vanban.txt` → `vanban (2).txt`, counting up until nothing is there.
 ///
 /// Converting the same folder twice is an ordinary thing to do — a second target, or
 /// a first attempt with the wrong source — and neither run should eat the other.
-fn numbered(dir: &Path, source: &Path) -> PathBuf {
+fn numbered(dir: &Path, source: &Path, taken: &mut HashSet<PathBuf>) -> PathBuf {
     let stem = source.file_stem().unwrap_or_default().to_string_lossy();
     let ext = source.extension().map(|e| e.to_string_lossy().into_owned());
     for n in 2..1000 {
@@ -94,7 +103,7 @@ fn numbered(dir: &Path, source: &Path) -> PathBuf {
             None => format!("{stem} ({n})"),
         };
         let candidate = dir.join(name);
-        if !candidate.exists() {
+        if !candidate.exists() && taken.insert(candidate.clone()) {
             return candidate;
         }
     }
@@ -158,6 +167,29 @@ mod tests {
         let out = dir.join(OUT_DIR);
         assert_eq!(std::fs::read(out.join("vanban.txt")).unwrap(), b"Vi\xD6t");
         assert!(out.join("vanban (2).txt").exists(), "second run was lost");
+    }
+
+    /// Two entries wanting the same name must not be pointed at the same file
+    /// before either is written.
+    ///
+    /// Asking the filesystem alone answers "is it there *yet*", which is a different
+    /// question. Today the writes happen one at a time so the gap is invisible; it
+    /// opens the moment a write fails, and it opens wide for a caller that collects
+    /// the destinations first — which is exactly what a shell reaching this through
+    /// a C ABI would do.
+    #[test]
+    fn two_destinations_asked_for_before_either_is_written_do_not_collide() {
+        let dir = scratch("reserve");
+        let source = dir.join("vanban.txt");
+        std::fs::write(&source, "seed").expect("seed file");
+
+        let mut taken = HashSet::new();
+        let first = destination(&source, &mut taken).expect("first destination");
+        let second = destination(&source, &mut taken).expect("second destination");
+
+        assert_ne!(first, second, "both entries were sent to one file");
+        assert_eq!(first, dir.join(OUT_DIR).join("vanban.txt"));
+        assert_eq!(second, dir.join(OUT_DIR).join("vanban (2).txt"));
     }
 
     /// A file nothing explained is skipped, not converted on a guess. Its row is
