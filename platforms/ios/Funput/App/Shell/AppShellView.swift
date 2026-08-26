@@ -5,29 +5,31 @@ struct AppShellView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            NavigationStack {
-                SettingsScreen()
+            Tab(
+                AppTab.settings.title,
+                systemImage: AppTab.settings.systemImage,
+                value: AppTab.settings
+            ) {
+                NavigationStack { SettingsScreen() }
             }
-            .tabItem { tabLabel(.settings) }
-            .tag(AppTab.settings)
 
-            NavigationStack {
-                AppearanceScreen()
+            Tab(
+                AppTab.appearance.title,
+                systemImage: AppTab.appearance.systemImage,
+                value: AppTab.appearance
+            ) {
+                NavigationStack { AppearanceScreen() }
             }
-            .tabItem { tabLabel(.appearance) }
-            .tag(AppTab.appearance)
 
-            NavigationStack {
-                AboutScreen()
+            Tab(
+                AppTab.about.title,
+                systemImage: AppTab.about.systemImage,
+                value: AppTab.about
+            ) {
+                NavigationStack { AboutScreen() }
             }
-            .tabItem { tabLabel(.about) }
-            .tag(AppTab.about)
         }
         .tint(.accentColor)
-    }
-
-    private func tabLabel(_ tab: AppTab) -> some View {
-        Label(tab.title, systemImage: tab.systemImage)
     }
 }
 
