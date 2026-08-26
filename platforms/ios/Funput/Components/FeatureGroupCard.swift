@@ -7,7 +7,7 @@ struct FeatureGroupCard: View {
     let features: [String]
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             VStack(alignment: .leading, spacing: 14) {
                 Label(title, systemImage: systemImage)
                     .font(.headline)

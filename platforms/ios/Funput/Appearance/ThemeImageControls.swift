@@ -11,7 +11,7 @@ struct ThemeImageControls: View {
     @State private var processingTask: Task<Void, Never>?
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Ảnh nền").font(.headline)
             if let data = draft.renderedImageData, let image = UIImage(data: data) {
                 Image(uiImage: image).resizable().scaledToFill()

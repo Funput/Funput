@@ -5,7 +5,7 @@ struct ThemeBackgroundModeControls: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Kiểu nền").font(.headline)
             Picker("Kiểu nền", selection: mode) {
                 Text("Gradient").tag(ThemeBackgroundMode.gradient)

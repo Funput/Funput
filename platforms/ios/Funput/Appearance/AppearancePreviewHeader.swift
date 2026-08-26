@@ -4,7 +4,7 @@ struct AppearancePreviewHeader: View {
     @Binding var mode: AppearancePreviewMode
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Label("Xem trước", systemImage: "keyboard")

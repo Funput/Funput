@@ -5,7 +5,7 @@ struct ThemeEditorNameCard: View {
     @Binding var name: String
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Tên theme").font(.headline)
             TextField("Tên theme", text: $name)
                 .textFieldStyle(.roundedBorder)
@@ -21,7 +21,7 @@ struct ThemeGeometryControls: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Hình học phím").font(.headline)
             metric("Chiều cao keycap", value: $draft.customTheme.theme.geometry.keycapHeightScale,
                    range: 0.82...1, step: 0.02, format: .percent)

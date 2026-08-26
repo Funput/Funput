@@ -63,7 +63,7 @@ private struct ThemeColorCard: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text(title).font(.headline)
             ForEach(options) { option in
                 ColorPicker(

@@ -5,7 +5,7 @@ struct ThemeKeyOpacityControls: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Độ trong phím").font(.headline)
             ThemeMetricSlider(
                 title: "Phím thường",

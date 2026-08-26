@@ -21,16 +21,32 @@ struct AppScreen<Content: View>: View {
             .ignoresSafeArea()
 
             ScrollView {
-                // These are short forms. Keeping every glass card mounted avoids
-                // an iOS 26 LazyVStack/glass layout loop while scrolling.
-                VStack(alignment: .leading, spacing: 18) {
-                    content
-                }
-                .frame(maxWidth: 720)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity)
+                screenContent
             }
         }
+    }
+
+    @ViewBuilder private var screenContent: some View {
+        if #available(iOS 26, *) {
+            // Rendering the screen's custom glass surfaces as one group avoids a
+            // separate sampling pass per card while the native tab bar is moving.
+            GlassEffectContainer(spacing: 0) {
+                cardStack
+            }
+        } else {
+            cardStack
+        }
+    }
+
+    private var cardStack: some View {
+        // These are short forms. Keeping every glass card mounted avoids
+        // an iOS 26 LazyVStack/glass layout loop while scrolling.
+        VStack(alignment: .leading, spacing: 18) {
+            content
+        }
+        .frame(maxWidth: 720)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity)
     }
 }

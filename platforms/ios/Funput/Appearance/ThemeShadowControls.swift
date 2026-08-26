@@ -5,7 +5,7 @@ struct ThemeShadowControls: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Shadow").font(.headline)
             if draft.customTheme.theme.material == .glass {
                 Toggle("Tùy chỉnh bóng trên Glass", isOn: overrideBinding)

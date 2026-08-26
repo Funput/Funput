@@ -5,7 +5,7 @@ struct AppearanceResetCard: View {
     let action: () -> Void
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Label("Funput Glass", systemImage: "sparkles")
                 .font(.headline)
             Text("Khôi phục theme mặc định mà không thay đổi thiết lập bộ gõ của bạn.")

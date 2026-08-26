@@ -5,7 +5,7 @@ struct ThemePressedControls: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Trạng thái nhấn").font(.headline)
             Toggle("Màu nhấn tùy chỉnh", isOn: overlayBinding)
                 .accessibilityIdentifier("themeEditor.pressedOverlayEnabled")

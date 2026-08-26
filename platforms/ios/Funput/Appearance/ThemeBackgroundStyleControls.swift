@@ -5,7 +5,7 @@ struct ThemeBackgroundStyleControls: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        AdaptiveGlassCard {
+        ContentCard {
             Text("Gradient").font(.headline)
             Picker("Hướng gradient", selection: directionBinding) {
                 ForEach(ThemeGradientDirection.allCases, id: \.self) { direction in
