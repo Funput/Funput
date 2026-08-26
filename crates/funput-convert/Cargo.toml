@@ -1,0 +1,15 @@
+[package]
+name = "funput-convert"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "The Chuyển mã window's logic: reading a batch, naming what a conversion costs, writing copies out."
+
+[lints]
+workspace = true
+
+[dependencies]
+# Every decision here is expressed in `Charset` terms, and the charset names the
+# warnings quote come from `Charset::name()` — the one place they are written, so
+# a menu on Windows and a menu on Linux cannot drift apart.
+funput-core = { path = "../funput-core", features = ["charset"] }

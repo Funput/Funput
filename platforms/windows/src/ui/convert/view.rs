@@ -11,12 +11,15 @@
 
 use std::cell::RefCell;
 
-use funput_core::charset::{self, Charset};
+use funput_convert::{
+    Mode,
+    charset::{self, Charset},
+};
 use slint::Weak;
 
 use crate::ConvertWindow;
 
-use super::{files, text};
+use super::files;
 
 thread_local! {
     pub(super) static WINDOW: RefCell<Option<Weak<ConvertWindow>>> = const { RefCell::new(None) };
@@ -30,7 +33,7 @@ pub(super) struct State {
     /// Text state. `None` until something is identified or the user picks.
     pub(super) source: Option<usize>,
     pub(super) input: String,
-    pub(super) files: Vec<files::Entry>,
+    pub(super) files: Vec<funput_convert::Entry>,
 }
 
 impl State {
@@ -61,30 +64,34 @@ pub(super) fn index_of(charset: Charset) -> Option<usize> {
 
 /// Rebuild the whole window from the state.
 ///
-/// **One file takes the text shape, not a one-row table.** A table earns its place
-/// when the rows differ — that is the whole point of reading a batch file by file.
-/// With one file there is nothing to compare against, and the before/after panes show
-/// what the user came to see.
+/// Which shape it takes is [`Mode::of`]'s call, shared with the GTK window on Linux —
+/// including the rule that one file takes the text shape rather than a one-row table.
 pub(super) fn refresh() {
     let Some(window) = current() else { return };
     STATE.with(|s| {
         let mut state = s.borrow_mut();
         let target = at(state.target);
         window.set_target_index(i32::try_from(state.target).unwrap_or(0));
-        files::measure(&mut state.files, target);
+        funput_convert::measure(&mut state.files, target);
 
-        match state.files.as_slice() {
-            [] if state.input.is_empty() => window.set_mode("empty".into()),
-            [] => {
+        match Mode::of(&state.files, &state.input) {
+            Mode::Empty => window.set_mode("empty".into()),
+            // Two arms for one shape: a pasted paragraph and a single file look the
+            // same on screen but are filled from different places. Split rather than
+            // matched on `first()` because the `None` arm needs `state` mutably, and
+            // the borrow taken to ask the question outlives the answer.
+            Mode::Text if state.files.is_empty() => {
                 show_pasted(&window, &mut state, target);
                 window.set_mode("text".into());
             }
-            [only] => {
-                files::show_one(&window, only, target);
+            Mode::Text => {
+                if let Some(only) = state.files.first() {
+                    files::show_one(&window, only, target);
+                }
                 window.set_mode("text".into());
             }
-            many => {
-                files::show_many(&window, many);
+            Mode::Files => {
+                files::show_many(&window, &state.files);
                 window.set_mode("files".into());
             }
         }
@@ -109,6 +116,6 @@ fn show_pasted(window: &ConvertWindow, state: &mut State, target: Charset) {
         window.set_loss(slint::SharedString::new());
         return;
     };
-    window.set_output_text(text::preview(&state.input, from, target).text.into());
-    window.set_loss(text::loss(&state.input, from, target).into());
+    window.set_output_text(funput_convert::preview(&state.input, from, target).text.into());
+    window.set_loss(funput_convert::loss(&state.input, from, target).into());
 }

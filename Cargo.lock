@@ -464,6 +464,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "funput-convert"
+version = "0.1.0"
+dependencies = [
+ "funput-core",
+]
+
+[[package]]
 name = "funput-core"
 version = "0.1.0"
 dependencies = [

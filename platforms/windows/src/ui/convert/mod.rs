@@ -3,9 +3,13 @@
 //! Runs in its own short-lived process like Settings — see [`crate::ui`]. This file
 //! owns the window's lifetime and its callbacks; everything else lives next door.
 //!
+//! Everything about *what* a conversion is and costs lives in [`funput_convert`],
+//! shared with the GTK window on Linux so the two cannot drift. What is here is this
+//! shell's half of it.
+//!
 //! - [`view`] — the state, and everything the window shows from it.
-//! - [`text`] — what a pasted paragraph is, becomes, and costs, and saving it.
-//! - [`files`] — the batch: reading each file on its own, and writing them out.
+//! - [`text`] — saving a pasted paragraph through a Save dialog.
+//! - [`files`] — running the batch off the UI thread.
 //! - [`win32`] — the two things Slint cannot do: file drop and clipboard buttons.
 
 mod files;
@@ -17,7 +21,7 @@ use std::path::PathBuf;
 
 use slint::{ComponentHandle, ModelRc, VecModel};
 
-use funput_core::charset;
+use funput_convert::charset;
 
 use crate::ui::{mica, system_accent};
 use crate::{ConvertWindow, Theme};
@@ -111,7 +115,7 @@ fn wire(window: &ConvertWindow) {
                 [only] => (only.charset, only.text.as_str()),
                 _ => (state.source.map(at), state.input.as_str()),
             };
-            from.map(|from| text::preview(input, from, at(state.target)).text)
+            from.map(|from| funput_convert::preview(input, from, at(state.target)).text)
         });
         if let Some(converted) = converted {
             win32::write(&converted);
