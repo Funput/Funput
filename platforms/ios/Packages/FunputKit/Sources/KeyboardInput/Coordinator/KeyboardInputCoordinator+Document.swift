@@ -124,11 +124,17 @@ extension KeyboardInputCoordinator {
     ) {
         guard !snapshot.hasSelection else { return }
         if preserveCapsLock, state.shiftState == .capsLocked { return }
-        if preserveOneShotShift, state.shiftState == .uppercase { return }
+        // Punctuation/space/backspace ask to keep a manual one-shot Shift, but an
+        // autocapitalization arm must follow the new context — otherwise deleting
+        // ". " leaves the keyboard stuck uppercase.
+        if preserveOneShotShift,
+           state.shiftState == .uppercase,
+           !automaticShiftArmed { return }
         let uppercase = KeyboardCapitalizationResolver.shouldUppercase(
             mode: state.autocapitalization,
             contextBeforeInput: snapshot.contextBeforeInput
         )
+        automaticShiftArmed = uppercase
         replaceState(shiftState: uppercase ? .uppercase : .lowercase)
     }
 }

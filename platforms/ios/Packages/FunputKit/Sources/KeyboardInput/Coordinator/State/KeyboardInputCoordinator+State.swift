@@ -13,6 +13,7 @@ extension KeyboardInputCoordinator {
         if inputContextChanged {
             composer.clear()
             shiftController.resetTapSequence()
+            automaticShiftArmed = false
             documentSynchronizer.invalidate()
             resetPersonalSuggestionTracking()
         }
@@ -31,10 +32,12 @@ extension KeyboardInputCoordinator {
     func consumeOneShotShift() {
         guard state.shiftState == .uppercase else { return }
         shiftController.resetTapSequence()
+        automaticShiftArmed = false
         replaceState(shiftState: .lowercase)
     }
 
     func toggleShift() {
+        automaticShiftArmed = false
         replaceState(shiftState: shiftController.toggle(from: state.shiftState))
     }
 
