@@ -15,6 +15,14 @@ use crate::settings::{Settings, Shortcut};
 mod empty;
 mod row;
 
+/// The "throw the list away and build it again" closure, held so the rows it builds
+/// can call it.
+///
+/// `AdwPreferencesGroup` has no "remove every row", so a list that changes is rebuilt
+/// by hand — and each row needs to reach the very closure that made it. That is a
+/// cycle by nature, so it goes through a cell filled *after* the closure exists.
+pub(super) type Rebuild = Rc<RefCell<Option<Rc<dyn Fn()>>>>;
+
 pub(super) fn page() -> gtk::Widget {
     let list_page = PreferencesPage::builder()
         .title("Gõ tắt")
@@ -32,7 +40,7 @@ pub(super) fn page() -> gtk::Widget {
     let pages = gtk::Stack::new();
     let rows: Rc<RefCell<Vec<gtk::Widget>>> = Rc::new(RefCell::new(Vec::new()));
     let focus_new = Rc::new(Cell::new(false));
-    let rebuild: Rc<RefCell<Option<Rc<dyn Fn()>>>> = Rc::new(RefCell::new(None));
+    let rebuild: Rebuild = Rc::new(RefCell::new(None));
 
     let rebuild_impl: Rc<dyn Fn()> = {
         let group = group.clone();

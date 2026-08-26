@@ -1,6 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use adw::prelude::*;
 use adw::{EntryRow, ExpanderRow};
 use gtk::{Align, Button};
@@ -10,7 +7,7 @@ use crate::settings::{Settings, Shortcut};
 pub(super) fn build(
     index: usize,
     shortcut: &Shortcut,
-    rebuild: &Rc<RefCell<Option<Rc<dyn Fn()>>>>,
+    rebuild: &super::Rebuild,
 ) -> (ExpanderRow, EntryRow) {
     let expander = ExpanderRow::builder()
         .title(if shortcut.trigger.is_empty() {
@@ -77,7 +74,7 @@ fn bind_focus(index: usize, entry: &EntryRow, trigger: bool) {
     entry.add_controller(focus);
 }
 
-fn delete_button(index: usize, rebuild: &Rc<RefCell<Option<Rc<dyn Fn()>>>>) -> Button {
+fn delete_button(index: usize, rebuild: &super::Rebuild) -> Button {
     let button = Button::builder()
         .icon_name("user-trash-symbolic")
         .valign(Align::Center)
