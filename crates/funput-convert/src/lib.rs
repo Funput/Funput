@@ -28,62 +28,49 @@
 //! - [`write`] — the copies, written beside the originals and never over them.
 
 mod batch;
+mod session;
 mod text;
-mod write;
 
 /// Re-exported so a consumer needs one dependency rather than two, and so the
 /// `charset` feature is switched on in exactly one manifest.
 pub use funput_core::charset;
 
-pub use batch::{Entry, collect, measure, out_dir_label, ready, scan};
-pub use text::{capped, warning};
-pub use write::{OUT_DIR, Outcome, report, write_all};
+use funput_core::charset::Charset;
 
-/// Which of the three shapes the window is in.
+pub use batch::{OUT_DIR, Outcome, Scan, report};
+pub use session::{Job, Mode, Row, Session, Unreadable, View};
+pub use text::{capped, unreadable_line, warning};
+
+/// The charset a menu position names, clamped.
 ///
-/// **The content decides, not a mode switch.** What the user put in already says
-/// whether this is a paragraph or a batch, so asking would be asking them to repeat
-/// themselves.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Mode {
-    /// Nothing yet: the drop zone.
-    Empty,
-    /// A pasted paragraph — **or exactly one file**. One file has nothing to compare
-    /// against, so a one-row table would hide the thing the user actually wants to
-    /// see; it gets the before/after panes instead.
-    Text,
-    /// Two or more files: a table, because the interesting thing is that the rows
-    /// differ.
-    Files,
+/// An index can only come from a menu built out of [`charset::ALL`], so clamping
+/// keeps a future mistake a wrong entry rather than a panic.
+pub fn at(index: usize) -> Charset {
+    charset::ALL[index.min(charset::ALL.len() - 1)]
 }
 
-impl Mode {
-    pub fn of(files: &[Entry], input: &str) -> Self {
-        match files.len() {
-            0 if input.is_empty() => Self::Empty,
-            0 | 1 => Self::Text,
-            _ => Self::Files,
-        }
-    }
+pub fn index_of(charset: Charset) -> Option<usize> {
+    charset::ALL.iter().position(|&c| c == charset)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// The display names for every dropdown, in `ALL`'s order.
+///
+/// The one thing a shell cannot work out for itself: `Charset` is
+/// `#[non_exhaustive]`, so code outside core must write a wildcard arm and would
+/// silently miss a charset added later.
+pub fn charset_names() -> Vec<&'static str> {
+    charset::ALL.iter().map(|c| c.name()).collect()
+}
 
-    /// The rule the Windows window expressed inline in `refresh()` and never tested:
-    /// one file is not a one-row table.
-    #[test]
-    fn one_file_is_shown_as_text_and_two_as_a_table() {
-        let entry = || Entry {
-            path: std::path::PathBuf::from("a.txt"),
-            text: String::new(),
-            charset: None,
-            unmapped: 0,
-        };
-        assert_eq!(Mode::of(&[], ""), Mode::Empty);
-        assert_eq!(Mode::of(&[], "việt"), Mode::Text);
-        assert_eq!(Mode::of(&[entry()], ""), Mode::Text);
-        assert_eq!(Mode::of(&[entry(), entry()], ""), Mode::Files);
-    }
+/// Read everything that was dropped, one file at a time.
+///
+/// **Off the UI thread.** A folder of a few hundred documents is I/O bound, and
+/// doing it inline holds a window still for the whole drop — so this is a free
+/// function returning a `Send` result, and [`Session::adopt`] takes it afterwards.
+///
+/// Expands a dropped folder one level. Not recursively: dropping a folder of
+/// documents is the ordinary case and has to work, while walking a home directory
+/// because someone let go over the wrong icon is what makes a tool feel dangerous.
+pub fn scan(paths: &[std::path::PathBuf]) -> Scan {
+    batch::scan(&batch::collect(paths))
 }

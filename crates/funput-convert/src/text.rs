@@ -6,6 +6,8 @@
 
 use funput_core::charset::{Charset, Cost};
 
+use crate::Unreadable;
+
 /// How many characters to name before the warning gets longer than it is useful.
 const NAMED: usize = 6;
 
@@ -66,6 +68,30 @@ fn target_line(lost: &[char], to: Charset) -> String {
         lost.len(),
         to.name()
     )
+}
+
+/// The files a drop could not read, named — or empty when it read them all.
+///
+/// **Named, not counted**, for the same reason the warning above names characters:
+/// ten files dropped and eight rows shown is a question a number cannot answer, and
+/// the reason separates "fix the permissions" from "that file is not what you think
+/// it is".
+pub fn unreadable_line(files: &[Unreadable]) -> String {
+    if files.is_empty() {
+        return String::new();
+    }
+    let named: Vec<String> = files
+        .iter()
+        .take(NAMED)
+        .map(|file| format!("{} ({})", file.name, file.reason))
+        .collect();
+    let rest = files.len().saturating_sub(NAMED);
+    let tail = if rest > 0 {
+        format!(" và {rest} tệp khác")
+    } else {
+        String::new()
+    };
+    format!("Không đọc được: {}{tail}", named.join(", "))
 }
 
 /// A document trimmed to what a pane can usefully show, and made safe to show.

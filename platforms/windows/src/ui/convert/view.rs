@@ -1,20 +1,17 @@
-//! The window's state, and everything shown from it.
+//! The window's session, and everything shown from it.
 //!
 //! [`refresh`] rebuilds the whole window, and every callback ends by calling it.
-//! That is deliberate: with three states and two charsets in play, setting properties
+//! That is deliberate: with three shapes and two charsets in play, setting properties
 //! one at a time is how a window ends up showing a target it is no longer converting
 //! to.
 //!
-//! A charset is an index into [`charset::ALL`] here and in the Slint files, which
-//! name no charset at all. Implementing VISCII in core lengthens every menu in this
-//! window without a line changing in it.
+//! Nothing here decides anything. Which shape the window is in, which source charset
+//! wins, what a picker index means — all of it lives in [`funput_convert::Session`],
+//! shared with the GTK window on Linux, and arrives as a [`View`] of plain values.
 
 use std::cell::RefCell;
 
-use funput_convert::{
-    charset::{self, Charset},
-    Mode,
-};
+use funput_convert::{Mode, Session, View};
 use slint::Weak;
 
 use crate::ConvertWindow;
@@ -23,103 +20,62 @@ use super::files;
 
 thread_local! {
     pub(super) static WINDOW: RefCell<Option<Weak<ConvertWindow>>> = const { RefCell::new(None) };
-    pub(super) static STATE: RefCell<State> = const { RefCell::new(State::new()) };
-}
-
-pub(super) struct State {
-    /// Index into [`charset::ALL`]. Unicode by default: converting *to* it is what
-    /// nearly everyone opening this window came to do.
-    pub(super) target: usize,
-    /// Text state. `None` until something is identified or the user picks.
-    pub(super) source: Option<usize>,
-    pub(super) input: String,
-    pub(super) files: Vec<funput_convert::Entry>,
-}
-
-impl State {
-    pub(super) const fn new() -> Self {
-        Self {
-            target: 0,
-            source: None,
-            input: String::new(),
-            files: Vec::new(),
-        }
-    }
+    pub(super) static SESSION: RefCell<Session> = RefCell::new(Session::new());
 }
 
 pub(super) fn current() -> Option<ConvertWindow> {
     WINDOW.with(|cell| cell.borrow().as_ref().and_then(Weak::upgrade))
 }
 
-/// The charset an index names, clamped. An index can only come from a menu this
-/// window built out of `ALL`, so clamping keeps a future mistake a wrong entry
-/// rather than a panic.
-pub(super) fn at(index: usize) -> Charset {
-    charset::ALL[index.min(charset::ALL.len() - 1)]
+/// Edit the session, then redraw. The only way a callback touches anything.
+pub(super) fn edit(change: impl FnOnce(&mut Session)) {
+    SESSION.with(|s| change(&mut s.borrow_mut()));
+    refresh();
 }
 
-pub(super) fn index_of(charset: Charset) -> Option<usize> {
-    charset::ALL.iter().position(|&c| c == charset)
+/// Ask the session something without changing it.
+pub(super) fn ask<R>(question: impl FnOnce(&Session) -> R) -> R {
+    SESSION.with(|s| question(&s.borrow()))
 }
 
-/// Rebuild the whole window from the state.
+/// Rebuild the whole window from the session.
 ///
-/// Which shape it takes is [`Mode::of`]'s call, shared with the GTK window on Linux —
-/// including the rule that one file takes the text shape rather than a one-row table.
+/// Two calls, because the crate splits them: `Session::refresh` does the work —
+/// converting the document, and every file in a batch, against the target of the
+/// moment — and `view()` only reads it back.
 pub(super) fn refresh() {
     let Some(window) = current() else { return };
-    STATE.with(|s| {
-        let mut state = s.borrow_mut();
-        let target = at(state.target);
-        window.set_target_index(i32::try_from(state.target).unwrap_or(0));
-        funput_convert::measure(&mut state.files, target);
-
-        match Mode::of(&state.files, &state.input) {
-            Mode::Empty => window.set_mode("empty".into()),
-            // Two arms for one shape: a pasted paragraph and a single file look the
-            // same on screen but are filled from different places. Split rather than
-            // matched on `first()` because the `None` arm needs `state` mutably, and
-            // the borrow taken to ask the question outlives the answer.
-            Mode::Text if state.files.is_empty() => {
-                show_pasted(&window, &mut state, target);
-                window.set_mode("text".into());
-            }
-            Mode::Text => {
-                if let Some(only) = state.files.first() {
-                    files::show_one(&window, only, target);
-                }
-                window.set_mode("text".into());
-            }
-            Mode::Files => {
-                files::show_many(&window, &state.files);
-                window.set_mode("files".into());
-            }
-        }
+    SESSION.with(|s| {
+        let mut session = s.borrow_mut();
+        session.refresh();
+        show(&window, session.view());
     });
 }
 
-/// The pasted-paragraph state: identify, convert, and say what it will cost.
-fn show_pasted(window: &ConvertWindow, state: &mut State, target: Charset) {
-    window.set_from_file(false);
-    // The user's own choice outranks the guess: they are looking at the document and
-    // the detector is looking at statistics.
-    let source = state
-        .source
-        .map_or_else(|| charset::detect(&state.input).and_then(index_of), Some);
-    state.source = source;
+fn show(window: &ConvertWindow, view: &View) {
+    window.set_target_index(i32::try_from(view.target).unwrap_or(0));
+    window.set_source_index(index(view.source));
+    window.set_from_file(view.from_file);
+    window.set_file_name(view.file_name.clone().unwrap_or_default().into());
+    window.set_output_text(view.output_preview.clone().into());
+    window.set_loss(view.warning.clone().into());
+    // Only when the view says the text is ours. A pasted paragraph belongs to the
+    // user, and writing it back on every redraw would move the caret.
+    if let Some(text) = &view.input_preview {
+        window.set_input_text(text.clone().into());
+    }
 
-    window.set_source_index(source.and_then(|i| i32::try_from(i).ok()).unwrap_or(-1));
-    let Some(from) = source.map(at) else {
-        // Nothing identified it and nothing was chosen: show the text back rather
-        // than convert it under a guess.
-        window.set_output_text(state.input.clone().into());
-        window.set_loss(slint::SharedString::new());
-        return;
-    };
-    // One read, one render. The pane shows `render`'s own text, which for a legacy
-    // target is its bytes read back — so what is on screen is what a saved file will
-    // hold rather than a second conversion that happens to look similar.
-    let rendered = charset::render(&charset::read(&state.input, from), target);
-    window.set_output_text(rendered.text.into());
-    window.set_loss(funput_convert::warning(&rendered.cost, from, target).into());
+    match view.mode {
+        Mode::Empty => window.set_mode("empty".into()),
+        Mode::Text => window.set_mode("text".into()),
+        Mode::Files => {
+            files::show_many(window, view);
+            window.set_mode("files".into());
+        }
+    }
+}
+
+/// A menu position as Slint spells it: `-1` for "nothing settled yet".
+pub(super) fn index(position: Option<usize>) -> i32 {
+    position.and_then(|i| i32::try_from(i).ok()).unwrap_or(-1)
 }

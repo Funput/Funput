@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 use funput_core::charset::{Charset, read, render};
 
-use crate::Entry;
+use super::Entry;
 
 /// The subfolder converted copies land in, beside the originals.
 ///
@@ -133,7 +133,6 @@ mod tests {
             path,
             text: text.to_string(),
             charset,
-            unmapped: 0,
         }
     }
 

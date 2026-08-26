@@ -19,10 +19,10 @@ mod widget;
 
 use std::rc::Rc;
 
-use funput_convert::Mode;
-
-use crate::convert::state::State;
 use crate::convert::Convert;
+use funput_convert::{Mode, View};
+
+pub(super) use files::ROWS;
 
 /// The three shapes, and the stack that shows one of them.
 pub(super) struct Panes {
@@ -63,18 +63,18 @@ impl Panes {
         self.files.wire(convert);
     }
 
-    pub(super) fn refresh(&self, convert: &Rc<Convert>, state: &mut State) {
-        match state.mode() {
+    pub(super) fn refresh(&self, convert: &Rc<Convert>, view: &View) {
+        match view.mode {
             Mode::Empty => self.stack.set_visible_child_name("empty"),
             // One shape, two sources. A pasted paragraph and a single file look the
             // same on screen; which one it is decides where the panes are filled
             // from, and the pane settles that for itself.
             Mode::Text => {
-                self.text.refresh(convert, state);
+                self.text.refresh(convert, view);
                 self.stack.set_visible_child_name("text");
             }
             Mode::Files => {
-                self.files.refresh(convert, state);
+                self.files.refresh(convert, view);
                 self.stack.set_visible_child_name("files");
             }
         }

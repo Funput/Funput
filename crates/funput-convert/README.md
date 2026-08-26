@@ -38,29 +38,62 @@ Những thứ đó khác nhau theo bản chất; không thứ nào dưới đây
 ```rust
 pub use funput_core::charset;   // để consumer chỉ cần MỘT dependency
 
-pub enum Mode { Empty, Text, Files }
-impl Mode { pub fn of(files: &[Entry], input: &str) -> Self; }
+// Một kiểu, một truy vấn
+pub struct Session;
+impl Session {
+    // sáu lệnh sửa — tám luật, mỗi luật một chỗ duy nhất
+    fn set_input(&mut self, text: String);
+    fn set_target(&mut self, index: usize);
+    fn pick_source(&mut self, index: Option<usize>);
+    fn pick_row_source(&mut self, row: usize, index: usize);
+    fn adopt(&mut self, scan: Scan);
+    fn set_row_window(&mut self, first: usize, len: usize);
+    fn reset(&mut self);
 
-// Một đoạn văn bản. Phép chuyển là `charset::read` + `charset::render` của core —
-// dùng chung với `funput convert`; ở đây chỉ còn câu chữ và bản cắt để hiển thị.
+    fn refresh(&mut self);      // làm việc — shell chọn luồng
+    fn view(&self) -> &View;    // đọc — không bao giờ tính
+
+    fn batch_job(&self) -> Job;             // lô, để mang ra khỏi luồng UI
+    fn result_text(&self) -> Option<String>; // chép — TOÀN VĂN, không cắt
+    fn save_bytes(&self) -> Option<Vec<u8>>;
+}
+
+#[non_exhaustive] pub struct View { mode, target, source, from_file, file_name,
+    input_preview: Option<String>, output_preview, warning,
+    rows: Vec<Row>, rows_first, rows_total, out_dir, ready, unreadable }
+#[non_exhaustive] pub struct Row { name, charset: Option<usize>, note }
+#[non_exhaustive] pub struct Unreadable { name, reason }
+pub enum Mode { Empty, Text, Files }
+
+// Việc I/O, trao ra để shell chọn luồng
+pub fn scan(paths: &[PathBuf]) -> Scan;
+pub struct Job;  impl Job { fn run(self) -> Outcome; }
+
+// Câu chữ
 pub fn warning(cost: &Cost, from: Charset, to: Charset) -> String;
+pub fn unreadable_line(files: &[Unreadable]) -> String;
 pub fn capped(text: &str) -> String;
 
-// Một lô tệp
-pub struct Entry { pub path: PathBuf, pub text: String,
-                   pub charset: Option<Charset>, pub unmapped: usize }
-pub fn collect(paths: &[PathBuf]) -> Vec<PathBuf>;
-pub fn scan(paths: &[PathBuf]) -> Vec<Entry>;
-pub fn measure(entries: &mut [Entry], target: Charset);
-pub fn ready(entries: &[Entry]) -> usize;
-pub fn out_dir_label(entries: &[Entry]) -> String;
+// Chỉ số bảng mã — thứ duy nhất shell cần biết về Charset
+pub fn charset_names() -> Vec<&'static str>;
+pub fn at(index: usize) -> Charset;
+pub fn index_of(charset: Charset) -> Option<usize>;
 
-// Ghi ra
-pub const OUT_DIR: &str;        // "Đã chuyển mã"
-pub struct Outcome { pub written: usize, pub skipped: usize, pub failed: usize }
-pub fn write_all(entries: &[Entry], target: Charset) -> Outcome;
+pub const OUT_DIR: &str;
+#[non_exhaustive] pub struct Outcome;
 pub fn report(outcome: &Outcome) -> String;
 ```
+
+**Chỉ số, không phải `Charset`. `String`, không phải `PathBuf`.** Không trường nào của
+`View` là dẫn xuất và không trường nào giữ borrow — đó không phải sự ngăn nắp mà là
+điều kiện để một cửa C ABI trao nó ra từng accessor một, vì không reference nào qua
+được ranh giới đó.
+
+**`refresh()` và `view()` là hai lời gọi.** Đọc mượn `&self` nên shell giữ trong
+`RefCell` chỉ cần borrow hẹp; khoảnh khắc tốn kém được gọi tên nên shell đặt nó lên
+đúng luồng nó muốn — GTK và Slint không chọn giống nhau. Cái giá: sửa mà quên
+`refresh()` thì view cũ. Cả hai shell đều đã kết thúc mọi callback bằng một lượt vẽ
+lại, và có test ghim điều đó.
 
 ## Ba điều đáng biết trước
 

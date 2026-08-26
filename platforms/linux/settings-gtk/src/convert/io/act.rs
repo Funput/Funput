@@ -10,8 +10,6 @@ use std::rc::Rc;
 use adw::prelude::*;
 use gtk::{gio, glib};
 
-use funput_convert::charset;
-
 use crate::convert::Convert;
 
 /// Paste the clipboard into the text pane.
@@ -25,23 +23,18 @@ pub(in crate::convert) fn paste(convert: &Rc<Convert>) {
         let Some(convert) = weak.upgrade() else {
             return;
         };
-        convert.state.borrow_mut().set_input(text.to_string());
+        convert.session.borrow_mut().set_input(text.to_string());
         convert.set_progress(String::new());
     });
 }
 
 /// Copy the converted document.
 ///
-/// **From the state, not from the pane.** The pane holds a capped preview of a long
-/// document, and copying that would hand over a document with its tail quietly
+/// **From the session, not from the pane.** The pane holds a capped preview of a
+/// long document, and copying that would hand over a document with its tail quietly
 /// missing.
 pub(in crate::convert) fn copy_result(convert: &Rc<Convert>) {
-    let converted = {
-        let state = convert.state.borrow();
-        state
-            .conversion()
-            .map(|(text, from, to)| charset::render(&charset::read(text, from), to).text)
-    };
+    let converted = convert.session.borrow().result_text();
     let Some(converted) = converted else { return };
     convert.window().clipboard().set_text(&converted);
     convert.set_progress("Đã chép kết quả".to_string());
@@ -53,12 +46,7 @@ pub(in crate::convert) fn copy_result(convert: &Rc<Convert>) {
 /// characters as UTF-8 would spend two on each and produce a file `.VnTime` cannot
 /// read back — the one mistake that would make the whole window pointless.
 pub(in crate::convert) fn save_result(convert: &Rc<Convert>) {
-    let bytes = {
-        let state = convert.state.borrow();
-        state
-            .conversion()
-            .map(|(text, from, to)| charset::render(&charset::read(text, from), to).bytes)
-    };
+    let bytes = convert.session.borrow().save_bytes();
     let Some(bytes) = bytes else { return };
 
     let dialog = gtk::FileDialog::builder()
@@ -87,17 +75,13 @@ pub(in crate::convert) fn save_result(convert: &Rc<Convert>) {
 
 /// Convert and write the batch, off the UI thread.
 pub(in crate::convert) fn convert_files(convert: &Rc<Convert>) {
-    let (entries, target) = {
-        let state = convert.state.borrow();
-        (state.files.clone(), crate::convert::state::at(state.target))
-    };
+    let job = convert.session.borrow().batch_job();
     convert.set_busy(true);
     convert.set_progress("Đang chuyển…".to_string());
 
     let weak = Rc::downgrade(convert);
     glib::spawn_future_local(async move {
-        let outcome =
-            gio::spawn_blocking(move || funput_convert::write_all(&entries, target)).await;
+        let outcome = gio::spawn_blocking(move || job.run()).await;
         let Some(convert) = weak.upgrade() else {
             return;
         };

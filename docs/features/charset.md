@@ -357,6 +357,18 @@ Hai con số về đích, cố ý tách: `lost.len()` là số chữ **riêng bi
 đếm). `normalized` đếm ở phía **đọc**, vì đó là phía duy nhất thấy được nó — phép ghi
 luôn xuất phát từ Unicode dựng sẵn, vốn chỉ có một cách viết.
 
+### Máy trạng thái của cửa sổ ở một chỗ
+
+Tám luật — kẹp chỉ số, "dán mới thì quên nguồn cũ", "người dùng chọn thắng máy đoán",
+"picker rơi vào tệp đơn đang mở", chọn nguồn theo hàng, chọn `(text, from, to)`, hình
+dạng theo nội dung, và chính struct trạng thái — từng tồn tại hai bản, một trong shell
+Slint và một trong shell GTK. Giờ chúng ở `funput_convert::Session`, và shell chỉ đọc
+một `View` gồm toàn giá trị phẳng.
+
+Điều đó bắt được một lỗi thật: `save()` bên Windows đọc ô văn bản dán, vốn rỗng ở hình
+dạng một-tệp, nên nó chuyển sai thứ — trong khi `copy` cùng tệp thì đúng. Cùng một
+luật, ba chỗ viết, sai một chỗ.
+
 ## Hợp đồng mở rộng
 
 Mỗi bảng mã là một module codec cung cấp đúng hai hàm:
