@@ -5,7 +5,7 @@ extension KeyboardViewController {
     override func viewWillDisappear(_ animated: Bool) {
         activationState.end()
         cancelClipboardRetry()
-        deactivatePreferredHeight()
+        markPreferredHeightHidden()
         super.viewWillDisappear(animated)
         clearPersonalSuggestions()
         flushPersonalSuggestions()

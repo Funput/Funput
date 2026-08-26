@@ -15,6 +15,9 @@ extension KeyboardViewController {
                 presentation: currentPresentation,
                 backgroundImage: cachedBackgroundImage
             )
+#if DEBUG
+            surface.accessibilityIdentifier = "funput.keyboard.surface"
+#endif
             surface.translatesAutoresizingMaskIntoConstraints = false
             surface.onKeyEvent = { [weak self] event in
                 self?.handleKeyEvent(event)
@@ -22,8 +25,7 @@ extension KeyboardViewController {
             surface.onOverlayPadChanged = { [weak self] pad in
                 guard let self else { return }
                 UIView.performWithoutAnimation {
-                    self.heightController.setOverlayPad(pad)
-                    self.view.layoutIfNeeded()
+                    self.setPreferredHeightOverlayPad(pad)
                 }
             }
             installClipboard(on: surface)

@@ -14,6 +14,13 @@ struct TypingHarnessView: View {
         HarnessTextView()
             .ignoresSafeArea(.container, edges: .bottom)
             .onAppear(perform: Self.forceDeterministicConfiguration)
+            .overlay(alignment: .topTrailing) {
+                if ProcessInfo.processInfo.arguments.contains("-uitest-warm-toolbar-refresh") {
+                    Button("Ẩn toolbar", action: Self.applyToolbarlessConfiguration)
+                        .accessibilityIdentifier("typingHarness.hideToolbar")
+                        .padding()
+                }
+            }
     }
 
     /// Pin the keyboard to the exact engine setup used to generate the test's
@@ -28,9 +35,26 @@ struct TypingHarnessView: View {
         configuration.eagerRestore = false
         configuration.autoCapitalize = false
         configuration.showsNumberRow = false
+        if ProcessInfo.processInfo.arguments.contains("-uitest-warm-toolbar-refresh") {
+            configuration.layoutPreset = .system
+        }
         FunputUITestConfigurationOverrideStore().save(
             configuration,
             expiresAt: Date().addingTimeInterval(10 * 60)
+        )
+    }
+
+    static func applyToolbarlessConfiguration() {
+        let store = FunputUITestConfigurationOverrideStore()
+        guard var configuration = store.load() else { return }
+        configuration.layoutPreset = .system
+        configuration.personalSuggestionsEnabled = false
+        store.save(configuration, expiresAt: Date().addingTimeInterval(10 * 60))
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
         )
     }
 }
