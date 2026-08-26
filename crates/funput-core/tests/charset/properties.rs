@@ -2,7 +2,7 @@
 //! arbitrary byte soup, half-words, unassigned codes, marks with nothing to
 //! attach to.
 
-use funput_core::charset::{Charset, convert, detect, detect_bytes};
+use funput_core::charset::{Charset, convert, detect, detect_bytes, encode_bytes};
 use proptest::prelude::*;
 
 /// Anything a legacy document could hold: one char per byte, the whole range.
@@ -38,6 +38,70 @@ const ALL: [Charset; 4] = [
 ];
 
 proptest! {
+    /// **Characterization, written before the two paths are unified.**
+    ///
+    /// A shell can convert `from → to` in one pass, or read into Unicode and write
+    /// Unicode out — and those are not the same thing. `transcode` decodes straight
+    /// to an `Atom`, so the pivot's round trip through a real Unicode string is an
+    /// extra `Atom::from_char(atom.to_char())`, which is identity for a `Vowel` or a
+    /// `Stroke` but **not** for an `Other(c)` whose `c` happens to be a Vietnamese
+    /// letter. That is exactly what a source codec emits for a code it does not
+    /// define — TCVN3's `0xC2` reading back as `Â`, whose real code is `0xA2`.
+    ///
+    /// What matters is not that they can differ, but that they can only differ where
+    /// the read was **already counted**. So a shell that switches from one to the
+    /// other never moves a character the user was not warned about. Pinned here so
+    /// the change that unifies them has to keep it true.
+    #[test]
+    fn the_two_conversion_paths_differ_only_where_the_read_was_counted(
+        text in LEGACY_TEXT,
+        combining in COMBINING_TEXT,
+    ) {
+        for source in [&text, &combining] {
+            for from in ALL {
+                let read = convert(source, from, Charset::Unicode);
+                for to in ALL {
+                    let direct = convert(source, from, to);
+                    let pivoted = convert(&read.text, Charset::Unicode, to);
+                    if direct.text != pivoted.text {
+                        prop_assert!(
+                            read.unmapped > 0,
+                            "{from:?} → {to:?} moved a character silently: \
+                             {:?} vs {:?}",
+                            direct.text,
+                            pivoted.text,
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /// **Characterization, same reason.**
+    ///
+    /// `encode_bytes` does one thing `convert` does not: a character with no byte to
+    /// put it in becomes `?`. So the text a preview pane shows and the bytes a file
+    /// receives are not the same content, and a shell that shows one while writing
+    /// the other is lying to the user.
+    ///
+    /// Again the useful half is the bound: every character that gets substituted was
+    /// already counted in `unmapped`, so showing `?` in a preview tells the user
+    /// nothing the warning line does not already say.
+    #[test]
+    fn a_character_no_byte_can_hold_was_already_counted(text in "\\PC{0,64}") {
+        for to in LEGACY {
+            let (bytes, reported) = encode_bytes(&text, to);
+            let converted = convert(&text, Charset::Unicode, to);
+            prop_assert_eq!(bytes.len(), converted.text.chars().count());
+
+            let substituted = converted.text.chars().filter(|&c| c as u32 > 0xFF).count();
+            prop_assert!(
+                reported.unmapped >= substituted,
+                "{substituted} character(s) became `?` in {to:?} uncounted",
+            );
+        }
+    }
+
     /// Conversion is total. Whatever the text is — and a user who picks the wrong
     /// source charset feeds it text that is *not* what it claims — it comes back
     /// as text, not as a panic.
