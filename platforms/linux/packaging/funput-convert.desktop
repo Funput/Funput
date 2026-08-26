@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Chuyển mã
+GenericName=Vietnamese Charset Converter
+Comment=Chuyển văn bản và tệp giữa Unicode, TCVN3 (ABC) và VNI-Windows
+Exec=funput-settings --convert
+Icon=funput
+Terminal=false
+Categories=Utility;TextTools;
+Keywords=chuyển mã;bảng mã;tcvn3;abc;vni;unicode;unikey;convert;charset;

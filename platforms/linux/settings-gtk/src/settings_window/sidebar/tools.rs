@@ -1,4 +1,5 @@
-//! Import / export rows at the bottom of the sidebar.
+//! Sidebar rows that *do* something rather than go somewhere: the converter, and
+//! import / export.
 
 use adw::prelude::*;
 use adw::ActionRow;
@@ -26,5 +27,34 @@ pub(super) fn widget(window: &adw::Window) -> ListBox {
 fn tool_row(title: &str, icon: &str) -> ActionRow {
     let row = ActionRow::builder().title(title).activatable(true).build();
     row.add_prefix(&gtk::Image::from_icon_name(icon));
+    row
+}
+
+/// The Chuyển mã row: looks like a destination, acts like a button.
+///
+/// **Not selectable, and that is the whole trick.** The list selects one row and the
+/// content pane follows it; a row with no page behind it would leave the sidebar
+/// highlighting one thing while the pane shows another. A non-selectable row still
+/// activates, so the highlight stays on whichever page is actually open.
+pub(super) fn convert_row(window: &adw::Window) -> ActionRow {
+    let row = ActionRow::builder()
+        .title("Chuyển mã")
+        .activatable(true)
+        .selectable(false)
+        .build();
+    row.add_prefix(&gtk::Image::from_icon_name(
+        "accessories-character-map-symbolic",
+    ));
+    let parent = window.clone();
+    row.connect_activated(move |_| {
+        // Through the same door the launcher uses, so there is one path in and one
+        // place that decides whether to reuse the window already open.
+        if let Some(app) = parent
+            .application()
+            .and_then(|app| app.downcast::<adw::Application>().ok())
+        {
+            crate::convert::present(&app);
+        }
+    });
     row
 }
