@@ -15,6 +15,10 @@ public final class KeyboardInputCoordinator {
     public internal(set) var smartGesturesEnabled = true
     var documentSynchronizer = KeyboardDocumentSynchronizer()
     var suggestionTracker = AuthoredTokenTracker()
+    /// True while Shift was raised by autocapitalization (sentence/word start), not by
+    /// a Shift key tap. Backspace must recompute in that case; a manual one-shot Shift
+    /// must survive punctuation/space/delete.
+    var automaticShiftArmed = false
     var personalSuggestionsEnabled = true
     var suggestionTrackingActive = true
     var preferredTelexMethod: KeyboardInputMethod
