@@ -46,7 +46,12 @@ pub use text::{capped, unreadable_line, warning};
 /// An index can only come from a menu built out of [`charset::ALL`], so clamping
 /// keeps a future mistake a wrong entry rather than a panic.
 pub fn at(index: usize) -> Charset {
-    charset::ALL[index.min(charset::ALL.len() - 1)]
+    charset::ALL[clamp(index)]
+}
+
+/// A menu position that exists, for the same reason [`at`] clamps.
+pub(crate) fn clamp(index: usize) -> usize {
+    index.min(charset::ALL.len() - 1)
 }
 
 pub fn index_of(charset: Charset) -> Option<usize> {
