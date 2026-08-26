@@ -35,12 +35,12 @@ enum SystemActionRowWeights {
     static let space = 11.2 - `switch` - emoji - enter
 }
 
-/// The emoji key the system preset places in its action row.
+/// The emoji key used when panel access lives in an action row instead of the toolbar.
 ///
 /// It matches the switch key beside it, as on the stock keyboard. The toolbar hides its
 /// own emoji button while this key is present, so the two never appear at once; the
 /// roles route identically either way.
-func systemEmojiKey(page: String) -> KeySpec {
+func actionRowEmojiKey(page: String) -> KeySpec {
     specialKey(
         "emoji-\(page)",
         "",
@@ -66,7 +66,7 @@ func systemActionRow(
             weight: SystemActionRowWeights.switch,
             accessibilityLabel: switchAccessibility
         ),
-        systemEmojiKey(page: page),
+        actionRowEmojiKey(page: page),
         standardSpaceKey(weight: SystemActionRowWeights.space),
         specialKey(
             "enter-\(page)",

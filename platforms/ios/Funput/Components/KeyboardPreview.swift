@@ -103,7 +103,8 @@ enum KeyboardPreviewPresentation {
             inputMethod: configuration.inputMethod,
             mode: .letters,
             showsNumberRow: configuration.showsNumberRow,
-            preset: configuration.layoutPreset
+            preset: configuration.layoutPreset,
+            showsToolbar: configuration.personalSuggestionsEnabled
         )
         return KeyboardPresentationFactory.make(
             from: configuration,

@@ -30,7 +30,7 @@ extension KeyboardViewController {
     }
 
     func showKaomoji() {
-        guard currentPresentation.layout.toolbar != nil else { return }
+        guard currentPresentation.layout.allowsEmojiPanel else { return }
         launchTrace.recordPanelFirstOpen(.kaomoji)
         ensureKaomojiView()
         inputCoordinator.prepareForLiteralInput()

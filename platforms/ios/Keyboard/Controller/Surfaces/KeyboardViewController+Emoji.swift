@@ -33,7 +33,7 @@ extension KeyboardViewController {
     }
 
     func showEmoji() {
-        guard currentPresentation.layout.toolbar != nil else { return }
+        guard currentPresentation.layout.allowsEmojiPanel else { return }
         launchTrace.recordPanelFirstOpen(.emoji)
         ensureEmojiView()
         inputCoordinator.prepareForLiteralInput()
