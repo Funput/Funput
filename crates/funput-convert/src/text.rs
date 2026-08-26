@@ -102,6 +102,12 @@ pub fn unreadable_line(files: &[Unreadable]) -> String {
 /// wrongly and Pango complains in the log. Windows never noticed, which is exactly
 /// why the sanitising belongs here rather than in one shell.
 ///
+/// A carriage return is **not** one of them. `\r` is a control character, but it is
+/// also how every Windows document ends a line, and the whole point of this tool is
+/// Windows documents — marking each one would put a `�` at the end of every line of
+/// every file it was built for. Line endings are normalised to `\n` instead: GTK and
+/// Slint both draw that as one break, where a raw `\r\n` risks two.
+///
 /// Only the *preview* is sanitised. The conversion and every counter still run over
 /// the real text, so nothing this hides can hide a lost character.
 pub fn capped(text: &str) -> String {
@@ -109,14 +115,20 @@ pub fn capped(text: &str) -> String {
         .char_indices()
         .nth(PREVIEW)
         .map_or(text.len(), |(index, _)| index);
-    let mut out: String = text[..cut]
-        .chars()
-        .map(|c| match c {
+    let mut out = String::with_capacity(cut);
+    let mut chars = text[..cut].chars().peekable();
+    while let Some(c) = chars.next() {
+        out.push(match c {
+            '\r' => {
+                // A lone `\r` still becomes a break rather than vanishing.
+                chars.next_if_eq(&'\n');
+                '\n'
+            }
             '\n' | '\t' => c,
             c if c.is_control() => char::REPLACEMENT_CHARACTER,
             c => c,
-        })
-        .collect();
+        });
+    }
     if cut < text.len() {
         out.push('…');
     }

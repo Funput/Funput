@@ -68,3 +68,22 @@ fn a_control_character_cannot_reach_the_preview() {
     assert!(!shown.contains('\u{1a}'), "{shown:?}");
     assert!(shown.contains('\t') && shown.contains('\n'), "{shown:?}");
 }
+
+/// The regression that shipped: `\r` is a control character, so sanitising them all
+/// put a `�` at the end of every line of every CRLF document — which is every
+/// Windows document, the entire reason this tool exists.
+#[test]
+fn a_windows_line_ending_is_not_marked_as_damage() {
+    let shown = capped("Cộng hòa\r\nĐộc lập\r\n");
+    assert!(!shown.contains('\u{FFFD}'), "{shown:?}");
+    assert_eq!(shown, "Cộng hòa\nĐộc lập\n");
+}
+
+/// Normalised rather than passed through: a raw `\r\n` risks drawing as two breaks
+/// in GTK, and a lone `\r` must still separate lines rather than disappear.
+#[test]
+fn every_line_ending_becomes_exactly_one_break() {
+    assert_eq!(capped("a\r\nb").lines().count(), 2);
+    assert_eq!(capped("a\rb").lines().count(), 2);
+    assert_eq!(capped("a\nb").lines().count(), 2);
+}
