@@ -263,6 +263,120 @@ fn pruning_drops_drafts_and_keeps_complete_rows() {
     assert_eq!(state.shortcuts()[0].trigger, "vn");
 }
 
+// --- keyboard layout -------------------------------------------------------
+
+/// Real Windows layout handles. `JAPANESE_IME` is what Microsoft IME reports;
+/// `US` and `VIETNAMESE` are plain keyboard layouts.
+const US: u32 = 0x0409_0409;
+const VIETNAMESE: u32 = 0x042A_042A;
+const JAPANESE_IME: u32 = 0xE020_0411;
+const RUSSIAN: u32 = 0x0419_0419;
+
+#[test]
+fn a_foreign_layout_suspends_vietnamese_and_leaving_it_gives_it_back() {
+    let mut state = shell();
+    assert_eq!(state.apply_for_layout(US), None); // nothing to do, already typing
+
+    assert_eq!(state.apply_for_layout(JAPANESE_IME), Some(false));
+    assert!(!state.enabled());
+    assert_eq!(state.apply_for_layout(US), Some(true));
+    assert!(state.enabled());
+}
+
+#[test]
+fn the_same_layout_twice_reports_no_change() {
+    let mut state = shell();
+    assert_eq!(state.apply_for_layout(RUSSIAN), Some(false));
+    assert_eq!(state.apply_for_layout(RUSSIAN), None);
+}
+
+/// The suspension is about the keyboard, not about what the user asked for. Their
+/// setting has to survive it untouched, or returning to a Latin layout would come
+/// back to English and the choice would have been quietly eaten.
+#[test]
+fn a_suspension_never_writes_to_the_setting() {
+    let mut state = shell();
+    state.apply_for_layout(JAPANESE_IME);
+
+    assert!(!state.enabled(), "not running");
+    assert!(
+        state.settings().enabled,
+        "but still what the user asked for"
+    );
+}
+
+#[test]
+fn the_vietnamese_layout_is_not_a_foreign_one() {
+    let mut state = shell();
+    assert_eq!(state.apply_for_layout(VIETNAMESE), None);
+    assert!(state.enabled());
+}
+
+#[test]
+fn nothing_is_suspended_while_the_user_is_already_in_english() {
+    let mut state = shell_remembering(&[("code.exe", false)]);
+    assert_eq!(state.apply_for_app("code.exe"), Some(false));
+
+    // Already off: the layout has nothing left to take away, and the tray must not
+    // be told about a change that did not happen.
+    assert_eq!(state.apply_for_layout(JAPANESE_IME), None);
+}
+
+/// The platform applies the layout rule after the per-app one, so a layout veto is
+/// the last word: an app remembered as Vietnamese does not switch it back on while
+/// a Japanese IME is loaded.
+#[test]
+fn a_layout_veto_outranks_a_remembered_app() {
+    let mut state = shell_remembering(&[("code.exe", true)]);
+    state.apply_for_layout(JAPANESE_IME);
+
+    state.note_foreground("code.exe".to_string());
+    assert_eq!(state.apply_for_app("code.exe"), None);
+    assert_eq!(state.apply_for_layout(JAPANESE_IME), None);
+    assert!(!state.enabled());
+}
+
+#[test]
+fn the_hotkey_overrules_the_layout_until_the_user_moves_to_another_one() {
+    let mut state = shell();
+    assert_eq!(state.apply_for_layout(JAPANESE_IME), Some(false));
+
+    // The hotkey is measured against what is running, so this turns it back on
+    // rather than toggling the setting that already said "on".
+    assert!(state.toggle_enabled_hotkey());
+    assert!(state.enabled());
+    assert_eq!(
+        state.apply_for_layout(JAPANESE_IME),
+        None,
+        "no second opinion"
+    );
+
+    // The override was for that keyboard only.
+    assert_eq!(state.apply_for_layout(US), None);
+    assert_eq!(state.apply_for_layout(JAPANESE_IME), Some(false));
+}
+
+#[test]
+fn the_switch_being_off_leaves_every_layout_alone() {
+    let mut state = shell_with(Settings {
+        auto_english_on_foreign_layout: false,
+        ..Settings::default()
+    });
+    assert_eq!(state.apply_for_layout(JAPANESE_IME), None);
+    assert!(state.enabled());
+}
+
+/// Turning the switch off in Settings has to give Vietnamese back there and then —
+/// waiting for the user to change keyboards would look like the switch did nothing.
+#[test]
+fn turning_the_switch_off_lifts_a_suspension_already_in_place() {
+    let mut state = shell();
+    assert_eq!(state.apply_for_layout(JAPANESE_IME), Some(false));
+
+    state.set_auto_english_on_foreign_layout(false);
+    assert!(state.enabled());
+}
+
 // --- persistence -----------------------------------------------------------
 
 #[test]

@@ -43,6 +43,14 @@ impl ShellState {
         self.update_config(|s| s.shortcuts_enabled = on);
     }
 
+    /// Turn the foreign-layout auto-switch on or off. Re-judges the current layout
+    /// straight away, so turning it off lifts a suspension already in place instead
+    /// of leaving Vietnamese off until the user next changes keyboards.
+    pub fn set_auto_english_on_foreign_layout(&mut self, on: bool) {
+        self.update_config(|s| s.auto_english_on_foreign_layout = on);
+        self.redecide_layout();
+    }
+
     /// Picking a preset also clears any recorded custom combo — the two are
     /// alternatives, and the combo (when present) always wins in the hook.
     pub fn set_toggle_hotkey(&mut self, hotkey: Hotkey) {

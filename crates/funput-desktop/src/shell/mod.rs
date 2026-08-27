@@ -52,6 +52,18 @@ pub struct ShellState {
     /// app the user focuses. Session-only: re-arming a stale choice after a
     /// restart would be surprising, so it is never persisted.
     pending_override: Option<bool>,
+    /// The keyboard layout handle last judged by [`Self::apply_for_layout`], so an
+    /// unchanged layout costs nothing. `0` until the platform reports one.
+    last_layout: u32,
+    /// Vietnamese is suspended because the focused layout is one it cannot be typed
+    /// on. Not a settings field and never persisted: it describes the keyboard in
+    /// front of the user right now, and is recomputed from it — see
+    /// [`Self::effective_enabled`].
+    layout_suspended: bool,
+    /// The one foreign layout the user has overruled by turning Vietnamese back on
+    /// inside it. Kept until they move to a different layout, so Funput states its
+    /// case once and then lets them type. `0` when there is none.
+    layout_override: u32,
 }
 
 impl ShellState {
@@ -65,6 +77,9 @@ impl ShellState {
             settings_file,
             foreground: None,
             pending_override: None,
+            last_layout: 0,
+            layout_suspended: false,
+            layout_override: 0,
         };
         state.settings = state.read_settings();
         state.apply_settings();
@@ -76,8 +91,12 @@ impl ShellState {
     pub fn settings(&self) -> &Settings {
         &self.settings
     }
+    /// Whether Vietnamese is actually being typed right now — the user's choice
+    /// *and* the layout's veto. This is what the hook and the tray ask; the
+    /// Settings window reads `settings().enabled` instead, because it wants the
+    /// choice, not the momentary state of a keyboard it is not focused on.
     pub fn enabled(&self) -> bool {
-        self.settings.enabled
+        self.effective_enabled()
     }
     pub fn shortcuts(&self) -> &[Shortcut] {
         &self.settings.shortcuts
