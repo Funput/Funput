@@ -10,6 +10,9 @@
 //! Two pure concerns: `key` (what a keystroke means — [`classify`] over a
 //! [`KeyEvent`]) and `inject` (what to emit — [`plan_inject`] into an [`InjectPlan`]).
 //!
+//! `layout` is a third: whether the keyboard layout under the caret is one
+//! Vietnamese can be typed on at all, decided from the handle the host hands it.
+//!
 //! `retone` adds the one piece of state such a shell needs: a [`CommittedTail`]
 //! shadow of the text it has typed, which stands in for the document it cannot read
 //! when Backspace should re-open a finished word.
@@ -20,11 +23,13 @@
 
 mod inject;
 mod key;
+mod layout;
 mod retone;
 mod shell;
 
 pub use funput_engine::{ImeResult, KeySource};
 pub use inject::{InjectPlan, plan_inject};
 pub use key::{KeyEvent, KeyKind, Mods, classify};
+pub use layout::is_foreign_layout;
 pub use retone::CommittedTail;
 pub use shell::ShellState;
