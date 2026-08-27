@@ -35,6 +35,10 @@ pub fn set_shortcuts_enabled(on: bool) {
     shell::set_shortcuts_enabled(on);
 }
 
+pub fn set_auto_english_layout(on: bool) {
+    shell::set_auto_english_on_foreign_layout(on);
+}
+
 pub fn set_enabled(on: bool) {
     shell::set_enabled(on);
 }

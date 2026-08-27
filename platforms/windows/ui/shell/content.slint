@@ -24,6 +24,7 @@ export component SettingsContent inherits ScrollView {
     in-out property <bool> eager-restore;
     in-out property <bool> spell-check;
     in-out property <bool> auto-capitalize;
+    in-out property <bool> auto-english-layout;
     in-out property <bool> launch-at-login;
     in property <[ShortcutEntry]> shortcuts;
     in property <bool> can-add-shortcut: true;
@@ -43,6 +44,7 @@ export component SettingsContent inherits ScrollView {
     callback set-eager(bool);
     callback set-spell(bool);
     callback set-auto-cap(bool);
+    callback set-auto-english-layout(bool);
     callback set-launch(bool);
     callback add-shortcut();
     callback set-shortcuts-enabled(bool);
@@ -74,8 +76,10 @@ export component SettingsContent inherits ScrollView {
                 method: root.method;
                 vi-enabled <=> root.vi-enabled;
                 launch-at-login <=> root.launch-at-login;
+                auto-english-layout <=> root.auto-english-layout;
                 set-enabled(v) => { root.set-enabled(v); }
                 set-launch(v) => { root.set-launch(v); }
+                set-auto-english-layout(v) => { root.set-auto-english-layout(v); }
                 pick-method(v) => { root.pick-method(v); }
             }
             if root.active == "typing": TypingPage {

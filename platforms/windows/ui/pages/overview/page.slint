@@ -7,7 +7,9 @@ export component OverviewPage inherits VerticalLayout {
     in property <string> method;
     in-out property <bool> vi-enabled;
     in-out property <bool> launch-at-login;
+    in-out property <bool> auto-english-layout;
     callback set-enabled(bool);
+    callback set-auto-english-layout(bool);
     callback set-launch(bool);
     callback pick-method(string);
 
@@ -50,6 +52,16 @@ export component OverviewPage inherits VerticalLayout {
                 ];
                 current: root.method;
                 changed(value) => { root.pick-method(value); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            title: "Tự tắt khi đổi bàn phím";
+            subtitle: "Chuyển sang EN khi dùng bàn phím tiếng Nhật, Hàn, Trung…";
+            icon: @image-url("../../icons/nav/primary/keyboard.svg");
+            AccentSwitch {
+                checked <=> root.auto-english-layout;
+                toggled => { root.set-auto-english-layout(self.checked); }
             }
         }
     }
