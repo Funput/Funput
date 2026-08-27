@@ -58,6 +58,12 @@ pub fn note_foreground(id: String) {
 pub fn apply_for_app(id: &str) -> Option<bool> {
     with(|s| s.apply_for_app(id))
 }
+/// Judge the keyboard layout now under the caret, given its `HKL`. Called on every
+/// keystroke, so it answers `None` — and does nothing else — for the layout it saw
+/// last, which is all but always the case.
+pub fn apply_for_layout(layout: u32) -> Option<bool> {
+    with(|s| s.apply_for_layout(layout))
+}
 /// Flip VI/EN from the keyboard hotkey; returns the new state. In memory only —
 /// [`save_settings`] finishes the job off the hook.
 pub fn toggle_enabled_hotkey() -> bool {

@@ -30,6 +30,11 @@ static ON_TOGGLE: OnceLock<ToggleCb> = OnceLock::new();
 /// ten, and the last state is the only one worth saving.
 static PENDING: AtomicBool = AtomicBool::new(false);
 
+/// The same, for a VI/EN change that has nothing to write down — the foreign-layout
+/// auto-switch, which lives in memory only. Separate from [`PENDING`] so it cannot
+/// swallow a real toggle's file write, or add one the layout rule never wanted.
+static PENDING_NOTIFY: AtomicBool = AtomicBool::new(false);
+
 pub fn set_on_toggle(f: impl Fn(bool) + Send + Sync + 'static) {
     let _ = ON_TOGGLE.set(Box::new(f));
 }
@@ -38,6 +43,18 @@ pub fn set_on_toggle(f: impl Fn(bool) + Send + Sync + 'static) {
 /// it must not block — posting a message never waits on the receiver.
 pub(super) fn defer() {
     PENDING.store(true, Ordering::Relaxed);
+    post();
+}
+
+/// Refresh the tray after a VI/EN change that is not the user's stored choice, so
+/// nothing is persisted. Same reason for deferring: repainting the tray is two
+/// cross-process calls into Explorer, and this is called from inside the hook.
+pub(super) fn defer_notify() {
+    PENDING_NOTIFY.store(true, Ordering::Relaxed);
+    post();
+}
+
+fn post() {
     unsafe {
         let _ = PostThreadMessageW(GetCurrentThreadId(), WM_TOGGLED, WPARAM(0), LPARAM(0));
     }
@@ -45,10 +62,18 @@ pub(super) fn defer() {
 
 /// Run those side effects, on the pump thread and off the hook.
 pub(super) fn run_pending() {
-    if !PENDING.swap(false, Ordering::Relaxed) {
-        return; // a burst of toggles: an earlier message already covered this one
+    // Both are taken every time: a toggle and a layout switch can land between two
+    // messages, and leaving either flag standing would spend a later message on it.
+    let toggled = PENDING.swap(false, Ordering::Relaxed);
+    let notified = PENDING_NOTIFY.swap(false, Ordering::Relaxed);
+    if !toggled && !notified {
+        return; // a burst of changes: an earlier message already covered this one
     }
-    shell::save_settings();
+    if toggled {
+        shell::save_settings();
+    }
+    // Read the state fresh rather than carrying it in the message: by now several
+    // may have landed, and the tray only ever wants the current one.
     notify(shell::enabled());
 }
 

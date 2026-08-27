@@ -18,7 +18,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 use super::{toggle, FOREGROUND_IS_FUNPUT};
-use crate::background::{inject, tray};
+use crate::background::{inject, keymap, tray};
 use crate::shared::shell;
 
 static OWN_EXE_ID: OnceLock<String> = OnceLock::new();
@@ -66,8 +66,16 @@ pub(super) unsafe extern "system" fn win_event_proc(
     shell::note_foreground(id.clone());
     // Focus on a new app is the start of input: arm so the first letter is capitalized.
     shell::arm_capitalization();
-    if let Some(on) = shell::apply_for_app(&id) {
-        toggle::notify(on); // keep tray checkmark / tooltip in sync with the auto-switch
+    let by_app = shell::apply_for_app(&id);
+    // The layout rule gets the last word, so an app remembered as Vietnamese does
+    // not turn it back on inside an app whose thread is running a Japanese IME.
+    // Input language is per-thread, so changing app can change it with no keystroke
+    // in between — this is the other place it has to be asked.
+    let by_layout = shell::apply_for_layout(keymap::foreground_layout());
+    if by_app.is_some() || by_layout.is_some() {
+        // Read back rather than trusting either answer: when both fired, only the
+        // second one is still true. Keeps the tray icon and tooltip in sync.
+        toggle::notify(shell::enabled());
     }
 }
 

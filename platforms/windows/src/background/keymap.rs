@@ -7,7 +7,9 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
     VK_CAPITAL, VK_CONTROL, VK_DELETE, VK_DOWN, VK_END, VK_ESCAPE, VK_HOME, VK_INSERT, VK_LEFT,
     VK_LWIN, VK_MENU, VK_NEXT, VK_PRIOR, VK_RETURN, VK_RIGHT, VK_RWIN, VK_SHIFT, VK_TAB, VK_UP,
 };
-use windows::Win32::UI::WindowsAndMessaging::KBDLLHOOKSTRUCT;
+use windows::Win32::UI::WindowsAndMessaging::{
+    GetForegroundWindow, GetWindowThreadProcessId, KBDLLHOOKSTRUCT,
+};
 
 fn async_down(vk: VIRTUAL_KEY) -> bool {
     (unsafe { GetAsyncKeyState(vk.0 as i32) } as u16 & 0x8000) != 0
@@ -20,6 +22,32 @@ pub fn read_mods() -> Mods {
         alt: async_down(VK_MENU),
         win: async_down(VK_LWIN) || async_down(VK_RWIN),
         shift: async_down(VK_SHIFT),
+    }
+}
+
+/// The keyboard layout handle of whatever has focus, as a plain `u32` for
+/// [`funput_desktop::is_foreign_layout`]. Zero when there is no foreground window.
+///
+/// The input language is a property of the *thread* that owns the window, which is
+/// what makes this the right question to ask however the user has Windows set up:
+/// one language for everything, or one per app window. `GetKeyboardLayout(0)`
+/// above answers for Funput's own hook thread instead, which is a different
+/// question and never changes.
+///
+/// Three cheap user32 calls that read session state — no cross-process work, no
+/// blocking — which is what makes this safe to do from inside the hook. Windows
+/// has no global notification for an input-language change (`WM_INPUTLANGCHANGE`
+/// goes only to the app that owns the change, and the TSF sinks are per-thread),
+/// so asking on each keystroke is the only way to know; and asking *there* is also
+/// what guarantees the first key typed after Win+Space is already judged right.
+pub fn foreground_layout() -> u32 {
+    unsafe {
+        let hwnd = GetForegroundWindow();
+        if hwnd.0.is_null() {
+            return 0;
+        }
+        let tid = GetWindowThreadProcessId(hwnd, None);
+        GetKeyboardLayout(tid).0 as usize as u32
     }
 }
 
