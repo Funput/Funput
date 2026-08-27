@@ -29,10 +29,13 @@ struct ConvertScreenState: Equatable {
     var outputText: String
     var warning: String
     var files: [ConvertFileRow]
+    var rowsTotal: Int
     var outputDirectory: String
+    var unreadable: String
     var progress: String
     var ready: Int
     var isBusy: Bool
+    var errorMessage: String?
 
     var canUseTextResult: Bool {
         source != nil && !isBusy
@@ -44,6 +47,10 @@ struct ConvertScreenState: Equatable {
 
     var batchAction: String {
         isBusy ? "Đang chuyển…" : "Chuyển \(ready) tệp"
+    }
+
+    var canLoadMore: Bool {
+        files.count < rowsTotal && !isBusy
     }
 }
 
@@ -58,6 +65,20 @@ enum ConvertAction: Equatable {
     case copyResult
     case saveResult
     case convertFiles
+    case loadMore
+    case receiveFiles([URL])
 }
 
 typealias ConvertDispatch = (ConvertAction) -> Void
+
+extension ConvertScreenState {
+    static func empty(charsets: [ConvertCharset]) -> Self {
+        .init(
+            mode: .empty, charsets: charsets, target: 0, source: nil,
+            fromFile: false, fileName: nil, inputText: "", outputText: "",
+            warning: "", files: [], rowsTotal: 0, outputDirectory: "",
+            unreadable: "", progress: "", ready: 0, isBusy: false,
+            errorMessage: nil
+        )
+    }
+}

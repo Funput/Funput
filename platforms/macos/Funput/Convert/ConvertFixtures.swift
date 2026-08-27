@@ -57,58 +57,9 @@ enum ConvertFixtures {
             mode: mode, charsets: charsets, target: target, source: source,
             fromFile: fromFile, fileName: fileName, inputText: input,
             outputText: output, warning: warning, files: files,
-            outputDirectory: outputDirectory, progress: "", ready: ready,
-            isBusy: false
+            rowsTotal: files.count, outputDirectory: outputDirectory,
+            unreadable: "", progress: "", ready: ready,
+            isBusy: false, errorMessage: nil
         )
-    }
-}
-
-struct ConvertPrototypeSession {
-    var state: ConvertScreenState
-
-    init(state: ConvertScreenState = ConvertFixtures.empty) {
-        self.state = state
-    }
-
-    mutating func send(_ action: ConvertAction) {
-        switch action {
-        case .paste:
-            #if DEBUG
-            state = ConvertFixtures.pasted
-            #endif
-        case .pickFiles:
-            #if DEBUG
-            state = ConvertFixtures.batch
-            #endif
-        case .restart:
-            state = ConvertFixtures.empty
-        case let .setInput(text):
-            state.inputText = text
-        case let .setSource(source):
-            state.source = source
-        case let .setTarget(target):
-            state.target = target
-        case let .setRowSource(id, source):
-            guard let index = state.files.firstIndex(where: { $0.id == id }) else { return }
-            let wasReady = state.files[index].source != nil
-            state.files[index].source = source
-            state.files[index].note = source == nil ? "Cần chọn bảng mã" : ""
-            if wasReady != (source != nil) {
-                state.ready += source == nil ? -1 : 1
-            }
-        case .copyResult:
-            #if DEBUG
-            state.progress = "Đã chép kết quả (prototype)"
-            #endif
-        case .saveResult:
-            #if DEBUG
-            state.progress = "Đã mở luồng lưu tệp (prototype)"
-            #endif
-        case .convertFiles:
-            #if DEBUG
-            state.isBusy = true
-            state.progress = "Đang chuyển \(state.ready) tệp…"
-            #endif
-        }
     }
 }

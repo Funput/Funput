@@ -52,7 +52,7 @@ struct ConvertTextView: View {
 
     private var footer: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            ConvertStatus(text: state.progress)
+            ConvertStatus(text: state.progress, isBusy: state.isBusy)
             GlassEffectContainer(spacing: Theme.Spacing.sm) {
                 HStack(spacing: Theme.Spacing.sm) {
                     Button("Chép kết quả", systemImage: "doc.on.doc", action: copy)

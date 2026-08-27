@@ -39,7 +39,7 @@ struct ConvertBatchView: View {
 
     private var header: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            Label("\(state.files.count) tệp", systemImage: "doc.on.doc")
+            Label("\(state.rowsTotal) tệp", systemImage: "doc.on.doc")
                 .foregroundStyle(.secondary)
             Spacer()
             Text("Sang").foregroundStyle(.secondary)
@@ -53,7 +53,7 @@ struct ConvertBatchView: View {
     private var footer: some View {
         HStack(spacing: Theme.Spacing.sm) {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                ConvertStatus(text: state.progress)
+                ConvertStatus(text: statusText, isBusy: state.isBusy)
                 if state.progress.isEmpty {
                     Label(state.outputDirectory, systemImage: "folder")
                         .font(.caption)
@@ -63,10 +63,18 @@ struct ConvertBatchView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Button(state.batchAction, action: convert)
-                .buttonStyle(.glassProminent)
-                .disabled(state.ready == 0 || state.isBusy)
-                .accessibilityIdentifier("convert.batchAction")
+            GlassEffectContainer(spacing: Theme.Spacing.sm) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    if state.canLoadMore {
+                        Button("Hiển thị thêm", action: loadMore)
+                            .buttonStyle(.glass)
+                    }
+                    Button(state.batchAction, action: convert)
+                        .buttonStyle(.glassProminent)
+                        .disabled(state.ready == 0 || state.isBusy)
+                        .accessibilityIdentifier("convert.batchAction")
+                }
+            }
         }
     }
 
@@ -83,6 +91,16 @@ struct ConvertBatchView: View {
 
     private func convert() {
         dispatch(.convertFiles)
+    }
+
+    private func loadMore() {
+        dispatch(.loadMore)
+    }
+
+    private var statusText: String {
+        if !state.progress.isEmpty { return state.progress }
+        if !state.unreadable.isEmpty { return state.unreadable }
+        return state.files.count < state.rowsTotal ? "Đang hiện \(state.files.count)/\(state.rowsTotal) tệp" : ""
     }
 }
 

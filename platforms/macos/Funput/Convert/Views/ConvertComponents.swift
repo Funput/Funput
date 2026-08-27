@@ -91,12 +91,16 @@ struct ConvertEditorPane: View {
 
 struct ConvertStatus: View {
     let text: String
+    var isBusy = false
 
     var body: some View {
         HStack(spacing: Theme.Spacing.xs) {
             if !text.isEmpty {
-                Image(systemName: "checkmark.circle")
-                    .foregroundStyle(.secondary)
+                if isBusy {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Image(systemName: "checkmark.circle").foregroundStyle(.secondary)
+                }
             }
             Text(text)
                 .font(.caption)
