@@ -66,9 +66,21 @@ pub struct Settings {
     /// would otherwise find it silently dead after an update.
     #[serde(default = "shortcuts_enabled_default")]
     pub shortcuts_enabled: bool,
+    /// Whether focusing a keyboard layout Vietnamese cannot be typed on — a CJK
+    /// IME, or a non-Latin script — suspends Vietnamese for as long as it is
+    /// active. Defaults to **on**, including for a file written before this field
+    /// existed: composing into a Japanese IME corrupts its text, and the users who
+    /// already hit that are exactly the ones who would never find the switch.
+    /// The suspension itself is live state, not settings — see `funput_desktop`.
+    #[serde(default = "auto_english_on_foreign_layout_default")]
+    pub auto_english_on_foreign_layout: bool,
 }
 
 fn shortcuts_enabled_default() -> bool {
+    true
+}
+
+fn auto_english_on_foreign_layout_default() -> bool {
     true
 }
 
@@ -106,6 +118,7 @@ impl Default for Settings {
             excluded_apps: Vec::new(),
             shortcuts: Vec::new(),
             shortcuts_enabled: true,
+            auto_english_on_foreign_layout: true,
         }
     }
 }

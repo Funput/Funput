@@ -137,3 +137,32 @@ fn the_shortcut_switch_round_trips_when_turned_off() {
     let back: Settings = serde_json::from_str(&text).expect("deserialize");
     assert!(!back.shortcuts_enabled);
 }
+
+/// Same rule as the gõ tắt switch: absent means on. Someone who has been fighting
+/// Funput inside a Japanese IME upgrades into the fix without going looking for it.
+#[test]
+fn a_file_without_the_foreign_layout_switch_still_auto_switches() {
+    let legacy = r#"{
+      "method": "vni",
+      "enabled": true,
+      "smartRestore": true,
+      "eagerRestore": true,
+      "toggleHotkey": "ctrl_backtick",
+      "launchAtLogin": false,
+      "hasCompletedOnboarding": false
+    }"#;
+    let s: Settings = serde_json::from_str(legacy).expect("legacy settings.json must decode");
+
+    assert!(s.auto_english_on_foreign_layout);
+}
+
+#[test]
+fn the_foreign_layout_switch_round_trips_when_turned_off() {
+    let s = Settings {
+        auto_english_on_foreign_layout: false,
+        ..Settings::default()
+    };
+    let text = serde_json::to_string(&s).expect("serialize");
+    let back: Settings = serde_json::from_str(&text).expect("deserialize");
+    assert!(!back.auto_english_on_foreign_layout);
+}
