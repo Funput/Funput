@@ -2,12 +2,15 @@
 //! A new page is one [`Destination`] variant plus a `ViewStack` child.
 
 pub(super) mod about;
+mod destination;
 mod tools;
 mod transfer;
 
 use adw::prelude::*;
 use adw::{ActionRow, NavigationSplitView, ViewStack, WindowTitle};
 use gtk::{ListBox, Orientation, SelectionMode};
+
+pub(in crate::settings_window) use destination::Destination;
 
 /// Switch the content pane and header. Overview status rows and the sidebar
 /// list both call this so a later shortcut (step 4) can reuse the same path.
@@ -25,66 +28,13 @@ pub(super) fn show(
     split.set_show_content(true);
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(super) enum Destination {
-    Overview,
-    Typing,
-    Keyboard,
-    Shortcuts,
-    About,
-}
-
-impl Destination {
-    pub(super) const ALL: [Self; 5] = [
-        Self::Overview,
-        Self::Typing,
-        Self::Keyboard,
-        Self::Shortcuts,
-        Self::About,
-    ];
-
-    pub(super) const fn id(self) -> &'static str {
-        match self {
-            Self::Overview => "overview",
-            Self::Typing => "typing",
-            Self::Keyboard => "keyboard",
-            Self::Shortcuts => "shortcuts",
-            Self::About => "about",
-        }
-    }
-
-    pub(super) const fn title(self) -> &'static str {
-        match self {
-            Self::Overview => "Tổng quan",
-            Self::Typing => "Cách gõ",
-            Self::Keyboard => "Phím tắt",
-            Self::Shortcuts => "Gõ tắt",
-            Self::About => "Giới thiệu",
-        }
-    }
-
-    pub(super) const fn icon(self) -> &'static str {
-        match self {
-            Self::Overview => "preferences-system-symbolic",
-            Self::Typing => "input-keyboard-symbolic",
-            Self::Keyboard => "preferences-desktop-keyboard-shortcuts-symbolic",
-            Self::Shortcuts => "edit-find-replace-symbolic",
-            Self::About => "help-about-symbolic",
-        }
-    }
-
-    fn from_id(id: &str) -> Option<Self> {
-        Self::ALL.into_iter().find(|dest| dest.id() == id)
-    }
-}
-
 pub(super) fn widget(
     stack: &ViewStack,
     split: &NavigationSplitView,
     window: &adw::Window,
     title: &WindowTitle,
 ) -> gtk::Widget {
-    let list = nav_list(stack, split, title);
+    let list = nav_list(stack, split, window, title);
     let list_sync = list.clone();
     stack.connect_visible_child_name_notify(move |stack| {
         sync_list(&list_sync, stack);
@@ -114,7 +64,12 @@ fn sync_list(list: &ListBox, stack: &ViewStack) {
     }
 }
 
-fn nav_list(stack: &ViewStack, split: &NavigationSplitView, title: &WindowTitle) -> ListBox {
+fn nav_list(
+    stack: &ViewStack,
+    split: &NavigationSplitView,
+    window: &adw::Window,
+    title: &WindowTitle,
+) -> ListBox {
     let list = ListBox::new();
     list.add_css_class("navigation-sidebar");
     list.set_selection_mode(SelectionMode::Single);
@@ -126,6 +81,13 @@ fn nav_list(stack: &ViewStack, split: &NavigationSplitView, title: &WindowTitle)
             .build();
         row.add_prefix(&gtk::Image::from_icon_name(dest.icon()));
         list.append(&row);
+        // Chuyển mã sits with the pages because that is where people look for it,
+        // but it is not one: it opens a window of its own. Linux has no tray, so
+        // this row and `funput-convert.desktop` are what stand in for the item
+        // Windows puts there.
+        if dest == Destination::Shortcuts {
+            list.append(&tools::convert_row(window));
+        }
     }
 
     let stack = stack.clone();
@@ -143,4 +105,3 @@ fn nav_list(stack: &ViewStack, split: &NavigationSplitView, title: &WindowTitle)
     }
     list
 }
-

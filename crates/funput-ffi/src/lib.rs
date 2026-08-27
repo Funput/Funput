@@ -21,6 +21,10 @@
 //! - `app_language/` — per-app VI/EN memory ([`FunputAppLanguage`] + the
 //!   `funput_app_language_*` calls), independent of composition too; the host
 //!   wires its decision into [`funput_set_enabled`] itself.
+//! - `charset/` — converting text between Unicode and the legacy Vietnamese
+//!   encodings ([`funput_charset_convert`] and friends). Behind the `charset`
+//!   cargo feature, off by default, and independent of everything above: it takes
+//!   text and returns text, and never touches an engine handle.
 //! - `abi/` — the shared panic guard, null-handle check, and UTF-32 marshalling.
 //!
 //! # Safety
@@ -35,6 +39,10 @@
 
 mod abi;
 mod app_language;
+#[cfg(feature = "charset")]
+mod charset;
+#[cfg(feature = "convert")]
+mod convert;
 mod engine;
 mod suggestion;
 
@@ -44,6 +52,13 @@ pub use app_language::{
     funput_app_language_new, funput_app_language_note_focus, funput_app_language_note_toggle,
     funput_app_language_seed,
 };
+#[cfg(feature = "charset")]
+pub use charset::{
+    FUNPUT_CHARSET_UNKNOWN, FunputConversion, funput_charset_convert, funput_charset_count,
+    funput_charset_detect, funput_charset_name,
+};
+#[cfg(feature = "convert")]
+pub use convert::*;
 pub use engine::{
     ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputConfig, FunputEngine, FunputResult,
     METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, SOURCE_NUMPAD, SOURCE_STANDARD,

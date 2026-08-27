@@ -91,10 +91,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "funput-convert"
+version = "0.1.0"
+dependencies = [
+ "funput-core",
+]
+
+[[package]]
+name = "funput-core"
+version = "0.1.0"
+
+[[package]]
 name = "funput-settings"
 version = "1.2026.1"
 dependencies = [
  "dirs",
+ "funput-convert",
  "gtk4",
  "libadwaita",
  "serde",

@@ -4,6 +4,7 @@ import SwiftUI
 enum WindowID {
     static let settings = "settings"
     static let onboarding = "onboarding"
+    static let convert = "convert"
 }
 
 /// Hosts the IMKServer so the bundle works as a system input method. The same
@@ -72,6 +73,13 @@ struct FunputApp: App {
                 .environment(settings)
         }
         .windowResizability(.contentSize)
+        .defaultPosition(.center)
+
+        Window("Funput — Chuyển mã", id: WindowID.convert) {
+            ConvertWindow()
+        }
+        .windowResizability(.contentSize)
+        .defaultSize(width: 920, height: 620)
         .defaultPosition(.center)
     }
 

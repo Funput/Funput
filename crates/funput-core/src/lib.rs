@@ -1,7 +1,14 @@
-//! Pure Vietnamese input transform — one keystroke at a time.
+//! Pure Vietnamese orthography, in two surfaces.
 //!
-//! `funput-core` answers: given the current syllable buffer and a key, what is the
-//! new text according to VNI or Telex?
+//! **Input transform** — one keystroke at a time — is what the crate is for and
+//! what everything below the fold serves: given the current syllable buffer and a
+//! key, what is the new text according to VNI or Telex?
+//!
+//! **Charset mapping** ([`charset`], off by default) converts whole text between
+//! Unicode and the legacy Vietnamese encodings. It is here rather than in a crate
+//! of its own because it maps the same letter inventory the transform already
+//! owns — `unicode::vowels` is the single source of truth for both, and a second
+//! copy of it would drift.
 //!
 //! # API FROZEN (Phase 8)
 //!
@@ -13,6 +20,10 @@
 //! exception to the boundary check).
 //! Breaking changes require semver coordination with the engine.
 //!
+//! That list stays complete for the default build. [`charset`] is additive, keeps
+//! to its own namespace, and re-exports nothing here, so the engine's view of this
+//! crate is the same with the feature on or off.
+//!
 //! # Contract
 //!
 //! - **Stateless:** no session, no backspace count — the engine diffs `buffer` vs
@@ -21,6 +32,8 @@
 //!   split words on spaces.
 //! - **No I/O:** no platform hooks, config files, or English auto-restore (engine).
 
+#[cfg(feature = "charset")]
+pub mod charset;
 mod composition;
 mod input_method;
 mod options;

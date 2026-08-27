@@ -9,10 +9,11 @@ use windows::Win32::System::Threading::{
     OpenProcess, TerminateProcess, WaitForSingleObject, PROCESS_SYNCHRONIZE, PROCESS_TERMINATE,
 };
 
-use super::{control_center, onboarding, settings_window};
+use super::{control_center, convert, onboarding, settings_window};
 
 pub(crate) use child::{
-    current_child_handle, launch_onboarding, launch_settings, terminate_children,
+    current_child_handle, launch_convert, launch_onboarding, launch_settings,
+    terminate_children,
 };
 pub(crate) use flyout::{reap_ui_child, toggle_control_center};
 
@@ -43,6 +44,12 @@ pub(crate) fn run_settings(check_update: bool) {
     } else {
         settings_window::open();
     }
+    let _ = slint::run_event_loop();
+}
+
+/// Run the only Chuyển mã window until it closes.
+pub(crate) fn run_convert() {
+    convert::open();
     let _ = slint::run_event_loop();
 }
 

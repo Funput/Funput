@@ -21,7 +21,7 @@ for arch in $ARCHS; do
         *) echo "build-ffi: skipping unknown arch '$arch'" >&2; continue ;;
     esac
     rustup target add "$rust_target" >/dev/null 2>&1 || true
-    cargo build -p funput-ffi --release --target "$rust_target"
+    cargo build -p funput-ffi --release --features convert --target "$rust_target"
     libs="$libs $REPO_ROOT/target/$rust_target/release/libfunput_ffi.a"
 done
 

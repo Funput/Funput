@@ -6,6 +6,7 @@ export component DataPage inherits VerticalLayout {
     callback export-config();
     callback import-config();
     callback import-unikey();
+    callback open-convert();
 
     spacing: Theme.sp-lg;
     width: 100%;
@@ -40,7 +41,17 @@ export component DataPage inherits VerticalLayout {
     }
 
     Section {
-        title: "Chuyển từ UniKey";
+        title: "Bảng mã";
+        Row {
+            title: "Công cụ chuyển mã";
+            subtitle: "Chuyển văn bản và tệp giữa Unicode, TCVN3 và VNI-Windows.";
+            icon: @image-url("../../icons/status/backup.svg");
+            GhostButton {
+                text: "Mở…";
+                clicked => { root.open-convert(); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
         Row {
             title: "Nhập bảng gõ tắt UniKey";
             subtitle: "Đọc ukmacro.txt và gộp vào bảng gõ tắt hiện có.";

@@ -35,6 +35,11 @@ fn main() {
             ui::run_settings(true);
             return;
         }
+        Some("--convert") => {
+            dark_mode::allow_dark_menus();
+            ui::run_convert();
+            return;
+        }
         Some("--onboarding") => {
             dark_mode::allow_dark_menus();
             ui::run_onboarding();

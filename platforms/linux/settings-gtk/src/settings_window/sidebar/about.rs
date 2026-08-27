@@ -45,10 +45,7 @@ fn hero() -> gtk::Widget {
     tagline.set_wrap(true);
     tagline.set_justify(Justification::Left);
     tagline.set_halign(Align::Start);
-    let version = gtk::Label::new(Some(&format!(
-        "Phiên bản {}",
-        env!("CARGO_PKG_VERSION")
-    )));
+    let version = gtk::Label::new(Some(&format!("Phiên bản {}", env!("CARGO_PKG_VERSION"))));
     version.add_css_class("caption");
     version.add_css_class("dim-label");
     version.set_halign(Align::Start);

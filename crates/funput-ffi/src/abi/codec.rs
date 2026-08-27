@@ -38,3 +38,29 @@ pub(crate) unsafe fn string_from_utf32(ptr: *const u32, len: usize) -> String {
     }
     decode_codepoints(unsafe { std::slice::from_raw_parts(ptr, len) })
 }
+
+/// Write a complete UTF-32 string, returning the required codepoint count.
+/// Nothing is written when the destination is absent or too small.
+#[cfg(feature = "charset")]
+pub(crate) unsafe fn write_text(text: &str, out: *mut u32, cap: usize) -> usize {
+    let len = text.chars().count();
+    if out.is_null() || cap < len {
+        return len;
+    }
+    let dst = unsafe { std::slice::from_raw_parts_mut(out, len) };
+    for (slot, ch) in dst.iter_mut().zip(text.chars()) {
+        *slot = ch as u32;
+    }
+    len
+}
+
+/// Byte counterpart of [`write_text`], used for exact encoded file output.
+#[cfg(feature = "convert")]
+pub(crate) unsafe fn write_bytes(bytes: &[u8], out: *mut u8, cap: usize) -> usize {
+    let len = bytes.len();
+    if out.is_null() || cap < len {
+        return len;
+    }
+    unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), out, len) };
+    len
+}

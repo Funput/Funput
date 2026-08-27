@@ -9,6 +9,9 @@ style = "type"
 [export]
 include = [
     "FunputConfig",
+    "FunputConversion",
+    "FunputConvertRow",
+    "FunputConvertView",
     "FunputResult",
     "FunputSuggestionCandidate",
     "FunputSuggestionResult",
@@ -19,3 +22,8 @@ include = [
 parse_deps = false
 
 [defines]
+# The charset door is behind a cargo feature, so its declarations come out wrapped
+# in `#ifdef FUNPUT_CHARSET`. The header stays one file, and a host that built
+# without the feature does not see functions that are not in the library.
+"feature = charset" = "FUNPUT_CHARSET"
+"feature = convert" = "FUNPUT_CONVERT"

@@ -15,6 +15,12 @@ path = "src/main.rs"
 # minimum we actually use (v4_10 for gtk, v1_5 for AdwAboutDialog + the rows) so the
 # crate links against 24.04's system libraries.
 [dependencies]
+# The Chuyển mã window's logic — reading a batch file by file, naming what a
+# conversion costs, writing copies beside the originals. Shared with the Windows
+# window so the two cannot drift; see crates/funput-convert/README.md. It re-exports
+# `funput_core::charset`, so this is the only edge needed and the `charset` feature is
+# switched on in exactly one manifest.
+funput-convert = { path = "../../../crates/funput-convert" }
 gtk = { package = "gtk4", version = "0.9", features = ["v4_10"] }
 adw = { package = "libadwaita", version = "0.7", features = ["v1_5"] }
 serde = { version = "1", features = ["derive"] }

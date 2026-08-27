@@ -37,7 +37,9 @@ ibus/src/               IBus engine -> ibus-engine-funput
   engine/                 internal.h, object.cpp, callbacks.cpp, client.cpp
 settings-gtk/           GTK4 + libadwaita Settings app (its own cargo crate,
                         and its own package — see Build)
-packaging/              .desktop file, apt/dnf repo metadata
+  src/settings_window/    one submodule per preferences page
+  src/convert/            the Chuyển mã window — see below
+packaging/              two .desktop files, apt/dnf repo metadata
 ```
 
 Directories are kept to five files or fewer; when one grows past that, it splits by
@@ -111,6 +113,37 @@ Note that the two **shells** are only compiled by the release workflow, so a cha
 under `fcitx5/` or `ibus/` still wants a local build before merging.
 
 Every file here is held to 150 lines by `scripts/check-loc.sh`, test files included.
+
+## Chuyển mã
+
+The charset converter (`settings-gtk/src/convert/`) is **shared by both shells** in the
+strongest sense: it never asks which one is running, never reads `settings.json`, and
+never touches the engine. Fcitx5 and IBus both depend on the `funput-settings` package
+at the exact version, so both get it without a line of C++ changing.
+
+Everything about *what* a conversion is and costs lives in `crates/funput-convert`,
+shared with the Slint window on Windows — the loss warning, the batch rules, the
+`Đã chuyển mã` folder name and its collision-avoiding `vanban (2).txt`. Writing those
+twice is how the two platforms would start disagreeing about the same document. What
+stays here is drag-and-drop, the clipboard, the dialogs, and getting file I/O off the
+UI thread.
+
+Two ways in, because **there is no tray** for the item Windows puts there:
+
+- Settings → **Chung** → "Công cụ chuyển mã", mirroring Windows' Settings → Dữ liệu.
+- `funput-convert.desktop`, which runs `funput-settings --convert`.
+
+Both reach the same process. That needs `ApplicationFlags::HANDLES_COMMAND_LINE` —
+GApplication's default flags do not forward argv to the running instance, so `--convert`
+would vanish without a trace — and it is why `route()` in `main.rs` looks for a window
+*of the right type* rather than calling `active_window()`, which would raise the
+converter when someone asked for Settings.
+
+`src/convert/state.rs` is the only file under `convert/` that decides anything, and the
+only one with tests. The `ui/*` files read the state and set properties; they decide
+nothing. One `refreshing` latch guards every signal a refresh fires — without it, a
+refresh setting a dropdown re-enters through `notify::selected` and panics on a nested
+`borrow_mut`.
 
 ## Non-preedit mode
 

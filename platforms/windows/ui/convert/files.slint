@@ -1,0 +1,131 @@
+// Batch state: one row per file, each with the charset **it** turned out to be.
+//
+// This is where the tool beats the one it replaces. UniKey's file converter takes a
+// single source charset for a whole folder, so an archive holding documents from
+// different eras converts most of itself to nonsense. Here every file is read on its
+// own, and a file nothing explains is left alone with its own picker rather than
+// being swept along with the rest.
+
+import { Palette, ComboBox, ListView } from "std-widgets.slint";
+import { Theme, PrimaryButton } from "../theme/mod.slint";
+
+export struct FileRow {
+    name: string,
+    // Display name of the charset it was read as; empty when nothing explained it.
+    charset: string,
+    // Index into the charset list, or -1 when undecided.
+    index: int,
+    // "N chữ sẽ mất", or empty.
+    note: string,
+}
+
+export component ConvertFiles inherits VerticalLayout {
+    in property <[string]> charset-names;
+    in property <int> target-index;
+    in property <[FileRow]> files;
+    in property <string> out-dir;
+    in property <string> action-label;
+    in property <bool> can-convert;
+    in property <string> progress;
+
+    callback pick-target(int);
+    callback pick-file-source(int, int);
+    callback convert-files();
+
+    spacing: Theme.sp-sm;
+    vertical-stretch: 1;
+
+    HorizontalLayout {
+        alignment: space-between;
+        VerticalLayout {
+            alignment: center;
+            Text {
+                text: root.files.length == 1 ? "1 tệp" : root.files.length + " tệp";
+                font-size: Theme.font-body;
+                color: Theme.subtle;
+            }
+        }
+        HorizontalLayout {
+            spacing: Theme.sp-sm;
+            VerticalLayout {
+                alignment: center;
+                Text {
+                    text: "Sang";
+                    font-size: Theme.font-body;
+                    color: Theme.subtle;
+                }
+            }
+            ComboBox {
+                model: root.charset-names;
+                current-index: root.target-index;
+                selected => { root.pick-target(self.current-index); }
+            }
+        }
+    }
+
+    Rectangle {
+        vertical-stretch: 1;
+        border-radius: Theme.r-card;
+        background: Theme.card-bg;
+        border-width: 1px;
+        border-color: Theme.card-border;
+
+        ListView {
+            for row[i] in root.files: HorizontalLayout {
+                padding: Theme.sp-sm;
+                spacing: Theme.sp-sm;
+
+                VerticalLayout {
+                    alignment: center;
+                    horizontal-stretch: 1;
+                    Text {
+                        text: row.name;
+                        font-size: Theme.font-body;
+                        color: Palette.foreground;
+                        overflow: elide;
+                    }
+                }
+                if row.note != "": VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: row.note;
+                        font-size: Theme.font-caption;
+                        color: Theme.warn;
+                    }
+                }
+                // A file nothing explained gets its own picker rather than being
+                // converted on a guess.
+                //
+                // Fixed width, because a `ComboBox` left to itself takes half the row
+                // and the file name is what the user is actually reading.
+                ComboBox {
+                    width: 200px;
+                    horizontal-stretch: 0;
+                    model: root.charset-names;
+                    current-index: row.index;
+                    selected => { root.pick-file-source(i, self.current-index); }
+                }
+            }
+        }
+    }
+
+    HorizontalLayout {
+        alignment: space-between;
+        spacing: Theme.sp-md;
+        VerticalLayout {
+            alignment: center;
+            horizontal-stretch: 1;
+            Text {
+                text: root.progress != "" ? root.progress : "Lưu vào: " + root.out-dir;
+                font-size: Theme.font-caption;
+                color: Theme.subtle;
+                overflow: elide;
+            }
+        }
+        PrimaryButton {
+            text: root.action-label;
+            enabled: root.can-convert;
+            clicked => { root.convert-files(); }
+        }
+    }
+}
