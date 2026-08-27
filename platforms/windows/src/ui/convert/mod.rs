@@ -67,7 +67,7 @@ fn wire(window: &ConvertWindow) {
         edit(|s| {
             s.pick_row_source(
                 usize::try_from(row).unwrap_or(0),
-                usize::try_from(index).unwrap_or(0),
+                Some(usize::try_from(index).unwrap_or(0)),
             );
         });
     });

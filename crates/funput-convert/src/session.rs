@@ -92,9 +92,9 @@ impl Session {
 
     /// A row's own picker, in the batch shape. `row` counts from the whole batch,
     /// not from the window.
-    pub fn pick_row_source(&mut self, row: usize, index: usize) {
+    pub fn pick_row_source(&mut self, row: usize, index: Option<usize>) {
         if let Some(entry) = self.files.get_mut(row) {
-            entry.charset = Some(at(index));
+            entry.charset = index.map(at);
         }
     }
 
@@ -105,8 +105,11 @@ impl Session {
     /// it uses and adopts the result here. That is also the only reason [`Scan`] is a
     /// type at all.
     pub fn adopt(&mut self, scan: crate::Scan) {
+        self.input.clear();
+        self.source = None;
         self.files = scan.entries;
         self.unreadable = scan.unreadable;
+        self.window = (0, WINDOW);
     }
 
     pub fn set_row_window(&mut self, first: usize, len: usize) {

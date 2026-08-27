@@ -173,7 +173,7 @@ fn an_index_a_host_made_up_is_answered_rather_than_fatal() {
     session.set_input("việt".to_string());
     session.set_target(usize::MAX);
     session.pick_source(Some(usize::MAX));
-    session.pick_row_source(usize::MAX, usize::MAX);
+    session.pick_row_source(usize::MAX, Some(usize::MAX));
     session.set_row_window(usize::MAX, 0);
     session.refresh();
 

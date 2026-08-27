@@ -113,6 +113,37 @@ fn the_row_window_does_not_change_the_counts() {
     assert_eq!(view.ready, 7, "every file was identified");
 }
 
+#[test]
+fn a_batch_row_can_be_returned_to_unknown() {
+    let (_dir, mut session) = batch("clear-row", 2);
+    session.pick_row_source(1, None);
+    session.refresh();
+
+    assert_eq!(session.view().rows[1].charset, None);
+    assert_eq!(session.view().ready, 1);
+}
+
+#[test]
+fn adopting_files_replaces_the_previous_document_and_row_window() {
+    let (_dir, mut session) = batch("fresh-adopt", 2);
+    session.set_input("nội dung cũ".to_string());
+    session.pick_source(Some(2));
+    session.set_target(1);
+    session.set_row_window(1, 1);
+
+    session.adopt(crate::scan(&[]));
+    session.refresh();
+
+    assert_eq!(session.view().mode, Mode::Empty);
+    assert_eq!(session.view().source, None);
+    assert_eq!(session.view().rows_first, 0);
+    assert_eq!(
+        session.view().target,
+        1,
+        "the destination is a tool preference"
+    );
+}
+
 /// The left pane belongs to whoever owns the text. A pasted paragraph is the user's
 /// — writing it back on every redraw sends the caret home — and a file's is ours.
 #[test]
@@ -186,7 +217,7 @@ fn a_view_is_never_stale_after_a_refresh() {
             0 => session.set_target(1),
             1 => session.set_input("việt".to_string()),
             2 => session.pick_source(Some(0)),
-            3 => session.pick_row_source(0, 2),
+            3 => session.pick_row_source(0, Some(2)),
             4 => session.set_row_window(1, 1),
             _ => session.reset(),
         }
