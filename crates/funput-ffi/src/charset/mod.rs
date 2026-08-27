@@ -34,7 +34,7 @@ mod detect;
 
 use funput_core::charset::{self, Charset};
 
-use crate::abi::safe;
+use crate::abi::{safe, write_text};
 
 pub use convert::{FunputConversion, funput_charset_convert};
 pub use detect::funput_charset_detect;
@@ -74,30 +74,6 @@ pub unsafe extern "C" fn funput_charset_name(index: usize, out: *mut u32, cap: u
 /// The charset an ABI index names, or `None` when the host passed one out of range.
 pub(crate) fn charset_at(index: usize) -> Option<Charset> {
     charset::ALL.get(index).copied()
-}
-
-/// Write `text` into `out` as UTF-32, returning its length in codepoints — whether
-/// or not it fit.
-///
-/// **All-or-nothing, unlike [`crate::abi::copy_codepoints`], which truncates.** That
-/// one serves a 64-character composing buffer where a clipped tail is visible
-/// immediately. Here the text is a document, and half of one written into a
-/// too-small buffer is worse than none: the caller reads a success it did not get.
-/// Returning the required length lets it size the buffer and call again.
-///
-/// # Safety
-/// `out` must point to at least `cap` writable `u32` values, or be null.
-pub(crate) unsafe fn write_text(text: &str, out: *mut u32, cap: usize) -> usize {
-    let len = text.chars().count();
-    if out.is_null() || cap < len {
-        return len;
-    }
-    // SAFETY: the caller promises `cap` writable values, and `len <= cap` here.
-    let dst = unsafe { std::slice::from_raw_parts_mut(out, len) };
-    for (slot, ch) in dst.iter_mut().zip(text.chars()) {
-        *slot = ch as u32;
-    }
-    len
 }
 
 #[cfg(test)]

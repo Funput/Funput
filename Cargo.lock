@@ -500,6 +500,7 @@ name = "funput-ffi"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "funput-convert",
  "funput-core",
  "funput-engine",
  "funput-suggestions",
