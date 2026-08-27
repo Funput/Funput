@@ -423,6 +423,11 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"FUNPUT_CHARSET=1",
+					"FUNPUT_CONVERT=1",
+					"$(inherited)",
+				);
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../crates/funput-ffi/include";
 				INFOPLIST_FILE = Funput/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Funput;
@@ -461,6 +466,11 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"FUNPUT_CHARSET=1",
+					"FUNPUT_CONVERT=1",
+					"$(inherited)",
+				);
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../crates/funput-ffi/include";
 				INFOPLIST_FILE = Funput/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Funput;
