@@ -36,4 +36,13 @@ final class ConvertStateTests: XCTestCase {
         XCTAssertEqual(ConvertFixtures.batch.batchAction, "Chuyển 3 tệp")
         XCTAssertEqual(ConvertFixtures.busyBatch.batchAction, "Đang chuyển…")
     }
+
+    func testUnknownBatchPlaceholderCannotReplaceASelectedCharset() {
+        let store = ConvertStore(initialState: ConvertFixtures.batch)
+        let initial = store.state
+
+        store.send(.setRowSource(id: 0, source: nil))
+
+        XCTAssertEqual(store.state, initial)
+    }
 }

@@ -27,7 +27,7 @@ final class ConvertStore {
         case let .setInput(text): edit(text)
         case let .setSource(value): selectSource(value)
         case let .setTarget(value): selectTarget(value)
-        case let .setRowSource(id, source): selectRow(id, source)
+        case let .setRowSource(id, source): if let source { selectRow(id, source) }
         case .copyResult: copyResult()
         case .saveResult: saveResult()
         case .convertFiles: convertFiles()
@@ -70,7 +70,7 @@ final class ConvertStore {
     private func selectTarget(_ target: Int) {
         updateFlushing { await $0.setTarget(target, input: $1) }
     }
-    private func selectRow(_ row: Int, _ source: Int?) {
+    private func selectRow(_ row: Int, _ source: Int) {
         update { await $0.setRowSource(row: row, source: source, input: self.state.inputText) }
     }
     private func loadMore() {

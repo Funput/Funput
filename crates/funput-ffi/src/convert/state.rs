@@ -60,13 +60,9 @@ pub unsafe extern "C" fn funput_convert_session_pick_source(
 pub unsafe extern "C" fn funput_convert_session_pick_row_source(
     session: *mut FunputConvertSession,
     row: usize,
-    index: i32,
+    index: usize,
 ) {
-    unsafe {
-        with_mut(session, |value| {
-            value.pick_row_source(row, usize::try_from(index).ok())
-        })
-    };
+    unsafe { with_mut(session, |value| value.pick_row_source(row, index)) };
 }
 
 #[unsafe(no_mangle)]

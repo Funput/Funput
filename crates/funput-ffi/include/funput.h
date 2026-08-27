@@ -408,7 +408,7 @@ void funput_convert_session_pick_source(FunputConvertSession *session, int32_t i
 #if defined(FUNPUT_CONVERT)
 void funput_convert_session_pick_row_source(FunputConvertSession *session,
                                             uintptr_t row,
-                                            int32_t index);
+                                            uintptr_t index);
 #endif
 
 #if defined(FUNPUT_CONVERT)

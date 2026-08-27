@@ -18,7 +18,7 @@ pub(super) fn build(convert: &Rc<Convert>, index: usize, row: &Row) -> adw::Acti
     picker.set_valign(gtk::Align::Center);
     widget::select(&picker, row.charset);
     widget::connect_dropdown(&picker, convert, move |convert, picked| {
-        convert.session.borrow_mut().pick_row_source(index, Some(picked));
+        convert.session.borrow_mut().pick_row_source(index, picked);
     });
 
     let built = adw::ActionRow::builder().title(&row.name).build();

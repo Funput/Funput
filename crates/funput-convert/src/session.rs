@@ -92,9 +92,9 @@ impl Session {
 
     /// A row's own picker, in the batch shape. `row` counts from the whole batch,
     /// not from the window.
-    pub fn pick_row_source(&mut self, row: usize, index: Option<usize>) {
+    pub fn pick_row_source(&mut self, row: usize, index: usize) {
         if let Some(entry) = self.files.get_mut(row) {
-            entry.charset = index.map(at);
+            entry.charset = Some(at(index));
         }
     }
 

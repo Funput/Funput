@@ -45,6 +45,7 @@ struct ConvertCharsetPicker: View {
         Picker(title, selection: $selection) {
             if allowsUnknown {
                 Text("Chọn bảng mã…").tag(Int?.none)
+                    .disabled(true)
             }
             ForEach(options) { option in
                 Text(option.name).tag(Optional(option.id))

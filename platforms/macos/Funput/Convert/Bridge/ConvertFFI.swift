@@ -17,8 +17,8 @@ nonisolated final class ConvertFFISession: @unchecked Sendable {
     func setSource(_ index: Int?) {
         funput_convert_session_pick_source(handle, Int32(index ?? -1)); refresh()
     }
-    func setRowSource(row: Int, source: Int?) {
-        funput_convert_session_pick_row_source(handle, UInt(row), Int32(source ?? -1)); refresh()
+    func setRowSource(row: Int, source: Int) {
+        funput_convert_session_pick_row_source(handle, UInt(row), UInt(source)); refresh()
     }
     func setRowCount(_ count: Int) {
         funput_convert_session_set_row_window(handle, 0, UInt(count)); refresh()

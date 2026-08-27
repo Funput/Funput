@@ -19,7 +19,7 @@ actor ConvertWorker {
     func setSource(_ value: Int?, input: String) -> ConvertScreenState {
         session.setSource(value); return current(input: input)
     }
-    func setRowSource(row: Int, source: Int?, input: String) -> ConvertScreenState {
+    func setRowSource(row: Int, source: Int, input: String) -> ConvertScreenState {
         session.setRowSource(row: row, source: source); return current(input: input)
     }
     func loadRows(_ count: Int, input: String) -> ConvertScreenState {
