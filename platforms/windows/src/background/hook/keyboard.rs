@@ -79,6 +79,18 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
     let vk = VIRTUAL_KEY(kbd.vkCode as u16);
     let mods = keymap::read_mods();
 
+    // Before anything decides what to do with this key: the user may have changed
+    // input language since the last one (Win+Space, Alt+Shift), and Vietnamese
+    // cannot be typed into a Japanese IME. Windows offers no notification for that,
+    // so it is asked here — where the answer lands one key *ahead* of the first
+    // keystroke it would affect. Funput's own windows are excluded so the state
+    // stays put while Settings has focus.
+    if !FOREGROUND_IS_FUNPUT.load(Ordering::Relaxed)
+        && shell::apply_for_layout(keymap::foreground_layout()).is_some()
+    {
+        toggle::defer_notify();
+    }
+
     if let Some(hit) = hotkey::on_keydown(vk, mods) {
         if fire(hit) {
             return true;

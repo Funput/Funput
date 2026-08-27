@@ -28,6 +28,7 @@ export component SettingsWindow inherits Window {
     in-out property <bool> eager-restore;
     in-out property <bool> spell-check;
     in-out property <bool> auto-capitalize;
+    in-out property <bool> auto-english-layout;
     in-out property <bool> launch-at-login;
     in property <[ShortcutEntry]> shortcuts;
     in property <bool> can-add-shortcut: true;
@@ -51,6 +52,7 @@ export component SettingsWindow inherits Window {
     callback set-eager(bool);
     callback set-spell(bool);
     callback set-auto-cap(bool);
+    callback set-auto-english-layout(bool);
     callback set-launch(bool);
     callback add-shortcut();
     callback set-shortcuts-enabled(bool);
@@ -98,6 +100,7 @@ export component SettingsWindow inherits Window {
             eager-restore <=> root.eager-restore;
             spell-check <=> root.spell-check;
             auto-capitalize <=> root.auto-capitalize;
+            auto-english-layout <=> root.auto-english-layout;
             launch-at-login <=> root.launch-at-login;
             shortcuts: root.shortcuts;
             can-add-shortcut: root.can-add-shortcut;
@@ -116,6 +119,7 @@ export component SettingsWindow inherits Window {
             set-eager(v) => { root.set-eager(v); }
             set-spell(v) => { root.set-spell(v); }
             set-auto-cap(v) => { root.set-auto-cap(v); }
+            set-auto-english-layout(v) => { root.set-auto-english-layout(v); }
             set-launch(v) => { root.set-launch(v); }
             add-shortcut() => { root.add-shortcut(); }
             set-shortcuts-enabled(v) => { root.set-shortcuts-enabled(v); }

@@ -13,7 +13,7 @@ impl ShellState {
     /// Push everything in `settings` to the engine and start from a clean slate.
     pub(super) fn apply_settings(&mut self) {
         self.sync_engine_config();
-        self.engine.set_enabled(self.settings.enabled);
+        self.engine.set_enabled(self.effective_enabled());
         push_shortcuts(&mut self.engine, &self.settings.shortcuts);
         self.reset_composition();
     }
@@ -42,11 +42,20 @@ impl ShellState {
         self.tail.clear();
     }
 
+    /// Whether Vietnamese is actually running: the user asked for it *and* the
+    /// focused keyboard layout is one it can be typed on. The suspension is the
+    /// only thing that can override the setting, and it never writes to it — so a
+    /// layout change costs no disk write, and `reload_settings` below cannot
+    /// mistake a suspended session for the user having flipped VI/EN elsewhere.
+    pub(super) fn effective_enabled(&self) -> bool {
+        self.settings.enabled && !self.layout_suspended
+    }
+
     /// Apply a VI/EN state to both the persisted settings and the live engine.
     /// Callers persist themselves, since some batch this with other field writes.
     pub(super) fn set_enabled_state(&mut self, on: bool) {
         self.settings.enabled = on;
-        self.engine.set_enabled(on);
+        self.engine.set_enabled(self.effective_enabled());
         // Both directions: English-mode keystrokes never reach the engine, so
         // whatever the shadow held no longer describes the text at the caret.
         self.reset_composition();
@@ -86,6 +95,9 @@ impl ShellState {
         }
         self.settings = loaded;
         self.apply_settings();
+        // The foreign-layout switch may have been the thing that changed, and the
+        // layout it applies to has not moved — re-judge it rather than waiting.
+        self.redecide_layout();
         true
     }
 
@@ -95,6 +107,14 @@ impl ShellState {
         self.settings = new;
         self.apply_settings();
         self.save();
+    }
+
+    /// Re-run the layout rule against the layout already in front of the user,
+    /// after the settings changed under it: turning the auto-switch off has to give
+    /// Vietnamese back now, not at the next change of keyboard.
+    pub(super) fn redecide_layout(&mut self) {
+        let layout = std::mem::take(&mut self.last_layout);
+        self.apply_for_layout(layout);
     }
 
     /// Mutate one engine option, then re-sync the whole config and persist. Folding
