@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsSidebar: View {
+    @Environment(\.openWindow) private var openWindow
     @Binding var selection: SettingsDestination?
     @Environment(UpdaterManager.self) private var updater
 
@@ -32,10 +33,16 @@ struct SettingsSidebar: View {
             }
 
             Section("Công cụ") {
+                Button(action: openConvert) {
+                    Label("Chuyển mã", systemImage: "arrow.left.arrow.right")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("Mở công cụ chuyển mã")
+                .accessibilityIdentifier("settings.openConvert")
+
                 HStack {
-                    // Leading icon matches the Label(icon + text) rhythm used by
-                    // the navigation destinations() rows above, instead of a
-                    // bare Text that looked out of place in the sidebar.
                     Label("Dữ liệu", systemImage: "tray.full")
                     Spacer()
                     ControlGroup {
@@ -53,8 +60,6 @@ struct SettingsSidebar: View {
                 }
 
                 HStack {
-                    // Use the actual Funput brand mark instead of a generic SF
-                    // Symbol here to emphasize brand identity for this row.
                     Label {
                         Text("Funput")
                     } icon: {
@@ -92,6 +97,8 @@ struct SettingsSidebar: View {
         }
     }
 
+    private func openConvert() { openWindow(id: WindowID.convert) }
+
     private func utilityButton(
         _ title: String,
         systemImage: String,
@@ -125,13 +132,7 @@ private struct SidebarQuickInputControl: View {
                 }
                 .pickerStyle(.menu)
                 .labelsHidden()
-                // Override the ambient `.tint(Theme.accent)` set by SettingsView so the
-                // menu's text/chevron stay neutral instead of inheriting the app accent.
                 .tint(.primary)
-                // Idle (unclicked) state gets a Liquid Glass surface; `.interactive()`
-                // lets the system add the press/hover response when the menu opens.
-                // No vertical padding: let the control keep its intrinsic (compact)
-                // height instead of matching the segmented "Chế độ nhập" control.
                 .padding(.horizontal, Theme.Spacing.sm)
                 .glassEffect(.regular.interactive(), in: .rect(cornerRadius: Theme.Radius.control))
                 .accessibilityLabel("Kiểu gõ")
