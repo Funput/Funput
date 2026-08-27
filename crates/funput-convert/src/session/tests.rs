@@ -113,6 +113,27 @@ fn the_row_window_does_not_change_the_counts() {
     assert_eq!(view.ready, 7, "every file was identified");
 }
 
+#[test]
+fn adopting_files_replaces_the_previous_document_and_row_window() {
+    let (_dir, mut session) = batch("fresh-adopt", 2);
+    session.set_input("nội dung cũ".to_string());
+    session.pick_source(Some(2));
+    session.set_target(1);
+    session.set_row_window(1, 1);
+
+    session.adopt(crate::scan(&[]));
+    session.refresh();
+
+    assert_eq!(session.view().mode, Mode::Empty);
+    assert_eq!(session.view().source, None);
+    assert_eq!(session.view().rows_first, 0);
+    assert_eq!(
+        session.view().target,
+        1,
+        "the destination is a tool preference"
+    );
+}
+
 /// The left pane belongs to whoever owns the text. A pasted paragraph is the user's
 /// — writing it back on every redraw sends the caret home — and a file's is ours.
 #[test]

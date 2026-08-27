@@ -49,3 +49,13 @@ if [ "$violations" -gt 0 ]; then
     exit 1
 fi
 echo "OK: $checked source files within the $LIMIT-line budget."
+
+MAX_FILES=5
+while IFS= read -r dir; do
+    count=$(find "$dir" -maxdepth 1 -type f -name '*.rs' | wc -l | tr -d ' ')
+    if [ "$count" -gt "$MAX_FILES" ]; then
+        echo "FAIL $dir: $count Rust files (limit $MAX_FILES)"
+        exit 1
+    fi
+done < <(find crates/funput-ffi/src/convert -type d | sort)
+echo "OK: funput-ffi convert directories stay within $MAX_FILES files."

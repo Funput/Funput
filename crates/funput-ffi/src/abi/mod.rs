@@ -11,5 +11,9 @@ mod guard;
 
 #[cfg(test)]
 pub(crate) use codec::decode_codepoints;
+#[cfg(feature = "convert")]
+pub(crate) use codec::write_bytes;
+#[cfg(feature = "charset")]
+pub(crate) use codec::write_text;
 pub(crate) use codec::{copy_codepoints, string_from_utf32};
 pub(crate) use guard::{safe, with_engine_mut, with_engine_ref};

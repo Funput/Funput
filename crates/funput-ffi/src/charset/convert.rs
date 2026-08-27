@@ -2,9 +2,9 @@
 
 use funput_core::charset;
 
-use crate::abi::{safe, string_from_utf32};
+use crate::abi::{safe, string_from_utf32, write_text};
 
-use super::{charset_at, write_text};
+use super::charset_at;
 
 /// What a conversion produced. POD, returned by value — nothing is allocated and
 /// there is nothing to free.

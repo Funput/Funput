@@ -34,6 +34,22 @@
 #define FUNPUT_CHARSET_UNKNOWN -1
 #endif
 
+#if defined(FUNPUT_CONVERT)
+#define FUNPUT_CONVERT_MODE_EMPTY 0
+#endif
+
+#if defined(FUNPUT_CONVERT)
+#define FUNPUT_CONVERT_MODE_TEXT 1
+#endif
+
+#if defined(FUNPUT_CONVERT)
+#define FUNPUT_CONVERT_MODE_FILES 2
+#endif
+
+#if defined(FUNPUT_CONVERT)
+#define FUNPUT_CONVERT_UNKNOWN -1
+#endif
+
 /**
  * [`funput_process_key`] source: main keyboard — digits may act as VNI modifiers.
  */
@@ -77,6 +93,18 @@
  */
 typedef struct FunputAppLanguage FunputAppLanguage;
 
+#if defined(FUNPUT_CONVERT)
+typedef struct FunputConvertJob FunputConvertJob;
+#endif
+
+#if defined(FUNPUT_CONVERT)
+typedef struct FunputConvertScan FunputConvertScan;
+#endif
+
+#if defined(FUNPUT_CONVERT)
+typedef struct FunputConvertSession FunputConvertSession;
+#endif
+
 /**
  * Opaque IME engine handle for C callers. Create with [`funput_engine_new`],
  * release with [`funput_engine_free`]. cbindgen emits this as an opaque struct.
@@ -115,6 +143,27 @@ typedef struct {
      */
     uintptr_t normalized;
 } FunputConversion;
+#endif
+
+#if defined(FUNPUT_CONVERT)
+typedef struct {
+    uint8_t mode;
+    uintptr_t target;
+    int32_t source;
+    bool from_file;
+    bool has_input_preview;
+    uintptr_t rows_first;
+    uintptr_t rows_count;
+    uintptr_t rows_total;
+    uintptr_t ready;
+    uintptr_t unreadable_count;
+} FunputConvertView;
+#endif
+
+#if defined(FUNPUT_CONVERT)
+typedef struct {
+    int32_t source;
+} FunputConvertRow;
 #endif
 
 /**
@@ -326,6 +375,158 @@ FunputConversion funput_charset_convert(const uint32_t *text,
  * `text` must point to at least `text_len` readable `u32` values, or be null.
  */
 int32_t funput_charset_detect(const uint32_t *text, uintptr_t text_len);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+FunputConvertSession *funput_convert_session_new(void);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+/**
+ * # Safety
+ * `session` must be a live handle returned by `funput_convert_session_new`, or null.
+ */
+void funput_convert_session_free(FunputConvertSession *session);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+void funput_convert_session_reset(FunputConvertSession *session);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+void funput_convert_session_refresh(FunputConvertSession *session);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+void funput_convert_session_set_target(FunputConvertSession *session, uintptr_t index);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+void funput_convert_session_pick_source(FunputConvertSession *session, int32_t index);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+void funput_convert_session_pick_row_source(FunputConvertSession *session,
+                                            uintptr_t row,
+                                            uintptr_t index);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+void funput_convert_session_set_row_window(FunputConvertSession *session,
+                                           uintptr_t first,
+                                           uintptr_t len);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+FunputConvertView funput_convert_session_view(const FunputConvertSession *session);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+FunputConvertRow funput_convert_session_row(const FunputConvertSession *session, uintptr_t index);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_session_out_dir(const FunputConvertSession *session,
+                                         uint32_t *out,
+                                         uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+void funput_convert_session_set_input(FunputConvertSession *session,
+                                      const uint32_t *text,
+                                      uintptr_t len);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_session_output_preview(const FunputConvertSession *session,
+                                                uint32_t *out,
+                                                uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_session_warning(const FunputConvertSession *session,
+                                         uint32_t *out,
+                                         uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_session_file_name(const FunputConvertSession *session,
+                                           uint32_t *out,
+                                           uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_session_input_preview(const FunputConvertSession *session,
+                                               uint32_t *out,
+                                               uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_session_unreadable_line(const FunputConvertSession *session,
+                                                 uint32_t *out,
+                                                 uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_session_row_name(const FunputConvertSession *session,
+                                          uintptr_t index,
+                                          uint32_t *out,
+                                          uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_session_row_note(const FunputConvertSession *session,
+                                          uintptr_t index,
+                                          uint32_t *out,
+                                          uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_session_result_text(const FunputConvertSession *session,
+                                             uint32_t *out,
+                                             uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_session_save_bytes(const FunputConvertSession *session,
+                                            uint8_t *out,
+                                            uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+FunputConvertScan *funput_convert_scan_new(void);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+bool funput_convert_scan_add_path(FunputConvertScan *scan, const uint8_t *path, uintptr_t len);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+bool funput_convert_scan_run(FunputConvertScan *scan);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+bool funput_convert_session_adopt_scan(FunputConvertSession *session, FunputConvertScan *scan);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+void funput_convert_scan_free(FunputConvertScan *scan);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+FunputConvertJob *funput_convert_job_new(const FunputConvertSession *session);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+bool funput_convert_job_run(FunputConvertJob *job);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+uintptr_t funput_convert_job_report(const FunputConvertJob *job, uint32_t *out, uintptr_t cap);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+void funput_convert_job_free(FunputConvertJob *job);
 #endif
 
 /**

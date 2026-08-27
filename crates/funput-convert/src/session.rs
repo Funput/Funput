@@ -105,8 +105,11 @@ impl Session {
     /// it uses and adopts the result here. That is also the only reason [`Scan`] is a
     /// type at all.
     pub fn adopt(&mut self, scan: crate::Scan) {
+        self.input.clear();
+        self.source = None;
         self.files = scan.entries;
         self.unreadable = scan.unreadable;
+        self.window = (0, WINDOW);
     }
 
     pub fn set_row_window(&mut self, first: usize, len: usize) {

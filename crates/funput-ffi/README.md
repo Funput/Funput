@@ -160,22 +160,23 @@ engine trực tiếp); addon Fcitx5 và engine IBus trên Linux link `libfunput_
 Lưu ý edition 2024: dùng `#[unsafe(no_mangle)]` và `unsafe { }` tường minh quanh
 `Box::from_raw` / `ptr.as_mut()`.
 
-## Feature `charset` (mặc định **tắt**)
+## Features `charset` và `convert` (mặc định **tắt**)
 
 Công cụ chuyển mã (`funput_charset_*`) nằm sau một cargo feature. Bàn phím iOS và Android link crate
 này và không dùng tới bảng mã, nên bản mặc định không mang chúng theo. CI kiểm cả hai nửa: bản mặc
 định **không** export symbol `funput_charset_*` nào, và bản bật feature vẫn lint/test sạch.
+`convert` kéo theo `charset` và mở ABI session/scan/job của `funput-convert`; mobile không bật nên
+không mang theo state machine, file scan hay bảng mã.
 
 Một shell desktop bật nó bằng hai bước — thư viện và header:
 
 ```bash
-cargo build -p funput-ffi --release --features charset
-cc -DFUNPUT_CHARSET ...        # header khai báo trong #ifdef FUNPUT_CHARSET
+cargo build -p funput-ffi --release --features convert
+cc -DFUNPUT_CHARSET -DFUNPUT_CONVERT ...
 ```
 
-`platforms/macos/scripts/build-ffi.sh` **chưa** bật feature này: chưa có UI macOS nào gọi tới, và bật
-sớm chỉ nhét bảng mã vào binary mà không ai dùng. Khi viết UI đó, thêm `--features charset` vào lệnh
-`cargo build` trong script và `FUNPUT_CHARSET` vào `GCC_PREPROCESSOR_DEFINITIONS` của target Xcode.
+`platforms/macos/scripts/build-ffi.sh` bật `convert`; target Xcode định nghĩa cả hai macro để Swift
+thấy danh sách bảng mã và API chuyển đổi. iOS/Android tiếp tục build feature mặc định.
 
 Bảng mã được gọi tên bằng **chỉ số** trong `funput_core::charset::ALL`, không phải bằng tên host tự
 đặt: `Charset` là `#[non_exhaustive]` nên không code nào ngoài `funput-core` liệt kê được nó.

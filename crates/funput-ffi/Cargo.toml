@@ -18,9 +18,11 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 # this crate and have no use for the tables, so they never carry them. CI asserts
 # both halves — that the default build is free of it, and that this one compiles.
 charset = ["funput-core/charset"]
+convert = ["charset", "dep:funput-convert"]
 
 [dependencies]
 funput-core = { path = "../funput-core" }
+funput-convert = { path = "../funput-convert", optional = true }
 funput-engine = { path = "../funput-engine" }
 funput-suggestions = { path = "../funput-suggestions" }
 

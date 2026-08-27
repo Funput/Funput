@@ -41,6 +41,8 @@ mod abi;
 mod app_language;
 #[cfg(feature = "charset")]
 mod charset;
+#[cfg(feature = "convert")]
+mod convert;
 mod engine;
 mod suggestion;
 
@@ -55,6 +57,8 @@ pub use charset::{
     FUNPUT_CHARSET_UNKNOWN, FunputConversion, funput_charset_convert, funput_charset_count,
     funput_charset_detect, funput_charset_name,
 };
+#[cfg(feature = "convert")]
+pub use convert::*;
 pub use engine::{
     ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputConfig, FunputEngine, FunputResult,
     METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, SOURCE_NUMPAD, SOURCE_STANDARD,
