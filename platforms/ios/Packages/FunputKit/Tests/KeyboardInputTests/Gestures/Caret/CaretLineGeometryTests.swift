@@ -35,37 +35,41 @@ struct CaretLineGeometryTests {
         #expect(step == .init(offset: 8, column: 5))
     }
 
-    @Test("Up on the first line goes to the start of the line")
-    func upOnFirstLineIsHome() {
+    @Test("Up on the first line stays put rather than sliding to its start")
+    func upOnFirstLineStaysPut() {
         let geometry = geometry(before: "abc", after: "def\nghi")
 
         #expect(
             geometry.resolve(columns: 0, lines: -1, desiredColumn: nil)
-                == .init(offset: -3, column: 0)
+                == .init(offset: 0, column: nil)
         )
     }
 
-    @Test("Down on the last line goes to the end of the line")
-    func downOnLastLineIsEnd() {
+    @Test("Down on the last line stays put rather than sliding to its end")
+    func downOnLastLineStaysPut() {
         let geometry = geometry(before: "abc\ndef", after: "gh")
 
         #expect(
             geometry.resolve(columns: 0, lines: 1, desiredColumn: nil)
-                == .init(offset: 2, column: 5)
+                == .init(offset: 0, column: nil)
         )
     }
 
-    @Test("A single-line field gets start and end instead of nothing")
-    func singleLineFieldGetsHomeAndEnd() {
+    @Test("A single-line field has nowhere to go and does not move")
+    func singleLineFieldDoesNotMove() {
         let geometry = geometry(before: "hello", after: " world")
 
+        #expect(geometry.resolve(columns: 0, lines: -1, desiredColumn: nil).offset == 0)
+        #expect(geometry.resolve(columns: 0, lines: 1, desiredColumn: nil).offset == 0)
+    }
+
+    @Test("A blocked vertical step still carries its horizontal half")
+    func blockedVerticalStepKeepsItsColumns() {
+        let geometry = geometry(before: "abc", after: "def\nghi")
+
         #expect(
-            geometry.resolve(columns: 0, lines: -1, desiredColumn: nil)
-                == .init(offset: -5, column: 0)
-        )
-        #expect(
-            geometry.resolve(columns: 0, lines: 1, desiredColumn: nil)
-                == .init(offset: 6, column: 11)
+            geometry.resolve(columns: 2, lines: -1, desiredColumn: nil)
+                == .init(offset: 2, column: nil)
         )
     }
 

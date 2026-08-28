@@ -5,8 +5,8 @@
 /// simply unknowable from this side.
 ///
 /// The window is whatever the proxy returned, which some hosts truncate to the current
-/// paragraph. Truncation can only shorten a jump to the line's edge: the caret still lands
-/// inside the real line, never outside the document.
+/// paragraph. Truncation only hides lines further out, so a step can stop short of where the
+/// document would have allowed; it never lands the caret somewhere it should not be.
 struct CaretLineGeometry {
     struct Resolution: Equatable {
         /// Characters to hand to the document's `moveCursor` mutation.
@@ -53,12 +53,11 @@ struct CaretLineGeometry {
         guard lines != 0 else { return Resolution(offset: columns, column: nil) }
         let target = min(max(lineIndex + lines, 0), lineLengths.count - 1)
         guard target != lineIndex else {
-            // Nowhere left to go on that side. Falling back to the line's own edge is what
-            // an up-arrow on the first line does everywhere else in the system, and it is
-            // the only thing a vertical drag can usefully mean in a single-line field.
-            return lines < 0
-                ? Resolution(offset: -column, column: 0)
-                : Resolution(offset: trailing, column: column + trailing)
+            // Nowhere left to go on that side, so the vertical part of the step does nothing.
+            // Sliding to the line's own edge instead reads as the caret wandering off on its
+            // own — the finger is still moving, so the jump looks like a fault rather than a
+            // limit. A diagonal drag keeps its horizontal half, which is still meaningful.
+            return Resolution(offset: columns, column: nil)
         }
         // The horizontal component of a diagonal drag still applies; the remembered
         // column only replaces the one the caret happens to sit on right now.
