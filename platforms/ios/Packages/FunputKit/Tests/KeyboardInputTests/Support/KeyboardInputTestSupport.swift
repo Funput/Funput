@@ -34,6 +34,13 @@ final class TestKeyboardWriter: KeyboardDocumentWriting {
         caret == textCount ? text : String(text.prefix(caret))
     }
 
+    var caretContext: KeyboardCaretContext {
+        KeyboardCaretContext(
+            before: textBeforeCaret,
+            after: String(text.dropFirst(caret))
+        )
+    }
+
     func apply(_ transaction: InputTransaction) {
         transactions.append(transaction)
         for mutation in transaction.mutations {
