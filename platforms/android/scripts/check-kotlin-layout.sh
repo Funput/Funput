@@ -23,6 +23,7 @@ readonly roots=(
     "$renderer_test/accessibility"
     "$ime_main/editing/caret"
     "$ime_main/editing/gestures"
+    "$ime_main/editing/typing"
     "$ime_main/settings/gestures"
     "$ime_test/editing/caret"
     "$ime_test/editing/gestures"

@@ -5,6 +5,7 @@ import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.ime.editing.backspace.ImeBackspaceHandler
 import app.funput.funput.ime.editing.gestures.ImeGestureEditor
+import app.funput.funput.ime.editing.typing.ImeTypingHandler
 
 /** Routes semantic keyboard actions through composition or direct editor commands. */
 internal class ImeKeyActionHandler(
@@ -20,6 +21,16 @@ internal class ImeKeyActionHandler(
         composition, editor, connection, ::backspace,
     ) { if (suggestionsAllowed) suggestions.reset() }
     var smartGesturesEnabled: Boolean by gestures::enabled
+    private val typing = ImeTypingHandler(
+        composition = composition,
+        editor = editor,
+        connection = connection,
+        enterCommand = enterCommand,
+        suggestions = suggestions,
+        usesComposition = { usesComposition },
+        suggestionsAllowed = { suggestionsAllowed },
+        finish = ::finish,
+    )
     private val backspaceHandler = ImeBackspaceHandler(
         composition = composition,
         editor = editor,
@@ -53,10 +64,10 @@ internal class ImeKeyActionHandler(
     fun onKeyAction(action: KeyAction) {
         if (gestures.consume(action)) return
         when (action) {
-            is KeyAction.Input -> inputText(action.text)
-            KeyAction.Space -> inputText(" ")
+            is KeyAction.Input -> typing.input(action.text)
+            KeyAction.Space -> typing.input(" ")
             KeyAction.Backspace -> backspace()
-            KeyAction.Enter -> enter()
+            KeyAction.Enter -> typing.enter()
             is KeyAction.ToggleLanguage -> toggleLanguage(action.language)
             is KeyAction.Shift,
             is KeyAction.MoveCursor,
@@ -69,9 +80,9 @@ internal class ImeKeyActionHandler(
         }
     }
 
-    fun onEmojiSelected(emoji: String) = commitExternalText(emoji)
+    fun onEmojiSelected(emoji: String) = typing.commitExternal(emoji)
 
-    fun onClipboardSelected(text: String) = commitExternalText(text)
+    fun onClipboardSelected(text: String) = typing.commitExternal(text)
 
     fun finish() {
         composition.finish(connection())
@@ -98,36 +109,10 @@ internal class ImeKeyActionHandler(
     fun acceptSuggestion(candidate: String, prefix: String): Boolean =
         suggestionsAllowed && suggestions.accept(candidate, prefix, usesComposition)
 
-    private fun inputText(text: String) {
-        if (usesComposition) {
-            val current = connection()
-            if (current == null) return suggestions.reset()
-            composition.input(current, text)
-            suggestions.updateComposition()
-        } else {
-            if (execute(ImeEditCommand.CommitText(text)) && suggestionsAllowed) {
-                suggestions.inputDirect(text)
-            } else {
-                suggestions.reset()
-            }
-        }
-    }
-
     private fun backspace() {
         val direct = !usesComposition
         backspaceHandler.perform()
         if (direct && suggestionsAllowed) suggestions.backspaceDirect()
-    }
-
-    private fun enter() {
-        val command = enterCommand()
-        if (usesComposition && command == ImeEditCommand.CommitText("\n")) {
-            composition.input(connection(), "\n")
-        } else {
-            if (usesComposition) finish()
-            else if (suggestionsAllowed) suggestions.inputDirect("\n")
-            execute(command)
-        }
     }
 
     private fun toggleLanguage(value: KeyboardLanguage) {
@@ -137,13 +122,6 @@ internal class ImeKeyActionHandler(
         composition.setEnabled(usesComposition)
         suggestions.reset()
     }
-
-    private fun commitExternalText(text: String) {
-        finish()
-        execute(ImeEditCommand.CommitText(text))
-    }
-
-    private fun execute(command: ImeEditCommand) = editor.execute(connection(), command)
 
     private val usesComposition: Boolean
         get() = compositionAllowed && language == KeyboardLanguage.VIETNAMESE
