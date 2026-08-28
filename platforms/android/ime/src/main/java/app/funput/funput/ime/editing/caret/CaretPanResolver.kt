@@ -21,6 +21,20 @@ internal class CaretPanResolver {
      */
     private var pan: Pan? = null
 
+    /**
+     * Caret position as the host last reported it through `onUpdateSelection`, or [NoCaret].
+     *
+     * This is the only absolute position available when the editor hands back no `ExtractedText`
+     * and the readable window does not reach the start of the document. It stays current across
+     * the start of a pan because `finishComposingText` does not move the caret, and because the
+     * hold that arms the gesture gives the report ample time to arrive.
+     */
+    private var reportedCaret = NoCaret
+
+    fun onSelectionChanged(position: Int) {
+        reportedCaret = position
+    }
+
     /** Returns whether the caret moved. */
     fun apply(connection: InputConnection, columns: Int, lines: Int): Boolean {
         if (columns == 0 && lines == 0) return false
@@ -33,6 +47,7 @@ internal class CaretPanResolver {
         val start = context.caretPosition - context.before.length
         val position = (context.caretPosition + resolution.offset).coerceIn(start, end)
         pan = resolution.column?.let { Pan(position, it) }
+        reportedCaret = position
         return connection.setSelection(position, position)
     }
 
@@ -47,27 +62,28 @@ internal class CaretPanResolver {
                 caretPosition = extracted.startOffset + caret,
             )
         }
-        // No ExtractedText: fall back to a window around the caret.
-        //
-        // `before.length` is the caret's absolute position only while the window reaches the start
-        // of the document. Once the request comes back full there is more text behind it than was
-        // asked for, and the length is the size of the request rather than the position of the
-        // caret — handing that to `setSelection` throws the caret back near the top of the field.
-        // Refuse the step instead: a gesture that declines to move beats one that teleports.
-        //
-        // A document with exactly `Lookback` characters behind the caret is refused too. Telling
-        // that apart from a clipped one costs another round-trip for a case worth nothing.
+        // No ExtractedText: fall back to a window around the caret. Its far edges are not the
+        // document's, which can only shorten a jump to the end of a line. Only the near edge, the
+        // caret itself, has to be exact.
         val before = connection.getTextBeforeCursor(Lookback, 0)?.toString().orEmpty()
-        if (before.length >= Lookback) return null
-        // The window's far edges are not the document's, which can only shorten a jump to the end
-        // of a line. Only the near edge, the caret itself, has to be exact.
         val after = connection.getTextAfterCursor(Lookback, 0)?.toString().orEmpty()
-        return KeyboardCaretContext(before, after, caretPosition = before.length)
+        // A window that did not come back full reaches the start of the document, so its length is
+        // the caret. A full one only proves there is at least that much text behind the caret —
+        // reading its length as a position is what used to throw the caret back near the top of a
+        // long field, so fall back to what the host reported instead.
+        if (before.length < Lookback) {
+            return KeyboardCaretContext(before, after, caretPosition = before.length)
+        }
+        // A report from before the text we can see is stale past rescuing; sitting still beats
+        // moving to a guess.
+        if (reportedCaret < before.length) return null
+        return KeyboardCaretContext(before, after, caretPosition = reportedCaret)
     }
 
     private data class Pan(val position: Int, val column: Int)
 
     private companion object {
         const val Lookback = 1024
+        const val NoCaret = -1
     }
 }

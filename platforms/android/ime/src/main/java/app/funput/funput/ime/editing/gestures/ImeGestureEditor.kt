@@ -44,6 +44,9 @@ internal class ImeGestureEditor(
 
     fun reset() = tracker.reset()
 
+    /** The caret pan's only absolute reference in editors that expose no extracted text. */
+    fun onSelectionChanged(position: Int) = pan.onSelectionChanged(position)
+
     private fun applySmartSpace(): Boolean {
         if (!enabled) return false
         if (!tracker.registerSpace()) return false

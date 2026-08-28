@@ -91,6 +91,7 @@ internal class ImeKeyActionHandler(
     }
 
     fun onSelectionChanged(newStart: Int, newEnd: Int, composingEnd: Int) {
+        gestures.onSelectionChanged(newStart)
         if (!usesComposition) {
             if (suggestionsAllowed) suggestions.reconcileDirectSelection()
             return
