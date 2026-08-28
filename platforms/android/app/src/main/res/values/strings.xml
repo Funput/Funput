@@ -11,7 +11,7 @@
     <string name="settings_section_feedback">Âm thanh &amp; rung</string>
     <string name="settings_section_gestures">Cử chỉ</string>
     <string name="settings_smart_gestures_title">Cử chỉ thông minh</string>
-    <string name="settings_smart_gestures_summary">Gõ đúp phím cách để chấm câu, giữ phím cách rồi kéo để di chuyển con trỏ, vuốt trái phím xóa để xóa cả từ.</string>
+    <string name="settings_smart_gestures_summary">Gõ đúp phím cách để chấm câu, giữ phím cách rồi kéo để di chuyển con trỏ mọi hướng, vuốt trái phím xóa để xóa cả từ.</string>
     <string name="settings_section_about">Thông tin</string>
     <string name="settings_keyboard_customize_heading">Tùy chỉnh</string>
     <string name="settings_keyboard_setup_not_enabled_title">Funput chưa được bật</string>
