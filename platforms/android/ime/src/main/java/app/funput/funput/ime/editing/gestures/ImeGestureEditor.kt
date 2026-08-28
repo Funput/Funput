@@ -64,10 +64,13 @@ internal class ImeGestureEditor(
     /**
      * Moves the caret [columns] characters sideways and [lines] logical lines vertically.
      *
-     * Composition cannot survive the caret leaving the buffer it mirrors, so every step ends it.
+     * Composition cannot survive the caret leaving the buffer it mirrors, so every step ends it —
+     * but a step asking for no movement touches nothing, composition included.
+     *
      * Always returns true: the pan owns this action whether or not the caret had room to move.
      */
     private fun moveCaret(columns: Int, lines: Int): Boolean {
+        if (columns == 0 && lines == 0) return true
         val current = connection() ?: return true
         composition.finish(current)
         if (pan.apply(current, columns, lines)) onSuggestionsCleared()
