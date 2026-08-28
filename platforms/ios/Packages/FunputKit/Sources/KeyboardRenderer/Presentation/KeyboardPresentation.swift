@@ -49,8 +49,8 @@ public struct KeyboardKeyEvent: Sendable {
         case pressed
         case repeated
         case swiped(KeySwipeAction)
-        /// Caret movement from the spacebar trackpad, in characters.
-        case cursorMoved(offset: Int)
+        /// Caret movement from the spacebar trackpad, on both axes.
+        case cursorMoved(CursorPanStep)
         /// One word rubbed away by a leftward drag on Backspace.
         case deletedWord
         case alternateSelected(KeyAlternate)

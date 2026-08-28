@@ -15,9 +15,13 @@ extension KeyboardViewController {
             applyPostCommitEffects(
                 .init(presentationChanged: true, suggestionsChanged: true)
             )
-        case let .cursorMoved(offset):
+        case let .cursorMoved(step):
             applyPostCommitEffects(
-                inputCoordinator.moveCursor(by: offset, writer: makeDocumentWriter())
+                inputCoordinator.moveCaret(
+                    columns: step.columns,
+                    lines: step.lines,
+                    writer: makeDocumentWriter()
+                )
             )
         case .deletedWord:
             applyPostCommitEffects(

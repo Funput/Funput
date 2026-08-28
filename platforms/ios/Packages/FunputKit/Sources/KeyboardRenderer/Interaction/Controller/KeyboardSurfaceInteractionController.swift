@@ -64,7 +64,7 @@ final class KeyboardSurfaceInteractionController {
 
     /// Half the swipe threshold: past this a touch is no longer a tap.
     static let tapSlop: CGFloat = 16
-    /// Sideways travel that turns an armed space hold into a caret pan.
+    /// Travel in any direction that turns an armed space hold into a caret pan.
     static let trackpadActivation: CGFloat = 10
     /// Space repeat waits this long when smart gestures are on, leaving a usable window
     /// between the hold arming and the first inserted space.

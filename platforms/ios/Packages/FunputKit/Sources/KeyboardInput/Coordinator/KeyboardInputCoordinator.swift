@@ -23,6 +23,10 @@ public final class KeyboardInputCoordinator {
     var suggestionTrackingActive = true
     var preferredTelexMethod: KeyboardInputMethod
     var nextTransactionSequence: UInt64 = 1
+    /// Column the spacebar trackpad is aiming for, paired with the transaction
+    /// sequence it stays valid at. Keeping the caret's target column across a short
+    /// line is what stops a run of up-steps from dragging it left for good.
+    var caretPan: (desiredColumn: Int, sequence: UInt64)?
 
     public init(
         inputMethod: KeyboardInputMethod = .vni,

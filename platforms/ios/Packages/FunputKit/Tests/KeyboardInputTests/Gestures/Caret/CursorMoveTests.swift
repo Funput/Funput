@@ -10,7 +10,7 @@ struct CursorMoveTests {
     func emitsMoveMutation() {
         let (coordinator, document) = makeCoordinator(context: "xin chao")
 
-        coordinator.moveCursor(by: -3, writer: document)
+        coordinator.moveCaret(columns: -3, lines: 0, writer: document)
 
         #expect(document.transactions.count == 1)
         #expect(document.transactions[0].mutations == [.moveCursor(offset: -3)])
@@ -22,7 +22,7 @@ struct CursorMoveTests {
     func zeroIsNoOp() {
         let (coordinator, document) = makeCoordinator(context: "xin chao")
 
-        let effects = coordinator.moveCursor(by: 0, writer: document)
+        let effects = coordinator.moveCaret(columns: 0, lines: 0, writer: document)
 
         #expect(effects == .none)
         #expect(document.transactions.isEmpty)
@@ -32,7 +32,7 @@ struct CursorMoveTests {
     func invalidatesShadow() {
         let (coordinator, document) = makeCoordinator(context: "xin chao")
 
-        coordinator.moveCursor(by: -2, writer: document)
+        coordinator.moveCaret(columns: -2, lines: 0, writer: document)
 
         #expect(coordinator.documentSynchronizer.snapshot == nil)
     }
@@ -41,11 +41,43 @@ struct CursorMoveTests {
     func typesAtNewCaret() {
         let (coordinator, document) = makeCoordinator(context: "xin chao")
 
-        coordinator.moveCursor(by: -4, writer: document)
+        coordinator.moveCaret(columns: -4, lines: 0, writer: document)
         coordinator.synchronizeDocument(document, event: .selectionChanged)
         type("Z", with: coordinator, into: document)
 
         #expect(document.text == "xin Zchao")
+    }
+
+    @Test("A vertical step lands on the same column of the line above")
+    func movesUpToTheSameColumn() {
+        let (coordinator, document) = makeCoordinator(context: "abcdefgh\nij\nklmnop")
+
+        coordinator.moveCaret(columns: 0, lines: -1, writer: document)
+
+        // Column 6 does not fit on "ij", so the caret stops at its end.
+        #expect(document.caret == 11)
+    }
+
+    @Test("A second vertical step returns to the column the first one wanted")
+    func remembersTheColumnAcrossSteps() {
+        let (coordinator, document) = makeCoordinator(context: "abcdefgh\nij\nklmnop")
+
+        coordinator.moveCaret(columns: 0, lines: -1, writer: document)
+        coordinator.moveCaret(columns: 0, lines: -1, writer: document)
+
+        #expect(document.caret == 6)
+    }
+
+    @Test("A horizontal step in between forgets the remembered column")
+    func horizontalStepForgetsTheColumn() {
+        let (coordinator, document) = makeCoordinator(context: "abcdefgh\nij\nklmnop")
+
+        coordinator.moveCaret(columns: 0, lines: -1, writer: document)
+        coordinator.moveCaret(columns: 1, lines: 0, writer: document)
+        coordinator.moveCaret(columns: 0, lines: -1, writer: document)
+
+        // Column 0 of "ij", not column 6 of the line the pan started on.
+        #expect(document.caret == 9)
     }
 
     private func makeCoordinator(
