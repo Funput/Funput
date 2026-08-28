@@ -47,9 +47,20 @@ internal class CaretPanResolver {
                 caretPosition = extracted.startOffset + caret,
             )
         }
-        // No ExtractedText: fall back to a window around the caret. Its edges are then the edges
-        // of what we can see, not of the document, which can only shorten a jump to a line's end.
+        // No ExtractedText: fall back to a window around the caret.
+        //
+        // `before.length` is the caret's absolute position only while the window reaches the start
+        // of the document. Once the request comes back full there is more text behind it than was
+        // asked for, and the length is the size of the request rather than the position of the
+        // caret — handing that to `setSelection` throws the caret back near the top of the field.
+        // Refuse the step instead: a gesture that declines to move beats one that teleports.
+        //
+        // A document with exactly `Lookback` characters behind the caret is refused too. Telling
+        // that apart from a clipped one costs another round-trip for a case worth nothing.
         val before = connection.getTextBeforeCursor(Lookback, 0)?.toString().orEmpty()
+        if (before.length >= Lookback) return null
+        // The window's far edges are not the document's, which can only shorten a jump to the end
+        // of a line. Only the near edge, the caret itself, has to be exact.
         val after = connection.getTextAfterCursor(Lookback, 0)?.toString().orEmpty()
         return KeyboardCaretContext(before, after, caretPosition = before.length)
     }

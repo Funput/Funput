@@ -74,6 +74,25 @@ class CaretPanResolverTest {
     }
 
     @Test
+    fun aClippedWindowRefusesToMoveRatherThanGuessTheCaret() {
+        // More text behind the caret than the resolver's 1024-character lookback can see.
+        val document = PanDocument("x".repeat(3000))
+        document.moveTo(2500)
+
+        assertFalse(CaretPanResolver().apply(document.proxy, columns = -3, lines = 0))
+        // Reading the window's length as the caret's position used to land it at 1021.
+        assertEquals(2500, document.cursor)
+    }
+
+    @Test
+    fun aWindowThatReachesTheStartOfTheDocumentStillMoves() {
+        val document = PanDocument("x".repeat(1000))
+
+        assertEquals(true, CaretPanResolver().apply(document.proxy, columns = -3, lines = 0))
+        assertEquals(997, document.cursor)
+    }
+
+    @Test
     fun aZeroStepWritesNothing() {
         val document = PanDocument("xin chao")
 
