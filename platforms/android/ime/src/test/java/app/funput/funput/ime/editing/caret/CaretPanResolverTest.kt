@@ -56,12 +56,11 @@ class CaretPanResolverTest {
     }
 
     @Test
-    fun upOnTheFirstLineGoesToTheStartOfTheLine() {
+    fun upWithNoLineAboveLeavesTheCaretWhereItIs() {
         val document = PanDocument("abcdef")
 
-        CaretPanResolver().apply(document.proxy, columns = 0, lines = -1)
-
-        assertEquals(0, document.cursor)
+        assertFalse(CaretPanResolver().apply(document.proxy, columns = 0, lines = -1))
+        assertEquals(6, document.cursor)
     }
 
     @Test

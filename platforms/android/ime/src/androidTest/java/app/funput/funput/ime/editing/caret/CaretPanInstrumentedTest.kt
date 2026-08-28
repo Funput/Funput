@@ -38,13 +38,13 @@ class CaretPanInstrumentedTest {
     }
 
     @Test
-    fun draggingDownOnTheLastLineGoesToTheEndOfTheText() = onMainThread {
+    fun draggingDownOnTheLastLineLeavesTheCaretWhereItIs() = onMainThread {
         val host = newHost("abc\ndefgh")
         host.moveCursorTo(6)
 
         CaretPanResolver().apply(host.connection, columns = 0, lines = 1)
 
-        assertEquals(9, host.editText.selectionStart)
+        assertEquals(6, host.editText.selectionStart)
     }
 
     @Test

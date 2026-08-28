@@ -7,8 +7,8 @@ package app.funput.funput.ime.editing.caret
  * has no access to the host's text layout, so wrap positions are unknowable from this side.
  *
  * With an `ExtractedText` the window is the whole field and the arithmetic is exact. On the
- * windowed fallback a truncated window can only shorten a jump to the line's edge: the caret still
- * lands inside the real line, never outside the document.
+ * windowed fallback a truncated window only hides lines further out, so a step can stop short of
+ * where the document would have allowed; it never lands the caret somewhere it should not be.
  */
 internal class CaretLineGeometry(context: KeyboardCaretContext) {
     /**
@@ -57,14 +57,11 @@ internal class CaretLineGeometry(context: KeyboardCaretContext) {
         if (lines == 0) return Resolution(columns, null)
         val target = (lineIndex + lines).coerceIn(0, lineLengths.lastIndex)
         if (target == lineIndex) {
-            // Nowhere left to go on that side. Falling back to the line's own edge is what an
-            // up-arrow on the first line does everywhere else in the system, and it is the only
-            // thing a vertical drag can usefully mean in a single-line field.
-            return if (lines < 0) {
-                Resolution(-column, 0)
-            } else {
-                Resolution(trailing, column + trailing)
-            }
+            // Nowhere left to go on that side, so the vertical part of the step does nothing.
+            // Sliding to the line's own edge instead reads as the caret wandering off on its own —
+            // the finger is still moving, so the jump looks like a fault rather than a limit. A
+            // diagonal drag keeps its horizontal half, which is still meaningful.
+            return Resolution(columns, null)
         }
         // The horizontal component of a diagonal drag still applies; the remembered column only
         // replaces the one the caret happens to sit on right now.

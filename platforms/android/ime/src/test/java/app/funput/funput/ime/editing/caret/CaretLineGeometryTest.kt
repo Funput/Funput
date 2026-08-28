@@ -42,36 +42,40 @@ class CaretLineGeometryTest {
     }
 
     @Test
-    fun upOnTheFirstLineGoesToTheStartOfTheLine() {
+    fun upOnTheFirstLineStaysPutRatherThanSlidingToItsStart() {
         val geometry = geometry(before = "abc", after = "def\nghi")
 
         assertEquals(
-            CaretLineGeometry.Resolution(offset = -3, column = 0),
+            CaretLineGeometry.Resolution(offset = 0, column = null),
             geometry.resolve(columns = 0, lines = -1, desiredColumn = null),
         )
     }
 
     @Test
-    fun downOnTheLastLineGoesToTheEndOfTheLine() {
+    fun downOnTheLastLineStaysPutRatherThanSlidingToItsEnd() {
         val geometry = geometry(before = "abc\ndef", after = "gh")
 
         assertEquals(
-            CaretLineGeometry.Resolution(offset = 2, column = 5),
+            CaretLineGeometry.Resolution(offset = 0, column = null),
             geometry.resolve(columns = 0, lines = 1, desiredColumn = null),
         )
     }
 
     @Test
-    fun aSingleLineFieldGetsStartAndEndInsteadOfNothing() {
+    fun aSingleLineFieldHasNowhereToGoAndDoesNotMove() {
         val geometry = geometry(before = "hello", after = " world")
 
+        assertEquals(0, geometry.resolve(columns = 0, lines = -1, desiredColumn = null).offset)
+        assertEquals(0, geometry.resolve(columns = 0, lines = 1, desiredColumn = null).offset)
+    }
+
+    @Test
+    fun aBlockedVerticalStepStillCarriesItsHorizontalHalf() {
+        val geometry = geometry(before = "abc", after = "def\nghi")
+
         assertEquals(
-            CaretLineGeometry.Resolution(offset = -5, column = 0),
-            geometry.resolve(columns = 0, lines = -1, desiredColumn = null),
-        )
-        assertEquals(
-            CaretLineGeometry.Resolution(offset = 6, column = 11),
-            geometry.resolve(columns = 0, lines = 1, desiredColumn = null),
+            CaretLineGeometry.Resolution(offset = 2, column = null),
+            geometry.resolve(columns = 2, lines = -1, desiredColumn = null),
         )
     }
 
