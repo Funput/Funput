@@ -38,6 +38,27 @@ class ImeGestureMutationTest {
     }
 
     @Test
+    fun aVerticalMoveLandsOnTheLineAbove() {
+        val document = GestureDocument("abcdefgh\nij\nklmnop")
+
+        handler(document).onKeyAction(KeyAction.MoveCursor(columns = 0, lines = -1))
+
+        // Column 6 does not fit on "ij", so the caret stops at its end.
+        assertEquals(11, document.cursor)
+    }
+
+    @Test
+    fun typingAfterAVerticalMoveInsertsOnTheNewLine() {
+        val document = GestureDocument("abcdefgh\nij\nklmnop")
+        val actions = handler(document)
+
+        actions.onKeyAction(KeyAction.MoveCursor(columns = 0, lines = -1))
+        actions.onKeyAction(KeyAction.Input("character-z", "Z"))
+
+        assertEquals("abcdefgh\nijZ\nklmnop", document.text)
+    }
+
+    @Test
     fun aZeroMoveWritesNothing() {
         val document = GestureDocument("xin chao")
         handler(document).onKeyAction(KeyAction.MoveCursor(0))

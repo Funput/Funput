@@ -4,6 +4,7 @@ import android.view.inputmethod.InputConnection
 import app.funput.funput.ime.editing.AndroidCompositionSession
 import app.funput.funput.ime.editing.ImeEditCommand
 import app.funput.funput.ime.editing.InputConnectionEditor
+import app.funput.funput.ime.editing.caret.CaretPanResolver
 import app.funput.funput.keyboard.model.KeyAction
 
 /**
@@ -24,9 +25,10 @@ internal class ImeGestureEditor(
             if (!value) tracker.reset()
         }
     private val tracker = SpaceTapTracker()
+    private val pan = CaretPanResolver()
 
     fun consume(action: KeyAction): Boolean = when (action) {
-        is KeyAction.MoveCursor -> moveCursor(action.offset)
+        is KeyAction.MoveCursor -> moveCaret(action.columns, action.lines)
         KeyAction.DeleteWord -> deleteWord()
         KeyAction.Space -> applySmartSpace()
         is KeyAction.Input,
@@ -56,12 +58,16 @@ internal class ImeGestureEditor(
         return true
     }
 
-    private fun moveCursor(offset: Int): Boolean {
-        if (offset == 0) return true
+    /**
+     * Moves the caret [columns] characters sideways and [lines] logical lines vertically.
+     *
+     * Composition cannot survive the caret leaving the buffer it mirrors, so every step ends it.
+     * Always returns true: the pan owns this action whether or not the caret had room to move.
+     */
+    private fun moveCaret(columns: Int, lines: Int): Boolean {
         val current = connection() ?: return true
         composition.finish(current)
-        editor.execute(current, ImeEditCommand.MoveCursor(offset))
-        onSuggestionsCleared()
+        if (pan.apply(current, columns, lines)) onSuggestionsCleared()
         return true
     }
 

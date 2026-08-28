@@ -8,6 +8,8 @@ internal object SmartGestureAccessibility {
     const val DeleteWord = 0x01030000
     const val CursorLeft = 0x01030001
     const val CursorRight = 0x01030002
+    const val CursorUp = 0x01030003
+    const val CursorDown = 0x01030004
 
     data class Action(val actionId: Int, val label: String)
 
@@ -18,6 +20,8 @@ internal object SmartGestureAccessibility {
             KeyRole.SPACE -> listOf(
                 Action(CursorLeft, "Con trỏ sang trái"),
                 Action(CursorRight, "Con trỏ sang phải"),
+                Action(CursorUp, "Con trỏ lên"),
+                Action(CursorDown, "Con trỏ xuống"),
             )
             else -> emptyList()
         }
@@ -25,8 +29,10 @@ internal object SmartGestureAccessibility {
 
     fun keyAction(actionId: Int): KeyAction? = when (actionId) {
         DeleteWord -> KeyAction.DeleteWord
-        CursorLeft -> KeyAction.MoveCursor(-1)
-        CursorRight -> KeyAction.MoveCursor(1)
+        CursorLeft -> KeyAction.MoveCursor(columns = -1)
+        CursorRight -> KeyAction.MoveCursor(columns = 1)
+        CursorUp -> KeyAction.MoveCursor(columns = 0, lines = -1)
+        CursorDown -> KeyAction.MoveCursor(columns = 0, lines = 1)
         else -> null
     }
 }

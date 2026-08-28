@@ -20,7 +20,8 @@ sealed interface KeyAction {
     data object SwitchInputMethod : KeyAction
     data object Space : KeyAction
     data object DeleteWord : KeyAction
-    data class MoveCursor(val offset: Int) : KeyAction
+    /** Caret movement from the spacebar trackpad, on both axes. */
+    data class MoveCursor(val columns: Int, val lines: Int = 0) : KeyAction
     data object Enter : KeyAction
     data class ToggleLanguage(val language: KeyboardLanguage) : KeyAction
 }

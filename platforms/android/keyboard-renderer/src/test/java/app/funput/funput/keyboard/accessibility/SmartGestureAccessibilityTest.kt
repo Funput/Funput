@@ -23,7 +23,7 @@ class SmartGestureAccessibilityTest {
             snapshot.nodes.first { it.keyId == "backspace" }.customActions.map { it.label },
         )
         assertEquals(
-            listOf("Con trỏ sang trái", "Con trỏ sang phải"),
+            listOf("Con trỏ sang trái", "Con trỏ sang phải", "Con trỏ lên", "Con trỏ xuống"),
             snapshot.nodes.first { it.keyId == "space" }.customActions.map { it.label },
         )
     }
@@ -50,6 +50,14 @@ class SmartGestureAccessibilityTest {
         assertEquals(
             KeyAction.MoveCursor(1),
             SmartGestureAccessibility.keyAction(SmartGestureAccessibility.CursorRight),
+        )
+        assertEquals(
+            KeyAction.MoveCursor(columns = 0, lines = -1),
+            SmartGestureAccessibility.keyAction(SmartGestureAccessibility.CursorUp),
+        )
+        assertEquals(
+            KeyAction.MoveCursor(columns = 0, lines = 1),
+            SmartGestureAccessibility.keyAction(SmartGestureAccessibility.CursorDown),
         )
     }
 
