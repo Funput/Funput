@@ -4,8 +4,9 @@
 //! - `slots` — which edges survive when there are more than there is room for.
 //! - `learning` — the engine's write path, [`SuggestionEngine::learn_after`].
 //!
-//! Nothing reads these edges yet; querying arrives with `suggest_with`.
+//! - `query` — the read path, [`SuggestionEngine::suggest_with`].
 
 pub(crate) mod follower;
 mod learning;
+mod query;
 mod slots;

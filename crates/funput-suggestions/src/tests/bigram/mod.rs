@@ -1,6 +1,7 @@
 //! What the engine remembers about which word followed which.
 
 mod learning;
+mod query;
 
 use crate::SuggestionEngine;
 
