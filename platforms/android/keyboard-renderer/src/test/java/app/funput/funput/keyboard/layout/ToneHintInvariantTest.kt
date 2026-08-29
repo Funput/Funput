@@ -43,8 +43,13 @@ class ToneHintInvariantTest {
         }
     }
 
+    /**
+     * A compact page prints the long-press digit in the same slot, and a digit promises nothing
+     * about tones — only the rest of the hint counts as one.
+     */
     private fun KeyboardLayout.hasTelexHints(): Boolean = rows.flatMap { it.keys }.any { key ->
-        key.role == KeyRole.CHARACTER && key.secondaryLabel != null
+        key.role == KeyRole.CHARACTER &&
+            key.secondaryLabel.orEmpty().any { !it.isDigit() && !it.isWhitespace() }
     }
 
     private fun KeyboardLayout.hasVniModifiers(): Boolean = rows.flatMap { it.keys }.any { key ->

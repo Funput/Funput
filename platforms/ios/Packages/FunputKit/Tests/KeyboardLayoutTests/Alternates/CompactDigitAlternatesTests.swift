@@ -70,13 +70,13 @@ struct CompactDigitAlternatesTests {
             #expect(key.accessibilityLabel == reference.accessibilityLabel)
             #expect(key.alternates == reference.alternates)
         }
-        for mode in [KeyboardEditorMode.search, .email, .url] {
-            let row = Self.topRow(
-                EditorKeyboardLayouts.resolve(.telex, editorMode: mode, showsNumberRow: false)
-            )
-            #expect(row.keys[0].secondaryLabel == nil)
-            #expect(row.keys[0].alternates.isEmpty)
-        }
+        // The QWERTY editors follow the preference too — CompactWebPageTests covers them.
+        // A page with no number row to trade keeps its top row exactly as it was.
+        let password = Self.topRow(
+            EditorKeyboardLayouts.resolve(.telex, editorMode: .password, showsNumberRow: false)
+        )
+        #expect(password.keys[0].secondaryLabel == nil)
+        #expect(password.keys[0].alternates.isEmpty)
         let system = KeyboardLayoutResolver.resolve(
             inputMethod: .telex,
             mode: .letters,

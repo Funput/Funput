@@ -57,9 +57,11 @@ public enum KeyboardLayoutResolver {
         editorMode: KeyboardEditorMode,
         showsNumberRow: Bool
     ) -> KeyboardLayout {
-        let usesCompactLayout = editorMode == .text
-            && inputMethod.isTelexFamily
-            && !showsNumberRow
+        let usesCompactLayout = usesCompactLetterRows(
+            inputMethod: inputMethod,
+            editorMode: editorMode,
+            showsNumberRow: showsNumberRow
+        )
         return switch mode {
         case .letters:
             EditorKeyboardLayouts.resolve(

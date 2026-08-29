@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.layout
 
 import app.funput.funput.keyboard.model.KeyRole
+import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
 
@@ -30,22 +31,21 @@ object KeyboardLayouts {
         inputMethod: KeyboardInputMethod,
         showsNumberRow: Boolean,
     ): KeyboardLayout {
-        val hasNumberRow = inputMethod == KeyboardInputMethod.VNI || showsNumberRow
+        val isCompact = usesCompactLetterRows(inputMethod, KeyboardEditorMode.TEXT, showsNumberRow)
         val layout = qwertyLayout(
-            id = if (hasNumberRow) id else "$id-compact",
+            id = if (isCompact) "$id-compact" else id,
             inputMethod = inputMethod,
-            leadingRows = if (hasNumberRow) {
-                listOf(topNumberRowForLetters(inputMethod))
-            } else {
+            leadingRows = if (isCompact) {
                 emptyList()
+            } else {
+                listOf(topNumberRowForLetters(inputMethod))
             },
             actionKeys = standardActionKeys(),
             supportsVietnameseAlternates = true,
             showsTelexHints = inputMethod.isTelexFamily,
         )
         // Digits move onto the top row only when no row of their own is on screen.
-        if (hasNumberRow || !inputMethod.isTelexFamily) return layout
-        return CompactDigitAlternates.decorate(layout)
+        return if (isCompact) CompactDigitAlternates.decorate(layout) else layout
     }
 
     private fun standardActionKeys() = listOf(

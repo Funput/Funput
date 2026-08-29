@@ -85,22 +85,18 @@ class CompactDigitAlternatesTest {
             assertEquals(reference.accessibilityLabel, key.accessibilityLabel)
             assertEquals(reference.alternates, key.alternates)
         }
-        listOf(
-            KeyboardEditorMode.SEARCH,
-            KeyboardEditorMode.EMAIL,
-            KeyboardEditorMode.URL,
-        ).forEach { editorMode ->
-            val row = topRow(
-                KeyboardLayoutResolver.resolve(
-                    inputMethod = KeyboardInputMethod.TELEX,
-                    mode = KeyboardLayoutMode.LETTERS,
-                    editorMode = editorMode,
-                    showsNumberRow = false,
-                ),
-            )
-            assertEquals("$editorMode", null, row.keys[0].secondaryLabel)
-            assertTrue("$editorMode", row.keys[0].alternates.isEmpty())
-        }
+        // The QWERTY editors follow the preference too — WebEditorNumberRowLayoutTest covers
+        // them. A page with no number row to trade keeps its top row exactly as it was.
+        val password = topRow(
+            KeyboardLayoutResolver.resolve(
+                inputMethod = KeyboardInputMethod.TELEX,
+                mode = KeyboardLayoutMode.LETTERS,
+                editorMode = KeyboardEditorMode.PASSWORD,
+                showsNumberRow = false,
+            ),
+        )
+        assertEquals(null, password.keys[0].secondaryLabel)
+        assertTrue(password.keys[0].alternates.isEmpty())
     }
 
     private fun compactRow(method: KeyboardInputMethod): KeyboardRow =
