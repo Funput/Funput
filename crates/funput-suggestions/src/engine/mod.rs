@@ -112,6 +112,15 @@ impl SuggestionEngine {
                 break;
             };
             self.words.swap_remove(index);
+            // `swap_remove` hands this slot to whatever was last in the list, so
+            // anything still holding the old index has to stop resolving — the
+            // same reuse `upsert_word` bumps for. It matters here because a
+            // freshly loaded store has every record at generation 0, so a
+            // follower read off disk would otherwise match its new tenant and
+            // read as perfectly alive.
+            if let Some(word) = self.words.get_mut(index) {
+                word.generation = word.generation.wrapping_add(1);
+            }
         }
     }
 }
