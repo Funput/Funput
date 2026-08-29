@@ -10,8 +10,8 @@ lookup and memory numbers are unchanged and are not repeated here.
 
 | Path | Before | After | Change |
 |---|---:|---:|---|
-| Learn an existing word | 2.39 µs | 2.29 µs | unchanged |
-| Learn evicting a promoted word | 1.82 ms | 50.0 µs | **36x faster** |
+| Learn an existing word | 2.39 µs | 2.17 µs | unchanged |
+| Learn evicting a promoted word | 1.82 ms | 47.2 µs | **39x faster** |
 
 `suggestions/learn/evicting` is the new benchmark: a lexicon already full of
 promoted words, learning one new word twice per iteration so that every iteration
@@ -27,6 +27,26 @@ only idle signal, which both keyboard shells already call off the typing path on
 a 2 s timer and every 32 learns. `REBUILD_AFTER_EVICTIONS = 64` caps how many
 dead entries can accumulate for a caller that never flushes, which is what keeps
 the tries from growing with every distinct word ever seen.
+
+## Memory
+
+Retained heap for a warm 5,000-word lexicon, measured with
+`cargo run --release -p funput-suggestions --example latency`:
+
+| Revision | Retained | Added |
+|---|---:|---:|
+| V1 baseline, and after the store durability work | 572,504 B | — |
+| After tagging trie entries with a slot generation | 670,820 B | +98,316 B |
+| After adding four follower slots per word | 932,964 B | +262,144 B |
+
+The follower figure is exactly 256 KiB because `words` grows by doubling: 32
+bytes of edges against a `Vec` capacity of 8,192, not the 5,000 words the
+capacity holds. `context_seen` fits in padding the record already had. The tests
+enforce a 4 MiB retained-heap budget, so the whole bigram feature spends about
+6% of the room it has.
+
+Lookup is unchanged at p99 **292 ns** and 3.85 M queries/second — the edges are
+written on the learn path and nothing reads them yet.
 
 ## Persistence
 
