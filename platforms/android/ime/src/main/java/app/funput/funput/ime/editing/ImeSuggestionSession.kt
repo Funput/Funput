@@ -10,7 +10,8 @@ internal class ImeSuggestionSession(
     private val tracker = AuthoredTokenTracker()
 
     fun updateComposition() {
-        tracker.update(composition.composingText, composition.takeCompletedToken())
+        val completed = composition.takeCompleted()
+        tracker.update(composition.composingText, completed?.first, completed?.second == true)
     }
 
     fun inputDirect(text: String) = tracker.input(text)

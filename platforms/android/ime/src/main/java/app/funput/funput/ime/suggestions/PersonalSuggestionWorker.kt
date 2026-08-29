@@ -28,8 +28,8 @@ internal class PersonalSuggestionWorker(
         if (requests.submit(request)) worker.post(drain)
     }
 
-    fun learn(token: String) = worker.post {
-        if (engine?.learn(token) != true) return@post
+    fun learn(token: String, after: String?) = worker.post {
+        if (engine?.learn(token, after) != true) return@post
         learnedSinceFlush += 1
         worker.removeCallbacks(idleFlush)
         if (learnedSinceFlush >= FlushWordCount) flushNow() else worker.postDelayed(idleFlush, IdleFlushMillis)
@@ -66,7 +66,7 @@ internal class PersonalSuggestionWorker(
         while (true) {
             val request = requests.takeLatest() ?: break
             suggestionCounter("SuggestionGeneration", request.generation)
-            val result = suggestionTrace("SuggestionJNIQuery") { engine?.query(request.prefix).orEmpty() }
+            val result = suggestionTrace("SuggestionJNIQuery") { engine?.query(request.prefix, request.context).orEmpty() }
             main.post { runCatching { publish(request, result) } }
         }
         if (requests.finishDrain()) worker.post(drain)
