@@ -2,6 +2,7 @@
 
 use std::io;
 
+use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
 use crate::types::WordRecord;
 
 use super::binary::{Cursor, checksum, invalid_data, put_u16, put_u32, put_u64};
@@ -61,9 +62,12 @@ pub(crate) fn decode(bytes: &[u8]) -> io::Result<Option<(Vec<WordRecord>, u64)>>
             text,
             uses: cursor.u32()?,
             last_used: cursor.u64()?,
-            // Not serialized: generations only mean something to the trie
-            // entries of one run, and those are rebuilt on open.
+            // None of these three are serialized. Generations only mean
+            // something to the entries of one run, and the followers that depend
+            // on them are not persisted yet either.
             generation: 0,
+            context_seen: 0,
+            followers: [Follower::EMPTY; FOLLOWER_SLOTS],
         });
     }
     Ok(cursor.is_empty().then_some((words, sequence)))

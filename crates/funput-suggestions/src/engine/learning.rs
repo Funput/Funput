@@ -1,20 +1,24 @@
 use super::{PENDING_LIMIT, REBUILD_AFTER_EVICTIONS, SuggestionEngine};
-use crate::index::normalize;
+use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
+use crate::index::{NONE, normalize};
 use crate::types::{LearnOutcome, WordRecord};
 
 impl SuggestionEngine {
     pub fn learn(&mut self, token: &str) -> LearnOutcome {
-        self.learn_inner(token, true)
+        self.learn_after(None, token)
     }
 
-    pub(crate) fn learn_inner(&mut self, token: &str, record_pending: bool) -> LearnOutcome {
+    /// Returns the outcome and the slot the token landed in; the slot is `NONE`
+    /// when the token was ignored. `learn_after` needs the slot to hang an edge
+    /// off, and it is the only thing that reads it.
+    pub(crate) fn learn_inner(&mut self, token: &str, record_pending: bool) -> (LearnOutcome, u32) {
         let normalized = normalize::exact(token);
         let length = normalized.chars().count();
         if length == 0
             || length > self.config.max_token_scalars
             || normalized.chars().any(char::is_whitespace)
         {
-            return LearnOutcome::Ignored;
+            return (LearnOutcome::Ignored, NONE);
         }
 
         self.sequence = self.sequence.saturating_add(1);
@@ -40,13 +44,14 @@ impl SuggestionEngine {
         }
 
         let uses = self.words[word_id as usize].uses;
-        if previous_uses == 0 {
+        let outcome = if previous_uses == 0 {
             LearnOutcome::Recorded
         } else if previous_uses < self.config.promotion_uses && uses >= self.config.promotion_uses {
             LearnOutcome::Promoted
         } else {
             LearnOutcome::Updated
-        }
+        };
+        (outcome, word_id)
     }
 
     fn upsert_word(&mut self, normalized: String) -> (u32, u32, bool) {
@@ -62,6 +67,8 @@ impl SuggestionEngine {
             uses: 1,
             last_used: self.sequence,
             generation: 0,
+            context_seen: 0,
+            followers: [Follower::EMPTY; FOLLOWER_SLOTS],
         };
         if self.words.len() < self.config.max_words {
             let index = self.words.len() as u32;

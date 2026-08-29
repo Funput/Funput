@@ -1,3 +1,4 @@
+mod bigram;
 mod eviction;
 mod learning;
 mod persistence;

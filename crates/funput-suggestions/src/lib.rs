@@ -5,12 +5,14 @@
 //!
 //! # Layout
 //!
+//! - `bigram/` — which words follow which, and the write path that learns them.
 //! - `engine/` — the [`SuggestionEngine`] facade, its [`SuggestionConfig`], and the
 //!   learn / query / durability behaviours.
 //! - `index/` — the in-memory search index (prefix trie, ranking, key normalization).
 //! - `persistence/` — the crash-safe on-disk snapshot + journal store.
 //! - `types` — the shared vocabulary (`WordRecord` and the public result types).
 
+mod bigram;
 mod engine;
 mod index;
 mod persistence;
