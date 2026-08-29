@@ -61,6 +61,9 @@ pub(crate) fn decode(bytes: &[u8]) -> io::Result<Option<(Vec<WordRecord>, u64)>>
             text,
             uses: cursor.u32()?,
             last_used: cursor.u64()?,
+            // Not serialized: generations only mean something to the trie
+            // entries of one run, and those are rebuilt on open.
+            generation: 0,
         });
     }
     Ok(cursor.is_empty().then_some((words, sequence)))

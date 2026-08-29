@@ -11,7 +11,7 @@ use std::cmp::Ordering;
 
 use crate::types::WordRecord;
 
-use node::Node;
+use node::{Entry, Node};
 pub(crate) use node::{NONE, TOP_K};
 use ranking::update_top;
 
@@ -46,14 +46,24 @@ impl ArenaTrie {
         word_id: u32,
         words: &[WordRecord],
     ) {
+        let Some(entry) = Entry::of(word_id, words) else {
+            return;
+        };
         let mut node = 0u32;
         for ch in chars {
             node = self.ensure_child(node, ch);
-            update_top(&mut self.nodes[node as usize], word_id, words);
+            update_top(&mut self.nodes[node as usize], entry, words);
         }
     }
 
-    pub(crate) fn find(&self, chars: impl Iterator<Item = char>) -> [u32; TOP_K] {
+    /// The best few live words under `chars`, `NONE` where an entry has gone
+    /// stale. Validating here rather than at the call site keeps the caller's
+    /// merge working on plain ids.
+    pub(crate) fn find(
+        &self,
+        chars: impl Iterator<Item = char>,
+        words: &[WordRecord],
+    ) -> [u32; TOP_K] {
         let mut node = 0u32;
         let mut consumed = false;
         for ch in chars {
@@ -64,7 +74,9 @@ impl ArenaTrie {
             node = next;
         }
         if consumed {
-            self.nodes[node as usize].top
+            self.nodes[node as usize]
+                .top
+                .map(|entry| entry.live_id(words))
         } else {
             [NONE; TOP_K]
         }

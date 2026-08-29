@@ -32,6 +32,11 @@ pub struct SuggestionEngine {
     pub(crate) store: Option<Store>,
     pub(crate) last_snapshot_bytes: u64,
     pub(crate) journal_bytes: u64,
+    /// How many times the tries have been rebuilt from scratch. Not part of
+    /// `SuggestionStats` — that struct crosses the C ABI and the JNI boundary,
+    /// and this exists so the crate's own tests can assert the learn path never
+    /// triggers one.
+    pub(crate) rebuilds: u64,
 }
 
 impl SuggestionEngine {
@@ -47,6 +52,7 @@ impl SuggestionEngine {
             store: None,
             last_snapshot_bytes: 0,
             journal_bytes: 0,
+            rebuilds: 0,
         }
     }
 

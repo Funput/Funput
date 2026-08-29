@@ -1,17 +1,16 @@
 //! The order each node keeps its top-3 in, and the insertion that maintains it.
 
-use super::node::{NONE, Node, TOP_K};
+use super::node::{Entry, Node, TOP_K};
 use crate::types::WordRecord;
 
-fn ranks_before(left: u32, right: u32, words: &[WordRecord]) -> bool {
-    if left == NONE {
+/// Dead entries rank last, so a live word always displaces one.
+fn ranks_before(left: Entry, right: Entry, words: &[WordRecord]) -> bool {
+    let Some(left) = left.word(words) else {
         return false;
-    }
-    if right == NONE {
+    };
+    let Some(right) = right.word(words) else {
         return true;
-    }
-    let left = &words[left as usize];
-    let right = &words[right as usize];
+    };
     left.uses
         .cmp(&right.uses)
         .then_with(|| left.last_used.cmp(&right.last_used))
@@ -19,11 +18,17 @@ fn ranks_before(left: u32, right: u32, words: &[WordRecord]) -> bool {
         .is_gt()
 }
 
-pub(super) fn update_top(node: &mut Node, word_id: u32, words: &[WordRecord]) {
-    let mut candidates = [NONE; TOP_K + 1];
+pub(super) fn update_top(node: &mut Node, entry: Entry, words: &[WordRecord]) {
+    let mut candidates = [Entry::EMPTY; TOP_K + 1];
     candidates[..TOP_K].copy_from_slice(&node.top);
-    if !node.top.contains(&word_id) {
-        candidates[TOP_K] = word_id;
+    // An id already present but at another generation is a dead entry for some
+    // other word, not this one: let both compete and the dead one sort out.
+    let present = node
+        .top
+        .iter()
+        .any(|slot| slot.id == entry.id && slot.generation == entry.generation);
+    if !present {
+        candidates[TOP_K] = entry;
     }
 
     for left in 0..candidates.len() {

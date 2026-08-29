@@ -54,6 +54,7 @@ impl SuggestionEngine {
             text: normalized,
             uses: 1,
             last_used: self.sequence,
+            generation: 0,
         };
         if self.words.len() < self.config.max_words {
             let index = self.words.len() as u32;
@@ -62,7 +63,11 @@ impl SuggestionEngine {
         }
         let index = self.lowest_ranked_index().unwrap_or(0);
         let rebuild = self.words[index].uses >= self.config.promotion_uses;
+        // Wrapping is unreachable in practice: it would take 65,536 reuses of one
+        // slot with no rebuild in between, and a rebuild clears every stale entry.
+        let generation = self.words[index].generation.wrapping_add(1);
         self.words[index] = record;
+        self.words[index].generation = generation;
         (index as u32, 0, rebuild)
     }
 
@@ -77,6 +82,7 @@ impl SuggestionEngine {
     }
 
     pub(crate) fn rebuild_tries(&mut self) {
+        self.rebuilds = self.rebuilds.saturating_add(1);
         self.exact.clear();
         self.folded.clear();
         for index in 0..self.words.len() {
