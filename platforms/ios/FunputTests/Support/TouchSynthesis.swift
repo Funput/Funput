@@ -42,13 +42,6 @@ final class ScriptedWriter: KeyboardDocumentWriting {
         )
     }
 
-    var caretContext: KeyboardCaretContext {
-        KeyboardCaretContext(
-            before: String(text.prefix(caret)),
-            after: String(text.dropFirst(caret))
-        )
-    }
-
     func replaceTextExternally(with text: String) {
         self.text = text
         textCount = text.count

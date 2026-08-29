@@ -49,24 +49,17 @@ enum KeyboardKeyAccessibilityActions {
             }]
         case .space:
             [
-                cursorAction("Con trỏ sang trái", step: .init(columns: -1), emit: emit),
-                cursorAction("Con trỏ sang phải", step: .init(columns: 1), emit: emit),
-                cursorAction("Con trỏ lên", step: .init(lines: -1), emit: emit),
-                cursorAction("Con trỏ xuống", step: .init(lines: 1), emit: emit),
+                UIAccessibilityCustomAction(name: "Con trỏ sang trái") { _ in
+                    emit(.cursorMoved(offset: -1))
+                    return true
+                },
+                UIAccessibilityCustomAction(name: "Con trỏ sang phải") { _ in
+                    emit(.cursorMoved(offset: 1))
+                    return true
+                },
             ]
         default:
             []
-        }
-    }
-
-    private static func cursorAction(
-        _ name: String,
-        step: CursorPanStep,
-        emit: @escaping (KeyboardKeyEvent.Phase) -> Void
-    ) -> UIAccessibilityCustomAction {
-        UIAccessibilityCustomAction(name: name) { _ in
-            emit(.cursorMoved(step))
-            return true
         }
     }
 }

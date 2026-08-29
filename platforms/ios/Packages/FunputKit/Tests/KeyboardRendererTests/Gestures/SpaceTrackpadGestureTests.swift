@@ -32,7 +32,7 @@ struct SpaceTrackpadGestureTests {
         subject.move(to: 145)
 
         #expect(subject.claims == [.trackpad])
-        #expect(subject.phases == [.pressed, .cursorMoved(.init(columns: 2))])
+        #expect(subject.phases == [.pressed, .cursorMoved(offset: 2)])
         #expect(!subject.phases.contains(.swiped(.toggleLanguage)))
     }
 
@@ -46,8 +46,8 @@ struct SpaceTrackpadGestureTests {
 
         #expect(subject.phases == [
             .pressed,
-            .cursorMoved(.init(columns: 3)),
-            .cursorMoved(.init(columns: -2)),
+            .cursorMoved(offset: 3),
+            .cursorMoved(offset: -2),
         ])
     }
 

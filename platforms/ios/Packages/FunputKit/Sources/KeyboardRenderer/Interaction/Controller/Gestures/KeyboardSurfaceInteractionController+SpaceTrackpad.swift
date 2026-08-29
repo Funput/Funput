@@ -9,10 +9,7 @@ extension KeyboardSurfaceInteractionController {
         touches[token]?.holdArmed = true
     }
 
-    /// Promotes an armed space press into a caret pan once the finger travels.
-    ///
-    /// Distance is measured in any direction, not just sideways: an upward drag is how the
-    /// caret reaches the line above, and it has no other meaning on the spacebar.
+    /// Promotes an armed space press into a caret pan once the finger travels sideways.
     ///
     /// A refused claim means the pipeline already committed the press; the caller falls
     /// through to the ordinary swipe handling rather than emitting anyway.
@@ -20,8 +17,7 @@ extension KeyboardSurfaceInteractionController {
         guard var state = touches[token],
               state.holdArmed,
               state.trackpad == nil,
-              hypot(translation.x, translation.y)
-                  >= KeyboardSurfaceInteractionController.trackpadActivation,
+              abs(translation.x) >= KeyboardSurfaceInteractionController.trackpadActivation,
               // A repeat that already fired inserted spaces; switching to a caret pan on
               // top of that would leave the user unsure what the gesture did.
               !(repeatTouch == token && repeatController.hasRepeated),
@@ -40,17 +36,15 @@ extension KeyboardSurfaceInteractionController {
 
     func updateSpaceTrackpad(token: TouchToken, translation: CGPoint) {
         guard var state = touches[token], var tracker = state.trackpad else { return }
-        let step = tracker.update(translation: translation)
+        let offset = tracker.update(translationX: translation.x)
         state.trackpad = tracker
         touches[token] = state
-        guard !step.isEmpty else { return }
+        guard offset != 0 else { return }
         onContactEvent(
             token,
-            KeyboardKeyEvent(key: state.initialKey, phase: .cursorMoved(step))
+            KeyboardKeyEvent(key: state.initialKey, phase: .cursorMoved(offset: offset))
         )
-        // A line change moves the caret further than the user can track from the finger
-        // alone, so it gets the firmer tick and stays distinguishable without looking.
-        if hapticsEnabled { haptics.perform(step.lines == 0 ? .deleteRepeat : .control) }
+        if hapticsEnabled { haptics.perform(.deleteRepeat) }
     }
 
     func completeGestureTouch(token: TouchToken, state: TouchState) {

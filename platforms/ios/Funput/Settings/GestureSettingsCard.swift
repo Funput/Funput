@@ -13,7 +13,7 @@ struct GestureSettingsCard: View {
             SettingsToggleRow(
                 title: "Cử chỉ thông minh",
                 summary: "Gõ đúp phím cách để chấm câu, giữ phím cách rồi kéo để di chuyển "
-                    + "con trỏ mọi hướng, vuốt trái phím xóa để xóa cả từ.",
+                    + "con trỏ, vuốt trái phím xóa để xóa cả từ.",
                 isOn: $isEnabled
             )
         }

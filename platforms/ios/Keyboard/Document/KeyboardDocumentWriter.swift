@@ -38,16 +38,6 @@ final class KeyboardDocumentWriter: KeyboardDocumentWriting {
         return object.perform(selector)?.takeUnretainedValue() as? UUID
     }
 
-    /// Read only by the caret pan, which needs to know where the lines are. Kept out of
-    /// ``snapshot`` on purpose: that one is read on every keystroke and a second proxy
-    /// round-trip there costs typing latency this gesture can afford and typing cannot.
-    var caretContext: KeyboardCaretContext {
-        KeyboardCaretContext(
-            before: proxy.documentContextBeforeInput ?? "",
-            after: proxy.documentContextAfterInput ?? ""
-        )
-    }
-
     func apply(_ transaction: InputTransaction) {
         let deleteCount = transaction.mutations.reduce(into: 0) {
             if case let .deleteBackward(count) = $1 { $0 += max(0, count) }
