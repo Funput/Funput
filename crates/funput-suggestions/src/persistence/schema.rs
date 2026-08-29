@@ -16,8 +16,8 @@ pub(super) const MAX_JOURNAL_BYTES: u64 = 1024 * 1024;
 pub(super) const SNAPSHOT_WRITE_VERSION: u16 = 2;
 pub(super) const SNAPSHOT_MIN_READ_VERSION: u16 = 1;
 
-/// v1 is a flat token list. Bumped when context breaks arrive.
-pub(super) const JOURNAL_WRITE_VERSION: u16 = 1;
+/// v1 is a flat token list; v2 may carry context breaks between the tokens.
+pub(super) const JOURNAL_WRITE_VERSION: u16 = 2;
 pub(super) const JOURNAL_MIN_READ_VERSION: u16 = 1;
 
 /// The oldest schema a build can still read. Raising one is how a format is
@@ -94,10 +94,10 @@ mod tests {
 
     #[test]
     fn the_two_records_are_versioned_apart() {
-        // The snapshot has moved and the journal has not; a build that shared one
-        // number would have to move both or neither.
+        // They move independently. What matters is that each still reads the
+        // version below it, which is every file already in the field.
         assert!(matches!(accept_snapshot(1), Version::Readable));
-        assert!(matches!(accept_journal(2), Version::TooNew));
+        assert!(matches!(accept_journal(1), Version::Readable));
     }
 
     #[test]

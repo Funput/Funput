@@ -34,7 +34,7 @@ impl Store {
         snapshot::decode(&bytes)
     }
 
-    pub(super) fn load_journal(&self) -> io::Result<(Vec<String>, u64)> {
+    pub(super) fn load_journal(&self) -> io::Result<(Vec<super::JournalEntry>, u64)> {
         let path = self.journal_path();
         let bytes = match fs::metadata(&path) {
             // Far past the 64 KiB that triggers a compact, so this is not
@@ -51,15 +51,15 @@ impl Store {
         };
         let journal_bytes = bytes.len() as u64;
         let mut cursor = Cursor::new(&bytes);
-        let mut tokens = Vec::new();
+        let mut entries = Vec::new();
         while !cursor.is_empty() {
             match journal::decode_frame(&mut cursor) {
-                Ok(frame) => tokens.extend(frame),
+                Ok(frame) => entries.extend(frame),
                 Err(error) if error.kind() == io::ErrorKind::Unsupported => return Err(error),
                 Err(_) => break,
             }
         }
-        Ok((tokens, journal_bytes))
+        Ok((entries, journal_bytes))
     }
 
     /// Empty a journal we have decided not to read.

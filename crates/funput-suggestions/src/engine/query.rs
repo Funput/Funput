@@ -47,8 +47,12 @@ impl SuggestionEngine {
                 .iter()
                 .map(|word| word.text.capacity())
                 .sum::<usize>();
-        let pending_bytes = self.pending.capacity() * size_of::<String>()
-            + self.pending.iter().map(String::capacity).sum::<usize>();
+        let pending_bytes = self.pending.capacity() * size_of::<crate::persistence::JournalEntry>()
+            + self
+                .pending
+                .iter()
+                .map(|(token, _)| token.capacity())
+                .sum::<usize>();
         SuggestionStats {
             words: self.words.len(),
             promoted_words: self

@@ -1,6 +1,7 @@
 use super::{PENDING_LIMIT, REBUILD_AFTER_EVICTIONS, SuggestionEngine};
 use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
 use crate::index::{NONE, normalize};
+use crate::persistence::JournalEntry;
 use crate::types::{LearnOutcome, WordRecord};
 
 impl SuggestionEngine {
@@ -8,10 +9,10 @@ impl SuggestionEngine {
         self.learn_after(None, token)
     }
 
-    /// Returns the outcome and the slot the token landed in; the slot is `NONE`
-    /// when the token was ignored. `learn_after` needs the slot to hang an edge
-    /// off, and it is the only thing that reads it.
-    pub(crate) fn learn_inner(&mut self, token: &str, record_pending: bool) -> (LearnOutcome, u32) {
+    /// Learn one token, returning the outcome and the slot it landed in — `NONE`
+    /// when it was ignored. Appending it to the journal is `learn_after_inner`'s
+    /// job, because only that knows whether it followed what came before.
+    pub(crate) fn learn_inner(&mut self, token: &str) -> (LearnOutcome, u32) {
         let normalized = normalize::exact(token);
         let length = normalized.chars().count();
         if length == 0
@@ -22,14 +23,7 @@ impl SuggestionEngine {
         }
 
         self.sequence = self.sequence.saturating_add(1);
-        let (word_id, previous_uses, evicted_indexed) = self.upsert_word(normalized.clone());
-        if record_pending {
-            if self.pending.len() < PENDING_LIMIT {
-                self.pending.push(normalized);
-            } else {
-                self.pending_overflow = true;
-            }
-        }
+        let (word_id, previous_uses, evicted_indexed) = self.upsert_word(normalized);
         if evicted_indexed {
             // The evicted word's entries are stale, not wrong: its slot's
             // generation moved on, so they already read as dead. Sweeping them is
@@ -52,6 +46,17 @@ impl SuggestionEngine {
             LearnOutcome::Updated
         };
         (outcome, word_id)
+    }
+
+    /// Overflow is not a gap in the journal: `flush` turns it into a compact,
+    /// which replaces the journal outright rather than appending a chain with a
+    /// hole nothing marked.
+    pub(crate) fn push_pending(&mut self, entry: JournalEntry) {
+        if self.pending.len() < PENDING_LIMIT {
+            self.pending.push(entry);
+        } else {
+            self.pending_overflow = true;
+        }
     }
 
     fn upsert_word(&mut self, normalized: String) -> (u32, u32, bool) {

@@ -15,7 +15,7 @@ use std::path::Path;
 use config::sanitize;
 
 use crate::index::ArenaTrie;
-use crate::persistence::Store;
+use crate::persistence::{JournalEntry, Store};
 use crate::types::WordRecord;
 
 pub(crate) const PENDING_LIMIT: usize = 256;
@@ -38,7 +38,7 @@ pub struct SuggestionEngine {
     pub(crate) exact: ArenaTrie,
     pub(crate) folded: ArenaTrie,
     pub(crate) sequence: u64,
-    pub(crate) pending: Vec<String>,
+    pub(crate) pending: Vec<JournalEntry>,
     pub(crate) pending_overflow: bool,
     pub(crate) store: Option<Store>,
     pub(crate) last_snapshot_bytes: u64,
@@ -51,6 +51,12 @@ pub struct SuggestionEngine {
     /// Indexed words evicted since the last rebuild — that is, how many dead
     /// entries the tries are currently carrying.
     pub(crate) evictions_since_rebuild: u32,
+    /// The slot and generation of the last token appended to the journal.
+    ///
+    /// Replay rebuilds pairs from adjacency, so the writer has to know whether
+    /// the context it was handed really is what it wrote last. When it is not, a
+    /// break goes in and replay loses an edge rather than inventing one.
+    pub(crate) journalled_previous: Option<(u32, u16)>,
 }
 
 impl SuggestionEngine {
@@ -68,6 +74,7 @@ impl SuggestionEngine {
             journal_bytes: 0,
             rebuilds: 0,
             evictions_since_rebuild: 0,
+            journalled_previous: None,
         }
     }
 
@@ -81,8 +88,11 @@ impl SuggestionEngine {
         engine.journal_bytes = loaded.journal_bytes;
         engine.enforce_capacity();
         engine.rebuild_tries();
-        for token in loaded.journal {
-            engine.learn_inner(&token, false);
+        let mut previous: Option<String> = None;
+        for (token, chained) in loaded.journal {
+            let context = chained.then_some(previous.as_deref()).flatten();
+            engine.learn_after_inner(context, &token, false);
+            previous = Some(token);
         }
         engine.pending.clear();
         engine.pending_overflow = false;
