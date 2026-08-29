@@ -1,10 +1,25 @@
 import CoreGraphics
 import Foundation
 
+/// Turns a stream of contact samples into one decision per press.
+///
+/// A press commits the key the finger **landed** on. The finger moves between landing and
+/// lifting — it rolls as it comes off, and the roll carries the direction of whatever key is
+/// typed next — so the lift point is the noisiest moment of the whole gesture and the one the
+/// user has least control over. Resolving to it made a press near a key edge commit its
+/// neighbour without any signal that something had gone wrong: not far enough to trip the tap
+/// slop, and never visible to the person typing, who had pressed the right key.
+///
+/// The lift point still decides one thing: whether the finger lifted inside the tracked area
+/// at all. Where inside it lifted is not the resolver's business.
 public struct ContactResolver<Payload: Sendable>: Sendable {
     struct State: Sendable {
         let beganAt: TimeInterval
         let startLocation: CGPoint
+        /// What the finger was on when it landed. This is what a press commits.
+        let landedPayload: Payload
+        /// What it is on now, which decides only whether the lift happened inside the
+        /// tracked area — never which key the press meant.
         var currentPayload: Payload?
         var exceededTapSlop = false
     }
@@ -57,6 +72,7 @@ public struct ContactResolver<Payload: Sendable>: Sendable {
         states[sample.id] = State(
             beganAt: sample.timestamp,
             startLocation: sample.location,
+            landedPayload: payload,
             currentPayload: payload
         )
         return .began(sample.id)
@@ -84,12 +100,12 @@ public struct ContactResolver<Payload: Sendable>: Sendable {
         if duration > configuration.maximumTapDuration {
             return .cancelled(sample.id, .exceededDuration)
         }
-        guard let payload = state.currentPayload else {
+        guard state.currentPayload != nil else {
             return .cancelled(sample.id, .endedOutside)
         }
         return .resolved(
             sample.id,
-            payload,
+            state.landedPayload,
             ContactResolutionMetadata(exceededTapSlop: state.exceededTapSlop)
         )
     }
