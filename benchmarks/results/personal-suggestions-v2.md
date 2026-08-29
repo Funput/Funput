@@ -28,6 +28,31 @@ a 2 s timer and every 32 learns. `REBUILD_AFTER_EVICTIONS = 64` caps how many
 dead entries can accumulate for a caller that never flushes, which is what keeps
 the tries from growing with every distinct word ever seen.
 
+## Lookup with a context
+
+| Path | Prefix only | With a context |
+|---|---:|---:|
+| Exact prefix, 5 scalars | 220 ns | 444 ns |
+| Miss | 146 ns | 340 ns |
+
+The context costs roughly 200 ns: normalizing the previous word, finding its slot,
+and walking four follower entries. Nearly all of it is finding the slot — a scan
+of up to 5,000 words — and it stays this cheap only because the word is
+normalized onto the stack once and then compared with `==`, which reads the
+length out of the record and rejects almost every candidate without touching its
+heap buffer. Comparing through a normalizing iterator inside the loop instead
+rebuilt an NFC iterator per word and took a cache miss on each; that was
+affordable when the call only ran once per learned token, and would not have been
+here. An O(1) index over `words` was left unbuilt: 200 ns on a background worker
+does not justify roughly 200 KB and a second copy of every word.
+
+Prefix-only lookup is 72.6 ns to 76.7 ns on the shortest prefix, about 6%. That is
+the cost of `suggest` becoming `suggest_with(None, ...)` and the merge moving
+behind two reusable calls; `#[inline]` recovers part of it, and the alternative is
+the same merge written twice. Both figures are around 13 million lookups a second.
+
+Warm lookup still makes zero heap allocations, with and without a context.
+
 ## Memory
 
 Retained heap for a warm 5,000-word lexicon, measured with
@@ -45,8 +70,8 @@ capacity holds. `context_seen` fits in padding the record already had. The tests
 enforce a 4 MiB retained-heap budget, so the whole bigram feature spends about
 6% of the room it has.
 
-Lookup is unchanged at p99 **292 ns** and 3.85 M queries/second — the edges are
-written on the learn path and nothing reads them yet.
+Lookup was p99 **292 ns** and 3.85 M queries/second while nothing read the edges;
+see above for what reading them costs.
 
 ## Persistence
 

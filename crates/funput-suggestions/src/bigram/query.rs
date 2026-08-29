@@ -18,6 +18,7 @@ impl SuggestionEngine {
     /// `previous` is the caller's business, as it is for `learn_after`: a
     /// platform that cannot vouch for what came before passes `None` and gets
     /// exactly what `suggest` has always returned.
+    #[inline]
     pub fn suggest_with(&self, previous: Option<&str>, prefix: &str) -> SuggestionSet<'_> {
         let (ids, len) = self.prefix_candidates(prefix);
         let Some((context, _)) = previous.and_then(|text| self.context_slot(text)) else {

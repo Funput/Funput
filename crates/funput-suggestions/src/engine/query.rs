@@ -11,6 +11,7 @@ impl SuggestionEngine {
 
     /// The words the prefix alone would offer, best first. Split out so the
     /// context-aware path can reorder and extend the same set.
+    #[inline]
     pub(crate) fn prefix_candidates(&self, prefix: &str) -> ([u32; TOP_K], usize) {
         let scalar_count = normalize::exact_chars(prefix).count();
         if scalar_count == 0 || scalar_count > self.config.max_token_scalars {
@@ -36,6 +37,7 @@ impl SuggestionEngine {
         (ids, len)
     }
 
+    #[inline]
     pub(crate) fn assemble(&self, ids: [u32; TOP_K], len: usize) -> SuggestionSet<'_> {
         let items = array::from_fn(|index| {
             ids.get(index)

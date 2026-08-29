@@ -48,13 +48,48 @@ fn warm_lookup_does_not_allocate() {
         engine.learn(word);
     }
 
-    MEASURING.set(true);
-    let before = ALLOCATIONS.get();
-    for _ in 0..100_000 {
-        std::hint::black_box(engine.suggest(std::hint::black_box("kh")));
-    }
-    let allocations = ALLOCATIONS.get() - before;
-    MEASURING.set(false);
+    let allocations = measure(|| {
+        for _ in 0..100_000 {
+            std::hint::black_box(engine.suggest(std::hint::black_box("kh")));
+        }
+    });
 
     assert_eq!(allocations, 0, "warm lookup allocated {allocations} times");
+}
+
+/// The context path normalizes the previous word and walks its follower slots on
+/// every keystroke, so it has to hold the same budget the plain lookup does.
+#[test]
+fn warm_lookup_with_a_context_does_not_allocate() {
+    let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
+    for word in ["không", "khỏe", "khoa", "hòa"] {
+        engine.learn(word);
+        engine.learn(word);
+    }
+    engine.learn_after(None, "xin");
+    engine.learn_after(Some("xin"), "khỏe");
+    engine.learn_after(Some("xin"), "khỏe");
+
+    let allocations = measure(|| {
+        for _ in 0..100_000 {
+            std::hint::black_box(engine.suggest_with(
+                std::hint::black_box(Some("xin")),
+                std::hint::black_box("kh"),
+            ));
+        }
+    });
+
+    assert_eq!(
+        allocations, 0,
+        "warm lookup with a context allocated {allocations} times"
+    );
+}
+
+fn measure(body: impl FnOnce()) -> usize {
+    MEASURING.set(true);
+    let before = ALLOCATIONS.get();
+    body();
+    let allocations = ALLOCATIONS.get() - before;
+    MEASURING.set(false);
+    allocations
 }
