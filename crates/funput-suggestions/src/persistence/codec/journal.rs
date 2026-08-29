@@ -3,7 +3,7 @@
 use std::io;
 
 use super::binary::{Cursor, checksum, invalid_data, put_u16, put_u32};
-use crate::persistence::schema::{self, JOURNAL_MAGIC, Version, WRITE_VERSION};
+use crate::persistence::schema::{self, JOURNAL_MAGIC, JOURNAL_WRITE_VERSION, Version};
 
 pub(crate) fn encode_frame(tokens: &[String]) -> Vec<u8> {
     let mut payload = Vec::new();
@@ -14,7 +14,7 @@ pub(crate) fn encode_frame(tokens: &[String]) -> Vec<u8> {
     }
     let mut frame = Vec::with_capacity(14 + payload.len());
     frame.extend_from_slice(JOURNAL_MAGIC);
-    put_u16(&mut frame, WRITE_VERSION);
+    put_u16(&mut frame, JOURNAL_WRITE_VERSION);
     put_u32(&mut frame, payload.len() as u32);
     put_u32(&mut frame, checksum(&payload));
     frame.extend_from_slice(&payload);
@@ -25,7 +25,7 @@ pub(crate) fn decode_frame(cursor: &mut Cursor<'_>) -> io::Result<Vec<String>> {
     if cursor.take(JOURNAL_MAGIC.len())? != JOURNAL_MAGIC {
         return Err(invalid_data());
     }
-    match schema::accept(cursor.u16()?) {
+    match schema::accept_journal(cursor.u16()?) {
         Version::Readable => {}
         Version::TooNew => {
             return Err(io::Error::new(

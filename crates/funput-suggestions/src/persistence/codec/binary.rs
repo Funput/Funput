@@ -20,6 +20,10 @@ impl<'a> Cursor<'a> {
         Ok(value)
     }
 
+    pub(crate) fn u8(&mut self) -> io::Result<u8> {
+        Ok(self.take(1)?[0])
+    }
+
     pub(crate) fn u16(&mut self) -> io::Result<u16> {
         Ok(u16::from_le_bytes(
             self.take(2)?.try_into().map_err(|_| invalid_data())?,

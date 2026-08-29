@@ -52,7 +52,10 @@ fn newer_schema_is_rejected_without_overwriting_it() {
     engine.compact().unwrap();
     drop(engine);
     let mut bytes = fs::read(&snapshot).unwrap();
-    bytes[8..10].copy_from_slice(&2u16.to_le_bytes());
+    // One past whatever this build writes, read out of the file rather than
+    // written in here, so the test keeps meaning the same thing after a bump.
+    let version = u16::from_le_bytes(bytes[8..10].try_into().unwrap());
+    bytes[8..10].copy_from_slice(&(version + 1).to_le_bytes());
     let content_len = bytes.len() - 4;
     let sum = crate::persistence::checksum(&bytes[..content_len]);
     bytes[content_len..].copy_from_slice(&sum.to_le_bytes());
@@ -119,4 +122,45 @@ fn an_oversized_journal_is_discarded_without_losing_persistence() {
     drop(engine);
     let reopened = SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
     assert_eq!(texts(&reopened, "m"), ["mới"]);
+}
+
+/// A valid v1 snapshot: the word list alone, with no follower section.
+fn version_one_snapshot(words: &[(&str, u32, u64)], sequence: u64) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(b"FPSNAP01");
+    bytes.extend_from_slice(&1u16.to_le_bytes());
+    bytes.extend_from_slice(&sequence.to_le_bytes());
+    bytes.extend_from_slice(&(words.len() as u32).to_le_bytes());
+    for (text, uses, last_used) in words {
+        bytes.extend_from_slice(&(text.len() as u16).to_le_bytes());
+        bytes.extend_from_slice(text.as_bytes());
+        bytes.extend_from_slice(&uses.to_le_bytes());
+        bytes.extend_from_slice(&last_used.to_le_bytes());
+    }
+    let sum = crate::persistence::checksum(&bytes);
+    bytes.extend_from_slice(&sum.to_le_bytes());
+    bytes
+}
+
+#[test]
+fn a_version_one_snapshot_upgrades_without_losing_a_word() {
+    let directory = tempdir().unwrap();
+    let snapshot = directory.path().join("personal-lexicon.snapshot");
+    let original = version_one_snapshot(&[("chào", 4, 1), ("chúc", 2, 2)], 2);
+    fs::write(&snapshot, &original).unwrap();
+
+    let mut engine = SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
+    assert_eq!(texts(&engine, "ch"), ["chào", "chúc"]);
+    assert_eq!(engine.stats().words, 2);
+
+    engine.compact().unwrap();
+    drop(engine);
+    assert_ne!(
+        fs::read(&snapshot).unwrap(),
+        original,
+        "the first compact should have rewritten the file at the current schema"
+    );
+
+    let reopened = SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
+    assert_eq!(texts(&reopened, "ch"), ["chào", "chúc"]);
 }
