@@ -1,29 +1,19 @@
+//! The arena-backed prefix trie: every node on a word's path remembers the best
+//! few words underneath it, so a lookup is a walk plus one array read.
+//!
+//! - `node` — the arena node and its sizing constants.
+//! - `ranking` — the order a node keeps its top-3 in.
+
+mod node;
+mod ranking;
+
 use std::cmp::Ordering;
 
-use super::ranking::ranks_before;
 use crate::types::WordRecord;
 
-pub(crate) const NONE: u32 = u32::MAX;
-pub(crate) const TOP_K: usize = 3;
-
-#[derive(Debug, Clone)]
-struct Node {
-    label: char,
-    first_child: u32,
-    next_sibling: u32,
-    top: [u32; TOP_K],
-}
-
-impl Node {
-    fn new(label: char) -> Self {
-        Self {
-            label,
-            first_child: NONE,
-            next_sibling: NONE,
-            top: [NONE; TOP_K],
-        }
-    }
-}
+use node::Node;
+pub(crate) use node::{NONE, TOP_K};
+use ranking::update_top;
 
 #[derive(Debug, Clone)]
 pub(crate) struct ArenaTrie {
@@ -59,7 +49,7 @@ impl ArenaTrie {
         let mut node = 0u32;
         for ch in chars {
             node = self.ensure_child(node, ch);
-            Self::update_top(&mut self.nodes[node as usize], word_id, words);
+            update_top(&mut self.nodes[node as usize], word_id, words);
         }
     }
 
@@ -118,22 +108,5 @@ impl ArenaTrie {
             self.nodes[previous as usize].next_sibling = index;
         }
         index
-    }
-
-    fn update_top(node: &mut Node, word_id: u32, words: &[WordRecord]) {
-        let mut candidates = [NONE; TOP_K + 1];
-        candidates[..TOP_K].copy_from_slice(&node.top);
-        if !node.top.contains(&word_id) {
-            candidates[TOP_K] = word_id;
-        }
-
-        for left in 0..candidates.len() {
-            for right in (left + 1)..candidates.len() {
-                if ranks_before(candidates[right], candidates[left], words) {
-                    candidates.swap(left, right);
-                }
-            }
-        }
-        node.top.copy_from_slice(&candidates[..TOP_K]);
     }
 }
