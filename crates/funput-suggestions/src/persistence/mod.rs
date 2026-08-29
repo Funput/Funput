@@ -1,19 +1,21 @@
-mod binary;
-mod journal;
-mod snapshot;
+//! The crash-safe on-disk store: a checksummed snapshot of the whole word list,
+//! plus an append-only journal of everything learned since it was written.
+//!
+//! - `schema` — the on-disk constants both records agree on.
+//! - `codec` — pure bytes to data translation, no filesystem.
+//! - `recovery` — reading a store that may be damaged.
+//! - here — paths, and the two write paths (`append_journal`, `compact`).
+
+mod codec;
+mod recovery;
+mod schema;
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use crate::types::WordRecord;
-use binary::{checksum as crc32, put_u16, put_u32};
-
-const SNAPSHOT_MAGIC: &[u8; 8] = b"FPSNAP01";
-const JOURNAL_MAGIC: &[u8; 4] = b"FPJR";
-const VERSION: u16 = 1;
-const MAX_SNAPSHOT_BYTES: u64 = 2 * 1024 * 1024;
-const MAX_JOURNAL_BYTES: u64 = 1024 * 1024;
+use codec::{journal, snapshot};
 
 pub(crate) struct Store {
     pub(super) root: PathBuf,
@@ -57,19 +59,7 @@ impl Store {
         if tokens.is_empty() {
             return Ok(0);
         }
-        let mut payload = Vec::new();
-        put_u32(&mut payload, tokens.len() as u32);
-        for token in tokens {
-            put_u16(&mut payload, token.len() as u16);
-            payload.extend_from_slice(token.as_bytes());
-        }
-        let mut frame = Vec::with_capacity(14 + payload.len());
-        frame.extend_from_slice(JOURNAL_MAGIC);
-        put_u16(&mut frame, VERSION);
-        put_u32(&mut frame, payload.len() as u32);
-        put_u32(&mut frame, crc32(&payload));
-        frame.extend_from_slice(&payload);
-
+        let frame = journal::encode_frame(tokens);
         let mut file = OpenOptions::new()
             .create(true)
             .append(true)
@@ -101,4 +91,4 @@ impl Store {
 }
 
 #[cfg(test)]
-pub(crate) use binary::checksum;
+pub(crate) use codec::binary::checksum;
