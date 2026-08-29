@@ -5,12 +5,12 @@ use std::io;
 use crate::types::WordRecord;
 
 use super::binary::{Cursor, checksum, invalid_data, put_u16, put_u32, put_u64};
-use crate::persistence::schema::{SNAPSHOT_MAGIC, VERSION};
+use crate::persistence::schema::{self, SNAPSHOT_MAGIC, Version, WRITE_VERSION};
 
 pub(crate) fn encode(words: &[WordRecord], sequence: u64) -> Vec<u8> {
     let mut bytes = Vec::new();
     bytes.extend_from_slice(SNAPSHOT_MAGIC);
-    put_u16(&mut bytes, VERSION);
+    put_u16(&mut bytes, WRITE_VERSION);
     put_u64(&mut bytes, sequence);
     put_u32(&mut bytes, words.len() as u32);
     for word in words {
@@ -36,11 +36,15 @@ pub(crate) fn decode(bytes: &[u8]) -> io::Result<Option<(Vec<WordRecord>, u64)>>
     if cursor.take(SNAPSHOT_MAGIC.len())? != SNAPSHOT_MAGIC {
         return Ok(None);
     }
-    if cursor.u16()? != VERSION {
-        return Err(io::Error::new(
-            io::ErrorKind::Unsupported,
-            "personal lexicon schema is newer or unsupported",
-        ));
+    match schema::accept(cursor.u16()?) {
+        Version::Readable => {}
+        Version::TooNew => {
+            return Err(io::Error::new(
+                io::ErrorKind::Unsupported,
+                "personal lexicon schema is newer than this build",
+            ));
+        }
+        Version::TooOld => return Ok(None),
     }
     let sequence = cursor.u64()?;
     let count = cursor.u32()? as usize;
