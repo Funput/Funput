@@ -23,7 +23,13 @@ impl SuggestionEngine {
         let Some((context, _)) = previous.and_then(|text| self.context_slot(text)) else {
             return self.assemble(ids, len);
         };
-        let (ids, len) = self.with_context(context, prefix, ids, len);
+        // No prefix means no candidates to reorder, so the context is all there
+        // is to go on and a much stricter question applies.
+        let (ids, len) = if len == 0 && prefix.is_empty() {
+            self.predict(context)
+        } else {
+            self.with_context(context, prefix, ids, len)
+        };
         self.assemble(ids, len)
     }
 }
