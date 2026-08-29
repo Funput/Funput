@@ -4,8 +4,12 @@ import Testing
 struct CompactSymbolLayoutParityTests {
     @Test("Compact Telex pages keep a stable four-row family")
     func stableFamily() {
-        for mode in KeyboardLayoutMode.allCases {
-            #expect(resolve(mode).rows.count == 4)
+        // Every QWERTY page honours the preference, so each keeps the four-row shape on
+        // every page it can switch to.
+        for editor in [KeyboardEditorMode.text, .search, .email, .url] {
+            for mode in KeyboardLayoutMode.allCases {
+                #expect(resolve(mode, editorMode: editor).rows.count == 4)
+            }
         }
     }
 
@@ -38,13 +42,13 @@ struct CompactSymbolLayoutParityTests {
     @Test("VNI and specialized editors ignore the compact preference")
     func standardOnlyContexts() {
         for mode in KeyboardLayoutMode.allCases {
-            #expect(resolve(mode, method: .vni).rows.count == 5)
-        }
-        for editor in [KeyboardEditorMode.search, .email, .url, .password] {
-            for mode in KeyboardLayoutMode.allCases {
-                let layout = resolve(mode, editorMode: editor)
-                #expect(layout.rows.count == 5)
+            for editor in [KeyboardEditorMode.text, .search, .email, .url] {
+                #expect(resolve(mode, method: .vni, editorMode: editor).rows.count == 5)
             }
+        }
+        // A secure page has no number row to trade, so it never goes compact either.
+        for mode in KeyboardLayoutMode.allCases {
+            #expect(resolve(mode, editorMode: .password).rows.count == 5)
         }
     }
 

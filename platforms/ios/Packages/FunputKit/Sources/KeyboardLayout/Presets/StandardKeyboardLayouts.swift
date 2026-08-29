@@ -3,18 +3,21 @@ public enum StandardKeyboardLayouts {
         _ inputMethod: KeyboardInputMethod,
         showsNumberRow: Bool = true
     ) -> KeyboardLayout {
-        let hasNumberRow = inputMethod == .vni || showsNumberRow
-        let layout = qwertyLayout(
-            id: "qwerty-\(inputMethod.rawValue)\(hasNumberRow ? "" : "-compact")",
+        let isCompact = usesCompactLetterRows(
             inputMethod: inputMethod,
-            leadingRows: hasNumberRow ? [topNumberRowForLetters(inputMethod)] : [],
+            editorMode: .text,
+            showsNumberRow: showsNumberRow
+        )
+        let layout = qwertyLayout(
+            id: "qwerty-\(inputMethod.rawValue)\(isCompact ? "-compact" : "")",
+            inputMethod: inputMethod,
+            leadingRows: isCompact ? [] : [topNumberRowForLetters(inputMethod)],
             actionKeys: standardActionRow().keys,
             showsTelexHints: inputMethod.isTelexFamily,
             supportsVietnameseAlternates: true
         )
         // Digits move onto the top row only when no row of their own is on screen.
-        guard !hasNumberRow, inputMethod.isTelexFamily else { return layout }
-        return CompactDigitAlternates.decorate(layout)
+        return isCompact ? CompactDigitAlternates.decorate(layout) : layout
     }
 }
 

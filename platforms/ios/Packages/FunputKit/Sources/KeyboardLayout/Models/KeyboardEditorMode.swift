@@ -27,6 +27,15 @@ public enum KeyboardEditorMode: String, CaseIterable, Hashable, Sendable {
     public var allowsSigned: Bool { self == .numberSigned || self == .numberSignedDecimal }
     public var usesKeypad: Bool { isNumber || self == .phone || self == .pin }
 
+    /// Whether this page can hide its number row and carry the digits as long-press
+    /// alternates on the top character row instead. See `usesCompactLetterRows`.
+    public var supportsCompactLetterRows: Bool {
+        switch self {
+        case .text, .search, .email, .url: true
+        default: false
+        }
+    }
+
     /// Whether `KeyboardLayoutPreset.system` describes this mode's keyboard.
     ///
     /// The stock keyboard renders text and search identically — the magnifying glass on
