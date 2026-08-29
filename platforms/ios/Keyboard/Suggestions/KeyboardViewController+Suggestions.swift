@@ -47,7 +47,8 @@ extension KeyboardViewController {
             && state.editorMode.supportsVietnameseComposition
         personalSuggestionService.update(
             inputCoordinator.takePersonalSuggestionUpdate(),
-            canQuery: canQuery
+            canQuery: canQuery,
+            capitalized: state.shiftState != .lowercase
         )
     }
 

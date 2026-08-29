@@ -1,5 +1,6 @@
 import Foundation
 import KeyboardInput
+import KeyboardRenderer
 import PersonalSuggestions
 import Testing
 
@@ -82,19 +83,74 @@ struct PersonalSuggestionServiceCreationTests {
         #expect(learned.context == "xin")
     }
 
-    @Test("A prefix shorter than the query threshold never reaches the worker")
-    func neverQueriesWithoutAPrefix() throws {
+    @Test("A context with no prefix asks for a prediction")
+    func predictsAfterASpace() throws {
         let factory = SuggestionWorkerFactorySpy()
         let service = factory.makeService()
         _ = factory.configure(service)
 
         service.update(.init(prefix: "", completedToken: "xin", context: "xin"), canQuery: true)
-        service.update(.init(prefix: "c", completedToken: nil, context: "xin"), canQuery: true)
 
         let worker = try #require(factory.workers.first)
-        // Without a prefix every follower matches, which is prediction without
-        // the threshold that has to guard it.
-        #expect(worker.events.compactMap(\.query).isEmpty)
+        let query = try #require(worker.events.compactMap(\.query).last)
+        #expect(query.prefix.isEmpty)
+        #expect(query.context == "xin")
+    }
+
+    @Test("One character is neither a prefix nor a boundary")
+    func oneCharacterAsksNothing() throws {
+        let factory = SuggestionWorkerFactorySpy()
+        let service = factory.makeService()
+        _ = factory.configure(service)
+
+        service.update(.init(prefix: "", completedToken: "xin", context: "xin"), canQuery: true)
+        let worker = try #require(factory.workers.first)
+        let afterSpace = worker.events.compactMap(\.query).count
+
+        service.update(.init(prefix: "c", completedToken: nil, context: "xin"), canQuery: true)
+        #expect(worker.events.compactMap(\.query).count == afterSpace)
+    }
+
+    @Test("A prediction can be accepted, replacing nothing")
+    func acceptsAPrediction() async throws {
+        let factory = SuggestionWorkerFactorySpy()
+        let service = factory.makeService()
+        var delivered: [[KeyboardSuggestionCandidate]] = []
+        service.onCandidates = { _, values in if !values.isEmpty { delivered.append(values) } }
+        _ = factory.configure(service)
+
+        service.update(.init(prefix: "", completedToken: "xin", context: "xin"), canQuery: true)
+        let worker = try #require(factory.workers.first)
+        worker.emit(["chào"], for: try #require(worker.events.compactMap(\.query).last))
+        await Task.yield()
+
+        let candidate = try #require(delivered.last?.first)
+        let acceptance = try #require(
+            service.acceptance(for: candidate),
+            "a prediction nobody can tap is no use at all"
+        )
+        #expect(acceptance.0.isEmpty)
+        #expect(acceptance.1 == "chào")
+    }
+
+    @Test("Shift decides the case a prediction has no prefix to take")
+    func shiftCapitalizesAPrediction() async throws {
+        let factory = SuggestionWorkerFactorySpy()
+        let service = factory.makeService()
+        var delivered: [[KeyboardSuggestionCandidate]] = []
+        service.onCandidates = { _, values in if !values.isEmpty { delivered.append(values) } }
+        _ = factory.configure(service)
+
+        service.update(
+            .init(prefix: "", completedToken: "xin", context: "xin"),
+            canQuery: true,
+            capitalized: true
+        )
+        let worker = try #require(factory.workers.first)
+        worker.emit(["chào"], for: try #require(worker.events.compactMap(\.query).last))
+        await Task.yield()
+
+        #expect(delivered.last?.first?.text == "Chào")
     }
 
     private func update(prefix: String) -> KeyboardSuggestionInputUpdate {
