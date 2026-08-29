@@ -718,6 +718,23 @@ bool funput_suggestion_learn(FunputSuggestionEngine *engine,
                              uintptr_t token_len);
 
 /**
+ * Record one completed token and that it followed `previous`.
+ *
+ * A null `previous`, or a zero length, means there was no context to vouch for —
+ * a sentence boundary, a moved caret, a fresh editor — and behaves exactly like
+ * `funput_suggestion_learn`.
+ *
+ * # Safety
+ * `previous` and `token` must each point to their stated number of readable
+ * codepoints, or be null.
+ */
+bool funput_suggestion_learn_after(FunputSuggestionEngine *engine,
+                                   const uint32_t *previous,
+                                   uintptr_t previous_len,
+                                   const uint32_t *token,
+                                   uintptr_t token_len);
+
+/**
  * Return at most three UTF-32 candidates by value. Any failure returns empty.
  *
  * # Safety
@@ -726,6 +743,20 @@ bool funput_suggestion_learn(FunputSuggestionEngine *engine,
 FunputSuggestionResult funput_suggestion_query(const FunputSuggestionEngine *engine,
                                                const uint32_t *prefix,
                                                uintptr_t prefix_len);
+
+/**
+ * Return at most three UTF-32 candidates, with the words that have followed
+ * `previous` before moved to the front. Any failure returns empty.
+ *
+ * # Safety
+ * `previous` and `prefix` must each point to their stated number of readable
+ * codepoints, or be null.
+ */
+FunputSuggestionResult funput_suggestion_query_with(const FunputSuggestionEngine *engine,
+                                                    const uint32_t *previous,
+                                                    uintptr_t previous_len,
+                                                    const uint32_t *prefix,
+                                                    uintptr_t prefix_len);
 
 /**
  * Flush pending learned tokens to the journal.
