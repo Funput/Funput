@@ -7,6 +7,7 @@ mod durability;
 mod learning;
 mod query;
 
+pub(crate) use config::MAX_TOKEN_SCALARS;
 pub use config::SuggestionConfig;
 
 use std::io;

@@ -2,7 +2,7 @@
 
 use super::follower::{FOLLOWER_SLOTS, Follower};
 use super::slots;
-use crate::engine::SuggestionEngine;
+use crate::engine::{MAX_TOKEN_SCALARS, SuggestionEngine};
 use crate::index::normalize;
 use crate::types::LearnOutcome;
 
@@ -53,12 +53,26 @@ impl SuggestionEngine {
 
     /// The slot `previous` sits in, and the generation it sits there at.
     ///
-    /// Compares through the normalizing iterator rather than `normalize::exact`,
-    /// which would allocate a `String` for every token learned with a context.
-    fn context_slot(&self, previous: &str) -> Option<(u32, u16)> {
+    /// Normalizes onto the stack and then compares with `==`, which is the same
+    /// shape `upsert_word` uses: the length check reads out of the record itself
+    /// and rejects almost every word without touching its heap buffer. Comparing
+    /// through `normalize::exact_chars` inside the loop instead would rebuild an
+    /// NFC iterator per word and take a cache miss on each one — affordable on
+    /// the learn path, and this now runs on every keystroke.
+    pub(super) fn context_slot(&self, previous: &str) -> Option<(u32, u16)> {
+        let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
+        let mut len = 0;
+        for scalar in normalize::exact_chars(previous) {
+            if len + scalar.len_utf8() > buffer.len() {
+                // Longer than anything `learn` would have accepted.
+                return None;
+            }
+            len += scalar.encode_utf8(&mut buffer[len..]).len();
+        }
+        let key = std::str::from_utf8(&buffer[..len]).ok()?;
         self.words
             .iter()
-            .position(|word| word.text.chars().eq(normalize::exact_chars(previous)))
+            .position(|word| word.text == key)
             .map(|index| (index as u32, self.words[index].generation))
     }
 
