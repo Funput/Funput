@@ -17,7 +17,7 @@ class ClippedWindowPanTest {
         val document = PanDocument("x".repeat(3000))
         document.moveTo(2500)
 
-        assertFalse(CaretPanResolver().apply(document.proxy, columns = -3, lines = 0))
+        assertFalse(CaretPanResolver().apply(document.proxy, columns = -3))
         // Reading the window's length as the caret's position used to land it at 1021.
         assertEquals(2500, document.cursor)
     }
@@ -28,7 +28,7 @@ class ClippedWindowPanTest {
         document.moveTo(2500)
         val resolver = CaretPanResolver().apply { onSelectionChanged(2500) }
 
-        assertEquals(true, resolver.apply(document.proxy, columns = -3, lines = 0))
+        assertEquals(true, resolver.apply(document.proxy, columns = -3))
         assertEquals(2497, document.cursor)
     }
 
@@ -38,8 +38,8 @@ class ClippedWindowPanTest {
         document.moveTo(2500)
         val resolver = CaretPanResolver().apply { onSelectionChanged(2500) }
 
-        resolver.apply(document.proxy, columns = -3, lines = 0)
-        resolver.apply(document.proxy, columns = -3, lines = 0)
+        resolver.apply(document.proxy, columns = -3)
+        resolver.apply(document.proxy, columns = -3)
 
         // The resolver's own setSelection keeps the reference current without a fresh report.
         assertEquals(2494, document.cursor)
@@ -52,7 +52,7 @@ class ClippedWindowPanTest {
         // The caret cannot be at 10 when 1024 characters are visible behind it.
         val resolver = CaretPanResolver().apply { onSelectionChanged(10) }
 
-        assertFalse(resolver.apply(document.proxy, columns = -3, lines = 0))
+        assertFalse(resolver.apply(document.proxy, columns = -3))
         assertEquals(2500, document.cursor)
     }
 }

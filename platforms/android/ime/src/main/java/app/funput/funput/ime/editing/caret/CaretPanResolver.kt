@@ -4,23 +4,13 @@ import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputConnection
 
 /**
- * Applies a two-axis caret pan to the live document.
+ * Moves the caret sideways in the live document.
  *
- * Reads the surrounding text once per step. Unlike iOS, whose `adjustTextPosition` is relative,
- * `setSelection` needs an absolute index, so even a purely horizontal step has to know where the
- * caret currently is — there is no read-free fast path to be had here.
+ * `setSelection` needs an absolute index, so every step has to find out where the caret currently
+ * is; there is no read-free fast path to be had here. Vertical movement is not done this way at
+ * all — see [CaretLineKeys].
  */
 internal class CaretPanResolver {
-    /**
-     * Column an earlier step in the same pan was aiming for, paired with the caret position that
-     * step left behind.
-     *
-     * Keying on the landing position is what makes the memory self-expiring: typing, deleting or
-     * the user tapping elsewhere all move the caret away from it, so the next vertical step
-     * recomputes from scratch without anyone having to call a reset.
-     */
-    private var pan: Pan? = null
-
     /**
      * Caret position as the host last reported it through `onUpdateSelection`, or [NoCaret].
      *
@@ -35,18 +25,14 @@ internal class CaretPanResolver {
         reportedCaret = position
     }
 
-    /** Returns whether the caret moved. */
-    fun apply(connection: InputConnection, columns: Int, lines: Int): Boolean {
-        if (columns == 0 && lines == 0) return false
+    /** Moves the caret [columns] characters sideways. Returns whether it moved. */
+    fun apply(connection: InputConnection, columns: Int): Boolean {
+        if (columns == 0) return false
         val context = read(connection) ?: return false
-        val remembered = pan?.takeIf { it.position == context.caretPosition }?.column
-        val resolution = CaretLineGeometry(context)
-            .resolve(columns = columns, lines = lines, desiredColumn = remembered)
-        if (resolution.offset == 0) return false
         val end = context.caretPosition + context.after.length
         val start = context.caretPosition - context.before.length
-        val position = (context.caretPosition + resolution.offset).coerceIn(start, end)
-        pan = resolution.column?.let { Pan(position, it) }
+        val position = (context.caretPosition + columns).coerceIn(start, end)
+        if (position == context.caretPosition) return false
         reportedCaret = position
         return connection.setSelection(position, position)
     }
@@ -79,8 +65,6 @@ internal class CaretPanResolver {
         if (reportedCaret < before.length) return null
         return KeyboardCaretContext(before, after, caretPosition = reportedCaret)
     }
-
-    private data class Pan(val position: Int, val column: Int)
 
     private companion object {
         const val Lookback = 1024

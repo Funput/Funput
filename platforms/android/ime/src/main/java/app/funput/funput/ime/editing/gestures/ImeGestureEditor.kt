@@ -4,6 +4,7 @@ import android.view.inputmethod.InputConnection
 import app.funput.funput.ime.editing.AndroidCompositionSession
 import app.funput.funput.ime.editing.ImeEditCommand
 import app.funput.funput.ime.editing.InputConnectionEditor
+import app.funput.funput.ime.editing.caret.CaretLineKeys
 import app.funput.funput.ime.editing.caret.CaretPanResolver
 import app.funput.funput.keyboard.model.KeyAction
 
@@ -67,13 +68,20 @@ internal class ImeGestureEditor(
      * Composition cannot survive the caret leaving the buffer it mirrors, so every step ends it —
      * but a step asking for no movement touches nothing, composition included.
      *
+     * The two axes travel by different means: sideways is an absolute `setSelection` we compute,
+     * while vertical is arrow keys the editor answers itself, because only the editor knows where
+     * its text wraps. Lines go first so the sideways nudge of a diagonal drag lands on the row the
+     * finger ended on.
+     *
      * Always returns true: the pan owns this action whether or not the caret had room to move.
      */
     private fun moveCaret(columns: Int, lines: Int): Boolean {
         if (columns == 0 && lines == 0) return true
         val current = connection() ?: return true
         composition.finish(current)
-        if (pan.apply(current, columns, lines)) onSuggestionsCleared()
+        var moved = CaretLineKeys.move(current, lines)
+        if (pan.apply(current, columns)) moved = true
+        if (moved) onSuggestionsCleared()
         return true
     }
 

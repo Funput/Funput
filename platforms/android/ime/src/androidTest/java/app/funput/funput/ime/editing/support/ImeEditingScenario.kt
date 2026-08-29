@@ -29,6 +29,30 @@ internal class HostEditor(context: Context) {
         connection.setSelection(index, index)
     }
 
+    /** Measures and lays out the unattached view so it has a Layout, and so its text wraps. */
+    fun layOutNarrow(widthPx: Int = 320) {
+        // TextView.checkForResize() reads layoutParams on every edit; an unattached view has none.
+        editText.layoutParams = android.view.ViewGroup.LayoutParams(
+            widthPx,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+        editText.measure(
+            android.view.View.MeasureSpec.makeMeasureSpec(widthPx, android.view.View.MeasureSpec.EXACTLY),
+            android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED),
+        )
+        editText.layout(0, 0, widthPx, editText.measuredHeight)
+    }
+
+    /** Visual line the caret sits on, wraps included. */
+    fun lineOfCaret(): Int =
+        requireNotNull(editText.layout).getLineForOffset(editText.selectionStart)
+
+    /** Hands a key straight to the view, which an unattached editor never gets from a connection. */
+    fun pressKey(keyCode: Int) {
+        editText.onKeyDown(keyCode, android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, keyCode))
+        editText.onKeyUp(keyCode, android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, keyCode))
+    }
+
     /** Guards against devices that refuse a connection for an unattached view. */
     private class FallbackConnection(view: EditText) : BaseInputConnection(view, true) {
         private val target = view
