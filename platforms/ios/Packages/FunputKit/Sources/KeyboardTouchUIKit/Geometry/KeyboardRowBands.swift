@@ -21,7 +21,14 @@ struct KeyboardRowBands: Sendable {
         let keys: [ResolvedKey]
     }
 
+    /// A strip one key takes from the row above it, resolved ahead of the bands themselves.
+    private struct Claim: Sendable {
+        let rect: CGRect
+        let key: ResolvedKey
+    }
+
     private let bands: [Band]
+    private let claims: [Claim]
 
     init(rows: [[ResolvedKey]]) {
         let extents = rows.compactMap { row -> Extent? in
@@ -39,12 +46,29 @@ struct KeyboardRowBands: Sendable {
                 : Self.midpoint(extent.maxY, extents[index + 1].minY)
             return Band(minY: minY, maxY: maxY, keys: extent.keys)
         }
+        claims = extents.indices.dropFirst().flatMap { index in
+            Self.claims(in: extents[index], reachingInto: extents[index - 1])
+        }
     }
 
-    /// Interior gaps are split at their midpoint. Past the outermost rows, callers fall back to
+    private static func claims(in extent: Extent, reachingInto above: Extent) -> [Claim] {
+        extent.keys.compactMap { key in
+            KeyboardSpaceReach.claim(
+                for: key,
+                neighbourBottom: above.maxY,
+                neighbourHeight: above.maxY - above.minY
+            ).map { Claim(rect: $0, key: key) }
+        }
+    }
+
+    /// Interior gaps are split at their midpoint, except where a key claims further into the
+    /// row above — see `KeyboardSpaceReach`. Past the outermost rows, callers fall back to
     /// searching every key so the existing top and bottom tolerance remains unchanged.
-    func keys(containing y: CGFloat) -> [ResolvedKey]? {
-        for band in bands where y >= band.minY && y <= band.maxY {
+    func candidates(at point: CGPoint) -> [ResolvedKey]? {
+        for claim in claims where claim.rect.contains(point) {
+            return [claim.key]
+        }
+        for band in bands where point.y >= band.minY && point.y <= band.maxY {
             return band.keys
         }
         return nil

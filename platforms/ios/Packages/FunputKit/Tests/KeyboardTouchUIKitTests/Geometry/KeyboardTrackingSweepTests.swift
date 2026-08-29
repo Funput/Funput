@@ -29,9 +29,13 @@ struct KeyboardTrackingSweepTests {
     /// The stronger invariant: inside a row's band, the winner belongs to that row. Sweeping it
     /// rather than spot-checking the rim, because an inset row is not the only way a neighbour
     /// can end up nearer than the key the finger is actually over.
+    ///
+    /// The spacebar's reach into the row above is the one deliberate exception, so it is
+    /// excluded by construction rather than by loosening the invariant everywhere else.
     @Test("Inside a row band the hit always belongs to that row")
     func bandOwnsItsRow() {
         let (snapshot, bounds, geometry) = makeGeometry()
+        let reaches = spaceReaches(in: geometry)
         var strays: [(CGPoint, String)] = []
 
         for row in geometry.rows {
@@ -46,7 +50,8 @@ struct KeyboardTrackingSweepTests {
                     let point = CGPoint(x: x, y: y)
                     if bounds.contains(point),
                        let hit = snapshot.touchHit(at: point),
-                       !ids.contains(hit.key.id) {
+                       !ids.contains(hit.key.id),
+                       !reaches.contains(where: { $0.contains(point) }) {
                         strays.append((point, hit.key.id))
                     }
                     x += 0.5
@@ -97,6 +102,22 @@ struct KeyboardTrackingSweepTests {
             KeyboardTrackingBounds.resolve(for: geometry),
             geometry
         )
+    }
+
+    /// Every strip a key claims from the row above it — one, above the spacebar.
+    private func spaceReaches(in geometry: ResolvedKeyboard) -> [CGRect] {
+        zip(geometry.rows, geometry.rows.dropFirst()).flatMap { above, row -> [CGRect] in
+            let frames = above.map(\.frame)
+            guard let bottom = frames.map(\.maxY).max(),
+                  let top = frames.map(\.minY).min() else { return [] }
+            return row.compactMap {
+                KeyboardSpaceReach.claim(
+                    for: $0,
+                    neighbourBottom: bottom,
+                    neighbourHeight: bottom - top
+                )
+            }
+        }
     }
 
     private func forEachHalfPoint(_ body: (CGPoint) -> Void) {
