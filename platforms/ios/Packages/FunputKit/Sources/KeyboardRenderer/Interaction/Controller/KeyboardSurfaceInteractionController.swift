@@ -66,9 +66,6 @@ final class KeyboardSurfaceInteractionController {
     static let tapSlop: CGFloat = 16
     /// Sideways travel that turns an armed space hold into a caret pan.
     static let trackpadActivation: CGFloat = 10
-    /// Space repeat waits this long when smart gestures are on, leaving a usable window
-    /// between the hold arming and the first inserted space.
-    static let smartSpaceRepeatDelay: TimeInterval = 0.7
 
     let haptics: KeyboardHaptics
     let onEvent: (KeyboardKeyEvent) -> Void

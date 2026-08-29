@@ -63,6 +63,30 @@ final class SmartGestureUITests: XCTestCase {
     }
 
     @MainActor
+    func testHoldingSpaceALongTimeStillMovesTheCaret() throws {
+        let field = try startTyping()
+        let taps = FunputKeyboardDriver.resolveKeyCoordinates(app, for: "abcdefx")
+        type("abcdef", taps: taps)
+
+        // Well past the old 0.7s space-repeat delay, which used to type spaces and lock the
+        // pan out before the finger ever moved.
+        let space = try key(labeled: "Dấu cách", exact: false)
+        space.press(
+            forDuration: 1.6,
+            thenDragTo: space.withOffset(CGVector(dx: -40, dy: 0)),
+            withVelocity: .slow,
+            thenHoldForDuration: 0.2
+        )
+        taps["x"]!.tap()
+
+        Thread.sleep(forTimeInterval: 1)
+        let actual = (field.value as? String) ?? ""
+        XCTAssertFalse(actual.contains(" "), "the hold typed spaces instead of panning: \(actual)")
+        XCTAssertFalse(actual.hasSuffix("x"), "the caret never moved: \(actual)")
+        XCTAssertEqual(actual.count, 7, "the drag inserted or ate characters: \(actual)")
+    }
+
+    @MainActor
     func testSwipingLeftOnBackspaceDeletesAWholeWord() throws {
         let field = try startTyping()
         type("xin chao", taps: FunputKeyboardDriver.resolveKeyCoordinates(app, for: "xin chao"))
