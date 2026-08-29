@@ -36,17 +36,35 @@ public final class PersonalSuggestionEngine: @unchecked Sendable {
     }
 
     @discardableResult
-    public func learn(_ token: String) -> Bool {
+    public func learn(_ token: String, after previous: String? = nil) -> Bool {
+        let context = (previous ?? "").unicodeScalars.map(\.value)
         let codepoints = token.unicodeScalars.map(\.value)
-        return codepoints.withUnsafeBufferPointer {
-            funput_suggestion_learn(handle, $0.baseAddress, UInt($0.count))
+        return context.withUnsafeBufferPointer { context in
+            codepoints.withUnsafeBufferPointer { token in
+                funput_suggestion_learn_after(
+                    handle,
+                    context.baseAddress,
+                    UInt(context.count),
+                    token.baseAddress,
+                    UInt(token.count)
+                )
+            }
         }
     }
 
-    public func query(_ prefix: String) -> [PersonalSuggestionCandidate] {
+    public func query(_ prefix: String, after previous: String? = nil) -> [PersonalSuggestionCandidate] {
+        let context = (previous ?? "").unicodeScalars.map(\.value)
         let codepoints = prefix.unicodeScalars.map(\.value)
-        let result = codepoints.withUnsafeBufferPointer {
-            funput_suggestion_query(handle, $0.baseAddress, UInt($0.count))
+        let result = context.withUnsafeBufferPointer { context in
+            codepoints.withUnsafeBufferPointer { prefix in
+                funput_suggestion_query_with(
+                    handle,
+                    context.baseAddress,
+                    UInt(context.count),
+                    prefix.baseAddress,
+                    UInt(prefix.count)
+                )
+            }
         }
         return PersonalSuggestionDecoder.candidates(result)
     }

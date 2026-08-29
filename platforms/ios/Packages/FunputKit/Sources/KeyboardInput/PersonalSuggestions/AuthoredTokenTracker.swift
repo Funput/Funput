@@ -4,6 +4,14 @@ struct AuthoredTokenTracker {
 
     private(set) var prefix = ""
     private(set) var completedToken: String?
+    /// The word the next one will be recorded as following, or nil when nothing
+    /// here can vouch for what came before.
+    ///
+    /// This lives in the tracker because the tracker is the only thing that sees
+    /// every mutation — which separator ended a word, when the caret left, when
+    /// the prefix was abandoned. Anything downstream sees the result and not the
+    /// reason.
+    private(set) var context: String?
     private var prefixLength = 0
     private var overflowCount = 0
 
@@ -12,7 +20,7 @@ struct AuthoredTokenTracker {
             if byte >= 65 && byte <= 90 || byte >= 97 && byte <= 122 {
                 append(text)
             } else {
-                complete()
+                complete(separator: Character(UnicodeScalar(byte)))
             }
             return
         }
@@ -20,7 +28,7 @@ struct AuthoredTokenTracker {
             if character.isLetter || isCombiningMark(character) && (!prefix.isEmpty || overflowCount > 0) {
                 append(String(character))
             } else {
-                complete()
+                complete(separator: character)
             }
         }
     }
@@ -32,6 +40,10 @@ struct AuthoredTokenTracker {
         } else if !prefix.isEmpty {
             prefix.removeLast()
             prefixLength -= 1
+        } else {
+            // Nothing left of this word to delete, so the caret has crossed back
+            // over a boundary and what precedes it is no longer known.
+            context = nil
         }
     }
 
@@ -53,7 +65,8 @@ struct AuthoredTokenTracker {
     mutating func consume() -> KeyboardSuggestionInputUpdate {
         let update = KeyboardSuggestionInputUpdate(
             prefix: overflowCount == 0 ? prefix : "",
-            completedToken: completedToken
+            completedToken: completedToken,
+            context: context
         )
         completedToken = nil
         return update
@@ -62,6 +75,7 @@ struct AuthoredTokenTracker {
     mutating func reset() {
         prefix.removeAll(keepingCapacity: true)
         completedToken = nil
+        context = nil
         prefixLength = 0
         overflowCount = 0
     }
@@ -76,10 +90,15 @@ struct AuthoredTokenTracker {
         }
     }
 
-    private mutating func complete() {
+    /// A space continues the sentence, so the word just finished becomes the
+    /// context for the next one. Anything else — a full stop, a newline, a comma
+    /// — ends it, and two words either side of that were never adjacent. Guessing
+    /// the other way would teach pairs nobody typed.
+    private mutating func complete(separator: Character) {
         if overflowCount == 0, prefixLength >= Self.minimumLength {
             completedToken = prefix
         }
+        context = separator == " " ? completedToken : nil
         prefix.removeAll(keepingCapacity: true)
         prefixLength = 0
         overflowCount = 0
@@ -98,10 +117,13 @@ struct AuthoredTokenTracker {
 public struct KeyboardSuggestionInputUpdate: Equatable, Sendable {
     public let prefix: String
     public let completedToken: String?
+    /// The word `prefix` is being typed after, when one can be vouched for.
+    public let context: String?
 
-    public init(prefix: String, completedToken: String?) {
+    public init(prefix: String, completedToken: String?, context: String? = nil) {
         self.prefix = prefix
         self.completedToken = completedToken
+        self.context = context
     }
 
     public static let empty = KeyboardSuggestionInputUpdate(prefix: "", completedToken: nil)
