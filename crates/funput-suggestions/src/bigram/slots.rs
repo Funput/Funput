@@ -5,6 +5,17 @@
 
 use super::follower::{FOLLOWER_SLOTS, Follower};
 
+/// After this many sightings of one context word, every count it holds is halved.
+///
+/// Two jobs in one constant. It bounds `uses`, which can never exceed `seen`, so
+/// the `u16` counts cannot overflow. And it is what lets a habit change: the
+/// challenge rule below removes one point at a time, so a slot that got far
+/// enough ahead would be unreachable forever without something that decays it.
+///
+/// Not in `SuggestionConfig` yet — the value is a guess until there is a reader
+/// to calibrate it against.
+pub(crate) const AGING_AFTER: u16 = 256;
+
 pub(crate) fn record(
     followers: &mut [Follower; FOLLOWER_SLOTS],
     seen: &mut u16,
@@ -12,7 +23,13 @@ pub(crate) fn record(
     next: Follower,
 ) {
     *seen = seen.saturating_add(1);
+    admit(followers, dead, next);
+    if *seen >= AGING_AFTER {
+        age(followers, seen);
+    }
+}
 
+fn admit(followers: &mut [Follower; FOLLOWER_SLOTS], dead: [bool; FOLLOWER_SLOTS], next: Follower) {
     if let Some(index) = (0..FOLLOWER_SLOTS).find(|&index| followers[index].points_at(next)) {
         followers[index].uses = followers[index].uses.saturating_add(1);
         return;
@@ -35,6 +52,18 @@ pub(crate) fn record(
     followers[weakest].uses -= 1;
     if followers[weakest].is_free() {
         followers[weakest] = next;
+    }
+}
+
+fn age(followers: &mut [Follower; FOLLOWER_SLOTS], seen: &mut u16) {
+    *seen /= 2;
+    for slot in followers {
+        slot.uses /= 2;
+        if slot.is_free() {
+            // Halved out of existence: a word seen once here is noise, and its
+            // slot is worth more to whatever comes next.
+            *slot = Follower::EMPTY;
+        }
     }
 }
 
@@ -87,6 +116,34 @@ mod tests {
             [3, 2, 2],
             "nobody should pay while a dead slot is going spare"
         );
+    }
+
+    #[test]
+    fn aging_halves_every_count_and_drops_the_one_offs() {
+        let mut followers = set([8, 5, 2, 1]);
+        let mut seen = AGING_AFTER - 1;
+        record(&mut followers, &mut seen, ALIVE, follower(0, 1));
+
+        assert_eq!(seen, AGING_AFTER / 2);
+        assert_eq!(
+            [followers[0].uses, followers[1].uses, followers[2].uses],
+            [4, 2, 1]
+        );
+        assert!(
+            followers[3].is_free(),
+            "a single sighting should not survive an aging pass"
+        );
+    }
+
+    #[test]
+    fn aging_keeps_an_entrenched_slot_reachable() {
+        // The challenge rule removes one point per sighting, so without decay a
+        // set that got this far ahead could never be displaced at all.
+        let mut followers = set([250, 250, 250, 250]);
+        let mut seen = AGING_AFTER - 1;
+        record(&mut followers, &mut seen, ALIVE, follower(9, 1));
+
+        assert!(followers.iter().all(|slot| slot.uses <= 125));
     }
 
     #[test]
