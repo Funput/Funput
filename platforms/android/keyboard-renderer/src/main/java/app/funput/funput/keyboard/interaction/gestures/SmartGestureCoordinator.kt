@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.interaction.gestures
 
 import app.funput.funput.keyboard.KeyboardHapticType
+import app.funput.funput.keyboard.interaction.gestures.cursor.SpaceCursorPanTracker
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
@@ -81,7 +82,7 @@ internal class SmartGestureCoordinator(
         if (session.initialKey.role != KeyRole.SPACE || !session.trackpadReady()) return false
         if (hasRepeated()) return false
         detach(pointerId)
-        session.trackpad = SpaceCursorPanTracker(session.stepWidthPx)
+        session.trackpad = SpaceCursorPanTracker(session.stepWidthPx, session.stepHeightPx)
         onHaptic(KeyboardHapticType.CONTROL)
         return true
     }
@@ -97,10 +98,16 @@ internal class SmartGestureCoordinator(
     }
 
     private fun emitTrackpad(session: SmartGestureSession) {
-        val offset = session.trackpad?.update(session.translationX) ?: return
-        if (offset == 0) return
-        onAction(KeyAction.MoveCursor(offset))
-        onHaptic(KeyboardHapticType.DELETE_REPEAT)
+        val step = session.trackpad
+            ?.update(session.translationX, session.translationY)
+            ?: return
+        if (step.isEmpty) return
+        onAction(KeyAction.MoveCursor(step.columns, step.lines))
+        // A line change moves the caret further than the user can track from the finger alone, so
+        // it gets the firmer tick and stays distinguishable without looking.
+        onHaptic(
+            if (step.lines == 0) KeyboardHapticType.DELETE_REPEAT else KeyboardHapticType.CONTROL,
+        )
     }
 
     private fun emitRatchet(session: SmartGestureSession) {

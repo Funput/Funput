@@ -1,8 +1,6 @@
 package app.funput.funput.keyboard.interaction.gestures
 
 import app.funput.funput.keyboard.KeyboardHapticType
-import app.funput.funput.keyboard.interaction.KeyboardInteractionController
-import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
@@ -76,54 +74,6 @@ class SpaceTrackpadGestureTest {
 
         assertFalse(subject.actions.any { it == KeyAction.Space })
         assertTrue(subject.actions.any { it is KeyAction.MoveCursor })
-    }
-}
-
-internal class GestureControllerSubject {
-    val actions = mutableListOf<KeyAction>()
-    val haptics = mutableListOf<KeyboardHapticType>()
-    val captured = mutableListOf<Int>()
-    val scheduler = MultiScheduler()
-    val controller = KeyboardInteractionController(
-        keySpec = { id -> keys[id] },
-        suggestionSelection = { null },
-        onAction = { actions += it },
-        onEmojiRequested = {},
-        onSuggestionSelected = {},
-        onHapticFeedback = { haptics += it },
-        onVisualStateChanged = {},
-        onSemanticStateChanged = {},
-        schedule = scheduler::schedule,
-        cancel = scheduler::cancel,
-        keyBounds = { KeyBounds(102f, 198f, 138f, 242f) },
-        surfaceBounds = { KeyBounds(0f, 0f, 390f, 304f) },
-        touchSlop = 8f,
-        onPointerCaptured = { captured += it },
-        doubleTapTimeoutMillis = 300L,
-        density = 1f,
-    )
-    private val keys = mutableMapOf<String, KeySpec>()
-
-    fun begin(key: KeySpec, x: Float = 120f) {
-        keys[key.id] = key
-        controller.onPointerStarted(1, key.id, x, 220f)
-        controller.onPointerKeyChanged(1, key.id)
-    }
-
-    fun move(key: KeySpec, x: Float) = controller.onPointerMoved(1, key.id, x, 220f)
-
-    fun release(key: KeySpec, x: Float) =
-        controller.onKeyReleased(1, key.id, x, 220f, eventTimeMillis = 100L)
-}
-
-internal class MultiScheduler {
-    private val pending = mutableListOf<Pair<Long, Runnable>>()
-    fun schedule(task: Runnable, delayMillis: Long) { pending += delayMillis to task }
-    fun cancel(task: Runnable) { pending.removeAll { it.second === task } }
-    fun fire(after: Long) {
-        val index = pending.indexOfFirst { it.first == after }
-        require(index >= 0) { "No task scheduled for $after" }
-        pending.removeAt(index).second.run()
     }
 }
 

@@ -38,6 +38,19 @@ class ImeGestureMutationTest {
     }
 
     @Test
+    fun aVerticalMoveAsksTheEditorRatherThanRewritingTheSelection() {
+        val document = GestureDocument("abcdefgh\nij\nklmnop")
+
+        handler(document).onKeyAction(KeyAction.MoveCursor(columns = 0, lines = -1))
+
+        // Only the editor knows where its text wraps, so the step goes out as arrow keys. This
+        // fake ignores them, which is exactly why the caret and text are untouched here.
+        assertEquals(2, document.keyEventCount)
+        assertEquals("abcdefgh\nij\nklmnop", document.text)
+        assertEquals(18, document.cursor)
+    }
+
+    @Test
     fun aZeroMoveWritesNothing() {
         val document = GestureDocument("xin chao")
         handler(document).onKeyAction(KeyAction.MoveCursor(0))

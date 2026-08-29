@@ -14,6 +14,5 @@ internal sealed interface ImeEditCommand {
             require(beforeLength > 0) { "Deleted span must be positive" }
         }
     }
-    data class MoveCursor(val offset: Int) : ImeEditCommand
     data class PerformEditorAction(val actionId: Int) : ImeEditCommand
 }

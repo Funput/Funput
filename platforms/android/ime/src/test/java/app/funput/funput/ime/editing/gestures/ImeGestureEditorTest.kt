@@ -100,6 +100,11 @@ internal class GestureDocument(initial: String) {
     private val document = StringBuilder(initial)
     var cursor: Int = initial.length
         private set
+
+    /** How many key events the IME handed to the editor. Their contents cannot be read here:
+     *  android.jar's KeyEvent getters throw in a JVM unit test. */
+    var keyEventCount = 0
+        private set
     val text: String get() = document.toString()
     val proxy: InputConnection = Proxy.newProxyInstance(
         InputConnection::class.java.classLoader,
@@ -125,6 +130,7 @@ internal class GestureDocument(initial: String) {
             )
             "setSelection" -> true.also { cursor = arguments?.first() as Int }
             "getExtractedText" -> null
+            "sendKeyEvent" -> true.also { keyEventCount++ }
             "finishComposingText", "beginBatchEdit", "endBatchEdit" -> true
             else -> false
         }

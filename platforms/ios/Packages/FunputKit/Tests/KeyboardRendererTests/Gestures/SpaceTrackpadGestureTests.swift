@@ -12,7 +12,9 @@ struct SpaceTrackpadGestureTests {
         horizontalSwipeAction: .toggleLanguage
     )
     private static let hold = 0.35
-    private static let smartRepeat = 0.7
+    /// The old space-repeat delay. Nothing schedules it any more; the tests keep the number to
+    /// prove a hold that long no longer costs the user the gesture.
+    private static let pastOldRepeat = 0.7
 
     @Test("A quick swipe still toggles the language")
     func quickSwipeTogglesLanguage() {
@@ -51,16 +53,31 @@ struct SpaceTrackpadGestureTests {
         ])
     }
 
-    @Test("Once the space has repeated, dragging no longer starts the trackpad")
-    func repeatWinsOverTrackpad() {
+    @Test("Holding well past the old repeat delay still starts the trackpad")
+    func aLongHoldStillStartsTheTrackpad() {
         let subject = subject()
         subject.begin()
         subject.scheduler.fire(after: Self.hold)
-        subject.scheduler.fire(after: Self.smartRepeat)
+        // Nothing is scheduled here any more, which is the point: the spacebar no longer races
+        // the hold by typing spaces while the finger waits.
+        subject.scheduler.fire(after: Self.pastOldRepeat)
         subject.move(to: 145)
 
-        #expect(subject.claims == [.repeatKey])
-        #expect(subject.phases == [.pressed, .repeated])
+        #expect(subject.claims == [.trackpad])
+        #expect(subject.phases == [.pressed, .cursorMoved(offset: 2)])
+    }
+
+    @Test("The spacebar does not repeat while smart gestures are on")
+    func spaceDoesNotRepeatWhileArmed() {
+        let subject = subject()
+        subject.begin()
+        subject.scheduler.fire(after: Self.hold)
+        subject.controller.endTouch(token: 1)
+
+        // No `.repeated`, and no claim: the press stays with the touch pipeline, which commits
+        // the single space on release the way an ordinary tap does.
+        #expect(subject.phases == [.pressed])
+        #expect(subject.claims.isEmpty)
     }
 
     @Test("A refused claim leaves the press with the touch pipeline")
