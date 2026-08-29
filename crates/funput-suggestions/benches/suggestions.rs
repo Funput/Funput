@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::hint::black_box;
 
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
@@ -40,6 +41,24 @@ fn bench_learning(c: &mut Criterion) {
     let mut engine = populated();
     c.bench_function("suggestions/learn/existing", |b| {
         b.iter(|| black_box(engine.learn(black_box("word1234"))))
+    });
+
+    // The eviction path, on a lexicon already full of promoted words. Each
+    // iteration learns one new word twice: the first call evicts a promoted word
+    // to take its slot, the second promotes the newcomer so the next iteration
+    // evicts a promoted word in turn. One promoted eviction per iteration is
+    // exactly the case that used to rebuild both tries on the spot.
+    let mut engine = populated();
+    let mut token = String::with_capacity(16);
+    let mut counter = 0u32;
+    c.bench_function("suggestions/learn/evicting", |b| {
+        b.iter(|| {
+            counter += 1;
+            token.clear();
+            write!(token, "evict{counter:07}").unwrap();
+            engine.learn(black_box(&token));
+            black_box(engine.learn(black_box(&token)))
+        })
     });
 }
 
