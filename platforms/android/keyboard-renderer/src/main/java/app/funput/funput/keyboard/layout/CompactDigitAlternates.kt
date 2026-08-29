@@ -8,9 +8,9 @@ import app.funput.funput.keyboard.popover.model.KeyAlternate
 /**
  * Digit hints and long-press digits for the top character row.
  *
- * The compact letters page hides the number row, which leaves the symbols page as the only
- * way to reach a digit. Printing the digit on the keycap and offering it as the pre-selected
- * long-press alternate restores that reach without spending a row.
+ * A compact page — letters, search, email or URL — hides the number row, which leaves the symbols
+ * page as the only way to reach a digit. Printing the digit on the keycap and offering it as the
+ * pre-selected long-press alternate restores that reach without spending a row.
  */
 internal object CompactDigitAlternates {
     private const val RowCharacters = "qwertyuiop"

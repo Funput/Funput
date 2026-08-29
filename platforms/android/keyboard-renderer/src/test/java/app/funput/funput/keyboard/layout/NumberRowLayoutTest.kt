@@ -80,33 +80,32 @@ class NumberRowLayoutTest {
     }
 
     @Test
-    fun webEditorsKeepFullHeightWhenNumberRowIsOff() {
-        for (editorMode in listOf(
-            KeyboardEditorMode.URL,
-            KeyboardEditorMode.SEARCH,
-            KeyboardEditorMode.EMAIL,
-        )) {
-            val layout = KeyboardLayoutResolver.resolve(
-                inputMethod = KeyboardInputMethod.TELEX,
-                mode = KeyboardLayoutMode.LETTERS,
-                editorMode = editorMode,
-                showsNumberRow = false,
-            )
-            val height = KeyboardDimensions.recommendedHeightDp(
-                KeyboardInputMethod.TELEX,
-                editorMode,
-                showsNumberRow = false,
-            )
+    fun securePagesKeepFullHeightWhenNumberRowIsOff() {
+        // A secure page has no number row to trade for long-press digits, so the preference
+        // cannot shrink it. The QWERTY editors do follow it — WebEditorNumberRowLayoutTest.
+        for (editorMode in listOf(KeyboardEditorMode.PASSWORD, KeyboardEditorMode.PIN)) {
+            val rows = { showsNumberRow: Boolean ->
+                KeyboardLayoutResolver.resolve(
+                    inputMethod = KeyboardInputMethod.TELEX,
+                    mode = KeyboardLayoutMode.LETTERS,
+                    editorMode = editorMode,
+                    showsNumberRow = showsNumberRow,
+                ).rows.size
+            }
 
-            assertEquals("$editorMode keeps its own number row", 5, layout.rows.size)
+            assertEquals("$editorMode keeps its own rows", rows(true), rows(false))
             assertEquals(
-                "$editorMode height must fit $editorMode rows",
+                "$editorMode height must not follow the preference",
                 KeyboardDimensions.recommendedHeightDp(
                     KeyboardInputMethod.TELEX,
                     editorMode,
                     showsNumberRow = true,
                 ),
-                height,
+                KeyboardDimensions.recommendedHeightDp(
+                    KeyboardInputMethod.TELEX,
+                    editorMode,
+                    showsNumberRow = false,
+                ),
                 0.001f,
             )
         }
