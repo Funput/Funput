@@ -1,4 +1,4 @@
-use super::{PENDING_LIMIT, SuggestionEngine};
+use super::{PENDING_LIMIT, REBUILD_AFTER_EVICTIONS, SuggestionEngine};
 use crate::index::normalize;
 use crate::types::{LearnOutcome, WordRecord};
 
@@ -18,7 +18,7 @@ impl SuggestionEngine {
         }
 
         self.sequence = self.sequence.saturating_add(1);
-        let (word_id, previous_uses, rebuild) = self.upsert_word(normalized.clone());
+        let (word_id, previous_uses, evicted_indexed) = self.upsert_word(normalized.clone());
         if record_pending {
             if self.pending.len() < PENDING_LIMIT {
                 self.pending.push(normalized);
@@ -26,10 +26,17 @@ impl SuggestionEngine {
                 self.pending_overflow = true;
             }
         }
-        if rebuild {
-            self.rebuild_tries();
-        } else if self.words[word_id as usize].uses >= self.config.promotion_uses {
+        if evicted_indexed {
+            // The evicted word's entries are stale, not wrong: its slot's
+            // generation moved on, so they already read as dead. Sweeping them is
+            // bookkeeping, and bookkeeping does not belong between two keystrokes.
+            self.evictions_since_rebuild = self.evictions_since_rebuild.saturating_add(1);
+        }
+        if self.words[word_id as usize].uses >= self.config.promotion_uses {
             self.index_word(word_id);
+        }
+        if self.evictions_since_rebuild >= REBUILD_AFTER_EVICTIONS {
+            self.rebuild_tries();
         }
 
         let uses = self.words[word_id as usize].uses;
@@ -83,6 +90,7 @@ impl SuggestionEngine {
 
     pub(crate) fn rebuild_tries(&mut self) {
         self.rebuilds = self.rebuilds.saturating_add(1);
+        self.evictions_since_rebuild = 0;
         self.exact.clear();
         self.folded.clear();
         for index in 0..self.words.len() {

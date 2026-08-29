@@ -4,6 +4,12 @@ use super::{JOURNAL_COMPACT_BYTES, SuggestionEngine};
 
 impl SuggestionEngine {
     pub fn flush(&mut self) -> io::Result<()> {
+        // Idle is where the sweep belongs, and this is the crate's only idle
+        // signal: both shells call it off the typing path. Before the early
+        // return, so an in-memory engine with nothing pending is swept too.
+        if self.evictions_since_rebuild > 0 {
+            self.rebuild_tries();
+        }
         if self.pending.is_empty() && !self.pending_overflow {
             return Ok(());
         }
@@ -45,6 +51,7 @@ impl SuggestionEngine {
 
     pub fn reset(&mut self) -> io::Result<()> {
         self.words.clear();
+        self.evictions_since_rebuild = 0;
         self.exact.clear();
         self.folded.clear();
         self.sequence = 0;

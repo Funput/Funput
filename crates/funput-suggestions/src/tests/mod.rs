@@ -1,3 +1,4 @@
+mod eviction;
 mod learning;
 mod persistence;
 mod stress;
