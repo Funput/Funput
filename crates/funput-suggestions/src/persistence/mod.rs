@@ -44,6 +44,12 @@ impl Store {
         let (journal, journal_bytes) = if snapshot_valid {
             store.load_journal()?
         } else {
+            // The snapshot was damaged, not absent. Repair both files now: leaving
+            // the snapshot means every later open discards the journal again, and
+            // leaving the journal means its unreadable head swallows every valid
+            // frame appended after it. Best effort — an empty engine works either
+            // way, and the next flush will try again.
+            let _ = store.compact(&[], 0);
             (Vec::new(), 0)
         };
         Ok((

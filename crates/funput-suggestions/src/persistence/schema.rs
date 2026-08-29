@@ -14,6 +14,10 @@ pub(super) const WRITE_VERSION: u16 = 1;
 /// retired: files below it are discarded and rebuilt rather than rejected.
 pub(super) const MIN_READ_VERSION: u16 = 1;
 
+/// A build that cannot read what it writes would discard every file on upgrade.
+/// Checked here so raising `MIN_READ_VERSION` too far fails the build, not a test.
+const _: () = assert!(MIN_READ_VERSION <= WRITE_VERSION);
+
 pub(super) enum Version {
     Readable,
     /// Written by a newer build. Its meaning is unknown, so it must be left
@@ -49,7 +53,6 @@ mod tests {
     fn the_shipped_window_reads_what_it_writes() {
         assert!(matches!(accept(WRITE_VERSION), Version::Readable));
         assert!(matches!(accept(MIN_READ_VERSION), Version::Readable));
-        assert!(MIN_READ_VERSION <= WRITE_VERSION);
     }
 
     #[test]

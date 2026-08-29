@@ -63,3 +63,60 @@ fn newer_schema_is_rejected_without_overwriting_it() {
     assert_eq!(error.kind(), std::io::ErrorKind::Unsupported);
     assert_eq!(fs::read(snapshot).unwrap(), bytes);
 }
+
+#[test]
+fn a_discarded_snapshot_takes_its_journal_with_it() {
+    let directory = tempdir().unwrap();
+    let journal = directory.path().join("personal-lexicon.journal");
+    let mut engine = SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
+    learned(&mut engine, "cũ", 2);
+    engine.flush().unwrap();
+    drop(engine);
+    assert!(fs::metadata(&journal).unwrap().len() > 0);
+
+    // The frames in that journal are perfectly good. It is the snapshot they were
+    // written against that is gone.
+    fs::write(
+        directory.path().join("personal-lexicon.snapshot"),
+        b"corrupt",
+    )
+    .unwrap();
+
+    let mut engine = SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
+    assert_eq!(
+        fs::metadata(&journal).unwrap().len(),
+        0,
+        "a journal we refuse to read must not be left for the next open to append to"
+    );
+
+    learned(&mut engine, "mới", 2);
+    engine.flush().unwrap();
+    drop(engine);
+    let reopened = SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
+    assert_eq!(texts(&reopened, "m"), ["mới"]);
+}
+
+#[test]
+fn an_oversized_journal_is_discarded_without_losing_persistence() {
+    let directory = tempdir().unwrap();
+    let journal = directory.path().join("personal-lexicon.journal");
+    let mut engine = SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
+    learned(&mut engine, "cũ", 2);
+    engine.compact().unwrap();
+    drop(engine);
+    fs::write(&journal, vec![0u8; 2 * 1024 * 1024]).unwrap();
+
+    let mut engine = SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
+    assert_eq!(fs::metadata(&journal).unwrap().len(), 0);
+    assert_eq!(
+        texts(&engine, "c"),
+        ["cũ"],
+        "the snapshot was never in doubt"
+    );
+
+    learned(&mut engine, "mới", 2);
+    engine.flush().unwrap();
+    drop(engine);
+    let reopened = SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
+    assert_eq!(texts(&reopened, "m"), ["mới"]);
+}
