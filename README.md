@@ -89,6 +89,18 @@ Funput đang được phát triển tích cực. Tính năng và kiến trúc c�
 
 Bug report, thảo luận và đóng góp đều được chào đón.
 
+## Ủng hộ
+
+Funput là dự án vì cộng đồng — miễn phí cho tất cả mọi người.
+Nếu thấy Funput hữu ích, bạn có thể ủng hộ dự án:
+
+<p align="center">
+  <img src="assets/donate/qr.png" width="360" alt="QR ủng hộ Funput">
+  <br>
+  <sub>Made with ❤️ by Funput</sub>
+</p>
+
 ## License
 
 [MIT](LICENSE) — © Funput
+

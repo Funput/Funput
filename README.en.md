@@ -90,6 +90,18 @@ evolve during the project's early releases.
 
 Bug reports, discussions, and contributions are welcome.
 
+## Support
+
+Funput is a community project — free for everyone.
+If you find Funput useful, you're welcome to support the project:
+
+<p align="center">
+  <img src="assets/donate/qr.png" width="360" alt="Donate to Funput">
+  <br>
+  <sub>Made with ❤️ by Funput</sub>
+</p>
+
 ## License
 
 [MIT](LICENSE) — © Funput
+
