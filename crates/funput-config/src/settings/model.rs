@@ -66,6 +66,12 @@ pub struct Settings {
     /// would otherwise find it silently dead after an update.
     #[serde(default = "shortcuts_enabled_default")]
     pub shortcuts_enabled: bool,
+    /// Whether a gõ tắt trigger matches regardless of how it was capitalized, with
+    /// the expansion re-cased to match. Defaults to **on**, including for a file
+    /// written before this field existed — that is how gõ tắt has always behaved,
+    /// and an update must not silently change what a table expands to.
+    #[serde(default = "shortcut_smart_case_default")]
+    pub shortcut_smart_case: bool,
     /// Whether focusing a keyboard layout Vietnamese cannot be typed on — a CJK
     /// IME, or a non-Latin script — suspends Vietnamese for as long as it is
     /// active. Defaults to **on**, including for a file written before this field
@@ -77,6 +83,10 @@ pub struct Settings {
 }
 
 fn shortcuts_enabled_default() -> bool {
+    true
+}
+
+fn shortcut_smart_case_default() -> bool {
     true
 }
 
@@ -118,6 +128,7 @@ impl Default for Settings {
             excluded_apps: Vec::new(),
             shortcuts: Vec::new(),
             shortcuts_enabled: true,
+            shortcut_smart_case: true,
             auto_english_on_foreign_layout: true,
         }
     }

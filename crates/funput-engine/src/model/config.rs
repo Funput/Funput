@@ -1,9 +1,9 @@
 //! User-configurable engine options, grouped out of the per-word [`super::Session`]
 //! state so adding a feature toggle touches one struct instead of the god-object.
 //!
-//! These six options map 1:1 to the public `Engine::set_*` methods (and, over the
-//! FFI, to `funput_set_*`). Keeping them together is also the seam for a future
-//! `Engine::configure(EngineConfig)` API — this type would simply become `pub`.
+//! Every option here is reachable from the public `Engine::configure` /
+//! `Engine::update_config` API (and, over the FFI, from `funput_configure` plus the
+//! `funput_set_*` functions for the ones that do not ride the by-value C struct).
 
 use funput_core::{InputMethod, ToneStyle};
 
@@ -32,6 +32,13 @@ pub struct EngineConfig {
     /// — to type a word that collides with a trigger — costs nothing and gives the
     /// rows back untouched.
     pub shortcuts_enabled: bool,
+    /// Smart-case matching for gõ tắt ("Tự nhận diện hoa/thường"). On by default.
+    ///
+    /// On, a trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same
+    /// entry and the expansion is re-cased to match (`tp`/`Tp`/`TP` → `TP. HCM`/
+    /// `Tp. Hcm`/`TP. HCM`). Off, only the exact trigger matches and the expansion
+    /// comes out verbatim — for users whose expansions have a casing of their own.
+    pub shortcut_smart_case: bool,
 }
 
 impl Default for EngineConfig {
@@ -44,6 +51,7 @@ impl Default for EngineConfig {
             spell_check: false,
             auto_capitalize: false,
             shortcuts_enabled: true,
+            shortcut_smart_case: true,
         }
     }
 }

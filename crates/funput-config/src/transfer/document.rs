@@ -68,6 +68,10 @@ pub struct Preferences {
     /// because it is a typing preference, not a per-OS one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shortcuts_enabled: Option<bool>,
+    /// Whether a gõ tắt trigger matches regardless of capitalization, with the
+    /// expansion re-cased to match. Portable for the same reason.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcut_smart_case: Option<bool>,
 }
 
 /// Comparable and printable because it is also what [`crate::unikey`] parses a

@@ -15,6 +15,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
             spell_check: false,
             auto_capitalize: false,
             shortcuts_enabled: true,
+            shortcut_smart_case: true,
         },
         buffer: buffer.into(),
         keys: keys.into(),

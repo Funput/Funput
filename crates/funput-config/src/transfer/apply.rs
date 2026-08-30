@@ -56,6 +56,9 @@ fn apply_preferences(s: &mut Settings, prefs: &Preferences) {
     if let Some(v) = prefs.shortcuts_enabled {
         s.shortcuts_enabled = v;
     }
+    if let Some(v) = prefs.shortcut_smart_case {
+        s.shortcut_smart_case = v;
+    }
 }
 
 /// Merge by `trigger`: a matching trigger takes the incoming expansion, a new one

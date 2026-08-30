@@ -138,6 +138,36 @@ fn the_shortcut_switch_round_trips_when_turned_off() {
     assert!(!back.shortcuts_enabled);
 }
 
+/// Same rule, same reason: a file written before the smart-case switch existed comes
+/// from someone whose triggers already match every capitalization. Defaulting off
+/// would change what their table expands to, out of nowhere, on an update.
+#[test]
+fn a_file_without_the_smart_case_switch_still_matches_any_capitalization() {
+    let legacy = r#"{
+      "method": "vni",
+      "enabled": true,
+      "smartRestore": true,
+      "eagerRestore": true,
+      "toggleHotkey": "ctrl_backtick",
+      "launchAtLogin": false,
+      "hasCompletedOnboarding": false
+    }"#;
+    let s: Settings = serde_json::from_str(legacy).expect("legacy settings.json must decode");
+
+    assert!(s.shortcut_smart_case);
+}
+
+#[test]
+fn the_smart_case_switch_round_trips_when_turned_off() {
+    let s = Settings {
+        shortcut_smart_case: false,
+        ..Settings::default()
+    };
+    let text = serde_json::to_string(&s).expect("serialize");
+    let back: Settings = serde_json::from_str(&text).expect("deserialize");
+    assert!(!back.shortcut_smart_case);
+}
+
 /// Same rule as the gõ tắt switch: absent means on. Someone who has been fighting
 /// Funput inside a Japanese IME upgrades into the fix without going looking for it.
 #[test]

@@ -46,6 +46,7 @@ fn round_trip_preserves_state() {
             expansion: "Việt Nam".into(),
         }],
         app_language_memory: BTreeMap::from([("code.exe".to_string(), false)]),
+        shortcut_smart_case: false,
         ..Settings::default()
     };
 
@@ -63,6 +64,8 @@ fn round_trip_preserves_state() {
     assert_eq!(b.shortcuts.len(), 1);
     assert_eq!(b.shortcuts[0].expansion, "Việt Nam");
     assert_eq!(b.app_language_memory.get("code.exe"), Some(&false));
+    assert!(!b.shortcut_smart_case, "both gõ tắt switches are portable");
+    assert!(b.shortcuts_enabled);
 }
 
 /// Import never rewrites a choice this machine's user made — the same

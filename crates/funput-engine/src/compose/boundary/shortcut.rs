@@ -1,11 +1,13 @@
-//! Shortcut expansion at a word boundary, including case propagation.
+//! Shortcut expansion at a word boundary, including case propagation when
+//! `shortcut_smart_case` is on.
 
 use crate::ImeResult;
 use crate::model::Session;
 
 /// The letter-casing pattern of typed keys, used to mirror the expansion's case
 /// (`vn` → lowercase, `Vn` → Title Case, `VN` → UPPERCASE) — the same "propagate
-/// case" convention used by common text expanders like Espanso.
+/// case" convention used by common text expanders like Espanso. Only consulted while
+/// `shortcut_smart_case` is on.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum ShortcutCase {
     Lower,
@@ -16,7 +18,8 @@ enum ShortcutCase {
 /// Classify the case pattern of `keys` from its cased characters (letters), ignoring
 /// digits and punctuation. Returns `None` when the keys don't fit a clean pattern
 /// (e.g. `vNa`), so the caller falls back to an exact, unmodified lookup — this keeps
-/// deliberately mixed-case triggers (like `iOS`) working exactly as defined.
+/// deliberately mixed-case triggers (like `iOS`) working exactly as defined. That same
+/// `None` path is what the smart-case switch reuses when it is off.
 fn classify_case(keys: &str) -> Option<ShortcutCase> {
     let mut letters = keys.chars().filter(|c| c.is_alphabetic());
     let first = letters.next()?;
@@ -67,7 +70,14 @@ pub(super) fn expansion(session: &Session, boundary_key: char) -> Option<ImeResu
     if !session.config.shortcuts_enabled || session.keys.is_empty() {
         return None;
     }
-    let case = classify_case(&session.keys);
+    // Off, every trigger takes the exact-match path below: `tp` expands, `Tp`/`TP` do
+    // not, and the expansion is never re-cased. Reusing the mixed-case fallback rather
+    // than adding a second lookup keeps one description of "no case propagation".
+    let case = if session.config.shortcut_smart_case {
+        classify_case(&session.keys)
+    } else {
+        None
+    };
     let lookup_key = match case {
         Some(_) => session.keys.to_lowercase(),
         None => session.keys.clone(),
