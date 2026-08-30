@@ -1,16 +1,16 @@
 use std::io;
 
-pub(super) struct Cursor<'a> {
+pub(crate) struct Cursor<'a> {
     bytes: &'a [u8],
     position: usize,
 }
 
 impl<'a> Cursor<'a> {
-    pub(super) fn new(bytes: &'a [u8]) -> Self {
+    pub(crate) fn new(bytes: &'a [u8]) -> Self {
         Self { bytes, position: 0 }
     }
 
-    pub(super) fn take(&mut self, len: usize) -> io::Result<&'a [u8]> {
+    pub(crate) fn take(&mut self, len: usize) -> io::Result<&'a [u8]> {
         let end = self.position.checked_add(len).ok_or_else(invalid_data)?;
         let value = self
             .bytes
@@ -20,42 +20,42 @@ impl<'a> Cursor<'a> {
         Ok(value)
     }
 
-    pub(super) fn u16(&mut self) -> io::Result<u16> {
+    pub(crate) fn u16(&mut self) -> io::Result<u16> {
         Ok(u16::from_le_bytes(
             self.take(2)?.try_into().map_err(|_| invalid_data())?,
         ))
     }
 
-    pub(super) fn u32(&mut self) -> io::Result<u32> {
+    pub(crate) fn u32(&mut self) -> io::Result<u32> {
         Ok(u32::from_le_bytes(
             self.take(4)?.try_into().map_err(|_| invalid_data())?,
         ))
     }
 
-    pub(super) fn u64(&mut self) -> io::Result<u64> {
+    pub(crate) fn u64(&mut self) -> io::Result<u64> {
         Ok(u64::from_le_bytes(
             self.take(8)?.try_into().map_err(|_| invalid_data())?,
         ))
     }
 
-    pub(super) fn remaining(&self) -> usize {
+    pub(crate) fn remaining(&self) -> usize {
         self.bytes.len() - self.position
     }
 
-    pub(super) fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.position == self.bytes.len()
     }
 }
 
-pub(super) fn put_u16(out: &mut Vec<u8>, value: u16) {
+pub(crate) fn put_u16(out: &mut Vec<u8>, value: u16) {
     out.extend_from_slice(&value.to_le_bytes());
 }
 
-pub(super) fn put_u32(out: &mut Vec<u8>, value: u32) {
+pub(crate) fn put_u32(out: &mut Vec<u8>, value: u32) {
     out.extend_from_slice(&value.to_le_bytes());
 }
 
-pub(super) fn put_u64(out: &mut Vec<u8>, value: u64) {
+pub(crate) fn put_u64(out: &mut Vec<u8>, value: u64) {
     out.extend_from_slice(&value.to_le_bytes());
 }
 
@@ -71,6 +71,6 @@ pub(crate) fn checksum(bytes: &[u8]) -> u32 {
     !crc
 }
 
-pub(super) fn invalid_data() -> io::Error {
+pub(crate) fn invalid_data() -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, "invalid personal lexicon data")
 }

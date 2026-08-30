@@ -1,12 +1,13 @@
-use std::fs::File;
-use std::io::{self, Read};
+//! The snapshot record: the whole word list in one checksummed frame.
+
+use std::io;
 
 use crate::types::WordRecord;
 
 use super::binary::{Cursor, checksum, invalid_data, put_u16, put_u32, put_u64};
-use super::{MAX_SNAPSHOT_BYTES, SNAPSHOT_MAGIC, Store, VERSION};
+use crate::persistence::schema::{SNAPSHOT_MAGIC, VERSION};
 
-pub(super) fn encode(words: &[WordRecord], sequence: u64) -> Vec<u8> {
+pub(crate) fn encode(words: &[WordRecord], sequence: u64) -> Vec<u8> {
     let mut bytes = Vec::new();
     bytes.extend_from_slice(SNAPSHOT_MAGIC);
     put_u16(&mut bytes, VERSION);
@@ -23,26 +24,7 @@ pub(super) fn encode(words: &[WordRecord], sequence: u64) -> Vec<u8> {
     bytes
 }
 
-impl Store {
-    pub(super) fn load_snapshot(&self) -> io::Result<Option<(Vec<WordRecord>, u64)>> {
-        let mut bytes = Vec::new();
-        match File::open(self.snapshot_path()) {
-            Ok(mut file) => {
-                if file.metadata()?.len() > MAX_SNAPSHOT_BYTES {
-                    return Ok(None);
-                }
-                file.read_to_end(&mut bytes)?;
-            }
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {
-                return Ok(Some((Vec::new(), 0)));
-            }
-            Err(error) => return Err(error),
-        }
-        decode(&bytes)
-    }
-}
-
-fn decode(bytes: &[u8]) -> io::Result<Option<(Vec<WordRecord>, u64)>> {
+pub(crate) fn decode(bytes: &[u8]) -> io::Result<Option<(Vec<WordRecord>, u64)>> {
     if bytes.len() < SNAPSHOT_MAGIC.len() + 2 + 8 + 4 + 4 {
         return Ok(None);
     }
