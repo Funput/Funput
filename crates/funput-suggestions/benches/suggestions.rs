@@ -5,6 +5,11 @@ use criterion::{BatchSize, BenchmarkId, Criterion, Throughput, criterion_group, 
 use funput_suggestions::{SuggestionConfig, SuggestionEngine};
 use tempfile::TempDir;
 
+/// Two words from the middle of `populated`, so resolving them costs what
+/// resolving a real context costs rather than what an early slot costs.
+const SHARP_CONTEXT: &str = "word2500";
+const FLAT_CONTEXT: &str = "word2501";
+
 fn populated() -> SuggestionEngine {
     let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
     for index in 0..5_000 {
@@ -21,9 +26,8 @@ fn populated() -> SuggestionEngine {
 
 fn bench_lookup(c: &mut Criterion) {
     let mut engine = populated();
-    engine.learn_after(None, "xin");
-    engine.learn_after(Some("xin"), "word1234");
-    engine.learn_after(Some("xin"), "word1234");
+    engine.learn_after(Some(SHARP_CONTEXT), "word1234");
+    engine.learn_after(Some(SHARP_CONTEXT), "word1234");
     let engine = engine;
     let mut group = c.benchmark_group("suggestions/lookup");
     group.throughput(Throughput::Elements(1));
@@ -50,6 +54,42 @@ fn bench_lookup(c: &mut Criterion) {
                 });
             },
         );
+    }
+    group.finish();
+}
+
+/// Prediction has two outcomes and they cost different amounts: speaking walks the
+/// follower slots and returns a word, staying quiet leaves after the dominance
+/// test. Both run once per space, so both are measured.
+///
+/// The context words are picked from the middle of the lexicon on purpose.
+/// Resolving one is a linear scan of `words`, so a context learned *after* the
+/// fixture would land in a slot freed near the front and be found in a handful of
+/// comparisons — a number that says nothing about the real cost.
+fn bench_predict(c: &mut Criterion) {
+    let mut engine = populated();
+    // A sharp context: every sighting of it is followed by the same word.
+    for _ in 0..8 {
+        engine.learn_after(Some(SHARP_CONTEXT), "ơn");
+    }
+    // A flat one: four followers sharing its sightings, so the bar stays quiet.
+    for word in ["tôi", "bạn", "anh", "chị"] {
+        for _ in 0..3 {
+            engine.learn_after(Some(FLAT_CONTEXT), word);
+        }
+    }
+    let engine = engine;
+    assert_eq!(engine.suggest_with(Some(SHARP_CONTEXT), "").len(), 1);
+    assert_eq!(engine.suggest_with(Some(FLAT_CONTEXT), "").len(), 0);
+
+    let mut group = c.benchmark_group("suggestions/predict");
+    group.throughput(Throughput::Elements(1));
+    for (name, context) in [("speaks", SHARP_CONTEXT), ("silent", FLAT_CONTEXT)] {
+        group.bench_with_input(BenchmarkId::from_parameter(name), context, |b, context| {
+            b.iter(|| {
+                black_box(engine.suggest_with(black_box(Some(context)), black_box(""))).len()
+            });
+        });
     }
     group.finish();
 }
@@ -143,5 +183,11 @@ fn bench_persistence(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_lookup, bench_learning, bench_persistence);
+criterion_group!(
+    benches,
+    bench_lookup,
+    bench_predict,
+    bench_learning,
+    bench_persistence
+);
 criterion_main!(benches);

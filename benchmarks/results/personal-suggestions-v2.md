@@ -28,30 +28,47 @@ a 2 s timer and every 32 learns. `REBUILD_AFTER_EVICTIONS = 64` caps how many
 dead entries can accumulate for a caller that never flushes, which is what keeps
 the tries from growing with every distinct word ever seen.
 
-## Lookup with a context
+## Lookup, with a context and without
 
 | Path | Prefix only | With a context |
 |---|---:|---:|
-| Exact prefix, 5 scalars | 220 ns | 444 ns |
-| Miss | 146 ns | 340 ns |
+| Exact prefix, 5 scalars | 232 ns | **2.99 µs** |
+| Miss | 154 ns | **2.93 µs** |
 
-The context costs roughly 200 ns: normalizing the previous word, finding its slot,
-and walking four follower entries. Nearly all of it is finding the slot — a scan
-of up to 5,000 words — and it stays this cheap only because the word is
-normalized onto the stack once and then compared with `==`, which reads the
-length out of the record and rejects almost every candidate without touching its
-heap buffer. Comparing through a normalizing iterator inside the loop instead
-rebuilt an NFC iterator per word and took a cache miss on each; that was
-affordable when the call only ran once per learned token, and would not have been
-here. An O(1) index over `words` was left unbuilt: 200 ns on a background worker
-does not justify roughly 200 KB and a second copy of every word.
+| Prediction (no prefix) | |
+|---|---:|
+| The context is sharp, so it speaks | **3.96 µs** |
+| The context is flat, so it stays quiet | **3.94 µs** |
 
-Prefix-only lookup is 72.6 ns to 76.7 ns on the shortest prefix, about 6%. That is
+**These replace an earlier figure of 444 ns that was wrong, and wrong in a way
+worth recording.** The first version of the benchmark learned its context word
+*after* the 5,000-word fixture, so that word landed in a slot the fixture had just
+freed near the front of `words` — and resolving it took about five comparisons
+instead of a realistic number. The benchmark was measuring its own setup.
+Resolving a context is a linear scan, so where the word sits in the list is the
+whole cost, and the benchmarks now take their contexts from the middle of the
+lexicon.
+
+So the context costs about **2.7 µs**, nearly all of it that scan. It runs on the
+shells' background worker, once per keystroke, so at four microseconds against a
+sixteen-millisecond frame it is still not something a user can feel — but the
+earlier justification for leaving an O(1) index over `words` unbuilt ("200 ns does
+not justify 200 KB") does not survive its own correction. That question is open
+again, and it is now the single largest cost in the crate by an order of
+magnitude.
+
+Prediction is measured in both outcomes because both run once per space. Speaking
+costs a little more than staying quiet, though not by the margin the extra work
+suggests; the difference between it and the reranking path is about a microsecond
+that the scan alone does not account for, and is not explained here rather than
+explained wrongly.
+
+Prefix-only lookup is 72.6 ns to 80.3 ns on the shortest prefix, about 10%. That is
 the cost of `suggest` becoming `suggest_with(None, ...)` and the merge moving
 behind two reusable calls; `#[inline]` recovers part of it, and the alternative is
-the same merge written twice. Both figures are around 13 million lookups a second.
+the same merge written twice.
 
-Warm lookup still makes zero heap allocations, with and without a context.
+Warm lookup makes zero heap allocations on all three paths.
 
 ## Memory
 
@@ -123,9 +140,14 @@ harness at p50 **250 ns**, identical to the Rust harness at p50 **250 ns**, so
 the allocation does not show up above the noise. Recorded here so the next reader
 does not re-measure it.
 
-**The linear scan in `upsert_word`.** Finding an existing word compares against
-up to 5,000 `String`s. Measured at 2.29 µs per learned token on a background
-worker — roughly 1/20,000th of the interval between keystrokes at a fast typing
-speed. A hash index would cost about 200 KB and a second copy of every word's
-text; the trade is not worth making. The bigram work will add a second such scan
-for the previous token, taking it to roughly 4.6 µs, which is still not worth it.
+**The linear scan over `words`.** Finding an existing word compares against up to
+5,000 `String`s: 2.29 µs on the learn path, and — since the context work — about
+2.7 µs on the query path as well, once per keystroke. A hash index would cost
+roughly 200 KB and a second copy of every word's text.
+
+This was recorded twice as "not worth it", the second time on the strength of a
+444 ns measurement that turned out to be a benchmark artifact (see above). Both
+figures are still small against a frame, and both still land on a background
+worker rather than the typing path, so nothing here is urgent. But the reasoning
+that closed the question was wrong, and the question should be reopened on
+purpose rather than left closed by accident.
