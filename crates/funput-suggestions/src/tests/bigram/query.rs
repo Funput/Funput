@@ -152,3 +152,92 @@ fn a_folded_prefix_still_reranks() {
     assert_eq!(texts(&engine, "ho"), ["hôm", "hòa"]);
     assert_eq!(with(&engine, "xin", "ho"), ["hòa", "hôm"]);
 }
+
+fn predicted(engine: &SuggestionEngine, previous: &str) -> Vec<String> {
+    with(engine, previous, "")
+}
+
+#[test]
+fn a_dominant_pair_speaks_after_a_space() {
+    let mut engine = engine(SuggestionConfig::default());
+    engine.learn_after(None, "cảm");
+    engine.learn_after(Some("cảm"), "ơn");
+    engine.learn_after(Some("cảm"), "ơn");
+    assert_eq!(predicted(&engine, "cảm"), ["ơn"]);
+}
+
+#[test]
+fn a_flat_context_stays_silent() {
+    let mut engine = engine(SuggestionConfig::default());
+    engine.learn_after(None, "của");
+    // Four followers sharing the sightings evenly. Every one of them clears the
+    // use threshold; none of them accounts for enough of "của" to be worth
+    // saying, which is the whole distinction this mode rests on.
+    for word in ["tôi", "bạn", "anh", "chị"] {
+        for _ in 0..3 {
+            engine.learn_after(Some("của"), word);
+        }
+    }
+    assert!(
+        predicted(&engine, "của").is_empty(),
+        "a context that can be followed by anything must not offer one of them"
+    );
+}
+
+#[test]
+fn only_the_leader_is_offered() {
+    let mut engine = engine(SuggestionConfig::default());
+    engine.learn_after(None, "xin");
+    for _ in 0..8 {
+        engine.learn_after(Some("xin"), "chào");
+    }
+    for _ in 0..2 {
+        engine.learn_after(Some("xin"), "lỗi");
+    }
+    assert_eq!(predicted(&engine, "xin"), ["chào"]);
+}
+
+#[test]
+fn a_pair_below_the_use_threshold_stays_silent() {
+    let mut engine = engine(SuggestionConfig::default());
+    engine.learn_after(None, "xin");
+    engine.learn_after(Some("xin"), "chào");
+    assert!(
+        predicted(&engine, "xin").is_empty(),
+        "seen once is not a habit"
+    );
+
+    engine.learn_after(Some("xin"), "chào");
+    assert_eq!(predicted(&engine, "xin"), ["chào"]);
+}
+
+#[test]
+fn without_a_context_nothing_is_predicted() {
+    let mut engine = engine(SuggestionConfig::default());
+    engine.learn_after(None, "xin");
+    engine.learn_after(Some("xin"), "chào");
+    engine.learn_after(Some("xin"), "chào");
+
+    assert!(engine.suggest_with(None, "").is_empty());
+    assert!(predicted(&engine, "chưa").is_empty());
+}
+
+#[test]
+fn a_dead_leader_does_not_speak() {
+    let mut engine = engine(SuggestionConfig {
+        max_words: 3,
+        ..SuggestionConfig::default()
+    });
+    engine.learn_after(None, "xin");
+    engine.learn_after(None, "xin");
+    engine.learn_after(Some("xin"), "chào");
+    engine.learn_after(Some("xin"), "chào");
+    assert_eq!(predicted(&engine, "xin"), ["chào"]);
+
+    // "chào" is the weakest, so filling the lexicon pushes it out.
+    engine.learn_after(None, "aaa");
+    engine.learn_after(None, "aaa");
+    engine.learn_after(None, "bbb");
+    engine.learn_after(None, "bbb");
+    assert!(predicted(&engine, "xin").is_empty());
+}

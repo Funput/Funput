@@ -85,6 +85,29 @@ fn warm_lookup_with_a_context_does_not_allocate() {
     );
 }
 
+/// Prediction runs after every space, so it is on the same budget: it normalizes
+/// the previous word and walks four follower slots with no heap in sight.
+#[test]
+fn warm_prediction_does_not_allocate() {
+    let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
+    engine.learn_after(None, "xin");
+    engine.learn_after(Some("xin"), "chào");
+    engine.learn_after(Some("xin"), "chào");
+
+    let allocations = measure(|| {
+        for _ in 0..100_000 {
+            std::hint::black_box(
+                engine.suggest_with(std::hint::black_box(Some("xin")), std::hint::black_box("")),
+            );
+        }
+    });
+
+    assert_eq!(
+        allocations, 0,
+        "warm prediction allocated {allocations} times"
+    );
+}
+
 fn measure(body: impl FnOnce()) -> usize {
     MEASURING.set(true);
     let before = ALLOCATIONS.get();
