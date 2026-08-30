@@ -84,7 +84,14 @@ fn bench_predict(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("suggestions/predict");
     group.throughput(Throughput::Elements(1));
-    for (name, context) in [("speaks", SHARP_CONTEXT), ("silent", FLAT_CONTEXT)] {
+    // "unknown" is a context the engine never learned, which the platforms can
+    // pass after an eviction or on a first-ever word. It scans the whole list
+    // rather than half of it and is *faster* for it — see the results file.
+    for (name, context) in [
+        ("speaks", SHARP_CONTEXT),
+        ("silent", FLAT_CONTEXT),
+        ("unknown", "khôngcótrongtừđiển"),
+    ] {
         group.bench_with_input(BenchmarkId::from_parameter(name), context, |b, context| {
             b.iter(|| {
                 black_box(engine.suggest_with(black_box(Some(context)), black_box(""))).len()
