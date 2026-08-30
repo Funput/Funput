@@ -4,10 +4,13 @@ import os
 public struct PersonalSuggestionQueryRequest: Equatable, Sendable {
     public let prefix: String
     public let generation: UInt64
+    /// The word `prefix` is being typed after, when the caller can vouch for one.
+    public let context: String?
 
-    public init(prefix: String, generation: UInt64) {
+    public init(prefix: String, generation: UInt64, context: String? = nil) {
         self.prefix = prefix
         self.generation = generation
+        self.context = context
     }
 }
 

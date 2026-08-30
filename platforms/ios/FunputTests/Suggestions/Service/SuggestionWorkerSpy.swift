@@ -42,9 +42,14 @@ final class SuggestionWorkerFactorySpy {
 final class SuggestionWorkerSpy: PersonalSuggestionWorking, @unchecked Sendable {
     enum Event: Equatable {
         case configure(PersonalSuggestionWorkerConfiguration)
-        case learn(String)
+        case learn(String, context: String?)
         case query(PersonalSuggestionQueryRequest)
         case flush
+
+        var learned: (token: String, context: String?)? {
+            guard case .learn(let token, let context) = self else { return nil }
+            return (token, context)
+        }
 
         var query: PersonalSuggestionQueryRequest? {
             guard case .query(let value) = self else { return nil }
@@ -68,7 +73,9 @@ final class SuggestionWorkerSpy: PersonalSuggestionWorking, @unchecked Sendable 
         events.append(.configure(configuration))
     }
 
-    func learn(_ token: String) { events.append(.learn(token)) }
+    func learn(_ token: String, after previous: String?) {
+        events.append(.learn(token, context: previous))
+    }
 
     func query(_ request: PersonalSuggestionQueryRequest) {
         events.append(.query(request))

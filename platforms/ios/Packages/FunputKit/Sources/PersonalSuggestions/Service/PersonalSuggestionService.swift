@@ -15,6 +15,7 @@ public final class PersonalSuggestionService {
     private var generation: UInt64 = 0
     private var activationGeneration: UInt64 = 0
     private var prefix = ""
+    private var context: String?
     private var visibleCandidates: [KeyboardSuggestionCandidate] = []
 
     public init(workerFactory: @escaping PersonalSuggestionWorkerFactory) {
@@ -46,8 +47,9 @@ public final class PersonalSuggestionService {
             )
         }
         if let token = update.completedToken, workerConfiguration.enabled {
-            ensureWorker()?.learn(token)
+            ensureWorker()?.learn(token, after: context)
         }
+        context = update.context
         let next = canQuery && workerConfiguration.enabled && update.prefix.count >= 2
             ? update.prefix : ""
         if update.completedToken == nil, next == prefix { return }
@@ -55,8 +57,10 @@ public final class PersonalSuggestionService {
         prefix = next
         visibleCandidates = []
         publish([])
+        // Never queried with an empty prefix: without one every follower matches,
+        // and that is prediction without the threshold that has to guard it.
         guard !prefix.isEmpty else { return }
-        ensureWorker()?.query(.init(prefix: prefix, generation: generation))
+        ensureWorker()?.query(.init(prefix: prefix, generation: generation, context: context))
     }
 
     public func acceptance(
@@ -89,6 +93,7 @@ public final class PersonalSuggestionService {
         let needsPublish = !prefix.isEmpty || !visibleCandidates.isEmpty
         generation &+= 1
         prefix = ""
+        context = nil
         visibleCandidates = []
         if needsPublish { publish([]) }
     }

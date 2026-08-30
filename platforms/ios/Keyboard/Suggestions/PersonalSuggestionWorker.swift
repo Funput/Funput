@@ -36,11 +36,11 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
         }
     }
 
-    func learn(_ token: String) {
+    func learn(_ token: String, after previous: String?) {
         queue.async { [weak self] in
             guard let self, enabled else { return }
             ensureEngine()
-            guard engine?.learn(token) == true else { return }
+            guard engine?.learn(token, after: previous) == true else { return }
             learnedSinceFlush += 1
             if learnedSinceFlush >= 32 { flushWhenIdle() }
             else { flushTimer.schedule(deadline: .now() + 2) }
@@ -89,7 +89,7 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
                 request.generation
             )
             ensureEngine()
-            let result = enabled ? engine?.query(request.prefix) ?? [] : []
+            let result = enabled ? engine?.query(request.prefix, after: request.context) ?? [] : []
             os_signpost(
                 .end,
                 log: PersonalSuggestionSignposts.log,

@@ -14,7 +14,7 @@ public struct PersonalSuggestionWorkerConfiguration: Equatable, Sendable {
 
 public protocol PersonalSuggestionWorking: AnyObject, Sendable {
     func configure(_ configuration: PersonalSuggestionWorkerConfiguration)
-    func learn(_ token: String)
+    func learn(_ token: String, after previous: String?)
     func query(_ request: PersonalSuggestionQueryRequest)
     func flush()
 }
