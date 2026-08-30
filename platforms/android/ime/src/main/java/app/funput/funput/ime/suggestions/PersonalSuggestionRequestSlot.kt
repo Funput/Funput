@@ -7,6 +7,8 @@ internal data class PersonalSuggestionRequest(
     val prefix: String,
     val generation: Long,
     val session: Long,
+    /** The word [prefix] is being typed after, when one can be vouched for. */
+    val context: String? = null,
     val startedNanos: Long = System.nanoTime(),
 )
 

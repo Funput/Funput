@@ -27,6 +27,8 @@ internal class PersonalSuggestionService(
     private var session = 0L
     private var generation = 0L
     private var prefix = ""
+    /** The word the next one follows, when the tracker can vouch for one. */
+    private var previousWord: String? = null
     private var candidates = emptyList<String>()
     private var pendingReset: String? = null
 
@@ -63,13 +65,18 @@ internal class PersonalSuggestionService(
     }
 
     fun consume(update: AuthoredSuggestionUpdate) {
-        update.completedToken?.takeIf { eligible() && policy.allowsPersonalizedLearning }?.let { worker?.learn(it) }
+        update.completedToken
+            ?.takeIf { eligible() && policy.allowsPersonalizedLearning }
+            ?.let { worker?.learn(it, previousWord) }
+        previousWord = update.context
         if (update.completedToken == null && update.prefix == prefix) return
         prefix = update.prefix
+        // Never queried without a prefix: without one every follower matches, and
+        // that is prediction without the threshold that has to guard it.
         if (!eligible() || prefix.codePointCount(0, prefix.length) < MinimumPrefix) return clear()
         generation += 1
         clearCandidates()
-        worker?.query(PersonalSuggestionRequest(prefix, generation, session))
+        worker?.query(PersonalSuggestionRequest(prefix, generation, session, previousWord))
     }
 
     fun select(selection: SuggestionSelection, handler: ImeKeyActionHandler): Boolean {
@@ -100,6 +107,7 @@ internal class PersonalSuggestionService(
     private fun clear() {
         generation += 1
         prefix = ""
+        previousWord = null
         worker?.clearQueries()
         clearCandidates()
     }

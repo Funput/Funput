@@ -17,7 +17,8 @@ internal class AndroidCompositionSession(
     private var renderMode = CompositionRenderMode.COMPOSING
     var composingText: String = ""
         private set
-    private var completedToken: String? = null
+    /** The word a boundary just finished, and whether that boundary was a space. */
+    private var completed: Pair<String, Boolean>? = null
 
     val isComposing: Boolean get() = composingText.isNotEmpty()
 
@@ -28,7 +29,7 @@ internal class AndroidCompositionSession(
     }
 
     fun input(connection: InputConnection?, text: String): Boolean {
-        completedToken = null
+        completed = null
         if (connection == null || text.isEmpty()) return false
         val codePoint = text.singleCodePointOrNull() ?: return commitRaw(connection, text)
         return if (CompositionBoundary.isBoundary(codePoint, engine.inputMethod)) {
@@ -39,7 +40,7 @@ internal class AndroidCompositionSession(
     }
 
     fun backspace(connection: InputConnection?): Boolean {
-        completedToken = null
+        completed = null
         if (connection == null || !isComposing) return false
         val previous = composingText
         composingText = engine.backspace()
@@ -53,19 +54,19 @@ internal class AndroidCompositionSession(
 
     fun reset() {
         composingText = ""
-        completedToken = null
+        completed = null
         committedTail.clear()
         engine.clear()
     }
 
-    fun takeCompletedToken(): String? = completedToken.also { completedToken = null }
+    fun takeCompleted(): Pair<String, Boolean>? = completed.also { completed = null }
 
     fun acceptSuggestion(connection: InputConnection, prefix: String, candidate: String): Boolean {
         if (composingText != prefix) return false
         val accepted = documentEditor.acceptSuggestion(connection, renderMode, prefix, candidate)
         if (accepted) committedTail.record("$candidate ")
         composingText = ""
-        completedToken = null
+        completed = null
         engine.clear()
         return accepted
     }
@@ -77,7 +78,10 @@ internal class AndroidCompositionSession(
     ): Boolean {
         val previous = composingText
         val replacement = engine.processBoundary(codePoint)
-        completedToken = replacement?.removeSuffix(text)?.ifEmpty { null } ?: previous.ifEmpty { null }
+        // Only a space leaves the words either side of it adjacent; the tracker
+        // has no other way to know which boundary this was.
+        val token = replacement?.removeSuffix(text)?.ifEmpty { null } ?: previous.ifEmpty { null }
+        completed = token?.let { it to (codePoint == ' '.code) }
         committedTail.record(replacement ?: previous + text)
         composingText = ""
         return documentEditor.commitBoundary(connection, renderMode, previous, replacement, text)
