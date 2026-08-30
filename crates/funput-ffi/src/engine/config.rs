@@ -5,7 +5,6 @@
 //! boundary rule "every FFI call goes through the guard" holds uniformly.
 
 use funput_core::{InputMethod, ToneStyle};
-use funput_engine::EngineConfig;
 
 use super::FunputEngine;
 use crate::abi;
@@ -45,7 +44,9 @@ pub unsafe extern "C" fn funput_set_method(engine: *mut FunputEngine, method: u8
 }
 
 /// A whole engine configuration passed by value over the C ABI — the six user
-/// options. `enabled` and the gõ tắt shortcut table have their own functions.
+/// options. `enabled` and the gõ tắt options have their own functions: this struct
+/// crosses the ABI by value and the hosts declaring it are built separately from the
+/// header, so growing it would mismatch silently until every consumer is rebuilt.
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct FunputConfig {
@@ -61,28 +62,29 @@ pub struct FunputConfig {
 
 /// Apply a whole [`FunputConfig`] at once — the batch equivalent of the individual
 /// `funput_set_*` functions, with the same side effects (a method change clears the
-/// composition; auto-capitalize off resets its tracking). `funput_set_enabled` and
-/// the shortcut table are separate and left untouched.
+/// composition; auto-capitalize off resets its tracking). `funput_set_enabled`, the
+/// shortcut table, and the gõ tắt options are separate and left untouched.
+///
+/// Edits the live config rather than replacing it, so an option that is not on the
+/// wire keeps whatever its own setter last put there, whichever order the two are
+/// called in.
 ///
 /// # Safety
 /// `engine` must be a valid handle or null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_configure(engine: *mut FunputEngine, config: FunputConfig) {
-    let cfg = EngineConfig {
-        method: decode_method(config.method),
-        tone_style: decode_tone_style(config.tone_style),
-        smart_restore: config.smart_restore,
-        eager_restore: config.eager_restore,
-        spell_check: config.spell_check,
-        auto_capitalize: config.auto_capitalize,
-        // Not in `FunputConfig`: this struct crosses the C ABI by value, and the
-        // Swift side declaring it is built separately, so growing it here would
-        // mismatch silently until every consumer is rebuilt. The hosts on this ABI
-        // have no gõ tắt switch yet, and `true` is what they behaved as before —
-        // give them a dedicated setter when one of them grows the feature.
-        shortcuts_enabled: true,
-    };
-    unsafe { abi::with_engine_mut(engine, |e| e.configure(cfg)) }
+    unsafe {
+        abi::with_engine_mut(engine, |e| {
+            e.update_config(|cfg| {
+                cfg.method = decode_method(config.method);
+                cfg.tone_style = decode_tone_style(config.tone_style);
+                cfg.smart_restore = config.smart_restore;
+                cfg.eager_restore = config.eager_restore;
+                cfg.spell_check = config.spell_check;
+                cfg.auto_capitalize = config.auto_capitalize;
+            })
+        })
+    }
 }
 
 /// Enable or disable Vietnamese composition.

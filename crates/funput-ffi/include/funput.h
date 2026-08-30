@@ -181,7 +181,9 @@ typedef struct {
 
 /**
  * A whole engine configuration passed by value over the C ABI — the six user
- * options. `enabled` and the gõ tắt shortcut table have their own functions.
+ * options. `enabled` and the gõ tắt options have their own functions: this struct
+ * crosses the ABI by value and the hosts declaring it are built separately from the
+ * header, so growing it would mismatch silently until every consumer is rebuilt.
  */
 typedef struct {
     /**
@@ -643,8 +645,12 @@ void funput_set_method(FunputEngine *engine, uint8_t method);
 /**
  * Apply a whole [`FunputConfig`] at once — the batch equivalent of the individual
  * `funput_set_*` functions, with the same side effects (a method change clears the
- * composition; auto-capitalize off resets its tracking). `funput_set_enabled` and
- * the shortcut table are separate and left untouched.
+ * composition; auto-capitalize off resets its tracking). `funput_set_enabled`, the
+ * shortcut table, and the gõ tắt options are separate and left untouched.
+ *
+ * Edits the live config rather than replacing it, so an option that is not on the
+ * wire keeps whatever its own setter last put there, whichever order the two are
+ * called in.
  *
  * # Safety
  * `engine` must be a valid handle or null.
