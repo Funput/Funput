@@ -6,17 +6,33 @@
 //!
 //! v1 has no such byte and recorded no boundaries at all, so nothing in a v1
 //! frame can be believed as adjacent.
+//!
+//! From v3 a frame also records the engine sequence its last token was learned
+//! at. `compact` folds the journal into the snapshot and then truncates it, and
+//! those are two writes rather than one: a crash in between leaves a snapshot
+//! that already contains the frame next to a journal that still holds it. The
+//! sequence is what lets the reader tell, so replaying such a journal adds
+//! nothing rather than counting every token in it twice.
 
 use std::io;
 
-use super::binary::{Cursor, checksum, invalid_data, put_u16, put_u32};
+use super::binary::{Cursor, checksum, invalid_data, put_u16, put_u32, put_u64};
 use crate::persistence::schema::{self, JOURNAL_MAGIC, JOURNAL_WRITE_VERSION, Version};
 
 /// One learned token, and whether it followed the token written before it.
 pub(crate) type Entry = (String, bool);
 
-pub(crate) fn encode_frame(entries: &[Entry]) -> Vec<u8> {
+/// A decoded frame: its entries, and the sequence it ends at when the format
+/// recorded one. `None` is a frame from before v3, which has to be replayed
+/// because nothing in it says whether it already has been.
+pub(crate) struct Frame {
+    pub(crate) sequence: Option<u64>,
+    pub(crate) entries: Vec<Entry>,
+}
+
+pub(crate) fn encode_frame(entries: &[Entry], sequence: u64) -> Vec<u8> {
     let mut payload = Vec::new();
+    put_u64(&mut payload, sequence);
     put_u32(&mut payload, entries.len() as u32);
     for (token, chained) in entries {
         put_u16(&mut payload, token.len() as u16);
@@ -32,7 +48,7 @@ pub(crate) fn encode_frame(entries: &[Entry]) -> Vec<u8> {
     frame
 }
 
-pub(crate) fn decode_frame(cursor: &mut Cursor<'_>) -> io::Result<Vec<Entry>> {
+pub(crate) fn decode_frame(cursor: &mut Cursor<'_>) -> io::Result<Frame> {
     if cursor.take(JOURNAL_MAGIC.len())? != JOURNAL_MAGIC {
         return Err(invalid_data());
     }
@@ -56,6 +72,11 @@ pub(crate) fn decode_frame(cursor: &mut Cursor<'_>) -> io::Result<Vec<Entry>> {
         return Err(invalid_data());
     }
     let mut payload = Cursor::new(payload);
+    let sequence = if version >= 3 {
+        Some(payload.u64()?)
+    } else {
+        None
+    };
     let count = payload.u32()? as usize;
     if count > payload.remaining() / 2 {
         return Err(invalid_data());
@@ -73,5 +94,5 @@ pub(crate) fn decode_frame(cursor: &mut Cursor<'_>) -> io::Result<Vec<Entry>> {
     if !payload.is_empty() {
         return Err(invalid_data());
     }
-    Ok(entries)
+    Ok(Frame { sequence, entries })
 }

@@ -34,7 +34,16 @@ impl Store {
         snapshot::decode(&bytes)
     }
 
-    pub(super) fn load_journal(&self) -> io::Result<(Vec<super::JournalEntry>, u64)> {
+    /// Frames the snapshot already contains are skipped rather than replayed.
+    ///
+    /// `compact` writes the snapshot and truncates the journal as two separate
+    /// writes; a crash between them leaves a journal that has already been folded
+    /// in. Comparing the sequence each frame ends at against the snapshot's makes
+    /// replaying such a journal a no-op instead of counting every token twice.
+    pub(super) fn load_journal(
+        &self,
+        snapshot_sequence: u64,
+    ) -> io::Result<(Vec<super::JournalEntry>, u64)> {
         let path = self.journal_path();
         let bytes = match fs::metadata(&path) {
             // Far past the 64 KiB that triggers a compact, so this is not
@@ -54,7 +63,13 @@ impl Store {
         let mut entries = Vec::new();
         while !cursor.is_empty() {
             match journal::decode_frame(&mut cursor) {
-                Ok(frame) => entries.extend(frame),
+                // A frame from before v3 records no sequence, so nothing in it
+                // says whether it has been folded in; replay it, as every build
+                // before this one did.
+                Ok(frame) if frame.sequence.is_none_or(|at| at > snapshot_sequence) => {
+                    entries.extend(frame.entries);
+                }
+                Ok(_) => {}
                 Err(error) if error.kind() == io::ErrorKind::Unsupported => return Err(error),
                 Err(_) => break,
             }
