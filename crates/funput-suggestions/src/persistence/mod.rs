@@ -91,11 +91,24 @@ impl Store {
         file.write_all(&bytes)?;
         file.sync_all()?;
         std::fs::rename(&temporary, self.snapshot_path())?;
+
+        // The barrier, and the reason it sits here rather than at the end.
+        //
+        // Emptying the journal is only safe once the snapshot that replaces it is
+        // durable. Nothing orders a rename against the truncation that follows it,
+        // so with one sync at the end a crash could leave the journal empty while
+        // the *old* snapshot is still the one on disk — and everything learned
+        // since the last compact would be gone. Syncing here makes that ordering
+        // impossible rather than unlikely.
+        //
+        // The truncation needs no directory sync of its own. `sync_all` below
+        // makes the emptied file durable, and if the journal was being created
+        // rather than truncated then losing its directory entry leaves no journal
+        // at all, which reads exactly like the empty one it would have been.
+        fs::sync_dir(&self.root)?;
+
         let journal = File::create(self.journal_path())?;
         journal.sync_all()?;
-        // Both the rename and the fresh journal are directory changes: without
-        // this the snapshot we just fsynced can still be the one lost.
-        fs::sync_dir(&self.root)?;
         Ok(bytes.len() as u64)
     }
 
