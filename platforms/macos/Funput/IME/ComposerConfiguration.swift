@@ -10,6 +10,7 @@ struct ComposerConfiguration: Equatable {
     let eagerRestore: Bool
     let spellCheckEnabled: Bool
     let autoCapitalizeEnabled: Bool
+    let shortcutSmartCase: Bool
 
     init(settings: AppSettings) {
         inputMethod = settings.inputMethod
@@ -19,6 +20,7 @@ struct ComposerConfiguration: Equatable {
         eagerRestore = settings.eagerRestore
         spellCheckEnabled = settings.spellCheckEnabled
         autoCapitalizeEnabled = settings.autoCapitalizeEnabled
+        shortcutSmartCase = settings.shortcutSmartCase
     }
 
     init(
@@ -28,7 +30,8 @@ struct ComposerConfiguration: Equatable {
         smartEnglishRestore: Bool = true,
         eagerRestore: Bool = true,
         spellCheckEnabled: Bool = false,
-        autoCapitalizeEnabled: Bool = false
+        autoCapitalizeEnabled: Bool = false,
+        shortcutSmartCase: Bool = true
     ) {
         self.inputMethod = inputMethod
         self.toneStyle = toneStyle
@@ -37,6 +40,7 @@ struct ComposerConfiguration: Equatable {
         self.eagerRestore = eagerRestore
         self.spellCheckEnabled = spellCheckEnabled
         self.autoCapitalizeEnabled = autoCapitalizeEnabled
+        self.shortcutSmartCase = shortcutSmartCase
     }
 }
 
@@ -52,7 +56,10 @@ extension FunputComposer {
                 auto_capitalize: configuration.autoCapitalizeEnabled
             )
         )
-        // `enabled` is a runtime toggle, not part of the batch config.
+        // Neither of these rides the by-value `FunputConfig`: `enabled` is a runtime
+        // toggle, and smart case is kept off the C struct for ABI stability. Order does
+        // not matter — `configure` edits the engine config rather than replacing it.
+        setShortcutSmartCase(configuration.shortcutSmartCase)
         setEnabled(configuration.enabled)
     }
 }

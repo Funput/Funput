@@ -28,6 +28,19 @@ struct ShortcutsPane: View {
                         )
                     }
 
+                    Divider()
+
+                    SettingsRow(
+                        title: "Tự nhận diện hoa/thường",
+                        subtitle: "Gõ vn, Vn hay VN đều bung và nội dung tự viết hoa theo. Tắt thì chỉ khớp đúng chuỗi tắt đã lưu.",
+                        systemImage: "textformat"
+                    ) {
+                        Toggle("Tự nhận diện hoa/thường", isOn: $settings.shortcutSmartCase)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .tint(Theme.accent)
+                    }
+
                     if settings.shortcuts.isEmpty {
                         Divider()
                         Text("Chưa có gõ tắt nào. Bấm “Thêm” để tạo — ví dụ vn → Việt Nam, kg → không.")
@@ -45,7 +58,9 @@ struct ShortcutsPane: View {
 
             Section("Mẹo") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    Text("Trigger tự nhận diện hoa/thường — gõ `vn`, `Vn` hay `VN` đều bung, expansion tự viết hoa tương ứng. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh.")
+                    Text(settings.shortcutSmartCase
+                        ? "Trigger tự nhận diện hoa/thường — gõ `vn`, `Vn` hay `VN` đều bung, expansion tự viết hoa tương ứng. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh."
+                        : "Đang tắt nhận diện hoa/thường — chỉ gõ đúng chuỗi tắt đã lưu mới bung, và nội dung giữ nguyên như đã nhập. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
