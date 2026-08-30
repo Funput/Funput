@@ -22,7 +22,7 @@ impl SuggestionEngine {
         };
         self.journal_bytes = self
             .journal_bytes
-            .saturating_add(store.append_journal(&self.pending)?);
+            .saturating_add(store.append_journal(&self.pending, self.sequence)?);
         self.pending.clear();
         if self.journal_bytes >= JOURNAL_COMPACT_BYTES
             && let Err(error) = self.compact()

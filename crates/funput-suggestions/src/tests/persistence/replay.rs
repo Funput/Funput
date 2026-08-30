@@ -88,6 +88,68 @@ fn a_version_one_journal_replays_its_words_and_no_pairs() {
     );
 }
 
+/// How often the engine has seen `word`, which is what a double replay inflates.
+fn uses(engine: &SuggestionEngine, word: &str) -> u32 {
+    engine
+        .words
+        .iter()
+        .find(|record| record.text == word)
+        .map(|record| record.uses)
+        .unwrap_or_default()
+}
+
+#[test]
+fn a_journal_that_outlived_its_compact_is_not_replayed_twice() {
+    let directory = tempdir().unwrap();
+    let journal = directory.path().join("personal-lexicon.journal");
+    {
+        let mut engine = opened(directory.path());
+        for _ in 0..3 {
+            engine.learn_after(None, "chào");
+        }
+        engine.flush().unwrap();
+        // Exactly what `compact` is about to fold into the snapshot.
+        let folded = fs::read(&journal).unwrap();
+        assert!(!folded.is_empty());
+        engine.compact().unwrap();
+        assert!(fs::read(&journal).unwrap().is_empty());
+
+        // The crash: the renamed snapshot reached the disk and the truncation
+        // did not, so the journal still holds what the snapshot already has.
+        fs::write(&journal, &folded).unwrap();
+    }
+
+    let reopened = opened(directory.path());
+    assert_eq!(
+        uses(&reopened, "chào"),
+        3,
+        "the snapshot already contained these tokens; replaying them again would \
+         inflate the ranking that decides what is offered and what is evicted"
+    );
+}
+
+#[test]
+fn a_journal_written_after_its_compact_still_replays() {
+    let directory = tempdir().unwrap();
+    {
+        let mut engine = opened(directory.path());
+        for _ in 0..3 {
+            engine.learn_after(None, "chào");
+        }
+        engine.compact().unwrap();
+        // Learned after the snapshot, so it is only in the journal.
+        engine.learn_after(None, "chào");
+        engine.flush().unwrap();
+    }
+
+    let reopened = opened(directory.path());
+    assert_eq!(
+        uses(&reopened, "chào"),
+        4,
+        "skipping is for folded frames only"
+    );
+}
+
 /// A valid v1 journal frame: a flat token list with no context breaks.
 fn version_one_frame(tokens: &[&str]) -> Vec<u8> {
     let mut payload = Vec::new();

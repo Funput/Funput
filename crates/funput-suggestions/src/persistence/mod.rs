@@ -45,7 +45,7 @@ impl Store {
             None => (Vec::new(), 0, false),
         };
         let (journal, journal_bytes) = if snapshot_valid {
-            store.load_journal()?
+            store.load_journal(sequence)?
         } else {
             // The snapshot was damaged, not absent. Repair both files now: leaving
             // the snapshot means every later open discards the journal again, and
@@ -66,11 +66,11 @@ impl Store {
         ))
     }
 
-    pub(crate) fn append_journal(&self, entries: &[Entry]) -> io::Result<u64> {
+    pub(crate) fn append_journal(&self, entries: &[Entry], sequence: u64) -> io::Result<u64> {
         if entries.is_empty() {
             return Ok(0);
         }
-        let frame = journal::encode_frame(entries);
+        let frame = journal::encode_frame(entries, sequence);
         let path = self.journal_path();
         // A brand new journal is a directory change, so the entry needs syncing
         // too — once, on the append that creates it, not on every later one.

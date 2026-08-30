@@ -16,8 +16,10 @@ pub(super) const MAX_JOURNAL_BYTES: u64 = 1024 * 1024;
 pub(super) const SNAPSHOT_WRITE_VERSION: u16 = 2;
 pub(super) const SNAPSHOT_MIN_READ_VERSION: u16 = 1;
 
-/// v1 is a flat token list; v2 may carry context breaks between the tokens.
-pub(super) const JOURNAL_WRITE_VERSION: u16 = 2;
+/// v1 is a flat token list; v2 marks which tokens followed which; v3 records the
+/// sequence a frame ends at, which is what lets replay know it has already been
+/// folded into the snapshot.
+pub(super) const JOURNAL_WRITE_VERSION: u16 = 3;
 pub(super) const JOURNAL_MIN_READ_VERSION: u16 = 1;
 
 /// The oldest schema a build can still read. Raising one is how a format is
