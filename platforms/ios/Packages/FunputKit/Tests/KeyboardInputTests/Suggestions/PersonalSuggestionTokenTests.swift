@@ -111,6 +111,22 @@ struct PersonalSuggestionTokenTests {
         #expect(coordinator.takePersonalSuggestionUpdate().context == nil)
     }
 
+    @Test("A prediction is accepted with nothing to replace")
+    func acceptsAPredictionWithNoPrefix() {
+        let coordinator = KeyboardInputCoordinator(inputMethod: .vni)
+        let document = TestKeyboardWriter()
+        type("xin", with: coordinator, into: document)
+        coordinator.handle(testKey(.space, label: " "), writer: document)
+        _ = coordinator.takePersonalSuggestionUpdate()
+
+        #expect(
+            coordinator.acceptSuggestion("chào", replacing: "", writer: document) != nil,
+            "accepting a prediction replaces nothing and inserts a word"
+        )
+        #expect(document.text == "xin chào ")
+        #expect(coordinator.takePersonalSuggestionUpdate().context == "chào")
+    }
+
     @Test("Oversized words do not expose a query prefix")
     func boundedPrefix() {
         let coordinator = KeyboardInputCoordinator(inputMethod: .vni)
