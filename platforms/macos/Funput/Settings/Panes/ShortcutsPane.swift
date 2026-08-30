@@ -3,8 +3,8 @@ import SwiftUI
 /// Manage text-expansion shortcuts (gõ tắt): type a short trigger, then a space or
 /// punctuation, and Funput expands it (`vn` → `Việt Nam`). Rows are edited inline.
 struct ShortcutsPane: View {
-    @Environment(AppSettings.self) private var settings
-    @FocusState private var focusedTrigger: UUID?
+    @Environment(AppSettings.self) var settings
+    @FocusState var focusedTrigger: UUID?
 
     var body: some View {
         @Bindable var settings = settings
@@ -54,58 +54,6 @@ struct ShortcutsPane: View {
         }
     }
 
-    // MARK: - Row
-
-    private func row(_ shortcut: Binding<TextShortcut>) -> some View {
-        let isDuplicate = !shortcut.wrappedValue.trigger.isEmpty
-            && duplicateTriggers.contains(shortcut.wrappedValue.trigger)
-
-        return VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            HStack(spacing: Theme.Spacing.md) {
-                field(text: shortcut.trigger, placeholder: "vn", monospaced: true, invalid: isDuplicate)
-                    .frame(width: 130)
-                    .focused($focusedTrigger, equals: shortcut.wrappedValue.id)
-
-                Image(systemName: "arrow.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                field(text: shortcut.expansion, placeholder: "Việt Nam", monospaced: false, invalid: false)
-                    .frame(maxWidth: .infinity)
-
-                Button {
-                    settings.removeShortcut(shortcut.wrappedValue.id)
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.secondary)
-                .help("Xoá gõ tắt này")
-            }
-
-            if isDuplicate {
-                Text("Trùng trigger — dòng dưới sẽ được dùng.")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.accent)
-            }
-        }
-        .padding(.vertical, Theme.Spacing.xs)
-    }
-
-    private func field(text: Binding<String>, placeholder: String, monospaced: Bool, invalid: Bool) -> some View {
-        TextField("", text: text, prompt: Text(placeholder))
-            .labelsHidden()
-            .textFieldStyle(.plain)
-            .font(.system(.body, design: monospaced ? .monospaced : .default))
-            .padding(.horizontal, Theme.Spacing.sm)
-            .padding(.vertical, 6)
-            .background(.quaternary, in: RoundedRectangle(cornerRadius: Theme.Radius.control))
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.control)
-                    .strokeBorder(invalid ? Theme.accent : .clear, lineWidth: 1)
-            )
-    }
-
     // MARK: - Helpers
 
     /// "Thêm" is only enabled when the list is empty, or the last row already
@@ -118,7 +66,7 @@ struct ShortcutsPane: View {
 
     /// Triggers (non-empty) that appear on more than one row — flagged so the user
     /// knows the engine map keeps only the last one.
-    private var duplicateTriggers: Set<String> {
+    var duplicateTriggers: Set<String> {
         var seen = Set<String>()
         var duplicates = Set<String>()
         for shortcut in settings.shortcuts where !shortcut.trigger.isEmpty {
