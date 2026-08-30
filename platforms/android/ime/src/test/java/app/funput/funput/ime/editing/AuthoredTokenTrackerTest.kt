@@ -9,9 +9,9 @@ class AuthoredTokenTrackerTest {
     fun `tracks final composed output and completed token`() {
         val tracker = AuthoredTokenTracker()
 
-        tracker.update("tiếng", null)
+        tracker.update("tiếng", null, completedOnSpace = true)
         assertEquals("tiếng", tracker.consume().prefix)
-        tracker.update("", "tiếng")
+        tracker.update("", "tiếng", completedOnSpace = true)
 
         val update = tracker.consume()
         assertEquals("", update.prefix)
@@ -23,9 +23,9 @@ class AuthoredTokenTrackerTest {
     fun `supports decomposed marks and rejects boundaries`() {
         val tracker = AuthoredTokenTracker()
 
-        tracker.update("tie\u0302\u0301ng", null)
+        tracker.update("tie\u0302\u0301ng", null, completedOnSpace = true)
         assertEquals("tie\u0302\u0301ng", tracker.consume().prefix)
-        tracker.update("xin chào", "a!")
+        tracker.update("xin chào", "a!", completedOnSpace = true)
 
         assertEquals(AuthoredSuggestionUpdate.Empty, tracker.consume())
     }
@@ -35,9 +35,9 @@ class AuthoredTokenTrackerTest {
         val tracker = AuthoredTokenTracker()
         val valid = "a".repeat(32)
 
-        tracker.update(valid, valid)
+        tracker.update(valid, valid, completedOnSpace = true)
         assertEquals(valid, tracker.consume().prefix)
-        tracker.update("a".repeat(33), "a".repeat(33))
+        tracker.update("a".repeat(33), "a".repeat(33), completedOnSpace = true)
 
         assertEquals(AuthoredSuggestionUpdate.Empty, tracker.consume())
     }
@@ -53,15 +53,15 @@ class AuthoredTokenTrackerTest {
     }
 
     @Test
-    fun `direct input tracks letters digits boundaries and backspace`() {
+    fun `direct input tracks letters boundaries and backspace`() {
         val tracker = AuthoredTokenTracker()
 
-        tracker.input("ab12")
+        tracker.input("abcd")
         tracker.backspace()
-        assertEquals("ab1", tracker.consume().prefix)
+        assertEquals("abc", tracker.consume().prefix)
         tracker.input(" ")
 
-        assertEquals(AuthoredSuggestionUpdate("", "ab1"), tracker.consume())
+        assertEquals(AuthoredSuggestionUpdate("", "abc", context = "abc"), tracker.consume())
     }
 
     @Test
@@ -74,4 +74,5 @@ class AuthoredTokenTrackerTest {
 
         assertEquals(AuthoredSuggestionUpdate.Empty, tracker.consume())
     }
+
 }

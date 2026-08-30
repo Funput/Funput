@@ -15,7 +15,13 @@ public final class PersonalSuggestionService {
     private var generation: UInt64 = 0
     private var activationGeneration: UInt64 = 0
     private var prefix = ""
+    private var context: String?
+    /// Whether the bar is currently answering a context rather than a prefix.
+    private var predicting = false
     private var visibleCandidates: [KeyboardSuggestionCandidate] = []
+    private var capitalized = false
+    /// Last drawn; `nil` after a reconfigure, so reactivation always redraws.
+    private var published: [String]?
 
     public init(workerFactory: @escaping PersonalSuggestionWorkerFactory) {
         self.workerFactory = workerFactory
@@ -34,10 +40,15 @@ public final class PersonalSuggestionService {
         )
         self.activationGeneration = activationGeneration
         worker?.configure(workerConfiguration)
+        published = nil
         invalidateAndPublish()
     }
 
-    public func update(_ update: KeyboardSuggestionInputUpdate, canQuery: Bool) {
+    public func update(
+        _ update: KeyboardSuggestionInputUpdate,
+        canQuery: Bool,
+        capitalized: Bool = false
+    ) {
         let signpostID = PersonalSuggestionServiceSignposts.beginDispatch()
         defer {
             PersonalSuggestionServiceSignposts.endDispatch(
@@ -46,24 +57,32 @@ public final class PersonalSuggestionService {
             )
         }
         if let token = update.completedToken, workerConfiguration.enabled {
-            ensureWorker()?.learn(token)
+            ensureWorker()?.learn(token, after: context)
         }
-        let next = canQuery && workerConfiguration.enabled && update.prefix.count >= 2
-            ? update.prefix : ""
-        if update.completedToken == nil, next == prefix { return }
+        context = update.context
+        self.capitalized = capitalized
+        let allowed = canQuery && workerConfiguration.enabled
+        let next = allowed && update.prefix.count >= 2 ? update.prefix : ""
+        // A prediction answers a context with no prefix at all. One character is
+        // neither a prefix worth completing nor a word boundary, and stays out.
+        let predicts = allowed && update.prefix.isEmpty && context != nil
+        if update.completedToken == nil, next == prefix, predicts == predicting { return }
         generation &+= 1
         prefix = next
+        predicting = predicts
         visibleCandidates = []
         publish([])
-        guard !prefix.isEmpty else { return }
-        ensureWorker()?.query(.init(prefix: prefix, generation: generation))
+        guard !prefix.isEmpty || predicting else { return }
+        ensureWorker()?.query(.init(prefix: prefix, generation: generation, context: context))
     }
 
     public func acceptance(
         for candidate: KeyboardSuggestionCandidate
     ) -> (String, String)? {
+        // An empty prefix is the ordinary shape of accepting a prediction: it
+        // replaces nothing and inserts a word.
         guard candidate.generation == generation,
-              visibleCandidates.contains(candidate), !prefix.isEmpty
+              visibleCandidates.contains(candidate)
         else { return nil }
         return (prefix, candidate.text)
     }
@@ -86,9 +105,11 @@ public final class PersonalSuggestionService {
     }
 
     private func invalidateAndPublish() {
-        let needsPublish = !prefix.isEmpty || !visibleCandidates.isEmpty
+        let needsPublish = !prefix.isEmpty || predicting || !visibleCandidates.isEmpty
         generation &+= 1
         prefix = ""
+        context = nil
+        predicting = false
         visibleCandidates = []
         if needsPublish { publish([]) }
     }
@@ -102,7 +123,11 @@ public final class PersonalSuggestionService {
         else { return }
         let values = candidates.map {
             KeyboardSuggestionCandidate(
-                text: PersonalSuggestionCasing.apply($0.text, matching: prefix),
+                text: PersonalSuggestionCasing.apply(
+                    $0.text,
+                    matching: prefix,
+                    capitalized: capitalized
+                ),
                 generation: generation
             )
         }
@@ -115,6 +140,11 @@ public final class PersonalSuggestionService {
     }
 
     private func publish(_ candidates: [KeyboardSuggestionCandidate]) {
+        // Prediction adds a bar update after every space, most of them one empty
+        // list after another. Comparing here keeps that cost off UIKit.
+        let texts = candidates.map(\.text)
+        guard texts != published else { return }
+        published = texts
         onCandidates?(activationGeneration, candidates)
     }
 }

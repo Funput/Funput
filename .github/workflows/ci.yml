@@ -113,6 +113,36 @@ jobs:
       - name: Line budget
         run: bash scripts/check-loc.sh
 
+  # The line budgets for the three shell languages, none of which ran anywhere a
+  # pull request could see. The Swift ones were called from deploy-ios.yml
+  # (`workflow_dispatch`, a manual release) and build-macos.yml (`workflow_call`,
+  # from release.yml); the Kotlin ones were called from nothing at all. So an
+  # oversized file could sit in main until someone shipped, and two did: a Swift
+  # test file at 159 lines with twelve green pull requests stacked on it, and a
+  # Kotlin one at 162.
+  #
+  # Its own job rather than steps in `rust`, so a failure is named for what broke.
+  # Every script here is bash, find and wc, so none needs a toolchain and the whole
+  # job costs a checkout. It does not build or test either mobile shell — the
+  # Android module in particular has no CI at all, which is its own problem and a
+  # much larger one than this job.
+  shell-line-budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Swift, iOS
+        run: bash platforms/ios/Scripts/check-swift-loc.sh
+
+      - name: Swift, macOS
+        run: bash platforms/macos/scripts/check-swift-loc.sh
+
+      - name: Kotlin, line budget
+        run: bash platforms/android/scripts/check-kotlin-loc.sh
+
+      - name: Kotlin, directory layout
+        run: bash platforms/android/scripts/check-kotlin-layout.sh
+
   # The GTK4 Settings app, which also hosts the Chuyển mã window. Excluded from the
   # cargo workspace because it links system gtk4/libadwaita, so the `rust` job above —
   # which deliberately installs no system libraries — cannot see it. Before this job it

@@ -13,6 +13,7 @@ import app.funput.funput.keyboard.ui.KeyboardPanel
 internal class PersonalSuggestionService(
     context: Context,
     private val show: (List<String>) -> Unit,
+    private val capitalized: () -> Boolean = { false },
     private val acknowledgeReset: (String) -> Unit,
 ) {
     private val worker = runCatching {
@@ -27,6 +28,10 @@ internal class PersonalSuggestionService(
     private var session = 0L
     private var generation = 0L
     private var prefix = ""
+    /** The word the next one follows, when the tracker can vouch for one. */
+    private var previousWord: String? = null
+    /** Whether the bar is currently answering a context rather than a prefix. */
+    private var predicting = false
     private var candidates = emptyList<String>()
     private var pendingReset: String? = null
 
@@ -63,18 +68,29 @@ internal class PersonalSuggestionService(
     }
 
     fun consume(update: AuthoredSuggestionUpdate) {
-        update.completedToken?.takeIf { eligible() && policy.allowsPersonalizedLearning }?.let { worker?.learn(it) }
-        if (update.completedToken == null && update.prefix == prefix) return
+        update.completedToken
+            ?.takeIf { eligible() && policy.allowsPersonalizedLearning }
+            ?.let { worker?.learn(it, previousWord) }
+        previousWord = update.context
+        // A prediction answers a context with no prefix at all. One character is
+        // neither a prefix worth completing nor a word boundary, and stays out.
+        val predicts = eligible() && update.prefix.isEmpty() && previousWord != null
+        if (update.completedToken == null && update.prefix == prefix && predicts == predicting) return
         prefix = update.prefix
-        if (!eligible() || prefix.codePointCount(0, prefix.length) < MinimumPrefix) return clear()
+        predicting = predicts
+        if (!eligible() || (!predicts && prefix.codePointCount(0, prefix.length) < MinimumPrefix)) {
+            return clear()
+        }
         generation += 1
         clearCandidates()
-        worker?.query(PersonalSuggestionRequest(prefix, generation, session))
+        worker?.query(PersonalSuggestionRequest(prefix, generation, session, previousWord))
     }
 
     fun select(selection: SuggestionSelection, handler: ImeKeyActionHandler): Boolean {
         val candidate = candidates.getOrNull(selection.index) ?: return reject()
-        if (candidate != selection.text || !eligible() || prefix.isEmpty()) return reject()
+        // An empty prefix is the ordinary shape of accepting a prediction: it
+        // replaces nothing and inserts a word.
+        if (candidate != selection.text || !eligible()) return reject()
         if (!handler.acceptSuggestion(candidate, prefix)) return reject()
         consume(handler.takeSuggestionUpdate())
         return true
@@ -86,8 +102,11 @@ internal class PersonalSuggestionService(
     private fun publish(request: PersonalSuggestionRequest, values: List<String>) {
         if (request.generation != generation || request.session != session || request.prefix != prefix) return
         if (!eligible()) return
-        candidates = values.map { PersonalSuggestionCasing.apply(it, prefix) }
-        runCatching { show(candidates) }
+        val next = values.map { PersonalSuggestionCasing.apply(it, prefix, capitalized()) }
+        if (next != candidates) {
+            candidates = next
+            runCatching { show(candidates) }
+        }
         suggestionCounter("SuggestionQueryToToolbarUs", (System.nanoTime() - request.startedNanos) / 1_000)
     }
 
@@ -100,6 +119,8 @@ internal class PersonalSuggestionService(
     private fun clear() {
         generation += 1
         prefix = ""
+        previousWord = null
+        predicting = false
         worker?.clearQueries()
         clearCandidates()
     }

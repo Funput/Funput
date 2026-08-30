@@ -112,9 +112,8 @@ internal fun createImeEditingSession(
         enterCommand = { editorRuntime.policy.editorAction.command },
     )
     val suggestionService = PersonalSuggestionService(
-        context = context,
-        show = showSuggestions,
-        acknowledgeReset = acknowledgeReset,
+        context = context, show = showSuggestions,
+        capitalized = { currentShiftState().isActive }, acknowledgeReset = acknowledgeReset,
     )
     val clipboardPreferences = ClipboardSettings(context).preferences
     val clipboardController = ImeClipboardController(

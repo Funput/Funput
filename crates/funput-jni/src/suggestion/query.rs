@@ -27,14 +27,38 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
                         .collect::<Vec<_>>()
                 })
                 .unwrap_or_default();
-                let initial =
-                    JString::from_str(env, words.first().map(String::as_str).unwrap_or(""))?;
-                let array = JObjectArray::<JString>::new(env, words.len(), &initial)?;
-                for (index, word) in words.iter().enumerate().skip(1) {
-                    let value = JString::from_str(env, word)?;
-                    array.set_element(env, index, &value)?;
-                }
-                Ok(array.into_raw())
+                candidates(env, &words)
+            })
+            .into_outcome();
+        neutral(result)
+    })
+}
+
+/// As `nativeQuery`, with the words that have followed `previous` before moved to
+/// the front. A null or empty `previous` means there was no context to vouch for.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeQueryWith(
+    mut env: EnvUnowned<'_>,
+    _this: JavaObject<'_>,
+    handle: jlong,
+    previous: JString<'_>,
+    prefix: JString<'_>,
+) -> jobjectArray {
+    safe(std::ptr::null_mut(), || {
+        let result = env
+            .with_env(|env| -> jni::errors::Result<_> {
+                let context = previous.try_to_string(env)?;
+                let text = prefix.try_to_string(env)?;
+                let words = registry::with(handle, |engine| {
+                    engine
+                        .suggest_with(Some(context.as_str()).filter(|it| !it.is_empty()), &text)
+                        .iter()
+                        .take(3)
+                        .map(str::to_owned)
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default();
+                candidates(env, &words)
             })
             .into_outcome();
         neutral(result)
@@ -71,4 +95,14 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
             .into_outcome();
         neutral(result)
     })
+}
+
+fn candidates(env: &mut jni::Env<'_>, words: &[String]) -> jni::errors::Result<jobjectArray> {
+    let initial = JString::from_str(env, words.first().map(String::as_str).unwrap_or(""))?;
+    let array = JObjectArray::<JString>::new(env, words.len(), &initial)?;
+    for (index, word) in words.iter().enumerate().skip(1) {
+        let value = JString::from_str(env, word)?;
+        array.set_element(env, index, &value)?;
+    }
+    Ok(array.into_raw())
 }

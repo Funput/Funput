@@ -1,5 +1,6 @@
 import Foundation
 import KeyboardInput
+import KeyboardRenderer
 import PersonalSuggestions
 import Testing
 
@@ -43,7 +44,7 @@ struct PersonalSuggestionServiceCreationTests {
         )
 
         let worker = try #require(factory.workers.first)
-        #expect(worker.events == [.configure(configuration), .learn("chào")])
+        #expect(worker.events == [.configure(configuration), .learn("chào", context: nil)])
     }
 
     @Test("Disabled suggestions never create a worker")

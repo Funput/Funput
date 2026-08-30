@@ -6,19 +6,24 @@ use crate::types::{SuggestionSet, SuggestionStats, WordRecord};
 
 impl SuggestionEngine {
     pub fn suggest(&self, prefix: &str) -> SuggestionSet<'_> {
+        self.suggest_with(None, prefix)
+    }
+
+    /// The words the prefix alone would offer, best first. Split out so the
+    /// context-aware path can reorder and extend the same set.
+    #[inline]
+    pub(crate) fn prefix_candidates(&self, prefix: &str) -> ([u32; TOP_K], usize) {
         let scalar_count = normalize::exact_chars(prefix).count();
         if scalar_count == 0 || scalar_count > self.config.max_token_scalars {
-            return SuggestionSet {
-                items: [None; TOP_K],
-                len: 0,
-            };
+            return ([NONE; TOP_K], 0);
         }
-        let exact = self.exact.find(normalize::exact_chars(prefix));
+        let exact = self.exact.find(normalize::exact_chars(prefix), &self.words);
         let differs = normalize::folded_chars(prefix).ne(normalize::exact_chars(prefix));
         let folded = if differs {
             [NONE; TOP_K]
         } else {
-            self.folded.find(normalize::folded_chars(prefix))
+            self.folded
+                .find(normalize::folded_chars(prefix), &self.words)
         };
 
         let mut ids = [NONE; TOP_K];
@@ -29,6 +34,11 @@ impl SuggestionEngine {
                 len += 1;
             }
         }
+        (ids, len)
+    }
+
+    #[inline]
+    pub(crate) fn assemble(&self, ids: [u32; TOP_K], len: usize) -> SuggestionSet<'_> {
         let items = array::from_fn(|index| {
             ids.get(index)
                 .copied()
@@ -46,8 +56,12 @@ impl SuggestionEngine {
                 .iter()
                 .map(|word| word.text.capacity())
                 .sum::<usize>();
-        let pending_bytes = self.pending.capacity() * size_of::<String>()
-            + self.pending.iter().map(String::capacity).sum::<usize>();
+        let pending_bytes = self.pending.capacity() * size_of::<crate::persistence::JournalEntry>()
+            + self
+                .pending
+                .iter()
+                .map(|(token, _)| token.capacity())
+                .sum::<usize>();
         SuggestionStats {
             words: self.words.len(),
             promoted_words: self

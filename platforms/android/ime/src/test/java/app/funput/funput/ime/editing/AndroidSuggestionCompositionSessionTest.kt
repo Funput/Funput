@@ -26,7 +26,18 @@ class AndroidSuggestionCompositionSessionTest {
 
         session.input(connection.proxy, " ")
 
-        assertEquals("tiếng", session.takeCompletedToken())
-        assertEquals(null, session.takeCompletedToken())
+        assertEquals("tiếng" to true, session.takeCompleted())
+        assertEquals(null, session.takeCompleted())
+    }
+
+    @Test
+    fun `a full stop finishes the word without leaving it as context`() {
+        val connection = RecordingConnection()
+        val session = testSession(ScriptedEngine(ArrayDeque(listOf("tiếng"))))
+        session.input(connection.proxy, "g")
+
+        session.input(connection.proxy, ".")
+
+        assertEquals("tiếng" to false, session.takeCompleted())
     }
 }

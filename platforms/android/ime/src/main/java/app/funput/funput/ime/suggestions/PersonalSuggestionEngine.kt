@@ -7,9 +7,13 @@ import java.io.File
 internal class PersonalSuggestionEngine private constructor(private var handle: Long) : Closeable {
     private val ownerThread = Thread.currentThread()
 
-    fun learn(token: String): Boolean = call(false) { PersonalSuggestionNative.nativeLearn(it, token) }
-    fun query(prefix: String): List<String> = call(emptyList()) { value ->
-        PersonalSuggestionNative.nativeQuery(value, prefix)?.take(MaxCandidates).orEmpty()
+    fun learn(token: String, after: String? = null): Boolean = call(false) {
+        PersonalSuggestionNative.nativeLearnAfter(it, after.orEmpty(), token)
+    }
+    fun query(prefix: String, after: String? = null): List<String> = call(emptyList()) { value ->
+        PersonalSuggestionNative.nativeQueryWith(value, after.orEmpty(), prefix)
+            ?.take(MaxCandidates)
+            .orEmpty()
     }
     fun flush(): Boolean = call(false, PersonalSuggestionNative::nativeFlush)
     fun compact(): Boolean = call(false, PersonalSuggestionNative::nativeCompact)

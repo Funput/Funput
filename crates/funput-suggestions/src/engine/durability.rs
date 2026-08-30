@@ -4,6 +4,12 @@ use super::{JOURNAL_COMPACT_BYTES, SuggestionEngine};
 
 impl SuggestionEngine {
     pub fn flush(&mut self) -> io::Result<()> {
+        // Idle is where the sweep belongs, and this is the crate's only idle
+        // signal: both shells call it off the typing path. Before the early
+        // return, so an in-memory engine with nothing pending is swept too.
+        if self.evictions_since_rebuild > 0 {
+            self.rebuild_tries();
+        }
         if self.pending.is_empty() && !self.pending_overflow {
             return Ok(());
         }
@@ -16,7 +22,7 @@ impl SuggestionEngine {
         };
         self.journal_bytes = self
             .journal_bytes
-            .saturating_add(store.append_journal(&self.pending)?);
+            .saturating_add(store.append_journal(&self.pending, self.sequence)?);
         self.pending.clear();
         if self.journal_bytes >= JOURNAL_COMPACT_BYTES
             && let Err(error) = self.compact()
@@ -28,6 +34,9 @@ impl SuggestionEngine {
     }
 
     pub fn compact(&mut self) -> io::Result<u64> {
+        // The journal is replaced wholesale below, so nothing already written is
+        // adjacent to whatever is learned next.
+        self.journalled_previous = None;
         let Some(store) = &self.store else {
             self.pending.clear();
             self.pending_overflow = false;
@@ -45,6 +54,8 @@ impl SuggestionEngine {
 
     pub fn reset(&mut self) -> io::Result<()> {
         self.words.clear();
+        self.evictions_since_rebuild = 0;
+        self.journalled_previous = None;
         self.exact.clear();
         self.folded.clear();
         self.sequence = 0;

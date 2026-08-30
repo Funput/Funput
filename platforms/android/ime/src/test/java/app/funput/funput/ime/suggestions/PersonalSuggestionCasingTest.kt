@@ -10,4 +10,10 @@ class PersonalSuggestionCasingTest {
         assertEquals("Việt", PersonalSuggestionCasing.apply("việt", "Vi"))
         assertEquals("VIỆT", PersonalSuggestionCasing.apply("việt", "VI"))
     }
+
+    @Test
+    fun `a prediction takes its case from shift, having no prefix to take it from`() {
+        assertEquals("chào", PersonalSuggestionCasing.apply("chào", "", capitalized = false))
+        assertEquals("Chào", PersonalSuggestionCasing.apply("chào", "", capitalized = true))
+    }
 }
