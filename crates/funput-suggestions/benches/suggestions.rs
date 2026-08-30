@@ -20,7 +20,11 @@ fn populated() -> SuggestionEngine {
 }
 
 fn bench_lookup(c: &mut Criterion) {
-    let engine = populated();
+    let mut engine = populated();
+    engine.learn_after(None, "xin");
+    engine.learn_after(Some("xin"), "word1234");
+    engine.learn_after(Some("xin"), "word1234");
+    let engine = engine;
     let mut group = c.benchmark_group("suggestions/lookup");
     group.throughput(Throughput::Elements(1));
     for (name, prefix) in [
@@ -33,6 +37,19 @@ fn bench_lookup(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("top3", name), prefix, |b, prefix| {
             b.iter(|| black_box(engine.suggest(black_box(prefix))).len());
         });
+    }
+    // The context path resolves the previous word against the whole lexicon and
+    // then walks four follower slots, on every keystroke.
+    for (name, prefix) in [("exact-medium", "word1"), ("miss", "zzzz")] {
+        group.bench_with_input(
+            BenchmarkId::new("with-context", name),
+            prefix,
+            |b, prefix| {
+                b.iter(|| {
+                    black_box(engine.suggest_with(black_box(Some("xin")), black_box(prefix))).len()
+                });
+            },
+        );
     }
     group.finish();
 }
