@@ -13,12 +13,13 @@ impl SuggestionEngine {
                 len: 0,
             };
         }
-        let exact = self.exact.find(normalize::exact_chars(prefix));
+        let exact = self.exact.find(normalize::exact_chars(prefix), &self.words);
         let differs = normalize::folded_chars(prefix).ne(normalize::exact_chars(prefix));
         let folded = if differs {
             [NONE; TOP_K]
         } else {
-            self.folded.find(normalize::folded_chars(prefix))
+            self.folded
+                .find(normalize::folded_chars(prefix), &self.words)
         };
 
         let mut ids = [NONE; TOP_K];

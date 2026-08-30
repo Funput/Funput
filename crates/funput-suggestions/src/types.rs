@@ -45,4 +45,9 @@ pub(crate) struct WordRecord {
     pub(crate) text: String,
     pub(crate) uses: u32,
     pub(crate) last_used: u64,
+    /// Bumped every time this slot is handed to a different word. Anything that
+    /// cached the slot's index carries the generation it saw, so a reused slot
+    /// invalidates those references instead of silently renaming what they point
+    /// at. In memory only — a reloaded store starts everyone back at zero.
+    pub(crate) generation: u16,
 }

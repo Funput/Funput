@@ -19,6 +19,17 @@ use crate::persistence::Store;
 use crate::types::WordRecord;
 
 pub(crate) const PENDING_LIMIT: usize = 256;
+
+/// How many dead trie entries the learn path may leave behind before it stops
+/// waiting for an idle moment and sweeps them itself.
+///
+/// `flush` normally sweeps long first — both shells call it every 32 learns and
+/// on a 2 s timer — so this is the bound for a caller that never flushes, not the
+/// common path. Without it the tries would grow with every distinct word ever
+/// seen, which is the one shape of unbounded memory this change could introduce.
+/// At roughly 1.4 ms per rebuild it amortises to about 22 µs per eviction,
+/// against 1.4 ms when every eviction rebuilt on the spot.
+pub(crate) const REBUILD_AFTER_EVICTIONS: u32 = 64;
 pub(crate) const JOURNAL_COMPACT_BYTES: u64 = 64 * 1024;
 
 pub struct SuggestionEngine {
@@ -32,6 +43,14 @@ pub struct SuggestionEngine {
     pub(crate) store: Option<Store>,
     pub(crate) last_snapshot_bytes: u64,
     pub(crate) journal_bytes: u64,
+    /// How many times the tries have been rebuilt from scratch. Not part of
+    /// `SuggestionStats` — that struct crosses the C ABI and the JNI boundary,
+    /// and this exists so the crate's own tests can assert the learn path never
+    /// triggers one.
+    pub(crate) rebuilds: u64,
+    /// Indexed words evicted since the last rebuild — that is, how many dead
+    /// entries the tries are currently carrying.
+    pub(crate) evictions_since_rebuild: u32,
 }
 
 impl SuggestionEngine {
@@ -47,6 +66,8 @@ impl SuggestionEngine {
             store: None,
             last_snapshot_bytes: 0,
             journal_bytes: 0,
+            rebuilds: 0,
+            evictions_since_rebuild: 0,
         }
     }
 
@@ -81,6 +102,10 @@ impl SuggestionEngine {
             .map(|(index, _)| index)
     }
 
+    /// Only ever called from `open`, which rebuilds the tries straight after.
+    /// Unlike the learn path this *shrinks* `words`, so trie entries can be left
+    /// pointing past the end; they read as dead rather than panicking, but the
+    /// rebuild is what actually clears them.
     fn enforce_capacity(&mut self) {
         while self.words.len() > self.config.max_words {
             let Some(index) = self.lowest_ranked_index() else {
