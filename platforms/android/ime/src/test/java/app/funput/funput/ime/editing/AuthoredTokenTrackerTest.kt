@@ -53,15 +53,46 @@ class AuthoredTokenTrackerTest {
     }
 
     @Test
-    fun `direct input tracks letters digits boundaries and backspace`() {
+    fun `direct input tracks letters boundaries and backspace`() {
         val tracker = AuthoredTokenTracker()
 
-        tracker.input("ab12")
+        tracker.input("abcd")
         tracker.backspace()
-        assertEquals("ab1", tracker.consume().prefix)
+        assertEquals("abc", tracker.consume().prefix)
         tracker.input(" ")
 
-        assertEquals(AuthoredSuggestionUpdate("", "ab1", context = "ab1"), tracker.consume())
+        assertEquals(AuthoredSuggestionUpdate("", "abc", context = "abc"), tracker.consume())
+    }
+
+    @Test
+    fun `a digit ends a word rather than joining it`() {
+        val tracker = AuthoredTokenTracker()
+        typed(tracker, "phòng ")
+        assertEquals("phòng", tracker.consume().context)
+
+        // "302" is not a word, and it is not part of one either.
+        typed(tracker, "302")
+
+        val afterDigits = tracker.consume()
+        assertEquals("digits never become a query prefix", "", afterDigits.prefix)
+        assertNull("and never become a learned word", afterDigits.completedToken)
+        assertNull("a digit is a boundary, and only a space chains", afterDigits.context)
+    }
+
+    @Test
+    fun `a digit inside a word cuts it there`() {
+        val tracker = AuthoredTokenTracker()
+
+        typed(tracker, "covid1")
+
+        val update = tracker.consume()
+        assertEquals("the letters are still worth learning", "covid", update.completedToken)
+        assertNull("a digit is a boundary, and only a space chains", update.context)
+    }
+
+    /** One call per key, which is how `ImeKeyActionHandler` drives the tracker. */
+    private fun typed(tracker: AuthoredTokenTracker, text: String) {
+        text.forEach { tracker.input(it.toString()) }
     }
 
     @Test

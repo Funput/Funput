@@ -106,8 +106,21 @@ internal class AuthoredTokenTracker {
 
     private fun scalarCount(text: String): Int = text.codePointCount(0, text.length)
 
+    /**
+     * Letters and their marks, and nothing else — a digit ends a word here as it
+     * does on iOS.
+     *
+     * The two trackers have to agree, or the same typing teaches two different
+     * lexicons. Letters is the rule that agrees with what is being learned:
+     * Vietnamese syllables contain no digits, so a run of them is never a word,
+     * and treating it as one spends a slot out of five thousand on a date or a
+     * price — and writes a phone number into the store on disk.
+     *
+     * It only comes up with the number row turned on. Otherwise digits are typed
+     * from the symbols panel, where nothing is learned at all.
+     */
     private fun isTokenScalar(codePoint: Int) =
-        Character.isLetterOrDigit(codePoint) || isCombiningMark(codePoint)
+        Character.isLetter(codePoint) || isCombiningMark(codePoint)
 
     private fun isCombiningMark(codePoint: Int): Boolean = when (Character.getType(codePoint)) {
         Character.NON_SPACING_MARK.toInt(),
