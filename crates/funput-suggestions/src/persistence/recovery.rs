@@ -11,8 +11,9 @@ use std::io::{self, Read};
 use crate::types::WordRecord;
 
 use super::Store;
-use super::codec::binary::{Cursor, invalid_data};
+use super::codec::binary::Cursor;
 use super::codec::{journal, snapshot};
+use super::fs::{sync_dir, truncate};
 use super::schema::{MAX_JOURNAL_BYTES, MAX_SNAPSHOT_BYTES};
 
 impl Store {
@@ -36,7 +37,14 @@ impl Store {
     pub(super) fn load_journal(&self) -> io::Result<(Vec<String>, u64)> {
         let path = self.journal_path();
         let bytes = match fs::metadata(&path) {
-            Ok(metadata) if metadata.len() > MAX_JOURNAL_BYTES => return Err(invalid_data()),
+            // Far past the 64 KiB that triggers a compact, so this is not
+            // something we wrote. Dropping it costs the tokens since the last
+            // snapshot; returning an error costs the shells their persistence for
+            // the rest of the process.
+            Ok(metadata) if metadata.len() > MAX_JOURNAL_BYTES => {
+                self.discard_journal()?;
+                return Ok((Vec::new(), 0));
+            }
             Ok(_) => fs::read(path)?,
             Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok((Vec::new(), 0)),
             Err(error) => return Err(error),
@@ -52,5 +60,15 @@ impl Store {
             }
         }
         Ok((tokens, journal_bytes))
+    }
+
+    /// Empty a journal we have decided not to read.
+    ///
+    /// Leaving it in place is not neutral: `load_journal` stops at the first frame
+    /// that fails to decode, so garbage at the head silently swallows every valid
+    /// frame appended after it, for as long as the file survives.
+    pub(super) fn discard_journal(&self) -> io::Result<()> {
+        truncate(&self.journal_path())?;
+        sync_dir(&self.root)
     }
 }
