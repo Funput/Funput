@@ -12,7 +12,10 @@ pub use engine::{
     FunputSuggestionEngine, funput_suggestion_engine_free, funput_suggestion_engine_new_in_memory,
     funput_suggestion_engine_open,
 };
-pub use query::{funput_suggestion_learn, funput_suggestion_query};
+pub use query::{
+    funput_suggestion_learn, funput_suggestion_learn_after, funput_suggestion_query,
+    funput_suggestion_query_with,
+};
 pub use store::{
     funput_suggestion_compact, funput_suggestion_flush, funput_suggestion_reset,
     funput_suggestion_stats,
