@@ -4,7 +4,7 @@ use funput_ffi::{
     ACTION_NONE, ACTION_SEND, FunputConfig, FunputResult, SOURCE_NUMPAD, funput_add_shortcut,
     funput_adopt, funput_backspace, funput_buffer, funput_clear, funput_clear_shortcuts,
     funput_configure, funput_engine_free, funput_engine_new, funput_process_char,
-    funput_process_key, funput_set_method,
+    funput_process_key, funput_set_method, funput_set_shortcut_smart_case,
 };
 
 fn output(result: &FunputResult) -> String {
@@ -304,4 +304,78 @@ fn shortcut_null_safe() {
         funput_add_shortcut(engine, std::ptr::null(), 0, std::ptr::null(), 0);
         funput_engine_free(engine);
     }
+}
+
+/// Type `keys` through the C API, applying each result to an app-text model.
+unsafe fn app_text(engine: *mut funput_ffi::FunputEngine, keys: &str) -> String {
+    let mut app = String::new();
+    for ch in keys.chars() {
+        let r = unsafe { funput_process_char(engine, ch as u32) };
+        if r.action == ACTION_NONE {
+            app.push(ch);
+        } else {
+            for _ in 0..r.backspace {
+                app.pop();
+            }
+            app.push_str(&output(&r));
+        }
+    }
+    app
+}
+
+#[test]
+fn smart_case_is_on_by_default_and_the_setter_turns_it_off() {
+    unsafe {
+        let engine = funput_engine_new();
+        funput_set_method(engine, 0); // Telex
+        add_shortcut(engine, "tp", "TP. HCM");
+
+        assert_eq!(
+            app_text(engine, "Tp "),
+            "Tp. Hcm ",
+            "default is smart case on"
+        );
+
+        funput_set_shortcut_smart_case(engine, false);
+        assert_eq!(app_text(engine, "Tp "), "Tp ", "no longer matches");
+        assert_eq!(
+            app_text(engine, "tp "),
+            "TP. HCM ",
+            "exact trigger, verbatim"
+        );
+
+        funput_engine_free(engine);
+    }
+}
+
+/// `funput_configure` carries only the six wire options, so it must edit the config
+/// rather than replace it — a host that configures after calling the setter would
+/// otherwise silently get smart case back.
+#[test]
+fn configure_does_not_clobber_the_smart_case_setting() {
+    unsafe {
+        let engine = funput_engine_new();
+        add_shortcut(engine, "tp", "TP. HCM");
+        funput_set_shortcut_smart_case(engine, false);
+
+        funput_configure(
+            engine,
+            FunputConfig {
+                method: 0, // Telex
+                tone_style: 0,
+                smart_restore: true,
+                eager_restore: true,
+                spell_check: false,
+                auto_capitalize: false,
+            },
+        );
+
+        assert_eq!(app_text(engine, "Tp "), "Tp ", "the setter must survive");
+        funput_engine_free(engine);
+    }
+}
+
+#[test]
+fn smart_case_setter_is_null_safe() {
+    unsafe { funput_set_shortcut_smart_case(std::ptr::null_mut(), false) };
 }

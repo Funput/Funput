@@ -44,3 +44,20 @@ pub unsafe extern "C" fn funput_add_shortcut(
 pub unsafe extern "C" fn funput_clear_shortcuts(engine: *mut FunputEngine) {
     unsafe { abi::with_engine_mut(engine, |e| e.clear_shortcuts()) }
 }
+
+/// Turn smart-case matching on or off ("Tự nhận diện hoa/thường"). On (the default),
+/// a trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same entry
+/// and the expansion is re-cased to match (`tp`/`Tp`/`TP` → `TP. HCM`/`Tp. Hcm`/
+/// `TP. HCM`). Off, only the exact trigger expands and the expansion comes out
+/// verbatim.
+///
+/// Its own function rather than a [`crate::FunputConfig`] field, for the ABI reason
+/// documented there; [`crate::funput_configure`] leaves this setting alone, so the
+/// two may be called in either order.
+///
+/// # Safety
+/// `engine` must be a valid handle or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_set_shortcut_smart_case(engine: *mut FunputEngine, on: bool) {
+    unsafe { abi::with_engine_mut(engine, |e| e.update_config(|c| c.shortcut_smart_case = on)) }
+}
