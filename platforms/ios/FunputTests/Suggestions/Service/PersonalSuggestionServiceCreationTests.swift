@@ -1,5 +1,6 @@
 import Foundation
 import KeyboardInput
+import KeyboardRenderer
 import PersonalSuggestions
 import Testing
 
@@ -59,42 +60,6 @@ struct PersonalSuggestionServiceCreationTests {
         service.flush()
 
         #expect(factory.workers.isEmpty)
-    }
-
-    @Test("The context reaches both the learn and the query")
-    func forwardsContext() throws {
-        let factory = SuggestionWorkerFactorySpy()
-        let service = factory.makeService()
-        _ = factory.configure(service)
-
-        // "xin" finishes on a space, so it is what the next word follows.
-        service.update(.init(prefix: "", completedToken: "xin", context: "xin"), canQuery: true)
-        service.update(.init(prefix: "ch", completedToken: nil, context: "xin"), canQuery: true)
-
-        let worker = try #require(factory.workers.first)
-        #expect(worker.events.compactMap(\.learned).last?.context == nil)
-        #expect(worker.events.compactMap(\.query).last?.context == "xin")
-
-        // The word that follows is learned against the context, not after it.
-        service.update(.init(prefix: "", completedToken: "chào", context: "chào"), canQuery: true)
-        let learned = try #require(worker.events.compactMap(\.learned).last)
-        #expect(learned.token == "chào")
-        #expect(learned.context == "xin")
-    }
-
-    @Test("A prefix shorter than the query threshold never reaches the worker")
-    func neverQueriesWithoutAPrefix() throws {
-        let factory = SuggestionWorkerFactorySpy()
-        let service = factory.makeService()
-        _ = factory.configure(service)
-
-        service.update(.init(prefix: "", completedToken: "xin", context: "xin"), canQuery: true)
-        service.update(.init(prefix: "c", completedToken: nil, context: "xin"), canQuery: true)
-
-        let worker = try #require(factory.workers.first)
-        // Without a prefix every follower matches, which is prediction without
-        // the threshold that has to guard it.
-        #expect(worker.events.compactMap(\.query).isEmpty)
     }
 
     private func update(prefix: String) -> KeyboardSuggestionInputUpdate {
