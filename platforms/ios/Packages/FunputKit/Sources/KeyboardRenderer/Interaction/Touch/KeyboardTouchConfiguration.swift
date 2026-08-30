@@ -19,7 +19,8 @@ extension KeyboardTouchCoordinator {
     static let arbiterConfiguration = PressArbiterConfiguration(rolloverWindow: 0.040)
 
     /// Every eligible role recovers from both kinds of drift. A fast two-thumb tap that slid
-    /// past the slop, or lifted off the tracked area, still meant the key it landed on.
+    /// past the slop, or lifted off the tracked area, still meant the key it landed on — and
+    /// `ContactResolver` is what makes that true of the key it commits.
     ///
     /// This includes Space, which the architecture document's Phase 2.5 note originally wanted
     /// cancelled: the swipe tracker already claims the contact at 32pt, so cancelling at the

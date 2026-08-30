@@ -26,7 +26,9 @@ struct KeyboardTouchPipelineTests {
         #expect(fixture.emissions.keys == ["b"])
     }
 
-    @Test("Text drift resolves while duration and outside hand back")
+    /// Drift keeps the press alive and keeps the key it landed on: the slop is exceeded, so
+    /// the recovery policy is what saves it, and the resolver is what decides it is still `a`.
+    @Test("Text drift resolves to the key it landed on while duration hands back")
     func resolutionPolicy() {
         let fixture = makeTouchPipeline()
         fixture.consume(touchSample(1, .began, 0, .init(x: 10, y: 20)))
@@ -38,7 +40,7 @@ struct KeyboardTouchPipelineTests {
         } else {
             Issue.record("Expected recovered fast tap")
         }
-        #expect(fixture.emissions.keys == ["b"])
+        #expect(fixture.emissions.keys == ["a"])
 
         fixture.consume(touchSample(2, .began, 1, .init(x: 10, y: 20)))
         let long = fixture.consume(

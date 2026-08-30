@@ -69,34 +69,23 @@ extension KeyboardTouchPipeline {
         return hit
     }
 
-    /// A fast two-thumb tap often lifts off the tracked geometry. Recovering it as the key the
-    /// finger landed on keeps the press instead of dropping it, mirroring how the resolver's
-    /// tap-slop recovery already treats a finger that merely drifted.
+    /// A fast two-thumb tap often lifts off the tracked geometry. Handing the resolver the key
+    /// the finger landed on keeps the press alive instead of dropping it as a lift outside.
+    ///
+    /// The resolver commits the landed key either way, so this decides only whether a press
+    /// that ended off the keys survives at all — never which key it produces.
     private func recoveredHit(
         for sample: ContactSample,
         current: KeyboardTouchHit?
     ) -> KeyboardTouchHit? {
-        let locked = lockedHit(for: sample.id, current: current)
         // `isTracking` keeps a contact already claimed by a gesture out of the counters, since
         // the resolver would ignore the hit anyway.
-        guard locked == nil,
+        guard current == nil,
               sample.phase == .ended,
               resolver.isTracking(sample.id),
-              let initial = initialHits[sample.id] else { return locked }
+              let initial = initialHits[sample.id] else { return current }
         let recovered = policy.recoversReleaseOutside(initial.key.role)
         counters.recordReleaseOutside(recovered: recovered)
         return recovered ? initial : nil
-    }
-
-    /// Keys with a horizontal swipe own the contact once it starts, so a finger sliding across
-    /// the spacebar never commits a neighbouring key.
-    private func lockedHit(
-        for id: ContactID,
-        current: KeyboardTouchHit?
-    ) -> KeyboardTouchHit? {
-        guard let initial = initialHits[id],
-              initial.key.horizontalSwipeAction != nil,
-              current != nil else { return current }
-        return initial
     }
 }

@@ -18,7 +18,10 @@ struct ContactResolverTests {
         #expect(resolver.activeContactCount == 0)
     }
 
-    @Test func slideToCorrectUsesTerminalHit() {
+    /// A finger that lands on one key and lifts over its neighbour typed the key it landed
+    /// on. This used to resolve to the neighbour, which is how a press dead centre on `h`
+    /// came out as `j` — the roll happens on the way up, after the aiming is over.
+    @Test func slidingKeepsTheKeyThatWasPressed() {
         var resolver = ContactResolver<String>(
             configuration: .init(tapSlop: 100, maximumTapDuration: 1)
         )
@@ -33,7 +36,24 @@ struct ContactResolverTests {
                 hit: "B"
             ) == .resolved(
                 .init(rawValue: 1),
-                "B",
+                "A",
+                .init(exceededTapSlop: false)
+            )
+        )
+    }
+
+    /// The drift that produced the reported mistypes never tripped anything: well inside the
+    /// tap slop, no metadata to show for it, and invisible to the person typing.
+    @Test func driftUnderTheTapSlopKeepsTheKeyThatWasPressed() {
+        var resolver = ContactResolver<String>()
+        _ = resolver.consume(contactSample(1, .began, at: 0), hit: "A")
+        #expect(
+            resolver.consume(
+                contactSample(1, .ended, at: 0.05, point: CGPoint(x: 12, y: 0)),
+                hit: "B"
+            ) == .resolved(
+                .init(rawValue: 1),
+                "A",
                 .init(exceededTapSlop: false)
             )
         )
@@ -48,7 +68,7 @@ struct ContactResolverTests {
                 hit: "B"
             ) == .resolved(
                 .init(rawValue: 1),
-                "B",
+                "A",
                 .init(exceededTapSlop: true)
             )
         )
