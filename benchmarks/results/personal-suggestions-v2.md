@@ -52,8 +52,10 @@ written on the learn path and nothing reads them yet.
 
 | Operation | V1 | V2 | Note |
 |---|---:|---:|---|
-| Flush 256 mutations | 5.19 ms | 5.42 ms | first append to a new journal only |
-| Compact 5,000 words | 9.83 ms | 13.51 ms | +4.1 ms, deliberate |
+| Open a 5,000-word snapshot | 2.17 ms | 2.31 ms | reads a follower section per word |
+| Open + replay 100 journal tokens | 3.98 ms | 2.92 ms | replay no longer rebuilds the tries |
+| Flush 256 mutations | 5.19 ms | 5.37 ms | first append to a new journal only |
+| Compact 5,000 words | 9.83 ms | 13.69 ms | +3.9 ms, deliberate |
 
 `compact` now fsyncs the directory after renaming the snapshot into place. A
 rename is a directory change, and without that sync a power loss can reorder it
@@ -64,6 +66,28 @@ worker, never on the typing path.
 The `flush_256` figure covers the append that *creates* the journal, which is the
 only append that syncs the directory; steady-state appends add one `stat` and no
 sync.
+
+## Storage format
+
+The snapshot is at v2 and the journal at v2; the two are versioned apart, because
+they are separate formats that happened to share a number. Both still read v1, so
+upgrading loses nothing, and a v1 file is rewritten at the current schema on its
+first compact.
+
+Costs are fixed by the format rather than measured. A snapshot word grows by
+three bytes for its context count and follower count, plus six per occupied
+follower slot — so a word nobody has followed costs three bytes and a word with
+all four slots taken costs twenty-seven. Against the V1 record of twenty-two
+bytes plus the word itself, a lexicon with no edges grows about 14%, and one with
+every slot filled roughly doubles. The 2 MiB snapshot budget the tests enforce is
+an order of magnitude away either way.
+
+A journal token grows by exactly one byte: a flag saying whether it followed the
+token before it. Recording pairs any other way was measurably worse — writing a
+separate break record doubled the entries for every token learned without a
+context, which is every token until the platforms pass one, and pushed `pending`
+past its 256-entry limit after 128 learns, turning every flush into a full
+compact. `flush_256` went to 9.97 ms before the flag byte replaced it.
 
 ## Measured and deliberately not changed
 

@@ -34,6 +34,9 @@ impl SuggestionEngine {
     }
 
     pub fn compact(&mut self) -> io::Result<u64> {
+        // The journal is replaced wholesale below, so nothing already written is
+        // adjacent to whatever is learned next.
+        self.journalled_previous = None;
         let Some(store) = &self.store else {
             self.pending.clear();
             self.pending_overflow = false;
@@ -52,6 +55,7 @@ impl SuggestionEngine {
     pub fn reset(&mut self) -> io::Result<()> {
         self.words.clear();
         self.evictions_since_rebuild = 0;
+        self.journalled_previous = None;
         self.exact.clear();
         self.folded.clear();
         self.sequence = 0;

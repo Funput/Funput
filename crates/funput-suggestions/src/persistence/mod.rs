@@ -17,7 +17,10 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use crate::types::WordRecord;
+use codec::journal::Entry;
 use codec::{journal, snapshot};
+
+pub(crate) use codec::journal::Entry as JournalEntry;
 
 pub(crate) struct Store {
     pub(super) root: PathBuf,
@@ -26,7 +29,7 @@ pub(crate) struct Store {
 pub(crate) struct Loaded {
     pub(crate) words: Vec<WordRecord>,
     pub(crate) sequence: u64,
-    pub(crate) journal: Vec<String>,
+    pub(crate) journal: Vec<Entry>,
     pub(crate) journal_bytes: u64,
 }
 
@@ -63,11 +66,11 @@ impl Store {
         ))
     }
 
-    pub(crate) fn append_journal(&self, tokens: &[String]) -> io::Result<u64> {
-        if tokens.is_empty() {
+    pub(crate) fn append_journal(&self, entries: &[Entry]) -> io::Result<u64> {
+        if entries.is_empty() {
             return Ok(0);
         }
-        let frame = journal::encode_frame(tokens);
+        let frame = journal::encode_frame(entries);
         let path = self.journal_path();
         // A brand new journal is a directory change, so the entry needs syncing
         // too — once, on the append that creates it, not on every later one.

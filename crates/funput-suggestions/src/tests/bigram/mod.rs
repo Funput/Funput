@@ -6,7 +6,7 @@ use crate::SuggestionEngine;
 
 /// The *living* followers of `word`, strongest first. Edges whose target has
 /// been evicted are filtered out here exactly as a reader would filter them.
-fn followers_of(engine: &SuggestionEngine, word: &str) -> Vec<(String, u16)> {
+pub(super) fn followers_of(engine: &SuggestionEngine, word: &str) -> Vec<(String, u16)> {
     let Some(record) = engine.words.iter().find(|record| record.text == word) else {
         return Vec::new();
     };
