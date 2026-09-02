@@ -5,8 +5,8 @@
 > mục cài đặt trong [`platforms/linux/README.md`](../../README.md). File này ghi cách
 > *dựng* và *bảo trì* kho (khóa GPG, secrets, Pages, DNS).
 
-Phân phối Phase 2: biến `.deb`/`.rpm` của bản release mới nhất thành **kho apt + dnf
-có ký GPG**, host trên **GitHub Pages**, để người dùng `apt/dnf/zypper upgrade` thay vì
+Phân phối Phase 2: biến `.deb`/`.rpm` của bản release mới nhất — cộng gói Arch dựng tại
+chỗ — thành **kho apt + dnf + pacman có ký GPG**, host trên **GitHub Pages**, để người dùng `apt/dnf/zypper upgrade` thay vì
 tải lại tay. Build bởi [`.github/workflows/publish-repo.yml`](../../../../.github/workflows/publish-repo.yml),
 tự chạy mỗi khi có release chính thức (không phải prerelease).
 
@@ -63,7 +63,12 @@ Xong, trang cài đặt nằm ở URL Pages (xem mục cuối `index.html.in` đ
   ký `InRelease` + `Release.gpg`. Kho **phẳng** (`deb … ./`).
 - **dnf/zypper** (job `rpm`, container Fedora): `rpm --addsign` từng gói → `createrepo_c` →
   ký `repodata/repomd.xml`. Người dùng đặt `gpgcheck=1` + `repo_gpgcheck=1`.
-- **deploy**: gộp `public/{deb,rpm}` + `funput.asc` + `index.html` + `funput.repo`, đẩy lên Pages.
+- **pacman** (job `pacman`, container Arch): Arch không có asset nào trong release (distro
+  rolling, build từ nguồn), nên job này *dựng* gói từ chính `packaging/aur/PKGBUILD.in` —
+  cùng một công thức với kênh AUR, để hai kênh không bao giờ mô tả khác nhau — rồi ký từng
+  gói, `repo-add`, ký luôn `funput.db`. Chỉ **x86_64** (Arch chỉ hỗ trợ chính thức kiến
+  trúc này). Đây là job duy nhất phải biên dịch, nên cũng là job lâu nhất.
+- **deploy**: gộp `public/{deb,rpm,arch}` + `funput.asc` + `index.html` + `funput.repo`, đẩy lên Pages.
 
 Mỗi lần chạy **dựng lại toàn bộ** từ release hiện tại (stateless) — package manager chỉ cần
 phiên bản mới nhất để chào upgrade, nên không cần giữ lịch sử gh-pages.
@@ -73,5 +78,9 @@ phiên bản mới nhất để chào upgrade, nên không cần giữ lịch s�
   của distro thì cần OBS/COPR/PPA (Phase 3).
 - Kho chỉ chứa **bản mới nhất**; không phục vụ cài lại phiên bản cũ qua kho (vẫn tải được từ
   GitHub Releases).
-- RPM ký gói + ký repomd; APT ký Release. Khóa hết hạn = `Expire-Date: 0` (vô hạn) để khỏi gãy
+- RPM ký gói + ký repomd; APT ký Release; pacman ký từng gói **và** `funput.db` (pacman áp
+  `SigLevel` theo từng gói, nên ký mình database là không đủ).
+- Gói pacman là **binary trên distro rolling**: link vào thư viện Arch tại thời điểm dựng, nên
+  một đợt bump soname (fcitx5, ibus, gtk4) sẽ làm gãy cho tới bản release kế tiếp. Kênh AUR
+  (`packaging/aur/`) không dính vì build trên máy người dùng — hai kênh bổ sung cho nhau. Khóa hết hạn = `Expire-Date: 0` (vô hạn) để khỏi gãy
   kho; nếu đặt hạn, nhớ gia hạn và chạy lại workflow trước khi hết hạn.

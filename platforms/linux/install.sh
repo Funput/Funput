@@ -14,7 +14,8 @@
 #
 # --no-repo: skip the repository and install a versioned asset straight from
 # GitHub Releases instead. No automatic upgrades — re-run to update. Implied by
-# --version, because the repository only ever carries the newest release.
+# --version, because the repository only ever carries the newest release. Not
+# available on Arch, which has no release asset — use the repository or --user.
 #
 # No-sudo (user-local): install the engine into ~/.local — no root, no package
 # manager. Needs an already-installed IBus or Fcitx5 daemon. IBus works right
@@ -284,6 +285,30 @@ repo_add_suse() {
   $SUDO zypper --non-interactive refresh
 }
 
+# Arch. Two steps no other package manager needs: pacman keeps its own keyring,
+# so the key has to be imported and locally signed before any signature verifies,
+# and the repo section goes into pacman.conf itself rather than a drop-in file.
+# x86_64 only, which is all Arch officially supports.
+repo_add_arch() {
+  [ "$(uname -m)" = "x86_64" ] || die "the Funput pacman repo is x86_64 only (Arch Linux ARM is a separate distribution). Try --user."
+  echo "Adding ${REPO_URL} (pacman)…"
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  curl -fsSL "${REPO_URL}/funput.asc" -o "$tmp/funput.asc"
+  $SUDO pacman-key --add "$tmp/funput.asc"
+  # Local signing is what promotes the key from "known" to "trusted"; without it
+  # pacman reports every package as signed by an unknown key.
+  $SUDO pacman-key --lsign-key hello@funput.app
+
+  # Appended, not written: pacman.conf is one file holding every repo, and the
+  # order of sections is the priority order. Skip if it is already there so
+  # re-running does not stack duplicate sections.
+  if ! grep -q '^\[funput\]' /etc/pacman.conf; then
+    printf '\n[funput]\nServer = %s/arch/$arch\n' "$REPO_URL" \
+      | $SUDO tee -a /etc/pacman.conf >/dev/null
+  fi
+  $SUDO pacman -Sy
+}
+
 # Install (or upgrade to) the package for the chosen framework from the repo.
 repo_install() {
   local pkg="funput"
@@ -293,6 +318,7 @@ repo_install() {
     debian) $SUDO apt-get install -y "$pkg" ;;
     fedora) $SUDO dnf install -y "$pkg" ;;
     suse)   $SUDO zypper --non-interactive install "$pkg" ;;
+    arch)   $SUDO pacman -S --noconfirm "$pkg" ;;
   esac
 }
 
@@ -343,21 +369,10 @@ esac
 SUDO=""
 [ "$(id -u)" -eq 0 ] || SUDO="sudo"
 
-# Arch is community-packaged via the AUR (one pkgbase, three packages), which is
-# neither a release asset nor part of repo.funput.app — so there is nothing for
-# this script to install and it hands the user over rather than failing.
-if [ "$FAMILY" = "arch" ]; then
-  cat <<'EOF'
-Arch Linux is packaged through the AUR, not the GitHub release assets.
-Install with an AUR helper, e.g.:
-  yay -S funput-ibus     # IBus (GNOME)
-  yay -S funput          # Fcitx5 (KDE / full features)
-
-No AUR helper, or no sudo? The user-local install works here too:
-  ./install.sh --user    # into ~/.local, needs an IBus or Fcitx5 daemon already
-EOF
-  exit 0
-fi
+# Arch has no release asset: it is a rolling source distro, so the .deb/.rpm
+# builds have nothing to offer it. What repo.funput.app serves instead is a
+# pacman repository of the same three packages, under the same key. Handled
+# entirely by repo_add_arch below, so it falls through with the others.
 
 # --- Framework -------------------------------------------------------------
 detect_framework
@@ -371,13 +386,20 @@ if [ "$USE_REPO" -eq 1 ]; then
     debian) repo_add_debian ;;
     fedora) repo_add_fedora ;;
     suse)   repo_add_suse ;;
+    arch)   repo_add_arch ;;
   esac
   repo_install
   post_install_hint
   exit 0
 fi
 
-# --- Arch + package-name pattern -------------------------------------------
+# Past this point every path resolves a release asset, and Arch has none — the
+# rpm branch below would otherwise pick up a Fedora package for it.
+if [ "$FAMILY" = "arch" ]; then
+  die "Arch has no release asset to install (--no-repo / --version cannot work here). Use the repository (re-run without those flags), or --user for a no-sudo install into ~/.local."
+fi
+
+# --- CPU arch + package-name pattern ---------------------------------------
 # .deb uses amd64/arm64; .rpm uses x86_64/aarch64. The CPack file names are:
 #   deb  funput_<v>_<arch>.deb        funput-ibus_<v>_<arch>.deb
 #   rpm  funput-<v>.<arch>.rpm        funput-ibus-<v>.<arch>.rpm

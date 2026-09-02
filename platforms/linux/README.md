@@ -93,9 +93,10 @@ The package manager now refuses the mismatch that used to cause it.
 
 Four channels, all fed by the same release:
 
-- **`repo.funput.app`** — signed apt + dnf/zypper repositories on GitHub Pages, built
-  by `.github/workflows/publish-repo.yml`. The only channel with automatic upgrades,
-  and what `install.sh` now configures by default. See `packaging/repo/README.md`.
+- **`repo.funput.app`** — signed apt, dnf/zypper and pacman repositories on GitHub
+  Pages, built by `.github/workflows/publish-repo.yml`. The only channel with
+  automatic upgrades, and what `install.sh` configures by default. See
+  `packaging/repo/README.md`.
 - **GitHub Releases** — the `.deb`/`.rpm` themselves, plus the portable `.tar.gz`
   trees behind `install.sh --user`.
 - **`install.sh`** — detect-then-configure front end over the two above.
@@ -105,6 +106,16 @@ Four channels, all fed by the same release:
   The recipe is only rendered and linted at release time; `ci.yml` runs a real
   `makepkg` on pull requests that touch it, since a full Rust + GTK4 build in an
   Arch container is far too slow to repeat per release.
+
+Arch is served twice, deliberately. The `pacman` job in `publish-repo.yml` builds
+**the same `PKGBUILD.in`** into binaries under `arch/x86_64/`, so a user needs no AUR
+helper and no compiler — which is also the only channel available while AUR account
+registration is closed. What that costs is what binaries always cost on a rolling
+distro: the packages link the Arch libraries of the build day, so a soname bump in
+fcitx5, ibus or gtk4 breaks them until the next release rebuilds. The AUR path has no
+such problem because it compiles on the user's machine, which is why both exist rather
+than one replacing the other. Sharing the recipe is what keeps them describing the
+same packages.
 
 ## Tests
 
