@@ -158,10 +158,11 @@ jobs:
 
   # ---- pacman repo: signed packages + signed database ------------------------
   # Arch is the one distro with no package in the release assets: it is a rolling
-  # source distro, so the .deb/.rpm builds have nothing to offer it. The AUR is the
-  # conventional answer and the recipe for it lives in packaging/aur/ — but an AUR
-  # upload needs an AUR account, so this serves the same three packages as a binary
-  # pacman repo under the same domain and the same GPG key.
+  # source distro, so the .deb/.rpm builds have nothing to offer it. The AUR would be
+  # the conventional answer, but uploading there needs an AUR account and Arch has
+  # registration paused — so this builds the same three packages from
+  # packaging/arch/PKGBUILD.in and serves them as a binary pacman repo, under the
+  # same domain and the same GPG key as the apt and dnf trees.
   #
   # The trade-off is inherent and worth knowing: these are binaries linked against
   # the Arch libraries of the build day, on a distro that moves continuously. A
@@ -178,7 +179,7 @@ jobs:
 
       - uses: actions/checkout@v5
 
-      - name: Build the packages from the AUR recipe
+      - name: Build the packages from the Arch recipe
         env:
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.event.release.tag_name }}
@@ -200,8 +201,6 @@ jobs:
           # with "believes it's in a workspace when it's not".
           install -d -o builder /home/builder/build
 
-          # The same template the AUR would consume, so the two channels can never
-          # describe different packages.
           # pkgrel is the build date, not 1. These are binaries, and the scheduled
           # rebuild produces the same pkgver every time — pacman only offers an
           # upgrade when pkgver-pkgrel moves, so the date is what makes a rebuild
@@ -209,7 +208,7 @@ jobs:
           # exact-version dependency between them satisfiable.
           PKGREL="$(date -u +%Y%m%d)"
           sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" -e "s/@PKGREL@/${PKGREL}/g" \
-            platforms/linux/packaging/aur/PKGBUILD.in > /home/builder/build/PKGBUILD
+            platforms/linux/packaging/arch/PKGBUILD.in > /home/builder/build/PKGBUILD
           chown builder /home/builder/build/PKGBUILD
 
           su builder -c 'cd ~/build && makepkg -s --noconfirm'

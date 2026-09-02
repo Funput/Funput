@@ -91,7 +91,7 @@ The package manager now refuses the mismatch that used to cause it.
 
 ## Distribution
 
-Four channels, all fed by the same release:
+Three channels, all fed by the same release:
 
 - **`repo.funput.app`** — signed apt, dnf/zypper and pacman repositories on GitHub
   Pages, built by `.github/workflows/publish-repo.yml`. The only channel with
@@ -100,19 +100,13 @@ Four channels, all fed by the same release:
 - **GitHub Releases** — the `.deb`/`.rpm` themselves, plus the portable `.tar.gz`
   trees behind `install.sh --user`.
 - **`install.sh`** — detect-then-configure front end over the two above.
-- **AUR** — `packaging/aur/PKGBUILD.in`, pushed to `ssh://aur@aur.archlinux.org/funput.git`
-  by `.github/workflows/publish-aur.yml`. One `pkgbase` yielding the same three
-  packages, built from the release tag's source rather than repackaged binaries.
-  The recipe is only rendered and linted at release time; `ci.yml` runs a real
-  `makepkg` on pull requests that touch it, since a full Rust + GTK4 build in an
-  Arch container is far too slow to repeat per release.
-
-Arch is served twice, deliberately. The `pacman` job in `publish-repo.yml` builds
-**the same `PKGBUILD.in`** into binaries under `arch/x86_64/`, so a user needs no AUR
-helper and no compiler — which is also the only channel available while AUR account
-registration is closed. The AUR path compiles on the user's machine, which is why both
-exist rather than one replacing the other; sharing the recipe is what keeps them
-describing the same packages.
+Arch is inside the first of those rather than a channel of its own. It has no release
+asset — a rolling source distro has no use for a `.deb` or `.rpm` — so the `pacman` job
+in `publish-repo.yml` *builds* it, from `packaging/arch/PKGBUILD.in`, and serves the
+result under `arch/x86_64/`. The AUR would be the conventional home for that recipe and
+it is written to AUR conventions, but nothing uploads it: Arch has new-account
+registration paused. `ci.yml`'s `arch-recipe` job runs a real `makepkg` on pull requests
+that touch the recipe, so a break is caught before it fails a publish.
 
 What binaries cost on a rolling distro is that they link the libraries of the build day,
 so a soname bump in fcitx5, ibus or gtk4 breaks them. A dependency cannot express that

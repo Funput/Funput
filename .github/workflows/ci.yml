@@ -200,10 +200,10 @@ jobs:
       - name: Test
         run: ctest --test-dir platforms/linux/build/tests --output-on-failure
 
-  # Does this pull request touch the AUR recipe? Its own tiny job so the Arch
+  # Does this pull request touch the Arch recipe? Its own tiny job so the Arch
   # container below is only pulled when it will actually be used — otherwise every
   # unrelated pull request would pay for the image and a full `pacman -Syu`.
-  aur-changed:
+  arch-recipe-changed:
     runs-on: ubuntu-latest
     outputs:
       run: ${{ steps.check.outputs.run }}
@@ -226,24 +226,25 @@ jobs:
           # fetch of the base would leave `...` without a merge base to work from.
           git fetch origin "$BASE_REF"
           if git diff --name-only "origin/${BASE_REF}...HEAD" \
-              | grep -q '^platforms/linux/packaging/aur/'; then
+              | grep -q '^platforms/linux/packaging/arch/'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "AUR recipe untouched — skipping the makepkg build."
+            echo "Arch recipe untouched — skipping the makepkg build."
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # The AUR recipe (platforms/linux/packaging/aur/PKGBUILD.in). publish-aur.yml only
-  # renders and lints it — a real makepkg run costs a full Rust + GTK4 build in an
-  # Arch container, far too much for every release — so the build happens here.
+  # The Arch recipe (platforms/linux/packaging/arch/PKGBUILD.in), which publish-repo.yml
+  # builds the pacman repository from. That workflow runs it for real on every release
+  # and every fortnight, but a break there costs a failed publish; catching it on the
+  # pull request is cheaper.
   #
   # It builds the LATEST RELEASED TAG, not this pull request's code: the recipe
   # sources a published GitHub tarball, and a pull request has no tag. So this
   # proves the recipe still works; a CMake-layout change that would break it needs
   # a run against a release made after that change.
-  aur:
-    needs: aur-changed
-    if: needs.aur-changed.outputs.run == 'true'
+  arch-recipe:
+    needs: arch-recipe-changed
+    if: needs.arch-recipe-changed.outputs.run == 'true'
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
@@ -270,10 +271,9 @@ jobs:
           # repo's own Cargo.toml is not covered by that exclude, so cargo refuses it
           # with "believes it's in a workspace when it's not".
           install -d -o builder /home/builder/build
-          # pkgrel 1: the AUR compiles on the user's machine, so a rebuild without a
-          # new pkgver has nothing to fix.
+          # pkgrel is irrelevant to this check — it only has to parse — so use 1.
           sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" -e "s/@PKGREL@/1/g" \
-            platforms/linux/packaging/aur/PKGBUILD.in > /home/builder/build/PKGBUILD
+            platforms/linux/packaging/arch/PKGBUILD.in > /home/builder/build/PKGBUILD
           chown builder /home/builder/build/PKGBUILD
 
       - name: makepkg
