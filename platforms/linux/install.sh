@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# Funput Linux installer: detect the distro + arch, pick the matching package from
-# the latest GitHub release, and install it with the native package manager.
+# Funput Linux installer: detect the distro + arch and install with the native
+# package manager.
 #
-# This is the "one command, auto-detect" front end over GitHub Releases — there is
-# no hosted apt/dnf repo yet, so it downloads a versioned asset and installs it
-# (no automatic upgrades; re-run this script to update). Apt and dnf are different
-# repo formats, so a single repo can never serve every distro — only this kind of
-# detect-then-fetch script gives the unified experience.
+# By default it adds the signed Funput repository (repo.funput.app) and installs
+# from it, so `apt/dnf/zypper upgrade` picks up later releases like any other
+# system package. Apt and rpm are different repo formats, so a single repo can
+# never serve every distro — only this kind of detect-then-configure script gives
+# the unified experience.
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/Funput/Funput/main/platforms/linux/install.sh | bash
-#   ./install.sh [--ibus | --fcitx5] [--version vX.Y.Z]
+#   ./install.sh [--ibus | --fcitx5] [--no-repo] [--version vX.Y.Z]
+#
+# --no-repo: skip the repository and install a versioned asset straight from
+# GitHub Releases instead. No automatic upgrades — re-run to update. Implied by
+# --version, because the repository only ever carries the newest release.
 #
 # No-sudo (user-local): install the engine into ~/.local — no root, no package
 # manager. Needs an already-installed IBus or Fcitx5 daemon. IBus works right
@@ -23,9 +27,11 @@
 set -euo pipefail
 
 REPO="Funput/Funput"
+REPO_URL="https://repo.funput.app"   # the signed apt/dnf/zypper repository
 FRAMEWORK=""        # "ibus" | "fcitx5"; empty = auto-detect
 VERSION="latest"    # "latest" or a tag like v1.2026.1
 USER_INSTALL=0      # 1 = no-sudo, user-local install into ~/.local (IBus only)
+USE_REPO=1          # 0 = --no-repo: fetch a release asset instead
 
 die() { echo "Error: $*" >&2; exit 1; }
 have() { command -v "$1" >/dev/null 2>&1; }
@@ -222,12 +228,83 @@ user_install_fcitx5() {
   echo "To update later: re-run this installer (grabs the latest release)."
 }
 
+# What to do once the package is on disk. Shared by the repository path and the
+# --no-repo one, which install the same package by different routes.
+post_install_hint() {
+  echo
+  echo "Installed. Next steps:"
+  if [ "$FRAMEWORK" = "ibus" ]; then
+    echo "  1. ibus restart            # load the newly registered engine"
+    echo "  2. Settings → Keyboard → Input Sources → + → Vietnamese → Funput"
+  else
+    echo "  1. fcitx5-configtool       # + → add Funput (Vietnamese group)"
+    echo "  2. log out/in if Fcitx5 was not already running"
+  fi
+  echo "  Open \"Funput\" from the app menu to switch Telex/VNI."
+  if [ "$USE_REPO" -eq 0 ]; then
+    echo
+    echo "Installed from a release asset, so this will not upgrade itself."
+    echo "For automatic updates, re-run without --version/--no-repo to add ${REPO_URL}."
+  fi
+}
+
+# --- The signed repository (the default path) ------------------------------
+# Adding the repo instead of dropping a downloaded package in is what buys the
+# user automatic upgrades; every other path here has to be re-run by hand. The
+# packages it serves are GPG-signed, so none of these needs an
+# unsigned-package escape hatch.
+
+# Debian/Ubuntu. The deb822 `.sources` format, not a one-line `.list`: apt 3.0
+# (Debian 13, Ubuntu 25.04) deprecates the latter and says so on every run. A flat
+# repository is spelled `Suites: ./` with no Components.
+repo_add_debian() {
+  local keyring="/usr/share/keyrings/funput.asc"
+  echo "Adding ${REPO_URL} (apt)…"
+  $SUDO install -d /usr/share/keyrings
+  curl -fsSL "${REPO_URL}/funput.asc" | $SUDO tee "$keyring" >/dev/null
+  printf 'Types: deb\nURIs: %s/deb\nSuites: ./\nSigned-By: %s\n' \
+    "$REPO_URL" "$keyring" | $SUDO tee /etc/apt/sources.list.d/funput.sources >/dev/null
+  $SUDO apt-get update
+}
+
+# Fedora/RHEL. Written straight into /etc/yum.repos.d rather than through
+# `dnf config-manager --add-repo`, which dnf5 (Fedora 41+) removed; a plain file
+# drop works on both dnf4 and dnf5. The key is not imported here — funput.repo
+# carries `gpgkey=` and dnf fetches it on first install.
+repo_add_fedora() {
+  echo "Adding ${REPO_URL} (dnf)…"
+  curl -fsSL "${REPO_URL}/funput.repo" | $SUDO tee /etc/yum.repos.d/funput.repo >/dev/null
+}
+
+# openSUSE. zypper wants the key in the rpm database up front, unlike dnf.
+repo_add_suse() {
+  echo "Adding ${REPO_URL} (zypper)…"
+  $SUDO rpm --import "${REPO_URL}/funput.asc"
+  $SUDO zypper --non-interactive addrepo -gf "${REPO_URL}/rpm/" funput
+  $SUDO zypper --non-interactive refresh
+}
+
+# Install (or upgrade to) the package for the chosen framework from the repo.
+repo_install() {
+  local pkg="funput"
+  [ "$FRAMEWORK" = "ibus" ] && pkg="funput-ibus"
+  echo "Installing ${pkg} from ${REPO_URL}…"
+  case "$FAMILY" in
+    debian) $SUDO apt-get install -y "$pkg" ;;
+    fedora) $SUDO dnf install -y "$pkg" ;;
+    suse)   $SUDO zypper --non-interactive install "$pkg" ;;
+  esac
+}
+
 while [ $# -gt 0 ]; do
   case "$1" in
     --ibus)    FRAMEWORK="ibus" ;;
     --fcitx5)  FRAMEWORK="fcitx5" ;;
     --user)    USER_INSTALL=1 ;;
-    --version) shift; VERSION="${1:?--version needs a tag}" ;;
+    --no-repo) USE_REPO=0 ;;
+    # Pinning a version means leaving the repository behind: it is rebuilt from
+    # the current release each time and serves nothing else.
+    --version) shift; VERSION="${1:?--version needs a tag}"; USE_REPO=0 ;;
     -h|--help)
       # Print the usage header (everything between line 2 and `set -euo …`).
       sed -n '2,/^set -euo/p' "$0" | sed -e '/^set -euo/d' -e 's/^# \{0,1\}//'
@@ -263,19 +340,42 @@ case " ${ID:-} ${ID_LIKE:-} " in
   *) die "unsupported distro (ID=${ID:-?}, ID_LIKE=${ID_LIKE:-?}). Build from source: platforms/linux/build.sh" ;;
 esac
 
-# Arch is community-packaged via the AUR, not a release asset.
+SUDO=""
+[ "$(id -u)" -eq 0 ] || SUDO="sudo"
+
+# Arch is community-packaged via the AUR (one pkgbase, three packages), which is
+# neither a release asset nor part of repo.funput.app — so there is nothing for
+# this script to install and it hands the user over rather than failing.
 if [ "$FAMILY" = "arch" ]; then
-  cat >&2 <<'EOF'
+  cat <<'EOF'
 Arch Linux is packaged through the AUR, not the GitHub release assets.
 Install with an AUR helper, e.g.:
   yay -S funput-ibus     # IBus (GNOME)
   yay -S funput          # Fcitx5 (KDE / full features)
+
+No AUR helper, or no sudo? The user-local install works here too:
+  ./install.sh --user    # into ~/.local, needs an IBus or Fcitx5 daemon already
 EOF
-  exit 1
+  exit 0
 fi
 
 # --- Framework -------------------------------------------------------------
 detect_framework
+
+# --- Repository path (the default) -----------------------------------------
+# Everything below this block is the --no-repo fallback: one versioned asset,
+# updated only by re-running the script.
+if [ "$USE_REPO" -eq 1 ]; then
+  have curl || die "curl is required"
+  case "$FAMILY" in
+    debian) repo_add_debian ;;
+    fedora) repo_add_fedora ;;
+    suse)   repo_add_suse ;;
+  esac
+  repo_install
+  post_install_hint
+  exit 0
+fi
 
 # --- Arch + package-name pattern -------------------------------------------
 # .deb uses amd64/arm64; .rpm uses x86_64/aarch64. The CPack file names are:
@@ -322,8 +422,6 @@ FILE="$TMP/$(basename "$URL")"
 download "$URL" "$FILE"
 
 # --- Install ---------------------------------------------------------------
-SUDO=""
-[ "$(id -u)" -eq 0 ] || SUDO="sudo"
 echo "Installing $(basename "$FILE")…"
 case "$FAMILY" in
   debian) $SUDO apt-get install -y "$FILE" ;;
@@ -331,14 +429,4 @@ case "$FAMILY" in
   suse)   $SUDO zypper --non-interactive install --allow-unsigned-rpm "$FILE" ;;
 esac
 
-# --- Post-install hint -----------------------------------------------------
-echo
-echo "Installed. Next steps:"
-if [ "$FRAMEWORK" = "ibus" ]; then
-  echo "  1. ibus restart            # load the newly registered engine"
-  echo "  2. Settings → Keyboard → Input Sources → + → Vietnamese → Funput"
-else
-  echo "  1. fcitx5-configtool       # + → add Funput (Vietnamese group)"
-  echo "  2. log out/in if Fcitx5 was not already running"
-fi
-echo "  Open \"Funput\" from the app menu to switch Telex/VNI."
+post_install_hint

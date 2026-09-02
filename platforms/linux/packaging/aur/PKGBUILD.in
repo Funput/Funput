@@ -1,0 +1,119 @@
+# Maintainer: Funput <hello@funput.app>
+#
+# Template, not a working PKGBUILD: @VERSION@ and @SHA256@ are substituted by
+# .github/workflows/publish-aur.yml, which then pushes the rendered file plus a
+# regenerated .SRCINFO to ssh://aur@aur.archlinux.org/funput.git.
+#
+# One pkgbase, three packages — the same split the .deb and .rpm builds produce
+# (see platforms/linux/README.md). Splitting the Settings app out is what lets the
+# Fcitx5 and IBus packages be installed side by side: they used to ship a copy of
+# its binary, icons and .desktop files each, which no package manager will unpack
+# twice.
+pkgbase=funput
+pkgname=(funput funput-ibus funput-settings)
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc="Vietnamese input method (Telex, Full Telex & VNI)"
+arch=('x86_64' 'aarch64')
+url="https://github.com/Funput/Funput"
+license=('MIT')
+# Arch does not split -devel packages: fcitx5 and ibus ship their own headers, so
+# they appear here and again in the runtime depends of the shell that needs them.
+# nlohmann-json is header-only and never becomes a runtime dependency.
+makedepends=('cargo' 'cmake' 'nlohmann-json' 'fcitx5' 'ibus' 'glib2'
+             'gtk4' 'libadwaita' 'librsvg')
+source=("$pkgbase-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('@SHA256@')
+# No debug package. makepkg's default `debug` writes one set of .build-id symlinks
+# for the whole pkgbase, but the binaries they name are split across the three
+# packages, so every symlink in it dangles and namcap fails the result. Nothing
+# here ships debug symbols anyway.
+options=('!debug')
+
+# The GitHub tarball unpacks to Funput-<pkgver>/, which is the Cargo workspace root
+# and holds platforms/ directly. (A local checkout nests the same tree under app/;
+# that directory is the git root, so it does not appear in the archive.)
+_srcdir="Funput-$pkgver"
+
+prepare() {
+  # Two independent lockfiles: the workspace (which owns funput-ffi) and the GTK
+  # Settings crate, excluded from that workspace so macOS/Windows
+  # `cargo test --workspace` stays green. Both must be fetched here so build() can
+  # run with the network off, the way a clean chroot expects.
+  cd "$_srcdir"
+  cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+  cd platforms/linux/settings-gtk
+  cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+}
+
+build() {
+  cd "$_srcdir"
+  # rust-toolchain.toml pins 1.97.1 so contributors and CI share one compiler. On
+  # a rustup host that pin would try to download the toolchain inside the chroot;
+  # Arch ships a single rolling stable, so use it.
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_NET_OFFLINE=true
+  # CARGO_TARGET_DIR is deliberately left unset. common/CMakeLists.txt reads the
+  # cdylib from <workspace>/target/release/libfunput_ffi.so and
+  # settings-gtk/CMakeLists.txt reads the GUI from
+  # settings-gtk/target/release/funput-settings; both paths are hardcoded, so
+  # redirecting the target dir hides the artifacts from CMake.
+  cargo build --release --frozen \
+    --manifest-path platforms/linux/settings-gtk/Cargo.toml
+
+  # Each project is its own top-level CMake build (the two shells package
+  # independently, and settings-gtk only installs the binary cargo just built).
+  # Both shells build the Rust cdylib through common/, so cargo runs again here
+  # and hits its own cache. Separate build dirs, the same shape as build.sh.
+  #
+  # CMAKE_BUILD_TYPE=None keeps makepkg's CFLAGS/LDFLAGS instead of CMake's own
+  # optimisation set. CMAKE_INSTALL_PREFIX is passed explicitly because the shells
+  # force /usr only while the prefix still holds its default, and settings-gtk
+  # never forces it at all.
+  #
+  # CMAKE_INSTALL_LIBEXECDIR=lib is not cosmetic. The IBus project asks pkg-config
+  # for ibus-1.0's libexecdir, and on Arch that variable is empty, so CMake falls
+  # back to GNUInstallDirs' /usr/libexec — while Arch's own ibus keeps its engines
+  # in /usr/lib/ibus and namcap rejects /usr/libexec outright.
+  local proj
+  for proj in fcitx5 ibus settings-gtk; do
+    cmake -S "platforms/linux/$proj" -B "build/$proj" \
+      -DCMAKE_BUILD_TYPE=None \
+      -DCMAKE_INSTALL_PREFIX=/usr \
+      -DCMAKE_INSTALL_LIBEXECDIR=lib \
+      -DFUNPUT_VERSION="$pkgver"
+    cmake --build "build/$proj"
+  done
+}
+
+package_funput() {
+  pkgdesc="Vietnamese input method (Telex, Full Telex & VNI) — Fcitx5 addon"
+  # glibc/gcc-libs are what namcap detects from the ELF files; fcitx5 is the host
+  # that dlopens the addon. funput-settings is pinned to the exact version, not
+  # merely required: the Settings app rewrites settings.json by serializing its
+  # whole struct, so a copy older than this addon deletes any key the addon has
+  # learned since. The .deb and .rpm carry the same pin.
+  depends=('glibc' 'gcc-libs' 'fcitx5' "funput-settings=$pkgver-$pkgrel")
+  cd "$_srcdir"
+  DESTDIR="$pkgdir" cmake --install build/fcitx5
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_funput-ibus() {
+  pkgdesc="Vietnamese input method (Telex, Full Telex & VNI) — IBus engine"
+  depends=('glibc' 'gcc-libs' 'glib2' 'ibus' "funput-settings=$pkgver-$pkgrel")
+  cd "$_srcdir"
+  DESTDIR="$pkgdir" cmake --install build/ibus
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_funput-settings() {
+  pkgdesc="Vietnamese input method (Telex, Full Telex & VNI) — Settings app"
+  # hicolor-icon-theme owns the theme hierarchy the icons below install into.
+  # librsvg is deliberately absent: namcap finds nothing linking it, and the 512px
+  # PNG shipped beside the SVG covers any renderer that cannot read the SVG.
+  depends=('glibc' 'gcc-libs' 'glib2' 'gtk4' 'libadwaita' 'hicolor-icon-theme')
+  cd "$_srcdir"
+  DESTDIR="$pkgdir" cmake --install build/settings-gtk
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

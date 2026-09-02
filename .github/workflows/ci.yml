@@ -199,3 +199,78 @@ jobs:
 
       - name: Test
         run: ctest --test-dir platforms/linux/build/tests --output-on-failure
+
+  # Does this pull request touch the AUR recipe? Its own tiny job so the Arch
+  # container below is only pulled when it will actually be used — otherwise every
+  # unrelated pull request would pay for the image and a full `pacman -Syu`.
+  aur-changed:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - id: check
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          # Pull requests only: a push to main has no base to diff against, and
+          # this is a review gate rather than a release check.
+          if [ -z "${BASE_REF:-}" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # No --depth here: checkout already unshallowed the clone, and a shallow
+          # fetch of the base would leave `...` without a merge base to work from.
+          git fetch origin "$BASE_REF"
+          if git diff --name-only "origin/${BASE_REF}...HEAD" \
+              | grep -q '^platforms/linux/packaging/aur/'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "AUR recipe untouched — skipping the makepkg build."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # The AUR recipe (platforms/linux/packaging/aur/PKGBUILD.in). publish-aur.yml only
+  # renders and lints it — a real makepkg run costs a full Rust + GTK4 build in an
+  # Arch container, far too much for every release — so the build happens here.
+  #
+  # It builds the LATEST RELEASED TAG, not this pull request's code: the recipe
+  # sources a published GitHub tarball, and a pull request has no tag. So this
+  # proves the recipe still works; a CMake-layout change that would break it needs
+  # a run against a release made after that change.
+  aur:
+    needs: aur-changed
+    if: needs.aur-changed.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed git namcap curl jq
+
+      - uses: actions/checkout@v5
+
+      - name: Render the recipe for the latest release
+        run: |
+          set -euo pipefail
+          TAG="$(curl -fsSL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .tag_name)"
+          VERSION="${TAG#v}"
+          URL="https://github.com/${{ github.repository }}/archive/refs/tags/${TAG}.tar.gz"
+          SHA="$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)"
+          mkdir -p aur
+          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" \
+            platforms/linux/packaging/aur/PKGBUILD.in > aur/PKGBUILD
+
+      - name: makepkg
+        run: |
+          set -euo pipefail
+          # makepkg refuses to run as root, and `-s` shells out to pacman for the
+          # declared makedepends — so the build user needs passwordless sudo.
+          useradd -m builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
+          chown -R builder aur
+          su builder -c 'cd aur && makepkg -s --noconfirm'
+          namcap aur/*.pkg.tar.zst
+          ls -l aur/*.pkg.tar.zst
