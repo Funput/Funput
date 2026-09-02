@@ -118,9 +118,10 @@ What binaries cost on a rolling distro is that they link the libraries of the bu
 so a soname bump in fcitx5, ibus or gtk4 breaks them. A dependency cannot express that
 constraint: Arch's `fcitx5` and `ibus` packages declare no soname `provides` at all
 (only gtk4, libadwaita and glib2 do), so pacman has nothing to check and cannot warn.
-The repair is therefore a schedule, not a dependency — `publish-repo.yml` also runs
-weekly, rebuilding the current release against current Arch, with `pkgrel` rendered as
-the build date so pacman sees an upgrade even though `pkgver` has not moved. That is
+The repair is therefore a schedule, not a dependency — `publish-repo.yml` also runs on
+the 1st and 15th, rebuilding the current release against current Arch, with `pkgrel`
+rendered as the build date so pacman sees an upgrade even though `pkgver` has not
+moved. That is
 what `@PKGREL@` in the template is for; the AUR renders it as `1`.
 
 ## Tests

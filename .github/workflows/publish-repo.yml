@@ -13,17 +13,20 @@ name: Publish package repo
 on:
   release:
     types: [released]   # fires only for full (non-prerelease) releases
-  # Weekly, for the pacman repo alone. Its packages are binaries on a rolling
+  # Fortnightly, for the pacman repo alone. Its packages are binaries on a rolling
   # distro: they link the Arch libraries of the build day, so an soname bump in
   # fcitx5, ibus or gtk4 breaks them until something rebuilds. Arch's fcitx5 and
   # ibus packages declare no soname `provides`, so a dependency cannot express
   # that constraint and pacman cannot warn — rebuilding on a schedule is the only
-  # thing that actually repairs it, within a week rather than at the next release.
+  # thing that actually repairs it, in about two weeks rather than at the next
+  # release.
   #
   # The run is stateless and rebuilds every tree from the current release, so the
   # apt and rpm halves simply re-publish what they already had.
+  # cron has no "every two weeks", so this is the 1st and 15th: gaps of 14-17 days
+  # rather than exactly 14, which is close enough for what it guards against.
   schedule:
-    - cron: "0 3 * * 1"   # Mondays, 03:00 UTC
+    - cron: "0 3 1,15 * *"   # 1st and 15th, 03:00 UTC
   workflow_dispatch: {}
 
 permissions:

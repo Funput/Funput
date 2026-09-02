@@ -8,7 +8,7 @@
 Phân phối Phase 2: biến `.deb`/`.rpm` của bản release mới nhất — cộng gói Arch dựng tại
 chỗ — thành **kho apt + dnf + pacman có ký GPG**, host trên **GitHub Pages**, để người dùng `apt/dnf/zypper upgrade` thay vì
 tải lại tay. Build bởi [`.github/workflows/publish-repo.yml`](../../../../.github/workflows/publish-repo.yml),
-tự chạy mỗi khi có release chính thức (không phải prerelease), **và hàng tuần** (thứ Hai
+tự chạy mỗi khi có release chính thức (không phải prerelease), **và hai tuần một lần** (ngày 1 và 15,
 03:00 UTC) để dựng lại phần Arch — xem mục giới hạn bên dưới.
 
 > Đây là kho "bên thứ ba" (như Docker/VS Code): người dùng tin **khóa của bạn** và URL
@@ -85,6 +85,6 @@ phiên bản mới nhất để chào upgrade, nên không cần giữ lịch s�
   một đợt bump soname (fcitx5, ibus, gtk4) làm gãy gói. Không khai dependency để pacman cảnh
   báo trước được: gói `fcitx5` và `ibus` của Arch **không khai soname `provides`** nào (chỉ
   gtk4/libadwaita/glib2 có), nên ràng buộc đó không diễn đạt được. Cách vá duy nhất là **dựng
-  lại theo lịch** — cron hàng tuần ở trên, với `pkgrel` = ngày dựng để pacman coi đó là bản
-  nâng cấp dù `pkgver` không đổi. Kênh AUR không dính vì build trên máy người dùng. Khóa hết hạn = `Expire-Date: 0` (vô hạn) để khỏi gãy
+  lại theo lịch** — cron hai tuần một lần ở trên, với `pkgrel` = ngày dựng để pacman coi đó
+  là bản nâng cấp dù `pkgver` không đổi. Kênh AUR không dính vì build trên máy người dùng. Khóa hết hạn = `Expire-Date: 0` (vô hạn) để khỏi gãy
   kho; nếu đặt hạn, nhớ gia hạn và chạy lại workflow trước khi hết hạn.
