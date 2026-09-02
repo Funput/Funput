@@ -89,6 +89,23 @@ that is the part worth keeping: the Settings app rewrites `settings.json` from i
 struct, so a copy older than the addon deletes settings the addon has since learned.
 The package manager now refuses the mismatch that used to cause it.
 
+## Distribution
+
+Four channels, all fed by the same release:
+
+- **`repo.funput.app`** — signed apt + dnf/zypper repositories on GitHub Pages, built
+  by `.github/workflows/publish-repo.yml`. The only channel with automatic upgrades,
+  and what `install.sh` now configures by default. See `packaging/repo/README.md`.
+- **GitHub Releases** — the `.deb`/`.rpm` themselves, plus the portable `.tar.gz`
+  trees behind `install.sh --user`.
+- **`install.sh`** — detect-then-configure front end over the two above.
+- **AUR** — `packaging/aur/PKGBUILD.in`, pushed to `ssh://aur@aur.archlinux.org/funput.git`
+  by `.github/workflows/publish-aur.yml`. One `pkgbase` yielding the same three
+  packages, built from the release tag's source rather than repackaged binaries.
+  The recipe is only rendered and linted at release time; `ci.yml` runs a real
+  `makepkg` on pull requests that touch it, since a full Rust + GTK4 build in an
+  Arch container is far too slow to repeat per release.
+
 ## Tests
 
 `common/` is buildable and testable on its own, with **neither Fcitx5 nor IBus

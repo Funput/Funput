@@ -125,7 +125,12 @@
     <div class="step">1 · Thêm kho (làm một lần)</div>
     <div class="cmd"><button class="copy">Copy</button><pre><code>sudo install -d /usr/share/keyrings
 curl -fsSL @REPO_URL@funput.asc | sudo tee /usr/share/keyrings/funput.asc >/dev/null
-echo "deb [signed-by=/usr/share/keyrings/funput.asc] @REPO_URL@deb ./" | sudo tee /etc/apt/sources.list.d/funput.list
+sudo tee /etc/apt/sources.list.d/funput.sources >/dev/null &lt;&lt;'EOF'
+Types: deb
+URIs: @REPO_URL@deb
+Suites: ./
+Signed-By: /usr/share/keyrings/funput.asc
+EOF
 sudo apt update</code></pre></div>
 
     <div class="step">2 · Cài đặt</div>
@@ -146,7 +151,7 @@ sudo apt update</code></pre></div>
     <h2>🎩 Fedora <small style="color:var(--muted);font-weight:400;font-size:.9rem">(.rpm)</small></h2>
 
     <div class="step">1 · Thêm kho (làm một lần)</div>
-    <div class="cmd"><button class="copy">Copy</button><pre><code>sudo dnf config-manager --add-repo @REPO_URL@funput.repo</code></pre></div>
+    <div class="cmd"><button class="copy">Copy</button><pre><code>sudo curl -fsSL @REPO_URL@funput.repo -o /etc/yum.repos.d/funput.repo</code></pre></div>
 
     <div class="step">2 · Cài đặt</div>
     <div class="grid">
