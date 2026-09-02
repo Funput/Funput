@@ -1,8 +1,10 @@
 # Maintainer: Funput <hello@funput.app>
 #
-# Template, not a working PKGBUILD: @VERSION@ and @SHA256@ are substituted by
-# .github/workflows/publish-aur.yml, which then pushes the rendered file plus a
-# regenerated .SRCINFO to ssh://aur@aur.archlinux.org/funput.git.
+# Template, not a working PKGBUILD: @VERSION@, @SHA256@ and @PKGREL@ are substituted
+# by the `pacman` job in .github/workflows/publish-repo.yml, which builds it and
+# serves the result as the Arch half of repo.funput.app. It is written to AUR
+# conventions so it can also be uploaded there unchanged, but nothing does that
+# today — Arch has new-account registration paused.
 #
 # One pkgbase, three packages — the same split the .deb and .rpm builds produce
 # (see platforms/linux/README.md). Splitting the Settings app out is what lets the
@@ -12,10 +14,10 @@
 pkgbase=funput
 pkgname=(funput funput-ibus funput-settings)
 pkgver=@VERSION@
-# @PKGREL@ is 1 for the AUR, where every install compiles against the machine's own
-# libraries. The pacman repo renders a build date instead: it ships binaries, so it
-# rebuilds on a schedule to follow Arch's libraries, and each rebuild has to look
-# like an upgrade to pacman even though pkgver has not moved.
+# @PKGREL@ is the build date, not 1: this ships binaries, so it rebuilds on a
+# schedule to follow Arch's libraries, and each rebuild has to look like an upgrade
+# to pacman even though pkgver has not moved. (An AUR upload would render 1, since
+# there every install compiles against the machine's own libraries.)
 pkgrel=@PKGREL@
 pkgdesc="Vietnamese input method (Telex, Full Telex & VNI)"
 arch=('x86_64' 'aarch64')

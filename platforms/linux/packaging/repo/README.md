@@ -65,8 +65,7 @@ Xong, trang cài đặt nằm ở URL Pages (xem mục cuối `index.html.in` đ
 - **dnf/zypper** (job `rpm`, container Fedora): `rpm --addsign` từng gói → `createrepo_c` →
   ký `repodata/repomd.xml`. Người dùng đặt `gpgcheck=1` + `repo_gpgcheck=1`.
 - **pacman** (job `pacman`, container Arch): Arch không có asset nào trong release (distro
-  rolling, build từ nguồn), nên job này *dựng* gói từ chính `packaging/aur/PKGBUILD.in` —
-  cùng một công thức với kênh AUR, để hai kênh không bao giờ mô tả khác nhau — rồi ký từng
+  rolling, build từ nguồn), nên job này *dựng* gói từ `packaging/arch/PKGBUILD.in` rồi ký từng
   gói, `repo-add`, ký luôn `funput.db`. Chỉ **x86_64** (Arch chỉ hỗ trợ chính thức kiến
   trúc này). Đây là job duy nhất phải biên dịch, nên cũng là job lâu nhất.
 - **deploy**: gộp `public/{deb,rpm,arch}` + `funput.asc` + `index.html` + `funput.repo`, đẩy lên Pages.
@@ -86,5 +85,5 @@ phiên bản mới nhất để chào upgrade, nên không cần giữ lịch s�
   báo trước được: gói `fcitx5` và `ibus` của Arch **không khai soname `provides`** nào (chỉ
   gtk4/libadwaita/glib2 có), nên ràng buộc đó không diễn đạt được. Cách vá duy nhất là **dựng
   lại theo lịch** — cron hai tuần một lần ở trên, với `pkgrel` = ngày dựng để pacman coi đó
-  là bản nâng cấp dù `pkgver` không đổi. Kênh AUR không dính vì build trên máy người dùng. Khóa hết hạn = `Expire-Date: 0` (vô hạn) để khỏi gãy
+  là bản nâng cấp dù `pkgver` không đổi. Khóa hết hạn = `Expire-Date: 0` (vô hạn) để khỏi gãy
   kho; nếu đặt hạn, nhớ gia hạn và chạy lại workflow trước khi hết hạn.
