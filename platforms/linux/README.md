@@ -110,12 +110,18 @@ Four channels, all fed by the same release:
 Arch is served twice, deliberately. The `pacman` job in `publish-repo.yml` builds
 **the same `PKGBUILD.in`** into binaries under `arch/x86_64/`, so a user needs no AUR
 helper and no compiler — which is also the only channel available while AUR account
-registration is closed. What that costs is what binaries always cost on a rolling
-distro: the packages link the Arch libraries of the build day, so a soname bump in
-fcitx5, ibus or gtk4 breaks them until the next release rebuilds. The AUR path has no
-such problem because it compiles on the user's machine, which is why both exist rather
-than one replacing the other. Sharing the recipe is what keeps them describing the
-same packages.
+registration is closed. The AUR path compiles on the user's machine, which is why both
+exist rather than one replacing the other; sharing the recipe is what keeps them
+describing the same packages.
+
+What binaries cost on a rolling distro is that they link the libraries of the build day,
+so a soname bump in fcitx5, ibus or gtk4 breaks them. A dependency cannot express that
+constraint: Arch's `fcitx5` and `ibus` packages declare no soname `provides` at all
+(only gtk4, libadwaita and glib2 do), so pacman has nothing to check and cannot warn.
+The repair is therefore a schedule, not a dependency — `publish-repo.yml` also runs
+weekly, rebuilding the current release against current Arch, with `pkgrel` rendered as
+the build date so pacman sees an upgrade even though `pkgver` has not moved. That is
+what `@PKGREL@` in the template is for; the AUR renders it as `1`.
 
 ## Tests
 

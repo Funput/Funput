@@ -13,6 +13,17 @@ name: Publish package repo
 on:
   release:
     types: [released]   # fires only for full (non-prerelease) releases
+  # Weekly, for the pacman repo alone. Its packages are binaries on a rolling
+  # distro: they link the Arch libraries of the build day, so an soname bump in
+  # fcitx5, ibus or gtk4 breaks them until something rebuilds. Arch's fcitx5 and
+  # ibus packages declare no soname `provides`, so a dependency cannot express
+  # that constraint and pacman cannot warn — rebuilding on a schedule is the only
+  # thing that actually repairs it, within a week rather than at the next release.
+  #
+  # The run is stateless and rebuilds every tree from the current release, so the
+  # apt and rpm halves simply re-publish what they already had.
+  schedule:
+    - cron: "0 3 * * 1"   # Mondays, 03:00 UTC
   workflow_dispatch: {}
 
 permissions:
@@ -177,7 +188,13 @@ jobs:
           mkdir -p build
           # The same template the AUR would consume, so the two channels can never
           # describe different packages.
-          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" \
+          # pkgrel is the build date, not 1. These are binaries, and the scheduled
+          # rebuild below produces the same pkgver every time — pacman only offers
+          # an upgrade when pkgver-pkgrel moves, so the date is what makes a rebuild
+          # reach users. All three packages share this run's value, which keeps the
+          # exact-version dependency between them satisfiable.
+          PKGREL="$(date -u +%Y%m%d)"
+          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" -e "s/@PKGREL@/${PKGREL}/g" \
             platforms/linux/packaging/aur/PKGBUILD.in > build/PKGBUILD
           # makepkg refuses to run as root, and `-s` shells out to pacman for the
           # declared makedepends, so the build user needs passwordless sudo.

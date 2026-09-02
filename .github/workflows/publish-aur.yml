@@ -66,7 +66,9 @@ jobs:
           SHA="$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)"
 
           mkdir -p aur
-          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" \
+          # pkgrel 1: the AUR compiles on the user's machine, so a rebuild without a
+          # new pkgver has nothing to fix.
+          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" -e "s/@PKGREL@/1/g" \
             platforms/linux/packaging/aur/PKGBUILD.in > aur/PKGBUILD
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
           cat aur/PKGBUILD
