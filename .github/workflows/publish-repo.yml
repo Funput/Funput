@@ -188,25 +188,33 @@ jobs:
           VERSION="${TAG#v}"
           URL="https://github.com/$GH_REPO/archive/refs/tags/${TAG}.tar.gz"
           SHA="$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)"
-          mkdir -p build
-          # The same template the AUR would consume, so the two channels can never
-          # describe different packages.
-          # pkgrel is the build date, not 1. These are binaries, and the scheduled
-          # rebuild below produces the same pkgver every time — pacman only offers
-          # an upgrade when pkgver-pkgrel moves, so the date is what makes a rebuild
-          # reach users. All three packages share this run's value, which keeps the
-          # exact-version dependency between them satisfiable.
-          PKGREL="$(date -u +%Y%m%d)"
-          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" -e "s/@PKGREL@/${PKGREL}/g" \
-            platforms/linux/packaging/aur/PKGBUILD.in > build/PKGBUILD
           # makepkg refuses to run as root, and `-s` shells out to pacman for the
           # declared makedepends, so the build user needs passwordless sudo.
           useradd -m builder
           echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
-          chown -R builder build
-          su builder -c 'cd build && makepkg -s --noconfirm'
+
+          # Build in the build user's home, NOT inside the checkout. makepkg unpacks
+          # the source under its build dir, and settings-gtk is a crate excluded from
+          # the root Cargo workspace by path — an unpacked copy nested under the
+          # repo's own Cargo.toml is not covered by that exclude, so cargo refuses it
+          # with "believes it's in a workspace when it's not".
+          install -d -o builder /home/builder/build
+
+          # The same template the AUR would consume, so the two channels can never
+          # describe different packages.
+          # pkgrel is the build date, not 1. These are binaries, and the scheduled
+          # rebuild produces the same pkgver every time — pacman only offers an
+          # upgrade when pkgver-pkgrel moves, so the date is what makes a rebuild
+          # reach users. All three packages share this run's value, which keeps the
+          # exact-version dependency between them satisfiable.
+          PKGREL="$(date -u +%Y%m%d)"
+          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" -e "s/@PKGREL@/${PKGREL}/g" \
+            platforms/linux/packaging/aur/PKGBUILD.in > /home/builder/build/PKGBUILD
+          chown builder /home/builder/build/PKGBUILD
+
+          su builder -c 'cd ~/build && makepkg -s --noconfirm'
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
-          ls -l build/*.pkg.tar.zst
+          ls -l /home/builder/build/*.pkg.tar.zst
 
       - name: Import GPG key
         env:
@@ -224,7 +232,7 @@ jobs:
           printf '%s' "$GPG_PASSPHRASE" > "$HOME/.gpg-pass"
 
           mkdir -p tree/arch/x86_64
-          cp build/*.pkg.tar.zst tree/arch/x86_64/
+          cp /home/builder/build/*.pkg.tar.zst tree/arch/x86_64/
 
           sign() {
             gpg --batch --yes --pinentry-mode loopback --passphrase-file "$HOME/.gpg-pass" \
