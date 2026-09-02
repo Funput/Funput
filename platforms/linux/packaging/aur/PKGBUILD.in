@@ -12,7 +12,11 @@
 pkgbase=funput
 pkgname=(funput funput-ibus funput-settings)
 pkgver=@VERSION@
-pkgrel=1
+# @PKGREL@ is 1 for the AUR, where every install compiles against the machine's own
+# libraries. The pacman repo renders a build date instead: it ships binaries, so it
+# rebuilds on a schedule to follow Arch's libraries, and each rebuild has to look
+# like an upgrade to pacman even though pkgver has not moved.
+pkgrel=@PKGREL@
 pkgdesc="Vietnamese input method (Telex, Full Telex & VNI)"
 arch=('x86_64' 'aarch64')
 url="https://github.com/Funput/Funput"

@@ -190,18 +190,36 @@ sudo zypper refresh</code></pre></div>
 
   <!-- Arch -->
   <div class="card">
-    <h2>🏛️ Arch Linux <small style="color:var(--muted);font-weight:400;font-size:.9rem">(AUR)</small></h2>
-    <div class="step">Cài qua AUR helper (vd <code class="inline">yay</code>)</div>
+    <h2>🏛️ Arch Linux <small style="color:var(--muted);font-weight:400;font-size:.9rem">(pacman · x86_64)</small></h2>
+
+    <div class="step">1 · Nhập khóa (làm một lần)</div>
+    <div class="cmd"><button class="copy">Copy</button><pre><code>curl -fsSL @REPO_URL@funput.asc | sudo pacman-key --add -
+sudo pacman-key --lsign-key hello@funput.app</code></pre></div>
+
+    <div class="step">2 · Thêm kho vào <code class="inline">/etc/pacman.conf</code></div>
+    <div class="cmd"><button class="copy">Copy</button><pre><code>sudo tee -a /etc/pacman.conf &lt;&lt;'EOF'
+
+[funput]
+Server = @REPO_URL@arch/$arch
+EOF
+sudo pacman -Sy</code></pre></div>
+
+    <div class="step">3 · Cài đặt</div>
     <div class="grid">
       <div>
         <div class="lbl"><span class="badge ibus">IBus</span></div>
-        <div class="cmd"><button class="copy">Copy</button><pre><code>yay -S funput-ibus</code></pre></div>
+        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo pacman -S funput-ibus</code></pre></div>
       </div>
       <div>
         <div class="lbl"><span class="badge fcitx">Fcitx5</span></div>
-        <div class="cmd"><button class="copy">Copy</button><pre><code>yay -S funput</code></pre></div>
+        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo pacman -S funput</code></pre></div>
       </div>
     </div>
+
+    <p style="color:var(--muted);font-size:.9rem;margin:.9rem 0 0">
+      Gói dựng sẵn cho <b>x86_64</b>. Arch cập nhật liên tục, nên sau một đợt bump
+      soname lớn (fcitx5, ibus, gtk4) gói có thể cần đợi bản phát hành kế tiếp.
+    </p>
   </div>
 
   <div class="note">

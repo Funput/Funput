@@ -13,6 +13,20 @@ name: Publish package repo
 on:
   release:
     types: [released]   # fires only for full (non-prerelease) releases
+  # Fortnightly, for the pacman repo alone. Its packages are binaries on a rolling
+  # distro: they link the Arch libraries of the build day, so an soname bump in
+  # fcitx5, ibus or gtk4 breaks them until something rebuilds. Arch's fcitx5 and
+  # ibus packages declare no soname `provides`, so a dependency cannot express
+  # that constraint and pacman cannot warn — rebuilding on a schedule is the only
+  # thing that actually repairs it, in about two weeks rather than at the next
+  # release.
+  #
+  # The run is stateless and rebuilds every tree from the current release, so the
+  # apt and rpm halves simply re-publish what they already had.
+  # cron has no "every two weeks", so this is the 1st and 15th: gaps of 14-17 days
+  # rather than exactly 14, which is close enough for what it guards against.
+  schedule:
+    - cron: "0 3 1,15 * *"   # 1st and 15th, 03:00 UTC
   workflow_dispatch: {}
 
 permissions:
@@ -142,9 +156,122 @@ jobs:
           name: rpm-tree
           path: tree/rpm
 
+  # ---- pacman repo: signed packages + signed database ------------------------
+  # Arch is the one distro with no package in the release assets: it is a rolling
+  # source distro, so the .deb/.rpm builds have nothing to offer it. The AUR is the
+  # conventional answer and the recipe for it lives in packaging/aur/ — but an AUR
+  # upload needs an AUR account, so this serves the same three packages as a binary
+  # pacman repo under the same domain and the same GPG key.
+  #
+  # The trade-off is inherent and worth knowing: these are binaries linked against
+  # the Arch libraries of the build day, on a distro that moves continuously. A
+  # soname bump in fcitx5, ibus or gtk4 breaks them until the next release rebuilds.
+  #
+  # x86_64 only — Arch officially supports no other architecture (Arch Linux ARM is
+  # a separate distribution with its own repositories).
+  pacman:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed git jq curl
+
+      - uses: actions/checkout@v5
+
+      - name: Build the packages from the AUR recipe
+        env:
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          [ -n "$TAG" ] || TAG="$(curl -fsSL "https://api.github.com/repos/$GH_REPO/releases/latest" | jq -r .tag_name)"
+          VERSION="${TAG#v}"
+          URL="https://github.com/$GH_REPO/archive/refs/tags/${TAG}.tar.gz"
+          SHA="$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)"
+          # makepkg refuses to run as root, and `-s` shells out to pacman for the
+          # declared makedepends, so the build user needs passwordless sudo.
+          useradd -m builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
+
+          # Build in the build user's home, NOT inside the checkout. makepkg unpacks
+          # the source under its build dir, and settings-gtk is a crate excluded from
+          # the root Cargo workspace by path — an unpacked copy nested under the
+          # repo's own Cargo.toml is not covered by that exclude, so cargo refuses it
+          # with "believes it's in a workspace when it's not".
+          install -d -o builder /home/builder/build
+
+          # The same template the AUR would consume, so the two channels can never
+          # describe different packages.
+          # pkgrel is the build date, not 1. These are binaries, and the scheduled
+          # rebuild produces the same pkgver every time — pacman only offers an
+          # upgrade when pkgver-pkgrel moves, so the date is what makes a rebuild
+          # reach users. All three packages share this run's value, which keeps the
+          # exact-version dependency between them satisfiable.
+          PKGREL="$(date -u +%Y%m%d)"
+          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" -e "s/@PKGREL@/${PKGREL}/g" \
+            platforms/linux/packaging/aur/PKGBUILD.in > /home/builder/build/PKGBUILD
+          chown builder /home/builder/build/PKGBUILD
+
+          su builder -c 'cd ~/build && makepkg -s --noconfirm'
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          ls -l /home/builder/build/*.pkg.tar.zst
+
+      - name: Import GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: printf '%s' "$GPG_PRIVATE_KEY" | gpg --batch --import
+
+      - name: Sign packages + build the database
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.gnupg" && chmod 700 "$HOME/.gnupg"
+          echo 'allow-loopback-pinentry' >> "$HOME/.gnupg/gpg-agent.conf"
+          gpgconf --kill gpg-agent || true
+          printf '%s' "$GPG_PASSPHRASE" > "$HOME/.gpg-pass"
+
+          mkdir -p tree/arch/x86_64
+          cp /home/builder/build/*.pkg.tar.zst tree/arch/x86_64/
+
+          sign() {
+            gpg --batch --yes --pinentry-mode loopback --passphrase-file "$HOME/.gpg-pass" \
+              --detach-sign --no-armor "$1"
+          }
+
+          # pacman verifies a detached .sig beside each package. Unlike apt and dnf,
+          # signing the database alone is not enough: SigLevel applies per package.
+          for f in tree/arch/x86_64/*.pkg.tar.zst; do sign "$f"; done
+
+          # repo-add picks up the .sig files and records them in the database. Its
+          # own --sign is not used: it shells out to gpg without a loopback
+          # pinentry, so it cannot take a passphrase in CI.
+          repo-add tree/arch/x86_64/funput.db.tar.gz tree/arch/x86_64/*.pkg.tar.zst
+
+          # repo-add leaves `funput.db` and `funput.files` as symlinks to the
+          # .tar.gz files. pacman fetches those names, and the Pages artifact does
+          # not carry symlinks, so materialise them as real files — then sign the
+          # names pacman actually downloads.
+          cd tree/arch/x86_64
+          for n in db files; do
+            rm -f "funput.$n"
+            cp "funput.$n.tar.gz" "funput.$n"
+          done
+          cd - >/dev/null
+          sign tree/arch/x86_64/funput.db
+          sign tree/arch/x86_64/funput.files
+
+          rm -f "$HOME/.gpg-pass"
+          ls -l tree/arch/x86_64
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: pacman-tree
+          path: tree/arch
+
   # ---- Assemble + deploy to Pages -------------------------------------------
   deploy:
-    needs: [apt, rpm]
+    needs: [apt, rpm, pacman]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -156,6 +283,8 @@ jobs:
         with: { name: apt-tree, path: public/deb }
       - uses: actions/download-artifact@v5
         with: { name: rpm-tree, path: public/rpm }
+      - uses: actions/download-artifact@v5
+        with: { name: pacman-tree, path: public/arch }
 
       - name: Assemble site (index, .repo, public key)
         run: |
