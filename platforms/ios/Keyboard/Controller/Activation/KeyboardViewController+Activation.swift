@@ -74,6 +74,7 @@ extension KeyboardViewController {
     /// Folds the adopted configuration and the live input state onto the surfaces.
     func applyAdoptedPresentation() {
         launchTrace.measure("SurfaceApply") {
+            applyKeyboardAppearance()
             applyInputPresentation()
             keyboardView.updateClipboardKeyVisible(configuration.clipboardEnabled)
             // A theme swap changes the backdrop without changing the layout, which on
@@ -82,5 +83,21 @@ extension KeyboardViewController {
             resolvedBackgroundRequest = nil
             refreshBackgroundImage()
         }
+    }
+
+    /// Pins the whole surface to the user's chosen appearance.
+    ///
+    /// Every color the renderer resolves reads the view's own trait collection, and so
+    /// does the Liquid Glass material — glass adapts from the trait environment, not from
+    /// the theme. Carrying a resolved style through `KeyboardPresentation` instead would
+    /// flip the tints while leaving the glass on the host app's appearance.
+    ///
+    /// This runs on every activation rather than once in `viewDidLoad` because the
+    /// setting can change between two keyboard sessions; the guard keeps an unchanged
+    /// appearance from spending a trait-change pass.
+    private func applyKeyboardAppearance() {
+        let style = configuration.keyboardAppearance.interfaceStyle
+        guard view.overrideUserInterfaceStyle != style else { return }
+        view.overrideUserInterfaceStyle = style
     }
 }

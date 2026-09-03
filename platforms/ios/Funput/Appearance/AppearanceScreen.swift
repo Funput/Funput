@@ -58,6 +58,7 @@ struct AppearanceScreen: View {
                     confirmsDelete = true
                 }
             )
+            KeyboardAppearanceCard(appearance: model.keyboardAppearanceBinding)
             AppearanceResetCard(isDefault: model.appliedThemeID == FunputConfiguration.defaultThemeID) {
                 confirmsReset = true
             }

@@ -52,7 +52,8 @@ extension ClipboardKeyboardView {
             theme: theme,
             traits: traitCollection,
             image: backgroundImage,
-            blendsSystemEdge: presentation.blendsSystemEdge
+            blendsSystemEdge: presentation.blendsSystemEdge,
+            pinsAppearance: presentation.pinsAppearance
         )
         let isEmpty = groups.isEmpty
         emptyStateView.isHidden = !isEmpty

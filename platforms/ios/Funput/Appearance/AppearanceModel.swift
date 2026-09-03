@@ -79,9 +79,16 @@ final class AppearanceModel {
         previewThemeID = appliedThemeID
     }
 
+    /// Seeds the preview from the appearance the keyboard will actually render in, which
+    /// is the pinned one when the user pinned it and the system's otherwise. It stays a
+    /// free toggle: the theme editor uses it to pick which half of each color pair to edit.
     func setInitialMode(for colorScheme: ColorScheme) {
         guard !didSetInitialMode else { return }
-        previewMode = colorScheme == .dark ? .dark : .light
+        switch configuration.keyboardAppearance {
+        case .light: previewMode = .light
+        case .dark: previewMode = .dark
+        case .system: previewMode = colorScheme == .dark ? .dark : .light
+        }
         didSetInitialMode = true
     }
 

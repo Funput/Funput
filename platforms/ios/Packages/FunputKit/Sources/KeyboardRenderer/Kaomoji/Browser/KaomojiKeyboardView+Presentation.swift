@@ -56,7 +56,8 @@ extension KaomojiKeyboardView {
             theme: theme,
             traits: traitCollection,
             image: backgroundImage,
-            blendsSystemEdge: presentation.blendsSystemEdge
+            blendsSystemEdge: presentation.blendsSystemEdge,
+            pinsAppearance: presentation.pinsAppearance
         )
         bottomBar.apply(color: theme.label.uiColor(for: traitCollection), selected: selectedCategory)
         collectionView.reloadData()

@@ -37,7 +37,8 @@ public enum KeyboardPresentationFactory {
             isHapticFeedbackEnabled: configuration.isHapticFeedbackEnabled,
             isKeySoundEnabled: configuration.isKeySoundEnabled,
             showsKeyPreviews: configuration.showsKeyPreviews,
-            areSmartGesturesEnabled: configuration.smartGesturesEnabled
+            areSmartGesturesEnabled: configuration.smartGesturesEnabled,
+            pinsAppearance: configuration.keyboardAppearance != .system
         )
     }
 
