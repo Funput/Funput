@@ -83,7 +83,8 @@ extension SettingsPicker {
             ToneStyleOption.allCases.map { value in
                 SettingsChoice(
                     id: value.rawValue, title: value.settingsTitle,
-                    summary: value == .traditional ? "Đặt dấu như “hoà”." : "Đặt dấu như “hòa”.",
+                    summary: value == .traditional
+                        ? "Dấu kiểu cũ — hòa, khỏe, thúy." : "Dấu kiểu mới — hoà, khoẻ, thuý.",
                     isSelected: model.configuration.toneStyle == value,
                     select: { model.update(\.toneStyle, to: value) }
                 )
