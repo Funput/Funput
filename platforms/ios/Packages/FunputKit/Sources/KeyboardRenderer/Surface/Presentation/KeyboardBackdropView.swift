@@ -51,7 +51,8 @@ final class KeyboardBackdropView: UIView {
         theme: ResolvedTheme,
         traits: UITraitCollection,
         image: UIImage? = nil,
-        blendsSystemEdge: Bool = false
+        blendsSystemEdge: Bool = false,
+        pinsAppearance: Bool = false
     ) {
         self.theme = theme
         self.blendsSystemEdge = blendsSystemEdge
@@ -60,7 +61,7 @@ final class KeyboardBackdropView: UIView {
         imageView.isHidden = !usesImage
         overlayView.isHidden = !usesImage
         gradientView.isHidden = usesImage
-        configureMaterial(theme: theme, usesImage: usesImage)
+        configureMaterial(theme: theme, usesImage: usesImage, pinsAppearance: pinsAppearance)
         gradientLayer.isHidden = gradientView.isHidden
         if usesImage {
             overlayView.backgroundColor = theme.backgroundEffects.overlay.uiColor(for: traits)
@@ -72,9 +73,13 @@ final class KeyboardBackdropView: UIView {
         updateEdgeMask()
     }
 
-    private func configureMaterial(theme: ResolvedTheme, usesImage: Bool) {
+    /// The host material is the *app's* glass, and it stays on that app's appearance no
+    /// matter what this keyboard overrides. A keyboard pinned to dark inside a light app
+    /// would draw dark-mode labels straight onto light glass, so once the appearance is
+    /// pinned the backdrop has to bring its own material.
+    private func configureMaterial(theme: ResolvedTheme, usesImage: Bool, pinsAppearance: Bool) {
         let reducesTransparency = UIAccessibility.isReduceTransparencyEnabled
-        if #available(iOS 26.0, *), theme.material == .glass, !reducesTransparency {
+        if #available(iOS 26.0, *), theme.material == .glass, !reducesTransparency, !pinsAppearance {
             usesHostMaterial = true
             materialView.effect = nil
         } else {

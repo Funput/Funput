@@ -23,6 +23,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var smartGesturesEnabled: Bool
     public var showsNumberRow: Bool
     public var layoutPreset: KeyboardLayoutPreset
+    /// Overrides the light/dark appearance the host app would otherwise impose.
+    public var keyboardAppearance: KeyboardAppearanceOption
     public var heightScale: Double
     public var personalSuggestionsEnabled: Bool
     public var clipboardEnabled: Bool
@@ -35,7 +37,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case eagerRestore, autoCapitalize, selectedThemeID
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
         case smartGesturesEnabled
-        case showsNumberRow, layoutPreset, heightScale
+        case showsNumberRow, layoutPreset, heightScale, keyboardAppearance
         case personalSuggestionsEnabled, personalSuggestionResetToken
         case clipboardEnabled, clipboardExpiry, schemaVersion
     }
@@ -55,6 +57,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         smartGesturesEnabled: Bool = true,
         showsNumberRow: Bool = false,
         layoutPreset: KeyboardLayoutPreset = .funput,
+        keyboardAppearance: KeyboardAppearanceOption = .system,
         heightScale: Double = 1.1,
         personalSuggestionsEnabled: Bool = true,
         clipboardEnabled: Bool = true,
@@ -76,6 +79,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.smartGesturesEnabled = smartGesturesEnabled
         self.showsNumberRow = showsNumberRow
         self.layoutPreset = layoutPreset
+        self.keyboardAppearance = keyboardAppearance
         self.heightScale = heightScale
         self.personalSuggestionsEnabled = personalSuggestionsEnabled
         self.clipboardEnabled = clipboardEnabled
@@ -89,5 +93,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 11
+    public static let currentSchemaVersion = 12
 }

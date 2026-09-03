@@ -22,6 +22,7 @@ extension FunputConfiguration {
         config.showsNumberRow = try container.decodeIfPresent(Bool.self, forKey: .showsNumberRow) ?? config.showsNumberRow
         config.layoutPreset = try container.decodeIfPresent(KeyboardLayoutPreset.self, forKey: .layoutPreset) ?? config.layoutPreset
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
+        config.keyboardAppearance = try container.decodeIfPresent(KeyboardAppearanceOption.self, forKey: .keyboardAppearance) ?? config.keyboardAppearance
         config.personalSuggestionsEnabled = try container.decodeIfPresent(Bool.self, forKey: .personalSuggestionsEnabled) ?? config.personalSuggestionsEnabled
         config.personalSuggestionResetToken = try container.decodeIfPresent(UUID.self, forKey: .personalSuggestionResetToken)
         config.clipboardEnabled = try container.decodeIfPresent(Bool.self, forKey: .clipboardEnabled) ?? config.clipboardEnabled
@@ -67,6 +68,11 @@ extension FunputConfiguration {
         // it covers are what iOS users already expect from the system keyboard.
         if config.schemaVersion < 11 {
             config.schemaVersion = 11
+        }
+        // v12 added `keyboardAppearance`. `.system` is the trait-following behaviour every
+        // earlier build had, so like the `< 10` rung there is nothing to fix up.
+        if config.schemaVersion < 12 {
+            config.schemaVersion = 12
         }
         self = config
     }

@@ -51,6 +51,21 @@ struct LiquidGlassSurfaceTests {
         #expect((backdrop?.backgroundColor?.cgColor.alpha ?? 0) == 0)
     }
 
+    /// A pinned appearance cannot borrow the host app's glass: that material stays on the
+    /// host app's own light/dark setting, so a keyboard pinned to dark inside a light app
+    /// would end up drawing dark-mode labels onto light glass.
+    @Test("A pinned appearance brings its own material instead of the host's")
+    func pinnedAppearanceDropsHostMaterial() {
+        guard #available(iOS 26.0, *) else { return }
+        let surface = KeyboardSurfaceView(
+            presentation: KeyboardPresentation(pinsAppearance: true)
+        )
+        let backdrop = surface.subviews.compactMap { $0 as? KeyboardBackdropView }.first
+
+        #expect(backdrop?.usesHostMaterial == false)
+        #expect(backdrop?.effect is UIBlurEffect)
+    }
+
     private func accessibleControls(in view: UIView) -> [UIControl] {
         view.subviews.flatMap { child -> [UIControl] in
             let own = (child as? UIControl).map {

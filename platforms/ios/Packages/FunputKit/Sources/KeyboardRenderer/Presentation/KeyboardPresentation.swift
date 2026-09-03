@@ -16,6 +16,8 @@ public struct KeyboardPresentation: Hashable, Sendable {
     public var showsKeyPreviews: Bool
     /// Double-tap space, spacebar cursor panning and swipe-to-delete-word.
     public var areSmartGesturesEnabled: Bool
+    /// Whether the user pinned the keyboard's appearance instead of following the host app.
+    public var pinsAppearance: Bool
 
     public init(
         layout: KeyboardLayout = .funputQWERTY,
@@ -28,7 +30,8 @@ public struct KeyboardPresentation: Hashable, Sendable {
         isHapticFeedbackEnabled: Bool = true,
         isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
-        areSmartGesturesEnabled: Bool = true
+        areSmartGesturesEnabled: Bool = true,
+        pinsAppearance: Bool = false
     ) {
         self.layout = layout
         self.sizing = sizing
@@ -41,6 +44,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
         self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
         self.areSmartGesturesEnabled = areSmartGesturesEnabled
+        self.pinsAppearance = pinsAppearance
     }
 }
 

@@ -64,7 +64,8 @@ extension EmojiKeyboardView {
             theme: theme,
             traits: traitCollection,
             image: backgroundImage,
-            blendsSystemEdge: presentation.blendsSystemEdge
+            blendsSystemEdge: presentation.blendsSystemEdge,
+            pinsAppearance: presentation.pinsAppearance
         )
         bottomBar.apply(color: label, selected: selectedCategory)
         searchHeader.apply(

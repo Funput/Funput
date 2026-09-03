@@ -85,10 +85,9 @@ extension KeyboardSurfaceView {
 
     func applyBackdropPresentation() {
         backdropView.apply(
-            theme: presentation.theme,
-            traits: traitCollection,
-            image: backgroundImage,
-            blendsSystemEdge: presentation.blendsSystemEdge
+            theme: presentation.theme, traits: traitCollection, image: backgroundImage,
+            blendsSystemEdge: presentation.blendsSystemEdge,
+            pinsAppearance: presentation.pinsAppearance
         )
     }
 
