@@ -38,8 +38,9 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     # makepkg compiles the whole Rust + C++ tree from source with no cache, so the
-    # normal run is minutes rather than seconds. Generous, but bounded.
-    timeout-minutes: 45
+    # normal run is minutes rather than seconds — measured at 2m48s, pacman -Syu
+    # included. Wide enough for a slow runner, far short of the six-hour default.
+    timeout-minutes: 20
     steps:
       - name: Install tools
         run: pacman -Syu --noconfirm --needed git namcap curl jq
