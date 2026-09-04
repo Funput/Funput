@@ -80,6 +80,11 @@ final class AppSettings {
             shortcutsRevision &+= 1
         }
     }
+    /// Master gõ tắt switch ("Bật gõ tắt"). Off, nothing expands; the table stays
+    /// loaded, so flipping it back costs nothing. On by default.
+    var shortcutsEnabled: Bool {
+        didSet { defaults.set(shortcutsEnabled, forKey: Keys.shortcutsEnabled) }
+    }
     /// Smart-case gõ tắt ("Tự nhận diện hoa/thường"): a trigger matches however it was
     /// capitalized and the expansion is re-cased to match. On by default.
     var shortcutSmartCase: Bool {
@@ -111,6 +116,7 @@ final class AppSettings {
             Keys.showMenuBarIcon: true,
             Keys.vietnameseEnabled: true,
             Keys.retoneAfterBackspace: true,
+            Keys.shortcutsEnabled: true,
             Keys.shortcutSmartCase: true,
         ])
         inputMethod = InputMethod.persisted(defaults.object(forKey: Keys.inputMethod))
@@ -121,6 +127,7 @@ final class AppSettings {
         spellCheckEnabled = defaults.bool(forKey: Keys.spellCheckEnabled)
         autoCapitalizeEnabled = defaults.bool(forKey: Keys.autoCapitalizeEnabled)
         retoneAfterBackspace = defaults.bool(forKey: Keys.retoneAfterBackspace)
+        shortcutsEnabled = defaults.bool(forKey: Keys.shortcutsEnabled)
         shortcutSmartCase = defaults.bool(forKey: Keys.shortcutSmartCase)
         toggleShortcut = defaults.data(forKey: Keys.toggleShortcut)
             .flatMap { try? JSONDecoder().decode(KeyCombo.self, from: $0) } ?? .defaultToggle

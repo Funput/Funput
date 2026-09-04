@@ -43,6 +43,13 @@ final class FunputComposer {
         funput_clear_shortcuts(handle)
     }
 
+    /// The gõ tắt master switch: off, nothing expands and the table is left loaded, so
+    /// hosts need not re-push their rows around it. Its own FFI call for the same ABI
+    /// reason as `setShortcutSmartCase` below.
+    func setShortcutsEnabled(_ on: Bool) {
+        funput_set_shortcuts_enabled(handle, on)
+    }
+
     /// Smart-case matching for gõ tắt: on, `tp`/`Tp`/`TP` all find the `tp` entry and
     /// the expansion is re-cased to match; off, only the exact trigger expands and the
     /// expansion is verbatim. Its own FFI call rather than a `FunputConfig` field —

@@ -41,6 +41,7 @@ extension AppSettings {
                 eagerRestore: eagerRestore,
                 spellCheck: spellCheckEnabled,
                 autoCapitalize: autoCapitalizeEnabled,
+                shortcutsEnabled: shortcutsEnabled,
                 shortcutSmartCase: shortcutSmartCase
             ),
             shortcuts: shortcuts.map { .init(trigger: $0.trigger, expansion: $0.expansion) },
@@ -86,6 +87,7 @@ extension AppSettings {
             if let value = prefs.eagerRestore { eagerRestore = value }
             if let value = prefs.spellCheck { spellCheckEnabled = value }
             if let value = prefs.autoCapitalize { autoCapitalizeEnabled = value }
+            if let value = prefs.shortcutsEnabled { shortcutsEnabled = value }
             if let value = prefs.shortcutSmartCase { shortcutSmartCase = value }
         }
 

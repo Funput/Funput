@@ -10,6 +10,7 @@ struct ComposerConfiguration: Equatable {
     let eagerRestore: Bool
     let spellCheckEnabled: Bool
     let autoCapitalizeEnabled: Bool
+    let shortcutsEnabled: Bool
     let shortcutSmartCase: Bool
 
     init(settings: AppSettings) {
@@ -20,6 +21,7 @@ struct ComposerConfiguration: Equatable {
         eagerRestore = settings.eagerRestore
         spellCheckEnabled = settings.spellCheckEnabled
         autoCapitalizeEnabled = settings.autoCapitalizeEnabled
+        shortcutsEnabled = settings.shortcutsEnabled
         shortcutSmartCase = settings.shortcutSmartCase
     }
 
@@ -31,6 +33,7 @@ struct ComposerConfiguration: Equatable {
         eagerRestore: Bool = true,
         spellCheckEnabled: Bool = false,
         autoCapitalizeEnabled: Bool = false,
+        shortcutsEnabled: Bool = true,
         shortcutSmartCase: Bool = true
     ) {
         self.inputMethod = inputMethod
@@ -40,6 +43,7 @@ struct ComposerConfiguration: Equatable {
         self.eagerRestore = eagerRestore
         self.spellCheckEnabled = spellCheckEnabled
         self.autoCapitalizeEnabled = autoCapitalizeEnabled
+        self.shortcutsEnabled = shortcutsEnabled
         self.shortcutSmartCase = shortcutSmartCase
     }
 }
@@ -56,9 +60,10 @@ extension FunputComposer {
                 auto_capitalize: configuration.autoCapitalizeEnabled
             )
         )
-        // Neither of these rides the by-value `FunputConfig`: `enabled` is a runtime
-        // toggle, and smart case is kept off the C struct for ABI stability. Order does
-        // not matter — `configure` edits the engine config rather than replacing it.
+        // None of these ride the by-value `FunputConfig`: `enabled` is a runtime
+        // toggle, and the gõ tắt switches are kept off the C struct for ABI stability.
+        // Order does not matter — `configure` edits the engine config, never replaces it.
+        setShortcutsEnabled(configuration.shortcutsEnabled)
         setShortcutSmartCase(configuration.shortcutSmartCase)
         setEnabled(configuration.enabled)
     }

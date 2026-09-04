@@ -35,6 +35,9 @@ struct ConfigDocument: Codable {
         var eagerRestore: Bool?
         var spellCheck: Bool?
         var autoCapitalize: Bool?
+        /// Whether the gõ tắt rows in `shortcuts` expand at all. Absent means on —
+        /// see `CONFIG_FORMAT.md`.
+        var shortcutsEnabled: Bool?
         /// Whether a gõ tắt trigger matches however it was capitalized, expansion
         /// re-cased to match. Absent means on — see `CONFIG_FORMAT.md`.
         var shortcutSmartCase: Bool?
