@@ -45,7 +45,7 @@ jobs:
       - name: Install tools
         run: pacman -Syu --noconfirm --needed git namcap curl jq
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Render the recipe for the latest release
         run: |

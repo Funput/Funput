@@ -99,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
 
@@ -131,7 +131,7 @@ jobs:
       # `out/*.tar.gz` are the portable Linux trees behind `install.sh --user`.
       # They were built but never attached, so the no-sudo path could not resolve
       # one and always died on "no matching asset".
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: |
             out/*.pkg
