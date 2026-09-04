@@ -28,7 +28,7 @@ gtk = { package = "gtk4", version = "0.9", features = ["v4_10"] }
 adw = { package = "libadwaita", version = "0.7", features = ["v1_5"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-dirs = "5"
+dirs = "6"
 
 # Pure settings UI — no IME hot path links here, so optimize for size. Matches
 # the root workspace profile (excluded packages do not inherit it). Do NOT set
