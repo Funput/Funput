@@ -24,6 +24,8 @@ pub(super) fn to_document(settings: &Settings) -> ConfigDocument {
             eager_restore: Some(settings.eager_restore),
             spell_check: Some(settings.spell_check),
             auto_capitalize: Some(settings.auto_capitalize),
+            shortcuts_enabled: Some(settings.shortcuts_enabled),
+            shortcut_smart_case: Some(settings.shortcut_smart_case),
         }),
         shortcuts: Some(
             settings
@@ -72,6 +74,15 @@ pub(super) fn apply(settings: &mut Settings, doc: &ConfigDocument) -> ImportSumm
         }
         if let Some(value) = prefs.auto_capitalize {
             settings.auto_capitalize = value;
+        }
+        // Absent means the exporter had nothing to say, not "off" — the format's
+        // non-destructive-import rule. A file predating these two fields carries a
+        // table that expands, smart-cased, and importing it must not change that.
+        if let Some(value) = prefs.shortcuts_enabled {
+            settings.shortcuts_enabled = value;
+        }
+        if let Some(value) = prefs.shortcut_smart_case {
+            settings.shortcut_smart_case = value;
         }
     }
     merge_shortcuts(settings, doc, &mut summary);

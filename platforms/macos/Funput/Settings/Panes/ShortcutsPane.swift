@@ -3,19 +3,51 @@ import SwiftUI
 /// Manage text-expansion shortcuts (gõ tắt): type a short trigger, then a space or
 /// punctuation, and Funput expands it (`vn` → `Việt Nam`). Rows are edited inline.
 struct ShortcutsPane: View {
-    @Environment(AppSettings.self) private var settings
-    @FocusState private var focusedTrigger: UUID?
+    @Environment(AppSettings.self) var settings
+    @FocusState var focusedTrigger: UUID?
 
     var body: some View {
         @Bindable var settings = settings
 
         Group {
+            Section("Gõ tắt") {
+                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                    // The pane's own sidebar mark, so the switch reads as governing the
+                    // whole feature rather than one option among several.
+                    SettingsRow(
+                        title: "Bật gõ tắt",
+                        subtitle: "Tắt để tạm gõ nguyên chữ tắt — bảng bên dưới vẫn giữ nguyên.",
+                        systemImage: "text.append"
+                    ) {
+                        Toggle("Bật gõ tắt", isOn: $settings.shortcutsEnabled)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .tint(Theme.accent)
+                    }
+
+                    Divider()
+
+                    // Deliberately live while "Bật gõ tắt" is off, even though it only
+                    // matters when that is on: Windows and Linux leave it live too.
+                    SettingsRow(
+                        title: "Tự nhận diện hoa/thường",
+                        subtitle: "Gõ vn, Vn hay VN đều bung và nội dung tự viết hoa theo. Tắt thì chỉ khớp đúng chuỗi tắt đã lưu.",
+                        systemImage: "textformat"
+                    ) {
+                        Toggle("Tự nhận diện hoa/thường", isOn: $settings.shortcutSmartCase)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .tint(Theme.accent)
+                    }
+                }
+            }
+
             Section("Danh sách gõ tắt") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     SettingsRow(
-                        title: "Gõ tắt",
+                        title: countLabel,
                         subtitle: "Gõ chuỗi tắt rồi dấu cách để bung — ví dụ vn → Việt Nam",
-                        systemImage: "text.append"
+                        systemImage: "list.bullet"
                     ) {
                         Button(action: addRow) {
                             Label("Thêm", systemImage: "plus")
@@ -30,7 +62,7 @@ struct ShortcutsPane: View {
 
                     if settings.shortcuts.isEmpty {
                         Divider()
-                        Text("Chưa có gõ tắt nào. Bấm “Thêm” để tạo — ví dụ vn → Việt Nam, kg → không.")
+                        Text("Bấm “Thêm” để tạo — ví dụ vn → Việt Nam, kg → không.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -45,7 +77,9 @@ struct ShortcutsPane: View {
 
             Section("Mẹo") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    Text("Trigger tự nhận diện hoa/thường — gõ `vn`, `Vn` hay `VN` đều bung, expansion tự viết hoa tương ứng. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh.")
+                    Text(settings.shortcutSmartCase
+                        ? "Trigger tự nhận diện hoa/thường — gõ `vn`, `Vn` hay `VN` đều bung, expansion tự viết hoa tương ứng. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh."
+                        : "Đang tắt nhận diện hoa/thường — chỉ gõ đúng chuỗi tắt đã lưu mới bung, và nội dung giữ nguyên như đã nhập. Gõ tắt được ưu tiên hơn tự động khôi phục tiếng Anh.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -54,59 +88,11 @@ struct ShortcutsPane: View {
         }
     }
 
-    // MARK: - Row
-
-    private func row(_ shortcut: Binding<TextShortcut>) -> some View {
-        let isDuplicate = !shortcut.wrappedValue.trigger.isEmpty
-            && duplicateTriggers.contains(shortcut.wrappedValue.trigger)
-
-        return VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            HStack(spacing: Theme.Spacing.md) {
-                field(text: shortcut.trigger, placeholder: "vn", monospaced: true, invalid: isDuplicate)
-                    .frame(width: 130)
-                    .focused($focusedTrigger, equals: shortcut.wrappedValue.id)
-
-                Image(systemName: "arrow.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                field(text: shortcut.expansion, placeholder: "Việt Nam", monospaced: false, invalid: false)
-                    .frame(maxWidth: .infinity)
-
-                Button {
-                    settings.removeShortcut(shortcut.wrappedValue.id)
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.secondary)
-                .help("Xoá gõ tắt này")
-            }
-
-            if isDuplicate {
-                Text("Trùng trigger — dòng dưới sẽ được dùng.")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.accent)
-            }
-        }
-        .padding(.vertical, Theme.Spacing.xs)
-    }
-
-    private func field(text: Binding<String>, placeholder: String, monospaced: Bool, invalid: Bool) -> some View {
-        TextField("", text: text, prompt: Text(placeholder))
-            .labelsHidden()
-            .textFieldStyle(.plain)
-            .font(.system(.body, design: monospaced ? .monospaced : .default))
-            .padding(.horizontal, Theme.Spacing.sm)
-            .padding(.vertical, 6)
-            .background(.quaternary, in: RoundedRectangle(cornerRadius: Theme.Radius.control))
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.control)
-                    .strokeBorder(invalid ? Theme.accent : .clear, lineWidth: 1)
-            )
-    }
-
     // MARK: - Helpers
+
+    private var countLabel: String {
+        settings.shortcuts.isEmpty ? "Chưa có gõ tắt nào" : "\(settings.shortcuts.count) gõ tắt"
+    }
 
     /// "Thêm" is only enabled when the list is empty, or the last row already
     /// has both a trigger and an expansion — avoids piling up empty/half-filled
@@ -118,7 +104,7 @@ struct ShortcutsPane: View {
 
     /// Triggers (non-empty) that appear on more than one row — flagged so the user
     /// knows the engine map keeps only the last one.
-    private var duplicateTriggers: Set<String> {
+    var duplicateTriggers: Set<String> {
         var seen = Set<String>()
         var duplicates = Set<String>()
         for shortcut in settings.shortcuts where !shortcut.trigger.isEmpty {

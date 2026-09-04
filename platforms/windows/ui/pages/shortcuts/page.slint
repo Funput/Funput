@@ -7,11 +7,13 @@ export component ShortcutsPage inherits VerticalLayout {
     in property <[ShortcutEntry]> shortcuts;
     in property <bool> can-add: true;
     in-out property <bool> shortcuts-enabled;
+    in-out property <bool> shortcut-smart-case;
     callback add-shortcut();
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
     callback set-shortcuts-enabled(bool);
+    callback set-shortcut-smart-case(bool);
 
     spacing: Theme.sp-lg;
     width: 100%;
@@ -19,7 +21,11 @@ export component ShortcutsPage inherits VerticalLayout {
 
     PageHeader {
         title: "Gõ tắt";
-        subtitle: "Bung chữ tắt khi gõ khoảng trắng hoặc dấu câu — tự nhận diện hoa/thường: vn → việt nam, Vn → Việt Nam, VN → VIỆT NAM.";
+        // The example only holds while smart case is on; with it off the page
+        // would otherwise promise matching that no longer happens.
+        subtitle: root.shortcut-smart-case
+            ? "Bung chữ tắt khi gõ khoảng trắng hoặc dấu câu — tự nhận diện hoa/thường: vn → việt nam, Vn → Việt Nam, VN → VIỆT NAM."
+            : "Bung chữ tắt khi gõ khoảng trắng hoặc dấu câu — đang tắt nhận diện hoa/thường, chỉ đúng chữ tắt đã lưu mới bung và nội dung giữ nguyên.";
     }
 
     Section {
@@ -32,6 +38,18 @@ export component ShortcutsPage inherits VerticalLayout {
             AccentSwitch {
                 checked <=> root.shortcuts-enabled;
                 toggled => { root.set-shortcuts-enabled(root.shortcuts-enabled); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            icon: @image-url("../../icons/row/case.svg");
+            title: "Tự nhận diện hoa/thường";
+            subtitle: "Gõ vn, Vn hay VN đều bung và nội dung tự viết hoa theo. Tắt thì chỉ khớp đúng chuỗi tắt đã lưu.";
+            // Deliberately not gated on shortcuts-enabled: macOS leaves it live,
+            // and the two platforms must read the same.
+            AccentSwitch {
+                checked <=> root.shortcut-smart-case;
+                toggled => { root.set-shortcut-smart-case(root.shortcut-smart-case); }
             }
         }
     }

@@ -5,7 +5,6 @@
 //! separate: VI/EN is runtime state, flipped per field and by the language key.
 
 use funput_core::{InputMethod, ToneStyle};
-use funput_engine::EngineConfig;
 use jni::EnvUnowned;
 use jni::sys::{jboolean, jint, jlong};
 
@@ -27,20 +26,21 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
     spell_check: jboolean,
     auto_capitalize: jboolean,
 ) {
-    let config = EngineConfig {
-        method: decode_method(method),
-        tone_style: decode_tone_style(tone_style),
-        smart_restore,
-        eager_restore,
-        spell_check,
-        auto_capitalize,
-        // Not a parameter: the JNI symbol name encodes the Java signature, so an
-        // extra argument would stop Kotlin finding this function at all until the
-        // `external fun` is changed to match. Android has no gõ tắt switch yet, and
-        // `true` is how it behaved before there was one.
-        shortcuts_enabled: true,
-    };
-    update(handle, |engine| engine.configure(config));
+    // Edits rather than replaces the config: the JNI symbol name encodes the Java
+    // signature, so the gõ tắt options cannot ride along here without breaking the
+    // `external fun` — and replacing the whole config would reset them behind the
+    // back of whatever set them. Android has no gõ tắt switch yet, so they simply
+    // stay at their defaults.
+    update(handle, |engine| {
+        engine.update_config(|config| {
+            config.method = decode_method(method);
+            config.tone_style = decode_tone_style(tone_style);
+            config.smart_restore = smart_restore;
+            config.eager_restore = eager_restore;
+            config.spell_check = spell_check;
+            config.auto_capitalize = auto_capitalize;
+        });
+    });
 }
 
 pub(crate) fn decode_method(method: jint) -> InputMethod {

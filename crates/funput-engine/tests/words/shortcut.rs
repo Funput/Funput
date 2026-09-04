@@ -10,14 +10,9 @@
 use funput_core::InputMethod;
 use funput_engine::{Action, Engine};
 
-/// Drive `keys` through an engine seeded with `shortcuts`, reconstructing the
-/// resulting app text from the inject stream (None → append, Send → delete + append).
-fn app_text_with_shortcuts(method: InputMethod, shortcuts: &[(&str, &str)], keys: &str) -> String {
-    let mut engine = Engine::new();
-    engine.set_method(method);
-    for (trigger, expansion) in shortcuts {
-        engine.add_shortcut(*trigger, *expansion);
-    }
+/// Type `keys` into `engine`, reconstructing the resulting app text from the inject
+/// stream (None → append, Send → delete + append).
+fn drive(engine: &mut Engine, keys: &str) -> String {
     let mut app = String::new();
     for key in keys.chars() {
         let r = engine.process_char(key);
@@ -33,6 +28,22 @@ fn app_text_with_shortcuts(method: InputMethod, shortcuts: &[(&str, &str)], keys
         }
     }
     app
+}
+
+/// An engine seeded with `shortcuts`, everything else at its default.
+fn engine_with(shortcuts: &[(&str, &str)]) -> Engine {
+    let mut engine = Engine::new();
+    for (trigger, expansion) in shortcuts {
+        engine.add_shortcut(*trigger, *expansion);
+    }
+    engine
+}
+
+/// Drive `keys` through an engine seeded with `shortcuts`.
+fn app_text_with_shortcuts(method: InputMethod, shortcuts: &[(&str, &str)], keys: &str) -> String {
+    let mut engine = engine_with(shortcuts);
+    engine.set_method(method);
+    drive(&mut engine, keys)
 }
 
 #[test]
@@ -153,26 +164,9 @@ fn re_adding_trigger_overwrites() {
 /// Drive `keys` with gõ tắt switched off, otherwise identical to
 /// [`app_text_with_shortcuts`].
 fn app_text_with_shortcuts_off(shortcuts: &[(&str, &str)], keys: &str) -> String {
-    let mut engine = Engine::new();
+    let mut engine = engine_with(shortcuts);
     engine.update_config(|config| config.shortcuts_enabled = false);
-    for (trigger, expansion) in shortcuts {
-        engine.add_shortcut(*trigger, *expansion);
-    }
-    let mut app = String::new();
-    for key in keys.chars() {
-        let r = engine.process_char(key);
-        match r.action {
-            Action::None => app.push(key),
-            Action::Send => {
-                for _ in 0..r.backspace {
-                    app.pop();
-                }
-                app.push_str(&r.output);
-            }
-            Action::Restore => unreachable!("Restore not implemented yet"),
-        }
-    }
-    app
+    drive(&mut engine, keys)
 }
 
 #[test]
@@ -203,4 +197,58 @@ fn the_table_survives_the_switch_so_flipping_back_costs_nothing() {
         engine.process_char(key);
     }
     assert_eq!(engine.shortcuts().len(), 1);
+}
+
+// ---- the smart-case switch ("Tự nhận diện hoa/thường") ----
+
+/// Drive `keys` with smart case off but gõ tắt itself still on.
+fn app_text_without_smart_case(shortcuts: &[(&str, &str)], keys: &str) -> String {
+    let mut engine = engine_with(shortcuts);
+    engine.update_config(|config| config.shortcut_smart_case = false);
+    drive(&mut engine, keys)
+}
+
+#[test]
+fn smart_case_off_expands_only_the_exact_trigger() {
+    let text = app_text_without_smart_case(&[("tp", "TP. HCM")], "tp ");
+    assert_eq!(text, "TP. HCM ");
+}
+
+#[test]
+fn smart_case_off_leaves_a_differently_cased_trigger_alone() {
+    // Neither the Title Case nor the UPPERCASE spelling is the stored trigger, so
+    // nothing expands and the keys stay exactly as typed.
+    assert_eq!(
+        app_text_without_smart_case(&[("tp", "TP. HCM")], "Tp "),
+        "Tp "
+    );
+    assert_eq!(
+        app_text_without_smart_case(&[("tp", "TP. HCM")], "TP "),
+        "TP "
+    );
+}
+
+#[test]
+fn smart_case_off_keeps_the_expansion_verbatim() {
+    // The whole point of the switch: an expansion with a casing of its own comes out
+    // untouched, where smart case would have re-cased it to `Tp. Hcm`.
+    let text = app_text_without_smart_case(&[("tp", "TP. HCM")], "tp ");
+    assert_eq!(text, "TP. HCM ");
+    let smart = app_text_with_shortcuts(InputMethod::Telex, &[("tp", "TP. HCM")], "Tp ");
+    assert_eq!(smart, "Tp. Hcm ", "smart case still re-cases when it is on");
+}
+
+#[test]
+fn flipping_smart_case_back_on_restores_matching() {
+    let mut engine = engine_with(&[("tp", "TP. HCM")]);
+    engine.update_config(|config| config.shortcut_smart_case = false);
+    assert_eq!(drive(&mut engine, "TP "), "TP ");
+    engine.update_config(|config| config.shortcut_smart_case = true);
+    assert_eq!(drive(&mut engine, "TP "), "TP. HCM ");
+}
+
+#[test]
+fn smart_case_off_still_leaves_ordinary_composition_alone() {
+    let text = app_text_without_smart_case(&[("tp", "TP. HCM")], "chaof ");
+    assert_eq!(text, "chào ");
 }

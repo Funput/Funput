@@ -40,7 +40,8 @@ one machine imports on another. macOS is the first implementation
     "eagerRestore": true,
     "spellCheck": false,
     "autoCapitalize": false,
-    "shortcutsEnabled": true
+    "shortcutsEnabled": true,
+    "shortcutSmartCase": true
   },
 
   "shortcuts": [
@@ -67,7 +68,8 @@ one machine imports on another. macOS is the first implementation
 | `source` | — | `platform` + `appVersion` that produced the file. Metadata only. |
 | `preferences.inputMethod` | ✅ | `telex`, `telex_advanced`, or `vni`. Exposed on macOS, Windows, Linux, iOS, and Android; unsupported consumers keep their current selection. |
 | `preferences.*` | ✅ | Other typing options; each is optional and applied only if present. |
-| `shortcuts[]` | ✅ | `{ trigger, expansion }`. Local UUIDs are dropped; recreated on import. Whether they expand is `preferences.shortcutsEnabled`, which defaults to `true` when absent — an older file carries a working table and must not arrive switched off. |
+| `shortcuts[]` | ✅ | `{ trigger, expansion }`. Local UUIDs are dropped; recreated on import. Whether they expand is `preferences.shortcutsEnabled`, which defaults to `true` when absent — an older file carries a working table and must not arrive switched off. Exposed as a switch on macOS, Windows and Linux. |
+| `preferences.shortcutSmartCase` | ✅ | Whether a trigger matches regardless of how it was capitalized, with the expansion re-cased to match (`tp`/`Tp`/`TP` → `TP. HCM`/`Tp. Hcm`/`TP. HCM`). Off, only the exact trigger expands and the expansion is verbatim. Defaults to `true` when absent, for the same reason as `shortcutsEnabled`. Exposed as a switch on macOS, Windows and Linux. |
 | `platform.macos.toggleShortcut` | ❌ | `KeyCombo` (`keyCode` is AppKit-specific). Applied only on macOS, only if present. |
 | `platform.macos.flipShortcut` | ❌ | `KeyCombo` or `null`. Applied only on macOS, only if present. |
 | `platform.macos.appLanguageMemory` | ❌ | `{ bundleId: rememberedIsVietnamese }`. macOS-only per-app VI/EN memory; merged by key, existing entries win. |

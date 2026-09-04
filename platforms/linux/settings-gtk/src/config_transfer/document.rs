@@ -43,6 +43,10 @@ pub(super) struct Preferences {
     pub spell_check: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_capitalize: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcuts_enabled: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcut_smart_case: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]

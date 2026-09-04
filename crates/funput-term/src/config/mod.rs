@@ -45,8 +45,11 @@ pub struct TermConfig {
     pub auto_capitalize: bool,
     pub shortcuts: Vec<(String, String)>,
     /// Whether those shortcuts expand. Read from the same `settings.json` the GUI
-    /// writes, so turning gõ tắt off there turns it off here too.
+    /// writes, so turning gõ tắt off there turns it off here too — as does
+    /// `shortcut_smart_case` below.
     pub shortcuts_enabled: bool,
+    /// Whether a trigger matches regardless of capitalization, expansion re-cased.
+    pub shortcut_smart_case: bool,
     /// The byte that toggles VI/EN.
     pub toggle: u8,
     /// The byte that cycles Telex↔VNI at runtime, or `None` to disable.
@@ -79,6 +82,7 @@ impl From<FileSettings> for TermConfig {
                 .map(|s| (s.trigger, s.expansion))
                 .collect(),
             shortcuts_enabled: f.shortcuts_enabled,
+            shortcut_smart_case: f.shortcut_smart_case,
             toggle: DEFAULT_TOGGLE,
             cycle_method: DEFAULT_CYCLE_METHOD,
             vi_cursor_color: DEFAULT_VI_CURSOR_COLOR.to_string(),
@@ -107,6 +111,7 @@ impl TermConfig {
             spell_check: self.spell_check,
             auto_capitalize: self.auto_capitalize,
             shortcuts_enabled: self.shortcuts_enabled,
+            shortcut_smart_case: self.shortcut_smart_case,
         });
         engine.clear_shortcuts();
         for (trigger, expansion) in &self.shortcuts {

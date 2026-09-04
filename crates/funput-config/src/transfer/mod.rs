@@ -8,6 +8,7 @@
 mod apply;
 mod document;
 mod error;
+mod export;
 mod time;
 
 use std::fs;
@@ -15,12 +16,13 @@ use std::path::Path;
 
 use crate::settings::Settings;
 
-pub use apply::{apply, to_document};
+pub use apply::apply;
 pub use document::{
     CURRENT_VERSION, ConfigDocument, Platform, PortableShortcut, Preferences, SCHEMA_ID, Source,
     WindowsBlock,
 };
 pub use error::{ConfigError, ImportSummary};
+pub use export::to_document;
 pub use time::iso8601_now;
 
 /// Write the current settings as a pretty-printed interchange file.

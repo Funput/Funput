@@ -181,7 +181,9 @@ typedef struct {
 
 /**
  * A whole engine configuration passed by value over the C ABI — the six user
- * options. `enabled` and the gõ tắt shortcut table have their own functions.
+ * options. `enabled` and the gõ tắt options have their own functions: this struct
+ * crosses the ABI by value and the hosts declaring it are built separately from the
+ * header, so growing it would mismatch silently until every consumer is rebuilt.
  */
 typedef struct {
     /**
@@ -643,8 +645,12 @@ void funput_set_method(FunputEngine *engine, uint8_t method);
 /**
  * Apply a whole [`FunputConfig`] at once — the batch equivalent of the individual
  * `funput_set_*` functions, with the same side effects (a method change clears the
- * composition; auto-capitalize off resets its tracking). `funput_set_enabled` and
- * the shortcut table are separate and left untouched.
+ * composition; auto-capitalize off resets its tracking). `funput_set_enabled`, the
+ * shortcut table, and the gõ tắt options are separate and left untouched.
+ *
+ * Edits the live config rather than replacing it, so an option that is not on the
+ * wire keeps whatever its own setter last put there, whichever order the two are
+ * called in.
  *
  * # Safety
  * `engine` must be a valid handle or null.
@@ -690,6 +696,36 @@ void funput_add_shortcut(FunputEngine *engine,
  * `engine` must be a valid handle or null.
  */
 void funput_clear_shortcuts(FunputEngine *engine);
+
+/**
+ * Turn gõ tắt expansion on or off ("Bật gõ tắt"). Off, a trigger is typed out as
+ * itself and nothing expands; the table is left loaded, so the switch is instant in
+ * both directions and hosts need not re-push their rows around it.
+ *
+ * Its own function rather than a [`crate::FunputConfig`] field, for the ABI reason
+ * documented there; [`crate::funput_configure`] leaves this setting alone, so the
+ * two may be called in either order.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_shortcuts_enabled(FunputEngine *engine, bool on);
+
+/**
+ * Turn smart-case matching on or off ("Tự nhận diện hoa/thường"). On (the default),
+ * a trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same entry
+ * and the expansion is re-cased to match (`tp`/`Tp`/`TP` → `TP. HCM`/`Tp. Hcm`/
+ * `TP. HCM`). Off, only the exact trigger expands and the expansion comes out
+ * verbatim.
+ *
+ * Its own function rather than a [`crate::FunputConfig`] field, for the ABI reason
+ * documented there; [`crate::funput_configure`] leaves this setting alone, so the
+ * two may be called in either order.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_shortcut_smart_case(FunputEngine *engine, bool on);
 
 FunputSuggestionEngine *funput_suggestion_engine_new_in_memory(void);
 

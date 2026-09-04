@@ -21,7 +21,7 @@ common/                 Framework-free C++ shared by both shells
       nonpreedit.h            Commit-as-you-type: the mode, and judging a client
       nonpreedit.cpp          What the composer does with that judgement
   settings/               ~/.config/Funput/settings.json
-    settings.h              The model every shell reads
+    settings.h              The model every shell reads, gõ tắt switches included
     lookup.cpp              Where the file lives; app exclusion
     io.cpp                  Parse and save (JSON)
     watch.h/.cpp            inotify watcher for live reload
@@ -38,6 +38,7 @@ ibus/src/               IBus engine -> ibus-engine-funput
 settings-gtk/           GTK4 + libadwaita Settings app (its own cargo crate,
                         and its own package — see Build)
   src/settings_window/    one submodule per preferences page
+    shortcuts/              the gõ tắt switches, the rows, the empty state
   src/convert/            the Chuyển mã window — see below
 packaging/              two .desktop files, apt/dnf repo metadata
 ```
