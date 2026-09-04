@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: Swatinem/rust-cache@v2
 
@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Swift, iOS
         run: bash platforms/ios/Scripts/check-swift-loc.sh
@@ -183,7 +183,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Build deps
         run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libadwaita-1-dev
@@ -212,7 +212,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Build deps
         run: sudo apt-get update && sudo apt-get install -y cmake nlohmann-json3-dev
@@ -245,7 +245,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: taiki-e/install-action@v2
         with:
@@ -293,7 +293,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # `key` is not decoration. rust-cache builds its key from the rust version,
       # Cargo.lock and the JOB NAME — not the cargo profile — and build-windows.yml
@@ -342,7 +342,7 @@ jobs:
       run:
         working-directory: platforms/android
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # JavaVersion.VERSION_21 in every module's compileOptions.
       - uses: actions/setup-java@v6

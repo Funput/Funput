@@ -94,7 +94,7 @@ jobs:
           # Public key users import to trust the repo.
           gpg --armor --export hello@funput.app > funput.asc
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: apt-tree
           path: tree/deb
@@ -153,7 +153,7 @@ jobs:
             --detach-sign --armor tree/rpm/repodata/repomd.xml
           rm -f "$HOME/.gpg-pass"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: rpm-tree
           path: tree/rpm
@@ -180,7 +180,7 @@ jobs:
       - name: Install tools
         run: pacman -Syu --noconfirm --needed git jq curl
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Build the packages from the Arch recipe
         env:
@@ -266,7 +266,7 @@ jobs:
           rm -f "$HOME/.gpg-pass"
           ls -l tree/arch/x86_64
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: pacman-tree
           path: tree/arch
@@ -280,13 +280,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with: { name: apt-tree, path: public/deb }
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with: { name: rpm-tree, path: public/rpm }
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with: { name: pacman-tree, path: public/arch }
 
       - name: Assemble site (index, .repo, public key)
@@ -303,8 +303,8 @@ jobs:
           touch public/.nojekyll
           find public -maxdepth 2 -type f | sort
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with: { path: public }
 
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

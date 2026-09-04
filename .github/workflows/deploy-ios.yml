@@ -54,7 +54,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Select latest stable Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -251,7 +251,7 @@ jobs:
           shasum -a 256 "$OUT/Funput-${{ inputs.version }}.ipa" \
             | awk '{print $1}' > "$OUT/Funput-${{ inputs.version }}.ipa.sha256"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ios

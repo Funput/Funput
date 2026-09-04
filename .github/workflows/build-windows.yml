@@ -34,7 +34,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Cache cargo build
         uses: Swatinem/rust-cache@v2
@@ -81,7 +81,7 @@ jobs:
           cp platforms/windows/target/release/funput.exe "$OUT/Funput-$V.exe"
           sha256sum "$OUT/Funput-$V.exe" | awk '{print $1}' > "$OUT/Funput-$V.exe.sha256"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: windows
           path: ${{ runner.temp }}/out/*
@@ -97,7 +97,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Cache cargo build
         uses: Swatinem/rust-cache@v2
@@ -125,7 +125,7 @@ jobs:
           7z a -tzip "$OUT/$ZIP" "./target/release/funput.exe" >/dev/null
           (cd "$OUT" && sha256sum "$ZIP" | awk '{print $1}' > "$ZIP.sha256")
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-cli
           path: ${{ runner.temp }}/out/*
@@ -142,7 +142,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Download Windows artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: windows
           path: win
@@ -180,7 +180,7 @@ jobs:
           EOF
           cat "$OUT/funput-windows.json"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-feed
           path: ${{ runner.temp }}/out/*

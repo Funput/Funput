@@ -44,7 +44,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install build deps
         run: |
@@ -172,7 +172,7 @@ jobs:
           cp platforms/linux/build/fcitx5/funput.conf       "$S/share/fcitx5/inputmethod/funput.conf"
           add_common "$S"; pack "$FCITX"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: linux-${{ matrix.arch }}
           path: ${{ runner.temp }}/out/*
@@ -207,7 +207,7 @@ jobs:
             ibus-devel glib2-devel \
             gtk4-devel libadwaita-devel librsvg2-devel
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install Rust (rustup, stable)
         run: |
@@ -265,7 +265,7 @@ jobs:
           OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
           find platforms/linux/build -name '*.rpm' -exec cp {} "$OUT/" \;
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: linux-rpm-${{ matrix.arch }}
           path: ${{ runner.temp }}/out/*
