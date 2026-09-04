@@ -3,7 +3,7 @@
 //! tray binds to, and when composition is thrown away.
 
 use funput_config::{Method, Settings};
-use funput_engine::KeySource;
+use funput_engine::{Action, KeySource};
 
 use super::*;
 
@@ -263,6 +263,72 @@ fn pruning_drops_drafts_and_keeps_complete_rows() {
     assert_eq!(state.shortcuts()[0].trigger, "vn");
 }
 
+/// Type `keys` through the shell and rebuild what the app would be showing, the
+/// same way the hook applies an [`ImeResult`]: pass the key through, or eat the
+/// backspaces and inject.
+fn app_text(state: &mut ShellState, keys: &str) -> String {
+    let mut app = String::new();
+    for key in keys.chars() {
+        let result = state.process_key(key, KeySource::Standard);
+        match result.action {
+            Action::None => app.push(key),
+            Action::Send => {
+                for _ in 0..result.backspace {
+                    app.pop();
+                }
+                app.push_str(&result.output);
+            }
+            Action::Restore => unreachable!("Restore not implemented yet"),
+        }
+    }
+    app
+}
+
+/// A shell holding one finished row, `tp` → `TP. HCM`.
+fn shell_with_tp() -> ShellState {
+    let mut state = shell();
+    state.add_shortcut();
+    state.set_shortcut_trigger(0, "tp".into());
+    state.set_shortcut_expansion(0, "TP. HCM".into());
+    state
+}
+
+#[test]
+fn smart_case_is_on_by_default() {
+    let mut state = shell_with_tp();
+    assert_eq!(app_text(&mut state, "Tp "), "Tp. Hcm ");
+}
+
+/// The Settings switch has to reach the engine, not just the settings file — on
+/// this shell that is `update_config` re-syncing the whole `EngineConfig`, with no
+/// separate setter to forget.
+#[test]
+fn turning_smart_case_off_reaches_the_engine() {
+    let mut state = shell_with_tp();
+    state.set_shortcut_smart_case(false);
+
+    assert_eq!(
+        app_text(&mut state, "Tp "),
+        "Tp ",
+        "a differently cased trigger must be left alone"
+    );
+    assert_eq!(
+        app_text(&mut state, "tp "),
+        "TP. HCM ",
+        "the row itself is untouched — the exact trigger still expands"
+    );
+}
+
+/// Flipping it back must take effect without re-pushing the table.
+#[test]
+fn turning_smart_case_back_on_restores_matching() {
+    let mut state = shell_with_tp();
+    state.set_shortcut_smart_case(false);
+    state.set_shortcut_smart_case(true);
+
+    assert_eq!(app_text(&mut state, "Tp "), "Tp. Hcm ");
+}
+
 // --- keyboard layout -------------------------------------------------------
 
 /// Real Windows layout handles. `JAPANESE_IME` is what Microsoft IME reports;
@@ -388,10 +454,12 @@ fn settings_survive_a_restart() {
     let mut state = ShellState::new(Some(path.clone()));
     state.set_method(InputMethod::Vni);
     state.set_spell_check(true);
+    state.set_shortcut_smart_case(false);
 
     let reopened = ShellState::new(Some(path));
     assert_eq!(reopened.settings().method, Method::Vni);
     assert!(reopened.settings().spell_check);
+    assert!(!reopened.settings().shortcut_smart_case);
     let _ = std::fs::remove_dir_all(dir);
 }
 

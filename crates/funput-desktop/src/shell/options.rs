@@ -43,6 +43,13 @@ impl ShellState {
         self.update_config(|s| s.shortcuts_enabled = on);
     }
 
+    /// Turn smart-case trigger matching on or off. Off, only the trigger as stored
+    /// expands and the expansion is emitted verbatim — which is what a table
+    /// holding both `vn` and `VN` needs.
+    pub fn set_shortcut_smart_case(&mut self, on: bool) {
+        self.update_config(|s| s.shortcut_smart_case = on);
+    }
+
     /// Turn the foreign-layout auto-switch on or off. Re-judges the current layout
     /// straight away, so turning it off lifts a suspension already in place instead
     /// of leaving Vietnamese off until the user next changes keyboards.
