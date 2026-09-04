@@ -60,6 +60,16 @@ TEST_CASE("the gõ tắt switches default to on when the file predates them") {
     CHECK(settings.shortcutSmartCase);
 }
 
+TEST_CASE("tone placement is modern only without an existing settings file") {
+    Settings fresh;
+    CHECK(fresh.toneStyle == ToneStyle::Modern);
+
+    writeSettingsFile(R"({"method": "vni"})");
+    Settings legacy;
+    REQUIRE(legacy.reload());
+    CHECK(legacy.toneStyle == ToneStyle::Traditional);
+}
+
 TEST_CASE("reload reports whether anything actually changed") {
     writeSettingsFile(R"({"method": "vni", "enabled": true})");
     Settings settings;

@@ -18,7 +18,14 @@ class ToneStyleSettings(context: Context) {
         .catch { error ->
             if (error is IOException) emit(emptyPreferences()) else throw error
         }
-        .map { preferences -> ToneStyleSettingCodec.decode(preferences[ToneStyleKey]) }
+        .map { preferences ->
+            val cohort = ToneStyleDefaultCohort.resolve(
+                value = preferences[ToneStyleDefaultCohortKey],
+                hasPriorSettings = preferences.asMap().isNotEmpty(),
+                isUpgrade = false,
+            )
+            ToneStyleSettingCodec.decode(preferences[ToneStyleKey], cohort.default)
+        }
         .distinctUntilChanged()
 
     suspend fun setToneStyle(style: ToneStyle) {
@@ -28,8 +35,8 @@ class ToneStyleSettings(context: Context) {
     }
 
     companion object {
-        val DefaultToneStyle = ToneStyle.TRADITIONAL
+        val DefaultToneStyle = ToneStyle.MODERN
 
-        private val ToneStyleKey = stringPreferencesKey("tone_style")
+        internal val ToneStyleKey = stringPreferencesKey("tone_style")
     }
 }

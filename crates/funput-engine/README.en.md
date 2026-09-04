@@ -41,7 +41,7 @@ policy live there, **not** in the engine. The platform reads `ImeResult` and dec
 
 | Method | Description |
 |--------|-------------|
-| `new()` | Create an engine (defaults: enabled, Telex, Traditional) |
+| `new()` | Create an engine (defaults: enabled, Telex, Modern) |
 | `process_char(key: char) -> ImeResult` | Process one Unicode scalar (the platform maps keycode → char) |
 | `on_backspace() -> ImeResult` | User pressed Backspace while composing → resync the buffer |
 | `flip_composing() -> ImeResult` | Flip the composing word between its Vietnamese form and raw keys (`card` ⇄ `cải`); the choice is sticky for the rest of the word |

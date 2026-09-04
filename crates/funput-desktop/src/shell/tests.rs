@@ -466,6 +466,7 @@ fn settings_survive_a_restart() {
 #[test]
 fn without_a_settings_file_everything_still_works_in_memory() {
     let mut state = ShellState::new(None);
+    assert_eq!(state.tone_style(), funput_core::ToneStyle::Modern);
     state.set_spell_check(true);
     assert!(state.settings().spell_check);
 }

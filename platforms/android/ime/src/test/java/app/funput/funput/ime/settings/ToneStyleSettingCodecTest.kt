@@ -5,9 +5,10 @@ import org.junit.Test
 
 class ToneStyleSettingCodecTest {
     @Test
-    fun `missing or unknown setting falls back to traditional`() {
-        assertEquals(ToneStyle.TRADITIONAL, ToneStyleSettingCodec.decode(null))
-        assertEquals(ToneStyle.TRADITIONAL, ToneStyleSettingCodec.decode("UNKNOWN"))
+    fun `missing or unknown setting falls back to the install default`() {
+        assertEquals(ToneStyle.MODERN, ToneStyleSettingCodec.decode(null))
+        assertEquals(ToneStyle.MODERN, ToneStyleSettingCodec.decode("UNKNOWN"))
+        assertEquals(ToneStyle.TRADITIONAL, ToneStyleSettingCodec.decode(null, ToneStyle.TRADITIONAL))
     }
 
     @Test

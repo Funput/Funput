@@ -12,6 +12,7 @@ fn engine_new_defaults() {
     let engine = Engine::new();
     assert!(engine.is_enabled());
     assert_eq!(engine.method(), InputMethod::Telex);
+    assert_eq!(engine.tone_style(), ToneStyle::Modern);
     assert_eq!(engine.buffer(), "");
 }
 

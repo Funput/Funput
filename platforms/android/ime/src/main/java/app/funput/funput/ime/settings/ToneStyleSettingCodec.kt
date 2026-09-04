@@ -6,10 +6,13 @@ internal object ToneStyleSettingCodec {
         ToneStyle.MODERN -> ModernValue
     }
 
-    fun decode(value: String?): ToneStyle = when (value) {
+    fun decode(
+        value: String?,
+        default: ToneStyle = ToneStyleSettings.DefaultToneStyle,
+    ): ToneStyle = when (value) {
         ModernValue -> ToneStyle.MODERN
         TraditionalValue -> ToneStyle.TRADITIONAL
-        else -> ToneStyleSettings.DefaultToneStyle
+        else -> default
     }
 
     private const val TraditionalValue = "traditional"

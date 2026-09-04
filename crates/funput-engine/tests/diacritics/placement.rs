@@ -5,6 +5,7 @@ use funput_engine::Engine;
 fn run(m: InputMethod, keys: &str) -> String {
     let mut e = Engine::new();
     e.set_method(m);
+    e.update_config(|c| c.tone_style = ToneStyle::Traditional);
     for k in keys.chars() {
         e.process_char(k);
     }

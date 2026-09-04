@@ -7,6 +7,7 @@ struct FunputConfigurationStoreTests {
     func loadEmptyReturnsDefault() {
         withVolatileStore { store, _ in
             #expect(store.load() == .default)
+            #expect(store.load().toneStyle == .modern)
         }
     }
 

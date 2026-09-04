@@ -9,7 +9,7 @@ struct FunputConfigurationTests {
         let config = FunputConfiguration.default
         #expect(config.inputMethod == .vni) // iOS overrides the engine's Telex default
         #expect(config.language == .vietnamese)
-        #expect(config.toneStyle == .traditional) // funput-engine Session::new()
+        #expect(config.toneStyle == .modern)
         #expect(config.spellCheck == false)
         #expect(config.smartRestore == true)
         #expect(config.eagerRestore == true)
@@ -53,6 +53,16 @@ struct FunputConfigurationTests {
         #expect(!decoded.showsNumberRow)
         #expect(decoded.personalSuggestionsEnabled)
         #expect(decoded.layoutPreset == .funput)
+        #expect(decoded.toneStyle == .traditional)
+    }
+
+    @Test("Stored tone styles remain unchanged")
+    func storedToneStylesWinOverDefaults() throws {
+        for style in ToneStyleOption.allCases {
+            let data = Data(#"{"toneStyle":"\#(style.rawValue)"}"#.utf8)
+            let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
+            #expect(decoded.toneStyle == style)
+        }
     }
 
     @Test("Legacy feedback settings migrate to safe defaults")

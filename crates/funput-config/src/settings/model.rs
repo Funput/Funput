@@ -29,7 +29,7 @@ pub struct Shortcut {
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub method: Method,
-    #[serde(default)]
+    #[serde(default = "legacy_tone_style_default")]
     pub tone_style: ToneStyle,
     pub enabled: bool,
     pub smart_restore: bool,
@@ -86,6 +86,10 @@ fn shortcuts_enabled_default() -> bool {
     true
 }
 
+fn legacy_tone_style_default() -> ToneStyle {
+    ToneStyle::Traditional
+}
+
 fn shortcut_smart_case_default() -> bool {
     true
 }
@@ -112,7 +116,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             method: Method::Vni,
-            tone_style: ToneStyle::Traditional,
+            tone_style: ToneStyle::Modern,
             enabled: true,
             smart_restore: true,
             eager_restore: true,

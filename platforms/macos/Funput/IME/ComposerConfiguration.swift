@@ -27,7 +27,7 @@ struct ComposerConfiguration: Equatable {
 
     init(
         inputMethod: InputMethod = .telex,
-        toneStyle: ToneStyle = .traditional,
+        toneStyle: ToneStyle = .modern,
         enabled: Bool = true,
         smartEnglishRestore: Bool = true,
         eagerRestore: Bool = true,

@@ -24,7 +24,7 @@ enum class FlipHotkey { Off, CtrlShiftZ, CtrlShiftX };
 
 struct Settings {
     Method method = Method::Vni;
-    ToneStyle toneStyle = ToneStyle::Traditional;
+    ToneStyle toneStyle = ToneStyle::Modern;
     bool enabled = true;
     bool smartRestore = true;
     bool eagerRestore = true;
