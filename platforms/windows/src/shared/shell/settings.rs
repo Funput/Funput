@@ -78,6 +78,9 @@ pub fn set_auto_capitalize(on: bool) {
 pub fn set_shortcuts_enabled(on: bool) {
     with(|s| s.set_shortcuts_enabled(on));
 }
+pub fn set_shortcut_smart_case(on: bool) {
+    with(|s| s.set_shortcut_smart_case(on));
+}
 pub fn set_auto_english_on_foreign_layout(on: bool) {
     with(|s| s.set_auto_english_on_foreign_layout(on));
 }

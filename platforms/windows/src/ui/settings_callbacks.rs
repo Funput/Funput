@@ -90,6 +90,7 @@ pub(super) fn wire(window: &SettingsWindow) {
     window.on_set_auto_cap(commands::set_auto_capitalize);
     window.on_set_auto_english_layout(commands::set_auto_english_layout);
     window.on_set_shortcuts_enabled(commands::set_shortcuts_enabled);
+    window.on_set_shortcut_smart_case(commands::set_shortcut_smart_case);
     window.on_set_launch(commands::set_launch_at_login);
 
     let weak = window.as_weak();
