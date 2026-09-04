@@ -14,6 +14,7 @@ extension AppSettings {
         static let showMenuBarIcon = "showMenuBarIcon"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let shortcuts = "shortcuts"
+        static let shortcutsEnabled = "shortcutsEnabled"
         static let shortcutSmartCase = "shortcutSmartCase"
     }
 }

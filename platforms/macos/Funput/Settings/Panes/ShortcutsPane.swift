@@ -10,12 +10,44 @@ struct ShortcutsPane: View {
         @Bindable var settings = settings
 
         Group {
+            Section("Gõ tắt") {
+                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                    // The pane's own sidebar mark, so the switch reads as governing the
+                    // whole feature rather than one option among several.
+                    SettingsRow(
+                        title: "Bật gõ tắt",
+                        subtitle: "Tắt để tạm gõ nguyên chữ tắt — bảng bên dưới vẫn giữ nguyên.",
+                        systemImage: "text.append"
+                    ) {
+                        Toggle("Bật gõ tắt", isOn: $settings.shortcutsEnabled)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .tint(Theme.accent)
+                    }
+
+                    Divider()
+
+                    // Deliberately live while "Bật gõ tắt" is off, even though it only
+                    // matters when that is on: Windows and Linux leave it live too.
+                    SettingsRow(
+                        title: "Tự nhận diện hoa/thường",
+                        subtitle: "Gõ vn, Vn hay VN đều bung và nội dung tự viết hoa theo. Tắt thì chỉ khớp đúng chuỗi tắt đã lưu.",
+                        systemImage: "textformat"
+                    ) {
+                        Toggle("Tự nhận diện hoa/thường", isOn: $settings.shortcutSmartCase)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .tint(Theme.accent)
+                    }
+                }
+            }
+
             Section("Danh sách gõ tắt") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     SettingsRow(
-                        title: "Gõ tắt",
+                        title: countLabel,
                         subtitle: "Gõ chuỗi tắt rồi dấu cách để bung — ví dụ vn → Việt Nam",
-                        systemImage: "text.append"
+                        systemImage: "list.bullet"
                     ) {
                         Button(action: addRow) {
                             Label("Thêm", systemImage: "plus")
@@ -28,22 +60,9 @@ struct ShortcutsPane: View {
                         )
                     }
 
-                    Divider()
-
-                    SettingsRow(
-                        title: "Tự nhận diện hoa/thường",
-                        subtitle: "Gõ vn, Vn hay VN đều bung và nội dung tự viết hoa theo. Tắt thì chỉ khớp đúng chuỗi tắt đã lưu.",
-                        systemImage: "textformat"
-                    ) {
-                        Toggle("Tự nhận diện hoa/thường", isOn: $settings.shortcutSmartCase)
-                            .labelsHidden()
-                            .toggleStyle(.switch)
-                            .tint(Theme.accent)
-                    }
-
                     if settings.shortcuts.isEmpty {
                         Divider()
-                        Text("Chưa có gõ tắt nào. Bấm “Thêm” để tạo — ví dụ vn → Việt Nam, kg → không.")
+                        Text("Bấm “Thêm” để tạo — ví dụ vn → Việt Nam, kg → không.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -70,6 +89,10 @@ struct ShortcutsPane: View {
     }
 
     // MARK: - Helpers
+
+    private var countLabel: String {
+        settings.shortcuts.isEmpty ? "Chưa có gõ tắt nào" : "\(settings.shortcuts.count) gõ tắt"
+    }
 
     /// "Thêm" is only enabled when the list is empty, or the last row already
     /// has both a trigger and an expansion — avoids piling up empty/half-filled

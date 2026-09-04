@@ -26,7 +26,9 @@ struct OverviewPane: View {
                         }
                         SettingsMetric(
                             title: "Gõ tắt",
-                            value: "\(settings.shortcuts.count)",
+                            // The count would otherwise promise expansions that the
+                            // master switch is currently stopping.
+                            value: settings.shortcutsEnabled ? "\(settings.shortcuts.count)" : "Tắt",
                             systemImage: "text.append"
                         ) {
                             selection = .textShortcuts
