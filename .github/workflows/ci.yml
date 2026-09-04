@@ -262,9 +262,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # `key` is not decoration. rust-cache builds its key from the rust version,
+      # Cargo.lock and the JOB NAME — not the cargo profile — and build-windows.yml
+      # also has a job called `windows`. Without this the two share one entry: the
+      # release build writes 673 MB of optimized artifacts, this job restores them
+      # as a "full match", cannot use a single one of them because it builds dev,
+      # compiles everything from scratch, and then skips saving precisely because
+      # the key already matched. That is a cache that can never warm up, and it is
+      # what the first two runs of this job were doing.
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: platforms/windows -> target
+          key: ci-dev
 
       - name: Clippy
         working-directory: platforms/windows
