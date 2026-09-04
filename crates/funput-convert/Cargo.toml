@@ -3,6 +3,7 @@ name = "funput-convert"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 description = "The Chuyển mã window's logic: reading a batch, naming what a conversion costs, writing copies out."
 
 [lints]

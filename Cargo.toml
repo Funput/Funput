@@ -28,6 +28,12 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 authors = ["Funput"]
+# These are application crates, not library releases: none has been published and
+# the shells consume them by path. Saying so prevents an accidental `cargo publish`
+# and lets cargo-deny's wildcard rule work — it refuses to accept versionless path
+# dependencies for a crate that claims to be publishable, because crates.io would
+# reject that crate anyway. Remove this from any crate genuinely bound for crates.io.
+publish = false
 
 # Shared lint policy — every member opts in via `[lints] workspace = true`.
 # CI escalates warnings to errors (`cargo clippy -- -D warnings`); the denies

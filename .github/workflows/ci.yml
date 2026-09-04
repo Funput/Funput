@@ -3,8 +3,9 @@ name: CI
 # The pull-request gate: the checks that must pass on **every** change, which is
 # why nothing here is path-filtered and nothing here builds or ships — the release
 # workflows own that. Its six jobs are the repository's required status checks
-# (`rust`, `shell-line-budget`, `settings-gtk`, `linux-common`, `windows`,
-# `android`), so renaming a job here means updating the ruleset on `main` to
+# (`rust`, `shell-line-budget`, `settings-gtk`, `linux-common`, `cargo-deny`,
+# `windows`, `android`), so renaming a job here means updating the ruleset on
+# `main` to
 # match, or the rule silently stops matching anything and the gate quietly opens.
 #
 # A check that only applies to some pull requests belongs in its own workflow with
@@ -226,6 +227,38 @@ jobs:
 
       - name: Test
         run: ctest --test-dir platforms/linux/build/tests --output-on-failure
+
+  # The deterministic half of cargo-deny: what the dependency graph is allowed to
+  # contain, which only changes when a dependency changes. Advisories are NOT here
+  # — RUSTSEC publishes continuously and a new entry would redden every open pull
+  # request over something none of them touched. audit.yml runs those on a schedule.
+  #
+  # `licenses` is the reason this job earns its place. Slint is tri-licensed
+  # (GPL-3.0-only OR Royalty-free-2.0 OR Software-3.0) and the Windows shell links
+  # it; deny.toml allows exactly one of the three, which is what picks one. Without
+  # this check that choice is a comment nobody enforces, and a dependency arriving
+  # under GPL-3.0 would ship inside an MIT release with nothing to say so.
+  #
+  # Three trees because there are three lockfiles: the workspace, and the two
+  # packages excluded from it. One deny.toml governs all three.
+  cargo-deny:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - name: Workspace
+        run: cargo deny --config deny.toml check bans licenses sources
+
+      - name: Windows shell
+        run: cargo deny --manifest-path platforms/windows/Cargo.toml --config deny.toml check bans licenses sources
+
+      - name: GTK Settings app
+        run: cargo deny --manifest-path platforms/linux/settings-gtk/Cargo.toml --config deny.toml check bans licenses sources
 
   # The Windows shell (platforms/windows): the Slint IME GUI. Excluded from the
   # cargo workspace because it links the `windows` crate and slint/skia, so the

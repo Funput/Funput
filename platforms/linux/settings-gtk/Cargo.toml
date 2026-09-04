@@ -3,6 +3,9 @@ name = "funput-settings"
 version = "1.2026.1"
 edition = "2021"
 description = "Funput Settings & Onboarding (GTK4 + libadwaita) for Linux"
+# Outside the root workspace, so [workspace.package] gives it nothing. See the
+# same note in platforms/windows/Cargo.toml.
+license = "MIT"
 publish = false
 
 # Single binary; the name is the contract with packaging — both CMakeLists and the
