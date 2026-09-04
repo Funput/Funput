@@ -1,16 +1,29 @@
 name: CI
 
-# The pull-request gate: the checks that must pass on **every** change, which is
-# why nothing here is path-filtered and nothing here builds or ships — the release
-# workflows own that. Its six jobs are the repository's required status checks
-# (`rust`, `shell-line-budget`, `settings-gtk`, `linux-common`, `cargo-deny`,
-# `windows`, `android`), so renaming a job here means updating the ruleset on
-# `main` to
-# match, or the rule silently stops matching anything and the gate quietly opens.
+# The pull-request gate: the checks that must pass before anything reaches `main`.
+# Nothing here builds or ships — the release workflows own that.
 #
-# A check that only applies to some pull requests belongs in its own workflow with
-# a `paths:` filter instead — see arch-recipe.yml — because GitHub filters paths
-# per workflow and never per job.
+# All eight jobs are the repository's required status checks (`changes`, `rust`,
+# `shell-line-budget`, `settings-gtk`, `linux-common`, `cargo-deny`, `windows`,
+# `android`), so renaming a job here means updating the ruleset on `main` to match,
+# or the rule silently stops matching anything and the gate quietly opens.
+#
+# `changes` is on that list for a reason that is easy to miss. A job skipped by its
+# own `if:` reports "skipped", which a required check counts as passing — that is
+# exactly what lets `windows` and `android` be filtered while staying required. But
+# a job skipped because its DEPENDENCY failed reports "skipped" too. So if `changes`
+# broke and were not itself required, both expensive jobs would report skipped, the
+# gate would read green, and a pull request could merge having run neither. Being
+# required is what closes that.
+#
+# Only `windows` and `android` are filtered, and only because of what they cost —
+# see the `changes` job for the measurements. Every other job runs on every change,
+# which is the cheaper thing to reason about.
+#
+# A check that applies to only some pull requests and reports NOTHING on the rest
+# belongs in its own workflow with a `paths:` filter — see arch-recipe.yml — and
+# must never be a required check, because a required check that never reports
+# blocks the merge forever. That is the opposite trade from the one made here.
 #
 # The toolchain comes from rust-toolchain.toml (1.97.1 + rustfmt + clippy), so
 # bumping the pin moves CI with it. Every shell that links a heavy OS-only
@@ -18,15 +31,8 @@ name: CI
 # job — the GTK4 Settings app and the Slint Windows shell each get a job of their
 # own below for exactly that reason.
 #
-# The `windows` and `android` jobs below are the two shells that had no gate on a
-# pull request at all. Windows was linted and tested only by build-windows.yml,
-# which is `workflow_call` only and therefore runs at release time — a failure
-# stopped a release rather than the change that caused it. Android had nothing
-# beyond a line count.
-#
-# Both run unconditionally, like everything else here. Filtering them by path is
-# worth doing once there is a nightly, unfiltered run to catch what a filter
-# misses; until then an unconditional job is the honest one.
+# Not covered here: macOS and iOS. build-macos.yml runs the macOS tests, but only
+# at release time, and the iOS suites run nowhere automated at all.
 
 on:
   pull_request:
@@ -228,6 +234,81 @@ jobs:
       - name: Test
         run: ctest --test-dir platforms/linux/build/tests --output-on-failure
 
+  # Which of the two expensive jobs does this pull request actually need?
+  #
+  # Only `windows` and `android` are filtered, and the reason is the clock: on the
+  # last warm run they took 202s and 247s while the other five finished in 66s of
+  # wall time between them. Skipping those two takes an unrelated pull request from
+  # 247s to 66s; filtering the rest would save at most 41s more and add five further
+  # chances to get a filter wrong. The cheap jobs stay unconditional.
+  #
+  # No checkout. The GitHub API already knows a pull request's changed files, so
+  # this costs one request rather than the full-history clone the old
+  # `arch-recipe-changed` job paid for on every run.
+  #
+  # FAIL-OPEN is the whole safety property. Anything that is not a pull request —
+  # a push to main, a tag, a manual dispatch — has nothing to diff against and runs
+  # EVERYTHING. That is what makes filtering safe: a filter that wrongly skips a job
+  # lets a bad merge through, and the unfiltered run on main catches it minutes
+  # later rather than never. Never make this branch fail closed.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      windows: ${{ steps.f.outputs.windows }}
+      android: ${{ steps.f.outputs.android }}
+    steps:
+      - id: f
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PR:-}" ]; then
+            echo "Not a pull request — running everything."
+            echo "windows=true" >> "$GITHUB_OUTPUT"
+            echo "android=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          FILES="$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename')"
+
+          # Shared triggers, deliberately wide. crates/ is the ROOT of the
+          # dependency graph — both shells consume it by path — so a change there
+          # fans out rather than narrowing. The root manifest carries
+          # [workspace.package], the toolchain file pins rustc for everything, and
+          # a change to this workflow must run every job it might have altered.
+          # Anchored at both ends: the root manifests only. crates/ already covers
+          # the members' own Cargo.toml, and settings-gtk's lockfile has no bearing
+          # on either shell — an unanchored `Cargo\.lock$` would match it and run
+          # both jobs for nothing.
+          shared='^(crates/.*|Cargo\.toml|Cargo\.lock|rust-toolchain\.toml|\.github/workflows/ci\.yml)$'
+
+          # Log both outcomes, not just the skip. When a filter misbehaves the
+          # question is always "why did it decide that", and a line that only
+          # appears on one branch cannot answer it — a job that ran because the
+          # filter matched looks identical to one that ran because this fell into
+          # the fail-open branch above.
+          decide() {
+            local hits
+            hits="$(printf '%s\n' "$FILES" | grep -E "$shared|$2" || true)"
+            if [ -n "$hits" ]; then
+              echo "$1: matched $(printf '%s\n' "$hits" | wc -l | tr -d ' ') file(s) —"
+              printf '%s\n' "$hits" | sed 's/^/    /'
+              echo "$1=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "$1: no matching file — skipping."
+              echo "$1=false" >> "$GITHUB_OUTPUT"
+            fi
+          }
+
+          decide windows '^platforms/windows/'
+          decide android '^platforms/android/'
+
   # The deterministic half of cargo-deny: what the dependency graph is allowed to
   # contain, which only changes when a dependency changes. Advisories are NOT here
   # — RUSTSEC publishes continuously and a new entry would redden every open pull
@@ -287,6 +368,8 @@ jobs:
   # test step to an unfiltered nightly run — not to delete the only thing that
   # checks whether the shell works.
   windows:
+    needs: changes
+    if: needs.changes.outputs.windows == 'true'
     runs-on: windows-latest
     timeout-minutes: 30
     defaults:
@@ -336,6 +419,8 @@ jobs:
   # turning them on is a cleanup with its own diff, not something to bundle into
   # the commit that first switches the suite on.
   android:
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
