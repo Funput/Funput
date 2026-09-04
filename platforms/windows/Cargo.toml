@@ -59,7 +59,7 @@ dirs = "6"
 # swap the running .exe in place.
 ureq = "3" # sync HTTP client (rustls, no OpenSSL); runs on its own thread
 ed25519-dalek = "3" # verify the Sparkle-compatible Ed25519 signature
-base64 = "0.22" # decode the public key + signature
+base64 = "0.23" # decode the public key + signature
 semver = "1" # compare the manifest version against CARGO_PKG_VERSION
 self-replace = "1" # replace the currently running executable (crate `self_replace`)
 # `charset` is spelled out rather than left to feature unification through
