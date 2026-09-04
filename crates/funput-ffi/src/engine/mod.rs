@@ -26,7 +26,10 @@ pub use config::{
     funput_set_enabled, funput_set_method,
 };
 pub use result::{ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputResult};
-pub use shortcuts::{funput_add_shortcut, funput_clear_shortcuts, funput_set_shortcut_smart_case};
+pub use shortcuts::{
+    funput_add_shortcut, funput_clear_shortcuts, funput_set_shortcut_smart_case,
+    funput_set_shortcuts_enabled,
+};
 
 /// Opaque IME engine handle for C callers. Create with [`funput_engine_new`],
 /// release with [`funput_engine_free`]. cbindgen emits this as an opaque struct.

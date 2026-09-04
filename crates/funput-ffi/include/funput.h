@@ -698,6 +698,20 @@ void funput_add_shortcut(FunputEngine *engine,
 void funput_clear_shortcuts(FunputEngine *engine);
 
 /**
+ * Turn gõ tắt expansion on or off ("Bật gõ tắt"). Off, a trigger is typed out as
+ * itself and nothing expands; the table is left loaded, so the switch is instant in
+ * both directions and hosts need not re-push their rows around it.
+ *
+ * Its own function rather than a [`crate::FunputConfig`] field, for the ABI reason
+ * documented there; [`crate::funput_configure`] leaves this setting alone, so the
+ * two may be called in either order.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_shortcuts_enabled(FunputEngine *engine, bool on);
+
+/**
  * Turn smart-case matching on or off ("Tự nhận diện hoa/thường"). On (the default),
  * a trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same entry
  * and the expansion is re-cased to match (`tp`/`Tp`/`TP` → `TP. HCM`/`Tp. Hcm`/
