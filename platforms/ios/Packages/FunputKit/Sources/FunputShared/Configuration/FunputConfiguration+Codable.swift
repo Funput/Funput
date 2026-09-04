@@ -9,9 +9,11 @@ extension FunputConfiguration {
         var config = FunputConfiguration()
         config.inputMethod = try container.decodeIfPresent(KeyboardInputMethod.self, forKey: .inputMethod) ?? config.inputMethod
         config.language = try container.decodeIfPresent(KeyboardLanguage.self, forKey: .language) ?? config.language
-        // Stored payloads without this key predate the setting and must retain
-        // their effective traditional placement. Empty storage never decodes and
-        // therefore receives the modern product default instead.
+        // Unlike every other line here, an absent key does not fall back to the
+        // product default: this one flipped to modern, and a payload written before
+        // that belongs to someone already typing traditional placement. Storage that
+        // is empty rather than old is not this function's call — see
+        // ``FunputConfigurationStore`` and ``ToneStyleInstallCohort``.
         config.toneStyle = try container.decodeIfPresent(ToneStyleOption.self, forKey: .toneStyle) ?? .traditional
         config.spellCheck = try container.decodeIfPresent(Bool.self, forKey: .spellCheck) ?? config.spellCheck
         config.smartRestore = try container.decodeIfPresent(Bool.self, forKey: .smartRestore) ?? config.smartRestore

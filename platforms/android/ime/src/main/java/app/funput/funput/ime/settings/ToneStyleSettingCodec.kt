@@ -8,7 +8,7 @@ internal object ToneStyleSettingCodec {
 
     fun decode(
         value: String?,
-        default: ToneStyle = ToneStyleSettings.DefaultToneStyle,
+        default: ToneStyle = ToneStyleSettings.FallbackToneStyle,
     ): ToneStyle = when (value) {
         ModernValue -> ToneStyle.MODERN
         TraditionalValue -> ToneStyle.TRADITIONAL

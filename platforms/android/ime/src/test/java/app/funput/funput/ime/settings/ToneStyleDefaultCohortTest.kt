@@ -4,26 +4,36 @@ import androidx.datastore.preferences.core.emptyPreferences
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ToneStyleDefaultCohortTest {
     @Test
     fun `a clean install receives the modern default`() {
-        assertEquals(ToneStyleDefaultCohort.MODERN, resolve(hasPriorSettings = false, isUpgrade = false))
+        assertEquals(
+            ToneStyleDefaultCohort.MODERN,
+            ToneStyleDefaultCohort.resolve(hasPriorSettings = false, isUpgrade = false),
+        )
     }
 
     @Test
     fun `an upgrade or restored settings retain the legacy default`() {
-        assertEquals(ToneStyleDefaultCohort.LEGACY, resolve(hasPriorSettings = false, isUpgrade = true))
-        assertEquals(ToneStyleDefaultCohort.LEGACY, resolve(hasPriorSettings = true, isUpgrade = false))
+        assertEquals(
+            ToneStyleDefaultCohort.LEGACY,
+            ToneStyleDefaultCohort.resolve(hasPriorSettings = false, isUpgrade = true),
+        )
+        assertEquals(
+            ToneStyleDefaultCohort.LEGACY,
+            ToneStyleDefaultCohort.resolve(hasPriorSettings = true, isUpgrade = false),
+        )
     }
 
     @Test
-    fun `a stored cohort remains stable across later upgrades`() {
-        val modern = ToneStyleDefaultCohort.resolve("modern", hasPriorSettings = true, isUpgrade = true)
-        val legacy = ToneStyleDefaultCohort.resolve("legacy", hasPriorSettings = false, isUpgrade = false)
-        assertEquals(ToneStyleDefaultCohort.MODERN, modern)
-        assertEquals(ToneStyleDefaultCohort.LEGACY, legacy)
+    fun `a recorded cohort reads back and an unrecorded one does not`() {
+        assertEquals(ToneStyleDefaultCohort.MODERN, ToneStyleDefaultCohort.of("modern"))
+        assertEquals(ToneStyleDefaultCohort.LEGACY, ToneStyleDefaultCohort.of("legacy"))
+        assertNull(ToneStyleDefaultCohort.of(null))
+        assertNull(ToneStyleDefaultCohort.of("neither"))
     }
 
     @Test
@@ -35,6 +45,16 @@ class ToneStyleDefaultCohortTest {
         assertFalse(migration.shouldMigrate(migrated))
     }
 
-    private fun resolve(hasPriorSettings: Boolean, isUpgrade: Boolean) =
-        ToneStyleDefaultCohort.resolve(null, hasPriorSettings, isUpgrade)
+    /**
+     * The whole point of recording the answer: an upgrade lands later and would
+     * otherwise flip a user this store already called new.
+     */
+    @Test
+    fun `a recorded cohort survives a later upgrade`() = runBlocking {
+        val migrated = ToneStyleDefaultCohortMigration(isUpgrade = { false })
+            .migrate(emptyPreferences())
+
+        assertFalse(ToneStyleDefaultCohortMigration(isUpgrade = { true }).shouldMigrate(migrated))
+        assertEquals(ToneStyleDefaultCohort.MODERN, ToneStyleDefaultCohort.of(migrated[ToneStyleDefaultCohortKey]))
+    }
 }

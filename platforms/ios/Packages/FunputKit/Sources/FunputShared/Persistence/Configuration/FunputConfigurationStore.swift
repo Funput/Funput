@@ -24,10 +24,34 @@ public struct FunputConfigurationStore {
         self.key = key
     }
 
+    /// Reads the stored configuration, or works out what an install with nothing
+    /// stored should start on.
+    ///
+    /// That second case is the one write this read can perform: it settles the
+    /// install's ``ToneStyleInstallCohort``, and here is the earliest point that
+    /// still knows whether the App Group was empty before Funput wrote to it.
     public func load() -> FunputConfiguration {
-        guard let data = defaults.data(forKey: key),
-              let configuration = try? JSONDecoder().decode(FunputConfiguration.self, from: data)
-        else { return .default }
+        guard let data = defaults.data(forKey: key) else { return unstoredConfiguration() }
+        guard let configuration = try? JSONDecoder().decode(FunputConfiguration.self, from: data)
+        else {
+            // Data that will not decode still belongs to someone who has been
+            // typing here, so their settings are gone but their tone placement is
+            // not something to guess at.
+            return defaultConfiguration(toneStyle: ToneStyleInstallCohort.legacy.toneStyle)
+        }
+        return configuration
+    }
+
+    /// Nothing stored: either a new install, or someone who has typed here for
+    /// releases without ever opening Settings. Only the cohort can tell them apart.
+    private func unstoredConfiguration() -> FunputConfiguration {
+        let cohort = ToneStyleInstallCohortStore(defaults: defaults).cohort()
+        return defaultConfiguration(toneStyle: cohort.toneStyle)
+    }
+
+    private func defaultConfiguration(toneStyle: ToneStyleOption) -> FunputConfiguration {
+        var configuration = FunputConfiguration.default
+        configuration.toneStyle = toneStyle
         return configuration
     }
 

@@ -1,27 +1,37 @@
 //! Reading and writing `settings.json`.
 //!
 //! Both directions are deliberately forgiving: a missing, unreadable, or corrupt
-//! file yields [`Settings::default`] rather than an error, and a failed write is
-//! dropped. This runs under a keyboard hook where the alternative to a stale
-//! setting is a dead IME, so neither path may propagate a failure.
+//! file yields defaults rather than an error, and a failed write is dropped. This
+//! runs under a keyboard hook where the alternative to a stale setting is a dead
+//! IME, so neither path may propagate a failure.
 
 use std::fs;
 use std::path::Path;
 
 use super::Settings;
+use super::model::legacy_tone_style_default;
 
 impl Settings {
-    /// Load from `path`, falling back to defaults when it is missing or corrupt.
+    /// Load from `path`. A missing file yields [`Settings::default`]; a corrupt one
+    /// yields the same except for the tone placement, which stays where an existing
+    /// user had it (see [`legacy_tone_style_default`]).
     ///
     /// This is also where the removed "always English" list is migrated: each id
     /// becomes a remembered English choice, and the field is drained so the key
     /// disappears from disk on the next write. Re-running it before that write is
     /// harmless — the merge keeps whatever is already remembered.
     pub fn load_from(path: &Path) -> Self {
-        let mut settings: Self = fs::read_to_string(path)
-            .ok()
-            .and_then(|json| serde_json::from_str(&json).ok())
-            .unwrap_or_default();
+        let mut settings: Self = match fs::read_to_string(path) {
+            // A file that will not parse still belongs to someone who has been
+            // typing here. The rest of their settings are gone either way, but tone
+            // placement is not a thing to guess at, so it keeps the value every file
+            // written before the default flipped implied.
+            Ok(json) => serde_json::from_str(&json).unwrap_or_else(|_| Self {
+                tone_style: legacy_tone_style_default(),
+                ..Self::default()
+            }),
+            Err(_) => Self::default(),
+        };
         let legacy: Vec<_> = std::mem::take(&mut settings.excluded_apps);
         settings.remember_as_english(legacy.into_iter().map(|app| app.id));
         settings
@@ -41,6 +51,7 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ToneStyle;
     use crate::test_support::unique_dir;
 
     fn tmp_dir() -> std::path::PathBuf {
@@ -117,6 +128,8 @@ mod tests {
         let _ = fs::remove_dir_all(dir);
     }
 
+    /// A corrupt file resets everything the user can see and re-pick. Tone placement
+    /// is the exception: nothing in the UI says it moved, only their typing does.
     #[test]
     fn a_missing_or_corrupt_file_reads_as_defaults() {
         let dir = tmp_dir();
@@ -125,7 +138,13 @@ mod tests {
 
         let corrupt = dir.join("corrupt.json");
         fs::write(&corrupt, "{ not json").unwrap();
-        assert_eq!(Settings::load_from(&corrupt), Settings::default());
+        assert_eq!(
+            Settings::load_from(&corrupt),
+            Settings {
+                tone_style: ToneStyle::Traditional,
+                ..Settings::default()
+            }
+        );
         let _ = fs::remove_dir_all(dir);
     }
 }

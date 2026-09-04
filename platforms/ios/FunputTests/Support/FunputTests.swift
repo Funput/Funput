@@ -101,7 +101,6 @@ struct FunputTests {
 
         model.reset()
         #expect(model.configuration == .default)
-        #expect(model.configuration.toneStyle == .modern)
 
         store.configuration.language = .english
         model.reload()

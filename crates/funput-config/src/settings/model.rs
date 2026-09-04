@@ -86,7 +86,10 @@ fn shortcuts_enabled_default() -> bool {
     true
 }
 
-fn legacy_tone_style_default() -> ToneStyle {
+/// The tone placement a file that predates the setting implies: whoever wrote it
+/// has been typing traditional placement, whether they chose it or never looked.
+/// A machine with no file at all is a new install and takes [`Settings::default`].
+pub(super) fn legacy_tone_style_default() -> ToneStyle {
     ToneStyle::Traditional
 }
 

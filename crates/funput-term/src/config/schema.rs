@@ -32,8 +32,8 @@ impl From<Method> for InputMethod {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(super) enum ToneStyleCfg {
-    #[default]
     Traditional,
+    #[default]
     Modern,
 }
 
@@ -44,6 +44,13 @@ impl From<ToneStyleCfg> for ToneStyle {
             ToneStyleCfg::Modern => ToneStyle::Modern,
         }
     }
+}
+
+/// A settings file written before tone style was configurable belongs to someone
+/// already typing traditional placement — unlike no file at all, which is a new
+/// install and takes [`ToneStyleCfg::default`].
+fn legacy_tone_style() -> ToneStyleCfg {
+    ToneStyleCfg::Traditional
 }
 
 /// A text-expansion shortcut (gõ tắt) as stored in `settings.json`.
@@ -59,7 +66,7 @@ pub(super) struct Shortcut {
 pub(super) struct FileSettings {
     #[serde(default)]
     pub(super) method: Method,
-    #[serde(default)]
+    #[serde(default = "legacy_tone_style")]
     pub(super) tone_style: ToneStyleCfg,
     #[serde(default = "default_true")]
     pub(super) enabled: bool,

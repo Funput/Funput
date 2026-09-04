@@ -29,7 +29,7 @@ class ImeSettingsControllerTest {
         assertEquals(
             EngineConfiguration(
                 inputMethod = InputMethodSettings.DefaultInputMethod,
-                toneStyle = ToneStyleSettings.DefaultToneStyle,
+                toneStyle = ToneStyleSettings.FallbackToneStyle,
                 smartRestore = SmartCompositionPreferences.Default.smartRestoreEnabled,
                 eagerRestore = SmartCompositionPreferences.Default.smartRestoreEnabled,
                 spellCheck = SmartCompositionPreferences.Default.spellCheckEnabled,
