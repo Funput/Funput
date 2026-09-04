@@ -6,6 +6,13 @@ name = "funput-windows"
 version = "1.2026.1"
 edition = "2021"
 description = "Funput for Windows — global keyboard hook + tray + native Slint UI."
+# Stated explicitly: this package is outside the root workspace, so it inherits
+# nothing from [workspace.package] — including the MIT licence every other crate
+# in the repository carries. Without this line cargo-deny reports the shipped
+# Windows binary as unlicensed, which it effectively was.
+license = "MIT"
+# A shipped binary, never a crates.io release — same as funput-settings.
+publish = false
 
 [workspace]
 

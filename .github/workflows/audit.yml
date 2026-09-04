@@ -1,0 +1,57 @@
+name: Audit
+
+# The half of cargo-deny that is not deterministic.
+#
+# `bans`, `licenses` and `sources` answer the same way until a dependency changes,
+# so ci.yml gates pull requests on them. Advisories do not: RUSTSEC publishes
+# continuously, and a entry filed overnight would turn every open pull request red
+# for a reason that has nothing to do with any of them. Someone would then either
+# fix an unrelated vulnerability under merge pressure, or — far likelier — learn to
+# merge past a red check. Both are worse than hearing about it a day later here.
+#
+# Daily rather than weekly: dependabot's cadence is weekly, and an advisory that
+# lands the day after a dependency bump should not wait six days to be noticed.
+on:
+  schedule:
+    - cron: "0 4 * * *"   # 04:00 UTC daily
+  pull_request:
+    # Only when the answer can have changed. A lockfile edit is the one thing on a
+    # pull request that moves this check, and the policy file itself is the other.
+    paths:
+      - "**/Cargo.lock"
+      - deny.toml
+      - .github/workflows/audit.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  advisories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      # Every tree gets checked even when an earlier one fails; a vulnerability in
+      # the Windows shell should not hide one in the engine.
+      fail-fast: false
+      matrix:
+        tree:
+          - .
+          - platforms/windows
+          - platforms/linux/settings-gtk
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      # One policy file for all three trees, so a licence accepted for the engine
+      # is accepted for the shells. cargo-deny would otherwise look for a deny.toml
+      # beside each manifest and find none.
+      - name: cargo-deny advisories
+        run: cargo deny --manifest-path ${{ matrix.tree }}/Cargo.toml --config deny.toml check advisories

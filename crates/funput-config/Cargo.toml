@@ -3,6 +3,7 @@ name = "funput-config"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 description = "Persisted Funput settings and the cross-platform config interchange document."
 
 [lints]

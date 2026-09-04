@@ -1,0 +1,63 @@
+# Dependency updates, grouped and weekly.
+#
+# Grouped on purpose: ungrouped, the four ecosystems below would open a dozen
+# single-crate pull requests a week, each burning a full CI run — and every one of
+# them now costs a Windows and an Android job. One pull request per ecosystem per
+# week is reviewable; twelve are not, and the ones that are not get ignored, which
+# is the failure mode this is meant to prevent.
+#
+# No npm entry: docs/ and website/ live outside this repository.
+version: 2
+updates:
+  # The workflows themselves. Actions are pinned by major tag here, so this is
+  # what notices a v6 -> v7; it is also the channel through which a compromised
+  # action's fix would arrive.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Three separate Cargo trees, each with its own Cargo.lock: the root workspace
+  # and the two packages excluded from it. Dependabot needs one entry per lockfile
+  # — it will not discover the excluded ones from the root manifest.
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      cargo:
+        patterns: ["*"]
+
+  - package-ecosystem: cargo
+    directory: /platforms/windows
+    schedule:
+      interval: weekly
+    groups:
+      cargo-windows:
+        patterns: ["*"]
+
+  - package-ecosystem: cargo
+    directory: /platforms/linux/settings-gtk
+    schedule:
+      interval: weekly
+    groups:
+      cargo-settings-gtk:
+        patterns: ["*"]
+
+  # Gradle, read from gradle/libs.versions.toml. AGP and Kotlin are split out of
+  # the group: those two move compileSdk, the Kotlin language version and the
+  # jvmTarget together, and a failure there needs reading on its own rather than
+  # buried in a bump of fifteen androidx artifacts.
+  - package-ecosystem: gradle
+    directory: /platforms/android
+    schedule:
+      interval: weekly
+    groups:
+      androidx:
+        patterns: ["*"]
+        exclude-patterns:
+          - "com.android.*"
+          - "org.jetbrains.kotlin*"

@@ -3,6 +3,7 @@ name = "funput-desktop"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 description = "Platform-agnostic logic for hook-based desktop input shells (Windows now)."
 
 [lints]

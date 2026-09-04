@@ -1,0 +1,98 @@
+# cargo-deny policy for every Rust tree in the repository: the root workspace and
+# the two packages excluded from it (platforms/windows, platforms/linux/settings-gtk),
+# each of which has its own Cargo.lock. CI runs cargo-deny once per tree against
+# this one file, so a licence accepted for the engine is accepted for the shells.
+#
+# Split by how the answer changes over time:
+#   - bans / licenses / sources are deterministic. They change only when a
+#     dependency changes, so they gate pull requests.
+#   - advisories are not. A new RUSTSEC entry published overnight would turn every
+#     open pull request red for a reason unrelated to any of them, so those run on
+#     a schedule instead (audit.yml).
+
+[graph]
+# Evaluate every target the lockfiles cover. The shells' locks include Linux-only
+# and UEFI-only crates that their own builds never compile; excluding targets here
+# would hide them, and a licence obligation is not something to hide from.
+all-features = true
+
+# ---------------------------------------------------------------------------
+[advisories]
+version = 2
+# Unmaintained is a maintenance signal, not a vulnerability, and almost all of it
+# here is transitive: slint pulls gtk3 bindings, rustybuzz and ttf-parser; the
+# proc-macro crates come from further down still. Flagging what the workspace
+# depends on DIRECTLY is actionable; flagging the rest is noise nobody can act on.
+unmaintained = "workspace"
+yanked = "deny"
+
+ignore = [
+  # quick-xml 0.39.4, reached only through wayland-scanner and zbus_xml. Both are
+  # Linux-only crates that appear in platforms/windows/Cargo.lock because a lockfile
+  # covers every target, and neither is compiled into any shipped Windows binary.
+  # The fix has to come from those two crates bumping to quick-xml >=0.41; there is
+  # no version of this tree that resolves it from here.
+  # Revisit when either publishes a release that moves off 0.39.
+  { id = "RUSTSEC-2026-0194", reason = "quick-xml via wayland-scanner/zbus_xml; Linux-only, not compiled on Windows; no fix available from this tree" },
+  { id = "RUSTSEC-2026-0195", reason = "same quick-xml 0.39.4 path as RUSTSEC-2026-0194" },
+]
+
+# ---------------------------------------------------------------------------
+[licenses]
+version = 2
+# Permissive licences plus MPL-2.0, whose copyleft is per-file and so places no
+# obligation on Funput's own sources.
+allow = [
+  "0BSD",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-1-Clause",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "BSL-1.0",
+  "CC0-1.0",
+  "CDLA-Permissive-2.0",
+  "ISC",
+  "MIT",
+  "MPL-2.0",
+  "NCSA",
+  "Unicode-3.0",
+  "Unlicense",
+  "Zlib",
+  # Slint is tri-licensed: GPL-3.0-only OR Royalty-free-2.0 OR Software-3.0.
+  # Allowing exactly one of the three is what PICKS one, and this file is the only
+  # place that choice is written down. Royalty-free 2.0 is the desktop-application
+  # licence: it costs nothing and asks for attribution.
+  #
+  # GPL-3.0-only is deliberately NOT on this list. Taking Slint under it would make
+  # the Windows shell GPL-3.0 and put it at odds with the MIT licence the rest of
+  # the repository ships under. Adding "GPL-3.0-only" here would silently make that
+  # choice instead, because cargo-deny resolves an OR expression against this list.
+  "LicenseRef-Slint-Royalty-free-2.0",
+]
+
+# Per-crate, because the licence is acceptable for this crate's role rather than
+# in general.
+[[licenses.exceptions]]
+# UEFI boot-services bindings, reached through getrandom's UEFI target support.
+# LGPL-2.1-or-later is not on the allow list and should not be: it is granted here
+# for a crate that no Funput target compiles — there is no UEFI build of an input
+# method. Linking obligations never arise because linking never happens.
+name = "r-efi"
+allow = ["LGPL-2.1-or-later"]
+
+# ---------------------------------------------------------------------------
+[bans]
+multiple-versions = "allow"   # a lockfile this wide always has some; not a gate
+wildcards = "deny"
+# The crates in this repository depend on each other by path and carry no version
+# requirement, which is a wildcard by cargo-deny's reading. That is how a workspace
+# is meant to look; the rule exists to catch `version = "*"` on a crates.io
+# dependency, and this keeps it aimed at that.
+allow-wildcard-paths = true
+
+# ---------------------------------------------------------------------------
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
