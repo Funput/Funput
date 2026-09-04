@@ -84,7 +84,9 @@ bool Settings::reload() {
     if (!data.is_object()) return false;
     const Settings previous = *this;
     method = parseMethod(data.value("method", std::string(methodString(method))));
-    toneStyle = parseTone(data.value("toneStyle", std::string(toneString(toneStyle))));
+    // A file without this key predates tone-style settings. Keep those users on
+    // the placement they already had; only a missing file receives the new default.
+    toneStyle = parseTone(data.value("toneStyle", std::string("traditional")));
     enabled = data.value("enabled", enabled);
     smartRestore = data.value("smartRestore", smartRestore);
     eagerRestore = data.value("eagerRestore", eagerRestore);

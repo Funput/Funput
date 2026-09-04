@@ -110,6 +110,7 @@ final class AppSettings {
     /// the user's real Funput configuration. Production uses `.standard` above.
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        let hasExistingSettings = defaults.object(forKey: Keys.inputMethod) != nil
         defaults.register(defaults: [
             Keys.smartEnglishRestore: true,
             Keys.eagerRestore: true,
@@ -120,7 +121,8 @@ final class AppSettings {
             Keys.shortcutSmartCase: true,
         ])
         inputMethod = InputMethod.persisted(defaults.object(forKey: Keys.inputMethod))
-        toneStyle = ToneStyle(rawValue: defaults.integer(forKey: Keys.toneStyle)) ?? .traditional
+        toneStyle = ToneStyle.persisted(
+            defaults.object(forKey: Keys.toneStyle), existingInstall: hasExistingSettings)
         vietnameseEnabled = defaults.bool(forKey: Keys.vietnameseEnabled)
         smartEnglishRestore = defaults.bool(forKey: Keys.smartEnglishRestore)
         eagerRestore = defaults.bool(forKey: Keys.eagerRestore)
@@ -140,5 +142,6 @@ final class AppSettings {
         shortcuts = defaults.data(forKey: Keys.shortcuts)
             .flatMap { try? JSONDecoder().decode([TextShortcut].self, from: $0) } ?? []
         defaults.set(inputMethod.rawValue, forKey: Keys.inputMethod)
+        if !hasExistingSettings { defaults.set(toneStyle.rawValue, forKey: Keys.toneStyle) }
     }
 }

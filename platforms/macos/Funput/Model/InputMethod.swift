@@ -56,6 +56,13 @@ enum ToneStyle: Int, CaseIterable, Identifiable, Codable {
 
     var id: Int { rawValue }
 
+    static func persisted(_ value: Any?, existingInstall: Bool) -> ToneStyle {
+        if let rawValue = value as? NSNumber, let style = ToneStyle(rawValue: rawValue.intValue) {
+            return style
+        }
+        return existingInstall ? .traditional : .modern
+    }
+
     var displayName: String {
         switch self {
         case .traditional: "Truyền thống"

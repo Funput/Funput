@@ -67,7 +67,7 @@ internal fun rememberFunputSettings(): FunputSettingsState {
     val context = LocalContext.current
     val stores = remember(context) { FunputSettingsStores(context) }
     val inputMethod by stores.input.inputMethod.collectAsState(InputMethodSettings.DefaultInputMethod)
-    val toneStyle by stores.toneStyleStore.toneStyle.collectAsState(ToneStyleSettings.DefaultToneStyle)
+    val toneStyle by stores.toneStyleStore.toneStyle.collectAsState(ToneStyleSettings.FallbackToneStyle)
     val keySizeProfile by stores.sizing.profile.collectAsState(KeyboardSizingSettings.DefaultProfile)
     val themeSelection by stores.keyboardTheme.selection
         .collectAsState(KeyboardThemeSettings.DefaultSelection)

@@ -7,7 +7,7 @@ fn char_at(buffer: &str, index: usize) -> char {
     buffer.chars().nth(index).expect("char at index")
 }
 
-/// `tone_vowel_index` with the default (traditional) style.
+/// `tone_vowel_index` with the explicit traditional style.
 fn trad(buffer: &str) -> usize {
     tone_vowel_index(buffer, ToneStyle::Traditional).unwrap()
 }

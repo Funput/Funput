@@ -46,7 +46,12 @@ internal class ImeSettingsController(
     // Seeded with the same defaults the settings flows fall back to, so the engine
     // configuration below is always complete — no option has to be invented when one
     // flow emits before the others.
-    private var toneStyle = ToneStyleSettings.DefaultToneStyle
+    //
+    // Tone style seeds with the fallback rather than the new-install default on
+    // purpose: this value is live for the keystrokes typed between here and the
+    // flow's first emission, and only one of the two guesses can move the tone mark
+    // under someone who never asked for it.
+    private var toneStyle = ToneStyleSettings.FallbackToneStyle
     private var smartComposition = SmartCompositionPreferences.Default
 
     init {

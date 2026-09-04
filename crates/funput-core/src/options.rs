@@ -32,9 +32,9 @@ impl InputMethod {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ToneStyle {
     /// "Kiểu cũ": tone on the first vowel — `hòa`, `khỏe`, `thúy`.
-    #[default]
     Traditional,
     /// "Kiểu mới": tone on the main (second) vowel — `hoà`, `khoẻ`, `thuý`.
+    #[default]
     Modern,
 }
 

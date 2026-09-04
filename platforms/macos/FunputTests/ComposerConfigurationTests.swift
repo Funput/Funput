@@ -49,4 +49,28 @@ final class ComposerConfigurationTests: XCTestCase {
         XCTAssertTrue(configuration.shortcutsEnabled)
         XCTAssertTrue(configuration.shortcutSmartCase)
     }
+
+    func testToneStyleDefaultsOnlyNewInstallsToModern() {
+        let freshName = "app.funput.tests.\(UUID().uuidString)"
+        let fresh = UserDefaults(suiteName: freshName)!
+        defer { fresh.removePersistentDomain(forName: freshName) }
+        XCTAssertEqual(AppSettings(defaults: fresh).toneStyle, .modern)
+        XCTAssertEqual(AppSettings(defaults: fresh).toneStyle, .modern)
+
+        let legacyName = "app.funput.tests.\(UUID().uuidString)"
+        let legacy = UserDefaults(suiteName: legacyName)!
+        defer { legacy.removePersistentDomain(forName: legacyName) }
+        legacy.set("vni", forKey: AppSettings.Keys.inputMethod)
+        XCTAssertEqual(AppSettings(defaults: legacy).toneStyle, .traditional)
+    }
+
+    func testStoredToneStyleAlwaysWins() {
+        for style in ToneStyle.allCases {
+            let suiteName = "app.funput.tests.\(UUID().uuidString)"
+            let defaults = UserDefaults(suiteName: suiteName)!
+            defer { defaults.removePersistentDomain(forName: suiteName) }
+            defaults.set(style.rawValue, forKey: AppSettings.Keys.toneStyle)
+            XCTAssertEqual(AppSettings(defaults: defaults).toneStyle, style)
+        }
+    }
 }

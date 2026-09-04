@@ -40,7 +40,7 @@ preedit/marked text…); logic inject không thuộc crate này.
 
 | Method | Mô tả |
 |--------|-------|
-| `new()` | Tạo engine (mặc định: bật, Telex, Traditional) |
+| `new()` | Tạo engine (mặc định: bật, Telex, Modern) |
 | `process_char(key: char) -> ImeResult` | Xử lý một Unicode scalar (platform tự map keycode → char) |
 | `on_backspace() -> ImeResult` | User bấm Backspace khi đang soạn → đồng bộ buffer |
 | `flip_composing() -> ImeResult` | Lật từ đang soạn giữa dạng tiếng Việt ⇄ phím thô (`card` ⇄ `cải`); lựa chọn dính (sticky) cho phần còn lại của từ |

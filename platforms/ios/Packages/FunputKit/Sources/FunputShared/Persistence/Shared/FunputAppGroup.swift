@@ -37,4 +37,8 @@ public enum FunputAppGroup {
 
     /// Encoded custom keyboard themes shared with the extension.
     public static let customThemesKey = "custom-themes"
+
+    /// Records once whether this install predates modern tone placement, so the
+    /// answer never has to be guessed twice. See ``ToneStyleInstallCohort``.
+    public static let toneStyleCohortKey = "tone-style-cohort"
 }

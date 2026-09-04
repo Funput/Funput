@@ -45,7 +45,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public init(
         inputMethod: KeyboardInputMethod = .vni,
         language: KeyboardLanguage = .vietnamese,
-        toneStyle: ToneStyleOption = .traditional,
+        toneStyle: ToneStyleOption = .modern,
         spellCheck: Bool = false,
         smartRestore: Bool = true,
         eagerRestore: Bool = true,

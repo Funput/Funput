@@ -31,7 +31,7 @@ Bề mặt nhỏ và ổn định cho `funput-engine`. Đổi breaking cần đ�
 | Symbol | Mô tả |
 |--------|-------|
 | `InputMethod` | `Telex` \| `Vni` |
-| `ToneStyle` | `Traditional` (mặc định) \| `Modern` — kiểu đặt dấu (xem mục dưới) |
+| `ToneStyle` | `Traditional` \| `Modern` (mặc định cấu hình mới) — kiểu đặt dấu (xem mục dưới) |
 | `TransformKind` | `Pending` \| `Applied` \| `Reverted` \| `Ignored` |
 | `TransformResult` | `{ kind, text }` — trạng thái sau một phím |
 | `apply(buffer, key, method, tone_style) -> TransformResult` | Transform một bước |
@@ -67,7 +67,7 @@ assert_eq!(r.text, "á");
 
 Hai kiểu **chỉ khác nhau** ở nhóm vần mở khởi đầu bằng bán nguyên âm: `oa`, `oe`, `uy`.
 
-| Vần | `Traditional` (mặc định) | `Modern` |
+| Vần | `Traditional` | `Modern` (mặc định mới) |
 |-----|--------------------------|----------|
 | `oa` | hòa (dấu trên `o`) | hoà (dấu trên `a`) |
 | `oe` | khỏe | khoẻ |
@@ -122,7 +122,7 @@ Nhánh `Tone` và `Normal` nhận thêm `ToneStyle` để đặt/reposition dấ
 
 ## Ví dụ hành vi
 
-VNI (mặc định `Traditional`):
+VNI với `Traditional`:
 
 | Gõ | Kết quả | Ghi chú |
 |----|---------|---------|

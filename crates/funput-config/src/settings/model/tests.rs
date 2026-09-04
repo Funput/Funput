@@ -106,6 +106,21 @@ fn a_minimal_legacy_file_falls_back_to_defaults() {
     assert!(s.shortcuts.is_empty());
 }
 
+#[test]
+fn a_new_install_defaults_to_modern_tone_placement() {
+    assert_eq!(Settings::default().tone_style, ToneStyle::Modern);
+}
+
+#[test]
+fn an_explicit_traditional_tone_style_is_preserved() {
+    let traditional = FULL.replace(
+        "\"toneStyle\": \"modern\"",
+        "\"toneStyle\": \"traditional\"",
+    );
+    let settings: Settings = serde_json::from_str(&traditional).unwrap();
+    assert_eq!(settings.tone_style, ToneStyle::Traditional);
+}
+
 /// The gõ tắt switch is the one added field whose absent value must not be `false`:
 /// a file written before it existed belongs to someone with a working table, and
 /// defaulting off would leave them wondering why their shortcuts died.

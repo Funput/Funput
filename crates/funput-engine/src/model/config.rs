@@ -45,7 +45,7 @@ impl Default for EngineConfig {
     fn default() -> Self {
         Self {
             method: InputMethod::Telex,
-            tone_style: ToneStyle::Traditional,
+            tone_style: ToneStyle::Modern,
             smart_restore: true,
             eager_restore: true,
             spell_check: false,

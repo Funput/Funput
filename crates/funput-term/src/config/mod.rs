@@ -61,8 +61,13 @@ pub struct TermConfig {
 impl Default for TermConfig {
     fn default() -> Self {
         // Parsing an empty object routes through the serde defaults so the
-        // defaults are defined in exactly one place.
-        from_json("{}")
+        // defaults are defined in exactly one place. Tone style is the one field
+        // that has to be restated: its serde default answers "a file written
+        // before the setting existed", which is not this question.
+        TermConfig {
+            tone_style: ToneStyle::Modern,
+            ..from_json("{}")
+        }
     }
 }
 

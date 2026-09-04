@@ -10,6 +10,20 @@ struct FunputConfigurationStoreTests {
         }
     }
 
+    /// Empty storage means one of two people, and they need opposite answers: a
+    /// new install gets modern placement, while someone who has been typing here
+    /// without ever opening Settings keeps the traditional placement they know.
+    @Test("Empty storage follows the install cohort")
+    func loadEmptyFollowsCohort() {
+        withVolatileStore { store, _ in
+            #expect(store.load().toneStyle == .modern)
+        }
+        withVolatileStore { store, defaults in
+            defaults.set(true, forKey: FunputAppGroup.observedFullAccessKey)
+            #expect(store.load().toneStyle == .traditional)
+        }
+    }
+
     @Test("Saved configuration round-trips through storage")
     func saveThenLoad() {
         withVolatileStore { store, _ in
@@ -21,11 +35,15 @@ struct FunputConfigurationStoreTests {
         }
     }
 
-    @Test("Corrupt stored data falls back to the default")
-    func corruptReturnsDefault() {
+    /// Everything else resets, but not the tone placement: data that will not
+    /// decode was still written by someone who has been typing here.
+    @Test("Corrupt stored data keeps traditional placement")
+    func corruptKeepsTraditionalPlacement() {
         withVolatileStore { store, defaults in
             defaults.set(Data([0x00, 0x01, 0x02]), forKey: FunputAppGroup.configurationKey)
-            #expect(store.load() == .default)
+            var expected = FunputConfiguration.default
+            expected.toneStyle = .traditional
+            #expect(store.load() == expected)
         }
     }
 

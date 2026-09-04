@@ -32,7 +32,7 @@ engine.
 | Symbol | Description |
 |--------|-------------|
 | `InputMethod` | `Telex` \| `Vni` |
-| `ToneStyle` | `Traditional` (default) \| `Modern` — tone placement (see below) |
+| `ToneStyle` | `Traditional` \| `Modern` (new-configuration default) — tone placement (see below) |
 | `TransformKind` | `Pending` \| `Applied` \| `Reverted` \| `Ignored` |
 | `TransformResult` | `{ kind, text }` — state after one key |
 | `apply(buffer, key, method, tone_style) -> TransformResult` | One transform step |
@@ -70,7 +70,7 @@ assert_eq!(r.text, "á");
 
 The two styles **differ only** on the open glide-initial rhymes: `oa`, `oe`, `uy`.
 
-| Rhyme | `Traditional` (default) | `Modern` |
+| Rhyme | `Traditional` | `Modern` (new default) |
 |-------|-------------------------|----------|
 | `oa` | hòa (mark on `o`) | hoà (mark on `a`) |
 | `oe` | khỏe | khoẻ |
@@ -126,7 +126,7 @@ that matches wins.
 
 ## Behavior examples
 
-VNI (default `Traditional`):
+VNI with `Traditional`:
 
 | Type | Result | Note |
 |------|--------|------|

@@ -30,11 +30,9 @@ fn parses_canonical_camelcase_file() {
 
 #[test]
 fn missing_keys_fall_back_to_defaults() {
-    // Empty object: VNI, traditional, enabled, restore flags on, others off.
+    // Empty object: VNI, enabled, restore flags on, others off.
     let c = from_json("{}");
-    assert_eq!(c, TermConfig::default());
     assert_eq!(c.method, InputMethod::Vni);
-    assert_eq!(c.tone_style, ToneStyle::Traditional);
     assert!(c.enabled && c.smart_restore && c.eager_restore);
     assert!(!c.spell_check && !c.auto_capitalize);
     assert_eq!(c.toggle, DEFAULT_TOGGLE);
@@ -42,6 +40,26 @@ fn missing_keys_fall_back_to_defaults() {
 }
 
 #[test]
-fn malformed_json_falls_back_to_defaults() {
-    assert_eq!(from_json("not json"), TermConfig::default());
+fn malformed_json_reads_like_an_empty_one() {
+    assert_eq!(from_json("not json"), from_json("{}"));
+}
+
+/// The two questions `from_json` and `Default` answer differ on exactly one field:
+/// a file that predates the setting belongs to someone already typing traditional
+/// placement, while no file at all is a new install and gets the current default.
+#[test]
+fn only_a_machine_without_a_settings_file_gets_modern_placement() {
+    assert_eq!(TermConfig::default().tone_style, ToneStyle::Modern);
+    // Tone placement is the only field the two answers disagree on.
+    assert_eq!(
+        from_json("{}"),
+        TermConfig {
+            tone_style: ToneStyle::Traditional,
+            ..TermConfig::default()
+        }
+    );
+    assert_eq!(
+        from_json(r#"{"toneStyle":"modern"}"#).tone_style,
+        ToneStyle::Modern
+    );
 }
