@@ -1,19 +1,36 @@
 name: CI
 
-# The pull-request gate. Nothing here builds or ships — the release workflows own
-# that. This only checks that the Rust workspace stays formatted, lint-clean,
-# tested and inside the per-file line budget.
+# The pull-request gate: the checks that must pass on **every** change, which is
+# why nothing here is path-filtered and nothing here builds or ships — the release
+# workflows own that. Its four jobs are the repository's required status checks
+# (`rust`, `shell-line-budget`, `settings-gtk`, `linux-common`), so renaming a job
+# here means updating the ruleset on `main` to match, or the rule silently stops
+# matching anything.
+#
+# A check that only applies to some pull requests belongs in its own workflow with
+# a `paths:` filter instead — see arch-recipe.yml — because GitHub filters paths
+# per workflow and never per job.
 #
 # The toolchain comes from rust-toolchain.toml (1.97.1 + rustfmt + clippy), so
-# bumping the pin moves CI with it. The two excluded shells need system libraries, so
-# neither is reachable from the `rust` job: the GTK4 Settings app gets a job of its own
-# below, and the Windows shell is covered by build-windows.yml, which runs clippy and
-# its tests there because nothing in this file can.
+# bumping the pin moves CI with it. The two excluded shells need system libraries,
+# so neither is reachable from the `rust` job: the GTK4 Settings app gets a job of
+# its own below.
+#
+# The Windows shell has no job here at all. build-windows.yml runs its clippy and
+# its tests, but that workflow is `workflow_call` only — it runs from release.yml,
+# at release time. So a lint or test failure in platforms/windows stops a release
+# rather than a pull request, and nothing on this list will catch it first.
 
 on:
   pull_request:
   push:
     branches: [main]
+
+# Read-only: nothing here writes to the repository, publishes an artifact, or
+# touches a release. Set explicitly rather than inherited from the repository
+# default, so widening that default never silently widens this workflow's token.
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -25,6 +42,7 @@ env:
 jobs:
   rust:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
 
@@ -128,6 +146,7 @@ jobs:
   # much larger one than this job.
   shell-line-budget:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
 
@@ -155,6 +174,7 @@ jobs:
   # which is why formatting is checked here too.
   settings-gtk:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
 
@@ -183,6 +203,7 @@ jobs:
   # for the funput-ffi cdylib the tests call across the C ABI.
   linux-common:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
 
@@ -199,86 +220,3 @@ jobs:
 
       - name: Test
         run: ctest --test-dir platforms/linux/build/tests --output-on-failure
-
-  # Does this pull request touch the Arch recipe? Its own tiny job so the Arch
-  # container below is only pulled when it will actually be used — otherwise every
-  # unrelated pull request would pay for the image and a full `pacman -Syu`.
-  arch-recipe-changed:
-    runs-on: ubuntu-latest
-    outputs:
-      run: ${{ steps.check.outputs.run }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - id: check
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          set -euo pipefail
-          # Pull requests only: a push to main has no base to diff against, and
-          # this is a review gate rather than a release check.
-          if [ -z "${BASE_REF:-}" ]; then
-            echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          # No --depth here: checkout already unshallowed the clone, and a shallow
-          # fetch of the base would leave `...` without a merge base to work from.
-          git fetch origin "$BASE_REF"
-          if git diff --name-only "origin/${BASE_REF}...HEAD" \
-              | grep -q '^platforms/linux/packaging/arch/'; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Arch recipe untouched — skipping the makepkg build."
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          fi
-
-  # The Arch recipe (platforms/linux/packaging/arch/PKGBUILD.in), which publish-repo.yml
-  # builds the pacman repository from. That workflow runs it for real on every release
-  # and every fortnight, but a break there costs a failed publish; catching it on the
-  # pull request is cheaper.
-  #
-  # It builds the LATEST RELEASED TAG, not this pull request's code: the recipe
-  # sources a published GitHub tarball, and a pull request has no tag. So this
-  # proves the recipe still works; a CMake-layout change that would break it needs
-  # a run against a release made after that change.
-  arch-recipe:
-    needs: arch-recipe-changed
-    if: needs.arch-recipe-changed.outputs.run == 'true'
-    runs-on: ubuntu-latest
-    container: archlinux:base-devel
-    steps:
-      - name: Install tools
-        run: pacman -Syu --noconfirm --needed git namcap curl jq
-
-      - uses: actions/checkout@v5
-
-      - name: Render the recipe for the latest release
-        run: |
-          set -euo pipefail
-          TAG="$(curl -fsSL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .tag_name)"
-          VERSION="${TAG#v}"
-          URL="https://github.com/${{ github.repository }}/archive/refs/tags/${TAG}.tar.gz"
-          SHA="$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)"
-          # makepkg refuses to run as root, and `-s` shells out to pacman for the
-          # declared makedepends — so the build user needs passwordless sudo.
-          useradd -m builder
-          echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
-
-          # Build in the build user's home, NOT inside the checkout. makepkg unpacks
-          # the source under its build dir, and settings-gtk is a crate excluded from
-          # the root Cargo workspace by path — an unpacked copy nested under the
-          # repo's own Cargo.toml is not covered by that exclude, so cargo refuses it
-          # with "believes it's in a workspace when it's not".
-          install -d -o builder /home/builder/build
-          # pkgrel is irrelevant to this check — it only has to parse — so use 1.
-          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" -e "s/@PKGREL@/1/g" \
-            platforms/linux/packaging/arch/PKGBUILD.in > /home/builder/build/PKGBUILD
-          chown builder /home/builder/build/PKGBUILD
-
-      - name: makepkg
-        run: |
-          set -euo pipefail
-          su builder -c 'cd ~/build && makepkg -s --noconfirm'
-          namcap /home/builder/build/*.pkg.tar.zst
-          ls -l /home/builder/build/*.pkg.tar.zst

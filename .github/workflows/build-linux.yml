@@ -20,6 +20,13 @@ on:
 
 # Cargo network resilience (see release.yml). Workflow-level env does not cross the
 # workflow_call boundary, so each build workflow repeats it.
+# Called from release.yml, whose token is `contents: write` so it can publish the
+# Release. Nothing in here needs that: it builds, signs and uploads artifacts, and
+# the `publish` job in the caller is what writes. A reusable workflow may narrow
+# the caller's token but never widen it, so declaring it here is a real reduction.
+permissions:
+  contents: read
+
 env:
   CARGO_HTTP_MULTIPLEXING: "false"
   CARGO_NET_RETRY: "5"
@@ -35,6 +42,7 @@ jobs:
           - arch: arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
 
@@ -183,6 +191,7 @@ jobs:
           - arch: arm64
             runner: ubuntu-26.04-arm
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
     container: fedora:latest
     steps:
       - name: Install build deps

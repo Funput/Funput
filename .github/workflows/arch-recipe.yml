@@ -1,0 +1,78 @@
+name: Arch recipe
+
+# Builds platforms/linux/packaging/arch/PKGBUILD.in with a real `makepkg`, so a
+# broken recipe is caught at review rather than at publish time.
+#
+# Its own workflow rather than a job in ci.yml, because it is the one check here
+# that does not apply to every pull request. GitHub filters paths per *workflow*,
+# never per job, so expressing "only when the recipe changes" inside ci.yml needed
+# a helper job that ran on every pull request — a whole runner and a full-history
+# checkout — to compute a diff whose answer was almost always "no". The `paths:`
+# filter below is the same condition with none of that machinery.
+#
+# NOT a required status check: a path-filtered workflow reports no status on the
+# pull requests it skips, and a required check that never reports blocks the merge
+# forever. ci.yml holds the checks that must pass on everything.
+#
+# It builds the LATEST RELEASED TAG, not this pull request's code: the recipe
+# sources a published GitHub tarball, and a pull request has no tag. So this
+# proves the recipe still works; a CMake-layout change that would break it needs
+# a run against a release made after that change. publish-repo.yml builds it for
+# real on every release and fortnightly — this is the cheaper, earlier signal.
+on:
+  pull_request:
+    paths:
+      - platforms/linux/packaging/arch/**
+      - .github/workflows/arch-recipe.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: arch-recipe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  arch-recipe:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    # makepkg compiles the whole Rust + C++ tree from source with no cache, so the
+    # normal run is minutes rather than seconds — measured at 2m48s, pacman -Syu
+    # included. Wide enough for a slow runner, far short of the six-hour default.
+    timeout-minutes: 20
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed git namcap curl jq
+
+      - uses: actions/checkout@v5
+
+      - name: Render the recipe for the latest release
+        run: |
+          set -euo pipefail
+          TAG="$(curl -fsSL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .tag_name)"
+          VERSION="${TAG#v}"
+          URL="https://github.com/${{ github.repository }}/archive/refs/tags/${TAG}.tar.gz"
+          SHA="$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)"
+          # makepkg refuses to run as root, and `-s` shells out to pacman for the
+          # declared makedepends — so the build user needs passwordless sudo.
+          useradd -m builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
+
+          # Build in the build user's home, NOT inside the checkout. makepkg unpacks
+          # the source under its build dir, and settings-gtk is a crate excluded from
+          # the root Cargo workspace by path — an unpacked copy nested under the
+          # repo's own Cargo.toml is not covered by that exclude, so cargo refuses it
+          # with "believes it's in a workspace when it's not".
+          install -d -o builder /home/builder/build
+          # pkgrel is irrelevant to this check — it only has to parse — so use 1.
+          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA}/g" -e "s/@PKGREL@/1/g" \
+            platforms/linux/packaging/arch/PKGBUILD.in > /home/builder/build/PKGBUILD
+          chown builder /home/builder/build/PKGBUILD
+
+      - name: makepkg
+        run: |
+          set -euo pipefail
+          su builder -c 'cd ~/build && makepkg -s --noconfirm'
+          namcap /home/builder/build/*.pkg.tar.zst
+          ls -l /home/builder/build/*.pkg.tar.zst

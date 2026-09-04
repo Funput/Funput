@@ -106,8 +106,8 @@ asset — a rolling source distro has no use for a `.deb` or `.rpm` — so the `
 in `publish-repo.yml` *builds* it, from `packaging/arch/PKGBUILD.in`, and serves the
 result under `arch/x86_64/`. The AUR would be the conventional home for that recipe and
 it is written to AUR conventions, but nothing uploads it: Arch has new-account
-registration paused. `ci.yml`'s `arch-recipe` job runs a real `makepkg` on pull requests
-that touch the recipe, so a break is caught before it fails a publish.
+registration paused. `arch-recipe.yml` runs a real `makepkg` on pull requests that
+touch the recipe, so a break is caught before it fails a publish.
 
 What binaries cost on a rolling distro is that they link the libraries of the build day,
 so a soname bump in fcitx5, ibus or gtk4 breaks them. A dependency cannot express that

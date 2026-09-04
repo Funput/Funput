@@ -40,6 +40,7 @@ jobs:
   # ---- Single source of truth for the version -------------------------------
   version:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       version: ${{ steps.v.outputs.version }}
       publish: ${{ steps.v.outputs.publish }}
@@ -96,6 +97,7 @@ jobs:
     needs: [version, macos, windows, linux]
     if: needs.version.outputs.publish == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/download-artifact@v5
         with:
@@ -185,6 +187,7 @@ jobs:
     needs: [version, publish]
     if: needs.version.outputs.prerelease == 'false'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Dispatch bottle build to Funput/homebrew-tap
         env:
@@ -212,6 +215,7 @@ jobs:
     needs: [version, publish]
     if: needs.version.outputs.prerelease == 'false'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Dispatch manifest bump to Funput/scoop-funput
         env:

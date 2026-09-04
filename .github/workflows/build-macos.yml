@@ -14,6 +14,13 @@ on:
 
 # Cargo network resilience (see release.yml). Workflow-level env does not cross the
 # workflow_call boundary, so each build workflow repeats it.
+# Called from release.yml, whose token is `contents: write` so it can publish the
+# Release. Nothing in here needs that: it builds, signs and uploads artifacts, and
+# the `publish` job in the caller is what writes. A reusable workflow may narrow
+# the caller's token but never widen it, so declaring it here is a real reduction.
+permissions:
+  contents: read
+
 env:
   CARGO_HTTP_MULTIPLEXING: "false"
   CARGO_NET_RETRY: "5"
@@ -21,6 +28,7 @@ env:
 jobs:
   macos:
     runs-on: macos-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
 

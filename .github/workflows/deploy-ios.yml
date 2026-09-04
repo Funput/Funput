@@ -52,6 +52,7 @@ env:
 jobs:
   ios:
     runs-on: macos-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
 
