@@ -27,7 +27,9 @@ add_executable(funput_linux_tests
     compose/composer/retone_tests.cpp
     compose/composer/verify_tests.cpp
     ffi/utf8_tests.cpp
-    settings/settings_tests.cpp)
+    settings/lookup_tests.cpp
+    settings/io_tests.cpp
+    settings/save_tests.cpp)
 
 target_link_libraries(funput_linux_tests PRIVATE funput_linux_common doctest::doctest)
 # So the nested test files can reach support.h by its bare name.

@@ -5,6 +5,7 @@ use funput_ffi::{
     funput_adopt, funput_backspace, funput_buffer, funput_clear, funput_clear_shortcuts,
     funput_configure, funput_engine_free, funput_engine_new, funput_process_char,
     funput_process_key, funput_set_method, funput_set_shortcut_smart_case,
+    funput_set_shortcuts_enabled,
 };
 
 fn output(result: &FunputResult) -> String {
@@ -378,4 +379,58 @@ fn configure_does_not_clobber_the_smart_case_setting() {
 #[test]
 fn smart_case_setter_is_null_safe() {
     unsafe { funput_set_shortcut_smart_case(std::ptr::null_mut(), false) };
+}
+
+#[test]
+fn shortcuts_are_on_by_default_and_the_setter_turns_them_off() {
+    unsafe {
+        let engine = funput_engine_new();
+        funput_set_method(engine, 0); // Telex
+        add_shortcut(engine, "vn", "Việt Nam");
+
+        assert_eq!(app_text(engine, "vn "), "Việt Nam ", "default is on");
+
+        funput_set_shortcuts_enabled(engine, false);
+        assert_eq!(
+            app_text(engine, "vn "),
+            "vn ",
+            "the trigger types out as itself"
+        );
+
+        // The table was never re-pushed, so turning the switch back on must be
+        // enough on its own — that is what lets a host toggle it without resyncing.
+        funput_set_shortcuts_enabled(engine, true);
+        assert_eq!(app_text(engine, "vn "), "Việt Nam ", "rows were kept");
+
+        funput_engine_free(engine);
+    }
+}
+
+/// The two gõ tắt setters write the same config, so each must edit it rather than
+/// replace it — turning smart case off must not switch expansion back on.
+#[test]
+fn the_two_shortcut_setters_do_not_clobber_each_other() {
+    unsafe {
+        let engine = funput_engine_new();
+        funput_set_method(engine, 0); // Telex
+        add_shortcut(engine, "tp", "TP. HCM");
+
+        funput_set_shortcuts_enabled(engine, false);
+        funput_set_shortcut_smart_case(engine, false);
+        assert_eq!(app_text(engine, "tp "), "tp ", "still switched off");
+
+        funput_set_shortcuts_enabled(engine, true);
+        assert_eq!(
+            app_text(engine, "Tp "),
+            "Tp ",
+            "smart case stayed off across the other setter"
+        );
+
+        funput_engine_free(engine);
+    }
+}
+
+#[test]
+fn shortcuts_enabled_setter_is_null_safe() {
+    unsafe { funput_set_shortcuts_enabled(std::ptr::null_mut(), false) };
 }

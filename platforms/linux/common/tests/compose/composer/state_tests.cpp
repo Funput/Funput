@@ -110,3 +110,29 @@ TEST_CASE("gõ tắt expansions survive a settings push") {
     CHECK(plan.effect == Effect::Commit);
     CHECK(plan.text == "Việt Nam ");
 }
+
+// The matching rules themselves belong to the engine and are tested there
+// (crates/funput-engine/tests/words/shortcut.rs). What only this layer can prove is
+// that applySettings() pushes each switch across the C ABI at all — before it did,
+// neither field reached the engine however the user set it.
+TEST_CASE("shortcutsEnabled off is pushed to the engine") {
+    Settings settings;
+    settings.method = Method::Telex;
+    settings.shortcuts = {{"vn", "Việt Nam"}};
+    settings.shortcutsEnabled = false;
+    Composer composer(settings);
+
+    CHECK(typeDocument(composer, "vn ") == "vn ");
+}
+
+TEST_CASE("shortcutSmartCase off is pushed to the engine") {
+    Settings settings;
+    settings.method = Method::Telex;
+    settings.shortcuts = {{"vn", "Việt Nam"}};
+    settings.shortcutSmartCase = false;
+    Composer composer(settings);
+
+    // The stored trigger still expands; a differently-cased one no longer does.
+    CHECK(typeDocument(composer, "vn ") == "Việt Nam ");
+    CHECK(typeDocument(composer, "Vn ") == "Vn ");
+}
