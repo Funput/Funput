@@ -1,32 +1,13 @@
-// The settings bridge. Every case writes the file it then reads, so the tests do
-// not depend on each other's leftovers (the composer's VI/EN toggle persists into
-// the same sandbox file).
+// Reading settings.json: every wire name, the defaults a key's absence must leave in
+// place, and what a file the reader cannot make sense of does *not* do.
 
 #include <doctest/doctest.h>
 
-#include <cstdlib>
-#include <fstream>
-#include <string>
-
 #include "settings/settings.h"
+#include "settings/support.h"
 
 using namespace funput;
-
-namespace {
-
-void writeSettingsFile(const std::string &json) {
-    std::ofstream out(Settings::path(), std::ios::trunc);
-    REQUIRE(out.good());
-    out << json;
-}
-
-} // namespace
-
-TEST_CASE("path follows XDG_CONFIG_HOME") {
-    const std::string path = Settings::path();
-    CHECK(path.rfind("/Funput/settings.json") != std::string::npos);
-    CHECK(path.rfind(std::getenv("XDG_CONFIG_HOME"), 0) == 0);
-}
+using namespace funput::test;
 
 TEST_CASE("reload parses every field from its wire name") {
     writeSettingsFile(R"({
@@ -40,6 +21,8 @@ TEST_CASE("reload parses every field from its wire name") {
         "nonPreedit": true,
         "toggleHotkey": "ctrl_space",
         "flipHotkey": "ctrl_shift_x",
+        "shortcutsEnabled": false,
+        "shortcutSmartCase": false,
         "shortcuts": [{"trigger": "vn", "expansion": "Việt Nam"}]
     })");
 
@@ -55,9 +38,26 @@ TEST_CASE("reload parses every field from its wire name") {
     CHECK(settings.nonPreedit);
     CHECK(settings.toggleHotkey == Hotkey::CtrlSpace);
     CHECK(settings.flipHotkey == FlipHotkey::CtrlShiftX);
+    CHECK_FALSE(settings.shortcutsEnabled);
+    CHECK_FALSE(settings.shortcutSmartCase);
     REQUIRE(settings.shortcuts.size() == 1);
     CHECK(settings.shortcuts[0].first == "vn");
     CHECK(settings.shortcuts[0].second == "Việt Nam");
+}
+
+// The compatibility guarantee behind both gõ tắt switches: a settings.json written
+// before they existed describes a table that expands, smart-cased. An update that
+// read those absences as "off" would silently change what the table expands to.
+TEST_CASE("the gõ tắt switches default to on when the file predates them") {
+    writeSettingsFile(R"({
+        "method": "telex",
+        "shortcuts": [{"trigger": "vn", "expansion": "Việt Nam"}]
+    })");
+
+    Settings settings;
+    REQUIRE(settings.reload());
+    CHECK(settings.shortcutsEnabled);
+    CHECK(settings.shortcutSmartCase);
 }
 
 TEST_CASE("reload reports whether anything actually changed") {
@@ -67,15 +67,6 @@ TEST_CASE("reload reports whether anything actually changed") {
     CHECK(settings.reload()); // method moved
 
     CHECK_FALSE(settings.reload()); // same file, same values
-}
-
-TEST_CASE("reloadIfChanged skips a file whose mtime has not moved") {
-    // "telex" differs from the Method::Vni default, so the first read reports a
-    // change — the return value is "did any value move", not "did I read the file".
-    writeSettingsFile(R"({"method": "telex"})");
-    Settings settings;
-    REQUIRE(settings.reloadIfChanged());
-    CHECK_FALSE(settings.reloadIfChanged());
 }
 
 TEST_CASE("a corrupt or missing file leaves the current values alone") {
@@ -98,35 +89,6 @@ TEST_CASE("unknown wire values fall back to the current setting") {
     settings.reload();
     CHECK(settings.method == Method::Vni);
     CHECK(settings.toggleHotkey == Hotkey::CtrlBacktick);
-}
-
-TEST_CASE("save round-trips and preserves keys it does not own") {
-    // shortcuts belong to the Settings UI: the addon reads them but must never
-    // write them back, or a toggle would wipe the user's list. Leftover keys
-    // (including a retired excludedApps list) must survive a merge save too.
-    writeSettingsFile(R"({
-        "method": "vni",
-        "excludedApps": [{"id": "firefox"}],
-        "shortcuts": [{"trigger": "vn", "expansion": "Việt Nam"}],
-        "someFutureKey": 42
-    })");
-
-    Settings settings;
-    REQUIRE(settings.reload());
-    settings.method = Method::Telex;
-    settings.enabled = false;
-    settings.save();
-
-    Settings reloaded;
-    REQUIRE(reloaded.reload());
-    CHECK(reloaded.method == Method::Telex);
-    CHECK_FALSE(reloaded.enabled);
-    REQUIRE(reloaded.shortcuts.size() == 1);
-
-    std::ifstream in(Settings::path());
-    const std::string raw((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    CHECK(raw.find("someFutureKey") != std::string::npos);
-    CHECK(raw.find("excludedApps") != std::string::npos);
 }
 
 TEST_CASE("toggleHotkey parses the extra presets") {

@@ -106,6 +106,21 @@ pub struct Settings {
     pub has_completed_onboarding: bool,
     #[serde(default)]
     pub shortcuts: Vec<Shortcut>,
+    /// Whether the table above expands at all. The rows stay stored either way.
+    #[serde(default = "on")]
+    pub shortcuts_enabled: bool,
+    /// Whether a trigger matches however it was capitalized, with the expansion
+    /// re-cased to match.
+    ///
+    /// Both default to **on**, including for a file written before they existed:
+    /// that is how gõ tắt has always behaved, and an update must not silently change
+    /// what an existing table expands to. The addon's C++ model says the same.
+    #[serde(default = "on")]
+    pub shortcut_smart_case: bool,
+}
+
+fn on() -> bool {
+    true
 }
 
 impl Default for Settings {
@@ -124,6 +139,8 @@ impl Default for Settings {
             launch_at_login: false,
             has_completed_onboarding: false,
             shortcuts: Vec::new(),
+            shortcuts_enabled: true,
+            shortcut_smart_case: true,
         }
     }
 }

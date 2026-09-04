@@ -44,6 +44,17 @@ struct Settings {
     // Text-expansion shortcuts (gõ tắt): (trigger, expansion) pairs. Owned by the
     // Settings UI; the addon only reads them and pushes them into the engine.
     std::vector<std::pair<std::string, std::string>> shortcuts;
+    // Whether the table above expands at all ("Bật gõ tắt"). The rows stay loaded
+    // either way, so the switch is instant in both directions.
+    bool shortcutsEnabled = true;
+    // Whether a trigger matches however it was capitalized, with the expansion
+    // re-cased to match ("Tự nhận diện hoa/thường"). Off, only the exact trigger
+    // expands and the expansion is verbatim.
+    //
+    // Both default to **on**, including for a file written before they existed:
+    // that is how gõ tắt has always behaved, and an update must not silently change
+    // what an existing table expands to.
+    bool shortcutSmartCase = true;
 
     // Absolute path to ~/.config/Funput/settings.json (XDG-aware).
     static std::string path();

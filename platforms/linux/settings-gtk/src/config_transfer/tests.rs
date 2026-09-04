@@ -12,6 +12,8 @@ fn round_trip_preserves_state() {
             expansion: "Việt Nam".into(),
         }],
         non_preedit: true,
+        shortcuts_enabled: false,
+        shortcut_smart_case: false,
         ..Settings::default()
     };
     assert_eq!(
@@ -26,6 +28,28 @@ fn round_trip_preserves_state() {
     assert_eq!(imported.toggle_hotkey, Hotkey::AltShift);
     assert_eq!(imported.shortcuts.len(), 1);
     assert!(imported.non_preedit);
+    assert!(!imported.shortcuts_enabled);
+    assert!(!imported.shortcut_smart_case);
+}
+
+#[test]
+fn a_document_without_the_gõ_tắt_switches_leaves_them_alone() {
+    // Both default to on, so a file predating them describes a table that expands,
+    // smart-cased. Reading their absence as "off" would silently change what an
+    // imported table expands to — the same rule non_preedit follows above.
+    let mut settings = Settings {
+        shortcuts_enabled: false,
+        shortcut_smart_case: false,
+        ..Settings::default()
+    };
+    let doc = serde_json::from_str(
+        r#"{"schema":"app.funput.config","version":1,"preferences":{"inputMethod":"telex"}}"#,
+    )
+    .unwrap();
+    apply(&mut settings, &doc);
+    assert_eq!(settings.method, Method::Telex); // the block was read
+    assert!(!settings.shortcuts_enabled); // and these survived it
+    assert!(!settings.shortcut_smart_case);
 }
 
 #[test]
