@@ -288,11 +288,20 @@ jobs:
           # both jobs for nothing.
           shared='^(crates/.*|Cargo\.toml|Cargo\.lock|rust-toolchain\.toml|\.github/workflows/ci\.yml)$'
 
+          # Log both outcomes, not just the skip. When a filter misbehaves the
+          # question is always "why did it decide that", and a line that only
+          # appears on one branch cannot answer it — a job that ran because the
+          # filter matched looks identical to one that ran because this fell into
+          # the fail-open branch above.
           decide() {
-            if printf '%s\n' "$FILES" | grep -qE "$shared|$2"; then
+            local hits
+            hits="$(printf '%s\n' "$FILES" | grep -E "$shared|$2" || true)"
+            if [ -n "$hits" ]; then
+              echo "$1: matched $(printf '%s\n' "$hits" | wc -l | tr -d ' ') file(s) —"
+              printf '%s\n' "$hits" | sed 's/^/    /'
               echo "$1=true" >> "$GITHUB_OUTPUT"
             else
-              echo "$1 not affected — skipping."
+              echo "$1: no matching file — skipping."
               echo "$1=false" >> "$GITHUB_OUTPUT"
             fi
           }
