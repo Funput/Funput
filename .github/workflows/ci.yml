@@ -236,10 +236,23 @@ jobs:
   # build-windows.yml records that happening — two clippy failures sat in the tree
   # until someone ran them by hand.
   #
-  # --release matches build-windows.yml for the reason given there: the dev profile
-  # would compile slint and skia a second time, and sharing the profile keeps one
-  # dependency tree. No `cargo build` here — `clippy --all-targets` already
-  # type-checks every target, and producing an executable is release.yml's job.
+  # The DEV profile, which is where this deliberately parts company with
+  # build-windows.yml. That workflow uses --release because a release `cargo build`
+  # follows it in the same job, so sharing the profile keeps one dependency tree.
+  # Nothing follows here — there is no `cargo build`, because `clippy
+  # --all-targets` already type-checks every target and producing the executable is
+  # release.yml's job. So --release would buy nothing and cost a great deal:
+  # platforms/windows sets `lto = "fat"`, `codegen-units = 1` and `opt-level = "s"`
+  # on its release profile, the three most expensive settings there are, applied to
+  # a slint + skia dependency tree. The first run of this job with --release spent
+  # 220s in clippy and 248s in test on a cold cache. The dev profile has none of
+  # those settings.
+  #
+  # Keeping `cargo test` rather than lint alone is deliberate: there are 58 test
+  # functions across 14 files here, and clippy proves nothing about behaviour. If
+  # this job is still too slow once the cache is warm, the answer is to move the
+  # test step to an unfiltered nightly run — not to delete the only thing that
+  # checks whether the shell works.
   windows:
     runs-on: windows-latest
     timeout-minutes: 30
@@ -255,11 +268,11 @@ jobs:
 
       - name: Clippy
         working-directory: platforms/windows
-        run: cargo clippy --release --all-targets -- -D warnings
+        run: cargo clippy --all-targets -- -D warnings
 
       - name: Test
         working-directory: platforms/windows
-        run: cargo test --release
+        run: cargo test
 
   # The Android keyboard. It had no CI of any kind — `shell-line-budget` counted
   # its lines and nothing compiled it, so 606 unit tests across six modules had
@@ -303,6 +316,12 @@ jobs:
       # sdkmanager is idempotent, so this is a no-op when the runner image already
       # ships them. Both are pinned by the build: compileSdk is `release(37)` and
       # ime/build.gradle.kts names the NDK version literally.
+      #
+      # The platform id carries a MINOR version — `platforms;android-37.0`, not
+      # `platforms;android-37`. Recent SDK platforms are released as 36.1, 37.0 and
+      # so on, and AGP's `release(37)` resolves to 37.0. The unsuffixed id does not
+      # exist and sdkmanager reports it as "Failed to find package" rather than as
+      # an error, which is how the first run of this job failed.
       - name: Android SDK packages
         run: |
           set -euo pipefail
@@ -319,7 +338,7 @@ jobs:
           set +o pipefail
           yes | "$SDKMANAGER" --licenses > /dev/null
           set -o pipefail
-          "$SDKMANAGER" "platforms;android-37" "ndk;29.0.14206865"
+          "$SDKMANAGER" "platforms;android-37.0" "ndk;29.0.14206865"
 
       # build-rust-jni.sh cross-compiles for both ABIs in ime/build.gradle.kts.
       - name: Rust Android targets
