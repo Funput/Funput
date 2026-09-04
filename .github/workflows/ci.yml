@@ -2,24 +2,30 @@ name: CI
 
 # The pull-request gate: the checks that must pass on **every** change, which is
 # why nothing here is path-filtered and nothing here builds or ships — the release
-# workflows own that. Its four jobs are the repository's required status checks
-# (`rust`, `shell-line-budget`, `settings-gtk`, `linux-common`), so renaming a job
-# here means updating the ruleset on `main` to match, or the rule silently stops
-# matching anything.
+# workflows own that. Its six jobs are the repository's required status checks
+# (`rust`, `shell-line-budget`, `settings-gtk`, `linux-common`, `windows`,
+# `android`), so renaming a job here means updating the ruleset on `main` to
+# match, or the rule silently stops matching anything and the gate quietly opens.
 #
 # A check that only applies to some pull requests belongs in its own workflow with
 # a `paths:` filter instead — see arch-recipe.yml — because GitHub filters paths
 # per workflow and never per job.
 #
 # The toolchain comes from rust-toolchain.toml (1.97.1 + rustfmt + clippy), so
-# bumping the pin moves CI with it. The two excluded shells need system libraries,
-# so neither is reachable from the `rust` job: the GTK4 Settings app gets a job of
-# its own below.
+# bumping the pin moves CI with it. Every shell that links a heavy OS-only
+# dependency is excluded from the cargo workspace and so invisible to the `rust`
+# job — the GTK4 Settings app and the Slint Windows shell each get a job of their
+# own below for exactly that reason.
 #
-# The Windows shell has no job here at all. build-windows.yml runs its clippy and
-# its tests, but that workflow is `workflow_call` only — it runs from release.yml,
-# at release time. So a lint or test failure in platforms/windows stops a release
-# rather than a pull request, and nothing on this list will catch it first.
+# The `windows` and `android` jobs below are the two shells that had no gate on a
+# pull request at all. Windows was linted and tested only by build-windows.yml,
+# which is `workflow_call` only and therefore runs at release time — a failure
+# stopped a release rather than the change that caused it. Android had nothing
+# beyond a line count.
+#
+# Both run unconditionally, like everything else here. Filtering them by path is
+# worth doing once there is a nightly, unfiltered run to catch what a filter
+# misses; until then an unconditional job is the honest one.
 
 on:
   pull_request:
@@ -220,3 +226,112 @@ jobs:
 
       - name: Test
         run: ctest --test-dir platforms/linux/build/tests --output-on-failure
+
+  # The Windows shell (platforms/windows): the Slint IME GUI. Excluded from the
+  # cargo workspace because it links the `windows` crate and slint/skia, so the
+  # `rust` job cannot see it — and until now nothing on a pull request could. Its
+  # clippy and its tests lived only in build-windows.yml, which is `workflow_call`
+  # only: they ran at release time, from release.yml. A lint failure there stopped
+  # a release rather than the pull request that introduced it, and the comment in
+  # build-windows.yml records that happening — two clippy failures sat in the tree
+  # until someone ran them by hand.
+  #
+  # --release matches build-windows.yml for the reason given there: the dev profile
+  # would compile slint and skia a second time, and sharing the profile keeps one
+  # dependency tree. No `cargo build` here — `clippy --all-targets` already
+  # type-checks every target, and producing an executable is release.yml's job.
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: platforms/windows -> target
+
+      - name: Clippy
+        working-directory: platforms/windows
+        run: cargo clippy --release --all-targets -- -D warnings
+
+      - name: Test
+        working-directory: platforms/windows
+        run: cargo test --release
+
+  # The Android keyboard. It had no CI of any kind — `shell-line-budget` counted
+  # its lines and nothing compiled it, so 606 unit tests across six modules had
+  # never run anywhere but a maintainer's laptop. That is the largest untested
+  # surface in the repository and it runs on a plain ubuntu runner, which is what
+  # makes it the cheapest one to close.
+  #
+  # Three steps rather than one `gradlew` invocation, so a failure is named for
+  # what broke. Gradle's build directory is shared within the job, so the second
+  # and third reuse the first's compilation rather than repeating it.
+  #
+  # `testDebugUnitTest` pulls in no Rust: the jniLibs tasks are wired to the
+  # variant's native sources, which the JVM unit tests never merge. `assembleDebug`
+  # is what cross-compiles funput-jni for both ABIs and packages the .so, so it is
+  # the step that fails when a change to crates/ breaks the JNI boundary.
+  #
+  # `lintDebug` gates on lint *errors*, which is what it did locally when this job
+  # was written: 0 errors and 102 warnings. Warnings are deliberately not fatal —
+  # turning them on is a cleanup with its own diff, not something to bundle into
+  # the commit that first switches the suite on.
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: platforms/android
+    steps:
+      - uses: actions/checkout@v5
+
+      # JavaVersion.VERSION_21 in every module's compileOptions.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # Validates the checksum of gradle-wrapper.jar as well as caching, which is
+      # the reason to prefer it over a bare actions/cache: the wrapper is a binary
+      # committed to the repository, and nothing else here would notice it change.
+      - uses: gradle/actions/setup-gradle@v6
+
+      # sdkmanager is idempotent, so this is a no-op when the runner image already
+      # ships them. Both are pinned by the build: compileSdk is `release(37)` and
+      # ime/build.gradle.kts names the NDK version literally.
+      - name: Android SDK packages
+        run: |
+          set -euo pipefail
+          # `latest` is a symlink the runner images have carried for years, but it
+          # is not guaranteed; fall back to whichever versioned cmdline-tools the
+          # image actually ships rather than failing on a missing path.
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)"
+          fi
+          # `yes` is killed by SIGPIPE the moment sdkmanager stops reading, which
+          # under `pipefail` is exit 141 and would fail this step every time. The
+          # install below keeps pipefail; only the licence prompt opts out.
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          set -o pipefail
+          "$SDKMANAGER" "platforms;android-37" "ndk;29.0.14206865"
+
+      # build-rust-jni.sh cross-compiles for both ABIs in ime/build.gradle.kts.
+      - name: Rust Android targets
+        run: rustup target add aarch64-linux-android x86_64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest --console=plain
+
+      - name: Assemble (cross-compiles funput-jni for both ABIs)
+        run: ./gradlew assembleDebug --console=plain
+
+      - name: Lint
+        run: ./gradlew lintDebug --console=plain
