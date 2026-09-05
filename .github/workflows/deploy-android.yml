@@ -194,8 +194,35 @@ jobs:
           fi
           echo "Bundle is signed."
 
-      # The Play Developer API by hand, in six calls: mint a token from the service
-      # account key, open an edit, upload the bundle, attach the ProGuard mapping,
+      # Use the symbols from this exact AAB, including generated Rust JNI libraries.
+      # A separate Gradle symbols output can be stale after an IDE/incremental build.
+      - name: Prepare native debug symbols
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED
+
+          bundle = Path("app/build/outputs/bundle/release/app-release.aab")
+          output = bundle.with_name("native-debug-symbols.zip")
+          prefix = "BUNDLE-METADATA/com.android.tools.build.debugsymbols/"
+          with ZipFile(bundle) as source:
+              symbols = {
+                  name.removeprefix(prefix): source.read(name)
+                  for name in source.namelist()
+                  if name.startswith(prefix) and not name.endswith("/")
+              }
+          for abi in ("arm64-v8a", "x86_64"):
+              name = f"{abi}/libfunput_jni.so.sym"
+              if not symbols.get(name):
+                  raise SystemExit(f"Missing native symbols in AAB: {name}")
+          with ZipFile(output, "w", ZIP_DEFLATED) as archive:
+              for name, data in sorted(symbols.items()):
+                  archive.writestr(name, data)
+          print(f"Prepared {output} with {len(symbols)} symbol files")
+          PY
+
+      # The Play Developer API: mint a token from the service account key,
+      # open an edit, upload the bundle, attach ProGuard and native symbols,
       # point the track at the new version code, commit. Nothing takes effect until
       # the commit, so a failure anywhere above leaves Play untouched — the abandoned
       # edit expires on its own.
@@ -301,6 +328,15 @@ jobs:
           fi
           echo "Uploaded version code $got"
 
+          # Explicitly attach symbols: build 104 contained them in its AAB, but
+          # Play did not expose native symbols after the API upload.
+          NATIVE_SYMBOLS=app/build/outputs/bundle/release/native-debug-symbols.zip
+          play "Attaching native debug symbols" -X POST "${auth[@]}" \
+            -H "Content-Type: application/octet-stream" --data-binary @"$NATIVE_SYMBOLS" \
+            "$upload/edits/$EDIT/apks/$BUILD/deobfuscationFiles/nativeCode?uploadType=media"
+          jq -e '.deobfuscationFile.symbolType == "nativeCode"' "$BODY" > /dev/null
+          echo "Attached native debug symbols for version code $BUILD"
+
           # Without the mapping, every stack trace in Play Console stays obfuscated —
           # the release build has minification on.
           MAPPING=app/build/outputs/mapping/release/mapping.txt
@@ -346,6 +382,10 @@ jobs:
             > "$OUT/Funput-$VERSION-$BUILD.aab.sha256"
           cp app/build/outputs/mapping/release/mapping.txt \
             "$OUT/mapping-$VERSION-$BUILD.txt" 2>/dev/null || true
+          NATIVE_SYMBOLS=app/build/outputs/bundle/release/native-debug-symbols.zip
+          if [ -f "$NATIVE_SYMBOLS" ]; then
+            cp "$NATIVE_SYMBOLS" "$OUT/native-debug-symbols-$VERSION-$BUILD.zip"
+          fi
 
       - uses: actions/upload-artifact@v7
         if: always()
