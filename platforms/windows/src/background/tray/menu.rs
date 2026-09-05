@@ -21,6 +21,6 @@ pub(super) fn build() -> Menu {
         &PredefinedMenuItem::separator(),
         &quit,
     ])
-        .expect("build tray menu");
+    .expect("build tray menu");
     menu
 }

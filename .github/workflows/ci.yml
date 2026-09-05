@@ -413,6 +413,15 @@ jobs:
   # this job is still too slow once the cache is warm, the answer is to move the
   # test step to an unfiltered nightly run — not to delete the only thing that
   # checks whether the shell works.
+  #
+  # `cargo fmt --all` in the `rust` job does not reach an excluded package either,
+  # which is why formatting is checked here too — the same gap `settings-gtk`
+  # closes for its own package. It was not theoretical: four files had drifted into
+  # style_edition 2024 import ordering while the other twenty-three stayed on the
+  # 2021 ordering this package's edition selects, and nothing on a pull request
+  # looked. Note the check must run from `platforms/windows`, not the root: the
+  # edition in its own manifest is what picks the style, so a root invocation would
+  # reformat it to disagree with itself.
   windows:
     needs: changes
     if: needs.changes.outputs.windows == 'true'
@@ -436,6 +445,10 @@ jobs:
         with:
           workspaces: platforms/windows -> target
           key: ci-dev
+
+      - name: Format
+        working-directory: platforms/windows
+        run: cargo fmt -- --check
 
       - name: Clippy
         working-directory: platforms/windows
