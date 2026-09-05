@@ -59,3 +59,14 @@ unimplemented = "deny"
 lto = "fat"
 codegen-units = 1
 strip = "symbols"
+
+# Android alone needs the symbols kept. Play asks for native debug symbols so a
+# crash inside libfunput_jni.so names functions instead of addresses, and
+# `strip = "symbols"` above throws away the very table it wants. AGP extracts that
+# table into the App Bundle's metadata and strips the .so it actually delivers, so
+# nothing reaches a device larger than before — but only if cargo left the symbols
+# there to extract. `debuginfo` drops DWARF and keeps the table: names, no line
+# numbers, a fraction of the size.
+[profile.android]
+inherits = "release"
+strip = "debuginfo"
