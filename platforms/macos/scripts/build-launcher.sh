@@ -46,6 +46,12 @@ rm -rf "$TMP"
 cp "$SRC/Info.plist" "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$APP/Contents/Info.plist"
+# Stamp the OS floor from the same variable the binary is compiled against, rather
+# than trusting the checked-in value. Those two drifted once already: the plist said
+# 26.5 while the input method (and this binary) shipped at 26.0, so LaunchServices
+# refused to open the launcher on macOS 26.0-26.4 — leaving a "Funput" in Spotlight
+# that did nothing, which is the one job this bundle has.
+/usr/libexec/PlistBuddy -c "Set :LSMinimumSystemVersion $DEPLOY_TARGET" "$APP/Contents/Info.plist"
 
 # App icon (best-effort): build AppIcon.icns from the 1024px master so Spotlight
 # and Finder show the Funput logo. Skipped quietly if the tools/source are missing.

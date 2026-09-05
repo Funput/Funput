@@ -4,8 +4,15 @@
 <dict>
     <!-- The launcher carries a distinct bundle id from the input method
          (app.funput.inputmethod.Funput) so the two bundles never collide in
-         LaunchServices. Version values are stamped at build time by
-         scripts/build-launcher.sh. -->
+         LaunchServices. CFBundleShortVersionString, CFBundleVersion and
+         LSMinimumSystemVersion are all stamped at build time by
+         scripts/build-launcher.sh; the values below are only what an unstamped
+         copy of this file would say. Keep LSMinimumSystemVersion in step with
+         MACOSX_DEPLOYMENT_TARGET in Funput.xcodeproj: it was hand-set to 26.5
+         while the input method shipped at 26.0, which made LaunchServices refuse
+         to open the launcher on macOS 26.0-26.4 even though the input method
+         itself ran — exactly the Spotlight entry point this bundle exists to
+         provide. -->
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
@@ -29,7 +36,7 @@
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.productivity</string>
     <key>LSMinimumSystemVersion</key>
-    <string>26.5</string>
+    <string>26.0</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 </dict>
