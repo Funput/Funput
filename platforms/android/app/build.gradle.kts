@@ -50,8 +50,9 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            optimization {
+                enable = true
+            }
             signingConfig = signingConfigs.findByName("release")
             // What actually fixes Play's "no debug symbols" warning is
             // [profile.android] in the workspace manifest: AGP already extracts
@@ -65,10 +66,6 @@ android {
             ndk {
                 debugSymbolLevel = "SYMBOL_TABLE"
             }
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
         }
     }
     compileOptions {
