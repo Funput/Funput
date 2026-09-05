@@ -24,9 +24,11 @@ readonly roots=(
     "$ime_main/editing/caret"
     "$ime_main/editing/gestures"
     "$ime_main/editing/typing"
+    "$ime_main/editing/keyevent"
     "$ime_main/settings/gestures"
     "$ime_test/editing/caret"
     "$ime_test/editing/gestures"
+    "$ime_test/editing/keyevent"
     "$ime_test/settings/gestures"
 )
 violations=0

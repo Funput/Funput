@@ -37,7 +37,7 @@ class CompositionCompatibilityPolicyTest {
 
     @Test
     fun `unlisted and missing packages keep native composition`() {
-        listOf(null, "com.android.chrome", "com.whatsapp").forEach { packageName ->
+        listOf(null, "com.android.chrome", "com.whatsapp", "cn.wps.moffice_eng").forEach { packageName ->
             assertEquals(
                 CompositionRenderMode.COMPOSING,
                 CompositionCompatibilityPolicy.renderMode(packageName),
