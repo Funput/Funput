@@ -153,17 +153,18 @@ jobs:
           tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.version.outputs.version) }}
 
       # Flip the draft to published. This bakes the already-attached assets into the
-      # now-immutable release, and is the event publish-repo.yml listens for.
+      # now-immutable release.
       #
-      # RELEASE_TOKEN, not github.token: GitHub does not start a workflow run for an
-      # event created by the default GITHUB_TOKEN, so publishing with it left
-      # `on: release: [released]` silently dead and the package repository stuck one
-      # release behind until someone dispatched it by hand. A PAT (contents: write on
-      # this repo) makes the event fire. Falls back to the default token when the
-      # secret is unset, so a release still publishes — just without the follow-on.
+      # github.token, deliberately: it is the one token guaranteed to see this draft.
+      # `gh release edit` resolves a tag through an endpoint that never returns
+      # drafts, then falls back to listing releases — and a token without write
+      # access here does not see drafts in that list either, so it fails with a bare
+      # "release not found" and takes the whole release down with it. Publishing the
+      # package repo needs a PAT, but that is the `repo` job's problem, not this
+      # step's.
       - name: Publish the draft release
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          GH_TOKEN: ${{ github.token }}
           # The publish job has no checkout, so tell gh which repo to act on instead
           # of letting it look for a local .git.
           GH_REPO: ${{ github.repository }}
@@ -177,6 +178,39 @@ jobs:
           else
             gh release edit "$TAG" --draft=false --latest
           fi
+
+  # ---- Trigger the apt/dnf/pacman package repository rebuild ----------------
+  # Fires only for a real public release. `publish-repo.yml` rebuilds the signed
+  # repositories from this release's .deb/.rpm assets. It also listens for the
+  # `release` event, but a release published by github.token raises no event GitHub
+  # acts on, so a CI release reaches it only through this dispatch. Requires a
+  # `RELEASE_TOKEN` secret (a PAT with `contents: write` on this repo); skipped
+  # automatically if absent. A job of its own, like the two dispatches below: a bad
+  # token then costs the package repository alone, not the release.
+  repo:
+    needs: [version, publish]
+    if: needs.version.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Dispatch the package repo publish
+        env:
+          TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.version.outputs.version) }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${TOKEN:-}" ]]; then
+            echo "RELEASE_TOKEN not set — skipping the package repo publish." >&2
+            exit 0
+          fi
+          # --fail-with-body, not -f: a token that cannot write to this repo gets a
+          # 404 here, and the body is the only thing that says so.
+          curl -sS --fail-with-body -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            "https://api.github.com/repos/${REPO}/dispatches" \
+            -d "{\"event_type\":\"publish-repo\",\"client_payload\":{\"tag\":\"${TAG}\"}}"
 
   # ---- Trigger the Homebrew tap to build + publish bottles ------------------
   # Fires only for a real public release (not prereleases/smoke tests). The tap's
