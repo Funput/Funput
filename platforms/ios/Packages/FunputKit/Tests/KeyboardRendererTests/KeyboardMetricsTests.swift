@@ -9,9 +9,9 @@ struct KeyboardMetricsTests {
     @Test("Device traits select the correct standard height")
     func deviceBaseHeights() {
         let layout = StandardKeyboardLayouts.letters(.telex)
-        expectHeight(layout, traits: phonePortrait, expected: 304)
-        expectHeight(layout, traits: phoneLandscape, expected: 236)
-        expectHeight(layout, traits: padPortrait, expected: 324)
+        expectHeight(layout, traits: phonePortrait, expected: 294)
+        expectHeight(layout, traits: phoneLandscape, expected: 226)
+        expectHeight(layout, traits: padPortrait, expected: 314)
     }
 
     @Test("Toolbar and row count determine variant heights")
@@ -48,10 +48,10 @@ struct KeyboardMetricsTests {
     @Test("Height scale stays within supported bounds")
     func scaleBounds() {
         let layout = StandardKeyboardLayouts.letters(.telex)
-        expectHeight(layout, traits: phonePortrait, scale: 0.5, expected: 304 * 0.85)
-        expectHeight(layout, traits: phonePortrait, scale: 0.85, expected: 304 * 0.85)
-        expectHeight(layout, traits: phonePortrait, scale: 1.2, expected: 304 * 1.2)
-        expectHeight(layout, traits: phonePortrait, scale: 2, expected: 304 * 1.2)
+        expectHeight(layout, traits: phonePortrait, scale: 0.5, expected: 294 * 0.85)
+        expectHeight(layout, traits: phonePortrait, scale: 0.85, expected: 294 * 0.85)
+        expectHeight(layout, traits: phonePortrait, scale: 1.2, expected: 294 * 1.2)
+        expectHeight(layout, traits: phonePortrait, scale: 2, expected: 294 * 1.2)
     }
 
     @Test("Compact Telex pages share one height below the standard family")

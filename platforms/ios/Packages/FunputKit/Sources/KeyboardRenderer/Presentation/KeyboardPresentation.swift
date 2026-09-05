@@ -73,9 +73,9 @@ public struct KeyboardKeyEvent: Sendable {
 
 @MainActor
 public enum KeyboardMetrics {
-    public static let phonePortraitBaseHeight: CGFloat = 304
-    public static let phoneLandscapeBaseHeight: CGFloat = 236
-    public static let padBaseHeight: CGFloat = 324
+    public static let phonePortraitBaseHeight: CGFloat = 294
+    public static let phoneLandscapeBaseHeight: CGFloat = 226
+    public static let padBaseHeight: CGFloat = 314
 
     public static func recommendedHeight(
         for traits: UITraitCollection,
@@ -113,7 +113,9 @@ public enum KeyboardMetrics {
         scale: CGFloat
     ) -> CGFloat {
         let verticalPadding: CGFloat = 12
-        let toolbarChrome: CGFloat = 50
+        // Read from the profile the geometry lays out with, so the strip reserved here
+        // and the band actually drawn can never disagree.
+        let toolbarChrome = KeyboardSizingProfile.default.toolbarChrome
         let rowGap: CGFloat = 7
         let standardRows: CGFloat = 5
         let standardRowHeight = (

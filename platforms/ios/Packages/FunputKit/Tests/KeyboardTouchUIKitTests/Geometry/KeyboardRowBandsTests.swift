@@ -36,21 +36,39 @@ struct KeyboardRowBandsTests {
     @Test("The gap above the inset row is split at its midpoint")
     func upperRowGapIsSplit() {
         let snapshot = makeSnapshot()
+        let split = gapMidpoint(in: snapshot, above: homeRowIndex(in: snapshot))
 
-        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: 151))?.key.id == "character-q")
-        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: 153))?.key.id == "character-a")
-        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: 151))?.key.id == "character-p")
-        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: 153))?.key.id == "character-l")
+        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: split - 1))?.key.id == "character-q")
+        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: split + 1))?.key.id == "character-a")
+        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: split - 1))?.key.id == "character-p")
+        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: split + 1))?.key.id == "character-l")
     }
 
     @Test("The gap below the inset row is split at its midpoint")
     func lowerRowGapIsSplit() {
         let snapshot = makeSnapshot()
+        let split = gapMidpoint(in: snapshot, above: homeRowIndex(in: snapshot) + 1)
 
-        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: 200))?.key.id == "character-a")
-        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: 204))?.key.id == "shift")
-        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: 200))?.key.id == "character-l")
-        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: 204))?.key.id == "backspace")
+        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: split - 1))?.key.id == "character-a")
+        #expect(snapshot.touchHit(at: CGPoint(x: 2, y: split + 1))?.key.id == "shift")
+        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: split - 1))?.key.id == "character-l")
+        #expect(snapshot.touchHit(at: CGPoint(x: 388, y: split + 1))?.key.id == "backspace")
+    }
+
+    private func homeRowIndex(in snapshot: KeyboardGeometrySnapshot) -> Int {
+        snapshot.geometry.rows.firstIndex { row in
+            row.contains { $0.spec.id == "character-a" }
+        } ?? 0
+    }
+
+    /// Where two rows' touch bands meet. Read off the resolved geometry rather than written
+    /// down as a coordinate, so re-sizing the toolbar moves the probe with the rows instead
+    /// of leaving it testing the wrong strip.
+    private func gapMidpoint(in snapshot: KeyboardGeometrySnapshot, above index: Int) -> CGFloat {
+        let rows = snapshot.geometry.rows
+        let upper = rows[index - 1].map(\.frame.maxY).max() ?? 0
+        let lower = rows[index].map(\.frame.minY).min() ?? 0
+        return upper + (lower - upper) / 2
     }
 
     @Test("Every alphabetic editor gives its side runway to A and L", arguments: [

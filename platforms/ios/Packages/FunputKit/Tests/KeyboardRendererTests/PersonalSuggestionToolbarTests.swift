@@ -10,7 +10,7 @@ import UIKit
 struct PersonalSuggestionToolbarTests {
     @Test("Keeps logo utilities and emits one candidate")
     func contentAndSelection() {
-        let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 360, height: 44))
+        let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 360, height: bandHeight))
         toolbar.apply(spec: .standard, theme: .funputGlass, traits: .init())
         let values = candidates(3)
         toolbar.updateSuggestions(values)
@@ -37,7 +37,7 @@ struct PersonalSuggestionToolbarTests {
 
     @Test("Narrow toolbar keeps highest-ranked candidates that fit")
     func adaptiveWidth() {
-        let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 220, height: 44))
+        let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 220, height: bandHeight))
         toolbar.apply(spec: .standard, theme: .funputGlass, traits: .init())
         toolbar.updateSuggestions(candidates(3))
         toolbar.layoutIfNeeded()
@@ -45,6 +45,10 @@ struct PersonalSuggestionToolbarTests {
         #expect(labels.contains("Gợi ý, từ0"))
         #expect(!labels.contains("Gợi ý, từ2"))
     }
+
+    /// The band the shipping geometry lays out, so the fitting rules are exercised at
+    /// the size users actually get.
+    private var bandHeight: CGFloat { KeyboardSizingProfile.default.toolbarHeight }
 
     private func candidates(_ count: Int) -> [KeyboardSuggestionCandidate] {
         (0..<count).map { KeyboardSuggestionCandidate(text: "từ\($0)", generation: 7) }

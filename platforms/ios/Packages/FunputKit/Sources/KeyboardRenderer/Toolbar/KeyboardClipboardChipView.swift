@@ -37,9 +37,9 @@ final class KeyboardClipboardChipView: UIView {
         super.layoutSubviews()
         guard let pasteControl else { return }
         let intrinsic = pasteControl.intrinsicContentSize
-        // At the smallest keyboard height the toolbar is ~37pt while the control
-        // wants 38.33pt, so it is scaled rather than clipped. Under a transform the
-        // frame is meaningless — position with bounds and center.
+        // The compact toolbar band is shorter than the 38.33pt the control asks for,
+        // so it is scaled down rather than clipped. Under a transform the frame is
+        // meaningless — position with bounds and center.
         let scale = min(1, bounds.height / max(intrinsic.height, 1))
         pasteControl.transform = .identity
         pasteControl.bounds = CGRect(origin: .zero, size: intrinsic)

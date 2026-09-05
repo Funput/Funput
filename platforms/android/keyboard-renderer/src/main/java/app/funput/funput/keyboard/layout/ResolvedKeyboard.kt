@@ -26,6 +26,12 @@ data class ResolvedSuggestionBar(
     val bounds: KeyBounds,
     val logoBounds: KeyBounds,
     val suggestionsBounds: KeyBounds,
+    /**
+     * Where a tap still counts as a suggestion. Wider than what is drawn: the band is only
+     * as tall as the text needs, so the slack above it and half the gap below it belong to
+     * the suggestions rather than to nothing at all. [KeyboardHitTargetResolver] fills it in.
+     */
+    val suggestionsHitBounds: KeyBounds = suggestionsBounds,
     val systemInputMethodKey: ResolvedKey?,
     val clipboardKey: ResolvedKey? = null,
     val emojiKey: ResolvedKey,

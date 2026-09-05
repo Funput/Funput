@@ -9,11 +9,12 @@ final class KeyboardToolbarView: UIView {
     var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
     var onClipboardPaste: ((String) -> Void)?
 
-    private let logoView = KeyboardBrandLogoView()
-    private let clipboardButton = UIButton(type: .system)
+    // Laid out across the band by `layoutContents()` in KeyboardToolbarView+Layout.
+    let logoView = KeyboardBrandLogoView()
+    let clipboardButton = UIButton(type: .system)
     let emojiButton = UIButton(type: .system)
     let suggestionBar = KeyboardSuggestionBarView()
-    private let clipboardChip = KeyboardClipboardChipView()
+    let clipboardChip = KeyboardClipboardChipView()
     private var clipboardHint: KeyboardClipboardHint?
     private var hasSuggestions = false
     private var allowsClipboardKey = true
@@ -39,46 +40,17 @@ final class KeyboardToolbarView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        let itemSize = min(36, bounds.height)
-        let originY = (bounds.height - itemSize) / 2
-        logoView.frame = CGRect(x: 0, y: originY, width: itemSize, height: itemSize)
-        // The right-hand controls stack inwards from the trailing edge, and either of
-        // them can step aside — the clipboard key while the user is typing, the emoji
-        // key when the layout already carries one in its rows.
-        var trailing = bounds.width
-        var placedAControl = false
-        if !emojiButton.isHidden {
-            emojiButton.frame = CGRect(
-                x: trailing - itemSize,
-                y: originY,
-                width: itemSize,
-                height: itemSize
-            )
-            trailing = emojiButton.frame.minX
-            placedAControl = true
+        layoutContents()
+    }
+
+    /// Folds a tap in the padding above the band onto the band itself. The band is drawn
+    /// no taller than the text and icons it carries, so its touch target has to reach past
+    /// what is painted for a suggestion to stay as easy to hit as a key.
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard point.y < 0, point.y >= -Metrics.topTouchOutset else {
+            return super.hitTest(point, with: event)
         }
-        if !clipboardButton.isHidden {
-            // The 2pt separator belongs *between* two controls, so it only applies when
-            // something was placed before this one — otherwise the content region would
-            // silently lose those 2pt whenever the clipboard key is the one to step aside.
-            clipboardButton.frame = CGRect(
-                x: trailing - itemSize - (placedAControl ? 2 : 0),
-                y: originY,
-                width: itemSize,
-                height: itemSize
-            )
-            trailing = clipboardButton.frame.minX
-        }
-        // Suggestions and the clipboard chip share one region and never show at the
-        // same time, so they get the same frame. It ends wherever the controls begin.
-        let contentRegion = CGRect(
-            x: logoView.frame.maxX + 6,
-            y: 0,
-            width: max(0, trailing - logoView.frame.maxX - 12),
-            height: bounds.height
-        )
-        suggestionBar.frame = contentRegion
-        clipboardChip.frame = contentRegion
+        return super.hitTest(CGPoint(x: point.x, y: 0), with: event)
     }
 
     func apply(
