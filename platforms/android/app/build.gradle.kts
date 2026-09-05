@@ -35,7 +35,12 @@ android {
                 keystorePropertiesFile.inputStream().use { load(it) }
             }
             create("release") {
-                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                // rootProject.file, not file: keystore.properties.example documents
+                // storeFile as relative to platforms/android/, and the key really does
+                // live there, but Project.file resolves against *this module*, so the
+                // documented path pointed at app/upload-keystore.jks and found nothing.
+                // An absolute path — what CI writes — is unaffected either way.
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
                 storePassword = keystoreProperties.getProperty("storePassword")
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
