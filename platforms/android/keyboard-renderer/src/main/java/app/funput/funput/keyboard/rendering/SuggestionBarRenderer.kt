@@ -90,18 +90,15 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     }
 
     private fun drawDivider(canvas: Canvas, bounds: KeyBounds, x: Float) {
-        canvas.drawLine(
-            x,
-            bounds.top + metrics.dp(DividerInsetDp),
-            x,
-            bounds.bottom - metrics.dp(DividerInsetDp),
-            dividerPaint,
-        )
+        // Taken from the band rather than in dp so the divider keeps its proportions at
+        // every keyboard size setting instead of swallowing a short band.
+        val inset = bounds.height * DividerInsetRatio
+        canvas.drawLine(x, bounds.top + inset, x, bounds.bottom - inset, dividerPaint)
     }
 
     private companion object {
         const val SuggestionLabelSizeSp = 14f
-        const val DividerInsetDp = 9f
+        const val DividerInsetRatio = 0.22f
         const val LabelHorizontalInsetDp = 8f
     }
 }

@@ -8,6 +8,19 @@ final class KeyboardSuggestionBarView: UIView {
 
     private static let maximumCount = 3
     private static let minimumWidth: CGFloat = 64
+    /// Sized for the compact band: body text would fill it edge to edge, and a
+    /// suggestion is a glance target rather than something the user reads. Dynamic Type
+    /// still moves it, but only up to what the band can show without clipping the
+    /// stacked Vietnamese diacritics.
+    private static var labelFont: UIFont {
+        UIFontMetrics(forTextStyle: .body).scaledFont(
+            for: .systemFont(ofSize: 15),
+            maximumPointSize: 17
+        )
+    }
+    /// The divider's share of the band height, so it keeps its proportions at any
+    /// keyboard size setting.
+    private static let separatorInsetRatio: CGFloat = 0.24
     private let buttons = (0..<maximumCount).map { _ in UIButton(type: .system) }
     private let separators = (0..<(maximumCount - 1)).map { _ in UIView() }
     private var candidates: [KeyboardSuggestionCandidate] = []
@@ -16,7 +29,7 @@ final class KeyboardSuggestionBarView: UIView {
         super.init(frame: frame)
         buttons.enumerated().forEach { index, button in
             button.tag = index
-            button.titleLabel?.font = .preferredFont(forTextStyle: .body)
+            button.titleLabel?.font = Self.labelFont
             button.titleLabel?.lineBreakMode = .byTruncatingTail
             button.accessibilityTraits = .keyboardKey
             button.addTarget(self, action: #selector(selectCandidate(_:)), for: .touchUpInside)
@@ -41,11 +54,17 @@ final class KeyboardSuggestionBarView: UIView {
                 ? CGRect(x: CGFloat(index) * width, y: 0, width: width, height: bounds.height)
                 : .zero
         }
+        let separatorInset = (bounds.height * Self.separatorInsetRatio).rounded()
         for index in separators.indices {
             let visible = index + 1 < count
             separators[index].isHidden = !visible
             separators[index].frame = visible
-                ? CGRect(x: CGFloat(index + 1) * width, y: 10, width: 0.5, height: bounds.height - 20)
+                ? CGRect(
+                    x: CGFloat(index + 1) * width,
+                    y: separatorInset,
+                    width: 0.5,
+                    height: bounds.height - separatorInset * 2
+                )
                 : .zero
         }
     }

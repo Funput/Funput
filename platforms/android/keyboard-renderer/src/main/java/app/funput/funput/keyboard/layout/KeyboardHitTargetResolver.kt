@@ -33,6 +33,7 @@ internal object KeyboardHitTargetResolver {
         val controls = listOfNotNull(
             bar.systemInputMethodKey, bar.clipboardKey, bar.emojiKey,
         )
+        val hitBottom = midpoint(bar.bounds.bottom, keyboard.rows.first().first().bounds.top)
         val resolvedControls = controls.mapIndexed { index, key ->
             val left = if (index > 0) {
                 midpoint(controls[index - 1].bounds.right, key.bounds.left)
@@ -43,11 +44,17 @@ internal object KeyboardHitTargetResolver {
             }
             val right = controls.getOrNull(index + 1)
                 ?.let { midpoint(key.bounds.right, it.bounds.left) } ?: keyboard.width
-            resolveToolbarKey(keyboard, key, left, right)
+            resolveToolbarKey(key, left, right, hitBottom)
         }
         fun lookup(key: ResolvedKey?): ResolvedKey? =
             key?.let { target -> resolvedControls.first { it.spec.id == target.spec.id } }
         return bar.copy(
+            suggestionsHitBounds = KeyBounds(
+                left = bar.suggestionsBounds.left,
+                top = 0f,
+                right = bar.suggestionsBounds.right,
+                bottom = hitBottom,
+            ),
             systemInputMethodKey = lookup(bar.systemInputMethodKey),
             clipboardKey = lookup(bar.clipboardKey),
             emojiKey = requireNotNull(lookup(bar.emojiKey)),
@@ -55,17 +62,12 @@ internal object KeyboardHitTargetResolver {
     }
 
     private fun resolveToolbarKey(
-        keyboard: ResolvedKeyboard,
         key: ResolvedKey,
         left: Float,
         right: Float,
+        bottom: Float,
     ): ResolvedKey = key.copy(
-        hitBounds = KeyBounds(
-            left = left,
-            top = 0f,
-            right = right,
-            bottom = midpoint(key.bounds.bottom, keyboard.rows.first().first().bounds.top),
-        ),
+        hitBounds = KeyBounds(left = left, top = 0f, right = right, bottom = bottom),
     )
 
     private fun rowHitTop(keyboard: ResolvedKeyboard, rowIndex: Int): Float {

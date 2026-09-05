@@ -24,10 +24,10 @@ internal fun ResolvedKeyboard.interactionTargetAt(
 ): String? {
     keyAt(x, y)?.let { return it.spec.id }
     val bar = suggestionBar ?: return null
-    if (!bar.suggestionsBounds.contains(x, y)) return null
+    if (!bar.suggestionsHitBounds.contains(x, y)) return null
     if (suggestionCount <= 0) return ClipboardTargetId.takeIf { clipboardVisible }
 
-    val bounds = bar.suggestionsBounds
+    val bounds = bar.suggestionsHitBounds
     val segmentWidth = bounds.width / suggestionCount
     val index = ((x - bounds.left) / segmentWidth).toInt().coerceIn(0, suggestionCount - 1)
     return SuggestionTargetIds.id(index)

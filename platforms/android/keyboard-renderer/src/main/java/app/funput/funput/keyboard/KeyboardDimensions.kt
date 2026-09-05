@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard
 
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
+import app.funput.funput.keyboard.layout.ToolbarMetrics
 import app.funput.funput.keyboard.layout.usesCompactLetterRows
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -9,8 +10,6 @@ object KeyboardDimensions {
     const val DefaultWidthDp = 360f
 
     private const val CanonicalColumnCount = 10
-    private const val SuggestionBarHeightDp = 42f
-    private const val SuggestionBarGapDp = 6f
 
     fun recommendedHeightDp(
         inputMethod: KeyboardInputMethod,
@@ -55,11 +54,7 @@ object KeyboardDimensions {
         val rowHeight = canonicalUnit / profile.keyAspectRatio
         val verticalGap = rowHeight * profile.verticalGapRatio
         val rowsBlockHeight = rowCount * rowHeight + (rowCount - 1) * verticalGap
-        val suggestionBarBlock = if (hasSuggestionBar) {
-            SuggestionBarHeightDp + SuggestionBarGapDp
-        } else {
-            0f
-        }
+        val suggestionBarBlock = if (hasSuggestionBar) ToolbarMetrics.ChromeDp else 0f
         return (profile.verticalPaddingDp * 2f + suggestionBarBlock + rowsBlockHeight) * profile.heightScale
     }
 }

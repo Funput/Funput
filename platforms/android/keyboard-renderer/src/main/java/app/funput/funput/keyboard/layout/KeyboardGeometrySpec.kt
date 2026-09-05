@@ -39,8 +39,8 @@ data class KeyboardGeometrySpec(
                 horizontalGapRatio = profile.horizontalGapRatio,
                 verticalGapRatio = profile.verticalGapRatio,
                 keyAspectRatio = profile.keyAspectRatio,
-                suggestionBarHeight = 42f * density * heightScale,
-                suggestionBarGap = 6f * density * heightScale,
+                suggestionBarHeight = ToolbarMetrics.SuggestionBarHeightDp * density * heightScale,
+                suggestionBarGap = ToolbarMetrics.SuggestionBarGapDp * density * heightScale,
                 heightScale = heightScale,
             )
         }

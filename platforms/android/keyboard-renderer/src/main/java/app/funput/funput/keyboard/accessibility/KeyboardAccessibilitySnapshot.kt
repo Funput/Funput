@@ -31,15 +31,19 @@ internal class KeyboardAccessibilitySnapshot(
                 customActions = SmartGestureAccessibility.actions(key.spec.role, smartGesturesEnabled),
             ).let(::add)
         }
-        val bounds = keyboard.suggestionBar?.suggestionsBounds
-        if (bounds != null && suggestions.isNotEmpty()) {
+        val bar = keyboard.suggestionBar
+        val bounds = bar?.suggestionsBounds
+        // Explore-by-touch follows the same generous region a finger does, not the drawn band.
+        val hit = bar?.suggestionsHitBounds
+        if (bounds != null && hit != null && suggestions.isNotEmpty()) {
             val width = bounds.width / suggestions.size
             suggestions.forEachIndexed { index, text ->
                 val segment = KeyBounds(bounds.left + width * index, bounds.top, bounds.left + width * (index + 1), bounds.bottom)
-                add(KeyboardAccessibilityNode(size, SuggestionTargetIds.id(index), "Gợi ý, $text", segment, segment, false))
+                val target = KeyBounds(segment.left, hit.top, segment.right, hit.bottom)
+                add(KeyboardAccessibilityNode(size, SuggestionTargetIds.id(index), "Gợi ý, $text", segment, target, false))
             }
-        } else if (bounds != null && clipboardLabel != null) {
-            add(KeyboardAccessibilityNode(size, ClipboardTargetId, clipboardLabel, bounds, bounds, false))
+        } else if (bounds != null && hit != null && clipboardLabel != null) {
+            add(KeyboardAccessibilityNode(size, ClipboardTargetId, clipboardLabel, bounds, hit, false))
         }
     }
 

@@ -53,6 +53,21 @@ class KeyboardInteractionTargetsTest {
     }
 
     @Test
+    fun suggestionsClaimThePaddingAroundTheirBand() {
+        val bar = requireNotNull(keyboard.suggestionBar)
+        val x = bar.suggestionsBounds.centerX
+        // The band is drawn no taller than its text, so a thumb landing in the padding above
+        // it or in the top half of the gap below it still means "take that suggestion".
+        for (y in listOf(0f, bar.bounds.top - 1f, bar.bounds.bottom + spec.suggestionBarGap / 4f)) {
+            assertEquals(
+                "tap at y=$y",
+                SuggestionTargetIds.id(1),
+                keyboard.interactionTargetAt(x, y, SuggestionCount),
+            )
+        }
+    }
+
+    @Test
     fun emptySuggestionListLeavesBarNonInteractive() {
         val bounds = requireNotNull(keyboard.suggestionBar).suggestionsBounds
 

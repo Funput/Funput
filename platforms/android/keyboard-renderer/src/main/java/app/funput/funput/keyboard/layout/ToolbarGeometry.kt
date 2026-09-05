@@ -29,7 +29,7 @@ internal object ToolbarGeometry {
         val systemAnchor = clipboard?.left ?: emoji.left
         val system = bar.systemInputMethodKey?.let { boundsBefore(systemAnchor, top, bottom, spec) }
         val controlsLeft = system?.left ?: clipboard?.left ?: emoji.left
-        val logoSize = spec.suggestionBarHeight * ToolbarBrandMetrics.LogoSizeRatio
+        val logoSize = spec.suggestionBarHeight * ToolbarMetrics.LogoSizeRatio
         val logoTop = top + (spec.suggestionBarHeight - logoSize) / 2f
         val logo = KeyBounds(spec.horizontalPadding, logoTop, spec.horizontalPadding + logoSize, logoTop + logoSize)
         val suggestionsLeft = logo.right + spec.horizontalGap
