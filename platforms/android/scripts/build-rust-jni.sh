@@ -35,12 +35,18 @@ case "$target" in
         ;;
 esac
 
+# A release build here uses the `android` cargo profile rather than `release`:
+# identical optimization, symbol table left in for AGP to extract. The profile
+# name is also the target subdirectory, which is why the output path below reads
+# it separately from the profile Gradle asked for.
 cargo_args=(build --locked -p funput-jni --target "$target")
+out_profile="debug"
 if [[ "$profile" == "release" ]]; then
-    cargo_args+=(--release)
+    cargo_args+=(--profile android)
+    out_profile="android"
 fi
 
 cd "$workspace_dir"
 cargo "${cargo_args[@]}"
 mkdir -p "$output_dir"
-install -m 0644 "target/$target/$profile/libfunput_jni.so" "$output_dir/libfunput_jni.so"
+install -m 0644 "target/$target/$out_profile/libfunput_jni.so" "$output_dir/libfunput_jni.so"

@@ -50,13 +50,22 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            optimization {
+                enable = true
+            }
             signingConfig = signingConfigs.findByName("release")
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
+            // What actually fixes Play's "no debug symbols" warning is
+            // [profile.android] in the workspace manifest: AGP already extracts
+            // symbols into the bundle by default, and it was faithfully extracting
+            // the nothing that `strip = "symbols"` had left behind — a .sym file
+            // byte-for-byte the size of the stripped .so. Naming the level here is
+            // belt and braces: an AGP default that changes cannot quietly drop
+            // symbols from a release, and SYMBOL_TABLE pins the trade — function
+            // names, no line numbers. The .so delivered to devices is stripped
+            // either way, so this costs the download nothing.
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
         }
     }
     compileOptions {
