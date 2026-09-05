@@ -25,6 +25,15 @@ name: Deploy Android
 #
 # One-time, outside this repo: the app must already exist in the Play Console with a
 # first bundle uploaded by hand. Google will not create an app from an API upload.
+#
+# About `changes_not_sent_for_review`: committing an edit normally submits its
+# changes to Google for review. Some apps cannot do that automatically — one with no
+# reviewed release yet, or one carrying unsubmitted Console changes (store listing,
+# content rating, data safety) — and Google refuses the commit saying so in as many
+# words. Re-running with this input checked commits the edit *without* submitting
+# anything: the build is attached to its track, and you press "Send for review" in
+# the Play Console yourself. Leave it off otherwise — a release nobody submits sits
+# there and never reaches a tester.
 on:
   workflow_dispatch:
     inputs:
