@@ -1,15 +1,17 @@
 package app.funput.funput.ime.editing
 
 import android.view.inputmethod.InputConnection
+import app.funput.funput.ime.editing.keyevent.KeyEventBufferWriter
 
 /**
  * Applies the engine buffer without exposing host-specific behavior to the engine session.
  *
  * Most editors get Android composing text. Broken hosts get committed replacements because they
- * ignore or decorate composing regions incorrectly.
+ * ignore or decorate composing regions incorrectly. Sandbox hosts get KeyEvents only.
  */
 internal class CompositionDocumentEditor(
     private val composingTextFactory: (String) -> CharSequence,
+    private val keyEventWriter: KeyEventBufferWriter = KeyEventBufferWriter(),
 ) {
     private val committedWriter = CommittedBufferWriter()
     private var committedSelection: Int? = null
@@ -20,16 +22,14 @@ internal class CompositionDocumentEditor(
         mode: CompositionRenderMode,
         previous: String,
         current: String,
-    ): Boolean = when (mode) {
-        CompositionRenderMode.COMPOSING ->
-            connection.setComposingText(composingTextFactory(current), CursorAfterText)
-        CompositionRenderMode.COMMITTED,
-        CompositionRenderMode.COMMITTED_KEY_DELETE,
-        -> replaceBeforeCursor(connection, mode, previous, current)
+    ): Boolean = if (mode.usesComposingSpans) {
+        connection.setComposingText(composingTextFactory(current), CursorAfterText)
+    } else {
+        replaceBeforeCursor(connection, mode, previous, current)
     }
 
     fun finish(connection: InputConnection?, mode: CompositionRenderMode, active: Boolean) {
-        if (active && mode == CompositionRenderMode.COMPOSING) connection?.finishComposingText()
+        if (active && mode.usesComposingSpans) connection?.finishComposingText()
     }
 
     fun commitBoundary(
@@ -38,23 +38,16 @@ internal class CompositionDocumentEditor(
         previous: String,
         replacement: String?,
         boundary: String,
-    ): Boolean = when (mode) {
-        CompositionRenderMode.COMPOSING -> {
-            if (replacement != null) connection.commitText(replacement, CursorAfterText)
-            else {
-                connection.finishComposingText()
-                connection.commitText(boundary, CursorAfterText)
-            }
+    ): Boolean = if (mode.usesComposingSpans) {
+        if (replacement != null) connection.commitText(replacement, CursorAfterText)
+        else {
+            connection.finishComposingText()
+            connection.commitText(boundary, CursorAfterText)
         }
-        CompositionRenderMode.COMMITTED,
-        CompositionRenderMode.COMMITTED_KEY_DELETE,
-        -> {
-            if (replacement != null) replaceBeforeCursor(connection, mode, previous, replacement)
-            else {
-                expectCommittedSelection(previousLength = 0, currentLength = boundary.length)
-                connection.commitText(boundary, CursorAfterText)
-            }
-        }
+    } else if (replacement != null) {
+        replaceBeforeCursor(connection, mode, previous, replacement)
+    } else {
+        replaceBeforeCursor(connection, mode, "", boundary)
     }
 
     fun acceptSuggestion(
@@ -62,28 +55,22 @@ internal class CompositionDocumentEditor(
         mode: CompositionRenderMode,
         prefix: String,
         candidate: String,
-    ): Boolean = when (mode) {
-        CompositionRenderMode.COMPOSING ->
-            connection.commitText("$candidate ", CursorAfterText)
-        CompositionRenderMode.COMMITTED,
-        CompositionRenderMode.COMMITTED_KEY_DELETE,
-        -> replaceBeforeCursor(connection, mode, prefix, "$candidate ")
+    ): Boolean = if (mode.usesComposingSpans) {
+        connection.commitText("$candidate ", CursorAfterText)
+    } else {
+        replaceBeforeCursor(connection, mode, prefix, "$candidate ")
     }
 
     fun reopenWord(
         connection: InputConnection,
         mode: CompositionRenderMode,
         word: String,
-    ): Boolean = when (mode) {
-        CompositionRenderMode.COMPOSING ->
-            connection.deleteSurroundingText(word.length, 0) &&
-                connection.setComposingText(composingTextFactory(word), CursorAfterText)
-        CompositionRenderMode.COMMITTED,
-        CompositionRenderMode.COMMITTED_KEY_DELETE,
-        -> true.also {
-            committedSelection = null
-            expectedCommittedSelection = null
-        }
+    ): Boolean = if (mode.usesComposingSpans) {
+        connection.deleteSurroundingText(word.length, 0) &&
+            connection.setComposingText(composingTextFactory(word), CursorAfterText)
+    } else true.also {
+        committedSelection = null
+        expectedCommittedSelection = null
     }
 
     fun ownsSelection(
@@ -93,12 +80,10 @@ internal class CompositionDocumentEditor(
         selectionStart: Int,
         selectionEnd: Int,
         composingEnd: Int,
-    ): Boolean = when (mode) {
-        CompositionRenderMode.COMPOSING ->
-            selectionStart == composingEnd && selectionEnd == composingEnd
-        CompositionRenderMode.COMMITTED,
-        CompositionRenderMode.COMMITTED_KEY_DELETE,
-        -> ownsCommittedSelection(connection, text, selectionStart, selectionEnd)
+    ): Boolean = if (mode.usesComposingSpans) {
+        selectionStart == composingEnd && selectionEnd == composingEnd
+    } else {
+        ownsCommittedSelection(connection, text, selectionStart, selectionEnd)
     }
 
     private fun replaceBeforeCursor(
@@ -108,12 +93,11 @@ internal class CompositionDocumentEditor(
         replacement: String,
     ): Boolean {
         expectCommittedSelection(previous.length, replacement.length)
-        return committedWriter.replace(
-            connection,
-            previous,
-            replacement,
-            deleteWithKeyEvents = mode.deleteWithKeyEvents,
-        )
+        return if (mode.writesKeyEvents) {
+            keyEventWriter.replace(connection, previous, replacement)
+        } else {
+            committedWriter.replace(connection, previous, replacement, mode.deleteWithKeyEvents)
+        }
     }
 
     private fun ownsCommittedSelection(
