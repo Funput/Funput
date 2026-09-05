@@ -181,9 +181,10 @@ jobs:
 
   # ---- Trigger the apt/dnf/pacman package repository rebuild ----------------
   # Fires only for a real public release. `publish-repo.yml` rebuilds the signed
-  # repositories from this release's .deb/.rpm assets. It also listens for the
-  # `release` event, but a release published by github.token raises no event GitHub
-  # acts on, so a CI release reaches it only through this dispatch. Requires a
+  # repositories from this release's .deb/.rpm assets. This dispatch is the only way
+  # a release reaches it: GitHub starts no run for an event the default GITHUB_TOKEN
+  # creates, and a `release`-triggered run would sit at a tag ref, which the
+  # `github-pages` environment refuses to deploy from. Requires a
   # `RELEASE_TOKEN` secret (a PAT with `contents: write` on this repo); skipped
   # automatically if absent. A job of its own, like the two dispatches below: a bad
   # token then costs the package repository alone, not the release.

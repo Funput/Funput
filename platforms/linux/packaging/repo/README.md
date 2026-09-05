@@ -62,10 +62,14 @@ cuối**); workflow tự suy host cho `CNAME` từ đó. Không đặt thì mặ
 
 ### 4. Chạy
 Tự chạy sau mỗi bản release chính thức: job `repo` trong `release.yml` bắn
-`repository_dispatch` (kèm tag vừa phát hành) ngay khi release được publish. Release publish
-bằng tay trong web UI thì sự kiện `released` cũng kích hoạt workflow này. Chạy tay:
+`repository_dispatch` (kèm tag vừa phát hành) ngay khi release được publish. Chạy tay:
 Actions → **Publish package repo** → Run workflow (khi đó workflow tự lấy tag của
 `releases/latest`).
+
+> **Mọi cách kích hoạt đều phải chạy từ nhánh `main`.** Environment `github-pages` chỉ cho
+> phép deploy từ `main`, nên run ở ref tag sẽ dựng xong cả ba kho rồi bị chặn ở job `deploy`.
+> Đó là lý do workflow **không** dùng trigger `release: [released]`: sự kiện release luôn nằm
+> ở `refs/tags/v*`. Publish release bằng tay trong web UI thì phải bấm Run workflow ở đây.
 Xong, trang cài đặt nằm ở URL Pages (xem mục cuối `index.html.in` để biết các lệnh người dùng).
 
 ## Hoạt động thế nào (tóm tắt)
