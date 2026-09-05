@@ -19,3 +19,4 @@ keystore.properties
 *.jks
 *.keystore
 /app/release/
+.config/
