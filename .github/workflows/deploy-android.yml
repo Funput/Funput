@@ -241,21 +241,58 @@ jobs:
           jq -r .private_key "$SA" > "$RUNNER_TEMP/play-key.pem"
           sig="$(printf '%s' "$si" | openssl dgst -sha256 -sign "$RUNNER_TEMP/play-key.pem" | b64url)"
           rm -f "$RUNNER_TEMP/play-key.pem"
-          TOKEN="$(curl -sS --fail-with-body -X POST "$aud" \
+          BODY="$RUNNER_TEMP/play-response.json"
+          code="$(curl -sS -o "$BODY" -w '%{http_code}' -X POST "$aud" \
             -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer \
-            --data-urlencode "assertion=$si.$sig" | jq -r .access_token)"
+            --data-urlencode "assertion=$si.$sig")"
+          if [ "$code" != "200" ]; then
+            echo "::error::Google refused the service account key (HTTP $code)."
+            cat "$BODY" >&2
+            exit 1
+          fi
+          TOKEN="$(jq -r .access_token "$BODY")"
           # The token is a bearer credential; GitHub does not know it is one.
           echo "::add-mask::$TOKEN"
           [ "$TOKEN" != "null" ] || { echo "::error::Google returned no access token for this service account."; exit 1; }
           auth=(-H "Authorization: Bearer $TOKEN")
+          echo "Acting as $iss on $PKG"
 
-          EDIT="$(curl -sS --fail-with-body -X POST "${auth[@]}" -H "Content-Length: 0" "$api/edits" | jq -r .id)"
+          # Every Play call goes through here, and it deliberately prints nothing on
+          # stdout. The obvious `curl --fail-with-body | jq` feeds the body into jq,
+          # so on a failure the one thing that explains it is thrown away and the log
+          # keeps nothing but an exit code — which is exactly how a 403 arrived saying
+          # nothing at all. Google's body names the cause and often carries the link
+          # that fixes it, so it goes to stderr, where no pipe can eat it, and the
+          # caller reads the parsed reply from $BODY instead.
+          play() {
+            local label="$1"; shift
+            local code
+            code="$(curl -sS -o "$BODY" -w '%{http_code}' "$@")"
+            if [ "$code" -ge 400 ]; then
+              echo "::error::$label — HTTP $code from the Play API:" >&2
+              # Google's body carries no trailing newline; without one it runs into
+              # whatever the caller prints next.
+              { cat "$BODY"; echo; } >&2
+              return 1
+            fi
+          }
+
+          # First call that touches the app, so it is where a misconfigured account
+          # always fails. Two causes account for nearly every 403 here, and the body
+          # above says which one; name them anyway, because this is the step someone
+          # reaches before they have read anything else.
+          if ! play "Opening an edit" -X POST "${auth[@]}" -H "Content-Length: 0" "$api/edits"; then
+            echo "::error::A 403 here is nearly always one of two things: the Google Play Android Developer API is not enabled in this service account's Cloud project, or the account has no access to $PKG (Play Console -> Users and permissions -> invite $iss -> App permissions -> Release to testing tracks)."
+            exit 1
+          fi
+          EDIT="$(jq -r .id "$BODY")"
           echo "Opened edit $EDIT on $PKG"
 
-          got="$(curl -sS --fail-with-body -X POST "${auth[@]}" \
+          play "Uploading the bundle" -X POST "${auth[@]}" \
             -H "Content-Type: application/octet-stream" \
             --data-binary @app/build/outputs/bundle/release/app-release.aab \
-            "$upload/edits/$EDIT/bundles?uploadType=media" | jq -r .versionCode)"
+            "$upload/edits/$EDIT/bundles?uploadType=media"
+          got="$(jq -r .versionCode "$BODY")"
           # Play assigns nothing here — it reports what the bundle declared. A mismatch
           # means the build did not take the version code we passed it.
           if [ "$got" != "$BUILD" ]; then
@@ -268,9 +305,9 @@ jobs:
           # the release build has minification on.
           MAPPING=app/build/outputs/mapping/release/mapping.txt
           if [ -f "$MAPPING" ]; then
-            curl -sS --fail-with-body -X POST "${auth[@]}" \
+            play "Attaching the mapping" -X POST "${auth[@]}" \
               -H "Content-Type: application/octet-stream" --data-binary @"$MAPPING" \
-              "$upload/edits/$EDIT/apks/$BUILD/deobfuscationFiles/proguard" > /dev/null
+              "$upload/edits/$EDIT/apks/$BUILD/deobfuscationFiles/proguard"
             echo "Attached ProGuard mapping"
           else
             echo "::warning::No mapping.txt was produced; crash reports will stay obfuscated."
@@ -278,15 +315,16 @@ jobs:
 
           body="$(jq -nc --arg t "$TRACK" --arg vc "$BUILD" --arg name "$VERSION ($BUILD)" \
             '{track:$t,releases:[{name:$name,versionCodes:[$vc],status:"completed"}]}')"
-          curl -sS --fail-with-body -X PUT "${auth[@]}" -H "Content-Type: application/json" \
-            -d "$body" "$api/edits/$EDIT/tracks/$TRACK" > /dev/null
+          play "Pointing track $TRACK at $BUILD" -X PUT "${auth[@]}" \
+            -H "Content-Type: application/json" -d "$body" \
+            "$api/edits/$EDIT/tracks/$TRACK"
           echo "Track $TRACK now points at $BUILD"
 
           # An app whose changes Google has not reviewed rejects a plain commit and says
           # so; re-running with changes_not_sent_for_review is the documented answer.
-          if ! curl -sS --fail-with-body -X POST "${auth[@]}" -H "Content-Length: 0" \
-            "$api/edits/$EDIT:commit?changesNotSentForReview=$CHANGES_NOT_SENT" > /dev/null; then
-            echo "::error::Commit failed. If Google asked for changesNotSentForReview, re-run this workflow with that input checked."
+          if ! play "Committing the edit" -X POST "${auth[@]}" -H "Content-Length: 0" \
+            "$api/edits/$EDIT:commit?changesNotSentForReview=$CHANGES_NOT_SENT"; then
+            echo "::error::If Google asked for changesNotSentForReview above, re-run this workflow with that input checked."
             exit 1
           fi
           echo "Committed edit $EDIT"
@@ -320,7 +358,10 @@ jobs:
         if: always()
         run: |
           rm -f keystore.properties
-          rm -f "$RUNNER_TEMP/upload-keystore.jks" "$RUNNER_TEMP/play-sa.json" "$RUNNER_TEMP/play-key.pem"
+          # play-response.json first held the token exchange's reply, which carries
+          # the access token itself.
+          rm -f "$RUNNER_TEMP/upload-keystore.jks" "$RUNNER_TEMP/play-sa.json" \
+            "$RUNNER_TEMP/play-key.pem" "$RUNNER_TEMP/play-response.json"
 
       - name: Summary
         if: success()
