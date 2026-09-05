@@ -15,8 +15,12 @@ android {
         applicationId = "app.funput.funput"
         minSdk = 26
         targetSdk = 37
-        versionCode = 27
-        versionName = "1.2026.70"
+        // deploy-android.yml passes both: the marketing version you type when you run
+        // it, and a build number derived from the run number. Neither is committed, so
+        // shipping needs no version bump in the tree and two deploys can never claim
+        // the same build number. The literals below are only what a local build gets.
+        versionCode = providers.gradleProperty("funput.versionCode").orNull?.toInt() ?: 27
+        versionName = providers.gradleProperty("funput.versionName").orNull ?: "1.2026.70"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -31,7 +35,12 @@ android {
                 keystorePropertiesFile.inputStream().use { load(it) }
             }
             create("release") {
-                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                // rootProject.file, not file: keystore.properties.example documents
+                // storeFile as relative to platforms/android/, and the key really does
+                // live there, but Project.file resolves against *this module*, so the
+                // documented path pointed at app/upload-keystore.jks and found nothing.
+                // An absolute path — what CI writes — is unaffected either way.
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
                 storePassword = keystoreProperties.getProperty("storePassword")
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")

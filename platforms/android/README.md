@@ -45,6 +45,26 @@ rustup target add aarch64-linux-android x86_64-linux-android
 The project requires Android SDK 37, NDK 29, and supports Android 8.0 (API 26)
 or newer. The NDK version is pinned for reproducible native builds.
 
+## Release
+
+`Deploy Android` (`.github/workflows/deploy-android.yml`) is manual, like its iOS
+counterpart: run it from Actions on whichever branch you want to ship, type the
+marketing version, and pick a track. It builds the signed `.aab`, uploads it to
+Google Play, and attaches the ProGuard mapping so crash reports stay readable.
+
+The **version code is not committed** — it is derived from the workflow's run
+number, so shipping needs no version bump in the tree and two deploys can never
+claim the same code. `versionCode`/`versionName` in `app/build.gradle.kts` are only
+what a local build gets; CI passes `-Pfunput.versionCode` and `-Pfunput.versionName`
+over the top.
+
+`dry_run` builds and signs without uploading. The `.aab`, its SHA-256 and the
+mapping are attached to every run either way.
+
+Secrets the workflow needs are listed in its header. Uploading is not releasing:
+the build reaches the track you picked, and promoting it to production stays a
+deliberate act in the Play Console.
+
 See [`docs/ARCHITECTURE_PROPOSAL.md`](docs/ARCHITECTURE_PROPOSAL.md) for the
 long-term architecture. The repository is licensed under the
 [`MIT License`](../../LICENSE).

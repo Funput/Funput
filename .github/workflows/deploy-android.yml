@@ -1,0 +1,330 @@
+name: Deploy Android
+
+# Manual only. Builds the Play Store .aab from whichever branch you run it on and
+# uploads it to Google Play, where it lands on a testing track.
+#
+# Deliberately NOT wired into release.yml, for the same reasons as deploy-ios.yml:
+# every upload burns a version code permanently at Google, and the upload depends on
+# infrastructure that fails for reasons unrelated to this repo (an expired service
+# account key, a Play Console policy hold). Keeping it separate means a bad day at
+# Google never blocks the macOS/Windows/Linux release.
+#
+# Uploading is not releasing to the public: the build reaches the track you pick,
+# and promoting it to production is still a deliberate act in the Play Console.
+#
+# Required secrets:
+#   ANDROID_UPLOAD_KEYSTORE   base64 of the upload keystore (.jks). This is the key
+#                             Play knows as the *upload* key; with Play App Signing,
+#                             Google re-signs with the app signing key it holds.
+#   ANDROID_KEYSTORE_PASSWORD password of that keystore
+#   ANDROID_KEY_ALIAS         alias of the upload key inside it (e.g. `upload`)
+#   ANDROID_KEY_PASSWORD      password of that key (often the same as the store's)
+#   PLAY_SERVICE_ACCOUNT_JSON the service account key .json, or its base64. The
+#                             account needs "Release to testing tracks" on this app
+#                             in the Play Console.
+#
+# One-time, outside this repo: the app must already exist in the Play Console with a
+# first bundle uploaded by hand. Google will not create an app from an API upload.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Marketing version, e.g. 1.2026.76 — what users see. The version code is derived from the run number."
+        required: true
+        type: string
+      track:
+        description: "Play track to release on."
+        required: false
+        default: internal
+        type: choice
+        options: [internal, alpha, beta]
+      dry_run:
+        description: "Build and sign the .aab but do not upload it."
+        required: false
+        type: boolean
+        default: false
+      changes_not_sent_for_review:
+        description: "Set only if the commit fails asking for it — see the workflow header."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One upload at a time: two concurrent runs would race for the same version code.
+concurrency:
+  group: deploy-android
+  cancel-in-progress: false
+
+env:
+  CARGO_HTTP_MULTIPLEXING: "false"
+  CARGO_NET_RETRY: "5"
+  # versionCode is derived from the run number, so re-deploying the same marketing
+  # version never collides, and Play — which rejects a version code it has already
+  # seen — always gets a higher one. The offset clears the highest code shipped
+  # before this workflow existed (27); set the repository variable to raise it.
+  # Careful: renaming this workflow file resets the run counter to 1, which would
+  # push the version code *backwards* and Play would refuse the upload.
+  ANDROID_BUILD_OFFSET: ${{ vars.ANDROID_BUILD_OFFSET || '100' }}
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: platforms/android
+    steps:
+      - uses: actions/checkout@v7
+
+      # JavaVersion.VERSION_21 in every module's compileOptions.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # Same packages, and the same reasoning, as ci.yml's `android` job: compileSdk
+      # is `release(37)` and ime/build.gradle.kts names the NDK version literally, so
+      # both ids are pinned by the build rather than chosen here. The platform id
+      # carries a MINOR version — `platforms;android-37.0`, not `platforms;android-37`.
+      - name: Android SDK packages
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)"
+          fi
+          # `yes` is killed by SIGPIPE the moment sdkmanager stops reading, which under
+          # `pipefail` is exit 141 and would fail this step every time.
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          set -o pipefail
+          "$SDKMANAGER" "platforms;android-37.0" "ndk;29.0.14206865"
+
+      # build-rust-jni.sh cross-compiles funput-jni for both ABIs from inside Gradle.
+      - name: Rust Android targets
+        run: rustup target add aarch64-linux-android x86_64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+
+      # This workflow runs on whatever branch you point it at, which is not
+      # necessarily a branch the pull-request gate has ever seen. Run the same checks
+      # here rather than trusting that it did.
+      - name: Kotlin line budget
+        run: bash scripts/check-kotlin-loc.sh
+
+      - name: Kotlin directory layout
+        run: bash scripts/check-kotlin-layout.sh
+
+      # Never ship a build the suite has not passed.
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest --console=plain
+
+      # keystore.properties is what app/build.gradle.kts reads; without it the release
+      # build produces an *unsigned* bundle instead of failing, so the signature check
+      # after the build is what actually proves this step worked. storeFile is written
+      # as an absolute path: a relative one resolves against the module directory, not
+      # the Gradle root.
+      - name: Import the upload keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            echo "::error::ANDROID_UPLOAD_KEYSTORE is not set. Add it with: base64 -i upload-keystore.jks | pbcopy"
+            exit 1
+          fi
+          KS="$RUNNER_TEMP/upload-keystore.jks"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KS"
+          # base64 on some platforms ignores characters it does not recognise and still
+          # exits 0, so a mangled secret decodes to garbage and only surfaces as an
+          # unhelpful Gradle failure. Ask keytool whether this is really a keystore,
+          # and whether it holds the alias the build is about to ask for.
+          if ! keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null 2>&1; then
+            echo "::error::The decoded keystore is unreadable, the store password is wrong, or it has no key named '$KEY_ALIAS'. Check ANDROID_UPLOAD_KEYSTORE, ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS."
+            exit 1
+          fi
+          umask 077
+          {
+            echo "storeFile=$KS"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > keystore.properties
+          echo "Upload keystore imported; alias '$KEY_ALIAS' present."
+
+      # A re-run keeps the same run number, which is what we want: a failed upload
+      # never consumed a version code at Google, so reusing it is correct.
+      - name: Build the signed .aab
+        env:
+          VERSION: ${{ inputs.version }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          BUILD=$(( ANDROID_BUILD_OFFSET + RUN_NUMBER ))
+          echo "Marketing version $VERSION, version code $BUILD"
+          echo "BUILD=$BUILD" >> "$GITHUB_ENV"
+          ./gradlew :app:bundleRelease --console=plain \
+            "-Pfunput.versionName=$VERSION" "-Pfunput.versionCode=$BUILD"
+
+      # Play rejects an unsigned bundle, but only after the upload — and an unsigned
+      # bundle is exactly what a silently failed signing config produces. Catch it here.
+      - name: Verify the bundle is signed
+        run: |
+          set -euo pipefail
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          if ! jarsigner -verify "$AAB" | grep -q "jar verified"; then
+            echo "::error::$AAB is not signed. app/build.gradle.kts only creates a release signing config when keystore.properties exists, so the import step above did not take effect."
+            exit 1
+          fi
+          echo "Bundle is signed."
+
+      # The Play Developer API by hand, in six calls: mint a token from the service
+      # account key, open an edit, upload the bundle, attach the ProGuard mapping,
+      # point the track at the new version code, commit. Nothing takes effect until
+      # the commit, so a failure anywhere above leaves Play untouched — the abandoned
+      # edit expires on its own.
+      - name: Upload to Google Play
+        if: ${{ !inputs.dry_run }}
+        env:
+          SA_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          VERSION: ${{ inputs.version }}
+          TRACK: ${{ inputs.track }}
+          CHANGES_NOT_SENT: ${{ inputs.changes_not_sent_for_review }}
+        run: |
+          set -euo pipefail
+          SA="$RUNNER_TEMP/play-sa.json"
+          # Take the secret either way: the .json pasted straight in, or its base64.
+          if printf '%s' "$SA_JSON" | grep -q '"private_key"'; then
+            printf '%s' "$SA_JSON" > "$SA"
+          else
+            printf '%s' "$SA_JSON" | base64 --decode > "$SA"
+          fi
+          chmod 600 "$SA"
+          if ! jq -e '.client_email and .private_key' "$SA" > /dev/null 2>&1; then
+            echo "::error::PLAY_SERVICE_ACCOUNT_JSON is not a service account key. Set it to the .json Google Cloud gave you, or to its base64."
+            exit 1
+          fi
+
+          # applicationId, read from the build rather than repeated here, so the two
+          # cannot drift apart.
+          PKG="$(sed -n 's/.*applicationId = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
+          [ -n "$PKG" ] || { echo "::error::Could not read applicationId from app/build.gradle.kts"; exit 1; }
+          api="https://androidpublisher.googleapis.com/androidpublisher/v3/applications/$PKG"
+          upload="https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/$PKG"
+
+          # JWT bearer grant (RFC 7523): sign our own assertion with the account's
+          # private key and exchange it for an access token. No third-party action ever
+          # sees this credential.
+          b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
+          iss="$(jq -r .client_email "$SA")"
+          aud="$(jq -r '.token_uri // "https://oauth2.googleapis.com/token"' "$SA")"
+          now="$(date +%s)"
+          claim="$(jq -nc --arg iss "$iss" --arg aud "$aud" --argjson iat "$now" --argjson exp "$((now + 1800))" \
+            '{iss:$iss,scope:"https://www.googleapis.com/auth/androidpublisher",aud:$aud,iat:$iat,exp:$exp}')"
+          si="$(printf '%s' '{"alg":"RS256","typ":"JWT"}' | b64url).$(printf '%s' "$claim" | b64url)"
+          jq -r .private_key "$SA" > "$RUNNER_TEMP/play-key.pem"
+          sig="$(printf '%s' "$si" | openssl dgst -sha256 -sign "$RUNNER_TEMP/play-key.pem" | b64url)"
+          rm -f "$RUNNER_TEMP/play-key.pem"
+          TOKEN="$(curl -sS --fail-with-body -X POST "$aud" \
+            -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer \
+            --data-urlencode "assertion=$si.$sig" | jq -r .access_token)"
+          # The token is a bearer credential; GitHub does not know it is one.
+          echo "::add-mask::$TOKEN"
+          [ "$TOKEN" != "null" ] || { echo "::error::Google returned no access token for this service account."; exit 1; }
+          auth=(-H "Authorization: Bearer $TOKEN")
+
+          EDIT="$(curl -sS --fail-with-body -X POST "${auth[@]}" -H "Content-Length: 0" "$api/edits" | jq -r .id)"
+          echo "Opened edit $EDIT on $PKG"
+
+          got="$(curl -sS --fail-with-body -X POST "${auth[@]}" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @app/build/outputs/bundle/release/app-release.aab \
+            "$upload/edits/$EDIT/bundles?uploadType=media" | jq -r .versionCode)"
+          # Play assigns nothing here — it reports what the bundle declared. A mismatch
+          # means the build did not take the version code we passed it.
+          if [ "$got" != "$BUILD" ]; then
+            echo "::error::Uploaded bundle declares version code $got, expected $BUILD."
+            exit 1
+          fi
+          echo "Uploaded version code $got"
+
+          # Without the mapping, every stack trace in Play Console stays obfuscated —
+          # the release build has minification on.
+          MAPPING=app/build/outputs/mapping/release/mapping.txt
+          if [ -f "$MAPPING" ]; then
+            curl -sS --fail-with-body -X POST "${auth[@]}" \
+              -H "Content-Type: application/octet-stream" --data-binary @"$MAPPING" \
+              "$upload/edits/$EDIT/apks/$BUILD/deobfuscationFiles/proguard" > /dev/null
+            echo "Attached ProGuard mapping"
+          else
+            echo "::warning::No mapping.txt was produced; crash reports will stay obfuscated."
+          fi
+
+          body="$(jq -nc --arg t "$TRACK" --arg vc "$BUILD" --arg name "$VERSION ($BUILD)" \
+            '{track:$t,releases:[{name:$name,versionCodes:[$vc],status:"completed"}]}')"
+          curl -sS --fail-with-body -X PUT "${auth[@]}" -H "Content-Type: application/json" \
+            -d "$body" "$api/edits/$EDIT/tracks/$TRACK" > /dev/null
+          echo "Track $TRACK now points at $BUILD"
+
+          # An app whose changes Google has not reviewed rejects a plain commit and says
+          # so; re-running with changes_not_sent_for_review is the documented answer.
+          if ! curl -sS --fail-with-body -X POST "${auth[@]}" -H "Content-Length: 0" \
+            "$api/edits/$EDIT:commit?changesNotSentForReview=$CHANGES_NOT_SENT" > /dev/null; then
+            echo "::error::Commit failed. If Google asked for changesNotSentForReview, re-run this workflow with that input checked."
+            exit 1
+          fi
+          echo "Committed edit $EDIT"
+
+      # Kept so a rejected or failed upload can be inspected, or retried by hand from
+      # the Play Console without rebuilding. The mapping goes with it: without the
+      # exact mapping.txt of this build, its crash reports can never be read.
+      - name: Stage artifacts
+        if: always()
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          [ -f "$AAB" ] || exit 0
+          cp "$AAB" "$OUT/Funput-$VERSION-$BUILD.aab"
+          sha256sum "$OUT/Funput-$VERSION-$BUILD.aab" | awk '{print $1}' \
+            > "$OUT/Funput-$VERSION-$BUILD.aab.sha256"
+          cp app/build/outputs/mapping/release/mapping.txt \
+            "$OUT/mapping-$VERSION-$BUILD.txt" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: android
+          path: ${{ runner.temp }}/out
+          if-no-files-found: ignore
+
+      - name: Remove credentials from the runner
+        if: always()
+        run: |
+          rm -f keystore.properties
+          rm -f "$RUNNER_TEMP/upload-keystore.jks" "$RUNNER_TEMP/play-sa.json" "$RUNNER_TEMP/play-key.pem"
+
+      - name: Summary
+        if: success()
+        env:
+          VERSION: ${{ inputs.version }}
+          TRACK: ${{ inputs.track }}
+        run: |
+          {
+            echo "### Funput Android $VERSION (version code $BUILD)"
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "Built and signed; **not** uploaded (dry run)."
+            else
+              echo "Uploaded to Google Play on the **$TRACK** track. Play processes the"
+              echo "bundle for a few minutes, then it appears for testers."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
