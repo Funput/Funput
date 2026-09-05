@@ -42,6 +42,11 @@ gpg --armor --export-secret-keys hello@funput.app
 Settings → Secrets and variables → Actions:
 - `GPG_PRIVATE_KEY` — toàn bộ khối `-----BEGIN PGP PRIVATE KEY BLOCK----- … END …`.
 - `GPG_PASSPHRASE` — mật khẩu của khóa trên.
+- `RELEASE_TOKEN` — PAT có quyền **`contents: write`** trên chính repo này (fine-grained:
+  Repository access = repo này, Contents = Read and write). `release.yml` dùng nó để bắn
+  `repository_dispatch` gọi workflow này sau mỗi bản release chính thức; GitHub không kích
+  hoạt workflow từ sự kiện do `GITHUB_TOKEN` mặc định tạo ra nên phải là PAT. Thiếu secret
+  thì release vẫn ra bình thường, chỉ là kho phải chạy tay (mục 4).
 
 ### 3. Bật GitHub Pages + custom domain `repo.funput.app`
 Kho phục vụ dưới thương hiệu funput.app qua subdomain riêng (tách hẳn site marketing —
@@ -56,7 +61,11 @@ Kho phục vụ dưới thương hiệu funput.app qua subdomain riêng (tách h
 cuối**); workflow tự suy host cho `CNAME` từ đó. Không đặt thì mặc định `https://repo.funput.app/`.
 
 ### 4. Chạy
-Tự chạy khi release `released`. Chạy tay: Actions → **Publish package repo** → Run workflow.
+Tự chạy sau mỗi bản release chính thức: job `repo` trong `release.yml` bắn
+`repository_dispatch` (kèm tag vừa phát hành) ngay khi release được publish. Release publish
+bằng tay trong web UI thì sự kiện `released` cũng kích hoạt workflow này. Chạy tay:
+Actions → **Publish package repo** → Run workflow (khi đó workflow tự lấy tag của
+`releases/latest`).
 Xong, trang cài đặt nằm ở URL Pages (xem mục cuối `index.html.in` để biết các lệnh người dùng).
 
 ## Hoạt động thế nào (tóm tắt)
