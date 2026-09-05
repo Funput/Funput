@@ -10,14 +10,18 @@ name: Publish package repo
 #   - Settings → Pages → Source = GitHub Actions.
 #   - Secrets GPG_PRIVATE_KEY (ASCII-armored private key) and GPG_PASSPHRASE.
 #     The key's uid must be `Funput <hello@funput.app>` (matches %_gpg_name below).
+#
+# Every trigger below runs on the default branch, and that is a requirement, not a
+# coincidence: the `github-pages` environment allows deployments from `main` alone.
+# A run at any other ref builds all three repositories and is then rejected at
+# `deploy`. `on: release: [released]` was exactly that — a release event always sits
+# at `refs/tags/v*` — so the one time it ever fired (v1.2026.75) it rebuilt all three
+# and was refused at the last step. It is gone; release.yml's `repo` job dispatches
+# this workflow instead, and every path in still lands on `main`.
 on:
-  release:
-    types: [released]   # a release published by hand, in the web UI
-  # How a *CI* release gets here. The `release` event above never fires for one:
-  # GitHub starts no workflow run for an event created by the default GITHUB_TOKEN,
-  # and release.yml publishes with that token so the release itself never depends on
-  # a PAT. Its `repo` job dispatches this workflow explicitly instead, passing the
-  # tag it just published.
+  # How a release gets here. release.yml publishes with the default GITHUB_TOKEN, and
+  # GitHub starts no workflow run for an event that token creates, so the dispatch is
+  # also what makes this run at all. It carries the tag it just published.
   repository_dispatch:
     types: [publish-repo]
   # Fortnightly, for the pacman repo alone. Its packages are binaries on a rolling
@@ -64,7 +68,7 @@ jobs:
       - name: Download .deb assets from the release
         env:
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.event.release.tag_name || github.event.client_payload.tag }}
+          TAG: ${{ github.event.client_payload.tag }}
         run: |
           set -euo pipefail
           mkdir -p tree/deb
@@ -119,7 +123,7 @@ jobs:
       - name: Download .rpm assets from the release
         env:
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.event.release.tag_name || github.event.client_payload.tag }}
+          TAG: ${{ github.event.client_payload.tag }}
         run: |
           set -euo pipefail
           mkdir -p tree/rpm
@@ -192,7 +196,7 @@ jobs:
       - name: Build the packages from the Arch recipe
         env:
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.event.release.tag_name || github.event.client_payload.tag }}
+          TAG: ${{ github.event.client_payload.tag }}
         run: |
           set -euo pipefail
           [ -n "$TAG" ] || TAG="$(curl -fsSL "https://api.github.com/repos/$GH_REPO/releases/latest" | jq -r .tag_name)"
