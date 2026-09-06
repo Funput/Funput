@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use tray_icon::Rect;
 
 use super::child::{
-    launch_settings_tab, now_ms, spawn_child, terminate_children, UiKind, UI_PROCESS,
+    UI_PROCESS, UiKind, launch_settings_tab, now_ms, spawn_child, terminate_children,
 };
 use super::control_center;
 use crate::background::tray;

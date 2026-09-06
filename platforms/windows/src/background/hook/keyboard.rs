@@ -5,14 +5,14 @@
 
 use std::sync::atomic::Ordering;
 
-use funput_desktop::{classify, plan_inject, KeyKind};
+use funput_desktop::{KeyKind, classify, plan_inject};
 use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
 use windows::Win32::UI::Input::KeyboardAndMouse::{VIRTUAL_KEY, VK_RETURN};
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
 };
 
-use super::{toggle, FOREGROUND_IS_FUNPUT};
+use super::{FOREGROUND_IS_FUNPUT, toggle};
 use crate::background::hotkey::{self, Hit};
 use crate::background::{inject, keymap};
 use crate::shared::shell;
@@ -23,10 +23,12 @@ pub(super) unsafe extern "system" fn keyboard_proc(
     lparam: LPARAM,
 ) -> LRESULT {
     if code == HC_ACTION as i32 {
-        let kbd = &*(lparam.0 as *const KBDLLHOOKSTRUCT);
+        // SAFETY: HC_ACTION supplies a valid KBDLLHOOKSTRUCT for this callback.
+        let kbd = unsafe { &*(lparam.0 as *const KBDLLHOOKSTRUCT) };
         // Skip the events we ourselves synthesized via SendInput (no re-entrancy).
         if kbd.dwExtraInfo == shell::INJECT_TAG {
-            return CallNextHookEx(None, code, wparam, lparam);
+            // SAFETY: Forward the original callback arguments unchanged.
+            return unsafe { CallNextHookEx(None, code, wparam, lparam) };
         }
         let msg = wparam.0 as u32;
         let down = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
@@ -44,7 +46,8 @@ pub(super) unsafe extern "system" fn keyboard_proc(
             return LRESULT(1); // swallow: do not pass the key to the focused app
         }
     }
-    CallNextHookEx(None, code, wparam, lparam)
+    // SAFETY: Forward the original callback arguments unchanged.
+    unsafe { CallNextHookEx(None, code, wparam, lparam) }
 }
 
 /// Run the hotkey that just matched. Returns false when it was not applicable
@@ -135,8 +138,8 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
         }
         KeyKind::Flush => {
             shell::clear(); // commit what is shown; nav/Enter/Tab/shortcut passes
-                            // Enter starts a new line → arm auto-capitalize (no-op unless the feature
-                            // is on). The engine never sees the newline itself on this path.
+            // Enter starts a new line → arm auto-capitalize (no-op unless the feature
+            // is on). The engine never sees the newline itself on this path.
             if vk == VK_RETURN {
                 shell::arm_capitalization();
             }

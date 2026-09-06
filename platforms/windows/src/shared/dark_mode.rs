@@ -6,8 +6,8 @@
 //! 135) and `FlushMenuThemes` (ordinal 136), the same trick win32-darkmode uses.
 //! muda themes the menu *bar* but explicitly not popups, so we do this ourselves.
 
-use windows::core::PCSTR;
 use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryA};
+use windows::core::PCSTR;
 
 /// Opt the process into dark menus when Windows is in dark mode (and light when
 /// light). Call once at startup, before the tray menu is first shown. No-op on

@@ -9,8 +9,8 @@ mod message;
 
 use slint::ComponentHandle;
 
-use crate::shared::commands;
 use crate::SettingsWindow;
+use crate::shared::commands;
 use funput_config::transfer;
 
 use message::{import_body, shown_path, unikey_body};

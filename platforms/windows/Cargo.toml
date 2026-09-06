@@ -4,7 +4,7 @@
 [package]
 name = "funput-windows"
 version = "1.2026.1"
-edition = "2021"
+edition = "2024"
 description = "Funput for Windows — global keyboard hook + tray + native Slint UI."
 # Stated explicitly: this package is outside the root workspace, so it inherits
 # nothing from [workspace.package] — including the MIT licence every other crate

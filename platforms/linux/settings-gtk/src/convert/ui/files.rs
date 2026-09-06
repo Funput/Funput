@@ -18,7 +18,7 @@ use std::rc::Rc;
 use adw::prelude::*;
 
 use crate::convert::ui::widget;
-use crate::convert::{io, Convert};
+use crate::convert::{Convert, io};
 use funput_convert::View;
 
 /// How many rows to build at once.

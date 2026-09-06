@@ -5,8 +5,8 @@
 
 use std::rc::Rc;
 
-use adw::prelude::*;
 use adw::Application;
+use adw::prelude::*;
 use gtk::{Align, Justification, Orientation};
 
 use crate::settings::Settings;

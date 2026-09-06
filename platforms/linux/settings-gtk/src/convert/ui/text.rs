@@ -18,8 +18,8 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 
-use crate::convert::ui::widget;
 use crate::convert::Convert;
+use crate::convert::ui::widget;
 
 pub(in crate::convert) struct Pane {
     pub(in crate::convert) root: gtk::Box,

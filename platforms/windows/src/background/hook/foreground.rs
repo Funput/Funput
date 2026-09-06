@@ -4,20 +4,20 @@
 //! Funput was composing is stale; and the new app may want a different VI/EN state
 //! (see [`crate::shared::shell`]'s per-app auto-switch).
 
-use std::sync::atomic::Ordering;
 use std::sync::OnceLock;
+use std::sync::atomic::Ordering;
 
-use windows::core::PWSTR;
 use windows::Win32::Foundation::{CloseHandle, HWND};
 use windows::Win32::System::Threading::{
-    OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
+    OpenProcess, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION, QueryFullProcessImageNameW,
 };
 use windows::Win32::UI::Accessibility::HWINEVENTHOOK;
 use windows::Win32::UI::WindowsAndMessaging::{
-    GetClassNameW, GetWindowThreadProcessId, EVENT_SYSTEM_FOREGROUND,
+    EVENT_SYSTEM_FOREGROUND, GetClassNameW, GetWindowThreadProcessId,
 };
+use windows::core::PWSTR;
 
-use super::{toggle, FOREGROUND_IS_FUNPUT};
+use super::{FOREGROUND_IS_FUNPUT, toggle};
 use crate::background::{inject, keymap, tray};
 use crate::shared::shell;
 
@@ -92,36 +92,43 @@ fn own_exe_id() -> &'static String {
 /// [`inject::note_foreground`] recognizes a browser engine without knowing the
 /// browser. Empty when the window is gone or has no class, which reads as "not a
 /// browser" and is the safe answer.
-unsafe fn class_of_window(hwnd: HWND) -> String {
+fn class_of_window(hwnd: HWND) -> String {
     // Class names are capped at 256 characters by `RegisterClass`, so this cannot
     // truncate one that matters.
     let mut buf = [0u16; 257];
-    let len = GetClassNameW(hwnd, &mut buf);
+    // SAFETY: The API receives a writable slice and handles invalid window handles.
+    let len = unsafe { GetClassNameW(hwnd, &mut buf) };
     String::from_utf16_lossy(&buf[..len.max(0) as usize])
 }
 
 /// Resolve a window's owning process to its app id — the lowercased exe file name
 /// (e.g. "code.exe"), which is the key the per-app VI/EN memory uses.
-unsafe fn exe_of_window(hwnd: HWND) -> Option<String> {
+fn exe_of_window(hwnd: HWND) -> Option<String> {
     if hwnd.0.is_null() {
         return None;
     }
     let mut pid = 0u32;
-    GetWindowThreadProcessId(hwnd, Some(&mut pid));
+    // SAFETY: pid is writable; an invalid or expired window returns failure.
+    unsafe { GetWindowThreadProcessId(hwnd, Some(&mut pid)) };
     if pid == 0 {
         return None;
     }
-    let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
+    // SAFETY: Request query access only; failure is propagated without using a handle.
+    let handle = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) }.ok()?;
 
     let mut buf = [0u16; 260];
     let mut len = buf.len() as u32;
-    let res = QueryFullProcessImageNameW(
-        handle,
-        PROCESS_NAME_WIN32,
-        PWSTR(buf.as_mut_ptr()),
-        &mut len,
-    );
-    let _ = CloseHandle(handle);
+    // SAFETY: handle is open and buf has the capacity provided in len.
+    let res = unsafe {
+        QueryFullProcessImageNameW(
+            handle,
+            PROCESS_NAME_WIN32,
+            PWSTR(buf.as_mut_ptr()),
+            &mut len,
+        )
+    };
+    // SAFETY: Release the owned process handle exactly once after its final use.
+    let _ = unsafe { CloseHandle(handle) };
     res.ok()?;
 
     let full = String::from_utf16_lossy(&buf[..len as usize]);

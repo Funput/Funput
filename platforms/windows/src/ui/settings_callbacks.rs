@@ -2,9 +2,9 @@
 
 use slint::ComponentHandle;
 
+use crate::SettingsWindow;
 use crate::shared::commands;
 use crate::ui::recorder;
-use crate::SettingsWindow;
 use funput_config::{FlipHotkey, Hotkey, Method, ToneStyle};
 
 use super::models;

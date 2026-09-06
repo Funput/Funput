@@ -28,7 +28,8 @@ pub(super) unsafe extern "system" fn mouse_proc(
             hotkey::note_other_input();
         }
     }
-    CallNextHookEx(None, code, wparam, lparam)
+    // SAFETY: Forward the original callback arguments unchanged.
+    unsafe { CallNextHookEx(None, code, wparam, lparam) }
 }
 
 /// Mouse messages that reposition the caret and so must flush composition. Move and

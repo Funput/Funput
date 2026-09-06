@@ -7,7 +7,7 @@
 
 use std::path::{Path, PathBuf};
 
-use funput_config::settings::path::{dir_is_writable, resolve, FILE};
+use funput_config::settings::path::{FILE, dir_is_writable, resolve};
 
 fn appdata_settings() -> Option<PathBuf> {
     dirs::config_dir().map(|directory| directory.join("Funput").join(FILE))

@@ -20,8 +20,8 @@ use windows::Win32::Foundation::HINSTANCE;
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::Accessibility::SetWinEventHook;
 use windows::Win32::UI::WindowsAndMessaging::{
-    DispatchMessageW, PeekMessageW, PostQuitMessage, SetWindowsHookExW, TranslateMessage,
-    EVENT_SYSTEM_FOREGROUND, MSG, PM_REMOVE, WH_KEYBOARD_LL, WH_MOUSE_LL, WINEVENT_OUTOFCONTEXT,
+    DispatchMessageW, EVENT_SYSTEM_FOREGROUND, MSG, PM_REMOVE, PeekMessageW, PostQuitMessage,
+    SetWindowsHookExW, TranslateMessage, WH_KEYBOARD_LL, WH_MOUSE_LL, WINEVENT_OUTOFCONTEXT,
     WM_QUIT,
 };
 

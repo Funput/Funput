@@ -24,7 +24,7 @@ use slint::{ComponentHandle, ModelRc, VecModel};
 use crate::ui::{mica, system_accent};
 use crate::{ConvertWindow, Theme};
 
-use view::{ask, current, edit, WINDOW};
+use view::{WINDOW, ask, current, edit};
 
 /// How many rows to build at once.
 ///

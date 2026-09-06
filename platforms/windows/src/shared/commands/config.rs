@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use funput_config::transfer::{
-    self, ConfigDocument, ConfigError, ImportSummary, Source, SCHEMA_ID,
+    self, ConfigDocument, ConfigError, ImportSummary, SCHEMA_ID, Source,
 };
 use funput_config::unikey::{self, MacroError};
 use funput_core::charset::Charset;

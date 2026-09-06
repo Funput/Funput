@@ -1,8 +1,8 @@
 use crate::settings::{Method, Settings, Shortcut};
 
 use super::document::{
-    ConfigDocument, ImportSummary, LinuxBlock, Platform, PortableShortcut, Preferences, Source,
-    CURRENT_VERSION, SCHEMA_ID,
+    CURRENT_VERSION, ConfigDocument, ImportSummary, LinuxBlock, Platform, PortableShortcut,
+    Preferences, SCHEMA_ID, Source,
 };
 use super::mapping::{
     flip_from_key, flip_key, hotkey_from_key, hotkey_key, tone_from_key, tone_key,

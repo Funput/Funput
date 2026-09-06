@@ -3,12 +3,12 @@
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
-use adw::prelude::*;
 use adw::Application;
+use adw::prelude::*;
 use funput_convert::Session;
 use gtk::glib;
 
-use super::{io, ui, Convert};
+use super::{Convert, io, ui};
 
 thread_local! {
     /// The open window, or nothing.

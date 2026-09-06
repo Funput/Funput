@@ -6,14 +6,14 @@
 use std::sync::OnceLock;
 use std::time::Duration;
 
-use windows::core::w;
 use windows::Win32::Foundation::{
-    CloseHandle, GetLastError, ERROR_ALREADY_EXISTS, HANDLE, WAIT_OBJECT_0,
+    CloseHandle, ERROR_ALREADY_EXISTS, GetLastError, HANDLE, WAIT_OBJECT_0,
 };
 use windows::Win32::System::Threading::{
-    CreateEventW, CreateMutexW, OpenEventW, ResetEvent, SetEvent, WaitForSingleObject,
-    EVENT_MODIFY_STATE, INFINITE,
+    CreateEventW, CreateMutexW, EVENT_MODIFY_STATE, INFINITE, OpenEventW, ResetEvent, SetEvent,
+    WaitForSingleObject,
 };
+use windows::core::w;
 
 const MUTEX_NAME: windows::core::PCWSTR = w!("Local\\Funput.SingleInstance");
 const EVENT_NAME: windows::core::PCWSTR = w!("Local\\Funput.ActivateSettings");
@@ -59,19 +59,22 @@ pub fn claim() -> bool {
 /// Wake the primary instance so it opens Settings (second-launch path).
 pub fn signal_activate() {
     for _ in 0..2 {
-        if unsafe { try_signal() } {
+        if try_signal() {
             return;
         }
         std::thread::sleep(Duration::from_millis(50));
     }
 }
 
-unsafe fn try_signal() -> bool {
-    let Ok(event) = OpenEventW(EVENT_MODIFY_STATE, false, EVENT_NAME) else {
+fn try_signal() -> bool {
+    // SAFETY: EVENT_NAME is a static, null-terminated string.
+    let Ok(event) = (unsafe { OpenEventW(EVENT_MODIFY_STATE, false, EVENT_NAME) }) else {
         return false;
     };
-    let ok = SetEvent(event).is_ok();
-    let _ = CloseHandle(event);
+    // SAFETY: OpenEventW returned an owned handle that remains open until below.
+    let ok = unsafe { SetEvent(event) }.is_ok();
+    // SAFETY: Close the owned handle exactly once after its final use.
+    let _ = unsafe { CloseHandle(event) };
     ok
 }
 
