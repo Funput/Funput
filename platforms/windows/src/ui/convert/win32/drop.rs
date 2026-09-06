@@ -11,7 +11,7 @@ use std::path::PathBuf;
 
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::UI::Shell::{
-    DefSubclassProc, DragAcceptFiles, DragFinish, DragQueryFileW, HDROP, SetWindowSubclass,
+    DefSubclassProc, DragAcceptFiles, DragFinish, DragQueryFileW, SetWindowSubclass, HDROP,
 };
 use windows::Win32::UI::WindowsAndMessaging::WM_DROPFILES;
 

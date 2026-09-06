@@ -9,7 +9,7 @@ use windows::Win32::Foundation::{HANDLE, HGLOBAL};
 use windows::Win32::System::DataExchange::{
     CloseClipboard, EmptyClipboard, GetClipboardData, OpenClipboard, SetClipboardData,
 };
-use windows::Win32::System::Memory::{GHND, GlobalAlloc, GlobalLock, GlobalUnlock};
+use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GHND};
 use windows::Win32::System::Ole::CF_UNICODETEXT;
 
 /// Replace the clipboard with `text`. Silently does nothing if Windows refuses —
@@ -90,7 +90,9 @@ unsafe fn read_open() -> Option<String> {
     // SAFETY: `CF_UNICODETEXT` is NUL-terminated UTF-16 by definition of the format.
     let text = unsafe { wide_string(source.cast::<u16>()) };
     // SAFETY: paired with the lock above.
-    unsafe { let _ = GlobalUnlock(block); }
+    unsafe {
+        let _ = GlobalUnlock(block);
+    }
     Some(text)
 }
 
