@@ -256,6 +256,10 @@ Thứ thật sự khác nhau giữa hai shell chỉ là preedit tới client b�
 nó khi mất focus** — Fcitx5 dùng `setClientPreedit` cộng watcher focus-out, IBus dùng
 `IBUS_ENGINE_PREEDIT_COMMIT`. Cả hai đều có chú thích tại chỗ.
 
+> [!TIP]
+> Shell Fcitx5 có README riêng: [`fcitx5/README.md`](fcitx5/README.md) — panel preedit, allowlist
+> client tự giấu preedit, biến môi trường theo session, và các đường dẫn cài đặt của addon.
+
 Mô hình này giống hệt các nền tảng desktop khác: `crates/funput-desktop/src/key.rs` là đúng cái
 classifier ấy cho shell hook trên Windows, và `inject.rs` của nó là đúng cái tách bạch “core trả
 về kế hoạch, shell thi hành”.
