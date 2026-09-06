@@ -74,10 +74,10 @@ fn watch_focus_loss(weak: Weak<ControlCenterWindow>) {
             armed.set(true);
             window.window().on_winit_window_event(move |_, event| {
                 use slint::winit_030::winit::event::WindowEvent;
-                if let WindowEvent::Focused(false) = event {
-                    if armed.get() {
-                        request_exit(EXIT_DISMISS);
-                    }
+                if let WindowEvent::Focused(false) = event
+                    && armed.get()
+                {
+                    request_exit(EXIT_DISMISS);
                 }
                 EventResult::Propagate
             });

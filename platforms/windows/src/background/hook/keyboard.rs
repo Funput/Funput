@@ -94,10 +94,10 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
         toggle::defer_notify();
     }
 
-    if let Some(hit) = hotkey::on_keydown(vk, mods) {
-        if fire(hit) {
-            return true;
-        }
+    if let Some(hit) = hotkey::on_keydown(vk, mods)
+        && fire(hit)
+    {
+        return true;
     }
 
     if !shell::enabled() {
