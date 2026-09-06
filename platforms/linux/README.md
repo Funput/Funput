@@ -101,15 +101,41 @@ Three channels, all fed by the same release:
   `packaging/repo/README.md`.
 - **GitHub Releases** — the `.deb`/`.rpm` themselves, plus the portable `.tar.gz`
   trees behind `install.sh --user`.
-- **`install.sh`** — detect-then-configure front end over the two above.
+- **`install.sh`** — detect-then-configure front end over the two above. It is published
+  as a `curl … | bash` one-liner, which is a lot of trust to ask for, so it prints its plan
+  before it acts, `--dry-run` prints every command and runs none, and each asset it takes
+  from GitHub Releases is checked against the SHA-256 digest the release API publishes for
+  it — the releases carry no `.sha256` files, so a hand-verified checksum was never actually
+  on offer. `ci.yml`'s `installer-scripts` job parses and shellchecks it on every pull
+  request; before that job existed nothing looked at it at all, and a syntax error on a
+  branch only Fedora reaches would have shipped.
+
+`install.sh` installs the **Fcitx5** package on every desktop; `--ibus` picks the IBus one.
+It used to guess from `XDG_CURRENT_DESKTOP` (KDE → Fcitx5, everything else → IBus), which
+handed most users the shell that cannot reach a WPS-shaped client at all. The desktop still
+decides one thing, but only what the script *prints*: outside KDE the session is wired to
+IBus, so Fcitx5 receives nothing until the user sets the variables below and logs out — the
+script says so before it installs, and prints them again after.
 
 Funput does not set `GTK_IM_MODULE` / `QT_IM_MODULE` for the user. Those belong to
-Fcitx5's session, and they differ by desktop — see
-[Using Fcitx 5 on Wayland](https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland).
-`install.sh` and the repo landing page print the same split: **GNOME** wants
-`XMODIFIERS=@im=fcitx` and `QT_IM_MODULE=fcitx` (leave `GTK_IM_MODULE` unset);
-**KDE** wants only `XMODIFIERS=@im=fcitx` and must not set the IM_MODULE trio
-globally. Put them in `~/.config/environment.d/fcitx5.conf` and log out.
+the session, not to us, and what is correct depends on the **session type first**:
+the classic `XMODIFIERS` + `GTK_IM_MODULE` + `QT_IM_MODULE` trio is right under X11
+and wrong under Wayland, where GTK 3/4 reach the compositor through text-input-v3
+themselves and the trio set globally makes KWin blink the candidate window. Under
+Wayland the desktop then decides: **GNOME** (and sway) wants `XMODIFIERS=@im=fcitx`
+plus `QT_IM_MODULE=fcitx` — or `QT_IM_MODULES=wayland;fcitx` on Qt 6.8.2+ — with
+`GTK_IM_MODULE` left unset; **KDE** wants `XMODIFIERS=@im=fcitx` alone. `install.sh`
+reads `$XDG_SESSION_TYPE` and prints only the block that applies, the docs carry the
+full matrix, and both name the distro tools that own this on Debian/Ubuntu
+(`im-config`, which does nothing in a Wayland session — its hook ships disabled) and
+Fedora (`fcitx5-autostart`). Sources:
+[Using Fcitx 5 on Wayland](https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland),
+[Setup Fcitx 5](https://fcitx-im.org/wiki/Setup_Fcitx_5).
+
+One thing that follows for the shells rather than the docs: on KDE, Fcitx5 is started
+by KWin's Virtual Keyboard KCM and handed a socket a replacement process cannot
+inherit, so `fcitx5 -r` breaks input for Wayland clients until the next login. Every
+place that suggested restarting the daemon now says so.
 
 Arch is inside the first of those rather than a channel of its own. It has no release
 asset — a rolling source distro has no use for a `.deb` or `.rpm` — so the `pacman` job

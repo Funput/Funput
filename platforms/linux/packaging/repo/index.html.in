@@ -107,14 +107,15 @@
 
   <div class="pick">
     <div class="opt">
-      <span class="badge ibus">IBus</span>
-      <b style="margin-top:.4rem">GNOME / Ubuntu mặc định</b>
-      <small>Cài sẵn trên hầu hết desktop. Gói <code class="inline">funput-ibus</code>.</small>
+      <span class="badge fcitx">Fcitx5</span>
+      <b style="margin-top:.4rem">Khuyến nghị cho mọi desktop</b>
+      <small>Bản đầy đủ hơn. Gói <code class="inline">funput</code>. Ngoài KDE thì cần
+      <a href="#session">nối session</a> rồi đăng xuất.</small>
     </div>
     <div class="opt">
-      <span class="badge fcitx">Fcitx5</span>
-      <b style="margin-top:.4rem">KDE, hoặc muốn đầy đủ tính năng</b>
-      <small>Gói <code class="inline">funput</code>.</small>
+      <span class="badge ibus">IBus</span>
+      <b style="margin-top:.4rem">Đang dùng IBus sẵn (GNOME / Ubuntu)</b>
+      <small>Không phải đổi session. Gói <code class="inline">funput-ibus</code>.</small>
     </div>
   </div>
 
@@ -136,12 +137,12 @@ sudo apt update</code></pre></div>
     <div class="step">2 · Cài đặt</div>
     <div class="grid">
       <div>
-        <div class="lbl"><span class="badge ibus">IBus</span></div>
-        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo apt install funput-ibus</code></pre></div>
+        <div class="lbl"><span class="badge fcitx">Fcitx5</span> <small style="color:var(--muted)">khuyến nghị</small></div>
+        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo apt install funput</code></pre></div>
       </div>
       <div>
-        <div class="lbl"><span class="badge fcitx">Fcitx5</span></div>
-        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo apt install funput</code></pre></div>
+        <div class="lbl"><span class="badge ibus">IBus</span></div>
+        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo apt install funput-ibus</code></pre></div>
       </div>
     </div>
   </div>
@@ -156,12 +157,12 @@ sudo apt update</code></pre></div>
     <div class="step">2 · Cài đặt</div>
     <div class="grid">
       <div>
-        <div class="lbl"><span class="badge ibus">IBus</span></div>
-        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo dnf install funput-ibus</code></pre></div>
+        <div class="lbl"><span class="badge fcitx">Fcitx5</span> <small style="color:var(--muted)">khuyến nghị</small></div>
+        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo dnf install funput</code></pre></div>
       </div>
       <div>
-        <div class="lbl"><span class="badge fcitx">Fcitx5</span></div>
-        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo dnf install funput</code></pre></div>
+        <div class="lbl"><span class="badge ibus">IBus</span></div>
+        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo dnf install funput-ibus</code></pre></div>
       </div>
     </div>
   </div>
@@ -178,12 +179,12 @@ sudo zypper refresh</code></pre></div>
     <div class="step">2 · Cài đặt</div>
     <div class="grid">
       <div>
-        <div class="lbl"><span class="badge ibus">IBus</span></div>
-        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo zypper install funput-ibus</code></pre></div>
+        <div class="lbl"><span class="badge fcitx">Fcitx5</span> <small style="color:var(--muted)">khuyến nghị</small></div>
+        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo zypper install funput</code></pre></div>
       </div>
       <div>
-        <div class="lbl"><span class="badge fcitx">Fcitx5</span></div>
-        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo zypper install funput</code></pre></div>
+        <div class="lbl"><span class="badge ibus">IBus</span></div>
+        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo zypper install funput-ibus</code></pre></div>
       </div>
     </div>
   </div>
@@ -207,12 +208,12 @@ sudo pacman -Sy</code></pre></div>
     <div class="step">3 · Cài đặt</div>
     <div class="grid">
       <div>
-        <div class="lbl"><span class="badge ibus">IBus</span></div>
-        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo pacman -S funput-ibus</code></pre></div>
+        <div class="lbl"><span class="badge fcitx">Fcitx5</span> <small style="color:var(--muted)">khuyến nghị</small></div>
+        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo pacman -S funput</code></pre></div>
       </div>
       <div>
-        <div class="lbl"><span class="badge fcitx">Fcitx5</span></div>
-        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo pacman -S funput</code></pre></div>
+        <div class="lbl"><span class="badge ibus">IBus</span></div>
+        <div class="cmd"><button class="copy">Copy</button><pre><code>sudo pacman -S funput-ibus</code></pre></div>
       </div>
     </div>
 
@@ -223,33 +224,52 @@ sudo pacman -Sy</code></pre></div>
   </div>
 
   <div class="note">
-    <b>Sau khi cài:</b> <span class="badge ibus">IBus</span> chạy <code class="inline">ibus restart</code>
+    <b>Sau khi cài:</b> <span class="badge fcitx">Fcitx5</span> đặt biến môi trường bên dưới,
+    đăng xuất, rồi mở <code class="inline">fcitx5-configtool</code> → thêm <b>Funput</b> (nhóm Vietnamese).
+    <span class="badge ibus">IBus</span> chạy <code class="inline">ibus restart</code>
     rồi <b>Settings → Keyboard → Input Sources → + → Vietnamese → Funput</b>.
-    <span class="badge fcitx">Fcitx5</span> mở <code class="inline">fcitx5-configtool</code> → thêm
-    <b>Funput</b> (nhóm Vietnamese). Mở <b>Funput</b> trong menu ứng dụng để chỉnh Telex/VNI.
+    Mở <b>Funput</b> trong menu ứng dụng để chỉnh Telex/VNI.
   </div>
 
   <div class="card">
-    <h2><span class="badge fcitx">Fcitx5</span> Biến môi trường (Wayland)</h2>
+    <h2 id="session"><span class="badge fcitx">Fcitx5</span> Biến môi trường session</h2>
     <p style="color:var(--muted);margin:0 0 1rem;font-size:.95rem">
       Funput là engine trong Fcitx5 — app chỉ gõ được nếu session đã nối đúng Fcitx5.
-      Cấu hình theo <b>desktop</b>, không copy một khối <code class="inline">GTK_IM_MODULE</code> cho mọi máy.
-      Nguồn: <a href="https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland">Fcitx 5 on Wayland</a>.
+      Đặt biến nào phụ thuộc <b>loại session trước, desktop sau</b> — kiểm tra bằng
+      <code class="inline">echo $XDG_SESSION_TYPE</code>. Đừng copy chung một khối
+      <code class="inline">GTK_IM_MODULE</code> cho mọi máy. Nguồn:
+      <a href="https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland">Fcitx 5 on Wayland</a>,
+      <a href="https://fcitx-im.org/wiki/Setup_Fcitx_5">Setup Fcitx 5</a>.
       Ghi vào <code class="inline">~/.config/environment.d/fcitx5.conf</code> rồi đăng xuất.
     </p>
 
-    <div class="step">GNOME</div>
+    <div class="step">X11 (mọi desktop)</div>
+    <div class="cmd"><button class="copy">Copy</button><pre><code>mkdir -p ~/.config/environment.d
+cat &gt; ~/.config/environment.d/fcitx5.conf &lt;&lt;'EOF'
+XMODIFIERS=@im=fcitx
+GTK_IM_MODULE=fcitx
+QT_IM_MODULE=fcitx
+EOF</code></pre></div>
+    <p style="color:var(--muted);font-size:.9rem;margin:.35rem 0 0">
+      Trên Debian/Ubuntu dùng <code class="inline">im-config -n fcitx5</code> thay cho khối này —
+      nó ghi đúng bộ trên và khởi động daemon. Fedora có gói
+      <code class="inline">fcitx5-autostart</code>.
+    </p>
+
+    <div class="step">GNOME (Wayland) — và sway, wlroots</div>
     <div class="cmd"><button class="copy">Copy</button><pre><code>mkdir -p ~/.config/environment.d
 cat &gt; ~/.config/environment.d/fcitx5.conf &lt;&lt;'EOF'
 XMODIFIERS=@im=fcitx
 QT_IM_MODULE=fcitx
 EOF</code></pre></div>
     <p style="color:var(--muted);font-size:.9rem;margin:.35rem 0 0">
-      Để trống <code class="inline">GTK_IM_MODULE</code> — GNOME đi frontend IBus của Fcitx5.
-      App Qt/XWayland (WPS, …) cần <code class="inline">QT_IM_MODULE=fcitx</code>.
+      Để trống <code class="inline">GTK_IM_MODULE</code> — GTK 3/4 đã đi thẳng
+      <code class="inline">text-input-v3</code>. Dòng <code class="inline">QT_IM_MODULE</code> là cho
+      Qt 5 và Qt cũ hơn 6.8.2 (chạy qua XWayland); từ <b>Qt 6.8.2</b> trở lên dùng
+      <code class="inline">QT_IM_MODULES=wayland;fcitx</code> thay cho nó.
     </p>
 
-    <div class="step">KDE Plasma</div>
+    <div class="step">KDE Plasma (Wayland, 5.27+)</div>
     <div class="cmd"><button class="copy">Copy</button><pre><code>mkdir -p ~/.config/environment.d
 cat &gt; ~/.config/environment.d/fcitx5.conf &lt;&lt;'EOF'
 XMODIFIERS=@im=fcitx
@@ -258,7 +278,10 @@ EOF</code></pre></div>
       <b>Không</b> set global <code class="inline">GTK_IM_MODULE</code> /
       <code class="inline">QT_IM_MODULE</code> /
       <code class="inline">SDL_IM_MODULE</code> — candidate window sẽ nhấp nháy trên KWin.
-      Bật Fcitx5 ở System Settings → Virtual keyboard.
+      Ứng dụng riêng lẻ cần thì đặt riêng: <code class="inline">env QT_IM_MODULE=fcitx wps</code>.
+      Bật Fcitx5 ở System Settings → Virtual keyboard, và <b>đừng restart</b> nó
+      (<code class="inline">fcitx5 -r</code> hay menu tray) — KWin trao socket mà tiến trình
+      mới không kế thừa được; hãy đăng xuất.
     </p>
   </div>
 
