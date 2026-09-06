@@ -13,7 +13,7 @@ public struct EmojiRecent: Codable, Equatable, Sendable {
 }
 
 public struct EmojiRecentsStore {
-    public static let limit = 30
+    public static let limit = 8
     private let defaults: UserDefaults
     private let key: String
 

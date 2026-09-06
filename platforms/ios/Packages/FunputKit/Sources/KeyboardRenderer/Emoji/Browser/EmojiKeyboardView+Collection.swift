@@ -1,7 +1,7 @@
 #if canImport(UIKit)
 import UIKit
 
-extension EmojiKeyboardView: UICollectionViewDataSource, UICollectionViewDelegate {
+extension EmojiKeyboardView: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     public func numberOfSections(in collectionView: UICollectionView) -> Int {
         sections.count
     }
@@ -43,10 +43,20 @@ extension EmojiKeyboardView: UICollectionViewDataSource, UICollectionViewDelegat
         let section = sections[indexPath.section]
         let item = section.items[indexPath.item]
         if section.category == .recent {
+            freezesRecents = true
             (onRecentEmojiSelected ?? onEmojiSelected)?(item)
         } else {
             onEmojiSelected?(item)
         }
+    }
+
+    public func collectionView(
+        _ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout,
+        sizeForItemAt indexPath: IndexPath
+    ) -> CGSize {
+        let width = sections[indexPath.section].category == .recent
+            ? min(44, max(1, floor((collectionView.bounds.width - 16) / CGFloat(Self.recentLimit)))) : 44
+        return CGSize(width: width, height: 44)
     }
 
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {

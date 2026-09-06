@@ -18,6 +18,10 @@ public final class EmojiKeyboardView: UIView {
     let searchResults = EmojiSearchResultsView()
     let searchKeyboard = KeyboardSurfaceView()
     var sections: [(category: EmojiCategory, items: [EmojiItem])] = []
+    static let recentLimit = 8
+    var latestRecents: [EmojiItem] = []
+    // Keep tap targets stable while retaining the latest history for the next visit.
+    var freezesRecents = false
     var selectedCategory = EmojiCategory.smileysPeople
     var presentation = KeyboardPresentation()
     var searchState = EmojiSearchState.browsing
@@ -51,6 +55,8 @@ public final class EmojiKeyboardView: UIView {
     }
 
     public func reset() {
+        freezesRecents = false
+        reload(recent: latestRecents)
         resetSearch()
     }
 

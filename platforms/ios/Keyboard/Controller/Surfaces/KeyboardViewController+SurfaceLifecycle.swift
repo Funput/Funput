@@ -1,3 +1,4 @@
+import KeyboardRenderer
 import UIKit
 
 extension KeyboardViewController {
@@ -14,6 +15,9 @@ extension KeyboardViewController {
     }
 
     func switchSurface(to surface: KeyboardSurface) {
+        if displayedSurface == .emoji, surface != .emoji {
+            emojiView?.reset()
+        }
         displayedSurface = surface
         keyboardView.isHidden = surface != .funput
         emojiView?.isHidden = surface != .emoji
