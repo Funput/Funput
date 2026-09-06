@@ -1,4 +1,5 @@
 #if os(iOS) && canImport(FunputCore)
+import Foundation
 import Testing
 import FunputShared
 import KeyboardInput
@@ -42,14 +43,35 @@ struct KeyboardInputConfigurationTests {
         #expect(document.text == "as")
     }
 
-    @Test("Default configuration keeps traditional tone placement")
-    func defaultUsesTraditionalTone() {
+    @Test("Default configuration uses modern tone placement")
+    func defaultUsesModernTone() {
         let coordinator = KeyboardInputCoordinator()
         coordinator.apply(.default)
         let document = TestKeyboardWriter()
         type("hoa", with: coordinator, into: document)
         type("2", role: .vniModifier, with: coordinator, into: document)
-        #expect(document.text == "hòa") // traditional; the modern style would yield "hoà"
+        #expect(document.text == "hoà")
+    }
+
+    @Test("Explicit tone style controls placement", arguments: [ToneStyleOption.traditional, .modern])
+    func explicitToneStyle(style: ToneStyleOption) {
+        let coordinator = KeyboardInputCoordinator()
+        coordinator.apply(FunputConfiguration(inputMethod: .vni, toneStyle: style))
+        let document = TestKeyboardWriter()
+        type("hoa", with: coordinator, into: document)
+        type("2", role: .vniModifier, with: coordinator, into: document)
+        #expect(document.text == (style == .traditional ? "hòa" : "hoà"))
+    }
+
+    @Test("Legacy configuration without tone style keeps traditional placement")
+    func legacyUsesTraditionalTone() throws {
+        let configuration = try JSONDecoder().decode(FunputConfiguration.self, from: Data("{}".utf8))
+        let coordinator = KeyboardInputCoordinator()
+        coordinator.apply(configuration)
+        let document = TestKeyboardWriter()
+        type("hoa", with: coordinator, into: document)
+        type("2", role: .vniModifier, with: coordinator, into: document)
+        #expect(document.text == "hòa")
     }
 }
 #endif
