@@ -4,6 +4,14 @@ import android.view.KeyEvent
 import android.view.inputmethod.InputConnection
 
 /**
+ * True when [CommittedBufferWriter.replace] has to delete before it commits, so the
+ * document passes through a state that holds neither buffer.
+ */
+internal fun deletesBeforeCommit(previous: String, replacement: String): Boolean =
+    previous.isNotEmpty() && replacement.isNotEmpty() &&
+        !replacement.startsWith(previous) && !previous.startsWith(replacement)
+
+/**
  * Writes the engine buffer into editors that cannot host composing spans.
  *
  * Prefer appending/shrinking the committed prefix so broken hosts that ignore
