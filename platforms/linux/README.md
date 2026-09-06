@@ -32,6 +32,7 @@ common/                 Framework-free C++ shared by both shells
 fcitx5/src/             Fcitx5 addon -> libfunput.so
   funput_input.cpp        One keystroke: normalize, ask the composer
   funput_client.cpp       Talking to the client, both directions
+  hidden_preedit.cpp      Clients that hide the client preedit (allowlist)
 ibus/src/               IBus engine -> ibus-engine-funput
   engine.h                The public GObject type
   engine/                 internal.h, object.cpp, callbacks.cpp, client.cpp
@@ -101,6 +102,15 @@ Three channels, all fed by the same release:
 - **GitHub Releases** — the `.deb`/`.rpm` themselves, plus the portable `.tar.gz`
   trees behind `install.sh --user`.
 - **`install.sh`** — detect-then-configure front end over the two above.
+
+Funput does not set `GTK_IM_MODULE` / `QT_IM_MODULE` for the user. Those belong to
+Fcitx5's session, and they differ by desktop — see
+[Using Fcitx 5 on Wayland](https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland).
+`install.sh` and the repo landing page print the same split: **GNOME** wants
+`XMODIFIERS=@im=fcitx` and `QT_IM_MODULE=fcitx` (leave `GTK_IM_MODULE` unset);
+**KDE** wants only `XMODIFIERS=@im=fcitx` and must not set the IM_MODULE trio
+globally. Put them in `~/.config/environment.d/fcitx5.conf` and log out.
+
 Arch is inside the first of those rather than a channel of its own. It has no release
 asset — a rolling source distro has no use for a `.deb` or `.rpm` — so the `pacman` job
 in `publish-repo.yml` *builds* it, from `packaging/arch/PKGBUILD.in`, and serves the
@@ -292,7 +302,7 @@ reasoned rather than measured.
 
 ### On the IBus side
 
-Three API facts, each of which cost several rounds to find, and none of which the
+Four API facts, each of which cost several rounds to find, and none of which the
 headers tell you:
 
 - **Registering for surrounding text is per input context, not per engine.** IBus
@@ -301,6 +311,24 @@ headers tell you:
   engine that only asks there receives nothing for the rest of the session. It has to
   be asked again on every focus-in. Until that was found, non-preedit had never once
   engaged on IBus, while looking as though it had.
+- **But asking is not what makes it arrive — the daemon deduplicates.**
+  `bus_engine_proxy_set_surrounding_text()` calls down to the engine only when the
+  text, the cursor or the anchor differs from what it last forwarded. That cache sits
+  on the engine *proxy*, is seeded with `("", 0, 0)`, and is never cleared on focus
+  change — only when the proxy is destroyed. So a client that answers with an empty
+  string is invisible to the engine no matter how often it is asked. WPS Office is
+  exactly that client: its editor does not implement `Qt::ImSurroundingText`, so Qt
+  answers every request with `("", 0, 0)`, which is precisely the seed value, and
+  `set_surrounding_text` never fires once — while `SetSurroundingText` lands on the
+  daemon sixteen times in a minute. Reading the count on the client side and calling
+  it support is the trap; the payload is the fact.
+
+  The same cache makes `focusIn()` clearing `sawSurroundingText` a latent bug: the
+  daemon will not repeat itself for a new focus, so once cleared the flag can only
+  return if the document *changes*. The repair belongs on the clearing side, not the
+  asking side — re-asking was tried and moved nothing. Left undone: no client here
+  shows the symptom, and guessing at a fix for one is how the capability flags got
+  trusted the first time.
 - **Reading it back does not work.** `ibus_engine_get_surrounding_text()` returns a
   null text immediately after the client has sent a perfectly good string. The only
   reliable copy is the one arriving in the `set_surrounding_text` vfunc, so the engine
@@ -327,6 +355,16 @@ client reported cursor 4 for `phủ ` (five bytes) and 3 for `phủ` (four).
   through `zwp_text_input_v3`; the same session shows preedit working normally in other
   apps, so this is Chrome's end and nothing in Funput can reach it. **Non-preedit is
   the answer for Chrome**, which is the shape the mode was built for.
+- **WPS Office paints no client preedit.** It advertises the Preedit capability, so
+  the Fcitx5 panel preedit was also skipped, and the composing word stayed invisible
+  until Space (or another commit). Non-preedit cannot run: WPS does not implement
+  `Qt::ImSurroundingText`, and forcing a delete-then-commit repair mangles the text
+  (`nguyen64` coming back `nguyenênễn`). The Fcitx5 shell therefore draws the panel
+  preedit for any basename on the allowlist in `hidden_preedit.cpp` (`wps`, `wpp`,
+  `et`, `wpspdf` today) and still sends the client preedit so a focus-out flush is
+  not lost. Adding another client of this kind is a name on that list. IBus has no
+  channel that works here — ForwardKeyEvent is gone, surrounding text never arrives —
+  and is left alone.
 - **Re-toning after Backspace is non-preedit only.** In preedit mode Backspace just
   shortens the composition, so `phủ` ␣ ⌫ `s` types a literal `s` — while macOS, Windows
   and Android all re-open the word. macOS manages it with one atomic

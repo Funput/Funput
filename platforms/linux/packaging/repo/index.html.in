@@ -229,6 +229,39 @@ sudo pacman -Sy</code></pre></div>
     <b>Funput</b> (nhóm Vietnamese). Mở <b>Funput</b> trong menu ứng dụng để chỉnh Telex/VNI.
   </div>
 
+  <div class="card">
+    <h2><span class="badge fcitx">Fcitx5</span> Biến môi trường (Wayland)</h2>
+    <p style="color:var(--muted);margin:0 0 1rem;font-size:.95rem">
+      Funput là engine trong Fcitx5 — app chỉ gõ được nếu session đã nối đúng Fcitx5.
+      Cấu hình theo <b>desktop</b>, không copy một khối <code class="inline">GTK_IM_MODULE</code> cho mọi máy.
+      Nguồn: <a href="https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland">Fcitx 5 on Wayland</a>.
+      Ghi vào <code class="inline">~/.config/environment.d/fcitx5.conf</code> rồi đăng xuất.
+    </p>
+
+    <div class="step">GNOME</div>
+    <div class="cmd"><button class="copy">Copy</button><pre><code>mkdir -p ~/.config/environment.d
+cat &gt; ~/.config/environment.d/fcitx5.conf &lt;&lt;'EOF'
+XMODIFIERS=@im=fcitx
+QT_IM_MODULE=fcitx
+EOF</code></pre></div>
+    <p style="color:var(--muted);font-size:.9rem;margin:.35rem 0 0">
+      Để trống <code class="inline">GTK_IM_MODULE</code> — GNOME đi frontend IBus của Fcitx5.
+      App Qt/XWayland (WPS, …) cần <code class="inline">QT_IM_MODULE=fcitx</code>.
+    </p>
+
+    <div class="step">KDE Plasma</div>
+    <div class="cmd"><button class="copy">Copy</button><pre><code>mkdir -p ~/.config/environment.d
+cat &gt; ~/.config/environment.d/fcitx5.conf &lt;&lt;'EOF'
+XMODIFIERS=@im=fcitx
+EOF</code></pre></div>
+    <p style="color:var(--muted);font-size:.9rem;margin:.35rem 0 0">
+      <b>Không</b> set global <code class="inline">GTK_IM_MODULE</code> /
+      <code class="inline">QT_IM_MODULE</code> /
+      <code class="inline">SDL_IM_MODULE</code> — candidate window sẽ nhấp nháy trên KWin.
+      Bật Fcitx5 ở System Settings → Virtual keyboard.
+    </p>
+  </div>
+
   <footer>
     Khóa ký công khai: <a href="@REPO_URL@funput.asc">funput.asc</a> ·
     Mã nguồn: <a href="https://github.com/Funput/Funput">github.com/Funput/Funput</a>

@@ -36,6 +36,7 @@ add_library(funput MODULE
     src/funput_engine.cpp
     src/funput_input.cpp
     src/funput_client.cpp
+    src/hidden_preedit.cpp
 )
 add_dependencies(funput funput_ffi)
 

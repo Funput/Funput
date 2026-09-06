@@ -44,10 +44,11 @@ FCITX_CONFIGURATION(
     fcitx::ExternalOption openSettings{
         this, "OpenSettings", "Open Funput Settings", "funput-settings"};);
 
-// Reading the focused client. Defined in funput_client.cpp beside the writing half —
-// talking to the client is one concern, whichever direction it goes.
+// Reading the focused client. Document helpers live in funput_client.cpp;
+// the hidden-preedit allowlist lives in hidden_preedit.cpp.
 std::string textBeforeCaret(fcitx::InputContext *context);
 bool hasSelection(fcitx::InputContext *context);
+bool hidesClientPreedit(fcitx::InputContext *context);
 
 class FunputEngine : public fcitx::InputMethodEngineV2 {
 public:
