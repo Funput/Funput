@@ -36,8 +36,16 @@ APP_BUNDLE_ID="${APP_BUNDLE_ID:-app.funput.funput}"
 APP_GROUP="${APP_GROUP:-group.app.funput.funput}"
 KEYBOARD_BUNDLE_ID="${KEYBOARD_BUNDLE_ID:-app.funput.funput.Keyboard}"
 MANUAL_SIGNING=
-if [ -n "$PROFILE_APP" ] && [ -n "$PROFILE_KEYBOARD" ]; then
+if [ -n "$PROFILE_APP" ] || [ -n "$PROFILE_KEYBOARD" ]; then
+    if [ -z "$PROFILE_APP" ] || [ -z "$PROFILE_KEYBOARD" ]; then
+        echo "release-ios: manual signing requires both PROFILE_APP and PROFILE_KEYBOARD" >&2
+        exit 1
+    fi
     MANUAL_SIGNING=1
+fi
+if [ "${CI:-false}" = true ] && [ -z "$MANUAL_SIGNING" ]; then
+    echo "release-ios: CI requires PROFILE_APP and PROFILE_KEYBOARD; automatic signing is local-only" >&2
+    exit 1
 fi
 # Defaulting to VERSION keeps a bare `VERSION=... ./release-ios.sh` self-consistent;
 # CI passes both separately.
@@ -57,7 +65,7 @@ rm -rf "$ARCHIVE" "$EXPORT"
 mkdir -p "$OUT"
 
 run_xcodebuild() {
-    if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -f "$ASC_KEY_PATH" ]; then
+    if [ -z "$MANUAL_SIGNING" ] && [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -f "$ASC_KEY_PATH" ]; then
         xcodebuild "$@" \
             -authenticationKeyPath "$ASC_KEY_PATH" \
             -authenticationKeyID "$ASC_KEY_ID" \
@@ -86,11 +94,16 @@ set -- -project Funput.xcodeproj -scheme "$SCHEME" \
 # fall back to their own defaults, and the keyboard stops seeing the app's settings
 # — no crash, no log, just a build that quietly does not work.
 #
-# A build setting given on the command line reaches every target, so the app and the
-# extension cannot be handed different profiles here. Automatic signing resolves
-# that per target on its own; the manual profiles are for the export, which is where
-# a per-bundle-id map can be expressed.
-set -- "$@" -allowProvisioningUpdates
+# Each app target resolves its own profile through a user-defined build setting.
+# Never pass PROVISIONING_PROFILE_SPECIFIER globally: that would assign the app's
+# profile to the extension and Swift package targets too.
+if [ -n "$MANUAL_SIGNING" ]; then
+    set -- "$@" "CODE_SIGN_STYLE=Manual" "CODE_SIGN_IDENTITY=$SIGN_IDENTITY" \
+        "DEVELOPMENT_TEAM=$TEAM_ID" \
+        "FUNPUT_APP_PROFILE=$PROFILE_APP" "FUNPUT_KEYBOARD_PROFILE=$PROFILE_KEYBOARD"
+else
+    set -- "$@" -allowProvisioningUpdates
+fi
 if [ -n "$VERSION" ]; then
     set -- "$@" "MARKETING_VERSION=$VERSION"
 fi

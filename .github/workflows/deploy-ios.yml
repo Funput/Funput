@@ -15,6 +15,9 @@ name: Deploy iOS
 #   IOS_DIST_CERT_P12       base64 of an *Apple Distribution* .p12 (with private key).
 #                           The Developer ID cert used for macOS cannot sign this.
 #   IOS_DIST_CERT_PASSWORD  password set when exporting that .p12
+#   IOS_PROFILE_APP        base64 of the App Store profile for app.funput.funput
+#   IOS_PROFILE_KEYBOARD   base64 of the App Store profile for app.funput.funput.Keyboard
+#                           Both profiles must use the imported Distribution certificate.
 #   ASC_KEY_ID              App Store Connect API key id
 #   ASC_ISSUER_ID           App Store Connect API issuer id
 #   ASC_API_KEY_P8          base64 of the AuthKey_<ASC_KEY_ID>.p8 (downloadable once)
@@ -55,6 +58,9 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
+
+      - name: Verify iOS release signing commands
+        run: python3 platforms/ios/Scripts/tests/test_release_signing.py
 
       - name: Select latest stable Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -215,6 +221,8 @@ jobs:
 
       # A re-run keeps the same run number, which is what we want: a failed upload
       # never consumed a build number, so reusing it is correct.
+      # release-ios.sh requires both profiles on CI and supplies them separately
+      # to the app and extension for the archive as well as the export.
       - name: Archive and export .ipa
         working-directory: platforms/ios
         env:
