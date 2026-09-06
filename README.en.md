@@ -93,7 +93,13 @@ Bug reports, discussions, and contributions are welcome.
 ## Support
 
 Funput is a community project — free for everyone.
-If you find Funput useful, you're welcome to support the project:
+If you find Funput useful, you're welcome to support the project via [GitHub Sponsors](https://github.com/sponsors/Funput) or bank transfer:
+
+<p align="center">
+  <a href="https://github.com/sponsors/Funput">
+    <img src="https://img.shields.io/badge/GitHub-Sponsor-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor Funput on GitHub">
+  </a>
+</p>
 
 <p align="center">
   <img src="assets/donate/qr.png" width="360" alt="Donate to Funput">
