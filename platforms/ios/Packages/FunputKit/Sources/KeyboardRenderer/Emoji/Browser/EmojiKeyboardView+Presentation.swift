@@ -48,8 +48,11 @@ extension EmojiKeyboardView {
     }
 
     func reload(recent: [EmojiItem]) {
+        latestRecents = Array(recent.prefix(Self.recentLimit))
+        let visibleRecents = freezesRecents
+            ? sections.first(where: { $0.category == .recent })?.items ?? [] : latestRecents
         sections = EmojiCategory.allCases.compactMap { category in
-            let items = category == .recent ? recent : catalog.items(in: category)
+            let items = category == .recent ? visibleRecents : catalog.items(in: category)
             return items.isEmpty ? nil : (category, items)
         }
         collectionView.reloadData()

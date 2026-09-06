@@ -92,6 +92,7 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        emojiView?.reset()
 #if DEBUG
         touchDiagnosticsReporter.finish()
 #endif

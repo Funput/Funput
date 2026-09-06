@@ -21,8 +21,18 @@ struct EmojiRecentsStoreTests {
             for index in 0...EmojiRecentsStore.limit {
                 _ = store.record(item("emoji-\(index)"))
             }
-            #expect(store.load().count == EmojiRecentsStore.limit)
-            #expect(store.load().first?.glyph == "emoji-30")
+            #expect(EmojiRecentsStore.limit == 8)
+            #expect(store.load().count == 8)
+            #expect(store.load().first?.glyph == "emoji-8")
+        }
+    }
+
+    @Test("Existing history is limited to the newest eight entries")
+    func legacyHistory() throws {
+        let data = try JSONEncoder().encode((0..<30).map { item("emoji-\($0)") })
+        withStore { store, defaults in
+            defaults.set(data, forKey: FunputAppGroup.emojiRecentsKey)
+            #expect(store.load().map(\.glyph) == (0..<8).map { "emoji-\($0)" })
         }
     }
 
