@@ -1,6 +1,7 @@
 //! Native tray icon + context menu on the keyboard-hook Win32 message loop.
 //!
-//! Left-click toggles the Acrylic Control Center; right-click opens a thin menu.
+//! Left-click toggles the Acrylic Control Center, double-click opens Settings,
+//! right-click opens a thin menu.
 
 use std::cell::RefCell;
 
