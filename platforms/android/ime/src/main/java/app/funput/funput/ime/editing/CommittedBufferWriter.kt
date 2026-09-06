@@ -4,8 +4,11 @@ import android.view.KeyEvent
 import android.view.inputmethod.InputConnection
 
 /**
- * True when [CommittedBufferWriter.replace] has to delete before it commits, so the
+ * True when replacing the committed buffer has to delete before it commits, so the
  * document passes through a state that holds neither buffer.
+ *
+ * Mirrors the branch both writers take — [CommittedBufferWriter.replace] and the
+ * KeyEvent plan behind it — so a new branch in either has to be reflected here.
  */
 internal fun deletesBeforeCommit(previous: String, replacement: String): Boolean =
     previous.isNotEmpty() && replacement.isNotEmpty() &&

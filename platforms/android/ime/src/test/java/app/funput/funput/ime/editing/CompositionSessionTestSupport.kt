@@ -75,10 +75,11 @@ internal class CommittedEditor(
 ) {
     var setComposingCount = 0
     /**
-     * What reads see while the host still shows a state our batch edit has moved past —
-     * Gecko answers from the document as it stood between the delete and the commit.
+     * What `getTextBeforeCursor` answers when the document tail is not what a read sees:
+     * a host still showing the state between our delete and our commit, or a caret this
+     * fake does not otherwise model.
      */
-    var textVisibleToReads: String? = null
+    var textBeforeCursor: String? = null
 
     val proxy: InputConnection = Proxy.newProxyInstance(
         InputConnection::class.java.classLoader,
@@ -96,7 +97,7 @@ internal class CommittedEditor(
                 if (!exposesSurroundingText || count >= GraphemeLookback) {
                     null
                 } else {
-                    (textVisibleToReads ?: text).takeLast(count)
+                    (textBeforeCursor ?: text).takeLast(count)
                 }
             }
             "deleteSurroundingTextInCodePoints" -> true.also {
