@@ -4,8 +4,8 @@
 mod method;
 mod smart;
 
-use adw::prelude::*;
 use adw::PreferencesPage;
+use adw::prelude::*;
 
 use crate::settings::Settings;
 

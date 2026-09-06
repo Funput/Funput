@@ -8,7 +8,7 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 
-use crate::convert::{io, Convert};
+use crate::convert::{Convert, io};
 
 pub(in crate::convert) struct Pane {
     pub(in crate::convert) root: adw::StatusPage,

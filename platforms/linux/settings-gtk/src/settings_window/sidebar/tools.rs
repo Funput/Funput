@@ -1,8 +1,8 @@
 //! Sidebar rows that *do* something rather than go somewhere: the converter, and
 //! import / export.
 
-use adw::prelude::*;
 use adw::ActionRow;
+use adw::prelude::*;
 use gtk::{ListBox, SelectionMode};
 
 use super::transfer;

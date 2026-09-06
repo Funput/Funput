@@ -9,8 +9,8 @@
 //! pump in [`super::run`] does the rest one message later, with the user's
 //! keystroke already delivered.
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::OnceLock;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use windows::Win32::Foundation::{LPARAM, WPARAM};
 use windows::Win32::System::Threading::GetCurrentThreadId;

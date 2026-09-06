@@ -1,7 +1,7 @@
 //! Empty-state for the shortcuts page.
 
-use adw::prelude::*;
 use adw::StatusPage;
+use adw::prelude::*;
 use gtk::{Align, Button};
 
 pub(super) fn page(on_add: impl Fn() + 'static) -> StatusPage {

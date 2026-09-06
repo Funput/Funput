@@ -25,7 +25,7 @@ name: CI
 # must never be a required check, because a required check that never reports
 # blocks the merge forever. That is the opposite trade from the one made here.
 #
-# The toolchain comes from rust-toolchain.toml (1.97.1 + rustfmt + clippy), so
+# The toolchain comes from rust-toolchain.toml (1.98.1 + rustfmt + clippy), so
 # bumping the pin moves CI with it. Every shell that links a heavy OS-only
 # dependency is excluded from the cargo workspace and so invisible to the `rust`
 # job — the GTK4 Settings app and the Slint Windows shell each get a job of their
@@ -416,12 +416,8 @@ jobs:
   #
   # `cargo fmt --all` in the `rust` job does not reach an excluded package either,
   # which is why formatting is checked here too — the same gap `settings-gtk`
-  # closes for its own package. It was not theoretical: four files had drifted into
-  # style_edition 2024 import ordering while the other twenty-three stayed on the
-  # 2021 ordering this package's edition selects, and nothing on a pull request
-  # looked. Note the check must run from `platforms/windows`, not the root: the
-  # edition in its own manifest is what picks the style, so a root invocation would
-  # reformat it to disagree with itself.
+  # closes for its own package. Run from each package directory so formatting
+  # includes the platform sources and uses its manifest's Rust 2024 edition.
   windows:
     needs: changes
     if: needs.changes.outputs.windows == 'true'

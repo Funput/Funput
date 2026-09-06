@@ -21,8 +21,8 @@ mod onboarding;
 mod settings;
 mod settings_window;
 
-use adw::prelude::*;
 use adw::Application;
+use adw::prelude::*;
 use gtk::gio;
 use gtk::glib;
 

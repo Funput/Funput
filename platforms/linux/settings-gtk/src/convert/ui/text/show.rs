@@ -8,8 +8,8 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 
-use crate::convert::ui::widget;
 use crate::convert::Convert;
+use crate::convert::ui::widget;
 use funput_convert::View;
 
 use super::Pane;

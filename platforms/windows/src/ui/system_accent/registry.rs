@@ -13,11 +13,11 @@ pub(super) const DWM: &str = "Software\\Microsoft\\Windows\\DWM";
 /// Read a value from HKCU into `buf`. Returns the value type and byte count.
 #[cfg(windows)]
 fn query(subkey: &str, value: &str, buf: &mut [u8]) -> Option<(u32, usize)> {
-    use windows::core::PCWSTR;
     use windows::Win32::Foundation::ERROR_SUCCESS;
     use windows::Win32::System::Registry::{
-        RegCloseKey, RegOpenKeyExW, RegQueryValueExW, HKEY_CURRENT_USER, KEY_READ, REG_VALUE_TYPE,
+        HKEY_CURRENT_USER, KEY_READ, REG_VALUE_TYPE, RegCloseKey, RegOpenKeyExW, RegQueryValueExW,
     };
+    use windows::core::PCWSTR;
 
     let subkey: Vec<u16> = subkey.encode_utf16().chain(Some(0)).collect();
     let value: Vec<u16> = value.encode_utf16().chain(Some(0)).collect();

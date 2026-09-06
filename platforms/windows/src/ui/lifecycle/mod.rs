@@ -6,7 +6,7 @@ mod process;
 
 use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::System::Threading::{
-    OpenProcess, TerminateProcess, WaitForSingleObject, PROCESS_SYNCHRONIZE, PROCESS_TERMINATE,
+    OpenProcess, PROCESS_SYNCHRONIZE, PROCESS_TERMINATE, TerminateProcess, WaitForSingleObject,
 };
 
 use super::{control_center, convert, onboarding, settings_window};

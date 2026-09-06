@@ -69,11 +69,11 @@ pub(super) fn page() -> gtk::Widget {
                 rows.borrow_mut().push(expander.clone().upcast());
                 last = Some((expander, trigger));
             }
-            if focus_new.replace(false) {
-                if let Some((expander, trigger)) = last {
-                    expander.set_expanded(true);
-                    trigger.grab_focus();
-                }
+            if focus_new.replace(false)
+                && let Some((expander, trigger)) = last
+            {
+                expander.set_expanded(true);
+                trigger.grab_focus();
             }
         })
     };

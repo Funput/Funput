@@ -15,13 +15,12 @@ mod buffers;
 
 use std::path::Path;
 
-use windows::core::PWSTR;
 use windows::Win32::Foundation::{CloseHandle, HANDLE, WAIT_TIMEOUT};
 use windows::Win32::System::Threading::{
-    CreateProcessW, GetExitCodeProcess, TerminateProcess, WaitForSingleObject,
-    CREATE_UNICODE_ENVIRONMENT, INFINITE, PROCESS_INFORMATION, STARTF_FORCEOFFFEEDBACK,
-    STARTUPINFOW,
+    CREATE_UNICODE_ENVIRONMENT, CreateProcessW, GetExitCodeProcess, INFINITE, PROCESS_INFORMATION,
+    STARTF_FORCEOFFFEEDBACK, STARTUPINFOW, TerminateProcess, WaitForSingleObject,
 };
+use windows::core::PWSTR;
 
 use buffers::{command_line, environment};
 

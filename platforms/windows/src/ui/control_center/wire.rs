@@ -2,13 +2,13 @@
 
 use slint::ComponentHandle;
 
-use crate::shared::{commands, shell};
 use crate::ControlCenterWindow;
+use crate::shared::{commands, shell};
 use funput_config::ToneStyle;
 
 use super::{
-    cycle_method, method_label, request_exit, status_line, tone_label, EXIT_DISMISS, EXIT_KEYBOARD,
-    EXIT_SETTINGS,
+    EXIT_DISMISS, EXIT_KEYBOARD, EXIT_SETTINGS, cycle_method, method_label, request_exit,
+    status_line, tone_label,
 };
 
 pub(super) fn attach(window: &ControlCenterWindow) {

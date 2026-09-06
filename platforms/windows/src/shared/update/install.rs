@@ -3,11 +3,11 @@
 //! The signature is checked against the *same* Ed25519 key Sparkle uses on macOS
 //! before a single byte is written anywhere executable.
 
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 
-use super::{Error, Result, PUBLIC_ED_KEY};
+use super::{Error, PUBLIC_ED_KEY, Result};
 
 /// Verify the downloaded bytes against the embedded public key. Sparkle signs the
 /// raw file with Ed25519 (libsodium), which is byte-compatible with `ed25519-dalek`.

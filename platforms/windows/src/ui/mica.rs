@@ -72,8 +72,8 @@ fn round_flyout(handle: &slint::WindowHandle) {
     use raw_window_handle::{HasWindowHandle, RawWindowHandle};
     use windows::Win32::Foundation::HWND;
     use windows::Win32::Graphics::Dwm::{
-        DwmSetWindowAttribute, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_ROUNDSMALL,
-        DWM_WINDOW_CORNER_PREFERENCE,
+        DWM_WINDOW_CORNER_PREFERENCE, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_ROUNDSMALL,
+        DwmSetWindowAttribute,
     };
 
     let Ok(borrowed) = handle.window_handle() else {
