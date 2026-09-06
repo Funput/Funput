@@ -46,7 +46,8 @@ void FunputEngine::updatePreedit(fcitx::InputContext *context, const std::string
     // unaffected — InputContext::updatePreedit() returns early without the Preedit
     // capability, so those clients still get the Fcitx5-drawn panel preedit below.
     panel.setClientPreedit(preedit);
-    if (!context->capabilityFlags().test(fcitx::CapabilityFlag::Preedit)) {
+    if (!context->capabilityFlags().test(fcitx::CapabilityFlag::Preedit) ||
+        hidesClientPreedit(context)) {
         panel.setPreedit(preedit);
     }
     context->updatePreedit();

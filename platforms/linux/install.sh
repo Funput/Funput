@@ -225,8 +225,23 @@ user_install_fcitx5() {
   echo "       FCITX_ADDON_DIRS=$sys_addon:$lib_dir fcitx5 -r -d"
   echo "  2. fcitx5-configtool → + → add Funput (Vietnamese group)"
   echo "  Open \"Funput\" from the app menu to switch Telex/VNI."
+  fcitx5_wayland_hint
   echo
   echo "To update later: re-run this installer (grabs the latest release)."
+}
+
+# Funput is an Fcitx5 engine; apps only reach it if the *session* talks to Fcitx5.
+# That wiring is desktop-specific (GNOME vs KDE) and Funput must not write a
+# global GTK_IM_MODULE=fcitx block — KWin blinks the candidate window if you do.
+# Official: https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland
+fcitx5_wayland_hint() {
+  echo "  Wayland session env (by desktop, then log out):"
+  echo "    GNOME  ~/.config/environment.d/fcitx5.conf :"
+  echo "           XMODIFIERS=@im=fcitx"
+  echo "           QT_IM_MODULE=fcitx"
+  echo "           (leave GTK_IM_MODULE unset — GNOME uses Fcitx5's ibus frontend)"
+  echo "    KDE    XMODIFIERS=@im=fcitx only; do not set GTK/QT/SDL_IM_MODULE"
+  echo "  https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland"
 }
 
 # What to do once the package is on disk. Shared by the repository path and the
@@ -240,6 +255,7 @@ post_install_hint() {
   else
     echo "  1. fcitx5-configtool       # + → add Funput (Vietnamese group)"
     echo "  2. log out/in if Fcitx5 was not already running"
+    fcitx5_wayland_hint
   fi
   echo "  Open \"Funput\" from the app menu to switch Telex/VNI."
   if [ "$USE_REPO" -eq 0 ]; then
