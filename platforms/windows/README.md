@@ -230,7 +230,7 @@ platforms/windows/
 
 | | |
 |---|---|
-| Rust | `1.97.1` ([`rust-toolchain.toml`](../../rust-toolchain.toml)) — Slint 1.17 cần ≥ 1.92 |
+| Rust | `1.98.1` ([`rust-toolchain.toml`](../../rust-toolchain.toml)) — Slint 1.17 cần ≥ 1.92 |
 | Slint | `1.17` · winit · renderer **Skia** · style Fluent *(chọn trong [`build.rs`](build.rs))* |
 | Win32 | `windows` 0.62 · `window-vibrancy` 0.8 — Mica (Win11) / Acrylic (Win10 1809+) |
 | Tray | `tray-icon` 0.24 *(không WebView2)* |

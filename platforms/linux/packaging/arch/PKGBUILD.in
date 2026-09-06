@@ -54,7 +54,7 @@ prepare() {
 
 build() {
   cd "$_srcdir"
-  # rust-toolchain.toml pins 1.97.1 so contributors and CI share one compiler. On
+  # rust-toolchain.toml pins 1.98.1 so contributors and CI share one compiler. On
   # a rustup host that pin would try to download the toolchain inside the chroot;
   # Arch ships a single rolling stable, so use it.
   export RUSTUP_TOOLCHAIN=stable

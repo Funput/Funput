@@ -25,7 +25,7 @@ name: CI
 # must never be a required check, because a required check that never reports
 # blocks the merge forever. That is the opposite trade from the one made here.
 #
-# The toolchain comes from rust-toolchain.toml (1.97.1 + rustfmt + clippy), so
+# The toolchain comes from rust-toolchain.toml (1.98.1 + rustfmt + clippy), so
 # bumping the pin moves CI with it. Every shell that links a heavy OS-only
 # dependency is excluded from the cargo workspace and so invisible to the `rust`
 # job — the GTK4 Settings app and the Slint Windows shell each get a job of their
