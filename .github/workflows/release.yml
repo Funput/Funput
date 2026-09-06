@@ -121,7 +121,7 @@ jobs:
             echo "- **iOS** — Tải trên [App Store](https://apps.apple.com/vn/app/id6788829996). Bản thử nghiệm sớm có trên [TestFlight](https://testflight.apple.com/join/E8YRd3sy)."
             echo "- **macOS** — \`Funput-*.pkg\` cài cho toàn máy (cần quyền quản trị), hoặc \`Funput-*.app.zip\` dùng được mà không cần quyền đó."
             echo "- **Windows** — \`Funput-*.exe\` chạy trực tiếp, không cần cài đặt, và tự cập nhật ngay trong ứng dụng."
-            echo "- **Linux** — \`.deb\` cho Debian/Ubuntu, \`.rpm\` cho Fedora/openSUSE. Chọn bản **Fcitx5** (\`funput-*\`) hoặc **IBus** (\`funput-ibus-*\`) theo đúng kiến trúc CPU; \`funput-settings-*\` là ứng dụng Cài đặt dùng chung, được cài kèm tự động và có thể dùng cả hai bản cùng lúc."
+            echo "- **Linux** — \`.deb\` cho Debian/Ubuntu, \`.rpm\` cho Fedora/openSUSE. Khuyến nghị bản **Fcitx5** (\`funput-*\`); bản **IBus** (\`funput-ibus-*\`) dành cho ai đang dùng IBus sẵn và không muốn đổi session. Chọn đúng kiến trúc CPU; \`funput-settings-*\` là ứng dụng Cài đặt dùng chung, cài kèm tự động và hai bản cài chung được (chỉ nên bật một bộ gõ cho mỗi phiên đăng nhập)."
             echo "- **Android** — Đang trong giai đoạn kiểm thử khép kín, chưa mở đăng ký công khai."
           } > notes.md
 

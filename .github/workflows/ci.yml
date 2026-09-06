@@ -183,6 +183,44 @@ jobs:
       - name: Kotlin, directory layout
         run: bash platforms/android/scripts/check-kotlin-layout.sh
 
+  # The shell scripts a stranger is asked to run. `platforms/linux/install.sh` in
+  # particular is published as a `curl … | bash` one-liner in the docs and on
+  # repo.funput.app, which makes it the most widely *executed* file in the repo and,
+  # until this job, the only one with nothing checking it — a syntax error in a
+  # branch that only Fedora reaches would ship, and be found by a user with a broken
+  # install. `bash -n` parses every path, not just the one this runner would take.
+  #
+  # `--severity=warning` on purpose: the scripts are clean at shellcheck's default
+  # (style/info) level too, but pinning the gate above that keeps a newer shellcheck
+  # in the runner image from failing an unrelated pull request over a new stylistic
+  # check. Both tools are preinstalled on ubuntu-latest, so this job costs a checkout.
+  installer-scripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Parse
+        run: |
+          for f in platforms/linux/install.sh platforms/linux/build.sh \
+                   platforms/macos/scripts/install.sh platforms/macos/scripts/uninstall.sh \
+                   scripts/check-loc.sh; do
+            bash -n "$f"
+          done
+
+      - name: ShellCheck
+        run: |
+          shellcheck --version
+          shellcheck --severity=warning \
+            platforms/linux/install.sh platforms/linux/build.sh \
+            platforms/macos/scripts/install.sh platforms/macos/scripts/uninstall.sh \
+            scripts/check-loc.sh
+
+      # The installer's own help must not break: it is the first thing anyone runs
+      # when the one-liner misbehaves, and it lives in a heredoc no other test opens.
+      - name: install.sh --help
+        run: bash platforms/linux/install.sh --help
+
   # The GTK4 Settings app, which also hosts the Chuyển mã window. Excluded from the
   # cargo workspace because it links system gtk4/libadwaita, so the `rust` job above —
   # which deliberately installs no system libraries — cannot see it. Before this job it
