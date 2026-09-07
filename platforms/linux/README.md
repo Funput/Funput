@@ -113,8 +113,7 @@ dùng đúng cái shell **không với tới nổi** một client kiểu WPS.
 > không kèm file `.sha256`, nên thật ra chưa bao giờ có chuyện tự kiểm checksum bằng tay.
 
 Các bước thêm kho thủ công cho từng distro nằm ở
-[docs.funput.app — Linux](https://docs.funput.app/docs/install/linux) và
-[repo.funput.app](https://repo.funput.app) (có sẵn nút copy lệnh).
+[docs.funput.app — Linux](https://docs.funput.app/docs/install/linux).
 
 > [!NOTE]
 > **Không có quyền root?** Dùng `install.sh --user`: nó đặt engine vào `~/.local`, không đụng
@@ -218,7 +217,8 @@ Xoá luôn cấu hình nếu muốn sạch hẳn:
 rm -rf ~/.config/Funput
 ```
 
-Cách gỡ kho `repo.funput.app` nằm ở [docs.funput.app — Linux](https://docs.funput.app/docs/install/linux#gỡ-kho-funput-nếu-cần).
+Cách gỡ kho `repo.funput.app` nằm ở
+[docs.funput.app — Xử lý sự cố](https://docs.funput.app/docs/install/linux/troubleshooting#remove-repo).
 
 ---
 
