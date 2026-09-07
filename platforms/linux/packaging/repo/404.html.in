@@ -1,17 +1,16 @@
 <!DOCTYPE html>
-<!-- Landing page for the Funput Linux package repository.
+<!-- 404 page for the Funput Linux package repository.
      @REPO_URL@ is substituted by the publish-repo workflow with the Pages base URL.
 
-     This host serves the apt/dnf/zypper/pacman trees; the install instructions
-     live at docs.funput.app so there is only one copy of them to maintain. The
-     page is a signpost, nothing more. Everything is inline because the workflow
-     copies no assets into the Pages artifact — see .github/workflows/publish-repo.yml. -->
+     GitHub Pages serves no directory listings, so a path like /deb/ or a typo in
+     a package name lands here. Same design as index.html.in — keep the two in
+     sync when either changes. -->
 <html lang="vi">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Funput — kho phần mềm Linux</title>
-<meta name="description" content="Kho apt/dnf/zypper/pacman của Funput. Hướng dẫn cài đặt nằm ở docs.funput.app.">
+<title>Không tìm thấy — kho phần mềm Funput</title>
+<meta name="robots" content="noindex">
 <style>
   :root {
     color-scheme: light dark;
@@ -36,8 +35,6 @@
     overflow-x: hidden;
   }
 
-  /* Two soft colour fields drifting behind the logo, drawn from the gradients
-     inside the mark itself. Fixed and non-interactive so they never affect layout. */
   .glow { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
   .glow i {
     position: absolute; display: block; border-radius: 50%;
@@ -67,11 +64,7 @@
     max-width: 34rem; text-align: center;
   }
 
-  .mark { width: 118px; height: 118px; display: block; margin: 0 auto 1.6rem; }
-
-  /* The mark is a spine with three ribbon leaves hinged on it. Bringing the
-     spine in first and then swinging the leaves out reads as the logo drawing
-     itself; each leaf's box starts at the spine, so `0% 50%` is that hinge. */
+  .mark { width: 92px; height: 92px; display: block; margin: 0 auto 1.5rem; }
   .mark path { transform-box: fill-box; }
   .spine {
     opacity: 0; transform-origin: 50% 0%;
@@ -103,7 +96,11 @@
     to   { opacity: 1; transform: none; }
   }
 
-  h1 { font-size: 1.9rem; margin: 0 0 .6rem; letter-spacing: -.022em; }
+  .code {
+    display: block; font-size: .8rem; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: .5rem;
+  }
+  h1 { font-size: 1.7rem; margin: 0 0 .6rem; letter-spacing: -.022em; }
   p  { margin: 0 auto; color: var(--muted); max-width: 30rem; }
 
   .btn {
@@ -130,8 +127,8 @@
   footer a { color: inherit; }
 
   @media (max-width: 400px) {
-    h1 { font-size: 1.55rem; }
-    .mark { width: 88px; height: 88px; }
+    h1 { font-size: 1.45rem; }
+    .mark { width: 76px; height: 76px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -180,17 +177,18 @@
       d="M261 887V743C261 642 346 572 458 572H541C545 572 548 575 547 579C539 670 502 747 436 794C401 819 360 828 323 839C295 847 278 867 266 895C264 900 261 897 261 887Z"/>
   </svg>
 
-  <h1 class="fade d1">Kho phần mềm Funput</h1>
+  <span class="code fade d1">404</span>
+  <h1 class="fade d1">Không có gì ở đường dẫn này</h1>
 
   <p class="fade d2">
-    Địa chỉ này phục vụ kho <b>apt</b>, <b>dnf</b>, <b>zypper</b> và <b>pacman</b> của Funput —
-    bộ gõ tiếng Việt cho Fcitx5 và IBus. Hướng dẫn cài đặt nằm ở trang tài liệu.
+    Địa chỉ này phục vụ kho <b>apt</b>, <b>dnf</b>, <b>zypper</b> và <b>pacman</b> của Funput.
+    Các thư mục của kho không duyệt bằng trình duyệt được — package manager mới đọc chúng.
   </p>
 
-  <a class="btn fade d3" href="https://docs.funput.app/docs/install/linux">Xem hướng dẫn cài đặt</a>
+  <a class="btn fade d3" href="@REPO_URL@">Về trang chủ kho</a>
 
   <span class="alt fade d4">
-    <a href="https://docs.funput.app/en/docs/install/linux">Read this in English</a>
+    <a href="https://docs.funput.app/docs/install/linux">Hướng dẫn cài đặt</a>
   </span>
 
   <footer class="fade d4">

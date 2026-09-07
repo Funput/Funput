@@ -307,6 +307,8 @@ jobs:
           mv public/deb/funput.asc public/funput.asc
           T=platforms/linux/packaging/repo
           sed "s#@REPO_URL@#${REPO_URL}#g" "$T/index.html.in"  > public/index.html
+          # Pages serves no directory listings, so /deb/ and typos land on 404.
+          sed "s#@REPO_URL@#${REPO_URL}#g" "$T/404.html.in"    > public/404.html
           sed "s#@REPO_URL@#${REPO_URL}#g" "$T/funput.repo.in" > public/funput.repo
           # Custom domain: derive the host from REPO_URL so it tracks the override.
           echo "${REPO_URL}" | sed -E 's#^https?://([^/]+)/?.*#\1#' > public/CNAME
