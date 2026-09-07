@@ -56,6 +56,16 @@ impl Session {
         }
     }
 
+    /// Whether English mode still owes the user gõ tắt: the raw keys are tracked
+    /// and a trigger expands at a word boundary, but nothing is composed. An empty
+    /// table answers `false`, so a user with no shortcuts gets the untouched English
+    /// mode Funput has always had.
+    pub(crate) fn english_shortcuts(&self) -> bool {
+        self.config.shortcuts_enabled
+            && self.config.shortcuts_in_english
+            && !self.shortcuts.is_empty()
+    }
+
     pub(crate) fn clear(&mut self) {
         self.buffer.clear();
         self.keys.clear();

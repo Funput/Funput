@@ -39,6 +39,14 @@ pub struct EngineConfig {
     /// `Tp. Hcm`/`TP. HCM`). Off, only the exact trigger matches and the expansion
     /// comes out verbatim — for users whose expansions have a casing of their own.
     pub shortcut_smart_case: bool,
+    /// Whether the gõ tắt table also expands in English mode ("Gõ tắt cả khi ở chế
+    /// độ tiếng Anh"). On by default.
+    ///
+    /// Text expansion is not a Vietnamese feature, so turning composition off need
+    /// not turn it off too. What English mode gives up is everything else: no
+    /// diacritics, no English restore, no auto-capitalize, no flip — the raw keys
+    /// are tracked only so a trigger can still be recognized at a word boundary.
+    pub shortcuts_in_english: bool,
 }
 
 impl Default for EngineConfig {
@@ -52,6 +60,7 @@ impl Default for EngineConfig {
             auto_capitalize: false,
             shortcuts_enabled: true,
             shortcut_smart_case: true,
+            shortcuts_in_english: true,
         }
     }
 }

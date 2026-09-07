@@ -64,26 +64,29 @@ pub struct Settings {
     /// Whether the gõ tắt table expands. Defaults to **on**, including for a file
     /// written before this field existed — those users have a working table and
     /// would otherwise find it silently dead after an update.
-    #[serde(default = "shortcuts_enabled_default")]
+    #[serde(default = "default_true")]
     pub shortcuts_enabled: bool,
     /// Whether a gõ tắt trigger matches regardless of how it was capitalized, with
     /// the expansion re-cased to match. Defaults to **on**, including for a file
     /// written before this field existed — that is how gõ tắt has always behaved,
     /// and an update must not silently change what a table expands to.
-    #[serde(default = "shortcut_smart_case_default")]
+    #[serde(default = "default_true")]
     pub shortcut_smart_case: bool,
+    /// Whether the gõ tắt table also expands while Funput is in English mode.
+    /// Text expansion is not a Vietnamese feature — an address or a phone number is
+    /// worth having in either language — so this defaults to **on**, including for a
+    /// file written before it existed. Composition itself stays off: English mode
+    /// tracks the raw keys and expands them, and does nothing else.
+    #[serde(default = "default_true")]
+    pub shortcuts_in_english: bool,
     /// Whether focusing a keyboard layout Vietnamese cannot be typed on — a CJK
     /// IME, or a non-Latin script — suspends Vietnamese for as long as it is
     /// active. Defaults to **on**, including for a file written before this field
     /// existed: composing into a Japanese IME corrupts its text, and the users who
     /// already hit that are exactly the ones who would never find the switch.
     /// The suspension itself is live state, not settings — see `funput_desktop`.
-    #[serde(default = "auto_english_on_foreign_layout_default")]
+    #[serde(default = "default_true")]
     pub auto_english_on_foreign_layout: bool,
-}
-
-fn shortcuts_enabled_default() -> bool {
-    true
 }
 
 /// The tone placement a file that predates the setting implies: whoever wrote it
@@ -93,11 +96,11 @@ pub(super) fn legacy_tone_style_default() -> ToneStyle {
     ToneStyle::Traditional
 }
 
-fn shortcut_smart_case_default() -> bool {
-    true
-}
-
-fn auto_english_on_foreign_layout_default() -> bool {
+/// The default every switch that carries one shares: a file written before the
+/// switch existed must decode as "on" — that is how Funput behaved when it was
+/// written, and an update may not silently take a feature away. Each field says
+/// above why that reasoning holds for it.
+fn default_true() -> bool {
     true
 }
 
@@ -136,6 +139,7 @@ impl Default for Settings {
             shortcuts: Vec::new(),
             shortcuts_enabled: true,
             shortcut_smart_case: true,
+            shortcuts_in_english: true,
             auto_english_on_foreign_layout: true,
         }
     }

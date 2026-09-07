@@ -8,12 +8,14 @@ export component ShortcutsPage inherits VerticalLayout {
     in property <bool> can-add: true;
     in-out property <bool> shortcuts-enabled;
     in-out property <bool> shortcut-smart-case;
+    in-out property <bool> shortcuts-in-english;
     callback add-shortcut();
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
     callback set-shortcuts-enabled(bool);
     callback set-shortcut-smart-case(bool);
+    callback set-shortcuts-in-english(bool);
 
     spacing: Theme.sp-lg;
     width: 100%;
@@ -50,6 +52,17 @@ export component ShortcutsPage inherits VerticalLayout {
             AccentSwitch {
                 checked <=> root.shortcut-smart-case;
                 toggled => { root.set-shortcut-smart-case(root.shortcut-smart-case); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            // The VI/EN mark: this row is about the other mode, not about gõ tắt.
+            icon: @image-url("../../icons/nav/primary/switch.svg");
+            title: "Gõ tắt cả khi ở chế độ tiếng Anh";
+            subtitle: "Chữ tắt vẫn bung khi đang tắt tiếng Việt — chỉ bung chữ tắt, không bỏ dấu. Không áp dụng khi tiếng Việt bị tạm tắt vì bàn phím ngoại.";
+            AccentSwitch {
+                checked <=> root.shortcuts-in-english;
+                toggled => { root.set-shortcuts-in-english(root.shortcuts-in-english); }
             }
         }
     }

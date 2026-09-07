@@ -18,6 +18,11 @@ pub fn shortcuts() -> Vec<Shortcut> {
 pub fn enabled() -> bool {
     with(|s| s.enabled())
 }
+/// Whether the keyboard hook should stay in the key path at all — Vietnamese, or
+/// English mode with gõ tắt still to do.
+pub fn hook_active() -> bool {
+    with(|s| s.hook_active())
+}
 pub fn method() -> InputMethod {
     with(|s| s.method())
 }
@@ -80,6 +85,9 @@ pub fn set_shortcuts_enabled(on: bool) {
 }
 pub fn set_shortcut_smart_case(on: bool) {
     with(|s| s.set_shortcut_smart_case(on));
+}
+pub fn set_shortcuts_in_english(on: bool) {
+    with(|s| s.set_shortcuts_in_english(on));
 }
 pub fn set_auto_english_on_foreign_layout(on: bool) {
     with(|s| s.set_auto_english_on_foreign_layout(on));

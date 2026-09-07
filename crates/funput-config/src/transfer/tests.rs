@@ -47,6 +47,7 @@ fn round_trip_preserves_state() {
         }],
         app_language_memory: BTreeMap::from([("code.exe".to_string(), false)]),
         shortcut_smart_case: false,
+        shortcuts_in_english: false,
         ..Settings::default()
     };
 
@@ -64,7 +65,10 @@ fn round_trip_preserves_state() {
     assert_eq!(b.shortcuts.len(), 1);
     assert_eq!(b.shortcuts[0].expansion, "Việt Nam");
     assert_eq!(b.app_language_memory.get("code.exe"), Some(&false));
-    assert!(!b.shortcut_smart_case, "both gõ tắt switches are portable");
+    assert!(
+        !b.shortcut_smart_case && !b.shortcuts_in_english,
+        "every gõ tắt switch is portable"
+    );
     assert!(b.shortcuts_enabled);
 }
 

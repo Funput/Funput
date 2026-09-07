@@ -470,3 +470,71 @@ fn without_a_settings_file_everything_still_works_in_memory() {
     state.set_spell_check(true);
     assert!(state.settings().spell_check);
 }
+
+// ---- gõ tắt in English mode ----
+
+/// English mode is the user's choice here, not a layout veto — the shell must still
+/// let the hook see keys so a trigger can expand.
+#[test]
+fn english_mode_keeps_the_hook_active_for_shortcuts() {
+    let mut state = shell_with_tp();
+    state.set_enabled(false);
+
+    assert!(!state.enabled(), "Vietnamese really is off");
+    assert!(state.hook_active(), "but gõ tắt still has work to do");
+    assert_eq!(app_text(&mut state, "tp "), "TP. HCM ");
+}
+
+#[test]
+fn turning_the_english_switch_off_hands_english_mode_back() {
+    let mut state = shell_with_tp();
+    state.set_enabled(false);
+    state.set_shortcuts_in_english(false);
+
+    assert!(!state.hook_active());
+    assert_eq!(app_text(&mut state, "tp "), "tp ");
+}
+
+/// No rows means nothing to expand, so English mode stays exactly as hands-off as
+/// it was before the feature existed.
+#[test]
+fn an_empty_table_leaves_english_mode_out_of_the_hook() {
+    let mut state = shell();
+    state.set_enabled(false);
+
+    assert!(!state.hook_active());
+}
+
+/// A suspended layout vetoes gõ tắt as well: an expansion injected into a CJK IME
+/// corrupts its text exactly as composition would.
+#[test]
+fn a_suspended_layout_vetoes_english_shortcuts_too() {
+    let mut state = shell_with_tp();
+    state.apply_for_layout(JAPANESE_IME);
+
+    assert!(!state.enabled());
+    assert!(
+        !state.hook_active(),
+        "the layout suspension outranks the English-mode switch"
+    );
+}
+
+/// Turning gõ tắt off entirely takes English mode with it — one feature, one switch.
+#[test]
+fn the_shortcuts_switch_also_closes_the_hook_in_english_mode() {
+    let mut state = shell_with_tp();
+    state.set_enabled(false);
+    state.set_shortcuts_enabled(false);
+
+    assert!(!state.hook_active());
+}
+
+/// Vietnamese mode never depends on the English-mode switch.
+#[test]
+fn the_english_switch_does_not_touch_vietnamese_mode() {
+    let mut state = shell_with_tp();
+    state.set_shortcuts_in_english(false);
+
+    assert!(state.hook_active());
+    assert_eq!(app_text(&mut state, "tp "), "TP. HCM ");
+}

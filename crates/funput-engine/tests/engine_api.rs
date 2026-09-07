@@ -472,6 +472,7 @@ fn configure_applies_all_options() {
         auto_capitalize: true,
         shortcuts_enabled: false,
         shortcut_smart_case: false,
+        shortcuts_in_english: false,
     });
     assert_eq!(engine.method(), InputMethod::Vni);
     assert_eq!(engine.tone_style(), ToneStyle::Modern);
@@ -480,6 +481,7 @@ fn configure_applies_all_options() {
     assert!(config.spell_check && config.auto_capitalize);
     assert!(!config.smart_restore && !config.eager_restore);
     assert!(!config.shortcuts_enabled && !config.shortcut_smart_case);
+    assert!(!config.shortcuts_in_english);
 }
 
 /// `configure` keeps the `set_*` side effect: switching method mid-word clears the

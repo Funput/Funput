@@ -100,8 +100,8 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
         return true;
     }
 
-    if !shell::enabled() {
-        return false; // English mode: hands off
+    if !shell::hook_active() {
+        return false; // English mode with no gõ tắt to do: hands off
     }
 
     // Settings/Onboarding run in a separate Funput process. Their fields compose

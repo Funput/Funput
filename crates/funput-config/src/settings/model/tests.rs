@@ -211,3 +211,37 @@ fn the_foreign_layout_switch_round_trips_when_turned_off() {
     let back: Settings = serde_json::from_str(&text).expect("deserialize");
     assert!(!back.auto_english_on_foreign_layout);
 }
+
+/// Same rule as the two switches above: absent means on. Gõ tắt in English mode is
+/// new behaviour, but it is behaviour a table's owner asked for by keeping a table —
+/// and the switch is one click away for anyone who disagrees.
+#[test]
+fn a_file_without_the_english_shortcut_switch_expands_in_english_mode() {
+    let legacy = r#"{
+      "method": "vni",
+      "enabled": true,
+      "smartRestore": true,
+      "eagerRestore": true,
+      "toggleHotkey": "ctrl_backtick",
+      "launchAtLogin": false,
+      "hasCompletedOnboarding": false
+    }"#;
+    let s: Settings = serde_json::from_str(legacy).expect("legacy settings.json must decode");
+
+    assert!(s.shortcuts_in_english);
+}
+
+#[test]
+fn the_english_shortcut_switch_round_trips_when_turned_off() {
+    let s = Settings {
+        shortcuts_in_english: false,
+        ..Settings::default()
+    };
+    let text = serde_json::to_string(&s).expect("serialize");
+    assert!(
+        text.contains("\"shortcutsInEnglish\":false"),
+        "the on-disk key is camelCase, like every other field"
+    );
+    let back: Settings = serde_json::from_str(&text).expect("deserialize");
+    assert!(!back.shortcuts_in_english);
+}

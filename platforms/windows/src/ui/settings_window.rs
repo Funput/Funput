@@ -105,6 +105,7 @@ pub(super) fn populate(window: &SettingsWindow) {
     window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
     window.set_shortcuts_enabled(settings.shortcuts_enabled);
     window.set_shortcut_smart_case(settings.shortcut_smart_case);
+    window.set_shortcuts_in_english(settings.shortcuts_in_english);
     window.set_can_add_shortcut(commands::can_add_shortcut());
 }
 

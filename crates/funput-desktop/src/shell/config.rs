@@ -31,6 +31,7 @@ impl ShellState {
             auto_capitalize: self.settings.auto_capitalize,
             shortcuts_enabled: self.settings.shortcuts_enabled,
             shortcut_smart_case: self.settings.shortcut_smart_case,
+            shortcuts_in_english: self.settings.shortcuts_in_english,
         });
     }
 

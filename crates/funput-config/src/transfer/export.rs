@@ -28,6 +28,7 @@ pub fn to_document(s: &Settings, source: Source) -> ConfigDocument {
             auto_capitalize: Some(s.auto_capitalize),
             shortcuts_enabled: Some(s.shortcuts_enabled),
             shortcut_smart_case: Some(s.shortcut_smart_case),
+            shortcuts_in_english: Some(s.shortcuts_in_english),
         }),
         shortcuts: Some(
             s.shortcuts

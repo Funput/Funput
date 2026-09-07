@@ -50,6 +50,12 @@ impl ShellState {
         self.update_config(|s| s.shortcut_smart_case = on);
     }
 
+    /// Turn gõ tắt in English mode on or off. Off, a trigger only expands while
+    /// Vietnamese is on — which is how Funput behaved before this switch existed.
+    pub fn set_shortcuts_in_english(&mut self, on: bool) {
+        self.update_config(|s| s.shortcuts_in_english = on);
+    }
+
     /// Turn the foreign-layout auto-switch on or off. Re-judges the current layout
     /// straight away, so turning it off lifts a suspension already in place instead
     /// of leaving Vietnamese off until the user next changes keyboards.
