@@ -1,9 +1,9 @@
 # Kho phần mềm Funput — vận hành (maintainer)
 
 > **Đối tượng: maintainer/người vận hành kho**, không phải người dùng cuối.
-> Người dùng cài đặt tại **https://repo.funput.app** (trang `index.html`) hoặc theo
-> mục cài đặt trong [`platforms/linux/README.md`](../../README.md). File này ghi cách
-> *dựng* và *bảo trì* kho (khóa GPG, secrets, Pages, DNS).
+> Người dùng cài đặt theo [docs.funput.app — Linux](https://docs.funput.app/docs/install/linux).
+> `index.html` chỉ là trang dẫn đường sang đó, **không** chứa hướng dẫn — docs là nguồn duy
+> nhất. File này ghi cách *dựng* và *bảo trì* kho (khóa GPG, secrets, Pages, DNS).
 
 Phân phối Phase 2: biến `.deb`/`.rpm` của bản release mới nhất — cộng gói Arch dựng tại
 chỗ — thành **kho apt + dnf + pacman có ký GPG**, host trên **GitHub Pages**, để người dùng `apt/dnf/zypper upgrade` thay vì
@@ -70,7 +70,7 @@ Actions → **Publish package repo** → Run workflow (khi đó workflow tự l�
 > phép deploy từ `main`, nên run ở ref tag sẽ dựng xong cả ba kho rồi bị chặn ở job `deploy`.
 > Đó là lý do workflow **không** dùng trigger `release: [released]`: sự kiện release luôn nằm
 > ở `refs/tags/v*`. Publish release bằng tay trong web UI thì phải bấm Run workflow ở đây.
-Xong, trang cài đặt nằm ở URL Pages (xem mục cuối `index.html.in` để biết các lệnh người dùng).
+Xong. URL Pages phục vụ kho; hướng dẫn cho người dùng nằm ở docs.funput.app.
 
 ## Hoạt động thế nào (tóm tắt)
 - **apt** (job `apt`): tải `.deb` của release → `apt-ftparchive` tạo `Packages`/`Release` →
@@ -81,7 +81,9 @@ Xong, trang cài đặt nằm ở URL Pages (xem mục cuối `index.html.in` đ
   rolling, build từ nguồn), nên job này *dựng* gói từ `packaging/arch/PKGBUILD.in` rồi ký từng
   gói, `repo-add`, ký luôn `funput.db`. Chỉ **x86_64** (Arch chỉ hỗ trợ chính thức kiến
   trúc này). Đây là job duy nhất phải biên dịch, nên cũng là job lâu nhất.
-- **deploy**: gộp `public/{deb,rpm,arch}` + `funput.asc` + `index.html` + `funput.repo`, đẩy lên Pages.
+- **deploy**: gộp `public/{deb,rpm,arch}` + `funput.asc` + `index.html` + `404.html` +
+  `funput.repo`, đẩy lên Pages. Hai trang HTML dựng từ `*.html.in` bằng một phép thay
+  `@REPO_URL@`; sửa trang thì sửa cả hai để chúng không lệch nhau.
 
 Mỗi lần chạy **dựng lại toàn bộ** từ release hiện tại (stateless) — package manager chỉ cần
 phiên bản mới nhất để chào upgrade, nên không cần giữ lịch sử gh-pages.
