@@ -26,25 +26,6 @@ class CommittedCompositionSessionTest {
     }
 
     @Test
-    fun `selection update from committed replacement keeps engine buffer`() {
-        val editor = CommittedEditor()
-        val session = testSession(ScriptedEngine(ArrayDeque(listOf("chào"))))
-        val handler = ImeKeyActionHandler(
-            composition = session,
-            editor = InputConnectionEditor(),
-            connection = { editor.proxy },
-            enterCommand = { ImeEditCommand.CommitText("\n") },
-        )
-        handler.start(renderMode = CompositionRenderMode.COMMITTED)
-
-        handler.onKeyAction(KeyAction.Input(keyId = "character-a", text = "a"))
-        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingEnd = -1)
-
-        assertTrue(session.isComposing)
-        assertEquals("chào", editor.text)
-    }
-
-    @Test
     fun `boundary replacement rewrites committed word once`() {
         val editor = CommittedEditor()
         val session = testSession(

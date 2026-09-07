@@ -16,6 +16,7 @@ internal class CompositionDocumentEditor(
     private val committedWriter = CommittedBufferWriter()
     private var committedSelection: Int? = null
     private var expectedCommittedSelection: Int? = null
+    private var midEditCommittedSelection: Int? = null
 
     fun update(
         connection: InputConnection,
@@ -71,6 +72,7 @@ internal class CompositionDocumentEditor(
     } else true.also {
         committedSelection = null
         expectedCommittedSelection = null
+        midEditCommittedSelection = null
     }
 
     fun ownsSelection(
@@ -92,7 +94,7 @@ internal class CompositionDocumentEditor(
         previous: String,
         replacement: String,
     ): Boolean {
-        expectCommittedSelection(previous.length, replacement.length)
+        expectCommittedSelection(previous, replacement)
         return if (mode.writesKeyEvents) {
             keyEventWriter.replace(connection, previous, replacement)
         } else {
@@ -107,6 +109,12 @@ internal class CompositionDocumentEditor(
         selectionEnd: Int,
     ): Boolean {
         if (selectionStart != selectionEnd) return false
+        // Gecko textareas carrying `maxlength` report the caret from inside our batch
+        // edit, after the delete and before the commit. That caret is ours, not a move.
+        if (midEditCommittedSelection == selectionEnd) {
+            midEditCommittedSelection = null
+            return true
+        }
         val beforeCursor = connection?.getTextBeforeCursor(text.length, 0)?.toString()
         val editorConfirmsText = beforeCursor?.endsWith(text) == true
         val editorWithholdsText = beforeCursor.isNullOrEmpty() && selectionEnd >= text.length
@@ -115,13 +123,17 @@ internal class CompositionDocumentEditor(
         if (owned) {
             committedSelection = selectionEnd
             expectedCommittedSelection = null
+            midEditCommittedSelection = null
         }
         return owned
     }
 
-    private fun expectCommittedSelection(previousLength: Int, currentLength: Int) {
+    private fun expectCommittedSelection(previous: String, replacement: String) {
         val base = expectedCommittedSelection ?: committedSelection
-        expectedCommittedSelection = base?.minus(previousLength)?.plus(currentLength)
+        val afterDelete = base?.minus(previous.length)
+        midEditCommittedSelection = afterDelete
+            ?.takeIf { deletesBeforeCommit(previous, replacement) }
+        expectedCommittedSelection = afterDelete?.plus(replacement.length)
     }
 
     private companion object {
