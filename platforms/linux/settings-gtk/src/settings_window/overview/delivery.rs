@@ -16,12 +16,16 @@ pub(super) fn group(settings: &Settings) -> PreferencesGroup {
         )
         .build();
     // Named for what the user sees, not for the mechanism: "preedit" is a word this
-    // audience has no reason to know, while the underline is on their screen. Someone
-    // arriving from UniKey on Windows has only ever seen the direct kind, so the
-    // subtitle says so rather than explaining a concept they never had.
+    // audience has no reason to know, while the underline is on their screen. The
+    // subtitle spends itself on the one thing the switch cannot promise — the mode
+    // stands itself down for a client that cannot take a document repair — and names
+    // the fallback by the same underline the title does, so "the old way" is not left
+    // to the reader. No other product is named here: Funput's own Windows shell types
+    // straight into the document too, so borrowing someone else's name for our own
+    // behaviour would be both unnecessary and wrong.
     let row = SwitchRow::builder()
         .title("Gõ thẳng, không gạch chân")
-        .subtitle("Giống UniKey trên Windows. App nào không nhận được thì Funput tự về cách cũ.")
+        .subtitle("App nào không nhận được thì Funput tự chuyển về kiểu gạch chân.")
         .active(settings.non_preedit)
         .build();
     row.add_prefix(&gtk::Image::from_icon_name("document-edit-symbolic"));
