@@ -44,10 +44,11 @@ FCITX_CONFIGURATION(
     fcitx::ExternalOption openSettings{
         this, "OpenSettings", "Open Funput Settings", "funput-settings"};);
 
-// Reading the focused client. Document helpers live in funput_client.cpp;
-// the hidden-preedit allowlist lives in hidden_preedit.cpp.
+// Reading the focused client. Document helpers and its identity live in
+// funput_client.cpp; the hidden-preedit allowlist lives in hidden_preedit.cpp.
 std::string textBeforeCaret(fcitx::InputContext *context);
 bool hasSelection(fcitx::InputContext *context);
+std::string clientId(fcitx::InputContext *context);
 bool hidesClientPreedit(fcitx::InputContext *context);
 
 class FunputEngine : public fcitx::InputMethodEngineV2 {
@@ -88,6 +89,10 @@ private:
     // cache can be stale, and surrounding text often arrives only after the client
     // answers. Set by SurroundingTextUpdated; cleared on activate().
     bool lastSurroundingOk_ = false;
+    // Whether the client has answered since the last keystroke. The one bit that tells
+    // an empty answer apart from no answer at all — see BlindWrites, which must never
+    // accuse a client that simply stayed quiet. Cleared as each key consumes it.
+    bool surroundingFresh_ = false;
     // Live settings reload: an inotify fd (settingsWatcher_) wired into Fcitx5's
     // event loop (settingsWatch_).
     funput::SettingsWatcher settingsWatcher_;

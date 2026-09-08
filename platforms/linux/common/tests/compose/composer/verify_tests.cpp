@@ -8,37 +8,11 @@
 
 #include <doctest/doctest.h>
 
+#include "compose/composer/nonpreedit/refusal.h"
 #include "support.h"
 
 using namespace funput;
 using namespace funput::test;
-
-namespace {
-
-// A client that drops every delete.
-void applyIgnoringDeletes(std::string &document, const ComposePlan &plan, char key) {
-    if (plan.effect != Effect::Replace) {
-        applyPlan(document, plan, key);
-        return;
-    }
-    document += plan.text;
-}
-
-// Type until the mode or re-toning is refused, feeding the client each plan. Returns
-// the document as that client left it.
-std::string typeUntilRefused(Composer &composer, const std::string &keys,
-                             void (*client)(std::string &, const ComposePlan &, char)) {
-    std::string document;
-    for (char c : keys) {
-        composer.observeDocument(document);
-        if (!composer.nonPreedit()) break;
-        client(document, composer.onKey(ascii(c)), c);
-    }
-    composer.observeDocument(document);
-    return document;
-}
-
-} // namespace
 
 TEST_CASE("a client that obeys keeps the mode") {
     Composer composer = composerFor(Method::Telex);
@@ -79,10 +53,12 @@ TEST_CASE("a silent client keeps the mode") {
     Composer composer = composerFor(Method::Telex);
     composer.setNonPreedit(true);
 
-    // The client answers nothing, so every reading is the document as it was before
-    // any of this. That is the common case — 61% of commits go unanswered — and
-    // reading it as failure would disable the mode for almost everybody.
-    const std::string stale;
+    // The client answers nothing, so every reading is the document as it was before any
+    // of this. That is the common case — 61% of commits go unanswered — and reading it
+    // as failure would disable the mode for almost everybody. Stale, not empty: an
+    // always-empty reading is a verdict of its own now (nonpreedit/verdict.h), and a
+    // client that has never shown a document cannot arm the mode in the first place.
+    const std::string stale = "câu trước đó ";
     for (char c : std::string("tieengs ")) {
         composer.observeDocument(stale);
         composer.onKey(ascii(c));

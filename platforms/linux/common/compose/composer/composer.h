@@ -18,6 +18,7 @@
 #define FUNPUT_COMPOSE_COMPOSER_H
 
 #include <string>
+#include <string_view>
 
 #include "compose/composer/nonpreedit.h"
 #include "compose/key/classify.h"
@@ -65,16 +66,28 @@ public:
     void setNonPreedit(bool on);
     bool nonPreedit() const { return nonPreedit_.on; }
 
-    // A new input context took focus. Clears what was learned about the last client,
-    // which is the only thing that lets a mode stood down for one client be tried
-    // again in the next. Kept apart from `setNonPreedit()` on purpose: IBus calls that
-    // on every keystroke, so clearing there would erase a verdict immediately.
-    void onFocusChanged();
+    // A client took focus. Clears what was learned about the last one, which is the
+    // only thing that lets a mode stood down for one client be tried again in the next.
+    // Kept apart from `setNonPreedit()` on purpose: IBus calls that on every keystroke,
+    // so clearing there would erase a verdict immediately.
+    //
+    // `client` is how the shell names what it just focused — Fcitx5 passes the program
+    // name, falling back to the input context's own identity. A client already caught
+    // dropping a delete keeps that verdict, because Fcitx5 re-activates on capability
+    // changes too and a client that churns them would otherwise be forgiven every
+    // keystroke. An empty name is always a fresh question; that is the IBus shell,
+    // which has none to give. See nonpreedit/clients.h.
+    void onFocusChanged(std::string_view client = {});
 
     // The document in front of the caret as it stands now, before this keystroke.
     // Checks that the previous repair landed, and stands down as narrowly as the
     // failure allows — see nonpreedit.cpp.
-    void observeDocument(const std::string &textBeforeCaret, bool selectionLive = false);
+    //
+    // `answered` is whether the client sent surrounding text since the last keystroke.
+    // Without it an empty answer and no answer are the same string, and standing the
+    // mode down on silence would take it from the clients it was built for.
+    void observeDocument(const std::string &textBeforeCaret, bool selectionLive = false,
+                         bool answered = true);
 
     // Whether a word is being composed right now. The shells ask before deciding
     // whether a Backspace is shortening a live word or eating a committed one.

@@ -31,40 +31,28 @@
 // the mode down on most keystrokes, curing one broken client by breaking the feature
 // for everyone. A repair that deletes nothing makes the first two identical, so that
 // case is excluded rather than left to luck.
+//
+// Which leaves one client this can never judge: the one whose document reads empty
+// every time. All three strings collapse into one there, so no repair is ever worth a
+// verdict. `BlindWrites` in nonpreedit/verdict.h is the answer to that one.
+//
+// The verdict belongs to the client it was about, not to the focus it was reached in:
+// a shell may re-activate the same client many times over — Fcitx5 does so on every
+// capability change — and each of those must not reopen a settled question. See
+// nonpreedit/clients.h.
 
 #ifndef FUNPUT_COMPOSE_NONPREEDIT_H
 #define FUNPUT_COMPOSE_NONPREEDIT_H
 
 #include <cstdint>
 #include <string>
-#include <vector>
+#include <string_view>
 
+#include "compose/composer/nonpreedit/clients.h"
+#include "compose/composer/nonpreedit/verdict.h"
 #include "ffi/utf8.h"
 
 namespace funput {
-
-// Drop the last `count` characters. Characters, not bytes — the same unit
-// `deleteChars` is in, and the same reason.
-inline std::string dropLast(const std::string &text, uint32_t count) {
-    std::vector<uint32_t> chars = decodeUtf8(text);
-    const size_t keep = count < chars.size() ? chars.size() - count : 0;
-    std::string out;
-    for (size_t i = 0; i < keep; ++i) appendUtf8(out, chars[i]);
-    return out;
-}
-
-// What the last repair turned out to be worth.
-enum class Verdict : uint8_t {
-    // Either it landed or the client has not said. Both mean carry on.
-    Unknown,
-    // The delete was dropped on a repair that followed a re-opened word. Chrome's
-    // address bar does exactly this: ordinary repairs work, but one issued straight
-    // after the app handled a Backspace itself is discarded. Only re-toning need go.
-    RefuseRetone,
-    // The delete was dropped on an ordinary repair, so nothing written here can be
-    // trusted. The mode goes.
-    RefuseMode,
-};
 
 struct NonPreeditState {
     // The mode as it applies right now. `refused` outranks it: once a client has been
@@ -72,7 +60,16 @@ struct NonPreeditState {
     // re-decides on every keystroke, so without the latch a verdict lasted one key.
     bool on = false;
     bool refused = false;
+    // Which clients that latch has already been spent on — see clients.h. Kept across
+    // `reset()`, since a client is the same client whether it was re-focused or merely
+    // re-activated by a capability change.
+    ClientMemory clients;
+    // How often this client has answered with nothing while being written into.
+    BlindWrites blind;
     bool retoneAllowed = true;
+    // Whether the client answered since the last keystroke. Only the shell can see it,
+    // and `BlindWrites` needs it to tell an empty answer from no answer at all.
+    bool answered = false;
     // Whether the client is holding a selection. Only the shell can see this, and the
     // Backspace path below needs it: taking a Backspace over while text is selected
     // would swallow the key the user pressed to delete that selection.
@@ -93,10 +90,14 @@ struct NonPreeditState {
     // the one a client like the address bar drops.
     bool justAdopted = false;
 
-    // A new input context: whatever the last client did says nothing about this one.
-    // `on` survives — that is the shell's decision, not something learned here.
-    void reset() {
-        refused = false;
+    // A client took focus: whatever the last one did says nothing about this one —
+    // unless it *is* this one, in which case a verdict already reached still stands.
+    // `on` survives either way; that is the shell's decision, not something learned
+    // here.
+    void reset(std::string_view client) {
+        refused = clients.focus(client);
+        blind.reset();
+        answered = false;
         retoneAllowed = true;
         selectionLive = false;
         inSync = false;
@@ -125,6 +126,11 @@ struct NonPreeditState {
             inSync = document == applied;
             if (document == dropped && dropped != applied) {
                 verdict = repairAfterAdopt ? Verdict::RefuseRetone : Verdict::RefuseMode;
+            }
+            // The comparison above is blind to a document that is always empty, which
+            // is a failure of its own rather than an absence of one.
+            if (verdict == Verdict::Unknown && blind.observe(document, answered)) {
+                verdict = Verdict::RefuseMode;
             }
             repairText.clear();
             repairDeleted = 0;

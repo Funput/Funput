@@ -17,12 +17,14 @@ void Composer::setNonPreedit(bool on) {
     nonPreedit_.on = on && !nonPreedit_.refused;
 }
 
-void Composer::onFocusChanged() {
-    nonPreedit_.reset();
+void Composer::onFocusChanged(std::string_view client) {
+    nonPreedit_.reset(client);
 }
 
-void Composer::observeDocument(const std::string &textBeforeCaret, bool selectionLive) {
+void Composer::observeDocument(const std::string &textBeforeCaret, bool selectionLive,
+                               bool answered) {
     nonPreedit_.selectionLive = selectionLive;
+    nonPreedit_.answered = answered;
     switch (nonPreedit_.observe(textBeforeCaret)) {
     case Verdict::Unknown:
         return;
@@ -33,6 +35,10 @@ void Composer::observeDocument(const std::string &textBeforeCaret, bool selectio
         nonPreedit_.retoneAllowed = false;
         break;
     case Verdict::RefuseMode:
+        // Remember *who* did it, so re-activating this same client — which Fcitx5 does
+        // on every capability change — does not hand it the mode back and cost another
+        // word. See nonpreedit/clients.h.
+        nonPreedit_.clients.remember();
         nonPreedit_.refused = true;
         nonPreedit_.on = false;
         break;
