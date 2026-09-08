@@ -94,7 +94,7 @@ pub struct Settings {
     pub spell_check: bool,
     #[serde(default)]
     pub auto_capitalize: bool,
-    /// "Gõ thẳng vào ứng dụng", shown on Tổng quan. `default = "on"`, not a bare
+    /// "Gõ thẳng, không gạch chân", shown on Tổng quan. `default = "on"`, not a bare
     /// `#[serde(default)]`: that reads a keyless document as false and saves it back.
     #[serde(default = "on")]
     pub non_preedit: bool,

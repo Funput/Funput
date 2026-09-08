@@ -35,7 +35,7 @@
 | ✂️ **Gõ tắt** | Bảng viết tắt tự bung, tuỳ chọn khớp cả hoa lẫn thường |
 | 🔄 **Chuyển mã** | Đổi qua lại giữa Unicode dựng sẵn, Unicode tổ hợp, TCVN3 (ABC) và VNI-Windows |
 | ⚙️ **App Cài đặt GTK4** | Dùng chung cho cả hai shell, giao diện libadwaita |
-| 📝 **Gõ thẳng vào ứng dụng** | Chữ vào thẳng tài liệu thay vì nằm ở preedit — cứu được Chrome. **Mặc định bật.** [Chi tiết](#chế-độ-không-preedit) |
+| 📝 **Gõ thẳng, không gạch chân** | Chữ vào thẳng ô nhập thay vì đợi ở dòng gạch chân — cứu được Chrome. **Mặc định bật.** [Chi tiết](#chế-độ-không-preedit) |
 | 🔁 **Nạp lại cấu hình tức thì** | `inotify` theo dõi `settings.json`, không cần khởi động lại |
 
 ## Yêu cầu
@@ -424,7 +424,8 @@ nhập qua `notify::selected` và panic vì `borrow_mut` lồng nhau.
 
 ### Chế độ không preedit
 
-**Mặc định bật**; công tắc “Bật gõ thẳng” nằm ở trang **Tổng quan** của app Cài đặt, hoặc đặt
+**Mặc định bật**; công tắc “Gõ thẳng, không gạch chân” nằm ở trang **Tổng quan** của app Cài
+đặt, hoặc đặt
 thẳng `"nonPreedit": false` trong `~/.config/Funput/settings.json`. Kiểu nào thì watcher cũng
 nhận ra ngay, không cần khởi động lại. **Cả hai shell đều thi hành nó.**
 

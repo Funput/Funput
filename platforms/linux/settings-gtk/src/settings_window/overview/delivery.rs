@@ -10,14 +10,18 @@ use crate::settings::Settings;
 
 pub(super) fn group(settings: &Settings) -> PreferencesGroup {
     let group = PreferencesGroup::builder()
-        .title("Gõ thẳng vào ứng dụng")
+        .title("Cách chữ hiện ra khi gõ")
         .description(
-            "Chữ hiện ngay trong ô gõ, không nằm ở dòng gạch chân. Đổi cửa sổ giữa chừng cũng không mất chữ.",
+            "Có hai kiểu: chữ vào thẳng ô nhập, hoặc đợi ở một dòng gạch chân rồi mới đáp xuống — đổi cửa sổ giữa chừng thì kiểu sau làm mất từ đang gõ.",
         )
         .build();
+    // Named for what the user sees, not for the mechanism: "preedit" is a word this
+    // audience has no reason to know, while the underline is on their screen. Someone
+    // arriving from UniKey on Windows has only ever seen the direct kind, so the
+    // subtitle says so rather than explaining a concept they never had.
     let row = SwitchRow::builder()
-        .title("Bật gõ thẳng")
-        .subtitle("App nào không nhận được thì Funput tự về cách cũ.")
+        .title("Gõ thẳng, không gạch chân")
+        .subtitle("Giống UniKey trên Windows. App nào không nhận được thì Funput tự về cách cũ.")
         .active(settings.non_preedit)
         .build();
     row.add_prefix(&gtk::Image::from_icon_name("document-edit-symbolic"));
