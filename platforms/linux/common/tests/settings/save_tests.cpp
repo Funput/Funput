@@ -59,10 +59,12 @@ TEST_CASE("save keeps the gõ tắt switches") {
     REQUIRE(settings.reload());
     settings.shortcutsEnabled = false;
     settings.shortcutSmartCase = false;
+    settings.shortcutsInEnglish = false;
     settings.save();
 
     Settings reloaded;
     REQUIRE(reloaded.reload());
     CHECK_FALSE(reloaded.shortcutsEnabled);
     CHECK_FALSE(reloaded.shortcutSmartCase);
+    CHECK_FALSE(reloaded.shortcutsInEnglish);
 }

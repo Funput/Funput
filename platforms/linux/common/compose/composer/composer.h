@@ -67,16 +67,13 @@ public:
     bool nonPreedit() const { return nonPreedit_.on; }
 
     // A client took focus. Clears what was learned about the last one, which is the
-    // only thing that lets a mode stood down for one client be tried again in the next.
-    // Kept apart from `setNonPreedit()` on purpose: IBus calls that on every keystroke,
-    // so clearing there would erase a verdict immediately.
+    // only thing that lets a stood-down mode be tried again. Apart from
+    // `setNonPreedit()`: IBus calls that on every keystroke.
     //
-    // `client` is how the shell names what it just focused — Fcitx5 passes the program
-    // name, falling back to the input context's own identity. A client already caught
-    // dropping a delete keeps that verdict, because Fcitx5 re-activates on capability
-    // changes too and a client that churns them would otherwise be forgiven every
-    // keystroke. An empty name is always a fresh question; that is the IBus shell,
-    // which has none to give. See nonpreedit/clients.h.
+    // `client` is how the shell names the focus — Fcitx5's program name, else the
+    // input context. A client caught dropping a delete keeps that verdict (Fcitx5
+    // also re-activates on capability churn). Empty is always a fresh question
+    // (IBus has no name). See nonpreedit/clients.h.
     void onFocusChanged(std::string_view client = {});
 
     // The document in front of the caret as it stands now, before this keystroke.
@@ -124,6 +121,7 @@ private:
     // A word boundary arrived while composing: commit the finished word plus the
     // boundary character itself as one string.
     ComposePlan onBoundary(char32_t scalar, KeySource source);
+    bool englishShortcutsActive() const;
 
     // --- non-preedit (nonpreedit.cpp) -----------------------------------------
 

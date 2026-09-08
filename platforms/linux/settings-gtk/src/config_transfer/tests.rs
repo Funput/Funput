@@ -14,6 +14,7 @@ fn round_trip_preserves_state() {
         non_preedit: true,
         shortcuts_enabled: false,
         shortcut_smart_case: false,
+        shortcuts_in_english: false,
         ..Settings::default()
     };
     assert_eq!(
@@ -30,6 +31,7 @@ fn round_trip_preserves_state() {
     assert!(imported.non_preedit);
     assert!(!imported.shortcuts_enabled);
     assert!(!imported.shortcut_smart_case);
+    assert!(!imported.shortcuts_in_english);
 }
 
 #[test]
@@ -40,6 +42,7 @@ fn a_document_without_the_gõ_tắt_switches_leaves_them_alone() {
     let mut settings = Settings {
         shortcuts_enabled: false,
         shortcut_smart_case: false,
+        shortcuts_in_english: false,
         ..Settings::default()
     };
     let doc = serde_json::from_str(
@@ -50,6 +53,7 @@ fn a_document_without_the_gõ_tắt_switches_leaves_them_alone() {
     assert_eq!(settings.method, Method::Telex); // the block was read
     assert!(!settings.shortcuts_enabled); // and these survived it
     assert!(!settings.shortcut_smart_case);
+    assert!(!settings.shortcuts_in_english);
 }
 
 #[test]

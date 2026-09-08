@@ -29,7 +29,7 @@ enum class KeySource : uint32_t {
 
 // The engine-affecting options of `settings`, as the C ABI's by-value config. The
 // runtime VI/EN state is deliberately absent: that is the live toggle
-// (`setEnabled`), not a persisted engine option. So are the two gõ tắt options,
+// (`setEnabled`), not a persisted engine option. So are the gõ tắt options,
 // which the C ABI keeps as their own functions — see `setShortcutsEnabled` below.
 inline FunputConfig engineConfig(const Settings &s) {
     return FunputConfig{
@@ -72,14 +72,15 @@ public:
     // re-adding each entry (the engine is a runtime mirror of settings.json).
     void clearShortcuts() { funput_clear_shortcuts(engine_); }
 
-    // The two gõ tắt options. Their own FFI calls rather than `FunputConfig` fields:
+    // The gõ tắt options. Their own FFI calls rather than `FunputConfig` fields:
     // that struct crosses the ABI by value and this addon is built separately from
     // the committed header, so growing it would mismatch silently. `configure` leaves
-    // both alone, so the calls may come in any order.
+    // them alone, so the calls may come in any order.
     //
-    // Neither touches the table, so toggling either is instant and needs no re-push.
+    // None touches the table, so toggling any is instant and needs no re-push.
     void setShortcutsEnabled(bool on) { funput_set_shortcuts_enabled(engine_, on); }
     void setShortcutSmartCase(bool on) { funput_set_shortcut_smart_case(engine_, on); }
+    void setShortcutsInEnglish(bool on) { funput_set_shortcuts_in_english(engine_, on); }
     void addShortcut(const std::string &trigger, const std::string &expansion) {
         const std::vector<uint32_t> t = decodeUtf8(trigger);
         const std::vector<uint32_t> e = decodeUtf8(expansion);

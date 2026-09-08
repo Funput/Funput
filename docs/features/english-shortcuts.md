@@ -2,11 +2,10 @@
 
 ## Trạng thái
 
-Đã có trong bản Windows và macOS. Setting `shortcutsInEnglish`, **mặc định bật**, công tắc
-nằm ở Cài đặt → Gõ tắt. File cấu hình đã mang sẵn khoá này, nên các nền tảng khác
-chỉ còn phần UI và phần shell:
+Đã có trong bản Windows, macOS và Linux. Setting `shortcutsInEnglish`, **mặc định bật**,
+công tắc nằm ở Cài đặt → Gõ tắt. File cấu hình đã mang sẵn khoá này:
 
-- **Linux, iOS, Android**: shell vẫn tự chặn chế độ EN trước khi gọi engine.
+- **iOS, Android**: shell vẫn tự chặn chế độ EN trước khi gọi engine.
   C ABI đã có `funput_set_shortcuts_in_english` để các host triển khai sau sử dụng.
 - **funput-term**: driver cũng tự chặn EN (`state.composing()`) và không bao giờ gọi
   `Engine::set_enabled`, nên khoá này đọc được mà chưa có tác dụng.
@@ -89,3 +88,24 @@ hạn 64 codepoint của `FunputResult` cũ mà không đổi layout ABI đang d
 Gõ tắt EN dùng marked text nên có thể ảnh hưởng thời điểm app hiển thị autocomplete.
 Các vấn đề cầu nối Chromium/Electron đã ghi ở
 [KNOWN_ISSUES.md](../../platforms/macos/docs/KNOWN_ISSUES.md) vẫn áp dụng.
+
+## Linux
+
+Cài đặt → Gõ tắt có công tắc **Gõ tắt cả khi ở chế độ tiếng Anh**, mặc định bật.
+Cả Fcitx5 và IBus đi qua cùng `Composer`: mở cổng khi ba điều kiện AND đúng, rồi
+để cây phím hiện có + engine EN quyết định. Không có phủ quyết layout ngoại.
+
+Đường mặc định là **gõ thẳng** (như Windows): app tự hiện phím; khớp trigger thì
+`Replace` xóa chữ tắt rồi ghi expansion. Client không chịu surrounding text, hoặc
+user tắt “Gõ thẳng, không gạch chân”, rơi về preedit phím thô rồi `Commit` (như
+macOS). Enter/Tab là phím, không phải ranh giới — app vẫn nhận chúng sau khi
+commit từ đang gõ.
+
+### Kiểm tra thủ công
+
+1. Chọn Funput (Fcitx5 và IBus), thêm `sdt` → `0901234567`, `vn` → `Việt Nam`.
+2. Tắt tiếng Việt, “Gõ thẳng…” **bật**: gõ `sdt ` / `VN.` / `address` — không
+   gạch chân; nhận expansion hoặc nguyên từ.
+3. Tắt “Gõ thẳng…”: cùng chuỗi hiện preedit rồi commit.
+4. Thử Backspace sửa trigger, Enter (app vẫn xuống dòng), tắt lần lượt hai
+   công tắc gõ tắt.

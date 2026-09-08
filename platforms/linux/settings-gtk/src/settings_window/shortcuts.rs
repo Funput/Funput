@@ -1,4 +1,4 @@
-//! "Gõ tắt" page: the two switches governing expansion, then the shortcuts
+//! "Gõ tắt" page: the switches governing expansion, then the shortcuts
 //! themselves (`vn` → `việt nam`, smart-cased to `Vn` → `Việt Nam` / `VN` →
 //! `VIỆT NAM` at expansion time). Each shortcut is an expander with two editable
 //! fields; edits persist by index and update the header live, while add/delete
