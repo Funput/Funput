@@ -41,6 +41,17 @@ inline KeyEvent bare(uint32_t keysym) {
     return ev;
 }
 
+// A control key as the frameworks actually deliver it: a keysym *and* the C0
+// character it maps to. `bare()` models a key that produces nothing, which Return is
+// not — and a test feeding `bare(Return)` is testing a key neither shell ever sends.
+// That is exactly how Enter came to be classified as a word boundary.
+inline KeyEvent control(uint32_t keysym, char32_t ch) {
+    KeyEvent ev;
+    ev.keysym = keysym;
+    ev.ch = ch;
+    return ev;
+}
+
 // A numeric-keypad digit with NumLock on: it does produce a character, but its
 // keysym is KP_<n> rather than the top-row digit's.
 inline KeyEvent numpadDigit(unsigned digit) {

@@ -194,6 +194,17 @@ Cả hai đều tới cùng một process.
   focus-out. Thêm một client kiểu này chỉ là thêm một cái tên vào danh sách đó. **IBus không có
   kênh nào chạy được ở đây** — ForwardKeyEvent đã bị bỏ, surrounding text thì không bao giờ
   tới — nên IBus được để yên.
+- **Editor của Cursor/VS Code bỏ `deleteSurroundingText`.** Nó nhận commit bình thường nhưng bỏ
+  lệnh xoá đi kèm, nên `Phu` `1` sẽ ra `Phuú`. Tệ hơn, nó **trả lời surrounding text rỗng** ở mọi
+  phím — đủ để bật [chế độ không preedit](#chế-độ-không-preedit) nhưng không đủ để kiểm chứng
+  bất cứ lần ghi nào. Đây là phía Chromium/EditContext, Funput không với tới được, nên
+  `BlindWrites` đứng dậy sau hai câu trả lời rỗng — trước lần sửa đầu tiên có lệnh xoá. Khung
+  chat của Cursor là input DOM thường nên không dính.
+- **Phím điều khiển được phân loại theo ký tự C0, không theo keysym.** Cả Fcitx5 lẫn IBus đều
+  ánh xạ Return → CR, Tab → HT, Escape → ESC, nên `classify()` phải loại chúng ra *trước* phép
+  thử ranh giới từ — `isBoundary()` cố tình nhận `\t \n \r` vì
+  `adoptWordBeforeBackspace()` dò ranh giới trong tài liệu thật, nơi xuống dòng đúng là ranh
+  giới. Thiếu bước đó thì Enter bị nuốt và CR được nối vào chuỗi commit.
 - **Bỏ dấu sau Backspace chỉ chạy ở chế độ không preedit.** Ở chế độ preedit, Backspace chỉ rút
   ngắn composition, nên `phủ` ␣ ⌫ `s` ra chữ `s` thường.
 - **Một số client làm mất từ đang gõ dở khi đổi focus.** Cả hai shell giao việc flush cho
@@ -280,6 +291,8 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       state.cpp               Settings, VI/EN, và các lối thoát không phải phím
       nonpreedit.h            Chế độ commit-khi-gõ, và cách đánh giá một client
       nonpreedit.cpp          Composer làm gì với đánh giá đó
+      nonpreedit/clients.h    Phán quyết đó thuộc về client nào
+      nonpreedit/verdict.h    Verdict, và client không bao giờ cho xem tài liệu
   settings/               ~/.config/Funput/settings.json
     settings.h              Model mọi shell đều đọc, gồm cả công tắc gõ tắt
     lookup.cpp              File nằm đâu; loại trừ theo app
@@ -473,13 +486,51 @@ Chỉ trường hợp ở giữa là một phán quyết, và sự dè dặt đ�
 thứ tôi mong đợi” là thất bại sẽ tắt chế độ này ở 61% số commit không được trả lời — chữa một
 client hỏng bằng cách làm hỏng tính năng cho tất cả.
 
+Còn lại **một client mà phép so ba chuỗi không bao giờ xử được**: client trả lời tài liệu rỗng ở
+mọi lần đọc. Xoá N ký tự khỏi chuỗi rỗng vẫn là chuỗi rỗng, nên cả ba dòng của bảng trên gộp làm
+một và không lần ghi nào có phán quyết. Đo được ở editor Cursor: nó trả lời surrounding text ở
+**mọi** phím — đủ để bật chế độ — rồi trả lời rỗng ở mọi phím, trong khi bỏ **mọi** lệnh xoá.
+
+Câu trả lời là **`BlindWrites`** (`nonpreedit/verdict.h`): client trả lời rỗng hai lần liên tiếp
+trong khi đang bị ghi vào thì đó là một phán quyết `RefuseMode`. Hai điểm quyết định tính đúng
+của nó:
+
+1. **Đếm câu trả lời, không đếm sự im lặng.** Một lần ghi không được trả lời cũng đọc ra chuỗi
+   rỗng y hệt một câu trả lời rỗng — và 39% số commit không bao giờ được trả lời. Vì vậy shell
+   phải đưa xuống thêm một bit: *client có lên tiếng kể từ phím trước hay không*
+   (`observeDocument(..., answered)`). Bản đầu của quy tắc này đếm ký tự đã ghi bất kể có trả
+   lời hay không, và nó **tắt chế độ ngay trong Chrome** — đúng client mà tính năng sinh ra để
+   phục vụ. Im lặng là “chưa có phán quyết”; trả lời bằng chuỗi rỗng mới là phán quyết.
+2. **Xoá đếm ngay khi đọc được bất cứ thứ gì.** Một ô trống thật cũng trả lời rỗng, nhưng chỉ
+   tới khi commit đầu tiên đáp xuống.
+
+Ngưỡng là **hai**: đủ sớm để đứng dậy trước lần sửa đầu tiên có `deleteChars > 0` — thứ duy nhất
+làm hỏng chữ — và đủ muộn để một lần đua với commit đang bay không buộc tội được ai.
+
+> [!WARNING]
+> Đã thử và đã **revert**: gác ở đầu vào, tức chỉ bật chế độ khi `textBeforeCaret()` khác rỗng.
+> Nghe hợp lý, và nó chặn Cursor sạch sẽ — nhưng nó cũng khiến chế độ **không bao giờ bật trong
+> Chrome**. Một câu trả lời đáng giá bao nhiêu phải được quyết **sau** một lần ghi, không phải
+> trước.
+
 Phán quyết rút lui hẹp đúng bằng phạm vi thất bại. Một sửa chữa bị bỏ **sau khi mở lại một từ**
 chỉ khiến mất khả năng bỏ dấu lại: đó là hình dạng duy nhất từng thấy hỏng. Bất kỳ sửa chữa nào
 khác bị bỏ thì mất cả chế độ, vì không còn tin được thứ gì nó viết ra.
 
 Phán quyết là một **chốt**, không phải một biến. Shell có thể tái khẳng định chế độ — IBus làm
-vậy ở mỗi phím — và không được phép hồi sinh một chế độ mà client đã bị bắt quả tang làm hỏng;
-chỉ `Composer::onFocusChanged()` xoá chốt, vì một client mới là một câu hỏi mới.
+vậy ở mỗi phím — và không được phép hồi sinh một chế độ mà client đã bị bắt quả tang làm hỏng.
+Chốt đó **thuộc về client**, không thuộc về một lần focus: `Composer::onFocusChanged()` nhận tên
+client và chỉ mở lại câu hỏi khi đó thật sự là một client khác.
+
+Sự khác biệt ấy không phải chuyện tinh vi. Fcitx5 gọi `activate()` **cả khi capability đổi**,
+không riêng khi đổi focus — chú thích trong `deactivate()` nói đúng điều đó — nên một client hay
+thay đổi capability sẽ xoá phán quyết chỉ một hai phím sau khi nó được đưa ra. Editor của Cursor
+là client như vậy: chế độ tự bật lại rồi phá tiếp từ sau, lặp vô hạn thay vì hỏng đúng một lần.
+Bộ nhớ nằm ở `compose/composer/nonpreedit/clients.h`, giới hạn tám client gần nhất. Tên client
+là `InputContext::program()`, và khi frontend không phân giải được thì là uuid của chính input
+context — hẹp hơn nhưng đúng phần cần thiết, vì một lần re-activate do capability đổi vẫn là
+cùng context ấy. **Tên rỗng không bao giờ được nhớ**: shell IBus không có tên để đưa, và trên
+GNOME/Wayland mọi client đều trả lời `gnome-shell` — nhớ cái tên đó là tắt chế độ cho tất cả.
 
 Cái giá là việc phát hiện chậm một nhịp, nên từ đầu tiên vẫn bị hỏng trước khi chế độ rút lui.
 Bắt sớm hơn nghĩa là phải ghi chữ dò vào tài liệu của người dùng, và điều đó không nằm trên bàn.

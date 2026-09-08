@@ -76,6 +76,18 @@ inline void appendUtf8(std::string &out, uint32_t cp) {
         out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
     }
 }
+
+// Drop the last `count` characters of a UTF-8 string. Characters, not bytes — the
+// unit `ComposePlan::deleteChars` and `deleteSurroundingText` both count in, and the
+// reason this lives beside the codec rather than being open-coded at either caller.
+inline std::string dropLast(const std::string &text, uint32_t count) {
+    const std::vector<uint32_t> chars = decodeUtf8(text);
+    const size_t keep = count < chars.size() ? chars.size() - count : 0;
+    std::string out;
+    for (size_t i = 0; i < keep; ++i) appendUtf8(out, chars[i]);
+    return out;
+}
+
 } // namespace funput
 
 #endif // FUNPUT_UTF8_H

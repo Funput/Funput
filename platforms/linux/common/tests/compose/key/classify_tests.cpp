@@ -89,6 +89,19 @@ TEST_CASE("a key with no character is NonText") {
     CHECK(classify(bare(0xFF51), settings) == KeyKind::NonText); // Left arrow
 }
 
+TEST_CASE("a control character is a key, not text") {
+    Settings settings;
+    // What the shells really send. Reading these as characters put Enter and Tab on
+    // the word-boundary path, where the key was swallowed and its CR appended to the
+    // commit, and put Escape on the composing path, where it was fed to the engine.
+    CHECK(classify(control(keysym::Return, U'\r'), settings) == KeyKind::NonText);
+    CHECK(classify(control(0xFF8D, U'\r'), settings) == KeyKind::NonText);  // KP_Enter
+    CHECK(classify(control(0xFF09, U'\t'), settings) == KeyKind::NonText);  // Tab
+    CHECK(classify(control(0xFF1B, U'\x1B'), settings) == KeyKind::NonText); // Escape
+    // Space is not a control character and must stay a word boundary.
+    CHECK(classify(ascii(' '), settings) == KeyKind::Boundary);
+}
+
 TEST_CASE("numpad digits are told apart from top-row digits") {
     Settings settings;
     settings.method = Method::Vni;

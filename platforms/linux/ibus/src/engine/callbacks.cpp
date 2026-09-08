@@ -2,6 +2,8 @@
 
 #include "engine/internal.h"
 
+#include <utility>
+
 namespace funput_ibus {
 
 namespace {
@@ -69,7 +71,8 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
     // shell's keyEvent().
     const bool nonPreedit = state->composer.nonPreedit();
     const std::string before = nonPreedit ? textBeforeCaret(engine) : std::string();
-    if (nonPreedit) state->composer.observeDocument(before, hasSelection(engine));
+    const bool answered = std::exchange(state->surroundingFresh, false);
+    if (nonPreedit) state->composer.observeDocument(before, hasSelection(engine), answered);
 
     const bool reopen = state->composer.nonPreedit() && !state->composer.isComposing() &&
                         funput::classify(ev, state->composer.settings()) ==
@@ -89,10 +92,12 @@ void focusIn(IBusEngine *engine) {
     // A different client, which has said nothing yet. Whatever the last one did tells
     // us nothing about this one.
     state->sawSurroundingText = false;
+    state->surroundingFresh = false;
     state->toggleChord.reset();
     // A new client: forget whether the last one could be trusted with a repair. Kept
     // out of applyNonPreeditMode(), which runs every keystroke — clearing there would
-    // wipe a verdict the moment it was reached.
+    // wipe a verdict the moment it was reached. Unnamed, unlike Fcitx5: IBus gives an
+    // engine per input context and calls this only on a real focus change.
     state->composer.onFocusChanged();
     requestSurroundingText(engine);
     if (state->composer.reloadSettingsIfChanged()) state->composer.applySettings();
@@ -118,6 +123,7 @@ void setSurroundingText(IBusEngine *engine, IBusText *text, guint cursorPos, gui
     }
     EngineState *state = stateOf(engine);
     state->sawSurroundingText = true;
+    state->surroundingFresh = true;
     const gchar *raw = text != nullptr ? ibus_text_get_text(text) : nullptr;
     state->surroundingText = raw != nullptr ? raw : "";
     state->surroundingCursor = cursorPos;

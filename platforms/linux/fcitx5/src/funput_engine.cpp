@@ -20,8 +20,12 @@ FunputEngine::FunputEngine(fcitx::Instance *instance) : instance_(instance) {
             if (ic != instance_->lastFocusedInputContext()) return;
             // isValid(), not CapabilityFlag::SurroundingText: on GNOME/Wayland the
             // flag lies both ways. Empty text with cursor 0 is still valid — a blank
-            // GTK field, and the IBus shell's "the client has spoken".
+            // GTK field, and the IBus shell's "the client has spoken". Judging the
+            // *content* here was tried and reverted: it kept the mode off in Chrome,
+            // the client this feature exists for. What an answer is worth is decided
+            // after a write, by BlindWrites, not before one.
             lastSurroundingOk_ = ic->surroundingText().isValid();
+            surroundingFresh_ = true;
         });
 }
 
@@ -74,15 +78,20 @@ void FunputEngine::reset(const fcitx::InputMethodEntry &, fcitx::InputContextEve
     applyPlan(event.inputContext(), composer_.flush());
 }
 
-void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &) {
+void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
     if (composer_.reloadSettingsIfChanged()) composer_.applySettings();
     if (composer_.settings().autoCapitalize) composer_.armCapitalization();
     toggleChord_.reset();
-    // A new client: forget whether the last one could be trusted with a repair.
-    composer_.onFocusChanged();
+    // A new client: forget whether the last one could be trusted with a repair. Named,
+    // because this runs on a capability change too, not only on a focus change — an
+    // unnamed reset would hand the mode back to a client already caught breaking it
+    // every time it toggled a capability, and Cursor's editor toggles them constantly.
+    composer_.onFocusChanged(clientId(event.inputContext()));
     // Like IBus `sawSurroundingText`: a new client has said nothing yet. `isValid()`
-    // here can be leftover from the previous focus, so do not snapshot it.
+    // here can be leftover from the previous focus, so do not snapshot it — and the
+    // last client's answer must not be credited to this one's first keystroke either.
     lastSurroundingOk_ = false;
+    surroundingFresh_ = false;
     applyNonPreeditMode();
 }
 

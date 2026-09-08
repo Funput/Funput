@@ -87,7 +87,7 @@ TEST_CASE("a non-text key commits but still reaches the app") {
     Composer composer = composerFor(Method::Telex);
     type(composer, "tieengs");
 
-    const ComposePlan plan = composer.onKey(bare(keysym::Return));
+    const ComposePlan plan = composer.onKey(control(keysym::Return, U'\r'));
     CHECK(plan.effect == Effect::Commit);
     CHECK(plan.text == "tiếng");
     CHECK_FALSE(plan.consumed);

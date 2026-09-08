@@ -113,9 +113,9 @@ hướng, hoặc lúc bật/tắt VI/EN.
 | File | Dòng | Việc |
 |---|---|---|
 | [`src/funput_engine.h`](src/funput_engine.h) | 105 | Kiểu addon, config, và mọi thứ nửa còn lại cần |
-| [`src/funput_engine.cpp`](src/funput_engine.cpp) | 110 | Vòng đời: watcher, nạp lại settings, bật/tắt chế độ |
+| [`src/funput_engine.cpp`](src/funput_engine.cpp) | 115 | Vòng đời: watcher, nạp lại settings, bật/tắt chế độ |
 | [`src/funput_input.cpp`](src/funput_input.cpp) | 69 | Một phím: chuẩn hoá, hỏi composer |
-| [`src/funput_client.cpp`](src/funput_client.cpp) | 99 | Thi hành plan lên client — preedit, commit, sửa tài liệu |
+| [`src/funput_client.cpp`](src/funput_client.cpp) | 145 | Thi hành plan lên client — preedit, commit, sửa tài liệu; đọc và định danh nó |
 | [`src/hidden_preedit.cpp`](src/hidden_preedit.cpp) | 49 | Allowlist client tự giấu preedit |
 
 ### Một phím đi qua đâu
@@ -185,6 +185,15 @@ shell này:
   `activate()`. Nó kiểm `surroundingText().isValid()` chứ **không** kiểm
   `CapabilityFlag::SurroundingText` — trên GNOME/Wayland cờ đó nói dối cả hai chiều. Text rỗng
   với con trỏ 0 **vẫn** là hợp lệ: đó là một ô GTK trống, và là tín hiệu "client đã lên tiếng".
+  Gác theo *nội dung* ở đây đã thử và đã revert — nó tắt chế độ ngay trong Chrome.
+- **`surroundingFresh_`** là bit thứ hai, và là bit khó thấy: *client có lên tiếng kể từ phím
+  trước hay không*. `BlindWrites` cần nó để phân biệt "trả lời rỗng" với "không trả lời" — hai
+  thứ đọc ra cùng một chuỗi. Mỗi phím tiêu thụ rồi xoá nó.
+- **Phán quyết "client này bỏ lệnh xoá" đi theo client, không theo lần focus.** `activate()`
+  chạy cả khi capability đổi, nên nó truyền `clientId()` xuống `Composer::onFocusChanged()`:
+  `program()` nếu tên đó chỉ đúng một app, không thì uuid của input context. Trên GNOME/Wayland
+  `program()` luôn là `gnome-shell` — đo được, không đoán — nên nó bị loại trừ theo tên và uuid
+  đứng thay. Không có chốt này, một client hay đổi capability được tha thứ mỗi phím.
 - **`applyNonPreeditMode()` không bao giờ lật giữa từ.** Hai chế độ bất đồng về chỗ từ đang gõ
   nằm ở đâu, nên lật khi đang soạn dở sẽ để engine và client mô tả hai thứ khác nhau. Cùng một
   cổng gác với `applyNonPreeditMode()` bên IBus.

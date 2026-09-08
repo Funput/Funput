@@ -35,6 +35,9 @@ struct EngineState {
     // therefore cannot be true at focus-in the way Fcitx5's `isValid()` can — only
     // once the client has spoken at least once.
     bool sawSurroundingText = false;
+    // Whether the client has answered since the last keystroke — what tells an empty
+    // answer apart from no answer. See BlindWrites.
+    bool surroundingFresh = false;
     // The client's last surrounding text, kept rather than read back on demand.
     // `ibus_engine_get_surrounding_text` hands out null here even right after the
     // client has sent a perfectly good string, so the only reliable copy is the one

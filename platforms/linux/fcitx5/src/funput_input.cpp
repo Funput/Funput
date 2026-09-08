@@ -4,6 +4,8 @@
 
 #include "funput_engine.h"
 
+#include <utility>
+
 namespace {
 
 // Fcitx5's key -> the composer's normalized one. Its keysyms are X11 keysyms, the
@@ -48,7 +50,10 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     // same text a Backspace needs below.
     const bool nonPreedit = composer_.nonPreedit();
     const std::string before = nonPreedit ? textBeforeCaret(event.inputContext()) : std::string();
-    if (nonPreedit) composer_.observeDocument(before, hasSelection(event.inputContext()));
+    const bool answered = std::exchange(surroundingFresh_, false);
+    if (nonPreedit) {
+        composer_.observeDocument(before, hasSelection(event.inputContext()), answered);
+    }
 
     // A Backspace with nothing composing is about to eat a *committed* character. In
     // non-preedit the word it lands in is right there in the document, so the composer
