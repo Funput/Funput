@@ -50,7 +50,15 @@ KeyKind classify(const KeyEvent &ev, const Settings &settings) {
     // been claimed as a Shortcut above, and BackSpace's keysym-to-Unicode mapping
     // is not something the typing rules should depend on.
     if (ev.keysym == keysym::BackSpace) return KeyKind::Backspace;
-    if (ev.ch == 0) return KeyKind::NonText;
+    // A control character is a key, not text. Both frameworks hand one over for the
+    // keys that used to have an ASCII meaning — `keySymToUnicode` was measured
+    // answering CR for Return, HT for Tab and ESC for Escape — so testing `ch == 0`
+    // alone let Enter fall through to the boundary test below, which counts CR as a
+    // word boundary. That swallowed the key and appended the CR to the commit: the app
+    // never saw Enter and got a newline inside a commit string instead. Arrows and
+    // F-keys arrive with ch == 0 and are the same kind of key, which is why they share
+    // this line rather than being tested apart.
+    if (ev.ch < 0x20 || ev.ch == 0x7F) return KeyKind::NonText;
     if (isNumpadDigitKeysym(ev.keysym)) return KeyKind::NumpadDigit;
     if (isBoundary(ev.ch, settings.method)) return KeyKind::Boundary;
     return KeyKind::Compose;

@@ -95,7 +95,7 @@ TEST_CASE("Enter ends the composition without re-typing it") {
     composer.setNonPreedit(true);
     type(composer, "tieengs");
 
-    const ComposePlan plan = composer.onKey(bare(keysym::Return));
+    const ComposePlan plan = composer.onKey(control(keysym::Return, U'\r'));
     CHECK(plan.effect == Effect::None);
     CHECK(!plan.consumed); // the app still has to see the Enter
 }

@@ -194,6 +194,11 @@ Cả hai đều tới cùng một process.
   focus-out. Thêm một client kiểu này chỉ là thêm một cái tên vào danh sách đó. **IBus không có
   kênh nào chạy được ở đây** — ForwardKeyEvent đã bị bỏ, surrounding text thì không bao giờ
   tới — nên IBus được để yên.
+- **Phím điều khiển được phân loại theo ký tự C0, không theo keysym.** Cả Fcitx5 lẫn IBus đều
+  ánh xạ Return → CR, Tab → HT, Escape → ESC, nên `classify()` phải loại chúng ra *trước* phép
+  thử ranh giới từ — `isBoundary()` cố tình nhận `\t \n \r` vì `adoptWordBeforeBackspace()` dò
+  ranh giới trong tài liệu thật, nơi xuống dòng đúng là ranh giới. Thiếu bước đó thì Enter bị
+  nuốt và CR được nối vào chuỗi commit.
 - **Bỏ dấu sau Backspace chỉ chạy ở chế độ không preedit.** Ở chế độ preedit, Backspace chỉ rút
   ngắn composition, nên `phủ` ␣ ⌫ `s` ra chữ `s` thường.
 - **Một số client làm mất từ đang gõ dở khi đổi focus.** Cả hai shell giao việc flush cho
