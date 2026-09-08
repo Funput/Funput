@@ -10,14 +10,22 @@ use crate::settings::Settings;
 
 pub(super) fn group(settings: &Settings) -> PreferencesGroup {
     let group = PreferencesGroup::builder()
-        .title("Gõ thẳng vào ứng dụng")
+        .title("Cách chữ hiện ra khi gõ")
         .description(
-            "Chữ hiện ngay trong ô gõ, không nằm ở dòng gạch chân. Đổi cửa sổ giữa chừng cũng không mất chữ.",
+            "Có hai kiểu: chữ vào thẳng ô nhập, hoặc đợi ở một dòng gạch chân rồi mới đáp xuống — đổi cửa sổ giữa chừng thì kiểu sau làm mất từ đang gõ.",
         )
         .build();
+    // Named for what the user sees, not for the mechanism: "preedit" is a word this
+    // audience has no reason to know, while the underline is on their screen. The
+    // subtitle spends itself on the one thing the switch cannot promise — the mode
+    // stands itself down for a client that cannot take a document repair — and names
+    // the fallback by the same underline the title does, so "the old way" is not left
+    // to the reader. No other product is named here: Funput's own Windows shell types
+    // straight into the document too, so borrowing someone else's name for our own
+    // behaviour would be both unnecessary and wrong.
     let row = SwitchRow::builder()
-        .title("Bật gõ thẳng")
-        .subtitle("Đang thử nghiệm. App nào chưa hỗ trợ thì Funput tự về cách cũ.")
+        .title("Gõ thẳng, không gạch chân")
+        .subtitle("App nào không nhận được thì Funput tự chuyển về kiểu gạch chân.")
         .active(settings.non_preedit)
         .build();
     row.add_prefix(&gtk::Image::from_icon_name("document-edit-symbolic"));

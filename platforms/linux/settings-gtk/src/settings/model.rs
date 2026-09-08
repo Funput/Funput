@@ -94,9 +94,9 @@ pub struct Settings {
     pub spell_check: bool,
     #[serde(default)]
     pub auto_capitalize: bool,
-    /// Read and written but not shown: no shell performs non-preedit yet. Carried
-    /// so `save()` does not drop it — see the note there.
-    #[serde(default)]
+    /// "Gõ thẳng, không gạch chân", shown on Tổng quan. `default = "on"`, not a bare
+    /// `#[serde(default)]`: that reads a keyless document as false and saves it back.
+    #[serde(default = "on")]
     pub non_preedit: bool,
     pub toggle_hotkey: Hotkey,
     #[serde(default)]
@@ -137,7 +137,7 @@ impl Default for Settings {
             eager_restore: true,
             spell_check: false,
             auto_capitalize: false,
-            non_preedit: false,
+            non_preedit: true,
             toggle_hotkey: Hotkey::CtrlBacktick,
             flip_hotkey: FlipHotkey::Off,
             launch_at_login: false,

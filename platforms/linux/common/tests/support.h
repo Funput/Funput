@@ -111,10 +111,14 @@ inline std::string typeDocument(Composer &composer, const std::string &keys) {
     return document;
 }
 
-// A composer configured for one input method, with everything else default.
+// A composer on the preedit path, which is what most of this suite is about. Pinned
+// rather than inherited: `Settings::nonPreedit` ships **on**, so leaving it at the
+// default would silently move every case here onto the other path. Cases that mean to
+// test the shipped default say so — see "the shipped default is direct typing".
 inline Composer composerFor(Method method) {
     Settings settings;
     settings.method = method;
+    settings.nonPreedit = false;
     return Composer(settings);
 }
 

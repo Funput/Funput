@@ -35,7 +35,7 @@
 | ✂️ **Gõ tắt** | Bảng viết tắt tự bung, tuỳ chọn khớp cả hoa lẫn thường |
 | 🔄 **Chuyển mã** | Đổi qua lại giữa Unicode dựng sẵn, Unicode tổ hợp, TCVN3 (ABC) và VNI-Windows |
 | ⚙️ **App Cài đặt GTK4** | Dùng chung cho cả hai shell, giao diện libadwaita |
-| 📝 **Chế độ không preedit** | Gõ thẳng vào tài liệu thay vì hiện preedit — cứu được Chrome. [Chi tiết](#chế-độ-không-preedit) |
+| 📝 **Gõ thẳng, không gạch chân** | Chữ vào thẳng ô nhập thay vì đợi ở dòng gạch chân — cứu được Chrome. **Mặc định bật.** [Chi tiết](#chế-độ-không-preedit) |
 | 🔁 **Nạp lại cấu hình tức thì** | `inotify` theo dõi `settings.json`, không cần khởi động lại |
 
 ## Yêu cầu
@@ -424,9 +424,14 @@ nhập qua `notify::selected` và panic vì `borrow_mut` lồng nhau.
 
 ### Chế độ không preedit
 
-Mặc định tắt; công tắc nằm trong Cài đặt mục **Kiểu gõ**, hoặc đặt thẳng `"nonPreedit": true`
-trong `~/.config/Funput/settings.json`. Kiểu nào thì watcher cũng nhận ra ngay, không cần khởi
-động lại. **Cả hai shell đều thi hành nó.**
+**Mặc định bật**; công tắc “Gõ thẳng, không gạch chân” nằm ở trang **Tổng quan** của app Cài
+đặt, hoặc đặt
+thẳng `"nonPreedit": false` trong `~/.config/Funput/settings.json`. Kiểu nào thì watcher cũng
+nhận ra ngay, không cần khởi động lại. **Cả hai shell đều thi hành nó.**
+
+Chỉ **bản cài mới** thừa hưởng mặc định đó. App Cài đặt ghi đè nguyên `settings.json` từ struct
+của nó, nên máy nào đã từng mở Cài đặt thì khoá `nonPreedit` đã nằm sẵn trong file và lựa chọn
+cũ được giữ nguyên — mặc định chỉ áp khi khoá vắng mặt.
 
 Thay vì đỗ từ đang gõ trong một preedit, mỗi phím commit thẳng vào tài liệu rồi sửa lại thứ phím
 trước đã viết — `Effect::Replace` mang theo “xoá N ký tự, rồi commit cái này”. Đó đúng là chỉ thị
