@@ -60,6 +60,24 @@ TEST_CASE("the gõ tắt switches default to on when the file predates them") {
     CHECK(settings.shortcutSmartCase);
 }
 
+TEST_CASE("direct typing defaults to on when the file predates the key") {
+    // The only users the flip reaches. The Settings app writes every field, so an
+    // install that has ever opened it keeps whatever it already chose.
+    writeSettingsFile(R"({"method": "telex"})");
+
+    Settings settings;
+    REQUIRE(settings.reload());
+    CHECK(settings.nonPreedit);
+}
+
+TEST_CASE("an explicit choice still wins over the default") {
+    writeSettingsFile(R"({"method": "telex", "nonPreedit": false})");
+
+    Settings settings;
+    REQUIRE(settings.reload());
+    CHECK_FALSE(settings.nonPreedit);
+}
+
 TEST_CASE("tone placement is modern only without an existing settings file") {
     Settings fresh;
     CHECK(fresh.toneStyle == ToneStyle::Modern);

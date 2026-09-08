@@ -100,7 +100,14 @@ TEST_CASE("Enter ends the composition without re-typing it") {
     CHECK(!plan.consumed); // the app still has to see the Enter
 }
 
-TEST_CASE("the mode is off unless it is asked for") {
+TEST_CASE("the shipped default is direct typing") {
+    Settings settings;
+    settings.method = Method::Telex;
+    Composer composer(settings);
+    CHECK(composer.nonPreedit());
+}
+
+TEST_CASE("turning the setting off puts the word back in a preedit") {
     Composer composer = composerFor(Method::Telex);
     CHECK(!composer.nonPreedit());
     // Byte-for-byte the behaviour of every other test in this directory.

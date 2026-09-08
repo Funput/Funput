@@ -16,6 +16,26 @@ fn a_new_install_uses_modern_tone_placement() {
 }
 
 #[test]
+fn a_new_install_types_straight_into_the_app() {
+    assert!(Settings::default().non_preedit);
+}
+
+#[test]
+fn a_legacy_document_without_non_preedit_still_gets_it() {
+    // `#[serde(default)]` would hand this `false` and the next save() would write that
+    // back, turning the mode off behind the user while the shells default it on.
+    let settings: Settings = serde_json::from_str(LEGACY).unwrap();
+    assert!(settings.non_preedit);
+}
+
+#[test]
+fn an_explicit_non_preedit_choice_is_kept() {
+    let json = LEGACY.replace('{', "{\n    \"nonPreedit\":false,");
+    let settings: Settings = serde_json::from_str(&json).unwrap();
+    assert!(!settings.non_preedit);
+}
+
+#[test]
 fn a_legacy_document_without_tone_style_stays_traditional() {
     let settings: Settings = serde_json::from_str(LEGACY).unwrap();
     assert_eq!(settings.tone_style, ToneStyle::Traditional);

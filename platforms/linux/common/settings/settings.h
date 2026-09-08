@@ -34,11 +34,13 @@ struct Settings {
     // Auto-capitalize ("Tự động viết hoa"): uppercase the first letter at the start of
     // a sentence. Off by default.
     bool autoCapitalize = false;
-    // Non-preedit: build the word in the document and repair it with a delete,
-    // instead of showing a preedit. Off by default. No shell performs it yet, so
-    // turning this on changes nothing today — see
-    // common/compose/composer/nonpreedit.cpp for what it will ask of one.
-    bool nonPreedit = false;
+    // Non-preedit ("Gõ thẳng vào ứng dụng"): build the word in the document and
+    // repair it with a delete, instead of showing a preedit. On by default — both
+    // shells perform it, and a client that cannot take a repair is detected and put
+    // back on the preedit by itself (common/compose/composer/nonpreedit.cpp). Only a
+    // file that predates the key inherits this; the Settings app writes every field,
+    // so an existing install keeps whatever it already chose.
+    bool nonPreedit = true;
     Hotkey toggleHotkey = Hotkey::CtrlBacktick;
     FlipHotkey flipHotkey = FlipHotkey::Off;
     // Text-expansion shortcuts (gõ tắt): (trigger, expansion) pairs. Owned by the

@@ -17,7 +17,7 @@ pub(super) fn group(settings: &Settings) -> PreferencesGroup {
         .build();
     let row = SwitchRow::builder()
         .title("Bật gõ thẳng")
-        .subtitle("Đang thử nghiệm. App nào chưa hỗ trợ thì Funput tự về cách cũ.")
+        .subtitle("App nào không nhận được thì Funput tự về cách cũ.")
         .active(settings.non_preedit)
         .build();
     row.add_prefix(&gtk::Image::from_icon_name("document-edit-symbolic"));
