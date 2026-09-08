@@ -1,6 +1,12 @@
-import Foundation
+import AppKit
 
 enum InputEventPolicy {
+    /// Keep macOS commands, including Option-Delete's word deletion, native in EN.
+    static func passesThroughEnglish(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) -> Bool {
+        !modifiers.isDisjoint(with: [.command, .control, .function])
+            || (keyCode == 51 && modifiers.contains(.option))
+    }
+
     static func isBoundary(_ scalar: Unicode.Scalar, method: InputMethod) -> Bool {
         guard scalar.isASCII else { return false }
         if method == .telexAdvanced, scalar == "[" || scalar == "]" {

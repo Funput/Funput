@@ -12,6 +12,7 @@ struct ComposerConfiguration: Equatable {
     let autoCapitalizeEnabled: Bool
     let shortcutsEnabled: Bool
     let shortcutSmartCase: Bool
+    let shortcutsInEnglish: Bool
 
     init(settings: AppSettings) {
         inputMethod = settings.inputMethod
@@ -23,6 +24,7 @@ struct ComposerConfiguration: Equatable {
         autoCapitalizeEnabled = settings.autoCapitalizeEnabled
         shortcutsEnabled = settings.shortcutsEnabled
         shortcutSmartCase = settings.shortcutSmartCase
+        shortcutsInEnglish = settings.shortcutsInEnglish
     }
 
     init(
@@ -34,7 +36,8 @@ struct ComposerConfiguration: Equatable {
         spellCheckEnabled: Bool = false,
         autoCapitalizeEnabled: Bool = false,
         shortcutsEnabled: Bool = true,
-        shortcutSmartCase: Bool = true
+        shortcutSmartCase: Bool = true,
+        shortcutsInEnglish: Bool = true
     ) {
         self.inputMethod = inputMethod
         self.toneStyle = toneStyle
@@ -45,6 +48,7 @@ struct ComposerConfiguration: Equatable {
         self.autoCapitalizeEnabled = autoCapitalizeEnabled
         self.shortcutsEnabled = shortcutsEnabled
         self.shortcutSmartCase = shortcutSmartCase
+        self.shortcutsInEnglish = shortcutsInEnglish
     }
 }
 
@@ -65,6 +69,7 @@ extension FunputComposer {
         // Order does not matter — `configure` edits the engine config, never replaces it.
         setShortcutsEnabled(configuration.shortcutsEnabled)
         setShortcutSmartCase(configuration.shortcutSmartCase)
+        setShortcutsInEnglish(configuration.shortcutsInEnglish)
         setEnabled(configuration.enabled)
     }
 }

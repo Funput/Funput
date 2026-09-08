@@ -37,6 +37,13 @@ final class FunputComposer {
         funput_clear(handle)
     }
 
+    /// Take the owned preedit once, clearing before a client write can re-enter IMK.
+    func finishComposition() -> String {
+        let text = buffer()
+        clear()
+        return text
+    }
+
     /// Remove every text-expansion shortcut (gõ tắt). Pair with `addShortcut` to
     /// replace the whole table when syncing from `AppSettings`.
     func clearShortcuts() {
@@ -48,6 +55,10 @@ final class FunputComposer {
     /// reason as `setShortcutSmartCase` below.
     func setShortcutsEnabled(_ on: Bool) {
         funput_set_shortcuts_enabled(handle, on)
+    }
+
+    func setShortcutsInEnglish(_ on: Bool) {
+        funput_set_shortcuts_in_english(handle, on)
     }
 
     /// Smart-case matching for gõ tắt: on, `tp`/`Tp`/`TP` all find the `tp` entry and
@@ -70,8 +81,11 @@ final class FunputComposer {
     /// The composed syllable buffer — the text shown as marked (underlined) text.
     func buffer() -> String {
         var out = [UInt32](repeating: 0, count: Int(CHARS_CAP))
-        let count = funput_buffer(handle, &out, UInt(out.count))
-        return Self.scalars(out, count)
+        while true {
+            let count = funput_buffer(handle, &out, UInt(out.count))
+            if count < out.count { return Self.scalars(out, count) }
+            out = [UInt32](repeating: 0, count: out.count * 2)
+        }
     }
 
     /// Physical origin of a key, mirroring the engine's `KeySource`. Raw values
@@ -115,27 +129,16 @@ final class FunputComposer {
         funput_flip_composing(handle)
     }
 
-    /// Decode a `FunputResult`'s inline `chars` (a C `uint32_t[64]`, imported as a
-    /// tuple) into a `String`.
-    static func output(of result: FunputResult) -> String {
-        var copy = result
-        let count = Int(result.count)
-        return withUnsafePointer(to: &copy.chars) { tuplePtr in
-            tuplePtr.withMemoryRebound(to: UInt32.self, capacity: Int(CHARS_CAP)) { buf in
-                var view = String.UnicodeScalarView()
-                for i in 0..<count {
-                    if let s = Unicode.Scalar(buf[i]) { view.append(s) }
-                }
-                return String(view)
-            }
+    /// Capture the complete expansion before the FFI's borrowed UTF-8 output expires.
+    func processText(_ scalar: Unicode.Scalar) -> (result: FunputResult, output: String) {
+        var output = ""
+        let result = withUnsafeMutablePointer(to: &output) { pointer in
+            funput_process_key_text(handle, scalar.value, 0, { context, bytes, count in
+                guard let context, let bytes else { return }
+                context.assumingMemoryBound(to: String.self).pointee = String(
+                    decoding: UnsafeBufferPointer(start: bytes, count: Int(count)), as: UTF8.self)
+            }, pointer)
         }
-    }
-
-    private static func scalars(_ codepoints: [UInt32], _ count: UInt) -> String {
-        var view = String.UnicodeScalarView()
-        for i in 0..<Int(count) {
-            if let s = Unicode.Scalar(codepoints[i]) { view.append(s) }
-        }
-        return String(view)
+        return (result, output)
     }
 }

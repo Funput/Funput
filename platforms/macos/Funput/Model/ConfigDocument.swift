@@ -41,6 +41,7 @@ struct ConfigDocument: Codable {
         /// Whether a gõ tắt trigger matches however it was capitalized, expansion
         /// re-cased to match. Absent means on — see `CONFIG_FORMAT.md`.
         var shortcutSmartCase: Bool?
+        var shortcutsInEnglish: Bool?
     }
 
     /// A text-expansion shortcut without the local UUID (recreated on import).

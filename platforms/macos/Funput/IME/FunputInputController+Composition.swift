@@ -13,11 +13,10 @@ extension FunputInputController {
     }
 
     func commit(into client: IMKTextInput) {
-        let text = composer.buffer()
+        let text = composer.finishComposition()
         if !text.isEmpty {
             client.insertText(text, replacementRange: Self.notFound)
         }
-        composer.clear()
     }
 
     func commitBoundary(
@@ -57,7 +56,6 @@ extension FunputInputController {
             !settings.vietnameseEnabled,
             to: NSWorkspace.shared.frontmostApplication?.bundleIdentifier
         )
-        composer.setEnabled(settings.vietnameseEnabled)
     }
 
     func matchesFlipShortcut(_ event: NSEvent) -> Bool {

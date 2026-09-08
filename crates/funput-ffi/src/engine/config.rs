@@ -91,10 +91,8 @@ pub unsafe extern "C" fn funput_configure(engine: *mut FunputEngine, config: Fun
 ///
 /// Disabling does not make [`funput_process_key`] a no-op: a loaded gõ tắt table
 /// still expands at a word boundary. Composition itself — diacritics, English
-/// restore, auto-capitalize, flip, adopt — stops. Every host today gates English
-/// mode before calling in, so none reaches that path; one that wants to reach it
-/// also needs a `shortcuts_in_english` setter on this ABI, which does not exist yet
-/// (`funput_set_shortcuts_enabled(false)` is the only way to silence it over C).
+/// restore, auto-capitalize, flip, adopt — stops. Hosts can disable English-mode
+/// expansion with `funput_set_shortcuts_in_english(false)`.
 ///
 /// # Safety
 /// `engine` must be a valid handle or null.

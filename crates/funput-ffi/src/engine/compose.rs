@@ -14,7 +14,7 @@ pub const SOURCE_STANDARD: u32 = 0;
 pub const SOURCE_NUMPAD: u32 = 1;
 
 /// Decode the C `source` argument; any unknown value falls back to the main keyboard.
-fn decode_source(source: u32) -> KeySource {
+pub(super) fn decode_source(source: u32) -> KeySource {
     match source {
         SOURCE_NUMPAD => KeySource::Numpad,
         _ => KeySource::Standard,
