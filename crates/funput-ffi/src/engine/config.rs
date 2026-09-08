@@ -89,6 +89,11 @@ pub unsafe extern "C" fn funput_configure(engine: *mut FunputEngine, config: Fun
 
 /// Enable or disable Vietnamese composition.
 ///
+/// Disabling does not make [`funput_process_key`] a no-op: a loaded gõ tắt table
+/// still expands at a word boundary. Composition itself — diacritics, English
+/// restore, auto-capitalize, flip, adopt — stops. Hosts can disable English-mode
+/// expansion with `funput_set_shortcuts_in_english(false)`.
+///
 /// # Safety
 /// `engine` must be a valid handle or null.
 #[unsafe(no_mangle)]

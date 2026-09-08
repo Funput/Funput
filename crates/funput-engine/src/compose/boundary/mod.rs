@@ -8,9 +8,15 @@ use crate::ImeResult;
 use crate::compose::RestoreOverride;
 use crate::model::Session;
 
+/// What ends a word with no input method in play — English mode, where nothing
+/// composes and so no key is spoken for.
+pub(crate) fn is_english_boundary(key: char) -> bool {
+    key.is_whitespace() || key.is_ascii_punctuation()
+}
+
 pub(crate) fn is_word_boundary(method: InputMethod, key: char) -> bool {
     let full_telex_shortcut = method.is_advanced_telex() && matches!(key, '[' | ']');
-    !full_telex_shortcut && (key.is_whitespace() || key.is_ascii_punctuation())
+    !full_telex_shortcut && is_english_boundary(key)
 }
 
 pub(crate) fn should_restore(session: &Session) -> bool {
@@ -68,6 +74,15 @@ fn update_caps_on_boundary(session: &mut Session, key: char) {
             session.cap_armed = false;
         }
     }
+}
+
+/// English-mode word boundary: gõ tắt is all that is left to do. There is no
+/// composition to restore (the keys are already the text on screen) and
+/// auto-capitalize is a Vietnamese-mode feature, so neither runs here.
+pub(crate) fn on_english_boundary(session: &mut Session, boundary_key: char) -> ImeResult {
+    let result = shortcut::expansion(session, boundary_key).unwrap_or_else(ImeResult::none);
+    session.clear();
+    result
 }
 
 pub(crate) fn on_word_boundary(session: &mut Session, boundary_key: char) -> ImeResult {

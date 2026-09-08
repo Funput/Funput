@@ -27,6 +27,18 @@ struct ShortcutsPane: View {
 
                     Divider()
 
+                    SettingsRow(
+                        title: "Gõ tắt khi tắt tiếng Việt",
+                        subtitle: "Vẫn bung chữ tắt khi đang gõ tiếng Anh.",
+                        systemImage: "textformat.abc"
+                    ) {
+                        Toggle("Gõ tắt khi tắt tiếng Việt", isOn: $settings.shortcutsInEnglish)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .tint(Theme.accent)
+                    }
+                    Divider()
+
                     // Deliberately live while "Bật gõ tắt" is off, even though it only
                     // matters when that is on: Windows and Linux leave it live too.
                     SettingsRow(

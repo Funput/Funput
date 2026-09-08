@@ -98,6 +98,12 @@ impl ShellState {
     pub fn enabled(&self) -> bool {
         self.effective_enabled()
     }
+    /// Whether the keyboard hook must keep seeing keystrokes at all: Vietnamese is
+    /// running, or English mode still owes the user gõ tắt. False means the shell
+    /// has nothing to do with this key and the platform should not even classify it.
+    pub fn hook_active(&self) -> bool {
+        self.effective_enabled() || self.english_shortcuts_active()
+    }
     pub fn shortcuts(&self) -> &[Shortcut] {
         &self.settings.shortcuts
     }

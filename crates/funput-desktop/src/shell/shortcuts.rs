@@ -17,6 +17,17 @@ fn is_complete(sc: &Shortcut) -> bool {
 }
 
 impl ShellState {
+    /// Whether English mode still has gõ tắt to do. A layout suspension vetoes it —
+    /// an expansion injected into a CJK IME corrupts its text exactly as composition
+    /// would — and so does an empty table, which leaves English mode exactly as it
+    /// was for the users who have no shortcuts at all.
+    pub(super) fn english_shortcuts_active(&self) -> bool {
+        !self.layout_suspended
+            && self.settings.shortcuts_enabled
+            && self.settings.shortcuts_in_english
+            && !self.settings.shortcuts.is_empty()
+    }
+
     /// Persist and push the complete rows, keeping drafts in memory for the UI.
     fn commit_shortcuts(&mut self) {
         let complete: Vec<Shortcut> = self

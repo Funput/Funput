@@ -13,6 +13,8 @@ final class FunputInputController: IMKInputController {
     /// Last `AppSettings.shortcutsRevision` pushed to the engine. `-1` forces a sync on
     /// the first `syncSettings()` so the engine starts with the saved table.
     var lastSyncedShortcutsRevision = -1
+    var lastConfiguration: ComposerConfiguration?
+    var hasSyncedShortcuts = false
 
     private enum KeyCode {
         static let backspace: UInt16 = 51
@@ -35,16 +37,18 @@ final class FunputInputController: IMKInputController {
         guard let event, let client = sender as? IMKTextInput else { return false }
         guard event.type == .keyDown else { return false }
 
-        syncSettings()
+        syncSettings(client: client)
 
         if AppSettings.shared.toggleShortcut.matches(event) {
+            commit(into: client)
             toggleEnabled()
+            syncSettings(client: client)
             return true
         }
 
-        // English mode: pass everything straight through to the app. The VI/EN state
-        // is set per-app on focus change (see `activateServer`) and can be toggled.
-        guard AppSettings.shared.vietnameseEnabled else { return false }
+        guard AppSettings.shared.vietnameseEnabled else {
+            return handleEnglish(event, client: client)
+        }
 
         // Flip the word being composed between Vietnamese and raw keys. Handled in
         // Vietnamese mode, before the Control-combo passthrough, so the hotkey isn't
@@ -115,6 +119,7 @@ final class FunputInputController: IMKInputController {
     /// the app it was made in (see `AppSettings.resolveVietnamese`).
     override func activateServer(_ sender: Any!) {
         super.activateServer(sender)
+        composer.clear()
         applyPerAppDefault()
         syncSettings()
         // Focus on a field is the start of input: arm so the first letter is capitalized.

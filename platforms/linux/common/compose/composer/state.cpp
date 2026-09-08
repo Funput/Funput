@@ -46,10 +46,11 @@ void Composer::applySettings() {
     // than left for the other mode to finish in a way it cannot.
     setNonPreedit(settings_.nonPreedit);
     handle_.setEnabled(effectiveEnabled_);
-    // The two gõ tắt options ride separately from `configure` (see handle.h), and
-    // ahead of the table itself only for reading order — neither one clears it.
+    // The gõ tắt options ride separately from `configure` (see handle.h), and
+    // ahead of the table itself only for reading order — none of them clears it.
     handle_.setShortcutsEnabled(settings_.shortcutsEnabled);
     handle_.setShortcutSmartCase(settings_.shortcutSmartCase);
+    handle_.setShortcutsInEnglish(settings_.shortcutsInEnglish);
     // The engine holds a runtime mirror of the gõ tắt table: replace it wholesale
     // rather than diffing, since the table is small and the source of truth is the
     // settings file.
@@ -70,6 +71,11 @@ ComposePlan Composer::toggleEnabled() {
     handle_.setEnabled(effectiveEnabled_);
     settings_.save();
     return plan;
+}
+
+bool Composer::englishShortcutsActive() const {
+    return settings_.shortcutsEnabled && settings_.shortcutsInEnglish &&
+           !settings_.shortcuts.empty();
 }
 
 } // namespace funput

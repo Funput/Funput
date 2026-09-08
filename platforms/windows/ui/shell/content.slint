@@ -30,6 +30,7 @@ export component SettingsContent inherits ScrollView {
     in property <bool> can-add-shortcut: true;
     in-out property <bool> shortcuts-enabled;
     in-out property <bool> shortcut-smart-case;
+    in-out property <bool> shortcuts-in-english;
     in property <string> version;
     in property <string> update-state: "idle";
     in property <string> update-version;
@@ -50,6 +51,7 @@ export component SettingsContent inherits ScrollView {
     callback add-shortcut();
     callback set-shortcuts-enabled(bool);
     callback set-shortcut-smart-case(bool);
+    callback set-shortcuts-in-english(bool);
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
@@ -115,9 +117,11 @@ export component SettingsContent inherits ScrollView {
                 can-add: root.can-add-shortcut;
                 shortcuts-enabled <=> root.shortcuts-enabled;
                 shortcut-smart-case <=> root.shortcut-smart-case;
+                shortcuts-in-english <=> root.shortcuts-in-english;
                 add-shortcut() => { root.add-shortcut(); }
                 set-shortcuts-enabled(v) => { root.set-shortcuts-enabled(v); }
                 set-shortcut-smart-case(v) => { root.set-shortcut-smart-case(v); }
+                set-shortcuts-in-english(v) => { root.set-shortcuts-in-english(v); }
                 remove-shortcut(i) => { root.remove-shortcut(i); }
                 edit-trigger(i, t) => { root.edit-trigger(i, t); }
                 edit-expansion(i, t) => { root.edit-expansion(i, t); }

@@ -660,6 +660,11 @@ void funput_configure(FunputEngine *engine, FunputConfig config);
 /**
  * Enable or disable Vietnamese composition.
  *
+ * Disabling does not make [`funput_process_key`] a no-op: a loaded gõ tắt table
+ * still expands at a word boundary. Composition itself — diacritics, English
+ * restore, auto-capitalize, flip, adopt — stops. Hosts can disable English-mode
+ * expansion with `funput_set_shortcuts_in_english(false)`.
+ *
  * # Safety
  * `engine` must be a valid handle or null.
  */
@@ -726,6 +731,33 @@ void funput_set_shortcuts_enabled(FunputEngine *engine, bool on);
  * `engine` must be a valid handle or null.
  */
 void funput_set_shortcut_smart_case(FunputEngine *engine, bool on);
+
+/**
+ * Allow gõ tắt in English mode. Defaults to on; the master shortcut switch
+ * and a non-empty table are still required. `funput_configure` preserves it.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_shortcuts_in_english(FunputEngine *engine, bool on);
+
+/**
+ * Process a key like `funput_process_key`, delivering the complete output as UTF-8
+ * to `receive` synchronously before returning. The returned POD remains compatible
+ * with `FunputResult` (its inline chars can still truncate at `CHARS_CAP`).
+ * The callback's text is borrowed only for the duration of that callback. It must
+ * not re-enter or free the engine. Null callback, null engine or invalid codepoint
+ * returns a no-op without processing a key.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `receive` must accept `context` and a
+ * borrowed UTF-8 pointer/length, and must not unwind across the C boundary.
+ */
+FunputResult funput_process_key_text(FunputEngine *engine,
+                                     uint32_t codepoint,
+                                     uint32_t source,
+                                     void (*receive)(void*, const uint8_t*, uintptr_t),
+                                     void *context);
 
 FunputSuggestionEngine *funput_suggestion_engine_new_in_memory(void);
 

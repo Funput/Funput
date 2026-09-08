@@ -72,6 +72,10 @@ pub struct Preferences {
     /// expansion re-cased to match. Portable for the same reason.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shortcut_smart_case: Option<bool>,
+    /// Whether gõ tắt also expands while the app is in English mode. Portable for
+    /// the same reason.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcuts_in_english: Option<bool>,
 }
 
 /// Comparable and printable because it is also what [`crate::unikey`] parses a

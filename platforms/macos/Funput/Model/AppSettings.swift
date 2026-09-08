@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// User preferences for Funput, persisted in `UserDefaults`. The Settings UI and
-/// (later) the `IMKInputController` live in the same process, so they share this
+/// `IMKInputController` live in the same process, so they share this
 /// store directly. `@Observable` drives live SwiftUI updates.
 @Observable
 final class AppSettings {
@@ -85,6 +85,9 @@ final class AppSettings {
     var shortcutsEnabled: Bool {
         didSet { defaults.set(shortcutsEnabled, forKey: Keys.shortcutsEnabled) }
     }
+    var shortcutsInEnglish: Bool {
+        didSet { defaults.set(shortcutsInEnglish, forKey: Keys.shortcutsInEnglish) }
+    }
     /// Smart-case gõ tắt ("Tự nhận diện hoa/thường"): a trigger matches however it was
     /// capitalized and the expansion is re-cased to match. On by default.
     var shortcutSmartCase: Bool {
@@ -94,9 +97,7 @@ final class AppSettings {
     /// the table to the engine (instead of doing it on every keystroke). Not persisted.
     @ObservationIgnored private(set) var shortcutsRevision = 0
 
-    /// Per-app VI/EN memory — remembers the last manual choice for each app and
-    /// replays it on refocus. Backed by `funput-ffi`'s `FunputAppLanguage`; see
-    /// `AppLanguageMemory` for the persistence and FFI wiring.
+    /// Persisted per-app VI/EN memory, backed by `funput-ffi`.
     @ObservationIgnored let appLanguageMemory: AppLanguageMemory
 
     /// Bumped when an external `funput://settings` request arrives (the /Applications
@@ -118,6 +119,7 @@ final class AppSettings {
             Keys.vietnameseEnabled: true,
             Keys.retoneAfterBackspace: true,
             Keys.shortcutsEnabled: true,
+            Keys.shortcutsInEnglish: true,
             Keys.shortcutSmartCase: true,
         ])
         inputMethod = InputMethod.persisted(defaults.object(forKey: Keys.inputMethod))
@@ -130,6 +132,7 @@ final class AppSettings {
         autoCapitalizeEnabled = defaults.bool(forKey: Keys.autoCapitalizeEnabled)
         retoneAfterBackspace = defaults.bool(forKey: Keys.retoneAfterBackspace)
         shortcutsEnabled = defaults.bool(forKey: Keys.shortcutsEnabled)
+        shortcutsInEnglish = defaults.bool(forKey: Keys.shortcutsInEnglish)
         shortcutSmartCase = defaults.bool(forKey: Keys.shortcutSmartCase)
         toggleShortcut = defaults.data(forKey: Keys.toggleShortcut)
             .flatMap { try? JSONDecoder().decode(KeyCombo.self, from: $0) } ?? .defaultToggle

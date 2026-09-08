@@ -34,8 +34,11 @@ impl Engine {
     }
 
     /// Synchronize engine state after a Backspace passed through to the host app.
+    ///
+    /// English mode keeps this too when gõ tắt is live there: a mistyped trigger has
+    /// to be correctable, and `keys` is what the expansion is looked up by.
     pub fn on_backspace(&mut self) -> ImeResult {
-        if !self.session.enabled {
+        if !self.session.enabled && !self.session.english_shortcuts() {
             return ImeResult::none();
         }
         self.session.buffer.pop();

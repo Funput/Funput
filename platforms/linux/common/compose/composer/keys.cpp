@@ -53,7 +53,11 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
     const KeyKind kind = classify(ev, settings_);
     // The toggle works in either mode — it is how the user gets back out of English.
     if (kind == KeyKind::Toggle) return toggleEnabled();
-    if (!effectiveEnabled_) return ComposePlan::passThrough();
+    if (!effectiveEnabled_) {
+        if (!englishShortcutsActive()) return ComposePlan::passThrough();
+        // No Vietnamese form to flip; swallowing the chord would steal Redo.
+        if (kind == KeyKind::Flip) return ComposePlan::passThrough();
+    }
 
     switch (kind) {
     case KeyKind::Toggle: // handled above

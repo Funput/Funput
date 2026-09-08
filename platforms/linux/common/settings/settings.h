@@ -57,6 +57,9 @@ struct Settings {
     // that is how gõ tắt has always behaved, and an update must not silently change
     // what an existing table expands to.
     bool shortcutSmartCase = true;
+    // Whether the table also expands while Vietnamese is off ("Gõ tắt cả khi ở
+    // chế độ tiếng Anh"). Same default-on rule as the two switches above.
+    bool shortcutsInEnglish = true;
 
     // Absolute path to ~/.config/Funput/settings.json (XDG-aware).
     static std::string path();

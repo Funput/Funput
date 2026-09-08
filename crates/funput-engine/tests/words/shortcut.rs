@@ -252,3 +252,97 @@ fn smart_case_off_still_leaves_ordinary_composition_alone() {
     let text = app_text_without_smart_case(&[("tp", "TP. HCM")], "chaof ");
     assert_eq!(text, "chào ");
 }
+
+// ---- English mode ("Gõ tắt cả khi ở chế độ tiếng Anh") ----
+
+/// An engine seeded with `shortcuts` and switched to English mode.
+fn english_engine(shortcuts: &[(&str, &str)]) -> Engine {
+    let mut engine = engine_with(shortcuts);
+    engine.set_enabled(false);
+    engine
+}
+
+#[test]
+fn english_mode_still_expands_a_trigger() {
+    let text = drive(&mut english_engine(&[("vn", "Việt Nam")]), "vn ");
+    assert_eq!(text, "Việt Nam ");
+}
+
+#[test]
+fn english_mode_expansion_follows_smart_case() {
+    // Case propagation is the shortcut matcher's, unchanged — English mode reaches
+    // the same code with the same keys.
+    assert_eq!(
+        drive(&mut english_engine(&[("vn", "việt nam")]), "VN "),
+        "VIỆT NAM "
+    );
+    assert_eq!(
+        drive(&mut english_engine(&[("vn", "việt nam")]), "Vn "),
+        "Việt Nam "
+    );
+}
+
+#[test]
+fn english_mode_composes_nothing() {
+    // The whole point: Vietnamese grammar is off, so Telex sequences stay literal.
+    let text = drive(&mut english_engine(&[("vn", "Việt Nam")]), "chaof ");
+    assert_eq!(text, "chaof ");
+}
+
+#[test]
+fn english_mode_leaves_a_non_trigger_word_exactly_as_typed() {
+    // No English restore either: there was no composition to undo.
+    let text = drive(&mut english_engine(&[("vn", "Việt Nam")]), "hello world ");
+    assert_eq!(text, "hello world ");
+}
+
+#[test]
+fn english_mode_does_not_auto_capitalize() {
+    let mut engine = english_engine(&[("vn", "Việt Nam")]);
+    engine.update_config(|config| config.auto_capitalize = true);
+    engine.arm_capitalization();
+    assert_eq!(drive(&mut engine, "hi. there "), "hi. there ");
+}
+
+#[test]
+fn english_mode_expands_after_a_correction() {
+    // A mistyped trigger must still be fixable: Backspace keeps `keys` in step.
+    let mut engine = english_engine(&[("vn", "Việt Nam")]);
+    assert_eq!(drive(&mut engine, "vnn"), "vnn");
+    engine.on_backspace();
+    assert_eq!(drive(&mut engine, " "), "Việt Nam ");
+}
+
+#[test]
+fn english_mode_expands_on_punctuation_too() {
+    let text = drive(&mut english_engine(&[("vn", "Việt Nam")]), "vn,");
+    assert_eq!(text, "Việt Nam,");
+}
+
+#[test]
+fn the_english_switch_off_keeps_english_mode_literal() {
+    let mut engine = english_engine(&[("vn", "Việt Nam")]);
+    engine.update_config(|config| config.shortcuts_in_english = false);
+    assert_eq!(drive(&mut engine, "vn "), "vn ");
+    // Vietnamese mode is unaffected by the English-mode switch.
+    engine.set_enabled(true);
+    assert_eq!(drive(&mut engine, "vn "), "Việt Nam ");
+}
+
+#[test]
+fn the_shortcuts_switch_also_governs_english_mode() {
+    let mut engine = english_engine(&[("vn", "Việt Nam")]);
+    engine.update_config(|config| config.shortcuts_enabled = false);
+    assert_eq!(drive(&mut engine, "vn "), "vn ");
+}
+
+#[test]
+fn an_empty_table_leaves_english_mode_completely_untouched() {
+    // Nothing to expand means nothing to track: every key comes back as `None`, which
+    // is the hands-off English mode Funput has always had.
+    let mut engine = english_engine(&[]);
+    for key in "vn chaof ".chars() {
+        assert_eq!(engine.process_char(key).action, Action::None);
+    }
+    assert!(engine.buffer().is_empty() && engine.keys().is_empty());
+}

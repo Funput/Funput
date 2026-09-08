@@ -2,13 +2,21 @@ import AppKit
 import InputMethodKit
 
 extension FunputInputController {
-    func syncSettings() {
+    func syncSettings(client: IMKTextInput? = nil) {
         let settings = AppSettings.shared
-        composer.apply(ComposerConfiguration(settings: settings))
+        let configuration = ComposerConfiguration(settings: settings)
+        let tableChanged = lastSyncedShortcutsRevision != settings.shortcutsRevision
+        if configuration != lastConfiguration || tableChanged {
+            if let client { commit(into: client) } else { composer.clear() }
+            composer.apply(configuration)
+            lastConfiguration = configuration
+        }
 
         guard lastSyncedShortcutsRevision != settings.shortcutsRevision else { return }
         composer.clearShortcuts()
-        for shortcut in settings.shortcuts where !shortcut.trigger.isEmpty {
+        let complete = settings.shortcuts.filter(\.isComplete)
+        hasSyncedShortcuts = !complete.isEmpty
+        for shortcut in complete {
             composer.addShortcut(trigger: shortcut.trigger, expansion: shortcut.expansion)
         }
         lastSyncedShortcutsRevision = settings.shortcutsRevision

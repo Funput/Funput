@@ -27,8 +27,8 @@ pub use config::{
 };
 pub use result::{ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputResult};
 pub use shortcuts::{
-    funput_add_shortcut, funput_clear_shortcuts, funput_set_shortcut_smart_case,
-    funput_set_shortcuts_enabled,
+    funput_add_shortcut, funput_clear_shortcuts, funput_process_key_text,
+    funput_set_shortcut_smart_case, funput_set_shortcuts_enabled, funput_set_shortcuts_in_english,
 };
 
 /// Opaque IME engine handle for C callers. Create with [`funput_engine_new`],

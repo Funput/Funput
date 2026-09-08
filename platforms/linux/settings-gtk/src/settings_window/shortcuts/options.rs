@@ -1,4 +1,4 @@
-//! The two switches governing the gõ tắt table, above the rows themselves.
+//! The three switches governing the gõ tắt table, above the rows themselves.
 //!
 //! Kept visible whether or not the table has any rows — an empty table is exactly
 //! when a user is most likely to be reading this page — and mirroring the Windows
@@ -56,7 +56,20 @@ pub(super) fn group(settings: &Settings) -> PreferencesGroup {
         group_for_smart.set_description(Some(description(on)));
     });
 
+    let english_row = SwitchRow::builder()
+        .title("Gõ tắt cả khi ở chế độ tiếng Anh")
+        .subtitle("Chữ tắt vẫn bung khi đang tắt tiếng Việt — chỉ bung chữ tắt, không bỏ dấu.")
+        .active(settings.shortcuts_in_english)
+        .build();
+    // Live while "Bật gõ tắt" is off, same as the smart-case row and the other
+    // platforms: the switch is a preference, not a child of the master.
+    english_row.connect_active_notify(|row| {
+        let on = row.is_active();
+        Settings::update(|settings| settings.shortcuts_in_english = on);
+    });
+
     group.add(&enabled_row);
     group.add(&smart_row);
+    group.add(&english_row);
     group
 }

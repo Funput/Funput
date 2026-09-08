@@ -47,6 +47,8 @@ pub(super) struct Preferences {
     pub shortcuts_enabled: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shortcut_smart_case: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcuts_in_english: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]

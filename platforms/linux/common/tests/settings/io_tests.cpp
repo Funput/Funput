@@ -23,6 +23,7 @@ TEST_CASE("reload parses every field from its wire name") {
         "flipHotkey": "ctrl_shift_x",
         "shortcutsEnabled": false,
         "shortcutSmartCase": false,
+        "shortcutsInEnglish": false,
         "shortcuts": [{"trigger": "vn", "expansion": "Việt Nam"}]
     })");
 
@@ -40,6 +41,7 @@ TEST_CASE("reload parses every field from its wire name") {
     CHECK(settings.flipHotkey == FlipHotkey::CtrlShiftX);
     CHECK_FALSE(settings.shortcutsEnabled);
     CHECK_FALSE(settings.shortcutSmartCase);
+    CHECK_FALSE(settings.shortcutsInEnglish);
     REQUIRE(settings.shortcuts.size() == 1);
     CHECK(settings.shortcuts[0].first == "vn");
     CHECK(settings.shortcuts[0].second == "Việt Nam");
@@ -58,6 +60,7 @@ TEST_CASE("the gõ tắt switches default to on when the file predates them") {
     REQUIRE(settings.reload());
     CHECK(settings.shortcutsEnabled);
     CHECK(settings.shortcutSmartCase);
+    CHECK(settings.shortcutsInEnglish);
 }
 
 TEST_CASE("direct typing defaults to on when the file predates the key") {

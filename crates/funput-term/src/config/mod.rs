@@ -44,12 +44,13 @@ pub struct TermConfig {
     pub spell_check: bool,
     pub auto_capitalize: bool,
     pub shortcuts: Vec<(String, String)>,
-    /// Whether those shortcuts expand. Read from the same `settings.json` the GUI
-    /// writes, so turning gõ tắt off there turns it off here too — as does
-    /// `shortcut_smart_case` below.
+    // The gõ tắt switches, read from the same `settings.json` the GUI writes, so
+    // turning one off there turns it off here too — each described on the field it
+    // mirrors in `funput_config::Settings`. `shortcuts_in_english` is the exception:
+    // the driver gates EN mode itself and never disables the engine, so it is inert.
     pub shortcuts_enabled: bool,
-    /// Whether a trigger matches regardless of capitalization, expansion re-cased.
     pub shortcut_smart_case: bool,
+    pub shortcuts_in_english: bool,
     /// The byte that toggles VI/EN.
     pub toggle: u8,
     /// The byte that cycles Telex↔VNI at runtime, or `None` to disable.
@@ -88,6 +89,7 @@ impl From<FileSettings> for TermConfig {
                 .collect(),
             shortcuts_enabled: f.shortcuts_enabled,
             shortcut_smart_case: f.shortcut_smart_case,
+            shortcuts_in_english: f.shortcuts_in_english,
             toggle: DEFAULT_TOGGLE,
             cycle_method: DEFAULT_CYCLE_METHOD,
             vi_cursor_color: DEFAULT_VI_CURSOR_COLOR.to_string(),
@@ -117,6 +119,7 @@ impl TermConfig {
             auto_capitalize: self.auto_capitalize,
             shortcuts_enabled: self.shortcuts_enabled,
             shortcut_smart_case: self.shortcut_smart_case,
+            shortcuts_in_english: self.shortcuts_in_english,
         });
         engine.clear_shortcuts();
         for (trigger, expansion) in &self.shortcuts {

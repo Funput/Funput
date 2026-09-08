@@ -95,6 +95,7 @@ bool Settings::reload() {
     nonPreedit = data.value("nonPreedit", nonPreedit);
     shortcutsEnabled = data.value("shortcutsEnabled", shortcutsEnabled);
     shortcutSmartCase = data.value("shortcutSmartCase", shortcutSmartCase);
+    shortcutsInEnglish = data.value("shortcutsInEnglish", shortcutsInEnglish);
     toggleHotkey = parseHotkey(data.value("toggleHotkey", std::string(hotkeyString(toggleHotkey))));
     flipHotkey = parseFlip(data.value("flipHotkey", std::string(flipString(flipHotkey))));
     shortcuts.clear();
@@ -113,7 +114,8 @@ bool Settings::reload() {
            autoCapitalize != previous.autoCapitalize || nonPreedit != previous.nonPreedit ||
            toggleHotkey != previous.toggleHotkey || flipHotkey != previous.flipHotkey ||
            shortcuts != previous.shortcuts || shortcutsEnabled != previous.shortcutsEnabled ||
-           shortcutSmartCase != previous.shortcutSmartCase;
+           shortcutSmartCase != previous.shortcutSmartCase ||
+           shortcutsInEnglish != previous.shortcutsInEnglish;
 }
 
 void Settings::save() const {
@@ -134,6 +136,7 @@ void Settings::save() const {
     data["nonPreedit"] = nonPreedit;
     data["shortcutsEnabled"] = shortcutsEnabled;
     data["shortcutSmartCase"] = shortcutSmartCase;
+    data["shortcutsInEnglish"] = shortcutsInEnglish;
     data["toggleHotkey"] = hotkeyString(toggleHotkey);
     data["flipHotkey"] = flipString(flipHotkey);
     std::ofstream output(file, std::ios::trunc);
