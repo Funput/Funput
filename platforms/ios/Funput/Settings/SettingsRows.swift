@@ -20,7 +20,7 @@ struct SettingsSelectionRow: View {
                 Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(.tertiary)
             }
             .padding(.vertical, 12)
-            .contentShape(.rect)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(option.title), \(value)")

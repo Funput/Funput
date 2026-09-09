@@ -1,10 +1,11 @@
+import Combine
 import KeyboardRenderer
 import SwiftUI
 import ThemeSchema
 
 struct ThemeEditor: View {
     @Environment(\.dismiss) private var dismiss
-    let model: AppearanceModel
+    @ObservedObject var model: AppearanceModel
     @State private var draft: ThemeEditorDraft
     @State private var confirmsCancel = false
     @State private var selectedTab = ThemeEditorTab.general

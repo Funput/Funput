@@ -23,7 +23,7 @@ struct ThemeCardThumbnail: View {
             }
             .padding(12)
         }
-        .clipShape(.rect(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(

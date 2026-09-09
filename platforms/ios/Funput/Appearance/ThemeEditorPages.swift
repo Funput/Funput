@@ -65,8 +65,10 @@ private struct ThemeResetButton: View {
     @Binding var draft: ThemeEditorDraft
 
     var body: some View {
-        Button("Khôi phục theme gốc", systemImage: "arrow.counterclockwise") {
+        Button {
             draft.resetToBase()
+        } label: {
+            Label("Khôi phục theme gốc", systemImage: "arrow.counterclockwise")
         }
         .buttonStyle(.bordered)
         .frame(maxWidth: .infinity)

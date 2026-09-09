@@ -31,7 +31,10 @@ private struct AboutLinkRow: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(destination.tint)
                     .frame(width: 36, height: 36)
-                    .background(destination.tint.opacity(0.12), in: .rect(cornerRadius: 10))
+                    .background(
+                        destination.tint.opacity(0.12),
+                        in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    )
                 VStack(alignment: .leading, spacing: 2) {
                     Text(destination.title)
                         .font(.subheadline.weight(.semibold))
@@ -45,7 +48,7 @@ private struct AboutLinkRow: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.tertiary)
             }
-            .contentShape(.rect)
+            .contentShape(Rectangle())
             .padding(.vertical, 9)
         }
         .buttonStyle(.plain)
