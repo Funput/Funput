@@ -10,11 +10,19 @@ final class KeyboardHaptics {
     private let repeatSelection: UISelectionFeedbackGenerator
 
     init(view: UIView) {
-        light = UIImpactFeedbackGenerator(style: .light, view: view)
-        soft = UIImpactFeedbackGenerator(style: .soft, view: view)
-        rigid = UIImpactFeedbackGenerator(style: .rigid, view: view)
-        medium = UIImpactFeedbackGenerator(style: .medium, view: view)
-        repeatSelection = UISelectionFeedbackGenerator(view: view)
+        if #available(iOS 17.5, *) {
+            light = UIImpactFeedbackGenerator(style: .light, view: view)
+            soft = UIImpactFeedbackGenerator(style: .soft, view: view)
+            rigid = UIImpactFeedbackGenerator(style: .rigid, view: view)
+            medium = UIImpactFeedbackGenerator(style: .medium, view: view)
+            repeatSelection = UISelectionFeedbackGenerator(view: view)
+        } else {
+            light = UIImpactFeedbackGenerator(style: .light)
+            soft = UIImpactFeedbackGenerator(style: .soft)
+            rigid = UIImpactFeedbackGenerator(style: .rigid)
+            medium = UIImpactFeedbackGenerator(style: .medium)
+            repeatSelection = UISelectionFeedbackGenerator()
+        }
     }
 
     func prepare() {

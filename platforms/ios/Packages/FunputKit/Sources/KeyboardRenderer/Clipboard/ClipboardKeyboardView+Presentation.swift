@@ -28,8 +28,10 @@ extension ClipboardKeyboardView {
     }
 
     func configureView() {
-        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
-            view.applyPresentation()
+        if #available(iOS 17, *) {
+            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
+                view.applyPresentation()
+            }
         }
         clipsToBounds = true
         backgroundColor = .clear
@@ -83,6 +85,11 @@ extension ClipboardKeyboardView {
 
     @objc private func accessibilityAppearanceDidChange() {
         applyPresentation()
+    }
+
+    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #unavailable(iOS 17) { applyPresentation() }
     }
 
     /// A list layout purely for the swipe actions it brings: separators and
