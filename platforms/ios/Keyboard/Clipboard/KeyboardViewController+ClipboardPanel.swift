@@ -11,6 +11,10 @@ extension KeyboardViewController {
             return clipboardPanelView
         }
         let clipboardPanelView = KeyboardLaunchTrace.makePanel(.clipboard, ClipboardKeyboardView())
+        clipboardPanelView.onRetry = { [weak self] in
+            self?.clipboardCapture.synchronize(retry: true)
+            self?.refreshClipboardPanel()
+        }
         clipboardPanelView.onSelect = { [weak self] entry in
             self?.pasteFromHistory(entry)
         }
@@ -43,6 +47,7 @@ extension KeyboardViewController {
         ensureClipboardPanelView()
         inputCoordinator.prepareForLiteralInput()
         clearPersonalSuggestions()
+        clipboardCapture.synchronize()
         refreshClipboardPanel()
         switchSurface(to: .clipboard)
     }
@@ -51,7 +56,8 @@ extension KeyboardViewController {
         clipboardPanelView?.apply(
             presentation: currentPresentation,
             entries: clipboardStore.load().map(Self.entry),
-            hasFullAccess: hasFullAccess
+            hasFullAccess: hasFullAccess,
+            needsRetry: clipboardCapture.needsRetry
         )
     }
 
@@ -73,10 +79,12 @@ extension KeyboardViewController {
         applyPostCommitEffects(effects)
     }
 
-    /// Wiping the history also clears the captured change count, so whatever is still
-    /// on the pasteboard is offered again — after an explicit wipe the user should be
-    /// able to start over rather than face a keyboard that has quietly written it off.
+    /// Wiping the history suppresses the clipboard that is still on the pasteboard for
+    /// the rest of the session: capture would otherwise re-import, within half a
+    /// second, exactly what the user just asked to be rid of. The next session syncs
+    /// it again, as opening the keyboard always does.
     private func clearClipboardHistory() {
+        clipboardCapture.suppressCurrentAfterClear()
         clipboardStore.clear()
         refreshClipboardPanel()
         refreshClipboardOffer()

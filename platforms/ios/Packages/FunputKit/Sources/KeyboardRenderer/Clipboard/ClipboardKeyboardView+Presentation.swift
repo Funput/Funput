@@ -7,8 +7,11 @@ extension ClipboardKeyboardView {
         presentation: KeyboardPresentation,
         entries: [KeyboardClipboardEntry],
         hasFullAccess: Bool,
+        needsRetry: Bool = false,
         now: Date = Date()
     ) {
+        retryBanner.isHidden = !hasFullAccess || !needsRetry
+        setNeedsLayout()
         self.presentation = presentation
         self.now = now
         emptyState = hasFullAccess ? .nothingSaved : .needsFullAccess
@@ -39,7 +42,9 @@ extension ClipboardKeyboardView {
         bottomBar.onReturn = { [weak self] in self?.onReturn?() }
         bottomBar.onDelete = { [weak self] in self?.onDelete?() }
         bottomBar.onClearAll = { [weak self] in self?.onClearAll?() }
-        [backdropView, collectionView, emptyStateView, bottomBar].forEach(addSubview)
+        retryBanner.isHidden = true
+        retryBanner.onRetry = { [weak self] in self?.onRetry?() }
+        [backdropView, collectionView, emptyStateView, bottomBar, retryBanner].forEach(addSubview)
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(accessibilityAppearanceDidChange),
@@ -62,6 +67,7 @@ extension ClipboardKeyboardView {
         collectionView.isHidden = isEmpty
         emptyStateView.apply(state: emptyState, theme: theme, traits: traitCollection)
         bottomBar.apply(color: label, canClear: !isEmpty)
+        retryBanner.tintColor = label
         collectionView.reloadData()
     }
 
