@@ -9,20 +9,20 @@ struct ClipboardStoreTests {
     @Test("Records newest first and de-duplicates by text")
     func recording() throws {
         let store = try makeStore()
-        store.record(item("một", at: epoch), now: epoch)
-        store.record(item("hai", at: epoch), now: epoch)
-        store.record(item("một", at: epoch), now: epoch)
+        _ = store.capture(item("một", at: epoch, changeCount: 1), now: epoch)
+        _ = store.capture(item("hai", at: epoch, changeCount: 2), now: epoch)
+        _ = store.capture(item("một", at: epoch, changeCount: 3), now: epoch)
         #expect(store.load(now: epoch).map(\.text) == ["một", "hai"])
     }
 
     @Test("Unpinned entries expire, pinned entries survive")
     func expiry() throws {
         let store = try makeStore()
-        store.record(item("tạm", at: epoch), now: epoch)
+        _ = store.capture(item("tạm", at: epoch), now: epoch)
         let pinned = ClipboardItem(
             text: "giữ", capturedAt: epoch, isPinned: true, sourceChangeCount: 2
         )
-        store.record(pinned, now: epoch)
+        _ = store.capture(pinned, now: epoch)
 
         let later = epoch.addingTimeInterval(ClipboardExpiry.hour.interval + 1)
         #expect(store.load(now: epoch).count == 2)
@@ -35,7 +35,7 @@ struct ClipboardStoreTests {
     func configurableExpiry() throws {
         let directory = try makeDirectory()
         let entry = item("tạm", at: epoch)
-        ClipboardStore(directory: directory, expiry: .week).record(entry, now: epoch)
+        _ = ClipboardStore(directory: directory, expiry: .week).capture(entry, now: epoch)
 
         let later = epoch.addingTimeInterval(ClipboardExpiry.hour.interval + 1)
         #expect(ClipboardStore(directory: directory, expiry: .hour).load(now: later).isEmpty)
@@ -48,9 +48,9 @@ struct ClipboardStoreTests {
         let oldestPinned = ClipboardItem(
             text: "ghim", capturedAt: epoch, isPinned: true, sourceChangeCount: 0
         )
-        store.record(oldestPinned, now: epoch)
+        _ = store.capture(oldestPinned, now: epoch)
         for index in 0...ClipboardStore.limit {
-            store.record(item("mục\(index)", at: epoch, changeCount: index + 1), now: epoch)
+            _ = store.capture(item("mục\(index)", at: epoch, changeCount: index + 1), now: epoch)
         }
         let stored = store.load(now: epoch)
         #expect(stored.count == ClipboardStore.limit)
@@ -62,7 +62,7 @@ struct ClipboardStoreTests {
     func changeCountSurvivesDeletion() throws {
         let store = try makeStore()
         let entry = item("xin chào", at: epoch, changeCount: 77)
-        store.record(entry, now: epoch)
+        _ = store.capture(entry, now: epoch)
         store.remove(id: entry.id, now: epoch)
         #expect(store.load(now: epoch).isEmpty)
         #expect(store.lastCapturedChangeCount() == 77)
@@ -72,7 +72,7 @@ struct ClipboardStoreTests {
     func pinning() throws {
         let directory = try makeDirectory()
         let entry = item("ghim tôi", at: epoch)
-        ClipboardStore(directory: directory).record(entry, now: epoch)
+        _ = ClipboardStore(directory: directory).capture(entry, now: epoch)
         ClipboardStore(directory: directory).setPinned(true, id: entry.id, now: epoch)
         #expect(ClipboardStore(directory: directory).load(now: epoch).first?.isPinned == true)
     }
@@ -80,7 +80,7 @@ struct ClipboardStoreTests {
     @Test("clear wipes the entries and the captured change count")
     func clearing() throws {
         let store = try makeStore()
-        store.record(item("bí mật", at: epoch, changeCount: 5), now: epoch)
+        _ = store.capture(item("bí mật", at: epoch, changeCount: 5), now: epoch)
         store.clear()
         #expect(store.load(now: epoch).isEmpty)
         #expect(store.lastCapturedChangeCount() == nil)
@@ -89,7 +89,7 @@ struct ClipboardStoreTests {
     @Test("A missing container degrades to an empty store instead of crashing")
     func withoutContainer() {
         let store = ClipboardStore(directory: nil)
-        store.record(item("rơi", at: epoch), now: epoch)
+        _ = store.capture(item("rơi", at: epoch), now: epoch)
         #expect(store.load(now: epoch).isEmpty)
     }
 

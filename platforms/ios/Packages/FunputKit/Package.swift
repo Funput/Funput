@@ -91,7 +91,7 @@ let package = Package(
         ),
         .testTarget(
             name: "KeyboardRendererTests",
-            dependencies: ["KeyboardLayout", "KeyboardRenderer", "ThemeSchema"]
+            dependencies: ["KeyboardLayout", "KeyboardRenderer", "ThemeSchema", "FunputShared"]
         ),
         .testTarget(
             name: "ThemeRuntimeTests",

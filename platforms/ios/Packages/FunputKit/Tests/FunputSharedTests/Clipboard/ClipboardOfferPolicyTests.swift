@@ -10,7 +10,7 @@ struct ClipboardOfferPolicyTests {
     func offersText() {
         #expect(
             ClipboardOfferPolicy.offer(
-                snapshot: text, lastCapturedChangeCount: 41, context: context()
+                snapshot: text, lastPastedChangeCount: 41, context: context()
             ) == ClipboardOffer(kind: .text, changeCount: 42)
         )
     }
@@ -20,7 +20,7 @@ struct ClipboardOfferPolicyTests {
         let snapshot = ClipboardSnapshot(changeCount: 7, hasStrings: true, hasURLs: true)
         #expect(
             ClipboardOfferPolicy.offer(
-                snapshot: snapshot, lastCapturedChangeCount: nil, context: context()
+                snapshot: snapshot, lastPastedChangeCount: nil, context: context()
             )?.kind == .link
         )
     }
@@ -29,7 +29,7 @@ struct ClipboardOfferPolicyTests {
     func noHistory() {
         #expect(
             ClipboardOfferPolicy.offer(
-                snapshot: text, lastCapturedChangeCount: nil, context: context()
+                snapshot: text, lastPastedChangeCount: nil, context: context()
             ) != nil
         )
     }
@@ -42,7 +42,7 @@ struct ClipboardOfferPolicyTests {
         #expect(
             ClipboardOfferPolicy.offer(
                 snapshot: text,
-                lastCapturedChangeCount: nil,
+                lastPastedChangeCount: nil,
                 context: context(editorMode: mode)
             ) == nil
         )
@@ -53,7 +53,7 @@ struct ClipboardOfferPolicyTests {
         #expect(
             ClipboardOfferPolicy.offer(
                 snapshot: text,
-                lastCapturedChangeCount: nil,
+                lastPastedChangeCount: nil,
                 context: context(hasFullAccess: false)
             ) == nil
         )
@@ -64,7 +64,7 @@ struct ClipboardOfferPolicyTests {
         #expect(
             ClipboardOfferPolicy.offer(
                 snapshot: text,
-                lastCapturedChangeCount: nil,
+                lastPastedChangeCount: nil,
                 context: context(hasToolbar: false)
             ) == nil
         )
@@ -75,16 +75,16 @@ struct ClipboardOfferPolicyTests {
         let snapshot = ClipboardSnapshot(changeCount: 9, hasStrings: false, hasURLs: false)
         #expect(
             ClipboardOfferPolicy.offer(
-                snapshot: snapshot, lastCapturedChangeCount: nil, context: context()
+                snapshot: snapshot, lastPastedChangeCount: nil, context: context()
             ) == nil
         )
     }
 
     @Test("The same pasteboard generation is never offered twice")
-    func alreadyCaptured() {
+    func alreadyPasted() {
         #expect(
             ClipboardOfferPolicy.offer(
-                snapshot: text, lastCapturedChangeCount: 42, context: context()
+                snapshot: text, lastPastedChangeCount: 42, context: context()
             ) == nil
         )
     }

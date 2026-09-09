@@ -46,14 +46,14 @@ public enum ClipboardOfferPolicy {
 
     public static func offer(
         snapshot: ClipboardSnapshot,
-        lastCapturedChangeCount: Int?,
+        lastPastedChangeCount: Int?,
         context: Context
     ) -> ClipboardOffer? {
         guard allowsOffer(context: context) else { return nil }
         // v1 is text only: an image-only pasteboard stays silent.
         guard snapshot.hasStrings else { return nil }
-        // Already captured — do not invite the user to paste the same thing twice.
-        guard snapshot.changeCount != lastCapturedChangeCount else { return nil }
+        // Already pasted — do not invite the user to paste the same thing twice.
+        guard snapshot.changeCount != lastPastedChangeCount else { return nil }
 
         return ClipboardOffer(
             kind: snapshot.hasURLs ? .link : .text,

@@ -2,7 +2,7 @@
 import ThemeSchema
 import UIKit
 
-/// Panel listing what the user has pasted through Funput.
+/// Panel listing text captured by Funput.
 ///
 /// Built on the same bones as ``KaomojiKeyboardView`` — `KeyboardBackdropView` for
 /// the background, a collection above a 46pt bottom bar — so every theme, image
@@ -20,9 +20,12 @@ public final class ClipboardKeyboardView: UIView {
     public var onClearAll: (() -> Void)?
     public var onDelete: (() -> Void)?
     public var onReturn: (() -> Void)?
+    public var onRetry: (() -> Void)?
 
     static let bottomBarHeight: CGFloat = 46
+    static let retryBannerHeight: CGFloat = 52
 
+    let retryBanner = ClipboardRetryBanner()
     let backdropView = KeyboardBackdropView()
     let collectionView: UICollectionView
     let bottomBar = ClipboardBottomBar()
@@ -54,8 +57,10 @@ public final class ClipboardKeyboardView: UIView {
     public override func layoutSubviews() {
         super.layoutSubviews()
         backdropView.frame = bounds
-        let listHeight = max(0, bounds.height - Self.bottomBarHeight)
-        collectionView.frame = CGRect(x: 0, y: 0, width: bounds.width, height: listHeight)
+        let retryHeight = retryBanner.isHidden ? 0 : Self.retryBannerHeight
+        retryBanner.frame = CGRect(x: 0, y: 0, width: bounds.width, height: retryHeight)
+        let listHeight = max(0, bounds.height - Self.bottomBarHeight - retryHeight)
+        collectionView.frame = CGRect(x: 0, y: retryHeight, width: bounds.width, height: listHeight)
         emptyStateView.frame = collectionView.frame
         bottomBar.frame = CGRect(
             x: 0, y: bounds.height - Self.bottomBarHeight,
