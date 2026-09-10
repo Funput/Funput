@@ -33,36 +33,95 @@
 
 ## Install by platform
 
-| Platform | Status | Install |
-|---|---|---|
-| iOS | Released | [Get it on the App Store](https://apps.apple.com/vn/app/id6788829996) |
-| macOS | Released | [Download the latest release](https://github.com/Funput/Funput/releases/latest) |
-| Windows | Released | [Download the latest release](https://github.com/Funput/Funput/releases/latest) |
-| Linux | Released | [Read the installation guide](https://docs.funput.app/docs/install/linux) |
-| Android | Closed testing | [Email to join](mailto:hello@funput.app) |
-
-> [!NOTE]
-> Google Play requires a full **14-day** closed test with a minimum number of testers before production. The previous round did not meet that bar, so Funput has to run another 14-day loop.
->
-> If you use Android and want to help get Funput onto the Play Store, email [hello@funput.app](mailto:hello@funput.app) (preferably from the Gmail account tied to Google Play). We will invite you into the closed testing track.
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" valign="top" width="20%">
+        <a href="https://apps.apple.com/vn/app/id6788829996">
+          <img src="https://funput.app/ios.svg#gh-light-mode-only" alt="iOS" width="40" height="40">
+          <img src="https://funput.app/ios-dark.svg#gh-dark-mode-only" alt="iOS" width="40" height="40">
+          <br><strong>iOS</strong><br>
+          <sub>App Store</sub>
+        </a>
+      </td>
+      <td align="center" valign="top" width="20%">
+        <a href="https://play.google.com/store/apps/details?id=app.funput.funput">
+          <img src="https://funput.app/android.svg#gh-light-mode-only" alt="Android" width="40" height="40">
+          <img src="https://funput.app/android-dark.svg#gh-dark-mode-only" alt="Android" width="40" height="40">
+          <br><strong>Android</strong><br>
+          <sub>Google Play</sub>
+        </a>
+      </td>
+      <td align="center" valign="top" width="20%">
+        <a href="https://github.com/Funput/Funput/releases/latest">
+          <img src="https://funput.app/apple.svg#gh-light-mode-only" alt="macOS" width="40" height="40">
+          <img src="https://funput.app/apple-dark.svg#gh-dark-mode-only" alt="macOS" width="40" height="40">
+          <br><strong>macOS</strong><br>
+          <sub>Download</sub>
+        </a>
+      </td>
+      <td align="center" valign="top" width="20%">
+        <a href="https://github.com/Funput/Funput/releases/latest">
+          <img src="https://funput.app/windows.svg#gh-light-mode-only" alt="Windows" width="40" height="40">
+          <img src="https://funput.app/windows-dark.svg#gh-dark-mode-only" alt="Windows" width="40" height="40">
+          <br><strong>Windows</strong><br>
+          <sub>Download</sub>
+        </a>
+      </td>
+      <td align="center" valign="top" width="20%">
+        <a href="https://docs.funput.app/docs/install/linux">
+          <img src="https://funput.app/linux.svg#gh-light-mode-only" alt="Linux" width="40" height="40">
+          <img src="https://funput.app/linux-dark.svg#gh-dark-mode-only" alt="Linux" width="40" height="40">
+          <br><strong>Linux</strong><br>
+          <sub>Install guide</sub>
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ## Interface
 
-<p align="center">
-  <img src="assets/screenshot/ios.png" height="420" alt="Funput keyboard on iOS">
-  &nbsp;&nbsp;
-  <img src="assets/screenshot/android.png" height="420" alt="Funput keyboard on Android">
-  <br>
-  <sub>Funput keyboard on iOS and Android.</sub>
-</p>
-
-<p align="center">
-  <img src="assets/screenshot/macOS.png" height="280" alt="Funput settings on macOS">
-  &nbsp;&nbsp;
-  <img src="assets/screenshot/windows.png" height="280" alt="Funput settings on Windows">
-  <br>
-  <sub>Settings on macOS and Windows.</sub>
-</p>
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" valign="middle" width="50%">
+        <a href="assets/screenshot/ios.png">
+          <img src="assets/screenshot/ios.png" alt="Funput keyboard on iOS" height="380">
+        </a>
+        <br><strong>iOS</strong>
+      </td>
+      <td align="center" valign="middle" width="50%">
+        <a href="assets/screenshot/android.png">
+          <img src="assets/screenshot/android.png" alt="Funput keyboard on Android" height="380">
+        </a>
+        <br><strong>Android</strong>
+      </td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <td align="center" valign="middle" width="33%">
+        <a href="assets/screenshot/macOS.png">
+          <img src="assets/screenshot/macOS.png" alt="Funput on macOS" height="210">
+        </a>
+        <br><strong>macOS</strong>
+      </td>
+      <td align="center" valign="middle" width="33%">
+        <a href="assets/screenshot/windows.png">
+          <img src="assets/screenshot/windows.png" alt="Funput on Windows" height="210">
+        </a>
+        <br><strong>Windows</strong>
+      </td>
+      <td align="center" valign="middle" width="33%">
+        <a href="assets/screenshot/linux.png">
+          <img src="assets/screenshot/linux.png" alt="Funput on Linux" height="210">
+        </a>
+        <br><strong>Linux</strong>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ## Architecture
 

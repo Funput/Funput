@@ -33,36 +33,95 @@
 
 ## Cài đặt theo nền tảng
 
-| Nền tảng | Trạng thái | Cài đặt |
-|---|---|---|
-| iOS | Đã phát hành | [Tải trên App Store](https://apps.apple.com/vn/app/id6788829996) |
-| macOS | Đã phát hành | [Tải bản mới nhất](https://github.com/Funput/Funput/releases/latest) |
-| Windows | Đã phát hành | [Tải bản mới nhất](https://github.com/Funput/Funput/releases/latest) |
-| Linux | Đã phát hành | [Xem hướng dẫn](https://docs.funput.app/docs/install/linux) |
-| Android | Kiểm thử khép kín | [Gửi email để tham gia](mailto:hello@funput.app) |
-
-> [!NOTE]
-> Google Play yêu cầu kiểm thử khép kín đủ **14 ngày** với số tester tối thiểu trước khi xuất bản. Vòng trước chưa đạt ngưỡng đó, nên Funput phải chạy lại vòng 14 ngày.
->
-> Nếu bạn dùng Android và muốn giúp đưa Funput lên Play Store, hãy gửi email tới [hello@funput.app](mailto:hello@funput.app) (nên dùng Gmail gắn với tài khoản Google Play). Chúng tôi sẽ mời bạn vào nhóm kiểm thử khép kín.
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" valign="top" width="20%">
+        <a href="https://apps.apple.com/vn/app/id6788829996">
+          <img src="https://funput.app/ios.svg#gh-light-mode-only" alt="iOS" width="40" height="40">
+          <img src="https://funput.app/ios-dark.svg#gh-dark-mode-only" alt="iOS" width="40" height="40">
+          <br><strong>iOS</strong><br>
+          <sub>App Store</sub>
+        </a>
+      </td>
+      <td align="center" valign="top" width="20%">
+        <a href="https://play.google.com/store/apps/details?id=app.funput.funput">
+          <img src="https://funput.app/android.svg#gh-light-mode-only" alt="Android" width="40" height="40">
+          <img src="https://funput.app/android-dark.svg#gh-dark-mode-only" alt="Android" width="40" height="40">
+          <br><strong>Android</strong><br>
+          <sub>Google Play</sub>
+        </a>
+      </td>
+      <td align="center" valign="top" width="20%">
+        <a href="https://github.com/Funput/Funput/releases/latest">
+          <img src="https://funput.app/apple.svg#gh-light-mode-only" alt="macOS" width="40" height="40">
+          <img src="https://funput.app/apple-dark.svg#gh-dark-mode-only" alt="macOS" width="40" height="40">
+          <br><strong>macOS</strong><br>
+          <sub>Tải xuống</sub>
+        </a>
+      </td>
+      <td align="center" valign="top" width="20%">
+        <a href="https://github.com/Funput/Funput/releases/latest">
+          <img src="https://funput.app/windows.svg#gh-light-mode-only" alt="Windows" width="40" height="40">
+          <img src="https://funput.app/windows-dark.svg#gh-dark-mode-only" alt="Windows" width="40" height="40">
+          <br><strong>Windows</strong><br>
+          <sub>Tải xuống</sub>
+        </a>
+      </td>
+      <td align="center" valign="top" width="20%">
+        <a href="https://docs.funput.app/docs/install/linux">
+          <img src="https://funput.app/linux.svg#gh-light-mode-only" alt="Linux" width="40" height="40">
+          <img src="https://funput.app/linux-dark.svg#gh-dark-mode-only" alt="Linux" width="40" height="40">
+          <br><strong>Linux</strong><br>
+          <sub>Hướng dẫn</sub>
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ## Giao diện
 
-<p align="center">
-  <img src="assets/screenshot/ios.png" height="420" alt="Bàn phím Funput trên iOS">
-  &nbsp;&nbsp;
-  <img src="assets/screenshot/android.png" height="420" alt="Bàn phím Funput trên Android">
-  <br>
-  <sub>Bàn phím Funput trên iOS và Android.</sub>
-</p>
-
-<p align="center">
-  <img src="assets/screenshot/macOS.png" height="280" alt="Giao diện cài đặt Funput trên macOS">
-  &nbsp;&nbsp;
-  <img src="assets/screenshot/windows.png" height="280" alt="Giao diện cài đặt Funput trên Windows">
-  <br>
-  <sub>Giao diện cài đặt trên macOS và Windows.</sub>
-</p>
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" valign="middle" width="50%">
+        <a href="assets/screenshot/ios.png">
+          <img src="assets/screenshot/ios.png" alt="Bàn phím Funput trên iOS" height="380">
+        </a>
+        <br><strong>iOS</strong>
+      </td>
+      <td align="center" valign="middle" width="50%">
+        <a href="assets/screenshot/android.png">
+          <img src="assets/screenshot/android.png" alt="Bàn phím Funput trên Android" height="380">
+        </a>
+        <br><strong>Android</strong>
+      </td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <td align="center" valign="middle" width="33%">
+        <a href="assets/screenshot/macOS.png">
+          <img src="assets/screenshot/macOS.png" alt="Giao diện Funput trên macOS" height="210">
+        </a>
+        <br><strong>macOS</strong>
+      </td>
+      <td align="center" valign="middle" width="33%">
+        <a href="assets/screenshot/windows.png">
+          <img src="assets/screenshot/windows.png" alt="Giao diện Funput trên Windows" height="210">
+        </a>
+        <br><strong>Windows</strong>
+      </td>
+      <td align="center" valign="middle" width="33%">
+        <a href="assets/screenshot/linux.png">
+          <img src="assets/screenshot/linux.png" alt="Giao diện Funput trên Linux" height="210">
+        </a>
+        <br><strong>Linux</strong>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ## Kiến trúc
 
