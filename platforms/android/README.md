@@ -13,8 +13,8 @@
 </p>
 
 <p align="center">
-  <a href="mailto:hello@funput.app">
-    <img src="https://img.shields.io/badge/Kiểm_thử_khép_kín-Gửi_email_tham_gia-22C55E?style=for-the-badge&logo=gmail&logoColor=white" alt="Tham gia kiểm thử">
+  <a href="https://play.google.com/store/apps/details?id=app.funput.funput">
+    <img src="https://img.shields.io/badge/Tải_về-Google_Play-22C55E?style=for-the-badge&logo=googleplay&logoColor=white" alt="Funput trên Google Play">
   </a>
   <a href="https://docs.funput.app/docs/install/android">
     <img src="https://img.shields.io/badge/Tài_liệu-Hướng_dẫn_cài_đặt-2563EB?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Hướng dẫn cài đặt">
@@ -56,7 +56,7 @@
 |---|---|
 | **Hệ điều hành tối thiểu** | **Android 8.0 (Oreo, API 26)** trở lên |
 | **Thiết bị** | Điện thoại và máy tính bảng · `arm64-v8a` và `x86_64` |
-| **Cài đặt** | Đang ở vòng **kiểm thử khép kín**, chưa lên Play Store công khai |
+| **Cài đặt** | Miễn phí trên [Google Play](https://play.google.com/store/apps/details?id=app.funput.funput) |
 
 > [!IMPORTANT]
 > **Android 8.0 là sàn cứng.** `minSdk = 26` được đặt ở **toàn bộ sáu module** của dự án, nên
@@ -66,22 +66,15 @@
 
 ## Cài đặt
 
-> [!NOTE]
-> **Funput chưa có trên Play Store công khai.** Google Play bắt buộc một vòng kiểm thử khép kín
-> đủ **14 ngày** với số tester tối thiểu trước khi cho xuất bản, và Funput đang chạy lại vòng đó.
->
-> Muốn dùng thử và giúp Funput lên Play Store, gửi email tới
-> [hello@funput.app](mailto:hello@funput.app) — nên dùng Gmail gắn với tài khoản Google Play của
-> bạn. Chúng tôi sẽ mời bạn vào nhóm kiểm thử khép kín.
-
 Cài xong app **chưa gõ được ngay** — Android bắt buộc bật bàn phím thủ công. App tự dò xem bạn
 đang ở bước nào và hiện thẻ **Thiết lập Funput** với đúng nút cần bấm:
 
-1. **Bật Funput** trong cài đặt bàn phím của Android.
-2. **Chọn Funput** khi đang gõ — chạm biểu tượng bàn phím ở thanh điều hướng, hoặc giữ phím
+1. **Cài Funput** từ [Google Play](https://play.google.com/store/apps/details?id=app.funput.funput), rồi mở app một lần.
+2. **Bật Funput** trong cài đặt bàn phím của Android.
+3. **Chọn Funput** khi đang gõ — chạm biểu tượng bàn phím ở thanh điều hướng, hoặc giữ phím
    🌐 / phím cách tuỳ máy.
 
-Xong bước hai, thẻ đổi thành **Funput đã sẵn sàng**.
+Xong bước cuối, thẻ đổi thành **Funput đã sẵn sàng**.
 
 ## Dùng hằng ngày
 
@@ -123,7 +116,6 @@ từ cá nhân.
 
 ## Giới hạn đã biết
 
-- **Chưa lên Play Store công khai** — xem mục [Cài đặt](#cài-đặt).
 - **Chưa có công cụ Chuyển mã.** Đổi bảng mã hiện chỉ có trên bản desktop.
 - **Chỉ `arm64-v8a` và `x86_64`.** Máy 32-bit không nằm trong phạm vi hỗ trợ.
 
