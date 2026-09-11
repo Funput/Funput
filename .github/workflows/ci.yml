@@ -98,6 +98,17 @@ jobs:
       - name: Test (funput-ffi with convert)
         run: cargo test -p funput-ffi --features convert
 
+      # `textcase` is default-off and nothing enables it: the workspace steps do not
+      # resolve it, and the mobile-shape steps are its off shape by construction. So
+      # this pair is the only place the module is built at all — and it is the shape
+      # a keyboard would ask for one day, textcase on with charset off, which no
+      # other step here resolves.
+      - name: Clippy (textcase, no charset)
+        run: cargo clippy -p funput-core --features textcase --all-targets -- -D warnings
+
+      - name: Test (textcase, no charset)
+        run: cargo test -p funput-core --features textcase
+
       # Compiling proves charset-off still builds; it does not prove the mobile
       # artifacts are free of it. Two different ways that can go wrong, so two checks.
       #

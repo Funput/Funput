@@ -20,9 +20,9 @@
 //! exception to the boundary check).
 //! Breaking changes require semver coordination with the engine.
 //!
-//! That list stays complete for the default build. [`charset`] is additive, keeps
-//! to its own namespace, and re-exports nothing here, so the engine's view of this
-//! crate is the same with the feature on or off.
+//! That list stays complete for the default build. [`charset`] and [`textcase`] are
+//! additive, keep to their own namespaces, and re-export nothing here, so the
+//! engine's view of this crate is the same with either feature on or off.
 //!
 //! # Contract
 //!
@@ -38,6 +38,8 @@ mod composition;
 mod input_method;
 mod options;
 mod orthography;
+#[cfg(feature = "textcase")]
+pub mod textcase;
 mod unicode;
 mod validation;
 
