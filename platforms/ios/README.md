@@ -54,19 +54,19 @@
 
 | | |
 |---|---|
-| **Hệ điều hành tối thiểu** | **iOS / iPadOS 18.6** trở lên |
+| **Hệ điều hành tối thiểu** | **iOS / iPadOS 16** trở lên |
 | **Thiết bị** | iPhone và iPad |
 | **Cài đặt** | Miễn phí trên [App Store](https://apps.apple.com/vn/app/id6788829996) |
 | **Quyền** | Cần bật **Cho phép truy cập đầy đủ** — [xem vì sao](#vì-sao-cần-cho-phép-truy-cập-đầy-đủ) |
 
 > [!IMPORTANT]
-> **iOS 18.6 là sàn cứng.** Cả app lẫn tiện ích bàn phím đều khai `MinimumOSVersion` là `18.6`
+> **iOS 16 là sàn cứng.** Cả app lẫn tiện ích bàn phím đều khai `MinimumOSVersion` là `16.0`
 > *(kiểm chứng được trong chính bản đã đóng gói)*, nên App Store sẽ không cho cài trên máy chạy
 > iOS thấp hơn.
 >
 > Kiểm tra máy bạn: **Cài đặt → Cài đặt chung → Giới thiệu → Phiên bản phần mềm**.
 >
-> Giao diện **Liquid Glass cần iOS 26**. Trên iOS 18–25 bàn phím vẫn chạy đầy đủ, chỉ là các
+> Giao diện **Liquid Glass cần iOS 26**. Trên iOS 16–25 bàn phím vẫn chạy đầy đủ, chỉ là các
 > theme kính đổi sang nền đặc tương đương.
 
 ## Cài đặt
@@ -207,16 +207,15 @@ platforms/ios/
 | | |
 |---|---|
 | Swift | `6.3`, Swift language mode 6 · SwiftUI *(app)* + UIKit *(bàn phím)* |
-| Deployment target | **`18.6`** cho cả app, bàn phím và test target |
+| Deployment target | **`16.0`** cho cả app, bàn phím và test target |
 | Engine | [`funput-ffi`](../../crates/funput-ffi) đóng thành `FunputCore.xcframework`, link tĩnh |
 | Cấu hình chia sẻ | App Group `group.app.funput.funput` + `UserDefaults(suiteName:)` |
 | Phát hành | App Store Connect → TestFlight → App Store |
 
 > [!WARNING]
-> **Cài đặt cấp project là `IPHONEOS_DEPLOYMENT_TARGET = 26.5`, không phải 18.6.** Mọi target hiện
-> có đều ghi đè xuống 18.6 nên giá trị đó vô hại — nhưng một target **mới** thêm vào mà quên đặt
-> giá trị riêng sẽ âm thầm thừa kế 26.5, tức là loại bỏ gần hết thiết bị người dùng. Đặt
-> `IPHONEOS_DEPLOYMENT_TARGET` một cách tường minh cho mọi target mới.
+> **Cài đặt cấp project là `IPHONEOS_DEPLOYMENT_TARGET = 16.0`.** Mọi target hiện có đều ghi đè
+> cùng giá trị đó. Vẫn đặt `IPHONEOS_DEPLOYMENT_TARGET` tường minh cho mọi target mới, để một
+> lần Xcode tự điền SDK version vào cấp project không âm thầm nâng sàn.
 
 ### Build
 

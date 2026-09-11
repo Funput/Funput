@@ -15,21 +15,26 @@ struct ThemeImageControls: View {
             Text("Ảnh nền").font(.headline)
             if let data = draft.renderedImageData, let image = UIImage(data: data) {
                 Image(uiImage: image).resizable().scaledToFill()
-                    .frame(height: 110).clipShape(.rect(cornerRadius: 12))
+                    .frame(height: 110).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 HStack {
                     picker("Đổi ảnh")
-                    Button("Điều chỉnh khung", systemImage: "crop") {
+                    Button {
                         cropRequest = ThemeCropRequest()
+                    } label: {
+                        Label("Điều chỉnh khung", systemImage: "crop")
                     }
                         .accessibilityIdentifier("themeEditor.imageCrop")
                 }
-                Button("Xóa ảnh", systemImage: "trash", role: .destructive) {
+                Button(role: .destructive) {
                     confirmsDelete = true
+                } label: {
+                    Label("Xóa ảnh", systemImage: "trash")
                 }
                 .accessibilityIdentifier("themeEditor.imageDelete")
                 blurSlider
             } else {
-                ContentUnavailableView("Chưa có ảnh", systemImage: "photo")
+                Label("Chưa có ảnh", systemImage: "photo")
+                    .foregroundStyle(.secondary)
                 picker("Chọn ảnh")
                 Text("Hãy chọn ảnh để có thể lưu theme ở chế độ Ảnh.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -41,7 +46,13 @@ struct ThemeImageControls: View {
         .confirmationDialog("Xóa ảnh nền?", isPresented: $confirmsDelete) {
             Button("Xóa ảnh", role: .destructive) { draft.removeImage() }
         }
-        .onChange(of: selection) { _, item in load(item) }
+        .background {
+            if #available(iOS 17, *) {
+                Color.clear.onChange(of: selection) { _, item in load(item) }
+            } else {
+                Color.clear.onChange(of: selection) { item in load(item) }
+            }
+        }
         .onDisappear { processingTask?.cancel() }
     }
 

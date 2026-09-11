@@ -3,8 +3,10 @@ import UIKit
 
 extension KeyboardSurfaceView {
     func configureView() {
-        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
-            view.applyPresentation()
+        if #available(iOS 17, *) {
+            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
+                view.applyPresentation()
+            }
         }
         isMultipleTouchEnabled = true
         contentHost.isMultipleTouchEnabled = true
@@ -47,6 +49,11 @@ extension KeyboardSurfaceView {
             interactionController.performSuggestionFeedback(presentation: presentation)
             onClipboardPaste?(text)
         }
+    }
+
+    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #unavailable(iOS 17) { applyPresentation() }
     }
 }
 #endif

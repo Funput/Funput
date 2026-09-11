@@ -10,8 +10,16 @@ struct ThemeEditorNameCard: View {
             TextField("Tên theme", text: $name)
                 .textFieldStyle(.roundedBorder)
                 .accessibilityIdentifier("themeEditor.name")
-                .onChange(of: name) { _, value in
-                    if value.count > 40 { name = String(value.prefix(40)) }
+                .background {
+                    if #available(iOS 17, *) {
+                        Color.clear.onChange(of: name) { _, value in
+                            if value.count > 40 { name = String(value.prefix(40)) }
+                        }
+                    } else {
+                        Color.clear.onChange(of: name) { value in
+                            if value.count > 40 { name = String(value.prefix(40)) }
+                        }
+                    }
                 }
         }
     }

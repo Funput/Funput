@@ -22,7 +22,7 @@ struct ThemeImageCropEditor: View {
                     cropImage(size: proxy.size)
                 }
                 .aspectRatio(1.29, contentMode: .fit)
-                .clipShape(.rect(cornerRadius: 18))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .overlay { RoundedRectangle(cornerRadius: 18).stroke(.white.opacity(0.7)) }
                 ThemeMetricSlider(
                     title: "Phóng to",
@@ -65,7 +65,7 @@ struct ThemeImageCropEditor: View {
                 )
                 .frame(width: size.width, height: size.height)
                 .clipped()
-                .contentShape(.rect)
+                .contentShape(Rectangle())
                 .gesture(dragGesture(overflow: overflow))
                 .simultaneousGesture(magnificationGesture)
         }

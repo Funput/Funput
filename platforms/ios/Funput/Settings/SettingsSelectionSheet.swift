@@ -1,9 +1,10 @@
+import Combine
 import SwiftUI
 
 struct SettingsSelectionSheet: View {
     @Environment(\.dismiss) private var dismiss
     let picker: SettingsPicker
-    let model: SettingsModel
+    @ObservedObject var model: SettingsModel
 
     var body: some View {
         NavigationStack {
@@ -49,7 +50,7 @@ struct SettingsSelectionSheet: View {
                 }
             }
             .padding(.vertical, 14)
-            .contentShape(.rect)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(choice.title)

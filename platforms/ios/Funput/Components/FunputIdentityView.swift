@@ -41,14 +41,17 @@ struct FunputIdentityView: View {
             Image(uiImage: image)
                 .resizable()
                 .scaledToFit()
-                .clipShape(.rect(cornerRadius: iconCornerRadius))
+                .clipShape(RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous))
                 .frame(width: iconSize, height: iconSize)
         } else {
             Image(systemName: "keyboard.fill")
                 .font(.system(size: iconSize * 0.44, weight: .semibold))
                 .foregroundStyle(.tint)
                 .frame(width: iconSize, height: iconSize)
-                .background(.tint.opacity(0.12), in: .rect(cornerRadius: iconCornerRadius))
+                .background(
+                    .tint.opacity(0.12),
+                    in: RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous)
+                )
         }
     }
 

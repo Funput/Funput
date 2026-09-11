@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "FunputKit",
-    platforms: [.iOS(.v18)],
+    platforms: [.iOS(.v16)],
     products: [
         .library(name: "FunputEngine", targets: ["FunputEngine"]),
         .library(name: "PersonalSuggestions", targets: ["PersonalSuggestions"]),

@@ -1,10 +1,11 @@
+import Combine
 import KeyboardRenderer
 import SwiftUI
 import ThemeRuntime
 import ThemeSchema
 
 struct ThemeGallery: View {
-    let model: AppearanceModel
+    @ObservedObject var model: AppearanceModel
     let onEdit: (String) -> Void
     let onDelete: (String) -> Void
 
@@ -46,6 +47,7 @@ struct ThemeGallery: View {
         }
     }
 
+    @ViewBuilder
     private func scroller(
         themes: [KeyboardTheme],
         isCustom: Bool,
@@ -55,10 +57,10 @@ struct ThemeGallery: View {
             LazyHStack(spacing: 16) {
                 ForEach(themes) { theme in themeCard(theme, isCustom: isCustom) }
             }
-            .scrollTargetLayout()
             .padding(.vertical, 4)
+            .modifier(ThemeGallerySnapContent())
         }
-        .scrollTargetBehavior(.viewAligned)
+        .modifier(ThemeGallerySnapContainer())
         .accessibilityIdentifier("appearance.carousel.\(identifier)")
     }
 
@@ -76,6 +78,26 @@ struct ThemeGallery: View {
             deleteAction: { onDelete(theme.id) }
         ) {
             withAnimation(.easeInOut(duration: 0.2)) { model.selectTheme(theme.id) }
+        }
+    }
+}
+
+private struct ThemeGallerySnapContent: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 17, *) {
+            content.scrollTargetLayout()
+        } else {
+            content
+        }
+    }
+}
+
+private struct ThemeGallerySnapContainer: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 17, *) {
+            content.scrollTargetBehavior(.viewAligned)
+        } else {
+            content
         }
     }
 }

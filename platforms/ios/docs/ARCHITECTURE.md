@@ -31,7 +31,7 @@ Funput iOS sử dụng kiến trúc **hybrid native**: giao diện và tích h�
 - **Swift:** 6.3, Swift language mode 6
 - **iOS SDK:** 26.4
 - **Rust:** 1.97 stable, edition 2024
-- **Minimum deployment:** iOS 18.6 — giá trị `IPHONEOS_DEPLOYMENT_TARGET` của mọi target trong `Funput.xcodeproj`, và là `MinimumOSVersion` của cả `.app` lẫn `.appex` khi đóng gói. Lưu ý cài đặt **cấp project** là 26.5: mọi target hiện có đều ghi đè xuống 18.6, nhưng một target mới quên đặt giá trị riêng sẽ âm thầm thừa kế 26.5
+- **Minimum deployment:** iOS 16.0 — giá trị `IPHONEOS_DEPLOYMENT_TARGET` của mọi target trong `Funput.xcodeproj`, và là `MinimumOSVersion` của cả `.app` lẫn `.appex` khi đóng gói. Cài đặt cấp project cũng là 16.0; vẫn ghi đè tường minh trên từng target để Xcode không âm thầm nâng sàn khi tạo target mới.
 - **Giao diện mục tiêu chính:** iOS/iPadOS 26.4
 
 Không đóng băng toolchain vĩnh viễn. Khi bắt đầu một milestone mới, cập nhật lên bản stable mới nhất sau khi CI và test thiết bị đã xanh.
@@ -392,7 +392,7 @@ phải giới hạn nền tảng**.
 > marked-text API tương đương macOS IMKit". Khẳng định đó **sai**. Không được dùng nó làm
 > tiền đề cho bất kỳ quyết định kiến trúc nào.
 
-`UITextDocumentProxy` có marked-text API từ **iOS 13** — thấp hơn deployment target iOS 18 của
+`UITextDocumentProxy` có marked-text API từ **iOS 13** — thấp hơn deployment target iOS 16 của
 dự án, nên dùng được vô điều kiện, không cần `@available`:
 
 ```swift
@@ -743,7 +743,7 @@ App Store yêu cầu keyboard vẫn hoạt động khi không có Full Access. V
 - Light/dark mode.
 - Reduce Transparency/Reduce Motion/Increase Contrast.
 - Dynamic Type và VoiceOver.
-- iOS 18 fallback và iOS 26 Liquid Glass.
+- iOS 16 fallback và iOS 26 Liquid Glass.
 
 ### Các chỉ số cần theo dõi
 
@@ -804,7 +804,7 @@ trước package resolution và `xcodebuild`.
 - `ThemeSchema`, `ThemeRuntime` và bundled themes.
 - Renderer dùng chung giữa preview và extension.
 - App Group synchronization và fallback không Full Access.
-- Liquid Glass trên iOS 26, fallback trên iOS 18–25.
+- Liquid Glass trên iOS 26, fallback trên iOS 16–25.
 
 ### Giai đoạn 4 — User-created themes
 
@@ -845,7 +845,7 @@ trước package resolution và `xcodebuild`.
 - [ ] Renderer preview và renderer extension là cùng implementation.
 - [ ] App và extension không link module không cần thiết.
 - [ ] Build chạy trên device ARM64 và Apple Silicon simulator.
-- [ ] Test iOS 18 fallback và iOS 26 Liquid Glass.
+- [ ] Test iOS 16 fallback và iOS 26 Liquid Glass.
 - [ ] Test iPhone/iPad, portrait/landscape và floating keyboard.
 - [ ] Test VoiceOver và các accessibility appearance settings.
 - [ ] Instruments không cho thấy allocation bất thường trên key hot path.
