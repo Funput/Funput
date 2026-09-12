@@ -12,14 +12,14 @@
 //! a nasty bug to own, and the boxed list is what the rest of this app looks like.
 
 mod row;
+mod show;
 
 use std::rc::Rc;
 
 use adw::prelude::*;
 
-use crate::convert::ui::widget;
+use crate::convert::ui::{casing, widget};
 use crate::convert::{Convert, io};
-use funput_convert::View;
 
 /// How many rows to build at once.
 ///
@@ -33,6 +33,7 @@ pub(in crate::convert) struct Pane {
     pub(in crate::convert) root: gtk::Box,
     count: gtk::Label,
     target: gtk::DropDown,
+    casing: casing::Bar,
     list: gtk::ListBox,
     progress: gtk::Label,
     action: gtk::Button,
@@ -49,6 +50,7 @@ impl Pane {
         head.append(&widget::caption("Sang"));
         head.append(&target);
 
+        let casing = casing::Bar::new();
         let list = gtk::ListBox::builder()
             .selection_mode(gtk::SelectionMode::None)
             .css_classes(["boxed-list"])
@@ -74,6 +76,9 @@ impl Pane {
             .spacing(12)
             .build();
         root.append(&head);
+        // One transform applies to the whole batch, the way one target charset
+        // does — so it sits in the header, not in every row.
+        root.append(&casing.root);
         root.append(&scroller);
         root.append(&footer);
 
@@ -81,6 +86,7 @@ impl Pane {
             root,
             count,
             target,
+            casing,
             list,
             progress,
             action,
@@ -88,6 +94,7 @@ impl Pane {
     }
 
     pub(in crate::convert) fn wire(&self, convert: &Rc<Convert>) {
+        self.casing.wire(convert);
         widget::connect_dropdown(&self.target, convert, |convert, index| {
             convert.session.borrow_mut().set_target(index);
         });
@@ -97,47 +104,5 @@ impl Pane {
                 io::convert_files(&convert);
             }
         });
-    }
-
-    pub(in crate::convert) fn refresh(&self, convert: &Rc<Convert>, view: &View) {
-        self.count.set_label(&format!("{} tệp", view.rows_total));
-        widget::select(&self.target, Some(view.target));
-
-        while let Some(child) = self.list.first_child() {
-            self.list.remove(&child);
-        }
-        for (offset, row) in view.rows.iter().enumerate() {
-            self.list
-                .append(&row::build(convert, view.rows_first + offset, row));
-        }
-        let shown = view.rows_first + view.rows.len();
-        if shown < view.rows_total {
-            let more = adw::ActionRow::builder()
-                .title(format!("và {} tệp khác", view.rows_total - shown))
-                .css_classes(["dim-label"])
-                .build();
-            self.list.append(&more);
-        }
-
-        // A file nothing explained is skipped, not guessed at, so the button counts
-        // only what is settled — and says so, rather than promising the whole batch.
-        self.action.set_label(&format!("Chuyển {} tệp", view.ready));
-        self.action
-            .set_sensitive(view.ready > 0 && !convert.is_busy());
-
-        // Before a run, the footer is a promise about where the files will land; once
-        // one has happened, it is the report. Never both, and never the promise after.
-        //
-        // A file that could not be read is *named* here rather than counted — a
-        // number cannot answer "which two of my ten".
-        let progress = convert.progress();
-        let footer = if !progress.is_empty() {
-            progress
-        } else if view.unreadable.is_empty() {
-            format!("Lưu vào: {}", view.out_dir)
-        } else {
-            funput_convert::unreadable_line(&view.unreadable)
-        };
-        self.progress.set_label(&footer);
     }
 }

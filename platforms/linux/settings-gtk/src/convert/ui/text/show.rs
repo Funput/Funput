@@ -35,6 +35,7 @@ impl Pane {
         if let Some(text) = &view.input_preview {
             self.show_input(text);
         }
+        self.casing.refresh(view);
         self.output.buffer().set_text(&view.output_preview);
         self.loss.set_label(&view.warning);
         self.loss.set_visible(!view.warning.is_empty());

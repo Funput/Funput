@@ -314,10 +314,13 @@ settings-gtk/           App Cài đặt GTK4 + libadwaita (crate cargo riêng,
   src/settings_window/    mỗi trang preferences một submodule
     shortcuts/              công tắc gõ tắt, các hàng, trạng thái rỗng
   src/convert/            cửa sổ Chuyển mã — xem bên dưới
+    ui/casing/              thanh Kiểu chữ: các chip, và hàng "Đang áp"
 packaging/              hai file .desktop, metadata kho apt/dnf/pacman
 ```
 
 Mỗi thư mục giữ tối đa năm file; vượt quá thì tách theo mối quan tâm chứ không theo kích thước.
+`src/convert/ui/` hiện **đủ năm file**, nên widget tiếp theo của cửa sổ Chuyển mã sẽ phải mở một
+thư mục con chứ không thêm file vào đó.
 Mọi file ở đây bị giới hạn **150 dòng** bởi `scripts/check-loc.sh`, kể cả file test.
 
 ### Build
@@ -417,10 +420,16 @@ trên Windows — cảnh báo mất chữ, luật xử lý hàng loạt, tên th
 trùng tên bằng `vanban (2).txt`. Viết hai lần là cách để hai nền tảng bắt đầu bất đồng về cùng
 một tài liệu. Phần ở lại đây là kéo-thả, clipboard, hộp thoại, và đẩy I/O file ra khỏi luồng UI.
 
-`src/convert/state.rs` là file duy nhất dưới `convert/` có quyết định gì, và cũng là file duy
-nhất có test. Các file `ui/*` đọc state rồi set property, không quyết định gì. Một chốt
-`refreshing` canh mọi tín hiệu mà một lần refresh bắn ra — thiếu nó, refresh set dropdown sẽ tái
-nhập qua `notify::selected` và panic vì `borrow_mut` lồng nhau.
+Không file nào dưới `convert/` quyết định một lần chuyển mã ra sao: các file `ui/*` đọc `View`
+rồi set property, và `crates/funput-convert` giữ toàn bộ phần còn lại. Ngoại lệ duy nhất là
+`ui/casing.rs`, file `ui/*` duy nhất có test — bốn hàm thuần của nó quyết định phần **trình bày**
+của thanh Kiểu chữ (chip nào sáng, dòng `Đang áp` đọc ra sao, công tắc nào đang trên màn hình, và
+thanh có sống hay không), và cả bốn kiểm được mà không cần màn hình.
+
+Một chốt `refreshing` canh mọi tín hiệu mà một lần refresh bắn ra — thiếu nó, refresh set dropdown
+sẽ tái nhập qua `notify::selected` và panic vì `borrow_mut` lồng nhau. `gtk::Switch` của thanh
+Kiểu chữ cũng vậy qua `notify::active`, nên hai công tắc đi qua `widget::connect_switch` chứ không
+tự nối tay. Nút thì không cần: `clicked` không bao giờ nổ vì một lần ghi property.
 
 ### Chế độ không preedit
 
