@@ -21,9 +21,17 @@ path = "src/main.rs"
 # The Chuyển mã window's logic — reading a batch file by file, naming what a
 # conversion costs, writing copies beside the originals. Shared with the Windows
 # window so the two cannot drift; see crates/funput-convert/README.md. It re-exports
-# `funput_core::charset`, so this is the only edge needed and the `charset` feature is
-# switched on in exactly one manifest.
+# `funput_core::charset`, so nothing here ever has to name a `Charset` and the
+# `charset` feature stays switched on in exactly one manifest.
 funput-convert = { path = "../../../crates/funput-convert" }
+# Named for one reason: the casing bar decides which switch to show from *which
+# transform* is applied, and asking `casing::index_of(Transform::Title)` is the
+# alternative to writing that transform's position in the menu down as a number.
+# Windows makes the same edge for the same reason. Only `textcase` — the charset side
+# is reached through the re-export above. Considered and rejected: re-exporting
+# `textcase` from funput-convert, which would leave the two shells that mirror each
+# other spelling one type two different ways.
+funput-core = { path = "../../../crates/funput-core", features = ["textcase"] }
 gtk = { package = "gtk4", version = "0.9", features = ["v4_10"] }
 adw = { package = "libadwaita", version = "0.7", features = ["v1_5"] }
 serde = { version = "1", features = ["derive"] }
