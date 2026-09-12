@@ -109,10 +109,11 @@ src/
 ├── cli.rs         # Cli, Command{Term, Dev}, MethodArg(→InputMethod), CliError/CliResult
 ├── term/
 │   └── mod.rs     # args + handler `funput term` (wrapper qua funput-term + install)
+├── io/            # hai đầu dùng chung của mọi lệnh biến đổi văn bản
+│   ├── source.rs  # bytes → text + bảng mã (hai cửa: UTF-8 hay theo byte)
+│   └── sink.rs    # ghi **bytes** ra stdout (không phải text)
 ├── convert/       # `funput convert` — công cụ chuyển mã
 │   ├── mod.rs     # args + luồng: đọc → nhận diện → chuyển → ghi
-│   ├── source.rs  # bytes → text + bảng mã (hai cửa: UTF-8 hay theo byte)
-│   ├── sink.rs    # ghi **bytes** ra stdout (không phải text)
 │   └── report.rs  # --list, --detect, cảnh báo mất mát (đều ra stderr)
 └── dev/
     ├── mod.rs     # args + dispatch `funput dev` (run/repl/coverage)

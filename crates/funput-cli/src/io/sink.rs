@@ -13,7 +13,7 @@ use crate::cli::CliError;
 ///
 /// A closed pipe is not an error. `funput convert … | head` closes the pipe as soon
 /// as it has enough, and reporting that as a failure would make the exit code lie.
-pub(super) fn write(bytes: &[u8]) -> Result<(), CliError> {
+pub(crate) fn write(bytes: &[u8]) -> Result<(), CliError> {
     let mut out = std::io::stdout().lock();
     match out.write_all(bytes).and_then(|()| out.flush()) {
         Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),

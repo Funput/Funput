@@ -111,10 +111,11 @@ src/
 ├── cli.rs         # Cli, Command{Term, Dev}, MethodArg(→InputMethod), CliError/CliResult
 ├── term/
 │   └── mod.rs     # args + handler for `funput term` (wrapper via funput-term + install)
+├── io/            # the two ends every text-transforming command shares
+│   ├── source.rs  # bytes → text + charset (two doors: UTF-8 or byte-oriented)
+│   └── sink.rs    # writes **bytes** to stdout, not text
 ├── convert/       # `funput convert` — the charset-conversion tool
 │   ├── mod.rs     # args + the flow: read → identify → convert → write
-│   ├── source.rs  # bytes → text + charset (two doors: UTF-8 or byte-oriented)
-│   ├── sink.rs    # writes **bytes** to stdout, not text
 │   └── report.rs  # --list, --detect, loss warnings (all to stderr)
 └── dev/
     ├── mod.rs     # args + dispatch for `funput dev` (run/repl/coverage)

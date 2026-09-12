@@ -12,6 +12,7 @@
 mod cli;
 mod convert;
 mod dev;
+mod io;
 mod term;
 
 use std::process::ExitCode;
