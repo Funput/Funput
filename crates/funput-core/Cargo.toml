@@ -16,6 +16,13 @@ workspace = true
 [features]
 default = []
 charset = []
+# Changing the case of existing text (chuyển đổi kiểu chữ). Off by default for the
+# same reason as `charset`, but deliberately *separate* from it: a keyboard may one
+# day want bỏ dấu on the selected text — iOS and Android can both read it — and
+# folding the two together would make that cost the four charset codecs. The
+# converse holds too: `funput-config` enables `charset` to read a UniKey macro file
+# and has no use for this. Adds no dependencies either.
+textcase = []
 
 [dependencies]
 
