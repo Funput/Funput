@@ -7,11 +7,12 @@ use proptest::prelude::*;
 /// Every transform there is. A wildcard is not available here — `Transform` is
 /// exhaustive on purpose — so a new variant makes this array a compile error until
 /// somebody decides which properties it has to satisfy.
-const ALL: [Transform; 4] = [
+const ALL: [Transform; 5] = [
     Transform::Upper,
     Transform::Lower,
     Transform::NoDiacritics,
     Transform::Sentence,
+    Transform::Title,
 ];
 
 /// Vietnamese as it is actually stored: precomposed letters, the stroke, the eight
@@ -71,7 +72,12 @@ proptest! {
     /// sentence boundary — a diff in the output alone would not say which.
     #[test]
     fn the_case_transforms_change_only_case(text in VIETNAMESE) {
-        for transform in [Transform::Upper, Transform::Lower, Transform::Sentence] {
+        for transform in [
+            Transform::Upper,
+            Transform::Lower,
+            Transform::Sentence,
+            Transform::Title,
+        ] {
             let out = apply(&text, transform, Options::default());
             prop_assert_eq!(
                 out.to_lowercase(),
