@@ -7,6 +7,7 @@ struct ConvertBatchView: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
             header
+            ConvertCasingBar(state: state, dispatch: dispatch)
             Table(state.files) {
                 TableColumn("Tệp") { row in
                     Label(row.name, systemImage: "doc.text")

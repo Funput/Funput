@@ -47,6 +47,7 @@
 | 🗂️ **Nhớ theo ứng dụng** | Bật tiếng Việt ở Pages, tắt ở Terminal — Funput tự chuyển khi bạn đổi app |
 | ✂️ **Gõ tắt** | Bảng viết tắt tự bung, tuỳ chọn khớp cả hoa lẫn thường |
 | 🔄 **Chuyển mã** | Đổi qua lại giữa Unicode dựng sẵn, Unicode tổ hợp, TCVN3 (ABC) và VNI-Windows |
+| 🔠 **Đổi kiểu chữ** | CHỮ HOA · chữ thường · bỏ dấu · viết hoa đầu câu · Viết Hoa Đầu Mỗi Từ, cộng dồn được, ngay trong cửa sổ Chuyển mã |
 | 💾 **Xuất / nhập cấu hình** | Mang toàn bộ tuỳ chọn và gõ tắt sang máy khác bằng một tệp |
 | 🍎 **Hợp chuẩn macOS 26** | Liquid Glass, thanh menu, khởi động cùng máy |
 

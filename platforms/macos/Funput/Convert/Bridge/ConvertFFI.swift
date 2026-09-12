@@ -31,6 +31,17 @@ nonisolated final class ConvertFFISession: @unchecked Sendable {
         refresh()
     }
 
+    func apply(_ action: ConvertCasingAction) {
+        switch action {
+        case let .apply(index): funput_convert_session_apply_transform(handle, UInt(index))
+        case .undo: funput_convert_session_undo_transform(handle)
+        case .clear: funput_convert_session_clear_transforms(handle)
+        case let .setKeepD(on): funput_convert_session_set_keep_d(handle, on)
+        case let .setFlattenCaps(on): funput_convert_session_set_flatten_caps(handle, on)
+        }
+        refresh()
+    }
+
     func adopt(paths: [String]) -> Bool {
         guard let scan = funput_convert_scan_new() else { return false }
         defer { funput_convert_scan_free(scan) }
@@ -62,9 +73,15 @@ nonisolated final class ConvertFFISession: @unchecked Sendable {
         return Data(bytes)
     }
 
-    func state(input: String, charsets: [ConvertCharset]) -> ConvertScreenState {
+    func state(
+        input: String, charsets: [ConvertCharset], transforms: [ConvertTransform]
+    ) -> ConvertScreenState {
         let view = funput_convert_session_view(handle)
+        let casing = funput_convert_session_casing(handle)
         let rows = (0..<Int(view.rows_count)).map { row(at: $0, first: Int(view.rows_first)) }
+        let applied = (0..<Int(casing.count)).compactMap {
+            optional(funput_convert_session_applied_transform(handle, UInt($0)))
+        }
         return ConvertScreenState(
             mode: mode(view.mode), charsets: charsets, target: Int(view.target),
             source: optional(view.source), fromFile: view.from_file,
@@ -74,7 +91,9 @@ nonisolated final class ConvertFFISession: @unchecked Sendable {
             warning: readText { funput_convert_session_warning(handle, $0, $1) }, files: rows,
             rowsTotal: Int(view.rows_total), outputDirectory: readText { funput_convert_session_out_dir(handle, $0, $1) },
             unreadable: readText { funput_convert_session_unreadable_line(handle, $0, $1) },
-            progress: "", ready: Int(view.ready), isBusy: false, errorMessage: nil
+            progress: "", ready: Int(view.ready), isBusy: false, errorMessage: nil,
+            transforms: transforms, appliedTransforms: applied,
+            keepD: casing.keep_d, flattenCaps: casing.flatten_caps
         )
     }
 
@@ -89,7 +108,7 @@ nonisolated final class ConvertFFISession: @unchecked Sendable {
     private func refreshed() -> Bool { refresh(); return true }
 }
 
-nonisolated private func readText(_ body: (UnsafeMutablePointer<UInt32>?, UInt) -> UInt) -> String {
+nonisolated func readText(_ body: (UnsafeMutablePointer<UInt32>?, UInt) -> UInt) -> String {
     let count = body(nil, 0)
     var values = [UInt32](repeating: 0, count: Int(count))
     values.withUnsafeMutableBufferPointer { _ = body($0.baseAddress, UInt($0.count)) }

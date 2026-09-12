@@ -14,7 +14,7 @@ final class ConvertStore {
         let worker = ConvertWorker()
         self.worker = worker
         self.platform = platform ?? ConvertPlatform()
-        state = initialState ?? .empty(charsets: ConvertWorker.loadCharsets())
+        state = initialState ?? .empty(charsets: ConvertWorker.loadCharsets(), transforms: ConvertWorker.loadTransforms())
         if worker == nil { state.errorMessage = "Không khởi tạo được bộ chuyển mã." }
     }
     func send(_ action: ConvertAction) {
@@ -32,6 +32,7 @@ final class ConvertStore {
         case .saveResult: saveResult()
         case .convertFiles: convertFiles()
         case .loadMore: loadMore()
+        case let .casing(action): updateFlushing { await $0.casing(action, input: $1) }
         }
     }
     func dismissError() { state.errorMessage = nil }
@@ -90,7 +91,6 @@ final class ConvertStore {
             state.progress = platform.copy(text) ? "Đã chép kết quả" : "Không chép được kết quả"
         }
     }
-
     private func saveResult() {
         taskFlushing { [weak self] worker, _, token in
             let bytes = await worker.saveBytes()
@@ -99,7 +99,6 @@ final class ConvertStore {
             catch { state.errorMessage = "Không lưu được tệp: \(error.localizedDescription)" }
         }
     }
-
     private func convertFiles() {
         busy("Đang chuyển \(state.ready) tệp…") { worker in
             guard let result = await worker.runBatch(input: self.state.inputText) else { return nil }
@@ -108,7 +107,6 @@ final class ConvertStore {
             return next
         }
     }
-
     private func update(_ operation: @escaping (ConvertWorker) async -> ConvertScreenState) {
         generation += 1; let token = generation
         Task { guard let worker else { return }; let next = await operation(worker)

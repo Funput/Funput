@@ -7,6 +7,7 @@ struct ConvertTextView: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
             selectors
+            ConvertCasingBar(state: state, dispatch: dispatch)
             HStack(spacing: Theme.Spacing.md) {
                 ConvertEditorPane(
                     title: state.fromFile ? state.fileName ?? "Tệp nguồn" : "Đang có",

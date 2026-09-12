@@ -11,6 +11,12 @@ struct ConvertCharset: Identifiable, Equatable {
     let name: String
 }
 
+/// One entry of the transform menu, named by core so three platforms cannot drift.
+struct ConvertTransform: Identifiable, Equatable {
+    let id: Int
+    let name: String
+}
+
 struct ConvertFileRow: Identifiable, Equatable {
     let id: Int
     let name: String
@@ -36,6 +42,13 @@ struct ConvertScreenState: Equatable {
     var ready: Int
     var isBusy: Bool
     var errorMessage: String?
+    /// The menu, in core's order. A position here is the identity of a transform.
+    var transforms: [ConvertTransform]
+    /// What has been applied, in the order pressed — so `chữ thường → Viết Hoa Đầu
+    /// Mỗi Từ` is a different document from the same two the other way round.
+    var appliedTransforms: [Int]
+    var keepD: Bool
+    var flattenCaps: Bool
 
     var canUseTextResult: Bool {
         source != nil && !isBusy
@@ -52,6 +65,7 @@ struct ConvertScreenState: Equatable {
     var canLoadMore: Bool {
         files.count < rowsTotal && !isBusy
     }
+
 }
 
 enum ConvertAction: Equatable {
@@ -67,18 +81,20 @@ enum ConvertAction: Equatable {
     case convertFiles
     case loadMore
     case receiveFiles([URL])
+    case casing(ConvertCasingAction)
 }
 
 typealias ConvertDispatch = (ConvertAction) -> Void
 
 extension ConvertScreenState {
-    static func empty(charsets: [ConvertCharset]) -> Self {
+    static func empty(charsets: [ConvertCharset], transforms: [ConvertTransform]) -> Self {
         .init(
             mode: .empty, charsets: charsets, target: 0, source: nil,
             fromFile: false, fileName: nil, inputText: "", outputText: "",
             warning: "", files: [], rowsTotal: 0, outputDirectory: "",
             unreadable: "", progress: "", ready: 0, isBusy: false,
-            errorMessage: nil
+            errorMessage: nil, transforms: transforms, appliedTransforms: [],
+            keepD: false, flattenCaps: false
         )
     }
 }

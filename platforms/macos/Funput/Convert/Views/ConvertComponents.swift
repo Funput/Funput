@@ -9,7 +9,7 @@ struct ConvertHeader: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text("Chuyển mã")
                     .font(.largeTitle.bold())
-                Text("Chuyển văn bản giữa Unicode và các bảng mã tiếng Việt cũ.")
+                Text("Đổi bảng mã và kiểu chữ của văn bản đã có.")
                     .foregroundStyle(.secondary)
             }
             Spacer()
