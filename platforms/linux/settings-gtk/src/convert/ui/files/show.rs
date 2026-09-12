@@ -23,6 +23,7 @@ impl Pane {
     pub(in crate::convert) fn refresh(&self, convert: &Rc<Convert>, view: &View) {
         self.count.set_label(&format!("{} tệp", view.rows_total));
         widget::select(&self.target, Some(view.target));
+        self.casing.refresh(view);
 
         while let Some(child) = self.list.first_child() {
             self.list.remove(&child);

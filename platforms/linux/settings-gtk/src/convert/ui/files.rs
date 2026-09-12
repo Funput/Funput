@@ -18,7 +18,7 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 
-use crate::convert::ui::widget;
+use crate::convert::ui::{casing, widget};
 use crate::convert::{Convert, io};
 
 /// How many rows to build at once.
@@ -33,6 +33,7 @@ pub(in crate::convert) struct Pane {
     pub(in crate::convert) root: gtk::Box,
     count: gtk::Label,
     target: gtk::DropDown,
+    casing: casing::Bar,
     list: gtk::ListBox,
     progress: gtk::Label,
     action: gtk::Button,
@@ -49,6 +50,7 @@ impl Pane {
         head.append(&widget::caption("Sang"));
         head.append(&target);
 
+        let casing = casing::Bar::new();
         let list = gtk::ListBox::builder()
             .selection_mode(gtk::SelectionMode::None)
             .css_classes(["boxed-list"])
@@ -74,6 +76,9 @@ impl Pane {
             .spacing(12)
             .build();
         root.append(&head);
+        // One transform applies to the whole batch, the way one target charset
+        // does — so it sits in the header, not in every row.
+        root.append(&casing.root);
         root.append(&scroller);
         root.append(&footer);
 
@@ -81,6 +86,7 @@ impl Pane {
             root,
             count,
             target,
+            casing,
             list,
             progress,
             action,
@@ -88,6 +94,7 @@ impl Pane {
     }
 
     pub(in crate::convert) fn wire(&self, convert: &Rc<Convert>) {
+        self.casing.wire(convert);
         widget::connect_dropdown(&self.target, convert, |convert, index| {
             convert.session.borrow_mut().set_target(index);
         });

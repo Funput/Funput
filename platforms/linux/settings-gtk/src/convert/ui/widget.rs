@@ -84,8 +84,8 @@ pub(in crate::convert) fn connect_dropdown(
 ///
 /// No [`Convert::is_refreshing`] guard, and that is not an oversight: `clicked` is only
 /// ever emitted by a real press, never by a property write, so a refresh cannot come
-/// back in through this door the way it can through [`connect_dropdown`]. Nor does
-/// this call `refresh` for the caller — some actions edit
+/// back in through this door the way it can through [`connect_dropdown`] or
+/// [`connect_switch`]. Nor does this call `refresh` for the caller — some actions edit
 /// the session and want one, others only read it and would redraw for nothing.
 ///
 /// Takes a closure rather than a `fn` pointer so a caller can capture, which is how the
@@ -100,5 +100,30 @@ pub(in crate::convert) fn click(
         if let Some(convert) = weak.upgrade() {
             action(&convert);
         }
+    });
+}
+
+/// Connect a switch to a state edit.
+///
+/// The guard is not optional here the way it is for [`click`]. `set_active` does emit
+/// `notify::active`, so a refresh correcting a stale switch would come straight back in
+/// as the user's own choice and undo the correction. No unchanged-write check like
+/// [`select`]'s is needed: `gtk_switch_set_active` returns early when the value already
+/// matches.
+pub(in crate::convert) fn connect_switch(
+    switch: &gtk::Switch,
+    convert: &Rc<Convert>,
+    edit: impl Fn(&Rc<Convert>, bool) + 'static,
+) {
+    let weak = Rc::downgrade(convert);
+    switch.connect_active_notify(move |switch| {
+        let Some(convert) = weak.upgrade() else {
+            return;
+        };
+        if convert.is_refreshing() {
+            return;
+        }
+        edit(&convert, switch.is_active());
+        convert.refresh();
     });
 }
