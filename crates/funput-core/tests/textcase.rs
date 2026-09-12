@@ -11,5 +11,7 @@
 //! These use only the public API, which is also how they check that the public API
 //! is enough: a shell has `Transform`, `Options` and `apply`, and nothing else.
 
+#[path = "textcase/cases.rs"]
+mod cases;
 #[path = "textcase/properties.rs"]
 mod properties;

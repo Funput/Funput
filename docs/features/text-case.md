@@ -2,9 +2,12 @@
 
 ## Trạng thái
 
-**Chưa có code.** Tài liệu này chốt mô hình trước, như [charset.md](charset.md) đã làm,
-và là nơi mọi quyết định thiết kế sống — mỗi phép biến đổi mới cập nhật lại nó trong
-cùng PR.
+**Tầng core đã xong**: `funput_core::textcase` sau cargo feature `textcase`, cả năm
+phép, kèm corpus và property test. Chưa có người dùng nào — `funput-convert`, ba shell
+và `funput case` là các bước tiếp theo.
+
+Tài liệu này chốt mô hình trước khi có code, như [charset.md](charset.md) đã làm, và là
+nơi mọi quyết định thiết kế sống — mỗi thay đổi cập nhật lại nó trong cùng PR.
 
 Phạm vi **V1 đã chốt: một tab trong cửa sổ Chuyển mã**, ba nền tảng desktop, cộng
 `funput case` trong CLI. Không hotkey, không đụng vùng bôi đen, không nghe clipboard. Những thứ đó nằm ở
@@ -111,8 +114,9 @@ Xuống dòng là ranh giới vì đầu vào thật của tính năng này thư
 `.srt`, ghi chú — nơi không ai chấm câu.
 
 Chữ cái đầu có thể không phải chữ cái: `"xin chào"` và `(xin chào)` phải viết hoa
-`x`, không bỏ qua vì gặp dấu nháy. Quy tắc: bỏ qua mọi ký tự không phải chữ cái cho
-tới chữ cái đầu tiên của câu.
+`x`, không bỏ qua vì gặp dấu nháy. Nhưng **chữ số thì chặn**: câu mở đầu bằng số là câu
+đã bắt đầu, nên `3 con mèo` không được thành `3 Con mèo`. Quy tắc: đi qua dấu mở, dừng
+ở chữ cái **hoặc** chữ số đầu tiên, và chỉ chữ cái mới được đổi.
 
 ### Viết Hoa Đầu Mỗi Từ
 
@@ -127,11 +131,26 @@ gửi về TP. HCM        →  Gửi Về TP. HCM        (không phải "Tp. Hcm
 Ngoại lệ ALL-CAPS bật mặc định, tắt được. Từ một chữ cái (`A`) coi như ALL-CAPS —
 vô hại, vì kết quả hai đường như nhau.
 
-Ranh giới từ là khoảng trắng và dấu câu; `bàn-phím` thành `Bàn-Phím`, `e-mail` thành
-`E-Mail`. Đây là quy ước của mọi công cụ cùng loại và người dùng đã quen.
+Ranh giới từ là **khoảng trắng hoặc dấu câu ASCII**; `bàn-phím` thành `Bàn-Phím`,
+`e-mail` thành `E-Mail` — quy ước của mọi công cụ cùng loại. Dấu nháy đơn là ngoại lệ,
+để `don't` không thành `Don'T`.
+
+Giữ tập ranh giới trong ASCII mua được một bảo đảm đáng giá hơn những ca biên nó bỏ
+lỡ: **không bao giờ cắt một từ ở giữa một grapheme cluster**, vì mọi dấu tổ hợp đều
+ngoài ASCII. `Tiếng Việt` viết dạng tổ hợp vẫn là hai từ, trong khi quy tắc "cắt ở mọi
+ký tự không phải chữ cái" sẽ cắt từng nguyên âm khỏi dấu của nó rồi viết hoa mảnh vụn
+phía sau. Giá phải trả: dấu câu ngoài ASCII không có khoảng trắng thì không tách từ
+(`xin…chào` chỉ viết hoa `x`) — thuần thẩm mỹ, và hiếm trong loại văn bản này.
+
+Vì một từ có thể mở đầu bằng thứ không có hoa/thường, phép này tìm **chữ cái đầu tiên
+trong từ**: `"xin` được viết hoa, và `5g` thành `5G`.
 
 Không có danh sách từ nối ("của", "và", "là" vẫn được viết hoa). Tiếng Việt không có
 quy ước title case như tiếng Anh, và đoán sẽ sai nhiều hơn đúng.
+
+**Giới hạn đã biết**, đối xứng với ngoại lệ ALL-CAPS: chữ hoa nằm giữa từ sẽ mất, nên
+`iPhone` thành `Iphone`. Giữ được nó nghĩa là không hạ thường phần còn lại của từ, mà
+đó chính là việc của phép này.
 
 ## Bảng mã cũ là ca biên thật sự
 
