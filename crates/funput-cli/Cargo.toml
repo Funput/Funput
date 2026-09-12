@@ -13,7 +13,7 @@ name = "funput"
 path = "src/main.rs"
 
 [dependencies]
-funput-core = { path = "../funput-core", features = ["charset"] }
+funput-core = { path = "../funput-core", features = ["charset", "textcase"] }
 funput-engine = { path = "../funput-engine" }
 funput-term = { path = "../funput-term" }
 clap = { version = "4.6.1", features = ["derive"] }

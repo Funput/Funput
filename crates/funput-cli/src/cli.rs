@@ -11,6 +11,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 
 use funput_core::InputMethod;
 
+use crate::case::CaseArgs;
 use crate::convert::ConvertArgs;
 use crate::dev::DevArgs;
 use crate::term::TermArgs;
@@ -34,6 +35,8 @@ pub enum Command {
     Dev(DevArgs),
     /// Convert Vietnamese text between Unicode and the legacy charsets.
     Convert(ConvertArgs),
+    /// Change the case of Vietnamese text, or strip its diacritics.
+    Case(CaseArgs),
 }
 
 /// Input method as selected on the command line. Kept at the CLI layer (a clap
@@ -78,5 +81,43 @@ impl std::error::Error for CliError {}
 impl From<std::io::Error> for CliError {
     fn from(e: std::io::Error) -> Self {
         CliError::Io(e)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use clap::CommandFactory;
+
+    use super::*;
+
+    /// clap's own audit of the argument tree: conflicting ids, impossible
+    /// `num_args`, a positional that can never be reached. Cheap, and it is what
+    /// catches a greedy positional swallowing the argument after it — `funput case`
+    /// takes its transforms as one comma-separated value for exactly that reason.
+    #[test]
+    fn the_argument_tree_is_well_formed() {
+        Cli::command().debug_assert();
+    }
+
+    /// The shape the README promises: transforms first, then the file.
+    #[test]
+    fn case_takes_stacked_transforms_and_still_sees_the_file() {
+        let cli = Cli::try_parse_from(["funput", "case", "lower,title", "vanban.txt"])
+            .expect("valid invocation");
+        let Command::Case(args) = cli.command else {
+            panic!("expected the case command");
+        };
+        assert_eq!(args.transforms.len(), 2);
+        assert_eq!(
+            args.file.as_deref(),
+            Some(std::path::Path::new("vanban.txt"))
+        );
+    }
+
+    /// A transform is required: `funput case vanban.txt` would otherwise read the
+    /// file name as a transform and fail with a worse message.
+    #[test]
+    fn case_without_a_transform_is_rejected() {
+        assert!(Cli::try_parse_from(["funput", "case"]).is_err());
     }
 }

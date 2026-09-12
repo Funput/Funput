@@ -87,6 +87,28 @@ holds; writing it as UTF-8 would produce a file Word cannot read.
 No charset is named in the code here: `--to tcvn3` is matched against `funput_core::charset::ALL`
 by slug, so implementing VISCII is one PR in core and this command picks it up.
 
+## Usage — `funput case`
+
+Change the case of **text that already exists**: UPPERCASE, lowercase, bỏ dấu, sentence case,
+Title Case. The rules are `funput_core::textcase`'s — see `docs/features/text-case.md`.
+
+```bash
+funput case upper vanban.txt                  # one transform, from a file
+funput case title < ghichu.txt                # or from standard input
+funput case lower,title vanban.txt            # stacked, in the order typed
+funput case no-diacritics --keep-d            # `đẹp` → `đep` rather than `dep`
+funput case title --flatten-caps < tt.txt     # `TP. HCM` → `Tp. Hcm`
+```
+
+Stacking takes **one comma-separated token** (`lower,title`) so the file stays the second
+positional argument, as in `funput convert`. Order matters: `lower,title` gives `Gửi Về Tp. Hcm`,
+while `title` alone leaves `TP. HCM` standing — which is what it is for.
+
+A legacy-charset file is **refused rather than mangled**: uppercasing TCVN3 bytes produces a
+document nothing can read, and doing it properly means decode → transform → re-encode, where the
+last step can lose letters. That warning belongs to the converter window, so this command says
+what the file looks like and points at `funput convert`.
+
 ## Platform simulation (`dev/sim.rs` — the heart; pure, tested)
 
 `simulate(method, input) -> Simulation { app_text, steps }` does **exactly** what a platform shell
@@ -117,6 +139,9 @@ src/
 ├── convert/       # `funput convert` — the charset-conversion tool
 │   ├── mod.rs     # args + the flow: read → identify → convert → write
 │   └── report.rs  # --list, --detect, loss warnings (all to stderr)
+├── case/          # `funput case` — changing the case of a document
+│   ├── mod.rs     # the flow: read → refuse legacy → stack transforms → write
+│   └── args.rs    # CaseArgs + TransformArg(→textcase::Transform), two switches
 └── dev/
     ├── mod.rs     # args + dispatch for `funput dev` (run/repl/coverage)
     ├── sim.rs     # simulate() — platform simulation; pure, tested
