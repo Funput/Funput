@@ -107,6 +107,7 @@ version = "1.2026.1"
 dependencies = [
  "dirs",
  "funput-convert",
+ "funput-core",
  "gtk4",
  "libadwaita",
  "serde",

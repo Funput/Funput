@@ -19,7 +19,7 @@ use std::rc::Rc;
 use adw::prelude::*;
 
 use crate::convert::Convert;
-use crate::convert::ui::widget;
+use crate::convert::ui::{casing, widget};
 
 pub(in crate::convert) struct Pane {
     pub(in crate::convert) root: gtk::Box,
@@ -28,6 +28,7 @@ pub(in crate::convert) struct Pane {
     target: gtk::DropDown,
     input: gtk::TextView,
     output: gtk::TextView,
+    casing: casing::Bar,
     loss: gtk::Label,
     footer: footer::Footer,
 }
@@ -63,12 +64,16 @@ impl Pane {
             .css_classes(["warning", "caption"])
             .build();
 
+        let casing = casing::Bar::new();
         let footer = footer::Footer::new();
         let root = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .spacing(12)
             .build();
         root.append(&head);
+        // Right under the charset row: changing the charset and changing the case
+        // are two choices about one document, and they add up.
+        root.append(&casing.root);
         root.append(&panes);
         root.append(&loss);
         root.append(&footer.root);
@@ -80,6 +85,7 @@ impl Pane {
             target,
             input,
             output,
+            casing,
             loss,
             footer,
         }
@@ -109,6 +115,7 @@ impl Pane {
         widget::connect_dropdown(&self.target, convert, |convert, index| {
             convert.session.borrow_mut().set_target(index);
         });
+        self.casing.wire(convert);
         self.footer.wire(convert);
     }
 }

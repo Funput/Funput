@@ -83,7 +83,12 @@ fn build(app: &Application) -> Rc<Convert> {
     let weak = Rc::downgrade(&convert);
     convert.restart.connect_clicked(move |_| {
         if let Some(convert) = weak.upgrade() {
-            convert.session.borrow_mut().reset();
+            // A fresh session through the same door `build` used, not `reset()`:
+            // `reset` is `Session::new()`, which takes the row window back to the
+            // crate's own default and drops the cap this shell asked for. The two
+            // numbers agree today; nothing makes them agree tomorrow, and the Windows
+            // window has to re-state its own for exactly this reason.
+            *convert.session.borrow_mut() = session();
             convert.set_progress(String::new());
         }
     });

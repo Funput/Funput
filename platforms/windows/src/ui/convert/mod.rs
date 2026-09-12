@@ -8,10 +8,12 @@
 //! drift. What is here is this shell's half of it.
 //!
 //! - [`view`] — the session, and everything the window shows from it.
+//! - [`casing`] — the second axis: the transforms, and which of them are applied.
 //! - [`text`] — saving a document through a Save dialog.
 //! - [`files`] — running the batch off the UI thread.
 //! - [`win32`] — the two things Slint cannot do: file drop and clipboard buttons.
 
+mod casing;
 mod files;
 mod text;
 mod view;
@@ -60,6 +62,7 @@ pub(super) fn open() {
 }
 
 fn wire(window: &ConvertWindow) {
+    casing::wire(window);
     window.on_text_changed(|typed| edit(|s| s.set_input(typed.to_string())));
     window.on_pick_source(|index| edit(|s| s.pick_source(usize::try_from(index).ok())));
     window.on_pick_target(|index| edit(|s| s.set_target(usize::try_from(index).unwrap_or(0))));

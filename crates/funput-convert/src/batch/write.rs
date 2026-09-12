@@ -8,7 +8,9 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use funput_core::charset::{Charset, read, render};
+use funput_core::charset::Charset;
+
+use crate::casing::{self, Casing};
 
 use super::Entry;
 
@@ -31,7 +33,7 @@ pub struct Outcome {
 ///
 /// A file with no charset is *skipped*, not guessed at — the row is still on screen
 /// with its own picker, and the user can settle it and run again.
-pub fn write_all(entries: &[Entry], target: Charset) -> Outcome {
+pub fn write_all(entries: &[Entry], casing: &Casing, target: Charset) -> Outcome {
     let mut outcome = Outcome {
         written: 0,
         skipped: 0,
@@ -48,11 +50,9 @@ pub fn write_all(entries: &[Entry], target: Charset) -> Outcome {
             outcome.skipped += 1;
             continue;
         };
-        // The same two steps every consumer takes, and the same call: read the
-        // document, then render it. `render` is what makes a legacy target one byte
-        // per letter rather than two — and what makes these bytes the ones the
-        // window promised in its preview pane.
-        let bytes = render(&read(&entry.text, from), target).bytes;
+        // The same call every consumer takes, which is what makes these bytes the
+        // ones the window promised in its preview pane — charset and case both.
+        let bytes = casing::render(&entry.text, from, casing, target).bytes;
         match destination(&entry.path, &mut taken)
             .and_then(|path| std::fs::write(path, &bytes).ok())
         {
@@ -142,7 +142,7 @@ mod tests {
     fn the_original_is_left_exactly_as_it_was() {
         let dir = scratch("keeps-original");
         let entries = [entry(&dir, "vanban.txt", "Việt", Some(Charset::Unicode))];
-        let outcome = write_all(&entries, Charset::Tcvn3);
+        let outcome = write_all(&entries, &Casing::default(), Charset::Tcvn3);
 
         assert_eq!(outcome.written, 1);
         assert_eq!(
@@ -161,8 +161,8 @@ mod tests {
     fn a_second_run_does_not_overwrite_the_first() {
         let dir = scratch("second-run");
         let entries = [entry(&dir, "vanban.txt", "Việt", Some(Charset::Unicode))];
-        write_all(&entries, Charset::Tcvn3);
-        write_all(&entries, Charset::VniWindows);
+        write_all(&entries, &Casing::default(), Charset::Tcvn3);
+        write_all(&entries, &Casing::default(), Charset::VniWindows);
 
         let out = dir.join(OUT_DIR);
         assert_eq!(std::fs::read(out.join("vanban.txt")).unwrap(), b"Vi\xD6t");
@@ -201,7 +201,7 @@ mod tests {
             entry(&dir, "known.txt", "Việt", Some(Charset::Unicode)),
             entry(&dir, "mystery.txt", "????", None),
         ];
-        let outcome = write_all(&entries, Charset::Tcvn3);
+        let outcome = write_all(&entries, &Casing::default(), Charset::Tcvn3);
 
         assert_eq!((outcome.written, outcome.skipped), (1, 1));
         assert!(!dir.join(OUT_DIR).join("mystery.txt").exists());

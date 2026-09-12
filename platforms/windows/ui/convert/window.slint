@@ -12,15 +12,18 @@ import { Theme, PageHeader, GhostButton } from "../theme/mod.slint";
 import { ConvertEmpty } from "empty.slint";
 import { ConvertText } from "text.slint";
 import { ConvertFiles, FileRow } from "files.slint";
+import { Casing, TransformChip } from "casing.slint";
 
-export { FileRow }
+export { FileRow, Casing, TransformChip }
 
 export component ConvertWindow inherits Window {
     title: "Funput — Chuyển mã";
     icon: @image-url("../../../../assets/logo.png");
     preferred-width: 760px;
     preferred-height: 560px;
-    min-width: 640px;
+    // Wide enough for the five transform chips on one row: their labels are whole
+    // Vietnamese phrases ("Viết Hoa Đầu Mỗi Từ"), so they do not shrink.
+    min-width: 720px;
     min-height: 460px;
     default-font-family: "Segoe UI Variable Text";
     background: Theme.mica ? transparent : Theme.window-base;
@@ -75,7 +78,7 @@ export component ConvertWindow inherits Window {
                 PageHeader {
                     title: "Chuyển mã";
                     subtitle: root.mode == "empty"
-                        ? "Chuyển văn bản giữa Unicode và các bảng mã cũ."
+                        ? "Đổi bảng mã và kiểu chữ của văn bản đã có."
                         : "";
                 }
             }

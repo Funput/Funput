@@ -8,10 +8,13 @@
 //!   platform shell would show, for quick checks, debugging, and CI.
 //! - `funput convert …` — turn a document between Unicode and the legacy charsets
 //!   Vietnamese government paperwork still arrives in (TCVN3, VNI-Windows).
+//! - `funput case …` — change the case of a document, or take its diacritics off.
 
+mod case;
 mod cli;
 mod convert;
 mod dev;
+mod io;
 mod term;
 
 use std::process::ExitCode;
@@ -25,6 +28,7 @@ fn main() -> ExitCode {
         Command::Term(args) => term::run(args),
         Command::Dev(args) => dev::run(args),
         Command::Convert(args) => convert::run(args),
+        Command::Case(args) => case::run(args),
     };
     match result {
         Ok(code) => code,

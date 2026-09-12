@@ -10,11 +10,13 @@
     reason = "the common ABI safety contract is documented once above"
 )]
 
+mod casing;
 mod handle;
 mod state;
 mod text;
 mod work;
 
+pub use casing::*;
 pub use handle::{FunputConvertSession, funput_convert_session_free, funput_convert_session_new};
 pub use state::*;
 pub use text::*;

@@ -8,10 +8,14 @@
 //! directly, and [`Panes::refresh`] sets every property it owns rather than the ones
 //! it thinks changed.
 //!
+//! Two of the three shapes carry a [`casing::Bar`] as well, each its own instance —
+//! that file says why one widget could not serve both.
+//!
 //! Two places deviate, and each says why where it happens: the input buffer in
 //! [`text::Pane`], and the batch list in [`files::Pane`], which is the closest thing
 //! GTK has to Slint swapping a model.
 
+mod casing;
 mod empty;
 mod files;
 mod text;

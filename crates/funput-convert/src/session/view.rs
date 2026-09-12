@@ -7,12 +7,15 @@
 //!
 //! Charsets are indices; paths are names. Both for the same reason.
 
-use funput_core::charset;
-
 use crate::batch;
+use crate::casing;
 use crate::text;
 
-use super::{Session, at, index_of};
+use super::{Session, at};
+
+mod rows;
+
+pub use rows::Row;
 
 /// Which of the three shapes the window is in.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -27,17 +30,6 @@ pub enum Mode {
     /// Two or more files: a table, because the interesting thing is that the rows
     /// differ.
     Files,
-}
-
-/// One file's row in the batch table.
-#[non_exhaustive]
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct Row {
-    pub name: String,
-    /// Index into `charset::ALL`, or `None` when nothing explained the file.
-    pub charset: Option<usize>,
-    /// "N chữ sẽ mất", or empty.
-    pub note: String,
 }
 
 /// A file that could not be read, and why.
@@ -78,13 +70,20 @@ pub struct View {
     pub out_dir: String,
     /// How many files a charset was settled for, over the **whole** batch.
     pub ready: usize,
+    /// The transforms pressed so far, in order, as positions in `casing::ALL`.
+    /// Empty means the document is going out as it came in.
+    pub transforms: Vec<usize>,
+    /// The two switches, named so that **off is what a fresh window means** — which
+    /// is what lets this struct keep deriving `Default`.
+    pub keep_d: bool,
+    pub flatten_caps: bool,
     pub unreadable: Vec<Unreadable>,
 }
 
 pub(super) fn build(session: &Session) -> View {
     let target = at(session.target);
     let (text, rendered) = match session.conversion() {
-        Some((text, from, to)) => (text, Some(charset::render(&charset::read(text, from), to))),
+        Some((text, from, to)) => (text, Some(casing::render(text, from, &session.casing, to))),
         None => (session.text(), None),
     };
     let single = session.files.len() == 1;
@@ -104,41 +103,14 @@ pub(super) fn build(session: &Session) -> View {
             (Some(r), Some((_, from, _))) => text::warning(&r.cost, from, target),
             _ => String::new(),
         },
-        rows: rows(session, target),
+        rows: rows::rows(session, target),
         rows_first: session.window.0,
         rows_total: session.files.len(),
         out_dir: batch::out_dir_label(&session.files),
         ready: batch::ready(&session.files),
+        transforms: session.casing.indices(),
+        keep_d: !session.casing.options().d_to_ascii,
+        flatten_caps: !session.casing.options().keep_all_caps,
         unreadable: session.unreadable.clone(),
     }
-}
-
-/// Rows for the window only — but every count above runs over the whole batch, so a
-/// capped list stays honest. Rebuilding two thousand of them on every target change
-/// is what the window exists to avoid.
-fn rows(session: &Session, target: charset::Charset) -> Vec<Row> {
-    let (first, len) = session.window;
-    session
-        .files
-        .iter()
-        .skip(first)
-        .take(len)
-        .map(|entry| Row {
-            name: entry.name(),
-            charset: entry.charset.and_then(index_of),
-            note: match entry.charset {
-                Some(from) => {
-                    let lost = charset::render(&charset::read(&entry.text, from), target)
-                        .cost
-                        .unrepresentable;
-                    if lost > 0 {
-                        format!("{lost} chữ sẽ mất")
-                    } else {
-                        String::new()
-                    }
-                }
-                None => String::new(),
-            },
-        })
-        .collect()
 }

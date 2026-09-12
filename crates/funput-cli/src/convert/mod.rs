@@ -5,10 +5,8 @@
 //! text that already exists; typing in a legacy charset is not offered and is not
 //! planned — see `docs/features/charset.md`.
 //!
-//! - [`source`] — turning an argument or standard input into text, and working out
-//!   what charset spelled it.
-//! - [`sink`] — writing the result back out, as bytes when the target is a legacy
-//!   charset and as UTF-8 when it is not.
+//! - [`crate::io`] — turning an argument or standard input into text and writing the
+//!   result back out, shared with `funput case`.
 //! - [`report`] — everything printed to standard error: the charset table, the
 //!   detected name, and the warning when something could not be represented.
 //!
@@ -17,8 +15,6 @@
 //! there and this command picks it up.
 
 mod report;
-mod sink;
-mod source;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -28,6 +24,7 @@ use clap::Args;
 use funput_core::charset::{self, Charset};
 
 use crate::cli::{CliError, CliResult};
+use crate::io::{read, write};
 
 #[derive(Debug, Args)]
 pub struct ConvertArgs {
@@ -63,7 +60,7 @@ pub fn run(args: ConvertArgs) -> CliResult {
     let to = args.to.as_deref().map(by_slug).transpose()?;
     let declared = args.from.as_deref().map(by_slug).transpose()?;
 
-    let input = source::read(args.file.as_deref())?;
+    let input = read(args.file.as_deref())?;
     // A charset the user named beats one that was worked out: they are looking at
     // the document, and the detector is looking at statistics.
     let Some(from) = declared.or(input.charset) else {
@@ -82,7 +79,7 @@ pub fn run(args: ConvertArgs) -> CliResult {
     // The same two calls the converter windows make, so a document converted here
     // and a document converted there cannot come out differently.
     let rendered = charset::render(&charset::read(&input.text, from), to);
-    sink::write(&rendered.bytes)?;
+    write(&rendered.bytes)?;
     report::losses(&rendered.cost);
     Ok(ExitCode::SUCCESS)
 }

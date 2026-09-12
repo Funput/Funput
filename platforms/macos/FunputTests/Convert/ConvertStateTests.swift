@@ -3,7 +3,9 @@ import XCTest
 
 final class ConvertStateTests: XCTestCase {
     func testEmptyStateUsesLiveCharsets() {
-        let state = ConvertScreenState.empty(charsets: ConvertFixtures.charsets)
+        let state = ConvertScreenState.empty(
+            charsets: ConvertFixtures.charsets, transforms: ConvertFixtures.transforms
+        )
 
         XCTAssertEqual(state.mode, .empty)
         XCTAssertEqual(state.charsets, ConvertFixtures.charsets)
@@ -35,6 +37,40 @@ final class ConvertStateTests: XCTestCase {
         XCTAssertEqual(ConvertFixtures.singleFile.textPrimaryAction, "Chuyển tệp")
         XCTAssertEqual(ConvertFixtures.batch.batchAction, "Chuyển 3 tệp")
         XCTAssertEqual(ConvertFixtures.busyBatch.batchAction, "Đang chuyển…")
+    }
+
+    /// The order is the feature: the same two transforms the other way round is a
+    /// different document, so the line the window shows has to keep it.
+    func testAppliedTransformsReadBackInThePressedOrder() {
+        XCTAssertEqual(
+            ConvertFixtures.cased.appliedTransformNames,
+            ["chữ thường", "Viết Hoa Đầu Mỗi Từ"]
+        )
+        XCTAssertTrue(ConvertFixtures.pasted.appliedTransformNames.isEmpty)
+    }
+
+    /// A switch belongs to one transform and only appears while that one is applied.
+    func testSwitchesAppearOnlyWithTheTransformTheyBelongTo() {
+        var state = ConvertFixtures.cased
+
+        XCTAssertTrue(state.showsSwitch(for: .title))
+        XCTAssertFalse(state.showsSwitch(for: .noDiacritics))
+
+        state.appliedTransforms = [ConvertTransformKind.noDiacritics.position]
+        XCTAssertTrue(state.showsSwitch(for: .noDiacritics))
+        XCTAssertFalse(state.showsSwitch(for: .title))
+    }
+
+    /// One rule for both axes: nothing is converted, and nothing is transformed,
+    /// until something explains the document. A batch explains itself per row.
+    func testCasingIsBlockedUntilTheDocumentIsExplained() {
+        var unresolved = ConvertFixtures.pasted
+        unresolved.source = nil
+        XCTAssertFalse(unresolved.canUseCasing)
+
+        XCTAssertTrue(ConvertFixtures.pasted.canUseCasing)
+        XCTAssertTrue(ConvertFixtures.batch.canUseCasing, "a batch carries a charset per row")
+        XCTAssertFalse(ConvertFixtures.busyBatch.canUseCasing)
     }
 
     func testUnknownBatchPlaceholderCannotReplaceASelectedCharset() {
