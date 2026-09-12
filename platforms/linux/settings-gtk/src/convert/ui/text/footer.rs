@@ -52,9 +52,9 @@ impl Footer {
     }
 
     pub(in crate::convert) fn wire(&self, convert: &Rc<Convert>) {
-        click(&self.copy, convert, io::copy_result);
-        click(&self.save, convert, io::save_result);
-        click(&self.convert_file, convert, io::convert_files);
+        widget::click(&self.copy, convert, io::copy_result);
+        widget::click(&self.save, convert, io::save_result);
+        widget::click(&self.convert_file, convert, io::convert_files);
     }
 
     pub(in crate::convert) fn refresh(&self, convert: &Rc<Convert>, view: &View) {
@@ -68,13 +68,4 @@ impl Footer {
         self.convert_file.set_sensitive(ready && !convert.is_busy());
         self.progress.set_label(&convert.progress());
     }
-}
-
-fn click(button: &gtk::Button, convert: &Rc<Convert>, action: fn(&Rc<Convert>)) {
-    let weak = Rc::downgrade(convert);
-    button.connect_clicked(move |_| {
-        if let Some(convert) = weak.upgrade() {
-            action(&convert);
-        }
-    });
 }

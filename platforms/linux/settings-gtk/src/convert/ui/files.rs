@@ -12,6 +12,7 @@
 //! a nasty bug to own, and the boxed list is what the rest of this app looks like.
 
 mod row;
+mod show;
 
 use std::rc::Rc;
 
@@ -19,7 +20,6 @@ use adw::prelude::*;
 
 use crate::convert::ui::widget;
 use crate::convert::{Convert, io};
-use funput_convert::View;
 
 /// How many rows to build at once.
 ///
@@ -97,47 +97,5 @@ impl Pane {
                 io::convert_files(&convert);
             }
         });
-    }
-
-    pub(in crate::convert) fn refresh(&self, convert: &Rc<Convert>, view: &View) {
-        self.count.set_label(&format!("{} tệp", view.rows_total));
-        widget::select(&self.target, Some(view.target));
-
-        while let Some(child) = self.list.first_child() {
-            self.list.remove(&child);
-        }
-        for (offset, row) in view.rows.iter().enumerate() {
-            self.list
-                .append(&row::build(convert, view.rows_first + offset, row));
-        }
-        let shown = view.rows_first + view.rows.len();
-        if shown < view.rows_total {
-            let more = adw::ActionRow::builder()
-                .title(format!("và {} tệp khác", view.rows_total - shown))
-                .css_classes(["dim-label"])
-                .build();
-            self.list.append(&more);
-        }
-
-        // A file nothing explained is skipped, not guessed at, so the button counts
-        // only what is settled — and says so, rather than promising the whole batch.
-        self.action.set_label(&format!("Chuyển {} tệp", view.ready));
-        self.action
-            .set_sensitive(view.ready > 0 && !convert.is_busy());
-
-        // Before a run, the footer is a promise about where the files will land; once
-        // one has happened, it is the report. Never both, and never the promise after.
-        //
-        // A file that could not be read is *named* here rather than counted — a
-        // number cannot answer "which two of my ten".
-        let progress = convert.progress();
-        let footer = if !progress.is_empty() {
-            progress
-        } else if view.unreadable.is_empty() {
-            format!("Lưu vào: {}", view.out_dir)
-        } else {
-            funput_convert::unreadable_line(&view.unreadable)
-        };
-        self.progress.set_label(&footer);
     }
 }

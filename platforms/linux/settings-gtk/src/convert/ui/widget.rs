@@ -79,3 +79,26 @@ pub(in crate::convert) fn connect_dropdown(
         convert.refresh();
     });
 }
+
+/// Connect a button to something that reads or edits the state.
+///
+/// No [`Convert::is_refreshing`] guard, and that is not an oversight: `clicked` is only
+/// ever emitted by a real press, never by a property write, so a refresh cannot come
+/// back in through this door the way it can through [`connect_dropdown`]. Nor does
+/// this call `refresh` for the caller — some actions edit
+/// the session and want one, others only read it and would redraw for nothing.
+///
+/// Takes a closure rather than a `fn` pointer so a caller can capture, which is how the
+/// casing chips each know their own position in the menu.
+pub(in crate::convert) fn click(
+    button: &gtk::Button,
+    convert: &Rc<Convert>,
+    action: impl Fn(&Rc<Convert>) + 'static,
+) {
+    let weak = Rc::downgrade(convert);
+    button.connect_clicked(move |_| {
+        if let Some(convert) = weak.upgrade() {
+            action(&convert);
+        }
+    });
+}
