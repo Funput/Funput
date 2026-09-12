@@ -24,6 +24,7 @@
 
 mod case;
 mod diacritics;
+mod sentence;
 
 /// Which transform to run.
 ///
@@ -38,6 +39,8 @@ pub enum Transform {
     Lower,
     /// `Tiếng Việt rất đẹp` → `Tieng Viet rat dep`.
     NoDiacritics,
+    /// `xin chào. hôm nay trời đẹp.` → `Xin chào. Hôm nay trời đẹp.`
+    Sentence,
 }
 
 /// The switches a transform reads.
@@ -77,6 +80,7 @@ pub fn apply(text: &str, transform: Transform, options: Options) -> String {
         Transform::Upper => case::upper(text, options),
         Transform::Lower => case::lower(text, options),
         Transform::NoDiacritics => diacritics::strip(text, options),
+        Transform::Sentence => sentence::capitalize(text, options),
     }
 }
 
