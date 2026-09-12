@@ -6,14 +6,10 @@
 //! job, and not necessarily for the same transform — and it would flip itself before the
 //! refresh flipped it back, which is a re-entrancy hole bought for nothing.
 //!
-//! Plain buttons in a `FlowBox`, not libadwaita's `pill`. The five Vietnamese names come
-//! to roughly 530px of text and `.pill` adds 64px of padding to each, which would put
-//! the row past this window's 880px default and well past its 640px minimum — and GTK
-//! raises a window's minimum to fit its children, so the capsule that looks right on
-//! macOS and Windows would leave Chuyển mã unable to shrink. A `FlowBox` wraps the row
-//! instead, and only when the user makes the window narrow. `adw::WrapBox` is the
-//! better container for this and needs no uniform columns, but it arrived in libadwaita
-//! 1.7 and this crate targets 1.5 — worth revisiting when the floor moves.
+//! Plain buttons in a `FlowBox`, not libadwaita's `pill`, and not `adw::WrapBox` —
+//! `docs/features/text-case.md` carries the measurements behind both, next to the same
+//! call made for the other two shells. What matters here is the consequence: the row
+//! wraps when the window is narrow rather than refusing to be narrow.
 
 use std::rc::Rc;
 
@@ -22,6 +18,10 @@ use adw::prelude::*;
 use crate::convert::Convert;
 use crate::convert::ui::widget;
 use funput_convert::casing;
+
+/// The accent fill an applied chip wears — named so the write and the read-back that
+/// decides whether to write cannot drift apart.
+const ACCENT: &str = "suggested-action";
 
 pub(super) struct Chips {
     pub(super) root: gtk::Box,
@@ -81,10 +81,19 @@ impl Chips {
         // drift — only a live `Chips` knows how many widgets it actually built.
         debug_assert_eq!(self.chips.len(), lit.len(), "a chip per transform");
         for (chip, &on) in self.chips.iter().zip(lit) {
+            // Skip what did not change, as `widget::select` does — this runs on every
+            // keystroke. Read the current state off the chip's own class list, never
+            // from `is_visible`, which answers for the ancestor chain too and would
+            // call every chip off while the pane is hidden — skipping the write that
+            // clears a stale accent. `chip` builds in the `false` state, so the first
+            // refresh has nothing to correct.
+            if chip.button.has_css_class(ACCENT) == on {
+                continue;
+            }
             chip.tick.set_visible(on);
             // Bound rather than written inline: the two arms are arrays of different
             // length, and `set_css_classes` wants one slice type.
-            let classes: &[&str] = if on { &["suggested-action"] } else { &[] };
+            let classes: &[&str] = if on { &[ACCENT] } else { &[] };
             chip.button.set_css_classes(classes);
             // The tick is the cue for someone who cannot read the accent; this is the
             // one a screen reader reads. Either way, colour alone says nothing.
@@ -121,5 +130,11 @@ fn chip(name: &str) -> Chip {
         .child(&content)
         .halign(gtk::Align::Start)
         .build();
+    // Stated here, not left to the first refresh, which skips a chip already in the
+    // state it wants: otherwise a never-pressed chip carries no pressed state while a
+    // cleared one carries `False`, and a screen reader describes them differently.
+    button.update_state(&[gtk::accessible::State::Pressed(
+        gtk::AccessibleTristate::False,
+    )]);
     Chip { button, tick }
 }
