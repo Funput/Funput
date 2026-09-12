@@ -12,6 +12,7 @@
 
 import { Palette, ComboBox, TextEdit } from "std-widgets.slint";
 import { Theme, PrimaryButton, GhostButton } from "../theme/mod.slint";
+import { ConvertCasingBar } from "casing.slint";
 
 export component ConvertText inherits VerticalLayout {
     in property <[string]> charset-names;
@@ -73,6 +74,10 @@ export component ConvertText inherits VerticalLayout {
             }
         }
     }
+
+    // Under the charsets and above the panes: both rows are choices about the same
+    // document, and the panes below show the result of the two together.
+    ConvertCasingBar { }
 
     HorizontalLayout {
         spacing: Theme.sp-sm;

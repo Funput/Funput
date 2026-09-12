@@ -8,6 +8,7 @@
 
 import { Palette, ComboBox, ListView } from "std-widgets.slint";
 import { Theme, PrimaryButton } from "../theme/mod.slint";
+import { ConvertCasingBar } from "casing.slint";
 
 export struct FileRow {
     name: string,
@@ -62,6 +63,10 @@ export component ConvertFiles inherits VerticalLayout {
             }
         }
     }
+
+    // One transform applies to the whole batch, the way one target charset does —
+    // so it sits in the header rather than in each row.
+    ConvertCasingBar { }
 
     Rectangle {
         vertical-stretch: 1;

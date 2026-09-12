@@ -16,7 +16,7 @@ use slint::Weak;
 
 use crate::ConvertWindow;
 
-use super::files;
+use super::{casing, files};
 
 thread_local! {
     pub(super) static WINDOW: RefCell<Option<Weak<ConvertWindow>>> = const { RefCell::new(None) };
@@ -64,6 +64,9 @@ fn show(window: &ConvertWindow, view: &View) {
     if let Some(text) = &view.input_preview {
         window.set_input_text(text.clone().into());
     }
+    // Ahead of the shape, and once for both of them: the bar rides in the text view
+    // and in the batch view, and it reads the same fields either way.
+    casing::show(window, view);
 
     match view.mode {
         Mode::Empty => window.set_mode("empty".into()),
