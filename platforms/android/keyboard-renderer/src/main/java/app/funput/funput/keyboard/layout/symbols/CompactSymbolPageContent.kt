@@ -1,10 +1,10 @@
 package app.funput.funput.keyboard.layout.symbols
 
-/** Symbol labels for Telex compact layouts, mirrored from iOS CompactSymbolPageContent. */
+/** Gboard-ordered symbol labels for Telex compact layouts, followed by Funput-only glyphs. */
 internal object CompactSymbolPageContent {
-    val primaryMiddle = listOf("@", "#", "₫", "$", "%", "&", "*", "+", "=", "/")
-    val primaryBottom = listOf("(", ")", "-", "_", ":", "!", "?")
-    val secondaryTop = listOf(";", "'", "\"", "~", "•", "…", "°", "×", "÷", "^")
-    val secondaryMiddle = listOf("[", "]", "{", "}", "<", ">", "\\", "|", "`", "€")
-    val secondaryBottom = listOf("£", "¥", "©", "≠", "±", "≤", "≥")
+    val primaryMiddle = listOf("@", "#", "₫", "_", "&", "-", "+", "(", ")", "/")
+    val primaryBottom = listOf("*", "\"", "'", ":", ";", "!", "?")
+    val secondaryTop = listOf("~", "`", "|", "•", "÷", "×", "£", "€", "$", "^")
+    val secondaryMiddle = listOf("°", "=", "{", "}", "\\", "%", "©", "[", "]", "…")
+    val secondaryBottom = listOf("<", ">", "¥", "≠", "±", "≤", "≥")
 }

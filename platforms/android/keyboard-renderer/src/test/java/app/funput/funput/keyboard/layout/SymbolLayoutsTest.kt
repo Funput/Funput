@@ -4,6 +4,7 @@ import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardEditorMode
+import app.funput.funput.keyboard.model.KeyboardLayout
 import app.funput.funput.keyboard.model.KeySwipeAction
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardRow
@@ -15,7 +16,7 @@ import org.junit.Test
 
 class SymbolLayoutsTest {
     @Test
-    fun `primary page uses five rows with common symbols`() {
+    fun `primary page follows Gboard order before Funput-only symbols`() {
         val layout = KeyboardLayoutResolver.resolve(
             KeyboardInputMethod.TELEX,
             KeyboardLayoutMode.SYMBOLS_PRIMARY,
@@ -25,21 +26,25 @@ class SymbolLayoutsTest {
         assertEquals("1234567890", labels(layout.rows[0].keys))
         assertTrue(layout.rows[0].keys.all { key -> key.role == KeyRole.PUNCTUATION })
         assertTrue(layout.rows[0].keys.all { key -> key.secondaryLabel == null })
-        assertEquals("@#₫", labels(layout.rows[1].keys).take(3))
-        assertEquals("()-", labels(layout.rows[2].keys).take(3))
+        assertEquals(listOf("@", "#", "₫", "_", "&", "-", "+", "(", ")", "/"), keyLabels(layout, 1))
+        assertEquals(listOf("*", "\"", "'", ":", ";", "!", "?", "…", "<", ">"), keyLabels(layout, 2))
+        assertEquals(listOf("=\\<", "¥", "¶", "·", "≠", "±", "≈", "≤", ""), keyLabels(layout, 3))
         assertTrue(layout.rows.flattenedKeys().any { it.label == "₫" })
         assertTrue(layout.rows.flattenedKeys().any { it.role == KeyRole.MORE_SYMBOLS })
         assertTrue(layout.rows.flattenedKeys().any { it.role == KeyRole.LETTERS })
     }
 
     @Test
-    fun `secondary page uses five rows with less common symbols`() {
+    fun `secondary page follows Gboard order before Funput-only symbols`() {
         val layout = KeyboardLayoutResolver.resolve(
             KeyboardInputMethod.VNI,
             KeyboardLayoutMode.SYMBOLS_SECONDARY,
         )
 
         assertEquals(5, layout.rows.size)
+        assertEquals(listOf("~", "`", "|", "•", "√", "÷", "×", "§", "£", "€"), keyLabels(layout, 1))
+        assertEquals(listOf("$", "¢", "^", "°", "=", "{", "}", "\\", "%", "©"), keyLabels(layout, 2))
+        assertEquals(listOf("?123", "®", "™", "✓", "[", "]", "≥", "∞", ""), keyLabels(layout, 3))
         assertTrue(layout.rows.flattenedKeys().any { it.role == KeyRole.SYMBOLS && it.label == "?123" })
         assertTrue(layout.rows.flattenedKeys().any { it.label == "€" })
         assertTrue(layout.rows.flattenedKeys().none { it.role == KeyRole.PLACEHOLDER })
@@ -84,6 +89,28 @@ class SymbolLayoutsTest {
 
         assertEquals(glyphs.size, glyphs.distinct().size)
     }
+
+    @Test
+    fun `compact pages follow Gboard order before Funput-only symbols`() {
+        val primary = compact(KeyboardLayoutMode.SYMBOLS_PRIMARY)
+        val secondary = compact(KeyboardLayoutMode.SYMBOLS_SECONDARY)
+
+        assertEquals(listOf("@", "#", "₫", "_", "&", "-", "+", "(", ")", "/"), keyLabels(primary, 1))
+        assertEquals(listOf("=\\<", "*", "\"", "'", ":", ";", "!", "?", ""), keyLabels(primary, 2))
+        assertEquals(listOf("~", "`", "|", "•", "÷", "×", "£", "€", "$", "^"), keyLabels(secondary, 0))
+        assertEquals(listOf("°", "=", "{", "}", "\\", "%", "©", "[", "]", "…"), keyLabels(secondary, 1))
+        assertEquals(listOf("?123", "<", ">", "¥", "≠", "±", "≤", "≥", ""), keyLabels(secondary, 2))
+    }
+
+    private fun compact(mode: KeyboardLayoutMode) = KeyboardLayoutResolver.resolve(
+        inputMethod = KeyboardInputMethod.TELEX,
+        mode = mode,
+        editorMode = KeyboardEditorMode.SEARCH,
+        showsNumberRow = false,
+    )
+
+    private fun keyLabels(layout: KeyboardLayout, row: Int) =
+        layout.rows[row].keys.map { it.label }
 
     private fun labels(keys: List<KeySpec>) = keys.joinToString("") { it.label }
 
