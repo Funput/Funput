@@ -59,7 +59,8 @@ pub(super) unsafe extern "system" fn win_event_proc(
 
     // A Settings child persists changes to disk. Reload them as soon as focus
     // returns to a regular app, before the next keystroke reaches the engine. A
-    // VI/EN flip made there is parked by the reload and lands on this app below.
+    // VI/EN flip made there arrives as the global default — `apply_for_app` below
+    // can still overrule it, but only for an app the user pinned with the hotkey.
     if shell::reload_settings() {
         tray::sync_from_shell();
     }

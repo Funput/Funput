@@ -1,6 +1,6 @@
 //! These exercise rules that were unreachable while the state lived inside a
-//! process-global mutex: which app gets Vietnamese, what a toggle made from the
-//! tray binds to, and when composition is thrown away.
+//! process-global mutex: which app gets Vietnamese, which surface is allowed to
+//! pin one, and when composition is thrown away.
 
 use funput_config::{Method, Settings};
 use funput_engine::{Action, KeySource};
@@ -56,21 +56,60 @@ fn focusing_the_same_app_twice_reports_no_change() {
     assert_eq!(state.apply_for_app("code.exe"), None);
 }
 
-/// The flyout steals foreground, so the toggle cannot bind to the app it was
-/// meant for until the user goes back to it.
+/// The flyout is a global surface — it has no app in front of it, so it pins none.
+/// It used to bind to whatever the user clicked into next, which pinned an app they
+/// had never mentioned.
 #[test]
-fn a_flyout_toggle_binds_to_the_next_app_focused() {
+fn a_flyout_toggle_does_not_pin_the_next_app() {
+    let mut state = shell();
+
+    state.set_enabled(false); // flyout turned Vietnamese off
+    // code.exe has no opinion, so it simply inherits the new default…
+    assert_eq!(state.apply_for_app("code.exe"), None);
+    assert!(!state.enabled());
+    // …and nothing was written down about it.
+    assert!(state.settings().app_language_memory.is_empty());
+}
+
+/// The trade this rule makes, stated as a test rather than left as a surprise: a
+/// global switch does not un-pin an app the user pinned on purpose.
+#[test]
+fn a_pinned_app_keeps_its_pin_when_the_global_switch_moves() {
     let mut state = shell_remembering(&[("notepad.exe", true)]);
 
     state.set_enabled(false); // flyout turned Vietnamese off
-    // notepad.exe is remembered as Vietnamese, which would normally switch it back
-    // on the moment focus lands there; the parked choice has to win instead.
-    assert_eq!(state.apply_for_app("notepad.exe"), None);
-    assert!(!state.enabled());
-    // …and it replaces what notepad.exe used to remember, from now on.
+    assert_eq!(
+        state.apply_for_app("notepad.exe"),
+        Some(true),
+        "the pin wins"
+    );
+    assert!(state.enabled());
+    assert_eq!(
+        state.settings().app_language_memory.get("notepad.exe"),
+        Some(&true),
+        "and it is still the only entry"
+    );
+    assert_eq!(state.settings().app_language_memory.len(), 1);
+}
+
+/// The whole rule in one place: the hotkey is the only writer.
+#[test]
+fn only_the_hotkey_writes_the_memory() {
+    let mut state = shell();
+
+    state.set_enabled(false);
     state.apply_for_app("code.exe");
-    assert_eq!(state.apply_for_app("notepad.exe"), None);
-    assert!(!state.enabled());
+    state.set_enabled(true);
+    state.apply_for_app("notepad.exe");
+    assert!(state.settings().app_language_memory.is_empty());
+
+    state.note_foreground("code.exe".into());
+    state.toggle_enabled_hotkey();
+    assert_eq!(
+        state.settings().app_language_memory.get("code.exe"),
+        Some(&false)
+    );
+    assert_eq!(state.settings().app_language_memory.len(), 1);
 }
 
 /// The hotkey fires while the target app is focused, so it binds immediately.
@@ -87,42 +126,11 @@ fn a_hotkey_toggle_binds_to_the_focused_app() {
     assert_eq!(state.apply_for_app("code.exe"), Some(false), "remembered");
 }
 
+/// The Settings window and the Control Center are their own processes, so their
+/// flip reaches the hook process as a settings file. It is a global default and
+/// arrives as one — no app is pinned on the way in.
 #[test]
-fn a_hotkey_toggle_clears_a_parked_flyout_toggle() {
-    let mut state = shell();
-    state.set_enabled(false); // flyout: parks "off"
-    state.note_foreground("code.exe".into());
-    state.toggle_enabled_hotkey(); // back on, and binds to code.exe
-
-    // The parked choice is gone, so a fresh app has nothing to bind and nothing
-    // remembered — it is left alone.
-    assert_eq!(state.apply_for_app("notepad.exe"), None);
-    assert!(state.enabled());
-    assert!(
-        !state
-            .settings()
-            .app_language_memory
-            .contains_key("notepad.exe")
-    );
-}
-
-/// A parked choice that happens to match the current state still has to be
-/// written down, or it is lost the moment focus moves on.
-#[test]
-fn a_parked_choice_is_remembered_even_when_the_state_does_not_flip() {
-    let mut state = shell();
-    state.set_enabled(true); // Settings window: parks "on", state already on
-    assert_eq!(state.apply_for_app("code.exe"), None, "nothing to flip");
-    assert_eq!(
-        state.settings().app_language_memory.get("code.exe"),
-        Some(&true)
-    );
-}
-
-/// The Settings window and the Control Center are their own processes, so the
-/// choice they parked died with them. Picking their file up has to re-park it.
-#[test]
-fn a_flip_written_by_another_process_binds_to_the_next_app() {
+fn a_flip_written_by_another_process_changes_the_global_state_without_pinning() {
     let dir = std::env::temp_dir().join(format!("funput-reload-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("settings.json");
@@ -133,11 +141,11 @@ fn a_flip_written_by_another_process_binds_to_the_next_app() {
     child.set_enabled(false);
 
     assert!(background.reload_settings());
+    assert!(!background.enabled(), "the flip reached this process");
     assert_eq!(background.apply_for_app("code.exe"), None, "already off");
-    assert_eq!(
-        background.settings().app_language_memory.get("code.exe"),
-        Some(&false),
-        "the flyout's choice bound to the app the user returned to"
+    assert!(
+        background.settings().app_language_memory.is_empty(),
+        "and pinned nothing on the way"
     );
     let _ = std::fs::remove_dir_all(dir);
 }
@@ -172,8 +180,10 @@ fn an_empty_app_id_is_ignored() {
     state.note_foreground(String::new());
     assert_eq!(state.foreground_id(), None);
 
-    state.set_enabled(false); // parks a choice with nowhere to land
+    // A window that resolved to no executable must not claim an entry, from either
+    // direction: nothing to replay for it, and a hotkey pressed in it writes nothing.
     assert_eq!(state.apply_for_app(""), None);
+    state.toggle_enabled_hotkey();
     assert!(state.settings().app_language_memory.is_empty());
 }
 
