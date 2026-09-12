@@ -117,7 +117,9 @@ impl Session {
         self.casing.clear();
         self.files = scan.entries;
         self.unreadable = scan.unreadable;
-        self.window = (0, WINDOW);
+        // Back to the top of the list, but the cap the shell asked for survives: how
+        // many rows it can build is the toolkit's business, not this document's.
+        self.window = (0, self.window.1);
     }
 
     pub fn set_row_window(&mut self, first: usize, len: usize) {

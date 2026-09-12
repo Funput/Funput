@@ -113,8 +113,38 @@ fn the_row_window_does_not_change_the_counts() {
     assert_eq!(view.ready, 7, "every file was identified");
 }
 
+/// How many rows a shell can build is the **toolkit's** business, not the document's:
+/// a GTK `ListBox` builds every row it is handed whatever is in it, which is why the
+/// cap exists at all. So a new batch starts at the top of the list without forgetting
+/// how long the list may be — the same distinction the destination charset gets one
+/// test down, where it survives as a tool preference.
+///
+/// Before this was true, the Windows window asked for two thousand rows once when it
+/// opened and then silently drew five hundred for every batch anyone dropped, with the
+/// button above still offering to convert all of them.
 #[test]
-fn adopting_files_replaces_the_previous_document_and_row_window() {
+fn adopting_files_keeps_the_row_cap_the_shell_asked_for() {
+    let (dir, mut session) = batch("keep-cap", 4);
+    session.set_row_window(0, 2);
+    session.refresh();
+    assert_eq!(session.view().rows.len(), 2, "the shell asked for two");
+
+    let paths: Vec<_> = (0..4).map(|i| dir.join(format!("{i}.txt"))).collect();
+    session.adopt(crate::scan(&paths));
+    session.refresh();
+
+    let view = session.view();
+    assert_eq!(view.rows_total, 4, "the whole batch is still counted");
+    assert_eq!(view.rows_first, 0, "a new batch starts at the top");
+    assert_eq!(
+        view.rows.len(),
+        2,
+        "and the cap the shell asked for survives"
+    );
+}
+
+#[test]
+fn adopting_files_replaces_the_previous_document_and_the_row_position() {
     let (_dir, mut session) = batch("fresh-adopt", 2);
     session.set_input("nội dung cũ".to_string());
     session.pick_source(Some(2));
