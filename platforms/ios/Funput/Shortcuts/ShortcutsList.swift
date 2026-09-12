@@ -1,11 +1,12 @@
 #if DEBUG
+import FunputShared
 import SwiftUI
 
 struct ShortcutsList: View {
     @Bindable var model: ShortcutsModel
-    let edit: (ShortcutDraft) -> Void
+    let edit: (TextShortcut) -> Void
     let add: () -> Void
-    @State private var pendingDelete: ShortcutDraft?
+    @State private var pendingDelete: TextShortcut?
 
     var body: some View {
         List {
@@ -14,19 +15,24 @@ struct ShortcutsList: View {
                     SettingsToggleRow(
                         title: "Bật gõ tắt",
                         summary: "Gõ chữ tắt rồi dấu cách hoặc dấu câu để thay bằng nội dung đầy đủ.",
-                        isOn: $model.isEnabled
+                        isOn: model.binding(\.isEnabled)
                     )
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("shortcuts.enabled")
+                    .disabled(!model.canWrite)
                     Divider()
                     Label("Bản xem trước", systemImage: "eye")
                         .font(.caption.weight(.semibold)).foregroundStyle(.tint)
-                    Text("Dữ liệu mẫu chỉ dùng để duyệt giao diện, chưa áp dụng khi gõ.")
+                    Text("Dữ liệu được lưu trên thiết bị, chưa áp dụng khi gõ.")
                         .font(.caption).foregroundStyle(.secondary)
+                    if model.isSaving { ProgressView("Đang lưu…").font(.caption) }
                 }
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
+            }
+            if model.loadError != nil || model.isLoading {
+                Section { ShortcutsLoadStatus(model: model) }
             }
             Section {
                 HStack(spacing: 10) {
@@ -45,7 +51,9 @@ struct ShortcutsList: View {
                 .frame(minHeight: 44)
             }
             Section {
-                if model.entries.isEmpty {
+                if !model.hasLoaded || model.loadError != nil {
+                    EmptyView()
+                } else if model.entries.isEmpty {
                     emptyState
                 } else if model.filteredEntries.isEmpty {
                     ContentUnavailableView {
@@ -62,7 +70,7 @@ struct ShortcutsList: View {
                     }
                 }
             } header: {
-                Text(model.query.isEmpty
+                Text(!model.hasLoaded || model.loadError != nil ? "Danh sách" : model.query.isEmpty
                      ? "Danh sách · \(model.entries.count) mục"
                      : "Kết quả · \(model.filteredEntries.count)/\(model.entries.count) mục")
                     .textCase(nil)
@@ -79,7 +87,7 @@ struct ShortcutsList: View {
         )) {
             Button("Huỷ", role: .cancel) { pendingDelete = nil }
             Button("Xoá", role: .destructive) {
-                if let entry = pendingDelete { model.delete(entry) }
+                if let entry = pendingDelete { Task { await model.delete(entry) } }
                 pendingDelete = nil
             }
         } message: {
@@ -94,12 +102,13 @@ struct ShortcutsList: View {
             Text("Lưu những nội dung thường dùng.\nVí dụ: vn → việt nam, kg → không.")
         } actions: {
             Button("Thêm gõ tắt", systemImage: "plus", action: add)
+                .disabled(!model.canWrite)
                 .buttonStyle(.borderedProminent)
                 .frame(minHeight: 44)
         }
     }
 
-    private func row(_ entry: ShortcutDraft) -> some View {
+    private func row(_ entry: TextShortcut) -> some View {
         Button { edit(entry) } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -114,6 +123,7 @@ struct ShortcutsList: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
+        .disabled(!model.canWrite)
         .accessibilityLabel("\(entry.trigger), \(entry.expansion)")
         .accessibilityHint("Chạm hai lần để sửa gõ tắt")
         .accessibilityIdentifier("shortcuts.entry.\(entry.trigger)")

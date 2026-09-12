@@ -1,4 +1,5 @@
 #if DEBUG
+import FunputShared
 import SwiftUI
 
 struct ShortcutsOptions: View {
@@ -9,22 +10,24 @@ struct ShortcutsOptions: View {
     var body: some View {
         NavigationStack {
             AppScreen {
+                if model.loadError != nil { ShortcutsLoadStatus(model: model) }
                 ContentCard {
                     SettingsToggleRow(
                         title: "Tự nhận diện hoa/thường",
                         summary: "Gõ vn → việt nam, Vn → Việt Nam, VN → VIỆT NAM. Tắt để chỉ khớp đúng chữ tắt đã lưu.",
-                        isOn: $model.smartCase
+                        isOn: model.binding(\.smartCase)
                     )
                     .accessibilityIdentifier("shortcuts.smartCase")
                     Divider()
                     SettingsToggleRow(
                         title: "Gõ tắt khi dùng tiếng Anh",
                         summary: "Vẫn thay chữ tắt khi bàn phím ở chế độ tiếng Anh.",
-                        isOn: $model.inEnglish
+                        isOn: model.binding(\.inEnglish)
                     )
                     .accessibilityIdentifier("shortcuts.inEnglish")
                 }
-                Text("Các tuỳ chọn chỉ thay đổi trong bản xem trước.")
+                .disabled(!model.canWrite)
+                Text("Các tuỳ chọn được lưu trên thiết bị, chưa áp dụng khi gõ.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             .navigationTitle("Tuỳ chọn gõ tắt")
@@ -32,15 +35,19 @@ struct ShortcutsOptions: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Xong") { dismiss() }
+                        .disabled(model.isSaving)
                 }
             }
         }
         .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large])
         .presentationDragIndicator(.visible)
+        .interactiveDismissDisabled(model.isSaving)
+        .shortcutsSaveAlert(model)
     }
 }
 
 #Preview("Tuỳ chọn") {
-    ShortcutsOptions(model: ShortcutsModel())
+    let model = ShortcutsModel(store: ShortcutsPreviewStore())
+    ShortcutsOptions(model: model).task { await model.reload() }
 }
 #endif

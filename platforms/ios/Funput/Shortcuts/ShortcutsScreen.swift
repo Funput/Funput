@@ -1,27 +1,36 @@
 #if DEBUG
+import FunputShared
 import SwiftUI
 
 struct ShortcutsScreen: View {
+    @Environment(\.scenePhase) private var scenePhase
     @Bindable var model: ShortcutsModel
-    @State private var editor: ShortcutDraft?
+    @State private var editor: TextShortcut?
     @State private var showsOptions = false
 
     var body: some View {
-        ShortcutsList(model: model, edit: { editor = $0 }, add: { editor = ShortcutDraft() })
+        ShortcutsList(model: model, edit: { editor = $0 }, add: { editor = TextShortcut() })
             .navigationTitle("Gõ tắt")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Tuỳ chọn", systemImage: "slider.horizontal.3") { showsOptions = true }
                         .accessibilityIdentifier("shortcuts.options")
+                        .disabled(!model.hasLoaded)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Thêm gõ tắt", systemImage: "plus") { editor = ShortcutDraft() }
+                    Button("Thêm gõ tắt", systemImage: "plus") { editor = TextShortcut() }
                         .accessibilityIdentifier("shortcuts.add")
+                        .disabled(!model.canWrite)
                 }
             }
             .sheet(item: $editor) { ShortcutEditor(model: model, original: $0) }
             .sheet(isPresented: $showsOptions) { ShortcutsOptions(model: model) }
+            .shortcutsSaveAlert(model, active: editor == nil && !showsOptions)
+            .task { await model.reload() }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { Task { await model.reload() } }
+            }
     }
 }
 
@@ -52,16 +61,16 @@ struct ShortcutsSettingsLink: View {
 }
 
 #Preview("Gõ tắt · Sáng") {
-    NavigationStack { ShortcutsScreen(model: ShortcutsModel()) }
+    NavigationStack { ShortcutsScreen(model: ShortcutsModel(store: ShortcutsPreviewStore())) }
         .preferredColorScheme(.light)
 }
 
 #Preview("Gõ tắt · Tối") {
-    NavigationStack { ShortcutsScreen(model: ShortcutsModel()) }
+    NavigationStack { ShortcutsScreen(model: ShortcutsModel(store: ShortcutsPreviewStore())) }
         .preferredColorScheme(.dark)
 }
 
 #Preview("Gõ tắt · Trống") {
-    NavigationStack { ShortcutsScreen(model: ShortcutsModel(entries: [])) }
+    NavigationStack { ShortcutsScreen(model: ShortcutsModel(store: ShortcutsPreviewStore(library: ShortcutLibrary()))) }
 }
 #endif

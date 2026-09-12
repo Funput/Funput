@@ -12,7 +12,7 @@ struct SettingsScreen: View {
     @State private var requestsHapticAccess = false
     @State private var requestsSoundAccess = false
 #if DEBUG
-    @State private var shortcuts = ShortcutsModel()
+    @State private var shortcuts = ShortcutsModel(store: ShortcutsStoreFactory.make())
 #endif
 
     init(
@@ -20,10 +20,18 @@ struct SettingsScreen: View {
         customStore: any CustomThemeStoring = CustomThemeStore(),
         bootstrap: any KeyboardBootstrapSynchronizing = KeyboardBootstrapSynchronizer()
     ) {
+#if DEBUG
+        if ShortcutsStoreFactory.isUITesting {
+            _model = StateObject(wrappedValue: SettingsModel(
+                store: PreviewConfigurationStore(),
+                customStore: PreviewCustomThemeStore(),
+                bootstrap: NoopKeyboardBootstrapSynchronizer()
+            ))
+            return
+        }
+#endif
         _model = StateObject(wrappedValue: SettingsModel(
-            store: store,
-            customStore: customStore,
-            bootstrap: bootstrap
+            store: store, customStore: customStore, bootstrap: bootstrap
         ))
     }
 
@@ -126,26 +134,4 @@ struct SettingsScreen: View {
             }
         }
     }
-}
-
-#Preview("Cài đặt · Light") {
-    NavigationStack {
-        SettingsScreen(
-            store: PreviewConfigurationStore(),
-            customStore: PreviewCustomThemeStore(),
-            bootstrap: NoopKeyboardBootstrapSynchronizer()
-        )
-    }
-        .preferredColorScheme(.light)
-}
-
-#Preview("Cài đặt · Dark") {
-    NavigationStack {
-        SettingsScreen(
-            store: PreviewConfigurationStore(),
-            customStore: PreviewCustomThemeStore(),
-            bootstrap: NoopKeyboardBootstrapSynchronizer()
-        )
-    }
-        .preferredColorScheme(.dark)
 }

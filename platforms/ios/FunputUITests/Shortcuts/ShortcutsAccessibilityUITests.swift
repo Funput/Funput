@@ -5,12 +5,15 @@ final class ShortcutsAccessibilityUITests: XCTestCase {
     func testReviewScreensHaveAccessibleControls() throws {
         continueAfterFailure = false
         let app = XCUIApplication()
+        app.launchEnvironment["FUNPUT_SHORTCUTS_TEST_DIRECTORY"] = UUID().uuidString
+        app.launchEnvironment["FUNPUT_SHORTCUTS_TEST_SEED"] = "1"
         app.launch()
         let entry = app.buttons["settings.shortcuts"]
         XCTAssertTrue(entry.waitForExistence(timeout: 10))
         for _ in 0..<5 where !entry.isHittable { app.swipeUp() }
         entry.tap()
         XCTAssertTrue(app.buttons["shortcuts.add"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["shortcuts.entry.vn"].waitForExistence(timeout: 5))
         try audit(app)
         capture(app, name: "Danh sách")
         app.buttons["shortcuts.options"].tap()

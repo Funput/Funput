@@ -7,12 +7,15 @@ final class ShortcutsUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
+        app.launchEnvironment["FUNPUT_SHORTCUTS_TEST_DIRECTORY"] = UUID().uuidString
+        app.launchEnvironment["FUNPUT_SHORTCUTS_TEST_SEED"] = "1"
         app.launch()
         let entry = app.buttons["settings.shortcuts"]
         XCTAssertTrue(entry.waitForExistence(timeout: 10))
         for _ in 0..<5 where !entry.isHittable { app.swipeUp() }
         entry.tap()
         XCTAssertTrue(app.buttons["shortcuts.add"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["shortcuts.entry.vn"].waitForExistence(timeout: 5))
     }
 
     func testAddEditAndSearchWhileDisabled() {
@@ -66,7 +69,10 @@ final class ShortcutsUITests: XCTestCase {
         XCTAssertTrue(trigger.waitForExistence(timeout: 3))
         trigger.tap()
         trigger.typeText("vn")
-        XCTAssertTrue(app.staticTexts["Chữ tắt này đã có trong danh sách."].exists)
+        XCTAssertTrue(app.staticTexts["Chữ tắt này đã có trong danh sách. Hãy chọn chữ tắt khác."].exists)
+        app.textFields["shortcuts.editor.expansion"].tap()
+        app.textFields["shortcuts.editor.expansion"].typeText("duplicate")
+        XCTAssertFalse(app.buttons["shortcuts.editor.save"].isEnabled)
         dismissEditorBySwiping()
         XCTAssertTrue(app.alerts["Bỏ thay đổi?"].waitForExistence(timeout: 3))
         app.alerts.buttons["Bỏ thay đổi"].tap()
@@ -106,7 +112,7 @@ final class ShortcutsUITests: XCTestCase {
             XCTAssertTrue(delete.waitForExistence(timeout: 3))
             delete.tap()
             app.alerts.buttons["Xoá"].tap()
-            XCTAssertFalse(entry.exists)
+            XCTAssertTrue(entry.waitForNonExistence(timeout: 5))
         }
         XCTAssertTrue(app.staticTexts["Chưa có gõ tắt"].exists)
         XCTAssertTrue(app.switches["shortcuts.enabled"].firstMatch.exists)
