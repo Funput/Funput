@@ -25,7 +25,7 @@ mod query;
 mod view;
 
 use crate::batch::Entry;
-use crate::{at, clamp, index_of};
+use crate::{at, clamp};
 
 pub use job::Job;
 pub use view::{Mode, Row, Unreadable, View};

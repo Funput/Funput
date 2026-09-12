@@ -12,7 +12,11 @@ use funput_core::charset;
 use crate::batch;
 use crate::text;
 
-use super::{Session, at, index_of};
+use super::{Session, at};
+
+mod rows;
+
+pub use rows::Row;
 
 /// Which of the three shapes the window is in.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -27,17 +31,6 @@ pub enum Mode {
     /// Two or more files: a table, because the interesting thing is that the rows
     /// differ.
     Files,
-}
-
-/// One file's row in the batch table.
-#[non_exhaustive]
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct Row {
-    pub name: String,
-    /// Index into `charset::ALL`, or `None` when nothing explained the file.
-    pub charset: Option<usize>,
-    /// "N chữ sẽ mất", or empty.
-    pub note: String,
 }
 
 /// A file that could not be read, and why.
@@ -104,41 +97,11 @@ pub(super) fn build(session: &Session) -> View {
             (Some(r), Some((_, from, _))) => text::warning(&r.cost, from, target),
             _ => String::new(),
         },
-        rows: rows(session, target),
+        rows: rows::rows(session, target),
         rows_first: session.window.0,
         rows_total: session.files.len(),
         out_dir: batch::out_dir_label(&session.files),
         ready: batch::ready(&session.files),
         unreadable: session.unreadable.clone(),
     }
-}
-
-/// Rows for the window only — but every count above runs over the whole batch, so a
-/// capped list stays honest. Rebuilding two thousand of them on every target change
-/// is what the window exists to avoid.
-fn rows(session: &Session, target: charset::Charset) -> Vec<Row> {
-    let (first, len) = session.window;
-    session
-        .files
-        .iter()
-        .skip(first)
-        .take(len)
-        .map(|entry| Row {
-            name: entry.name(),
-            charset: entry.charset.and_then(index_of),
-            note: match entry.charset {
-                Some(from) => {
-                    let lost = charset::render(&charset::read(&entry.text, from), target)
-                        .cost
-                        .unrepresentable;
-                    if lost > 0 {
-                        format!("{lost} chữ sẽ mất")
-                    } else {
-                        String::new()
-                    }
-                }
-                None => String::new(),
-            },
-        })
-        .collect()
 }
