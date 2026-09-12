@@ -47,11 +47,6 @@ pub struct ShellState {
     /// The app that currently has focus, fed by the foreground hook. Not
     /// persisted, and `None` until the first focus change.
     foreground: Option<String>,
-    /// A manual toggle whose target app isn't known yet. The tray and the Settings
-    /// window steal foreground, so the choice is parked here and bound to the next
-    /// app the user focuses. Session-only: re-arming a stale choice after a
-    /// restart would be surprising, so it is never persisted.
-    pending_override: Option<bool>,
     /// The keyboard layout handle last judged by [`Self::apply_for_layout`], so an
     /// unchanged layout costs nothing. `0` until the platform reports one.
     last_layout: u32,
@@ -76,7 +71,6 @@ impl ShellState {
             settings: Settings::default(),
             settings_file,
             foreground: None,
-            pending_override: None,
             last_layout: 0,
             layout_suspended: false,
             layout_override: 0,

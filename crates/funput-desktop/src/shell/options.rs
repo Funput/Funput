@@ -102,11 +102,18 @@ impl ShellState {
     }
 
     /// Flip VI/EN from a Funput window (the Settings pane or the tray flyout).
-    /// That window holds focus while this runs, so the choice is parked and bound
-    /// to the next app the user returns to.
+    ///
+    /// **Global, and it pins nothing.** The surface says the scope: these two are
+    /// Funput's own windows, opened from the tray, with no app in sight — so they
+    /// move the default every app without an opinion follows. The hotkey is the one
+    /// that means "just here", because it is pressed inside the app it means.
+    ///
+    /// This used to park the choice and bind it to whichever app took focus next,
+    /// which wrote a permanent entry into the per-app memory for an app the user
+    /// never mentioned — invisible, since nothing on Windows shows that map, and
+    /// still overruling them a week later. See [`ShellState::apply_for_app`].
     pub fn set_enabled(&mut self, on: bool) {
         self.set_enabled_state(on);
-        self.pending_override = Some(on);
         self.save();
     }
 }

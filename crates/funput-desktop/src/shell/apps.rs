@@ -5,10 +5,17 @@
 //! choice then survives leaving, re-focusing, and restarting. An app nobody has
 //! toggled in has no opinion attached, so focusing it changes nothing.
 //!
-//! The awkward part is that both places a user can toggle from — the tray flyout
-//! and the Settings window — *steal foreground themselves*, so the app the choice
-//! is meant for is not focused when the choice is made. That is what
-//! `pending_override` exists for.
+//! **The surface a toggle came from says its scope**, which is what keeps the rule
+//! above true. The hotkey is pressed inside the app it means, so it pins that app.
+//! The tray flyout and the Settings window are Funput's own windows, opened from the
+//! tray with no app in sight, so they move the global default and pin nothing.
+//!
+//! Those two used to park their choice and bind it to whichever app took focus next
+//! — the flyout steals foreground, so there was no app to bind to at the time. That
+//! made turning Vietnamese off in the tray write a permanent entry here for whatever
+//! the user clicked into afterwards: an app they never mentioned, pinned invisibly,
+//! since nothing on Windows displays this map, and still overruling the global switch
+//! long after. A global surface now stays global.
 
 use super::ShellState;
 
@@ -25,8 +32,8 @@ impl ShellState {
     }
 
     /// Flip VI/EN from the keyboard hotkey; returns the new state. Unlike the tray,
-    /// the hotkey fires while the target app is focused, so the choice binds to
-    /// that app immediately and clears any stale pending override.
+    /// the hotkey fires while the target app is focused — so it is the one toggle
+    /// that means "just here", and the only thing that writes this map.
     ///
     /// In memory only. The caller persists with [`Self::save_settings`] once it is
     /// somewhere it can afford to block: on Windows this runs inside the low-level
@@ -46,7 +53,6 @@ impl ShellState {
         if let Some(id) = self.foreground_id().map(str::to_string) {
             self.remember(&id, on);
         }
-        self.pending_override = None;
         on
     }
 
@@ -67,35 +73,23 @@ impl ShellState {
         self.foreground = Some(id);
     }
 
-    /// Decide VI/EN for the newly-focused app:
+    /// Replay the choice remembered for the newly-focused app, if it has one.
     ///
-    /// 1. A pending manual toggle (from the tray / Settings, which steal
-    ///    foreground) binds to this app — the user's choice lands on the app they
-    ///    return to, and is remembered there from now on.
-    /// 2. Otherwise the choice remembered for this app, if it has one.
+    /// An app with none is left alone: it inherits whatever state the previous app
+    /// had, which is what "we only remember what you told us" means — and it is why
+    /// a global toggle reaches every app nobody has pinned without this being told
+    /// anything.
     ///
-    /// An app with neither is left alone: it inherits whatever state the previous
-    /// app had, which is what "we only remember what you told us" means.
+    /// **Reads the map, never writes it.** Only [`Self::toggle_enabled_hotkey`]
+    /// writes, because only the hotkey is pressed inside the app it is about.
     ///
     /// Returns `Some(on)` when it flipped VI/EN (so the caller can refresh its
     /// tray), `None` when nothing changed.
     pub fn apply_for_app(&mut self, id: &str) -> Option<bool> {
-        let mut remembered = false;
-        let target = if let Some(on) = self.pending_override.take() {
-            remembered = self.remember(id, on);
-            on
-        } else {
-            *self.settings.app_language_memory.get(id)?
-        };
-
-        // The map is persisted now, so a choice that binds without flipping the
-        // state still has to reach disk — returning early here would drop it.
+        let target = *self.settings.app_language_memory.get(id)?;
         let before = self.effective_enabled();
-        let flipped = self.settings.enabled != target;
-        if flipped {
+        if self.settings.enabled != target {
             self.set_enabled_state(target);
-        }
-        if flipped || remembered {
             self.save();
         }
         // Reported against what is running: an app remembered as Vietnamese does

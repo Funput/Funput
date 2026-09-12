@@ -88,13 +88,9 @@ impl ShellState {
         if self.settings == loaded {
             return false;
         }
-        // A VI/EN flip made in one of those windows parked itself in *their*
-        // `ShellState`, which died with the process — so the app it was meant for
-        // never learned about it. Park it here instead and the next focus change
-        // binds it, exactly as an in-process toggle would.
-        if loaded.enabled != self.settings.enabled {
-            self.pending_override = Some(loaded.enabled);
-        }
+        // A VI/EN flip made in one of those windows arrives as a plain settings
+        // field, and `apply_settings` below pushes it to the engine. Nothing else is
+        // owed: it was a global choice, so it needs no app to land on.
         self.settings = loaded;
         self.apply_settings();
         // The foreign-layout switch may have been the thing that changed, and the

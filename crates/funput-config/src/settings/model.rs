@@ -54,6 +54,15 @@ pub struct Settings {
     /// order — this is rewritten on every focus change that flips VI/EN.
     #[serde(default)]
     pub app_language_memory: BTreeMap<String, bool>,
+    /// How many one-time repairs of this document have been applied — see
+    /// [`Settings::repair`]. A file written before the field existed reads as `0`,
+    /// which is what makes a repair run once; [`Settings::default`] starts at the
+    /// current number, because a document nobody has written yet needs none.
+    ///
+    /// Persisted for one reason only: so a repair cannot keep undoing a choice the
+    /// user makes afterwards.
+    #[serde(default)]
+    pub schema: u32,
     /// **Legacy, read-only.** Drained into `app_language_memory` by
     /// [`Settings::load_from`], so it is always empty afterwards, and never
     /// written back (`skip_serializing`).
@@ -89,21 +98,6 @@ pub struct Settings {
     pub auto_english_on_foreign_layout: bool,
 }
 
-/// The tone placement a file that predates the setting implies: whoever wrote it
-/// has been typing traditional placement, whether they chose it or never looked.
-/// A machine with no file at all is a new install and takes [`Settings::default`].
-pub(super) fn legacy_tone_style_default() -> ToneStyle {
-    ToneStyle::Traditional
-}
-
-/// The default every switch that carries one shares: a file written before the
-/// switch existed must decode as "on" — that is how Funput behaved when it was
-/// written, and an update may not silently take a feature away. Each field says
-/// above why that reasoning holds for it.
-fn default_true() -> bool {
-    true
-}
-
 impl Settings {
     /// Fold legacy "always English" app ids into the per-app memory. An id the
     /// user has since toggled keeps its remembered choice — existing wins, the
@@ -118,32 +112,10 @@ impl Settings {
     }
 }
 
-impl Default for Settings {
-    fn default() -> Self {
-        Self {
-            method: Method::Vni,
-            tone_style: ToneStyle::Modern,
-            enabled: true,
-            smart_restore: true,
-            eager_restore: true,
-            spell_check: false,
-            auto_capitalize: false,
-            toggle_hotkey: Hotkey::CtrlBacktick,
-            toggle_combo: None,
-            flip_hotkey: FlipHotkey::Off,
-            flip_combo: None,
-            launch_at_login: false,
-            has_completed_onboarding: false,
-            app_language_memory: BTreeMap::new(),
-            excluded_apps: Vec::new(),
-            shortcuts: Vec::new(),
-            shortcuts_enabled: true,
-            shortcut_smart_case: true,
-            shortcuts_in_english: true,
-            auto_english_on_foreign_layout: true,
-        }
-    }
-}
+mod defaults;
+
+use defaults::default_true;
+pub(super) use defaults::{SCHEMA, legacy_tone_style_default};
 
 #[cfg(test)]
 mod tests;
