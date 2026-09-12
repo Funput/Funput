@@ -56,6 +56,22 @@ pub fn stroke_d(c: char) -> Option<char> {
     }
 }
 
+/// Convert đ/Đ back to d/D — the inverse of [`stroke_d`].
+///
+/// A separate question from the combining marks, and from the vowels: `đ` is a
+/// letter of the alphabet rather than a `d` carrying something, so bỏ dấu has to
+/// decide about it rather than derive it. That decision is a switch, because the
+/// answer differs between "make this typeable on a US keyboard" and "just take the
+/// tones off".
+#[cfg(feature = "textcase")]
+pub(crate) fn unstroke_d(c: char) -> Option<char> {
+    match c {
+        'đ' => Some('d'),
+        'Đ' => Some('D'),
+        _ => None,
+    }
+}
+
 /// Returns true if `c` is a vowel (ASCII or precomposed Vietnamese).
 pub fn is_vowel(c: char) -> bool {
     vowels::is_vowel(c)

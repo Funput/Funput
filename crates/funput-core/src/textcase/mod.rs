@@ -23,6 +23,7 @@
 //! shell matching on it cannot compile against a variant that does nothing yet.
 
 mod case;
+mod diacritics;
 
 /// Which transform to run.
 ///
@@ -35,6 +36,8 @@ pub enum Transform {
     Upper,
     /// `Xin Chào Việt Nam` → `xin chào việt nam`.
     Lower,
+    /// `Tiếng Việt rất đẹp` → `Tieng Viet rat dep`.
+    NoDiacritics,
 }
 
 /// The switches a transform reads.
@@ -73,6 +76,7 @@ pub fn apply(text: &str, transform: Transform, options: Options) -> String {
     match transform {
         Transform::Upper => case::upper(text, options),
         Transform::Lower => case::lower(text, options),
+        Transform::NoDiacritics => diacritics::strip(text, options),
     }
 }
 

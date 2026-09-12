@@ -68,19 +68,24 @@ Bỏ **cả thanh điệu lẫn dấu phụ của nguyên âm**, giữ chữ cá
 ```
 
 Không dùng crate normalization: `funput-core` có **bất biến không phụ thuộc runtime**
-(`[dependencies]` rỗng), và phá nó cho một tính năng desktop là cái giá sai. Bảng có
-sẵn đã đủ gần: `unicode::vowels::vowel_stem` bỏ thanh nhưng **giữ hình** (`ấ` → `â`),
-nên còn thiếu một bảng `family → chữ cái ASCII` 12 dòng dựng cạnh
-`vowels::table::VOWEL_FAMILIES`. Chữ tổ hợp xử lý bằng cách lọc các dấu thanh rời
-(`U+0300`, `U+0301`, `U+0303`, `U+0309`, `U+0323`) và dấu mũ/móc/trăng rời, sau khi
-đã quy chữ nền về ASCII.
+(`[dependencies]` rỗng), và phá nó cho một tính năng desktop là cái giá sai.
+
+Và **không cần bảng mới nào**: `unicode::shapes::base_vowel` đã bỏ cả thanh lẫn hình
+mà giữ hoa/thường, trên toàn bộ bảng chữ dựng sẵn — chính engine dùng nó để quyết định
+phím hình có đổi được nguyên âm hay không. Một bảng `family → ASCII` sẽ là bản copy
+thứ hai của cùng câu trả lời, và bản thứ hai là bản sẽ lệch. Chữ tổ hợp xử lý bằng
+cách lọc tám dấu rời, danh sách lấy từ `unicode::combining`.
 
 **Tuỳ chọn `đ → d`**: mặc định **bật**. Người cần giữ `đ` (đặt tên file cho hệ thống
 chấp nhận nó, hoặc chỉ muốn bỏ thanh) tắt được trong cùng tab. Đây là tuỳ chọn duy
 nhất của phép này.
 
-Ký tự không phải tiếng Việt (chữ Nhật, emoji, `é` của tiếng Pháp) **giữ nguyên**:
-tính năng tên là "bỏ dấu tiếng Việt", không phải "ASCII hoá".
+Hai điều phép này **không làm được**, và đều là bản chất chứ không phải thiếu sót.
+`é` chỉ có một code point dù người gõ nó cho tiếng Việt hay tiếng Pháp, nên `café`
+thành `cafe`: một phép biến đổi trên chữ cái không biết được ai có ý gì. Và dấu tổ hợp
+bị bỏ bất kể ai đặt nó, nên `ñ` ở dạng tổ hợp ra `n` — còn `ñ`, `ü`, `ç`, `ß` dựng sẵn,
+chữ Nhật và emoji thì giữ nguyên mọi thứ. Cả hai đều có test khoá lại để chúng là quyết
+định, không phải điều bất ngờ.
 
 ### Viết hoa đầu câu
 
@@ -156,7 +161,7 @@ không dùng đường cảnh báo.
 
 | Tầng | Nội dung |
 | --- | --- |
-| `funput-core::textcase` | Năm hàm thuần + bảng `family → ASCII`. Không phụ thuộc, không alloc ngoài chuỗi kết quả. Sau cargo feature riêng, **mặc định tắt** như `charset` — iOS/Android không bao giờ biên dịch nó |
+| `funput-core::textcase` | Năm phép biến đổi thuần, không phụ thuộc, không alloc ngoài chuỗi kết quả, và không bảng dữ liệu mới nào. Sau cargo feature riêng, **mặc định tắt** như `charset` — iOS/Android không bao giờ biên dịch nó |
 | `funput-convert` | Trục thứ hai của `Session`: "đổi bảng mã" và "đổi kiểu chữ" dùng chung một `Session`, một `View`, một đường cảnh báo |
 | Ba shell | Chỉ tab, nút, và preview. Không quyết định gì — đúng hợp đồng `refresh()` / `view()` hiện tại |
 | `funput-cli` | `funput case --upper|--lower|--no-diacritics|--sentence|--title` đọc stdin. Rẻ, và là bề mặt test tốt nhất |
@@ -182,19 +187,22 @@ một phím "bỏ dấu" ngay trên bàn phím là hướng đi hợp lý về s
 kéo cả bốn codec bảng mã vào bản build của chúng, đúng thứ mà ghi chú của feature
 `charset` cấm.
 
-Crate riêng thì không, vì phần bỏ dấu **đọc bảng nguyên âm nội bộ của core**
-(`unicode::vowels::table::VOWEL_FAMILIES`, `vowel_stem`). Một crate ngoài chỉ có hai
-đường: chép lại bảng — hai nguồn sự thật cho cùng một dữ liệu — hoặc đổi bảng thành
-`pub`, biến chi tiết nội bộ thành API công khai của core cho đúng một người dùng.
+Crate riêng thì không, vì phần bỏ dấu **đọc thẳng ruột của core**:
+`unicode::shapes::base_vowel` và `unicode::combining::is_mark`, cả hai đều
+`pub(crate)`. Một crate ngoài chỉ có hai đường: chép lại dữ liệu — hai nguồn sự thật
+cho cùng một thứ — hoặc đổi chúng thành `pub`, biến chi tiết nội bộ thành API công khai
+của core cho đúng một người dùng.
 `funput-convert` là crate riêng vì lý do ngược lại: nó không cần ruột của core, nó cần
 nằm *trong* workspace để `cargo test --workspace` và `check-loc.sh` với tới hai shell
 bị loại khỏi workspace. `textcase` không có vấn đề đó.
 
 Hai chi tiết bắt buộc khi hiện thực:
 
-- `VOWEL_FAMILIES` hiện là `pub(crate)` sau `#[cfg(feature = "charset")]`. Phải nới
-  thành `#[cfg(any(feature = "charset", feature = "textcase"))]` — quên thì lỗi build
-  chỉ hiện ra ở đúng một tổ hợp feature.
+- Module `unicode::combining` (tám dấu tổ hợp) nằm sau
+  `#[cfg(any(feature = "charset", feature = "textcase"))]`: nới đúng lúc có người đọc
+  thứ hai, không nới trước — gate rộng hơn số người đọc là dead code, và bước CI
+  textcase-on/charset-off sẽ trượt vì `-D warnings`. Không có gate nào khác phải đổi;
+  `base_vowel` vốn đã `pub(crate)` không gated.
 - `funput-ffi` đã có cấu trúc hai tầng sẵn; chỉ thêm `textcase = ["funput-core/textcase"]`
   và đổi `convert` thành `["charset", "textcase", "dep:funput-convert"]`. Job CI hiện
   có (`cargo test -p funput-ffi --features convert`) phủ luôn, không cần job mới.
