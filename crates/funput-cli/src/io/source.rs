@@ -13,7 +13,7 @@ use funput_core::charset::document::{self, Document};
 use crate::cli::CliError;
 
 /// Read `path`, or standard input when it is `None`, and say what it holds.
-pub(super) fn read(path: Option<&Path>) -> Result<Document, CliError> {
+pub(crate) fn read(path: Option<&Path>) -> Result<Document, CliError> {
     let bytes = match path {
         Some(path) => std::fs::read(path)
             .map_err(|e| CliError::Msg(format!("cannot read {}: {e}", path.display())))?,

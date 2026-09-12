@@ -85,6 +85,28 @@ Không bảng mã nào bị gọi tên trong code ở đây: `--to tcvn3` đối
 `funput_core::charset::ALL` bằng slug, nên thêm VISCII là một PR trong core và lệnh này hưởng miễn
 phí.
 
+## Dùng — `funput case`
+
+Đổi kiểu chữ của **văn bản đã có**: CHỮ HOA, chữ thường, bỏ dấu, viết hoa đầu câu, Viết Hoa Đầu
+Mỗi Từ. Luật nằm ở `funput_core::textcase`, xem `docs/features/text-case.md`.
+
+```bash
+funput case upper vanban.txt                  # một phép, từ tệp
+funput case title < ghichu.txt                # hoặc từ stdin
+funput case lower,title vanban.txt            # cộng dồn, đúng thứ tự đã gõ
+funput case no-diacritics --keep-d            # `đẹp` → `đep` thay vì `dep`
+funput case title --flatten-caps < tt.txt     # `TP. HCM` → `Tp. Hcm`
+```
+
+Cộng dồn dùng **một token, ngăn bằng dấu phẩy** (`lower,title`), để tên tệp vẫn là tham số vị trí
+thứ hai như `funput convert`. Thứ tự có nghĩa: `lower,title` cho `Gửi Về Tp. Hcm`, còn `title` một
+mình giữ nguyên `TP. HCM` — đó là việc của nó.
+
+Tệp bảng mã cũ bị **từ chối chứ không bị làm hỏng**: viết hoa byte TCVN3 sẽ ra tài liệu không ai
+đọc được, mà làm đúng thì phải giải mã → đổi kiểu chữ → mã hoá lại, và bước cuối có thể mất chữ.
+Đường cảnh báo đó thuộc về cửa sổ Chuyển mã, nên ở đây lệnh nói tệp trông như bảng mã gì rồi chỉ
+sang `funput convert`.
+
 ## Mô phỏng platform (`dev/sim.rs` — trái tim, thuần, có test)
 
 `simulate(method, input) -> Simulation { app_text, steps }` làm **đúng** việc một platform shell làm:
@@ -109,11 +131,15 @@ src/
 ├── cli.rs         # Cli, Command{Term, Dev}, MethodArg(→InputMethod), CliError/CliResult
 ├── term/
 │   └── mod.rs     # args + handler `funput term` (wrapper qua funput-term + install)
+├── io/            # hai đầu dùng chung của mọi lệnh biến đổi văn bản
+│   ├── source.rs  # bytes → text + bảng mã (hai cửa: UTF-8 hay theo byte)
+│   └── sink.rs    # ghi **bytes** ra stdout (không phải text)
 ├── convert/       # `funput convert` — công cụ chuyển mã
 │   ├── mod.rs     # args + luồng: đọc → nhận diện → chuyển → ghi
-│   ├── source.rs  # bytes → text + bảng mã (hai cửa: UTF-8 hay theo byte)
-│   ├── sink.rs    # ghi **bytes** ra stdout (không phải text)
 │   └── report.rs  # --list, --detect, cảnh báo mất mát (đều ra stderr)
+├── case/          # `funput case` — đổi kiểu chữ
+│   ├── mod.rs     # luồng: đọc → chặn bảng mã cũ → cộng dồn các phép → ghi
+│   └── args.rs    # CaseArgs + TransformArg(→textcase::Transform), hai công tắc
 └── dev/
     ├── mod.rs     # args + dispatch `funput dev` (run/repl/coverage)
     ├── sim.rs     # simulate() — mô phỏng platform, thuần, có test

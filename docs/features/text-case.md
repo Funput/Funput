@@ -3,8 +3,8 @@
 ## Trạng thái
 
 **Tầng core đã xong**: `funput_core::textcase` sau cargo feature `textcase`, cả năm
-phép, kèm corpus và property test. Chưa có người dùng nào — `funput-convert`, ba shell
-và `funput case` là các bước tiếp theo.
+phép, kèm corpus và property test, và **`funput case`** trong CLI đã gọi tới nó. Còn
+lại: `funput-convert` và ba cửa sổ.
 
 Tài liệu này chốt mô hình trước khi có code, như [charset.md](charset.md) đã làm, và là
 nơi mọi quyết định thiết kế sống — mỗi thay đổi cập nhật lại nó trong cùng PR.
