@@ -74,6 +74,12 @@ impl Chips {
     }
 
     pub(super) fn refresh(&self, lit: &[bool]) {
+        // `zip` stops at the shorter side, so a chip count that drifted from the menu
+        // would leave the last chip showing whatever it showed last rather than fail.
+        // The assertion belongs here, not in a test: both sides of the comparison a
+        // test could make are derived from `casing::ALL`, so a test cannot see the
+        // drift — only a live `Chips` knows how many widgets it actually built.
+        debug_assert_eq!(self.chips.len(), lit.len(), "a chip per transform");
         for (chip, &on) in self.chips.iter().zip(lit) {
             chip.tick.set_visible(on);
             // Bound rather than written inline: the two arms are arrays of different

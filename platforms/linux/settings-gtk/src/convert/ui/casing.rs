@@ -131,12 +131,13 @@ mod tests {
     }
 
     #[test]
-    fn the_menu_is_whole_before_anything_is_pressed() {
-        // Load-bearing here in a way it is not in Slint: the chips are built from
-        // `casing::ALL` and refreshed by zipping a slice of bools, so a length that
-        // drifted would quietly stop lighting the last chip rather than fail.
-        let session = viewed(&[]);
-        let lit = lit(session.view());
+    fn a_fresh_document_lights_nothing() {
+        // What this locks is that the menu is offered whole with nothing applied — a
+        // press is the only thing that lights a chip. It deliberately does *not* claim
+        // to catch a chip count that drifted from `casing::ALL`: `lit` counts from
+        // `casing::ALL` too, so any length a test could assert here is the same number
+        // twice. That invariant is asserted where the widgets are, in `Chips::refresh`.
+        let lit = lit(viewed(&[]).view());
         assert_eq!(lit.len(), casing::ALL.len());
         assert!(lit.iter().all(|on| !on));
     }
