@@ -8,6 +8,14 @@ enum ConvertFixtures {
         ConvertCharset(id: 3, name: "Unicode tổ hợp"),
     ]
 
+    static let transforms = [
+        ConvertTransform(id: 0, name: "CHỮ HOA"),
+        ConvertTransform(id: 1, name: "chữ thường"),
+        ConvertTransform(id: 2, name: "Bỏ dấu tiếng Việt"),
+        ConvertTransform(id: 3, name: "Viết hoa đầu câu"),
+        ConvertTransform(id: 4, name: "Viết Hoa Đầu Mỗi Từ"),
+    ]
+
     static let empty = state(mode: .empty)
 
     static let pasted = state(
@@ -40,6 +48,16 @@ enum ConvertFixtures {
         ready: 3
     )
 
+    /// A paste with two transforms on it, in an order that matters: lowercase then
+    /// title case is `Gửi Về Tp. Hcm`, the other way round is all lowercase.
+    static let cased = state(
+        mode: .text,
+        source: 0,
+        input: "GỬI VỀ TP. HCM",
+        output: "Gửi Về Tp. Hcm",
+        applied: [1, 4]
+    )
+
     static var busyBatch: ConvertScreenState {
         var value = batch
         value.isBusy = true
@@ -51,7 +69,7 @@ enum ConvertFixtures {
         mode: ConvertMode, target: Int = 0, source: Int? = nil, fromFile: Bool = false,
         fileName: String? = nil, input: String = "", output: String = "",
         warning: String = "", files: [ConvertFileRow] = [],
-        outputDirectory: String = "", ready: Int = 0
+        outputDirectory: String = "", ready: Int = 0, applied: [Int] = []
     ) -> ConvertScreenState {
         ConvertScreenState(
             mode: mode, charsets: charsets, target: target, source: source,
@@ -59,7 +77,8 @@ enum ConvertFixtures {
             outputText: output, warning: warning, files: files,
             rowsTotal: files.count, outputDirectory: outputDirectory,
             unreadable: "", progress: "", ready: ready,
-            isBusy: false, errorMessage: nil
+            isBusy: false, errorMessage: nil, transforms: transforms,
+            appliedTransforms: applied, keepD: false, flattenCaps: false
         )
     }
 }
