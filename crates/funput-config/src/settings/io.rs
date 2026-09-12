@@ -9,6 +9,7 @@ use std::fs;
 use std::path::Path;
 
 use super::Settings;
+use super::model;
 use super::model::legacy_tone_style_default;
 
 impl Settings {
@@ -34,7 +35,30 @@ impl Settings {
         };
         let legacy: Vec<_> = std::mem::take(&mut settings.excluded_apps);
         settings.remember_as_english(legacy.into_iter().map(|app| app.id));
+        settings.repair();
         settings
+    }
+
+    /// One-time repairs of documents an earlier build wrote, applied in order and
+    /// counted by [`Settings::schema`] so none of them runs twice.
+    ///
+    /// Like the drain above, re-running a repair before the next write is harmless;
+    /// what the counter buys is that it stops once the user's own choices are on
+    /// disk beside it.
+    fn repair(&mut self) {
+        if self.schema < 1 {
+            // Windows' shell draws the taskbar, the desktop *and* the tray icon, all
+            // from explorer.exe — so a pin there fired on every trip to the tray and
+            // read as Vietnamese switching itself off. Nothing put one there on
+            // purpose: until this release a toggle made in the Control Center was
+            // parked and bound to whichever window took focus next, which after a
+            // tray click is the taskbar. The shell's own surfaces are ignored now
+            // (platforms/windows/.../hook/foreground/window.rs), but the entry that
+            // bug already wrote would outlive the fix, and there is no UI to clear
+            // it with.
+            self.app_language_memory.remove("explorer.exe");
+        }
+        self.schema = model::SCHEMA;
     }
 
     /// Write to `path`, creating its directory. Silent on failure — see above.
@@ -79,6 +103,46 @@ mod tests {
         Settings::default().save_to(&path);
 
         assert!(path.is_file());
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    /// The pin the Control Center bug left on Windows' shell. Nobody chose it, it
+    /// fired on every trip to the tray, and there is no UI to clear it with.
+    #[test]
+    fn the_explorer_pin_is_dropped_from_a_document_written_before_the_repair() {
+        let dir = tmp_dir();
+        let path = dir.join("settings.json");
+        let mut json = serde_json::to_value(Settings::default()).unwrap();
+        json["schema"] = serde_json::json!(0);
+        json["appLanguageMemory"] = serde_json::json!({ "explorer.exe": false, "code.exe": false });
+        fs::write(&path, json.to_string()).unwrap();
+
+        let loaded = Settings::load_from(&path);
+        assert_eq!(loaded.app_language_memory.get("explorer.exe"), None);
+        assert_eq!(
+            loaded.app_language_memory.get("code.exe"),
+            Some(&false),
+            "every other pin is the user's and stays"
+        );
+        assert_eq!(loaded.schema, model::SCHEMA);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    /// …and having run, it stops. A File Explorer window is a real app, so someone
+    /// may pin it on purpose afterwards, and a repair that kept firing would delete
+    /// that choice on every launch.
+    #[test]
+    fn a_pin_made_after_the_repair_survives() {
+        let dir = tmp_dir();
+        let path = dir.join("settings.json");
+        let mut settings = Settings::default();
+        settings
+            .app_language_memory
+            .insert("explorer.exe".to_string(), false);
+        settings.save_to(&path);
+
+        let loaded = Settings::load_from(&path);
+        assert_eq!(loaded.app_language_memory.get("explorer.exe"), Some(&false));
         let _ = fs::remove_dir_all(dir);
     }
 

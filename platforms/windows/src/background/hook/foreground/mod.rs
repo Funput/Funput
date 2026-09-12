@@ -3,25 +3,25 @@
 //! Two things follow from that. The caret is somewhere else entirely, so anything
 //! Funput was composing is stale; and the new app may want a different VI/EN state
 //! (see [`crate::shared::shell`]'s per-app auto-switch).
+//!
+//! Twice over, though, a foreground change is **not** a user switching apps: when
+//! the window is one of Funput's own, and when it is the shell itself — the taskbar,
+//! the desktop, Alt-Tab. Both are turned away here, and [`window`] is where a window
+//! is asked which it is.
 
-use std::sync::OnceLock;
+mod window;
+
 use std::sync::atomic::Ordering;
 
-use windows::Win32::Foundation::{CloseHandle, HWND};
-use windows::Win32::System::Threading::{
-    OpenProcess, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION, QueryFullProcessImageNameW,
-};
+use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Accessibility::HWINEVENTHOOK;
-use windows::Win32::UI::WindowsAndMessaging::{
-    EVENT_SYSTEM_FOREGROUND, GetClassNameW, GetWindowThreadProcessId,
-};
-use windows::core::PWSTR;
+use windows::Win32::UI::WindowsAndMessaging::EVENT_SYSTEM_FOREGROUND;
 
 use super::{FOREGROUND_IS_FUNPUT, toggle};
 use crate::background::{inject, keymap, tray};
 use crate::shared::shell;
 
-static OWN_EXE_ID: OnceLock<String> = OnceLock::new();
+use window::{class_of_window, exe_of_window, is_shell_surface, own_exe_id};
 
 /// Foreground-window changed: record the app and apply its per-app VI/EN default.
 pub(super) unsafe extern "system" fn win_event_proc(
@@ -41,8 +41,9 @@ pub(super) unsafe extern "system" fn win_event_proc(
     // costs — see `inject::send_plan`. Decided from the window's class first, so a
     // window whose process cannot be resolved still updates it rather than leaving
     // the previous app's answer standing.
+    let class = class_of_window(hwnd);
     let id = exe_of_window(hwnd);
-    inject::note_foreground(&class_of_window(hwnd), id.as_deref().unwrap_or_default());
+    inject::note_foreground(&class, id.as_deref().unwrap_or_default());
 
     let Some(id) = id else {
         return;
@@ -53,7 +54,11 @@ pub(super) unsafe extern "system" fn win_event_proc(
     // front of it any more (mirrors the mouse-click flush). Both directions: keys
     // typed into Funput's own windows compose in-process and never reach the engine.
     shell::clear();
-    if is_funput {
+    // Neither of these is somewhere a person is typing, so neither gets to say what
+    // language they are typing in. The shell matters most: the tray icon sits on the
+    // taskbar, so answering for `Shell_TrayWnd` would let a trip to Funput's own
+    // flyout undo the choice the user went there to make.
+    if is_funput || is_shell_surface(&class) {
         return;
     }
 
@@ -78,64 +83,4 @@ pub(super) unsafe extern "system" fn win_event_proc(
         // second one is still true. Keeps the tray icon and tooltip in sync.
         toggle::notify(shell::enabled());
     }
-}
-
-fn own_exe_id() -> &'static String {
-    OWN_EXE_ID.get_or_init(|| {
-        std::env::current_exe()
-            .ok()
-            .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_lowercase()))
-            .unwrap_or_else(|| "funput.exe".to_string())
-    })
-}
-
-/// A window's class name — what the toolkit that drew it calls itself, which is how
-/// [`inject::note_foreground`] recognizes a browser engine without knowing the
-/// browser. Empty when the window is gone or has no class, which reads as "not a
-/// browser" and is the safe answer.
-fn class_of_window(hwnd: HWND) -> String {
-    // Class names are capped at 256 characters by `RegisterClass`, so this cannot
-    // truncate one that matters.
-    let mut buf = [0u16; 257];
-    // SAFETY: The API receives a writable slice and handles invalid window handles.
-    let len = unsafe { GetClassNameW(hwnd, &mut buf) };
-    String::from_utf16_lossy(&buf[..len.max(0) as usize])
-}
-
-/// Resolve a window's owning process to its app id — the lowercased exe file name
-/// (e.g. "code.exe"), which is the key the per-app VI/EN memory uses.
-fn exe_of_window(hwnd: HWND) -> Option<String> {
-    if hwnd.0.is_null() {
-        return None;
-    }
-    let mut pid = 0u32;
-    // SAFETY: pid is writable; an invalid or expired window returns failure.
-    unsafe { GetWindowThreadProcessId(hwnd, Some(&mut pid)) };
-    if pid == 0 {
-        return None;
-    }
-    // SAFETY: Request query access only; failure is propagated without using a handle.
-    let handle = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) }.ok()?;
-
-    let mut buf = [0u16; 260];
-    let mut len = buf.len() as u32;
-    // SAFETY: handle is open and buf has the capacity provided in len.
-    let res = unsafe {
-        QueryFullProcessImageNameW(
-            handle,
-            PROCESS_NAME_WIN32,
-            PWSTR(buf.as_mut_ptr()),
-            &mut len,
-        )
-    };
-    // SAFETY: Release the owned process handle exactly once after its final use.
-    let _ = unsafe { CloseHandle(handle) };
-    res.ok()?;
-
-    let full = String::from_utf16_lossy(&buf[..len as usize]);
-    let file = full.rsplit(['\\', '/']).next().unwrap_or("");
-    if file.is_empty() {
-        return None;
-    }
-    Some(file.to_lowercase())
 }
