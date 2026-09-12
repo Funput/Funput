@@ -23,9 +23,13 @@
 //! whatever that platform does to get work off its UI thread. Those differ per
 //! platform by nature; nothing below does.
 //!
+//! - [`casing`] — the second axis: the transforms a window offers besides the
+//!   charset, and the one place either is applied.
 //! - [`text`] — a paragraph: what it becomes, and what it costs.
 //! - [`batch`] — a drop: what each file turned out to be.
 //! - [`write`] — the copies, written beside the originals and never over them.
+
+pub mod casing;
 
 mod batch;
 mod session;

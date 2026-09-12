@@ -13,4 +13,4 @@ workspace = true
 # Every decision here is expressed in `Charset` terms, and the charset names the
 # warnings quote come from `Charset::name()` — the one place they are written, so
 # a menu on Windows and a menu on Linux cannot drift apart.
-funput-core = { path = "../funput-core", features = ["charset"] }
+funput-core = { path = "../funput-core", features = ["charset", "textcase"] }

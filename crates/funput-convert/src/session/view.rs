@@ -7,9 +7,8 @@
 //!
 //! Charsets are indices; paths are names. Both for the same reason.
 
-use funput_core::charset;
-
 use crate::batch;
+use crate::casing;
 use crate::text;
 
 use super::{Session, at};
@@ -71,13 +70,20 @@ pub struct View {
     pub out_dir: String,
     /// How many files a charset was settled for, over the **whole** batch.
     pub ready: usize,
+    /// The transforms pressed so far, in order, as positions in `casing::ALL`.
+    /// Empty means the document is going out as it came in.
+    pub transforms: Vec<usize>,
+    /// The two switches, named so that **off is what a fresh window means** — which
+    /// is what lets this struct keep deriving `Default`.
+    pub keep_d: bool,
+    pub flatten_caps: bool,
     pub unreadable: Vec<Unreadable>,
 }
 
 pub(super) fn build(session: &Session) -> View {
     let target = at(session.target);
     let (text, rendered) = match session.conversion() {
-        Some((text, from, to)) => (text, Some(charset::render(&charset::read(text, from), to))),
+        Some((text, from, to)) => (text, Some(casing::render(text, from, &session.casing, to))),
         None => (session.text(), None),
     };
     let single = session.files.len() == 1;
@@ -102,6 +108,9 @@ pub(super) fn build(session: &Session) -> View {
         rows_total: session.files.len(),
         out_dir: batch::out_dir_label(&session.files),
         ready: batch::ready(&session.files),
+        transforms: session.casing.indices(),
+        keep_d: !session.casing.options().d_to_ascii,
+        flatten_caps: !session.casing.options().keep_all_caps,
         unreadable: session.unreadable.clone(),
     }
 }

@@ -20,11 +20,13 @@
 //! Charsets are **indices into [`charset::ALL`]** — see [`index`].
 
 mod act;
+mod casing;
 mod job;
 mod query;
 mod view;
 
 use crate::batch::Entry;
+use crate::casing::Casing;
 use crate::{at, clamp};
 
 pub use job::Job;
@@ -40,6 +42,7 @@ pub struct Session {
     pub(super) files: Vec<Entry>,
     pub(super) unreadable: Vec<Unreadable>,
     pub(super) window: (usize, usize),
+    pub(super) casing: Casing,
     view: View,
 }
 
@@ -60,6 +63,7 @@ impl Session {
             files: Vec::new(),
             unreadable: Vec::new(),
             window: (0, WINDOW),
+            casing: Casing::default(),
             view: View::default(),
         }
     }
@@ -69,6 +73,9 @@ impl Session {
     pub fn set_input(&mut self, text: String) {
         self.input = text;
         self.source = None;
+        // A new document is not the old one under a different name: the transforms
+        // pressed on the last paragraph belong to it, exactly as its charset did.
+        self.casing.clear();
     }
 
     /// Clamped on the way in, not on the way out: [`View::target`] is a position a
@@ -107,6 +114,7 @@ impl Session {
     pub fn adopt(&mut self, scan: crate::Scan) {
         self.input.clear();
         self.source = None;
+        self.casing.clear();
         self.files = scan.entries;
         self.unreadable = scan.unreadable;
         self.window = (0, WINDOW);
