@@ -216,3 +216,55 @@ fn the_work_a_shell_hands_off_can_leave_the_thread() {
     assert_send::<Scan>();
     assert_send::<Job>();
 }
+
+/// The second axis, driven the same way: a menu read by index, presses recorded as
+/// positions, and two switches that are plain booleans on the way across.
+#[test]
+fn a_host_can_drive_the_casing_axis_by_index() {
+    use funput_convert::casing;
+
+    // The menu a host builds: count, then a name per index. No `Transform` crosses.
+    let menu: Vec<String> = (0..casing::ALL.len())
+        .map(|index| read_text(casing::name(casing::at(index))))
+        .collect();
+    assert_eq!(menu.len(), casing::ALL.len());
+    assert!(menu.iter().all(|name| !name.is_empty()));
+
+    let position_of = |label: &str| menu.iter().position(|name| name == label).expect(label);
+
+    let mut session = Session::new();
+    session.set_input("GỬI VỀ TP. HCM".to_string());
+    session.pick_source(Some(0));
+    session.apply_transform(position_of("chữ thường"));
+    session.apply_transform(position_of("Viết Hoa Đầu Mỗi Từ"));
+    session.refresh();
+
+    // Read back the way a host reads every other list here: a count, then indices.
+    let applied: Vec<i32> = (0..session.view().transforms.len())
+        .map(|index| position(session.view().transforms.get(index).copied()))
+        .collect();
+    assert_eq!(
+        applied,
+        vec![
+            position(Some(position_of("chữ thường"))),
+            position(Some(position_of("Viết Hoa Đầu Mỗi Từ")))
+        ]
+    );
+    assert_eq!(read_text(&session.view().output_preview), "Gửi Về Tp. Hcm");
+    assert!(!session.view().keep_d && !session.view().flatten_caps);
+
+    // A press a host made up is answered rather than fatal, like every other index
+    // on this door: it clamps to the last menu entry.
+    session.apply_transform(usize::MAX);
+    session.refresh();
+    assert_eq!(
+        session.view().transforms.last().copied(),
+        Some(menu.len() - 1),
+        "a made-up position should clamp to the last entry, not panic"
+    );
+
+    session.clear_transforms();
+    session.refresh();
+    assert!(session.view().transforms.is_empty());
+    assert_eq!(read_text(&session.view().output_preview), "GỬI VỀ TP. HCM");
+}

@@ -146,6 +146,24 @@ typedef struct {
 #endif
 
 #if defined(FUNPUT_CONVERT)
+/**
+ * What the second axis is doing, as scalars.
+ */
+typedef struct {
+    /**
+     * How many transforms are applied. Read them with
+     * [`funput_convert_session_applied_transform`].
+     */
+    uintptr_t count;
+    /**
+     * Named for what it turns **on**, so a fresh session is all-false.
+     */
+    bool keep_d;
+    bool flatten_caps;
+} FunputConvertCasing;
+#endif
+
+#if defined(FUNPUT_CONVERT)
 typedef struct {
     uint8_t mode;
     uintptr_t target;
@@ -377,6 +395,83 @@ FunputConversion funput_charset_convert(const uint32_t *text,
  * `text` must point to at least `text_len` readable `u32` values, or be null.
  */
 int32_t funput_charset_detect(const uint32_t *text, uintptr_t text_len);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+/**
+ * Press the transform at `index` in the menu. Out of range clamps, as everywhere
+ * else a menu position crosses this door.
+ */
+void funput_convert_session_apply_transform(FunputConvertSession *session, uintptr_t index);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+/**
+ * Take off the last transform. A session with none is a no-op, not an error.
+ */
+void funput_convert_session_undo_transform(FunputConvertSession *session);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+/**
+ * Back to the document as it arrived.
+ */
+void funput_convert_session_clear_transforms(FunputConvertSession *session);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+/**
+ * Keep `đ` and `Đ` instead of writing `d` and `D` (bỏ dấu).
+ */
+void funput_convert_session_set_keep_d(FunputConvertSession *session, bool on);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+/**
+ * Also lowercase words that are already all-caps (title case).
+ */
+void funput_convert_session_set_flatten_caps(FunputConvertSession *session, bool on);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+/**
+ * The axis as of the last refresh. Null gives the all-false snapshot.
+ */
+FunputConvertCasing funput_convert_session_casing(const FunputConvertSession *session);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+/**
+ * The menu position of the `index`-th transform applied, in the order pressed, or
+ * [`FUNPUT_CONVERT_UNKNOWN`] when there is no such press.
+ */
+int32_t funput_convert_session_applied_transform(const FunputConvertSession *session,
+                                                 uintptr_t index);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+/**
+ * How many transforms there are. Valid indices run
+ * `0..funput_convert_transform_count()`.
+ */
+uintptr_t funput_convert_transform_count(void);
+#endif
+
+#if defined(FUNPUT_CONVERT)
+/**
+ * Write the label of the transform at `index` into `out` as UTF-32, returning its
+ * length in codepoints. An index out of range gives 0.
+ *
+ * The label comes from `funput-convert` so that three platforms' menus cannot drift
+ * apart, and it is interface text — Vietnamese, like the loss warning beside it.
+ *
+ * Sizing works as everywhere else on this door: the length comes back whether or
+ * not it fit, and nothing is written unless all of it fits.
+ *
+ * # Safety
+ * `out` must point to at least `cap` writable `u32` values, or be null.
+ */
+uintptr_t funput_convert_transform_name(uintptr_t index, uint32_t *out, uintptr_t cap);
 #endif
 
 #if defined(FUNPUT_CONVERT)
