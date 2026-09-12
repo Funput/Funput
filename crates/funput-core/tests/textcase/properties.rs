@@ -7,7 +7,12 @@ use proptest::prelude::*;
 /// Every transform there is. A wildcard is not available here — `Transform` is
 /// exhaustive on purpose — so a new variant makes this array a compile error until
 /// somebody decides which properties it has to satisfy.
-const ALL: [Transform; 3] = [Transform::Upper, Transform::Lower, Transform::NoDiacritics];
+const ALL: [Transform; 4] = [
+    Transform::Upper,
+    Transform::Lower,
+    Transform::NoDiacritics,
+    Transform::Sentence,
+];
 
 /// Vietnamese as it is actually stored: precomposed letters, the stroke, the eight
 /// combining marks, and the punctuation that decides a sentence boundary. A plain
@@ -54,6 +59,24 @@ proptest! {
                 apply(&once, transform, Options::default()),
                 once.clone(),
                 "{:?} is not idempotent on {:?}",
+                transform,
+                text
+            );
+        }
+    }
+
+    /// The case transforms change only case, so lowercasing the result gives the
+    /// same text as lowercasing the input. This is the property that catches a
+    /// scanner losing, duplicating or reordering a character while it looks for a
+    /// sentence boundary — a diff in the output alone would not say which.
+    #[test]
+    fn the_case_transforms_change_only_case(text in VIETNAMESE) {
+        for transform in [Transform::Upper, Transform::Lower, Transform::Sentence] {
+            let out = apply(&text, transform, Options::default());
+            prop_assert_eq!(
+                out.to_lowercase(),
+                text.to_lowercase(),
+                "{:?} changed more than case in {:?}",
                 transform,
                 text
             );
