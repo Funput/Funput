@@ -9,6 +9,7 @@
 
 use funput_core::charset;
 
+use crate::casing;
 use crate::index_of;
 
 use super::Session;
@@ -39,7 +40,10 @@ pub(super) fn rows(session: &Session, target: charset::Charset) -> Vec<Row> {
             charset: entry.charset.and_then(index_of),
             note: match entry.charset {
                 Some(from) => {
-                    let lost = charset::render(&charset::read(&entry.text, from), target)
+                    // Through `casing::render`, so the count is what this file will
+                    // actually cost: UPPERCASE makes letters TCVN3 has no room for,
+                    // and a note taken before the transform would understate it.
+                    let lost = casing::render(&entry.text, from, &session.casing, target)
                         .cost
                         .unrepresentable;
                     if lost > 0 {

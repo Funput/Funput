@@ -8,18 +8,20 @@
 use funput_core::charset::Charset;
 
 use crate::batch::{self, Entry, Outcome};
+use crate::casing::Casing;
 
 use super::{Session, at};
 
 /// A batch, ready to be written on whatever thread the shell picks.
 pub struct Job {
     entries: Vec<Entry>,
+    casing: Casing,
     target: Charset,
 }
 
 impl Job {
     pub fn run(self) -> Outcome {
-        batch::write_all(&self.entries, self.target)
+        batch::write_all(&self.entries, &self.casing, self.target)
     }
 }
 
@@ -28,6 +30,7 @@ impl Session {
     pub fn batch_job(&self) -> Job {
         Job {
             entries: self.files.clone(),
+            casing: self.casing.clone(),
             target: at(self.target),
         }
     }
