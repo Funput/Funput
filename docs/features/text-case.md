@@ -188,7 +188,7 @@ không dùng đường cảnh báo.
 | `funput-core::textcase` | Năm phép biến đổi thuần, không phụ thuộc, không alloc ngoài chuỗi kết quả, và không bảng dữ liệu mới nào. Sau cargo feature riêng, **mặc định tắt** như `charset` — iOS/Android không bao giờ biên dịch nó |
 | `funput-convert` | Trục thứ hai của `Session`: "đổi bảng mã" và "đổi kiểu chữ" dùng chung một `Session`, một `View`, một đường cảnh báo |
 | Ba shell | Chỉ thanh, nút, và preview. Không quyết định gì — đúng hợp đồng `refresh()` / `view()` hiện tại |
-| `funput-cli` | `funput case --upper|--lower|--no-diacritics|--sentence|--title` đọc stdin. Rẻ, và là bề mặt test tốt nhất |
+| `funput-cli` | `funput case upper\|lower\|no-diacritics\|sentence\|title` đọc stdin; ghép nhiều phép bằng dấu phẩy (`lower,title`), và hai công tắc là `--keep-d` / `--flatten-caps`. Rẻ, và là bề mặt test tốt nhất |
 
 **Vì sao mở rộng `Session` chứ không dựng session thứ hai.** Lý do `funput-convert`
 tồn tại — ghi ở đầu `lib.rs` — là để câu chữ cảnh báo, quy tắc `vanban (2).txt` và
@@ -367,5 +367,5 @@ không đoán trước.
    cho văn bản khác. **Hoàn tác** gỡ đúng phép cuối; **Bỏ hết** về nguyên bản.
 6. Dán chuỗi không đoán được bảng mã (`hello world`): cả thanh phải mờ và không bấm
    được.
-7. `echo "Tiếng Việt" | funput case --no-diacritics` cho `Tieng Viet` — CLI và ba cửa
+7. `echo "Tiếng Việt" | funput case no-diacritics` cho `Tieng Viet` — CLI và ba cửa
    sổ gọi cùng một hàm, nên lệch nhau ở đây là lỗi nối dây của shell.
