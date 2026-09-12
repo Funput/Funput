@@ -47,6 +47,7 @@
 | 🌏 **Tự tắt khi đổi bàn phím** | Chuyển sang EN khi bạn dùng bàn phím tiếng Nhật, Hàn, Trung… |
 | ✂️ **Gõ tắt** | Bảng viết tắt tự bung, khớp cả hoa lẫn thường; nhập được bảng gõ tắt UniKey |
 | 🔄 **Chuyển mã** | Đổi qua lại giữa Unicode dựng sẵn, Unicode tổ hợp, TCVN3 (ABC) và VNI-Windows — dán văn bản hoặc chuyển cả tệp |
+| 🔠 **Đổi kiểu chữ** | CHỮ HOA · chữ thường · bỏ dấu · viết hoa đầu câu · Viết Hoa Đầu Mỗi Từ, cộng dồn được, ngay trong cửa sổ Chuyển mã |
 | 💾 **Xuất / nhập cấu hình** | Mang toàn bộ tuỳ chọn và gõ tắt sang máy khác bằng một tệp |
 | 🚀 **Khởi động cùng Windows** | Tuỳ chọn, ghi vào registry `HKCU\…\Run` |
 

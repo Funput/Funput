@@ -2,14 +2,17 @@
 
 ## Trạng thái
 
-**Tầng core đã xong**: `funput_core::textcase` sau cargo feature `textcase`, cả năm
-phép, kèm corpus và property test, và **`funput case`** trong CLI đã gọi tới nó. Còn
-lại: `funput-convert` và ba cửa sổ.
+**Còn lại một cửa sổ.** `funput_core::textcase` sau cargo feature `textcase` có cả
+năm phép, kèm corpus và property test; `funput-convert` mang trục thứ hai của
+`Session`; `funput-ffi` mở cửa C cho nó; và **`funput case`** trong CLI, **macOS**
+(`ConvertCasingBar.swift`) cùng **Windows** (`ui/convert/casing.slint`) đều đã gọi
+tới. Chưa nối: cửa sổ GTK trên Linux — mọi thứ nó cần đã có sẵn trong `Session` và
+`View`, đúng như hai shell kia đã dùng.
 
 Tài liệu này chốt mô hình trước khi có code, như [charset.md](charset.md) đã làm, và là
 nơi mọi quyết định thiết kế sống — mỗi thay đổi cập nhật lại nó trong cùng PR.
 
-Phạm vi **V1 đã chốt: một tab trong cửa sổ Chuyển mã**, ba nền tảng desktop, cộng
+Phạm vi **V1 đã chốt: một thanh trong cửa sổ Chuyển mã**, ba nền tảng desktop, cộng
 `funput case` trong CLI. Không hotkey, không đụng vùng bôi đen, không nghe clipboard. Những thứ đó nằm ở
 [Lộ trình sau V1](#lộ-trình-sau-v1) và có tài liệu riêng khi tới lượt.
 
@@ -80,8 +83,9 @@ thứ hai của cùng câu trả lời, và bản thứ hai là bản sẽ lệc
 cách lọc tám dấu rời, danh sách lấy từ `unicode::combining`.
 
 **Tuỳ chọn `đ → d`**: mặc định **bật**. Người cần giữ `đ` (đặt tên file cho hệ thống
-chấp nhận nó, hoặc chỉ muốn bỏ thanh) tắt được trong cùng tab. Đây là tuỳ chọn duy
-nhất của phép này.
+chấp nhận nó, hoặc chỉ muốn bỏ thanh) tắt được bằng công tắc **Giữ đ/Đ** trên cùng
+thanh — công tắc đặt tên theo thứ nó bật lên, nên mặc định của phép hiện ra ở UI là
+công tắc **tắt**. Đây là tuỳ chọn duy nhất của phép này.
 
 Hai điều phép này **không làm được**, và đều là bản chất chứ không phải thiếu sót.
 `é` chỉ có một code point dù người gõ nó cho tiếng Việt hay tiếng Pháp, nên `café`
@@ -128,8 +132,9 @@ bàn phím tiếng Việt   →  Bàn Phím Tiếng Việt
 gửi về TP. HCM        →  Gửi Về TP. HCM        (không phải "Tp. Hcm")
 ```
 
-Ngoại lệ ALL-CAPS bật mặc định, tắt được. Từ một chữ cái (`A`) coi như ALL-CAPS —
-vô hại, vì kết quả hai đường như nhau.
+Ngoại lệ ALL-CAPS bật mặc định, tắt được bằng công tắc **Hạ chữ viết hoa** — đặt tên
+theo thứ nó bật lên, nên cũng mặc định **tắt** như công tắc kia. Từ một chữ cái (`A`)
+coi như ALL-CAPS — vô hại, vì kết quả hai đường như nhau.
 
 Ranh giới từ là **khoảng trắng hoặc dấu câu ASCII**; `bàn-phím` thành `Bàn-Phím`,
 `e-mail` thành `E-Mail` — quy ước của mọi công cụ cùng loại. Dấu nháy đơn là ngoại lệ,
@@ -154,7 +159,7 @@ quy ước title case như tiếng Anh, và đoán sẽ sai nhiều hơn đúng.
 
 ## Bảng mã cũ là ca biên thật sự
 
-Cửa sổ Chuyển mã làm việc với TCVN3 và VNI-Windows, nên tab mới **bắt buộc** phải trả
+Cửa sổ Chuyển mã làm việc với TCVN3 và VNI-Windows, nên trục mới **bắt buộc** phải trả
 lời câu hỏi: viết hoa một đoạn TCVN3 thì sao?
 
 Viết hoa từng `char` của chuỗi TCVN3 là **sai**, vì `char` ở đó không phải chữ cái —
@@ -182,7 +187,7 @@ không dùng đường cảnh báo.
 | --- | --- |
 | `funput-core::textcase` | Năm phép biến đổi thuần, không phụ thuộc, không alloc ngoài chuỗi kết quả, và không bảng dữ liệu mới nào. Sau cargo feature riêng, **mặc định tắt** như `charset` — iOS/Android không bao giờ biên dịch nó |
 | `funput-convert` | Trục thứ hai của `Session`: "đổi bảng mã" và "đổi kiểu chữ" dùng chung một `Session`, một `View`, một đường cảnh báo |
-| Ba shell | Chỉ tab, nút, và preview. Không quyết định gì — đúng hợp đồng `refresh()` / `view()` hiện tại |
+| Ba shell | Chỉ thanh, nút, và preview. Không quyết định gì — đúng hợp đồng `refresh()` / `view()` hiện tại |
 | `funput-cli` | `funput case --upper|--lower|--no-diacritics|--sentence|--title` đọc stdin. Rẻ, và là bề mặt test tốt nhất |
 
 **Vì sao mở rộng `Session` chứ không dựng session thứ hai.** Lý do `funput-convert`
@@ -228,15 +233,34 @@ Hai chi tiết bắt buộc khi hiện thực:
 
 ## Giao diện V1
 
-Tab thứ hai trong cửa sổ Chuyển mã, cùng vùng dán và cùng cặp khung trước/sau:
+**Một thanh luôn hiện, không phải một tab.** Đã cân nhắc tab và **loại**: đổi bảng mã
+và đổi kiểu chữ là hai lựa chọn về cùng một văn bản và chúng **cộng dồn** — một đoạn
+đọc ra từ TCVN3 vẫn viết hoa đầu mỗi từ được — nên cả hai ở trên màn hình cùng lúc.
+Một tab sẽ nói rằng người dùng phải chọn một trong hai.
 
-- Năm nút phép biến đổi (chọn một), áp dụng ngay lên preview.
-- Hai công tắc: **đ → d** (mặc định bật) và **giữ nguyên từ viết HOA** (mặc định bật),
-  chỉ hiện khi liên quan tới phép đang chọn.
+Thanh nằm ngay dưới hàng chọn bảng mã ở hình dạng văn bản, và dưới header ở hình dạng
+batch; hình dạng rỗng (vùng thả tệp) không có nó. Cùng vùng dán và cùng cặp khung
+trước/sau:
+
+- Năm nút phép biến đổi, áp dụng ngay lên preview. Phép đang áp có **nền accent và
+  dấu tick** — chỉ đổi màu là tín hiệu mà người mù màu không nhận được.
+- Dòng **`Đang áp: chữ thường → Viết Hoa Đầu Mỗi Từ`** viết rõ thứ tự, vì thứ tự ra
+  văn bản khác nhau. Chỉ hiện khi có phép đang áp.
+- Hai công tắc, đặt tên theo thứ chúng **bật lên** nên cả hai **mặc định tắt**:
+  **Giữ đ/Đ** (tắt = `đ → d`) và **Hạ chữ viết hoa** (tắt = giữ nguyên từ viết HOA).
+  Mỗi công tắc chỉ hiện **khi phép sở hữu nó đang được áp** — ngoài lúc đó nó không có
+  gì để nói, và hiện ở đó là cách dạy phép nào sở hữu nó.
 - Dòng cảnh báo dùng chung với Chuyển mã, chỉ hiện khi encode ngược mất chữ.
-- Nút **Sao chép kết quả**, và **Hoàn tác** trả về nguyên bản.
+- Nút **Hoàn tác** gỡ **phép cuối cùng** chứ không phải tất cả — bấm nhầm phép thứ ba
+  không nên mất hai phép trước nó — và **Bỏ hết** trả về nguyên bản.
 - Phép biến đổi **cộng dồn được**: bấm "chữ thường" rồi "Viết Hoa Đầu Mỗi Từ" cho kết
-  quả của cả hai. Nguyên bản luôn giữ để hoàn tác về một bước.
+  quả của cả hai. Bấm lại đúng phép đang ở đỉnh là **không làm gì**, vì mọi phép đều
+  idempotent nên lần bấm thứ hai không đổi được văn bản. Nguyên bản luôn giữ: danh
+  sách phép được phát lại từ đầu ở mỗi lần dựng preview, không bao giờ ghi đè lên
+  đoạn người dùng đã dán.
+- Thanh **mờ và không bấm được** khi chưa có bảng mã nào giải thích được văn bản: văn
+  bản đó không được chuyển mã, và cũng không được đổi kiểu chữ — một quy tắc, không
+  phải hai. Batch mang bảng mã theo từng dòng nên không bao giờ bị chặn.
 
 Một file thả vào vẫn rơi vào `Mode::Text` như hiện tại. Nhiều file là batch —
 **không thuộc V1**, nhưng bảng `Row` không cần đổi khi tới lượt.
@@ -278,7 +302,7 @@ Windows), và không đụng clipboard ở đó.
 
 ## Cấu hình
 
-V1 **không thêm khoá nào vào file cấu hình**. Hai công tắc của tab là lựa chọn của
+V1 **không thêm khoá nào vào file cấu hình**. Hai công tắc của thanh là lựa chọn của
 phiên làm việc, lưu cùng chỗ cửa sổ Chuyển mã lưu trạng thái của nó.
 
 Từ V3 trở đi mới cần hotkey, và hotkey là khối **theo từng nền tảng** trong
@@ -303,12 +327,18 @@ không đoán trước.
 
 ### Kiểm tra thủ công
 
-1. Mở Chuyển mã → tab Kiểu chữ, dán `xin chào. hôm nay trời đẹp.` rồi thử lần lượt
+1. Mở Chuyển mã → thanh Kiểu chữ, dán `xin chào. hôm nay trời đẹp.` rồi thử lần lượt
    năm nút; kiểm tra preview trước/sau khớp với bảng ở đầu tài liệu.
 2. Dán đoạn có `TP. HCM` và một dòng xuống dòng không chấm câu: kiểm tra ngoại lệ
    ALL-CAPS và ranh giới dòng.
-3. Tắt công tắc `đ → d`, bỏ dấu `đẹp` → `đep`.
-4. Dán một đoạn TCVN3 (copy từ Word font `.VnTime`), bấm CHỮ HOA: phải thấy dòng cảnh
-   báo nêu tên ký tự sẽ mất.
-5. Bấm chồng hai phép rồi Hoàn tác: phải về đúng nguyên bản, một bước.
-6. `echo "Tiếng Việt" | funput case --no-diacritics` cho `Tieng Viet`.
+3. Bật công tắc **Giữ đ/Đ**, bỏ dấu `đẹp` → `đep`. Nó chỉ hiện khi `Bỏ dấu tiếng Việt`
+   đang áp; **Hạ chữ viết hoa** cũng vậy với `Viết Hoa Đầu Mỗi Từ`.
+4. Đặt đích TCVN3 rồi bấm CHỮ HOA: phải thấy dòng cảnh báo **nêu tên** ký tự sẽ mất —
+   phép biến đổi chạy trước khi tính giá, nên chữ hoa TCVN3 không có chỗ mới lộ ra ở
+   đây. Ở hình dạng batch, cột `N chữ sẽ mất` của từng dòng phải đổi theo.
+5. Bấm chồng hai phép: dòng `Đang áp` phải viết đúng thứ tự đã bấm, và đổi thứ tự phải
+   cho văn bản khác. **Hoàn tác** gỡ đúng phép cuối; **Bỏ hết** về nguyên bản.
+6. Dán chuỗi không đoán được bảng mã (`hello world`): cả thanh phải mờ và không bấm
+   được.
+7. `echo "Tiếng Việt" | funput case --no-diacritics` cho `Tieng Viet` — CLI và ba cửa
+   sổ gọi cùng một hàm, nên lệch nhau ở đây là lỗi nối dây của shell.

@@ -1,0 +1,184 @@
+// The second axis: five transforms, the order they were pressed in, and the two
+// switches that belong to them.
+//
+// Not a tab. Changing a charset and changing the case are two choices about one
+// document and they compose — a paragraph can be read out of TCVN3 *and* put in
+// title case — so both stay on screen at once. A tab would say the user has to
+// pick one.
+//
+// State arrives through a global rather than through properties, because this bar
+// appears in two of the window's three shapes (`text` and `files`) and each of them
+// is a component of its own. Passing seven properties and five callbacks down two
+// separate paths would put the same wiring in `window.slint` twice; a global is the
+// shape `Compose` already uses for the same reason.
+//
+// No transform is named here. The labels come from `funput_convert::casing::name`
+// so that three platforms' menus cannot drift apart, and a chip's position in the
+// list is its identity — implementing a sixth transform in core lengthens this row
+// without a line changing here.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, GhostButton, AccentSwitch } from "../theme/mod.slint";
+
+export struct TransformChip {
+    // From `casing::name`, never written in this package.
+    name: string,
+    applied: bool,
+}
+
+export global Casing {
+    // The menu in core's order; the index is the identity of a transform.
+    in property <[TransformChip]> transforms;
+    // "Đang áp: chữ thường → Viết Hoa Đầu Mỗi Từ", or empty when nothing is applied.
+    in property <string> applied-line;
+    // False while no charset explains the document: it is not being converted, and
+    // core does not transform it either.
+    in property <bool> enabled;
+    in property <bool> shows-keep-d;
+    in property <bool> keep-d;
+    in property <bool> shows-flatten-caps;
+    in property <bool> flatten-caps;
+
+    callback apply(int);
+    callback undo();
+    callback clear();
+    callback set-keep-d(bool);
+    callback set-flatten-caps(bool);
+}
+
+// A press appends, and pressing the one already on top is a no-op in core — so this
+// is a button rather than a checkbox. The tick is the non-colour cue: the accent
+// fill alone would leave the state invisible to a colour-blind user.
+component Chip inherits Rectangle {
+    in property <string> label;
+    in property <bool> applied;
+    in property <bool> enabled;
+    callback clicked;
+
+    height: 28px;
+    border-radius: self.height / 2;
+    background: root.applied
+        ? Theme.accent
+        : (touch.has-hover && root.enabled ? Theme.nav-hover : transparent);
+    border-width: root.applied ? 0px : 1px;
+    border-color: Theme.divider;
+    animate background { duration: 120ms; easing: ease-out; }
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 6px;
+        if root.applied: VerticalLayout {
+            alignment: center;
+            Image {
+                source: @image-url("../icons/status/check.svg");
+                colorize: Theme.accent-text;
+                width: 11px;
+                height: 11px;
+            }
+        }
+        Text {
+            text: root.label;
+            color: root.applied ? Theme.accent-text : Palette.foreground;
+            font-size: Theme.font-caption;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            if root.enabled {
+                root.clicked();
+            }
+        }
+    }
+}
+
+export component ConvertCasingBar inherits VerticalLayout {
+    spacing: Theme.sp-sm;
+
+    HorizontalLayout {
+        spacing: Theme.sp-sm;
+        opacity: Casing.enabled ? 1 : 0.45;
+
+        VerticalLayout {
+            alignment: center;
+            Text {
+                text: "Kiểu chữ";
+                font-size: Theme.font-body;
+                color: Theme.subtle;
+            }
+        }
+        for chip[i] in Casing.transforms: Chip {
+            label: chip.name;
+            applied: chip.applied;
+            enabled: Casing.enabled;
+            clicked => { Casing.apply(i); }
+        }
+        // The row is as wide as its chips; anything left over is empty space rather
+        // than five chips stretched across the window.
+        Rectangle { horizontal-stretch: 1; }
+    }
+
+    // The order is the whole point — `chữ thường → Viết Hoa Đầu Mỗi Từ` is a
+    // different document from the same two reversed — so it is spelled out rather
+    // than left for the user to infer from which chips are lit. Shown only when
+    // there is something to say, the way the loss line is.
+    if Casing.applied-line != "": HorizontalLayout {
+        spacing: Theme.sp-md;
+
+        VerticalLayout {
+            alignment: center;
+            horizontal-stretch: 1;
+            Text {
+                text: Casing.applied-line;
+                font-size: Theme.font-caption;
+                color: Theme.subtle;
+                overflow: elide;
+            }
+        }
+        // A switch appears only while the transform it belongs to is applied: it has
+        // nothing to say otherwise, and showing it there teaches which one owns it.
+        if Casing.shows-keep-d: VerticalLayout {
+            alignment: center;
+            Text {
+                text: "Giữ đ/Đ";
+                font-size: Theme.font-caption;
+                color: Theme.subtle;
+            }
+        }
+        if Casing.shows-keep-d: VerticalLayout {
+            alignment: center;
+            AccentSwitch {
+                checked: Casing.keep-d;
+                toggled => { Casing.set-keep-d(self.checked); }
+            }
+        }
+        if Casing.shows-flatten-caps: VerticalLayout {
+            alignment: center;
+            Text {
+                text: "Hạ chữ viết hoa";
+                font-size: Theme.font-caption;
+                color: Theme.subtle;
+            }
+        }
+        if Casing.shows-flatten-caps: VerticalLayout {
+            alignment: center;
+            AccentSwitch {
+                checked: Casing.flatten-caps;
+                toggled => { Casing.set-flatten-caps(self.checked); }
+            }
+        }
+        // Undo takes off the last transform rather than all of them: pressing a
+        // third one by mistake should not cost the two before it.
+        GhostButton {
+            text: "Hoàn tác";
+            clicked => { Casing.undo(); }
+        }
+        GhostButton {
+            text: "Bỏ hết";
+            clicked => { Casing.clear(); }
+        }
+    }
+}
