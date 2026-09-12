@@ -2,12 +2,12 @@
 
 ## Trạng thái
 
-**Còn lại một cửa sổ.** `funput_core::textcase` sau cargo feature `textcase` có cả
-năm phép, kèm corpus và property test; `funput-convert` mang trục thứ hai của
-`Session`; `funput-ffi` mở cửa C cho nó; và **`funput case`** trong CLI, **macOS**
-(`ConvertCasingBar.swift`) cùng **Windows** (`ui/convert/casing.slint`) đều đã gọi
-tới. Chưa nối: cửa sổ GTK trên Linux — mọi thứ nó cần đã có sẵn trong `Session` và
-`View`, đúng như hai shell kia đã dùng.
+**V1 đã xong.** `funput_core::textcase` sau cargo feature `textcase` có cả năm phép,
+kèm corpus và property test; `funput-convert` mang trục thứ hai của `Session`;
+`funput-ffi` mở cửa C cho nó; và cả bốn bề mặt đều đã gọi tới: **`funput case`** trong
+CLI, **macOS** (`ConvertCasingBar.swift`), **Windows** (`ui/convert/casing.slint`) và
+**Linux** (`settings-gtk/src/convert/ui/casing.rs`). Không shell nào tự quyết định gì
+— cả ba đọc cùng `View` và gọi cùng `Session`.
 
 Tài liệu này chốt mô hình trước khi có code, như [charset.md](charset.md) đã làm, và là
 nơi mọi quyết định thiết kế sống — mỗi thay đổi cập nhật lại nó trong cùng PR.
@@ -249,7 +249,10 @@ trước/sau:
 - Hai công tắc, đặt tên theo thứ chúng **bật lên** nên cả hai **mặc định tắt**:
   **Giữ đ/Đ** (tắt = `đ → d`) và **Hạ chữ viết hoa** (tắt = giữ nguyên từ viết HOA).
   Mỗi công tắc chỉ hiện **khi phép sở hữu nó đang được áp** — ngoài lúc đó nó không có
-  gì để nói, và hiện ở đó là cách dạy phép nào sở hữu nó.
+  gì để nói, và hiện ở đó là cách dạy phép nào sở hữu nó. Trên GTK là `gtk::Switch`
+  kèm nhãn, không phải `adw::SwitchRow`: `SwitchRow` là một `ActionRow`, đặt vào thanh
+  ngang sẽ ra một hàng full-width có nền riêng. Giá phải trả là công tắc trần không có
+  tên cho screen reader, nên mỗi cái được trỏ về nhãn của nó bằng `LabelledBy`.
 - Dòng cảnh báo dùng chung với Chuyển mã, chỉ hiện khi encode ngược mất chữ.
 - Nút **Hoàn tác** gỡ **phép cuối cùng** chứ không phải tất cả — bấm nhầm phép thứ ba
   không nên mất hai phép trước nó — và **Bỏ hết** trả về nguyên bản.
@@ -264,6 +267,30 @@ trước/sau:
 
 Một file thả vào vẫn rơi vào `Mode::Text` như hiện tại. Nhiều file là batch —
 **không thuộc V1**, nhưng bảng `Row` không cần đổi khi tới lượt.
+
+### Ba chỗ mỗi shell tự quyết, và đã quyết khác nhau
+
+Hợp đồng ở trên là chung; cách vẽ ra thì theo idiom của nền tảng, và ba chỗ dưới đây
+là nơi ba shell không giống nhau. Ghi lại để lần sau không ai "sửa" chúng cho khớp.
+
+- **Hình dạng chip.** macOS dùng capsule `glassEffect`, Windows vẽ capsule 28px trong
+  Slint. GTK dùng **nút thường trong `gtk::FlowBox`**, không dùng class `pill` của
+  libadwaita: `.pill` là `padding: 10px 32px`, và năm nhãn kèm padding đó vượt cả
+  `default_width` 880 lẫn `width_request` 640 của cửa sổ — GTK nâng minimum của cửa sổ
+  cho vừa con nó, nên capsule sẽ khiến Chuyển mã không co lại được. Đo được: thanh có
+  min 496px, natural 778px, nên vừa một hàng ở kích thước mặc định và xuống dòng khi
+  người dùng thu nhỏ. Mỗi chip `halign: Start` để một chip không đổi kích thước tuỳ
+  theo hàng có xuống dòng hay chưa. `adw::WrapBox` là container đúng hơn nhưng có từ
+  libadwaita 1.7, còn crate nhắm 1.5.
+- **Dấu tick.** GTK dùng `object-select-symbolic`, vì nó nằm trong chính gresource của
+  GTK4 lẫn theme Adwaita hệ thống; `check-plain-symbolic` và `emblem-ok-symbolic`
+  không có trong Adwaita trên 24.04 và sẽ ra ô ảnh thiếu.
+- **Thanh lúc batch đang chạy.** macOS tắt thanh (`!isBusy && …`); Windows và Linux để
+  nguyên, đúng câu chữ ở trên — chỉ tắt khi chưa đoán được bảng mã. Để nguyên là an
+  toàn vì `Session::batch_job` chụp `casing` trước khi việc rời luồng, nên phép bấm
+  giữa lúc chạy không đổi được file đang ghi; giá phải trả thuần hiển thị là cột
+  `N chữ sẽ mất` tính lại theo phép mà job đang chạy không có. Đây là lệch thật giữa
+  ba shell, không phải lỗi của shell nào.
 
 ## Lộ trình sau V1
 
