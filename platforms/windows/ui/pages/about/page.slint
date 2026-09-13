@@ -9,7 +9,6 @@ export component AboutPage inherits VerticalLayout {
     in property <string> update-state: "idle";
     in property <string> update-version;
     in property <string> update-message;
-    in property <bool> store-managed: false;
     callback open-link(string);
     callback check-update();
     callback install-update();
@@ -27,7 +26,6 @@ export component AboutPage inherits VerticalLayout {
         update-state: root.update-state;
         update-version: root.update-version;
         update-message: root.update-message;
-        store-managed: root.store-managed;
         check-update => { root.check-update(); }
         install-update => { root.install-update(); }
         relaunch-now => { root.relaunch-now(); }

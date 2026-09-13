@@ -18,7 +18,7 @@ static PENDING_UPDATE: Mutex<Option<Manifest>> = Mutex::new(None);
 /// `checking` → `available`/`uptodate`/`error`.
 pub fn check_for_updates() {
     if packaged::is_packaged() {
-        set_update_ui("error", "", STORE_UPDATE_MESSAGE);
+        set_update_ui(packaged::STORE_UPDATE_STATE, "", STORE_UPDATE_MESSAGE);
         return;
     }
     set_update_ui("checking", "", "");

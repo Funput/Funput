@@ -39,7 +39,6 @@ export component SettingsWindow inherits Window {
     in property <string> update-state: "idle";
     in property <string> update-version;
     in property <string> update-message;
-    in property <bool> store-managed: false;
     in-out property <bool> notice-open;
     in property <string> notice-title;
     in property <string> notice-body;
@@ -116,7 +115,6 @@ export component SettingsWindow inherits Window {
             update-state: root.update-state;
             update-version: root.update-version;
             update-message: root.update-message;
-            store-managed: root.store-managed;
             pick-method(v) => { root.pick-method(v); }
             pick-tone(v) => { root.pick-tone(v); }
             pick-hotkey(v) => { root.pick-hotkey(v); }

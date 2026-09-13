@@ -100,11 +100,15 @@ pub(super) fn populate(window: &SettingsWindow) {
     window.set_auto_english_layout(settings.auto_english_on_foreign_layout);
     window.set_launch_at_login(settings.launch_at_login);
     window.set_version(env!("CARGO_PKG_VERSION").into());
-    window.set_update_state("idle".into());
+    // A Store build parks the About pane in `store`: message only, no actions.
+    let (state, message) = if packaged::is_packaged() {
+        (packaged::STORE_UPDATE_STATE, STORE_UPDATE_MESSAGE)
+    } else {
+        ("idle", "")
+    };
+    window.set_update_state(state.into());
     window.set_update_version("".into());
-    let store = packaged::is_packaged();
-    window.set_store_managed(store);
-    window.set_update_message(if store { STORE_UPDATE_MESSAGE } else { "" }.into());
+    window.set_update_message(message.into());
     window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
     window.set_shortcuts_enabled(settings.shortcuts_enabled);
     window.set_shortcut_smart_case(settings.shortcut_smart_case);

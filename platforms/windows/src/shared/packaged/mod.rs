@@ -3,9 +3,14 @@
 //! A packaged install lives under `WindowsApps` (read-only). The portable
 //! `.exe` must keep writing next to itself, swapping updates, and using
 //! `HKCU\…\Run`; those all fail or violate Store policy when packaged.
+//! [`startup_task`] is the packaged replacement for that Run key.
+
+pub mod startup_task;
 
 /// About-pane copy when the Store owns updates. Vietnamese: the Settings UI is.
 pub const STORE_UPDATE_MESSAGE: &str = "Cập nhật qua Microsoft Store.";
+/// `update-state` that tells `about/update.slint` to hide the GitHub actions.
+pub const STORE_UPDATE_STATE: &str = "store";
 
 /// `GetCurrentPackageFullName` when this process has no package identity.
 const APPMODEL_ERROR_NO_PACKAGE: u32 = 15700;
@@ -63,6 +68,12 @@ mod tests {
     fn unknown_status_stays_portable() {
         assert!(!packaged_from_status(5));
         assert!(!packaged_from_status(u32::MAX));
+    }
+
+    #[test]
+    fn store_update_state_is_the_one_the_about_pane_hides_actions_for() {
+        let slint = include_str!("../../../ui/pages/about/update.slint");
+        assert!(slint.contains(&format!("update-state != \"{STORE_UPDATE_STATE}\"")));
     }
 
     #[test]

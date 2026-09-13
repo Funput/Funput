@@ -100,7 +100,7 @@ pub(super) fn wire(window: &SettingsWindow) {
 
 /// Raise the in-window notice. `danger` is for a failure the user has to read, not
 /// a summary they can wave away.
-fn notice(window: &SettingsWindow, title: &str, body: &str, danger: bool) {
+pub(super) fn notice(window: &SettingsWindow, title: &str, body: &str, danger: bool) {
     window.set_notice_title(title.into());
     window.set_notice_body(body.into());
     window.set_notice_danger(danger);

@@ -16,5 +16,4 @@ pub mod dark_mode;
 pub mod packaged;
 pub mod settings_path;
 pub mod shell;
-pub mod startup_task;
 pub mod update;

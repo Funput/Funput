@@ -4,6 +4,7 @@ use slint::ComponentHandle;
 
 use crate::SettingsWindow;
 use crate::shared::commands;
+use crate::shared::packaged::startup_task;
 use crate::ui::recorder;
 use funput_config::{FlipHotkey, Hotkey, Method, ToneStyle};
 
@@ -92,7 +93,21 @@ pub(super) fn wire(window: &SettingsWindow) {
     window.on_set_shortcuts_enabled(commands::set_shortcuts_enabled);
     window.on_set_shortcut_smart_case(commands::set_shortcut_smart_case);
     window.on_set_shortcuts_in_english(commands::set_shortcuts_in_english);
-    window.on_set_launch(commands::set_launch_at_login);
+
+    // A Store build's startup task can be held off (or on) by the user or an
+    // organization; put the switch back and say where to change it.
+    let weak = window.as_weak();
+    window.on_set_launch(move |on| {
+        let effective = commands::set_launch_at_login(on);
+        if effective == on {
+            return;
+        }
+        if let Some(window) = weak.upgrade() {
+            window.set_launch_at_login(effective);
+            let (title, body) = startup_task::refusal(on);
+            config::notice(&window, title, body, false);
+        }
+    });
 
     let weak = window.as_weak();
     window.on_set_enabled(move |on| {

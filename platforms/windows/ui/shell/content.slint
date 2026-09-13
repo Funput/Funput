@@ -35,7 +35,6 @@ export component SettingsContent inherits ScrollView {
     in property <string> update-state: "idle";
     in property <string> update-version;
     in property <string> update-message;
-    in property <bool> store-managed: false;
 
     callback pick-method(string);
     callback pick-tone(string);
@@ -138,7 +137,6 @@ export component SettingsContent inherits ScrollView {
                 update-state: root.update-state;
                 update-version: root.update-version;
                 update-message: root.update-message;
-                store-managed: root.store-managed;
                 open-link(url) => { root.open-link(url); }
                 check-update() => { root.check-update(); }
                 install-update() => { root.install-update(); }

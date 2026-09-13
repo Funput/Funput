@@ -6,8 +6,6 @@ export component AboutUpdate inherits Section {
     in property <string> update-state: "idle";
     in property <string> update-version;
     in property <string> update-message;
-    // Store build: Microsoft owns updates — hide GitHub check/install actions.
-    in property <bool> store-managed: false;
     callback check-update();
     callback install-update();
     callback relaunch-now();
@@ -15,14 +13,8 @@ export component AboutUpdate inherits Section {
 
     title: "Cập nhật";
 
-    if root.store-managed: Text {
-        text: root.update-message;
-        font-size: Theme.font-caption;
-        wrap: word-wrap;
-        color: Theme.subtle;
-    }
-
-    if !root.store-managed && root.update-state != "idle": Text {
+    // "store": a Store build — Microsoft owns updates, so only update-message shows.
+    if root.update-state != "idle": Text {
         text: root.update-state == "checking" ? "Đang kiểm tra…"
             : root.update-state == "uptodate" ? "Bạn đang dùng bản mới nhất."
             : root.update-state == "available" ? "Có bản mới \{root.update-version}."
@@ -34,7 +26,7 @@ export component AboutUpdate inherits Section {
         color: root.update-state == "error" ? Theme.danger : Theme.subtle;
     }
 
-    if !root.store-managed: HorizontalLayout {
+    if root.update-state != "store": HorizontalLayout {
         spacing: Theme.sp-sm;
         alignment: start;
         if root.update-state != "available"
