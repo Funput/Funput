@@ -2,9 +2,10 @@
 
 ## Trạng thái
 
-**Bước 1–4 đã xong** — dữ liệu, định dạng `en.lex`, trộn vào `suggest_with`, C ABI
-và JNI. **Bước 5–8 chưa làm**: chúng cần Xcode, Android SDK và máy thật, nên được
-làm trên máy khác; xem [Bàn giao cho bước 5–8](#bàn-giao-cho-bước-58).
+**Bước 1–5 và phần iOS của bước 7 đã hiện thực** — dữ liệu, định dạng `en.lex`,
+trộn vào `suggest_with`, C ABI, JNI, tích hợp bàn phím iOS và màn hình giấy phép iOS.
+**Còn Android (bước 6 và phần Android của bước 7), cùng đo trên máy thật (bước 8).**
+Xem [bàn giao](#bàn-giao-cho-bước-58) và [kiểm chứng iOS](#kiểm-chứng-ios).
 
 Tài liệu này chốt mô hình trước khi hiện thực và được review riêng. Như
 [context-suggestion.md](context-suggestion.md), nó là nơi mọi quyết định thiết kế
@@ -244,9 +245,8 @@ thư viện bằng `-p`.
 ### Ghi công
 
 SCOWL yêu cầu thông báo bản quyền xuất hiện trong mọi bản sao và tài liệu kèm theo;
-Google Books Ngram và LDNOOBW yêu cầu ghi nguồn. Khảo sát chưa thấy màn hình giấy phép
-bên thứ ba nào trong app iOS hay Android — **phải thêm trước khi phát hành**, nội dung
-lấy từ `NOTICE.md`.
+Google Books Ngram và LDNOOBW yêu cầu ghi nguồn. iOS đã hiển thị đầy đủ `NOTICE.md`
+trong Giới thiệu → Giấy phép bên thứ ba. Android **phải thêm trước khi phát hành**.
 
 ## Định dạng `en.lex`
 
@@ -367,13 +367,12 @@ tính cả cạnh dev và sẽ báo sai; đã thử hai chiều với một dev-
 
 ## Thay đổi ở shell
 
-**Chưa làm** — bước 5 (iOS) và 6 (Android). Bảng dưới là thiết kế đã chốt; đường đi
-cụ thể nằm ở [Bàn giao cho bước 5–8](#bàn-giao-cho-bước-58).
+**iOS đã hiện thực; Android chưa làm.** Đường đi cụ thể nằm ở [Bàn giao cho bước 5–8](#bàn-giao-cho-bước-58).
 
 | | iOS | Android |
 |---|---|---|
 | Nạp | `attach_lexicon` với đường dẫn trong bundle | Chép asset, rồi `attach_lexicon` |
-| Cổng ngôn ngữ | **Bỏ `state.language == .vietnamese`** trong `publishPersonalSuggestionUpdate`; giữ nguyên các điều kiện panel, surface, loại editor | `eligible()` hiện không kiểm tra ngôn ngữ — **xác minh** EN mode thật sự truy vấn |
+| Cổng ngôn ngữ | Bỏ `state.language == .vietnamese` trong cả `publishPersonalSuggestionUpdate` và `KeyboardInputCoordinator.replaceState`; giữ nguyên các điều kiện panel, surface, loại editor | `eligible()` hiện không kiểm tra ngôn ngữ — **xác minh** EN mode thật sự truy vấn |
 | Viết hoa | `PersonalSuggestionCasing` đã trả nguyên ứng viên khi prefix thường — không đổi | Nhánh cuối đang `candidate.lowercase(...)` — **đổi thành trả nguyên**, nếu không `iPhone` thành `iphone` |
 | Công tắc | Dùng chung "Gợi ý từ" | Dùng chung "Gợi ý từ" |
 
@@ -382,6 +381,14 @@ học được xuống chữ thường, nên chỉ từ điển mới có chữ 
 
 Không đổi: ranh giới token, `MinimumPrefix`, đường chấp nhận gợi ý, đường học, điều
 kiện mật khẩu / ô số.
+
+**Đã đổi khi hiện thực iOS:** bàn giao ban đầu chỉ nhắc cổng ở controller. Coordinator
+cũng khóa `suggestionTrackingActive` theo ngôn ngữ; phải bỏ cả hai để EN có prefix và
+chấp nhận được gợi ý. Cổng bật bộ ghép dấu tiếng Việt (`usesVietnameseComposition`)
+vẫn giữ nguyên. **Hệ quả về dữ liệu:** từ gõ ở chế độ EN giờ cũng được học vào kho cá
+nhân (trước đây EN không học gì) — vẫn chỉ trong ô `.text` / `.search`, không bao giờ ở
+ô mật khẩu, PIN, email, URL, điện thoại hay số, và vẫn tắt theo công tắc "Gợi ý từ". Thứ tự thật của prefix `wh` trong dữ liệu đã commit là
+`which · when · what` (hạng 32, 40, 43); ví dụ trong mô tả PR ban đầu khác thứ tự này.
 
 ## Bất biến về hiệu năng và bộ nhớ
 
@@ -495,9 +502,12 @@ kiện mật khẩu / ô số.
    hợp lệ, handle đã huỷ.
 5. **iOS**: đóng gói, nạp, bỏ cổng ngôn ngữ. Đây là bước đầu tiên người dùng thấy
    được.
+   → **Đã hiện thực.** Build phase Keyboard sinh `en.lex`; worker gắn sau mỗi lần tạo
+   engine, kể cả engine trong bộ nhớ; bỏ cả hai cổng ngôn ngữ nêu trên.
 6. **Android**: chép asset, nạp, sửa casing, xác minh cổng ngôn ngữ.
 7. **Màn hình giấy phép bên thứ ba** ở cả hai app. Phải xong trước bản phát hành đầu
    tiên mang từ điển.
+   → **iOS đã hiện thực**, trong Giới thiệu → Giấy phép bên thứ ba; Android còn chờ.
 8. **Đo trên máy thật.** Tiêu chí dừng: nếu từ điển làm p99 độ trễ phím xấu đi, hoặc
    nhiễu khi gõ tiếng Việt mà ngưỡng nhường không chặn được, thì sửa luật trộn trước
    khi phát hành. Các hằng dưới đây đều là phỏng đoán và chờ hiệu chỉnh:
@@ -511,9 +521,9 @@ kiện mật khẩu / ô số.
 
 ## Bàn giao cho bước 5–8
 
-Bước 1–4 được làm và kiểm trên Ubuntu, không có Xcode hay Android SDK. Mọi thứ trong
-Rust — thư viện, `funput-ffi`, `funput-jni`, công cụ — đã có test và qua CI cục bộ;
-**chưa có dòng Swift hay Kotlin nào gọi từ điển**, trừ khai báo `external fun`.
+Bước 1–4 được làm và kiểm trên Ubuntu. Phần iOS sau đó được tích hợp trên macOS;
+Swift đã gọi nạp từ điển qua C ABI. Kotlin vẫn chỉ có khai báo `external fun`, chưa
+gọi từ điển. Rust và hai lớp biên đã có test từ các bước trước.
 
 **Sinh `en.lex`** (không commit tệp này; mỗi shell tự sinh lúc build):
 
@@ -526,18 +536,22 @@ cargo run --release -p funput-lexicon-tool -- pack \
 nặng / kích thước ra stderr, và thoát khác 0 nếu danh sách hỏng. Hiện ra 30.000 từ,
 8.740 prefix nặng, 402.522 byte.
 
-**Bước 5 — iOS:**
+**Bước 5 — iOS (đã hiện thực):**
 
-- Nối lệnh `pack` vào quy trình build cạnh `platforms/ios/Scripts/build-ffi.sh`, ghi ra
-  thư mục sinh (không phải cây nguồn), và đưa `en.lex` vào resource của **Keyboard
-  extension**.
-- `platforms/ios/Packages/FunputKit/Sources/PersonalSuggestions/PersonalSuggestionEngine.swift`:
-  thêm `attachLexicon(url:) -> Bool` gọi `funput_suggestion_attach_lexicon` theo đúng
-  mẫu `open(storeURL:)` (UTF-8 bytes + độ dài). Gọi một lần trên worker sau khi mở
-  engine; `false` thì chạy tiếp không có từ điển.
-- Bỏ `state.language == .vietnamese` trong
-  `platforms/ios/Keyboard/Suggestions/KeyboardViewController+Suggestions.swift`.
-- Không cần Full Access; không đổi casing (bảng "Thay đổi ở shell").
+- `platforms/ios/Scripts/build-lexicon.sh` chạy trong build phase Keyboard ở Debug
+  và Release, dùng Cargo `--locked`, target host, ghi tạm rồi thay file trong
+  `DERIVED_FILE_DIR/Lexicon`; chỉ chép vào **Keyboard extension** khi pack thành công
+  và kích thước trong trần 512 KiB. Không commit nhị phân, không tải dữ liệu.
+- Phase chạy mỗi lần build để không bỏ sót thay đổi TSV hoặc bộ mã hóa; Cargo cache
+  phần biên dịch. Chỉ target Keyboard tắt Xcode user-script sandbox vì Cargo cần
+  truy cập toolchain và cache; không thay đổi sandbox/quyền của app hay extension.
+- `PersonalSuggestionEngine.attachLexicon(url:) -> Bool` gọi C ABI theo mẫu
+  `open(storeURL:)` (UTF-8 bytes + độ dài). Worker gọi một lần khi tạo mỗi engine,
+  trước khi query; lỗi nạp vẫn cho phép gợi ý cá nhân. Nguồn URL có thể truyền vào
+  initializer nội bộ để test production worker với store riêng.
+- Bỏ hai cổng ngôn ngữ ở controller và coordinator; giữ cổng loại editor và công
+  tắc gợi ý. Nhãn cài đặt giải thích rõ cả từ cá nhân lẫn từ điển đi kèm.
+- Không cần Full Access để nạp từ điển; không đổi casing (bảng "Thay đổi ở shell").
 
 **Bước 6 — Android:**
 
@@ -555,9 +569,10 @@ nặng / kích thước ra stderr, và thoát khác 0 nếu danh sách hỏng. H
   từng chạy trên thiết bị.
 - Giữ `check-kotlin-loc.sh` / `check-kotlin-layout.sh` xanh khi thêm tệp.
 
-**Bước 7 — giấy phép:** màn hình giấy phép bên thứ ba ở cả hai app, nội dung từ
-`crates/funput-suggestions/data/lexicon/NOTICE.md`. Bắt buộc trước bản phát hành đầu
-tiên mang từ điển.
+**Bước 7 — giấy phép:** iOS đã có màn hình trong Giới thiệu, đọc offline từ resource
+tham chiếu thẳng `crates/funput-suggestions/data/lexicon/NOTICE.md`; không sao chép
+nội dung vào source Swift. Hỗ trợ Dynamic Type, VoiceOver và chọn văn bản. Android
+còn phải thêm màn hình trước bản phát hành đầu tiên mang từ điển.
 
 **Bước 8 — đo trên máy thật:** p99 độ trễ phím, peak memory của extension iOS, và độ
 nhiễu khi gõ tiếng Việt; hiệu chỉnh `lexicon_yield_after_words` theo bảng hằng ở bước 8
@@ -572,6 +587,31 @@ của "Thứ tự hiện thực".
 `bash -e` chỉ dòng cuối thật sự chặn — sửa ở #387. Guard của từ điển viết theo cùng
 khuôn đó: phủ định là `if … then refuse`, và `grep` đọc hết đầu vào để `pipefail`
 không biến một lần khớp thành "qua".
+
+## Kiểm chứng iOS
+
+- Build lại XCFramework trước khi test để Swift dùng đúng header và thư viện C ABI.
+- Chạy `Scripts/test-funput-kit.sh` trên iOS Simulator, rồi `FunputTests` và
+  `FunputUITests` của scheme Funput. UI tests cần bật bàn phím bằng
+  `Scripts/uitest-enable-keyboard.sh`; test clipboard còn cần Full Access và quyền
+  dán. Các test giao diện dọc phải không kế thừa hướng ngang từ launch tests.
+- Test tích hợp đọc `en.lex` từ chính `Keyboard.appex` trong app đã build, kiểm tra
+  gợi ý, thứ tự cá nhân, bỏ trùng, ngưỡng nhường, reset và lỗi attach. Test worker
+  dùng production source cùng target membership, với URL và store riêng.
+- Kiểm tra Debug Simulator và Release device: `en.lex` trong extension ≤ 512 KiB,
+  `NOTICE.md` trong app trùng nguồn và `MinimumOSVersion` của cả hai vẫn là 16.0.
+- `Scripts/check-swift-loc.sh`, ShellCheck cho `Scripts/build-lexicon.sh`,
+  `Scripts/tests/test_build_lexicon.py`, cùng guard `lexicon-build` của CI phải xanh.
+
+**Bàn giao người dùng thử trên máy thật (chưa xác nhận):**
+
+1. Kho trống: gõ `wh` ở VI và EN, chọn gợi ý; kiểm tra đúng từ và một dấu cách.
+2. Thử `ip` / `IP`, tắt rồi bật gợi ý, đổi VI/EN và mở lại bàn phím.
+3. Thử không Full Access, bật lại Full Access, và “Xóa từ đã học”: từ điển vẫn có.
+4. Gõ tiếng Việt thường dùng; kiểm tra từ cá nhân đứng trước và luật nhường sau khi
+   đủ 200 từ đã promoted mang dấu. Thử ô mật khẩu, ô số và chuyển ứng dụng.
+5. Mở giấy phép khi offline. Đo p99 độ trễ phím, peak memory extension và đánh giá
+   độ nhiễu khi gõ; kết quả Simulator không thay thế các phép đo này.
 
 ## Nợ mang theo
 
