@@ -61,3 +61,14 @@ always give the same file.
 A floor borrows a real count rather than inventing one, so a lifted word sorts
 among the rest by the same measure. Keep the reason for each floor in a comment
 next to it.
+
+## Blocklist
+
+`blocklist.txt` lists words the lexicon never offers, matched ignoring case. It
+starts with the single words of LDNOOBW's `en` list, imported verbatim at a pinned
+commit so the import can be diffed against its source, then:
+
+- `!word` — re-admit a word the import blocks, for words whose main sense is
+  clinical, legal, historical or everyday. `rank` fails if a re-admit matches
+  nothing blocked, so a typo or a changed import cannot quietly undo it.
+- `word` after the import — Funput's own additions.

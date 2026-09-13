@@ -3,8 +3,8 @@
 # ignored by funput-lexicon-tool.
 #
 # Imported from LDNOOBW `en` at commit 5faf2ba42d7b1c0977169ec3611df25a3c08eb13
-# (CC BY 4.0, see NOTICE.md), single words only; Funput's own additions follow
-# the import.
+# (CC BY 4.0, see NOTICE.md), single words only. After the import come Funput's
+# re-admits (`!word` lifts a block the import made) and Funput's own additions.
 2g1c
 acrotomophilia
 anal
