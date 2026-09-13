@@ -3,6 +3,7 @@ import XCTest
 final class FunputUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
+        XCUIDevice.shared.orientation = .portrait
     }
 
     @MainActor
@@ -47,6 +48,7 @@ final class FunputUITests: XCTestCase {
         XCTAssertTrue(shadowToggle.isHittable)
         shadowToggle.tap()
         let shadowRadius = app.sliders["themeEditor.shadowRadius"]
+        for _ in 0..<4 where !shadowRadius.isHittable { keyScroll.swipeUp() }
         XCTAssertTrue(shadowRadius.isHittable)
         shadowRadius.adjust(toNormalizedSliderPosition: 0.5)
 
@@ -103,7 +105,8 @@ final class FunputUITests: XCTestCase {
         XCTAssertTrue(firstTheme.waitForExistence(timeout: 5))
         let initialX = firstTheme.frame.minX
         carousel.swipeLeft()
-        XCTAssertLessThan(firstTheme.frame.minX, initialX - 20)
+        // Lazy carousel cells may leave the accessibility tree once off-screen.
+        XCTAssertTrue(!firstTheme.exists || firstTheme.frame.minX < initialX - 20)
     }
 
     private func openAppearance(in app: XCUIApplication) {

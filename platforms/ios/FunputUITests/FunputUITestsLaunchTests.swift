@@ -17,6 +17,11 @@ final class FunputUITestsLaunchTests: XCTestCase {
         continueAfterFailure = false
     }
 
+    override func tearDownWithError() throws {
+        // Launch configurations also exercise landscape; do not leak it to typing tests.
+        XCUIDevice.shared.orientation = .portrait
+    }
+
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
