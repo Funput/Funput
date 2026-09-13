@@ -2,10 +2,14 @@
 
 ## Trạng thái
 
-**Bước 1–4 đã xong** (dữ liệu, định dạng `en.lex`, trộn vào `suggest_with`, C ABI/JNI); **từ bước 5 (iOS) chưa có code.** Tài liệu này chốt mô hình
-trước khi hiện thực và được review riêng. Như [context-suggestion.md](context-suggestion.md), nó là nơi mọi quyết
-định thiết kế sống: mỗi thay đổi hành vi sau này cập nhật lại nó trong cùng PR, chỗ
-nào hiện thực lệch khỏi bản viết thì sửa lại và đánh dấu **Đã đổi khi hiện thực**.
+**Bước 1–4 đã xong** — dữ liệu, định dạng `en.lex`, trộn vào `suggest_with`, C ABI
+và JNI. **Bước 5–8 chưa làm**: chúng cần Xcode, Android SDK và máy thật, nên được
+làm trên máy khác; xem [Bàn giao cho bước 5–8](#bàn-giao-cho-bước-58).
+
+Tài liệu này chốt mô hình trước khi hiện thực và được review riêng. Như
+[context-suggestion.md](context-suggestion.md), nó là nơi mọi quyết định thiết kế
+sống: mỗi thay đổi hành vi sau này cập nhật lại nó trong cùng PR, chỗ nào hiện thực
+lệch khỏi bản viết thì sửa lại và đánh dấu **Đã đổi khi hiện thực**.
 
 Phần lõi nằm trong **`crates/funput-suggestions`**, iOS và Android dùng chung qua
 `funput-ffi` và `funput-jni`. Các shell desktop không có thanh gợi ý nên không bị ảnh
@@ -15,7 +19,7 @@ hưởng.
 
 Người dùng gõ gì thì thanh gợi ý trả về top 3 từ **cả** kho cá nhân **lẫn** một từ
 điển tiếng Anh kèm app — **không phân biệt chế độ VI hay EN**. Gõ `wor` thì có
-`work · world · would` ngay từ lần cài đầu tiên, không phải gõ tay mỗi từ hai lần như
+`work · world · words` ngay từ lần cài đầu tiên, không phải gõ tay mỗi từ hai lần như
 hôm nay.
 
 Ràng buộc kế thừa nguyên từ gợi ý theo ngữ cảnh, không thương lượng:
@@ -186,7 +190,7 @@ Google Books 1-gram (stream, không lưu file thô)
 + supplement.tsv − (LDNOOBW ∪ blocklist.txt)
 → sắp theo tần suất giảm dần (hoà thì theo khoá), áp hạng sàn, cắt top N
 → data/lexicon/en.tsv          (word \t rank)          ← commit
-→ en.lex                        (định dạng bên dưới)    ← sinh trong CI, không commit
+→ en.lex                        (định dạng bên dưới)    ← sinh lúc build shell, không commit
 ```
 
 **Đã đổi khi hiện thực — `supplement.tsv` có hạng sàn.** Bản viết ban đầu coi nó chỉ
@@ -209,8 +213,9 @@ chặn, kể cả những từ mà nghĩa thường gặp nhất chính là ngh�
 nhật LDNOOBW không lặng lẽ vô hiệu hoá nó. Kết quả: 39 từ trở lại top 30k.
 
 **Commit TSV, không commit dữ liệu thô.** PR đổi từ điển thành một diff đọc được:
-từ nào vào, từ nào ra. CI chỉ chạy bước TSV → `.lex`, không tải vài GB Google Books.
-Bước xếp hạng chạy tay khi cập nhật dữ liệu.
+từ nào vào, từ nào ra. CI chỉ mã hoá `en.tsv` bên trong test (cổng kích thước, test
+vét cạn), không bao giờ tải vài GB Google Books. Bước xếp hạng chạy tay khi cập nhật
+dữ liệu; `en.lex` được sinh từ `en.tsv` lúc build shell (bước 5–6).
 
 Tần suất **không vào app** — sau khi sắp xong nó chỉ còn là số thứ tự `rank`.
 
@@ -362,6 +367,9 @@ tính cả cạnh dev và sẽ báo sai; đã thử hai chiều với một dev-
 
 ## Thay đổi ở shell
 
+**Chưa làm** — bước 5 (iOS) và 6 (Android). Bảng dưới là thiết kế đã chốt; đường đi
+cụ thể nằm ở [Bàn giao cho bước 5–8](#bàn-giao-cho-bước-58).
+
 | | iOS | Android |
 |---|---|---|
 | Nạp | `attach_lexicon` với đường dẫn trong bundle | Chép asset, rồi `attach_lexicon` |
@@ -398,7 +406,7 @@ kiện mật khẩu / ô số.
   một `format.rs`; tách ra để mỗi tệp dưới 150 dòng. `engine/query.rs` không phình.
   Codec nhị phân dời từ `persistence/codec/binary.rs` lên `src/binary.rs` để hai định
   dạng dùng chung. Test nằm ở `src/tests/lexicon/` (`encode`, `corrupt`, `lookup`,
-  `real`).
+  `real`, `merge`, `yield`).
 - **Differential (proptest)**: `top3(prefix)` bằng kết quả brute-force trên danh sách
   từ — lọc theo prefix, sắp theo `rank`, lấy 3. Từ sinh từ ba chữ cái cả hoa lẫn
   thường để run nặng và nhẹ cùng xuất hiện dày đặc.
@@ -425,7 +433,7 @@ kiện mật khẩu / ô số.
   với `suggestions/lookup`. Không gắn trần p99 vào CI — đường hiện có cũng chỉ in số,
   gác cứng trên runner dùng chung sẽ flaky.
 - **Kích thước**: `en.lex` sinh từ `en.tsv` ≤ 512 KiB.
-- **Casing Android**: `iPhone` với prefix `ip` giữ nguyên; prefix `IP` thành `IPHONE`.
+- **Casing Android** (bước 6): `iPhone` với prefix `ip` giữ nguyên; prefix `IP` thành `IPHONE`.
 
 ## Thứ tự hiện thực
 
@@ -500,6 +508,68 @@ kiện mật khẩu / ô số.
    | `lexicon_yield_after_words` | 200 | Bao nhiêu từ có dấu thì kho được coi là kho tiếng Việt |
    | Kích thước khối | 16 | Cân giữa kích thước block index và độ dài lượt quét |
    | Trần `en.lex` | 512 KiB | Mức phình tối đa chấp nhận được |
+
+## Bàn giao cho bước 5–8
+
+Bước 1–4 được làm và kiểm trên Ubuntu, không có Xcode hay Android SDK. Mọi thứ trong
+Rust — thư viện, `funput-ffi`, `funput-jni`, công cụ — đã có test và qua CI cục bộ;
+**chưa có dòng Swift hay Kotlin nào gọi từ điển**, trừ khai báo `external fun`.
+
+**Sinh `en.lex`** (không commit tệp này; mỗi shell tự sinh lúc build):
+
+```bash
+cargo run --release -p funput-lexicon-tool -- pack \
+    < crates/funput-suggestions/data/lexicon/en.tsv > "$OUT/en.lex"
+```
+
+`pack` xác minh tệp bằng chính reader của thư viện trước khi ghi, in số từ / số prefix
+nặng / kích thước ra stderr, và thoát khác 0 nếu danh sách hỏng. Hiện ra 30.000 từ,
+8.740 prefix nặng, 402.522 byte.
+
+**Bước 5 — iOS:**
+
+- Nối lệnh `pack` vào quy trình build cạnh `platforms/ios/Scripts/build-ffi.sh`, ghi ra
+  thư mục sinh (không phải cây nguồn), và đưa `en.lex` vào resource của **Keyboard
+  extension**.
+- `platforms/ios/Packages/FunputKit/Sources/PersonalSuggestions/PersonalSuggestionEngine.swift`:
+  thêm `attachLexicon(url:) -> Bool` gọi `funput_suggestion_attach_lexicon` theo đúng
+  mẫu `open(storeURL:)` (UTF-8 bytes + độ dài). Gọi một lần trên worker sau khi mở
+  engine; `false` thì chạy tiếp không có từ điển.
+- Bỏ `state.language == .vietnamese` trong
+  `platforms/ios/Keyboard/Suggestions/KeyboardViewController+Suggestions.swift`.
+- Không cần Full Access; không đổi casing (bảng "Thay đổi ở shell").
+
+**Bước 6 — Android:**
+
+- Nối `pack` vào build (cạnh `platforms/android/scripts/build-rust-jni.sh` /
+  `BuildRustJniTask.kt`), ghi vào thư mục asset sinh ra, không vào `src/main/assets`.
+- Lần đầu, hoặc khi CRC trong header đổi, chép asset ra
+  `noBackupFilesDir/Lexicon/en-<body_crc>.lex`, xoá bản cũ, rồi gọi
+  `PersonalSuggestionNative.nativeAttachLexicon` từ `PersonalSuggestionEngine.kt` /
+  `PersonalSuggestionWorker.kt`. `body_crc` là 4 byte little-endian ở offset 20.
+- `PersonalSuggestionCasing.kt`: nhánh cuối trả nguyên ứng viên thay vì
+  `lowercase(...)`.
+- Xác minh EN mode có truy vấn gợi ý (`PersonalSuggestionService.eligible()`).
+- **Lần đầu gọi `nativeAttachLexicon` qua JVM thật.** Quyết định bên dưới đã có test
+  (`registry::attach_lexicon`); lớp mở chuỗi Java theo mẫu `nativeOpen` nhưng chưa
+  từng chạy trên thiết bị.
+- Giữ `check-kotlin-loc.sh` / `check-kotlin-layout.sh` xanh khi thêm tệp.
+
+**Bước 7 — giấy phép:** màn hình giấy phép bên thứ ba ở cả hai app, nội dung từ
+`crates/funput-suggestions/data/lexicon/NOTICE.md`. Bắt buộc trước bản phát hành đầu
+tiên mang từ điển.
+
+**Bước 8 — đo trên máy thật:** p99 độ trễ phím, peak memory của extension iOS, và độ
+nhiễu khi gõ tiếng Việt; hiệu chỉnh `lexicon_yield_after_words` theo bảng hằng ở bước 8
+của "Thứ tự hiện thực".
+
+**Còn treo, không thuộc bước nào:**
+
+- `refresh.sh` mới vào danh sách ShellCheck của CI; máy làm bước 1–4 không có
+  ShellCheck, nên lần chạy CI đầu tiên là lần kiểm đầu tiên.
+- Step CI "charset stays out of the mobile crates" có sẵn từ trước dùng `! lệnh`, mà
+  dưới `bash -e` chỉ dòng cuối thật sự chặn. Guard của từ điển đã viết đúng
+  (`if … exit 1`); step cũ cần sửa riêng.
 
 ## Nợ mang theo
 
