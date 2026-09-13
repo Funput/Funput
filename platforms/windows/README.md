@@ -223,7 +223,7 @@ platforms/windows/
     background/    hook/ (keyboard · mouse · foreground) · hotkey/ · inject/ · keymap · tray/
     shared/        shell/ · commands/ · update/ · packaged/ (MSIX · startup_task) · canonical_exe
     ui/            Cửa sổ Slint · control_center/ · mica.rs
-  msix/          AppxManifest template · Assets/ (Icons · Tiles)
+  msix/          AppxManifest template · Assets/ (Icons · Tiles, sinh bằng render-assets.ps1 từ assets/logo.png)
   scripts/
     build-release.ps1 · build-release.sh
     store/         pack-msix.ps1 · msix_version.py · submit_msix.py · store_flight.py · store_http.py

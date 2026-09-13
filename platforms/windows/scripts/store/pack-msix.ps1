@@ -27,19 +27,25 @@ if ($OutDir) { $OutDir = [System.IO.Path]::GetFullPath($OutDir) }
 if (-not $OutDir) { $OutDir = Join-Path $Root "build\msix" }
 Set-Location $Root
 
-function Find-MakeAppx {
+function Find-SdkTool([string]$Name) {
     $roots = @(
         "${env:ProgramFiles(x86)}\Windows Kits\10\bin",
         "${env:ProgramFiles}\Windows Kits\10\bin"
     ) | Where-Object { Test-Path $_ }
-    $found = Get-ChildItem -Path $roots -Filter makeappx.exe -Recurse -ErrorAction SilentlyContinue |
+    $found = Get-ChildItem -Path $roots -Filter $Name -Recurse -ErrorAction SilentlyContinue |
         Where-Object { $_.Directory.Name -eq "x64" } |
         Sort-Object FullName -Descending |
         Select-Object -First 1
     if (-not $found) {
-        throw "makeappx.exe not found. Install the Windows SDK (windows-latest has it)."
+        throw "$Name not found. Install the Windows SDK (windows-latest has it)."
     }
     $found.FullName
+}
+
+function Invoke-Tool([string]$Tool, [string[]]$Arguments) {
+    # Out-Host keeps tool chatter out of the script's one output: the package path.
+    & $Tool @Arguments | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "$(Split-Path -Leaf $Tool) $($Arguments[0]) failed with exit $LASTEXITCODE" }
 }
 
 function Assert-Token([string]$Name, [string]$Value) {
@@ -57,12 +63,14 @@ if ($Version -notmatch "^\d+\.\d+\.\d+\.0$") {
 }
 if (-not (Test-Path $Exe)) { throw "Executable missing: $Exe" }
 
-$MakeAppx = Find-MakeAppx
-$Stage = Join-Path $env:TEMP ("funput-msix-" + [guid]::NewGuid().ToString("N"))
+$MakeAppx = Find-SdkTool "makeappx.exe"
+$MakePri = Find-SdkTool "makepri.exe"
+$Work = Join-Path $env:TEMP ("funput-msix-" + [guid]::NewGuid().ToString("N"))
+$Stage = Join-Path $Work "package"
 New-Item -ItemType Directory -Force -Path $Stage | Out-Null
 try {
     Copy-Item -Force $Exe (Join-Path $Stage "Funput.exe")
-    # Assets\Icons and Assets\Tiles keep their layout; the manifest names them so.
+    # Qualifier folders (scale-200\, targetsize-48\) come along; msix/render-assets.ps1.
     Copy-Item -Recurse -Force (Join-Path $Root "msix\Assets") (Join-Path $Stage "Assets")
     $manifest = [System.IO.File]::ReadAllText((Join-Path $Root "msix\AppxManifest.xml.template"))
     $manifest = $manifest.Replace("__IDENTITY_NAME__", $IdentityName)
@@ -77,15 +85,29 @@ try {
     $utf8 = New-Object System.Text.UTF8Encoding $false
     [System.IO.File]::WriteAllText((Join-Path $Stage "AppxManifest.xml"), $manifest, $utf8)
 
+    # Without resources.pri Windows loads only the unqualified logo and stretches
+    # it; the index is what lets the shell pick targetsize-24 for the taskbar or
+    # scale-200 for a 200% display. The config stays outside the package.
+    $PriConfig = Join-Path $Work "priconfig.xml"
+    Invoke-Tool $MakePri @("createconfig", "/cf", $PriConfig, "/dq", "en-US", "/pv", "10.0.0", "/o")
+    # The default config splits scale/language candidates into resources.scale-200.pri
+    # and friends, which only a bundle's resource packages load. One .msix needs
+    # them all in resources.pri, so drop <packaging>.
+    $config = [xml](Get-Content -Raw $PriConfig)
+    $packaging = $config.resources.SelectSingleNode("packaging")
+    if ($packaging) { [void]$config.resources.RemoveChild($packaging) }
+    $config.Save($PriConfig)
+    Invoke-Tool $MakePri @("new", "/pr", $Stage, "/cf", $PriConfig, "/mn", (Join-Path $Stage "AppxManifest.xml"),
+        "/of", (Join-Path $Stage "resources.pri"), "/o")
+
     New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
     $Package = Join-Path $OutDir "Funput-$Version.msix"
     if (Test-Path $Package) { Remove-Item -Force $Package }
-    & $MakeAppx pack /d $Stage /p $Package /o
-    if ($LASTEXITCODE -ne 0) { throw "makeappx pack failed with exit $LASTEXITCODE" }
+    Invoke-Tool $MakeAppx @("pack", "/d", $Stage, "/p", $Package, "/o")
     if (-not (Test-Path $Package)) { throw "makeappx reported success but $Package is missing" }
     Write-Host "Packed $Package"
     $Package
 }
 finally {
-    Remove-Item -Recurse -Force $Stage -ErrorAction SilentlyContinue
+    Remove-Item -Recurse -Force $Work -ErrorAction SilentlyContinue
 }
