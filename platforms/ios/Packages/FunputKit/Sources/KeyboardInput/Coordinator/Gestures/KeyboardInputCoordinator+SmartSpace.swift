@@ -18,7 +18,7 @@ extension KeyboardInputCoordinator {
         else { return false }
         // The trailing space is literal text, never part of a syllable, so the composer is
         // cleared instead of being asked to delete through it.
-        composer.clear()
+        clearComposition()
         builder.deleteBackward()
         builder.insert(". ")
         return true

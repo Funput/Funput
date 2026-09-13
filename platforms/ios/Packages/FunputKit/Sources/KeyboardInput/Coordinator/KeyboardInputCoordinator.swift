@@ -7,6 +7,7 @@ import KeyboardLayout
 public final class KeyboardInputCoordinator {
     public internal(set) var state: KeyboardInputState
 
+    var shortcuts = KeyboardShortcutState()
     let composer: FunputComposer
     var shiftController: ShiftStateController
     var spaceTapTracker: SpaceTapTracker

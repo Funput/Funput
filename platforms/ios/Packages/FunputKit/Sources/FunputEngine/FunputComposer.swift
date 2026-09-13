@@ -80,19 +80,6 @@ public final class FunputComposer {
         funput_clear_shortcuts(handle)
     }
 
-    public func buffer() -> String {
-        var codepoints = [UInt32](repeating: 0, count: Int(CHARS_CAP))
-        let count = codepoints.withUnsafeMutableBufferPointer {
-            funput_buffer(handle, $0.baseAddress, UInt($0.count))
-        }
-        return FunputResultDecoder.string(from: codepoints, count: Int(count))
-    }
-
-    @discardableResult
-    public func process(_ scalar: Unicode.Scalar) -> FunputCompositionResult {
-        FunputResultDecoder.decode(funput_process_char(handle, scalar.value))
-    }
-
     @discardableResult
     public func backspace() -> FunputCompositionResult {
         FunputResultDecoder.decode(funput_backspace(handle))

@@ -11,16 +11,25 @@ struct SettingsScreen: View {
     @State private var picker: SettingsPicker?
     @State private var requestsHapticAccess = false
     @State private var requestsSoundAccess = false
+    @StateObject private var shortcuts = ShortcutsModel(store: ShortcutsStoreFactory.make())
 
     init(
         store: any FunputConfigurationStoring = FunputConfigurationStore(),
         customStore: any CustomThemeStoring = CustomThemeStore(),
         bootstrap: any KeyboardBootstrapSynchronizing = KeyboardBootstrapSynchronizer()
     ) {
+#if DEBUG
+        if ShortcutsStoreFactory.isUITesting {
+            _model = StateObject(wrappedValue: SettingsModel(
+                store: PreviewConfigurationStore(),
+                customStore: PreviewCustomThemeStore(),
+                bootstrap: NoopKeyboardBootstrapSynchronizer()
+            ))
+            return
+        }
+#endif
         _model = StateObject(wrappedValue: SettingsModel(
-            store: store,
-            customStore: customStore,
-            bootstrap: bootstrap
+            store: store, customStore: customStore, bootstrap: bootstrap
         ))
     }
 
@@ -43,6 +52,7 @@ struct SettingsScreen: View {
                 SettingsHeightRow(value: model.heightBinding)
             }
             SettingsSectionCard(title: "Nhập liệu thông minh", systemImage: "wand.and.stars") {
+                ShortcutsSettingsLink(model: shortcuts)
                 SettingsToggleRow(
                     title: "Khôi phục từ thông minh",
                     summary: "Giữ từ gốc khi chỉnh sửa hoặc xóa dấu.",
@@ -120,26 +130,4 @@ struct SettingsScreen: View {
             }
         }
     }
-}
-
-#Preview("Cài đặt · Light") {
-    NavigationStack {
-        SettingsScreen(
-            store: PreviewConfigurationStore(),
-            customStore: PreviewCustomThemeStore(),
-            bootstrap: NoopKeyboardBootstrapSynchronizer()
-        )
-    }
-        .preferredColorScheme(.light)
-}
-
-#Preview("Cài đặt · Dark") {
-    NavigationStack {
-        SettingsScreen(
-            store: PreviewConfigurationStore(),
-            customStore: PreviewCustomThemeStore(),
-            bootstrap: NoopKeyboardBootstrapSynchronizer()
-        )
-    }
-        .preferredColorScheme(.dark)
 }

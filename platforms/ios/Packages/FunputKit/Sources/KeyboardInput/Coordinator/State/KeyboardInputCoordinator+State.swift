@@ -11,7 +11,7 @@ extension KeyboardInputCoordinator {
         guard inputContextChanged || state.enterAction != context.enterAction else { return }
 
         if inputContextChanged {
-            composer.clear()
+            clearComposition()
             shiftController.resetTapSequence()
             automaticShiftArmed = false
             documentSynchronizer.invalidate()
@@ -49,7 +49,7 @@ extension KeyboardInputCoordinator {
             preferredTelexMethod = state.inputMethod
             next = .vni
         }
-        composer.clear()
+        clearComposition()
         composer.setInputMethod(next.engineMethod)
         documentSynchronizer.invalidate()
         resetPersonalSuggestionTracking()
@@ -58,7 +58,7 @@ extension KeyboardInputCoordinator {
 
     public func toggleLanguage() {
         guard state.editorMode.supportsVietnameseComposition else { return }
-        composer.clear()
+        clearComposition()
         resetPersonalSuggestionTracking()
         let next: KeyboardLanguage = state.language == .vietnamese ? .english : .vietnamese
         replaceState(language: next)

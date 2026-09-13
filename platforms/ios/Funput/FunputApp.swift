@@ -13,6 +13,10 @@ import ThemeRuntime
 struct FunputApp: App {
     init() {
 #if DEBUG
+        let environment = ProcessInfo.processInfo.environment
+        let harness = ProcessInfo.processInfo.arguments.contains("-uitest-typing-harness")
+        let fixture = environment["FUNPUT_SHORTCUTS_TEST_DIRECTORY"] ?? (harness ? UUID().uuidString : nil)
+        try? ShortcutsUITestSelection.activate(id: fixture)
         if ProcessInfo.processInfo.arguments.contains("-uitest-clear-configuration-override") {
             FunputUITestConfigurationOverrideStore().clear()
         }
