@@ -1,3 +1,9 @@
+//! Little-endian integers and a CRC-32, read and written over plain byte slices.
+//!
+//! Shared by every on-disk format the crate owns — the personal store's snapshot
+//! and journal, and the English lexicon — so each format decides its own layout
+//! and none of them reinvents how a `u32` or a checksum is spelled.
+
 use std::io;
 
 pub(crate) struct Cursor<'a> {
@@ -76,5 +82,5 @@ pub(crate) fn checksum(bytes: &[u8]) -> u32 {
 }
 
 pub(crate) fn invalid_data() -> io::Error {
-    io::Error::new(io::ErrorKind::InvalidData, "invalid personal lexicon data")
+    io::Error::new(io::ErrorKind::InvalidData, "invalid suggestion data")
 }

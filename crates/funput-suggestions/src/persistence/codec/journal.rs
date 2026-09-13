@@ -16,7 +16,7 @@
 
 use std::io;
 
-use super::binary::{Cursor, checksum, invalid_data, put_u16, put_u32, put_u64};
+use crate::binary::{Cursor, checksum, invalid_data, put_u16, put_u32, put_u64};
 use crate::persistence::schema::{self, JOURNAL_MAGIC, JOURNAL_WRITE_VERSION, Version};
 
 /// One learned token, and whether it followed the token written before it.

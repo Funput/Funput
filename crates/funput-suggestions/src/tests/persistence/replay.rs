@@ -162,7 +162,7 @@ fn version_one_frame(tokens: &[&str]) -> Vec<u8> {
     frame.extend_from_slice(b"FPJR");
     frame.extend_from_slice(&1u16.to_le_bytes());
     frame.extend_from_slice(&(payload.len() as u32).to_le_bytes());
-    frame.extend_from_slice(&crate::persistence::checksum(&payload).to_le_bytes());
+    frame.extend_from_slice(&crate::binary::checksum(&payload).to_le_bytes());
     frame.extend_from_slice(&payload);
     frame
 }

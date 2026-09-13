@@ -5,6 +5,7 @@
 //!
 //! # Layout
 //!
+//! - `binary` — little-endian integers and the CRC-32 every on-disk format uses.
 //! - `bigram/` — which words follow which, and the write path that learns them.
 //! - `engine/` — the [`SuggestionEngine`] facade, its [`SuggestionConfig`], and the
 //!   learn / query / durability behaviours.
@@ -13,6 +14,7 @@
 //! - `types` — the shared vocabulary (`WordRecord` and the public result types).
 
 mod bigram;
+mod binary;
 mod engine;
 mod index;
 mod persistence;
