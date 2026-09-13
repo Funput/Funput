@@ -2,7 +2,7 @@
 
 ## Trạng thái
 
-**Bước 1 (dữ liệu) và bước 2 (định dạng `en.lex`) đã xong; từ bước 3 chưa có code.** Tài liệu này chốt mô hình
+**Bước 1 (dữ liệu), bước 2 (định dạng `en.lex`) và bước 3 (trộn vào `suggest_with`) đã xong; từ bước 4 (C ABI/JNI) chưa có code.** Tài liệu này chốt mô hình
 trước khi hiện thực và được review riêng. Như [context-suggestion.md](context-suggestion.md), nó là nơi mọi quyết
 định thiết kế sống: mỗi thay đổi hành vi sau này cập nhật lại nó trong cùng PR, chỗ
 nào hiện thực lệch khỏi bản viết thì sửa lại và đánh dấu **Đã đổi khi hiện thực**.
@@ -63,8 +63,18 @@ suggest_with(prev, prefix):
     nếu kho đã là kho tiếng Việt và P có từ mang dấu tiếng Việt:
         trả P                                                 // nhường, xem mục dưới
     L = lexicon.top3(prefix)
-    trả P, rồi lấp ô trống bằng L không trùng P (so theo normalize::exact)
+    trả P, rồi lấp ô trống bằng L không trùng P (so eq_ignore_ascii_case)
 ```
+
+**Đã đổi khi hiện thực.** Hiện thực ở `src/lexicon/merge.rs::complete_from_lexicon`,
+gọi ở cuối `suggest_with` sau cả ba nhánh (không ngữ cảnh / rerank / predict). Bỏ
+trùng bằng `eq_ignore_ascii_case` thay vì `normalize::exact`: từ cá nhân đã lưu chữ
+thường NFC, từ điển là ASCII, nên hai phía chỉ có thể trùng khi đều là ASCII — so
+không phân biệt hoa thường là đủ và không cấp phát (`iphone` học được và `iPhone` của
+từ điển là một gợi ý). Rust có API công khai
+`SuggestionEngine::attach_lexicon(path) -> io::Result<()>`: thành công thì thay từ
+điển đang gắn; thất bại thì giữ nguyên cái cũ (hoặc không có). Trạng thái từ điển gom
+trong một `LexiconSlot` (tệp đã mở + bộ đếm) để struct engine chỉ thêm một field.
 
 **Cá nhân luôn đứng trước.** Từ người dùng tự gõ là tín hiệu mạnh nhất, và hai thang
 đo — `uses` của kho cá nhân, thứ hạng tần suất của từ điển — không so với nhau được
@@ -79,7 +89,8 @@ nhân, đứng đầu. Không cần cơ chế riêng.
 
 Không đổi:
 
-- **Predict** (prefix rỗng) chỉ dùng bigram cá nhân. Từ điển không đoán từ tiếp theo.
+- **Predict** (prefix rỗng) chỉ dùng bigram cá nhân. Từ điển không đoán từ tiếp theo —
+  không cần nhánh riêng: `top3("")` vốn trả rỗng.
 - **`MinimumPrefix = 2`** ở cả hai shell.
 - Prefix có ký tự ngoài ASCII (`thà`, `đi`) thì `lexicon.top3` trả rỗng ngay ở byte
   đầu tiên không phải ASCII — không cần luật riêng cho tiếng Việt.
@@ -91,8 +102,9 @@ năng. Người đã gõ tiếng Việt lâu thì khác — gõ `an` giữa câu
 hiện `and · any` là nhiễu.
 
 **Kho tiếng Việt** là kho có ít nhất `lexicon_yield_after_words` từ **đã promoted và
-mang dấu tiếng Việt** — tức `normalize::folded(w) != w`, đúng điều kiện `index_word`
-đang dùng để quyết định có chèn vào trie `folded` hay không. Từ không dấu (`anh`,
+mang dấu tiếng Việt** — tức `normalize::is_marked(w)` (`folded_chars(w) != w`), đúng
+điều kiện `index_word` đang dùng để quyết định có chèn vào trie `folded` hay không;
+`index_word` giờ trả luôn kết quả đó để không phải tính hai lần. Từ không dấu (`anh`,
 `con`) không được đếm, nhưng người gõ tiếng Việt thật sẽ vượt ngưỡng rất nhanh nhờ
 các từ có dấu.
 
@@ -102,28 +114,38 @@ không lấp. Ngược lại vẫn lấp như bình thường.
 | Prefix | P | Kết quả khi kho đã là kho tiếng Việt |
 |---|---|---|
 | `an` | `anh · ăn` | `anh · ăn` — có `ăn` mang dấu, nhường |
-| `wo` | `work` | `work · world · would` — P không có từ mang dấu |
-| `ha` | `hai` | `hai · have · has` — `hai` không dấu, không nhường |
+| `wo` | `work` | `work · would · world` — P không có từ mang dấu |
+| `ha` | `hai` | `hai · have · had` — `hai` không dấu, không nhường |
 | `xyz` | — | từ điển (nếu có) |
 
 Phương án đã cân nhắc và loại: **nhường khi P khác rỗng.** Đơn giản hơn, nhưng một từ
 tiếng Anh người dùng đã học (`work`) sẽ chặn luôn `world · would` — trừng phạt đúng
 người dùng song ngữ mà tính năng này nhắm tới.
 
-**Bộ đếm.** `vietnamese_words: u32` trong `SuggestionEngine`, không có lượt quét nào
-trên đường gõ:
+**Bộ đếm.** `LexiconSlot::vietnamese_words: u32`, không có lượt quét nào trên đường
+gõ:
 
-- `+1` khi `learn_inner` trả `Promoted` cho một từ mang dấu.
-- `−1` khi `upsert_word` ghi đè, hoặc `enforce_capacity` `swap_remove`, một từ đã
-  promoted mang dấu.
-- **Đếm lại từ đầu trong `rebuild_tries`** — hàm đó vốn đã duyệt toàn bộ `words`, nên
-  không tốn thêm lượt nào, và mọi lệch pha (nếu có) được sửa ở mỗi `flush`.
-- `reset()` về 0; `open` đi qua rebuild nên tự đúng.
+- `+1` trong `learn_inner` khi một từ mang dấu **vừa vượt** `promotion_uses`
+  (`previous_uses < promotion_uses ≤ uses`), **trước** lần rebuild thỉnh thoảng của
+  chính đường học — nếu không, rebuild đếm lại đã thấy từ đó và phép cộng thành đếm
+  hai lần. **Đã đổi khi hiện thực**: bản viết ban đầu nói "khi trả `Promoted`", nhưng
+  với `promotion_uses = 1` lần học đầu trả `Recorded` mà từ đã được promoted.
+- `−1` khi `upsert_word` ghi đè một từ đã promoted mang dấu.
+- **Đếm lại từ đầu trong `rebuild_tries`**, trong vòng lặp vốn đã duyệt toàn bộ
+  `words`. Đây mới là thứ làm `open` đúng (từ nạp từ đĩa không đi qua promotion), và
+  nó sửa mọi lệch pha mỗi khi trie được quét: lúc `open`, và lúc `flush` sau khi có
+  evict. **Đã đổi khi hiện thực**: `enforce_capacity` không cần `−1` riêng — nó chỉ
+  chạy trong `open`, ngay trước rebuild.
+- `reset()` về 0.
+
+Mỗi điểm trên đều có test bắt được nếu bị gỡ: bỏ `−1` thì proptest đếm-lại-sau-mỗi-bước
+thất bại; bỏ đếm lại thì test mở lại từ đĩa thất bại; bỏ `reset` về 0 thì proptest thất
+bại (đã thử bằng mutation).
 
 Kiểm tra "P có từ mang dấu" là so `folded_chars` với `exact_chars` trên tối đa 3 từ,
 mỗi từ ≤ 32 ký tự, cùng loại iterator mà `prefix_candidates` đang dùng với 0 cấp phát.
 
-Cấu hình thêm một khoá, `engine/config.rs::sanitize` kẹp nó:
+Cấu hình thêm một khoá (không cần kẹp — mọi giá trị `u32` đều có nghĩa):
 
 ```rust
 lexicon_yield_after_words: u32,   // mặc định 200, 0 = luôn nhường
@@ -358,16 +380,24 @@ kiện mật khẩu / ô số.
   so với top-3 dựng độc lập; số heavy khớp số run dài hơn 3.
 - **Tệp hỏng**: cắt cụt ở mọi độ dài, hỏng từng trường header, một tá chỗ sửa nhất
   quán-mà-sai được **tính lại CRC** để chạm tới kiểm tra cấu trúc, fuzz byte ngẫu nhiên
-  rồi tra cứu, và mở qua đường mmap lẫn từ bộ nhớ. Bước 3 thêm: `attach` trả `false`,
-  engine vẫn gợi ý cá nhân bình thường.
-- **Trộn**: không trùng lặp; thứ tự của P giữ nguyên; kho rỗng thì
-  `len = min(3, |P ∪ L|)`.
-- **Nhường**: dưới ngưỡng thì lấp; trên ngưỡng + P có từ mang dấu thì không; trên
-  ngưỡng + P chỉ có từ không dấu thì vẫn lấp. Bộ đếm khớp với đếm lại brute-force sau
-  một chuỗi learn / evict / `enforce_capacity` / rebuild ngẫu nhiên.
-- **Alloc-budget**: `suggest_with(None, "wo")`, `suggest_with(Some, "wo")` có từ điển
-  đều 0 cấp phát.
-- **Bench**: song song `suggestions_lookup`, kèm trần p99.
+  rồi tra cứu, và mở qua đường mmap lẫn từ bộ nhớ. `attach_lexicon` với tệp hỏng hoặc
+  không tồn tại trả `Err` và giữ nguyên từ điển đang gắn.
+- **Trộn** (`src/tests/lexicon/merge.rs`): gắn qua tệp thật (đường mmap); P đứng trước,
+  giữ thứ tự kể cả thứ tự rerank theo ngữ cảnh; `iphone` học được không kèm `iPhone`;
+  P đủ 3, predict và prefix có dấu không bị đụng; `reset` giữ từ điển. Proptest: với
+  mọi lịch sử học và prefix, kết quả trộn **bắt đầu đúng bằng** kết quả chỉ-cá-nhân và
+  chỉ thêm từ điển chưa có trong đó, đủ `min(3, |P| + |L \ P|)`.
+- **Nhường** (`src/tests/lexicon/yield.rs`): dưới ngưỡng thì lấp; trên ngưỡng + P có từ
+  mang dấu thì không; trên ngưỡng + P chỉ có từ không dấu thì vẫn lấp; ngưỡng 0. Proptest
+  tới 300 bước learn / flush / reset trên kho 3–7 từ (gần như từ mới nào cũng evict),
+  so bộ đếm với đếm lại sau **mỗi** bước; thêm test mở lại từ đĩa, đủ cỡ và bị thu nhỏ.
+- **Alloc-budget** (`tests/alloc_budget.rs`, feature `lexicon-build`): 100.000 lượt
+  tra trên `en.tsv` thật qua tệp mmap cho heavy `th`, light `quiz`, miss `zzq`, lấp một
+  phần `wo`, `kh`, có ngữ cảnh `(xin, wo)`, và một ca **nhường** — đều 0 cấp phát.
+  `cargo test --workspace` bật feature qua funput-lexicon-tool nên CI chạy chúng.
+- **Bench** (`suggestions/lexicon`, feature `lexicon-build`) trên cùng kho 5.000 từ
+  với `suggestions/lookup`. Không gắn trần p99 vào CI — đường hiện có cũng chỉ in số,
+  gác cứng trên runner dùng chung sẽ flaky.
 - **Kích thước**: `en.lex` sinh từ `en.tsv` ≤ 512 KiB.
 - **Casing Android**: `iPhone` với prefix `ip` giữ nguyên; prefix `IP` thành `IPHONE`.
 
@@ -405,6 +435,22 @@ kiện mật khẩu / ô số.
    `tests/alloc_budget.rs` cần API công khai của engine nên nằm ở bước 3, như đã định;
    đường tra hiện không tạo `String`/`Vec`, sắp xếp ≤ 3 phần tử tại chỗ.
 3. **Trộn trong `suggest_with`**, cùng ngưỡng nhường và bộ đếm. Alloc-budget, bench.
+   → **Xong**, 4 commit: lấp ô trống · ngưỡng nhường · ngân sách cấp phát và độ trễ ·
+   tài liệu này. Gỡ `expect(dead_code)`; những gì chỉ test hoặc bộ mã hoá dùng
+   (`Lexicon::from_bytes`, `Header::write`…) được compile riêng cho chúng. Đo trên máy
+   dev, criterion, kho 5.000 từ + `en.lex` thật:
+
+   | Ca | Không từ điển | Có từ điển |
+   |---|---:|---:|
+   | Heavy `th` | — | 294 ns |
+   | Light `quiz` | — | 343 ns |
+   | Miss | 245 ns (`zzzz`) | 263 ns (`zzq`) |
+   | Kho cá nhân đủ 3 ô (`word1`) | 334 ns | 329 ns — không hỏi từ điển |
+   | Trộn cá nhân + từ điển (`ho`) | — | 287 ns |
+
+   Cấp phát khi ấm: 0 ở mọi ca. Heap ước tính không đổi (935.012 byte) vì từ điển là
+   vùng map. Miss đắt thêm khoảng 18 ns; mọi ca vẫn dưới 350 ns, cùng bậc với đường cá
+   nhân sẵn có.
 4. **C ABI + JNI**: `attach_lexicon`.
 5. **iOS**: đóng gói, nạp, bỏ cổng ngôn ngữ. Đây là bước đầu tiên người dùng thấy
    được.
