@@ -16,12 +16,18 @@
 //! the file's identity, so a shell can tell two builds of the data apart without
 //! anyone remembering to bump a number.
 
+pub(crate) mod sections;
+pub(crate) mod validate;
+
 use std::cmp::Ordering;
 use std::io;
 
 use crate::binary::{Cursor, invalid_data, put_u16, put_u32};
 use crate::engine::MAX_TOKEN_SCALARS;
 
+/// Refused before mapping. Twice the size the data is allowed to reach, so a
+/// file this large is damage, not growth.
+pub(crate) const MAX_FILE_BYTES: u64 = 1024 * 1024;
 pub(crate) const MAGIC: &[u8; 4] = b"FPLX";
 pub(crate) const VERSION: u16 = 1;
 pub(crate) const HEADER_BYTES: usize = 24;

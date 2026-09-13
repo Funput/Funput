@@ -34,6 +34,7 @@ pub use types::{LearnOutcome, SuggestionSet, SuggestionStats};
 #[cfg(feature = "lexicon-build")]
 pub mod lexicon_build {
     pub use crate::lexicon::encode::encode;
+    pub use crate::lexicon::{Stats, verify};
 }
 
 #[cfg(test)]

@@ -1,9 +1,11 @@
-//! English lexicon tests: the encoder in `encode`.
+//! English lexicon tests: the encoder in `encode`, and the files the reader
+//! refuses in `corrupt`.
 //!
 //! The helpers decode `en.lex` by hand, straight from the documented layout, so
 //! the tests check the bytes against the format rather than against the code
 //! that wrote them.
 
+mod corrupt;
 mod encode;
 
 use crate::lexicon::encode::encode;

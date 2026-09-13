@@ -80,29 +80,20 @@ fn parse(tsv: &str) -> io::Result<Vec<Word<'_>>> {
             .split_once('\t')
             .ok_or_else(|| bad("expected word<TAB>rank"))?;
         if !format::admissible(text.as_bytes()) {
-            return Err(bad(&format!(
-                "a word is {MIN_LEN} to {MAX_LEN} ASCII letters"
-            )));
+            let why = format!("a word is {MIN_LEN} to {MAX_LEN} ASCII letters");
+            return Err(bad(&why));
         }
         let rank = rank
             .parse()
             .map_err(|_| bad("rank is not a number up to 65535"))?;
         words.push(Word { text, rank });
     }
-    if words.len() > MAX_WORDS {
-        return Err(invalid(format!(
-            "{} words, more than {MAX_WORDS}",
-            words.len()
-        )));
+    let count = words.len();
+    if count > MAX_WORDS {
+        return Err(invalid(format!("{count} words, more than {MAX_WORDS}")));
     }
-    match words
-        .iter()
-        .find(|word| usize::from(word.rank) >= words.len())
-    {
-        Some(word) => Err(invalid(format!(
-            "`{}` ranks {}, past the last word",
-            word.text, word.rank
-        ))),
+    match words.iter().find(|word| usize::from(word.rank) >= count) {
+        Some(&Word { text, rank }) => Err(invalid(format!("`{text}` ranks {rank}, past the end"))),
         None => Ok(words),
     }
 }

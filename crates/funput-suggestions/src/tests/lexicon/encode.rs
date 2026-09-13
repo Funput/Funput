@@ -117,7 +117,7 @@ fn refuses_what_the_reader_would_reject_and_says_which_line() {
         ("word\n", "expected word<TAB>rank"),
         ("word\tsoon\n", "rank is not a number"),
         ("word\t70000\n", "rank is not a number"),
-        ("word\t1\n", "past the last word"),
+        ("word\t1\n", "past the end"),
     ] {
         let error = encode(input).unwrap_err();
         assert_eq!(error.kind(), ErrorKind::InvalidData);
