@@ -2,7 +2,7 @@
 
 ## Trạng thái
 
-**Bước 1 (dữ liệu) đã xong; từ bước 2 chưa có code.** Tài liệu này chốt mô hình
+**Bước 1 (dữ liệu) và bước 2 (định dạng `en.lex`) đã xong; từ bước 3 chưa có code.** Tài liệu này chốt mô hình
 trước khi hiện thực và được review riêng. Như [context-suggestion.md](context-suggestion.md), nó là nơi mọi quyết
 định thiết kế sống: mỗi thay đổi hành vi sau này cập nhật lại nó trong cùng PR, chỗ
 nào hiện thực lệch khỏi bản viết thì sửa lại và đánh dấu **Đã đổi khi hiện thực**.
@@ -203,12 +203,16 @@ crates/funput-suggestions/data/lexicon/
 ```
 
 Công cụ xếp hạng (Google Books + SCOWL → `en.tsv`) là crate **`funput-lexicon-tool`**
-(`publish = false`, không dependency nào), không phải dependency của thư viện. Nó
-tách hai lệnh: `count` đọc một shard 1-gram đã giải nén từ stdin, `rank` ghép mọi thứ
-thành `en.tsv`; `crates/funput-lexicon-tool/refresh.sh` nối cả quy trình, bỏ qua
-phần đã xong nên chạy lại được sau khi bị ngắt. Bộ mã hoá TSV → `.lex` nằm
-**trong** `funput-suggestions` sau feature `lexicon-build`, để người ghi và người đọc
-dùng chung một định nghĩa định dạng và test round-trip được trong crate.
+(`publish = false`), không phải dependency của thư viện. Nó có ba lệnh: `count` đọc
+một shard 1-gram đã giải nén từ stdin, `rank` ghép mọi thứ thành `en.tsv`, `pack` biến
+`en.tsv` thành `en.lex`; `crates/funput-lexicon-tool/refresh.sh` nối cả quy trình, bỏ
+qua phần đã xong nên chạy lại được sau khi bị ngắt. Bộ mã hoá TSV → `.lex` và phép
+xác minh nằm **trong** `funput-suggestions` sau feature `lexicon-build`
+(`funput_suggestions::lexicon_build::{encode, verify}`); công cụ chỉ gọi chúng, nên
+định dạng được định nghĩa đúng một chỗ — chỗ đọc nó — và `pack` xác minh tệp bằng
+chính reader của thư viện trước khi ghi. CI gác để feature này không lọt vào
+`funput-ffi` / `funput-jni`: build `--workspace` hợp nhất feature, còn các shell build
+thư viện bằng `-p`.
 
 ### Ghi công
 
@@ -225,12 +229,19 @@ khớp ≤ 3 từ thì chính các từ đó là kết quả. Nên định dạn
 top-3 chỉ cho prefix nặng**:
 
 ```text
-Header      magic "FPLX" · format_version u16 · flags u16 · data_version u32
-            word_count u32 · block_count u32 · heavy_count u32 · checksum u32
-Block index block_count × u32   // offset vào Words, mỗi khối 16 từ
+Header      magic "FPLX" · version u16 · flags u16 · word_count u32
+            words_len u32 · heavy_count u32 · body_crc u32            // 24 byte
+Block index ceil(word_count / 16) × u32   // offset vào Words, mỗi khối 16 từ
 Words       word_count × { len u8 · rank u16 · bytes }   // sắp theo khoá chữ thường
 Heavy       heavy_count × { lo u16 · plen u8 · top [u16; 3] }   // 9 byte, sắp theo (lo, plen)
 ```
+
+**Đã đổi khi hiện thực — header 24 byte.** Bản viết ban đầu có `block_count` và
+`data_version`. `block_count` suy ra được từ `word_count`, lưu thêm chỉ là thêm một chỗ
+để hai con số lệch nhau. `data_version` bị thay bằng **`body_crc`** (CRC-32 của mọi
+thứ sau header, dùng chung `crate::binary::checksum` với kho cá nhân): nó vừa là
+checksum vừa là danh tính của một bản dữ liệu, và không ai phải nhớ tăng tay. Header
+có thêm `words_len` để kích thước từng section suy ra được mà không phải duyệt.
 
 `top3(prefix)`:
 
@@ -243,12 +254,19 @@ Heavy       heavy_count × { lo u16 · plen u8 · top [u16; 3] }   // 9 byte, s�
 O(log n) phép so, không cấp phát. Chuỗi trả về là `&str` mượn thẳng từ vùng nhớ của
 tệp, sống cùng engine, nên `SuggestionSet` giữ nguyên `[Option<&str>; 3]`.
 
-**Kiểm tra đầy đủ lúc nạp, không kiểm tra lúc tra.** `attach_lexicon` xác minh
-checksum, mọi offset, mọi độ dài, mọi id `< word_count` và thứ tự sắp xếp — một lần,
-O(kích thước tệp), trên worker. Qua được bước đó thì đường tra không thể đọc ra ngoài
-vùng nhớ; nó vẫn dùng `get` chứ không index trực tiếp, nên tệp hỏng theo cách chưa
-nghĩ tới cũng không panic. Nạp thất bại thì engine chạy tiếp **không có từ điển**, gợi
-ý cá nhân không bị ảnh hưởng.
+**Kiểm tra đầy đủ lúc nạp, không kiểm tra lúc tra.** `Lexicon::open` / `from_bytes`
+(bước 3 gọi qua `attach_lexicon`) chạy `format/validate.rs` một lần, O(kích thước tệp),
+trên worker; không có cách nào cầm một `Lexicon` chưa qua bước này. Nó kiểm tra: kích
+thước ≤ 1 MiB (từ chối trước khi map), magic, `version` (mới hơn → `Unsupported`, như
+kho cá nhân; cũ hơn → hỏng), `flags == 0`, tổng độ dài khớp đúng từng byte, `body_crc`;
+mọi từ dài 2..=32 chỉ gồm chữ ASCII, `rank < word_count`, khoá chữ thường **tăng
+nghiêm ngặt**, mỗi block offset trỏ đúng từ thứ `16k`; mọi mục Heavy tăng theo
+`(lo, plen)`, `lo` đúng là chỗ run bắt đầu, run thật sự dài hơn 3, ba id khác nhau,
+thuộc run và theo thứ tự rank. Một byte hỏng ngẫu nhiên đã bị CRC bắt; các kiểm tra
+cấu trúc dành cho tệp **nhất quán mà vẫn sai**. Qua được bước đó thì đường tra không
+thể đọc ra ngoài vùng nhớ; nó vẫn dùng `get` chứ không index trực tiếp, nên tệp hỏng
+theo cách chưa nghĩ tới cũng không panic. Nạp thất bại thì engine chạy tiếp **không
+có từ điển**, gợi ý cá nhân không bị ảnh hưởng.
 
 `u16` cho id và `lo` đặt trần cứng 65.535 từ, dư cho mọi `N` hợp lý.
 
@@ -264,18 +282,24 @@ Mẫu đo thiên về từ ngắn, block index cộng thêm ~7,5 KB ở 30k. Ư�
 biến thật: **350–450 KB trên đĩa, 200–250 KB khi tải về.** Để so sánh,
 `libfunput_ffi.so` bản release trên Linux ≈ 670 KB.
 
-**Trần: `en.lex` ≤ 512 KB**, gác bằng test trong CI.
+**Trần: `en.lex` ≤ 512 KiB**, gác bằng test `en_lex_stays_under_its_size_ceiling`.
+
+**Đo thật ở bước 2:** `en.tsv` 30.000 từ → `en.lex` **402.522 byte (393 KiB)**, 8.740
+prefix nặng; `verify` toàn tệp **2,5 ms** ở bản release. Khớp ước tính.
 
 ### Nạp và bộ nhớ
 
-Tệp được **mmap chỉ đọc** (`memmap2`; mmap lỗi thì đọc vào `Vec<u8>`). Trang nhớ là
+Tệp được **mmap chỉ đọc** (`memmap2`; mmap lỗi thì đọc vào bộ nhớ, dừng ở 1 MiB + 1
+byte để tệp phình lên sau khi đo vẫn bị từ chối). Đây là `unsafe` duy nhất của crate,
+một khối có `// SAFETY:`: tệp nằm trong bundle chỉ đọc đã ký của iOS hoặc bản chép
+riêng của app Android, không gì khác ghi vào nó. Trang nhớ là
 clean memory: hệ điều hành chỉ nạp trang thật sự được đọc và thu hồi được bất cứ lúc
 nào. `estimated_heap_bytes` và trần 4 MiB mà test đang gác không đổi.
 
 | Nền tảng | Tệp nằm ở | Ghi chú |
 |---|---|---|
 | iOS | Bundle của Keyboard extension | mmap thẳng; **không cần Full Access** |
-| Android | `assets/`, nén trong APK | Lần đầu (hoặc khi `data_version` đổi) chép ra `noBackupFilesDir/Lexicon/en-<data_version>.lex`, xoá bản cũ, rồi mmap |
+| Android | `assets/`, nén trong APK | Lần đầu (hoặc khi `body_crc` đổi) chép ra `noBackupFilesDir/Lexicon/en-<body_crc>.lex`, xoá bản cũ, rồi mmap |
 
 ## C ABI và JNI
 
@@ -310,7 +334,7 @@ kiện mật khẩu / ô số.
 2. **Truy vấn có từ điển: 0 cấp phát khi ấm.** Mở rộng `tests/alloc_budget.rs`.
 3. **Không gọi vào `funput-core`, không đọc document.** Tín hiệu duy nhất là prefix
    engine đã có trong tay.
-4. **Trần tĩnh.** `en.lex` ≤ 512 KB; heap không đổi; từ điển không có cấu trúc động
+4. **Trần tĩnh.** `en.lex` ≤ 512 KiB; heap không đổi; từ điển không có cấu trúc động
    nào.
 5. **UI không cập nhật thêm lần nào.** Thanh gợi ý vốn đã cập nhật khi prefix đổi; từ
    điển chỉ lấp các ô trước đây để trống. Phép so "danh sách không đổi thì không vẽ
@@ -319,13 +343,23 @@ kiện mật khẩu / ô số.
 ## Kiểm thử và cổng gác
 
 - `scripts/check-loc.sh`: phần mới nằm ở **`src/lexicon/`** — `mod.rs` (`Lexicon`,
-  attach), `format.rs` (header, xác minh), `lookup.rs` (`top3`), `merge.rs` (lấp chỗ
-  trống + nhường), `encode.rs` (feature `lexicon-build`). `engine/query.rs` không
-  phình.
+  `verify`), `storage.rs` (mmap / đọc), `lookup.rs` (`top3`), `encode.rs` (feature
+  `lexicon-build`), `merge.rs` (lấp chỗ trống + nhường, bước 3), và `format/` —
+  `mod.rs` (hằng, header, so khoá), `sections.rs` (đọc section theo vị trí),
+  `validate.rs`. **Đã đổi khi hiện thực**: bản viết ban đầu gộp header và xác minh vào
+  một `format.rs`; tách ra để mỗi tệp dưới 150 dòng. `engine/query.rs` không phình.
+  Codec nhị phân dời từ `persistence/codec/binary.rs` lên `src/binary.rs` để hai định
+  dạng dùng chung. Test nằm ở `src/tests/lexicon/` (`encode`, `corrupt`, `lookup`,
+  `real`).
 - **Differential (proptest)**: `top3(prefix)` bằng kết quả brute-force trên danh sách
-  từ — lọc theo prefix, sắp theo `rank`, lấy 3.
-- **Tệp hỏng**: cắt cụt, sai checksum, offset / id vượt biên, sai thứ tự → `attach`
-  trả `false`, engine vẫn gợi ý cá nhân bình thường.
+  từ — lọc theo prefix, sắp theo `rank`, lấy 3. Từ sinh từ ba chữ cái cả hoa lẫn
+  thường để run nặng và nhẹ cùng xuất hiện dày đặc.
+- **Dữ liệu thật**: mọi prefix của cả 30.000 từ trong `en.tsv`, chữ thường và chữ hoa,
+  so với top-3 dựng độc lập; số heavy khớp số run dài hơn 3.
+- **Tệp hỏng**: cắt cụt ở mọi độ dài, hỏng từng trường header, một tá chỗ sửa nhất
+  quán-mà-sai được **tính lại CRC** để chạm tới kiểm tra cấu trúc, fuzz byte ngẫu nhiên
+  rồi tra cứu, và mở qua đường mmap lẫn từ bộ nhớ. Bước 3 thêm: `attach` trả `false`,
+  engine vẫn gợi ý cá nhân bình thường.
 - **Trộn**: không trùng lặp; thứ tự của P giữ nguyên; kho rỗng thì
   `len = min(3, |P ∪ L|)`.
 - **Nhường**: dưới ngưỡng thì lấp; trên ngưỡng + P có từ mang dấu thì không; trên
@@ -334,7 +368,7 @@ kiện mật khẩu / ô số.
 - **Alloc-budget**: `suggest_with(None, "wo")`, `suggest_with(Some, "wo")` có từ điển
   đều 0 cấp phát.
 - **Bench**: song song `suggestions_lookup`, kèm trần p99.
-- **Kích thước**: `en.lex` sinh từ `en.tsv` ≤ 512 KB.
+- **Kích thước**: `en.lex` sinh từ `en.tsv` ≤ 512 KiB.
 - **Casing Android**: `iPhone` với prefix `ip` giữ nguyên; prefix `IP` thành `IPHONE`.
 
 ## Thứ tự hiện thực
@@ -363,6 +397,13 @@ kiện mật khẩu / ô số.
    `Goebbels`) — di sản văn phong sách, chấp nhận ở bản này.
 2. **Định dạng.** `format.rs`, `encode.rs`, `lookup.rs`, xác minh lúc nạp, test
    differential và tệp hỏng, cổng kích thước. Chưa ai dùng tới.
+   → **Xong**, 7 commit: dời codec nhị phân ra dùng chung · định dạng và bộ mã hoá ·
+   nạp và xác minh · tra cứu · `pack` trong công cụ · guard CI · tài liệu này.
+   `en.lex` thật 402.522 byte, 8.740 prefix nặng, `verify` 2,5 ms. Module `lexicon`
+   mang `expect(dead_code)` cho tới khi bước 3 dùng nó — là `expect` chứ không `allow`,
+   nên khi đã có consumer thì build báo lỗi và buộc gỡ. Bench criterion và
+   `tests/alloc_budget.rs` cần API công khai của engine nên nằm ở bước 3, như đã định;
+   đường tra hiện không tạo `String`/`Vec`, sắp xếp ≤ 3 phần tử tại chỗ.
 3. **Trộn trong `suggest_with`**, cùng ngưỡng nhường và bộ đếm. Alloc-budget, bench.
 4. **C ABI + JNI**: `attach_lexicon`.
 5. **iOS**: đóng gói, nạp, bỏ cổng ngôn ngữ. Đây là bước đầu tiên người dùng thấy
@@ -379,7 +420,7 @@ kiện mật khẩu / ô số.
    | `N` | 30k (đã chốt ở bước 1) | Bao nhiêu từ vào `en.lex` — đánh đổi độ phủ và kích thước |
    | `lexicon_yield_after_words` | 200 | Bao nhiêu từ có dấu thì kho được coi là kho tiếng Việt |
    | Kích thước khối | 16 | Cân giữa kích thước block index và độ dài lượt quét |
-   | Trần `en.lex` | 512 KB | Mức phình tối đa chấp nhận được |
+   | Trần `en.lex` | 512 KiB | Mức phình tối đa chấp nhận được |
 
 ## Nợ mang theo
 
