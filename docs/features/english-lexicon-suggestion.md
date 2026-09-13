@@ -567,9 +567,11 @@ của "Thứ tự hiện thực".
 
 - `refresh.sh` mới vào danh sách ShellCheck của CI; máy làm bước 1–4 không có
   ShellCheck, nên lần chạy CI đầu tiên là lần kiểm đầu tiên.
-- Step CI "charset stays out of the mobile crates" có sẵn từ trước dùng `! lệnh`, mà
-  dưới `bash -e` chỉ dòng cuối thật sự chặn. Guard của từ điển đã viết đúng
-  (`if … exit 1`); step cũ cần sửa riêng.
+
+Đã xử lý: step CI "charset stays out of the mobile crates" dùng `! lệnh`, mà dưới
+`bash -e` chỉ dòng cuối thật sự chặn — sửa ở #387. Guard của từ điển viết theo cùng
+khuôn đó: phủ định là `if … then refuse`, và `grep` đọc hết đầu vào để `pipefail`
+không biến một lần khớp thành "qua".
 
 ## Nợ mang theo
 
