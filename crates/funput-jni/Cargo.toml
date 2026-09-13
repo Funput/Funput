@@ -17,3 +17,9 @@ funput-core = { path = "../funput-core" }
 funput-engine = { path = "../funput-engine" }
 funput-suggestions = { path = "../funput-suggestions" }
 jni = "0.22.4"
+
+[dev-dependencies]
+# The registry tests attach a real en.lex, which only the encoder can build.
+# A dev-dependency never reaches the library the Android keyboard links.
+funput-suggestions = { path = "../funput-suggestions", features = ["lexicon-build"] }
+tempfile = "3.27.0"

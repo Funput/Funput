@@ -515,6 +515,7 @@ dependencies = [
  "funput-engine",
  "funput-suggestions",
  "jni",
+ "tempfile",
 ]
 
 [[package]]
