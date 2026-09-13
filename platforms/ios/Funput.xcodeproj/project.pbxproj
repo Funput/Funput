@@ -90,8 +90,8 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Suggestions/PersonalSuggestionSignposts.swift,
-				"Suggestions/PersonalSuggestionWorker+Store.swift",
 				Suggestions/PersonalSuggestionWorker.swift,
+				"Suggestions/PersonalSuggestionWorker+Store.swift",
 			);
 			target = 5FB3C7C33001F78400CE4906 /* FunputTests */;
 		};
@@ -116,8 +116,8 @@
 		5FB3C7F23001F87500CE4906 /* Keyboard */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				5FB3C7FC3001F87500CE4906 /* Exceptions for "Keyboard" folder in "Keyboard" target */,
 				FE3860000000000000000401 /* Exceptions for "Keyboard" folder in "FunputTests" target */,
+				5FB3C7FC3001F87500CE4906 /* Exceptions for "Keyboard" folder in "Keyboard" target */,
 			);
 			path = Keyboard;
 			sourceTree = "<group>";
@@ -333,7 +333,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2660;
-				LastUpgradeCheck = 2660;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					5FB3C7B63001F78300CE4906 = {
 						CreatedOnToolsVersion = 26.6;
