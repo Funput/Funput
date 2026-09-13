@@ -1,6 +1,6 @@
 //! English lexicon tests: the encoder in `encode`, the files the reader refuses
-//! in `corrupt`, the lookup against an oracle in `lookup`, and the shipped word
-//! list in `real`.
+//! in `corrupt`, the lookup against an oracle in `lookup`, the engine with a
+//! lexicon attached in `merge`, and the shipped word list in `real`.
 //!
 //! The helpers decode `en.lex` by hand, straight from the documented layout, so
 //! the tests check the bytes against the format rather than against the code
@@ -9,6 +9,7 @@
 mod corrupt;
 mod encode;
 mod lookup;
+mod merge;
 mod real;
 
 use crate::lexicon::encode::encode;

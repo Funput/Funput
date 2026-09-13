@@ -18,10 +18,6 @@ mod bigram;
 mod binary;
 mod engine;
 mod index;
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "step 3 wires the lexicon into suggest_with")
-)]
 mod lexicon;
 mod persistence;
 mod types;

@@ -5,6 +5,7 @@
 //!   every file passes before anything reads it.
 //! - `storage` — mapping the file, or reading it when mapping is unavailable.
 //! - `lookup` — a prefix's top three, allocation-free.
+//! - `merge` — attaching a lexicon to the engine and filling its empty slots.
 //! - `encode` — `en.tsv` to `en.lex`, for the build only.
 //!
 //! See `docs/features/english-lexicon-suggestion.md`.
@@ -13,6 +14,7 @@
 pub(crate) mod encode;
 pub(crate) mod format;
 mod lookup;
+mod merge;
 mod storage;
 
 use std::io;
@@ -20,6 +22,7 @@ use std::path::Path;
 
 use format::sections::Layout;
 use format::validate::validate;
+pub(crate) use merge::LexiconSlot;
 use storage::Bytes;
 
 /// An `en.lex` that passed validation. There is no way to hold one that did not.
@@ -33,13 +36,17 @@ impl Lexicon {
         Self::new(Bytes::open(path)?)
     }
 
-    pub(crate) fn from_bytes(bytes: impl Into<Box<[u8]>>) -> io::Result<Self> {
-        Self::new(Bytes::Owned(bytes.into()))
-    }
-
     fn new(bytes: Bytes) -> io::Result<Self> {
         let layout = validate(&bytes)?;
         Ok(Self { bytes, layout })
+    }
+}
+
+/// Views the tests need and the engine does not.
+#[cfg(test)]
+impl Lexicon {
+    pub(crate) fn from_bytes(bytes: impl Into<Box<[u8]>>) -> io::Result<Self> {
+        Self::new(Bytes::Owned(bytes.into()))
     }
 
     pub(crate) fn layout(&self) -> &Layout {

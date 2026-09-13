@@ -22,7 +22,7 @@ pub(crate) mod validate;
 use std::cmp::Ordering;
 use std::io;
 
-use crate::binary::{Cursor, invalid_data, put_u16, put_u32};
+use crate::binary::{Cursor, invalid_data};
 use crate::engine::MAX_TOKEN_SCALARS;
 
 /// Refused before mapping. Twice the size the data is allowed to reach, so a
@@ -70,7 +70,11 @@ impl Header {
         })
     }
 
+    /// Only the encoder writes a header; the keyboards never do.
+    #[cfg(any(test, feature = "lexicon-build"))]
     pub(crate) fn write(&self, out: &mut Vec<u8>) {
+        use crate::binary::{put_u16, put_u32};
+
         out.extend_from_slice(MAGIC);
         put_u16(out, self.version);
         put_u16(out, self.flags);
