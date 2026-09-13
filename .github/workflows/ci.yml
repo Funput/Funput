@@ -158,13 +158,17 @@ jobs:
       # control: if the feature is ever renamed, it fails instead of the negatives
       # passing forever on a name that no longer exists.
       #
+      # The negatives read `no-dev`: the boundary crates' own tests build an en.lex
+      # through a dev-dependency on the encoder, and a dev-dependency never reaches
+      # the library a shell links. `cargo tree` counts dev edges unless told not to.
+      #
       # The negatives are `if … exit 1`, not `! …`: under `bash -e` a negated command
       # that fails does not stop the script, so only the last one would gate.
       - name: lexicon encoder stays out of the mobile crates
         run: |
           cargo tree -p funput-lexicon-tool -e features | grep -q lexicon-build
           for crate in funput-ffi funput-jni; do
-            if cargo tree -p "$crate" -e features | grep -q lexicon-build; then
+            if cargo tree -p "$crate" -e features,no-dev | grep -q lexicon-build; then
               echo "::error::lexicon-build reached $crate"
               exit 1
             fi
