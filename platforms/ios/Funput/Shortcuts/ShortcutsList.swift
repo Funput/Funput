@@ -2,7 +2,7 @@ import FunputShared
 import SwiftUI
 
 struct ShortcutsList: View {
-    @Bindable var model: ShortcutsModel
+    @ObservedObject var model: ShortcutsModel
     let edit: (TextShortcut) -> Void
     let add: () -> Void
     @State private var pendingDelete: TextShortcut?
@@ -41,7 +41,7 @@ struct ShortcutsList: View {
                         .textInputAutocapitalization(.never)
                         .accessibilityIdentifier("shortcuts.search")
                     if !model.query.isEmpty {
-                        Button("Xoá tìm kiếm", systemImage: "xmark.circle.fill") { model.query = "" }
+                        Button { model.query = "" } label: { Label("Xoá tìm kiếm", systemImage: "xmark.circle.fill") }
                             .labelStyle(.iconOnly)
                             .foregroundStyle(.secondary)
                             .frame(minWidth: 44, minHeight: 44)
@@ -55,11 +55,10 @@ struct ShortcutsList: View {
                 } else if model.entries.isEmpty {
                     emptyState
                 } else if model.filteredEntries.isEmpty {
-                    ContentUnavailableView {
-                        Label("Không tìm thấy gõ tắt", systemImage: "magnifyingglass")
-                    } description: {
-                        Text("Thử tìm bằng chữ tắt hoặc một phần nội dung khác.")
-                    } actions: {
+                    ShortcutsEmptyState(
+                        title: "Không tìm thấy gõ tắt", systemImage: "magnifyingglass",
+                        summary: "Thử tìm bằng chữ tắt hoặc một phần nội dung khác."
+                    ) {
                         Button("Xoá tìm kiếm") { model.query = "" }
                             .frame(minHeight: 44)
                     }
@@ -76,8 +75,7 @@ struct ShortcutsList: View {
             }
         }
         .listStyle(.insetGrouped)
-        .listSectionSpacing(16)
-        .contentMargins(.top, 12, for: .scrollContent)
+        .modifier(ShortcutsListSpacing())
         .scrollDismissesKeyboard(.interactively)
         .accessibilityIdentifier("shortcuts.list")
         .alert("Xoá gõ tắt?", isPresented: Binding(
@@ -95,12 +93,11 @@ struct ShortcutsList: View {
     }
 
     private var emptyState: some View {
-        ContentUnavailableView {
-            Label("Chưa có gõ tắt", systemImage: "text.append")
-        } description: {
-            Text("Lưu những nội dung thường dùng.\nVí dụ: vn → việt nam, kg → không.")
-        } actions: {
-            Button("Thêm gõ tắt", systemImage: "plus", action: add)
+        ShortcutsEmptyState(
+            title: "Chưa có gõ tắt", systemImage: "text.append",
+            summary: "Lưu những nội dung thường dùng.\nVí dụ: vn → việt nam, kg → không."
+        ) {
+            Button(action: add) { Label("Thêm gõ tắt", systemImage: "plus") }
                 .disabled(!model.canWrite)
                 .buttonStyle(.borderedProminent)
                 .frame(minHeight: 44)
@@ -119,7 +116,7 @@ struct ShortcutsList: View {
             }
             .frame(minHeight: 44, alignment: .leading)
             .padding(.vertical, 6)
-            .contentShape(.rect)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(!model.canWrite)

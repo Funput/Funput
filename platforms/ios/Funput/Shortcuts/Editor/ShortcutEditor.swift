@@ -4,7 +4,7 @@ import UIKit
 
 struct ShortcutEditor: View {
     @Environment(\.dismiss) private var dismiss
-    let model: ShortcutsModel
+    @ObservedObject var model: ShortcutsModel
     let original: TextShortcut
     @State private var draft: TextShortcut
     @State private var confirmsDiscard = false

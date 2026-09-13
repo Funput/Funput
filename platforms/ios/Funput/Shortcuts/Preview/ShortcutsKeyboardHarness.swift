@@ -6,7 +6,7 @@ import UIKit
 
 /// Only reachable through an explicit UI-test launch argument.
 struct ShortcutsKeyboardHarness: View {
-    @State private var model = ShortcutsModel(store: ShortcutsStoreFactory.make())
+    @StateObject private var model = ShortcutsModel(store: ShortcutsStoreFactory.make())
 
     var body: some View {
         NavigationStack {

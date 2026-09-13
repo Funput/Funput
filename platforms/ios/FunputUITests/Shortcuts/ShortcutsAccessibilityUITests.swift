@@ -32,6 +32,9 @@ final class ShortcutsAccessibilityUITests: XCTestCase {
     }
 
     private func audit(_ app: XCUIApplication) throws {
+        guard #available(iOS 17, *) else {
+            throw XCTSkip("The system accessibility audit requires iOS 17 or newer.")
+        }
         try app.performAccessibilityAudit(for: [.hitRegion, .sufficientElementDescription, .trait])
     }
 

@@ -1,16 +1,16 @@
 import Foundation
 import FunputShared
-import Observation
+import Combine
 
-@MainActor @Observable
-final class ShortcutsModel {
-    private(set) var library = ShortcutLibrary()
-    private(set) var hasLoaded = false
-    private(set) var isLoading = false
-    private(set) var isSaving = false
-    private(set) var loadError: String?
-    var saveError: String?
-    var query = ""
+@MainActor
+final class ShortcutsModel: ObservableObject {
+    @Published private(set) var library = ShortcutLibrary()
+    @Published private(set) var hasLoaded = false
+    @Published private(set) var isLoading = false
+    @Published private(set) var isSaving = false
+    @Published private(set) var loadError: String?
+    @Published var saveError: String?
+    @Published var query = ""
     private let store: any ShortcutsStoring
 
     init(store: any ShortcutsStoring = ShortcutsStore.shared) {

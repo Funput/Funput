@@ -4,7 +4,7 @@ import SwiftUI
 struct ShortcutsOptions: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Bindable var model: ShortcutsModel
+    @ObservedObject var model: ShortcutsModel
 
     var body: some View {
         NavigationStack {

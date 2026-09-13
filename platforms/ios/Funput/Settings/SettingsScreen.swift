@@ -11,7 +11,7 @@ struct SettingsScreen: View {
     @State private var picker: SettingsPicker?
     @State private var requestsHapticAccess = false
     @State private var requestsSoundAccess = false
-    @State private var shortcuts = ShortcutsModel(store: ShortcutsStoreFactory.make())
+    @StateObject private var shortcuts = ShortcutsModel(store: ShortcutsStoreFactory.make())
 
     init(
         store: any FunputConfigurationStoring = FunputConfigurationStore(),

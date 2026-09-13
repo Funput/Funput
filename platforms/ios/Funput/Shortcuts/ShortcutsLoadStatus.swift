@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ShortcutsLoadStatus: View {
-    let model: ShortcutsModel
+    @ObservedObject var model: ShortcutsModel
 
     var body: some View {
         if model.isLoading {

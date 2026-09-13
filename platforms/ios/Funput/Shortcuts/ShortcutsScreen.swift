@@ -3,7 +3,7 @@ import SwiftUI
 
 struct ShortcutsScreen: View {
     @Environment(\.scenePhase) private var scenePhase
-    @Bindable var model: ShortcutsModel
+    @ObservedObject var model: ShortcutsModel
     @State private var editor: TextShortcut?
     @State private var showsOptions = false
 
@@ -12,13 +12,13 @@ struct ShortcutsScreen: View {
             .navigationTitle("Gõ tắt")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Tuỳ chọn", systemImage: "slider.horizontal.3") { showsOptions = true }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { showsOptions = true } label: { Label("Tuỳ chọn", systemImage: "slider.horizontal.3") }
                         .accessibilityIdentifier("shortcuts.options")
                         .disabled(!model.hasLoaded)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Thêm gõ tắt", systemImage: "plus") { editor = TextShortcut() }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { editor = TextShortcut() } label: { Label("Thêm gõ tắt", systemImage: "plus") }
                         .accessibilityIdentifier("shortcuts.add")
                         .disabled(!model.canWrite)
                 }
@@ -27,14 +27,22 @@ struct ShortcutsScreen: View {
             .sheet(isPresented: $showsOptions) { ShortcutsOptions(model: model) }
             .shortcutsSaveAlert(model, active: editor == nil && !showsOptions)
             .task { await model.reload() }
-            .onChange(of: scenePhase) { _, phase in
-                if phase == .active { Task { await model.reload() } }
+            .background {
+                if #available(iOS 17, *) {
+                    Color.clear.onChange(of: scenePhase) { _, phase in reloadIfActive(phase) }
+                } else {
+                    Color.clear.onChange(of: scenePhase) { phase in reloadIfActive(phase) }
+                }
             }
+    }
+
+    private func reloadIfActive(_ phase: ScenePhase) {
+        if phase == .active { Task { await model.reload() } }
     }
 }
 
 struct ShortcutsSettingsLink: View {
-    let model: ShortcutsModel
+    @ObservedObject var model: ShortcutsModel
 
     var body: some View {
         NavigationLink {
@@ -52,7 +60,7 @@ struct ShortcutsSettingsLink: View {
             }
             .frame(minHeight: 44)
             .padding(.vertical, 10)
-            .contentShape(.rect)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("settings.shortcuts")
