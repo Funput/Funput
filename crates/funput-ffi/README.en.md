@@ -26,6 +26,9 @@ no-op result — it **never** unwinds into the host (which would abort the whole
 Personal suggestions use a separate opaque `FunputSuggestionEngine` handle. Queries return at most
 three UTF-32 candidates as a POD; open/learn/flush/compact/reset failures return null, `false`, or an
 empty result. Platforms drive this handle serially on a worker, never from the composition path.
+`funput_suggestion_attach_lexicon` attaches the English `en.lex` (a UTF-8 path, as for
+`engine_open`) so queries fill the slots personal words leave empty; a failure returns `false` and
+keeps the lexicon already attached.
 
 Per-app VI/EN memory uses another separate opaque handle, `FunputAppLanguage`, also independent of
 `FunputEngine`: it only decides "should this app be Vietnamese", the host calls `funput_set_enabled`
@@ -136,7 +139,7 @@ src/engine/         # composition IME C API (FunputEngine)
                     #   shortcuts.rs add_shortcut/clear_shortcuts (text expansion, "gõ tắt")
                     #   result.rs   #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 src/suggestion/     # personal-suggestion C API (FunputSuggestionEngine)
-                    #   engine.rs (handle new/open/free), query.rs (learn/query),
+                    #   engine.rs (handle new/open/free, attach_lexicon), query.rs (learn/query),
                     #   store.rs (flush/compact/reset/stats), types.rs (candidate/stats PODs)
 src/app_language/   # per-app VI/EN memory C API (FunputAppLanguage), independent of FunputEngine
                     #   handle.rs (handle new/free + shared UTF-8 marshalling),

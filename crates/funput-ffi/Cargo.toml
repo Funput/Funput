@@ -29,6 +29,9 @@ funput-suggestions = { path = "../funput-suggestions" }
 
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
+# The suggestion tests attach a real en.lex, which only the encoder can build.
+# A dev-dependency never reaches the library a shell links.
+funput-suggestions = { path = "../funput-suggestions", features = ["lexicon-build"] }
 tempfile = "3.27.0"
 
 [[bench]]
