@@ -174,6 +174,21 @@ jobs:
       - name: Verify iOS release signing commands
         run: python3 platforms/ios/Scripts/tests/test_release_signing.py
 
+  # Partner Center upload command construction. Same idea as ios-release-signing:
+  # exercise the scripts a stranger will run from deploy-windows-store.yml without
+  # Azure AD secrets or a Windows SDK. Not a required status check — adding one
+  # means updating the ruleset on `main`.
+  windows-store-submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify Store version and flight payloads
+        run: |
+          python3 platforms/windows/scripts/store/tests/test_msix_version.py
+          python3 platforms/windows/scripts/store/tests/test_store_flight.py
+          python3 platforms/windows/scripts/store/tests/test_submit_msix.py
+
   # The line budgets for the three shell languages, none of which ran anywhere a
   # pull request could see. The Swift ones were called from deploy-ios.yml
   # (`workflow_dispatch`, a manual release) and build-macos.yml (`workflow_call`,

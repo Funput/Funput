@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  IgnorableNamespaces="uap rescap desktop">
+
+  <Identity
+    Name="__IDENTITY_NAME__"
+    Publisher="__PUBLISHER__"
+    Version="__VERSION__"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <!-- Must match a name reserved in Partner Center exactly; pack-msix.ps1 -DisplayName. -->
+    <DisplayName>__DISPLAY_NAME__</DisplayName>
+    <PublisherDisplayName>__PUBLISHER_DISPLAY_NAME__</PublisherDisplayName>
+    <Logo>Assets\Icons\StoreLogo.png</Logo>
+    <Description>Vietnamese input method</Description>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+    <Resource Language="vi-vn" />
+  </Resources>
+
+  <Applications>
+    <Application Id="Funput" Executable="Funput.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Funput"
+        Description="Bộ gõ tiếng Việt"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Tiles\Square150x150Logo.png"
+        Square44x44Logo="Assets\Icons\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Tiles\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="Assets\Tiles\SplashScreen.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <desktop:Extension Category="windows.startupTask" Executable="Funput.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="FunputStartup" Enabled="false" DisplayName="Funput" />
+        </desktop:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

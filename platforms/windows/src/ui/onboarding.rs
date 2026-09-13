@@ -38,7 +38,17 @@ pub(super) fn open() {
             window.set_method(value);
         }
     });
-    window.on_set_launch(commands::set_launch_at_login);
+    // Onboarding has no notice; the switch snapping back is the signal, and
+    // Settings explains it if the user tries again there.
+    let weak = window.as_weak();
+    window.on_set_launch(move |on| {
+        let effective = commands::set_launch_at_login(on);
+        if effective != on
+            && let Some(window) = weak.upgrade()
+        {
+            window.set_launch_at_login(effective);
+        }
+    });
 
     let weak = window.as_weak();
     window.on_finish(move || {

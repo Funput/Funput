@@ -84,7 +84,10 @@ window-vibrancy = "0.8"
 # for DWM corner preference on the Control Center flyout.
 raw-window-handle = "0.6.2"
 windows = { version = "0.62", features = [
+    "Foundation",
+    "ApplicationModel",
     "Win32_Foundation",
+    "Win32_Storage_Packaging_Appx",
     "Win32_UI_WindowsAndMessaging",
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_UI_Accessibility",

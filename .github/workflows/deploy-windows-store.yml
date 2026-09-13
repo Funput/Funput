@@ -1,0 +1,217 @@
+name: Deploy Windows Store
+
+# Manual only. Builds the Store .msix from whichever branch you run it on and
+# uploads it to a Partner Center package flight.
+#
+# Deliberately NOT wired into release.yml, for the same reasons as deploy-ios.yml
+# and deploy-android.yml: every upload burns an Identity.Version permanently at
+# Microsoft, and the upload depends on infrastructure that fails for reasons
+# unrelated to this repo (an expired Azure AD secret, a Partner Center hold).
+# Keeping it separate means a bad day at Microsoft never blocks the
+# macOS/Windows/Linux GitHub release.
+#
+# Uploading is not publishing to the public Store: the build reaches the flight
+# you named. Promoting it to production is still a deliberate act in Partner
+# Center.
+#
+# This workflow does not run scripts/check-loc.sh. The 150-line budget is
+# already a pull-request gate (ci.yml job `rust`). Repeating it here would
+# only keep a windows-latest runner busy.
+#
+# Required repository variables (Partner Center → Product identity):
+#   MS_STORE_PACKAGE_NAME           Identity Name
+#   MS_STORE_PUBLISHER              Publisher, e.g. CN=xxxxxxxx-...
+#   MS_STORE_PUBLISHER_DISPLAY_NAME Publisher display name
+#   MS_STORE_APP_ID                 Store ID (9N…)
+#   MS_STORE_DISPLAY_NAME           optional; defaults to `Funput`. Must match a
+#                                   name reserved for the app in Partner Center.
+#   MS_STORE_FLIGHT_NAME            optional; defaults to `internal`
+#
+# Required secrets (Azure AD app with Manager on this Partner Center account):
+#   MS_STORE_TENANT_ID
+#   MS_STORE_CLIENT_ID
+#   MS_STORE_CLIENT_SECRET
+#
+# One-time, outside this repo: package flights only exist for an app whose
+# first submission has been *published*. So in Partner Center: finish the
+# listing and age ratings, submit a build by hand and let it pass
+# certification, then create a known user group and a package flight named as
+# MS_STORE_FLIGHT_NAME. The Store API can do none of that for you, and this
+# workflow never creates a flight.
+#
+# Versioning differs from deploy-ios.yml: the MSIX Identity.Version's fourth
+# part is reserved for the Store and must be 0, so there is no room for a build
+# number derived from run_number. The package version is the marketing version
+# plus `.0`, and every build Partner Center accepts needs a new marketing
+# version. A run that failed before its commit consumed nothing — re-run it.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Marketing version, e.g. 1.2026.66 — what users see. The package is 1.2026.66.0, so use a new one per upload."
+        required: true
+        type: string
+      dry_run:
+        description: "Pack the .msix but do not upload it to Partner Center."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One upload at a time: two concurrent runs would race for the same revision.
+concurrency:
+  group: deploy-windows-store
+  cancel-in-progress: false
+
+env:
+  CARGO_HTTP_MULTIPLEXING: "false"
+  CARGO_NET_RETRY: "5"
+  MS_STORE_FLIGHT_NAME: ${{ vars.MS_STORE_FLIGHT_NAME || 'internal' }}
+
+jobs:
+  windows-store:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: platforms/windows -> target
+
+      # Reject a bad marketing version *before* the release clippy/test spend
+      # ~45 minutes.
+      - name: Package version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          PACKAGE_VERSION="$(python platforms/windows/scripts/store/msix_version.py "$VERSION")"
+          echo "Marketing version $VERSION, package $PACKAGE_VERSION"
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
+
+      - name: Stamp marketing version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          node -e "const fs=require('fs');const f='platforms/windows/Cargo.toml';let s=fs.readFileSync(f,'utf8');s=s.replace(/^version = \".*\"/m,'version = \"'+process.argv[1]+'\"');fs.writeFileSync(f,s)" "$VERSION"
+
+      # Same gate as build-windows.yml: this workflow can target a branch the
+      # pull-request job never saw. --release shares the tree the pack step needs.
+      - name: Clippy
+        working-directory: platforms/windows
+        run: cargo clippy --release --all-targets -- -D warnings
+
+      - name: Test
+        working-directory: platforms/windows
+        run: cargo test --release
+
+      - name: Build Funput.exe
+        working-directory: platforms/windows
+        run: cargo build --release
+
+      - name: Require Partner Center identity
+        env:
+          MS_STORE_PACKAGE_NAME: ${{ vars.MS_STORE_PACKAGE_NAME }}
+          MS_STORE_PUBLISHER: ${{ vars.MS_STORE_PUBLISHER }}
+          MS_STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.MS_STORE_PUBLISHER_DISPLAY_NAME }}
+          MS_STORE_APP_ID: ${{ vars.MS_STORE_APP_ID }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in MS_STORE_PACKAGE_NAME MS_STORE_PUBLISHER MS_STORE_PUBLISHER_DISPLAY_NAME MS_STORE_APP_ID; do
+            eval "value=\${$name:-}"
+            if [ -z "$value" ]; then
+              echo "::error::$name is not set. Add it under Settings → Variables (Partner Center → Product identity)."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Pack MSIX
+        shell: pwsh
+        env:
+          MS_STORE_PACKAGE_NAME: ${{ vars.MS_STORE_PACKAGE_NAME }}
+          MS_STORE_PUBLISHER: ${{ vars.MS_STORE_PUBLISHER }}
+          MS_STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.MS_STORE_PUBLISHER_DISPLAY_NAME }}
+          MS_STORE_DISPLAY_NAME: ${{ vars.MS_STORE_DISPLAY_NAME || 'Funput' }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          & platforms/windows/scripts/store/pack-msix.ps1 `
+            -Exe platforms/windows/target/release/funput.exe `
+            -Version $env:PACKAGE_VERSION `
+            -IdentityName $env:MS_STORE_PACKAGE_NAME `
+            -Publisher $env:MS_STORE_PUBLISHER `
+            -PublisherDisplayName $env:MS_STORE_PUBLISHER_DISPLAY_NAME `
+            -DisplayName $env:MS_STORE_DISPLAY_NAME `
+            -OutDir platforms/windows/build/msix
+
+      # Waits for the commit to leave CommitStarted and fails the job on
+      # CommitFailed, so a rejected archive shows up here rather than only in
+      # the portal. Certification itself runs later and is not awaited.
+      - name: Upload to Partner Center flight
+        if: ${{ !inputs.dry_run }}
+        env:
+          MS_STORE_TENANT_ID: ${{ secrets.MS_STORE_TENANT_ID }}
+          MS_STORE_CLIENT_ID: ${{ secrets.MS_STORE_CLIENT_ID }}
+          MS_STORE_CLIENT_SECRET: ${{ secrets.MS_STORE_CLIENT_SECRET }}
+          MS_STORE_APP_ID: ${{ vars.MS_STORE_APP_ID }}
+        run: |
+          set -euo pipefail
+          for name in MS_STORE_TENANT_ID MS_STORE_CLIENT_ID MS_STORE_CLIENT_SECRET; do
+            eval "value=\${$name:-}"
+            if [ -z "$value" ]; then
+              echo "::error::$name is not set. Add the Azure AD app secret under Settings → Secrets."
+              exit 1
+            fi
+          done
+          export PYTHONPATH="$PWD/platforms/windows/scripts/store"
+          python platforms/windows/scripts/store/submit_msix.py \
+            "platforms/windows/build/msix/Funput-$PACKAGE_VERSION.msix"
+
+      - name: Stage artifact
+        if: always()
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          MSIX="platforms/windows/build/msix/Funput-${PACKAGE_VERSION}.msix"
+          [ -f "$MSIX" ] || exit 0
+          cp "$MSIX" "$OUT/"
+          sha256sum "$OUT/Funput-${PACKAGE_VERSION}.msix" | awk '{print $1}' \
+            > "$OUT/Funput-${PACKAGE_VERSION}.msix.sha256"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: windows-store
+          path: ${{ runner.temp }}/out
+          if-no-files-found: ignore
+
+      - name: Summary
+        if: success()
+        env:
+          VERSION: ${{ inputs.version }}
+          APP_ID: ${{ vars.MS_STORE_APP_ID }}
+        run: |
+          {
+            echo "### Funput Windows Store $VERSION (package $PACKAGE_VERSION)"
+            echo
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "Packed the .msix; **not** uploaded (dry run)."
+            else
+              echo "Committed to Partner Center flight **$MS_STORE_FLIGHT_NAME**; certification runs next."
+              echo "Promote to production in the portal when you mean it."
+            fi
+            if [ -n "${APP_ID:-}" ]; then
+              echo
+              echo "Partner Center: https://partner.microsoft.com/dashboard/products/$APP_ID/"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

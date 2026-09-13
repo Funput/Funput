@@ -7,6 +7,7 @@
 
 use std::sync::Mutex;
 
+use crate::shared::packaged::{self, STORE_UPDATE_MESSAGE};
 use crate::shared::update::{self, Manifest};
 use crate::ui;
 
@@ -16,6 +17,10 @@ static PENDING_UPDATE: Mutex<Option<Manifest>> = Mutex::new(None);
 /// Check the GitHub Release feed for a newer build. Drives the About pane through
 /// `checking` → `available`/`uptodate`/`error`.
 pub fn check_for_updates() {
+    if packaged::is_packaged() {
+        set_update_ui(packaged::STORE_UPDATE_STATE, "", STORE_UPDATE_MESSAGE);
+        return;
+    }
     set_update_ui("checking", "", "");
     std::thread::spawn(|| match update::fetch_manifest() {
         Ok(manifest) if update::is_newer(&manifest.version) => {
@@ -34,6 +39,9 @@ pub fn check_for_updates() {
 /// Download, verify, and swap in the pending update. Drives the About pane through
 /// `downloading` → `ready`/`error`. The relaunch waits for the user's confirmation.
 pub fn install_update() {
+    if packaged::is_packaged() {
+        return;
+    }
     let Some(manifest) = PENDING_UPDATE.lock().unwrap().clone() else {
         return;
     };

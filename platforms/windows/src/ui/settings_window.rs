@@ -6,6 +6,7 @@ use slint::{ComponentHandle, Weak};
 
 use super::models;
 use super::settings_callbacks;
+use crate::shared::packaged::{self, STORE_UPDATE_MESSAGE};
 use crate::shared::{commands, shell};
 use crate::ui::{recorder, system_accent};
 use crate::{SettingsWindow, Theme};
@@ -99,9 +100,15 @@ pub(super) fn populate(window: &SettingsWindow) {
     window.set_auto_english_layout(settings.auto_english_on_foreign_layout);
     window.set_launch_at_login(settings.launch_at_login);
     window.set_version(env!("CARGO_PKG_VERSION").into());
-    window.set_update_state("idle".into());
+    // A Store build parks the About pane in `store`: message only, no actions.
+    let (state, message) = if packaged::is_packaged() {
+        (packaged::STORE_UPDATE_STATE, STORE_UPDATE_MESSAGE)
+    } else {
+        ("idle", "")
+    };
+    window.set_update_state(state.into());
     window.set_update_version("".into());
-    window.set_update_message("".into());
+    window.set_update_message(message.into());
     window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
     window.set_shortcuts_enabled(settings.shortcuts_enabled);
     window.set_shortcut_smart_case(settings.shortcut_smart_case);
@@ -123,5 +130,7 @@ pub(super) fn open_and_check_updates() {
     if let Some(window) = current() {
         window.set_active("about".into());
     }
-    commands::check_for_updates();
+    if !packaged::is_packaged() {
+        commands::check_for_updates();
+    }
 }

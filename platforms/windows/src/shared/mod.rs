@@ -13,6 +13,7 @@
 pub mod canonical_exe;
 pub mod commands;
 pub mod dark_mode;
+pub mod packaged;
 pub mod settings_path;
 pub mod shell;
 pub mod update;

@@ -13,6 +13,7 @@ export component AboutUpdate inherits Section {
 
     title: "Cập nhật";
 
+    // "store": a Store build — Microsoft owns updates, so only update-message shows.
     if root.update-state != "idle": Text {
         text: root.update-state == "checking" ? "Đang kiểm tra…"
             : root.update-state == "uptodate" ? "Bạn đang dùng bản mới nhất."
@@ -25,7 +26,7 @@ export component AboutUpdate inherits Section {
         color: root.update-state == "error" ? Theme.danger : Theme.subtle;
     }
 
-    HorizontalLayout {
+    if root.update-state != "store": HorizontalLayout {
         spacing: Theme.sp-sm;
         alignment: start;
         if root.update-state != "available"
