@@ -36,8 +36,9 @@ if [ ! -f "$work/scowl/scowl.db" ]; then
     # ESDB's build warns about groups it skips; that is its business, not ours.
     make -C "$work/scowl" > "$work/scowl-make.log" 2>&1
 fi
-(cd "$work/scowl" && ./scowl --db scowl.db word-list 60 A 1 --dot True 2>/dev/null) \
-    > "$work/allowed.txt"
+# It echoes its query and word pattern to stderr on every run; keep that in a log.
+(cd "$work/scowl" && ./scowl --db scowl.db word-list 60 A 1 --dot True) \
+    > "$work/allowed.txt" 2> "$work/scowl-list.log"
 
 # 2. Counts, one file per 1-gram shard, written aside and renamed when complete.
 export NGRAMS tool work
@@ -50,11 +51,14 @@ seq -f '%05g' 0 23 | xargs -P "$JOBS" -I{} bash -c '
     echo "counted shard {}" >&2
 '
 
-# 3. Rank.
+# 3. Rank into WORK first: a redirect truncates its target before the command
+#    runs, so ranking straight into data/ would empty the committed list whenever
+#    rank failed.
 "$tool" rank --allowed "$work/allowed.txt" \
     --supplement "$data/supplement.tsv" --blocklist "$data/blocklist.txt" \
-    --top "$TOP" "$work"/counts/1-*.tsv > "$data/en.tsv"
-echo "wrote $data/en.tsv ($TOP words)" >&2
+    --top "$TOP" "$work"/counts/1-*.tsv > "$work/en.tsv"
+mv "$work/en.tsv" "$data/en.tsv"
+echo "wrote $data/en.tsv ($(grep -vc '^#' "$data/en.tsv") words)" >&2
 
 # 4. Pack, as a check: the list must still make an en.lex the library accepts.
 #    The file stays in WORK; the shells build their own.
