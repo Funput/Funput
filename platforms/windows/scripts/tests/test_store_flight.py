@@ -14,6 +14,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 from store_flight import (  # noqa: E402
     BOOTSTRAP_HINT,
+    as_flight_list,
     bootstrap_required,
     find_flight,
     new_flight_body,
@@ -34,6 +35,14 @@ class FlightLookupTests(unittest.TestCase):
 
     def test_empty_list_is_none(self):
         self.assertIsNone(find_flight([], "internal"))
+
+    def test_as_flight_list_accepts_bare_array_and_value_wrapper(self):
+        flight = {"flightName": "internal", "flightId": "i"}
+        self.assertEqual(as_flight_list([flight]), [flight])
+        self.assertEqual(as_flight_list({"value": [flight]}), [flight])
+        self.assertEqual(as_flight_list({"flights": [flight]}), [flight])
+        self.assertEqual(as_flight_list("nope"), [])
+        self.assertEqual(as_flight_list({"value": "x"}), [])
 
     def test_pending_id_present(self):
         flight = {"pendingFlightSubmission": {"id": "sub-1"}}

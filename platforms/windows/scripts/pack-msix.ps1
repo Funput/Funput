@@ -39,7 +39,7 @@ function Find-MakeAppx {
 
 function Assert-Token([string]$Name, [string]$Value) {
     if ([string]::IsNullOrWhiteSpace($Value)) { throw "$Name is empty." }
-    if ($Value -match "[<>&]") { throw "$Name contains XML-special characters: $Value" }
+    if ($Value -match '[<>&"]') { throw "$Name contains XML-special characters: $Value" }
 }
 
 Assert-Token "IdentityName" $IdentityName

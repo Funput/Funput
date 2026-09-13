@@ -16,7 +16,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-from store_flight import find_flight, new_flight_body, pending_submission_id, with_package
+from store_flight import as_flight_list, find_flight, new_flight_body, pending_submission_id, with_package
 from store_http import StoreError, access_token, api_json, request
 
 
@@ -32,7 +32,7 @@ def submit(msix: Path, *, env: dict[str, str], opener=None) -> str:
     token = access_token(env["MS_STORE_TENANT_ID"], env["MS_STORE_CLIENT_ID"], env["MS_STORE_CLIENT_SECRET"], **kwargs)
     app_id, flight_name = env["MS_STORE_APP_ID"], env["MS_STORE_FLIGHT_NAME"]
     listed = api_json("GET", f"/applications/{app_id}/flights", token, **kwargs)
-    flight = find_flight(listed.get("value") or listed.get("flights") or [], flight_name)
+    flight = find_flight(as_flight_list(listed), flight_name)
     if flight is None:
         flight = api_json(
             "POST",

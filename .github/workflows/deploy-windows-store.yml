@@ -82,6 +82,14 @@ jobs:
         with:
           workspaces: platforms/windows -> target
 
+      # Reject a bad marketing version *before* the release clippy/test spend
+      # ~45 minutes. The fourth part is only known after run_number, so this
+      # uses 0 as a dummy revision — any illegal three-part input still fails.
+      - name: Check marketing version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: python platforms/windows/scripts/msix_version.py "$VERSION" 0
+
       - name: Stamp marketing version
         env:
           VERSION: ${{ inputs.version }}

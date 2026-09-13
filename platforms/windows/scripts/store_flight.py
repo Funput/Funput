@@ -27,6 +27,16 @@ _BOOTSTRAP_MARKERS = (
 )
 
 
+def as_flight_list(payload: Any) -> list[dict[str, Any]]:
+    """Partner Center has returned both a bare array and `{value: [...]}`."""
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    if isinstance(payload, dict):
+        raw = payload.get("value") or payload.get("flights") or []
+        return [item for item in raw if isinstance(item, dict)] if isinstance(raw, list) else []
+    return []
+
+
 def find_flight(flights: list[dict[str, Any]], name: str) -> dict[str, Any] | None:
     for flight in flights:
         if flight.get("flightName") == name:
