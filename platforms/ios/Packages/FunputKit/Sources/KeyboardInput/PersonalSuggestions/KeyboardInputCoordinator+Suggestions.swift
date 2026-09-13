@@ -34,7 +34,7 @@ public extension KeyboardInputCoordinator {
             closesEpoch: true,
             preservesOneShotShift: false
         ) { builder in
-            composer.clear()
+            clearComposition()
             builder.deleteBackward(count: prefix.count)
             builder.insert(suggestion + " ")
         }

@@ -1,4 +1,3 @@
-#if DEBUG
 import SwiftUI
 import UIKit
 
@@ -43,5 +42,3 @@ struct ShortcutDismissGuard: UIViewControllerRepresentable {
         }
     }
 }
-
-#endif

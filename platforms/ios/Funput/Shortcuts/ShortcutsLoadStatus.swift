@@ -1,4 +1,3 @@
-#if DEBUG
 import SwiftUI
 
 struct ShortcutsLoadStatus: View {
@@ -21,4 +20,3 @@ struct ShortcutsLoadStatus: View {
         }
     }
 }
-#endif

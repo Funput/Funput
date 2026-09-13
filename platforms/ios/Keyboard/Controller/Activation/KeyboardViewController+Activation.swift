@@ -38,6 +38,7 @@ extension KeyboardViewController {
                 event: .activated
             )
         }
+        activateShortcuts()
         applyAdoptedPresentation()
         // A panel left open in the previous host is not where the next one should
         // start; without this the keyboard comes back on emoji instead of letters.

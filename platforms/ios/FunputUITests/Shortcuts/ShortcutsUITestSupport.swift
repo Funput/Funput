@@ -23,6 +23,16 @@ enum ShortcutsUITestSupport {
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed)
     }
 
+    static func assertKeyboardVisible(_ app: XCUIApplication) {
+        let visible = NSPredicate { _, _ in
+            app.keyboards.firstMatch.exists || app.keys.matching(
+                NSPredicate(format: "label BEGINSWITH %@", "Dấu cách. Vuốt")
+            ).firstMatch.exists
+        }
+        let expectation = XCTNSPredicateExpectation(predicate: visible, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed)
+    }
+
     static func capture(_ app: XCUIApplication, name: String, test: XCTestCase) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name

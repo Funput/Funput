@@ -18,6 +18,7 @@ import UIKit
 final class KeyboardViewController: UIInputViewController {
     let launchTrace = KeyboardLaunchTrace()
     let inputCoordinator = KeyboardInputCoordinator()
+    let shortcutsLoader = KeyboardShortcutsLoader(store: KeyboardShortcutSource())
     lazy var keyboardView = makePrimarySurface()
     var hasPrimarySurface = false
     var emojiView: EmojiKeyboardView?
@@ -96,6 +97,7 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        shortcutsLoader.cancel()
         emojiView?.reset()
 #if DEBUG
         touchDiagnosticsReporter.finish()

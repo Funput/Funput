@@ -11,16 +11,18 @@ enum FunputKeyboardDriver {
         "9": "Chữ đ", "0": "Xóa dấu",
     ]
 
-    /// The Funput layer is identified by its VNI tone key ("Dấu sắc" — no
-    /// system keyboard has one); the system keyboard's globe key is tapped
-    /// until it shows up. The extension's toolbar buttons are NOT exposed to
-    /// XCUITest, so only real keys can serve as the sentinel.
-    /// Returns false when the Funput keyboard never appeared.
+    /// Funput's space key has a unique gesture hint in every language and input method.
+    /// Unlike a VNI digit, it remains available when the active layout uses Telex.
     static func switchToFunputKeyboard(_ app: XCUIApplication) -> Bool {
-        let sentinel = app.keys["Dấu sắc"]
+        let sentinel = app.keys.matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Dấu cách. Vuốt")
+        ).firstMatch
         if sentinel.waitForExistence(timeout: 5) { return true }
 
         for _ in 0..<4 {
+            if app.staticTexts["Quickly Change Keyboards"].exists {
+                app.buttons["Continue"].tap()
+            }
             let globe = app.buttons
                 .matching(NSPredicate(format: "label ==[c] 'next keyboard' OR label == 'Bàn phím tiếp theo'"))
                 .firstMatch

@@ -1,4 +1,3 @@
-#if DEBUG
 import FunputShared
 import SwiftUI
 import UIKit
@@ -47,7 +46,7 @@ struct ShortcutEditor: View {
                         .disabled(!model.canWrite)
                 }
                 Section {
-                    Label("Lưu trên thiết bị, chưa áp dụng khi gõ", systemImage: "eye")
+                    Label("Mở lại bàn phím Funput để nhận thay đổi", systemImage: "keyboard")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 if isEditing {
@@ -99,6 +98,7 @@ struct ShortcutEditor: View {
     }
 }
 
+#if DEBUG
 #Preview("Form gõ tắt") {
     let model = ShortcutsModel(store: ShortcutsPreviewStore())
     ShortcutEditor(model: model, original: ShortcutsPreviewStore.samples[0])

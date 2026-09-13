@@ -80,7 +80,7 @@ final class ShortcutsFailureUITests: XCTestCase {
         XCTAssertTrue((expansion.value as? String)?.contains("Dòng thứ hai") == true)
         expansion.tap()
         expansion.typeText("!")
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5))
+        ShortcutsUITestSupport.assertKeyboardVisible(app)
         XCTAssertTrue(app.buttons["shortcuts.editor.save"].isHittable)
         XCTAssertTrue((expansion.value as? String)?.contains("!") == true)
         ShortcutsUITestSupport.capture(app, name: "Bản nháp chữ lớn và bàn phím", test: self)

@@ -3,33 +3,36 @@ import FunputEngine
 import KeyboardLayout
 
 extension KeyboardInputCoordinator {
-    func input(
-        _ text: String,
-        builder: inout InputTransactionBuilder
-    ) {
-        guard state.usesVietnameseComposition else {
-            builder.insert(text)
-            return
-        }
-
+    func input(_ text: String, builder: inout InputTransactionBuilder) {
+        var context = documentSynchronizer.snapshot?.contextBeforeInput
         for scalar in text.unicodeScalars {
-            let signpostID = KeyboardInputSignposts.begin("ComposerFFI")
-            let result = composer.process(scalar)
-            KeyboardInputSignposts.end("ComposerFFI", signpostID)
-            if result.action == .none {
-                builder.insert(String(scalar))
+            if usesEngine {
+                let previous = composer.buffer()
+                let signpostID = KeyboardInputSignposts.begin("ComposerFFI")
+                let result = composer.process(scalar)
+                KeyboardInputSignposts.end("ComposerFFI", signpostID)
+                if result.action == .none {
+                    insert(String(scalar), context: &context, builder: &builder)
+                } else if let count = KeyboardReplacement.deletionCount(
+                    scalars: result.deleteCount, buffer: previous, context: context
+                ) {
+                    builder.deleteBackward(count: count)
+                    if let current = context { context = String(current.dropLast(count)) }
+                    insert(result.text, context: &context, builder: &builder)
+                } else {
+                    abandonUnsafeReplacement()
+                    insert(String(scalar), context: &context, builder: &builder)
+                }
             } else {
-                apply(result, builder: &builder)
+                insert(String(scalar), context: &context, builder: &builder)
             }
+            trackShortcutInput(scalar)
         }
     }
 
-    func apply(
-        _ result: FunputCompositionResult,
-        builder: inout InputTransactionBuilder
-    ) {
-        builder.deleteBackward(count: result.deleteCount)
-        builder.insert(result.text)
+    private func insert(_ text: String, context: inout String?, builder: inout InputTransactionBuilder) {
+        builder.insert(text)
+        context = (context ?? "") + text
     }
 
     func characterText(for key: KeySpec) -> String {

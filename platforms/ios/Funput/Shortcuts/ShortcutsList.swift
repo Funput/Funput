@@ -1,4 +1,3 @@
-#if DEBUG
 import FunputShared
 import SwiftUI
 
@@ -22,9 +21,9 @@ struct ShortcutsList: View {
                     .accessibilityIdentifier("shortcuts.enabled")
                     .disabled(!model.canWrite)
                     Divider()
-                    Label("Bản xem trước", systemImage: "eye")
+                    Label("Gõ tắt trên bàn phím Funput", systemImage: "keyboard")
                         .font(.caption.weight(.semibold)).foregroundStyle(.tint)
-                    Text("Dữ liệu được lưu trên thiết bị, chưa áp dụng khi gõ.")
+                    Text("Thay đổi có hiệu lực khi mở lại bàn phím Funput.")
                         .font(.caption).foregroundStyle(.secondary)
                     if model.isSaving { ProgressView("Đang lưu…").font(.caption) }
                 }
@@ -132,4 +131,3 @@ struct ShortcutsList: View {
         }
     }
 }
-#endif

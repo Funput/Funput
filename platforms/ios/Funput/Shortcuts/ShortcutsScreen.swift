@@ -1,4 +1,3 @@
-#if DEBUG
 import FunputShared
 import SwiftUI
 
@@ -45,7 +44,7 @@ struct ShortcutsSettingsLink: View {
                 Image(systemName: "text.append").foregroundStyle(.tint).frame(width: 22)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Gõ tắt").foregroundStyle(.primary)
-                    Text("Bản xem trước · Thay chữ tắt bằng nội dung dài hơn.")
+                    Text("Thay chữ tắt bằng nội dung dài hơn.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 0)
@@ -60,6 +59,7 @@ struct ShortcutsSettingsLink: View {
     }
 }
 
+#if DEBUG
 #Preview("Gõ tắt · Sáng") {
     NavigationStack { ShortcutsScreen(model: ShortcutsModel(store: ShortcutsPreviewStore())) }
         .preferredColorScheme(.light)

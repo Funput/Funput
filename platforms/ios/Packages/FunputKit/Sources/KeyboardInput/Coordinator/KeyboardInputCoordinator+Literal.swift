@@ -2,7 +2,7 @@
 extension KeyboardInputCoordinator {
     /// Ends any active composition before presenting literal-input UI.
     public func prepareForLiteralInput() {
-        composer.clear()
+        clearComposition()
         shiftController.resetTapSequence()
         documentSynchronizer.invalidate()
         resetPersonalSuggestionTracking()
@@ -20,7 +20,7 @@ extension KeyboardInputCoordinator {
             closesEpoch: true,
             preservesOneShotShift: true
         ) { builder in
-            composer.clear()
+            clearComposition()
             builder.insert(text)
         }
     }
@@ -36,8 +36,12 @@ extension KeyboardInputCoordinator {
     }
 
     func performDeleteBackward(builder: inout InputTransactionBuilder) {
-        if state.usesVietnameseComposition {
-            composer.backspace()
+        if usesEngine, let last = composer.buffer().last {
+            for _ in last.unicodeScalars { composer.backspace() }
+            if composer.buffer().isEmpty { finishShortcutWord() }
+        } else if !shortcuts.word.isEmpty {
+            shortcuts.word.removeLast()
+            if shortcuts.word.isEmpty { finishShortcutWord() }
         }
         builder.deleteBackward()
     }

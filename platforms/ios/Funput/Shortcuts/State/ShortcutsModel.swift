@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 import FunputShared
 import Observation
@@ -100,4 +99,3 @@ final class ShortcutsModel {
         }
     }
 }
-#endif

@@ -11,7 +11,7 @@ public extension KeyboardInputCoordinator {
     /// autocapitalization) continue to come from ``updateContext(_:)``; the
     /// language chosen here can still be toggled at runtime afterward.
     func apply(_ configuration: FunputConfiguration) {
-        composer.clear()
+        clearComposition()
         if configuration.inputMethod.isTelexFamily {
             preferredTelexMethod = configuration.inputMethod
         }

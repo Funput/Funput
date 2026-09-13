@@ -1,4 +1,3 @@
-#if DEBUG
 import FunputShared
 import SwiftUI
 
@@ -24,4 +23,3 @@ extension View {
         }
     }
 }
-#endif

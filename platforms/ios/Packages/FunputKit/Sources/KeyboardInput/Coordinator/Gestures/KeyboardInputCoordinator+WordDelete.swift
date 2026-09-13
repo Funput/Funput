@@ -21,7 +21,7 @@ extension KeyboardInputCoordinator {
         ) { builder in
             // Literal deletion: the span covers committed text, so the composer is ended
             // rather than walked back character by character.
-            composer.clear()
+            clearComposition()
             builder.deleteBackward(count: count)
         }
     }

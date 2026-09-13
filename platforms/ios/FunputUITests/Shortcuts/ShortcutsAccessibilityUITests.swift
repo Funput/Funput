@@ -26,7 +26,7 @@ final class ShortcutsAccessibilityUITests: XCTestCase {
         try audit(app)
         capture(app, name: "Form sửa")
         app.textFields["shortcuts.editor.trigger"].tap()
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
+        ShortcutsUITestSupport.assertKeyboardVisible(app)
         XCTAssertTrue(app.buttons["shortcuts.editor.save"].isHittable)
         capture(app, name: "Form và bàn phím")
     }

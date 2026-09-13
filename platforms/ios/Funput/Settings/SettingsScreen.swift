@@ -11,9 +11,7 @@ struct SettingsScreen: View {
     @State private var picker: SettingsPicker?
     @State private var requestsHapticAccess = false
     @State private var requestsSoundAccess = false
-#if DEBUG
     @State private var shortcuts = ShortcutsModel(store: ShortcutsStoreFactory.make())
-#endif
 
     init(
         store: any FunputConfigurationStoring = FunputConfigurationStore(),
@@ -54,9 +52,7 @@ struct SettingsScreen: View {
                 SettingsHeightRow(value: model.heightBinding)
             }
             SettingsSectionCard(title: "Nhập liệu thông minh", systemImage: "wand.and.stars") {
-#if DEBUG
                 ShortcutsSettingsLink(model: shortcuts)
-#endif
                 SettingsToggleRow(
                     title: "Khôi phục từ thông minh",
                     summary: "Giữ từ gốc khi chỉnh sửa hoặc xóa dấu.",

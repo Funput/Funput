@@ -1,4 +1,3 @@
-#if DEBUG
 import FunputShared
 import SwiftUI
 
@@ -27,7 +26,7 @@ struct ShortcutsOptions: View {
                     .accessibilityIdentifier("shortcuts.inEnglish")
                 }
                 .disabled(!model.canWrite)
-                Text("Các tuỳ chọn được lưu trên thiết bị, chưa áp dụng khi gõ.")
+                Text("Các tuỳ chọn có hiệu lực khi mở lại bàn phím Funput.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             .navigationTitle("Tuỳ chọn gõ tắt")
@@ -46,6 +45,7 @@ struct ShortcutsOptions: View {
     }
 }
 
+#if DEBUG
 #Preview("Tuỳ chọn") {
     let model = ShortcutsModel(store: ShortcutsPreviewStore())
     ShortcutsOptions(model: model).task { await model.reload() }

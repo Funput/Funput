@@ -12,7 +12,9 @@ struct ContentView: View {
 
     var body: some View {
 #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-device-touch-acceptance") {
+        if ProcessInfo.processInfo.arguments.contains("-uitest-shortcuts-keyboard") {
+            ShortcutsKeyboardHarness()
+        } else if ProcessInfo.processInfo.arguments.contains("-device-touch-acceptance") {
             KeyboardTouchAcceptanceView()
         } else if ProcessInfo.processInfo.arguments.contains("-uitest-typing-harness") {
             TypingHarnessView()
