@@ -7,19 +7,28 @@
 //! the lexicon only fills the slots left empty. Its own top three always
 //! suffice — the `3 − |P|` empty slots never outnumber the lexicon words that
 //! are not already in P.
+//!
+//! One exception: once the store is plainly Vietnamese, a personal answer that
+//! holds a marked word is Vietnamese typing, and English in its empty slots
+//! would be noise — `an` should offer `anh · ăn`, not `and`. The lexicon then
+//! stays out. Unmarked answers (`hai`, `work`) still get filled.
 
 use std::io;
 use std::path::Path;
 
 use super::Lexicon;
 use crate::engine::SuggestionEngine;
-use crate::index::TOP_K;
+use crate::index::{TOP_K, normalize};
 use crate::types::SuggestionSet;
 
 /// What an engine holds of the English lexicon.
 #[derive(Default)]
 pub(crate) struct LexiconSlot {
     pub(crate) file: Option<Lexicon>,
+    /// Promoted words carrying Vietnamese marks. Kept by the learn path: up on
+    /// promotion, down on eviction, recounted by every trie rebuild, zero on
+    /// reset. Never scanned for on the query path.
+    pub(crate) vietnamese_words: u32,
 }
 
 impl SuggestionEngine {
@@ -42,7 +51,7 @@ impl SuggestionEngine {
         let Some(file) = &self.lexicon.file else {
             return personal;
         };
-        if personal.len >= TOP_K {
+        if personal.len >= TOP_K || self.yields_to(&personal) {
             return personal;
         }
         let mut merged = personal;
@@ -59,5 +68,11 @@ impl SuggestionEngine {
             merged.len += 1;
         }
         merged
+    }
+
+    /// Whether `personal` is Vietnamese typing in a Vietnamese store.
+    fn yields_to(&self, personal: &SuggestionSet<'_>) -> bool {
+        self.lexicon.vietnamese_words >= self.config.lexicon_yield_after_words
+            && personal.iter().any(normalize::is_marked)
     }
 }

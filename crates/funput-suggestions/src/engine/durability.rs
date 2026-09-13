@@ -58,6 +58,7 @@ impl SuggestionEngine {
         self.journalled_previous = None;
         self.exact.clear();
         self.folded.clear();
+        self.lexicon.vietnamese_words = 0;
         self.sequence = 0;
         self.pending.clear();
         self.pending_overflow = false;

@@ -11,6 +11,7 @@ mod encode;
 mod lookup;
 mod merge;
 mod real;
+mod r#yield;
 
 use crate::lexicon::encode::encode;
 use crate::lexicon::format::{
