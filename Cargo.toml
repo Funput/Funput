@@ -6,6 +6,7 @@ members = [
     "crates/funput-convert",
     "crates/funput-engine",
     "crates/funput-suggestions",
+    "crates/funput-lexicon-tool",
     "crates/funput-cli",
     "crates/funput-ffi",
     "crates/funput-jni",

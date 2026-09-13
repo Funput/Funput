@@ -1,0 +1,9 @@
+# `cargo build` run from this directory rather than the workspace root.
+/target/
+
+# refresh.sh keeps its downloads and counts in WORK (default: the workspace's
+# target/lexicon). Pointed inside the crate, this is where it usually lands.
+/work/
+
+# A shard `count` was still writing when a refresh was interrupted.
+*.part
