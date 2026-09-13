@@ -21,8 +21,10 @@ extension EmojiKeyboardView {
     }
 
     func configureView() {
-        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
-            view.applyPresentation()
+        if #available(iOS 17, *) {
+            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
+                view.applyPresentation()
+            }
         }
         clipsToBounds = true
         backgroundColor = .clear
@@ -96,6 +98,11 @@ extension EmojiKeyboardView {
 
     @objc private func accessibilityAppearanceDidChange() {
         applyPresentation()
+    }
+
+    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #unavailable(iOS 17) { applyPresentation() }
     }
 
     static func makeLayout() -> UICollectionViewLayout {

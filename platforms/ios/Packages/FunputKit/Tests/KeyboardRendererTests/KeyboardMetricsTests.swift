@@ -110,10 +110,10 @@ struct KeyboardMetricsTests {
         idiom: UIUserInterfaceIdiom,
         verticalSizeClass: UIUserInterfaceSizeClass
     ) -> UITraitCollection {
-        UITraitCollection { traits in
-            traits.userInterfaceIdiom = idiom
-            traits.verticalSizeClass = verticalSizeClass
-        }
+        UITraitCollection(traitsFrom: [
+            UITraitCollection(userInterfaceIdiom: idiom),
+            UITraitCollection(verticalSizeClass: verticalSizeClass),
+        ])
     }
 
     private func expectHeight(

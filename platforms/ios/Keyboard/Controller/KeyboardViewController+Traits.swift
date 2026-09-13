@@ -8,6 +8,11 @@ extension KeyboardViewController {
         activateKeyboardForAppearance()
     }
 
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if #unavailable(iOS 17) { updatePreferredHeight() }
+    }
+
     override func textWillChange(_ textInput: (any UITextInput)?) {
         super.textWillChange(textInput)
         updateTextInputTraits()

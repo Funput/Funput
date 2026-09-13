@@ -21,8 +21,10 @@ struct KeyboardTouchAcceptanceView: View {
             .navigationTitle("Touch Acceptance")
             .onAppear { model.appear() }
             .onDisappear { model.disappear() }
-            .onChange(of: scenePhase) { _, phase in
-                if phase == .active { model.appear() }
+            .background {
+                if #available(iOS 17, *) {
+                    Color.clear.onChange(of: scenePhase) { _, p in if p == .active { model.appear() } }
+                } else { Color.clear.onChange(of: scenePhase) { p in if p == .active { model.appear() } } }
             }
         }
     }
@@ -34,11 +36,7 @@ struct KeyboardTouchAcceptanceView: View {
                     Text(fixture.title).tag(fixture.inputMethod)
                 }
             }
-            .disabled(
-                model.stage == .guided || model.stage == .settling
-                    || model.stage == .gestures
-                    || model.stage == .free
-            )
+            .disabled([.guided, .settling, .gestures, .free].contains(model.stage))
             if !model.hasFullAccess {
                 Label("Cần bật Full Access để nhận live report.",
                       systemImage: "exclamationmark.triangle")

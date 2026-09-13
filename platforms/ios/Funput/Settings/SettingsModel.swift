@@ -1,13 +1,13 @@
+import Combine
 import FunputShared
 import KeyboardLayout
-import Observation
 import SwiftUI
 
-@MainActor @Observable
-final class SettingsModel {
-    private(set) var configuration: FunputConfiguration
-    private(set) var hasFullAccess: Bool
-    var showsSaveError = false
+@MainActor
+final class SettingsModel: ObservableObject {
+    @Published private(set) var configuration: FunputConfiguration
+    @Published private(set) var hasFullAccess: Bool
+    @Published var showsSaveError = false
     private let store: any FunputConfigurationStoring
     private let customStore: any CustomThemeStoring
     private let bootstrap: any KeyboardBootstrapSynchronizing

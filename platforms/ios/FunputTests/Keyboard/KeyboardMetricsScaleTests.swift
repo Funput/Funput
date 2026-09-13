@@ -35,9 +35,9 @@ struct KeyboardMetricsScaleTests {
         idiom: UIUserInterfaceIdiom,
         vertical: UIUserInterfaceSizeClass
     ) -> UITraitCollection {
-        UITraitCollection { traits in
-            traits.userInterfaceIdiom = idiom
-            traits.verticalSizeClass = vertical
-        }
+        UITraitCollection(traitsFrom: [
+            UITraitCollection(userInterfaceIdiom: idiom),
+            UITraitCollection(verticalSizeClass: vertical),
+        ])
     }
 }

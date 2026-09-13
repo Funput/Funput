@@ -71,9 +71,11 @@ final class KeyboardViewController: UIInputViewController {
         heightController.install(on: view)
         // The height only tracks the size class, and `viewWillTransition` alone misses
         // every change that is not a rotation of an already-visible keyboard.
-        registerForTraitChanges([UITraitVerticalSizeClass.self]) {
-            (controller: KeyboardViewController, _) in
-            controller.updatePreferredHeight()
+        if #available(iOS 17, *) {
+            registerForTraitChanges([UITraitVerticalSizeClass.self]) {
+                (controller: KeyboardViewController, _) in
+                controller.updatePreferredHeight()
+            }
         }
         bootstrapKeyboard()
         launchTrace.endViewDidLoad()

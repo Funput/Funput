@@ -1,18 +1,18 @@
+import Combine
 import FunputShared
 import KeyboardRenderer
-import Observation
 import SwiftUI
 import ThemeRuntime
 import ThemeSchema
 import UIKit
-@MainActor @Observable
-final class AppearanceModel {
-    private(set) var configuration: FunputConfiguration
-    private(set) var appliedThemeID: String
-    private(set) var customThemes: [CustomKeyboardTheme]
-    var previewThemeID: String
-    var previewMode = AppearancePreviewMode.light
-    var showsSaveError = false
+@MainActor
+final class AppearanceModel: ObservableObject {
+    @Published private(set) var configuration: FunputConfiguration
+    @Published private(set) var appliedThemeID: String
+    @Published private(set) var customThemes: [CustomKeyboardTheme]
+    @Published var previewThemeID: String
+    @Published var previewMode = AppearancePreviewMode.light
+    @Published var showsSaveError = false
 
     let store: any FunputConfigurationStoring
     let bootstrap: any KeyboardBootstrapSynchronizing

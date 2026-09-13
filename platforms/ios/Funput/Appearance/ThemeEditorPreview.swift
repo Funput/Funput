@@ -29,7 +29,7 @@ struct ThemeEditorPreview: View {
             )
             .id(draft.previewMode)
             .frame(height: previewHeight)
-            .clipShape(.rect(cornerRadius: 18))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .shadow(color: .black.opacity(0.14), radius: 12, y: 6)
             .accessibilityIdentifier("themeEditor.preview")
         }

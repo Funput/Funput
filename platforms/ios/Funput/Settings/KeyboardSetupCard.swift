@@ -17,7 +17,9 @@ struct KeyboardSetupCard: View {
             } else {
                 setupSteps
                 privacyNotice
-                Button("Mở Cài đặt", systemImage: "gear", action: openSettings)
+                Button(action: openSettings) {
+                    Label("Mở Cài đặt", systemImage: "gear")
+                }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -69,7 +71,7 @@ struct KeyboardSetupCard: View {
                 .font(.caption.bold())
                 .foregroundStyle(.tint)
                 .frame(width: 24, height: 24)
-                .background(.tint.opacity(0.12), in: .circle)
+                .background(.tint.opacity(0.12), in: Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.subheadline.weight(.semibold))
                 Text(detail).font(.caption).foregroundStyle(.secondary)

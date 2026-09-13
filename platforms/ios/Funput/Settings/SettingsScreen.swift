@@ -1,3 +1,4 @@
+import Combine
 import FunputShared
 import SwiftUI
 import ThemeRuntime
@@ -6,7 +7,7 @@ import UIKit
 struct SettingsScreen: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
-    @State private var model: SettingsModel
+    @StateObject private var model: SettingsModel
     @State private var picker: SettingsPicker?
     @State private var requestsHapticAccess = false
     @State private var requestsSoundAccess = false
@@ -16,7 +17,7 @@ struct SettingsScreen: View {
         customStore: any CustomThemeStoring = CustomThemeStore(),
         bootstrap: any KeyboardBootstrapSynchronizing = KeyboardBootstrapSynchronizer()
     ) {
-        _model = State(initialValue: SettingsModel(
+        _model = StateObject(wrappedValue: SettingsModel(
             store: store,
             customStore: customStore,
             bootstrap: bootstrap
@@ -110,8 +111,12 @@ struct SettingsScreen: View {
         } message: {
             Text("Để phát âm thanh khi gõ, hãy mở Funput trong Cài đặt, chọn Bàn phím và bật Cho phép truy cập đầy đủ.")
         }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { model.reload() }
+        .background {
+            if #available(iOS 17, *) {
+                Color.clear.onChange(of: scenePhase) { _, p in if p == .active { model.reload() } }
+            } else {
+                Color.clear.onChange(of: scenePhase) { p in if p == .active { model.reload() } }
+            }
         }
     }
 }

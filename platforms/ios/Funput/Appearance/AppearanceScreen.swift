@@ -1,3 +1,4 @@
+import Combine
 import FunputShared
 import KeyboardRenderer
 import SwiftUI
@@ -7,7 +8,7 @@ import ThemeSchema
 struct AppearanceScreen: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
-    @State private var model: AppearanceModel
+    @StateObject private var model: AppearanceModel
     @State private var confirmsReset = false
     @State private var confirmsDelete = false
     @State private var editorRequest: ThemeEditorRequest?
@@ -18,7 +19,7 @@ struct AppearanceScreen: View {
         assetStore: any ThemeAssetStoring = ThemeAssetStore(),
         bootstrap: any KeyboardBootstrapSynchronizing = KeyboardBootstrapSynchronizer()
     ) {
-        _model = State(initialValue: AppearanceModel(
+        _model = StateObject(wrappedValue: AppearanceModel(
             store: store,
             customStore: customStore,
             assetStore: assetStore,
@@ -39,7 +40,7 @@ struct AppearanceScreen: View {
             // it, so UIKit never interpolates the glass colors out of range.
             .id(model.previewMode)
             .frame(height: previewHeight)
-            .clipShape(.rect(cornerRadius: 22))
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .shadow(color: .black.opacity(0.14), radius: 16, y: 8)
             .accessibilityLabel("Bản xem trước bàn phím \(model.previewTheme.metadata.name)")
 
@@ -83,8 +84,12 @@ struct AppearanceScreen: View {
             Text("Nếu theme đang được dùng, Funput sẽ chuyển về theme hệ thống gốc.")
         }
         .onAppear { model.setInitialMode(for: colorScheme) }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { model.reload() }
+        .background {
+            if #available(iOS 17, *) {
+                Color.clear.onChange(of: scenePhase) { _, p in if p == .active { model.reload() } }
+            } else {
+                Color.clear.onChange(of: scenePhase) { p in if p == .active { model.reload() } }
+            }
         }
     }
 

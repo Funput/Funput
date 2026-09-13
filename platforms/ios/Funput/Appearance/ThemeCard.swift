@@ -43,8 +43,8 @@ struct ThemeCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             Button(action: action) {
-                Color.clear
-                    .contentShape(.rect)
+                    Color.clear
+                    .contentShape(Rectangle())
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .buttonStyle(.plain)
@@ -79,8 +79,12 @@ struct ThemeCard: View {
 
     private var actionsMenu: some View {
         Menu {
-            Button("Chỉnh sửa", systemImage: "slider.horizontal.3", action: editAction)
-            Button("Xóa", systemImage: "trash", role: .destructive, action: deleteAction)
+            Button(action: editAction) {
+                Label("Chỉnh sửa", systemImage: "slider.horizontal.3")
+            }
+            Button(role: .destructive, action: deleteAction) {
+                Label("Xóa", systemImage: "trash")
+            }
                 .accessibilityIdentifier("themeEditor.delete")
         } label: {
             Image(systemName: "ellipsis.circle.fill")
@@ -88,7 +92,7 @@ struct ThemeCard: View {
                 .symbolRenderingMode(.palette)
                 .foregroundStyle(.primary, .ultraThinMaterial)
                 .padding(8)
-                .contentShape(.circle)
+                .contentShape(Circle())
         }
         .accessibilityLabel("Tùy chọn theme \(theme.metadata.name)")
         .accessibilityIdentifier("appearance.theme.\(theme.id).menu")
