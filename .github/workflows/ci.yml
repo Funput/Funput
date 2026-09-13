@@ -162,15 +162,17 @@ jobs:
       # through a dev-dependency on the encoder, and a dev-dependency never reaches
       # the library a shell links. `cargo tree` counts dev edges unless told not to.
       #
-      # The negatives are `if … exit 1`, not `! …`: under `bash -e` a negated command
-      # that fails does not stop the script, so only the last one would gate.
+      # The checks are written like the charset step's, for the reasons given there:
+      # negatives are `if … then refuse`, never `! …`, and `grep` reads its whole
+      # input rather than stopping at the first match.
       - name: lexicon encoder stays out of the mobile crates
         run: |
-          cargo tree -p funput-lexicon-tool -e features | grep -q lexicon-build
+          refuse() { echo "::error::$1"; exit 1; }
+
+          cargo tree -p funput-lexicon-tool -e features | grep lexicon-build > /dev/null
           for crate in funput-ffi funput-jni; do
-            if cargo tree -p "$crate" -e features,no-dev | grep -q lexicon-build; then
-              echo "::error::lexicon-build reached $crate"
-              exit 1
+            if cargo tree -p "$crate" -e features,no-dev | grep lexicon-build > /dev/null; then
+              refuse "lexicon-build reached $crate"
             fi
           done
 
