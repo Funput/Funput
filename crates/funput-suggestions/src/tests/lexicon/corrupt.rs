@@ -224,6 +224,9 @@ fn open_maps_the_file_and_agrees_with_from_bytes() {
     let mapped = Lexicon::open(file.path()).unwrap();
     assert!(mapped.is_mapped());
     assert_eq!(mapped.layout(), open(&bytes).unwrap().layout());
+    // Never resize a file while it is mapped: Windows refuses outright, and
+    // elsewhere a read past the new end faults.
+    drop(mapped);
 
     file.as_file().set_len(bytes.len() as u64 - 1).unwrap();
     assert!(Lexicon::open(file.path()).is_err());
