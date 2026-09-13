@@ -2,7 +2,7 @@
 
 ## Trạng thái
 
-**Bước 1 (dữ liệu), bước 2 (định dạng `en.lex`) và bước 3 (trộn vào `suggest_with`) đã xong; từ bước 4 (C ABI/JNI) chưa có code.** Tài liệu này chốt mô hình
+**Bước 1–4 đã xong** (dữ liệu, định dạng `en.lex`, trộn vào `suggest_with`, C ABI/JNI); **từ bước 5 (iOS) chưa có code.** Tài liệu này chốt mô hình
 trước khi hiện thực và được review riêng. Như [context-suggestion.md](context-suggestion.md), nó là nơi mọi quyết
 định thiết kế sống: mỗi thay đổi hành vi sau này cập nhật lại nó trong cùng PR, chỗ
 nào hiện thực lệch khỏi bản viết thì sửa lại và đánh dấu **Đã đổi khi hiện thực**.
@@ -328,11 +328,37 @@ nào. `estimated_heap_bytes` và trần 4 MiB mà test đang gác không đổi.
 Thêm hàm mới, **không sửa hàm cũ**. `funput_suggestion_query_with` giữ nguyên chữ ký
 và `FunputSuggestionResult` giữ nguyên hình dạng POD:
 
-- `funput_suggestion_attach_lexicon(engine, path, path_len) -> bool`
-- `nativeAttachLexicon(handle, path: String): Boolean`
+```c
+bool funput_suggestion_attach_lexicon(FunputSuggestionEngine *engine,
+                                      const uint8_t *path, uintptr_t path_len);
+```
 
-Gọi một lần trên worker nối tiếp, ngay sau `open` / `in_memory`. Trả `false` là chạy
-tiếp không có từ điển.
+```kotlin
+external fun nativeAttachLexicon(handle: Long, path: String): Boolean
+```
+
+Gọi một lần trên worker nối tiếp, ngay sau `open` / `in_memory`. Cả hai chỉ là lớp
+mỏng quanh `SuggestionEngine::attach_lexicon`:
+
+- **Đường dẫn**: C nhận UTF-8 bytes + độ dài, đúng quy ước của
+  `funput_suggestion_engine_open` — hai hàm dùng chung một `path_from_raw`. JNI nhận
+  `String` như `nativeOpen`; chuỗi rỗng là `false`.
+- **`false`** khi handle null hoặc không tồn tại, đường dẫn không phải UTF-8 (hoặc
+  con trỏ null kèm độ dài khác 0 — không bao giờ đọc), tệp không có hoặc không phải
+  `en.lex` hợp lệ. Khi đó **từ điển đang gắn (nếu có) được giữ nguyên** và engine gợi
+  ý như trước. Không log gì.
+- Panic trong engine bị chặn tại biên bằng `abi::safe` như mọi entry point khác.
+- JNI đặt quyết định ở `registry::attach_lexicon` để test được không cần JVM; hàm
+  `extern "system"` chỉ mở chuỗi Java. Khai báo `external fun` trong
+  `PersonalSuggestionNative.kt` đổi cùng commit với export Rust — thiếu một bên là
+  không gọi được hoặc `UnsatisfiedLinkError`.
+
+**Test cần một `en.lex` thật.** `funput-ffi` và `funput-jni` có dev-dependency
+`funput-suggestions` với feature `lexicon-build`. Resolver 2 không bật feature của
+dev-dependency khi build thư viện bằng `-p` (đúng lệnh các shell dùng), nên bộ mã hoá
+vẫn không vào bàn phím. **Đã đổi khi hiện thực**: guard CI "lexicon encoder stays out
+of the mobile crates" đọc `cargo tree -e features,no-dev`, vì `cargo tree` mặc định
+tính cả cạnh dev và sẽ báo sai; đã thử hai chiều với một dev-dependency tạm.
 
 ## Thay đổi ở shell
 
@@ -452,6 +478,13 @@ kiện mật khẩu / ô số.
    vùng map. Miss đắt thêm khoảng 18 ns; mọi ca vẫn dưới 350 ns, cùng bậc với đường cá
    nhân sẵn có.
 4. **C ABI + JNI**: `attach_lexicon`.
+   → **Xong**, 4 commit: guard CI bỏ qua cạnh dev · `funput_suggestion_attach_lexicon`
+   (header tái sinh) · `nativeAttachLexicon` + khai báo Kotlin · tài liệu này. Cả hai
+   symbol có trong `libfunput_ffi.so` / `libfunput_jni.so`; `cargo tree -p … -e
+   features,no-dev` không kéo `lexicon-build`. Test biên C: lấp ô trống, gắn lỗi giữ từ
+   điển cũ (tệp không có / không phải UTF-8 / tệp hỏng), con trỏ null, `reset` trên
+   store bền giữ từ điển. Test registry JNI: handle không tồn tại, tệp không có, tệp
+   hợp lệ, handle đã huỷ.
 5. **iOS**: đóng gói, nạp, bỏ cổng ngôn ngữ. Đây là bước đầu tiên người dùng thấy
    được.
 6. **Android**: chép asset, nạp, sửa casing, xác minh cổng ngôn ngữ.
