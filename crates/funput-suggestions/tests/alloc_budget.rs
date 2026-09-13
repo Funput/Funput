@@ -108,6 +108,95 @@ fn warm_prediction_does_not_allocate() {
     );
 }
 
+/// The lexicon cases need the encoder, which only the `lexicon-build` feature
+/// exposes. `cargo test --workspace` turns it on through funput-lexicon-tool;
+/// run `cargo test -p funput-suggestions --features lexicon-build` alone.
+#[cfg(feature = "lexicon-build")]
+mod lexicon {
+    use std::io::Write;
+
+    use funput_suggestions::lexicon_build::encode;
+
+    use super::*;
+
+    const EN_TSV: &str = include_str!("../data/lexicon/en.tsv");
+
+    fn attached(engine: &mut SuggestionEngine) -> tempfile::NamedTempFile {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        file.write_all(&encode(EN_TSV).unwrap()).unwrap();
+        engine.attach_lexicon(file.path()).unwrap();
+        file
+    }
+
+    /// Every shape the merged path takes on a keystroke: a heavy prefix, a light
+    /// one, a miss, one the personal store answers in part, and one with a
+    /// context — all against the shipped word list, through the mapped file.
+    #[test]
+    fn warm_lookup_through_the_lexicon_does_not_allocate() {
+        let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
+        for word in ["không", "khỏe", "work", "world"] {
+            engine.learn(word);
+            engine.learn(word);
+        }
+        engine.learn_after(None, "xin");
+        engine.learn_after(Some("xin"), "world");
+        let _file = attached(&mut engine);
+
+        for (previous, prefix) in [
+            (None, "th"),
+            (None, "quiz"),
+            (None, "zzq"),
+            (None, "wo"),
+            (None, "kh"),
+            (Some("xin"), "wo"),
+        ] {
+            let allocations = measure(|| {
+                for _ in 0..100_000 {
+                    std::hint::black_box(engine.suggest_with(
+                        std::hint::black_box(previous),
+                        std::hint::black_box(prefix),
+                    ));
+                }
+            });
+            assert_eq!(
+                allocations, 0,
+                "lexicon lookup {previous:?} {prefix:?} allocated {allocations} times"
+            );
+        }
+    }
+
+    /// Deciding to yield reads the personal answer's marks on every keystroke of
+    /// a Vietnamese typist, so it holds the same budget.
+    #[test]
+    fn a_lookup_that_yields_to_a_vietnamese_store_does_not_allocate() {
+        let config = SuggestionConfig {
+            lexicon_yield_after_words: 1,
+            ..SuggestionConfig::default()
+        };
+        let mut engine = SuggestionEngine::in_memory(config);
+        for word in ["ăn", "anh"] {
+            engine.learn(word);
+            engine.learn(word);
+        }
+        let _file = attached(&mut engine);
+        assert_eq!(
+            engine.suggest("an").len(),
+            2,
+            "the case must actually yield"
+        );
+
+        let allocations = measure(|| {
+            for _ in 0..100_000 {
+                std::hint::black_box(engine.suggest(std::hint::black_box("an")));
+            }
+        });
+        assert_eq!(
+            allocations, 0,
+            "a yielding lookup allocated {allocations} times"
+        );
+    }
+}
+
 fn measure(body: impl FnOnce()) -> usize {
     MEASURING.set(true);
     let before = ALLOCATIONS.get();
