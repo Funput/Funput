@@ -42,7 +42,9 @@ Ba ràng buộc đặt ra từ đầu và không thương lượng:
 **Từ điển bigram tĩnh kèm app.** Đã cân nhắc và loại: nó giải quyết cold start nhưng
 kéo theo corpus, giấy phép, kích thước gói và một đường dữ liệu thứ hai. Nếu sau này
 đổi ý, bảng tĩnh là một nguồn ứng viên thứ hai ghép vào cùng chỗ chấm điểm ở mục
-"Truy vấn", không đụng phần còn lại.
+"Truy vấn", không đụng phần còn lại. Từ điển *đơn từ* tiếng Anh cho gợi ý theo prefix
+thì đã được thiết kế riêng, xem [english-lexicon-suggestion.md](english-lexicon-suggestion.md);
+bigram vẫn chỉ học từ người dùng.
 
 Cũng ngoài phạm vi: mô hình ngôn ngữ · trigram · học từ nội dung người dùng không tự
 gõ (paste, văn bản có sẵn) · gợi ý ở các shell desktop · đồng bộ giữa thiết bị.
