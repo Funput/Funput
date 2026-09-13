@@ -1,5 +1,6 @@
-//! English lexicon tests: the encoder in `encode`, and the files the reader
-//! refuses in `corrupt`.
+//! English lexicon tests: the encoder in `encode`, the files the reader refuses
+//! in `corrupt`, the lookup against an oracle in `lookup`, and the shipped word
+//! list in `real`.
 //!
 //! The helpers decode `en.lex` by hand, straight from the documented layout, so
 //! the tests check the bytes against the format rather than against the code
@@ -7,11 +8,35 @@
 
 mod corrupt;
 mod encode;
+mod lookup;
+mod real;
 
 use crate::lexicon::encode::encode;
 use crate::lexicon::format::{
     BLOCK, HEADER_BYTES, HEAVY_BYTES, Header, WORD_HEAD_BYTES, block_count,
 };
+
+/// What the lookup must answer, by brute force: the words carrying `prefix`
+/// (ignoring case), best rank first, ties by stored order, at most three.
+fn oracle(words: &[(String, u16)], prefix: &str) -> Vec<String> {
+    let fit =
+        (2..=32).contains(&prefix.len()) && prefix.bytes().all(|byte| byte.is_ascii_alphabetic());
+    let prefix = prefix.to_ascii_lowercase();
+    let mut sorted: Vec<&(String, u16)> = words.iter().collect();
+    sorted.sort_by_key(|(word, _)| word.to_ascii_lowercase());
+    let mut matching: Vec<(u16, usize, &str)> = sorted
+        .iter()
+        .enumerate()
+        .filter(|(_, (word, _))| fit && word.to_ascii_lowercase().starts_with(&prefix))
+        .map(|(id, (word, rank))| (*rank, id, word.as_str()))
+        .collect();
+    matching.sort_unstable();
+    matching
+        .iter()
+        .take(3)
+        .map(|(_, _, word)| (*word).to_owned())
+        .collect()
+}
 
 /// A `word<TAB>rank` list, ranked in the order given.
 fn tsv(words: &[&str]) -> String {

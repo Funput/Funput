@@ -246,6 +246,10 @@ proptest! {
             let at = HEADER_BYTES + index.index(bytes.len() - HEADER_BYTES);
             bytes[at] = value;
         }
-        let _ = open(&resealed(bytes));
+        if let Ok(lexicon) = open(&resealed(bytes)) {
+            for prefix in ["th", "the", "TH", "wh", "ab", "zz", "iphone"] {
+                let _ = lexicon.top3(prefix);
+            }
+        }
     }
 }

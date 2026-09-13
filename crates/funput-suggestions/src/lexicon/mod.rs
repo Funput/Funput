@@ -4,6 +4,7 @@
 //! - [`format`] — the `en.lex` layout, its section readers, and the validation
 //!   every file passes before anything reads it.
 //! - `storage` — mapping the file, or reading it when mapping is unavailable.
+//! - `lookup` — a prefix's top three, allocation-free.
 //! - `encode` — `en.tsv` to `en.lex`, for the build only.
 //!
 //! See `docs/features/english-lexicon-suggestion.md`.
@@ -11,6 +12,7 @@
 #[cfg(any(test, feature = "lexicon-build"))]
 pub(crate) mod encode;
 pub(crate) mod format;
+mod lookup;
 mod storage;
 
 use std::io;
