@@ -200,6 +200,9 @@ jobs:
       - name: Verify iOS release signing commands
         run: python3 platforms/ios/Scripts/tests/test_release_signing.py
 
+      - name: Verify iOS lexicon packaging
+        run: python3 platforms/ios/Scripts/tests/test_build_lexicon.py
+
   # Partner Center upload command construction. Same idea as ios-release-signing:
   # exercise the scripts a stranger will run from deploy-windows-store.yml without
   # Azure AD secrets or a Windows SDK. Not a required status check — adding one
@@ -267,7 +270,8 @@ jobs:
         run: |
           for f in platforms/linux/install.sh platforms/linux/build.sh \
                    platforms/macos/scripts/install.sh platforms/macos/scripts/uninstall.sh \
-                   scripts/check-loc.sh crates/funput-lexicon-tool/refresh.sh; do
+                   scripts/check-loc.sh crates/funput-lexicon-tool/refresh.sh \
+                   platforms/ios/Scripts/build-lexicon.sh; do
             bash -n "$f"
           done
 
@@ -277,7 +281,8 @@ jobs:
           shellcheck --severity=warning \
             platforms/linux/install.sh platforms/linux/build.sh \
             platforms/macos/scripts/install.sh platforms/macos/scripts/uninstall.sh \
-            scripts/check-loc.sh crates/funput-lexicon-tool/refresh.sh
+            scripts/check-loc.sh crates/funput-lexicon-tool/refresh.sh \
+            platforms/ios/Scripts/build-lexicon.sh
 
       # The installer's own help must not break: it is the first thing anyone runs
       # when the one-liner misbehaves, and it lives in a heredoc no other test opens.

@@ -10,12 +10,20 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
     private let querySlot = PersonalSuggestionQuerySlot()
     private let onResult: @Sendable (Query, [PersonalSuggestionCandidate]) -> Void
     private let flushTimer: DispatchSourceTimer
+    private let lexiconURL: @Sendable () -> URL?
+    private let storeURL: @Sendable () -> URL?
     private var engine: PersonalSuggestionEngine?
     private var activeStoreURL: URL?
     private var enabled = true
     private var learnedSinceFlush = 0
 
-    init(onResult: @escaping @Sendable (Query, [PersonalSuggestionCandidate]) -> Void) {
+    init(
+        lexiconURL: @escaping @Sendable () -> URL? = { Bundle.main.url(forResource: "en", withExtension: "lex") },
+        storeURL: @escaping @Sendable () -> URL? = { PersonalSuggestionWorker.prepareStoreURL() },
+        onResult: @escaping @Sendable (Query, [PersonalSuggestionCandidate]) -> Void
+    ) {
+        self.lexiconURL = lexiconURL
+        self.storeURL = storeURL
         self.onResult = onResult
         flushTimer = DispatchSource.makeTimerSource(queue: queue)
         flushTimer.setEventHandler { [weak self] in self?.flushWhenIdle() }
@@ -30,7 +38,7 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
         queue.async { [weak self] in
             self?.applyConfiguration(
                 enabled: configuration.enabled,
-                requestedURL: configuration.hasFullAccess ? Self.prepareStoreURL() : nil,
+                requestedURL: configuration.hasFullAccess ? self?.storeURL() : nil,
                 resetToken: configuration.resetToken
             )
         }
@@ -60,9 +68,7 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
         self.enabled = enabled
         if activeStoreURL != requestedURL || engine == nil {
             _ = engine?.flush()
-            let persistent = requestedURL.flatMap(PersonalSuggestionEngine.open)
-            activeStoreURL = persistent == nil ? nil : requestedURL
-            engine = persistent ?? PersonalSuggestionEngine.inMemory()
+            createEngine(storeURL: requestedURL)
         }
         let persistentReady = requestedURL == nil || activeStoreURL == requestedURL
         if persistentReady { applyResetIfNeeded(resetToken) }
@@ -105,7 +111,18 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
     }
 
     private func ensureEngine() {
-        if engine == nil { engine = PersonalSuggestionEngine.inMemory() }
+        if engine == nil { createEngine(storeURL: nil) }
+    }
+
+    private func createEngine(storeURL: URL?) {
+        let persistent = storeURL.flatMap(PersonalSuggestionEngine.open)
+        activeStoreURL = persistent == nil ? nil : storeURL
+        engine = persistent ?? PersonalSuggestionEngine.inMemory()
+        let attached = lexiconURL().map { engine?.attachLexicon(url: $0) == true } ?? false
+        // Personal suggestions carry on without it; on-device checks still need to see this.
+        if !attached {
+            os_log(.error, log: PersonalSuggestionSignposts.log, "English lexicon was not attached")
+        }
     }
 
     private func flushWhenIdle() {

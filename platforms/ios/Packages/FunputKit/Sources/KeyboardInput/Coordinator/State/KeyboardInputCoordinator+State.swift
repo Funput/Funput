@@ -89,7 +89,6 @@ extension KeyboardInputCoordinator {
             autocapitalization: autocapitalization ?? state.autocapitalization
         )
         suggestionTrackingActive = personalSuggestionsEnabled
-            && state.language == .vietnamese
             && state.editorMode.supportsVietnameseComposition
     }
 }

@@ -29,6 +29,7 @@
 		FA2600000000000000000212 /* ThemeSchema in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000126 /* ThemeSchema */; };
 		FA2600000000000000000213 /* PersonalSuggestions in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000119 /* PersonalSuggestions */; };
 		FA2600000000000000000214 /* PersonalSuggestions in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000127 /* PersonalSuggestions */; };
+		FE3860000000000000000201 /* ../../crates/funput-suggestions/data/lexicon/NOTICE.md in Resources */ = {isa = PBXBuildFile; fileRef = FE3860000000000000000101 /* ../../crates/funput-suggestions/data/lexicon/NOTICE.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +75,7 @@
 		5FB3C7C43001F78400CE4906 /* FunputTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FunputTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FB3C7CE3001F78400CE4906 /* FunputUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FunputUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FB3C7F13001F87500CE4906 /* Keyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Keyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE3860000000000000000101 /* ../../crates/funput-suggestions/data/lexicon/NOTICE.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = "../../crates/funput-suggestions/data/lexicon/NOTICE.md"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -83,6 +85,15 @@
 				Info.plist,
 			);
 			target = 5FB3C7F03001F87500CE4906 /* Keyboard */;
+		};
+		FE3860000000000000000401 /* Exceptions for "Keyboard" folder in "FunputTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Suggestions/PersonalSuggestionSignposts.swift,
+				"Suggestions/PersonalSuggestionWorker+Store.swift",
+				Suggestions/PersonalSuggestionWorker.swift,
+			);
+			target = 5FB3C7C33001F78400CE4906 /* FunputTests */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -106,6 +117,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				5FB3C7FC3001F87500CE4906 /* Exceptions for "Keyboard" folder in "Keyboard" target */,
+				FE3860000000000000000401 /* Exceptions for "Keyboard" folder in "FunputTests" target */,
 			);
 			path = Keyboard;
 			sourceTree = "<group>";
@@ -165,6 +177,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5F7D394C305716FE003D8FA9 /* Third-Party Notices */ = {
+			isa = PBXGroup;
+			children = (
+				FE3860000000000000000101 /* ../../crates/funput-suggestions/data/lexicon/NOTICE.md */,
+			);
+			name = "Third-Party Notices";
+			sourceTree = "<group>";
+		};
 		5FB3C7AE3001F78300CE4906 = {
 			isa = PBXGroup;
 			children = (
@@ -173,6 +193,7 @@
 				5FB3C7D13001F78400CE4906 /* FunputUITests */,
 				5FB3C7F23001F87500CE4906 /* Keyboard */,
 				5FB3C7B83001F78300CE4906 /* Products */,
+				5F7D394C305716FE003D8FA9 /* Third-Party Notices */,
 			);
 			sourceTree = "<group>";
 		};
@@ -279,6 +300,7 @@
 				5FB3C7ED3001F87500CE4906 /* Sources */,
 				5FB3C7EE3001F87500CE4906 /* Frameworks */,
 				5FB3C7EF3001F87500CE4906 /* Resources */,
+				FE3860000000000000000301 /* Build English lexicon */,
 			);
 			buildRules = (
 			);
@@ -359,6 +381,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FE3860000000000000000201 /* ../../crates/funput-suggestions/data/lexicon/NOTICE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -384,6 +407,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		FE3860000000000000000301 /* Build English lexicon */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Build English lexicon";
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/en.lex",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "sh \"$SRCROOT/Scripts/build-lexicon.sh\"";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		5FB3C7B33001F78300CE4906 /* Sources */ = {
@@ -727,6 +769,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RSARFZ5CD3;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Keyboard/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Funput;
@@ -759,6 +802,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RSARFZ5CD3;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Keyboard/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Funput;
