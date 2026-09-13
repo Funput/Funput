@@ -10,7 +10,7 @@ import UIKit
 /// delivers its provider in ~29ms.
 @MainActor
 final class KeyboardClipboardChipView: UIView {
-    var onPaste: ((String) -> Void)?
+    var onPaste: ((KeyboardClipboardPaste) -> Void)?
 
     private let hintLabel = UILabel()
     private var pasteControl: UIPasteControl?
@@ -88,6 +88,7 @@ final class KeyboardClipboardChipView: UIView {
         configuration.baseBackgroundColor = accent
         configuration.baseForegroundColor = foreground
         let control = UIPasteControl(configuration: configuration)
+        control.accessibilityIdentifier = "funput.clipboard.paste"
         control.target = self
         addSubview(control)
         pasteControl = control
@@ -98,9 +99,13 @@ final class KeyboardClipboardChipView: UIView {
         guard let provider = itemProviders.first(where: {
             $0.canLoadObject(ofClass: NSString.self)
         }) else { return }
+        let changeCount = UIPasteboard.general.changeCount
         _ = provider.loadObject(ofClass: NSString.self) { [weak self] object, _ in
             guard let text = (object as? NSString) as String? else { return }
-            Task { @MainActor in self?.onPaste?(text) }
+            Task { @MainActor in
+                let stable = UIPasteboard.general.changeCount == changeCount ? changeCount : nil
+                self?.onPaste?(KeyboardClipboardPaste(text: text, changeCount: stable))
+            }
         }
     }
 }

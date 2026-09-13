@@ -72,6 +72,7 @@ struct SettingsScreen: View {
                 isEnabled: model.boolBinding(\.clipboardEnabled),
                 expiryLabel: model.clipboardExpiryLabel,
                 selectExpiry: { picker = .clipboardExpiry },
+                openSettings: { openURL(URL(string: UIApplication.openSettingsURLString)!) },
                 clear: { model.clearClipboardHistory() }
             )
             FeedbackSettingsCard(

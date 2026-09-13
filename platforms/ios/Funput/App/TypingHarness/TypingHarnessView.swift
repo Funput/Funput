@@ -14,6 +14,11 @@ struct TypingHarnessView: View {
         HarnessTextView()
             .ignoresSafeArea(.container, edges: .bottom)
             .onAppear(perform: Self.forceDeterministicConfiguration)
+            .overlay(alignment: .topLeading) {
+                if ProcessInfo.processInfo.arguments.contains("-uitest-clipboard") {
+                    ClipboardHarnessControls()
+                }
+            }
             .overlay(alignment: .topTrailing) {
                 if ProcessInfo.processInfo.arguments.contains("-uitest-warm-toolbar-refresh") {
                     Button("Ẩn toolbar", action: Self.applyToolbarlessConfiguration)

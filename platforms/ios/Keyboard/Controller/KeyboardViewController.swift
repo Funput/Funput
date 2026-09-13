@@ -37,6 +37,8 @@ final class KeyboardViewController: UIInputViewController {
     let backgroundImageCache = KeyboardBackgroundAssetCache<UIImage>()
     let bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
     var clipboardRetryTask: Task<Void, Never>?
+    let clipboardChangeMonitor = ClipboardChangeMonitor()
+    lazy var clipboardCapture = makeClipboardCapture()
     var pendingBootstrapRepair: KeyboardBootstrapSnapshot?
     var adoptedIdentity: KeyboardActivationIdentity?
     var resolvedBackgroundRequest: KeyboardBackgroundRequest?
@@ -88,7 +90,7 @@ final class KeyboardViewController: UIInputViewController {
 #if DEBUG
         touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
 #endif
-        refreshClipboardOffer()
+        startClipboardMonitoring()
         repairBootstrapSnapshotIfNeeded()
     }
 

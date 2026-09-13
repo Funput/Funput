@@ -28,7 +28,7 @@ public final class KeyboardSurfaceView: UIView {
     }
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
-    public var onClipboardPaste: ((String) -> Void)?
+    public var onClipboardPaste: ((KeyboardClipboardPaste) -> Void)?
     public var onOverlayPadChanged: ((CGFloat) -> Void)?
     var overlayPadTop: CGFloat = 0
     var keyboardSize: CGSize {

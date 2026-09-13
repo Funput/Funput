@@ -16,13 +16,28 @@ struct ClipboardChipToolbarTests {
         #expect(try #require(chip(in: toolbar)).isHidden == false)
     }
 
-    @Test("Suggestions win the shared region, and give it back when they clear")
-    func suggestionsWin() throws {
+    @Test("Copying while suggestions are visible exposes Paste")
+    func pasteWinsOnArrival() throws {
         let toolbar = makeToolbar()
-        toolbar.updateClipboardHint(.link)
         toolbar.updateSuggestions([KeyboardSuggestionCandidate(text: "chào", generation: 1)])
-        #expect(try #require(chip(in: toolbar)).isHidden == true)
+        toolbar.updateClipboardHint(.link)
+        #expect(try #require(chip(in: toolbar)).isHidden == false)
+        #expect(toolbar.suggestionBar.isHidden)
+    }
 
+    /// The offer stands until the user pastes or copies again, so holding the region
+    /// would cost them every suggestion for the rest of the session.
+    @Test("The next keystroke takes the region back for suggestions")
+    func pasteYieldsOnceTypingContinues() throws {
+        let toolbar = makeToolbar()
+        toolbar.updateSuggestions([KeyboardSuggestionCandidate(text: "chào", generation: 1)])
+        toolbar.updateClipboardHint(.link)
+
+        toolbar.updateSuggestions([KeyboardSuggestionCandidate(text: "chào", generation: 2)])
+        #expect(try #require(chip(in: toolbar)).isHidden)
+        #expect(!toolbar.suggestionBar.isHidden)
+
+        // Still offered the moment the candidates clear.
         toolbar.updateSuggestions([])
         #expect(try #require(chip(in: toolbar)).isHidden == false)
     }

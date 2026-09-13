@@ -16,7 +16,7 @@ extension KeyboardViewController {
     ///
     /// Reads pasteboard **metadata only** — `changeCount`, `hasStrings`, `hasURLs` —
     /// which raises no paste alert. The contents are never read here; they arrive
-    /// only through the user's tap on the chip's `UIPasteControl`.
+    /// through the capture controller or the chip's `UIPasteControl`.
     ///
     /// Deliberately not called from `updateInputPresentation()`: that runs on every
     /// keystroke that moves the shift state, and the typing hot path stays free of
@@ -49,7 +49,7 @@ extension KeyboardViewController {
 
         let offer = ClipboardOfferPolicy.offer(
             snapshot: snapshot,
-            lastCapturedChangeCount: clipboardStore.lastCapturedChangeCount(),
+            lastPastedChangeCount: clipboardCapture.lastPastedChangeCount,
             context: context
         )
         keyboardView.updateClipboardHint(offer.map(Self.hint))
@@ -86,18 +86,10 @@ extension KeyboardViewController {
         }
     }
 
-    private func pasteFromClipboard(_ text: String) {
-        guard !text.isEmpty else { return }
-        let effects = inputCoordinator.insertLiteral(text, writer: makeDocumentWriter())
-        // Stamped with the live `changeCount` rather than the one the offer was built
-        // from: the text just handed over is whatever is on the pasteboard now.
-        // The panel can already be open when the switch is turned off, so the write
-        // is guarded here and not only where the chip is offered.
-        if configuration.clipboardEnabled {
-            clipboardStore.record(
-                ClipboardItem(text: text, sourceChangeCount: UIPasteboard.general.changeCount)
-            )
-        }
+    private func pasteFromClipboard(_ paste: KeyboardClipboardPaste) {
+        guard activationState.isActive, !paste.text.isEmpty else { return }
+        let effects = inputCoordinator.insertLiteral(paste.text, writer: makeDocumentWriter())
+        clipboardCapture.didPaste(paste.text, changeCount: paste.changeCount)
         refreshClipboardOffer()
         applyPostCommitEffects(effects)
     }

@@ -7,7 +7,7 @@ import UIKit
 final class KeyboardToolbarView: UIView {
     var onEvent: ((KeyboardKeyEvent) -> Void)?
     var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
-    var onClipboardPaste: ((String) -> Void)?
+    var onClipboardPaste: ((KeyboardClipboardPaste) -> Void)?
 
     // Laid out across the band by `layoutContents()` in KeyboardToolbarView+Layout.
     let logoView = KeyboardBrandLogoView()
@@ -18,6 +18,8 @@ final class KeyboardToolbarView: UIView {
     private var clipboardHint: KeyboardClipboardHint?
     private var hasSuggestions = false
     private var allowsClipboardKey = true
+    /// Whether the offer arrived since the user last typed. See `arbitrateContentRegion`.
+    private var pasteOfferIsNew = false
     private var allowsEmojiKey = true
     var spec: KeyboardToolbarSpec?
 
@@ -72,6 +74,9 @@ final class KeyboardToolbarView: UIView {
     func updateSuggestions(_ candidates: [KeyboardSuggestionCandidate]) {
         suggestionBar.update(candidates)
         hasSuggestions = !candidates.isEmpty
+        // The user has typed since the offer arrived, so it is no longer the newest
+        // thing in the band and stops holding the region.
+        pasteOfferIsNew = false
         arbitrateContentRegion()
     }
 
@@ -86,17 +91,23 @@ final class KeyboardToolbarView: UIView {
     }
 
     func updateClipboardHint(_ hint: KeyboardClipboardHint?) {
+        pasteOfferIsNew = hint != nil && hint != clipboardHint
         clipboardHint = hint
         clipboardChip.update(hint: hint)
         arbitrateContentRegion()
     }
 
-    /// Suggestions win the shared region: they are about what the user is typing
-    /// right now, while the clipboard chip is a standing offer they can also reach
-    /// from the clipboard panel.
+    /// Both want the one shared region, and each is right at a different moment.
+    ///
+    /// Copying while typing must expose Paste, or the offer is swallowed by the
+    /// candidates and the user never learns it was there. But the offer stands until
+    /// they paste or copy again, so letting it hold the region would cost them every
+    /// suggestion for the rest of the session. It holds until the next keystroke and
+    /// then steps aside; the clipboard key and the history panel still reach it.
     private func arbitrateContentRegion() {
-        suggestionBar.isHidden = !hasSuggestions
-        clipboardChip.isHidden = hasSuggestions || clipboardHint == nil
+        let pasteWins = clipboardHint != nil && (!hasSuggestions || pasteOfferIsNew)
+        suggestionBar.isHidden = !hasSuggestions || pasteWins
+        clipboardChip.isHidden = !pasteWins
         // The clipboard key yields its slot too: while the user is typing, the whole
         // toolbar belongs to suggestions.
         clipboardButton.isHidden = hasSuggestions || !allowsClipboardKey

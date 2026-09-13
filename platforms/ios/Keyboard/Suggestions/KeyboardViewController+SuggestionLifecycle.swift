@@ -1,9 +1,12 @@
+import FunputShared
 import KeyboardConfiguration
 import UIKit
 
 extension KeyboardViewController {
     override func viewWillDisappear(_ animated: Bool) {
         activationState.end()
+        clipboardChangeMonitor.stop()
+        clipboardCapture.end()
         cancelClipboardRetry()
         markPreferredHeightHidden()
         super.viewWillDisappear(animated)
