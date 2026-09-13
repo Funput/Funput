@@ -55,3 +55,7 @@ seq -f '%05g' 0 23 | xargs -P "$JOBS" -I{} bash -c '
     --supplement "$data/supplement.tsv" --blocklist "$data/blocklist.txt" \
     --top "$TOP" "$work"/counts/1-*.tsv > "$data/en.tsv"
 echo "wrote $data/en.tsv ($TOP words)" >&2
+
+# 4. Pack, as a check: the list must still make an en.lex the library accepts.
+#    The file stays in WORK; the shells build their own.
+"$tool" pack < "$data/en.tsv" > "$work/en.lex"

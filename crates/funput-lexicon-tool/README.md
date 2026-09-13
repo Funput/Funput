@@ -1,12 +1,15 @@
 # funput-lexicon-tool
 
 Builds `crates/funput-suggestions/data/lexicon/en.tsv`, the ranked word list
-behind the English lexicon. The design lives in
+behind the English lexicon, and packs it into the `en.lex` the keyboards map.
+The design lives in
 [english-lexicon-suggestion.md](../../docs/features/english-lexicon-suggestion.md);
 attribution in [NOTICE.md](../funput-suggestions/data/lexicon/NOTICE.md).
 
 Nothing here ships. Run it by hand when the lexicon's data should change, then
-review `en.tsv` as an ordinary diff.
+review `en.tsv` as an ordinary diff. The only dependency is `funput-suggestions`
+with its `lexicon-build` feature, so the `en.lex` layout is defined once, in
+the library that reads it.
 
 ## Refresh
 
@@ -31,6 +34,14 @@ with the counts already in `WORK`, the script goes straight to the rank step.
 | SCOWL | ESDB at a pinned commit, size 60, American, `--dot True` | `allowed.txt` |
 | `count` | one decompressed 1-gram shard on stdin | `word\tcount`, lowercased, years 2000–2019, spellings under 100 dropped |
 | `rank` | `allowed.txt`, `supplement.tsv`, `blocklist.txt`, every count file | `en.tsv` |
+| `pack` | `en.tsv` on stdin | `en.lex` on stdout, checked by the library's own validation first |
+
+`refresh.sh` ends with `pack` into `WORK` purely as a check; the shells build
+the `en.lex` they ship.
+
+```bash
+target/release/funput-lexicon-tool pack < crates/funput-suggestions/data/lexicon/en.tsv > en.lex
+```
 
 `rank` keeps one spelling per lowercase word (lowercase, then capitalised, then
 the rest, e.g. `iPhone`), drops blocklisted words and words the corpus never

@@ -520,6 +520,9 @@ dependencies = [
 [[package]]
 name = "funput-lexicon-tool"
 version = "0.1.0"
+dependencies = [
+ "funput-suggestions",
+]
 
 [[package]]
 name = "funput-suggestions"

@@ -9,6 +9,7 @@ publish.workspace = true
 workspace = true
 
 # Data work run by hand when the English lexicon is refreshed. Nothing here links
-# into a shipped binary, and it keeps no dependencies so the workspace pays
-# nothing for carrying it.
+# into a shipped binary. The one dependency is the library whose format `pack`
+# writes, so the layout is defined in exactly one place.
 [dependencies]
+funput-suggestions = { path = "../funput-suggestions", features = ["lexicon-build"] }
