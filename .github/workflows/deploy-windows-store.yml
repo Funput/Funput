@@ -44,6 +44,14 @@ name: Deploy Windows Store
 # number derived from run_number. The package version is the marketing version
 # plus `.0`, and every build Partner Center accepts needs a new marketing
 # version. A run that failed before its commit consumed nothing — re-run it.
+#
+# Two jobs, so a failed upload does not cost another ~45-minute build. `pack`
+# builds on Windows and hands the .msix over as the `windows-store` artifact;
+# `upload` only needs Python, so it runs on Ubuntu. When `upload` fails (an
+# expired secret, a missing flight), fix that and use "Re-run failed jobs": the
+# re-run reads the current secrets and the artifact from the earlier attempt.
+# It still runs the scripts of the original commit, so a fix to submit_msix.py
+# needs a fresh run.
 on:
   workflow_dispatch:
     inputs:
@@ -71,7 +79,7 @@ env:
   MS_STORE_FLIGHT_NAME: ${{ vars.MS_STORE_FLIGHT_NAME || 'internal' }}
 
 jobs:
-  windows-store:
+  pack:
     runs-on: windows-latest
     timeout-minutes: 90
     defaults:
@@ -154,29 +162,6 @@ jobs:
             -DisplayName $env:MS_STORE_DISPLAY_NAME `
             -OutDir platforms/windows/build/msix
 
-      # Waits for the commit to leave CommitStarted and fails the job on
-      # CommitFailed, so a rejected archive shows up here rather than only in
-      # the portal. Certification itself runs later and is not awaited.
-      - name: Upload to Partner Center flight
-        if: ${{ !inputs.dry_run }}
-        env:
-          MS_STORE_TENANT_ID: ${{ secrets.MS_STORE_TENANT_ID }}
-          MS_STORE_CLIENT_ID: ${{ secrets.MS_STORE_CLIENT_ID }}
-          MS_STORE_CLIENT_SECRET: ${{ secrets.MS_STORE_CLIENT_SECRET }}
-          MS_STORE_APP_ID: ${{ vars.MS_STORE_APP_ID }}
-        run: |
-          set -euo pipefail
-          for name in MS_STORE_TENANT_ID MS_STORE_CLIENT_ID MS_STORE_CLIENT_SECRET; do
-            eval "value=\${$name:-}"
-            if [ -z "$value" ]; then
-              echo "::error::$name is not set. Add the Azure AD app secret under Settings → Secrets."
-              exit 1
-            fi
-          done
-          export PYTHONPATH="$PWD/platforms/windows/scripts/store"
-          python platforms/windows/scripts/store/submit_msix.py \
-            "platforms/windows/build/msix/Funput-$PACKAGE_VERSION.msix"
-
       - name: Stage artifact
         if: always()
         run: |
@@ -199,7 +184,6 @@ jobs:
         if: success()
         env:
           VERSION: ${{ inputs.version }}
-          APP_ID: ${{ vars.MS_STORE_APP_ID }}
         run: |
           {
             echo "### Funput Windows Store $VERSION (package $PACKAGE_VERSION)"
@@ -207,9 +191,66 @@ jobs:
             if [ "${{ inputs.dry_run }}" = "true" ]; then
               echo "Packed the .msix; **not** uploaded (dry run)."
             else
-              echo "Committed to Partner Center flight **$MS_STORE_FLIGHT_NAME**; certification runs next."
-              echo "Promote to production in the portal when you mean it."
+              echo "Packed the .msix; the \`upload\` job sends it to Partner Center."
             fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  upload:
+    needs: pack
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    # The commit poll alone may take 20 minutes (submit_msix.py).
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      # Derived again from the input rather than read from `pack`'s outputs:
+      # same function, and nothing depends on what a re-run carries over.
+      - name: Package version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          PACKAGE_VERSION="$(python3 platforms/windows/scripts/store/msix_version.py "$VERSION")"
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows-store
+          path: ${{ runner.temp }}/msix
+
+      # Waits for the commit to leave CommitStarted and fails the job on
+      # CommitFailed, so a rejected archive shows up here rather than only in
+      # the portal. Certification itself runs later and is not awaited.
+      - name: Upload to Partner Center flight
+        env:
+          MS_STORE_TENANT_ID: ${{ secrets.MS_STORE_TENANT_ID }}
+          MS_STORE_CLIENT_ID: ${{ secrets.MS_STORE_CLIENT_ID }}
+          MS_STORE_CLIENT_SECRET: ${{ secrets.MS_STORE_CLIENT_SECRET }}
+          MS_STORE_APP_ID: ${{ vars.MS_STORE_APP_ID }}
+        run: |
+          set -euo pipefail
+          for name in MS_STORE_TENANT_ID MS_STORE_CLIENT_ID MS_STORE_CLIENT_SECRET MS_STORE_APP_ID; do
+            eval "value=\${$name:-}"
+            if [ -z "$value" ]; then
+              echo "::error::$name is not set. Add the Azure AD app secret under Settings → Secrets, the Store ID under Settings → Variables."
+              exit 1
+            fi
+          done
+          export PYTHONPATH="$PWD/platforms/windows/scripts/store"
+          python3 platforms/windows/scripts/store/submit_msix.py \
+            "$RUNNER_TEMP/msix/Funput-$PACKAGE_VERSION.msix"
+
+      - name: Summary
+        env:
+          VERSION: ${{ inputs.version }}
+          APP_ID: ${{ vars.MS_STORE_APP_ID }}
+        run: |
+          {
+            echo "### Funput Windows Store $VERSION (package $PACKAGE_VERSION)"
+            echo
+            echo "Committed to Partner Center flight **$MS_STORE_FLIGHT_NAME**; certification runs next."
+            echo "Promote to production in the portal when you mean it."
             if [ -n "${APP_ID:-}" ]; then
               echo
               echo "Partner Center: https://partner.microsoft.com/dashboard/products/$APP_ID/"
