@@ -23,6 +23,10 @@ pub fn is_versioned_name(file_name: &str) -> bool {
 /// If this process was started from a versioned asset, copy to `Funput.exe`,
 /// spawn it (asking it to delete this file), and return `true` so the caller exits.
 pub fn normalize_and_relaunch() -> bool {
+    // The Store install directory is read-only; copying would just fail.
+    if crate::shared::packaged::is_packaged() {
+        return false;
+    }
     let Ok(current) = std::env::current_exe() else {
         return false;
     };
@@ -47,6 +51,9 @@ pub fn normalize_and_relaunch() -> bool {
 /// Delete leftover `Funput-*.exe` next to the canonical binary (retry while Windows
 /// still holds a lock on the process that just exited).
 pub fn cleanup_versioned_siblings() {
+    if crate::shared::packaged::is_packaged() {
+        return;
+    }
     let Ok(current) = std::env::current_exe() else {
         return;
     };

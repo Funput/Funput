@@ -13,6 +13,10 @@ pub fn set_launch_at_login(on: bool) {
 /// Bring the OS autostart entry in line with `on`. Called on startup (from the
 /// persisted preference) and whenever the toggle changes.
 pub fn sync_autostart(on: bool) {
+    if crate::shared::packaged::is_packaged() {
+        crate::shared::startup_task::sync(on);
+        return;
+    }
     let Some(auto) = autolaunch() else { return };
     let _ = if on { auto.enable() } else { auto.disable() };
 }

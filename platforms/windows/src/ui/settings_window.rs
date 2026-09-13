@@ -6,6 +6,7 @@ use slint::{ComponentHandle, Weak};
 
 use super::models;
 use super::settings_callbacks;
+use crate::shared::packaged::{self, STORE_UPDATE_MESSAGE};
 use crate::shared::{commands, shell};
 use crate::ui::{recorder, system_accent};
 use crate::{SettingsWindow, Theme};
@@ -101,7 +102,9 @@ pub(super) fn populate(window: &SettingsWindow) {
     window.set_version(env!("CARGO_PKG_VERSION").into());
     window.set_update_state("idle".into());
     window.set_update_version("".into());
-    window.set_update_message("".into());
+    let store = packaged::is_packaged();
+    window.set_store_managed(store);
+    window.set_update_message(if store { STORE_UPDATE_MESSAGE } else { "" }.into());
     window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
     window.set_shortcuts_enabled(settings.shortcuts_enabled);
     window.set_shortcut_smart_case(settings.shortcut_smart_case);
@@ -123,5 +126,7 @@ pub(super) fn open_and_check_updates() {
     if let Some(window) = current() {
         window.set_active("about".into());
     }
-    commands::check_for_updates();
+    if !packaged::is_packaged() {
+        commands::check_for_updates();
+    }
 }

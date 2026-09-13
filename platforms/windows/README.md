@@ -221,10 +221,11 @@ platforms/windows/
   src/
     main.rs        Định tuyến cờ · chuẩn hoá exe · singleton
     background/    hook/ (keyboard · mouse · foreground) · hotkey/ · inject/ · keymap · tray/
-    shared/        shell/ (state toàn cục) · commands/ · update/ · settings_path · canonical_exe
+    shared/        shell/ · commands/ · update/ · packaged · startup_task · canonical_exe
     ui/            Cửa sổ Slint · control_center/ · mica.rs
+  msix/          AppxManifest template + Store logos
   scripts/
-    build-release.ps1 · build-release.sh
+    build-release.ps1 · pack-msix.ps1 · submit_msix.py
 ```
 
 ### Stack
@@ -279,8 +280,9 @@ Test cần trỏ cấu hình đi chỗ khác thì đặt `FUNPUT_CONFIG` — nó
 
 | Workflow | Việc |
 |---|---|
-| [`ci.yml`](../../.github/workflows/ci.yml) | Job `windows`: clippy + test *(profile dev)*. Job `cargo-deny` có bước riêng cho shell này |
+| [`ci.yml`](../../.github/workflows/ci.yml) | Job `windows`: clippy + test *(profile dev)*. Job `windows-store-submit`: test mock đóng gói/upload Store. Job `cargo-deny` có bước riêng cho shell này |
 | [`build-windows.yml`](../../.github/workflows/build-windows.yml) | Build `Funput.exe` và `funput` CLI; job `windows-feed` chạy trên **macOS runner** để ký Ed25519 và phát `funput-windows.json` |
+| [`deploy-windows-store.yml`](../../.github/workflows/deploy-windows-store.yml) | Chạy tay: đóng gói `.msix` và upload lên Package flight Partner Center |
 | [`release.yml`](../../.github/workflows/release.yml) | Gom artifact lên GitHub Releases |
 | [`audit.yml`](../../.github/workflows/audit.yml) | Rà advisory của dependency |
 
