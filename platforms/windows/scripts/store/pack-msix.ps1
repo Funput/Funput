@@ -1,9 +1,12 @@
 # Pack Funput.exe into an unsigned Store .msix (Microsoft re-signs on ingest).
 #
 # Usage, from platforms/windows:
-#   .\scripts\pack-msix.ps1 -Exe target\release\funput.exe -Version 1.2026.66.101 `
+#   .\scripts\store\pack-msix.ps1 -Exe target\release\funput.exe -Version 1.2026.66.0 `
 #       -IdentityName <from Partner Center> -Publisher "CN=..." `
 #       -PublisherDisplayName Funput -OutDir build\msix
+#
+# -DisplayName is the package's Properties/DisplayName, which Partner Center
+# checks against the app's reserved names. The Start menu tile keeps "Funput".
 
 [CmdletBinding()]
 param(
@@ -12,11 +15,13 @@ param(
     [Parameter(Mandatory = $true)][string]$IdentityName,
     [Parameter(Mandatory = $true)][string]$Publisher,
     [Parameter(Mandatory = $true)][string]$PublisherDisplayName,
+    [string]$DisplayName = "Funput",
     [string]$OutDir = ""
 )
 
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+# platforms/windows, two levels above scripts/store/.
+$Root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
 $Exe = [System.IO.Path]::GetFullPath($Exe)
 if ($OutDir) { $OutDir = [System.IO.Path]::GetFullPath($OutDir) }
 if (-not $OutDir) { $OutDir = Join-Path $Root "build\msix" }
@@ -45,8 +50,10 @@ function Assert-Token([string]$Name, [string]$Value) {
 Assert-Token "IdentityName" $IdentityName
 Assert-Token "Publisher" $Publisher
 Assert-Token "PublisherDisplayName" $PublisherDisplayName
-if ($Version -notmatch "^\d+\.\d+\.\d+\.\d+$") {
-    throw "Version must be four numeric parts (e.g. 1.2026.66.101), got $Version"
+Assert-Token "DisplayName" $DisplayName
+# The fourth part is reserved for the Store and must be 0 (msix_version.py).
+if ($Version -notmatch "^\d+\.\d+\.\d+\.0$") {
+    throw "Version must be four numeric parts ending in .0 (e.g. 1.2026.66.0), got $Version"
 }
 if (-not (Test-Path $Exe)) { throw "Executable missing: $Exe" }
 
@@ -55,13 +62,14 @@ $Stage = Join-Path $env:TEMP ("funput-msix-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $Stage | Out-Null
 try {
     Copy-Item -Force $Exe (Join-Path $Stage "Funput.exe")
-    $assets = Join-Path $Stage "Assets"
-    New-Item -ItemType Directory -Force -Path $assets | Out-Null
-    Copy-Item -Force (Join-Path $Root "msix\Assets\*") $assets
+    # Assets\Icons and Assets\Tiles keep their layout; the manifest names them so.
+    Copy-Item -Recurse -Force (Join-Path $Root "msix\Assets") (Join-Path $Stage "Assets")
     $manifest = [System.IO.File]::ReadAllText((Join-Path $Root "msix\AppxManifest.xml.template"))
     $manifest = $manifest.Replace("__IDENTITY_NAME__", $IdentityName)
     $manifest = $manifest.Replace("__PUBLISHER__", $Publisher)
+    # __DISPLAY_NAME__ is a substring of __PUBLISHER_DISPLAY_NAME__: keep this order.
     $manifest = $manifest.Replace("__PUBLISHER_DISPLAY_NAME__", $PublisherDisplayName)
+    $manifest = $manifest.Replace("__DISPLAY_NAME__", $DisplayName)
     $manifest = $manifest.Replace("__VERSION__", $Version)
     if ($manifest -match "__[A-Z_]+__") {
         throw "Manifest still has unsubstituted placeholders."

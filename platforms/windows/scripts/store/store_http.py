@@ -71,8 +71,10 @@ def api_json(
     token: str,
     *,
     payload: Any | None = None,
+    missing_ok: bool = False,
     opener=urllib.request.urlopen,
 ) -> Any:
+    """`missing_ok` turns a 404 into `None` — `listflights` answers 404 for "no flights"."""
     data = None if payload is None else json.dumps(payload).encode()
     headers = {"Accept": "application/json"}
     if data is not None:
@@ -83,6 +85,8 @@ def api_json(
     text = body.decode("utf-8", "replace")
     if bootstrap_required(status, text):
         raise StoreError(f"{BOOTSTRAP_HINT}\nAPI HTTP {status}: {text}", bootstrap=True)
+    if status == 404 and missing_ok:
+        return None
     if status >= 400:
         raise StoreError(f"Partner Center HTTP {status} on {method} {path}: {text}")
     return json.loads(text) if text else {}

@@ -23,23 +23,32 @@ name: Deploy Windows Store
 #   MS_STORE_PUBLISHER              Publisher, e.g. CN=xxxxxxxx-...
 #   MS_STORE_PUBLISHER_DISPLAY_NAME Publisher display name
 #   MS_STORE_APP_ID                 Store ID (9N…)
+#   MS_STORE_DISPLAY_NAME           optional; defaults to `Funput`. Must match a
+#                                   name reserved for the app in Partner Center.
 #   MS_STORE_FLIGHT_NAME            optional; defaults to `internal`
-#   STORE_BUILD_OFFSET              optional; defaults to 100
 #
 # Required secrets (Azure AD app with Manager on this Partner Center account):
 #   MS_STORE_TENANT_ID
 #   MS_STORE_CLIENT_ID
 #   MS_STORE_CLIENT_SECRET
 #
-# One-time, outside this repo: the app must already exist in Partner Center
-# with a listing, an age ratings questionnaire, and one submission created by
-# hand. The Store API will not create that first submission. Create the
-# package flight (or let the script try) after that bootstrap.
+# One-time, outside this repo: package flights only exist for an app whose
+# first submission has been *published*. So in Partner Center: finish the
+# listing and age ratings, submit a build by hand and let it pass
+# certification, then create a known user group and a package flight named as
+# MS_STORE_FLIGHT_NAME. The Store API can do none of that for you, and this
+# workflow never creates a flight.
+#
+# Versioning differs from deploy-ios.yml: the MSIX Identity.Version's fourth
+# part is reserved for the Store and must be 0, so there is no room for a build
+# number derived from run_number. The package version is the marketing version
+# plus `.0`, and every build Partner Center accepts needs a new marketing
+# version. A run that failed before its commit consumed nothing — re-run it.
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Marketing version, e.g. 1.2026.66 — what users see. The MSIX revision is derived from the run number."
+        description: "Marketing version, e.g. 1.2026.66 — what users see. The package is 1.2026.66.0, so use a new one per upload."
         required: true
         type: string
       dry_run:
@@ -59,12 +68,6 @@ concurrency:
 env:
   CARGO_HTTP_MULTIPLEXING: "false"
   CARGO_NET_RETRY: "5"
-  # Identity.Version's fourth part is derived from the run number, so
-  # re-deploying the same marketing version never collides. The offset leaves
-  # room below the first Store build; set the repository variable to raise it.
-  # Careful: renaming this workflow file resets the run counter to 1, which
-  # would push the package version *backwards* — Partner Center rejects that.
-  STORE_BUILD_OFFSET: ${{ vars.STORE_BUILD_OFFSET || '100' }}
   MS_STORE_FLIGHT_NAME: ${{ vars.MS_STORE_FLIGHT_NAME || 'internal' }}
 
 jobs:
@@ -83,12 +86,15 @@ jobs:
           workspaces: platforms/windows -> target
 
       # Reject a bad marketing version *before* the release clippy/test spend
-      # ~45 minutes. The fourth part is only known after run_number, so this
-      # uses 0 as a dummy revision — any illegal three-part input still fails.
-      - name: Check marketing version
+      # ~45 minutes.
+      - name: Package version
         env:
           VERSION: ${{ inputs.version }}
-        run: python platforms/windows/scripts/msix_version.py "$VERSION" 0
+        run: |
+          set -euo pipefail
+          PACKAGE_VERSION="$(python platforms/windows/scripts/store/msix_version.py "$VERSION")"
+          echo "Marketing version $VERSION, package $PACKAGE_VERSION"
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
 
       - name: Stamp marketing version
         env:
@@ -109,17 +115,6 @@ jobs:
       - name: Build Funput.exe
         working-directory: platforms/windows
         run: cargo build --release
-
-      - name: Package version
-        env:
-          VERSION: ${{ inputs.version }}
-          RUN_NUMBER: ${{ github.run_number }}
-        run: |
-          set -euo pipefail
-          REVISION=$(( STORE_BUILD_OFFSET + RUN_NUMBER ))
-          PACKAGE_VERSION="$(python platforms/windows/scripts/msix_version.py "$VERSION" "$REVISION")"
-          echo "Marketing version $VERSION, package $PACKAGE_VERSION"
-          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
 
       - name: Require Partner Center identity
         env:
@@ -147,16 +142,21 @@ jobs:
           MS_STORE_PACKAGE_NAME: ${{ vars.MS_STORE_PACKAGE_NAME }}
           MS_STORE_PUBLISHER: ${{ vars.MS_STORE_PUBLISHER }}
           MS_STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.MS_STORE_PUBLISHER_DISPLAY_NAME }}
+          MS_STORE_DISPLAY_NAME: ${{ vars.MS_STORE_DISPLAY_NAME || 'Funput' }}
         run: |
           $ErrorActionPreference = "Stop"
-          & platforms/windows/scripts/pack-msix.ps1 `
+          & platforms/windows/scripts/store/pack-msix.ps1 `
             -Exe platforms/windows/target/release/funput.exe `
             -Version $env:PACKAGE_VERSION `
             -IdentityName $env:MS_STORE_PACKAGE_NAME `
             -Publisher $env:MS_STORE_PUBLISHER `
             -PublisherDisplayName $env:MS_STORE_PUBLISHER_DISPLAY_NAME `
+            -DisplayName $env:MS_STORE_DISPLAY_NAME `
             -OutDir platforms/windows/build/msix
 
+      # Waits for the commit to leave CommitStarted and fails the job on
+      # CommitFailed, so a rejected archive shows up here rather than only in
+      # the portal. Certification itself runs later and is not awaited.
       - name: Upload to Partner Center flight
         if: ${{ !inputs.dry_run }}
         env:
@@ -173,8 +173,8 @@ jobs:
               exit 1
             fi
           done
-          export PYTHONPATH="$PWD/platforms/windows/scripts"
-          python platforms/windows/scripts/submit_msix.py \
+          export PYTHONPATH="$PWD/platforms/windows/scripts/store"
+          python platforms/windows/scripts/store/submit_msix.py \
             "platforms/windows/build/msix/Funput-$PACKAGE_VERSION.msix"
 
       - name: Stage artifact
@@ -207,7 +207,7 @@ jobs:
             if [ "${{ inputs.dry_run }}" = "true" ]; then
               echo "Packed the .msix; **not** uploaded (dry run)."
             else
-              echo "Uploaded to Partner Center flight **$MS_STORE_FLIGHT_NAME**."
+              echo "Committed to Partner Center flight **$MS_STORE_FLIGHT_NAME**; certification runs next."
               echo "Promote to production in the portal when you mean it."
             fi
             if [ -n "${APP_ID:-}" ]; then

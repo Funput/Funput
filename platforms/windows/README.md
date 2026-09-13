@@ -221,11 +221,12 @@ platforms/windows/
   src/
     main.rs        Định tuyến cờ · chuẩn hoá exe · singleton
     background/    hook/ (keyboard · mouse · foreground) · hotkey/ · inject/ · keymap · tray/
-    shared/        shell/ · commands/ · update/ · packaged · startup_task · canonical_exe
+    shared/        shell/ · commands/ · update/ · packaged/ (MSIX · startup_task) · canonical_exe
     ui/            Cửa sổ Slint · control_center/ · mica.rs
-  msix/          AppxManifest template + Store logos
+  msix/          AppxManifest template · Assets/ (Icons · Tiles)
   scripts/
-    build-release.ps1 · pack-msix.ps1 · submit_msix.py
+    build-release.ps1 · build-release.sh
+    store/         pack-msix.ps1 · msix_version.py · submit_msix.py · store_flight.py · store_http.py
 ```
 
 ### Stack

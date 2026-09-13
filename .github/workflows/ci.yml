@@ -174,8 +174,9 @@ jobs:
       - uses: actions/checkout@v7
       - name: Verify Store version and flight payloads
         run: |
-          python3 platforms/windows/scripts/tests/test_msix_version.py
-          python3 platforms/windows/scripts/tests/test_store_flight.py
+          python3 platforms/windows/scripts/store/tests/test_msix_version.py
+          python3 platforms/windows/scripts/store/tests/test_store_flight.py
+          python3 platforms/windows/scripts/store/tests/test_submit_msix.py
 
   # The line budgets for the three shell languages, none of which ran anywhere a
   # pull request could see. The Swift ones were called from deploy-ios.yml
