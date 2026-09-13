@@ -23,6 +23,16 @@ struct ShortcutLifecycleTests {
         #expect(rig.writer.text == "chào new ")
     }
 
+    @Test func lateLoadWaitsForReopenedVietnameseWord() {
+        let rig = ShortcutTypingRig(language: .vietnamese, method: .telex)
+        rig.coordinator.beginShortcutActivation()
+        rig.type("va ")
+        rig.key("delete", role: .backspace)
+        rig.coordinator.receiveShortcuts(.init(entries: [.init(trigger: "va", expansion: "new")]))
+        rig.type(" va ")
+        #expect(rig.writer.text == "va new ")
+    }
+
     @Test func newActivationAndEmptyLibraryRemoveOldEntries() {
         let rig = ShortcutTypingRig()
         rig.type("vn ")

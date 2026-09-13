@@ -64,7 +64,10 @@ extension KeyboardInputCoordinator {
             !snapshot.hasSelection,
             let word = snapshot.contextBeforeInput?.wordBeforeCursor()
         else { return }
-        composer.adopt(word) // refused unless it is a Vietnamese syllable
+        if composer.adopt(word) {
+            // An adopted syllable is still in progress when a library arrives late.
+            shortcuts.word = word
+        }
     }
 }
 #endif
