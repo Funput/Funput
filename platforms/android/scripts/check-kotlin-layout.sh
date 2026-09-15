@@ -11,12 +11,21 @@ set -euo pipefail
 
 readonly max_lines="${MAX_KOTLIN_FILE_LINES:-150}"
 readonly max_files="${MAX_FILES_PER_DIRECTORY:-5}"
-readonly android_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+android_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly android_root
 readonly renderer_main="$android_root/keyboard-renderer/src/main/java/app/funput/funput/keyboard"
 readonly renderer_test="$android_root/keyboard-renderer/src/test/java/app/funput/funput/keyboard"
 readonly ime_main="$android_root/ime/src/main/java/app/funput/funput/ime"
 readonly ime_test="$android_root/ime/src/test/java/app/funput/funput/ime"
 readonly roots=(
+    "$ime_main/suggestions"
+    "$ime_test/suggestions"
+    "$android_root/ime/src/androidTest/java/app/funput/funput/ime/suggestions"
+    "$android_root/app/src/main/java/app/funput/funput/ui/about"
+    "$android_root/app/src/test/java/app/funput/funput/ui/about"
+    "$android_root/app/src/androidTest/java/app/funput/funput/ui/about"
+    "$android_root/buildSrc/src/main/kotlin"
+
     "$renderer_main/interaction/gestures"
     "$renderer_main/accessibility"
     "$renderer_test/interaction/gestures"
