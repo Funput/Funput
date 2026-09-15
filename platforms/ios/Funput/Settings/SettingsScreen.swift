@@ -38,53 +38,9 @@ struct SettingsScreen: View {
             KeyboardSetupCard(hasFullAccess: model.hasFullAccess) {
                 openURL(URL(string: UIApplication.openSettingsURLString)!)
             }
-            SettingsSectionCard(title: "Bàn phím", systemImage: "keyboard") {
-                SettingsSelectionRow(option: .inputMethod, value: model.inputMethodLabel) { picker = .inputMethod }
-                SettingsSelectionRow(option: .layoutPreset, value: model.layoutPresetLabel) { picker = .layoutPreset }
-                SettingsToggleRow(
-                    title: "Hàng phím số",
-                    summary: "Hiển thị 0–9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.",
-                    isOn: model.numberRowBinding
-                )
-                .disabled(model.isNumberRowLocked)
-                SettingsSelectionRow(option: .language, value: model.languageLabel) { picker = .language }
-                SettingsSelectionRow(option: .toneStyle, value: model.toneStyleLabel) { picker = .toneStyle }
-                SettingsHeightRow(value: model.heightBinding)
-            }
-            SettingsSectionCard(title: "Nhập liệu thông minh", systemImage: "wand.and.stars") {
-                ShortcutsSettingsLink(model: shortcuts)
-                SettingsToggleRow(
-                    title: "Khôi phục từ thông minh",
-                    summary: "Giữ từ gốc khi chỉnh sửa hoặc xóa dấu.",
-                    isOn: model.boolBinding(\.smartRestore)
-                )
-                SettingsToggleRow(
-                    title: "Khôi phục sớm",
-                    summary: "Nhận biết và khôi phục từ ngay trong lúc gõ.",
-                    isOn: model.boolBinding(\.eagerRestore)
-                )
-                SettingsToggleRow(
-                    title: "Kiểm tra chính tả",
-                    summary: "Hỗ trợ nhận diện các từ tiếng Việt chưa hợp lệ.",
-                    isOn: model.boolBinding(\.spellCheck)
-                )
-                SettingsToggleRow(
-                    title: "Tự viết hoa",
-                    summary: "Viết hoa ký tự đầu câu khi phù hợp.",
-                    isOn: model.boolBinding(\.autoCapitalize)
-                )
-            }
-            PersonalSuggestionSettingsCard(
-                isEnabled: model.boolBinding(\.personalSuggestionsEnabled),
-                reset: { model.requestPersonalSuggestionReset() }
-            )
-            ClipboardSettingsCard(
-                isEnabled: model.boolBinding(\.clipboardEnabled),
-                expiryLabel: model.clipboardExpiryLabel,
-                selectExpiry: { picker = .clipboardExpiry },
-                openSettings: { openURL(URL(string: UIApplication.openSettingsURLString)!) },
-                clear: { model.clearClipboardHistory() }
-            )
+            TypingSettingsSection(model: model, shortcuts: shortcuts) { picker = $0 }
+            LayoutSettingsSection(model: model) { picker = $0 }
+            SmartInputSettingsSection(model: model)
             FeedbackSettingsCard(
                 haptics: model.fullAccessBinding(\.isHapticFeedbackEnabled) {
                     requestsHapticAccess = true
@@ -94,8 +50,17 @@ struct SettingsScreen: View {
                 },
                 keyPreviews: model.boolBinding(\.showsKeyPreviews)
             )
-            GestureSettingsCard(isEnabled: model.boolBinding(\.smartGesturesEnabled))
-            SettingsResetCard { model.reset() }
+            ClipboardSettingsCard(
+                isEnabled: model.boolBinding(\.clipboardEnabled),
+                expiryLabel: model.clipboardExpiryLabel,
+                selectExpiry: { picker = .clipboardExpiry },
+                openSettings: { openURL(URL(string: UIApplication.openSettingsURLString)!) }
+            )
+            SettingsDataCard(
+                resetPersonalSuggestions: { model.requestPersonalSuggestionReset() },
+                clearClipboard: { model.clearClipboardHistory() },
+                resetSettings: { model.reset() }
+            )
         }
         .navigationTitle("Cài đặt")
         .sheet(item: $picker) { SettingsSelectionSheet(picker: $0, model: model) }
