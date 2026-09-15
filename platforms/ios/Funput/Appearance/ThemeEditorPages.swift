@@ -4,11 +4,12 @@ import ThemeSchema
 struct ThemeEditorPages: View {
     @Binding var selection: ThemeEditorTab
     @Binding var draft: ThemeEditorDraft
+    let usesSystemKeySizing: Bool
 
     var body: some View {
         TabView(selection: $selection) {
             ForEach(ThemeEditorTab.allCases) { tab in
-                ThemeEditorTabPage(tab: tab, draft: $draft)
+                ThemeEditorTabPage(tab: tab, draft: $draft, usesSystemKeySizing: usesSystemKeySizing)
                     .tag(tab)
             }
         }
@@ -19,6 +20,7 @@ struct ThemeEditorPages: View {
 private struct ThemeEditorTabPage: View {
     let tab: ThemeEditorTab
     @Binding var draft: ThemeEditorDraft
+    let usesSystemKeySizing: Bool
 
     var body: some View {
         ScrollView {
@@ -26,7 +28,7 @@ private struct ThemeEditorTabPage: View {
                 switch tab {
                 case .general:
                     ThemeEditorNameCard(name: $draft.customTheme.theme.metadata.name)
-                    ThemeGeometryControls(draft: $draft)
+                    ThemeGeometryControls(draft: $draft, usesSystemKeySizing: usesSystemKeySizing)
                     ThemeResetButton(draft: $draft)
                 case .background:
                     ThemeBackgroundModeControls(draft: $draft)

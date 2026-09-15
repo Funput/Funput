@@ -4,6 +4,7 @@ import KeyboardLayout
 enum SettingsPicker: String, Identifiable {
     case inputMethod
     case layoutPreset
+    case keySizing
     case language
     case toneStyle
     case clipboardExpiry
@@ -14,6 +15,7 @@ enum SettingsPicker: String, Identifiable {
         switch self {
         case .inputMethod: "Kiểu gõ"
         case .layoutPreset: "Bố cục phím"
+        case .keySizing: "Kích thước phím"
         case .language: "Ngôn ngữ"
         case .toneStyle: "Kiểu đặt dấu"
         case .clipboardExpiry: "Tự xoá sau"
@@ -24,6 +26,7 @@ enum SettingsPicker: String, Identifiable {
         switch self {
         case .inputMethod: "Cách nhập dấu tiếng Việt"
         case .layoutPreset: "Thứ tự và thành phần các phím"
+        case .keySizing: "Chiều cao hàng và khoảng cách giữa phím"
         case .language: "Ngôn ngữ chính của bàn phím"
         case .toneStyle: "Vị trí dấu trong một số vần"
         case .clipboardExpiry: "Mục đã ghim không bao giờ tự xoá"
@@ -34,6 +37,7 @@ enum SettingsPicker: String, Identifiable {
         switch self {
         case .inputMethod: "character.cursor.ibeam"
         case .layoutPreset: "square.grid.3x3"
+        case .keySizing: "rectangle.split.3x3"
         case .language: "globe.asia.australia"
         case .toneStyle: "textformat"
         case .clipboardExpiry: "clock.arrow.trianglehead.counterclockwise.rotate.90"
@@ -68,6 +72,15 @@ extension SettingsPicker {
                     summary: value.settingsSummary,
                     isSelected: model.configuration.layoutPreset == value,
                     select: { model.update(\.layoutPreset, to: value) }
+                )
+            }
+        case .keySizing:
+            KeyboardKeySizing.allCases.map { value in
+                SettingsChoice(
+                    id: value.rawValue, title: value.settingsTitle,
+                    summary: value.settingsSummary,
+                    isSelected: model.configuration.keySizing == value,
+                    select: { model.update(\.keySizing, to: value) }
                 )
             }
         case .language:

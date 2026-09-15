@@ -1,4 +1,5 @@
 import FunputShared
+import KeyboardLayout
 import SwiftUI
 
 /// "Gõ tiếng Việt": what the keyboard produces — method, tone placement, language, shortcuts.
@@ -29,17 +30,22 @@ struct LayoutSettingsSection: View {
         SettingsSectionCard(title: "Bố cục bàn phím", systemImage: "keyboard") {
             SettingsSelectionRow(option: .layoutPreset, value: model.layoutPresetLabel) { select(.layoutPreset) }
             SettingsRowDivider()
+            SettingsSelectionRow(option: .keySizing, value: model.keySizingLabel) { select(.keySizing) }
             // VNI types tones with digits, so the row is always on there: nothing to choose.
             if !model.isNumberRowLocked {
+                SettingsRowDivider()
                 SettingsToggleRow(
                     title: "Hàng phím số",
                     summary: "Hiển thị 0–9 phía trên bàn phím.",
                     systemImage: "textformat.123",
                     isOn: model.numberRowBinding
                 )
-                SettingsRowDivider()
             }
-            SettingsHeightRow(value: model.heightBinding)
+            // System sizing uses Apple's row heights, so there is nothing to scale.
+            if model.configuration.keySizing == .funput {
+                SettingsRowDivider()
+                SettingsHeightRow(value: model.heightBinding)
+            }
         }
     }
 }

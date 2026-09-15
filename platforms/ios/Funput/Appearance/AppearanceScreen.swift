@@ -94,7 +94,10 @@ struct AppearanceScreen: View {
     }
 
     private var previewHeight: CGFloat {
-        KeyboardMetrics.phonePortraitHeight(for: model.previewPresentation.layout)
+        KeyboardMetrics.phonePortraitHeight(
+            for: model.previewPresentation.layout,
+            sizing: model.previewPresentation.previewSizing
+        )
     }
 }
 

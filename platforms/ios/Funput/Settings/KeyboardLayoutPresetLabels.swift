@@ -17,3 +17,19 @@ extension KeyboardLayoutPreset {
         }
     }
 }
+
+extension KeyboardKeySizing {
+    var settingsTitle: String {
+        switch self {
+        case .funput: "Funput"
+        case .system: "Giống hệ thống"
+        }
+    }
+
+    var settingsSummary: String {
+        switch self {
+        case .funput: "Phím cao, khoảng cách hẹp, chỉnh được chiều cao."
+        case .system: "Chiều cao hàng và khoảng cách như bàn phím iOS."
+        }
+    }
+}

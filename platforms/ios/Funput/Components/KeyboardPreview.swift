@@ -113,3 +113,11 @@ enum KeyboardPreviewPresentation {
         )
     }
 }
+
+extension KeyboardPresentation {
+    /// The sizing an in-app preview reserves height for. Previews have always shown
+    /// Funput sizing at its natural 100% height; system sizing has no scale to ignore.
+    var previewSizing: KeyboardSizingProfile {
+        sizing.keySizing == .system ? sizing : .default
+    }
+}

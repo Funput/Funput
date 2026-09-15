@@ -39,7 +39,7 @@ struct ThemeEditorPreview: View {
     }
 
     private var previewHeight: CGFloat {
-        let natural = KeyboardMetrics.phonePortraitHeight(for: presentation.layout)
+        let natural = KeyboardMetrics.phonePortraitHeight(for: presentation.layout, sizing: presentation.previewSizing)
         return min(natural, max(148, availableHeight * 0.32))
     }
 }

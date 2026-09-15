@@ -40,6 +40,9 @@ struct TypingHarnessView: View {
         configuration.eagerRestore = false
         configuration.autoCapitalize = false
         configuration.showsNumberRow = false
+        if ProcessInfo.processInfo.arguments.contains("-uitest-system-key-sizing") {
+            configuration.keySizing = .system
+        }
         if ProcessInfo.processInfo.arguments.contains("-uitest-warm-toolbar-refresh") {
             configuration.layoutPreset = .system
         }
