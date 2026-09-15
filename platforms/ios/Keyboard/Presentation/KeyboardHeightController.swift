@@ -45,7 +45,7 @@ final class KeyboardHeightController {
         let height = KeyboardMetrics.recommendedHeight(
             for: presentation.layout,
             traits: traits,
-            scale: presentation.sizing.heightScale
+            sizing: presentation.sizing
         )
         guard baseHeight != height else { return false }
 

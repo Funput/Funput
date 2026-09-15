@@ -21,15 +21,10 @@ public enum KeyboardPresentationFactory {
         layout: KeyboardLayout = .funputQWERTY,
         catalog: ThemeCatalog = ThemeCatalog()
     ) -> KeyboardPresentation {
-        var sizing = KeyboardSizingProfile.default
-        sizing.heightScale = CGFloat(configuration.heightScale)
         let theme = resolvedTheme(for: configuration, catalog: catalog)
-        sizing.horizontalPadding = CGFloat(theme.horizontalPadding)
-        sizing.horizontalGap = CGFloat(theme.horizontalGap)
-        sizing.verticalGap = CGFloat(theme.verticalGap)
         return KeyboardPresentation(
             layout: layout,
-            sizing: sizing,
+            sizing: sizing(for: configuration, theme: theme),
             theme: theme,
             blendsSystemEdge: selectedTheme(for: configuration, catalog: catalog).id
                 != BundledThemes.default.id,
@@ -53,6 +48,21 @@ public enum KeyboardPresentationFactory {
             reduceTransparency: UIAccessibility.isReduceTransparencyEnabled
         )
         return ThemeRuntime.resolve(authored, context: context)
+    }
+
+    /// System sizing replaces the theme's gaps and the height setting with Apple's
+    /// metrics; Funput sizing takes both from the theme and the user.
+    public static func sizing(
+        for configuration: FunputConfiguration,
+        theme: ResolvedTheme
+    ) -> KeyboardSizingProfile {
+        guard configuration.keySizing == .funput else { return .system }
+        var sizing = KeyboardSizingProfile.default
+        sizing.heightScale = CGFloat(configuration.heightScale)
+        sizing.horizontalPadding = CGFloat(theme.horizontalPadding)
+        sizing.horizontalGap = CGFloat(theme.horizontalGap)
+        sizing.verticalGap = CGFloat(theme.verticalGap)
+        return sizing
     }
 
     private static func selectedTheme(
