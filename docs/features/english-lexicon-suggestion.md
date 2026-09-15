@@ -2,9 +2,9 @@
 
 ## Trạng thái
 
-**Bước 1–5 và phần iOS của bước 7 đã hiện thực** — dữ liệu, định dạng `en.lex`,
-trộn vào `suggest_with`, C ABI, JNI, tích hợp bàn phím iOS và màn hình giấy phép iOS.
-**Còn Android (bước 6 và phần Android của bước 7), cùng đo trên máy thật (bước 8).**
+**Bước 1–7 đã hiện thực** — dữ liệu, định dạng `en.lex`, trộn vào `suggest_with`,
+C ABI, JNI, bàn phím và màn hình giấy phép trên cả iOS lẫn Android.
+**Còn đo hiệu năng và nghiệm thu trải nghiệm trên máy thật (bước 8), do người duy trì thực hiện.**
 Xem [bàn giao](#bàn-giao-cho-bước-58) và [kiểm chứng iOS](#kiểm-chứng-ios).
 
 Tài liệu này chốt mô hình trước khi hiện thực và được review riêng. Như
@@ -246,7 +246,7 @@ thư viện bằng `-p`.
 
 SCOWL yêu cầu thông báo bản quyền xuất hiện trong mọi bản sao và tài liệu kèm theo;
 Google Books Ngram và LDNOOBW yêu cầu ghi nguồn. iOS đã hiển thị đầy đủ `NOTICE.md`
-trong Giới thiệu → Giấy phép bên thứ ba. Android **phải thêm trước khi phát hành**.
+trong Giới thiệu → Giấy phép bên thứ ba. Android cũng hiển thị đầy đủ notice offline tại cùng mục Giới thiệu.
 
 ## Định dạng `en.lex`
 
@@ -326,7 +326,7 @@ nào. `estimated_heap_bytes` và trần 4 MiB mà test đang gác không đổi.
 | Nền tảng | Tệp nằm ở | Ghi chú |
 |---|---|---|
 | iOS | Bundle của Keyboard extension | mmap thẳng; **không cần Full Access** |
-| Android | `assets/`, nén trong APK | Lần đầu (hoặc khi `body_crc` đổi) chép ra `noBackupFilesDir/Lexicon/en-<body_crc>.lex`, xoá bản cũ, rồi mmap |
+| Android | `assets/`, nén trong APK | Lần đầu (hoặc khi `body_crc` đổi) chép ra `noBackupFilesDir/Lexicon/en-<body_crc>.lex`, attach thành công rồi mới xoá các phiên bản cũ do installer tạo |
 
 ## C ABI và JNI
 
@@ -367,13 +367,13 @@ tính cả cạnh dev và sẽ báo sai; đã thử hai chiều với một dev-
 
 ## Thay đổi ở shell
 
-**iOS đã hiện thực; Android chưa làm.** Đường đi cụ thể nằm ở [Bàn giao cho bước 5–8](#bàn-giao-cho-bước-58).
+**iOS và Android đã hiện thực.** Đường đi cụ thể nằm ở [Bàn giao cho bước 5–8](#bàn-giao-cho-bước-58).
 
 | | iOS | Android |
 |---|---|---|
 | Nạp | `attach_lexicon` với đường dẫn trong bundle | Chép asset, rồi `attach_lexicon` |
-| Cổng ngôn ngữ | Bỏ `state.language == .vietnamese` trong cả `publishPersonalSuggestionUpdate` và `KeyboardInputCoordinator.replaceState`; giữ nguyên các điều kiện panel, surface, loại editor | `eligible()` hiện không kiểm tra ngôn ngữ — **xác minh** EN mode thật sự truy vấn |
-| Viết hoa | `PersonalSuggestionCasing` đã trả nguyên ứng viên khi prefix thường — không đổi | Nhánh cuối đang `candidate.lowercase(...)` — **đổi thành trả nguyên**, nếu không `iPhone` thành `iphone` |
+| Cổng ngôn ngữ | Bỏ `state.language == .vietnamese` trong cả `publishPersonalSuggestionUpdate` và `KeyboardInputCoordinator.replaceState`; giữ nguyên các điều kiện panel, surface, loại editor | `eligible()` không kiểm tra ngôn ngữ; instrumentation xác minh VI/EN truy vấn và chấp nhận qua JNI thật |
+| Viết hoa | `PersonalSuggestionCasing` đã trả nguyên ứng viên khi prefix thường — không đổi | Nhánh cuối trả nguyên ứng viên: `ip → iPhone`, `IP → IPHONE` |
 | Công tắc | Dùng chung "Gợi ý từ" | Dùng chung "Gợi ý từ" |
 
 Đổi luật viết hoa trên Android an toàn với từ cá nhân: `normalize::exact` đã hạ mọi từ
@@ -504,10 +504,11 @@ nhân (trước đây EN không học gì) — vẫn chỉ trong ô `.text` / `.
    được.
    → **Đã hiện thực.** Build phase Keyboard sinh `en.lex`; worker gắn sau mỗi lần tạo
    engine, kể cả engine trong bộ nhớ; bỏ cả hai cổng ngôn ngữ nêu trên.
-6. **Android**: chép asset, nạp, sửa casing, xác minh cổng ngôn ngữ.
+6. **Android — đã hiện thực**: sinh asset, cài file theo CRC, attach trên worker,
+   giữ casing và kiểm thử đường VI/EN qua JNI thật.
 7. **Màn hình giấy phép bên thứ ba** ở cả hai app. Phải xong trước bản phát hành đầu
    tiên mang từ điển.
-   → **iOS đã hiện thực**, trong Giới thiệu → Giấy phép bên thứ ba; Android còn chờ.
+   → **iOS và Android đã hiện thực**, trong Giới thiệu → Giấy phép bên thứ ba.
 8. **Đo trên máy thật.** Tiêu chí dừng: nếu từ điển làm p99 độ trễ phím xấu đi, hoặc
    nhiễu khi gõ tiếng Việt mà ngưỡng nhường không chặn được, thì sửa luật trộn trước
    khi phát hành. Các hằng dưới đây đều là phỏng đoán và chờ hiệu chỉnh:
@@ -522,8 +523,8 @@ nhân (trước đây EN không học gì) — vẫn chỉ trong ô `.text` / `.
 ## Bàn giao cho bước 5–8
 
 Bước 1–4 được làm và kiểm trên Ubuntu. Phần iOS sau đó được tích hợp trên macOS;
-Swift đã gọi nạp từ điển qua C ABI. Kotlin vẫn chỉ có khai báo `external fun`, chưa
-gọi từ điển. Rust và hai lớp biên đã có test từ các bước trước.
+Swift gọi nạp qua C ABI; Kotlin gọi JNI thật và đã kiểm thử trên emulator.
+Rust và hai lớp biên đã có test từ các bước trước.
 
 **Sinh `en.lex`** (không commit tệp này; mỗi shell tự sinh lúc build):
 
@@ -553,26 +554,34 @@ nặng / kích thước ra stderr, và thoát khác 0 nếu danh sách hỏng. H
   tắc gợi ý. Nhãn cài đặt giải thích rõ cả từ cá nhân lẫn từ điển đi kèm.
 - Không cần Full Access để nạp từ điển; không đổi casing (bảng "Thay đổi ở shell").
 
-**Bước 6 — Android:**
+**Bước 6 — Android (đã hiện thực):**
 
-- Nối `pack` vào build (cạnh `platforms/android/scripts/build-rust-jni.sh` /
-  `BuildRustJniTask.kt`), ghi vào thư mục asset sinh ra, không vào `src/main/assets`.
-- Lần đầu, hoặc khi CRC trong header đổi, chép asset ra
-  `noBackupFilesDir/Lexicon/en-<body_crc>.lex`, xoá bản cũ, rồi gọi
-  `PersonalSuggestionNative.nativeAttachLexicon` từ `PersonalSuggestionEngine.kt` /
-  `PersonalSuggestionWorker.kt`. `body_crc` là 4 byte little-endian ở offset 20.
-- `PersonalSuggestionCasing.kt`: nhánh cuối trả nguyên ứng viên thay vì
-  `lowercase(...)`.
-- Xác minh EN mode có truy vấn gợi ý (`PersonalSuggestionService.eligible()`).
-- **Lần đầu gọi `nativeAttachLexicon` qua JVM thật.** Quyết định bên dưới đã có test
-  (`registry::attach_lexicon`); lớp mở chuỗi Java theo mẫu `nativeOpen` nhưng chưa
-  từng chạy trên thiết bị.
-- Giữ `check-kotlin-loc.sh` / `check-kotlin-layout.sh` xanh khi thêm tệp.
+- `BuildLexiconTask` chạy `scripts/build-lexicon.sh` bằng host Cargo `--locked`;
+  generated assets của `ime` ở cả Debug/Release chứa `lexicon/en.lex` và nguyên
+  `lexicon/NOTICE.md`. Inputs gồm TSV, notice, Cargo manifests/lockfile, toolchain,
+  source Rust và script. Không tải dữ liệu hay commit nhị phân. Pack lỗi hoặc quá
+  512 KiB làm build thất bại; file tạm chỉ được rename khi pack thành công.
+- `suggestions/lexicon/LexiconInstaller` đọc CRC unsigned little-endian tại offset
+  20; tái sử dụng `noBackupFilesDir/Lexicon/en-<crc-8-hex>.lex`. Copy stream kiểm
+  chiều dài và CRC vào file tạm cùng thư mục, sync rồi rename nguyên tử. Bản cache
+  bị Rust từ chối được chép lại và thử attach đúng một lần; chỉ dọn tên phiên bản
+  do installer quản lý sau khi attach thành công. Không truncate file đang mmap.
+- `PersonalSuggestionEngine.attachLexicon(File)` giữ owner-thread check; worker
+  attach một lần sau khi mở engine lưu bền hoặc fallback trong bộ nhớ, trước query.
+  I/O không chạy trên main hoặc mỗi phím. Lỗi file/attach vẫn dùng gợi ý cá nhân.
+  Reset giữ từ điển; không đổi chữ ký JNI hoặc R8 keep rule.
+- Nhánh casing mặc định giữ nguyên `iPhone`; đường EN nhập trực tiếp và VI ghép dấu
+  cùng query/chấp nhận qua production service, worker và JNI. Giữ chính sách editor
+  Android, nguồn gợi ý, prefix 2 ký tự và `IME_FLAG_NO_PERSONALIZED_LEARNING`.
+- Source suggestions tách engine/worker/service/lexicon, giữ package cũ cho phần
+  hiện có. Thư mục About và test mới được kiểm tra layout; mọi `.kt`/`.kts` ≤150 dòng,
+  các thư mục chuẩn hóa ≤5 file Kotlin trực tiếp, không thêm ngoại lệ.
 
-**Bước 7 — giấy phép:** iOS đã có màn hình trong Giới thiệu, đọc offline từ resource
-tham chiếu thẳng `crates/funput-suggestions/data/lexicon/NOTICE.md`; không sao chép
-nội dung vào source Swift. Hỗ trợ Dynamic Type, VoiceOver và chọn văn bản. Android
-còn phải thêm màn hình trước bản phát hành đầu tiên mang từ điển.
+**Bước 7 — giấy phép (hai nền tảng đã hiện thực):** iOS đọc resource tham chiếu
+thẳng `crates/funput-suggestions/data/lexicon/NOTICE.md`; Android đóng gói nguyên file
+nguồn vào generated assets. Màn hình Compose đọc trên `Dispatchers.IO`, hỗ trợ cuộn,
+chọn văn bản, cỡ chữ hệ thống và TalkBack; destination trong tab Giới thiệu dùng
+back stack và saver hiện có. Không duy trì bản notice thủ công trong Swift/Kotlin.
 
 **Bước 8 — đo trên máy thật:** p99 độ trễ phím, peak memory của extension iOS, và độ
 nhiễu khi gõ tiếng Việt; hiệu chỉnh `lexicon_yield_after_words` theo bảng hằng ở bước 8
@@ -612,6 +621,58 @@ không biến một lần khớp thành "qua".
    đủ 200 từ đã promoted mang dấu. Thử ô mật khẩu, ô số và chuyển ứng dụng.
 5. Mở giấy phép khi offline. Đo p99 độ trễ phím, peak memory extension và đánh giá
    độ nhiễu khi gõ; kết quả Simulator không thay thế các phép đo này.
+
+## Kiểm chứng Android
+
+Thực hiện ngày 2026-09-15 trên macOS, emulator **Pixel_10a / emulator-5556, Android 17
+(API 37), arm64**. Giữ minSdk 26, JNI `arm64-v8a` và `x86_64`; không sửa source iOS.
+
+| Cổng | Kết quả |
+|---|---|
+| `clean testDebugUnitTest lintDebug assembleDebug :app:assembleRelease :app:bundleRelease` | Xanh; build sạch, sinh lại JNI từ Rust hiện tại và generated assets |
+| Unit test toàn Android | **625 đạt**, không skip: app 35, ime 266, renderer 222, keyboard-ui 39, theme-runtime 34, theme-store 29 |
+| Instrumentation `ime` | **31 test chức năng đạt**; 1 benchmark Release-only không chạy ở Debug |
+| Instrumentation `keyboard-ui` | **14 đạt** |
+| Instrumentation `app` | **21 đạt**, gồm mở notice đầy đủ và quay lại Giới thiệu |
+| Instrumentation `keyboard-renderer` | Task đã gọi nhưng module không có source instrumentation; **không tính là có test đạt** |
+| LOC/layout Kotlin, ShellCheck, `bash -n`, `git diff --check` | Xanh; không tăng giới hạn hoặc thêm ngoại lệ |
+| Packer failure tests | 2 test Python đạt, gồm lỗi pack, output thiếu/quá lớn, giữ artifact cũ và dọn file tạm |
+| Gradle incremental | TSV đổi nội dung làm chạy lại pack; khôi phục TSV chạy lại; lượt tiếp theo `UP-TO-DATE` |
+| Guard `lexicon-build` | Không xuất hiện trong `cargo tree --locked -p funput-ffi/funput-jni -e features,no-dev` |
+| APK Debug, APK Release, AAB Release | Đều có **30.000 từ / 402.522 byte / CRC b31198ec**, notice trùng nguồn và JNI đủ hai ABI |
+
+Clean build chạy toàn bộ unit test; test bổ sung về copy bị gián đoạn và lint IME
+được chạy lại sau đó. Instrumentation gọi production engine/worker/service, xác minh
+fallback bộ nhớ, attach một lần mỗi engine, mở lại, personal-first, dedup, ngưỡng
+nhường, reset và lỗi attach. Đường VI/EN chèn đúng một dấu cách, học đúng một lần;
+kết quả cũ bị loại khi đổi session/panel/editor hoặc tắt gợi ý. Kiểm tra riêng
+`IME_FLAG_NO_PERSONALIZED_LEARNING`, password và chuyển ngôn ngữ.
+
+**Các giới hạn cần đọc cùng kết quả:**
+
+- Máy local không có khóa ký Release được cấu hình: APK là `app-release-unsigned.apk`,
+  AAB cũng không ký. Build sử dụng cấu hình hiện có, không thêm hoặc thay khóa ký.
+- `warmQueryMeetsReleaseLatencyAndMemoryBudgets` giữ assumption Release-only. Gradle
+  báo task xanh, nhưng XML của runner ghi `AssumptionViolatedException` dưới failure
+  thay vì skipped. Đây là **không chạy benchmark**, không phải test đạt; không dùng
+  số liệu emulator để kết luận hiệu năng máy thật.
+- `keyboard-renderer` chỉ có 222 unit test, chưa có instrumentation. ABI x86_64 được
+  build và kiểm artifact, không thực thi trên emulator arm64 này.
+- Lint không có lỗi chặn build; các warning/deprecation hiện hữu vẫn được báo.
+
+Có thể kiểm lại artifact bằng
+`python3 scripts/tests/verify_lexicon_artifacts.py <apk> <aab>` từ thư mục Android.
+Test packer: `python3 scripts/tests/test_build_lexicon.py`.
+
+**Bàn giao kiểm thử máy thật cho người duy trì (bước 8 còn chờ):**
+
+- Cài mới, gõ VI/EN khi chưa học từ; thử `wh`, `ip`, `IP`, chuyển ngôn ngữ và nhận gợi ý.
+- Học từ, kiểm ưu tiên và bỏ trùng; reset và xác nhận từ điển vẫn còn; tắt/bật gợi ý.
+- Kiểm gõ liên tục, đổi app/editor/panel, mật khẩu và editor yêu cầu không học cá nhân.
+- Nâng cấp app có bản từ điển mới, mở lại IME; kiểm hoạt động offline và notice đầy đủ.
+- Thử font lớn, TalkBack, chọn văn bản, Back và khôi phục màn hình giấy phép.
+- Đo p99 độ trễ phím, bộ nhớ IME/extension và độ nhiễu khi gõ tiếng Việt với kho nhỏ/lớn;
+  hiệu chỉnh ngưỡng nhường nếu cần. Chưa nghiệm thu hiệu năng máy thật của hai nền tảng.
 
 ## Nợ mang theo
 

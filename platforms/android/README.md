@@ -106,13 +106,28 @@ Cả ba nằm chung một công tắc **Cử chỉ thông minh**.
 | Mục | Chỉnh được gì |
 |---|---|
 | **Bàn phím** | Kiểu gõ · hàng phím số · kích thước phím |
-| **Gõ thông minh** | Khôi phục tiếng Anh · khôi phục sớm · kiểm tra chính tả · tự viết hoa · gợi ý từ cá nhân |
+| **Gõ thông minh** | Khôi phục tiếng Anh · khôi phục sớm · kiểm tra chính tả · tự viết hoa · gợi ý từ đã học và từ điển tiếng Anh |
 | **Giao diện** | Chọn theme dựng sẵn hoặc tự tạo theme riêng |
 | **Âm thanh & rung** | Phản hồi khi gõ |
 | **Cử chỉ** | Công tắc cử chỉ thông minh |
 
 Cấu hình lưu bằng **Preferences DataStore**; gỡ app là mất sạch, gồm cả theme tự tạo và gợi ý
 từ cá nhân.
+
+### Gợi ý từ và giấy phép
+
+Bàn phím kèm từ điển tiếng Anh 30.000 từ, dùng offline ở cả VI và EN. Từ cá nhân
+được ưu tiên; từ điển lấp các ô còn lại trong tối đa ba gợi ý, bỏ trùng và nhường
+kho tiếng Việt theo luật Rust dùng chung với iOS. Công tắc **Gợi ý từ** điều khiển
+cả hai nguồn; **Xóa từ đã học** giữ nguyên từ điển đi kèm. Android tiếp tục tôn trọng
+mật khẩu, nguồn gợi ý của editor và `IME_FLAG_NO_PERSONALIZED_LEARNING`.
+
+**Giới thiệu → Giấy phép bên thứ ba** hiển thị đầy đủ ghi công offline. Gradle sinh
+`lexicon/en.lex` và chép nguyên `NOTICE.md` từ source vào generated assets của `ime`;
+không tải dữ liệu hoặc commit nhị phân. Installer kiểm CRC và cài file phiên bản trong
+`noBackupFilesDir/Lexicon` trên worker trước khi gọi JNI.
+
+Chi tiết và kết quả kiểm chứng: [English lexicon](../../docs/features/english-lexicon-suggestion.md).
 
 ## Giới hạn đã biết
 
