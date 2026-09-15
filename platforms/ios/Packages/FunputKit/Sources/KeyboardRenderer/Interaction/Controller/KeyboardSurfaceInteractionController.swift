@@ -82,7 +82,10 @@ final class KeyboardSurfaceInteractionController {
     ) { [weak self] in
         self?.repeatActiveKey()
     }
+    /// UIKit's long-press threshold. At 0.35s a press that was merely slow opened the accent
+    /// palette, and a finger that then rolled off the key lost the letter.
     lazy var alternateHoldController = KeyHoldController(
+        delay: 0.5,
         schedule: repeatScheduler
     ) { [weak self] token in
         self?.activateAlternates(for: token)
