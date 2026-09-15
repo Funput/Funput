@@ -6,7 +6,9 @@ import org.junit.Test
 class PersonalSuggestionCasingTest {
     @Test
     fun `applies lowercase titlecase and uppercase from prefix`() {
-        assertEquals("việt", PersonalSuggestionCasing.apply("VIỆT", "vi"))
+        assertEquals("VIỆT", PersonalSuggestionCasing.apply("VIỆT", "vi"))
+        assertEquals("iPhone", PersonalSuggestionCasing.apply("iPhone", "ip"))
+        assertEquals("IPHONE", PersonalSuggestionCasing.apply("iPhone", "IP"))
         assertEquals("Việt", PersonalSuggestionCasing.apply("việt", "Vi"))
         assertEquals("VIỆT", PersonalSuggestionCasing.apply("việt", "VI"))
     }

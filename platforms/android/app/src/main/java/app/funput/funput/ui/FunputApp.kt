@@ -86,7 +86,10 @@ fun FunputApp() {
                             }
                         },
                     )
-                    AppDestination.ABOUT -> AboutRoute()
+                    AppDestination.ABOUT -> AboutRoute { navigator.navigate(AppDestination.THIRD_PARTY_LICENSES) }
+                    AppDestination.THIRD_PARTY_LICENSES -> app.funput.funput.ui.about.licenses.LicensesRoute {
+                        navigator.navigateBack()
+                    }
                     AppDestination.CREATE_CUSTOM_THEME -> CustomThemeStudioRoute(
                         editingThemeId = editingThemeId,
                         themeRepository = themeRepository,

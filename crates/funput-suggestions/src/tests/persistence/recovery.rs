@@ -57,7 +57,7 @@ fn newer_schema_is_rejected_without_overwriting_it() {
     let version = u16::from_le_bytes(bytes[8..10].try_into().unwrap());
     bytes[8..10].copy_from_slice(&(version + 1).to_le_bytes());
     let content_len = bytes.len() - 4;
-    let sum = crate::persistence::checksum(&bytes[..content_len]);
+    let sum = crate::binary::checksum(&bytes[..content_len]);
     bytes[content_len..].copy_from_slice(&sum.to_le_bytes());
     fs::write(&snapshot, &bytes).unwrap();
     let error = SuggestionEngine::open(directory.path(), SuggestionConfig::default())
@@ -137,7 +137,7 @@ fn version_one_snapshot(words: &[(&str, u32, u64)], sequence: u64) -> Vec<u8> {
         bytes.extend_from_slice(&uses.to_le_bytes());
         bytes.extend_from_slice(&last_used.to_le_bytes());
     }
-    let sum = crate::persistence::checksum(&bytes);
+    let sum = crate::binary::checksum(&bytes);
     bytes.extend_from_slice(&sum.to_le_bytes());
     bytes
 }

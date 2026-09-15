@@ -8,6 +8,7 @@ import java.io.File
 
 internal class PersonalSuggestionWorker(
     private val storeDirectory: () -> File,
+    private val attachLexicon: (PersonalSuggestionEngine) -> Unit = {},
     private val publish: (PersonalSuggestionRequest, List<String>) -> Unit,
 ) {
     private val thread = HandlerThread("FunputSuggestions", Process.THREAD_PRIORITY_BACKGROUND).apply { start() }
@@ -45,7 +46,7 @@ internal class PersonalSuggestionWorker(
 
     fun clearQueries() = requests.clear()
 
-    fun close() {
+    fun close(onClosed: () -> Unit = {}) {
         requests.clear()
         worker.removeCallbacks(idleFlush)
         worker.post {
@@ -53,6 +54,7 @@ internal class PersonalSuggestionWorker(
             engine?.close()
             engine = null
             thread.quitSafely()
+            onClosed()
         }
     }
 
@@ -60,6 +62,7 @@ internal class PersonalSuggestionWorker(
         engine = runCatching { PersonalSuggestionEngine.open(storeDirectory()) }.getOrNull()
         persistentAvailable = engine != null
         if (engine == null) engine = PersonalSuggestionEngine.inMemory()
+        engine?.let { runCatching { attachLexicon(it) } }
     }
 
     private fun drainQueries() {

@@ -7,9 +7,10 @@ import app.funput.funput.ui.keyboard.openWebsite
 
 /** Binds the about screen to the app's own metadata and to whatever opens links on this device. */
 @Composable
-internal fun AboutRoute() {
+internal fun AboutRoute(onOpenLicenses: () -> Unit) {
     val context = LocalContext.current
     AboutScreen(
+        onOpenLicenses = onOpenLicenses,
         versionName = AppVersionProvider.versionName(context),
         onOpenLink = context::openWebsite,
     )

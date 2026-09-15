@@ -1,0 +1,18 @@
+# Corrections to what SCOWL and Google Books say, one word per line, spelled as
+# it should be offered: `word`, or `word<TAB>rank` to place it no lower than the
+# word at that rank in the books-only order. Hand-kept, MIT like the rest of
+# Funput. Every floor below is a judgement call; keep the reason next to it.
+
+# Tokenization: Google Books splits it into `can not`, so books rank it ~43,700.
+cannot	300
+
+# After the corpus, or used online far more than in print (books rank in brackets).
+COVID	3000
+lol	5000
+emoji	10000
+podcast	10000
+selfie	12000
+hashtag	15000
+emojis	20000
+chatbot	20000
+livestream	20000

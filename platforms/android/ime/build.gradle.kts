@@ -1,4 +1,5 @@
 import app.funput.build.BuildRustJniTask
+import app.funput.build.BuildLexiconTask
 
 plugins {
     alias(libs.plugins.android.library)
@@ -48,6 +49,17 @@ androidComponents.beforeVariants {
 }
 
 androidComponents.onVariants { variant ->
+    val lexicon = tasks.register<BuildLexiconTask>("buildLexicon${variant.name.replaceFirstChar(Char::uppercase)}") {
+        buildScript.set(rootProject.layout.projectDirectory.file("scripts/build-lexicon.sh"))
+        workspaceDirectory.set(rustWorkspace)
+        outputDirectory.set(layout.buildDirectory.dir("generated/lexicon/${variant.name}"))
+        sources.from(fileTree(rustWorkspace) {
+            include("Cargo.toml", "Cargo.lock", "rust-toolchain.toml")
+            include("crates/**/Cargo.toml", "crates/**/src/**/*.rs")
+            include("crates/funput-suggestions/data/lexicon/en.tsv", "crates/funput-suggestions/data/lexicon/NOTICE.md")
+        })
+    }
+    variant.sources.assets?.addGeneratedSourceDirectory(lexicon, BuildLexiconTask::outputDirectory)
     val profile = if (variant.buildType == "release") "release" else "debug"
     rustTargets.forEach { (targetName, target) ->
         val task = tasks.register<BuildRustJniTask>(

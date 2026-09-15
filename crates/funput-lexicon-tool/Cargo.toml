@@ -1,0 +1,15 @@
+[package]
+name = "funput-lexicon-tool"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+# Data work run by hand when the English lexicon is refreshed. Nothing here links
+# into a shipped binary. The one dependency is the library whose format `pack`
+# writes, so the layout is defined in exactly one place.
+[dependencies]
+funput-suggestions = { path = "../funput-suggestions", features = ["lexicon-build"] }

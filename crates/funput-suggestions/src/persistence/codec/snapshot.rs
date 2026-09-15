@@ -10,7 +10,7 @@ use std::io;
 use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
 use crate::types::WordRecord;
 
-use super::binary::{Cursor, checksum, invalid_data, put_u16, put_u32, put_u64};
+use crate::binary::{Cursor, checksum, invalid_data, put_u16, put_u32, put_u64};
 use crate::persistence::schema::{self, SNAPSHOT_MAGIC, SNAPSHOT_WRITE_VERSION, Version};
 
 pub(crate) fn encode(words: &[WordRecord], sequence: u64) -> Vec<u8> {

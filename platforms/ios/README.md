@@ -42,7 +42,7 @@
 |---|---|
 | ⌨️ **Ba kiểu gõ** | Telex · **Telex nâng cao** (thêm `w` đầu từ và phím tắt `[` `]`) · VNI |
 | 🧠 **Nhập liệu thông minh** | Khôi phục từ thông minh · khôi phục sớm · kiểm tra chính tả · tự viết hoa |
-| 💬 **Gợi ý từ cá nhân** | Chỉ học chữ bạn gõ qua Funput, **lưu trên thiết bị** |
+| 💬 **Gợi ý từ** | Từ đã học ưu tiên trước, từ điển tiếng Anh 30.000 từ lấp ô trống ở cả VI và EN; **lưu trên thiết bị** |
 | 👆 **Cử chỉ thông minh** | Gõ đúp phím cách để chấm câu · giữ phím cách rồi kéo để di chuyển con trỏ · vuốt trái phím xoá để xoá cả từ |
 | 🎨 **Theme** | 5 theme dựng sẵn, gồm cả Liquid Glass trên iOS 26 |
 | 🔢 **Bố cục** | Bật hàng phím số · chọn kiểu Funput hoặc “Giống hệ thống” |
@@ -220,6 +220,10 @@ platforms/ios/
 ### Build
 
 Cần **macOS** + Xcode, cộng Rust toolchain để dựng `FunputCore.xcframework`.
+
+Mỗi build Keyboard tự sinh `en.lex` từ dữ liệu đã commit và đóng vào extension;
+không cần tải từ điển. Từ điển nạp trực tiếp từ bundle nên không cần Full Access.
+Nội dung ghi công nằm trong app ở **Giới thiệu → Giấy phép bên thứ ba**.
 
 ```bash
 # Lần đầu: dựng xcframework từ funput-ffi (device + simulator)

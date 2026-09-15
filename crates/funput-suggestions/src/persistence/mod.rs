@@ -120,6 +120,3 @@ impl Store {
         self.root.join("personal-lexicon.journal")
     }
 }
-
-#[cfg(test)]
-pub(crate) use codec::binary::checksum;

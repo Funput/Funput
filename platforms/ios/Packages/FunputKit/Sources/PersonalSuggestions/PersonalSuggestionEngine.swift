@@ -21,6 +21,15 @@ public final class PersonalSuggestionEngine: @unchecked Sendable {
         return PersonalSuggestionEngine(handle: handle)
     }
 
+    /// Attaches a read-only bundled lexicon; failure preserves the current one.
+    @discardableResult
+    public func attachLexicon(url: URL) -> Bool {
+        let path = Array(url.path.utf8)
+        return path.withUnsafeBufferPointer {
+            funput_suggestion_attach_lexicon(handle, $0.baseAddress, UInt($0.count))
+        }
+    }
+
     init(
         handle: OpaquePointer,
         releaseHandle: @escaping @Sendable (OpaquePointer) -> Void = {

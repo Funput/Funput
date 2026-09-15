@@ -4,7 +4,10 @@ import XCTest
 final class ClipboardCaptureUITests: XCTestCase {
     private var app: XCUIApplication!
 
-    override func setUpWithError() throws { continueAfterFailure = false }
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        XCUIDevice.shared.orientation = .portrait
+    }
 
     override func tearDownWithError() throws {
         app?.terminate()

@@ -865,6 +865,23 @@ FunputSuggestionEngine *funput_suggestion_engine_new_in_memory(void);
 FunputSuggestionEngine *funput_suggestion_engine_open(const uint8_t *path, uintptr_t path_len);
 
 /**
+ * Attach the English lexicon (`en.lex`) at a UTF-8 path, replacing any lexicon
+ * already attached. From then on, queries fill the slots the personal words
+ * leave empty.
+ *
+ * Returns false for a null handle, a path that is not UTF-8, or a file that is
+ * missing or not a valid lexicon. The engine then keeps the lexicon it had, or
+ * none, and suggests exactly as before. Nothing is logged.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used
+ * concurrently. `path` must point to `path_len` readable bytes, or be null.
+ */
+bool funput_suggestion_attach_lexicon(FunputSuggestionEngine *engine,
+                                      const uint8_t *path,
+                                      uintptr_t path_len);
+
+/**
  * # Safety
  * `engine` must be a live suggestion handle or null.
  */

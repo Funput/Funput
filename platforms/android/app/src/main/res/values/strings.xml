@@ -193,12 +193,12 @@
     <string name="settings_spell_check_title">Kiểm tra chính tả</string>
     <string name="settings_auto_capitalize_title">Tự viết hoa</string>
     <string name="settings_auto_capitalize_summary">Viết hoa ký tự đầu câu khi phù hợp.</string>
-    <string name="settings_personal_suggestions_section">Gợi ý cá nhân</string>
-    <string name="settings_personal_suggestions_title">Gợi ý từ cá nhân</string>
-    <string name="settings_personal_suggestions_description">Chỉ học chữ Funput gõ và lưu trên thiết bị.</string>
+    <string name="settings_personal_suggestions_section">Gợi ý từ</string>
+    <string name="settings_personal_suggestions_title">Gợi ý từ</string>
+    <string name="settings_personal_suggestions_description">Gợi ý từ đã học trên thiết bị và từ điển tiếng Anh đi kèm.</string>
     <string name="settings_personal_suggestions_reset">Xóa từ đã học</string>
     <string name="settings_personal_suggestions_reset_title">Xóa các từ đã học?</string>
-    <string name="settings_personal_suggestions_reset_body">Funput sẽ xóa toàn bộ từ cá nhân đã học trên thiết bị này.</string>
+    <string name="settings_personal_suggestions_reset_body">Funput sẽ xóa toàn bộ từ cá nhân đã học trên thiết bị này. Từ điển tiếng Anh đi kèm vẫn được giữ lại.</string>
     <string name="settings_personal_suggestions_reset_confirm">Xóa từ</string>
     <string name="settings_personal_suggestions_reset_cancel">Giữ lại</string>
     <string name="settings_clipboard_section">Lịch sử bảng nhớ tạm</string>
@@ -250,4 +250,9 @@
     <string name="about_footer_title">Được xây dựng cho cộng đồng</string>
     <string name="about_footer_body">Funput là dự án mã nguồn mở &amp; miễn phí cho tất cả mọi người.</string>
     <string name="about_external_link">Mở liên kết ngoài</string>
+    <string name="licenses_title">Giấy phép bên thứ ba</string>
+    <string name="licenses_summary">Giấy phép và ghi công cho từ điển đi kèm</string>
+    <string name="licenses_loading">Đang đọc giấy phép…</string>
+    <string name="licenses_error">Không thể đọc giấy phép.</string>
+    <string name="licenses_back">Quay lại</string>
 </resources>

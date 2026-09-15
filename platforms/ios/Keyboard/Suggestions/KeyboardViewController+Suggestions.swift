@@ -42,7 +42,6 @@ extension KeyboardViewController {
         let state = inputCoordinator.state
         let canQuery = configuration.personalSuggestionsEnabled
             && displayedSurface == .funput
-            && state.language == .vietnamese
             && state.layoutMode == .letters
             && state.editorMode.supportsVietnameseComposition
         personalSuggestionService.update(

@@ -7,6 +7,7 @@ internal object PersonalSuggestionNative {
 
     external fun nativeCreate(): Long
     external fun nativeOpen(path: String): Long
+    external fun nativeAttachLexicon(handle: Long, path: String): Boolean
     external fun nativeDestroy(handle: Long)
     external fun nativeLearn(handle: Long, token: String): Boolean
     external fun nativeLearnAfter(handle: Long, previous: String, token: String): Boolean

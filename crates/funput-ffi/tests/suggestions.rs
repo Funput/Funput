@@ -1,9 +1,12 @@
+use std::io::Write;
+
 use funput_ffi::{
-    FunputSuggestionResult, funput_suggestion_engine_free, funput_suggestion_engine_new_in_memory,
-    funput_suggestion_engine_open, funput_suggestion_flush, funput_suggestion_learn,
-    funput_suggestion_learn_after, funput_suggestion_query, funput_suggestion_query_with,
-    funput_suggestion_reset, funput_suggestion_stats,
+    FunputSuggestionResult, funput_suggestion_attach_lexicon, funput_suggestion_engine_free,
+    funput_suggestion_engine_new_in_memory, funput_suggestion_engine_open, funput_suggestion_flush,
+    funput_suggestion_learn, funput_suggestion_learn_after, funput_suggestion_query,
+    funput_suggestion_query_with, funput_suggestion_reset, funput_suggestion_stats,
 };
+use funput_suggestions::lexicon_build::encode;
 
 fn codepoints(text: &str) -> Vec<u32> {
     text.chars().map(u32::from).collect()
@@ -154,5 +157,96 @@ fn a_null_context_is_the_same_as_no_context() {
     let result =
         unsafe { funput_suggestion_query_with(engine, std::ptr::null(), 0, [99u32].as_ptr(), 1) };
     assert_eq!(candidate(&result, 0), "ch");
+    unsafe { funput_suggestion_engine_free(engine) };
+}
+
+/// Four English words, ranked in the order given.
+const LEXICON: &str = "what\t0\nwhen\t1\nwhich\t2\nwhale\t3\n";
+
+/// An `en.lex` on disk, built by the same encoder as the shipped one.
+fn lexicon_file(tsv: &str) -> tempfile::NamedTempFile {
+    let mut file = tempfile::NamedTempFile::new().unwrap();
+    file.write_all(&encode(tsv).unwrap()).unwrap();
+    file
+}
+
+fn attach(engine: *mut funput_ffi::FunputSuggestionEngine, path: &[u8]) -> bool {
+    unsafe { funput_suggestion_attach_lexicon(engine, path.as_ptr(), path.len()) }
+}
+
+fn path_bytes(file: &tempfile::NamedTempFile) -> Vec<u8> {
+    file.path().to_str().unwrap().as_bytes().to_vec()
+}
+
+fn texts(result: &FunputSuggestionResult) -> Vec<String> {
+    (0..result.count as usize)
+        .map(|index| candidate(result, index))
+        .collect()
+}
+
+#[test]
+fn an_attached_lexicon_fills_the_empty_slots_through_c_abi() {
+    let lexicon = lexicon_file(LEXICON);
+    let engine = funput_suggestion_engine_new_in_memory();
+    assert!(attach(engine, &path_bytes(&lexicon)));
+    assert_eq!(texts(&query(engine, "wh")), ["what", "when", "which"]);
+
+    // Personal words lead; the lexicon only fills what they leave.
+    assert!(learn(engine, "whale"));
+    assert!(learn(engine, "whale"));
+    assert_eq!(texts(&query(engine, "wh")), ["whale", "what", "when"]);
+    assert_eq!(
+        texts(&query_with(engine, "", "wh")),
+        ["whale", "what", "when"]
+    );
+    unsafe { funput_suggestion_engine_free(engine) };
+}
+
+#[test]
+fn a_failed_attach_keeps_the_lexicon_already_attached() {
+    let lexicon = lexicon_file(LEXICON);
+    let mut damaged = tempfile::NamedTempFile::new().unwrap();
+    damaged.write_all(b"FPLX, but not a lexicon").unwrap();
+    let mut missing = path_bytes(&lexicon);
+    missing.extend_from_slice(b".missing");
+
+    let engine = funput_suggestion_engine_new_in_memory();
+    assert!(attach(engine, &path_bytes(&lexicon)));
+    for path in [missing, vec![0xff], path_bytes(&damaged)] {
+        assert!(!attach(engine, &path), "attached {path:?}");
+    }
+    assert_eq!(texts(&query(engine, "wh")), ["what", "when", "which"]);
+    unsafe { funput_suggestion_engine_free(engine) };
+}
+
+#[test]
+fn attach_is_null_safe() {
+    let lexicon = lexicon_file(LEXICON);
+    let path = path_bytes(&lexicon);
+    assert!(!unsafe {
+        funput_suggestion_attach_lexicon(std::ptr::null_mut(), path.as_ptr(), path.len())
+    });
+
+    let engine = funput_suggestion_engine_new_in_memory();
+    assert!(!unsafe { funput_suggestion_attach_lexicon(engine, std::ptr::null(), 0) });
+    // A null path with a length is malformed and must not be read.
+    assert!(!unsafe { funput_suggestion_attach_lexicon(engine, std::ptr::null(), 8) });
+    assert_eq!(query(engine, "wh").count, 0);
+    unsafe { funput_suggestion_engine_free(engine) };
+}
+
+#[test]
+fn reset_forgets_the_user_but_keeps_the_lexicon() {
+    let directory = tempfile::tempdir().unwrap();
+    let store = directory.path().to_string_lossy();
+    let lexicon = lexicon_file(LEXICON);
+    let engine = unsafe { funput_suggestion_engine_open(store.as_ptr(), store.len()) };
+    assert!(attach(engine, &path_bytes(&lexicon)));
+    assert!(learn(engine, "whale"));
+    assert!(learn(engine, "whale"));
+    assert_eq!(candidate(&query(engine, "wh"), 0), "whale");
+
+    assert!(unsafe { funput_suggestion_reset(engine) });
+    assert_eq!(texts(&query(engine, "wh")), ["what", "when", "which"]);
     unsafe { funput_suggestion_engine_free(engine) };
 }

@@ -27,6 +27,7 @@ internal enum class AppDestination(val tab: TopLevelDestination, val depth: Int)
     SETTINGS(tab = TopLevelDestination.SETTINGS, depth = 0),
     THEME_GALLERY(tab = TopLevelDestination.APPEARANCE, depth = 0),
     CREATE_CUSTOM_THEME(tab = TopLevelDestination.APPEARANCE, depth = 1),
+    THIRD_PARTY_LICENSES(tab = TopLevelDestination.ABOUT, depth = 1),
     ABOUT(tab = TopLevelDestination.ABOUT, depth = 0),
     ;
 

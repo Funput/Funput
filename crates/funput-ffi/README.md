@@ -26,6 +26,9 @@ unwind sang host (điều sẽ abort cả tiến trình IME).
 Personal suggestion dùng một opaque handle riêng (`FunputSuggestionEngine`). Query trả tối đa ba
 candidate UTF-32 bằng POD; open/learn/flush/compact/reset lỗi đều trả null, `false` hoặc kết quả rỗng.
 Handle này chỉ được gọi tuần tự trên worker của platform và không tham gia đường compose.
+`funput_suggestion_attach_lexicon` gắn từ điển tiếng Anh `en.lex` (đường dẫn UTF-8, như
+`engine_open`) để query lấp những ô từ cá nhân để trống; lỗi trả `false` và giữ nguyên từ điển
+đang gắn.
 
 Per-app VI/EN memory dùng một opaque handle riêng (`FunputAppLanguage`), cũng độc lập với
 `FunputEngine`: nó chỉ quyết định "app này nên VI hay EN", host tự gọi `funput_set_enabled` với kết
@@ -135,7 +138,7 @@ src/engine/         # C API composition (FunputEngine)
                     #   shortcuts.rs add_shortcut/clear_shortcuts (gõ tắt)
                     #   result.rs   #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 src/suggestion/     # C API personal suggestions (FunputSuggestionEngine)
-                    #   engine.rs (handle new/open/free), query.rs (learn/query),
+                    #   engine.rs (handle new/open/free, attach_lexicon), query.rs (learn/query),
                     #   store.rs (flush/compact/reset/stats), types.rs (POD candidate/stats)
 src/app_language/   # C API per-app VI/EN memory (FunputAppLanguage), độc lập FunputEngine
                     #   handle.rs (handle new/free + marshalling UTF-8 dùng chung),

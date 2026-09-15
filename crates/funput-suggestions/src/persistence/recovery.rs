@@ -8,10 +8,10 @@
 use std::fs::{self, File};
 use std::io::{self, Read};
 
+use crate::binary::Cursor;
 use crate::types::WordRecord;
 
 use super::Store;
-use super::codec::binary::Cursor;
 use super::codec::{journal, snapshot};
 use super::fs::{sync_dir, truncate};
 use super::schema::{MAX_JOURNAL_BYTES, MAX_SNAPSHOT_BYTES};

@@ -190,11 +190,47 @@ fn bench_persistence(c: &mut Criterion) {
     group.finish();
 }
 
+/// The merged path against the shipped word list, on the same 5,000-word store
+/// the lookups above use. It needs the encoder, so it only measures anything
+/// with `--features lexicon-build`.
+fn bench_lexicon(c: &mut Criterion) {
+    #[cfg(feature = "lexicon-build")]
+    {
+        use std::io::Write;
+
+        let tsv = include_str!("../data/lexicon/en.tsv");
+        let bytes = funput_suggestions::lexicon_build::encode(tsv).unwrap();
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        file.write_all(&bytes).unwrap();
+        let mut engine = populated();
+        engine.attach_lexicon(file.path()).unwrap();
+        let engine = engine;
+
+        let mut group = c.benchmark_group("suggestions/lexicon");
+        group.throughput(Throughput::Elements(1));
+        for (name, prefix) in [
+            ("heavy", "th"),
+            ("light", "quiz"),
+            ("miss", "zzq"),
+            ("personal-full", "word1"),
+            ("merged", "ho"),
+        ] {
+            group.bench_with_input(BenchmarkId::new("top3", name), prefix, |b, prefix| {
+                b.iter(|| black_box(engine.suggest(black_box(prefix))).len());
+            });
+        }
+        group.finish();
+    }
+    #[cfg(not(feature = "lexicon-build"))]
+    let _ = c;
+}
+
 criterion_group!(
     benches,
     bench_lookup,
     bench_predict,
     bench_learning,
-    bench_persistence
+    bench_persistence,
+    bench_lexicon
 );
 criterion_main!(benches);

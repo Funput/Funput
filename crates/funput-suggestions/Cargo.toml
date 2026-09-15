@@ -8,7 +8,13 @@ publish.workspace = true
 [lints]
 workspace = true
 
+[features]
+# The `en.tsv` → `en.lex` encoder. For funput-lexicon-tool; the keyboards never
+# enable it.
+lexicon-build = []
+
 [dependencies]
+memmap2 = "0.9.11"
 unicode-normalization = "0.1.25"
 
 [dev-dependencies]

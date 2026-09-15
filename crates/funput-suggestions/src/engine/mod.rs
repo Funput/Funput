@@ -16,6 +16,7 @@ use std::path::Path;
 use config::sanitize;
 
 use crate::index::ArenaTrie;
+use crate::lexicon::LexiconSlot;
 use crate::persistence::{JournalEntry, Store};
 use crate::types::WordRecord;
 
@@ -58,6 +59,8 @@ pub struct SuggestionEngine {
     /// the context it was handed really is what it wrote last. When it is not, a
     /// break goes in and replay loses an edge rather than inventing one.
     pub(crate) journalled_previous: Option<(u32, u16)>,
+    /// The shipped English word list, beside the personal store, never in it.
+    pub(crate) lexicon: LexiconSlot,
 }
 
 impl SuggestionEngine {
@@ -76,6 +79,7 @@ impl SuggestionEngine {
             rebuilds: 0,
             evictions_since_rebuild: 0,
             journalled_previous: None,
+            lexicon: LexiconSlot::default(),
         }
     }
 

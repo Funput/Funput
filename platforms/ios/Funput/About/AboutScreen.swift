@@ -22,6 +22,16 @@ struct AboutScreen: View {
                 systemImage: "hand.raised.fill",
                 destinations: AboutDestination.legal
             )
+            ContentCard {
+                NavigationLink {
+                    ThirdPartyLicensesScreen()
+                } label: {
+                    Label("Giấy phép bên thứ ba", systemImage: "doc.text")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 9)
+                }
+                .accessibilityIdentifier("about.licenses")
+            }
             AboutCommunityFooter()
         }
         .navigationTitle("Giới thiệu")

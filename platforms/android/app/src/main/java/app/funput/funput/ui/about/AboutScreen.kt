@@ -42,6 +42,7 @@ internal fun AboutScreen(
     versionName: String,
     onOpenLink: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenLicenses: () -> Unit = {},
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     Scaffold(
@@ -76,6 +77,13 @@ internal fun AboutScreen(
             linkSection("discovery", R.string.about_section_discovery, AboutLinks.discovery, onOpenLink, 1, tracker)
             linkSection("support", R.string.about_section_support, AboutLinks.support, onOpenLink, 2, tracker)
             linkSection("legal", R.string.about_section_privacy, AboutLinks.legal, onOpenLink, 3, tracker)
+            item(key = "licenses") {
+                SettingsSection(title = stringResource(R.string.licenses_title), rows = listOf({ position ->
+                    SettingsLinkRow(position = position, title = stringResource(R.string.licenses_title),
+                        summary = stringResource(R.string.licenses_summary), iconRes = R.drawable.ic_code,
+                        onClick = onOpenLicenses)
+                }))
+            }
             item(key = "footer") {
                 Box(modifier = Modifier.staggeredEntry(4, tracker)) { AboutFooter() }
             }

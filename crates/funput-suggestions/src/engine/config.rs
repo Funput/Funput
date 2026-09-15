@@ -21,6 +21,11 @@ pub struct SuggestionConfig {
     /// feature's judgement: "cảm" is nearly always followed by "ơn" and clears it
     /// at once, while "của" can be followed by anything and never will.
     pub context_dominance_percent: u8,
+    /// How many promoted words carrying Vietnamese marks make the store a
+    /// Vietnamese one. From then on, a prefix whose personal answer holds such a
+    /// word is Vietnamese typing, and the English lexicon stays out of its empty
+    /// slots. Zero yields from the first marked word.
+    pub lexicon_yield_after_words: u32,
 }
 
 impl Default for SuggestionConfig {
@@ -32,6 +37,7 @@ impl Default for SuggestionConfig {
             context_rerank_uses: 1,
             context_predict_uses: 2,
             context_dominance_percent: 40,
+            lexicon_yield_after_words: 200,
         }
     }
 }
@@ -44,5 +50,6 @@ pub(crate) fn sanitize(config: SuggestionConfig) -> SuggestionConfig {
         context_rerank_uses: config.context_rerank_uses.max(1),
         context_predict_uses: config.context_predict_uses.max(1),
         context_dominance_percent: config.context_dominance_percent.min(100),
+        lexicon_yield_after_words: config.lexicon_yield_after_words,
     }
 }

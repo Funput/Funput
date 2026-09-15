@@ -1,6 +1,7 @@
 mod bigram;
 mod eviction;
 mod learning;
+mod lexicon;
 mod persistence;
 mod stress;
 
