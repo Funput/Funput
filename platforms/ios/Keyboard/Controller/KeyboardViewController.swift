@@ -65,6 +65,10 @@ final class KeyboardViewController: UIInputViewController {
 
     var cachedBackgroundImage: UIImage? { backgroundImageCache.value }
 
+    override func loadView() {
+        inputView = KeyboardAudioInputView(frame: .zero, inputViewStyle: .keyboard)
+    }
+
     override func viewDidLoad() {
         launchTrace.beginViewDidLoad()
         super.viewDidLoad()
