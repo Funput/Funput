@@ -1,4 +1,6 @@
 import Combine
+import FunputShared
+import KeyboardLayout
 import KeyboardRenderer
 import SwiftUI
 import ThemeSchema
@@ -27,7 +29,11 @@ struct ThemeEditor: View {
                             availableHeight: proxy.size.height
                         )
                         ThemeEditorTabBar(selection: $selectedTab)
-                        ThemeEditorPages(selection: $selectedTab, draft: $draft)
+                        ThemeEditorPages(
+                            selection: $selectedTab,
+                            draft: $draft,
+                            usesSystemKeySizing: model.configuration.keySizing == .system
+                        )
                     }
                 }
             }

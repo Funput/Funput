@@ -16,7 +16,7 @@ extension AboutDestination {
     ]
 
     static let support = [
-        item("issues", "Báo lỗi", "Gửi phản hồi trên GitHub Issues", "exclamationmark.bubble.fill", "https://github.com/Funput/Funput/issues", .orange),
+        item("issues", "Báo lỗi / Đề xuất tính năng", "Gửi phản hồi trên GitHub Issues", "exclamationmark.bubble.fill", "https://github.com/Funput/Funput/issues", .orange),
         item("email", "Liên hệ", "hello@funput.app", "envelope.fill", "mailto:hello@funput.app", .green),
     ]
 

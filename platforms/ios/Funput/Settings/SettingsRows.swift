@@ -8,9 +8,7 @@ struct SettingsSelectionRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                Image(systemName: option.systemImage)
-                    .foregroundStyle(.tint)
-                    .frame(width: 22)
+                SettingsRowIcon(systemImage: option.systemImage)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(option.title).foregroundStyle(.primary)
                     Text(option.summary).font(.caption).foregroundStyle(.secondary)
@@ -31,13 +29,19 @@ struct SettingsSelectionRow: View {
 struct SettingsToggleRow: View {
     let title: String
     let summary: String
+    var systemImage: String?
     @Binding var isOn: Bool
 
     var body: some View {
         Toggle(isOn: $isOn) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                Text(summary).font(.caption).foregroundStyle(.secondary)
+            HStack(spacing: 12) {
+                if let systemImage {
+                    SettingsRowIcon(systemImage: systemImage)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                    Text(summary).font(.caption).foregroundStyle(.secondary)
+                }
             }
         }
         .tint(.accentColor)
@@ -51,8 +55,9 @@ struct SettingsHeightRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label("Chiều cao bàn phím", systemImage: "arrow.up.and.down")
+            HStack(spacing: 12) {
+                SettingsRowIcon(systemImage: "arrow.up.and.down")
+                Text("Chiều cao bàn phím")
                 Spacer()
                 Text(value, format: .percent.precision(.fractionLength(0)))
                     .foregroundStyle(.secondary)
@@ -66,8 +71,22 @@ struct SettingsHeightRow: View {
                 Text("120%").font(.caption2)
             }
             .tint(.accentColor)
+            .padding(.leading, 34)
         }
         .padding(.vertical, 12)
         .accessibilityElement(children: .contain)
+    }
+}
+
+/// The shared leading column, so selection, toggle and link rows start text at one edge.
+struct SettingsRowIcon: View {
+    let systemImage: String
+    var tint: Color?
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .foregroundStyle(tint.map(AnyShapeStyle.init) ?? AnyShapeStyle(.tint))
+            .frame(width: 22)
+            .accessibilityHidden(true)
     }
 }

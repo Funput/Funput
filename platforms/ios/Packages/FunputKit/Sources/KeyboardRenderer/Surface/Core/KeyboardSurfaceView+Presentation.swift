@@ -134,15 +134,15 @@ extension KeyboardSurfaceView {
         if let cache = geometryCache,
            cache.size == keyboardSize,
            cache.layout == presentation.layout,
-           cache.sizing == presentation.sizing {
+           cache.sizing == layoutSizing {
             return cache.value
         }
         let value = KeyboardGeometry.resolve(
             layout: presentation.layout,
             size: keyboardSize,
-            sizing: presentation.sizing
+            sizing: layoutSizing
         )
-        geometryCache = (keyboardSize, presentation.layout, presentation.sizing, value)
+        geometryCache = (keyboardSize, presentation.layout, layoutSizing, value)
         return value
     }
 }

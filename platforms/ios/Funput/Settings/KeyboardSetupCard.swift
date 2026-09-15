@@ -6,21 +6,20 @@ struct KeyboardSetupCard: View {
 
     var body: some View {
         ContentCard {
-            Label(title, systemImage: statusIcon)
-                .font(.headline)
-                .foregroundStyle(hasFullAccess ? Color.green : Color.primary)
-            Text(summary)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
             if hasFullAccess {
-                privacyNotice
+                readyStatus
             } else {
+                Label(title, systemImage: statusIcon)
+                    .font(.headline)
+                Text(summary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                 setupSteps
                 privacyNotice
                 Button(action: openSettings) {
                     Label("Mở Cài đặt", systemImage: "gear")
                 }
-                    .buttonStyle(.borderedProminent)
+                    .settingsActionButtonStyle(prominent: true)
                     .controlSize(.large)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityHint("Mở cài đặt của Funput để bật bàn phím và truy cập đầy đủ")
@@ -43,6 +42,26 @@ struct KeyboardSetupCard: View {
             return "Cho phép truy cập đầy đủ đã được bàn phím xác nhận."
         }
         return "Thực hiện ba bước để dùng đầy đủ tính năng trong mọi ứng dụng."
+    }
+
+    /// Once set up, the card only confirms it: the explanation is one tap away instead of
+    /// taking the top of the screen on every visit.
+    private var readyStatus: some View {
+        DisclosureGroup {
+            privacyNotice
+                .padding(.top, 10)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: statusIcon)
+                    .font(.title3)
+                    .foregroundStyle(Color.green)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.headline).foregroundStyle(Color.green)
+                    Text(summary).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .tint(.secondary)
     }
 
     private var setupSteps: some View {

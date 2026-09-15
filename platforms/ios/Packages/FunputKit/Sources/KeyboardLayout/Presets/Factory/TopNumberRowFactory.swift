@@ -38,5 +38,5 @@ func topNumberRow(_ mode: TopNumberRowMode, pageID: String) -> KeyboardRow {
             return KeySpec(id: "digit-\(pageID)-\(digit)", label: label, role: .punctuation)
         }
     }
-    return KeyboardRow(keys: keys)
+    return KeyboardRow(keys: keys, isNumberRow: true)
 }

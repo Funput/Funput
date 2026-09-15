@@ -85,13 +85,18 @@ public final class KeyboardSurfaceView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// The sizing keys are laid out with: system metrics only apply in phone portrait.
+    var layoutSizing: KeyboardSizingProfile {
+        KeyboardMetrics.effectiveSizing(presentation.sizing, traits: traitCollection)
+    }
+
     public override var intrinsicContentSize: CGSize {
         CGSize(
             width: UIView.noIntrinsicMetric,
             height: KeyboardMetrics.recommendedHeight(
                 for: presentation.layout,
                 traits: traitCollection,
-                scale: presentation.sizing.heightScale
+                sizing: presentation.sizing
             )
         )
     }

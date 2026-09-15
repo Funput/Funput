@@ -52,21 +52,25 @@ public enum KeyboardGeometry {
             1,
             size.height - rowsTop - verticalPadding - verticalGap * CGFloat(layout.rows.count - 1)
         )
-        let rowHeight = rowsHeight / CGFloat(layout.rows.count)
+        let totalWeight = layout.rows.reduce(0) { $0 + sizing.heightWeight(of: $1) }
+        let unitRowHeight = rowsHeight / totalWeight
+        var nextRowTop = rowsTop
         let canonicalKeyWidth = max(
             1,
             (contentWidth - sizing.horizontalGap * (canonicalColumnCount - 1)) / canonicalColumnCount
         )
         let canonicalUnit = canonicalKeyWidth + sizing.horizontalGap
 
-        let rows = layout.rows.enumerated().map { rowIndex, row in
+        let rows = layout.rows.map { row in
             let visibleKeys = row.keys
             let inset = row.horizontalInsetUnits * canonicalUnit
             let rowWidth = max(1, contentWidth - inset * 2)
             let gapWidth = sizing.horizontalGap * CGFloat(max(visibleKeys.count - 1, 0))
             let totalWeight = visibleKeys.reduce(0) { $0 + $1.widthWeight }
             let widthPerWeight = max(1, (rowWidth - gapWidth) / totalWeight)
-            let y = rowsTop + CGFloat(rowIndex) * (rowHeight + verticalGap)
+            let rowHeight = unitRowHeight * sizing.heightWeight(of: row)
+            let y = nextRowTop
+            nextRowTop += rowHeight + verticalGap
             var x = sizing.horizontalPadding + inset
 
             return visibleKeys.map { key in
