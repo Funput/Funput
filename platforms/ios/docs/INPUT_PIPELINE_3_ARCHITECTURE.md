@@ -1,5 +1,7 @@
 # Funput iOS Input Pipeline 3.0
 
+> **Cập nhật 16/09/2026:** Phase 0 đã xong; Phase 1–3 vẫn chưa hiện thực. Vấn đề *gõ ra sai phím* và *phím không nhạy* được điều tra riêng trong [KEY_ACCURACY_INVESTIGATION.md](KEY_ACCURACY_INVESTIGATION.md) — đọc tài liệu đó trước khi chỉnh tầng chạm.
+>
 > **Trạng thái:** Đề xuất kiến trúc — chưa hiện thực, chưa có số đo thiết bị
 > **Phạm vi:** Từ UIKit touch delivery đến document commit trong keyboard extension
 > **Ngày:** 06/08/2026
