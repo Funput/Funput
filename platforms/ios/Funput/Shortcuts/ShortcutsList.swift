@@ -37,17 +37,24 @@ struct ShortcutsList: View {
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     TextField("Tìm chữ tắt hoặc nội dung", text: $model.query)
+                        .frame(minHeight: 44)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .accessibilityIdentifier("shortcuts.search")
                     if !model.query.isEmpty {
-                        Button { model.query = "" } label: { Label("Xoá tìm kiếm", systemImage: "xmark.circle.fill") }
-                            .labelStyle(.iconOnly)
-                            .foregroundStyle(.secondary)
-                            .frame(minWidth: 44, minHeight: 44)
+                        Button { model.query = "" } label: {
+                            Label("Xoá tìm kiếm", systemImage: "xmark.circle.fill")
+                                .labelStyle(.iconOnly)
+                                .foregroundStyle(.secondary)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("shortcuts.search.clear")
                     }
                 }
                 .frame(minHeight: 44)
+                .listRowInsets(EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 4))
             }
             Section {
                 if !model.hasLoaded || model.loadError != nil {
@@ -68,13 +75,15 @@ struct ShortcutsList: View {
                     }
                 }
             } header: {
-                Text(!model.hasLoaded || model.loadError != nil ? "Danh sách" : model.query.isEmpty
-                     ? "Danh sách · \(model.entries.count) mục"
-                     : "Kết quả · \(model.filteredEntries.count)/\(model.entries.count) mục")
-                    .textCase(nil)
+                if !model.entries.isEmpty {
+                    Text(model.query.isEmpty ? "Danh sách · \(model.entries.count) mục"
+                         : "Kết quả · \(model.filteredEntries.count)/\(model.entries.count) mục")
+                        .textCase(nil)
+                }
             }
         }
         .listStyle(.insetGrouped)
+        .environment(\.defaultMinListRowHeight, 44)
         .modifier(ShortcutsListSpacing())
         .scrollDismissesKeyboard(.interactively)
         .accessibilityIdentifier("shortcuts.list")
@@ -95,12 +104,11 @@ struct ShortcutsList: View {
     private var emptyState: some View {
         ShortcutsEmptyState(
             title: "Chưa có gõ tắt", systemImage: "text.append",
-            summary: "Lưu những nội dung thường dùng.\nVí dụ: vn → việt nam, kg → không."
+            summary: "Gõ ít hơn với những nội dung thường dùng.\nVí dụ: vn → việt nam"
         ) {
-            Button(action: add) { Label("Thêm gõ tắt", systemImage: "plus") }
+            ShortcutsAddButton(action: add)
                 .disabled(!model.canWrite)
-                .buttonStyle(.borderedProminent)
-                .frame(minHeight: 44)
+                .accessibilityIdentifier("shortcuts.empty.add")
         }
     }
 

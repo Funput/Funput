@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Keeps the same empty-state actions on the minimum supported iOS version.
+/// Uses intrinsic height so a List row cannot stretch the empty-state action.
 struct ShortcutsEmptyState<Actions: View>: View {
     let title: String
     let systemImage: String
@@ -8,26 +8,45 @@ struct ShortcutsEmptyState<Actions: View>: View {
     @ViewBuilder var actions: () -> Actions
 
     var body: some View {
-        if #available(iOS 17, *) {
-            ContentUnavailableView {
-                Label(title, systemImage: systemImage)
-            } description: {
-                Text(summary)
-            } actions: {
-                actions()
-            }
-        } else {
-            VStack(spacing: 16) {
-                Image(systemName: systemImage)
-                    .font(.largeTitle).foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-                Text(title).font(.title2.bold()).accessibilityAddTraits(.isHeader)
+        VStack(spacing: 20) {
+            Image(systemName: systemImage)
+                .font(.system(size: 28, weight: .medium))
+                .foregroundStyle(.tint)
+                .frame(width: 64, height: 64)
+                .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 20))
+                .accessibilityHidden(true)
+            VStack(spacing: 8) {
+                Text(title).font(.title3.bold()).accessibilityAddTraits(.isHeader)
                 Text(summary).font(.subheadline).foregroundStyle(.secondary)
-                actions()
             }
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 24)
+            actions()
+                .labelStyle(.titleAndIcon)
+                .controlSize(.regular)
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 28)
+        .fixedSize(horizontal: false, vertical: true)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+    }
+}
+
+struct ShortcutsAddButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        let button = Button(action: action) {
+            Label("Thêm gõ tắt", systemImage: "plus")
+        }
+        .labelStyle(.titleAndIcon)
+        .controlSize(.regular)
+
+        if #available(iOS 26, *) {
+            button.buttonStyle(.glass)
+        } else {
+            button.buttonStyle(.bordered)
         }
     }
 }
