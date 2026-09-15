@@ -41,9 +41,9 @@ struct KeyboardPresentationFactoryTests {
         #expect(presentation.sizing.heightScale == 1.2)
     }
 
-    @Test("Default configuration produces 110 percent keyboard height")
+    @Test("Default configuration produces 100 percent keyboard height")
     func defaultKeyboardHeight() {
-        #expect(KeyboardPresentationFactory.make(from: .default).sizing.heightScale == 1.1)
+        #expect(KeyboardPresentationFactory.make(from: .default).sizing.heightScale == 1)
     }
 
     @Test("Default configuration id matches the default bundled theme")

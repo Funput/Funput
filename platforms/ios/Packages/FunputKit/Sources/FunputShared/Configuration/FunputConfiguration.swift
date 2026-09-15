@@ -58,7 +58,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         showsNumberRow: Bool = false,
         layoutPreset: KeyboardLayoutPreset = .funput,
         keyboardAppearance: KeyboardAppearanceOption = .system,
-        heightScale: Double = 1.1,
+        heightScale: Double = 1,
         personalSuggestionsEnabled: Bool = true,
         clipboardEnabled: Bool = true,
         clipboardExpiry: ClipboardExpiry = .hour,

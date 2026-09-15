@@ -18,7 +18,7 @@ struct FunputConfigurationTests {
         #expect(!config.isHapticFeedbackEnabled)
         #expect(!config.isKeySoundEnabled)
         #expect(!config.showsNumberRow)
-        #expect(config.heightScale == 1.1)
+        #expect(config.heightScale == 1)
         #expect(config.personalSuggestionsEnabled)
         #expect(config.personalSuggestionResetToken == nil)
         #expect(config.clipboardEnabled)
