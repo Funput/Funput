@@ -75,7 +75,7 @@ struct ShortcutsList: View {
                     }
                 }
             } header: {
-                if !model.entries.isEmpty {
+                if model.hasLoaded, model.loadError == nil, !model.entries.isEmpty {
                     Text(model.query.isEmpty ? "Danh sách · \(model.entries.count) mục"
                          : "Kết quả · \(model.filteredEntries.count)/\(model.entries.count) mục")
                         .textCase(nil)
