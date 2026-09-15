@@ -18,14 +18,22 @@ public enum SystemKeyMetrics {
     /// Phones at least this wide get the taller rows.
     static let wideScreenWidth: CGFloat = 414
 
-    /// The height of a letter row. A layout with a number row gets shorter letter rows,
-    /// as the stock VNI keyboard does, so the keyboard does not grow by a whole row.
-    public static func letterRowHeight(screenWidth: CGFloat, hasNumberRow: Bool) -> CGFloat {
-        switch (screenWidth >= wideScreenWidth, hasNumberRow) {
-        case (true, false): 45
-        case (true, true): 42
-        case (false, false): 43
-        case (false, true): 40.3
+    /// The combined height of a page's key rows, excluding gaps.
+    ///
+    /// It depends only on how many rows the page has, never on which of them is the
+    /// number row: a compact Telex letters page and its "123" page are both four rows,
+    /// but only the second carries digits, and the keyboard must not change height when
+    /// switching between them. Within the budget, the geometry still draws a number row
+    /// shorter than its neighbours.
+    ///
+    /// Four rows is the stock Telex keyboard (45/43pt each). Five is the stock VNI keyboard,
+    /// whose letter rows shrink (42/40.3pt) so the digits cost less than a whole row.
+    public static func rowsHeight(screenWidth: CGFloat, rowCount: Int) -> CGFloat {
+        let isWide = screenWidth >= wideScreenWidth
+        guard rowCount >= 5 else {
+            return (isWide ? 45 : 43) * CGFloat(rowCount)
         }
+        let letterRow: CGFloat = isWide ? 42 : 40.3
+        return letterRow * (CGFloat(rowCount - 1) + numberRowHeightRatio)
     }
 }

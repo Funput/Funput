@@ -79,11 +79,7 @@ public enum KeyboardMetrics {
         sizing: KeyboardSizingProfile,
         screenWidth: CGFloat
     ) -> CGFloat {
-        let letterRow = SystemKeyMetrics.letterRowHeight(
-            screenWidth: screenWidth,
-            hasNumberRow: layout.hasNumberRow
-        )
-        let rows = layout.rows.reduce(0) { $0 + letterRow * sizing.heightWeight(of: $1) }
+        let rows = SystemKeyMetrics.rowsHeight(screenWidth: screenWidth, rowCount: layout.rows.count)
         return sizing.verticalPadding * 2
             + rows
             + sizing.verticalGap * CGFloat(max(layout.rows.count - 1, 0))

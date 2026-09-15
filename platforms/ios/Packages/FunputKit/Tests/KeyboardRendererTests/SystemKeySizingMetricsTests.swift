@@ -26,6 +26,37 @@ struct SystemKeySizingMetricsTests {
         #expect(abs(height - expected) <= 0.01)
     }
 
+    /// A compact Telex letters page has no digits but its "123" page does; both are four
+    /// rows, so switching pages must not resize the keyboard.
+    @Test("Page switches keep the keyboard height", arguments: [
+        (KeyboardInputMethod.telex, false, KeyboardLayoutPreset.funput),
+        (KeyboardInputMethod.telex, false, KeyboardLayoutPreset.system),
+        (KeyboardInputMethod.telex, true, KeyboardLayoutPreset.funput),
+        (KeyboardInputMethod.vni, true, KeyboardLayoutPreset.system),
+    ])
+    func pageSwitchKeepsHeight(inputMethod: KeyboardInputMethod, numberRow: Bool, preset: KeyboardLayoutPreset) {
+        let heights = KeyboardLayoutMode.allCases.map { mode in
+            let layout = KeyboardLayoutResolver.resolve(
+                inputMethod: inputMethod,
+                mode: mode,
+                showsNumberRow: numberRow,
+                preset: preset
+            )
+            let height = KeyboardMetrics.recommendedHeight(
+                for: layout,
+                traits: phonePortrait,
+                sizing: .system,
+                screenWidth: 440
+            )
+            let funputHeight = KeyboardMetrics.recommendedHeight(for: layout, traits: phonePortrait)
+            return (layout.rows.count, height, funputHeight)
+        }
+        // Wherever Funput sizing keeps the height across pages, system sizing must too.
+        for (lhs, rhs) in zip(heights, heights.dropFirst()) where lhs.2 == rhs.2 {
+            #expect(abs(lhs.1 - rhs.1) <= 0.01, "rows \(lhs.0) vs \(rhs.0)")
+        }
+    }
+
     @Test("System sizing falls back to Funput sizing where Apple's was not measured")
     func landscapeAndPadFallBack() {
         let layout = StandardKeyboardLayouts.letters(.telex)
