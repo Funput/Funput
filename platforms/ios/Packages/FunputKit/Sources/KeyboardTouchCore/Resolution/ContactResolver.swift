@@ -3,23 +3,21 @@ import Foundation
 
 /// Turns a stream of contact samples into one decision per press.
 ///
-/// A press commits the key the finger **landed** on. The finger moves between landing and
-/// lifting — it rolls as it comes off, and the roll carries the direction of whatever key is
-/// typed next — so the lift point is the noisiest moment of the whole gesture and the one the
-/// user has least control over. Resolving to it made a press near a key edge commit its
-/// neighbour without any signal that something had gone wrong: not far enough to trip the tap
-/// slop, and never visible to the person typing, who had pressed the right key.
+/// A press commits the key under the finger when it **lifts**, as Apple's keyboard does. People
+/// who come from it see the wrong key highlighted, slide onto the right one and let go; that
+/// reflex only works if the lift decides. Measured against the iOS 27 keyboard, the key changes
+/// as soon as the finger crosses into its neighbour's area, with no margin held back for a roll
+/// on the way up, so none is held back here either.
 ///
-/// The lift point still decides one thing: whether the finger lifted inside the tracked area
-/// at all. Where inside it lifted is not the resolver's business.
+/// A finger that lifts outside the tracked area has no key under it and the press cancels as
+/// `endedOutside`. Whether that press still survives on the key it landed on is the host's
+/// recovery policy, which hands the landed key back as the lift hit.
 public struct ContactResolver<Payload: Sendable>: Sendable {
     struct State: Sendable {
         let beganAt: TimeInterval
         let startLocation: CGPoint
-        /// What the finger was on when it landed. This is what a press commits.
-        let landedPayload: Payload
-        /// What it is on now, which decides only whether the lift happened inside the
-        /// tracked area — never which key the press meant.
+        /// What the finger is on now. At lift this is the key the press commits; `nil` means
+        /// the finger is outside the tracked area.
         var currentPayload: Payload?
         var exceededTapSlop = false
     }
@@ -72,7 +70,6 @@ public struct ContactResolver<Payload: Sendable>: Sendable {
         states[sample.id] = State(
             beganAt: sample.timestamp,
             startLocation: sample.location,
-            landedPayload: payload,
             currentPayload: payload
         )
         return .began(sample.id)
@@ -100,12 +97,12 @@ public struct ContactResolver<Payload: Sendable>: Sendable {
         if duration > configuration.maximumTapDuration {
             return .cancelled(sample.id, .exceededDuration)
         }
-        guard state.currentPayload != nil else {
+        guard let committed = state.currentPayload else {
             return .cancelled(sample.id, .endedOutside)
         }
         return .resolved(
             sample.id,
-            state.landedPayload,
+            committed,
             ContactResolutionMetadata(exceededTapSlop: state.exceededTapSlop)
         )
     }

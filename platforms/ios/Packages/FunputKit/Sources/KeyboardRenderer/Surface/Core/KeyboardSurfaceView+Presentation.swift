@@ -14,9 +14,9 @@ extension KeyboardSurfaceView {
         if layoutChanged {
             // Contacts outlive a layout swap. The surface and the document both stay alive,
             // and the pipeline keeps a geometry snapshot per contact, so a finger already
-            // down still commits to the key it landed on. Tearing the contacts down here is
-            // what used to swallow the press of every finger resting on the keyboard while
-            // another one hit `?123`.
+            // down still commits a key from the layout it landed on. Tearing the contacts
+            // down here is what used to swallow the press of every finger resting on the
+            // keyboard while another one hit `?123`.
             interactionController.suspendPresentation()
             rebuildKeys()
         }

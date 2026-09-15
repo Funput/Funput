@@ -3,14 +3,15 @@ import KeyboardLayout
 /// Groups the per-role rules the pipeline applies while a contact is still recoverable.
 ///
 /// A fast two-thumb tap rarely lifts exactly where it landed, so the pipeline needs to know
-/// which roles survive a finger that drifted. What they commit is never in question — a press
-/// commits the key it landed on — so these rules decide only whether it commits at all.
+/// which roles survive a finger that drifted. A press commits the key under the finger at lift;
+/// these rules decide only whether a drifted press commits at all, and a release that lifted
+/// off the keys falls back to the key it landed on.
 /// Keeping them in one value type means a new rule is an added property here instead of
 /// another `KeyboardTouchPipeline.init` parameter.
 public struct KeyboardTouchRecoveryPolicy: Equatable, Sendable {
     /// Roles the pipeline tracks at all; a touch-down on anything else is ignored.
     public let eligibleRoles: Set<KeyRole>
-    /// Roles that still commit their landed key after the finger travelled past the tap slop.
+    /// Roles that still commit after the finger travelled past the tap slop.
     public let tapSlopRecoveringRoles: Set<KeyRole>
     /// Roles that still commit their landed key when the finger lifts outside the geometry.
     public let releaseOutsideRecoveringRoles: Set<KeyRole>

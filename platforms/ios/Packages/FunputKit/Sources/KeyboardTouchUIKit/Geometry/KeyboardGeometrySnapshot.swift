@@ -27,11 +27,12 @@ public struct KeyboardGeometrySnapshot: Sendable {
     /// left of `a` the nearest keycap is `q` above or `shift` below, never `a` — and landing on
     /// a modifier produces no character, which is indistinguishable from a dropped key.
     ///
-    /// Row gaps are divided at their vertical midpoint. Only the slack above the first row and
-    /// below the last falls back to a plain nearest-key search.
+    /// Row gaps are divided at their vertical midpoint, except above the spacebar, which reaches
+    /// a little into the letter row — see `KeyboardSpaceReach`. Only the slack above the first
+    /// row and below the last falls back to a plain nearest-key search.
     public func touchHit(at point: CGPoint) -> KeyboardTouchHit? {
         guard trackingBounds.contains(point) else { return nil }
-        let candidates = rowBands.keys(containing: point.y) ?? keys
+        let candidates = rowBands.candidates(at: point) ?? keys
         return nearest(to: point, among: candidates).map {
             KeyboardTouchHit(key: $0.spec, frame: $0.frame)
         }
