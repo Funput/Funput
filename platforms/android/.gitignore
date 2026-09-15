@@ -15,3 +15,5 @@ keystore.properties
 *.keystore
 /app/release/
 .config/
+
+.kotlin/

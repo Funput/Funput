@@ -271,7 +271,7 @@ jobs:
           for f in platforms/linux/install.sh platforms/linux/build.sh \
                    platforms/macos/scripts/install.sh platforms/macos/scripts/uninstall.sh \
                    scripts/check-loc.sh crates/funput-lexicon-tool/refresh.sh \
-                   platforms/ios/Scripts/build-lexicon.sh; do
+                   platforms/ios/Scripts/build-lexicon.sh platforms/android/scripts/build-lexicon.sh; do
             bash -n "$f"
           done
 
@@ -282,7 +282,7 @@ jobs:
             platforms/linux/install.sh platforms/linux/build.sh \
             platforms/macos/scripts/install.sh platforms/macos/scripts/uninstall.sh \
             scripts/check-loc.sh crates/funput-lexicon-tool/refresh.sh \
-            platforms/ios/Scripts/build-lexicon.sh
+            platforms/ios/Scripts/build-lexicon.sh platforms/android/scripts/build-lexicon.sh
 
       # The installer's own help must not break: it is the first thing anyone runs
       # when the one-liner misbehaves, and it lives in a heredoc no other test opens.
@@ -552,6 +552,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Verify Android lexicon packaging
+        run: python3 scripts/tests/test_build_lexicon.py
+
       # JavaVersion.VERSION_21 in every module's compileOptions.
       - uses: actions/setup-java@v6
         with:
@@ -601,6 +604,9 @@ jobs:
 
       - name: Assemble (cross-compiles funput-jni for both ABIs)
         run: ./gradlew assembleDebug --console=plain
+
+      - name: Verify packaged dictionary, notice and JNI ABIs
+        run: python3 scripts/tests/verify_lexicon_artifacts.py app/build/outputs/apk/debug/app-debug.apk
 
       - name: Lint
         run: ./gradlew lintDebug --console=plain
