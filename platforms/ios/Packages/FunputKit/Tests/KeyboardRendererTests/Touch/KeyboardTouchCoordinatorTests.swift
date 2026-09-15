@@ -76,29 +76,27 @@ struct KeyboardTouchCoordinatorTests {
     }
 
     /// The whole path, not just the resolver: `a` spans x 0...45 and `b` starts at 55, so a
-    /// press at 40 lands on `a` while a lift at 52 is over `b` — 12pt of travel, inside the
-    /// 16pt tap slop, which is the drift a finger makes on its way up without meaning
-    /// anything by it.
-    @Test("A press that drifts to the next key still types the key it landed on")
-    func driftCommitsTheKeyThatWasPressed() {
+    /// press at 40 lands on `a` while a lift at 52 is over `b` — inside the 16pt tap slop, and
+    /// the press types `b`, because the stock keyboard commits whatever is under the finger at lift.
+    @Test("A press that drifts onto the next key types the key under the lift")
+    func driftCommitsTheKeyUnderTheLift() {
         let fixture = KeyboardTouchFixture.adjacentKeys()
         fixture.begin(x: 40, at: 0)
         fixture.coordinator.consume(fixture.sample(.moved, id: 1, x: 52, at: 0.04))
         fixture.end(x: 52, at: 0.05)
 
-        #expect(fixture.output.map(\.key.id) == ["a"])
+        #expect(fixture.output.map(\.key.id) == ["b"])
         #expect(fixture.coordinator.metrics.recoveredTapSlop == 0)
     }
 
-    /// A slide the whole way across is no different. Landing on a key is the aim; everything
-    /// after it is the finger leaving.
-    @Test("A press that slides across the neighbour still types the key it landed on")
-    func longSlideCommitsTheKeyThatWasPressed() {
+    /// Sliding the whole way across is how a press is corrected on iOS.
+    @Test("A press that slides across to the neighbour types the neighbour")
+    func longSlideCommitsTheNeighbour() {
         let fixture = KeyboardTouchFixture.adjacentKeys()
         fixture.begin(x: 22, at: 0)
         fixture.end(x: 77, at: 0.05)
 
-        #expect(fixture.output.map(\.key.id) == ["a"])
+        #expect(fixture.output.map(\.key.id) == ["b"])
         #expect(fixture.coordinator.metrics.recoveredTapSlop == 1)
     }
 }
