@@ -15,13 +15,9 @@ internal class PersonalSuggestionService(
     private val show: (List<String>) -> Unit,
     private val capitalized: () -> Boolean = { false },
     private val acknowledgeReset: (String) -> Unit,
+    createWorker: (Context, (PersonalSuggestionRequest, List<String>) -> Unit) -> PersonalSuggestionWorker = ::suggestionWorker,
 ) {
-    private val worker = runCatching {
-        PersonalSuggestionWorker(
-            storeDirectory = { FileStore.directory(context) },
-            publish = ::publish,
-        )
-    }.getOrNull()
+    private val worker = runCatching { createWorker(context, ::publish) }.getOrNull()
     private var preferences = PersonalSuggestionPreferences.Default
     private var policy = EditorInfoPolicy.Default
     private var panel = KeyboardPanel.LETTERS
@@ -129,10 +125,6 @@ internal class PersonalSuggestionService(
         if (candidates.isEmpty()) return
         candidates = emptyList()
         runCatching { show(emptyList()) }
-    }
-
-    private object FileStore {
-        fun directory(context: Context) = context.noBackupFilesDir.resolve("PersonalSuggestions")
     }
 
     private companion object {

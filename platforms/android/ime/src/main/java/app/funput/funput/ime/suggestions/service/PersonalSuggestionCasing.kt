@@ -13,7 +13,7 @@ internal object PersonalSuggestionCasing {
         prefix.isEmpty() -> if (capitalized) candidate.titlecased() else candidate
         prefix.hasLetters() && prefix == prefix.uppercase(Vietnamese) -> candidate.uppercase(Vietnamese)
         prefix.firstOrNull()?.isUpperCase() == true -> candidate.titlecased()
-        else -> candidate.lowercase(Vietnamese)
+        else -> candidate
     }
 
     private fun String.titlecased() = replaceFirstChar { char -> char.titlecase(Vietnamese) }

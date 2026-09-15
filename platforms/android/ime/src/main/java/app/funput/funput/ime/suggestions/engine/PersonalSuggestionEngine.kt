@@ -15,6 +15,9 @@ internal class PersonalSuggestionEngine private constructor(private var handle: 
             ?.take(MaxCandidates)
             .orEmpty()
     }
+    fun attachLexicon(file: File): Boolean = call(false) {
+        PersonalSuggestionNative.nativeAttachLexicon(it, file.absolutePath)
+    }
     fun flush(): Boolean = call(false, PersonalSuggestionNative::nativeFlush)
     fun compact(): Boolean = call(false, PersonalSuggestionNative::nativeCompact)
     fun reset(): Boolean = call(false, PersonalSuggestionNative::nativeReset)
