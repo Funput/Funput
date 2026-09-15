@@ -1,6 +1,6 @@
 # Điều tra: phím iOS không nhạy và gõ nhầm phím
 
-> **Trạng thái:** Điều tra xong, có đề xuất sửa ngay (§7). Chưa có thay đổi code.
+> **Trạng thái:** Điều tra xong. §7.1–7.4 đã hiện thực trên nhánh `fix/ios-system-key-recognition` (§7.5).
 > **Ngày:** 16/09/2026
 > **Phạm vi:** Từ lúc ngón tay chạm màn hình đến lúc Funput quyết định phím nào được nhập, trong keyboard extension iOS.
 > **Liên quan:** [INPUT_PIPELINE_2_ARCHITECTURE.md](INPUT_PIPELINE_2_ARCHITECTURE.md) và [INPUT_PIPELINE_3_ARCHITECTURE.md](INPUT_PIPELINE_3_ARCHITECTURE.md) chỉ bàn về *mất phím* và *thứ tự phím*, không bàn *đúng phím*. Xem §6.
@@ -220,10 +220,11 @@ Mục tiêu: **nhận diện phím giống bàn phím hệ thống.** Một PR, 
 - **Chi phí:** một thuộc tính, không ảnh hưởng logic.
 - **Chỉ thử được trên máy thật:** simulator không tái hiện cử chỉ hệ thống. Sau khi cài, kiểm tra cảm giác phím q/a/p/l so với bản cũ. Vuốt Home vẫn hoạt động vì Apple không cho app chặn cử chỉ đó.
 
-### 7.4. Mốc nhấn giữ 0,5s (F7)
+### 7.4. Mốc nhấn giữ 0,5s cho bảng dấu (F7)
 
-- **Chỗ sửa:** đổi mặc định `KeyHoldController` từ 0,35s lên 0,5s, bằng mặc định long-press của UIKit. Áp cho bảng dấu và cho chế độ di con trỏ trên phím cách.
-- **Test:** cập nhật các test đang dùng 0,35s.
+- **Chỗ sửa:** bảng dấu chờ 0,5s, bằng mặc định long-press của UIKit.
+- **Không đổi:** phím cách vẫn giữ 0,35s để vào chế độ di con trỏ. Nhấn chậm trên phím cách vẫn ra dấu cách nên không mất gì, còn đổi sang 0,5s sẽ làm cử chỉ này chậm đi và phá `SmartGestureUITests`, vốn giữ phím cách 0,45s rồi kéo.
+- **Test:** test bảng dấu dùng scheduler giả (`runNext`) nên không phụ thuộc mốc thời gian.
 
 ### Không làm trong PR này
 
@@ -244,11 +245,29 @@ Mục tiêu: **nhận diện phím giống bàn phím hệ thống.** Một PR, 
 
 ---
 
-## 8. Quyết định cần chốt
+### 7.5. Đã hiện thực
 
-1. **Phạm vi PR:** làm cả 4 mục §7.1–7.4, hay chỉ §7.1 trước?
-2. **Nhấc ngoài vùng bàn phím:** giữ "cứu" phím lúc chạm (đề xuất), hay huỷ như một số bàn phím khác?
-3. **Mốc nhấn giữ:** 0,5s (mặc định UIKit), hay giữ 0,35s?
+Nhánh `fix/ios-system-key-recognition`, tách từ `feat/ios-app-enhance` (PR #395):
+
+| Commit | Mục |
+|---|---|
+| `docs(ios): investigate key accuracy against the stock keyboard` | Tài liệu này |
+| `fix(ios): commit the key under the finger at lift, like the stock keyboard` | §7.1 |
+| `fix(ios): wait for a real long press before opening the accent palette` | §7.4 |
+| `fix(ios): let keyboard touches win at the screen edges` | §7.3 |
+| `fix(ios): give the spacebar reach into the letter row above it` (cherry-pick `7c562e87`) | §7.2 |
+| `test(ios): pin slide-to-correct against the stock keyboard` | UI test `KeyboardSlideToCorrectUITests` |
+
+Chưa kiểm được trên simulator: tác dụng thật của §7.3 (cử chỉ hệ thống ở mép) và cảm giác gõ bằng ngón tay thật. Cần thử trên máy thật trước khi phát hành.
+
+---
+
+## 8. Quyết định đã chốt (16/09/2026)
+
+1. **Không đo với người dùng trước.** Maintainer dùng Funput hằng ngày và xác nhận lỗi; thí nghiệm §3 đủ để sửa.
+2. **Phạm vi:** làm cả 4 mục §7.1–7.4 trong một nhánh.
+3. **Nhấc ngoài vùng bàn phím:** giữ "cứu" phím lúc chạm.
+4. **Mốc nhấn giữ:** 0,5s cho bảng dấu, giữ 0,35s cho phím cách.
 
 ---
 
