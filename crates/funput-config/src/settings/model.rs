@@ -54,6 +54,14 @@ pub struct Settings {
     /// order — this is rewritten on every focus change that flips VI/EN.
     #[serde(default)]
     pub app_language_memory: BTreeMap<String, bool>,
+    /// Whether the memory above is in play. Off, the map is read-only history:
+    /// nothing new is written, nothing remembered is replayed, and every app
+    /// follows the global switch. The entries stay, so turning it back on gives
+    /// the user their pins back rather than a blank slate. Defaults to **on**,
+    /// including for a file written before this field existed — that is how
+    /// Funput behaved when it was written.
+    #[serde(default = "default_true")]
+    pub app_language_memory_enabled: bool,
     /// How many one-time repairs of this document have been applied — see
     /// [`Settings::repair`]. A file written before the field existed reads as `0`,
     /// which is what makes a repair run once; [`Settings::default`] starts at the

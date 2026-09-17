@@ -16,16 +16,22 @@
 //! the user clicked into afterwards: an app they never mentioned, pinned invisibly,
 //! since nothing on Windows displays this map, and still overruling the global switch
 //! long after. A global surface now stays global.
+//!
+//! All of which the user can switch off (`Settings::app_language_memory_enabled`),
+//! and then this map is history: nothing is written, nothing is replayed, and every
+//! app follows the global VI/EN state. The entries stay, so switching it back on
+//! hands the pins back rather than starting over.
 
 use super::ShellState;
 
 impl ShellState {
     /// Remember the user's VI/EN choice for `id`, reporting whether that actually
-    /// changed the map. Empty ids are ignored — a window we could not resolve to
-    /// an executable must not claim an entry. The caller persists, because every
-    /// caller has its own reason to write and would otherwise write twice.
+    /// changed the map. Two things are turned away: an empty id, because a window
+    /// we could not resolve to an executable must not claim an entry, and every id
+    /// while the memory is switched off. The caller persists, because every caller
+    /// has its own reason to write and would otherwise write twice.
     pub(super) fn remember(&mut self, id: &str, on: bool) -> bool {
-        if id.is_empty() {
+        if id.is_empty() || !self.settings.app_language_memory_enabled {
             return false;
         }
         self.settings.app_language_memory.insert(id.to_string(), on) != Some(on)
@@ -84,8 +90,13 @@ impl ShellState {
     /// writes, because only the hotkey is pressed inside the app it is about.
     ///
     /// Returns `Some(on)` when it flipped VI/EN (so the caller can refresh its
-    /// tray), `None` when nothing changed.
+    /// tray), `None` when nothing changed — including every app once the user has
+    /// switched the memory off, which is what makes that switch felt: the map is
+    /// still on disk, but nothing consults it.
     pub fn apply_for_app(&mut self, id: &str) -> Option<bool> {
+        if !self.settings.app_language_memory_enabled {
+            return None;
+        }
         let target = *self.settings.app_language_memory.get(id)?;
         let before = self.effective_enabled();
         if self.settings.enabled != target {

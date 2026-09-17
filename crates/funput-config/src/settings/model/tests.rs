@@ -245,3 +245,43 @@ fn the_english_shortcut_switch_round_trips_when_turned_off() {
     let back: Settings = serde_json::from_str(&text).expect("deserialize");
     assert!(!back.shortcuts_in_english);
 }
+
+/// Same rule again: absent means on. A file written before the switch existed
+/// belongs to someone whose pins have been working — an update must not arrive
+/// with the per-app memory silently switched off under them.
+#[test]
+fn a_file_without_the_per_app_switch_still_remembers_apps() {
+    let legacy = r#"{
+      "method": "vni",
+      "enabled": true,
+      "smartRestore": true,
+      "eagerRestore": true,
+      "toggleHotkey": "ctrl_backtick",
+      "launchAtLogin": false,
+      "hasCompletedOnboarding": false,
+      "appLanguageMemory": { "code.exe": false }
+    }"#;
+    let s: Settings = serde_json::from_str(legacy).expect("legacy settings.json must decode");
+
+    assert!(s.app_language_memory_enabled);
+    assert_eq!(s.app_language_memory.get("code.exe"), Some(&false));
+}
+
+/// Turning it off must not take the pins with it: the map is what the user gets
+/// back when they turn it on again.
+#[test]
+fn the_per_app_switch_round_trips_when_turned_off_and_keeps_the_pins() {
+    let s = Settings {
+        app_language_memory_enabled: false,
+        app_language_memory: BTreeMap::from([("code.exe".to_string(), false)]),
+        ..Settings::default()
+    };
+    let text = serde_json::to_string(&s).expect("serialize");
+    assert!(
+        text.contains("\"appLanguageMemoryEnabled\":false"),
+        "the on-disk key is camelCase, like every other field"
+    );
+    let back: Settings = serde_json::from_str(&text).expect("deserialize");
+    assert!(!back.app_language_memory_enabled);
+    assert_eq!(back.app_language_memory.get("code.exe"), Some(&false));
+}

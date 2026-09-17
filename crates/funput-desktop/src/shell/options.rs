@@ -64,6 +64,18 @@ impl ShellState {
         self.redecide_layout();
     }
 
+    /// Turn the per-app VI/EN memory on or off. The map itself is left alone, so
+    /// the pins are still there — and still honoured — once it is switched back on.
+    ///
+    /// Nothing is re-applied here, unlike the foreign-layout switch next door:
+    /// there is no live suspension to lift, and the background process replays the
+    /// focused app's pin on its next foreground change anyway (`reload_settings`
+    /// runs there, immediately before `apply_for_app`).
+    pub fn set_remember_app_language(&mut self, on: bool) {
+        self.settings.app_language_memory_enabled = on;
+        self.save();
+    }
+
     /// Picking a preset also clears any recorded custom combo — the two are
     /// alternatives, and the combo (when present) always wins in the hook.
     pub fn set_toggle_hotkey(&mut self, hotkey: Hotkey) {

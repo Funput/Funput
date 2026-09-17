@@ -99,6 +99,12 @@ fn apply_windows(s: &mut Settings, win: &WindowsBlock) {
     if let Some(combo) = &win.flip_combo {
         s.flip_combo = Some(combo.clone());
     }
+    // The switch is a plain preference, so it overwrites like the hotkeys above
+    // rather than merging — and it is applied before the pins it governs, so an
+    // import that turns the memory off cannot leave one in force for a keystroke.
+    if let Some(on) = win.app_language_memory_enabled {
+        s.app_language_memory_enabled = on;
+    }
     // Both app sources merge by key with the local entry winning, so importing a
     // colleague's file never rewrites a choice this machine's user made. Newer
     // exports carry the memory directly; older ones only have the removed

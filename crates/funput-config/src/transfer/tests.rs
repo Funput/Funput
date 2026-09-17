@@ -72,6 +72,50 @@ fn round_trip_preserves_state() {
     assert!(b.shortcuts_enabled);
 }
 
+/// The switch travels with the pins it governs: a file that carried the map but
+/// not the switch would arrive with the memory silently in force.
+#[test]
+fn the_per_app_switch_rides_along_in_the_windows_block() {
+    let exported = Settings {
+        app_language_memory_enabled: false,
+        app_language_memory: BTreeMap::from([("code.exe".to_string(), false)]),
+        ..Settings::default()
+    };
+    let json = serde_json::to_string(&to_document(&exported, source())).unwrap();
+    assert!(
+        json.contains("\"appLanguageMemoryEnabled\":false"),
+        "written under platform.windows, in camelCase: {json}"
+    );
+
+    let mut local = Settings::default();
+    let doc: ConfigDocument = serde_json::from_str(&json).unwrap();
+    apply(&mut local, &doc);
+
+    // Unlike the map it governs, the switch is a plain preference and overwrites.
+    assert!(!local.app_language_memory_enabled);
+    assert_eq!(
+        local.app_language_memory.get("code.exe"),
+        Some(&false),
+        "the pins still arrive — switching the memory off is not deleting it"
+    );
+}
+
+/// An export written before the switch existed says nothing about it, and the
+/// non-destructive rule makes silence mean "no opinion" rather than "on".
+#[test]
+fn a_file_without_the_per_app_switch_keeps_the_local_one() {
+    let legacy = r#"{"schema":"app.funput.config","version":1,
+        "platform":{"windows":{"appLanguageMemory":{"code.exe":false}}}}"#;
+    let mut s = Settings {
+        app_language_memory_enabled: false,
+        ..Settings::default()
+    };
+    let doc: ConfigDocument = serde_json::from_str(legacy).unwrap();
+    apply(&mut s, &doc);
+
+    assert!(!s.app_language_memory_enabled);
+}
+
 /// Import never rewrites a choice this machine's user made — the same
 /// "existing wins" rule the legacy migration uses.
 #[test]

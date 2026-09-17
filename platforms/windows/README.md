@@ -43,7 +43,7 @@
 | ⌨️ **Ba kiểu gõ** | Telex · **Telex+** (thêm `w` đầu từ và phím tắt `[` `]`) · VNI |
 | 🔤 **Kiểu đặt dấu** | Truyền thống (`hòa`, `khỏe`) hoặc hiện đại (`hoà`, `khoẻ`) |
 | 🧠 **Gõ thông minh** | Tự khôi phục tiếng Anh · khôi phục tức thì · kiểm tra chính tả · tự động viết hoa |
-| 🗂️ **Nhớ theo ứng dụng** | Bật tiếng Việt ở Word, tắt ở Terminal — Funput tự chuyển khi bạn đổi cửa sổ |
+| 🗂️ **Nhớ theo ứng dụng** | Bật tiếng Việt ở Word, tắt ở Terminal — Funput tự chuyển khi bạn đổi cửa sổ. Tắt được trong Cài đặt; tắt chỉ là ngừng áp dụng, các app đã ghim vẫn còn đó |
 | 🌏 **Tự tắt khi đổi bàn phím** | Chuyển sang EN khi bạn dùng bàn phím tiếng Nhật, Hàn, Trung… |
 | ✂️ **Gõ tắt** | Bảng viết tắt tự bung, khớp cả hoa lẫn thường; nhập được bảng gõ tắt UniKey |
 | 🔄 **Chuyển mã** | Đổi qua lại giữa Unicode dựng sẵn, Unicode tổ hợp, TCVN3 (ABC) và VNI-Windows — dán văn bản hoặc chuyển cả tệp |

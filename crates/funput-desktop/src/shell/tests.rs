@@ -174,6 +174,48 @@ fn a_remembered_choice_survives_a_restart() {
     let _ = std::fs::remove_dir_all(dir);
 }
 
+// --- the per-app memory switch ---------------------------------------------
+
+/// Off, the map is history: every app follows the global switch, even one the
+/// user pinned back when the memory was on.
+#[test]
+fn the_switch_being_off_leaves_every_app_alone() {
+    let mut state = shell_remembering(&[("code.exe", false)]);
+    state.set_remember_app_language(false);
+
+    assert_eq!(state.apply_for_app("code.exe"), None);
+    assert!(state.enabled());
+}
+
+/// …and it stops the one writer too, so a hotkey toggle is purely global.
+#[test]
+fn the_switch_being_off_stops_the_hotkey_from_pinning() {
+    let mut state = shell();
+    state.set_remember_app_language(false);
+    state.note_foreground("code.exe".into());
+
+    assert!(!state.toggle_enabled_hotkey(), "still a global flip");
+    assert!(!state.enabled());
+    assert!(state.settings().app_language_memory.is_empty());
+}
+
+/// Off means ignored, not forgotten: the pins are what the user gets back, which
+/// is why the switch never touches the map.
+#[test]
+fn turning_the_switch_back_on_replays_the_pins_it_was_hiding() {
+    let mut state = shell_remembering(&[("code.exe", false)]);
+    state.set_remember_app_language(false);
+    assert_eq!(state.apply_for_app("code.exe"), None, "hidden while off");
+
+    state.set_remember_app_language(true);
+    assert_eq!(
+        state.settings().app_language_memory.get("code.exe"),
+        Some(&false),
+        "the entry was never deleted"
+    );
+    assert_eq!(state.apply_for_app("code.exe"), Some(false), "and replays");
+}
+
 #[test]
 fn an_empty_app_id_is_ignored() {
     let mut state = shell();

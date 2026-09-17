@@ -97,7 +97,8 @@ and identifies apps by exe name, so its block differs from macOS:
     },
     "flipHotkey": "off",
     "flipCombo": null,
-    "appLanguageMemory": { "code.exe": false }
+    "appLanguageMemory": { "code.exe": false },
+    "appLanguageMemoryEnabled": true
   }
 }
 ```
@@ -109,6 +110,7 @@ and identifies apps by exe name, so its block differs from macOS:
 | `flipHotkey` | Preset id: `off` \| `ctrl_shift_z` \| `ctrl_shift_x`. |
 | `flipCombo` | Optional recorded combo; when present, overrides `flipHotkey`. |
 | `appLanguageMemory` | `{ lowercased exe name: rememberedIsVietnamese }`. Windows-only per-app VI/EN memory; merged by key, existing entries win. |
+| `appLanguageMemoryEnabled` | Whether that memory is consulted at all. Rides along with the map it governs, because a file carrying the pins but not the switch would arrive with them silently in force. Unlike the map this is a plain preference and **overwrites** when present; absent leaves the local switch alone. Defaults to `true`, for the same reason as `shortcutsEnabled`. |
 | `excludedApps[]` | **Legacy, read-only.** `{ id (lowercased exe name), name }` from the removed "always English" list. Only decoded from older exports (no longer written); each `id` is migrated into `appLanguageMemory` as English. |
 
 `vk` is the Win32 virtual-key captured using the user's active keyboard layout;
