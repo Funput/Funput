@@ -4,22 +4,16 @@ import Foundation
 /// ten-column letter grid. Measured on iOS 27 at 390–440pt; see
 /// `docs/KEY_ACCURACY_INVESTIGATION.md`.
 enum SystemRowSpans {
-    /// `<switch> <space> <enter>`. The switch key ends one gap before `x`, the spacebar
-    /// runs from under `x` to the end of `n`, and enter takes the rest. Apple has no emoji
-    /// key here — on these phones it sits below the keyboard, and in Funput's toolbar.
+    /// `<switch> emoji <space> <enter>`. The spacebar runs from under `x` to the end of `n`,
+    /// enter takes the rest, and the switch key and emoji key split what is left at the
+    /// leading edge. Apple shows the emoji key whenever the Emoji keyboard is enabled, which
+    /// is the default; the globe and dictation keys sit below the keyboard instead.
     static let action: [KeyColumnSpan] = [
-        KeyColumnSpan(start: .leading, end: .grid(columns: 2.5, gaps: -1)),
+        KeyColumnSpan(start: .leading, end: .grid(columns: 1.25, gaps: -1)),
+        KeyColumnSpan(start: .grid(columns: 1.25), end: .grid(columns: 2.5, gaps: -1)),
         KeyColumnSpan(start: .grid(columns: 2.5), end: .grid(columns: 7.5, gaps: -1)),
         KeyColumnSpan(start: .grid(columns: 7.5), end: .trailing),
     ]
-
-    /// The action row with an emoji key after the switch key, for a layout without a
-    /// toolbar to carry one. The switch key gives up half its width so the spacebar and
-    /// enter stay exactly where muscle memory expects them.
-    static let actionWithEmoji: [KeyColumnSpan] = [
-        KeyColumnSpan(start: .leading, end: .grid(columns: 1.25, gaps: -1)),
-        KeyColumnSpan(start: .grid(columns: 1.25), end: .grid(columns: 2.5, gaps: -1)),
-    ] + action.dropFirst()
 
     /// `shift z x c v b n m delete`, with the letters under `s`…`l`.
     ///
@@ -47,9 +41,9 @@ enum SystemActionRowWeights {
 
 /// The emoji key used when panel access lives in an action row instead of the toolbar.
 ///
-/// Only a layout without a toolbar carries it. The toolbar hides its own emoji button while
-/// this key is present, so the two never appear at once; the roles route identically either
-/// way.
+/// It matches the switch key beside it, as on the stock keyboard. The toolbar hides its own
+/// emoji button while this key is present, so the two never appear at once; the roles route
+/// identically either way.
 func actionRowEmojiKey(page: String) -> KeySpec {
     specialKey(
         "emoji-\(page)",
@@ -60,7 +54,7 @@ func actionRowEmojiKey(page: String) -> KeySpec {
     )
 }
 
-/// `<switch> space <enter>`, the action row shared by every system-preset page.
+/// `<switch> emoji space <enter>`, the action row shared by every system-preset page.
 func systemActionRow(
     page: String,
     switchID: String,
@@ -76,6 +70,7 @@ func systemActionRow(
                 switchRole,
                 accessibilityLabel: switchAccessibility
             ),
+            actionRowEmojiKey(page: page),
             standardSpaceKey(),
             specialKey("enter-\(page)", "", .enter, accessibilityLabel: "Enter"),
         ],

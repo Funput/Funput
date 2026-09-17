@@ -73,8 +73,9 @@ struct StandardLayoutParityTests {
             preset: .funput
         )
         #expect(layout.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
-        // With a toolbar, emoji lives there in both presets; only a toolbarless layout
-        // moves it into the action row. See `SystemLettersParityTests.emojiOnlyWithoutToolbar`.
+        // Keeping emoji out of the rows is a Funput-preset invariant: the system preset
+        // deliberately places one in its action row, where Apple puts it. See
+        // `SystemLettersParityTests.actionRow`.
         #expect(!layout.rows.flatMap(\.keys).contains { $0.role == .emoji })
     }
 

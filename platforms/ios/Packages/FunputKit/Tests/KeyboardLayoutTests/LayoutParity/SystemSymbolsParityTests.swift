@@ -56,8 +56,8 @@ struct SystemSymbolsParityTests {
             SystemSymbolKeyboardLayouts.secondary(method),
         ] {
             let keys = layout.rows.last?.keys ?? []
-            #expect(keys.map(\.label) == ["ABC", "Tiếng Việt", ""])
-            #expect(keys.map(\.role) == [.letters, .space, .enter])
+            #expect(keys.map(\.label) == ["ABC", "", "Tiếng Việt", ""])
+            #expect(keys.map(\.role) == [.letters, .emoji, .space, .enter])
             #expect(layout.rows.last?.columnSpans != nil)
             #expect(layout.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
         }

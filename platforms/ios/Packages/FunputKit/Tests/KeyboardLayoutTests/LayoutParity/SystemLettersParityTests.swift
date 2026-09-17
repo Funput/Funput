@@ -30,14 +30,14 @@ struct SystemLettersParityTests {
         }
     }
 
-    @Test("The action row is 123, space and enter", arguments: KeyboardInputMethod.allCases)
+    @Test("The action row is 123, emoji, space and enter", arguments: KeyboardInputMethod.allCases)
     func actionRow(method: KeyboardInputMethod) {
         let row = SystemKeyboardLayouts.letters(method).rows.last
         let keys = row?.keys ?? []
-        #expect(keys.map(\.label) == ["123", "Tiếng Việt", ""])
-        #expect(keys.map(\.role) == [.symbols, .space, .enter])
-        #expect(row?.columnSpans?.count == 3)
-        #expect(keys[1].horizontalSwipeAction == .toggleLanguage)
+        #expect(keys.map(\.label) == ["123", "", "Tiếng Việt", ""])
+        #expect(keys.map(\.role) == [.symbols, .emoji, .space, .enter])
+        #expect(row?.columnSpans?.count == 4)
+        #expect(keys[2].horizontalSwipeAction == .toggleLanguage)
     }
 
     @Test("The spacebar is centred", arguments: [320.0, 390.0, 440.0])
@@ -62,30 +62,17 @@ struct SystemLettersParityTests {
         #expect(hinted == ["s": "´", "f": "`", "r": "̉", "x": "˜", "j": "̣", "z": "×"])
     }
 
-    @Test("Emoji moves into the action row only without a toolbar", arguments: KeyboardInputMethod.allCases)
-    func emojiOnlyWithoutToolbar(method: KeyboardInputMethod) {
-        let withToolbar = KeyboardLayoutResolver.resolve(inputMethod: method, mode: .letters, preset: .system)
-        #expect(!withToolbar.rows.flatMap(\.keys).contains { $0.role == .emoji })
-        #expect(withToolbar.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
-
-        let toolbarless = KeyboardLayoutResolver.resolve(
-            inputMethod: method,
-            mode: .letters,
-            preset: .system,
-            showsToolbar: false
-        )
-        let action = toolbarless.rows.last
-        #expect(action?.keys.map(\.role) == [.symbols, .emoji, .space, .enter])
-        #expect(action?.columnSpans?.count == 4)
-
-        // The emoji key comes out of the switch key; the spacebar does not move.
-        let size = CGSize(width: 402, height: 260)
-        func spaceFrame(_ layout: KeyboardLayout) -> CGRect? {
-            KeyboardGeometry.resolve(layout: layout, size: size, sizing: .system)
-                .rows.last?.first { $0.spec.role == .space }?.frame
-        }
-        #expect(spaceFrame(withToolbar)?.minX == spaceFrame(toolbarless)?.minX)
-        #expect(spaceFrame(withToolbar)?.width == spaceFrame(toolbarless)?.width)
+    @Test("The row emoji key does not shadow the toolbar one", arguments: KeyboardInputMethod.allCases)
+    func emojiKeyIsDistinct(method: KeyboardInputMethod) {
+        let layout = SystemKeyboardLayouts.letters(method)
+        let rowEmoji = layout.rows.flatMap(\.keys).filter { $0.role == .emoji }
+        #expect(rowEmoji.count == 1)
+        // The spec still carries a toolbar emoji key; the renderer hides its button
+        // while a row provides one. The labels stay distinct so the two never read
+        // alike should both ever be on screen.
+        #expect(layout.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
+        let toolbarEmoji = layout.toolbar?.keys.first { $0.role == .emoji }
+        #expect(rowEmoji.first?.accessibilityLabel != toolbarEmoji?.accessibilityLabel)
     }
 
     @Test("Each preset resolves to its own layout identity", arguments: KeyboardInputMethod.allCases)
