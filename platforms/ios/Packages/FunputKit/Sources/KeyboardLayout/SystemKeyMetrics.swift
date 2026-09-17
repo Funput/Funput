@@ -2,14 +2,17 @@ import CoreGraphics
 
 /// Metrics of Apple's stock Vietnamese keyboard in portrait on iPhone.
 ///
-/// Measured from iOS 27 simulator screenshots of the Telex and VNI keyboards on 402pt,
-/// 420pt and 440pt wide phones. Gaps and padding were identical on all three; row heights
-/// step down on the narrower phone. Narrower phones than 402pt were not measured and use
-/// the narrow values.
+/// Measured from iOS 27 simulator screenshots of the Telex and VNI keyboards on 390pt,
+/// 402pt, 420pt and 440pt wide phones. Gaps and padding were identical on all of them; row
+/// heights step down below 414pt.
 public enum SystemKeyMetrics {
     public static let horizontalPadding: CGFloat = 6.5
     public static let horizontalGap: CGFloat = 6
     public static let verticalGap: CGFloat = 11
+
+    /// Apple's keyboard answers a touch up to about 8pt above its top row before the
+    /// prediction bar takes it; the gap below Funput's toolbar is that slack.
+    public static let toolbarGap: CGFloat = 8
 
     /// VNI's digit row is drawn shorter than the letter rows beneath it: 35.7 over 42pt
     /// on wide phones, 34 over 40.3pt on narrow ones — the same proportion on both.
@@ -17,6 +20,14 @@ public enum SystemKeyMetrics {
 
     /// Phones at least this wide get the taller rows.
     static let wideScreenWidth: CGFloat = 414
+
+    /// The space below the bottom row. On 420pt and 440pt phones Apple's bottom row ends
+    /// 7pt above the globe/dictation bar. On 390pt and 402pt phones it runs 4pt *into*
+    /// the area that bar takes from a third-party keyboard, which no extension can draw
+    /// into; ending the rows flush with the view is as close as a custom keyboard gets.
+    public static func bottomPadding(screenWidth: CGFloat) -> CGFloat {
+        screenWidth >= wideScreenWidth ? 6 : 0
+    }
 
     /// The combined height of a page's key rows, excluding gaps.
     ///

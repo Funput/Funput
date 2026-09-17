@@ -80,7 +80,8 @@ public enum KeyboardMetrics {
         screenWidth: CGFloat
     ) -> CGFloat {
         let rows = SystemKeyMetrics.rowsHeight(screenWidth: screenWidth, rowCount: layout.rows.count)
-        return sizing.verticalPadding * 2
+        return sizing.verticalPadding
+            + sizing.bottomPadding(forWidth: screenWidth)
             + rows
             + sizing.verticalGap * CGFloat(max(layout.rows.count - 1, 0))
             + (layout.toolbar == nil ? 0 : sizing.toolbarChrome)

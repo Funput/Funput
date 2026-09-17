@@ -55,6 +55,7 @@ struct SystemPresetRenderingTests {
 
     private var traits: UITraitCollection { UITraitCollection(userInterfaceStyle: .dark) }
 
+
     private func surface(for layout: KeyboardLayout) -> KeyboardSurfaceView {
         let surface = KeyboardSurfaceView(presentation: KeyboardPresentation(layout: layout))
         surface.frame = CGRect(x: 0, y: 0, width: 390, height: 304)

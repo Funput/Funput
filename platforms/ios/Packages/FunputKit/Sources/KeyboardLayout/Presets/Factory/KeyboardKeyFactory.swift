@@ -64,7 +64,8 @@ func characterRow(
 
 func bottomCharacterRow(
     showsTelexHints: Bool = false,
-    supportsVietnameseAlternates: Bool = false
+    supportsVietnameseAlternates: Bool = false,
+    columnSpans: [KeyColumnSpan]? = nil
 ) -> KeyboardRow {
     var keys = [specialKey("shift", "", .shift, weight: 1.5, accessibilityLabel: "Shift")]
     keys.append(contentsOf: "zxcvbnm".map {
@@ -75,7 +76,7 @@ func bottomCharacterRow(
         )
     })
     keys.append(specialKey("backspace", "", .backspace, weight: 1.5, accessibilityLabel: "Xóa"))
-    return KeyboardRow(keys: keys)
+    return KeyboardRow(keys: keys, columnSpans: columnSpans)
 }
 
 func standardSpaceKey(weight: CGFloat = 5.8) -> KeySpec {
