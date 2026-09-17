@@ -114,8 +114,8 @@ Ba luật đáng đọc trước khi sửa:
 
 **Surface nào toggle thì surface đó quyết định phạm vi.** Hotkey được bấm bên trong app nó nhắm tới
 nên nó ghim app đó. Tray flyout và cửa sổ Cài đặt là cửa sổ của chính Funput, mở từ tray, không có
-app nào trước mặt — nên chúng dịch mặc định toàn cục và không ghim gì. Hai cái sau từng đỗ lựa chọn
-rồi gắn vào app nhận focus kế tiếp, và vì flyout giành foreground nên cái nó ghim là taskbar.
+app nào trước mặt — nên chúng dịch mặc định toàn cục và không ghim gì. Hai cái sau từng giữ lựa chọn
+lại rồi gắn vào app nhận focus kế tiếp, và vì flyout giành foreground nên cái nó ghim là taskbar.
 
 **Bộ nhớ theo app tắt được**, và tắt nghĩa là bỏ qua chứ không phải quên: map ở lại trên đĩa nên bật
 lại là các app đã ghim quay về.
