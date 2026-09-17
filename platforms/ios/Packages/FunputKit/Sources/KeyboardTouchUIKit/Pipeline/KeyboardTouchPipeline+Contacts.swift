@@ -8,7 +8,7 @@ extension KeyboardTouchPipeline {
         let geometry = sample.phase == .began
             ? currentGeometry : geometries[sample.id]
         let tracked = eligibleHit(at: sample.location, in: geometry)
-        let hit = recoveredHit(for: sample, current: tracked)
+        let hit = recoveredHit(for: sample, current: swipeLockedHit(for: sample, current: tracked))
         let resolution = resolver.consume(sample, hit: hit)
         return handle(resolution, sample: sample, geometry: geometry)
     }
@@ -69,11 +69,25 @@ extension KeyboardTouchPipeline {
         return hit
     }
 
+    /// A key with a horizontal swipe keeps the key it landed on while the finger stays on the
+    /// keys. Sliding along the spacebar is how the language toggle starts, and a thumb resting
+    /// on it drifts up into the letter row; neither means the letter it drifted over.
+    private func swipeLockedHit(
+        for sample: ContactSample,
+        current: KeyboardTouchHit?
+    ) -> KeyboardTouchHit? {
+        guard sample.phase != .began,
+              current != nil,
+              let initial = initialHits[sample.id],
+              initial.key.horizontalSwipeAction != nil else { return current }
+        return initial
+    }
+
     /// A fast two-thumb tap often lifts off the tracked geometry. Handing the resolver the key
     /// the finger landed on keeps the press alive instead of dropping it as a lift outside.
     ///
-    /// The resolver commits the landed key either way, so this decides only whether a press
-    /// that ended off the keys survives at all — never which key it produces.
+    /// With nothing under the finger there is no lift key to commit, so for these presses the
+    /// landed key is also the key they produce.
     private func recoveredHit(
         for sample: ContactSample,
         current: KeyboardTouchHit?

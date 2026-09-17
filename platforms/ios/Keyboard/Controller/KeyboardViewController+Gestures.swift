@@ -4,6 +4,14 @@ import KeyboardRenderer
 import UIKit
 
 extension KeyboardViewController {
+    /// The keycaps run to both screen edges and sit just above the home indicator, which is
+    /// where the system's own edge gestures wait before handing a touch over. Asking for the
+    /// keyboard's touches to win there keeps `q`, `a`, `p`, `l`, Shift and Delete as prompt as
+    /// the keys in the middle. The Home gesture itself cannot be deferred on Face ID iPhones.
+    override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge {
+        [.left, .right, .bottom]
+    }
+
     /// Handles the phases the gesture lane writes to the document itself.
     ///
     /// Returns whether the event was fully handled, so `handleKeyEvent` can leave the

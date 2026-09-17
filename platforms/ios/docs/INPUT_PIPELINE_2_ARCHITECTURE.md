@@ -1,5 +1,7 @@
 # Funput iOS Input Pipeline 2.0
 
+> **Cập nhật 16/09/2026:** Mô tả bên dưới vẫn khớp code, nhưng chỉ bàn về *mất phím* và *thứ tự phím*. Vấn đề *gõ ra sai phím* và *phím không nhạy* (mô hình nhập phím lúc chạm/lúc nhấc, phản hồi hình ảnh, hình học so với iOS) nằm trong [KEY_ACCURACY_INVESTIGATION.md](KEY_ACCURACY_INVESTIGATION.md).
+>
 > **Trạng thái:** Phase 1–5 đã hiện thực; production chỉ có một touch pipeline
 > **Phạm vi:** Xử lý phím trong custom keyboard extension trên iOS/iPadOS  
 > **Ngày:** 30/07/2026 (cập nhật 06/08/2026: §11.1 và §19.8 — mô hình commit)
