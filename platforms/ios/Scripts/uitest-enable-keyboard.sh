@@ -6,8 +6,9 @@
 # Usage: Scripts/uitest-enable-keyboard.sh [udid]   (default: the booted sim)
 #
 # Run after the app has been installed at least once (the extension must be on
-# the device before iOS will honour the AppleKeyboards entry). Restart the
-# Simulator app afterwards if it was already running so the hardware-keyboard
+# the device before iOS will honour the AppleKeyboards entry). The simulator is
+# rebooted at the end, because the keyboard list is only read at boot. Restart
+# the Simulator app too if it was already running, so the hardware-keyboard
 # preference is picked up.
 set -eu
 
@@ -28,8 +29,18 @@ xcrun simctl spawn "$UDID" defaults write -g AppleKeyboards -array \
     "app.funput.funput.Keyboard"
 xcrun simctl spawn "$UDID" defaults write -g AppleKeyboardsExpanded -int 1
 
+# The slide-to-type tutorial covers the keys the first time a system keyboard shows.
+for key in DidShowContinuousPathIntroduction DidShowGestureKeyboardIntroduction \
+    KeyboardDidShowProductivityTutorial; do
+    xcrun simctl spawn "$UDID" defaults write -g "$key" -bool true
+done
+
 # Software keyboard must be visible for the test to tap keys.
 defaults write com.apple.iphonesimulator DevicePreferences -dict-add "$UDID" \
     '{ ConnectHardwareKeyboard = 0; }'
+
+xcrun simctl shutdown "$UDID"
+xcrun simctl boot "$UDID"
+xcrun simctl bootstatus "$UDID" -b >/dev/null
 
 echo "uitest-enable-keyboard: Funput keyboard enabled on $UDID"

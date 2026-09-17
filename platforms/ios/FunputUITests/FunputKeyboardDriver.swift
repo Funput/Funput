@@ -33,6 +33,11 @@ enum FunputKeyboardDriver {
             // before it settles would hop straight past Funput.
             if sentinel.waitForExistence(timeout: 10) { return true }
         }
+        XCTFail("""
+        The Funput keyboard never came up. UI tests need it enabled on this simulator with \
+        the hardware keyboard disconnected: install the app once, then run \
+        `platforms/ios/Scripts/uitest-enable-keyboard.sh <simulator-udid>`.
+        """)
         return false
     }
 
