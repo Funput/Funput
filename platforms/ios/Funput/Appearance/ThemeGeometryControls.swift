@@ -27,18 +27,28 @@ struct ThemeEditorNameCard: View {
 
 struct ThemeGeometryControls: View {
     @Binding var draft: ThemeEditorDraft
+    /// System key sizing replaces the theme's padding and gaps with Apple's, so their
+    /// sliders would move nothing; they are hidden rather than left to look broken.
+    let usesSystemKeySizing: Bool
 
     var body: some View {
         ContentCard {
             Text("Hình học phím").font(.headline)
             metric("Chiều cao keycap", value: $draft.customTheme.theme.geometry.keycapHeightScale,
                    range: 0.82...1, step: 0.02, format: .percent)
-            metric("Lề ngang", value: $draft.customTheme.theme.geometry.horizontalPadding,
-                   range: 2...16, step: 1)
-            metric("Khoảng cách ngang", value: $draft.customTheme.theme.geometry.horizontalGap,
-                   range: 2...10, step: 1)
-            metric("Khoảng cách dọc", value: $draft.customTheme.theme.geometry.verticalGap,
-                   range: 3...12, step: 1)
+            if usesSystemKeySizing {
+                Text("Lề và khoảng cách giữa phím đang theo kích thước giống hệ thống.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                metric("Lề ngang", value: $draft.customTheme.theme.geometry.horizontalPadding,
+                       range: 2...16, step: 1)
+                metric("Khoảng cách ngang", value: $draft.customTheme.theme.geometry.horizontalGap,
+                       range: 2...10, step: 1)
+                metric("Khoảng cách dọc", value: $draft.customTheme.theme.geometry.verticalGap,
+                       range: 3...12, step: 1)
+            }
             metric("Corner radius", value: $draft.customTheme.theme.metrics.cornerRadius,
                    range: 0...20, step: 1)
         }

@@ -3,7 +3,7 @@ public enum PasswordKeyboardLayouts {
         qwertyLayout(
             id: "qwerty-password-\(inputMethod.rawValue)",
             inputMethod: inputMethod,
-            leadingRows: [KeyboardRow(keys: "1234567890".map(keypadDigit))],
+            leadingRows: [KeyboardRow(keys: "1234567890".map(keypadDigit), isNumberRow: true)],
             actionKeys: [
                 specialKey("symbols", "?123", .symbols, weight: 1.7, accessibilityLabel: "Ký hiệu"),
                 specialKey("comma", ",", .punctuation, accessibilityLabel: "Dấu phẩy"),

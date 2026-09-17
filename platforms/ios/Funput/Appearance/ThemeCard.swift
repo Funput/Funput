@@ -22,6 +22,7 @@ struct ThemeCard: View {
             InteractiveGlassCard(isSelected: isPreviewed) {
                 VStack(alignment: .leading, spacing: 10) {
                     ThemeCardThumbnail(
+                        themeID: theme.id,
                         theme: resolvedTheme,
                         backgroundImageData: backgroundImageData,
                         interfaceStyle: interfaceStyle

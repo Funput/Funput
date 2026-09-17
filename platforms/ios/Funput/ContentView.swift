@@ -18,6 +18,8 @@ struct ContentView: View {
             KeyboardTouchAcceptanceView()
         } else if ProcessInfo.processInfo.arguments.contains("-uitest-typing-harness") {
             TypingHarnessView()
+        } else if ProcessInfo.processInfo.arguments.contains(ThemeThumbnailExporter.launchArgument) {
+            ThemeThumbnailExportView()
         } else {
             appContent
         }

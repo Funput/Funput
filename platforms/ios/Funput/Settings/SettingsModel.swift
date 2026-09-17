@@ -32,6 +32,7 @@ final class SettingsModel: ObservableObject {
 
     var inputMethodLabel: String { configuration.inputMethod.settingsTitle }
     var layoutPresetLabel: String { configuration.layoutPreset.settingsTitle }
+    var keySizingLabel: String { configuration.keySizing.settingsTitle }
     var languageLabel: String { configuration.language.displayLabel }
     var toneStyleLabel: String { configuration.toneStyle.settingsTitle }
     var clipboardExpiryLabel: String { configuration.clipboardExpiry.title }

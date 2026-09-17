@@ -71,65 +71,6 @@ public struct KeyboardKeyEvent: Sendable {
     }
 }
 
-@MainActor
-public enum KeyboardMetrics {
-    public static let phonePortraitBaseHeight: CGFloat = 294
-    public static let phoneLandscapeBaseHeight: CGFloat = 226
-    public static let padBaseHeight: CGFloat = 314
-
-    public static func recommendedHeight(
-        for traits: UITraitCollection,
-        scale: CGFloat = 1
-    ) -> CGFloat {
-        recommendedHeight(for: .funputQWERTY, traits: traits, scale: scale)
-    }
-
-    public static func recommendedHeight(
-        for layout: KeyboardLayout,
-        traits: UITraitCollection,
-        scale: CGFloat = 1
-    ) -> CGFloat {
-        let baseHeight: CGFloat
-        if traits.userInterfaceIdiom == .pad {
-            baseHeight = padBaseHeight
-        } else if traits.verticalSizeClass == .compact {
-            baseHeight = phoneLandscapeBaseHeight
-        } else {
-            baseHeight = phonePortraitBaseHeight
-        }
-        return height(for: layout, baseHeight: baseHeight, scale: scale)
-    }
-
-    public static func phonePortraitHeight(
-        for layout: KeyboardLayout,
-        scale: CGFloat = 1
-    ) -> CGFloat {
-        height(for: layout, baseHeight: phonePortraitBaseHeight, scale: scale)
-    }
-
-    private static func height(
-        for layout: KeyboardLayout,
-        baseHeight: CGFloat,
-        scale: CGFloat
-    ) -> CGFloat {
-        let verticalPadding: CGFloat = 12
-        // Read from the profile the geometry lays out with, so the strip reserved here
-        // and the band actually drawn can never disagree.
-        let toolbarChrome = KeyboardSizingProfile.default.toolbarChrome
-        let rowGap: CGFloat = 7
-        let standardRows: CGFloat = 5
-        let standardRowHeight = (
-            baseHeight - verticalPadding - toolbarChrome - rowGap * (standardRows - 1)
-        ) / standardRows
-        let rowCount = CGFloat(layout.rows.count)
-        let targetHeight = verticalPadding
-            + standardRowHeight * rowCount
-            + rowGap * CGFloat(max(layout.rows.count - 1, 0))
-            + (layout.toolbar == nil ? 0 : toolbarChrome)
-        return targetHeight * min(max(scale, 0.85), 1.2)
-    }
-}
-
 extension AdaptiveThemeColor {
     func uiColor(for traits: UITraitCollection) -> UIColor {
         let rgba = traits.userInterfaceStyle == .dark ? dark : light

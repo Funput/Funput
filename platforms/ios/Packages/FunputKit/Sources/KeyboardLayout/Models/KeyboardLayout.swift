@@ -3,13 +3,17 @@ import Foundation
 public struct KeyboardRow: Hashable, Sendable {
     public let keys: [KeySpec]
     public let horizontalInsetUnits: CGFloat
+    /// The digit row above the letters. System key sizing draws it shorter than the
+    /// other rows; Funput sizing treats it like any row.
+    public let isNumberRow: Bool
 
-    public init(keys: [KeySpec], horizontalInsetUnits: CGFloat = 0) {
+    public init(keys: [KeySpec], horizontalInsetUnits: CGFloat = 0, isNumberRow: Bool = false) {
         precondition(!keys.isEmpty, "Keyboard row must contain at least one key")
         precondition(horizontalInsetUnits >= 0, "Row inset must not be negative")
 
         self.keys = keys
         self.horizontalInsetUnits = horizontalInsetUnits
+        self.isNumberRow = isNumberRow
     }
 }
 
@@ -42,4 +46,6 @@ public struct KeyboardLayout: Hashable, Sendable {
         toolbar?.keys.contains { $0.role == .emoji } == true
             || rows.contains { row in row.keys.contains { $0.role == .emoji } }
     }
+
+    public var hasNumberRow: Bool { rows.contains(where: \.isNumberRow) }
 }

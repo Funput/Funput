@@ -77,7 +77,7 @@ final class ShortcutsPersistenceUITests: XCTestCase {
         }
         app.buttons["Xong"].tap()
         app.navigationBars.buttons.firstMatch.tap()
-        let reset = app.buttons["Khôi phục cài đặt"]
+        let reset = app.buttons["settings.data.reset"]
         for _ in 0..<12 where !reset.isHittable { app.swipeUp() }
         reset.tap()
         app.buttons["Khôi phục"].tap()

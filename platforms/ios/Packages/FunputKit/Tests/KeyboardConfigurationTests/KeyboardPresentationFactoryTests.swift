@@ -41,9 +41,9 @@ struct KeyboardPresentationFactoryTests {
         #expect(presentation.sizing.heightScale == 1.2)
     }
 
-    @Test("Default configuration produces 110 percent keyboard height")
+    @Test("Default configuration produces 100 percent keyboard height")
     func defaultKeyboardHeight() {
-        #expect(KeyboardPresentationFactory.make(from: .default).sizing.heightScale == 1.1)
+        #expect(KeyboardPresentationFactory.make(from: .default).sizing.heightScale == 1)
     }
 
     @Test("Default configuration id matches the default bundled theme")
@@ -90,6 +90,23 @@ struct KeyboardPresentationFactoryTests {
         )
         #expect(presentation.theme.backgroundEffects.mode == .image)
         #expect(presentation.theme.backgroundEffects.image?.assetID == "activation-image")
+    }
+
+    @Test("System key sizing ignores the height setting and the theme's gaps")
+    func systemSizingOverridesThemeAndScale() {
+        var custom = CustomKeyboardTheme(baseTheme: .classicLight)
+        custom.theme.geometry.horizontalGap = 14
+        var config = FunputConfiguration.default
+        config.selectedThemeID = custom.id
+        config.heightScale = 1.2
+        config.keySizing = .system
+
+        let sizing = KeyboardPresentationFactory.make(
+            from: config,
+            catalog: ThemeCatalog(customThemes: [custom])
+        ).sizing
+        #expect(sizing == .system)
+        #expect(sizing.heightScale == 1)
     }
 
     private func resolved(_ theme: KeyboardTheme) -> ResolvedTheme {

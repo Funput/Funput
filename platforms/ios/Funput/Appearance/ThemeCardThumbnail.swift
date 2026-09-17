@@ -2,10 +2,12 @@ import SwiftUI
 import ThemeSchema
 import UIKit
 
-/// A lightweight gallery representation. The selected theme is rendered by the
-/// production keyboard preview above the gallery; cards only need to communicate
-/// palette and surface hierarchy without mounting another keyboard renderer.
+/// A lightweight gallery representation. Bundled themes show artwork captured from the
+/// production renderer (``BundledThemeThumbnail``); custom themes, and any theme the
+/// artwork cannot stand in for, fall back to a drawn sketch of palette and surfaces.
+/// Neither mounts another keyboard renderer.
 struct ThemeCardThumbnail: View {
+    let themeID: String
     let theme: ResolvedTheme
     let backgroundImageData: Data?
     let interfaceStyle: UIUserInterfaceStyle
@@ -13,6 +15,18 @@ struct ThemeCardThumbnail: View {
     private let rowCounts = [10, 9, 7]
 
     var body: some View {
+        if let artwork = BundledThemeThumbnail.image(themeID: themeID, theme: theme, style: interfaceStyle) {
+            Image(uiImage: artwork)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        } else {
+            sketch
+        }
+    }
+
+    private var sketch: some View {
         ZStack {
             background
             VStack(spacing: 7) {

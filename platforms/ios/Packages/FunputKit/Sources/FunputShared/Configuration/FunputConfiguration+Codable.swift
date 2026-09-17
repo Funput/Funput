@@ -26,6 +26,7 @@ extension FunputConfiguration {
         config.smartGesturesEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartGesturesEnabled) ?? config.smartGesturesEnabled
         config.showsNumberRow = try container.decodeIfPresent(Bool.self, forKey: .showsNumberRow) ?? config.showsNumberRow
         config.layoutPreset = try container.decodeIfPresent(KeyboardLayoutPreset.self, forKey: .layoutPreset) ?? config.layoutPreset
+        config.keySizing = try container.decodeIfPresent(KeyboardKeySizing.self, forKey: .keySizing) ?? config.keySizing
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
         config.keyboardAppearance = try container.decodeIfPresent(KeyboardAppearanceOption.self, forKey: .keyboardAppearance) ?? config.keyboardAppearance
         config.personalSuggestionsEnabled = try container.decodeIfPresent(Bool.self, forKey: .personalSuggestionsEnabled) ?? config.personalSuggestionsEnabled
@@ -78,6 +79,10 @@ extension FunputConfiguration {
         // earlier build had, so like the `< 10` rung there is nothing to fix up.
         if config.schemaVersion < 12 {
             config.schemaVersion = 12
+        }
+        // v13 added `keySizing`. `.funput` is the only sizing earlier builds had.
+        if config.schemaVersion < 13 {
+            config.schemaVersion = 13
         }
         self = config
     }
