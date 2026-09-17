@@ -3,6 +3,8 @@ func qwertyLayout(
     inputMethod: KeyboardInputMethod,
     leadingRows: [KeyboardRow] = [],
     actionKeys: [KeySpec],
+    actionSpans: [KeyColumnSpan]? = nil,
+    bottomRowSpans: [KeyColumnSpan]? = nil,
     showsTelexHints: Bool = false,
     supportsVietnameseAlternates: Bool = false,
     showsToolbar: Bool = true
@@ -26,9 +28,10 @@ func qwertyLayout(
             ),
             bottomCharacterRow(
                 showsTelexHints: displaysTelexHints,
-                supportsVietnameseAlternates: supportsVietnameseAlternates
+                supportsVietnameseAlternates: supportsVietnameseAlternates,
+                columnSpans: bottomRowSpans
             ),
-            KeyboardRow(keys: actionKeys),
+            KeyboardRow(keys: actionKeys, columnSpans: actionSpans),
         ]
     )
 }

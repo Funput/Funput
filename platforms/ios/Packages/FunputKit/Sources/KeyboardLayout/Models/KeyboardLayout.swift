@@ -6,14 +6,23 @@ public struct KeyboardRow: Hashable, Sendable {
     /// The digit row above the letters. System key sizing draws it shorter than the
     /// other rows; Funput sizing treats it like any row.
     public let isNumberRow: Bool
+    /// Grid positions for every key, replacing width weights and inset when present.
+    public let columnSpans: [KeyColumnSpan]?
 
-    public init(keys: [KeySpec], horizontalInsetUnits: CGFloat = 0, isNumberRow: Bool = false) {
+    public init(
+        keys: [KeySpec],
+        horizontalInsetUnits: CGFloat = 0,
+        isNumberRow: Bool = false,
+        columnSpans: [KeyColumnSpan]? = nil
+    ) {
         precondition(!keys.isEmpty, "Keyboard row must contain at least one key")
         precondition(horizontalInsetUnits >= 0, "Row inset must not be negative")
+        precondition(columnSpans == nil || columnSpans?.count == keys.count, "One span per key")
 
         self.keys = keys
         self.horizontalInsetUnits = horizontalInsetUnits
         self.isNumberRow = isNumberRow
+        self.columnSpans = columnSpans
     }
 }
 

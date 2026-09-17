@@ -11,17 +11,21 @@ struct SystemPresetRenderingTests {
         // The renderer builds a control for every spec in the rows without filtering on
         // role, so placing an emoji key in a row needs no renderer change — this test is
         // what keeps that true.
-        let keys = SystemKeyboardLayouts.letters(.vni).rows.last?.keys ?? []
+        let keys = toolbarlessSystem.rows.last?.keys ?? []
         let emoji = keys.first { $0.role == .emoji }
         #expect(emoji?.label.isEmpty == true)
         #expect(KeyboardKeyContentStyle.icon(for: .emoji, shiftState: .lowercase) != nil)
     }
 
-    @Test("The toolbar drops its emoji button when a row provides one")
+    @Test("Exactly one control opens the emoji panel, in the toolbar or the action row")
     func toolbarYieldsToTheRowEmojiKey() {
+        // With a toolbar the system preset leaves emoji there, as Apple's action row has none.
         let system = surface(for: SystemKeyboardLayouts.letters(.vni))
-        #expect(!emojiLabels(in: system).contains { $0 == "Biểu tượng cảm xúc" })
-        #expect(emojiLabels(in: system) == ["Mở bảng biểu tượng cảm xúc"])
+        #expect(emojiLabels(in: system) == ["Biểu tượng cảm xúc"])
+
+        // Without one, the action row carries it.
+        let toolbarless = surface(for: toolbarlessSystem)
+        #expect(emojiLabels(in: toolbarless) == ["Mở bảng biểu tượng cảm xúc"])
 
         // The Funput preset has no row emoji key, so its toolbar button stays.
         let funput = surface(for: StandardKeyboardLayouts.letters(.vni))
@@ -54,6 +58,10 @@ struct SystemPresetRenderingTests {
     }
 
     private var traits: UITraitCollection { UITraitCollection(userInterfaceStyle: .dark) }
+
+    private var toolbarlessSystem: KeyboardLayout {
+        KeyboardLayoutResolver.resolve(inputMethod: .vni, mode: .letters, preset: .system, showsToolbar: false)
+    }
 
     private func surface(for layout: KeyboardLayout) -> KeyboardSurfaceView {
         let surface = KeyboardSurfaceView(presentation: KeyboardPresentation(layout: layout))

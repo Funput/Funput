@@ -1,8 +1,8 @@
 /// The letter pages of the system preset.
 ///
-/// Rows one through three are the same QWERTY block the Funput preset uses — only the
-/// action row differs, dropping the comma and period keys and gaining an emoji key
-/// where Apple puts one.
+/// Rows one through three hold the same keys as the Funput preset, but the Shift row and the
+/// action row are placed on the letter grid the way Apple places them, and the action row
+/// drops the comma and period keys.
 public enum SystemKeyboardLayouts {
     public static func letters(
         _ inputMethod: KeyboardInputMethod,
@@ -48,6 +48,8 @@ public enum SystemKeyboardLayouts {
                 ? [topNumberRow(for: inputMethod, pageID: "\(page)-\(inputMethod.rawValue)")]
                 : [],
             actionKeys: systemLettersActionRow(page: page).keys,
+            actionSpans: SystemRowSpans.action,
+            bottomRowSpans: SystemRowSpans.bottomLetters(hasNumberRow: hasNumberRow),
             showsTelexHints: inputMethod.isTelexFamily,
             supportsVietnameseAlternates: true
         )

@@ -38,9 +38,11 @@ public enum KeyboardLayoutResolver {
             let action = rows[actionIndex]
             var keys = action.keys
             keys.insert(actionRowEmojiKey(page: layout.id), at: min(1, keys.count))
+            // A grid-placed row takes the emoji key out of the switch key's width.
             rows[actionIndex] = KeyboardRow(
                 keys: keys,
-                horizontalInsetUnits: action.horizontalInsetUnits
+                horizontalInsetUnits: action.horizontalInsetUnits,
+                columnSpans: action.columnSpans == nil ? nil : SystemRowSpans.actionWithEmoji
             )
         }
         return KeyboardLayout(

@@ -30,56 +30,27 @@ struct SystemLettersParityTests {
         }
     }
 
-    @Test("The action row drops comma and period for an emoji key", arguments: KeyboardInputMethod.allCases)
+    @Test("The action row is 123, space and enter", arguments: KeyboardInputMethod.allCases)
     func actionRow(method: KeyboardInputMethod) {
-        let keys = SystemKeyboardLayouts.letters(method).rows.last?.keys ?? []
-        #expect(keys.map(\.label) == ["123", "", "Tiếng Việt", ""])
-        #expect(keys.map(\.role) == [.symbols, .emoji, .space, .enter])
-        // Compared with a tolerance: the spacebar and enter weights are derived, so an
-        // exact literal match fails on the last binary digit.
-        #expect(Self.matches(keys.map(\.widthWeight), [1.56, 1.4, 5.64, 2.6]))
-        // The row totals what `standardActionRow` does, so a unit of weight buys the same
-        // width in both presets and these numbers stay comparable across them.
-        #expect(abs(keys.map(\.widthWeight).reduce(0, +) - 11.2) < 0.001)
-        #expect(keys[2].horizontalSwipeAction == .toggleLanguage)
+        let row = SystemKeyboardLayouts.letters(method).rows.last
+        let keys = row?.keys ?? []
+        #expect(keys.map(\.label) == ["123", "Tiếng Việt", ""])
+        #expect(keys.map(\.role) == [.symbols, .space, .enter])
+        #expect(row?.columnSpans?.count == 3)
+        #expect(keys[1].horizontalSwipeAction == .toggleLanguage)
     }
 
-    /// Shared by the action-row weight checks; see the comment at the first call site.
-    static func matches(_ weights: [CGFloat], _ expected: [CGFloat]) -> Bool {
-        weights.count == expected.count
-            && zip(weights, expected).allSatisfy { abs($0 - $1) < 0.001 }
-    }
-
-    @Test("The spacebar stays near centre", arguments: [320.0, 390.0, 430.0])
-    func spacebarNearCentre(width: Double) {
-        // Two keys and two gaps sit left of the spacebar but only one key and one gap
-        // right of it, so enter has to be about as wide as both to centre it exactly.
-        // It is deliberately narrower than that, spending the difference on the spacebar,
-        // which leaves the spacebar slightly right of centre. This pins how slightly:
-        // drifting further means the trade was widened without anyone deciding to.
-        let layout = SystemKeyboardLayouts.letters(.vni)
-        let resolved = KeyboardGeometry.resolve(
-            layout: layout,
-            size: CGSize(width: width, height: 304),
-            sizing: .default
-        )
-        let space = resolved.rows.last?.first { $0.spec.role == .space }?.frame ?? .zero
-        let offset = space.midX - width / 2
-        #expect(offset > 0)
-        #expect(offset <= 10)
-    }
-
-    @Test("The switch key matches the Shift key width", arguments: [320.0, 390.0, 430.0])
-    func switchKeyMatchesShift(width: Double) {
-        // Different rows, different weight units — this is checked in points, not weights.
+    @Test("The spacebar is centred", arguments: [320.0, 390.0, 440.0])
+    func spacebarCentred(width: Double) {
+        // Apple's spacebar runs from under `x` to the end of `n`, which is symmetric about
+        // the middle of the letter grid.
         let resolved = KeyboardGeometry.resolve(
             layout: SystemKeyboardLayouts.letters(.vni),
             size: CGSize(width: width, height: 304),
             sizing: .default
         )
-        let shift = resolved.keys.first { $0.spec.role == .shift }?.frame.width ?? 0
-        let switchKey = resolved.keys.first { $0.spec.role == .symbols }?.frame.width ?? 0
-        #expect(abs(shift - switchKey) <= 1)
+        let space = resolved.rows.last?.first { $0.spec.role == .space }?.frame ?? .zero
+        #expect(abs(space.midX - width / 2) <= 1)
     }
 
     @Test("Telex hints survive the preset", arguments: [KeyboardInputMethod.telex, .telexAdvanced])
@@ -91,17 +62,30 @@ struct SystemLettersParityTests {
         #expect(hinted == ["s": "´", "f": "`", "r": "̉", "x": "˜", "j": "̣", "z": "×"])
     }
 
-    @Test("The row emoji key does not shadow the toolbar one", arguments: KeyboardInputMethod.allCases)
-    func emojiKeyIsDistinct(method: KeyboardInputMethod) {
-        let layout = SystemKeyboardLayouts.letters(method)
-        let rowEmoji = layout.rows.flatMap(\.keys).filter { $0.role == .emoji }
-        #expect(rowEmoji.count == 1)
-        // The spec still carries a toolbar emoji key; the renderer hides its button
-        // while a row provides one. The labels stay distinct so the two never read
-        // alike should both ever be on screen.
-        #expect(layout.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
-        let toolbarEmoji = layout.toolbar?.keys.first { $0.role == .emoji }
-        #expect(rowEmoji.first?.accessibilityLabel != toolbarEmoji?.accessibilityLabel)
+    @Test("Emoji moves into the action row only without a toolbar", arguments: KeyboardInputMethod.allCases)
+    func emojiOnlyWithoutToolbar(method: KeyboardInputMethod) {
+        let withToolbar = KeyboardLayoutResolver.resolve(inputMethod: method, mode: .letters, preset: .system)
+        #expect(!withToolbar.rows.flatMap(\.keys).contains { $0.role == .emoji })
+        #expect(withToolbar.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
+
+        let toolbarless = KeyboardLayoutResolver.resolve(
+            inputMethod: method,
+            mode: .letters,
+            preset: .system,
+            showsToolbar: false
+        )
+        let action = toolbarless.rows.last
+        #expect(action?.keys.map(\.role) == [.symbols, .emoji, .space, .enter])
+        #expect(action?.columnSpans?.count == 4)
+
+        // The emoji key comes out of the switch key; the spacebar does not move.
+        let size = CGSize(width: 402, height: 260)
+        func spaceFrame(_ layout: KeyboardLayout) -> CGRect? {
+            KeyboardGeometry.resolve(layout: layout, size: size, sizing: .system)
+                .rows.last?.first { $0.spec.role == .space }?.frame
+        }
+        #expect(spaceFrame(withToolbar)?.minX == spaceFrame(toolbarless)?.minX)
+        #expect(spaceFrame(withToolbar)?.width == spaceFrame(toolbarless)?.width)
     }
 
     @Test("Each preset resolves to its own layout identity", arguments: KeyboardInputMethod.allCases)

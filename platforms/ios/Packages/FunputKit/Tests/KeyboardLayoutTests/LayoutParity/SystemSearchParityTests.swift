@@ -38,9 +38,9 @@ struct SystemSearchParityTests {
     @Test("Search drops the slash key for the stock action row", arguments: KeyboardInputMethod.allCases)
     func actionRow(method: KeyboardInputMethod) {
         let keys = SystemKeyboardLayouts.search(method).rows.last?.keys ?? []
-        #expect(keys.map(\.label) == ["123", "", "Tiếng Việt", ""])
-        #expect(keys.map(\.role) == [.symbols, .emoji, .space, .enter])
-        #expect(keys[2].horizontalSwipeAction == .toggleLanguage)
+        #expect(keys.map(\.label) == ["123", "Tiếng Việt", ""])
+        #expect(keys.map(\.role) == [.symbols, .space, .enter])
+        #expect(keys[1].horizontalSwipeAction == .toggleLanguage)
 
         // The Funput preset keeps its slash and period keys for URL-ish searches.
         let funput = KeyboardLayoutResolver.resolve(

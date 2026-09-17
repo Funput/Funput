@@ -55,6 +55,11 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
     /// sum and drift away from what the geometry actually lays out.
     public var toolbarChrome: CGFloat { toolbarHeight + toolbarGap }
 
+    /// The padding below the last row of a keyboard `width` points wide.
+    public func bottomPadding(forWidth width: CGFloat) -> CGFloat {
+        keySizing == .system ? SystemKeyMetrics.bottomPadding(screenWidth: width) : verticalPadding
+    }
+
     /// How tall a row is relative to a letter row.
     public func heightWeight(of row: KeyboardRow) -> CGFloat {
         row.isNumberRow ? numberRowHeightRatio : 1
@@ -69,6 +74,7 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
         horizontalPadding: SystemKeyMetrics.horizontalPadding,
         horizontalGap: SystemKeyMetrics.horizontalGap,
         verticalGap: SystemKeyMetrics.verticalGap,
+        toolbarGap: SystemKeyMetrics.toolbarGap,
         numberRowHeightRatio: SystemKeyMetrics.numberRowHeightRatio
     )
 }
