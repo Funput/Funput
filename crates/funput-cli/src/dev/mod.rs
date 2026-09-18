@@ -7,6 +7,7 @@ mod encode;
 mod render;
 mod repl;
 mod sim;
+mod typos;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -35,6 +36,32 @@ pub enum DevCommand {
     Repl {
         #[command(flatten)]
         opts: CommonOpts,
+    },
+    /// Measure typo correction: type a corpus with a wandering finger and count
+    /// what correction fixes, misses, and — the number that matters — gets wrong.
+    Typos {
+        /// Corpus file (one word per line). Defaults to `benchmarks/sample.txt`.
+        corpus: Option<PathBuf>,
+        /// Input method to encode and type with.
+        #[arg(short, long, value_enum, default_value_t = MethodArg::Telex)]
+        method: MethodArg,
+        /// How far the finger really lands from a key centre, in key pitches. Not
+        /// the engine's scoring σ — that is its belief about the same spread, and
+        /// the interesting runs are the ones where the two differ.
+        #[arg(long, default_value_t = 0.25)]
+        noise: f32,
+        /// Seed for the touch noise, so a run is reproducible.
+        #[arg(long, default_value_t = 1)]
+        seed: u64,
+        /// Cap the number of syllables evaluated (for a quick run).
+        #[arg(long)]
+        limit: Option<usize>,
+        /// Print up to N sample words that were not typed cleanly.
+        #[arg(long, default_value_t = 0)]
+        show: usize,
+        /// Emit machine-readable JSON instead of a human report.
+        #[arg(long)]
+        json: bool,
     },
     /// Round-trip coverage check over a Vietnamese corpus (Telex, Advanced & VNI).
     Coverage {
@@ -74,6 +101,28 @@ pub fn run(args: DevArgs) -> CliResult {
             }
         }
         DevCommand::Repl { opts } => repl::run(opts.method.into(), opts.steps),
+        DevCommand::Typos {
+            corpus,
+            method,
+            noise,
+            seed,
+            limit,
+            show,
+            json,
+        } => {
+            let path = corpus.unwrap_or_else(|| PathBuf::from("benchmarks/sample.txt"));
+            let options = typos::Options {
+                method: method.into(),
+                noise,
+                seed,
+                limit,
+                show,
+                json,
+            };
+            typos::run(&path, &options).map_err(|e| {
+                CliError::Msg(format!("typos: cannot read corpus {}: {e}", path.display()))
+            })?;
+        }
         DevCommand::Coverage {
             corpus,
             json,

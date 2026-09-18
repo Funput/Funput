@@ -488,8 +488,9 @@ tác cao nghĩa là `Δ` đặt thấp quá.
 | PR | Nội dung | Cổng |
 |---|---|---|
 | 1 ✅ | `funput-engine::correction` + `KeyTouch` + phát lại + lọc + hoàn tác, `typo_correction` mặc định tắt | Differential, property test, ngân sách cấp phát, `check-loc.sh` |
-| 2 | `SuggestionEngine::frequency` + `is_known_word` (cửa chặn tiếng Anh) | Test đơn vị + ngân sách 0 cấp phát |
+| 2 ✅ | `SuggestionEngine::frequency` + `is_known_word` (cửa chặn tiếng Anh) | Test đơn vị + ngân sách 0 cấp phát |
 | 2b ✅ | C ABI + JNI (đường edit riêng trả `IntArray` cho Android) + header cbindgen | Test round-trip FFI, `gen-header.sh --check` |
+| 2c ✅ | `funput dev typos` — bộ đo tỉ lệ sửa đúng / sửa sai | Sửa sai < 1%, sửa đúng ≥ 50% ở nhiễu ngón 0,25 |
 | 3 | iOS: phím kề từ hình học, mang điểm chạm qua pipeline, hai bước ở ranh giới từ, ghi tài liệu | Test đơn vị + UI test §12.6 |
 | 4 | iOS: hoàn tác, chip trên thanh gợi ý, công tắc Cài đặt, tôn trọng `autocorrectionType` | UI test hoàn tác |
 | 5 | Android: cùng lõi, batch edit | Instrumented test |
