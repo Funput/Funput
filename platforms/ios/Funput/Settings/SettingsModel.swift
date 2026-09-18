@@ -2,6 +2,8 @@ import Combine
 import FunputShared
 import KeyboardLayout
 import SwiftUI
+import ThemeRuntime
+import ThemeSchema
 
 @MainActor
 final class SettingsModel: ObservableObject {
@@ -46,6 +48,15 @@ final class SettingsModel: ObservableObject {
     func update<Value>(_ keyPath: WritableKeyPath<FunputConfiguration, Value>, to value: Value) {
         var candidate = configuration
         candidate[keyPath: keyPath] = value
+        commit(candidate)
+    }
+
+    func selectKeySizing(_ sizing: KeyboardKeySizing) {
+        var candidate = configuration
+        candidate.keySizing = sizing
+        if sizing == .system {
+            candidate.selectedThemeID = KeyboardTheme.iosSystem.id
+        }
         commit(candidate)
     }
 
@@ -124,26 +135,4 @@ final class SettingsModel: ObservableObject {
         }
         configuration = candidate
     }
-}
-
-extension KeyboardInputMethod {
-    var settingsTitle: String {
-        switch self {
-        case .telex: "Telex"
-        case .telexAdvanced: "Telex nâng cao"
-        case .vni: "VNI"
-        }
-    }
-
-    var settingsSummary: String {
-        switch self {
-        case .telex: "Dùng tổ hợp chữ để nhập dấu."
-        case .telexAdvanced: "Telex nâng cao — [→ư, ]→ơ, w đầu từ→ư."
-        case .vni: "Dùng các phím số để nhập dấu."
-        }
-    }
-}
-
-extension ToneStyleOption {
-    var settingsTitle: String { self == .traditional ? "Truyền thống" : "Hiện đại" }
 }
