@@ -58,10 +58,17 @@ final class KeyboardBackdropView: UIView {
         self.blendsSystemEdge = blendsSystemEdge
         imageView.image = image
         let usesImage = theme.backgroundEffects.mode == .image && image != nil
+        let usesHostBackdrop = !usesImage && theme.material == .translucent
+            && theme.backgroundStart.uiColor(for: traits).cgColor.alpha == 0
+            && theme.backgroundEnd.uiColor(for: traits).cgColor.alpha == 0
+        themedView.isHidden = usesHostBackdrop
         imageView.isHidden = !usesImage
         overlayView.isHidden = !usesImage
         gradientView.isHidden = usesImage
-        configureMaterial(theme: theme, usesImage: usesImage, pinsAppearance: pinsAppearance)
+        configureMaterial(
+            theme: theme, usesImage: usesImage,
+            usesHostBackdrop: usesHostBackdrop, pinsAppearance: pinsAppearance
+        )
         gradientLayer.isHidden = gradientView.isHidden
         if usesImage {
             overlayView.backgroundColor = theme.backgroundEffects.overlay.uiColor(for: traits)
@@ -73,11 +80,17 @@ final class KeyboardBackdropView: UIView {
         updateEdgeMask()
     }
 
-    /// The host material is the *app's* glass, and it stays on that app's appearance no
-    /// matter what this keyboard overrides. A keyboard pinned to dark inside a light app
-    /// would draw dark-mode labels straight onto light glass, so once the appearance is
-    /// pinned the backdrop has to bring its own material.
-    private func configureMaterial(theme: ResolvedTheme, usesImage: Bool, pinsAppearance: Bool) {
+    /// Transparent translucent themes explicitly borrow the keyboard host. Other themes
+    /// borrow it only for unpinned Liquid Glass; pinned themes bring their own material.
+    private func configureMaterial(
+        theme: ResolvedTheme, usesImage: Bool,
+        usesHostBackdrop: Bool, pinsAppearance: Bool
+    ) {
+        if usesHostBackdrop {
+            usesHostMaterial = true
+            materialView.effect = nil
+            return
+        }
         let reducesTransparency = UIAccessibility.isReduceTransparencyEnabled
         if #available(iOS 26.0, *), theme.material == .glass, !reducesTransparency, !pinsAppearance {
             usesHostMaterial = true

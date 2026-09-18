@@ -80,7 +80,7 @@ extension SettingsPicker {
                     id: value.rawValue, title: value.settingsTitle,
                     summary: value.settingsSummary,
                     isSelected: model.configuration.keySizing == value,
-                    select: { model.update(\.keySizing, to: value) }
+                    select: { model.selectKeySizing(value) }
                 )
             }
         case .language:

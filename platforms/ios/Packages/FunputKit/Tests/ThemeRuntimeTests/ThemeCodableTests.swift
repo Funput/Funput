@@ -16,6 +16,7 @@ struct ThemeCodableTests {
         let ids = BundledThemes.all.map(\.id)
         #expect(ids == [
             KeyboardTheme.funputGlass.id,
+            KeyboardTheme.iosSystem.id,
             KeyboardTheme.classicLight.id,
             KeyboardTheme.midnight.id,
             KeyboardTheme.lotusSilk.id,
