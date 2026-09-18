@@ -16,6 +16,8 @@ struct iOSSystemThemeTests {
         #expect(theme.metrics.cornerRadius == 8)
         #expect(theme.metrics.borderWidth == 0)
         #expect(theme.palette.accent == theme.palette.label)
+        #expect(theme.palette.backgroundStart.light.alpha == 0)
+        #expect(theme.palette.backgroundStart.dark.alpha == 0)
     }
 
     @Test("Theme is valid and survives persistence")

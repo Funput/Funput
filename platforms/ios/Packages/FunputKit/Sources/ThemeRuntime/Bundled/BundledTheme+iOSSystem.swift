@@ -8,12 +8,12 @@ public extension KeyboardTheme {
         material: .translucent,
         palette: ThemePalette(
             backgroundStart: AdaptiveThemeColor(
-                light: ThemeRGBA(hex: 0xD1D3D9),
-                dark: ThemeRGBA(hex: 0x1C1C1E)
+                light: ThemeRGBA(hex: 0xD1D3D9, alpha: 0),
+                dark: ThemeRGBA(hex: 0x1C1C1E, alpha: 0)
             ),
             backgroundEnd: AdaptiveThemeColor(
-                light: ThemeRGBA(hex: 0xD1D3D9),
-                dark: ThemeRGBA(hex: 0x1C1C1E)
+                light: ThemeRGBA(hex: 0xD1D3D9, alpha: 0),
+                dark: ThemeRGBA(hex: 0x1C1C1E, alpha: 0)
             ),
             characterKey: AdaptiveThemeColor(
                 light: ThemeRGBA(hex: 0xFFFFFF),
