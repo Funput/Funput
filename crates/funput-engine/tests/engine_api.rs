@@ -511,6 +511,7 @@ fn configure_applies_all_options() {
         shortcuts_enabled: false,
         shortcut_smart_case: false,
         shortcuts_in_english: false,
+        typo_correction: true,
     });
     assert_eq!(engine.method(), InputMethod::Vni);
     assert_eq!(engine.tone_style(), ToneStyle::Modern);
@@ -520,6 +521,7 @@ fn configure_applies_all_options() {
     assert!(!config.smart_restore && !config.eager_restore);
     assert!(!config.shortcuts_enabled && !config.shortcut_smart_case);
     assert!(!config.shortcuts_in_english);
+    assert!(config.typo_correction);
 }
 
 /// `configure` keeps the `set_*` side effect: switching method mid-word clears the

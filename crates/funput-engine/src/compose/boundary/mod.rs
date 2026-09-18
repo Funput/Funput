@@ -6,6 +6,7 @@ use funput_core::{InputMethod, is_bare_shaped_vowel, is_complete_syllable};
 
 use crate::ImeResult;
 use crate::compose::RestoreOverride;
+use crate::correction;
 use crate::model::Session;
 
 /// What ends a word with no input method in play — English mode, where nothing
@@ -19,15 +20,45 @@ pub(crate) fn is_word_boundary(method: InputMethod, key: char) -> bool {
     !full_telex_shortcut && is_english_boundary(key)
 }
 
-pub(crate) fn should_restore(session: &Session) -> bool {
-    if session.restore_override == Some(RestoreOverride::ForceVietnamese) {
-        return false;
-    }
-    session.config.smart_restore
+/// The boundary's read of the word it is about to commit.
+///
+/// One struct because one `is_complete_syllable` call answers both questions, and
+/// that call allocates: it builds the rhyme it validates. English restore and typo
+/// correction each need the verdict, and asking twice would put a second allocation
+/// on every word boundary.
+pub(crate) struct Verdict {
+    /// The buffer is a finished Vietnamese syllable.
+    pub(crate) complete: bool,
+    /// English restore wants this word back as its raw keystrokes.
+    pub(crate) restore: bool,
+}
+
+pub(crate) fn judge(session: &Session) -> Verdict {
+    let pinned = session.restore_override == Some(RestoreOverride::ForceVietnamese);
+    let restore_candidate = !pinned
+        && session.config.smart_restore
         && !session.buffer.is_empty()
-        && session.keys != session.buffer
-        && !is_complete_syllable(&session.buffer)
-        && !keystrokes_intend_vietnamese(session)
+        && session.keys != session.buffer;
+    // With restore already refused and correction unable to act, nobody needs the
+    // verdict — and the engine must not start paying for a syllable check it never
+    // made before.
+    if !restore_candidate && !correction::wants_verdict(session) {
+        return Verdict {
+            complete: false,
+            restore: false,
+        };
+    }
+    let complete = !session.buffer.is_empty() && is_complete_syllable(&session.buffer);
+    Verdict {
+        complete,
+        restore: restore_candidate && !complete && !keystrokes_intend_vietnamese(session),
+    }
+}
+
+/// The restore half of [`judge`], for tests that ask about it on its own.
+#[cfg(test)]
+pub(crate) fn should_restore(session: &Session) -> bool {
+    judge(session).restore
 }
 
 /// Whether the keystrokes behind `buffer` can only have been meant as Vietnamese,
@@ -86,13 +117,28 @@ pub(crate) fn on_english_boundary(session: &mut Session, boundary_key: char) -> 
 }
 
 pub(crate) fn on_word_boundary(session: &mut Session, boundary_key: char) -> ImeResult {
-    let result = if let Some(expansion) = shortcut::expansion(session, boundary_key) {
-        expansion
-    } else if should_restore(session) {
+    if let Some(expansion) = shortcut::expansion(session, boundary_key) {
+        return finish(session, boundary_key, expansion);
+    }
+    let verdict = judge(session);
+    // Typo correction gets the word before English restore does, and is deliberately
+    // not hung off `restore`: the eager restore in `pipeline` has usually already
+    // rewritten the buffer to the raw keys by now, which is what makes `restore`
+    // false for precisely the mistyped words correction exists for. What it parks is
+    // answered by the platform on the next call; this keystroke behaves as it always
+    // has, so nothing here can change the text the app already shows.
+    if correction::offer(session, boundary_key, &verdict) {
+        return finish(session, boundary_key, ImeResult::none());
+    }
+    let result = if verdict.restore {
         english_restore_result(session, boundary_key)
     } else {
         ImeResult::none()
     };
+    finish(session, boundary_key, result)
+}
+
+fn finish(session: &mut Session, boundary_key: char, result: ImeResult) -> ImeResult {
     update_caps_on_boundary(session, boundary_key);
     session.clear();
     result

@@ -1,10 +1,12 @@
 //! The public [`Engine`] facade and the methods callers drive it with.
 //!
-//! This module is just the verbs — `config` (settings), `process` (feed keys), and
-//! `editing` (backspace / flip). The state they mutate lives in `crate::model`; the
-//! composition algorithms they call live in `crate::compose`.
+//! This module is just the verbs — `config` (settings), `process` (feed keys),
+//! `editing` (backspace / flip), and `correction` (the typo-correction handshake).
+//! The state they mutate lives in `crate::model`; the composition algorithms they
+//! call live in `crate::compose` and `crate::correction`.
 
 mod config;
+mod correction;
 mod editing;
 mod process;
 

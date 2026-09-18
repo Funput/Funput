@@ -120,6 +120,7 @@ impl TermConfig {
             shortcuts_enabled: self.shortcuts_enabled,
             shortcut_smart_case: self.shortcut_smart_case,
             shortcuts_in_english: self.shortcuts_in_english,
+            typo_correction: false, // no touch positions from a physical keyboard
         });
         engine.clear_shortcuts();
         for (trigger, expansion) in &self.shortcuts {

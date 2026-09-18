@@ -13,6 +13,7 @@ funput-core = { path = "../funput-core" }
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
+proptest = "1.11.0"
 
 [[bench]]
 name = "process_char"
@@ -20,4 +21,8 @@ harness = false
 
 [[bench]]
 name = "advanced_telex"
+harness = false
+
+[[bench]]
+name = "correction"
 harness = false

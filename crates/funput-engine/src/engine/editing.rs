@@ -1,6 +1,7 @@
 use funput_core::is_reopenable_syllable;
 
 use crate::compose::{diff, flip};
+use crate::correction;
 use crate::{Engine, ImeResult};
 
 impl Engine {
@@ -27,6 +28,10 @@ impl Engine {
         // costs nothing; the syllable check above is the only allocation here (it
         // builds a rhyme string), the same one every word boundary already pays.
         self.session.clear();
+        // The raw keys are being invented from the text, so there is no touch behind
+        // them: the word stays out of typo correction until the user starts a new one.
+        correction::discard(&mut self.session);
+        correction::invalidate(&mut self.session);
         self.session.buffer.push_str(text);
         self.session.keys.push_str(text);
         self.session.vn_form.push_str(text);
@@ -38,9 +43,17 @@ impl Engine {
     /// English mode keeps this too when gõ tắt is live there: a mistyped trigger has
     /// to be correctable, and `keys` is what the expansion is looked up by.
     pub fn on_backspace(&mut self) -> ImeResult {
+        // A correction applied on the previous keystroke owns this Backspace: undo it
+        // rather than nibble the boundary character. What it restores lives in the
+        // correction state, not in `keys` — which this function overwrites below.
+        if let Some(undo) = correction::take_undo(&mut self.session) {
+            return undo;
+        }
         if !self.session.enabled && !self.session.english_shortcuts() {
             return ImeResult::none();
         }
+        correction::discard(&mut self.session);
+        correction::invalidate(&mut self.session);
         self.session.buffer.pop();
         self.session.resync_after_backspace();
         ImeResult::none()
@@ -48,6 +61,7 @@ impl Engine {
 
     /// Flip the live word between its Vietnamese and raw-keystroke forms.
     pub fn flip_composing(&mut self) -> ImeResult {
+        correction::discard(&mut self.session);
         match flip::flip(
             &self.session.buffer,
             &self.session.keys,
