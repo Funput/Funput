@@ -59,7 +59,7 @@ impl SuggestionEngine {
     /// through `normalize::exact_chars` inside the loop instead would rebuild an
     /// NFC iterator per word and take a cache miss on each one — affordable on
     /// the learn path, and this now runs on every keystroke.
-    pub(super) fn context_slot(&self, previous: &str) -> Option<(u32, u16)> {
+    pub(crate) fn context_slot(&self, previous: &str) -> Option<(u32, u16)> {
         let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
         let mut len = 0;
         for scalar in normalize::exact_chars(previous) {
