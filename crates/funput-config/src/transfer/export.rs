@@ -46,6 +46,7 @@ pub fn to_document(s: &Settings, source: Source) -> ConfigDocument {
                 flip_hotkey: Some(s.flip_hotkey.id().to_string()),
                 flip_combo: s.flip_combo.clone(),
                 app_language_memory: Some(s.app_language_memory.clone()),
+                app_language_memory_enabled: Some(s.app_language_memory_enabled),
                 excluded_apps: None,
             }),
         }),

@@ -92,6 +92,9 @@ pub fn set_shortcuts_in_english(on: bool) {
 pub fn set_auto_english_on_foreign_layout(on: bool) {
     with(|s| s.set_auto_english_on_foreign_layout(on));
 }
+pub fn set_remember_app_language(on: bool) {
+    with(|s| s.set_remember_app_language(on));
+}
 pub fn set_toggle_hotkey(hotkey: Hotkey) {
     with(|s| s.set_toggle_hotkey(hotkey));
 }

@@ -114,6 +114,11 @@ pub struct WindowsBlock {
     /// import — an app already remembered locally keeps its choice.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub app_language_memory: Option<BTreeMap<String, bool>>,
+    /// Whether that memory is consulted at all. Rides along with the map it
+    /// governs — a file that carries the pins but not the switch would arrive with
+    /// them silently in force. Overwrites the local switch when present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub app_language_memory_enabled: Option<bool>,
     /// **Legacy, read-only.** The removed "always English" list, still decoded
     /// from older exports so their ids migrate into `app_language_memory` as
     /// English. Never written.

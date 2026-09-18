@@ -8,8 +8,10 @@ export component OverviewPage inherits VerticalLayout {
     in-out property <bool> vi-enabled;
     in-out property <bool> launch-at-login;
     in-out property <bool> auto-english-layout;
+    in-out property <bool> remember-per-app;
     callback set-enabled(bool);
     callback set-auto-english-layout(bool);
+    callback set-remember-per-app(bool);
     callback set-launch(bool);
     callback pick-method(string);
 
@@ -52,6 +54,16 @@ export component OverviewPage inherits VerticalLayout {
                 ];
                 current: root.method;
                 changed(value) => { root.pick-method(value); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            title: "Nhớ Anh / Việt theo ứng dụng";
+            subtitle: "Bấm phím tắt trong một app để ghim VI/EN riêng cho app đó.";
+            icon: @image-url("../../icons/row/app.svg");
+            AccentSwitch {
+                checked <=> root.remember-per-app;
+                toggled => { root.set-remember-per-app(self.checked); }
             }
         }
         Rectangle { height: 1px; background: Theme.divider; }

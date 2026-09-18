@@ -47,6 +47,10 @@ pub fn set_auto_english_layout(on: bool) {
     shell::set_auto_english_on_foreign_layout(on);
 }
 
+pub fn set_remember_per_app(on: bool) {
+    shell::set_remember_app_language(on);
+}
+
 pub fn set_enabled(on: bool) {
     shell::set_enabled(on);
 }

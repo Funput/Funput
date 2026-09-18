@@ -98,6 +98,7 @@ pub(super) fn populate(window: &SettingsWindow) {
     window.set_spell_check(settings.spell_check);
     window.set_auto_capitalize(settings.auto_capitalize);
     window.set_auto_english_layout(settings.auto_english_on_foreign_layout);
+    window.set_remember_per_app(settings.app_language_memory_enabled);
     window.set_launch_at_login(settings.launch_at_login);
     window.set_version(env!("CARGO_PKG_VERSION").into());
     // A Store build parks the About pane in `store`: message only, no actions.

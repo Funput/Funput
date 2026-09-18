@@ -45,6 +45,7 @@ impl Default for Settings {
             launch_at_login: false,
             has_completed_onboarding: false,
             app_language_memory: BTreeMap::new(),
+            app_language_memory_enabled: true,
             // A document nobody has written yet needs no repair; only a file
             // missing the key reads as 0 and gets one.
             schema: SCHEMA,
