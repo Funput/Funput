@@ -8,6 +8,7 @@ public enum BundledThemes {
     /// Every theme shipped with the app, in display order.
     public static let all: [KeyboardTheme] = [
         .funputGlass,
+        .iosSystem,
         .classicLight,
         .midnight,
         .lotusSilk,

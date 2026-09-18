@@ -101,7 +101,7 @@ struct AppearanceTests {
         let ids = model.themes.map(\.id)
 
         #expect(ids == BundledThemes.all.map(\.id))
-        #expect(Set(ids).count == 5)
+        #expect(Set(ids).count == 6)
         #expect(model.presentation(for: KeyboardTheme.midnight.id).theme != .funputGlass)
         #expect(AppearancePreviewMode.light.interfaceStyle == .light)
         #expect(AppearancePreviewMode.dark.interfaceStyle == .dark)
