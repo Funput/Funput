@@ -2,8 +2,8 @@
 
 ## Trạng thái
 
-**Lõi Rust đã hiện thực** (`crates/funput-engine/src/correction/`, mặc định tắt). FFI/JNI,
-iOS và Android chưa. Mọi quyết định hành vi sống ở tài liệu này; khi hiện thực lệch khỏi bản
+**Phần Rust đã hiện thực**: lõi (`crates/funput-engine/src/correction/`), hai câu truy vấn ở
+`funput-suggestions`, và cầu nối C ABI + JNI. Mặc định tắt. iOS và Android chưa. Mọi quyết định hành vi sống ở tài liệu này; khi hiện thực lệch khỏi bản
 viết, cập nhật lại tài liệu trong cùng PR — các mục dưới đây đã được sửa theo đúng những gì
 code làm, chỗ nào lệch đều ghi rõ lý do.
 
@@ -313,8 +313,8 @@ luật Δ chỉ tồn tại một bản. `has_correction_undo` là bắt buộc 
 
 ### 7.2. C ABI (`funput-ffi`)
 
-Chưa hiện thực (PR kế tiếp). Bề mặt dự kiến, trả `FunputResult` theo giá trị như mọi hàm engine
-khác:
+Đã hiện thực (`crates/funput-ffi/src/engine/correction/`), trả `FunputResult` theo giá trị như
+mọi hàm engine khác:
 
 ```c
 void         funput_engine_set_next_key_touch(FunputEngine*, const FunputKeyTouch*);
@@ -330,6 +330,15 @@ void         funput_set_typo_correction(FunputEngine*, bool);
 `funput_set_typo_correction` là setter riêng: `FunputConfig` là `#[repr(C)]` truyền theo giá
 trị, thêm trường vào là vỡ ABI — đúng lối `funput_set_shortcuts_enabled` đã đi.
 
+Hai điều học được khi làm:
+
+- `funput_engine_choose_correction` **không** dùng được `with_engine_ref`: fallback của nó là
+  `Default`, tức `0` — handle null sẽ nói "áp dụng ứng viên đầu tiên". Sentinel là `-1`, nên hàm
+  này tự bọc guard. Test `every_call_is_null_safe` bắt được đúng lỗi này.
+- Hằng số trong header không được trỏ sang crate khác: cbindgen đặt `parse_deps = false`, nên
+  `TOUCH_ALTERNATE_CAP = MAX_ALTERNATES` sinh ra một `#define` gọi tên macro không tồn tại. Viết
+  số thẳng, và `const _: () = assert!(...)` giữ hai bên khớp nhau.
+
 `FunputKeyTouch` và `FunputCorrectionCandidate` là `#[repr(C)]`, chuỗi UTF-32 cố định như
 `FunputResult` hiện có (`chars: [u32; 64]`). JNI phản chiếu đúng ba hàm này.
 
@@ -339,8 +348,34 @@ trị, thêm trường vào là vỡ ABI — đúng lối `funput_set_shortcuts_
 impl SuggestionEngine {
     /// How many times the user typed `word`, 0 when unknown. Read-only, no I/O.
     pub fn frequency(&self, word: &str) -> u32;
+
+    /// A word the user has typed, or one in the shipped English list — the veto.
+    pub fn is_known_word(&self, word: &str) -> bool;
 }
 ```
+
+### 7.4. JNI (`funput-jni`)
+
+Một lệnh sửa về Android dưới dạng `IntArray` `[backspace, codepoint…]` — đúng dáng `nativeStats`
+đã dùng cho số — nên một lần gọi mang cả hai nửa và không có thứ tự nào để gọi sai:
+
+```kotlin
+external fun nativeSetNextKeyTouch(handle: Long, typed: Int, typedDistance: Float,
+                                   a1: Int, d1: Float, a2: Int, d2: Float, a3: Int, d3: Float)
+external fun nativeHasPendingCorrection(handle: Long): Boolean
+external fun nativeCorrectionCandidates(handle: Long): Array<String>
+external fun nativePendingCorrectionBackspace(handle: Long): Int
+external fun nativeChooseCorrection(handle: Long, uses: IntArray): Int
+external fun nativeApplyCorrection(handle: Long, index: Int): IntArray
+external fun nativeHasCorrectionUndo(handle: Long): Boolean
+external fun nativeCorrectionUndoText(handle: Long): String
+external fun nativeUndoCorrection(handle: Long): IntArray
+external fun nativeSetTypoCorrection(handle: Long, on: Boolean)
+```
+
+`nativeUndoCorrection` tách khỏi `nativeBackspace` và là no-op khi `nativeHasCorrectionUndo` sai,
+nên một phím Xoá bình thường không bao giờ bị nuốt ở đường này: IME hỏi trước rồi gọi một trong
+hai. `String(edit, 1, edit.size - 1)` dựng lại chữ từ phần đuôi.
 
 ## 8. iOS
 
@@ -381,9 +416,9 @@ gốc và tự bật cờ "không sửa lại". Host chỉ cần hỏi `has_corr
 | Tần suất từ | `PersonalSuggestionNative` (đã có `nativeQuery`) |
 | Cờ autocorrect | `EditorInfo.inputType` — bỏ qua khi có `TYPE_TEXT_FLAG_NO_SUGGESTIONS` hoặc ô mật khẩu |
 
-**Cần sửa trước khi bật trên Android:** `nativeBackspace` và `nativeBoundary` trong
-`crates/funput-jni/src/engine/composition.rs` chỉ trả `String` và vứt `ImeResult` đi, nên hôm
-nay chúng không tải nổi một lệnh sửa. PR FFI/JNI phải thêm đường trả kết quả đầy đủ.
+**Đã giải quyết:** `nativeBackspace` và `nativeBoundary` chỉ trả `String` và vứt `ImeResult`
+đi, nên chúng không tải nổi một lệnh sửa. Thay vì đổi hai hàm đó (và đổi cả chữ ký Java của
+chúng), phần correction có đường riêng trả `IntArray` — xem §7.4.
 
 ## 10. Desktop
 
@@ -454,7 +489,7 @@ tác cao nghĩa là `Δ` đặt thấp quá.
 |---|---|---|
 | 1 ✅ | `funput-engine::correction` + `KeyTouch` + phát lại + lọc + hoàn tác, `typo_correction` mặc định tắt | Differential, property test, ngân sách cấp phát, `check-loc.sh` |
 | 2 | `SuggestionEngine::frequency` + `is_known_word` (cửa chặn tiếng Anh) | Test đơn vị + ngân sách 0 cấp phát |
-| 2b | C ABI + JNI (kể cả đường backspace trả kết quả cho Android) + header cbindgen | Test round-trip FFI, `gen-header.sh --check` |
+| 2b ✅ | C ABI + JNI (đường edit riêng trả `IntArray` cho Android) + header cbindgen | Test round-trip FFI, `gen-header.sh --check` |
 | 3 | iOS: phím kề từ hình học, mang điểm chạm qua pipeline, hai bước ở ranh giới từ, ghi tài liệu | Test đơn vị + UI test §12.6 |
 | 4 | iOS: hoàn tác, chip trên thanh gợi ý, công tắc Cài đặt, tôn trọng `autocorrectionType` | UI test hoàn tác |
 | 5 | Android: cùng lõi, batch edit | Instrumented test |

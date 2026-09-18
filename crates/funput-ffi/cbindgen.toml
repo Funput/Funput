@@ -13,6 +13,8 @@ include = [
     "FunputConvertCasing",
     "FunputConvertRow",
     "FunputConvertView",
+    "FunputCorrectionCandidate",
+    "FunputKeyTouch",
     "FunputResult",
     "FunputSuggestionCandidate",
     "FunputSuggestionResult",
