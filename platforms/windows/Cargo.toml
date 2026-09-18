@@ -41,7 +41,7 @@ slint = { version = "1.17", default-features = false, features = [
 ] }
 # Tray icon + menu — the standalone crate Tauri itself wraps, so no WebView2. The
 # menu types come from tray-icon's re-exported `muda` (kept version-matched).
-tray-icon = "0.24"
+tray-icon = "0.25"
 # Launch-at-login (writes the HKCU\...\Run registry value).
 auto-launch = "0.6"
 # Open external links in the system browser.
