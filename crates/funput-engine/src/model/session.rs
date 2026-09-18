@@ -72,6 +72,28 @@ impl Session {
         self.vn_form.clear();
         self.restore_override = None;
     }
+
+    /// Bring the per-word state back in line with a `buffer` that Backspace just
+    /// shortened. The counterpart of [`Session::clear`]: a word boundary throws the
+    /// whole word away, Backspace eats it one character at a time.
+    ///
+    /// `vn_form` describes a composition that no longer exists, so it follows the
+    /// buffer down — left standing, the flip hotkey would re-type the word that was
+    /// just deleted.
+    ///
+    /// A flip choice only outlives the word it was made on. Correcting a typo
+    /// mid-word is still that word, so the choice stays; emptying the buffer ends
+    /// it, and the choice has to go with it or it would pin the *next* word too and
+    /// keep its diacritics off.
+    pub(crate) fn resync_after_backspace(&mut self) {
+        self.keys.clear();
+        self.keys.push_str(&self.buffer);
+        self.vn_form.clear();
+        self.vn_form.push_str(&self.buffer);
+        if self.buffer.is_empty() {
+            self.restore_override = None;
+        }
+    }
 }
 
 impl Default for Session {
@@ -117,5 +139,42 @@ mod tests {
             session.shortcuts.get("vn").map(String::as_str),
             Some("Việt Nam")
         );
+    }
+
+    /// A word flipped to its raw keys and then deleted character by character. The
+    /// choice must not survive the word it was made on, or it pins the next one.
+    #[test]
+    fn emptying_the_buffer_drops_the_flip_choice() {
+        let mut session = Session::new();
+        session.buffer.push_str("mas");
+        session.keys.push_str("mas");
+        session.vn_form.push_str("má");
+        session.restore_override = Some(RestoreOverride::ForceRaw);
+
+        for _ in 0..3 {
+            session.buffer.pop();
+            session.resync_after_backspace();
+        }
+        assert!(session.keys.is_empty());
+        assert!(session.vn_form.is_empty());
+        assert_eq!(session.restore_override, None);
+    }
+
+    /// Backspacing inside a word is correcting a typo, not abandoning the word, so
+    /// the flip choice stays — but `vn_form` still follows the shortened buffer, or
+    /// the flip hotkey would re-type the characters just deleted.
+    #[test]
+    fn backspacing_inside_a_word_keeps_the_flip_choice() {
+        let mut session = Session::new();
+        session.buffer.push_str("mas");
+        session.keys.push_str("mas");
+        session.vn_form.push_str("má");
+        session.restore_override = Some(RestoreOverride::ForceRaw);
+
+        session.buffer.pop();
+        session.resync_after_backspace();
+        assert_eq!(session.keys, "ma");
+        assert_eq!(session.vn_form, "ma");
+        assert_eq!(session.restore_override, Some(RestoreOverride::ForceRaw));
     }
 }
