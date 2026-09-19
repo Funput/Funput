@@ -25,10 +25,10 @@ struct KeyboardAlternatePaletteLayoutTests {
         }
     }
 
-    @Test("The palette rises from the key instead of dropping below it")
+    @Test("The palette stays above lower-row keys")
     func risesAbove() {
         let bounds = CGRect(x: 0, y: 0, width: 390, height: 260)
-        for row in [CGFloat(62), 111, 160, 209] {
+        for row in [CGFloat(160), 209] {
             let source = CGRect(x: 156, y: row, width: 36, height: 40)
             let layout = KeyboardAlternatePaletteLayout.resolve(
                 count: 13,
@@ -59,7 +59,7 @@ struct KeyboardAlternatePaletteLayoutTests {
         }
     }
 
-    @Test("Vietnamese diacritic keys keep the palette above a top-row hold")
+    @Test("Top-row palettes clamp inside the surface and overlap only when needed")
     func vietnameseTopRow() {
         let bounds = CGRect(x: 0, y: 0, width: 390, height: 304)
         for count in [6, 12, 18] {
@@ -69,8 +69,9 @@ struct KeyboardAlternatePaletteLayoutTests {
                 sourceFrame: source,
                 bounds: bounds
             )
-            #expect(layout.frame.maxY <= source.minY)
-            #expect(!layout.overlapsSource)
+            #expect(bounds.contains(layout.frame))
+            #expect(layout.frame.minY == 4)
+            #expect(layout.overlapsSource == (count > 6))
         }
     }
 
@@ -85,17 +86,17 @@ struct KeyboardAlternatePaletteLayoutTests {
         #expect(layout.itemFrames.count == 2)
     }
 
-    @Test("A top-row Vietnamese catalog overflows above the surface instead of covering the key")
-    func overflowsAboveSurface() {
+    @Test("A long top-row catalog stays in bounds and preserves the default hold")
+    func clampsInsideSurface() {
+        let bounds = CGRect(x: 0, y: 0, width: 390, height: 260)
         let source = CGRect(x: 300, y: 62, width: 36, height: 40)
         let layout = KeyboardAlternatePaletteLayout.resolve(
             count: 19,
             sourceFrame: source,
-            bounds: CGRect(x: 0, y: 0, width: 390, height: 260)
+            bounds: bounds
         )
-        #expect(layout.frame.maxY <= source.minY)
-        #expect(!layout.overlapsSource)
-        #expect(layout.overflowAbove > 0)
+        #expect(bounds.contains(layout.frame))
+        #expect(layout.overlapsSource)
         let start = CGPoint(x: source.midX, y: source.midY)
         #expect(layout.selection(at: start, from: start) == 0)
     }

@@ -10,12 +10,6 @@ extension KeyboardViewController {
         if changed { invalidateInputViewSize() }
     }
 
-    func setPreferredHeightOverlayPad(_ pad: CGFloat) {
-        guard heightController.setOverlayPad(pad) else { return }
-        invalidateInputViewSize()
-        view.layoutIfNeeded()
-    }
-
     func activatePreferredHeightForAppearance() {
         updatePreferredHeight()
         markPreferredHeightVisible()

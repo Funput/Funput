@@ -27,7 +27,6 @@ extension KeyboardSurfaceView {
         layout: KeyboardAlternatePaletteLayout?,
         selectedIndex: Int?
     ) {
-        syncOverlayPad(layout?.overflowAbove ?? 0)
         guard let key, let layout else {
             alternatePaletteView.hide()
             return
@@ -39,16 +38,7 @@ extension KeyboardSurfaceView {
             presentation: presentation,
             traits: traitCollection
         )
-        alternatePaletteView.frame = layout.frame.offsetBy(dx: 0, dy: overlayPadTop)
         bringSubviewToFront(alternatePaletteView)
-    }
-
-    func syncOverlayPad(_ overflow: CGFloat) {
-        let next = ceil(overflow)
-        guard overlayPadTop != next else { return }
-        overlayPadTop = next
-        onOverlayPadChanged?(next)
-        setNeedsLayout()
     }
 }
 #endif

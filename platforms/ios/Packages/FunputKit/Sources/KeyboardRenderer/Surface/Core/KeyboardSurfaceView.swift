@@ -29,11 +29,7 @@ public final class KeyboardSurfaceView: UIView {
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
     public var onClipboardPaste: ((KeyboardClipboardPaste) -> Void)?
-    public var onOverlayPadChanged: ((CGFloat) -> Void)?
-    var overlayPadTop: CGFloat = 0
-    var keyboardSize: CGSize {
-        CGSize(width: bounds.width, height: max(0, bounds.height - overlayPadTop))
-    }
+    var keyboardSize: CGSize { bounds.size }
     var keyboardBounds: CGRect { CGRect(origin: .zero, size: keyboardSize) }
 
     let backdropView = KeyboardBackdropView()
@@ -103,7 +99,7 @@ public final class KeyboardSurfaceView: UIView {
 
     public override func layoutSubviews() {
         super.layoutSubviews()
-        let band = CGRect(origin: CGPoint(x: 0, y: overlayPadTop), size: keyboardSize)
+        let band = keyboardBounds
         backdropView.frame = band
         contentHost.frame = band
         keysHost.frame = contentHost.bounds

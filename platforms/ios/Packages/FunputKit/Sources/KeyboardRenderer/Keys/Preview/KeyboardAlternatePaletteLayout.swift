@@ -7,8 +7,6 @@ struct KeyboardAlternatePaletteLayout: Equatable {
     let sourceFrame: CGRect
     /// True when the palette still intersects its key after placement.
     let overlapsSource: Bool
-    /// Pixels the palette extends above the keyboard surface and needs an IME overlay pad.
-    var overflowAbove: CGFloat { max(0, -frame.minY) }
 
     /// Preferred grid width. The palette stays narrow and wraps into more rows so it
     /// reads as a block above the finger rather than a long strip across the keyboard.
@@ -38,9 +36,11 @@ struct KeyboardAlternatePaletteLayout: Equatable {
             max(safe.minX, sourceFrame.midX - width / 2),
             safe.maxX - width
         )
-        // Sit fully above the key, like Gboard. Covering a top-row key made the hold
-        // harder to aim; overflow above the surface is drawn in a transparent IME pad.
-        let y = sourceFrame.minY - sourceGap - height
+        // Prefer the space above the key, then clamp into the existing keyboard surface.
+        // A top-row palette may cover its source; hold slop keeps that overlap aimable.
+        let preferredY = sourceFrame.minY - sourceGap - height
+        let maximumY = max(safe.minY, safe.maxY - height)
+        let y = min(max(safe.minY, preferredY), maximumY)
         let frame = CGRect(x: x, y: y, width: width, height: height)
         let contentWidth = width - padding * 2 - CGFloat(columns - 1) * gap
         let cellWidth = contentWidth / CGFloat(columns)
