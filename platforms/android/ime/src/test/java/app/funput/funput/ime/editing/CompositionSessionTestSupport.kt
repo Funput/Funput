@@ -80,6 +80,7 @@ internal class CommittedEditor(
      * fake does not otherwise model.
      */
     var textBeforeCursor: String? = null
+    var remainingCommitFailures = 0
 
     val proxy: InputConnection = Proxy.newProxyInstance(
         InputConnection::class.java.classLoader,
@@ -87,7 +88,10 @@ internal class CommittedEditor(
     ) { _, method, arguments ->
         when (method.name) {
             "beginBatchEdit", "endBatchEdit" -> true
-            "commitText" -> true.also { text += arguments?.first().toString() }
+            "commitText" -> if (remainingCommitFailures > 0) {
+                remainingCommitFailures -= 1
+                false
+            } else true.also { text += arguments?.first().toString() }
             "deleteSurroundingText" -> true.also {
                 text = text.dropLast(arguments?.first() as Int)
             }

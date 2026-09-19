@@ -2,6 +2,7 @@ package app.funput.funput.ime.nativebridge
 
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.shortcuts.model.ShortcutLibrary
 
 /**
  * The engine's durable options, applied as one batch by [VietnameseEngine.configure].
@@ -28,6 +29,8 @@ internal interface VietnameseEngine : AutoCloseable {
     /** Single writer for durable configuration; see [EngineConfiguration]. */
     fun configure(configuration: EngineConfiguration)
     fun setEnabled(enabled: Boolean)
+    fun installShortcuts(library: ShortcutLibrary) = Unit
+    fun clearShortcuts() = Unit
 
     /**
      * Re-opens an already-committed [word] as the live composition so the next
@@ -64,6 +67,21 @@ internal class NativeVietnameseEngine : VietnameseEngine {
 
     override fun setEnabled(enabled: Boolean) = withHandle { value ->
         FunputNative.nativeSetEnabled(value, enabled)
+    }
+
+    override fun installShortcuts(library: ShortcutLibrary) = withHandle { value ->
+        FunputNative.nativeClearShortcuts(value)
+        library.entries.forEach { entry ->
+            FunputNative.nativeAddShortcut(value, entry.trigger, entry.expansion)
+        }
+        FunputNative.nativeSetShortcutSmartCase(value, library.smartCase)
+        FunputNative.nativeSetShortcutsInEnglish(value, library.inEnglish)
+        FunputNative.nativeSetShortcutsEnabled(value, library.isEnabled)
+    }
+
+    override fun clearShortcuts() = withHandle { value ->
+        FunputNative.nativeSetShortcutsEnabled(value, false)
+        FunputNative.nativeClearShortcuts(value)
     }
 
     override fun adopt(word: String): Boolean = withHandle { value ->

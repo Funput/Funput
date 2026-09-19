@@ -22,6 +22,11 @@ internal object FunputNative {
 
     /** Runtime VI/EN state — flipped per field and by the language key, not durable config. */
     external fun nativeSetEnabled(handle: Long, enabled: Boolean)
+    external fun nativeClearShortcuts(handle: Long)
+    external fun nativeAddShortcut(handle: Long, trigger: String, expansion: String)
+    external fun nativeSetShortcutsEnabled(handle: Long, enabled: Boolean)
+    external fun nativeSetShortcutSmartCase(handle: Long, enabled: Boolean)
+    external fun nativeSetShortcutsInEnglish(handle: Long, enabled: Boolean)
     /** Re-opens an already-committed word for editing; false when it is not adoptable. */
     external fun nativeAdopt(handle: Long, word: String): Boolean
 

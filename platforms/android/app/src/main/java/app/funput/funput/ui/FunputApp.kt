@@ -21,6 +21,7 @@ import app.funput.funput.ui.navigation.AppNavDisplay
 import app.funput.funput.ui.navigation.AppNavigationSuite
 import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
+import app.funput.funput.ui.shortcuts.ShortcutsRoute
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
 import app.funput.funput.ui.theme.custom.rememberCustomThemeServices
@@ -65,7 +66,9 @@ fun FunputApp() {
                             settings.themeSelection.resolve(isSystemInDarkTheme()),
                         ),
                         onOpenAppearance = { navigator.selectTab(TopLevelDestination.APPEARANCE) },
+                        onOpenShortcuts = { navigator.navigate(AppDestination.SHORTCUTS) },
                     )
+                    AppDestination.SHORTCUTS -> ShortcutsRoute { navigator.navigateBack() }
                     AppDestination.THEME_GALLERY -> AppearanceRoute(
                         settings = settings,
                         catalog = themeCatalog,

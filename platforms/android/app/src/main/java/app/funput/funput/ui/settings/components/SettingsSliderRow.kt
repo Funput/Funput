@@ -1,10 +1,14 @@
 package app.funput.funput.ui.settings.components
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -31,44 +35,55 @@ import kotlin.math.roundToInt
  */
 @Composable
 internal fun SettingsPercentSliderRow(
+    position: RowPosition,
     title: String,
+    @DrawableRes iconRes: Int,
     value: Float,
     range: ClosedFloatingPointRange<Float>,
     onValueSettled: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var draft by remember(value) { mutableFloatStateOf(value) }
-    Column(
-        verticalArrangement = Arrangement.spacedBy(Spacing.Small),
-        modifier = modifier.fillMaxWidth(),
+    SettingsRowSurface(
+        position = position,
+        interactionSource = remember { MutableInteractionSource() },
+        modifier = modifier,
     ) {
-        Row(
-            // The section header carries its own bottom padding; matching it here keeps the
-            // readout on the header's baseline rather than floating above it.
-            verticalAlignment = Alignment.Bottom,
-            modifier = Modifier.fillMaxWidth(),
+        SettingsIcon(iconRes)
+        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Spacing.Small),
+            modifier = Modifier.fillMaxWidth().weight(1f),
         ) {
-            SettingsSectionHeader(title, modifier = Modifier.weight(1f))
-            Text(
-                text = percentLabel(draft),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = Spacing.Small),
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = percentLabel(draft),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Slider(
+                value = draft,
+                valueRange = range,
+                onValueChange = { draft = it },
+                onValueChangeFinished = { onValueSettled(roundToPercent(draft)) },
+                modifier = Modifier.semantics { contentDescription = title },
             )
-        }
-        Slider(
-            value = draft,
-            valueRange = range,
-            onValueChange = { draft = it },
-            onValueChangeFinished = { onValueSettled(roundToPercent(draft)) },
-            modifier = Modifier.semantics { contentDescription = title },
-        )
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.Small),
-        ) {
-            SliderBound(percentLabel(range.start))
-            SliderBound(percentLabel(range.endInclusive))
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.Small),
+            ) {
+                SliderBound(percentLabel(range.start))
+                SliderBound(percentLabel(range.endInclusive))
+            }
         }
     }
 }

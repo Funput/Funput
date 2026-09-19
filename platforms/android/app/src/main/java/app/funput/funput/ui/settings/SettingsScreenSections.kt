@@ -10,61 +10,33 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import app.funput.funput.ime.settings.ClipboardPreferences
-import app.funput.funput.ime.settings.SmartCompositionPreferences
-import app.funput.funput.ime.settings.ToneStyle
-import app.funput.funput.keyboard.layout.KeyboardSizingProfile
-import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.ui.settings.clipboard.clipboardSettingsItem
+import androidx.compose.ui.platform.testTag
+import app.funput.funput.ui.settings.clipboard.ClipboardSettingsSection
 import app.funput.funput.ui.settings.components.KeyboardHero
+import app.funput.funput.ui.settings.data.DataSettingsSection
 import app.funput.funput.ui.settings.feedback.FeedbackSettingsSection
-import app.funput.funput.ui.settings.keyboard.KeyboardSettingsSection
+import app.funput.funput.ui.settings.keyboard.KeyboardSetupCard
+import app.funput.funput.ui.settings.keyboard.LayoutSettingsSection
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
-import app.funput.funput.ui.settings.smart.PersonalSuggestionSettingsSection
 import app.funput.funput.ui.settings.smart.SmartSettingsSection
-import app.funput.funput.ui.settings.smart.gestureSettingsItem
+import app.funput.funput.ui.settings.typing.TypingSettingsSection
+import app.funput.funput.ui.theme.EntryTracker
 import app.funput.funput.ui.theme.Spacing
 import app.funput.funput.ui.theme.rememberEntryTracker
 import app.funput.funput.ui.theme.staggeredEntry
-import app.funput.funput.theme.KeyboardThemeDescriptor
 
 @Composable
 internal fun SettingsScreenSections(
-    keyboardSetupStatus: KeyboardSetupStatus,
-    keyboardTheme: KeyboardThemeDescriptor,
-    inputMethod: KeyboardInputMethod,
-    showsNumberRow: Boolean,
-    toneStyle: ToneStyle,
-    keySizeProfile: KeyboardSizingProfile,
-    hapticsEnabled: Boolean,
-    soundsEnabled: Boolean,
-    smartComposition: SmartCompositionPreferences,
-    personalSuggestionsEnabled: Boolean,
-    clipboardPreferences: ClipboardPreferences,
-    smartGesturesEnabled: Boolean,
+    state: SettingsScreenState,
     contentPadding: PaddingValues,
     onOpenPicker: (SettingsPicker) -> Unit,
-    onShowsNumberRowChanged: (Boolean) -> Unit,
-    onOpenAppearance: () -> Unit,
-    onToneStyleSelected: (ToneStyle) -> Unit,
-    onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
-    onHapticsChanged: (Boolean) -> Unit,
-    onSoundsChanged: (Boolean) -> Unit,
-    onSmartGesturesChanged: (Boolean) -> Unit,
-    onSmartRestoreChanged: (Boolean) -> Unit,
-    onSpellCheckChanged: (Boolean) -> Unit,
-    onAutoCapitalizeChanged: (Boolean) -> Unit,
-    onPersonalSuggestionsChanged: (Boolean) -> Unit,
-    onClipboardEnabledChanged: (Boolean) -> Unit,
-    onClearClipboardHistory: () -> Unit,
-    onResetPersonalSuggestions: () -> Unit,
-    onEnableKeyboard: () -> Unit,
-    onSelectKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val tracker = rememberEntryTracker()
+    val firstSectionIndex = if (state.keyboardSetupStatus == KeyboardSetupStatus.READY) 1 else 2
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(Spacing.Section),
         contentPadding = PaddingValues(
@@ -75,72 +47,95 @@ internal fun SettingsScreenSections(
         ),
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+            .testTag(SettingsListTag),
     ) {
-        item(key = "hero") {
-            Box(modifier = Modifier.staggeredEntry(0, tracker)) {
-                KeyboardHero(
-                    descriptor = keyboardTheme,
-                    inputMethod = inputMethod,
-                    sizingProfile = keySizeProfile,
-                    showsNumberRow = showsNumberRow,
-                    onOpenAppearance = onOpenAppearance,
+        settingsItem("hero", 0, tracker) {
+            KeyboardHero(
+                descriptor = state.keyboardTheme,
+                inputMethod = state.inputMethod,
+                sizingProfile = state.keySizeProfile,
+                showsNumberRow = state.showsNumberRow,
+                onOpenAppearance = state.onOpenAppearance,
+                modifier = Modifier.testTag(SettingsHeroTag),
+            )
+        }
+        if (state.keyboardSetupStatus != KeyboardSetupStatus.READY) {
+            settingsItem("setup", 1, tracker) {
+                KeyboardSetupCard(
+                    status = state.keyboardSetupStatus,
+                    onEnableKeyboard = state.onEnableKeyboard,
+                    onSelectKeyboard = state.onSelectKeyboard,
+                    modifier = Modifier.testTag(SettingsSetupTag),
                 )
             }
         }
-        item(key = "keyboard") {
-            Box(modifier = Modifier.staggeredEntry(4, tracker)) {
-                KeyboardSettingsSection(
-                    setupStatus = keyboardSetupStatus,
-                    inputMethod = inputMethod,
-                    showsNumberRow = showsNumberRow,
-                    toneStyle = toneStyle,
-                    keySizeProfile = keySizeProfile,
-                    onOpenPicker = onOpenPicker,
-                    onShowsNumberRowChanged = onShowsNumberRowChanged,
-                    onToneStyleSelected = onToneStyleSelected,
-                    onKeySizeSelected = onKeySizeSelected,
-                    onEnableKeyboard = onEnableKeyboard,
-                    onSelectKeyboard = onSelectKeyboard,
-                )
-            }
+        settingsItem("typing", firstSectionIndex, tracker) {
+            TypingSettingsSection(
+                inputMethod = state.inputMethod,
+                toneStyle = state.toneStyle,
+                onOpenPicker = onOpenPicker,
+                onToneStyleSelected = state.onToneStyleSelected,
+                onOpenShortcuts = state.onOpenShortcuts,
+            )
         }
-        item(key = "smart") {
-            Box(modifier = Modifier.staggeredEntry(2, tracker)) {
-                SmartSettingsSection(
-                    preferences = smartComposition,
-                    onSmartRestoreChanged = onSmartRestoreChanged,
-                    onSpellCheckChanged = onSpellCheckChanged,
-                    onAutoCapitalizeChanged = onAutoCapitalizeChanged,
-                )
-            }
+        settingsItem("layout", firstSectionIndex + 1, tracker) {
+            LayoutSettingsSection(
+                inputMethod = state.inputMethod,
+                showsNumberRow = state.showsNumberRow,
+                keySizeProfile = state.keySizeProfile,
+                onShowsNumberRowChanged = state.onShowsNumberRowChanged,
+                onKeySizeSelected = state.onKeySizeSelected,
+            )
         }
-        item(key = "personal-suggestions") {
-            Box(modifier = Modifier.staggeredEntry(3, tracker)) {
-                PersonalSuggestionSettingsSection(
-                    enabled = personalSuggestionsEnabled,
-                    onEnabledChanged = onPersonalSuggestionsChanged,
-                    onReset = onResetPersonalSuggestions,
-                )
-            }
+        settingsItem("smart", firstSectionIndex + 2, tracker) {
+            SmartSettingsSection(
+                preferences = state.smartComposition,
+                personalSuggestionsEnabled = state.personalSuggestionsEnabled,
+                smartGesturesEnabled = state.smartGesturesEnabled,
+                onSmartRestoreChanged = state.onSmartRestoreChanged,
+                onSpellCheckChanged = state.onSpellCheckChanged,
+                onAutoCapitalizeChanged = state.onAutoCapitalizeChanged,
+                onPersonalSuggestionsChanged = state.onPersonalSuggestionsChanged,
+                onSmartGesturesChanged = state.onSmartGesturesChanged,
+            )
         }
-        clipboardSettingsItem(
-            preferences = clipboardPreferences,
-            tracker = tracker,
-            onEnabledChanged = onClipboardEnabledChanged,
-            onOpenExpiry = { onOpenPicker(SettingsPicker.CLIPBOARD_EXPIRY) },
-            onClear = onClearClipboardHistory,
-        )
-        item(key = "feedback") {
-            Box(modifier = Modifier.staggeredEntry(5, tracker)) {
-                FeedbackSettingsSection(
-                    hapticsEnabled = hapticsEnabled,
-                    soundsEnabled = soundsEnabled,
-                    onHapticsChanged = onHapticsChanged,
-                    onSoundsChanged = onSoundsChanged,
-                )
-            }
+        settingsItem("feedback", firstSectionIndex + 3, tracker) {
+            FeedbackSettingsSection(
+                hapticsEnabled = state.hapticsEnabled,
+                soundsEnabled = state.soundsEnabled,
+                onHapticsChanged = state.onHapticsChanged,
+                onSoundsChanged = state.onSoundsChanged,
+            )
         }
-        gestureSettingsItem(smartGesturesEnabled, tracker, onSmartGesturesChanged)
+        settingsItem("clipboard", firstSectionIndex + 4, tracker) {
+            ClipboardSettingsSection(
+                enabled = state.clipboardPreferences.enabled,
+                expiry = state.clipboardPreferences.expiry,
+                onEnabledChanged = state.onClipboardEnabledChanged,
+                onOpenExpiry = { onOpenPicker(SettingsPicker.CLIPBOARD_EXPIRY) },
+            )
+        }
+        settingsItem("data", firstSectionIndex + 5, tracker) {
+            DataSettingsSection(
+                onResetPersonalSuggestions = state.onResetPersonalSuggestions,
+                onClearClipboardHistory = state.onClearClipboardHistory,
+            )
+        }
     }
 }
+
+private fun LazyListScope.settingsItem(
+    key: String,
+    index: Int,
+    tracker: EntryTracker,
+    content: @Composable () -> Unit,
+) {
+    item(key = key) {
+        Box(modifier = Modifier.staggeredEntry(index, tracker)) { content() }
+    }
+}
+
+internal const val SettingsListTag = "settings-list"
+internal const val SettingsHeroTag = "settings-hero"
+internal const val SettingsSetupTag = "settings-setup"

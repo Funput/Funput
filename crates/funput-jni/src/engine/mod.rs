@@ -16,3 +16,4 @@ mod composition;
 mod lifecycle;
 mod registry;
 mod settings;
+mod shortcuts;

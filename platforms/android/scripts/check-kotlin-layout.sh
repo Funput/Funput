@@ -39,6 +39,14 @@ readonly roots=(
     "$ime_test/editing/gestures"
     "$ime_test/editing/keyevent"
     "$ime_test/settings/gestures"
+    "$ime_main/shortcuts"
+    "$ime_test/shortcuts"
+    "$android_root/ime/src/androidTest/java/app/funput/funput/ime/shortcuts"
+    "$android_root/app/src/main/java/app/funput/funput/ui/shortcuts"
+    "$android_root/app/src/test/java/app/funput/funput/ui/shortcuts"
+    "$android_root/app/src/androidTest/java/app/funput/funput/ui/shortcuts"
+    "$android_root/shortcut-store/src/main/java/app/funput/funput/shortcuts"
+    "$android_root/shortcut-store/src/test/java/app/funput/funput/shortcuts"
 )
 violations=0
 

@@ -35,6 +35,7 @@ android {
 
 dependencies {
     implementation(project(":keyboard-ui"))
+    implementation(project(":shortcut-store"))
     implementation(project(":theme-store"))
     implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)

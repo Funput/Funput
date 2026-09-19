@@ -19,6 +19,18 @@ class AppNavigatorTest {
     }
 
     @Test
+    fun `shortcuts belongs to settings and back returns to settings`() {
+        val navigator = AppNavigator()
+
+        navigator.navigate(AppDestination.SHORTCUTS)
+
+        assertEquals(TopLevelDestination.SETTINGS, navigator.currentTab)
+        assertEquals(AppDestination.SHORTCUTS, navigator.currentDestination)
+        assertTrue(navigator.navigateBack())
+        assertEquals(AppDestination.SETTINGS, navigator.currentDestination)
+    }
+
+    @Test
     fun `navigating into another tab switches to it`() {
         val navigator = AppNavigator()
 
