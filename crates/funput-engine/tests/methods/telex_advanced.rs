@@ -128,5 +128,8 @@ fn capitalization_backspace_and_method_switch_stay_synchronized() {
 #[test]
 fn layout_stays_compact() {
     assert_eq!(std::mem::size_of::<InputMethod>(), 1);
-    assert_eq!(std::mem::size_of::<Engine>(), 136);
+    // 136 until typo correction added `Option<Box<CorrectionState>>` to the session:
+    // the state itself is several hundred bytes, so it is boxed and the engine pays
+    // one pointer for a feature that is off by default.
+    assert_eq!(std::mem::size_of::<Engine>(), 144);
 }

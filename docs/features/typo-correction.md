@@ -2,8 +2,10 @@
 
 ## Trạng thái
 
-**Thiết kế — chờ duyệt, chưa có code.** Mọi quyết định hành vi sống ở tài liệu này; khi hiện
-thực lệch khỏi bản viết, cập nhật lại tài liệu trong cùng PR.
+**Lõi Rust đã hiện thực** (`crates/funput-engine/src/correction/`, mặc định tắt). FFI/JNI,
+iOS và Android chưa. Mọi quyết định hành vi sống ở tài liệu này; khi hiện thực lệch khỏi bản
+viết, cập nhật lại tài liệu trong cùng PR — các mục dưới đây đã được sửa theo đúng những gì
+code làm, chỗ nào lệch đều ghi rõ lý do.
 
 Tài liệu này viết đủ chi tiết để một người (hoặc một agent) khác lập kế hoạch hiện thực mà
 không cần đọc lại toàn bộ điều tra: mọi điểm nối đều ghi rõ file, hàm và thứ tự gọi.
@@ -33,6 +35,10 @@ Kiểm chứng bằng `funput dev run` (bản `target/release/funput`, 18/09/202
 | `vieeyj ` | `vieeyj ` | việt |
 | `dduowxj ` | `đuợ ` | được |
 | `minhg ` | `minhg ` | mình |
+
+Trong số này **`dduowxj ` nằm ngoài tầm với của bản đầu**: nó ra `đuợ`, mà
+`funput_core::is_complete_syllable` nhận là âm tiết hoàn chỉnh. Sửa nó nghĩa là sửa cả những từ
+hợp lệ — đúng thứ §11 xếp cuối vì rủi ro cao nhất. Xem §3.4.
 
 Vì âm tiết không hợp lệ, `should_restore` trong
 [boundary/mod.rs](../../crates/funput-engine/src/compose/boundary/mod.rs) trả chuỗi phím thô
@@ -72,24 +78,34 @@ Cần đủ **tất cả**:
 |---|---|
 | Phím vừa gõ là ranh giới từ (dấu cách, dấu câu, Enter) | `is_word_boundary` trong `boundary/mod.rs` |
 | Chế độ tiếng Việt, method Telex / Telex nâng cao / VNI | `session.config` |
-| Buffer **không** là âm tiết hoàn chỉnh | `funput_core::is_complete_syllable` |
-| Không rơi vào nhánh "keystrokes intend Vietnamese" đã có | `keystrokes_intend_vietnamese` |
+| Buffer **không** là âm tiết hoàn chỉnh | `boundary::judge` (một lần cho cả restore lẫn correction) |
+| Buffer không phải nguyên âm trần (`ă`, `â`) | `funput_core::is_bare_shaped_vowel` |
+| Người dùng chưa tự lật dạng chữ cho từ này | `session.restore_override` |
 | Không phải gõ tắt (shortcut khớp) | `boundary/shortcut.rs` chạy trước |
-| Từ không chứa chữ số, không toàn chữ hoa | luật mới trong `correction/` |
+| Từ không chứa chữ số (trừ VNI), không toàn chữ hoa | `correction::eligible` |
+| Từ chưa bị người dùng hoàn tác | `correction::undone_before` |
 | Cài đặt `typo_correction` bật | `EngineConfig` |
 | Host cho phép autocorrect | nền tảng, §8.1 và §9.1 |
-| Có dữ liệu chạm cho từ này | nền tảng gửi kèm, §6 |
+| Có dữ liệu chạm cho **mọi** phím của từ, khớp với `session.keys` | `TouchLog::matches` |
+
+**Đã bỏ so với bản thiết kế:** điều kiện "không rơi vào `keystrokes_intend_vietnamese`". Chính
+hai ca phải sửa của §3.4 lại bị nó bắt — `dduowxj` có `đ` trong buffer, `d9u7o7nh2` có chữ số
+trong keys. Hàm đó trả lời "có nên quay về chữ Latin thô không", không phải "từ này đã xong
+chưa". Riêng chữ số: VNI dùng chữ số làm phím dấu nên luật "có chữ số thì bỏ qua" chỉ áp cho
+Telex.
 
 ### 3.2. Khi sửa
 
 - Thay phần từ đang hiển thị bằng ứng viên thắng, **giữ nguyên ký tự ranh giới**.
-- Giữ kiểu chữ theo từ gốc: `Nhsf ` → `Nhà `, `NHSF ` không bị sửa (toàn hoa → bỏ qua).
+- Giữ kiểu chữ theo từ gốc: `Nhad ` → `Nhà `, `NHAD ` không bị sửa (toàn hoa → bỏ qua).
+  (Bản thiết kế viết `Nhsf `; chuỗi đó không có nguyên âm nên Telex không ra `Nhà`.)
 - Thanh gợi ý hiện chip hoàn tác `↩ dduwowfnh` cho tới khi người dùng gõ phím tiếp theo.
 
 ### 3.3. Hoàn tác
 
 - **Xoá ngay sau khi sửa**: trả lại đúng chuỗi người dùng đã gõ (bao gồm ký tự ranh giới), và
-  đánh dấu từ đó "không sửa lại" cho tới hết phiên gõ từ (`suppress_next_correction`).
+  đánh dấu từ đó "không sửa lại". Dấu này **tiêu thụ một lần**: gõ lại từ đó lần nữa trong cùng
+  phiên vẫn được đề nghị sửa, giống bàn phím hệ thống.
 - Gõ phím khác: mất khả năng hoàn tác một chạm, như iOS.
 - Chạm chip trên thanh gợi ý: tương đương bấm Xoá.
 
@@ -103,14 +119,22 @@ Cần đủ **tất cả**:
 | `tpoi ` | `tpoi ` | **tôi** | p → o |
 | `khpong ` | `khpong ` | **không** | p → o |
 | `vieeyj ` | `vieeyj ` | **việt** | y → t |
-| `dduowxj ` | `đuợ ` | **được** | x → c |
 | `minhg ` | `minhg ` | **mình** | g → f |
+| `quaa ` | `quâ ` | **quá** | a → s |
 | `d9u7o7nh2 ` (VNI) | `d9u7o7nh2 ` | **đường** | h → g |
+
+`quaa ` là ca *đang hiển thị dạng đã ghép*: thứ phải xoá là `quâ` (3 ký tự) chứ không phải 4
+phím đã gõ. Bảng test `tests/correction/table.rs` giữ đúng các hàng này.
 
 **Hai ứng viên** — `nhad `: `d→f` ra **nhà**, `d→s` ra **nhá**. Ngón lệch về `f` chọn nhà, lệch
 về `s` chọn nhá, chạm giữa `d` thì **không sửa** và đưa cả hai lên thanh gợi ý.
 
 **Không đụng** — `bans ` → bán, `banj ` → bạn, `d9u7o7ng3 ` → đưởng: đều hợp lệ.
+
+**`dduowxj ` không sửa được ở bản đầu.** Nó ra `đuợ`, và `is_complete_syllable("đuợ")` là
+`true`, nên luật cứng "không bao giờ sửa một từ hợp lệ" (§2) chặn lại. Muốn sửa phải mở sang
+"sửa từ hợp lệ theo ngữ cảnh" — mục rủi ro nhất ở §11 — nên nó ở lại danh sách không đụng cho
+tới lúc đó.
 
 ## 4. Kiến trúc
 
@@ -130,7 +154,7 @@ quan hệ hiện nay giữa hai crate.
 | Tầng | Thêm gì |
 |---|---|
 | `crates/funput-engine/src/correction/` (mới) | Sinh ứng viên, phát lại, lọc, chấm theo chạm |
-| `crates/funput-engine/src/model/session.rs` | Ring điểm chạm; `pending_correction`; `last_correction`; `suppress_next_correction` |
+| `crates/funput-engine/src/model/session.rs` | Đúng một trường `correction: Option<Box<CorrectionState>>` (`model/` đã đủ 5 file; state nằm trong `correction/state.rs`). Box vì state ~900 B — `size_of::<Engine>()` chỉ tăng 136 → 144 |
 | `crates/funput-engine/src/model/config.rs` | `typo_correction: bool` (mặc định `false` cho tới khi bật theo nền tảng) |
 | `crates/funput-engine/src/compose/boundary/mod.rs` | Gọi correction **trước** English restore |
 | `crates/funput-ffi/src/engine/` | 3 hàm C mới (§7) |
@@ -148,17 +172,20 @@ phím** (pitch = bề rộng phím + khe):
 
 ```rust
 /// One typed key and the keys the finger was near, nearest first.
-pub struct KeyTouch {
-    pub typed: char,
-    /// Distance from the touch point to the centre of `typed`, in key pitches.
-    pub typed_distance: f32,
-    pub alternates: [Option<(char, f32)>; 3],
-}
+let touch = KeyTouch::new('h', 0.35)
+    .with_alternate('g', 0.15)
+    .with_alternate('j', 0.60);
 ```
 
+Trường để riêng tư và dựng bằng builder, vì bên trong engine chúng được lượng tử hoá: `Session`
+derive `Eq`, mà `f32` thì không. Khoảng cách lưu Q8.8 (`u16`), điểm lưu milli-nat (`i32`);
+`CorrectionCandidate::touch_score()` đổi ngược khi nền tảng đọc.
+
 Nền tảng tự tính danh sách này từ hình học đang hiển thị; lõi không biết bố cục bàn phím. Phím
-nào không có dữ liệu chạm (gõ tắt, dán, bàn phím vật lý) thì `alternates` rỗng và phím đó không
-bao giờ bị thay.
+nào **không** có dữ liệu chạm (gõ tắt, dán, bàn phím vật lý) làm **cả từ** mất khả năng sửa —
+bằng chứng khuyết một nửa còn tệ hơn không có. Cũng vậy khi chuỗi phím bị viết lại sau lưng
+(phím dấu bị revert, `adopt`, Xoá): log tự đánh dấu không dùng được, và hệ quả luôn là *không
+sửa*, không bao giờ là sửa sai.
 
 ### 5.2. Sinh ứng viên
 
@@ -169,10 +196,18 @@ cho mỗi tập con S các vị trí trong từ, |S| ≤ 2:
         nếu kết quả là âm tiết hoàn chỉnh hợp lệ → giữ làm ứng viên
 ```
 
-- **Trần:** từ dài tối đa 10 phím; tối đa 3 thay thế mỗi phím; tối đa 2 phím thay.
-  Số chuỗi phải phát lại tối đa `1 + 10×3 + C(10,2)×9 = 436`.
-- **Phát lại** dùng chính `Engine`/`Session` nên mọi luật Telex, VNI, Telex nâng cao, đặt dấu
-  kiểu cũ/mới đều đúng theo cấu hình hiện tại. Không có bản sao luật thứ hai.
+- **Trần:** từ dài 2–10 phím; tối đa 3 thay thế mỗi phím; tối đa 2 phím thay.
+  Số chuỗi phải phát lại tối đa `10×3 + C(10,2)×9 = 435` (không tính chuỗi gốc — nó đã được
+  biết là không hợp lệ). Đo thật: một từ 9 phím, mỗi phím 3 phím kề, tốn 4509 lần cấp phát —
+  đúng cỡ một lần cho mỗi phím được phát lại, và chỉ trả một lần cho mỗi từ được sửa.
+- **Phát lại** chạy thẳng `compose::pipeline::process` trên một `Session` nháp dùng lại (không
+  qua `Engine`, để không chạm `prepare_key`, ranh giới từ hay trạng thái viết hoa), nên mọi luật
+  Telex, VNI, Telex nâng cao, đặt dấu kiểu cũ/mới đều đúng theo cấu hình hiện tại. Không có bản
+  sao luật thứ hai.
+- Config nháp **ép tắt** `smart_restore`, `eager_restore`, `spell_check`, `auto_capitalize`:
+  nếu không, chính cơ chế English restore sẽ biến một ứng viên hợp lệ thành chữ thô giữa chừng
+  và bước kiểm tra sẽ chấm nhầm chuỗi phím thay vì âm tiết. Vòng phát lại cũng phải tự làm hai
+  việc `process_key` làm quanh pipeline: chặn chữ số mở đầu từ, và đẩy phím vào `keys`.
 - Phím dấu (`s f r x j w z`, nhân đôi nguyên âm, chữ số VNI) được đối xử như mọi phím khác;
   nhờ vậy `dduowxj → dduowcj` và `nhsf → nhaf` nằm trong cùng một cơ chế.
 
@@ -194,66 +229,106 @@ P(chạm | phím) = exp(−d² / (2σ²)),  d tính theo bước phím
 - **Không sửa** nếu `best − runner_up < Δ`; khi đó gửi cả hai lên thanh gợi ý.
 - `σ`, `λ`, `Δ` là hằng số khởi điểm, chỉnh bằng bộ kiểm thử ở §12.
 
+**Cửa chặn tiếng Anh là việc của nền tảng.** Một từ tiếng Anh gõ có chủ ý kết thúc ở đúng trạng
+thái mà một từ tiếng Việt gõ nhầm kết thúc: chữ thô, không phải âm tiết. `text ` chẳng hạn có
+thể với tới `tẻ` (phím `r` ngay cạnh `t`). Lõi không có từ điển tiếng Anh nên nó **giao lại**
+danh sách ứng viên; thứ giữ `text` nguyên vẹn là `SuggestionEngine::is_known_word` ở phía nền
+tảng, cộng biên Δ và tần suất từ. Test `an_english_word_the_user_typed_on_purpose_still_reaches_the_platform`
+ghim đúng sự phân vai này.
+
 ### 5.4. Thứ tự ở ranh giới từ
 
 Trong `boundary/mod.rs`, khi gặp phím ranh giới:
 
 1. **Gõ tắt** (`shortcut.rs`) — nếu khớp, dừng.
-2. **Âm tiết hợp lệ** — dừng, không đụng.
-3. **`keystrokes_intend_vietnamese`** — giữ nguyên hành vi hiện tại, không sửa.
-4. **Correction** — nếu bật, có dữ liệu chạm, không bị `suppress_next_correction`:
-   trả về danh sách ứng viên cho nền tảng và **chờ bước 5** trước khi sinh `ImeResult`.
-5. **English restore** — như hôm nay, khi không có ứng viên hoặc nền tảng từ chối.
+2. **`judge`** — một lần `is_complete_syllable` trả lời cho cả hai việc còn lại. Nó chỉ chạy khi
+   có người cần: English restore còn cửa, hoặc correction có dữ liệu chạm dùng được. Nhờ vậy
+   host không gửi điểm chạm thì chi phí bằng đúng hôm nay (đo bằng `alloc_budget_correction`).
+3. **Correction** — nếu qua hết §3.1: ghi ứng viên vào chỗ chờ, rồi vẫn `session.clear()` và
+   trả về đúng `ImeResult` như hôm nay (`Action::None`). Keystroke này **không** đổi văn bản.
+4. **English restore** — như hôm nay, khi correction không nhận từ này.
+
+Thứ tự này khác bản thiết kế ở một điểm quan trọng: correction **không** treo dưới nhánh
+`should_restore`. Với `dduwowfnh` và `d9u7o7nh2`, eager restore trong `pipeline` đã đổi buffer
+thành chuỗi phím thô từ một phím trước đó, nên tới ranh giới `buffer == keys` và
+`should_restore` là **false** — đúng với những từ mà tính năng này sinh ra để sửa.
 
 ## 6. Giao thức hai bước
 
 Vì lõi không được phụ thuộc kho từ, ranh giới từ chạy hai bước **đồng bộ, trong cùng một
 keystroke**, không có `Task`, không chờ I/O:
 
-1. Nền tảng gọi `process_key` cho phím ranh giới như hôm nay.
-2. Nếu engine có ứng viên, nó **chưa** ghi tài liệu: trả `Action::None` kèm cờ
-   `has_pending_correction`.
-3. Nền tảng đọc ứng viên (`funput_engine_correction_candidates`), hỏi tần suất từng ứng viên ở
-   `funput-suggestions`, chọn chỉ số thắng (hoặc `-1` nghĩa là bỏ qua).
-4. Nền tảng gọi `funput_engine_apply_correction(index)`; engine sinh `ImeResult::send` cuối cùng
-   (xoá buffer hiện tại, chèn từ đã sửa + ký tự ranh giới) hoặc, với `-1`, chạy English restore
-   như cũ.
+1. Nền tảng gọi `process_key` cho phím ranh giới như hôm nay, và **áp dụng kết quả như hôm
+   nay** — kể cả khi đó là `Action::None`, nghĩa là chính nền tảng chèn ký tự ranh giới.
+2. Nền tảng hỏi `has_pending_correction()`. Đây là **một truy vấn riêng**, không phải cờ gắn
+   vào `ImeResult`: `FunputResult` là `#[repr(C)]` truyền theo giá trị, `size_of` 268 byte đã bị
+   test ghim và header đã phát hành — thêm trường vào là vỡ ABI âm thầm.
+3. Nền tảng đọc ứng viên (`correction_candidates`), hỏi tần suất từng ứng viên ở
+   `funput-suggestions`, rồi `choose_correction(&uses)` trả chỉ số thắng hoặc `None` khi hai
+   ứng viên đầu sát nhau (biên Δ).
+4. Nền tảng gọi `apply_correction(index)`. Với `Some(i)` engine sinh `ImeResult::send`; với
+   `None` nó chạy nốt việc ranh giới đã hoãn (English restore, hoặc không gì cả).
 
-**Nếu nền tảng không gọi bước 4** (phiên bản cũ, hoặc lỗi), engine tự chốt bằng English restore
-ở keystroke kế tiếp. Không có trạng thái treo.
+**Số ký tự phải xoá đã tính cả ký tự ranh giới**: bước 1 trả `Action::None` nên ký tự đó *đã*
+nằm trong tài liệu. Vì vậy `backspace = số ký tự đang hiển thị của từ + 1`, và nhánh English
+restore ở đây nhiều hơn `boundary::english_restore_result` đúng 1 — đường kia nuốt phím ranh
+giới, đường này thì không. `pending_correction_backspace()` trả sẵn con số đó cho host cần dựng
+batch edit trước khi quyết định.
+
+**Nếu nền tảng không gọi bước 4** (phiên bản cũ, hoặc lỗi), keystroke kế tiếp tự chốt: nó phát
+lại đúng việc ranh giới đã hoãn rồi gộp vào kết quả của chính nó. Không có trạng thái treo, và
+không mất chữ. Thắt lưng thứ hai là `typo_correction` mặc định tắt, nên không host nào đang chạy
+bị ảnh hưởng.
 
 ## 7. API
 
 ### 7.1. Rust (`funput-engine`)
 
 ```rust
-pub struct CorrectionCandidate {
-    pub text: String,
-    /// Touch-only score; the platform adds the word prior.
-    pub touch_score: f32,
-    pub edits: u8,
+impl CorrectionCandidate {
+    pub fn text(&self) -> &str;
+    /// Touch evidence only, in nats; the platform adds the word prior.
+    pub fn touch_score(&self) -> f32;
+    pub fn edits(&self) -> usize;
 }
 
 impl Engine {
-    /// Records the keys the finger was near, for the key about to be processed.
     pub fn set_next_key_touch(&mut self, touch: KeyTouch);
-
-    /// Candidates for the word that just hit a boundary, best touch score first.
+    pub fn has_pending_correction(&self) -> bool;
     pub fn correction_candidates(&self) -> &[CorrectionCandidate];
-
-    /// Applies the candidate at `index`, or `None` to fall back to the current
-    /// behaviour (English restore). Returns the result for this keystroke.
+    /// The word plus the boundary character the platform already echoed.
+    pub fn pending_correction_backspace(&self) -> usize;
+    /// `uses` is parallel to the candidates; `&[]` gives the touch-only ranking.
+    pub fn choose_correction(&self, uses: &[u32]) -> Option<usize>;
     pub fn apply_correction(&mut self, index: Option<usize>) -> ImeResult;
+    /// While Backspace would still undo the last correction.
+    pub fn has_correction_undo(&self) -> bool;
+    pub fn correction_undo_text(&self) -> Option<&str>;
 }
 ```
 
+`choose_correction` nằm trong Rust chứ không để mỗi nền tảng tự viết, để công thức prior và
+luật Δ chỉ tồn tại một bản. `has_correction_undo` là bắt buộc với host nào đang để phím Xoá tự
+đi qua: từ nay `on_backspace` có lúc trả `Action::Send`.
+
 ### 7.2. C ABI (`funput-ffi`)
 
+Chưa hiện thực (PR kế tiếp). Bề mặt dự kiến, trả `FunputResult` theo giá trị như mọi hàm engine
+khác:
+
 ```c
-void     funput_engine_set_next_key_touch(FunputEngine*, const FunputKeyTouch*);
-uint32_t funput_engine_correction_candidates(FunputEngine*, FunputCorrectionCandidate* out, uint32_t cap);
-void     funput_engine_apply_correction(FunputEngine*, int32_t index, FunputResult* out);
+void         funput_engine_set_next_key_touch(FunputEngine*, const FunputKeyTouch*);
+bool         funput_engine_has_pending_correction(const FunputEngine*);
+uint32_t     funput_engine_correction_candidates(const FunputEngine*, FunputCorrectionCandidate* out, uint32_t cap);
+uint32_t     funput_engine_pending_correction_backspace(const FunputEngine*);
+int32_t      funput_engine_choose_correction(const FunputEngine*, const uint32_t* uses, uint32_t len);
+FunputResult funput_engine_apply_correction(FunputEngine*, int32_t index);
+uint32_t     funput_engine_correction_undo_text(const FunputEngine*, uint32_t* out, uint32_t cap);
+void         funput_set_typo_correction(FunputEngine*, bool);
 ```
+
+`funput_set_typo_correction` là setter riêng: `FunputConfig` là `#[repr(C)]` truyền theo giá
+trị, thêm trường vào là vỡ ABI — đúng lối `funput_set_shortcuts_enabled` đã đi.
 
 `FunputKeyTouch` và `FunputCorrectionCandidate` là `#[repr(C)]`, chuỗi UTF-32 cố định như
 `FunputResult` hiện có (`chars: [u32; 64]`). JNI phản chiếu đúng ba hàm này.
@@ -290,8 +365,10 @@ bộ chống echo hiện tại vẫn đúng.
 
 ### 8.3. Hoàn tác
 
-Phím Xoá ngay sau khi sửa: `KeyboardInputCoordinator` đã có `reopensPreviousWord` cho Backspace;
-correction cắm vào đó, phát `ImeResult::send` trả lại chuỗi gốc và bật `suppress_next_correction`.
+Phím Xoá ngay sau khi sửa: `KeyboardInputCoordinator` đã có `reopensPreviousWord` cho Backspace.
+Việc hoàn tác nằm **trong engine** — `Engine::on_backspace` trả thẳng `ImeResult::send` với chuỗi
+gốc và tự bật cờ "không sửa lại". Host chỉ cần hỏi `has_correction_undo()` trước khi để phím Xoá
+đi qua, và áp dụng kết quả như mọi `ImeResult` khác.
 
 ## 9. Android
 
@@ -303,6 +380,10 @@ correction cắm vào đó, phát `ImeResult::send` trả lại chuỗi gốc v�
 | Ghi tài liệu | `ime/.../editing/CommittedBufferWriter.kt` — một batch edit, như retone |
 | Tần suất từ | `PersonalSuggestionNative` (đã có `nativeQuery`) |
 | Cờ autocorrect | `EditorInfo.inputType` — bỏ qua khi có `TYPE_TEXT_FLAG_NO_SUGGESTIONS` hoặc ô mật khẩu |
+
+**Cần sửa trước khi bật trên Android:** `nativeBackspace` và `nativeBoundary` trong
+`crates/funput-jni/src/engine/composition.rs` chỉ trả `String` và vứt `ImeResult` đi, nên hôm
+nay chúng không tải nổi một lệnh sửa. PR FFI/JNI phải thêm đường trả kết quả đầy đủ.
 
 ## 10. Desktop
 
@@ -335,28 +416,45 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    - Đo: tỉ lệ sửa đúng, **tỉ lệ sửa sai**, tỉ lệ bỏ qua.
    - Cổng: sửa sai **< 1%** số lần sửa; sửa đúng ≥ 70% ở nhiễu σ = 0,45.
 2. **Bất biến**: mọi âm tiết hợp lệ gõ đúng phím không bao giờ bị đổi (property test toàn tập).
+   ✅ `tests/correction_property.rs`, cùng với: không ứng viên nào trùng chữ đang hiển thị, ứng
+   viên luôn xếp giảm dần, sửa rồi Xoá trả lại đúng tài liệu cũ, và **từ chối thì ra đúng kết
+   quả của engine khi tắt tính năng**.
 3. **Ca đã đo trên iOS** (§3.4) thành test bảng, gồm cả ca `nhad` hai ứng viên: lệch trái ra
    `nhá`, lệch phải ra `nhà`, chạm giữa không sửa.
 4. **Hoàn tác**: sửa → Xoá → đúng chuỗi gốc; gõ lại từ đó trong cùng phiên không bị sửa lần hai.
-5. **Hiệu năng**: p99 < 2ms cho một từ 10 phím trên thiết bị cũ nhất hỗ trợ; benchmark trong
-   `benchmarks/`.
+5. **Hiệu năng**: p99 < 2ms cho một từ 10 phím trên thiết bị cũ nhất hỗ trợ.
+   ✅ `benches/correction.rs`. Đo trên máy dev (Apple Silicon, release): từ 9 phím **356 µs**,
+   từ 10 phím **496 µs** ở trường hợp nặng nhất — mọi phím đều có đủ 3 phím kề. Gõ thường có
+   kèm điểm chạm: **0,14 µs/phím**, không đo được khác lúc tắt.
+
+   Con số 496 µs là trên máy dev; một iPhone đời cũ chậm hơn cỡ 3 lần, tức ~1,5 ms — vẫn dưới
+   ngưỡng nhưng không dư dả. **Cách rẻ nhất để lấy lại biên**: nền tảng chỉ gửi phím kề khi
+   khoảng cách thật sự đáng ngờ (ví dụ < 1,2 pitch). Phím nào gõ giữa tâm thì không có phím kề
+   nào, và mỗi vị trí bị loại như vậy cắt cả một tầng của vòng lặp ghép đôi.
 6. **UI test iOS**: gõ `dduwowfnh ` trong ô bật autocorrect ra `đường `; trong harness (tắt
    autocorrect) ra `dduwowfnh `; Xoá ngay sau khi sửa trả lại `dduwowfnh `.
-7. **Differential**: chạy bộ 70k chuỗi phím hiện có với `typo_correction` **tắt** để chứng minh
-   không đổi hành vi cũ (xem `docs` của `funput dev coverage`).
+7. **Differential**: ✅ `tests/correction_off.rs` chạy lại toàn bộ fixture với `typo_correction`
+   **bật** ở cả ba dáng một nền tảng có thể mang: không gửi điểm chạm (phải ra đúng từng bước
+   instruction cũ), gửi điểm chạm rồi từ chối mọi đề nghị, và gửi rồi không trả lời (cả hai phải
+   ra đúng văn bản cũ).
+8. **Ngân sách cấp phát**: ✅ `tests/alloc_budget_correction.rs` — host không gửi điểm chạm thì
+   số lần cấp phát *bằng đúng* lúc tắt; gửi điểm chạm thì tốn thêm nhiều nhất một lần kiểm âm
+   tiết cho mỗi từ; một từ được sửa nằm trong trần 5000. `tests/alloc_budget.rs` cũ không đụng tới.
 
 ## 13. Chỉ số
 
 `correctionsApplied`, `correctionsReverted`, `correctionsSkippedAmbiguous`,
-`correctionCandidatesMax`, `correctionMicrosecondsMax`. Chỉ đếm, không lưu nội dung. Tỉ lệ hoàn
+`correctionCandidatesMax`, `correctionMicrosecondsMax`. Chỉ đếm, không lưu nội dung. Lõi chưa
+đếm gì cả — bộ đếm sẽ đặt ở nền tảng, nơi đã có chỗ gửi số liệu. Tỉ lệ hoàn
 tác cao nghĩa là `Δ` đặt thấp quá.
 
 ## 14. Thứ tự hiện thực
 
 | PR | Nội dung | Cổng |
 |---|---|---|
-| 1 | `funput-engine::correction` + `KeyTouch` + phát lại + lọc, prior đều, `typo_correction` mặc định tắt | Kho lỗi tổng hợp, property test |
-| 2 | `SuggestionEngine::frequency` + C ABI + JNI | Test round-trip FFI |
+| 1 ✅ | `funput-engine::correction` + `KeyTouch` + phát lại + lọc + hoàn tác, `typo_correction` mặc định tắt | Differential, property test, ngân sách cấp phát, `check-loc.sh` |
+| 2 | `SuggestionEngine::frequency` + `is_known_word` (cửa chặn tiếng Anh) | Test đơn vị + ngân sách 0 cấp phát |
+| 2b | C ABI + JNI (kể cả đường backspace trả kết quả cho Android) + header cbindgen | Test round-trip FFI, `gen-header.sh --check` |
 | 3 | iOS: phím kề từ hình học, mang điểm chạm qua pipeline, hai bước ở ranh giới từ, ghi tài liệu | Test đơn vị + UI test §12.6 |
 | 4 | iOS: hoàn tác, chip trên thanh gợi ý, công tắc Cài đặt, tôn trọng `autocorrectionType` | UI test hoàn tác |
 | 5 | Android: cùng lõi, batch edit | Instrumented test |

@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use funput_core::{InputMethod, ToneStyle};
 
+use crate::correction;
 use crate::{Engine, EngineConfig};
 
 impl Engine {
@@ -15,6 +16,7 @@ impl Engine {
         let method_changed = self.session.config.method != config.method;
         let auto_capitalize_off = !config.auto_capitalize;
         self.session.config = config;
+        correction::sync(&mut self.session);
         if method_changed {
             self.session.clear();
         }
@@ -74,6 +76,9 @@ impl Engine {
     /// Reset per-word state without changing settings.
     pub fn clear(&mut self) {
         self.session.clear();
+        // The caret has moved or the field has changed: a correction parked for the
+        // old word would land somewhere it was never meant to.
+        correction::discard(&mut self.session);
     }
 
     pub fn add_shortcut(&mut self, trigger: impl Into<String>, expansion: impl Into<String>) {

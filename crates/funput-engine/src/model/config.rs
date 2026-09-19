@@ -47,6 +47,10 @@ pub struct EngineConfig {
     /// diacritics, no English restore, no auto-capitalize, no flip — the raw keys
     /// are tracked only so a trigger can still be recognized at a word boundary.
     pub shortcuts_in_english: bool,
+    /// Auto-correct a mistyped neighbouring key at the end of a word ("Tự sửa lỗi gõ
+    /// nhầm phím"). Off by default, and inert until the host also reports where each
+    /// touch landed — see [`crate::Engine::set_next_key_touch`].
+    pub typo_correction: bool,
 }
 
 impl Default for EngineConfig {
@@ -61,6 +65,7 @@ impl Default for EngineConfig {
             shortcuts_enabled: true,
             shortcut_smart_case: true,
             shortcuts_in_english: true,
+            typo_correction: false,
         }
     }
 }
