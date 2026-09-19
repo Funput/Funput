@@ -16,16 +16,19 @@ extension KeyboardViewController {
     func reportCorrectionSession() {
         let spread = inputCoordinator.touchSpread
         guard spread.count > 0 else { return }
+        // `viewWillDisappear` arrives more than once for a keyboard extension, and a
+        // session counted twice is a session that looks twice as certain as it is.
+        inputCoordinator.resetTouchSpread()
         let counts = inputCoordinator.correctionCounts
         // Default level, not `.info`: Console hides info messages unless the reader
         // knows to turn them on, and this line is the whole point of the measurement.
         os_log(
             .default,
             log: Self.correctionLog,
-            "touches %{public}d spread %{public}.3f±%{public}.3f · applied %{public}d reverted %{public}d ambiguous %{public}d · candidates %{public}d max %{public}dµs",
+            "touches %{public}d σ %{public}.3f (mean %{public}.3f) · applied %{public}d reverted %{public}d ambiguous %{public}d · candidates %{public}d max %{public}dµs",
             spread.count,
+            spread.perAxisSigma,
             spread.mean,
-            spread.standardDeviation,
             counts.applied,
             counts.reverted,
             counts.skippedAmbiguous,

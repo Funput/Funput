@@ -114,6 +114,21 @@ struct KeyboardCorrectionTests {
 
         #expect(coordinator.touchSpread.count == 9)
         #expect(abs(coordinator.touchSpread.mean - 0.35) < 0.001)
+        // Distances from a centre are not the per-axis spread the model is written
+        // in: touches scattered by σ each way land about 1.25σ out.
+        #expect(abs(coordinator.touchSpread.perAxisSigma - 0.35 / 2.0.squareRoot()) < 0.001)
+    }
+
+    @Test("A session's touches are never counted twice")
+    func reportedOnce() {
+        // `viewWillDisappear` arrives more than once for a keyboard extension.
+        let coordinator = coordinator(dictionary: nil)
+        let document = TestKeyboardWriter()
+        type("dduwowfnh ", slip: nil, with: coordinator, into: document)
+
+        coordinator.resetTouchSpread()
+
+        #expect(coordinator.touchSpread.count == 0)
     }
 }
 #endif

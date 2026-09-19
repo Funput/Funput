@@ -41,6 +41,11 @@ public final class KeyboardInputCoordinator {
     /// whether correcting is worth doing at all.
     public internal(set) var touchSpread = KeyboardTouchSpread()
 
+    /// Forget the touches counted so far — called once a session has been reported.
+    public func resetTouchSpread() {
+        touchSpread.reset()
+    }
+
     public init(
         inputMethod: KeyboardInputMethod = .vni,
         shiftDoubleTapInterval: TimeInterval = 0.3,
