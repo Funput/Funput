@@ -2,6 +2,7 @@
 //! and CI. Not a real IME — no keyboard hooks, no injecting into other apps. Owns
 //! its clap surface, its handler, and the engine-simulation tooling below it.
 
+mod command;
 mod coverage;
 mod encode;
 mod render;
@@ -10,12 +11,12 @@ mod sim;
 mod typos;
 
 use std::path::PathBuf;
-use std::process::ExitCode;
 
 use clap::{Args, Subcommand};
 
-use crate::cli::{CliError, CliResult, MethodArg};
-use render::steps_table;
+use crate::cli::MethodArg;
+
+pub use command::run;
 
 #[derive(Debug, Args)]
 pub struct DevArgs {
@@ -53,6 +54,20 @@ pub enum DevCommand {
         /// Seed for the touch noise, so a run is reproducible.
         #[arg(long, default_value_t = 1)]
         seed: u64,
+        /// How far ahead the winner must be before it is applied (the engine's Δ).
+        #[arg(long, default_value_t = 1.0)]
+        margin: f32,
+        /// Only offer candidates the word store recognizes.
+        #[arg(long)]
+        known_only: bool,
+        /// How many substituted keys a candidate may carry.
+        #[arg(long, default_value_t = 2)]
+        max_edits: usize,
+        /// Rank candidates with no word store at all, the way a host that has not
+        /// wired one would. The default learns the corpus, which is what a shipped
+        /// Vietnamese word list gives a real keyboard.
+        #[arg(long)]
+        uniform_prior: bool,
         /// Cap the number of syllables evaluated (for a quick run).
         #[arg(long)]
         limit: Option<usize>,
@@ -87,56 +102,4 @@ pub struct CommonOpts {
     /// Print per-keystroke detail instead of just the final app text.
     #[arg(long)]
     pub steps: bool,
-}
-
-/// Run `funput dev`: dispatch to the selected engine tool.
-pub fn run(args: DevArgs) -> CliResult {
-    match args.command {
-        DevCommand::Run { input, opts } => {
-            let simulation = sim::simulate(opts.method.into(), &input);
-            if opts.steps {
-                println!("{}", steps_table(&simulation));
-            } else {
-                println!("{}", simulation.app_text);
-            }
-        }
-        DevCommand::Repl { opts } => repl::run(opts.method.into(), opts.steps),
-        DevCommand::Typos {
-            corpus,
-            method,
-            noise,
-            seed,
-            limit,
-            show,
-            json,
-        } => {
-            let path = corpus.unwrap_or_else(|| PathBuf::from("benchmarks/sample.txt"));
-            let options = typos::Options {
-                method: method.into(),
-                noise,
-                seed,
-                limit,
-                show,
-                json,
-            };
-            typos::run(&path, &options).map_err(|e| {
-                CliError::Msg(format!("typos: cannot read corpus {}: {e}", path.display()))
-            })?;
-        }
-        DevCommand::Coverage {
-            corpus,
-            json,
-            show_mismatches,
-            limit,
-        } => {
-            let path = corpus.unwrap_or_else(|| PathBuf::from("benchmarks/sample.txt"));
-            coverage::run(&path, json, show_mismatches, limit).map_err(|e| {
-                CliError::Msg(format!(
-                    "coverage: cannot read corpus {}: {e}",
-                    path.display()
-                ))
-            })?;
-        }
-    }
-    Ok(ExitCode::SUCCESS)
 }

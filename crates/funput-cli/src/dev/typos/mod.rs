@@ -17,7 +17,7 @@
 
 mod noise;
 mod report;
-mod tally;
+mod store;
 
 use std::path::Path;
 
@@ -27,11 +27,16 @@ use funput_engine::{Action, Engine};
 use super::coverage::corpus::load_syllables;
 use super::encode::encode;
 use noise::{Rng, aim};
-use tally::Outcome;
-use tally::Tally;
+use report::{Outcome, Tally};
+pub(in crate::dev) use store::Prior;
+use store::{Store, decide};
 
 /// Type `syllable` with a wandering finger and report what correction made of it.
-fn attempt(syllable: &str, method: InputMethod, noise: f32, rng: &mut Rng) -> Outcome {
+///
+/// `store` stands in for the platform's word store, and is used exactly the way a
+/// keyboard uses it: veto first, then weigh the candidates.
+fn attempt(syllable: &str, options: &Options, store: &Store, rng: &mut Rng) -> Outcome {
+    let (method, noise) = (options.method, options.noise);
     let mut engine = Engine::new();
     engine.update_config(|config| {
         config.method = method;
@@ -47,7 +52,20 @@ fn attempt(syllable: &str, method: InputMethod, noise: f32, rng: &mut Rng) -> Ou
     }
     apply(&mut app, &engine.process_char(' '), ' ');
 
-    let chosen = engine.choose_correction(&[]);
+    // What a platform does before it looks at candidates: a word that is already a
+    // word is what the user meant, however odd it looks to the engine.
+    let vetoed = store.knows(app.trim_end());
+    let chosen = if vetoed {
+        None
+    } else {
+        decide(
+            engine.correction_candidates(),
+            store,
+            options.margin,
+            options.known_only,
+            options.max_edits,
+        )
+    };
     let corrected = chosen
         .and_then(|index| engine.correction_candidates().get(index))
         .map(|candidate| candidate.text().to_owned());
@@ -77,7 +95,16 @@ fn apply(app: &mut String, result: &funput_engine::ImeResult, key: char) {
 
 pub(super) struct Options {
     pub(super) method: InputMethod,
+    pub(super) prior: Prior,
     pub(super) noise: f32,
+    /// How far ahead the winner must be before it is applied. 1.0 is the engine's
+    /// own Δ; the harness can vary it to find where the wrong corrections go away.
+    pub(super) margin: f32,
+    /// Only offer a candidate the word store recognizes, rather than any
+    /// structurally valid syllable.
+    pub(super) known_only: bool,
+    /// How many substituted keys a candidate may carry.
+    pub(super) max_edits: usize,
     pub(super) seed: u64,
     pub(super) limit: Option<usize>,
     pub(super) show: usize,
@@ -101,9 +128,10 @@ pub fn run(corpus_path: &Path, options: &Options) -> std::io::Result<()> {
 
 fn measure(syllables: &[String], options: &Options) -> Tally {
     let mut rng = Rng::new(options.seed);
+    let store = Store::learn(syllables, options.prior);
     let mut tally = Tally::default();
     for syllable in syllables {
-        let outcome = attempt(syllable, options.method, options.noise, &mut rng);
+        let outcome = attempt(syllable, options, &store, &mut rng);
         tally.add(outcome);
         if tally.samples.len() < options.show && outcome != Outcome::Typed {
             let keys = encode(syllable, options.method);
