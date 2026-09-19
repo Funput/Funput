@@ -12,6 +12,7 @@ import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.keyboard.openKeyboardSettings
 import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.settings.SettingsScreen
+import app.funput.funput.ui.settings.SettingsScreenState
 import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,63 +36,71 @@ internal fun SettingsRoute(
     var clipboardClearJob by remember { mutableStateOf<Job?>(null) }
 
     SettingsScreen(
-        keyboardSetupStatus = rememberKeyboardSetupStatus(),
-        keyboardTheme = keyboardTheme,
-        onOpenAppearance = onOpenAppearance,
-        inputMethod = settings.inputMethod,
-        showsNumberRow = settings.showsNumberRow,
-        toneStyle = settings.toneStyle,
-        keySizeProfile = settings.keySizeProfile,
-        hapticsEnabled = settings.feedback.hapticsEnabled,
-        soundsEnabled = settings.feedback.soundsEnabled,
-        smartComposition = settings.smartComposition,
-        personalSuggestionsEnabled = settings.personalSuggestions.enabled,
-        clipboardPreferences = settings.clipboard,
-        smartGesturesEnabled = settings.smartGesturesEnabled,
-        onInputMethodSelected = { method -> scope.launch { settings.input.setInputMethod(method) } },
-        onShowsNumberRowChanged = { enabled ->
-            scope.launch { settings.numberRowStore.setShowsNumberRow(enabled) }
-        },
-        onToneStyleSelected = { style -> scope.launch { settings.toneStyleStore.setToneStyle(style) } },
-        onKeySizeSelected = { profile -> scope.launch { settings.sizing.setProfile(profile) } },
-        onHapticsChanged = { enabled ->
-            scope.launch { settings.feedbackStore.setHapticsEnabled(enabled) }
-        },
-        onSoundsChanged = { enabled ->
-            scope.launch { settings.feedbackStore.setSoundsEnabled(enabled) }
-        },
-        onSmartGesturesChanged = { enabled ->
-            scope.launch { settings.smartGestureStore.setEnabled(enabled) }
-        },
-        onSmartRestoreChanged = { enabled ->
-            scope.launch { settings.smartCompositionStore.setSmartRestoreEnabled(enabled) }
-        },
-        onSpellCheckChanged = { enabled ->
-            scope.launch { settings.smartCompositionStore.setSpellCheckEnabled(enabled) }
-        },
-        onAutoCapitalizeChanged = { enabled ->
-            scope.launch { settings.smartCompositionStore.setAutoCapitalizeEnabled(enabled) }
-        },
-        onPersonalSuggestionsChanged = { enabled ->
-            scope.launch { settings.personalSuggestionStore.setEnabled(enabled) }
-        },
-        onClipboardEnabledChanged = { enabled ->
-            scope.launch { settings.clipboardStore.setEnabled(enabled) }
-        },
-        onClipboardExpirySelected = { expiry ->
-            scope.launch { settings.clipboardStore.setExpiry(expiry) }
-        },
-        onClearClipboardHistory = {
-            if (clipboardClearJob?.isActive != true) {
-                clipboardClearJob = scope.launch {
-                    withContext(Dispatchers.IO) { ClipboardHistoryStore.from(context).clear() }
+        state = SettingsScreenState(
+            keyboardSetupStatus = rememberKeyboardSetupStatus(),
+            keyboardTheme = keyboardTheme,
+            inputMethod = settings.inputMethod,
+            showsNumberRow = settings.showsNumberRow,
+            toneStyle = settings.toneStyle,
+            keySizeProfile = settings.keySizeProfile,
+            hapticsEnabled = settings.feedback.hapticsEnabled,
+            soundsEnabled = settings.feedback.soundsEnabled,
+            smartComposition = settings.smartComposition,
+            personalSuggestionsEnabled = settings.personalSuggestions.enabled,
+            clipboardPreferences = settings.clipboard,
+            smartGesturesEnabled = settings.smartGesturesEnabled,
+            onInputMethodSelected = { method ->
+                scope.launch { settings.input.setInputMethod(method) }
+            },
+            onShowsNumberRowChanged = { enabled ->
+                scope.launch { settings.numberRowStore.setShowsNumberRow(enabled) }
+            },
+            onOpenAppearance = onOpenAppearance,
+            onToneStyleSelected = { style ->
+                scope.launch { settings.toneStyleStore.setToneStyle(style) }
+            },
+            onKeySizeSelected = { profile ->
+                scope.launch { settings.sizing.setProfile(profile) }
+            },
+            onHapticsChanged = { enabled ->
+                scope.launch { settings.feedbackStore.setHapticsEnabled(enabled) }
+            },
+            onSoundsChanged = { enabled ->
+                scope.launch { settings.feedbackStore.setSoundsEnabled(enabled) }
+            },
+            onSmartGesturesChanged = { enabled ->
+                scope.launch { settings.smartGestureStore.setEnabled(enabled) }
+            },
+            onSmartRestoreChanged = { enabled ->
+                scope.launch { settings.smartCompositionStore.setSmartRestoreEnabled(enabled) }
+            },
+            onSpellCheckChanged = { enabled ->
+                scope.launch { settings.smartCompositionStore.setSpellCheckEnabled(enabled) }
+            },
+            onAutoCapitalizeChanged = { enabled ->
+                scope.launch { settings.smartCompositionStore.setAutoCapitalizeEnabled(enabled) }
+            },
+            onPersonalSuggestionsChanged = { enabled ->
+                scope.launch { settings.personalSuggestionStore.setEnabled(enabled) }
+            },
+            onClipboardEnabledChanged = { enabled ->
+                scope.launch { settings.clipboardStore.setEnabled(enabled) }
+            },
+            onClipboardExpirySelected = { expiry ->
+                scope.launch { settings.clipboardStore.setExpiry(expiry) }
+            },
+            onClearClipboardHistory = {
+                if (clipboardClearJob?.isActive != true) {
+                    clipboardClearJob = scope.launch {
+                        withContext(Dispatchers.IO) { ClipboardHistoryStore.from(context).clear() }
+                    }
                 }
-            }
-        },
-        onResetPersonalSuggestions = {
-            scope.launch { settings.personalSuggestionStore.requestReset() }
-        },
-        onEnableKeyboard = context::openKeyboardSettings,
-        onSelectKeyboard = context::showKeyboardPicker,
+            },
+            onResetPersonalSuggestions = {
+                scope.launch { settings.personalSuggestionStore.requestReset() }
+            },
+            onEnableKeyboard = context::openKeyboardSettings,
+            onSelectKeyboard = context::showKeyboardPicker,
+        ),
     )
 }

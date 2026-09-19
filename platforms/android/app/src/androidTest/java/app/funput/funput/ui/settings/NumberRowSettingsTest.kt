@@ -4,11 +4,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.ui.settings.keyboard.KeyboardSettingsSection
-import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
+import app.funput.funput.ui.settings.keyboard.LayoutSettingsSection
 import app.funput.funput.ui.theme.FunputTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -64,18 +62,12 @@ class NumberRowSettingsTest {
     ) {
         compose.setContent {
             FunputTheme {
-                KeyboardSettingsSection(
-                    setupStatus = KeyboardSetupStatus.READY,
+                LayoutSettingsSection(
                     inputMethod = inputMethod,
                     showsNumberRow = showsNumberRow,
-                    toneStyle = ToneStyle.TRADITIONAL,
                     keySizeProfile = KeyboardSizingProfile.Normal,
-                    onOpenPicker = {},
                     onShowsNumberRowChanged = onShowsNumberRowChanged,
-                    onToneStyleSelected = {},
                     onKeySizeSelected = {},
-                    onEnableKeyboard = {},
-                    onSelectKeyboard = {},
                 )
             }
         }
