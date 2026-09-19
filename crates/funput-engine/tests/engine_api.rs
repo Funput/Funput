@@ -348,6 +348,44 @@ fn flip_choice_resets_after_the_word_commits() {
     assert_eq!(engine.buffer(), "card"); // eager-restored again, override gone
 }
 
+/// Backspace the live composition away one character at a time, the way a user
+/// clearing a word does. No `clear()` anywhere: the bugs below are precisely about
+/// what the engine keeps when a word ends without one.
+fn backspace_the_word(engine: &mut Engine) {
+    while !engine.buffer().is_empty() {
+        engine.on_backspace();
+    }
+}
+
+#[test]
+fn flip_choice_resets_when_backspace_empties_the_word() {
+    // The reported regression: a word boundary is not the only way a word ends.
+    // Flipping "má" to its raw keys and then deleting the lot left the choice
+    // pinned, so every word typed afterwards came out as its raw keystrokes —
+    // Vietnamese looked broken until a space happened to clear it.
+    let mut engine = Engine::new();
+    type_word(&mut engine, "mas");
+    engine.flip_composing(); // force raw
+    assert_eq!(engine.buffer(), "mas");
+
+    backspace_the_word(&mut engine);
+    for key in "mas".chars() {
+        engine.process_char(key);
+    }
+    assert_eq!(engine.buffer(), "má"); // composes again, the pinned choice is gone
+}
+
+#[test]
+fn flip_is_noop_after_backspace_takes_the_word_away() {
+    // `vn_form` outliving the buffer let the flip hotkey type a word the user had
+    // just deleted back out of an empty composition.
+    let mut engine = Engine::new();
+    type_word(&mut engine, "mas");
+    backspace_the_word(&mut engine);
+    assert_eq!(engine.flip_composing().action, Action::None);
+    assert_eq!(engine.buffer(), "");
+}
+
 // --- Word-start digits (numeric fields / OTP codes / phone numbers) ----------
 
 /// A digit typed with an empty buffer is a number, not the start of a Vietnamese

@@ -42,7 +42,7 @@ impl Engine {
             return ImeResult::none();
         }
         self.session.buffer.pop();
-        self.session.keys = self.session.buffer.clone();
+        self.session.resync_after_backspace();
         ImeResult::none()
     }
 
