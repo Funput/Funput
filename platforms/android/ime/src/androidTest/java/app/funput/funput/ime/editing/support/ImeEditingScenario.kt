@@ -78,6 +78,7 @@ internal class ImeEditingScenario private constructor(
         fun create(
             inputMethod: KeyboardInputMethod = KeyboardInputMethod.TELEX,
             allowComposition: Boolean = true,
+            allowShortcuts: Boolean = true,
         ): ImeEditingScenario {
             val host = HostEditor(ApplicationProvider.getApplicationContext())
             val engine = NativeVietnameseEngine()
@@ -97,7 +98,7 @@ internal class ImeEditingScenario private constructor(
                     spellCheck = true,
                 ),
             )
-            handler.start(allowComposition = allowComposition)
+            handler.start(allowComposition = allowComposition, allowShortcuts = allowShortcuts)
             return ImeEditingScenario(host, engine, composition, handler)
         }
     }

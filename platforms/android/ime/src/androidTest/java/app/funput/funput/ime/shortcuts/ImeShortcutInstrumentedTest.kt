@@ -17,7 +17,8 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ImeShortcutInstrumentedTest {
     @Test fun telexAndVniExpandOnBoundary() = onMainThread {
-        listOf(KeyboardInputMethod.TELEX, KeyboardInputMethod.VNI).forEach { method ->
+        listOf(KeyboardInputMethod.TELEX, KeyboardInputMethod.VNI,
+            KeyboardInputMethod.TELEX_ADVANCED).forEach { method ->
             ImeEditingScenario.create(method).use { scenario ->
                 scenario.handler.receiveShortcuts(library())
                 scenario.handler.type("vn ")
@@ -59,6 +60,22 @@ class ImeShortcutInstrumentedTest {
             scenario.handler.receiveShortcuts(library())
             scenario.handler.type("vn ")
             assertEquals("vn ", scenario.text)
+        }
+        ImeEditingScenario.create(allowShortcuts = false).use { scenario ->
+            scenario.handler.receiveShortcuts(library())
+            scenario.handler.type("vn ")
+            assertEquals("vn ", scenario.text)
+        }
+    }
+
+    @Test fun expansionDoesNotLeaveALearnedTrigger() = onMainThread {
+        ImeEditingScenario.create().use { scenario ->
+            scenario.handler.receiveShortcuts(library())
+            scenario.handler.onKeyAction(KeyAction.ToggleLanguage(KeyboardLanguage.ENGLISH))
+            scenario.handler.type("vn ")
+            val update = scenario.handler.takeSuggestionUpdate()
+            assertEquals("", update.prefix)
+            assertEquals(null, update.completedToken)
         }
     }
 

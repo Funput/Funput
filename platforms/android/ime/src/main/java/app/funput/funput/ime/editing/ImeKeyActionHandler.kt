@@ -20,6 +20,7 @@ internal class ImeKeyActionHandler(
 ) {
     private var compositionAllowed = true
     private var suggestionsAllowed = true
+    private var shortcutsAllowed = true
     private val suggestions = ImeSuggestionSession(composition, connection)
     private val gestures = ImeGestureEditor(
         composition, editor, connection, ::backspace,
@@ -51,17 +52,15 @@ internal class ImeKeyActionHandler(
     var language: KeyboardLanguage = KeyboardLanguage.VIETNAMESE
         private set
 
-    /**
-     * The input method is not applied here: `ImeSettingsController` owns engine
-     * configuration and has already pushed it (see its `applyEngineConfiguration`).
-     */
     fun start(
         allowComposition: Boolean = true,
         allowSuggestions: Boolean = true,
+        allowShortcuts: Boolean = true,
         renderMode: CompositionRenderMode = CompositionRenderMode.COMPOSING,
     ) {
         compositionAllowed = allowComposition
         suggestionsAllowed = allowSuggestions
+        shortcutsAllowed = allowShortcuts
         composition.reset()
         composition.setRenderMode(renderMode)
         composition.setEnabled(usesVietnameseComposition)
@@ -102,7 +101,8 @@ internal class ImeKeyActionHandler(
     fun beginShortcutActivation() = shortcutCoordinator.beginActivation()
 
     fun receiveShortcuts(library: ShortcutLibrary) {
-        shortcutCoordinator.receive(library)
+        val snapshot = if (shortcutsAllowed) library else ShortcutLibrary(isEnabled = false)
+        shortcutCoordinator.receive(snapshot)
         composition.setEnabled(usesVietnameseComposition)
     }
 
@@ -145,6 +145,6 @@ internal class ImeKeyActionHandler(
     private val usesVietnameseComposition: Boolean
         get() = compositionAllowed && language == KeyboardLanguage.VIETNAMESE
     private val usesEnglishShortcuts: Boolean
-        get() = compositionAllowed && language == KeyboardLanguage.ENGLISH &&
+        get() = shortcutsAllowed && compositionAllowed && language == KeyboardLanguage.ENGLISH &&
             shortcutCoordinator.runsInEnglish
 }

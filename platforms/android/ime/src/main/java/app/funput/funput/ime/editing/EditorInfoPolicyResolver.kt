@@ -23,6 +23,7 @@ internal object EditorInfoPolicyResolver {
     ): EditorInfoPolicy {
         val editorMode = EditorInfoKeyboardModeResolver.resolve(inputType)
         val isText = inputType and InputType.TYPE_MASK_CLASS == InputType.TYPE_CLASS_TEXT
+        val variation = inputType and InputType.TYPE_MASK_VARIATION
         val source = suggestionSource(editorMode.isPassword)
         val learningAllowed = !editorMode.isPassword &&
             !(imeOptions has EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
@@ -34,6 +35,9 @@ internal object EditorInfoPolicyResolver {
             suggestionSource = source,
             allowsPersonalizedLearning = learningAllowed,
             allowsPersonalSuggestions = source == ImeSuggestionSource.FUNPUT,
+            // URI fields reuse SEARCH so omnibars still compose Vietnamese; they must not expand.
+            allowsShortcuts = editorMode.supportsVietnameseComposition &&
+                variation != InputType.TYPE_TEXT_VARIATION_URI,
             compositionRenderMode = CompositionCompatibilityPolicy.renderMode(packageName),
         )
     }
