@@ -2,7 +2,7 @@
 //! boundary key and answering.
 
 use super::FunputEngine;
-use super::types::{CORRECTION_CAP, FunputCorrectionCandidate};
+use super::types::{CORRECTION_CAP, FunputCorrectionCandidate, FunputCorrectionMetrics};
 use crate::abi;
 
 /// What `funput_engine_choose_correction` answers when there is nothing to apply.
@@ -73,7 +73,7 @@ pub unsafe extern "C" fn funput_engine_pending_correction_backspace(
 /// values, or be null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_engine_choose_correction(
-    engine: *const FunputEngine,
+    engine: *mut FunputEngine,
     uses: *const u32,
     allowed: *const bool,
     len: usize,
@@ -83,7 +83,7 @@ pub unsafe extern "C" fn funput_engine_choose_correction(
     // The sentinel for "do not correct" is -1, so a null handle and a panic must
     // both land on that.
     abi::safe(NO_CHOICE, || {
-        let Some(engine) = (unsafe { engine.as_ref() }) else {
+        let Some(engine) = (unsafe { engine.as_mut() }) else {
             return NO_CHOICE;
         };
         let uses = if uses.is_null() {
@@ -129,4 +129,15 @@ pub unsafe extern "C" fn funput_engine_correction_undo_text(
             abi::copy_codepoints(dst, text.chars())
         })
     }
+}
+
+/// Read the correction counters. Zeroed when the feature has never been switched on.
+///
+/// # Safety
+/// `engine` must be a valid handle or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_engine_correction_metrics(
+    engine: *const FunputEngine,
+) -> FunputCorrectionMetrics {
+    unsafe { abi::with_engine_ref(engine, |e| e.correction_metrics().into()) }
 }

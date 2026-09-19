@@ -7,6 +7,10 @@
 
 use crate::ImeResult;
 use crate::correction::score::CorrectionCandidate;
+mod metrics;
+
+pub use metrics::CorrectionMetrics;
+
 use crate::correction::touch::{StoredTouch, TouchLog};
 use crate::model::Session;
 
@@ -29,6 +33,7 @@ pub(crate) struct CorrectionState {
     pub(crate) last: Option<Applied>,
     /// Raw keys of a word the user undid: not corrected again next time it is typed.
     pub(crate) suppressed: Option<String>,
+    pub(crate) metrics: CorrectionMetrics,
 }
 
 impl CorrectionState {
@@ -73,6 +78,7 @@ pub(crate) fn apply(session: &mut Session, index: Option<usize>) -> ImeResult {
     let mut output = String::with_capacity(candidate.text().len() + pending.boundary.len_utf8());
     output.push_str(candidate.text());
     output.push(pending.boundary);
+    state.metrics.applied += 1;
     state.last = Some(Applied {
         shown: pending.shown,
         keys: pending.keys,
@@ -112,6 +118,7 @@ pub(crate) fn take_undo(session: &mut Session) -> Option<ImeResult> {
     }
     let state = session.correction.as_mut()?;
     let applied = state.last.take()?;
+    state.metrics.reverted += 1;
     state.suppressed = Some(applied.keys);
     let mut output = applied.shown;
     output.push(applied.boundary);

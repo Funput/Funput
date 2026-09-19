@@ -9,7 +9,7 @@
 //! See `docs/features/typo-correction.md` and [`crate::correction`].
 
 use crate::correction::score::{is_ambiguous, word_prior};
-use crate::correction::state::CorrectionState;
+use crate::correction::state::{CorrectionMetrics, CorrectionState};
 use crate::correction::{self, CorrectionCandidate, KeyTouch};
 use crate::{Engine, ImeResult};
 
@@ -63,7 +63,11 @@ impl Engine {
     /// not know. It belongs here rather than in a caller's own filter because the
     /// index this returns points into the unfiltered list, and because the confidence
     /// margin has to be measured against the runner-up that was actually eligible.
-    pub fn choose_correction(&self, uses: &[u32], allowed: &[bool]) -> Option<usize> {
+    ///
+    /// Takes `&mut self` because it records *why* it declined. Telling a word the
+    /// margin refused from one the host's dictionary vetoed is the difference between
+    /// "Δ is too high" and "the word list is too small", and only this call knows.
+    pub fn choose_correction(&mut self, uses: &[u32], allowed: &[bool]) -> Option<usize> {
         let mut best: Option<(usize, f32)> = None;
         let mut runner_up = f32::NEG_INFINITY;
         for (i, candidate) in self.correction_candidates().iter().enumerate() {
@@ -89,7 +93,20 @@ impl Engine {
             }
         }
         let (index, top) = best?;
-        (!is_ambiguous(top, runner_up)).then_some(index)
+        if is_ambiguous(top, runner_up) {
+            if let Some(state) = self.session.correction.as_mut() {
+                state.metrics.skipped_ambiguous += 1;
+            }
+            return None;
+        }
+        Some(index)
+    }
+
+    /// What typo correction has done this session. Counts only — never a word.
+    pub fn correction_metrics(&self) -> CorrectionMetrics {
+        self.correction_state()
+            .map(|state| state.metrics)
+            .unwrap_or_default()
     }
 
     /// Answer the parked correction: apply the candidate at `index`, or pass `None`

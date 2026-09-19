@@ -29,6 +29,15 @@ extension KeyboardViewController {
         hasFullAccess: Bool,
         activationGeneration: UInt64
     ) {
+        // Opening the word list takes a few milliseconds, so it happens off the way
+        // to the first keystroke. Until it is ready the coordinator declines every
+        // correction, which is the safe direction.
+        if configuration.typoCorrection {
+            inputCoordinator.correctionDictionary = correctionWords
+            correctionWords.prepare()
+        } else {
+            inputCoordinator.correctionDictionary = nil
+        }
         personalSuggestionService.configure(
             enabled: configuration.personalSuggestionsEnabled,
             hasFullAccess: hasFullAccess,

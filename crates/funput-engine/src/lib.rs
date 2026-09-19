@@ -21,7 +21,7 @@ mod correction;
 mod engine;
 mod model;
 
-pub use correction::{CorrectionCandidate, KeyTouch, MAX_ALTERNATES};
+pub use correction::{CorrectionCandidate, CorrectionMetrics, KeyTouch, MAX_ALTERNATES};
 pub use engine::Engine;
 pub use model::EngineConfig;
 pub use model::key_source::KeySource;

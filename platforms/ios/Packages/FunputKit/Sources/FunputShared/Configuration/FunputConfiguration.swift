@@ -33,6 +33,10 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     /// swipe, no language name, no chevrons.
     public var languageToggleEnabled: Bool
     public var personalSuggestionsEnabled: Bool
+    /// Repair a mistyped neighbouring key at the end of a word ("Tự sửa lỗi gõ nhầm
+    /// phím"). Needs a word store to weigh candidates against, and does nothing in a
+    /// field that has asked for autocorrect to be off.
+    public var typoCorrection: Bool
     public var clipboardEnabled: Bool
     public var clipboardExpiry: ClipboardExpiry
     public var personalSuggestionResetToken: UUID?
@@ -45,6 +49,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case smartGesturesEnabled
         case showsNumberRow, layoutPreset, keySizing, heightScale, keyboardAppearance
         case personalSuggestionsEnabled, personalSuggestionResetToken, languageToggleEnabled
+        case typoCorrection
         case clipboardEnabled, clipboardExpiry, schemaVersion
     }
 
@@ -68,6 +73,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         heightScale: Double = 1,
         languageToggleEnabled: Bool = true,
         personalSuggestionsEnabled: Bool = true,
+        typoCorrection: Bool = true,
         clipboardEnabled: Bool = true,
         clipboardExpiry: ClipboardExpiry = .hour,
         personalSuggestionResetToken: UUID? = nil,
@@ -92,6 +98,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.heightScale = heightScale
         self.languageToggleEnabled = languageToggleEnabled
         self.personalSuggestionsEnabled = personalSuggestionsEnabled
+        self.typoCorrection = typoCorrection
         self.clipboardEnabled = clipboardEnabled
         self.clipboardExpiry = clipboardExpiry
         self.personalSuggestionResetToken = personalSuggestionResetToken
@@ -111,5 +118,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 14
+    public static let currentSchemaVersion = 15
 }
