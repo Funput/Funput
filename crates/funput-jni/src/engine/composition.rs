@@ -83,6 +83,6 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
     })
 }
 
-fn to_char(code_point: jint) -> Option<char> {
-    char::from_u32(code_point as u32)
+pub(super) fn to_char(code_point: jint) -> Option<char> {
+    u32::try_from(code_point).ok().and_then(char::from_u32)
 }

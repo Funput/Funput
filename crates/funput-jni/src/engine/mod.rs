@@ -6,6 +6,7 @@
 //!   safe no-op.
 //! - [`lifecycle`] — `nativeCreate` / `nativeDestroy` / `nativeClear`.
 //! - [`composition`] — `nativeProcess` / `nativeBoundary` / `nativeBackspace`.
+//! - [`correction`] — the typo-correction handshake at a word boundary.
 //! - [`settings`] — `nativeConfigure` (the durable options in one call) and
 //!   `nativeSetEnabled` (runtime VI/EN).
 //!
@@ -13,6 +14,7 @@
 //! invisible to the Android runtime.
 
 mod composition;
+mod correction;
 mod lifecycle;
 mod registry;
 mod settings;
