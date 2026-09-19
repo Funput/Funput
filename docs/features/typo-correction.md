@@ -415,6 +415,14 @@ bộ chống echo hiện tại vẫn đúng.
 
 ### 8.3. Hoàn tác
 
+✅ Đã hiện thực. Một chỗ phải cẩn thận hơn bản viết: khi hoàn tác nổ, phím Xoá **không được**
+đi tiếp vào tài liệu — engine đã nói chính xác xoá bao nhiêu và chèn lại gì, xoá thêm một ký tự
+nữa là ăn mất dấu cách người dùng không hề chạm vào. Và `reopenPreviousWord` phải bị chặn cho
+đúng lượt đó, nếu không `adopt` sẽ mở lại chính từ vừa bị người dùng từ chối.
+
+Ngoài ra ngữ cảnh tài liệu phải kiểm **trước** khi hỏi engine, vì hỏi là tiêu thụ luôn lệnh hoàn
+tác: hỏng sau đó thì engine tin là đã trả chữ về trong khi tài liệu vẫn đang hiện bản sửa.
+
 Phím Xoá ngay sau khi sửa: `KeyboardInputCoordinator` đã có `reopensPreviousWord` cho Backspace.
 Việc hoàn tác nằm **trong engine** — `Engine::on_backspace` trả thẳng `ImeResult::send` với chuỗi
 gốc và tự bật cờ "không sửa lại". Host chỉ cần hỏi `has_correction_undo()` trước khi để phím Xoá
