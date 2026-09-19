@@ -7,6 +7,14 @@ extension KeyboardInputCoordinator {
         var context = documentSynchronizer.snapshot?.contextBeforeInput
         for scalar in text.unicodeScalars {
             if usesEngine {
+                // One key, one touch. The engine spends the report on the next
+                // keystroke it sees, so a key that produces more than one scalar
+                // describes only its first — and the engine, finding a key with no
+                // evidence, leaves the whole word alone rather than guessing.
+                if let touch = pendingTouch {
+                    composer.setNextKeyTouch(touch)
+                    pendingTouch = nil
+                }
                 let previous = composer.buffer()
                 let signpostID = KeyboardInputSignposts.begin("ComposerFFI")
                 let result = composer.process(scalar)

@@ -24,6 +24,10 @@ public final class KeyboardInputCoordinator {
     var suggestionTrackingActive = true
     var preferredTelexMethod: KeyboardInputMethod
     var nextTransactionSequence: UInt64 = 1
+    /// Where the finger landed for the key being handled right now. Set by `handle`
+    /// and spent on the first scalar that reaches the engine; never outlives the key
+    /// it belongs to.
+    var pendingTouch: KeyboardTouchEvidence?
 
     public init(
         inputMethod: KeyboardInputMethod = .vni,
