@@ -534,7 +534,21 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    Nên **vùng an toàn duy nhất là nhiễu ≈ 0,20** (0,6% sửa sai, vá 57%). Ở 0,25 thì cứ 15 lần
    sửa có 1 lần viết lại một từ người dùng cố ý gõ.
 
-   **Chưa ai biết nhiễu thật của người dùng Funput là bao nhiêu** — và đó là con số quyết định.
+   **Đã đo trên máy thật (20/09/2026, iPhone 15 Pro, iOS 27, VNI):** σ ≈ **0,174 ± 0,011** trên
+   135 phím, hai phiên gõ tự nhiên. Chạy bộ đo đúng mức đó trên Viet74K: 2,5% số từ có phím
+   trượt, vá được 1,1% số từ, và **viết sai 0,01% số từ — 1 trên 8 955**. Kể cả ở cận trên của
+   khoảng tin cậy (0,19) vẫn là 0,02%.
+
+   Hai lưu ý để người đọc sau không tin quá mức: mẫu nhỏ (135 phím, một người, hai phiên), và
+   con số quy từ khoảng cách tới tâm phím sang σ mỗi trục theo phân phối Rayleigh — hai ước
+   lượng độc lập (từ trung bình và từ độ lệch) ra 0,155/0,162 và 0,186/0,182, khớp nhau, nên mô
+   hình Gauss hai chiều là hợp lý chứ không phải giả định suông.
+
+   Cùng lần đo: tìm ứng viên nặng nhất **568 µs** trên iPhone 15 Pro — dưới xa ngưỡng 2 ms, và
+   thấp hơn ước lượng ~1,5 ms tôi đưa cho máy đời cũ.
+
+   Trước khi có số này thì **chưa ai biết nhiễu thật của người dùng Funput là bao nhiêu** — và
+   đó là con số quyết định.
    `KEY_ACCURACY_INVESTIGATION.md` đo *vùng chạm*, không đo độ phân tán của ngón; chỉ biết nửa
    phím ≈ 20pt, tức pitch ≈ 40pt, nên 0,20 là 8pt và 0,25 là 10pt — gõ hai ngón cái trên điện
    thoại nằm đúng quanh khoảng đó. **Việc đầu tiên của đợt iOS phải là đo con số này trên máy
