@@ -50,7 +50,9 @@ internal object KeyboardHitTargetResolver {
             key?.let { target -> resolvedControls.first { it.spec.id == target.spec.id } }
         return bar.copy(
             suggestionsHitBounds = KeyBounds(
-                left = bar.suggestionsBounds.left,
+                // Nothing sits to the left of the suggestions, so like the outer keys of a
+                // row they reach the surface edge instead of leaving the padding unowned.
+                left = 0f,
                 top = 0f,
                 right = bar.suggestionsBounds.right,
                 bottom = hitBottom,

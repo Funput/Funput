@@ -23,7 +23,4 @@ internal object ToolbarMetrics {
 
     /** The vertical strip the toolbar claims in total. */
     const val ChromeDp = SuggestionBarHeightDp + SuggestionBarGapDp
-
-    /** The brand mark is decorative, so it sits inside the band instead of filling it. */
-    const val LogoSizeRatio = 0.68f
 }

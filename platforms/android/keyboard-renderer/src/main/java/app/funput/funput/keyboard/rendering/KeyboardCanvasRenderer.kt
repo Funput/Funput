@@ -30,7 +30,6 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
     private val alternatePaletteRenderer = AlternatePaletteRenderer(metrics)
     private val suggestionBarRenderer = SuggestionBarRenderer(metrics)
     private val clipboardChipRenderer = ClipboardChipRenderer(resources, metrics)
-    private val toolbarLogoRenderer = ToolbarLogoRenderer(resources)
     private val backgroundImageRenderer = KeyboardBackgroundImageRenderer()
     private var theme: KeyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
 
@@ -86,7 +85,6 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
             if (suggestions.isEmpty() && clipboardHint != null) {
                 clipboardChipRenderer.draw(canvas, bar.suggestionsBounds, clipboardHint, pressedKeys)
             }
-            toolbarLogoRenderer.draw(canvas, bar.logoBounds)
         }
         keyboard.keys.forEach { key ->
             keyRenderer.draw(

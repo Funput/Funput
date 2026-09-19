@@ -27,7 +27,9 @@ internal fun ResolvedKeyboard.interactionTargetAt(
     if (!bar.suggestionsHitBounds.contains(x, y)) return null
     if (suggestionCount <= 0) return ClipboardTargetId.takeIf { clipboardVisible }
 
-    val bounds = bar.suggestionsHitBounds
+    // Segments follow what is drawn, not the wider hit region: a tap in the slack around
+    // the band belongs to the nearest candidate instead of shifting every boundary.
+    val bounds = bar.suggestionsBounds
     val segmentWidth = bounds.width / suggestionCount
     val index = ((x - bounds.left) / segmentWidth).toInt().coerceIn(0, suggestionCount - 1)
     return SuggestionTargetIds.id(index)

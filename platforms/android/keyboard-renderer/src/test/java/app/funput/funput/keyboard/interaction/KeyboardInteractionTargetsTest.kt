@@ -68,6 +68,21 @@ class KeyboardInteractionTargetsTest {
     }
 
     @Test
+    fun leadingSuggestionClaimsThePaddingBesideIt() {
+        val bar = requireNotNull(keyboard.suggestionBar)
+        // With no logo beside them the suggestions own the band's leading padding, the way
+        // the outer key of a row reaches the surface edge.
+        assertEquals(0f, bar.suggestionsHitBounds.left, 0.01f)
+        for (x in listOf(0f, bar.suggestionsBounds.left - 1f)) {
+            assertEquals(
+                "tap at x=$x",
+                SuggestionTargetIds.id(0),
+                keyboard.interactionTargetAt(x, bar.suggestionsBounds.centerY, SuggestionCount),
+            )
+        }
+    }
+
+    @Test
     fun emptySuggestionListLeavesBarNonInteractive() {
         val bounds = requireNotNull(keyboard.suggestionBar).suggestionsBounds
 
