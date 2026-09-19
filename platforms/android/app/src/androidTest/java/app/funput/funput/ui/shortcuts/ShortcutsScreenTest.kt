@@ -3,6 +3,7 @@ package app.funput.funput.ui.shortcuts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -90,6 +91,17 @@ class ShortcutsScreenTest {
         compose.runOnIdle { assert(store.value.smartCase) }
         compose.onNodeWithText("Đóng").performClick()
         compose.onNodeWithText("Tự nhận diện hoa/thường").assertIsOn()
+    }
+
+    @Test
+    fun focusedExpansionRemainsVisibleWithSoftwareKeyboard() {
+        show(ShortcutLibrary())
+        compose.onNodeWithContentDescription("Thêm gõ tắt").performClick()
+
+        compose.onNodeWithTag("shortcuts-editor-expansion").performClick()
+        compose.onNodeWithTag("shortcuts-editor-expansion").performTextInput("Nội dung dài")
+
+        compose.onNodeWithTag("shortcuts-editor-expansion").assertIsDisplayed()
     }
 
     private fun show(initial: ShortcutLibrary): ShortcutTestStore {

@@ -3,9 +3,8 @@ package app.funput.funput.ui.shortcuts.editor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,6 +16,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,19 +44,21 @@ internal fun ShortcutEditorSheet(
     var deleteDialog by remember { mutableStateOf(false) }
     val editing = model.contains(original)
     val hasChanges = draft != original
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     fun requestDismiss() {
         if (model.isSaving) return
         if (hasChanges) discardDialog = true else dismiss()
     }
     ModalBottomSheet(
         onDismissRequest = ::requestDismiss,
+        sheetState = sheetState,
         sheetGesturesEnabled = !hasChanges && !model.isSaving,
         modifier = Modifier.fillMaxHeight(),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
-                .imePadding().padding(Spacing.Large),
+                .padding(Spacing.Large),
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton(onClick = ::requestDismiss, enabled = !model.isSaving) {
