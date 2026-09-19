@@ -59,7 +59,7 @@ public final class ClipboardCaptureController {
         if retry { needsRetry = false; processed = nil }
         guard !needsRetry else { return }
         let before = gateway.snapshot()
-        guard !before.isIndeterminate, before.hasStrings,
+        guard !before.isIndeterminate, before.hasPlainText,
               before.changeCount != processed, before.changeCount != suppressed else { return }
         isReading = true
         defer {

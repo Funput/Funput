@@ -1,4 +1,5 @@
 #if canImport(UIKit)
+import FunputShared
 import ThemeSchema
 import UIKit
 
@@ -19,7 +20,9 @@ final class KeyboardClipboardChipView: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        pasteConfiguration = UIPasteConfiguration(forAccepting: NSString.self)
+        pasteConfiguration = UIPasteConfiguration(
+            acceptableTypeIdentifiers: ClipboardPlainText.typeIdentifiers
+        )
         hintLabel.font = .preferredFont(forTextStyle: .subheadline)
         hintLabel.adjustsFontForContentSizeCategory = true
         hintLabel.lineBreakMode = .byTruncatingTail
@@ -97,7 +100,7 @@ final class KeyboardClipboardChipView: UIView {
 
     override func paste(itemProviders: [NSItemProvider]) {
         guard let provider = itemProviders.first(where: {
-            $0.canLoadObject(ofClass: NSString.self)
+            ClipboardPlainText.canLoad(from: $0)
         }) else { return }
         let changeCount = UIPasteboard.general.changeCount
         _ = provider.loadObject(ofClass: NSString.self) { [weak self] object, _ in

@@ -8,10 +8,10 @@ struct ClipboardChangeMonitorTests {
     func automaticSampling() async throws {
         let monitor = ClipboardChangeMonitor()
         defer { monitor.stop() }
-        var snapshot = ClipboardSnapshot(changeCount: 1, hasStrings: false, hasURLs: false)
+        var snapshot = makeSnapshot(changeCount: 1, hasPlainText: false)
         var changes = 0
         monitor.start(readSnapshot: { snapshot }, onChange: { changes += 1 })
-        snapshot = ClipboardSnapshot(changeCount: 2, hasStrings: true, hasURLs: false)
+        snapshot = makeSnapshot(changeCount: 2)
         for _ in 0..<100 {
             if changes == 2 { break }
             try await Task.sleep(for: .milliseconds(20))
@@ -23,20 +23,20 @@ struct ClipboardChangeMonitorTests {
     func changesDuringSession() {
         let monitor = ClipboardChangeMonitor()
         defer { monitor.stop() }
-        var snapshot = ClipboardSnapshot(changeCount: 1, hasStrings: false, hasURLs: false)
+        var snapshot = makeSnapshot(changeCount: 1, hasPlainText: false)
         var changes = 0
         monitor.start(readSnapshot: { snapshot }, onChange: { changes += 1 })
         #expect(changes == 1)
         monitor.sample()
         #expect(changes == 1)
 
-        snapshot = ClipboardSnapshot(changeCount: 2, hasStrings: true, hasURLs: false)
+        snapshot = makeSnapshot(changeCount: 2)
         monitor.sample()
         #expect(changes == 2)
-        snapshot = ClipboardSnapshot(changeCount: 3, hasStrings: true, hasURLs: false)
+        snapshot = makeSnapshot(changeCount: 3)
         monitor.sample()
         #expect(changes == 3)
-        snapshot = ClipboardSnapshot(changeCount: 4, hasStrings: false, hasURLs: false)
+        snapshot = makeSnapshot(changeCount: 4, hasPlainText: false)
         monitor.sample()
         #expect(changes == 4)
     }
@@ -49,7 +49,7 @@ struct ClipboardChangeMonitorTests {
         var changes = 0
         let read = {
             reads += 1
-            return ClipboardSnapshot(changeCount: 5, hasStrings: true, hasURLs: false)
+            return makeSnapshot(changeCount: 5)
         }
         monitor.start(readSnapshot: read, onChange: { changes += 1 })
         monitor.stop()
@@ -68,15 +68,24 @@ struct ClipboardChangeMonitorTests {
         var changes = 0
         monitor.start(readSnapshot: { snapshot }, onChange: { changes += 1 })
         #expect(changes == 0)
-        snapshot = ClipboardSnapshot(changeCount: 0, hasStrings: false, hasURLs: false)
+        snapshot = makeSnapshot(changeCount: 0, hasPlainText: false)
         monitor.sample()
-        snapshot = ClipboardSnapshot(changeCount: 9, hasStrings: true, hasURLs: false)
+        snapshot = makeSnapshot(changeCount: 9)
         monitor.sample()
         #expect(changes == 2)
         snapshot = nil
         monitor.sample()
-        snapshot = ClipboardSnapshot(changeCount: 9, hasStrings: true, hasURLs: false)
+        snapshot = makeSnapshot(changeCount: 9)
         monitor.sample()
         #expect(changes == 3)
+    }
+
+    private func makeSnapshot(changeCount: Int, hasPlainText: Bool = true) -> ClipboardSnapshot {
+        ClipboardSnapshot(
+            changeCount: changeCount,
+            hasStrings: hasPlainText,
+            hasURLs: false,
+            hasPlainText: hasPlainText
+        )
     }
 }

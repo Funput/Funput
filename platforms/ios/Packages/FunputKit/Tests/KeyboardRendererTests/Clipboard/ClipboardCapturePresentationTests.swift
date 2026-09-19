@@ -61,7 +61,9 @@ struct ClipboardCapturePresentationTests {
 @MainActor
 private struct PresentationGateway: ClipboardGateway {
     func snapshot() -> ClipboardSnapshot {
-        ClipboardSnapshot(changeCount: 1, hasStrings: true, hasURLs: false)
+        ClipboardSnapshot(
+            changeCount: 1, hasStrings: true, hasURLs: false, hasPlainText: true
+        )
     }
     func readText() -> String? { "copied" }
 }

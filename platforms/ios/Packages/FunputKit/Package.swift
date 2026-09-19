@@ -61,6 +61,7 @@ let package = Package(
         .target(
             name: "KeyboardRenderer",
             dependencies: [
+                .target(name: "FunputShared"),
                 .target(name: "KeyboardLayout"),
                 .target(name: "KeyboardTouchUIKit"),
                 .target(name: "ThemeSchema"),

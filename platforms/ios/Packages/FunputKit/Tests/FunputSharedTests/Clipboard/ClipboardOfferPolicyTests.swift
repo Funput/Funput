@@ -4,7 +4,9 @@ import Testing
 
 @Suite("Clipboard offer policy")
 struct ClipboardOfferPolicyTests {
-    private let text = ClipboardSnapshot(changeCount: 42, hasStrings: true, hasURLs: false)
+    private let text = ClipboardSnapshot(
+        changeCount: 42, hasStrings: true, hasURLs: false, hasPlainText: true
+    )
 
     @Test("Offers plain text when every precondition holds")
     func offersText() {
@@ -17,7 +19,9 @@ struct ClipboardOfferPolicyTests {
 
     @Test("A copied URL is announced as a link")
     func offersLink() {
-        let snapshot = ClipboardSnapshot(changeCount: 7, hasStrings: true, hasURLs: true)
+        let snapshot = ClipboardSnapshot(
+            changeCount: 7, hasStrings: true, hasURLs: true, hasPlainText: true
+        )
         #expect(
             ClipboardOfferPolicy.offer(
                 snapshot: snapshot, lastPastedChangeCount: nil, context: context()
@@ -72,7 +76,21 @@ struct ClipboardOfferPolicyTests {
 
     @Test("An image-only pasteboard is ignored in v1")
     func withoutStrings() {
-        let snapshot = ClipboardSnapshot(changeCount: 9, hasStrings: false, hasURLs: false)
+        let snapshot = ClipboardSnapshot(
+            changeCount: 9, hasStrings: false, hasURLs: false, hasPlainText: false
+        )
+        #expect(
+            ClipboardOfferPolicy.offer(
+                snapshot: snapshot, lastPastedChangeCount: nil, context: context()
+            ) == nil
+        )
+    }
+
+    @Test("URL-shaped providers without plain text are ignored")
+    func withoutPlainText() {
+        let snapshot = ClipboardSnapshot(
+            changeCount: 10, hasStrings: true, hasURLs: true, hasPlainText: false
+        )
         #expect(
             ClipboardOfferPolicy.offer(
                 snapshot: snapshot, lastPastedChangeCount: nil, context: context()
