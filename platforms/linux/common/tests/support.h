@@ -94,6 +94,9 @@ inline void applyPlan(std::string &document, const ComposePlan &plan, char key) 
         document += plan.text;
         break;
     case Effect::Replace:
+        // deleteAfterChars is the selected suffix sitting at the end of a full
+        // document; tests that only model text-before-caret leave it at zero.
+        popChars(document, plan.deleteAfterChars);
         popChars(document, plan.deleteChars);
         document += plan.text;
         break;

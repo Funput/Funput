@@ -8,6 +8,7 @@
 #ifndef FUNPUT_IBUS_ENGINE_INTERNAL_H
 #define FUNPUT_IBUS_ENGINE_INTERNAL_H
 
+#include <cstdint>
 #include <string>
 
 #include <ibus.h>
@@ -57,12 +58,13 @@ void updatePreedit(IBusEngine *engine, const std::string &text);
 
 // --- reading the document -----------------------------------------------------
 //
-// The IBus twins of `textBeforeCaret` and `hasSelection` in
-// fcitx5/src/funput_client.cpp; same names so both shells read alike. Both return
+// The IBus twins of `textBeforeCaret`, `hasSelection` and `selectedAfter` in
+// fcitx5/src/funput_client.cpp; same names so both shells read alike. They return
 // the "nothing usable" answer when the client has never sent surrounding text.
 
 std::string textBeforeCaret(IBusEngine *engine);
 bool hasSelection(IBusEngine *engine);
+uint32_t selectedAfter(IBusEngine *engine);
 
 // Decide whether the composer may build the word in the document. Must run after
 // every `applySettings()`, which seeds the mode from the setting alone — and the

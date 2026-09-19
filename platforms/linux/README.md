@@ -293,6 +293,8 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       nonpreedit.cpp          Composer làm gì với đánh giá đó
       nonpreedit/clients.h    Phán quyết đó thuộc về client nào
       nonpreedit/verdict.h    Verdict, và client không bao giờ cho xem tài liệu
+      nonpreedit/observe.h    So ba chuỗi sau một lần sửa
+      nonpreedit/selection.h  Hậu tố gợi ý sau caret (Sheets/Excel)
   settings/               ~/.config/Funput/settings.json
     settings.h              Model mọi shell đều đọc, gồm cả công tắc gõ tắt
     lookup.cpp              File nằm đâu; loại trừ theo app
@@ -499,6 +501,11 @@ chỉ có thể là một trong ba chuỗi, và chúng khác nhau:
 Chỉ trường hợp ở giữa là một phán quyết, và sự dè dặt đó mới là điểm mấu chốt: coi “không giống
 thứ tôi mong đợi” là thất bại sẽ tắt chế độ này ở 61% số commit không được trả lời — chữa một
 client hỏng bằng cách làm hỏng tính năng cho tất cả.
+
+Một hậu tố gợi ý **sau** caret — Google Sheets trên Firefox bôi đen phần còn lại của ô khớp —
+không phải client bỏ lệnh xoá. `Replace` mang `deleteAfterChars` để gỡ hậu tố đó trước khi sửa
+ký tự đang gõ, nên `chư` cộng gợi ý `ứ` vẫn thành `chứ` chứ không còn `chưứ`. Vùng bôi đen của
+người dùng (select-all, kéo ngược) vẫn để phím đi thẳng qua.
 
 Còn lại **một client mà phép so ba chuỗi không bao giờ xử được**: client trả lời tài liệu rỗng ở
 mọi lần đọc. Xoá N ký tự khỏi chuỗi rỗng vẫn là chuỗi rỗng, nên cả ba dòng của bảng trên gộp làm

@@ -52,7 +52,8 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     const std::string before = nonPreedit ? textBeforeCaret(event.inputContext()) : std::string();
     const bool answered = std::exchange(surroundingFresh_, false);
     if (nonPreedit) {
-        composer_.observeDocument(before, hasSelection(event.inputContext()), answered);
+        fcitx::InputContext *ic = event.inputContext();
+        composer_.observeDocument(before, hasSelection(ic), answered, selectedAfter(ic));
     }
 
     // A Backspace with nothing composing is about to eat a *committed* character. In

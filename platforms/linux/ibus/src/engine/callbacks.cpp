@@ -61,18 +61,19 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
     // them, and each framework reports them differently.
     if (released) return FALSE;
 
-    // Between words, re-ask whether this client can take a document repair. The answer
-    // changes during a focus — surrounding text only starts arriving once the client
-    // answers — so unlike Fcitx5 there is no single moment early enough to settle it.
+    // Between words, re-ask whether this client can take a document repair.
+    // Surrounding text often arrives only after the client answers.
     applyNonPreeditMode(engine);
 
-    // One read of the document, used twice: to check that the last repair landed, and
-    // as the word a Backspace may re-open. Same wiring, same order, as the Fcitx5
-    // shell's keyEvent().
+    // One read of the document, used twice: to check that the last repair landed,
+    // and as the word a Backspace may re-open. Same order as Fcitx5's keyEvent().
     const bool nonPreedit = state->composer.nonPreedit();
     const std::string before = nonPreedit ? textBeforeCaret(engine) : std::string();
     const bool answered = std::exchange(state->surroundingFresh, false);
-    if (nonPreedit) state->composer.observeDocument(before, hasSelection(engine), answered);
+    if (nonPreedit) {
+        state->composer.observeDocument(before, hasSelection(engine), answered,
+                                        selectedAfter(engine));
+    }
 
     const bool reopen = state->composer.nonPreedit() && !state->composer.isComposing() &&
                         funput::classify(ev, state->composer.settings()) ==
@@ -81,8 +82,7 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
     const funput::ComposePlan plan = state->composer.onKey(ev);
     applyPlan(engine, plan);
 
-    // Writes nothing itself: the key passes through, the app deletes its own
-    // character, and the engine just takes ownership of the word left behind.
+    // The key passes through; the engine only takes ownership of what is left.
     if (reopen) state->composer.adoptWordBeforeBackspace(before);
     return plan.consumed ? TRUE : FALSE;
 }
