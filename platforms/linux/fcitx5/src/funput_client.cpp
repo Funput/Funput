@@ -11,6 +11,8 @@
 #include <fcitx/text.h>
 #include <fcitx/userinterface.h>
 
+#include "compose/composer/nonpreedit/selection.h"
+
 // The document in front of the caret, as UTF-8. Fcitx5 reports the cursor in
 // characters while the text is UTF-8, so the two have to be reconciled here —
 // slicing by the cursor as if it were a byte offset cuts Vietnamese in half.
@@ -53,14 +55,18 @@ std::string clientId(fcitx::InputContext *context) {
     return hex;
 }
 
-// Is the client holding a selection right now? Non-preedit repairs the document by
-// deleting backwards from the caret, and with a selection live that delete takes the
-// highlighted text instead — the browser-autofill hazard. Measuring never caught a
-// live selection in 93 commits, but "not seen" is not "cannot happen" and the price
-// is the user's own words, so this guard is reasoned rather than observed.
+// Is the client holding a selection? Backspace must not take that key over, and
+// a highlight that is not a suffix after the caret is the user's own text.
 bool hasSelection(fcitx::InputContext *context) {
     const auto &surrounding = context->surroundingText();
     return surrounding.isValid() && surrounding.cursor() != surrounding.anchor();
+}
+
+uint32_t selectedAfter(fcitx::InputContext *context) {
+    const auto &surrounding = context->surroundingText();
+    if (!surrounding.isValid()) return 0;
+    return funput::selectedAfterCaret(static_cast<uint32_t>(surrounding.cursor()),
+                                      static_cast<uint32_t>(surrounding.anchor()));
 }
 
 void FunputEngine::updatePreedit(fcitx::InputContext *context, const std::string &text) {
@@ -105,19 +111,14 @@ void FunputEngine::applyPlan(fcitx::InputContext *context, const funput::Compose
         }
         break;
     case funput::Effect::Replace:
-        // Non-preedit's document repair: take back what the last keystroke wrote,
-        // then write what this one produced. Both counts are in characters — the
-        // engine hands out characters and deleteSurroundingText takes characters, so
-        // nothing converts between them anywhere along the way.
+        // Non-preedit's document repair: clear a selected suffix, take back what
+        // the last keystroke wrote, then write what this one produced. Counts are
+        // characters — the engine and deleteSurroundingText agree, so nothing
+        // converts between them.
+        if (plan.deleteAfterChars > 0) {
+            context->deleteSurroundingText(0, static_cast<unsigned int>(plan.deleteAfterChars));
+        }
         if (plan.deleteChars > 0) {
-            if (hasSelection(context)) {
-                // Deleting now would take the user's highlighted text instead of our
-                // own. Give up on the repair *and* the composition: leaving the engine
-                // believing it owns a word it could not correct would send the next
-                // keystroke's delete into text we never wrote.
-                composer_.discard();
-                break;
-            }
             context->deleteSurroundingText(-static_cast<int>(plan.deleteChars), plan.deleteChars);
         }
         if (!plan.text.empty()) {

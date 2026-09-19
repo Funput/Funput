@@ -3,8 +3,10 @@
 
 #include "engine/internal.h"
 
+#include <cstdint>
 #include <vector>
 
+#include "compose/composer/nonpreedit/selection.h"
 #include "ffi/utf8.h"
 
 namespace funput_ibus {
@@ -28,6 +30,12 @@ std::string textBeforeCaret(IBusEngine *engine) {
 bool hasSelection(IBusEngine *engine) {
     const EngineState *state = stateOf(engine);
     return state->sawSurroundingText && state->surroundingCursor != state->surroundingAnchor;
+}
+
+uint32_t selectedAfter(IBusEngine *engine) {
+    const EngineState *state = stateOf(engine);
+    if (!state->sawSurroundingText) return 0;
+    return funput::selectedAfterCaret(state->surroundingCursor, state->surroundingAnchor);
 }
 
 void updatePreedit(IBusEngine *engine, const std::string &text) {
@@ -63,20 +71,14 @@ void applyPlan(IBusEngine *engine, const funput::ComposePlan &plan) {
         }
         break;
     case funput::Effect::Replace:
-        // Non-preedit's document repair: take back what the last keystroke wrote, then
-        // write what this one produced. Both counts are characters —
-        // `ibus_engine_delete_surrounding_text` takes `nchars`, and the cursor this
-        // shell reads back was measured to be a character count too, so no conversion
-        // sits between them.
+        // Non-preedit's document repair: clear a selected suffix, take back what the
+        // last keystroke wrote, then write what this one produced. Counts are
+        // characters — `ibus_engine_delete_surrounding_text` takes `nchars`.
+        if (plan.deleteAfterChars > 0) {
+            ibus_engine_delete_surrounding_text(engine, 0,
+                                                static_cast<gint>(plan.deleteAfterChars));
+        }
         if (plan.deleteChars > 0) {
-            // Same reasoning as the Fcitx5 shell's arm in fcitx5/src/funput_client.cpp:
-            // deleting under a live selection eats the user's highlighted text, and
-            // abandoning only the delete would double the word or desynchronise the
-            // engine from the document. So the composition goes too.
-            if (hasSelection(engine)) {
-                stateOf(engine)->composer.discard();
-                break;
-            }
             ibus_engine_delete_surrounding_text(engine, -static_cast<gint>(plan.deleteChars),
                                                 plan.deleteChars);
         }

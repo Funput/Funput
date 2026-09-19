@@ -50,7 +50,6 @@
 
 #include "compose/composer/nonpreedit/clients.h"
 #include "compose/composer/nonpreedit/verdict.h"
-#include "ffi/utf8.h"
 
 namespace funput {
 
@@ -74,6 +73,9 @@ struct NonPreeditState {
     // Backspace path below needs it: taking a Backspace over while text is selected
     // would swallow the key the user pressed to delete that selection.
     bool selectionLive = false;
+    // Selected characters after the caret — a Sheets/Excel autocomplete suffix.
+    // Zero when the selection is a user highlight (select-all, a backward drag).
+    uint32_t selectionAfter = 0;
     // Whether the last repair was seen to land. Distinct from "no verdict", which also
     // covers a client that has said nothing — see `observe()`. Only a confirmation
     // proves the document we are holding is current, and only then is it safe to take
@@ -100,6 +102,7 @@ struct NonPreeditState {
         answered = false;
         retoneAllowed = true;
         selectionLive = false;
+        selectionAfter = 0;
         inSync = false;
         lastDoc.clear();
         repairText.clear();
@@ -118,33 +121,11 @@ struct NonPreeditState {
 
     // Judge `document` against that record and forget it either way — one reading is
     // all a repair gets. Also remembers `document` as the latest.
-    Verdict observe(const std::string &document) {
-        Verdict verdict = Verdict::Unknown;
-        if (!repairText.empty()) {
-            const std::string dropped = lastDoc + repairText;
-            const std::string applied = dropLast(lastDoc, repairDeleted) + repairText;
-            inSync = document == applied;
-            if (document == dropped && dropped != applied) {
-                verdict = repairAfterAdopt ? Verdict::RefuseRetone : Verdict::RefuseMode;
-            }
-            // The comparison above is blind to a document that is always empty, which
-            // is a failure of its own rather than an absence of one.
-            if (verdict == Verdict::Unknown && blind.observe(document, answered)) {
-                verdict = Verdict::RefuseMode;
-            }
-            repairText.clear();
-            repairDeleted = 0;
-            repairAfterAdopt = false;
-        } else {
-            // Nothing was written, so nothing was confirmed. A document that moved on
-            // its own — the user clicking, or selecting with the mouse — lands here.
-            inSync = false;
-        }
-        lastDoc = document;
-        return verdict;
-    }
+    Verdict observe(const std::string &document);
 };
 
 } // namespace funput
+
+#include "compose/composer/nonpreedit/observe.h"
 
 #endif // FUNPUT_COMPOSE_NONPREEDIT_H
