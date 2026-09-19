@@ -34,10 +34,24 @@ class AlternateSelectionControllerTest {
     )
 
     @Test
-    fun `hold release on source selects base character`() {
+    fun `hold release on source selects first non-base alternate`() {
         startAndActivate()
         assertTrue(controller.finish(1, 120f, 220f))
-        assertEquals(listOf("a"), selected)
+        assertEquals(listOf("á"), selected)
+    }
+
+    @Test
+    fun `hold release on d selects stroke d`() {
+        val dKey = key.copy(
+            id = "character-d",
+            label = "d",
+            alternates = VietnameseKeyAlternates.valuesFor('d'),
+        )
+        controller.start(1, dKey, 120f, 220f)
+        scheduler.run()
+
+        assertTrue(controller.finish(1, 120f, 220f))
+        assertEquals(listOf("đ"), selected)
     }
 
     @Test

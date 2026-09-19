@@ -7,6 +7,7 @@ internal data class AlternatePaletteLayout(
     val bounds: KeyBounds,
     val itemBounds: List<KeyBounds>,
     val sourceBounds: KeyBounds,
+    val defaultIndex: Int,
     /** True when the palette still intersects its key after placement. */
     val overlapsSource: Boolean,
 ) {
@@ -23,12 +24,14 @@ internal data class AlternatePaletteLayout(
         val dx = x - startX
         val dy = y - startY
         val slop = HoldSlop * density
-        if (dx * dx + dy * dy <= slop * slop) return 0
+        if (dx * dx + dy * dy <= slop * slop) return defaultIndex
         return indexAt(x, y, density)
     }
 
     fun indexAt(x: Float, y: Float, density: Float): Int? {
-        if (!overlapsSource && sourceBounds.expanded(8f * density).contains(x, y)) return 0
+        if (!overlapsSource && sourceBounds.expanded(8f * density).contains(x, y)) {
+            return defaultIndex
+        }
         return itemBounds.indexOfFirst { it.expanded(density).contains(x, y) }.takeIf { it >= 0 }
     }
 
@@ -61,7 +64,9 @@ internal data class AlternatePaletteLayout(
             source: KeyBounds,
             surface: KeyBounds,
             density: Float,
+            defaultIndex: Int = 0,
         ): AlternatePaletteLayout {
+            require(defaultIndex in 0 until count) { "Default alternate must be in bounds" }
             val safe = surface.inset(6f * density, 4f * density)
             val padding = Padding * density
             val gap = Gap * density
@@ -81,6 +86,7 @@ internal data class AlternatePaletteLayout(
                 bounds = bounds,
                 itemBounds = itemBounds(count, bounds, columns, padding, gap, cellHeight),
                 sourceBounds = source,
+                defaultIndex = defaultIndex,
                 overlapsSource = bounds.intersects(source),
             )
         }
