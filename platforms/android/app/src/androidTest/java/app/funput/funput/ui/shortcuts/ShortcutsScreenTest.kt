@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -45,6 +46,10 @@ class ShortcutsScreenTest {
 
         compose.waitUntil { store.value.entries.size == 2 }
         assertEquals("vnX", store.value.entries.last().trigger)
+        compose.waitUntil {
+            compose.onAllNodesWithTag("shortcuts-editor-trigger").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("shortcuts-editor-trigger").assertDoesNotExist()
     }
 
     @Test

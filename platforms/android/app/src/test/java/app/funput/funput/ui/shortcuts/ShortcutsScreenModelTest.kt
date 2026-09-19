@@ -67,6 +67,21 @@ class ShortcutsScreenModelTest {
         assertTrue(model.canWrite)
     }
 
+    @Test fun `save completion runs only after a successful write`() {
+        val store = FakeStore(ShortcutLibrary())
+        val model = loadedModel(store)
+        var completions = 0
+
+        model.save(TextShortcut(trigger = "ok", expansion = "saved")) { completions += 1 }
+        waitFor { !model.isSaving }
+        assertEquals(1, completions)
+
+        store.saveError = ShortcutsStorageError.WriteFailed
+        model.save(TextShortcut(trigger = "no", expansion = "failure")) { completions += 1 }
+        waitFor { !model.isSaving }
+        assertEquals(1, completions)
+    }
+
     private fun loadedModel(store: FakeStore): ShortcutsScreenModel =
         ShortcutsScreenModel(store, scope).also { model ->
             model.reload()

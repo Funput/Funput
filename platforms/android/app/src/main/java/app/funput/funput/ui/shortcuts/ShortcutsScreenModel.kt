@@ -61,10 +61,10 @@ internal class ShortcutsScreenModel(
         val entries = library.entries.toMutableList()
         val index = entries.indexOfFirst { it.id == entry.id }
         if (index < 0) entries += entry else entries[index] = entry
-        commit(library.copy(entries = entries)) {
+        commit(library.copy(entries = entries), success = {
             if (isNew) query = ""
             saved()
-        }
+        })
     }
 
     fun delete(entry: TextShortcut, deleted: () -> Unit = {}) {
