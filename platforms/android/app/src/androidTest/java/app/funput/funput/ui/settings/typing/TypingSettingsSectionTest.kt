@@ -19,6 +19,7 @@ class TypingSettingsSectionTest {
     fun sectionDispatchesInputMethodAndToneStyleActions() {
         var picker: SettingsPicker? = null
         var toneStyle: ToneStyle? = null
+        var openedShortcuts = false
         compose.setContent {
             FunputTheme {
                 TypingSettingsSection(
@@ -26,16 +27,19 @@ class TypingSettingsSectionTest {
                     toneStyle = ToneStyle.TRADITIONAL,
                     onOpenPicker = { picker = it },
                     onToneStyleSelected = { toneStyle = it },
+                    onOpenShortcuts = { openedShortcuts = true },
                 )
             }
         }
 
         compose.onNodeWithText("Kiểu gõ").performClick()
         compose.onNodeWithText("Hiện đại").performClick()
+        compose.onNodeWithText("Gõ tắt").performClick()
 
         compose.runOnIdle {
             assertEquals(SettingsPicker.INPUT_METHOD, picker)
             assertEquals(ToneStyle.MODERN, toneStyle)
+            assert(openedShortcuts)
         }
     }
 }

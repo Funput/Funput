@@ -30,6 +30,7 @@ internal fun SettingsRoute(
     settings: FunputSettingsState,
     keyboardTheme: KeyboardThemeDescriptor,
     onOpenAppearance: () -> Unit,
+    onOpenShortcuts: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -56,6 +57,7 @@ internal fun SettingsRoute(
                 scope.launch { settings.numberRowStore.setShowsNumberRow(enabled) }
             },
             onOpenAppearance = onOpenAppearance,
+            onOpenShortcuts = onOpenShortcuts,
             onToneStyleSelected = { style ->
                 scope.launch { settings.toneStyleStore.setToneStyle(style) }
             },

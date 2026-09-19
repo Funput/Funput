@@ -76,6 +76,7 @@ internal fun SettingsScreenSections(
                 toneStyle = state.toneStyle,
                 onOpenPicker = onOpenPicker,
                 onToneStyleSelected = state.onToneStyleSelected,
+                onOpenShortcuts = state.onOpenShortcuts,
             )
         }
         settingsItem("layout", firstSectionIndex + 1, tracker) {

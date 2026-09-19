@@ -19,6 +19,7 @@ internal fun TypingSettingsSection(
     toneStyle: ToneStyle,
     onOpenPicker: (SettingsPicker) -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
+    onOpenShortcuts: () -> Unit = {},
 ) {
     SettingsSection(
         title = stringResource(R.string.settings_section_typing),
@@ -41,6 +42,15 @@ internal fun TypingSettingsSection(
                     selected = toneStyle,
                     labelOf = { style -> style.label() },
                     onSelected = onToneStyleSelected,
+                )
+            },
+            { position ->
+                SettingsRow(
+                    position = position,
+                    title = stringResource(R.string.shortcuts_title),
+                    summary = stringResource(R.string.shortcuts_settings_summary),
+                    iconRes = R.drawable.ic_code,
+                    onClick = onOpenShortcuts,
                 )
             },
         ),

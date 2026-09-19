@@ -28,6 +28,7 @@ internal class SettingsScreenState(
     val onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     val onShowsNumberRowChanged: (Boolean) -> Unit,
     val onOpenAppearance: () -> Unit,
+    val onOpenShortcuts: () -> Unit = {},
     val onToneStyleSelected: (ToneStyle) -> Unit,
     val onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     val onHapticsChanged: (Boolean) -> Unit,

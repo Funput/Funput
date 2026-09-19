@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performScrollToNode
 import app.funput.funput.ui.settings.data.DataSettingsSectionTag
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 import app.funput.funput.ui.settings.smart.SmartSettingsSectionTag
+import app.funput.funput.ui.settings.typing.TypingSettingsSectionTag
 import app.funput.funput.ui.theme.FunputTheme
 import org.junit.Rule
 import org.junit.Test
@@ -25,6 +26,9 @@ class SettingsScreenGroupingTest {
         compose.onNodeWithTag(SettingsSetupTag).assertDoesNotExist()
         list().performScrollToNode(hasText("GÕ TIẾNG VIỆT"))
         compose.onNodeWithText("GÕ TIẾNG VIỆT").assertExists()
+        compose.onNode(
+            hasText("Gõ tắt") and hasAnyAncestor(hasTestTag(TypingSettingsSectionTag)),
+        ).assertExists()
         list().performScrollToNode(hasText("BỐ CỤC BÀN PHÍM"))
         compose.onNodeWithText("BỐ CỤC BÀN PHÍM").assertExists()
         list().performScrollToNode(hasText("THÔNG MINH"))

@@ -105,14 +105,15 @@ Cả ba nằm chung một công tắc **Cử chỉ thông minh**.
 
 | Mục | Chỉnh được gì |
 |---|---|
-| **Bàn phím** | Kiểu gõ · hàng phím số · kích thước phím |
-| **Gõ thông minh** | Khôi phục tiếng Anh · khôi phục sớm · kiểm tra chính tả · tự viết hoa · gợi ý từ đã học và từ điển tiếng Anh |
+| **Gõ tiếng Việt** | Kiểu gõ · kiểu đặt dấu · gõ tắt |
+| **Bố cục bàn phím** | Hàng phím số · kích thước phím |
+| **Thông minh** | Khôi phục từ · kiểm tra chính tả · tự viết hoa · gợi ý từ · cử chỉ thông minh |
 | **Giao diện** | Chọn theme dựng sẵn hoặc tự tạo theme riêng |
-| **Âm thanh & rung** | Phản hồi khi gõ |
-| **Cử chỉ** | Công tắc cử chỉ thông minh |
+| **Phản hồi khi chạm** | Âm thanh và rung khi gõ |
+| **Clipboard · Dữ liệu** | Lịch sử clipboard và thao tác xoá dữ liệu cục bộ |
 
-Cấu hình lưu bằng **Preferences DataStore**; gỡ app là mất sạch, gồm cả theme tự tạo và gợi ý
-từ cá nhân.
+Cấu hình lưu bằng **Preferences DataStore**. Gõ tắt là tài liệu JSON riêng trong vùng private
+của app để UI và IME dùng cùng một snapshot; xem [thiết kế Gõ tắt](../../docs/features/android-shortcuts.md).
 
 ### Gợi ý từ và giấy phép
 
@@ -152,12 +153,13 @@ Rust dùng chung, qua **JNI** ([`funput-jni`](../../crates/funput-jni)).
 
 IME sở hữu composing span của Android, còn
 [`funput-engine`](../../crates/funput-engine) vẫn là **nguồn chân lý duy nhất** cho luật Telex,
-Telex nâng cao và VNI.
+Telex nâng cao, VNI, matching và smart case của Gõ tắt.
 
 | Module | Trách nhiệm |
 |---|---|
 | `app` | Host Compose cho onboarding, cài đặt, trình tạo theme và bản xem trước bàn phím |
 | `ime` | Vòng đời input-method của Android và cầu nối tới ô nhập đang focus |
+| `shortcut-store` | Domain contract và lưu tài liệu Gõ tắt JSON bằng atomic replace |
 | `keyboard-ui` | Điều hướng giữa các panel và emoji picker AndroidX nạp trễ |
 | `keyboard-renderer` | Bố cục co giãn, chạm, trợ năng và vẽ bằng Canvas |
 | `theme-runtime` | Hợp đồng theme có version, kiểm tra hợp lệ, phân giải token, truy cập asset an toàn |
@@ -168,6 +170,7 @@ Chiều phụ thuộc là **một chiều, cố ý**:
 ```text
 app ──▶ ime ──▶ keyboard-ui ──▶ keyboard-renderer ──▶ theme-runtime
  │       │           │                                     ▲
+ ├───────┴──▶ shortcut-store                               │
  │       └──▶ theme-store ────────────────────────────────┤
  │                                                         │
  ├──▶ keyboard-renderer ──────────────────────────────────┤
@@ -195,7 +198,7 @@ rustup target add aarch64-linux-android x86_64-linux-android
 |---|---|
 | Kotlin | Jetpack Compose *(app)* + Canvas *(bàn phím)* |
 | `compileSdk` · `targetSdk` | **37** |
-| `minSdk` | **26** — đặt ở cả sáu module |
+| `minSdk` | **26** — đặt đồng nhất ở toàn bộ module Android |
 | NDK | `29.0.14206865` — ghim để build native tái lập được |
 | Application ID | `app.funput.funput` |
 

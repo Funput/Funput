@@ -9,7 +9,7 @@ import app.funput.funput.ime.nativebridge.VietnameseEngine
 
 /** Maps the shared engine buffer onto Android's composing-text primitives. */
 internal class AndroidCompositionSession(
-    private val engine: VietnameseEngine,
+    internal val engine: VietnameseEngine,
     private val composingTextFactory: (String) -> CharSequence = ::unstyledComposingText,
 ) {
     private val documentEditor = CompositionDocumentEditor(composingTextFactory)
@@ -27,6 +27,9 @@ internal class AndroidCompositionSession(
     fun setRenderMode(value: CompositionRenderMode) {
         renderMode = value
     }
+
+    fun isBoundary(codePoint: Int): Boolean =
+        CompositionBoundary.isBoundary(codePoint, engine.inputMethod)
 
     fun input(connection: InputConnection?, text: String): Boolean {
         completed = null
