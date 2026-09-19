@@ -67,10 +67,18 @@ impl Engine {
         let mut best: Option<(usize, f32)> = None;
         let mut runner_up = f32::NEG_INFINITY;
         for (i, candidate) in self.correction_candidates().iter().enumerate() {
+            let score = candidate.touch_score() + word_prior(uses.get(i).copied().unwrap_or(0));
+            // A refused candidate cannot win, but it still competes for the margin.
+            // Measured: letting it drop out entirely is what makes an *incomplete*
+            // dictionary dangerous rather than merely unhelpful — the word the host
+            // does not know is often the right one, and without it in the comparison
+            // a common wrong word wins uncontested. Kept in, it suppresses that word
+            // instead, so a dictionary that knows too little corrects less rather
+            // than corrects badly.
             if !allowed.get(i).copied().unwrap_or(true) {
+                runner_up = runner_up.max(score);
                 continue;
             }
-            let score = candidate.touch_score() + word_prior(uses.get(i).copied().unwrap_or(0));
             match best {
                 Some((_, leader)) if leader >= score => runner_up = runner_up.max(score),
                 Some((_, leader)) => {
