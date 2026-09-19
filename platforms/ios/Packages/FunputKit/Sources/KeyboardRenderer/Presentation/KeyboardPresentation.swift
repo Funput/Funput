@@ -64,10 +64,15 @@ public struct KeyboardKeyEvent: Sendable {
 
     public let key: KeySpec
     public let phase: Phase
+    /// Where the finger landed, for the phases that come from a real touch. Absent
+    /// for keys raised by VoiceOver, key repeat, and the gesture phases, none of
+    /// which have a lift point to describe.
+    public let touch: KeyboardTouchEvidence?
 
-    public init(key: KeySpec, phase: Phase) {
+    public init(key: KeySpec, phase: Phase, touch: KeyboardTouchEvidence? = nil) {
         self.key = key
         self.phase = phase
+        self.touch = touch
     }
 }
 
