@@ -222,14 +222,17 @@ P(chạm | phím) = exp(−d² / (2σ²)),  d tính theo bước phím
 |---|---|---|
 | `σ` | 0,45 pitch | Độ tản của điểm chạm quanh tâm phím |
 | `λ` | 1,2 | Phạt mỗi phím thay, để 1 phím luôn hơn 2 phím |
-| `Δ` | 1,0 | Biên tối thiểu giữa ứng viên nhất và nhì để dám sửa |
+| `Δ` | **1,5** | Biên tối thiểu giữa ứng viên nhất và nhì để dám sửa (đo ở §12.1) |
 | `prior` nền | 0,5 | Điểm cho âm tiết hợp lệ chưa từng gõ |
 
 - `prior(từ)` = `ln(1 + số lần người dùng đã gõ từ đó)` + nền, lấy từ `funput-suggestions`.
 - **Không sửa** nếu `best − runner_up < Δ`; khi đó gửi cả hai lên thanh gợi ý.
-- `σ`, `λ`, `Δ` là hằng số khởi điểm, chỉnh bằng bộ kiểm thử ở §12. Đo thật (§12.1) cho thấy Δ
-  là knob **yếu**: đẩy từ 1,0 lên 2,5 chỉ hạ sửa sai từ 6,8% xuống 2,3% trong khi mất một nửa số
-  lần sửa đúng. Thứ thật sự quyết định là mức nhiễu của ngón, không phải Δ.
+- `σ`, `λ` là hằng số khởi điểm. **`Δ` đã chốt ở 1,5** sau khi đo (§12.1): nó là knob **yếu**
+  — đẩy tiếp lên 2,5 chỉ hạ sửa sai từ 3,9% xuống 2,3% mà mất thêm một phần tư số lần sửa đúng
+  — nhưng 1,0 → 1,5 là đoạn duy nhất đáng đổi. Thứ thật sự quyết định vẫn là mức nhiễu của ngón.
+- **Mặt nạ `allowed`**: nền tảng nói ứng viên nào từ điển của nó công nhận. Việc lọc nằm trong
+  cùng hàm quyết định chứ không ở phía gọi, vì chỉ số trả về trỏ vào danh sách **chưa lọc** và
+  biên Δ phải đo với ứng viên nhì **thật sự đủ tư cách**.
 
 **Cửa chặn tiếng Anh là việc của nền tảng.** Một từ tiếng Anh gõ có chủ ý kết thúc ở đúng trạng
 thái mà một từ tiếng Việt gõ nhầm kết thúc: chữ thô, không phải âm tiết. `text ` chẳng hạn có
@@ -479,10 +482,18 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    |---|---|---|
    | Δ = 1,0 | 51,9% | 6,83% |
    | Δ = 1,0 + chỉ từ có thật | 54,4% | 5,63% |
-   | Δ = 1,5 + chỉ từ có thật | 50,3% | 3,87% |
+   | **Δ = 1,5 + chỉ từ có thật** ← đã chốt | **50,3%** | **3,87%** |
    | Δ = 2,0 + chỉ từ có thật | 42,6% | 2,86% |
    | Δ = 2,5 + chỉ từ có thật | 35,9% | 2,28% |
    | Δ = 1,0 + chỉ 1 phím thay | 47,8% | 6,42% |
+
+   Với Δ = 1,5 (hằng số hiện tại) và bộ lọc từ-có-thật, cả đường cong nhiễu là:
+
+   | Nhiễu ngón | Sửa đúng | Sửa sai |
+   |---|---|---|
+   | 0,20 | 54,6% | **0,42%** |
+   | 0,25 | 50,3% | **3,87%** |
+   | 0,30 | 43,0% | **8,93%** |
 
    Ba điều đọc được, và cả ba đều quan trọng hơn con số:
 

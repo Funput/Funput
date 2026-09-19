@@ -939,17 +939,24 @@ uintptr_t funput_engine_pending_correction_backspace(const FunputEngine *engine)
  * winner, or `-1` when the top two are too close to call — a pair to offer on the
  * suggestion bar rather than an edit to make.
  *
- * `uses` is parallel to [`funput_engine_correction_candidates`]; a shorter array
- * (or a null one) reads the missing entries as zero, so a host with no word store
- * can pass null and still get the touch-only ranking. The formula lives here rather
- * than in each host so the confidence margin has exactly one definition.
+ * `uses` and `allowed` are both parallel to [`funput_engine_correction_candidates`]
+ * and both nullable. A null or short `uses` reads its missing entries as zero, so a
+ * host with no word store can pass null and still get the touch-only ranking. A null
+ * or short `allowed` reads its missing entries as permitted.
+ *
+ * `allowed` is how a host refuses to correct *into* a word its dictionary does not
+ * know. It is answered here rather than by filtering the candidate list, because the
+ * returned index points into the unfiltered list and the confidence margin has to be
+ * measured against the runner-up that was actually eligible.
  *
  * # Safety
  * `engine` must be a valid handle or null. `uses` must point to at least `len`
- * readable `u32` values, or be null.
+ * readable `u32` values, or be null; `allowed` to at least `len` readable `bool`
+ * values, or be null.
  */
 int32_t funput_engine_choose_correction(const FunputEngine *engine,
                                         const uint32_t *uses,
+                                        const bool *allowed,
                                         uintptr_t len);
 
 /**
