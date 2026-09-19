@@ -80,6 +80,7 @@ pub use suggestion::{
     FunputSuggestionStats, SUGGESTION_CAP, SUGGESTION_CHARS_CAP, funput_suggestion_attach_lexicon,
     funput_suggestion_compact, funput_suggestion_engine_free,
     funput_suggestion_engine_new_in_memory, funput_suggestion_engine_open, funput_suggestion_flush,
-    funput_suggestion_learn, funput_suggestion_learn_after, funput_suggestion_query,
-    funput_suggestion_query_with, funput_suggestion_reset, funput_suggestion_stats,
+    funput_suggestion_frequency, funput_suggestion_is_known_word, funput_suggestion_learn,
+    funput_suggestion_learn_after, funput_suggestion_query, funput_suggestion_query_with,
+    funput_suggestion_reset, funput_suggestion_stats,
 };
