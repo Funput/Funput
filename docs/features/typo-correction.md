@@ -227,7 +227,9 @@ P(chạm | phím) = exp(−d² / (2σ²)),  d tính theo bước phím
 
 - `prior(từ)` = `ln(1 + số lần người dùng đã gõ từ đó)` + nền, lấy từ `funput-suggestions`.
 - **Không sửa** nếu `best − runner_up < Δ`; khi đó gửi cả hai lên thanh gợi ý.
-- `σ`, `λ`, `Δ` là hằng số khởi điểm, chỉnh bằng bộ kiểm thử ở §12.
+- `σ`, `λ`, `Δ` là hằng số khởi điểm, chỉnh bằng bộ kiểm thử ở §12. Đo thật (§12.1) cho thấy Δ
+  là knob **yếu**: đẩy từ 1,0 lên 2,5 chỉ hạ sửa sai từ 6,8% xuống 2,3% trong khi mất một nửa số
+  lần sửa đúng. Thứ thật sự quyết định là mức nhiễu của ngón, không phải Δ.
 
 **Cửa chặn tiếng Anh là việc của nền tảng.** Một từ tiếng Anh gõ có chủ ý kết thúc ở đúng trạng
 thái mà một từ tiếng Việt gõ nhầm kết thúc: chữ thô, không phải âm tiết. `text ` chẳng hạn có
@@ -451,10 +453,58 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
 
 ## 12. Kiểm thử và cổng gác
 
-1. **Kho lỗi tổng hợp** (`crates/funput-engine/tests/`): lấy danh sách âm tiết hợp lệ từ bộ phủ
-   `funput dev coverage`, mô phỏng chạm có nhiễu Gauss quanh tâm phím để sinh chuỗi gõ nhầm.
-   - Đo: tỉ lệ sửa đúng, **tỉ lệ sửa sai**, tỉ lệ bỏ qua.
-   - Cổng: sửa sai **< 1%** số lần sửa; sửa đúng ≥ 70% ở nhiễu σ = 0,45.
+1. **Kho lỗi tổng hợp**: ✅ `funput dev typos` (`crates/funput-cli/src/dev/typos/`). Lấy âm tiết
+   hợp lệ từ đúng bộ ngữ liệu của `funput dev coverage`, gõ lại với ngón trượt theo nhiễu Gauss
+   quanh tâm phím trên lưới QWERTY so le, rồi đếm.
+
+   **Đã tách hai chữ σ.** Bản thiết kế dùng một chữ σ cho hai thứ khác nhau: độ tản *thật* của
+   ngón tay, và độ tản engine *tin* là có khi chấm điểm. Bộ đo gọi cái đầu là `--noise`, vì đúng
+   chỗ hai cái lệch nhau mới đáng đo.
+
+   **Số thật, trên Viet74K (8 955 âm tiết).** `benchmarks/sample.txt` chỉ có 137 âm tiết nên kho
+   từ học từ nó gần như luôn phân biệt được đúng/sai — số ở đó quá lạc quan, đừng dùng để quyết
+   định:
+
+   | Nhiễu ngón | Kho từ | Sửa đúng | **Sửa sai** |
+   |---|---|---|---|
+   | 0,20 | không | 54,6% | 0,8% |
+   | 0,20 | Viet74K | 57,3% | **0,6%** |
+   | 0,25 | không | 48,7% | 8,8% |
+   | 0,25 | Viet74K | 51,9% | **6,8%** |
+   | 0,30 | Viet74K | 42,9% | **14,8%** |
+
+   Quét Δ và các bộ lọc, ở nhiễu 0,25 với kho từ Viet74K:
+
+   | | Sửa đúng | Sửa sai |
+   |---|---|---|
+   | Δ = 1,0 | 51,9% | 6,83% |
+   | Δ = 1,0 + chỉ từ có thật | 54,4% | 5,63% |
+   | Δ = 1,5 + chỉ từ có thật | 50,3% | 3,87% |
+   | Δ = 2,0 + chỉ từ có thật | 42,6% | 2,86% |
+   | Δ = 2,5 + chỉ từ có thật | 35,9% | 2,28% |
+   | Δ = 1,0 + chỉ 1 phím thay | 47,8% | 6,42% |
+
+   Ba điều đọc được, và cả ba đều quan trọng hơn con số:
+
+   - **Cổng "σ = 0,45" của bản thiết kế không đạt được.** Ở mức đó gần như từ nào cũng trượt
+     nhiều hơn một phím và gần nửa số lần sửa là sửa hỏng.
+   - **Δ có đòn bẩy kém.** Đẩy Δ lên 2,5 đánh đổi một nửa số lần sửa đúng mà vẫn còn 2,3% sửa
+     sai. Sửa sai không đến từ chỗ hai ứng viên sát nhau, mà từ chỗ mô hình **tự tin mà sai**.
+   - **Giới hạn 1 phím thay không giúp** (6,42% so với 6,83%). Một phím trượt duy nhất cũng đủ
+     rơi vào một từ thật khác — bản chất bài toán, không phải chuyện chỉnh tham số.
+
+   Nên **vùng an toàn duy nhất là nhiễu ≈ 0,20** (0,6% sửa sai, vá 57%). Ở 0,25 thì cứ 15 lần
+   sửa có 1 lần viết lại một từ người dùng cố ý gõ.
+
+   **Chưa ai biết nhiễu thật của người dùng Funput là bao nhiêu** — và đó là con số quyết định.
+   `KEY_ACCURACY_INVESTIGATION.md` đo *vùng chạm*, không đo độ phân tán của ngón; chỉ biết nửa
+   phím ≈ 20pt, tức pitch ≈ 40pt, nên 0,20 là 8pt và 0,25 là 10pt — gõ hai ngón cái trên điện
+   thoại nằm đúng quanh khoảng đó. **Việc đầu tiên của đợt iOS phải là đo con số này trên máy
+   thật.**
+
+   - Cổng trong CI (trên `sample.txt`, nơi chạy được không cần tải ngữ liệu): sửa sai **< 1%**
+     số lần sửa và sửa đúng ≥ 50% số từ trượt, ở nhiễu ngón 0,25. Một test riêng ghi lại vách
+     0,45 khi không có kho từ, thay vì giả vờ nó an toàn.
 2. **Bất biến**: mọi âm tiết hợp lệ gõ đúng phím không bao giờ bị đổi (property test toàn tập).
    ✅ `tests/correction_property.rs`, cùng với: không ứng viên nào trùng chữ đang hiển thị, ứng
    viên luôn xếp giảm dần, sửa rồi Xoá trả lại đúng tài liệu cũ, và **từ chối thì ra đúng kết

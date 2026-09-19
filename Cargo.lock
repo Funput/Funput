@@ -450,6 +450,7 @@ dependencies = [
  "clap",
  "funput-core",
  "funput-engine",
+ "funput-suggestions",
  "funput-term",
  "unicode-normalization",
 ]

@@ -10,10 +10,14 @@ fn sample_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../benchmarks/sample.txt")
 }
 
-fn options(noise: f32) -> Options {
+fn options(noise: f32, prior: Prior) -> Options {
     Options {
         method: InputMethod::Telex,
+        prior,
         noise,
+        margin: 1.0,
+        known_only: false,
+        max_edits: 2,
         seed: 1,
         limit: None,
         show: 0,
@@ -22,11 +26,15 @@ fn options(noise: f32) -> Options {
 }
 
 fn run(noise: f32) -> (Vec<String>, Tally) {
+    run_with(noise, Prior::Corpus)
+}
+
+fn run_with(noise: f32, prior: Prior) -> (Vec<String>, Tally) {
     let syllables: Vec<String> = load_syllables(&sample_path())
         .expect("load sample corpus")
         .into_iter()
         .collect();
-    let tally = measure(&syllables, &options(noise));
+    let tally = measure(&syllables, &options(noise, prior));
     (syllables, tally)
 }
 
@@ -60,20 +68,32 @@ fn at_realistic_noise_it_repairs_most_of_what_it_can() {
     assert!(fixed >= 50.0, "only {fixed:.1}% of slips were repaired");
 }
 
-/// Above this the model's assumptions break down: nearly every word carries more
-/// than one slip, two substitutions reach words nobody typed, and touch evidence
-/// alone stops telling them apart. The platform's word frequencies are what buy the
-/// margin back, and the engine has none here — so this records where the floor is
-/// rather than pretending it is safe.
+/// Without a word store, touch evidence alone stops telling candidates apart once
+/// the finger wanders far enough. This records where that floor is rather than
+/// pretending it is safe — it is the reason a platform must wire its word store
+/// before switching the feature on.
 #[test]
 fn a_very_noisy_finger_outruns_touch_evidence_alone() {
-    let (_, tally) = run(0.45);
+    let (_, tally) = run_with(0.45, Prior::Uniform);
     assert!(
         tally.wrong * 4 > tally.corrections(),
-        "σ 0.45 used to put a quarter of corrections wrong; if that has improved, \
-         move the gate and say so ({} of {})",
+        "with no word store, noise 0.45 used to put a quarter of corrections wrong; \
+         if that has improved, move the gate and say so ({} of {})",
         tally.wrong,
         tally.corrections()
+    );
+}
+
+/// What the word store is worth, in the only terms that matter.
+#[test]
+fn a_word_store_is_what_makes_a_noisy_finger_survivable() {
+    let (_, without) = run_with(0.45, Prior::Uniform);
+    let (_, with) = run_with(0.45, Prior::Corpus);
+    assert!(
+        with.wrong < without.wrong,
+        "the store must cut wrong corrections ({} with, {} without)",
+        with.wrong,
+        without.wrong
     );
 }
 
