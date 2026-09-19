@@ -133,6 +133,30 @@ pub fn type_touched(engine: &mut Engine, doc: &mut Document, keys: &str, slips: 
     }
 }
 
+/// Type `keys` with one key reported as having drifted towards `towards` by
+/// `distance` pitches, while its other neighbour sits further away. Lets a test say
+/// which way the finger leaned, which a uniform slip cannot.
+pub fn type_leaning(
+    engine: &mut Engine,
+    doc: &mut Document,
+    keys: &str,
+    at: usize,
+    near: (char, f32),
+    far: (char, f32),
+) {
+    for (i, key) in keys.chars().enumerate() {
+        let mut touch = KeyTouch::new(key, 0.35);
+        if i == at {
+            touch = touch
+                .with_alternate(near.0, near.1)
+                .with_alternate(far.0, far.1);
+        }
+        engine.set_next_key_touch(touch);
+        let result = engine.process_char(key);
+        doc.typed(key, &result);
+    }
+}
+
 /// The candidate words on offer, best first.
 pub fn candidate_texts(engine: &Engine) -> Vec<&str> {
     engine

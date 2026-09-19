@@ -6,7 +6,7 @@
 
 use funput_core::InputMethod;
 
-use crate::support::{Document, candidate_texts, correcting_engine, type_touched};
+use crate::support::{Document, candidate_texts, correcting_engine, type_leaning, type_touched};
 
 struct Case {
     method: InputMethod,
@@ -141,4 +141,60 @@ fn a_correction_keeps_the_case_of_the_word_it_replaces() {
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "Nhad ", &[(3, 'f')]);
     assert_eq!(candidate_texts(&engine), ["Nhà"]);
+}
+
+/// The `nhad` case from the design, in all three directions. Two tones are one key
+/// apart, so which one the user meant is only in where the finger landed — this is
+/// the case the touch model exists for, and the case where getting it wrong is a
+/// wrong word rather than a missed one.
+///
+/// The numbers here are not arbitrary. At Δ 1.5 the margin only opens once the
+/// nearer key is about 0.8 pitches clearer than the other: closer than that and the
+/// engine declines and offers both, which is what the design asks for. So a tone
+/// pair resolves only for a finger that really did lean.
+#[test]
+fn nhad_follows_the_finger_to_the_tone_it_leaned_towards() {
+    for (near, far, expected) in [
+        (('f', 0.1), ('s', 1.0), "nhà"),
+        (('s', 0.1), ('f', 1.0), "nhá"),
+    ] {
+        let mut engine = correcting_engine(InputMethod::Telex);
+        let mut doc = Document::new();
+        type_leaning(&mut engine, &mut doc, "nhad", 3, near, far);
+        type_touched(&mut engine, &mut doc, " ", &[]);
+
+        let chosen = engine
+            .choose_correction(&[], &[])
+            .expect("one tone is clearly nearer than the other");
+        assert_eq!(
+            candidate_texts(&engine)[chosen],
+            expected,
+            "leaning towards {} should choose {expected}",
+            near.0
+        );
+    }
+}
+
+/// A finger that leaned only a little is still a finger that might have meant
+/// either, so the engine declines rather than guesses.
+#[test]
+fn nhad_leaning_slightly_is_still_too_close_to_call() {
+    let mut engine = correcting_engine(InputMethod::Telex);
+    let mut doc = Document::new();
+    type_leaning(&mut engine, &mut doc, "nhad", 3, ('f', 0.15), ('s', 0.75));
+    type_touched(&mut engine, &mut doc, " ", &[]);
+
+    assert_eq!(candidate_texts(&engine).len(), 2);
+    assert_eq!(engine.choose_correction(&[], &[]), None);
+}
+
+#[test]
+fn nhad_typed_dead_centre_is_offered_rather_than_applied() {
+    let mut engine = correcting_engine(InputMethod::Telex);
+    let mut doc = Document::new();
+    type_leaning(&mut engine, &mut doc, "nhad", 3, ('f', 0.3), ('s', 0.3));
+    type_touched(&mut engine, &mut doc, " ", &[]);
+
+    assert_eq!(candidate_texts(&engine).len(), 2);
+    assert_eq!(engine.choose_correction(&[], &[]), None);
 }
