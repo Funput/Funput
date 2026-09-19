@@ -14,7 +14,7 @@ extension KeyboardViewController {
 
     /// Re-evaluates whether the toolbar may invite a paste.
     ///
-    /// Reads pasteboard **metadata only** — `changeCount`, `hasStrings`, `hasURLs` —
+    /// Reads pasteboard metadata only — including its plain-text type identifiers —
     /// which raises no paste alert. The contents are never read here; they arrive
     /// through the capture controller or the chip's `UIPasteControl`.
     ///

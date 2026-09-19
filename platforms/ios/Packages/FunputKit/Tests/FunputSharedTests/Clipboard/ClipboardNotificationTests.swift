@@ -12,7 +12,9 @@ struct ClipboardNotificationTests {
         var changes = 0
         monitor.start(readSnapshot: {
             reads += 1
-            return ClipboardSnapshot(changeCount: count, hasStrings: true, hasURLs: false)
+            return ClipboardSnapshot(
+                changeCount: count, hasStrings: true, hasURLs: false, hasPlainText: true
+            )
         }, onChange: { changes += 1 })
         count = 2
         NotificationCenter.default.post(name: UIPasteboard.changedNotification, object: nil)

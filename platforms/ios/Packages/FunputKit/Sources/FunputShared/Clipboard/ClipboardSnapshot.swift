@@ -14,11 +14,13 @@ public struct ClipboardSnapshot: Equatable, Sendable {
     public let changeCount: Int
     public let hasStrings: Bool
     public let hasURLs: Bool
+    public let hasPlainText: Bool
 
-    public init(changeCount: Int, hasStrings: Bool, hasURLs: Bool) {
+    public init(changeCount: Int, hasStrings: Bool, hasURLs: Bool, hasPlainText: Bool) {
         self.changeCount = changeCount
         self.hasStrings = hasStrings
         self.hasURLs = hasURLs
+        self.hasPlainText = hasPlainText
     }
 
     /// Whether this reading may be a refusal rather than an answer.
@@ -33,7 +35,7 @@ public struct ClipboardSnapshot: Equatable, Sendable {
     /// pasteboard, and it does not need to be: both mean "nothing to offer yet, ask
     /// again shortly".
     public var isIndeterminate: Bool {
-        changeCount == 0 && !hasStrings && !hasURLs
+        changeCount == 0 && !hasStrings && !hasURLs && !hasPlainText
     }
 }
 
@@ -44,7 +46,8 @@ public extension ClipboardSnapshot {
         self.init(
             changeCount: pasteboard.changeCount,
             hasStrings: pasteboard.hasStrings,
-            hasURLs: pasteboard.hasURLs
+            hasURLs: pasteboard.hasURLs,
+            hasPlainText: ClipboardPlainText.isAvailable(in: pasteboard)
         )
     }
 }

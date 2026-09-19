@@ -65,4 +65,16 @@ struct ClipboardCaptureControllerTests {
         #expect(f.saved.isEmpty)
         #expect(!f.controller.needsRetry)
     }
+
+    @Test func ignoresURLShapedProvidersWithoutPlainText() {
+        let f = CaptureFixture()
+        f.gateway.metadata = ClipboardSnapshot(
+            changeCount: 2, hasStrings: true, hasURLs: true, hasPlainText: false
+        )
+        f.gateway.text = nil
+        f.controller.synchronize()
+        #expect(f.gateway.reads == 0)
+        #expect(f.saved.isEmpty)
+        #expect(!f.controller.needsRetry)
+    }
 }
