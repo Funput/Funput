@@ -32,6 +32,8 @@ class ShortcutsScreenTest {
         val store = show(ShortcutLibrary(entries = listOf(testShortcut("vn", "việt nam"))))
         compose.onNodeWithTag("shortcuts-search").performTextInput("NAM")
         compose.onNodeWithText("việt nam").assertExists()
+        compose.onNodeWithText("Xoá tìm kiếm").performClick()
+        compose.onNodeWithText("việt nam").assertExists()
         compose.onNodeWithTag("shortcuts-search").performTextInput("-none")
         compose.onNodeWithText("Không tìm thấy gõ tắt").assertExists()
 
@@ -57,6 +59,13 @@ class ShortcutsScreenTest {
         val entry = testShortcut("dc", "được")
         val store = show(ShortcutLibrary(entries = listOf(entry)))
         val row = compose.onNodeWithTag("shortcuts-entry-${entry.id}")
+        compose.onNodeWithContentDescription("Xoá dc").assertDoesNotExist()
+        compose.onNodeWithText("dc").performClick()
+        compose.onNodeWithTag("shortcuts-editor-trigger").assertExists()
+        compose.onNodeWithText("Huỷ").performClick()
+        compose.waitUntil {
+            compose.onAllNodesWithTag("shortcuts-editor-trigger").fetchSemanticsNodes().isEmpty()
+        }
         row.performTouchInput { swipeLeft() }
         compose.onNodeWithText("Huỷ").performClick()
         compose.runOnIdle { assertEquals(0, store.saveCount) }

@@ -61,6 +61,11 @@ internal fun ShortcutsList(
                 onValueChange = { model.query = it },
                 label = { Text(stringResource(R.string.shortcuts_search)) },
                 singleLine = true,
+                trailingIcon = if (model.query.isNotEmpty()) ({
+                    TextButton(onClick = { model.query = "" }) {
+                        Text(stringResource(R.string.shortcuts_clear_search))
+                    }
+                }) else null,
                 modifier = Modifier.fillMaxWidth().testTag("shortcuts-search"),
             )
         }

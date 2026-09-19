@@ -75,6 +75,7 @@ internal fun ShortcutEditorSheet(
             OutlinedTextField(
                 value = draft.trigger,
                 onValueChange = { draft = draft.copy(trigger = it) },
+                enabled = !model.isSaving,
                 label = { Text(stringResource(R.string.shortcuts_trigger)) },
                 placeholder = { Text(stringResource(R.string.shortcuts_trigger_example)) },
                 singleLine = true,
@@ -89,6 +90,7 @@ internal fun ShortcutEditorSheet(
             OutlinedTextField(
                 value = draft.expansion,
                 onValueChange = { draft = draft.copy(expansion = it) },
+                enabled = !model.isSaving,
                 label = { Text(stringResource(R.string.shortcuts_expansion)) },
                 placeholder = { Text(stringResource(R.string.shortcuts_expansion_example)) },
                 minLines = 5,

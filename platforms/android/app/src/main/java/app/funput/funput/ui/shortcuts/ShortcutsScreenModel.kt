@@ -7,6 +7,7 @@ import app.funput.funput.shortcuts.model.ShortcutLibrary
 import app.funput.funput.shortcuts.model.TextShortcut
 import app.funput.funput.shortcuts.persistence.ShortcutsStorageError
 import app.funput.funput.shortcuts.persistence.ShortcutsStoring
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,9 +45,15 @@ internal class ShortcutsScreenModel(
         if (isLoading || isSaving) return
         isLoading = true
         scope.launch {
-            runCatching { withContext(Dispatchers.IO) { store.load() } }
-                .onSuccess { value -> library = value; hasLoaded = true; loadError = null }
-                .onFailure { loadError = it.storageError() }
+            try {
+                library = withContext(Dispatchers.IO) { store.load() }
+                hasLoaded = true
+                loadError = null
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                loadError = error.asStorageError(ShortcutsStorageError.ReadFailed)
+            }
             isLoading = false
         }
     }
@@ -90,18 +97,22 @@ internal class ShortcutsScreenModel(
         isSaving = true
         saveError = null
         scope.launch {
-            runCatching { withContext(Dispatchers.IO) { store.save(candidate) } }
-                .onSuccess { library = candidate; success() }
-                .onFailure { error ->
-                    saveError = error.storageError()
-                    if (saveError !in listOf(ShortcutsStorageError.WriteFailed,
-                            ShortcutsStorageError.DuplicateTrigger)) loadError = saveError
-                    failed()
-                }
+            try {
+                withContext(Dispatchers.IO) { store.save(candidate) }
+                library = candidate
+                success()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                saveError = error.asStorageError(ShortcutsStorageError.WriteFailed)
+                if (saveError !in listOf(ShortcutsStorageError.WriteFailed,
+                        ShortcutsStorageError.DuplicateTrigger)) loadError = saveError
+                failed()
+            }
             isSaving = false
         }
     }
 }
 
-private fun Throwable.storageError() = this as? ShortcutsStorageError
-    ?: ShortcutsStorageError.WriteFailed
+private fun Throwable.asStorageError(fallback: ShortcutsStorageError) =
+    this as? ShortcutsStorageError ?: fallback

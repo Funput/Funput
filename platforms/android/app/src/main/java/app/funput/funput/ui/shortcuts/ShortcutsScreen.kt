@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.shortcuts.model.TextShortcut
+import app.funput.funput.shortcuts.persistence.ShortcutsStorageError
 import app.funput.funput.ui.shortcuts.editor.ShortcutEditorSheet
 import app.funput.funput.ui.shortcuts.options.ShortcutOptionsSheet
 
@@ -36,9 +37,9 @@ internal fun ShortcutsScreen(model: ShortcutsScreenModel, onBack: () -> Unit) {
         AlertDialog(
             onDismissRequest = model::clearSaveError,
             title = { Text(stringResource(R.string.shortcuts_save_error)) },
-            text = { Text(if (model.saveError == app.funput.funput.shortcuts.persistence
-                    .ShortcutsStorageError.DuplicateTrigger) stringResource(R.string.shortcuts_duplicate)
-                else stringResource(R.string.shortcuts_save_error_body)) },
+            text = { Text(if (model.saveError == ShortcutsStorageError.DuplicateTrigger)
+                stringResource(R.string.shortcuts_duplicate)
+            else stringResource(R.string.shortcuts_save_error_body)) },
             confirmButton = { TextButton(onClick = model::clearSaveError) {
                 Text(stringResource(R.string.shortcuts_close))
             } },

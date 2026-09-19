@@ -67,6 +67,32 @@ class ShortcutsScreenModelTest {
         assertTrue(model.canWrite)
     }
 
+    @Test fun `cancelled reload does not report a storage error`() {
+        val store = FakeStore(ShortcutLibrary()).apply { blockLoad = true }
+        val job = SupervisorJob()
+        val model = ShortcutsScreenModel(store, CoroutineScope(job + Dispatchers.Unconfined))
+        model.reload()
+        assertTrue(store.loadStarted.await(2, TimeUnit.SECONDS))
+        job.cancel()
+        store.releaseLoad.countDown()
+        Thread.sleep(50)
+        assertEquals(null, model.loadError)
+    }
+
+    @Test fun `edit and delete persist the surviving entries`() {
+        val first = TextShortcut(trigger = "a", expansion = "one")
+        val second = TextShortcut(trigger = "b", expansion = "two")
+        val store = FakeStore(ShortcutLibrary(entries = listOf(first, second)))
+        val model = loadedModel(store)
+
+        model.save(first.copy(expansion = "updated")) {}
+        waitFor { !model.isSaving }
+        model.delete(second)
+        waitFor { !model.isSaving }
+
+        assertEquals(listOf("a" to "updated"), store.value.entries.map { it.trigger to it.expansion })
+    }
+
     @Test fun `save completion runs only after a successful write`() {
         val store = FakeStore(ShortcutLibrary())
         val model = loadedModel(store)
@@ -100,11 +126,18 @@ private class FakeStore(initial: ShortcutLibrary) : ShortcutsStoring {
     @Volatile var loadError: Throwable? = null
     @Volatile var saveError: Throwable? = null
     var blockSave = false
+    var blockLoad = false
     var saveCount = 0
     val saveStarted = CountDownLatch(1)
     val releaseSave = CountDownLatch(1)
+    val loadStarted = CountDownLatch(1)
+    val releaseLoad = CountDownLatch(1)
 
-    override fun load(): ShortcutLibrary = loadError?.let { throw it } ?: value
+    override fun load(): ShortcutLibrary {
+        loadStarted.countDown()
+        if (blockLoad) releaseLoad.await()
+        return loadError?.let { throw it } ?: value
+    }
 
     override fun save(library: ShortcutLibrary) {
         saveStarted.countDown()
