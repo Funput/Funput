@@ -77,8 +77,8 @@ class AlternatePaletteLayoutTest {
     }
 
     @Test
-    fun `a palette overlapping its key keeps the default until the finger travels`() {
-        val source = KeyBounds(300f, 62f, 336f, 102f)
+    fun `a palette overlapping its key keeps its preferred default until the finger travels`() {
+        val source = KeyBounds(290f, 62f, 326f, 102f)
         val covering = KeyBounds(280f, 50f, 356f, 110f)
         val layout = AlternatePaletteLayout(
             bounds = covering,
@@ -87,29 +87,33 @@ class AlternatePaletteLayoutTest {
                 KeyBounds(318f, 52f, 354f, 90f),
             ),
             sourceBounds = source,
+            defaultIndex = 1,
             overlapsSource = true,
         )
         val startX = source.centerX
         val startY = source.centerY
 
-        assertEquals(0, layout.selectionAt(startX, startY, startX, startY, 1f))
-        assertEquals(0, layout.selectionAt(startX + 6f, startY, startX, startY, 1f))
+        assertEquals(1, layout.selectionAt(startX, startY, startX, startY, 1f))
+        assertEquals(1, layout.selectionAt(startX + 6f, startY, startX, startY, 1f))
         val covered = layout.indexAt(startX, startY, 1f)
         assertNotEquals(null, covered)
+        assertNotEquals(1, covered)
         assertEquals(covered, layout.selectionAt(startX, startY, startX, startY + 60f, 1f))
     }
 
     @Test
     fun `source and item points resolve while outside cancels`() {
         val source = KeyBounds(102f, 198f, 138f, 242f)
-        val layout = resolve(18, source)
-        val second = layout.itemBounds[1]
+        val layout = resolve(18, source, defaultIndex = 1)
+        val third = layout.itemBounds[2]
 
-        assertEquals(0, layout.indexAt(source.centerX, source.centerY, 1f))
-        assertEquals(1, layout.indexAt(second.centerX, second.centerY, 1f))
+        assertEquals(1, layout.indexAt(source.centerX, source.centerY, 1f))
+        assertEquals(2, layout.indexAt(third.centerX, third.centerY, 1f))
         assertNull(layout.indexAt(389f, 303f, 1f))
     }
 
-    private fun resolve(count: Int, source: KeyBounds) =
-        AlternatePaletteLayout.resolve(count, source, surface, density = 1f)
+    private fun resolve(count: Int, source: KeyBounds, defaultIndex: Int = 0) =
+        AlternatePaletteLayout.resolve(
+            count, source, surface, density = 1f, defaultIndex = defaultIndex,
+        )
 }

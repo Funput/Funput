@@ -85,18 +85,25 @@ internal class AlternateSelectionController(
     private fun activate(pointerId: Int) {
         val session = sessions[pointerId] ?: return
         val source = keyBounds(session.key.id) ?: return remove(pointerId)
+        val defaultIndex = preferredAlternateIndex(session.key)
         session.layout = AlternatePaletteLayout.resolve(
             session.key.alternates.size,
             source,
             surfaceBounds(),
             density,
+            defaultIndex = defaultIndex,
         )
-        session.selectedIndex = 0
+        session.selectedIndex = defaultIndex
         session.activationOrder = nextActivationOrder++
         onCaptured(pointerId)
         onFeedback()
         onChanged()
     }
+
+    /** A hold means the user wants something other than the visible key. */
+    private fun preferredAlternateIndex(key: KeySpec): Int =
+        key.alternates.indexOfFirst { !it.text.equals(key.label, ignoreCase = true) }
+            .takeIf { it >= 0 } ?: 0
 
     private fun remove(pointerId: Int) {
         sessions.remove(pointerId)?.let { cancel(it.task) }
