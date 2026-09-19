@@ -47,6 +47,18 @@ class ImeShortcutSessionTest {
         assertEquals(1, engine.installs)
     }
 
+    @Test fun `failed expansion commit restores the trigger then keeps the boundary`() {
+        val session = ImeShortcutSession(ShortcutEngine("việt nam "))
+        val editor = CommittedEditor()
+        session.receive(library(), wordIsActive = false)
+        session.inputEnglish(editor.proxy, "v")
+        session.inputEnglish(editor.proxy, "n")
+        editor.remainingCommitFailures = 1
+
+        assertFalse(session.inputEnglish(editor.proxy, " "))
+        assertEquals("vn ", editor.text)
+    }
+
     @Test fun `activation clears the previous native table`() {
         val engine = ShortcutEngine(null)
         val session = ImeShortcutSession(engine)

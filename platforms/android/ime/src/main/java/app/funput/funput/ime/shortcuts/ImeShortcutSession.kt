@@ -73,8 +73,10 @@ internal class ImeShortcutSession(private val engine: VietnameseEngine) {
         if (!context.endsWith(previous)) return false
         connection.beginBatchEdit()
         return try {
-            connection.deleteSurroundingText(previous.length, 0) &&
-                connection.commitText(replacement, CursorAfterText)
+            if (!connection.deleteSurroundingText(previous.length, 0)) return false
+            if (connection.commitText(replacement, CursorAfterText)) return true
+            connection.commitText(previous, CursorAfterText)
+            false
         } finally {
             connection.endBatchEdit()
         }

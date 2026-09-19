@@ -1,8 +1,10 @@
 package app.funput.funput.ime.shortcuts
 
 import android.util.Log
+import app.funput.funput.shortcuts.model.ShortcutLibrary
 import app.funput.funput.shortcuts.persistence.ShortcutsStorageError
 import app.funput.funput.shortcuts.persistence.ShortcutsStoring
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -14,7 +16,7 @@ internal class ImeShortcutsController(
     private val scope: CoroutineScope,
     private val store: ShortcutsStoring,
     private val begin: () -> Unit,
-    private val receive: (app.funput.funput.shortcuts.model.ShortcutLibrary) -> Unit,
+    private val receive: (ShortcutLibrary) -> Unit,
 ) {
     private var generation = 0L
     private var job: Job? = null
@@ -24,9 +26,15 @@ internal class ImeShortcutsController(
         begin()
         val expected = generation
         job = scope.launch {
-            val result = runCatching { withContext(Dispatchers.IO) { store.load() } }
-            if (generation != expected) return@launch
-            result.onSuccess(receive).onFailure(::logFailure)
+            val value = try {
+                withContext(Dispatchers.IO) { store.load() }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                if (generation == expected) logFailure(error)
+                return@launch
+            }
+            if (generation == expected) receive(value)
         }
     }
 
