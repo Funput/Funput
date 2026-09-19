@@ -24,7 +24,6 @@ pub fn run(args: DevArgs) -> CliResult {
             method,
             noise,
             seed,
-            margin,
             known_only,
             max_edits,
             uniform_prior,
@@ -41,7 +40,6 @@ pub fn run(args: DevArgs) -> CliResult {
                     typos::Prior::Corpus
                 },
                 noise,
-                margin,
                 known_only,
                 max_edits,
                 seed,

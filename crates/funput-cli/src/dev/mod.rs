@@ -54,9 +54,6 @@ pub enum DevCommand {
         /// Seed for the touch noise, so a run is reproducible.
         #[arg(long, default_value_t = 1)]
         seed: u64,
-        /// How far ahead the winner must be before it is applied (the engine's Δ).
-        #[arg(long, default_value_t = 1.0)]
-        margin: f32,
         /// Only offer candidates the word store recognizes.
         #[arg(long)]
         known_only: bool,

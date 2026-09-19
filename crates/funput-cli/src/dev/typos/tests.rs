@@ -15,7 +15,6 @@ fn options(noise: f32, prior: Prior) -> Options {
         method: InputMethod::Telex,
         prior,
         noise,
-        margin: 1.0,
         known_only: false,
         max_edits: 2,
         seed: 1,

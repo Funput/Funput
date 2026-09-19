@@ -110,7 +110,7 @@ fn a_host_with_no_word_store_still_gets_a_ranking() {
     let mut engine = correcting_engine(InputMethod::Telex);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "dduwowfnh ", &[(8, 'g')]);
-    assert_eq!(engine.choose_correction(&[]), Some(0));
+    assert_eq!(engine.choose_correction(&[], &[]), Some(0));
 }
 
 #[test]
@@ -119,9 +119,40 @@ fn two_candidates_too_close_to_call_are_offered_rather_than_applied() {
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "nhad ", &[(3, 'f'), (3, 's')]);
     assert_eq!(candidate_texts(&engine).len(), 2);
-    assert_eq!(engine.choose_correction(&[]), None);
+    assert_eq!(engine.choose_correction(&[], &[]), None);
     // The user's own history breaks the tie.
-    assert_eq!(engine.choose_correction(&[40, 0]), Some(0));
+    assert_eq!(engine.choose_correction(&[40, 0], &[]), Some(0));
+}
+
+#[test]
+fn a_word_the_platform_does_not_recognize_is_never_chosen() {
+    // The engine offers any structurally valid syllable the touches can reach; only
+    // the host knows which of them are words anyone writes. Refusing one has to
+    // happen inside the ranking, because the index comes back pointing into the
+    // unfiltered list and the margin is measured against the eligible runner-up.
+    let mut engine = correcting_engine(InputMethod::Telex);
+    let mut doc = Document::new();
+    type_touched(&mut engine, &mut doc, "nhad ", &[(3, 'f'), (3, 's')]);
+    assert_eq!(candidate_texts(&engine).len(), 2);
+
+    let winner = engine
+        .choose_correction(&[], &[false, true])
+        .expect("the one allowed candidate wins uncontested");
+    assert_eq!(
+        candidate_texts(&engine)[winner],
+        candidate_texts(&engine)[1]
+    );
+
+    assert_eq!(
+        engine.choose_correction(&[], &[false, false]),
+        None,
+        "nothing eligible is nothing to apply"
+    );
+    assert_eq!(
+        engine.choose_correction(&[], &[true]),
+        None,
+        "a short mask permits the rest, so the two are ambiguous again"
+    );
 }
 
 #[test]
