@@ -5,6 +5,7 @@ struct KeyboardAlternatePaletteLayout: Equatable {
     let frame: CGRect
     let itemFrames: [CGRect]
     let sourceFrame: CGRect
+    let defaultIndex: Int
     /// True when the palette still intersects its key after placement.
     let overlapsSource: Bool
 
@@ -24,7 +25,13 @@ struct KeyboardAlternatePaletteLayout: Equatable {
     /// "the default cell", used only when the palette covers the source key.
     private static let holdSlop: CGFloat = 16
 
-    static func resolve(count: Int, sourceFrame: CGRect, bounds: CGRect) -> Self {
+    static func resolve(
+        count: Int,
+        defaultIndex: Int = 0,
+        sourceFrame: CGRect,
+        bounds: CGRect
+    ) -> Self {
+        precondition((0..<count).contains(defaultIndex), "Default alternate must be in bounds")
         let safe = bounds.insetBy(dx: 6, dy: 4)
         let available = max(1, safe.width - padding * 2)
         let columns = columnCount(count: count, available: available)
@@ -58,6 +65,7 @@ struct KeyboardAlternatePaletteLayout: Equatable {
             frame: frame,
             itemFrames: items,
             sourceFrame: sourceFrame,
+            defaultIndex: defaultIndex,
             overlapsSource: frame.intersects(sourceFrame)
         )
     }
@@ -81,12 +89,14 @@ struct KeyboardAlternatePaletteLayout: Equatable {
         guard overlapsSource else { return index(at: point) }
         let dx = point.x - start.x
         let dy = point.y - start.y
-        if dx * dx + dy * dy <= Self.holdSlop * Self.holdSlop { return 0 }
+        if dx * dx + dy * dy <= Self.holdSlop * Self.holdSlop { return defaultIndex }
         return index(at: point)
     }
 
     func index(at point: CGPoint) -> Int? {
-        if !overlapsSource, sourceFrame.insetBy(dx: -8, dy: -8).contains(point) { return 0 }
+        if !overlapsSource, sourceFrame.insetBy(dx: -8, dy: -8).contains(point) {
+            return defaultIndex
+        }
         let local = CGPoint(x: point.x - frame.minX, y: point.y - frame.minY)
         return itemFrames.firstIndex { $0.insetBy(dx: -1, dy: -1).contains(local) }
     }

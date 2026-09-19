@@ -101,9 +101,9 @@ struct KeyboardAlternatePaletteLayoutTests {
         #expect(layout.selection(at: start, from: start) == 0)
     }
 
-    @Test("A palette overlapping its key keeps the default until the finger travels")
+    @Test("A palette overlapping its key keeps its preferred default until the finger travels")
     func holdSlopWhenOverlapping() {
-        let source = CGRect(x: 300, y: 62, width: 36, height: 40)
+        let source = CGRect(x: 290, y: 62, width: 36, height: 40)
         let layout = KeyboardAlternatePaletteLayout(
             frame: CGRect(x: 280, y: 50, width: 76, height: 60),
             itemFrames: [
@@ -111,14 +111,15 @@ struct KeyboardAlternatePaletteLayoutTests {
                 CGRect(x: 38, y: 2, width: 36, height: 38),
             ],
             sourceFrame: source,
+            defaultIndex: 1,
             overlapsSource: true
         )
         let start = CGPoint(x: source.midX, y: source.midY)
-        #expect(layout.selection(at: start, from: start) == 0)
-        #expect(layout.selection(at: CGPoint(x: start.x + 6, y: start.y), from: start) == 0)
+        #expect(layout.selection(at: start, from: start) == 1)
+        #expect(layout.selection(at: CGPoint(x: start.x + 6, y: start.y), from: start) == 1)
         let covering = layout.index(at: start)
         #expect(covering != nil)
-        #expect(covering != 0)
+        #expect(covering != 1)
         #expect(layout.selection(at: start, from: CGPoint(x: start.x, y: start.y + 60))
             == covering)
     }

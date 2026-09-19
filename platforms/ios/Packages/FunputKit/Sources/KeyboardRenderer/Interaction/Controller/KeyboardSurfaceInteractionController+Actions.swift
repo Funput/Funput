@@ -13,18 +13,28 @@ extension KeyboardSurfaceInteractionController {
         // No palette at all if the pipeline already committed this press; showing one whose
         // selection would silently vanish is worse than not offering it.
         guard onClaimGesture(token, .alternate) else { return }
+        let defaultIndex = preferredAlternateIndex(for: state.initialKey)
         state.alternateLayout = .resolve(
             count: state.initialKey.alternates.count,
+            defaultIndex: defaultIndex,
             sourceFrame: sourceFrame,
             bounds: state.containerBounds
         )
-        state.selectedAlternateIndex = 0
+        state.selectedAlternateIndex = defaultIndex
         if let key = state.currentKey { setHighlighted(key, false) }
         state.currentKey = nil
         touches[token] = state
         if hapticsEnabled { haptics.perform(.control) }
         refreshPreview()
     }
+
+    /// A hold means the user wants something other than the visible key. Compact layouts
+    /// already put their digit first, while Vietnamese catalogs start with the base letter.
+    private func preferredAlternateIndex(for key: KeySpec) -> Int {
+        let base = key.label.lowercased()
+        return key.alternates.firstIndex { $0.text.lowercased() != base } ?? 0
+    }
+
     func performSuggestionFeedback(presentation: KeyboardPresentation) {
         if presentation.isHapticFeedbackEnabled { haptics.perform(.control) }
         if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
