@@ -44,19 +44,22 @@ struct KeyboardAlternateInteractionTests {
         #expect(dragged.palette == nil)
     }
 
-    @Test("Holding a compact top-row key releases its pre-selected digit")
-    func selectDefaultDigit() {
-        let subject = Subject(key: Subject.digitKey)
-        subject.begin()
-        subject.scheduler.runNext()
-        subject.controller.endTouch(token: 1)
+    @Test("Holding preselects the first alternate different from the visible key")
+    func selectDefaultAlternate() {
+        let cases: [(KeySpec, String)] = [(Subject.dKey, "đ"), (Subject.digitKey, "7")]
+        for (key, expected) in cases {
+            let subject = Subject(key: key)
+            subject.begin()
+            subject.scheduler.runNext()
+            subject.controller.endTouch(token: 1)
 
-        guard let phase = subject.events.last?.phase,
-              case let .alternateSelected(value) = phase else {
-            Issue.record("Expected alternate selection")
-            return
+            guard let phase = subject.events.last?.phase,
+                  case let .alternateSelected(value) = phase else {
+                Issue.record("Expected alternate selection")
+                continue
+            }
+            #expect(value.text == expected)
         }
-        #expect(value.text == "7")
     }
 
     @Test("Leaving the palette cancels the alternate release")
@@ -93,6 +96,10 @@ private final class Subject {
         role: .character,
         shiftedLabel: "A",
         alternates: VietnameseKeyAlternates.values(for: "a")
+    )
+    static let dKey = KeySpec(
+        id: "d", label: "d", role: .character, shiftedLabel: "D",
+        alternates: VietnameseKeyAlternates.values(for: "d")
     )
     /// The compact top row leads its palette with the digit, so a hold that never moves
     /// resolves to the number rather than to the letter.

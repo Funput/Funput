@@ -5,10 +5,9 @@ struct KeyboardAlternatePaletteLayout: Equatable {
     let frame: CGRect
     let itemFrames: [CGRect]
     let sourceFrame: CGRect
+    let defaultIndex: Int
     /// True when the palette still intersects its key after placement.
     let overlapsSource: Bool
-    /// Pixels the palette extends above the keyboard surface and needs an IME overlay pad.
-    var overflowAbove: CGFloat { max(0, -frame.minY) }
 
     /// Preferred grid width. The palette stays narrow and wraps into more rows so it
     /// reads as a block above the finger rather than a long strip across the keyboard.
@@ -26,7 +25,13 @@ struct KeyboardAlternatePaletteLayout: Equatable {
     /// "the default cell", used only when the palette covers the source key.
     private static let holdSlop: CGFloat = 16
 
-    static func resolve(count: Int, sourceFrame: CGRect, bounds: CGRect) -> Self {
+    static func resolve(
+        count: Int,
+        defaultIndex: Int = 0,
+        sourceFrame: CGRect,
+        bounds: CGRect
+    ) -> Self {
+        precondition((0..<count).contains(defaultIndex), "Default alternate must be in bounds")
         let safe = bounds.insetBy(dx: 6, dy: 4)
         let available = max(1, safe.width - padding * 2)
         let columns = columnCount(count: count, available: available)
@@ -38,9 +43,11 @@ struct KeyboardAlternatePaletteLayout: Equatable {
             max(safe.minX, sourceFrame.midX - width / 2),
             safe.maxX - width
         )
-        // Sit fully above the key, like Gboard. Covering a top-row key made the hold
-        // harder to aim; overflow above the surface is drawn in a transparent IME pad.
-        let y = sourceFrame.minY - sourceGap - height
+        // Prefer the space above the key, then clamp into the existing keyboard surface.
+        // A top-row palette may cover its source; hold slop keeps that overlap aimable.
+        let preferredY = sourceFrame.minY - sourceGap - height
+        let maximumY = max(safe.minY, safe.maxY - height)
+        let y = min(max(safe.minY, preferredY), maximumY)
         let frame = CGRect(x: x, y: y, width: width, height: height)
         let contentWidth = width - padding * 2 - CGFloat(columns - 1) * gap
         let cellWidth = contentWidth / CGFloat(columns)
@@ -58,6 +65,7 @@ struct KeyboardAlternatePaletteLayout: Equatable {
             frame: frame,
             itemFrames: items,
             sourceFrame: sourceFrame,
+            defaultIndex: defaultIndex,
             overlapsSource: frame.intersects(sourceFrame)
         )
     }
@@ -81,12 +89,14 @@ struct KeyboardAlternatePaletteLayout: Equatable {
         guard overlapsSource else { return index(at: point) }
         let dx = point.x - start.x
         let dy = point.y - start.y
-        if dx * dx + dy * dy <= Self.holdSlop * Self.holdSlop { return 0 }
+        if dx * dx + dy * dy <= Self.holdSlop * Self.holdSlop { return defaultIndex }
         return index(at: point)
     }
 
     func index(at point: CGPoint) -> Int? {
-        if !overlapsSource, sourceFrame.insetBy(dx: -8, dy: -8).contains(point) { return 0 }
+        if !overlapsSource, sourceFrame.insetBy(dx: -8, dy: -8).contains(point) {
+            return defaultIndex
+        }
         let local = CGPoint(x: point.x - frame.minX, y: point.y - frame.minY)
         return itemFrames.firstIndex { $0.insetBy(dx: -1, dy: -1).contains(local) }
     }
