@@ -49,6 +49,35 @@ impl SuggestionEngine {
         SuggestionSet { items, len }
     }
 
+    /// How many times the user has typed `word`, and 0 for a word the store has
+    /// never seen.
+    ///
+    /// Read-only, no I/O, and no allocation: typo correction asks it once per
+    /// candidate at a word boundary, to weigh the words the touch evidence reached
+    /// against how likely each one is to be what this user meant.
+    pub fn frequency(&self, word: &str) -> u32 {
+        self.context_slot(word)
+            .and_then(|(index, _)| self.words.get(index as usize))
+            .map_or(0, |record| record.uses)
+    }
+
+    /// Whether `word` is a word at all — one the user has typed, or one in the
+    /// shipped English list.
+    ///
+    /// This is the veto behind typo correction. `funput-engine` carries no
+    /// dictionary, so `text ` reaches it looking exactly like a mistyped Vietnamese
+    /// word, and the engine offers what the touch data can reach (`tẻ`, since `r`
+    /// sits beside `t`). Asking this first is what tells a deliberate English word
+    /// from a slip.
+    pub fn is_known_word(&self, word: &str) -> bool {
+        self.frequency(word) > 0
+            || self
+                .lexicon
+                .file
+                .as_ref()
+                .is_some_and(|file| file.contains(word))
+    }
+
     pub fn stats(&self) -> SuggestionStats {
         let word_bytes = self.words.capacity() * size_of::<WordRecord>()
             + self

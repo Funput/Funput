@@ -31,6 +31,19 @@ impl Lexicon {
         set
     }
 
+    /// Whether the list holds `word` itself, ignoring ASCII case.
+    ///
+    /// The same binary search the prefix path uses, stopped one step earlier: the
+    /// first key not below the word either is the word or the word is not there.
+    pub(crate) fn contains(&self, word: &str) -> bool {
+        let key = word.as_bytes();
+        admissible(key)
+            && self
+                .first_at_or_after(key)
+                .and_then(|(_, offset)| word_at(self.words(), offset))
+                .is_some_and(|(_, text, _)| compare_keys(text, key).is_eq())
+    }
+
     fn fill<'a>(&'a self, prefix: &[u8], set: &mut SuggestionSet<'a>) -> Option<()> {
         let (first, offset) = self.first_at_or_after(prefix)?;
         // One more than the answer can hold: finding a fourth is what makes it heavy.
