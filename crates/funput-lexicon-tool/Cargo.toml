@@ -13,3 +13,10 @@ workspace = true
 # writes, so the layout is defined in exactly one place.
 [dependencies]
 funput-suggestions = { path = "../funput-suggestions", features = ["lexicon-build"] }
+
+# Test-only: the shipped Vietnamese syllable list is checked against the engine that
+# will consume it, which is the only way to catch a malformed spelling before a
+# device sees one. `funput-suggestions` stays independent of the composition engine;
+# this crate links into nothing.
+[dev-dependencies]
+funput-core = { path = "../funput-core" }

@@ -125,33 +125,41 @@ fn two_candidates_too_close_to_call_are_offered_rather_than_applied() {
 }
 
 #[test]
-fn a_word_the_platform_does_not_recognize_is_never_chosen() {
-    // The engine offers any structurally valid syllable the touches can reach; only
-    // the host knows which of them are words anyone writes. Refusing one has to
-    // happen inside the ranking, because the index comes back pointing into the
-    // unfiltered list and the margin is measured against the eligible runner-up.
+fn refusing_the_leading_candidate_calls_the_whole_correction_off() {
+    // The safety property of an *incomplete* dictionary. A host that has never heard
+    // of the right word must not thereby hand the win to a word it has heard of: a
+    // refused candidate cannot win, but it still competes for the confidence margin,
+    // so the one the host does not know suppresses the one it does.
+    //
+    // Measured over Viet74K with a 569-word list: letting the refused candidate drop
+    // out of the comparison put 59.6% of corrections wrong; keeping it in puts 5.3%
+    // wrong. A dictionary that knows too little now corrects less, not badly.
     let mut engine = correcting_engine(InputMethod::Telex);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "nhad ", &[(3, 'f'), (3, 's')]);
     assert_eq!(candidate_texts(&engine).len(), 2);
 
-    let winner = engine
-        .choose_correction(&[], &[false, true])
-        .expect("the one allowed candidate wins uncontested");
     assert_eq!(
-        candidate_texts(&engine)[winner],
-        candidate_texts(&engine)[1]
+        engine.choose_correction(&[40, 0], &[false, true]),
+        None,
+        "the refused leader still outranks the candidate that was allowed"
     );
+    assert_eq!(engine.choose_correction(&[], &[false, false]), None);
+}
 
+#[test]
+fn refusing_a_trailing_candidate_leaves_the_leader_to_win() {
+    // The other half: refusing a candidate that was losing anyway changes nothing,
+    // so a dictionary only ever costs corrections it had a reason to doubt.
+    let mut engine = correcting_engine(InputMethod::Telex);
+    let mut doc = Document::new();
+    type_touched(&mut engine, &mut doc, "nhad ", &[(3, 'f'), (3, 's')]);
+
+    assert_eq!(engine.choose_correction(&[40, 0], &[true, false]), Some(0));
     assert_eq!(
-        engine.choose_correction(&[], &[false, false]),
-        None,
-        "nothing eligible is nothing to apply"
-    );
-    assert_eq!(
-        engine.choose_correction(&[], &[true]),
-        None,
-        "a short mask permits the rest, so the two are ambiguous again"
+        engine.choose_correction(&[40, 0], &[true]),
+        Some(0),
+        "a short mask permits the rest"
     );
 }
 
