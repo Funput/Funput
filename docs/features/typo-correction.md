@@ -344,6 +344,11 @@ Hai điều học được khi làm:
 
 ### 7.3. `funput-suggestions`
 
+Cả hai đều có mặt ở C ABI (`funput_suggestion_frequency`, `funput_suggestion_is_known_word`)
+và JNI (`nativeFrequency`, `nativeIsKnownWord`) — không có chúng thì nền tảng chỉ truyền được
+mảng rỗng vào `choose_correction`, tức đúng trường hợp prior đều mà §12.1 đo được là nguy hiểm.
+
+
 ```rust
 impl SuggestionEngine {
     /// How many times the user typed `word`, 0 when unknown. Read-only, no I/O.
