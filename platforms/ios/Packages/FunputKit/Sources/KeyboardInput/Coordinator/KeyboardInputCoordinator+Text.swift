@@ -36,6 +36,9 @@ extension KeyboardInputCoordinator {
             }
             trackShortcutInput(scalar)
         }
+        // The boundary key, if this was one, has parked its answer by now — and the
+        // builder is still open, which is the only place the repair can ride along.
+        applyPendingCorrection(context: &context, builder: &builder)
     }
 
     private func insert(_ text: String, context: inout String?, builder: inout InputTransactionBuilder) {

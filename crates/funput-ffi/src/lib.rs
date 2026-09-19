@@ -63,13 +63,14 @@ pub use charset::{
 pub use convert::*;
 pub use engine::{
     ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, CORRECTION_CAP, CORRECTION_CHARS_CAP,
-    FunputConfig, FunputCorrectionCandidate, FunputEngine, FunputKeyTouch, FunputResult,
-    METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, SOURCE_NUMPAD, SOURCE_STANDARD,
+    FunputConfig, FunputCorrectionCandidate, FunputCorrectionMetrics, FunputEngine, FunputKeyTouch,
+    FunputResult, METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, SOURCE_NUMPAD, SOURCE_STANDARD,
     TOUCH_ALTERNATE_CAP, funput_add_shortcut, funput_adopt, funput_arm_capitalization,
     funput_backspace, funput_buffer, funput_clear, funput_clear_shortcuts, funput_configure,
     funput_engine_apply_correction, funput_engine_choose_correction,
-    funput_engine_correction_candidates, funput_engine_correction_undo_text, funput_engine_free,
-    funput_engine_has_correction_undo, funput_engine_has_pending_correction, funput_engine_new,
+    funput_engine_correction_candidates, funput_engine_correction_metrics,
+    funput_engine_correction_undo_text, funput_engine_free, funput_engine_has_correction_undo,
+    funput_engine_has_pending_correction, funput_engine_new,
     funput_engine_pending_correction_backspace, funput_engine_set_next_key_touch,
     funput_flip_composing, funput_process_char, funput_process_key, funput_process_key_text,
     funput_set_enabled, funput_set_method, funput_set_shortcut_smart_case,

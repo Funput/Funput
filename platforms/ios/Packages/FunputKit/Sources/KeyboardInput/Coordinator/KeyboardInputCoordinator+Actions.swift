@@ -17,6 +17,7 @@ extension KeyboardInputCoordinator {
             KeyboardInputSignposts.end("CoordinatorHandle", signpost)
         }
         pendingTouch = touch
+        if let touch { touchSpread.record(touch.typedDistance) }
         synchronizeBeforeInput(writer)
         if key.role.mutatesDocument {
             return commit(

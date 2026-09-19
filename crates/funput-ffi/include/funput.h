@@ -284,6 +284,19 @@ typedef struct {
     uint32_t edits;
 } FunputCorrectionCandidate;
 
+/**
+ * What typo correction has done this session. Counts only — never a word, never a
+ * keystroke. A high revert rate means the confidence margin is set too low; a high
+ * ambiguous-skip rate means it is set too high.
+ */
+typedef struct {
+    uint32_t applied;
+    uint32_t reverted;
+    uint32_t skipped_ambiguous;
+    uint32_t candidates_max;
+    uint32_t microseconds_max;
+} FunputCorrectionMetrics;
+
 typedef struct {
     uint32_t count;
     uint32_t chars[SUGGESTION_CHARS_CAP];
@@ -954,7 +967,7 @@ uintptr_t funput_engine_pending_correction_backspace(const FunputEngine *engine)
  * readable `u32` values, or be null; `allowed` to at least `len` readable `bool`
  * values, or be null.
  */
-int32_t funput_engine_choose_correction(const FunputEngine *engine,
+int32_t funput_engine_choose_correction(FunputEngine *engine,
                                         const uint32_t *uses,
                                         const bool *allowed,
                                         uintptr_t len);
@@ -971,6 +984,14 @@ int32_t funput_engine_choose_correction(const FunputEngine *engine,
 uintptr_t funput_engine_correction_undo_text(const FunputEngine *engine,
                                              uint32_t *out,
                                              uintptr_t cap);
+
+/**
+ * Read the correction counters. Zeroed when the feature has never been switched on.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+FunputCorrectionMetrics funput_engine_correction_metrics(const FunputEngine *engine);
 
 /**
  * Define a text-expansion shortcut (gõ tắt): typing `trigger` then a word boundary
