@@ -17,8 +17,10 @@ extension KeyboardViewController {
         let spread = inputCoordinator.touchSpread
         guard spread.count > 0 else { return }
         let counts = inputCoordinator.correctionCounts
+        // Default level, not `.info`: Console hides info messages unless the reader
+        // knows to turn them on, and this line is the whole point of the measurement.
         os_log(
-            .info,
+            .default,
             log: Self.correctionLog,
             "touches %{public}d spread %{public}.3f±%{public}.3f · applied %{public}d reverted %{public}d ambiguous %{public}d · candidates %{public}d max %{public}dµs",
             spread.count,
