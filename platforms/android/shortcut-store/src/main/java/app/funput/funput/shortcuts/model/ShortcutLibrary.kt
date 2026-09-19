@@ -1,6 +1,7 @@
 package app.funput.funput.shortcuts.model
 
 import app.funput.funput.shortcuts.persistence.ShortcutsStorageError
+import java.util.UUID
 
 /** Versioned standalone document shared by the app and input method. */
 data class ShortcutLibrary(
@@ -15,7 +16,7 @@ data class ShortcutLibrary(
 
     fun validate() {
         if (schemaVersion != CurrentSchemaVersion) throw ShortcutsStorageError.UnsupportedVersion
-        val ids = HashSet<java.util.UUID>()
+        val ids = HashSet<UUID>()
         val triggers = HashSet<String>()
         entries.forEach { entry ->
             if (!entry.isValid || !ids.add(entry.id)) throw ShortcutsStorageError.InvalidData

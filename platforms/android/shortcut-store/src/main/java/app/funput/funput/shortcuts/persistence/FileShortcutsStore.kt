@@ -15,7 +15,7 @@ class FileShortcutsStore internal constructor(
     private val file = AtomicShortcutFile(destination, replace)
     private val lock = StoreLocks.forFile(destination)
 
-    constructor(directory: File) : this(directory, ::replaceAtomically)
+    constructor(directory: File) : this(directory, AtomicShortcutFile::replaceAtomically)
 
     override fun load(): ShortcutLibrary = synchronized(lock) { read() }
 
@@ -46,17 +46,6 @@ class FileShortcutsStore internal constructor(
         fun from(context: Context): FileShortcutsStore = FileShortcutsStore(
             context.applicationContext.filesDir.resolve(DirectoryName),
         )
-
-        private fun replaceAtomically(source: Path, destination: Path) {
-            try {
-                java.nio.file.Files.move(source, destination,
-                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-            } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
-                java.nio.file.Files.move(source, destination,
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-            }
-        }
     }
 }
 

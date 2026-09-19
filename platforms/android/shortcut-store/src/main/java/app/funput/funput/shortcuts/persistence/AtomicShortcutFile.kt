@@ -11,7 +11,7 @@ import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 
 internal class AtomicShortcutFile(
     private val destination: File,
-    private val replace: (Path, Path) -> Unit = ::replaceFile,
+    private val replace: (Path, Path) -> Unit = Companion::replaceAtomically,
 ) {
     fun read(): String? {
         if (!destination.exists()) return null
@@ -28,10 +28,8 @@ internal class AtomicShortcutFile(
         try {
             temporary = File.createTempFile("shortcuts-", ".tmp", directory)
             FileOutputStream(temporary).use { output ->
-                output.writer(StandardCharsets.UTF_8).apply {
-                    write(content)
-                    flush()
-                }
+                output.write(content.toByteArray(StandardCharsets.UTF_8))
+                output.flush()
                 output.fd.sync()
             }
             replace(temporary.toPath(), destination.toPath())
@@ -44,8 +42,8 @@ internal class AtomicShortcutFile(
         }
     }
 
-    private companion object {
-        fun replaceFile(source: Path, destination: Path) {
+    companion object {
+        fun replaceAtomically(source: Path, destination: Path) {
             try {
                 Files.move(source, destination, ATOMIC_MOVE, REPLACE_EXISTING)
             } catch (_: AtomicMoveNotSupportedException) {
