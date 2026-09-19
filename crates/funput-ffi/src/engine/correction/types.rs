@@ -1,6 +1,6 @@
 //! The two POD types typo correction carries across the C ABI.
 
-use funput_engine::{CorrectionCandidate, KeyTouch, MAX_ALTERNATES};
+use funput_engine::{CorrectionCandidate, CorrectionMetrics, KeyTouch, MAX_ALTERNATES};
 
 use crate::abi;
 
@@ -86,6 +86,31 @@ impl Default for FunputCorrectionCandidate {
             chars: [0; CORRECTION_CHARS_CAP],
             touch_score: 0.0,
             edits: 0,
+        }
+    }
+}
+
+/// What typo correction has done this session. Counts only — never a word, never a
+/// keystroke. A high revert rate means the confidence margin is set too low; a high
+/// ambiguous-skip rate means it is set too high.
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+pub struct FunputCorrectionMetrics {
+    pub applied: u32,
+    pub reverted: u32,
+    pub skipped_ambiguous: u32,
+    pub candidates_max: u32,
+    pub microseconds_max: u32,
+}
+
+impl From<CorrectionMetrics> for FunputCorrectionMetrics {
+    fn from(metrics: CorrectionMetrics) -> Self {
+        Self {
+            applied: metrics.applied,
+            reverted: metrics.reverted,
+            skipped_ambiguous: metrics.skipped_ambiguous,
+            candidates_max: metrics.candidates_max,
+            microseconds_max: metrics.microseconds_max,
         }
     }
 }

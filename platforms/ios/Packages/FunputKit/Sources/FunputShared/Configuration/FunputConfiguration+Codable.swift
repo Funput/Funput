@@ -30,6 +30,7 @@ extension FunputConfiguration {
         config.heightScale = try container.decodeIfPresent(Double.self, forKey: .heightScale) ?? config.heightScale
         config.keyboardAppearance = try container.decodeIfPresent(KeyboardAppearanceOption.self, forKey: .keyboardAppearance) ?? config.keyboardAppearance
         config.personalSuggestionsEnabled = try container.decodeIfPresent(Bool.self, forKey: .personalSuggestionsEnabled) ?? config.personalSuggestionsEnabled
+        config.typoCorrection = try container.decodeIfPresent(Bool.self, forKey: .typoCorrection) ?? config.typoCorrection
         config.personalSuggestionResetToken = try container.decodeIfPresent(UUID.self, forKey: .personalSuggestionResetToken)
         config.clipboardEnabled = try container.decodeIfPresent(Bool.self, forKey: .clipboardEnabled) ?? config.clipboardEnabled
         config.clipboardExpiry = try container.decodeIfPresent(ClipboardExpiry.self, forKey: .clipboardExpiry) ?? config.clipboardExpiry
@@ -83,6 +84,12 @@ extension FunputConfiguration {
         // v13 added `keySizing`. `.funput` is the only sizing earlier builds had.
         if config.schemaVersion < 13 {
             config.schemaVersion = 13
+        }
+        // v14 added `typoCorrection`, on for everyone. It cannot act until the
+        // keyboard also reports where each touch landed, so an older build's stored
+        // configuration needs nothing fixed up — it simply gains a switch.
+        if config.schemaVersion < 14 {
+            config.schemaVersion = 14
         }
         self = config
     }

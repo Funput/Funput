@@ -20,11 +20,12 @@ mod types;
 
 pub use query::{
     funput_engine_choose_correction, funput_engine_correction_candidates,
-    funput_engine_correction_undo_text, funput_engine_pending_correction_backspace,
+    funput_engine_correction_metrics, funput_engine_correction_undo_text,
+    funput_engine_pending_correction_backspace,
 };
 pub use types::{
-    CORRECTION_CAP, CORRECTION_CHARS_CAP, FunputCorrectionCandidate, FunputKeyTouch,
-    TOUCH_ALTERNATE_CAP,
+    CORRECTION_CAP, CORRECTION_CHARS_CAP, FunputCorrectionCandidate, FunputCorrectionMetrics,
+    FunputKeyTouch, TOUCH_ALTERNATE_CAP,
 };
 
 use super::{FunputEngine, FunputResult};

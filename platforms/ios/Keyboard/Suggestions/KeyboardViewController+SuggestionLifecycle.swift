@@ -12,6 +12,7 @@ extension KeyboardViewController {
         super.viewWillDisappear(animated)
         clearPersonalSuggestions()
         flushPersonalSuggestions()
+        reportCorrectionSession()
     }
 
     override func didReceiveMemoryWarning() {

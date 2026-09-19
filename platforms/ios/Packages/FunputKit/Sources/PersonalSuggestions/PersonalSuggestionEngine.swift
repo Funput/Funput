@@ -4,7 +4,10 @@ import FunputCore
 
 /// Serial-owner Swift boundary around the local Rust suggestion engine.
 public final class PersonalSuggestionEngine: @unchecked Sendable {
-    private let handle: OpaquePointer
+    /// `internal` rather than `private` so the word-level queries in `Correction/`
+    /// can reach it: they are the same kind of read-only call as `query`, and keeping
+    /// them out of this file is what keeps it inside the line budget.
+    let handle: OpaquePointer
     private let releaseHandle: @Sendable (OpaquePointer) -> Void
 
     public static func inMemory() -> PersonalSuggestionEngine? {

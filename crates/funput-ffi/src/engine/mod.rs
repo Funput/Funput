@@ -28,9 +28,10 @@ pub use config::{
     funput_set_enabled, funput_set_method, funput_set_typo_correction,
 };
 pub use correction::{
-    CORRECTION_CAP, CORRECTION_CHARS_CAP, FunputCorrectionCandidate, FunputKeyTouch,
-    TOUCH_ALTERNATE_CAP, funput_engine_apply_correction, funput_engine_choose_correction,
-    funput_engine_correction_candidates, funput_engine_correction_undo_text,
+    CORRECTION_CAP, CORRECTION_CHARS_CAP, FunputCorrectionCandidate, FunputCorrectionMetrics,
+    FunputKeyTouch, TOUCH_ALTERNATE_CAP, funput_engine_apply_correction,
+    funput_engine_choose_correction, funput_engine_correction_candidates,
+    funput_engine_correction_metrics, funput_engine_correction_undo_text,
     funput_engine_has_correction_undo, funput_engine_has_pending_correction,
     funput_engine_pending_correction_backspace, funput_engine_set_next_key_touch,
 };
