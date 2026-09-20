@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="app_name">Funput</string>
     <string name="funput_logo_description">Logo Funput</string>
     <string name="settings_title">Cài đặt</string>
@@ -29,6 +29,11 @@
     <string name="settings_number_row_title">Hàng phím số</string>
     <string name="settings_number_row_summary">Hiển thị 0–9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.</string>
     <string name="settings_key_size_title">Kích thước phím</string>
+    <string name="settings_keyboard_mode_title">Chế độ bàn phím</string>
+    <string name="keyboard_mode_standard">Thường</string>
+    <string name="keyboard_mode_elevated">Trên cao</string>
+    <string name="settings_elevation_title">Mức nâng</string>
+    <string name="settings_elevation_value">%1$d dp</string>
     <string name="settings_percent_value">%1$d%%</string>
     <string name="settings_keyboard_theme_dark">Ink</string>
     <string name="settings_keyboard_theme_light">Paper</string>

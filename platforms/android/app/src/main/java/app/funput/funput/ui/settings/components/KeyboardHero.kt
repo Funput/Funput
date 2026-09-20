@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -24,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.placement.KeyboardPlacementMode
+import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.theme.KeyboardThemePreview
 import app.funput.funput.ui.theme.KeyboardThemePreviewConfiguration
@@ -43,6 +46,7 @@ internal fun KeyboardHero(
     descriptor: KeyboardThemeDescriptor,
     inputMethod: KeyboardInputMethod,
     sizingProfile: KeyboardSizingProfile,
+    placement: KeyboardPlacementPreferences = KeyboardPlacementPreferences.Default,
     showsNumberRow: Boolean,
     onOpenAppearance: () -> Unit,
     modifier: Modifier = Modifier,
@@ -62,22 +66,26 @@ internal fun KeyboardHero(
             verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
             modifier = Modifier.padding(Spacing.Medium),
         ) {
-            KeyboardThemePreview(
-                theme = descriptor.theme,
-                backgroundImage = descriptor.backgroundImage,
-                // Every keyboard setting on this page shows up here. A preview that ignored them
-                // would be a picture of a keyboard rather than a picture of yours — and the size
-                // presets differ by 8% of height, which is only readable at this width.
-                configuration = KeyboardThemePreviewConfiguration(
-                    inputMethod = inputMethod,
-                    sizingProfile = sizingProfile,
-                    showsNumberRow = numberRow,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(if (numberRow) NumberRowAspect else PreviewAspect)
-                    .clip(MaterialTheme.shapes.small),
-            )
+            Column(modifier = Modifier.clip(MaterialTheme.shapes.small)) {
+                KeyboardThemePreview(
+                    theme = descriptor.theme,
+                    backgroundImage = descriptor.backgroundImage,
+                    configuration = KeyboardThemePreviewConfiguration(
+                        inputMethod = inputMethod,
+                        sizingProfile = sizingProfile,
+                        showsNumberRow = numberRow,
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                        .aspectRatio(if (numberRow) NumberRowAspect else PreviewAspect),
+                )
+                if (placement.activeMode == KeyboardPlacementMode.ELEVATED) {
+                    Surface(
+                        color = androidx.compose.ui.graphics.Color(descriptor.theme.backgroundEndColor),
+                        modifier = Modifier.fillMaxWidth()
+                            .height((placement.elevatedOffsetDp * PreviewElevationScale).dp),
+                    ) {}
+                }
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(start = Spacing.Tight),
@@ -109,3 +117,4 @@ private const val PreviewAspect = 2.05f
 
 /** The same keyboard with a fifth row on top of it. */
 private const val NumberRowAspect = 1.72f
+private const val PreviewElevationScale = 0.2f

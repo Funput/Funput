@@ -6,6 +6,7 @@ import app.funput.funput.R
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.ui.settings.components.PreferencePickerSheet
 
 @Composable
@@ -13,9 +14,11 @@ internal fun SettingsPickerSheet(
     picker: SettingsPicker?,
     inputMethod: KeyboardInputMethod,
     toneStyle: ToneStyle,
+    keyboardPlacementMode: KeyboardPlacementMode = KeyboardPlacementMode.STANDARD,
     clipboardExpiry: ClipboardExpiry,
     onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
+    onKeyboardPlacementSelected: (KeyboardPlacementMode) -> Unit = {},
     onClipboardExpirySelected: (ClipboardExpiry) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -32,6 +35,13 @@ internal fun SettingsPickerSheet(
             options = toneStyleOptions(),
             selected = toneStyle,
             onSelected = onToneStyleSelected,
+            onDismiss = onDismiss,
+        )
+        SettingsPicker.KEYBOARD_PLACEMENT -> PreferencePickerSheet(
+            title = stringResource(R.string.settings_keyboard_mode_title),
+            options = keyboardPlacementOptions(),
+            selected = keyboardPlacementMode,
+            onSelected = onKeyboardPlacementSelected,
             onDismiss = onDismiss,
         )
         SettingsPicker.CLIPBOARD_EXPIRY -> PreferencePickerSheet(

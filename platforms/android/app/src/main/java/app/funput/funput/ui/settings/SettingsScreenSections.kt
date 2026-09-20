@@ -55,6 +55,7 @@ internal fun SettingsScreenSections(
                 descriptor = state.keyboardTheme,
                 inputMethod = state.inputMethod,
                 sizingProfile = state.keySizeProfile,
+                placement = state.placement,
                 showsNumberRow = state.showsNumberRow,
                 onOpenAppearance = state.onOpenAppearance,
                 modifier = Modifier.testTag(SettingsHeroTag),
@@ -84,8 +85,11 @@ internal fun SettingsScreenSections(
                 inputMethod = state.inputMethod,
                 showsNumberRow = state.showsNumberRow,
                 keySizeProfile = state.keySizeProfile,
+                placement = state.placement,
                 onShowsNumberRowChanged = state.onShowsNumberRowChanged,
                 onKeySizeSelected = state.onKeySizeSelected,
+                onOpenPlacement = { onOpenPicker(SettingsPicker.KEYBOARD_PLACEMENT) },
+                onElevationSelected = state.onElevationSelected,
             )
         }
         settingsItem("smart", firstSectionIndex + 2, tracker) {

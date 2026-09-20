@@ -44,6 +44,7 @@ internal fun SettingsRoute(
             showsNumberRow = settings.showsNumberRow,
             toneStyle = settings.toneStyle,
             keySizeProfile = settings.keySizeProfile,
+            placement = settings.placement,
             hapticsEnabled = settings.feedback.hapticsEnabled,
             soundsEnabled = settings.feedback.soundsEnabled,
             smartComposition = settings.smartComposition,
@@ -63,6 +64,12 @@ internal fun SettingsRoute(
             },
             onKeySizeSelected = { profile ->
                 scope.launch { settings.sizing.setProfile(profile) }
+            },
+            onPlacementModeSelected = { mode ->
+                scope.launch { settings.placementStore.setMode(mode) }
+            },
+            onElevationSelected = { offsetDp ->
+                scope.launch { settings.placementStore.setElevatedOffsetDp(offsetDp) }
             },
             onHapticsChanged = { enabled ->
                 scope.launch { settings.feedbackStore.setHapticsEnabled(enabled) }
