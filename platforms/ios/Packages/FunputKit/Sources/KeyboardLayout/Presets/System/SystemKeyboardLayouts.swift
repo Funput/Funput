@@ -23,15 +23,19 @@ public enum SystemKeyboardLayouts {
     /// page — the magnifying glass on the return key comes from `enterAction`, not from
     /// the layout, so nothing here has to know about it.
     ///
-    /// The number row stays whatever the preference says, as it does on the Funput
-    /// preset's search layout: a search field is where digits are most likely to be
-    /// wanted, and hiding them would take away something Telex users have today.
-    public static func search(_ inputMethod: KeyboardInputMethod) -> KeyboardLayout {
+    /// Including the number row: it answers the preference exactly as the letters page
+    /// does, VNI aside. Search used to keep the row whatever the user asked, on the
+    /// grounds that the Funput preset's search page always carries digits — it does not,
+    /// it goes compact there like every other QWERTY page.
+    public static func search(
+        _ inputMethod: KeyboardInputMethod,
+        showsNumberRow: Bool = true
+    ) -> KeyboardLayout {
         page(
             id: "qwerty-search-\(inputMethod.rawValue)-system",
             page: "system-search",
             inputMethod: inputMethod,
-            hasNumberRow: true
+            hasNumberRow: inputMethod == .vni || showsNumberRow
         )
     }
 

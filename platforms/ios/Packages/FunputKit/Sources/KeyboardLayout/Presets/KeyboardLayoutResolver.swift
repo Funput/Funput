@@ -129,7 +129,7 @@ public enum KeyboardLayoutResolver {
         switch mode {
         case .letters:
             editorMode == .search
-                ? SystemKeyboardLayouts.search(inputMethod)
+                ? SystemKeyboardLayouts.search(inputMethod, showsNumberRow: showsNumberRow)
                 : SystemKeyboardLayouts.letters(inputMethod, showsNumberRow: showsNumberRow)
         // The symbol pages ignore `showsNumberRow`: page one always carries the digits,
         // so there is no compact variant of them to choose.
