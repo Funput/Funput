@@ -231,8 +231,13 @@ P(chạm | phím) = exp(−d² / (2σ²)),  d tính theo bước phím
   — đẩy tiếp lên 2,5 chỉ hạ sửa sai từ 3,9% xuống 2,3% mà mất thêm một phần tư số lần sửa đúng
   — nhưng 1,0 → 1,5 là đoạn duy nhất đáng đổi. Thứ thật sự quyết định vẫn là mức nhiễu của ngón.
 - **Mặt nạ `allowed`**: nền tảng nói ứng viên nào từ điển của nó công nhận. Việc lọc nằm trong
-  cùng hàm quyết định chứ không ở phía gọi, vì chỉ số trả về trỏ vào danh sách **chưa lọc** và
-  biên Δ phải đo với ứng viên nhì **thật sự đủ tư cách**.
+  cùng hàm quyết định chứ không ở phía gọi, vì chỉ số trả về trỏ vào danh sách **chưa lọc**.
+
+  **Ứng viên bị từ chối không được thắng, nhưng vẫn tranh biên Δ.** Đây là tính chất an toàn của
+  một từ điển *chưa đầy đủ*, và nó được đo chứ không phải suy đoán: với danh sách 569 âm tiết,
+  để ứng viên bị từ chối rơi hẳn khỏi phép so sánh đưa tỉ lệ sửa sai lên **59,6%** — một từ
+  thông dụng nhưng sai thắng *không cần tranh* vì đáp án đúng vừa bị gạt. Giữ nó lại trong phép
+  so sánh thì còn **5,3%**: từ điển biết quá ít sẽ **sửa ít đi**, chứ không sửa bậy.
 
 **Cửa chặn tiếng Anh là việc của nền tảng.** Một từ tiếng Anh gõ có chủ ý kết thúc ở đúng trạng
 thái mà một từ tiếng Việt gõ nhầm kết thúc: chữ thô, không phải âm tiết. `text ` chẳng hạn có
@@ -486,6 +491,20 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    | Δ = 2,0 + chỉ từ có thật | 42,6% | 2,86% |
    | Δ = 2,5 + chỉ từ có thật | 35,9% | 2,28% |
    | Δ = 1,0 + chỉ 1 phím thay | 47,8% | 6,42% |
+
+   **Bộ lọc cần độ phủ, không cần bắt đầu sớm.** Đo trên Viet74K ở nhiễu 0,25, so ba cỡ từ điển:
+
+   | Từ điển dùng làm bộ lọc | Sửa đúng | Sửa sai |
+   |---|---|---|
+   | không lọc | 41,9% | 5,66% |
+   | danh sách ship (569 âm tiết) | 4,4% | 5,30% |
+   | Viet74K (8 955 âm tiết) | 46,3% | 3,77% |
+
+   Danh sách nhỏ **không phải bước đệm** tới danh sách lớn: ở 569 âm tiết nó cắt chín phần mười
+   số lần sửa mà gần như không hạ được tỉ lệ sửa sai. Nên nền tảng **để bộ lọc tắt** cho tới khi
+   độ phủ đủ lớn, và ngưỡng đó phải đo bằng `funput dev typos --prior shipped --known-only` chứ
+   không đoán. Dùng danh sách nhỏ làm **prior** cũng không đổi gì (5,88% so với 5,66%), vì
+   `ln(1 + uses)` quá nhỏ bên cạnh biên Δ.
 
    Với Δ = 1,5 (hằng số hiện tại) và bộ lọc từ-có-thật, cả đường cong nhiễu là:
 

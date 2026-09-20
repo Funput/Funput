@@ -26,7 +26,7 @@ pub fn run(args: DevArgs) -> CliResult {
             seed,
             known_only,
             max_edits,
-            uniform_prior,
+            prior,
             limit,
             show,
             json,
@@ -34,10 +34,10 @@ pub fn run(args: DevArgs) -> CliResult {
             let path = corpus.unwrap_or_else(|| PathBuf::from("benchmarks/sample.txt"));
             let options = typos::Options {
                 method: method.into(),
-                prior: if uniform_prior {
-                    typos::Prior::Uniform
-                } else {
-                    typos::Prior::Corpus
+                prior: match prior.as_str() {
+                    "uniform" => typos::Prior::Uniform,
+                    "corpus" => typos::Prior::Corpus,
+                    _ => typos::Prior::Shipped,
                 },
                 noise,
                 known_only,

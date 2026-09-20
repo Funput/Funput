@@ -60,11 +60,11 @@ pub enum DevCommand {
         /// How many substituted keys a candidate may carry.
         #[arg(long, default_value_t = 2)]
         max_edits: usize,
-        /// Rank candidates with no word store at all, the way a host that has not
-        /// wired one would. The default learns the corpus, which is what a shipped
-        /// Vietnamese word list gives a real keyboard.
-        #[arg(long)]
-        uniform_prior: bool,
+        /// Which word store to rank with: `shipped` is the list Funput bundles and
+        /// is what a device sees, `corpus` learns the corpus itself and is the
+        /// optimistic bound, `uniform` is a host that wired no store at all.
+        #[arg(long, default_value = "shipped")]
+        prior: String,
         /// Cap the number of syllables evaluated (for a quick run).
         #[arg(long)]
         limit: Option<usize>,

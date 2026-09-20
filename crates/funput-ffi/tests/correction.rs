@@ -164,17 +164,30 @@ fn the_word_store_breaks_a_tie_the_touches_cannot() {
             0
         );
 
-        // The same pair, decided by the dictionary instead of by history.
-        let allowed = [false, true];
+        // A dictionary that has not heard of the leading candidate calls the whole
+        // correction off rather than promoting the one it does know: the refused
+        // candidate cannot win, but it still competes for the confidence margin.
+        let refuse_leader = [false, true];
         assert_eq!(
             funput_engine_choose_correction(
                 engine,
-                std::ptr::null(),
-                allowed.as_ptr(),
-                allowed.len()
+                uses.as_ptr(),
+                refuse_leader.as_ptr(),
+                refuse_leader.len()
             ),
-            1,
-            "only one candidate is a word the host knows"
+            -1
+        );
+
+        // Refusing a candidate that was losing anyway changes nothing.
+        let refuse_trailer = [true, false];
+        assert_eq!(
+            funput_engine_choose_correction(
+                engine,
+                uses.as_ptr(),
+                refuse_trailer.as_ptr(),
+                refuse_trailer.len()
+            ),
+            0
         );
 
         funput_engine_free(engine);

@@ -13,10 +13,23 @@ pub(in crate::dev) enum Prior {
     /// None at all — what a host without a personal store would see, and the floor
     /// this feature can be measured at.
     Uniform,
-    /// Every syllable of the corpus, learned once. Stands in for the shipped
-    /// Vietnamese word list: a structurally valid non-word scores zero, a real one
-    /// does not.
+    /// Every syllable of the corpus, learned once. The optimistic bound: a store
+    /// that happens to know every word being typed.
     Corpus,
+    /// The list Funput actually ships. The realistic one, and the only number worth
+    /// quoting — it is deliberately much smaller than any corpus.
+    Shipped,
+}
+
+/// The syllable list the platforms bundle, so the harness measures what ships.
+const SHIPPED: &str = include_str!("../../../../funput-suggestions/data/syllables/vi.txt");
+
+fn shipped_syllables() -> Vec<&'static str> {
+    SHIPPED
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .collect()
 }
 
 /// The platform's word store, or the absence of one.
@@ -29,11 +42,16 @@ impl Store {
         if prior == Prior::Uniform {
             return Self { inner: None };
         }
+        let shipped = shipped_syllables();
+        let words: Vec<&str> = match prior {
+            Prior::Shipped => shipped,
+            _ => syllables.iter().map(String::as_str).collect(),
+        };
         let mut engine = SuggestionEngine::in_memory(SuggestionConfig {
-            max_words: syllables.len().max(1),
+            max_words: words.len().max(1),
             ..SuggestionConfig::default()
         });
-        for syllable in syllables {
+        for syllable in &words {
             engine.learn(syllable);
         }
         Self {

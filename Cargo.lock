@@ -524,6 +524,7 @@ dependencies = [
 name = "funput-lexicon-tool"
 version = "0.1.0"
 dependencies = [
+ "funput-core",
  "funput-suggestions",
 ]
 
