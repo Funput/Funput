@@ -161,7 +161,7 @@ Bug report, thảo luận và đóng góp đều được chào đón.
 ## Ủng hộ
 
 Funput là dự án vì cộng đồng — miễn phí cho tất cả mọi người.
-Nếu thấy Funput hữu ích, bạn có thể ủng hộ dự án qua [GitHub Sponsors](https://github.com/sponsors/Funput) hoặc chuyển khoản — hoặc đơn giản là ấn [Star](https://github.com/Funput/Funput).
+Nếu thấy Funput hữu ích, bạn có thể ủng hộ dự án qua [GitHub Sponsors](https://github.com/sponsors/Funput) hoặc chuyển khoản — hoặc đơn giản là mở [repo](https://github.com/Funput/Funput) rồi ấn Star góc trên.
 
 <p align="center">
   <a href="https://github.com/sponsors/Funput">
