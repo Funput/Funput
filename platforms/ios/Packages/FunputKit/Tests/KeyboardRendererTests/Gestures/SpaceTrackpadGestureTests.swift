@@ -26,6 +26,34 @@ struct SpaceTrackpadGestureTests {
         #expect(!subject.phases.contains { if case .cursorMoved = $0 { true } else { false } })
     }
 
+    @Test("The hold that readies the trackpad is what the finger feels")
+    func armingReportsItself() {
+        let subject = subject()
+        subject.hapticFeedback = true
+        subject.begin()
+        #expect(!subject.haptics.performed.contains(.modeChange))
+
+        subject.scheduler.fire(after: Self.hold)
+
+        // Straight after the press's own `.space`, and before the first sideways pixel: by
+        // the time the caret moves, the user can see the answer and the buzz is late.
+        #expect(subject.haptics.performed == [.space, .modeChange])
+        subject.move(to: 145)
+        #expect(subject.haptics.performed.filter { $0 == .modeChange }.count == 1)
+    }
+
+    @Test("Nothing buzzes while haptics are off")
+    func silentWhenDisabled() {
+        let subject = subject()
+        subject.begin()
+        subject.scheduler.fire(after: Self.hold)
+        subject.move(to: 145)
+
+        #expect(subject.haptics.performed.isEmpty)
+        // The gesture itself still runs; only the feedback is off.
+        #expect(subject.claims == [.trackpad])
+    }
+
     @Test("Holding then dragging moves the caret instead")
     func holdThenDragMovesCaret() {
         let subject = subject()

@@ -1,8 +1,15 @@
 #if canImport(UIKit)
 import UIKit
 
+/// Lets a test watch what the keyboard asked for without a taptic engine.
 @MainActor
-final class KeyboardHaptics {
+protocol KeyboardHapticPerforming {
+    func prepare()
+    func perform(_ type: KeyboardHapticType)
+}
+
+@MainActor
+final class KeyboardHaptics: KeyboardHapticPerforming {
     private let light: UIImpactFeedbackGenerator
     private let soft: UIImpactFeedbackGenerator
     private let rigid: UIImpactFeedbackGenerator
@@ -41,6 +48,10 @@ final class KeyboardHaptics {
             impact(soft, intensity: 0.6)
         case .control:
             impact(rigid, intensity: 0.55)
+        // Firmer than a key or a control: it answers "the spacebar is a trackpad now",
+        // and the finger reading it is resting rather than tapping.
+        case .modeChange:
+            impact(rigid, intensity: 0.75)
         case .delete:
             impact(medium, intensity: 0.65)
         case .deleteRepeat:

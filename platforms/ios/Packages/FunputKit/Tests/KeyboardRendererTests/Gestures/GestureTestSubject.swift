@@ -34,15 +34,27 @@ final class TestGestureScheduler {
     }
 }
 
+/// Records what the keyboard asked the taptic engine for, which a test bundle has none of.
+@MainActor
+final class HapticSpy: KeyboardHapticPerforming {
+    private(set) var performed: [KeyboardHapticType] = []
+
+    func prepare() {}
+    func perform(_ type: KeyboardHapticType) { performed.append(type) }
+}
+
 /// One interaction controller over a single key, driven by explicit touch points.
 @MainActor
 final class GestureTestSubject {
     let scheduler = TestGestureScheduler()
+    let haptics = HapticSpy()
     var events: [(token: UInt64, event: KeyboardKeyEvent)] = []
     var claims: [KeyboardSurfaceInteractionController.GestureClaim] = []
     var grantsClaims = true
     let key: KeySpec
     var smartGestures = true
+    /// Off by default, as the setting itself is.
+    var hapticFeedback = false
 
     lazy var controller = KeyboardSurfaceInteractionController(
         onEvent: { _ in },
@@ -55,7 +67,8 @@ final class GestureTestSubject {
             return grantsClaims
         },
         onPreview: { _, _ in },
-        repeatScheduler: scheduler.schedule
+        repeatScheduler: scheduler.schedule,
+        haptics: haptics
     )
 
     init(key: KeySpec) {
@@ -66,7 +79,7 @@ final class GestureTestSubject {
 
     var presentation: KeyboardPresentation {
         var value = KeyboardPresentation()
-        value.isHapticFeedbackEnabled = false
+        value.isHapticFeedbackEnabled = hapticFeedback
         value.areSmartGesturesEnabled = smartGestures
         return value
     }
