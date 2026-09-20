@@ -15,7 +15,7 @@ struct KeySizingConfigurationTests {
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(decoded.keySizing == .funput)
         #expect(decoded.heightScale == 1.1)
-        #expect(decoded.schemaVersion == 13)
+        #expect(decoded.schemaVersion == FunputConfiguration.currentSchemaVersion)
     }
 
     @Test("System key sizing survives a JSON round-trip")

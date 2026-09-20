@@ -31,6 +31,7 @@ extension FunputConfiguration {
         config.keyboardAppearance = try container.decodeIfPresent(KeyboardAppearanceOption.self, forKey: .keyboardAppearance) ?? config.keyboardAppearance
         config.personalSuggestionsEnabled = try container.decodeIfPresent(Bool.self, forKey: .personalSuggestionsEnabled) ?? config.personalSuggestionsEnabled
         config.personalSuggestionResetToken = try container.decodeIfPresent(UUID.self, forKey: .personalSuggestionResetToken)
+        config.languageToggleEnabled = try container.decodeIfPresent(Bool.self, forKey: .languageToggleEnabled) ?? config.languageToggleEnabled
         config.clipboardEnabled = try container.decodeIfPresent(Bool.self, forKey: .clipboardEnabled) ?? config.clipboardEnabled
         config.clipboardExpiry = try container.decodeIfPresent(ClipboardExpiry.self, forKey: .clipboardExpiry) ?? config.clipboardExpiry
         config.schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? config.schemaVersion
@@ -83,6 +84,11 @@ extension FunputConfiguration {
         // v13 added `keySizing`. `.funput` is the only sizing earlier builds had.
         if config.schemaVersion < 13 {
             config.schemaVersion = 13
+        }
+        // v14 added `languageToggleEnabled`. On is the space bar every earlier build drew,
+        // so like the `< 10` rung there is nothing to fix up.
+        if config.schemaVersion < 14 {
+            config.schemaVersion = 14
         }
         self = config
     }

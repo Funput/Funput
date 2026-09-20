@@ -5,7 +5,8 @@ public enum KeyboardLayoutResolver {
         editorMode: KeyboardEditorMode = .text,
         showsNumberRow: Bool = true,
         preset: KeyboardLayoutPreset = .funput,
-        showsToolbar: Bool = true
+        showsToolbar: Bool = true,
+        allowsLanguageToggle: Bool = true
     ) -> KeyboardLayout {
         // The system preset describes text and search; other editors retain their
         // specialized key rows. Toolbar visibility is applied afterwards, independently
@@ -25,8 +26,47 @@ public enum KeyboardLayoutResolver {
                 showsNumberRow: showsNumberRow
             )
         }
-        guard !showsToolbar, layout.toolbar != nil else { return layout }
-        return toolbarless(layout)
+        let toggled = allowsLanguageToggle ? layout : languageLocked(layout)
+        guard !showsToolbar, toggled.toolbar != nil else { return toggled }
+        return toolbarless(toggled)
+    }
+
+    /// Turns every language-switching space bar back into a plain one.
+    ///
+    /// Applied to the resolved layout rather than threaded through the factories: the
+    /// switch rides on the space key of the letters page, both symbol pages and every
+    /// preset, and they have no other reason to know about the setting. Secure pages
+    /// already carry a space bar without the switch and pass through untouched.
+    private static func languageLocked(_ layout: KeyboardLayout) -> KeyboardLayout {
+        KeyboardLayout(
+            id: "\(layout.id)-vietnamese",
+            inputMethod: layout.inputMethod,
+            toolbar: layout.toolbar,
+            rows: layout.rows.map { row in
+                guard row.keys.contains(where: { $0.horizontalSwipeAction == .toggleLanguage })
+                else { return row }
+                return KeyboardRow(
+                    keys: row.keys.map(plainSpaceKey),
+                    horizontalInsetUnits: row.horizontalInsetUnits,
+                    isNumberRow: row.isNumberRow,
+                    columnSpans: row.columnSpans
+                )
+            }
+        )
+    }
+
+    private static func plainSpaceKey(_ key: KeySpec) -> KeySpec {
+        guard key.horizontalSwipeAction == .toggleLanguage else { return key }
+        return KeySpec(
+            id: key.id,
+            // The renderer shows a static label and drops the chevrons once the swipe is
+            // gone, so the key reads as what it now is.
+            label: "␣",
+            role: key.role,
+            widthWeight: key.widthWeight,
+            accessibilityLabel: "Dấu cách. Giữ rồi kéo để di chuyển con trỏ",
+            alternates: key.alternates
+        )
     }
 
     /// Moves the emoji entry point into the action row before removing the toolbar.
