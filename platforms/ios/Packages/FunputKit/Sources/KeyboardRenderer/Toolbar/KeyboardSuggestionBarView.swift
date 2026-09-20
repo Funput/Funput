@@ -8,14 +8,14 @@ final class KeyboardSuggestionBarView: UIView {
 
     private static let maximumCount = 3
     private static let minimumWidth: CGFloat = 64
-    /// Sized for the compact band: body text would fill it edge to edge, and a
-    /// suggestion is a glance target rather than something the user reads. Dynamic Type
-    /// still moves it, but only up to what the band can show without clipping the
-    /// stacked Vietnamese diacritics.
+    /// Matches the stock candidate bar. At 15pt the word sat small in the band and read
+    /// as an afterthought next to the keycaps; 17pt is what the system bar uses and what
+    /// the band has room for. Dynamic Type still moves it, but only up to what the band
+    /// can show without clipping the stacked Vietnamese diacritics.
     private static var labelFont: UIFont {
         UIFontMetrics(forTextStyle: .body).scaledFont(
-            for: .systemFont(ofSize: 15),
-            maximumPointSize: 17
+            for: .systemFont(ofSize: 17),
+            maximumPointSize: 19
         )
     }
     /// The divider's share of the band height, so it keeps its proportions at any
