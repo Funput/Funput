@@ -12,7 +12,13 @@ extension KeyboardSurfaceInteractionController {
         // Reporting it at the first sideways pixel instead told them something the moving
         // caret had already said. Lifting without moving still types a space, as before,
         // so this says the trackpad is ready — not that the space is gone.
-        if hapticsEnabled { haptics.perform(.modeChange) }
+        //
+        // Deliberately outside `hapticsEnabled`: that setting turns off the buzz of
+        // ordinary typing, which the user can see landing on screen anyway. This one
+        // reports a mode the keyboard shows no other way, during a hold that looks
+        // identical to a thumb resting on the space bar. The per-step feedback while
+        // panning does follow the setting — that is ongoing, and typing-like.
+        haptics.perform(.modeChange)
     }
 
     /// Promotes an armed space press into a caret pan once the finger travels sideways.
