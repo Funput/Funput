@@ -8,7 +8,8 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
     public var verticalGap: CGFloat
     /// The suggestion band, sized like Gboard's strip rather than like a key row:
     /// the toolbar carries one line of text and two icons, so anything taller is
-    /// keyboard height spent on padding.
+    /// keyboard height spent on padding. The default leaves 6pt above and below a
+    /// 17pt candidate with its diacritics.
     public var toolbarHeight: CGFloat
     public var toolbarGap: CGFloat
     public var heightScale: CGFloat
@@ -22,7 +23,7 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
         verticalPadding: CGFloat = 6,
         horizontalGap: CGFloat = 5,
         verticalGap: CGFloat = 7,
-        toolbarHeight: CGFloat = 36,
+        toolbarHeight: CGFloat = 34,
         toolbarGap: CGFloat = 4,
         heightScale: CGFloat = 1,
         labelScale: CGFloat = 1,
@@ -74,6 +75,7 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
         horizontalPadding: SystemKeyMetrics.horizontalPadding,
         horizontalGap: SystemKeyMetrics.horizontalGap,
         verticalGap: SystemKeyMetrics.verticalGap,
+        toolbarHeight: SystemKeyMetrics.toolbarHeight,
         toolbarGap: SystemKeyMetrics.toolbarGap,
         numberRowHeightRatio: SystemKeyMetrics.numberRowHeightRatio
     )

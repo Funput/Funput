@@ -66,6 +66,26 @@ struct PersonalSuggestionToolbarTests {
         #expect(toolbar.suggestionBar.frame.maxX < (controlsBegin ?? toolbar.bounds.width))
     }
 
+    @Test("A candidate fills the band instead of floating in it")
+    func candidateFitsTheBand() throws {
+        let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 360, height: bandHeight))
+        toolbar.apply(spec: .standard, theme: .funputGlass, traits: .init())
+        toolbar.updateSuggestions([KeyboardSuggestionCandidate(text: "nghiễng", generation: 1)])
+        toolbar.layoutIfNeeded()
+
+        let label = try #require(
+            visibleButtons(in: toolbar)
+                .first { $0.accessibilityLabel?.hasPrefix("Gợi ý") == true }?
+                .titleLabel
+        )
+        // Stacked diacritics have to clear the band, and the word has to be worth reading
+        // once it does: a candidate that takes less than half the height reads as an
+        // afterthought beside the keycaps.
+        let ink = label.intrinsicContentSize.height
+        #expect(ink <= bandHeight)
+        #expect(ink >= bandHeight / 2)
+    }
+
     /// The band the shipping geometry lays out, so the fitting rules are exercised at
     /// the size users actually get.
     private var bandHeight: CGFloat { KeyboardSizingProfile.default.toolbarHeight }

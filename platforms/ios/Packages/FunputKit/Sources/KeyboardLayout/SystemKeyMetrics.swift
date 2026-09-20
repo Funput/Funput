@@ -10,6 +10,10 @@ public enum SystemKeyMetrics {
     public static let horizontalGap: CGFloat = 6
     public static let verticalGap: CGFloat = 11
 
+    /// Apple's prediction bar. The system preset reproduces the stock keyboard, so it
+    /// keeps this band even where Funput's own preset draws a shorter one.
+    public static let toolbarHeight: CGFloat = 36
+
     /// Apple's keyboard answers a touch up to about 8pt above its top row before the
     /// prediction bar takes it; the gap below Funput's toolbar is that slack.
     public static let toolbarGap: CGFloat = 8

@@ -16,10 +16,12 @@ struct KeyboardMetricsTests {
 
     @Test("Toolbar and row count determine variant heights")
     func layoutVariantHeights() {
+        // A layout without a band is measured in rows the standard family sizes, so
+        // trimming the band lifts these by the share of it each row takes back.
         let cases: [(UITraitCollection, CGFloat, CGFloat)] = [
-            (phonePortrait, 254, 204.2),
-            (phoneLandscape, 186, 149.8),
-            (padPortrait, 274, 220.2),
+            (phonePortrait, 256, 205.8),
+            (phoneLandscape, 188, 151.4),
+            (padPortrait, 276, 221.8),
         ]
         let secureLayouts = [
             PasswordKeyboardLayouts.text(.telex),
