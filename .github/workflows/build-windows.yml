@@ -44,10 +44,11 @@ jobs:
       - name: Stamp version from tag
         if: inputs.version != ''
         run: |
-          V="${{ inputs.version }}"
           # Crate version is the single source of truth: cargo logs, the exe's
           # embedded version resource, and the About pane (CARGO_PKG_VERSION).
-          node -e "const fs=require('fs');const f='platforms/windows/Cargo.toml';let s=fs.readFileSync(f,'utf8');s=s.replace(/^version = \".*\"/m,'version = \"'+process.argv[1]+'\"');fs.writeFileSync(f,s)" "$V"
+          # The lockfile is rewritten too — `--locked` will not accept a
+          # Cargo.toml version the lock still lists as 1.2026.1.
+          node platforms/windows/scripts/stamp-version.js "${{ inputs.version }}"
 
       # platforms/windows sits outside the cargo workspace, so ci.yml never lints or
       # tests it. Without these two steps nothing does, and it showed: two clippy
