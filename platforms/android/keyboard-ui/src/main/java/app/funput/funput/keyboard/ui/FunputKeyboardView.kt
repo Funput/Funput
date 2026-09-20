@@ -7,17 +7,18 @@ import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.KeyboardClipboardHint
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
-import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelCoordinator
 import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 import app.funput.funput.keyboard.ui.panel.FunputPanelFactory
 import app.funput.funput.keyboard.ui.panel.KeyboardClipboardPanelState
+import app.funput.funput.keyboard.ui.placement.KeyboardPlacementHostController
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.roundToInt
 
@@ -70,6 +71,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         set(value) {
             keyboardSurface.keyboardTheme = value
             panelCoordinator.updateTheme(value)
+            placement.updateTheme(value)
             hostBackground.color = value.backgroundEndColor
         }
     var keyboardThemeBackgroundImage by keyboardSurface::keyboardThemeBackgroundImage
@@ -88,15 +90,18 @@ class FunputKeyboardView @JvmOverloads constructor(
     var hapticsEnabled: Boolean by feedbackController::hapticsEnabled
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
     private val safeArea = KeyboardSafeAreaController(this)
+    private val placement = KeyboardPlacementHostController(this, safeArea, callbacks)
+    var placementPreferences: KeyboardPlacementPreferences by placement::preferences
     init { KeyboardComposeLifecycle.install(this)
         background = hostBackground
         hostBackground.attach(keyboardSurface, ::requestLayout)
         addView(keyboardSurface, matchParentLayoutParams())
-        keyboardSurface.callbacks.onKeyAction = ::handleKeyAction
+        keyboardSurface.callbacks.onKeyAction = ::routeKeyAction
         keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
         keyboardSurface.callbacks.onEmojiRequested = ::openEmojiFromKeyboard
         keyboardSurface.callbacks.onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest
         keyboardSurface.callbacks.onClipboardPanelRequested = ::showClipboardPanel
+        keyboardSurface.callbacks.onPlacementEditorRequested = placement::showEditor
         safeArea.install()
     }
 
@@ -119,9 +124,8 @@ class FunputKeyboardView @JvmOverloads constructor(
         val heightDp = KeyboardDimensions.recommendedHeightDp(
             inputMethod, editorMode, sizingProfile, contentWidthDp, showsNumberRow,
         )
-        val height = resolveSize(
-            (heightDp * density).roundToInt() + safeArea.bottomInset + overlayPadTop, heightMeasureSpec,
-        )
+        val baseHeight = (heightDp * density).roundToInt() + overlayPadTop
+        val height = placement.resolveHeight(baseHeight, heightMeasureSpec)
         super.onMeasure(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
             MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
@@ -131,14 +135,6 @@ class FunputKeyboardView @JvmOverloads constructor(
     private fun openEmojiFromKeyboard() {
         if (editorMode.isPassword) return
         showEmojiPanel(); callbacks.dispatchEmojiPanelOpened()
-    }
-
-    private fun handleKeyAction(action: KeyAction) = when (action) {
-        KeyAction.Symbols -> showSymbolsPanel(KeyboardLayoutMode.SYMBOLS_PRIMARY)
-        KeyAction.MoreSymbols -> showSymbolsPanel(KeyboardLayoutMode.SYMBOLS_SECONDARY)
-        KeyAction.Letters -> showLettersPanel()
-        KeyAction.SwitchInputMethod -> callbacks.dispatchInputMethodSwitchRequest()
-        else -> callbacks.dispatch(action)
     }
 
     private fun syncSuggestions() {

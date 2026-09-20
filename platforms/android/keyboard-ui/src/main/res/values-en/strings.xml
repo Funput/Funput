@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="placement_standard">Standard</string>
+    <string name="placement_elevated">Elevated</string>
+    <string name="placement_done">Done</string>
+    <string name="placement_reset">Reset</string>
+    <string name="placement_slider">Keyboard elevation</string>
+    <string name="placement_unavailable">Not enough space to elevate the keyboard</string>
+</resources>

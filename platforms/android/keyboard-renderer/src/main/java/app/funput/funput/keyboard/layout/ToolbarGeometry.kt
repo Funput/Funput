@@ -21,14 +21,15 @@ internal object ToolbarGeometry {
         val bottom = top + spec.suggestionBarHeight
         val right = width - spec.horizontalPadding
         val emoji = boundsBefore(right, top, bottom, spec, separated = false)
+        val placement = boundsBefore(emoji.left, top, bottom, spec)
         val clipboard = if (showClipboard && bar.clipboardKey != null) {
-            boundsBefore(emoji.left, top, bottom, spec)
+            boundsBefore(placement.left, top, bottom, spec)
         } else {
             null
         }
-        val systemAnchor = clipboard?.left ?: emoji.left
+        val systemAnchor = clipboard?.left ?: placement.left
         val system = bar.systemInputMethodKey?.let { boundsBefore(systemAnchor, top, bottom, spec) }
-        val controlsLeft = system?.left ?: clipboard?.left ?: emoji.left
+        val controlsLeft = system?.left ?: clipboard?.left ?: placement.left
         // Suggestions start at the band's leading edge, flush with the first key of the
         // rows below — nothing sits to their left.
         val suggestionsLeft = spec.horizontalPadding
@@ -38,6 +39,7 @@ internal object ToolbarGeometry {
             suggestionsBounds = KeyBounds(suggestionsLeft, top, suggestionsRight, bottom),
             systemInputMethodKey = system?.let { ResolvedKey(requireNotNull(bar.systemInputMethodKey), it) },
             clipboardKey = clipboard?.let { ResolvedKey(requireNotNull(bar.clipboardKey), it) },
+            placementKey = ResolvedKey(bar.placementKey, placement),
             emojiKey = ResolvedKey(bar.emojiKey, emoji),
             suggestionsEnabled = bar.suggestionsEnabled,
         )

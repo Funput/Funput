@@ -13,6 +13,12 @@ internal class KeyboardSafeAreaController(private val host: View) {
         private set
     val horizontalInset: Int get() = current.left + current.right
     val bottomInset: Int get() = current.bottom
+    var extraBottomInset: Int = 0
+        set(value) {
+            if (field == value) return
+            field = value
+            applyPadding()
+        }
 
     fun install() {
         ViewCompat.setOnApplyWindowInsetsListener(host) { _, windowInsets ->
@@ -25,7 +31,15 @@ internal class KeyboardSafeAreaController(private val host: View) {
     private fun update(insets: Insets) {
         if (insets == current) return
         current = insets
-        host.updatePadding(left = insets.left, right = insets.right, bottom = insets.bottom)
+        applyPadding()
+    }
+
+    private fun applyPadding() {
+        host.updatePadding(
+            left = current.left,
+            right = current.right,
+            bottom = current.bottom + extraBottomInset,
+        )
         host.requestLayout()
     }
 }

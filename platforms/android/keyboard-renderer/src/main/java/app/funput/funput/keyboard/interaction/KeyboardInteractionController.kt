@@ -16,6 +16,7 @@ internal class KeyboardInteractionController(
     private val suggestionSelection: (targetId: String) -> SuggestionSelection?,
     private val onAction: (KeyAction) -> Unit,
     private val onEmojiRequested: () -> Unit,
+    private val onPlacementEditorRequested: () -> Unit = {},
     private val onClipboardPanelRequested: () -> Unit = {},
     private val onClipboardRequested: () -> Unit = {},
     private val onSuggestionSelected: (SuggestionSelection) -> Unit,
@@ -39,6 +40,10 @@ internal class KeyboardInteractionController(
             onSemanticStateChanged()
         },
         doubleTapTimeoutMillis = doubleTapTimeoutMillis,
+    )
+    private val utilityActions = KeyboardUtilityActionRouter(
+        onSuggestionSelected, onEmojiRequested, onPlacementEditorRequested,
+        onClipboardPanelRequested, onClipboardRequested,
     )
     private val backspaceRepeat = BackspaceRepeatController(
         schedule = schedule,
@@ -105,12 +110,16 @@ internal class KeyboardInteractionController(
             setLanguage(language.toggled())
             actionDispatcher.toggleLanguage(language)
         } else {
-            dispatchTarget(keyId, key, selection, eventTimeMillis)
+            utilityActions.dispatch(keyId, key, selection) {
+                actionDispatcher.dispatch(it, eventTimeMillis)
+            }
         }
     }
     fun emitClick(keyId: String, eventTimeMillis: Long) {
         KeyHapticTypeMapper.forTarget(keySpec(keyId), keyId == ClipboardTargetId)?.let(onHapticFeedback)
-        dispatchTarget(keyId, keySpec(keyId), null, eventTimeMillis)
+        utilityActions.dispatch(keyId, keySpec(keyId), null) {
+            actionDispatcher.dispatch(it, eventTimeMillis)
+        }
     }
     fun emitAlternate(keyId: String, index: Int) {
         val key = keySpec(keyId) ?: return
@@ -132,18 +141,4 @@ internal class KeyboardInteractionController(
         gestures.cancelAll()
     }
     fun reset() { cancel(); actionDispatcher.reset() }
-    private fun dispatchTarget(
-        keyId: String?,
-        key: KeySpec?,
-        selection: SuggestionSelection?,
-        eventTimeMillis: Long,
-    ) {
-        when {
-            selection != null -> onSuggestionSelected(selection)
-            keyId == ClipboardTargetId -> onClipboardRequested()
-            key?.role == KeyRole.CLIPBOARD -> onClipboardPanelRequested()
-            key?.role == KeyRole.EMOJI -> onEmojiRequested()
-            keyId != null -> actionDispatcher.dispatch(keyId, eventTimeMillis)
-        }
-    }
 }
