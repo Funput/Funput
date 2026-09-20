@@ -9,9 +9,9 @@ struct KeyboardMetricsTests {
     @Test("Device traits select the correct standard height")
     func deviceBaseHeights() {
         let layout = StandardKeyboardLayouts.letters(.telex)
-        expectHeight(layout, traits: phonePortrait, expected: 294)
-        expectHeight(layout, traits: phoneLandscape, expected: 226)
-        expectHeight(layout, traits: padPortrait, expected: 314)
+        expectHeight(layout, traits: phonePortrait, expected: 288)
+        expectHeight(layout, traits: phoneLandscape, expected: 220)
+        expectHeight(layout, traits: padPortrait, expected: 308)
     }
 
     @Test("Toolbar and row count determine variant heights")
@@ -19,9 +19,9 @@ struct KeyboardMetricsTests {
         // A layout without a band is measured in rows the standard family sizes, so
         // trimming the band lifts these by the share of it each row takes back.
         let cases: [(UITraitCollection, CGFloat, CGFloat)] = [
-            (phonePortrait, 256, 205.8),
-            (phoneLandscape, 188, 151.4),
-            (padPortrait, 276, 221.8),
+            (phonePortrait, 250, 199.8),
+            (phoneLandscape, 182, 145.4),
+            (padPortrait, 270, 215.8),
         ]
         let secureLayouts = [
             PasswordKeyboardLayouts.text(.telex),
@@ -50,10 +50,10 @@ struct KeyboardMetricsTests {
     @Test("Height scale stays within supported bounds")
     func scaleBounds() {
         let layout = StandardKeyboardLayouts.letters(.telex)
-        expectHeight(layout, traits: phonePortrait, scale: 0.5, expected: 294 * 0.85)
-        expectHeight(layout, traits: phonePortrait, scale: 0.85, expected: 294 * 0.85)
-        expectHeight(layout, traits: phonePortrait, scale: 1.2, expected: 294 * 1.2)
-        expectHeight(layout, traits: phonePortrait, scale: 2, expected: 294 * 1.2)
+        expectHeight(layout, traits: phonePortrait, scale: 0.5, expected: 288 * 0.85)
+        expectHeight(layout, traits: phonePortrait, scale: 0.85, expected: 288 * 0.85)
+        expectHeight(layout, traits: phonePortrait, scale: 1.2, expected: 288 * 1.2)
+        expectHeight(layout, traits: phonePortrait, scale: 2, expected: 288 * 1.2)
     }
 
     @Test("Compact Telex pages share one height below the standard family")

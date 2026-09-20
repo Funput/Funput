@@ -52,7 +52,8 @@ struct GeometryVariantTests {
             let result = geometry(layout)
             #expect(result.toolbarFrame == nil)
             #expect(result.rows[0][0].frame.minY == KeyboardSizingProfile.default.verticalPadding)
-            let expectedBottom = result.size.height - KeyboardSizingProfile.default.verticalPadding
+            let expectedBottom = result.size.height
+                - KeyboardSizingProfile.default.bottomPadding(forWidth: result.size.width)
             let actualBottom = result.rows.last?[0].frame.maxY ?? 0
             #expect(abs(actualBottom - expectedBottom) <= 0.5)
         }

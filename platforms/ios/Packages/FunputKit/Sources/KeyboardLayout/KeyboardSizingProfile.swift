@@ -57,8 +57,12 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
     public var toolbarChrome: CGFloat { toolbarHeight + toolbarGap }
 
     /// The padding below the last row of a keyboard `width` points wide.
+    ///
+    /// None of its own: iOS keeps a globe and dictation bar below a custom keyboard, so
+    /// the rows already end well above the screen. Padding on top of that strip only
+    /// pushes them further from the thumb.
     public func bottomPadding(forWidth width: CGFloat) -> CGFloat {
-        keySizing == .system ? SystemKeyMetrics.bottomPadding(screenWidth: width) : verticalPadding
+        keySizing == .system ? SystemKeyMetrics.bottomPadding(screenWidth: width) : 0
     }
 
     /// How tall a row is relative to a letter row.
