@@ -114,15 +114,15 @@ jobs:
       # pull-request job never saw. --release shares the tree the pack step needs.
       - name: Clippy
         working-directory: platforms/windows
-        run: cargo clippy --release --all-targets -- -D warnings
+        run: cargo clippy --locked --release --all-targets -- -D warnings
 
       - name: Test
         working-directory: platforms/windows
-        run: cargo test --release
+        run: cargo test --locked --release
 
       - name: Build Funput.exe
         working-directory: platforms/windows
-        run: cargo build --release
+        run: cargo build --locked --release
 
       - name: Require Partner Center identity
         env:
