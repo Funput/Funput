@@ -41,8 +41,9 @@ struct EnglishLexiconWorkerTests {
             results.yield(values.map(\.text))
         }
         worker.configure(.init(enabled: true, hasFullAccess: false, resetToken: nil))
-        worker.learn("whimsy", after: nil)
-        worker.learn("whimsy", after: nil)
+        // Four sightings, not two: `whimsy` is not a syllable Vietnamese can spell,
+        // so it waits for the longer tier in `engine/admission.rs`.
+        for _ in 0..<4 { worker.learn("whimsy", after: nil) }
         worker.query(.init(prefix: "wh", generation: 1, context: nil))
         #expect(await iterator.next() == ["whimsy"])
         worker.configure(.init(enabled: false, hasFullAccess: false, resetToken: nil))

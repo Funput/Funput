@@ -12,8 +12,10 @@ struct EnglishLexiconBridgeTests {
         #expect(engine.query("ip").map(\.text).contains("iPhone"))
         #expect(engine.query("").isEmpty)
         #expect(engine.query("thà").isEmpty)
-        #expect(engine.learn("iphone"))
-        #expect(engine.learn("iphone"))
+        // A token the language cannot spell waits for `unrecognized_promotion_uses`
+        // sightings (4) rather than `promotion_uses` (2) — see `engine/admission.rs`.
+        // Retuning either constant must update these counts with it.
+        for _ in 0..<4 { #expect(engine.learn("iphone")) }
         let values = engine.query("ip").map(\.text)
         #expect(values.first == "iphone")
         #expect(values.filter { $0.lowercased() == "iphone" }.count == 1)
@@ -28,8 +30,10 @@ struct EnglishLexiconBridgeTests {
         try Data("corrupt".utf8).write(to: root)
         #expect(!engine.attachLexicon(url: root))
         #expect(engine.query("wh").map(\.text) == ["which", "when", "what"])
-        #expect(engine.learn("whimsy"))
-        #expect(engine.learn("whimsy"))
+        // A token the language cannot spell waits for `unrecognized_promotion_uses`
+        // sightings (4) rather than `promotion_uses` (2) — see `engine/admission.rs`.
+        // Retuning either constant must update these counts with it.
+        for _ in 0..<4 { #expect(engine.learn("whimsy")) }
         #expect(engine.query("wh").first?.text == "whimsy")
     }
 
@@ -55,8 +59,9 @@ struct EnglishLexiconBridgeTests {
         for index in 0..<200 {
             // Distinct alphabetic marked words without depending on a user's store.
             let suffix = String(UnicodeScalar(97 + index / 26)!) + String(UnicodeScalar(97 + index % 26)!)
-            #expect(engine.learn("đ" + suffix))
-            #expect(engine.learn("đ" + suffix))
+            // Marked, but not syllables the language can spell, so they wait for the
+            // longer `unrecognized_promotion_uses` tier before they count as promoted.
+            for _ in 0..<4 { #expect(engine.learn("đ" + suffix)) }
         }
         #expect(engine.query("an").map(\.text) == ["ăn"])
         #expect(engine.query("wh").count == 3)
