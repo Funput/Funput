@@ -52,7 +52,7 @@ extension KeyboardViewController {
                 writer: writer
             )
         } else {
-            effects = inputCoordinator.handle(event.key, writer: writer)
+            effects = inputCoordinator.handle(event.key, touch: event.touch, writer: writer)
         }
         applyPostCommitEffects(effects)
     }

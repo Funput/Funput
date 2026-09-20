@@ -2,13 +2,21 @@
 import KeyboardLayout
 
 extension KeyboardInputCoordinator {
+    /// `touch` is where the finger landed, when the key came from a real one. It is
+    /// spent on the first scalar this key produces and dropped afterwards, so a key
+    /// raised by VoiceOver or by key repeat simply arrives without it.
     @discardableResult
     public func handle(
         _ key: KeySpec,
+        touch: KeyboardTouchEvidence? = nil,
         writer: any KeyboardDocumentWriting
     ) -> KeyboardPostCommitEffects {
         let signpost = KeyboardInputSignposts.begin("CoordinatorHandle")
-        defer { KeyboardInputSignposts.end("CoordinatorHandle", signpost) }
+        defer {
+            pendingTouch = nil
+            KeyboardInputSignposts.end("CoordinatorHandle", signpost)
+        }
+        pendingTouch = touch
         synchronizeBeforeInput(writer)
         if key.role.mutatesDocument {
             return commit(

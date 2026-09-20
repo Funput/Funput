@@ -6,8 +6,8 @@ import KeyboardTouchUIKit
 extension KeyboardTouchAction {
     var keyEvent: KeyboardKeyEvent {
         switch self {
-        case let .released(hit):
-            KeyboardKeyEvent(key: hit.key, phase: .released)
+        case let .released(hit, evidence):
+            KeyboardKeyEvent(key: hit.key, phase: .released, touch: evidence)
         case let .repeated(hit):
             KeyboardKeyEvent(key: hit.key, phase: .repeated)
         case let .alternate(hit, alternate):
