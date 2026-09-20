@@ -97,7 +97,7 @@ extension KeyboardViewController {
             editorMode: state.editorMode,
             showsNumberRow: configuration.showsNumberRow,
             preset: configuration.layoutPreset,
-            showsToolbar: configuration.personalSuggestionsEnabled
+            showsToolbar: configuration.showsToolbar
         )
         presentation.shiftState = state.shiftState
         presentation.language = state.language

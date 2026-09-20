@@ -91,6 +91,14 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.schemaVersion = schemaVersion
     }
 
+    /// Whether the keyboard carries its toolbar band.
+    ///
+    /// The band holds the suggestions, the clipboard key and the emoji key, so either
+    /// feature is reason enough to keep it: tying it to the suggestions alone took the
+    /// paste offer away from anyone who wanted the clipboard without them. Secure
+    /// layouts arrive with no toolbar of their own and are unaffected.
+    public var showsToolbar: Bool { personalSuggestionsEnabled || clipboardEnabled }
+
     /// Identifier of the bundled default theme. Must equal the default bundled
     /// theme's `id`; a cross-module test guards that equality.
     public static let defaultThemeID = "app.funput.theme.glass"
