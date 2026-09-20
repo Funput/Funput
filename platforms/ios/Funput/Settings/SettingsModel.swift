@@ -51,6 +51,14 @@ final class SettingsModel: ObservableObject {
         commit(candidate)
     }
 
+    /// Writes several fields as one change, so a setting that means two things in the
+    /// stored shape still reaches the keyboard as a single save.
+    func update(_ mutate: (inout FunputConfiguration) -> Void) {
+        var candidate = configuration
+        mutate(&candidate)
+        commit(candidate)
+    }
+
     func selectKeySizing(_ sizing: KeyboardKeySizing) {
         var candidate = configuration
         candidate.keySizing = sizing
