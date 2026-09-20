@@ -84,7 +84,7 @@ public:
     // Without it an empty answer and no answer are the same string, and standing the
     // mode down on silence would take it from the clients it was built for.
     void observeDocument(const std::string &textBeforeCaret, bool selectionLive = false,
-                         bool answered = true);
+                         bool answered = true, uint32_t selectedAfter = 0);
 
     // Whether a word is being composed right now. The shells ask before deciding
     // whether a Backspace is shortening a live word or eating a committed one.

@@ -42,15 +42,15 @@ internal class ImeEditingSession(
         actionHandler.start(
             allowComposition = editorRuntime.policy.editorMode.supportsVietnameseComposition,
             allowSuggestions = editorRuntime.policy.allowsPersonalSuggestions,
+            allowShortcuts = editorRuntime.policy.allowsShortcuts,
             renderMode = editorRuntime.policy.compositionRenderMode,
         )
     }
 
-    fun startInputView(policy: EditorInfoPolicy) =
-        Unit.also {
-            clipboardController.start(policy.editorMode)
-            clipboardHistoryController.start(policy.editorMode)
-        }
+    fun startInputView(policy: EditorInfoPolicy) {
+        clipboardController.start(policy.editorMode)
+        clipboardHistoryController.start(policy.editorMode)
+    }
 
     /** Ends the current input without tearing down the engine. */
     fun finishInput() {
@@ -113,7 +113,7 @@ internal fun createImeEditingSession(
     )
     val suggestionService = PersonalSuggestionService(
         context = context, show = showSuggestions,
-        capitalized = { currentShiftState().isActive }, acknowledgeReset = acknowledgeReset,
+        shift = currentShiftState, acknowledgeReset = acknowledgeReset,
     )
     val clipboardPreferences = ClipboardSettings(context).preferences
     val clipboardController = ImeClipboardController(

@@ -18,16 +18,16 @@ class ClipboardSettingsThemeTest {
     val compose = createComposeRule()
 
     @Test
-    fun narrowLightThemeKeepsEveryActionVisible() = render(AppearanceMode.LIGHT)
+    fun narrowLightThemeKeepsPreferencesVisible() = render(AppearanceMode.LIGHT)
 
     @Test
-    fun narrowDarkThemeKeepsEveryActionVisible() = render(AppearanceMode.DARK)
+    fun narrowDarkThemeKeepsPreferencesVisible() = render(AppearanceMode.DARK)
 
     @Test
-    fun narrowSystemThemeKeepsEveryActionVisible() = render(AppearanceMode.SYSTEM)
+    fun narrowSystemThemeKeepsPreferencesVisible() = render(AppearanceMode.SYSTEM)
 
     @Test
-    fun narrowDynamicThemeKeepsEveryActionVisible() = render(AppearanceMode.SYSTEM, true)
+    fun narrowDynamicThemeKeepsPreferencesVisible() = render(AppearanceMode.SYSTEM, true)
 
     private fun render(appearance: AppearanceMode, dynamicColor: Boolean = false) {
         compose.setContent {
@@ -38,13 +38,11 @@ class ClipboardSettingsThemeTest {
                         expiry = ClipboardExpiry.WEEK,
                         onEnabledChanged = {},
                         onOpenExpiry = {},
-                        onClear = {},
                     )
                 }
             }
         }
         compose.onNodeWithText("Lưu lịch sử bảng nhớ tạm").assertIsDisplayed()
         compose.onNodeWithText("1 tuần").assertIsDisplayed()
-        compose.onNodeWithText("Xoá tất cả").assertIsDisplayed()
     }
 }

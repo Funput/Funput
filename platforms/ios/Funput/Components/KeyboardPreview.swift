@@ -104,7 +104,8 @@ enum KeyboardPreviewPresentation {
             mode: .letters,
             showsNumberRow: configuration.showsNumberRow,
             preset: configuration.layoutPreset,
-            showsToolbar: configuration.personalSuggestionsEnabled
+            showsToolbar: configuration.showsToolbar,
+            allowsLanguageToggle: configuration.languageToggleEnabled
         )
         return KeyboardPresentationFactory.make(
             from: configuration,

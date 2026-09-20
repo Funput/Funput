@@ -1,6 +1,7 @@
 use std::array;
 
 use super::SuggestionEngine;
+use super::admission::promotion_threshold;
 use crate::index::{NONE, TOP_K, normalize};
 use crate::types::{SuggestionSet, SuggestionStats, WordRecord};
 
@@ -96,7 +97,7 @@ impl SuggestionEngine {
             promoted_words: self
                 .words
                 .iter()
-                .filter(|word| word.uses >= self.config.promotion_uses)
+                .filter(|word| word.uses >= promotion_threshold(&word.text, &self.config))
                 .count(),
             exact_nodes: self.exact.node_count(),
             folded_nodes: self.folded.node_count(),

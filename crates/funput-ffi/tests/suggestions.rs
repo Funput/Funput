@@ -149,12 +149,13 @@ fn a_context_reorders_the_candidates_through_c_abi() {
 #[test]
 fn a_null_context_is_the_same_as_no_context() {
     let engine = funput_suggestion_engine_new_in_memory();
-    assert!(unsafe {
-        funput_suggestion_learn_after(engine, std::ptr::null(), 0, [99u32, 104].as_ptr(), 2)
-    });
-    assert!(unsafe {
-        funput_suggestion_learn_after(engine, std::ptr::null(), 0, [99u32, 104].as_ptr(), 2)
-    });
+    // `ch` is an onset with nothing behind it, so it is promoted on the slow tier like
+    // any other token Vietnamese cannot spell. The subject here is the null context.
+    for _ in 0..4 {
+        assert!(unsafe {
+            funput_suggestion_learn_after(engine, std::ptr::null(), 0, [99u32, 104].as_ptr(), 2)
+        });
+    }
     let result =
         unsafe { funput_suggestion_query_with(engine, std::ptr::null(), 0, [99u32].as_ptr(), 1) };
     assert_eq!(candidate(&result, 0), "ch");
@@ -193,8 +194,10 @@ fn an_attached_lexicon_fills_the_empty_slots_through_c_abi() {
     assert_eq!(texts(&query(engine, "wh")), ["what", "when", "which"]);
 
     // Personal words lead; the lexicon only fills what they leave.
-    assert!(learn(engine, "whale"));
-    assert!(learn(engine, "whale"));
+    // Four for an English word, which the syllable rule does not recognise.
+    for _ in 0..4 {
+        assert!(learn(engine, "whale"));
+    }
     assert_eq!(texts(&query(engine, "wh")), ["whale", "what", "when"]);
     assert_eq!(
         texts(&query_with(engine, "", "wh")),
@@ -243,8 +246,9 @@ fn reset_forgets_the_user_but_keeps_the_lexicon() {
     let lexicon = lexicon_file(LEXICON);
     let engine = unsafe { funput_suggestion_engine_open(store.as_ptr(), store.len()) };
     assert!(attach(engine, &path_bytes(&lexicon)));
-    assert!(learn(engine, "whale"));
-    assert!(learn(engine, "whale"));
+    for _ in 0..4 {
+        assert!(learn(engine, "whale"));
+    }
     assert_eq!(candidate(&query(engine, "wh"), 0), "whale");
 
     assert!(unsafe { funput_suggestion_reset(engine) });

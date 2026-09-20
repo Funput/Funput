@@ -25,7 +25,9 @@ fn snapshot_and_journal_round_trip() {
 fn abandoned_temporary_snapshot_keeps_last_good_state() {
     let directory = tempdir().unwrap();
     let mut engine = SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
-    learned(&mut engine, "antoàn", 2);
+    // Four: `antoàn` is two syllables run together, so it waits like any other token
+    // Vietnamese cannot spell. The subject here is the abandoned snapshot, not that.
+    learned(&mut engine, "antoàn", 4);
     engine.compact().unwrap();
     std::fs::write(
         directory.path().join("personal-lexicon.snapshot.tmp"),

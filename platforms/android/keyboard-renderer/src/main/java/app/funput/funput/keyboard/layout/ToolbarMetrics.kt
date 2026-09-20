@@ -16,14 +16,11 @@ internal object ToolbarMetrics {
      * padding. The utility keys still take the full band and widen into their neighbours'
      * slack (see [KeyboardHitTargetResolver]), so the shorter band costs no tap area.
      */
-    const val SuggestionBarHeightDp = 36f
+    const val SuggestionBarHeightDp = 34f
 
     /** Separates the band from the first key row. */
     const val SuggestionBarGapDp = 4f
 
     /** The vertical strip the toolbar claims in total. */
     const val ChromeDp = SuggestionBarHeightDp + SuggestionBarGapDp
-
-    /** The brand mark is decorative, so it sits inside the band instead of filling it. */
-    const val LogoSizeRatio = 0.68f
 }

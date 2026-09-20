@@ -6,22 +6,25 @@ struct SystemSearchParityTests {
     func matchesTheLettersPage(method: KeyboardInputMethod) {
         // On the stock keyboard the two are the same picture; the magnifying glass on the
         // return key comes from the enter action, so no key here differs.
-        let search = SystemKeyboardLayouts.search(method).rows
-        let letters = SystemKeyboardLayouts.letters(method).rows
-        #expect(search.count == letters.count)
-        for (searchRow, lettersRow) in zip(search, letters) {
-            #expect(searchRow.keys.map(\.label) == lettersRow.keys.map(\.label))
-            #expect(searchRow.keys.map(\.role) == lettersRow.keys.map(\.role))
-            #expect(searchRow.keys.map(\.widthWeight) == lettersRow.keys.map(\.widthWeight))
-            #expect(searchRow.horizontalInsetUnits == lettersRow.horizontalInsetUnits)
+        // Including the number row, which is why both settings are checked here.
+        for showsNumberRow in [true, false] {
+            let search = SystemKeyboardLayouts.search(method, showsNumberRow: showsNumberRow).rows
+            let letters = SystemKeyboardLayouts.letters(method, showsNumberRow: showsNumberRow).rows
+            #expect(search.count == letters.count)
+            for (searchRow, lettersRow) in zip(search, letters) {
+                #expect(searchRow.keys.map(\.label) == lettersRow.keys.map(\.label))
+                #expect(searchRow.keys.map(\.role) == lettersRow.keys.map(\.role))
+                #expect(searchRow.keys.map(\.widthWeight) == lettersRow.keys.map(\.widthWeight))
+                #expect(searchRow.horizontalInsetUnits == lettersRow.horizontalInsetUnits)
+            }
         }
     }
 
-    @Test("Search keeps the number row whatever the preference", arguments: KeyboardInputMethod.allCases)
-    func numberRowSurvivesThePreference(method: KeyboardInputMethod) {
-        // The Funput preset's search layout always carries digits. Reusing the letters
-        // rule would take them away from a Telex user who turned the row off, which is a
-        // capability they have today — search is where digits are most likely wanted.
+    @Test("Search answers the number row preference", arguments: KeyboardInputMethod.allCases)
+    func numberRowFollowsThePreference(method: KeyboardInputMethod) {
+        // A search field used to keep the row whatever the user asked. The reason given
+        // was that the Funput preset's search page always carries digits — it does not
+        // (see `CompactWebPageTests`), so search was the one page that ignored the switch.
         for showsNumberRow in [true, false] {
             let layout = KeyboardLayoutResolver.resolve(
                 inputMethod: method,
@@ -30,8 +33,22 @@ struct SystemSearchParityTests {
                 showsNumberRow: showsNumberRow,
                 preset: .system
             )
-            #expect(layout.rows.count == 5)
-            #expect(layout.rows[0].keys.map(\.label).joined() == "1234567890")
+            // VNI spends the row on tone modifiers, so it keeps it either way.
+            let keepsRow = showsNumberRow || method == .vni
+            #expect(layout.rows.count == (keepsRow ? 5 : 4))
+            #expect(layout.rows.contains { $0.keys.map(\.label).joined() == "1234567890" } == keepsRow)
+        }
+    }
+
+    @Test("A hidden row leaves search and letters the same height", arguments: KeyboardInputMethod.allCases)
+    func rowCountMatchesTheLettersPage(method: KeyboardInputMethod) {
+        // Layout and measured height both count rows, so a search page that disagreed with
+        // the letters page would resize the keyboard when the focused field changed.
+        for showsNumberRow in [true, false] {
+            #expect(
+                SystemKeyboardLayouts.search(method, showsNumberRow: showsNumberRow).rows.count
+                    == SystemKeyboardLayouts.letters(method, showsNumberRow: showsNumberRow).rows.count
+            )
         }
     }
 

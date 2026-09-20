@@ -79,6 +79,20 @@ class EditorInfoPolicyResolverTest {
     }
 
     @Test
+    fun `text and search actions allow shortcuts but URI email and password do not`() {
+        assertTrue(resolve(InputType.TYPE_CLASS_TEXT).allowsShortcuts)
+        assertTrue(resolve(InputType.TYPE_CLASS_TEXT, EditorInfo.IME_ACTION_SEARCH).allowsShortcuts)
+        assertFalse(resolve(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI).allowsShortcuts)
+        assertFalse(resolve(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+            .allowsShortcuts)
+        assertFalse(resolve(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
+            .allowsShortcuts)
+        listOf(InputType.TYPE_CLASS_NUMBER, InputType.TYPE_CLASS_PHONE).forEach { inputType ->
+            assertFalse(resolve(inputType).allowsShortcuts)
+        }
+    }
+
+    @Test
     fun `plain text enables personal suggestions`() {
         assertTrue(resolve(InputType.TYPE_CLASS_TEXT).allowsPersonalSuggestions)
     }

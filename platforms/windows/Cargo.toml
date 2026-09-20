@@ -21,7 +21,9 @@ name = "funput"
 path = "src/main.rs"
 
 [build-dependencies]
-slint-build = "1.17"
+# Tilde: `slint = "1.17"` is ^1.17 and took 1.18, whose WGPU/Direct3D Skia
+# paints Mica's transparent pixels black. Stay on 1.17.x.
+slint-build = "~1.17.1"
 winresource = "0.1"
 
 [dependencies]
@@ -30,7 +32,7 @@ winresource = "0.1"
 # black instead of revealing the DWM material (see src/mica.rs). `raw-window-handle-06`
 # exposes `Window::window_handle()`, which window-vibrancy needs. The Fluent (Win11)
 # widget style is selected in build.rs.
-slint = { version = "1.17", default-features = false, features = [
+slint = { version = "~1.17.1", default-features = false, features = [
     "std",
     "accessibility",
     "compat-1-2",

@@ -5,6 +5,7 @@ import app.funput.funput.ime.editing.AndroidCompositionSession
 import app.funput.funput.ime.editing.ImeEditCommand
 import app.funput.funput.ime.editing.ImeSuggestionSession
 import app.funput.funput.ime.editing.InputConnectionEditor
+import app.funput.funput.ime.shortcuts.ImeShortcutSession
 
 /**
  * The ordinary path text takes into the document: characters, Enter, and text arriving from the
@@ -19,31 +20,52 @@ internal class ImeTypingHandler(
     private val connection: () -> InputConnection?,
     private val enterCommand: () -> ImeEditCommand,
     private val suggestions: ImeSuggestionSession,
-    private val usesComposition: () -> Boolean,
+    private val usesVietnameseComposition: () -> Boolean,
+    private val usesEnglishShortcuts: () -> Boolean,
     private val suggestionsAllowed: () -> Boolean,
+    private val shortcuts: ImeShortcutSession,
+    private val inputTracked: (String) -> Unit,
     private val finish: () -> Unit,
 ) {
     fun input(text: String) {
-        if (usesComposition()) {
+        val handled = if (usesVietnameseComposition()) {
             val current = connection()
-            if (current == null) return suggestions.reset()
-            composition.input(current, text)
+            if (current == null) {
+                suggestions.reset()
+            } else {
+                composition.input(current, text)
+            }
             suggestions.updateComposition()
+            current != null
+        } else if (usesEnglishShortcuts()) {
+            val current = connection()
+            if (current == null) {
+                suggestions.reset()
+                false
+            } else {
+                val expanded = shortcuts.inputEnglish(current, text)
+                if (expanded) suggestions.reset()
+                else if (suggestionsAllowed()) suggestions.inputDirect(text)
+                true
+            }
         } else {
             if (execute(ImeEditCommand.CommitText(text)) && suggestionsAllowed()) {
                 suggestions.inputDirect(text)
             } else {
                 suggestions.reset()
             }
+            true
         }
+        if (handled) inputTracked(text)
     }
 
     fun enter() {
         val command = enterCommand()
-        if (usesComposition() && command == ImeEditCommand.CommitText("\n")) {
-            composition.input(connection(), "\n")
+        if ((usesVietnameseComposition() || usesEnglishShortcuts()) &&
+            command == ImeEditCommand.CommitText("\n")) {
+            input("\n")
         } else {
-            if (usesComposition()) finish()
+            if (usesVietnameseComposition() || usesEnglishShortcuts()) finish()
             else if (suggestionsAllowed()) suggestions.inputDirect("\n")
             execute(command)
         }

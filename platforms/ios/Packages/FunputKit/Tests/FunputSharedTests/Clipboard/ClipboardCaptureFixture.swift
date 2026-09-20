@@ -2,7 +2,9 @@ import FunputShared
 
 @MainActor
 final class CaptureGateway: ClipboardGateway {
-    var metadata = ClipboardSnapshot(changeCount: 1, hasStrings: true, hasURLs: false)
+    var metadata = ClipboardSnapshot(
+        changeCount: 1, hasStrings: true, hasURLs: false, hasPlainText: true
+    )
     var text: String? = "  Tiếng Việt\n🙂  "
     var reads = 0
     var duringRead: (() -> Void)?
@@ -11,7 +13,10 @@ final class CaptureGateway: ClipboardGateway {
     func copy(_ text: String?) {
         self.text = text
         metadata = ClipboardSnapshot(
-            changeCount: metadata.changeCount + 1, hasStrings: text != nil, hasURLs: false
+            changeCount: metadata.changeCount + 1,
+            hasStrings: text != nil,
+            hasURLs: false,
+            hasPlainText: text != nil
         )
     }
 }

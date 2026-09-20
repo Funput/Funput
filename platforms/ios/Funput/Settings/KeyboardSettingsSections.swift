@@ -14,7 +14,17 @@ struct TypingSettingsSection: View {
             SettingsRowDivider()
             SettingsSelectionRow(option: .toneStyle, value: model.toneStyleLabel) { select(.toneStyle) }
             SettingsRowDivider()
-            SettingsSelectionRow(option: .language, value: model.languageLabel) { select(.language) }
+            // A language to choose between only exists while the space bar can switch.
+            if !model.isLanguageLocked {
+                SettingsSelectionRow(option: .language, value: model.languageLabel) { select(.language) }
+                SettingsRowDivider()
+            }
+            SettingsToggleRow(
+                title: "Đổi ngôn ngữ ở phím cách",
+                summary: "Vuốt ngang phím cách để đổi Tiếng Việt và Tiếng Anh. Tắt thì Funput luôn gõ tiếng Việt.",
+                systemImage: "arrow.left.arrow.right",
+                isOn: model.languageToggleBinding
+            )
             SettingsRowDivider()
             ShortcutsSettingsLink(model: shortcuts)
         }
@@ -31,6 +41,8 @@ struct LayoutSettingsSection: View {
             SettingsSelectionRow(option: .layoutPreset, value: model.layoutPresetLabel) { select(.layoutPreset) }
             SettingsRowDivider()
             SettingsSelectionRow(option: .keySizing, value: model.keySizingLabel) { select(.keySizing) }
+            SettingsRowDivider()
+            ToolbarSettingsRow(model: model)
             // VNI types tones with digits, so the row is always on there: nothing to choose.
             if !model.isNumberRowLocked {
                 SettingsRowDivider()

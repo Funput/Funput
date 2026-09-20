@@ -29,14 +29,12 @@ internal object ToolbarGeometry {
         val systemAnchor = clipboard?.left ?: emoji.left
         val system = bar.systemInputMethodKey?.let { boundsBefore(systemAnchor, top, bottom, spec) }
         val controlsLeft = system?.left ?: clipboard?.left ?: emoji.left
-        val logoSize = spec.suggestionBarHeight * ToolbarMetrics.LogoSizeRatio
-        val logoTop = top + (spec.suggestionBarHeight - logoSize) / 2f
-        val logo = KeyBounds(spec.horizontalPadding, logoTop, spec.horizontalPadding + logoSize, logoTop + logoSize)
-        val suggestionsLeft = logo.right + spec.horizontalGap
+        // Suggestions start at the band's leading edge, flush with the first key of the
+        // rows below — nothing sits to their left.
+        val suggestionsLeft = spec.horizontalPadding
         val suggestionsRight = controlsLeft - if (bar.suggestionsEnabled) spec.horizontalGap else 0f
         val resolved = ResolvedSuggestionBar(
             bounds = KeyBounds(spec.horizontalPadding, top, right, bottom),
-            logoBounds = logo,
             suggestionsBounds = KeyBounds(suggestionsLeft, top, suggestionsRight, bottom),
             systemInputMethodKey = system?.let { ResolvedKey(requireNotNull(bar.systemInputMethodKey), it) },
             clipboardKey = clipboard?.let { ResolvedKey(requireNotNull(bar.clipboardKey), it) },

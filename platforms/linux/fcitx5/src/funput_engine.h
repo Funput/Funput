@@ -15,6 +15,7 @@
 #ifndef FUNPUT_ENGINE_H
 #define FUNPUT_ENGINE_H
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -48,6 +49,7 @@ FCITX_CONFIGURATION(
 // funput_client.cpp; the hidden-preedit allowlist lives in hidden_preedit.cpp.
 std::string textBeforeCaret(fcitx::InputContext *context);
 bool hasSelection(fcitx::InputContext *context);
+uint32_t selectedAfter(fcitx::InputContext *context);
 std::string clientId(fcitx::InputContext *context);
 bool hidesClientPreedit(fcitx::InputContext *context);
 

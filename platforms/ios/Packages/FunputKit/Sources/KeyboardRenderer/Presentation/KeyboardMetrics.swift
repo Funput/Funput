@@ -4,9 +4,12 @@ import UIKit
 
 @MainActor
 public enum KeyboardMetrics {
-    public static let phonePortraitBaseHeight: CGFloat = 294
-    public static let phoneLandscapeBaseHeight: CGFloat = 226
-    public static let padBaseHeight: CGFloat = 314
+    // The keyboard's whole height at 100%. Each dropped 6pt along with the padding that
+    // used to sit below the rows, so the rows themselves keep the height they had: the
+    // keyboard ends lower instead of growing its keys.
+    public static let phonePortraitBaseHeight: CGFloat = 288
+    public static let phoneLandscapeBaseHeight: CGFloat = 220
+    public static let padBaseHeight: CGFloat = 308
 
     public static func recommendedHeight(
         for traits: UITraitCollection,
@@ -92,7 +95,10 @@ public enum KeyboardMetrics {
         baseHeight: CGFloat,
         scale: CGFloat
     ) -> CGFloat {
-        let verticalPadding: CGFloat = 12
+        // Only the padding above the rows: Funput sizing ends them flush with the view,
+        // since iOS's globe bar already sits below it. Read from the profile the geometry
+        // lays out with, like the toolbar strip below, so the two cannot drift apart.
+        let verticalPadding = KeyboardSizingProfile.default.verticalPadding
         // Read from the profile the geometry lays out with, so the strip reserved here
         // and the band actually drawn can never disagree.
         let toolbarChrome = KeyboardSizingProfile.default.toolbarChrome

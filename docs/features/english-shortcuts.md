@@ -2,11 +2,12 @@
 
 ## Trạng thái
 
-Đã có trong bản Windows, macOS và Linux. Setting `shortcutsInEnglish`, **mặc định bật**,
+Đã có trong bản Windows, macOS, Linux và Android. Setting `shortcutsInEnglish`, **mặc định bật**,
 công tắc nằm ở Cài đặt → Gõ tắt. File cấu hình đã mang sẵn khoá này:
 
-- **iOS, Android**: shell vẫn tự chặn chế độ EN trước khi gọi engine.
-  C ABI đã có `funput_set_shortcuts_in_english` để các host triển khai sau sử dụng.
+- **iOS**: shell vẫn tự chặn chế độ EN trước khi gọi engine.
+- **Android**: IME theo dõi từ thô và gọi cùng engine qua JNI; xem
+  [Gõ tắt trên Android](android-shortcuts.md).
 - **funput-term**: driver cũng tự chặn EN (`state.composing()`) và không bao giờ gọi
   `Engine::set_enabled`, nên khoá này đọc được mà chưa có tác dụng.
 

@@ -533,6 +533,7 @@ name = "funput-suggestions"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "funput-core",
  "memmap2",
  "proptest",
  "tempfile",

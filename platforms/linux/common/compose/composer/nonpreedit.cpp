@@ -22,8 +22,9 @@ void Composer::onFocusChanged(std::string_view client) {
 }
 
 void Composer::observeDocument(const std::string &textBeforeCaret, bool selectionLive,
-                               bool answered) {
+                               bool answered, uint32_t selectedAfter) {
     nonPreedit_.selectionLive = selectionLive;
+    nonPreedit_.selectionAfter = selectedAfter;
     nonPreedit_.answered = answered;
     switch (nonPreedit_.observe(textBeforeCaret)) {
     case Verdict::Unknown:
@@ -62,8 +63,18 @@ ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed)
         nonPreedit_.noteRepair(0, text);
         return ComposePlan::passThrough();
     }
+    // A live selection that is not a suffix after the caret is the user's own
+    // highlight. Deleting into it would take their text, so the key goes through
+    // and the composition is dropped.
+    if (nonPreedit_.selectionLive && nonPreedit_.selectionAfter == 0 &&
+        result.backspace > 0) {
+        discard();
+        return ComposePlan::passThrough();
+    }
     nonPreedit_.noteRepair(result.backspace, Handle::output(result));
-    return ComposePlan::replace(nonPreedit_.repairDeleted, nonPreedit_.repairText);
+    ComposePlan plan = ComposePlan::replace(nonPreedit_.repairDeleted, nonPreedit_.repairText);
+    plan.deleteAfterChars = nonPreedit_.selectionAfter;
+    return plan;
 }
 
 ComposePlan Composer::backspaceOutsideWord() {

@@ -3,6 +3,7 @@ package app.funput.funput.ui.settings.components
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +21,7 @@ internal fun SettingsDestructiveRow(
     title: String,
     @DrawableRes iconRes: Int,
     onClick: () -> Unit,
+    summary: String? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     SettingsRowSurface(
@@ -38,10 +40,19 @@ internal fun SettingsDestructiveRow(
             contentColor = MaterialTheme.colorScheme.onErrorContainer,
         )
         Spacer(modifier = Modifier.width(Spacing.Medium))
-        Text(
-            text = title,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodyLarge,
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            summary?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
     }
 }

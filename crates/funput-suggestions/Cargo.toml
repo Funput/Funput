@@ -14,6 +14,9 @@ workspace = true
 lexicon-build = []
 
 [dependencies]
+# Only the learn path reads it, to tell a Vietnamese syllable from a slip of the
+# thumb. Queries stay clear of it, as the perf invariants require.
+funput-core = { path = "../funput-core" }
 memmap2 = "0.9.11"
 unicode-normalization = "0.1.25"
 

@@ -8,7 +8,8 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
     public var verticalGap: CGFloat
     /// The suggestion band, sized like Gboard's strip rather than like a key row:
     /// the toolbar carries one line of text and two icons, so anything taller is
-    /// keyboard height spent on padding.
+    /// keyboard height spent on padding. The default leaves 6pt above and below a
+    /// 17pt candidate with its diacritics.
     public var toolbarHeight: CGFloat
     public var toolbarGap: CGFloat
     public var heightScale: CGFloat
@@ -22,7 +23,7 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
         verticalPadding: CGFloat = 6,
         horizontalGap: CGFloat = 5,
         verticalGap: CGFloat = 7,
-        toolbarHeight: CGFloat = 36,
+        toolbarHeight: CGFloat = 34,
         toolbarGap: CGFloat = 4,
         heightScale: CGFloat = 1,
         labelScale: CGFloat = 1,
@@ -56,8 +57,12 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
     public var toolbarChrome: CGFloat { toolbarHeight + toolbarGap }
 
     /// The padding below the last row of a keyboard `width` points wide.
+    ///
+    /// None of its own: iOS keeps a globe and dictation bar below a custom keyboard, so
+    /// the rows already end well above the screen. Padding on top of that strip only
+    /// pushes them further from the thumb.
     public func bottomPadding(forWidth width: CGFloat) -> CGFloat {
-        keySizing == .system ? SystemKeyMetrics.bottomPadding(screenWidth: width) : verticalPadding
+        keySizing == .system ? SystemKeyMetrics.bottomPadding(screenWidth: width) : 0
     }
 
     /// How tall a row is relative to a letter row.
@@ -74,6 +79,7 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
         horizontalPadding: SystemKeyMetrics.horizontalPadding,
         horizontalGap: SystemKeyMetrics.horizontalGap,
         verticalGap: SystemKeyMetrics.verticalGap,
+        toolbarHeight: SystemKeyMetrics.toolbarHeight,
         toolbarGap: SystemKeyMetrics.toolbarGap,
         numberRowHeightRatio: SystemKeyMetrics.numberRowHeightRatio
     )

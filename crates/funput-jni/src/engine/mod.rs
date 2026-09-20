@@ -18,3 +18,4 @@ mod correction;
 mod lifecycle;
 mod registry;
 mod settings;
+mod shortcuts;

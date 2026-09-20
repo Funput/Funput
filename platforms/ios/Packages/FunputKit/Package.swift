@@ -39,6 +39,7 @@ let package = Package(
             dependencies: [
                 .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
                 .target(name: "KeyboardInput"),
+                .target(name: "KeyboardLayout"),
                 .target(name: "KeyboardRenderer"),
             ]
         ),
@@ -66,6 +67,7 @@ let package = Package(
         .target(
             name: "KeyboardRenderer",
             dependencies: [
+                .target(name: "FunputShared"),
                 .target(name: "KeyboardLayout"),
                 .target(name: "KeyboardTouchUIKit"),
                 .target(name: "ThemeSchema"),

@@ -50,8 +50,9 @@ public enum ClipboardOfferPolicy {
         context: Context
     ) -> ClipboardOffer? {
         guard allowsOffer(context: context) else { return nil }
-        // v1 is text only: an image-only pasteboard stays silent.
-        guard snapshot.hasStrings else { return nil }
+        // `hasStrings` also accepts URL providers, including file URLs. Funput can
+        // only insert an explicit plain-text representation into the document.
+        guard snapshot.hasPlainText else { return nil }
         // Already pasted — do not invite the user to paste the same thing twice.
         guard snapshot.changeCount != lastPastedChangeCount else { return nil }
 

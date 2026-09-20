@@ -10,48 +10,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import app.funput.funput.ime.clipboard.model.ClipboardExpiry
-import app.funput.funput.ime.settings.ClipboardPreferences
-import app.funput.funput.ime.settings.SmartCompositionPreferences
-import app.funput.funput.ime.settings.ToneStyle
-import app.funput.funput.keyboard.layout.KeyboardSizingProfile
-import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.theme.KeyboardThemeDescriptor
-import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsScreen(
-    keyboardSetupStatus: KeyboardSetupStatus,
-    keyboardTheme: KeyboardThemeDescriptor,
-    inputMethod: KeyboardInputMethod,
-    showsNumberRow: Boolean,
-    toneStyle: ToneStyle,
-    keySizeProfile: KeyboardSizingProfile,
-    hapticsEnabled: Boolean,
-    soundsEnabled: Boolean,
-    smartComposition: SmartCompositionPreferences,
-    personalSuggestionsEnabled: Boolean,
-    clipboardPreferences: ClipboardPreferences,
-    smartGesturesEnabled: Boolean,
-    onInputMethodSelected: (KeyboardInputMethod) -> Unit,
-    onShowsNumberRowChanged: (Boolean) -> Unit,
-    onOpenAppearance: () -> Unit,
-    onToneStyleSelected: (ToneStyle) -> Unit,
-    onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
-    onHapticsChanged: (Boolean) -> Unit,
-    onSoundsChanged: (Boolean) -> Unit,
-    onSmartGesturesChanged: (Boolean) -> Unit,
-    onSmartRestoreChanged: (Boolean) -> Unit,
-    onSpellCheckChanged: (Boolean) -> Unit,
-    onAutoCapitalizeChanged: (Boolean) -> Unit,
-    onPersonalSuggestionsChanged: (Boolean) -> Unit,
-    onClipboardEnabledChanged: (Boolean) -> Unit,
-    onClipboardExpirySelected: (ClipboardExpiry) -> Unit,
-    onClearClipboardHistory: () -> Unit,
-    onResetPersonalSuggestions: () -> Unit,
-    onEnableKeyboard: () -> Unit,
-    onSelectKeyboard: () -> Unit,
+    state: SettingsScreenState,
     modifier: Modifier = Modifier,
 ) {
     var picker by rememberSaveable { mutableStateOf<SettingsPicker?>(null) }
@@ -61,46 +23,19 @@ internal fun SettingsScreen(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { contentPadding ->
         SettingsScreenSections(
+            state = state,
             contentPadding = contentPadding,
-            keyboardSetupStatus = keyboardSetupStatus,
-            keyboardTheme = keyboardTheme,
-            inputMethod = inputMethod,
-            showsNumberRow = showsNumberRow,
-            toneStyle = toneStyle,
-            keySizeProfile = keySizeProfile,
-            hapticsEnabled = hapticsEnabled,
-            soundsEnabled = soundsEnabled,
-            smartComposition = smartComposition,
-            personalSuggestionsEnabled = personalSuggestionsEnabled,
-            clipboardPreferences = clipboardPreferences,
-            smartGesturesEnabled = smartGesturesEnabled,
             onOpenPicker = { picker = it },
-            onShowsNumberRowChanged = onShowsNumberRowChanged,
-            onOpenAppearance = onOpenAppearance,
-            onToneStyleSelected = onToneStyleSelected,
-            onKeySizeSelected = onKeySizeSelected,
-            onHapticsChanged = onHapticsChanged,
-            onSoundsChanged = onSoundsChanged,
-            onSmartGesturesChanged = onSmartGesturesChanged,
-            onSmartRestoreChanged = onSmartRestoreChanged,
-            onSpellCheckChanged = onSpellCheckChanged,
-            onAutoCapitalizeChanged = onAutoCapitalizeChanged,
-            onPersonalSuggestionsChanged = onPersonalSuggestionsChanged,
-            onClipboardEnabledChanged = onClipboardEnabledChanged,
-            onClearClipboardHistory = onClearClipboardHistory,
-            onResetPersonalSuggestions = onResetPersonalSuggestions,
-            onEnableKeyboard = onEnableKeyboard,
-            onSelectKeyboard = onSelectKeyboard,
         )
     }
     SettingsPickerSheet(
         picker = picker,
-        inputMethod = inputMethod,
-        toneStyle = toneStyle,
-        clipboardExpiry = clipboardPreferences.expiry,
-        onInputMethodSelected = onInputMethodSelected,
-        onToneStyleSelected = onToneStyleSelected,
-        onClipboardExpirySelected = onClipboardExpirySelected,
+        inputMethod = state.inputMethod,
+        toneStyle = state.toneStyle,
+        clipboardExpiry = state.clipboardPreferences.expiry,
+        onInputMethodSelected = state.onInputMethodSelected,
+        onToneStyleSelected = state.onToneStyleSelected,
+        onClipboardExpirySelected = state.onClipboardExpirySelected,
         onDismiss = { picker = null },
     )
 }

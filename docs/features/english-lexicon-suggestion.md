@@ -390,13 +390,39 @@ nhân (trước đây EN không học gì) — vẫn chỉ trong ô `.text` / `.
 ô mật khẩu, PIN, email, URL, điện thoại hay số, và vẫn tắt theo công tắc "Gợi ý từ". Thứ tự thật của prefix `wh` trong dữ liệu đã commit là
 `which · when · what` (hạng 32, 40, 43); ví dụ trong mô tả PR ban đầu khác thứ tự này.
 
+## Hai bậc kết nạp: từ nào được lên thanh gợi ý
+
+Kho cá nhân **ghi mọi thứ người dùng gõ**, nhưng không phải thứ gì cũng được đem ra gợi ý.
+Ngưỡng phụ thuộc vào chính từ đó (`engine/admission.rs`):
+
+| Token | Ngưỡng | Vì sao |
+|---|---|---|
+| Âm tiết tiếng Việt hoàn chỉnh (`đánh`, `khỏe`) | `promotion_uses` = 2 | Ngôn ngữ đánh vần được nó |
+| Mọi thứ còn lại (`đánb`, `hello`, `zalo`, `antoàn`) | `unrecognized_promotion_uses` = 4 | Gõ nhầm thường chỉ nhầm một hai lần |
+
+**Nâng rào chứ không chặn.** Kho là bản ghi của người sở hữu nó, không phải của một luật:
+không luật nào biết hết tên riêng, thương hiệu và từ nước ngoài mà người ta có quyền
+dùng lại. `Zalo` gõ bốn lần vẫn lên gợi ý; `đánb` gõ hai lần thì không.
+
+Điều kiện "âm tiết hoàn chỉnh" là `funput_core::is_complete_syllable`, tức **cùng bộ luật**
+mà engine dùng để quyết định ranh giới từ — không có bảng thứ hai để lệch. Lưu ý nó cũng
+loại `chuc` (thiếu dấu, `AwaitingDiacritic`): một từ chưa xong dấu trông giống một từ bị bỏ
+dở hơn là một từ.
+
+Ngưỡng theo từng từ phải được dùng ở **bốn chỗ**, không chỉ ở `learn`: promote, eviction,
+`rebuild_tries` và `stats`. Bỏ sót một chỗ thì bộ đếm `vietnamese_words` lệch khỏi thực tế
+sau mỗi lần rebuild — proptest `the_running_count_always_matches_a_recount` đã bắt đúng lỗi
+đó, và `đánb` nằm trong danh sách từ của nó chính vì vậy.
+
 ## Bất biến về hiệu năng và bộ nhớ
 
-1. **Đường học không đổi.** Từ điển không tham gia `learn`; bộ đếm `vietnamese_words`
-   là O(1) ở promote/evict và nằm trong lượt duyệt sẵn có của `rebuild_tries`.
+1. **Từ điển không tham gia `learn`.** Bộ đếm `vietnamese_words` là O(1) ở promote/evict và
+   nằm trong lượt duyệt sẵn có của `rebuild_tries`. **Đã đổi**: đường học nay gọi
+   `funput_core::is_complete_syllable` để chọn bậc kết nạp — một phép phân tích chuỗi ngắn,
+   không cấp phát, không đọc file.
 2. **Truy vấn có từ điển: 0 cấp phát khi ấm.** Mở rộng `tests/alloc_budget.rs`.
-3. **Không gọi vào `funput-core`, không đọc document.** Tín hiệu duy nhất là prefix
-   engine đã có trong tay.
+3. **Truy vấn không gọi vào `funput-core`, không đọc document.** Tín hiệu duy nhất là prefix
+   engine đã có trong tay. (Đường *học* thì có gọi — xem bậc kết nạp ở trên.)
 4. **Trần tĩnh.** `en.lex` ≤ 512 KiB; heap không đổi; từ điển không có cấu trúc động
    nào.
 5. **UI không cập nhật thêm lần nào.** Thanh gợi ý vốn đã cập nhật khi prefix đổi; từ
@@ -441,6 +467,29 @@ nhân (trước đây EN không học gì) — vẫn chỉ trong ô `.text` / `.
   gác cứng trên runner dùng chung sẽ flaky.
 - **Kích thước**: `en.lex` sinh từ `en.tsv` ≤ 512 KiB.
 - **Casing Android** (bước 6): `iPhone` với prefix `ip` giữ nguyên; prefix `IP` thành `IPHONE`.
+
+## Viết hoa theo người gõ
+
+Luật chung cho cả hai nền tảng, đọc theo thứ tự ưu tiên — `SuggestionCaseStyle` (iOS) và
+`PersonalSuggestionCasing` (Android) là hai bản chép tay của cùng bảng này, và cùng phải
+khớp `classify_case` của gõ tắt trong `funput-engine`:
+
+| Tín hiệu | Kết quả | Ví dụ |
+|---|---|---|
+| Caps Lock bật | TẤT CẢ HOA | `việt` → `VIỆT` |
+| Shift bật | Viết hoa đầu | prefix `vi` → `Việt` |
+| Prefix: ≥2 chữ cái đều hoa | TẤT CẢ HOA | `VI` → `VIỆT` |
+| Prefix: chữ cái đầu hoa, phần sau thường | Viết hoa đầu | `Vi`, `V1` → `Việt` |
+| Prefix: chữ thường, hoặc hoa-thường lẫn lộn | giữ nguyên ứng viên | `ip` → `iPhone`, `VNa` → `việt` |
+
+Ba điểm đáng nhớ. Chỉ xét **chữ cái**, nên `1v` đọc theo `v`. **Một chữ hoa duy nhất là
+Title**, không phải ALL CAPS — hai bản trước đây cùng sai chỗ này. Và prefix cố ý viết
+lẫn (`iOS`, `VNa`) thì không đụng tới, giống nhánh `None` của `classify_case`.
+
+Shift đứng trên prefix chứ không chỉ lấp chỗ trống: bật Shift khi thanh đang hiện chữ
+thì danh sách được tô lại từ **danh sách thô đã lưu**, không hỏi lại engine — tô từ danh
+sách đã viết hoa sẽ không bao giờ quay về được `Việt` từ `VIỆT`. Danh sách hiển thị và
+danh sách lưu luôn đi cùng nhau vì đường chấp nhận so khớp đúng chuỗi đang hiển thị.
 
 ## Thứ tự hiện thực
 

@@ -97,7 +97,7 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     }
 
     private companion object {
-        const val SuggestionLabelSizeSp = 14f
+        const val SuggestionLabelSizeSp = 16f
         const val DividerInsetRatio = 0.22f
         const val LabelHorizontalInsetDp = 8f
     }

@@ -67,7 +67,7 @@ final class KeyboardSurfaceInteractionController {
     /// Sideways travel that turns an armed space hold into a caret pan.
     static let trackpadActivation: CGFloat = 10
 
-    let haptics: KeyboardHaptics
+    let haptics: any KeyboardHapticPerforming
     let onEvent: (KeyboardKeyEvent) -> Void
     let onContactEvent: ContactEventHandler
     /// Returns whether the pipeline handed the contact over. A refusal means this controller
@@ -113,9 +113,10 @@ final class KeyboardSurfaceInteractionController {
         onAlternatePreview: @escaping AlternatePreviewHandler = { _, _, _ in },
         onHighlight: @escaping HighlightHandler = { _, _ in },
         repeatScheduler: @escaping BackspaceRepeatController.Scheduler =
-            BackspaceRepeatController.schedule
+            BackspaceRepeatController.schedule,
+        haptics: (any KeyboardHapticPerforming)? = nil
     ) {
-        haptics = KeyboardHaptics(view: feedbackView)
+        self.haptics = haptics ?? KeyboardHaptics(view: feedbackView)
         self.onEvent = onEvent
         self.onContactEvent = onContactEvent ?? { _, event in onEvent(event) }
         self.onClaimGesture = onClaimGesture
@@ -124,7 +125,7 @@ final class KeyboardSurfaceInteractionController {
         self.onHighlight = onHighlight
         self.repeatScheduler = repeatScheduler
         touches.reserveCapacity(10)
-        haptics.prepare()
+        self.haptics.prepare()
     }
 
     var activeTouchCount: Int { touches.count }

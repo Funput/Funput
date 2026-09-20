@@ -9,6 +9,8 @@ import android.view.inputmethod.EditorInfo
 import app.funput.funput.ime.editing.InputConnectionEditor
 import app.funput.funput.ime.hardware.ImeHardwareKeyHandler
 import app.funput.funput.ime.hardware.toHardwareKeyStroke
+import app.funput.funput.ime.shortcuts.ImeShortcutsController
+import app.funput.funput.ime.shortcuts.createImeShortcutsController
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 import app.funput.funput.keyboard.ui.emoji.EmojiCatalogPreloader
@@ -28,6 +30,7 @@ class FunputInputMethodService : InputMethodService() {
     private lateinit var session: ImeEditingSession
     private lateinit var settings: ImeSettingsController
     private lateinit var hardwareKeys: ImeHardwareKeyHandler
+    private lateinit var shortcuts: ImeShortcutsController
 
     private val nativeEngine get() = session.nativeEngine
     private val actionHandler get() = session.actionHandler
@@ -57,6 +60,7 @@ class FunputInputMethodService : InputMethodService() {
             onAutoCapitalizeChanged = editorRuntime::setAutoCapitalizeEnabled,
         )
         settings.observe(this, serviceScope)
+        shortcuts = createImeShortcutsController(this, serviceScope, actionHandler)
         hardwareKeys = ImeHardwareKeyHandler.bind(session) { keyboardView?.shiftState ?: ShiftState.OFF }
     }
     override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
@@ -72,6 +76,7 @@ class FunputInputMethodService : InputMethodService() {
         editorRuntime.configure(attribute)
         editorRuntime.setAutoCapitalizeEnabled(settings.autoCapitalizeEnabled)
         session.startActionHandler()
+        shortcuts.activate()
         suggestionService.start(editorRuntime.policy)
     }
     override fun onStartInputView(attribute: EditorInfo, restarting: Boolean) {
@@ -81,10 +86,8 @@ class FunputInputMethodService : InputMethodService() {
         editorRuntime.updateCapitalization(preserveCapsLock = false)
     }
 
-    override fun onFinishInputView(finishingInput: Boolean) {
-        session.finishInputView()
-        super.onFinishInputView(finishingInput)
-    }
+    override fun onFinishInputView(finishingInput: Boolean) =
+        session.finishInputView().also { super.onFinishInputView(finishingInput) }
     override fun onUpdateSelection(
         oldSelStart: Int,
         oldSelEnd: Int,
@@ -101,21 +104,19 @@ class FunputInputMethodService : InputMethodService() {
     }
     override fun onDisplayCompletions(completions: Array<out CompletionInfo>?) =
         editorRuntime.updateCompletions(completions)
-
     override fun onFinishInput() {
+        shortcuts.cancel()
         session.finishInput()
         super.onFinishInput()
     }
-    override fun onWindowHidden() {
-        session.windowHidden()
-        super.onWindowHidden()
-    }
+    override fun onWindowHidden() = session.windowHidden().also { super.onWindowHidden() }
     override fun onTrimMemory(level: Int) {
         suggestionService.flush()
         super.onTrimMemory(level)
     }
 
     override fun onDestroy() {
+        shortcuts.cancel()
         session.close()
         serviceScope.cancel()
         actionHandler.finish()
@@ -129,7 +130,6 @@ class FunputInputMethodService : InputMethodService() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent) =
         hardwareKeys.onKeyDown(event.toHardwareKeyStroke()) || super.onKeyDown(keyCode, event)
-
     override fun onKeyUp(keyCode: Int, event: KeyEvent) =
         hardwareKeys.onKeyUp(event.toHardwareKeyStroke()) || super.onKeyUp(keyCode, event)
 

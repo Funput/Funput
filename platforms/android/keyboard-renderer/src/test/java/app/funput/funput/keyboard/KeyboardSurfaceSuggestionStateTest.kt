@@ -85,7 +85,6 @@ class KeyboardSurfaceSuggestionStateTest {
             height = 700f,
             suggestionBar = ResolvedSuggestionBar(
                 bounds = KeyBounds(0f, 0f, 1080f, 100f),
-                logoBounds = KeyBounds(0f, 0f, 80f, 80f),
                 suggestionsBounds = KeyBounds(90f, 0f, 90f + width, 100f),
                 systemInputMethodKey = null,
                 emojiKey = emoji,

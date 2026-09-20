@@ -8,7 +8,7 @@ import UIKit
 @MainActor
 @Suite("Personal suggestion toolbar")
 struct PersonalSuggestionToolbarTests {
-    @Test("Keeps logo utilities and emits one candidate")
+    @Test("Keeps toolbar utilities and emits one candidate")
     func contentAndSelection() {
         let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 360, height: bandHeight))
         toolbar.apply(spec: .standard, theme: .funputGlass, traits: .init())
@@ -44,6 +44,46 @@ struct PersonalSuggestionToolbarTests {
         let labels = visibleButtons(in: toolbar).compactMap(\.accessibilityLabel)
         #expect(labels.contains("Gợi ý, từ0"))
         #expect(!labels.contains("Gợi ý, từ2"))
+    }
+
+    @Test("Content region runs from the band's leading edge to the utility keys")
+    func contentRegionSpansTheBand() {
+        let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 360, height: bandHeight))
+        toolbar.apply(spec: .standard, theme: .funputGlass, traits: .init())
+        toolbar.updateSuggestions(candidates(3))
+        toolbar.layoutIfNeeded()
+
+        // Nothing precedes the suggestions, so they start flush with the band — which the
+        // geometry insets to the same leading edge as the keycaps below.
+        #expect(toolbar.suggestionBar.frame.minX == 0)
+        #expect(toolbar.clipboardChip.frame == toolbar.suggestionBar.frame)
+        // The clipboard key steps aside while the user is typing, so only the keys still
+        // on the band bound the region.
+        let controlsBegin = [toolbar.clipboardButton, toolbar.emojiButton]
+            .filter { !$0.isHidden }
+            .map(\.frame.minX)
+            .min()
+        #expect(toolbar.suggestionBar.frame.maxX < (controlsBegin ?? toolbar.bounds.width))
+    }
+
+    @Test("A candidate fills the band instead of floating in it")
+    func candidateFitsTheBand() throws {
+        let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 360, height: bandHeight))
+        toolbar.apply(spec: .standard, theme: .funputGlass, traits: .init())
+        toolbar.updateSuggestions([KeyboardSuggestionCandidate(text: "nghiễng", generation: 1)])
+        toolbar.layoutIfNeeded()
+
+        let label = try #require(
+            visibleButtons(in: toolbar)
+                .first { $0.accessibilityLabel?.hasPrefix("Gợi ý") == true }?
+                .titleLabel
+        )
+        // Stacked diacritics have to clear the band, and the word has to be worth reading
+        // once it does: a candidate that takes less than half the height reads as an
+        // afterthought beside the keycaps.
+        let ink = label.intrinsicContentSize.height
+        #expect(ink <= bandHeight)
+        #expect(ink >= bandHeight / 2)
     }
 
     /// The band the shipping geometry lays out, so the fitting rules are exercised at

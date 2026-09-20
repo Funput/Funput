@@ -79,6 +79,7 @@ android {
 
 dependencies {
     implementation(project(":ime"))
+    implementation(project(":shortcut-store"))
     implementation(project(":keyboard-renderer"))
     implementation(project(":theme-runtime"))
     implementation(project(":theme-store"))

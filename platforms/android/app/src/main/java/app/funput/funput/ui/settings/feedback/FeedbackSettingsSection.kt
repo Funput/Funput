@@ -1,6 +1,8 @@
 package app.funput.funput.ui.settings.feedback
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.ui.settings.components.SettingsSection
@@ -35,5 +37,8 @@ internal fun FeedbackSettingsSection(
                 )
             },
         ),
+        modifier = Modifier.testTag(FeedbackSettingsSectionTag),
     )
 }
+
+internal const val FeedbackSettingsSectionTag = "settings-section-feedback"

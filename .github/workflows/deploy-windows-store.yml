@@ -107,22 +107,21 @@ jobs:
       - name: Stamp marketing version
         env:
           VERSION: ${{ inputs.version }}
-        run: |
-          node -e "const fs=require('fs');const f='platforms/windows/Cargo.toml';let s=fs.readFileSync(f,'utf8');s=s.replace(/^version = \".*\"/m,'version = \"'+process.argv[1]+'\"');fs.writeFileSync(f,s)" "$VERSION"
+        run: node platforms/windows/scripts/stamp-version.js "$VERSION"
 
       # Same gate as build-windows.yml: this workflow can target a branch the
       # pull-request job never saw. --release shares the tree the pack step needs.
       - name: Clippy
         working-directory: platforms/windows
-        run: cargo clippy --release --all-targets -- -D warnings
+        run: cargo clippy --locked --release --all-targets -- -D warnings
 
       - name: Test
         working-directory: platforms/windows
-        run: cargo test --release
+        run: cargo test --locked --release
 
       - name: Build Funput.exe
         working-directory: platforms/windows
-        run: cargo build --release
+        run: cargo build --locked --release
 
       - name: Require Partner Center identity
         env:

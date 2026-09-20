@@ -26,9 +26,9 @@ enum class Effect : uint8_t {
     // Drop the preedit, then commit `text`. An empty `text` means "just drop the
     // preedit", which is how a focus change or a cancelled composition ends.
     Commit,
-    // Non-preedit mode: delete `deleteChars` characters before the caret, then
-    // commit `text`. The word is built in the document itself rather than in a
-    // preedit, so each keystroke repairs what the previous one wrote.
+    // Non-preedit mode: delete `deleteAfterChars` after the caret, then
+    // `deleteChars` before it, then commit `text`. The word is built in the
+    // document, so each keystroke repairs what the previous one wrote.
     Replace,
 };
 
@@ -50,6 +50,9 @@ struct ComposePlan {
     // sits between them. Getting this wrong is silent on ASCII and corrupts
     // Vietnamese: `ế` is one character and three bytes.
     uint32_t deleteChars = 0;
+    // Selected characters *after* the caret — a spreadsheet autocomplete suffix.
+    // Cleared first so the repair does not land beside the suggestion.
+    uint32_t deleteAfterChars = 0;
 
     // Nothing to do and nothing to swallow — the key passes straight through.
     bool isNoop() const { return effect == Effect::None && !consumed; }
