@@ -38,40 +38,50 @@
     <tr>
       <td align="center" valign="top" width="20%">
         <a href="https://apps.apple.com/vn/app/id6788829996">
-          <img src="https://funput.app/ios.svg#gh-light-mode-only" alt="iOS" width="40" height="40">
-          <img src="https://funput.app/ios-dark.svg#gh-dark-mode-only" alt="iOS" width="40" height="40">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="https://funput.app/ios-dark.svg">
+            <img src="https://funput.app/ios.svg" alt="iOS" width="40" height="40">
+          </picture>
           <br><strong>iOS</strong><br>
           <sub>App Store</sub>
         </a>
       </td>
       <td align="center" valign="top" width="20%">
         <a href="https://play.google.com/store/apps/details?id=app.funput.funput">
-          <img src="https://funput.app/android.svg#gh-light-mode-only" alt="Android" width="40" height="40">
-          <img src="https://funput.app/android-dark.svg#gh-dark-mode-only" alt="Android" width="40" height="40">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="https://funput.app/android-dark.svg">
+            <img src="https://funput.app/android.svg" alt="Android" width="40" height="40">
+          </picture>
           <br><strong>Android</strong><br>
           <sub>Google Play</sub>
         </a>
       </td>
       <td align="center" valign="top" width="20%">
         <a href="https://github.com/Funput/Funput/releases/latest">
-          <img src="https://funput.app/apple.svg#gh-light-mode-only" alt="macOS" width="40" height="40">
-          <img src="https://funput.app/apple-dark.svg#gh-dark-mode-only" alt="macOS" width="40" height="40">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="https://funput.app/apple-dark.svg">
+            <img src="https://funput.app/apple.svg" alt="macOS" width="40" height="40">
+          </picture>
           <br><strong>macOS</strong><br>
           <sub>Download</sub>
         </a>
       </td>
       <td align="center" valign="top" width="20%">
         <a href="https://github.com/Funput/Funput/releases/latest">
-          <img src="https://funput.app/windows.svg#gh-light-mode-only" alt="Windows" width="40" height="40">
-          <img src="https://funput.app/windows-dark.svg#gh-dark-mode-only" alt="Windows" width="40" height="40">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="https://funput.app/windows-dark.svg">
+            <img src="https://funput.app/windows.svg" alt="Windows" width="40" height="40">
+          </picture>
           <br><strong>Windows</strong><br>
           <sub>Download</sub>
         </a>
       </td>
       <td align="center" valign="top" width="20%">
         <a href="https://docs.funput.app/docs/install/linux">
-          <img src="https://funput.app/linux.svg#gh-light-mode-only" alt="Linux" width="40" height="40">
-          <img src="https://funput.app/linux-dark.svg#gh-dark-mode-only" alt="Linux" width="40" height="40">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="https://funput.app/linux-dark.svg">
+            <img src="https://funput.app/linux.svg" alt="Linux" width="40" height="40">
+          </picture>
           <br><strong>Linux</strong><br>
           <sub>Install guide</sub>
         </a>
@@ -152,11 +162,14 @@ Bug reports, discussions, and contributions are welcome.
 ## Support
 
 Funput is a community project — free for everyone.
-If you find Funput useful, you're welcome to support the project via [GitHub Sponsors](https://github.com/sponsors/Funput) or bank transfer:
+If you find Funput useful, you're welcome to support the project via [GitHub Sponsors](https://github.com/sponsors/Funput) or bank transfer — or simply [star](https://github.com/Funput/Funput) the repo.
 
 <p align="center">
   <a href="https://github.com/sponsors/Funput">
     <img src="https://img.shields.io/badge/GitHub-Sponsor-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor Funput on GitHub">
+  </a>
+  <a href="https://github.com/Funput/Funput">
+    <img src="https://img.shields.io/github/stars/Funput/Funput?style=for-the-badge&logo=github&logoColor=white&color=F59E0B" alt="Star Funput on GitHub">
   </a>
 </p>
 
@@ -165,6 +178,37 @@ If you find Funput useful, you're welcome to support the project via [GitHub Spo
   <br>
   <sub>Made with ❤️ by Funput</sub>
 </p>
+
+## Acknowledgements
+
+Funput exists thanks to the community.
+Special thanks to:
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" valign="top" width="33%">
+        <a href="https://github.com/zenfas">
+          <img src="https://github.com/zenfas.png?size=160" width="80" height="80" alt="zenfas">
+          <br><strong>zenfas</strong>
+        </a>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <a href="https://github.com/quyleanh">
+          <img src="https://github.com/quyleanh.png?size=160" width="80" height="80" alt="Quy Le Anh">
+          <br><strong>Quy Le Anh</strong><br>
+          <sub>@quyleanh</sub>
+        </a>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <a href="https://github.com/huyle0406">
+          <img src="https://github.com/huyle0406.png?size=160" width="80" height="80" alt="huyle0406">
+          <br><strong>huyle0406</strong>
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ## License
 
