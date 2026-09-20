@@ -31,6 +31,8 @@ struct LayoutSettingsSection: View {
             SettingsSelectionRow(option: .layoutPreset, value: model.layoutPresetLabel) { select(.layoutPreset) }
             SettingsRowDivider()
             SettingsSelectionRow(option: .keySizing, value: model.keySizingLabel) { select(.keySizing) }
+            SettingsRowDivider()
+            ToolbarSettingsRow(model: model)
             // VNI types tones with digits, so the row is always on there: nothing to choose.
             if !model.isNumberRowLocked {
                 SettingsRowDivider()
