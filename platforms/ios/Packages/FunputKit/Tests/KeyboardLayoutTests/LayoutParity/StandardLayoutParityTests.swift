@@ -60,10 +60,10 @@ struct StandardLayoutParityTests {
         #expect(keys[2].horizontalSwipeAction == .toggleLanguage)
     }
 
-    @Test("Toolbar exposes the brand logo and optional system switcher", arguments: KeyboardInputMethod.allCases)
+    @Test("Toolbar exposes the panel keys and optional system switcher", arguments: KeyboardInputMethod.allCases)
     func toolbar(method: KeyboardInputMethod) {
-        // The brand logo is decorative, so the panel keys are the only interactive
-        // toolbar keys. The resolver must not smuggle them into the rows either.
+        // The panel keys are the only interactive toolbar keys. The resolver must not
+        // smuggle them into the rows either.
         let standard = StandardKeyboardLayouts.letters(method)
         #expect(standard.toolbar?.keys.map(\.role) == [.clipboard, .emoji])
 

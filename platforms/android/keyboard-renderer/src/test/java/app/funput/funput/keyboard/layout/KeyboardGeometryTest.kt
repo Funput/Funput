@@ -94,8 +94,14 @@ class KeyboardGeometryTest {
         val suggestionBar = requireNotNull(keyboard.suggestionBar)
 
         assertEquals("emoji", suggestionBar.emojiKey.spec.id)
-        assertTrue(suggestionBar.logoBounds.width > 0f)
-        assertTrue(suggestionBar.suggestionsBounds.left > suggestionBar.logoBounds.right)
+        // Nothing precedes the suggestions, so they start flush with the band and with the
+        // first key of the row below.
+        assertEquals(suggestionBar.bounds.left, suggestionBar.suggestionsBounds.left, 0.01f)
+        assertEquals(
+            keyboard.rows.first().first().bounds.left,
+            suggestionBar.suggestionsBounds.left,
+            0.01f,
+        )
         assertTrue(suggestionBar.suggestionsBounds.right < suggestionBar.emojiKey.bounds.left)
         assertEquals(
             suggestionBar.emojiKey,

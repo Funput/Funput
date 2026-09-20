@@ -45,12 +45,12 @@ struct RendererContentTests {
         }
     }
 
-    @Test("Toolbar renders the brand logo and switcher buttons")
+    @Test("Toolbar renders the switcher buttons")
     func toolbarContent() {
         let toolbar = KeyboardToolbarView()
         toolbar.apply(spec: .standard, theme: .funputGlass, traits: traits)
 
-        // The logo is a decorative image view, so the two panel keys are what show.
+        // The two panel keys are the only buttons the band carries.
         #expect(!toolbar.isHidden)
         #expect(visibleButtons(in: toolbar).compactMap(\.accessibilityLabel) == [
             "Lịch sử clipboard", "Biểu tượng cảm xúc",

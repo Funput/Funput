@@ -10,7 +10,6 @@ final class KeyboardToolbarView: UIView {
     var onClipboardPaste: ((KeyboardClipboardPaste) -> Void)?
 
     // Laid out across the band by `layoutContents()` in KeyboardToolbarView+Layout.
-    let logoView = KeyboardBrandLogoView()
     let clipboardButton = UIButton(type: .system)
     let emojiButton = UIButton(type: .system)
     let suggestionBar = KeyboardSuggestionBarView()
@@ -25,7 +24,6 @@ final class KeyboardToolbarView: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        addSubview(logoView)
         configure(clipboardButton, symbol: "clipboard", role: .clipboard)
         configure(emojiButton, symbol: "face.smiling", role: .emoji)
         suggestionBar.onSelection = { [weak self] in self?.onSuggestionSelected?($0) }
