@@ -54,13 +54,22 @@ impl Engine {
     /// the winner — or `None` when the top two are too close to call, which is a
     /// suggestion to offer rather than an edit to make.
     ///
-    /// `uses` is parallel to [`Engine::correction_candidates`]; a short slice reads
-    /// its missing entries as zero, so a host with no word store can pass `&[]` and
-    /// still get the touch-only ranking.
-    pub fn choose_correction(&self, uses: &[u32]) -> Option<usize> {
+    /// `uses` and `allowed` are both parallel to [`Engine::correction_candidates`].
+    /// A short `uses` reads its missing entries as zero, so a host with no word store
+    /// can pass `&[]` and still get the touch-only ranking. A short `allowed` reads
+    /// its missing entries as permitted, so `&[]` means "consider them all".
+    ///
+    /// `allowed` is how a host refuses to correct *into* a word its dictionary does
+    /// not know. It belongs here rather than in a caller's own filter because the
+    /// index this returns points into the unfiltered list, and because the confidence
+    /// margin has to be measured against the runner-up that was actually eligible.
+    pub fn choose_correction(&self, uses: &[u32], allowed: &[bool]) -> Option<usize> {
         let mut best: Option<(usize, f32)> = None;
         let mut runner_up = f32::NEG_INFINITY;
         for (i, candidate) in self.correction_candidates().iter().enumerate() {
+            if !allowed.get(i).copied().unwrap_or(true) {
+                continue;
+            }
             let score = candidate.touch_score() + word_prior(uses.get(i).copied().unwrap_or(0));
             match best {
                 Some((_, leader)) if leader >= score => runner_up = runner_up.max(score),

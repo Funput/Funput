@@ -29,7 +29,7 @@ use super::encode::encode;
 use noise::{Rng, aim};
 use report::{Outcome, Tally};
 pub(in crate::dev) use store::Prior;
-use store::{Store, decide};
+use store::{Store, ballots};
 
 /// Type `syllable` with a wandering finger and report what correction made of it.
 ///
@@ -58,13 +58,13 @@ fn attempt(syllable: &str, options: &Options, store: &Store, rng: &mut Rng) -> O
     let chosen = if vetoed {
         None
     } else {
-        decide(
+        let (uses, allowed) = ballots(
             engine.correction_candidates(),
             store,
-            options.margin,
             options.known_only,
             options.max_edits,
-        )
+        );
+        engine.choose_correction(&uses, &allowed)
     };
     let corrected = chosen
         .and_then(|index| engine.correction_candidates().get(index))
@@ -97,9 +97,6 @@ pub(super) struct Options {
     pub(super) method: InputMethod,
     pub(super) prior: Prior,
     pub(super) noise: f32,
-    /// How far ahead the winner must be before it is applied. 1.0 is the engine's
-    /// own Δ; the harness can vary it to find where the wrong corrections go away.
-    pub(super) margin: f32,
     /// Only offer a candidate the word store recognizes, rather than any
     /// structurally valid syllable.
     pub(super) known_only: bool,

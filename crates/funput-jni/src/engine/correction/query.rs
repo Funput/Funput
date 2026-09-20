@@ -2,9 +2,10 @@
 //! boundary key and answering.
 
 use jni::EnvUnowned;
-use jni::objects::{JIntArray, JObjectArray, JString};
+use jni::objects::{JBooleanArray, JIntArray, JObjectArray, JString};
 use jni::sys::{jboolean, jint, jlong, jobjectArray};
 
+use super::arrays::{read_bools, read_ints};
 use super::registry;
 use crate::abi::{JavaObject, neutral, safe, string_result};
 
@@ -57,34 +58,27 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
 /// return the winner, or `-1` when the top two are too close to call — a pair to
 /// offer on the suggestion bar rather than an edit to make.
 ///
-/// `uses` is parallel to `nativeCorrectionCandidates`; a shorter or null array reads
-/// the missing entries as zero. The formula lives in Rust so the confidence margin
-/// has one definition across the platforms.
+/// `uses` and `allowed` are both parallel to `nativeCorrectionCandidates`. A shorter
+/// or null `uses` reads its missing entries as zero; a shorter or null `allowed` reads
+/// its missing entries as permitted.
+///
+/// `allowed` is how the IME refuses to correct *into* a word its dictionary does not
+/// know. The formula lives in Rust so the confidence margin has one definition across
+/// the platforms.
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeChooseCorrection(
     mut env: EnvUnowned<'_>,
     _this: JavaObject<'_>,
     handle: jlong,
     uses: JIntArray<'_>,
+    allowed: JBooleanArray<'_>,
 ) -> jint {
     safe(-1, || {
-        let counts = env
-            .with_env(|env| -> jni::errors::Result<Vec<jint>> {
-                let len = uses.len(env).unwrap_or(0);
-                let mut values = vec![0; len];
-                if len > 0 {
-                    uses.get_region(env, 0, &mut values)?;
-                }
-                Ok(values)
-            })
-            .into_outcome();
-        let counts: Vec<u32> = neutral(counts)
-            .into_iter()
-            .map(|count| u32::try_from(count).unwrap_or(0))
-            .collect();
+        let counts = neutral(env.with_env(|env| read_ints(env, &uses)).into_outcome());
+        let allowed = neutral(env.with_env(|env| read_bools(env, &allowed)).into_outcome());
         registry::with_mut(handle, |engine| {
             engine
-                .choose_correction(&counts)
+                .choose_correction(&counts, &allowed)
                 .and_then(|index| jint::try_from(index).ok())
                 .unwrap_or(-1)
         })

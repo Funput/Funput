@@ -16,6 +16,7 @@
 //! - this file — the calls that change engine state.
 //! - `query` — the read-only calls between the two steps.
 
+mod arrays;
 // Exports link by `#[unsafe(no_mangle)]` symbol name, so declaring the module is
 // all it takes for the JVM to find what is in it.
 mod query;

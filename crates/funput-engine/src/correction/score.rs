@@ -14,7 +14,14 @@ pub(crate) const SIGMA: f32 = 0.45;
 /// Flat cost of substituting one key, in nats.
 pub(crate) const LAMBDA: f32 = 1.2;
 /// How far ahead the winner must be before a correction is applied without asking.
-pub(crate) const MARGIN: f32 = 1.0;
+///
+/// Measured with `funput dev typos` over Viet74K at a finger spread of 0.25 pitches,
+/// with the candidate set filtered to words the platform recognizes: 1.0 leaves 5.6%
+/// of corrections wrong, 1.5 leaves 3.9%, and it costs 4 points of repair rate to buy
+/// that. Past 1.5 the trade turns bad — 2.5 halves the repairs for another 1.6 points
+/// — because wrong corrections do not come from two candidates being close together,
+/// they come from the model being confidently wrong.
+pub(crate) const MARGIN: f32 = 1.5;
 /// Score a word the user has never typed still carries, so a correct-but-unseen word
 /// is not shut out by a familiar one.
 pub(crate) const PRIOR_FLOOR: f32 = 0.5;

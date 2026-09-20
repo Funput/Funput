@@ -85,7 +85,7 @@ fn the_whole_handshake_replaces_the_word_and_keeps_the_boundary() {
         assert!(offered[0].1 < 0.0, "a log-likelihood is negative");
         assert_eq!(offered[0].2, 1);
 
-        let winner = funput_engine_choose_correction(engine, std::ptr::null(), 0);
+        let winner = funput_engine_choose_correction(engine, std::ptr::null(), std::ptr::null(), 0);
         assert_eq!(winner, 0);
 
         let result = funput_engine_apply_correction(engine, winner);
@@ -153,15 +153,28 @@ fn the_word_store_breaks_a_tie_the_touches_cannot() {
 
         assert_eq!(candidates(engine).len(), 2);
         assert_eq!(
-            funput_engine_choose_correction(engine, std::ptr::null(), 0),
+            funput_engine_choose_correction(engine, std::ptr::null(), std::ptr::null(), 0),
             -1,
             "too close to call without a word store"
         );
 
         let uses = [40u32, 0];
         assert_eq!(
-            funput_engine_choose_correction(engine, uses.as_ptr(), uses.len()),
+            funput_engine_choose_correction(engine, uses.as_ptr(), std::ptr::null(), uses.len()),
             0
+        );
+
+        // The same pair, decided by the dictionary instead of by history.
+        let allowed = [false, true];
+        assert_eq!(
+            funput_engine_choose_correction(
+                engine,
+                std::ptr::null(),
+                allowed.as_ptr(),
+                allowed.len()
+            ),
+            1,
+            "only one candidate is a word the host knows"
         );
 
         funput_engine_free(engine);
@@ -196,7 +209,7 @@ fn every_call_is_null_safe() {
         assert!(!funput_engine_has_pending_correction(null));
         assert_eq!(funput_engine_pending_correction_backspace(null), 0);
         assert_eq!(
-            funput_engine_choose_correction(null, std::ptr::null(), 0),
+            funput_engine_choose_correction(null, std::ptr::null(), std::ptr::null(), 0),
             -1
         );
         assert_eq!(funput_engine_apply_correction(null, 0).action, ACTION_NONE);

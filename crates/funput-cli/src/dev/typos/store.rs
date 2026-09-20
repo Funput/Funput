@@ -7,10 +7,6 @@
 use funput_engine::CorrectionCandidate;
 use funput_suggestions::{SuggestionConfig, SuggestionEngine};
 
-/// The floor `funput-engine` gives a word nobody has typed, repeated here because
-/// the harness has to reproduce the engine's decision to vary the margin around it.
-const PRIOR_FLOOR: f32 = 0.5;
-
 /// Whether the harness gives the engine a word store to rank with.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(in crate::dev) enum Prior {
@@ -56,37 +52,23 @@ impl Store {
     }
 }
 
-/// The platform's decision, reproduced here so the confidence margin can be varied
-/// without rebuilding the engine.
-///
-/// Identical to `Engine::choose_correction` at `margin = 1.0` with `known_only` off
-/// — which the test below pins — and that is the point: the sweep measures the
-/// engine's own rule, not a second one written for the occasion.
-pub(super) fn decide(
+/// The two arrays the engine ranks with: how often the user typed each candidate,
+/// and whether the store recognizes it as a word at all.
+pub(super) fn ballots(
     candidates: &[CorrectionCandidate],
     store: &Store,
-    margin: f32,
     known_only: bool,
     max_edits: usize,
-) -> Option<usize> {
-    let mut best: Option<(usize, f32)> = None;
-    let mut runner_up = f32::NEG_INFINITY;
-    for (index, candidate) in candidates.iter().enumerate() {
-        if candidate.edits() > max_edits || (known_only && !store.knows(candidate.text())) {
-            continue;
-        }
-        let score = candidate.touch_score()
-            + (1.0 + store.uses(candidate.text()) as f32).ln()
-            + PRIOR_FLOOR;
-        match best {
-            Some((_, leader)) if leader >= score => runner_up = runner_up.max(score),
-            Some((_, leader)) => {
-                runner_up = runner_up.max(leader);
-                best = Some((index, score));
-            }
-            None => best = Some((index, score)),
-        }
-    }
-    let (index, top) = best?;
-    (top - runner_up >= margin).then_some(index)
+) -> (Vec<u32>, Vec<bool>) {
+    let uses = candidates
+        .iter()
+        .map(|candidate| store.uses(candidate.text()))
+        .collect();
+    let allowed = candidates
+        .iter()
+        .map(|candidate| {
+            candidate.edits() <= max_edits && (!known_only || store.knows(candidate.text()))
+        })
+        .collect();
+    (uses, allowed)
 }
