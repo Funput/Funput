@@ -63,14 +63,15 @@ fn personal_words_come_first_in_their_own_order() {
 #[test]
 fn a_learned_word_is_not_offered_again_in_the_lexicons_case() {
     let (mut engine, _file) = with_fixture();
-    learned(&mut engine, "iphone", 2);
+    // Four, not two: `iphone` is not a syllable Vietnamese can spell.
+    learned(&mut engine, "iphone", 4);
     assert_eq!(texts(&engine, None, "ip"), ["iphone"]);
 }
 
 #[test]
 fn a_full_personal_answer_and_a_prediction_are_left_alone() {
     let (mut engine, _file) = with_fixture();
-    for (word, uses) in [("work", 4), ("world", 3), ("would", 2)] {
+    for (word, uses) in [("work", 6), ("world", 5), ("would", 4)] {
         learned(&mut engine, word, uses);
     }
     assert_eq!(texts(&engine, None, "wo"), ["work", "world", "would"]);

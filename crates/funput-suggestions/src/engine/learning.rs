@@ -1,3 +1,4 @@
+use super::admission::promotion_threshold;
 use super::{PENDING_LIMIT, REBUILD_AFTER_EVICTIONS, SuggestionEngine};
 use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
 use crate::index::{NONE, normalize};
@@ -31,11 +32,12 @@ impl SuggestionEngine {
             self.evictions_since_rebuild = self.evictions_since_rebuild.saturating_add(1);
         }
         let uses = self.words[word_id as usize].uses;
-        if uses >= self.config.promotion_uses {
+        let threshold = promotion_threshold(&self.words[word_id as usize].text, &self.config);
+        if uses >= threshold {
             let marked = self.index_word(word_id);
             // Counted before any rebuild below, which recounts from scratch and
             // would otherwise see this word twice.
-            if marked && previous_uses < self.config.promotion_uses {
+            if marked && previous_uses < threshold {
                 self.lexicon.vietnamese_words = self.lexicon.vietnamese_words.saturating_add(1);
             }
         }
@@ -45,7 +47,7 @@ impl SuggestionEngine {
 
         let outcome = if previous_uses == 0 {
             LearnOutcome::Recorded
-        } else if previous_uses < self.config.promotion_uses && uses >= self.config.promotion_uses {
+        } else if previous_uses < threshold && uses >= threshold {
             LearnOutcome::Promoted
         } else {
             LearnOutcome::Updated
@@ -86,7 +88,8 @@ impl SuggestionEngine {
             return (index, 0, false);
         }
         let index = self.lowest_ranked_index().unwrap_or(0);
-        let rebuild = self.words[index].uses >= self.config.promotion_uses;
+        let rebuild =
+            self.words[index].uses >= promotion_threshold(&self.words[index].text, &self.config);
         if rebuild && normalize::is_marked(&self.words[index].text) {
             self.lexicon.vietnamese_words = self.lexicon.vietnamese_words.saturating_sub(1);
         }
@@ -122,8 +125,8 @@ impl SuggestionEngine {
         self.folded.clear();
         let mut marked = 0u32;
         for index in 0..self.words.len() {
-            if self.words[index].uses >= self.config.promotion_uses && self.index_word(index as u32)
-            {
+            let threshold = promotion_threshold(&self.words[index].text, &self.config);
+            if self.words[index].uses >= threshold && self.index_word(index as u32) {
                 marked = marked.saturating_add(1);
             }
         }

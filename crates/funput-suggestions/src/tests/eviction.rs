@@ -7,6 +7,9 @@ use crate::{SuggestionConfig, SuggestionEngine};
 fn bounded(max_words: usize) -> SuggestionEngine {
     SuggestionEngine::in_memory(SuggestionConfig {
         max_words,
+        // These words are slot fillers, not Vietnamese: keep admission out of a test
+        // about what happens when the slots run out.
+        unrecognized_promotion_uses: 2,
         ..SuggestionConfig::default()
     })
 }
