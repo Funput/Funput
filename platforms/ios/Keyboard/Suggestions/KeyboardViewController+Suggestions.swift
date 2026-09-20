@@ -47,7 +47,7 @@ extension KeyboardViewController {
         personalSuggestionService.update(
             inputCoordinator.takePersonalSuggestionUpdate(),
             canQuery: canQuery,
-            capitalized: state.shiftState != .lowercase
+            shift: state.shiftState
         )
     }
 

@@ -243,6 +243,12 @@ Hai chi tiết dễ sót:
   nó không có đầu vào. Quy tắc cho Predict: theo trạng thái Shift hiện tại (trên iOS
   `auto_capitalize` của engine đang vô hiệu, Shift mới là thứ quyết định).
 
+  **Đã đổi sau đó**: Shift/Caps Lock đứng *trên* prefix chứ không chỉ lấp chỗ trống của
+  nó — bật Shift khi đã gõ `vi` là một yêu cầu viết hoa, và đường chấp nhận vốn xoá
+  prefix trước khi chèn nên chữ đã gõ cũng được sửa theo. Bật Shift khi thanh đang có
+  chữ thì danh sách được **tô lại tại chỗ**, không hỏi lại engine. Xem
+  [text-case-suggestion](#viết-hoa-theo-người-gõ) ở english-lexicon-suggestion.md.
+
 ## C ABI và JNI
 
 Thêm hàm mới, không sửa hàm cũ — shell cũ và thư viện mới vẫn khớp:

@@ -113,7 +113,7 @@ internal fun createImeEditingSession(
     )
     val suggestionService = PersonalSuggestionService(
         context = context, show = showSuggestions,
-        capitalized = { currentShiftState().isActive }, acknowledgeReset = acknowledgeReset,
+        shift = currentShiftState, acknowledgeReset = acknowledgeReset,
     )
     val clipboardPreferences = ClipboardSettings(context).preferences
     val clipboardController = ImeClipboardController(

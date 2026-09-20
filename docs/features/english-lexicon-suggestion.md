@@ -442,6 +442,29 @@ nhân (trước đây EN không học gì) — vẫn chỉ trong ô `.text` / `.
 - **Kích thước**: `en.lex` sinh từ `en.tsv` ≤ 512 KiB.
 - **Casing Android** (bước 6): `iPhone` với prefix `ip` giữ nguyên; prefix `IP` thành `IPHONE`.
 
+## Viết hoa theo người gõ
+
+Luật chung cho cả hai nền tảng, đọc theo thứ tự ưu tiên — `SuggestionCaseStyle` (iOS) và
+`PersonalSuggestionCasing` (Android) là hai bản chép tay của cùng bảng này, và cùng phải
+khớp `classify_case` của gõ tắt trong `funput-engine`:
+
+| Tín hiệu | Kết quả | Ví dụ |
+|---|---|---|
+| Caps Lock bật | TẤT CẢ HOA | `việt` → `VIỆT` |
+| Shift bật | Viết hoa đầu | prefix `vi` → `Việt` |
+| Prefix: ≥2 chữ cái đều hoa | TẤT CẢ HOA | `VI` → `VIỆT` |
+| Prefix: chữ cái đầu hoa, phần sau thường | Viết hoa đầu | `Vi`, `V1` → `Việt` |
+| Prefix: chữ thường, hoặc hoa-thường lẫn lộn | giữ nguyên ứng viên | `ip` → `iPhone`, `VNa` → `việt` |
+
+Ba điểm đáng nhớ. Chỉ xét **chữ cái**, nên `1v` đọc theo `v`. **Một chữ hoa duy nhất là
+Title**, không phải ALL CAPS — hai bản trước đây cùng sai chỗ này. Và prefix cố ý viết
+lẫn (`iOS`, `VNa`) thì không đụng tới, giống nhánh `None` của `classify_case`.
+
+Shift đứng trên prefix chứ không chỉ lấp chỗ trống: bật Shift khi thanh đang hiện chữ
+thì danh sách được tô lại từ **danh sách thô đã lưu**, không hỏi lại engine — tô từ danh
+sách đã viết hoa sẽ không bao giờ quay về được `Việt` từ `VIỆT`. Danh sách hiển thị và
+danh sách lưu luôn đi cùng nhau vì đường chấp nhận so khớp đúng chuỗi đang hiển thị.
+
 ## Thứ tự hiện thực
 
 1. **Dữ liệu.** Công cụ xếp hạng, `en.tsv`, `supplement.tsv`, `blocklist.txt`,

@@ -7,13 +7,14 @@ import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.ImeSuggestionSource
 import app.funput.funput.ime.settings.PersonalSuggestionPreferences
 import app.funput.funput.ime.settings.pendingReset
+import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.ui.KeyboardPanel
 
 internal class PersonalSuggestionService(
     context: Context,
     private val show: (List<String>) -> Unit,
-    private val capitalized: () -> Boolean = { false },
+    private val shift: () -> ShiftState = { ShiftState.OFF },
     private val acknowledgeReset: (String) -> Unit,
     createWorker: (Context, (PersonalSuggestionRequest, List<String>) -> Unit) -> PersonalSuggestionWorker = ::suggestionWorker,
 ) {
@@ -28,6 +29,8 @@ internal class PersonalSuggestionService(
     private var previousWord: String? = null
     /** Whether the bar is currently answering a context rather than a prefix. */
     private var predicting = false
+    /** As the engine returned them; [candidates] is the same list in the user's case. */
+    private var received = emptyList<String>()
     private var candidates = emptyList<String>()
     private var pendingReset: String? = null
 
@@ -71,7 +74,10 @@ internal class PersonalSuggestionService(
         // A prediction answers a context with no prefix at all. One character is
         // neither a prefix worth completing nor a word boundary, and stays out.
         val predicts = eligible() && update.prefix.isEmpty() && previousWord != null
-        if (update.completedToken == null && update.prefix == prefix && predicts == predicting) return
+        if (update.completedToken == null && update.prefix == prefix && predicts == predicting) {
+            // Shift arrives here: same words, new shape, nothing to ask the engine.
+            return draw()
+        }
         prefix = update.prefix
         predicting = predicts
         if (!eligible() || (!predicts && prefix.codePointCount(0, prefix.length) < MinimumPrefix)) {
@@ -97,13 +103,20 @@ internal class PersonalSuggestionService(
 
     private fun publish(request: PersonalSuggestionRequest, values: List<String>) {
         if (request.generation != generation || request.session != session || request.prefix != prefix) return
-        if (!eligible()) return
-        val next = values.map { PersonalSuggestionCasing.apply(it, prefix, capitalized()) }
-        if (next != candidates) {
-            candidates = next
-            runCatching { show(candidates) }
-        }
+        received = values
+        draw()
         suggestionCounter("SuggestionQueryToToolbarUs", (System.nanoTime() - request.startedNanos) / 1_000)
+    }
+
+    /** Cases what the engine gave us and shows it, keeping both lists in step: the
+     *  accept path matches the tapped text against [candidates], so a bar drawn from a
+     *  list nobody stored is a bar whose every tap is silently refused. */
+    private fun draw() {
+        if (!eligible()) return
+        val next = received.map { PersonalSuggestionCasing.apply(it, prefix, shift()) }
+        if (next == candidates) return
+        candidates = next
+        runCatching { show(candidates) }
     }
 
     private fun eligible() = preferences.enabled && policy.allowsPersonalSuggestions &&
@@ -122,6 +135,8 @@ internal class PersonalSuggestionService(
     }
 
     private fun clearCandidates() {
+        // The raw list goes with them, or a later Shift would redraw what was dropped.
+        received = emptyList()
         if (candidates.isEmpty()) return
         candidates = emptyList()
         runCatching { show(emptyList()) }

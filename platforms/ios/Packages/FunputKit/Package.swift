@@ -34,6 +34,7 @@ let package = Package(
             dependencies: [
                 .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
                 .target(name: "KeyboardInput"),
+                .target(name: "KeyboardLayout"),
                 .target(name: "KeyboardRenderer"),
             ]
         ),

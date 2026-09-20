@@ -1,5 +1,6 @@
 import Foundation
 import KeyboardInput
+import KeyboardLayout
 import KeyboardRenderer
 import PersonalSuggestions
 import Testing
@@ -91,7 +92,7 @@ struct PersonalSuggestionServiceContextTests {
         service.update(
             .init(prefix: "", completedToken: "xin", context: "xin"),
             canQuery: true,
-            capitalized: true
+            shift: .uppercase
         )
         let worker = try #require(factory.workers.first)
         worker.emit(["chào"], for: try #require(worker.events.compactMap(\.query).last))

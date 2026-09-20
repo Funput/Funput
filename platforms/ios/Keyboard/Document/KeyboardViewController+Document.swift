@@ -1,4 +1,5 @@
 import KeyboardInput
+import PersonalSuggestions
 import UIKit
 
 extension KeyboardViewController {
@@ -9,6 +10,10 @@ extension KeyboardViewController {
     func applyPostCommitEffects(_ effects: KeyboardPostCommitEffects) {
         if effects.suggestionsChanged {
             publishPersonalSuggestionUpdate()
+        } else {
+            // Shift moved no text, so the words on the bar still stand — only their
+            // case does not. `update` would drop this: its dedupe compares prefixes.
+            personalSuggestionService.recase(shift: inputCoordinator.state.shiftState)
         }
         if effects.presentationChanged {
             updateInputPresentation()
