@@ -3,8 +3,9 @@ use std::io::Write;
 use funput_ffi::{
     FunputSuggestionResult, funput_suggestion_attach_lexicon, funput_suggestion_engine_free,
     funput_suggestion_engine_new_in_memory, funput_suggestion_engine_open, funput_suggestion_flush,
-    funput_suggestion_learn, funput_suggestion_learn_after, funput_suggestion_query,
-    funput_suggestion_query_with, funput_suggestion_reset, funput_suggestion_stats,
+    funput_suggestion_frequency, funput_suggestion_is_known_word, funput_suggestion_learn,
+    funput_suggestion_learn_after, funput_suggestion_query, funput_suggestion_query_with,
+    funput_suggestion_reset, funput_suggestion_stats,
 };
 use funput_suggestions::lexicon_build::encode;
 
@@ -248,5 +249,51 @@ fn reset_forgets_the_user_but_keeps_the_lexicon() {
 
     assert!(unsafe { funput_suggestion_reset(engine) });
     assert_eq!(texts(&query(engine, "wh")), ["what", "when", "which"]);
+    unsafe { funput_suggestion_engine_free(engine) };
+}
+
+fn frequency(engine: *const funput_ffi::FunputSuggestionEngine, word: &str) -> u32 {
+    let word = codepoints(word);
+    unsafe { funput_suggestion_frequency(engine, word.as_ptr(), word.len()) }
+}
+
+fn known(engine: *const funput_ffi::FunputSuggestionEngine, word: &str) -> bool {
+    let word = codepoints(word);
+    unsafe { funput_suggestion_is_known_word(engine, word.as_ptr(), word.len()) }
+}
+
+/// What typo correction ranks its candidates with. The engine that produced them has
+/// no dictionary, so these two are the only thing standing between a deliberate
+/// English word and a Vietnamese "correction" of it.
+#[test]
+fn a_word_can_be_weighed_and_vetoed_across_the_abi() {
+    let lexicon = lexicon_file(LEXICON);
+    let engine = funput_suggestion_engine_new_in_memory();
+    assert!(attach(engine, &path_bytes(&lexicon)));
+    assert!(learn(engine, "đường"));
+    assert!(learn(engine, "đường"));
+
+    assert_eq!(frequency(engine, "đường"), 2);
+    assert_eq!(frequency(engine, "đưởng"), 0, "never typed");
+    assert!(known(engine, "đường"), "the user has typed it");
+    assert!(known(engine, "what"), "the shipped English list holds it");
+    assert!(!known(engine, "dduwowfnh"), "not a word in either sense");
+
+    unsafe { funput_suggestion_engine_free(engine) };
+}
+
+#[test]
+fn weighing_a_word_is_null_safe() {
+    let null: *const funput_ffi::FunputSuggestionEngine = std::ptr::null();
+    assert_eq!(frequency(null, "đường"), 0);
+    assert!(!known(null, "what"));
+
+    let engine = funput_suggestion_engine_new_in_memory();
+    assert_eq!(
+        unsafe { funput_suggestion_frequency(engine, std::ptr::null(), 4) },
+        0,
+        "a null pointer with a length is malformed and must not be read"
+    );
+    assert!(!unsafe { funput_suggestion_is_known_word(engine, std::ptr::null(), 4) });
     unsafe { funput_suggestion_engine_free(engine) };
 }

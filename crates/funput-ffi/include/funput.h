@@ -1139,6 +1139,33 @@ FunputSuggestionResult funput_suggestion_query_with(const FunputSuggestionEngine
                                                     uintptr_t prefix_len);
 
 /**
+ * How many times the user has typed `word`, and 0 for one the store has never
+ * seen — the `uses` entry that goes into `funput_engine_choose_correction`.
+ *
+ * Read-only, no I/O, and no allocation. A null handle or malformed text answers 0.
+ *
+ * # Safety
+ * `word` must point to `word_len` readable codepoints, or be null.
+ */
+uint32_t funput_suggestion_frequency(const FunputSuggestionEngine *engine,
+                                     const uint32_t *word,
+                                     uintptr_t word_len);
+
+/**
+ * Whether `word` is a word at all: one the user has typed, or one in the attached
+ * English list.
+ *
+ * The veto. Without it a host would let correction rewrite `text ` as `tẻ`, since
+ * `r` sits beside `t` and the engine has no way to know better.
+ *
+ * # Safety
+ * `word` must point to `word_len` readable codepoints, or be null.
+ */
+bool funput_suggestion_is_known_word(const FunputSuggestionEngine *engine,
+                                     const uint32_t *word,
+                                     uintptr_t word_len);
+
+/**
  * Flush pending learned tokens to the journal.
  *
  * # Safety
