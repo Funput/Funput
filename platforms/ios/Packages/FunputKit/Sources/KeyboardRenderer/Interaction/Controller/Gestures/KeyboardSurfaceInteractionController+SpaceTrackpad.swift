@@ -6,7 +6,19 @@ extension KeyboardSurfaceInteractionController {
     /// Hold timer callback: the press is now old enough to become a trackpad, but nothing
     /// is claimed until the finger actually moves — a resting thumb must still type a space.
     func armSpaceTrackpad(for token: TouchToken) {
+        guard touches[token] != nil else { return }
         touches[token]?.holdArmed = true
+        // The answer the user is waiting for is "can I pan now", and that is true here.
+        // Reporting it at the first sideways pixel instead told them something the moving
+        // caret had already said. Lifting without moving still types a space, as before,
+        // so this says the trackpad is ready — not that the space is gone.
+        //
+        // Deliberately outside `hapticsEnabled`: that setting turns off the buzz of
+        // ordinary typing, which the user can see landing on screen anyway. This one
+        // reports a mode the keyboard shows no other way, during a hold that looks
+        // identical to a thumb resting on the space bar. The per-step feedback while
+        // panning does follow the setting — that is ongoing, and typing-like.
+        haptics.perform(.modeChange)
     }
 
     /// Promotes an armed space press into a caret pan once the finger travels sideways.
@@ -29,7 +41,6 @@ extension KeyboardSurfaceInteractionController {
         state.claimedGesture = .trackpad
         state.trackpad = SpaceCursorPanTracker()
         touches[token] = state
-        if hapticsEnabled { haptics.perform(.control) }
         refreshPreview()
         return true
     }

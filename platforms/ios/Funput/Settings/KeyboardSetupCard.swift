@@ -59,6 +59,10 @@ struct KeyboardSetupCard: View {
                     Text(title).font(.headline).foregroundStyle(Color.green)
                     Text(summary).font(.caption).foregroundStyle(.secondary)
                 }
+                // The disclosure label hands its content the width left beside the
+                // chevron, and a summary long enough to wrap took the middle of it.
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .multilineTextAlignment(.leading)
             }
         }
         .tint(.secondary)

@@ -27,6 +27,11 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     /// Overrides the light/dark appearance the host app would otherwise impose.
     public var keyboardAppearance: KeyboardAppearanceOption
     public var heightScale: Double
+    /// Whether the space bar carries the Vietnamese/English switch.
+    ///
+    /// Off, the keyboard composes Vietnamese and the space bar is just a space bar — no
+    /// swipe, no language name, no chevrons.
+    public var languageToggleEnabled: Bool
     public var personalSuggestionsEnabled: Bool
     public var clipboardEnabled: Bool
     public var clipboardExpiry: ClipboardExpiry
@@ -39,7 +44,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
         case smartGesturesEnabled
         case showsNumberRow, layoutPreset, keySizing, heightScale, keyboardAppearance
-        case personalSuggestionsEnabled, personalSuggestionResetToken
+        case personalSuggestionsEnabled, personalSuggestionResetToken, languageToggleEnabled
         case clipboardEnabled, clipboardExpiry, schemaVersion
     }
 
@@ -61,6 +66,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         keySizing: KeyboardKeySizing = .funput,
         keyboardAppearance: KeyboardAppearanceOption = .system,
         heightScale: Double = 1,
+        languageToggleEnabled: Bool = true,
         personalSuggestionsEnabled: Bool = true,
         clipboardEnabled: Bool = true,
         clipboardExpiry: ClipboardExpiry = .hour,
@@ -84,6 +90,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.keySizing = keySizing
         self.keyboardAppearance = keyboardAppearance
         self.heightScale = heightScale
+        self.languageToggleEnabled = languageToggleEnabled
         self.personalSuggestionsEnabled = personalSuggestionsEnabled
         self.clipboardEnabled = clipboardEnabled
         self.clipboardExpiry = clipboardExpiry
@@ -104,5 +111,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 13
+    public static let currentSchemaVersion = 14
 }
