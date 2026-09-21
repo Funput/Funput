@@ -82,11 +82,12 @@ class KeyboardHitTesterTest {
     @Test
     fun placementTargetAbsorbsItsLeadingGap() {
         val bar = requireNotNull(keyboardWithSuggestions.suggestionBar)
-        val midpoint = (bar.suggestionsBounds.right + bar.placementKey.bounds.left) / 2f
+        val placement = requireNotNull(bar.placementKey)
+        val midpoint = (bar.suggestionsBounds.right + placement.bounds.left) / 2f
 
         assertNull(keyboardWithSuggestions.keyAt(midpoint - TestOffset, bar.bounds.centerY))
         assertEquals(
-            bar.placementKey,
+            placement,
             keyboardWithSuggestions.keyAt(midpoint + TestOffset, bar.bounds.centerY),
         )
     }
