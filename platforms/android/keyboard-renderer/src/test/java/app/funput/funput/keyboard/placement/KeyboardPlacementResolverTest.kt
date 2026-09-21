@@ -17,10 +17,18 @@ class KeyboardPlacementResolverTest {
     }
 
     @Test
-    fun `offset leaves thirty percent of a tall viewport for the app`() {
+    fun `hard maximum caps elevation on a tall viewport`() {
         val preferences = KeyboardPlacementPreferences(KeyboardPlacementMode.ELEVATED, 500f)
         val result = resolve(preferences, viewportHeightPx = 2_000, keyboardHeightPx = 800)
-        assertEquals(600, result.appliedOffsetPx)
+        assertEquals(320, result.appliedOffsetPx)
+        assertEquals(320, result.maximumOffsetPx)
+    }
+
+    @Test
+    fun `offset still leaves thirty percent of the viewport for the app`() {
+        val preferences = KeyboardPlacementPreferences(KeyboardPlacementMode.ELEVATED, 500f)
+        val result = resolve(preferences, viewportHeightPx = 1_200, keyboardHeightPx = 600)
+        assertEquals(240, result.appliedOffsetPx)
     }
 
     @Test

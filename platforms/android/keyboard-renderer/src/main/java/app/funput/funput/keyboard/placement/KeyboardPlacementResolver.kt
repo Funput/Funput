@@ -6,6 +6,7 @@ import kotlin.math.roundToInt
 object KeyboardPlacementResolver {
     const val MinimumAppFraction = 0.30f
     const val MinimumAppHeightDp = 160f
+    const val MaximumElevatedOffsetDp = 160f
 
     fun resolve(
         preferences: KeyboardPlacementPreferences,
@@ -18,8 +19,12 @@ object KeyboardPlacementResolver {
             (viewportHeightPx * MinimumAppFraction).roundToInt(),
             (MinimumAppHeightDp * density).roundToInt(),
         )
-        val maximumOffset = (viewportHeightPx - baseKeyboardHeightPx - minimumAppHeight)
+        val availableOffset = (viewportHeightPx - baseKeyboardHeightPx - minimumAppHeight)
             .coerceAtLeast(0)
+        val maximumOffset = minOf(
+            availableOffset,
+            (MaximumElevatedOffsetDp * density).roundToInt(),
+        )
         val requestedOffset = (preferences.elevatedOffsetDp * density).roundToInt()
         val appliedOffset = if (preferences.activeMode == KeyboardPlacementMode.ELEVATED) {
             requestedOffset.coerceAtMost(maximumOffset)
