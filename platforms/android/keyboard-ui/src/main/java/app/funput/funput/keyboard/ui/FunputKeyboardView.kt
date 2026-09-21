@@ -29,6 +29,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : FrameLayout(context, attrs, defStyleAttr) {
     private val keyboardSurface = KeyboardSurfaceView(context)
+    private val contentHost = FrameLayout(context)
     private val hostBackground = KeyboardHostBackground()
     val overlayPadTop: Int get() = keyboardSurface.overlayPadTop
     val callbacks = FunputKeyboardCallbacks()
@@ -44,7 +45,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         keyboardSurface = keyboardSurface,
         createEmojiPanel = panelFactory::createEmoji,
         createClipboardPanel = panelFactory::createClipboard,
-        attachPanel = { addView(it, matchParentLayoutParams()) },
+        attachPanel = { contentHost.addView(it, matchParentLayoutParams()) },
         onPanelChanged = callbacks::dispatchPanelChanged,
         syncSuggestions = ::syncSuggestions,
     )
@@ -90,18 +91,19 @@ class FunputKeyboardView @JvmOverloads constructor(
     var hapticsEnabled: Boolean by feedbackController::hapticsEnabled
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
     private val safeArea = KeyboardSafeAreaController(this)
-    private val placement = KeyboardPlacementHostController(this, safeArea, callbacks)
+    private val placement = KeyboardPlacementHostController(this, contentHost, safeArea, callbacks)
     var placementPreferences: KeyboardPlacementPreferences by placement::preferences
     init { KeyboardComposeLifecycle.install(this)
         background = hostBackground
         hostBackground.attach(keyboardSurface, ::requestLayout)
-        addView(keyboardSurface, matchParentLayoutParams())
+        addView(contentHost, matchParentLayoutParams())
+        contentHost.addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::routeKeyAction
         keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
         keyboardSurface.callbacks.onEmojiRequested = ::openEmojiFromKeyboard
         keyboardSurface.callbacks.onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest
         keyboardSurface.callbacks.onClipboardPanelRequested = ::showClipboardPanel
-        keyboardSurface.callbacks.onPlacementEditorRequested = placement::showEditor
+        keyboardSurface.callbacks.onPlacementEditorRequested = placement::showPicker
         safeArea.install()
     }
 
@@ -120,7 +122,8 @@ class FunputKeyboardView @JvmOverloads constructor(
         val density = resources.displayMetrics.density
         val keyboardWidth = (KeyboardDimensions.DefaultWidthDp * density).roundToInt()
         val width = resolveSize(keyboardWidth + safeArea.horizontalInset, widthMeasureSpec)
-        val contentWidthDp = (width - safeArea.horizontalInset) / density
+        val contentWidth = placement.resolveContentWidth(width - safeArea.horizontalInset)
+        val contentWidthDp = contentWidth / density
         val heightDp = KeyboardDimensions.recommendedHeightDp(
             inputMethod, editorMode, sizingProfile, contentWidthDp, showsNumberRow,
         )
