@@ -16,9 +16,8 @@ object KeyboardThemes {
 
     /**
      * Dark preset. Borderless, with key plates carried by a faint white wash rather than a solid
-     * color: translucency keeps the plates reading correctly over the background gradient, and
-     * over a background image if one is set. Modifier keys wash in at half the strength of the
-     * alphabet so the letters stay dominant while every key still shows its touch area.
+     * color, so they keep reading over the background gradient and over a background image. Modifier
+     * keys wash in at half the alphabet's strength: letters dominate, yet every key shows its area.
      */
     val Ink: KeyboardTheme = KeyboardTheme(
         backgroundStartColor = 0xFF121013.toInt(),
@@ -75,9 +74,8 @@ object KeyboardThemes {
     )
 
     /**
-     * Dark glass preset. Translucent key plates sit over a diagonal midnight gradient, while a
-     * borderless plates keep the surface quiet. Funput gold remains the only saturated color and
-     * is reserved for emphasis and interaction.
+     * Dark glass preset. Borderless translucent plates over a diagonal midnight gradient, with
+     * Funput gold as the only saturated color, reserved for emphasis and interaction.
      */
     val GlassDark: KeyboardTheme = KeyboardTheme(
         backgroundStartColor = 0xFF151822.toInt(),
@@ -109,8 +107,8 @@ object KeyboardThemes {
     )
 
     /**
-     * Light glass preset based on Funput Glass for iOS. Cool translucent plates sit on a soft
-     * blue-grey ground, while the borderless 6dp shape matches the approved Android dark preset.
+     * Light glass preset based on Funput Glass for iOS. Cool translucent plates on a soft
+     * blue-grey ground, borderless at 6dp to match the approved Android dark preset.
      */
     val GlassLight: KeyboardTheme = KeyboardTheme(
         backgroundStartColor = 0xFFDCE4ED.toInt(),
@@ -140,6 +138,9 @@ object KeyboardThemes {
         popupShadowColor = 0x52000000,
         keySurfaceStyle = KeyboardKeySurfaceStyle.GLASS,
     )
+
+    /** Apple's Liquid Glass: clear lensed panes over a neutral ground. Lives in its own file. */
+    val LiquidGlass: KeyboardTheme = LiquidGlassKeyboardTheme
 
     /** Light floral preset: a blush-to-lilac gradient under near-white keycaps. */
     val Blossom: KeyboardTheme = BlossomKeyboardTheme

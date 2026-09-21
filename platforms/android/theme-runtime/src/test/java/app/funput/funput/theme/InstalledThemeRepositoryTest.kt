@@ -16,6 +16,7 @@ class InstalledThemeRepositoryTest {
                 KeyboardThemeId.Light,
                 KeyboardThemeId.GlassDark,
                 KeyboardThemeId.GlassLight,
+                KeyboardThemeId.LiquidGlass,
                 KeyboardThemeId.Slate,
                 KeyboardThemeId.Blossom,
                 KeyboardThemeId.Orchid,

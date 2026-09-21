@@ -13,6 +13,7 @@ class ClipboardChipRendererTest {
             KeyboardThemes.Paper,
             KeyboardThemes.GlassDark,
             KeyboardThemes.GlassLight,
+            KeyboardThemes.LiquidGlass,
             KeyboardThemes.Blossom,
             KeyboardThemes.Orchid,
         )

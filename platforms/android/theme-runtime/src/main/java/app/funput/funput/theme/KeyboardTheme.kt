@@ -77,7 +77,8 @@ data class KeyboardTheme(
      * Surface treatment for key plates.
      *
      * Flat preserves the original fill-and-border renderer. Glass adds a cached directional rim
-     * and a pressed halo without changing the authored colors or key geometry.
+     * and a pressed halo. Liquid Glass adds the lensed edge and body ramps of Apple's material
+     * on top of that. None of them changes the authored colors or key geometry.
      */
     val keySurfaceStyle: KeyboardKeySurfaceStyle = KeyboardKeySurfaceStyle.Default,
 ) {
