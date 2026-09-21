@@ -1,12 +1,12 @@
 package app.funput.funput.keyboard.ui.placement
 
 import android.os.Build
-import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.keyboard.placement.KeyboardPlacementResolver
 import app.funput.funput.keyboard.ui.FunputKeyboardCallbacks
@@ -34,14 +34,8 @@ internal class KeyboardPlacementHostController(
         }
 
     init {
-        editor.onModeSelected = { mode ->
-            preferences = preferences.copy(activeMode = mode)
-            callbacks.dispatchPlacementMode(mode)
-        }
-        editor.onOffsetPreview = { offset ->
-            preferences = preferences.copy(elevatedOffsetDp = offset.coerceAtLeast(0f))
-        }
-        editor.onOffsetSettled = callbacks::dispatchPlacementOffset
+        editor.onOffsetPreview = ::previewOffset
+        editor.onOffsetSettled = ::settleOffset
         editor.onDone = ::hideEditor
     }
 
@@ -49,8 +43,7 @@ internal class KeyboardPlacementHostController(
         val viewport = availableContentViewportPx().coerceAtLeast(baseHeightPx)
         result = KeyboardPlacementResolver.resolve(preferences, density, viewport, baseHeightPx)
         safeArea.extraBottomInset = result.appliedOffsetPx
-        editor.translationY = result.appliedOffsetPx.toFloat()
-        editor.render(preferences, result.maximumOffsetPx)
+        editor.render(result.maximumOffsetPx, result.appliedOffsetPx)
         val desired = baseHeightPx + safeArea.bottomInset + result.appliedOffsetPx
         return View.resolveSize(desired, heightMeasureSpec)
     }
@@ -59,13 +52,12 @@ internal class KeyboardPlacementHostController(
         if (editor.parent == null) {
             host.addView(editor, FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
-                (EditorHeightDp * density).roundToInt(),
-                Gravity.BOTTOM,
+                FrameLayout.LayoutParams.MATCH_PARENT,
             ))
         }
         editor.visibility = View.VISIBLE
         editor.bringToFront()
-        editor.render(preferences, result.maximumOffsetPx)
+        editor.render(result.maximumOffsetPx, result.appliedOffsetPx)
     }
 
     fun hideEditor() {
@@ -73,6 +65,21 @@ internal class KeyboardPlacementHostController(
     }
 
     fun updateTheme(theme: KeyboardTheme) = editor.updateTheme(theme)
+
+    private fun previewOffset(offsetDp: Float) {
+        preferences = if (offsetDp <= 0f) {
+            preferences.copy(activeMode = KeyboardPlacementMode.STANDARD)
+        } else {
+            KeyboardPlacementPreferences(KeyboardPlacementMode.ELEVATED, offsetDp)
+        }
+    }
+
+    private fun settleOffset(offsetDp: Float) {
+        val mode = if (offsetDp <= 0f) KeyboardPlacementMode.STANDARD
+        else KeyboardPlacementMode.ELEVATED
+        callbacks.dispatchPlacementMode(mode)
+        if (mode == KeyboardPlacementMode.ELEVATED) callbacks.dispatchPlacementOffset(offsetDp)
+    }
 
     private fun availableContentViewportPx(): Int {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
@@ -85,9 +92,5 @@ internal class KeyboardPlacementHostController(
             WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.displayCutout(),
         )?.top ?: 0
         return (height - top - safeArea.bottomInset).coerceAtLeast(0)
-    }
-
-    private companion object {
-        const val EditorHeightDp = 88f
     }
 }

@@ -27,4 +27,5 @@
     <string name="placement_reset">Đặt lại</string>
     <string name="placement_slider">Mức nâng bàn phím</string>
     <string name="placement_unavailable">Không đủ không gian để nâng bàn phím</string>
+    <string name="placement_drag_description">Kéo lên hoặc xuống để chỉnh độ cao bàn phím, hiện tại %1$d dp</string>
 </resources>

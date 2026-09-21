@@ -6,4 +6,5 @@
     <string name="placement_reset">Reset</string>
     <string name="placement_slider">Keyboard elevation</string>
     <string name="placement_unavailable">Not enough space to elevate the keyboard</string>
+    <string name="placement_drag_description">Drag up or down to adjust keyboard elevation, currently %1$d dp</string>
 </resources>
