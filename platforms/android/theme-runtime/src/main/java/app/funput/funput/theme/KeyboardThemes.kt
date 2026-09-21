@@ -16,8 +16,9 @@ object KeyboardThemes {
 
     /**
      * Dark preset. Borderless, with key plates carried by a faint white wash rather than a solid
-     * color, so they keep reading over the background gradient and over a background image. Modifier
-     * keys wash in at half the alphabet's strength: letters dominate, yet every key shows its area.
+     * color: translucency keeps the plates reading correctly over the background gradient, and
+     * over a background image if one is set. Modifier keys wash in at half the strength of the
+     * alphabet so the letters stay dominant while every key still shows its touch area.
      */
     val Ink: KeyboardTheme = KeyboardTheme(
         backgroundStartColor = 0xFF121013.toInt(),
@@ -73,73 +74,13 @@ object KeyboardThemes {
         pressedKeyScale = 1f,
     )
 
-    /**
-     * Dark glass preset. Borderless translucent plates over a diagonal midnight gradient, with
-     * Funput gold as the only saturated color, reserved for emphasis and interaction.
-     */
-    val GlassDark: KeyboardTheme = KeyboardTheme(
-        backgroundStartColor = 0xFF151822.toInt(),
-        backgroundEndColor = 0xFF08090D.toInt(),
-        keyColor = 0x20FFFFFF,
-        specialKeyColor = 0x12FFFFFF,
-        keyBorderColor = 0x00000000,
-        keyShadowColor = 0x66000000,
-        pressedKeyColor = 0x66C8A951,
-        pressedKeyBorderColor = 0xB3E3C371.toInt(),
-        activatedKeyColor = 0x44C8A951,
-        activatedKeyBorderColor = 0x00000000,
-        labelColor = 0xFFF4F5FA.toInt(),
-        secondaryLabelColor = 0xFF9094A3.toInt(),
-        accentColor = AccentGold,
-        keyCornerRadiusDp = 6f,
-        keyBorderWidthDp = 0f,
-        keyShadowOffsetDp = 1f,
-        pressedKeyShadowOffsetDp = 0f,
-        specialLabelColor = 0xFFB3B6C2.toInt(),
-        accentKeyColor = 0xD0C8A951.toInt(),
-        accentLabelColor = 0xFF17110A.toInt(),
-        popupSurfaceColor = 0xFF1C1F29.toInt(),
-        suggestionHighlightColor = 0xFFE3C371.toInt(),
-        pressedKeyScale = 1.04f,
-        suggestionDividerColor = 0x24FFFFFF,
-        popupShadowColor = 0x66000000,
-        keySurfaceStyle = KeyboardKeySurfaceStyle.GLASS,
-    )
+    /** Dark glass preset: translucent plates over a diagonal midnight gradient. */
+    val GlassDark: KeyboardTheme = GlassDarkKeyboardTheme
 
-    /**
-     * Light glass preset based on Funput Glass for iOS. Cool translucent plates on a soft
-     * blue-grey ground, borderless at 6dp to match the approved Android dark preset.
-     */
-    val GlassLight: KeyboardTheme = KeyboardTheme(
-        backgroundStartColor = 0xFFDCE4ED.toInt(),
-        backgroundEndColor = 0xFFAEBCCC.toInt(),
-        keyColor = 0xB8FFFFFF.toInt(),
-        specialKeyColor = 0xD1AAB7C7.toInt(),
-        keyBorderColor = 0x00000000,
-        keyShadowColor = 0x29000000,
-        pressedKeyColor = 0x66A98B32,
-        pressedKeyBorderColor = 0xB3A98B32.toInt(),
-        activatedKeyColor = 0x44A98B32,
-        activatedKeyBorderColor = 0x00000000,
-        labelColor = 0xFF111318.toInt(),
-        secondaryLabelColor = 0xFF414957.toInt(),
-        accentColor = 0xFFA98B32.toInt(),
-        keyCornerRadiusDp = 6f,
-        keyBorderWidthDp = 0f,
-        keyShadowOffsetDp = 1f,
-        pressedKeyShadowOffsetDp = 0f,
-        specialLabelColor = 0xFF303844.toInt(),
-        accentKeyColor = 0xD0A98B32.toInt(),
-        accentLabelColor = 0xFF17110A.toInt(),
-        popupSurfaceColor = 0xFFF7F9FC.toInt(),
-        suggestionHighlightColor = 0xFF755D16.toInt(),
-        pressedKeyScale = 1.04f,
-        suggestionDividerColor = 0x24414957,
-        popupShadowColor = 0x52000000,
-        keySurfaceStyle = KeyboardKeySurfaceStyle.GLASS,
-    )
+    /** Light glass preset from Funput Glass for iOS: cool plates on a blue-grey ground. */
+    val GlassLight: KeyboardTheme = GlassLightKeyboardTheme
 
-    /** Apple's Liquid Glass: clear lensed panes over a neutral ground. Lives in its own file. */
+    /** Apple's Liquid Glass: clear lensed panes over a reflective ground. */
     val LiquidGlass: KeyboardTheme = LiquidGlassKeyboardTheme
 
     /** Light floral preset: a blush-to-lilac gradient under near-white keycaps. */
