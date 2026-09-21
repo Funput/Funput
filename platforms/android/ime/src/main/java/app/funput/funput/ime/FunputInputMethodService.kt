@@ -131,11 +131,6 @@ class FunputInputMethodService : InputMethodService() {
     override fun onKeyUp(keyCode: Int, event: KeyEvent) =
         hardwareKeys.onKeyUp(event.toHardwareKeyStroke()) || super.onKeyUp(keyCode, event)
 
-    override fun onComputeInsets(outInsets: InputMethodService.Insets) {
-        super.onComputeInsets(outInsets)
-        ImeOverlayInsets.apply(outInsets, keyboardView?.overlayPadTop ?: 0)
-    }
-
     override fun onEvaluateFullscreenMode(): Boolean = false
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)

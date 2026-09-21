@@ -30,8 +30,6 @@ class FunputKeyboardView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
     private val keyboardSurface = KeyboardSurfaceView(context)
     private val contentHost = FrameLayout(context)
-    private val hostBackground = KeyboardHostBackground()
-    val overlayPadTop: Int get() = keyboardSurface.overlayPadTop
     val callbacks = FunputKeyboardCallbacks()
     private val clipboardState = KeyboardClipboardPanelState(
         keyboardSurface, { editorMode }, { activePanel }, ::showLettersPanel,
@@ -73,7 +71,7 @@ class FunputKeyboardView @JvmOverloads constructor(
             keyboardSurface.keyboardTheme = value
             panelCoordinator.updateTheme(value)
             placement.updateTheme(value)
-            hostBackground.color = value.backgroundEndColor
+            setBackgroundColor(value.backgroundEndColor)
         }
     var keyboardThemeBackgroundImage by keyboardSurface::keyboardThemeBackgroundImage
     var sizingProfile: KeyboardSizingProfile by keyboardSurface::sizingProfile
@@ -94,8 +92,6 @@ class FunputKeyboardView @JvmOverloads constructor(
     private val placement = KeyboardPlacementHostController(this, contentHost, safeArea, callbacks)
     var placementPreferences: KeyboardPlacementPreferences by placement::preferences
     init { KeyboardComposeLifecycle.install(this)
-        background = hostBackground
-        hostBackground.attach(keyboardSurface, ::requestLayout)
         addView(contentHost, matchParentLayoutParams())
         contentHost.addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::routeKeyAction
@@ -104,6 +100,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         keyboardSurface.callbacks.onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest
         keyboardSurface.callbacks.onClipboardPanelRequested = ::showClipboardPanel
         keyboardSurface.callbacks.onPlacementEditorRequested = placement::showPicker
+        setBackgroundColor(keyboardTheme.backgroundEndColor)
         safeArea.install()
     }
 
@@ -127,7 +124,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         val heightDp = KeyboardDimensions.recommendedHeightDp(
             inputMethod, editorMode, sizingProfile, contentWidthDp, showsNumberRow,
         )
-        val baseHeight = (heightDp * density).roundToInt() + overlayPadTop
+        val baseHeight = (heightDp * density).roundToInt()
         val height = placement.resolveHeight(baseHeight, heightMeasureSpec)
         super.onMeasure(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
