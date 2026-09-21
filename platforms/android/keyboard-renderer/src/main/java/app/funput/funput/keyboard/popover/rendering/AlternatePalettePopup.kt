@@ -66,6 +66,7 @@ internal class AlternatePalettePopup(private val host: View) {
         private val renderer = AlternatePaletteRenderer(RenderMetrics(resources))
         private var preview: AlternateSelectionPreview? = null
         private lateinit var theme: KeyboardTheme
+        private var appliedTheme: KeyboardTheme? = null
         private var shiftState = ShiftState.OFF
         private var padding = 0f
 
@@ -75,6 +76,12 @@ internal class AlternatePalettePopup(private val host: View) {
             shiftState: ShiftState,
             padding: Float,
         ) {
+            // Sliding between alternates re-renders on every selection, so the renderer's cached
+            // shaders are rebuilt only when the theme instance itself changes.
+            if (appliedTheme !== theme) {
+                renderer.updateTheme(theme)
+                appliedTheme = theme
+            }
             this.preview = preview
             this.theme = theme
             this.shiftState = shiftState

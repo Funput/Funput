@@ -8,6 +8,7 @@ import androidx.core.graphics.ColorUtils
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionPreview
 import app.funput.funput.keyboard.rendering.RenderMetrics
+import app.funput.funput.keyboard.rendering.liquid.LiquidGlassKeyPainter
 import app.funput.funput.theme.KeyboardTheme
 
 internal class AlternatePaletteRenderer(private val metrics: RenderMetrics) {
@@ -20,6 +21,11 @@ internal class AlternatePaletteRenderer(private val metrics: RenderMetrics) {
     }
     private val rect = RectF()
     private val fontMetrics = Paint.FontMetrics()
+    private val liquidPainter = LiquidGlassKeyPainter(metrics)
+
+    fun updateTheme(theme: KeyboardTheme) {
+        liquidPainter.updateTheme(theme)
+    }
 
     fun draw(
         canvas: Canvas,
@@ -36,6 +42,7 @@ internal class AlternatePaletteRenderer(private val metrics: RenderMetrics) {
         rect.offset(0f, -metrics.dp(2f))
         fillPaint.color = theme.popupSurfaceColor
         canvas.drawRoundRect(rect, radius, radius, fillPaint)
+        liquidPainter.draw(canvas, rect, radius, pressed = false)
         drawBorder(canvas, theme, radius)
         preview.layout.itemBounds.forEachIndexed { index, item ->
             if (index == preview.selectedIndex) drawSelection(canvas, item, theme, radius)

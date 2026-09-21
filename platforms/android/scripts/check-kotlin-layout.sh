@@ -26,6 +26,7 @@ readonly roots=(
     "$android_root/app/src/androidTest/java/app/funput/funput/ui/about"
     "$android_root/buildSrc/src/main/kotlin"
 
+    "$renderer_main/rendering/liquid"
     "$renderer_main/interaction/gestures"
     "$renderer_main/accessibility"
     "$renderer_main/placement"
