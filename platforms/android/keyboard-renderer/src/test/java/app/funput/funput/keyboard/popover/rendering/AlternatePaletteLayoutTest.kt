@@ -8,7 +8,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AlternatePaletteLayoutTest {
-    private val surface = KeyBounds(0f, 0f, 390f, 304f)
+    private val surface = KeyBounds(0f, -400f, 390f, 304f)
 
     @Test
     fun `large catalog wraps and remains inside the surface`() {
@@ -66,13 +66,13 @@ class AlternatePaletteLayoutTest {
     }
 
     @Test
-    fun `a top-row Vietnamese catalog overflows above the surface instead of covering the key`() {
+    fun `a top-row Vietnamese catalog uses screen space above the keyboard`() {
         val source = KeyBounds(300f, 62f, 336f, 102f)
         val layout = resolve(19, source)
 
         assertTrue(layout.bounds.bottom <= source.top)
         assertTrue(!layout.overlapsSource)
-        assertTrue(layout.overflowAbove > 0f)
+        assertTrue(layout.bounds.top < 0f)
         assertEquals(0, layout.selectionAt(source.centerX, source.centerY, source.centerX, source.centerY, 1f))
     }
 

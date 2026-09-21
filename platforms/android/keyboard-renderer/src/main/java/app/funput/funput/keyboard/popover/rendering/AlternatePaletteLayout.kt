@@ -8,12 +8,9 @@ internal data class AlternatePaletteLayout(
     val itemBounds: List<KeyBounds>,
     val sourceBounds: KeyBounds,
     val defaultIndex: Int,
-    /** True when the palette still intersects its key after placement. */
+    /** True when a short viewport forces the palette to intersect its source key. */
     val overlapsSource: Boolean,
 ) {
-    /** Pixels the palette extends above the keyboard surface and needs an IME overlay pad. */
-    val overflowAbove: Float get() = (-bounds.top).coerceAtLeast(0f)
-
     /**
      * The cell a moved finger is on. A palette clamped over its own key has no key region left
      * to stand for the default, so the touch's starting point holds it until the finger travels
@@ -78,9 +75,9 @@ internal data class AlternatePaletteLayout(
             val width = minOf(safe.width, columns * span - gap + padding * 2f)
             val height = rows * cellHeight + (rows - 1) * gap + padding * 2f
             val left = (source.centerX - width / 2f).coerceIn(safe.left, safe.right - width)
-            // Sit fully above the key, like Gboard. Covering a top-row key made the hold
-            // harder to aim; overflow above the surface is drawn in a transparent IME pad.
-            val top = source.top - SourceGap * density - height
+            // The surface may extend into screen space above the keyboard. Only overlap the
+            // source when even that full viewport cannot fit the palette.
+            val top = maxOf(safe.top, source.top - SourceGap * density - height)
             val bounds = KeyBounds(left, top, left + width, top + height)
             return AlternatePaletteLayout(
                 bounds = bounds,
