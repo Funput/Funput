@@ -7,6 +7,7 @@ use std::io::Write;
 use proptest::prelude::*;
 
 use super::*;
+use crate::engine::admission::promotion_threshold;
 use crate::index::normalize;
 use crate::{SuggestionConfig, SuggestionEngine};
 
@@ -25,10 +26,13 @@ fn attach(engine: &mut SuggestionEngine) -> tempfile::NamedTempFile {
     file
 }
 
+/// Learns each word often enough to be offered, English ones included: a word the
+/// language cannot spell waits for `unrecognized_promotion_uses` rather than two.
 fn promoted(engine: &mut SuggestionEngine, words: &[&str]) {
     for word in words {
-        engine.learn(word);
-        engine.learn(word);
+        for _ in 0..SuggestionConfig::default().unrecognized_promotion_uses {
+            engine.learn(word);
+        }
     }
 }
 
@@ -40,11 +44,12 @@ fn sorted(engine: &SuggestionEngine, prefix: &str) -> Vec<String> {
 
 /// What the running count must equal, found the slow way.
 fn recount(engine: &SuggestionEngine) -> u32 {
-    let promotion = engine.config.promotion_uses;
-    let marked = engine
-        .words
-        .iter()
-        .filter(|word| word.uses >= promotion && normalize::is_marked(&word.text));
+    // Per word, not one threshold for all: a marked word the language cannot spell —
+    // `đánb` — is promoted later than `đánh`, and the running count knows it.
+    let marked = engine.words.iter().filter(|word| {
+        word.uses >= promotion_threshold(&word.text, &engine.config)
+            && normalize::is_marked(&word.text)
+    });
     marked.count() as u32
 }
 
@@ -110,8 +115,10 @@ enum Step {
     Reset,
 }
 
+/// `đánb` earns its place here: marked like a Vietnamese word, spelled like nothing the
+/// language has, so it is the one word whose promotion the two counts could disagree on.
 const WORDS: &[&str] = &[
-    "ăn", "thì", "đi", "khỏe", "được", "anh", "hai", "em", "con", "work", "the", "iphone",
+    "ăn", "thì", "đi", "khỏe", "được", "anh", "hai", "em", "con", "work", "the", "iphone", "đánb",
 ];
 
 fn step() -> impl Strategy<Value = Step> {

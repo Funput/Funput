@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 70371cf40f8616e01b0894c06d619b75782d4e004645cb98aa61e1b995aa877b # shrinks to steps = [Learn("con"), Learn("con"), Learn("đi"), Learn("con"), Learn("đi"), Learn("đánb"), Learn("đi"), Learn("đánb"), Learn("ăn")], max_words = 3

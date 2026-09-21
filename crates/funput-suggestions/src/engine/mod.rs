@@ -1,7 +1,9 @@
 //! The [`SuggestionEngine`] facade — its state, lifecycle (`in_memory` / `open`),
 //! and capacity policy — plus the behaviours split by concern into [`learning`]
 //! (learn), [`query`] (suggest/stats), and [`durability`] (flush/compact/reset).
+//! [`admission`] decides how often a word has to be seen before learning offers it.
 
+pub(crate) mod admission;
 mod config;
 mod durability;
 mod learning;
