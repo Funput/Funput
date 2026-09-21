@@ -80,6 +80,10 @@ class KeyboardSurfaceSuggestionStateTest {
             KeySpec("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji"),
             KeyBounds(900f, 0f, 1000f, 100f),
         )
+        val placement = ResolvedKey(
+            KeySpec("placement", "", KeyRole.PLACEMENT, accessibilityLabel = "Placement"),
+            KeyBounds(800f, 0f, 890f, 100f),
+        )
         return ResolvedKeyboard(
             width = 1080f,
             height = 700f,
@@ -87,6 +91,7 @@ class KeyboardSurfaceSuggestionStateTest {
                 bounds = KeyBounds(0f, 0f, 1080f, 100f),
                 suggestionsBounds = KeyBounds(90f, 0f, 90f + width, 100f),
                 systemInputMethodKey = null,
+                placementKey = placement,
                 emojiKey = emoji,
                 suggestionsEnabled = true,
             ),

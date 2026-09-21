@@ -80,13 +80,13 @@ class KeyboardHitTesterTest {
     }
 
     @Test
-    fun emojiTargetAbsorbsItsAdjacentGap() {
+    fun placementTargetAbsorbsItsLeadingGap() {
         val bar = requireNotNull(keyboardWithSuggestions.suggestionBar)
-        val midpoint = (bar.suggestionsBounds.right + bar.emojiKey.bounds.left) / 2f
+        val midpoint = (bar.suggestionsBounds.right + bar.placementKey.bounds.left) / 2f
 
         assertNull(keyboardWithSuggestions.keyAt(midpoint - TestOffset, bar.bounds.centerY))
         assertEquals(
-            bar.emojiKey,
+            bar.placementKey,
             keyboardWithSuggestions.keyAt(midpoint + TestOffset, bar.bounds.centerY),
         )
     }

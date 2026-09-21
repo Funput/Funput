@@ -31,12 +31,10 @@ class FunputInputMethodService : InputMethodService() {
     private lateinit var settings: ImeSettingsController
     private lateinit var hardwareKeys: ImeHardwareKeyHandler
     private lateinit var shortcuts: ImeShortcutsController
-
     private val nativeEngine get() = session.nativeEngine
     private val actionHandler get() = session.actionHandler
     private val editorRuntime get() = session.editorRuntime
     private val suggestionService get() = session.suggestionService
-
     override fun onCreate() {
         super.onCreate()
         session = createImeEditingSession(
@@ -68,6 +66,7 @@ class FunputInputMethodService : InputMethodService() {
         updateInputView(view)
         ImeKeyboardCallbackBinder.bind(view, actionHandler, editorRuntime, suggestionService,
             systemInputMethodSwitcher)
+        ImePlacementBinder.bind(view, this, serviceScope)
         session.bindClipboard(view)
         EmojiCatalogPreloader.schedule(view)
     }
@@ -85,7 +84,6 @@ class FunputInputMethodService : InputMethodService() {
         session.startInputView(editorRuntime.policy)
         editorRuntime.updateCapitalization(preserveCapsLock = false)
     }
-
     override fun onFinishInputView(finishingInput: Boolean) =
         session.finishInputView().also { super.onFinishInputView(finishingInput) }
     override fun onUpdateSelection(
@@ -138,6 +136,7 @@ class FunputInputMethodService : InputMethodService() {
         ImeOverlayInsets.apply(outInsets, keyboardView?.overlayPadTop ?: 0)
     }
 
+    override fun onEvaluateFullscreenMode(): Boolean = false
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         keyboardView?.let(::updateInputView)

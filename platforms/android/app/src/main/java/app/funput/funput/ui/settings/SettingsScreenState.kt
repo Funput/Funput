@@ -7,6 +7,8 @@ import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.placement.KeyboardPlacementMode
+import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 
@@ -19,6 +21,7 @@ internal class SettingsScreenState(
     val showsNumberRow: Boolean,
     val toneStyle: ToneStyle,
     val keySizeProfile: KeyboardSizingProfile,
+    val placement: KeyboardPlacementPreferences = KeyboardPlacementPreferences.Default,
     val hapticsEnabled: Boolean,
     val soundsEnabled: Boolean,
     val smartComposition: SmartCompositionPreferences,
@@ -31,6 +34,8 @@ internal class SettingsScreenState(
     val onOpenShortcuts: () -> Unit = {},
     val onToneStyleSelected: (ToneStyle) -> Unit,
     val onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
+    val onPlacementModeSelected: (KeyboardPlacementMode) -> Unit = {},
+    val onElevationSelected: (Float) -> Unit = {},
     val onHapticsChanged: (Boolean) -> Unit,
     val onSoundsChanged: (Boolean) -> Unit,
     val onSmartGesturesChanged: (Boolean) -> Unit,

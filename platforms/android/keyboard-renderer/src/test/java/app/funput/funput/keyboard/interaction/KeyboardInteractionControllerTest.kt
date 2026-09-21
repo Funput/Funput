@@ -1,5 +1,4 @@
 package app.funput.funput.keyboard.interaction
-
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
@@ -16,6 +15,7 @@ class KeyboardInteractionControllerTest {
     private val selections = mutableListOf<SuggestionSelection>()
     private val haptics = mutableListOf<KeyboardHapticType>()
     private var emojiRequestCount = 0
+    private var placementRequestCount = 0
     private var visualStateChangeCount = 0
     private var semanticStateChangeCount = 0
     private val space = KeySpec(
@@ -26,13 +26,15 @@ class KeyboardInteractionControllerTest {
     )
     private val comma = KeySpec("comma", ",", KeyRole.PUNCTUATION)
     private val emoji = KeySpec("emoji", "", KeyRole.EMOJI, accessibilityLabel = "Emoji")
+    private val placement = KeySpec("placement", "", KeyRole.PLACEMENT, accessibilityLabel = "Placement")
     private val controller = KeyboardInteractionController(
-        keySpec = { id -> listOf(space, comma, emoji).firstOrNull { it.id == id } },
+        keySpec = { id -> listOf(space, comma, emoji, placement).firstOrNull { it.id == id } },
         suggestionSelection = { id ->
             SuggestionSelection(1, "chào").takeIf { id == "suggestion-1" }
         },
         onAction = { action -> actions += action },
         onEmojiRequested = { emojiRequestCount++ },
+        onPlacementEditorRequested = { placementRequestCount++ },
         onSuggestionSelected = { selection -> selections += selection },
         onHapticFeedback = { type -> haptics += type },
         onVisualStateChanged = { visualStateChangeCount++ },
@@ -67,6 +69,11 @@ class KeyboardInteractionControllerTest {
         assertEquals(listOf(KeyboardHapticType.CONTROL, KeyboardHapticType.SPACE), haptics)
     }
 
+    @Test
+    fun placementUsesDedicatedCallback() {
+        controller.emitClick("placement", eventTimeMillis = 100L)
+        assertEquals(1, placementRequestCount)
+    }
     @Test
     fun swipingAgainReturnsToVietnamese() {
         swipe(pointerId = 3, fromX = 100f, toX = 140f)

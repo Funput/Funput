@@ -20,4 +20,11 @@
     <string name="clipboard_clear_all">Xoá tất cả</string>
     <string name="clipboard_return">Trở về bàn phím Funput</string>
     <string name="clipboard_preview">Xem nội dung bảng nhớ tạm</string>
+    <string name="placement_standard">Thường</string>
+    <string name="placement_elevated">Trên cao</string>
+    <string name="placement_done">Xong</string>
+    <string name="placement_reset">Đặt lại</string>
+    <string name="placement_slider">Mức nâng bàn phím</string>
+    <string name="placement_unavailable">Không đủ không gian để nâng bàn phím</string>
+    <string name="placement_drag_description">Kéo lên hoặc xuống để chỉnh độ cao bàn phím, hiện tại %1$d dp</string>
 </resources>

@@ -28,6 +28,9 @@ readonly roots=(
 
     "$renderer_main/interaction/gestures"
     "$renderer_main/accessibility"
+    "$renderer_main/placement"
+    "$renderer_test/placement"
+    "$android_root/keyboard-ui/src/main/java/app/funput/funput/keyboard/ui/placement"
     "$renderer_test/interaction/gestures"
     "$renderer_test/accessibility"
     "$ime_main/editing/caret"

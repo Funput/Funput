@@ -29,6 +29,7 @@ internal class ImeSettingsController(
     private val onPersonalSuggestionsChanged: (PersonalSuggestionPreferences) -> Unit,
     private val onAutoCapitalizeChanged: (Boolean) -> Unit = {},
 ) {
+    private val placementState = ImePlacementSettingsState(onViewSettingsChanged)
     var inputMethod = InputMethodSettings.DefaultInputMethod
         private set
     var sizingProfile = KeyboardSizingSettings.DefaultProfile
@@ -42,7 +43,7 @@ internal class ImeSettingsController(
     var smartGesturesEnabled = SmartGestureSettings.DefaultEnabled
         private set
     val autoCapitalizeEnabled get() = smartComposition.autoCapitalizeEnabled
-
+    val placementPreferences get() = placementState.preferences
     // Seeded with the same defaults the settings flows fall back to, so the engine
     // configuration below is always complete — no option has to be invented when one
     // flow emits before the others.
@@ -53,7 +54,6 @@ internal class ImeSettingsController(
     // under someone who never asked for it.
     private var toneStyle = ToneStyleSettings.FallbackToneStyle
     private var smartComposition = SmartCompositionPreferences.Default
-
     init {
         // Push the defaults before any flow reports anything.
         //
@@ -66,12 +66,12 @@ internal class ImeSettingsController(
         // no matter which defaults either of them picks later.
         applyEngineConfiguration()
     }
-
     fun observe(context: Context, scope: CoroutineScope) {
         InputMethodSettings(context).inputMethod.collectIn(scope, ::applyInputMethod)
         ToneStyleSettings(context).toneStyle.collectIn(scope, ::applyToneStyle)
         SmartCompositionSettings(context).preferences.collectIn(scope, ::applySmartComposition)
         KeyboardSizingSettings(context).profile.collectIn(scope, ::applySizingProfile)
+        placementState.observe(context, scope)
         KeyboardThemeSettings(context).selection.collectIn(scope, ::applyThemeSelection)
         KeyboardFeedbackSettings(context).preferences.collectIn(scope, ::applyFeedback)
         NumberRowSettings(context).showsNumberRow.collectIn(scope, ::applyShowsNumberRow)

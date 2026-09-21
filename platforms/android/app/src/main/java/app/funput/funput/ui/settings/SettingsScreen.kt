@@ -32,9 +32,11 @@ internal fun SettingsScreen(
         picker = picker,
         inputMethod = state.inputMethod,
         toneStyle = state.toneStyle,
+        keyboardPlacementMode = state.placement.activeMode,
         clipboardExpiry = state.clipboardPreferences.expiry,
         onInputMethodSelected = state.onInputMethodSelected,
         onToneStyleSelected = state.onToneStyleSelected,
+        onKeyboardPlacementSelected = state.onPlacementModeSelected,
         onClipboardExpirySelected = state.onClipboardExpirySelected,
         onDismiss = { picker = null },
     )

@@ -2,26 +2,67 @@ package app.funput.funput.ui.settings.keyboard
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
+import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.model.KeyboardEditorMode
+import app.funput.funput.keyboard.placement.KeyboardPlacementMode
+import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
+import app.funput.funput.keyboard.placement.KeyboardPlacementResolver
 import app.funput.funput.ui.settings.components.SettingsPercentSliderRow
+import app.funput.funput.ui.settings.components.SettingsRow
 import app.funput.funput.ui.settings.components.SettingsSection
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
+import app.funput.funput.ui.settings.label
 
 @Composable
 internal fun LayoutSettingsSection(
     inputMethod: KeyboardInputMethod,
     showsNumberRow: Boolean,
     keySizeProfile: KeyboardSizingProfile,
+    placement: KeyboardPlacementPreferences = KeyboardPlacementPreferences.Default,
     onShowsNumberRowChanged: (Boolean) -> Unit,
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
+    onOpenPlacement: () -> Unit = {},
+    onElevationSelected: (Float) -> Unit = {},
 ) {
+    val configuration = LocalConfiguration.current
+    val baseHeight = KeyboardDimensions.recommendedHeightDp(
+        inputMethod, KeyboardEditorMode.TEXT, keySizeProfile,
+        configuration.screenWidthDp.toFloat(), showsNumberRow,
+    )
+    val maximumOffset = KeyboardPlacementResolver.resolve(
+        preferences = placement.copy(
+            activeMode = KeyboardPlacementMode.ELEVATED,
+            elevatedOffsetDp = configuration.screenHeightDp.toFloat(),
+        ),
+        density = 1f,
+        viewportHeightPx = configuration.screenHeightDp,
+        baseKeyboardHeightPx = baseHeight.toInt(),
+    ).maximumOffsetPx.toFloat()
     SettingsSection(
         title = stringResource(R.string.settings_section_layout),
         rows = buildList {
+            add { position ->
+                SettingsRow(
+                    position = position,
+                    title = stringResource(R.string.settings_keyboard_mode_title),
+                    value = placement.activeMode.label(),
+                    iconRes = R.drawable.ic_keyboard,
+                    onClick = onOpenPlacement,
+                )
+            }
+            if (placement.activeMode == KeyboardPlacementMode.ELEVATED) {
+                add { position ->
+                    ElevationSliderRow(
+                        position, placement.elevatedOffsetDp, maximumOffset, onElevationSelected,
+                    )
+                }
+            }
             if (inputMethod.isTelexFamily) {
                 add { position ->
                     SettingsSwitchRow(
