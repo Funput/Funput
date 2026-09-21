@@ -2,7 +2,7 @@ package app.funput.funput.keyboard.ui
 
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.SuggestionSelection
-import app.funput.funput.keyboard.placement.KeyboardPlacementMode
+import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 
 /** Host callbacks emitted by the complete Funput keyboard UI. */
@@ -19,8 +19,7 @@ class FunputKeyboardCallbacks {
     var onClipboardEntryRemoved: ((KeyboardClipboardEntry) -> Unit)? = null
     var onClipboardClearRequested: (() -> Unit)? = null
     var onSuggestionSelected: ((SuggestionSelection) -> Unit)? = null
-    var onPlacementModeChanged: ((KeyboardPlacementMode) -> Unit)? = null
-    var onPlacementOffsetSettled: ((Float) -> Unit)? = null
+    var onPlacementChanged: ((KeyboardPlacementPreferences) -> Unit)? = null
 
     internal fun dispatch(action: KeyAction) {
         onKeyAction?.invoke(action)
@@ -56,11 +55,7 @@ class FunputKeyboardCallbacks {
         onSuggestionSelected?.invoke(selection)
     }
 
-    internal fun dispatchPlacementMode(mode: KeyboardPlacementMode) {
-        onPlacementModeChanged?.invoke(mode)
-    }
-
-    internal fun dispatchPlacementOffset(offsetDp: Float) {
-        onPlacementOffsetSettled?.invoke(offsetDp)
+    internal fun dispatchPlacement(preferences: KeyboardPlacementPreferences) {
+        onPlacementChanged?.invoke(preferences)
     }
 }

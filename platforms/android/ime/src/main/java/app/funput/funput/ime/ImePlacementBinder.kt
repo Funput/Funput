@@ -10,11 +10,8 @@ import kotlinx.coroutines.launch
 internal object ImePlacementBinder {
     fun bind(view: FunputKeyboardView, context: Context, scope: CoroutineScope) {
         val store = KeyboardPlacementSettings(context)
-        view.callbacks.onPlacementModeChanged = { mode ->
-            scope.launch { store.setMode(mode) }
-        }
-        view.callbacks.onPlacementOffsetSettled = { offsetDp ->
-            scope.launch { store.setElevatedOffsetDp(offsetDp) }
+        view.callbacks.onPlacementChanged = { preferences ->
+            scope.launch { store.setPreferences(preferences) }
         }
     }
 }

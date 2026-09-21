@@ -142,7 +142,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         resolvedKeyboard = layoutState.layout.resolveGeometry(
             width = width, height = overlay.keyboardHeight(height),
             density = resources.displayMetrics.density, profile = sizingProfile,
-            showClipboard = clipboardKeyVisible && suggestionState.utilityKeysVisible,
+            showClipboard = clipboardKeyVisible && suggestionState.utilityKeysVisible, showPlacement = suggestionState.utilityKeysVisible,
         )
         suggestionState.geometryChanged(); accessibility.refresh()
     }

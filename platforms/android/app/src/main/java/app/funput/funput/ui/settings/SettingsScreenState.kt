@@ -9,6 +9,7 @@ import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
+import app.funput.funput.keyboard.placement.OneHandedSide
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 
@@ -36,6 +37,8 @@ internal class SettingsScreenState(
     val onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     val onPlacementModeSelected: (KeyboardPlacementMode) -> Unit = {},
     val onElevationSelected: (Float) -> Unit = {},
+    val onOneHandedWidthSelected: (Float) -> Unit = {},
+    val onOneHandedSideSelected: (OneHandedSide) -> Unit = {},
     val onHapticsChanged: (Boolean) -> Unit,
     val onSoundsChanged: (Boolean) -> Unit,
     val onSmartGesturesChanged: (Boolean) -> Unit,

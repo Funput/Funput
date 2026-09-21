@@ -90,6 +90,8 @@ internal fun SettingsScreenSections(
                 onKeySizeSelected = state.onKeySizeSelected,
                 onOpenPlacement = { onOpenPicker(SettingsPicker.KEYBOARD_PLACEMENT) },
                 onElevationSelected = state.onElevationSelected,
+                onOneHandedWidthSelected = state.onOneHandedWidthSelected,
+                onOneHandedSideSelected = state.onOneHandedSideSelected,
             )
         }
         settingsItem("smart", firstSectionIndex + 2, tracker) {

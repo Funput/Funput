@@ -59,7 +59,7 @@ internal object KeyboardHitTargetResolver {
             ),
             systemInputMethodKey = lookup(bar.systemInputMethodKey),
             clipboardKey = lookup(bar.clipboardKey),
-            placementKey = requireNotNull(lookup(bar.placementKey)),
+            placementKey = lookup(bar.placementKey),
             emojiKey = requireNotNull(lookup(bar.emojiKey)),
         )
     }

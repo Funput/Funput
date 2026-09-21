@@ -27,7 +27,10 @@ class ToolbarClipboardYieldTest {
         assertNull(hidden.clipboardKey)
         assertNotNull(shown.clipboardKey)
         assertEquals(hidden.emojiKey.bounds, shown.emojiKey.bounds)
-        assertEquals(hidden.placementKey.bounds, shown.placementKey.bounds)
+        assertEquals(
+            requireNotNull(hidden.placementKey).bounds,
+            requireNotNull(shown.placementKey).bounds,
+        )
         assertTrue(hidden.suggestionsBounds.width > shown.suggestionsBounds.width)
     }
 

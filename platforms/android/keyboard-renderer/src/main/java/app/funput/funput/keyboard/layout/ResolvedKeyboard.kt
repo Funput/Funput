@@ -34,7 +34,7 @@ data class ResolvedSuggestionBar(
     val suggestionsHitBounds: KeyBounds = suggestionsBounds,
     val systemInputMethodKey: ResolvedKey?,
     val clipboardKey: ResolvedKey? = null,
-    val placementKey: ResolvedKey,
+    val placementKey: ResolvedKey?,
     val emojiKey: ResolvedKey,
     val suggestionsEnabled: Boolean,
 )
