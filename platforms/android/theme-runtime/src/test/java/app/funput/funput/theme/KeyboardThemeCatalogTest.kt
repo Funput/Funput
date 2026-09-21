@@ -38,6 +38,8 @@ class KeyboardThemeCatalogTest {
             assertEquals(6f, descriptor.theme.keyCornerRadiusDp, 0f)
             assertEquals(0f, descriptor.theme.keyBorderWidthDp, 0f)
             assertEquals(0, descriptor.theme.keyBorderColor ushr 24)
+            // A preset that insets its keycaps draws smaller keys than every other preset.
+            assertEquals(0f, descriptor.theme.keycapInsetDp, 0f)
         }
     }
 
