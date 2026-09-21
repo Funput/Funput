@@ -1,8 +1,10 @@
 package app.funput.funput.ui.settings.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -27,6 +29,7 @@ import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
+import app.funput.funput.keyboard.placement.OneHandedSide
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.theme.KeyboardThemePreview
 import app.funput.funput.ui.theme.KeyboardThemePreviewConfiguration
@@ -67,17 +70,29 @@ internal fun KeyboardHero(
             modifier = Modifier.padding(Spacing.Medium),
         ) {
             Column(modifier = Modifier.clip(MaterialTheme.shapes.small)) {
-                KeyboardThemePreview(
-                    theme = descriptor.theme,
-                    backgroundImage = descriptor.backgroundImage,
-                    configuration = KeyboardThemePreviewConfiguration(
-                        inputMethod = inputMethod,
-                        sizingProfile = sizingProfile,
-                        showsNumberRow = numberRow,
+                Box(
+                    modifier = Modifier.fillMaxWidth().background(
+                        androidx.compose.ui.graphics.Color(descriptor.theme.backgroundEndColor),
                     ),
-                    modifier = Modifier.fillMaxWidth()
-                        .aspectRatio(if (numberRow) NumberRowAspect else PreviewAspect),
-                )
+                ) {
+                    val oneHanded = placement.activeMode == KeyboardPlacementMode.ONE_HANDED
+                    KeyboardThemePreview(
+                        theme = descriptor.theme,
+                        backgroundImage = descriptor.backgroundImage,
+                        configuration = KeyboardThemePreviewConfiguration(
+                            inputMethod = inputMethod,
+                            sizingProfile = sizingProfile,
+                            showsNumberRow = numberRow,
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth(if (oneHanded) placement.oneHandedWidthFraction else 1f)
+                            .aspectRatio(if (numberRow) NumberRowAspect else PreviewAspect)
+                            .align(
+                                if (placement.oneHandedSide == OneHandedSide.RIGHT) Alignment.CenterEnd
+                                else Alignment.CenterStart,
+                            ),
+                    )
+                }
                 if (placement.activeMode == KeyboardPlacementMode.ELEVATED) {
                     Surface(
                         color = androidx.compose.ui.graphics.Color(descriptor.theme.backgroundEndColor),

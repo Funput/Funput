@@ -32,6 +32,11 @@
     <string name="settings_keyboard_mode_title">Chế độ bàn phím</string>
     <string name="keyboard_mode_standard">Thường</string>
     <string name="keyboard_mode_elevated">Trên cao</string>
+    <string name="keyboard_mode_one_handed">Một tay</string>
+    <string name="settings_one_handed_width_title">Chiều rộng bàn phím một tay</string>
+    <string name="settings_one_handed_side_title">Vị trí bàn phím một tay</string>
+    <string name="keyboard_side_left">Trái</string>
+    <string name="keyboard_side_right">Phải</string>
     <string name="settings_elevation_title">Mức nâng</string>
     <string name="settings_elevation_value">%1$d dp</string>
     <string name="settings_percent_value">%1$d%%</string>

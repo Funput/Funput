@@ -71,6 +71,12 @@ internal fun SettingsRoute(
             onElevationSelected = { offsetDp ->
                 scope.launch { settings.placementStore.setElevatedOffsetDp(offsetDp) }
             },
+            onOneHandedWidthSelected = { width ->
+                scope.launch { settings.placementStore.setOneHandedWidthFraction(width) }
+            },
+            onOneHandedSideSelected = { side ->
+                scope.launch { settings.placementStore.setOneHandedSide(side) }
+            },
             onHapticsChanged = { enabled ->
                 scope.launch { settings.feedbackStore.setHapticsEnabled(enabled) }
             },

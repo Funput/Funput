@@ -13,8 +13,10 @@ import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.keyboard.placement.KeyboardPlacementResolver
+import app.funput.funput.keyboard.placement.OneHandedSide
 import app.funput.funput.ui.settings.components.SettingsPercentSliderRow
 import app.funput.funput.ui.settings.components.SettingsRow
+import app.funput.funput.ui.settings.components.SettingsSegmentedRow
 import app.funput.funput.ui.settings.components.SettingsSection
 import app.funput.funput.ui.settings.components.SettingsSwitchRow
 import app.funput.funput.ui.settings.label
@@ -29,6 +31,8 @@ internal fun LayoutSettingsSection(
     onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     onOpenPlacement: () -> Unit = {},
     onElevationSelected: (Float) -> Unit = {},
+    onOneHandedWidthSelected: (Float) -> Unit = {},
+    onOneHandedSideSelected: (OneHandedSide) -> Unit = {},
 ) {
     val configuration = LocalConfiguration.current
     val baseHeight = KeyboardDimensions.recommendedHeightDp(
@@ -60,6 +64,30 @@ internal fun LayoutSettingsSection(
                 add { position ->
                     ElevationSliderRow(
                         position, placement.elevatedOffsetDp, maximumOffset, onElevationSelected,
+                    )
+                }
+            }
+            if (placement.activeMode == KeyboardPlacementMode.ONE_HANDED) {
+                add { position ->
+                    SettingsPercentSliderRow(
+                        position = position,
+                        title = stringResource(R.string.settings_one_handed_width_title),
+                        iconRes = R.drawable.ic_key_size,
+                        value = placement.oneHandedWidthFraction,
+                        range = KeyboardPlacementPreferences.MinOneHandedWidthFraction..
+                            KeyboardPlacementPreferences.MaxOneHandedWidthFraction,
+                        onValueSettled = onOneHandedWidthSelected,
+                    )
+                }
+                add { position ->
+                    SettingsSegmentedRow(
+                        position = position,
+                        title = stringResource(R.string.settings_one_handed_side_title),
+                        iconRes = R.drawable.ic_keyboard,
+                        options = OneHandedSide.entries,
+                        selected = placement.oneHandedSide,
+                        labelOf = { it.label() },
+                        onSelected = onOneHandedSideSelected,
                     )
                 }
             }
