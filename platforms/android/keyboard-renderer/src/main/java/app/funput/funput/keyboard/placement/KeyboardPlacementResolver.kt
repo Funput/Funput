@@ -33,9 +33,30 @@ object KeyboardPlacementResolver {
         }
         return KeyboardPlacementResult(appliedOffset, maximumOffset)
     }
+
+    fun resolveHorizontal(
+        preferences: KeyboardPlacementPreferences,
+        viewportWidthPx: Int,
+    ): KeyboardHorizontalPlacementResult {
+        val width = if (preferences.activeMode == KeyboardPlacementMode.ONE_HANDED) {
+            (viewportWidthPx * preferences.oneHandedWidthFraction).roundToInt()
+        } else {
+            viewportWidthPx
+        }.coerceIn(0, viewportWidthPx)
+        val start = if (
+            preferences.activeMode == KeyboardPlacementMode.ONE_HANDED &&
+            preferences.oneHandedSide == OneHandedSide.RIGHT
+        ) viewportWidthPx - width else 0
+        return KeyboardHorizontalPlacementResult(width, start)
+    }
 }
 
 data class KeyboardPlacementResult(
     val appliedOffsetPx: Int,
     val maximumOffsetPx: Int,
+)
+
+data class KeyboardHorizontalPlacementResult(
+    val contentWidthPx: Int,
+    val contentStartPx: Int,
 )
