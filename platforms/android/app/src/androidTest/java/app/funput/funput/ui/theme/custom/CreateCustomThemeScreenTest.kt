@@ -1,14 +1,15 @@
 package app.funput.funput.ui.theme.custom
 
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
+import app.funput.funput.ui.theme.custom.color.ColorPickerHexTag
+import app.funput.funput.ui.theme.custom.color.ColorPickerState
 import app.funput.funput.theme.BuiltInKeyboardThemeSource
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId
@@ -46,15 +47,18 @@ class CreateCustomThemeScreenTest {
         compose.onNodeWithTag("custom-theme-name").performTextInput("Ocean")
         // Base and accent are the first two things on the page now, not a dropdown behind restore.
         compose.onNodeWithText(lightTheme.name).performClick()
-        compose.onNodeWithContentDescription("Xanh biển").performClick().assertIsSelected()
+        compose.onNodeWithTag(AccentColorSelectorTag).performClick()
+        compose.onNodeWithTag(ColorPickerHexTag).performTextReplacement("2F9BFF")
+        compose.onNodeWithText("Chọn").performClick()
         compose.onNodeWithText("Lưu chủ đề").performClick()
 
         compose.runOnIdle {
             assertEquals("Ocean", savedDraft?.name)
             assertEquals(KeyboardThemeId.Light, savedDraft?.baseThemeId)
             // The re-dye is proved against every base and hue in ThemeRecolorTest; what this test
-            // is for is that the accent the user tapped is the accent that got saved.
-            assertEquals(AccentPresets[3].argb, savedDraft?.theme?.accentColor)
+            // is for is that the color typed into the picker is the accent that got saved.
+            val ocean = ColorPickerState.fromHexOrNull("2F9BFF", alpha = 1f)!!.argb
+            assertEquals(ocean, savedDraft?.theme?.accentColor)
             assertNotEquals(lightTheme.theme, savedDraft?.theme)
         }
     }
@@ -71,7 +75,7 @@ class CreateCustomThemeScreenTest {
             author = "Me",
             origin = KeyboardThemeOrigin.CUSTOM,
             baseThemeId = KeyboardThemeId.Light,
-            theme = lightTheme.theme.withAccent(AccentPresets[2].argb),
+            theme = lightTheme.theme.withAccent(0xFF9F5CFF.toInt()),
         )
 
         compose.setContent {
