@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.text.KeyboardOptions
@@ -109,9 +110,13 @@ private fun HexField(state: ColorPickerState, onChange: (ColorPickerState) -> Un
         label = { Text(stringResource(R.string.custom_theme_color_picker_hex)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(ColorPickerHexTag),
     )
 }
+
+internal const val ColorPickerHexTag = "theme-color-hex"
 
 private const val MaxHue = 360f
 private const val PercentScale = 100f

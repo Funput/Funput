@@ -31,12 +31,15 @@ class KeyboardSizingProfileTest {
 
     @Test
     fun phoneLandscapeClampsDownToItsCeiling() {
-        val tall = KeyboardSizingProfile.scaled(1.2f)
+        val tall = KeyboardSizingProfile.scaled(KeyboardSizingProfile.MaxScale)
         assertEquals(
             KeyboardSizingProfile.PhoneLandscapeMaxScale,
             tall.constrainedForLandscape(isPhoneLandscape = true).heightScale,
         )
-        assertEquals(1.2f, tall.constrainedForLandscape(isPhoneLandscape = false).heightScale)
+        assertEquals(
+            KeyboardSizingProfile.MaxScale,
+            tall.constrainedForLandscape(isPhoneLandscape = false).heightScale,
+        )
     }
 
     @Test

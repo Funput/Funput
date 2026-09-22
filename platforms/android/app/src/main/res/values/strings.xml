@@ -107,6 +107,7 @@
     <string name="custom_theme_cancel">Hủy</string>
     <string name="custom_theme_name_hint">Tên chủ đề</string>
     <string name="custom_theme_accent_title">Màu nhấn</string>
+    <string name="custom_theme_accent_pick">Chọn màu bất kỳ</string>
     <string name="custom_theme_tab_colors">Màu sắc</string>
     <string name="custom_theme_contrast_title">Tương phản thấp</string>
     <string name="custom_theme_contrast_footer">Bạn vẫn lưu được chủ đề này.</string>

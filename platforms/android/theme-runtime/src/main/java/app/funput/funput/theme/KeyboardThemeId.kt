@@ -23,7 +23,9 @@ value class KeyboardThemeId private constructor(val value: String) {
         val Slate: KeyboardThemeId = KeyboardThemeId("slate")
         val Blossom: KeyboardThemeId = KeyboardThemeId("blossom")
         val Orchid: KeyboardThemeId = KeyboardThemeId("orchid")
-        val Default: KeyboardThemeId = Dark
+
+        /** Used when nothing is stored yet, so a fresh install opens on Liquid Glass. */
+        val Default: KeyboardThemeId = LiquidGlass
 
         /** Creates an identifier or throws when [value] is not safe to persist. */
         fun of(value: String): KeyboardThemeId {

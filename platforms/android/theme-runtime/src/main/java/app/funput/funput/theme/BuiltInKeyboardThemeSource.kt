@@ -6,6 +6,14 @@ object BuiltInKeyboardThemeSource : InstalledThemeSource {
 
     override fun loadThemes(): List<KeyboardThemeDescriptor> = listOf(
         KeyboardThemeDescriptor(
+            id = KeyboardThemeId.LiquidGlass,
+            version = 1,
+            name = "Liquid Glass",
+            author = FunputAuthor,
+            origin = KeyboardThemeOrigin.BUILT_IN,
+            theme = KeyboardThemes.LiquidGlass,
+        ),
+        KeyboardThemeDescriptor(
             id = KeyboardThemeId.Dark,
             version = 2,
             name = "Ink",
@@ -36,14 +44,6 @@ object BuiltInKeyboardThemeSource : InstalledThemeSource {
             author = FunputAuthor,
             origin = KeyboardThemeOrigin.BUILT_IN,
             theme = KeyboardThemes.GlassLight,
-        ),
-        KeyboardThemeDescriptor(
-            id = KeyboardThemeId.LiquidGlass,
-            version = 1,
-            name = "Liquid Glass",
-            author = FunputAuthor,
-            origin = KeyboardThemeOrigin.BUILT_IN,
-            theme = KeyboardThemes.LiquidGlass,
         ),
         KeyboardThemeDescriptor(
             id = KeyboardThemeId.Slate,

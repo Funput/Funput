@@ -10,11 +10,11 @@ class KeyboardThemeCatalogTest {
     fun localCatalogContainsBuiltInThemesInDisplayOrder() {
         assertEquals(
             listOf(
+                KeyboardThemeId.LiquidGlass,
                 KeyboardThemeId.Dark,
                 KeyboardThemeId.Light,
                 KeyboardThemeId.GlassDark,
                 KeyboardThemeId.GlassLight,
-                KeyboardThemeId.LiquidGlass,
                 KeyboardThemeId.Slate,
                 KeyboardThemeId.Blossom,
                 KeyboardThemeId.Orchid,
@@ -28,9 +28,9 @@ class KeyboardThemeCatalogTest {
     }
 
     @Test
-    fun localCatalogUsesDarkAsDefault() {
-        assertEquals(KeyboardThemeId.Dark, LocalKeyboardThemeCatalog.defaultTheme.id)
-        assertSame(KeyboardThemes.Ink, LocalKeyboardThemeCatalog.defaultTheme.theme)
+    fun localCatalogUsesLiquidGlassAsDefault() {
+        assertEquals(KeyboardThemeId.LiquidGlass, LocalKeyboardThemeCatalog.defaultTheme.id)
+        assertSame(KeyboardThemes.LiquidGlass, LocalKeyboardThemeCatalog.defaultTheme.theme)
     }
 
     @Test
@@ -51,7 +51,7 @@ class KeyboardThemeCatalogTest {
             LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.Light).theme,
         )
         assertSame(
-            KeyboardThemes.Ink,
+            KeyboardThemes.LiquidGlass,
             LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.of("future-theme")).theme,
         )
         assertSame(
