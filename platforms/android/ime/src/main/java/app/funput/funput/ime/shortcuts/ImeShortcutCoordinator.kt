@@ -19,7 +19,8 @@ internal class ImeShortcutCoordinator(
         session.beginActivation()
     }
 
-    fun receive(library: ShortcutLibrary) = session.receive(library, word.isActive)
+    fun receive(library: ShortcutLibrary) =
+        session.receive(library, word.isActive || composition.isComposing)
 
     fun finish() {
         word.clear()
@@ -28,7 +29,9 @@ internal class ImeShortcutCoordinator(
 
     fun backspace(tracksEnglish: Boolean) {
         if (tracksEnglish) session.backspaceEnglish()
-        if (word.backspace()) session.finishWord()
+        // Reopening restores the shared engine, but not this raw-keystroke tracker.
+        // An empty tracker must not clear a Vietnamese composition that still owns it.
+        if (word.backspace() && !composition.isComposing) session.finishWord()
     }
 
     fun track(text: String, vietnamese: Boolean) {
