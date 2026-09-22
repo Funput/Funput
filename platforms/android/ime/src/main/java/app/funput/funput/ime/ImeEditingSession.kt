@@ -91,7 +91,6 @@ internal fun createImeEditingSession(
     scope: CoroutineScope,
     editor: InputConnectionEditor,
     connection: () -> InputConnection?,
-    cursorCapsMode: (Int) -> Int,
     currentShiftState: () -> ShiftState,
     updateShiftState: (ShiftState) -> Unit,
     showSuggestions: (List<String>) -> Unit,
@@ -99,7 +98,6 @@ internal fun createImeEditingSession(
 ): ImeEditingSession {
     val nativeEngine = NativeVietnameseEngine()
     val editorRuntime = ImeEditorRuntime(
-        cursorCapsMode = cursorCapsMode,
         currentShiftState = currentShiftState,
         updateShiftState = updateShiftState,
         connection = connection,

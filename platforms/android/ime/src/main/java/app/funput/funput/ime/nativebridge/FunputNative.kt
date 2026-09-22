@@ -33,4 +33,16 @@ internal object FunputNative {
     external fun nativeProcess(handle: Long, codePoint: Int): String
     external fun nativeBoundary(handle: Long, codePoint: Int): String
     external fun nativeBackspace(handle: Long): String
+
+    /**
+     * Whether a caret sitting after [before] starts a sentence, by the rules shared
+     * with every other Funput platform. Stateless, hence no handle.
+     *
+     * Always applies the typing reading, which treats a repeated full stop as an
+     * abbreviation (`v.v. ` does not start a sentence, `TS. ` still does).
+     */
+    external fun nativeStartsSentence(before: String): Boolean
+
+    /** Whether a caret sitting after [before] starts a word. Stateless, hence no handle. */
+    external fun nativeStartsWord(before: String): Boolean
 }

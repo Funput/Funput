@@ -7,9 +7,12 @@ import app.funput.funput.shortcuts.model.ShortcutLibrary
 /**
  * The engine's durable options, applied as one batch by [VietnameseEngine.configure].
  *
- * [autoCapitalize] stays off on Android: sentence capitalization is handled at the
- * keyboard layer by `AutoCapitalizationController` (shift state driven by the editor's
- * `CAP_MODE_*` flags), so enabling it in the engine too would capitalize twice.
+ * [autoCapitalize] stays off on Android. The engine's own auto-capitalize keeps
+ * running state that only sees keys passing through it, and an Android caret moves
+ * for reasons it never hears about — a paste, a tap elsewhere, a field that opened
+ * with text in it. `AutoCapitalizationController` asks `funput_core::sentence` about
+ * the real document instead, and raises the visible Shift key, which the engine has
+ * no way to do.
  */
 internal data class EngineConfiguration(
     val inputMethod: KeyboardInputMethod,

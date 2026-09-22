@@ -31,6 +31,9 @@ internal object EditorInfoPolicyResolver {
             editorMode = editorMode,
             editorAction = EditorInfoActionResolver.resolve(imeOptions, actionLabel, actionId),
             capitalizationModes = capitalizationModes(inputType, isText, editorMode.isPassword),
+            allowsAutoCapitalization = isText &&
+                !editorMode.isPassword &&
+                variation !in UncapitalizedVariations,
             isMultiline = isText && inputType has InputType.TYPE_TEXT_FLAG_MULTI_LINE,
             suggestionSource = source,
             allowsPersonalizedLearning = learningAllowed,
@@ -55,4 +58,15 @@ internal object EditorInfoPolicyResolver {
         if (isPassword) ImeSuggestionSource.NONE else ImeSuggestionSource.FUNPUT
 
     private infix fun Int.has(flag: Int): Boolean = this and flag != 0
+
+    /**
+     * Addresses, not prose. An email or a URI is lower case by convention, and
+     * these fields rarely set a CAP flag — under the old rule that silence was
+     * enough to keep Funput out, so it now has to be said.
+     */
+    private val UncapitalizedVariations = intArrayOf(
+        InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
+        InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS,
+        InputType.TYPE_TEXT_VARIATION_URI,
+    )
 }
