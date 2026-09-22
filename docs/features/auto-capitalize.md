@@ -2,9 +2,9 @@
 
 ## Trạng thái
 
-**Android đã chạy trên core.** Luật nhận diện câu sống một chỗ duy nhất trong
-`funput_core::sentence` và Android gọi tới nó qua `funput-jni`. iOS và ba nền tảng
-desktop vẫn dùng bản riêng của mình; [phần cuối](#chưa-hợp-nhất) liệt kê việc còn lại.
+**Android và iOS đã chạy trên core.** Luật nhận diện câu sống một chỗ duy nhất trong
+`funput_core::sentence`; Android gọi tới nó qua `funput-jni`, iOS qua `funput-ffi`.
+Ba nền tảng desktop vẫn dùng bản riêng; [phần cuối](#chưa-hợp-nhất) liệt kê việc còn lại.
 
 Tài liệu này là nơi luật sống. Mọi thay đổi cập nhật lại nó trong cùng PR.
 
@@ -64,7 +64,7 @@ thường trong khi gõ ra chữ hoa.
 funput_core::sentence      starts_sentence() / starts_word()
         │                            │
         ├── textcase::sentence       ├── funput-jni  → Android
-        │   (Chuyển mã, funput case) └── (funput-ffi → iOS: chưa nối)
+        │   (Chuyển mã, funput case) └── funput-ffi  → iOS
 ```
 
 ### Vì sao không dùng `auto_capitalize` của engine
@@ -79,22 +79,36 @@ funput_core::sentence      starts_sentence() / starts_word()
   trong số đó, nên trạng thái sẽ lệch. Android tính lại từ văn bản thật mỗi lần.
 - `on_english_boundary` cố ý bỏ qua auto-capitalize, nên chế độ tiếng Anh không có.
 
-## Android
+## Chọn chế độ
 
-### Chọn chế độ
+Hai nền tảng đọc **cùng bốn nhánh theo cùng thứ tự**, chỉ khác tên tín hiệu:
+`EditorInfoPolicy.autoCapitalizationMode(preferenceEnabled)` trên Android,
+`KeyboardInputContextResolver.autocapitalization` trên iOS.
 
-`EditorInfoPolicy.autoCapitalizationMode(preferenceEnabled)` đọc bốn nhánh theo thứ tự:
-
-1. Ô không bao giờ chứa văn xuôi — mật khẩu, email, URI, số, điện thoại — thì không
-   viết hoa gì, bất kể ai yêu cầu. Đây là `EditorInfoPolicy.allowsAutoCapitalization`.
-2. Ô đòi `CAP_MODE_CHARACTERS` thắng cả khi người dùng tắt công tắc: đó là một phát
-   biểu về nội dung ô, không phải một tiện ích được mời.
+1. Ô không bao giờ chứa văn xuôi — mật khẩu, email, URL, số, điện thoại — thì không
+   viết hoa gì, bất kể ai yêu cầu. Đây là `allowsAutoCapitalization`, có trên cả
+   `EditorInfoPolicy` lẫn `KeyboardEditorMode`.
+2. Ô đòi viết hoa toàn bộ (`CAP_MODE_CHARACTERS` / `.allCharacters`) thắng cả khi
+   người dùng tắt công tắc: đó là một phát biểu về nội dung ô, không phải một tiện
+   ích được mời.
 3. Công tắc "Tự viết hoa" tắt thì im hai chế độ tiện ích còn lại.
-4. Còn lại là `SENTENCES`, **kể cả khi ô không đặt cờ `CAP_*` nào**.
+4. Còn lại là câu, **kể cả khi ô không yêu cầu gì hoặc yêu cầu không viết hoa**.
 
-Nhánh 4 là thay đổi cốt lõi. Android không có mặc định cho cờ này và phần lớn app
-không đặt, nên luật cũ "chỉ viết hoa khi app yêu cầu" khiến tính năng tắt ở gần như
-mọi chỗ. iOS nhận `.sentences` mặc định từ UIKit, và đó là hành vi đang được san bằng.
+### Vì sao nhánh 4 lấn quyền ô nhập liệu
+
+Đây là chỗ duy nhất Funput đi xa hơn bàn phím hệ thống, và lý do khác nhau ở hai bên:
+
+- **Android không có mặc định.** App không đặt cờ `CAP_*` nghĩa là chưa nghĩ tới, và
+  phần lớn app không đặt — luật cũ "chỉ viết hoa khi app yêu cầu" khiến tính năng tắt
+  ở gần như mọi chỗ.
+- **iOS mặc định `.sentences`**, nên `.none` là từ chối có chủ đích. Nhưng nó xuất
+  hiện đầy trong những ô không hề có ý đó: input web mang `autocapitalize="off"`, ô
+  soạn tin chép từ một ô tìm kiếm. Người dùng bật công tắc là đang xin viết hoa đúng
+  ở những chỗ đó.
+
+Nhánh 1 là thứ giữ cho quyết định này không lan tới ô mà nó sai.
+
+## Android
 
 ### Đồng bộ lại sau khi đổi bảng phím
 
@@ -104,14 +118,31 @@ về ABC luôn xoá mất chữ hoa mà dấu cách vừa dựng lên — đó l
 đây không bao giờ viết hoa. `ImeKeyboardCallbackBinder` nối `onPanelChanged` vào
 `updateCapitalization()` để dựng lại.
 
+## iOS
+
+`KeyboardCapitalizationResolver` chỉ còn phân nhánh theo chế độ: `.none` và
+`.allCharacters` là phát biểu về ô nhập liệu nên trả lời ngay, hai chế độ còn lại hỏi
+`FunputSentence`, wrapper Swift quanh `funput_starts_sentence` / `funput_starts_word`.
+
+Wrapper nằm trong target `FunputEngine` chứ không trong `KeyboardInput`, theo ranh giới
+module mà `platforms/ios/docs/ARCHITECTURE.md` đặt ra: chỉ `FunputEngine` được chạm vào
+lớp C. Nó cắt context còn 256 ký tự cuối trước khi vượt biên, bằng cửa sổ Android dùng.
+
+**Xcode build lại Rust ở mọi configuration.** Pre-action của scheme `Funput` từng bọc
+`build-ffi.sh` trong `if [ "$CONFIGURATION" = "Release" ]`, nên một lần Run ở Debug link
+đúng cái xcframework đang nằm trên đĩa và thay đổi Rust vắng mặt trong im lặng cho tới
+khi ai đó archive. Điều kiện đó đã bỏ; cargo incremental nên một crate không đổi chỉ tốn
+vài giây.
+
+**Engine không còn nhận cờ.** Trước đây `KeyboardInputCoordinator+Configuration.swift`
+truyền `configuration.autoCapitalize` xuống `funput_configure` dù kết quả của bộ đếm câu
+trong engine không bao giờ thắng Shift. `FunputCompositionOptions` nay không có trường
+đó nữa và `FunputComposer.configure` ghim `auto_capitalize: false`, nên không ai bật lại
+được do nhầm. `KeyboardCapitalizationOwnershipTests` vẫn ghim kết quả: chữ đi theo Shift
+kể cả khi người dùng hạ Shift ngay chỗ một bộ đếm câu sẽ viết hoa.
+
 ## Chưa hợp nhất
 
-- **iOS** vẫn dùng `KeyboardCapitalizationResolver` viết bằng Swift. Nó thiếu luật dấu
-  đóng trong suốt và luật chống viết tắt. Cần chuyển sang gọi core qua `funput-ffi`.
-- **iOS chạy hai đường song song.** `KeyboardInputCoordinator+Configuration.swift`
-  truyền `configuration.autoCapitalize` (mặc định bật) xuống engine, đồng thời
-  resolver Swift cũng nâng Shift. Chưa lộ lỗi vì viết hoa hai lần là idempotent, nhưng
-  phải chốt bên nào làm chủ.
 - **Desktop** (macOS, Windows, Linux) vẫn dùng `update_caps_on_boundary` trong
   `funput-engine`. Ba điểm nó lệch khỏi luật trên:
   - Thiếu `…`. Nặng hơn: `is_english_boundary` chỉ nhận `is_whitespace() ||

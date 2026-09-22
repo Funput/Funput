@@ -41,15 +41,14 @@ public enum KeyboardInputContextResolver {
         autocapitalizationType: UITextAutocapitalizationType = .sentences,
         autoCapitalizeEnabled: Bool = true
     ) -> KeyboardInputContext {
-        KeyboardInputContext(
-            editorMode: editorMode(
-                keyboardType: keyboardType,
-                isSecure: isSecureTextEntry
-            ),
+        let mode = editorMode(keyboardType: keyboardType, isSecure: isSecureTextEntry)
+        return KeyboardInputContext(
+            editorMode: mode,
             enterAction: enterAction(returnKeyType),
             initialLayoutMode: .letters,
             autocapitalization: autocapitalization(
                 autocapitalizationType,
+                editorMode: mode,
                 enabled: autoCapitalizeEnabled
             )
         )
@@ -93,22 +92,30 @@ public enum KeyboardInputContextResolver {
         }
     }
 
-    /// A disabled preference silences the convenience modes but not `allCharacters`:
-    /// a field that insists on upper case is stating a requirement about its content,
-    /// not offering something the user asked to turn off.
+    /// Reading the four branches in order:
+    ///
+    /// 1. A field that is never prose — a password, an address, a number pad — is
+    ///    left alone whatever anyone asked for.
+    /// 2. A field demanding upper case wins even against a disabled preference: that
+    ///    is a statement about what the field holds, not a convenience being offered.
+    /// 3. The user's "Tự viết hoa" switch silences the two convenience modes.
+    /// 4. Otherwise sentences, **including when the field asked for `.none`**.
+    ///
+    /// Branch 4 outranks the field on purpose, and it is the one place Funput goes
+    /// further than the system keyboard. `.none` is common in text views that never
+    /// meant it — a web input carrying `autocapitalize="off"`, a chat composer copied
+    /// from a search field — and a user who turned the switch on is asking for prose
+    /// to be capitalized in exactly those places. Branch 1 is what keeps that from
+    /// reaching a field where it would be wrong; Android resolves the same way.
     private static func autocapitalization(
         _ type: UITextAutocapitalizationType,
+        editorMode: KeyboardEditorMode,
         enabled: Bool
     ) -> KeyboardAutocapitalizationMode {
-        let mode: KeyboardAutocapitalizationMode = switch type {
-        case .none: .none
-        case .words: .words
-        case .sentences: .sentences
-        case .allCharacters: .allCharacters
-        @unknown default: .sentences
-        }
-        guard !enabled else { return mode }
-        return mode == .allCharacters ? .allCharacters : .none
+        guard editorMode.allowsAutoCapitalization else { return .none }
+        if type == .allCharacters { return .allCharacters }
+        guard enabled else { return .none }
+        return type == .words ? .words : .sentences
     }
 }
 #endif

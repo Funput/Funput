@@ -21,8 +21,7 @@ public extension KeyboardInputCoordinator {
                 toneStyle: configuration.toneStyle.engineToneStyle,
                 smartRestore: configuration.smartRestore,
                 eagerRestore: configuration.eagerRestore,
-                spellCheck: configuration.spellCheck,
-                autoCapitalize: configuration.autoCapitalize
+                spellCheck: configuration.spellCheck
             )
         )
         shiftController.resetTapSequence()

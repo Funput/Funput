@@ -25,6 +25,10 @@
 //!   encodings ([`funput_charset_convert`] and friends). Behind the `charset`
 //!   cargo feature, off by default, and independent of everything above: it takes
 //!   text and returns text, and never touches an engine handle.
+//! - `sentence/` — where a sentence begins ([`funput_starts_sentence`],
+//!   [`funput_starts_word`]), for a soft keyboard deciding whether to raise its
+//!   Shift key. Stateless, so handle-free, and not feature-gated because the
+//!   keyboards build this crate with default features only.
 //! - `abi/` — the shared panic guard, null-handle check, and UTF-32 marshalling.
 //!
 //! # Safety
@@ -44,6 +48,7 @@ mod charset;
 #[cfg(feature = "convert")]
 mod convert;
 mod engine;
+mod sentence;
 mod suggestion;
 
 pub use app_language::{
@@ -68,6 +73,7 @@ pub use engine::{
     funput_set_enabled, funput_set_method, funput_set_shortcut_smart_case,
     funput_set_shortcuts_enabled, funput_set_shortcuts_in_english,
 };
+pub use sentence::{funput_starts_sentence, funput_starts_word};
 pub use suggestion::{
     FunputSuggestionCandidate, FunputSuggestionEngine, FunputSuggestionResult,
     FunputSuggestionStats, SUGGESTION_CAP, SUGGESTION_CHARS_CAP, funput_suggestion_attach_lexicon,
