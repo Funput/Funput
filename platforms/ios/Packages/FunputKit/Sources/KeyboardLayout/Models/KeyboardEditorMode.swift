@@ -23,6 +23,13 @@ public enum KeyboardEditorMode: String, CaseIterable, Hashable, Sendable {
     }
 
     public var isPassword: Bool { self == .password || self == .pin }
+
+    /// Whether the field is one a sentence is ever typed into.
+    ///
+    /// False for passwords, addresses and number pads, which is what keeps Funput's
+    /// sentence detection out of them now that the user's preference can outrank a
+    /// field asking for no capitalization at all.
+    public var allowsAutoCapitalization: Bool { self == .text || self == .search }
     public var allowsDecimal: Bool { self == .numberDecimal || self == .numberSignedDecimal }
     public var allowsSigned: Bool { self == .numberSigned || self == .numberSignedDecimal }
     public var usesKeypad: Bool { isNumber || self == .phone || self == .pin }
