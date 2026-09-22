@@ -87,14 +87,31 @@ class ReopenPreviousWordTest {
     fun `skips when there is no connection`() {
         assertFalse(testSession(AdoptingEngine(setOf("chào"))).reopenPreviousWord(null))
     }
+
+    @Test
+    fun `restores the word when setComposingText fails after deletion`() {
+        val editor = FakeEditor(textBeforeCursor = "chào", setComposingTextFails = true)
+        val engine = AdoptingEngine(adoptable = setOf("chào"))
+        val session = testSession(engine)
+
+        assertFalse(session.reopenPreviousWord(editor.proxy))
+
+        assertEquals("chào", engine.adopted)
+        assertEquals(listOf(4), editor.deletedBefore)
+        assertEquals(listOf("chào"), editor.committedTexts) // rollback committed the word back
+        assertTrue(editor.composingTexts.isEmpty()) // setComposingText was never successful
+        assertEquals("", session.composingText)
+    }
 }
 
 /** Editor stub covering the calls the re-open path makes. */
 private class FakeEditor(
     private val textBeforeCursor: String,
     private val selectedText: String? = null,
+    private val setComposingTextFails: Boolean = false,
 ) {
     val composingTexts = mutableListOf<String>()
+    val committedTexts = mutableListOf<String>()
     val deletedBefore = mutableListOf<Int>()
     var batchDepthPeak = 0
         private set
@@ -108,8 +125,11 @@ private class FakeEditor(
             "getTextBeforeCursor" -> textBeforeCursor.takeLast(arguments?.first() as Int)
             "getSelectedText" -> selectedText
             "deleteSurroundingText" -> true.also { deletedBefore += arguments?.first() as Int }
-            "setComposingText" -> true.also {
+            "setComposingText" -> if (setComposingTextFails) false else true.also {
                 composingTexts += (arguments?.first() as CharSequence).toString()
+            }
+            "commitText" -> true.also {
+                committedTexts += (arguments?.first() as CharSequence).toString()
             }
             "beginBatchEdit" -> true.also {
                 batchDepth += 1

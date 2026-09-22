@@ -67,8 +67,10 @@ internal class CompositionDocumentEditor(
         mode: CompositionRenderMode,
         word: String,
     ): Boolean = if (mode.usesComposingSpans) {
-        connection.deleteSurroundingText(word.length, 0) &&
-            connection.setComposingText(composingTextFactory(word), CursorAfterText)
+        if (!connection.deleteSurroundingText(word.length, 0)) return false
+        if (connection.setComposingText(composingTextFactory(word), CursorAfterText)) return true
+        connection.commitText(word, CursorAfterText)
+        false
     } else true.also {
         committedSelection = null
         expectedCommittedSelection = null
