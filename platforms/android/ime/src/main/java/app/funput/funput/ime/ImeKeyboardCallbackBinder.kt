@@ -30,7 +30,13 @@ internal object ImeKeyboardCallbackBinder {
             switcher.switch()
         }
         onEmojiSelected = handler::onEmojiSelected
-        onPanelChanged = suggestions::updatePanel
+        onPanelChanged = { panel ->
+            suggestions.updatePanel(panel)
+            // Swapping panels rebuilds the layout, and that resets Shift. Without
+            // this the `!` and `?` on the symbol panel never capitalize: the space
+            // after them raises Shift, and the trip back to ABC drops it again.
+            runtime.updateCapitalization()
+        }
         onSuggestionSelected = { selection ->
             if (!runtime.selectCompletion(selection, handler::finish)) {
                 suggestions.select(selection, handler)
