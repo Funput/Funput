@@ -65,6 +65,7 @@ class ClipboardToolbarInstrumentedTest {
             KeyboardThemes.Paper,
             KeyboardThemes.GlassDark,
             KeyboardThemes.GlassLight,
+            KeyboardThemes.LiquidGlass,
             KeyboardThemes.Blossom,
             KeyboardThemes.Orchid,
         )
@@ -99,6 +100,7 @@ class ClipboardToolbarInstrumentedTest {
         listOf(
             KeyboardThemes.Slate, KeyboardThemes.Ink, KeyboardThemes.Paper,
             KeyboardThemes.GlassDark, KeyboardThemes.GlassLight,
+            KeyboardThemes.LiquidGlass,
             KeyboardThemes.Blossom, KeyboardThemes.Orchid,
         ).forEach { theme -> keyboard.keyboardTheme = theme; keyboard.bitmap() }
     }

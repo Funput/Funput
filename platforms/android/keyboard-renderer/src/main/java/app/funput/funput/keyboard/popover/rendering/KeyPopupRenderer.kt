@@ -6,8 +6,9 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.ShiftState
-import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.keyboard.rendering.RenderMetrics
+import app.funput.funput.keyboard.rendering.liquid.LiquidGlassKeyPainter
+import app.funput.funput.theme.KeyboardTheme
 
 /** Draws the enlarged key preview above a pressed printable key. */
 internal class KeyPopupRenderer(private val metrics: RenderMetrics) {
@@ -20,6 +21,11 @@ internal class KeyPopupRenderer(private val metrics: RenderMetrics) {
     }
     private val drawingRect = RectF()
     private val fontMetrics = Paint.FontMetrics()
+    private val liquidPainter = LiquidGlassKeyPainter(metrics)
+
+    fun updateTheme(theme: KeyboardTheme) {
+        liquidPainter.updateTheme(theme)
+    }
 
     fun draw(
         canvas: Canvas,
@@ -44,6 +50,7 @@ internal class KeyPopupRenderer(private val metrics: RenderMetrics) {
         drawingRect.offset(0f, -metrics.dp(ShadowOffsetDp))
         fillPaint.color = theme.popupSurfaceColor
         canvas.drawRoundRect(drawingRect, radius, radius, fillPaint)
+        liquidPainter.draw(canvas, drawingRect, radius, pressed = false)
         drawBorder(canvas, theme, radius)
         drawLabel(canvas, key, bounds.centerX, bounds.centerY, theme, shiftState)
     }

@@ -5,6 +5,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole
+import app.funput.funput.keyboard.rendering.liquid.LiquidGlassKeyPainter
 import app.funput.funput.theme.KeyboardKeySurfaceStyle
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.roundToInt
@@ -21,11 +22,13 @@ internal class KeySurfacePainter(private val metrics: RenderMetrics) {
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val drawingRect = RectF()
     private val glassPainter = GlassKeySurfacePainter(metrics)
+    private val liquidPainter = LiquidGlassKeyPainter(metrics)
 
     fun updateTheme(theme: KeyboardTheme, width: Int, height: Int) {
         shadowPaint.color = theme.keyShadowColor
         borderPaint.strokeWidth = metrics.dp(theme.keyBorderWidthDp)
         glassPainter.updateTheme(theme, width, height)
+        liquidPainter.updateTheme(theme)
     }
 
     fun draw(
@@ -43,15 +46,16 @@ internal class KeySurfacePainter(private val metrics: RenderMetrics) {
         val radius = metrics.dp(theme.keyCornerRadiusDp)
         setDrawingRect(key, theme, if (isPressed) theme.pressedKeyScale else 1f)
         drawShadow(canvas, theme, radius, isPressed)
-        if (theme.keySurfaceStyle == KeyboardKeySurfaceStyle.GLASS && isPressed) {
+        if (theme.keySurfaceStyle != KeyboardKeySurfaceStyle.FLAT && isPressed) {
             glassPainter.drawPressedHalo(canvas, drawingRect, radius, theme)
         }
         if (fillColor.isVisible) {
             fillPaint.color = fillColor
             canvas.drawRoundRect(drawingRect, radius, radius, fillPaint)
         }
+        liquidPainter.draw(canvas, drawingRect, radius, isPressed)
         if (hasBorder) {
-            borderPaint.shader = if (theme.keySurfaceStyle == KeyboardKeySurfaceStyle.GLASS) {
+            borderPaint.shader = if (theme.keySurfaceStyle != KeyboardKeySurfaceStyle.FLAT) {
                 glassPainter.borderShader(isPressed, isActivated)
             } else {
                 null

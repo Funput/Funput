@@ -18,6 +18,7 @@ import app.funput.funput.theme.KeyboardThemeBackgroundImage
 import app.funput.funput.theme.LocalKeyboardThemeCatalog
 import app.funput.funput.keyboard.popover.rendering.KeyPopupLayout
 import app.funput.funput.keyboard.popover.rendering.KeyPopupRenderer
+import app.funput.funput.keyboard.rendering.liquid.LiquidGlassBackdropPainter
 import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 
 /** Draws a fully resolved keyboard without owning Android view state. */
@@ -29,6 +30,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
     private val suggestionBarRenderer = SuggestionBarRenderer(metrics)
     private val clipboardChipRenderer = ClipboardChipRenderer(resources, metrics)
     private val backgroundImageRenderer = KeyboardBackgroundImageRenderer()
+    private val liquidGlassBackdrop = LiquidGlassBackdropPainter()
     private var theme: KeyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
 
     fun updateTheme(theme: KeyboardTheme, width: Int, height: Int) {
@@ -36,6 +38,8 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         keyRenderer.updateTheme(theme, width, height)
         suggestionBarRenderer.updateTheme(theme)
         clipboardChipRenderer.updateTheme(theme)
+        keyPopupRenderer.updateTheme(theme)
+        liquidGlassBackdrop.updateTheme(theme, width, height)
         if (width > 0 && height > 0) {
             if (theme.backgroundStartColor == theme.backgroundEndColor) {
                 backgroundPaint.shader = null
@@ -75,6 +79,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         secure: Boolean,
     ) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
+        liquidGlassBackdrop.draw(canvas, width, height)
         backgroundImageRenderer.draw(canvas, backgroundBitmap, backgroundImage, width, height)
         keyboard.suggestionBar?.let { bar ->
             if (bar.suggestionsEnabled) {
