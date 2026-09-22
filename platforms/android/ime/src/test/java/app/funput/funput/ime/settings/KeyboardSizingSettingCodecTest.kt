@@ -14,7 +14,7 @@ class KeyboardSizingSettingCodecTest {
 
     @Test
     fun scalesRoundTrip() {
-        listOf(0.85f, 1f, 1.08f, 1.2f).forEach { scale ->
+        listOf(0.85f, 1f, 1.08f, 1.2f, 1.5f).forEach { scale ->
             val profile = KeyboardSizingProfile.scaled(scale)
             assertEquals(profile, KeyboardSizingSettingCodec.decode(KeyboardSizingSettingCodec.encode(profile)))
         }
