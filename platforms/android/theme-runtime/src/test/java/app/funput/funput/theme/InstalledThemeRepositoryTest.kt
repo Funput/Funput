@@ -12,18 +12,18 @@ class InstalledThemeRepositoryTest {
 
         assertEquals(
             listOf(
+                KeyboardThemeId.LiquidGlass,
                 KeyboardThemeId.Dark,
                 KeyboardThemeId.Light,
                 KeyboardThemeId.GlassDark,
                 KeyboardThemeId.GlassLight,
-                KeyboardThemeId.LiquidGlass,
                 KeyboardThemeId.Slate,
                 KeyboardThemeId.Blossom,
                 KeyboardThemeId.Orchid,
             ),
             repository.themes.map(KeyboardThemeDescriptor::id),
         )
-        assertSame(KeyboardThemes.Ink, repository.defaultTheme.theme)
+        assertSame(KeyboardThemes.LiquidGlass, repository.defaultTheme.theme)
     }
 
     @Test
@@ -35,7 +35,7 @@ class InstalledThemeRepositoryTest {
         )
 
         assertEquals(customThemeId, repository.find(customThemeId)?.id)
-        assertEquals(KeyboardThemeId.Dark, repository.resolve(KeyboardThemeId.of("missing")).id)
+        assertEquals(KeyboardThemeId.LiquidGlass, repository.resolve(KeyboardThemeId.of("missing")).id)
     }
 
     @Test

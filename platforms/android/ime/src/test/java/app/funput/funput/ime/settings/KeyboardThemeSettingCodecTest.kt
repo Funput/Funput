@@ -6,9 +6,9 @@ import org.junit.Test
 
 class KeyboardThemeSettingCodecTest {
     @Test
-    fun missingOrMalformedSettingFallsBackToDark() {
-        assertEquals(KeyboardThemeId.Dark, KeyboardThemeSettingCodec.decode(null))
-        assertEquals(KeyboardThemeId.Dark, KeyboardThemeSettingCodec.decode("invalid theme"))
+    fun missingOrMalformedSettingFallsBackToTheDefaultTheme() {
+        assertEquals(KeyboardThemeId.LiquidGlass, KeyboardThemeSettingCodec.decode(null))
+        assertEquals(KeyboardThemeId.LiquidGlass, KeyboardThemeSettingCodec.decode("invalid theme"))
     }
 
     @Test
