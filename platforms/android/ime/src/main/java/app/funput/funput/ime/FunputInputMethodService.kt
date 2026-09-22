@@ -42,7 +42,6 @@ class FunputInputMethodService : InputMethodService() {
             scope = serviceScope,
             editor = editor,
             connection = { currentInputConnection },
-            cursorCapsMode = { modes -> currentInputConnection?.getCursorCapsMode(modes) ?: 0 },
             currentShiftState = { keyboardView?.shiftState ?: ShiftState.OFF },
             updateShiftState = { state -> keyboardView?.shiftState = state },
             showSuggestions = { values -> keyboardView?.suggestions = values },

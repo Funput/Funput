@@ -11,14 +11,6 @@ import org.junit.Test
 
 class EditorInfoPolicyResolverTest {
     @Test
-    fun `capitalization flags are preserved for cursor caps queries`() {
-        val flags = InputType.TYPE_TEXT_FLAG_CAP_WORDS or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-        val policy = resolve(InputType.TYPE_CLASS_TEXT or flags)
-
-        assertEquals(flags, policy.capitalizationModes)
-    }
-
-    @Test
     fun `multiline editor keeps its flag and explicit action`() {
         val policy = resolve(
             InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE,

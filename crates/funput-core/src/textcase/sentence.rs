@@ -5,15 +5,9 @@
 //! `TP. HCM`, proper nouns, and anything capitalised on purpose, and a user who
 //! wants that can press lowercase and then this.
 //!
-//! A sentence begins at the start of the text, after a newline, and after one of
-//! `.` `!` `?` `…` **followed by whitespace**. Two rules fall out of that shape
-//! rather than being written down separately: `1.5` keeps its `.` because a digit
-//! follows it rather than a space, and a run of `...` or `?!` ends one sentence
-//! rather than several.
-//!
-//! A newline counts even with no punctuation before it, because the text this
-//! transform is pointed at is usually a list, a subtitle file, or notes — places
-//! where nobody punctuates the ends of lines.
+//! Where a sentence begins is [`crate::sentence`]'s answer, not this module's: a
+//! keyboard asks the same question of the text behind its caret, and two copies of
+//! the rules would drift. What stays here is the walk that rewrites the text.
 //!
 //! **Where the first letter is.** Openers are skipped, so `"xin chào"` and
 //! `(xin chào)` both get their `x`. Digits are not: a sentence that opens with a
@@ -21,50 +15,30 @@
 //! `3 Con mèo`. So the search stops at the first letter *or* digit, and only a
 //! letter is changed.
 //!
-//! **The known limitation.** An abbreviation's full stop is indistinguishable from
-//! the end of a sentence — `v.v. nhé` becomes `V.v. Nhé`, `TS. nguyễn` becomes
-//! `TS. Nguyễn`. A list of Vietnamese abbreviations was considered and left out of
-//! `docs/features/text-case.md` on purpose: no list is ever complete, and its
-//! mistakes are harder to predict than this one rule, which a user sees in the
-//! preview. The tests below pin the behaviour so it stays a decision.
+//! **The known limitation.** This transform reads every full stop as an ending, so
+//! an abbreviation is caught in the crossfire — `v.v. nhé` becomes `V.v. Nhé`,
+//! `TS. nguyễn` becomes `TS. Nguyễn`. [`Rules::TYPING`] guards the first of those
+//! and this transform deliberately does not take that guard: a list of Vietnamese
+//! abbreviations was considered and left out of `docs/features/text-case.md` on
+//! purpose, and the partial rule would trade one predictable miss for two. A user
+//! sees this one in the preview. The tests below pin the behaviour so it stays a
+//! decision.
 
 use super::Options;
-
-/// The characters that can end a sentence.
-const TERMINATORS: [char; 4] = ['.', '!', '?', '…'];
+use crate::sentence::{Rules, Scanner};
 
 /// `xin chào. hôm nay trời đẹp.` → `Xin chào. Hôm nay trời đẹp.`
 pub(super) fn capitalize(text: &str, _: Options) -> String {
     let mut out = String::with_capacity(text.len());
-    // The start of the text is the start of a sentence.
-    let mut awaiting = true;
-    // A terminator has been seen and is waiting for the whitespace that confirms it.
-    let mut terminated = false;
+    let mut scanner = Scanner::new(Rules::TRANSFORM);
 
     for c in text.chars() {
-        if awaiting && c.is_alphabetic() {
+        if scanner.opens_sentence(c) {
             out.extend(c.to_uppercase());
-            awaiting = false;
-            terminated = false;
-            continue;
+        } else {
+            out.push(c);
         }
-        out.push(c);
-        match c {
-            '\n' => {
-                awaiting = true;
-                terminated = false;
-            }
-            c if TERMINATORS.contains(&c) => terminated = true,
-            c if c.is_whitespace() => {
-                awaiting = awaiting || terminated;
-                terminated = false;
-            }
-            c => {
-                // A digit ends the search for a first letter; punctuation does not.
-                awaiting = awaiting && !c.is_alphanumeric();
-                terminated = false;
-            }
-        }
+        scanner.push(c);
     }
     out
 }
@@ -105,6 +79,17 @@ mod tests {
             capitalize("3 con mèo. 5 con chó.", opts()),
             "3 con mèo. 5 con chó."
         );
+    }
+
+    /// The quote is transparent, not a boundary: `xin` stays mid-sentence and only
+    /// `rồi`, on the far side of the full stop, is a new one.
+    #[test]
+    fn a_closing_quote_does_not_hide_the_ending_behind_it() {
+        assert_eq!(
+            capitalize("anh ấy nói \"xin chào.\" rồi đi", opts()),
+            "Anh ấy nói \"xin chào.\" Rồi đi"
+        );
+        assert_eq!(capitalize("(xong.) tiếp", opts()), "(Xong.) Tiếp");
     }
 
     #[test]

@@ -3,21 +3,23 @@ package app.funput.funput.ime.editing
 import android.view.inputmethod.CompletionInfo
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
+import app.funput.funput.ime.editing.capitalization.AutoCapitalizationController
+import app.funput.funput.ime.editing.capitalization.NativeCapitalizationBoundary
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
 
 /** Owns editor-scoped policy and clears transient state whenever the editor changes. */
 internal class ImeEditorRuntime(
-    cursorCapsMode: (requestedModes: Int) -> Int,
     currentShiftState: () -> ShiftState,
     updateShiftState: (ShiftState) -> Unit,
     connection: () -> InputConnection?,
     onSuggestionsChanged: (List<String>) -> Unit,
 ) {
     private val autoCapitalization = AutoCapitalizationController(
-        cursorCapsMode,
-        currentShiftState,
-        updateShiftState,
+        boundary = NativeCapitalizationBoundary,
+        textBeforeCursor = { connection()?.getTextBeforeCursor(CapitalizationLookback, 0) },
+        currentShiftState = currentShiftState,
+        updateShiftState = updateShiftState,
     )
     private val completions = EditorCompletionSession<CompletionInfo>(
         text = { completion -> completion.text },
@@ -30,13 +32,13 @@ internal class ImeEditorRuntime(
 
     fun configure(info: EditorInfo) {
         policy = EditorInfoPolicyResolver.resolve(info)
-        autoCapitalization.configure(policy.capitalizationModes)
+        autoCapitalization.configure(policy)
         completions.configure(policy.suggestionSource == ImeSuggestionSource.EDITOR)
     }
 
     fun finish() {
         policy = EditorInfoPolicy.Default
-        autoCapitalization.configure(capitalizationModes = 0)
+        autoCapitalization.configure(policy = null)
         completions.configure(enabled = false)
     }
 
@@ -54,5 +56,10 @@ internal class ImeEditorRuntime(
         if (policy.suggestionSource != ImeSuggestionSource.EDITOR) return false
         beforeCommit()
         return completions.select(selection)
+    }
+
+    private companion object {
+        /** Enough context for the sentence rules; they never look further back. */
+        const val CapitalizationLookback = 256
     }
 }

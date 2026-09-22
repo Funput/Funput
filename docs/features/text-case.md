@@ -41,6 +41,9 @@ engine.
   chữ sau đó bị viết hoa. Đã cân nhắc và **cố ý không làm**: một danh sách viết tắt
   tiếng Việt không bao giờ đủ, và sai sót của nó khó đoán hơn là một quy tắc đơn giản
   mà người dùng nhìn preview là thấy ngay. Ghi vào phần giới hạn đã biết ở UI.
+  Bàn phím thì không có preview nên nó bật một luật chống viết tắt rẻ tiền; chỗ nào
+  hết câu giờ là câu trả lời chung của `funput_core::sentence`, xem
+  [auto-capitalize.md](auto-capitalize.md#hai-cách-đọc-dấu-chấm).
 - **Chế độ slug** (`tieng-viet`) và **bỏ dấu giữ dấu kiểu Telex** (`đẹp` → `depj`).
   Có thể thêm sau; không thuộc V1.
 - Chuyển đổi trên vùng bôi đen, hotkey toàn cục, clipboard tự động — xem lộ trình.
