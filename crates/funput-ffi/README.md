@@ -91,6 +91,22 @@ focus) là việc của platform, không phải của handle này — platform t
 `funput_app_language_note_toggle`, giống cách `pending`/deferred override đã hoạt động hôm nay trên
 macOS và Windows.
 
+Đầu câu / đầu từ **không có handle**: chúng chỉ đọc đoạn văn bản host đưa và trả lời về vị trí kết
+thúc đoạn đó.
+
+```c
+// text null hoặc rỗng = đầu tài liệu, tức đầu câu và đầu từ.
+bool funput_starts_sentence(const uint32_t *text, uintptr_t text_len);
+bool funput_starts_word(const uint32_t *text, uintptr_t text_len);
+```
+
+Bàn phím mềm là bên cần chúng: nó tự vẽ phím Shift nên phải biết ở mỗi lần con trỏ nhảy xem phím đó
+có sáng không, và không thể giữ trạng thái chạy — con trỏ còn nhảy vì dán, chạm chỗ khác, hoặc mở
+một ô đã có sẵn nội dung, không phím nào giải thích được. `funput_starts_sentence` luôn áp cách đọc
+của bàn phím: dấu chấm lặp lại là viết tắt, nên `v.v. ` không mở câu mới còn `TS. ` thì có. Luật đầy
+đủ nằm ở `docs/features/auto-capitalize.md`. Không nằm sau feature nào, vì iOS và Android build crate
+này với default features.
+
 Header sinh bằng **cbindgen** (đã commit). Regen sau khi đổi `extern "C"` surface:
 
 ```bash
@@ -148,6 +164,8 @@ src/charset/       # C API chuyển mã (chuyển đổi + nhận diện), sau f
                     #   mod.rs      count/name + chỉ số bảng mã + ghi UTF-32
                     #   convert.rs  #[repr(C)] FunputConversion + funput_charset_convert
                     #   detect.rs   funput_charset_detect
+src/sentence/      # C API đầu câu / đầu từ, không handle, không feature
+                    #   mod.rs      funput_starts_sentence / funput_starts_word
 src/abi/            # plumbing C-ABI dùng chung
                     #   guard.rs safe(): catch_unwind + null-handle; codec.rs UTF-32 marshalling
 cbindgen.toml
