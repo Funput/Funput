@@ -12,16 +12,14 @@ struct FunputConfigureTests {
         toneStyle: FunputToneStyle = .traditional,
         smartRestore: Bool = true,
         eagerRestore: Bool = true,
-        spellCheck: Bool = false,
-        autoCapitalize: Bool = false
+        spellCheck: Bool = false
     ) -> FunputCompositionOptions {
         FunputCompositionOptions(
             inputMethod: inputMethod,
             toneStyle: toneStyle,
             smartRestore: smartRestore,
             eagerRestore: eagerRestore,
-            spellCheck: spellCheck,
-            autoCapitalize: autoCapitalize
+            spellCheck: spellCheck
         )
     }
 
@@ -66,11 +64,12 @@ struct FunputConfigureTests {
         #expect(unchecked.buffer() == "tèt")
     }
 
-    // No auto-capitalize test here any more. It only ever exercised
-    // `armCapitalization()`, which iOS never called and which is now gone: case on
-    // this platform comes from the Shift state, covered by
-    // KeyboardCapitalizationOwnershipTests. The engine's own sentence tracker is
-    // covered where it is used from, in crates/funput-engine/tests/engine_api.rs.
+    // No auto-capitalize option to test: `FunputCompositionOptions` does not carry
+    // one and `configure` hard-wires the C field off, because case on this platform
+    // comes from the Shift state — covered by KeyboardCapitalizationOwnershipTests,
+    // and driven by the shared rules through FunputSentenceTests. The engine's own
+    // sentence tracker is covered where it is used from, in
+    // crates/funput-engine/tests/engine_api.rs.
 
     @Test("Configure applies eager restore")
     func eagerRestore() {

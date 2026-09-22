@@ -59,8 +59,7 @@ struct AdvancedTelexComposerTests {
                 toneStyle: toneStyle,
                 smartRestore: true,
                 eagerRestore: true,
-                spellCheck: false,
-                autoCapitalize: false
+                spellCheck: false
             )
         )
         return composer

@@ -13,7 +13,9 @@ struct FunputConfigurationTests {
         #expect(config.spellCheck == false)
         #expect(config.smartRestore == true)
         #expect(config.eagerRestore == true)
-        #expect(config.autoCapitalize == true) // iOS overrides the engine's off default
+        // The user preference, which picks the capitalization mode. It is not the
+        // engine's `auto_capitalize`: iOS keeps that off whatever this says.
+        #expect(config.autoCapitalize == true)
         #expect(config.selectedThemeID == FunputConfiguration.defaultThemeID)
         #expect(!config.isHapticFeedbackEnabled)
         #expect(!config.isKeySoundEnabled)
