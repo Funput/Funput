@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use funput_core::sentence::{Rules, Scanner};
 use funput_core::{InputMethod, ToneStyle};
 
 use crate::model::{EngineConfig, Session};
@@ -20,8 +21,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
         },
         buffer: buffer.into(),
         keys: keys.into(),
-        cap_sentence_ended: false,
-        cap_armed: false,
+        scanner: Scanner::mid_text(Rules::TYPING),
         shortcuts: HashMap::new(),
         vn_form: String::new(),
         restore_override: None,

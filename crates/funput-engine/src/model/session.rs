@@ -2,6 +2,8 @@
 
 use std::collections::HashMap;
 
+use funput_core::sentence::{Rules, Scanner};
+
 use crate::compose::RestoreOverride;
 use crate::model::EngineConfig;
 
@@ -17,14 +19,16 @@ pub(crate) struct Session {
     /// (phase E3) rebuild the original Latin text when the composed buffer is
     /// not a complete Vietnamese syllable (`keys != buffer && !is_complete_syllable(buffer)`).
     pub(crate) keys: String,
-    /// A sentence-ending mark (`.`/`!`/`?`) was just seen; waiting for whitespace to
-    /// confirm the next word starts a new sentence. Survives `clear()` — capitalize
-    /// state spans word commits.
-    pub(crate) cap_sentence_ended: bool,
-    /// The next word's first letter should be capitalized. Set by a confirmed
-    /// sentence start (whitespace after `.`/`!`/`?`, a newline) or focus; consumed
-    /// when a word begins. Survives `clear()`.
-    pub(crate) cap_armed: bool,
+    /// Where auto-capitalize thinks the next letter sits, by the sentence rules
+    /// every Funput platform shares. Fed one keystroke at a time, because a desktop
+    /// shell hands the engine keys and never the document. Survives `clear()` —
+    /// capitalize state spans word commits.
+    ///
+    /// Resumed rather than started: a new session does not know where the caret is,
+    /// and assuming the start of a document would capitalize the first word typed
+    /// after switching apps. A host that does know says so through
+    /// [`crate::Engine::arm_capitalization`].
+    pub(crate) scanner: Scanner,
     /// Text-expansion table (gõ tắt): raw-keystroke trigger → expansion. Matched
     /// smart-case against `keys` at a word boundary, before English restore — a
     /// trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same
@@ -48,8 +52,7 @@ impl Session {
             config: EngineConfig::default(),
             buffer: String::new(),
             keys: String::new(),
-            cap_sentence_ended: false,
-            cap_armed: false,
+            scanner: Scanner::mid_text(Rules::TYPING),
             shortcuts: HashMap::new(),
             vn_form: String::new(),
             restore_override: None,

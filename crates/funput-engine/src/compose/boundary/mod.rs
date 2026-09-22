@@ -57,25 +57,6 @@ fn english_restore_result(session: &Session, boundary_key: char) -> ImeResult {
     ImeResult::send(backspace, output)
 }
 
-fn update_caps_on_boundary(session: &mut Session, key: char) {
-    if !session.config.auto_capitalize {
-        return;
-    }
-    match key {
-        '.' | '!' | '?' => session.cap_sentence_ended = true,
-        '\n' | '\r' => {
-            session.cap_armed = true;
-            session.cap_sentence_ended = false;
-        }
-        ' ' | '\t' if session.cap_sentence_ended => session.cap_armed = true,
-        ' ' | '\t' | '"' | '\'' | '(' | ')' | '[' | ']' | '{' | '}' => {}
-        _ => {
-            session.cap_sentence_ended = false;
-            session.cap_armed = false;
-        }
-    }
-}
-
 /// English-mode word boundary: gõ tắt is all that is left to do. There is no
 /// composition to restore (the keys are already the text on screen) and
 /// auto-capitalize is a Vietnamese-mode feature, so neither runs here.
@@ -93,7 +74,6 @@ pub(crate) fn on_word_boundary(session: &mut Session, boundary_key: char) -> Ime
     } else {
         ImeResult::none()
     };
-    update_caps_on_boundary(session, boundary_key);
     session.clear();
     result
 }
