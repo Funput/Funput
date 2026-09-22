@@ -2,9 +2,9 @@
 
 ## Trạng thái
 
-**Android và iOS đã chạy trên core.** Luật nhận diện câu sống một chỗ duy nhất trong
-`funput_core::sentence`; Android gọi tới nó qua `funput-jni`, iOS qua `funput-ffi`.
-Ba nền tảng desktop vẫn dùng bản riêng; [phần cuối](#chưa-hợp-nhất) liệt kê việc còn lại.
+**Cả năm nền tảng đã chạy trên core.** Luật nhận diện câu sống một chỗ duy nhất
+trong `funput_core::sentence`: Android gọi qua `funput-jni`, iOS qua `funput-ffi`,
+còn macOS, Windows và Linux nhận nó qua `funput-engine`, vốn đã link core sẵn.
 
 Tài liệu này là nơi luật sống. Mọi thay đổi cập nhật lại nó trong cùng PR.
 
@@ -61,23 +61,34 @@ Bàn phím mềm phải nâng trạng thái phím Shift hiển thị, nếu khô
 thường trong khi gõ ra chữ hoa.
 
 ```
-funput_core::sentence      starts_sentence() / starts_word()
-        │                            │
-        ├── textcase::sentence       ├── funput-jni  → Android
-        │   (Chuyển mã, funput case) └── funput-ffi  → iOS
+funput_core::sentence  ── Scanner ──┬── textcase::sentence  (Chuyển mã, funput case)
+                                    ├── starts_sentence()   ├── funput-jni  → Android
+                                    │   starts_word()       └── funput-ffi  → iOS
+                                    └── funput-engine       → macOS, Windows, Linux
 ```
 
-### Vì sao không dùng `auto_capitalize` của engine
+### Hai cách vào cùng một máy quét
 
-`funput-engine` có sẵn một đường auto-capitalize **có trạng thái**
-(`cap_armed`, `cap_sentence_ended` trong `Session`), và Android để nó tắt. Ba lý do:
+`Scanner` quét tăng dần, nên phục vụ được cả hai kiểu người gọi.
 
-- Không có API để truy vấn. Bàn phím cần *hỏi* ở mỗi lần con trỏ đổi chỗ để biết có
-  sáng phím Shift hay không.
-- Trạng thái đó chỉ theo dõi phím đi qua engine. Con trỏ trên Android nhảy vì dán,
-  chọn gợi ý, chạm chỗ khác, hoặc mở một ô đã có sẵn nội dung — engine không thấy gì
-  trong số đó, nên trạng thái sẽ lệch. Android tính lại từ văn bản thật mỗi lần.
-- `on_english_boundary` cố ý bỏ qua auto-capitalize, nên chế độ tiếng Anh không có.
+**Bên đọc được văn bản** — bàn phím mềm và batch transform — đưa cả đoạn vào rồi đọc
+kết quả. `starts_sentence` dựng một `Scanner::new`, chạy hết đoạn trước con trỏ, trả
+về cờ cuối. Tính lại mỗi lần chứ không tích luỹ, vì con trỏ còn nhảy vì dán, chọn gợi
+ý, chạm chỗ khác, hoặc mở một ô đã có sẵn nội dung.
+
+**Bên chỉ thấy phím gõ** — desktop shell — giữ một `Scanner` sống suốt phiên trong
+`Session` và đẩy từng phím vào. Nó dùng `Scanner::mid_text` chứ không phải
+`Scanner::new`: engine không biết con trỏ đang ở đâu, và coi mặc định là đầu tài liệu
+sẽ viết hoa từ đầu tiên người dùng gõ sau khi đổi app, giữa một đoạn văn. Chỉ khi shell
+biết chắc — nó vừa nhận sự kiện focus — nó mới nói ra bằng `Engine::arm_capitalization`,
+và hàm đó thay scanner bằng `Scanner::new`.
+
+Đẩy mọi phím vào scanner cũng là cách `…` được tính là hết câu. `is_english_boundary`
+chỉ nhận `is_whitespace() || is_ascii_punctuation()` nên U+2026 không phải ranh giới
+từ; mở rộng predicate đó là cách duy nhất để một bản vá tại chỗ với tới `…`, nhưng nó
+đồng thời gác cửa gõ tắt và English restore.
+
+`on_english_boundary` vẫn cố ý bỏ qua auto-capitalize, nên chế độ tiếng Anh không có.
 
 ## Chọn chế độ
 
@@ -141,12 +152,21 @@ trong engine không bao giờ thắng Shift. `FunputCompositionOptions` nay khô
 được do nhầm. `KeyboardCapitalizationOwnershipTests` vẫn ghim kết quả: chữ đi theo Shift
 kể cả khi người dùng hạ Shift ngay chỗ một bộ đếm câu sẽ viết hoa.
 
-## Chưa hợp nhất
+## Desktop
 
-- **Desktop** (macOS, Windows, Linux) vẫn dùng `update_caps_on_boundary` trong
-  `funput-engine`. Ba điểm nó lệch khỏi luật trên:
-  - Thiếu `…`. Nặng hơn: `is_english_boundary` chỉ nhận `is_whitespace() ||
-    is_ascii_punctuation()`, mà `…` ở U+2026 không phải ASCII, nên `on_word_boundary`
-    không bao giờ chạy cho dấu chấm lửng.
-  - Không có luật chống viết tắt, dù nó là đường gõ trực tiếp và đáng lẽ phải có.
-  - Danh sách dấu đóng hardcode ASCII, thiếu `»` `”` `’` `›`.
+macOS, Windows và Linux không viết một dòng nào cho tính năng này: cả ba link
+`funput-engine`, và engine giữ một `Scanner` trong `Session` thay cho hai cờ
+`cap_armed` / `cap_sentence_ended` cũ. `update_caps_on_boundary` đã bị xoá.
+
+Việc này vá luôn ba điểm engine từng lệch khỏi luật chung: thiếu `…`, không có luật
+chống viết tắt, và danh sách dấu đóng chỉ có ASCII nên `»` `”` `’` `›` không trong
+suốt.
+
+`prepare_key` đọc `awaiting_sentence()` rồi gọi `consume_sentence_start()` **chỉ khi
+thực sự lấy được arm**. Tiêu thụ vô điều kiện sẽ xoá mất một dấu kết câu còn đang chờ
+khoảng trắng — đúng trường hợp của `»`, vốn không phải ASCII nên không đi qua đường
+ranh giới từ mà rơi vào `prepare_key`.
+
+**Vẫn tắt mặc định trên desktop** (`auto_capitalize: false` trong
+`funput-config/src/settings/model/defaults.rs` và trong UserDefaults của macOS), khác
+mobile bật sẵn. Đợt hợp nhất này làm đúng luật cho ai đã bật, không đổi mặc định.

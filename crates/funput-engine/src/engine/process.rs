@@ -23,6 +23,18 @@ impl Engine {
         if !self.session.enabled {
             return self.process_key_english(key);
         }
+        // Every key reaches the scanner, whatever the result below turns out to be,
+        // and whether or not auto-capitalize is on: only reading it is gated, so
+        // turning the switch on mid-session finds the sentence already tracked.
+        // `…` arrives here too, which is how it counts as a sentence end without
+        // `is_english_boundary` — that predicate also gates gõ tắt and English
+        // restore, and widening it would start expanding triggers on an ellipsis.
+        let result = self.compose_key(key, source);
+        self.session.scanner.push(key);
+        result
+    }
+
+    fn compose_key(&mut self, key: char, source: KeySource) -> ImeResult {
         if source.forces_literal_digit(key)
             || boundary::is_word_boundary(self.session.config.method, key)
         {
@@ -66,12 +78,16 @@ impl Engine {
         if !self.session.config.auto_capitalize || !self.session.buffer.is_empty() {
             return (key, false);
         }
-        let armed = self.session.cap_armed;
-        self.session.cap_armed = false;
-        self.session.cap_sentence_ended = false;
-        if !armed {
+        if !self.session.scanner.awaiting_sentence() {
+            // Nothing to take, and taking anyway would drop a terminator still
+            // waiting for its space — which is what a closer like `»` is doing here,
+            // since it is not ASCII and so never reached the boundary path.
             return (key, false);
         }
+        // Taken here rather than left to the push below, because `[` expanding to a
+        // whole word is punctuation as far as the scan is concerned and would leave
+        // the sentence open over the word it just wrote.
+        self.session.scanner.consume_sentence_start();
         if key.is_alphabetic() {
             return (key.to_ascii_uppercase(), false);
         }

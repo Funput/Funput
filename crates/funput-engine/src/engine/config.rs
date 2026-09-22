@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use funput_core::sentence::{Rules, Scanner};
 use funput_core::{InputMethod, ToneStyle};
 
 use crate::{Engine, EngineConfig};
@@ -19,8 +20,7 @@ impl Engine {
             self.session.clear();
         }
         if auto_capitalize_off {
-            self.session.cap_armed = false;
-            self.session.cap_sentence_ended = false;
+            self.session.scanner = Scanner::mid_text(Rules::TYPING);
         }
     }
 
@@ -65,9 +65,12 @@ impl Engine {
         self.session.config.tone_style
     }
 
+    /// Tell the engine the caret sits at the start of a document, so the next letter
+    /// opens a sentence. What a shell calls when a field takes focus — the one moment
+    /// it knows something about the caret that the keystrokes cannot say.
     pub fn arm_capitalization(&mut self) {
         if self.session.config.auto_capitalize {
-            self.session.cap_armed = true;
+            self.session.scanner = Scanner::new(Rules::TYPING);
         }
     }
 

@@ -30,7 +30,7 @@ mod scan;
 #[cfg(test)]
 mod tests;
 
-pub(crate) use scan::Scanner;
+pub use scan::Scanner;
 
 /// Which reading of a full stop the caller wants.
 ///

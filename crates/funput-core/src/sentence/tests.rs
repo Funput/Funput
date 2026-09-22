@@ -92,6 +92,50 @@ fn a_digit_has_already_begun_the_sentence() {
     assert!(!typing("Xin chào. 3 "));
 }
 
+/// What a keyboard engine gets: it is handed keystrokes with no idea where the
+/// caret sits, so it must not assume the start of a document.
+#[test]
+fn a_scan_resumed_mid_text_is_not_waiting_for_a_first_letter() {
+    let scanner = Scanner::mid_text(Rules::TYPING);
+
+    assert!(!scanner.awaiting_sentence());
+    assert!(Scanner::new(Rules::TYPING).awaiting_sentence());
+}
+
+#[test]
+fn a_resumed_scan_still_finds_the_next_sentence() {
+    let mut scanner = Scanner::mid_text(Rules::TYPING);
+
+    for c in "giua cau. ".chars() {
+        scanner.push(c);
+    }
+
+    assert!(scanner.awaiting_sentence());
+}
+
+#[test]
+fn consuming_the_start_closes_it_without_a_character() {
+    let mut scanner = Scanner::new(Rules::TYPING);
+    assert!(scanner.awaiting_sentence());
+
+    scanner.consume_sentence_start();
+
+    assert!(!scanner.awaiting_sentence());
+}
+
+/// Consuming has to drop the pending terminator too, or the next space would
+/// re-open the sentence the caller just took.
+#[test]
+fn consuming_the_start_also_drops_a_pending_terminator() {
+    let mut scanner = Scanner::mid_text(Rules::TYPING);
+    scanner.push('.');
+
+    scanner.consume_sentence_start();
+    scanner.push(' ');
+
+    assert!(!scanner.awaiting_sentence());
+}
+
 #[test]
 fn a_word_starts_after_anything_that_is_not_a_letter_or_digit() {
     assert!(starts_word(""));
