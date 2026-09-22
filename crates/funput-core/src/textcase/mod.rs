@@ -6,11 +6,12 @@
 //! state, and the whole surface is [`apply`].
 //!
 //! **Why core rather than a shell.** The Chuyển mã window will offer these on three
-//! platforms and `funput case` offers them everywhere else. What counts as the end
-//! of a sentence, and which letters lose their diacritics, then has to be one copy
-//! or it drifts — the same argument that put [`crate::charset`] here rather than in
-//! the windows that draw it. The decisions themselves live in
-//! `docs/features/text-case.md`.
+//! platforms and `funput case` offers them everywhere else. Which letters lose their
+//! diacritics then has to be one copy or it drifts — the same argument that put
+//! [`crate::charset`] here rather than in the windows that draw it. The decisions
+//! themselves live in `docs/features/text-case.md`. What counts as the end of a
+//! sentence went one step further and moved to [`crate::sentence`], because the
+//! keyboards ask it too.
 //!
 //! **Why its own feature and not `charset`'s.** A keyboard has no use for the
 //! legacy charset tables, but it may well want bỏ dấu one day: iOS and Android can
