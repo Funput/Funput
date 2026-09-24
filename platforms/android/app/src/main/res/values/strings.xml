@@ -185,7 +185,7 @@
     <string name="input_method_telex">Telex</string>
     <string name="input_method_telex_summary">Dùng tổ hợp chữ để nhập dấu.</string>
     <string name="input_method_telex_advanced">Telex nâng cao</string>
-    <string name="input_method_telex_advanced_summary">Gõ [ thành ư, ] thành ơ; w đầu từ thành ư.</string>
+    <string name="input_method_telex_advanced_summary">Gõ ] thành ư, [ thành ơ; w đầu từ thành ư.</string>
     <string name="input_method_vni">VNI</string>
     <string name="input_method_vni_summary">Dùng các phím số để nhập dấu.</string>
     <string name="settings_tone_style_title">Kiểu đặt dấu</string>
