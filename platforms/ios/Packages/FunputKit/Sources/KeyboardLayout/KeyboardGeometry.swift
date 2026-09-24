@@ -53,7 +53,7 @@ public enum KeyboardGeometry {
             1,
             size.height - rowsTop - bottomPadding - verticalGap * CGFloat(layout.rows.count - 1)
         )
-        let totalWeight = layout.rows.reduce(0) { $0 + sizing.heightWeight(of: $1) }
+        let totalWeight = layout.rows.reduce(0) { $0 + sizing.heightWeight(of: $1, in: layout) }
         let unitRowHeight = rowsHeight / totalWeight
         var nextRowTop = rowsTop
         let canonicalKeyWidth = max(
@@ -70,7 +70,7 @@ public enum KeyboardGeometry {
         )
 
         let rows = layout.rows.map { row in
-            let rowHeight = unitRowHeight * sizing.heightWeight(of: row)
+            let rowHeight = unitRowHeight * sizing.heightWeight(of: row, in: layout)
             let y = nextRowTop
             nextRowTop += rowHeight + verticalGap
             if let spans = row.columnSpans {
