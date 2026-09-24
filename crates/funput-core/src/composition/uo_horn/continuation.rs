@@ -15,8 +15,8 @@ use super::pair::{horned_uo_suffix, open_uo_suffix};
 /// back to the ordinary horn compound: `trưu` + `o` → `trưo` → `trươ` → `trường`.
 ///
 /// This is what lets a horn typed *before* the nucleus still reach `ươ`, whether
-/// it came from Full Telex's leading `w` (`trwuongf`), the `[` shortcut
-/// (`tr[uongf`) or VNI's `7`.
+/// it came from Full Telex's leading `w` (`trwuongf`), the `]` shortcut
+/// (`tr]uongf`) or VNI's `7`.
 pub(crate) fn drop_stray_u_after_horn_u(buffer: &str, key: char) -> Option<String> {
     if !is_vowel(key) {
         return None;

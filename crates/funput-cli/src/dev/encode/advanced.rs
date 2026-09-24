@@ -16,8 +16,8 @@ pub(super) fn push_shortcut(
     let shortcut = match (base, index) {
         ('u', 0) => 'w',
         ('U', 0) => 'W',
-        ('u', _) => '[',
-        ('o', _) => ']',
+        ('u', _) => ']',
+        ('o', _) => '[',
         // Full Telex deliberately has no `{`/`}` uppercase shortcuts.
         _ => return false,
     };
@@ -39,7 +39,7 @@ mod tests {
             Some(Shape::Horn),
             &mut output
         ));
-        assert_eq!(output, "[");
+        assert_eq!(output, "]");
         assert!(!push_shortcut(
             InputMethod::Telex,
             1,

@@ -7,7 +7,7 @@ use funput_ffi::{
 };
 
 const CANONICAL: &str = "uw uwf tuw mow truwowngf nguwowif uwngf.";
-const FULL: &str = "w wf t[ m] tr[]ngf ng[]if wngf.";
+const FULL: &str = "w wf t] m[ tr][ngf ng][if wngf.";
 
 fn run(engine: *mut FunputEngine, input: &str, out: &mut [u32; CHARS_CAP]) {
     unsafe { funput_clear(engine) };

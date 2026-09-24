@@ -11,8 +11,11 @@ pub(super) fn classify(buffer: &str, key: char) -> AdvancedAction {
         return AdvancedAction::Standard(KeyAction::DeferredW);
     }
     match key {
-        '[' => AdvancedAction::Shortcut(TelexShortcut::HornU),
-        ']' => AdvancedAction::Shortcut(TelexShortcut::HornO),
+        // UniKey's engine (x-unikey `TelexMethodMapping`) and OpenKey put `ư` on
+        // `]` and `ơ` on `[`. The UniKey manual prints the pair the other way
+        // round; the engine is what users' hands learned.
+        ']' => AdvancedAction::Shortcut(TelexShortcut::HornU),
+        '[' => AdvancedAction::Shortcut(TelexShortcut::HornO),
         'w' | 'W' if leading_w(buffer) => AdvancedAction::Shortcut(TelexShortcut::LeadingW),
         'w' | 'W' if ends_with_w_after_vowel(buffer) => {
             AdvancedAction::Shortcut(TelexShortcut::RepeatedW)
@@ -71,11 +74,11 @@ mod tests {
             AdvancedAction::Shortcut(TelexShortcut::LeadingW)
         );
         assert_eq!(
-            classify("t", '['),
+            classify("t", ']'),
             AdvancedAction::Shortcut(TelexShortcut::HornU)
         );
         assert_eq!(
-            classify("m", ']'),
+            classify("m", '['),
             AdvancedAction::Shortcut(TelexShortcut::HornO)
         );
         assert_eq!(

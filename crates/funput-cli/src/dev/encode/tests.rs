@@ -34,10 +34,10 @@ fn advanced_encoder_exercises_full_telex_shortcuts() {
         ("ư", "w"),
         ("Ư", "W"),
         ("ứng", "wsng"),
-        ("tư", "t["),
-        ("mơ", "m]"),
-        ("trường", "tr[]fng"),
-        ("người", "ng[]f i"),
+        ("tư", "t]"),
+        ("mơ", "m["),
+        ("trường", "tr][fng"),
+        ("người", "ng][f i"),
     ] {
         let encoded = encode(word, InputMethod::TelexAdvanced);
         let expected = keys.replace(' ', "");

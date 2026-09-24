@@ -10,7 +10,7 @@ pub enum InputMethod {
     Vni,
     /// Telex letter modifiers without Full Telex shortcuts.
     Telex,
-    /// Telex plus leading `w` and the `[` / `]` vowel shortcuts.
+    /// Telex plus leading `w` and the UniKey vowel shortcuts `]` → `ư`, `[` → `ơ`.
     TelexAdvanced,
 }
 
