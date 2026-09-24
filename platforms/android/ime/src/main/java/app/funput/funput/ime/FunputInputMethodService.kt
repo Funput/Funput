@@ -7,8 +7,7 @@ import android.view.View
 import android.view.inputmethod.CompletionInfo
 import android.view.inputmethod.EditorInfo
 import app.funput.funput.ime.editing.InputConnectionEditor
-import app.funput.funput.ime.hardware.ImeHardwareKeyHandler
-import app.funput.funput.ime.hardware.toHardwareKeyStroke
+import app.funput.funput.ime.hardware.HardwareKeyboard
 import app.funput.funput.ime.shortcuts.ImeShortcutsController
 import app.funput.funput.ime.shortcuts.createImeShortcutsController
 import app.funput.funput.keyboard.model.ShiftState
@@ -29,7 +28,7 @@ class FunputInputMethodService : InputMethodService() {
     private var keyboardView: FunputKeyboardView? = null
     private lateinit var session: ImeEditingSession
     private lateinit var settings: ImeSettingsController
-    private lateinit var hardwareKeys: ImeHardwareKeyHandler
+    private lateinit var hardwareKeyboard: HardwareKeyboard
     private lateinit var shortcuts: ImeShortcutsController
     private val nativeEngine get() = session.nativeEngine
     private val actionHandler get() = session.actionHandler
@@ -58,7 +57,7 @@ class FunputInputMethodService : InputMethodService() {
         )
         settings.observe(this, serviceScope)
         shortcuts = createImeShortcutsController(this, serviceScope, actionHandler)
-        hardwareKeys = ImeHardwareKeyHandler.bind(session) { keyboardView?.shiftState ?: ShiftState.OFF }
+        hardwareKeyboard = HardwareKeyboard.bind(this, session, serviceScope) { keyboardView?.shiftState ?: ShiftState.OFF }
     }
     override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
         keyboardView = view
@@ -126,13 +125,19 @@ class FunputInputMethodService : InputMethodService() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent) =
-        hardwareKeys.onKeyDown(event.toHardwareKeyStroke()) || super.onKeyDown(keyCode, event)
+        hardwareKeyboard.onKeyDown(event) || super.onKeyDown(keyCode, event)
     override fun onKeyUp(keyCode: Int, event: KeyEvent) =
-        hardwareKeys.onKeyUp(event.toHardwareKeyStroke()) || super.onKeyUp(keyCode, event)
+        hardwareKeyboard.onKeyUp(event) || super.onKeyUp(keyCode, event)
+    override fun onEvaluateInputViewShown() =
+        super.onEvaluateInputViewShown() || hardwareKeyboard.showsSoftKeyboard
+    // Implicit show requests (auto-show on focus) are refused separately beside a hardware keyboard.
+    override fun onShowInputRequested(flags: Int, configChange: Boolean) =
+        hardwareKeyboard.showsSoftKeyboard || super.onShowInputRequested(flags, configChange)
 
     override fun onEvaluateFullscreenMode(): Boolean = false
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        hardwareKeyboard.onConfigurationChanged(newConfig)
         keyboardView?.let(::updateInputView)
     }
 

@@ -3,6 +3,7 @@ package app.funput.funput.ime.hardware
 import android.view.KeyEvent
 import app.funput.funput.keyboard.model.KeyAction
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -58,6 +59,34 @@ class HardwareKeyActionMapperTest {
             HardwareKeyDecision.Pass,
             HardwareKeyActionMapper.map(HardwareKeyStroke(KeyEvent.KEYCODE_E, codePoint = Int.MIN_VALUE)),
         )
+    }
+
+    @Test
+    fun `alt space toggles the soft keyboard only while the hotkey is enabled`() {
+        val altSpace = HardwareKeyStroke(KeyEvent.KEYCODE_SPACE, ' '.code, isAlt = true)
+
+        assertEquals(
+            HardwareKeyDecision.ToggleSoftKeyboard,
+            HardwareKeyActionMapper.map(altSpace, hotkeyEnabled = true),
+        )
+        assertEquals(KeyAction.Space, consume(altSpace))
+    }
+
+    @Test
+    fun `other space chords never toggle the soft keyboard`() {
+        val chords = listOf(
+            HardwareKeyStroke(KeyEvent.KEYCODE_SPACE, ' '.code),
+            HardwareKeyStroke(KeyEvent.KEYCODE_SPACE, ' '.code, isAlt = true, isShift = true),
+            HardwareKeyStroke(KeyEvent.KEYCODE_SPACE, isCtrl = true, isAlt = true),
+            HardwareKeyStroke(KeyEvent.KEYCODE_SPACE, isAlt = true, isMeta = true),
+        )
+
+        chords.forEach { chord ->
+            assertNotEquals(
+                HardwareKeyDecision.ToggleSoftKeyboard,
+                HardwareKeyActionMapper.map(chord, hotkeyEnabled = true),
+            )
+        }
     }
 
     private fun assertInput(keyCode: Int, codePoint: Int, text: String) {
