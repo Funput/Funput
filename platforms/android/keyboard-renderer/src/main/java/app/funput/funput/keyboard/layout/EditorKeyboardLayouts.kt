@@ -93,7 +93,7 @@ internal object EditorKeyboardLayouts {
             } else {
                 asciiSpaceKey(5.8f)
             },
-            specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
+            periodKey("period"),
             specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
         )
     }

@@ -90,7 +90,7 @@ internal object SymbolLayouts {
             specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.7f, "Chữ cái"),
             specialKey("comma-$page", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
             symbolSpace(page, secure),
-            specialKey("period-$page", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
+            periodKey("period-$page"),
             specialKey("enter-$page", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
     )

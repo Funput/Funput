@@ -13,6 +13,8 @@ data class KeySpec(
     val horizontalSwipeAction: KeySwipeAction? = null,
     val spaceLabelOverride: String? = null,
     val alternates: List<KeyAlternate> = emptyList(),
+    val preferredAlternateText: String? = null,
+    val alternatePaletteColumns: Int? = null,
 ) {
     init {
         require(id.isNotBlank()) { "Key id must not be blank" }
@@ -21,6 +23,12 @@ data class KeySpec(
         require(accessibilityLabel.isNotBlank()) { "Accessibility label must not be blank" }
         require(spaceLabelOverride == null || spaceLabelOverride.isNotBlank()) {
             "Space label override must not be blank"
+        }
+        require(preferredAlternateText == null || alternates.any { it.text == preferredAlternateText }) {
+            "Preferred alternate must belong to the key"
+        }
+        require(alternatePaletteColumns == null || alternatePaletteColumns > 0) {
+            "Alternate palette columns must be positive"
         }
     }
 }

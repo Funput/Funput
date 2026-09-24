@@ -120,7 +120,7 @@ class AlternateSelectionControllerTest {
     private class Scheduler {
         private var task: Runnable? = null
         fun schedule(value: Runnable, delay: Long) {
-            assertEquals(350L, delay)
+            assertEquals(300L, delay)
             task = value
         }
         fun cancel(value: Runnable) {

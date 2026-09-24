@@ -13,7 +13,7 @@ internal object PasswordKeyboardLayouts {
             specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Ký hiệu"),
             specialKey("comma", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
             asciiSpaceKey(5.8f),
-            specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
+            periodKey("period"),
             specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
         showSuggestionBar = false,

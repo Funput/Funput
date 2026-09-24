@@ -66,6 +66,34 @@ class AlternatePaletteLayoutTest {
     }
 
     @Test
+    fun `period palette uses eight columns and two rows when space allows`() {
+        val source = KeyBounds(270f, 200f, 300f, 240f)
+        val layout = AlternatePaletteLayout.resolve(
+            16, source, KeyBounds(0f, -400f, 320f, 304f), density = 1f,
+            defaultIndex = 14, preferredColumns = 8,
+        )
+
+        assertEquals(1, layout.itemBounds.take(8).map { it.top }.distinct().size)
+        assertEquals(2, layout.itemBounds.map { it.top }.distinct().size)
+        assertEquals(8, layout.itemBounds.map { it.left }.distinct().size)
+        assertTrue(layout.bounds.left >= 6f && layout.bounds.right <= 314f)
+        assertTrue(layout.bounds.bottom <= source.top)
+    }
+
+    @Test
+    fun `period palette reduces columns on narrow surfaces`() {
+        val source = KeyBounds(150f, 200f, 180f, 240f)
+        val layout = AlternatePaletteLayout.resolve(
+            16, source, KeyBounds(0f, -400f, 190f, 304f), density = 1f,
+            defaultIndex = 14, preferredColumns = 8,
+        )
+
+        assertTrue(layout.itemBounds.map { it.left }.distinct().size < 8)
+        assertTrue(layout.bounds.left >= 6f && layout.bounds.right <= 184f)
+        assertEquals(14, layout.indexAt(source.centerX, source.centerY, 1f))
+    }
+
+    @Test
     fun `a top-row Vietnamese catalog uses screen space above the keyboard`() {
         val source = KeyBounds(300f, 62f, 336f, 102f)
         val layout = resolve(19, source)

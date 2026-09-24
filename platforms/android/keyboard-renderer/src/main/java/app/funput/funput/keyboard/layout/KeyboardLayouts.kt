@@ -52,7 +52,7 @@ object KeyboardLayouts {
         specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Ký hiệu"),
         specialKey("comma", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
         standardSpaceKey(),
-        specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
+        periodKey("period"),
         specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
     )
 }

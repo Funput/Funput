@@ -12,10 +12,15 @@ internal data class AlternateAccessibilityAction(
 internal fun KeySpec.alternateAccessibilityActions(
     shiftState: ShiftState,
 ): List<AlternateAccessibilityAction> = alternates.mapIndexed { index, alternate ->
+    val spokenLabel = if (shiftState.isActive && alternate.shiftedText != alternate.text) {
+        alternate.textFor(shiftState)
+    } else {
+        alternate.accessibilityLabel
+    }
     AlternateAccessibilityAction(
         index = index,
         actionId = AlternateActionIdBase + index,
-        label = "Chọn ${alternate.textFor(shiftState)}",
+        label = "Chọn $spokenLabel",
     )
 }
 

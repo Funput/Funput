@@ -92,6 +92,7 @@ internal class AlternateSelectionController(
             surfaceBounds(),
             density,
             defaultIndex = defaultIndex,
+            preferredColumns = session.key.alternatePaletteColumns,
         )
         session.selectedIndex = defaultIndex
         session.activationOrder = nextActivationOrder++
@@ -101,15 +102,19 @@ internal class AlternateSelectionController(
     }
 
     /** A hold means the user wants something other than the visible key. */
-    private fun preferredAlternateIndex(key: KeySpec): Int =
-        key.alternates.indexOfFirst { !it.text.equals(key.label, ignoreCase = true) }
+    private fun preferredAlternateIndex(key: KeySpec): Int {
+        key.preferredAlternateText?.let { preferred ->
+            return key.alternates.indexOfFirst { it.text == preferred }
+        }
+        return key.alternates.indexOfFirst { !it.text.equals(key.label, ignoreCase = true) }
             .takeIf { it >= 0 } ?: 0
+    }
 
     private fun remove(pointerId: Int) {
         sessions.remove(pointerId)?.let { cancel(it.task) }
     }
 
     private companion object {
-        const val HoldDelayMillis = 350L
+        const val HoldDelayMillis = 300L
     }
 }

@@ -87,6 +87,15 @@ class KeyboardAccessibilitySnapshotTest {
     }
 
     @Test
+    fun `period exposes all punctuation alternates to TalkBack`() {
+        val actions = snapshot().nodes.first { it.keyId == "period" }.alternateActions
+
+        assertEquals(16, actions.size)
+        assertEquals("Chọn a còng", actions.first().label)
+        assertEquals("Chọn dấu phẩy", actions[14].label)
+    }
+
+    @Test
     fun `excluded editors expose no alternate actions`() {
         val node = snapshot(editorMode = KeyboardEditorMode.URL).nodes
             .first { it.keyId == "character-a" }

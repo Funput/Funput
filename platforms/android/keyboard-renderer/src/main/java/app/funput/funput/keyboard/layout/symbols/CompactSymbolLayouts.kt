@@ -2,6 +2,7 @@ package app.funput.funput.keyboard.layout.symbols
 
 import app.funput.funput.keyboard.KeyboardFeatures
 import app.funput.funput.keyboard.layout.TopNumberRowMode
+import app.funput.funput.keyboard.layout.periodKey
 import app.funput.funput.keyboard.layout.specialKey
 import app.funput.funput.keyboard.layout.standardSpaceKey
 import app.funput.funput.keyboard.layout.topNumberRow
@@ -109,7 +110,7 @@ internal object CompactSymbolLayouts {
             specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.7f, "Chữ cái"),
             specialKey("comma-$page", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
             standardSpaceKey(),
-            specialKey("period-$page", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
+            periodKey("period-$page"),
             specialKey("enter-$page", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
     )
