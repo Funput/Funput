@@ -16,6 +16,8 @@ fn full_telex_runs_end_to_end() {
         ("m] ", "mơ "),
         ("tr[]ngf ", "trường "),
         ("ng[]if ", "người "),
+        ("giwx ", "giữ "),
+        ("giwax ", "giữa "),
         ("WWindowws ", "Windows "),
     ] {
         assert_eq!(
