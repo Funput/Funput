@@ -9,7 +9,7 @@ const W_DEFERRED: &str = "lwams cwon mwoif mwua trwuongf ngwuoif ";
 const MULTI_CANONICAL: &str = "ddwuocj ddwuongf ddwon ddwoif ";
 const MULTI_W_FIRST: &str = "dwduocj dwduongf dwdon dwdoif ";
 const FULL_CANONICAL: &str = "uw uwf tuw mow truwowngf nguwowif uwngfs";
-const FULL_SHORTCUTS: &str = "w wf t[ m] tr[]ngf ng[]if wngf WWindowws";
+const FULL_SHORTCUTS: &str = "w wf t] m[ tr][ngf ng][if wngf WWindowws";
 
 fn measure_pair(
     engine: &mut Engine,

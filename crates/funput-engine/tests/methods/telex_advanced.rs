@@ -12,10 +12,10 @@ fn full_telex_runs_end_to_end() {
     for (keys, output) in [
         ("w ", "ư "),
         ("wf ", "ừ "),
-        ("t[ ", "tư "),
-        ("m] ", "mơ "),
-        ("tr[]ngf ", "trường "),
-        ("ng[]if ", "người "),
+        ("t] ", "tư "),
+        ("m[ ", "mơ "),
+        ("tr][ngf ", "trường "),
+        ("ng][if ", "người "),
         ("giwx ", "giữ "),
         ("giwax ", "giữa "),
         ("WWindowws ", "Windows "),
@@ -31,7 +31,7 @@ fn full_telex_runs_end_to_end() {
 #[test]
 fn canonical_and_full_corpora_commit_the_same_text() {
     let canonical = "uw uwf tuw mow truwowngf nguwowif uwngf.";
-    let full = "w wf t[ m] tr[]ngf ng[]if wngf.";
+    let full = "w wf t] m[ tr][ngf ng][if wngf.";
     assert_eq!(
         crate::support::app_text(InputMethod::Telex, canonical),
         crate::support::app_text(InputMethod::TelexAdvanced, full)
@@ -48,31 +48,31 @@ fn direct_shortcuts_emit_minimal_diffs() {
 
     engine.clear();
     engine.process_char('t');
-    let horn_u = engine.process_char('[');
+    let horn_u = engine.process_char(']');
     assert_eq!((horn_u.backspace, horn_u.output.as_str()), (0, "ư"));
     engine.clear();
-    for key in "tr[".chars() {
+    for key in "tr]".chars() {
         engine.process_char(key);
     }
-    let horn_o = engine.process_char(']');
+    let horn_o = engine.process_char('[');
     assert_eq!((horn_o.backspace, horn_o.output.as_str()), (0, "ơ"));
 }
 
 #[test]
 fn raw_keys_flip_and_sticky_latin_survive_boundary() {
     let mut engine = engine();
-    for key in "tr[]ngf".chars() {
+    for key in "tr][ngf".chars() {
         engine.process_char(key);
     }
     assert_eq!(engine.buffer(), "trường");
-    assert_eq!(engine.keys(), "tr[]ngf");
+    assert_eq!(engine.keys(), "tr][ngf");
 
     engine.flip_composing();
-    assert_eq!(engine.buffer(), "tr[]ngf");
+    assert_eq!(engine.buffer(), "tr][ngf");
     engine.flip_composing();
     assert_eq!(engine.buffer(), "trường");
     engine.flip_composing();
-    assert_eq!(engine.buffer(), "tr[]ngf");
+    assert_eq!(engine.buffer(), "tr][ngf");
     engine.process_char(' ');
     assert!(engine.buffer().is_empty());
 }
@@ -81,12 +81,12 @@ fn raw_keys_flip_and_sticky_latin_survive_boundary() {
 fn brackets_are_boundaries_only_outside_advanced_telex() {
     let mut standard = Engine::new();
     standard.process_char('t');
-    assert_eq!(standard.process_char('[').action, Action::None);
+    assert_eq!(standard.process_char(']').action, Action::None);
     assert!(standard.buffer().is_empty());
 
     let mut advanced = engine();
     advanced.process_char('t');
-    assert_eq!(advanced.process_char('[').action, Action::Send);
+    assert_eq!(advanced.process_char(']').action, Action::Send);
     assert_eq!(advanced.buffer(), "tư");
 }
 
@@ -112,9 +112,9 @@ fn capitalization_backspace_and_method_switch_stay_synchronized() {
     let mut engine = engine();
     engine.update_config(|c| c.auto_capitalize = true);
     engine.arm_capitalization();
-    engine.process_char('[');
+    engine.process_char(']');
     assert_eq!(engine.buffer(), "Ư");
-    assert_eq!(engine.keys(), "[");
+    assert_eq!(engine.keys(), "]");
     engine.on_backspace();
     assert!(engine.buffer().is_empty());
     assert!(engine.keys().is_empty());

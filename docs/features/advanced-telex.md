@@ -35,15 +35,21 @@ Mọi regression test của Telex hiện tại phải chạy lại cho Telex nâ
 
 | Phím | Kết quả | Ví dụ |
 |---|---|---|
-| `[` | `ư` | `t[` → `tư` |
-| `]` | `ơ` | `m]` → `mơ` |
+| `]` | `ư` | `t]` → `tư` |
+| `[` | `ơ` | `m[` → `mơ` |
 | `w` khi âm tiết chưa có nguyên âm | `ư` | `w` → `ư`, `wf` → `ừ`, `th` + `w` → `thư` |
+
+Cặp `]`/`[` theo đúng engine UniKey (`TelexMethodMapping` trong x-unikey, cũng là
+engine của UniKey Windows) và OpenKey — thứ người dùng đã quen tay: gõ `][` ra `ươ`.
+Trang hướng dẫn UniKey in ngược (`[` → `ư`, `]` → `ơ`); cách gán đó thực ra là của
+bàn phím MS Vietnamese (`MsViMethodMapping`). Funput theo engine, không theo trang
+hướng dẫn.
 
 Các phím mới phải kết hợp với pipeline hiện tại:
 
 ```text
-tr[]ngf  → trường
-ng[]if   → người
+tr][ngf  → trường
+ng][if   → người
 wngf     → ừng
 ```
 
@@ -65,7 +71,7 @@ Raw keystrokes phải luôn được giữ để Flip khôi phục chính xác i
 
 Âm đầu `gi` cũng tính là chưa có nguyên âm: chữ `i` của nó là âm đệm, không phải
 nguyên âm chính (`giữ` = `gi` + `ư`). Nên `giwx` → `giữ`, `giwax` → `giữa`,
-`giwongf` → `giường`. Dấu thanh gõ trước (`gixw`, `gix[`) được dời sang nguyên âm
+`giwongf` → `giường`. Dấu thanh gõ trước (`gixw`, `gix]`) được dời sang nguyên âm
 mới ngay khi phím tắt tạo ra nó. `gin` + `w` không đổi — ở đó `i` là nguyên âm chính.
 
 Hệ quả: `w` sau onset không còn là deferred `w` (pending horn chờ nguyên âm phía
@@ -90,7 +96,7 @@ của một nguyên âm phía sau **không** thuộc cặp `uo`: `cwon`, `lwams`
 `gwiux`, `giwof`, `giwatj`. Đây là ambiguity không gỡ được — `lưa`/`cưa`/`giữa` là
 âm tiết hợp lệ, nên không phân biệt được với `lắm`/`cơn`/`giặt`. Các từ này vẫn gõ
 được ở mọi vị trí tự do khác (`conw`, `lamws`, `nuwx`, `giowf`, `giatwj`), bằng
-shortcut (`gi]f`) và bằng cách gõ canonical.
+shortcut (`gi[f`) và bằng cách gõ canonical.
 
 `q` được loại khỏi luật: không có âm tiết `qư`, nên `w` sau `q` đứng một mình vẫn
 là trần thường (`qwuangj` → `quặng`).
@@ -108,8 +114,9 @@ trưu + o  →  trưo  →  trươ  →  trường
 ```
 
 Luật này nằm ở `uo_horn` nên dùng chung cho mọi cách tạo ra `ư` sớm: leading `w`
-của Telex nâng cao (`trwuongf`), shortcut `[` (`tr[uongf`) và `7` của VNI
-(`tru7uong2`). Nó đồng thời sửa một lỗi có sẵn: `tr[uongf` trước đây ra `trừuong`.
+của Telex nâng cao (`trwuongf`), shortcut `]` (`tr]uongf`) và `7` của VNI
+(`tru7uong2`). Nó đồng thời sửa một lỗi có sẵn: shortcut `ư` rồi `uong` trước đây
+ra `trừuong`.
 
 ## So sánh hai mode
 
@@ -117,9 +124,9 @@ của Telex nâng cao (`trwuongf`), shortcut `[` (`tr[uongf`) và `7` của VNI
 |---|---|---|
 | `w` | `w` | `ư` |
 | `wf` | `wf` | `ừ` |
-| `t[` | `t[` | `tư` |
-| `m]` | `m]` | `mơ` |
-| `tr[]ngf` | literal/restore hiện tại | `trường` |
+| `t]` | `t]` | `tư` |
+| `m[` | `m[` | `mơ` |
+| `tr][ngf` | literal/restore hiện tại | `trường` |
 
 Telex hiện tại tiếp tục là lựa chọn an toàn hơn khi nhập tiếng Anh hoặc code. Trong
 Telex nâng cao, Flip là escape chính thức cho collision; người dùng cũng có thể đổi
@@ -188,11 +195,16 @@ Config interchange mở rộng `preferences.inputMethod` thành:
 ## Ngoài phạm vi V5
 
 - Deferred tone hoặc arbitrary free-order của V4.
-- `{` → `Ư`, `}` → `Ơ`.
+- `{` → `Ơ`, `}` → `Ư` (bản viết hoa của `[`/`]` trong UniKey).
 - Dictionary, prediction, autocorrect hoặc ambiguity scoring.
 - Thay đổi mặc định của người dùng Telex hiện tại.
 
 ## Tham chiếu tương thích
 
-- [UniKey Manual — bảng phím Telex đầy đủ](https://www.unikey.org/support/ukmanual.html)
+- [UniKey engine — `TelexMethodMapping`](https://github.com/fcitx/fcitx5-unikey/blob/master/unikey/inputproc.cpp)
+  (engine gốc x-unikey; [unikey.org/source](https://www.unikey.org/source.html) xác nhận
+  UniKey Windows dùng cùng engine)
+- [OpenKey — xử lý `[`/`]`](https://github.com/tuyenvm/OpenKey/blob/master/Sources/OpenKey/engine/Engine.cpp)
+- [UniKey Manual — bảng phím Telex](https://www.unikey.org/support/ukmanual.html)
+  (in ngược cặp `[`/`]` so với engine)
 - [UniKey 4.6 RC2 — phân biệt Simple Telex](https://www.unikey.org/version_4_6_2.html)

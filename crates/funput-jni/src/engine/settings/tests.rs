@@ -47,8 +47,8 @@ fn tone_style_wire_values_are_stable_and_unknown_is_safe() {
 #[test]
 fn persisted_advanced_id_survives_registry_relaunch() {
     let persisted_method = 2; // Telex Advanced
-    assert_eq!(type_with(config(persisted_method, 0), "t["), "tư");
-    assert_eq!(type_with(config(persisted_method, 0), "m]"), "mơ");
+    assert_eq!(type_with(config(persisted_method, 0), "t]"), "tư");
+    assert_eq!(type_with(config(persisted_method, 0), "m["), "mơ");
 }
 
 /// The wire config must land field for field: a swapped bool or a dropped tone style

@@ -24,7 +24,7 @@ impl Method {
     pub const fn description(self) -> &'static str {
         match self {
             Self::Telex => "Dấu bằng chữ cái — aa→â, ow→ơ, as→á, dd→đ",
-            Self::TelexAdvanced => "Full Telex — [→ư, ]→ơ, w đầu từ→ư",
+            Self::TelexAdvanced => "Full Telex — ]→ư, [→ơ, w đầu từ→ư",
             Self::Vni => "Dấu bằng chữ số — a6→â, o7→ơ, a1→á, d9→đ",
         }
     }

@@ -31,7 +31,7 @@ enum InputMethod: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .telex: "Dấu bằng chữ cái — aa→â, ow→ơ, as→á, dd→đ"
         case .vni: "Dấu bằng chữ số — a6→â, o7→ơ, a1→á, d9→đ"
-        case .telexAdvanced: "Full Telex — [→ư, ]→ơ, w đầu từ→ư"
+        case .telexAdvanced: "Full Telex — ]→ư, [→ơ, w đầu từ→ư"
         }
     }
 

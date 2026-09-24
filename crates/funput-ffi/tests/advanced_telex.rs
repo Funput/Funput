@@ -51,12 +51,12 @@ fn apply_result(displayed: &mut String, result: FunputResult) {
 fn stable_method_ids_select_the_expected_grammar() {
     assert_eq!(typed(METHOD_TELEX, "w "), "w ");
     assert_eq!(typed(METHOD_VNI, "a1 "), "á ");
-    assert_eq!(typed(METHOD_TELEX_ADVANCED, "tr[]ngf "), "trường ");
+    assert_eq!(typed(METHOD_TELEX_ADVANCED, "tr][ngf "), "trường ");
 }
 
 #[test]
 fn unknown_method_falls_back_to_standard_telex() {
-    assert_eq!(typed(u8::MAX, "w t[ "), "w t[ ");
+    assert_eq!(typed(u8::MAX, "w t] "), "w t] ");
 }
 
 #[test]
@@ -72,12 +72,12 @@ fn persisted_advanced_id_survives_native_relaunch() {
     unsafe {
         let first = funput_engine_new();
         funput_set_method(first, persisted_method);
-        assert_eq!(type_on(first, "t["), "tư");
+        assert_eq!(type_on(first, "t]"), "tư");
         funput_engine_free(first);
 
         let relaunched = funput_engine_new();
         funput_set_method(relaunched, persisted_method);
-        assert_eq!(type_on(relaunched, "tr[]ngf "), "trường ");
+        assert_eq!(type_on(relaunched, "tr][ngf "), "trường ");
         funput_engine_free(relaunched);
     }
 }
@@ -87,10 +87,10 @@ fn advanced_raw_keys_flip_both_ways_through_c_abi() {
     unsafe {
         let engine = funput_engine_new();
         funput_set_method(engine, METHOD_TELEX_ADVANCED);
-        let mut displayed = type_on(engine, "tr[]ngf");
+        let mut displayed = type_on(engine, "tr][ngf");
         assert_eq!(displayed, "trường");
         apply_result(&mut displayed, funput_flip_composing(engine));
-        assert_eq!(displayed, "tr[]ngf");
+        assert_eq!(displayed, "tr][ngf");
         apply_result(&mut displayed, funput_flip_composing(engine));
         assert_eq!(displayed, "trường");
         funput_engine_free(engine);

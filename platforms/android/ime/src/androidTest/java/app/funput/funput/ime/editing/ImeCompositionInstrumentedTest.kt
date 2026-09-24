@@ -47,10 +47,10 @@ class ImeCompositionInstrumentedTest {
         val cases = listOf(
             "w" to "ư",
             "wf" to "ừ",
-            "t[" to "tư",
-            "m]" to "mơ",
-            "tr[]ngf" to "trường",
-            "ng[]if" to "người",
+            "t]" to "tư",
+            "m[" to "mơ",
+            "tr][ngf" to "trường",
+            "ng][if" to "người",
             "ww" to "w",
             "Wf" to "Ừ",
         )

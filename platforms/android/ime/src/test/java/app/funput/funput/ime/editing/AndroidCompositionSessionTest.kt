@@ -16,7 +16,7 @@ class AndroidCompositionSessionTest {
         )
         val session = testSession(engine)
 
-        session.input(connection.proxy, "[")
+        session.input(connection.proxy, "]")
 
         assertEquals(listOf("tư"), connection.composingTexts)
         assertEquals("tư", session.composingText)
