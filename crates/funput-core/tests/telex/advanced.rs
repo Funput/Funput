@@ -126,6 +126,34 @@ fn leading_w_skips_the_q_onset() {
 }
 
 #[test]
+fn leading_w_treats_the_gi_glide_as_onset() {
+    // The `i` of `gi` is the medial glide, not a nucleus, so `gi` + `w` is `giư`
+    // exactly like `th` + `w` is `thư` — in any tone order.
+    for (keys, output) in [
+        ("giwx", "giữ"),
+        ("Giwx", "Giữ"),
+        ("GIWX", "GIỮ"),
+        ("giwxa", "giữa"),
+        ("giwax", "giữa"),
+        ("giwtj", "giựt"),
+        ("giwongf", "giường"),
+        ("giwowngf", "giường"),
+        ("gixw", "giữ"),
+        ("gix[", "giữ"),
+        ("gi[x", "giữ"),
+    ] {
+        assert_eq!(typed(keys), output, "{keys}");
+    }
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Telex, "giuwx"),
+        typed("giwx")
+    );
+    // The second `w` undoes it as for any onset, and `gin` keeps `i` as nucleus.
+    assert_eq!(typed("giww"), "giw");
+    assert_eq!(typed("ginw"), "ginw");
+}
+
+#[test]
 fn shortcut_vowel_takes_a_tone_typed_before_it() {
     // A tone typed ahead of the nucleus moves onto the shortcut vowel at once,
     // not on the next key — so the word is right even when it ends there.
@@ -148,11 +176,26 @@ fn leading_w_loses_the_onset_placed_non_uo_horn() {
     assert_eq!(typed("cwon"), "cươn"); // plain Telex: cơn
     assert_eq!(typed("lwams"), "lứam"); // plain Telex: lắm
     assert_eq!(typed("nwux"), "nữu"); // plain Telex: nữ
-    for (keys, output) in [("conw", "cơn"), ("lamws", "lắm"), ("nuwx", "nữ")] {
+    assert_eq!(typed("giwof"), "giuờ"); // plain Telex: giờ
+    assert_eq!(typed("giwatj"), "giựat"); // plain Telex: giặt
+    for (keys, output) in [
+        ("conw", "cơn"),
+        ("lamws", "lắm"),
+        ("nuwx", "nữ"),
+        ("giowf", "giờ"),
+        ("gi]f", "giờ"),
+        ("giatwj", "giặt"),
+    ] {
         assert_eq!(typed(keys), output, "{keys}");
     }
     // Plain Telex keeps the deferred `w` in every position.
-    for (keys, output) in [("cwon", "cơn"), ("lwams", "lắm"), ("nwux", "nữ")] {
+    for (keys, output) in [
+        ("cwon", "cơn"),
+        ("lwams", "lắm"),
+        ("nwux", "nữ"),
+        ("giwof", "giờ"),
+        ("giwatj", "giặt"),
+    ] {
         assert_eq!(
             crate::support::type_keys(InputMethod::Telex, keys),
             output,

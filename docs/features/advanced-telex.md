@@ -63,6 +63,11 @@ Raw keystrokes phải luôn được giữ để Flip khôi phục chính xác i
 `w` là phím `ư` ở **mọi vị trí âm tiết chưa có nguyên âm**, không chỉ ở ký tự đầu:
 `thw` → `thư`, `nhwng` → `nhưng`, `thwongf` → `thường`, `ngwoif` → `người`.
 
+Âm đầu `gi` cũng tính là chưa có nguyên âm: chữ `i` của nó là âm đệm, không phải
+nguyên âm chính (`giữ` = `gi` + `ư`). Nên `giwx` → `giữ`, `giwax` → `giữa`,
+`giwongf` → `giường`. Dấu thanh gõ trước (`gixw`, `gix[`) được dời sang nguyên âm
+mới ngay khi phím tắt tạo ra nó. `gin` + `w` không đổi — ở đó `i` là nguyên âm chính.
+
 Hệ quả: `w` sau onset không còn là deferred `w` (pending horn chờ nguyên âm phía
 sau) trong Telex nâng cao. Telex thường **không đổi**.
 
@@ -73,16 +78,19 @@ Vần `ươ` — nhóm lớn nhất — vẫn về đích nhờ chuẩn hoá `ư
 | `thw` | `thw` | `thư` |
 | `thwongf` | `thờng` | `thường` |
 | `nhwng` | `nhwng` | `nhưng` |
+| `giwx` | `giwx` | `giữ` |
 | `trwuongf` | `trường` | `trường` |
 | `dwduocj` | `được` | `được` |
 | `cwon` | `cơn` | `cươn` |
 | `lwams` | `lắm` | `lứam` |
+| `giwof` | `giờ` | `giuờ` |
 
 Chênh lệch còn lại chỉ xảy ra khi `w` gõ **ngay sau onset** và nhắm tới trần/móc
 của một nguyên âm phía sau **không** thuộc cặp `uo`: `cwon`, `lwams`, `nwux`,
-`gwiux`. Đây là ambiguity không gỡ được — `lưa`/`cưa` là âm tiết hợp lệ, nên không
-phân biệt được với `lắm`/`cơn`. Các từ này vẫn gõ được ở mọi vị trí tự do khác
-(`conw`, `lamws`, `nuwx`) và bằng cách gõ canonical.
+`gwiux`, `giwof`, `giwatj`. Đây là ambiguity không gỡ được — `lưa`/`cưa`/`giữa` là
+âm tiết hợp lệ, nên không phân biệt được với `lắm`/`cơn`/`giặt`. Các từ này vẫn gõ
+được ở mọi vị trí tự do khác (`conw`, `lamws`, `nuwx`, `giowf`, `giatwj`), bằng
+shortcut (`gi]f`) và bằng cách gõ canonical.
 
 `q` được loại khỏi luật: không có âm tiết `qư`, nên `w` sau `q` đứng một mình vẫn
 là trần thường (`qwuangj` → `quặng`).
