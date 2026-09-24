@@ -11,6 +11,7 @@ import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.keyboard.placement.OneHandedSide
 import app.funput.funput.theme.KeyboardThemeDescriptor
+import app.funput.funput.ui.settings.hardware.HardwareKeyboardSectionState
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 
 /** Everything the settings screen renders and every action it can dispatch. */
@@ -29,6 +30,7 @@ internal class SettingsScreenState(
     val personalSuggestionsEnabled: Boolean,
     val clipboardPreferences: ClipboardPreferences,
     val smartGesturesEnabled: Boolean,
+    val hardwareKeyboard: HardwareKeyboardSectionState = HardwareKeyboardSectionState.Inert,
     val onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     val onShowsNumberRowChanged: (Boolean) -> Unit,
     val onOpenAppearance: () -> Unit,

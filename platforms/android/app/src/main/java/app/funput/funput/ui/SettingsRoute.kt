@@ -13,6 +13,7 @@ import app.funput.funput.ui.keyboard.openKeyboardSettings
 import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.settings.SettingsScreen
 import app.funput.funput.ui.settings.SettingsScreenState
+import app.funput.funput.ui.settings.hardware.rememberHardwareKeyboardSectionState
 import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -51,6 +52,7 @@ internal fun SettingsRoute(
             personalSuggestionsEnabled = settings.personalSuggestions.enabled,
             clipboardPreferences = settings.clipboard,
             smartGesturesEnabled = settings.smartGesturesEnabled,
+            hardwareKeyboard = rememberHardwareKeyboardSectionState(),
             onInputMethodSelected = { method ->
                 scope.launch { settings.input.setInputMethod(method) }
             },

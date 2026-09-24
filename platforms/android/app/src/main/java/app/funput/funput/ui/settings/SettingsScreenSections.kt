@@ -1,7 +1,6 @@
 package app.funput.funput.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -18,15 +16,14 @@ import app.funput.funput.ui.settings.clipboard.ClipboardSettingsSection
 import app.funput.funput.ui.settings.components.KeyboardHero
 import app.funput.funput.ui.settings.data.DataSettingsSection
 import app.funput.funput.ui.settings.feedback.FeedbackSettingsSection
+import app.funput.funput.ui.settings.hardware.HardwareKeyboardSettingsSection
 import app.funput.funput.ui.settings.keyboard.KeyboardSetupCard
 import app.funput.funput.ui.settings.keyboard.LayoutSettingsSection
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 import app.funput.funput.ui.settings.smart.SmartSettingsSection
 import app.funput.funput.ui.settings.typing.TypingSettingsSection
-import app.funput.funput.ui.theme.EntryTracker
 import app.funput.funput.ui.theme.Spacing
 import app.funput.funput.ui.theme.rememberEntryTracker
-import app.funput.funput.ui.theme.staggeredEntry
 
 @Composable
 internal fun SettingsScreenSections(
@@ -122,23 +119,15 @@ internal fun SettingsScreenSections(
                 onOpenExpiry = { onOpenPicker(SettingsPicker.CLIPBOARD_EXPIRY) },
             )
         }
-        settingsItem("data", firstSectionIndex + 5, tracker) {
+        settingsItem("hardware-keyboard", firstSectionIndex + 5, tracker) {
+            HardwareKeyboardSettingsSection(state.hardwareKeyboard)
+        }
+        settingsItem("data", firstSectionIndex + 6, tracker) {
             DataSettingsSection(
                 onResetPersonalSuggestions = state.onResetPersonalSuggestions,
                 onClearClipboardHistory = state.onClearClipboardHistory,
             )
         }
-    }
-}
-
-private fun LazyListScope.settingsItem(
-    key: String,
-    index: Int,
-    tracker: EntryTracker,
-    content: @Composable () -> Unit,
-) {
-    item(key = key) {
-        Box(modifier = Modifier.staggeredEntry(index, tracker)) { content() }
     }
 }
 
