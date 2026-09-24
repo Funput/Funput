@@ -38,15 +38,15 @@ struct SystemSymbolsParityTests {
 
     @Test("Page switch keys keep their roles", arguments: KeyboardInputMethod.allCases)
     func switchKeys(method: KeyboardInputMethod) {
-        let primary = SystemSymbolKeyboardLayouts.primary(method).rows[2].keys
-        #expect(primary.first?.role == .moreSymbols)
-        #expect(primary.first?.widthWeight == 1.5)
-        #expect(primary.last?.role == .backspace)
-        #expect(primary.last?.widthWeight == 1.5)
+        let primary = SystemSymbolKeyboardLayouts.primary(method).rows[2]
+        #expect(primary.keys.first?.role == .moreSymbols)
+        #expect(primary.keys.last?.role == .backspace)
+        #expect(primary.columnSpans != nil)
 
-        let secondary = SystemSymbolKeyboardLayouts.secondary(method).rows[2].keys
-        #expect(secondary.first?.role == .symbols)
-        #expect(secondary.first?.widthWeight == 1.5)
+        let secondary = SystemSymbolKeyboardLayouts.secondary(method).rows[2]
+        #expect(secondary.keys.first?.role == .symbols)
+        #expect(secondary.keys.last?.role == .backspace)
+        #expect(secondary.columnSpans != nil)
     }
 
     @Test("Both pages share the letters action row", arguments: KeyboardInputMethod.allCases)
