@@ -48,7 +48,9 @@ pub(crate) fn apply_advanced_telex(
 ) -> TransformResult {
     match telex::classify_advanced_key(buffer, key) {
         AdvancedAction::Standard(action) => apply_action(buffer, key, action, style, spell_check),
-        AdvancedAction::Shortcut(shortcut) => full_telex::apply(buffer, key, shortcut, spell_check),
+        AdvancedAction::Shortcut(shortcut) => {
+            full_telex::apply(buffer, key, shortcut, style, spell_check)
+        }
     }
 }
 

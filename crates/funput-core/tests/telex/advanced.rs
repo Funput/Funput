@@ -126,6 +126,20 @@ fn leading_w_skips_the_q_onset() {
 }
 
 #[test]
+fn shortcut_vowel_takes_a_tone_typed_before_it() {
+    // A tone typed ahead of the nucleus moves onto the shortcut vowel at once,
+    // not on the next key — so the word is right even when it ends there.
+    for (keys, output) in [
+        ("thur]", "thuở"),
+        ("gif]", "giờ"),
+        ("cuf]ng", "cường"),
+        ("ng[f]", "ngườ"),
+    ] {
+        assert_eq!(typed(keys), output, "{keys}");
+    }
+}
+
+#[test]
 fn leading_w_loses_the_onset_placed_non_uo_horn() {
     // Remaining divergence, documented in docs/features/advanced-telex.md: when a
     // `w` typed straight after the onset was meant as the trần/móc of a *later*
