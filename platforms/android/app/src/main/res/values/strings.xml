@@ -225,6 +225,13 @@
     <string name="settings_clipboard_clear_dialog_title">Xoá toàn bộ lịch sử bảng nhớ tạm?</string>
     <string name="settings_clipboard_clear_dialog_body">Xoá ngay lập tức, kể cả những mục đã ghim.</string>
     <string name="settings_clipboard_clear_dialog_cancel">Giữ lại</string>
+    <string name="settings_section_hardware_keyboard">Bàn phím rời</string>
+    <string name="settings_hardware_keyboard_show_title">Hiện Funput khi có bàn phím rời</string>
+    <string name="settings_hardware_keyboard_show_summary">Android mặc định ẩn bàn phím trên màn hình khi đã kết nối bàn phím rời.</string>
+    <string name="settings_hardware_keyboard_hotkey_title">Alt + Space để hiện hoặc ẩn</string>
+    <string name="settings_hardware_keyboard_hotkey_summary">Nhấn trên bàn phím rời để hiện hoặc ẩn Funput. Khi tắt, Alt + Space gõ dấu cách.</string>
+    <string name="settings_hardware_keyboard_system_title">Cài đặt bàn phím vật lý</string>
+    <string name="settings_hardware_keyboard_system_summary">Bố cục phím và các tuỳ chọn khác của Android.</string>
     <string name="settings_section_data">Dữ liệu</string>
     <string name="settings_data_suggestions_title">Từ đã học</string>
     <string name="settings_data_suggestions_summary">Giữ từ điển tiếng Anh đi kèm.</string>
