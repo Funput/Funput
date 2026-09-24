@@ -1,8 +1,8 @@
 enum SystemSymbolPageContent {
-    // The seventh glyph is "đ" (U+0111), the Vietnamese LETTER — not "₫" (U+20AB), the
-    // currency sign that `SymbolPageContent.primaryRow1` carries. Apple's Vietnamese
-    // keyboard puts the letter here, and the two are trivially confusable in a diff.
-    static let primaryRow = ["-", "/", ":", ";", "(", ")", "đ", "&", "@", "\""]
+    // The seventh glyph is "₫" (U+20AB), the dong sign, where the US keyboard has "$" —
+    // not "đ" (U+0111), the letter. Apple's Vietnamese keyboard draws it with the bar
+    // underneath, and the two are trivially confusable in a diff.
+    static let primaryRow = ["-", "/", ":", ";", "(", ")", "\u{20AB}", "&", "@", "\""]
 
     static let secondaryRowUpper = ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="]
     static let secondaryRowLower = ["_", "\\", "|", "~", "<", ">", "$", "¥", "€", "•"]

@@ -33,6 +33,34 @@ struct SystemKeySizingGeometryTests {
         #expect(abs(letter.minX - SystemKeyMetrics.horizontalPadding) <= 0.5)
     }
 
+    /// Apple shortens the digits only when they stack above four rows. The "123" page is
+    /// four rows, like the compact Telex letters page, so its rows must match those.
+    @Test("A four-row page draws its digits as a full row", arguments: [390.0, 440.0])
+    func fourRowPagesKeepFullRows(width: CGFloat) {
+        func rowHeights(_ layout: KeyboardLayout) -> [CGFloat] {
+            KeyboardGeometry.resolve(
+                layout: layout,
+                size: CGSize(width: width, height: 255),
+                sizing: .system
+            ).rows.map { $0[0].frame.height }
+        }
+        let letters = rowHeights(SystemKeyboardLayouts.letters(.telex, showsNumberRow: false))
+        #expect(Set(letters).count == 1)
+
+        let symbolPages = [KeyboardLayoutPreset.system, .funput].map { preset in
+            KeyboardLayoutResolver.resolve(
+                inputMethod: .telex,
+                mode: .symbolsPrimary,
+                showsNumberRow: false,
+                preset: preset
+            )
+        }
+        for page in symbolPages {
+            #expect(page.rows[0].isNumberRow, "\(page.id)")
+            #expect(rowHeights(page) == letters, "\(page.id)")
+        }
+    }
+
     @Test("A compact Telex layout has no number row")
     func telexCompactHasNoNumberRow() {
         #expect(!StandardKeyboardLayouts.letters(.telex, showsNumberRow: false).hasNumberRow)

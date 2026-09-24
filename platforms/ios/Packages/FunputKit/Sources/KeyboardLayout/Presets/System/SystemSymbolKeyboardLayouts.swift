@@ -57,8 +57,8 @@ public enum SystemSymbolKeyboardLayouts {
         })
     }
 
-    /// `<switch> . , ? ! ' <backspace>` — five middle keys rather than the seven the
-    /// Funput preset uses, so they render wider. That is what the stock keyboard does.
+    /// `<switch> . , ? ! ' <backspace>`, placed on the letter grid so the switch and
+    /// backspace line up with Shift and Delete on the letters page, as on the stock keyboard.
     private static func punctuationRow(
         page: String,
         switchLabel: String,
@@ -68,19 +68,15 @@ public enum SystemSymbolKeyboardLayouts {
             "switch-\(page)",
             switchLabel,
             switchRole,
-            weight: 1.5,
             accessibilityLabel: "Chuyển trang ký hiệu"
         )
         let middle = SystemSymbolPageContent.punctuationRow.enumerated().map { index, label in
             KeySpec(id: "punctuation-\(page)-\(index)", label: label, role: .punctuation)
         }
-        let trailing = specialKey(
-            "backspace-\(page)",
-            "",
-            .backspace,
-            weight: 1.5,
-            accessibilityLabel: "Xóa"
+        let trailing = specialKey("backspace-\(page)", "", .backspace, accessibilityLabel: "Xóa")
+        return KeyboardRow(
+            keys: [leading] + middle + [trailing],
+            columnSpans: SystemRowSpans.symbolPunctuation(count: middle.count)
         )
-        return KeyboardRow(keys: [leading] + middle + [trailing])
     }
 }

@@ -65,9 +65,14 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
         keySizing == .system ? SystemKeyMetrics.bottomPadding(screenWidth: width) : 0
     }
 
-    /// How tall a row is relative to a letter row.
-    public func heightWeight(of row: KeyboardRow) -> CGFloat {
-        row.isNumberRow ? numberRowHeightRatio : 1
+    /// How tall `row` is relative to a letter row of `layout`.
+    ///
+    /// A number row is only drawn short when it is stacked above the standard rows, the
+    /// same rule ``SystemKeyMetrics/rowsHeight(screenWidth:rowCount:)`` budgets for. The
+    /// digits of a four-row "123" page are a full row, as on the stock keyboard.
+    public func heightWeight(of row: KeyboardRow, in layout: KeyboardLayout) -> CGFloat {
+        let isStacked = layout.rows.count > SystemKeyMetrics.standardRowCount
+        return row.isNumberRow && isStacked ? numberRowHeightRatio : 1
     }
 
     public static let `default` = KeyboardSizingProfile()
