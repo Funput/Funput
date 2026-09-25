@@ -34,6 +34,7 @@ pub(crate) mod state;
 mod touch;
 
 pub use score::CorrectionCandidate;
+pub use state::CorrectionMetrics;
 pub use touch::{KeyTouch, MAX_ALTERNATES};
 
 pub(crate) use state::{CorrectionState, apply, discard, flush_pending, sync, take_undo};
@@ -60,7 +61,12 @@ pub(crate) fn offer(session: &mut Session, boundary: char, verdict: &Verdict) ->
     let found = if undone_before(&mut state, &session.keys) {
         0
     } else {
-        search::find(&mut state, &session.config, &session.keys, &session.buffer)
+        let started = std::time::Instant::now();
+        let found = search::find(&mut state, &session.config, &session.keys, &session.buffer);
+        state
+            .metrics
+            .note_search(found, started.elapsed().as_micros());
+        found
     };
     if found > 0 {
         park(&mut state, session, boundary, verdict.restore);
