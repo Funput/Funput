@@ -11,10 +11,13 @@
 //!
 //! # Layout
 //!
-//! - this file — the run loop and how each word is classified.
+//! - this file — the run loop.
+//! - `attempt` — typing one word and naming what became of it; `--keep` mode.
 //! - `noise` — the key grid and the finger that misses it.
-//! - `report` — the human and JSON renderings.
+//! - `report` — what is counted, and the human and JSON renderings.
+//! - `store` — the platform's word store, or the absence of one.
 
+mod attempt;
 mod noise;
 mod report;
 mod store;
@@ -22,77 +25,17 @@ mod store;
 use std::path::Path;
 
 use funput_core::InputMethod;
-use funput_engine::{Action, Engine};
 
 use super::coverage::corpus::load_syllables;
-use super::encode::encode;
-use noise::{Rng, aim};
+use super::encode;
+use attempt::attempt;
+pub(in crate::dev) use attempt::run_keep;
+use noise::Rng;
 use report::{Outcome, Tally};
 pub(in crate::dev) use store::Prior;
-use store::{Store, ballots};
+use store::Store;
 
-/// Type `syllable` with a wandering finger and report what correction made of it.
-///
-/// `store` stands in for the platform's word store, and is used exactly the way a
-/// keyboard uses it: veto first, then weigh the candidates.
-fn attempt(syllable: &str, options: &Options, store: &Store, rng: &mut Rng) -> Outcome {
-    let (method, noise) = (options.method, options.noise);
-    let mut engine = Engine::new();
-    engine.update_config(|config| {
-        config.method = method;
-        config.typo_correction = true;
-    });
-    let mut app = String::new();
-    let mut slipped = false;
-    for key in encode(syllable, method).chars() {
-        let (hit, touch) = aim(key, noise, rng);
-        slipped |= hit != key;
-        engine.set_next_key_touch(touch);
-        apply(&mut app, &engine.process_char(hit), hit);
-    }
-    apply(&mut app, &engine.process_char(' '), ' ');
-
-    // What a platform does before it looks at candidates: a word that is already a
-    // word is what the user meant, however odd it looks to the engine.
-    let vetoed = store.knows(app.trim_end());
-    let chosen = if vetoed {
-        None
-    } else {
-        let (uses, allowed) = ballots(
-            engine.correction_candidates(),
-            store,
-            options.known_only,
-            options.max_edits,
-        );
-        engine.choose_correction(&uses, &allowed)
-    };
-    let corrected = chosen
-        .and_then(|index| engine.correction_candidates().get(index))
-        .map(|candidate| candidate.text().to_owned());
-    apply(&mut app, &engine.apply_correction(chosen), ' ');
-
-    match (slipped, corrected) {
-        (false, _) => Outcome::Typed,
-        (true, Some(word)) if word == syllable => Outcome::Fixed,
-        (true, Some(_)) => Outcome::Wrong,
-        // Nothing was offered. Either the broken word is still a real syllable — and
-        // correction is right to leave it — or it is not and we simply missed it.
-        (true, None) if funput_core::is_complete_syllable(app.trim_end()) => Outcome::Homophone,
-        (true, None) => Outcome::Missed,
-    }
-}
-
-fn apply(app: &mut String, result: &funput_engine::ImeResult, key: char) {
-    if result.action == Action::None {
-        app.push(key);
-        return;
-    }
-    for _ in 0..result.backspace {
-        app.pop();
-    }
-    app.push_str(&result.output);
-}
-
+#[derive(Clone, Copy)]
 pub(super) struct Options {
     pub(super) method: InputMethod,
     pub(super) prior: Prior,
@@ -124,15 +67,23 @@ pub fn run(corpus_path: &Path, options: &Options) -> std::io::Result<()> {
 }
 
 fn measure(syllables: &[String], options: &Options) -> Tally {
+    let keys: Vec<String> = syllables
+        .iter()
+        .map(|syllable| encode::encode(syllable, options.method))
+        .collect();
+    measure_typed(syllables, &keys, options)
+}
+
+/// Type each word through its keys and tally the outcomes.
+fn measure_typed(words: &[String], keys: &[String], options: &Options) -> Tally {
     let mut rng = Rng::new(options.seed);
-    let store = Store::learn(syllables, options.prior);
+    let store = Store::learn(words, options.prior);
     let mut tally = Tally::default();
-    for syllable in syllables {
-        let outcome = attempt(syllable, options, &store, &mut rng);
+    for (word, keys) in words.iter().zip(keys) {
+        let outcome = attempt(word, keys, options, &store, &mut rng);
         tally.add(outcome);
         if tally.samples.len() < options.show && outcome != Outcome::Typed {
-            let keys = encode(syllable, options.method);
-            tally.samples.push((syllable.clone(), keys, outcome));
+            tally.samples.push((word.clone(), keys.clone(), outcome));
         }
     }
     tally

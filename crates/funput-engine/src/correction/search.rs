@@ -104,14 +104,18 @@ fn consider(
 /// Type `word` into the scratch session from scratch, and answer whether it lands on
 /// a real syllable.
 ///
-/// The two things `Engine::process_key` does around the pipeline have to be done here
-/// too: a digit cannot open a word (in VNI the modifiers *are* digits), and the raw
-/// keys have to grow with the buffer.
+/// The raw keys have to grow with the buffer, as `Engine::process_key` grows them.
+///
+/// A digit cannot open a word — in VNI the modifiers *are* digits — and the engine
+/// never puts one there, so one here can only be a substitution. It sinks the whole
+/// candidate rather than being skipped: skipped, the candidate describes a word one
+/// letter short of what the screen would show, and a `t` whose neighbour is `5` turns
+/// `trước` into `rước`.
 fn replay(scratch: &mut Session, word: &[char]) -> bool {
     scratch.clear();
     for &key in word {
         if scratch.buffer.is_empty() && key.is_ascii_digit() {
-            continue;
+            return false;
         }
         scratch.keys.push(key);
         pipeline::process(scratch, key, false);

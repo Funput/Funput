@@ -52,6 +52,8 @@ pub(crate) struct Pending {
     pub(crate) boundary: char,
     /// Whether the boundary would have English-restored this word.
     pub(crate) restore: bool,
+    /// Touch score of the word exactly as typed, in milli-nats.
+    pub(crate) typed_score: i32,
 }
 
 /// A correction that landed, and can still be undone by one Backspace.

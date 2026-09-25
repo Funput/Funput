@@ -5,6 +5,7 @@
 //! keyboards would have produced.
 
 use funput_core::InputMethod;
+use funput_engine::KeyTouch;
 
 use crate::support::{Document, candidate_texts, correcting_engine, type_leaning, type_touched};
 
@@ -197,4 +198,39 @@ fn nhad_typed_dead_centre_is_offered_rather_than_applied() {
 
     assert_eq!(candidate_texts(&engine).len(), 2);
     assert_eq!(engine.choose_correction(&[], &[]), None);
+}
+
+/// A digit is a neighbour of the top letter row, and in VNI a digit cannot open a
+/// word. Offered in the first position it used to be skipped by the replay, so the
+/// candidate lost a letter and still looked like a syllable: `rru7o7c1` with the
+/// first key's `5` neighbour came out as `rước`, beside the `trước` it was meant to be.
+#[test]
+fn a_digit_offered_for_the_first_key_is_not_a_word() {
+    let mut engine = correcting_engine(InputMethod::Vni);
+    let mut doc = Document::new();
+    type_touched(&mut engine, &mut doc, "rru7o7c1", &[(0, 't'), (0, '5')]);
+    type_touched(&mut engine, &mut doc, " ", &[]);
+    assert_eq!(candidate_texts(&engine), ["trước"]);
+}
+
+/// `ampe` is a word — a loanword in every Vietnamese dictionary — and one key from
+/// the syllable `smoe`. Typed with every finger square on its key, it used to be
+/// rewritten anyway, because a lone candidate won unopposed. The word as typed now
+/// competes, and a touch dead on the key it hit is evidence for it.
+#[test]
+fn a_word_typed_squarely_is_kept_even_with_a_syllable_one_key_away() {
+    let mut engine = correcting_engine(InputMethod::Vni);
+    let mut doc = Document::new();
+    let neighbours = [('a', 's'), ('m', 'n'), ('p', 'o'), ('e', 'r')];
+    for (key, neighbour) in neighbours {
+        engine.set_next_key_touch(KeyTouch::new(key, 0.0).with_alternate(neighbour, 1.0));
+        doc.typed(key, &engine.process_char(key));
+    }
+    type_touched(&mut engine, &mut doc, " ", &[]);
+    assert!(
+        engine.has_pending_correction(),
+        "the search still finds a syllable"
+    );
+    assert_eq!(engine.choose_correction(&[], &[]), None);
+    assert_eq!(engine.correction_metrics().kept_as_typed, 1);
 }
