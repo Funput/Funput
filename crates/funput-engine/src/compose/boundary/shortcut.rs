@@ -2,7 +2,7 @@
 //! `shortcut_smart_case` is on.
 
 use crate::ImeResult;
-use crate::model::Session;
+use crate::model::{NumberGlue, Session};
 
 /// The letter-casing pattern of typed keys, used to mirror the expansion's case
 /// (`vn` → lowercase, `Vn` → Title Case, `VN` → UPPERCASE) — the same "propagate
@@ -66,8 +66,12 @@ fn apply_shortcut_case(expansion: &str, case: ShortcutCase) -> String {
 
 pub(super) fn expansion(session: &Session, boundary_key: char) -> Option<ImeResult> {
     // Gated here rather than by clearing the table: the rows stay loaded, so the
-    // switch is instant in both directions and nothing has to be re-pushed.
-    if !session.config.shortcuts_enabled || session.keys.is_empty() {
+    // switch is instant in both directions and nothing has to be re-pushed. A word
+    // glued to a number (`500k`) is a unit on that number, never a trigger.
+    if !session.config.shortcuts_enabled
+        || session.keys.is_empty()
+        || session.glue == NumberGlue::Word
+    {
         return None;
     }
     // Off, every trigger takes the exact-match path below: `tp` expands, `Tp`/`TP` do

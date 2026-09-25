@@ -8,7 +8,7 @@
 //! `src/compose/boundary/mod.rs` for the matching logic.
 
 use funput_core::InputMethod;
-use funput_engine::{Action, Engine};
+use funput_engine::{Action, Engine, ImeResult, KeySource};
 
 /// Type `keys` into `engine`, reconstructing the resulting app text from the inject
 /// stream (None → append, Send → delete + append).
@@ -345,4 +345,94 @@ fn an_empty_table_leaves_english_mode_completely_untouched() {
         assert_eq!(engine.process_char(key).action, Action::None);
     }
     assert!(engine.buffer().is_empty() && engine.keys().is_empty());
+}
+
+// ---- A trigger glued to a number is a unit, not a trigger ----
+
+/// Apply one engine result to `app` the way a host does.
+fn apply(app: &mut String, key: char, result: &ImeResult) {
+    match result.action {
+        Action::None => app.push(key),
+        Action::Send => {
+            for _ in 0..result.backspace {
+                app.pop();
+            }
+            app.push_str(&result.output);
+        }
+        Action::Restore => unreachable!("Restore not implemented yet"),
+    }
+}
+
+/// Like [`drive`], but resets the engine after every key it passed through with
+/// nothing composing — what Android does when it commits a word-start digit raw.
+fn drive_resetting_host(engine: &mut Engine, keys: &str) -> String {
+    let mut app = String::new();
+    for key in keys.chars() {
+        let result = engine.process_char(key);
+        apply(&mut app, key, &result);
+        if result.action == Action::None && engine.buffer().is_empty() {
+            engine.clear();
+        }
+    }
+    app
+}
+
+#[test]
+fn a_trigger_after_a_number_stays_literal() {
+    for method in [InputMethod::Telex, InputMethod::Vni] {
+        let text = app_text_with_shortcuts(method, &[("k", "không")], "500k ");
+        assert_eq!(text, "500k ", "{method:?}");
+    }
+}
+
+#[test]
+fn a_smart_cased_trigger_after_a_number_stays_literal() {
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("k", "không")], "500K ");
+    assert_eq!(text, "500K ");
+}
+
+#[test]
+fn a_host_reset_after_the_digit_keeps_the_trigger_literal() {
+    let mut engine = engine_with(&[("k", "không")]);
+    assert_eq!(drive_resetting_host(&mut engine, "500k "), "500k ");
+    // The number ends at the boundary; the next trigger stands alone again.
+    assert_eq!(drive_resetting_host(&mut engine, "k "), "không ");
+}
+
+#[test]
+fn a_trigger_after_numpad_digits_stays_literal() {
+    let mut engine = engine_with(&[("k", "không")]);
+    engine.set_method(InputMethod::Vni);
+    let mut app = String::new();
+    for key in "500".chars() {
+        let result = engine.process_key(key, KeySource::Numpad);
+        apply(&mut app, key, &result);
+    }
+    app.push_str(&drive(&mut engine, "k "));
+    assert_eq!(app, "500k ");
+}
+
+#[test]
+fn a_boundary_after_the_number_frees_the_trigger() {
+    let shortcuts = [("k", "không")];
+    let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "500 k ");
+    assert_eq!(text, "500 không ");
+    let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "500.k ");
+    assert_eq!(text, "500.không ");
+}
+
+#[test]
+fn digits_inside_a_word_still_match_as_typed() {
+    let shortcuts = [("k", "không"), ("k5", "khá")];
+    let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "k5 a500k ");
+    assert_eq!(text, "khá a500k ");
+}
+
+#[test]
+fn a_retyped_word_stays_glued_to_the_number() {
+    // `500k` ⌫ `m`: the digits are still on screen, so `500m` is no trigger either.
+    let mut engine = engine_with(&[("m", "mình")]);
+    assert_eq!(drive(&mut engine, "500k"), "500k");
+    engine.on_backspace();
+    assert_eq!(drive(&mut engine, "m "), "m ");
 }

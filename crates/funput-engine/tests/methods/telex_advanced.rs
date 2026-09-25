@@ -130,5 +130,7 @@ fn capitalization_backspace_and_method_switch_stay_synchronized() {
 #[test]
 fn layout_stays_compact() {
     assert_eq!(std::mem::size_of::<InputMethod>(), 1);
-    assert_eq!(std::mem::size_of::<Engine>(), 136);
+    // 136 had no padding left, so `NumberGlue` (one byte, gõ tắt after a number)
+    // costs a whole word. Keep `benchmarks/README.md` in step when this moves.
+    assert_eq!(std::mem::size_of::<Engine>(), 144);
 }
