@@ -200,6 +200,7 @@ mod lexicon {
                 std::hint::black_box(engine.is_known_word(std::hint::black_box("work")));
                 std::hint::black_box(engine.is_known_word(std::hint::black_box("dduwowfnh")));
                 std::hint::black_box(engine.is_known_word(std::hint::black_box("đường")));
+                std::hint::black_box(engine.is_known_word(std::hint::black_box("Đc")));
             }
         });
 

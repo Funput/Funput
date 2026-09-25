@@ -83,3 +83,13 @@ fn nothing_is_known_to_an_engine_with_no_lexicon_and_no_history() {
     let engine = engine();
     assert!(!engine.is_known_word("text"));
 }
+
+#[test]
+fn a_word_typed_on_purpose_is_known_without_a_lexicon() {
+    // The veto for what the engine cannot tell from a slip: `ko` is one key from
+    // `ki` and `lo`, and nobody has to have typed it before for it to be kept.
+    let engine = engine();
+    assert!(engine.is_known_word("ko"));
+    assert!(engine.is_known_word("Mk"));
+    assert!(!engine.is_known_word("dduwowfnh"));
+}

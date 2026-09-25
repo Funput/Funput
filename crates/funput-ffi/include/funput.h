@@ -295,6 +295,22 @@ typedef struct {
     uint32_t skipped_ambiguous;
     uint32_t candidates_max;
     uint32_t microseconds_max;
+    /**
+     * Words where no candidate beat the word as typed.
+     */
+    uint32_t kept_as_typed;
+    /**
+     * Words the boundary parked a correction for.
+     */
+    uint32_t offered;
+    /**
+     * Words looked at with no syllable within reach.
+     */
+    uint32_t no_candidate;
+    /**
+     * Real syllables with a touch on the edge between two keys, left alone.
+     */
+    uint32_t valid_near_edge;
 } FunputCorrectionMetrics;
 
 typedef struct {

@@ -10,6 +10,7 @@ import Testing
 private final class TestDictionary: CorrectionDictionary {
     var words: Set<String> = []
     func recognizes(_ word: String) -> Bool { words.contains(word) }
+    func keep(_ word: String) { words.insert(word) }
 }
 
 @MainActor
@@ -82,6 +83,7 @@ struct KeyboardCorrectionTests {
         type("text ", slip: (3, "r"), with: coordinator, into: document)
 
         #expect(document.text == "text ")
+        #expect(coordinator.correctionDeclines.recognized == 1)
     }
 
     @Test("Without a dictionary nothing is ever corrected")
@@ -102,6 +104,8 @@ struct KeyboardCorrectionTests {
         type("dduwowfnh ", slip: (8, "g"), with: coordinator, into: document)
 
         #expect(document.text == "dduwowfnh ")
+        #expect(coordinator.correctionDeclines.fieldRefused == 1)
+        #expect(coordinator.correctionDeclines.recognized == 0)
     }
 
     @Test("Touch spread is measured whether or not anything is corrected")

@@ -34,6 +34,8 @@ public final class KeyboardInputCoordinator {
     /// Whether the field the user is typing in wants autocorrect at all. A password
     /// box, a code field or a search bar that asked for `.no` gets none.
     public var allowsAutocorrect = true
+    /// Corrections the keyboard declined before the engine ranked anything.
+    public internal(set) var correctionDeclines = CorrectionDeclines()
     /// Set for the one commit that undoes a correction, so re-opening the previous
     /// word is skipped for it.
     var undidCorrection = false

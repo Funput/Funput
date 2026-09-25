@@ -20,18 +20,25 @@ extension KeyboardViewController {
         // session counted twice is a session that looks twice as certain as it is.
         inputCoordinator.resetTouchSpread()
         let counts = inputCoordinator.correctionCounts
+        let declines = inputCoordinator.correctionDeclines
         // Default level, not `.info`: Console hides info messages unless the reader
         // knows to turn them on, and this line is the whole point of the measurement.
         os_log(
             .default,
             log: Self.correctionLog,
-            "touches %{public}d σ %{public}.3f (mean %{public}.3f) · applied %{public}d reverted %{public}d ambiguous %{public}d · candidates %{public}d max %{public}dµs",
+            "touches %{public}d σ %{public}.3f (mean %{public}.3f) · applied %{public}d reverted %{public}d · offered %{public}d: ambiguous %{public}d as-typed %{public}d known %{public}d field %{public}d · no candidate %{public}d · valid near edge %{public}d · candidates %{public}d max %{public}dµs",
             spread.count,
             spread.perAxisSigma,
             spread.mean,
             counts.applied,
             counts.reverted,
+            counts.offered,
             counts.skippedAmbiguous,
+            counts.keptAsTyped,
+            declines.recognized,
+            declines.fieldRefused,
+            counts.noCandidate,
+            counts.validNearEdge,
             counts.candidatesMax,
             counts.microsecondsMax
         )

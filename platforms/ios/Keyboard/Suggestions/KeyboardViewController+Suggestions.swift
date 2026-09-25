@@ -35,6 +35,7 @@ extension KeyboardViewController {
         if configuration.typoCorrection {
             inputCoordinator.correctionDictionary = correctionWords
             correctionWords.prepare()
+            restoreKeptWords(hasFullAccess: hasFullAccess)
         } else {
             inputCoordinator.correctionDictionary = nil
         }
