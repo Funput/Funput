@@ -573,8 +573,18 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    ngưỡng nhưng không dư dả. **Cách rẻ nhất để lấy lại biên**: nền tảng chỉ gửi phím kề khi
    khoảng cách thật sự đáng ngờ (ví dụ < 1,2 pitch). Phím nào gõ giữa tâm thì không có phím kề
    nào, và mỗi vị trí bị loại như vậy cắt cả một tầng của vòng lặp ghép đôi.
-6. **UI test iOS**: gõ `dduwowfnh ` trong ô bật autocorrect ra `đường `; trong harness (tắt
-   autocorrect) ra `dduwowfnh `; Xoá ngay sau khi sửa trả lại `dduwowfnh `.
+6. **UI test iOS**: ✅ `FunputUITests/Correction/TypoCorrectionUITests.swift`, chạy qua đúng
+   bàn phím thật với VNI `d9u7o7ng2` và ngón đáp lệch sang `h`.
+
+   Hai điều bản viết chưa lường:
+
+   - **Không ô nào trong harness cho phép autocorrect** — cả hai đều đặt `.no` để test cũ khỏi
+     bị hệ thống chen vào. Thêm cờ `-uitest-autocorrect` để một lượt chạy xin được autocorrect;
+     mọi tính năng thông minh khác vẫn tắt.
+   - **Dạng chưa sửa không phải chuỗi phím thô** mà là `đườnh`, vì harness ghim
+     `eagerRestore = false` cho xác định, và ranh giới từ cũng không khôi phục (VNI đánh vần
+     bằng chữ số nên `keystrokes_intend_vietnamese` đọc ra là cố ý). Hoàn tác vì thế trả về
+     `đườnh `, tức đúng thứ đang hiển thị trước khi sửa.
 7. **Differential**: ✅ `tests/correction_off.rs` chạy lại toàn bộ fixture với `typo_correction`
    **bật** ở cả ba dáng một nền tảng có thể mang: không gửi điểm chạm (phải ra đúng từng bước
    instruction cũ), gửi điểm chạm rồi từ chối mọi đề nghị, và gửi rồi không trả lời (cả hai phải
