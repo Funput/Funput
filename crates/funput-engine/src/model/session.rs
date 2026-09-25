@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use funput_core::sentence::{Rules, Scanner};
 
 use crate::compose::RestoreOverride;
-use crate::model::EngineConfig;
+use crate::model::{EngineConfig, NumberGlue};
 
 /// Mutable session held by [`crate::Engine`]. Internal — not part of the public API.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -43,6 +43,10 @@ pub(crate) struct Session {
     /// A manual flip choice for the current word: pins the displayed form and keeps
     /// the word boundary from English-restoring it back. Per-word — reset by `clear()`.
     pub(crate) restore_override: Option<RestoreOverride>,
+    /// Whether the current word is glued to a number on screen, which keeps gõ tắt
+    /// off it. Unlike the rest of the per-word state, a digit still waiting for its
+    /// word survives `clear()` — see [`NumberGlue`].
+    pub(crate) glue: NumberGlue,
 }
 
 impl Session {
@@ -56,6 +60,7 @@ impl Session {
             shortcuts: HashMap::new(),
             vn_form: String::new(),
             restore_override: None,
+            glue: NumberGlue::Loose,
         }
     }
 
@@ -74,6 +79,7 @@ impl Session {
         self.keys.clear();
         self.vn_form.clear();
         self.restore_override = None;
+        self.glue.end_word();
     }
 
     /// Bring the per-word state back in line with a `buffer` that Backspace just
@@ -129,6 +135,19 @@ mod tests {
         session.clear();
         assert!(session.buffer.is_empty());
         assert!(session.keys.is_empty());
+    }
+
+    /// The host resets the engine after committing a passed-through digit, so the
+    /// digit has to outlive `clear()` while the word it glued to does not.
+    #[test]
+    fn clear_keeps_a_pending_digit_but_frees_the_glued_word() {
+        let mut session = Session::new();
+        session.glue = NumberGlue::Digit;
+        session.clear();
+        assert_eq!(session.glue, NumberGlue::Digit);
+        session.glue = NumberGlue::Word;
+        session.clear();
+        assert_eq!(session.glue, NumberGlue::Loose);
     }
 
     #[test]

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use funput_core::sentence::{Rules, Scanner};
 use funput_core::{InputMethod, ToneStyle};
 
-use crate::model::{EngineConfig, Session};
+use crate::model::{EngineConfig, NumberGlue, Session};
 
 fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
     Session {
@@ -25,6 +25,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
         shortcuts: HashMap::new(),
         vn_form: String::new(),
         restore_override: None,
+        glue: NumberGlue::Loose,
     }
 }
 
