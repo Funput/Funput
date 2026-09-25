@@ -74,6 +74,39 @@ class ImeHardwareKeyHandlerTest {
         assertEquals(0, finished)
     }
 
+    @Test
+    fun `alt space finishes the word then toggles once per press`() {
+        val events = mutableListOf<String>()
+        val handler = ImeHardwareKeyHandler(
+            currentShift = { ShiftState.OFF },
+            dispatch = { error("should not dispatch") },
+            finish = { events += "finish" },
+            hotkeyEnabled = { true },
+            toggleSoftKeyboard = { events += "toggle" },
+        )
+        val altSpace = HardwareKeyStroke(KeyEvent.KEYCODE_SPACE, ' '.code, isAlt = true)
+
+        assertTrue(handler.onKeyDown(altSpace))
+        assertTrue(handler.onKeyDown(altSpace.copy(repeatCount = 1)))
+        assertEquals(listOf("finish", "toggle"), events)
+        assertTrue(handler.onKeyUp(altSpace))
+    }
+
+    @Test
+    fun `alt space types a space while the hotkey is disabled`() {
+        val dispatched = mutableListOf<KeyAction>()
+        val handler = ImeHardwareKeyHandler(
+            currentShift = { ShiftState.OFF },
+            dispatch = dispatched::add,
+            finish = { error("should not finish") },
+            hotkeyEnabled = { false },
+            toggleSoftKeyboard = { error("should not toggle") },
+        )
+
+        assertTrue(handler.onKeyDown(HardwareKeyStroke(KeyEvent.KEYCODE_SPACE, ' '.code, isAlt = true)))
+        assertEquals(listOf(KeyAction.Space), dispatched)
+    }
+
     private fun handler(
         dispatched: MutableList<KeyAction>,
         shift: ShiftState = ShiftState.OFF,

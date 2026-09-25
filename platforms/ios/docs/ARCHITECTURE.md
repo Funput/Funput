@@ -363,6 +363,11 @@ API duy nhất Swift consumer được dùng: typed input method, tone style, ac
 và result. C handle, `FunputResult` raw và tuple UTF-32 chỉ tồn tại bên trong
 module này.
 
+`FunputSentence` cũng ở đây vì lý do đó, dù nó không đụng tới handle nào: nó hỏi
+core xem con trỏ có đang ở đầu câu hay đầu từ không, và `KeyboardInput` đọc câu
+trả lời để dựng trạng thái Shift. Marshalling UTF-32 của nó không được rò ra ngoài
+module, y như phần còn lại.
+
 ### Lifetime và threading
 
 - Một `FunputComposer` giữ đúng một engine handle cho mỗi `KeyboardViewController`.

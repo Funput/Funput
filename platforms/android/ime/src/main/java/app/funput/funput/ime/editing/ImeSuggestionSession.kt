@@ -52,8 +52,14 @@ internal class ImeSuggestionSession(
         val current = validConnection(prefix) ?: return false
         current.beginBatchEdit()
         val accepted = try {
-            current.deleteSurroundingText(prefix.length, 0) &&
-                current.commitText("$candidate ", CursorAfterText)
+            when {
+                !current.deleteSurroundingText(prefix.length, 0) -> false
+                current.commitText("$candidate ", CursorAfterText) -> true
+                else -> {
+                    current.commitText(prefix, CursorAfterText)
+                    false
+                }
+            }
         } finally {
             current.endBatchEdit()
         }

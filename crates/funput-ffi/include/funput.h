@@ -1082,6 +1082,29 @@ FunputResult funput_process_key_text(FunputEngine *engine,
                                      void (*receive)(void*, const uint8_t*, uintptr_t),
                                      void *context);
 
+/**
+ * Whether a caret sitting after `text` starts a sentence.
+ *
+ * An empty or null `text` is the start of the document, which is the start of a
+ * sentence. Always applies the typing reading of a full stop, which treats a
+ * repeated one as an abbreviation: `v.v. ` does not start a sentence, `TS. ` does.
+ *
+ * # Safety
+ * `text` must point to at least `text_len` readable `u32` values, or be null.
+ */
+bool funput_starts_sentence(const uint32_t *text, uintptr_t text_len);
+
+/**
+ * Whether a caret sitting after `text` starts a word.
+ *
+ * True at the start of the document and after anything that is not a letter or a
+ * digit, so after a space, a hyphen, or an opening bracket.
+ *
+ * # Safety
+ * `text` must point to at least `text_len` readable `u32` values, or be null.
+ */
+bool funput_starts_word(const uint32_t *text, uintptr_t text_len);
+
 FunputSuggestionEngine *funput_suggestion_engine_new_in_memory(void);
 
 /**

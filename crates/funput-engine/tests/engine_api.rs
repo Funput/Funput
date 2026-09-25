@@ -150,6 +150,56 @@ fn autocap_closing_quote_is_transparent() {
     assert_eq!(feed(&mut e, "roi"), "Roi");
 }
 
+/// `…` is not ASCII, so `is_english_boundary` never called it a word boundary and
+/// the old tracker never saw it. Feeding the scanner every key reaches it without
+/// widening that predicate, which also gates gõ tắt and English restore.
+#[test]
+fn autocap_ellipsis_ends_a_sentence() {
+    let mut e = engine_autocap();
+    feed(&mut e, "roi");
+    e.process_char('…');
+    e.process_char(' ');
+    assert_eq!(feed(&mut e, "thoi"), "Thoi");
+}
+
+/// A keyboard commits its capital before the user can see it, so it takes the
+/// abbreviation guard the bulk case transform declines.
+#[test]
+fn autocap_reads_a_repeated_full_stop_as_an_abbreviation() {
+    let mut e = engine_autocap();
+    feed(&mut e, "giay");
+    e.process_char(' ');
+    feed(&mut e, "v");
+    e.process_char('.');
+    feed(&mut e, "v");
+    e.process_char('.');
+    e.process_char(' ');
+    assert_eq!(feed(&mut e, "nhe"), "nhe");
+}
+
+/// No earlier dot gives `TS.` away, so it stays indistinguishable from an ending.
+#[test]
+fn autocap_single_dotted_word_still_ends_a_sentence() {
+    let mut e = engine_autocap();
+    feed(&mut e, "TS");
+    e.process_char('.');
+    e.process_char(' ');
+    assert_eq!(feed(&mut e, "nguyen"), "Nguyen");
+}
+
+/// The ASCII closers were already transparent; the typographic ones were not.
+#[test]
+fn autocap_non_ascii_closers_are_transparent() {
+    for closer in ['»', '”', '’'] {
+        let mut e = engine_autocap();
+        feed(&mut e, "di");
+        e.process_char('.');
+        e.process_char(closer);
+        e.process_char(' ');
+        assert_eq!(feed(&mut e, "roi"), "Roi", "{closer} should be transparent");
+    }
+}
+
 #[test]
 fn autocap_off_is_noop() {
     let mut e = Engine::new(); // default off

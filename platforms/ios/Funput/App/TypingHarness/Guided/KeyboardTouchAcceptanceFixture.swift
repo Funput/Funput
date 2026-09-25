@@ -68,12 +68,12 @@ struct KeyboardTouchAcceptanceFixture: Identifiable, Equatable {
         .init(
             inputMethod: .telexAdvanced,
             rawSteps: [
-                "hoom nay tr]fi trong xanh",
+                "hoom nay tr[fi trong xanh",
                 "mifnh ddi dajo quanh",
                 "hoof nhor roofi ghes",
                 "quasn caf phee goji",
-                "moojt ly s[xa ddas",
-                "ngoofi ngawsm dofng ng[]fi",
+                "moojt ly s]xa ddas",
+                "ngoofi ngawsm dofng ng][fi",
                 "qua laji",
             ]
         ),

@@ -27,9 +27,13 @@ public final class FunputComposer {
         releaseHandle(handle)
     }
 
-    /// Applies every durable option in one FFI call. Same side effects the per-option
-    /// setters had: a method change clears the composition, and turning
-    /// auto-capitalize off resets its tracking.
+    /// Applies every durable option in one FFI call. Same side effect the per-option
+    /// setters had: a method change clears the composition.
+    ///
+    /// `auto_capitalize` is hard-wired off and is not an option a caller can set. The
+    /// engine's sentence tracker would uppercase the first letter of a sentence on its
+    /// own, which on iOS could only ever contradict a Shift key the user can see — see
+    /// the note below and KeyboardCapitalizationOwnershipTests.
     public func configure(_ options: FunputCompositionOptions) {
         funput_configure(
             handle,
@@ -39,7 +43,7 @@ public final class FunputComposer {
                 smart_restore: options.smartRestore,
                 eager_restore: options.eagerRestore,
                 spell_check: options.spellCheck,
-                auto_capitalize: options.autoCapitalize
+                auto_capitalize: false
             )
         )
     }
@@ -67,10 +71,11 @@ public final class FunputComposer {
         funput_set_enabled(handle, enabled)
     }
 
-    // No `armCapitalization()`. The engine's sentence tracker exists for the shells
-    // that only see keystrokes; the iOS keyboard draws its own keys, so case follows
-    // the Shift state, which is driven from the document context instead. See
-    // KeyboardCapitalizationOwnershipTests.
+    // No `armCapitalization()`, and no way to switch the tracker behind it on. The
+    // engine's sentence tracker exists for the shells that only see keystrokes; the
+    // iOS keyboard draws its own keys, so case follows the Shift state, which
+    // `KeyboardCapitalizationResolver` drives from the document context through the
+    // same core rules the tracker uses. See KeyboardCapitalizationOwnershipTests.
 
     public func clear() {
         funput_clear(handle)

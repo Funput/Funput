@@ -7,6 +7,7 @@ import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
 import app.funput.funput.ime.nativebridge.EngineConfiguration
 import app.funput.funput.ime.nativebridge.VietnameseEngine
+import app.funput.funput.shortcuts.model.ShortcutLibrary
 import java.lang.reflect.Proxy
 
 internal fun retoneHandler(
@@ -85,12 +86,19 @@ internal class MutableEditor(var text: String) {
 }
 
 internal class RetoneAdoptingEngine(private val adoptable: Set<String>) : VietnameseEngine {
-    override fun adopt(word: String): Boolean = adoptable.contains(word)
-    override fun process(codePoint: Int): String = ""
-    override fun processBoundary(codePoint: Int): String? = null
-    override fun backspace(): String = ""
+    var buffer = ""
+        private set
+    val installedLibraries = mutableListOf<ShortcutLibrary>()
+    override fun adopt(word: String): Boolean = adoptable.contains(word).also {
+        if (it) buffer = word
+    }
+    override fun process(codePoint: Int): String =
+        (buffer + String(Character.toChars(codePoint))).also { buffer = it }
+    override fun processBoundary(codePoint: Int): String? = null.also { clear() }
+    override fun backspace(): String = buffer.dropLast(1).also { buffer = it }
     override fun configure(configuration: EngineConfiguration) = Unit
     override fun setEnabled(enabled: Boolean) = Unit
-    override fun clear() = Unit
+    override fun installShortcuts(library: ShortcutLibrary) { installedLibraries += library }
+    override fun clear() { buffer = "" }
     override fun close() = Unit
 }

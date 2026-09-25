@@ -33,6 +33,7 @@ internal fun FunputKeyboardView.applyImeState(
         currentLanguage = currentLanguage,
         feedback = settings.feedback,
         sizingProfile = settings.sizingProfile,
+        placementPreferences = settings.placementPreferences,
         keyboardTheme = descriptor.theme,
         keyboardThemeBackgroundImage = descriptor.backgroundImage,
         showsNumberRow = settings.showsNumberRow,
@@ -45,6 +46,7 @@ internal fun FunputKeyboardView.configureForEditor(
     currentLanguage: KeyboardLanguage,
     feedback: KeyboardFeedbackPreferences,
     sizingProfile: KeyboardSizingProfile,
+    placementPreferences: app.funput.funput.keyboard.placement.KeyboardPlacementPreferences,
     keyboardTheme: KeyboardTheme,
     keyboardThemeBackgroundImage: KeyboardThemeBackgroundImage?,
     showsNumberRow: Boolean,
@@ -53,6 +55,7 @@ internal fun FunputKeyboardView.configureForEditor(
     this.inputMethod = inputMethod
     this.showsNumberRow = showsNumberRow
     this.sizingProfile = sizingProfile
+    this.placementPreferences = placementPreferences
     this.keyboardTheme = keyboardTheme
     this.keyboardThemeBackgroundImage = keyboardThemeBackgroundImage
     systemInputMethodSwitcherVisible = false

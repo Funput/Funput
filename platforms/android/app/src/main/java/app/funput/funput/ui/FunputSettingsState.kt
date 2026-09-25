@@ -14,6 +14,7 @@ import app.funput.funput.ime.settings.DynamicColorSettings
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
+import app.funput.funput.ime.settings.KeyboardPlacementSettings
 import app.funput.funput.ime.settings.KeyboardSizingSettings
 import app.funput.funput.ime.settings.KeyboardThemeSelection
 import app.funput.funput.ime.settings.KeyboardThemeSettings
@@ -27,6 +28,7 @@ import app.funput.funput.ime.settings.ToneStyleSettings
 import app.funput.funput.ime.settings.gestures.SmartGestureSettings
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 
 /**
  * Every persisted setting the app screens read, plus the stores they write back through.
@@ -38,6 +40,7 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 internal class FunputSettingsState(
     val input: InputMethodSettings,
     val sizing: KeyboardSizingSettings,
+    val placementStore: KeyboardPlacementSettings,
     val keyboardTheme: KeyboardThemeSettings,
     val toneStyleStore: ToneStyleSettings,
     val appearance: AppearanceSettings,
@@ -51,6 +54,7 @@ internal class FunputSettingsState(
     val inputMethod: KeyboardInputMethod,
     val toneStyle: ToneStyle,
     val keySizeProfile: KeyboardSizingProfile,
+    val placement: KeyboardPlacementPreferences,
     val themeSelection: KeyboardThemeSelection,
     val appearanceMode: AppearanceMode,
     val clipboard: ClipboardPreferences,
@@ -69,6 +73,7 @@ internal fun rememberFunputSettings(): FunputSettingsState {
     val inputMethod by stores.input.inputMethod.collectAsState(InputMethodSettings.DefaultInputMethod)
     val toneStyle by stores.toneStyleStore.toneStyle.collectAsState(ToneStyleSettings.FallbackToneStyle)
     val keySizeProfile by stores.sizing.profile.collectAsState(KeyboardSizingSettings.DefaultProfile)
+    val placement by stores.placement.preferences.collectAsState(KeyboardPlacementSettings.DefaultPreferences)
     val themeSelection by stores.keyboardTheme.selection
         .collectAsState(KeyboardThemeSettings.DefaultSelection)
     val appearanceMode by stores.appearance.mode.collectAsState(AppearanceSettings.DefaultMode)
@@ -88,6 +93,7 @@ internal fun rememberFunputSettings(): FunputSettingsState {
     return FunputSettingsState(
         input = stores.input,
         sizing = stores.sizing,
+        placementStore = stores.placement,
         keyboardTheme = stores.keyboardTheme,
         toneStyleStore = stores.toneStyleStore,
         appearance = stores.appearance,
@@ -101,6 +107,7 @@ internal fun rememberFunputSettings(): FunputSettingsState {
         inputMethod = inputMethod,
         toneStyle = toneStyle,
         keySizeProfile = keySizeProfile,
+        placement = placement,
         themeSelection = themeSelection,
         appearanceMode = appearanceMode,
         clipboard = clipboard,

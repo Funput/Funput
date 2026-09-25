@@ -6,6 +6,7 @@ import app.funput.funput.ime.settings.ClipboardSettings
 import app.funput.funput.ime.settings.DynamicColorSettings
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
+import app.funput.funput.ime.settings.KeyboardPlacementSettings
 import app.funput.funput.ime.settings.KeyboardSizingSettings
 import app.funput.funput.ime.settings.KeyboardThemeSettings
 import app.funput.funput.ime.settings.NumberRowSettings
@@ -18,6 +19,7 @@ import app.funput.funput.ime.settings.gestures.SmartGestureSettings
 internal class FunputSettingsStores(context: Context) {
     val input = InputMethodSettings(context)
     val sizing = KeyboardSizingSettings(context)
+    val placement = KeyboardPlacementSettings(context)
     val keyboardTheme = KeyboardThemeSettings(context)
     val toneStyleStore = ToneStyleSettings(context)
     val appearance = AppearanceSettings(context)

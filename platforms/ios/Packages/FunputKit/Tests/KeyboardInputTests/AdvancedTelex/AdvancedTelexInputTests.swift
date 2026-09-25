@@ -12,7 +12,7 @@ struct AdvancedTelexInputTests {
         coordinator.apply(FunputConfiguration(inputMethod: .telexAdvanced))
         let document = TestKeyboardWriter()
 
-        typeAdvanced("tr[]ngf", with: coordinator, into: document)
+        typeAdvanced("tr][ngf", with: coordinator, into: document)
 
         #expect(coordinator.state.inputMethod == .telexAdvanced)
         #expect(document.text == "trường")
@@ -37,8 +37,8 @@ struct AdvancedTelexInputTests {
         document.publishContext()
 
         type("tr", with: coordinator, into: document)
-        type("[", role: .punctuation, with: coordinator, into: document)
         type("]", role: .punctuation, with: coordinator, into: document)
+        type("[", role: .punctuation, with: coordinator, into: document)
         coordinator.synchronizeDocument(document, event: .textChanged)
         type("ngf", with: coordinator, into: document)
 

@@ -32,6 +32,7 @@ internal class KeyIconRenderer(metrics: RenderMetrics) {
             KeyRole.ENTER -> enterContent.draw(canvas, key, enterAction)
             KeyRole.BACKSPACE -> utilityIcons.drawBackspace(canvas, key)
             KeyRole.SYSTEM_INPUT_METHOD -> utilityIcons.drawSystemInputMethod(canvas, key)
+            KeyRole.PLACEMENT -> utilityIcons.drawPlacement(canvas, key)
             KeyRole.CLIPBOARD -> clipboardIcon.draw(canvas, key)
             KeyRole.EMOJI -> utilityIcons.drawEmoji(canvas, key)
             else -> return false

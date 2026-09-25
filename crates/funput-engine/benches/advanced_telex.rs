@@ -5,7 +5,7 @@ use funput_core::InputMethod;
 use funput_engine::Engine;
 
 const CANONICAL: &str = "uw uwf tuw mow truwowngf nguwowif uwngf.";
-const FULL: &str = "w wf t[ m] tr[]ngf ng[]if wngf.";
+const FULL: &str = "w wf t] m[ tr][ngf ng][if wngf.";
 
 fn run(input: &str, method: InputMethod) {
     let mut engine = Engine::new();

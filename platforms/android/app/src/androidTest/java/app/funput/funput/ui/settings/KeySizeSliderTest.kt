@@ -24,7 +24,7 @@ class KeySizeSliderTest {
 
         compose.onNodeWithText("100%").assertIsDisplayed()
         compose.onNodeWithText("85%").assertIsDisplayed()
-        compose.onNodeWithText("120%").assertIsDisplayed()
+        compose.onNodeWithText("150%").assertIsDisplayed()
     }
 
     @Test

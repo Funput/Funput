@@ -31,13 +31,20 @@ composition, and keep both symbol pages free of candidate and emoji UI.
 `setComposingText()`. JNI is intentionally narrow: one synchronous call per text
 key, no network or storage, and safe registry IDs instead of native pointers.
 
-A hardware keyboard hides the soft Funput view (Android's default
+By default a hardware keyboard hides the soft Funput view (Android's default
 `onEvaluateInputViewShown`). The IME stays bound: `onKeyDown` / `onKeyUp` map
 printable keys, Space, Enter, and Backspace onto the same `KeyAction` path as
 taps, so Telex and VNI still compose. Navigation and Ctrl/Alt/Meta shortcuts
 finish the current composition and pass through to the host. A few OEM builds
 do not deliver hardware keys while the input view is hidden; enable the system
 *Show on-screen keyboard* setting in that case.
+
+`hardware/HardwareKeyboard` can keep the soft view up anyway. The Settings
+switch *Hiện Funput khi có bàn phím rời* does for Funput alone what the system
+setting does, including implicit show requests (`onShowInputRequested`). Alt+Space
+finishes the word and flips the view until it is pressed again, the keyboard is
+detached, or the setting changes; with its switch off, Alt+Space types a space.
+Meta chords and Ctrl+Space belong to Android, which is why the hotkey is on Alt.
 
 The system-keyboard globe is intentionally always hidden until its interaction
 is revisited in a later plan. The dormant switch callback remains isolated from

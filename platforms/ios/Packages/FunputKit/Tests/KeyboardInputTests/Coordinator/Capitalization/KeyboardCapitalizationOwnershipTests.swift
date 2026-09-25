@@ -7,11 +7,11 @@ import Testing
 /// On iOS the Shift state is the only thing that decides a letter's case: the keyboard
 /// draws its own keys, so the user can see and change it.
 ///
-/// The engine keeps a separate sentence tracker for the desktop shells, and it receives
-/// the same preference, so these tests pin down that it never gets the last word — the
-/// output follows Shift even when the user lowers it right where the engine's tracker
-/// would capitalize. Delete them and a change in the composition pipeline could start
-/// overriding the user silently.
+/// The engine keeps a separate sentence tracker for the desktop shells. iOS now holds
+/// it off at the FFI call rather than passing the preference down, and these tests pin
+/// the outcome that decision is for: the output follows Shift even when the user lowers
+/// it right where a tracker would capitalize. Delete them and a change in the
+/// composition pipeline could start overriding the user silently.
 @MainActor
 struct KeyboardCapitalizationOwnershipTests {
     @Test("Turning Shift off after a sentence end is respected")

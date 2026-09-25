@@ -12,10 +12,10 @@ fn full_telex_shortcuts_compose() {
         ("wf", "ừ"),
         ("ww", "w"),
         ("WW", "W"),
-        ("t[", "tư"),
-        ("m]", "mơ"),
-        ("tr[]ngf", "trường"),
-        ("ng[]if", "người"),
+        ("t]", "tư"),
+        ("m[", "mơ"),
+        ("tr][ngf", "trường"),
+        ("ng][if", "người"),
         ("wngf", "ừng"),
         ("WWindowws", "Windows"),
     ] {
@@ -36,7 +36,7 @@ fn every_tone_and_removal_work_on_shortcuts() {
 fn tone_styles_and_existing_telex_converge() {
     for style in [ToneStyle::Traditional, ToneStyle::Modern] {
         let mut buffer = String::new();
-        for key in "tr[]ngf".chars() {
+        for key in "tr][ngf".chars() {
             buffer = apply(&buffer, key, InputMethod::TelexAdvanced, style).text;
         }
         assert_eq!(buffer, "trường");
@@ -52,7 +52,7 @@ fn tone_styles_and_existing_telex_converge() {
 #[test]
 fn leading_w_covers_the_whole_onset() {
     // `w` is the `ư` key wherever the syllable still lacks a nucleus, not only at
-    // position 0 — the same rule `[` already follows.
+    // position 0 — the same rule `]` already follows.
     for (keys, output) in [
         ("thw", "thư"),
         ("Thw", "Thư"),
@@ -99,10 +99,10 @@ fn leading_w_still_reaches_the_uo_horn() {
         );
     }
 
-    // The same re-parse fixes the `[` shortcut, which never reached `ươ` before.
-    assert_eq!(typed("tr[uongf"), "trường");
-    assert_eq!(typed("tr[ongf"), "trường");
-    assert_eq!(typed("tr[]ngf"), "trường");
+    // The same re-parse fixes the `]` shortcut, which never reached `ươ` before.
+    assert_eq!(typed("tr]uongf"), "trường");
+    assert_eq!(typed("tr]ongf"), "trường");
+    assert_eq!(typed("tr][ngf"), "trường");
 
     // `ưu` itself is untouched — it is a closed rhyme, so only a *following*
     // vowel marks the `u` as stray.
@@ -110,8 +110,8 @@ fn leading_w_still_reaches_the_uo_horn() {
         ("cwuf", "cừu"),
         ("hwuu", "hưu"),
         ("lwuu", "lưu"),
-        ("c[uf", "cừu"),
-        ("tr[uf", "trừu"),
+        ("c]uf", "cừu"),
+        ("tr]uf", "trừu"),
     ] {
         assert_eq!(typed(keys), output, "{keys}");
     }
@@ -126,6 +126,48 @@ fn leading_w_skips_the_q_onset() {
 }
 
 #[test]
+fn leading_w_treats_the_gi_glide_as_onset() {
+    // The `i` of `gi` is the medial glide, not a nucleus, so `gi` + `w` is `giư`
+    // exactly like `th` + `w` is `thư` — in any tone order.
+    for (keys, output) in [
+        ("giwx", "giữ"),
+        ("Giwx", "Giữ"),
+        ("GIWX", "GIỮ"),
+        ("giwxa", "giữa"),
+        ("giwax", "giữa"),
+        ("giwtj", "giựt"),
+        ("giwongf", "giường"),
+        ("giwowngf", "giường"),
+        ("gixw", "giữ"),
+        ("gix]", "giữ"),
+        ("gi]x", "giữ"),
+    ] {
+        assert_eq!(typed(keys), output, "{keys}");
+    }
+    assert_eq!(
+        crate::support::type_keys(InputMethod::Telex, "giuwx"),
+        typed("giwx")
+    );
+    // The second `w` undoes it as for any onset, and `gin` keeps `i` as nucleus.
+    assert_eq!(typed("giww"), "giw");
+    assert_eq!(typed("ginw"), "ginw");
+}
+
+#[test]
+fn shortcut_vowel_takes_a_tone_typed_before_it() {
+    // A tone typed ahead of the nucleus moves onto the shortcut vowel at once,
+    // not on the next key — so the word is right even when it ends there.
+    for (keys, output) in [
+        ("thur[", "thuở"),
+        ("gif[", "giờ"),
+        ("cuf[ng", "cường"),
+        ("ng]f[", "ngườ"),
+    ] {
+        assert_eq!(typed(keys), output, "{keys}");
+    }
+}
+
+#[test]
 fn leading_w_loses_the_onset_placed_non_uo_horn() {
     // Remaining divergence, documented in docs/features/advanced-telex.md: when a
     // `w` typed straight after the onset was meant as the trần/móc of a *later*
@@ -134,11 +176,26 @@ fn leading_w_loses_the_onset_placed_non_uo_horn() {
     assert_eq!(typed("cwon"), "cươn"); // plain Telex: cơn
     assert_eq!(typed("lwams"), "lứam"); // plain Telex: lắm
     assert_eq!(typed("nwux"), "nữu"); // plain Telex: nữ
-    for (keys, output) in [("conw", "cơn"), ("lamws", "lắm"), ("nuwx", "nữ")] {
+    assert_eq!(typed("giwof"), "giuờ"); // plain Telex: giờ
+    assert_eq!(typed("giwatj"), "giựat"); // plain Telex: giặt
+    for (keys, output) in [
+        ("conw", "cơn"),
+        ("lamws", "lắm"),
+        ("nuwx", "nữ"),
+        ("giowf", "giờ"),
+        ("gi[f", "giờ"),
+        ("giatwj", "giặt"),
+    ] {
         assert_eq!(typed(keys), output, "{keys}");
     }
     // Plain Telex keeps the deferred `w` in every position.
-    for (keys, output) in [("cwon", "cơn"), ("lwams", "lắm"), ("nwux", "nữ")] {
+    for (keys, output) in [
+        ("cwon", "cơn"),
+        ("lwams", "lắm"),
+        ("nwux", "nữ"),
+        ("giwof", "giờ"),
+        ("giwatj", "giặt"),
+    ] {
         assert_eq!(
             crate::support::type_keys(InputMethod::Telex, keys),
             output,
@@ -150,8 +207,8 @@ fn leading_w_loses_the_onset_placed_non_uo_horn() {
 #[test]
 fn standard_methods_keep_shortcuts_literal() {
     assert_eq!(crate::support::type_keys(InputMethod::Telex, "w"), "w");
-    assert_eq!(crate::support::type_keys(InputMethod::Telex, "t["), "t[");
-    assert_eq!(crate::support::type_keys(InputMethod::Vni, "m]"), "m]");
+    assert_eq!(crate::support::type_keys(InputMethod::Telex, "t]"), "t]");
+    assert_eq!(crate::support::type_keys(InputMethod::Vni, "m["), "m[");
     assert_eq!(typed("{"), "{");
     assert_eq!(typed("}"), "}");
 }
@@ -160,11 +217,11 @@ fn standard_methods_keep_shortcuts_literal() {
 fn spell_check_falls_back_to_the_raw_shortcut() {
     let result = apply_checked(
         "text",
-        '[',
+        ']',
         InputMethod::TelexAdvanced,
         ToneStyle::Traditional,
         true,
     );
     assert_eq!(result.kind, TransformKind::Pending);
-    assert_eq!(result.text, "text[");
+    assert_eq!(result.text, "text]");
 }

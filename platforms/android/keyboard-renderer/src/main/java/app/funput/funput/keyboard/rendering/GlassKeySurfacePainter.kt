@@ -9,7 +9,7 @@ import app.funput.funput.theme.KeyboardKeySurfaceStyle
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.roundToInt
 
-/** Cached lighting treatment used only by glass key surfaces. */
+/** Cached halo and directional rim used by glass key surfaces. */
 internal class GlassKeySurfacePainter(private val metrics: RenderMetrics) {
     private val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val haloRect = RectF()
@@ -19,7 +19,7 @@ internal class GlassKeySurfacePainter(private val metrics: RenderMetrics) {
 
     fun updateTheme(theme: KeyboardTheme, width: Int, height: Int) {
         haloPaint.strokeWidth = metrics.dp(HaloStrokeDp)
-        val enabled = theme.keySurfaceStyle == KeyboardKeySurfaceStyle.GLASS
+        val enabled = theme.keySurfaceStyle != KeyboardKeySurfaceStyle.FLAT
         normalBorderShader = borderShader(theme.keyBorderColor, width, height, enabled)
         pressedBorderShader = borderShader(theme.pressedKeyBorderColor, width, height, enabled)
         activatedBorderShader = borderShader(theme.activatedKeyBorderColor, width, height, enabled)

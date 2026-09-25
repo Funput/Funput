@@ -14,8 +14,8 @@ struct AdvancedTelexComposerTests {
     @Test("Advanced Telex shortcuts compose through the FFI wrapper")
     func shortcuts() {
         let cases = [
-            ("w", "ư"), ("wf", "ừ"), ("t[", "tư"), ("m]", "mơ"),
-            ("tr[]ngf", "trường"), ("ng[]if", "người"), ("ww", "w"),
+            ("w", "ư"), ("wf", "ừ"), ("t]", "tư"), ("m[", "mơ"),
+            ("tr][ngf", "trường"), ("ng][if", "người"), ("ww", "w"),
         ]
         for (keys, expected) in cases {
             #expect(compose(keys) == expected, "Failed input: \(keys)")
@@ -59,8 +59,7 @@ struct AdvancedTelexComposerTests {
                 toneStyle: toneStyle,
                 smartRestore: true,
                 eagerRestore: true,
-                spellCheck: false,
-                autoCapitalize: false
+                spellCheck: false
             )
         )
         return composer

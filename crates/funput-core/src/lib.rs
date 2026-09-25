@@ -20,9 +20,14 @@
 //! exception to the boundary check).
 //! Breaking changes require semver coordination with the engine.
 //!
-//! That list stays complete for the default build. [`charset`] and [`textcase`] are
-//! additive, keep to their own namespaces, and re-export nothing here, so the
-//! engine's view of this crate is the same with either feature on or off.
+//! That list stays complete for what the engine transforms. [`charset`],
+//! [`textcase`] and [`sentence`] are additive, keep to their own namespaces, and
+//! re-export nothing here, so the engine's view of this crate is the same with
+//! either feature on or off.
+//!
+//! [`sentence`] alone is not feature-gated. Where a sentence begins is asked by the
+//! keyboards, which link this crate without [`textcase`], and keeping one copy of
+//! that answer is the whole point of it being here — see its module doc.
 //!
 //! # Contract
 //!
@@ -38,6 +43,7 @@ mod composition;
 mod input_method;
 mod options;
 mod orthography;
+pub mod sentence;
 #[cfg(feature = "textcase")]
 pub mod textcase;
 mod unicode;

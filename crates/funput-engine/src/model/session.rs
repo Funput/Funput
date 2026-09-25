@@ -2,9 +2,11 @@
 
 use std::collections::HashMap;
 
+use funput_core::sentence::{Rules, Scanner};
+
 use crate::compose::RestoreOverride;
 use crate::correction::CorrectionState;
-use crate::model::EngineConfig;
+use crate::model::{EngineConfig, NumberGlue};
 
 /// Mutable session held by [`crate::Engine`]. Internal — not part of the public API.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -18,14 +20,16 @@ pub(crate) struct Session {
     /// (phase E3) rebuild the original Latin text when the composed buffer is
     /// not a complete Vietnamese syllable (`keys != buffer && !is_complete_syllable(buffer)`).
     pub(crate) keys: String,
-    /// A sentence-ending mark (`.`/`!`/`?`) was just seen; waiting for whitespace to
-    /// confirm the next word starts a new sentence. Survives `clear()` — capitalize
-    /// state spans word commits.
-    pub(crate) cap_sentence_ended: bool,
-    /// The next word's first letter should be capitalized. Set by a confirmed
-    /// sentence start (whitespace after `.`/`!`/`?`, a newline) or focus; consumed
-    /// when a word begins. Survives `clear()`.
-    pub(crate) cap_armed: bool,
+    /// Where auto-capitalize thinks the next letter sits, by the sentence rules
+    /// every Funput platform shares. Fed one keystroke at a time, because a desktop
+    /// shell hands the engine keys and never the document. Survives `clear()` —
+    /// capitalize state spans word commits.
+    ///
+    /// Resumed rather than started: a new session does not know where the caret is,
+    /// and assuming the start of a document would capitalize the first word typed
+    /// after switching apps. A host that does know says so through
+    /// [`crate::Engine::arm_capitalization`].
+    pub(crate) scanner: Scanner,
     /// Text-expansion table (gõ tắt): raw-keystroke trigger → expansion. Matched
     /// smart-case against `keys` at a word boundary, before English restore — a
     /// trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same
@@ -45,6 +49,10 @@ pub(crate) struct Session {
     /// until the setting is switched on — off, the feature costs one null check per
     /// keystroke and eight bytes here.
     pub(crate) correction: Option<Box<CorrectionState>>,
+    /// Whether the current word is glued to a number on screen, which keeps gõ tắt
+    /// off it. Unlike the rest of the per-word state, a digit still waiting for its
+    /// word survives `clear()` — see [`NumberGlue`].
+    pub(crate) glue: NumberGlue,
 }
 
 impl Session {
@@ -54,12 +62,12 @@ impl Session {
             config: EngineConfig::default(),
             buffer: String::new(),
             keys: String::new(),
-            cap_sentence_ended: false,
-            cap_armed: false,
+            scanner: Scanner::mid_text(Rules::TYPING),
             shortcuts: HashMap::new(),
             vn_form: String::new(),
             restore_override: None,
             correction: None,
+            glue: NumberGlue::Loose,
         }
     }
 
@@ -78,6 +86,7 @@ impl Session {
         self.keys.clear();
         self.vn_form.clear();
         self.restore_override = None;
+        self.glue.end_word();
         // Only the touch log is per-word. A correction parked by the boundary that
         // is calling this has to outlive it — the platform answers it afterwards.
         if let Some(state) = self.correction.as_mut() {
@@ -138,6 +147,19 @@ mod tests {
         session.clear();
         assert!(session.buffer.is_empty());
         assert!(session.keys.is_empty());
+    }
+
+    /// The host resets the engine after committing a passed-through digit, so the
+    /// digit has to outlive `clear()` while the word it glued to does not.
+    #[test]
+    fn clear_keeps_a_pending_digit_but_frees_the_glued_word() {
+        let mut session = Session::new();
+        session.glue = NumberGlue::Digit;
+        session.clear();
+        assert_eq!(session.glue, NumberGlue::Digit);
+        session.glue = NumberGlue::Word;
+        session.clear();
+        assert_eq!(session.glue, NumberGlue::Loose);
     }
 
     #[test]

@@ -4,7 +4,7 @@ use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_m
 use funput_core::{InputMethod, ToneStyle, apply_checked};
 
 const CANONICAL: &str = "uw uwf tuw mow truwowngf nguwowif uwngf";
-const FULL: &str = "w wf t[ m] tr[]ngf ng[]if wngf";
+const FULL: &str = "w wf t] m[ tr][ngf ng][if wngf";
 
 fn run(input: &str, method: InputMethod) -> String {
     let mut buffer = String::new();

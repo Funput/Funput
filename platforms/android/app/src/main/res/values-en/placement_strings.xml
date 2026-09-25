@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_keyboard_mode_title">Keyboard mode</string>
+    <string name="keyboard_mode_standard">Standard</string>
+    <string name="keyboard_mode_elevated">Elevated</string>
+    <string name="keyboard_mode_one_handed">One-handed</string>
+    <string name="settings_one_handed_width_title">One-handed keyboard width</string>
+    <string name="settings_one_handed_side_title">One-handed keyboard position</string>
+    <string name="keyboard_side_left">Left</string>
+    <string name="keyboard_side_right">Right</string>
+    <string name="settings_elevation_title">Elevation</string>
+    <string name="settings_elevation_value">%1$d dp</string>
+</resources>

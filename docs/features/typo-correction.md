@@ -154,7 +154,7 @@ quan hệ hiện nay giữa hai crate.
 | Tầng | Thêm gì |
 |---|---|
 | `crates/funput-engine/src/correction/` (mới) | Sinh ứng viên, phát lại, lọc, chấm theo chạm |
-| `crates/funput-engine/src/model/session.rs` | Đúng một trường `correction: Option<Box<CorrectionState>>` (`model/` đã đủ 5 file; state nằm trong `correction/state.rs`). Box vì state ~900 B — `size_of::<Engine>()` chỉ tăng 136 → 144 |
+| `crates/funput-engine/src/model/session.rs` | Đúng một trường `correction: Option<Box<CorrectionState>>` (`model/` đã đủ 5 file; state nằm trong `correction/state.rs`). Box vì state ~900 B — `size_of::<Engine>()` chỉ tăng một con trỏ 8 byte (cùng `NumberGlue` của gõ tắt sau số: 136 → 152) |
 | `crates/funput-engine/src/model/config.rs` | `typo_correction: bool` (mặc định `false` cho tới khi bật theo nền tảng) |
 | `crates/funput-engine/src/compose/boundary/mod.rs` | Gọi correction **trước** English restore |
 | `crates/funput-ffi/src/engine/` | 3 hàm C mới (§7) |

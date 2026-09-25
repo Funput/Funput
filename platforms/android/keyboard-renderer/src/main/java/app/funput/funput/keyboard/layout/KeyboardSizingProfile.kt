@@ -31,9 +31,9 @@ data class KeyboardSizingProfile(
          */
         const val DefaultKeyAspectRatio = 0.73f
 
-        /** The range Settings offers, matching the iOS slider so the two platforms agree. */
+        /** The range Settings offers. Portrait honors the full span; landscape phones stay capped. */
         const val MinScale = 0.85f
-        const val MaxScale = 1.2f
+        const val MaxScale = 1.5f
         const val DefaultScale = 1.08f
 
         /**

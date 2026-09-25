@@ -4,18 +4,24 @@ import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import app.funput.funput.keyboard.model.KeyAction
 
-/** Verdict for one hardware stroke: consume into Funput, commit then pass, or ignore. */
+/**
+ * Verdict for one hardware stroke: consume into Funput, show or hide the soft keyboard, commit
+ * then pass, or ignore.
+ */
 internal sealed interface HardwareKeyDecision {
     data class Consume(val action: KeyAction) : HardwareKeyDecision
+    data object ToggleSoftKeyboard : HardwareKeyDecision
     data object FinishAndPass : HardwareKeyDecision
     data object Pass : HardwareKeyDecision
 }
 
 /** Maps a hardware stroke onto a [HardwareKeyDecision] without touching the editor. */
 internal object HardwareKeyActionMapper {
-    fun map(stroke: HardwareKeyStroke): HardwareKeyDecision {
+    fun map(stroke: HardwareKeyStroke, hotkeyEnabled: Boolean = false): HardwareKeyDecision {
         if (stroke.isCanceled || stroke.keyCode in PassThroughKeys) return HardwareKeyDecision.Pass
         if (stroke.isCtrl || stroke.isMeta) return HardwareKeyDecision.FinishAndPass
+        // Ahead of specialAction, which would otherwise type Alt+Space as a plain space.
+        if (hotkeyEnabled && stroke.isSoftKeyboardHotkey) return HardwareKeyDecision.ToggleSoftKeyboard
         specialAction(stroke.keyCode)?.let { return HardwareKeyDecision.Consume(it) }
         if (stroke.keyCode in NavigationKeys) return HardwareKeyDecision.FinishAndPass
         if (stroke.isAlt && printableText(stroke.codePoint) == null) {
@@ -25,6 +31,13 @@ internal object HardwareKeyActionMapper {
         return HardwareKeyDecision.Consume(KeyAction.Input("hardware-${stroke.keyCode}", text))
     }
 }
+
+/**
+ * Alt+Space. Android keeps every Meta chord and Ctrl+Space for itself, and Shift+Space is too
+ * easy to hit while typing capitals; Alt+Space is none of those.
+ */
+private val HardwareKeyStroke.isSoftKeyboardHotkey: Boolean
+    get() = keyCode == KeyEvent.KEYCODE_SPACE && isAlt && !isShift
 
 private fun specialAction(keyCode: Int): KeyAction? = when (keyCode) {
     KeyEvent.KEYCODE_DEL -> KeyAction.Backspace

@@ -15,6 +15,19 @@ internal fun Context.openKeyboardSettings() {
     )
 }
 
+internal fun Context.openHardwareKeyboardSettings() {
+    // Some OEM builds ship no physical-keyboard page; the keyboard list is the nearest one.
+    try {
+        startActivity(
+            Intent(Settings.ACTION_HARD_KEYBOARD_SETTINGS)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    } catch (missingPage: ActivityNotFoundException) {
+        Log.w("Funput", "No physical keyboard settings page", missingPage)
+        openKeyboardSettings()
+    }
+}
+
 internal fun Context.showKeyboardPicker() {
     getSystemService(InputMethodManager::class.java).showInputMethodPicker()
 }

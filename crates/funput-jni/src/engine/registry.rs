@@ -84,7 +84,7 @@ mod tests {
         let handle = create();
         let buffer = with_mut(handle, |engine| {
             engine.set_method(InputMethod::TelexAdvanced);
-            for key in "tr[]ngf".chars() {
+            for key in "tr][ngf".chars() {
                 engine.process_char(key);
             }
             engine.buffer().to_owned()

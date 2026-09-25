@@ -7,6 +7,8 @@ import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.placement.KeyboardPlacementMode
+import app.funput.funput.keyboard.placement.OneHandedSide
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.ui.settings.components.PickerOption
 
@@ -31,6 +33,19 @@ internal fun KeyboardInputMethod.summary(): String = when (this) {
 }
 
 @Composable
+internal fun KeyboardPlacementMode.label(): String = when (this) {
+    KeyboardPlacementMode.STANDARD -> stringResource(R.string.keyboard_mode_standard)
+    KeyboardPlacementMode.ELEVATED -> stringResource(R.string.keyboard_mode_elevated)
+    KeyboardPlacementMode.ONE_HANDED -> stringResource(R.string.keyboard_mode_one_handed)
+}
+
+@Composable
+internal fun OneHandedSide.label(): String = when (this) {
+    OneHandedSide.LEFT -> stringResource(R.string.keyboard_side_left)
+    OneHandedSide.RIGHT -> stringResource(R.string.keyboard_side_right)
+}
+
+@Composable
 internal fun AppearanceMode.label(): String = when (this) {
     AppearanceMode.SYSTEM -> stringResource(R.string.settings_theme_system)
     AppearanceMode.LIGHT -> stringResource(R.string.settings_theme_light)
@@ -46,6 +61,11 @@ internal fun KeyboardThemeId.label(): String = when (this) {
 @Composable
 internal fun inputMethodOptions() = KeyboardInputMethod.entries.map {
     PickerOption(it, it.label(), it.summary())
+}
+
+@Composable
+internal fun keyboardPlacementOptions() = KeyboardPlacementMode.entries.map {
+    PickerOption(it, it.label())
 }
 
 @Composable

@@ -38,7 +38,7 @@ pub use state::CorrectionMetrics;
 pub use touch::{KeyTouch, MAX_ALTERNATES};
 
 pub(crate) use state::{CorrectionState, apply, discard, flush_pending, sync, take_undo};
-pub(crate) use touch::{invalidate, note_key, set_next, take_next, verify_alignment};
+pub(crate) use touch::{StoredTouch, invalidate, note_key, set_next, take_next, verify_alignment};
 
 use funput_core::{InputMethod, is_bare_shaped_vowel};
 

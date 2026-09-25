@@ -10,6 +10,7 @@ class KeyboardThemeCatalogTest {
     fun localCatalogContainsBuiltInThemesInDisplayOrder() {
         assertEquals(
             listOf(
+                KeyboardThemeId.LiquidGlass,
                 KeyboardThemeId.Dark,
                 KeyboardThemeId.Light,
                 KeyboardThemeId.GlassDark,
@@ -21,15 +22,15 @@ class KeyboardThemeCatalogTest {
             LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::id),
         )
         assertEquals(
-            List(7) { KeyboardThemeOrigin.BUILT_IN },
+            List(8) { KeyboardThemeOrigin.BUILT_IN },
             LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::origin),
         )
     }
 
     @Test
-    fun localCatalogUsesDarkAsDefault() {
-        assertEquals(KeyboardThemeId.Dark, LocalKeyboardThemeCatalog.defaultTheme.id)
-        assertSame(KeyboardThemes.Ink, LocalKeyboardThemeCatalog.defaultTheme.theme)
+    fun localCatalogUsesLiquidGlassAsDefault() {
+        assertEquals(KeyboardThemeId.LiquidGlass, LocalKeyboardThemeCatalog.defaultTheme.id)
+        assertSame(KeyboardThemes.LiquidGlass, LocalKeyboardThemeCatalog.defaultTheme.theme)
     }
 
     @Test
@@ -38,6 +39,8 @@ class KeyboardThemeCatalogTest {
             assertEquals(6f, descriptor.theme.keyCornerRadiusDp, 0f)
             assertEquals(0f, descriptor.theme.keyBorderWidthDp, 0f)
             assertEquals(0, descriptor.theme.keyBorderColor ushr 24)
+            // A preset that insets its keycaps draws smaller keys than every other preset.
+            assertEquals(0f, descriptor.theme.keycapInsetDp, 0f)
         }
     }
 
@@ -48,7 +51,7 @@ class KeyboardThemeCatalogTest {
             LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.Light).theme,
         )
         assertSame(
-            KeyboardThemes.Ink,
+            KeyboardThemes.LiquidGlass,
             LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.of("future-theme")).theme,
         )
         assertSame(
@@ -58,6 +61,10 @@ class KeyboardThemeCatalogTest {
         assertSame(
             KeyboardThemes.GlassLight,
             LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.GlassLight).theme,
+        )
+        assertSame(
+            KeyboardThemes.LiquidGlass,
+            LocalKeyboardThemeCatalog.resolve(KeyboardThemeId.LiquidGlass).theme,
         )
         assertSame(
             KeyboardThemes.Slate,

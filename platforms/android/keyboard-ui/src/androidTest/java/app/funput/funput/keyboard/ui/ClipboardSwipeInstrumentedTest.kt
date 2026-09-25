@@ -45,7 +45,7 @@ class ClipboardSwipeInstrumentedTest {
             scenario.onActivity {
                 listOf(
                     KeyboardThemes.Slate, KeyboardThemes.Ink, KeyboardThemes.Paper,
-                    KeyboardThemes.GlassDark, KeyboardThemes.GlassLight,
+                    KeyboardThemes.GlassDark, KeyboardThemes.GlassLight, KeyboardThemes.LiquidGlass,
                     KeyboardThemes.Blossom, KeyboardThemes.Orchid,
                 ).forEach { theme -> keyboard.keyboardTheme = theme; render(keyboard) }
                 swipeRowVertically(panel)

@@ -55,7 +55,7 @@ Telex V5 measurements and the dedicated Full Telex pairs are recorded in
 | Full Telex same-output core canonical / Full | **17.02 / 27.18 M keys/s** |
 | Full Telex same-output engine canonical / Full | **7.73 / 8.54 M keys/s** |
 | **End-to-end across the C FFI** (`process_char` + read composed text back) | **~0.11 µs / keystroke** (~8.78 M/s) |
-| `size_of::<Engine>` (per-field session state) | **136 bytes** |
+| `size_of::<Engine>` (per-field session state) | **152 bytes** |
 | Heap allocations per keystroke (with or without spell-check) | **~1** (~7 B) |
 | Release FFI shared lib (`libfunput_ffi.dylib`, LTO + stripped) | ~0.37 MB |
 

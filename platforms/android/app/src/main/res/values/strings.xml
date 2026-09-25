@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="app_name">Funput</string>
     <string name="funput_logo_description">Logo Funput</string>
     <string name="settings_title">Cài đặt</string>
@@ -29,6 +29,16 @@
     <string name="settings_number_row_title">Hàng phím số</string>
     <string name="settings_number_row_summary">Hiển thị 0–9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.</string>
     <string name="settings_key_size_title">Kích thước phím</string>
+    <string name="settings_keyboard_mode_title">Chế độ bàn phím</string>
+    <string name="keyboard_mode_standard">Thường</string>
+    <string name="keyboard_mode_elevated">Trên cao</string>
+    <string name="keyboard_mode_one_handed">Một tay</string>
+    <string name="settings_one_handed_width_title">Chiều rộng bàn phím một tay</string>
+    <string name="settings_one_handed_side_title">Vị trí bàn phím một tay</string>
+    <string name="keyboard_side_left">Trái</string>
+    <string name="keyboard_side_right">Phải</string>
+    <string name="settings_elevation_title">Mức nâng</string>
+    <string name="settings_elevation_value">%1$d dp</string>
     <string name="settings_percent_value">%1$d%%</string>
     <string name="settings_keyboard_theme_dark">Ink</string>
     <string name="settings_keyboard_theme_light">Paper</string>
@@ -97,6 +107,7 @@
     <string name="custom_theme_cancel">Hủy</string>
     <string name="custom_theme_name_hint">Tên chủ đề</string>
     <string name="custom_theme_accent_title">Màu nhấn</string>
+    <string name="custom_theme_accent_pick">Chọn màu bất kỳ</string>
     <string name="custom_theme_tab_colors">Màu sắc</string>
     <string name="custom_theme_contrast_title">Tương phản thấp</string>
     <string name="custom_theme_contrast_footer">Bạn vẫn lưu được chủ đề này.</string>
@@ -174,7 +185,7 @@
     <string name="input_method_telex">Telex</string>
     <string name="input_method_telex_summary">Dùng tổ hợp chữ để nhập dấu.</string>
     <string name="input_method_telex_advanced">Telex nâng cao</string>
-    <string name="input_method_telex_advanced_summary">Gõ [ thành ư, ] thành ơ; w đầu từ thành ư.</string>
+    <string name="input_method_telex_advanced_summary">Gõ ] thành ư, [ thành ơ; w đầu từ thành ư.</string>
     <string name="input_method_vni">VNI</string>
     <string name="input_method_vni_summary">Dùng các phím số để nhập dấu.</string>
     <string name="settings_tone_style_title">Kiểu đặt dấu</string>
@@ -214,6 +225,13 @@
     <string name="settings_clipboard_clear_dialog_title">Xoá toàn bộ lịch sử bảng nhớ tạm?</string>
     <string name="settings_clipboard_clear_dialog_body">Xoá ngay lập tức, kể cả những mục đã ghim.</string>
     <string name="settings_clipboard_clear_dialog_cancel">Giữ lại</string>
+    <string name="settings_section_hardware_keyboard">Bàn phím rời</string>
+    <string name="settings_hardware_keyboard_show_title">Hiện Funput khi có bàn phím rời</string>
+    <string name="settings_hardware_keyboard_show_summary">Android mặc định ẩn bàn phím trên màn hình khi đã kết nối bàn phím rời.</string>
+    <string name="settings_hardware_keyboard_hotkey_title">Alt + Space để hiện hoặc ẩn</string>
+    <string name="settings_hardware_keyboard_hotkey_summary">Nhấn trên bàn phím rời để hiện hoặc ẩn Funput. Khi tắt, Alt + Space gõ dấu cách.</string>
+    <string name="settings_hardware_keyboard_system_title">Cài đặt bàn phím vật lý</string>
+    <string name="settings_hardware_keyboard_system_summary">Bố cục phím và các tuỳ chọn khác của Android.</string>
     <string name="settings_section_data">Dữ liệu</string>
     <string name="settings_data_suggestions_title">Từ đã học</string>
     <string name="settings_data_suggestions_summary">Giữ từ điển tiếng Anh đi kèm.</string>

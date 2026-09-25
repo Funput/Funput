@@ -68,7 +68,7 @@ struct ShortcutInputTests {
 
     @Test func advancedTelexBracketsAreNotBoundaries() {
         let rig = ShortcutTypingRig(language: .vietnamese, method: .telexAdvanced)
-        rig.key("[", role: .punctuation)
+        rig.key("]", role: .punctuation)
         #expect(rig.writer.text == "ư")
     }
 

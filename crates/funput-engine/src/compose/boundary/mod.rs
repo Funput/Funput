@@ -88,25 +88,6 @@ fn english_restore_result(session: &Session, boundary_key: char) -> ImeResult {
     ImeResult::send(backspace, output)
 }
 
-fn update_caps_on_boundary(session: &mut Session, key: char) {
-    if !session.config.auto_capitalize {
-        return;
-    }
-    match key {
-        '.' | '!' | '?' => session.cap_sentence_ended = true,
-        '\n' | '\r' => {
-            session.cap_armed = true;
-            session.cap_sentence_ended = false;
-        }
-        ' ' | '\t' if session.cap_sentence_ended => session.cap_armed = true,
-        ' ' | '\t' | '"' | '\'' | '(' | ')' | '[' | ']' | '{' | '}' => {}
-        _ => {
-            session.cap_sentence_ended = false;
-            session.cap_armed = false;
-        }
-    }
-}
-
 /// English-mode word boundary: gõ tắt is all that is left to do. There is no
 /// composition to restore (the keys are already the text on screen) and
 /// auto-capitalize is a Vietnamese-mode feature, so neither runs here.
@@ -117,8 +98,14 @@ pub(crate) fn on_english_boundary(session: &mut Session, boundary_key: char) -> 
 }
 
 pub(crate) fn on_word_boundary(session: &mut Session, boundary_key: char) -> ImeResult {
+    let result = boundary_result(session, boundary_key);
+    session.clear();
+    result
+}
+
+fn boundary_result(session: &mut Session, boundary_key: char) -> ImeResult {
     if let Some(expansion) = shortcut::expansion(session, boundary_key) {
-        return finish(session, boundary_key, expansion);
+        return expansion;
     }
     let verdict = judge(session);
     // Typo correction gets the word before English restore does, and is deliberately
@@ -128,20 +115,13 @@ pub(crate) fn on_word_boundary(session: &mut Session, boundary_key: char) -> Ime
     // answered by the platform on the next call; this keystroke behaves as it always
     // has, so nothing here can change the text the app already shows.
     if correction::offer(session, boundary_key, &verdict) {
-        return finish(session, boundary_key, ImeResult::none());
+        return ImeResult::none();
     }
-    let result = if verdict.restore {
+    if verdict.restore {
         english_restore_result(session, boundary_key)
     } else {
         ImeResult::none()
-    };
-    finish(session, boundary_key, result)
-}
-
-fn finish(session: &mut Session, boundary_key: char, result: ImeResult) -> ImeResult {
-    update_caps_on_boundary(session, boundary_key);
-    session.clear();
-    result
+    }
 }
 
 #[cfg(test)]

@@ -13,6 +13,7 @@ import app.funput.funput.ui.keyboard.openKeyboardSettings
 import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.settings.SettingsScreen
 import app.funput.funput.ui.settings.SettingsScreenState
+import app.funput.funput.ui.settings.hardware.rememberHardwareKeyboardSectionState
 import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -44,12 +45,14 @@ internal fun SettingsRoute(
             showsNumberRow = settings.showsNumberRow,
             toneStyle = settings.toneStyle,
             keySizeProfile = settings.keySizeProfile,
+            placement = settings.placement,
             hapticsEnabled = settings.feedback.hapticsEnabled,
             soundsEnabled = settings.feedback.soundsEnabled,
             smartComposition = settings.smartComposition,
             personalSuggestionsEnabled = settings.personalSuggestions.enabled,
             clipboardPreferences = settings.clipboard,
             smartGesturesEnabled = settings.smartGesturesEnabled,
+            hardwareKeyboard = rememberHardwareKeyboardSectionState(),
             onInputMethodSelected = { method ->
                 scope.launch { settings.input.setInputMethod(method) }
             },
@@ -63,6 +66,18 @@ internal fun SettingsRoute(
             },
             onKeySizeSelected = { profile ->
                 scope.launch { settings.sizing.setProfile(profile) }
+            },
+            onPlacementModeSelected = { mode ->
+                scope.launch { settings.placementStore.setMode(mode) }
+            },
+            onElevationSelected = { offsetDp ->
+                scope.launch { settings.placementStore.setElevatedOffsetDp(offsetDp) }
+            },
+            onOneHandedWidthSelected = { width ->
+                scope.launch { settings.placementStore.setOneHandedWidthFraction(width) }
+            },
+            onOneHandedSideSelected = { side ->
+                scope.launch { settings.placementStore.setOneHandedSide(side) }
             },
             onHapticsChanged = { enabled ->
                 scope.launch { settings.feedbackStore.setHapticsEnabled(enabled) }

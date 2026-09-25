@@ -14,18 +14,18 @@ struct SystemSymbolsParityTests {
         let rows = SystemSymbolKeyboardLayouts.primary(.vni).rows
         #expect(rows[0].keys.map(\.label).joined() == "1234567890")
         #expect(rows[0].keys.allSatisfy { $0.role == .punctuation })
-        #expect(rows[1].keys.map(\.label) == ["-", "/", ":", ";", "(", ")", "đ", "&", "@", "\""])
+        #expect(rows[1].keys.map(\.label) == ["-", "/", ":", ";", "(", ")", "₫", "&", "@", "\""])
         #expect(rows[2].keys.map(\.label) == ["#+=", ".", ",", "?", "!", "'", ""])
     }
 
-    @Test("Page one carries the letter đ, not the currency sign")
-    func primaryUsesTheLetterDe() {
-        // "đ" U+0111 vs "₫" U+20AB. The Funput preset's symbol page carries the currency
-        // sign, so a copy-paste between the two content files would look right in a diff
-        // and be wrong on the keyboard.
+    @Test("Page one carries the dong sign, not the letter đ")
+    func primaryUsesTheDongSign() {
+        // "₫" U+20AB vs "đ" U+0111. Apple's key shows the dong sign, bar underneath, where
+        // the US keyboard has "$"; the letter would look right in a diff and be wrong on
+        // the keyboard.
         let labels = SystemSymbolKeyboardLayouts.primary(.vni).rows[1].keys.map(\.label)
-        #expect(labels.contains("\u{0111}"))
-        #expect(!labels.contains("\u{20AB}"))
+        #expect(labels.contains("\u{20AB}"))
+        #expect(!labels.contains("\u{0111}"))
     }
 
     @Test("Page two matches the stock keyboard")
@@ -38,15 +38,15 @@ struct SystemSymbolsParityTests {
 
     @Test("Page switch keys keep their roles", arguments: KeyboardInputMethod.allCases)
     func switchKeys(method: KeyboardInputMethod) {
-        let primary = SystemSymbolKeyboardLayouts.primary(method).rows[2].keys
-        #expect(primary.first?.role == .moreSymbols)
-        #expect(primary.first?.widthWeight == 1.5)
-        #expect(primary.last?.role == .backspace)
-        #expect(primary.last?.widthWeight == 1.5)
+        let primary = SystemSymbolKeyboardLayouts.primary(method).rows[2]
+        #expect(primary.keys.first?.role == .moreSymbols)
+        #expect(primary.keys.last?.role == .backspace)
+        #expect(primary.columnSpans != nil)
 
-        let secondary = SystemSymbolKeyboardLayouts.secondary(method).rows[2].keys
-        #expect(secondary.first?.role == .symbols)
-        #expect(secondary.first?.widthWeight == 1.5)
+        let secondary = SystemSymbolKeyboardLayouts.secondary(method).rows[2]
+        #expect(secondary.keys.first?.role == .symbols)
+        #expect(secondary.keys.last?.role == .backspace)
+        #expect(secondary.columnSpans != nil)
     }
 
     @Test("Both pages share the letters action row", arguments: KeyboardInputMethod.allCases)
