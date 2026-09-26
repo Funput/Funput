@@ -23,6 +23,8 @@ public final class KeyboardInputCoordinator {
     var personalSuggestionsEnabled = true
     var suggestionTrackingActive = true
     var preferredTelexMethod: KeyboardInputMethod
+    /// The durable options last applied, kept so panel fields compose the same way.
+    var compositionOptions: FunputCompositionOptions?
     var nextTransactionSequence: UInt64 = 1
 
     public init(

@@ -32,7 +32,7 @@ extension KeyboardViewController {
     func showEmoji() {
         guard currentPresentation.layout.allowsEmojiPanel else { return }
         launchTrace.recordPanelFirstOpen(.emoji)
-        ensureEmojiView()
+        ensureEmojiView().searchComposer = makeEmojiSearchComposer()
         inputCoordinator.prepareForLiteralInput()
         clearPersonalSuggestions()
         refreshEmojiPresentation()
@@ -50,6 +50,14 @@ extension KeyboardViewController {
             presentation: currentPresentation,
             recent: emojiRecentsStore.load().compactMap(emojiItem)
         )
+    }
+
+    /// A fresh field on every visit, so the search follows the Telex/VNI key and the
+    /// language switch as they are now.
+    private func makeEmojiSearchComposer() -> LocalTextComposer {
+        let composer = LocalTextComposer()
+        inputCoordinator.configure(composer)
+        return composer
     }
 
     private func insertEmoji(_ item: EmojiItem) {

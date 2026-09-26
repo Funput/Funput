@@ -56,6 +56,9 @@ struct EmojiSearchIndex {
             options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive],
             locale: Locale(identifier: "vi_VN")
         )
+        // `đ` has no decomposition, so diacritic folding leaves it alone (case folding
+        // already turned `Đ` into `đ`). Without this, `do` would never find `đỏ`.
+        .replacingOccurrences(of: "đ", with: "d")
         let words = folded.unicodeScalars.split { scalar in
             !CharacterSet.alphanumerics.contains(scalar)
         }

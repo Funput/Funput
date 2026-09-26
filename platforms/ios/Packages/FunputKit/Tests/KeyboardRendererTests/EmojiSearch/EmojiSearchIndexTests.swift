@@ -26,6 +26,18 @@ struct EmojiSearchIndexTests {
         #expect(index.search("cho").first == dog)
     }
 
+    @Test("đ matches with or without its stroke")
+    func strokedD() {
+        let red = EmojiItem(
+            glyph: "🔴", name: "red circle", localizedName: "hình tròn đỏ", category: .symbols
+        )
+        let index = EmojiSearchIndex(catalog: EmojiCatalog(version: "test", emojis: [face, red]))
+        #expect(index.search("đỏ").first == red)
+        #expect(index.search("do").first == red)
+        #expect(index.search("ĐỎ").first == red)
+        #expect(index.search("cười").first == face)
+    }
+
     @Test("English names and multilingual keywords match")
     func multilingualTerms() {
         let index = makeIndex()
