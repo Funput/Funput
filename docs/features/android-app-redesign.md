@@ -131,8 +131,8 @@ dùng bề mặt mờ đục đơn giản. Tầng 3 (máy mới) được thiế
 
 | Tầng | Máy | Hiệu ứng | Công nghệ |
 | --- | --- | --- | --- |
-| 3 — Liquid Glass | Android 13+ (API 33) | Làm mờ nền phía sau + khúc xạ ở mép + vệt sáng | Shader AGSL (`RuntimeShader`), cân nhắc thư viện Liquid Glass cho Compose hoặc tự viết |
-| 2 — Kính mờ | Android 12 (API 31–32) | Làm mờ nền + phủ màu + viền sáng, không khúc xạ | `RenderEffect` blur, thư viện Haze |
+| 3 — Liquid Glass | Android 13+ (API 33) | Làm mờ nền phía sau + khúc xạ ở mép + vệt sáng | Thư viện backdrop (Kyant): `blur` + `lens` (AGSL) + highlight |
+| 2 — Kính mờ | Android 12 (API 31–32) | Làm mờ nền + phủ màu + viền sáng, không khúc xạ | Cùng thư viện backdrop; `lens` tự bỏ qua dưới API 33 |
 | 1 — Mờ đục | Android 8–11, hoặc máy yếu ở mọi phiên bản | Nền bán trong suốt + viền sáng 1px + bóng nhẹ | Compose thuần, giữ đơn giản |
 
 Tầng 3 là ưu tiên. Tầng 2 và 1 chỉ cần đúng và không vỡ; chưa đầu tư làm đẹp thêm.
@@ -149,11 +149,50 @@ hoạt ảnh trong hệ thống, hoặc đo thấy rớt khung hình.
 - Xem trước chủ đề kính của bàn phím luôn có nền đỡ phía sau (bài học từ iOS: thiếu nền
   đỡ thì chủ đề Midnight gần như vô hình)
 
-Mốc API là theo hiểu biết hiện tại, chưa đối chiếu tài liệu. Cần làm một spike trước
-khi chốt.
+### Quyết định kính
 
-Spike nằm trong P0 (xem "Lộ trình & theo dõi"); kết quả ghi thành mục "Quyết định kính"
-trong file này.
+Chọn **thư viện backdrop của Kyant** (`io.github.kyant0:backdrop` 2.0.1, Apache 2.0) cho
+tầng 3 và tầng 2. Tầng 1 là bề mặt mờ đục tự vẽ. Không dùng Haze và không tự viết AGSL.
+Kết luận rút từ spike trên nhánh `spike/android-glass` (không merge), chạy ngày 2026-09-26
+trên Galaxy S21 Ultra (SM-G998B, Android 15, 120 Hz).
+
+Demo là một danh sách cài đặt kiểu iOS, cuộn dưới một thanh tiêu đề kính và một thanh tab
+viên thuốc. Mỗi chế độ được vuốt 20 lần mỗi vòng, 3 vòng, đọc bằng `dumpsys gfxinfo`. Script
+đo: `platforms/android/glass-spike/measure.sh`.
+
+| Chế độ | Khung hình giật | Thời gian khung p50 / p90 / p99 (ms) | GPU p90 / p99 (ms) |
+| --- | --- | --- | --- |
+| Mờ đục (tầng 1) | 1,83% | 6 / 8 / 11,7 | 4 / 5,7 |
+| Haze blur | 1,72% | 10 / 12 / 16 | 6 / 9 |
+| Backdrop Liquid Glass | 1,92% | 9 / 15 / 20,7 | 10,7 / 15,7 |
+
+Cả ba chế độ có tỉ lệ khung hình giật gần như nhau, khoảng 1,7–1,9%. Kính tốn thêm GPU (p90
+từ 4 lên 10,7ms) nhưng không làm tăng số khung hình giật ở 120 Hz trên máy đời 2021.
+
+| Tiêu chí | Backdrop (Kyant) | Haze 2.0 | Tự viết AGSL |
+| --- | --- | --- | --- |
+| Giống Liquid Glass iOS | Có khúc xạ ở mép, vệt sáng, bóng | Chỉ kính mờ, không khúc xạ | Làm được, nhưng là viết lại thư viện backdrop |
+| API | Blur từ 31, lens từ 33, tự bỏ qua khi không hỗ trợ | Blur từ 31, dưới đó là lớp phủ | Tự lo |
+| Dung lượng AAR | ~176 KB (backdrop + shapes) | ~447 KB (haze + utils + blur) | 0 |
+| Giấy phép | Apache 2.0 | Apache 2.0 | — |
+| Rủi ro | Một người bảo trì | Phổ biến, nhiều người dùng | Tốn công, tự bảo trì shader |
+
+Ảnh chụp trên nhánh spike:
+[mờ đục](https://github.com/Funput/Funput/blob/spike/android-glass/platforms/android/glass-spike/results/solid-tabbar.png),
+[Haze](https://github.com/Funput/Funput/blob/spike/android-glass/platforms/android/glass-spike/results/haze-tabbar.png),
+[Liquid Glass](https://github.com/Funput/Funput/blob/spike/android-glass/platforms/android/glass-spike/results/liquid-tabbar.png).
+
+**Điều kiện đi kèm, bắt buộc trong P1:**
+
+- **Bọc sau API riêng của FunputUI** (ví dụ `Modifier.funputGlass(...)`). Màn hình không bao
+  giờ gọi thẳng thư viện. Nếu thư viện ngừng bảo trì, chỉ phải thay một chỗ; shader của nó
+  là Apache 2.0 nên có thể vendor lại.
+- **Chỉ nhận `CornerBasedShape`.** `lens` ném `UnsupportedOperationException` với hình khác
+  (ví dụ `RectangleShape`); spike đã crash vì lỗi này. Thanh tiêu đề dùng bo góc 0 và tắt
+  khúc xạ.
+- **Tự chọn tầng theo API level.** Dưới API 31 thư viện chỉ vẽ lớp phủ mỏng, gần như trong
+  suốt, nên FunputUI phải tự chuyển sang bề mặt mờ đục. Không được để thư viện "tự hạ cấp".
+- Giữ quy tắc dùng kính ở trên: chỉ thanh tab, thanh tiêu đề, nút và thẻ tương tác.
 
 ## Map màn hình iOS → Android
 
@@ -194,8 +233,8 @@ nào. Mỗi giai đoạn là một hoặc vài PR con, merge vào nhánh tổng 
       trạng các màn làm bằng chứng "trước" (artifact CI, không commit ảnh)
 - [ ] File token dùng chung `design/tokens/app.tokens.json` (giá trị từ app iOS, màu
       nhấn cam) + validator trong buildSrc chạy mỗi lần build
-- [ ] Spike kính (nhánh `spike/android-glass`, không merge): so thư viện Liquid Glass cho
-      Compose, Haze và AGSL tự viết; ghi "Quyết định kính" vào file này
+- [x] Spike kính (nhánh `spike/android-glass`, không merge): chọn thư viện backdrop, xem
+      "Quyết định kính"
 
 ### P1 — FunputUI
 
@@ -245,7 +284,7 @@ chấp nhận trong giai đoạn này.
 | Kính gây rớt khung hình khi cuộn | Giật, nóng máy | Giới hạn số bề mặt kính, tự hạ tầng, đo khung hình trong spike |
 | Bản tầng 1 trông như hàng hạ cấp | Máy cũ vẫn xấu | Chấp nhận trong giai đoạn này; làm đẹp khi đủ người dùng |
 | Component tự làm thiếu trợ năng | TalkBack đọc sai | Test semantics bắt buộc cho mọi component |
-| Thư viện kính bên ngoài ngừng bảo trì hoặc vỡ khi nâng Compose | Kẹt nâng cấp | Bọc sau interface riêng, sẵn sàng thay bằng AGSL tự viết |
+| Thư viện backdrop (một người bảo trì) ngừng cập nhật hoặc vỡ khi nâng Compose | Kẹt nâng cấp | Bọc sau API riêng của FunputUI; shader Apache 2.0 có thể vendor lại |
 | Người dùng Android thấy app "giống iOS" quá | Khó chịu | Giữ điều hướng, back, rung kiểu Android |
 | Người đang dùng "Màu theo hình nền" mất tính năng | Phản hồi tiêu cực | Nêu trong ghi chú phát hành |
 
