@@ -24,6 +24,7 @@ extension FunputConfiguration {
         config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.smartGesturesEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartGesturesEnabled) ?? config.smartGesturesEnabled
+        config.returnsToLettersAfterPunctuation = try container.decodeIfPresent(Bool.self, forKey: .returnsToLettersAfterPunctuation) ?? config.returnsToLettersAfterPunctuation
         config.showsNumberRow = try container.decodeIfPresent(Bool.self, forKey: .showsNumberRow) ?? config.showsNumberRow
         config.layoutPreset = try container.decodeIfPresent(KeyboardLayoutPreset.self, forKey: .layoutPreset) ?? config.layoutPreset
         config.keySizing = try container.decodeIfPresent(KeyboardKeySizing.self, forKey: .keySizing) ?? config.keySizing
@@ -89,6 +90,12 @@ extension FunputConfiguration {
         // so like the `< 10` rung there is nothing to fix up.
         if config.schemaVersion < 14 {
             config.schemaVersion = 14
+        }
+        // v15 added `returnsToLettersAfterPunctuation`, defaulting to on for everyone like
+        // the `< 11` rung: finishing a sentence on the symbol page should not strand the
+        // next Vietnamese word there.
+        if config.schemaVersion < 15 {
+            config.schemaVersion = 15
         }
         self = config
     }

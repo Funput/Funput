@@ -49,6 +49,7 @@ extension KeyboardInputCoordinator {
         case .vniModifier, .punctuation:
             input(key.label, builder: &builder)
         case .space:
+            returnToLettersAfterPunctuationIfNeeded()
             if !applySmartSpace(builder: &builder) { input(" ", builder: &builder) }
         case .enter: input("\n", builder: &builder)
         // Re-opening the previous word is deferred to `commit`, which runs it once the
