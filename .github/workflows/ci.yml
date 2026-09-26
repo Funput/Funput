@@ -421,7 +421,8 @@ jobs:
           }
 
           decide windows '^platforms/windows/'
-          decide android '^platforms/android/'
+          # design/tokens/ is validated by every Android build, so a token-only change runs it.
+          decide android '^(platforms/android/|design/tokens/)'
 
   # The deterministic half of cargo-deny: what the dependency graph is allowed to
   # contain, which only changes when a dependency changes. Advisories are NOT here
@@ -598,6 +599,11 @@ jobs:
         run: rustup target add aarch64-linux-android x86_64-linux-android
 
       - uses: Swatinem/rust-cache@v2
+
+      # buildSrc is its own Gradle build, so the project's test task never reaches its tests.
+      # They cover the design-token validator that every Android build runs.
+      - name: Build logic tests
+        run: ./gradlew -p buildSrc test --console=plain
 
       - name: Unit tests
         run: ./gradlew testDebugUnitTest --console=plain

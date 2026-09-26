@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "color": {
+    "accent": { "light": "#D46B08", "dark": "#FFA43F" },
+    "groupedBackground": { "light": "#F2F2F7", "dark": "#000000" },
+    "cardBackground": { "light": "#FFFFFF", "dark": "#1C1C1E" },
+    "cardStroke": { "light": "#00000012", "dark": "#FFFFFF12" },
+    "label": { "light": "#000000", "dark": "#FFFFFF" },
+    "secondaryLabel": { "light": "#3C3C4399", "dark": "#EBEBF599" },
+    "tertiaryLabel": { "light": "#3C3C434D", "dark": "#EBEBF54D" },
+    "separator": { "light": "#3C3C434A", "dark": "#54545899" },
+    "success": { "light": "#34C759", "dark": "#30D158" },
+    "destructive": { "light": "#FF3B30", "dark": "#FF453A" },
+    "brandPink": { "light": "#FF2D55", "dark": "#FF375F" },
+    "brandPurple": { "light": "#AF52DE", "dark": "#BF5AF2" },
+    "brandBlue": { "light": "#007AFF", "dark": "#0A84FF" }
+  },
+  "radius": {
+    "card": 22,
+    "interactiveCard": 20,
+    "thumbnail": 16,
+    "iconTile": 12,
+    "smallTile": 10
+  },
+  "spacing": {
+    "tight": 4,
+    "small": 8,
+    "medium": 12,
+    "large": 18,
+    "section": 24
+  },
+  "layout": {
+    "pageMargin": 18,
+    "cardPadding": 18,
+    "contentMaxWidth": 720,
+    "cardStrokeWidth": 0.5
+  },
+  "opacity": {
+    "tintFill": 0.12,
+    "glassTintSelected": 0.16,
+    "screenAccentWash": 0.08
+  },
+  "typography": {
+    "largeTitle": { "size": 34, "lineHeight": 41, "weight": 700 },
+    "title": { "size": 28, "lineHeight": 34, "weight": 400 },
+    "title2": { "size": 22, "lineHeight": 28, "weight": 700 },
+    "title3": { "size": 20, "lineHeight": 25, "weight": 400 },
+    "headline": { "size": 17, "lineHeight": 22, "weight": 600 },
+    "body": { "size": 17, "lineHeight": 22, "weight": 400 },
+    "callout": { "size": 16, "lineHeight": 21, "weight": 400 },
+    "subheadline": { "size": 15, "lineHeight": 20, "weight": 400 },
+    "footnote": { "size": 13, "lineHeight": 18, "weight": 400 },
+    "caption": { "size": 12, "lineHeight": 16, "weight": 400 },
+    "caption2": { "size": 11, "lineHeight": 13, "weight": 600 }
+  },
+  "motion": {
+    "launchBloom": { "curve": "spring", "durationMs": 550, "bounce": 0.12 },
+    "launchExit": { "curve": "easeOut", "durationMs": 220 },
+    "themeSelect": { "curve": "easeInOut", "durationMs": 200 }
+  }
+}
