@@ -1,5 +1,6 @@
-package app.funput.build.tokens
+package app.funput.build.tokens.validation
 
+import app.funput.build.tokens.model.RgbaColor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test

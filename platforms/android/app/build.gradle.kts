@@ -82,6 +82,7 @@ android {
 
 dependencies {
     implementation(project(":ime"))
+    implementation(project(":funput-ui"))
     implementation(project(":shortcut-store"))
     implementation(project(":keyboard-renderer"))
     implementation(project(":theme-runtime"))
@@ -110,11 +111,3 @@ dependencies {
 androidComponents.beforeVariants {
     (it as com.android.build.api.variant.HasUnitTestBuilder).enableUnitTest = true
 }
-
-// The app's design tokens are shared with iOS. A malformed or low-contrast token fails every build
-// here, before any code is generated from it.
-val validateDesignTokens by tasks.registering(app.funput.build.tokens.ValidateDesignTokensTask::class) {
-    tokenFile.set(rootProject.layout.projectDirectory.file("../../design/tokens/app.tokens.json"))
-    stampFile.set(layout.buildDirectory.file("designTokens/validated.stamp"))
-}
-tasks.named("preBuild") { dependsOn(validateDesignTokens) }

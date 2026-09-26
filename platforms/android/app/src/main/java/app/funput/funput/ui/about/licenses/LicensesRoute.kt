@@ -29,8 +29,11 @@ internal fun LicensesRoute(onBack: () -> Unit) {
     val error = stringResource(R.string.licenses_error)
     val notice by produceState(loading, context, error) {
         value = withContext(Dispatchers.IO) {
-            runCatching { context.assets.open("lexicon/NOTICE.md").bufferedReader().use { it.readText() } }
-                .getOrDefault(error)
+            runCatching {
+                NoticeAssets.joinToString(separator = "\n\n") { path ->
+                    context.assets.open(path).bufferedReader().use { it.readText() }
+                }
+            }.getOrDefault(error)
         }
     }
     Scaffold(topBar = {
@@ -43,3 +46,9 @@ internal fun LicensesRoute(onBack: () -> Unit) {
         }
     }
 }
+
+/**
+ * Third-party notices shipped as assets, shown in this order: the dictionary's notice (generated
+ * by `:ime`) and the licence of the bundled Be Vietnam Pro font (from `:funput-ui`).
+ */
+private val NoticeAssets = listOf("lexicon/NOTICE.md", "licenses/be-vietnam-pro-OFL.txt")

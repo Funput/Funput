@@ -1,4 +1,4 @@
-package app.funput.build.tokens
+package app.funput.build.tokens.validation
 
 /**
  * A minimal token file that passes every rule, with hooks to break one part at a time. Each test
@@ -7,6 +7,7 @@ package app.funput.build.tokens
 internal object TokenFixtures {
     private val validColors = mapOf(
         "accent" to ("#D46B08" to "#FFA43F"),
+        "onAccent" to ("#1F1300" to "#1F1300"),
         "groupedBackground" to ("#F2F2F7" to "#000000"),
         "cardBackground" to ("#FFFFFF" to "#1C1C1E"),
         "cardStroke" to ("#00000012" to "#FFFFFF12"),

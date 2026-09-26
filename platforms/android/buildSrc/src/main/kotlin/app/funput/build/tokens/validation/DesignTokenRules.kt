@@ -1,4 +1,6 @@
-package app.funput.build.tokens
+package app.funput.build.tokens.validation
+
+import app.funput.build.tokens.model.DesignTokens
 
 /**
  * What a parsed token set must satisfy beyond its shape.
@@ -10,7 +12,7 @@ package app.funput.build.tokens
 object DesignTokenRules {
     /** Colour roles every platform relies on; removing one would break generated code. */
     val RequiredColors: List<String> = listOf(
-        "accent", "groupedBackground", "cardBackground", "cardStroke", "label", "secondaryLabel",
+        "accent", "onAccent", "groupedBackground", "cardBackground", "cardStroke", "label", "secondaryLabel",
         "tertiaryLabel", "separator", "success", "destructive",
     )
 
@@ -23,6 +25,9 @@ object DesignTokenRules {
     /** Minimum contrast of the accent on every surface. */
     const val ACCENT_CONTRAST: Double = 3.0
 
+    /** Token names become generated identifiers, so they must be lowerCamelCase. */
+    private val TokenName = Regex("^[a-z][A-Za-z0-9]*$")
+
     /** Every rule [tokens] breaks, as `path: reason`; empty when the set is valid. */
     fun violations(tokens: DesignTokens): List<String> = buildList {
         if (tokens.schemaVersion != DesignTokens.SUPPORTED_SCHEMA_VERSION) {
@@ -30,14 +35,27 @@ object DesignTokenRules {
                 "(expected ${DesignTokens.SUPPORTED_SCHEMA_VERSION})")
         }
         RequiredColors.filterNot(tokens.colors::containsKey).forEach { add("color.$it: missing") }
+        addAll(nameViolations(tokens))
         addAll(surfaceViolations(tokens))
         addAll(contrastViolations(tokens, "label", TEXT_CONTRAST))
         addAll(contrastViolations(tokens, "accent", ACCENT_CONTRAST))
+        addAll(onAccentViolations(tokens))
         addAll(numberViolations(tokens))
         addAll(typographyViolations(tokens))
         tokens.motion.forEach { (name, motion) ->
             if (motion.durationMs !in 1..2_000) add("motion.$name.durationMs: ${motion.durationMs} not in 1..2000")
             motion.bounce?.let { if (it !in 0.0..1.0) add("motion.$name.bounce: $it not in 0..1") }
+        }
+    }
+
+    private fun nameViolations(tokens: DesignTokens): List<String> {
+        val groups = mapOf(
+            "color" to tokens.colors.keys,
+            "typography" to tokens.typography.keys,
+            "motion" to tokens.motion.keys,
+        ) + tokens.numbers.mapValues { (_, values) -> values.keys }
+        return groups.flatMap { (group, names) ->
+            names.filterNot(TokenName::matches).map { "$group.$it: name must be lowerCamelCase" }
         }
     }
 
@@ -62,6 +80,18 @@ object DesignTokenRules {
                 else "color.$role.$mode: %.2f:1 on $surface, needs %.1f:1".format(ratio, floor)
             }
         }
+    }
+
+    /** Text on an accent-filled button must read like body text, in both appearances. */
+    private fun onAccentViolations(tokens: DesignTokens): List<String> {
+        val text = tokens.colors["onAccent"] ?: return emptyList()
+        val fill = tokens.colors["accent"]?.takeIf { it.light.isOpaque && it.dark.isOpaque } ?: return emptyList()
+        return listOf("light" to (text.light to fill.light), "dark" to (text.dark to fill.dark))
+            .mapNotNull { (mode, colors) ->
+                val ratio = ContrastMath.ratio(colors.first, colors.second)
+                if (ratio >= TEXT_CONTRAST) null
+                else "color.onAccent.$mode: %.2f:1 on accent, needs %.1f:1".format(ratio, TEXT_CONTRAST)
+            }
     }
 
     private fun numberViolations(tokens: DesignTokens) = tokens.numbers.flatMap { (group, values) ->
