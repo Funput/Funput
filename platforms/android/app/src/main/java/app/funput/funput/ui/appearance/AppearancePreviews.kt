@@ -14,7 +14,7 @@ import app.funput.funput.ui.theme.FunputTheme
 @Composable
 private fun AppearanceLightPreview() {
     FunputTheme(appearanceMode = AppearanceMode.LIGHT) {
-        AppearanceScreen(previewState(followsAppearance = false))
+        AppearanceScreen(appearancePreviewState(followsAppearance = false))
     }
 }
 
@@ -28,11 +28,15 @@ private fun AppearanceLightPreview() {
 @Composable
 private fun AppearanceSlotsPreview() {
     FunputTheme(appearanceMode = AppearanceMode.DARK) {
-        AppearanceScreen(previewState(followsAppearance = true))
+        AppearanceScreen(appearancePreviewState(followsAppearance = true))
     }
 }
 
-private fun previewState(followsAppearance: Boolean): AppearanceScreenState {
+/**
+ * The appearance screen's state over the built-in themes. Shared by the IDE previews above and the
+ * JVM screenshot tests, so both show the same screen.
+ */
+internal fun appearancePreviewState(followsAppearance: Boolean): AppearanceScreenState {
     val themes = InstalledThemeRepository.builtIn().themes
     return AppearanceScreenState(
         appearanceMode = AppearanceMode.SYSTEM,

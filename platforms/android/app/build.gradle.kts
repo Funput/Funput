@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.roborazzi)
 }
 
 android {
@@ -75,6 +76,8 @@ android {
     buildFeatures {
         compose = true
     }
+    // Robolectric renders the app's own resources and fonts in JVM screenshot tests.
+    testOptions.unitTests.isIncludeAndroidResources = true
 }
 
 dependencies {
@@ -95,6 +98,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)
+    testImplementation(project(":ui-testing"))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

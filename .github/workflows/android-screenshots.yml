@@ -1,0 +1,78 @@
+name: Android screenshots
+
+# Renders the Android app's screens on the JVM (Robolectric + Roborazzi) and
+# attaches the images to the run, so a reviewer can see what a pull request does
+# to the UI without installing it.
+#
+# Its own workflow rather than a job in ci.yml because it only applies to pull
+# requests that touch the Android tree, and GitHub filters paths per workflow.
+# NOT a required status check, for the same reason as arch-recipe.yml: a
+# path-filtered workflow reports nothing on the pull requests it skips, and a
+# required check that never reports blocks the merge forever. The `android` job
+# in ci.yml already composes every one of these screens in `testDebugUnitTest`,
+# so a screen that crashes fails the required gate; this workflow only adds the
+# pictures.
+#
+# It records, it does not verify: no golden images are committed yet. Verifying
+# against goldens starts once the redesigned components land (see
+# docs/features/android-app-redesign.md).
+on:
+  pull_request:
+    paths:
+      - platforms/android/**
+      - .github/workflows/android-screenshots.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: platforms/android
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # Same packages as the `android` job in ci.yml; see the notes there on the
+      # minor-versioned platform id and the licence prompt.
+      - name: Android SDK packages
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)"
+          fi
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          set -o pipefail
+          "$SDKMANAGER" "platforms;android-37.0" "ndk;29.0.14206865"
+
+      # The app module depends on :ime, whose build packs the Rust lexicon.
+      - name: Rust Android targets
+        run: rustup target add aarch64-linux-android x86_64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Record screenshots
+        run: ./gradlew :app:recordRoborazziDebug --console=plain
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android-screenshots
+          path: platforms/android/app/build/outputs/roborazzi/
+          if-no-files-found: error
+          retention-days: 30
