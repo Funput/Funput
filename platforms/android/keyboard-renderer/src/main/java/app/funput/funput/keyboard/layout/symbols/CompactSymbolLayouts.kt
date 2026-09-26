@@ -1,10 +1,12 @@
 package app.funput.funput.keyboard.layout.symbols
 
 import app.funput.funput.keyboard.KeyboardFeatures
-import app.funput.funput.keyboard.layout.TopNumberRowMode
-import app.funput.funput.keyboard.layout.specialKey
-import app.funput.funput.keyboard.layout.standardSpaceKey
-import app.funput.funput.keyboard.layout.topNumberRow
+import app.funput.funput.keyboard.layout.keys.commaKey
+import app.funput.funput.keyboard.layout.keys.periodKey
+import app.funput.funput.keyboard.layout.letters.specialKey
+import app.funput.funput.keyboard.layout.letters.standardSpaceKey
+import app.funput.funput.keyboard.layout.rows.TopNumberRowMode
+import app.funput.funput.keyboard.layout.rows.topNumberRow
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -107,9 +109,9 @@ internal object CompactSymbolLayouts {
     private fun actionRow(page: String) = KeyboardRow(
         keys = listOf(
             specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.7f, "Chữ cái"),
-            specialKey("comma-$page", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
+            commaKey("comma-$page"),
             standardSpaceKey(),
-            specialKey("period-$page", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
+            periodKey("period-$page"),
             specialKey("enter-$page", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
     )

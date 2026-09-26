@@ -1,5 +1,14 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.editors
 
+import app.funput.funput.keyboard.layout.keys.commaKey
+import app.funput.funput.keyboard.layout.keys.keypadCommand
+import app.funput.funput.keyboard.layout.keys.keypadDigit
+import app.funput.funput.keyboard.layout.keys.keypadEmpty
+import app.funput.funput.keyboard.layout.keys.keypadRow
+import app.funput.funput.keyboard.layout.keys.periodKey
+import app.funput.funput.keyboard.layout.letters.asciiSpaceKey
+import app.funput.funput.keyboard.layout.letters.qwertyLayout
+import app.funput.funput.keyboard.layout.letters.specialKey
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
@@ -11,9 +20,9 @@ internal object PasswordKeyboardLayouts {
         leadingRows = listOf(keypadRow(*"1234567890".map(::keypadDigit).toTypedArray())),
         actionKeys = listOf(
             specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Ký hiệu"),
-            specialKey("comma", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
+            commaKey("comma"),
             asciiSpaceKey(5.8f),
-            specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
+            periodKey("period"),
             specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
         ),
         showSuggestionBar = false,

@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.rows
 
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec

@@ -6,18 +6,18 @@ import android.view.MotionEvent
 import android.view.View
 import app.funput.funput.keyboard.interaction.interactionTargetAt
 import app.funput.funput.keyboard.interaction.selectionForTarget
-import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.KeyBounds
+import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
-import app.funput.funput.keyboard.layout.resolveGeometry
+import app.funput.funput.keyboard.layout.geometry.resolveGeometry
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
+import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.popover.rendering.AlternatePalettePopup
-import app.funput.funput.keyboard.surface.KeyboardSurfaceEventDispatcher
 import app.funput.funput.keyboard.surface.KeyboardSurfaceAccessibilityBinding
+import app.funput.funput.keyboard.surface.KeyboardSurfaceEventDispatcher
 import app.funput.funput.keyboard.surface.KeyboardSurfaceLayoutState
 import app.funput.funput.keyboard.surface.KeyboardSurfaceRenderController
 import app.funput.funput.keyboard.surface.createKeyboardSurfaceInteraction
@@ -44,6 +44,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
     var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
     var clipboardKeyVisible: Boolean = false; set(value) { if (field != value) { field = value; resolveGeometry() } }
+    var placementKeyVisible: Boolean = true; set(value) { if (field != value) { field = value; resolveGeometry(); invalidate() } }
     var showsNumberRow: Boolean by layoutState::showsNumberRow
     var keyboardTheme by render::keyboardTheme
     var keyboardThemeBackgroundImage by render::keyboardThemeBackgroundImage
@@ -138,7 +139,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         resolvedKeyboard = layoutState.layout.resolveGeometry(
             width = width, height = height,
             density = resources.displayMetrics.density, profile = sizingProfile,
-            showClipboard = clipboardKeyVisible && suggestionState.utilityKeysVisible, showPlacement = suggestionState.utilityKeysVisible,
+            showClipboard = clipboardKeyVisible && suggestionState.utilityKeysVisible, showPlacement = placementKeyVisible && suggestionState.utilityKeysVisible,
         )
         suggestionState.geometryChanged(); accessibility.refresh()
     }

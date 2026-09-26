@@ -1,4 +1,6 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.geometry
+
+import app.funput.funput.keyboard.layout.ResolvedKey
 
 /** Allocation-free lookup over precomputed key hit targets. */
 internal class KeyboardHitTester(

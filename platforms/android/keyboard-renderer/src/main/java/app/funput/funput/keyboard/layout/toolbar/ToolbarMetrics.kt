@@ -1,4 +1,7 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.toolbar
+
+import app.funput.funput.keyboard.layout.KeyboardGeometry
+import app.funput.funput.keyboard.layout.geometry.KeyboardHitTargetResolver
 
 /**
  * Density-independent toolbar geometry, shared by the layout, the renderer and the panel

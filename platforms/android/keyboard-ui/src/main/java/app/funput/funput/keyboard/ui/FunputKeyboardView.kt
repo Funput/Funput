@@ -57,6 +57,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         get() = keyboardSurface.editorMode
         set(value) { keyboardSurface.editorMode = value; clipboardState.editorModeChanged() }
     var systemInputMethodSwitcherVisible: Boolean by keyboardSurface::systemInputMethodSwitcherVisible
+    var placementKeyVisible: Boolean by keyboardSurface::placementKeyVisible
     var showsNumberRow: Boolean by keyboardSurface::showsNumberRow
     var suggestionBarEnabled: Boolean
         get() = keyboardSurface.suggestionBarEnabled
@@ -100,6 +101,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         keyboardSurface.callbacks.onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest
         keyboardSurface.callbacks.onClipboardPanelRequested = ::showClipboardPanel
         keyboardSurface.callbacks.onPlacementEditorRequested = placement::showPicker
+        keyboardSurface.callbacks.onSettingsRequested = callbacks::dispatchSettingsRequest
         setBackgroundColor(keyboardTheme.backgroundEndColor)
         safeArea.install()
     }

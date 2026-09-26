@@ -1,4 +1,9 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.geometry
+
+import app.funput.funput.keyboard.layout.KeyBounds
+import app.funput.funput.keyboard.layout.ResolvedKey
+import app.funput.funput.keyboard.layout.ResolvedKeyboard
+import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
 
 /**
  * Expands visual key bounds to gap-free touch targets.

@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.layout.geometry.KeyboardHitTargetResolver
+import app.funput.funput.keyboard.layout.toolbar.ToolbarGeometry
 import app.funput.funput.keyboard.model.KeyboardLayout
 
 /** Resolves relative key weights into pixel bounds for the current surface. */

@@ -4,6 +4,7 @@ import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
+import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.ShiftState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -31,7 +32,7 @@ class VietnameseKeyAlternatesTest {
     }
 
     @Test
-    fun `only text and search layouts expose alternates`() {
+    fun `only text and search layouts expose character alternates`() {
         KeyboardInputMethod.entries.forEach { method ->
             assertTrue(alternates(method, KeyboardEditorMode.TEXT).isNotEmpty())
             assertTrue(alternates(method, KeyboardEditorMode.SEARCH).isNotEmpty())
@@ -44,11 +45,11 @@ class VietnameseKeyAlternatesTest {
     }
 
     private fun texts(character: Char) =
-        VietnameseKeyAlternates.valuesFor(character).map(KeyAlternate::text)
+        VietnameseKeyAlternates.valuesFor(character).map(KeyAlternate.Text::text)
 
     private fun chars(value: String) = value.map(Char::toString)
 
     private fun alternates(method: KeyboardInputMethod, mode: KeyboardEditorMode) =
         KeyboardLayoutResolver.resolve(method, KeyboardLayoutMode.LETTERS, mode)
-            .rows.flatMap { it.keys }.flatMap { it.alternates }
+            .rows.flatMap { it.keys }.filter { it.role == KeyRole.CHARACTER }.flatMap { it.alternates }
 }

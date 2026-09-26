@@ -26,8 +26,10 @@ internal class ImeTypingHandler(
     private val shortcuts: ImeShortcutSession,
     private val inputTracked: (String) -> Unit,
     private val finish: () -> Unit,
+    private val onTyping: () -> Unit = {},
 ) {
     fun input(text: String) {
+        if (text.isNotEmpty()) onTyping()
         val handled = if (usesVietnameseComposition()) {
             val current = connection()
             if (current == null) {
@@ -60,6 +62,7 @@ internal class ImeTypingHandler(
     }
 
     fun enter() {
+        onTyping()
         val command = enterCommand()
         if ((usesVietnameseComposition() || usesEnglishShortcuts()) &&
             command == ImeEditCommand.CommitText("\n")) {
@@ -73,6 +76,7 @@ internal class ImeTypingHandler(
 
     /** Text the user picked from a panel rather than typed; never joins a composition. */
     fun commitExternal(text: String) {
+        if (text.isNotEmpty()) onTyping()
         finish()
         execute(ImeEditCommand.CommitText(text))
     }

@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.letters
 
 /** Tone and clear-key secondary hints for Telex-family letter keys (iOS parity). */
 internal object TelexKeyHints {

@@ -23,7 +23,12 @@ internal object ImeKeyboardCallbackBinder {
         suggestions: PersonalSuggestionService,
         switcher: SystemInputMethodSwitcher,
     ) = with(view.callbacks) {
+        handler.typingSession.observe { hasTyped -> view.placementKeyVisible = !hasTyped }
         onKeyAction = { action -> dispatch(handler, suggestions, action) }
+        onSettingsRequested = ImeSettingsLauncher(view.context) {
+            handler.finish()
+            suggestions.finish()
+        }::open
         onInputMethodSwitchRequested = {
             handler.finish()
             suggestions.finish()

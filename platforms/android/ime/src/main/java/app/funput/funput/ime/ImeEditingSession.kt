@@ -22,11 +22,8 @@ import app.funput.funput.keyboard.ui.FunputKeyboardView
 import kotlinx.coroutines.CoroutineScope
 
 /**
- * The collaborators an input session is built from, constructed together.
- *
- * They are wired to each other and to the service in one place so the service itself is left with
- * lifecycle and framework callbacks. Every dependency on the service arrives as a lambda, which
- * keeps this free of a back-reference to the running IME.
+ * Wires input collaborators together, leaving lifecycle and framework callbacks to the service.
+ * Service dependencies arrive as lambdas.
  */
 internal class ImeEditingSession(
     val nativeEngine: NativeVietnameseEngine,
@@ -48,12 +45,14 @@ internal class ImeEditingSession(
     }
 
     fun startInputView(policy: EditorInfoPolicy) {
+        actionHandler.typingSession.begin()
         clipboardController.start(policy.editorMode)
         clipboardHistoryController.start(policy.editorMode)
     }
 
     /** Ends the current input without tearing down the engine. */
     fun finishInput() {
+        actionHandler.typingSession.end()
         clipboardController.stop()
         clipboardHistoryController.stop()
         actionHandler.finish()
@@ -61,7 +60,9 @@ internal class ImeEditingSession(
         suggestionService.finish()
     }
 
-    fun finishInputView() { clipboardController.stop(); clipboardHistoryController.stop() }
+    fun finishInputView() {
+        actionHandler.typingSession.end(); clipboardController.stop(); clipboardHistoryController.stop()
+    }
 
     fun bindClipboard(view: FunputKeyboardView) = clipboardUiBinding.attach(view)
 
@@ -73,6 +74,7 @@ internal class ImeEditingSession(
     }
 
     fun windowHidden() {
+        actionHandler.typingSession.end()
         clipboardController.stop()
         clipboardHistoryController.stop()
         suggestionService.flush()

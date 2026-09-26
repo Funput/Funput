@@ -1,5 +1,9 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.geometry
 
+import app.funput.funput.keyboard.layout.KeyboardGeometry
+import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
+import app.funput.funput.keyboard.layout.KeyboardSizingProfile
+import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.KeyboardLayout
 
 internal fun KeyboardLayout.resolveGeometry(

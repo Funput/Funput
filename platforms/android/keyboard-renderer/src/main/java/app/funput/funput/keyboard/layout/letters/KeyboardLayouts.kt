@@ -1,5 +1,8 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.letters
 
+import app.funput.funput.keyboard.layout.keys.commaKey
+import app.funput.funput.keyboard.layout.keys.periodKey
+import app.funput.funput.keyboard.layout.rows.topNumberRowForLetters
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -50,9 +53,9 @@ object KeyboardLayouts {
 
     private fun standardActionKeys() = listOf(
         specialKey("symbols", "?123", KeyRole.SYMBOLS, 1.7f, "Ký hiệu"),
-        specialKey("comma", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
+        commaKey("comma"),
         standardSpaceKey(),
-        specialKey("period", ".", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu chấm"),
+        periodKey("period"),
         specialKey("enter", "", KeyRole.ENTER, 1.7f, "Enter"),
     )
 }
