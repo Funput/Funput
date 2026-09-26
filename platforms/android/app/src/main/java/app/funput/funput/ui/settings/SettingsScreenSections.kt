@@ -96,11 +96,13 @@ internal fun SettingsScreenSections(
                 preferences = state.smartComposition,
                 personalSuggestionsEnabled = state.personalSuggestionsEnabled,
                 smartGesturesEnabled = state.smartGesturesEnabled,
+                returnsToLettersEnabled = state.returnsToLettersEnabled,
                 onSmartRestoreChanged = state.onSmartRestoreChanged,
                 onSpellCheckChanged = state.onSpellCheckChanged,
                 onAutoCapitalizeChanged = state.onAutoCapitalizeChanged,
                 onPersonalSuggestionsChanged = state.onPersonalSuggestionsChanged,
                 onSmartGesturesChanged = state.onSmartGesturesChanged,
+                onReturnsToLettersChanged = state.onReturnsToLettersChanged,
             )
         }
         settingsItem("feedback", firstSectionIndex + 3, tracker) {

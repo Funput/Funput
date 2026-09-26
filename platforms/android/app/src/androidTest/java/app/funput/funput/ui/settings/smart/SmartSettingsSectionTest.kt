@@ -14,7 +14,7 @@ class SmartSettingsSectionTest {
     val compose = createComposeRule()
 
     @Test
-    fun allFivePreferencesDispatchFromOneSection() {
+    fun allSixPreferencesDispatchFromOneSection() {
         val changes = mutableMapOf<String, Boolean>()
         compose.setContent {
             FunputTheme {
@@ -22,11 +22,13 @@ class SmartSettingsSectionTest {
                     preferences = SmartCompositionPreferences.Default,
                     personalSuggestionsEnabled = true,
                     smartGesturesEnabled = true,
+                    returnsToLettersEnabled = true,
                     onSmartRestoreChanged = { changes["restore"] = it },
                     onSpellCheckChanged = { changes["spelling"] = it },
                     onAutoCapitalizeChanged = { changes["capitalization"] = it },
                     onPersonalSuggestionsChanged = { changes["suggestions"] = it },
                     onSmartGesturesChanged = { changes["gestures"] = it },
+                    onReturnsToLettersChanged = { changes["letters"] = it },
                 )
             }
         }
@@ -36,6 +38,7 @@ class SmartSettingsSectionTest {
         compose.onNodeWithText("Tự viết hoa").performClick()
         compose.onNodeWithText("Gợi ý từ").performClick()
         compose.onNodeWithText("Cử chỉ thông minh").performClick()
+        compose.onNodeWithText("Tự về bảng chữ").performClick()
 
         compose.runOnIdle {
             assertEquals(
@@ -45,6 +48,7 @@ class SmartSettingsSectionTest {
                     "capitalization" to false,
                     "suggestions" to false,
                     "gestures" to false,
+                    "letters" to false,
                 ),
                 changes,
             )
