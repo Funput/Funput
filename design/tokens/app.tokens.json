@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "color": {
     "accent": { "light": "#D46B08", "dark": "#FFA43F" },
+    "onAccent": { "light": "#1F1300", "dark": "#1F1300" },
     "groupedBackground": { "light": "#F2F2F7", "dark": "#000000" },
     "cardBackground": { "light": "#FFFFFF", "dark": "#1C1C1E" },
     "cardStroke": { "light": "#00000012", "dark": "#FFFFFF12" },
@@ -41,17 +42,12 @@
     "screenAccentWash": 0.08
   },
   "typography": {
-    "largeTitle": { "size": 34, "lineHeight": 41, "weight": 700 },
-    "title": { "size": 28, "lineHeight": 34, "weight": 400 },
-    "title2": { "size": 22, "lineHeight": 28, "weight": 700 },
-    "title3": { "size": 20, "lineHeight": 25, "weight": 400 },
-    "headline": { "size": 17, "lineHeight": 22, "weight": 600 },
-    "body": { "size": 17, "lineHeight": 22, "weight": 400 },
-    "callout": { "size": 16, "lineHeight": 21, "weight": 400 },
-    "subheadline": { "size": 15, "lineHeight": 20, "weight": 400 },
-    "footnote": { "size": 13, "lineHeight": 18, "weight": 400 },
-    "caption": { "size": 12, "lineHeight": 16, "weight": 400 },
-    "caption2": { "size": 11, "lineHeight": 13, "weight": 600 }
+    "display": { "size": 32, "lineHeight": 40, "weight": 700 },
+    "title": { "size": 22, "lineHeight": 30, "weight": 600 },
+    "headline": { "size": 17, "lineHeight": 24, "weight": 600 },
+    "body": { "size": 16, "lineHeight": 24, "weight": 400 },
+    "label": { "size": 14, "lineHeight": 20, "weight": 500 },
+    "caption": { "size": 12, "lineHeight": 18, "weight": 400 }
   },
   "motion": {
     "launchBloom": { "curve": "spring", "durationMs": 550, "bounce": 0.12 },

@@ -1,5 +1,9 @@
-package app.funput.build.tokens
+package app.funput.build.tokens.validation
 
+import app.funput.build.tokens.model.MotionCurve
+import app.funput.build.tokens.model.MotionToken
+import app.funput.build.tokens.model.RgbaColor
+import app.funput.build.tokens.model.TextStyleToken
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows

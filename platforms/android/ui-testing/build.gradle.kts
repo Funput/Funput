@@ -29,6 +29,8 @@ dependencies {
     api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.ui)
     api(libs.androidx.compose.ui.test.junit4)
+    // Registers the empty ComponentActivity that createComposeRule() launches.
+    api(libs.androidx.compose.ui.test.manifest)
     api(libs.junit)
     api(libs.robolectric)
     api(libs.roborazzi)

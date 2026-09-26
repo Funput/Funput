@@ -1,5 +1,11 @@
-package app.funput.build.tokens
+package app.funput.build.tokens.validation
 
+import app.funput.build.tokens.model.ColorPair
+import app.funput.build.tokens.model.DesignTokens
+import app.funput.build.tokens.model.MotionCurve
+import app.funput.build.tokens.model.MotionToken
+import app.funput.build.tokens.model.RgbaColor
+import app.funput.build.tokens.model.TextStyleToken
 import groovy.json.JsonException
 import groovy.json.JsonSlurper
 

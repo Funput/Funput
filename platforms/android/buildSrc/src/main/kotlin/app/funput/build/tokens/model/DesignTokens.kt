@@ -1,4 +1,4 @@
-package app.funput.build.tokens
+package app.funput.build.tokens.model
 
 /** An sRGB colour with straight (not premultiplied) alpha, each channel 0..255. */
 data class RgbaColor(val red: Int, val green: Int, val blue: Int, val alpha: Int = 255) {

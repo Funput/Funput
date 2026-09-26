@@ -1,5 +1,6 @@
-package app.funput.build.tokens
+package app.funput.build.tokens.validation
 
+import app.funput.build.tokens.model.RgbaColor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow

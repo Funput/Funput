@@ -1,7 +1,7 @@
-package app.funput.build.tokens
+package app.funput.build.tokens.validation
 
-import app.funput.build.tokens.TokenFixtures.json
-import app.funput.build.tokens.TokenFixtures.violationsOf
+import app.funput.build.tokens.validation.TokenFixtures.json
+import app.funput.build.tokens.validation.TokenFixtures.violationsOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -23,6 +23,13 @@ class DesignTokenRulesTest {
     }
 
     @Test
+    fun `token names must be usable as generated identifiers`() {
+        val violations = violationsOf(json(radius = """{ "card-large": 22 }"""))
+
+        assertEquals(listOf("radius.card-large: name must be lowerCamelCase"), violations)
+    }
+
+    @Test
     fun `surfaces must be opaque`() {
         val violations = violationsOf(json(colors = mapOf("cardBackground" to ("#FFFFFF80" to "#1C1C1E"))))
 
@@ -37,6 +44,13 @@ class DesignTokenRulesTest {
         assertEquals(2, violations.size)
         assertTrue(violations.all { it.startsWith("color.accent.light:") })
         assertTrue(violations.any { it.contains("on cardBackground") })
+    }
+
+    @Test
+    fun `white text on the light accent is too faint for a button label`() {
+        val violations = violationsOf(json(colors = mapOf("onAccent" to ("#FFFFFF" to "#1F1300"))))
+
+        assertEquals(listOf("color.onAccent.light: 3.56:1 on accent, needs 4.5:1"), violations)
     }
 
     @Test
@@ -56,7 +70,8 @@ class DesignTokenRulesTest {
 
     @Test
     fun `a line height shorter than its text would clip stacked diacritics`() {
-        val violations = violationsOf(json(typography = """{ "body": { "size": 17, "lineHeight": 16, "weight": 450 } }"""))
+        val typography = """{ "body": { "size": 17, "lineHeight": 16, "weight": 450 } }"""
+        val violations = violationsOf(json(typography = typography))
 
         assertEquals(
             listOf(

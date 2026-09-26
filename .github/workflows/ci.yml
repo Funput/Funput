@@ -601,7 +601,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       # buildSrc is its own Gradle build, so the project's test task never reaches its tests.
-      # They cover the design-token validator that every Android build runs.
+      # They cover the design-token validator and code generator that every Android build runs.
       - name: Build logic tests
         run: ./gradlew -p buildSrc test --console=plain
 
