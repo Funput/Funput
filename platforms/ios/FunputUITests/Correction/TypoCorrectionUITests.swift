@@ -90,19 +90,15 @@ final class TypoCorrectionUITests: XCTestCase {
         return field
     }
 
-    /// Tap every key at its centre, except the slipped one — tapped a twelfth of the
-    /// way in from the edge nearest the key it was meant for, where a real slip lands.
-    ///
-    /// Not further in: a touch a third of the way into the wrong key is evidence the
-    /// user meant that key, and the engine now keeps such a word as typed (the word
-    /// as typed competes, so a deliberate `ko` survives). At a real finger's spread
-    /// almost every slip lands this close to the edge it crossed.
+    /// Tap every key at its centre, except the slipped one — tapped a sixth of the way
+    /// in from the edge nearest the key it was meant for, so the keyboard reports that
+    /// key as the near neighbour.
     @MainActor
     private func typeWithSlip() {
         let frames = FunputKeyboardDriver.resolveKeyFrames(app, for: typed + " ")
         for (index, character) in typed.enumerated() {
             guard let frame = frames[character] else { continue }
-            let x = index == slipIndex ? frame.minX + frame.width / 12 : frame.midX
+            let x = index == slipIndex ? frame.minX + frame.width / 6 : frame.midX
             app.coordinate(withNormalizedOffset: .zero)
                 .withOffset(CGVector(dx: x, dy: frame.midY))
                 .tap()
