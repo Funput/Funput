@@ -75,6 +75,10 @@ impl Engine {
     }
 
     /// Reset per-word state without changing settings.
+    ///
+    /// A digit that just passed through is kept, like the sentence scanner: a host
+    /// that clears right after committing a word-start digit must still have the next
+    /// word read as glued to that number (`500k` is not the trigger `k`).
     pub fn clear(&mut self) {
         self.session.clear();
     }

@@ -31,6 +31,8 @@ impl Engine {
         // restore, and widening it would start expanding triggers on an ellipsis.
         let result = self.compose_key(key, source);
         self.session.scanner.push(key);
+        let word_open = !self.session.keys.is_empty();
+        self.session.glue.after_key(key, word_open);
         result
     }
 
@@ -49,6 +51,9 @@ impl Engine {
         } else {
             compose_key
         };
+        if self.session.keys.is_empty() {
+            self.session.glue.start_word();
+        }
         self.session.keys.push(raw_key);
         pipeline::process(&mut self.session, compose_key, capitalize_shortcut)
     }
