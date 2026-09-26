@@ -35,3 +35,7 @@ platforms/linux/build*/
 
 # DS_Store
 .DS_Store
+
+# Python bytecode from the build and test scripts.
+__pycache__/
+*.pyc

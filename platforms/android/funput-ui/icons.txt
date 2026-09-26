@@ -1,0 +1,49 @@
+# Phosphor icons bundled in FunputUI, one per line: <phosphor-name> [regular|bold|fill].
+# Regenerate the drawables with `python3 scripts/import-phosphor-icons.py` from platforms/android.
+# Code refers to them by meaning through FunputIcons, never by these names.
+
+# Navigation: tabs are outlined, the selected tab filled.
+gear-six
+gear-six fill
+palette
+palette fill
+info
+info fill
+
+# Controls
+caret-left
+caret-right
+check bold
+plus
+
+# Typing
+keyboard
+text-aa
+lightning
+
+# Layout
+number-square-one
+sliders-horizontal
+arrows-vertical
+hand-pointing
+
+# Smart input
+arrow-counter-clockwise
+seal-check
+text-t
+sparkle
+hand-tap
+arrow-u-up-left
+
+# Feedback
+vibrate
+speaker-high
+
+# Clipboard and data
+clipboard-text
+clock-countdown
+trash
+broom
+
+# Hardware keyboard
+desktop

@@ -47,6 +47,8 @@ data class FunputTab(
     val label: String,
     /** Optional icon, tinted by the bar. */
     @param:DrawableRes val icon: Int? = null,
+    /** Icon while selected, usually the filled form of [icon]; falls back to [icon]. */
+    @param:DrawableRes val selectedIcon: Int? = null,
 )
 
 /**
@@ -92,7 +94,7 @@ fun FunputTabBar(
                     .background(fill)
                     .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(index) }),
             ) {
-                tab.icon?.let {
+                (if (selected) tab.selectedIcon ?: tab.icon else tab.icon)?.let {
                     Image(
                         painter = painterResource(it),
                         contentDescription = null,

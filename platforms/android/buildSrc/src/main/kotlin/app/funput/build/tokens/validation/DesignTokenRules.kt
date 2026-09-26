@@ -40,6 +40,7 @@ object DesignTokenRules {
         addAll(contrastViolations(tokens, "label", TEXT_CONTRAST))
         addAll(contrastViolations(tokens, "accent", ACCENT_CONTRAST))
         addAll(onAccentViolations(tokens))
+        addAll(tintViolations(tokens))
         addAll(numberViolations(tokens))
         addAll(typographyViolations(tokens))
         tokens.motion.forEach { (name, motion) ->
@@ -79,6 +80,23 @@ object DesignTokenRules {
                 if (ratio >= floor) null
                 else "color.$role.$mode: %.2f:1 on $surface, needs %.1f:1".format(ratio, floor)
             }
+        }
+    }
+
+    /**
+     * Icon tints (`tint*`) colour glyphs drawn on cards, so each must reach the non-text floor on
+     * the card colour in both appearances.
+     */
+    private fun tintViolations(tokens: DesignTokens): List<String> {
+        val card = tokens.colors["cardBackground"]
+            ?.takeIf { it.light.isOpaque && it.dark.isOpaque } ?: return emptyList()
+        return tokens.colors.filterKeys { it.startsWith("tint") }.flatMap { (name, tint) ->
+            listOf("light" to (tint.light to card.light), "dark" to (tint.dark to card.dark))
+                .mapNotNull { (mode, pair) ->
+                    val ratio = ContrastMath.ratio(pair.first, pair.second)
+                    if (ratio >= ACCENT_CONTRAST) null
+                    else "color.$name.$mode: %.2f:1 on cardBackground, needs %.1f:1".format(ratio, ACCENT_CONTRAST)
+                }
         }
     }
 

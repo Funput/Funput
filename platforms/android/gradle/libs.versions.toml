@@ -1,6 +1,7 @@
 [versions]
 agp = "9.4.1"
 coreKtx = "1.19.0"
+coreSplashscreen = "1.2.0"
 customView = "1.2.0"
 junit = "4.13.2"
 json = "20260814"
@@ -19,6 +20,7 @@ kyantBackdrop = "2.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-customview = { group = "androidx.customview", name = "customview", version.ref = "customView" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "dataStore" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

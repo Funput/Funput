@@ -14,7 +14,14 @@
     "destructive": { "light": "#FF3B30", "dark": "#FF453A" },
     "brandPink": { "light": "#FF2D55", "dark": "#FF375F" },
     "brandPurple": { "light": "#AF52DE", "dark": "#BF5AF2" },
-    "brandBlue": { "light": "#007AFF", "dark": "#0A84FF" }
+    "brandBlue": { "light": "#007AFF", "dark": "#0A84FF" },
+    "tintOrange": { "light": "#D46B08", "dark": "#FFA43F" },
+    "tintBlue": { "light": "#007AFF", "dark": "#0A84FF" },
+    "tintPurple": { "light": "#AF52DE", "dark": "#BF5AF2" },
+    "tintPink": { "light": "#FF2D55", "dark": "#FF375F" },
+    "tintGreen": { "light": "#248A3D", "dark": "#30D158" },
+    "tintGray": { "light": "#8E8E93", "dark": "#98989D" },
+    "tintRed": { "light": "#FF3B30", "dark": "#FF453A" }
   },
   "radius": {
     "card": 22,

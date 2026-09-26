@@ -49,6 +49,10 @@ internal fun LicensesRoute(onBack: () -> Unit) {
 
 /**
  * Third-party notices shipped as assets, shown in this order: the dictionary's notice (generated
- * by `:ime`) and the licence of the bundled Be Vietnam Pro font (from `:funput-ui`).
+ * by `:ime`), then the licences of FunputUI's bundled Be Vietnam Pro font and Phosphor icons.
  */
-private val NoticeAssets = listOf("lexicon/NOTICE.md", "licenses/be-vietnam-pro-OFL.txt")
+private val NoticeAssets = listOf(
+    "lexicon/NOTICE.md",
+    "licenses/be-vietnam-pro-OFL.txt",
+    "licenses/phosphor-MIT.txt",
+)

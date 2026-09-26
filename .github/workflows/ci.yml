@@ -556,6 +556,9 @@ jobs:
       - name: Verify Android lexicon packaging
         run: python3 scripts/tests/test_build_lexicon.py
 
+      - name: Verify the Phosphor icon importer
+        run: python3 scripts/tests/test_import_phosphor_icons.py
+
       # JavaVersion.VERSION_21 in every module's compileOptions.
       - uses: actions/setup-java@v6
         with:

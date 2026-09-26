@@ -15,18 +15,18 @@ import androidx.compose.animation.togetherWith
  * Picks the move to animate from what actually changed.
  *
  * Sliding between tabs would claim they sit next to each other in an order the user is expected to
- * hold in their head; Material fades between them instead, and keeps sliding for going in and out
- * of a stack, where a direction means something.
+ * hold in their head, so tabs cross-fade instead, and sliding is kept for going in and out of a
+ * stack, where a direction means something.
  */
 internal fun AnimatedContentTransitionScope<AppDestination>.destinationTransition(): ContentTransform =
-    if (targetState.tab != initialState.tab) fadeThrough() else pushTransition()
+    if (targetState.tab != initialState.tab) crossFade() else pushTransition()
 
-/** Lateral: the outgoing tab drops away and the incoming one rises, with no direction implied. */
-private fun fadeThrough(): ContentTransform =
-    (fadeIn(animationSpec = tween(FadeMillis)) + scaleIn(initialScale = FadeThroughScale))
-        .togetherWith(
-            fadeOut(animationSpec = tween(FadeMillis)) + scaleOut(targetScale = FadeThroughScale),
-        )
+/**
+ * Lateral: a plain cross-fade. Each tab root draws the same tab bar, so with no scale or movement
+ * the bar looks fixed while only the page above it changes.
+ */
+private fun crossFade(): ContentTransform =
+    fadeIn(animationSpec = tween(FadeMillis)).togetherWith(fadeOut(animationSpec = tween(FadeMillis)))
 
 /**
  * In and out of a stack: the arriving screen slides in from the side it came from and the leaving
@@ -59,5 +59,4 @@ private fun <T> slideSpring() = spring<T>(
 
 /** How far the screen being left behind settles back. Material's own value for this move. */
 private const val RestingScale = 0.9f
-private const val FadeThroughScale = 0.94f
 private const val FadeMillis = 120

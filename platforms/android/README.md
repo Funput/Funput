@@ -201,6 +201,12 @@ và job `android` so từng PR với chúng (`:funput-ui:verifyRoborazziDebug`).
 ghi trên Linux: khi cố ý đổi một component, tải artifact `funput-ui-goldens` của workflow
 `android-screenshots` trên PR đó và commit đè lên thư mục trên. Ghi trên Mac chỉ để tự xem.
 
+**Icon.** FunputUI dùng bộ [Phosphor](https://phosphoricons.com) (MIT), ghim ở một phiên bản.
+Danh sách nằm trong `funput-ui/icons.txt`; thêm icon thì thêm một dòng rồi chạy
+`python3 scripts/import-phosphor-icons.py` để sinh lại drawable. Code chỉ gọi icon qua
+`FunputIcons`, theo ý nghĩa (`FunputIcons.Haptics`), không theo tên file. Mỗi nhóm cài đặt có
+một màu (`FunputTint`), giống ứng dụng Cài đặt của iOS.
+
 **Catalog.** Bản debug có thêm biểu tượng "Funput UI" mở màn trưng bày mọi component, có nút
 chuyển tầng kính để so kính thật với bản mờ đục ngay trên máy. Bản release không có nó.
 
