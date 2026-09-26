@@ -228,8 +228,8 @@ P(chạm | phím) = exp(−d² / (2σ²)),  d tính theo bước phím
 | `prior` nền | 0,5 | Điểm cho âm tiết hợp lệ chưa từng gõ |
 
 - `prior(từ)` = `ln(1 + số lần người dùng đã gõ từ đó)` + nền, lấy từ `funput-suggestions`.
-- **Chữ nguyên như đã gõ cũng là một ứng viên**, điểm = điểm chạm gốc − `INVALID_COST` (**3,0**,
-  đo ở §12.1). `runner_up` bắt đầu từ điểm đó, không phải âm vô cực. Trước đợt 2, một ứng viên
+- **Chữ nguyên như đã gõ cũng là một ứng viên**, điểm = điểm chạm gốc − `INVALID_COST` (**4,0**,
+  §12.1 đợt 2): chỉ một lần chạm cách tâm phím dưới khoảng 0,15 bước phím mới được tin là cố ý. `runner_up` bắt đầu từ điểm đó, không phải âm vô cực. Trước đợt 2, một ứng viên
   duy nhất luôn thắng dù ngón đặt ngay giữa phím — nên `ko`, `atlas`, `robot` gõ đúng vẫn bị đổi.
 - **Không sửa** nếu `best − runner_up < Δ`; khi đó gửi cả hai lên thanh gợi ý. Nếu thứ cản là
   chữ nguyên thì engine đếm vào `kept_as_typed`, nếu là ứng viên thứ hai thì `skipped_ambiguous`.
@@ -578,15 +578,20 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
      | `INVALID_COST` | Chữ cố ý bị đổi, VNI / Telex | Sửa đúng, VNI / Telex |
      |---|---|---|
      | không có (trước đợt 2) | 24,5% / 26,4% | 66,9% / 51,7% |
-     | 4,0 | 4,5% / 5,1% | 66,5% / 51,5% |
-     | **3,0** ← đã chốt | **0,3% / 0,5%** | **64,3% / 50,2%** |
+     | **4,0** ← đã chốt | **4,5% / 5,1%** | **66,5% / 51,5%** |
+     | 3,0 | 0,3% / 0,5% | 64,3% / 50,2% |
      | 2,5 | 0,1% / 0,1% | 45,8% / 37,1% |
 
-     Một phần tư chữ gõ có chủ ý từng bị đổi. 3,0 là điểm gãy: thấp hơn một nấc là mất một phần
-     ba số lần sửa. Có kho từ (`--prior corpus`) thì cái giá gần như bằng 0 ở nhiễu thật (VNI
-     69,6% → 69,2%) và khoảng 5 điểm ở 0,25. Phần còn lọt (`tl → to`, `hk → hi`, `haha → hây`)
-     là chạm gần mép phím, trông y hệt một lần trượt thật — **chỉ danh sách mới chặn được**, nên
-     bàn phím coi mọi chữ trong `keep.txt` là chữ có thật.
+     Một phần tư chữ gõ có chủ ý từng bị đổi. Bảng này gợi ý 3,0 gần như miễn phí — và **nó
+     sai trên máy thật**: ở 3,0, `abh` chỉ thành `anh` khi ngón đáp trong 15% sát mép `b` với `n`.
+     Bộ đo rải ngón theo phân phối chuẩn quanh phím định gõ, nên mọi lần trượt đều nằm sát mép;
+     lỗi thật của người gõ hay rơi sâu hẳn vào phím bên cạnh, thứ bộ đo không mô phỏng. **Bài
+     học: một con số bộ đo cho là "miễn phí" phải thử bằng tay trên máy trước khi chốt.**
+
+     4,0 chỉ tin lần chạm cách tâm phím dưới khoảng 0,15 bước phím (test
+     `a_slip_deep_into_the_wrong_key_is_still_repaired`). Phần chữ cố ý còn lọt (`tl → to`,
+     `hk → hi`, `haha → hây`, và phần lớn ở 4,0) là việc của **danh sách**: bàn phím coi mọi chữ
+     trong `keep.txt` là chữ có thật, cùng với từ điển tiếng Anh và chữ người dùng đã hoàn tác.
    - **Phím số ở đầu từ làm mất một chữ cái.** Phép phát lại bỏ qua chữ số mở đầu từ (VNI không
      cho chữ số mở từ), nên thay `t` bằng phím kề `5` cho ra `rước` thay vì `trước`. Giờ ứng viên
      như vậy bị loại (`search::replay`). Ví dụ đo được trước đó: `quạt → ũa`, `Quắc → ắc`.

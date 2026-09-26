@@ -17,14 +17,17 @@ use super::{CorrectionCandidate, MARGIN, word_prior};
 /// | cost | deliberate words rewritten, VNI / Telex | slips repaired, VNI / Telex |
 /// |---|---|---|
 /// | none (a lone candidate always won) | 24.5% / 26.4% | 66.9% / 51.7% |
-/// | 4.0 | 4.5% / 5.1% | 66.5% / 51.5% |
-/// | **3.0** | **0.3% / 0.5%** | **64.3% / 50.2%** |
+/// | **4.0** | **4.5% / 5.1%** | **66.5% / 51.5%** |
+/// | 3.0 | 0.3% / 0.5% | 64.3% / 50.2% |
 /// | 2.5 | 0.1% / 0.1% | 45.8% / 37.1% |
 ///
-/// 3.0 is the knee: one step lower and a third of the repairs go with it. What it
-/// still lets through is a touch near a key's edge, which looks exactly like a slip —
-/// only a word list can protect those, which is why the keyboards keep one.
-pub(crate) const INVALID_COST: f32 = 3.0;
+/// That sweep models a finger scattered around the key it aimed at, so every slip
+/// lands next to the edge it crossed, and 3.0 looked nearly free. On a device it was
+/// not: at 3.0 `abh` only became `anh` for a touch in the outer 15% of `b`, and a real
+/// mistake often lands well inside the wrong key. 4.0 trusts only a touch within about
+/// 0.15 pitches of a key's centre. The deliberate words that still get through are the
+/// keep list's job — `is_known_word` knows them by name, and a keyboard vetoes them.
+pub(crate) const INVALID_COST: f32 = 4.0;
 
 /// Why the ranking came out the way it did.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -234,3 +234,35 @@ fn a_word_typed_squarely_is_kept_even_with_a_syllable_one_key_away() {
     assert_eq!(engine.choose_correction(&[], &[]), None);
     assert_eq!(engine.correction_metrics().kept_as_typed, 1);
 }
+
+/// The other side of the typed word competing: a slip that lands well inside the
+/// wrong key is still a slip. `abh` with the finger a quarter of a key from `b`'s
+/// centre, towards `n`, is `anh` — only a touch close to the centre of the key it hit
+/// is trusted as meant.
+#[test]
+fn a_slip_deep_into_the_wrong_key_is_still_repaired() {
+    for (from_centre, repaired) in [(0.05, false), (0.25, true), (0.45, true)] {
+        let mut engine = correcting_engine(InputMethod::Vni);
+        let mut doc = Document::new();
+        let touches = [
+            KeyTouch::new('a', 0.0).with_alternate('s', 1.0),
+            KeyTouch::new('b', from_centre)
+                .with_alternate('n', 1.0 - from_centre)
+                .with_alternate('v', 1.0 + from_centre),
+            KeyTouch::new('h', 0.0)
+                .with_alternate('g', 1.0)
+                .with_alternate('j', 1.0),
+        ];
+        for (key, touch) in "abh".chars().zip(touches) {
+            engine.set_next_key_touch(touch);
+            doc.typed(key, &engine.process_char(key));
+        }
+        type_touched(&mut engine, &mut doc, " ", &[]);
+        let chosen = engine.choose_correction(&[], &[]);
+        assert_eq!(
+            chosen.map(|index| candidate_texts(&engine)[index]),
+            repaired.then_some("anh"),
+            "touch {from_centre} pitches from the centre of b"
+        );
+    }
+}
