@@ -20,14 +20,19 @@ const VALID_ONSETS: &[&str] = &[
 /// True if `onset` is a valid Vietnamese onset (`đ` included, any case), or a
 /// Tây Nguyên name cluster.
 pub(crate) fn is_valid_onset(onset: &str) -> bool {
-    onset.is_empty()
-        || onset == "đ"
-        || onset == "Đ"
-        || VALID_ONSETS.iter().any(|o| onset.eq_ignore_ascii_case(o))
+    is_native(onset)
         || cluster_kind(onset).is_some()
         // Last: plain `qu`/`gi` already matched above, so this only rescues the
         // toned transient (`qú`, `gí`) and stays off the common path.
         || glide::in_onset(onset).is_some()
+}
+
+/// A native onset as spelled, `đ` included, in any case.
+fn is_native(onset: &str) -> bool {
+    onset.is_empty()
+        || onset == "đ"
+        || onset == "Đ"
+        || VALID_ONSETS.iter().any(|o| onset.eq_ignore_ascii_case(o))
 }
 
 /// Split `buffer` into (onset, rest, invalid_onset).
@@ -35,14 +40,26 @@ pub(super) fn match_onset(buffer: &str) -> (&str, &str, bool) {
     let Some(first) = buffer.chars().next() else {
         return ("", buffer, false);
     };
+    // An onset is a run of consonants — the `qu`/`gi` glides aside, whose vowel
+    // belongs to the onset — so a prefix reaching past the run (`tiê`, `ti` of
+    // `tiếng`) cannot be one. Counting the run once skips those tries.
+    let consonants = buffer.chars().take(3).take_while(|&c| !is_vowel(c)).count();
+    let longest = if matches!(first, 'q' | 'Q' | 'g' | 'G') {
+        3
+    } else {
+        consonants.max(1)
+    };
 
     // Longest onset first (3 chars: `ngh`, `kđr`), then shorter.
-    for len in (1..=3).rev() {
+    for len in (1..=longest).rev() {
         let Some(split) = after_n_chars(buffer, len) else {
             continue;
         };
         let (prefix, rest) = buffer.split_at(split);
-        if prefix.is_empty() || !is_valid_onset(prefix) {
+        let valid = is_native(prefix)
+            || (len <= consonants && cluster_kind(prefix).is_some())
+            || glide::in_onset(prefix).is_some();
+        if prefix.is_empty() || !valid {
             continue;
         }
 

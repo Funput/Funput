@@ -11,9 +11,10 @@
 //! - **Final `k`** read as `c` (`Đắk`, `Lắk`), in [`super::coda::normalized_coda`].
 //!
 //! - **Finals `h`, `l`, `r`** ([`closes_with_name_final`]) — `Chư Păh`, `Ea Nuôl`,
-//!   `Blơr` — in VNI only. There only a digit composes, so English never reaches
-//!   them; in Telex they are English `cash` (`s` + `h` → `cáh`, `aha` → `âh`),
-//!   `cool` (`côl`) and the hỏi key.
+//!   `Blơr` — in VNI only. In Telex they are English `cash` (`s` + `h` → `cáh`,
+//!   `aha` → `âh`), `cool` (`côl`) and the hỏi key. VNI reaches English only
+//!   through a digit glued to a bare word (`bar1`), which the engine judges
+//!   strictly by key order.
 //!
 //! Left out on purpose, because Telex could no longer restore English: `kn` and
 //! `sl` onsets (`know` → `knơ`, `slow` → `slơ`), and a stop coda without a tone

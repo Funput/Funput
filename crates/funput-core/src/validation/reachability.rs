@@ -44,8 +44,10 @@ pub fn is_definitely_invalid(buffer: &str) -> bool {
 
 /// [`is_definitely_invalid`] for a word typed in `method`. VNI also keeps alive a
 /// word ending in a final only place names use — `Chư Păh`, `Ea Nuôl`, `Blơr`
-/// (see [`ethnic`]): only a digit composes there, so English never gets that
-/// far, whereas in Telex those finals are English `cash`, `cool` and the hỏi key.
+/// (see [`ethnic`]) — where in Telex those finals are English `cash`, `cool` and
+/// the hỏi key. English still reaches them in VNI through a digit glued to a word
+/// (`bar1` → `bár`); telling that apart takes the keystrokes, so it is the
+/// caller's call which reading a keystroke gets.
 pub fn is_definitely_invalid_in(buffer: &str, method: InputMethod) -> bool {
     is_definitely_invalid_parts(&parse_syllable(buffer), !method.is_telex_family())
 }
@@ -73,17 +75,8 @@ pub(crate) fn is_definitely_invalid_parts(parts: &SyllableParts<'_>, name_finals
         len += 1;
     }
 
-    if !rhyme::has_deshaped_prefix(&query[..len]) {
-        let cluster_name = ethnic::admits(parts.onset) && coda_in(VALID_CODAS, coda);
-        let final_name = name_finals
-            && ethnic::closes_with_name_final(
-                parts.nucleus_chars().map(plain_base),
-                coda,
-                rhyme::has_deshaped_prefix,
-            );
-        if !cluster_name && !final_name {
-            return true;
-        }
+    if !rhyme::has_deshaped_prefix(&query[..len]) && !is_name_rhyme(parts, coda, name_finals) {
+        return true;
     }
 
     if coda_in(STOP_CODAS, coda) {
@@ -93,6 +86,22 @@ pub(crate) fn is_definitely_invalid_parts(parts: &SyllableParts<'_>, name_finals
         );
     }
     false
+}
+
+/// Whether a rhyme the inventory rejects still stands in a Tây Nguyên name: after
+/// a distinct cluster (`Kpă`), or — when `name_finals` — before a name final
+/// (`Păh`). Out of line and cold: real Vietnamese never gets here, and keeping it
+/// out of [`is_definitely_invalid_parts`] keeps the per-keystroke path compact.
+#[cold]
+#[inline(never)]
+fn is_name_rhyme(parts: &SyllableParts<'_>, coda: &[char], name_finals: bool) -> bool {
+    (ethnic::admits(parts.onset) && coda_in(VALID_CODAS, coda))
+        || (name_finals
+            && ethnic::closes_with_name_final(
+                parts.nucleus_chars().map(plain_base),
+                coda,
+                rhyme::has_deshaped_prefix,
+            ))
 }
 
 /// Whether the candidate's actual shaped rhyme is a prefix of a Vietnamese rhyme.

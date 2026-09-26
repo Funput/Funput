@@ -2,6 +2,7 @@
 //! methods — without letting English words through in their place.
 
 use funput_core::InputMethod;
+use funput_engine::Engine;
 
 use crate::support::app_text;
 
@@ -38,18 +39,32 @@ fn m_drak_strikes_its_d_on_the_spot() {
 
 #[test]
 fn vni_keeps_the_finals_telex_cannot_afford() {
-    // Chư Păh, Chư Pưh, Đạ Tẻh, Ea Nuôl, Blơr — digits first or last.
+    // Chư Păh, Chư Pưh, Đạ Tẻh, Ea Nuôl, Blơr: the final typed after a mark, or a
+    // digit landing on a word that already carries one (`Pa8h1`, the `đ` of `Đêh`).
     for (keys, name) in [
         ("Pa8h ", "Păh "),
-        ("Pah8 ", "Păh "),
         ("Pu7h ", "Pưh "),
         ("Te3h ", "Tẻh "),
-        ("Teh3 ", "Tẻh "),
         ("Nuo6l ", "Nuôl "),
         ("Blo7r ", "Blơr "),
+        ("Pa8h1 ", "Pắh "),
+        ("D9eh6 ", "Đêh "),
     ] {
         assert_eq!(vni(keys), name, "{keys}");
     }
+}
+
+#[test]
+fn vni_mark_last_on_a_bare_name_comes_back_through_flip() {
+    // `Pah8` types exactly like `bar8`, so it restores; Flip recovers the name.
+    let mut engine = Engine::new();
+    engine.set_method(InputMethod::Vni);
+    for key in "Pah8".chars() {
+        engine.process_char(key);
+    }
+    assert_eq!(engine.buffer(), "Pah8");
+    engine.flip_composing();
+    assert_eq!(engine.buffer(), "Păh");
 }
 
 #[test]
@@ -80,7 +95,11 @@ fn english_still_restores_in_telex() {
 
 #[test]
 fn vni_digits_glued_to_words_still_restore() {
-    for word in ["e2e ", "u23vn ", "a4paper ", "a1b ", "covid19 ", "mix4 "] {
+    // Including words ending in a name final: `bar1` must not stay `bár`.
+    for word in [
+        "e2e ", "u23vn ", "a4paper ", "a1b ", "covid19 ", "mix4 ", "bar1 ", "cool2 ", "ver2 ",
+        "tier1 ", "ah1 ",
+    ] {
         assert_eq!(vni(word), word);
     }
 }

@@ -21,7 +21,7 @@ Việt thường, nên không cần ngoại lệ nào.
 | Âm cuối `k` đọc như `c` | `Đắk`, `Lắk`, `Búk` | ✓ | ✓ |
 | Cụm âm đầu tiếng Anh cũng có (`bl br dr đr gl gr kl kr phl pl pr bh`) — vần phải là vần tiếng Việt | `Krông`, `Plông`, `Đrắk`, `Phlắc` | ✓ | ✓ |
 | Cụm âm đầu tiếng Anh không có (`kp kd kb kt ktl km khl hr hđr hm hn mr mđh rc rl rs tb xr xt dl`) — vần nào cũng được | `Kpă`, `Kdăm`, `Rcăm`, `Dliê`, `Xtiêng` | ✓ | ✓ |
-| Âm cuối `h`, `l`, `r` | `Păh`, `Tẻh`, `Nuôl`, `Blơr` | Flip / phím kép | ✓ |
+| Âm cuối `h`, `l`, `r` | `Păh`, `Tẻh`, `Nuôl`, `Blơr` | Flip / phím kép | ✓ khi dấu gõ trước âm cuối (`Pa8h`); dấu sau cùng (`Pah8`) → Flip |
 | Âm cuối tắc không dấu thanh | `Môt`, `Mâp`, `Trôk` | Flip hai lần | ✓ |
 
 Cách gõ khi Telex va chạm với phím:
@@ -42,7 +42,12 @@ Mỗi ngoại lệ chỉ rộng đến mức tiếng Anh cho phép. Những th�
 - **Âm cuối `h`/`l`/`r` trong Telex.** `s` + `h` chính là đuôi `sh` (`cash` →
   `cáh`, `bush` → `búh`); mũ trễ biến `aha` thành `âh`; `cool` → `côl`; `r` là phím
   hỏi. Buffer không phân biệt được những từ đó với `Păh`, nên chỉ VNI nhận các âm
-  cuối này — ở VNI chỉ chữ số mới tạo dấu, tiếng Anh không bao giờ tới được đó.
+  cuối này.
+- **Âm cuối `h`/`l`/`r` trong VNI khi dấu gõ sau cùng.** Ở VNI, tiếng Anh chỉ tới
+  được các âm cuối này qua số dính chữ (`bar1`, `ver2`, `cool2`), và về phím thì
+  `Pah8` giống hệt `bar8`. Vì vậy một phím số rơi vào từ chưa có dấu nào được xét
+  chặt; bấm Flip để lấy lại `Păh`. Gõ dấu trước âm cuối (`Pa8h`), hoặc thêm số vào
+  từ đã có dấu (`Pa8h1` → `Pắh`), thì không có gì để nhầm.
 - **Cụm `kn`, `sl`, `sr`.** `know` → `knơ`, `knee` → `knê`, `slow` → `slơ`. Vì vậy
   `Ea Knuếc`, `Slìn`, `SRó` chưa gõ được dấu.
 - **Âm đầu `j`, `f`, `w`, `z`.** Đây là phím Telex; trong VNI, `win10` sẽ thành
@@ -58,8 +63,9 @@ Mỗi ngoại lệ chỉ rộng đến mức tiếng Anh cho phép. Những th�
   - `mod.rs`: `admits` (vần sau cụm distinct) và `closes_with_name_final` (âm cuối
     `h`/`l`/`r` sau nguyên âm mà tiếng Việt khép được: `ăh` như `ăn`).
 - `is_complete_syllable` (ranh giới từ) và `is_definitely_invalid` (eager restore)
-  hỏi `ethnic`. Eager restore của engine gọi `is_definitely_invalid_in(buffer, method)`:
-  chỉ VNI nhận thêm âm cuối của tên riêng.
+  hỏi `ethnic`. `is_definitely_invalid_in(buffer, method)` cho VNI nhận thêm âm cuối
+  của tên riêng; `is_dead_end` trong `compose/pipeline.rs` của engine quyết định
+  từng phím dùng cách đọc nào, dựa vào thứ tự phím (số rơi vào từ trần → chặt).
 - `apply_stroke` không đánh `đ` trễ vào một `d` mở đầu cụm phụ âm (`droid`,
   `dried`): `đ` tiếng Việt luôn đứng trước nguyên âm, còn `Đr` được gõ ngay tại chỗ.
 

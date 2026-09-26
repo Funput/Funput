@@ -33,6 +33,21 @@ fn parse_syllable_cases() {
 }
 
 #[test]
+fn onset_never_reaches_past_the_consonant_run() {
+    // Only the `qu`/`gi` glides carry a vowel into the onset; every other onset,
+    // Tây Nguyên clusters included, is the leading consonant run or part of it.
+    assert_eq!(parts("tiếng"), ok("t", "iế", "ng"));
+    assert_eq!(parts("đẹp"), ok("đ", "ẹ", "p"));
+    assert_eq!(parts("kpă"), ok("kp", "ă", ""));
+    assert_eq!(parts("Đrắk"), ok("Đr", "ắ", "k"));
+    assert_eq!(parts("kđrao"), ok("kđr", "ao", ""));
+    assert_eq!(parts("KTy"), ok("KT", "y", ""));
+    assert_eq!(parts("glong"), ok("gl", "o", "ng"));
+    assert_eq!(parts("quy"), ok("qu", "y", ""));
+    assert_eq!(parts("yêu"), ok("", "yêu", ""));
+}
+
+#[test]
 fn is_well_ordered_cases() {
     // Nucleus first, coda last — or either one missing.
     for ok in [
