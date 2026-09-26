@@ -54,6 +54,14 @@ class DesignTokenRulesTest {
     }
 
     @Test
+    fun `an icon tint must stand out on a card`() {
+        // iOS systemGreen is fine on dark cards and too faint (2.2:1) on white ones.
+        val violations = violationsOf(json(colors = mapOf("tintGreen" to ("#34C759" to "#30D158"))))
+
+        assertEquals(listOf("color.tintGreen.light: 2.22:1 on cardBackground, needs 3.0:1"), violations)
+    }
+
+    @Test
     fun `body text needs 4_5 to 1 on both surfaces`() {
         val violations = violationsOf(json(colors = mapOf("label" to ("#000000" to "#555555"))))
 

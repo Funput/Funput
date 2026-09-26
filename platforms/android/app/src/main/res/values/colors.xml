@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="funput_window_background">#FFF8F3</color>
+    <!-- FunputUI groupedBackground, so the window, the splash and the first frame match. -->
+    <color name="funput_window_background">#F2F2F7</color>
+    <!-- The launcher icon's own black tile, repeated behind the logo on the splash screen. -->
+    <color name="funput_splash_icon_background">#000000</color>
 </resources>
