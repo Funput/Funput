@@ -30,6 +30,8 @@ fn shaped_base(c: char) -> char {
 /// 1. The deshaped nucleus+coda is not a prefix of any rhyme: `ae`, `uuy`, `ad`.
 /// 2. A **stop** coda already carries a *wrong* tone — huyền / hỏi / ngã: `tẽt`.
 ///    (A stop coda with no tone yet stays alive — the tone follows the coda.)
+/// 3. A consonant sits between the onset and a vowel: `cno`, `ona`. Modifier keys
+///    only reshape vowels (and `d`), so no later key can move it back out.
 pub fn is_definitely_invalid(buffer: &str) -> bool {
     let parts = parse_syllable(buffer);
     is_definitely_invalid_parts(&parts)
@@ -38,6 +40,9 @@ pub fn is_definitely_invalid(buffer: &str) -> bool {
 pub(crate) fn is_definitely_invalid_parts(parts: &SyllableParts<'_>) -> bool {
     if parts.nucleus_chars().next().is_none() {
         return false; // still building the onset
+    }
+    if !parts.is_well_ordered() {
+        return true;
     }
     let Some((coda, coda_len)) = normalized_coda(parts) else {
         return true; // longer than any Vietnamese coda — no rhyme can match

@@ -67,6 +67,9 @@ const MUST_REJECT: &[&str] = &[
     "bèc", // stop coda + huyền
     "tẽt", // stop coda + ngã ("text")
     "eg", "id", "oab", "onk", "erf", "az", "ngb", // non-Vietnamese rhyme / structure
+    // A consonant between onset and vowel, which an order-blind parse reads as
+    // the coda (`cno` → rhyme `on`).
+    "cno", "cna", "cnu", "tnó", "ctá", "ona",
 ];
 
 #[test]
@@ -114,6 +117,13 @@ fn spell_check_keeps_real_words() {
         ("hoongf", "hồng"),
         ("koong", "kông"),
         ("drawng", "drăng"), // cluster onset dr (Ea Drăng)
+        // Tây Nguyên toponyms: final k ≈ c and cluster onsets.
+        ("ddawks", "đắk"), // Đắk Lắk
+        ("lawks", "lắk"),
+        ("kroong", "krông"), // Krông Pắc
+        ("pawcs", "pắc"),
+        ("buks", "búk"),     // Krông Búk
+        ("ploong", "plông"), // Kon Plông
     ] {
         assert_eq!(type_checked(keys), expected, "blocked real word: {keys}");
     }
@@ -134,6 +144,14 @@ fn tay_nguyen_place_names_accepted() {
         "chư",   // Chư Pưh / Chư Sê
         "kông",  // k + ô — loanword/toponym (Hồng Kông, Kông Chro)
         "pơng",  // ơng rhyme (Chư Pơng)
+        "pắc",   // Krông Pắc
+        "búk",   // Krông Búk — final k ≈ c
+        "nông",  // Đắk Nông
+        "plông", // Kon Plông
+        "prông", // Chư Prông
+        "grai",  // Ia Grai
+        "kon",   // Kon Tum
+        "tum", "pơ", // Đak Pơ
     ] {
         assert!(
             is_complete_syllable(s),
@@ -180,5 +198,14 @@ fn final_k_does_not_overaccept_english() {
 fn spell_check_blocks_nonsyllable_via_gate() {
     let r = apply_checked("bec", 'f', InputMethod::Telex, ToneStyle::Traditional, true);
     assert_eq!(r.text, "becf");
+    assert_eq!(r.kind, TransformKind::Pending);
+}
+
+/// Same gate for a consonant stranded before the vowel: `cno` has no syllable to
+/// put a tone on, so the tone key stays literal.
+#[test]
+fn spell_check_blocks_tone_on_misordered_consonant() {
+    let r = apply_checked("cno", 's', InputMethod::Telex, ToneStyle::Traditional, true);
+    assert_eq!(r.text, "cnos");
     assert_eq!(r.kind, TransformKind::Pending);
 }

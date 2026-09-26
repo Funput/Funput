@@ -33,6 +33,24 @@ fn parse_syllable_cases() {
 }
 
 #[test]
+fn is_well_ordered_cases() {
+    // Nucleus first, coda last — or either one missing.
+    for ok in [
+        "ma", "trung", "text", "tr", "", "gío", "qúa", "krông", "đắk",
+    ] {
+        assert!(parse_syllable(ok).is_well_ordered(), "{ok} is well ordered");
+    }
+    // A consonant between onset and a vowel — or between two vowels — is not,
+    // even though the order-blind iterators happily read a rhyme out of it.
+    for bad in ["cno", "ona", "mixa"] {
+        assert!(
+            !parse_syllable(bad).is_well_ordered(),
+            "{bad} is misordered"
+        );
+    }
+}
+
+#[test]
 fn onset_survives_a_tone_parked_on_the_glide() {
     // Mid-composition transients: the tone key arrived before the nucleus. These
     // must keep parsing as `gi`/`qu` onsets, or the rhyme reads as `io`/`ua` and

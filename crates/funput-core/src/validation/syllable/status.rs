@@ -46,6 +46,7 @@ pub(super) fn classify(buffer: &str) -> SyllableStatus {
         // a finished syllable: `qúy` is a misspelling of `quý`.
         && !glide::onset_holds_tone(parts.onset)
         && parts.nucleus_chars().next().is_some()
+        && parts.is_well_ordered()
         && !violates_ckg_spelling(parts.onset, &parts)
         && coda_in(VALID_CODAS, coda);
     if !structure_ok {
