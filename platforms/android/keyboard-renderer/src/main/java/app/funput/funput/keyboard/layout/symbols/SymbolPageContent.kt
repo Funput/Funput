@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.symbols
 
 /**
  * Symbol key labels grouped by page and row for the 5-row Samsung-style grid.

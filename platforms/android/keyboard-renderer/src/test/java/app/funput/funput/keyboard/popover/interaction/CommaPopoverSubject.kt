@@ -2,8 +2,8 @@ package app.funput.funput.keyboard.popover.interaction
 
 import app.funput.funput.keyboard.interaction.KeyboardInteractionController
 import app.funput.funput.keyboard.layout.KeyBounds
-import app.funput.funput.keyboard.layout.commaKey
-import app.funput.funput.keyboard.layout.periodKey
+import app.funput.funput.keyboard.layout.keys.commaKey
+import app.funput.funput.keyboard.layout.keys.periodKey
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeySpec
 import org.junit.Assert.assertNull

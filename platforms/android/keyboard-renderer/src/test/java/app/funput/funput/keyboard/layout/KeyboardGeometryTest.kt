@@ -1,6 +1,8 @@
 package app.funput.funput.keyboard.layout
 
 import app.funput.funput.keyboard.KeyboardDimensions
+import app.funput.funput.keyboard.layout.letters.KeyboardLayouts
+import app.funput.funput.keyboard.layout.letters.qwertyLayout
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

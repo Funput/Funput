@@ -1,5 +1,11 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.editors
 
+import app.funput.funput.keyboard.layout.keys.keypadCommand
+import app.funput.funput.keyboard.layout.keys.keypadDigit
+import app.funput.funput.keyboard.layout.keys.keypadEmpty
+import app.funput.funput.keyboard.layout.keys.keypadRow
+import app.funput.funput.keyboard.layout.keys.keypadText
+import app.funput.funput.keyboard.layout.letters.keyboardToolbarSpec
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod

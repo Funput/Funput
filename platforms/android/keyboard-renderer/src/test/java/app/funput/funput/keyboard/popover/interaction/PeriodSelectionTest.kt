@@ -1,8 +1,8 @@
 package app.funput.funput.keyboard.popover.interaction
 
-import app.funput.funput.keyboard.popover.model.KeyAlternate
 import app.funput.funput.keyboard.layout.KeyBounds
-import app.funput.funput.keyboard.layout.periodKey
+import app.funput.funput.keyboard.layout.keys.periodKey
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

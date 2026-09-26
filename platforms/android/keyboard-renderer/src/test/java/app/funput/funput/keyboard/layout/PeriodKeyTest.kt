@@ -1,12 +1,13 @@
 package app.funput.funput.keyboard.layout
 
-import app.funput.funput.keyboard.popover.model.KeyAlternate
+import app.funput.funput.keyboard.layout.keys.periodKey
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.toKeyAction
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

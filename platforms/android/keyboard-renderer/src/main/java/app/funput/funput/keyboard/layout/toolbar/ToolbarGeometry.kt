@@ -1,5 +1,9 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.toolbar
 
+import app.funput.funput.keyboard.layout.KeyBounds
+import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
+import app.funput.funput.keyboard.layout.ResolvedKey
+import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
 import app.funput.funput.keyboard.model.KeyboardLayout
 
 /** Places optional toolbar actions before the higher-priority Emoji key. */

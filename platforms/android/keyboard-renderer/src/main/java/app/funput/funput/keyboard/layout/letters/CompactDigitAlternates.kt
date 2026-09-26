@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.letters
 
 import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardLayout

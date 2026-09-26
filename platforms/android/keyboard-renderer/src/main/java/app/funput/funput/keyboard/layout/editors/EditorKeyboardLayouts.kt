@@ -1,5 +1,14 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.editors
 
+import app.funput.funput.keyboard.layout.keys.periodKey
+import app.funput.funput.keyboard.layout.letters.CompactDigitAlternates
+import app.funput.funput.keyboard.layout.letters.KeyboardLayouts
+import app.funput.funput.keyboard.layout.letters.asciiSpaceKey
+import app.funput.funput.keyboard.layout.letters.qwertyLayout
+import app.funput.funput.keyboard.layout.letters.specialKey
+import app.funput.funput.keyboard.layout.letters.standardSpaceKey
+import app.funput.funput.keyboard.layout.letters.usesCompactLetterRows
+import app.funput.funput.keyboard.layout.rows.topNumberRowFor
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardEditorMode

@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.layout.geometry.KeyboardHitTargetResolver
+import app.funput.funput.keyboard.layout.geometry.KeyboardHitTester
 import app.funput.funput.keyboard.model.KeySpec
 
 data class KeyBounds(

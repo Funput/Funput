@@ -1,5 +1,8 @@
-package app.funput.funput.keyboard.layout
+package app.funput.funput.keyboard.layout.letters
 
+import app.funput.funput.keyboard.layout.keys.commaKey
+import app.funput.funput.keyboard.layout.keys.periodKey
+import app.funput.funput.keyboard.layout.rows.topNumberRowForLetters
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod

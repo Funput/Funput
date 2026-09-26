@@ -1,12 +1,13 @@
 package app.funput.funput.keyboard.layout
 
-import app.funput.funput.keyboard.popover.model.KeyAlternate
+import app.funput.funput.keyboard.layout.letters.KeyboardLayouts
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayout
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardRow
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 import app.funput.funput.keyboard.popover.model.VietnameseKeyAlternates
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

@@ -1,8 +1,8 @@
 package app.funput.funput.keyboard
 
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
-import app.funput.funput.keyboard.layout.ToolbarMetrics
-import app.funput.funput.keyboard.layout.usesCompactLetterRows
+import app.funput.funput.keyboard.layout.letters.usesCompactLetterRows
+import app.funput.funput.keyboard.layout.toolbar.ToolbarMetrics
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 
