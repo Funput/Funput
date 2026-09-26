@@ -65,7 +65,7 @@ fn consonant_between_onset_and_nucleus_is_no_syllable() {
     // Read order-blind, each of these hides a real rhyme (`cno` → `on`, `ctá` →
     // `át`, `ona` → `oan`), but the consonant sits before the vowel, not after it.
     for bad in [
-        "cno", "bno", "tno", "cna", "cnu", "bna", "mna", "tna", "hmo", "tma", "sno", "tnga",
+        "cno", "bno", "tno", "cna", "cnu", "bna", "mna", "tna", "lmo", "tma", "sno", "tnga",
         "xnoa", "ona", "cnó", "bnà", "tnố", "cmá", "ctá", "tná", "bcá",
     ] {
         assert!(!is_complete_syllable(bad), "{bad} should be incomplete");

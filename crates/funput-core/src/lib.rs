@@ -91,7 +91,7 @@ pub struct TransformResult {
 ///     }
 /// );
 /// ```
-pub use validation::reachability::is_definitely_invalid;
+pub use validation::reachability::{is_definitely_invalid, is_definitely_invalid_in};
 pub use validation::syllable::{
     is_bare_shaped_vowel, is_complete_syllable, is_reopenable_syllable, is_valid,
 };

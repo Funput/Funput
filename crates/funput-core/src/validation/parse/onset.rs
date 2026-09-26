@@ -8,27 +8,23 @@
 
 use crate::orthography::glide::{self, Glide};
 use crate::unicode::marks::is_vowel;
+use crate::validation::ethnic::cluster_kind;
 
+/// The native onsets. Tây Nguyên name clusters (`kr`, `kp`, `đr`) are kept apart
+/// in [`crate::validation::ethnic`], so this inventory stays "pure Vietnamese".
 const VALID_ONSETS: &[&str] = &[
     "b", "c", "ch", "d", "g", "gh", "gi", "h", "k", "kh", "l", "m", "n", "ng", "ngh", "nh", "p",
     "ph", "qu", "r", "s", "t", "th", "tr", "v", "x",
 ];
 
-/// Consonant-cluster onsets that occur only in Central Highlands (Tây Nguyên)
-/// toponyms borrowed from Ê Đê / Jarai / Bahnar / M'Nông (`Pleiku`, `Krông`,
-/// `Glong`, `Blơr`, `Drăng`). Not native Vietnamese onsets — kept separate so the
-/// inventory above stays "pure Vietnamese". A valid rhyme is still required after
-/// the onset, so this barely affects English auto-restore.
-const ETHNIC_ONSETS: &[&str] = &["bl", "br", "dr", "gl", "gr", "kl", "kr", "pl", "pr"];
-
 /// True if `onset` is a valid Vietnamese onset (`đ` included, any case), or a
-/// Tây Nguyên toponym cluster ([`ETHNIC_ONSETS`]).
+/// Tây Nguyên name cluster.
 pub(crate) fn is_valid_onset(onset: &str) -> bool {
     onset.is_empty()
         || onset == "đ"
         || onset == "Đ"
         || VALID_ONSETS.iter().any(|o| onset.eq_ignore_ascii_case(o))
-        || ETHNIC_ONSETS.iter().any(|o| onset.eq_ignore_ascii_case(o))
+        || cluster_kind(onset).is_some()
         // Last: plain `qu`/`gi` already matched above, so this only rescues the
         // toned transient (`qú`, `gí`) and stays off the common path.
         || glide::in_onset(onset).is_some()
@@ -39,12 +35,8 @@ pub(super) fn match_onset(buffer: &str) -> (&str, &str, bool) {
     let Some(first) = buffer.chars().next() else {
         return ("", buffer, false);
     };
-    if first == 'đ' || first == 'Đ' {
-        let (onset, rest) = buffer.split_at(first.len_utf8());
-        return (onset, rest, false);
-    }
 
-    // Longest onset first (3 chars: `ngh`), then shorter.
+    // Longest onset first (3 chars: `ngh`, `kđr`), then shorter.
     for len in (1..=3).rev() {
         let Some(split) = after_n_chars(buffer, len) else {
             continue;

@@ -26,7 +26,7 @@ pub(crate) fn is_viable_shape_candidate(buffer: &str) -> bool {
         validate_parts(&parts, ModifierKind::Shape),
         ModifierValidation::Allow
     ) && has_shaped_rhyme_prefix(&parts)
-        && !is_definitely_invalid_parts(&parts)
+        && !is_definitely_invalid_parts(&parts, false)
 }
 
 /// Returns true if the syllable structure is valid for transform.

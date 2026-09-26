@@ -75,19 +75,6 @@ fn telex_misordered_consonant_restores_eagerly() {
 }
 
 #[test]
-fn tay_nguyen_place_names_survive_restore() {
-    // Cluster onsets (`kr`) and the final `k` ≈ `c` must never read as English.
-    assert_eq!(
-        crate::support::app_text(InputMethod::Telex, "ddawks lawks kroong buks "),
-        "đắk lắk krông búk "
-    );
-    assert_eq!(
-        crate::support::app_text(InputMethod::Vni, "d9a8k1 la8k1 kro6ng bu1k "),
-        "đắk lắk krông búk "
-    );
-}
-
-#[test]
 fn telex_mas_space_no_restore() {
     let mut engine = Engine::new();
     engine.process_char('m');

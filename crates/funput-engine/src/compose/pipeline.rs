@@ -4,7 +4,7 @@
 //! the zero-allocation pass-through exit; session strings (`vn_form`, `keys`)
 //! are refilled in place so their capacity is reused across keystrokes.
 
-use funput_core::{TransformKind, apply_checked, is_definitely_invalid};
+use funput_core::{TransformKind, apply_checked, is_definitely_invalid_in};
 
 use crate::ImeResult;
 use crate::compose::RestoreOverride;
@@ -46,12 +46,14 @@ pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: boo
         // no longer be Vietnamese (`tẽt` → `text` on the closing `t`). Gated by the
         // smart + eager toggles. Skip on Reverted (a deliberate user restore) and when
         // nothing was transformed (`keys == composed`, e.g. a literal digit `ng1`).
+        // "Can no longer be" depends on the method: VNI also keeps the place-name
+        // finals Telex cannot afford (`Pa8h` → `Păh`, as in Chư Păh).
         None => {
             if session.config.smart_restore
                 && session.config.eager_restore
                 && result.kind != TransformKind::Reverted
                 && session.keys != composed
-                && is_definitely_invalid(&composed)
+                && is_definitely_invalid_in(&composed, session.config.method)
             {
                 session.keys.clone()
             } else {
