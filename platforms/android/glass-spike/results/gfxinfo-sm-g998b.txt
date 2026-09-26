@@ -1,0 +1,126 @@
+== solid run1
+Total frames rendered: 2120
+Janky frames: 38 (1.79%)
+50th percentile: 6ms
+90th percentile: 8ms
+95th percentile: 9ms
+99th percentile: 11ms
+Number Slow UI thread: 25
+Number Slow bitmap uploads: 0
+Number Frame deadline missed: 38
+50th gpu percentile: 4ms
+90th gpu percentile: 4ms
+95th gpu percentile: 4ms
+99th gpu percentile: 5ms
+== haze run1
+Total frames rendered: 2127
+Janky frames: 30 (1.41%)
+50th percentile: 10ms
+90th percentile: 12ms
+95th percentile: 13ms
+99th percentile: 16ms
+Number Slow UI thread: 8
+Number Slow bitmap uploads: 0
+Number Frame deadline missed: 30
+50th gpu percentile: 5ms
+90th gpu percentile: 6ms
+95th gpu percentile: 7ms
+99th gpu percentile: 9ms
+== liquid run1
+Total frames rendered: 2093
+Janky frames: 46 (2.20%)
+50th percentile: 9ms
+90th percentile: 15ms
+95th percentile: 17ms
+99th percentile: 21ms
+Number Slow UI thread: 16
+Number Slow bitmap uploads: 0
+Number Frame deadline missed: 46
+50th gpu percentile: 5ms
+90th gpu percentile: 11ms
+95th gpu percentile: 13ms
+99th gpu percentile: 16ms
+== solid run2
+Total frames rendered: 2104
+Janky frames: 36 (1.71%)
+50th percentile: 6ms
+90th percentile: 8ms
+95th percentile: 9ms
+99th percentile: 12ms
+Number Slow UI thread: 24
+Number Slow bitmap uploads: 0
+Number Frame deadline missed: 36
+50th gpu percentile: 4ms
+90th gpu percentile: 4ms
+95th gpu percentile: 5ms
+99th gpu percentile: 7ms
+== haze run2
+Total frames rendered: 2100
+Janky frames: 35 (1.67%)
+50th percentile: 10ms
+90th percentile: 12ms
+95th percentile: 13ms
+99th percentile: 16ms
+Number Slow UI thread: 13
+Number Slow bitmap uploads: 0
+Number Frame deadline missed: 35
+50th gpu percentile: 5ms
+90th gpu percentile: 6ms
+95th gpu percentile: 7ms
+99th gpu percentile: 10ms
+== liquid run2
+Total frames rendered: 2111
+Janky frames: 38 (1.80%)
+50th percentile: 9ms
+90th percentile: 15ms
+95th percentile: 18ms
+99th percentile: 21ms
+Number Slow UI thread: 13
+Number Slow bitmap uploads: 0
+Number Frame deadline missed: 38
+50th gpu percentile: 5ms
+90th gpu percentile: 11ms
+95th gpu percentile: 13ms
+99th gpu percentile: 16ms
+== solid run3
+Total frames rendered: 2107
+Janky frames: 42 (1.99%)
+50th percentile: 6ms
+90th percentile: 8ms
+95th percentile: 9ms
+99th percentile: 12ms
+Number Slow UI thread: 31
+Number Slow bitmap uploads: 0
+Number Frame deadline missed: 42
+50th gpu percentile: 4ms
+90th gpu percentile: 4ms
+95th gpu percentile: 4ms
+99th gpu percentile: 5ms
+== haze run3
+Total frames rendered: 2117
+Janky frames: 44 (2.08%)
+50th percentile: 10ms
+90th percentile: 12ms
+95th percentile: 13ms
+99th percentile: 16ms
+Number Slow UI thread: 20
+Number Slow bitmap uploads: 0
+Number Frame deadline missed: 44
+50th gpu percentile: 5ms
+90th gpu percentile: 6ms
+95th gpu percentile: 6ms
+99th gpu percentile: 8ms
+== liquid run3
+Total frames rendered: 2117
+Janky frames: 37 (1.75%)
+50th percentile: 9ms
+90th percentile: 15ms
+95th percentile: 17ms
+99th percentile: 20ms
+Number Slow UI thread: 15
+Number Slow bitmap uploads: 0
+Number Frame deadline missed: 37
+50th gpu percentile: 5ms
+90th gpu percentile: 10ms
+95th gpu percentile: 12ms
+99th gpu percentile: 15ms
