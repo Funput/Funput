@@ -6,16 +6,17 @@
 //! `rewritten`: a word whose every key landed where it was aimed, which correction
 //! replaced anyway.
 //!
-//! The run has no word store veto, on purpose. A keyboard vetoes these words by
-//! knowing them, but the list can never be complete; what this measures is how
-//! much protection the engine gives a deliberate word the list does not know.
+//! `--prior uniform` runs it with no word store, and so no veto: how much protection
+//! the engine alone gives a deliberate word no list knows. Any other prior vetoes
+//! the way a keyboard does, through `is_known_word` — which knows this very list,
+//! so there the number to see is zero.
 
 use std::path::Path;
 use std::{fs, io};
 
 use crate::dev::encode::encode;
 use crate::dev::typos::report::{print_human, print_json};
-use crate::dev::typos::{Options, Prior, measure_typed};
+use crate::dev::typos::{Options, measure_typed};
 
 /// The words in `path`: whitespace-separated, `#` comments, blank lines ignored.
 pub(in crate::dev) fn load_words(path: &Path) -> io::Result<Vec<String>> {
@@ -55,9 +56,5 @@ pub(in crate::dev) fn measure_keep(
     options: &Options,
 ) -> crate::dev::typos::report::Tally {
     let keys: Vec<String> = words.iter().map(|word| keys_for(word, options)).collect();
-    let options = Options {
-        prior: Prior::Uniform,
-        ..*options
-    };
-    measure_typed(words, &keys, &options)
+    measure_typed(words, &keys, options)
 }
