@@ -32,7 +32,9 @@ class KotlinTokenEmitterTest {
 
     @Test
     fun `type and motion keep every field`() {
-        assertTrue(source.contains("val body = TypeToken(size = 17.sp, lineHeight = 22.sp, weight = FontWeight(400))"))
+        assertTrue(
+            source.contains("val body = TypeToken(size = 17.sp, lineHeight = 22.sp, weight = FontWeight(400))"),
+        )
         assertTrue(
             source.contains("val launch = MotionToken(curve = TokenCurve.SPRING, durationMillis = 550, bounce = 0.12f)"),
         )
