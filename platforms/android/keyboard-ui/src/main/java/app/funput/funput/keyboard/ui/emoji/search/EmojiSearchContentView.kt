@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.ui.emoji
+package app.funput.funput.keyboard.ui.emoji.search
 
 import android.content.Context
 import androidx.compose.foundation.layout.Box
@@ -15,10 +15,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.model.KeyAction
-import app.funput.funput.keyboard.ui.panel.KeyboardPanelComposeView
-import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.ui.R
+import app.funput.funput.keyboard.ui.emoji.EmojiEmptyState
+import app.funput.funput.keyboard.ui.emoji.EmojiItem
+import app.funput.funput.keyboard.ui.emoji.EmojiSearchKeyboardLayout
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelComposeView
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import app.funput.funput.theme.KeyboardTheme
 
 internal class EmojiSearchContentView(context: Context) : KeyboardPanelComposeView(context) {

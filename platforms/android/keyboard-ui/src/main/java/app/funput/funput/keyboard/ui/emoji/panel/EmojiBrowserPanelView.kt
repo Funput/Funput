@@ -17,12 +17,12 @@ import app.funput.funput.keyboard.ui.emoji.EmojiCategory
 import app.funput.funput.keyboard.ui.emoji.EmojiItem
 import app.funput.funput.keyboard.ui.emoji.EmojiLoadingView
 import app.funput.funput.keyboard.ui.emoji.EmojiRecentsStore
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchContentView
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchController
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchHeaderView
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchIndex
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchMode
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchState
+import app.funput.funput.keyboard.ui.emoji.search.EmojiSearchContentView
+import app.funput.funput.keyboard.ui.emoji.search.EmojiSearchController
+import app.funput.funput.keyboard.ui.emoji.search.EmojiSearchHeaderView
+import app.funput.funput.keyboard.ui.emoji.search.EmojiSearchIndex
+import app.funput.funput.keyboard.ui.emoji.search.EmojiSearchMode
+import app.funput.funput.keyboard.ui.emoji.search.EmojiSearchState
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import app.funput.funput.theme.KeyboardTheme
 

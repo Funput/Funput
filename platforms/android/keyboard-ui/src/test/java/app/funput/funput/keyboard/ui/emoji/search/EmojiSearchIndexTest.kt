@@ -1,5 +1,7 @@
-package app.funput.funput.keyboard.ui.emoji
+package app.funput.funput.keyboard.ui.emoji.search
 
+import app.funput.funput.keyboard.ui.emoji.EmojiCategory
+import app.funput.funput.keyboard.ui.emoji.EmojiItem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

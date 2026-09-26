@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.ui.emoji
+package app.funput.funput.keyboard.ui.emoji.search
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

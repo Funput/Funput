@@ -1,9 +1,12 @@
-package app.funput.funput.keyboard.ui.emoji
+package app.funput.funput.keyboard.ui.emoji.search
 
 import android.content.Context
 import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.TextView
+import app.funput.funput.keyboard.ui.emoji.configureAction
+import app.funput.funput.keyboard.ui.emoji.dp
+import app.funput.funput.keyboard.ui.emoji.surface
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 
 internal class EmojiSearchHeaderView(context: Context) : FrameLayout(context) {
