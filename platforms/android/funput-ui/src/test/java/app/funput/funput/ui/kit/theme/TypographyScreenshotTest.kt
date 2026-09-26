@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
+import app.funput.funput.ui.kit.KIT_SCREENSHOT_ROOT
 import app.funput.funput.uitesting.SCREENSHOT_SDK
 import app.funput.funput.uitesting.ScreenshotDevices
 import app.funput.funput.uitesting.ScreenshotVariant
@@ -32,7 +33,7 @@ class TypographyScreenshotTest(private val variant: ScreenshotVariant) {
     val compose = createComposeRule()
 
     @Test
-    fun specimen() = compose.captureScreen("kit/typography", variant) {
+    fun specimen() = compose.captureScreen("typography", variant, root = KIT_SCREENSHOT_ROOT) {
         FunputUiTheme(isDark = variant.isDark) { Specimen() }
     }
 

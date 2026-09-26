@@ -39,6 +39,9 @@ fun FunputSegmented(
 ) {
     val colors = FunputUi.colors
     val capsule = FunputUi.shapes.capsule
+    // The selected segment must sit above the track: the card colour does in light mode, but in
+    // dark mode the card is the darkest surface, so a light tint lifts it instead.
+    val selectedFill = if (colors.isDark) colors.label.copy(alpha = SelectedDarkAlpha) else colors.cardBackground
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
@@ -52,7 +55,7 @@ fun FunputSegmented(
         options.forEachIndexed { index, option ->
             val selected = index == selectedIndex
             val fill by animateColorAsState(
-                if (selected) colors.cardBackground else Color.Transparent,
+                if (selected) selectedFill else Color.Transparent,
                 FunputMotion.selection(),
                 label = "segment-fill",
             )
@@ -77,3 +80,6 @@ fun FunputSegmented(
         }
     }
 }
+
+/** Lift of the selected segment over the track in dark mode. */
+private const val SelectedDarkAlpha = 0.18f

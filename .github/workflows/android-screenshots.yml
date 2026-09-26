@@ -13,9 +13,11 @@ name: Android screenshots
 # so a screen that crashes fails the required gate; this workflow only adds the
 # pictures.
 #
-# It records, it does not verify: no golden images are committed yet. Verifying
-# against goldens starts once the redesigned components land (see
-# docs/features/android-app-redesign.md).
+# It records; ci.yml verifies. FunputUI's goldens live in
+# platforms/android/funput-ui/src/test/screenshots and must come from this Linux
+# runner: when a component changes on purpose, download the "funput-ui-goldens"
+# artifact of this workflow's run on the pull request and commit its contents
+# over that directory. The app's own captures are "before" evidence only.
 on:
   pull_request:
     paths:
@@ -68,11 +70,18 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Record screenshots
-        run: ./gradlew :app:recordRoborazziDebug --console=plain
+        run: ./gradlew :app:recordRoborazziDebug :funput-ui:recordRoborazziDebug --console=plain
 
       - uses: actions/upload-artifact@v7
         with:
           name: android-screenshots
           path: platforms/android/app/build/outputs/roborazzi/
+          if-no-files-found: error
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: funput-ui-goldens
+          path: platforms/android/funput-ui/src/test/screenshots/
           if-no-files-found: error
           retention-days: 30

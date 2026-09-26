@@ -605,8 +605,20 @@ jobs:
       - name: Build logic tests
         run: ./gradlew -p buildSrc test --console=plain
 
-      - name: Unit tests
-        run: ./gradlew testDebugUnitTest --console=plain
+      # One pass: FunputUI's screenshot tests run once, in verify mode, against the goldens in
+      # funput-ui/src/test/screenshots. Those goldens are recorded on Linux by the
+      # android-screenshots workflow, so they match this runner pixel for pixel.
+      - name: Unit tests and FunputUI screenshot goldens
+        run: ./gradlew testDebugUnitTest :funput-ui:verifyRoborazziDebug --console=plain
+
+      - name: Upload screenshot diffs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: funput-ui-screenshot-diffs
+          path: platforms/android/funput-ui/build/outputs/roborazzi/
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Assemble (cross-compiles funput-jni for both ABIs)
         run: ./gradlew assembleDebug --console=plain

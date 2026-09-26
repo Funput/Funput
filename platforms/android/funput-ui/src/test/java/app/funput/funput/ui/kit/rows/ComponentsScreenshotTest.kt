@@ -15,6 +15,7 @@ import app.funput.funput.ui.kit.controls.FunputButtonStyle
 import app.funput.funput.ui.kit.controls.FunputSegmented
 import app.funput.funput.ui.kit.theme.FunputUi
 import app.funput.funput.ui.kit.theme.FunputUiTheme
+import app.funput.funput.ui.kit.KIT_SCREENSHOT_ROOT
 import app.funput.funput.uitesting.SCREENSHOT_SDK
 import app.funput.funput.uitesting.ScreenshotDevices
 import app.funput.funput.uitesting.ScreenshotVariant
@@ -38,12 +39,12 @@ class ComponentsScreenshotTest(private val variant: ScreenshotVariant) {
     val compose = createComposeRule()
 
     @Test
-    fun rows() = compose.captureScreen("kit/rows", variant) {
+    fun rows() = compose.captureScreen("rows", variant, root = KIT_SCREENSHOT_ROOT) {
         FunputUiTheme(isDark = variant.isDark) { Page { RowsSamples() } }
     }
 
     @Test
-    fun controls() = compose.captureScreen("kit/controls", variant) {
+    fun controls() = compose.captureScreen("controls", variant, root = KIT_SCREENSHOT_ROOT) {
         FunputUiTheme(isDark = variant.isDark) { Page { ControlsSamples() } }
     }
 

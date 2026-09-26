@@ -13,9 +13,6 @@ import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.shapes.RoundedRectangularShape
 
-/** How opaque the [GlassTier.SOLID] surface is: enough to read text over any content. */
-private const val SolidAlpha = 0.96f
-
 /** The film over real glass, so labels keep contrast over busy content. */
 private const val GlassTintAlpha = 0.28f
 
@@ -25,7 +22,8 @@ private const val GlassTintAlpha = 0.28f
  * The only place the glass library is called: screens and components never touch it, so swapping
  * the implementation is a change to this file. [shape] is a [RoundedRectangularShape] because the
  * library's refraction throws on any other shape; the type makes that crash impossible. [refract]
- * bends content at the edges; bars that span the full width turn it off.
+ * bends content at the edges; bars that span the full width turn it off. The [GlassTier.SOLID]
+ * surface is an opaque card with a hairline.
  */
 internal fun Modifier.funputGlass(
     backdrop: GlassBackdrop?,
@@ -35,7 +33,8 @@ internal fun Modifier.funputGlass(
 ): Modifier {
     if (backdrop == null || backdrop.tier == GlassTier.SOLID) {
         return clip(shape)
-            .background(colors.cardBackground.copy(alpha = SolidAlpha))
+            // Fully opaque: any see-through share turns the text scrolling behind into grey smears.
+            .background(colors.cardBackground)
             .border(FunputSpacing.cardStrokeWidth, colors.cardStroke, shape)
     }
     return drawBackdrop(

@@ -3,11 +3,22 @@ package app.funput.funput.uitesting
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.robolectric.RuntimeEnvironment
 
 /** Where captures land unless a caller names another root, relative to the module directory. */
 const val DEFAULT_SCREENSHOT_ROOT: String = "build/outputs/roborazzi"
+
+/**
+ * How every capture is written and compared. Images are stored at half resolution, which keeps
+ * committed goldens small and still shows every layout fault; a comparison tolerates 0.2% of
+ * pixels differing, enough for anti-aliasing noise and far below any visible change.
+ */
+val ScreenshotOptions: RoborazziOptions = RoborazziOptions(
+    compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.002f),
+    recordOptions = RoborazziOptions.RecordOptions(resizeScale = 0.5),
+)
 
 /**
  * Renders [content] under [variant] and captures it as `<root>/<screen>/<variant>.png`.
@@ -34,5 +45,5 @@ fun ComposeContentTestRule.captureScreen(
     waitForIdle()
     prepare()
     waitForIdle()
-    onRoot().captureRoboImage("$root/$screen/${variant.fileName}.png")
+    onRoot().captureRoboImage("$root/$screen/${variant.fileName}.png", roborazziOptions = ScreenshotOptions)
 }

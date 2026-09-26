@@ -77,6 +77,7 @@ readonly roots=(
     "$android_root/app/src/test/java/app/funput/funput/screenshots"
     "$android_root/funput-ui/src/main/java/app/funput/funput/ui/kit"
     "$android_root/funput-ui/src/test/java/app/funput/funput/ui/kit"
+    "$android_root/app/src/debug/java/app/funput/funput/catalog"
 )
 violations=0
 

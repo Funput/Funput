@@ -36,6 +36,12 @@ val generateDesignTokens by tasks.registering(GenerateDesignTokensTask::class) {
     outputDirectory.set(layout.buildDirectory.dir("generated/designTokens"))
 }
 
+// Goldens are test inputs: without this, a changed or replaced golden leaves the test task
+// UP-TO-DATE and verifyRoborazzi passes without comparing anything.
+tasks.withType<Test>().configureEach {
+    inputs.dir("src/test/screenshots").withPathSensitivity(PathSensitivity.RELATIVE).optional()
+}
+
 androidComponents.onVariants { variant ->
     variant.sources.kotlin?.addGeneratedSourceDirectory(
         generateDesignTokens,

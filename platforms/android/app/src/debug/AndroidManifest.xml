@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: a second launcher entry that opens the FunputUI component catalog. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <activity
+            android:name=".catalog.CatalogActivity"
+            android:exported="true"
+            android:label="Funput UI"
+            android:taskAffinity="app.funput.funput.catalog"
+            android:theme="@style/Theme.Funput">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

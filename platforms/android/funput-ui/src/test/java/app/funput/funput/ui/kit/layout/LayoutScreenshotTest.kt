@@ -3,6 +3,7 @@ package app.funput.funput.ui.kit.layout
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollToIndex
+import app.funput.funput.ui.kit.KIT_SCREENSHOT_ROOT
 import app.funput.funput.uitesting.SCREENSHOT_SDK
 import app.funput.funput.uitesting.ScreenshotDevices
 import app.funput.funput.uitesting.ScreenshotVariant
@@ -26,14 +27,15 @@ class LayoutScreenshotTest(private val variant: ScreenshotVariant) {
     val compose = createComposeRule()
 
     @Test
-    fun atTop() = compose.captureScreen("kit/screen-top", variant) {
+    fun atTop() = compose.captureScreen("screen-top", variant, root = KIT_SCREENSHOT_ROOT) {
         SampleScreen(isDark = variant.isDark, onBack = {})
     }
 
     @Test
     fun scrolled() = compose.captureScreen(
-        screen = "kit/screen-scrolled",
+        screen = "screen-scrolled",
         variant = variant,
+        root = KIT_SCREENSHOT_ROOT,
         prepare = { onNodeWithTag(FunputScreenListTag).performScrollToIndex(2) },
     ) {
         SampleScreen(isDark = variant.isDark, onBack = {})
