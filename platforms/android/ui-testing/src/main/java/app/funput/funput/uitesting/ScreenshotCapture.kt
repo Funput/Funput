@@ -17,16 +17,22 @@ const val DEFAULT_SCREENSHOT_ROOT: String = "build/outputs/roborazzi"
  * written, compared or skipped is Roborazzi's call from the Gradle task that ran the test:
  * `recordRoborazziDebug` writes, `verifyRoborazziDebug` compares, a plain unit-test run only
  * composes the screen, which still fails the test if it crashes.
+ *
+ * [prepare] runs after composition and before the capture, to put the screen in the state being
+ * captured (scrolled, a sheet open, a field focused).
  */
 fun ComposeContentTestRule.captureScreen(
     screen: String,
     variant: ScreenshotVariant,
     root: String = DEFAULT_SCREENSHOT_ROOT,
+    prepare: ComposeContentTestRule.() -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     RuntimeEnvironment.setQualifiers(if (variant.isDark) "+night" else "+notnight")
     RuntimeEnvironment.setFontScale(variant.fontScale)
     setContent(content)
+    waitForIdle()
+    prepare()
     waitForIdle()
     onRoot().captureRoboImage("$root/$screen/${variant.fileName}.png")
 }

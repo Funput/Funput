@@ -48,6 +48,8 @@ dependencies {
     api(libs.androidx.compose.foundation)
     api(libs.androidx.compose.ui)
     api(libs.kyant.shapes)
+    // Glass: blur from API 31, edge refraction from API 33. Wrapped by the glass package only.
+    implementation(libs.kyant.backdrop)
     // Only for the few components FunputUI deliberately borrows (sheet, dialog, slider).
     implementation(libs.androidx.compose.material3)
     testImplementation(project(":ui-testing"))
