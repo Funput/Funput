@@ -14,6 +14,9 @@ pub struct CorrectionMetrics {
     pub reverted: u32,
     /// Words where candidates were found but the top two were too close to call.
     pub skipped_ambiguous: u32,
+    /// Words where no candidate beat the word as typed: the finger sat on the keys it
+    /// hit, so the engine believed it.
+    pub kept_as_typed: u32,
     /// The most candidates any one word produced.
     pub candidates_max: u32,
     /// The longest a candidate search took, in microseconds.

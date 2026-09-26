@@ -2,8 +2,10 @@
 
 ## Trạng thái
 
-**Phần Rust đã hiện thực**: lõi (`crates/funput-engine/src/correction/`), hai câu truy vấn ở
-`funput-suggestions`, và cầu nối C ABI + JNI. Mặc định tắt. iOS và Android chưa. Mọi quyết định hành vi sống ở tài liệu này; khi hiện thực lệch khỏi bản
+**Rust và iOS đã hiện thực** trên nhánh `feat/typo-correction`: lõi
+(`crates/funput-engine/src/correction/`), hai câu truy vấn ở `funput-suggestions`, cầu nối C ABI
++ JNI, và bàn phím iOS (bật sẵn, tắt được trong Cài đặt). Engine để mặc định tắt; mỗi nền tảng
+tự bật. Android chưa làm. Mọi quyết định hành vi sống ở tài liệu này; khi hiện thực lệch khỏi bản
 viết, cập nhật lại tài liệu trong cùng PR — các mục dưới đây đã được sửa theo đúng những gì
 code làm, chỗ nào lệch đều ghi rõ lý do.
 
@@ -226,7 +228,11 @@ P(chạm | phím) = exp(−d² / (2σ²)),  d tính theo bước phím
 | `prior` nền | 0,5 | Điểm cho âm tiết hợp lệ chưa từng gõ |
 
 - `prior(từ)` = `ln(1 + số lần người dùng đã gõ từ đó)` + nền, lấy từ `funput-suggestions`.
-- **Không sửa** nếu `best − runner_up < Δ`; khi đó gửi cả hai lên thanh gợi ý.
+- **Chữ nguyên như đã gõ cũng là một ứng viên**, điểm = điểm chạm gốc − `INVALID_COST` (**4,0**,
+  §12.1 đợt 2): chỉ một lần chạm cách tâm phím dưới khoảng 0,15 bước phím mới được tin là cố ý. `runner_up` bắt đầu từ điểm đó, không phải âm vô cực. Trước đợt 2, một ứng viên
+  duy nhất luôn thắng dù ngón đặt ngay giữa phím — nên `ko`, `atlas`, `robot` gõ đúng vẫn bị đổi.
+- **Không sửa** nếu `best − runner_up < Δ`; khi đó gửi cả hai lên thanh gợi ý. Nếu thứ cản là
+  chữ nguyên thì engine đếm vào `kept_as_typed`, nếu là ứng viên thứ hai thì `skipped_ambiguous`.
 - `σ`, `λ` là hằng số khởi điểm. **`Δ` đã chốt ở 1,5** sau khi đo (§12.1): nó là knob **yếu**
   — đẩy tiếp lên 2,5 chỉ hạ sửa sai từ 3,9% xuống 2,3% mà mất thêm một phần tư số lần sửa đúng
   — nhưng 1,0 → 1,5 là đoạn duy nhất đáng đổi. Thứ thật sự quyết định vẫn là mức nhiễu của ngón.
@@ -555,8 +561,49 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    thật.**
 
    - Cổng trong CI (trên `sample.txt`, nơi chạy được không cần tải ngữ liệu): sửa sai **< 1%**
-     số lần sửa và sửa đúng ≥ 50% số từ trượt, ở nhiễu ngón 0,25. Một test riêng ghi lại vách
-     0,45 khi không có kho từ, thay vì giả vờ nó an toàn.
+     số lần sửa ở nhiễu 0,25, và sửa đúng ≥ 50% số từ trượt ở **nhiễu đo trên máy (0,174)**,
+     cộng 10 seed. Cổng sửa đúng từng đặt ở 0,25 — con số đoán trước khi đo; đợt 2 dời nó về
+     nhiễu thật (xem dưới). Một test riêng ghi lại vách 0,45 khi không có kho từ, thay vì giả vờ
+     nó an toàn.
+
+   **Đợt 2 (26/09/2026): chữ gõ có chủ ý.** Thử trên máy thật lộ ra một lỗ mà bộ đo cũ không
+   nhìn thấy, vì nó chỉ gõ âm tiết tiếng Việt: một ứng viên duy nhất **luôn thắng**, nên chữ không
+   phải tiếng Việt nhưng gõ đúng ý — viết tắt khi chat, tên hãng, từ mượn — bị đổi. Ba việc:
+
+   - **Chữ nguyên tham gia so sánh** (`INVALID_COST`, §5.3). Đo bằng chế độ mới
+     `funput dev typos --keep` trên `crates/funput-suggestions/data/correction/keep.txt` (chữ
+     viết tắt, tên hãng, tên không dấu — tự viết, MIT), 40 seed, nhiễu 0,174, không có từ điển
+     chặn; cột phải là Viet74K, 8 seed, không có kho từ:
+
+     | `INVALID_COST` | Chữ cố ý bị đổi, VNI / Telex | Sửa đúng, VNI / Telex |
+     |---|---|---|
+     | không có (trước đợt 2) | 24,5% / 26,4% | 66,9% / 51,7% |
+     | **4,0** ← đã chốt | **4,5% / 5,1%** | **66,5% / 51,5%** |
+     | 3,0 | 0,3% / 0,5% | 64,3% / 50,2% |
+     | 2,5 | 0,1% / 0,1% | 45,8% / 37,1% |
+
+     Một phần tư chữ gõ có chủ ý từng bị đổi. Bảng này gợi ý 3,0 gần như miễn phí — và **nó
+     sai trên máy thật**: ở 3,0, `abh` chỉ thành `anh` khi ngón đáp trong 15% sát mép `b` với `n`.
+     Bộ đo rải ngón theo phân phối chuẩn quanh phím định gõ, nên mọi lần trượt đều nằm sát mép;
+     lỗi thật của người gõ hay rơi sâu hẳn vào phím bên cạnh, thứ bộ đo không mô phỏng. **Bài
+     học: một con số bộ đo cho là "miễn phí" phải thử bằng tay trên máy trước khi chốt.**
+
+     4,0 chỉ tin lần chạm cách tâm phím dưới khoảng 0,15 bước phím (test
+     `a_slip_deep_into_the_wrong_key_is_still_repaired`). Phần chữ cố ý còn lọt (`tl → to`,
+     `hk → hi`, `haha → hây`, và phần lớn ở 4,0) là việc của **danh sách**: bàn phím coi mọi chữ
+     trong `keep.txt` là chữ có thật, cùng với từ điển tiếng Anh và chữ người dùng đã hoàn tác.
+   - **Phím số ở đầu từ làm mất một chữ cái.** Phép phát lại bỏ qua chữ số mở đầu từ (VNI không
+     cho chữ số mở từ), nên thay `t` bằng phím kề `5` cho ra `rước` thay vì `trước`. Giờ ứng viên
+     như vậy bị loại (`search::replay`). Ví dụ đo được trước đó: `quạt → ũa`, `Quắc → ắc`.
+   - **Bộ đo so chữ bỏ qua vị trí dấu thanh.** Hơn nửa cột "sửa sai" cũ là `khóa → khoá`,
+     `tọa → toạ` — cùng một chữ. Giờ còn đúng 1 lần sửa sai VNI trên 71 640 từ ở nhiễu 0,174.
+     "Bỏ sót" cũng được chia theo lý do: không có ứng viên / vướng Δ / chữ nguyên thắng / bị
+     chặn.
+
+   Differential trên toàn bộ âm tiết Viet74K, dấu thanh gõ ở mọi vị trí (22 426 chuỗi Telex,
+   22 501 VNI), điểm chạm đúng tâm kèm đủ phím kề: **bật tính năng cho ra y hệt lúc tắt, 0 khác
+   biệt**. Engine trước đợt 2 đổi 591 chuỗi trong số đó — toàn từ mượn gõ đúng (`ampe → smoe`,
+   `atlas → stoá`, `robot → rổn`, `camera → cẩm`, `Latin → Lặn`).
 2. **Bất biến**: mọi âm tiết hợp lệ gõ đúng phím không bao giờ bị đổi (property test toàn tập).
    ✅ `tests/correction_property.rs`, cùng với: không ứng viên nào trùng chữ đang hiển thị, ứng
    viên luôn xếp giảm dần, sửa rồi Xoá trả lại đúng tài liệu cũ, và **từ chối thì ra đúng kết
@@ -595,10 +642,10 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
 
 ## 13. Chỉ số
 
-`correctionsApplied`, `correctionsReverted`, `correctionsSkippedAmbiguous`,
-`correctionCandidatesMax`, `correctionMicrosecondsMax`. Chỉ đếm, không lưu nội dung. Lõi chưa
-đếm gì cả — bộ đếm sẽ đặt ở nền tảng, nơi đã có chỗ gửi số liệu. Tỉ lệ hoàn
-tác cao nghĩa là `Δ` đặt thấp quá.
+`correctionsApplied`, `correctionsReverted`, `correctionsSkippedAmbiguous`, `keptAsTyped`,
+`correctionCandidatesMax`, `correctionMicrosecondsMax`. Chỉ đếm, không lưu nội dung. Lõi đếm
+trong `CorrectionMetrics`, iOS in ra log category `typo`. Tỉ lệ hoàn tác cao nghĩa là `Δ` đặt
+thấp quá; `keptAsTyped` cao nghĩa là `INVALID_COST` đặt thấp quá.
 
 ## 14. Thứ tự hiện thực
 
@@ -608,8 +655,10 @@ tác cao nghĩa là `Δ` đặt thấp quá.
 | 2 ✅ | `SuggestionEngine::frequency` + `is_known_word` (cửa chặn tiếng Anh) | Test đơn vị + ngân sách 0 cấp phát |
 | 2b ✅ | C ABI + JNI (đường edit riêng trả `IntArray` cho Android) + header cbindgen | Test round-trip FFI, `gen-header.sh --check` |
 | 2c ✅ | `funput dev typos` — bộ đo tỉ lệ sửa đúng / sửa sai | Sửa sai < 1%, sửa đúng ≥ 50% ở nhiễu ngón 0,25 |
-| 3 | iOS: phím kề từ hình học, mang điểm chạm qua pipeline, hai bước ở ranh giới từ, ghi tài liệu | Test đơn vị + UI test §12.6 |
-| 4 | iOS: hoàn tác, chip trên thanh gợi ý, công tắc Cài đặt, tôn trọng `autocorrectionType` | UI test hoàn tác |
+| 3 ✅ | iOS: phím kề từ hình học, mang điểm chạm qua pipeline, hai bước ở ranh giới từ, ghi tài liệu | Test đơn vị + UI test §12.6 |
+| 4 ✅ | iOS: hoàn tác bằng phím Xoá, công tắc Cài đặt, tôn trọng `autocorrectionType` (chip trên thanh gợi ý: chưa) | UI test hoàn tác |
+| 4b ✅ | An toàn đợt 2: chữ nguyên tham gia so sánh, loại chữ số mở từ, bộ đo `--keep` | `--keep` < 1%, differential bật = tắt khi gõ đúng |
+| 4c | iOS: danh sách giữ nguyên, hoàn tác thì nhớ, đếm lý do bỏ sót, nhật ký từng chữ (Debug) | Test đơn vị + thử trên máy |
 | 5 | Android: cùng lõi, batch edit | Instrumented test |
 | 6 | Chỉnh `σ`, `λ`, `Δ` theo kho lỗi và phản hồi TestFlight | Số liệu §13 |
 

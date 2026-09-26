@@ -1,0 +1,24 @@
+# Words typed on purpose that are not Vietnamese syllables, and that typo correction
+# must leave exactly as typed.
+#
+# Written by hand for Funput and released under the project's MIT licence — nothing
+# here is taken from a word list. Add to it freely: one or more words per line,
+# lowercase, `#` starts a comment.
+#
+# Two uses: `funput dev typos --keep` measures how many of these the engine would
+# rewrite on its own, and the keyboards treat every one of them as a known word.
+
+# Chat abbreviations
+ko k kh hk hok hem dc đc dk đk mk mik bn b j z ns nch vs vx
+ok oke okie ck vk trc ntn cx cg ms lm ng ngta nma nhma nhg thik bik
+ib rep cmt tl tn ad sp ship cod fb zl mn mng r đr bth bt bthg kbt kb klq
+uk ukm um uh hic huhu haha hihi hehe kk kkk ny lun wa wá hum nhìu
+
+# Brands and everyday tech words
+shopee tiki lazada grab gojek zalo momo vnpay tiktok facebook messenger
+youtube google gmail iphone ipad samsung xiaomi oppo vinfast viettel
+vinaphone mobifone netflix spotify wifi bluetooth email pdf excel app web
+link online offline livestream check
+
+# Names typed without their marks
+nguyen tran pham hoang huynh phan dang bui duong truong huong quoc viet thanh

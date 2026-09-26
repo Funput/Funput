@@ -143,6 +143,7 @@ fn park(state: &mut CorrectionState, session: &Session, boundary: char, restore:
     pending.keys.push_str(&session.keys);
     pending.boundary = boundary;
     pending.restore = restore;
+    pending.typed_score = score::to_milli(state.touch.base_score());
 }
 
 #[cfg(test)]
