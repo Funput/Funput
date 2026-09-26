@@ -52,6 +52,7 @@ internal fun SettingsRoute(
             personalSuggestionsEnabled = settings.personalSuggestions.enabled,
             clipboardPreferences = settings.clipboard,
             smartGesturesEnabled = settings.smartGesturesEnabled,
+            returnsToLettersEnabled = settings.returnsToLettersEnabled,
             hardwareKeyboard = rememberHardwareKeyboardSectionState(),
             onInputMethodSelected = { method ->
                 scope.launch { settings.input.setInputMethod(method) }
@@ -87,6 +88,9 @@ internal fun SettingsRoute(
             },
             onSmartGesturesChanged = { enabled ->
                 scope.launch { settings.smartGestureStore.setEnabled(enabled) }
+            },
+            onReturnsToLettersChanged = { enabled ->
+                scope.launch { settings.letterReturnStore.setEnabled(enabled) }
             },
             onSmartRestoreChanged = { enabled ->
                 scope.launch { settings.smartCompositionStore.setSmartRestoreEnabled(enabled) }

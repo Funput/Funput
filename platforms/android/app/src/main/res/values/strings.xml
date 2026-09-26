@@ -12,6 +12,8 @@
     <string name="settings_section_feedback">Phản hồi khi chạm</string>
     <string name="settings_smart_gestures_title">Cử chỉ thông minh</string>
     <string name="settings_smart_gestures_summary">Gõ đúp phím cách để chấm câu, giữ phím cách rồi kéo để di chuyển con trỏ mọi hướng, vuốt trái phím xóa để xóa cả từ.</string>
+    <string name="settings_letter_return_title">Tự về bảng chữ</string>
+    <string name="settings_letter_return_summary">Gõ dấu câu ở bảng ký hiệu rồi bấm cách để quay lại bảng chữ cái.</string>
     <string name="settings_section_about">Thông tin</string>
     <string name="settings_keyboard_setup_not_enabled_title">Funput chưa được bật</string>
     <string name="settings_keyboard_setup_not_enabled_body">Bật Funput trong cài đặt bàn phím Android để bắt đầu gõ.</string>

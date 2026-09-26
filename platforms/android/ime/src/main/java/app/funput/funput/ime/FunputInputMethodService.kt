@@ -63,7 +63,7 @@ class FunputInputMethodService : InputMethodService() {
         keyboardView = view
         updateInputView(view)
         ImeKeyboardCallbackBinder.bind(view, actionHandler, editorRuntime, suggestionService,
-            systemInputMethodSwitcher)
+            systemInputMethodSwitcher, session.letterReturn)
         ImePlacementBinder.bind(view, this, serviceScope)
         session.bindPanels(view)
         EmojiCatalogPreloader.schedule(view)

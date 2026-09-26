@@ -14,6 +14,7 @@ import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.settings.SmartCompositionSettings
 import app.funput.funput.ime.settings.ToneStyleSettings
 import app.funput.funput.ime.settings.gestures.SmartGestureSettings
+import app.funput.funput.ime.settings.layout.LetterPageReturnSettings
 
 /** Remembers the DataStore wrappers used by [rememberFunputSettings]. */
 internal class FunputSettingsStores(context: Context) {
@@ -29,5 +30,6 @@ internal class FunputSettingsStores(context: Context) {
     val numberRowStore = NumberRowSettings(context)
     val smartCompositionStore = SmartCompositionSettings(context)
     val smartGestureStore = SmartGestureSettings(context)
+    val letterReturnStore = LetterPageReturnSettings(context)
     val personalSuggestionStore = PersonalSuggestionSettings(context)
 }

@@ -8,9 +8,11 @@ import app.funput.funput.ime.editing.EditorInfoPolicy
 import app.funput.funput.ime.editing.ImeEditorRuntime
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
+import app.funput.funput.ime.editing.layout.LetterPageReturn
 import app.funput.funput.ime.localtext.ImeLocalTextFields
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
+import app.funput.funput.ime.settings.layout.LetterPageReturnSettings
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.ShiftState
@@ -28,6 +30,7 @@ internal class ImeEditingSession(
     val suggestionService: PersonalSuggestionService,
     val suggestionSettings: PersonalSuggestionSettings,
     val clipboard: ImeClipboardSession,
+    val letterReturn: LetterPageReturn,
 ) {
     private val localText = ImeLocalTextFields(nativeEngine) { actionHandler.language }
 
@@ -130,5 +133,8 @@ internal fun createImeEditingSession(
         suggestionService = suggestionService,
         suggestionSettings = PersonalSuggestionSettings(context),
         clipboard = clipboard,
+        letterReturn = LetterPageReturn(connection).also {
+            it.observe(LetterPageReturnSettings(context), scope)
+        },
     )
 }

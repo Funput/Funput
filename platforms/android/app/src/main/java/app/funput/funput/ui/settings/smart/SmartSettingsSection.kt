@@ -14,11 +14,13 @@ internal fun SmartSettingsSection(
     preferences: SmartCompositionPreferences,
     personalSuggestionsEnabled: Boolean,
     smartGesturesEnabled: Boolean,
+    returnsToLettersEnabled: Boolean,
     onSmartRestoreChanged: (Boolean) -> Unit,
     onSpellCheckChanged: (Boolean) -> Unit,
     onAutoCapitalizeChanged: (Boolean) -> Unit,
     onPersonalSuggestionsChanged: (Boolean) -> Unit,
     onSmartGesturesChanged: (Boolean) -> Unit,
+    onReturnsToLettersChanged: (Boolean) -> Unit,
 ) {
     SettingsSection(
         title = stringResource(R.string.settings_section_smart),
@@ -69,6 +71,16 @@ internal fun SmartSettingsSection(
                     checked = smartGesturesEnabled,
                     iconRes = R.drawable.ic_keyboard,
                     onCheckedChange = onSmartGesturesChanged,
+                )
+            },
+            { position ->
+                SettingsSwitchRow(
+                    position = position,
+                    title = stringResource(R.string.settings_letter_return_title),
+                    summary = stringResource(R.string.settings_letter_return_summary),
+                    checked = returnsToLettersEnabled,
+                    iconRes = R.drawable.ic_keyboard,
+                    onCheckedChange = onReturnsToLettersChanged,
                 )
             },
         ),
