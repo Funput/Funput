@@ -46,8 +46,12 @@ private fun DarkSettingsPreview() {
     )
 }
 
+/**
+ * The settings screen filled with representative values. Shared by the IDE previews above and the
+ * JVM screenshot tests, so both show the same screen.
+ */
 @Composable
-private fun SettingsPreview(
+internal fun SettingsPreview(
     appearanceMode: AppearanceMode = AppearanceMode.LIGHT,
     keyboardSetupStatus: KeyboardSetupStatus = KeyboardSetupStatus.NOT_ENABLED,
 ) {

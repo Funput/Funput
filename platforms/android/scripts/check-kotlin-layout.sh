@@ -72,6 +72,8 @@ readonly roots=(
     "$android_root/app/src/androidTest/java/app/funput/funput/ui/shortcuts"
     "$android_root/shortcut-store/src/main/java/app/funput/funput/shortcuts"
     "$android_root/shortcut-store/src/test/java/app/funput/funput/shortcuts"
+    "$android_root/ui-testing/src/main/java/app/funput/funput/uitesting"
+    "$android_root/app/src/test/java/app/funput/funput/screenshots"
 )
 violations=0
 

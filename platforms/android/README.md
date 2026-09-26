@@ -164,6 +164,7 @@ Telex nâng cao, VNI, matching và smart case của Gõ tắt.
 | `keyboard-renderer` | Bố cục co giãn, chạm, trợ năng và vẽ bằng Canvas |
 | `theme-runtime` | Hợp đồng theme có version, kiểm tra hợp lệ, phân giải token, truy cập asset an toàn |
 | `theme-store` | Lưu theme tự tạo: JSON, bản nháp và kho asset |
+| `ui-testing` | Chỉ dùng cho test: Robolectric + Roborazzi để dựng và chụp màn Compose trên JVM |
 
 Chiều phụ thuộc là **một chiều, cố ý**:
 
@@ -177,7 +178,21 @@ app ──▶ ime ──▶ keyboard-ui ──▶ keyboard-renderer ──▶ th
  └──▶ theme-runtime ──────────────────────────────────────┘
 ```
 
-`theme-runtime` là lá — nó không phụ thuộc module nào khác trong dự án.
+`theme-runtime` là lá — nó không phụ thuộc module nào khác trong dự án. `ui-testing` đứng ngoài
+đồ thị này: module khác chỉ kéo nó vào bằng `testImplementation`, nên nó không bao giờ vào APK.
+
+### Test giao diện trên JVM
+
+Test Compose chạy bằng Robolectric trong `testDebugUnitTest`, không cần emulator. Chụp ảnh
+màn hình bằng Roborazzi:
+
+```bash
+./gradlew :app:recordRoborazziDebug
+```
+
+Ảnh nằm ở `app/build/outputs/roborazzi/`. Chạy `testDebugUnitTest` bình thường thì màn vẫn được
+dựng (bắt crash) nhưng không ghi ảnh. Workflow `android-screenshots` chụp lại trên mỗi PR đụng
+tới Android và đính ảnh vào artifact.
 
 ### Build
 
