@@ -31,6 +31,7 @@ internal class EmojiPanelView @JvmOverloads constructor(
         }
     private val emoji = EmojiBrowserPanelView(context)
     private val kaomoji = KaomojiPanelView(context)
+    var searchField by emoji::searchField
 
     init {
         KeyboardComposeLifecycle.install(this)

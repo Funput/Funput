@@ -2,18 +2,14 @@ package app.funput.funput.ime
 
 import android.content.Context
 import android.view.inputmethod.InputConnection
-import app.funput.funput.ime.clipboard.controller.ImeClipboardController
-import app.funput.funput.ime.clipboard.controller.ImeClipboardHistoryController
-import app.funput.funput.ime.clipboard.persistence.ClipboardHistoryStore
-import app.funput.funput.ime.clipboard.platform.AndroidClipboardGateway
-import app.funput.funput.ime.clipboard.ui.ImeClipboardUiBinding
+import app.funput.funput.ime.clipboard.session.ImeClipboardSession
 import app.funput.funput.ime.editing.AndroidCompositionSession
 import app.funput.funput.ime.editing.EditorInfoPolicy
 import app.funput.funput.ime.editing.ImeEditorRuntime
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
+import app.funput.funput.ime.localtext.ImeLocalTextFields
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
-import app.funput.funput.ime.settings.ClipboardSettings
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -31,10 +27,10 @@ internal class ImeEditingSession(
     val actionHandler: ImeKeyActionHandler,
     val suggestionService: PersonalSuggestionService,
     val suggestionSettings: PersonalSuggestionSettings,
-    val clipboardController: ImeClipboardController,
-    val clipboardHistoryController: ImeClipboardHistoryController,
-    val clipboardUiBinding: ImeClipboardUiBinding,
+    val clipboard: ImeClipboardSession,
 ) {
+    private val localText = ImeLocalTextFields(nativeEngine) { actionHandler.language }
+
     fun startActionHandler() {
         actionHandler.start(
             allowComposition = editorRuntime.policy.editorMode.supportsVietnameseComposition,
@@ -46,25 +42,27 @@ internal class ImeEditingSession(
 
     fun startInputView(policy: EditorInfoPolicy) {
         actionHandler.typingSession.begin()
-        clipboardController.start(policy.editorMode)
-        clipboardHistoryController.start(policy.editorMode)
+        clipboard.start(policy.editorMode)
     }
 
     /** Ends the current input without tearing down the engine. */
     fun finishInput() {
         actionHandler.typingSession.end()
-        clipboardController.stop()
-        clipboardHistoryController.stop()
+        clipboard.stop()
         actionHandler.finish()
         editorRuntime.finish()
         suggestionService.finish()
     }
 
     fun finishInputView() {
-        actionHandler.typingSession.end(); clipboardController.stop(); clipboardHistoryController.stop()
+        actionHandler.typingSession.end()
+        clipboard.stop()
     }
 
-    fun bindClipboard(view: FunputKeyboardView) = clipboardUiBinding.attach(view)
+    fun bindPanels(view: FunputKeyboardView) {
+        clipboard.attach(view)
+        localText.attach(view)
+    }
 
     fun restartComposition(method: KeyboardInputMethod, view: FunputKeyboardView?) {
         actionHandler.finish()
@@ -75,16 +73,19 @@ internal class ImeEditingSession(
 
     fun windowHidden() {
         actionHandler.typingSession.end()
-        clipboardController.stop()
-        clipboardHistoryController.stop()
+        clipboard.stop()
         suggestionService.flush()
     }
 
     fun close() {
-        clipboardUiBinding.close()
-        clipboardHistoryController.close()
-        clipboardController.close()
+        clipboard.close()
         suggestionService.close()
+    }
+
+    /** Only once the framework is done with input: closed engines refuse every call. */
+    fun closeEngines() {
+        nativeEngine.close()
+        localText.close()
     }
 }
 
@@ -115,26 +116,12 @@ internal fun createImeEditingSession(
         context = context, show = showSuggestions,
         shift = currentShiftState, acknowledgeReset = acknowledgeReset,
     )
-    val clipboardPreferences = ClipboardSettings(context).preferences
-    val clipboardController = ImeClipboardController(
-        parentScope = scope,
-        preferences = clipboardPreferences,
-        gateway = AndroidClipboardGateway(context),
-        storeFactory = { expiry -> ClipboardHistoryStore.from(context, expiry) },
-        commitText = actionHandler::onClipboardSelected,
-        afterCommit = { suggestionService.consume(actionHandler.takeSuggestionUpdate()) },
-    )
-    val clipboardHistoryController = ImeClipboardHistoryController(
-        parentScope = scope,
-        preferences = clipboardPreferences,
-        storeFactory = { expiry -> ClipboardHistoryStore.from(context, expiry) },
+    val clipboard = ImeClipboardSession(
+        context = context,
+        scope = scope,
         commitText = actionHandler::onClipboardSelected,
         afterCommit = { suggestionService.consume(actionHandler.takeSuggestionUpdate()) },
         preparePanel = { actionHandler.finish(); showSuggestions(emptyList()) },
-        onCleared = clipboardController::historyCleared,
-    )
-    val clipboardUiBinding = ImeClipboardUiBinding(
-        context, scope, clipboardController, clipboardHistoryController,
     )
     return ImeEditingSession(
         nativeEngine = nativeEngine,
@@ -142,8 +129,6 @@ internal fun createImeEditingSession(
         actionHandler = actionHandler,
         suggestionService = suggestionService,
         suggestionSettings = PersonalSuggestionSettings(context),
-        clipboardController = clipboardController,
-        clipboardHistoryController = clipboardHistoryController,
-        clipboardUiBinding = clipboardUiBinding,
+        clipboard = clipboard,
     )
 }

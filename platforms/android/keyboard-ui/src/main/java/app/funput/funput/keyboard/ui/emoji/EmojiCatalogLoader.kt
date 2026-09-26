@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Paint
 import android.os.Handler
 import android.os.Looper
+import app.funput.funput.keyboard.ui.emoji.search.EmojiSearchIndex
 import java.util.concurrent.Executors
 
 internal object EmojiCatalogLoader {

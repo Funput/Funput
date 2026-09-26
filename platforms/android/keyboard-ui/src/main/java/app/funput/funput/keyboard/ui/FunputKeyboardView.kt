@@ -16,6 +16,7 @@ import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelCoordinator
 import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
+import app.funput.funput.keyboard.ui.localtext.LocalTextFields
 import app.funput.funput.keyboard.ui.panel.FunputPanelFactory
 import app.funput.funput.keyboard.ui.panel.KeyboardClipboardPanelState
 import app.funput.funput.keyboard.ui.placement.KeyboardPlacementHostController
@@ -34,10 +35,11 @@ class FunputKeyboardView @JvmOverloads constructor(
     private val clipboardState = KeyboardClipboardPanelState(
         keyboardSurface, { editorMode }, { activePanel }, ::showLettersPanel,
     )
+    val localTextFields = LocalTextFields()
     private val panelFactory = FunputPanelFactory(
         context, callbacks, { keyboardSurface.keyboardTheme },
         { keyboardSurface.isHapticFeedbackEnabled }, { keyboardSurface.isSoundEffectsEnabled },
-        clipboardState, ::showLettersPanel,
+        clipboardState, localTextFields, ::showLettersPanel,
     )
     private val panelCoordinator = KeyboardPanelCoordinator(
         keyboardSurface = keyboardSurface,

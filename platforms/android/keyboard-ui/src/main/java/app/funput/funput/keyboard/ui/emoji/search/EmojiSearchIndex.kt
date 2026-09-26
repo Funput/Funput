@@ -1,5 +1,6 @@
-package app.funput.funput.keyboard.ui.emoji
+package app.funput.funput.keyboard.ui.emoji.search
 
+import app.funput.funput.keyboard.ui.emoji.EmojiItem
 import java.text.Normalizer
 import java.util.Locale
 

@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.ui.emoji
+package app.funput.funput.keyboard.ui.emoji.search
 
 import android.content.Context
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -6,16 +6,19 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.funput.funput.keyboard.ui.emoji.EmojiCell
+import app.funput.funput.keyboard.ui.emoji.EmojiGridMetrics
+import app.funput.funput.keyboard.ui.emoji.EmojiItem
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelComposeView
 
 internal class EmojiResultsView(context: Context) : KeyboardPanelComposeView(context) {

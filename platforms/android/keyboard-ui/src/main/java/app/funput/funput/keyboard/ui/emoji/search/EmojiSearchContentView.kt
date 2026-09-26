@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.ui.emoji
+package app.funput.funput.keyboard.ui.emoji.search
 
 import android.content.Context
 import androidx.compose.foundation.layout.Box
@@ -14,11 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import app.funput.funput.keyboard.KeyboardSurfaceView
+import app.funput.funput.keyboard.layout.panels.PanelSearchKeyboardLayouts
 import app.funput.funput.keyboard.model.KeyAction
+import app.funput.funput.keyboard.model.KeyboardEnterAction
+import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.ui.R
+import app.funput.funput.keyboard.ui.emoji.EmojiEmptyState
+import app.funput.funput.keyboard.ui.emoji.EmojiItem
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelComposeView
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
-import app.funput.funput.keyboard.model.KeyboardEnterAction
-import app.funput.funput.keyboard.ui.R
 import app.funput.funput.theme.KeyboardTheme
 
 internal class EmojiSearchContentView(context: Context) : KeyboardPanelComposeView(context) {
@@ -35,8 +39,9 @@ internal class EmojiSearchContentView(context: Context) : KeyboardPanelComposeVi
     private var haptics by mutableStateOf(true)
     private var sounds by mutableStateOf(true)
     private val emptyLabel = context.getString(R.string.emoji_search_empty)
+    private var keyboardMethod: KeyboardInputMethod? = null
     private val keyboard = KeyboardSurfaceView(context).apply {
-        layoutOverride = EmojiSearchKeyboardLayout.layout
+        layoutOverride = searchLayout(keyboardMethod)
         suggestionBarEnabled = false
         enterAction = KeyboardEnterAction.Custom("Xong")
         callbacks.onKeyAction = ::handleAction
@@ -60,6 +65,10 @@ internal class EmojiSearchContentView(context: Context) : KeyboardPanelComposeVi
         this.state = state
         this.items = items
         this.palette = palette
+        if (state.inputMethod != keyboardMethod) {
+            keyboardMethod = state.inputMethod
+            keyboard.layoutOverride = searchLayout(keyboardMethod)
+        }
     }
 
     @Composable
@@ -86,6 +95,9 @@ internal class EmojiSearchContentView(context: Context) : KeyboardPanelComposeVi
             }
         }
     }
+
+    private fun searchLayout(inputMethod: KeyboardInputMethod?) =
+        PanelSearchKeyboardLayouts.letters(inputMethod, spaceLabel = "Tìm emoji")
 
     private fun handleAction(action: KeyAction) = when (action) {
         is KeyAction.Input -> onInput(action.text)

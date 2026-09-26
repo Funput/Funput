@@ -65,7 +65,7 @@ class FunputInputMethodService : InputMethodService() {
         ImeKeyboardCallbackBinder.bind(view, actionHandler, editorRuntime, suggestionService,
             systemInputMethodSwitcher)
         ImePlacementBinder.bind(view, this, serviceScope)
-        session.bindClipboard(view)
+        session.bindPanels(view)
         EmojiCatalogPreloader.schedule(view)
     }
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
@@ -121,7 +121,7 @@ class FunputInputMethodService : InputMethodService() {
         // super.onDestroy() re-enters onFinishInput() while input is still open, which
         // routes back through the engine; close it only after the framework is done.
         super.onDestroy()
-        nativeEngine.close()
+        session.closeEngines()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent) =

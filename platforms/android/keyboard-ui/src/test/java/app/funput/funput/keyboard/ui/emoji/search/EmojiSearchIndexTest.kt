@@ -1,5 +1,7 @@
-package app.funput.funput.keyboard.ui.emoji
+package app.funput.funput.keyboard.ui.emoji.search
 
+import app.funput.funput.keyboard.ui.emoji.EmojiCategory
+import app.funput.funput.keyboard.ui.emoji.EmojiItem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -12,6 +14,15 @@ class EmojiSearchIndexTest {
 
     @Test fun `Vietnamese search ignores accents`() {
         assertEquals(listOf(coffee), index.search("ca phe"))
+    }
+
+    @Test fun `đ matches with or without its stroke`() {
+        val red = item("🔴", "red circle", "hình tròn đỏ", "red")
+        val strokes = EmojiSearchIndex(listOf(red, smile))
+        assertEquals(red, strokes.search("đỏ").first())
+        assertEquals(red, strokes.search("do").first())
+        assertEquals(red, strokes.search("ĐỎ").first())
+        assertEquals(smile, strokes.search("cười toe").first())
     }
 
     @Test fun `English multiple tokens require every token`() {
