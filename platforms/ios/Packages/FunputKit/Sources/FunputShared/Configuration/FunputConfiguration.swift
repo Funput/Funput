@@ -21,6 +21,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var showsKeyPreviews: Bool
     /// Double-tap space, spacebar cursor panning and swipe-to-delete-word, as one switch.
     public var smartGesturesEnabled: Bool
+    /// Whether a space typed after punctuation on a symbol page brings back the letters.
+    public var returnsToLettersAfterPunctuation: Bool
     public var showsNumberRow: Bool
     public var layoutPreset: KeyboardLayoutPreset
     public var keySizing: KeyboardKeySizing
@@ -42,7 +44,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
         case eagerRestore, autoCapitalize, selectedThemeID
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
-        case smartGesturesEnabled
+        case smartGesturesEnabled, returnsToLettersAfterPunctuation
         case showsNumberRow, layoutPreset, keySizing, heightScale, keyboardAppearance
         case personalSuggestionsEnabled, personalSuggestionResetToken, languageToggleEnabled
         case clipboardEnabled, clipboardExpiry, schemaVersion
@@ -61,6 +63,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
         smartGesturesEnabled: Bool = true,
+        returnsToLettersAfterPunctuation: Bool = true,
         showsNumberRow: Bool = false,
         layoutPreset: KeyboardLayoutPreset = .funput,
         keySizing: KeyboardKeySizing = .funput,
@@ -85,6 +88,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
         self.smartGesturesEnabled = smartGesturesEnabled
+        self.returnsToLettersAfterPunctuation = returnsToLettersAfterPunctuation
         self.showsNumberRow = showsNumberRow
         self.layoutPreset = layoutPreset
         self.keySizing = keySizing
@@ -111,5 +115,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 14
+    public static let currentSchemaVersion = 15
 }

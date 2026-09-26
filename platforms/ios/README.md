@@ -41,9 +41,9 @@
 | | |
 |---|---|
 | ⌨️ **Ba kiểu gõ** | Telex · **Telex nâng cao** (thêm `w` đầu từ và phím tắt `[` `]`) · VNI |
-| 🧠 **Nhập liệu thông minh** | Khôi phục từ thông minh · khôi phục sớm · kiểm tra chính tả · tự viết hoa |
+| 🧠 **Nhập liệu thông minh** | Khôi phục từ thông minh · khôi phục sớm · kiểm tra chính tả · tự viết hoa · tự về bảng chữ sau dấu câu |
 | 💬 **Gợi ý từ** | Từ đã học ưu tiên trước, từ điển tiếng Anh 30.000 từ lấp ô trống ở cả VI và EN; **lưu trên thiết bị** |
-| 👆 **Cử chỉ thông minh** | Gõ đúp phím cách để chấm câu · giữ phím cách rồi kéo để di chuyển con trỏ · vuốt trái phím xoá để xoá cả từ |
+| 👆 **Cử chỉ thông minh** | Gõ đúp phím cách để chấm câu · giữ phím cách rồi kéo để di chuyển con trỏ · vuốt trái phím xoá để xoá cả từ · giữ phím chấm để chọn nhanh ký hiệu |
 | 🎨 **Theme** | 5 theme dựng sẵn, gồm cả Liquid Glass trên iOS 26 |
 | 🔢 **Bố cục** | Bật hàng phím số · chọn kiểu Funput hoặc “Giống hệ thống” |
 | 📋 **Lịch sử clipboard** | Chỉ lưu thứ bạn đã dán qua Funput, trên thiết bị |

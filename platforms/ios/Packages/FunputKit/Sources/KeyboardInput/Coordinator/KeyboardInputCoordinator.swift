@@ -14,6 +14,8 @@ public final class KeyboardInputCoordinator {
     /// Mirrors ``FunputConfiguration/smartGesturesEnabled`` for the gestures the engine
     /// owns; the touch-side gestures read it from ``KeyboardPresentation`` instead.
     public internal(set) var smartGesturesEnabled = true
+    /// Mirrors ``FunputConfiguration/returnsToLettersAfterPunctuation``.
+    public internal(set) var returnsToLettersAfterPunctuation = true
     var documentSynchronizer = KeyboardDocumentSynchronizer()
     var suggestionTracker = AuthoredTokenTracker()
     /// True while Shift was raised by autocapitalization (sentence/word start), not by

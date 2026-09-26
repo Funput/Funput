@@ -65,7 +65,8 @@ public enum KeyboardLayoutResolver {
             role: key.role,
             widthWeight: key.widthWeight,
             accessibilityLabel: "Dấu cách. Giữ rồi kéo để di chuyển con trỏ",
-            alternates: key.alternates
+            alternates: key.alternates,
+            alternateColumns: key.alternateColumns
         )
     }
 

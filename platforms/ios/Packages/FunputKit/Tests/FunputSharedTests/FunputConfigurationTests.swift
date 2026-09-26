@@ -28,7 +28,8 @@ struct FunputConfigurationTests {
         #expect(config.clipboardExpiry == .hour)
         #expect(config.layoutPreset == .funput)
         #expect(config.keyboardAppearance == .system) // follow the host app, as before v12
-        #expect(config.schemaVersion == 14)
+        #expect(config.returnsToLettersAfterPunctuation)
+        #expect(config.schemaVersion == 15)
     }
 
     @Test("Configuration survives a JSON round-trip")
@@ -119,5 +120,18 @@ struct FunputConfigurationTests {
         #expect(decoded.inputMethod == .telex)
         #expect(decoded.layoutPreset == .system)
         #expect(decoded.schemaVersion == FunputConfiguration.currentSchemaVersion)
+    }
+
+    /// v15 added `returnsToLettersAfterPunctuation`, on for upgrading users too, while a
+    /// stored choice to turn it off is kept.
+    @Test("Schema 14 payloads return to letters after punctuation")
+    func migratesLetterReturnDefault() throws {
+        let legacy = Data(#"{"inputMethod":"telex","schemaVersion":14}"#.utf8)
+        let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: legacy)
+        #expect(decoded.returnsToLettersAfterPunctuation)
+        #expect(decoded.schemaVersion == FunputConfiguration.currentSchemaVersion)
+        let optedOut = Data(#"{"returnsToLettersAfterPunctuation":false,"schemaVersion":15}"#.utf8)
+        #expect(try !JSONDecoder().decode(FunputConfiguration.self, from: optedOut)
+            .returnsToLettersAfterPunctuation)
     }
 }

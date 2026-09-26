@@ -13,7 +13,7 @@ extension KeyboardInputCoordinator {
         if key.role.mutatesDocument {
             return commit(
                 writer: writer,
-                closesEpoch: closesCompositionEpoch(for: key),
+                closesEpoch: closesCompositionEpoch(role: key.role, text: key.label),
                 preservesOneShotShift: key.role != .character,
                 reopensPreviousWord: key.role == .backspace
             ) { builder in
@@ -37,22 +37,6 @@ extension KeyboardInputCoordinator {
         )
     }
 
-    @discardableResult
-    public func handleAlternate(
-        _ alternate: KeyAlternate,
-        from key: KeySpec,
-        writer: any KeyboardDocumentWriting
-    ) -> KeyboardPostCommitEffects {
-        guard key.role == .character else { return .none }
-        return commit(writer: writer, preservesOneShotShift: false) { builder in
-            input(
-                alternate.text(for: state.shiftState),
-                builder: &builder
-            )
-            consumeOneShotShift()
-        }
-    }
-
     private func applyDocumentKey(
         _ key: KeySpec,
         builder: inout InputTransactionBuilder
@@ -65,6 +49,7 @@ extension KeyboardInputCoordinator {
         case .vniModifier, .punctuation:
             input(key.label, builder: &builder)
         case .space:
+            returnToLettersAfterPunctuationIfNeeded()
             if !applySmartSpace(builder: &builder) { input(" ", builder: &builder) }
         case .enter: input("\n", builder: &builder)
         // Re-opening the previous word is deferred to `commit`, which runs it once the
@@ -74,13 +59,15 @@ extension KeyboardInputCoordinator {
         }
     }
 
-    private func closesCompositionEpoch(for key: KeySpec) -> Bool {
+    /// Whether typing `text` from a key of this role ends the word being composed. Advanced
+    /// Telex keeps `[` and `]` inside the word because they are its ơ and ư shortcuts.
+    func closesCompositionEpoch(role: KeyRole, text: String) -> Bool {
         if state.inputMethod == .telexAdvanced,
-           key.role == .punctuation,
-           (key.label == "[" || key.label == "]") {
+           role == .punctuation,
+           (text == "[" || text == "]") {
             return false
         }
-        return switch key.role {
+        return switch role {
         case .space, .punctuation, .enter: true
         default: false
         }

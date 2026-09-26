@@ -41,8 +41,9 @@ struct EnglishLexiconWorkerTests {
             results.yield(values.map(\.text))
         }
         worker.configure(.init(enabled: true, hasFullAccess: false, resetToken: nil))
-        worker.learn("whimsy", after: nil)
-        worker.learn("whimsy", after: nil)
+        for _ in 0..<PersonalSuggestionEngine.unrecognizedPromotionUses {
+            worker.learn("whimsy", after: nil)
+        }
         worker.query(.init(prefix: "wh", generation: 1, context: nil))
         #expect(await iterator.next() == ["whimsy"])
         worker.configure(.init(enabled: false, hasFullAccess: false, resetToken: nil))

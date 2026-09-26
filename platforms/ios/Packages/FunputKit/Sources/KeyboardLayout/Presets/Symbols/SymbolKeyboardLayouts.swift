@@ -92,7 +92,7 @@ public enum SymbolKeyboardLayouts {
             specialKey("letters-\(page)", "ABC", .letters, weight: 1.7, accessibilityLabel: "Chữ cái"),
             specialKey("comma-\(page)", ",", .punctuation, accessibilityLabel: "Dấu phẩy"),
             symbolSpace(page: page, secure: secure),
-            specialKey("period-\(page)", ".", .punctuation, accessibilityLabel: "Dấu chấm"),
+            periodKey("period-\(page)"),
             specialKey("enter-\(page)", "", .enter, weight: 1.7, accessibilityLabel: "Enter"),
         ])
     }
