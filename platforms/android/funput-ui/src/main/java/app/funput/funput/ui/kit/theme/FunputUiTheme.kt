@@ -26,6 +26,9 @@ fun FunputUiTheme(isDark: Boolean = isSystemInDarkTheme(), content: @Composable 
     }
 }
 
+/** How much a disabled control or row is dimmed; one value so every disabled thing reads alike. */
+internal const val DisabledAlpha: Float = 0.4f
+
 /** Entry point to the current FunputUI theme, like `MaterialTheme` is for Material. */
 object FunputUi {
     /** Colour roles for the current appearance. */
