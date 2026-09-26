@@ -15,26 +15,29 @@ extension EmojiKeyboardView {
     }
 
     func clearSearch() {
-        searchQuery = ""
+        searchComposer.reset()
         updateSearchUI()
     }
 
     func resetSearch() {
         searchState = .browsing
-        searchQuery = ""
+        searchComposer.reset()
         searchShiftState = .lowercase
         updateSearchUI()
     }
 
     func handleSearchKey(_ event: KeyboardKeyEvent) {
         guard event.phase == .released || event.phase == .repeated else { return }
-        switch event.key.role {
+        let key = event.key
+        switch key.role {
         case .character:
-            appendSearchCharacter(event.key)
+            searchComposer.apply(.text(searchCharacter(for: key)))
+        case .vniModifier, .punctuation:
+            searchComposer.apply(.text(key.label))
         case .space:
-            appendSearchSpace()
+            searchComposer.apply(.space)
         case .backspace:
-            if !searchQuery.isEmpty { searchQuery.removeLast() }
+            searchComposer.apply(.deleteBackward)
         case .shift:
             searchShiftState = searchShiftState == .lowercase ? .uppercase : .lowercase
         case .enter:
@@ -74,24 +77,21 @@ extension EmojiKeyboardView {
 
     func applySearchKeyboardPresentation() {
         var value = presentation
-        value.layout = EmojiSearchKeyboardLayout.layout
+        value.layout = PanelSearchKeyboardLayouts.letters(
+            presentation.layout.inputMethod,
+            spaceLabel: "Tìm emoji"
+        )
         value.shiftState = searchShiftState
         value.language = .vietnamese
         value.enterAction = .custom("Xong")
         searchKeyboard.presentation = value
     }
 
-    private func appendSearchCharacter(_ key: KeySpec) {
-        let value = searchShiftState == .lowercase
-            ? key.label
-            : (key.shiftedLabel ?? key.label.uppercased())
-        searchQuery.append(contentsOf: value)
-        if searchShiftState == .uppercase { searchShiftState = .lowercase }
-    }
-
-    private func appendSearchSpace() {
-        guard !searchQuery.isEmpty, !searchQuery.hasSuffix(" ") else { return }
-        searchQuery.append(" ")
+    /// Applies the one-shot Shift, which then drops back to lowercase.
+    private func searchCharacter(for key: KeySpec) -> String {
+        guard searchShiftState == .uppercase else { return key.label }
+        searchShiftState = .lowercase
+        return key.shiftedLabel ?? key.label.uppercased()
     }
 }
 #endif

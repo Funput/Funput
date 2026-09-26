@@ -15,15 +15,15 @@ public extension KeyboardInputCoordinator {
         if configuration.inputMethod.isTelexFamily {
             preferredTelexMethod = configuration.inputMethod
         }
-        composer.configure(
-            FunputCompositionOptions(
-                inputMethod: configuration.inputMethod.engineMethod,
-                toneStyle: configuration.toneStyle.engineToneStyle,
-                smartRestore: configuration.smartRestore,
-                eagerRestore: configuration.eagerRestore,
-                spellCheck: configuration.spellCheck
-            )
+        let options = FunputCompositionOptions(
+            inputMethod: configuration.inputMethod.engineMethod,
+            toneStyle: configuration.toneStyle.engineToneStyle,
+            smartRestore: configuration.smartRestore,
+            eagerRestore: configuration.eagerRestore,
+            spellCheck: configuration.spellCheck
         )
+        composer.configure(options)
+        compositionOptions = options
         shiftController.resetTapSequence()
         spaceTapTracker.reset()
         smartGesturesEnabled = configuration.smartGesturesEnabled

@@ -25,7 +25,12 @@ public final class EmojiKeyboardView: UIView {
     var selectedCategory = EmojiCategory.smileysPeople
     var presentation = KeyboardPresentation()
     var searchState = EmojiSearchState.browsing
-    var searchQuery = ""
+    /// Where the search keys land. The keyboard injects an engine-backed field so the
+    /// query composes Vietnamese; without one, keys are kept exactly as typed.
+    public var searchComposer: any LocalTextComposing = PlainLocalTextComposer() {
+        didSet { resetSearch() }
+    }
+    var searchQuery: String { searchComposer.text }
     var searchShiftState = ShiftState.lowercase
     let catalog: EmojiCatalog
     let searchIndex: EmojiSearchIndex
