@@ -196,6 +196,14 @@ màn hình bằng Roborazzi:
 dựng (bắt crash) nhưng không ghi ảnh. Workflow `android-screenshots` chụp lại trên mỗi PR đụng
 tới Android và đính ảnh vào artifact.
 
+**FunputUI dùng ảnh golden.** Ảnh mẫu của `:funput-ui` nằm trong `funput-ui/src/test/screenshots`
+và job `android` so từng PR với chúng (`:funput-ui:verifyRoborazziDebug`). Ảnh golden phải được
+ghi trên Linux: khi cố ý đổi một component, tải artifact `funput-ui-goldens` của workflow
+`android-screenshots` trên PR đó và commit đè lên thư mục trên. Ghi trên Mac chỉ để tự xem.
+
+**Catalog.** Bản debug có thêm biểu tượng "Funput UI" mở màn trưng bày mọi component, có nút
+chuyển tầng kính để so kính thật với bản mờ đục ngay trên máy. Bản release không có nó.
+
 ### Build
 
 Mở thư mục này bằng Android Studio bản stable mới nhất, hoặc chạy:

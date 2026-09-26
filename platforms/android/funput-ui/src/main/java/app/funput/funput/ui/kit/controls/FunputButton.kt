@@ -54,10 +54,11 @@ fun FunputButton(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .defaultMinSize(minHeight = 48.dp, minWidth = 64.dp)
+            // Dim the whole button, fill included: a full-strength fill reads as tappable.
+            .alpha(if (enabled) 1f else DisabledAlpha)
             .clip(FunputUi.shapes.capsule)
             .background(fill)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .alpha(if (enabled) 1f else DisabledAlpha)
             .padding(horizontal = FunputUi.spacing.large, vertical = FunputUi.spacing.medium),
     ) {
         BasicText(
