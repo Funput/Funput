@@ -16,6 +16,15 @@ class EmojiSearchIndexTest {
         assertEquals(listOf(coffee), index.search("ca phe"))
     }
 
+    @Test fun `đ matches with or without its stroke`() {
+        val red = item("🔴", "red circle", "hình tròn đỏ", "red")
+        val strokes = EmojiSearchIndex(listOf(red, smile))
+        assertEquals(red, strokes.search("đỏ").first())
+        assertEquals(red, strokes.search("do").first())
+        assertEquals(red, strokes.search("ĐỎ").first())
+        assertEquals(smile, strokes.search("cười toe").first())
+    }
+
     @Test fun `English multiple tokens require every token`() {
         assertEquals(listOf(tears), index.search("happy tears"))
     }

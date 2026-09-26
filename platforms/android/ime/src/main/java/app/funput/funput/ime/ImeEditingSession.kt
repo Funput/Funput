@@ -8,6 +8,7 @@ import app.funput.funput.ime.editing.EditorInfoPolicy
 import app.funput.funput.ime.editing.ImeEditorRuntime
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
+import app.funput.funput.ime.localtext.ImeLocalTextFields
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
@@ -28,6 +29,8 @@ internal class ImeEditingSession(
     val suggestionSettings: PersonalSuggestionSettings,
     val clipboard: ImeClipboardSession,
 ) {
+    private val localText = ImeLocalTextFields(nativeEngine) { actionHandler.language }
+
     fun startActionHandler() {
         actionHandler.start(
             allowComposition = editorRuntime.policy.editorMode.supportsVietnameseComposition,
@@ -56,7 +59,10 @@ internal class ImeEditingSession(
         clipboard.stop()
     }
 
-    fun bindClipboard(view: FunputKeyboardView) = clipboard.attach(view)
+    fun bindPanels(view: FunputKeyboardView) {
+        clipboard.attach(view)
+        localText.attach(view)
+    }
 
     fun restartComposition(method: KeyboardInputMethod, view: FunputKeyboardView?) {
         actionHandler.finish()
@@ -74,6 +80,12 @@ internal class ImeEditingSession(
     fun close() {
         clipboard.close()
         suggestionService.close()
+    }
+
+    /** Only once the framework is done with input: closed engines refuse every call. */
+    fun closeEngines() {
+        nativeEngine.close()
+        localText.close()
     }
 }
 

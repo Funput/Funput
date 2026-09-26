@@ -5,6 +5,7 @@ import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.ui.EmojiPanelView
 import app.funput.funput.keyboard.ui.FunputKeyboardCallbacks
 import app.funput.funput.keyboard.ui.clipboard.ClipboardPanelView
+import app.funput.funput.keyboard.ui.localtext.LocalTextFields
 import app.funput.funput.theme.KeyboardTheme
 
 internal class FunputPanelFactory(
@@ -14,6 +15,7 @@ internal class FunputPanelFactory(
     private val haptics: () -> Boolean,
     private val sounds: () -> Boolean,
     private val clipboardState: KeyboardClipboardPanelState,
+    private val localTextFields: LocalTextFields,
     private val showLetters: () -> Unit,
 ) {
     fun createEmoji() = EmojiPanelView(context).apply {
@@ -23,6 +25,7 @@ internal class FunputPanelFactory(
         onEmojiSelected = callbacks::dispatchEmoji
         onBackspaceRequested = callbacks::dispatch
         onLettersRequested = showLetters
+        searchField = { localTextFields.emojiSearch }
     }
 
     fun createClipboard() = ClipboardPanelView(context).apply {

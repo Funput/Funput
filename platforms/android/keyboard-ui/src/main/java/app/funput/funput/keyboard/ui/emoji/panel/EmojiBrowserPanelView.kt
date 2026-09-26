@@ -55,6 +55,7 @@ internal class EmojiBrowserPanelView(context: Context) : LinearLayout(context) {
     private var index = EmojiSearchIndex(emptyList())
     private lateinit var palette: KeyboardPanelPalette
     private val controller = EmojiSearchController(::renderSearch)
+    var searchField by controller::field
 
     init {
         orientation = VERTICAL
