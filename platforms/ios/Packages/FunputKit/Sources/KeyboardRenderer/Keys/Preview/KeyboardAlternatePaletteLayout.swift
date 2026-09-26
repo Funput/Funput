@@ -27,6 +27,7 @@ struct KeyboardAlternatePaletteLayout: Equatable {
 
     static func resolve(
         count: Int,
+        columns requestedColumns: Int? = nil,
         defaultIndex: Int = 0,
         sourceFrame: CGRect,
         bounds: CGRect
@@ -34,7 +35,7 @@ struct KeyboardAlternatePaletteLayout: Equatable {
         precondition((0..<count).contains(defaultIndex), "Default alternate must be in bounds")
         let safe = bounds.insetBy(dx: 6, dy: 4)
         let available = max(1, safe.width - padding * 2)
-        let columns = columnCount(count: count, available: available)
+        let columns = columnCount(count: count, requested: requestedColumns, available: available)
         let rows = Int(ceil(Double(count) / Double(columns)))
         let span = min(preferredSpan, (available + gap) / CGFloat(columns))
         let width = min(safe.width, CGFloat(columns) * span - gap + padding * 2)
@@ -70,11 +71,13 @@ struct KeyboardAlternatePaletteLayout: Equatable {
         )
     }
 
-    /// Wraps at ``preferredColumns`` and widens only when the set would otherwise need
-    /// more than ``maximumRows`` rows. The rows are then evened out, so thirteen cells
-    /// read as 5 + 5 + 3 rather than 6 + 6 + 1.
-    private static func columnCount(count: Int, available: CGFloat) -> Int {
+    /// A key that asks for a column count gets it, as far as the width allows. Otherwise
+    /// the grid wraps at ``preferredColumns`` and widens only when the set would need more
+    /// than ``maximumRows`` rows. The rows are then evened out, so thirteen cells read as
+    /// 5 + 5 + 3 rather than 6 + 6 + 1.
+    private static func columnCount(count: Int, requested: Int?, available: CGFloat) -> Int {
         let widthLimit = max(1, Int((available + gap) / minimumSpan))
+        if let requested { return min(count, min(widthLimit, max(1, requested))) }
         let wrapped = Int(ceil(Double(count) / Double(preferredColumns)))
         let rows = min(maximumRows, max(1, wrapped))
         let balanced = Int(ceil(Double(count) / Double(rows)))

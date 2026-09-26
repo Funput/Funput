@@ -21,7 +21,7 @@ struct VietnameseKeyAlternatesTests {
             == Array("OÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ").map(String.init))
     }
 
-    @Test("Only Text and Search alphabetic layouts expose alternates")
+    @Test("Only Text and Search alphabetic layouts expose letter alternates")
     func editorPolicy() {
         for method in KeyboardInputMethod.allCases {
             #expect(!alternates(
@@ -42,7 +42,8 @@ struct VietnameseKeyAlternatesTests {
         VietnameseKeyAlternates.values(for: character).map(\.text)
     }
 
+    /// Letter keys only: the period's symbol palette belongs to every text editor.
     private func alternates(in layout: KeyboardLayout) -> [KeyAlternate] {
-        layout.rows.flatMap(\.keys).flatMap(\.alternates)
+        layout.rows.flatMap(\.keys).filter { $0.role == .character }.flatMap(\.alternates)
     }
 }

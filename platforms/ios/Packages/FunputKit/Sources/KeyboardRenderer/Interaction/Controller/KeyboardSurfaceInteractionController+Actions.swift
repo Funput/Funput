@@ -16,6 +16,7 @@ extension KeyboardSurfaceInteractionController {
         let defaultIndex = preferredAlternateIndex(for: state.initialKey)
         state.alternateLayout = .resolve(
             count: state.initialKey.alternates.count,
+            columns: state.initialKey.alternateColumns,
             defaultIndex: defaultIndex,
             sourceFrame: sourceFrame,
             bounds: state.containerBounds

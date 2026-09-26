@@ -74,7 +74,7 @@ public enum EditorKeyboardLayouts {
             editorMode.supportsVietnameseComposition
                 ? standardSpaceKey()
                 : asciiSpaceKey(weight: 5.8),
-            specialKey("period", ".", .punctuation, accessibilityLabel: "Dấu chấm"),
+            periodKey("period"),
             specialKey("enter", "", .enter, weight: 1.7, accessibilityLabel: "Enter"),
         ]
     }

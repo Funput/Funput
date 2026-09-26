@@ -106,7 +106,7 @@ func standardActionRow() -> KeyboardRow {
         specialKey("symbols", "?123", .symbols, weight: 1.7, accessibilityLabel: "Ký hiệu"),
         specialKey("comma", ",", .punctuation, accessibilityLabel: "Dấu phẩy"),
         standardSpaceKey(),
-        specialKey("period", ".", .punctuation, accessibilityLabel: "Dấu chấm"),
+        periodKey("period"),
         specialKey("enter", "", .enter, weight: 1.7, accessibilityLabel: "Enter"),
     ])
 }
