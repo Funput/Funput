@@ -24,7 +24,7 @@ data class KeySpec(
         require(spaceLabelOverride == null || spaceLabelOverride.isNotBlank()) {
             "Space label override must not be blank"
         }
-        require(preferredAlternateText == null || alternates.any { it.text == preferredAlternateText }) {
+        require(preferredAlternateText == null || alternates.any { it is KeyAlternate.Text && it.text == preferredAlternateText }) {
             "Preferred alternate must belong to the key"
         }
         require(alternatePaletteColumns == null || alternatePaletteColumns > 0) {

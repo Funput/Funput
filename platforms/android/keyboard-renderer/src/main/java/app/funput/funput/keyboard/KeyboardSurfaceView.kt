@@ -44,6 +44,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
     var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
     var clipboardKeyVisible: Boolean = false; set(value) { if (field != value) { field = value; resolveGeometry() } }
+    var placementKeyVisible: Boolean = true; set(value) { if (field != value) { field = value; resolveGeometry(); invalidate() } }
     var showsNumberRow: Boolean by layoutState::showsNumberRow
     var keyboardTheme by render::keyboardTheme
     var keyboardThemeBackgroundImage by render::keyboardThemeBackgroundImage
@@ -138,7 +139,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         resolvedKeyboard = layoutState.layout.resolveGeometry(
             width = width, height = height,
             density = resources.displayMetrics.density, profile = sizingProfile,
-            showClipboard = clipboardKeyVisible && suggestionState.utilityKeysVisible, showPlacement = suggestionState.utilityKeysVisible,
+            showClipboard = clipboardKeyVisible && suggestionState.utilityKeysVisible, showPlacement = placementKeyVisible && suggestionState.utilityKeysVisible,
         )
         suggestionState.geometryChanged(); accessibility.refresh()
     }

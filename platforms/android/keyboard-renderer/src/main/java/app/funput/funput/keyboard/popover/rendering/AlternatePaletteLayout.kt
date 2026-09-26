@@ -7,7 +7,7 @@ internal data class AlternatePaletteLayout(
     val bounds: KeyBounds,
     val itemBounds: List<KeyBounds>,
     val sourceBounds: KeyBounds,
-    val defaultIndex: Int,
+    val defaultIndex: Int?,
     /** True when a short viewport forces the palette to intersect its source key. */
     val overlapsSource: Boolean,
 ) {
@@ -61,10 +61,11 @@ internal data class AlternatePaletteLayout(
             source: KeyBounds,
             surface: KeyBounds,
             density: Float,
-            defaultIndex: Int = 0,
+            defaultIndex: Int? = 0,
             preferredColumns: Int? = null,
         ): AlternatePaletteLayout {
-            require(defaultIndex in 0 until count) { "Default alternate must be in bounds" }
+            require(count > 0) { "Palette must contain items" }
+            require(defaultIndex == null || defaultIndex in 0 until count) { "Default alternate must be in bounds" }
             require(preferredColumns == null || preferredColumns > 0) {
                 "Preferred columns must be positive"
             }

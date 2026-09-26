@@ -33,7 +33,7 @@ internal class KeyboardActionDispatcher(
 
     fun repeatBackspace() = onAction(KeyAction.Backspace)
 
-    fun dispatchAlternate(key: KeySpec, alternate: KeyAlternate) {
+    fun dispatchAlternate(key: KeySpec, alternate: KeyAlternate.Text) {
         onAction(KeyAction.Input(key.id, alternate.textFor(shiftState)))
         if (shiftController.consumeAfter(key.role)) onShiftStateChanged()
     }

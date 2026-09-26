@@ -36,7 +36,7 @@ internal object CompactDigitAlternates {
         // First place wins the palette's default selection, which is what makes a plain
         // hold-and-release type the digit.
         alternates = listOf(
-            KeyAlternate(digit.toString(), accessibilityLabel = "Số $digit"),
+            KeyAlternate.Text(digit.toString(), accessibilityLabel = "Số $digit"),
         ) + key.alternates,
     )
 }

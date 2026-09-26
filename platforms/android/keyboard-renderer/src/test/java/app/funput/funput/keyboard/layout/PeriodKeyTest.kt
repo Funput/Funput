@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -12,14 +13,14 @@ import org.junit.Test
 
 class PeriodKeyTest {
     @Test
-    fun `period catalog matches the reference and a tap still types a period`() {
+    fun `period catalog excludes comma and a tap still types a period`() {
         val key = periodKey("period")
 
         assertEquals(
-            listOf("@", "&", "%", "+", ";", "/", "(", ")", "\"", "'", "#", "-", ":", "!", ",", "?"),
-            key.alternates.map { it.text },
+            listOf("@", "&", "%", "+", ";", "/", "(", ")", "\"", "'", "#", "-", ":", "!", "?"),
+            key.alternates.map { (it as KeyAlternate.Text).text },
         )
-        assertEquals(",", key.preferredAlternateText)
+        assertEquals(null, key.preferredAlternateText)
         assertEquals(8, key.alternatePaletteColumns)
         assertEquals(KeyAction.Input("period", "."), key.toKeyAction(ShiftState.OFF))
     }

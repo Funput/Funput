@@ -6,6 +6,7 @@ import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.ime.editing.backspace.ImeBackspaceHandler
 import app.funput.funput.ime.editing.gestures.ImeGestureEditor
 import app.funput.funput.ime.editing.typing.ImeTypingHandler
+import app.funput.funput.ime.editing.typing.ImeTypingSession
 import app.funput.funput.ime.shortcuts.ImeShortcutSession
 import app.funput.funput.ime.shortcuts.ImeShortcutCoordinator
 import app.funput.funput.shortcuts.model.ShortcutLibrary
@@ -26,6 +27,7 @@ internal class ImeKeyActionHandler(
         composition, editor, connection, ::backspace,
     ) { if (suggestionsAllowed) suggestions.reset() }
     var smartGesturesEnabled: Boolean by gestures::enabled
+    val typingSession = ImeTypingSession()
     private val typing = ImeTypingHandler(
         composition = composition,
         editor = editor,
@@ -36,6 +38,7 @@ internal class ImeKeyActionHandler(
         usesEnglishShortcuts = { usesEnglishShortcuts },
         suggestionsAllowed = { suggestionsAllowed },
         shortcuts = shortcuts,
+        onTyping = typingSession::recordInput,
         inputTracked = { text -> shortcutCoordinator.track(text, usesVietnameseComposition) },
         finish = ::finish,
     )
@@ -51,7 +54,6 @@ internal class ImeKeyActionHandler(
 
     var language: KeyboardLanguage = KeyboardLanguage.VIETNAMESE
         private set
-
     fun start(
         allowComposition: Boolean = true,
         allowSuggestions: Boolean = true,
@@ -97,7 +99,6 @@ internal class ImeKeyActionHandler(
         suggestions.reset()
         gestures.reset()
     }
-
     fun beginShortcutActivation() = shortcutCoordinator.beginActivation()
 
     fun receiveShortcuts(library: ShortcutLibrary) {
@@ -120,7 +121,6 @@ internal class ImeKeyActionHandler(
             finish()
         }
     }
-
     fun takeSuggestionUpdate(): AuthoredSuggestionUpdate =
         if (suggestionsAllowed) suggestions.takeUpdate() else AuthoredSuggestionUpdate.Empty
 

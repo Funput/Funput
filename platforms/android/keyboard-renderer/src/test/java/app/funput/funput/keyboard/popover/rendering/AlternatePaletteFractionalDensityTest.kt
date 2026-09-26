@@ -13,21 +13,21 @@ class AlternatePaletteFractionalDensityTest {
             val source = KeyBounds(width - 120f, 500f, width - 50f, 600f)
             val surface = KeyBounds(0f, -800f, width, 650f)
             val layout = AlternatePaletteLayout.resolve(
-                count = 16,
+                count = 15,
                 source = source,
                 surface = surface,
                 density = density,
-                defaultIndex = 14,
+                defaultIndex = 0,
                 preferredColumns = 8,
             )
 
-            assertEquals(16, layout.itemBounds.size)
+            assertEquals(15, layout.itemBounds.size)
             assertEquals(2, layout.itemBounds.map { it.top }.distinct().size)
             assertEquals(8, layout.itemBounds.map { it.left }.distinct().size)
             assertEquals(6f * density, layout.bounds.left, 0.001f)
             assertEquals(width - 6f * density, layout.bounds.right, 0.001f)
             assertTrue(layout.bounds.bottom < source.top)
-            assertEquals(14, layout.indexAt(source.centerX, source.centerY, density))
+            assertEquals(0, layout.indexAt(source.centerX, source.centerY, density))
             layout.itemBounds.forEachIndexed { index, item ->
                 assertTrue(item.width > 0f && item.height > 0f)
                 assertEquals(index, layout.indexAt(item.centerX, item.centerY, density))

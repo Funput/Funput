@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.popover.rendering
 
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
@@ -22,6 +23,7 @@ internal class AlternatePaletteRenderer(private val metrics: RenderMetrics) {
     private val rect = RectF()
     private val fontMetrics = Paint.FontMetrics()
     private val liquidPainter = LiquidGlassKeyPainter(metrics)
+    private val actionIcons = AlternateActionIconRenderer(metrics)
 
     fun updateTheme(theme: KeyboardTheme) {
         liquidPainter.updateTheme(theme)
@@ -46,7 +48,10 @@ internal class AlternatePaletteRenderer(private val metrics: RenderMetrics) {
         drawBorder(canvas, theme, radius)
         preview.layout.itemBounds.forEachIndexed { index, item ->
             if (index == preview.selectedIndex) drawSelection(canvas, item, theme, radius)
-            drawLabel(canvas, item.centerX, item.centerY, preview.key.alternates[index].textFor(shiftState), theme)
+            when (val alternate = preview.key.alternates[index]) {
+                is KeyAlternate.Text -> drawLabel(canvas, item.centerX, item.centerY, alternate.textFor(shiftState), theme)
+                is KeyAlternate.Action -> actionIcons.draw(canvas, item, alternate, theme.labelColor)
+            }
         }
     }
 

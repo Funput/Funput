@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -35,15 +36,15 @@ class CompactDigitAlternatesTest {
         listOf(KeyboardInputMethod.TELEX, KeyboardInputMethod.TELEX_ADVANCED).forEach { method ->
             val row = compactRow(method)
             row.keys.forEachIndexed { index, key ->
-                assertEquals(Digits[index], key.alternates.first().text)
-                assertEquals(Digits[index], key.alternates.first().shiftedText)
+                assertEquals(Digits[index], (key.alternates.first() as KeyAlternate.Text).text)
+                assertEquals(Digits[index], (key.alternates.first() as KeyAlternate.Text).shiftedText)
                 assertTrue(key.accessibilityLabel.endsWith(", số ${Digits[index]}"))
             }
             assertEquals(
                 listOf("7") + VietnameseKeyAlternates.valuesFor('u').map { it.text },
-                row.keys[6].alternates.map { it.text },
+                row.keys[6].alternates.map { (it as KeyAlternate.Text).text },
             )
-            assertEquals(listOf("1"), row.keys[0].alternates.map { it.text })
+            assertEquals(listOf("1"), row.keys[0].alternates.map { (it as KeyAlternate.Text).text })
         }
     }
 
@@ -64,7 +65,7 @@ class CompactDigitAlternatesTest {
             val row = topRow(KeyboardLayouts.forInputMethod(method))
             assertEquals(null, row.keys[0].secondaryLabel)
             assertTrue(row.keys[0].alternates.isEmpty())
-            assertEquals("u", row.keys[6].alternates.first().text)
+            assertEquals("u", (row.keys[6].alternates.first() as KeyAlternate.Text).text)
         }
         // VNI forces its own digit row, so the preference never reaches this page.
         val vni = topRow(

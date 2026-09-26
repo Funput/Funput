@@ -1,8 +1,8 @@
 package app.funput.funput.keyboard.popover.model
 
 internal object VietnameseKeyAlternates {
-    fun valuesFor(character: Char): List<KeyAlternate> =
-        Catalog[character.lowercaseChar()].orEmpty().map(::KeyAlternate)
+    fun valuesFor(character: Char): List<KeyAlternate.Text> =
+        Catalog[character.lowercaseChar()].orEmpty().map { KeyAlternate.Text(it) }
 
     private val Catalog = mapOf(
         'a' to groups("aáàảãạ", "ăắằẳẵặ", "âấầẩẫậ"),

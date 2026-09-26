@@ -90,9 +90,19 @@ class KeyboardAccessibilitySnapshotTest {
     fun `period exposes all punctuation alternates to TalkBack`() {
         val actions = snapshot().nodes.first { it.keyId == "period" }.alternateActions
 
-        assertEquals(16, actions.size)
+        assertEquals(15, actions.size)
         assertEquals("Chọn a còng", actions.first().label)
-        assertEquals("Chọn dấu phẩy", actions[14].label)
+        assertEquals("Chọn dấu hỏi", actions[14].label)
+        assertTrue(actions.none { it.label == "Chọn dấu phẩy" })
+    }
+
+    @Test
+    fun `comma exposes named function actions to TalkBack`() {
+        val actions = snapshot().nodes.first { it.keyId == "comma" }.alternateActions
+        assertEquals(
+            listOf("Tùy chỉnh vị trí bàn phím", "Cài đặt, mở ứng dụng Funput"),
+            actions.map { it.label },
+        )
     }
 
     @Test

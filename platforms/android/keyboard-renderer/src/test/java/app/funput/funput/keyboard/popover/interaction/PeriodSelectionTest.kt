@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.popover.interaction
 
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.periodKey
 import org.junit.Assert.assertEquals
@@ -21,16 +22,16 @@ class PeriodSelectionTest {
         onCaptured = {},
         onFeedback = {},
         onChanged = {},
-        onSelected = { _, alternate -> selected += alternate.text },
+        onSelected = { _, alternate -> selected += (alternate as KeyAlternate.Text).text },
     )
 
     @Test
-    fun `hold and release on period commits preselected comma`() {
+    fun `hold and release on period commits first alternate`() {
         activate()
 
-        assertEquals(14, controller.preview?.selectedIndex)
+        assertEquals(0, controller.preview?.selectedIndex)
         assertTrue(controller.finish(1, source.centerX, source.centerY))
-        assertEquals(listOf(","), selected)
+        assertEquals(listOf("@"), selected)
     }
 
     @Test

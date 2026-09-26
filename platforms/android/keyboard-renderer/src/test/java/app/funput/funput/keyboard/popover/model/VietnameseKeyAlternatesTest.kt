@@ -45,7 +45,7 @@ class VietnameseKeyAlternatesTest {
     }
 
     private fun texts(character: Char) =
-        VietnameseKeyAlternates.valuesFor(character).map(KeyAlternate::text)
+        VietnameseKeyAlternates.valuesFor(character).map(KeyAlternate.Text::text)
 
     private fun chars(value: String) = value.map(Char::toString)
 

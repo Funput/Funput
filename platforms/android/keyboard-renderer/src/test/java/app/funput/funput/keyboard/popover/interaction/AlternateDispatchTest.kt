@@ -22,7 +22,7 @@ class AlternateDispatchTest {
     @Test
     fun `alternate follows shift and consumes one shot state`() {
         dispatcher.setShiftState(ShiftState.ON)
-        dispatcher.dispatchAlternate(key, KeyAlternate("á"))
+        dispatcher.dispatchAlternate(key, KeyAlternate.Text("á"))
 
         assertEquals(KeyAction.Input(key.id, "Á"), actions.single())
         assertEquals(ShiftState.OFF, dispatcher.shiftState)
@@ -31,7 +31,7 @@ class AlternateDispatchTest {
     @Test
     fun `a digit alternate stays a digit under shift`() {
         dispatcher.setShiftState(ShiftState.CAPS_LOCK)
-        dispatcher.dispatchAlternate(key, KeyAlternate("7", accessibilityLabel = "Số 7"))
+        dispatcher.dispatchAlternate(key, KeyAlternate.Text("7", accessibilityLabel = "Số 7"))
 
         assertEquals(KeyAction.Input(key.id, "7"), actions.single())
     }
@@ -39,7 +39,7 @@ class AlternateDispatchTest {
     @Test
     fun `caps lock remains active after alternate`() {
         dispatcher.setShiftState(ShiftState.CAPS_LOCK)
-        dispatcher.dispatchAlternate(key, KeyAlternate("ư"))
+        dispatcher.dispatchAlternate(key, KeyAlternate.Text("ư"))
 
         assertEquals(KeyAction.Input(key.id, "Ư"), actions.single())
         assertEquals(ShiftState.CAPS_LOCK, dispatcher.shiftState)

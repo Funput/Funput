@@ -88,7 +88,7 @@ internal object SymbolLayouts {
     private fun actionRow(page: String, secure: Boolean) = KeyboardRow(
         keys = listOf(
             specialKey("letters-$page", "ABC", KeyRole.LETTERS, 1.7f, "Chữ cái"),
-            specialKey("comma-$page", ",", KeyRole.PUNCTUATION, accessibilityLabel = "Dấu phẩy"),
+            commaKey("comma-$page"),
             symbolSpace(page, secure),
             periodKey("period-$page"),
             specialKey("enter-$page", "", KeyRole.ENTER, 1.7f, "Enter"),

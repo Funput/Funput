@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.popover.accessibility
 
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.ShiftState
 
@@ -12,7 +13,7 @@ internal data class AlternateAccessibilityAction(
 internal fun KeySpec.alternateAccessibilityActions(
     shiftState: ShiftState,
 ): List<AlternateAccessibilityAction> = alternates.mapIndexed { index, alternate ->
-    val spokenLabel = if (shiftState.isActive && alternate.shiftedText != alternate.text) {
+    val spokenLabel = if (alternate is KeyAlternate.Text && shiftState.isActive && alternate.shiftedText != alternate.text) {
         alternate.textFor(shiftState)
     } else {
         alternate.accessibilityLabel
@@ -20,7 +21,7 @@ internal fun KeySpec.alternateAccessibilityActions(
     AlternateAccessibilityAction(
         index = index,
         actionId = AlternateActionIdBase + index,
-        label = "Chọn $spokenLabel",
+        label = if (alternate is KeyAlternate.Action) spokenLabel else "Chọn $spokenLabel",
     )
 }
 

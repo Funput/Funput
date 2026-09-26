@@ -34,11 +34,24 @@ class ToolbarClipboardYieldTest {
         assertTrue(hidden.suggestionsBounds.width > shown.suggestionsBounds.width)
     }
 
-    private fun resolve(showClipboard: Boolean) = KeyboardGeometry.resolve(
+    @Test
+    fun hidingPlacementPreservesClipboardAndEmoji() {
+        listOf(false, true).forEach { clipboard ->
+            val before = requireNotNull(resolve(clipboard).suggestionBar)
+            val after = requireNotNull(resolve(clipboard, showPlacement = false).suggestionBar)
+            assertNull(after.placementKey)
+            assertEquals(before.clipboardKey?.spec, after.clipboardKey?.spec)
+            assertEquals(before.emojiKey, after.emojiKey)
+            assertTrue(after.suggestionsBounds.width > before.suggestionsBounds.width)
+        }
+    }
+
+    private fun resolve(showClipboard: Boolean, showPlacement: Boolean = true) = KeyboardGeometry.resolve(
         layout = KeyboardLayouts.forInputMethod(KeyboardInputMethod.TELEX),
         width = 1080f,
         height = 726f,
         spec = spec,
         showClipboard = showClipboard,
+        showPlacement = showPlacement,
     )
 }

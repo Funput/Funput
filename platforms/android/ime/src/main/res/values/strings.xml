@@ -4,4 +4,5 @@
     <string name="funput_ime_subtype_vietnamese">Tiếng Việt</string>
     <string name="clipboard_paste_too_large">Nội dung đã sao chép quá dài để dán</string>
     <string name="clipboard_paste_failed">Không thể dán nội dung đã sao chép</string>
+    <string name="open_settings_failed">Không thể mở Funput</string>
 </resources>
