@@ -61,6 +61,19 @@ fn is_complete_syllable_cases() {
 }
 
 #[test]
+fn consonant_between_onset_and_nucleus_is_no_syllable() {
+    // Read order-blind, each of these hides a real rhyme (`cno` → `on`, `ctá` →
+    // `át`, `ona` → `oan`), but the consonant sits before the vowel, not after it.
+    for bad in [
+        "cno", "bno", "tno", "cna", "cnu", "bna", "mna", "tna", "lmo", "tma", "sno", "tnga",
+        "xnoa", "ona", "cnó", "bnà", "tnố", "cmá", "ctá", "tná", "bcá",
+    ] {
+        assert!(!is_complete_syllable(bad), "{bad} should be incomplete");
+        assert!(!is_reopenable_syllable(bad), "{bad} should be refused");
+    }
+}
+
+#[test]
 fn bare_shaped_vowel_cases() {
     // A lone vowel carrying mũ / móc / trần, with or without a tone.
     for ok in ["ă", "â", "Ă", "Â", "ê", "ô", "ơ", "ư", "ắ", "ậ", "Ừ"] {
@@ -115,15 +128,18 @@ fn real_syllables_are_complete() {
 
 #[test]
 fn definitely_invalid_detects_dead_ends() {
-    // Dead ends — unreachable rhyme (incl. open clusters), or stop coda +
-    // wrong (huyền/hỏi/ngã) tone.
-    for dead in ["tẽt", "tèt", "cảd", "máz", "pèect", "ábc", "caé", "luuỷ"] {
+    // Dead ends — unreachable rhyme (incl. open clusters), stop coda + wrong
+    // (huyền/hỏi/ngã) tone, or a consonant stranded before the vowel.
+    for dead in [
+        "tẽt", "tèt", "cảd", "máz", "pèect", "ábc", "caé", "luuỷ", "cno", "cnó", "ona",
+    ] {
         assert!(is_definitely_invalid(dead), "{dead} should be a dead end");
     }
     // Alive: still typing, already valid, OR a stop coda awaiting its tone
     // (`nuoc`/`nươc`/`côt` → user types the tone after the coda).
     for alive in [
         "tẽ", "te", "ng", "ngh", "cả", "cản", "việt", "má", "trươ", "nuoc", "nươc", "côt", "tét",
+        "cn",
     ] {
         assert!(!is_definitely_invalid(alive), "{alive} should stay alive");
     }

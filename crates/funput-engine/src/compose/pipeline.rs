@@ -4,7 +4,7 @@
 //! the zero-allocation pass-through exit; session strings (`vn_form`, `keys`)
 //! are refilled in place so their capacity is reused across keystrokes.
 
-use funput_core::{TransformKind, apply_checked, is_definitely_invalid};
+use funput_core::{TransformKind, apply_checked, is_definitely_invalid, is_definitely_invalid_in};
 
 use crate::ImeResult;
 use crate::compose::RestoreOverride;
@@ -51,7 +51,7 @@ pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: boo
                 && session.config.eager_restore
                 && result.kind != TransformKind::Reverted
                 && session.keys != composed
-                && is_definitely_invalid(&composed)
+                && is_dead_end(session, &composed, key)
             {
                 session.keys.clone()
             } else {
@@ -82,6 +82,28 @@ pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: boo
     }
 
     instruction
+}
+
+/// Whether `composed` can no longer become Vietnamese, judged for this keystroke.
+///
+/// VNI may keep the finals only place names use (`Pa8h` → `Păh`, as in Chư Păh),
+/// but a digit landing on a word that carried no mark yet is how numbers glue to
+/// English (`bar1`, `ver2`), so that keystroke is judged strictly. A letter after
+/// a digit (the `h` of `Pa8h`), or a digit on a word already marked (`Pa8h1` →
+/// `Pắh`), only extends a word the user shaped on purpose. What a strict reading
+/// restores stays in `vn_form`, so Flip still recovers `Pah8` → `Păh`.
+fn is_dead_end(session: &Session, composed: &str, key: char) -> bool {
+    let bare_before = || {
+        session
+            .keys
+            .strip_suffix(key)
+            .is_some_and(|before| before == session.buffer)
+    };
+    if key.is_ascii_digit() && bare_before() {
+        is_definitely_invalid(composed)
+    } else {
+        is_definitely_invalid_in(composed, session.config.method)
+    }
 }
 
 fn uppercase_direct_vowel(text: &mut String) {

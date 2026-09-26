@@ -58,6 +58,23 @@ fn telex_eager_restore_step() {
 }
 
 #[test]
+fn telex_misordered_consonant_restores_eagerly() {
+    // Read order-blind, `cnó` looks like onset `c` + rhyme `ón`. The `n` sits
+    // before the vowel, though, so the tone key makes it a dead end and the raw
+    // keystrokes come back at once — and stay through the boundary.
+    let mut engine = Engine::new();
+    for key in "cno".chars() {
+        engine.process_char(key);
+    }
+    engine.process_char('s');
+    assert_eq!(engine.buffer(), "cnos");
+    assert_eq!(
+        crate::support::app_text(InputMethod::Telex, "cnos "),
+        "cnos "
+    );
+}
+
+#[test]
 fn telex_mas_space_no_restore() {
     let mut engine = Engine::new();
     engine.process_char('m');

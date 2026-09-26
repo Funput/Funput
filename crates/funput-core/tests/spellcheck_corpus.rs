@@ -67,6 +67,9 @@ const MUST_REJECT: &[&str] = &[
     "bèc", // stop coda + huyền
     "tẽt", // stop coda + ngã ("text")
     "eg", "id", "oab", "onk", "erf", "az", "ngb", // non-Vietnamese rhyme / structure
+    // A consonant between onset and vowel, which an order-blind parse reads as
+    // the coda (`cno` → rhyme `on`).
+    "cno", "cna", "cnu", "tnó", "ctá", "ona",
 ];
 
 #[test]
@@ -114,6 +117,13 @@ fn spell_check_keeps_real_words() {
         ("hoongf", "hồng"),
         ("koong", "kông"),
         ("drawng", "drăng"), // cluster onset dr (Ea Drăng)
+        // Tây Nguyên toponyms: final k ≈ c and cluster onsets.
+        ("ddawks", "đắk"), // Đắk Lắk
+        ("lawks", "lắk"),
+        ("kroong", "krông"), // Krông Pắc
+        ("pawcs", "pắc"),
+        ("buks", "búk"),     // Krông Búk
+        ("ploong", "plông"), // Kon Plông
     ] {
         assert_eq!(type_checked(keys), expected, "blocked real word: {keys}");
     }
@@ -134,6 +144,25 @@ fn tay_nguyen_place_names_accepted() {
         "chư",   // Chư Pưh / Chư Sê
         "kông",  // k + ô — loanword/toponym (Hồng Kông, Kông Chro)
         "pơng",  // ơng rhyme (Chư Pơng)
+        "pắc",   // Krông Pắc
+        "búk",   // Krông Búk — final k ≈ c
+        "nông",  // Đắk Nông
+        "plông", // Kon Plông
+        "prông", // Chư Prông
+        "grai",  // Ia Grai
+        "kon",   // Kon Tum
+        "tum", "pơ", // Đak Pơ
+        // Clusters no English word begins with: any rhyme after them is a name's.
+        "kpă",    // Kpă (open ă, which native Vietnamese never has)
+        "kpăng",  // Kpăng
+        "kdăm",   // Ia Kdăm
+        "mrơn",   // Ia Mrơn
+        "rcăm",   // Chư Rcăm
+        "rsươm",  // Ia Rsươm
+        "hrê",    // Hrê
+        "xtiêng", // Xtiêng
+        "dliê",   // Cư Dliê M'nông (open iê)
+        "đrắk",   // M'Đrắk
     ] {
         assert!(
             is_complete_syllable(s),
@@ -152,13 +181,20 @@ fn loanword_place_names_accepted() {
     assert!(is_complete_syllable("kê"));
 }
 
-/// Boundary of the chosen scope. `Blơr` needs a final `r`, which we deliberately do
-/// NOT add: `r` is the Telex hỏi-tone key (so it can't be a coda there) and a global
-/// `r` coda would wrongly keep English `car`/`bar`. Documented as unsupported — it
-/// falls back to the English toggle / VNI.
+/// Boundary of the chosen scope. The finals `h`, `l`, `r` (`Chư Păh`, `Ea Nuôl`,
+/// `Blơr`) are never complete syllables: in Telex they are English `cash` (`s` +
+/// `h`), `cool` and the hỏi key. VNI keeps them alive while typing (see
+/// `is_definitely_invalid_in`) and its digits keep them at the word boundary;
+/// Telex types them with the double key (`Blowrr`) or the flip hotkey.
 #[test]
 fn tay_nguyen_out_of_scope_still_rejected() {
-    assert!(!is_complete_syllable("blơr"), "final r not in scope");
+    for s in ["blơr", "păh", "nuôl"] {
+        assert!(!is_complete_syllable(s), "name final not in scope: {s}");
+    }
+    // Onsets English begins words with stay out too: `know` → `knơ`, `slow` → `slơ`.
+    for s in ["knơ", "slơ"] {
+        assert!(!is_complete_syllable(s), "English onset: {s}");
+    }
 }
 
 /// The k≈c allophone must NOT over-accept English: a lone trailing `k` only maps to
@@ -180,5 +216,14 @@ fn final_k_does_not_overaccept_english() {
 fn spell_check_blocks_nonsyllable_via_gate() {
     let r = apply_checked("bec", 'f', InputMethod::Telex, ToneStyle::Traditional, true);
     assert_eq!(r.text, "becf");
+    assert_eq!(r.kind, TransformKind::Pending);
+}
+
+/// Same gate for a consonant stranded before the vowel: `cno` has no syllable to
+/// put a tone on, so the tone key stays literal.
+#[test]
+fn spell_check_blocks_tone_on_misordered_consonant() {
+    let r = apply_checked("cno", 's', InputMethod::Telex, ToneStyle::Traditional, true);
+    assert_eq!(r.text, "cnos");
     assert_eq!(r.kind, TransformKind::Pending);
 }
