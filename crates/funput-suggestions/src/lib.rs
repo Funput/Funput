@@ -18,6 +18,7 @@ mod bigram;
 mod binary;
 mod engine;
 mod index;
+mod keep;
 mod lexicon;
 mod persistence;
 mod types;

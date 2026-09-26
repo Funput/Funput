@@ -17,6 +17,13 @@ pub struct CorrectionMetrics {
     /// Words where no candidate beat the word as typed: the finger sat on the keys it
     /// hit, so the engine believed it.
     pub kept_as_typed: u32,
+    /// Words the boundary parked a correction for.
+    pub offered: u32,
+    /// Words correction looked at and found no syllable within reach of.
+    pub no_candidate: u32,
+    /// Words that ended as a real syllable with a touch on the edge between two keys —
+    /// left alone, and the upper bound on slips onto another word.
+    pub valid_near_edge: u32,
     /// The most candidates any one word produced.
     pub candidates_max: u32,
     /// The longest a candidate search took, in microseconds.

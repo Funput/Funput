@@ -20,6 +20,17 @@ public final class CorrectionWordSource: CorrectionDictionary {
     private var engine: PersonalSuggestionEngine?
     private var loading = false
     private let lexiconURL: @Sendable () -> URL?
+    /// Words the user took a correction back on, oldest first so the cap drops the
+    /// oldest. Lowercased: `Ko` at the start of a sentence is the same word.
+    private var kept: [String] = []
+    private var keptSet: Set<String> = []
+    /// Called with the whole kept list whenever it grows, so the host can store it.
+    /// Nil when there is nowhere to store it — without Full Access the list lasts as
+    /// long as the keyboard does.
+    public var onKeep: (@MainActor ([String]) -> Void)?
+
+    /// How many kept words are remembered.
+    public static let keptLimit = 200
 
     public init(
         lexiconURL: @escaping @Sendable () -> URL? = {
@@ -45,8 +56,31 @@ public final class CorrectionWordSource: CorrectionDictionary {
     }
 
     public func recognizes(_ word: String) -> Bool {
+        if isKept(word) { return true }
         guard let engine else { return true }
         return engine.recognizes(word)
+    }
+
+    public func keep(_ word: String) {
+        let key = word.lowercased()
+        guard !key.isEmpty, keptSet.insert(key).inserted else { return }
+        kept.append(key)
+        if kept.count > Self.keptLimit {
+            keptSet.remove(kept.removeFirst())
+        }
+        onKeep?(kept)
+    }
+
+    /// Whether the user took a correction of `word` back, in this session or one
+    /// restored from an earlier one.
+    public func isKept(_ word: String) -> Bool {
+        keptSet.contains(word.lowercased())
+    }
+
+    /// Put back the words kept in an earlier session.
+    public func restoreKept(_ words: [String]) {
+        kept = Array(words.suffix(Self.keptLimit))
+        keptSet = Set(kept)
     }
 
     /// Built off the main actor, then handed over and never written to again. The

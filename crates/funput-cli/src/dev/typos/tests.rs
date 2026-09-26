@@ -194,3 +194,25 @@ fn every_miss_has_a_reason() {
     assert_eq!(tally.missed(), tally.missed.iter().sum::<usize>());
     assert!(tally.missed() > 0, "a noisy run must miss something");
 }
+
+/// With the keyboard's veto in play — `is_known_word`, which carries the keep list —
+/// not one listed word typed right is rewritten, however near an edge the finger
+/// lands. (A listed word that *slipped* — `kp` for `ko` — is no longer the listed
+/// word, and what correction makes of it is a different question.)
+#[test]
+fn a_listed_word_is_never_rewritten_by_a_keyboard() {
+    let words = attempt::keep::load_words(&keep_path()).expect("load keep list");
+    for method in [InputMethod::Telex, InputMethod::Vni] {
+        for seed in 1..=20 {
+            let tally = attempt::keep::measure_keep(
+                &words,
+                &Options {
+                    method,
+                    seed,
+                    ..options(0.174, Prior::Shipped)
+                },
+            );
+            assert_eq!(tally.rewritten, 0, "{method:?} seed {seed}");
+        }
+    }
+}

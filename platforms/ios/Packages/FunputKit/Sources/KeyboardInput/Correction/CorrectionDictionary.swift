@@ -12,4 +12,8 @@ public protocol CorrectionDictionary: AnyObject {
     /// Whether `word` is one the user has typed before, or one in a shipped word
     /// list. `false` for a word the dictionary has simply never heard of.
     func recognizes(_ word: String) -> Bool
+
+    /// The user took back a correction of `word`: recognize it from now on, so the
+    /// same correction is never made twice.
+    func keep(_ word: String)
 }

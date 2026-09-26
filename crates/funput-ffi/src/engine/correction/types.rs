@@ -101,6 +101,14 @@ pub struct FunputCorrectionMetrics {
     pub skipped_ambiguous: u32,
     pub candidates_max: u32,
     pub microseconds_max: u32,
+    /// Words where no candidate beat the word as typed.
+    pub kept_as_typed: u32,
+    /// Words the boundary parked a correction for.
+    pub offered: u32,
+    /// Words looked at with no syllable within reach.
+    pub no_candidate: u32,
+    /// Real syllables with a touch on the edge between two keys, left alone.
+    pub valid_near_edge: u32,
 }
 
 impl From<CorrectionMetrics> for FunputCorrectionMetrics {
@@ -111,6 +119,10 @@ impl From<CorrectionMetrics> for FunputCorrectionMetrics {
             skipped_ambiguous: metrics.skipped_ambiguous,
             candidates_max: metrics.candidates_max,
             microseconds_max: metrics.microseconds_max,
+            kept_as_typed: metrics.kept_as_typed,
+            offered: metrics.offered,
+            no_candidate: metrics.no_candidate,
+            valid_near_edge: metrics.valid_near_edge,
         }
     }
 }

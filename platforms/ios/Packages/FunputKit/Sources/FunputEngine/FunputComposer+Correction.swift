@@ -107,7 +107,11 @@ extension FunputComposer {
             reverted: Int(raw.reverted),
             skippedAmbiguous: Int(raw.skipped_ambiguous),
             candidatesMax: Int(raw.candidates_max),
-            microsecondsMax: Int(raw.microseconds_max)
+            microsecondsMax: Int(raw.microseconds_max),
+            keptAsTyped: Int(raw.kept_as_typed),
+            offered: Int(raw.offered),
+            noCandidate: Int(raw.no_candidate),
+            validNearEdge: Int(raw.valid_near_edge)
         )
     }
 
