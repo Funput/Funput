@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Debug builds only: the component catalog's title and launcher shortcut label. -->
+    <string name="debug_catalog_label" translatable="false">FunputUI catalog</string>
+</resources>

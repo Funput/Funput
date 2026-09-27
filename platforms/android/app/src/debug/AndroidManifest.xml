@@ -1,19 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Debug builds only: a second launcher entry that opens the FunputUI component catalog. -->
+<!--
+  Debug builds only: the FunputUI component catalog. It is deliberately not a launcher entry:
+  a second launcher activity made Android Studio's "Default Activity" start the catalog
+  instead of the app. Open it from the Funput icon's long-press shortcut, or with
+  `adb shell am start -n app.funput.funput/.catalog.CatalogActivity`.
+-->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
         <activity
+            android:name=".MainActivity">
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/debug_shortcuts" />
+        </activity>
+
+        <activity
             android:name=".catalog.CatalogActivity"
             android:exported="true"
-            android:label="Funput UI"
+            android:label="@string/debug_catalog_label"
             android:taskAffinity="app.funput.funput.catalog"
-            android:theme="@style/Theme.Funput">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:theme="@style/Theme.Funput" />
     </application>
 
 </manifest>
