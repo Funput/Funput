@@ -11,8 +11,8 @@ import org.robolectric.RuntimeEnvironment
 const val DEFAULT_SCREENSHOT_ROOT: String = "build/outputs/roborazzi"
 
 /**
- * How every capture is written and compared. Images are stored at half resolution, which keeps
- * committed goldens small and still shows every layout fault; a comparison tolerates 0.2% of
+ * How every capture is written, and compared if someone runs a verify task locally. Images are
+ * stored at half resolution, which still shows every layout fault; a comparison tolerates 0.2% of
  * pixels differing, enough for anti-aliasing noise and far below any visible change.
  */
 val ScreenshotOptions: RoborazziOptions = RoborazziOptions(
@@ -26,8 +26,8 @@ val ScreenshotOptions: RoborazziOptions = RoborazziOptions(
  * The system night mode and font scale are applied before composition, so both the app theme and
  * anything that reads the configuration directly see the same condition. Whether the capture is
  * written, compared or skipped is Roborazzi's call from the Gradle task that ran the test:
- * `recordRoborazziDebug` writes, `verifyRoborazziDebug` compares, a plain unit-test run only
- * composes the screen, which still fails the test if it crashes.
+ * `recordRoborazziDebug` writes (to look at a screen locally), a plain unit-test run, which is
+ * what CI does, only composes the screen and still fails the test if it crashes.
  *
  * [prepare] runs after composition and before the capture, to put the screen in the state being
  * captured (scrolled, a sheet open, a field focused).

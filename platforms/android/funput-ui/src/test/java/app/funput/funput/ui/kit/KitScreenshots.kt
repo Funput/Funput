@@ -1,7 +1,8 @@
 package app.funput.funput.ui.kit
 
 /**
- * FunputUI screenshots are goldens: they live in the source tree, are recorded on CI (Linux, so
- * every image comes from the same renderer) and are verified on every pull request.
+ * Where FunputUI captures are written when someone records them locally to look at a screen. They
+ * are not committed and not compared: CI composes every screen to catch crashes, and the look is
+ * checked by hand on a device.
  */
-internal const val KIT_SCREENSHOT_ROOT: String = "src/test/screenshots"
+internal const val KIT_SCREENSHOT_ROOT: String = "build/outputs/roborazzi"

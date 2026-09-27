@@ -6,6 +6,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -36,9 +37,10 @@ class LayoutSemanticsTest {
         var selected = -1
         compose.setContent { SampleScreen(isDark = false, onSelectTab = { selected = it }) }
 
-        // "Cài đặt" is also the screen title, so match the tab by role as well as text.
-        compose.onNode(hasText("Cài đặt") and isTab).assertIsSelected()
-        compose.onNode(hasText("Giao diện") and isTab).assertIsNotSelected().performClick()
+        // Tabs are named by their description (only the selected one shows its label), and matched
+        // by role as well, since "Cài đặt" is also the screen title.
+        compose.onNode(hasContentDescription("Cài đặt") and isTab).assertIsSelected()
+        compose.onNode(hasContentDescription("Giao diện") and isTab).assertIsNotSelected().performClick()
 
         assertEquals(1, selected)
     }

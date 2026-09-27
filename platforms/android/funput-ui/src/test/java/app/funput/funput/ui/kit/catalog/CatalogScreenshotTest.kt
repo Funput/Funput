@@ -2,7 +2,7 @@ package app.funput.funput.ui.kit.catalog
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import app.funput.funput.ui.kit.KIT_SCREENSHOT_ROOT
 import app.funput.funput.ui.kit.glass.GlassTier
@@ -42,7 +42,7 @@ class CatalogScreenshotTest(private val variant: ScreenshotVariant) {
         screen = screen,
         variant = variant,
         root = KIT_SCREENSHOT_ROOT,
-        prepare = { tab?.let { onNodeWithText(it).performClick() } },
+        prepare = { tab?.let { onNodeWithContentDescription(it).performClick() } },
     ) {
         // The catalog's own "follow the device" default would pick GLASS on API 35; JVM
         // rendering cannot draw it, so the solid tier is pinned from outside.

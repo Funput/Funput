@@ -22,8 +22,8 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** Where the app's goldens live; see funput-ui for how they are recorded and verified. */
-internal const val APP_SCREENSHOT_ROOT: String = "src/test/screenshots"
+/** Where the app's captures are written when recorded locally; see funput-ui's KIT_SCREENSHOT_ROOT. */
+internal const val APP_SCREENSHOT_ROOT: String = "build/outputs/roborazzi"
 
 /**
  * The rebuilt Settings page: first launch (setup card under the keyboard preview), and a ready
