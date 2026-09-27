@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import app.funput.funput.ui.kit.controls.FunputToggle
+import app.funput.funput.ui.kit.theme.FunputTint
 
 /**
  * A setting that is on or off. The whole row is the switch: tapping anywhere flips it, and
@@ -19,12 +20,14 @@ fun ToggleRow(
     modifier: Modifier = Modifier,
     summary: String? = null,
     @DrawableRes icon: Int? = null,
+    tint: FunputTint = FunputTint.ORANGE,
     enabled: Boolean = true,
 ) {
     FunputRow(
         title = title,
         summary = summary,
         icon = icon,
+        tint = tint,
         enabled = enabled,
         modifier = modifier.toggleable(
             value = checked,

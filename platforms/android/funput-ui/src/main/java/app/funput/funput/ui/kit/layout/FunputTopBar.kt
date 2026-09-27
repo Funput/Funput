@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.funput.funput.ui.kit.R
 import app.funput.funput.ui.kit.glass.LocalGlassBackdrop
+import app.funput.funput.ui.kit.icons.FunputIcons
 import app.funput.funput.ui.kit.glass.funputGlass
 import app.funput.funput.ui.kit.theme.FunputMotion
 import app.funput.funput.ui.kit.theme.FunputUi
@@ -84,7 +85,7 @@ private fun BackButton(onBack: () -> Unit, modifier: Modifier) {
             ),
     ) {
         Image(
-            painter = painterResource(R.drawable.funput_ic_back),
+            painter = painterResource(FunputIcons.Back),
             contentDescription = stringResource(R.string.funput_ui_back),
             colorFilter = ColorFilter.tint(FunputUi.colors.accent),
             modifier = Modifier.size(24.dp),

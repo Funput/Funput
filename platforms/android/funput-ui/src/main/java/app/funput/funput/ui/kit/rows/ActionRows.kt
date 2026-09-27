@@ -13,7 +13,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import app.funput.funput.ui.kit.R
+import app.funput.funput.ui.kit.icons.FunputIcons
+import app.funput.funput.ui.kit.theme.FunputTint
 import app.funput.funput.ui.kit.theme.FunputUi
 
 /**
@@ -28,6 +29,7 @@ fun LinkRow(
     summary: String? = null,
     value: String? = null,
     @DrawableRes icon: Int? = null,
+    tint: FunputTint = FunputTint.ORANGE,
     enabled: Boolean = true,
 ) {
     val colors = FunputUi.colors
@@ -35,6 +37,7 @@ fun LinkRow(
         title = title,
         summary = summary,
         icon = icon,
+        tint = tint,
         enabled = enabled,
         modifier = modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         detail = value?.let {
@@ -42,7 +45,7 @@ fun LinkRow(
             // under the title it must read from the start like the title does.
             { BasicText(text = it, style = FunputUi.typography.body.copy(color = colors.secondaryLabel)) }
         },
-        accessory = { RowGlyph(R.drawable.funput_ic_chevron, colors.tertiaryLabel) },
+        accessory = { RowGlyph(FunputIcons.Forward, colors.tertiaryLabel) },
     )
 }
 
@@ -63,7 +66,7 @@ fun ChoiceRow(
         summary = summary,
         modifier = modifier.selectable(selected = selected, role = Role.RadioButton, onClick = onSelect),
         accessory = if (selected) {
-            { RowGlyph(R.drawable.funput_ic_check, FunputUi.colors.accent) }
+            { RowGlyph(FunputIcons.Check, FunputUi.colors.accent) }
         } else {
             null
         },

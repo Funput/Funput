@@ -59,3 +59,33 @@ class FunputColors internal constructor(
         }
     }
 }
+
+/**
+ * Colour families for row icons. Each settings group takes one, as iOS Settings does, so a group
+ * can be found by colour before its title is read. Every family is validated at 3:1 on a card.
+ */
+enum class FunputTint(internal val token: ColorToken) {
+    /** Funput orange: typing. */
+    ORANGE(ColorTokens.tintOrange),
+
+    /** Layout and sizing. */
+    BLUE(ColorTokens.tintBlue),
+
+    /** Smart input. */
+    PURPLE(ColorTokens.tintPurple),
+
+    /** Sound and haptics. */
+    PINK(ColorTokens.tintPink),
+
+    /** Clipboard. */
+    GREEN(ColorTokens.tintGreen),
+
+    /** Hardware and system things. */
+    GRAY(ColorTokens.tintGray),
+
+    /** Destructive actions and data. */
+    RED(ColorTokens.tintRed),
+}
+
+/** [tint] in the appearance these colours were resolved for. */
+fun FunputColors.tint(tint: FunputTint): Color = if (isDark) tint.token.dark else tint.token.light

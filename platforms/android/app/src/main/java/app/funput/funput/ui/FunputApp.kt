@@ -9,16 +9,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import app.funput.funput.ime.settings.KeyboardThemeSlot
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import app.funput.funput.ime.settings.KeyboardThemeSlot
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.store.customKeyboardThemeStore
 import app.funput.funput.ui.about.AboutRoute
+import app.funput.funput.ui.about.licenses.LicensesRoute
 import app.funput.funput.ui.appearance.AppearanceRoute
+import app.funput.funput.ui.kit.theme.FunputUiTheme
 import app.funput.funput.ui.navigation.AppDestination
 import app.funput.funput.ui.navigation.AppNavDisplay
-import app.funput.funput.ui.navigation.AppNavigationSuite
+import app.funput.funput.ui.navigation.LegacyTabHost
 import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.shortcuts.ShortcutsRoute
@@ -51,13 +53,21 @@ fun FunputApp() {
     } else {
         KeyboardThemeSlot.SINGLE
     }
-    FunputTheme(appearanceMode = settings.appearanceMode, dynamicColor = settings.dynamicColor) {
+    // FunputUI owns the app theme. Screens not rebuilt on it yet keep the old Material theme
+    // through [legacy], so both kinds render correctly during the migration.
+    val legacy: @Composable (Boolean, @Composable () -> Unit) -> Unit = { tabRoot, screen ->
+        FunputTheme(appearanceMode = settings.appearanceMode, dynamicColor = settings.dynamicColor) {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                if (tabRoot) LegacyTabHost(navigator, screen) else screen()
+            }
+        }
+    }
+    FunputUiTheme(isDark = darkTheme) {
         SyncSystemBarAppearance(darkTheme = darkTheme)
-        Surface(modifier = Modifier.fillMaxSize()) {
-            AppNavigationSuite(navigator) {
-            AppNavDisplay(navigator) { destination ->
-                when (destination) {
-                    AppDestination.SETTINGS -> SettingsRoute(
+        AppNavDisplay(navigator) { destination ->
+            when (destination) {
+                AppDestination.SETTINGS -> legacy(true) {
+                    SettingsRoute(
                         settings = settings,
                         // The keyboard follows the system appearance rather than the app's own
                         // light/dark preference, so the hero has to resolve against the system to
@@ -68,8 +78,10 @@ fun FunputApp() {
                         onOpenAppearance = { navigator.selectTab(TopLevelDestination.APPEARANCE) },
                         onOpenShortcuts = { navigator.navigate(AppDestination.SHORTCUTS) },
                     )
-                    AppDestination.SHORTCUTS -> ShortcutsRoute { navigator.navigateBack() }
-                    AppDestination.THEME_GALLERY -> AppearanceRoute(
+                }
+                AppDestination.SHORTCUTS -> legacy(false) { ShortcutsRoute { navigator.navigateBack() } }
+                AppDestination.THEME_GALLERY -> legacy(true) {
+                    AppearanceRoute(
                         settings = settings,
                         catalog = themeCatalog,
                         activeSlot = activeSlot,
@@ -89,11 +101,15 @@ fun FunputApp() {
                             }
                         },
                     )
-                    AppDestination.ABOUT -> AboutRoute { navigator.navigate(AppDestination.THIRD_PARTY_LICENSES) }
-                    AppDestination.THIRD_PARTY_LICENSES -> app.funput.funput.ui.about.licenses.LicensesRoute {
-                        navigator.navigateBack()
-                    }
-                    AppDestination.CREATE_CUSTOM_THEME -> CustomThemeStudioRoute(
+                }
+                AppDestination.ABOUT -> legacy(true) {
+                    AboutRoute { navigator.navigate(AppDestination.THIRD_PARTY_LICENSES) }
+                }
+                AppDestination.THIRD_PARTY_LICENSES -> legacy(false) {
+                    LicensesRoute { navigator.navigateBack() }
+                }
+                AppDestination.CREATE_CUSTOM_THEME -> legacy(false) {
+                    CustomThemeStudioRoute(
                         editingThemeId = editingThemeId,
                         themeRepository = themeRepository,
                         saveHandler = customThemeServices.saveHandler,
@@ -105,7 +121,6 @@ fun FunputApp() {
                         },
                     )
                 }
-            }
             }
         }
     }
