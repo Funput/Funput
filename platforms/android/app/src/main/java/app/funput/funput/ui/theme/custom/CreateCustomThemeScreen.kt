@@ -40,10 +40,10 @@ import kotlinx.coroutines.withContext
 @Composable
 internal fun CreateCustomThemeScreen(
     baseThemes: List<KeyboardThemeDescriptor>,
-    editingTheme: KeyboardThemeDescriptor? = null,
     onSave: (CustomThemeDraft) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    editingTheme: KeyboardThemeDescriptor? = null,
 ) {
     val context = LocalContext.current
     val state = rememberThemeDraftState(baseThemes, editingTheme)

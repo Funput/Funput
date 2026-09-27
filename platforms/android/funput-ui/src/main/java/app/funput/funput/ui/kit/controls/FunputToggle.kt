@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import app.funput.funput.ui.kit.theme.FunputMotion
 import app.funput.funput.ui.kit.theme.FunputUi
@@ -68,7 +69,7 @@ fun FunputToggle(
         ) {
             Box(
                 Modifier
-                    .offset(x = thumbX)
+                    .offset { IntOffset(thumbX.roundToPx(), 0) }
                     .size(ThumbSize)
                     .shadow(2.dp, FunputUi.shapes.capsule)
                     .background(Color.White, FunputUi.shapes.capsule),

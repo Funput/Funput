@@ -36,7 +36,7 @@ internal fun AboutHero(versionName: String) {
         modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = "$name, $version" },
     ) {
         Image(
-            painter = painterResource(R.drawable.img_funput_logo),
+            painter = painterResource(R.drawable.ic_launcher_logo),
             contentDescription = null,
             contentScale = ContentScale.Fit,
             modifier = Modifier.size(96.dp),

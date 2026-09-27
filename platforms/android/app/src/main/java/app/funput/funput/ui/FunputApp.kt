@@ -2,6 +2,7 @@ package app.funput.funput.ui
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,7 +37,7 @@ fun FunputApp() {
     val themeRepository = remember(customThemeStore) { installedThemeRepository(customThemeStore) }
     val customThemeServices =
         rememberCustomThemeServices(themeRepository, customThemeStore, settings.keyboardTheme)
-    var themeCatalogRevision by remember { mutableStateOf(0) }
+    var themeCatalogRevision by remember { mutableIntStateOf(0) }
     // One read of the theme sources per catalog change. Asking the repository directly would hit
     // disk again on every recomposition, since it deliberately keeps no cache of its own.
     val themeCatalog = remember(themeRepository, themeCatalogRevision) { themeRepository.snapshot() }

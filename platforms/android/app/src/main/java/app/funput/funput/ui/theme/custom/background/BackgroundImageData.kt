@@ -3,7 +3,8 @@ package app.funput.funput.ui.theme.custom.background
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
+import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.produceState
@@ -41,7 +42,7 @@ private fun openStream(context: Context, source: String) =
     if (source.startsWith("/")) {
         File(source).takeIf(File::exists)?.inputStream()
     } else {
-        context.contentResolver.openInputStream(Uri.parse(source))
+        context.contentResolver.openInputStream(source.toUri())
     }
 
 private fun sampleSize(width: Int, height: Int): Int {
@@ -68,7 +69,7 @@ internal fun rememberImagePalette(bitmap: Bitmap?): State<List<Int>> =
     }
 
 private fun Bitmap.samplePixels(): IntArray {
-    val scaled = Bitmap.createScaledBitmap(this, SampleSize, SampleSize, true)
+    val scaled = scale(SampleSize, SampleSize)
     val pixels = IntArray(SampleSize * SampleSize)
     scaled.getPixels(pixels, 0, SampleSize, 0, 0, SampleSize, SampleSize)
     if (scaled !== this) scaled.recycle()

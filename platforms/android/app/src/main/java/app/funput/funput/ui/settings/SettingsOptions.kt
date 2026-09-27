@@ -78,9 +78,6 @@ internal fun keyboardPlacementOptions() = KeyboardPlacementMode.entries.map {
 internal fun toneStyleOptions() = ToneStyle.entries.map { PickerOption(it, it.label()) }
 
 @Composable
-internal fun appearanceOptions() = AppearanceMode.entries.map { PickerOption(it, it.label()) }
-
-@Composable
 internal fun ClipboardExpiry.label(): String = when (this) {
     ClipboardExpiry.HOUR -> stringResource(R.string.settings_clipboard_expiry_hour)
     ClipboardExpiry.DAY -> stringResource(R.string.settings_clipboard_expiry_day)
