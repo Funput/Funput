@@ -8,12 +8,12 @@ import app.funput.funput.ime.settings.KeyboardThemeSlot
 import app.funput.funput.theme.InstalledThemeRepository
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.KeyboardThemeOrigin
-import app.funput.funput.ui.theme.FunputTheme
+import app.funput.funput.ui.kit.theme.FunputUiTheme
 
 @Preview(name = "Giao diện · Sáng", showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun AppearanceLightPreview() {
-    FunputTheme(appearanceMode = AppearanceMode.LIGHT) {
+    FunputUiTheme(isDark = false) {
         AppearanceScreen(appearancePreviewState(followsAppearance = false))
     }
 }
@@ -27,7 +27,7 @@ private fun AppearanceLightPreview() {
 )
 @Composable
 private fun AppearanceSlotsPreview() {
-    FunputTheme(appearanceMode = AppearanceMode.DARK) {
+    FunputUiTheme(isDark = true) {
         AppearanceScreen(appearancePreviewState(followsAppearance = true))
     }
 }
@@ -40,7 +40,6 @@ internal fun appearancePreviewState(followsAppearance: Boolean): AppearanceScree
     val themes = InstalledThemeRepository.builtIn().themes
     return AppearanceScreenState(
         appearanceMode = AppearanceMode.SYSTEM,
-        dynamicColorEnabled = false,
         followsAppearance = followsAppearance,
         activeSlot = if (followsAppearance) KeyboardThemeSlot.LIGHT else KeyboardThemeSlot.SINGLE,
         lightThemeName = "Paper",
@@ -49,7 +48,6 @@ internal fun appearancePreviewState(followsAppearance: Boolean): AppearanceScree
         userThemes = themes.filter { it.origin != KeyboardThemeOrigin.BUILT_IN },
         selectedThemeId = KeyboardThemeId.Dark,
         onAppearanceSelected = {},
-        onDynamicColorChanged = {},
         onFollowsAppearanceChange = {},
         onSlotSelected = {},
         onThemeSelected = {},

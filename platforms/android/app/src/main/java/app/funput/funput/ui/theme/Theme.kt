@@ -11,18 +11,17 @@ import app.funput.funput.ime.settings.AppearanceMode
  * Until a stable release exposes it, components Funput owns spring on their own — see
  * `SettingsRowShapes`.
  *
- * @param dynamicColor whether to tint from the system wallpaper palette. Defaults to off so that
- *   previews and UI tests, which do not read the setting, always get the stable brand scheme.
+ * Always the brand scheme: FunputUI gives the app its own colours, so the screens still on this
+ * theme must not drift to the wallpaper palette while they wait to be rebuilt.
  */
 @Composable
 fun FunputTheme(
     appearanceMode: AppearanceMode = AppearanceMode.SYSTEM,
-    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val darkTheme = appearanceMode.resolveDarkTheme(isSystemInDarkTheme())
     MaterialTheme(
-        colorScheme = funputColorScheme(darkTheme = darkTheme, dynamicColor = dynamicColor),
+        colorScheme = if (darkTheme) FunputDarkColors else FunputLightColors,
         shapes = FunputShapes,
         typography = Typography,
         content = content,

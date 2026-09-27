@@ -30,15 +30,7 @@ fun FunputSection(
     val type = FunputUi.typography
     val inset = FunputUi.spacing.cardPadding
     Column(modifier.fillMaxWidth()) {
-        title?.let {
-            BasicText(
-                text = it.toUpperCase(Locale.current),
-                style = type.label.copy(color = colors.secondaryLabel),
-                modifier = Modifier
-                    .padding(start = inset, end = inset, bottom = FunputUi.spacing.small)
-                    .semantics { heading() },
-            )
-        }
+        title?.let { FunputSectionHeader(it) }
         FunputCard(content = content)
         footer?.let {
             BasicText(
@@ -48,4 +40,20 @@ fun FunputSection(
             )
         }
     }
+}
+
+/**
+ * The header on its own, for a group that is not one card: a list of cards (a theme gallery, say)
+ * still reads as one titled group, named exactly like every other section.
+ */
+@Composable
+fun FunputSectionHeader(title: String, modifier: Modifier = Modifier) {
+    val inset = FunputUi.spacing.cardPadding
+    BasicText(
+        text = title.toUpperCase(Locale.current),
+        style = FunputUi.typography.label.copy(color = FunputUi.colors.secondaryLabel),
+        modifier = modifier
+            .padding(start = inset, end = inset, bottom = FunputUi.spacing.small)
+            .semantics { heading() },
+    )
 }

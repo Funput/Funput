@@ -18,6 +18,3 @@ internal val FunputShapes = Shapes(
     large = RoundedCornerShape(20.dp),
     extraLarge = RoundedCornerShape(28.dp),
 )
-
-/** Fully rounded ends, for pills and step badges. Not part of [Shapes], which has no such slot. */
-internal val PillShape = RoundedCornerShape(percent = 50)

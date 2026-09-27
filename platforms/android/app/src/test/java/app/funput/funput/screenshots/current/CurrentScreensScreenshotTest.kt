@@ -5,8 +5,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.theme.BuiltInKeyboardThemeSource
 import app.funput.funput.ui.about.AboutScreen
-import app.funput.funput.ui.appearance.AppearanceScreen
-import app.funput.funput.ui.appearance.appearancePreviewState
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CreateCustomThemeScreen
 import app.funput.funput.uitesting.SCREENSHOT_SDK
@@ -45,13 +43,6 @@ class CurrentScreensScreenshotTest(private val variant: ScreenshotVariant) {
 
     private val appearance: AppearanceMode
         get() = if (variant.isDark) AppearanceMode.DARK else AppearanceMode.LIGHT
-
-    @Test
-    fun appearance() = capture("appearance") {
-        FunputTheme(appearanceMode = appearance) {
-            AppearanceScreen(appearancePreviewState(followsAppearance = false))
-        }
-    }
 
     @Test
     fun themeStudio() = capture("theme-studio") {
