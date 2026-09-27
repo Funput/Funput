@@ -625,6 +625,17 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      # Gradle's console names only the failing line; the XML keeps the assertion message, which is
+      # what tells a flaky wait apart from a real regression.
+      - name: Upload unit test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-test-reports
+          path: platforms/android/*/build/test-results/testDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Assemble (cross-compiles funput-jni for both ABIs)
         run: ./gradlew assembleDebug --console=plain
 
