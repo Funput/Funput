@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.roborazzi)
 }
 
-// FunputUI: the app's own design system. Tokens come from the shared design/tokens file and are
+// FunputUI: the app's own design system. Tokens come from tokens/app.tokens.json beside this file and are
 // generated into this module's sources on every build; screens depend on the components here,
 // never on the tokens or on Material directly.
 android {
@@ -31,7 +31,7 @@ android {
 }
 
 val generateDesignTokens by tasks.registering(GenerateDesignTokensTask::class) {
-    tokenFile.set(rootProject.layout.projectDirectory.file("../../design/tokens/app.tokens.json"))
+    tokenFile.set(layout.projectDirectory.file("tokens/app.tokens.json"))
     packageName.set("app.funput.funput.ui.kit.tokens")
     outputDirectory.set(layout.buildDirectory.dir("generated/designTokens"))
 }

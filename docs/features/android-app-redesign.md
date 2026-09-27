@@ -45,7 +45,7 @@ trình tạo chủ đề, ảnh nền, Giới thiệu, Giấy phép, luồng b�
 ## Kiến trúc
 
 ```
-design/tokens/app.tokens.json ──(buildSrc: kiểm tra + sinh code)──▶ FunputTokens.kt
+funput-ui/tokens/app.tokens.json ──(buildSrc: kiểm tra + sinh code)──▶ FunputTokens.kt
                                                                           │
 :funput-ui  (theme, glass, layout, cards, rows, controls, overlays, gestures, icons)
      │
@@ -54,7 +54,7 @@ design/tokens/app.tokens.json ──(buildSrc: kiểm tra + sinh code)──▶ 
 
 ### Token
 
-`design/tokens/app.tokens.json` là nguồn duy nhất cho màu, chữ, bo góc, khoảng cách, độ mờ
+`platforms/android/funput-ui/tokens/app.tokens.json` là nguồn duy nhất cho màu, chữ, bo góc, khoảng cách, độ mờ
 và chuyển động. Task `GenerateDesignTokensTask` (buildSrc) kiểm tra rồi sinh
 `FunputTokens.kt` ở mỗi lần build. Các luật kiểm tra gồm:
 

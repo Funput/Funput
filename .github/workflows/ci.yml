@@ -424,8 +424,7 @@ jobs:
           }
 
           decide windows '^platforms/windows/'
-          # design/tokens/ is validated by every Android build, so a token-only change runs it.
-          decide android '^(platforms/android/|design/tokens/)'
+          decide android '^platforms/android/'
 
   # The deterministic half of cargo-deny: what the dependency graph is allowed to
   # contain, which only changes when a dependency changes. Advisories are NOT here

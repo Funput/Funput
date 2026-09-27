@@ -2,10 +2,11 @@
 
 `app.tokens.json` là **nguồn duy nhất** cho màu, chữ, bo góc, khoảng cách, độ mờ và hiệu ứng
 của app cài đặt Funput. Đây là ngôn ngữ thiết kế **của Funput**: điểm khởi đầu lấy từ app iOS,
-nhưng Android không cố làm bản sao iOS. Hiện Android sinh code từ file này; iOS có thể dùng sau. Token của bàn phím (chủ đề, phím) **không** nằm ở
-đây — chúng thuộc `theme-runtime` / `ThemeRuntime`.
+nhưng Android không cố làm bản sao iOS. Chỉ Android dùng file này, nên nó nằm cạnh `:funput-ui`,
+module sinh code từ nó. Token của bàn phím (chủ đề, phím) **không** nằm ở đây: chúng thuộc
+`theme-runtime` / `ThemeRuntime`.
 
-Bối cảnh: [làm lại app Android theo phong cách iOS](../../docs/features/android-app-redesign.md).
+Bối cảnh: [làm lại app Android trên FunputUI](../../../../docs/features/android-app-redesign.md).
 
 ## Định dạng
 
@@ -75,5 +76,6 @@ cd platforms/android && ./gradlew -p buildSrc test
 
 - **Android:** `:funput-ui` sinh `FunputTokens.kt` từ file này bằng `GenerateDesignTokensTask`
   (validate trước, sinh code sau).
-- **iOS:** sinh code Swift khi app iOS chuyển sang đọc file này.
+- **iOS:** nếu app iOS chuyển sang dùng chung file này, chuyển nó ra root (ví dụ `design/tokens/`)
+  và thêm bộ sinh Swift.
 - **iOS:** đặt `AccentColor` sang cam Funput trong một PR iOS riêng, để hai app khớp nhau.

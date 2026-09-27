@@ -13,7 +13,7 @@ class KotlinTokenEmitterTest {
     fun `declares the package and marks itself generated`() {
         val lines = source.lines()
 
-        assertTrue(lines[0].startsWith("// Generated from design/tokens/app.tokens.json"))
+        assertTrue(lines[0].startsWith("// Generated from funput-ui/tokens/app.tokens.json"))
         assertEquals("package app.example.tokens", lines[1])
     }
 
