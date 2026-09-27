@@ -17,6 +17,7 @@ import app.funput.funput.shortcuts.model.ShortcutLibrary
 import app.funput.funput.shortcuts.persistence.ShortcutsStorageError
 import app.funput.funput.uitesting.SCREENSHOT_SDK
 import app.funput.funput.uitesting.ScreenshotDevices
+import app.funput.funput.uitesting.waitForText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -127,6 +128,20 @@ class ShortcutsScreenTest {
         compose.runOnIdle { assertTrue(store.value.smartCase) }
         compose.onNodeWithText("Đóng").performClick()
         compose.onNodeWithText("Tự nhận diện hoa/thường").assertIsOn()
+    }
+
+    @Test
+    fun `a failed read offers a retry in the list's place, and retrying shows the list`() {
+        val store = ShortcutTestStore(ShortcutLibrary(entries = listOf(testShortcut("vn", "việt nam"))))
+        store.loadFailure = ShortcutsStorageError.ReadFailed
+        compose.setShortcutsContent(store)
+
+        compose.waitForText("Không thể mở Gõ tắt")
+        compose.onNodeWithTag(ShortcutsSearchTag).assertExists()
+        store.loadFailure = null
+        compose.onNodeWithText("Thử lại").performClick()
+        compose.waitForText("vn")
+        compose.onNodeWithText("Không thể mở Gõ tắt").assertDoesNotExist()
     }
 
     private fun hasText(text: String) =

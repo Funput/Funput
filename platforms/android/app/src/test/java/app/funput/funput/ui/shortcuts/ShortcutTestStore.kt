@@ -23,7 +23,13 @@ internal class ShortcutTestStore(initial: ShortcutLibrary) : ShortcutsStoring {
         private set
     var saveFailure: Throwable? = null
 
-    override fun load() = value
+    @Volatile
+    var loadFailure: Throwable? = null
+
+    override fun load(): ShortcutLibrary {
+        loadFailure?.let { throw it }
+        return value
+    }
 
     @Synchronized
     override fun save(library: ShortcutLibrary) {
@@ -49,6 +55,19 @@ internal fun ComposeContentTestRule.showShortcuts(
     isDark: Boolean = false,
 ): ShortcutTestStore {
     val store = ShortcutTestStore(initial)
+    val model = setShortcutsContent(store, isDark)
+    // Loaded in the model is not yet drawn: wait for the screen itself, with room for a slow runner.
+    waitUntil(DefaultWaitMillis) { model()?.hasLoaded == true && model()?.isLoading == false }
+    val drawn = if (initial.entries.isEmpty()) "Chưa có gõ tắt" else initial.entries.first().trigger
+    waitForText(drawn)
+    return store
+}
+
+/** Shows the shortcuts screen over [store] and returns a way to reach its model once composed. */
+internal fun ComposeContentTestRule.setShortcutsContent(
+    store: ShortcutTestStore,
+    isDark: Boolean = false,
+): () -> ShortcutsScreenModel? {
     var model: ShortcutsScreenModel? = null
     setContent {
         val scope = rememberCoroutineScope()
@@ -60,9 +79,5 @@ internal fun ComposeContentTestRule.showShortcuts(
             }
         }
     }
-    // Loaded in the model is not yet drawn: wait for the screen itself, with room for a slow runner.
-    waitUntil(DefaultWaitMillis) { model?.hasLoaded == true && model?.isLoading == false }
-    val drawn = if (initial.entries.isEmpty()) "Chưa có gõ tắt" else initial.entries.first().trigger
-    waitForText(drawn)
-    return store
+    return { model }
 }

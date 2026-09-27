@@ -18,8 +18,9 @@ import app.funput.funput.ui.shortcuts.components.ShortcutsEmptyState
 import app.funput.funput.ui.shortcuts.components.ShortcutsLoadStatus
 
 /**
- * The shortcuts page: the feature switch, load status while it matters, the search, then the list
- * under a count, or an empty state that says whether there is nothing yet or nothing matching.
+ * The shortcuts page: the feature switch, the search, then the list under a count. In the list's
+ * place: a loading or load-error card until the library is read, or an empty state that says
+ * whether there is nothing yet or nothing matching.
  */
 internal fun LazyListScope.shortcutsSections(
     model: ShortcutsScreenModel,
@@ -39,9 +40,6 @@ internal fun LazyListScope.shortcutsSections(
             )
         }
     }
-    if (model.isLoading || model.loadError != null) {
-        item(key = "status") { ShortcutsLoadStatus(model.isLoading, model.loadError != null, model::reload) }
-    }
     item(key = "search") {
         FunputSearchField(
             query = model.query,
@@ -51,11 +49,14 @@ internal fun LazyListScope.shortcutsSections(
             modifier = Modifier.testTag(ShortcutsSearchTag),
         )
     }
-    if (!model.hasLoaded || model.loadError != null) return
+    // Always the same three items: loading and load errors show where the list will be, so the list
+    // never gains or loses an item as loading finishes (a vanishing item left a gap for a frame).
     item(key = "list") {
         val entries = model.filteredEntries
         val total = model.library.entries.size
         when {
+            model.loadError != null -> ShortcutsLoadStatus(loading = false, error = true, retry = model::reload)
+            !model.hasLoaded -> ShortcutsLoadStatus(loading = true, error = false, retry = model::reload)
             total == 0 -> ShortcutsEmptyState(
                 title = stringResource(R.string.shortcuts_empty_title),
                 body = stringResource(R.string.shortcuts_empty_body),
