@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -63,7 +64,7 @@ internal fun BackgroundFocusPicker(
                 bitmap = decoded.asImageBitmap(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().testTag(BackgroundFocusImageTag),
             )
         }
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -90,3 +91,6 @@ private fun report(
 
 private val PickerHeight = 160.dp
 private val MarkerRadius = 10.dp
+
+/** Test tag of the picker's image, present once the photo has been decoded. */
+internal const val BackgroundFocusImageTag = "background-focus-image"
