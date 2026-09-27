@@ -47,3 +47,7 @@ broom
 
 # Hardware keyboard
 desktop
+
+# System integration
+command
+arrow-square-out

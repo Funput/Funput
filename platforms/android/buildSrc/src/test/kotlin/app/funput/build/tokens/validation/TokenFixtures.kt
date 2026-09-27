@@ -10,6 +10,8 @@ internal object TokenFixtures {
         "onAccent" to ("#1F1300" to "#1F1300"),
         "groupedBackground" to ("#F2F2F7" to "#000000"),
         "cardBackground" to ("#FFFFFF" to "#1C1C1E"),
+        "elevatedGroupedBackground" to ("#F2F2F7" to "#1C1C1E"),
+        "elevatedCardBackground" to ("#FFFFFF" to "#2C2C2E"),
         "cardStroke" to ("#00000012" to "#FFFFFF12"),
         "label" to ("#000000" to "#FFFFFF"),
         "secondaryLabel" to ("#3C3C4399" to "#EBEBF599"),

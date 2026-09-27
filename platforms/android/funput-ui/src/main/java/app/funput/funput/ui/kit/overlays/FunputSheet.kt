@@ -16,21 +16,28 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.funput.funput.ui.kit.theme.FunputUi
+import app.funput.funput.ui.kit.theme.ProvideElevatedColors
 
 /**
- * A bottom sheet for a focused task, typically a picker: a title, then content on the screen
- * background so `FunputSection`s inside it look like the rest of the app.
+ * A bottom sheet for a focused task, typically a picker: a title, then content. The sheet and its
+ * cards use the raised surface colours, so in dark mode the sheet stands off the scrim and the
+ * `FunputSection`s inside it still stand off the sheet.
  *
  * Material's sheet, restyled. Drag to dismiss, scrim tap, predictive back and window insets are
  * handled there, and that is behaviour worth borrowing rather than rebuilding.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FunputSheet(
     onDismiss: () -> Unit,
     title: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    ProvideElevatedColors { SheetContent(onDismiss, title, content) }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SheetContent(onDismiss: () -> Unit, title: String?, content: @Composable ColumnScope.() -> Unit) {
     val colors = FunputUi.colors
     val spacing = FunputUi.spacing
     ModalBottomSheet(

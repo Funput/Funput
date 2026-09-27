@@ -12,12 +12,18 @@ import app.funput.build.tokens.model.DesignTokens
 object DesignTokenRules {
     /** Colour roles every platform relies on; removing one would break generated code. */
     val RequiredColors: List<String> = listOf(
-        "accent", "onAccent", "groupedBackground", "cardBackground", "cardStroke", "label", "secondaryLabel",
+        "accent", "onAccent", "groupedBackground", "cardBackground", "elevatedGroupedBackground",
+        "elevatedCardBackground", "cardStroke", "label", "secondaryLabel",
         "tertiaryLabel", "separator", "success", "destructive",
     )
 
-    /** The two surfaces content sits on; both must be opaque. */
-    val Surfaces: List<String> = listOf("groupedBackground", "cardBackground")
+    /**
+     * The surfaces content sits on, on the screen and raised in a sheet; all must be opaque, and
+     * text and the accent are checked on each.
+     */
+    val Surfaces: List<String> = listOf(
+        "groupedBackground", "cardBackground", "elevatedGroupedBackground", "elevatedCardBackground",
+    )
 
     /** Minimum contrast of body text ([label]) on every surface. */
     const val TEXT_CONTRAST: Double = 4.5

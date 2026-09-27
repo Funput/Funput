@@ -1,31 +1,38 @@
-package app.funput.funput.ui.settings.hardware
+package app.funput.funput.ui.settings.groups
 
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isToggleable
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.funput.funput.ime.settings.hardware.HardwareKeyboardPreferences
-import app.funput.funput.ui.theme.FunputTheme
+import app.funput.funput.ui.kit.theme.FunputUiTheme
+import app.funput.funput.ui.settings.hardware.HardwareKeyboardSection
+import app.funput.funput.ui.settings.hardware.HardwareKeyboardSectionState
+import app.funput.funput.uitesting.SCREENSHOT_SDK
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
-class HardwareKeyboardSettingsSectionTest {
+/** The physical keyboard group: both switches and the link to Android's own settings. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [SCREENSHOT_SDK], qualifiers = "vi")
+class HardwareKeyboardSectionTest {
     @get:Rule
     val compose = createComposeRule()
 
     @Test
-    fun sectionDispatchesBothSwitchesAndTheSystemSettingsLink() {
+    fun `the section dispatches both switches and the system settings link`() {
         val showChanges = mutableListOf<Boolean>()
         val hotkeyChanges = mutableListOf<Boolean>()
         var openedSystemSettings = false
         compose.setContent {
-            FunputTheme {
-                HardwareKeyboardSettingsSection(
+            FunputUiTheme(isDark = false) {
+                HardwareKeyboardSection(
                     HardwareKeyboardSectionState(
                         preferences = HardwareKeyboardPreferences.Default,
                         onShowsSoftKeyboardChanged = showChanges::add,
@@ -40,21 +47,19 @@ class HardwareKeyboardSettingsSectionTest {
         compose.onNodeWithText(HotkeyTitle).performClick()
         compose.onNodeWithText("Cài đặt bàn phím vật lý").performClick()
 
-        compose.runOnIdle {
-            assertEquals(listOf(true), showChanges)
-            assertEquals(listOf(false), hotkeyChanges)
-            assertTrue(openedSystemSettings)
-        }
+        assertEquals(listOf(true), showChanges)
+        assertEquals(listOf(false), hotkeyChanges)
+        assertTrue(openedSystemSettings)
     }
 
     @Test
-    fun switchesReflectTheDefaults() {
+    fun `the switches reflect the defaults`() {
         compose.setContent {
-            FunputTheme { HardwareKeyboardSettingsSection(HardwareKeyboardSectionState.Inert) }
+            FunputUiTheme(isDark = false) { HardwareKeyboardSection(HardwareKeyboardSectionState.Inert) }
         }
 
-        compose.onNode(isToggleable() and hasText(ShowTitle)).assertIsOff()
-        compose.onNode(isToggleable() and hasText(HotkeyTitle)).assertIsOn()
+        compose.onNodeWithText(ShowTitle).assertIsOff()
+        compose.onNodeWithText(HotkeyTitle).assertIsOn()
     }
 
     private companion object {

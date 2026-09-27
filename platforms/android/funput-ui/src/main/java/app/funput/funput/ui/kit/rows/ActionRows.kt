@@ -50,6 +50,30 @@ fun LinkRow(
 }
 
 /**
+ * A row that does something right away (possibly after a confirmation), rather than opening a
+ * place: no chevron, and a [destructive] action says so with its title colour.
+ */
+@Composable
+fun ActionRow(
+    title: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    @DrawableRes icon: Int? = null,
+    tint: FunputTint = FunputTint.ORANGE,
+    destructive: Boolean = false,
+) {
+    FunputRow(
+        title = title,
+        summary = summary,
+        icon = icon,
+        tint = tint,
+        titleColor = if (destructive) FunputUi.colors.destructive else Color.Unspecified,
+        modifier = modifier.clickable(role = Role.Button, onClick = onClick),
+    )
+}
+
+/**
  * One option in a list of mutually exclusive choices, such as a picker sheet. The chosen one
  * carries a check; TalkBack reads each as a radio button with its state.
  */

@@ -3,21 +3,20 @@ package app.funput.funput.ui.settings
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import app.funput.funput.ui.settings.clipboard.ClipboardSettingsSection
-import app.funput.funput.ui.settings.data.DataSettingsSection
-import app.funput.funput.ui.settings.feedback.FeedbackSettingsSection
-import app.funput.funput.ui.settings.hardware.HardwareKeyboardSettingsSection
+import app.funput.funput.ui.settings.clipboard.ClipboardSection
+import app.funput.funput.ui.settings.data.DataSection
+import app.funput.funput.ui.settings.feedback.FeedbackSection
+import app.funput.funput.ui.settings.hardware.HardwareKeyboardSection
 import app.funput.funput.ui.settings.keyboard.KeyboardPreviewCard
 import app.funput.funput.ui.settings.keyboard.KeyboardSetupCard
 import app.funput.funput.ui.settings.keyboard.LayoutSection
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
-import app.funput.funput.ui.settings.smart.SmartSettingsSection
+import app.funput.funput.ui.settings.smart.SmartSection
 import app.funput.funput.ui.settings.typing.TypingSection
 
 /**
  * The settings page, top to bottom: the keyboard preview, setup while it is unfinished, then one
- * group per concern. The groups from Smart input down are still the pre-FunputUI sections; they
- * read their colours from the FunputUI Material bridge until they are rebuilt.
+ * group per concern, each with its own icon colour.
  */
 internal fun LazyListScope.settingsSections(state: SettingsScreenState, onOpenPicker: (SettingsPicker) -> Unit) {
     item(key = "preview") {
@@ -64,7 +63,7 @@ internal fun LazyListScope.settingsSections(state: SettingsScreenState, onOpenPi
         )
     }
     item(key = "smart") {
-        SmartSettingsSection(
+        SmartSection(
             preferences = state.smartComposition,
             personalSuggestionsEnabled = state.personalSuggestionsEnabled,
             smartGesturesEnabled = state.smartGesturesEnabled,
@@ -78,7 +77,7 @@ internal fun LazyListScope.settingsSections(state: SettingsScreenState, onOpenPi
         )
     }
     item(key = "feedback") {
-        FeedbackSettingsSection(
+        FeedbackSection(
             hapticsEnabled = state.hapticsEnabled,
             soundsEnabled = state.soundsEnabled,
             onHapticsChanged = state.onHapticsChanged,
@@ -86,16 +85,16 @@ internal fun LazyListScope.settingsSections(state: SettingsScreenState, onOpenPi
         )
     }
     item(key = "clipboard") {
-        ClipboardSettingsSection(
+        ClipboardSection(
             enabled = state.clipboardPreferences.enabled,
             expiry = state.clipboardPreferences.expiry,
             onEnabledChanged = state.onClipboardEnabledChanged,
             onOpenExpiry = { onOpenPicker(SettingsPicker.CLIPBOARD_EXPIRY) },
         )
     }
-    item(key = "hardware-keyboard") { HardwareKeyboardSettingsSection(state.hardwareKeyboard) }
+    item(key = "hardware-keyboard") { HardwareKeyboardSection(state.hardwareKeyboard) }
     item(key = "data") {
-        DataSettingsSection(
+        DataSection(
             onResetPersonalSuggestions = state.onResetPersonalSuggestions,
             onClearClipboardHistory = state.onClearClipboardHistory,
         )

@@ -64,7 +64,6 @@ readonly roots=(
     "$ime_test/settings/layout"
     "$ime_test/hardware"
     "$android_root/app/src/main/java/app/funput/funput/ui/settings/hardware"
-    "$android_root/app/src/androidTest/java/app/funput/funput/ui/settings/hardware"
     "$ime_main/shortcuts"
     "$ime_test/shortcuts"
     "$android_root/ime/src/androidTest/java/app/funput/funput/ime/shortcuts"

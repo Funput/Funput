@@ -5,6 +5,8 @@
     "onAccent": { "light": "#1F1300", "dark": "#1F1300" },
     "groupedBackground": { "light": "#F2F2F7", "dark": "#000000" },
     "cardBackground": { "light": "#FFFFFF", "dark": "#1C1C1E" },
+    "elevatedGroupedBackground": { "light": "#F2F2F7", "dark": "#1C1C1E" },
+    "elevatedCardBackground": { "light": "#FFFFFF", "dark": "#2C2C2E" },
     "cardStroke": { "light": "#00000012", "dark": "#FFFFFF12" },
     "label": { "light": "#000000", "dark": "#FFFFFF" },
     "secondaryLabel": { "light": "#3C3C4399", "dark": "#EBEBF599" },

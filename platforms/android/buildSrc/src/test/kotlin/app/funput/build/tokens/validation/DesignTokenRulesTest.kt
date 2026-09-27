@@ -41,7 +41,8 @@ class DesignTokenRulesTest {
         // The raw Funput seed: fine on dark surfaces, 2.5:1 on a white card.
         val violations = violationsOf(json(colors = mapOf("accent" to ("#EF8A1A" to "#FFA43F"))))
 
-        assertEquals(2, violations.size)
+        // Every light surface fails: the screen, the card, and their raised twins in sheets.
+        assertEquals(4, violations.size)
         assertTrue(violations.all { it.startsWith("color.accent.light:") })
         assertTrue(violations.any { it.contains("on cardBackground") })
     }
@@ -62,10 +63,10 @@ class DesignTokenRulesTest {
     }
 
     @Test
-    fun `body text needs 4_5 to 1 on both surfaces`() {
+    fun `body text needs 4_5 to 1 on every surface`() {
         val violations = violationsOf(json(colors = mapOf("label" to ("#000000" to "#555555"))))
 
-        assertEquals(2, violations.size)
+        assertEquals(4, violations.size)
         assertTrue(violations.all { it.startsWith("color.label.dark:") })
     }
 
