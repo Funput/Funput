@@ -20,6 +20,7 @@ import app.funput.funput.ui.appearance.AppearanceRoute
 import app.funput.funput.ui.kit.theme.FunputUiTheme
 import app.funput.funput.ui.navigation.AppDestination
 import app.funput.funput.ui.navigation.AppNavDisplay
+import app.funput.funput.ui.navigation.AppTabBar
 import app.funput.funput.ui.navigation.LegacyTabHost
 import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
@@ -66,7 +67,7 @@ fun FunputApp() {
         SyncSystemBarAppearance(darkTheme = darkTheme)
         AppNavDisplay(navigator) { destination ->
             when (destination) {
-                AppDestination.SETTINGS -> legacy(true) {
+                AppDestination.SETTINGS -> {
                     SettingsRoute(
                         settings = settings,
                         // The keyboard follows the system appearance rather than the app's own
@@ -77,6 +78,7 @@ fun FunputApp() {
                         ),
                         onOpenAppearance = { navigator.selectTab(TopLevelDestination.APPEARANCE) },
                         onOpenShortcuts = { navigator.navigate(AppDestination.SHORTCUTS) },
+                        tabBar = { AppTabBar(navigator) },
                     )
                 }
                 AppDestination.SHORTCUTS -> legacy(false) { ShortcutsRoute { navigator.navigateBack() } }

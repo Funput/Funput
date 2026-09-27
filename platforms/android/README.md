@@ -196,10 +196,11 @@ màn hình bằng Roborazzi:
 dựng (bắt crash) nhưng không ghi ảnh. Workflow `android-screenshots` chụp lại trên mỗi PR đụng
 tới Android và đính ảnh vào artifact.
 
-**FunputUI dùng ảnh golden.** Ảnh mẫu của `:funput-ui` nằm trong `funput-ui/src/test/screenshots`
-và job `android` so từng PR với chúng (`:funput-ui:verifyRoborazziDebug`). Ảnh golden phải được
-ghi trên Linux: khi cố ý đổi một component, tải artifact `funput-ui-goldens` của workflow
-`android-screenshots` trên PR đó và commit đè lên thư mục trên. Ghi trên Mac chỉ để tự xem.
+**FunputUI và các màn đã làm lại dùng ảnh golden.** Ảnh mẫu nằm trong
+`funput-ui/src/test/screenshots` và `app/src/test/screenshots`; job `android` so từng PR với
+chúng (`verifyRoborazziDebug` của cả hai module). Ảnh golden phải được
+ghi trên Linux: khi cố ý đổi giao diện, tải artifact `funput-ui-goldens` / `app-goldens` của
+workflow `android-screenshots` trên PR đó và commit đè lên thư mục tương ứng. Ghi trên Mac chỉ để tự xem.
 
 **Icon.** FunputUI dùng bộ [Phosphor](https://phosphoricons.com) (MIT), ghim ở một phiên bản.
 Danh sách nằm trong `funput-ui/icons.txt`; thêm icon thì thêm một dòng rồi chạy

@@ -32,6 +32,7 @@ internal fun SettingsRoute(
     keyboardTheme: KeyboardThemeDescriptor,
     onOpenAppearance: () -> Unit,
     onOpenShortcuts: () -> Unit,
+    tabBar: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -123,5 +124,6 @@ internal fun SettingsRoute(
             onEnableKeyboard = context::openKeyboardSettings,
             onSelectKeyboard = context::showKeyboardPicker,
         ),
+        tabBar = tabBar,
     )
 }

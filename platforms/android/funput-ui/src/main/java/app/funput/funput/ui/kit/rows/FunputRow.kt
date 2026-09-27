@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.funput.funput.ui.kit.theme.DisabledAlpha
 import app.funput.funput.ui.kit.theme.FunputTint
@@ -27,6 +28,12 @@ import app.funput.funput.ui.kit.tokens.OpacityTokens
 
 /** Rows are never shorter than this, which also keeps every row a comfortable touch target. */
 private val RowMinHeight = 56.dp
+
+/** Measures shared by rows and the dividers between them. */
+object FunputRowDefaults {
+    /** Divider inset for rows with an icon: past the tile, lined up with the title. */
+    val IconDividerInset: Dp = 18.dp + 32.dp + 12.dp
+}
 
 /**
  * The shared anatomy of every FunputUI row, inside a card: an optional icon tile in the group's

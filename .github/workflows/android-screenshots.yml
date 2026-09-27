@@ -17,7 +17,9 @@ name: Android screenshots
 # platforms/android/funput-ui/src/test/screenshots and must come from this Linux
 # runner: when a component changes on purpose, download the "funput-ui-goldens"
 # artifact of this workflow's run on the pull request and commit its contents
-# over that directory. The app's own captures are "before" evidence only.
+# over that directory; the rebuilt app screens do the same with "app-goldens" and
+# platforms/android/app/src/test/screenshots. The app's remaining "current" captures
+# are "before" evidence only, recorded but never verified.
 on:
   pull_request:
     paths:
@@ -83,5 +85,12 @@ jobs:
         with:
           name: funput-ui-goldens
           path: platforms/android/funput-ui/src/test/screenshots/
+          if-no-files-found: error
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: app-goldens
+          path: platforms/android/app/src/test/screenshots/
           if-no-files-found: error
           retention-days: 30
