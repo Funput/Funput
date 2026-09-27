@@ -116,9 +116,12 @@ Số đo từ spike (Galaxy S21 Ultra, 120 Hz, `dumpsys gfxinfo`):
   - `check-kotlin-loc.sh`: ≤150 dòng mỗi file Kotlin
   - `check-kotlin-layout.sh`: ≤5 file mỗi thư mục trong các thư mục đã đăng ký
   - `check-app-material-free.sh`
-  - `-p buildSrc test`: luật token
   - `testDebugUnitTest`
   - `lintDebug` (hiện `:funput-ui` 0 cảnh báo, `:app` 3 cảnh báo ngoài phạm vi)
+  - Token luôn được kiểm tra khi build: token sai thì build hỏng.
+- **Chạy ở máy khi sửa công cụ** (không có trong CI để giữ CI nhanh):
+  - sửa bộ kiểm tra hoặc bộ sinh token trong `buildSrc`: `./gradlew -p buildSrc test`
+  - sửa script nhập icon: `python3 scripts/tests/test_import_phosphor_icons.py`
 - **Test giao diện chạy trên JVM** (Robolectric, SDK 35, `GraphicsMode.NATIVE`, tiếng Việt):
   test hành vi cho từng màn, và test ảnh chụp dựng mọi màn ở sáng/tối × cỡ chữ 1.0/1.3.
   Test ảnh chụp **không so ảnh**, chỉ bắt màn bị văng. Muốn xem ảnh ở local thì chạy
