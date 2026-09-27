@@ -118,7 +118,8 @@ Số đo từ spike (Galaxy S21 Ultra, 120 Hz, `dumpsys gfxinfo`):
   - `check-app-material-free.sh`
   - `-p buildSrc test`: luật token
   - `testDebugUnitTest`
-  - lint
+- **Lint chưa chạy trong CI.** Chạy `lintDebug` ở máy trước khi mở PR (hiện `:funput-ui` 0
+  cảnh báo, `:app` 3 cảnh báo ngoài phạm vi).
 - **Test giao diện chạy trên JVM** (Robolectric, SDK 35, `GraphicsMode.NATIVE`, tiếng Việt):
   test hành vi cho từng màn, và test ảnh chụp dựng mọi màn ở sáng/tối × cỡ chữ 1.0/1.3.
   Test ảnh chụp **không so ảnh**, chỉ bắt màn bị văng. Muốn xem ảnh ở local thì chạy
