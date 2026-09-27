@@ -29,18 +29,20 @@ internal fun LicensesRoute(onBack: () -> Unit) {
     val texts by produceState<Map<LicenseNotice, String?>?>(null, context) {
         value = withContext(Dispatchers.IO) { LicenseNotices.associateWith { context.readNotice(it) } }
     }
+    // One item per notice from the first frame, each showing "reading…" until its text arrives:
+    // the list's items never change as loading finishes, only what is drawn inside them.
     FunputScreen(title = stringResource(R.string.licenses_title), onBack = onBack) {
-        val loaded = texts
-        if (loaded == null) {
-            item(key = "loading") { Caption(stringResource(R.string.licenses_loading)) }
-            return@FunputScreen
-        }
         LicenseNotices.forEach { notice ->
             item(key = notice.assetPath) {
                 FunputSection(title = stringResource(notice.title)) {
-                    val text = loaded[notice]
                     Column(Modifier.padding(FunputUi.spacing.cardPadding)) {
-                        if (text == null) Caption(stringResource(R.string.licenses_error)) else NoticeBody(text, notice.isMarkdown)
+                        val loaded = texts
+                        val text = loaded?.get(notice)
+                        when {
+                            loaded == null -> Caption(stringResource(R.string.licenses_loading))
+                            text == null -> Caption(stringResource(R.string.licenses_error))
+                            else -> NoticeBody(text, notice.isMarkdown)
+                        }
                     }
                 }
             }
