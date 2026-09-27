@@ -79,6 +79,8 @@ readonly roots=(
     "$android_root/app/src/main/java/app/funput/funput/ui/settings/keyboard"
     "$android_root/app/src/main/java/app/funput/funput/ui/settings/typing"
     "$android_root/app/src/test/java/app/funput/funput/ui/settings"
+    "$android_root/app/src/main/java/app/funput/funput/ui/appearance"
+    "$android_root/app/src/test/java/app/funput/funput/ui/appearance"
 )
 violations=0
 

@@ -117,4 +117,10 @@ object FunputIcons {
 
     /** A language, such as typing in English. */
     @DrawableRes val Language: Int = R.drawable.ph_globe_simple
+
+    /** Light or dark mode. */
+    @DrawableRes val LightDark: Int = R.drawable.ph_circle_half
+
+    /** Editing something the user made. */
+    @DrawableRes val Edit: Int = R.drawable.ph_pencil_simple
 }

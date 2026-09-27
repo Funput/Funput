@@ -59,3 +59,7 @@ dots-three-circle
 
 # Languages
 globe-simple
+
+# Appearance and themes
+circle-half
+pencil-simple

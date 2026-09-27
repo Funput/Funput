@@ -57,7 +57,7 @@ fun FunputApp() {
     // FunputUI owns the app theme. Screens not rebuilt on it yet keep the old Material theme
     // through [legacy], so both kinds render correctly during the migration.
     val legacy: @Composable (Boolean, @Composable () -> Unit) -> Unit = { tabRoot, screen ->
-        FunputTheme(appearanceMode = settings.appearanceMode, dynamicColor = settings.dynamicColor) {
+        FunputTheme(appearanceMode = settings.appearanceMode) {
             Surface(modifier = Modifier.fillMaxSize()) {
                 if (tabRoot) LegacyTabHost(navigator, screen) else screen()
             }
@@ -82,7 +82,7 @@ fun FunputApp() {
                     )
                 }
                 AppDestination.SHORTCUTS -> ShortcutsRoute { navigator.navigateBack() }
-                AppDestination.THEME_GALLERY -> legacy(true) {
+                AppDestination.THEME_GALLERY -> {
                     AppearanceRoute(
                         settings = settings,
                         catalog = themeCatalog,
@@ -102,6 +102,7 @@ fun FunputApp() {
                                 themeCatalogRevision += 1
                             }
                         },
+                        tabBar = { AppTabBar(navigator) },
                     )
                 }
                 AppDestination.ABOUT -> legacy(true) {
