@@ -1,4 +1,4 @@
-package app.funput.funput.ui.theme.custom
+package app.funput.funput.ui.theme.custom.draft
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable

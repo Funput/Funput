@@ -81,9 +81,7 @@ readonly roots=(
     "$android_root/app/src/test/java/app/funput/funput/ui/settings"
     "$android_root/app/src/main/java/app/funput/funput/ui/appearance"
     "$android_root/app/src/test/java/app/funput/funput/ui/appearance"
-    "$android_root/app/src/main/java/app/funput/funput/ui/theme/custom/color"
-    "$android_root/app/src/main/java/app/funput/funput/ui/theme/custom/metrics"
-    "$android_root/app/src/main/java/app/funput/funput/ui/theme/custom/studio"
+    "$android_root/app/src/main/java/app/funput/funput/ui/theme/custom"
     "$android_root/app/src/test/java/app/funput/funput/ui/theme/custom"
 )
 violations=0

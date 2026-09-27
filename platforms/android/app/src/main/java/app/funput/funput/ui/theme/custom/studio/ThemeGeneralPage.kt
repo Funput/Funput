@@ -18,7 +18,7 @@ import app.funput.funput.ui.kit.controls.FunputTextField
 import app.funput.funput.ui.kit.rows.LinkRow
 import app.funput.funput.ui.settings.PickerOption
 import app.funput.funput.ui.settings.PickerSheet
-import app.funput.funput.ui.theme.custom.ThemeDraftState
+import app.funput.funput.ui.theme.custom.draft.ThemeDraftState
 import app.funput.funput.ui.theme.custom.color.ColorRow
 import app.funput.funput.ui.theme.custom.color.picker.ColorPickerSheet
 import app.funput.funput.ui.theme.custom.metrics.ThemeShapeSection

@@ -2,6 +2,7 @@ package app.funput.funput.ui.theme.custom.studio
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -18,7 +19,7 @@ import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.kit.cards.FunputSection
 import app.funput.funput.ui.kit.rows.LinkRow
 import app.funput.funput.ui.kit.theme.FunputUi
-import app.funput.funput.ui.theme.custom.ThemeDraftState
+import app.funput.funput.ui.theme.custom.draft.ThemeDraftState
 import app.funput.funput.ui.theme.custom.color.ThemeColorLinks
 import app.funput.funput.ui.theme.custom.color.ThemeColorList
 import app.funput.funput.ui.theme.custom.color.ThemeColorRole
@@ -35,19 +36,24 @@ internal fun ThemeStudioPages(
     onOpenBackground: () -> Unit,
 ) {
     HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+        ThemeEditorColumn { ThemeEditorPage(ThemeEditorTab.entries[page], state, baseThemes, onOpenBackground) }
+    }
+}
+
+/** One scrolling page of sections, centred and never wider than the layout token allows. */
+@Composable
+internal fun ThemeEditorColumn(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+    ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(FunputUi.spacing.section),
-                modifier = Modifier
-                    .widthIn(max = FunputUi.spacing.contentMaxWidth)
-                    .padding(horizontal = FunputUi.spacing.pageMargin, vertical = FunputUi.spacing.medium),
-            ) {
-                ThemeEditorPage(ThemeEditorTab.entries[page], state, baseThemes, onOpenBackground)
-            }
-        }
+            verticalArrangement = Arrangement.spacedBy(FunputUi.spacing.section),
+            modifier = Modifier
+                .widthIn(max = FunputUi.spacing.contentMaxWidth)
+                .padding(horizontal = FunputUi.spacing.pageMargin, vertical = FunputUi.spacing.medium),
+            content = content,
+        )
     }
 }
 

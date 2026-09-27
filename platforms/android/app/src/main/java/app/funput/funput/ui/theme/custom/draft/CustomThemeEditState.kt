@@ -1,4 +1,4 @@
-package app.funput.funput.ui.theme.custom
+package app.funput.funput.ui.theme.custom.draft
 
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemeId

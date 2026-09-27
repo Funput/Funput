@@ -8,8 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import app.funput.funput.R
+import app.funput.funput.ui.kit.theme.FunputUi
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,12 +41,14 @@ internal fun BackgroundFocusPicker(
     modifier: Modifier = Modifier,
 ) {
     val bitmap by rememberBackgroundBitmap(source)
+    val description = stringResource(R.string.custom_theme_background_focus_hint)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(PickerHeight)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(FunputUi.shapes.thumbnail)
+            .semantics { contentDescription = description }
             .pointerInput(source) {
                 detectTapGestures { offset -> report(offset, size.width, size.height, onFocusChange) }
             }

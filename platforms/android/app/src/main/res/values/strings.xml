@@ -143,11 +143,12 @@
     <string name="custom_theme_background_remove">Gỡ ảnh</string>
     <string name="custom_theme_background_focus_hint">Kéo trên ảnh để chọn phần muốn thấy.</string>
     <string name="custom_theme_background_overlay">Lớp phủ</string>
+    <string name="custom_theme_background_frame">Phần ảnh hiển thị</string>
+    <string name="custom_theme_background_adjust">Điều chỉnh</string>
     <string name="custom_theme_background_opacity_label">Độ hiện ảnh nền</string>
     <string name="custom_theme_background_zoom_label">Phóng to</string>
     <string name="custom_theme_background_blur_label">Làm mờ</string>
     <string name="custom_theme_save">Lưu chủ đề</string>
-    <string name="custom_theme_back_description">Quay lại</string>
     <string name="input_method_telex">Telex</string>
     <string name="input_method_telex_summary">Dùng tổ hợp chữ để nhập dấu.</string>
     <string name="input_method_telex_advanced">Telex nâng cao</string>
