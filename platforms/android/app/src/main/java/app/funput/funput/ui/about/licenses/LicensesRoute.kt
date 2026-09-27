@@ -29,22 +29,27 @@ internal fun LicensesRoute(onBack: () -> Unit) {
     val texts by produceState<Map<LicenseNotice, String?>?>(null, context) {
         value = withContext(Dispatchers.IO) { LicenseNotices.associateWith { context.readNotice(it) } }
     }
-    // One item per notice from the first frame, each showing "reading…" until its text arrives:
-    // the list's items never change as loading finishes, only what is drawn inside them.
+    // Read here, not inside the list's items: the page recomposes with the loaded texts and hands
+    // them down, rather than relying on each lazy item to notice a change it read itself. On a
+    // loaded CI runner an item composed before the read finished was seen to stay on "reading…".
+    val loaded = texts
     FunputScreen(title = stringResource(R.string.licenses_title), onBack = onBack) {
         LicenseNotices.forEach { notice ->
-            item(key = notice.assetPath) {
-                FunputSection(title = stringResource(notice.title)) {
-                    Column(Modifier.padding(FunputUi.spacing.cardPadding)) {
-                        val loaded = texts
-                        val text = loaded?.get(notice)
-                        when {
-                            loaded == null -> Caption(stringResource(R.string.licenses_loading))
-                            text == null -> Caption(stringResource(R.string.licenses_error))
-                            else -> NoticeBody(text, notice.isMarkdown)
-                        }
-                    }
-                }
+            item(key = notice.assetPath) { NoticeCard(notice, loaded) }
+        }
+    }
+}
+
+/** One notice's card: "reading…" until [loaded] arrives, then its text, or why it is missing. */
+@Composable
+private fun NoticeCard(notice: LicenseNotice, loaded: Map<LicenseNotice, String?>?) {
+    FunputSection(title = stringResource(notice.title)) {
+        Column(Modifier.padding(FunputUi.spacing.cardPadding)) {
+            val text = loaded?.get(notice)
+            when {
+                loaded == null -> Caption(stringResource(R.string.licenses_loading))
+                text == null -> Caption(stringResource(R.string.licenses_error))
+                else -> NoticeBody(text, notice.isMarkdown)
             }
         }
     }
