@@ -1,6 +1,6 @@
 package app.funput.funput.ui.kit.theme
 
-import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.LinearEasing
@@ -12,16 +12,19 @@ import app.funput.funput.ui.kit.tokens.TokenCurve
 import kotlin.math.PI
 import kotlin.math.pow
 
-/** Named animations of FunputUI, built from the motion tokens. */
+/**
+ * Named animations of FunputUI, built from the motion tokens. All are finite (springs and tweens),
+ * so they also drive enter and exit transitions.
+ */
 object FunputMotion {
     /** Selecting something: a theme, a tab, a segment. */
-    fun <T> selection(): AnimationSpec<T> = MotionTokens.themeSelect.toSpec()
+    fun <T> selection(): FiniteAnimationSpec<T> = MotionTokens.themeSelect.toSpec()
 
     /** Something arriving with a little life: a sheet, a confirmation. */
-    fun <T> emphasized(): AnimationSpec<T> = MotionTokens.launchBloom.toSpec()
+    fun <T> emphasized(): FiniteAnimationSpec<T> = MotionTokens.launchBloom.toSpec()
 
     /** Something leaving. */
-    fun <T> exit(): AnimationSpec<T> = MotionTokens.launchExit.toSpec()
+    fun <T> exit(): FiniteAnimationSpec<T> = MotionTokens.launchExit.toSpec()
 }
 
 /**
@@ -31,7 +34,7 @@ object FunputMotion {
  * stiffness. For a unit-mass spring the period is `2π / √stiffness`, so a duration `d` gives
  * `stiffness = (2π / d)²`, and bounce 0..1 maps to damping `1 - bounce` (0 = critically damped).
  */
-internal fun <T> MotionToken.toSpec(): AnimationSpec<T> = when (curve) {
+internal fun <T> MotionToken.toSpec(): FiniteAnimationSpec<T> = when (curve) {
     TokenCurve.SPRING -> spring(dampingRatio = dampingRatio(bounce), stiffness = stiffness(durationMillis))
     TokenCurve.EASE_OUT -> tween(durationMillis, easing = EaseOut)
     TokenCurve.EASE_IN_OUT -> tween(durationMillis, easing = EaseInOut)
