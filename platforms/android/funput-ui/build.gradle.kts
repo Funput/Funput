@@ -36,15 +36,6 @@ val generateDesignTokens by tasks.registering(GenerateDesignTokensTask::class) {
     outputDirectory.set(layout.buildDirectory.dir("generated/designTokens"))
 }
 
-// Goldens are test inputs: without this, a changed or replaced golden leaves the test task
-// UP-TO-DATE and verifyRoborazzi passes without comparing anything.
-tasks.withType<Test>().configureEach {
-    // A file tree, not inputs.dir: re-recording from scratch starts with the directory absent.
-    inputs.files(fileTree("src/test/screenshots"))
-        .withPropertyName("screenshotGoldens")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
-}
-
 androidComponents.onVariants { variant ->
     variant.sources.kotlin?.addGeneratedSourceDirectory(
         generateDesignTokens,

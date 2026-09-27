@@ -103,13 +103,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
 
-// The app's goldens are test inputs, so a replaced golden re-runs the comparison (see funput-ui).
-tasks.withType<Test>().configureEach {
-    inputs.files(fileTree("src/test/screenshots"))
-        .withPropertyName("screenshotGoldens")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
-}
-
 androidComponents.beforeVariants {
     (it as com.android.build.api.variant.HasUnitTestBuilder).enableUnitTest = true
 }

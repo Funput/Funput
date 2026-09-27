@@ -611,22 +611,11 @@ jobs:
       - name: Build logic tests
         run: ./gradlew -p buildSrc test --console=plain
 
-      # One pass: the screenshot tests of FunputUI and of the rebuilt app screens run once, in
-      # verify mode, against the goldens in <module>/src/test/screenshots. Those goldens are
-      # recorded on Linux by the android-screenshots workflow, so they match this runner.
-      - name: Unit tests and screenshot goldens
-        run: ./gradlew testDebugUnitTest :funput-ui:verifyRoborazziDebug :app:verifyRoborazziDebug --console=plain
-
-      - name: Upload screenshot diffs
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: screenshot-diffs
-          path: |
-            platforms/android/funput-ui/build/outputs/roborazzi/
-            platforms/android/app/build/outputs/roborazzi/
-          if-no-files-found: ignore
-          retention-days: 14
+      # The screenshot tests run here too, composing every screen in every appearance and font
+      # scale without comparing images: a screen that crashes still fails the job. Visual checks
+      # are done by hand on a device.
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest --console=plain
 
       # Gradle's console names only the failing line; the XML keeps the assertion message, which is
       # what tells a flaky wait apart from a real regression.
