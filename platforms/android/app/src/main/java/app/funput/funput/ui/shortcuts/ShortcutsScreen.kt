@@ -25,6 +25,7 @@ internal fun ShortcutsScreen(model: ShortcutsScreenModel, onBack: () -> Unit) {
     var editor by remember { mutableStateOf<TextShortcut?>(null) }
     var showsOptions by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<TextShortcut?>(null) }
+    val page = model.page()
     FunputScreen(
         title = stringResource(R.string.shortcuts_title),
         onBack = onBack,
@@ -45,6 +46,7 @@ internal fun ShortcutsScreen(model: ShortcutsScreenModel, onBack: () -> Unit) {
     ) {
         shortcutsSections(
             model = model,
+            page = page,
             onEdit = { editor = it },
             onAdd = { editor = TextShortcut() },
             onDelete = { pendingDelete = it },
