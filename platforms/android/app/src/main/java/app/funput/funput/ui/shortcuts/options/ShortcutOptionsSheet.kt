@@ -1,48 +1,51 @@
 package app.funput.funput.ui.shortcuts.options
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
-import app.funput.funput.ui.settings.components.SettingsGroup
-import app.funput.funput.ui.settings.components.SettingsSwitchRow
+import app.funput.funput.ui.kit.cards.FunputDivider
+import app.funput.funput.ui.kit.cards.FunputSection
+import app.funput.funput.ui.kit.controls.FunputButton
+import app.funput.funput.ui.kit.icons.FunputIcons
+import app.funput.funput.ui.kit.overlays.FunputSheet
+import app.funput.funput.ui.kit.rows.FunputRowDefaults
+import app.funput.funput.ui.kit.rows.ToggleRow
 import app.funput.funput.ui.shortcuts.ShortcutsScreenModel
-import app.funput.funput.ui.theme.Spacing
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** How shortcuts expand: matching the typed case, and whether they also work in English mode. */
 @Composable
 internal fun ShortcutOptionsSheet(model: ShortcutsScreenModel, dismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = { if (!model.isSaving) dismiss() }) {
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
-            modifier = Modifier.fillMaxWidth().padding(Spacing.Large)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.shortcuts_options_title))
-                TextButton(onClick = dismiss, enabled = !model.isSaving) {
-                    Text(stringResource(R.string.shortcuts_done))
-                }
-            }
-            SettingsGroup(listOf(
-                { position -> SettingsSwitchRow(position,
-                    stringResource(R.string.shortcuts_smart_case), model.library.smartCase,
-                    R.drawable.ic_settings, { value ->
-                        model.updateOptions { it.copy(smartCase = value) }
-                    }, stringResource(R.string.shortcuts_smart_case_summary), model.canWrite) },
-                { position -> SettingsSwitchRow(position,
-                    stringResource(R.string.shortcuts_in_english), model.library.inEnglish,
-                    R.drawable.ic_globe, { value ->
-                        model.updateOptions { it.copy(inEnglish = value) }
-                    }, stringResource(R.string.shortcuts_in_english_summary), model.canWrite) },
-            ))
-            Text(stringResource(R.string.shortcuts_reopen_hint))
+    val library = model.library
+    FunputSheet(
+        onDismiss = { if (!model.isSaving) dismiss() },
+        title = stringResource(R.string.shortcuts_options_title),
+    ) {
+        FunputSection(title = null, footer = stringResource(R.string.shortcuts_reopen_hint)) {
+            ToggleRow(
+                title = stringResource(R.string.shortcuts_smart_case),
+                summary = stringResource(R.string.shortcuts_smart_case_summary),
+                checked = library.smartCase,
+                onCheckedChange = { value -> model.updateOptions { it.copy(smartCase = value) } },
+                icon = FunputIcons.Capitalize,
+                enabled = model.canWrite,
+            )
+            FunputDivider(startInset = FunputRowDefaults.IconDividerInset)
+            ToggleRow(
+                title = stringResource(R.string.shortcuts_in_english),
+                summary = stringResource(R.string.shortcuts_in_english_summary),
+                checked = library.inEnglish,
+                onCheckedChange = { value -> model.updateOptions { it.copy(inEnglish = value) } },
+                icon = FunputIcons.Language,
+                enabled = model.canWrite,
+            )
         }
+        FunputButton(
+            text = stringResource(R.string.shortcuts_done),
+            onClick = dismiss,
+            enabled = !model.isSaving,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }

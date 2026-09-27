@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.funput.funput.ui.kit.theme.DisabledAlpha
@@ -50,6 +51,7 @@ fun FunputRow(
     title: String,
     modifier: Modifier = Modifier,
     summary: String? = null,
+    summaryMaxLines: Int = Int.MAX_VALUE,
     @DrawableRes icon: Int? = null,
     tint: FunputTint = FunputTint.ORANGE,
     titleColor: Color = Color.Unspecified,
@@ -72,7 +74,14 @@ fun FunputRow(
         icon?.let { RowIcon(it, colors.tint(tint), Modifier.rowSlot(RowSlot.LEADING)) }
         Column(Modifier.rowSlot(RowSlot.BODY)) {
             BasicText(title, style = type.body.copy(color = titleColor.takeOrElse { colors.label }))
-            summary?.let { BasicText(it, style = type.caption.copy(color = colors.secondaryLabel)) }
+            summary?.let {
+                BasicText(
+                    text = it,
+                    style = type.caption.copy(color = colors.secondaryLabel),
+                    maxLines = summaryMaxLines,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         detail?.let { Box(Modifier.rowSlot(RowSlot.DETAIL)) { it() } }
         accessory?.let { Box(Modifier.rowSlot(RowSlot.ACCESSORY)) { it() } }

@@ -81,7 +81,7 @@ fun FunputApp() {
                         tabBar = { AppTabBar(navigator) },
                     )
                 }
-                AppDestination.SHORTCUTS -> legacy(false) { ShortcutsRoute { navigator.navigateBack() } }
+                AppDestination.SHORTCUTS -> ShortcutsRoute { navigator.navigateBack() }
                 AppDestination.THEME_GALLERY -> legacy(true) {
                     AppearanceRoute(
                         settings = settings,

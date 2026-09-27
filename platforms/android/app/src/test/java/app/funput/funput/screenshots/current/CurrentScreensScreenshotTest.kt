@@ -7,7 +7,6 @@ import app.funput.funput.theme.BuiltInKeyboardThemeSource
 import app.funput.funput.ui.about.AboutScreen
 import app.funput.funput.ui.appearance.AppearanceScreen
 import app.funput.funput.ui.appearance.appearancePreviewState
-import app.funput.funput.ui.shortcuts.ShortcutsRoute
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CreateCustomThemeScreen
 import app.funput.funput.uitesting.SCREENSHOT_SDK
@@ -63,11 +62,6 @@ class CurrentScreensScreenshotTest(private val variant: ScreenshotVariant) {
                 onBack = {},
             )
         }
-    }
-
-    @Test
-    fun shortcuts() = capture("shortcuts") {
-        FunputTheme(appearanceMode = appearance) { ShortcutsRoute(onBack = {}) }
     }
 
     @Test

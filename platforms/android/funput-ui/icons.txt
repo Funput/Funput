@@ -51,3 +51,11 @@ desktop
 # System integration
 command
 arrow-square-out
+
+# Lists and editing
+magnifying-glass
+x-circle fill
+dots-three-circle
+
+# Languages
+globe-simple

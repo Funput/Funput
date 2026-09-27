@@ -27,6 +27,7 @@ fun LinkRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     summary: String? = null,
+    summaryMaxLines: Int = Int.MAX_VALUE,
     value: String? = null,
     @DrawableRes icon: Int? = null,
     tint: FunputTint = FunputTint.ORANGE,
@@ -36,6 +37,7 @@ fun LinkRow(
     FunputRow(
         title = title,
         summary = summary,
+        summaryMaxLines = summaryMaxLines,
         icon = icon,
         tint = tint,
         enabled = enabled,

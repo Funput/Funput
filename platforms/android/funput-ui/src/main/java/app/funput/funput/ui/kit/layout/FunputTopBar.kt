@@ -4,6 +4,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,10 +42,17 @@ private val BarShape = RoundedRectangle(0.dp)
 
 /**
  * The bar over a [FunputScreen]: invisible while the large title is in view, then glass with a
- * compact title once content scrolls under it. The back button, when present, is always shown.
+ * compact title once content scrolls under it. The back button and the actions, when present,
+ * are always shown.
  */
 @Composable
-internal fun FunputTopBar(title: String, collapsed: Boolean, onBack: (() -> Unit)?, modifier: Modifier = Modifier) {
+internal fun FunputTopBar(
+    title: String,
+    collapsed: Boolean,
+    onBack: (() -> Unit)?,
+    actions: (@Composable RowScope.() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
     val colors = FunputUi.colors
     val chrome by animateFloatAsState(if (collapsed) 1f else 0f, FunputMotion.selection(), label = "top-bar")
     val backdrop = LocalGlassBackdrop.current
@@ -66,6 +75,7 @@ internal fun FunputTopBar(title: String, collapsed: Boolean, onBack: (() -> Unit
                 modifier = Modifier.padding(horizontal = 64.dp).graphicsLayer { alpha = chrome },
             )
             onBack?.let { BackButton(it, Modifier.align(Alignment.CenterStart)) }
+            actions?.let { Row(Modifier.align(Alignment.CenterEnd).padding(end = 4.dp), content = it) }
         }
     }
 }
