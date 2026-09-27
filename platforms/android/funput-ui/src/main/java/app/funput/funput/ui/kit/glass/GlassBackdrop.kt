@@ -33,6 +33,10 @@ fun rememberGlassBackdrop(): GlassBackdrop {
 /**
  * Marks the content glass surfaces refract. Recording costs a layer per frame, so at
  * [GlassTier.SOLID] nothing is recorded at all.
+ *
+ * A glass surface must never sit inside the node this is applied to: it would draw a layer that
+ * contains itself, and the render thread recurses until it overflows its stack (a native crash
+ * that JVM screenshot tests cannot see, as they do not render through the hardware pipeline).
  */
 fun Modifier.glassSource(backdrop: GlassBackdrop): Modifier =
     if (backdrop.tier == GlassTier.GLASS) layerBackdrop(backdrop.layer) else this

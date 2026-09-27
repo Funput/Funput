@@ -19,10 +19,12 @@ import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardThemeBackgroundImage
 import app.funput.funput.ui.theme.custom.ThemeDraftState
-import app.funput.funput.ui.theme.custom.color.ColorPickerDialog
-import app.funput.funput.ui.theme.custom.color.ColorSwatchRow
+import app.funput.funput.ui.theme.custom.color.picker.ColorPickerSheet
+import app.funput.funput.ui.theme.custom.color.ColorRow
 import app.funput.funput.ui.theme.custom.metrics.ThemeDpSlider
 import app.funput.funput.ui.theme.custom.metrics.ThemePercentSlider
+import app.funput.funput.ui.kit.rows.SliderRow
+import java.util.Locale
 
 @Composable
 internal fun ThemeBackgroundTab(
@@ -86,11 +88,12 @@ private fun ChosenImageControls(
         range = 0f..1f,
         onChange = { value -> state.updateBackgroundImage { it.copy(opacity = value) } },
     )
-    ThemeDpSlider(
-        label = stringResource(R.string.custom_theme_background_zoom_label),
+    SliderRow(
+        title = stringResource(R.string.custom_theme_background_zoom_label),
         value = image.zoom,
-        range = KeyboardThemeBackgroundImage.ZoomRange,
-        onChange = { value -> state.updateBackgroundImage { it.copy(zoom = value) } },
+        valueRange = KeyboardThemeBackgroundImage.ZoomRange,
+        valueLabel = String.format(Locale.ROOT, "%.1f×", image.zoom),
+        onValueChange = { value -> state.updateBackgroundImage { it.copy(zoom = value) } },
     )
     ThemeDpSlider(
         label = stringResource(R.string.custom_theme_background_blur_label),
@@ -98,14 +101,14 @@ private fun ChosenImageControls(
         range = KeyboardThemeBackgroundImage.BlurRange,
         onChange = { value -> state.updateBackgroundImage { it.copy(blurRadiusDp = value) } },
     )
-    ColorSwatchRow(
+    ColorRow(
         label = stringResource(R.string.custom_theme_background_overlay),
         color = image.overlayColor,
         onClick = { editingOverlay = true },
     )
 
     if (editingOverlay) {
-        ColorPickerDialog(
+        ColorPickerSheet(
             title = stringResource(R.string.custom_theme_background_overlay),
             initialColor = image.overlayColor,
             onDismiss = { editingOverlay = false },

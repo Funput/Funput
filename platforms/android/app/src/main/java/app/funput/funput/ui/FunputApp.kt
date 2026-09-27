@@ -111,7 +111,7 @@ fun FunputApp() {
                 AppDestination.THIRD_PARTY_LICENSES -> legacy(false) {
                     LicensesRoute { navigator.navigateBack() }
                 }
-                AppDestination.CREATE_CUSTOM_THEME -> legacy(false) {
+                AppDestination.CREATE_CUSTOM_THEME -> {
                     CustomThemeStudioRoute(
                         editingThemeId = editingThemeId,
                         themeRepository = themeRepository,

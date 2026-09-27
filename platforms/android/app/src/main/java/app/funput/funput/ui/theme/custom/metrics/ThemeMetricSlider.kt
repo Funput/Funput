@@ -1,18 +1,12 @@
 package app.funput.funput.ui.theme.custom.metrics
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import app.funput.funput.R
+import app.funput.funput.ui.kit.rows.SliderRow
+import java.util.Locale
 import kotlin.math.roundToInt
 
-/** A labelled slider showing its value in dp. */
+/** A theme measurement in dp, as a slider row with its value at the end. */
 @Composable
 internal fun ThemeDpSlider(
     label: String,
@@ -20,30 +14,18 @@ internal fun ThemeDpSlider(
     range: ClosedFloatingPointRange<Float>,
     onChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
-    hint: String? = null,
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(R.string.custom_theme_metric_dp, label, value),
-            style = MaterialTheme.typography.labelLarge,
-        )
-        hint?.let {
-            Text(
-                text = it,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelSmall,
-            )
-        }
-        Slider(
-            value = value,
-            valueRange = range,
-            onValueChange = onChange,
-            modifier = Modifier.semantics { contentDescription = label },
-        )
-    }
+    SliderRow(
+        title = label,
+        value = value,
+        onValueChange = onChange,
+        valueRange = range,
+        valueLabel = String.format(Locale.ROOT, "%.0f dp", value),
+        modifier = modifier,
+    )
 }
 
-/** A labelled slider showing its value as a percentage of the given range. */
+/** A theme proportion, as a slider row showing a percentage at the end. */
 @Composable
 internal fun ThemePercentSlider(
     label: String,
@@ -52,22 +34,14 @@ internal fun ThemePercentSlider(
     onChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(
-                R.string.custom_theme_metric_percent,
-                label,
-                (value * PercentScale).roundToInt(),
-            ),
-            style = MaterialTheme.typography.labelLarge,
-        )
-        Slider(
-            value = value,
-            valueRange = range,
-            onValueChange = onChange,
-            modifier = Modifier.semantics { contentDescription = label },
-        )
-    }
+    SliderRow(
+        title = label,
+        value = value,
+        onValueChange = onChange,
+        valueRange = range,
+        valueLabel = "${(value * PercentScale).roundToInt()}%",
+        modifier = modifier,
+    )
 }
 
 private const val PercentScale = 100f

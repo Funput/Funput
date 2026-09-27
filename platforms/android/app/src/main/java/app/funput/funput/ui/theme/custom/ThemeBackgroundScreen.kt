@@ -15,6 +15,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import app.funput.funput.ui.theme.KeyboardThemePreview
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -55,11 +60,14 @@ internal fun ThemeBackgroundScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
         ) {
-            ThemeStudioPreview(
+            KeyboardThemePreview(
                 theme = state.theme,
                 backgroundImage = state.backgroundImage,
-                editingThemeId = null,
-                modifier = Modifier.padding(bottom = 16.dp),
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .fillMaxWidth()
+                    .height(178.dp)
+                    .clip(MaterialTheme.shapes.large),
             )
             ThemeBackgroundTab(state = state, onChooseImage = onChooseImage)
         }

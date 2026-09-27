@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -63,22 +64,59 @@ internal fun FunputTopBar(
                 .graphicsLayer { alpha = chrome }
                 .funputGlass(backdrop, BarShape, colors, refract = false),
         )
-        Box(
-            contentAlignment = Alignment.Center,
+        CenteredBar(
             modifier = Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars).height(TopBarHeight),
-        ) {
-            BasicText(
-                text = title,
-                style = FunputUi.typography.headline.copy(color = colors.label),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 64.dp).graphicsLayer { alpha = chrome },
-            )
-            onBack?.let { BackButton(it, Modifier.align(Alignment.CenterStart)) }
-            actions?.let { Row(Modifier.align(Alignment.CenterEnd).padding(end = 4.dp), content = it) }
+            start = { onBack?.let { BackButton(it, Modifier) } },
+            title = {
+                BasicText(
+                    text = title,
+                    style = FunputUi.typography.headline.copy(color = colors.label),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 8.dp).graphicsLayer { alpha = chrome },
+                )
+            },
+            end = {
+                actions?.let { Row(Modifier.padding(end = 4.dp), verticalAlignment = Alignment.CenterVertically, content = it) }
+            },
+        )
+    }
+}
+
+/**
+ * Back button at the start, actions at the end, and the title centred in what they leave. The
+ * room kept on each side is the wider of the two, so the title stays centred on the screen and
+ * never runs under a wide action such as a text button at a large font.
+ */
+@Composable
+private fun CenteredBar(
+    modifier: Modifier,
+    start: @Composable () -> Unit,
+    title: @Composable () -> Unit,
+    end: @Composable () -> Unit,
+) {
+    Layout(contents = listOf(start, title, end), modifier = modifier) { (starts, titles, ends), constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val startPlaceables = starts.map { it.measure(loose) }
+        val endPlaceables = ends.map { it.measure(loose) }
+        val side = maxOf(
+            startPlaceables.maxOfOrNull { it.width } ?: 0,
+            endPlaceables.maxOfOrNull { it.width } ?: 0,
+            MinSide.roundToPx(),
+        )
+        val titleWidth = (constraints.maxWidth - 2 * side).coerceAtLeast(0)
+        val titlePlaceables = titles.map { it.measure(loose.copy(maxWidth = titleWidth)) }
+        val height = constraints.maxHeight
+        layout(constraints.maxWidth, height) {
+            startPlaceables.forEach { it.place(0, (height - it.height) / 2) }
+            endPlaceables.forEach { it.place(constraints.maxWidth - it.width, (height - it.height) / 2) }
+            titlePlaceables.forEach { it.place((constraints.maxWidth - it.width) / 2, (height - it.height) / 2) }
         }
     }
 }
+
+/** Room kept on each side of the title even with nothing there, so it never touches the edge. */
+private val MinSide = 16.dp
 
 @Composable
 private fun BackButton(onBack: () -> Unit, modifier: Modifier) {

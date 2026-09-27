@@ -1,63 +1,46 @@
 package app.funput.funput.ui.theme.custom.color
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.validation.ThemeContrastPair
 import app.funput.funput.theme.validation.ThemeValidator
+import app.funput.funput.ui.kit.cards.FunputDivider
+import app.funput.funput.ui.kit.cards.FunputSection
+import app.funput.funput.ui.kit.rows.FunputRow
+import app.funput.funput.ui.kit.theme.FunputUi
+import java.util.Locale
 
 /**
- * Flags color pairings that will be hard to read.
+ * Flags colour pairings that will be hard to read, each with its measured ratio.
  *
- * Advisory only — it never blocks saving, and says so, because a theme is the user's to get wrong.
- * Someone deliberately building a very low-contrast look should be told once, not stopped.
+ * Advisory only: it never blocks saving, and its footer says so, because a theme is the user's to
+ * get wrong. Someone deliberately building a very low-contrast look should be told, not stopped.
  */
 @Composable
 internal fun ThemeContrastWarnings(theme: KeyboardTheme, modifier: Modifier = Modifier) {
     val issues = ThemeValidator.validate(theme)
     if (issues.isEmpty()) return
-
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f)),
-        modifier = modifier.fillMaxWidth(),
+    val colors = FunputUi.colors
+    FunputSection(
+        title = stringResource(R.string.custom_theme_contrast_title),
+        footer = stringResource(R.string.custom_theme_contrast_footer),
+        modifier = modifier,
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.padding(14.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.custom_theme_contrast_title),
-                style = MaterialTheme.typography.titleSmall,
-            )
-            issues.forEach { issue ->
-                Text(
-                    text = stringResource(
-                        R.string.custom_theme_contrast_item,
-                        stringResource(issue.pair.labelRes),
-                        issue.ratio,
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            Text(
-                text = stringResource(R.string.custom_theme_contrast_footer),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier.padding(top = 4.dp),
+        issues.forEachIndexed { index, issue ->
+            if (index > 0) FunputDivider()
+            FunputRow(
+                title = stringResource(issue.pair.labelRes),
+                detail = {
+                    BasicText(
+                        text = String.format(Locale.ROOT, "%.1f:1", issue.ratio),
+                        style = FunputUi.typography.body.copy(color = colors.destructive),
+                    )
+                },
             )
         }
     }
@@ -70,6 +53,5 @@ private val ThemeContrastPair.labelRes: Int
         ThemeContrastPair.SpecialLabelOnSpecialKey -> R.string.custom_theme_contrast_special_label
         ThemeContrastPair.SecondaryLabelOnKey -> R.string.custom_theme_contrast_secondary_label
         ThemeContrastPair.AccentLabelOnAccentKey -> R.string.custom_theme_contrast_accent_label
-        ThemeContrastPair.SuggestionHighlightOnBackground ->
-            R.string.custom_theme_contrast_suggestion
+        ThemeContrastPair.SuggestionHighlightOnBackground -> R.string.custom_theme_contrast_suggestion
     }

@@ -1,4 +1,4 @@
-package app.funput.funput.ui.theme.custom.color
+package app.funput.funput.ui.theme.custom.color.picker
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
