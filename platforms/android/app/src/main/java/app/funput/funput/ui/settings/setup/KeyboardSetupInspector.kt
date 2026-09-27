@@ -51,10 +51,4 @@ internal object KeyboardSetupInspector {
     }
 
     private fun isDefaultIme(default: String?): Boolean = FunputImeComponent.matches(default)
-
-    /** Strips subtype suffix (`:123`) that Android appends to enabled/default IME entries. */
-    internal fun imeComponentId(raw: String?): String? {
-        if (raw.isNullOrBlank()) return null
-        return raw.trim().substringBefore(':')
-    }
 }

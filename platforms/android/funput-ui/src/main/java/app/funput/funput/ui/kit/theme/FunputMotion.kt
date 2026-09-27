@@ -19,12 +19,6 @@ import kotlin.math.pow
 object FunputMotion {
     /** Selecting something: a theme, a tab, a segment. */
     fun <T> selection(): FiniteAnimationSpec<T> = MotionTokens.themeSelect.toSpec()
-
-    /** Something arriving with a little life: a sheet, a confirmation. */
-    fun <T> emphasized(): FiniteAnimationSpec<T> = MotionTokens.launchBloom.toSpec()
-
-    /** Something leaving. */
-    fun <T> exit(): FiniteAnimationSpec<T> = MotionTokens.launchExit.toSpec()
 }
 
 /**

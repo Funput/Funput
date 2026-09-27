@@ -1,6 +1,7 @@
 package app.funput.funput.ui.settings.keyboard
 
 import androidx.annotation.DrawableRes
+import android.annotation.SuppressLint
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -72,6 +73,9 @@ internal fun ElevationSliderRow(valueDp: Float, maximumDp: Float, onSettled: (Fl
  * The most the keyboard can be raised on this screen: what the placement resolver allows for an
  * elevated keyboard of the current size, asked with an offset larger than any screen.
  */
+// The IME's placement host measures with Configuration.screenHeightDp; the slider must use the
+// same numbers or its maximum would disagree with how far the keyboard can actually rise.
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 internal fun elevationMaximumDp(
     inputMethod: KeyboardInputMethod,
