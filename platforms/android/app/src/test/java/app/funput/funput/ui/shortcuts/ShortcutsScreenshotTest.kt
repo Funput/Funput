@@ -5,7 +5,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import app.funput.funput.shortcuts.model.ShortcutLibrary
 import app.funput.funput.ui.kit.glass.GlassTier
 import app.funput.funput.ui.kit.glass.LocalGlassTier
@@ -14,7 +13,9 @@ import app.funput.funput.ui.settings.APP_SCREENSHOT_ROOT
 import app.funput.funput.uitesting.SCREENSHOT_SDK
 import app.funput.funput.uitesting.ScreenshotDevices
 import app.funput.funput.uitesting.ScreenshotVariant
+import app.funput.funput.uitesting.DefaultWaitMillis
 import app.funput.funput.uitesting.captureScreen
+import app.funput.funput.uitesting.waitForText
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -55,9 +56,9 @@ class ShortcutsScreenshotTest(private val variant: ScreenshotVariant) {
             root = APP_SCREENSHOT_ROOT,
             // Loaded in the model is not yet drawn: wait for the list (or the empty state) itself.
             prepare = {
-                waitUntil(DrawTimeoutMillis) { model?.hasLoaded == true && model?.isLoading == false }
+                waitUntil(DefaultWaitMillis) { model?.hasLoaded == true && model?.isLoading == false }
                 val drawn = library.entries.firstOrNull()?.trigger ?: "Chưa có gõ tắt"
-                waitUntil(DrawTimeoutMillis) { onAllNodesWithText(drawn).fetchSemanticsNodes().isNotEmpty() }
+                waitForText(drawn)
             },
         ) {
             val scope = rememberCoroutineScope()
@@ -78,5 +79,3 @@ class ShortcutsScreenshotTest(private val variant: ScreenshotVariant) {
         fun variants(): List<Array<Any>> = ScreenshotVariant.parameters()
     }
 }
-
-private const val DrawTimeoutMillis = 5_000L

@@ -5,13 +5,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
-import androidx.compose.ui.test.onAllNodesWithText
 import app.funput.funput.shortcuts.model.ShortcutLibrary
 import app.funput.funput.shortcuts.model.TextShortcut
 import app.funput.funput.shortcuts.persistence.ShortcutsStoring
 import app.funput.funput.ui.kit.glass.GlassTier
 import app.funput.funput.ui.kit.glass.LocalGlassTier
 import app.funput.funput.ui.kit.theme.FunputUiTheme
+import app.funput.funput.uitesting.DefaultWaitMillis
+import app.funput.funput.uitesting.waitForText
 import java.util.UUID
 
 /** An in-memory store that counts saves and can be told to fail them. */
@@ -60,10 +61,8 @@ internal fun ComposeContentTestRule.showShortcuts(
         }
     }
     // Loaded in the model is not yet drawn: wait for the screen itself, with room for a slow runner.
-    waitUntil(LoadTimeoutMillis) { model?.hasLoaded == true && model?.isLoading == false }
+    waitUntil(DefaultWaitMillis) { model?.hasLoaded == true && model?.isLoading == false }
     val drawn = if (initial.entries.isEmpty()) "Chưa có gõ tắt" else initial.entries.first().trigger
-    waitUntil(LoadTimeoutMillis) { onAllNodesWithText(drawn).fetchSemanticsNodes().isNotEmpty() }
+    waitForText(drawn)
     return store
 }
-
-private const val LoadTimeoutMillis = 5_000L
