@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.onAllNodesWithText
 import app.funput.funput.shortcuts.model.ShortcutLibrary
 import app.funput.funput.shortcuts.model.TextShortcut
 import app.funput.funput.shortcuts.persistence.ShortcutsStoring
@@ -58,6 +59,11 @@ internal fun ComposeContentTestRule.showShortcuts(
             }
         }
     }
-    waitUntil { model?.hasLoaded == true && model?.isLoading == false }
+    // Loaded in the model is not yet drawn: wait for the screen itself, with room for a slow runner.
+    waitUntil(LoadTimeoutMillis) { model?.hasLoaded == true && model?.isLoading == false }
+    val drawn = if (initial.entries.isEmpty()) "Chưa có gõ tắt" else initial.entries.first().trigger
+    waitUntil(LoadTimeoutMillis) { onAllNodesWithText(drawn).fetchSemanticsNodes().isNotEmpty() }
     return store
 }
+
+private const val LoadTimeoutMillis = 5_000L
