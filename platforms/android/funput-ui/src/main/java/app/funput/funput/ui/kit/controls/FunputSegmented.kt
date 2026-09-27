@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.funput.funput.ui.kit.theme.FunputMotion
@@ -24,8 +25,10 @@ import app.funput.funput.ui.kit.theme.FunputUi
 import app.funput.funput.ui.kit.tokens.OpacityTokens
 
 /**
- * A choice between a few short options shown side by side, the selected one raised on a card-
- * coloured capsule. For more than three or four options, or long labels, use a picker sheet.
+ * A choice between a few short options shown side by side, the selected one on a solid accent
+ * capsule with its label in the on-accent colour. A raised card or grey lift read as "disabled";
+ * the accent says "this one is on" at a glance, and the token rules keep that label at 4.5:1 or
+ * better in both appearances. For more than three or four options, or long labels, use a picker.
  *
  * The control is 48dp tall; each segment is 42dp inside a 3dp inset, and TalkBack reads the
  * segments as radio buttons in one group.
@@ -39,9 +42,6 @@ fun FunputSegmented(
 ) {
     val colors = FunputUi.colors
     val capsule = FunputUi.shapes.capsule
-    // The selected segment must sit above the track: the card colour does in light mode, but in
-    // dark mode the card is the darkest surface, so a light tint lifts it instead.
-    val selectedFill = if (colors.isDark) colors.label.copy(alpha = SelectedDarkAlpha) else colors.cardBackground
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
@@ -55,7 +55,7 @@ fun FunputSegmented(
         options.forEachIndexed { index, option ->
             val selected = index == selectedIndex
             val fill by animateColorAsState(
-                if (selected) selectedFill else Color.Transparent,
+                if (selected) colors.accent else Color.Transparent,
                 FunputMotion.selection(),
                 label = "segment-fill",
             )
@@ -69,10 +69,16 @@ fun FunputSegmented(
                     .selectable(selected = selected, role = Role.RadioButton, onClick = { onSelect(index) })
                     .padding(horizontal = FunputUi.spacing.small),
             ) {
+                val text by animateColorAsState(
+                    if (selected) colors.onAccent else colors.secondaryLabel,
+                    FunputMotion.selection(),
+                    label = "segment-text",
+                )
                 BasicText(
                     text = option,
                     style = FunputUi.typography.label.copy(
-                        color = if (selected) colors.label else colors.secondaryLabel,
+                        color = text,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                         textAlign = TextAlign.Center,
                     ),
                 )
@@ -80,6 +86,3 @@ fun FunputSegmented(
         }
     }
 }
-
-/** Lift of the selected segment over the track in dark mode. */
-private const val SelectedDarkAlpha = 0.18f
