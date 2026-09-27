@@ -11,9 +11,13 @@ import androidx.compose.ui.test.printToString
  * a decode). On timeout the failure carries what *was* on screen, so a wait that only times out on
  * a loaded CI runner can be diagnosed from its report instead of guessed at.
  */
-fun ComposeContentTestRule.waitForText(text: String, timeoutMillis: Long = DefaultWaitMillis) {
+fun ComposeContentTestRule.waitForText(
+    text: String,
+    substring: Boolean = false,
+    timeoutMillis: Long = DefaultWaitMillis,
+) {
     try {
-        waitUntil(timeoutMillis) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis) { onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }
     } catch (timeout: ComposeTimeoutException) {
         val screen = runCatching { onRoot().printToString(maxDepth = Int.MAX_VALUE) }.getOrElse { "<no root: $it>" }
         throw AssertionError("\"$text\" did not appear within $timeoutMillis ms. On screen:\n$screen", timeout)

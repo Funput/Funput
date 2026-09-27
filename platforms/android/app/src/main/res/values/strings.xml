@@ -238,10 +238,12 @@
     <string name="about_footer_body">Funput là dự án mã nguồn mở &amp; miễn phí cho tất cả mọi người.</string>
     <string name="about_external_link">Mở liên kết ngoài</string>
     <string name="licenses_title">Giấy phép bên thứ ba</string>
-    <string name="licenses_summary">Giấy phép và ghi công cho từ điển đi kèm</string>
+    <string name="licenses_summary">Từ điển, phông chữ và biểu tượng đi kèm</string>
     <string name="licenses_loading">Đang đọc giấy phép…</string>
     <string name="licenses_error">Không thể đọc giấy phép.</string>
-    <string name="licenses_back">Quay lại</string>
+    <string name="licenses_dictionary">Từ điển gợi ý tiếng Anh</string>
+    <string name="licenses_font">Phông chữ Be Vietnam Pro</string>
+    <string name="licenses_icons">Biểu tượng Phosphor</string>
     <string name="shortcuts_title">Gõ tắt</string>
     <string name="shortcuts_settings_summary">Thay chữ tắt bằng nội dung dài hơn.</string>
     <string name="shortcuts_back">Quay lại</string>

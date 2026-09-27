@@ -63,3 +63,11 @@ globe-simple
 # Appearance and themes
 circle-half
 pencil-simple
+
+# About
+github-logo
+bug
+envelope-simple
+shield-check
+scroll
+heart fill
