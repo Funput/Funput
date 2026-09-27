@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import app.funput.funput.shortcuts.model.ShortcutLibrary
 import app.funput.funput.ui.kit.glass.GlassTier
 import app.funput.funput.ui.kit.glass.LocalGlassTier
@@ -52,7 +53,12 @@ class ShortcutsScreenshotTest(private val variant: ScreenshotVariant) {
             screen,
             variant,
             root = APP_SCREENSHOT_ROOT,
-            prepare = { waitUntil { model?.hasLoaded == true && model?.isLoading == false } },
+            // Loaded in the model is not yet drawn: wait for the list (or the empty state) itself.
+            prepare = {
+                waitUntil(DrawTimeoutMillis) { model?.hasLoaded == true && model?.isLoading == false }
+                val drawn = library.entries.firstOrNull()?.trigger ?: "Chưa có gõ tắt"
+                waitUntil(DrawTimeoutMillis) { onAllNodesWithText(drawn).fetchSemanticsNodes().isNotEmpty() }
+            },
         ) {
             val scope = rememberCoroutineScope()
             val screenModel = remember { ShortcutsScreenModel(store, scope).also { model = it } }
@@ -72,3 +78,5 @@ class ShortcutsScreenshotTest(private val variant: ScreenshotVariant) {
         fun variants(): List<Array<Any>> = ScreenshotVariant.parameters()
     }
 }
+
+private const val DrawTimeoutMillis = 5_000L
