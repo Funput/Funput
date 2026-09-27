@@ -17,4 +17,6 @@ keystore.properties
 .config/
 
 .kotlin/
-/shortcut-store/build
+# Every module's build output, including modules that were removed but whose
+# build directory is still on disk (glass-spike once slipped in this way).
+/*/build/

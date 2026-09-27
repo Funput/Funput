@@ -105,4 +105,16 @@ object FunputIcons {
 
     /** Opening something outside the app, such as a system settings page. */
     @DrawableRes val OpenExternal: Int = R.drawable.ph_arrow_square_out
+
+    /** Searching a list. */
+    @DrawableRes val Search: Int = R.drawable.ph_magnifying_glass
+
+    /** Clearing a field. */
+    @DrawableRes val ClearField: Int = R.drawable.ph_x_circle_fill
+
+    /** More options for the current screen. */
+    @DrawableRes val More: Int = R.drawable.ph_dots_three_circle
+
+    /** A language, such as typing in English. */
+    @DrawableRes val Language: Int = R.drawable.ph_globe_simple
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
@@ -44,7 +45,8 @@ private val CollapseDistance = 40.dp
 
 /**
  * A FunputUI screen: a large title that scrolls with the content, a top bar that turns to glass
- * and shows a compact title once the content passes under it, an optional floating [tabBar], and
+ * and shows a compact title once the content passes under it, optional [actions] at the bar's end
+ * (icon buttons), an optional floating [tabBar], and
  * a centred column never wider than the layout token allows.
  *
  * [content] is a lazy list of sections (typically `FunputSection`s), spaced by the section gap.
@@ -55,6 +57,7 @@ fun FunputScreen(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    actions: (@Composable RowScope.() -> Unit)? = null,
     listState: LazyListState = rememberLazyListState(),
     tabBar: (@Composable () -> Unit)? = null,
     content: LazyListScope.() -> Unit,
@@ -102,6 +105,7 @@ fun FunputScreen(
                 title = title,
                 collapsed = collapsed,
                 onBack = onBack,
+                actions = actions,
                 modifier = Modifier.align(Alignment.TopCenter),
             )
             tabBar?.let { bar -> Box(Modifier.align(Alignment.BottomCenter)) { bar() } }
