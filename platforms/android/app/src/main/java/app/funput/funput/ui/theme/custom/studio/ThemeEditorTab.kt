@@ -1,4 +1,4 @@
-package app.funput.funput.ui.theme.custom
+package app.funput.funput.ui.theme.custom.studio
 
 import androidx.annotation.StringRes
 import app.funput.funput.R

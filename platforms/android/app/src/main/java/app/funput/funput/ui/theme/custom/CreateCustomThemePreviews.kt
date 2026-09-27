@@ -3,14 +3,13 @@ package app.funput.funput.ui.theme.custom
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.theme.BuiltInKeyboardThemeSource
-import app.funput.funput.ui.theme.FunputTheme
+import app.funput.funput.ui.kit.theme.FunputUiTheme
 
 @Preview(name = "Create custom theme · Light", showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun CreateCustomThemeLightPreview() {
-    FunputTheme {
+    FunputUiTheme(isDark = false) {
         CreateCustomThemeScreen(
             baseThemes = BuiltInKeyboardThemeSource.loadThemes(),
             onSave = {},
@@ -28,7 +27,7 @@ private fun CreateCustomThemeLightPreview() {
 )
 @Composable
 private fun CreateCustomThemeDarkPreview() {
-    FunputTheme(appearanceMode = AppearanceMode.DARK) {
+    FunputUiTheme(isDark = true) {
         CreateCustomThemeScreen(
             baseThemes = BuiltInKeyboardThemeSource.loadThemes(),
             onSave = {},
