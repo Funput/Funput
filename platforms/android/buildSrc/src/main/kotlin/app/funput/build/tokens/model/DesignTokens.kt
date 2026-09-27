@@ -50,7 +50,7 @@ enum class MotionCurve(val jsonName: String) {
 }
 
 /**
- * The shared app design tokens (`design/tokens/app.tokens.json`) after parsing.
+ * The app design tokens (`funput-ui/tokens/app.tokens.json`) after parsing.
  *
  * Numeric groups (`radius`, `spacing`, `layout`, `opacity`) are plain name→value maps so a new
  * token needs no code change; the rules decide which of them must exist and what range they obey.

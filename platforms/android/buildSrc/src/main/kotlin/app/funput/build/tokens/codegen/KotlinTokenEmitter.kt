@@ -15,7 +15,7 @@ import java.util.Locale
 class KotlinTokenEmitter(private val packageName: String) {
     /** The complete source file for [tokens]. */
     fun emit(tokens: DesignTokens): String = buildString {
-        appendLine("// Generated from design/tokens/app.tokens.json by GenerateDesignTokensTask. Do not edit.")
+        appendLine("// Generated from funput-ui/tokens/app.tokens.json by GenerateDesignTokensTask. Do not edit.")
         appendLine("package $packageName")
         appendLine()
         Imports.forEach { appendLine("import $it") }

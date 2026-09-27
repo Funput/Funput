@@ -45,7 +45,7 @@ trình tạo chủ đề, ảnh nền, Giới thiệu, Giấy phép, luồng b�
 ## Kiến trúc
 
 ```
-design/tokens/app.tokens.json ──(buildSrc: kiểm tra + sinh code)──▶ FunputTokens.kt
+funput-ui/tokens/app.tokens.json ──(buildSrc: kiểm tra + sinh code)──▶ FunputTokens.kt
                                                                           │
 :funput-ui  (theme, glass, layout, cards, rows, controls, overlays, gestures, icons)
      │
@@ -54,7 +54,7 @@ design/tokens/app.tokens.json ──(buildSrc: kiểm tra + sinh code)──▶ 
 
 ### Token
 
-`design/tokens/app.tokens.json` là nguồn duy nhất cho màu, chữ, bo góc, khoảng cách, độ mờ
+`platforms/android/funput-ui/tokens/app.tokens.json` là nguồn duy nhất cho màu, chữ, bo góc, khoảng cách, độ mờ
 và chuyển động. Task `GenerateDesignTokensTask` (buildSrc) kiểm tra rồi sinh
 `FunputTokens.kt` ở mỗi lần build. Các luật kiểm tra gồm:
 
@@ -118,7 +118,8 @@ Số đo từ spike (Galaxy S21 Ultra, 120 Hz, `dumpsys gfxinfo`):
   - `check-app-material-free.sh`
   - `-p buildSrc test`: luật token
   - `testDebugUnitTest`
-  - lint
+- **Lint chưa chạy trong CI.** Chạy `lintDebug` ở máy trước khi mở PR (hiện `:funput-ui` 0
+  cảnh báo, `:app` 3 cảnh báo ngoài phạm vi).
 - **Test giao diện chạy trên JVM** (Robolectric, SDK 35, `GraphicsMode.NATIVE`, tiếng Việt):
   test hành vi cho từng màn, và test ảnh chụp dựng mọi màn ở sáng/tối × cỡ chữ 1.0/1.3.
   Test ảnh chụp **không so ảnh**, chỉ bắt màn bị văng. Muốn xem ảnh ở local thì chạy

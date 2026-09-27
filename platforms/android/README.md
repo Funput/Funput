@@ -164,7 +164,7 @@ Telex nâng cao, VNI, matching và smart case của Gõ tắt.
 | `keyboard-renderer` | Bố cục co giãn, chạm, trợ năng và vẽ bằng Canvas |
 | `theme-runtime` | Hợp đồng theme có version, kiểm tra hợp lệ, phân giải token, truy cập asset an toàn |
 | `theme-store` | Lưu theme tự tạo: JSON, bản nháp và kho asset |
-| `funput-ui` | Design system riêng của app (FunputUI): theme, font Be Vietnam Pro, component; token sinh từ `design/tokens/app.tokens.json` |
+| `funput-ui` | Design system riêng của app (FunputUI): theme, font Be Vietnam Pro, component; token sinh từ `funput-ui/tokens/app.tokens.json` |
 | `ui-testing` | Chỉ dùng cho test: Robolectric + Roborazzi để dựng và chụp màn Compose trên JVM |
 
 Chiều phụ thuộc là **một chiều, cố ý**:

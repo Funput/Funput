@@ -24,7 +24,7 @@ import org.gradle.api.tasks.TaskAction
  */
 @CacheableTask
 abstract class GenerateDesignTokensTask : DefaultTask() {
-    /** The shared token file, `design/tokens/app.tokens.json` at the repository root. */
+    /** The token file, `funput-ui/tokens/app.tokens.json` beside the module that uses it. */
     @get:InputFile
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val tokenFile: RegularFileProperty
