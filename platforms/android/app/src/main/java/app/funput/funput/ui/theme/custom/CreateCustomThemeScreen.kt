@@ -59,6 +59,8 @@ internal fun CreateCustomThemeScreen(
         }
     }
     var editingBackground by rememberSaveable { mutableStateOf(false) }
+    // Above the branch below, so coming back from the image editor lands on the page it left from.
+    val pagerState = rememberPagerState { ThemeEditorTab.entries.size }
     if (editingBackground) {
         // System back leaves the image editor for the studio, not the studio for the gallery.
         BackHandler { editingBackground = false }
@@ -72,7 +74,6 @@ internal fun CreateCustomThemeScreen(
         )
         return
     }
-    val pagerState = rememberPagerState { ThemeEditorTab.entries.size }
     FunputEditorScreen(
         title = stringResource(if (editingTheme != null) R.string.custom_theme_edit_title else R.string.custom_theme_title),
         modifier = modifier,

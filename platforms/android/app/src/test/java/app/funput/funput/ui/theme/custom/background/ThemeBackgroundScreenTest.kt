@@ -48,7 +48,7 @@ class ThemeBackgroundScreenTest {
     }
 
     @Test
-    fun `system back returns from the image editor to the studio`() {
+    fun `system back returns from the image editor to the studio page it left`() {
         compose.setContent { ThemeStudioTestHost() }
         compose.onNodeWithText("Nền").performClick()
         compose.onNodeWithText("Ảnh nền").performClick()
@@ -57,5 +57,7 @@ class ThemeBackgroundScreenTest {
         compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.onNodeWithText("Lưu chủ đề").assertExists()
         compose.onNodeWithText("Chọn ảnh").assertDoesNotExist()
+        // Back where it left from: the background page, not the first one.
+        compose.onNodeWithText("Ảnh nền").assertExists()
     }
 }
