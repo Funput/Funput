@@ -13,7 +13,9 @@ import app.funput.funput.ui.settings.APP_SCREENSHOT_ROOT
 import app.funput.funput.uitesting.SCREENSHOT_SDK
 import app.funput.funput.uitesting.ScreenshotDevices
 import app.funput.funput.uitesting.ScreenshotVariant
+import app.funput.funput.uitesting.DefaultWaitMillis
 import app.funput.funput.uitesting.captureScreen
+import app.funput.funput.uitesting.waitForText
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,7 +54,12 @@ class ShortcutsScreenshotTest(private val variant: ScreenshotVariant) {
             screen,
             variant,
             root = APP_SCREENSHOT_ROOT,
-            prepare = { waitUntil { model?.hasLoaded == true && model?.isLoading == false } },
+            // Loaded in the model is not yet drawn: wait for the list (or the empty state) itself.
+            prepare = {
+                waitUntil(DefaultWaitMillis) { model?.hasLoaded == true && model?.isLoading == false }
+                val drawn = library.entries.firstOrNull()?.trigger ?: "Chưa có gõ tắt"
+                waitForText(drawn)
+            },
         ) {
             val scope = rememberCoroutineScope()
             val screenModel = remember { ShortcutsScreenModel(store, scope).also { model = it } }

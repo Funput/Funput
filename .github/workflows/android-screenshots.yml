@@ -74,12 +74,15 @@ jobs:
       - name: Record screenshots
         run: ./gradlew :app:recordRoborazziDebug :funput-ui:recordRoborazziDebug --console=plain
 
-      - uses: actions/upload-artifact@v7
+      # A failing capture names only its line in the console; the XML keeps the message.
+      - name: Upload unit test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
         with:
-          name: android-screenshots
-          path: platforms/android/app/build/outputs/roborazzi/
-          if-no-files-found: error
-          retention-days: 30
+          name: android-test-reports
+          path: platforms/android/*/build/test-results/testDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 14
 
       - uses: actions/upload-artifact@v7
         with:

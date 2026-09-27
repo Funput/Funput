@@ -1,58 +1,92 @@
 package app.funput.funput.ui.about.licenses
 
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import app.funput.funput.R
+import app.funput.funput.ui.kit.cards.FunputSection
+import app.funput.funput.ui.kit.layout.FunputScreen
+import app.funput.funput.ui.kit.theme.FunputUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** The third-party notices, one card each, read from assets off the main thread. */
 @Composable
 internal fun LicensesRoute(onBack: () -> Unit) {
     val context = LocalContext.current
-    val loading = stringResource(R.string.licenses_loading)
-    val error = stringResource(R.string.licenses_error)
-    val notice by produceState(loading, context, error) {
-        value = withContext(Dispatchers.IO) {
-            runCatching {
-                NoticeAssets.joinToString(separator = "\n\n") { path ->
-                    context.assets.open(path).bufferedReader().use { it.readText() }
-                }
-            }.getOrDefault(error)
-        }
+    val texts by produceState<Map<LicenseNotice, String?>?>(null, context) {
+        value = withContext(Dispatchers.IO) { LicenseNotices.associateWith { context.readNotice(it) } }
     }
-    Scaffold(topBar = {
-        TopAppBar(title = { Text(stringResource(R.string.licenses_title)) }, navigationIcon = {
-            TextButton(onClick = onBack) { Text(stringResource(R.string.licenses_back)) }
-        })
-    }) { padding ->
-        SelectionContainer(Modifier.padding(padding).fillMaxSize()) {
-            Text(notice, modifier = Modifier.verticalScroll(rememberScrollState()).padding(16.dp))
+    // Read here, not inside the list's items: the page recomposes with the loaded texts and hands
+    // them down, rather than relying on each lazy item to notice a change it read itself. On a
+    // loaded CI runner an item composed before the read finished was seen to stay on "reading…".
+    val loaded = texts
+    FunputScreen(title = stringResource(R.string.licenses_title), onBack = onBack) {
+        LicenseNotices.forEach { notice ->
+            item(key = notice.assetPath) { NoticeCard(notice, loaded) }
         }
     }
 }
 
-/**
- * Third-party notices shipped as assets, shown in this order: the dictionary's notice (generated
- * by `:ime`), then the licences of FunputUI's bundled Be Vietnam Pro font and Phosphor icons.
- */
-private val NoticeAssets = listOf(
-    "lexicon/NOTICE.md",
-    "licenses/be-vietnam-pro-OFL.txt",
-    "licenses/phosphor-MIT.txt",
-)
+/** One notice's card: "reading…" until [loaded] arrives, then its text, or why it is missing. */
+@Composable
+private fun NoticeCard(notice: LicenseNotice, loaded: Map<LicenseNotice, String?>?) {
+    FunputSection(title = stringResource(notice.title)) {
+        Column(Modifier.padding(FunputUi.spacing.cardPadding)) {
+            val text = loaded?.get(notice)
+            when {
+                loaded == null -> Caption(stringResource(R.string.licenses_loading))
+                text == null -> Caption(stringResource(R.string.licenses_error))
+                else -> NoticeBody(text, notice.isMarkdown)
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoticeBody(text: String, markdown: Boolean) {
+    val colors = FunputUi.colors
+    val type = FunputUi.typography
+    SelectionContainer {
+        Column(verticalArrangement = Arrangement.spacedBy(FunputUi.spacing.medium)) {
+            parseLicense(text, markdown).forEach { block ->
+                when (block) {
+                    is LicenseBlock.Heading -> BasicText(
+                        block.text,
+                        style = (if (block.level == 1) type.headline else type.label.copy(fontWeight = FontWeight.SemiBold))
+                            .copy(color = colors.label),
+                    )
+                    is LicenseBlock.Paragraph -> BasicText(block.text, style = type.label.copy(color = colors.secondaryLabel))
+                    is LicenseBlock.Quote -> BasicText(
+                        block.text,
+                        style = type.caption.copy(color = colors.secondaryLabel),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(FunputUi.shapes.smallTile)
+                            .background(colors.label.copy(alpha = QuoteFill))
+                            .padding(FunputUi.spacing.medium),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Caption(text: String) {
+    BasicText(text, style = FunputUi.typography.label.copy(color = FunputUi.colors.secondaryLabel))
+}
+
+private const val QuoteFill = 0.05f

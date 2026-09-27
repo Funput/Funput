@@ -48,6 +48,8 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var showsNumberRow: Boolean by layoutState::showsNumberRow
     var keyboardTheme by render::keyboardTheme
     var keyboardThemeBackgroundImage by render::keyboardThemeBackgroundImage
+    /** False while the background image set last is still decoding; a frame drawn after it is final. */
+    val isBackgroundImageSettled: Boolean get() = render.isBackgroundImageSettled
     var sizingProfile: KeyboardSizingProfile by render::sizingProfile
     var suggestions: List<String>
         get() = render.suggestions
@@ -127,10 +129,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         events.dispatchTouch(event, ::performClick)
     override fun dispatchHoverEvent(event: MotionEvent): Boolean =
         events.dispatchHover(event) { super.dispatchHoverEvent(event) }
-    override fun performClick(): Boolean {
-        if (!events.enabled) return false
-        super.performClick(); return true
-    }
+    override fun performClick(): Boolean = events.enabled && run { super.performClick(); true }
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus); if (!hasWindowFocus) interaction.clear()
     }

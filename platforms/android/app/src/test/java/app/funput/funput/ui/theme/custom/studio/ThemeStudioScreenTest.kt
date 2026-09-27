@@ -18,7 +18,7 @@ import app.funput.funput.theme.KeyboardThemeOrigin
 import app.funput.funput.theme.store.custom.CustomThemeDraft
 import app.funput.funput.ui.theme.custom.color.picker.ColorPickerHexTag
 import app.funput.funput.ui.theme.custom.color.picker.ColorPickerState
-import app.funput.funput.ui.theme.custom.withAccent
+import app.funput.funput.ui.theme.custom.draft.withAccent
 import app.funput.funput.uitesting.SCREENSHOT_SDK
 import app.funput.funput.uitesting.ScreenshotDevices
 import org.junit.Assert.assertEquals

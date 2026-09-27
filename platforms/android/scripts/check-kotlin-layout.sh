@@ -23,7 +23,6 @@ readonly roots=(
     "$android_root/ime/src/androidTest/java/app/funput/funput/ime/suggestions"
     "$android_root/app/src/main/java/app/funput/funput/ui/about"
     "$android_root/app/src/test/java/app/funput/funput/ui/about"
-    "$android_root/app/src/androidTest/java/app/funput/funput/ui/about"
     "$android_root/buildSrc/src/main/kotlin"
     "$android_root/buildSrc/src/test/kotlin"
 
@@ -72,7 +71,6 @@ readonly roots=(
     "$android_root/shortcut-store/src/main/java/app/funput/funput/shortcuts"
     "$android_root/shortcut-store/src/test/java/app/funput/funput/shortcuts"
     "$android_root/ui-testing/src/main/java/app/funput/funput/uitesting"
-    "$android_root/app/src/test/java/app/funput/funput/screenshots"
     "$android_root/funput-ui/src/main/java/app/funput/funput/ui/kit"
     "$android_root/funput-ui/src/test/java/app/funput/funput/ui/kit"
     "$android_root/app/src/debug/java/app/funput/funput/catalog"
@@ -81,9 +79,7 @@ readonly roots=(
     "$android_root/app/src/test/java/app/funput/funput/ui/settings"
     "$android_root/app/src/main/java/app/funput/funput/ui/appearance"
     "$android_root/app/src/test/java/app/funput/funput/ui/appearance"
-    "$android_root/app/src/main/java/app/funput/funput/ui/theme/custom/color"
-    "$android_root/app/src/main/java/app/funput/funput/ui/theme/custom/metrics"
-    "$android_root/app/src/main/java/app/funput/funput/ui/theme/custom/studio"
+    "$android_root/app/src/main/java/app/funput/funput/ui/theme/custom"
     "$android_root/app/src/test/java/app/funput/funput/ui/theme/custom"
 )
 violations=0

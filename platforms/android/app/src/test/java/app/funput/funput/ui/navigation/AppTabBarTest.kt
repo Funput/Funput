@@ -1,14 +1,12 @@
 package app.funput.funput.ui.navigation
 
 import android.content.Context
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import app.funput.funput.R
@@ -21,7 +19,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** The app's tab bar, around a screen not yet rebuilt on FunputUI, drives the navigator. */
+/** The app's tab bar shows the three tabs and drives the navigator. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [SCREENSHOT_SDK])
 class AppTabBarTest {
@@ -32,14 +30,13 @@ class AppTabBarTest {
     private fun label(id: Int) = ApplicationProvider.getApplicationContext<Context>().getString(id)
 
     @Test
-    fun `the legacy host shows the three tabs and switching one moves the navigator`() {
+    fun `the tab bar marks the current tab and switching one moves the navigator`() {
         lateinit var navigator: AppNavigator
         compose.setContent {
             navigator = rememberAppNavigator()
-            FunputUiTheme(isDark = false) { LegacyTabHost(navigator) { BasicText("Màn cũ") } }
+            FunputUiTheme(isDark = false) { AppTabBar(navigator) }
         }
 
-        compose.onNodeWithText("Màn cũ").assertExists()
         compose.onNode(hasText(label(R.string.nav_settings)) and isTab).assertIsSelected()
         compose.onNode(hasText(label(R.string.nav_about)) and isTab).performClick()
 

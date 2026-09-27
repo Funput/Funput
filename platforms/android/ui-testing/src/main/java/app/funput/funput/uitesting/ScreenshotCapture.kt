@@ -45,5 +45,14 @@ fun ComposeContentTestRule.captureScreen(
     waitForIdle()
     prepare()
     waitForIdle()
-    onRoot().captureRoboImage("$root/$screen/${variant.fileName}.png", roborazziOptions = ScreenshotOptions)
+    onRoot().captureRoboImage("$root/$screen/${variant.fileName}.png", roborazziOptions = optionsFor(screen))
 }
+
+/**
+ * Comparison images go to a folder per screen. Roborazzi names them after the file alone, so every
+ * screen's `dark-font100_compare.png` would otherwise overwrite the last, and a CI failure would
+ * show some other screen's diff.
+ */
+private fun optionsFor(screen: String): RoborazziOptions = ScreenshotOptions.copy(
+    compareOptions = ScreenshotOptions.compareOptions.copy(outputDirectoryPath = "$DEFAULT_SCREENSHOT_ROOT/compare/$screen"),
+)

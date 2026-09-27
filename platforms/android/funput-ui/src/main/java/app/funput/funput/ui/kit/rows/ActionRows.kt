@@ -19,7 +19,8 @@ import app.funput.funput.ui.kit.theme.FunputUi
 
 /**
  * A row that opens something: a sheet, a sub-screen, a picker. Shows the current [value] (which
- * moves under the title when long) and a chevron.
+ * moves under the title when long) and a chevron, or, when [external] (a web page, the mail app),
+ * an arrow out of the box so leaving the app is never a surprise.
  */
 @Composable
 fun LinkRow(
@@ -32,6 +33,7 @@ fun LinkRow(
     @DrawableRes icon: Int? = null,
     tint: FunputTint = FunputTint.ORANGE,
     enabled: Boolean = true,
+    external: Boolean = false,
 ) {
     val colors = FunputUi.colors
     FunputRow(
@@ -47,7 +49,7 @@ fun LinkRow(
             // under the title it must read from the start like the title does.
             { BasicText(text = it, style = FunputUi.typography.body.copy(color = colors.secondaryLabel)) }
         },
-        accessory = { RowGlyph(FunputIcons.Forward, colors.tertiaryLabel) },
+        accessory = { RowGlyph(if (external) FunputIcons.OpenExternal else FunputIcons.Forward, colors.tertiaryLabel) },
     )
 }
 

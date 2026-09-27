@@ -1,5 +1,6 @@
 package app.funput.funput.ui.theme.custom
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,15 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
-import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.store.custom.CustomThemeDraft
 import app.funput.funput.theme.store.themeAssetStore
 import app.funput.funput.ui.kit.controls.FunputButton
 import app.funput.funput.ui.kit.controls.FunputButtonStyle
 import app.funput.funput.ui.kit.layout.FunputEditorScreen
-import app.funput.funput.ui.kit.theme.FunputUi
-import app.funput.funput.ui.theme.FunputTheme
+import app.funput.funput.ui.theme.custom.background.ThemeBackgroundScreen
+import app.funput.funput.ui.theme.custom.draft.rememberThemeDraftState
 import app.funput.funput.ui.theme.custom.studio.ThemeEditorTab
 import app.funput.funput.ui.theme.custom.studio.ThemeStudioActionBar
 import app.funput.funput.ui.theme.custom.studio.ThemeStudioHeader
@@ -59,21 +59,21 @@ internal fun CreateCustomThemeScreen(
         }
     }
     var editingBackground by rememberSaveable { mutableStateOf(false) }
+    // Above the branch below, so coming back from the image editor lands on the page it left from.
+    val pagerState = rememberPagerState { ThemeEditorTab.entries.size }
     if (editingBackground) {
-        // The image editor is rebuilt separately; until then it keeps the old theme it was drawn for.
-        FunputTheme(appearanceMode = if (FunputUi.colors.isDark) AppearanceMode.DARK else AppearanceMode.LIGHT) {
-            ThemeBackgroundScreen(
-                state = state,
-                onChooseImage = {
-                    imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                },
-                onBack = { editingBackground = false },
-                modifier = modifier,
-            )
-        }
+        // System back leaves the image editor for the studio, not the studio for the gallery.
+        BackHandler { editingBackground = false }
+        ThemeBackgroundScreen(
+            state = state,
+            onChooseImage = {
+                imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            onBack = { editingBackground = false },
+            modifier = modifier,
+        )
         return
     }
-    val pagerState = rememberPagerState { ThemeEditorTab.entries.size }
     FunputEditorScreen(
         title = stringResource(if (editingTheme != null) R.string.custom_theme_edit_title else R.string.custom_theme_title),
         modifier = modifier,

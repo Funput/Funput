@@ -40,21 +40,34 @@ internal fun ThemeStudioHeader(
             bottom = FunputUi.spacing.medium,
         ),
     ) {
-        KeyboardThemePreview(
-            theme = theme,
-            backgroundImage = backgroundImage,
-            modifier = Modifier
-                .sharedElementByKey(themePreviewSharedKey(editingThemeId))
-                .fillMaxWidth()
-                .height(PreviewHeight)
-                .clip(FunputUi.shapes.thumbnail),
-        )
+        ThemeLivePreview(theme, backgroundImage, editingThemeId)
         FunputSegmented(
             options = tabs.map { stringResource(it.titleRes) },
             selectedIndex = tabs.indexOf(selectedTab),
             onSelect = { index -> onSelectTab(tabs[index]) },
         )
     }
+}
+
+/**
+ * The keyboard being edited, drawn by the real renderer at full width. [editingThemeId] ties it to
+ * the gallery card it grew from, so opening a theme animates rather than cuts.
+ */
+@Composable
+internal fun ThemeLivePreview(
+    theme: KeyboardTheme,
+    backgroundImage: KeyboardThemeBackgroundImage?,
+    editingThemeId: KeyboardThemeId?,
+) {
+    KeyboardThemePreview(
+        theme = theme,
+        backgroundImage = backgroundImage,
+        modifier = Modifier
+            .sharedElementByKey(themePreviewSharedKey(editingThemeId))
+            .fillMaxWidth()
+            .height(PreviewHeight)
+            .clip(FunputUi.shapes.thumbnail),
+    )
 }
 
 private val PreviewHeight = 178.dp

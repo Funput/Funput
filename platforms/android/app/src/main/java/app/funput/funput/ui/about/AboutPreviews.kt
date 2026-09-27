@@ -3,13 +3,12 @@ package app.funput.funput.ui.about
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import app.funput.funput.ime.settings.AppearanceMode
-import app.funput.funput.ui.theme.FunputTheme
+import app.funput.funput.ui.kit.theme.FunputUiTheme
 
 @Preview(name = "Giới thiệu · Sáng", showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun AboutLightPreview() {
-    FunputTheme(appearanceMode = AppearanceMode.LIGHT) {
+    FunputUiTheme(isDark = false) {
         AboutScreen(versionName = "1.2026.53", onOpenLink = {})
     }
 }
@@ -23,7 +22,7 @@ private fun AboutLightPreview() {
 )
 @Composable
 private fun AboutDarkPreview() {
-    FunputTheme(appearanceMode = AppearanceMode.DARK) {
+    FunputUiTheme(isDark = true) {
         AboutScreen(versionName = "1.2026.53", onOpenLink = {})
     }
 }
