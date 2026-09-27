@@ -1,19 +1,13 @@
 package app.funput.funput.ui.kit.layout
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -27,7 +21,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,11 +28,14 @@ import app.funput.funput.ui.kit.theme.FunputMotion
 import app.funput.funput.ui.kit.theme.FunputUi
 import app.funput.funput.ui.kit.tokens.OpacityTokens
 
-/** One tab of a [FunputTabBar]: its icon, and its label beside it while [selected]. */
+/**
+ * One tab of a [FunputTabBar]: its icon over its label, both in the accent on a tinted capsule
+ * while [selected]. With few tabs every one is named; the selection shows by colour, not by
+ * hiding the others' names.
+ */
 @Composable
-internal fun TabItem(tab: FunputTab, selected: Boolean, onClick: () -> Unit) {
+internal fun TabItem(tab: FunputTab, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = FunputUi.colors
-    val capsule = FunputUi.shapes.capsule
     val fill by animateColorAsState(
         if (selected) colors.accent.copy(alpha = OpacityTokens.tintFill) else Color.Transparent,
         FunputMotion.selection(),
@@ -51,45 +47,31 @@ internal fun TabItem(tab: FunputTab, selected: Boolean, onClick: () -> Unit) {
         label = "tab-tint",
     )
     val icon = if (selected) tab.selectedIcon ?: tab.icon else tab.icon
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .height(TabHeight)
-            .widthIn(min = MinTabWidth)
-            .clip(capsule)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(FunputUi.shapes.capsule)
             .background(fill)
             .selectable(selected = selected, role = Role.Tab, onClick = onClick)
-            .semantics { contentDescription = tab.label }
-            .padding(horizontal = 14.dp),
-        horizontalArrangement = Arrangement.Center,
+            // Announced once through the description above, not as an icon plus a separate label.
+            .clearAndSetSemantics { contentDescription = tab.label }
+            .padding(horizontal = 8.dp),
     ) {
-        // What is drawn is announced through the tab's own description, once and the same for
-        // every tab, rather than as an icon and, for one tab only, a visible label.
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clearAndSetSemantics {}) {
-            icon?.let {
-                Image(
-                    painter = painterResource(it),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(tint),
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-            AnimatedVisibility(
-                visible = selected || icon == null,
-                enter = fadeIn(FunputMotion.selection()) + expandHorizontally(FunputMotion.selection()),
-                exit = fadeOut(FunputMotion.selection()) + shrinkHorizontally(FunputMotion.selection()),
-            ) {
-                BasicText(
-                    text = tab.label,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = FunputUi.typography.label.copy(color = tint, fontWeight = FontWeight.SemiBold),
-                    modifier = Modifier.padding(start = if (icon != null) 8.dp else 0.dp),
-                )
-            }
+        icon?.let {
+            Image(
+                painter = painterResource(it),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(tint),
+                modifier = Modifier.size(20.dp),
+            )
         }
+        BasicText(
+            text = tab.label,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = FunputUi.typography.caption.copy(color = tint, fontWeight = FontWeight.SemiBold),
+        )
     }
 }
-
-/** An icon-only tab is still a comfortable touch target. */
-private val MinTabWidth = 56.dp
