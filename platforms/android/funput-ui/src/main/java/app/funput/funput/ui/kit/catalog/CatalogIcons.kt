@@ -14,6 +14,7 @@ import app.funput.funput.ui.kit.cards.FunputDivider
 import app.funput.funput.ui.kit.cards.FunputSection
 import app.funput.funput.ui.kit.icons.FunputIcons
 import app.funput.funput.ui.kit.rows.FunputRow
+import app.funput.funput.ui.kit.rows.FunputRowDefaults
 import app.funput.funput.ui.kit.theme.FunputTint
 import app.funput.funput.ui.kit.theme.FunputUi
 
@@ -42,7 +43,7 @@ private val AllIcons = with(FunputIcons) {
 internal fun CatalogIcons() {
     FunputSection(title = "Icon", footer = "Phosphor (MIT). Mỗi nhóm cài đặt một màu.") {
         TintSamples.forEachIndexed { index, (title, icon, tint) ->
-            if (index > 0) FunputDivider(startInset = 62.dp)
+            if (index > 0) FunputDivider(startInset = FunputRowDefaults.IconDividerInset)
             FunputRow(title = title, icon = icon, tint = tint)
         }
         FunputDivider()

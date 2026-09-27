@@ -10,8 +10,8 @@ import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.theme.InstalledThemeRepository
+import app.funput.funput.ui.kit.theme.FunputUiTheme
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
-import app.funput.funput.ui.theme.FunputTheme
 
 @Preview(name = "Setup · Not enabled", showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
@@ -55,7 +55,7 @@ internal fun SettingsPreview(
     appearanceMode: AppearanceMode = AppearanceMode.LIGHT,
     keyboardSetupStatus: KeyboardSetupStatus = KeyboardSetupStatus.NOT_ENABLED,
 ) {
-    FunputTheme(appearanceMode = appearanceMode) {
+    FunputUiTheme(isDark = appearanceMode == AppearanceMode.DARK) {
         SettingsScreen(
             state = SettingsScreenState(
                 keyboardSetupStatus = keyboardSetupStatus,

@@ -7,8 +7,6 @@ import app.funput.funput.theme.BuiltInKeyboardThemeSource
 import app.funput.funput.ui.about.AboutScreen
 import app.funput.funput.ui.appearance.AppearanceScreen
 import app.funput.funput.ui.appearance.appearancePreviewState
-import app.funput.funput.ui.settings.SettingsPreview
-import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 import app.funput.funput.ui.shortcuts.ShortcutsRoute
 import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CreateCustomThemeScreen
@@ -16,6 +14,8 @@ import app.funput.funput.uitesting.SCREENSHOT_SDK
 import app.funput.funput.uitesting.ScreenshotDevices
 import app.funput.funput.uitesting.ScreenshotVariant
 import app.funput.funput.uitesting.captureScreen
+import org.junit.Assume.assumeFalse
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,18 +37,15 @@ class CurrentScreensScreenshotTest(private val variant: ScreenshotVariant) {
     @get:Rule
     val compose = createComposeRule()
 
+    /**
+     * These captures have no goldens, on purpose: they are "before" evidence for screens about to
+     * be replaced. A verify run would report every one as missing, so they only run otherwise.
+     */
+    @Before
+    fun skipWhenVerifying() = assumeFalse(System.getProperty("roborazzi.test.verify") == "true")
+
     private val appearance: AppearanceMode
         get() = if (variant.isDark) AppearanceMode.DARK else AppearanceMode.LIGHT
-
-    @Test
-    fun settingsBeforeSetup() = capture("settings-setup") {
-        SettingsPreview(appearance, KeyboardSetupStatus.NOT_ENABLED)
-    }
-
-    @Test
-    fun settingsReady() = capture("settings-ready") {
-        SettingsPreview(appearance, KeyboardSetupStatus.READY)
-    }
 
     @Test
     fun appearance() = capture("appearance") {
