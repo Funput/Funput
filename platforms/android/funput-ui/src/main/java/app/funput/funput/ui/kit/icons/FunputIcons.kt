@@ -123,4 +123,22 @@ object FunputIcons {
 
     /** Editing something the user made. */
     @DrawableRes val Edit: Int = R.drawable.ph_pencil_simple
+
+    /** The project's source code on GitHub. */
+    @DrawableRes val SourceCode: Int = R.drawable.ph_github_logo
+
+    /** Reporting a problem. */
+    @DrawableRes val ReportBug: Int = R.drawable.ph_bug
+
+    /** Writing to the team. */
+    @DrawableRes val Mail: Int = R.drawable.ph_envelope_simple
+
+    /** Privacy. */
+    @DrawableRes val Privacy: Int = R.drawable.ph_shield_check
+
+    /** Licences and attribution. */
+    @DrawableRes val Licenses: Int = R.drawable.ph_scroll
+
+    /** Made with care, for the community. */
+    @DrawableRes val Heart: Int = R.drawable.ph_heart_fill
 }

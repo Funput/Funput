@@ -35,7 +35,8 @@ private val AllIcons = with(FunputIcons) {
         Check, Add, Keyboard, ToneMarks, Shortcuts, NumberRow, KeySize, Placement, OneHanded, Restore,
         SpellCheck, Capitalize, Suggestions, Gestures, ReturnToLetters, Haptics, Sound, Clipboard,
         ClipboardExpiry, HardwareKeyboard, Delete, Clear, Hotkey, OpenExternal,
-        Search, ClearField, More, Language, LightDark, Edit,
+        Search, ClearField, More, Language, LightDark, Edit, SourceCode, ReportBug, Mail, Privacy,
+        Licenses, Heart,
     )
 }
 

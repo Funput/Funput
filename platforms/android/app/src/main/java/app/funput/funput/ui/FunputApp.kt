@@ -1,7 +1,5 @@
 package app.funput.funput.ui
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,7 +7,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import app.funput.funput.ime.settings.KeyboardThemeSlot
 import app.funput.funput.theme.KeyboardThemeId
@@ -21,11 +18,9 @@ import app.funput.funput.ui.kit.theme.FunputUiTheme
 import app.funput.funput.ui.navigation.AppDestination
 import app.funput.funput.ui.navigation.AppNavDisplay
 import app.funput.funput.ui.navigation.AppTabBar
-import app.funput.funput.ui.navigation.LegacyTabHost
 import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.shortcuts.ShortcutsRoute
-import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
 import app.funput.funput.ui.theme.custom.rememberCustomThemeServices
 import app.funput.funput.ui.theme.resolveDarkTheme
@@ -53,15 +48,6 @@ fun FunputApp() {
         slotChoice
     } else {
         KeyboardThemeSlot.SINGLE
-    }
-    // FunputUI owns the app theme. Screens not rebuilt on it yet keep the old Material theme
-    // through [legacy], so both kinds render correctly during the migration.
-    val legacy: @Composable (Boolean, @Composable () -> Unit) -> Unit = { tabRoot, screen ->
-        FunputTheme(appearanceMode = settings.appearanceMode) {
-            Surface(modifier = Modifier.fillMaxSize()) {
-                if (tabRoot) LegacyTabHost(navigator, screen) else screen()
-            }
-        }
     }
     FunputUiTheme(isDark = darkTheme) {
         SyncSystemBarAppearance(darkTheme = darkTheme)
@@ -105,12 +91,10 @@ fun FunputApp() {
                         tabBar = { AppTabBar(navigator) },
                     )
                 }
-                AppDestination.ABOUT -> legacy(true) {
-                    AboutRoute { navigator.navigate(AppDestination.THIRD_PARTY_LICENSES) }
+                AppDestination.ABOUT -> AboutRoute(tabBar = { AppTabBar(navigator) }) {
+                    navigator.navigate(AppDestination.THIRD_PARTY_LICENSES)
                 }
-                AppDestination.THIRD_PARTY_LICENSES -> legacy(false) {
-                    LicensesRoute { navigator.navigateBack() }
-                }
+                AppDestination.THIRD_PARTY_LICENSES -> LicensesRoute { navigator.navigateBack() }
                 AppDestination.CREATE_CUSTOM_THEME -> {
                     CustomThemeStudioRoute(
                         editingThemeId = editingThemeId,
