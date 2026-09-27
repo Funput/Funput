@@ -1,32 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="app_name">Funput</string>
-    <string name="funput_logo_description">Logo Funput</string>
     <string name="settings_title">Cài đặt</string>
-    <string name="settings_tagline">Bộ gõ tiếng Việt đa nền tảng - mã nguồn mở</string>
     <string name="settings_keyboard_hero_hint">Chạm để đổi giao diện bàn phím</string>
     <string name="settings_section_typing">Gõ tiếng Việt</string>
     <string name="settings_section_layout">Bố cục bàn phím</string>
     <string name="settings_section_smart">Thông minh</string>
-    <string name="settings_section_appearance">Giao diện</string>
     <string name="settings_section_feedback">Phản hồi khi chạm</string>
     <string name="settings_smart_gestures_title">Cử chỉ thông minh</string>
     <string name="settings_smart_gestures_summary">Gõ đúp phím cách để chấm câu, giữ phím cách rồi kéo để di chuyển con trỏ mọi hướng, vuốt trái phím xóa để xóa cả từ.</string>
     <string name="settings_letter_return_title">Tự về bảng chữ</string>
     <string name="settings_letter_return_summary">Gõ dấu câu ở bảng ký hiệu rồi bấm cách để quay lại bảng chữ cái.</string>
-    <string name="settings_section_about">Thông tin</string>
-    <string name="settings_keyboard_setup_not_enabled_title">Funput chưa được bật</string>
-    <string name="settings_keyboard_setup_not_enabled_body">Bật Funput trong cài đặt bàn phím Android để bắt đầu gõ.</string>
     <string name="settings_keyboard_setup_enable_action">Bật Funput</string>
-    <string name="settings_keyboard_setup_not_selected_title">Chọn Funput làm bàn phím</string>
-    <string name="settings_keyboard_setup_not_selected_body">Chọn Funput khi gõ để dùng bộ gõ tiếng Việt.</string>
     <string name="settings_keyboard_setup_select_action">Chọn bàn phím</string>
-    <string name="settings_keyboard_setup_ready">Funput đã sẵn sàng</string>
     <string name="settings_keyboard_setup_heading">Thiết lập Funput</string>
     <string name="settings_keyboard_setup_progress">Bước %1$d trên 2</string>
     <string name="settings_keyboard_setup_step_enable">Bật Funput trong bàn phím</string>
     <string name="settings_keyboard_setup_step_select">Chọn Funput khi gõ</string>
-    <string name="settings_keyboard_setup_ready_hint">Gõ tiếng Việt ở bất kỳ đâu</string>
     <string name="settings_input_method_title">Kiểu gõ</string>
     <string name="settings_number_row_title">Hàng phím số</string>
     <string name="settings_number_row_summary">Hiển thị 0–9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.</string>
@@ -158,7 +148,6 @@
     <string name="settings_tone_style_title">Kiểu đặt dấu</string>
     <string name="tone_style_traditional">Truyền thống</string>
     <string name="tone_style_modern">Hiện đại</string>
-    <string name="settings_theme_title">Chế độ màu</string>
     <string name="settings_theme_system">Hệ thống</string>
     <string name="settings_theme_light">Sáng</string>
     <string name="settings_theme_dark">Tối</string>
@@ -170,11 +159,9 @@
     <string name="settings_auto_capitalize_summary">Viết hoa ký tự đầu câu khi phù hợp.</string>
     <string name="settings_personal_suggestions_title">Gợi ý từ</string>
     <string name="settings_personal_suggestions_description">Gợi ý từ đã học trên thiết bị và từ điển tiếng Anh đi kèm.</string>
-    <string name="settings_personal_suggestions_reset">Xóa từ đã học</string>
     <string name="settings_personal_suggestions_reset_title">Xóa các từ đã học?</string>
     <string name="settings_personal_suggestions_reset_body">Funput sẽ xóa toàn bộ từ cá nhân đã học trên thiết bị này. Từ điển tiếng Anh đi kèm vẫn được giữ lại.</string>
     <string name="settings_personal_suggestions_reset_confirm">Xóa từ</string>
-    <string name="settings_personal_suggestions_reset_cancel">Giữ lại</string>
     <string name="settings_clipboard_section">Clipboard</string>
     <string name="settings_clipboard_enabled_title">Lưu lịch sử bảng nhớ tạm</string>
     <string name="settings_clipboard_enabled_summary">Chỉ lưu những gì bạn đã dán qua Funput, trên thiết bị.</string>
@@ -202,11 +189,8 @@
     <string name="settings_data_suggestions_summary">Giữ từ điển tiếng Anh đi kèm.</string>
     <string name="settings_data_clipboard_title">Lịch sử bảng nhớ tạm</string>
     <string name="settings_data_clipboard_summary">Kể cả những mục đã ghim.</string>
-    <string name="settings_version_title">Phiên bản</string>
     <string name="settings_website_title">Website</string>
-    <string name="settings_website_display">funput.app</string>
     <string name="settings_website_url">https://funput.app/</string>
-    <string name="settings_about_row_title">Giới thiệu</string>
     <string name="about_title">Giới thiệu</string>
     <string name="nav_settings">Cài đặt</string>
     <string name="nav_appearance">Giao diện</string>
@@ -236,7 +220,6 @@
     <string name="about_privacy_url">https://funput.app/privacy</string>
     <string name="about_footer_title">Được xây dựng cho cộng đồng</string>
     <string name="about_footer_body">Funput là dự án mã nguồn mở &amp; miễn phí cho tất cả mọi người.</string>
-    <string name="about_external_link">Mở liên kết ngoài</string>
     <string name="licenses_title">Giấy phép bên thứ ba</string>
     <string name="licenses_summary">Từ điển, phông chữ và biểu tượng đi kèm</string>
     <string name="licenses_loading">Đang đọc giấy phép…</string>
@@ -246,7 +229,6 @@
     <string name="licenses_icons">Biểu tượng Phosphor</string>
     <string name="shortcuts_title">Gõ tắt</string>
     <string name="shortcuts_settings_summary">Thay chữ tắt bằng nội dung dài hơn.</string>
-    <string name="shortcuts_back">Quay lại</string>
     <string name="shortcuts_options">Tuỳ chọn</string>
     <string name="shortcuts_add">Thêm gõ tắt</string>
     <string name="shortcuts_enabled">Bật gõ tắt</string>
@@ -263,7 +245,6 @@
     <string name="shortcuts_loading">Đang đọc Gõ tắt…</string>
     <string name="shortcuts_load_error">Không thể mở Gõ tắt</string>
     <string name="shortcuts_retry">Thử lại</string>
-    <string name="shortcuts_delete_action">Xoá %1$s</string>
     <string name="shortcuts_swipe_delete">Vuốt để xoá</string>
     <string name="shortcuts_save_error">Không thể lưu Gõ tắt</string>
     <string name="shortcuts_save_error_body">Dữ liệu đã lưu được giữ nguyên. Vui lòng thử lại.</string>

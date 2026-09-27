@@ -249,6 +249,9 @@ jobs:
       - name: Kotlin, directory layout
         run: bash platforms/android/scripts/check-kotlin-layout.sh
 
+      - name: Android app, Material-free
+        run: bash platforms/android/scripts/check-app-material-free.sh
+
   # The shell scripts a stranger is asked to run. `platforms/linux/install.sh` in
   # particular is published as a `curl … | bash` one-liner in the docs and on
   # repo.funput.app, which makes it the most widely *executed* file in the repo and,
