@@ -22,6 +22,10 @@ internal class KeyboardBackgroundImageLoader(
     var bitmap: Bitmap? = null
         private set
 
+    /** Whether the last requested image has finished decoding, or failed to: nothing is pending. */
+    var isSettled: Boolean = true
+        private set
+
     /**
      * The blur radius is part of the request, not just the source.
      *
@@ -34,6 +38,7 @@ internal class KeyboardBackgroundImageLoader(
         currentRequest = request
         generation += 1
         bitmap = null
+        isSettled = request == null
         if (request == null) {
             onLoaded()
             return
@@ -46,6 +51,7 @@ internal class KeyboardBackgroundImageLoader(
             mainHandler.post {
                 if (requestGeneration != generation) return@post
                 bitmap = decoded
+                isSettled = true
                 onLoaded()
             }
         }
@@ -55,6 +61,7 @@ internal class KeyboardBackgroundImageLoader(
         generation += 1
         executor.shutdownNow()
         bitmap = null
+        isSettled = true
     }
 
     private fun decodeBitmap(source: String): Bitmap? = runCatching {

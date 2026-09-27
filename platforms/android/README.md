@@ -164,6 +164,8 @@ Telex nâng cao, VNI, matching và smart case của Gõ tắt.
 | `keyboard-renderer` | Bố cục co giãn, chạm, trợ năng và vẽ bằng Canvas |
 | `theme-runtime` | Hợp đồng theme có version, kiểm tra hợp lệ, phân giải token, truy cập asset an toàn |
 | `theme-store` | Lưu theme tự tạo: JSON, bản nháp và kho asset |
+| `funput-ui` | Design system riêng của app (FunputUI): theme, font Be Vietnam Pro, component; token sinh từ `funput-ui/tokens/app.tokens.json` |
+| `ui-testing` | Chỉ dùng cho test: Robolectric + Roborazzi để dựng và chụp màn Compose trên JVM |
 
 Chiều phụ thuộc là **một chiều, cố ý**:
 
@@ -177,7 +179,37 @@ app ──▶ ime ──▶ keyboard-ui ──▶ keyboard-renderer ──▶ th
  └──▶ theme-runtime ──────────────────────────────────────┘
 ```
 
-`theme-runtime` là lá — nó không phụ thuộc module nào khác trong dự án.
+`theme-runtime` là lá — nó không phụ thuộc module nào khác trong dự án. `funput-ui` cũng là lá: chỉ `app` phụ thuộc vào nó, và nó
+không biết gì về IME hay bàn phím. `ui-testing` đứng ngoài
+đồ thị này: module khác chỉ kéo nó vào bằng `testImplementation`, nên nó không bao giờ vào APK.
+
+### Test giao diện trên JVM
+
+Test Compose chạy bằng Robolectric trong `testDebugUnitTest`, không cần emulator. Chụp ảnh
+màn hình bằng Roborazzi:
+
+```bash
+./gradlew :app:recordRoborazziDebug
+```
+
+Ảnh nằm ở `app/build/outputs/roborazzi/`. Chạy `testDebugUnitTest` bình thường thì màn vẫn được
+dựng (bắt crash) nhưng không ghi ảnh. Workflow `android-screenshots` chụp lại trên mỗi PR đụng
+tới Android và đính ảnh vào artifact.
+
+**FunputUI và các màn đã làm lại dùng ảnh golden.** Ảnh mẫu nằm trong
+`funput-ui/src/test/screenshots` và `app/src/test/screenshots`; job `android` so từng PR với
+chúng (`verifyRoborazziDebug` của cả hai module). Ảnh golden phải được
+ghi trên Linux: khi cố ý đổi giao diện, tải artifact `funput-ui-goldens` / `app-goldens` của
+workflow `android-screenshots` trên PR đó và commit đè lên thư mục tương ứng. Ghi trên Mac chỉ để tự xem.
+
+**Icon.** FunputUI dùng bộ [Phosphor](https://phosphoricons.com) (MIT), ghim ở một phiên bản.
+Danh sách nằm trong `funput-ui/icons.txt`; thêm icon thì thêm một dòng rồi chạy
+`python3 scripts/import-phosphor-icons.py` để sinh lại drawable. Code chỉ gọi icon qua
+`FunputIcons`, theo ý nghĩa (`FunputIcons.Haptics`), không theo tên file. Mỗi nhóm cài đặt có
+một màu (`FunputTint`), giống ứng dụng Cài đặt của iOS.
+
+**Catalog.** Bản debug có thêm biểu tượng "Funput UI" mở màn trưng bày mọi component, có nút
+chuyển tầng kính để so kính thật với bản mờ đục ngay trên máy. Bản release không có nó.
 
 ### Build
 

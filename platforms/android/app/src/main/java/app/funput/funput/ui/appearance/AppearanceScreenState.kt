@@ -16,7 +16,6 @@ import app.funput.funput.theme.KeyboardThemeId
 @Immutable
 internal class AppearanceScreenState(
     val appearanceMode: AppearanceMode,
-    val dynamicColorEnabled: Boolean,
     val followsAppearance: Boolean,
     val activeSlot: KeyboardThemeSlot,
     val lightThemeName: String,
@@ -25,7 +24,6 @@ internal class AppearanceScreenState(
     val userThemes: List<KeyboardThemeDescriptor>,
     val selectedThemeId: KeyboardThemeId,
     val onAppearanceSelected: (AppearanceMode) -> Unit,
-    val onDynamicColorChanged: (Boolean) -> Unit,
     val onFollowsAppearanceChange: (Boolean) -> Unit,
     val onSlotSelected: (KeyboardThemeSlot) -> Unit,
     val onThemeSelected: (KeyboardThemeId) -> Unit,

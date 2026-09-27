@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="funput_window_background">#17120F</color>
+    <!-- FunputUI groupedBackground, so the window, the splash and the first frame match. -->
+    <color name="funput_window_background">#000000</color>
 </resources>

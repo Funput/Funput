@@ -21,6 +21,7 @@ internal fun AppearanceRoute(
     onCreateTheme: () -> Unit,
     onEditTheme: (KeyboardThemeId) -> Unit,
     onDeleteTheme: (KeyboardThemeId) -> Unit,
+    tabBar: (@Composable () -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val themes = catalog.themes
@@ -34,7 +35,6 @@ internal fun AppearanceRoute(
     AppearanceScreen(
         AppearanceScreenState(
             appearanceMode = settings.appearanceMode,
-            dynamicColorEnabled = settings.dynamicColor,
             followsAppearance = selection.followsAppearance,
             activeSlot = activeSlot,
             lightThemeName = catalog.resolve(selection.themeId(KeyboardThemeSlot.LIGHT)).localizedName(),
@@ -43,9 +43,6 @@ internal fun AppearanceRoute(
             userThemes = userThemes,
             selectedThemeId = selection.themeId(activeSlot),
             onAppearanceSelected = { mode -> scope.launch { settings.appearance.setMode(mode) } },
-            onDynamicColorChanged = { enabled ->
-                scope.launch { settings.dynamicColorStore.setEnabled(enabled) }
-            },
             onFollowsAppearanceChange = { follows ->
                 scope.launch { settings.keyboardTheme.setFollowsAppearance(follows) }
             },
@@ -57,5 +54,6 @@ internal fun AppearanceRoute(
             onEditTheme = onEditTheme,
             onDeleteTheme = onDeleteTheme,
         ),
+        tabBar = tabBar,
     )
 }

@@ -36,6 +36,7 @@ internal class KeyboardSurfaceRenderController(
 
     var keyboardTheme by presentation::keyboardTheme
     var keyboardThemeBackgroundImage by presentation::keyboardThemeBackgroundImage
+    val isBackgroundImageSettled: Boolean get() = background.isSettled
 
     // A landscape phone gets a lower ceiling than the profile itself carries — see
     // KeyboardSizingProfile.constrainedForLandscape. Capping here, the one place a profile is

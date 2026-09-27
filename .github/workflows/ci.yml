@@ -249,6 +249,9 @@ jobs:
       - name: Kotlin, directory layout
         run: bash platforms/android/scripts/check-kotlin-layout.sh
 
+      - name: Android app, Material-free
+        run: bash platforms/android/scripts/check-app-material-free.sh
+
   # The shell scripts a stranger is asked to run. `platforms/linux/install.sh` in
   # particular is published as a `curl … | bash` one-liner in the docs and on
   # repo.funput.app, which makes it the most widely *executed* file in the repo and,
@@ -599,8 +602,22 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      # The screenshot tests run here too, composing every screen in every appearance and font
+      # scale without comparing images: a screen that crashes still fails the job. Visual checks
+      # are done by hand on a device.
       - name: Unit tests
         run: ./gradlew testDebugUnitTest --console=plain
+
+      # Gradle's console names only the failing line; the XML keeps the assertion message, which is
+      # what tells a flaky wait apart from a real regression.
+      - name: Upload unit test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-test-reports
+          path: platforms/android/*/build/test-results/testDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Assemble (cross-compiles funput-jni for both ABIs)
         run: ./gradlew assembleDebug --console=plain

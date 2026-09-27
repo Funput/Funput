@@ -10,7 +10,6 @@ import app.funput.funput.ime.settings.AppearanceMode
 import app.funput.funput.ime.settings.AppearanceSettings
 import app.funput.funput.ime.settings.ClipboardPreferences
 import app.funput.funput.ime.settings.ClipboardSettings
-import app.funput.funput.ime.settings.DynamicColorSettings
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
@@ -46,7 +45,6 @@ internal class FunputSettingsState(
     val toneStyleStore: ToneStyleSettings,
     val appearance: AppearanceSettings,
     val clipboardStore: ClipboardSettings,
-    val dynamicColorStore: DynamicColorSettings,
     val feedbackStore: KeyboardFeedbackSettings,
     val numberRowStore: NumberRowSettings,
     val smartCompositionStore: SmartCompositionSettings,
@@ -60,7 +58,6 @@ internal class FunputSettingsState(
     val themeSelection: KeyboardThemeSelection,
     val appearanceMode: AppearanceMode,
     val clipboard: ClipboardPreferences,
-    val dynamicColor: Boolean,
     val feedback: KeyboardFeedbackPreferences,
     val showsNumberRow: Boolean,
     val smartGesturesEnabled: Boolean,
@@ -80,8 +77,6 @@ internal fun rememberFunputSettings(): FunputSettingsState {
     val themeSelection by stores.keyboardTheme.selection
         .collectAsState(KeyboardThemeSettings.DefaultSelection)
     val appearanceMode by stores.appearance.mode.collectAsState(AppearanceSettings.DefaultMode)
-    val dynamicColor by stores.dynamicColorStore.enabled
-        .collectAsState(DynamicColorSettings.DefaultEnabled)
     val clipboard by stores.clipboard.preferences.collectAsState(ClipboardPreferences.Default)
     val feedback by stores.feedbackStore.preferences.collectAsState(KeyboardFeedbackPreferences.Default)
     val showsNumberRow by stores.numberRowStore.showsNumberRow
@@ -103,7 +98,6 @@ internal fun rememberFunputSettings(): FunputSettingsState {
         toneStyleStore = stores.toneStyleStore,
         appearance = stores.appearance,
         clipboardStore = stores.clipboard,
-        dynamicColorStore = stores.dynamicColorStore,
         feedbackStore = stores.feedbackStore,
         numberRowStore = stores.numberRowStore,
         smartCompositionStore = stores.smartCompositionStore,
@@ -117,7 +111,6 @@ internal fun rememberFunputSettings(): FunputSettingsState {
         themeSelection = themeSelection,
         appearanceMode = appearanceMode,
         clipboard = clipboard,
-        dynamicColor = dynamicColor,
         feedback = feedback,
         showsNumberRow = showsNumberRow,
         smartGesturesEnabled = smartGesturesEnabled,
