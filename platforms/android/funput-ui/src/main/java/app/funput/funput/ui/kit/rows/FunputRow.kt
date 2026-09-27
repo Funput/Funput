@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -51,6 +52,7 @@ fun FunputRow(
     summary: String? = null,
     @DrawableRes icon: Int? = null,
     tint: FunputTint = FunputTint.ORANGE,
+    titleColor: Color = Color.Unspecified,
     enabled: Boolean = true,
     detail: (@Composable () -> Unit)? = null,
     accessory: (@Composable () -> Unit)? = null,
@@ -69,7 +71,7 @@ fun FunputRow(
     ) {
         icon?.let { RowIcon(it, colors.tint(tint), Modifier.rowSlot(RowSlot.LEADING)) }
         Column(Modifier.rowSlot(RowSlot.BODY)) {
-            BasicText(title, style = type.body.copy(color = colors.label))
+            BasicText(title, style = type.body.copy(color = titleColor.takeOrElse { colors.label }))
             summary?.let { BasicText(it, style = type.caption.copy(color = colors.secondaryLabel)) }
         }
         detail?.let { Box(Modifier.rowSlot(RowSlot.DETAIL)) { it() } }

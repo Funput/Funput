@@ -99,4 +99,10 @@ object FunputIcons {
 
     /** Clearing a history. */
     @DrawableRes val Clear: Int = R.drawable.ph_broom
+
+    /** A keyboard shortcut (hotkey). */
+    @DrawableRes val Hotkey: Int = R.drawable.ph_command
+
+    /** Opening something outside the app, such as a system settings page. */
+    @DrawableRes val OpenExternal: Int = R.drawable.ph_arrow_square_out
 }

@@ -39,15 +39,21 @@ class FunputColors internal constructor(
     val destructive: Color,
 ) {
     internal companion object {
-        /** Resolves every role for the light or dark appearance. */
-        fun of(isDark: Boolean): FunputColors {
+        /**
+         * Resolves every role for the light or dark appearance. [elevated] swaps in the raised
+         * surfaces a sheet uses: in dark mode the screen colour is black, so a sheet drawn in it
+         * would have no visible edge against the scrim behind it.
+         */
+        fun of(isDark: Boolean, elevated: Boolean = false): FunputColors {
             fun ColorToken.pick() = if (isDark) dark else light
+            val grouped = if (elevated) ColorTokens.elevatedGroupedBackground else ColorTokens.groupedBackground
+            val card = if (elevated) ColorTokens.elevatedCardBackground else ColorTokens.cardBackground
             return FunputColors(
                 isDark = isDark,
                 accent = ColorTokens.accent.pick(),
                 onAccent = ColorTokens.onAccent.pick(),
-                groupedBackground = ColorTokens.groupedBackground.pick(),
-                cardBackground = ColorTokens.cardBackground.pick(),
+                groupedBackground = grouped.pick(),
+                cardBackground = card.pick(),
                 cardStroke = ColorTokens.cardStroke.pick(),
                 label = ColorTokens.label.pick(),
                 secondaryLabel = ColorTokens.secondaryLabel.pick(),

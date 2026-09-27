@@ -26,6 +26,17 @@ fun FunputUiTheme(isDark: Boolean = isSystemInDarkTheme(), content: @Composable 
     }
 }
 
+/**
+ * Draws [content] on raised surfaces, as sheets do: the same roles, with the screen and card
+ * colours of [FunputColors.of]'s elevated set. Components inside need no change.
+ */
+@Composable
+internal fun ProvideElevatedColors(content: @Composable () -> Unit) {
+    val base = LocalFunputColors.current
+    val elevated = remember(base.isDark) { FunputColors.of(base.isDark, elevated = true) }
+    CompositionLocalProvider(LocalFunputColors provides elevated, content = content)
+}
+
 /** How much a disabled control or row is dimmed; one value so every disabled thing reads alike. */
 internal const val DisabledAlpha: Float = 0.4f
 

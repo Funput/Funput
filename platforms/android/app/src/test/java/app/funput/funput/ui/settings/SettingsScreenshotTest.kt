@@ -26,8 +26,8 @@ import org.robolectric.annotation.GraphicsMode
 internal const val APP_SCREENSHOT_ROOT: String = "src/test/screenshots"
 
 /**
- * The rebuilt Settings page: first launch (setup card under the keyboard preview) and a ready
- * keyboard scrolled to the layout group, in every appearance and font scale, in Vietnamese.
+ * The rebuilt Settings page: first launch (setup card under the keyboard preview), and a ready
+ * keyboard scrolled to the layout, smart and data groups, in every appearance and font scale.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -42,6 +42,16 @@ class SettingsScreenshotTest(private val variant: ScreenshotVariant) {
     @Test
     fun layout() = capture("settings-layout", KeyboardSetupStatus.READY) {
         onNodeWithTag(FunputScreenListTag).performScrollToNode(hasText("BỐ CỤC BÀN PHÍM"))
+    }
+
+    @Test
+    fun smart() = capture("settings-smart", KeyboardSetupStatus.READY) {
+        onNodeWithTag(FunputScreenListTag).performScrollToNode(hasText("Tự về bảng chữ"))
+    }
+
+    @Test
+    fun data() = capture("settings-data", KeyboardSetupStatus.READY) {
+        onNodeWithTag(FunputScreenListTag).performScrollToNode(hasText("DỮ LIỆU"))
     }
 
     private fun capture(
