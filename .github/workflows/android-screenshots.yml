@@ -86,13 +86,6 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: android-screenshots
-          path: platforms/android/app/build/outputs/roborazzi/
-          if-no-files-found: error
-          retention-days: 30
-
-      - uses: actions/upload-artifact@v7
-        with:
           name: funput-ui-goldens
           path: platforms/android/funput-ui/src/test/screenshots/
           if-no-files-found: error
