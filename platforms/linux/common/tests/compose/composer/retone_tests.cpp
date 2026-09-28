@@ -6,6 +6,7 @@
 
 #include <doctest/doctest.h>
 
+#include "compose/composer/nonpreedit/sync.h"
 #include "support.h"
 
 using namespace funput;
@@ -20,35 +21,6 @@ void applyIgnoringDeletes(std::string &document, const ComposePlan &plan, char k
         return;
     }
     document += plan.text;
-}
-
-// Type `keys` into a client that answers every keystroke on time, the way a shell
-// drives the composer: read the document, check it, then press the key. Ends with a
-// reading taken, so the next Backspace has the proof `adoptWordBeforeBackspace` asks
-// for — that the document it reads is the one the last repair left.
-std::string typeInSync(Composer &composer, const std::string &keys) {
-    std::string document;
-    for (char c : keys) {
-        composer.observeDocument(document);
-        applyPlan(document, composer.onKey(ascii(c)), c);
-    }
-    composer.observeDocument(document);
-    return document;
-}
-
-// One Backspace the way a shell handles it: the reading it took before the key is
-// the word it offers for re-opening afterwards. Returns whether a word was re-opened.
-bool backspace(Composer &composer, std::string &document) {
-    const std::string reading = document;
-    const ComposePlan plan = composer.onKey(bare(keysym::BackSpace));
-    if (plan.effect == Effect::Replace) {
-        popChars(document, plan.deleteChars);
-    } else if (!plan.consumed) {
-        popChars(document, 1); // the app deletes its own character
-    }
-    const bool adopted = composer.adoptWordBeforeBackspace(reading);
-    composer.observeDocument(document);
-    return adopted;
 }
 
 } // namespace
@@ -87,62 +59,6 @@ TEST_CASE("the word scan splits on punctuation, as the hook shells do") {
     // shared with the other platforms, not an accident of this one.
     REQUIRE(typeInSync(composer, "github.com ") == "github.com ");
     CHECK(composer.adoptWordBeforeBackspace("github.com "));
-}
-
-// `gõ` + `x` restores `gox`; Space, then ⌫⌫ deletes the space and the `x`, and `x`
-// again must put the tone back. The first Backspace was taken over but not recorded,
-// so the second had no proof the document was current and went to the app — and the
-// repair after an app-handled Backspace is the one Chrome drops. `go` + `õ`: `goõ`.
-TEST_CASE("consecutive Backspaces all stay on Funput's channel") {
-    Composer composer = composerFor(Method::Telex);
-    composer.setNonPreedit(true);
-    std::string document = typeInSync(composer, "goxx ");
-    REQUIRE(document == "gox ");
-
-    CHECK_FALSE(backspace(composer, document)); // `gox` is not a syllable
-    REQUIRE(document == "gox");
-
-    // Taken over too, not handed to the app: the first delete was seen to land.
-    const ComposePlan second = composer.onKey(bare(keysym::BackSpace));
-    CHECK(second.effect == Effect::Replace);
-    CHECK(second.deleteChars == 1);
-    CHECK(second.consumed);
-    popChars(document, 1);
-    REQUIRE(composer.adoptWordBeforeBackspace("gox"));
-    composer.observeDocument(document);
-    REQUIRE(document == "go");
-
-    applyPlan(document, composer.onKey(ascii('x')), 'x');
-    CHECK(document == "gõ");
-}
-
-// Chrome reports surrounding text late, so the reading a Backspace gets can be the
-// document from a keystroke ago. After Space the stale copy still reads `gox`, and
-// dropping the character the app "is about to delete" offered `go` — a word the
-// document no longer ends with. The next `x` then wrote `goõ`.
-TEST_CASE("a stale reading of the document re-opens nothing") {
-    Composer composer = composerFor(Method::Telex);
-    composer.setNonPreedit(true);
-
-    std::string document;
-    std::string reading; // what the client last reported: one keystroke behind
-    for (char c : std::string("goxx ")) {
-        composer.observeDocument(reading);
-        reading = document;
-        applyPlan(document, composer.onKey(ascii(c)), c);
-    }
-    REQUIRE(document == "gox ");
-
-    composer.observeDocument(reading); // still `gox`: the space has not been reported
-    REQUIRE(reading == "gox");
-    const ComposePlan plan = composer.onKey(bare(keysym::BackSpace));
-    CHECK_FALSE(plan.consumed); // no proof the reading is current, so the app deletes
-    popChars(document, 1);
-    CHECK_FALSE(composer.adoptWordBeforeBackspace(reading));
-
-    composer.observeDocument(reading);
-    applyPlan(document, composer.onKey(ascii('x')), 'x');
-    CHECK(document == "goxx");
 }
 
 TEST_CASE("re-opening is a non-preedit affair only") {

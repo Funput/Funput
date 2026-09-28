@@ -98,11 +98,9 @@ ComposePlan Composer::backspaceOutsideWord() {
     // Note this repair cannot convict a client afterwards. It carries no text, so
     // "dropped" reads as the unchanged document, which is the silent-client signature.
     // A client that refuses it will simply appear to ignore Backspace.
-    //
-    // It is still recorded, because seeing it land is what keeps `inSync` for the
-    // Backspace after it. Left unrecorded, ⌫⌫ over `gox ` took the space over and then
-    // handed the `x` to the app — and the repair after *that* is the one Chrome drops:
-    // re-opening `go` and typing `x` wrote `goõ`.
+    // Still recorded: seeing it land keeps `inSync`, so the next ⌫ stays here too.
+    // Unrecorded, ⌫⌫ over `gox ` handed the `x` to the app, Chrome dropped the repair
+    // after it, and re-toning `go` wrote `goõ`.
     if (!nonPreedit_.on || !nonPreedit_.inSync || nonPreedit_.selectionLive ||
         nonPreedit_.lastDoc.empty()) {
         return ComposePlan::passThrough();
@@ -120,10 +118,8 @@ ComposePlan Composer::endComposition(bool consumed) {
 
 bool Composer::adoptWordBeforeBackspace(const std::string &textBeforeCaret) {
     if (!nonPreedit_.on || !nonPreedit_.retoneAllowed || !effectiveEnabled_) return false;
-    // Only a document seen to be current. Chrome can report surrounding text a
-    // keystroke late: a stale `gox` for `gox ` makes the scan below offer `go`, a word
-    // the document no longer ends with, and the next `x` writes `goõ`. Declining costs
-    // one re-tone; adopting a word that is not there corrupts the user's text.
+    // Only a document seen to be current: Chrome can report `gox ` a keystroke late as
+    // `gox`, and adopting the `go` that leaves would make the next `x` write `goõ`.
     if (!nonPreedit_.inSync) return false;
     std::vector<uint32_t> chars = decodeUtf8(textBeforeCaret);
     if (chars.empty()) return false;
