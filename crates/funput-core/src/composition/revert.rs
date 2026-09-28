@@ -9,7 +9,9 @@ use crate::ToneStyle;
 use crate::composition::uo_horn::try_revert_uo_compound;
 use crate::orthography::tone_vowel_index;
 use crate::unicode::marks::{Tone, tone_on_vowel, vowel_stem};
-use crate::unicode::shapes::{VowelShape, shaped_vowel_index, strip_shape};
+use crate::unicode::shapes::{
+    VowelShape, base_vowel, shape_on_vowel, shaped_vowel_index, strip_shape,
+};
 
 /// Copy of `buffer` with the char at `char_idx` replaced (single allocation).
 /// An out-of-range index returns the buffer unchanged.
@@ -63,6 +65,24 @@ pub fn try_revert_shape(buffer: &str, shape: VowelShape) -> Option<String> {
     let vowel = buffer.chars().nth(vowel_idx)?;
     let unstemmed = strip_shape(vowel)?;
     Some(replace_char_at(buffer, vowel_idx, unstemmed))
+}
+
+/// Revert a Telex mũ when its own letter is pressed again right after it: `ô` + `o`.
+///
+/// Ahead of any other target, because a mũ key only ever shapes its own letter. Left
+/// to the general shape path, the `ô` (which cannot take a second mũ) was skipped for
+/// the last vowel that could: `hadô` + `o` → `hâdô`, `caô` + `o` → `câô`.
+pub fn try_revert_own_circumflex(buffer: &str, key: char) -> Option<String> {
+    let (offset, last) = buffer.char_indices().next_back()?;
+    if shape_on_vowel(last) != Some(VowelShape::Circumflex)
+        || !base_vowel(last).is_some_and(|base| base.eq_ignore_ascii_case(&key))
+    {
+        return None;
+    }
+    let mut text = String::with_capacity(buffer.len());
+    text.push_str(&buffer[..offset]);
+    text.push(strip_shape(last)?);
+    Some(text)
 }
 
 #[cfg(test)]
