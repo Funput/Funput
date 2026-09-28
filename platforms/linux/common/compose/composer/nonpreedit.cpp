@@ -95,13 +95,19 @@ ComposePlan Composer::backspaceOutsideWord() {
     // client says nothing this simply declines, which costs re-toning rather than the
     // far commoner select-and-delete.
     //
-    // Note this repair cannot be verified afterwards. It carries no text, so "applied"
-    // and "dropped" read as the same document, which is the silent-client signature. A
-    // client that refuses it will simply appear to ignore Backspace.
+    // Note this repair cannot convict a client afterwards. It carries no text, so
+    // "dropped" reads as the unchanged document, which is the silent-client signature.
+    // A client that refuses it will simply appear to ignore Backspace.
+    //
+    // It is still recorded, because seeing it land is what keeps `inSync` for the
+    // Backspace after it. Left unrecorded, ⌫⌫ over `gox ` took the space over and then
+    // handed the `x` to the app — and the repair after *that* is the one Chrome drops:
+    // re-opening `go` and typing `x` wrote `goõ`.
     if (!nonPreedit_.on || !nonPreedit_.inSync || nonPreedit_.selectionLive ||
         nonPreedit_.lastDoc.empty()) {
         return ComposePlan::passThrough();
     }
+    nonPreedit_.noteRepair(1, {});
     return ComposePlan::replace(1, {});
 }
 
@@ -114,6 +120,11 @@ ComposePlan Composer::endComposition(bool consumed) {
 
 bool Composer::adoptWordBeforeBackspace(const std::string &textBeforeCaret) {
     if (!nonPreedit_.on || !nonPreedit_.retoneAllowed || !effectiveEnabled_) return false;
+    // Only a document seen to be current. Chrome can report surrounding text a
+    // keystroke late: a stale `gox` for `gox ` makes the scan below offer `go`, a word
+    // the document no longer ends with, and the next `x` writes `goõ`. Declining costs
+    // one re-tone; adopting a word that is not there corrupts the user's text.
+    if (!nonPreedit_.inSync) return false;
     std::vector<uint32_t> chars = decodeUtf8(textBeforeCaret);
     if (chars.empty()) return false;
     // The app has not deleted it yet, so drop it here to see where the caret lands.
