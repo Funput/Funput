@@ -1,6 +1,7 @@
 //! The mouse hook. It exists for one reason: a click moves the text caret, and the
 //! keyboard hook cannot see that happen.
 
+use funput_desktop::Caret;
 use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, HC_ACTION, WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_MOUSEMOVE, WM_RBUTTONDOWN,
@@ -9,8 +10,10 @@ use windows::Win32::UI::WindowsAndMessaging::{
 use crate::background::hotkey;
 use crate::shared::shell;
 
-/// A button-down click moves the caret, so flush the in-progress composition before
-/// the next keystroke diffs against a now-stale word.
+/// A button-down click moves the caret somewhere the hook cannot see: flush the
+/// in-progress composition before the next keystroke diffs against a now-stale
+/// word, and drop the sentence the keys typed so far described, or `Xong. ` would
+/// capitalize whatever is typed after a click into the middle of another sentence.
 pub(super) unsafe extern "system" fn mouse_proc(
     code: i32,
     wparam: WPARAM,
@@ -19,7 +22,7 @@ pub(super) unsafe extern "system" fn mouse_proc(
     if code == HC_ACTION as i32 {
         let msg = wparam.0 as u32;
         if is_caret_moving_click(msg) {
-            shell::clear();
+            shell::caret_moved(Caret::Unknown);
         }
         // Any deliberate mouse action ends a modifier-only gesture: Ctrl+Shift
         // then a click is multi-select, not a hotkey. Movement is excluded — it

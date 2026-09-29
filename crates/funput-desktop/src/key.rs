@@ -2,6 +2,8 @@
 
 use funput_engine::KeySource;
 
+use crate::Caret;
+
 /// Modifier keys held when a key is pressed. `shift` is tracked but does **not**
 /// by itself mark a system shortcut (Shift is part of normal typing).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -31,6 +33,9 @@ pub struct KeyEvent {
     /// Caret-moving or non-text key: arrows, Home/End, PageUp/Down, Esc, Delete,
     /// Insert, F-keys, Enter, Tab.
     pub is_navigation: bool,
+    /// Enter. Flagged on its own because it is the one key after which the shell
+    /// knows where the caret sits — the start of a line — and says so to the engine.
+    pub is_enter: bool,
     /// Where the key physically came from. A numpad digit carries
     /// [`KeySource::Numpad`] so the engine keeps it a literal number instead of a
     /// VNI tone/shape modifier; ordinary keys are [`KeySource::Standard`].
@@ -47,8 +52,9 @@ pub enum KeyKind {
     /// Backspace pressed — call `engine.backspace()` and apply its result.
     Backspace,
     /// Flush the composition (commit/clear) and let the key pass through —
-    /// navigation, function keys, or a system shortcut.
-    Flush,
+    /// navigation, function keys, or a system shortcut. Carries where the key
+    /// leaves the caret, for [`crate::ShellState::caret_moved`].
+    Flush(Caret),
     /// Irrelevant key (no character, not navigation) — pass through, leave the
     /// composition as-is.
     PassThrough,
@@ -58,17 +64,28 @@ pub enum KeyKind {
 /// *before* this, since the toggle combo is configurable and host-specific.
 pub fn classify(ev: &KeyEvent) -> KeyKind {
     if ev.mods.is_shortcut() {
-        return KeyKind::Flush;
+        return KeyKind::Flush(landing(ev));
     }
     if ev.is_backspace {
         return KeyKind::Backspace;
     }
     if ev.is_navigation {
-        return KeyKind::Flush;
+        return KeyKind::Flush(landing(ev));
     }
     match ev.ch {
         Some(c) => KeyKind::Compose(c, ev.source),
         None => KeyKind::PassThrough,
+    }
+}
+
+/// Where a flushing key leaves the caret. Enter with a modifier still counts — it
+/// is how Alt+Enter and Shift+Enter break a line in apps where plain Enter submits.
+/// Anything else is a guess, and [`Caret::Unknown`] is the cheap one to get wrong.
+fn landing(ev: &KeyEvent) -> Caret {
+    if ev.is_enter {
+        Caret::LineStart
+    } else {
+        Caret::Unknown
     }
 }
 
@@ -84,8 +101,16 @@ mod tests {
             ch,
             is_backspace: false,
             is_navigation: false,
+            is_enter: false,
             source: KeySource::Standard,
         }
+    }
+
+    fn enter() -> KeyEvent {
+        let mut ev = key(Some('\r'));
+        ev.is_navigation = true;
+        ev.is_enter = true;
+        ev
     }
 
     #[test]
@@ -109,7 +134,7 @@ mod tests {
     fn classify_shortcut_flushes() {
         let mut ev = key(Some('a'));
         ev.mods.ctrl = true;
-        assert_eq!(classify(&ev), KeyKind::Flush); // Ctrl+A must not compose
+        assert_eq!(classify(&ev), KeyKind::Flush(Caret::Unknown)); // Ctrl+A must not compose
     }
 
     #[test]
@@ -127,7 +152,25 @@ mod tests {
 
         let mut nav = key(None);
         nav.is_navigation = true;
-        assert_eq!(classify(&nav), KeyKind::Flush);
+        assert_eq!(classify(&nav), KeyKind::Flush(Caret::Unknown));
+    }
+
+    #[test]
+    fn enter_leaves_the_caret_at_a_line_start() {
+        assert_eq!(classify(&enter()), KeyKind::Flush(Caret::LineStart));
+    }
+
+    /// Alt+Enter and Shift+Enter are how some apps break a line where plain Enter
+    /// submits, so the modifier does not change where the caret lands.
+    #[test]
+    fn enter_with_a_modifier_still_starts_a_line() {
+        let mut alt = enter();
+        alt.mods.alt = true;
+        assert_eq!(classify(&alt), KeyKind::Flush(Caret::LineStart));
+
+        let mut shift = enter();
+        shift.mods.shift = true;
+        assert_eq!(classify(&shift), KeyKind::Flush(Caret::LineStart));
     }
 
     #[test]

@@ -6,6 +6,7 @@ use funput_config::{Method, Settings};
 use funput_engine::{Action, KeySource};
 
 use super::*;
+use crate::Caret;
 
 /// In memory only — no settings file, so nothing touches the disk.
 fn shell() -> ShellState {
@@ -282,6 +283,50 @@ fn backspace_after_a_word_boundary_reopens_the_word() {
 
     state.on_backspace();
     assert!(state.is_composing(), "phủ was re-opened");
+}
+
+// --- caret moves -----------------------------------------------------------
+
+fn shell_autocap() -> ShellState {
+    shell_with(Settings {
+        auto_capitalize: true,
+        ..Settings::default()
+    })
+}
+
+#[test]
+fn a_caret_move_commits_the_word_and_drops_the_shadow() {
+    let mut state = shell();
+    app_text(&mut state, "phur ");
+    state.process_key('c', KeySource::Standard);
+
+    state.caret_moved(Caret::Unknown);
+    assert!(!state.is_composing());
+
+    state.on_backspace();
+    assert!(!state.is_composing(), "phủ sits somewhere else now");
+}
+
+/// `Xong. `, then a click into the middle of another sentence: the full stop the
+/// user typed is no longer in front of the caret.
+#[test]
+fn a_sentence_end_does_not_survive_a_caret_move() {
+    let mut state = shell_autocap();
+    app_text(&mut state, "xong. ");
+
+    state.caret_moved(Caret::Unknown);
+
+    assert_eq!(app_text(&mut state, "tiep"), "tiep");
+}
+
+#[test]
+fn a_line_start_capitalizes_the_next_word() {
+    let mut state = shell_autocap();
+    app_text(&mut state, "xong");
+
+    state.caret_moved(Caret::LineStart);
+
+    assert_eq!(app_text(&mut state, "tiep"), "Tiep");
 }
 
 // --- shortcuts -------------------------------------------------------------

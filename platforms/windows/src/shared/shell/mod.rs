@@ -14,7 +14,7 @@ mod settings;
 
 use std::sync::{Mutex, OnceLock};
 
-use funput_desktop::{ImeResult, KeySource, ShellState};
+use funput_desktop::{Caret, ImeResult, KeySource, ShellState};
 
 use crate::shared::settings_path;
 
@@ -46,11 +46,10 @@ pub fn flip_composing() -> ImeResult {
 pub fn on_backspace() {
     with(|s| s.on_backspace());
 }
-pub fn arm_capitalization() {
-    with(|s| s.arm_capitalization());
-}
-pub fn clear() {
-    with(|s| s.clear());
+/// The caret moved without typing: commit the composition and tell the engine
+/// where it landed — see [`ShellState::caret_moved`].
+pub fn caret_moved(caret: Caret) {
+    with(|s| s.caret_moved(caret));
 }
 pub fn note_foreground(id: String) {
     with(|s| s.note_foreground(id));

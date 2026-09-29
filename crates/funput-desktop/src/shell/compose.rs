@@ -1,12 +1,13 @@
 //! What the keyboard hook calls on every keystroke.
 //!
-//! These four are the hot path — they run inside the low-level hook, before the
+//! These are the hot path — they run inside the low-level hook, before the
 //! focused app sees the key — so they do no I/O and take no allocation beyond what
 //! the engine itself needs.
 
 use funput_engine::{ImeResult, KeySource};
 
 use super::ShellState;
+use crate::Caret;
 
 impl ShellState {
     /// Feed one character to the engine, tagged with its physical [`KeySource`] so
@@ -51,19 +52,17 @@ impl ShellState {
         self.engine.flip_composing()
     }
 
-    /// Commit whatever is composed and forget where the caret was. Called for
-    /// anything the shell cannot model — a caret key, Enter, a mouse click, a
-    /// focus change — after which nothing it typed is reliably in front of the
-    /// caret any more.
-    pub fn clear(&mut self) {
+    /// The caret moved without typing — a caret key, Enter, a mouse click, a focus
+    /// change — so nothing the shell typed is reliably in front of it any more.
+    /// Commits whatever is composed, and tells the engine what is known about where
+    /// the caret landed, so auto-capitalize reads the sentence from there rather
+    /// than from keys typed somewhere else.
+    pub fn caret_moved(&mut self, caret: Caret) {
         self.reset_composition();
-    }
-
-    /// Arm auto-capitalize for the next word (the engine no-ops unless the feature
-    /// is on). Called on focus change so the first letter typed in a newly-focused
-    /// app is capitalized, and after Enter for a new line.
-    pub fn arm_capitalization(&mut self) {
-        self.engine.arm_capitalization();
+        match caret {
+            Caret::LineStart => self.engine.arm_capitalization(),
+            Caret::Unknown => self.engine.disarm_capitalization(),
+        }
     }
 
     /// Whether a word is being composed right now.

@@ -13,6 +13,9 @@
 //! `layout` is a third: whether the keyboard layout under the caret is one
 //! Vietnamese can be typed on at all, decided from the handle the host hands it.
 //!
+//! `caret` says what a shell knows about where the caret landed after it moved
+//! without typing — see [`Caret`].
+//!
 //! `retone` adds the one piece of state such a shell needs: a [`CommittedTail`]
 //! shadow of the text it has typed, which stands in for the document it cannot read
 //! when Backspace should re-open a finished word.
@@ -21,12 +24,14 @@
 //! the shadow, the settings, and which app is focused — as a plain struct the
 //! platform owns and can unit-test.
 
+mod caret;
 mod inject;
 mod key;
 mod layout;
 mod retone;
 mod shell;
 
+pub use caret::Caret;
 pub use funput_engine::{ImeResult, KeySource};
 pub use inject::{InjectPlan, plan_inject};
 pub use key::{KeyEvent, KeyKind, Mods, classify};
