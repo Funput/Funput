@@ -96,6 +96,34 @@ fn autocap_focus_capitalizes_first_word() {
     assert_eq!(feed(&mut e, "viet"), "Viet");
 }
 
+/// The capital has to reach the app, not just the buffer. A host like the Windows
+/// hook lets the physical key through on `Action::None`, so a capitalized letter
+/// reported as a pass-through arrives lowercase while the engine believes `V`.
+#[test]
+fn autocap_injects_the_capital_instead_of_passing_the_key_through() {
+    let mut e = engine_autocap();
+    e.arm_capitalization();
+    let first = e.process_char('v');
+    assert_eq!(first.action, Action::Send);
+    assert_eq!((first.backspace, first.output.as_str()), (0, "V"));
+    // The rest of the word is an ordinary append again.
+    assert_eq!(e.process_char('i').action, Action::None);
+
+    // Same after a sentence end typed mid-session.
+    feed(&mut e, "et. ");
+    let next = e.process_char('x');
+    assert_eq!((next.action, next.output.as_str()), (Action::Send, "X"));
+}
+
+/// A key that is already uppercase needs nothing injected.
+#[test]
+fn autocap_passes_an_uppercase_key_through() {
+    let mut e = engine_autocap();
+    e.arm_capitalization();
+    assert_eq!(e.process_char('V').action, Action::None);
+    assert_eq!(e.buffer(), "V");
+}
+
 #[test]
 fn autocap_first_letter_composes_vietnamese() {
     let mut e = engine_autocap();
