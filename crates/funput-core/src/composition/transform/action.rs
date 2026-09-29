@@ -2,7 +2,9 @@ use crate::composition::apply::{
     apply_shape_key, apply_stroke, apply_tone_key, remove_tone, shape_apply_target_exists,
 };
 use crate::composition::intent::{ModifierIntent, resolve};
-use crate::composition::revert::{try_revert_shape, try_revert_stroke, try_revert_tone};
+use crate::composition::revert::{
+    try_revert_own_circumflex, try_revert_shape, try_revert_stroke, try_revert_tone,
+};
 use crate::composition::uo_horn::{ends_with_open_uo_horn, normalize_horned_uo_open};
 use crate::input_method::KeyAction;
 use crate::validation::syllable::{validate_shape, validate_stroke, validate_tone};
@@ -80,6 +82,11 @@ fn shape(
     if shape == crate::unicode::shapes::VowelShape::Horn
         && ends_with_open_uo_horn(buffer)
         && let Some(text) = try_revert_shape(buffer, shape)
+    {
+        return reverted(append(&text, key));
+    }
+    if shape == crate::unicode::shapes::VowelShape::Circumflex
+        && let Some(text) = try_revert_own_circumflex(buffer, key)
     {
         return reverted(append(&text, key));
     }
