@@ -1,5 +1,8 @@
 name: Deploy Windows Store
 
+# Public Microsoft Store listing: Funput: Bộ gõ tiếng Việt
+# https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS
+#
 # Manual only. Builds the Store .msix from whichever branch you run it on and
 # uploads it to a Partner Center package flight.
 #
