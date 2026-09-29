@@ -52,6 +52,7 @@ preedit/marked text…); logic inject không thuộc crate này.
 | `set_spell_check(bool)` | Kiểm tra chính tả — chỉ đặt dấu nếu kết quả vẫn có thể là âm tiết VN hợp lệ |
 | `set_auto_capitalize(bool)` | Tự động viết hoa chữ đầu câu |
 | `arm_capitalization()` | "Nạp" viết hoa cho từ kế tiếp (platform gọi khi text field được focus) |
+| `disarm_capitalization()` | Quên trạng thái câu khi caret nhảy tới chỗ platform không thấy (click, đổi app, phím di chuyển) |
 | `clear()` | Reset buffer + keys (ranh giới từ, đổi focus) |
 | `buffer() -> &str` | Text đang soạn — platform dùng để vẽ preedit/marked text |
 | `keys() -> &str` | Chuỗi phím thô từ ranh giới từ gần nhất — dùng để khôi phục tiếng Anh |

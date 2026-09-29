@@ -74,6 +74,15 @@ impl Engine {
         }
     }
 
+    /// Tell the engine the caret moved somewhere it cannot see — a click, another
+    /// app, a caret key — so the keys typed before it no longer say where the
+    /// sentence stands. The next letter is left as typed until the keys typed from
+    /// here end a sentence. Not gated on the switch: a lost position is lost either
+    /// way, and [`Self::configure`] resets to the same state when it turns off.
+    pub fn disarm_capitalization(&mut self) {
+        self.session.scanner = Scanner::mid_text(Rules::TYPING);
+    }
+
     /// Reset per-word state without changing settings.
     ///
     /// A digit that just passed through is kept, like the sentence scanner: a host

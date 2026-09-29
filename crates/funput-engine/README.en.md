@@ -53,6 +53,7 @@ policy live there, **not** in the engine. The platform reads `ImeResult` and dec
 | `set_spell_check(bool)` | Spell-check — only place a diacritic if the result can still be a valid VN syllable |
 | `set_auto_capitalize(bool)` | Auto-capitalize the first letter of a sentence |
 | `arm_capitalization()` | Arm capitalization for the next word (platform calls this on text-field focus) |
+| `disarm_capitalization()` | Forget the sentence state when the caret jumps somewhere the platform cannot see (click, app switch, caret key) |
 | `clear()` | Reset buffer + keys (word boundary, focus change) |
 | `buffer() -> &str` | The composing text — the platform renders it as preedit/marked text |
 | `keys() -> &str` | Raw keystrokes since the last word boundary — used for English restore |

@@ -13,6 +13,7 @@ mod window;
 
 use std::sync::atomic::Ordering;
 
+use funput_desktop::Caret;
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Accessibility::HWINEVENTHOOK;
 use windows::Win32::UI::WindowsAndMessaging::EVENT_SYSTEM_FOREGROUND;
@@ -53,7 +54,9 @@ pub(super) unsafe extern "system" fn win_event_proc(
     // The caret is somewhere else entirely now, so nothing Funput has typed sits in
     // front of it any more (mirrors the mouse-click flush). Both directions: keys
     // typed into Funput's own windows compose in-process and never reach the engine.
-    shell::clear();
+    // Unknown rather than a line start: an app gives the caret back wherever it
+    // left it, usually mid-document, so capitalizing here would be a guess.
+    shell::caret_moved(Caret::Unknown);
     // Neither of these is somewhere a person is typing, so neither gets to say what
     // language they are typing in. The shell matters most: the tray icon sits on the
     // taskbar, so answering for `Shell_TrayWnd` would let a trip to Funput's own
@@ -70,8 +73,6 @@ pub(super) unsafe extern "system" fn win_event_proc(
         tray::sync_from_shell();
     }
     shell::note_foreground(id.clone());
-    // Focus on a new app is the start of input: arm so the first letter is capitalized.
-    shell::arm_capitalization();
     let by_app = shell::apply_for_app(&id);
     // The layout rule gets the last word, so an app remembered as Vietnamese does
     // not turn it back on inside an app whose thread is running a Japanese IME.

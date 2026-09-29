@@ -159,6 +159,35 @@ fn autocap_newline_arms() {
     assert_eq!(feed(&mut e, "lam"), "Lam");
 }
 
+/// A sentence end typed before the caret moved says nothing about where it landed:
+/// `Xong. ` then a click into the middle of another sentence.
+#[test]
+fn autocap_disarm_forgets_a_sentence_end_typed_before_the_caret_moved() {
+    let mut e = engine_autocap();
+    feed(&mut e, "xong. ");
+    e.clear();
+    e.disarm_capitalization();
+    assert_eq!(feed(&mut e, "tiep"), "tiep");
+}
+
+#[test]
+fn autocap_disarm_overrides_an_armed_start() {
+    let mut e = engine_autocap();
+    e.arm_capitalization();
+    e.disarm_capitalization();
+    assert_eq!(feed(&mut e, "viet"), "viet");
+}
+
+/// Disarming drops what is known, not the feature: the keys typed afterwards still
+/// end a sentence.
+#[test]
+fn autocap_after_disarm_the_next_sentence_end_still_arms() {
+    let mut e = engine_autocap();
+    e.disarm_capitalization();
+    feed(&mut e, "giua cau. ");
+    assert_eq!(feed(&mut e, "lam"), "Lam");
+}
+
 #[test]
 fn autocap_comma_does_not_arm() {
     let mut e = engine_autocap();
