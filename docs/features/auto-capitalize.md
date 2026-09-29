@@ -167,6 +167,15 @@ thực sự lấy được arm**. Tiêu thụ vô điều kiện sẽ xoá mất
 khoảng trắng — đúng trường hợp của `»`, vốn không phải ASCII nên không đi qua đường
 ranh giới từ mà rơi vào `prepare_key`.
 
+**Chữ hoa phải được inject, không được pass-through.** `prepare_key` viết hoa phím
+trước khi vào `pipeline::process`, nên phép kiểm "chỉ nối thêm đúng phím vừa gõ" phải
+so với phím **người dùng gõ** (`typed`), không phải phím đã viết hoa. Trước đây nó so
+với `'V'`, thấy khớp, trả `Action::None` — và hook Windows, vốn thả phím vật lý qua khi
+nhận `None`, để lọt chữ `v` thường vào app trong khi buffer của engine là `V`. Chữ đầu
+câu chỉ hiện hoa khi phím sau sửa lại nó (`dd` → `Đ`, `as` → `Á`), nên tính năng trông
+như lúc được lúc không. `autocap_injects_the_capital_instead_of_passing_the_key_through`
+ghim lại `Send(0, "V")`.
+
 **Vẫn tắt mặc định trên desktop** (`auto_capitalize: false` trong
 `funput-config/src/settings/model/defaults.rs` và trong UserDefaults của macOS), khác
 mobile bật sẵn. Đợt hợp nhất này làm đúng luật cho ai đã bật, không đổi mặc định.

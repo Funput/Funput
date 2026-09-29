@@ -14,7 +14,18 @@ use crate::model::Session;
 /// Apply one keystroke to `session` and return platform instructions.
 ///
 /// `session.keys` already includes `key` (pushed by the caller).
-pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: bool) -> ImeResult {
+///
+/// `typed` is the character the physical key produces, which differs from `key`
+/// when auto-capitalize has already uppercased it. Only `typed` decides whether the
+/// app can echo the key itself: a host that passes the key through on
+/// [`ImeResult::none`] — the Windows hook — would otherwise let the lowercase `v`
+/// reach the app while the buffer holds `V`.
+pub(crate) fn process(
+    session: &mut Session,
+    key: char,
+    typed: char,
+    capitalize_shortcut: bool,
+) -> ImeResult {
     let mut result = apply_checked(
         &session.buffer,
         key,
@@ -64,7 +75,7 @@ pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: boo
     // so there is nothing to inject (and nothing to allocate).
     let prefix = common_prefix_bytes(&session.buffer, &new_buffer);
     let pass_through =
-        prefix == session.buffer.len() && new_buffer[prefix..].chars().eq(std::iter::once(key));
+        prefix == session.buffer.len() && new_buffer[prefix..].chars().eq(std::iter::once(typed));
     let instruction = if pass_through {
         ImeResult::none()
     } else {

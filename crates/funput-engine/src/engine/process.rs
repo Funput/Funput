@@ -55,7 +55,7 @@ impl Engine {
             self.session.glue.start_word();
         }
         self.session.keys.push(raw_key);
-        pipeline::process(&mut self.session, compose_key, capitalize_shortcut)
+        pipeline::process(&mut self.session, compose_key, key, capitalize_shortcut)
     }
 
     /// English mode with gõ tắt still on. Nothing is composed: the app renders
