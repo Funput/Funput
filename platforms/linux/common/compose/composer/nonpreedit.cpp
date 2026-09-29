@@ -95,13 +95,17 @@ ComposePlan Composer::backspaceOutsideWord() {
     // client says nothing this simply declines, which costs re-toning rather than the
     // far commoner select-and-delete.
     //
-    // Note this repair cannot be verified afterwards. It carries no text, so "applied"
-    // and "dropped" read as the same document, which is the silent-client signature. A
-    // client that refuses it will simply appear to ignore Backspace.
+    // Note this repair cannot convict a client afterwards. It carries no text, so
+    // "dropped" reads as the unchanged document, which is the silent-client signature.
+    // A client that refuses it will simply appear to ignore Backspace.
+    // Still recorded: seeing it land keeps `inSync`, so the next ⌫ stays here too.
+    // Unrecorded, ⌫⌫ over `gox ` handed the `x` to the app, Chrome dropped the repair
+    // after it, and re-toning `go` wrote `goõ`.
     if (!nonPreedit_.on || !nonPreedit_.inSync || nonPreedit_.selectionLive ||
         nonPreedit_.lastDoc.empty()) {
         return ComposePlan::passThrough();
     }
+    nonPreedit_.noteRepair(1, {});
     return ComposePlan::replace(1, {});
 }
 
@@ -114,6 +118,9 @@ ComposePlan Composer::endComposition(bool consumed) {
 
 bool Composer::adoptWordBeforeBackspace(const std::string &textBeforeCaret) {
     if (!nonPreedit_.on || !nonPreedit_.retoneAllowed || !effectiveEnabled_) return false;
+    // Only a document seen to be current: Chrome can report `gox ` a keystroke late as
+    // `gox`, and adopting the `go` that leaves would make the next `x` write `goõ`.
+    if (!nonPreedit_.inSync) return false;
     std::vector<uint32_t> chars = decodeUtf8(textBeforeCaret);
     if (chars.empty()) return false;
     // The app has not deleted it yet, so drop it here to see where the caret lands.

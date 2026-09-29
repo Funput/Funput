@@ -10,17 +10,24 @@ namespace funput {
 
 inline Verdict NonPreeditState::observe(const std::string &document) {
     Verdict verdict = Verdict::Unknown;
-    if (!repairText.empty()) {
+    if (!repairText.empty() || repairDeleted > 0) {
         const std::string dropped = lastDoc + repairText;
         const std::string applied = dropLast(lastDoc, repairDeleted) + repairText;
         inSync = document == applied;
-        if (document == dropped && dropped != applied) {
-            verdict = repairAfterAdopt ? Verdict::RefuseRetone : Verdict::RefuseMode;
-        }
-        // The comparison above is blind to a document that is always empty, which
-        // is a failure of its own rather than an absence of one.
-        if (verdict == Verdict::Unknown && blind.observe(document, answered)) {
-            verdict = Verdict::RefuseMode;
+        // A delete with nothing written — Funput taking a Backspace over — still
+        // proves the document is current when it is seen to land, which is what lets
+        // the *next* Backspace stay on Funput's channel too. It can never convict:
+        // "dropped" is then the unchanged document, which is also what a client that
+        // has not answered yet reads.
+        if (!repairText.empty()) {
+            if (document == dropped && dropped != applied) {
+                verdict = repairAfterAdopt ? Verdict::RefuseRetone : Verdict::RefuseMode;
+            }
+            // The comparison above is blind to a document that is always empty, which
+            // is a failure of its own rather than an absence of one.
+            if (verdict == Verdict::Unknown && blind.observe(document, answered)) {
+                verdict = Verdict::RefuseMode;
+            }
         }
         repairText.clear();
         repairDeleted = 0;
