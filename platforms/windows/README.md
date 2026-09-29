@@ -7,14 +7,17 @@
 </p>
 
 <p align="center">
-  <strong>Funput cho Windows</strong> — bộ gõ tiếng Việt portable, chạy nền ở khay hệ thống.<br>
-  Một file <code>.exe</code> · không cài đặt · UI native <a href="https://slint.dev">Slint</a> · link trực tiếp
+  <strong>Funput cho Windows</strong> — bộ gõ tiếng Việt miễn phí, chạy nền ở khay hệ thống.<br>
+  Đã có trên <a href="https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS">Microsoft Store</a> · có bản <code>.exe</code> portable · UI native <a href="https://slint.dev">Slint</a> · link trực tiếp
   <code>funput-engine</code>
 </p>
 
 <p align="center">
+  <a href="https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS">
+    <img src="https://img.shields.io/badge/Windows-Microsoft_Store-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Tải Funput miễn phí trên Microsoft Store">
+  </a>
   <a href="https://github.com/Funput/Funput/releases/latest">
-    <img src="https://img.shields.io/badge/Tải_xuống-Bản_mới_nhất-22C55E?style=for-the-badge&logo=github&logoColor=white" alt="Tải Funput Windows">
+    <img src="https://img.shields.io/badge/Portable-GitHub_Releases-22C55E?style=for-the-badge&logo=github&logoColor=white" alt="Tải bản Funput Windows portable">
   </a>
   <a href="https://docs.funput.app/docs/install/windows">
     <img src="https://img.shields.io/badge/Tài_liệu-Hướng_dẫn_cài_đặt-2563EB?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Hướng dẫn cài đặt">
@@ -49,7 +52,7 @@
 | 🔄 **Chuyển mã** | Đổi qua lại giữa Unicode dựng sẵn, Unicode tổ hợp, TCVN3 (ABC) và VNI-Windows — dán văn bản hoặc chuyển cả tệp |
 | 🔠 **Đổi kiểu chữ** | CHỮ HOA · chữ thường · bỏ dấu · viết hoa đầu câu · Viết Hoa Đầu Mỗi Từ, cộng dồn được, ngay trong cửa sổ Chuyển mã |
 | 💾 **Xuất / nhập cấu hình** | Mang toàn bộ tuỳ chọn và gõ tắt sang máy khác bằng một tệp |
-| 🚀 **Khởi động cùng Windows** | Tuỳ chọn, ghi vào registry `HKCU\…\Run` |
+| 🚀 **Khởi động cùng Windows** | Tuỳ chọn; bản Store dùng Startup Task của Windows, bản portable dùng registry `HKCU\…\Run` |
 
 Không cần thêm Input Source như macOS hay Linux — Funput hoạt động ngay qua keyboard hook toàn cục.
 
@@ -59,7 +62,7 @@ Không cần thêm Input Source như macOS hay Linux — Funput hoạt động n
 |---|---|
 | **Hệ điều hành** | **Windows 10 phiên bản 1809 (build 17763)** trở lên · Windows 11 |
 | **Kiến trúc** | **x86-64**. Windows on ARM chạy được qua emulation, nhưng không có bản build riêng |
-| **Cài đặt** | Một file `.exe` portable — chưa có MSI/installer |
+| **Cài đặt** | [Microsoft Store](https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS) (khuyến nghị) hoặc một file `.exe` portable từ GitHub |
 | **Runtime ngoài** | Không cần. Không WebView2, không .NET |
 
 > [!NOTE]
@@ -70,6 +73,21 @@ Không cần thêm Input Source như macOS hay Linux — Funput hoạt động n
 > đường Acrylic thay thế khiến cửa sổ kéo/resize bị giật (xem [`src/ui/mica.rs`](src/ui/mica.rs)).
 
 ## Cài đặt
+
+### Microsoft Store (khuyến nghị)
+
+1. Mở [Funput trên Microsoft Store](https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS) và chọn **Nhận / Get** hoặc **Cài đặt / Install**.
+2. Nếu trình duyệt đề nghị mở ứng dụng Microsoft Store, tiếp tục trong Store để hoàn tất cài đặt.
+3. Chọn **Mở / Open** trong Store hoặc tìm **Funput** trong menu Start.
+4. Làm theo hướng dẫn thiết lập lần đầu, chọn Telex, Telex+ hoặc VNI và thử gõ trong Notepad.
+
+Bản này cài đặt và cập nhật qua Microsoft Store. Bạn không cần tự tạo thư mục hoặc thay file `.exe`.
+Nếu đang dùng bản portable hoặc bộ gõ tiếng Việt khác, thoát bộ gõ đang chạy trước khi mở bản mới.
+Để giữ thiết lập khi chuyển bản cài, vào **Cài đặt → Dữ liệu → Xuất cấu hình**, rồi nhập lại trong bản mới.
+
+### Bản portable từ GitHub
+
+Các bước về thư mục, đổi tên file và SmartScreen dưới đây chỉ dành cho bản portable.
 
 1. Tải `Funput-<version>.exe` từ [GitHub Releases](https://github.com/Funput/Funput/releases/latest).
 2. Đặt file ở vị trí cố định, ví dụ `%LOCALAPPDATA%\Programs\Funput\` — **đừng để trong Downloads**.
@@ -88,7 +106,7 @@ Get-FileHash .\Funput-*.exe -Algorithm SHA256
 > cố ý: autostart và cập nhật cần một đường dẫn cố định. Từ đó trở đi bạn chỉ chạy `Funput.exe`.
 
 > [!WARNING]
-> **SmartScreen** có thể cảnh báo lần đầu (exe chưa ký Authenticode). Chỉ tải từ
+> **Bản portable** có thể hiện cảnh báo **SmartScreen** lần đầu. Chỉ tải từ
 > [GitHub Releases](https://github.com/Funput/Funput/releases) chính thức, rồi chọn
 > **More info** → **Run anyway**.
 
@@ -99,9 +117,13 @@ Get-FileHash .\Funput-*.exe -Algorithm SHA256
 | Thao tác | Chức năng |
 |---|---|
 | **Click trái** | Mở / đóng **Control Center** — bật tắt tiếng Việt, đổi kiểu gõ, bật nhanh chính tả / khôi phục tiếng Anh / viết hoa |
-| **Click phải** | Cài đặt… · Chuyển mã… · Kiểm tra cập nhật… · Thoát |
+| **Click phải** | Cài đặt… · Chuyển mã… · Thoát; bản portable có thêm Kiểm tra cập nhật… |
 
 Icon tray đổi **màu ↔ mono** theo trạng thái tiếng Việt, nên liếc một cái là biết đang gõ kiểu gì.
+
+Bật **Khởi động cùng Windows** trong **Cài đặt → Tổng quan** để bộ gõ sẵn sàng khi đăng nhập.
+Với bản Store, nếu Windows đã tắt quyền khởi động, kiểm tra **Settings → Apps → Startup**;
+Funput không thể ghi đè thiết lập bị người dùng hoặc tổ chức chặn.
 
 ### Phím tắt
 
@@ -119,7 +141,7 @@ Icon tray đổi **màu ↔ mono** theo trạng thái tiếng Việt, nên liế
 
 ### Cấu hình lưu ở đâu
 
-Funput ưu tiên **portable**: cấu hình nằm cạnh chính file exe để cả app đi theo USB được.
+Với **bản portable**, cấu hình ưu tiên nằm cạnh file exe để cả app đi theo USB được.
 
 | Thứ tự | Vị trí | Khi nào dùng |
 |---|---|---|
@@ -127,18 +149,29 @@ Funput ưu tiên **portable**: cấu hình nằm cạnh chính file exe để c�
 | 2 | `<thư mục chứa Funput.exe>\settings.json` | **Mặc định** — khi thư mục đó ghi được |
 | 3 | `%APPDATA%\Funput\settings.json` | Dự phòng, khi thư mục exe chỉ đọc (ví dụ đặt trong `C:\Program Files\`) |
 
+Với **bản Microsoft Store**, Windows quản lý thư mục cài đặt. Không di chuyển hoặc sửa file trong
+`WindowsApps`; dùng **Cài đặt → Dữ liệu** để xuất / nhập cấu hình.
+
 ## Giới hạn đã biết
 
 > [!CAUTION]
 > **Không gõ được vào ứng dụng chạy quyền Administrator** (Task Manager, regedit, một số trình cài đặt).
 > Funput chạy ở quyền thường (`asInvoker`) nên Windows chặn nó đưa phím vào cửa sổ elevated.
-> Cách duy nhất: chạy Funput bằng **Run as administrator**.
+> Với bản portable, có thể thoát Funput rồi mở lại bằng **Run as administrator**.
 
-- **Không tự kiểm tra cập nhật nền.** Chỉ chạy khi bạn bấm **Kiểm tra cập nhật…**.
-- **Chưa có installer.** Bản phát hành là một file `.exe` portable, chưa có MSI.
-- **Chưa ký Authenticode**, nên SmartScreen sẽ cảnh báo ở lần chạy đầu.
+- **Bản portable không tự kiểm tra cập nhật nền.** Chỉ chạy khi bạn bấm **Kiểm tra cập nhật…**.
+- **Bản Store cập nhật qua Microsoft Store**, không qua trình cập nhật GitHub trong ứng dụng.
+- **Bản portable có thể hiện SmartScreen** ở lần chạy đầu; chỉ tải từ GitHub Releases chính thức.
 
 ## Cập nhật
+
+### Bản Microsoft Store
+
+Mở Microsoft Store để kiểm tra và tải bản cập nhật Funput trong phần quản lý ứng dụng / Thư viện.
+Trong **Cài đặt → Giới thiệu**, Funput hiển thị **Cập nhật qua Microsoft Store**. Bản Store không
+có mục **Kiểm tra cập nhật…** ở menu tray và không tự thay file ứng dụng bằng bản GitHub.
+
+### Bản portable
 
 Tray → **Kiểm tra cập nhật…**. Funput đọc manifest `funput-windows.json` từ GitHub Releases, tải
 `.exe` mới, **xác minh chữ ký Ed25519** (cùng public key với Sparkle trên macOS), thay file đang
@@ -146,7 +179,16 @@ chạy tại chỗ rồi tự khởi động lại — không cần đăng xuấ
 
 ## Gỡ cài đặt
 
-Portable nên không có trình gỡ; dọn ba thứ:
+Trước khi gỡ, dùng **Cài đặt → Dữ liệu → Xuất cấu hình** nếu muốn giữ thiết lập.
+
+### Bản Microsoft Store
+
+Thoát Funput từ khay hệ thống. Mở **Settings → Apps**, tìm **Funput** trong danh sách ứng dụng
+đã cài và chọn **Uninstall / Gỡ cài đặt**.
+
+### Bản portable
+
+Bản portable không có trình gỡ; dọn ba thứ:
 
 ```powershell
 # 1. Thoát Funput từ menu tray, rồi xoá thư mục chứa app
@@ -271,7 +313,7 @@ Artifact trong `build/release/`:
 
 | File | |
 |---|---|
-| `Funput-<version>.exe` | Asset để phát hành |
+| `Funput-<version>.exe` | Asset phát hành bản portable trên GitHub |
 | `Funput.exe` | Tên ổn định, dùng cho autostart và chạy thử tại chỗ |
 | `Funput-<version>.exe.sha256` | Checksum |
 
@@ -281,10 +323,10 @@ Test cần trỏ cấu hình đi chỗ khác thì đặt `FUNPUT_CONFIG` — nó
 
 | Workflow | Việc |
 |---|---|
-| [`ci.yml`](../../.github/workflows/ci.yml) | Job `windows`: clippy + test *(profile dev)*. Job `windows-store-submit`: test mock đóng gói/upload Store. Job `cargo-deny` có bước riêng cho shell này |
-| [`build-windows.yml`](../../.github/workflows/build-windows.yml) | Build `Funput.exe` và `funput` CLI; job `windows-feed` chạy trên **macOS runner** để ký Ed25519 và phát `funput-windows.json` |
-| [`deploy-windows-store.yml`](../../.github/workflows/deploy-windows-store.yml) | Chạy tay: đóng gói `.msix` và upload lên Package flight Partner Center |
-| [`release.yml`](../../.github/workflows/release.yml) | Gom artifact lên GitHub Releases |
+| [`ci.yml`](../../.github/workflows/ci.yml) | Job `windows`: clippy + test *(profile dev)*. Job `windows-store-submit`: test mock các script đóng gói và gửi bản Microsoft Store. Job `cargo-deny` có bước riêng cho shell này |
+| [`build-windows.yml`](../../.github/workflows/build-windows.yml) | Build bản portable `Funput.exe` và `funput` CLI; job `windows-feed` chạy trên **macOS runner** để ký Ed25519 và phát `funput-windows.json` cho cập nhật bản portable |
+| [`deploy-windows-store.yml`](../../.github/workflows/deploy-windows-store.yml) | Chạy tay: đóng gói `.msix` cho [Funput trên Microsoft Store](https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS) và upload lên Package flight trong Partner Center; đưa bản flight lên production thực hiện riêng trong Partner Center |
+| [`release.yml`](../../.github/workflows/release.yml) | Gom artifact lên GitHub Releases, gồm bản Windows portable; bản Microsoft Store được gửi qua workflow riêng ở trên |
 | [`audit.yml`](../../.github/workflows/audit.yml) | Rà advisory của dependency |
 
 ## Giấy phép
@@ -294,6 +336,8 @@ MIT — [`LICENSE`](../../LICENSE).
 <p align="center">
   <sub>
     <a href="https://funput.app">funput.app</a>
+    ·
+    <a href="https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS">Microsoft Store</a>
     ·
     <a href="../../README.md">README gốc</a>
     ·
