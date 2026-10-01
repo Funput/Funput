@@ -8,10 +8,10 @@ use std::io::{self, BufRead, Write};
 use funput_core::InputMethod;
 
 use super::render::steps_table;
-use super::sim::simulate;
+use super::sim::{SimConfig, simulate_with};
 
-pub fn run(method: InputMethod, steps: bool) {
-    let name = match method {
+pub fn run(config: SimConfig, steps: bool) {
+    let name = match config.method {
         InputMethod::Telex => "telex",
         InputMethod::TelexAdvanced => "telex-advanced",
         InputMethod::Vni => "vni",
@@ -27,7 +27,7 @@ pub fn run(method: InputMethod, steps: bool) {
         if line == ":q" {
             break;
         }
-        let sim = simulate(method, &line);
+        let sim = simulate_with(config, &line);
         let rendered = if steps {
             steps_table(&sim)
         } else {

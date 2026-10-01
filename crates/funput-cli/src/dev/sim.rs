@@ -5,7 +5,7 @@
 //! [`ImeResult`](funput_engine::ImeResult) to the app's text — so the CLI acts
 //! as a minimal, scriptable "platform" with no input hooks.
 
-use funput_core::{InputMethod, ToneStyle};
+use funput_core::{InputMethod, SyllableRules, ToneStyle};
 use funput_engine::{Action, Engine};
 
 /// One keystroke and what the engine asked the platform to do.
@@ -35,22 +35,21 @@ pub struct SimConfig {
     pub tone_style: ToneStyle,
     pub smart_restore: bool,
     pub spell_check: bool,
+    pub syllable_rules: SyllableRules,
 }
 
 impl SimConfig {
-    /// Defaults matching a fresh engine (smart restore on, spell-check off).
+    /// Defaults matching a fresh engine (smart restore on, spell-check off, native
+    /// spelling).
     pub fn new(method: InputMethod) -> Self {
         Self {
             method,
             tone_style: ToneStyle::Traditional,
             smart_restore: true,
             spell_check: false,
+            syllable_rules: SyllableRules::STANDARD,
         }
     }
-}
-
-pub fn simulate(method: InputMethod, input: &str) -> Simulation {
-    simulate_with(SimConfig::new(method), input)
 }
 
 /// Run `input` through a fresh engine, acting as the platform: apply each
@@ -61,6 +60,7 @@ pub fn simulate_with(config: SimConfig, input: &str) -> Simulation {
     engine.update_config(|c| c.tone_style = config.tone_style);
     engine.update_config(|c| c.smart_restore = config.smart_restore);
     engine.update_config(|c| c.spell_check = config.spell_check);
+    engine.update_config(|c| c.syllable_rules = config.syllable_rules);
 
     let mut app_text = String::new();
     let mut steps = Vec::new();
@@ -94,7 +94,7 @@ mod tests {
     use super::*;
 
     fn app(method: InputMethod, input: &str) -> String {
-        simulate(method, input).app_text
+        simulate_with(SimConfig::new(method), input).app_text
     }
 
     #[test]
@@ -122,7 +122,7 @@ mod tests {
 
     #[test]
     fn steps_record_each_keystroke() {
-        let sim = simulate(InputMethod::Telex, "as");
+        let sim = simulate_with(SimConfig::new(InputMethod::Telex), "as");
         assert_eq!(sim.steps.len(), 2);
 
         assert_eq!(sim.steps[0].action, Action::None);

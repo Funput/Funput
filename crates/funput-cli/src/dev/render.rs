@@ -59,12 +59,12 @@ fn show_str(s: &str) -> String {
 mod tests {
     use funput_core::InputMethod;
 
-    use super::super::sim::simulate;
+    use super::super::sim::{SimConfig, simulate_with};
     use super::*;
 
     #[test]
     fn table_has_header_rows_and_summary() {
-        let table = steps_table(&simulate(InputMethod::Telex, "as"));
+        let table = steps_table(&simulate_with(SimConfig::new(InputMethod::Telex), "as"));
         let lines: Vec<&str> = table.lines().collect();
         assert!(lines[0].starts_with("#"));
         assert_eq!(lines.len(), 1 + 2 + 1); // header + 2 steps + summary
