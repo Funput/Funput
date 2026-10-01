@@ -1,11 +1,15 @@
 import SwiftUI
 
-/// "Phụ âm đầu mở rộng": one switch like UniKey's, then a chip per letter so the
-/// user keeps only the ones they type. Turning the switch on picks all four;
-/// clearing the last chip turns it off.
+/// "Phụ âm đầu mở rộng": one switch like UniKey's, then a checkbox per letter so
+/// the user keeps only the ones they type. Turning the switch on ticks all four;
+/// unticking the last one turns it off.
 struct ExtraOnsetsSection: View {
     @Environment(AppSettings.self) private var settings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// Lines the checkboxes up with the switch's title: `SettingsRow`'s icon column
+    /// (22 pt) plus its spacing.
+    private static let rowTextInset: CGFloat = 22 + Theme.Spacing.md
 
     var body: some View {
         @Bindable var settings = settings
@@ -24,13 +28,16 @@ struct ExtraOnsetsSection: View {
 
             if !settings.extraOnsets.isEmpty {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    ExtraOnsetChips(selection: $settings.extraOnsets)
+                    Text("Chữ được phép")
+                        .font(.subheadline.weight(.medium))
+                    ExtraOnsetCheckboxes(selection: $settings.extraOnsets)
                     Text(notes)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.vertical, Theme.Spacing.xs)
+                .padding(.leading, Self.rowTextInset)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
@@ -45,17 +52,12 @@ struct ExtraOnsetsSection: View {
         )
     }
 
-    /// What the chosen letters let the user type, then the trade-off every IME's
-    /// switch makes, then the Full Telex hint when it applies.
+    /// The trade-off every IME's switch makes, then the Full Telex hint when it
+    /// applies. The examples already sit next to each checkbox.
     private var notes: String {
-        let examples = ExtraOnsetLetters.letters
-            .filter { settings.extraOnsets.contains($0.member) }
-            .map(\.examples)
-            .joined(separator: " · ")
         var lines = [
-            "Gõ được: \(examples).",
             "Từ tiếng Anh có vần tiếng Việt cũng được bỏ dấu (fast → fát) — "
-                + "bấm phím lật hoặc gõ đúp phím dấu (fasst) để giữ tiếng Anh.",
+                + "bấm phím lật hoặc gõ đúp phím dấu (fasst) để giữ tiếng Anh."
         ]
         if settings.inputMethod == .telexAdvanced, settings.extraOnsets.contains(.w) {
             lines.append("Telex nâng cao: w vẫn là ư — gõ ww để có phụ âm w (wwas → wá).")
