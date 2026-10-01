@@ -43,7 +43,8 @@ extension AppSettings {
                 autoCapitalize: autoCapitalizeEnabled,
                 shortcutsEnabled: shortcutsEnabled,
                 shortcutSmartCase: shortcutSmartCase,
-                shortcutsInEnglish: shortcutsInEnglish
+                shortcutsInEnglish: shortcutsInEnglish,
+                extraOnsets: extraOnsets.configValue
             ),
             shortcuts: shortcuts.map { .init(trigger: $0.trigger, expansion: $0.expansion) },
             platform: .init(macos: .init(
@@ -91,6 +92,7 @@ extension AppSettings {
             if let value = prefs.shortcutsEnabled { shortcutsEnabled = value }
             if let value = prefs.shortcutSmartCase { shortcutSmartCase = value }
             if let value = prefs.shortcutsInEnglish { shortcutsInEnglish = value }
+            if let value = prefs.extraOnsets { extraOnsets = ExtraOnsetLetters(configValue: value) }
         }
 
         if let incoming = document.shortcuts {

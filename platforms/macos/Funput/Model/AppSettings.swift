@@ -39,6 +39,11 @@ final class AppSettings {
     var autoCapitalizeEnabled: Bool {
         didSet { defaults.set(autoCapitalizeEnabled, forKey: Keys.autoCapitalizeEnabled) }
     }
+    /// Letters admitted as initial consonants beyond Vietnamese spelling (`zô`, `fải`,
+    /// `wá`, `jờ`), chosen one by one. Empty — the default — admits none.
+    var extraOnsets: ExtraOnsetLetters {
+        didSet { defaults.set(Int(extraOnsets.rawValue), forKey: Keys.extraOnsets) }
+    }
     /// Re-open the previous word on Backspace so the next keystroke retones it
     /// (`chào` + Space + ⌫ + `s` → `cháo`). On by default and deliberately without UI —
     /// Windows and Android just do it too. It exists as an escape hatch for an app whose
@@ -112,16 +117,7 @@ final class AppSettings {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         let hasExistingSettings = defaults.object(forKey: Keys.inputMethod) != nil
-        defaults.register(defaults: [
-            Keys.smartEnglishRestore: true,
-            Keys.eagerRestore: true,
-            Keys.showMenuBarIcon: true,
-            Keys.vietnameseEnabled: true,
-            Keys.retoneAfterBackspace: true,
-            Keys.shortcutsEnabled: true,
-            Keys.shortcutsInEnglish: true,
-            Keys.shortcutSmartCase: true,
-        ])
+        defaults.register(defaults: Self.registeredDefaults)
         inputMethod = InputMethod.persisted(defaults.object(forKey: Keys.inputMethod))
         toneStyle = ToneStyle.persisted(
             defaults.object(forKey: Keys.toneStyle), existingInstall: hasExistingSettings)
@@ -130,6 +126,8 @@ final class AppSettings {
         eagerRestore = defaults.bool(forKey: Keys.eagerRestore)
         spellCheckEnabled = defaults.bool(forKey: Keys.spellCheckEnabled)
         autoCapitalizeEnabled = defaults.bool(forKey: Keys.autoCapitalizeEnabled)
+        extraOnsets = ExtraOnsetLetters(
+            rawValue: UInt8(clamping: defaults.integer(forKey: Keys.extraOnsets)))
         retoneAfterBackspace = defaults.bool(forKey: Keys.retoneAfterBackspace)
         shortcutsEnabled = defaults.bool(forKey: Keys.shortcutsEnabled)
         shortcutsInEnglish = defaults.bool(forKey: Keys.shortcutsInEnglish)
