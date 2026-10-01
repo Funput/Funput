@@ -40,6 +40,21 @@ fn words_survive_the_word_boundary() {
 }
 
 #[test]
+fn full_telex_reads_a_restored_w_as_the_consonant() {
+    // `ưao` and `ưit` dead-end, so the raw keys come back with a literal `w` — which
+    // the widened spelling then opens a syllable with, just as in plain Telex.
+    assert_eq!(
+        admitted(InputMethod::TelexAdvanced, "waor wits "),
+        "wảo wít "
+    );
+    assert_eq!(admitted(InputMethod::Telex, "waor wits "), "wảo wít ");
+    assert_eq!(
+        app_text(InputMethod::TelexAdvanced, "waor wits "),
+        "waor wits "
+    );
+}
+
+#[test]
 fn english_without_a_vietnamese_rhyme_still_restores() {
     for word in [
         "food ", "wood ", "wear ", "zebra ", "from ", "jump ", "file ",
