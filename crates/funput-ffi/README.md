@@ -61,6 +61,7 @@ typedef struct {                 // toàn bộ tuỳ chọn, truyền theo giá 
 void          funput_configure(FunputEngine *engine, FunputConfig config);   // áp cả cụm
 void          funput_set_method(FunputEngine *engine, uint8_t method);       // đổi kiểu gõ lúc chạy
 void          funput_set_enabled(FunputEngine *engine, bool enabled);        // VI/EN lúc chạy
+void          funput_set_extra_onsets(FunputEngine *engine, uint8_t letters); // z/f/w/j đầu từ: ONSET_F|J|W|Z, 0 = tắt
 void          funput_clear(FunputEngine *engine);                            // ranh giới từ / đổi focus
 
 FunputResult  funput_process_char(FunputEngine *engine, uint32_t codepoint);

@@ -61,6 +61,7 @@ typedef struct {                 // every option, passed by value
 void          funput_configure(FunputEngine *engine, FunputConfig config);   // apply the whole set
 void          funput_set_method(FunputEngine *engine, uint8_t method);       // runtime method switch
 void          funput_set_enabled(FunputEngine *engine, bool enabled);        // runtime VI/EN
+void          funput_set_extra_onsets(FunputEngine *engine, uint8_t letters); // z/f/w/j onsets: ONSET_F|J|W|Z, 0 = off
 void          funput_clear(FunputEngine *engine);                            // word boundary / focus change
 
 FunputResult  funput_process_char(FunputEngine *engine, uint32_t codepoint);

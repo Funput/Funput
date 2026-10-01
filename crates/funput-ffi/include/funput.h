@@ -67,6 +67,18 @@
 #define METHOD_TELEX_ADVANCED 2
 
 /**
+ * Letters for [`funput_set_extra_onsets`], OR-ed into one byte. The wire's own
+ * stable values — never the core's internal bits.
+ */
+#define ONSET_F 1
+
+#define ONSET_J 2
+
+#define ONSET_W 4
+
+#define ONSET_Z 8
+
+/**
  * Max output codepoints carried inline. Generous enough for English-restore of
  * long words; longer output is truncated (practically never happens).
  */
@@ -764,6 +776,20 @@ void funput_configure(FunputEngine *engine, FunputConfig config);
  * `engine` must be a valid handle or null.
  */
 void funput_set_enabled(FunputEngine *engine, bool enabled);
+
+/**
+ * Admit `z`, `f`, `w`, `j` as initial consonants (`zô`, `fải`, `wá`, `jờ`) — the
+ * `ONSET_*` letters OR-ed together; `0` (the default) admits none. Bits no
+ * `ONSET_*` names are ignored.
+ *
+ * Its own function rather than a [`FunputConfig`] field, so `funput_configure`
+ * leaves it alone. Off by default because it also lets English with a Vietnamese
+ * rhyme compose (Telex `fast` → `fát`).
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_extra_onsets(FunputEngine *engine, uint8_t letters);
 
 /**
  * Define a text-expansion shortcut (gõ tắt): typing `trigger` then a word boundary
