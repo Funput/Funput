@@ -71,6 +71,11 @@ pub enum DevCommand {
         /// Print up to N sample words that were not typed cleanly.
         #[arg(long, default_value_t = 0)]
         show: usize,
+        /// Type a list of words that must stay as typed (chat abbreviations, brand
+        /// names) instead of a corpus, and count how many correction rewrites.
+        /// Defaults to `crates/funput-suggestions/data/correction/keep.txt`.
+        #[arg(long)]
+        keep: bool,
         /// Emit machine-readable JSON instead of a human report.
         #[arg(long)]
         json: bool,

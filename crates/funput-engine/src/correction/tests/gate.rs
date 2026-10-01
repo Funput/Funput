@@ -85,3 +85,23 @@ fn an_english_word_the_user_typed_on_purpose_still_reaches_the_platform() {
     assert!(engine.has_pending_correction());
     assert_eq!(engine.apply_correction(None).output, "");
 }
+
+/// What a platform reads back to learn why words were or were not corrected.
+#[test]
+fn every_finished_word_it_looks_at_is_counted_once() {
+    let mut engine = engine(InputMethod::Telex);
+    // A slip with a syllable in reach: offered.
+    type_and_end(&mut engine, "dduwowfnh", &[(8, 'g')]);
+    engine.apply_correction(None);
+    // Broken, but nothing in reach: no candidate.
+    type_and_end(&mut engine, "qqq", &[]);
+    // A real syllable whose last touch sat on the edge with `s`: counted, left alone.
+    type_and_end(&mut engine, "chaof", &[(4, 's')]);
+    // A real syllable typed cleanly: not counted at all.
+    type_and_end(&mut engine, "chaof", &[]);
+
+    let metrics = engine.correction_metrics();
+    assert_eq!(metrics.offered, 1);
+    assert_eq!(metrics.no_candidate, 1);
+    assert_eq!(metrics.valid_near_edge, 1);
+}

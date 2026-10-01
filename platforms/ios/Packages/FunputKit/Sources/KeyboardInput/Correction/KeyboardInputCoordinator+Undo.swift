@@ -11,7 +11,7 @@ extension KeyboardInputCoordinator {
     /// on top of that would eat the space the user never touched.
     ///
     /// The word restored is the one they typed, not the one that was corrected away,
-    /// and the engine remembers not to correct it again straight after.
+    /// and the dictionary is told to keep it, so it is never corrected again.
     func undoCorrection(builder: inout InputTransactionBuilder) -> Bool {
         // The context is checked *before* the engine is asked, because asking spends
         // the undo: a failure afterwards would leave the engine believing it had put
@@ -33,6 +33,9 @@ extension KeyboardInputCoordinator {
         builder.deleteBackward(count: count)
         builder.insert(result.text)
         undidCorrection = true
+        // What comes back is the word as typed plus the boundary after it. The engine
+        // only suppresses the word once; the dictionary makes it permanent.
+        correctionDictionary?.keep(String(result.text.dropLast()))
         return true
     }
 }

@@ -8,7 +8,7 @@
 //!
 //! See `docs/features/typo-correction.md` and [`crate::correction`].
 
-use crate::correction::score::{is_ambiguous, word_prior};
+use crate::correction::score::{self, Choice, INVALID_COST, from_milli};
 use crate::correction::state::{CorrectionMetrics, CorrectionState};
 use crate::correction::{self, CorrectionCandidate, KeyTouch};
 use crate::{Engine, ImeResult};
@@ -51,8 +51,9 @@ impl Engine {
     }
 
     /// Rank the parked candidates with the platform's use counts folded in, and name
-    /// the winner — or `None` when the top two are too close to call, which is a
-    /// suggestion to offer rather than an edit to make.
+    /// the winner — or `None` when the top two are too close to call (a suggestion to
+    /// offer rather than an edit to make), or when none of them beats the word exactly
+    /// as typed: a finger that sat on the keys it hit meant them.
     ///
     /// `uses` and `allowed` are both parallel to [`Engine::correction_candidates`].
     /// A short `uses` reads its missing entries as zero, so a host with no word store
@@ -68,38 +69,16 @@ impl Engine {
     /// margin refused from one the host's dictionary vetoed is the difference between
     /// "Δ is too high" and "the word list is too small", and only this call knows.
     pub fn choose_correction(&mut self, uses: &[u32], allowed: &[bool]) -> Option<usize> {
-        let mut best: Option<(usize, f32)> = None;
-        let mut runner_up = f32::NEG_INFINITY;
-        for (i, candidate) in self.correction_candidates().iter().enumerate() {
-            let score = candidate.touch_score() + word_prior(uses.get(i).copied().unwrap_or(0));
-            // A refused candidate cannot win, but it still competes for the margin.
-            // Measured: letting it drop out entirely is what makes an *incomplete*
-            // dictionary dangerous rather than merely unhelpful — the word the host
-            // does not know is often the right one, and without it in the comparison
-            // a common wrong word wins uncontested. Kept in, it suppresses that word
-            // instead, so a dictionary that knows too little corrects less rather
-            // than corrects badly.
-            if !allowed.get(i).copied().unwrap_or(true) {
-                runner_up = runner_up.max(score);
-                continue;
-            }
-            match best {
-                Some((_, leader)) if leader >= score => runner_up = runner_up.max(score),
-                Some((_, leader)) => {
-                    runner_up = runner_up.max(leader);
-                    best = Some((i, score));
-                }
-                None => best = Some((i, score)),
-            }
+        let state = self.session.correction.as_mut()?;
+        let as_typed = state.pending.as_ref().map_or(f32::NEG_INFINITY, |pending| {
+            from_milli(pending.typed_score) - INVALID_COST
+        });
+        match score::choose(state.candidates(), uses, allowed, as_typed)? {
+            Choice::Apply(index) => return Some(index),
+            Choice::Ambiguous => state.metrics.skipped_ambiguous += 1,
+            Choice::AsTyped => state.metrics.kept_as_typed += 1,
         }
-        let (index, top) = best?;
-        if is_ambiguous(top, runner_up) {
-            if let Some(state) = self.session.correction.as_mut() {
-                state.metrics.skipped_ambiguous += 1;
-            }
-            return None;
-        }
-        Some(index)
+        None
     }
 
     /// What typo correction has done this session. Counts only — never a word.

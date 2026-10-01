@@ -62,16 +62,18 @@ impl SuggestionEngine {
             .map_or(0, |record| record.uses)
     }
 
-    /// Whether `word` is a word at all — one the user has typed, or one in the
-    /// shipped English list.
+    /// Whether `word` is a word at all — one the user has typed, one in the shipped
+    /// English list, or one of the words typed on purpose that correction must keep
+    /// (`ko`, `dc`, a brand name; see `data/correction/keep.txt`).
     ///
     /// This is the veto behind typo correction. `funput-engine` carries no
     /// dictionary, so `text ` reaches it looking exactly like a mistyped Vietnamese
     /// word, and the engine offers what the touch data can reach (`tẻ`, since `r`
-    /// sits beside `t`). Asking this first is what tells a deliberate English word
-    /// from a slip.
+    /// sits beside `t`). Asking this first is what tells a deliberate word from a
+    /// slip.
     pub fn is_known_word(&self, word: &str) -> bool {
-        self.frequency(word) > 0
+        crate::keep::is_kept(word)
+            || self.frequency(word) > 0
             || self
                 .lexicon
                 .file

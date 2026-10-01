@@ -29,9 +29,15 @@ pub fn run(args: DevArgs) -> CliResult {
             prior,
             limit,
             show,
+            keep,
             json,
         } => {
-            let path = corpus.unwrap_or_else(|| PathBuf::from("benchmarks/sample.txt"));
+            let default = if keep {
+                "crates/funput-suggestions/data/correction/keep.txt"
+            } else {
+                "benchmarks/sample.txt"
+            };
+            let path = corpus.unwrap_or_else(|| PathBuf::from(default));
             let options = typos::Options {
                 method: method.into(),
                 prior: match prior.as_str() {
@@ -47,7 +53,8 @@ pub fn run(args: DevArgs) -> CliResult {
                 show,
                 json,
             };
-            typos::run(&path, &options).map_err(|e| {
+            let run = if keep { typos::run_keep } else { typos::run };
+            run(&path, &options).map_err(|e| {
                 CliError::Msg(format!("typos: cannot read corpus {}: {e}", path.display()))
             })?;
         }

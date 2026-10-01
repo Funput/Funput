@@ -9,6 +9,10 @@
 //! Scores are kept as milli-nats (`i32`) rather than `f32`: a candidate is reachable
 //! from `Session`, which derives `Eq`.
 
+mod choose;
+
+pub(crate) use choose::{Choice, INVALID_COST, choose};
+
 /// Touch spread in key pitches — how far a finger typically lands from centre.
 pub(crate) const SIGMA: f32 = 0.45;
 /// Flat cost of substituting one key, in nats.
@@ -86,12 +90,6 @@ pub(crate) fn word_prior(uses: u32) -> f32 {
     (1.0 + uses as f32).ln() + PRIOR_FLOOR
 }
 
-/// Whether the runner-up is close enough that the winner should be offered rather
-/// than applied.
-pub(crate) fn is_ambiguous(best: f32, runner_up: f32) -> bool {
-    best - runner_up < MARGIN
-}
-
 pub(crate) fn to_milli(score: f32) -> i32 {
     (score * 1000.0) as i32
 }
@@ -164,12 +162,6 @@ mod tests {
         let one = edit_delta(0.6, 0.2);
         let two = one + edit_delta(0.6, 0.2);
         assert!(two < one);
-    }
-
-    #[test]
-    fn a_pair_inside_the_margin_is_called_ambiguous() {
-        assert!(is_ambiguous(-2.0, -2.5));
-        assert!(!is_ambiguous(-2.0, -3.5));
     }
 
     #[test]
