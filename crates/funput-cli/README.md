@@ -25,12 +25,13 @@ funput dev run -m telex "card "      # → card    (English-restore khi gặp d�
 funput dev run -m telex "card"       # → cảd     (chưa tới boundary → chưa restore)
 funput dev run --steps "a1"          # bảng từng phím
 funput dev repl -m telex --steps     # REPL: gõ một dòng + Enter; :q hoặc Ctrl-D để thoát
+funput dev run -m telex --extra-onsets "zoo fair "  # phụ âm đầu z/f/w/j (zô, fải)
 funput dev coverage benchmarks/sample.txt   # round-trip Telex & VNI trên corpus
 ```
 
 ```
-funput dev run      [-m telex|vni] [--steps] <INPUT>       # transform → app-text (hoặc bảng --steps)
-funput dev repl     [-m telex|vni] [--steps]               # REPL đọc từng dòng
+funput dev run      [-m telex|vni] [--steps] [--extra-onsets] <INPUT>   # transform → app-text (hoặc bảng --steps)
+funput dev repl     [-m telex|vni] [--steps] [--extra-onsets]           # REPL đọc từng dòng
 funput dev coverage [CORPUS] [--json] [--show-mismatches N] [--limit N]
 ```
 

@@ -25,12 +25,13 @@ funput dev run -m telex "card "      # → card    (English-restore at the space
 funput dev run -m telex "card"       # → cảd     (no boundary yet → not restored)
 funput dev run --steps "a1"          # per-keystroke table
 funput dev repl -m telex --steps     # REPL: type a line + Enter; :q or Ctrl-D to quit
+funput dev run -m telex --extra-onsets "zoo fair "  # z/f/w/j onsets (zô, fải)
 funput dev coverage benchmarks/sample.txt   # round-trip Telex & VNI over a corpus
 ```
 
 ```
-funput dev run      [-m telex|vni] [--steps] <INPUT>       # transform → app-text (or a --steps table)
-funput dev repl     [-m telex|vni] [--steps]               # line-by-line REPL
+funput dev run      [-m telex|vni] [--steps] [--extra-onsets] <INPUT>   # transform → app-text (or a --steps table)
+funput dev repl     [-m telex|vni] [--steps] [--extra-onsets]           # line-by-line REPL
 funput dev coverage [CORPUS] [--json] [--show-mismatches N] [--limit N]
 ```
 
