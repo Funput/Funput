@@ -17,16 +17,6 @@ const VALID_ONSETS: &[&str] = &[
     "ph", "qu", "r", "s", "t", "th", "tr", "v", "x",
 ];
 
-/// True if `onset` is a valid Vietnamese onset (`đ` included, any case), or a
-/// Tây Nguyên name cluster.
-pub(crate) fn is_valid_onset(onset: &str) -> bool {
-    is_native(onset)
-        || cluster_kind(onset).is_some()
-        // Last: plain `qu`/`gi` already matched above, so this only rescues the
-        // toned transient (`qú`, `gí`) and stays off the common path.
-        || glide::in_onset(onset).is_some()
-}
-
 /// A native onset as spelled, `đ` included, in any case.
 fn is_native(onset: &str) -> bool {
     onset.is_empty()
@@ -36,6 +26,10 @@ fn is_native(onset: &str) -> bool {
 }
 
 /// Split `buffer` into (onset, rest, invalid_onset).
+///
+/// This is the only gate an onset passes: the prefix it returns is always one the
+/// inventory knows (or empty), so `invalid_onset` is the whole verdict and no
+/// caller re-checks the onset text.
 pub(super) fn match_onset(buffer: &str) -> (&str, &str, bool) {
     let Some(first) = buffer.chars().next() else {
         return ("", buffer, false);

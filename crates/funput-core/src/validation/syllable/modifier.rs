@@ -5,7 +5,7 @@
 
 use crate::orthography::glide;
 use crate::validation::coda::{VALID_CODAS, coda_in, normalized_coda};
-use crate::validation::parse::{SyllableParts, is_valid_onset, parse_syllable};
+use crate::validation::parse::{SyllableParts, parse_syllable};
 
 use super::spelling::violates_ckg_spelling;
 
@@ -30,7 +30,7 @@ pub(super) enum ModifierKind {
 }
 
 pub(super) fn validate_parts(parts: &SyllableParts<'_>, kind: ModifierKind) -> ModifierValidation {
-    if parts.invalid_onset || !is_valid_onset(parts.onset) {
+    if parts.invalid_onset {
         return ModifierValidation::PassThrough;
     }
     if parts.nucleus_chars().next().is_none() {

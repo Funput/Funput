@@ -11,7 +11,7 @@ use crate::validation::coda::{
     STOP_CODAS, VALID_CODAS, coda_in, normalized_coda, nucleus_tone, toneless_rhyme,
 };
 use crate::validation::ethnic;
-use crate::validation::parse::{is_valid_onset, parse_syllable};
+use crate::validation::parse::parse_syllable;
 use crate::validation::rhyme::{is_valid_rhyme, matches_deshaped};
 
 use super::spelling::violates_ckg_spelling;
@@ -42,7 +42,6 @@ pub(super) fn classify(buffer: &str) -> SyllableStatus {
     let coda = &coda[..coda_len];
 
     let structure_ok = !parts.invalid_onset
-        && is_valid_onset(parts.onset)
         // A tone parked on the `qu`/`gi` glide is a mid-composition transient, not
         // a finished syllable: `qúy` is a misspelling of `quý`.
         && !glide::onset_holds_tone(parts.onset)

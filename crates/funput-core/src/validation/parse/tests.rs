@@ -87,5 +87,4 @@ fn horned_u_is_not_a_qu_glide() {
     // `ư` is a different vowel, not a toned `u`, so `qư` forms no onset at all
     // (the bare `q` is what flags the chunk).
     assert!(parse_syllable("qư").invalid_onset);
-    assert!(!is_valid_onset("qư"));
 }

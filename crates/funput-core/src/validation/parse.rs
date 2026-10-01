@@ -8,8 +8,6 @@ mod onset;
 
 use crate::unicode::marks::is_vowel;
 
-pub(crate) use onset::is_valid_onset;
-
 /// Parsed view of a single syllable chunk. The nucleus and coda are
 /// *interleaved* selections of the post-onset text — a vowel after a consonant
 /// still counts as nucleus (`mixa` → nucleus `ia`, coda `x`) — so they are
