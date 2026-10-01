@@ -1,4 +1,4 @@
-use crate::ToneStyle;
+use crate::ComposeOptions;
 use crate::composition::replace_char_at;
 use crate::input_method::telex::tone_from_key;
 use crate::orthography::reposition_existing_tone;
@@ -10,7 +10,13 @@ use super::super::IntentResolution;
 use super::super::candidate;
 use super::super::target::{Target, rightmost_stem};
 
-pub(crate) fn resolve(buffer: &str, stem: char, key: char, style: ToneStyle) -> IntentResolution {
+pub(crate) fn resolve(
+    buffer: &str,
+    stem: char,
+    key: char,
+    options: ComposeOptions,
+) -> IntentResolution {
+    let style = options.tone_style;
     let Some(target) = rightmost_stem(buffer, stem) else {
         return literal(buffer, key, None);
     };

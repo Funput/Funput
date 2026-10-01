@@ -1,3 +1,6 @@
+//! How keystrokes become letters: the key grammar ([`InputMethod`]) and where a
+//! tone lands ([`ToneStyle`]).
+
 /// Input-method selector passed to [`crate::apply`] for every keystroke.
 ///
 /// This enum is non-exhaustive so adding another method does not break external

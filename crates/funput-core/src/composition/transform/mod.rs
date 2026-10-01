@@ -6,52 +6,23 @@ mod gates;
 mod normal;
 
 use crate::input_method::{AdvancedAction, telex, vni};
-use crate::{ToneStyle, TransformResult};
+use crate::{ComposeOptions, InputMethod, TransformResult};
 
 pub(crate) use action::apply_action;
 
-pub(crate) fn apply_vni(
-    buffer: &str,
-    key: char,
-    style: ToneStyle,
-    spell_check: bool,
-) -> TransformResult {
-    apply_action(
-        buffer,
-        key,
-        vni::classify_key(buffer, key),
-        style,
-        spell_check,
-    )
-}
-
-pub(crate) fn apply_telex(
-    buffer: &str,
-    key: char,
-    style: ToneStyle,
-    spell_check: bool,
-) -> TransformResult {
-    apply_action(
-        buffer,
-        key,
-        telex::classify_key(buffer, key),
-        style,
-        spell_check,
-    )
-}
-
-pub(crate) fn apply_advanced_telex(
-    buffer: &str,
-    key: char,
-    style: ToneStyle,
-    spell_check: bool,
-) -> TransformResult {
-    match telex::classify_advanced_key(buffer, key) {
-        AdvancedAction::Standard(action) => apply_action(buffer, key, action, style, spell_check),
-        AdvancedAction::Shortcut(shortcut) => {
-            full_telex::apply(buffer, key, shortcut, style, spell_check)
-        }
-    }
+/// Classify `key` with the method's grammar, then resolve what it asks for.
+pub(crate) fn apply(buffer: &str, key: char, options: ComposeOptions) -> TransformResult {
+    let action = match options.method {
+        InputMethod::Telex => telex::classify_key(buffer, key),
+        InputMethod::Vni => vni::classify_key(buffer, key),
+        InputMethod::TelexAdvanced => match telex::classify_advanced_key(buffer, key) {
+            AdvancedAction::Standard(action) => action,
+            AdvancedAction::Shortcut(shortcut) => {
+                return full_telex::apply(buffer, key, shortcut, options);
+            }
+        },
+    };
+    apply_action(buffer, key, action, options)
 }
 
 pub(super) fn append(buffer: &str, key: char) -> String {
