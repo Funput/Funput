@@ -4,7 +4,7 @@
 //! These exercise only the public API, so they live here as integration tests
 //! rather than inline in `src/lib.rs`.
 
-use funput_core::{InputMethod, ToneStyle};
+use funput_core::{ExtraOnsets, InputMethod, SyllableRules, ToneStyle};
 use funput_engine::{Action, Engine, EngineConfig, ImeResult, KeySource};
 
 #[test]
@@ -614,6 +614,7 @@ fn configure_applies_all_options() {
         smart_restore: false,
         eager_restore: false,
         spell_check: true,
+        syllable_rules: SyllableRules::STANDARD.with_extra_onsets(ExtraOnsets::ZFWJ),
         auto_capitalize: true,
         shortcuts_enabled: false,
         shortcut_smart_case: false,
@@ -627,6 +628,7 @@ fn configure_applies_all_options() {
     assert!(!config.smart_restore && !config.eager_restore);
     assert!(!config.shortcuts_enabled && !config.shortcut_smart_case);
     assert!(!config.shortcuts_in_english);
+    assert_eq!(config.syllable_rules.extra_onsets, ExtraOnsets::ZFWJ);
 }
 
 /// `configure` keeps the `set_*` side effect: switching method mid-word clears the

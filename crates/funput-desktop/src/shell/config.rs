@@ -5,6 +5,7 @@
 //! persisted.
 
 use funput_config::{Settings, Shortcut};
+use funput_core::SyllableRules;
 use funput_engine::{Engine, EngineConfig};
 
 use super::ShellState;
@@ -28,6 +29,7 @@ impl ShellState {
             smart_restore: self.settings.smart_restore,
             eager_restore: self.settings.eager_restore,
             spell_check: self.settings.spell_check,
+            syllable_rules: SyllableRules::STANDARD,
             auto_capitalize: self.settings.auto_capitalize,
             shortcuts_enabled: self.settings.shortcuts_enabled,
             shortcut_smart_case: self.settings.shortcut_smart_case,

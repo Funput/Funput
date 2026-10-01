@@ -4,7 +4,7 @@
 //! the zero-allocation pass-through exit; session strings (`vn_form`, `keys`)
 //! are refilled in place so their capacity is reused across keystrokes.
 
-use funput_core::{TransformKind, apply_checked, is_definitely_invalid, is_definitely_invalid_in};
+use funput_core::{TransformKind, apply_with};
 
 use crate::ImeResult;
 use crate::compose::RestoreOverride;
@@ -26,13 +26,7 @@ pub(crate) fn process(
     typed: char,
     capitalize_shortcut: bool,
 ) -> ImeResult {
-    let mut result = apply_checked(
-        &session.buffer,
-        key,
-        session.config.method,
-        session.config.tone_style,
-        session.config.spell_check,
-    );
+    let mut result = apply_with(&session.buffer, key, session.config.compose_options());
     if capitalize_shortcut && result.kind == TransformKind::Applied {
         uppercase_direct_vowel(&mut result.text);
     }
@@ -110,10 +104,11 @@ fn is_dead_end(session: &Session, composed: &str, key: char) -> bool {
             .strip_suffix(key)
             .is_some_and(|before| before == session.buffer)
     };
+    let rules = session.config.syllable_rules;
     if key.is_ascii_digit() && bare_before() {
-        is_definitely_invalid(composed)
+        rules.is_definitely_invalid(composed)
     } else {
-        is_definitely_invalid_in(composed, session.config.method)
+        rules.is_definitely_invalid_in(composed, session.config.method)
     }
 }
 

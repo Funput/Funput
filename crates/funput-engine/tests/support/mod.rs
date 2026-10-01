@@ -50,6 +50,11 @@ pub fn app_text(method: InputMethod, keys: &str) -> String {
     let mut engine = Engine::new();
     engine.set_method(method);
     engine.update_config(|config| config.tone_style = ToneStyle::Traditional);
+    app_text_in(&mut engine, keys)
+}
+
+/// [`app_text`] through an engine the caller configured.
+pub fn app_text_in(engine: &mut Engine, keys: &str) -> String {
     let mut app = String::new();
     for key in keys.chars() {
         let r = engine.process_char(key);

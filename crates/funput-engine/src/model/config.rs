@@ -5,7 +5,7 @@
 //! `Engine::update_config` API (and, over the FFI, from `funput_configure` plus the
 //! `funput_set_*` functions for the ones that do not ride the by-value C struct).
 
-use funput_core::{InputMethod, ToneStyle};
+use funput_core::{ComposeOptions, InputMethod, SyllableRules, ToneStyle};
 
 /// The engine's user-facing options. Runtime composition state (buffer, raw keys,
 /// capitalization tracking, the flip override) stays in the internal `Session`.
@@ -23,6 +23,16 @@ pub struct EngineConfig {
     /// Spell-check ("Kiểm tra chính tả"): only place a diacritic when the result can
     /// still become a real Vietnamese syllable. Off by default.
     pub spell_check: bool,
+    /// The spelling a word is judged against — native Vietnamese by default.
+    ///
+    /// Widening it admits more words everywhere at once: diacritics compose on
+    /// them, and English restore (eager and at the word boundary) keeps them. Its
+    /// one relaxation today is [`funput_core::ExtraOnsets`] — the UniKey switch
+    /// "Cho phép phụ âm đầu Z, F, W, J" is
+    /// `SyllableRules::STANDARD.with_extra_onsets(ExtraOnsets::ZFWJ)` (`zô`, `jờ`,
+    /// `fải`, `wá`). Off by default, because it also lets English through: Telex
+    /// `fast` → `fát`, VNI `win10` → `win`.
+    pub syllable_rules: SyllableRules,
     /// Auto-capitalize ("Tự động viết hoa"): uppercase the first letter of a word at
     /// the start of a sentence. Off by default.
     pub auto_capitalize: bool,
@@ -57,10 +67,22 @@ impl Default for EngineConfig {
             smart_restore: true,
             eager_restore: true,
             spell_check: false,
+            syllable_rules: SyllableRules::STANDARD,
             auto_capitalize: false,
             shortcuts_enabled: true,
             shortcut_smart_case: true,
             shortcuts_in_english: true,
         }
+    }
+}
+
+impl EngineConfig {
+    /// What funput-core composes each keystroke under, built in one place so a new
+    /// core option is wired here and nowhere else.
+    pub(crate) fn compose_options(&self) -> ComposeOptions {
+        ComposeOptions::new(self.method)
+            .with_tone_style(self.tone_style)
+            .with_spell_check(self.spell_check)
+            .with_syllable_rules(self.syllable_rules)
     }
 }
