@@ -370,10 +370,18 @@ impl SuggestionEngine {
     /// How many times the user typed `word`, 0 when unknown. Read-only, no I/O.
     pub fn frequency(&self, word: &str) -> u32;
 
-    /// A word the user has typed, or one in the shipped English list — the veto.
+    /// A word the user has typed, one in the shipped English list, or one on the
+    /// keep list — the veto.
     pub fn is_known_word(&self, word: &str) -> bool;
 }
 ```
+
+**Danh sách giữ nguyên** (`data/correction/keep.txt`, tự viết, MIT) được biên dịch thẳng vào
+`funput-suggestions` và `is_known_word` hỏi nó trước tiên — quét tuần tự khoảng 130 chữ, không cấp
+phát, không so hoa thường. Nằm ở đây chứ không ở từng nền tảng vì iOS và Android cùng hỏi đúng
+hàm này: không phải đóng gói file nào, không có hai bản danh sách để lệch nhau. Nó chặn những chữ
+mà `INVALID_COST` không chặn được — `ko`, `mk`, `tl`, `haha` gõ gần mép phím, trông y hệt một lần
+trượt (§12.1, đợt 2).
 
 ### 7.4. JNI (`funput-jni`)
 
@@ -428,6 +436,21 @@ nữa là ăn mất dấu cách người dùng không hề chạm vào. Và `reo
 
 Ngoài ra ngữ cảnh tài liệu phải kiểm **trước** khi hỏi engine, vì hỏi là tiêu thụ luôn lệnh hoàn
 tác: hỏng sau đó thì engine tin là đã trả chữ về trong khi tài liệu vẫn đang hiện bản sửa.
+
+**Hoàn tác một lần là nhớ mãi.** Engine chỉ tha cho từ vừa hoàn tác **một lần** (lần gõ lại kế
+tiếp). Nền tảng làm nốt: `CorrectionDictionary.keep(_:)` ghi chữ gốc vào danh sách của
+`CorrectionWordSource`, và từ đó `recognizes` trả `true` cho nó. Danh sách lưu trong App Group
+(`TypoKeptWordsStore`), tối đa 200 chữ, bỏ chữ cũ nhất trước, **chỉ khi có Full Access** — cùng
+ranh giới với kho từ cá nhân — và bị xoá cùng lúc với kho từ cá nhân (lưu kèm reset token;
+khác token thì đọc ra rỗng).
+
+**Đếm lý do và nhật ký Debug.** Dòng log `typo` cuối phiên có thêm: số lần đưa ra lệnh sửa,
+vướng Δ, chữ nguyên thắng, bị chặn vì là chữ có thật, bị chặn vì ô nhập, không có ứng viên, và
+chữ hợp lệ có chạm gần mép phím. Chỉ số đếm. Riêng bản **Debug** có thêm một dòng cho mỗi từ —
+chữ trên màn hình, các ứng viên kèm điểm, và quyết định — để đọc vì sao một lần trượt được hay
+không được sửa trên máy đang gõ. Bọc trong `#if DEBUG`, không bao giờ có trong bản TestFlight;
+chữ ghi ở mức `.public` vì mục đích của nó chính là để người phát triển đọc được:
+`log stream --predicate 'subsystem == "app.funput.keyboard" && category == "typo"' --level debug`.
 
 Phím Xoá ngay sau khi sửa: `KeyboardInputCoordinator` đã có `reopensPreviousWord` cho Backspace.
 Việc hoàn tác nằm **trong engine** — `Engine::on_backspace` trả thẳng `ImeResult::send` với chuỗi
@@ -643,6 +666,7 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
 ## 13. Chỉ số
 
 `correctionsApplied`, `correctionsReverted`, `correctionsSkippedAmbiguous`, `keptAsTyped`,
+`offered`, `noCandidate`, `validNearEdge` (lõi); `recognized`, `fieldRefused` (nền tảng);
 `correctionCandidatesMax`, `correctionMicrosecondsMax`. Chỉ đếm, không lưu nội dung. Lõi đếm
 trong `CorrectionMetrics`, iOS in ra log category `typo`. Tỉ lệ hoàn tác cao nghĩa là `Δ` đặt
 thấp quá; `keptAsTyped` cao nghĩa là `INVALID_COST` đặt thấp quá.
@@ -658,7 +682,7 @@ thấp quá; `keptAsTyped` cao nghĩa là `INVALID_COST` đặt thấp quá.
 | 3 ✅ | iOS: phím kề từ hình học, mang điểm chạm qua pipeline, hai bước ở ranh giới từ, ghi tài liệu | Test đơn vị + UI test §12.6 |
 | 4 ✅ | iOS: hoàn tác bằng phím Xoá, công tắc Cài đặt, tôn trọng `autocorrectionType` (chip trên thanh gợi ý: chưa) | UI test hoàn tác |
 | 4b ✅ | An toàn đợt 2: chữ nguyên tham gia so sánh, loại chữ số mở từ, bộ đo `--keep` | `--keep` < 1%, differential bật = tắt khi gõ đúng |
-| 4c | iOS: danh sách giữ nguyên, hoàn tác thì nhớ, đếm lý do bỏ sót, nhật ký từng chữ (Debug) | Test đơn vị + thử trên máy |
+| 4c ✅ | Danh sách giữ nguyên trong `is_known_word`, iOS: hoàn tác thì nhớ, đếm lý do bỏ sót, nhật ký từng chữ (Debug) | Test đơn vị + thử trên máy |
 | 5 | Android: cùng lõi, batch edit | Instrumented test |
 | 6 | Chỉnh `σ`, `λ`, `Δ` theo kho lỗi và phản hồi TestFlight | Số liệu §13 |
 

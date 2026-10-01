@@ -34,20 +34,42 @@ extension KeyboardInputCoordinator {
 
     /// Which candidate to apply, or `nil` to decline.
     private func chooseCorrection(context: String?) -> Int? {
+        let shown = pendingWord(context: context)
+        guard allowsAutocorrect else {
+            correctionDeclines.fieldRefused += 1
+            return nil
+        }
         // No dictionary, no corrections. The engine offers any structurally valid
         // syllable the touches can reach, and without something to weigh them
         // against, applying one would be a guess.
-        guard allowsAutocorrect, let dictionary = correctionDictionary else { return nil }
+        guard let dictionary = correctionDictionary else { return nil }
         // A word that is already a word is what the user meant, however odd it looks
         // to an engine that only knows Vietnamese spelling.
-        if let word = pendingWord(context: context), dictionary.recognizes(word) {
+        if let shown, dictionary.recognizes(shown) {
+            correctionDeclines.recognized += 1
+            #if DEBUG
+            logCorrection(shown: shown, decision: "known word")
+            #endif
             return nil
         }
         let candidates = composer.correctionCandidates()
+        #if DEBUG
+        let before = composer.correctionMetrics
+        #endif
         // Every candidate is allowed to win. Filtering to words the dictionary knows
         // is measured to cost nine tenths of the repairs until the list is far larger
         // than the one shipped today — see `docs/features/typo-correction.md` §12.1.
-        return composer.chooseCorrection(uses: [], allowed: Array(repeating: true, count: candidates.count))
+        let chosen = composer.chooseCorrection(
+            uses: [], allowed: Array(repeating: true, count: candidates.count)
+        )
+        #if DEBUG
+        logCorrection(
+            shown: shown,
+            decision: chosen.map { "applied \(candidates[$0].text)" }
+                ?? declineReason(before: before)
+        )
+        #endif
+        return chosen
     }
 
     /// The word the app is showing for the correction being answered, read back out of

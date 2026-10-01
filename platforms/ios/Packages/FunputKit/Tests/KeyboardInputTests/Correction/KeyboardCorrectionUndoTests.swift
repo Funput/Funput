@@ -5,10 +5,13 @@ import Testing
 
 @testable import KeyboardInput
 
-/// A dictionary that recognizes nothing, so nothing is ever vetoed.
+/// A dictionary that starts out recognizing nothing, and learns what it is told to
+/// keep — the part of the contract an undo exercises.
 @MainActor
 private final class OpenDictionary: CorrectionDictionary {
-    func recognizes(_ word: String) -> Bool { false }
+    var kept: [String] = []
+    func recognizes(_ word: String) -> Bool { kept.contains(word) }
+    func keep(_ word: String) { kept.append(word) }
 }
 
 @MainActor
@@ -68,6 +71,15 @@ struct KeyboardCorrectionUndoTests {
         #expect(document.text == "đường ", "an ordinary Backspace, on ordinary text")
     }
 
+    @Test("Undoing tells the dictionary to keep the word as typed")
+    func keeps() {
+        let (coordinator, document) = corrected()
+
+        coordinator.handle(testKey(.backspace), writer: document)
+
+        #expect(dictionary.kept == ["dduwowfnh"])
+    }
+
     @Test("An undone word is not corrected again straight away")
     func suppressed() {
         let (coordinator, document) = corrected()
@@ -87,6 +99,31 @@ struct KeyboardCorrectionUndoTests {
         }
 
         #expect(document.text == "dduwowfnh dduwowfnh ")
+    }
+
+    @Test("An undone word stays uncorrected after the engine's one-time reprieve")
+    func keptForGood() {
+        // The engine suppresses the word once. The second time is the dictionary's.
+        let (coordinator, document) = corrected()
+        coordinator.handle(testKey(.backspace), writer: document)
+
+        for _ in 0..<2 {
+            for character in "dduwowfnh " {
+                let key = character == " "
+                    ? testKey(.space)
+                    : testKey(.character, label: String(character))
+                let scalar = String(character).unicodeScalars.first ?? "a"
+                let touch = character == " "
+                    ? nil
+                    : KeyboardTouchEvidence(
+                        typed: scalar, typedDistance: 0.35, first: .init(scalar: "g", distance: 0.15)
+                    )
+                coordinator.handle(key, touch: touch, writer: document)
+            }
+        }
+
+        #expect(document.text == "dduwowfnh dduwowfnh dduwowfnh ")
+        #expect(coordinator.correctionDeclines.recognized == 1)
     }
 }
 #endif
