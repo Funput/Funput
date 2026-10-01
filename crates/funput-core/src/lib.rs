@@ -18,7 +18,9 @@
 //! syllable-structure checks [`is_valid`] (lenient) / [`is_complete_syllable`]
 //! (strict, for word boundaries) / [`is_reopenable_syllable`] (re-opening a
 //! committed word for editing) / [`is_bare_shaped_vowel`] (the lone-vowel
-//! exception to the boundary check).
+//! exception to the boundary check). Those checks judge native spelling; the same
+//! checks under widened spelling ([`ExtraOnsets`] such as `zô`) are methods of
+//! [`SyllableRules`].
 //! Breaking changes require semver coordination with the engine.
 //!
 //! That list stays complete for what the engine transforms. [`charset`],
@@ -77,6 +79,7 @@ pub struct TransformResult {
 }
 
 pub use validation::reachability::{is_definitely_invalid, is_definitely_invalid_in};
+pub use validation::rules::{ExtraOnsets, SyllableRules};
 pub use validation::syllable::{
     is_bare_shaped_vowel, is_complete_syllable, is_reopenable_syllable, is_valid,
 };

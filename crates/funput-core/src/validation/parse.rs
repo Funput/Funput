@@ -7,6 +7,7 @@
 mod onset;
 
 use crate::unicode::marks::is_vowel;
+use crate::validation::rules::SyllableRules;
 
 /// Parsed view of a single syllable chunk. The nucleus and coda are
 /// *interleaved* selections of the post-onset text — a vowel after a consonant
@@ -46,9 +47,10 @@ impl<'a> SyllableParts<'a> {
     }
 }
 
-/// Parse one syllable chunk into onset, vowel nucleus, and coda.
-pub fn parse_syllable(buffer: &str) -> SyllableParts<'_> {
-    let (onset, rest, invalid_onset) = onset::match_onset(buffer);
+/// Parse one syllable chunk into onset, vowel nucleus, and coda, admitting the
+/// onsets `rules` allows.
+pub fn parse_syllable(buffer: &str, rules: SyllableRules) -> SyllableParts<'_> {
+    let (onset, rest, invalid_onset) = onset::match_onset(buffer, rules.extra_onsets);
     SyllableParts {
         onset,
         rest,

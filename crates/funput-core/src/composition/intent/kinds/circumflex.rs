@@ -33,13 +33,15 @@ pub(crate) fn resolve(
     if let Some(moved) = reposition_existing_tone(&text, style) {
         text = moved;
     }
-    if is_viable_shape_candidate(&text) {
+    if is_viable_shape_candidate(&text, options.syllable_rules) {
         return IntentResolution::Applied(text);
     }
     if let Some((offset, tone)) = pending_tone(buffer, target.byte_offset) {
         text.clear();
         candidate::build(&mut text, buffer, target, Some(offset));
-        if candidate::apply_tone(&mut text, tone, style) && is_viable_shape_candidate(&text) {
+        if candidate::apply_tone(&mut text, tone, style)
+            && is_viable_shape_candidate(&text, options.syllable_rules)
+        {
             return IntentResolution::Applied(text);
         }
     }
@@ -56,8 +58,8 @@ fn revert(buffer: &str, key: char, target: Target) -> IntentResolution {
 }
 
 fn pending_tone(buffer: &str, before: usize) -> Option<(usize, Tone)> {
-    // A leading Telex tone letter is a literal onset (`fomo` → `fomo`), not a
-    // parked huyền. Same rule as deferred `w`: only a non-leading marker is a
+    // A leading Telex tone letter is a literal onset, not a parked huyền: `fomo`
+    // stays `fomo`, or becomes `fôm` where `f` is an admitted onset. Same rule as deferred `w`: only a non-leading marker is a
     // modifier (`chfana` → `chần`, `oso` → `ố`).
     buffer[..before]
         .char_indices()

@@ -4,6 +4,7 @@ use crate::input_method::telex::classify_w;
 use crate::orthography::glide;
 use crate::unicode::marks::{apply_tone_to_vowel, is_vowel, tone_on_vowel};
 use crate::unicode::shapes::{apply_shape_to_vowel, shape_target_index};
+use crate::validation::rules::SyllableRules;
 use crate::validation::syllable::is_viable_shape_candidate;
 
 use super::super::IntentResolution;
@@ -29,7 +30,7 @@ pub(crate) fn has_pending(buffer: &str) -> bool {
     count == 1
 }
 
-pub(crate) fn resolve(buffer: &str, key: char) -> IntentResolution {
+pub(crate) fn resolve(buffer: &str, key: char, rules: SyllableRules) -> IntentResolution {
     let Some(w_offset) = pending_offset(buffer) else {
         return IntentResolution::Literal(appended(buffer, key));
     };
@@ -44,7 +45,7 @@ pub(crate) fn resolve(buffer: &str, key: char) -> IntentResolution {
     let Some(KeyAction::Shape(shape)) = classify_w(&candidate) else {
         return raw(buffer, key, w_offset, candidate);
     };
-    if apply_in_place(&mut candidate, shape) && is_viable_shape_candidate(&candidate) {
+    if apply_in_place(&mut candidate, shape) && is_viable_shape_candidate(&candidate, rules) {
         return IntentResolution::Applied(candidate);
     }
     raw(buffer, key, w_offset, candidate)
@@ -134,15 +135,24 @@ mod tests {
 
     #[test]
     fn pending_marker_allows_one_stroke_intent() {
-        assert_eq!(resolve("dw", 'd'), IntentResolution::Applied("đw".into()));
-        assert_eq!(resolve("dW", 'D'), IntentResolution::Applied("đW".into()));
-        assert_eq!(resolve("đw", 'd'), IntentResolution::Reverted("dwd".into()));
         assert_eq!(
-            resolve("gdw", 'd'),
+            resolve("dw", 'd', SyllableRules::STANDARD),
+            IntentResolution::Applied("đw".into())
+        );
+        assert_eq!(
+            resolve("dW", 'D', SyllableRules::STANDARD),
+            IntentResolution::Applied("đW".into())
+        );
+        assert_eq!(
+            resolve("đw", 'd', SyllableRules::STANDARD),
+            IntentResolution::Reverted("dwd".into())
+        );
+        assert_eq!(
+            resolve("gdw", 'd', SyllableRules::STANDARD),
             IntentResolution::Deferred("gdwd".into())
         );
         assert_eq!(
-            resolve("đw", 'e'),
+            resolve("đw", 'e', SyllableRules::STANDARD),
             IntentResolution::Deferred("dwde".into())
         );
     }

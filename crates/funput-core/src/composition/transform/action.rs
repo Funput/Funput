@@ -67,7 +67,7 @@ fn tone(
     if let Some(text) = try_revert_tone(buffer, tone, style) {
         return reverted(append(&text, key));
     }
-    let result = gates::validation(buffer, key, validate_tone(buffer))
+    let result = gates::validation(buffer, key, validate_tone(buffer, options.syllable_rules))
         .unwrap_or_else(|| apply_tone_key(buffer, tone, style));
     gates::spell_check(buffer, key, options, result)
 }
@@ -90,14 +90,14 @@ fn shape(
         return reverted(append(&text, key));
     }
     if shape_apply_target_exists(buffer, shape) {
-        let result = gates::validation(buffer, key, validate_shape(buffer))
+        let result = gates::validation(buffer, key, validate_shape(buffer, options.syllable_rules))
             .unwrap_or_else(|| apply_shape_key(buffer, shape));
         return gates::spell_check(buffer, key, options, result);
     }
     if let Some(text) = try_revert_shape(buffer, shape) {
         return reverted(append(&text, key));
     }
-    let result = gates::validation(buffer, key, validate_shape(buffer))
+    let result = gates::validation(buffer, key, validate_shape(buffer, options.syllable_rules))
         .unwrap_or_else(|| apply_shape_key(buffer, shape));
     gates::spell_check(buffer, key, options, result)
 }

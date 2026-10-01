@@ -6,6 +6,7 @@
 use crate::orthography::glide;
 use crate::validation::coda::{VALID_CODAS, coda_in, normalized_coda};
 use crate::validation::parse::{SyllableParts, parse_syllable};
+use crate::validation::rules::SyllableRules;
 
 use super::spelling::violates_ckg_spelling;
 
@@ -68,14 +69,14 @@ fn empty_nucleus(onset: &str, kind: ModifierKind) -> ModifierValidation {
     }
 }
 
-/// Validate tone key (1–5) against the current buffer.
-pub fn validate_tone(buffer: &str) -> ModifierValidation {
-    validate_parts(&parse_syllable(buffer), ModifierKind::Tone)
+/// Validate tone key (1–5) against the current buffer, spelled by `rules`.
+pub fn validate_tone(buffer: &str, rules: SyllableRules) -> ModifierValidation {
+    validate_parts(&parse_syllable(buffer, rules), ModifierKind::Tone)
 }
 
-/// Validate shape key (6–8) against the current buffer.
-pub fn validate_shape(buffer: &str) -> ModifierValidation {
-    validate_parts(&parse_syllable(buffer), ModifierKind::Shape)
+/// Validate shape key (6–8) against the current buffer, spelled by `rules`.
+pub fn validate_shape(buffer: &str, rules: SyllableRules) -> ModifierValidation {
+    validate_parts(&parse_syllable(buffer, rules), ModifierKind::Shape)
 }
 
 /// Validate stroke key (9) against the current buffer. The stroke applies whenever

@@ -2,14 +2,30 @@ use super::*;
 use crate::validation::coda::{MAX_CODA, normalized_coda, toneless_rhyme};
 use crate::validation::reachability::is_definitely_invalid;
 use crate::validation::rhyme::{VALID_RHYMES, plain_base};
+use crate::validation::rules::SyllableRules;
 
 #[test]
 fn validate_tone_cases() {
-    assert_eq!(validate_tone("ng"), ModifierValidation::Ignored);
-    assert_eq!(validate_tone("text"), ModifierValidation::PassThrough);
-    assert_eq!(validate_tone("mix"), ModifierValidation::Allow);
-    assert_eq!(validate_tone("ma"), ModifierValidation::Allow);
-    assert_eq!(validate_tone("zt"), ModifierValidation::PassThrough);
+    assert_eq!(
+        validate_tone("ng", SyllableRules::STANDARD),
+        ModifierValidation::Ignored
+    );
+    assert_eq!(
+        validate_tone("text", SyllableRules::STANDARD),
+        ModifierValidation::PassThrough
+    );
+    assert_eq!(
+        validate_tone("mix", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
+    assert_eq!(
+        validate_tone("ma", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
+    assert_eq!(
+        validate_tone("zt", SyllableRules::STANDARD),
+        ModifierValidation::PassThrough
+    );
 }
 
 #[test]
@@ -118,7 +134,7 @@ fn real_syllables_are_complete() {
             is_complete_syllable(w),
             "{w} (rhyme {:?}) should be a complete syllable",
             {
-                let p = parse_syllable(w);
+                let p = parse_syllable(w, SyllableRules::STANDARD);
                 let (coda, len) = normalized_coda(&p).unwrap_or((['\0'; MAX_CODA], 0));
                 toneless_rhyme(&p, &coda[..len])
             }
@@ -226,13 +242,31 @@ fn every_rhyme_is_reopenable_before_its_diacritics_land() {
 
 #[test]
 fn ckg_spelling() {
-    assert_eq!(validate_tone("ke"), ModifierValidation::Allow);
+    assert_eq!(
+        validate_tone("ke", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
     // `k` is exempt from the pairing rule for loanwords/toponyms (Kông, Kenya).
-    assert_eq!(validate_tone("ka"), ModifierValidation::Allow);
-    assert_eq!(validate_tone("ca"), ModifierValidation::Allow);
+    assert_eq!(
+        validate_tone("ka", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
+    assert_eq!(
+        validate_tone("ca", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
     // `c`+front still needs `k`; `ge` would need `gh` — these stay restricted.
-    assert_eq!(validate_tone("ce"), ModifierValidation::PassThrough);
-    assert_eq!(validate_tone("ge"), ModifierValidation::PassThrough);
+    assert_eq!(
+        validate_tone("ce", SyllableRules::STANDARD),
+        ModifierValidation::PassThrough
+    );
+    assert_eq!(
+        validate_tone("ge", SyllableRules::STANDARD),
+        ModifierValidation::PassThrough
+    );
     // `gi` digraph stays valid.
-    assert_eq!(validate_tone("gi"), ModifierValidation::Allow);
+    assert_eq!(
+        validate_tone("gi", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
 }

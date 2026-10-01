@@ -3,6 +3,7 @@
 //! function of the per-key pipeline.
 
 use super::{InputMethod, ToneStyle};
+use crate::SyllableRules;
 
 /// The settings [`crate::apply_with`] composes a keystroke under.
 ///
@@ -29,16 +30,21 @@ pub struct ComposeOptions {
     /// result can still become a real Vietnamese syllable; otherwise the key passes
     /// through as a literal character (UniKey-style strict diacritics).
     pub spell_check: bool,
+    /// The spelling every diacritic is checked against — native by default; widen
+    /// it to admit onsets like `z` (`zô`) or `f` (`fải`).
+    pub syllable_rules: SyllableRules,
 }
 
 impl ComposeOptions {
-    /// `method` with the default [`ToneStyle`] and spell-check off.
+    /// `method` with the default [`ToneStyle`], spell-check off and
+    /// [`SyllableRules::STANDARD`].
     #[inline]
     pub const fn new(method: InputMethod) -> Self {
         Self {
             method,
             tone_style: ToneStyle::Modern,
             spell_check: false,
+            syllable_rules: SyllableRules::STANDARD,
         }
     }
 
@@ -57,6 +63,14 @@ impl ComposeOptions {
         self.spell_check = spell_check;
         self
     }
+
+    /// These options, judging syllables by `syllable_rules`.
+    #[inline]
+    #[must_use]
+    pub const fn with_syllable_rules(mut self, syllable_rules: SyllableRules) -> Self {
+        self.syllable_rules = syllable_rules;
+        self
+    }
 }
 
 #[cfg(test)]
@@ -69,6 +83,7 @@ mod tests {
         assert_eq!(options.method, InputMethod::Vni);
         assert_eq!(options.tone_style, ToneStyle::default());
         assert!(!options.spell_check);
+        assert_eq!(options.syllable_rules, SyllableRules::STANDARD);
     }
 
     #[test]
@@ -78,6 +93,8 @@ mod tests {
         assert_eq!(styled.tone_style, ToneStyle::Traditional);
         assert_eq!(styled.with_tone_style(base.tone_style), base);
         assert!(base.with_spell_check(true).spell_check);
+        let rules = SyllableRules::STANDARD.with_extra_onsets(crate::ExtraOnsets::Z);
+        assert_eq!(base.with_syllable_rules(rules).syllable_rules, rules);
     }
 
     #[test]

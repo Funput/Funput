@@ -1,4 +1,3 @@
-use crate::validation::reachability::is_definitely_invalid;
 use crate::validation::syllable::ModifierValidation;
 use crate::{ComposeOptions, TransformKind, TransformResult};
 
@@ -14,7 +13,7 @@ pub(super) fn spell_check(
 ) -> TransformResult {
     if options.spell_check
         && result.kind == TransformKind::Applied
-        && is_definitely_invalid(&result.text)
+        && options.syllable_rules.is_definitely_invalid(&result.text)
     {
         return TransformResult {
             kind: TransformKind::Pending,

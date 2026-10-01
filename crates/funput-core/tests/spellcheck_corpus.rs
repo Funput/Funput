@@ -6,8 +6,15 @@
 //! (a) **recall** — real syllables, including established loanwords and onomatopoeia,
 //! are never rejected (else spell-check would wrongly block a real word); and
 //! (b) **precision** — structurally-plausible non-syllables are rejected.
+//!
+//! The last section types the opt-in extra onsets (`zô`, `jờ`, `fải`, `wá`) through
+//! the public [`apply_with`] in every method, with and without the option.
 
-use funput_core::{InputMethod, ToneStyle, TransformKind, apply_checked, is_complete_syllable};
+use funput_core::{
+    ComposeOptions, ExtraOnsets, InputMethod, SyllableRules, ToneStyle, TransformKind,
+    apply_checked, apply_with, is_complete_syllable,
+};
+use proptest::prelude::*;
 
 /// Real Vietnamese syllables (incl. established loanwords / onomatopoeia). Each MUST
 /// be accepted as a complete syllable — otherwise spell-check would block a real word.
@@ -226,4 +233,135 @@ fn spell_check_blocks_tone_on_misordered_consonant() {
     let r = apply_checked("cno", 's', InputMethod::Telex, ToneStyle::Traditional, true);
     assert_eq!(r.text, "cnos");
     assert_eq!(r.kind, TransformKind::Pending);
+}
+
+// --- Extra onsets ------------------------------------------------------------
+// UniKey's "Cho phép phụ âm đầu Z, F, W, J": admitted letters open a syllable like
+// a native onset. Only the onset widens; the rhyme must still be Vietnamese.
+
+const NONE: ExtraOnsets = ExtraOnsets::NONE;
+const ZFWJ: ExtraOnsets = ExtraOnsets::ZFWJ;
+
+fn options(method: InputMethod, extra: ExtraOnsets) -> ComposeOptions {
+    ComposeOptions::new(method)
+        .with_tone_style(ToneStyle::Traditional)
+        .with_syllable_rules(SyllableRules::STANDARD.with_extra_onsets(extra))
+}
+
+fn type_under(options: ComposeOptions, keys: &str) -> String {
+    keys.chars().fold(String::new(), |buffer, key| {
+        apply_with(&buffer, key, options).text
+    })
+}
+
+fn typed(method: InputMethod, extra: ExtraOnsets, keys: &str) -> String {
+    type_under(options(method, extra), keys)
+}
+
+#[test]
+fn extra_onsets_take_diacritics_in_telex() {
+    for (keys, word) in [
+        ("zoo", "zô"),
+        ("zoos", "zố"),
+        ("zuis", "zúi"),
+        ("jowf", "jờ"),
+        ("fair", "fải"),
+        ("faf", "fà"),
+        ("was", "wá"),
+        ("wow", "wơ"),
+        ("Juts", "Jút"),
+        ("Just", "Jút"),
+        ("Zoo", "Zô"),
+        ("ZOO", "ZÔ"),
+    ] {
+        assert_eq!(typed(InputMethod::Telex, ZFWJ, keys), word, "{keys}");
+        assert_eq!(typed(InputMethod::Telex, NONE, keys), keys, "{keys}");
+    }
+}
+
+#[test]
+fn extra_onsets_follow_the_native_key_rules_in_telex() {
+    // A `w` before the vowel and a circumflex typed away from its vowel act as they
+    // do after a native onset: `twa` → `tă`, `tomo` → `tôm`.
+    assert_eq!(typed(InputMethod::Telex, ZFWJ, "fwa"), "fă");
+    assert_eq!(typed(InputMethod::Telex, ZFWJ, "fomo"), "fôm");
+    assert_eq!(typed(InputMethod::Telex, NONE, "fomo"), "fomo");
+    // A word whose rhyme Vietnamese lacks never composes.
+    for word in ["file", "from", "jump", "jazz", "with", "zzz"] {
+        assert_eq!(typed(InputMethod::Telex, ZFWJ, word), word);
+    }
+}
+
+#[test]
+fn full_telex_keeps_its_leading_w_and_reaches_w_through_ww() {
+    for extra in [NONE, ZFWJ] {
+        for (keys, word) in [("w", "ư"), ("wa", "ưa"), ("wf", "ừ"), ("wngf", "ừng")] {
+            assert_eq!(
+                typed(InputMethod::TelexAdvanced, extra, keys),
+                word,
+                "{keys}"
+            );
+        }
+        assert_eq!(
+            typed(InputMethod::TelexAdvanced, extra, "WWindowws"),
+            "Windows"
+        );
+    }
+    assert_eq!(typed(InputMethod::TelexAdvanced, ZFWJ, "wwas"), "wá");
+    assert_eq!(typed(InputMethod::TelexAdvanced, ZFWJ, "WWas"), "Wá");
+    assert_eq!(typed(InputMethod::TelexAdvanced, NONE, "wwas"), "was");
+    // `z`, `j` and `f` are no shortcut keys: they work as in plain Telex.
+    assert_eq!(typed(InputMethod::TelexAdvanced, ZFWJ, "zoo"), "zô");
+    assert_eq!(typed(InputMethod::TelexAdvanced, ZFWJ, "jowf"), "jờ");
+}
+
+#[test]
+fn extra_onsets_take_diacritics_in_vni() {
+    for (keys, word) in [
+        ("zo6", "zô"),
+        ("zo61", "zố"),
+        ("jo72", "jờ"),
+        ("fa3i", "fải"),
+        ("wa1", "wá"),
+        ("Ju1t", "Jút"),
+        ("Jut1", "Jút"),
+    ] {
+        assert_eq!(typed(InputMethod::Vni, ZFWJ, keys), word, "{keys}");
+        assert_eq!(typed(InputMethod::Vni, NONE, keys), keys, "{keys}");
+    }
+}
+
+#[test]
+fn only_the_admitted_letters_open_a_syllable() {
+    let only_z = options(InputMethod::Telex, ExtraOnsets::Z);
+    assert_eq!(type_under(only_z, "zoo"), "zô");
+    assert_eq!(type_under(only_z, "fair"), "fair");
+}
+
+#[test]
+fn spell_check_judges_by_the_same_rules() {
+    let checked = |extra, keys| {
+        type_under(
+            options(InputMethod::Telex, extra).with_spell_check(true),
+            keys,
+        )
+    };
+    assert_eq!(checked(ZFWJ, "zoo"), "zô");
+    assert_eq!(checked(ZFWJ, "jowf"), "jờ");
+    assert_eq!(checked(NONE, "zoo"), "zoo");
+    // The gate still refuses a tone on a rhyme Vietnamese lacks.
+    assert_eq!(checked(ZFWJ, "fods"), "fods");
+}
+
+proptest! {
+    /// Admitting extra onsets changes nothing for a word that opens with any other
+    /// key: the onset is the only place the rules are read.
+    #[test]
+    fn extra_onsets_only_touch_words_they_open(
+        keys in "[a-eg-ik-vxyA-EG-IK-VXY][a-zA-Z0-9]{0,10}",
+    ) {
+        for method in [InputMethod::Telex, InputMethod::TelexAdvanced, InputMethod::Vni] {
+            prop_assert_eq!(typed(method, ZFWJ, &keys), typed(method, NONE, &keys), "{:?}", method);
+        }
+    }
 }

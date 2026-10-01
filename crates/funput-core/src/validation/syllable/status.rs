@@ -13,12 +13,13 @@ use crate::validation::coda::{
 use crate::validation::ethnic;
 use crate::validation::parse::parse_syllable;
 use crate::validation::rhyme::{is_valid_rhyme, matches_deshaped};
+use crate::validation::rules::SyllableRules;
 
 use super::spelling::violates_ckg_spelling;
 
 /// How a finished buffer sits against Vietnamese syllable structure.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub(super) enum SyllableStatus {
+pub(crate) enum SyllableStatus {
     /// Not a Vietnamese syllable, and no diacritic can make it one: `cảd` (card),
     /// `côl` (cool), `tẽt` (text).
     Invalid,
@@ -34,8 +35,8 @@ pub(super) enum SyllableStatus {
     Complete,
 }
 
-pub(super) fn classify(buffer: &str) -> SyllableStatus {
-    let parts = parse_syllable(buffer);
+pub(crate) fn classify(buffer: &str, rules: SyllableRules) -> SyllableStatus {
+    let parts = parse_syllable(buffer, rules);
     let Some((coda, coda_len)) = normalized_coda(&parts) else {
         return SyllableStatus::Invalid;
     };

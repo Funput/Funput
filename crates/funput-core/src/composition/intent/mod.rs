@@ -33,7 +33,7 @@ pub(crate) fn resolve(
             kinds::circumflex::resolve(buffer, char::from(stem), key, options)
         }
         ModifierIntent::Stroke { key } => kinds::stroke::resolve(buffer, key),
-        ModifierIntent::DeferredW { key } => kinds::w::resolve(buffer, key),
+        ModifierIntent::DeferredW { key } => kinds::w::resolve(buffer, key, options.syllable_rules),
     }
 }
 
