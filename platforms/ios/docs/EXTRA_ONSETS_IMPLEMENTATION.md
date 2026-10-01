@@ -22,9 +22,11 @@ Tài liệu tính năng (hành vi, đánh đổi, số liệu): `docs/features/e
 
 ### Điều kiện bắt đầu
 
-- #505 **và** #506 đã merge vào `main` (iOS cần setter FFI của #506). Nếu chưa merge,
-  tách nhánh từ `feat/macos-extra-onsets` và mở PR với base đó.
-- Nhánh: `feat/ios-extra-onsets` tách từ `origin/main`.
+- Làm tiếp trên nhánh **`feat/ios-extra-onsets`** (đã có sẵn, chứa tài liệu này). Nhánh
+  xếp chồng: `main` ← #505 `feat/extra-onsets` ← #506 `feat/macos-extra-onsets` ←
+  `feat/ios-extra-onsets`, nên đã có setter FFI. Mở PR với base `feat/macos-extra-onsets`;
+  khi #505/#506 merge thì đổi base về `main` (`git rebase --onto origin/main
+  feat/macos-extra-onsets` nếu cần).
 - Sau khi kéo code mới: **phải dựng lại xcframework** để header có `funput_set_extra_onsets`:
   `cd platforms/ios && ./Scripts/bootstrap-ios.sh` (gọi `Scripts/build-ffi.sh`, ra
   `Frameworks/FunputCore.xcframework`).
@@ -275,7 +277,8 @@ Dynamic Type lớn, VoiceOver đọc đúng tên từng chữ.
   trong `docs/features/extra-onsets.md` (dòng iOS) và README iOS nếu có bảng tính năng.
 - Commit message: tiếng Anh, prose, có trailer `Co-Authored-By` theo quy ước repo.
 - PR: tiêu đề `feat(ios): let users pick the extra onsets z, f, w, j`, **mô tả tiếng Việt**
-  (Tóm tắt · Thay đổi · Kiểm chứng · Test tay), base `main` (hoặc nhánh của #506 nếu chưa merge).
+  (Tóm tắt · Thay đổi · Kiểm chứng · Test tay), base `feat/macos-extra-onsets` (đổi về `main`
+  sau khi #505/#506 merge).
 
 ## 9. Hoàn thành khi
 
