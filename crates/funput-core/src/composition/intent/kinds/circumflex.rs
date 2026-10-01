@@ -59,8 +59,9 @@ fn revert(buffer: &str, key: char, target: Target) -> IntentResolution {
 
 fn pending_tone(buffer: &str, before: usize) -> Option<(usize, Tone)> {
     // A leading Telex tone letter is a literal onset, not a parked huyền: `fomo`
-    // stays `fomo`, or becomes `fôm` where `f` is an admitted onset. Same rule as deferred `w`: only a non-leading marker is a
-    // modifier (`chfana` → `chần`, `oso` → `ố`).
+    // stays `fomo`, or becomes `fôm` where `f` is an admitted onset. Same rule as
+    // deferred `w`: only a non-leading marker is a modifier (`chfana` → `chần`,
+    // `oso` → `ố`).
     buffer[..before]
         .char_indices()
         .rev()
