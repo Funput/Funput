@@ -42,6 +42,7 @@
 |---|---|
 | ⌨️ **Ba kiểu gõ** | Telex · **Telex nâng cao** (thêm `w` đầu từ và phím tắt `[` `]`) · VNI |
 | 🧠 **Nhập liệu thông minh** | Khôi phục từ thông minh · khôi phục sớm · kiểm tra chính tả · tự viết hoa · tự về bảng chữ sau dấu câu |
+| 🔤 **Phụ âm đầu mở rộng** | Chọn riêng `z`, `f`, `w`, `j` cho teencode, từ mượn và tên riêng; mặc định tắt, áp dụng cả ô tìm emoji |
 | 💬 **Gợi ý từ** | Từ đã học ưu tiên trước, từ điển tiếng Anh 30.000 từ lấp ô trống ở cả VI và EN; **lưu trên thiết bị** |
 | 👆 **Cử chỉ thông minh** | Gõ đúp phím cách để chấm câu · giữ phím cách rồi kéo để di chuyển con trỏ · vuốt trái phím xoá để xoá cả từ · giữ phím chấm để chọn nhanh ký hiệu |
 | 🎨 **Theme** | 5 theme dựng sẵn, gồm cả Liquid Glass trên iOS 26 |
@@ -111,6 +112,17 @@ Cài đặt → Cài đặt chung → Bàn phím → Các bàn phím → **Sửa
 |---|---|---|
 | Telex | `tieesng vieejt` | tiếng việt |
 | VNI | `xin chao2` | xin chào |
+
+### Phụ âm đầu mở rộng
+
+Trong app Funput → **Cài đặt → Phụ âm đầu mở rộng**, bật công tắc chính rồi chọn
+riêng `z`, `f`, `w`, `j`. Mặc định tắt; bật công tắc chính chọn cả bốn chữ. Lựa chọn
+được áp dụng khi mở lại bàn phím và khi mở ô tìm emoji.
+
+Ví dụ Telex: bật `z` để gõ `zoo` → `zô`; thêm `f` để gõ `fair` → `fải`.
+Vần vẫn phải hợp lệ, nên `food` vẫn giữ nguyên. Từ tiếng Anh có vần tiếng Việt cũng
+nhận dấu (`fast` → `fát`); gõ đúp phím dấu (`fasst`) để giữ tiếng Anh.
+Với Telex nâng cao, `w` đầu từ vẫn là `ư`; gõ `wwas` để có `wá` khi bật chữ `w`.
 
 ### Cử chỉ
 
