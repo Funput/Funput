@@ -27,8 +27,8 @@ public final class FunputComposer {
         releaseHandle(handle)
     }
 
-    /// Applies every durable option in one FFI call. Same side effect the per-option
-    /// setters had: a method change clears the composition.
+    /// Applies every durable option through the configuration ABI and onset setter.
+    /// A method change clears the composition, just as the per-option setters did.
     ///
     /// `auto_capitalize` is hard-wired off and is not an option a caller can set. The
     /// engine's sentence tracker would uppercase the first letter of a sentence on its
@@ -46,6 +46,8 @@ public final class FunputComposer {
                 auto_capitalize: false
             )
         )
+        // FunputConfig crosses the ABI by value and must not grow.
+        funput_set_extra_onsets(handle, options.extraOnsets.rawValue)
     }
 
     /// Switches the input method on its own, for the keyboard's Telex/VNI key — the

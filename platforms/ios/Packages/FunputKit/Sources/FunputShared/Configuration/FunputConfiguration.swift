@@ -14,6 +14,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var spellCheck: Bool
     public var smartRestore: Bool
     public var eagerRestore: Bool
+    /// Additional initial consonants admitted when composing Vietnamese.
+    public var extraOnsets: ExtraOnsetLetters
     public var autoCapitalize: Bool
     public var selectedThemeID: String
     public var isHapticFeedbackEnabled: Bool
@@ -42,7 +44,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
-        case eagerRestore, autoCapitalize, selectedThemeID
+        case eagerRestore, autoCapitalize, selectedThemeID, extraOnsets
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
         case smartGesturesEnabled, returnsToLettersAfterPunctuation
         case showsNumberRow, layoutPreset, keySizing, heightScale, keyboardAppearance
@@ -74,7 +76,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         clipboardEnabled: Bool = true,
         clipboardExpiry: ClipboardExpiry = .hour,
         personalSuggestionResetToken: UUID? = nil,
-        schemaVersion: Int = FunputConfiguration.currentSchemaVersion
+        schemaVersion: Int = FunputConfiguration.currentSchemaVersion,
+        extraOnsets: ExtraOnsetLetters = []
     ) {
         self.inputMethod = inputMethod
         self.language = language
@@ -82,6 +85,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.spellCheck = spellCheck
         self.smartRestore = smartRestore
         self.eagerRestore = eagerRestore
+        self.extraOnsets = extraOnsets
         self.autoCapitalize = autoCapitalize
         self.selectedThemeID = selectedThemeID
         self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
