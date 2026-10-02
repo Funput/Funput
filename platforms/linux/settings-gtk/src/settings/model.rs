@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
-use super::{FlipHotkey, Hotkey, Method, Shortcut, ToneStyle};
+use super::{ExtraOnsetLetters, FlipHotkey, Hotkey, Method, Shortcut, ToneStyle};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -15,6 +15,12 @@ pub struct Settings {
     pub spell_check: bool,
     #[serde(default)]
     pub auto_capitalize: bool,
+    /// "Phụ âm đầu mở rộng": letters admitted as initial consonants beyond Vietnamese
+    /// spelling (`zô`, `fải`, `wá`, `jờ`). **None** by default, including for a file
+    /// written before the key existed — admitting one also lets English with a
+    /// Vietnamese rhyme compose (`fast` → `fát`). Stored spelled out (`"zj"`).
+    #[serde(default, deserialize_with = "lenient_onsets")]
+    pub extra_onsets: ExtraOnsetLetters,
     /// "Gõ thẳng, không gạch chân", shown on Tổng quan. `default = "on"`, not a bare
     /// `#[serde(default)]`: that reads a keyless document as false and saves it back.
     #[serde(default = "on")]
@@ -44,6 +50,16 @@ fn on() -> bool {
     true
 }
 
+/// Anything but a string reads as no letter, as the addon reads it, instead of
+/// failing the whole document: `load()` would fall back to defaults and the next
+/// save would write them over every key the user has.
+fn lenient_onsets<'de, D: Deserializer<'de>>(d: D) -> Result<ExtraOnsetLetters, D::Error> {
+    Ok(match serde_json::Value::deserialize(d)? {
+        serde_json::Value::String(id) => ExtraOnsetLetters::from_id(&id),
+        _ => ExtraOnsetLetters::NONE,
+    })
+}
+
 fn legacy_tone_style_default() -> ToneStyle {
     ToneStyle::Traditional
 }
@@ -58,6 +74,7 @@ impl Default for Settings {
             eager_restore: true,
             spell_check: false,
             auto_capitalize: false,
+            extra_onsets: ExtraOnsetLetters::NONE,
             non_preedit: true,
             toggle_hotkey: Hotkey::CtrlBacktick,
             flip_hotkey: FlipHotkey::Off,

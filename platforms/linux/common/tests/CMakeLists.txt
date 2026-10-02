@@ -23,6 +23,7 @@ add_executable(funput_linux_tests
     compose/key/chord_tests.cpp
     compose/composer/keys_tests.cpp
     compose/composer/state_tests.cpp
+    compose/composer/state/onsets_tests.cpp
     compose/composer/nonpreedit_tests.cpp
     compose/composer/retone_tests.cpp
     compose/composer/verify_tests.cpp
@@ -32,9 +33,11 @@ add_executable(funput_linux_tests
     compose/composer/nonpreedit/selection_tests.cpp
     compose/composer/nonpreedit/backspace_tests.cpp
     ffi/utf8_tests.cpp
+    ffi/onsets_tests.cpp
     settings/lookup_tests.cpp
     settings/io_tests.cpp
-    settings/save_tests.cpp)
+    settings/save_tests.cpp
+    settings/onsets/letters_tests.cpp)
 
 target_link_libraries(funput_linux_tests PRIVATE funput_linux_common doctest::doctest)
 # So the nested test files can reach support.h by its bare name.

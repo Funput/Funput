@@ -72,3 +72,17 @@ fn serializes_as_the_spelled_out_letters() {
     let back: ExtraOnsetLetters = serde_json::from_str(r#""JF""#).unwrap();
     assert_eq!(back, fj);
 }
+
+/// Each letter's examples open with that letter, so a screen never shows `zô`
+/// beside `f`.
+#[test]
+fn every_example_opens_with_its_letter() {
+    for letter in OnsetLetter::ALL {
+        for example in letter.examples().split(", ") {
+            let opens = example.split(' ').any(|word| {
+                word.chars().next().map(|c| c.to_ascii_lowercase()) == Some(letter.symbol())
+            });
+            assert!(opens, "{letter:?}: {example}");
+        }
+    }
+}

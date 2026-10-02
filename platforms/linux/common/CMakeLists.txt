@@ -37,12 +37,19 @@ add_custom_target(funput_ffi DEPENDS "${FUNPUT_FFI_SO}")
 add_library(funput_linux_common STATIC
     settings/lookup.cpp
     settings/io.cpp
+    settings/io/names.cpp
+    settings/onsets/letters.cpp
     settings/watch.cpp
     compose/key/classify.cpp
     compose/composer/keys.cpp
     compose/composer/state.cpp
     compose/composer/nonpreedit.cpp)
 target_compile_features(funput_linux_common PUBLIC cxx_std_17)
+# An enum `switch` that misses an enumerator is an error, not a silent fallthrough:
+# it is how a value added to one of the settings enums (an `OnsetLetter`, a hotkey)
+# names every mapping still to write — the FFI wire value, the stored spelling.
+# PUBLIC so the shells and the tests compiling the inline headers check it too.
+target_compile_options(funput_linux_common PUBLIC -Werror=switch)
 # This static lib is linked into shared objects (the Fcitx5 addon MODULE) and PIE
 # executables (the IBus engine), so its objects must be position-independent.
 set_target_properties(funput_linux_common PROPERTIES POSITION_INDEPENDENT_CODE ON)

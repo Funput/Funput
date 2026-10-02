@@ -15,7 +15,7 @@ Android dùng setter JNI `nativeSetExtraOnsets(handle, letters)` với contract 
 | iOS | Cài đặt → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; lưu qua App Group, áp dụng cho bàn phím và ô tìm emoji |
 | Android | Cài đặt → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; lưu qua Preferences DataStore, áp dụng cho bàn phím, phím vật lý và ô tìm emoji |
 | Windows | Cài đặt → Cách gõ → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; xuất/nhập qua `preferences.extraOnsets`. Link thẳng Rust, không qua FFI — xem [Tích hợp Windows](#tích-hợp-windows) |
-| Linux | Chưa có |
+| Linux | Cài đặt → Cách gõ → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; xuất/nhập qua `preferences.extraOnsets`; áp dụng cho cả Fcitx5 lẫn IBus — xem [Tích hợp Linux](#tích-hợp-linux) |
 
 ## Mục tiêu
 
@@ -244,3 +244,59 @@ cargo run -- --settings   # cửa sổ Cài đặt
 - Dữ liệu → Xuất rồi Nhập trên một cấu hình khác: giữ `"extraOnsets"`; nhập file cũ
   không có trường thì lựa chọn hiện tại giữ nguyên.
 - Sáng/Tối, đổi màu nhấn của Windows, Narrator đọc đúng tên và trạng thái từng ô.
+
+## Tích hợp Linux
+
+Hai process dùng chung `~/.config/Funput/settings.json`: app Cài đặt GTK ghi file, còn addon
+Fcitx5/IBus đọc file (theo dõi bằng inotify, kiểm tra lại mtime khi focus-in) rồi đẩy vào
+engine qua C ABI. Có ba tầng, mỗi tầng làm một việc:
+
+- **App Cài đặt (`settings-gtk`, Rust)**: dùng lại `funput_config::ExtraOnsetLetters` /
+  `OnsetLetter`, cùng kiểu với Windows, nên trường `extraOnsets` (`"zj"`) được đọc và ghi theo
+  một cách duy nhất. `Settings` của app có trường này vì `save()` ghi đè cả file. Xuất/nhập
+  dùng `preferences.extraOnsets`: thiếu trường thì giữ lựa chọn cục bộ, chữ lạ thì bỏ qua.
+  UI nằm ở `settings_window/typing/extra_onsets.rs`: một `AdwExpanderRow` có công tắc riêng,
+  mỗi chữ một dòng gồm checkbox, keycap và ví dụ (`OnsetLetter::examples()`, dùng chung với
+  Windows). Quy tắc của mỗi cú bấm nằm trong hàm thuần `change::next` và có test riêng: bật thì
+  chọn cả bốn, tắt thì xoá hết, bỏ chữ cuối thì công tắc tự tắt. Mỗi lần bấm, tập mới được lưu
+  rồi `show()` đặt lại mọi widget. `show()` ghi nhận tập mới trước khi đụng tới widget, nên các
+  notify do chính nó gây ra không lưu gì, và không phụ thuộc việc ghi file có thành công hay
+  không. Handler chỉ giữ `Weak`, còn tham chiếu mạnh gắn vào group nên không tạo chu trình.
+  Mỗi lần mở trang, section đọc lại file để gợi ý `ww` theo đúng phương thức hiện tại.
+- **Addon, tầng settings (`common/settings/`, C++)**: `onsets/letters.h` là bản C++ của
+  `ExtraOnsetLetters`, với bit private, `id()` / `fromId()` và cùng các luật đọc. `io.cpp` đọc
+  `extraOnsets`; khóa thiếu hoặc sai kiểu được coi là không chữ nào. Addon **không bao giờ ghi**
+  khóa này: lúc lưu (khi bật/tắt VI/EN), phần merge giữ nguyên giá trị trong file, nên không thể
+  ghi đè một lựa chọn vừa lưu từ Cài đặt.
+- **Addon, tầng engine (`common/ffi/`, `compose/`)**: `ffi/onsets.h` ánh xạ từng chữ sang
+  `ONSET_*` bằng `switch` liệt kê đủ trường hợp; `common/CMakeLists.txt` bật
+  `-Werror=switch`, nên thiếu một chữ là build lỗi. `Handle::setExtraOnsets` gọi
+  `funput_set_extra_onsets`, còn `Composer::applySettings()` gọi nó ngay sau `configure`. Đây
+  là đường đi duy nhất cho lúc khởi động, khi watcher nạp lại và khi focus-in, nên cả hai shell
+  đều không phải sửa.
+
+Thêm một chữ mới: thêm biến thể vào `OnsetLetter` (funput-config) và `OnsetLetter` cùng
+`kAllOnsetLetters` (C++). Trình biên dịch sẽ chỉ ra những chỗ còn lại: `match` trong Rust (ví
+dụ, ký hiệu) và `switch` trong C++ (ký hiệu, bit wire).
+
+### Kiểm tra tay Linux
+
+Build và cài gói (máy dùng IBus thì `FUNPUT_FRAMEWORK=ibus`), rồi `ibus restart` hoặc
+`fcitx5 -r`:
+
+```bash
+FUNPUT_FRAMEWORK=ibus platforms/linux/build.sh
+```
+
+- Cài đặt → Cách gõ → Phụ âm đầu mở rộng: mặc định tắt; bật → cả bốn ô được chọn; chỉ giữ
+  `z`; bỏ ô cuối → công tắc tắt và danh sách thu lại. Đóng/mở lại Cài đặt vẫn giữ lựa chọn.
+- Text Editor/gedit, Telex: `zoo ` → `zô `, `fair ` → `fair `; chọn thêm `f`: `fair ` →
+  `fải `, `food ` giữ nguyên, `fasst ` → `fast `. Đổi lựa chọn có hiệu lực ngay, không cần
+  khởi động lại bộ gõ.
+- VNI: `zo6 jo72 ` → `zô jờ `. Telex nâng cao + `w`: `wa` → `ưa`, `wwas` → `wá`; dòng gợi ý
+  `ww` chỉ hiện khi đang dùng Telex nâng cao và có chọn `w` (đổi phương thức trên cùng trang
+  thì dòng này ẩn/hiện theo).
+- Bật/tắt VI/EN bằng phím tắt: `settings.json` vẫn giữ `"extraOnsets"`.
+- Xuất rồi Nhập: giữ `"extraOnsets"`; nhập file cũ không có trường thì lựa chọn hiện tại giữ
+  nguyên.
+- Sáng/Tối; Orca đọc tên và trạng thái từng ô ("Phụ âm đầu z, ví dụ zô, zui").

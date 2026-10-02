@@ -91,6 +91,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "funput-config"
+version = "0.1.0"
+dependencies = [
+ "funput-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "funput-convert"
 version = "0.1.0"
 dependencies = [
@@ -106,6 +115,7 @@ name = "funput-settings"
 version = "1.2026.1"
 dependencies = [
  "dirs",
+ "funput-config",
  "funput-convert",
  "funput-core",
  "gtk4",

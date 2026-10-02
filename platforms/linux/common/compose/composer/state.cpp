@@ -38,6 +38,7 @@ bool Composer::reloadSettings() {
 
 void Composer::applySettings() {
     handle_.configure(settings_);
+    handle_.setExtraOnsets(settings_.extraOnsets);
     effectiveEnabled_ = settings_.enabled;
     // Same shape as effectiveEnabled_: the preference is the starting point, and a
     // shell may override it per input context (a client that cannot report

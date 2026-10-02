@@ -32,6 +32,11 @@ funput-convert = { path = "../../../crates/funput-convert" }
 # `textcase` from funput-convert, which would leave the two shells that mirror each
 # other spelling one type two different ways.
 funput-core = { path = "../../../crates/funput-core", features = ["textcase"] }
+# The "Phụ âm đầu mở rộng" letter set — `ExtraOnsetLetters`/`OnsetLetter` — so the
+# `extraOnsets` key is read and written by the very type Windows persists it with:
+# same spelling, same forward-compatible reading of an unknown letter. Only that
+# type is used; this app keeps its own `Settings`, which carries Linux-only keys.
+funput-config = { path = "../../../crates/funput-config" }
 gtk = { package = "gtk4", version = "0.9", features = ["v4_10"] }
 adw = { package = "libadwaita", version = "0.7", features = ["v1_5"] }
 serde = { version = "1", features = ["derive"] }

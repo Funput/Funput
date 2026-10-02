@@ -39,6 +39,17 @@ impl OnsetLetter {
         Self::ALL.into_iter().find(|letter| letter.symbol() == c)
     }
 
+    /// What the letter lets a user write, as every settings screen lists it beside
+    /// the letter. Exhaustive, so a new letter cannot reach a screen without them.
+    pub fn examples(self) -> &'static str {
+        match self {
+            Self::Z => "zô, zui",
+            Self::F => "fải, fan",
+            Self::W => "wá, wê",
+            Self::J => "jờ, Cư Jút",
+        }
+    }
+
     /// The onset the engine admits for this letter.
     pub fn core(self) -> ExtraOnsets {
         match self {

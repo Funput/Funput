@@ -18,6 +18,7 @@ TEST_CASE("reload parses every field from its wire name") {
         "eagerRestore": false,
         "spellCheck": true,
         "autoCapitalize": true,
+        "extraOnsets": "jz",
         "nonPreedit": true,
         "toggleHotkey": "ctrl_space",
         "flipHotkey": "ctrl_shift_x",
@@ -36,6 +37,7 @@ TEST_CASE("reload parses every field from its wire name") {
     CHECK_FALSE(settings.eagerRestore);
     CHECK(settings.spellCheck);
     CHECK(settings.autoCapitalize);
+    CHECK(settings.extraOnsets.id() == "zj");
     CHECK(settings.nonPreedit);
     CHECK(settings.toggleHotkey == Hotkey::CtrlSpace);
     CHECK(settings.flipHotkey == FlipHotkey::CtrlShiftX);
