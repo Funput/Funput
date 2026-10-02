@@ -12,9 +12,11 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Args, Subcommand};
+use funput_core::{ExtraOnsets, SyllableRules};
 
 use crate::cli::{CliError, CliResult, MethodArg};
 use render::steps_table;
+use sim::SimConfig;
 
 #[derive(Debug, Args)]
 pub struct DevArgs {
@@ -60,20 +62,38 @@ pub struct CommonOpts {
     /// Print per-keystroke detail instead of just the final app text.
     #[arg(long)]
     pub steps: bool,
+    /// Also open syllables with `z`, `f`, `w`, `j` (`zô`, `fải`, `wá`, `jờ`).
+    #[arg(long)]
+    pub extra_onsets: bool,
+}
+
+impl CommonOpts {
+    /// The engine settings these flags ask for.
+    fn sim_config(&self) -> SimConfig {
+        let extra = if self.extra_onsets {
+            ExtraOnsets::ZFWJ
+        } else {
+            ExtraOnsets::NONE
+        };
+        SimConfig {
+            syllable_rules: SyllableRules::STANDARD.with_extra_onsets(extra),
+            ..SimConfig::new(self.method.into())
+        }
+    }
 }
 
 /// Run `funput dev`: dispatch to the selected engine tool.
 pub fn run(args: DevArgs) -> CliResult {
     match args.command {
         DevCommand::Run { input, opts } => {
-            let simulation = sim::simulate(opts.method.into(), &input);
+            let simulation = sim::simulate_with(opts.sim_config(), &input);
             if opts.steps {
                 println!("{}", steps_table(&simulation));
             } else {
                 println!("{}", simulation.app_text);
             }
         }
-        DevCommand::Repl { opts } => repl::run(opts.method.into(), opts.steps),
+        DevCommand::Repl { opts } => repl::run(opts.sim_config(), opts.steps),
         DevCommand::Coverage {
             corpus,
             json,

@@ -1,15 +1,11 @@
-use funput_core::ToneStyle;
-
 use super::super::sim::{SimConfig, simulate_with};
 use super::*;
 
 fn roundtrip(word: &str, method: InputMethod) -> String {
     let keys = encode(word, method);
     let config = SimConfig {
-        method,
-        tone_style: ToneStyle::Traditional,
         smart_restore: false,
-        spell_check: false,
+        ..SimConfig::new(method)
     };
     simulate_with(config, &keys).app_text
 }

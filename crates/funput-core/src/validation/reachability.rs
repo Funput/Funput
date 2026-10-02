@@ -8,8 +8,9 @@ use crate::InputMethod;
 use crate::unicode::marks::{Tone, vowel_stem};
 use crate::validation::coda::{STOP_CODAS, VALID_CODAS, coda_in, normalized_coda, nucleus_tone};
 use crate::validation::ethnic;
-use crate::validation::parse::{SyllableParts, parse_syllable};
+use crate::validation::parse::SyllableParts;
 use crate::validation::rhyme::{self, plain_base};
+use crate::validation::rules::SyllableRules;
 
 /// Longer than every deshaped rhyme (max is 4 chars, e.g. `uong`), so a query
 /// that overflows this buffer can never be a rhyme prefix.
@@ -39,7 +40,7 @@ fn shaped_base(c: char) -> char {
 /// This is the reading every method can afford; [`is_definitely_invalid_in`]
 /// widens it where the method allows.
 pub fn is_definitely_invalid(buffer: &str) -> bool {
-    is_definitely_invalid_parts(&parse_syllable(buffer), false)
+    SyllableRules::STANDARD.is_definitely_invalid(buffer)
 }
 
 /// [`is_definitely_invalid`] for a word typed in `method`. VNI also keeps alive a
@@ -49,7 +50,7 @@ pub fn is_definitely_invalid(buffer: &str) -> bool {
 /// (`bar1` → `bár`); telling that apart takes the keystrokes, so it is the
 /// caller's call which reading a keystroke gets.
 pub fn is_definitely_invalid_in(buffer: &str, method: InputMethod) -> bool {
-    is_definitely_invalid_parts(&parse_syllable(buffer), !method.is_telex_family())
+    SyllableRules::STANDARD.is_definitely_invalid_in(buffer, method)
 }
 
 /// `name_finals`: whether the `h`/`l`/`r` finals of place names count as alive.

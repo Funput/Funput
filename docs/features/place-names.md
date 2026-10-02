@@ -51,7 +51,8 @@ Mỗi ngoại lệ chỉ rộng đến mức tiếng Anh cho phép. Những th�
 - **Cụm `kn`, `sl`, `sr`.** `know` → `knơ`, `knee` → `knê`, `slow` → `slơ`. Vì vậy
   `Ea Knuếc`, `Slìn`, `SRó` chưa gõ được dấu.
 - **Âm đầu `j`, `f`, `w`, `z`.** Đây là phím Telex; trong VNI, `win10` sẽ thành
-  `win`. Vì vậy `Cư Jút` chưa gõ được dấu.
+  `win`. Vì vậy chúng không được nhận mặc định; bật tuỳ chọn
+  [phụ âm đầu mở rộng](extra-onsets.md) để gõ `Cư Jút`.
 - **Âm cuối tắc không dấu với âm đầu thường.** `moot` → `môt`, `book` → `bôk`.
 
 ## Kiến trúc

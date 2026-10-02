@@ -16,6 +16,7 @@
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+use funput_core::{ExtraOnsets, SyllableRules};
 use funput_engine::Engine;
 
 #[path = "alloc_budget/pairs.rs"]
@@ -148,7 +149,16 @@ fn keystroke_alloc_budget() {
     engine.update_config(|c| c.spell_check = true);
     assert_within_budget("spell-check on", &mut engine);
 
-    engine.update_config(|c| c.spell_check = false);
+    // Widened spelling only changes which onsets parse; it must not allocate.
+    engine.update_config(|c| {
+        c.syllable_rules = SyllableRules::STANDARD.with_extra_onsets(ExtraOnsets::ZFWJ);
+    });
+    assert_within_budget("extra onsets + spell-check", &mut engine);
+
+    engine.update_config(|c| {
+        c.spell_check = false;
+        c.syllable_rules = SyllableRules::STANDARD;
+    });
     assert_adopt_within_budget(&mut engine);
     pairs::assert_paired_allocations(&mut engine);
 }

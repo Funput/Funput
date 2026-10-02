@@ -118,6 +118,11 @@ Khi gõ từ tiếng Anh, core vẫn bỏ dấu (`card` → `cảd`). Tại ranh
 engine `Send` lại **chuỗi phím thô** (`keys`) + phím ranh giới, rồi `clear()`. `eager_restore` làm
 việc này ngay khi buffer trở thành dead-end thay vì đợi dấu cách.
 
+Phán quyết "có là âm tiết tiếng Việt" (ở ranh giới từ, eager restore và `adopt`) đọc theo
+`EngineConfig.syllable_rules` — mặc định `SyllableRules::STANDARD`. Nới nó, ví dụ nhận phụ âm đầu
+`z`/`f`/`w`/`j` (`zô`, `fải`), thì các từ đó vừa được bỏ dấu vừa không bị restore; xem
+[docs/features/extra-onsets.md](../../docs/features/extra-onsets.md).
+
 Không từ điển: từ tiếng Anh tình cờ là âm tiết VN hợp lệ (`test` → `tét`) sẽ **không** auto-restore
 — đổi lại không bao giờ phá tiếng Việt đang gõ đúng (giống UniKey không từ điển).
 

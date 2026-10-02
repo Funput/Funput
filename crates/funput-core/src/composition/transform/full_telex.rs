@@ -1,6 +1,6 @@
 use crate::input_method::TelexShortcut;
 use crate::orthography::reposition_existing_tone;
-use crate::{ToneStyle, TransformKind, TransformResult};
+use crate::{ComposeOptions, TransformKind, TransformResult};
 
 use super::gates;
 
@@ -8,8 +8,7 @@ pub(super) fn apply(
     buffer: &str,
     key: char,
     shortcut: TelexShortcut,
-    style: ToneStyle,
-    spell_check: bool,
+    options: ComposeOptions,
 ) -> TransformResult {
     if shortcut == TelexShortcut::RepeatedW {
         return TransformResult {
@@ -44,12 +43,12 @@ pub(super) fn apply(
     // it — the `gi` glide (`gĩ` + `w` → `giữ`) or the `u` of `uơ` (`thủ` + `[` →
     // `thuở`). Move it now, as every ordinary key does, so a word ending here is
     // already right.
-    let text = reposition_existing_tone(&text, style).unwrap_or(text);
+    let text = reposition_existing_tone(&text, options.tone_style).unwrap_or(text);
     let result = TransformResult {
         kind: TransformKind::Applied,
         text,
     };
-    gates::spell_check(buffer, key, spell_check, result)
+    gates::spell_check(buffer, key, options, result)
 }
 
 /// Split a buffer that ends in `ư`/`Ư` into the part before it and that vowel.
@@ -64,44 +63,29 @@ fn split_trailing_horn_u(buffer: &str) -> Option<(&str, char)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{InputMethod, ToneStyle};
 
-    const STYLE: ToneStyle = ToneStyle::Traditional;
+    const PLAIN: ComposeOptions =
+        ComposeOptions::new(InputMethod::TelexAdvanced).with_tone_style(ToneStyle::Traditional);
+    const CHECKED: ComposeOptions = PLAIN.with_spell_check(true);
 
     #[test]
     fn shortcut_applies_and_leading_w_reverts() {
-        assert_eq!(
-            apply("t", ']', TelexShortcut::HornU, STYLE, false).text,
-            "tư"
-        );
-        assert_eq!(
-            apply("m", '[', TelexShortcut::HornO, STYLE, false).text,
-            "mơ"
-        );
-        assert_eq!(
-            apply("", 'W', TelexShortcut::LeadingW, STYLE, false).text,
-            "Ư"
-        );
-        assert_eq!(
-            apply("ư", 'w', TelexShortcut::LeadingW, STYLE, false).text,
-            "w"
-        );
+        assert_eq!(apply("t", ']', TelexShortcut::HornU, PLAIN).text, "tư");
+        assert_eq!(apply("m", '[', TelexShortcut::HornO, PLAIN).text, "mơ");
+        assert_eq!(apply("", 'W', TelexShortcut::LeadingW, PLAIN).text, "Ư");
+        assert_eq!(apply("ư", 'w', TelexShortcut::LeadingW, PLAIN).text, "w");
     }
 
     #[test]
     fn shortcut_vowel_takes_the_tone_parked_on_the_glide() {
-        assert_eq!(
-            apply("gĩ", 'w', TelexShortcut::LeadingW, STYLE, false).text,
-            "giữ"
-        );
-        assert_eq!(
-            apply("gí", '[', TelexShortcut::HornO, STYLE, false).text,
-            "giớ"
-        );
+        assert_eq!(apply("gĩ", 'w', TelexShortcut::LeadingW, PLAIN).text, "giữ");
+        assert_eq!(apply("gí", '[', TelexShortcut::HornO, PLAIN).text, "giớ");
     }
 
     #[test]
     fn spell_check_reuses_literal_fallback() {
-        let result = apply("text", ']', TelexShortcut::HornU, STYLE, true);
+        let result = apply("text", ']', TelexShortcut::HornU, CHECKED);
         assert_eq!(result.kind, TransformKind::Pending);
         assert_eq!(result.text, "text]");
     }

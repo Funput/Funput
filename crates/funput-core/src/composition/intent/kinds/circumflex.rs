@@ -1,4 +1,4 @@
-use crate::ToneStyle;
+use crate::ComposeOptions;
 use crate::composition::replace_char_at;
 use crate::input_method::telex::tone_from_key;
 use crate::orthography::reposition_existing_tone;
@@ -10,7 +10,13 @@ use super::super::IntentResolution;
 use super::super::candidate;
 use super::super::target::{Target, rightmost_stem};
 
-pub(crate) fn resolve(buffer: &str, stem: char, key: char, style: ToneStyle) -> IntentResolution {
+pub(crate) fn resolve(
+    buffer: &str,
+    stem: char,
+    key: char,
+    options: ComposeOptions,
+) -> IntentResolution {
+    let style = options.tone_style;
     let Some(target) = rightmost_stem(buffer, stem) else {
         return literal(buffer, key, None);
     };
@@ -27,13 +33,15 @@ pub(crate) fn resolve(buffer: &str, stem: char, key: char, style: ToneStyle) -> 
     if let Some(moved) = reposition_existing_tone(&text, style) {
         text = moved;
     }
-    if is_viable_shape_candidate(&text) {
+    if is_viable_shape_candidate(&text, options.syllable_rules) {
         return IntentResolution::Applied(text);
     }
     if let Some((offset, tone)) = pending_tone(buffer, target.byte_offset) {
         text.clear();
         candidate::build(&mut text, buffer, target, Some(offset));
-        if candidate::apply_tone(&mut text, tone, style) && is_viable_shape_candidate(&text) {
+        if candidate::apply_tone(&mut text, tone, style)
+            && is_viable_shape_candidate(&text, options.syllable_rules)
+        {
             return IntentResolution::Applied(text);
         }
     }
@@ -50,9 +58,10 @@ fn revert(buffer: &str, key: char, target: Target) -> IntentResolution {
 }
 
 fn pending_tone(buffer: &str, before: usize) -> Option<(usize, Tone)> {
-    // A leading Telex tone letter is a literal onset (`fomo` → `fomo`), not a
-    // parked huyền. Same rule as deferred `w`: only a non-leading marker is a
-    // modifier (`chfana` → `chần`, `oso` → `ố`).
+    // A leading Telex tone letter is a literal onset, not a parked huyền: `fomo`
+    // stays `fomo`, or becomes `fôm` where `f` is an admitted onset. Same rule as
+    // deferred `w`: only a non-leading marker is a modifier (`chfana` → `chần`,
+    // `oso` → `ố`).
     buffer[..before]
         .char_indices()
         .rev()

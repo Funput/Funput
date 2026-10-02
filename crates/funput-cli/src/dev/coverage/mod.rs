@@ -21,10 +21,8 @@ use super::sim::{SimConfig, simulate_with};
 /// used to show what the engine produced for a mismatch.
 fn composed(keys: &str, method: InputMethod) -> String {
     let config = SimConfig {
-        method,
-        tone_style: ToneStyle::Traditional,
         smart_restore: false,
-        spell_check: false,
+        ..SimConfig::new(method)
     };
     simulate_with(config, keys).app_text
 }
@@ -37,10 +35,9 @@ fn round_trips(syllable: &str, encoding: InputMethod, method: InputMethod) -> bo
         .iter()
         .any(|&style| {
             let config = SimConfig {
-                method,
                 tone_style: style,
                 smart_restore: false,
-                spell_check: false,
+                ..SimConfig::new(method)
             };
             simulate_with(config, &keys).app_text == syllable
         })

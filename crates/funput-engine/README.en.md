@@ -121,6 +121,11 @@ buffer is **not** a complete Vietnamese syllable (`funput_core::is_complete_syll
 `clear()`s. `eager_restore` does this the instant the buffer becomes a dead end instead of waiting for
 a space.
 
+The "is this a Vietnamese syllable" verdict (at the word boundary, in eager restore and in `adopt`)
+follows `EngineConfig.syllable_rules` — `SyllableRules::STANDARD` by default. Widen it, e.g. to admit
+the `z`/`f`/`w`/`j` onsets (`zô`, `fải`), and those words both compose and survive restore; see
+[docs/features/extra-onsets.md](../../docs/features/extra-onsets.md).
+
 Dictionary-free: an English word that happens to be a valid VN syllable (`test` → `tét`) is **not**
 auto-restored — in exchange it never breaks correctly-typed Vietnamese (like UniKey without a
 dictionary).

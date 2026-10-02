@@ -31,12 +31,16 @@ engine.
 
 | Symbol | Description |
 |--------|-------------|
-| `InputMethod` | `Telex` \| `Vni` |
+| `InputMethod` | `Telex` \| `TelexAdvanced` \| `Vni` |
 | `ToneStyle` | `Traditional` \| `Modern` (new-configuration default) — tone placement (see below) |
 | `TransformKind` | `Pending` \| `Applied` \| `Reverted` \| `Ignored` |
 | `TransformResult` | `{ kind, text }` — state after one key |
 | `apply(buffer, key, method, tone_style) -> TransformResult` | One transform step |
 | `apply_checked(buffer, key, method, tone_style, spell_check) -> TransformResult` | Like `apply` + a **spell-check** gate: when `spell_check` is on, a diacritic is placed only if the result can still become a valid VN syllable, otherwise the modifier key stays a literal (`mix` + ngã → `mĩx` is blocked). `spell_check = false` ≡ `apply` |
+| `ComposeOptions` | Every option one keystroke is composed under (`method`, `tone_style`, `spell_check`, `syllable_rules`); build with `new(method)` + `with_*` |
+| `apply_with(buffer, key, options) -> TransformResult` | The entry point `apply` / `apply_checked` wrap; the only one that reaches every option |
+| `SyllableRules` | The spelling syllables are judged by — `STANDARD` (default) or widened; its methods `is_valid` / `is_complete_syllable` / `is_reopenable_syllable` / `is_definitely_invalid(_in)` judge by it |
+| `ExtraOnsets` | Extra onsets to admit (`F`, `J`, `W`, `Z`, `ZFWJ`) — see [Extra onsets](#extra-onsets--syllablerules) |
 | `is_valid(buffer) -> bool` | Buffer **could** still be a valid VN syllable (lenient) |
 | `is_complete_syllable(buffer) -> bool` | Buffer is a **complete** VN syllable (strict) |
 | `is_definitely_invalid(buffer) -> bool` | Buffer can **definitely** never become a VN syllable |
@@ -66,6 +70,24 @@ assert_eq!(r.text, "á");
   `ass` → `as`).
 - `Ignored` — the modifier was rejected, `text` unchanged (`ng` + `1`, a stroke on a non-`d`).
 
+## Extra onsets — `SyllableRules`
+
+The crate-root `is_*` functions always judge native spelling (`SyllableRules::STANDARD`). To also
+admit the onsets of UniKey's "Cho phép phụ âm đầu Z, F, W, J" switch (`zô`, `jờ`, `fải`, `wá`), build
+a wider `SyllableRules` and pass it through `ComposeOptions`:
+
+```rust
+use funput_core::{apply_with, ComposeOptions, ExtraOnsets, InputMethod, SyllableRules};
+
+let rules = SyllableRules::STANDARD.with_extra_onsets(ExtraOnsets::ZFWJ);
+let options = ComposeOptions::new(InputMethod::Vni).with_syllable_rules(rules);
+assert_eq!(apply_with("zo", '6', options).text, "zô");
+assert!(rules.is_complete_syllable("zô"));
+```
+
+Only the onset widens — the rhyme must still be Vietnamese. Details and trade-offs (in Vietnamese):
+[docs/features/extra-onsets.md](../../docs/features/extra-onsets.md).
+
 ## Tone placement — `ToneStyle`
 
 The two styles **differ only** on the open glide-initial rhymes: `oa`, `oe`, `uy`.
@@ -90,7 +112,8 @@ the chosen style. Reference: [Quy tắc đặt dấu thanh của chữ Quốc ng
 
 ```
 src/
-├── lib.rs                    # Public API + apply()
+├── lib.rs                    # Public API + apply() / apply_with()
+├── options/                  # The caller's choices: InputMethod, ToneStyle, ComposeOptions
 ├── input_method/             # Key classification → KeyAction. The ONLY place VNI and Telex differ.
 │   ├── vni.rs                # 1–9
 │   └── telex.rs              # s/f/r/x/j, aa/dd/ee/oo, w (buffer-aware)
@@ -99,9 +122,12 @@ src/
 │   ├── apply.rs              # Apply stroke / tone / shape to the buffer
 │   └── revert.rs             # Strip the diacritic on a doubled modifier key
 ├── validation/
-│   ├── parse.rs              # Split onset / nucleus / coda
-│   ├── rhyme.rs              # Valid-rhyme table — the core of "is this Vietnamese?"
-│   └── syllable.rs           # is_valid / is_complete_syllable / is_definitely_invalid + modifier gate
+│   ├── parse.rs, parse/      # Split onset / nucleus / coda; onset.rs is the only onset gate
+│   ├── rhyme.rs, coda.rs     # Valid-rhyme table — the core of "is this Vietnamese?" — and codas
+│   ├── syllable/             # is_valid / is_complete_syllable / … + modifier gate
+│   ├── reachability.rs       # is_definitely_invalid(_in) — eager restore
+│   ├── ethnic/               # Tây Nguyên place-name exceptions
+│   └── rules/                # SyllableRules + ExtraOnsets — opt-in wider spelling
 └── unicode/
     ├── marks.rs              # Tone-mark table
     ├── shapes.rs             # mũ / móc / breve table

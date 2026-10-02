@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use funput_core::sentence::{Rules, Scanner};
-use funput_core::{InputMethod, ToneStyle};
+use funput_core::{InputMethod, SyllableRules, ToneStyle};
 
 use crate::model::{EngineConfig, NumberGlue, Session};
 
@@ -14,6 +14,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
             smart_restore: true,
             eager_restore: true,
             spell_check: false,
+            syllable_rules: SyllableRules::STANDARD,
             auto_capitalize: false,
             shortcuts_enabled: true,
             shortcut_smart_case: true,
