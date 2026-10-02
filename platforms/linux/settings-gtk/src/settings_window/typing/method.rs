@@ -6,7 +6,11 @@ use gtk::{CheckButton, StringList};
 
 use crate::settings::{Method, Settings, ToneStyle};
 
-pub(super) fn group(settings: &Settings) -> PreferencesGroup {
+/// `on_change` hears every method the user picks, after it is saved.
+pub(super) fn group(
+    settings: &Settings,
+    on_change: impl Fn(Method) + Clone + 'static,
+) -> PreferencesGroup {
     let group = PreferencesGroup::builder().title("Phương thức").build();
     let mut radio: Option<CheckButton> = None;
     for method in Method::ALL {
@@ -17,9 +21,11 @@ pub(super) fn group(settings: &Settings) -> PreferencesGroup {
             radio = Some(check.clone());
         }
         check.set_active(method == settings.method);
+        let on_change = on_change.clone();
         check.connect_toggled(move |check| {
             if check.is_active() {
                 Settings::update(|settings| settings.method = method);
+                on_change(method);
             }
         });
         let row = ActionRow::builder()

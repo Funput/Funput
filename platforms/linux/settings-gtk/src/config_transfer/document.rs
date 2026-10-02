@@ -43,6 +43,10 @@ pub(super) struct Preferences {
     pub spell_check: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_capitalize: Option<bool>,
+    /// Letters admitted as extra initial consonants, spelled out (`"zj"`; `""` =
+    /// none). Absent leaves the local choice alone.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extra_onsets: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shortcuts_enabled: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
