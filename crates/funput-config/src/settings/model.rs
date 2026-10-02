@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
-use super::{FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
+use super::{ExtraOnsetLetters, FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
 
 /// One entry of the removed "always English" list. Kept only so a `settings.json`
 /// or an exported config written before the per-app memory existed still decodes —
@@ -38,6 +38,12 @@ pub struct Settings {
     pub spell_check: bool,
     #[serde(default)]
     pub auto_capitalize: bool,
+    /// Letters admitted as initial consonants beyond Vietnamese spelling (`zô`, `fải`,
+    /// `wá`, `jờ`), chosen one by one. Defaults to **none**, including for a file
+    /// written before this field existed — that is how Funput spelled then, and
+    /// admitting one also lets English with a Vietnamese rhyme compose (`fast` → `fát`).
+    #[serde(default)]
+    pub extra_onsets: ExtraOnsetLetters,
     pub toggle_hotkey: Hotkey,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub toggle_combo: Option<KeyCombo>,

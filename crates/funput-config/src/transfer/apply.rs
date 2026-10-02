@@ -6,7 +6,9 @@
 //! "no opinion", not "clear it". That rule is what makes importing a partial or
 //! foreign file safe, so each branch below is a plain `if let Some(..)`.
 
-use crate::settings::{FlipHotkey, Hotkey, Method, Settings, Shortcut, ToneStyle};
+use crate::settings::{
+    ExtraOnsetLetters, FlipHotkey, Hotkey, Method, Settings, Shortcut, ToneStyle,
+};
 
 use super::document::{
     CURRENT_VERSION, ConfigDocument, PortableShortcut, Preferences, WindowsBlock,
@@ -52,6 +54,11 @@ fn apply_preferences(s: &mut Settings, prefs: &Preferences) {
     }
     if let Some(v) = prefs.auto_capitalize {
         s.auto_capitalize = v;
+    }
+    // Letters this build does not know are skipped rather than voiding the value, so
+    // a newer build's extra letter cannot cost the user the ones known here.
+    if let Some(letters) = prefs.extra_onsets.as_deref() {
+        s.extra_onsets = ExtraOnsetLetters::from_id(letters);
     }
     if let Some(v) = prefs.shortcuts_enabled {
         s.shortcuts_enabled = v;
