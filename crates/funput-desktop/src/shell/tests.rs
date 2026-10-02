@@ -2,7 +2,7 @@
 //! process-global mutex: which app gets Vietnamese, which surface is allowed to
 //! pin one, and when composition is thrown away.
 
-use funput_config::{Method, Settings};
+use funput_config::{ExtraOnsetLetters, Method, Settings};
 use funput_engine::{Action, KeySource};
 
 use super::*;
@@ -634,4 +634,58 @@ fn the_english_switch_does_not_touch_vietnamese_mode() {
 
     assert!(state.hook_active());
     assert_eq!(app_text(&mut state, "tp "), "TP. HCM ");
+}
+
+// --- extra onsets (z, f, w, j) -----------------------------------------------
+
+/// A Telex shell admitting `letters`, set the way the Settings window sets them.
+fn shell_with_onsets(letters: &str) -> ShellState {
+    let mut state = shell();
+    state.set_method(InputMethod::Telex);
+    state.set_extra_onsets(ExtraOnsetLetters::from_id(letters));
+    state
+}
+
+#[test]
+fn extra_onsets_are_off_by_default() {
+    let mut state = shell_with_onsets("");
+    assert_eq!(app_text(&mut state, "zoo jowf fair "), "zoo jowf fair ");
+}
+
+/// The switch has to reach the engine, not just the settings file, and only the
+/// letters picked may open a syllable.
+#[test]
+fn only_the_chosen_letters_open_a_syllable() {
+    let mut state = shell_with_onsets("z");
+    assert_eq!(app_text(&mut state, "zoo fair "), "zô fair ");
+
+    state.set_extra_onsets(ExtraOnsetLetters::from_id("zf"));
+    assert_eq!(app_text(&mut state, "zoo fair "), "zô fải ");
+    assert_eq!(
+        app_text(&mut state, "food "),
+        "food ",
+        "the rhyme still has to be Vietnamese"
+    );
+
+    state.set_extra_onsets(ExtraOnsetLetters::NONE);
+    assert_eq!(app_text(&mut state, "zoo "), "zoo ");
+}
+
+/// Import and a write from the Settings process arrive as a whole document, and
+/// take the same road to the engine.
+#[test]
+fn replaced_settings_carry_the_letters_to_the_engine() {
+    let mut state = shell_with(Settings {
+        method: Method::Telex,
+        extra_onsets: ExtraOnsetLetters::ALL,
+        ..Settings::default()
+    });
+    assert_eq!(app_text(&mut state, "jowf was "), "jờ wá ");
+}
+
+#[test]
+fn full_telex_keeps_its_leading_w() {
+    let mut state = shell_with_onsets("zfwj");
+    state.set_method(InputMethod::TelexAdvanced);
+    assert_eq!(app_text(&mut state, "wa wwas "), "ưa wá ");
 }
