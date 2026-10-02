@@ -14,6 +14,7 @@ import app.funput.funput.ime.editing.InputConnectionEditor
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.nativebridge.EngineConfiguration
 import app.funput.funput.ime.settings.ToneStyle
+import app.funput.funput.ime.settings.extraonsets.ExtraOnsetLetters
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 
@@ -79,6 +80,7 @@ internal class ImeEditingScenario private constructor(
             inputMethod: KeyboardInputMethod = KeyboardInputMethod.TELEX,
             allowComposition: Boolean = true,
             allowShortcuts: Boolean = true,
+            extraOnsets: ExtraOnsetLetters = ExtraOnsetLetters.None,
         ): ImeEditingScenario {
             val host = HostEditor(ApplicationProvider.getApplicationContext())
             val engine = NativeVietnameseEngine()
@@ -96,6 +98,7 @@ internal class ImeEditingScenario private constructor(
                     smartRestore = true,
                     eagerRestore = true,
                     spellCheck = true,
+                    extraOnsets = extraOnsets,
                 ),
             )
             handler.start(allowComposition = allowComposition, allowShortcuts = allowShortcuts)

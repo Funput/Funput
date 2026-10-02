@@ -44,7 +44,8 @@ class SettingsScreenTest {
         compose.onNodeWithTag(SettingsHeroTag).assertExists()
         compose.onNodeWithTag(SettingsSetupTag).assertDoesNotExist()
         val headers = listOf(
-            "GÕ TIẾNG VIỆT", "BỐ CỤC BÀN PHÍM", "THÔNG MINH", "PHẢN HỒI KHI CHẠM", "CLIPBOARD", "DỮ LIỆU",
+            "GÕ TIẾNG VIỆT", "BỐ CỤC BÀN PHÍM", "THÔNG MINH", "PHỤ ÂM ĐẦU MỞ RỘNG",
+            "PHẢN HỒI KHI CHẠM", "CLIPBOARD", "DỮ LIỆU",
         )
         headers.forEach { header ->
             scrollTo(header)

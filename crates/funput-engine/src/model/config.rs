@@ -31,7 +31,8 @@ pub struct EngineConfig {
     /// "Cho phép phụ âm đầu Z, F, W, J" is
     /// `SyllableRules::STANDARD.with_extra_onsets(ExtraOnsets::ZFWJ)` (`zô`, `jờ`,
     /// `fải`, `wá`). Off by default, because it also lets English through: Telex
-    /// `fast` → `fát`, VNI `win10` → `win`. Not yet reachable over FFI / JNI.
+    /// `fast` → `fát`, VNI `win10` → `win`. Android carries it through the separate
+    /// JNI `nativeSetExtraOnsets` setter, keeping the original configure signature.
     pub syllable_rules: SyllableRules,
     /// Auto-capitalize ("Tự động viết hoa"): uppercase the first letter of a word at
     /// the start of a sentence. Off by default.

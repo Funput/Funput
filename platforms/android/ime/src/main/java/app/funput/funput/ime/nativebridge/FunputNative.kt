@@ -9,7 +9,7 @@ internal object FunputNative {
     external fun nativeCreate(): Long
     external fun nativeDestroy(handle: Long)
     external fun nativeClear(handle: Long)
-    /** Applies every durable engine option in one crossing (see [EngineConfiguration]). */
+    /** Applies the original durable options; extra onsets follow through their own setter. */
     external fun nativeConfigure(
         handle: Long,
         method: Int,
@@ -19,6 +19,9 @@ internal object FunputNative {
         spellCheck: Boolean,
         autoCapitalize: Boolean,
     )
+
+    /** Extra onset wire bits (F=1, J=2, W=4, Z=8); applied after every nativeConfigure. */
+    external fun nativeSetExtraOnsets(handle: Long, letters: Int)
 
     /** Runtime VI/EN state — flipped per field and by the language key, not durable config. */
     external fun nativeSetEnabled(handle: Long, enabled: Boolean)

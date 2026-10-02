@@ -1,6 +1,8 @@
 package app.funput.funput.ime.nativebridge
 
+import app.funput.funput.ime.nativebridge.configuration.nativeMask
 import app.funput.funput.ime.settings.ToneStyle
+import app.funput.funput.ime.settings.extraonsets.ExtraOnsetLetters
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.shortcuts.model.ShortcutLibrary
 
@@ -21,6 +23,7 @@ internal data class EngineConfiguration(
     val eagerRestore: Boolean,
     val spellCheck: Boolean,
     val autoCapitalize: Boolean = false,
+    val extraOnsets: ExtraOnsetLetters = ExtraOnsetLetters.None,
 )
 
 /** Platform-independent contract consumed by Android's composition adapter. */
@@ -68,6 +71,7 @@ internal class NativeVietnameseEngine : VietnameseEngine {
             configuration.spellCheck,
             configuration.autoCapitalize,
         )
+        FunputNative.nativeSetExtraOnsets(value, configuration.extraOnsets.nativeMask)
         inputMethod = configuration.inputMethod
         this.configuration = configuration
     }

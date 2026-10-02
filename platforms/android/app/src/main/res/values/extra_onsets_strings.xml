@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="extra_onsets_section">Phụ âm đầu mở rộng</string>
+    <string name="extra_onsets_enabled_title">Cho phép z, f, w, j</string>
+    <string name="extra_onsets_enabled_summary">Nhận dấu cho teencode, từ mượn và một số tên riêng. Chọn riêng từng chữ bên dưới.</string>
+    <string name="extra_onsets_letter_title">Phụ âm %1$s</string>
+    <string name="extra_onsets_example_z">Ví dụ: zô, zui</string>
+    <string name="extra_onsets_example_f">Ví dụ: fải, fan</string>
+    <string name="extra_onsets_example_w">Ví dụ: wá, wê</string>
+    <string name="extra_onsets_example_j">Ví dụ: jờ, Cư Jút</string>
+    <string name="extra_onsets_warning">Một số từ tiếng Anh có vần tiếng Việt sẽ nhận dấu: fast → fát khi bật f. Gõ lặp phím dấu để giữ tiếng Anh: fasst → fast.</string>
+    <string name="extra_onsets_advanced_w_hint">Telex nâng cao vẫn dùng w đầu từ để gõ ư (wa → ưa). Gõ ww để lấy phụ âm w: wwas → wá.</string>
+    <string name="extra_onsets_save_error">Không thể lưu lựa chọn. Cài đặt trước đó vẫn được giữ; hãy thử lại.</string>
+</resources>

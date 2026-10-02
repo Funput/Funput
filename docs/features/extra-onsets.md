@@ -6,11 +6,15 @@ Có trong core (`funput-core`) và engine (`funput-engine`), **mặc định t�
 `funput_set_extra_onsets(engine, letters)` với các bit `ONSET_F | ONSET_J | ONSET_W |
 ONSET_Z` (`0` = tắt) — setter riêng, không nới `FunputConfig`.
 
+Android dùng setter JNI `nativeSetExtraOnsets(handle, letters)` với contract bit
+`f=1`, `j=2`, `w=4`, `z=8`; không đổi chữ ký `nativeConfigure`.
+
 | Nền tảng | Trạng thái |
 |---|---|
 | macOS | Settings → Cách gõ → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; xuất/nhập qua `preferences.extraOnsets` |
 | iOS | Cài đặt → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; lưu qua App Group, áp dụng cho bàn phím và ô tìm emoji |
-| Windows, Linux, Android | Chưa có (Android/JNI cần setter tương ứng) |
+| Android | Cài đặt → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; lưu qua Preferences DataStore, áp dụng cho bàn phím, phím vật lý và ô tìm emoji |
+| Windows, Linux | Chưa có |
 
 ## Mục tiêu
 
@@ -153,3 +157,44 @@ cargo run -p funput-cli -- dev run -m vni --extra-onsets "zo6 jo72 fa3i wa1 Ju1t
   Bật Reduce Motion để xác nhận các dòng chữ hiện/ẩn không có animation.
 - Kiểm tra trên iOS 26 trở lên và một iOS cũ: control/nền theo Settings hiện tại,
   đầy đủ chức năng và không có lỗi availability.
+
+## Tích hợp Android
+
+- `ExtraOnsetLetters` lưu chuỗi canonical `zfwj` trong khóa `extra_onsets` của
+  Preferences DataStore. Đọc chữ hoa/thường như nhau, bỏ chữ lạ và gộp chữ trùng;
+  khóa thiếu hoặc rỗng là tắt, không cần migration.
+- Bật công tắc chính chọn cả bốn; tắt xóa toàn bộ. Mỗi dòng thêm/bỏ đúng một chữ,
+  bỏ chữ cuối tự tắt công tắc chính. Ghi bằng `DataStore.edit` trên giá trị mới
+  nhất; UI chỉ hiển thị snapshot đã lưu và báo lỗi nếu ghi thất bại.
+- `SmartCompositionPreferences` mang lựa chọn theo flow hiện có tới
+  `ImeSettingsController`. Snapshot đầy đủ giữ lựa chọn qua các lần đổi kiểu gõ
+  và kiểu đặt dấu, tiếp tục để `autoCapitalize = false` phía engine.
+- `NativeVietnameseEngine.configure` gọi `nativeConfigure` rồi
+  `nativeSetExtraOnsets`. Kotlin và Rust ánh xạ từng chữ qua contract JNI
+  `f=1`, `j=2`, `w=4`, `z=8`; không ép kiểu model sang bitset Rust.
+- Setter dùng `update_config`, chỉ sửa extra onsets và giữ tùy chọn khác.
+  Bit lạ bị bỏ qua; handle đã đóng hoặc không hợp lệ là no-op.
+- IME nhận thay đổi qua flow mà không cần restart app. Khi bắt đầu tìm emoji,
+  `LocalTextComposer.reset()` sao chép snapshot mới từ engine của document.
+  Bàn phím vật lý dùng cùng session của document.
+- UI dùng FunputUI hiện có, gồm theme và glass fallback trên API 26 trở lên;
+  motion tôn trọng thiết lập tắt animation của Android và mỗi dòng có một switch
+  semantics cho TalkBack.
+
+### Kiểm tra tay Android
+
+- Cài đặt → Phụ âm đầu mở rộng: mặc định tắt; bật chọn cả bốn; thử riêng từng chữ,
+  bỏ chữ cuối, bật lại và xác nhận mọi lựa chọn vẫn đúng sau khi mở lại app.
+- Telex: `zoo` → `zô`, `fair` → `fải`, `jowf` → `jờ`, `was` → `wá` khi bật chữ
+  tương ứng; `food` giữ nguyên. Khi bật `f`, `fast` → `fát`, `fasst` → `fast`.
+- VNI: `zo6` → `zô`, `jo72` → `jờ`. Telex nâng cao: `wa` → `ưa`, khi bật `w`
+  thì `wwas` → `wá`; chỉ lúc đó section hiển thị hướng dẫn `w`/`ww`.
+- Tắt mọi chữ và xác nhận các từ mở bằng chữ đó trở về hành vi cũ.
+- Đổi lựa chọn rồi mở lại bàn phím, bắt đầu tìm emoji, đổi kiểu gõ; thử bàn phím
+  vật lý và chuyển VI/EN. Không cần khởi động lại app chủ.
+- Kiểm tra Light/Dark, font lớn, TalkBack, animation tắt, API 26 và thiết bị mới
+  có glass; trạng thái và nội dung từng switch phải đọc được.
+
+Test hồi quy Kotlin, Compose, JNI instrumented và Rust được bổ sung cho tích
+hợp này. Build/compile source test có thể chạy độc lập; không cần chạy test để
+dựng APK. Xem lệnh build trong README Android.
