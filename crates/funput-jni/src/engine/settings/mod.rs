@@ -1,6 +1,6 @@
 //! JNI exports for engine configuration.
 //!
-//! Android applies its durable options as one batch (`nativeConfigure`), so the Kotlin
+//! Android applies `nativeConfigure` followed by `nativeSetExtraOnsets`, so the Kotlin
 //! side keeps a single writer for engine configuration. `nativeSetEnabled` stays
 //! separate: VI/EN is runtime state, flipped per field and by the language key.
 
@@ -11,8 +11,11 @@ use jni::sys::{jboolean, jint, jlong};
 use super::registry;
 use crate::abi::{JavaObject, safe};
 
-/// Apply every durable engine option in one call. Wire values mirror the Kotlin
-/// `EngineConfiguration`: method `0 = Telex`, `1 = VNI`, `2 = Telex Advanced`; tone
+mod extra_onsets;
+
+/// Apply the original durable options without resetting extra onsets or shortcuts.
+/// Wire values mirror Kotlin's `EngineConfiguration`: method `0 = Telex`,
+/// `1 = VNI`, `2 = Telex Advanced`; tone
 /// style `1 = Modern`, anything else Traditional.
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeConfigure(
@@ -26,11 +29,8 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
     spell_check: jboolean,
     auto_capitalize: jboolean,
 ) {
-    // Edits rather than replaces the config: the JNI symbol name encodes the Java
-    // signature, so the gõ tắt options cannot ride along here without breaking the
-    // `external fun` — and replacing the whole config would reset them behind the
-    // back of whatever set them. Android has no gõ tắt switch yet, so they simply
-    // stay at their defaults.
+    // Preserve options supplied by separate setters, including extra onsets and
+    // shortcuts. The Kotlin declaration and JNI signature remain unchanged.
     update(handle, |engine| {
         engine.update_config(|config| {
             config.method = decode_method(method);
