@@ -42,6 +42,7 @@
 |---|---|
 | ⌨️ **Ba kiểu gõ** | Telex · **Telex nâng cao** (thêm `w` đầu từ và phím tắt `[` `]`) · VNI |
 | 🧠 **Gõ thông minh** | Tự khôi phục tiếng Anh · khôi phục tức thì · kiểm tra chính tả · tự động viết hoa |
+| 🔤 **Phụ âm đầu mở rộng** | Chọn riêng `z`, `f`, `w`, `j` cho teencode, từ mượn và tên riêng; mặc định tắt |
 | 💬 **Gợi ý từ cá nhân** | Chỉ học chữ bạn gõ qua Funput, **lưu trên máy** |
 | 👆 **Cử chỉ thông minh** | Gõ đúp phím cách để chấm câu · giữ phím cách rồi kéo để di chuyển con trỏ mọi hướng · vuốt trái phím xoá để xoá cả từ |
 | 🎨 **7 theme dựng sẵn** | Slate · Ink · Paper · Glass Dark · Glass Light · Blossom · Orchid |
@@ -108,12 +109,22 @@ Cả ba nằm chung một công tắc **Cử chỉ thông minh**.
 | **Gõ tiếng Việt** | Kiểu gõ · kiểu đặt dấu · gõ tắt |
 | **Bố cục bàn phím** | Hàng phím số · kích thước phím |
 | **Thông minh** | Khôi phục từ · kiểm tra chính tả · tự viết hoa · gợi ý từ · cử chỉ thông minh |
+| **Phụ âm đầu mở rộng** | Công tắc chính · chọn riêng `z`, `f`, `w`, `j` |
 | **Giao diện** | Chọn theme dựng sẵn hoặc tự tạo theme riêng |
 | **Phản hồi khi chạm** | Âm thanh và rung khi gõ |
 | **Clipboard · Dữ liệu** | Lịch sử clipboard và thao tác xoá dữ liệu cục bộ |
 
 Cấu hình lưu bằng **Preferences DataStore**. Gõ tắt là tài liệu JSON riêng trong vùng private
 của app để UI và IME dùng cùng một snapshot; xem [thiết kế Gõ tắt](../../docs/features/android-shortcuts.md).
+
+**Phụ âm đầu mở rộng** nằm ngay sau **Thông minh**, mặc định tắt. Bật công tắc
+chính chọn cả bốn chữ; có thể bỏ riêng từng chữ, và bỏ chữ cuối sẽ tự tắt công
+tắc chính. Lựa chọn áp dụng cho bàn phím, bàn phím vật lý và ô tìm emoji mà không
+cần khởi động lại app chủ.
+
+Khi bật `f`, Telex có thể đổi `fast` thành `fát`; gõ `fasst` để giữ `fast`.
+Telex nâng cao vẫn dùng `w` đầu từ để gõ `ư` (`wa` → `ưa`); khi bật phụ âm `w`,
+gõ `wwas` để lấy `wá`. Xem [thiết kế và checklist kiểm tra tay](../../docs/features/extra-onsets.md#tích-hợp-android).
 
 ### Gợi ý từ và giấy phép
 
