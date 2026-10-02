@@ -20,7 +20,8 @@ public extension KeyboardInputCoordinator {
             toneStyle: configuration.toneStyle.engineToneStyle,
             smartRestore: configuration.smartRestore,
             eagerRestore: configuration.eagerRestore,
-            spellCheck: configuration.spellCheck
+            spellCheck: configuration.spellCheck,
+            extraOnsets: configuration.extraOnsets.engineOnsets
         )
         composer.configure(options)
         compositionOptions = options
@@ -42,6 +43,18 @@ extension ToneStyleOption {
         case .traditional: .traditional
         case .modern: .modern
         }
+    }
+}
+
+extension ExtraOnsetLetters {
+    /// Shared storage bits and C ABI bits are independent; map letters explicitly.
+    var engineOnsets: FunputExtraOnsets {
+        var onsets: FunputExtraOnsets = []
+        if contains(.z) { onsets.insert(.z) }
+        if contains(.f) { onsets.insert(.f) }
+        if contains(.w) { onsets.insert(.w) }
+        if contains(.j) { onsets.insert(.j) }
+        return onsets
     }
 }
 #endif

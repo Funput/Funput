@@ -66,12 +66,13 @@ pub use charset::{
 pub use convert::*;
 pub use engine::{
     ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputConfig, FunputEngine, FunputResult,
-    METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, SOURCE_NUMPAD, SOURCE_STANDARD,
-    funput_add_shortcut, funput_adopt, funput_arm_capitalization, funput_backspace, funput_buffer,
-    funput_clear, funput_clear_shortcuts, funput_configure, funput_engine_free, funput_engine_new,
-    funput_flip_composing, funput_process_char, funput_process_key, funput_process_key_text,
-    funput_set_enabled, funput_set_method, funput_set_shortcut_smart_case,
-    funput_set_shortcuts_enabled, funput_set_shortcuts_in_english,
+    METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, ONSET_F, ONSET_J, ONSET_W, ONSET_Z,
+    SOURCE_NUMPAD, SOURCE_STANDARD, funput_add_shortcut, funput_adopt, funput_arm_capitalization,
+    funput_backspace, funput_buffer, funput_clear, funput_clear_shortcuts, funput_configure,
+    funput_engine_free, funput_engine_new, funput_flip_composing, funput_process_char,
+    funput_process_key, funput_process_key_text, funput_set_enabled, funput_set_extra_onsets,
+    funput_set_method, funput_set_shortcut_smart_case, funput_set_shortcuts_enabled,
+    funput_set_shortcuts_in_english,
 };
 pub use sentence::{funput_starts_sentence, funput_starts_word};
 pub use suggestion::{

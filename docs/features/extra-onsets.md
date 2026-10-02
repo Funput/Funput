@@ -2,13 +2,19 @@
 
 ## Trạng thái
 
-Có trong core (`funput-core`) và engine (`funput-engine`), **mặc định tắt**.
-Android có section **Phụ âm đầu mở rộng** ngay sau **Thông minh**: một công tắc
-chính và lựa chọn riêng từng chữ. Áp dụng cho bàn phím, phím vật lý và ô tìm emoji.
-Các tích hợp nền tảng khác được phát triển trên nhánh riêng.
+Có trong core (`funput-core`) và engine (`funput-engine`), **mặc định tắt**. FFI có
+`funput_set_extra_onsets(engine, letters)` với các bit `ONSET_F | ONSET_J | ONSET_W |
+ONSET_Z` (`0` = tắt) — setter riêng, không nới `FunputConfig`.
 
-Mỗi nền tảng đẩy `SyllableRules` vào `EngineConfig` qua setter riêng, không nới
-struct `FunputConfig` hoặc chữ ký JNI `nativeConfigure` hiện có.
+Android dùng setter JNI `nativeSetExtraOnsets(handle, letters)` với contract bit
+`f=1`, `j=2`, `w=4`, `z=8`; không đổi chữ ký `nativeConfigure`.
+
+| Nền tảng | Trạng thái |
+|---|---|
+| macOS | Settings → Cách gõ → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; xuất/nhập qua `preferences.extraOnsets` |
+| iOS | Cài đặt → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; lưu qua App Group, áp dụng cho bàn phím và ô tìm emoji |
+| Android | Cài đặt → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; lưu qua Preferences DataStore, áp dụng cho bàn phím, phím vật lý và ô tìm emoji |
+| Windows, Linux | Chưa có |
 
 ## Mục tiêu
 
@@ -132,6 +138,25 @@ Thử tay:
 cargo run -p funput-cli -- dev run -m telex --extra-onsets "zoo jowf fair was Juts food "
 cargo run -p funput-cli -- dev run -m vni --extra-onsets "zo6 jo72 fa3i wa1 Ju1t win10 "
 ```
+
+### Kiểm tra tay trên iOS
+
+- Cài đặt → **Phụ âm đầu mở rộng**: mặc định tắt; bật hiện bốn switch và chọn cả bốn
+  chữ. Bỏ chữ cuối cùng tự tắt switch chính; bật lại chọn cả bốn.
+- Chỉ giữ `z`, dùng Telex trong Notes: `zoo ` → `zô `, `fair ` → `fair `.
+  Bật thêm `f`: `fair ` → `fải `, `food ` vẫn là `food `;
+  `fast ` → `fát `, `fasst ` → `fast `.
+- Bật cả bốn: Telex `jowf was ` → `jờ wá `; VNI `zo6 jo72 ` → `zô jờ `.
+  Telex nâng cao `wa` → `ưa`, `wwas` → `wá`; footer giải thích `w`/`ww` chỉ hiện
+  khi chọn Telex nâng cao và bật `w`.
+- Đổi lựa chọn trong app, quay lại Notes và mở bàn phím: lựa chọn mới có hiệu lực.
+  Đóng/mở app vẫn giữ lựa chọn; tắt switch chính trả về cách gõ trước đây.
+- Mở ô tìm emoji khi bật `z`: `zoo` → `zô`; tắt và mở lại ô tìm kiếm:
+  `zoo` giữ nguyên. Chuyển sang tiếng Anh giữ nguyên `zoo`, `fair` ở cả hai nơi.
+- Kiểm tra Light/Dark, Dynamic Type lớn và VoiceOver đọc tên/trạng thái từng switch.
+  Bật Reduce Motion để xác nhận các dòng chữ hiện/ẩn không có animation.
+- Kiểm tra trên iOS 26 trở lên và một iOS cũ: control/nền theo Settings hiện tại,
+  đầy đủ chức năng và không có lỗi availability.
 
 ## Tích hợp Android
 

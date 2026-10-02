@@ -42,6 +42,9 @@ struct ConfigDocument: Codable {
         /// re-cased to match. Absent means on — see `CONFIG_FORMAT.md`.
         var shortcutSmartCase: Bool?
         var shortcutsInEnglish: Bool?
+        /// Letters admitted as extra initial consonants, spelled out (`"zf"`; `""` =
+        /// none). Absent means leave the local choice — see `CONFIG_FORMAT.md`.
+        var extraOnsets: String?
     }
 
     /// A text-expansion shortcut without the local UUID (recreated on import).

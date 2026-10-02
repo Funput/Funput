@@ -116,7 +116,10 @@ let package = Package(
         ),
         .testTarget(
             name: "FunputEngineTests",
-            dependencies: ["FunputEngine"]
+            dependencies: [
+                "FunputEngine",
+                .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
+            ]
         ),
         .testTarget(
             name: "PersonalSuggestionsTests",
@@ -124,7 +127,7 @@ let package = Package(
         ),
         .testTarget(
             name: "KeyboardInputTests",
-            dependencies: ["KeyboardInput", "KeyboardLayout", "FunputShared"]
+            dependencies: ["KeyboardInput", "KeyboardLayout", "FunputShared", "FunputEngine"]
         ),
         .testTarget(
             name: "KeyboardTouchCoreTests",
