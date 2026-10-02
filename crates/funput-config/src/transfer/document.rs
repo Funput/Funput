@@ -64,6 +64,10 @@ pub struct Preferences {
     pub spell_check: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_capitalize: Option<bool>,
+    /// Letters admitted as extra initial consonants, spelled out (`"zj"`; `""` =
+    /// none). Portable: it decides how a word is spelled, not how an OS behaves.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extra_onsets: Option<String>,
     /// Whether the gõ tắt rows carried in `shortcuts` actually expand. Portable
     /// because it is a typing preference, not a per-OS one.
     #[serde(default, skip_serializing_if = "Option::is_none")]

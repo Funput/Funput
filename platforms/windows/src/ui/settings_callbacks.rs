@@ -12,6 +12,9 @@ use super::models;
 
 mod config;
 mod content;
+mod extra_onsets;
+
+pub(super) use extra_onsets::show as show_extra_onsets;
 
 pub(super) fn wire(window: &SettingsWindow) {
     let weak = window.as_weak();
@@ -119,6 +122,7 @@ pub(super) fn wire(window: &SettingsWindow) {
     });
 
     content::wire(window);
+    extra_onsets::wire(window);
 
     window.on_open_link(|url| commands::open_url(url.as_str()));
     window.on_check_update(commands::check_for_updates);

@@ -31,5 +31,6 @@ pub mod unikey;
 mod test_support;
 
 pub use settings::{
-    ExcludedApp, FlipHotkey, Hotkey, KeyCombo, Method, NO_KEY, Settings, Shortcut, ToneStyle,
+    ExcludedApp, ExtraOnsetLetters, FlipHotkey, Hotkey, KeyCombo, Method, NO_KEY, OnsetLetter,
+    Settings, Shortcut, ToneStyle,
 };

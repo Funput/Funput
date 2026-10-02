@@ -3,7 +3,7 @@
 //! Each one exists so a Slint callback can name a single function instead of
 //! reaching into `shell` and converting types itself.
 
-use funput_config::{FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
+use funput_config::{ExtraOnsetLetters, FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
 
 use crate::shared::shell;
 
@@ -29,6 +29,10 @@ pub fn set_spell_check(on: bool) {
 
 pub fn set_auto_capitalize(on: bool) {
     shell::set_auto_capitalize(on);
+}
+
+pub fn set_extra_onsets(letters: ExtraOnsetLetters) {
+    shell::set_extra_onsets(letters);
 }
 
 pub fn set_shortcuts_enabled(on: bool) {

@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 
 use super::*;
-use crate::settings::{FlipHotkey, Hotkey, KeyCombo, Method, Settings, Shortcut, ToneStyle};
+use crate::settings::{
+    ExtraOnsetLetters, FlipHotkey, Hotkey, KeyCombo, Method, Settings, Shortcut, ToneStyle,
+};
 
 fn source() -> Source {
     Source {
@@ -276,4 +278,60 @@ fn rejects_foreign_schema() {
     let doc: ConfigDocument =
         serde_json::from_str(r#"{"schema":"something.else","version":1}"#).unwrap();
     assert_ne!(doc.schema, SCHEMA_ID);
+}
+
+// --- extra onsets ------------------------------------------------------------
+
+/// The letters travel as `preferences.extraOnsets`, spelled out — the same form
+/// macOS writes, so a file crosses between the two.
+#[test]
+fn extra_onsets_survive_export_and_import() {
+    let exported = Settings {
+        extra_onsets: ExtraOnsetLetters::from_id("jf"),
+        ..Settings::default()
+    };
+    let json = serde_json::to_string(&to_document(&exported, source())).unwrap();
+    assert!(json.contains("\"extraOnsets\":\"fj\""), "{json}");
+
+    let mut local = Settings::default();
+    let doc: ConfigDocument = serde_json::from_str(&json).unwrap();
+    apply(&mut local, &doc);
+    assert_eq!(local.extra_onsets, ExtraOnsetLetters::from_id("fj"));
+}
+
+/// An export written before the option existed says nothing about it, and silence
+/// means "no opinion" — the user's letters stay.
+#[test]
+fn a_file_without_extra_onsets_keeps_the_local_letters() {
+    let mut s = Settings {
+        extra_onsets: ExtraOnsetLetters::from_id("z"),
+        ..Settings::default()
+    };
+    let doc: ConfigDocument = serde_json::from_str(
+        r#"{"schema":"app.funput.config","version":1,"preferences":{"inputMethod":"vni"}}"#,
+    )
+    .unwrap();
+    apply(&mut s, &doc);
+    assert_eq!(s.extra_onsets, ExtraOnsetLetters::from_id("z"));
+}
+
+/// An empty value is an opinion (none), and a letter this build does not know is
+/// skipped without costing the ones it does.
+#[test]
+fn extra_onsets_import_empty_as_none_and_skip_unknown_letters() {
+    let import = |value: &str| {
+        let mut s = Settings {
+            extra_onsets: ExtraOnsetLetters::ALL,
+            ..Settings::default()
+        };
+        let json = format!(
+            r#"{{"schema":"app.funput.config","version":1,"preferences":{{"extraOnsets":"{value}"}}}}"#
+        );
+        let doc: ConfigDocument = serde_json::from_str(&json).unwrap();
+        apply(&mut s, &doc);
+        s.extra_onsets
+    };
+    assert_eq!(import(""), ExtraOnsetLetters::NONE);
+    assert_eq!(import("zxq"), ExtraOnsetLetters::from_id("z"));
+    assert_eq!(import("WJ"), ExtraOnsetLetters::from_id("wj"));
 }

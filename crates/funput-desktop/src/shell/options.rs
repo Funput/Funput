@@ -1,6 +1,6 @@
 //! The individual setting writes the Settings UI drives. Each persists.
 
-use funput_config::{FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
+use funput_config::{ExtraOnsetLetters, FlipHotkey, Hotkey, KeyCombo, Method, ToneStyle};
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
 
 use super::ShellState;
@@ -35,6 +35,13 @@ impl ShellState {
 
     pub fn set_auto_capitalize(&mut self, on: bool) {
         self.update_config(|s| s.auto_capitalize = on);
+    }
+
+    /// Admit `letters` as initial consonants (`zô`, `fải`, `wá`, `jờ`); `NONE` is
+    /// native spelling. The whole set, so a single switch and a per-letter pick are
+    /// the same write.
+    pub fn set_extra_onsets(&mut self, letters: ExtraOnsetLetters) {
+        self.update_config(|s| s.extra_onsets = letters);
     }
 
     /// Turn gõ tắt expansion on or off. The table itself is left alone, so the rows

@@ -14,7 +14,8 @@ Android dùng setter JNI `nativeSetExtraOnsets(handle, letters)` với contract 
 | macOS | Settings → Cách gõ → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; xuất/nhập qua `preferences.extraOnsets` |
 | iOS | Cài đặt → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; lưu qua App Group, áp dụng cho bàn phím và ô tìm emoji |
 | Android | Cài đặt → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; lưu qua Preferences DataStore, áp dụng cho bàn phím, phím vật lý và ô tìm emoji |
-| Windows, Linux | Chưa có |
+| Windows | Cài đặt → Cách gõ → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; xuất/nhập qua `preferences.extraOnsets`. Link thẳng Rust, không qua FFI — xem [Tích hợp Windows](#tích-hợp-windows) |
+| Linux | Chưa có |
 
 ## Mục tiêu
 
@@ -198,3 +199,48 @@ cargo run -p funput-cli -- dev run -m vni --extra-onsets "zo6 jo72 fa3i wa1 Ju1t
 Test hồi quy Kotlin, Compose, JNI instrumented và Rust được bổ sung cho tích
 hợp này. Build/compile source test có thể chạy độc lập; không cần chạy test để
 dựng APK. Xem lệnh build trong README Android.
+
+## Tích hợp Windows
+
+Windows link thẳng Rust nên không qua FFI. Ba tầng, mỗi tầng một việc:
+
+- **`funput-config`** — `ExtraOnsetLetters` (cùng tên với macOS) là tập các
+  `OnsetLetter` (`Z`, `F`, `W`, `J`), lưu trong `settings.json` ở trường `extraOnsets`
+  và xuất/nhập ở `preferences.extraOnsets`, cả hai cùng dạng chữ viết ra (`"zj"`).
+  Bit bên trong là private, không bao giờ ghi ra đĩa, nên không dính tới bit của core
+  hay bit wire `ONSET_*` của FFI. Thiếu trường = không chữ nào (file cũ giữ hành vi
+  cũ); nhập file không có trường thì giữ lựa chọn cục bộ; chữ lạ bị bỏ qua. Thêm một
+  chữ mới (vd `dz`) là thêm một biến thể `OnsetLetter` — các `match` đầy đủ sẽ chỉ ra
+  mọi chỗ cần sửa, kể cả ví dụ hiển thị trên UI.
+- **`funput-desktop`** — `ShellState::sync_engine_config` dựng
+  `SyllableRules::STANDARD.with_extra_onsets(..)` từ settings, nên thao tác trong Cài
+  đặt, nhập cấu hình và `reload_settings` (process nền đọc lại file do process Cài đặt
+  ghi) đều tới engine bằng một đường. `set_extra_onsets` nhận cả tập.
+- **`platforms/windows`** — mục `ui/pages/typing/extra_onsets/` (Slint) nói chuyện với
+  Rust qua global `ExtraOnsetsState`, không luồn prop qua `SettingsWindow` →
+  `SettingsContent` → `TypingPage`. Rust là nguồn sự thật
+  (`src/ui/settings_callbacks/extra_onsets.rs`): mỗi cú bấm ghi tập mới rồi đẩy lại
+  trạng thái, nên bỏ chữ cuối thì công tắc tự tắt mà UI không phải giữ luật riêng. Ô
+  "Bung thành" của gõ tắt (`FieldComposer`) dựng lại từ toàn bộ `Settings`, nên gõ
+  `zô` được y như ngoài hệ thống.
+
+### Kiểm tra tay Windows
+
+Chạy với cấu hình tạm để không đụng cấu hình thật:
+
+```powershell
+$env:FUNPUT_CONFIG = "$env:TEMP\funput-test\settings.json"
+cargo run                 # process nền: hook + tray
+cargo run -- --settings   # cửa sổ Cài đặt
+```
+
+- Cài đặt → Cách gõ → Phụ âm đầu mở rộng: mặc định tắt; bật → cả bốn ô được chọn;
+  chỉ giữ `z`; bỏ ô cuối → công tắc tắt và danh sách thu lại. Mở lại Cài đặt giữ lựa chọn.
+- Notepad, Telex: `zoo ` → `zô `, `fair ` → `fair `; chọn thêm `f`: `fair ` → `fải `,
+  `food ` giữ nguyên, `fasst ` → `fast `.
+- VNI: `zo6 jo72 ` → `zô jờ `. Telex nâng cao + `w`: `wa` → `ưa`, `wwas` → `wá`; dòng
+  gợi ý `ww` chỉ hiện khi đang dùng Telex nâng cao và có chọn `w`.
+- Gõ tắt → ô "Bung thành": gõ `zoo` ra `zô` khi đã chọn `z`.
+- Dữ liệu → Xuất rồi Nhập trên một cấu hình khác: giữ `"extraOnsets"`; nhập file cũ
+  không có trường thì lựa chọn hiện tại giữ nguyên.
+- Sáng/Tối, đổi màu nhấn của Windows, Narrator đọc đúng tên và trạng thái từng ô.

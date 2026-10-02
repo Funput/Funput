@@ -97,6 +97,7 @@ pub(super) fn populate(window: &SettingsWindow) {
     window.set_eager_restore(settings.eager_restore);
     window.set_spell_check(settings.spell_check);
     window.set_auto_capitalize(settings.auto_capitalize);
+    settings_callbacks::show_extra_onsets(window, settings.extra_onsets);
     window.set_auto_english_layout(settings.auto_english_on_foreign_layout);
     window.set_remember_per_app(settings.app_language_memory_enabled);
     window.set_launch_at_login(settings.launch_at_login);
