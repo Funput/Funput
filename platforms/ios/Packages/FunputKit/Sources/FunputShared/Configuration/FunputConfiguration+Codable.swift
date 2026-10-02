@@ -18,6 +18,7 @@ extension FunputConfiguration {
         config.spellCheck = try container.decodeIfPresent(Bool.self, forKey: .spellCheck) ?? config.spellCheck
         config.smartRestore = try container.decodeIfPresent(Bool.self, forKey: .smartRestore) ?? config.smartRestore
         config.eagerRestore = try container.decodeIfPresent(Bool.self, forKey: .eagerRestore) ?? config.eagerRestore
+        config.extraOnsets = try container.decodeIfPresent(ExtraOnsetLetters.self, forKey: .extraOnsets) ?? config.extraOnsets
         config.autoCapitalize = try container.decodeIfPresent(Bool.self, forKey: .autoCapitalize) ?? config.autoCapitalize
         config.selectedThemeID = try container.decodeIfPresent(String.self, forKey: .selectedThemeID) ?? config.selectedThemeID
         config.isHapticFeedbackEnabled = try container.decodeIfPresent(Bool.self, forKey: .isHapticFeedbackEnabled) ?? config.isHapticFeedbackEnabled

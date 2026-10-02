@@ -9,7 +9,8 @@ ONSET_Z` (`0` = tắt) — setter riêng, không nới `FunputConfig`.
 | Nền tảng | Trạng thái |
 |---|---|
 | macOS | Settings → Cách gõ → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; xuất/nhập qua `preferences.extraOnsets` |
-| Windows, Linux, iOS, Android | Chưa có (JNI cần setter tương ứng) |
+| iOS | Cài đặt → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; lưu qua App Group, áp dụng cho bàn phím và ô tìm emoji |
+| Windows, Linux, Android | Chưa có (Android/JNI cần setter tương ứng) |
 
 ## Mục tiêu
 
@@ -133,3 +134,22 @@ Thử tay:
 cargo run -p funput-cli -- dev run -m telex --extra-onsets "zoo jowf fair was Juts food "
 cargo run -p funput-cli -- dev run -m vni --extra-onsets "zo6 jo72 fa3i wa1 Ju1t win10 "
 ```
+
+### Kiểm tra tay trên iOS
+
+- Cài đặt → **Phụ âm đầu mở rộng**: mặc định tắt; bật hiện bốn switch và chọn cả bốn
+  chữ. Bỏ chữ cuối cùng tự tắt switch chính; bật lại chọn cả bốn.
+- Chỉ giữ `z`, dùng Telex trong Notes: `zoo ` → `zô `, `fair ` → `fair `.
+  Bật thêm `f`: `fair ` → `fải `, `food ` vẫn là `food `;
+  `fast ` → `fát `, `fasst ` → `fast `.
+- Bật cả bốn: Telex `jowf was ` → `jờ wá `; VNI `zo6 jo72 ` → `zô jờ `.
+  Telex nâng cao `wa` → `ưa`, `wwas` → `wá`; footer giải thích `w`/`ww` chỉ hiện
+  khi chọn Telex nâng cao và bật `w`.
+- Đổi lựa chọn trong app, quay lại Notes và mở bàn phím: lựa chọn mới có hiệu lực.
+  Đóng/mở app vẫn giữ lựa chọn; tắt switch chính trả về cách gõ trước đây.
+- Mở ô tìm emoji khi bật `z`: `zoo` → `zô`; tắt và mở lại ô tìm kiếm:
+  `zoo` giữ nguyên. Chuyển sang tiếng Anh giữ nguyên `zoo`, `fair` ở cả hai nơi.
+- Kiểm tra Light/Dark, Dynamic Type lớn và VoiceOver đọc tên/trạng thái từng switch.
+  Bật Reduce Motion để xác nhận các dòng chữ hiện/ẩn không có animation.
+- Kiểm tra trên iOS 26 trở lên và một iOS cũ: control/nền theo Settings hiện tại,
+  đầy đủ chức năng và không có lỗi availability.
