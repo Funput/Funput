@@ -2,7 +2,7 @@
 //! and change one piece of it. Every setter persists — see
 //! `funput_desktop::ShellState`, which owns the actual rules.
 
-use funput_config::{FlipHotkey, Hotkey, KeyCombo, Settings, Shortcut};
+use funput_config::{ExtraOnsetLetters, FlipHotkey, Hotkey, KeyCombo, Settings, Shortcut};
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
 
 use super::with;
@@ -45,12 +45,6 @@ pub fn can_add_shortcut() -> bool {
     with(|s| s.can_add_shortcut())
 }
 
-/// The user's current input method + tone style, for the in-process composer that
-/// the Settings window's gõ tắt field uses (it can't go through the global hook).
-pub fn method_and_tone() -> (InputMethod, CoreToneStyle) {
-    with(|s| (s.method(), s.tone_style()))
-}
-
 // --- writes (each persists) ------------------------------------------------
 
 pub fn reload_settings() -> bool {
@@ -79,6 +73,9 @@ pub fn set_spell_check(on: bool) {
 }
 pub fn set_auto_capitalize(on: bool) {
     with(|s| s.set_auto_capitalize(on));
+}
+pub fn set_extra_onsets(letters: ExtraOnsetLetters) {
+    with(|s| s.set_extra_onsets(letters));
 }
 pub fn set_shortcuts_enabled(on: bool) {
     with(|s| s.set_shortcuts_enabled(on));

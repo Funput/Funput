@@ -90,8 +90,8 @@ fn update_shortcut(
 fn wire_composer(window: &SettingsWindow) {
     let compose = window.global::<Compose>();
     compose.on_reset(|text| {
-        let (method, tone) = shell::method_and_tone();
-        COMPOSER.with(|composer| composer.borrow_mut().reset(text.as_str(), method, tone));
+        let settings = shell::snapshot();
+        COMPOSER.with(|composer| composer.borrow_mut().reset(text.as_str(), &settings));
     });
     compose.on_key(|text| {
         let character = text.chars().next().unwrap_or('\0');
