@@ -32,6 +32,7 @@
 | ⌨️ **Ba kiểu gõ** | Telex · **Telex nâng cao** (thêm `w` đầu từ và phím tắt `[` `]`) · VNI |
 | 🔤 **Kiểu đặt dấu** | Truyền thống (`hòa`, `khỏe`) hoặc hiện đại (`hoà`, `khoẻ`) |
 | 🧠 **Gõ thông minh** | Tự khôi phục tiếng Anh · khôi phục tức thì · kiểm tra chính tả · tự động viết hoa |
+| 🔠 **Phụ âm đầu mở rộng** | Cho phép `z`, `f`, `w`, `j` đầu từ (`zô`, `fải`, `wá`, `jờ`), chọn từng chữ — mặc định tắt |
 | ✂️ **Gõ tắt** | Bảng viết tắt tự bung, tuỳ chọn khớp cả hoa lẫn thường |
 | 🔄 **Chuyển mã** | Đổi qua lại giữa Unicode dựng sẵn, Unicode tổ hợp, TCVN3 (ABC) và VNI-Windows |
 | ⚙️ **App Cài đặt GTK4** | Dùng chung cho cả hai shell, giao diện libadwaita |
@@ -299,9 +300,12 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
     settings.h              Model mọi shell đều đọc, gồm cả công tắc gõ tắt
     lookup.cpp              File nằm đâu; loại trừ theo app
     io.cpp                  Parse và lưu (JSON)
+    io/names.h/.cpp         Tên wire của từng enum (telex, ctrl_space…)
+    onsets/letters.h/.cpp   Phụ âm đầu mở rộng z/f/w/j (`extraOnsets`)
     watch.h/.cpp            Watcher inotify để nạp lại tức thì
   ffi/                    C ABI của funput-ffi
     handle.h                Bọc RAII quanh handle của engine
+    onsets.h                Bộ chữ phụ âm đầu -> mặt nạ `ONSET_*`
     utf8.h                  Chuyển đổi UTF-8 <-> UTF-32
   tests/                  doctest, cây thư mục soi gương phần trên
 fcitx5/src/             Addon Fcitx5 -> libfunput.so
@@ -315,6 +319,7 @@ settings-gtk/           App Cài đặt GTK4 + libadwaita (crate cargo riêng,
                         và là gói riêng — xem mục Build)
   src/settings_window/    mỗi trang preferences một submodule
     shortcuts/              công tắc gõ tắt, các hàng, trạng thái rỗng
+    typing/extra_onsets/    phụ âm đầu mở rộng: quy tắc bấm, một dòng mỗi chữ, chú thích
   src/convert/            cửa sổ Chuyển mã — xem bên dưới
     ui/casing/              thanh Kiểu chữ: các chip, và hàng "Đang áp"
 packaging/              hai file .desktop, metadata kho apt/dnf/pacman
