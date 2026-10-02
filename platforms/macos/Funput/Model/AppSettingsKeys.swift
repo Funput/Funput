@@ -17,5 +17,19 @@ extension AppSettings {
         static let shortcutsInEnglish = "shortcutsInEnglish"
         static let shortcutsEnabled = "shortcutsEnabled"
         static let shortcutSmartCase = "shortcutSmartCase"
+        static let extraOnsets = "extraOnsets"
     }
+
+    /// Preferences that default to on. `UserDefaults.bool` reads a missing key as
+    /// false, so these are registered before the first read.
+    static let registeredDefaults: [String: Any] = [
+        Keys.smartEnglishRestore: true,
+        Keys.eagerRestore: true,
+        Keys.showMenuBarIcon: true,
+        Keys.vietnameseEnabled: true,
+        Keys.retoneAfterBackspace: true,
+        Keys.shortcutsEnabled: true,
+        Keys.shortcutsInEnglish: true,
+        Keys.shortcutSmartCase: true,
+    ]
 }

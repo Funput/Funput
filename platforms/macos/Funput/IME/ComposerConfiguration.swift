@@ -10,6 +10,7 @@ struct ComposerConfiguration: Equatable {
     let eagerRestore: Bool
     let spellCheckEnabled: Bool
     let autoCapitalizeEnabled: Bool
+    let extraOnsets: ExtraOnsetLetters
     let shortcutsEnabled: Bool
     let shortcutSmartCase: Bool
     let shortcutsInEnglish: Bool
@@ -22,6 +23,7 @@ struct ComposerConfiguration: Equatable {
         eagerRestore = settings.eagerRestore
         spellCheckEnabled = settings.spellCheckEnabled
         autoCapitalizeEnabled = settings.autoCapitalizeEnabled
+        extraOnsets = settings.extraOnsets
         shortcutsEnabled = settings.shortcutsEnabled
         shortcutSmartCase = settings.shortcutSmartCase
         shortcutsInEnglish = settings.shortcutsInEnglish
@@ -35,6 +37,7 @@ struct ComposerConfiguration: Equatable {
         eagerRestore: Bool = true,
         spellCheckEnabled: Bool = false,
         autoCapitalizeEnabled: Bool = false,
+        extraOnsets: ExtraOnsetLetters = [],
         shortcutsEnabled: Bool = true,
         shortcutSmartCase: Bool = true,
         shortcutsInEnglish: Bool = true
@@ -46,6 +49,7 @@ struct ComposerConfiguration: Equatable {
         self.eagerRestore = eagerRestore
         self.spellCheckEnabled = spellCheckEnabled
         self.autoCapitalizeEnabled = autoCapitalizeEnabled
+        self.extraOnsets = extraOnsets
         self.shortcutsEnabled = shortcutsEnabled
         self.shortcutSmartCase = shortcutSmartCase
         self.shortcutsInEnglish = shortcutsInEnglish
@@ -65,11 +69,13 @@ extension FunputComposer {
             )
         )
         // None of these ride the by-value `FunputConfig`: `enabled` is a runtime
-        // toggle, and the gõ tắt switches are kept off the C struct for ABI stability.
+        // toggle, and the gõ tắt switches and extra onsets are kept off the C struct for
+        // ABI stability.
         // Order does not matter — `configure` edits the engine config, never replaces it.
         setShortcutsEnabled(configuration.shortcutsEnabled)
         setShortcutSmartCase(configuration.shortcutSmartCase)
         setShortcutsInEnglish(configuration.shortcutsInEnglish)
+        setExtraOnsets(configuration.extraOnsets)
         setEnabled(configuration.enabled)
     }
 }

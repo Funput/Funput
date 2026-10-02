@@ -2,10 +2,14 @@
 
 ## Trạng thái
 
-Có trong core (`funput-core`) và engine (`funput-engine`), **mặc định tắt**. Chưa
-nền tảng nào có công tắc trong phần cài đặt; khi tích hợp, mỗi nền tảng chỉ cần đẩy
-một giá trị `SyllableRules` vào `EngineConfig` (FFI/JNI sẽ thêm một setter riêng,
-không nới struct `FunputConfig` / chữ ký JNI hiện có).
+Có trong core (`funput-core`) và engine (`funput-engine`), **mặc định tắt**. FFI có
+`funput_set_extra_onsets(engine, letters)` với các bit `ONSET_F | ONSET_J | ONSET_W |
+ONSET_Z` (`0` = tắt) — setter riêng, không nới `FunputConfig`.
+
+| Nền tảng | Trạng thái |
+|---|---|
+| macOS | Settings → Cách gõ → "Phụ âm đầu mở rộng": một công tắc + chọn từng chữ; xuất/nhập qua `preferences.extraOnsets` |
+| Windows, Linux, iOS, Android | Chưa có (JNI cần setter tương ứng) |
 
 ## Mục tiêu
 

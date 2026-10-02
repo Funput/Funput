@@ -42,7 +42,7 @@
 |---|---|
 | ⌨️ **Ba kiểu gõ** | Telex · **Telex nâng cao** (thêm `w` đầu từ và phím tắt `[` `]`) · VNI |
 | 🔤 **Kiểu đặt dấu** | Truyền thống (`hòa`, `khỏe`) hoặc hiện đại (`hoà`, `khoẻ`) |
-| 🧠 **Gõ thông minh** | Tự khôi phục từ tiếng Anh · khôi phục tức thì · kiểm tra chính tả · tự động viết hoa |
+| 🧠 **Gõ thông minh** | Tự khôi phục từ tiếng Anh · khôi phục tức thì · kiểm tra chính tả · tự động viết hoa · phụ âm đầu mở rộng z/f/w/j (chọn từng chữ) |
 | ↩️ **Bỏ dấu sau Backspace** | Xoá lùi rồi gõ dấu khác, Funput đặt lại dấu cho đúng từ |
 | 🗂️ **Nhớ theo ứng dụng** | Bật tiếng Việt ở Pages, tắt ở Terminal — Funput tự chuyển khi bạn đổi app |
 | ✂️ **Gõ tắt** | Bảng viết tắt tự bung, tuỳ chọn khớp cả hoa lẫn thường |
