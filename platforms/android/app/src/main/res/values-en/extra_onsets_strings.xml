@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="extra_onsets_section">Extra initial consonants</string>
+    <string name="extra_onsets_enabled_title">Allow z, f, w, j</string>
+    <string name="extra_onsets_enabled_summary">Compose accents in informal spellings, loanwords and some names. Choose individual letters below.</string>
+    <string name="extra_onsets_letter_title">Consonant %1$s</string>
+    <string name="extra_onsets_example_z">Examples: zô, zui</string>
+    <string name="extra_onsets_example_f">Examples: fải, fan</string>
+    <string name="extra_onsets_example_w">Examples: wá, wê</string>
+    <string name="extra_onsets_example_j">Examples: jờ, Cư Jút</string>
+    <string name="extra_onsets_warning">Some English words with Vietnamese rhymes gain accents: fast → fát when f is enabled. Repeat the tone key to keep English: fasst → fast.</string>
+    <string name="extra_onsets_advanced_w_hint">Advanced Telex still uses initial w for ư (wa → ưa). Type ww for consonant w: wwas → wá.</string>
+    <string name="extra_onsets_save_error">Could not save your selection. Your previous settings are preserved; please try again.</string>
+</resources>

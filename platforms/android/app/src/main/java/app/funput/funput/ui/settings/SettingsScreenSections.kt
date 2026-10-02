@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import app.funput.funput.ui.settings.clipboard.ClipboardSection
 import app.funput.funput.ui.settings.data.DataSection
+import app.funput.funput.ui.settings.extraonsets.ExtraOnsetsSection
 import app.funput.funput.ui.settings.feedback.FeedbackSection
 import app.funput.funput.ui.settings.hardware.HardwareKeyboardSection
 import app.funput.funput.ui.settings.keyboard.KeyboardPreviewCard
@@ -76,6 +77,7 @@ internal fun LazyListScope.settingsSections(state: SettingsScreenState, onOpenPi
             onReturnsToLettersChanged = state.onReturnsToLettersChanged,
         )
     }
+    item(key = "extra-onsets") { ExtraOnsetsSection(state.extraOnsets) }
     item(key = "feedback") {
         FeedbackSection(
             hapticsEnabled = state.hapticsEnabled,
