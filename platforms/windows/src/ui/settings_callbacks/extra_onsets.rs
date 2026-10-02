@@ -40,7 +40,7 @@ pub(in crate::ui) fn show(window: &SettingsWindow, letters: ExtraOnsetLetters) {
         .into_iter()
         .map(|letter| OnsetChoice {
             letter: letter.symbol().to_string().into(),
-            examples: examples(letter).into(),
+            examples: letter.examples().into(),
             on: letters.contains(letter),
         })
         .collect();
@@ -53,16 +53,5 @@ fn apply(weak: &slint::Weak<SettingsWindow>, letters: ExtraOnsetLetters) {
     commands::set_extra_onsets(letters);
     if let Some(window) = weak.upgrade() {
         show(&window, letters);
-    }
-}
-
-/// What each letter lets the user write. Exhaustive, so a letter added to
-/// `OnsetLetter` cannot reach this screen without its examples.
-fn examples(letter: OnsetLetter) -> &'static str {
-    match letter {
-        OnsetLetter::Z => "zô, zui",
-        OnsetLetter::F => "fải, fan",
-        OnsetLetter::W => "wá, wê",
-        OnsetLetter::J => "jờ, Cư Jút",
     }
 }
