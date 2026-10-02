@@ -68,3 +68,33 @@ TEST_CASE("save keeps the gõ tắt switches") {
     CHECK_FALSE(reloaded.shortcutSmartCase);
     CHECK_FALSE(reloaded.shortcutsInEnglish);
 }
+
+// The addon never edits the letters, so a VI/EN toggle's save must leave the key
+// to the merge: writing its own copy back could undo a newer choice.
+TEST_CASE("save never writes extraOnsets back over the file's") {
+    writeSettingsFile(R"({"method": "telex", "extraOnsets": "z"})");
+    Settings settings;
+    REQUIRE(settings.reload());
+    // The Settings app saves new letters before this process has reloaded.
+    writeSettingsFile(R"({"method": "telex", "extraOnsets": "fz"})");
+    settings.enabled = false;
+    settings.save();
+
+    Settings reloaded;
+    REQUIRE(reloaded.reload());
+    CHECK(reloaded.extraOnsets.id() == "zf");
+    CHECK_FALSE(reloaded.enabled);
+}
+
+// A file without the key, or with anything but a string there, reads as none —
+// the pre-feature spelling — instead of failing the rest of the file.
+TEST_CASE("extraOnsets reads as none when absent or not a string") {
+    writeSettingsFile(R"({"method": "vni", "extraOnsets": 7})");
+    Settings settings;
+    REQUIRE(settings.reload());
+    CHECK(settings.method == Method::Vni);
+    CHECK(settings.extraOnsets.empty());
+    writeSettingsFile(R"({"method": "telex"})");
+    REQUIRE(settings.reload());
+    CHECK(settings.extraOnsets.empty());
+}

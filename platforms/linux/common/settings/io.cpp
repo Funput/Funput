@@ -5,62 +5,19 @@
 
 #include <nlohmann/json.hpp>
 
+#include "settings/io/names.h"
+
 namespace funput {
 namespace {
 using json = nlohmann::json;
+using namespace names;
 
-Method parseMethod(const std::string &value) {
-    if (value == "telex") return Method::Telex;
-    if (value == "telex_advanced") return Method::TelexAdvanced;
-    return Method::Vni;
-}
-
-const char *methodString(Method method) {
-    switch (method) {
-    case Method::Telex: return "telex";
-    case Method::TelexAdvanced: return "telex_advanced";
-    case Method::Vni: return "vni";
-    }
-    return "vni";
-}
-
-ToneStyle parseTone(const std::string &value) {
-    return value == "modern" ? ToneStyle::Modern : ToneStyle::Traditional;
-}
-
-const char *toneString(ToneStyle tone) {
-    return tone == ToneStyle::Modern ? "modern" : "traditional";
-}
-
-Hotkey parseHotkey(const std::string &value) {
-    if (value == "ctrl_space") return Hotkey::CtrlSpace;
-    if (value == "alt_shift") return Hotkey::AltShift;
-    if (value == "super_space") return Hotkey::SuperSpace;
-    if (value == "ctrl_shift_space") return Hotkey::CtrlShiftSpace;
-    return Hotkey::CtrlBacktick;
-}
-
-const char *hotkeyString(Hotkey hotkey) {
-    switch (hotkey) {
-    case Hotkey::CtrlSpace: return "ctrl_space";
-    case Hotkey::AltShift: return "alt_shift";
-    case Hotkey::SuperSpace: return "super_space";
-    case Hotkey::CtrlShiftSpace: return "ctrl_shift_space";
-    case Hotkey::CtrlBacktick: return "ctrl_backtick";
-    }
-    return "ctrl_backtick";
-}
-
-FlipHotkey parseFlip(const std::string &value) {
-    if (value == "ctrl_shift_z") return FlipHotkey::CtrlShiftZ;
-    if (value == "ctrl_shift_x") return FlipHotkey::CtrlShiftX;
-    return FlipHotkey::Off;
-}
-
-const char *flipString(FlipHotkey hotkey) {
-    if (hotkey == FlipHotkey::CtrlShiftZ) return "ctrl_shift_z";
-    if (hotkey == FlipHotkey::CtrlShiftX) return "ctrl_shift_x";
-    return "off";
+// Absent, or anything but a string, is no letter: that is how a file written
+// before the key existed spelled, and the Settings app always writes it.
+ExtraOnsetLetters parseOnsets(const json &data) {
+    const auto value = data.find("extraOnsets");
+    if (value == data.end() || !value->is_string()) return {};
+    return ExtraOnsetLetters::fromId(value->get<std::string>());
 }
 } // namespace
 
@@ -92,6 +49,7 @@ bool Settings::reload() {
     eagerRestore = data.value("eagerRestore", eagerRestore);
     spellCheck = data.value("spellCheck", spellCheck);
     autoCapitalize = data.value("autoCapitalize", autoCapitalize);
+    extraOnsets = parseOnsets(data);
     nonPreedit = data.value("nonPreedit", nonPreedit);
     shortcutsEnabled = data.value("shortcutsEnabled", shortcutsEnabled);
     shortcutSmartCase = data.value("shortcutSmartCase", shortcutSmartCase);
@@ -111,8 +69,9 @@ bool Settings::reload() {
     return method != previous.method || toneStyle != previous.toneStyle ||
            enabled != previous.enabled || smartRestore != previous.smartRestore ||
            eagerRestore != previous.eagerRestore || spellCheck != previous.spellCheck ||
-           autoCapitalize != previous.autoCapitalize || nonPreedit != previous.nonPreedit ||
-           toggleHotkey != previous.toggleHotkey || flipHotkey != previous.flipHotkey ||
+           autoCapitalize != previous.autoCapitalize || extraOnsets != previous.extraOnsets ||
+           nonPreedit != previous.nonPreedit || toggleHotkey != previous.toggleHotkey ||
+           flipHotkey != previous.flipHotkey ||
            shortcuts != previous.shortcuts || shortcutsEnabled != previous.shortcutsEnabled ||
            shortcutSmartCase != previous.shortcutSmartCase ||
            shortcutsInEnglish != previous.shortcutsInEnglish;
@@ -133,6 +92,9 @@ void Settings::save() const {
     data["eagerRestore"] = eagerRestore;
     data["spellCheck"] = spellCheck;
     data["autoCapitalize"] = autoCapitalize;
+    // Not `extraOnsets`: the addon never changes the letters, so writing its copy
+    // back could only undo a choice the Settings app saved since the last reload,
+    // or drop a letter a newer build wrote. The merge above keeps the key as is.
     data["nonPreedit"] = nonPreedit;
     data["shortcutsEnabled"] = shortcutsEnabled;
     data["shortcutSmartCase"] = shortcutSmartCase;

@@ -12,6 +12,8 @@
 #include <utility>
 #include <vector>
 
+#include "settings/onsets/letters.h"
+
 namespace funput {
 
 // Values are the stable C FFI wire IDs, independent from Settings display order.
@@ -34,6 +36,12 @@ struct Settings {
     // Auto-capitalize ("Tự động viết hoa"): uppercase the first letter at the start of
     // a sentence. Off by default.
     bool autoCapitalize = false;
+    // Phụ âm đầu mở rộng: letters admitted as initial consonants beyond Vietnamese
+    // spelling (`zô`, `fải`, `wá`, `jờ`). None by default, including for a file
+    // written before the key existed — admitting one also lets English with a
+    // Vietnamese rhyme compose (Telex `fast` → `fát`). Owned by the Settings UI:
+    // read here, never written back by `save()`.
+    ExtraOnsetLetters extraOnsets;
     // Non-preedit ("Gõ thẳng vào ứng dụng"): build the word in the document and
     // repair it with a delete, instead of showing a preedit. On by default — both
     // shells perform it, and a client that cannot take a repair is detected and put
