@@ -38,6 +38,11 @@ package, dữ liệu và quyền riêng, không thay bản Play Store. Người 
 và chọn đúng bàn phím test; cấp quyền cho đúng app. Không gỡ app hoặc xoá dữ
 liệu để vượt trở ngại cài đặt. Hai máy vật lý là hai device ID, dù cùng provider.
 
+Sau nghiệm thu, theo yêu cầu người dùng, bản Speech Test đã gỡ khỏi Fold5 và
+đã khôi phục Funput Play Store làm IME. Bảng trên mô tả app dùng trong lượt thử;
+các hướng dẫn debug bên dưới giữ để tái kiểm tra. File tạm/build/run rỗng đã dọn,
+test hồi quy và catalog debug được giữ; xem mục cleanup trong report.
+
 Build bản song song từ `platforms/android/`:
 
 ```bash
