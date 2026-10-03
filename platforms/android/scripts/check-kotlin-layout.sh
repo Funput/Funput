@@ -27,6 +27,8 @@ readonly roots=(
     "$android_root/keyboard-ui/src/androidTest/java/app/funput/funput/keyboard/ui/support"
     "$android_root/ime/src/androidTestRelease/java/app/funput/funput/ime/suggestions"
     "$ime_main/lifecycle"
+    "$ime_main/speech"
+    "$ime_test/speech"
     "$ime_main/suggestions"
     "$ime_test/suggestions"
     "$android_root/ime/src/androidTest/java/app/funput/funput/ime/suggestions"
