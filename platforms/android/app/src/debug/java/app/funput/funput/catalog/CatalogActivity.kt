@@ -22,7 +22,7 @@ class CatalogActivity : ComponentActivity() {
             return
         }
         if (intent.getBooleanExtra("speech_panel", false)) {
-            startActivity(Intent(this, SpeechPanelCatalogActivity::class.java))
+            startActivity(Intent(this, SpeechPanelCatalogActivity::class.java).putExtras(intent))
             finish()
             return
         }

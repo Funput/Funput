@@ -21,20 +21,23 @@ import app.funput.funput.keyboard.ui.speech.SpeechPanelStage
 import app.funput.funput.keyboard.ui.speech.SpeechPanelState
 import app.funput.funput.keyboard.ui.speech.cancelSpeechPanel
 import app.funput.funput.keyboard.utility.KeyboardMicrophoneState
-import app.funput.funput.theme.KeyboardThemes
+import app.funput.funput.theme.LocalKeyboardThemeCatalog
 
 /** Fake-state review surface. It never accesses a recognizer, permission or setup service. */
 class SpeechPanelCatalogActivity : ComponentActivity() {
     private lateinit var keyboard: FunputKeyboardView
     private lateinit var host: LinearLayout
     private var stage = SpeechPanelStage.PREPARING
-    private var dark = false
+    private val themes = LocalKeyboardThemeCatalog.themes
+    private var themeIndex = 0
     private var largeText = false
     private var english = false
     private var oneHanded = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        stage = SpeechPanelStage.entries[intent.getIntExtra("speech_stage", 0).coerceIn(0, 3)]
+        themeIndex = intent.getIntExtra("speech_theme", 0).coerceIn(themes.indices)
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -43,17 +46,17 @@ class SpeechPanelCatalogActivity : ComponentActivity() {
             insets
         }
         root.addView(TextView(this).apply {
-            text = "P4 · State giả · Không thu âm\nBấm mic để mở panel; Back = Huỷ."
+            text = "Speech UI · State giả · Không thu âm\nBấm mic để mở panel; Back = Huỷ."
             setPadding(16, 16, 16, 16)
         })
         root.addView(selector(listOf("Preparing", "Listening", "Finalizing", "Error")) {
             stage = SpeechPanelStage.entries[it]
             if (::keyboard.isInitialized) showState()
-        })
-        root.addView(selector(listOf("Sáng", "Tối")) {
-            dark = it == 1
+        }.apply { setSelection(stage.ordinal) })
+        root.addView(selector(themes.map { it.name }) {
+            themeIndex = it
             if (::keyboard.isInitialized) keyboard.keyboardTheme = theme()
-        })
+        }.apply { setSelection(themeIndex) })
         root.addView(selector(listOf("Tiếng Việt", "Tiếng Anh")) {
             english = it == 1
             if (::keyboard.isInitialized) updateMic()
@@ -102,11 +105,14 @@ class SpeechPanelCatalogActivity : ComponentActivity() {
         host.addView(keyboard, LinearLayout.LayoutParams(-1, -2))
         updateMic()
         updatePlacement()
+        if (intent.getBooleanExtra("speech_show", false)) showState()
+        if (intent.getBooleanExtra("speech_snapshot", false)) snapshotSpeechCatalog(keyboard)
     }
 
     private fun showState() {
         keyboard.speechPanelState = SpeechPanelState(stage, language(),
-            preview = if (stage in listOf(SpeechPanelStage.LISTENING, SpeechPanelStage.FINALIZING))
+            preview = if (!intent.getBooleanExtra("speech_empty", false) &&
+                stage in listOf(SpeechPanelStage.LISTENING, SpeechPanelStage.FINALIZING))
                 "Mẫu: Hôm nay tôi thử nhập bằng giọng nói trong Funput." else "",
             message = if (stage == SpeechPanelStage.ERROR) "Thông báo lỗi mẫu: chưa có model." else null,
             canRetry = true, canOpenSetup = false)
@@ -126,7 +132,7 @@ class SpeechPanelCatalogActivity : ComponentActivity() {
     }
 
     private fun language() = if (english) KeyboardLanguage.ENGLISH else KeyboardLanguage.VIETNAMESE
-    private fun theme() = if (dark) KeyboardThemes.GlassDark else KeyboardThemes.GlassLight
+    private fun theme() = themes[themeIndex].theme
 
     private fun selector(labels: List<String>, selected: (Int) -> Unit) = Spinner(this).apply {
         adapter = ArrayAdapter(this@SpeechPanelCatalogActivity, android.R.layout.simple_spinner_dropdown_item, labels)
