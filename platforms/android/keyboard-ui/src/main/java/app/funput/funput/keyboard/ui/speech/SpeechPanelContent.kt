@@ -1,6 +1,5 @@
 package app.funput.funput.keyboard.ui.speech
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -19,7 +17,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,18 +31,21 @@ internal fun SpeechPanelContent(
     state: SpeechPanelState,
     palette: KeyboardPanelPalette,
     style: SpeechPanelStyle,
+    motionVisible: Boolean,
     onAction: (SpeechPanelAction) -> Unit,
 ) {
     val largeText = LocalDensity.current.fontScale > 1.3f
     Column(Modifier.fillMaxSize().padding(16.dp, 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!largeText) SpeechPanelHeader(state, palette, style)
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+            val orbSize = if (largeText || state.preview.isNotEmpty()) 64.dp
+                else (maxHeight - 56.dp).coerceIn(48.dp, 112.dp)
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).heightIn(min = maxHeight),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)) {
                 if (largeText) SpeechPanelHeader(state, palette, style)
+                SpeechPanelIndicator(state.stage, style, motionVisible, orbSize)
                 if (state.stage == SpeechPanelStage.ERROR || state.preview.isEmpty()) {
-                    SpeechPanelIndicator(state.stage, style)
                     val hint = state.message ?: stringResource(when (state.stage) {
                         SpeechPanelStage.PREPARING -> R.string.speech_panel_preparing_hint
                         SpeechPanelStage.LISTENING -> R.string.speech_panel_listening_hint
@@ -56,15 +56,10 @@ internal fun SpeechPanelContent(
                         TextStyle(Color(palette.readable(palette.secondaryLabel)), 14.sp,
                             lineHeight = 20.sp, textAlign = TextAlign.Center))
                 } else {
-                    Column(Modifier.fillMaxWidth().background(Color(style.cardSurface),
-                        RoundedCornerShape(style.radiusDp.dp)).padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        BasicText(stringResource(R.string.speech_panel_transcript),
-                            style = TextStyle(Color(style.cardSecondary), 11.sp, fontWeight = FontWeight.Medium))
-                        // Hypotheses are readable but never a live region; only the header announces state.
-                        BasicText(state.preview, Modifier.fillMaxWidth(),
-                            TextStyle(Color(style.cardLabel), 18.sp, lineHeight = 26.sp))
-                    }
+                    // Hypotheses never announce continuously; only the header is a live region.
+                    BasicText(state.preview, Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                        TextStyle(Color(palette.readable(palette.label)), 20.sp,
+                            lineHeight = 28.sp, textAlign = TextAlign.Center))
                 }
             }
         }

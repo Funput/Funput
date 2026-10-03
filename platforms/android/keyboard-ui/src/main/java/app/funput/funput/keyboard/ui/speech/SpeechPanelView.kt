@@ -2,6 +2,8 @@ package app.funput.funput.keyboard.ui.speech
 
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
+import android.view.View
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -22,11 +24,42 @@ internal class SpeechPanelView(context: Context) : KeyboardPanelComposeView(cont
     private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
 
     private var style by mutableStateOf<SpeechPanelStyle?>(null)
+    // Android may dispatch visibility callbacks from the superclass constructor.
+    private var motionVisible: MutableState<Boolean>? = null
+
+    internal val isMotionVisible: Boolean get() = motionVisible?.value == true
 
     init {
+        motionVisible = mutableStateOf(false)
         setContent {
-            palette?.let { colors -> style?.let { SpeechPanelContent(state, colors, it, ::dispatch) } }
+            palette?.let { colors -> style?.let {
+                SpeechPanelContent(state, colors, it, isMotionVisible, ::dispatch)
+            } }
         }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        updateMotionVisibility()
+    }
+
+    override fun onDetachedFromWindow() {
+        motionVisible?.value = false
+        super.onDetachedFromWindow()
+    }
+
+    override fun onVisibilityChanged(changedView: View, visibility: Int) {
+        super.onVisibilityChanged(changedView, visibility)
+        updateMotionVisibility()
+    }
+
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        updateMotionVisibility()
+    }
+
+    private fun updateMotionVisibility() {
+        motionVisible?.value = isAttachedToWindow && isShown && windowVisibility == VISIBLE
     }
 
     fun submit(value: SpeechPanelState) { state = value }
