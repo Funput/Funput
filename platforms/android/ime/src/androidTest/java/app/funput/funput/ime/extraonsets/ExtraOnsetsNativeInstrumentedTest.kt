@@ -47,7 +47,10 @@ class ExtraOnsetsNativeInstrumentedTest {
             assertEquals("fát", type(engine, "fast"))
             assertEquals("fast", type(engine, "fasst"))
             engine.setEnabled(false)
-            assertEquals("zoo", type(engine, "zoo"))
+            assertEquals("", type(engine, "zoo"))
+            assertEquals("", engine.backspace())
+            engine.setEnabled(true)
+            assertEquals("zô", type(engine, "zoo"))
         }
     }
 

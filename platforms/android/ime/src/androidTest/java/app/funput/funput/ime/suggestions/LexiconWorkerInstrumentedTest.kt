@@ -51,6 +51,9 @@ class LexiconWorkerInstrumentedTest {
         )
         try {
             repeat(2) { worker.learn("funput", null) }
+            worker.query(PersonalSuggestionRequest("fu", 0, 1))
+            assertEquals(emptyList<String>(), results.poll(20, TimeUnit.SECONDS))
+            repeat(2) { worker.learn("funput", null) }
             worker.query(PersonalSuggestionRequest("fu", 1, 1))
             assertEquals(listOf("funput"), results.poll(20, TimeUnit.SECONDS))
         } finally { val closed = CountDownLatch(1); worker.close { closed.countDown() }; assertTrue(closed.await(20, TimeUnit.SECONDS)) }

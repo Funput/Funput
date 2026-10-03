@@ -25,6 +25,7 @@ readonly roots=(
     "$renderer_main/surface/geometry"
     "$android_root/keyboard-ui/src/main/java/app/funput/funput/keyboard/ui/host"
     "$android_root/keyboard-ui/src/androidTest/java/app/funput/funput/keyboard/ui/support"
+    "$android_root/ime/src/androidTestRelease/java/app/funput/funput/ime/suggestions"
     "$ime_main/lifecycle"
     "$ime_main/suggestions"
     "$ime_test/suggestions"
