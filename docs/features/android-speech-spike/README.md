@@ -5,9 +5,9 @@ thủ công**. Nó ghi nhận phản hồi smoke test của người dùng, chư
 đạt gate, bản ghi âm hoặc lịch sử lời nói. Thiết kế đầy đủ ở
 [android-speech-to-text.md](../android-speech-to-text.md).
 
-P0 dùng `SpeechRecognizer.createOnDeviceSpeechRecognizer`. Dải **Speech spike
-(debug)** có Start / Stop / Cancel / Setup (Chuẩn bị) trong IME để kiểm chứng; đây là
-điểm vào tạm của bản debug, chưa phải nút mic và panel production. Không có cloud
+P0 dùng `SpeechRecognizer.createOnDeviceSpeechRecognizer`. P0–P3 từng có dải
+**Speech spike (debug)** với Start/Stop/Cancel/Setup. Từ P5, điểm vào là mic cạnh
+Emoji và speech panel trong IME; debug strip đã bỏ. Production vẫn tắt. Không có cloud
 fallback, ML Kit, tải model tự động hoặc tự mở một phiên nghe tiếp theo.
 
 Người dùng đã cho phép chuyển sang P1 ngày 03/10/2026 sau smoke test VI.
@@ -115,18 +115,18 @@ API 31–32 có thể thử on-device nhưng locale readiness vẫn Unknown vì 
    state saving. Người thử chủ động chọn Funput và đặt caret thu gọn ở ô TEXT A/B;
    giữ bàn phím visible. Password chỉ để kiểm chứng từ chối thu, không chạy corpus.
    Không dùng password/PIN/email, number/phone hoặc host KEY_EVENT cho accuracy.
-2. Chọn VI/EN trên bàn phím; locale của spike theo trạng thái đó. Dải debug là
-   Start / Stop / Cancel / Setup (Chuẩn bị), chưa có biểu tượng mic production.
+2. Chọn VI/EN trên bàn phím; locale theo trạng thái đó. Bản P5 có mic cạnh
+   Emoji, Preparing/Listening/Finalizing/Error cùng Dừng/Huỷ/Chuẩn bị khi phù hợp.
 3. Thiếu quyền thì tap **Chuẩn bị** (Setup). Activity `SpeechSetupActivity` dùng
-   chung nội dung quyền/model với Settings; chỉ xin quyền theo tap và grant không thu âm. Quay lại ô nhập và **tap Start lần
+   chung nội dung quyền/model với Settings; chỉ xin quyền theo tap và grant không thu âm. Quay lại ô nhập và **tap mic lần
    nữa**. Không dùng `adb grant`, không ghi một phiên chưa bắt đầu là đã thử ASR.
-4. Tap Start; đo thời gian từ tap đến trạng thái Listening/ready. Chỉ nói khi đã
-   ready. Đọc một câu corpus, rồi tap **Stop** khi hết câu; đo đến final/chèn xong.
+4. Tap mic; đo thời gian từ tap đến trạng thái Listening/ready. Chỉ nói khi đã
+   ready. Đọc một câu corpus, rồi tap **Dừng** khi hết câu; đo đến final/chèn xong.
    Partial chỉ để nhìn preview, tuyệt đối không dùng làm hypothesis trong CSV.
 5. Chép final của ô test vào `hypothesis` bằng thao tác thủ công. Đánh giá usable
    và lỗi dấu/tên/số. Xoá ô test bằng thao tác người thử trước câu tiếp theo.
-6. Tap Cancel khi muốn bỏ phiên; huỷ không chèn partial. Có thể huỷ trong lúc chờ
-   final. Không mở Start nối tiếp tự động hoặc giả lập lời nói bằng test text.
+6. Tap Huỷ khi muốn bỏ phiên; huỷ không chèn partial. Có thể huỷ trong lúc chờ
+   final. Không mở phiên nghe nối tiếp tự động hoặc giả lập lời nói bằng test text.
 
 Timing dùng milliseconds. Chỉ ghi giá trị đã đo từ đồng hồ/mốc quan sát trực tiếp;
 ghi độ phân giải và phương pháp trong `notes`. Nếu không đo đủ tin cậy để xét
@@ -165,7 +165,7 @@ cụ CSV hoặc đặt chuỗi có dấu phẩy/xuống dòng trong dấu nháy 
 | `model_state` | `installed`, `unknown`, `pending`, `downloadable`, `unsupported` theo bằng chứng thực tế |
 | `airplane_mode` | `yes`, `no`, `unknown`; yes bao gồm xác nhận Wi-Fi/data đã tắt |
 | `status` | `final`, `start_error`, `recognition_error`, `no_match`, `timeout`, `cancelled` |
-| `ready_ms` | Tap Start → ready; trống nếu chưa ready hoặc chưa đo được |
+| `ready_ms` | Tap mic → ready; trống nếu chưa ready hoặc chưa đo được |
 | `final_after_stop_ms` | Tap Stop → final/chèn; chỉ có cho `final`, trống nếu chưa đo được |
 | `hypothesis` | Final thật, trống cho mọi trạng thái khác; không lấy partial |
 | `usable` | Người thử đánh dấu `yes`/`no`; cancelled có thể trống |
@@ -234,7 +234,7 @@ Không điền Pass chỉ vì build/unit test hoặc service probe đã chạy.
 
 | Hạng mục | Máy A: Samsung SM-G998B | Máy B: chưa chọn | Report/bằng chứng |
 | --- | --- | --- | --- |
-| Debug APK/signing/build revision | Debug APK update cùng chữ ký, code 27/version 1.2026.70 | PENDING | Source P0–P4: `feat/android-speech-to-text`, implementation `e7238a7d`; xem docs chính |
+| Debug APK/signing/build revision | Debug APK update cùng chữ ký, code 27/version 1.2026.70 | PENDING | Source P5: `feat/android-speech-to-text`, implementation `f887424c`; xem docs chính |
 | Live availability + VI/EN support lists | PASS capability; EN chưa installed | PENDING | Probe 03/10/2026 00:47 |
 | VI smoke test từ IME thật | PASS theo phản hồi người dùng; đánh giá nhận diện tốt | PENDING | Phản hồi trong trao đổi; không có corpus/timing/network status |
 | Model preparation đã làm | PENDING | PENDING | |
@@ -255,8 +255,8 @@ không mô tả nút mic production đã hoàn thành chỉ từ spike này.
 
 ## 9. Catalog presentation P4 (03/10/2026)
 
-P4 thêm catalog state giả để review mic/panel; IME thật vẫn giữ debug strip P3
-cho đến khi P5 nối flow mới. Mở catalog từ máy đã cài debug APK:
+P4 thêm catalog state giả để review mic/panel. Từ P5, IME thật đã dùng mic/panel
+với on-device backend; catalog vẫn là presentation giả độc lập. Mở catalog từ máy đã cài debug APK:
 
 ```bash
 adb shell am start -n app.funput.funput/.catalog.CatalogActivity --ez speech_panel true
@@ -271,3 +271,24 @@ Preview là câu mẫu viết sẵn, không ghi audio/transcript. Nó không tha
 nhận dạng thật, corpus/WER hay gate offline/P6. Unit/lint/build pass; Samsung API
 35 có 22/22 UI tests (8 mới P4) và regression IME 53/53. Xem phần 21 của tài liệu
 chính để biết contracts, geometry, accessibility và phần P5/P6 còn thiếu.
+
+
+## 10. Thử flow P5 đã cài trên Samsung
+
+Implementation `f887424c` đã cài debug APK cùng signer/version và giữ dữ liệu.
+Mở editor qua lệnh `--ez speech_spike true` ở phần 3, hoặc một ô văn bản thông
+thường. Chọn Funput/VI và tap mic cạnh Emoji để bắt đầu. Partial chỉ ở panel;
+Dừng chờ final, final tự chèn một lần rồi về Letters; Huỷ/Back bỏ phiên. Đổi ô
+nhập, hide/finish/rotation/lock hoặc tắt setting giọng nói huỷ phiên. Sau chuẩn bị
+quyền/model, quay lại và tap mic lần nữa, không tự start.
+
+P5 có IME 530 unit tests và 62/62 instrumentation (9 mới), UI 22/22 trên Samsung;
+LOC/layout/FunputUI, lint/build/release compile pass. Integration dùng backend giả
+và editor/JNI/view thật, không thu âm hoặc cấp/revoke quyền thật. AppOps không có
+recording mới trong lượt automation. **Smoke test lời nói thật của mic/panel P5
+vẫn PENDING**; phản hồi VI tốt trước đó thuộc flow debug strip P0–P3.
+
+Ghi kết quả mới vào biên bản theo revision, tránh coi synthetic final là câu ASR
+hoặc tự điền CSV. Corpus/offline/timing/hai máy cùng ma trận mic/editor/P6 vẫn chưa
+đủ bằng chứng; production giữ tắt. Chi tiết architecture, safety lease và validation
+ở phần 22 của tài liệu thiết kế chính.

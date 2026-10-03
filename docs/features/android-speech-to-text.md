@@ -1060,8 +1060,8 @@ bộ presentation/lifecycle production flow. Release vẫn phải chờ nghiệm
 
 ## 21. P4 — mic renderer và panel speech (03/10/2026)
 
-P4 hoàn tất phần presentation, dùng state giả để nghiệm thu UI trước P5.
-IME thật vẫn dùng debug strip P3; chưa nối mic/panel mới vào recording controller.
+Snapshot P4 hoàn tất presentation bằng state giả. Tại snapshot đó IME thật
+vẫn dùng debug strip P3; integration mới được ghi ở phần 22 bên dưới.
 Production giữ `speech_feature_available=false`, debug override `true`.
 Code P4 nằm trên `feat/android-speech-to-text`: renderer `35521728`, panel
 `2e2a9da9`, catalog `235c3acc`, contrast fix `e7238a7d`.
@@ -1146,3 +1146,109 @@ setting/editor visibility, request/action, Back/lifecycle và trả Letters sau 
 Chưa dùng kết quả fake-state hoặc UI tests thay cho ASR offline/corpus/máy thứ hai
 hay ma trận quyền/microphone của P6. Không đổi version, thêm model/ML Kit/cloud
 fallback, triển khai iOS hoặc bật production.
+
+
+## 22. P5 — tích hợp mic/panel với IME (03/10/2026)
+
+Implementation P5 đã nối panel P4 tới backend on-device và editor thật. Debug
+strip P0–P3 cùng release stub được bỏ; bản debug dùng mic cạnh Emoji. Production
+vẫn `speech_feature_available=false`, preference vẫn mặc định `true`. Nhánh
+`feat/android-speech-to-text` có UI navigation guards `e536b8a7` và integration/
+tests `f887424c`. Không đổi version, dependency, manifest, release gate hoặc iOS.
+
+### Ownership và ranh giới
+
+- `ImeSpeechSession` là facade lifecycle có feature gate: khi gate tắt không
+  dựng runtime, backend, preparation service, receiver hoặc scheduler speech.
+- `ImeSpeechRuntime` sở hữu tracker, editor gateway, flow và UI port. Backend và
+  preparation facade có thể inject; main production adapter vẫn on-device.
+- `ImeSpeechFlow` điều phối một tap gồm capability preflight và recording session;
+  không có Android framework imports hoặc dispatcher mặc định. Scheduler/clock,
+  editor, permission, language và presentation đều được inject. Epoch vô hiệu hoá
+  callback preflight và safety timer cũ trước khi chúng có thể khởi động phiên mới.
+- `ImeSpeechPreflight` lưu operation trước `start`, đóng trước callback tiếp theo,
+  có absolute deadline 3 giây. Timeout/check failure trả Unknown để thử on-device
+  theo policy đã chốt; không dùng generic/cloud recognizer. Mỗi tap chỉ sở hữu một
+  capability operation; rời/hide/đóng owner giải phóng observation, không huỷ model
+  download của hệ thống. Locale cache 5 phút giữ nguyên facade P2.
+- `ImeSpeechUiBinder` chuyển domain state thành `SpeechPanelState`; preview chỉ ở
+  panel. `AndroidSpeechUiPort` cập nhật view hiện tại và suppress callback do chính
+  presentation phát ra. Final thành công về Letters; Error giữ panel với CTA phù
+  hợp. Callback của view cũ và callback sau dismiss không mở lại Speech.
+- `ImeSpeechInputActions` guard actual callbacks, gồm TalkBack, thay vì mọi touch.
+  UI có `onPanelChanging` trước transition và callback mở placement picker; cancel
+  trước navigation/soft input/emoji/paste/suggestion/settings/switch IME/placement.
+  Mở Speech được phân biệt rõ với rời Speech. STOP giữ panel và chờ final.
+
+Khi cancel, flow vô hiệu hoá ownership UI, operation, editor stamp và controller
+trước khi dismiss presentation. Cả recognizer cleanup lẫn UI callback đồng bộ
+không thể chèn final trong lúc Huỷ. Final vẫn tiêu thụ recording ownership trước
+COMMITTING/editor write, chèn Boolean tối đa một lần và không retry khi false.
+
+### Editor và lifecycle
+
+Mic chỉ hiện khi gate/preference bật, view và editor còn hiện, có on-device
+service, input policy cho phép và caret thu gọn đã biết. Thiếu quyền vẫn có mic
+để người dùng mở CTA Chuẩn bị; grant không tự thu, phải quay lại và tap mic mới.
+Probe lúc view/window hiện không tạo client và không chạy check locale trên từng
+phím. On-device locale check chỉ sau tap; VI/EN theo keyboard language hiện tại.
+
+Mọi `onStartInput`, kể cả restart cùng package/fieldId, huỷ phiên cũ và tăng editor
+generation trước framework callback. Selection được seed từ EditorInfo và
+reconcile sau finish composition. Callback selection do anchor preparation hoặc
+commit final của chính phiên không tự cancel. Selection khác huỷ phiên; caret đi
+rồi quay lại vẫn không khôi phục quyền commit của callback cũ. KEY_EVENT, password,
+PIN, email, number/phone/non-text và range selection không có đường voice commit.
+
+`ImeHardwareInputBoundary` huỷ trước forwarding Down/Up/Multiple, kể cả navigation,
+Ctrl/Alt không đi qua soft dispatcher. Speech Back tiêu thụ cả Down/repeat/Up, huỷ
+về Letters và giữ keyboard; Back ngoài Speech theo hành vi framework hiện có.
+Framework compat Back hiện chuyển invocation sang Down/Up; không thêm một dispatcher
+cạnh tranh. Tham chiếu: [AOSP InputMethodService](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/inputmethodservice/InputMethodService.java).
+
+Hide/finish/restart/configuration/setting off/close huỷ phiên và preview. SCREEN_OFF
+receiver huỷ khi khoá màn hình; editor gate kiểm tra interactive/keyguard ở anchor
+và commit. Trong preflight/recording có safety lease 250 ms kiểm tra permission và
+foreground; mất quyền/editor environment huỷ và giải phóng client. Lease kết thúc
+ở terminal, cancel, hide hoặc close; gõ thường không chạy polling hoặc tạo client.
+Không dùng permission-change listener hệ thống vì nó cần quyền privileged; xem
+[AOSP PackageManager](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/content/pm/PackageManager.java).
+
+Commit dùng `commitVoiceText` nên không qua Telex/VNI, shortcut hay suggestion
+learning. Chỉ trim hai đầu, không thêm separator/dấu/viết hoa. Gateway cập nhật
+capitalization với `preserveCapsLock=false` sau thành công; sentence rules hiện có
+vẫn cần separator sau dấu câu để viết hoa lần gõ sau. Speech close idempotent,
+engine chỉ close sau `super.onDestroy()` để framework finish có thể re-enter.
+
+### Validation và phần chưa kiểm chứng
+
+| Hạng mục | Kết quả |
+| --- | --- |
+| LOC/layout/FunputUI và `git diff --check` | PASS; mọi `.kt/.kts` ≤150 dòng, source/test speech cùng hardware subtree được checker bảo vệ |
+| Toàn bộ `testDebugUnitTest` | PASS; IME 530, keyboard-ui 45, renderer 266, app 165 |
+| Unit mới P5 | 22; preflight inline/timeout/absolute deadline, final/duplicate/reentrancy, permission/setup, stale callback/timer, hidden/disabled environment, Back/hardware ordering, close |
+| `lintDebug`, `:app:assembleDebug`, `:ime:compileReleaseKotlin` | PASS |
+| Samsung SM-G998B API 35, IME instrumentation | 62/62, không skip, 03/10/2026 12:19 Asia/Ho_Chi_Minh; 9 tests mới P5 |
+| Samsung keyboard-ui instrumentation | 22/22, không skip, 03/10/2026 12:11 Asia/Ho_Chi_Minh |
+| Backend giả + editor/JNI/view/gateway thật | Mic → Preparing → Listening → partial → Stop/final/Cancel; raw insertion, không học transcript, typing tiếp; same-field restart, panel change, hide/setting off, caret away/back, excluded editors PASS |
+| APK debug trên Samsung | Cài update cùng signer, code 27/version 1.2026.70; feature gate debug true |
+| Mic trong lượt automation P5 | Không gọi recognizer recording; AppOps không có usage mới/running sau mở editor, chỉ duration cũ 1s487ms từ smoke test trước |
+| Nhận dạng lời thật qua mic/panel P5 | **PENDING — người dùng cần thử bản P5 đã cài**; smoke test VI P0 không thay cho flow mới |
+
+Instrumented tests inject synthetic backend và permission environment; không
+thu âm, không mutate quyền thật, không tải model, không tự ghi corpus/hypothesis.
+Chúng xác nhận editor và presentation integration, không chứng minh accuracy,
+airplane mode hoặc hành vi provider microphone trên máy thật. Không có UI spot
+check mới được coi là đạt khi điện thoại không ở foreground/unlocked; review P4
+và instrumentation vẫn được ghi riêng.
+
+Lượt validation cuối từng bị gián đoạn bởi `No space left on device`; chỉ dọn
+`target/debug/incremental` là generated Rust cache rồi chạy lại thành công. Không
+xoá source/dữ liệu người dùng hoặc thay ignore để che lỗi. APK/log/build/target
+vẫn nằm ngoài commit theo gitignore hiện có.
+
+P5 implementation/automatic regression đã đạt; gate real ASR mới còn pending.
+P6 giữ toàn bộ corpus/timing/offline/hai máy vật lý, EN/model download, actual
+permission revoke/privacy toggle, lock/rotation/hardware/headset/call/process death,
+TalkBack nghe thật và ma trận editor. Chỉ bật production khi các bằng chứng đó
+đạt; không dùng synthetic integration tests để thay gate phát hành.
