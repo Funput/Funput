@@ -14,14 +14,15 @@ object FunputImeComponent {
     val idShort: String
         get() = "$PACKAGE/.ime.$SERVICE_SIMPLE_NAME"
 
-    fun matches(raw: String?): Boolean {
+    fun matches(raw: String?, packageName: String = PACKAGE): Boolean {
         val candidate = raw?.trim()?.substringBefore(':') ?: return false
-        if (candidate == id || candidate == idShort) return true
+        if (candidate == "$packageName/$SERVICE" ||
+            candidate == "$packageName/.ime.$SERVICE_SIMPLE_NAME") return true
         val slash = candidate.indexOf('/')
         if (slash <= 0) return false
         val pkg = candidate.substring(0, slash)
         val cls = candidate.substring(slash + 1)
-        if (pkg != PACKAGE) return false
+        if (pkg != packageName) return false
         return cls == SERVICE ||
             cls == ".ime.$SERVICE_SIMPLE_NAME" ||
             cls.endsWith(SERVICE_SIMPLE_NAME)

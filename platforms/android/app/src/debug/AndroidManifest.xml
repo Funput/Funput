@@ -28,7 +28,7 @@
             android:name=".catalog.CatalogActivity"
             android:exported="true"
             android:label="@string/debug_catalog_label"
-            android:taskAffinity="app.funput.funput.catalog"
+            android:taskAffinity="${applicationId}.catalog"
             android:theme="@style/Theme.Funput" />
 
 

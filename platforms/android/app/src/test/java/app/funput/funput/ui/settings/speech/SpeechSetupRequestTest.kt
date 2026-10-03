@@ -19,9 +19,20 @@ class SpeechSetupRequestTest {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val request = SpeechSetupRequest(SpeechSetupReason.MODEL, SpeechLocale.EN)
         val intent = request.intent(context)
-        assertEquals(context.packageName + ".speech.SpeechSetupActivity", intent.component?.className)
+        assertEquals("app.funput.funput.speech.SpeechSetupActivity", intent.component?.className)
+        assertEquals(context.packageName, intent.component?.packageName)
         assertEquals(request, SpeechSetupRequest.read(intent))
         assertNull(intent.action)
+    }
+    @Test fun isolatedBuildTargetsItsOwnPackageAndTheOriginalActivityNamespace() {
+        val original = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val isolated = object : android.content.ContextWrapper(original) {
+            override fun getPackageName() = "app.funput.funput.speechtest"
+        }
+        val intent = SpeechSetupRequest(SpeechSetupReason.PERMISSION, SpeechLocale.VI).intent(isolated)
+        assertEquals(isolated.packageName, intent.component?.packageName)
+        assertEquals("app.funput.funput.speech.SpeechSetupActivity", intent.component?.className)
+        assertEquals(SpeechLocale.VI, SpeechSetupRequest.read(intent).locale)
     }
     @Test fun invalidExtrasCannotCreateRecordingOrSubstituteLanguage() {
         val request = SpeechSetupRequest.read(Intent().putExtra("speech_setup_reason", "RECORD")

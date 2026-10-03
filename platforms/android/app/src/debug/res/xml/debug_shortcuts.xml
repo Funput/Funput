@@ -9,6 +9,6 @@
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="app.funput.funput.catalog.CatalogActivity"
-            android:targetPackage="app.funput.funput" />
+            android:targetPackage="@string/debug_application_id" />
     </shortcut>
 </shortcuts>

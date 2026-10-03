@@ -91,4 +91,17 @@ class KeyboardSetupInspectorTest {
             KeyboardSetupInspector.resolve(enabled, "$imeIdShort:9876543210"),
         )
     }
+
+    @Test fun isolatedBuildDoesNotMistakeTheProductionImeForItsOwn() {
+        val testPackage = "app.funput.funput.speechtest"
+        val testId = "$testPackage/${FunputImeComponent.SERVICE}"
+        assertEquals(KeyboardSetupStatus.READY,
+            KeyboardSetupInspector.resolve(true, null, testId, testPackage))
+        assertEquals(KeyboardSetupStatus.NOT_SELECTED,
+            KeyboardSetupInspector.resolve(true, null, imeId, testPackage))
+        assertEquals(KeyboardSetupStatus.NOT_ENABLED,
+            KeyboardSetupInspector.resolve(false, imeId, testId, testPackage))
+        assertEquals(KeyboardSetupStatus.NOT_ENABLED,
+            KeyboardSetupInspector.resolve(false, testId, imeId))
+    }
 }

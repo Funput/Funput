@@ -8,11 +8,13 @@ enum class SpeechSetupReason { PERMISSION, MODEL }
 
 data class SpeechSetupRequest(val reason: SpeechSetupReason, val locale: SpeechLocale?) {
     fun intent(context: Context): Intent = Intent().setClassName(context.packageName,
-        "${context.packageName}.speech.SpeechSetupActivity")
+        SetupActivityClassName)
         .putExtra(ReasonKey, reason.name)
         .putExtra(LocaleKey, locale?.name)
 
     companion object {
+        // The runtime package may have a debug suffix; the activity keeps its source namespace.
+        private const val SetupActivityClassName = "app.funput.funput.speech.SpeechSetupActivity"
         private const val ReasonKey = "speech_setup_reason"
         private const val LocaleKey = "speech_setup_locale"
         fun read(intent: Intent): SpeechSetupRequest = SpeechSetupRequest(
