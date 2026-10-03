@@ -6,6 +6,8 @@
 # will have compiled files and executables
 debug/
 target/
+# Local build output; Android modules have their own build-directory rules.
+/build/
 # ...except Android's debug source sets (debug-only code such as the FunputUI catalog), which
 # the Cargo pattern above would otherwise swallow.
 !platforms/android/*/src/debug/
@@ -39,3 +41,7 @@ platforms/linux/build*/
 # Python bytecode from the build and test scripts.
 __pycache__/
 *.pyc
+
+# Local profiling dumps and manual speech benchmark runs.
+*.hprof
+/docs/features/android-speech-spike/runs/
