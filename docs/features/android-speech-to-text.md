@@ -2,14 +2,16 @@
 
 ## Trạng thái và cách dùng tài liệu
 
-**Thiết kế trước khi code — chưa hiện thực.** Phạm vi đã chốt: Android trước,
-iOS chưa làm. Công nghệ cho bản đầu là `android.speech.SpeechRecognizer` với
+**Đã hiện thực P0–P6; P6 chốt ngày 03/10/2026 theo phạm vi người dùng điều chỉnh.**
+Feature gate production đã bật, chưa deploy hoặc thay release version. Android
+trước, iOS chưa làm. Công nghệ bản đầu là `android.speech.SpeechRecognizer` với
 recognizer **on-device**; ML Kit GenAI chỉ là hướng thử nghiệm sau này.
 
 Ngày đối chiếu source và tài liệu nền tảng: **02/10/2026**. Những hành vi ghi là
 “Funput chọn” là quyết định sản phẩm trong thiết kế này, không phải bảo đảm của
-Android. Các tên class mới bên dưới là đề xuất để lập plan; không mô tả code đã có.
-Khi hiện thực thay đổi một quyết định, cập nhật tài liệu trong cùng PR.
+Android. Các phần thiết kế ban đầu giữ làm tham chiếu; lịch sử hiện thực và
+nghiệm thu ở phần 17–27. Phần 27 và report P6 ghi phạm vi cuối, bao gồm các
+phép đo/ca máy thật được người dùng miễn, không phải đã đạt toàn bộ gate ban đầu.
 
 ## 1. Mục tiêu
 
@@ -1419,3 +1421,33 @@ Người dùng sau đó yêu cầu không kiểm tra tiếng Anh. Phạm vi nghi
 thay code hỗ trợ EN hoặc tự tải model. Mỗi máy còn 60 câu VI theo corpus gốc
 (40 rõ, 10 tên/số, 10 nhiễu), giữ nguyên ngưỡng WER/usable/p95 và các ca
 lifecycle/UI khác. Report/checklist ghi riêng phạm vi đã bỏ và mục còn thiếu.
+
+Người dùng xác nhận thêm ca từ chối/cấp lại quyền riêng app và privacy toggle
+trong phiên trên cả hai máy đã pass: không thu khi bị chặn, không tự thu sau
+cấp/bật lại, không chèn final cũ sau Huỷ, gõ thường hoạt động. Không suy ra
+quyền một lần hoặc thu hồi quyền app giữa phiên cũng đã được thử.
+
+## 27. Chốt P6 và bật production gate (03/10/2026)
+
+Sau khi thử VI offline, Huỷ, hide/lock/chuyển editor, từ chối/cấp lại quyền
+và privacy microphone toggle trên hai máy, người dùng chọn **“Miễn các mục
+còn lại, chốt P6”**. Do đó corpus/timing, ca headset/cuộc gọi/process death,
+TalkBack/chữ lớn và các kiểm chứng máy thật chưa thực hiện được ghi
+WAIVED/NOT_RUN, không PASS. EN đã loại khỏi nghiệm thu theo yêu cầu trước đó.
+Không tự tạo transcript, kết quả WER hoặc p95; scorer vẫn giữ ngưỡng ban đầu.
+
+`speech_feature_available` main chuyển true; debug tiếp tục true. API31,
+provider/model, permission, user setting và editor policy vẫn được kiểm tra
+khi dùng tính năng. Không có cloud fallback, ML Kit, nghe tự động hoặc thay
+semantics chèn final. Help/privacy/release notes trong repository cập nhật
+theo phạm vi thực tế. Không publish website, deploy hoặc thay version.
+
+Xem [report cuối](android-speech-acceptance/report-2026-10-03.md) để biết
+automated tests/build/manifest/APK audit và giới hạn bằng chứng máy thật.
+
+Commit gate `bb191c7d`. Build/testDebugUnitTest/lintDebug/assembleDebug và
+assembleRelease pass; 1.136 JVM tests, không fail/error/skip, scoring tool 6/6.
+LOC/layout/FunputUI pass. Compiled release/debug gate đều true; manifest release
+không có INTERNET/FGS microphone, setup không exported và không có debug host.
+Không có dependency speech ML Kit/model mới; release unsigned chưa deploy.
+Debug APK giữ nguyên SHA-256 nên connected regression trước vẫn áp dụng.

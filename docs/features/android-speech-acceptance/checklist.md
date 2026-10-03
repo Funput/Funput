@@ -1,11 +1,17 @@
 # Checklist P6 trên từng máy
 
 Thực hiện riêng trên `samsung-a` và `fold-b`. L03/L04/L05 đã PASS theo người dùng
-trên cả hai máy; các mục chưa có bằng chứng vẫn **PENDING**, xem report hiện tại.
+trên cả hai máy; các mục chưa có bằng chứng được miễn **WAIVED/NOT_RUN**, xem report hiện tại.
+Ca từ chối/cấp lại quyền riêng app và P04 privacy toggle cũng đã PASS theo
+người dùng trên cả hai máy; quyền một lần/thu hồi quyền app giữa phiên chưa thử.
 EN nằm ngoài phạm vi theo yêu cầu người dùng ngày 03/10/2026. Ghi kết quả vào bản
 checklist riêng trong `android-speech-spike/runs/`: ID, PASS/FAIL/NOT_RUN,
 thiết bị, ngày giờ, bước đã làm và lỗi quan sát. Không cần lời nói cá nhân.
 Các tests dùng fake backend đã pass chỉ bổ sung bằng chứng kỹ thuật.
+
+**Kết thúc P6:** người dùng đã chọn “Miễn các mục còn lại, chốt P6”. Các mục
+chưa được thử trong bảng là **WAIVED/NOT_RUN** ở đợt này; chỉ giữ hướng dẫn cho
+kiểm tra về sau, không coi đã PASS. Production gate bật, không deploy.
 
 ## Lượt đầu ngắn
 
@@ -80,8 +86,8 @@ không quan sát được phải giữ NOT_RUN, không đánh dấu PASS từ co
 
 ## Điều kiện ký nghiệm thu
 
-Đủ hai corpus run VI rõ đạt ngưỡng cố định, báo cáo đầy đủ các nhóm VI, không
-còn lỗi commit sai phiên/duplicate/mic giữ khi ẩn, và các mục checklist có bằng
-chứng tương ứng. Ghi rủi ro thực tế, không suy ra PASS cho mục chưa chạy. Khi
-tất cả gate đạt, chạy các cổng tự động lại nếu có sửa code, cập nhật help/privacy
-và release notes, rồi mới đổi production gate. Không deploy trong P6.
+Kế hoạch ban đầu yêu cầu đủ hai corpus run VI rõ đạt ngưỡng cố định, các nhóm
+VI còn lại và bằng chứng toàn bộ checklist. Người dùng đã miễn các mục còn
+thiếu, chốt theo smoke/lifecycle/quyền trên hai máy và automated tests đã pass.
+Report ghi rõ giới hạn này. Kiểm tra tự động và artifact được chạy lại sau bật
+gate; không tạo số đo giả hoặc đánh dấu ca miễn là PASS. Không deploy trong P6.

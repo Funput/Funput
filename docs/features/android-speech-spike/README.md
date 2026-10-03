@@ -5,9 +5,15 @@ thủ công**. Nó ghi nhận phản hồi smoke test của người dùng, chư
 đạt gate, bản ghi âm hoặc lịch sử lời nói. Thiết kế đầy đủ ở
 [android-speech-to-text.md](../android-speech-to-text.md).
 
+**Trạng thái cuối P6:** người dùng chốt theo smoke VI/lifecycle/quyền trên
+S21 và Fold5, miễn các mục còn lại. Production gate đã bật, chưa deploy.
+Corpus/timing chưa đo, EN chưa kiểm chứng ASR; không coi các mục miễn là PASS.
+Xem [report P6](../android-speech-acceptance/report-2026-10-03.md).
+
 P0 dùng `SpeechRecognizer.createOnDeviceSpeechRecognizer`. P0–P3 từng có dải
 **Speech spike (debug)** với Start/Stop/Cancel/Setup. Từ P5, điểm vào là mic cạnh
-Emoji và speech panel trong IME; debug strip đã bỏ. Production vẫn tắt. Không có cloud
+Emoji và speech panel trong IME; debug strip đã bỏ. P0–P5 giữ production tắt;
+P6 chốt đã bật gate. Không có cloud
 fallback, ML Kit, tải model tự động hoặc tự mở một phiên nghe tiếp theo.
 
 Người dùng đã cho phép chuyển sang P1 ngày 03/10/2026 sau smoke test VI.
@@ -16,7 +22,7 @@ P3 dùng controller/reducer/editor guard mới trong cùng dải debug; xem ph�
 Giới hạn 60 giây gửi Stop và chờ final tối đa 5 giây, terminal xoá preview.
 Regression P3 đạt IME 53/53 và keyboard-ui 14/14 trên Samsung; đây không thay
 corpus run hoặc kiểm chứng ASR offline/máy thứ hai.
-Các gate còn thiếu được giữ để nghiệm thu P6; production vẫn tắt. Không coi
+Tại snapshot P3, các gate còn thiếu được giữ cho P6 và production vẫn tắt. Không coi
 quyết định chuyển phase là bằng chứng các phép đo đã pass.
 
 ## 1. Trạng thái bằng chứng
@@ -35,7 +41,7 @@ quyết định chuyển phase là bằng chứng các phép đo đã pass.
 | Nhận dạng EN thực tế từ IME visible | Chưa có phản hồi kiểm chứng | **PENDING** |
 | Nhận dạng khi không có mạng | Người dùng xác nhận VI offline/Huỷ trên Fold5 và S21 OK ngày 03/10/2026 | **PASS — smoke riêng từng máy; corpus/timing PENDING** |
 | Máy thứ hai | Fold5 SM-F946B, Android 16/API 36; probe VI installed, regression 62 IME/29 UI pass; người dùng báo lượt VI offline/Huỷ OK | **PASS — capability/regression/smoke; corpus PENDING** |
-| Gate chất lượng và lifecycle | Cả hai máy hide/lock/chuyển TEXT A → B đạt theo người dùng; các ca khác và corpus/timing chưa đủ | **PENDING — chưa đạt toàn bộ gate** |
+| Gate chất lượng và lifecycle | Cả hai máy hide/lock/chuyển TEXT A → B, từ chối/cấp lại quyền và privacy toggle đạt theo người dùng; các ca khác và corpus/timing được miễn | **P6 chốt theo phạm vi điều chỉnh; chưa đo đạt toàn bộ gate ban đầu** |
 
 Probe trên đã đóng cả temporary client. Unit test, lint, debug build và release
 compile đã pass trong lượt kiểm chứng P0. Tại snapshot P0, toàn bộ connected suite chưa sạch:

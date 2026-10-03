@@ -1,9 +1,12 @@
 # Nhập bằng giọng nói trên Android
 
-**Hiện chỉ bật trong bản debug để nghiệm thu P6. Bản production chưa bật.**
+**Feature gate đã bật cho debug và production; chưa deploy bản phát hành.**
 Chi tiết kiểm chứng ở [P6](../../../docs/features/android-speech-acceptance/README.md).
+VI offline, lifecycle cơ bản và quyền micro/privacy toggle đã được người dùng
+xác nhận trên S21 Ultra/Fold5. Người dùng miễn phép đo corpus/timing và ca còn
+lại; EN chưa kiểm chứng ASR. Không cam kết WER/p95 từ các lượt smoke này.
 
-## Cách dùng trong bản test
+## Cách dùng
 
 Cần Android 12/API 31 trở lên, dịch vụ nhận dạng on-device và model cho ngôn
 ngữ đã chọn. VI dùng `vi-VN`, EN dùng `en-US`. Availability và model phụ thuộc
@@ -38,7 +41,7 @@ Lỗi dịch vụ, mic đang bận, headset hoặc quyền bị thu hồi có th
 Sau lỗi/Huỷ, gõ thường vẫn hoạt động. Chất lượng tên riêng, số và môi trường
 ồn cần kiểm chứng; báo lỗi theo thiết bị/API/provider thay vì gửi lời nói riêng.
 
-## Bổ sung quyền riêng tư cho chức năng giọng nói — dự thảo
+## Bổ sung quyền riêng tư cho chức năng giọng nói
 
 Funput dùng `SpeechRecognizer.createOnDeviceSpeechRecognizer` của Android,
 không có đường nhận dạng generic/cloud fallback. Quyền `RECORD_AUDIO` phục vụ
@@ -60,7 +63,7 @@ việc này không thay thế kiểm chứng nhận dạng thực tế khi tắt
 tư hoặc thông báo phát hành công khai. Chỉ publish sau nghiệm thu và theo quy
 trình release riêng.
 
-## Release notes dự thảo — chưa phát hành
+## Release notes — chưa phát hành
 
 - Thêm nhập bằng giọng nói VI/EN on-device trên Android 12+ khi máy có model
   tương ứng, với mic trên toolbar và panel đồng bộ theme Funput.
@@ -68,6 +71,8 @@ trình release riêng.
 - Xem trước lời nói trong panel; final chèn một lần. Dừng chờ kết quả, Huỷ bỏ
   phiên; đổi editor hoặc ẩn bàn phím không giữ phiên cũ.
 - iOS, ML Kit và nhận dạng cloud chưa nằm trong bản này.
+- Đã thử VI offline và an toàn phiên/quyền trên S21 Ultra/Fold5. EN và các
+  phép đo chất lượng/tốc độ chưa được nghiệm thu; phạm vi được người dùng miễn.
 
-Ghi chú phát hành chỉ dùng sau khi gate P6 đạt. Không thay version hoặc deploy
-từ tài liệu này.
+P6 đã chốt theo phạm vi điều chỉnh. Nội dung này sẵn sàng cho quy trình release
+riêng; không thay version hoặc deploy từ tài liệu này.
