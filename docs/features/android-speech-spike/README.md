@@ -33,9 +33,9 @@ quyết định chuyển phase là bằng chứng các phép đo đã pass.
 | Thiếu quyền và mở setup | Start bị chặn; CTA mở setup, permission vẫn denied; AppOps `RECORD_AUDIO: ignore` | **PASS — chưa thử grant/capture** |
 | Nhận dạng VI thực tế từ IME visible | Người dùng báo hoạt động chuẩn, tiếng Việt nhận diện tốt trên bản debug đang thử | **PASS — smoke test theo phản hồi người dùng; chưa có timing/corpus run** |
 | Nhận dạng EN thực tế từ IME visible | Chưa có phản hồi kiểm chứng | **PENDING** |
-| Nhận dạng khi không có mạng | Người dùng xác nhận lượt VI-C01 offline và Huỷ trên Fold5 OK ngày 03/10/2026 | **PASS — smoke theo phản hồi; corpus/timing PENDING** |
+| Nhận dạng khi không có mạng | Người dùng xác nhận VI offline/Huỷ trên Fold5 và S21 OK ngày 03/10/2026 | **PASS — smoke riêng từng máy; corpus/timing PENDING** |
 | Máy thứ hai | Fold5 SM-F946B, Android 16/API 36; probe VI installed, regression 62 IME/29 UI pass; người dùng báo lượt VI offline/Huỷ OK | **PASS — capability/regression/smoke; corpus PENDING** |
-| Gate chất lượng và lifecycle | Fold5 hide/lock/chuyển TEXT A → B đạt theo người dùng; các ca khác và corpus/timing chưa đủ | **PENDING — chưa đạt toàn bộ gate** |
+| Gate chất lượng và lifecycle | Cả hai máy hide/lock/chuyển TEXT A → B đạt theo người dùng; các ca khác và corpus/timing chưa đủ | **PENDING — chưa đạt toàn bộ gate** |
 
 Probe trên đã đóng cả temporary client. Unit test, lint, debug build và release
 compile đã pass trong lượt kiểm chứng P0. Tại snapshot P0, toàn bộ connected suite chưa sạch:

@@ -1408,3 +1408,8 @@ benchmark. Tiếp đó người dùng xác nhận 3 phiên hide/lock/chuyển TE
 trên Fold5 đều ngừng mic, không chèn final cũ và gõ tiếp bình thường. Ghi nhận
 L03/L04/L05 pass theo người dùng cho Fold5; không suy ra S21 hoặc các race
 khác đã đạt. Corpus/timing và các mục checklist còn lại vẫn pending.
+
+Trong lượt tiếp theo, người dùng xác nhận “Tất cả đều đạt trên S21” cho VI
+offline, Huỷ và ba ca hide/lock/chuyển TEXT A → B. Như vậy smoke offline/Huỷ
+và L03/L04/L05 có xác nhận riêng trên cả hai máy; không thay corpus/timing
+hoặc suy ra các gate khác đã đạt. Production tiếp tục tắt.
