@@ -26,9 +26,11 @@ internal class MicrophoneKeyIconRenderer(private val metrics: RenderMetrics) {
 
     fun draw(canvas: Canvas, key: ResolvedKey) {
         paint.color = if (key.active) activeColor else normalColor
-        val unit = min(key.bounds.height * 0.27f, metrics.dp(10f))
+        // Match the clipboard's full icon envelope, rather than scaling each mic segment.
+        val iconHeight = min(min(key.bounds.width, key.bounds.height) * 0.42f, metrics.dp(19f))
+        val unit = iconHeight / 2.1f
         val x = key.bounds.centerX
-        val y = key.bounds.centerY
+        val y = key.bounds.centerY - unit * 0.05f
         rect.set(x - unit * 0.38f, y - unit, x + unit * 0.38f, y + unit * 0.3f)
         canvas.drawRoundRect(rect, unit * 0.38f, unit * 0.38f, paint)
         rect.set(x - unit * 0.7f, y - unit * 0.35f, x + unit * 0.7f, y + unit * 0.7f)
