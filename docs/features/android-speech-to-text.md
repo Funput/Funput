@@ -1413,3 +1413,9 @@ Trong lượt tiếp theo, người dùng xác nhận “Tất cả đều đạ
 offline, Huỷ và ba ca hide/lock/chuyển TEXT A → B. Như vậy smoke offline/Huỷ
 và L03/L04/L05 có xác nhận riêng trên cả hai máy; không thay corpus/timing
 hoặc suy ra các gate khác đã đạt. Production tiếp tục tắt.
+
+Người dùng sau đó yêu cầu không kiểm tra tiếng Anh. Phạm vi nghiệm thu P6
+được cập nhật: EN không phải gate chặn đợt này và không được ghi PASS; không
+thay code hỗ trợ EN hoặc tự tải model. Mỗi máy còn 60 câu VI theo corpus gốc
+(40 rõ, 10 tên/số, 10 nhiễu), giữ nguyên ngưỡng WER/usable/p95 và các ca
+lifecycle/UI khác. Report/checklist ghi riêng phạm vi đã bỏ và mục còn thiếu.

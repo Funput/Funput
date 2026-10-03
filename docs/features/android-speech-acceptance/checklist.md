@@ -1,7 +1,8 @@
 # Checklist P6 trên từng máy
 
-Thực hiện riêng trên `samsung-a` và `fold-b`. Trạng thái các mục dưới đây là
-**PENDING** cho đến khi có thao tác và quan sát thực tế. Ghi kết quả vào bản
+Thực hiện riêng trên `samsung-a` và `fold-b`. L03/L04/L05 đã PASS theo người dùng
+trên cả hai máy; các mục chưa có bằng chứng vẫn **PENDING**, xem report hiện tại.
+EN nằm ngoài phạm vi theo yêu cầu người dùng ngày 03/10/2026. Ghi kết quả vào bản
 checklist riêng trong `android-speech-spike/runs/`: ID, PASS/FAIL/NOT_RUN,
 thiết bị, ngày giờ, bước đã làm và lỗi quan sát. Không cần lời nói cá nhân.
 Các tests dùng fake backend đã pass chỉ bổ sung bằng chứng kỹ thuật.
@@ -14,7 +15,7 @@ Các tests dùng fake backend đã pass chỉ bổ sung bằng chứng kỹ thu�
    **Hôm nay trời mát và có một chút gió.** Bấm Dừng nếu chưa tự endpoint.
    Final chèn đúng một lần; preview biến mất; quay về bàn phím chữ.
 3. Bắt đầu lại, nói một câu rồi Huỷ trước final: không chèn. Gõ Telex/VNI ngay
-   sau đó vẫn bình thường. Đây chỉ là smoke, chưa thay 80 câu hoặc timing.
+   sau đó vẫn bình thường. Đây chỉ là smoke, chưa thay 60 câu VI hoặc timing.
 
 ## Lifecycle và editor
 
@@ -53,11 +54,11 @@ L18 dùng package test trên Fold5 nếu cần force-stop, không xoá dữ li�
 | P03 | Thu hồi quyền khi có phiên | Ngừng phiên; callback không chèn; có đường chuẩn bị lại |
 | P04 | Tắt privacy microphone toggle | Ngừng/lỗi có thể phục hồi; không tiếp tục phiên cũ khi bật lại |
 | P05 | Tắt setting giọng nói khi có phiên | Mic ngừng; toolbar phản ánh setting; gõ thường bình thường |
-| P06 | EN thiếu model; chuẩn bị trong setup rồi kiểm tra lại | Không tự download; không dùng VI/cloud thay EN; timeout giải phóng client |
+| P06 | EN thiếu model; chuẩn bị trong setup rồi kiểm tra lại | Ngoài phạm vi lượt nghiệm thu theo yêu cầu người dùng; chưa xác minh thực tế |
 | P07 | Model pending/unsupported/Unknown, service lỗi | UI giải thích trạng thái, có kiểm tra lại; không chờ vô hạn |
 | P08 | App khác đang dùng mic hoặc cuộc gọi | Báo lỗi/huỷ an toàn, gõ thường còn dùng được |
 | P09 | Headset dây/Bluetooth, ngắt kết nối giữa phiên | Đo hành vi thật, không cam kết route không được kiểm chứng; không kẹt mic |
-| P10 | VI/EN thật sau chuẩn bị, airplane + Wi-Fi/data off | Nhận dạng từ IME thật; không tự đổi locale hoặc cloud fallback |
+| P10 | VI thật sau chuẩn bị, airplane + Wi-Fi/data off | Smoke đã đạt cả hai máy; corpus/timing còn pending; EN ngoài phạm vi |
 
 Không gỡ/xoá dữ liệu provider để giả lập thiếu model. API 31/33 khác biệt đã có
 tests guard/classifier; hai máy hiện tại chỉ xác minh trực tiếp API 35/36.
@@ -79,7 +80,7 @@ không quan sát được phải giữ NOT_RUN, không đánh dấu PASS từ co
 
 ## Điều kiện ký nghiệm thu
 
-Đủ hai corpus run VI rõ đạt ngưỡng cố định, báo cáo đầy đủ các nhóm/EN, không
+Đủ hai corpus run VI rõ đạt ngưỡng cố định, báo cáo đầy đủ các nhóm VI, không
 còn lỗi commit sai phiên/duplicate/mic giữ khi ẩn, và các mục checklist có bằng
 chứng tương ứng. Ghi rủi ro thực tế, không suy ra PASS cho mục chưa chạy. Khi
 tất cả gate đạt, chạy các cổng tự động lại nếu có sửa code, cập nhật help/privacy

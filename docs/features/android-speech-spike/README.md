@@ -60,6 +60,9 @@ report cụ thể; không biến support API thành kết quả nhận dạng đ
 
 ## 2. Artifact và dữ liệu
 
+Phạm vi P6 ngày 03/10/2026 được người dùng điều chỉnh: không kiểm tra EN.
+Dùng 60 câu VI mỗi máy; corpus gốc giữ đủ 80 câu, không ghi kết quả EN giả.
+
 P6 dùng lại corpus/tool trong thư mục này. Xem [quy trình P6](../android-speech-acceptance/README.md),
 [report hai máy](../android-speech-acceptance/report-2026-10-03.md) và
 [checklist máy thật](../android-speech-acceptance/checklist.md). Snapshot P0/P1

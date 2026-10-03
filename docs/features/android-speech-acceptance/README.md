@@ -6,6 +6,10 @@ Kết quả kỹ thuật ở [report](report-2026-10-03.md); thao tác trên má
 [checklist](checklist.md). Không coi capability, preview hoặc regression dùng
 fake backend là bằng chứng nhận dạng lời nói offline.
 
+Ngày 03/10/2026, người dùng yêu cầu **không kiểm tra tiếng Anh**. EN được loại
+khỏi phạm vi nghiệm thu này, không phải PASS và không còn là gate chặn P6.
+Không thay code hỗ trợ EN hoặc tự tải model. Các ngưỡng tiếng Việt giữ nguyên.
+
 ## Phân công
 
 - Agent: build/test/lint, manifest/APK/dependencies, chuẩn bị test host, tổng hợp
@@ -54,11 +58,11 @@ Mở host không tự thu âm. Người thử chủ động tap mic từng phiê
 
 ## Corpus và phép đo
 
-Dùng nguyên [corpus 80 câu](../android-speech-spike/corpus.csv) và
+Dùng nguyên các câu VI trong [corpus 80 câu](../android-speech-spike/corpus.csv) và
 [quy trình ghi CSV](../android-speech-spike/README.md#6-điền-csv). Không tạo corpus
-khác để giảm độ khó. Mỗi máy chạy 40 VI rõ, 10 VI tên/số, 10 VI nhiễu nhẹ và
-20 EN rõ khi đã chuẩn bị được locale đó. Nếu EN chưa sẵn sàng, ghi lỗi model
-và giữ mục EN pending, không đổi ngôn ngữ hoặc dùng cloud.
+khác để giảm độ khó. Mỗi máy chạy **60 câu VI**: 40 VI rõ, 10 VI tên/số và
+10 VI nhiễu nhẹ. Giữ 20 câu EN trong corpus gốc để dùng về sau, nhưng không
+yêu cầu chạy trong đợt này. Không ghi hàng đo EN giả hoặc tính mục bỏ qua là đạt.
 
 Sao chép `measurements.template.csv` vào thư mục `android-speech-spike/runs/`
 (đã gitignore). File ban đầu chỉ có header. Ghi **mọi attempt**, kể cả lỗi,
@@ -84,7 +88,7 @@ p95 dùng nearest rank. Không giảm ngưỡng sau khi thấy kết quả.
 
 Mỗi máy phải có đủ 40 VI rõ offline: WER ≤20%, usable ≥90%, ready p95 và
 final sau Dừng p95 đều ≤3.000 ms. Gate hai máy xét từng máy độc lập. Numeric
-gate đạt vẫn phải hoàn tất [lifecycle/UI checklist](checklist.md), EN và các
+gate đạt vẫn phải hoàn tất [lifecycle/UI checklist](checklist.md) và các
 nhóm corpus còn lại trước khi bật production.
 
 ## Tài liệu người dùng và bản phát hành
