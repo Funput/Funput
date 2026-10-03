@@ -31,6 +31,19 @@ class AppNavigatorTest {
     }
 
     @Test
+    fun speechStaysInSettingsAndBackReturnsToItsRoot() {
+        val navigator = AppNavigator()
+        navigator.navigate(AppDestination.SPEECH)
+        assertEquals(TopLevelDestination.SETTINGS, navigator.currentTab)
+        assertEquals(1, AppDestination.SPEECH.depth)
+        navigator.selectTab(TopLevelDestination.ABOUT)
+        navigator.selectTab(TopLevelDestination.SETTINGS)
+        assertEquals(AppDestination.SPEECH, navigator.currentDestination)
+        assertTrue(navigator.navigateBack())
+        assertEquals(AppDestination.SETTINGS, navigator.currentDestination)
+    }
+
+    @Test
     fun `navigating into another tab switches to it`() {
         val navigator = AppNavigator()
 

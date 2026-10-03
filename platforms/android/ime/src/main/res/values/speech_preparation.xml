@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="speech_spike_checking">Checking on-device language support…</string>
+    <string name="speech_spike_pending">Language download pending. Open setup to check again.</string>
+    <string name="speech_spike_downloadable">Language data needs downloading. Open setup.</string>
+    <string name="speech_spike_unsupported_locale">This language is not supported offline by the service.</string>
+</resources>

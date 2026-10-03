@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="speech_settings_title">Voice input</string>
+    <string name="speech_settings_summary">Microphone permission and on-device language models</string>
+    <string name="speech_enabled">Enable voice input</string>
+    <string name="speech_on_device_footer">Speech is recognized on this device. Funput does not save audio or recognition text.</string>
+    <string name="speech_return_to_keyboard">Return to the keyboard and tap the microphone again to start. Granting permission or downloading a model never starts recording.</string>
+    <string name="speech_permission_request">Allow microphone access</string>
+    <string name="speech_permission_help">Only used when you start voice input. If permission was blocked, this opens Funput’s app permission settings.</string>
+    <string name="speech_permission_granted">Microphone permission granted</string>
+    <string name="speech_save_error">Could not save this setting. Try again.</string>
+    <string name="speech_feature_unavailable">Voice input is not available in this build.</string>
+    <string name="speech_unsupported_os">Voice input requires Android 12 or later.</string>
+    <string name="speech_service_unavailable">No available on-device recognition service. Check again after reopening this screen.</string>
+    <string name="speech_vietnamese">Vietnamese · vi-VN</string>
+    <string name="speech_english">English · en-US</string>
+    <string name="speech_download_footer">Downloading language data requires a network connection. Recognition uses the on-device service; closing this screen does not cancel a system download.</string>
+    <string name="speech_check_again">Check again</string>
+    <string name="speech_download">Download recognition data</string>
+    <string name="speech_checking">Checking language support…</string>
+    <string name="speech_downloading">Requesting language data…</string>
+    <string name="speech_download_progress">Downloading: %1$d%%</string>
+    <string name="speech_download_requested">Download requested. Check again to see when it is ready.</string>
+    <string name="speech_pending">Waiting for the system to download this language.</string>
+    <string name="speech_download_error">Download did not respond or failed. Check again before retrying.</string>
+    <string name="speech_ready">Ready on this device</string>
+    <string name="speech_downloadable">Language data can be downloaded</string>
+    <string name="speech_unsupported_locale">This service does not support this language offline.</string>
+    <string name="speech_unknown_locale">Readiness could not be checked. You can try from the keyboard.</string>
+</resources>

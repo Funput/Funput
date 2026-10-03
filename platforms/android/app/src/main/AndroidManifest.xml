@@ -12,6 +12,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Funput">
         <activity
+            android:name=".speech.SpeechSetupActivity"
+            android:exported="false"
+            android:enabled="@bool/speech_feature_available"
+            android:theme="@style/Theme.Funput" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Funput.Starting"

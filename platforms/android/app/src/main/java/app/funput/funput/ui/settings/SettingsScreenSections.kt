@@ -12,6 +12,7 @@ import app.funput.funput.ui.settings.keyboard.KeyboardPreviewCard
 import app.funput.funput.ui.settings.keyboard.KeyboardSetupCard
 import app.funput.funput.ui.settings.keyboard.LayoutSection
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
+import app.funput.funput.ui.settings.speech.SpeechSettingsEntry
 import app.funput.funput.ui.settings.smart.SmartSection
 import app.funput.funput.ui.settings.typing.TypingSection
 
@@ -49,6 +50,7 @@ internal fun LazyListScope.settingsSections(state: SettingsScreenState, onOpenPi
             onOpenShortcuts = state.onOpenShortcuts,
         )
     }
+    if (state.speechAvailable) item(key = "speech") { SpeechSettingsEntry(state.onOpenSpeech) }
     item(key = "layout") {
         LayoutSection(
             inputMethod = state.inputMethod,

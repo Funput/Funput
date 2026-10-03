@@ -25,6 +25,7 @@ internal enum class TopLevelDestination {
  */
 internal enum class AppDestination(val tab: TopLevelDestination, val depth: Int) {
     SETTINGS(tab = TopLevelDestination.SETTINGS, depth = 0),
+    SPEECH(tab = TopLevelDestination.SETTINGS, depth = 1),
     SHORTCUTS(tab = TopLevelDestination.SETTINGS, depth = 1),
     THEME_GALLERY(tab = TopLevelDestination.APPEARANCE, depth = 0),
     CREATE_CUSTOM_THEME(tab = TopLevelDestination.APPEARANCE, depth = 1),
