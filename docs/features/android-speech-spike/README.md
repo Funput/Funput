@@ -262,7 +262,7 @@ với on-device backend; catalog vẫn là presentation giả độc lập. Mở
 adb shell am start -n app.funput.funput/.catalog.CatalogActivity --ez speech_panel true
 ```
 
-Catalog có Preparing/Listening/Finalizing/Error, VI/EN, sáng/tối, chế độ một tay
+Catalog có Preparing/Listening/Finalizing/Error, VI/EN, tất cả preset theme, chế độ một tay
 và font 200% chỉ trong catalog. Back/Huỷ về Letters; bấm mic mở lại panel mẫu.
 Dừng đổi sang Finalizing giả; không có final commit vào app/editor.
 
@@ -292,3 +292,23 @@ Ghi kết quả mới vào biên bản theo revision, tránh coi synthetic final
 hoặc tự điền CSV. Corpus/offline/timing/hai máy cùng ma trận mic/editor/P6 vẫn chưa
 đủ bằng chứng; production giữ tắt. Chi tiết architecture, safety lease và validation
 ở phần 22 của tài liệu thiết kế chính.
+
+
+## 11. Review thiết kế panel theo theme
+
+Sau phản hồi P5, UI `2f7bf8ca` dùng header/badge, mic illustration, transcript card
+và footer bo góc; theme tokens hiện có quyết định màu, nền và chữ. Preview catalog
+`eb5f4655` chọn tất cả presets, không thay setting theme thật của người dùng.
+
+Ví dụ mở Listening giả với Glass Dark (index 3 trong catalog hiện tại):
+
+```bash
+adb shell am start --activity-clear-top -n app.funput.funput/.catalog.CatalogActivity \
+  --ez speech_panel true --ei speech_stage 1 --ei speech_theme 3 --ez speech_show true
+```
+
+Thêm `--ez speech_empty true` để xem mic/hint trước partial. `speech_snapshot=true`
+chỉ xuất ảnh UI mẫu từ catalog vào `cache/speech-panel-preview.png`; không nối tới
+editor hoặc recognizer và không có API tương đương trong IME thật. Review ảnh trên
+Samsung xác nhận Glass Dark/Glass Light; UI 25/25, IME 62/62 và contrast/unit/lint/
+build/LOC pass. Đây là bằng chứng presentation, không thay nghiệm thu ASR/P6.

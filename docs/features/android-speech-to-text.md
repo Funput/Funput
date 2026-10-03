@@ -1252,3 +1252,43 @@ P6 giữ toàn bộ corpus/timing/offline/hai máy vật lý, EN/model download,
 permission revoke/privacy toggle, lock/rotation/hardware/headset/call/process death,
 TalkBack nghe thật và ma trận editor. Chỉ bật production khi các bằng chứng đó
 đạt; không dùng synthetic integration tests để thay gate phát hành.
+
+
+## 23. Chỉnh thiết kế panel theo theme (03/10/2026)
+
+Theo phản hồi giao diện P5, panel được thay bố cục: header trạng thái có live region
+và badge ngôn ngữ, minh hoạ mic ở trạng thái chưa có lời nói, card transcript dễ
+đọc và footer với hai nút bo góc tách biệt. Dừng là primary action, Huỷ là secondary;
+Preparing/Finalizing chỉ có Huỷ. Error giữ Setup/Retry theo capability và dùng nhãn
+Quay lại/Back ngắn để tránh footer quá cao. Không đổi action/session/editor contracts.
+
+`SpeechPanelStyle` derive từ `KeyboardTheme` hiện tại, không có palette giọng nói
+riêng: gradient giữ nguyên theme; primary dùng accent-key/accent-label, secondary
+lấy special-key/special-label, transcript lấy surface/label và radius derive từ
+key radius. Button surfaces được composite thành opaque theo nền theme để giữ
+contrast ổn định trên gradient. Foreground có fallback contrast ≥4.5:1; preset và
+custom tokens đều dùng cùng đường dữ liệu. Không thêm theme setting hoặc dependency.
+
+Header xếp dọc khi host hẹp hoặc font lớn; ở chữ lớn header nằm trong vùng cuộn
+cùng nội dung để không chiếm chỗ của footer. Error controls xếp dọc khi cần; vùng
+chạm tối thiểu 48dp. Body cuộn, giữ keyboard height/placement/safe area. Canvas mic
+và processing/error icon chỉ minh hoạ state; không giả RMS/volume/progress, không
+có infinite animation, không khởi động recognizer từ composition.
+
+Implementation UI `2f7bf8ca`, debug previews `eb5f4655` trên feature branch.
+Catalog nay chọn mọi preset từ `LocalKeyboardThemeCatalog`; extras `speech_stage`,
+`speech_theme`, `speech_show`, `speech_empty` dùng review state giả. Tuỳ chọn debug
+`speech_snapshot` xuất PNG của riêng keyboard catalog vào app cache; nội dung cố
+định tự viết, không có đường export IME/editor/transcript nhận dạng thật và không
+xuất trong release. Preview Glass Dark/Glass Light đã render trực tiếp trên Samsung.
+
+Validation: toàn bộ unit tests pass (keyboard-ui 48, IME 530, renderer 266, app 165),
+lint/build/release compile, LOC/layout/FunputUI và diff check pass. Samsung API 35:
+UI 25/25 và IME 62/62, không skip; 3 UI tests mới kiểm tra nút tách biệt/48dp,
+English Error ở 240dp/font 200% và đổi toàn bộ presets. 3 unit tests mới kiểm tra
+contrast preset, custom theme bất lợi và custom accent. Copy fallback Error được
+lint/build lại sau thay đổi cuối. APK debug update cùng version/signing đã cài.
+
+Flow P5 và gate P6 giữ nguyên: preview là synthetic state; chưa dùng nó làm bằng
+chứng ASR mới, offline/corpus/timing, actual permission/TalkBack hay hai máy.
+Production vẫn tắt. Không ghi audio hoặc nội dung nhận dạng thật trong lượt review.
