@@ -7,6 +7,7 @@ internal class KeyboardFeedbackController(
     private val keyboardSurface: KeyboardSurfaceView,
     private val emojiPanel: () -> EmojiPanelView?,
     private val clipboardPanel: () -> ClipboardPanelView?,
+    private val feedbackChanged: () -> Unit = {},
 ) {
     var hapticsEnabled: Boolean
         get() = keyboardSurface.isHapticFeedbackEnabled
@@ -14,6 +15,7 @@ internal class KeyboardFeedbackController(
             keyboardSurface.isHapticFeedbackEnabled = value
             emojiPanel()?.hapticsEnabled = value
             clipboardPanel()?.hapticsEnabled = value
+            feedbackChanged()
         }
 
     var soundsEnabled: Boolean
@@ -22,5 +24,6 @@ internal class KeyboardFeedbackController(
             keyboardSurface.isSoundEffectsEnabled = value
             emojiPanel()?.soundsEnabled = value
             clipboardPanel()?.soundsEnabled = value
+            feedbackChanged()
         }
 }

@@ -1,6 +1,8 @@
 package app.funput.funput.keyboard.ui
 
 import android.content.Context
+import app.funput.funput.keyboard.ui.host.bindKeyboardToolbar
+import app.funput.funput.keyboard.ui.speech.KeyboardSpeechPanelBinding
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import app.funput.funput.keyboard.KeyboardSurfaceView
@@ -40,8 +42,12 @@ class FunputKeyboardView @JvmOverloads constructor(
         { keyboardSurface.isHapticFeedbackEnabled }, { keyboardSurface.isSoundEffectsEnabled },
         clipboardState, localTextFields, ::showLettersPanel,
     )
+    private val speech = KeyboardSpeechPanelBinding(context, keyboardSurface, callbacks, ::showLettersPanel)
     private val panelCoordinator = KeyboardPanelCoordinator(
         keyboardSurface = keyboardSurface,
+        createSpeechPanel = speech::create,
+        onSpeechAction = callbacks::dispatchSpeechAction,
+        clearSpeech = speech::clear,
         createEmojiPanel = panelFactory::createEmoji,
         createClipboardPanel = panelFactory::createClipboard,
         attachPanel = { contentHost.addView(it, matchParentLayoutParams()) },
@@ -50,6 +56,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     )
     private val feedbackController = KeyboardFeedbackController(
         keyboardSurface, { panelCoordinator.loadedEmojiPanel }, { panelCoordinator.loadedClipboardPanel },
+        speech::updateFeedback,
     )
     val activePanel: KeyboardPanel get() = panelCoordinator.activePanel
     var shiftState: ShiftState by keyboardSurface::shiftState
@@ -58,6 +65,8 @@ class FunputKeyboardView @JvmOverloads constructor(
         get() = keyboardSurface.editorMode
         set(value) { keyboardSurface.editorMode = value; clipboardState.editorModeChanged() }
     var systemInputMethodSwitcherVisible: Boolean by keyboardSurface::systemInputMethodSwitcherVisible
+    var microphone by keyboardSurface::microphone
+    var speechPanelState by speech::state
     var placementKeyVisible: Boolean by keyboardSurface::placementKeyVisible
     var showsNumberRow: Boolean by keyboardSurface::showsNumberRow
     var suggestionBarEnabled: Boolean
@@ -99,15 +108,13 @@ class FunputKeyboardView @JvmOverloads constructor(
         contentHost.addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::routeKeyAction
         keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
-        keyboardSurface.callbacks.onEmojiRequested = ::openEmojiFromKeyboard
-        keyboardSurface.callbacks.onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest
-        keyboardSurface.callbacks.onClipboardPanelRequested = ::showClipboardPanel
-        keyboardSurface.callbacks.onPlacementEditorRequested = placement::showPicker
-        keyboardSurface.callbacks.onSettingsRequested = callbacks::dispatchSettingsRequest
+        bindKeyboardToolbar(keyboardSurface, callbacks, ::openEmojiFromKeyboard,
+            ::showClipboardPanel, placement::showPicker)
         setBackgroundColor(keyboardTheme.backgroundEndColor)
         safeArea.install()
     }
 
+    fun showSpeechPanel(): Unit = panelCoordinator.showSpeech()
     fun showEmojiPanel(): Unit = panelCoordinator.showEmoji()
     fun showClipboardPanel() {
         if (!clipboardState.available() || activePanel == KeyboardPanel.CLIPBOARD) return

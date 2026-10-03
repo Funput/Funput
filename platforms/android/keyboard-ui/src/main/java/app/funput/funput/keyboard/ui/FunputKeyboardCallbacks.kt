@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.ui
 
+import app.funput.funput.keyboard.ui.speech.SpeechPanelAction
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
@@ -7,6 +8,8 @@ import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 
 /** Host callbacks emitted by the complete Funput keyboard UI. */
 class FunputKeyboardCallbacks {
+    var onSpeechRequested: (() -> Unit)? = null
+    var onSpeechAction: ((SpeechPanelAction) -> Unit)? = null
     var onKeyAction: ((KeyAction) -> Unit)? = null
     var onInputMethodSwitchRequested: (() -> Unit)? = null
     var onSettingsRequested: (() -> Unit)? = null
@@ -21,6 +24,9 @@ class FunputKeyboardCallbacks {
     var onClipboardClearRequested: (() -> Unit)? = null
     var onSuggestionSelected: ((SuggestionSelection) -> Unit)? = null
     var onPlacementChanged: ((KeyboardPlacementPreferences) -> Unit)? = null
+
+    internal fun dispatchSpeechRequest() { onSpeechRequested?.invoke() }
+    internal fun dispatchSpeechAction(action: SpeechPanelAction) { onSpeechAction?.invoke(action) }
 
     internal fun dispatch(action: KeyAction) {
         onKeyAction?.invoke(action)
