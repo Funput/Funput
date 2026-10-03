@@ -22,6 +22,7 @@ data class ResolvedKey(
     val spec: KeySpec,
     val bounds: KeyBounds,
     val hitBounds: KeyBounds = bounds,
+    val active: Boolean = false,
 )
 
 data class ResolvedSuggestionBar(
@@ -39,6 +40,8 @@ data class ResolvedSuggestionBar(
     val placementKey: ResolvedKey?,
     val emojiKey: ResolvedKey,
     val suggestionsEnabled: Boolean,
+    val microphoneKey: ResolvedKey? = null,
+    val clipboardHintFits: Boolean = true,
 )
 
 data class ResolvedKeyboard(
@@ -51,6 +54,7 @@ data class ResolvedKeyboard(
         suggestionBar?.systemInputMethodKey?.let(::add)
         suggestionBar?.clipboardKey?.let(::add)
         suggestionBar?.placementKey?.let(::add)
+        suggestionBar?.microphoneKey?.let(::add)
         suggestionBar?.emojiKey?.let(::add)
         rows.forEach(::addAll)
     }

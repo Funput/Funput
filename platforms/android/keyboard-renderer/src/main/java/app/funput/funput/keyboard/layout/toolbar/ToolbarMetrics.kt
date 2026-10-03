@@ -21,6 +21,12 @@ internal object ToolbarMetrics {
      */
     const val SuggestionBarHeightDp = 34f
 
+    /** Microphone width stays constant when the height profile changes. */
+    const val MicrophoneWidthDp = 48f
+
+    /** The paste capsule yields as a whole if its label cannot fit. */
+    const val ClipboardPasteWidthDp = 52f
+
     /** Separates the band from the first key row. */
     const val SuggestionBarGapDp = 4f
 

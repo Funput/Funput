@@ -1,0 +1,81 @@
+id,group,locale,reference
+VI-C01,vi_clear,vi-VN,Hôm nay trời mát và có một chút gió.
+VI-C02,vi_clear,vi-VN,Mình sẽ về nhà sau khi làm việc xong.
+VI-C03,vi_clear,vi-VN,Bạn có muốn uống một ly nước không?
+VI-C04,vi_clear,vi-VN,Chiều nay chúng ta gặp nhau ở quán cà phê.
+VI-C05,vi_clear,vi-VN,Tôi cần mua thêm rau và trái cây.
+VI-C06,vi_clear,vi-VN,Nhớ đóng cửa trước khi ra ngoài nhé.
+VI-C07,vi_clear,vi-VN,Cuốn sách này rất dễ đọc và thú vị.
+VI-C08,vi_clear,vi-VN,Đường về nhà hôm nay hơi đông xe.
+VI-C09,vi_clear,vi-VN,Mẹ đang chuẩn bị bữa tối trong bếp.
+VI-C10,vi_clear,vi-VN,Chúng ta nên nghỉ một lát rồi làm tiếp.
+VI-C11,vi_clear,vi-VN,Tôi đã gửi tài liệu cho bạn rồi.
+VI-C12,vi_clear,vi-VN,Bạn kiểm tra lại nội dung giúp mình nhé.
+VI-C13,vi_clear,vi-VN,Sáng mai tôi sẽ đi bộ quanh công viên.
+VI-C14,vi_clear,vi-VN,Căn phòng này cần thêm một chiếc đèn.
+VI-C15,vi_clear,vi-VN,Mình muốn đặt một bàn gần cửa sổ.
+VI-C16,vi_clear,vi-VN,Đừng quên mang theo áo khoác khi đi.
+VI-C17,vi_clear,vi-VN,Bạn có thể nói chậm hơn một chút không?
+VI-C18,vi_clear,vi-VN,Tôi chưa tìm thấy chiếc chìa khóa của mình.
+VI-C19,vi_clear,vi-VN,Chuyến đi vừa rồi có rất nhiều kỷ niệm.
+VI-C20,vi_clear,vi-VN,Món canh này hơi mặn nhưng vẫn ngon.
+VI-C21,vi_clear,vi-VN,Tôi muốn đổi lịch hẹn sang chiều mai.
+VI-C22,vi_clear,vi-VN,Hãy để chiếc túi lên bàn bên cạnh.
+VI-C23,vi_clear,vi-VN,Chúng mình có thể cùng nhau giải quyết việc này.
+VI-C24,vi_clear,vi-VN,Tôi đang học cách nấu một món mới.
+VI-C25,vi_clear,vi-VN,Bạn nhớ uống nước và nghỉ ngơi đầy đủ.
+VI-C26,vi_clear,vi-VN,Cửa hàng này có bán bánh mì nóng.
+VI-C27,vi_clear,vi-VN,Mình cần một nơi yên tĩnh để đọc sách.
+VI-C28,vi_clear,vi-VN,Hôm qua tôi đã dọn lại góc làm việc.
+VI-C29,vi_clear,vi-VN,Tôi thích nghe tiếng mưa vào buổi tối.
+VI-C30,vi_clear,vi-VN,Bạn thử mở lại ứng dụng xem sao.
+VI-C31,vi_clear,vi-VN,Chúng ta hãy chọn cách làm đơn giản nhất.
+VI-C32,vi_clear,vi-VN,Mình sẽ gọi lại sau khi đến nơi.
+VI-C33,vi_clear,vi-VN,Chiếc ghế này ngồi khá thoải mái.
+VI-C34,vi_clear,vi-VN,Tôi muốn lưu ghi chú này để xem sau.
+VI-C35,vi_clear,vi-VN,Nếu trời mưa thì chúng ta ở nhà.
+VI-C36,vi_clear,vi-VN,Bạn gửi cho mình địa chỉ đầy đủ nhé.
+VI-C37,vi_clear,vi-VN,Mình đã hoàn thành công việc cần làm.
+VI-C38,vi_clear,vi-VN,Tôi cần kiểm tra pin trước khi đi.
+VI-C39,vi_clear,vi-VN,Hãy cho mình biết khi bạn sẵn sàng.
+VI-C40,vi_clear,vi-VN,Cảm ơn bạn đã giúp mình hôm nay.
+VI-N01,vi_names_numbers,vi-VN,Lê Minh Anh sẽ gặp Nguyễn Hoàng Nam vào thứ sáu.
+VI-N02,vi_names_numbers,vi-VN,Cuộc họp bắt đầu lúc 15 giờ 30 phút.
+VI-N03,vi_names_numbers,vi-VN,Tôi sẽ đến Đà Nẵng ngày 12 tháng 10.
+VI-N04,vi_names_numbers,vi-VN,Vé tàu đến Huế có giá 250000 đồng.
+VI-N05,vi_names_numbers,vi-VN,Trần Thị Mỹ Linh đang sống ở Cần Thơ.
+VI-N06,vi_names_numbers,vi-VN,Gửi hàng đến số 28 đường Nguyễn Du.
+VI-N07,vi_names_numbers,vi-VN,Đơn hàng gồm 3 chiếc áo và 2 đôi giày.
+VI-N08,vi_names_numbers,vi-VN,Phạm Quang Huy sẽ đi Nha Trang vào sáng mai.
+VI-N09,vi_names_numbers,vi-VN,Chuyến xe khởi hành lúc 7 giờ 45 phút.
+VI-N10,vi_names_numbers,vi-VN,Tôi cần đặt phòng cho 4 người trong 2 đêm.
+VI-B01,vi_noise,vi-VN,Bạn chờ mình một chút ở cửa ra vào nhé.
+VI-B02,vi_noise,vi-VN,Tôi sẽ mang đồ ăn đến sau giờ làm.
+VI-B03,vi_noise,vi-VN,Chúng ta có thể chuyển sang phòng bên cạnh.
+VI-B04,vi_noise,vi-VN,Mình đang đứng gần quầy bán vé.
+VI-B05,vi_noise,vi-VN,Bạn nhớ kiểm tra túi trước khi xuống xe.
+VI-B06,vi_noise,vi-VN,Hãy gọi cho tôi khi bạn đến cổng.
+VI-B07,vi_noise,vi-VN,Tôi muốn mua thêm một chai nước.
+VI-B08,vi_noise,vi-VN,Mình sẽ gửi lại thông tin sau ít phút.
+VI-B09,vi_noise,vi-VN,Đường này đi thẳng đến trạm xe buýt.
+VI-B10,vi_noise,vi-VN,Chúng ta nghỉ ở đây rồi tiếp tục nhé.
+EN-C01,en_clear,en-US,Please send me the document after the meeting.
+EN-C02,en_clear,en-US,I will call you when I arrive home.
+EN-C03,en_clear,en-US,The weather is cool and sunny today.
+EN-C04,en_clear,en-US,Can we move the appointment to tomorrow afternoon?
+EN-C05,en_clear,en-US,I need a quiet place to read this book.
+EN-C06,en_clear,en-US,Remember to close the window before you leave.
+EN-C07,en_clear,en-US,We can take a short break and continue later.
+EN-C08,en_clear,en-US,Please check the address before sending the package.
+EN-C09,en_clear,en-US,I would like a table near the window.
+EN-C10,en_clear,en-US,The train station is just around the corner.
+EN-C11,en_clear,en-US,I have finished the work for today.
+EN-C12,en_clear,en-US,Could you speak a little more slowly?
+EN-C13,en_clear,en-US,Let me know when you are ready to start.
+EN-C14,en_clear,en-US,I am looking for my keys and my wallet.
+EN-C15,en_clear,en-US,This room needs another lamp beside the desk.
+EN-C16,en_clear,en-US,We should choose the simplest way to solve this.
+EN-C17,en_clear,en-US,Please save this note so I can read it later.
+EN-C18,en_clear,en-US,I will bring some food after work.
+EN-C19,en_clear,en-US,The road is very busy this evening.
+EN-C20,en_clear,en-US,Thank you for helping me with this task.

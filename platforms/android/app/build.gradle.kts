@@ -50,6 +50,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Install beside a Play-signed app for device acceptance without replacing its data.
+            if (providers.gradleProperty("funput.speechTestApp").orNull.toBoolean()) {
+                applicationIdSuffix = ".speechtest"
+                resValue("string", "app_name", "Funput Speech Test")
+                resValue("string", "funput_ime_name", "Funput Speech Test")
+            }
+            resValue("string", "debug_application_id", "app.funput.funput${applicationIdSuffix.orEmpty()}")
+        }
         release {
             optimization {
                 enable = true
@@ -75,12 +84,14 @@ android {
     }
     buildFeatures {
         compose = true
+        resValues = true
     }
     // Robolectric renders the app's own resources and fonts in JVM screenshot tests.
     testOptions.unitTests.isIncludeAndroidResources = true
 }
 
 dependencies {
+    debugImplementation(project(":keyboard-ui"))
     implementation(project(":ime"))
     implementation(project(":funput-ui"))
     implementation(project(":shortcut-store"))

@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.interaction
 
+import app.funput.funput.keyboard.utility.KeyboardUtilityAction
+import app.funput.funput.keyboard.utility.KeyboardUtilityDispatcher
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.model.KeyRole
@@ -38,9 +40,13 @@ class ClipboardInteractionControllerTest {
         keySpec = { id -> KeySpec(id, "", KeyRole.CLIPBOARD, accessibilityLabel = "Clipboard") },
         suggestionSelection = { null },
         onAction = {},
-        onEmojiRequested = {},
-        onClipboardRequested = onClipboard,
-        onClipboardPanelRequested = onPanel,
+        utilities = KeyboardUtilityDispatcher {
+            when (it) {
+                KeyboardUtilityAction.CLIPBOARD_PASTE -> onClipboard()
+                KeyboardUtilityAction.CLIPBOARD_PANEL -> onPanel()
+                else -> Unit
+            }
+        },
         onSuggestionSelected = {},
         onHapticFeedback = onHaptic,
         onVisualStateChanged = {},

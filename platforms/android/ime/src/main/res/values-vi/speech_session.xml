@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="speech_mic_vi">Nhập bằng giọng nói, Tiếng Việt</string>
+    <string name="speech_mic_en">Nhập bằng giọng nói, Tiếng Anh</string>
+    <string name="speech_permission_required">Cấp quyền micro trong Chuẩn bị, quay lại rồi bấm mic lần nữa.</string>
+    <string name="speech_setup_unavailable">Không thể mở màn chuẩn bị giọng nói.</string>
+    <string name="speech_editor_changed">Ô nhập hoặc con trỏ đã thay đổi. Bấm mic để thử lại.</string>
+    <string name="speech_timeout">Nhập giọng nói đã hết thời gian chờ. Hãy thử lại.</string>
+    <string name="speech_empty">Chưa nhận dạng được lời nói. Hãy thử lại.</string>
+    <string name="speech_length">Nội dung nhận dạng quá dài. Hãy nói câu ngắn hơn.</string>
+    <string name="speech_backend_error">Không thể nhận dạng giọng nói trên thiết bị. Hãy thử lại.</string>
+</resources>

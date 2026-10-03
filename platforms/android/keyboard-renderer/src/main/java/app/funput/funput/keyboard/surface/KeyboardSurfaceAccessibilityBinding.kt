@@ -42,7 +42,8 @@ internal class KeyboardSurfaceAccessibilityBinding(
         keyboard(),
         shiftState(),
         suggestions(),
-        clipboardHint().takeIf { suggestions().isEmpty() }?.accessibilityLabel(resources),
+        clipboardHint().takeIf { suggestions().isEmpty() && keyboard()?.suggestionBar?.clipboardHintFits == true }
+            ?.accessibilityLabel(resources),
         resources.getString(R.string.clipboard_open_accessibility),
         interaction().areSmartGesturesEnabled,
     )

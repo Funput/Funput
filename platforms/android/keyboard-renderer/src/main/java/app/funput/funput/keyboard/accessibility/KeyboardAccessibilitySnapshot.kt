@@ -26,7 +26,7 @@ internal class KeyboardAccessibilitySnapshot(
                 label = key.accessibilityLabel(shiftState, clipboardKeyLabel),
                 bounds = key.bounds,
                 hitBounds = key.hitBounds,
-                selected = key.spec.role == KeyRole.SHIFT && shiftState != ShiftState.OFF,
+                selected = key.active || (key.spec.role == KeyRole.SHIFT && shiftState != ShiftState.OFF),
                 alternateActions = key.spec.alternateAccessibilityActions(shiftState),
                 customActions = SmartGestureAccessibility.actions(key.spec.role, smartGesturesEnabled),
             ).let(::add)

@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.interaction
 
+import app.funput.funput.keyboard.utility.KeyboardUtilityDispatcher
 import android.view.MotionEvent
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyAction
@@ -16,11 +17,7 @@ internal class KeyboardSurfaceInteraction(
     keySpec: (keyId: String) -> KeySpec?,
     suggestionSelection: (targetId: String) -> SuggestionSelection?,
     onAction: (KeyAction) -> Unit,
-    onEmojiRequested: () -> Unit,
-    onPlacementEditorRequested: () -> Unit,
-    onSettingsRequested: () -> Unit = {},
-    onClipboardPanelRequested: () -> Unit,
-    onClipboardPasteRequested: () -> Unit,
+    utilities: KeyboardUtilityDispatcher,
     onSuggestionSelected: (SuggestionSelection) -> Unit,
     onHapticFeedback: (KeyboardHapticType) -> Unit,
     onVisualStateChanged: () -> Unit,
@@ -39,12 +36,8 @@ internal class KeyboardSurfaceInteraction(
         keySpec = keySpec,
         suggestionSelection = suggestionSelection,
         onAction = onAction,
-        onEmojiRequested = onEmojiRequested,
-        onPlacementEditorRequested = onPlacementEditorRequested,
-        onSettingsRequested = onSettingsRequested,
+        utilities = utilities,
         onPointersCancelled = { touchHandler.cancelGesture() },
-        onClipboardPanelRequested = onClipboardPanelRequested,
-        onClipboardRequested = onClipboardPasteRequested,
         onSuggestionSelected = onSuggestionSelected,
         onHapticFeedback = onHapticFeedback,
         onVisualStateChanged = onVisualStateChanged,

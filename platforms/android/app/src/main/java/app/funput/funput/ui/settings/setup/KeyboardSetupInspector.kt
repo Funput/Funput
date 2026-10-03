@@ -8,7 +8,7 @@ import app.funput.funput.ime.FunputImeComponent
 internal object KeyboardSetupInspector {
     fun read(context: Context): KeyboardSetupStatus {
         val imm = context.getSystemService(InputMethodManager::class.java)
-        val enabledFromSystem = imm.enabledInputMethodList.any { it.packageName == FunputImeComponent.PACKAGE }
+        val enabledFromSystem = imm.enabledInputMethodList.any { it.packageName == context.packageName }
         // ENABLED_INPUT_METHODS is not readable for targetSdk > 33 (throws SecurityException);
         // the enabled-list API above already answers "is Funput enabled". DEFAULT_INPUT_METHOD is
         // read defensively so a platform/OEM restriction degrades to NOT_SELECTED, never a crash.
@@ -17,6 +17,7 @@ internal object KeyboardSetupInspector {
             enabledFromSystem = enabledFromSystem,
             enabledSetting = null,
             defaultSetting = defaultSetting,
+            packageName = context.packageName,
         )
     }
 
@@ -30,11 +31,12 @@ internal object KeyboardSetupInspector {
         enabledFromSystem: Boolean = false,
         enabledSetting: String?,
         defaultSetting: String?,
+        packageName: String = FunputImeComponent.PACKAGE,
     ): KeyboardSetupStatus {
-        if (!enabledFromSystem && !isImeEnabledInSettings(enabledSetting)) {
+        if (!enabledFromSystem && !isImeEnabledInSettings(enabledSetting, packageName)) {
             return KeyboardSetupStatus.NOT_ENABLED
         }
-        if (!isDefaultIme(defaultSetting)) return KeyboardSetupStatus.NOT_SELECTED
+        if (!FunputImeComponent.matches(defaultSetting, packageName)) return KeyboardSetupStatus.NOT_SELECTED
         return KeyboardSetupStatus.READY
     }
 
@@ -45,10 +47,9 @@ internal object KeyboardSetupInspector {
         defaultSetting = defaultSetting,
     )
 
-    private fun isImeEnabledInSettings(enabled: String?): Boolean {
+    private fun isImeEnabledInSettings(enabled: String?, packageName: String): Boolean {
         if (enabled.isNullOrBlank()) return false
-        return enabled.split(';').any(FunputImeComponent::matches)
+        return enabled.split(';').any { FunputImeComponent.matches(it, packageName) }
     }
 
-    private fun isDefaultIme(default: String?): Boolean = FunputImeComponent.matches(default)
 }

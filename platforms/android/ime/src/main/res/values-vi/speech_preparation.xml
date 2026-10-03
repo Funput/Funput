@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="speech_spike_checking">Đang kiểm tra ngôn ngữ trên thiết bị…</string>
+    <string name="speech_spike_pending">Đang chờ tải ngôn ngữ. Mở chuẩn bị để kiểm tra lại.</string>
+    <string name="speech_spike_downloadable">Cần tải dữ liệu ngôn ngữ. Hãy mở chuẩn bị.</string>
+    <string name="speech_spike_unsupported_locale">Dịch vụ không hỗ trợ ngôn ngữ này trên thiết bị.</string>
+</resources>

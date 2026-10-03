@@ -38,6 +38,8 @@ internal class SettingsScreenState(
     val onShowsNumberRowChanged: (Boolean) -> Unit,
     val onOpenAppearance: () -> Unit,
     val onOpenShortcuts: () -> Unit = {},
+    val speechAvailable: Boolean = false,
+    val onOpenSpeech: () -> Unit = {},
     val onToneStyleSelected: (ToneStyle) -> Unit,
     val onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     val onPlacementModeSelected: (KeyboardPlacementMode) -> Unit = {},

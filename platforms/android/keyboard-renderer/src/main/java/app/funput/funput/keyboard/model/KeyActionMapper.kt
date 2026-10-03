@@ -20,6 +20,7 @@ internal fun KeySpec.toKeyAction(shiftState: ShiftState): KeyAction? = when (rol
     KeyRole.PLACEMENT,
     KeyRole.CLIPBOARD,
     KeyRole.EMOJI,
+    KeyRole.MICROPHONE,
     -> null
     KeyRole.SPACE -> KeyAction.Space
     KeyRole.ENTER -> KeyAction.Enter

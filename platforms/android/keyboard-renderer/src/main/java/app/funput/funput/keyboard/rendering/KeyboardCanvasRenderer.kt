@@ -85,7 +85,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
             if (bar.suggestionsEnabled) {
                 suggestionBarRenderer.draw(canvas, bar, suggestions, pressedKeys)
             }
-            if (suggestions.isEmpty() && clipboardHint != null) {
+            if (suggestions.isEmpty() && clipboardHint != null && bar.clipboardHintFits) {
                 clipboardChipRenderer.draw(canvas, bar.suggestionsBounds, clipboardHint, pressedKeys)
             }
         }

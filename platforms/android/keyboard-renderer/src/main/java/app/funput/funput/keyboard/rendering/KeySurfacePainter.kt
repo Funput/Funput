@@ -6,6 +6,7 @@ import android.graphics.RectF
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.rendering.liquid.LiquidGlassKeyPainter
+import app.funput.funput.keyboard.rendering.microphone.fitMicrophonePlate
 import app.funput.funput.theme.KeyboardKeySurfaceStyle
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.roundToInt
@@ -82,10 +83,11 @@ internal class KeySurfacePainter(private val metrics: RenderMetrics) {
     private fun setDrawingRect(key: ResolvedKey, theme: KeyboardTheme, scale: Float) {
         val bounds = key.bounds
         drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
+        if (key.spec.role == KeyRole.MICROPHONE) drawingRect.fitMicrophonePlate()
         val inset = metrics.dp(theme.keycapInsetDp)
         if (inset > 0f) {
             // Never inset so far that the key vanishes, however the theme was authored.
-            val limit = minOf(bounds.width, bounds.height) / MaxInsetDivisor
+            val limit = minOf(drawingRect.width(), drawingRect.height()) / MaxInsetDivisor
             drawingRect.inset(minOf(inset, limit), minOf(inset, limit))
         }
         if (scale == 1f) return

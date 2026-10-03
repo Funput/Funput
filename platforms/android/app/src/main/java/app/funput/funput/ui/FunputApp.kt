@@ -21,6 +21,7 @@ import app.funput.funput.ui.navigation.AppNavDisplay
 import app.funput.funput.ui.navigation.AppTabBar
 import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
+import app.funput.funput.ui.settings.speech.SpeechSetupRoute
 import app.funput.funput.ui.shortcuts.ShortcutsRoute
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
 import app.funput.funput.ui.theme.custom.rememberCustomThemeServices
@@ -64,10 +65,12 @@ fun FunputApp() {
                             settings.themeSelection.resolve(isSystemInDarkTheme()),
                         ),
                         onOpenAppearance = { navigator.selectTab(TopLevelDestination.APPEARANCE) },
+                        onOpenSpeech = { navigator.navigate(AppDestination.SPEECH) },
                         onOpenShortcuts = { navigator.navigate(AppDestination.SHORTCUTS) },
                         tabBar = { AppTabBar(navigator) },
                     )
                 }
+                AppDestination.SPEECH -> SpeechSetupRoute(onBack = { navigator.navigateBack() })
                 AppDestination.SHORTCUTS -> ShortcutsRoute { navigator.navigateBack() }
                 AppDestination.THEME_GALLERY -> {
                     AppearanceRoute(

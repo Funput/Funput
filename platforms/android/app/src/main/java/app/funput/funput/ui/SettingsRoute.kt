@@ -33,6 +33,7 @@ internal fun SettingsRoute(
     keyboardTheme: KeyboardThemeDescriptor,
     onOpenAppearance: () -> Unit,
     onOpenShortcuts: () -> Unit,
+    onOpenSpeech: () -> Unit,
     tabBar: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
@@ -65,6 +66,8 @@ internal fun SettingsRoute(
             },
             onOpenAppearance = onOpenAppearance,
             onOpenShortcuts = onOpenShortcuts,
+            speechAvailable = context.resources.getBoolean(app.funput.funput.ime.R.bool.speech_feature_available),
+            onOpenSpeech = onOpenSpeech,
             onToneStyleSelected = { style ->
                 scope.launch { settings.toneStyleStore.setToneStyle(style) }
             },

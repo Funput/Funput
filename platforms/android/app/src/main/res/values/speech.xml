@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="speech_settings_title">Nhập bằng giọng nói</string>
+    <string name="speech_settings_summary">Quyền micro và dữ liệu nhận dạng trên thiết bị</string>
+    <string name="speech_enabled">Bật nhập bằng giọng nói</string>
+    <string name="speech_on_device_footer">Nhận dạng diễn ra trên thiết bị. Funput không lưu âm thanh hoặc lời nhận dạng.</string>
+    <string name="speech_return_to_keyboard">Quay lại bàn phím và chạm micro lần nữa để bắt đầu. Cấp quyền hoặc tải dữ liệu không tự bắt đầu thu âm.</string>
+    <string name="speech_permission_request">Cho phép dùng micro</string>
+    <string name="speech_permission_help">Chỉ dùng khi bạn bắt đầu nhập giọng nói. Nếu quyền đã bị chặn, nút này mở cài đặt quyền của Funput.</string>
+    <string name="speech_permission_granted">Đã có quyền dùng micro</string>
+    <string name="speech_save_error">Chưa lưu được cài đặt. Hãy thử lại.</string>
+    <string name="speech_feature_unavailable">Nhập giọng nói chưa được bật trong bản này.</string>
+    <string name="speech_unsupported_os">Nhập giọng nói cần Android 12 trở lên.</string>
+    <string name="speech_service_unavailable">Chưa có dịch vụ nhận dạng trên thiết bị. Hãy mở lại màn hình để kiểm tra.</string>
+    <string name="speech_vietnamese">Tiếng Việt · vi-VN</string>
+    <string name="speech_english">Tiếng Anh · en-US</string>
+    <string name="speech_download_footer">Tải dữ liệu ngôn ngữ cần kết nối mạng. Nhận dạng dùng dịch vụ trên thiết bị; đóng màn hình không huỷ quá trình tải của hệ thống.</string>
+    <string name="speech_check_again">Kiểm tra lại</string>
+    <string name="speech_download">Tải dữ liệu nhận dạng</string>
+    <string name="speech_checking">Đang kiểm tra ngôn ngữ…</string>
+    <string name="speech_downloading">Đang yêu cầu dữ liệu ngôn ngữ…</string>
+    <string name="speech_download_progress">Đang tải: %1$d%%</string>
+    <string name="speech_download_requested">Đã gửi yêu cầu tải. Chọn Kiểm tra lại để xem khi nào sẵn sàng.</string>
+    <string name="speech_pending">Đang chờ hệ thống tải ngôn ngữ này.</string>
+    <string name="speech_download_error">Yêu cầu tải chưa phản hồi hoặc gặp lỗi. Hãy kiểm tra lại trước khi thử tải tiếp.</string>
+    <string name="speech_ready">Sẵn sàng trên thiết bị</string>
+    <string name="speech_downloadable">Có thể tải dữ liệu ngôn ngữ</string>
+    <string name="speech_unsupported_locale">Dịch vụ này không hỗ trợ ngôn ngữ này trên thiết bị.</string>
+    <string name="speech_unknown_locale">Chưa kiểm tra được mức sẵn sàng. Bạn có thể thử từ bàn phím.</string>
+</resources>

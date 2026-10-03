@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="speech_spike_editor_explanation" translatable="false">P5: chọn bàn phím Funput và bấm mic cạnh Emoji để thử từ IME thật. Hai ô văn bản kiểm tra đổi focus; ô mật khẩu phải chặn giọng nói. Nội dung chỉ giữ trong RAM.</string>
+    <string name="speech_spike_editor_setup" translatable="false">Chuẩn bị giọng nói: quyền micro và ngôn ngữ</string>
+    <string name="speech_spike_editor_first" translatable="false">Ô văn bản A</string>
+    <string name="speech_spike_editor_second" translatable="false">Ô văn bản B</string>
+    <string name="speech_spike_editor_password" translatable="false">Ô mật khẩu (phải chặn)</string>
+</resources>

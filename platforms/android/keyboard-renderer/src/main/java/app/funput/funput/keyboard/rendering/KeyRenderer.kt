@@ -35,7 +35,7 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         enterAction: KeyboardEnterAction,
     ) {
         if (key.spec.role == KeyRole.PLACEHOLDER) return
-        val isActivated = key.spec.role == KeyRole.SHIFT && shiftState.isActive
+        val isActivated = key.active || (key.spec.role == KeyRole.SHIFT && shiftState.isActive)
         surfacePainter.draw(canvas, key, theme, isPressed, isActivated)
         when {
             key.spec.role == KeyRole.SPACE -> spacebarRenderer.draw(
