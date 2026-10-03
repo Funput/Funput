@@ -141,6 +141,18 @@ không tải dữ liệu hoặc commit nhị phân. Installer kiểm CRC và cà
 
 Chi tiết và kết quả kiểm chứng: [English lexicon](../../docs/features/english-lexicon-suggestion.md).
 
+### Nhập bằng giọng nói — đang nghiệm thu trong debug
+
+Android 12/API 31+ có mic cạnh Emoji khi bật Giọng nói và máy hỗ trợ model
+on-device cho VI (`vi-VN`) hoặc EN (`en-US`). Tap mic, chuẩn bị quyền/model nếu
+cần, quay lại và tap lần nữa để nghe. Dừng chờ final; Huỷ/Back bỏ phiên. Panel
+đồng bộ theme bàn phím, partial chỉ xem trước và final chèn một lần.
+
+Funput không có cloud fallback, không tự thêm khoảng trắng/dấu câu/viết hoa,
+không lưu audio/transcript hay học từ từ lời nói. Production vẫn tắt đến khi
+đủ gate máy thật. Xem [hướng dẫn và quyền riêng tư](docs/VoiceInput.md) và
+[checklist nghiệm thu P6](../../docs/features/android-speech-acceptance/README.md).
+
 ## Giới hạn đã biết
 
 - **Chưa có công cụ Chuyển mã.** Đổi bảng mã hiện chỉ có trên bản desktop.

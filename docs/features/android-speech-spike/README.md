@@ -34,7 +34,7 @@ quyết định chuyển phase là bằng chứng các phép đo đã pass.
 | Nhận dạng VI thực tế từ IME visible | Người dùng báo hoạt động chuẩn, tiếng Việt nhận diện tốt trên bản debug đang thử | **PASS — smoke test theo phản hồi người dùng; chưa có timing/corpus run** |
 | Nhận dạng EN thực tế từ IME visible | Chưa có phản hồi kiểm chứng | **PENDING** |
 | Nhận dạng khi không có mạng | Chưa có phiên kiểm chứng | **PENDING** |
-| Máy thứ hai | Chưa có tổ hợp thiết bị/service thứ hai | **PENDING** |
+| Máy thứ hai | Fold5 SM-F946B, Android 16/API 36; probe VI installed, regression 62 IME/29 UI pass ngày 03/10/2026 | **PASS — capability/regression; ASR offline/corpus PENDING** |
 | Gate chất lượng và lifecycle | Chưa có đủ bằng chứng máy thật | **PENDING** |
 
 Probe trên đã đóng cả temporary client. Unit test, lint, debug build và release
@@ -60,12 +60,20 @@ report cụ thể; không biến support API thành kết quả nhận dạng đ
 
 ## 2. Artifact và dữ liệu
 
+P6 dùng lại corpus/tool trong thư mục này. Xem [quy trình P6](../android-speech-acceptance/README.md),
+[report hai máy](../android-speech-acceptance/report-2026-10-03.md) và
+[checklist máy thật](../android-speech-acceptance/checklist.md). Snapshot P0/P1
+trên đây giữ lịch sử; report P6 ghi kết quả EN mới nhất, không suy ra từ VI support.
+
 - `corpus.csv`: đúng **80 câu** — 40 VI rõ, 10 VI tên/số, 10 VI nhiễu nhẹ,
   20 EN rõ. Mỗi câu do tác giả artifact tự viết; tên/địa chỉ trong đó dùng để thử.
 - `measurements.template.csv`: chỉ header; sao chép thành file run riêng rồi
   nhập kết quả. Không có hàng đo giả hoặc placeholder được coi là một phép đo.
 - `measure.py`: Python 3, chỉ thư viện chuẩn; đọc CSV và xuất JSON ra stdout.
   Không gọi ADB, microphone, service, mạng hoặc ghi audio/log transcript tự động.
+- `test_measure.py`: regression của numeric gate dùng fixtures tổng hợp trong
+  RAM/temp file, không phải dữ liệu máy thật. Chạy:
+  `python3 -m unittest discover -s docs/features/android-speech-spike -p 'test_*.py'`.
 
 Giữ corpus cố định trong một đợt so sánh. Đọc câu tự nhiên; chữ số trong reference
 được đọc thành lời như thường dùng. Không yêu cầu đọc dấu chấm/dấu phẩy thành

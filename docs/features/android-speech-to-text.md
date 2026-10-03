@@ -1370,3 +1370,32 @@ pass, không skip; lintDebug, assembleDebug, LOC/layout/FunputUI và diff check
 pass. Native preview Glass Dark trước/sau xác nhận plate mic cùng cỡ Emoji và
 glyph nhỏ hơn. APK debug cùng version/signing đã cài cập nhật trên Samsung.
 Không có test ASR mới; production gate và các mục P6 còn thiếu giữ nguyên.
+
+## 26. P6 — nghiệm thu hai máy (03/10/2026, đang thực hiện)
+
+Đã bắt đầu P6 với Samsung SM-G998B (Android 15/API 35) và SM-F946B/Fold5
+(Android 16/API 36). Hai máy chạy regression IME 62/62 và keyboard-ui 29/29
+pass riêng; probe on-device không thu âm xác nhận VI installed trên cả hai.
+S21 EN còn Downloadable; Fold5 request EN trả lỗi 11, giữ Unknown. Kết quả
+support không thay cho phép đo lời nói/offline. Model version không được API
+cung cấp, không tự ghi một version suy đoán.
+
+Fold5 đã có bản Play Store signer khác nên thêm debug property
+`funput.speechTestApp=true`: package `.speechtest`, label Funput Speech Test,
+dữ liệu/quyền riêng. Không thay bản Play hoặc xoá dữ liệu. Setup intent giữ
+source class namespace, dùng runtime package; keyboard inspector và catalog
+shortcut/task affinity cũng theo runtime package. Tests cover việc không nhầm
+IME Play với IME test. Release ID/version và production gate giữ nguyên.
+
+Tài liệu nghiệm thu gồm [quy trình](android-speech-acceptance/README.md),
+[report kỹ thuật](android-speech-acceptance/report-2026-10-03.md),
+[checklist lifecycle/UI](android-speech-acceptance/checklist.md) và
+[help/privacy/release notes dự thảo](../../platforms/android/docs/VoiceInput.md).
+Dùng nguyên corpus 80 câu và ngưỡng trước đó; bổ sung regression scoring tool
+để không coi CSV rỗng, thiếu timing, retry cùng máy hoặc lỗi chất lượng/latency
+là đạt gate. Fixtures của tool không phải phép đo thật.
+
+Người dùng tham gia các phiên nói thật, tắt mạng và các ca thiết bị; agent làm
+automation/build/audit và tổng hợp. P6 chưa hoàn thành: thiếu corpus/timing
+offline hai máy và checklist thực tế. Chỉ bật production sau khi mọi gate đạt;
+không deploy hoặc thay release version trong phase này.
