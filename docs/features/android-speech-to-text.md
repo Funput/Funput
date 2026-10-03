@@ -1057,3 +1057,92 @@ vào phản hồi người dùng P0; corpus/offline/máy thứ hai và ma trận
 còn thiếu trước P6. Không ghi audio/transcript vào log, clipboard hoặc storage.
 P4 tiếp theo là mic renderer và panel Compose inert theo state, rồi P5 nối toàn
 bộ presentation/lifecycle production flow. Release vẫn phải chờ nghiệm thu P6.
+
+## 21. P4 — mic renderer và panel speech (03/10/2026)
+
+P4 hoàn tất phần presentation, dùng state giả để nghiệm thu UI trước P5.
+IME thật vẫn dùng debug strip P3; chưa nối mic/panel mới vào recording controller.
+Production giữ `speech_feature_available=false`, debug override `true`.
+Code P4 nằm trên `feat/android-speech-to-text`: renderer `35521728`, panel
+`2e2a9da9`, catalog `235c3acc`, contrast fix `e7238a7d`.
+
+### Contracts và ranh giới
+
+- `:keyboard-renderer` thêm `KeyRole.MICROPHONE`, optional toolbar `microphoneKey`
+  và `KeyboardMicrophoneState(visible, active, accessibilityLabel)`. State mặc định
+  ẩn; host cung cấp visibility sau capability/editor checks. Renderer không nhận
+  transcript, locale domain, recognizer hoặc permission API.
+- `:keyboard-ui/speech` có đúng 5 Kotlin files: `SpeechPanelState` (kèm stage/action),
+  view, content, controls và binding. Presentation chỉ dùng `KeyboardLanguage`
+  của renderer, không import domain `:ime`.
+- `FunputKeyboardView.microphone` và `speechPanelState` cập nhật presentation;
+  `showSpeechPanel()` mở panel lazy. `onSpeechRequested` yêu cầu host xử lý tap mic;
+  `onSpeechAction` chuyển `STOP/CANCEL/RETRY/OPEN_SETUP` về host.
+- Host xử lý Back bằng `cancelSpeechPanel()` trước điều hướng mặc định. Catalog đã
+  nối Back dispatcher; ranh giới Back của `InputMethodService` thuộc P5.
+
+### Geometry và accessibility
+
+Mic nằm ngay trước Emoji và không dùng `utilityKeysVisible` của candidates.
+Tắt Gợi ý từ không ẩn mic. Password/PIN/email/keypad không vẽ hoặc dispatch mic;
+policy đầy đủ cho caret, `KEY_EVENT`, setting và capability thuộc binder P5.
+
+Mic giữ chiều rộng visual 48dp khi đổi height profile; không thay toolbar height
+hoặc row geometry. Hit target dùng chung gap resolver, mở rộng theo slack của
+band hiện có và không chồng utility bên cạnh. Candidate capacity dùng phần chiều
+rộng còn lại; optional placement/clipboard/system switcher bị bỏ nếu không đủ
+chỗ. Paste capsule 52dp được ẩn đồng thời ở draw, touch và accessibility khi nhãn
+không vừa; tránh vẽ đè lên mic trên host hẹp.
+
+Accessibility node dùng chính key/hit bounds đã resolve, nhãn do host cung cấp
+và selected state của mic. Panel chỉ đặt live region polite trên trạng thái;
+partial không phải live region. Controls có role Button và minimum height 48dp;
+body/transcript cuộn trong phần chiều cao còn lại. UI không có animation nên
+không cần timer hoặc xử lý reduced motion riêng.
+
+`KeyboardPanelPalette.readableOn` composite surface có alpha trên cả hai đầu
+gradient trước khi chọn foreground. Regression test cho toàn bộ presets bảo đảm
+contrast ≥4.5; tránh chữ đen trên nền nút translucent tối.
+
+### Panel và navigation
+
+Preparing/Listening/Finalizing/Error hiển thị bằng Compose Foundation hiện có,
+`KeyboardPanelComposeView` và `KeyboardPanelPalette`; có resource VI/EN đầy đủ.
+Chỉ Listening có Dừng. STOP phát action và giữ panel; host đổi sang Finalizing
+để chờ final. Cancel/Back/rời Speech xoá preview và phát CANCEL đúng một lần.
+Error có thông báo, CTA thiết lập hoặc Thử lại theo flags, và Quay lại bàn phím.
+Attach, recomposition và cập nhật state/theme không tự phát recording action.
+
+Coordinator hoàn tất visibility/state trước khi phát callback Huỷ và kiểm tra
+panel hiện tại trước notification tiếp theo. Callback host đổi panel đồng bộ
+không làm panel cũ hiện lại. Panel được tạo khi mở lần đầu, tái sử dụng, cập nhật
+theme/haptics/sounds và nằm trong content host hiện có nên giữ placement/height.
+Action của view đã ẩn bị bỏ qua.
+
+### Kiểm tra và giới hạn bằng chứng
+
+| Hạng mục | Kết quả |
+| --- | --- |
+| Kotlin LOC, layout, FunputUI, `git diff --check` | PASS; mọi `.kt/.kts` ≤150 dòng, các subtree mới được đăng ký |
+| `testDebugUnitTest` | PASS toàn bộ modules; renderer 266, keyboard-ui 45, IME 508, app 165 |
+| Test mới P4 | 9 unit (8 renderer, 1 contrast palette) và 8 UI instrumented tests |
+| `lintDebug`, `:app:assembleDebug` | PASS; đã bổ sung resource VI/EN thay vì suppress MissingTranslation |
+| `:ime:compileReleaseKotlin`, release manifest merge | PASS; release không có SpeechPanelCatalogActivity |
+| Samsung SM-G998B, API 35, `:ime:connectedDebugAndroidTest` | 53/53, không skip, 03/10/2026 09:52 local |
+| Samsung, `:keyboard-ui:connectedDebugAndroidTest` | 22/22, không skip, 03/10/2026 10:07 local |
+| Fake-state UI | Lazy/inert, Stop/Cancel/Back, reentrant callback, VI/EN, theme/feedback/reuse, 240dp và font 200% PASS |
+| Mic geometry | Candidates on/off, narrow 120–360dp, height profile, hit targets, label/selected node PASS |
+| Catalog trên Samsung | Preparing/Listening và Back → Letters; mic cạnh Emoji cùng 3 candidates; tối/một tay/chữ 200%, safe area và contrast fix đã kiểm tra |
+| Microphone trong catalog | Không gọi recording; AppOps không có usage mới/running, permission/default IME được giữ |
+
+TalkBack semantics được kiểm tra bằng snapshot và Compose semantics; nghe thử
+announcement bằng TalkBack thật vẫn cần nghiệm thu máy ở P6. Android hiện chỉ có
+Standard/Elevated/One-handed; không thêm floating placement trong P4. Panel dùng
+content host chung và được kiểm tra với host hẹp; floating product mode không
+được coi là đã nghiệm thu khi mode đó chưa tồn tại.
+
+P5 còn phải tạo session/UI binder, bỏ debug strip khi dùng flow mới, nối capability/
+setting/editor visibility, request/action, Back/lifecycle và trả Letters sau commit.
+Chưa dùng kết quả fake-state hoặc UI tests thay cho ASR offline/corpus/máy thứ hai
+hay ma trận quyền/microphone của P6. Không đổi version, thêm model/ML Kit/cloud
+fallback, triển khai iOS hoặc bật production.

@@ -234,7 +234,7 @@ Không điền Pass chỉ vì build/unit test hoặc service probe đã chạy.
 
 | Hạng mục | Máy A: Samsung SM-G998B | Máy B: chưa chọn | Report/bằng chứng |
 | --- | --- | --- | --- |
-| Debug APK/signing/build revision | Debug APK update cùng chữ ký, code 27/version 1.2026.70 | PENDING | Source P0–P3: `feat/android-speech-to-text`, implementation `72a98798`; xem docs chính |
+| Debug APK/signing/build revision | Debug APK update cùng chữ ký, code 27/version 1.2026.70 | PENDING | Source P0–P4: `feat/android-speech-to-text`, implementation `e7238a7d`; xem docs chính |
 | Live availability + VI/EN support lists | PASS capability; EN chưa installed | PENDING | Probe 03/10/2026 00:47 |
 | VI smoke test từ IME thật | PASS theo phản hồi người dùng; đánh giá nhận diện tốt | PENDING | Phản hồi trong trao đổi; không có corpus/timing/network status |
 | Model preparation đã làm | PENDING | PENDING | |
@@ -252,3 +252,22 @@ Biên bản cần ghi người thử, điều kiện phòng/mic/giọng đọc, 
 version, ngày chạy, cách đo và giới hạn bằng chứng. Không lưu audio. Khi đủ hai
 máy, ghi rõ verdict P0 và các giới hạn còn lại trước khi nghiệm thu P6;
 không mô tả nút mic production đã hoàn thành chỉ từ spike này.
+
+## 9. Catalog presentation P4 (03/10/2026)
+
+P4 thêm catalog state giả để review mic/panel; IME thật vẫn giữ debug strip P3
+cho đến khi P5 nối flow mới. Mở catalog từ máy đã cài debug APK:
+
+```bash
+adb shell am start -n app.funput.funput/.catalog.CatalogActivity --ez speech_panel true
+```
+
+Catalog có Preparing/Listening/Finalizing/Error, VI/EN, sáng/tối, chế độ một tay
+và font 200% chỉ trong catalog. Back/Huỷ về Letters; bấm mic mở lại panel mẫu.
+Dừng đổi sang Finalizing giả; không có final commit vào app/editor.
+
+Catalog không tạo recognizer, xin quyền, tải model hoặc mở thiết lập thật.
+Preview là câu mẫu viết sẵn, không ghi audio/transcript. Nó không thay spike
+nhận dạng thật, corpus/WER hay gate offline/P6. Unit/lint/build pass; Samsung API
+35 có 22/22 UI tests (8 mới P4) và regression IME 53/53. Xem phần 21 của tài liệu
+chính để biết contracts, geometry, accessibility và phần P5/P6 còn thiếu.
