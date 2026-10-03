@@ -18,6 +18,8 @@ readonly renderer_test="$android_root/keyboard-renderer/src/test/java/app/funput
 readonly ime_main="$android_root/ime/src/main/java/app/funput/funput/ime"
 readonly ime_test="$android_root/ime/src/test/java/app/funput/funput/ime"
 readonly roots=(
+    "$renderer_main/rendering/microphone"
+    "$renderer_test/layout/microphone"
     "$ime_main/editing/mode"
     "$ime_test/editing/mode"
     "$ime_test/editing/voice"

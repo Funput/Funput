@@ -67,6 +67,7 @@ internal object CompactSymbolLayouts {
         suggestionBar = SuggestionBarSpec(
             clipboardKey = specialKey("clipboard-$id", "", KeyRole.CLIPBOARD, accessibilityLabel = "Lịch sử clipboard"),
             placementKey = specialKey("placement-$id", "", KeyRole.PLACEMENT, accessibilityLabel = "Chế độ bàn phím"),
+            microphoneKey = specialKey("microphone-$id", "", KeyRole.MICROPHONE, accessibilityLabel = "Nhập bằng giọng nói"),
             emojiKey = specialKey("emoji-$id", "", KeyRole.EMOJI, accessibilityLabel = "Biểu tượng cảm xúc"),
             suggestionsEnabled = KeyboardFeatures.SuggestionsEnabled && suggestionsEnabled,
         ).takeIf { KeyboardFeatures.EmojiToolbarEnabled },

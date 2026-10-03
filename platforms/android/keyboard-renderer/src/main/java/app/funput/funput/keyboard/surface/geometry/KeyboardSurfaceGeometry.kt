@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.surface.geometry
 
 import android.view.View
+import app.funput.funput.keyboard.utility.KeyboardMicrophoneState
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.layout.geometry.resolveGeometry
@@ -12,10 +13,18 @@ internal class KeyboardSurfaceGeometry(
     private val layout: () -> KeyboardLayout,
     private val profile: () -> KeyboardSizingProfile,
     private val utilitiesVisible: () -> Boolean,
+    private val microphoneAllowed: () -> Boolean,
     private val changed: () -> Unit,
 ) {
     var keyboard: ResolvedKeyboard? = null
         private set
+    var microphone = KeyboardMicrophoneState()
+        set(value) {
+            if (field == value) return
+            field = value
+            resolve()
+            host.invalidate()
+        }
     var clipboardKeyVisible = false
         set(value) {
             if (field == value) return
@@ -38,6 +47,7 @@ internal class KeyboardSurfaceGeometry(
             profile = profile(),
             showClipboard = clipboardKeyVisible && utilitiesVisible(),
             showPlacement = placementKeyVisible && utilitiesVisible(),
+            microphone = microphone.copy(visible = microphone.visible && microphoneAllowed()),
         )
         changed()
     }

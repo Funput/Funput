@@ -14,6 +14,7 @@ enum class KeyRole {
     PLACEMENT,
     CLIPBOARD,
     EMOJI,
+    MICROPHONE,
     SPACE,
     ENTER,
 }

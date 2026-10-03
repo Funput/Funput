@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.rendering
 
 import android.graphics.Canvas
+import app.funput.funput.keyboard.rendering.microphone.MicrophoneKeyIconRenderer
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardEnterAction
@@ -11,12 +12,14 @@ internal class KeyIconRenderer(metrics: RenderMetrics) {
     private val navigationIcons = NavigationKeyIconRenderer(metrics)
     private val utilityIcons = UtilityKeyIconRenderer(metrics)
     private val clipboardIcon = ClipboardKeyIconRenderer(metrics)
+    private val microphoneIcon = MicrophoneKeyIconRenderer(metrics)
     private val enterContent = EnterKeyContentRenderer(metrics)
 
     fun updateTheme(theme: KeyboardTheme) {
         navigationIcons.updateTheme(theme)
         utilityIcons.updateTheme(theme)
         clipboardIcon.updateTheme(theme)
+        microphoneIcon.updateTheme(theme)
         enterContent.updateTheme(theme)
     }
 
@@ -34,6 +37,7 @@ internal class KeyIconRenderer(metrics: RenderMetrics) {
             KeyRole.SYSTEM_INPUT_METHOD -> utilityIcons.drawSystemInputMethod(canvas, key)
             KeyRole.PLACEMENT -> utilityIcons.drawPlacement(canvas, key)
             KeyRole.CLIPBOARD -> clipboardIcon.draw(canvas, key)
+            KeyRole.MICROPHONE -> microphoneIcon.draw(canvas, key)
             KeyRole.EMOJI -> utilityIcons.drawEmoji(canvas, key)
             else -> return false
         }

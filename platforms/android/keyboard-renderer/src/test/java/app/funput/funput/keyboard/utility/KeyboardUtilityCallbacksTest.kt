@@ -8,6 +8,7 @@ class KeyboardUtilityCallbacksTest {
     @Test fun commonUtilityContractPreservesEveryHostCallbackWithoutTyping() {
         val requests = mutableListOf<String>()
         val callbacks = KeyboardCallbacks().apply {
+            onMicrophoneRequested = { requests += "microphone" }
             onEmojiRequested = { requests += "emoji" }
             onPlacementEditorRequested = { requests += "placement" }
             onSettingsRequested = { requests += "settings" }
@@ -18,7 +19,7 @@ class KeyboardUtilityCallbacksTest {
         }
         val utilities: KeyboardUtilityDispatcher = callbacks
         KeyboardUtilityAction.entries.forEach(utilities::dispatch)
-        assertEquals(listOf("emoji", "placement", "settings", "panel", "paste"), requests)
+        assertEquals(listOf("emoji", "microphone", "placement", "settings", "panel", "paste"), requests)
     }
 
     @Test fun unattachedCallbacksAreInert() {

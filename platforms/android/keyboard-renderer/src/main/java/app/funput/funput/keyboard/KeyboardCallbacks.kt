@@ -8,6 +8,7 @@ import app.funput.funput.keyboard.model.SuggestionSelection
 /** Host callbacks emitted by the keyboard surface. */
 class KeyboardCallbacks : KeyboardUtilityDispatcher {
     var onKeyAction: ((KeyAction) -> Unit)? = null
+    var onMicrophoneRequested: (() -> Unit)? = null
     var onEmojiRequested: (() -> Unit)? = null
     var onPlacementEditorRequested: (() -> Unit)? = null
     var onSettingsRequested: (() -> Unit)? = null
@@ -21,6 +22,7 @@ class KeyboardCallbacks : KeyboardUtilityDispatcher {
 
     override fun dispatch(action: KeyboardUtilityAction) {
         when (action) {
+            KeyboardUtilityAction.MICROPHONE -> onMicrophoneRequested?.invoke()
             KeyboardUtilityAction.EMOJI -> onEmojiRequested?.invoke()
             KeyboardUtilityAction.PLACEMENT -> onPlacementEditorRequested?.invoke()
             KeyboardUtilityAction.SETTINGS -> onSettingsRequested?.invoke()

@@ -22,6 +22,7 @@ internal class KeyboardUtilityActionRouter(
             keyId == ClipboardTargetId -> utilities.dispatch(KeyboardUtilityAction.CLIPBOARD_PASTE)
             key?.role == KeyRole.PLACEMENT -> utilities.dispatch(KeyboardUtilityAction.PLACEMENT)
             key?.role == KeyRole.CLIPBOARD -> utilities.dispatch(KeyboardUtilityAction.CLIPBOARD_PANEL)
+            key?.role == KeyRole.MICROPHONE -> utilities.dispatch(KeyboardUtilityAction.MICROPHONE)
             key?.role == KeyRole.EMOJI -> utilities.dispatch(KeyboardUtilityAction.EMOJI)
             keyId != null -> onKeyboardKey(keyId)
         }

@@ -6,7 +6,6 @@ import android.view.MotionEvent
 import android.view.View
 import app.funput.funput.keyboard.interaction.interactionTargetAt
 import app.funput.funput.keyboard.interaction.selectionForTarget
-import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.KeyboardEditorMode
@@ -20,6 +19,7 @@ import app.funput.funput.keyboard.surface.KeyboardSurfaceEventDispatcher
 import app.funput.funput.keyboard.surface.KeyboardSurfaceLayoutState
 import app.funput.funput.keyboard.surface.KeyboardSurfaceRenderController
 import app.funput.funput.keyboard.surface.createKeyboardSurfaceInteraction
+import app.funput.funput.keyboard.surface.geometry.KeyboardSurfacePopoverBounds
 import app.funput.funput.keyboard.surface.geometry.KeyboardSurfaceGeometry
 import app.funput.funput.keyboard.surface.geometry.measureKeyboardSurface
 class KeyboardSurfaceView @JvmOverloads constructor(
@@ -28,7 +28,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : View(context, attrs, defStyleAttr) {
     private val alternatePopup = AlternatePalettePopup(this)
-    private val screenLocation = IntArray(2)
+    private val popoverGeometry = KeyboardSurfacePopoverBounds(this)
     private val layoutState = KeyboardSurfaceLayoutState(::updateKeyboardLayout)
     private val render = KeyboardSurfaceRenderController(
         context = context,
@@ -42,6 +42,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         layout = { layoutState.layout },
         profile = { sizingProfile },
         utilitiesVisible = { suggestionState.utilityKeysVisible },
+        microphoneAllowed = { editorMode in listOf(KeyboardEditorMode.TEXT, KeyboardEditorMode.SEARCH, KeyboardEditorMode.URL) },
         changed = {
             suggestionState.geometryChanged()
             accessibility.refresh()
@@ -54,6 +55,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
     var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
     var clipboardKeyVisible: Boolean by geometry::clipboardKeyVisible
+    var microphone by geometry::microphone
     var placementKeyVisible: Boolean by geometry::placementKeyVisible
     var showsNumberRow: Boolean by layoutState::showsNumberRow
     var keyboardTheme by render::keyboardTheme
@@ -93,7 +95,8 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         host = this,
         callbacks = callbacks,
         keyAt = { x, y -> resolvedKeyboard?.interactionTargetAt(
-            x, y, suggestions.size, clipboardHint != null && suggestions.isEmpty(),
+            x, y, suggestions.size, clipboardHint != null && suggestions.isEmpty() &&
+                resolvedKeyboard?.suggestionBar?.clipboardHintFits == true,
         ) },
         keySpec = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.spec },
         suggestionSelection = { id -> suggestions.selectionForTarget(id) },
@@ -107,7 +110,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         },
         onSemanticStateChanged = accessibility::refresh,
         keyBounds = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.bounds },
-        surfaceBounds = ::popoverBounds,
+        surfaceBounds = popoverGeometry::resolve,
     )
     private val events = KeyboardSurfaceEventDispatcher(
         host = this,
@@ -141,8 +144,5 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     }
     override fun onDetachedFromWindow() { interaction.clear(); alternatePopup.dismiss(); render.clear(); super.onDetachedFromWindow() }
     private fun resolveGeometry() = geometry.resolve()
-    private fun popoverBounds(): KeyBounds {
-        getLocationOnScreen(screenLocation); return KeyBounds(0f, -screenLocation[1].toFloat(), width.toFloat(), height.toFloat())
-    }
     private fun updateKeyboardLayout() { interaction.reset(); requestLayout(); resolveGeometry(); invalidate() }
 }

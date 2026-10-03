@@ -4,6 +4,7 @@ import app.funput.funput.keyboard.layout.KeyboardGeometry
 import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
+import app.funput.funput.keyboard.utility.KeyboardMicrophoneState
 import app.funput.funput.keyboard.model.KeyboardLayout
 
 internal fun KeyboardLayout.resolveGeometry(
@@ -13,6 +14,7 @@ internal fun KeyboardLayout.resolveGeometry(
     profile: KeyboardSizingProfile = KeyboardSizingProfile.Default,
     showClipboard: Boolean = false,
     showPlacement: Boolean = true,
+    microphone: KeyboardMicrophoneState = KeyboardMicrophoneState(),
 ): ResolvedKeyboard? {
     if (width <= 0 || height <= 0) return null
     return KeyboardGeometry.resolve(
@@ -22,5 +24,6 @@ internal fun KeyboardLayout.resolveGeometry(
         spec = KeyboardGeometrySpec.fromProfile(density, profile),
         showClipboard = showClipboard,
         showPlacement = showPlacement,
+        microphone = microphone,
     )
 }
