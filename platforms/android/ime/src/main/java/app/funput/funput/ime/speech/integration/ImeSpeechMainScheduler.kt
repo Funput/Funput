@@ -7,7 +7,7 @@ import app.funput.funput.ime.speech.session.SpeechCancellation
 import app.funput.funput.ime.speech.session.SpeechScheduler
 import app.funput.funput.ime.speech.session.SpeechClock
 
-internal class SpeechSpikeMainScheduler : SpeechScheduler, SpeechClock {
+internal class ImeSpeechMainScheduler : SpeechScheduler, SpeechClock {
     override fun nowMillis() = SystemClock.elapsedRealtime()
     private val handler = Handler(Looper.getMainLooper())
 

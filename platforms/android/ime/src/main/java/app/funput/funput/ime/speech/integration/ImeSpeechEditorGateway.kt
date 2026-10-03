@@ -16,7 +16,7 @@ import app.funput.funput.ime.speech.session.SpeechEditorAnchor
 import app.funput.funput.ime.speech.session.SpeechEditorGateway
 
 /** Current connection is resolved per operation; wrapper identity never replaces the editor stamp. */
-internal class SpeechSpikeEditorGateway(
+internal class ImeSpeechEditorGateway(
     private val service: InputMethodService,
     private val session: ImeEditingSession,
     private val tracker: SpeechEditorTracker,
@@ -30,7 +30,9 @@ internal class SpeechSpikeEditorGateway(
     fun permitted(): Boolean = service.checkSelfPermission(Manifest.permission.RECORD_AUDIO) ==
         PackageManager.PERMISSION_GRANTED
 
-    override fun available(): Boolean = visible && service.isInputViewShown && permitted() &&
+    override fun available(): Boolean = foreground() && permitted()
+
+    fun foreground(): Boolean = visible && service.isInputViewShown &&
         service.currentInputConnection != null &&
         service.getSystemService(PowerManager::class.java).isInteractive &&
         !service.getSystemService(KeyguardManager::class.java).isKeyguardLocked

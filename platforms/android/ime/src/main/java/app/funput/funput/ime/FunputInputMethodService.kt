@@ -6,10 +6,11 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.CompletionInfo
 import android.view.inputmethod.EditorInfo
+import app.funput.funput.ime.hardware.boundary.ImeHardwareInputBoundary
 import app.funput.funput.ime.lifecycle.ImeInputViewBinder
 import app.funput.funput.ime.lifecycle.ImeRuntime
 import app.funput.funput.ime.lifecycle.createImeRuntime
-import app.funput.funput.ime.speech.integration.ImeSpeechSpike
+import app.funput.funput.ime.speech.integration.lifecycle.ImeSpeechSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,7 +25,8 @@ class FunputInputMethodService : InputMethodService() {
     private val settings get() = runtime.settings
     private val hardwareKeyboard get() = runtime.hardwareKeyboard
     private val shortcuts get() = runtime.shortcuts
-    private val speech by lazy { ImeSpeechSpike(this, session) }
+    private val speech by lazy { ImeSpeechSession(this, session) }
+    private val hardwareInput by lazy { ImeHardwareInputBoundary({ hardwareKeyboard }, speech) }
     private val actionHandler get() = session.actionHandler
     private val editorRuntime get() = session.editorRuntime
     private val suggestionService get() = session.suggestionService
@@ -35,11 +37,11 @@ class FunputInputMethodService : InputMethodService() {
         runtime.observe(this, serviceScope) { speech.setEnabled(it) }
     }
 
-    override fun onCreateInputView(): View = speech.wrap(views.create())
+    override fun onCreateInputView(): View = speech.bind(views.create())
 
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
-        super.onStartInput(attribute, restarting)
         speech.startInput(attribute)
+        super.onStartInput(attribute, restarting)
         editorRuntime.configure(attribute)
         editorRuntime.setAutoCapitalizeEnabled(settings.autoCapitalizeEnabled)
         session.startActionHandler()
@@ -87,6 +89,11 @@ class FunputInputMethodService : InputMethodService() {
         super.onFinishInput()
     }
 
+    override fun onWindowShown() {
+        super.onWindowShown()
+        speech.show()
+    }
+
     override fun onWindowHidden() {
         speech.hide()
         session.windowHidden()
@@ -114,15 +121,14 @@ class FunputInputMethodService : InputMethodService() {
     }
 
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        speech.invalidate()
-        return hardwareKeyboard.onKeyDown(event) || super.onKeyDown(keyCode, event)
-    }
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean =
+        hardwareInput.down(keyCode, event) { super.onKeyDown(keyCode, event) }
 
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        speech.invalidate()
-        return hardwareKeyboard.onKeyUp(event) || super.onKeyUp(keyCode, event)
-    }
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
+        hardwareInput.up(keyCode, event) { super.onKeyUp(keyCode, event) }
+
+    override fun onKeyMultiple(keyCode: Int, count: Int, event: KeyEvent): Boolean =
+        hardwareInput.multiple { super.onKeyMultiple(keyCode, count, event) }
 
     override fun onEvaluateInputViewShown() =
         super.onEvaluateInputViewShown() || hardwareKeyboard.showsSoftKeyboard

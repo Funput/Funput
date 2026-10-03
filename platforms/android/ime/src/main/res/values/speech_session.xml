@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="speech_mic_vi">Voice input, Vietnamese</string>
+    <string name="speech_mic_en">Voice input, English</string>
+    <string name="speech_permission_required">Allow microphone access in Setup, then return and tap the mic again.</string>
+    <string name="speech_setup_unavailable">Unable to open voice input setup.</string>
+    <string name="speech_editor_changed">The text field or caret changed. Tap the mic to try again.</string>
+    <string name="speech_timeout">Voice input timed out. Please try again.</string>
+    <string name="speech_empty">No speech was recognized. Please try again.</string>
+    <string name="speech_length">The recognized text is too long. Please speak a shorter sentence.</string>
+    <string name="speech_backend_error">Unable to recognize speech on this device. Please try again.</string>
+</resources>

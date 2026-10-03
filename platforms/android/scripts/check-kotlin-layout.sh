@@ -39,8 +39,6 @@ readonly roots=(
     "$ime_main/lifecycle"
     "$ime_main/speech"
     "$ime_test/speech"
-    "$android_root/ime/src/debug/java/app/funput/funput/ime/speech"
-    "$android_root/ime/src/release/java/app/funput/funput/ime/speech"
     "$android_root/ime/src/androidTest/java/app/funput/funput/ime/speech"
     "$android_root/app/src/debug/java/app/funput/funput/speech"
     "$ime_main/suggestions"
