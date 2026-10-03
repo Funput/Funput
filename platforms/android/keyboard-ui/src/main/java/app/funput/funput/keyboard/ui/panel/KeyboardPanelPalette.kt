@@ -16,7 +16,9 @@ internal data class KeyboardPanelPalette(
         contrastForeground(preferred, intArrayOf(backgroundStart, backgroundEnd), minimum)
 
     fun readableOn(surface: Int, preferred: Int): Int =
-        contrastForeground(preferred, intArrayOf(surface), 4.5)
+        contrastForeground(preferred, intArrayOf(
+            surface.compositedOver(backgroundStart), surface.compositedOver(backgroundEnd),
+        ), 4.5)
 
     companion object {
         fun from(theme: KeyboardTheme) = KeyboardPanelPalette(
