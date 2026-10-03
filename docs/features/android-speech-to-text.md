@@ -1376,7 +1376,8 @@ Không có test ASR mới; production gate và các mục P6 còn thiếu giữ 
 Đã bắt đầu P6 với Samsung SM-G998B (Android 15/API 35) và SM-F946B/Fold5
 (Android 16/API 36). Hai máy chạy regression IME 62/62 và keyboard-ui 29/29
 pass riêng; probe on-device không thu âm xác nhận VI installed trên cả hai.
-S21 EN còn Downloadable; Fold5 request EN trả lỗi 11, giữ Unknown. Kết quả
+S21 EN còn Downloadable; Fold5 request EN đầu trả lỗi 11 (Unknown), reprobe
+không thu âm lúc 14:25 trả EN Downloadable, chưa installed. Kết quả
 support không thay cho phép đo lời nói/offline. Model version không được API
 cung cấp, không tự ghi một version suy đoán.
 
@@ -1399,3 +1400,11 @@ Người dùng tham gia các phiên nói thật, tắt mạng và các ca thiế
 automation/build/audit và tổng hợp. P6 chưa hoàn thành: thiếu corpus/timing
 offline hai máy và checklist thực tế. Chỉ bật production sau khi mọi gate đạt;
 không deploy hoặc thay release version trong phase này.
+
+Người dùng sau đó xác nhận “Tôi test ok rồi” cho lượt hướng dẫn Fold5:
+VI-C01 offline, final chèn một lần và Huỷ không chèn. Ghi nhận smoke pass theo
+phản hồi người dùng trong report P6; không tự tạo transcript/timing hoặc CSV
+benchmark. Tiếp đó người dùng xác nhận 3 phiên hide/lock/chuyển TEXT A → B
+trên Fold5 đều ngừng mic, không chèn final cũ và gõ tiếp bình thường. Ghi nhận
+L03/L04/L05 pass theo người dùng cho Fold5; không suy ra S21 hoặc các race
+khác đã đạt. Corpus/timing và các mục checklist còn lại vẫn pending.
