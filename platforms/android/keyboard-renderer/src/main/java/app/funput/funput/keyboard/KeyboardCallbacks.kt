@@ -1,10 +1,12 @@
 package app.funput.funput.keyboard
 
+import app.funput.funput.keyboard.utility.KeyboardUtilityAction
+import app.funput.funput.keyboard.utility.KeyboardUtilityDispatcher
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.SuggestionSelection
 
 /** Host callbacks emitted by the keyboard surface. */
-class KeyboardCallbacks {
+class KeyboardCallbacks : KeyboardUtilityDispatcher {
     var onKeyAction: ((KeyAction) -> Unit)? = null
     var onEmojiRequested: (() -> Unit)? = null
     var onPlacementEditorRequested: (() -> Unit)? = null
@@ -17,22 +19,14 @@ class KeyboardCallbacks {
         onKeyAction?.invoke(action)
     }
 
-    internal fun dispatchSettingsRequest() { onSettingsRequested?.invoke() }
-
-    internal fun dispatchEmojiRequest() {
-        onEmojiRequested?.invoke()
-    }
-
-    internal fun dispatchPlacementEditorRequest() {
-        onPlacementEditorRequested?.invoke()
-    }
-
-    internal fun dispatchClipboardPasteRequest() {
-        onClipboardPasteRequested?.invoke()
-    }
-
-    internal fun dispatchClipboardPanelRequest() {
-        onClipboardPanelRequested?.invoke()
+    override fun dispatch(action: KeyboardUtilityAction) {
+        when (action) {
+            KeyboardUtilityAction.EMOJI -> onEmojiRequested?.invoke()
+            KeyboardUtilityAction.PLACEMENT -> onPlacementEditorRequested?.invoke()
+            KeyboardUtilityAction.SETTINGS -> onSettingsRequested?.invoke()
+            KeyboardUtilityAction.CLIPBOARD_PANEL -> onClipboardPanelRequested?.invoke()
+            KeyboardUtilityAction.CLIPBOARD_PASTE -> onClipboardPasteRequested?.invoke()
+        }
     }
 
     internal fun dispatchSuggestion(selection: SuggestionSelection) {

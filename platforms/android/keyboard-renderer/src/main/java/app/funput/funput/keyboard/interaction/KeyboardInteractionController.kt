@@ -1,4 +1,6 @@
 package app.funput.funput.keyboard.interaction
+import app.funput.funput.keyboard.utility.KeyboardUtilityAction
+import app.funput.funput.keyboard.utility.KeyboardUtilityDispatcher
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
@@ -15,11 +17,7 @@ internal class KeyboardInteractionController(
     private val keySpec: (keyId: String) -> KeySpec?,
     private val suggestionSelection: (targetId: String) -> SuggestionSelection?,
     private val onAction: (KeyAction) -> Unit,
-    private val onEmojiRequested: () -> Unit,
-    private val onPlacementEditorRequested: () -> Unit = {},
-    private val onClipboardPanelRequested: () -> Unit = {},
-    private val onClipboardRequested: () -> Unit = {},
-    onSettingsRequested: () -> Unit = {},
+    utilities: KeyboardUtilityDispatcher = KeyboardUtilityDispatcher {},
     onPointersCancelled: () -> Unit = {},
     private val onSuggestionSelected: (SuggestionSelection) -> Unit,
     private val onHapticFeedback: (KeyboardHapticType) -> Unit,
@@ -43,12 +41,11 @@ internal class KeyboardInteractionController(
         },
         doubleTapTimeoutMillis = doubleTapTimeoutMillis,
     )
-    private val utilityActions = KeyboardUtilityActionRouter(
-        onSuggestionSelected, onEmojiRequested, onPlacementEditorRequested,
-        onClipboardPanelRequested, onClipboardRequested,
-    )
+    private val utilityActions = KeyboardUtilityActionRouter(onSuggestionSelected, utilities)
     private val alternateActions = AlternateActionRouter(
-        actionDispatcher, { cancel(); onPointersCancelled() }, onPlacementEditorRequested, onSettingsRequested,
+        actionDispatcher, { cancel(); onPointersCancelled() },
+        { utilities.dispatch(KeyboardUtilityAction.PLACEMENT) },
+        { utilities.dispatch(KeyboardUtilityAction.SETTINGS) },
     )
     private val backspaceRepeat = BackspaceRepeatController(
         schedule = schedule,

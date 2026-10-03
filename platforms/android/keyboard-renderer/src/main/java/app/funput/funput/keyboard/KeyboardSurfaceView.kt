@@ -9,7 +9,6 @@ import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
-import app.funput.funput.keyboard.layout.geometry.resolveGeometry
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLanguage
@@ -21,7 +20,8 @@ import app.funput.funput.keyboard.surface.KeyboardSurfaceEventDispatcher
 import app.funput.funput.keyboard.surface.KeyboardSurfaceLayoutState
 import app.funput.funput.keyboard.surface.KeyboardSurfaceRenderController
 import app.funput.funput.keyboard.surface.createKeyboardSurfaceInteraction
-import kotlin.math.roundToInt
+import app.funput.funput.keyboard.surface.geometry.KeyboardSurfaceGeometry
+import app.funput.funput.keyboard.surface.geometry.measureKeyboardSurface
 class KeyboardSurfaceView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -37,14 +37,24 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         requestLayout = ::requestLayout,
         resolveGeometry = ::resolveGeometry,
     )
+    private val geometry: KeyboardSurfaceGeometry = KeyboardSurfaceGeometry(
+        host = this,
+        layout = { layoutState.layout },
+        profile = { sizingProfile },
+        utilitiesVisible = { suggestionState.utilityKeysVisible },
+        changed = {
+            suggestionState.geometryChanged()
+            accessibility.refresh()
+        },
+    )
     var inputMethod: KeyboardInputMethod by layoutState::inputMethod
     var layoutMode: KeyboardLayoutMode by layoutState::layoutMode
     var editorMode: KeyboardEditorMode by layoutState::editorMode
     var layoutOverride: app.funput.funput.keyboard.model.KeyboardLayout? by layoutState::layoutOverride
     var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
     var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
-    var clipboardKeyVisible: Boolean = false; set(value) { if (field != value) { field = value; resolveGeometry() } }
-    var placementKeyVisible: Boolean = true; set(value) { if (field != value) { field = value; resolveGeometry(); invalidate() } }
+    var clipboardKeyVisible: Boolean by geometry::clipboardKeyVisible
+    var placementKeyVisible: Boolean by geometry::placementKeyVisible
     var showsNumberRow: Boolean by layoutState::showsNumberRow
     var keyboardTheme by render::keyboardTheme
     var keyboardThemeBackgroundImage by render::keyboardThemeBackgroundImage
@@ -64,8 +74,8 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         set(value) = interaction.setShiftState(value)
     var language: KeyboardLanguage get() = interaction.language; set(value) { interaction.language = value }
     var areSmartGesturesEnabled: Boolean get() = interaction.areSmartGesturesEnabled; set(value) { interaction.areSmartGesturesEnabled = value }
-    private var resolvedKeyboard: ResolvedKeyboard? = null
-    private val accessibility = KeyboardSurfaceAccessibilityBinding(
+    private val resolvedKeyboard: ResolvedKeyboard? get() = geometry.keyboard
+    private val accessibility: KeyboardSurfaceAccessibilityBinding = KeyboardSurfaceAccessibilityBinding(
         host = this,
         interaction = { interaction },
         keyboard = { resolvedKeyboard },
@@ -73,7 +83,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         suggestions = { render.suggestions },
         clipboardHint = { render.clipboardHint },
     )
-    private val suggestionState = KeyboardSurfaceSuggestionState(
+    private val suggestionState: KeyboardSurfaceSuggestionState = KeyboardSurfaceSuggestionState(
         density = { resources.displayMetrics.density },
         keyboard = { resolvedKeyboard },
         apply = { values -> render.suggestions = values; accessibility.refresh() },
@@ -108,13 +118,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         get() = events.enabled
         set(value) = events.setEnabled(value)
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val density = resources.displayMetrics.density
-        val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
-        val heightDp = KeyboardDimensions.recommendedHeightDp(
-            inputMethod, editorMode, sizingProfile, width / density, showsNumberRow,
-        )
-        val height = resolveSize((heightDp * density).roundToInt(), heightMeasureSpec)
-        setMeasuredDimension(width, height)
+        val size = measureKeyboardSurface(this, widthMeasureSpec, heightMeasureSpec,
+            inputMethod, editorMode, sizingProfile, showsNumberRow)
+        setMeasuredDimension(size.width, size.height)
     }
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
@@ -134,14 +140,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         super.onWindowFocusChanged(hasWindowFocus); if (!hasWindowFocus) interaction.clear()
     }
     override fun onDetachedFromWindow() { interaction.clear(); alternatePopup.dismiss(); render.clear(); super.onDetachedFromWindow() }
-    private fun resolveGeometry() {
-        resolvedKeyboard = layoutState.layout.resolveGeometry(
-            width = width, height = height,
-            density = resources.displayMetrics.density, profile = sizingProfile,
-            showClipboard = clipboardKeyVisible && suggestionState.utilityKeysVisible, showPlacement = placementKeyVisible && suggestionState.utilityKeysVisible,
-        )
-        suggestionState.geometryChanged(); accessibility.refresh()
-    }
+    private fun resolveGeometry() = geometry.resolve()
     private fun popoverBounds(): KeyBounds {
         getLocationOnScreen(screenLocation); return KeyBounds(0f, -screenLocation[1].toFloat(), width.toFloat(), height.toFloat())
     }

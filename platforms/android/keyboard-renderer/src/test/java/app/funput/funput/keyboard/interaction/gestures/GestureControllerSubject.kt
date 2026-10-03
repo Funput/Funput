@@ -15,7 +15,6 @@ internal class GestureControllerSubject {
         keySpec = { id -> keys[id] },
         suggestionSelection = { null },
         onAction = { actions += it },
-        onEmojiRequested = {},
         onSuggestionSelected = {},
         onHapticFeedback = { haptics += it },
         onVisualStateChanged = {},

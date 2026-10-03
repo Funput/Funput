@@ -1,4 +1,6 @@
 package app.funput.funput.keyboard.interaction
+import app.funput.funput.keyboard.utility.KeyboardUtilityAction
+import app.funput.funput.keyboard.utility.KeyboardUtilityDispatcher
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
@@ -14,8 +16,7 @@ class KeyboardInteractionControllerTest {
     private val actions = mutableListOf<KeyAction>()
     private val selections = mutableListOf<SuggestionSelection>()
     private val haptics = mutableListOf<KeyboardHapticType>()
-    private var emojiRequestCount = 0
-    private var placementRequestCount = 0
+    private val utilityRequests = mutableListOf<KeyboardUtilityAction>()
     private var visualStateChangeCount = 0
     private var semanticStateChangeCount = 0
     private val space = KeySpec(
@@ -33,8 +34,7 @@ class KeyboardInteractionControllerTest {
             SuggestionSelection(1, "chào").takeIf { id == "suggestion-1" }
         },
         onAction = { action -> actions += action },
-        onEmojiRequested = { emojiRequestCount++ },
-        onPlacementEditorRequested = { placementRequestCount++ },
+        utilities = KeyboardUtilityDispatcher { utilityRequests += it },
         onSuggestionSelected = { selection -> selections += selection },
         onHapticFeedback = { type -> haptics += type },
         onVisualStateChanged = { visualStateChangeCount++ },
@@ -64,7 +64,7 @@ class KeyboardInteractionControllerTest {
         controller.emitClick("emoji", eventTimeMillis = 100L)
         controller.emitClick("space", eventTimeMillis = 101L)
 
-        assertEquals(1, emojiRequestCount)
+        assertEquals(listOf(KeyboardUtilityAction.EMOJI), utilityRequests)
         assertEquals(KeyAction.Space, actions.single())
         assertEquals(listOf(KeyboardHapticType.CONTROL, KeyboardHapticType.SPACE), haptics)
     }
@@ -72,7 +72,7 @@ class KeyboardInteractionControllerTest {
     @Test
     fun placementUsesDedicatedCallback() {
         controller.emitClick("placement", eventTimeMillis = 100L)
-        assertEquals(1, placementRequestCount)
+        assertEquals(listOf(KeyboardUtilityAction.PLACEMENT), utilityRequests)
     }
     @Test
     fun swipingAgainReturnsToVietnamese() {
@@ -105,7 +105,7 @@ class KeyboardInteractionControllerTest {
         controller.onPointerStarted(3, emoji.id, 100f, 50f)
         controller.onKeyReleased(3, emoji.id, 100f, 50f, eventTimeMillis = 100L)
 
-        assertEquals(1, emojiRequestCount)
+        assertEquals(listOf(KeyboardUtilityAction.EMOJI), utilityRequests)
         assertEquals(emptyList<KeyAction>(), actions)
     }
 

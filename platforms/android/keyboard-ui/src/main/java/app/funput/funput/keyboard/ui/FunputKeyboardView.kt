@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import app.funput.funput.keyboard.KeyboardSurfaceView
-import app.funput.funput.keyboard.KeyboardDimensions
+import app.funput.funput.keyboard.ui.host.KeyboardHostMeasure
 import app.funput.funput.keyboard.KeyboardClipboardHint
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardEnterAction
@@ -21,7 +21,6 @@ import app.funput.funput.keyboard.ui.panel.FunputPanelFactory
 import app.funput.funput.keyboard.ui.panel.KeyboardClipboardPanelState
 import app.funput.funput.keyboard.ui.placement.KeyboardPlacementHostController
 import app.funput.funput.theme.KeyboardTheme
-import kotlin.math.roundToInt
 
 /** Complete Funput keyboard UI, including panel navigation and host callbacks. */
 class FunputKeyboardView @JvmOverloads constructor(
@@ -93,6 +92,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
     private val safeArea = KeyboardSafeAreaController(this)
     private val placement = KeyboardPlacementHostController(this, contentHost, safeArea, callbacks)
+    private val hostMeasure = KeyboardHostMeasure(this, safeArea, placement)
     var placementPreferences: KeyboardPlacementPreferences by placement::preferences
     init { KeyboardComposeLifecycle.install(this)
         addView(contentHost, matchParentLayoutParams())
@@ -120,20 +120,9 @@ class FunputKeyboardView @JvmOverloads constructor(
     fun showLettersPanel(): Unit = panelCoordinator.showLetters()
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val density = resources.displayMetrics.density
-        val keyboardWidth = (KeyboardDimensions.DefaultWidthDp * density).roundToInt()
-        val width = resolveSize(keyboardWidth + safeArea.horizontalInset, widthMeasureSpec)
-        val contentWidth = placement.resolveContentWidth(width - safeArea.horizontalInset)
-        val contentWidthDp = contentWidth / density
-        val heightDp = KeyboardDimensions.recommendedHeightDp(
-            inputMethod, editorMode, sizingProfile, contentWidthDp, showsNumberRow,
-        )
-        val baseHeight = (heightDp * density).roundToInt()
-        val height = placement.resolveHeight(baseHeight, heightMeasureSpec)
-        super.onMeasure(
-            MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-            MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
-        )
+        val size = hostMeasure.resolve(widthMeasureSpec, heightMeasureSpec,
+            inputMethod, editorMode, sizingProfile, showsNumberRow)
+        super.onMeasure(size.widthSpec, size.heightSpec)
     }
 
     private fun openEmojiFromKeyboard() {

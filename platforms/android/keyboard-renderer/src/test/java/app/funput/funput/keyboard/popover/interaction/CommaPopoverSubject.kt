@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.popover.interaction
 
+import app.funput.funput.keyboard.utility.KeyboardUtilityAction
+import app.funput.funput.keyboard.utility.KeyboardUtilityDispatcher
 import app.funput.funput.keyboard.interaction.KeyboardInteractionController
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.keys.commaKey
@@ -20,9 +22,13 @@ internal class CommaPopoverSubject {
         keySpec = { id -> listOf(comma, period).firstOrNull { it.id == id } },
         suggestionSelection = { null },
         onAction = { input += it },
-        onEmojiRequested = {},
-        onPlacementEditorRequested = { opened("placement") },
-        onSettingsRequested = { opened("settings") },
+        utilities = KeyboardUtilityDispatcher {
+            when (it) {
+                KeyboardUtilityAction.PLACEMENT -> opened("placement")
+                KeyboardUtilityAction.SETTINGS -> opened("settings")
+                else -> Unit
+            }
+        },
         onPointersCancelled = { events += "cancelPointers" },
         onSuggestionSelected = {},
         onHapticFeedback = {},
