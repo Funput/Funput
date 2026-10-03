@@ -9,6 +9,11 @@
 
     <application>
         <activity
+            android:name=".speech.SpeechSpikeEditorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Funput"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".MainActivity">
             <meta-data
                 android:name="android.app.shortcuts"
@@ -21,6 +26,8 @@
             android:label="@string/debug_catalog_label"
             android:taskAffinity="app.funput.funput.catalog"
             android:theme="@style/Theme.Funput" />
+
+
     </application>
 
 </manifest>

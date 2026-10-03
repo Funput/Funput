@@ -9,6 +9,7 @@ import android.view.inputmethod.EditorInfo
 import app.funput.funput.ime.lifecycle.ImeInputViewBinder
 import app.funput.funput.ime.lifecycle.ImeRuntime
 import app.funput.funput.ime.lifecycle.createImeRuntime
+import app.funput.funput.ime.speech.integration.ImeSpeechSpike
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,20 +24,22 @@ class FunputInputMethodService : InputMethodService() {
     private val settings get() = runtime.settings
     private val hardwareKeyboard get() = runtime.hardwareKeyboard
     private val shortcuts get() = runtime.shortcuts
+    private val speech by lazy { ImeSpeechSpike(this, session) }
     private val actionHandler get() = session.actionHandler
     private val editorRuntime get() = session.editorRuntime
     private val suggestionService get() = session.suggestionService
 
     override fun onCreate() {
         super.onCreate()
-        runtime = createImeRuntime(this, serviceScope, views) {}
-        runtime.observe(this, serviceScope)
+        runtime = createImeRuntime(this, serviceScope, views) { speech.invalidate() }
+        runtime.observe(this, serviceScope) { speech.setEnabled(it) }
     }
 
-    override fun onCreateInputView(): View = views.create()
+    override fun onCreateInputView(): View = speech.wrap(views.create())
 
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
+        speech.startInput(attribute)
         editorRuntime.configure(attribute)
         editorRuntime.setAutoCapitalizeEnabled(settings.autoCapitalizeEnabled)
         session.startActionHandler()
@@ -49,9 +52,11 @@ class FunputInputMethodService : InputMethodService() {
         views.update()
         session.startInputView(editorRuntime.policy)
         editorRuntime.updateCapitalization(preserveCapsLock = false)
+        speech.show()
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
+        speech.hide()
         session.finishInputView()
         super.onFinishInputView(finishingInput)
     }
@@ -66,6 +71,7 @@ class FunputInputMethodService : InputMethodService() {
     ) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
             candidatesStart, candidatesEnd)
+        speech.selectionChanged(newSelStart, newSelEnd)
         actionHandler.onSelectionChanged(newSelStart, newSelEnd, candidatesEnd)
         suggestionService.consume(actionHandler.takeSuggestionUpdate())
         editorRuntime.updateCapitalization()
@@ -75,12 +81,14 @@ class FunputInputMethodService : InputMethodService() {
         editorRuntime.updateCompletions(completions)
 
     override fun onFinishInput() {
+        speech.hide()
         shortcuts.cancel()
         session.finishInput()
         super.onFinishInput()
     }
 
     override fun onWindowHidden() {
+        speech.hide()
         session.windowHidden()
         super.onWindowHidden()
     }
@@ -92,6 +100,7 @@ class FunputInputMethodService : InputMethodService() {
 
 
     override fun onDestroy() {
+        speech.close()
         shortcuts.cancel()
         session.close()
         serviceScope.cancel()
@@ -106,10 +115,12 @@ class FunputInputMethodService : InputMethodService() {
 
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        speech.invalidate()
         return hardwareKeyboard.onKeyDown(event) || super.onKeyDown(keyCode, event)
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        speech.invalidate()
         return hardwareKeyboard.onKeyUp(event) || super.onKeyUp(keyCode, event)
     }
 
@@ -124,6 +135,7 @@ class FunputInputMethodService : InputMethodService() {
     override fun onEvaluateFullscreenMode(): Boolean = false
 
     override fun onConfigurationChanged(newConfig: Configuration) {
+        speech.hide()
         super.onConfigurationChanged(newConfig)
         hardwareKeyboard.onConfigurationChanged(newConfig)
         views.update()

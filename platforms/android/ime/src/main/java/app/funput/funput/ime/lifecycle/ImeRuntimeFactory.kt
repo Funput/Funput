@@ -4,8 +4,10 @@ import android.inputmethodservice.InputMethodService
 import app.funput.funput.ime.ImeEditingSession
 import app.funput.funput.ime.ImeSettingsController
 import app.funput.funput.ime.hardware.HardwareKeyboard
+import app.funput.funput.ime.settings.speech.VoiceInputSettings
 import app.funput.funput.ime.shortcuts.ImeShortcutsController
 import app.funput.funput.ime.shortcuts.createImeShortcutsController
+import app.funput.funput.ime.speech.integration.settings.ImeSpeechSettingsBinding
 import app.funput.funput.keyboard.model.ShiftState
 import kotlinx.coroutines.CoroutineScope
 
@@ -16,8 +18,9 @@ internal class ImeRuntime(
     val hardwareKeyboard: HardwareKeyboard,
 ) {
     // Observe only after the owner stores this runtime: flows may emit synchronously.
-    fun observe(service: InputMethodService, scope: CoroutineScope) {
+    fun observe(service: InputMethodService, scope: CoroutineScope, speechEnabled: (Boolean) -> Unit) {
         settings.observe(service, scope)
+        ImeSpeechSettingsBinding(VoiceInputSettings(service).voiceInputEnabled, speechEnabled).observe(scope)
     }
 }
 

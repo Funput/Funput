@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="speech_feature_available">true</bool>
+    <string name="speech_spike_title">Speech spike (debug)</string>
+    <string name="speech_spike_start">Start</string>
+    <string name="speech_spike_stop">Stop</string>
+    <string name="speech_spike_cancel">Cancel</string>
+    <string name="speech_spike_permission">Setup</string>
+    <string name="speech_spike_idle">Tap Start to test on-device speech. Language follows VI/EN.</string>
+    <string name="speech_spike_permission_required">Microphone permission required. Open Setup, then return and tap Start.</string>
+    <string name="speech_spike_unavailable">On-device recognition unavailable (requires Android 12+ and a supported service).</string>
+    <string name="speech_spike_setup_unavailable">Setup screen unavailable in this test host. Use the Funput debug app.</string>
+    <string name="speech_spike_state">%1$s · %2$s</string>
+    <string name="speech_spike_preview">%1$s\n%2$s</string>
+</resources>
