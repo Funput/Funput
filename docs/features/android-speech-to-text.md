@@ -1451,3 +1451,26 @@ LOC/layout/FunputUI pass. Compiled release/debug gate đều true; manifest rele
 không có INTERNET/FGS microphone, setup không exported và không có debug host.
 Không có dependency speech ML Kit/model mới; release unsigned chưa deploy.
 Debug APK giữ nguyên SHA-256 nên connected regression trước vẫn áp dụng.
+
+## 28. Sửa lỗi sau review trước PR (03/10/2026)
+
+IME và màn hình Setup sở hữu facade/cache capability riêng. Khi IME đã cache
+Pending/Downloadable, tải model trong Setup trước đây không làm mới cache IME,
+nên lần tap mic tiếp theo vẫn bị chặn tối đa 5 phút. Nay mở Setup invalidates
+locale hiện tại; lần bàn phím hiện lại sau khi ẩn invalidates cache RAM để nhận
+thay đổi model từ Settings hoặc hệ thống. Không probe locale hoặc tự thu âm
+trong `show()`; kiểm tra model vẫn bắt đầu từ lần tap mic tiếp theo.
+
+Huỷ, Shift, chuyển panel và đổi placement trước đây đánh dấu caret đang chờ
+selection mới dù không sửa editor. Với editor không hỗ trợ extracted text và
+không gửi callback cho caret không đổi, lần mic tiếp theo hết hạn preflight.
+Policy mới phân biệt lệnh sửa văn bản/caret với điều hướng. Điều hướng vẫn huỷ
+phiên và vô hiệu hoá callback cũ, nhưng giữ caret đã xác nhận. Nếu thao tác sửa
+thật đang chờ selection, điều hướng không được xoá trạng thái chờ đó.
+
+Regression tests tái hiện cả hai lỗi trước sửa. Sau sửa: 1.139 JVM tests,
+66 IME và 29 keyboard-ui connected tests trên S21 pass, không fail/error/skip;
+lintDebug, assembleDebug/Release và LOC/layout/FunputUI pass. Lint còn 29
+warnings; không có lỗi lint trong IME. Các connected tests dùng backend giả,
+không phải phép đo nhận dạng hoặc tải model thật. Giới hạn nghiệm thu P6 đã
+được người dùng miễn vẫn giữ nguyên; chưa deploy hoặc thay release version.
