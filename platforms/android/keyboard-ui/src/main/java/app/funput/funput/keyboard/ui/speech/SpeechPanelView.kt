@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.KeyboardHaptics
 import app.funput.funput.keyboard.KeyboardSounds
+import app.funput.funput.keyboard.ui.speech.visual.SpeechPanelStyle
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelComposeView
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import app.funput.funput.theme.KeyboardTheme
@@ -20,9 +21,11 @@ internal class SpeechPanelView(context: Context) : KeyboardPanelComposeView(cont
         private set
     private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
 
+    private var style by mutableStateOf<SpeechPanelStyle?>(null)
+
     init {
         setContent {
-            palette?.let { SpeechPanelContent(state, it, ::dispatch) }
+            palette?.let { colors -> style?.let { SpeechPanelContent(state, colors, it, ::dispatch) } }
         }
     }
 
@@ -32,6 +35,7 @@ internal class SpeechPanelView(context: Context) : KeyboardPanelComposeView(cont
 
     fun updateTheme(theme: KeyboardTheme) {
         palette = KeyboardPanelPalette.from(theme)
+        style = SpeechPanelStyle.from(theme)
         val orientation = when (theme.backgroundGradientDirection) {
             KeyboardThemeGradientDirection.HORIZONTAL -> GradientDrawable.Orientation.LEFT_RIGHT
             KeyboardThemeGradientDirection.VERTICAL -> GradientDrawable.Orientation.TOP_BOTTOM

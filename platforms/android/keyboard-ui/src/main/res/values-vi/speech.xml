@@ -3,13 +3,18 @@
     <string name="speech_panel_preparing">Đang chuẩn bị…</string>
     <string name="speech_panel_listening">Đang nghe…</string>
     <string name="speech_panel_finalizing">Đang xử lý…</string>
-    <string name="speech_panel_error">Chưa thể nhập bằng giọng nói</string>
+    <string name="speech_panel_error">Chưa sẵn sàng</string>
     <string name="speech_panel_vi">Tiếng Việt</string>
     <string name="speech_panel_en">Tiếng Anh</string>
-    <string name="speech_panel_preview_hint">Nội dung nhận dạng sẽ hiện ở đây.</string>
+    <string name="speech_panel_error_hint">Quay lại bàn phím để tiếp tục nhập.</string>
     <string name="speech_panel_stop">Dừng</string>
     <string name="speech_panel_cancel">Huỷ</string>
     <string name="speech_panel_return">Quay lại bàn phím</string>
     <string name="speech_panel_retry">Thử lại</string>
     <string name="speech_panel_setup">Thiết lập giọng nói</string>
+    <string name="speech_panel_preparing_hint">Đang kết nối nhận dạng giọng nói.</string>
+    <string name="speech_panel_listening_hint">Hãy nói, Funput đang lắng nghe.</string>
+    <string name="speech_panel_finalizing_hint">Đang hoàn tất lời bạn vừa nói.</string>
+    <string name="speech_panel_transcript">LỜI BẠN NÓI</string>
+    <string name="speech_panel_back">Quay lại</string>
 </resources>

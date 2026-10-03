@@ -21,6 +21,7 @@ readonly roots=(
     "$renderer_main/rendering/microphone"
     "$renderer_test/layout/microphone"
     "$android_root/keyboard-ui/src/main/java/app/funput/funput/keyboard/ui/speech"
+    "$android_root/keyboard-ui/src/test/java/app/funput/funput/keyboard/ui/speech"
     "$android_root/keyboard-ui/src/androidTest/java/app/funput/funput/keyboard/ui/speech"
     "$ime_main/editing/mode"
     "$ime_test/editing/mode"

@@ -72,7 +72,7 @@ class SpeechPanelInstrumentedTest {
             }
             compose.onNodeWithText("Thử lại").performClick()
             assertEquals(listOf(SpeechPanelAction.OPEN_SETUP, SpeechPanelAction.RETRY), actions)
-            compose.onNodeWithText("Quay lại bàn phím").performClick()
+            compose.onNodeWithText("Quay lại").performClick()
             assertEquals(SpeechPanelAction.CANCEL, actions.last())
         }
     }
