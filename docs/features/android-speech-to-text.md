@@ -1348,3 +1348,25 @@ Glass Dark, Glass Light và Orchid dùng state giả; chưa test mic thật tự
 
 P6 và production gate tiếp tục giữ nguyên, không coi preview/motion tests là
 bằng chứng ASR/offline/accuracy. Production vẫn tắt.
+
+
+## 25. Đồng bộ kích thước mic trên toolbar (03/10/2026)
+
+Mic trước đây vừa có plate rộng 48dp, vừa có glyph cao hơn Clipboard/Emoji.
+Renderer nay chỉ vẽ plate vuông, cạnh theo chiều cao toolbar như các utility
+khác; geometry của slot và `hitBounds` giữ nguyên. `fitMicrophonePlate()` làm
+việc trên RectF dùng để paint, không sửa ResolvedKey, suggestion capacity,
+accessibility, dispatch hoặc khoảng dự trữ ngang 48dp của mic.
+
+Icon mic dùng full envelope bằng 42% cạnh ngắn của key, tối đa 19dp, cùng quy
+ước với Clipboard. Chia envelope cho toàn bộ hình mic (2,1 units) và căn giữa
+lại theo cả chân mic; stroke/theme/active color giữ nguyên. Theme inset, press
+scale, border và shadow áp dụng sau khi fit plate nên không tạo mặt nút rộng
+hơn khi nhấn. Không thay kích thước panel voice hoặc logic nhận dạng.
+
+
+Implementation `49e5d579`. Renderer unit tests 266/266 và Samsung UI tests 29/29
+pass, không skip; lintDebug, assembleDebug, LOC/layout/FunputUI và diff check
+pass. Native preview Glass Dark trước/sau xác nhận plate mic cùng cỡ Emoji và
+glyph nhỏ hơn. APK debug cùng version/signing đã cài cập nhật trên Samsung.
+Không có test ASR mới; production gate và các mục P6 còn thiếu giữ nguyên.
