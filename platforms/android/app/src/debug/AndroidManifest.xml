@@ -9,6 +9,10 @@
 
     <application>
         <activity
+            android:name=".speech.catalog.SpeechPanelCatalogActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Funput" />
+        <activity
             android:name=".speech.SpeechSpikeEditorActivity"
             android:exported="false"
             android:theme="@style/Theme.Funput"

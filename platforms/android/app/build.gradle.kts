@@ -81,6 +81,7 @@ android {
 }
 
 dependencies {
+    debugImplementation(project(":keyboard-ui"))
     implementation(project(":ime"))
     implementation(project(":funput-ui"))
     implementation(project(":shortcut-store"))

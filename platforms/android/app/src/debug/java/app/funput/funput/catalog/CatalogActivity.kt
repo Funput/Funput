@@ -1,6 +1,7 @@
 package app.funput.funput.catalog
 
 import android.os.Bundle
+import app.funput.funput.speech.catalog.SpeechPanelCatalogActivity
 import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,6 +18,11 @@ class CatalogActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         if (intent.getBooleanExtra("speech_spike", false)) {
             startActivity(Intent(this, SpeechSpikeEditorActivity::class.java))
+            finish()
+            return
+        }
+        if (intent.getBooleanExtra("speech_panel", false)) {
+            startActivity(Intent(this, SpeechPanelCatalogActivity::class.java))
             finish()
             return
         }
