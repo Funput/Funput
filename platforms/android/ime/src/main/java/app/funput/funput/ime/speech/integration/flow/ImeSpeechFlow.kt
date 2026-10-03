@@ -20,7 +20,7 @@ import app.funput.funput.keyboard.ui.speech.SpeechPanelAction
 internal class ImeSpeechFlow(
     backend: SpeechBackend,
     editor: SpeechEditorGateway,
-    preparation: SpeechPreparationService,
+    private val preparation: SpeechPreparationService,
     private val scheduler: SpeechScheduler,
     clock: SpeechClock,
     private val ui: ImeSpeechUiBinder,
@@ -90,12 +90,13 @@ internal class ImeSpeechFlow(
             SpeechPanelAction.OPEN_SETUP -> {
                 val locale = if (language() == KeyboardLanguage.VIETNAMESE) SpeechLocale.VI else SpeechLocale.EN
                 cancel(false)
+                preparation.invalidate(locale)
                 setup(locale)
             }
         }
     }
 
-    fun cancel(expectSelection: Boolean = true) {
+    fun cancel(expectSelection: Boolean = false) {
         epoch++
         // Invalidate ownership before any presentation or client cleanup can re-enter.
         ui.invalidate()

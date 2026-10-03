@@ -12,6 +12,22 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class SpeechRuntimeLifecycleInstrumentedTest {
+    @Test fun returningFromSetupRefreshesReadinessOnlyOnTheNextMicTap() = onMainThread {
+        SpeechRuntimeFixture().use { f ->
+            val initial = f.preparation.invalidations
+            f.runtime.show()
+            assertEquals(initial, f.preparation.invalidations)
+            f.runtime.hide()
+            f.runtime.show()
+            assertEquals(initial + 1, f.preparation.invalidations)
+            assertEquals(0, f.preparation.checks)
+            assertTrue(f.backend.recordings.isEmpty())
+            f.start()
+            assertEquals(1, f.preparation.checks)
+            assertEquals(1, f.backend.recordings.size)
+        }
+    }
+
     @Test fun switchingPanelsCancelsBeforeAnyLaterFinal() = onMainThread {
         SpeechRuntimeFixture().use { f ->
             val recording = f.start()

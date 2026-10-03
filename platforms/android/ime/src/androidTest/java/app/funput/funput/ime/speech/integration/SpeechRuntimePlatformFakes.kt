@@ -38,8 +38,9 @@ internal class SpeechTestRecording(private val listener: (SpeechEvent) -> Unit) 
 
 internal class SpeechTestPreparation : SpeechPreparationService {
     var checks = 0
+    var invalidations = 0
     override fun availability() = SpeechAvailability.AVAILABLE
-    override fun invalidate(locale: SpeechLocale?) = Unit
+    override fun invalidate(locale: SpeechLocale?) { invalidations++ }
     override fun check(locale: SpeechLocale, listener: (SpeechCapability) -> Unit): SpeechPreparationOperation {
         checks++
         return object : SpeechPreparationOperation {

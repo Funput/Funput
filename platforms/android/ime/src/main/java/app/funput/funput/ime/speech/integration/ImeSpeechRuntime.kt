@@ -61,6 +61,8 @@ internal class ImeSpeechRuntime(
 
     fun show() {
         if (closed) return
+        // Setup owns a separate facade; models may have changed while this view was hidden.
+        if (!editor.visible) preparation.invalidate()
         editor.visible = true
         available = preparation.availability() == SpeechAvailability.AVAILABLE
         flow.refresh()
@@ -81,8 +83,8 @@ internal class ImeSpeechRuntime(
         flow.refresh()
     }
 
-    fun invalidate() {
-        if (!closed) flow.cancel()
+    fun invalidate(expectSelection: Boolean = true) {
+        if (!closed) flow.cancel(expectSelection)
     }
 
     fun hide() {
