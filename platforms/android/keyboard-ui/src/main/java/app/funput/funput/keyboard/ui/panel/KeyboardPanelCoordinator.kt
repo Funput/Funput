@@ -20,6 +20,7 @@ internal class KeyboardPanelCoordinator(
     private val clearSpeech: () -> Unit,
     private val createClipboardPanel: () -> ClipboardPanelView,
     private val attachPanel: (View) -> Unit,
+    private val onPanelChanging: (KeyboardPanel) -> Unit = {},
     private val onPanelChanged: (KeyboardPanel) -> Unit,
     private val syncSuggestions: () -> Unit,
 ) {
@@ -33,6 +34,7 @@ internal class KeyboardPanelCoordinator(
     val loadedClipboardPanel: ClipboardPanelView? get() = clipboardPanel
 
     fun showSpeech() {
+        if (activePanel != KeyboardPanel.SPEECH) onPanelChanging(KeyboardPanel.SPEECH)
         if (!state.show(KeyboardPanel.SPEECH)) return
         val panel = speechPanel ?: createSpeechPanel().also {
             speechPanel = it
@@ -47,6 +49,7 @@ internal class KeyboardPanelCoordinator(
     }
 
     fun showEmoji() {
+        if (activePanel != KeyboardPanel.EMOJI) onPanelChanging(KeyboardPanel.EMOJI)
         if (!state.show(KeyboardPanel.EMOJI)) return
         val panel = emojiPanel ?: createEmojiPanel().also {
             emojiPanel = it
@@ -60,6 +63,7 @@ internal class KeyboardPanelCoordinator(
     }
 
     fun showClipboard() {
+        if (activePanel != KeyboardPanel.CLIPBOARD) onPanelChanging(KeyboardPanel.CLIPBOARD)
         if (!state.show(KeyboardPanel.CLIPBOARD)) return
         val panel = clipboardPanel ?: createClipboardPanel().also {
             clipboardPanel = it
@@ -74,6 +78,7 @@ internal class KeyboardPanelCoordinator(
     }
 
     fun showSymbols(mode: KeyboardLayoutMode) {
+        onPanelChanging(KeyboardPanel.SYMBOLS)
         state.showSymbols(mode)
         hideEmojiPanel()
         hideClipboardPanel()
@@ -85,6 +90,7 @@ internal class KeyboardPanelCoordinator(
     }
 
     fun showLetters() {
+        if (activePanel != KeyboardPanel.LETTERS) onPanelChanging(KeyboardPanel.LETTERS)
         if (!state.show(KeyboardPanel.LETTERS)) return
         hideEmojiPanel()
         hideClipboardPanel()

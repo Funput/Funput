@@ -14,6 +14,8 @@ class FunputKeyboardCallbacks {
     var onInputMethodSwitchRequested: (() -> Unit)? = null
     var onSettingsRequested: (() -> Unit)? = null
     var onEmojiPanelOpened: (() -> Unit)? = null
+    var onPanelChanging: ((KeyboardPanel) -> Unit)? = null
+    var onPlacementEditorRequested: (() -> Unit)? = null
     var onPanelChanged: ((KeyboardPanel) -> Unit)? = null
     var onEmojiSelected: ((String) -> Unit)? = null
     var onClipboardPasteRequested: (() -> Unit)? = null
@@ -41,6 +43,8 @@ class FunputKeyboardCallbacks {
     internal fun dispatchEmojiPanelOpened() {
         onEmojiPanelOpened?.invoke()
     }
+
+    internal fun dispatchPanelChanging(panel: KeyboardPanel) { onPanelChanging?.invoke(panel) }
 
     internal fun dispatchPanelChanged(panel: KeyboardPanel) {
         onPanelChanged?.invoke(panel)

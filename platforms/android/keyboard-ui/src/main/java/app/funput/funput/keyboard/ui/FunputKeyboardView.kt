@@ -51,6 +51,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         createEmojiPanel = panelFactory::createEmoji,
         createClipboardPanel = panelFactory::createClipboard,
         attachPanel = { contentHost.addView(it, matchParentLayoutParams()) },
+        onPanelChanging = callbacks::dispatchPanelChanging,
         onPanelChanged = callbacks::dispatchPanelChanged,
         syncSuggestions = ::syncSuggestions,
     )
