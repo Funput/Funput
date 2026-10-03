@@ -1292,3 +1292,59 @@ lint/build lại sau thay đổi cuối. APK debug update cùng version/signing 
 Flow P5 và gate P6 giữ nguyên: preview là synthetic state; chưa dùng nó làm bằng
 chứng ASR mới, offline/corpus/timing, actual permission/TalkBack hay hai máy.
 Production vẫn tắt. Không ghi audio hoặc nội dung nhận dạng thật trong lượt review.
+
+
+## 24. Voice orb theo hướng ChatGPT/Gemini (03/10/2026)
+
+Tham khảo visual chính thức của [ChatGPT Voice](https://chatgpt.com/features/voice/)
+(orb có các dải màu mềm) và [Gemini Neural Expressive](https://blog.google/innovation-and-ai/products/gemini-app/next-evolution-gemini-app/)
+(chuyển động fluid, điều khiển gọn trong giao diện). Chọn một orb trung tâm và
+footer dạng pill phù hợp chiều cao IME. Không dùng logo, asset hoặc palette của
+hai sản phẩm; Funput vẫn derive màu từ keyboard theme và giữ cùng flow dictation.
+Bố cục ở phần 23 là bản trước; phần này mô tả thiết kế hiện tại.
+
+Orb dùng Canvas với sphere gradient, hai ribbon Bézier và halo nhẹ; hue lấy từ
+`KeyboardTheme.accentColor`, ánh sáng/bóng derive bằng blend trắng/đen. Theme
+preset hoặc custom đều dùng cùng adapter. Transcript hiện trực tiếp trên nền,
+20sp/28sp, căn giữa, contrast fallback theo hai đầu gradient; bỏ card và nhãn
+uppercase. Orb vẫn hiện khi có partial, dùng kích thước nhỏ để nhường chỗ cho
+chữ; khi chưa có lời nói, kích thước derive từ chiều cao body, giới hạn 48–112dp.
+Header và badge ngôn ngữ giữ semantics hiện có; chỉ header là live region.
+
+Hai nút Huỷ/Dừng có hình pill, icon trang trí và nhãn đầy đủ; màu vẫn lấy từ
+accent-key/special-key và label có contrast fallback. Footer rộng tối đa 320dp,
+canh giữa, target tối thiểu 52dp. Icon được bỏ ở font lớn để ưu tiên nhãn; Error
+vẫn xếp Setup/Retry và Quay lại dọc trên host hẹp/font lớn. Body tiếp tục cuộn,
+không đổi keyboard height, placement hoặc safe area.
+
+`SpeechOrbMotion` chỉ animate presentation: vòng 6,4 giây, phase được đọc trong
+Canvas draw, không làm transcript/layout recompose mỗi frame. Chuyển động chỉ
+biểu diễn một phiên đang hoạt động, không phải waveform/RMS hoặc phần trăm
+recognition. Error đứng yên. Animation được loại khỏi composition khi panel,
+parent hoặc window ẩn; detach dispose composition theo base view. Dùng
+`MotionDurationScale` của Compose để tôn trọng tốc độ chuyển động hệ thống,
+và render orb tĩnh khi scale = 0, kể cả thay đổi trong phiên.
+
+Không thêm dependency, public recording API, SDK, shader/GPU effect hoặc model.
+Không đổi action, permission, recognizer, editor guard, commit hay feature gate.
+Không tạo client/thu âm từ composition, attach hoặc animation. Catalog vẫn chỉ
+hiển thị state giả và export PNG của nội dung mẫu; không export transcript thật.
+
+Implementation: `215a1710`; motion/integration tests: `6d7e83ed` trên branch
+`feat/android-speech-to-text`. LOC/layout/FunputUI và diff check pass. Toàn bộ unit
+tests pass: keyboard-ui 49, IME 530, renderer 266, app 165; lintDebug,
+keyboard-ui release compile và assembleDebug pass. Samsung SM-G998B/API 35:
+UI 29/29 và IME 62/62 pass, không skip. Bốn test mới dùng clock và native bitmap
+synthetic để chứng minh pixels đổi khi animate, đứng yên với scale 0 ngay từ đầu
+hoặc khi đổi trong phiên, Error tĩnh, orb giữ khi partial cập nhật, và gate motion
+đóng/mở theo parent visibility/navigation. Tests không lưu bitmap hay thu âm.
+
+Lượt test đầu phát hiện hint bị khuất trên host thấp: đã sửa orb sizing theo body
+và chạy lại UI suite pass. Công cụ `captureToImage()` chỉ chấp nhận Activity
+context; đổi test sang `View.draw(Canvas)` trên context như IME, không thay
+fixture để che ràng buộc này. Final unit/lint/build/IME regression pass sau sửa.
+APK debug cùng version/signing đã được cài cập nhật trên Samsung. Preview native
+Glass Dark, Glass Light và Orchid dùng state giả; chưa test mic thật tự động.
+
+P6 và production gate tiếp tục giữ nguyên, không coi preview/motion tests là
+bằng chứng ASR/offline/accuracy. Production vẫn tắt.

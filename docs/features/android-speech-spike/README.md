@@ -312,3 +312,18 @@ chỉ xuất ảnh UI mẫu từ catalog vào `cache/speech-panel-preview.png`; 
 editor hoặc recognizer và không có API tương đương trong IME thật. Review ảnh trên
 Samsung xác nhận Glass Dark/Glass Light; UI 25/25, IME 62/62 và contrast/unit/lint/
 build/LOC pass. Đây là bằng chứng presentation, không thay nghiệm thu ASR/P6.
+
+
+## 12. Review voice orb (03/10/2026)
+
+Catalog theme/state ở phần 11 nay dùng thiết kế orb Canvas trung tâm lấy màu
+accent của theme; transcript không có card và footer là hai nút pill. Có thể dùng
+cùng extras `speech_theme`, `speech_stage`, `speech_show`, `speech_empty` và
+`speech_snapshot` để review Glass Dark, Glass Light hoặc Orchid. Orb animate
+activity của phiên giả, không mô phỏng âm lượng và không tạo recognizer.
+
+Orb nhỏ khi có transcript, co theo host height khi chưa có chữ; có thể dùng
+font 200%/one-hand/floating để review vùng cuộn và footer. System animation scale
+0 cho orb tĩnh. Hide parent/window hoặc detach dừng chuyển động. Quyền/audio,
+model và state machine P5 giữ nguyên. Xem phần 24 của tài liệu thiết kế để biết
+nguồn tham khảo và cơ chế motion; nghiệm thu ASR P6 vẫn chưa được thay thế.
