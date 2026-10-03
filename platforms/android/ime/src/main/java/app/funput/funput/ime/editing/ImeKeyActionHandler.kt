@@ -88,6 +88,7 @@ internal class ImeKeyActionHandler(
 
     fun onEmojiSelected(emoji: String) = typing.commitExternal(emoji)
     fun onClipboardSelected(text: String) = typing.commitExternal(text)
+    fun commitVoiceText(text: String): Boolean = typing.commitVoice(text)
 
     fun finish() {
         composition.finish(connection())

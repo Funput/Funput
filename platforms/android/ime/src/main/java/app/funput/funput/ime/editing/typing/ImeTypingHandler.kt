@@ -81,5 +81,8 @@ internal class ImeTypingHandler(
         execute(ImeEditCommand.CommitText(text))
     }
 
+    /** Composition has already finished during anchor preparation; speech is never authored input. */
+    fun commitVoice(text: String): Boolean = text.isNotEmpty() && execute(ImeEditCommand.CommitText(text))
+
     private fun execute(command: ImeEditCommand) = editor.execute(connection(), command)
 }
