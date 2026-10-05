@@ -75,6 +75,25 @@ fn leading_w_covers_the_whole_onset() {
 }
 
 #[test]
+fn second_bracket_restores_the_literal_key() {
+    // Like `ww` → `w`, pressing `[`/`]` again on the vowel it just made puts the
+    // literal bracket back and keeps the onset.
+    for (keys, output) in [
+        ("[[", "["),
+        ("]]", "]"),
+        ("m[[", "m["),
+        ("t]]", "t]"),
+        ("th]]", "th]"),
+        ("thu[[", "thu["),
+        ("tr][[", "trư["),
+    ] {
+        assert_eq!(typed(keys), output, "{keys}");
+    }
+    // A different bracket still composes the `ươ` pair.
+    assert_eq!(typed("]["), "ươ");
+}
+
+#[test]
 fn leading_w_still_reaches_the_uo_horn() {
     // The leading `w` consumes the key as `ư`, so it can no longer be the pending
     // horn that plain Telex resolves against a later `uo`. The `ưu` re-parse in

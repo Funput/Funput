@@ -62,6 +62,8 @@ quyết định sản phẩm riêng.
 
 Nhấn `w` lần hai dùng semantics revert hiện có: `w → ư`, `ww → w`. Revert giữ lại
 onset đứng trước, nên `sww → sw` và `thww → thw`; Latin run vẫn escape được.
+Nhấn `[`/`]` lần hai cũng revert như vậy: `[[ → [`, `]] → ]`, giữ onset
+(`m[[ → m[`, `t]] → t]`). Chỉ revert khi `ơ`/`ư` vừa tạo chưa mang dấu thanh.
 Raw keystrokes phải luôn được giữ để Flip khôi phục chính xác input ban đầu.
 
 ### Leading `w` và deferred `w`
