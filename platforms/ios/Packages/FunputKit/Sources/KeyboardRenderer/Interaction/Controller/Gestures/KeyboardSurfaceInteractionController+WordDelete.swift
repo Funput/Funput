@@ -41,9 +41,10 @@ extension KeyboardSurfaceInteractionController {
     }
 
     /// A rub that claimed but never crossed a full step still deletes one character, so a
-    /// short flick reads as a backspace rather than as a dropped touch.
+    /// short flick reads as a backspace rather than as a dropped touch. Backspace already
+    /// deleted that character on contact, so the fallback must not run a second time.
     func finishWordRatchet(token: TouchToken, state: TouchState) {
-        if state.ratchet?.hasDeleted == false {
+        if state.ratchet?.hasDeleted == false, !state.committedInitialDelete {
             onContactEvent(
                 token,
                 KeyboardKeyEvent(key: state.initialKey, phase: .repeated)
