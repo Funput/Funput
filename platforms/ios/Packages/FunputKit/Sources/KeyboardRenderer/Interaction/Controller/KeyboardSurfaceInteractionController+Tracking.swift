@@ -40,17 +40,11 @@ extension KeyboardSurfaceInteractionController {
             haptics.perform(type)
         }
         if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
-        if presentation.areSmartGesturesEnabled, key.role == .space {
-            // Holding space is how the caret pan starts, so the spacebar does not repeat while
-            // smart gestures are on. It used to, on a longer delay, which made the gesture a
-            // race the user had to win: hold a beat too long before dragging and the repeat
-            // had already typed spaces and locked the pan out. Lifting without dragging still
-            // types the one space, because arming is not claiming.
-            spaceHoldController.start(for: token)
-        } else if repeatTouch == nil, key.role == .backspace || key.role == .space {
-            repeatTouch = token
-            repeatController.start()
-        }
+        armHeldKey(
+            token: token,
+            key: key,
+            smartGestures: presentation.areSmartGesturesEnabled
+        )
         if !key.alternates.isEmpty, sourceFrame != nil, !containerBounds.isEmpty {
             alternateHoldController.start(for: token)
         }

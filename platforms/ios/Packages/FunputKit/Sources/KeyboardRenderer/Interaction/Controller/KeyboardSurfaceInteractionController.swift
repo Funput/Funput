@@ -59,6 +59,10 @@ final class KeyboardSurfaceInteractionController {
         /// Set once the finger travels past `tapSlop`, which separates a tap from a
         /// gesture that merely started on a keycap.
         var hasWandered = false
+        /// Backspace waits until the pipeline owns the contact before deleting once.
+        var awaitingInitialDelete = false
+        /// True after that first delete, so a short word-rub does not delete again.
+        var committedInitialDelete = false
         let signpostID: OSSignpostID
     }
 
