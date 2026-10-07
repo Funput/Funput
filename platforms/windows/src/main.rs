@@ -16,7 +16,7 @@ mod background;
 mod shared;
 mod ui;
 
-use shared::{canonical_exe, commands, dark_mode, shell};
+use shared::{canonical_exe, commands, dark_mode, shell, update};
 
 fn main() {
     let mode = std::env::args().nth(1);
@@ -68,6 +68,8 @@ fn main() {
         background::instance::signal_activate();
         return;
     }
+    // The build an update replaced is only free to delete now that this one runs.
+    update::remove_leftovers();
 
     // Let Windows draw the tray's right-click menu dark when the system is dark.
     // Process-global, so set it before the tray (on the hook thread) is created.
