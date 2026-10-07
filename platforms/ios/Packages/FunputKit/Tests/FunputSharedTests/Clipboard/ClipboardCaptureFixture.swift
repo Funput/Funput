@@ -9,7 +9,7 @@ final class CaptureGateway: ClipboardGateway {
     var reads = 0
     var duringRead: (() -> Void)?
     func snapshot() -> ClipboardSnapshot { metadata }
-    func readText() -> String? { reads += 1; duringRead?(); return text }
+    func readText() async -> String? { reads += 1; duringRead?(); return text }
     func copy(_ text: String?) {
         self.text = text
         metadata = ClipboardSnapshot(
@@ -54,4 +54,11 @@ final class CaptureFixture {
         onUpdate: { [unowned self] in updates += 1 }
     )
     init() { controller.begin() }
+
+    /// Starts a capture and waits for the background read, and any re-read it
+    /// queues, to finish.
+    func sync(retry: Bool = false) async {
+        controller.synchronize(retry: retry)
+        await controller.settle()
+    }
 }
