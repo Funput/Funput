@@ -7,6 +7,9 @@ import UIKit
 
 extension KeyboardViewController {
     func handleKeyEvent(_ event: KeyboardKeyEvent) {
+        // Every touch phase counts as typing, so an automatic clipboard read — and
+        // the paste prompt it can raise — waits until the user stops.
+        clipboardIdleGate.noteActivity()
         if handleGesturePhase(event.phase) { return }
         let alternate: KeyAlternate?
         switch event.phase {

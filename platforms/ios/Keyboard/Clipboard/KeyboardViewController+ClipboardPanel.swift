@@ -47,6 +47,13 @@ extension KeyboardViewController {
         ensureClipboardPanelView()
         inputCoordinator.prepareForLiteralInput()
         clearPersonalSuggestions()
+        // Opened within the start delay: the user asked for the clipboard, so
+        // there is nothing left to wait for.
+        if !isClipboardMonitoring {
+            cancelClipboardMonitoringStart()
+            startClipboardMonitoring()
+        }
+        // Read now, not when idle. The result lands through `onUpdate`.
         clipboardCapture.synchronize()
         refreshClipboardPanel()
         switchSurface(to: .clipboard)

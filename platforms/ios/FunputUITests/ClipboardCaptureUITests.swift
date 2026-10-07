@@ -37,7 +37,9 @@ final class ClipboardCaptureUITests: XCTestCase {
         XCTAssertTrue(FunputKeyboardDriver.switchToFunputKeyboard(app))
         allowClipboardPrompt()
         app.buttons["clipboardHarness.copy"].tap()
-        allowClipboardPrompt()
+        // Automatic capture waits for ~2 s without key activity before reading, so
+        // the prompt for the new copy arrives after that quiet period.
+        allowClipboardPrompt(timeout: 6)
         let saved = app.staticTexts["clipboardHarness.status"]
         let ready = NSPredicate(format: "label == 'Saved'")
         XCTAssertEqual(XCTWaiter.wait(
@@ -55,10 +57,10 @@ final class ClipboardCaptureUITests: XCTestCase {
     }
 
     @MainActor
-    private func allowClipboardPrompt() {
+    private func allowClipboardPrompt(timeout: TimeInterval = 2) {
         let allow = app.alerts.buttons.matching(
             NSPredicate(format: "label IN %@", ["Allow Paste", "Cho phép dán"])
         ).firstMatch
-        if allow.waitForExistence(timeout: 2) { allow.tap() }
+        if allow.waitForExistence(timeout: timeout) { allow.tap() }
     }
 }

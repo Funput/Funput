@@ -3,72 +3,72 @@ import Testing
 
 @MainActor
 struct ClipboardCaptureLifecycleTests {
-    @Test func deniedReadsPauseUntilExplicitRetryEvenAcrossNewCopies() {
+    @Test func deniedReadsPauseUntilExplicitRetryEvenAcrossNewCopies() async {
         let f = CaptureFixture()
         f.gateway.text = nil
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.controller.needsRetry)
         f.gateway.copy("allowed now")
-        f.controller.synchronize()
+        await f.sync()
         f.controller.end()
         f.controller.begin()
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.gateway.reads == 1)
         #expect(f.saved.isEmpty)
-        f.controller.synchronize(retry: true)
+        await f.sync(retry: true)
         #expect(f.saved.first?.text == "allowed now")
         #expect(!f.controller.needsRetry)
     }
 
-    @Test func writeFailureIsNotMarkedCaptured() {
+    @Test func writeFailureIsNotMarkedCaptured() async {
         let f = CaptureFixture()
         f.writesSucceed = false
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.controller.needsRetry)
         f.writesSucceed = true
-        f.controller.synchronize(retry: true)
+        await f.sync(retry: true)
         #expect(f.saved.count == 1)
     }
 
-    @Test func lostAccessOrClosedSessionCannotSaveAnInFlightRead() {
+    @Test func lostAccessOrClosedSessionCannotSaveAnInFlightRead() async {
         for close in [false, true] {
             let f = CaptureFixture()
             f.gateway.duringRead = {
                 if close { f.controller.end() } else { f.allowed = false }
             }
-            f.controller.synchronize()
+            await f.sync()
             #expect(f.saved.isEmpty)
-            f.controller.synchronize()
+            await f.sync()
             #expect(f.gateway.reads == 1)
         }
     }
 
-    @Test func clearingSuppressesSameClipboardUntilNextSession() {
+    @Test func clearingSuppressesSameClipboardUntilNextSession() async {
         let f = CaptureFixture()
-        f.controller.synchronize()
+        await f.sync()
         f.controller.suppressCurrentAfterClear()
         f.saved = []
-        f.controller.synchronize(retry: true)
+        await f.sync(retry: true)
         #expect(f.saved.isEmpty)
         f.controller.end()
         f.controller.begin()
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.saved.count == 1)
     }
 
     /// Every pasteboard read shows the user a system banner, so reopening the
     /// keyboard on a clipboard the previous session already captured must read
     /// nothing at all.
-    @Test func reopeningOnAnUnchangedClipboardReadsNothing() {
+    @Test func reopeningOnAnUnchangedClipboardReadsNothing() async {
         let f = CaptureFixture()
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.gateway.reads == 1)
         f.marks.captured = f.gateway.metadata.changeCount
 
         for _ in 0..<5 {
             f.controller.end()
             f.controller.begin()
-            f.controller.synchronize()
+            await f.sync()
         }
         #expect(f.gateway.reads == 1)
         #expect(f.saved.count == 1)
@@ -77,13 +77,13 @@ struct ClipboardCaptureLifecycleTests {
         f.gateway.copy("trong luc dong")
         f.controller.end()
         f.controller.begin()
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.gateway.reads == 2)
         #expect(f.saved.map(\.text) == ["  Tiếng Việt\n🙂  ", "trong luc dong"])
     }
 
     /// Switching apps rebuilds the keyboard. The offer must not come back with it.
-    @Test func pasteSurvivesTheSessionAndOnlyANewCopyBringsTheOfferBack() {
+    @Test func pasteSurvivesTheSessionAndOnlyANewCopyBringsTheOfferBack() async {
         let f = CaptureFixture()
         f.controller.didPaste(f.gateway.text!, changeCount: 1)
         #expect(f.controller.lastPastedChangeCount == 1)
@@ -105,10 +105,10 @@ struct ClipboardCaptureLifecycleTests {
         ) != nil)
     }
 
-    @Test func reentrantNotificationDoesNotStartAnotherRead() {
+    @Test func reentrantNotificationDoesNotStartAnotherRead() async {
         let f = CaptureFixture()
         f.gateway.duringRead = { f.controller.synchronize() }
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.gateway.reads == 1)
         #expect(f.saved.count == 1)
     }
