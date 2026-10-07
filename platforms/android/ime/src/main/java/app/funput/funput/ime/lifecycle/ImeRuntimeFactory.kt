@@ -36,8 +36,12 @@ internal fun createImeRuntime(
         session = session,
         settings = settings,
         shortcuts = createImeShortcutsController(service, scope, session.actionHandler),
-        hardwareKeyboard = HardwareKeyboard.bind(service, session, scope) {
-            views.view?.shiftState ?: ShiftState.OFF
-        },
+        hardwareKeyboard = HardwareKeyboard.bind(
+            service = service,
+            session = session,
+            scope = scope,
+            currentShift = { views.view?.shiftState ?: ShiftState.OFF },
+            setShift = { state -> views.view?.shiftState = state },
+        ),
     )
 }
