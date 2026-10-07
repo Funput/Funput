@@ -57,6 +57,7 @@ fn fire(hit: Hit) -> bool {
         // The flip must land before the next keystroke; writing it down and
         // repainting the tray must not happen here at all — see [`toggle`].
         Hit::Toggle => {
+            super::foreground::refresh_for_hotkey(); // pin the app really in front
             shell::toggle_enabled_hotkey();
             toggle::defer();
             true

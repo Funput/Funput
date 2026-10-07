@@ -25,6 +25,7 @@ pub fn export_config(path: &Path) -> std::io::Result<()> {
 
 /// Merge a config file into the live settings (applies to the engine + persists).
 pub fn import_config(path: &Path) -> Result<ImportSummary, ConfigError> {
+    shell::refresh_hook_state(); // do not import over pins made since Settings opened
     let mut settings = shell::snapshot();
     let summary = transfer::import_file(path, &mut settings)?;
     shell::replace_settings(settings);
@@ -52,6 +53,7 @@ pub fn import_unikey_macros(path: &Path) -> Result<(ImportSummary, Option<Charse
         shortcuts: Some(import.rows),
         platform: None,
     };
+    shell::refresh_hook_state(); // do not import over pins made since Settings opened
     let mut settings = shell::snapshot();
     let summary = transfer::apply(&mut settings, &document);
     shell::replace_settings(settings);

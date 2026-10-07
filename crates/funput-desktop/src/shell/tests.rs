@@ -175,6 +175,150 @@ fn a_remembered_choice_survives_a_restart() {
     let _ = std::fs::remove_dir_all(dir);
 }
 
+/// The reported bug, first path: on the desktop, the taskbar or a Funput window
+/// there is no app in front, and a hotkey pressed there used to re-pin the app the
+/// user had just left — so they came back to it in the other language.
+#[test]
+fn a_hotkey_with_no_app_in_front_pins_nothing() {
+    let mut state = shell_remembering(&[("a.exe", false)]);
+    state.note_foreground("a.exe".into());
+    assert_eq!(state.apply_for_app("a.exe"), Some(false));
+
+    state.clear_foreground(); // the user clicked the desktop
+    assert!(
+        state.toggle_enabled_hotkey(),
+        "the global switch still flips"
+    );
+    assert_eq!(
+        state.settings().app_language_memory.get("a.exe"),
+        Some(&false),
+        "a.exe keeps the pin it was given inside it"
+    );
+    assert_eq!(
+        state.apply_for_app("a.exe"),
+        Some(false),
+        "and gets it back"
+    );
+}
+
+#[test]
+fn an_unresolvable_window_counts_as_no_app() {
+    let mut state = shell();
+    state.note_foreground("a.exe".into());
+    state.note_foreground(String::new());
+    assert_eq!(state.foreground_id(), None);
+}
+
+/// A scratch settings file shared by a "background" and a "Settings window"
+/// state, the way the two processes share one on Windows.
+fn shared_file(tag: &str) -> (std::path::PathBuf, std::path::PathBuf) {
+    let dir = std::env::temp_dir().join(format!("funput-{tag}-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("settings.json");
+    // Written up front so both sides start from the same file, as they do once
+    // Funput has run before.
+    Settings::default().save_to(&path);
+    (dir, path)
+}
+
+/// The reported bug, second path: Settings left open reads the file once, and
+/// every option it changes saves the whole struct — which used to put back the
+/// pins from when it opened.
+#[test]
+fn a_stale_settings_window_does_not_erase_a_pin() {
+    let (dir, path) = shared_file("stale-ui");
+    let mut background = ShellState::new(Some(path.clone()));
+    let mut settings_window = ShellState::new(Some(path.clone())); // opened now
+
+    background.note_foreground("a.exe".into());
+    assert!(!background.toggle_enabled_hotkey(), "a.exe → English");
+    background.save_settings();
+
+    // The user changes an unrelated option in the window they left open, through
+    // the same refresh-then-write path the platform wrappers take.
+    let spell = !settings_window.settings().spell_check;
+    settings_window.refresh_hook_state();
+    settings_window.set_spell_check(spell);
+
+    // A focus change, in the order the foreground hook runs it: reload first.
+    assert!(background.reload_settings());
+    assert_eq!(
+        background.settings().spell_check,
+        spell,
+        "the option arrived"
+    );
+    background.note_foreground("b.exe".into());
+    background.remember("b.exe", true);
+    assert_eq!(background.apply_for_app("b.exe"), Some(true));
+    assert_eq!(
+        background.settings().app_language_memory.get("a.exe"),
+        Some(&false),
+        "and a.exe's pin survived it"
+    );
+    assert_eq!(background.apply_for_app("a.exe"), Some(false));
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+/// The same lost update the other way round: a hotkey pressed while Settings has
+/// focus used to save the hook process's stale copy over what Settings wrote.
+#[test]
+fn a_hotkey_save_does_not_erase_a_settings_change() {
+    let (dir, path) = shared_file("stale-hook");
+    let mut background = ShellState::new(Some(path.clone()));
+    let mut settings_window = ShellState::new(Some(path.clone()));
+
+    let spell = !settings_window.settings().spell_check;
+    settings_window.refresh_hook_state();
+    settings_window.set_spell_check(spell);
+
+    background.note_foreground("a.exe".into());
+    background.toggle_enabled_hotkey();
+    background.save_settings();
+
+    let on_disk = Settings::load_from(&path);
+    assert_eq!(
+        on_disk.spell_check, spell,
+        "Settings' change is still there"
+    );
+    assert_eq!(on_disk.app_language_memory.get("a.exe"), Some(&false));
+    assert!(!on_disk.enabled);
+    assert_eq!(
+        background.settings().spell_check,
+        spell,
+        "and in memory too"
+    );
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+/// A UI process takes only the hook's two fields from the file: its own unsaved
+/// gõ tắt drafts are not written to disk on purpose and must survive the refresh.
+#[test]
+fn refreshing_a_settings_window_keeps_its_drafts() {
+    let (dir, path) = shared_file("drafts");
+    let mut settings_window = ShellState::new(Some(path.clone()));
+    settings_window.add_shortcut(); // a blank draft, never saved
+
+    let mut background = ShellState::new(Some(path.clone()));
+    background.note_foreground("a.exe".into());
+    background.toggle_enabled_hotkey();
+    background.save_settings();
+
+    settings_window.refresh_hook_state();
+    assert_eq!(
+        settings_window.shortcuts().len(),
+        1,
+        "the draft is still there"
+    );
+    assert!(!settings_window.settings().enabled, "VI/EN arrived");
+    assert_eq!(
+        settings_window.settings().app_language_memory.get("a.exe"),
+        Some(&false),
+        "and so did the pin"
+    );
+    let _ = std::fs::remove_dir_all(dir);
+}
+
 // --- the per-app memory switch ---------------------------------------------
 
 /// Off, the map is history: every app follows the global switch, even one the

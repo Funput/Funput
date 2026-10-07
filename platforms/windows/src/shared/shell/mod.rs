@@ -54,6 +54,11 @@ pub fn caret_moved(caret: Caret) {
 pub fn note_foreground(id: String) {
     with(|s| s.note_foreground(id));
 }
+/// Focus is somewhere that is not an app (the shell, a Funput window, a window
+/// whose program could not be resolved): a hotkey pressed there pins nothing.
+pub fn clear_foreground() {
+    with(|s| s.clear_foreground());
+}
 pub fn apply_for_app(id: &str) -> Option<bool> {
     with(|s| s.apply_for_app(id))
 }
