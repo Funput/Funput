@@ -118,18 +118,25 @@ phải của shell.
 
 | File | Luật |
 |---|---|
-| `config` | Đẩy settings vào engine, đọc/ghi đĩa, `effective_enabled` |
+| `config` | Đẩy settings vào engine, đọc/ghi đĩa, `effective_enabled`; `config/sync` — dùng chung file settings với process khác |
 | `options` | Từng ô setting mà UI Cài đặt bật/tắt |
 | `apps` | App đang focus, bộ nhớ VI/EN theo app, và công tắc tắt nó |
 | `shortcuts` | Bảng gõ tắt, kể cả những dòng người dùng đang gõ nửa vời |
 | `compose` | Những gì keyboard hook gọi trên mỗi phím — đường nóng, không I/O |
 
-Ba luật đáng đọc trước khi sửa:
+Bốn luật đáng đọc trước khi sửa:
 
 **Surface nào toggle thì surface đó quyết định phạm vi.** Hotkey được bấm bên trong app nó nhắm tới
 nên nó ghim app đó. Tray flyout và cửa sổ Cài đặt là cửa sổ của chính Funput, mở từ tray, không có
 app nào trước mặt — nên chúng dịch mặc định toàn cục và không ghim gì. Hai cái sau từng giữ lựa chọn
 lại rồi gắn vào app nhận focus kế tiếp, và vì flyout giành foreground nên cái nó ghim là taskbar.
+Cùng lý do đó, khi focus ở chỗ không phải app (taskbar, desktop, cửa sổ Funput, cửa sổ không đọc được
+exe) host gọi `clear_foreground`, và hotkey bấm ở đó cũng chỉ dịch mặc định toàn cục.
+
+**Một file settings, nhiều process ghi.** Mỗi process giữ cả `Settings` trong bộ nhớ và ghi nguyên
+cả struct, nên ghi từ bản cũ sẽ xoá thay đổi của process khác. Hai bên chia field theo chủ: VI/EN và
+bộ nhớ theo app thuộc về hook, phần còn lại thuộc về UI. Trước khi ghi, UI gọi `refresh_hook_state`;
+còn `save_settings` đọc file mới rồi chỉ đè VI/EN và các pin hotkey vừa tạo.
 
 **Bộ nhớ theo app tắt được**, và tắt nghĩa là bỏ qua chứ không phải quên: map ở lại trên đĩa nên bật
 lại là các app đã ghim quay về.
@@ -143,7 +150,8 @@ tưởng một session đang bị treo là một lần lật VI/EN từ process 
 
 ```
 WH_KEYBOARD_LL callback
-  ├─ tổ hợp toggle? → state.toggle_enabled_hotkey(), nuốt phím       (trước classify)
+  ├─ tổ hợp toggle? → hỏi lại app đang ở trước (note/clear_foreground),
+  │                   state.toggle_enabled_hotkey(), nuốt phím       (trước classify)
   ├─ tổ hợp flip?   → plan_inject(state.flip_composing()), nuốt phím
   ├─ !state.hook_active()? → để phím đi qua, không classify
   └─ dựng KeyEvent (mods, ToUnicodeEx → ch, backspace/navigation, numpad?)
@@ -153,8 +161,9 @@ WH_KEYBOARD_LL callback
          Flush(caret)    → state.caret_moved(caret); để phím đi qua
          PassThrough     → để phím đi qua
 
-EVENT_SYSTEM_FOREGROUND → caret_moved(Unknown) → reload_settings → note_foreground → apply_for_app
-                          → apply_for_layout
+EVENT_SYSTEM_FOREGROUND → save_settings (nếu còn toggle chưa ghi) → caret_moved(Unknown)
+                          → không phải app? clear_foreground, dừng
+                          → reload_settings → note_foreground → apply_for_app → apply_for_layout
 WM_[LRM]BUTTONDOWN      → caret_moved(Unknown)
 ```
 

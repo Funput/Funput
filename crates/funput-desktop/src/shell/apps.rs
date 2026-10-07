@@ -29,11 +29,13 @@ impl ShellState {
     /// changed the map. Two things are turned away: an empty id, because a window
     /// we could not resolve to an executable must not claim an entry, and every id
     /// while the memory is switched off. The caller persists, because every caller
-    /// has its own reason to write and would otherwise write twice.
+    /// has its own reason to write and would otherwise write twice; the pin is also
+    /// queued so [`Self::save_settings`] can merge it onto a fresh read of the file.
     pub(super) fn remember(&mut self, id: &str, on: bool) -> bool {
         if id.is_empty() || !self.settings.app_language_memory_enabled {
             return false;
         }
+        self.unsaved_pins.push((id.to_string(), on));
         self.settings.app_language_memory.insert(id.to_string(), on) != Some(on)
     }
 
@@ -62,21 +64,18 @@ impl ShellState {
         on
     }
 
-    /// Write down what [`Self::toggle_enabled_hotkey`] changed. Split out because
-    /// it is the one write in this file whose caller may have to postpone it; the
-    /// rest happen where blocking is free.
-    pub fn save_settings(&self) {
-        self.save();
+    /// Record the app that just took focus, so a hotkey toggle knows what to bind
+    /// to. An empty id is not an app, and is handled like [`Self::clear_foreground`].
+    pub fn note_foreground(&mut self, id: String) {
+        self.foreground = (!id.is_empty()).then_some(id);
     }
 
-    /// Record the app that just took focus, so a hotkey toggle knows what to bind
-    /// to. No-op for empty ids — a window we could not resolve leaves the previous
-    /// app standing rather than blanking it.
-    pub fn note_foreground(&mut self, id: String) {
-        if id.is_empty() {
-            return;
-        }
-        self.foreground = Some(id);
+    /// Focus moved somewhere that is not an app the user types in: the taskbar, the
+    /// desktop, a Funput window, or a window whose program could not be resolved. A
+    /// hotkey pressed there is a global switch and pins nothing — leaving the last
+    /// app on record instead let it re-pin the app the user had just *left*.
+    pub fn clear_foreground(&mut self) {
+        self.foreground = None;
     }
 
     /// Replay the choice remembered for the newly-focused app, if it has one.

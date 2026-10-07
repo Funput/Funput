@@ -2,7 +2,10 @@
 //!
 //! `settings` is the single source of truth: every write elsewhere mutates a field
 //! and then re-syncs through here, so the engine can never drift from what was
-//! persisted.
+//! persisted. Sharing that file with the other processes that write it lives in
+//! [`sync`].
+
+mod sync;
 
 use funput_config::{Settings, Shortcut};
 use funput_core::SyllableRules;
@@ -80,26 +83,6 @@ impl ShellState {
         if let Some(path) = &self.settings_file {
             self.settings.save_to(path);
         }
-    }
-
-    /// Reload settings written by another process (the Settings window and the
-    /// Control Center each run as their own). The focused app is untouched; only
-    /// persisted state and the live engine are refreshed. Returns whether anything
-    /// actually changed, so the caller can skip refreshing its UI.
-    pub fn reload_settings(&mut self) -> bool {
-        let loaded = self.read_settings();
-        if self.settings == loaded {
-            return false;
-        }
-        // A VI/EN flip made in one of those windows arrives as a plain settings
-        // field, and `apply_settings` below pushes it to the engine. Nothing else is
-        // owed: it was a global choice, so it needs no app to land on.
-        self.settings = loaded;
-        self.apply_settings();
-        // The foreign-layout switch may have been the thing that changed, and the
-        // layout it applies to has not moved — re-judge it rather than waiting.
-        self.redecide_layout();
-        true
     }
 
     /// Replace all settings at once (config import). Applies to the live engine and
