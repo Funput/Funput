@@ -92,13 +92,8 @@ fn position_above_tray(window: &slint::Window) {
         env_f64("FUNPUT_TRAY_W").max(1.0),
         env_f64("FUNPUT_TRAY_H"),
     );
-    let size = window.size();
-    let (x, y) = placement::anchor(
-        tray,
-        placement::work_area(tray),
-        f64::from(size.width),
-        f64::from(size.height),
-    );
+    let size = window.size().to_logical(window.scale_factor());
+    let (x, y) = placement::place(tray, f64::from(size.width), f64::from(size.height));
     window.set_position(PhysicalPosition::new(x, y));
 }
 

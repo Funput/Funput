@@ -15,7 +15,10 @@ use windows::Win32::Foundation::POINT;
 use windows::Win32::Graphics::Gdi::{
     GetMonitorInfoW, HMONITOR, MONITOR_DEFAULTTONEAREST, MONITORINFO, MonitorFromPoint,
 };
-use windows::Win32::UI::WindowsAndMessaging::{SPI_GETWORKAREA, SystemParametersInfoW};
+use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
+use windows::Win32::UI::WindowsAndMessaging::{
+    SPI_GETWORKAREA, SystemParametersInfoW, USER_DEFAULT_SCREEN_DPI,
+};
 
 /// Breathing room kept between the flyout and both the icon and the screen edge.
 const GAP: f64 = 8.0;
@@ -41,13 +44,25 @@ impl Rect {
     }
 }
 
+/// Top-left corner, in physical pixels, for a flyout measuring `width` x `height`
+/// *logical* pixels, next to `tray` and inside its monitor's work area.
+///
+/// Logical, because the flyout is placed before its window exists — Slint creates
+/// it once the event loop runs — so the only size it has is measured at a scale of
+/// `1.0`. Taken as physical, that put the flyout 25 % too low and too far right at
+/// 125 %: over the taskbar below it, or beside it with the taskbar on the right.
+pub(super) fn place(tray: Rect, width: f64, height: f64) -> (i32, i32) {
+    let scale = scale_at(tray);
+    anchor(tray, work_area(tray), width * scale, height * scale)
+}
+
 /// Top-left corner for a `width` x `height` flyout anchored to `tray`, kept inside
 /// `work`.
 ///
 /// Above the icon when there is room, below it when there is not — a taskbar at the
 /// top of the screen leaves nothing above. Horizontally it starts centred on the
 /// icon and then slides just far enough to fit.
-pub(super) fn anchor(tray: Rect, work: Rect, width: f64, height: f64) -> (i32, i32) {
+fn anchor(tray: Rect, work: Rect, width: f64, height: f64) -> (i32, i32) {
     let mut y = tray.top - height - GAP;
     if y < work.top + GAP {
         y = tray.bottom + GAP;
@@ -69,16 +84,42 @@ fn fit(start: f64, low: f64, high: f64, extent: f64) -> f64 {
     start.min(high - extent - GAP).max(low + GAP)
 }
 
-/// Work area — screen minus taskbar — of the monitor under the middle of `tray`.
-///
-/// Falls back to the primary monitor's, which `MONITOR_DEFAULTTONEAREST` already
-/// makes all but unreachable: it only matters if `GetMonitorInfoW` itself fails.
-pub(super) fn work_area(tray: Rect) -> Rect {
+/// Physical pixels per logical one for a window on `tray`'s monitor — or what
+/// `SLINT_SCALE_FACTOR` says, since Slint honours it too. `1.0` if Windows cannot say.
+fn scale_at(tray: Rect) -> f64 {
+    if let Some(scale) = scale_override(std::env::var("SLINT_SCALE_FACTOR").ok().as_deref()) {
+        return scale;
+    }
+    let (mut dpi_x, mut dpi_y) = (0, 0);
+    match unsafe { GetDpiForMonitor(monitor_of(tray), MDT_EFFECTIVE_DPI, &mut dpi_x, &mut dpi_y) } {
+        Ok(()) if dpi_x > 0 => f64::from(dpi_x) / f64::from(USER_DEFAULT_SCREEN_DPI),
+        _ => 1.0,
+    }
+}
+
+/// `SLINT_SCALE_FACTOR` parsed the way Slint parses it: a positive number, or none.
+fn scale_override(value: Option<&str>) -> Option<f64> {
+    value
+        .and_then(|v| v.parse::<f32>().ok())
+        .filter(|scale| *scale > 0.0)
+        .map(f64::from)
+}
+
+/// The monitor under the middle of `tray`, or the nearest one.
+fn monitor_of(tray: Rect) -> HMONITOR {
     let point = POINT {
         x: ((tray.left + tray.right) / 2.0) as i32,
         y: ((tray.top + tray.bottom) / 2.0) as i32,
     };
-    let monitor: HMONITOR = unsafe { MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST) };
+    unsafe { MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST) }
+}
+
+/// Work area — screen minus taskbar — of the monitor under the middle of `tray`.
+///
+/// Falls back to the primary monitor's, which `MONITOR_DEFAULTTONEAREST` already
+/// makes all but unreachable: it only matters if `GetMonitorInfoW` itself fails.
+fn work_area(tray: Rect) -> Rect {
+    let monitor = monitor_of(tray);
     let mut info = MONITORINFO {
         cbSize: size_of::<MONITORINFO>() as u32,
         ..Default::default()
@@ -162,6 +203,47 @@ mod tests {
         assert!(x >= -1920 + GAP as i32, "x={x} escaped the left monitor");
         assert!(x + 340 <= 0 - GAP as i32, "x={x} spilled onto the primary");
         assert_eq!(y, (1040.0 - 351.0 - GAP) as i32);
+    }
+
+    /// The reported bug, measured on a 2560x1440 screen at 125 %: anchored at its
+    /// unscaled 340x351, the flyout that appeared was 425x439 and ran 80px into the
+    /// taskbar and 77px off the right edge. Anchored at the scaled size, it fits.
+    #[test]
+    fn a_flyout_anchored_at_its_scaled_size_clears_the_taskbar() {
+        let (scale, width, height) = (1.25, 340.0, 351.0);
+        let (unscaled_x, unscaled_y) = anchor(tray(120.0), work(), width, height);
+        assert!(
+            unscaled_y as f64 + height * scale > 1400.0,
+            "the bug, restated"
+        );
+        assert!(unscaled_x as f64 + width * scale > 2560.0, "…on both edges");
+
+        let (x, y) = anchor(tray(120.0), work(), width * scale, height * scale);
+        // Within the pixel `anchor` rounds to: 351 x 1.25 is 438.75.
+        assert!((y as f64 + height * scale - (1400.0 - GAP)).abs() < 1.0);
+        assert!((x as f64 + width * scale - (2560.0 - GAP)).abs() < 1.0);
+    }
+
+    /// The same report with the taskbar moved to the right: a 64px-wide bar, the
+    /// tray near its bottom. The flyout must stay left of it at any size.
+    #[test]
+    fn a_taskbar_on_the_right_is_not_covered_either() {
+        let work = Rect::from_size(0.0, 0.0, 2560.0 - 80.0, 1440.0);
+        let tray = Rect::from_size(2500.0, 1300.0, 40.0, 40.0);
+        let (width, height) = (340.0 * 1.25, 351.0 * 1.25);
+        let (x, y) = anchor(tray, work, width, height);
+        assert_eq!(x as f64 + width, 2480.0 - GAP);
+        assert!(y as f64 + height <= tray.top - GAP + 1.0, "above the icon");
+    }
+
+    #[test]
+    fn the_scale_override_is_read_the_way_slint_reads_it() {
+        assert_eq!(scale_override(Some("1.5")), Some(1.5));
+        assert_eq!(scale_override(Some("2")), Some(2.0));
+        assert_eq!(scale_override(Some("0")), None);
+        assert_eq!(scale_override(Some("-1")), None);
+        assert_eq!(scale_override(Some("big")), None);
+        assert_eq!(scale_override(None), None);
     }
 
     #[test]

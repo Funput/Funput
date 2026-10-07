@@ -100,6 +100,9 @@ windows = { version = "0.62", features = [
     # Monitor work area, so the Control Center flyout can be kept on screen next to
     # a tray icon that sits in a corner (see ui/control_center/placement.rs).
     "Win32_Graphics_Gdi",
+    # …and that monitor's DPI, since the flyout is placed before its window exists
+    # and so before Slint knows what scale it will be drawn at.
+    "Win32_UI_HiDpi",
     # Chuyển mã window: accept dropped files (DragQueryFileW) and subclass the
     # Slint HWND to see WM_DROPFILES, which the winit backend does not forward.
     "Win32_UI_Shell",
