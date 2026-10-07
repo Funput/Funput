@@ -3,11 +3,14 @@
 //! The signature is checked against the *same* Ed25519 key Sparkle uses on macOS
 //! before a single byte is written anywhere executable.
 
+use std::io;
+use std::path::Path;
+
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 
-use super::{Error, PUBLIC_ED_KEY, Result};
+use super::{Error, PUBLIC_ED_KEY, Result, leftovers};
 
 /// Verify the downloaded bytes against the embedded public key. Sparkle signs the
 /// raw file with Ed25519 (libsodium), which is byte-compatible with `ed25519-dalek`.
@@ -35,15 +38,40 @@ fn verify_with_key(bytes: &[u8], ed_signature: &str, public_key_b64: &str) -> Re
         .map_err(|_| Error::BadSignature)
 }
 
-/// Write the verified bytes to a temp file and swap them in for the running
-/// executable. After this returns, `current_exe()` points at the new build.
+/// Swap the verified bytes in for the running executable. After this returns,
+/// `current_exe()` points at the new build, and the old one waits beside it for
+/// the new build to delete — see [`super::leftovers`].
+///
+/// Nothing is deleted here, and nothing is left to a helper process: the old file
+/// is mapped by the background process as well as by this Settings window, and
+/// only the next start of Funput is sure to come after both of them.
 pub fn stage_and_replace(bytes: &[u8]) -> Result<()> {
-    let staged = std::env::temp_dir().join("Funput-update.exe");
-    std::fs::write(&staged, bytes).map_err(|e| Error::Replace(e.to_string()))?;
-    let result = self_replace::self_replace(&staged).map_err(|e| Error::Replace(e.to_string()));
-    // Best-effort cleanup; the swap already copied the bytes into place.
-    let _ = std::fs::remove_file(&staged);
-    result
+    std::env::current_exe()
+        .and_then(|exe| swap_in(&exe, bytes, std::process::id()))
+        .map_err(|e| Error::Replace(e.to_string()))
+}
+
+/// Put `bytes` at `exe`, moving what was there to its backup name. Every step is
+/// a write or a rename inside the executable's own folder, so the renames cannot
+/// fail for crossing drives, and a step that fails undoes the ones before it.
+fn swap_in(exe: &Path, bytes: &[u8], tag: u32) -> io::Result<()> {
+    let name = exe
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "no file name"))?;
+    let new = exe.with_file_name(format!("{name}.{tag}.new"));
+    let old = exe.with_file_name(leftovers::backup_name(name, tag));
+
+    let undo_new = |e: io::Error| {
+        let _ = std::fs::remove_file(&new);
+        e
+    };
+    std::fs::write(&new, bytes).map_err(undo_new)?;
+    std::fs::rename(exe, &old).map_err(undo_new)?;
+    std::fs::rename(&new, exe).map_err(|e| {
+        let _ = std::fs::rename(&old, exe);
+        undo_new(e)
+    })
 }
 
 /// Relaunch the (now updated) executable and exit this process. Never returns.
@@ -72,5 +100,48 @@ mod tests {
         assert!(verify_with_key(b"funput release bytez", &sig_b64, &pubkey_b64).is_err());
         // Garbage signature → fail, not panic.
         assert!(verify_with_key(payload, "!!!notbase64!!!", &pubkey_b64).is_err());
+    }
+
+    fn scratch(tag: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!("funput-swap-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    fn names_in(dir: &Path) -> Vec<String> {
+        let mut names: Vec<_> = std::fs::read_dir(dir)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().into_string().unwrap())
+            .collect();
+        names.sort();
+        names
+    }
+
+    #[test]
+    fn the_new_build_takes_the_name_and_the_old_one_steps_aside() {
+        let dir = scratch("ok");
+        let exe = dir.join("Funput.exe");
+        std::fs::write(&exe, b"old build").unwrap();
+
+        swap_in(&exe, b"new build", 7).unwrap();
+
+        assert_eq!(std::fs::read(&exe).unwrap(), b"new build");
+        assert_eq!(
+            std::fs::read(dir.join("Funput.exe.7.old")).unwrap(),
+            b"old build"
+        );
+        assert_eq!(names_in(&dir), ["Funput.exe", "Funput.exe.7.old"]);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn a_failed_swap_leaves_nothing_behind() {
+        let dir = scratch("fail");
+        let exe = dir.join("Funput.exe"); // never created, so moving it aside fails
+
+        assert!(swap_in(&exe, b"new build", 7).is_err());
+        assert!(names_in(&dir).is_empty(), "no half-written .new left");
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

@@ -20,17 +20,20 @@
 //!
 //! - `feed` — fetching the manifest and the new `.exe` over the network.
 //! - `install` — verifying the signature, swapping the binary, relaunching.
+//! - `leftovers` — the new build deleting the old one once nothing runs from it.
 //!
 //! The version comparison and the shared types stay here, since both halves and
 //! the About pane need them.
 
 mod feed;
 mod install;
+mod leftovers;
 
 use serde::Deserialize;
 
 pub use feed::{download, fetch_manifest};
 pub use install::{relaunch, stage_and_replace, verify};
+pub use leftovers::remove_leftovers;
 
 /// Ed25519 public key used to verify update signatures. This MUST stay identical
 /// to `SUPublicEDKey` in the macOS `Info.plist` — both platforms are signed with

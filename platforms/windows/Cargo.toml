@@ -56,14 +56,13 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 dirs = "7"
-# Auto-update (see src/update.rs): fetch a signed JSON manifest from GitHub
+# Auto-update (see src/shared/update/): fetch a signed JSON manifest from GitHub
 # Releases, verify it with the same Ed25519 key Sparkle uses on macOS, then
 # swap the running .exe in place.
 ureq = "3" # sync HTTP client (rustls, no OpenSSL); runs on its own thread
 ed25519-dalek = "3" # verify the Sparkle-compatible Ed25519 signature
 base64 = "0.23" # decode the public key + signature
 semver = "1" # compare the manifest version against CARGO_PKG_VERSION
-self-replace = "1" # replace the currently running executable (crate `self_replace`)
 # Both features are spelled out rather than left to feature unification through
 # funput-config and funput-convert: this shell calls each of them directly, so it
 # should ask for each directly. `textcase` is the Chuyển mã window's second axis —
