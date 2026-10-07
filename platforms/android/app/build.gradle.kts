@@ -8,6 +8,13 @@ plugins {
 
 android {
     namespace = "app.funput.funput"
+    // The app module, not :ime, owns stripReleaseDebugSymbols and
+    // extractReleaseNativeSymbolTables, and those resolve their NDK from *this*
+    // module's ndkVersion. Left unset it falls back to AGP's default NDK; when the
+    // runner image stopped shipping that version, both tasks quietly packaged
+    // libfunput_jni.so unstripped with no symbol table, and the deploy failed on
+    // missing symbols. Keep it identical to ime/build.gradle.kts.
+    ndkVersion = "29.0.14206865"
     compileSdk {
         version = release(37)
     }
