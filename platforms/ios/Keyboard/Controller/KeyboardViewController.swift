@@ -94,6 +94,7 @@ final class KeyboardViewController: UIInputViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         launchTrace.finish()
+        releaseSystemGestureTouchDelay()
         if hasFullAccess { accessStateStore.recordFullAccess() }
 #if DEBUG
         touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)

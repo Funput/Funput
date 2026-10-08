@@ -1,6 +1,7 @@
 import KeyboardInput
 import KeyboardLayout
 import KeyboardRenderer
+import os
 import UIKit
 
 extension KeyboardViewController {
@@ -10,6 +11,29 @@ extension KeyboardViewController {
     /// the keys in the middle. The Home gesture itself cannot be deferred on Face ID iPhones.
     override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge {
         [.left, .right, .bottom]
+    }
+
+    /// Stops the system's edge-gesture gates from holding back `touchesBegan`.
+    ///
+    /// The override above is not enough inside a keyboard extension: UIKit asks the root
+    /// view controller of the extension's window, which belongs to the system, so the
+    /// gates on that window keep `delaysTouchesBegan` on. A finger resting on Delete at the
+    /// right edge then reaches the keyboard only once the gate gives up, which delayed both
+    /// the first deletion and key repeat (#516). The gates still recognize edge swipes and
+    /// cancel the touch when they do; they just stop withholding its first sample.
+    func releaseSystemGestureTouchDelay() {
+        guard let recognizers = view.window?.gestureRecognizers else { return }
+        for recognizer in recognizers where recognizer.delaysTouchesBegan {
+#if DEBUG
+            os_log(
+                .info,
+                log: KeyboardControllerSignpost.log,
+                "Released touch delay on window recognizer %{public}@",
+                String(describing: type(of: recognizer))
+            )
+#endif
+            recognizer.delaysTouchesBegan = false
+        }
     }
 
     /// Handles the phases the gesture lane writes to the document itself.

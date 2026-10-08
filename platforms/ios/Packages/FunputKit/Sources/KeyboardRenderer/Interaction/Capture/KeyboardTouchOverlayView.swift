@@ -2,6 +2,7 @@
 import KeyboardLayout
 import KeyboardTouchCore
 import KeyboardTouchUIKit
+import os
 import UIKit
 
 /// One multi-touch surface for all keycaps. Central tracking lets a finger move
@@ -46,6 +47,9 @@ final class KeyboardTouchOverlayView: UIView {
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+#if DEBUG
+        logLateBegins(touches)
+#endif
         captureAndRoute(touches, phase: .began)
     }
 
@@ -68,6 +72,26 @@ final class KeyboardTouchOverlayView: UIView {
     func forgetTrackedTouches() {
         captureAdapter.reset()
     }
+
+#if DEBUG
+    /// A began sample that arrives well after the finger landed was held back upstream,
+    /// usually by a system edge-gesture gate (#516).
+    private func logLateBegins(_ touches: Set<UITouch>) {
+        let now = ProcessInfo.processInfo.systemUptime
+        for touch in touches {
+            let lateness = Int((now - touch.timestamp) * 1000)
+            guard lateness > 50 else { continue }
+            os_log(
+                .info,
+                log: KeyboardTouchSignpost.log,
+                "Touch began late by %d ms at x=%.0f of %.0f",
+                lateness,
+                touch.location(in: self).x,
+                bounds.width
+            )
+        }
+    }
+#endif
 
     func resolvedHit(at point: CGPoint) -> Hit? {
         geometry?.touchHit(at: point).map { ($0.key, $0.frame) }
