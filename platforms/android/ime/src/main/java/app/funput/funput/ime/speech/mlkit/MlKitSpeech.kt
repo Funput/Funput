@@ -1,17 +1,12 @@
 package app.funput.funput.ime.speech.mlkit
 
 import android.speech.SpeechRecognizer as Platform
-import app.funput.funput.ime.speech.model.SpeechEvent
-import app.funput.funput.ime.speech.platform.SpeechResultSnapshot
-import app.funput.funput.ime.speech.preparation.SpeechDownloadEvent
 import app.funput.funput.ime.speech.preparation.platform.SpeechSupportResult
-import com.google.mlkit.genai.common.DownloadStatus
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.common.GenAiException
 import com.google.mlkit.genai.speechrecognition.SpeechRecognition
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizer
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizerOptions
-import com.google.mlkit.genai.speechrecognition.SpeechRecognizerResponse
 import com.google.mlkit.genai.speechrecognition.speechRecognizerOptions
 import java.util.Locale
 
@@ -47,39 +42,5 @@ internal object MlKitSpeech {
             FeatureStatus.UNAVAILABLE -> SpeechSupportResult.Languages(emptyList(), emptyList(), emptyList())
             else -> SpeechSupportResult.Failure(Platform.ERROR_CANNOT_CHECK_SUPPORT)
         }
-    }
-}
-
-/** Tracks byte totals so progress can be reported as a percentage. */
-internal class MlKitDownloadMapper {
-    private var total = 0L
-
-    fun map(status: DownloadStatus): SpeechDownloadEvent? = when (status) {
-        is DownloadStatus.DownloadStarted -> {
-            total = status.bytesToDownload
-            SpeechDownloadEvent.Progress(0)
-        }
-        is DownloadStatus.DownloadProgress -> if (total <= 0) null
-            else SpeechDownloadEvent.Progress((status.totalBytesDownloaded * 100 / total).toInt().coerceIn(0, 100))
-        is DownloadStatus.DownloadCompleted -> SpeechDownloadEvent.Success
-        is DownloadStatus.DownloadFailed -> SpeechDownloadEvent.Failure(MlKitSpeech.errorCode(status.e))
-        else -> null
-    }
-}
-
-/** A completed stream without any final hypothesis is a no-match, not a silent hang. */
-internal class MlKitResponseMapper {
-    private var finalSeen = false
-
-    fun map(response: SpeechRecognizerResponse): SpeechEvent? = when (response) {
-        is SpeechRecognizerResponse.PartialTextResponse -> SpeechResultSnapshot.partial(listOf(response.text))
-        is SpeechRecognizerResponse.FinalTextResponse -> {
-            finalSeen = true
-            SpeechResultSnapshot.final(listOf(response.text))
-        }
-        is SpeechRecognizerResponse.CompletedResponse ->
-            if (finalSeen) null else SpeechEvent.Failure(Platform.ERROR_NO_MATCH)
-        is SpeechRecognizerResponse.ErrorResponse -> SpeechEvent.Failure(MlKitSpeech.errorCode(response.e))
-        else -> null
     }
 }
