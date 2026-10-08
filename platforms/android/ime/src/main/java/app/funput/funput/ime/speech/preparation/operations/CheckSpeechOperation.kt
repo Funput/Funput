@@ -25,7 +25,6 @@ internal class CheckSpeechOperation(
             SpeechAvailability.UNKNOWN -> return deliver(SpeechCapability.UNKNOWN)
             SpeechAvailability.AVAILABLE -> Unit
         }
-        if (factory.apiLevel < 33) return deliver(SpeechCapability.UNKNOWN)
         cache.get(locale)?.let { return deliver(it) }
         val revision = cache.revision(locale)
         acquire(3_000, { SpeechCapability.UNKNOWN }) { client ->

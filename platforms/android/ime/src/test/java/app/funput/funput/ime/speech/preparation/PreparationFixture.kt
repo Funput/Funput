@@ -40,26 +40,16 @@ internal class FakePreparationClient : PreparationClient {
     var checkListener: (SpeechSupportResult) -> Unit = {}
     var downloadListener: (SpeechDownloadEvent) -> Unit = {}
     var checks = 0
-    var downloads = 0
     var trackedDownloads = 0
     var closes = 0
     var onCheck: () -> Unit = {}
     var onDownload: () -> Unit = {}
     var onClose: () -> Unit = {}
-    var holdLegacy = false
-    var legacyListener: (SpeechDownloadEvent) -> Unit = {}
     override fun check(request: SpeechRequest, listener: (SpeechSupportResult) -> Unit) {
         checks++
         requests += request
         checkListener = listener
         onCheck()
-    }
-    override fun requestDownload(request: SpeechRequest, listener: (SpeechDownloadEvent) -> Unit) {
-        downloads++
-        requests += request
-        legacyListener = listener
-        onDownload()
-        if (!holdLegacy) listener(SpeechDownloadEvent.Requested)
     }
     override fun trackDownload(request: SpeechRequest, listener: (SpeechDownloadEvent) -> Unit) {
         trackedDownloads++

@@ -17,6 +17,8 @@ robolectric = "4.17"
 roborazzi = "1.75.0"
 kyantShapes = "1.2.1"
 kyantBackdrop = "2.0.1"
+mlkitGenaiSpeech = "1.0.0-alpha1"
+coroutines = "1.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -44,6 +46,9 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-compose-material3-adaptive-navigation-suite = { group = "androidx.compose.material3", name = "material3-adaptive-navigation-suite" }
 kyant-backdrop = { group = "io.github.kyant0", name = "backdrop", version.ref = "kyantBackdrop" }
 kyant-shapes = { group = "io.github.kyant0", name = "shapes", version.ref = "kyantShapes" }
+mlkit-genai-speech = { group = "com.google.mlkit", name = "genai-speech-recognition", version.ref = "mlkitGenaiSpeech" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }

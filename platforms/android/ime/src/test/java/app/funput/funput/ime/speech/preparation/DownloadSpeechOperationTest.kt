@@ -7,17 +7,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class DownloadSpeechOperationTest {
-    @Test fun api33SendsRequestWithoutInventingProgress() {
-        val f = PreparationFixture(33)
-        val events = mutableListOf<SpeechDownloadEvent>()
-        f.service.download(SpeechLocale.EN) { events += it }.start()
-        assertEquals(listOf(SpeechDownloadEvent.Requested), events)
-        assertEquals(1, f.client.downloads)
-        assertEquals(0, f.client.trackedDownloads)
-        assertEquals(listOf(SpeechRequestFactory.create(SpeechLocale.EN)), f.client.requests)
-        assertEquals(1, f.client.closes)
-    }
-    @Test fun api34ProgressThenSuccessClosesExactlyOnce() {
+    @Test fun progressThenSuccessClosesExactlyOnce() {
         val f = PreparationFixture()
         val events = mutableListOf<SpeechDownloadEvent>()
         val op = f.service.download(SpeechLocale.VI) { events += it }
@@ -29,7 +19,6 @@ class DownloadSpeechOperationTest {
         op.close()
         assertEquals(listOf(SpeechDownloadEvent.Progress(40), SpeechDownloadEvent.Success), events)
         assertEquals(1, f.client.closes)
-        assertEquals(0, f.client.downloads)
         assertEquals(listOf(SpeechRequestFactory.create(SpeechLocale.VI)), f.client.requests)
     }
     @Test fun scheduledIsTerminalAndNeverWaitsForSuccess() {
@@ -42,30 +31,18 @@ class DownloadSpeechOperationTest {
         assertEquals(listOf(SpeechDownloadEvent.Scheduled), events)
         assertEquals(1, f.client.closes)
     }
-    @Test fun missingEventSupportFallsBackToLegacyExactlyOnce() {
-        val f = PreparationFixture()
-        val events = mutableListOf<SpeechDownloadEvent>()
-        f.service.download(SpeechLocale.VI) { events += it }.start()
-        val error = SpeechDownloadEvent.Failure(SpeechRecognizer.ERROR_CANNOT_LISTEN_TO_DOWNLOAD_EVENTS)
-        f.client.downloadListener(error)
-        f.client.downloadListener(error)
-        assertEquals(listOf(SpeechDownloadEvent.Requested), events)
-        assertEquals(1, f.client.downloads)
-        assertEquals(1, f.client.closes)
-    }
     @Test fun unrelatedErrorNeverRetriesDownload() {
         val f = PreparationFixture()
         val error = SpeechDownloadEvent.Failure(SpeechRecognizer.ERROR_NETWORK)
         f.service.download(SpeechLocale.EN) { assertEquals(error, it) }.start()
         f.client.downloadListener(error)
-        assertEquals(0, f.client.downloads)
         assertEquals(1, f.client.closes)
     }
     @Test fun deadlineIsAbsoluteEvenWithProgress() {
         val f = PreparationFixture()
         val events = mutableListOf<SpeechDownloadEvent>()
         f.service.download(SpeechLocale.EN) { events += it }.start()
-        f.time.advance(59_999)
+        f.time.advance(599_999)
         f.client.downloadListener(SpeechDownloadEvent.Progress(99))
         f.time.advance(1)
         f.client.downloadListener(SpeechDownloadEvent.Success)
@@ -85,7 +62,7 @@ class DownloadSpeechOperationTest {
         assertEquals(1, f.client.closes)
     }
     @Test fun lowerApisAndUnavailableServiceNeverCreateClient() {
-        for (api in listOf(26, 30, 31, 32)) {
+        for (api in listOf(26, 30)) {
             val f = PreparationFixture(api)
             f.service.download(SpeechLocale.VI) { assertTrue(it is SpeechDownloadEvent.Failure) }.start()
             assertTrue(f.factory.clients.isEmpty())
