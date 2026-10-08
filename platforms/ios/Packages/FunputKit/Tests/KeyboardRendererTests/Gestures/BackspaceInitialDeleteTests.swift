@@ -8,6 +8,7 @@ import Testing
 struct BackspaceInitialDeleteTests {
     private static let backspace = KeySpec(id: "backspace", label: "", role: .backspace)
     private static let space = KeySpec(id: "space", label: " ", role: .space)
+    private static let repeatDelay = KeyboardSurfaceInteractionController.smartBackspaceRepeatDelay
 
     @Test("A stationary press deletes once before the repeat timer")
     func stationaryPressDeletesOnce() {
@@ -28,7 +29,7 @@ struct BackspaceInitialDeleteTests {
         let subject = GestureTestSubject(key: Self.backspace)
         subject.hapticFeedback = true
         subject.begin()
-        subject.scheduler.fire(after: 0.4)
+        subject.scheduler.fire(after: Self.repeatDelay)
 
         #expect(subject.phases == [.pressed, .repeated, .repeated])
         #expect(subject.haptics.performed == [.delete, .deleteRepeat])
