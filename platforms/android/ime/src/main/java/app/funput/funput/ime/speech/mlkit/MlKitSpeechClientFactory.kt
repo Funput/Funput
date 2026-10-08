@@ -1,6 +1,7 @@
 package app.funput.funput.ime.speech.mlkit
 
 import android.os.Build
+import androidx.annotation.RequiresApi
 import app.funput.funput.ime.speech.model.SpeechEvent
 import app.funput.funput.ime.speech.platform.SpeechClient
 import app.funput.funput.ime.speech.platform.SpeechClientFactory
@@ -22,10 +23,14 @@ import kotlinx.coroutines.launch
 internal class MlKitSpeechClientFactory : SpeechClientFactory {
     override val apiLevel get() = Build.VERSION.SDK_INT
     override fun isOnDeviceAvailable() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    override fun create(listener: (SpeechEvent) -> Unit): SpeechClient = MlKitSpeechClient(listener)
+    override fun create(listener: (SpeechEvent) -> Unit): SpeechClient {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) throw UnsupportedOperationException()
+        return MlKitSpeechClient(listener)
+    }
 }
 
 /** Commands arrive on the main thread; responses are collected there too. */
+@RequiresApi(Build.VERSION_CODES.S)
 private class MlKitSpeechClient(private val emit: (SpeechEvent) -> Unit) : SpeechClient {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var recognizer: SpeechRecognizer? = null
