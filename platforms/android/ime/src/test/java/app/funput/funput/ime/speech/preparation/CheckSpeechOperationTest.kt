@@ -20,15 +20,22 @@ class CheckSpeechOperationTest {
         assertEquals(1, f.client.closes)
         assertTrue(f.time.tasks.single().cancelled)
     }
-    @Test fun everyApiGuardAvoidsClientCreation() {
-        for (api in listOf(26, 30, 31, 32)) {
+    @Test fun preSApisAvoidClientCreation() {
+        for (api in listOf(26, 30)) {
             val f = PreparationFixture(api)
             var result: SpeechCapability? = null
             f.service.check(SpeechLocale.VI) { result = it }.start()
-            assertEquals(if (api < 31) SpeechCapability.UNSUPPORTED else SpeechCapability.UNKNOWN, result)
+            assertEquals(SpeechCapability.UNSUPPORTED, result)
             assertTrue(f.factory.clients.isEmpty())
-            if (api < 31) assertEquals(0, f.factory.probes)
+            assertEquals(0, f.factory.probes)
         }
+    }
+    @Test fun api31ChecksTheModelDirectly() {
+        val f = PreparationFixture(31)
+        var result: SpeechCapability? = null
+        f.service.check(SpeechLocale.VI) { result = it }.start()
+        f.client.languages(supported = listOf("vi-VN"))
+        assertEquals(SpeechCapability.DOWNLOADABLE, result)
     }
     @Test fun serviceUnavailableAndProbeExceptionAreDifferent() {
         val f = PreparationFixture()

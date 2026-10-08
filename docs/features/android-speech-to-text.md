@@ -1474,3 +1474,34 @@ lintDebug, assembleDebug/Release và LOC/layout/FunputUI pass. Lint còn 29
 warnings; không có lỗi lint trong IME. Các connected tests dùng backend giả,
 không phải phép đo nhận dạng hoặc tải model thật. Giới hạn nghiệm thu P6 đã
 được người dùng miễn vẫn giữ nguyên; chưa deploy hoặc thay release version.
+
+## 28. Đổi engine sang ML Kit GenAI Speech (nhánh `feat/android-mlkit-speech`, 08/10/2026)
+
+**Lý do:** `createOnDeviceSpeechRecognizer()` chỉ chạy khi ROM đặt
+`config_defaultOnDeviceSpeechRecognitionService`. Samsung trỏ tới Android System
+Intelligence nên chạy; Xiaomi/HyperOS thường không đặt hoặc trỏ tới package không
+có, nên mic bị ẩn hoặc phiên lỗi ngay.
+
+**Thay đổi:** `MlKitSpeechClientFactory` và `MlKitPreparationClientFactory`
+(`ime/speech/mlkit/`) thay hai factory của `android.speech`. `PlatformSpeechBackend`,
+các operation chuẩn bị, cache, session và UI giữ nguyên. Chỉ dùng chế độ **Basic**
+(`com.google.mlkit:genai-speech-recognition:1.0.0-alpha1`), thu âm bằng
+`AudioSource.fromMic()` trong tiến trình IME.
+
+- `checkStatus`: `AVAILABLE→Ready`, `DOWNLOADING→Pending`, `DOWNLOADABLE→Downloadable`,
+  `UNAVAILABLE→LanguageUnsupported`. Kiểm tra model từ API 31; bỏ nhánh API 33/34.
+- Tải model qua `download()` có phần trăm; hạn chờ 10 phút. Đóng màn có thể dừng
+  luôn việc tải, vì ML Kit không tách quan sát khỏi tải.
+- Lỗi giữ mã `SpeechRecognizer.ERROR_*`; luồng kết thúc mà không có final → `NO_MATCH`.
+
+**Rủi ro cần kiểm chứng trên máy thật:**
+- API alpha, không có SLA; `vi-VN` ở Basic đang beta.
+- AAR khai báo `<queries>` tới `com.google.android.tts` và AICore; Basic có thể cần
+  Speech Services by Google. ROM không có dịch vụ Google sẽ không chạy.
+- AAR khai báo `INTERNET`/`ACCESS_NETWORK_STATE`; Funput gỡ cả hai bằng
+  `tools:node="remove"` để bàn phím không có quyền mạng. Nếu việc tải model chạy
+  trong tiến trình Funput thì tải sẽ hỏng; khi đó phải quyết định lại.
+- Có thể ML Kit phát nhiều final theo từng đoạn nói; phiên dừng ở final đầu tiên.
+
+Probe `OnDeviceSpeechProbeInstrumentedTest` giờ in phiên bản các package Google liên
+quan và `checkStatus` cho VI/EN, không thu âm, không tải model.

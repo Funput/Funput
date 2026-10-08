@@ -22,7 +22,7 @@ import app.funput.funput.keyboard.ui.FunputKeyboardView
 internal class ImeSpeechRuntime(
     private val service: InputMethodService,
     editing: ImeEditingSession,
-    backend: SpeechBackend = PlatformSpeechBackend(service),
+    backend: SpeechBackend = PlatformSpeechBackend(),
     private val preparation: SpeechPreparationService = OnDeviceSpeechPreparationService(service),
 ) {
     private val tracker = SpeechEditorTracker()

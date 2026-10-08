@@ -15,7 +15,6 @@ internal sealed interface SpeechSupportResult {
 /** This client has no microphone commands. */
 internal interface PreparationClient {
     fun check(request: SpeechRequest, listener: (SpeechSupportResult) -> Unit)
-    fun requestDownload(request: SpeechRequest, listener: (SpeechDownloadEvent) -> Unit)
     fun trackDownload(request: SpeechRequest, listener: (SpeechDownloadEvent) -> Unit)
     fun close()
 }

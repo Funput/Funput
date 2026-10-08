@@ -1,7 +1,7 @@
 package app.funput.funput.ime.speech.platform
 
-import android.content.Context
 import android.speech.SpeechRecognizer
+import app.funput.funput.ime.speech.mlkit.MlKitSpeechClientFactory
 import app.funput.funput.ime.speech.model.SpeechBackend
 import app.funput.funput.ime.speech.model.SpeechEvent
 import app.funput.funput.ime.speech.model.SpeechLocale
@@ -11,7 +11,7 @@ internal class PlatformSpeechBackend(
     private val factory: SpeechClientFactory,
     private val main: SpeechMainQueue,
 ) : SpeechBackend {
-    constructor(context: Context) : this(AndroidSpeechClientFactory(context), AndroidSpeechMainQueue())
+    constructor() : this(MlKitSpeechClientFactory(), AndroidSpeechMainQueue())
 
     override fun open(locale: SpeechLocale, listener: (SpeechEvent) -> Unit): SpeechRecording =
         PlatformSpeechRecording(factory, main, SpeechRequestFactory.create(locale), listener)

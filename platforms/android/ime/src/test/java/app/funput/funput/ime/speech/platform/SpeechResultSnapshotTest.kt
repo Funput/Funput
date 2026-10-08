@@ -31,13 +31,9 @@ class SpeechResultSnapshotTest {
     }
 
     @Test
-    fun `both locales request partial on-device results explicitly`() {
+    fun `both locales request their BCP-47 tag`() {
         SpeechLocale.entries.forEach { locale ->
-            val request = SpeechRequestFactory.create(locale)
-            assertEquals(locale.tag, request.localeTag)
-            assertTrue(request.partialResults)
-            assertTrue(request.preferOffline)
-            assertEquals(1, request.maxResults)
+            assertEquals(locale.tag, SpeechRequestFactory.create(locale).localeTag)
         }
         assertEquals("vi-VN", SpeechLocale.VI.tag)
         assertEquals("en-US", SpeechLocale.EN.tag)

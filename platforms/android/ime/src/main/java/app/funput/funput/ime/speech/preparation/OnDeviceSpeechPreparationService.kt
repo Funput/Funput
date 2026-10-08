@@ -2,12 +2,12 @@ package app.funput.funput.ime.speech.preparation
 
 import android.content.Context
 import androidx.annotation.MainThread
+import app.funput.funput.ime.speech.mlkit.MlKitPreparationClientFactory
 import app.funput.funput.ime.speech.model.SpeechLocale
 import app.funput.funput.ime.speech.platform.AndroidSpeechMainQueue
 import app.funput.funput.ime.speech.platform.SpeechMainQueue
 import app.funput.funput.ime.speech.preparation.operations.CheckSpeechOperation
 import app.funput.funput.ime.speech.preparation.operations.DownloadSpeechOperation
-import app.funput.funput.ime.speech.preparation.platform.AndroidPreparationClientFactory
 import app.funput.funput.ime.speech.preparation.platform.AndroidPreparationTime
 import app.funput.funput.ime.speech.preparation.platform.PreparationClientFactory
 import app.funput.funput.ime.speech.preparation.platform.PreparationTime
@@ -20,7 +20,7 @@ class OnDeviceSpeechPreparationService internal constructor(
 ) : SpeechPreparationService {
     constructor(context: Context) : this(context, AndroidSpeechMainQueue())
     private constructor(context: Context, main: SpeechMainQueue) :
-        this(AndroidPreparationClientFactory(context, main), main, AndroidPreparationTime())
+        this(MlKitPreparationClientFactory(), main, AndroidPreparationTime())
     private val cache = SpeechCapabilityCache(time)
 
     override fun invalidate(locale: SpeechLocale?) = main.dispatch { cache.invalidate(locale) }
