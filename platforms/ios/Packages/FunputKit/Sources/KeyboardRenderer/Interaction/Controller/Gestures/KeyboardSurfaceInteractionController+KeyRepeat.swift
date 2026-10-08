@@ -1,9 +1,18 @@
 #if canImport(UIKit)
+import Foundation
 import KeyboardLayout
 
 extension KeyboardSurfaceInteractionController {
-    /// Space keeps its hold-to-pan arming. Backspace starts the same repeat timer as before
-    /// and marks itself for one immediate delete once the pipeline owns the contact.
+    /// How long Backspace waits before repeating while smart gestures are on.
+    ///
+    /// Repeating locks out the word rub, and people hold a beat before they rub. The first
+    /// character already goes on contact, so the longer wait costs no feedback. The system
+    /// edge gates used to hide this race by delaying the contact itself (#516).
+    static let smartBackspaceRepeatDelay: TimeInterval = 0.7
+
+    /// Space keeps its hold-to-pan arming. Backspace starts its repeat timer, on the longer
+    /// delay when the word rub is enabled, and marks itself for one immediate delete once
+    /// the pipeline owns the contact.
     func armHeldKey(token: TouchToken, key: KeySpec, smartGestures: Bool) {
         if smartGestures, key.role == .space {
             // Holding space is how the caret pan starts, so the spacebar does not repeat while
@@ -16,7 +25,10 @@ extension KeyboardSurfaceInteractionController {
         }
         guard repeatTouch == nil, key.role == .backspace || key.role == .space else { return }
         repeatTouch = token
-        repeatController.start()
+        let delaysForRub = smartGestures && key.role == .backspace
+        repeatController.start(
+            initialDelay: delaysForRub ? Self.smartBackspaceRepeatDelay : nil
+        )
         guard key.role == .backspace, var state = touches[token] else { return }
         state.awaitingInitialDelete = true
         touches[token] = state
