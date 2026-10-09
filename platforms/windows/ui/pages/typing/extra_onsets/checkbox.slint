@@ -1,0 +1,67 @@
+// One letter of "Phụ âm đầu mở rộng": a Fluent checkbox, the letter on a keycap
+// (it is the key the user types), and what it lets them write.
+
+import { Palette } from "std-widgets.slint";
+import { Theme, KeyCap } from "../../../theme/mod.slint";
+
+export component OnsetCheckbox inherits Rectangle {
+    in property <string> letter;
+    in property <string> examples;
+    in property <bool> checked;
+    // Padding around the content, inside the hover fill.
+    in property <length> inset: 6px;
+    // The wanted state. Nothing here flips `checked`: Rust owns it and answers.
+    callback toggled(bool);
+
+    border-radius: Theme.r-control;
+    background: touch.has-hover ? Theme.nav-hover : transparent;
+    accessible-role: checkbox;
+    accessible-checked: root.checked;
+    accessible-label: "Phụ âm đầu " + root.letter + ", ví dụ " + root.examples;
+    accessible-action-default => { root.toggled(!root.checked); }
+
+    HorizontalLayout {
+        padding: root.inset;
+        spacing: Theme.sp-ms;
+
+        // The std CheckBox fills with the style's accent; this one follows the app's
+        // `Theme.accent`, like `AccentSwitch` beside it.
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 18px;
+                height: 18px;
+                border-radius: Theme.r-control;
+                background: root.checked ? Theme.accent : Theme.field-bg;
+                border-width: root.checked ? 0px : 1px;
+                border-color: Theme.subtle;
+                Path {
+                    visible: root.checked;
+                    width: 12px;
+                    height: 12px;
+                    viewbox-width: 12;
+                    viewbox-height: 12;
+                    commands: "M 2 6.2 L 4.8 9 L 10 3.2";
+                    stroke: Theme.accent-text;
+                    stroke-width: 1.6px;
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            KeyCap { label: root.letter; }
+        }
+        Text {
+            text: root.examples;
+            vertical-alignment: center;
+            font-size: Theme.font-body;
+            color: Palette.foreground;
+            horizontal-stretch: 1;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.toggled(!root.checked); }
+    }
+}

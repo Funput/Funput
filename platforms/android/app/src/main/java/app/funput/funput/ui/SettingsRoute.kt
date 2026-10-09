@@ -13,6 +13,7 @@ import app.funput.funput.ui.keyboard.openKeyboardSettings
 import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.settings.SettingsScreen
 import app.funput.funput.ui.settings.SettingsScreenState
+import app.funput.funput.ui.settings.extraonsets.rememberExtraOnsetsSectionState
 import app.funput.funput.ui.settings.hardware.rememberHardwareKeyboardSectionState
 import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,8 @@ internal fun SettingsRoute(
     keyboardTheme: KeyboardThemeDescriptor,
     onOpenAppearance: () -> Unit,
     onOpenShortcuts: () -> Unit,
+    onOpenSpeech: () -> Unit,
+    tabBar: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -52,7 +55,9 @@ internal fun SettingsRoute(
             personalSuggestionsEnabled = settings.personalSuggestions.enabled,
             clipboardPreferences = settings.clipboard,
             smartGesturesEnabled = settings.smartGesturesEnabled,
+            returnsToLettersEnabled = settings.returnsToLettersEnabled,
             hardwareKeyboard = rememberHardwareKeyboardSectionState(),
+            extraOnsets = rememberExtraOnsetsSectionState(settings.smartComposition.extraOnsets, settings.inputMethod),
             onInputMethodSelected = { method ->
                 scope.launch { settings.input.setInputMethod(method) }
             },
@@ -61,6 +66,8 @@ internal fun SettingsRoute(
             },
             onOpenAppearance = onOpenAppearance,
             onOpenShortcuts = onOpenShortcuts,
+            speechAvailable = context.resources.getBoolean(app.funput.funput.ime.R.bool.speech_feature_available),
+            onOpenSpeech = onOpenSpeech,
             onToneStyleSelected = { style ->
                 scope.launch { settings.toneStyleStore.setToneStyle(style) }
             },
@@ -87,6 +94,9 @@ internal fun SettingsRoute(
             },
             onSmartGesturesChanged = { enabled ->
                 scope.launch { settings.smartGestureStore.setEnabled(enabled) }
+            },
+            onReturnsToLettersChanged = { enabled ->
+                scope.launch { settings.letterReturnStore.setEnabled(enabled) }
             },
             onSmartRestoreChanged = { enabled ->
                 scope.launch { settings.smartCompositionStore.setSmartRestoreEnabled(enabled) }
@@ -119,5 +129,6 @@ internal fun SettingsRoute(
             onEnableKeyboard = context::openKeyboardSettings,
             onSelectKeyboard = context::showKeyboardPicker,
         ),
+        tabBar = tabBar,
     )
 }

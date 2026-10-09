@@ -66,6 +66,8 @@ struct TypingPane: View {
                         .tint(Theme.accent)
                 }
             }
+
+            ExtraOnsetsSection()
         }
     }
 }

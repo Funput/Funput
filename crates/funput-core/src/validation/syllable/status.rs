@@ -10,14 +10,16 @@ use crate::unicode::marks::Tone;
 use crate::validation::coda::{
     STOP_CODAS, VALID_CODAS, coda_in, normalized_coda, nucleus_tone, toneless_rhyme,
 };
-use crate::validation::parse::{is_valid_onset, parse_syllable};
+use crate::validation::ethnic;
+use crate::validation::parse::parse_syllable;
 use crate::validation::rhyme::{is_valid_rhyme, matches_deshaped};
+use crate::validation::rules::SyllableRules;
 
 use super::spelling::violates_ckg_spelling;
 
 /// How a finished buffer sits against Vietnamese syllable structure.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub(super) enum SyllableStatus {
+pub(crate) enum SyllableStatus {
     /// Not a Vietnamese syllable, and no diacritic can make it one: `cảd` (card),
     /// `côl` (cool), `tẽt` (text).
     Invalid,
@@ -33,19 +35,19 @@ pub(super) enum SyllableStatus {
     Complete,
 }
 
-pub(super) fn classify(buffer: &str) -> SyllableStatus {
-    let parts = parse_syllable(buffer);
+pub(crate) fn classify(buffer: &str, rules: SyllableRules) -> SyllableStatus {
+    let parts = parse_syllable(buffer, rules);
     let Some((coda, coda_len)) = normalized_coda(&parts) else {
         return SyllableStatus::Invalid;
     };
     let coda = &coda[..coda_len];
 
     let structure_ok = !parts.invalid_onset
-        && is_valid_onset(parts.onset)
         // A tone parked on the `qu`/`gi` glide is a mid-composition transient, not
         // a finished syllable: `qúy` is a misspelling of `quý`.
         && !glide::onset_holds_tone(parts.onset)
         && parts.nucleus_chars().next().is_some()
+        && parts.is_well_ordered()
         && !violates_ckg_spelling(parts.onset, &parts)
         && coda_in(VALID_CODAS, coda);
     if !structure_ok {
@@ -53,11 +55,12 @@ pub(super) fn classify(buffer: &str) -> SyllableStatus {
     }
 
     // The nucleus+coda must be a real Vietnamese rhyme (Level 2): keeps `việt`,
-    // `trường` … but reverts structurally-ok-but-nonexistent rhymes. A rhyme that
-    // exists only *shaped* is that same rhyme with its shape keys still to come —
-    // `ien` is `iên` minus the circumflex — so it is unfinished, not wrong.
+    // `trường` … but reverts structurally-ok-but-nonexistent rhymes — unless a
+    // Tây Nguyên name spells it (`Kpă`, `Dliê`). A rhyme that exists only *shaped*
+    // is that same rhyme with its shape keys still to come — `ien` is `iên` minus
+    // the circumflex — so it is unfinished, not wrong.
     let rhyme = toneless_rhyme(&parts, coda);
-    let status = if is_valid_rhyme(&rhyme) {
+    let status = if is_valid_rhyme(&rhyme) || ethnic::admits(parts.onset) {
         SyllableStatus::Complete
     } else if matches_deshaped(&rhyme) {
         SyllableStatus::AwaitingDiacritic

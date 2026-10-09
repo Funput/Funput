@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.rendering
 
 import android.content.res.Resources
+import app.funput.funput.keyboard.layout.toolbar.ToolbarMetrics
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -36,7 +37,7 @@ internal class ClipboardChipRenderer(
     ) {
         drawPressedState(canvas, bounds, pressed)
         val inset = metrics.dp(3f)
-        val capsuleRight = minOf(bounds.right, bounds.left + metrics.dp(CapsuleWidthDp))
+        val capsuleRight = minOf(bounds.right, bounds.left + metrics.dp(ToolbarMetrics.ClipboardPasteWidthDp))
         rect.set(bounds.left, bounds.top + inset, capsuleRight, bounds.bottom - inset)
         fill.color = theme.accentColor
         canvas.drawRoundRect(rect, rect.height() / 2f, rect.height() / 2f, fill)
@@ -89,7 +90,6 @@ internal class ClipboardChipRenderer(
         centerY - (text.fontMetrics.ascent + text.fontMetrics.descent) / 2f
 
     private companion object {
-        const val CapsuleWidthDp = 52f
         const val HintGapDp = 8f
         const val MinimumHintWidthDp = 28f
     }

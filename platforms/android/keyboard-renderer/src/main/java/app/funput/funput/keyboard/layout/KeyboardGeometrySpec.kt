@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.layout.toolbar.ToolbarMetrics
+
 data class KeyboardGeometrySpec(
     val horizontalPadding: Float,
     val verticalPadding: Float,

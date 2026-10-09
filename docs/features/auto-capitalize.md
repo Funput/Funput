@@ -83,6 +83,11 @@ sẽ viết hoa từ đầu tiên người dùng gõ sau khi đổi app, giữa 
 biết chắc — nó vừa nhận sự kiện focus — nó mới nói ra bằng `Engine::arm_capitalization`,
 và hàm đó thay scanner bằng `Scanner::new`.
 
+Chiều ngược lại cũng cần nói ra. Khi con trỏ nhảy tới chỗ shell không thấy — click chuột,
+đổi app, phím mũi tên — trạng thái câu dựng từ những phím gõ trước đó không còn đúng nữa:
+`Xong. `, click vào giữa một câu khác, `tiếp` sẽ thành `Tiếp`. Shell báo điều đó bằng
+`Engine::disarm_capitalization`, hàm này đưa scanner về `Scanner::mid_text`.
+
 Đẩy mọi phím vào scanner cũng là cách `…` được tính là hết câu. `is_english_boundary`
 chỉ nhận `is_whitespace() || is_ascii_punctuation()` nên U+2026 không phải ranh giới
 từ; mở rộng predicate đó là cách duy nhất để một bản vá tại chỗ với tới `…`, nhưng nó
@@ -166,6 +171,43 @@ suốt.
 thực sự lấy được arm**. Tiêu thụ vô điều kiện sẽ xoá mất một dấu kết câu còn đang chờ
 khoảng trắng — đúng trường hợp của `»`, vốn không phải ASCII nên không đi qua đường
 ranh giới từ mà rơi vào `prepare_key`.
+
+**Chữ hoa phải được inject, không được pass-through.** `prepare_key` viết hoa phím
+trước khi vào `pipeline::process`, nên phép kiểm "chỉ nối thêm đúng phím vừa gõ" phải
+so với phím **người dùng gõ** (`typed`), không phải phím đã viết hoa. Trước đây nó so
+với `'V'`, thấy khớp, trả `Action::None` — và hook Windows, vốn thả phím vật lý qua khi
+nhận `None`, để lọt chữ `v` thường vào app trong khi buffer của engine là `V`. Chữ đầu
+câu chỉ hiện hoa khi phím sau sửa lại nó (`dd` → `Đ`, `as` → `Á`), nên tính năng trông
+như lúc được lúc không. `autocap_injects_the_capital_instead_of_passing_the_key_through`
+ghim lại `Send(0, "V")`.
+
+### Windows: con trỏ nhảy thì không đoán
+
+Hook Windows không đọc được tài liệu, nên mỗi lần con trỏ nhảy mà không qua phím gõ, nó
+báo cho engine qua `ShellState::caret_moved(Caret)` trong `funput-desktop`. Hàm này vừa
+commit composition vừa đặt lại trạng thái câu, nên không hook nào làm được một việc mà
+quên việc kia.
+
+| Sự kiện | `Caret` | Chữ kế tiếp |
+| --- | --- | --- |
+| Enter, kể cả khi giữ Shift/Alt/Ctrl | `LineStart` | Viết hoa |
+| Click chuột, đổi app, mọi phím điều hướng khác (kể cả Esc, Delete, F-key), mọi phím tắt Ctrl/Alt/Win | `Unknown` | Giữ nguyên, cho tới khi gõ hết câu mới |
+
+`classify` quyết định `Caret` cho phím, nên luật "phím nào nói gì về con trỏ" nằm ở phần
+dùng chung và có unit test, không nằm trong hook.
+
+**Đánh đổi có chủ đích.** Trước đây đổi app thì luôn viết hoa, còn click chuột thì giữ
+trạng thái câu cũ, nên cả hai đều viết hoa sai ở giữa câu. Giờ cả hai đều không viết hoa,
+kể cả khi con trỏ thật ra đang ở ô trống hay đầu dòng. Viết hoa thiếu tốn một lần Shift,
+viết hoa sai thì phải xoá.
+
+Vì vậy cả những phím không dời con trỏ cũng xoá trạng thái câu: `Xong. `, Ctrl+B,
+`quan trọng` không còn viết hoa. Hook không phân biệt được Ctrl+B với Ctrl+V hay Ctrl+Z,
+hai phím thay đổi chính chữ đứng trước con trỏ, nên nó không đoán ở đây.
+
+Muốn không phải đánh đổi thì phải đọc được chữ trước con trỏ, bằng UI Automation hoặc
+chuyển sang bộ gõ TSF. Nếu làm, câu trả lời mới sẽ đi vào `caret_moved`, các hook không
+phải sửa.
 
 **Vẫn tắt mặc định trên desktop** (`auto_capitalize: false` trong
 `funput-config/src/settings/model/defaults.rs` và trong UserDefaults của macOS), khác

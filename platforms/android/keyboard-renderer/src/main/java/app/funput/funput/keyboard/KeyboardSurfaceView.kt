@@ -7,28 +7,28 @@ import android.view.View
 import app.funput.funput.keyboard.interaction.interactionTargetAt
 import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
-import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
-import app.funput.funput.keyboard.layout.resolveGeometry
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
+import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.popover.rendering.AlternatePalettePopup
-import app.funput.funput.keyboard.surface.KeyboardSurfaceEventDispatcher
 import app.funput.funput.keyboard.surface.KeyboardSurfaceAccessibilityBinding
+import app.funput.funput.keyboard.surface.KeyboardSurfaceEventDispatcher
 import app.funput.funput.keyboard.surface.KeyboardSurfaceLayoutState
 import app.funput.funput.keyboard.surface.KeyboardSurfaceRenderController
 import app.funput.funput.keyboard.surface.createKeyboardSurfaceInteraction
-import kotlin.math.roundToInt
+import app.funput.funput.keyboard.surface.geometry.KeyboardSurfacePopoverBounds
+import app.funput.funput.keyboard.surface.geometry.KeyboardSurfaceGeometry
+import app.funput.funput.keyboard.surface.geometry.measureKeyboardSurface
 class KeyboardSurfaceView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
 ) : View(context, attrs, defStyleAttr) {
     private val alternatePopup = AlternatePalettePopup(this)
-    private val screenLocation = IntArray(2)
+    private val popoverGeometry = KeyboardSurfacePopoverBounds(this)
     private val layoutState = KeyboardSurfaceLayoutState(::updateKeyboardLayout)
     private val render = KeyboardSurfaceRenderController(
         context = context,
@@ -37,16 +37,31 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         requestLayout = ::requestLayout,
         resolveGeometry = ::resolveGeometry,
     )
+    private val geometry: KeyboardSurfaceGeometry = KeyboardSurfaceGeometry(
+        host = this,
+        layout = { layoutState.layout },
+        profile = { sizingProfile },
+        utilitiesVisible = { suggestionState.utilityKeysVisible },
+        microphoneAllowed = { editorMode in listOf(KeyboardEditorMode.TEXT, KeyboardEditorMode.SEARCH, KeyboardEditorMode.URL) },
+        changed = {
+            suggestionState.geometryChanged()
+            accessibility.refresh()
+        },
+    )
     var inputMethod: KeyboardInputMethod by layoutState::inputMethod
     var layoutMode: KeyboardLayoutMode by layoutState::layoutMode
     var editorMode: KeyboardEditorMode by layoutState::editorMode
     var layoutOverride: app.funput.funput.keyboard.model.KeyboardLayout? by layoutState::layoutOverride
     var suggestionBarEnabled: Boolean by layoutState::suggestionsEnabled
     var systemInputMethodSwitcherVisible: Boolean by layoutState::systemInputMethodSwitcherVisible
-    var clipboardKeyVisible: Boolean = false; set(value) { if (field != value) { field = value; resolveGeometry() } }
+    var clipboardKeyVisible: Boolean by geometry::clipboardKeyVisible
+    var microphone by geometry::microphone
+    var placementKeyVisible: Boolean by geometry::placementKeyVisible
     var showsNumberRow: Boolean by layoutState::showsNumberRow
     var keyboardTheme by render::keyboardTheme
     var keyboardThemeBackgroundImage by render::keyboardThemeBackgroundImage
+    /** False while the background image set last is still decoding; a frame drawn after it is final. */
+    val isBackgroundImageSettled: Boolean get() = render.isBackgroundImageSettled
     var sizingProfile: KeyboardSizingProfile by render::sizingProfile
     var suggestions: List<String>
         get() = render.suggestions
@@ -61,8 +76,8 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         set(value) = interaction.setShiftState(value)
     var language: KeyboardLanguage get() = interaction.language; set(value) { interaction.language = value }
     var areSmartGesturesEnabled: Boolean get() = interaction.areSmartGesturesEnabled; set(value) { interaction.areSmartGesturesEnabled = value }
-    private var resolvedKeyboard: ResolvedKeyboard? = null
-    private val accessibility = KeyboardSurfaceAccessibilityBinding(
+    private val resolvedKeyboard: ResolvedKeyboard? get() = geometry.keyboard
+    private val accessibility: KeyboardSurfaceAccessibilityBinding = KeyboardSurfaceAccessibilityBinding(
         host = this,
         interaction = { interaction },
         keyboard = { resolvedKeyboard },
@@ -70,7 +85,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         suggestions = { render.suggestions },
         clipboardHint = { render.clipboardHint },
     )
-    private val suggestionState = KeyboardSurfaceSuggestionState(
+    private val suggestionState: KeyboardSurfaceSuggestionState = KeyboardSurfaceSuggestionState(
         density = { resources.displayMetrics.density },
         keyboard = { resolvedKeyboard },
         apply = { values -> render.suggestions = values; accessibility.refresh() },
@@ -80,7 +95,8 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         host = this,
         callbacks = callbacks,
         keyAt = { x, y -> resolvedKeyboard?.interactionTargetAt(
-            x, y, suggestions.size, clipboardHint != null && suggestions.isEmpty(),
+            x, y, suggestions.size, clipboardHint != null && suggestions.isEmpty() &&
+                resolvedKeyboard?.suggestionBar?.clipboardHintFits == true,
         ) },
         keySpec = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.spec },
         suggestionSelection = { id -> suggestions.selectionForTarget(id) },
@@ -94,7 +110,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         },
         onSemanticStateChanged = accessibility::refresh,
         keyBounds = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.bounds },
-        surfaceBounds = ::popoverBounds,
+        surfaceBounds = popoverGeometry::resolve,
     )
     private val events = KeyboardSurfaceEventDispatcher(
         host = this,
@@ -105,13 +121,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         get() = events.enabled
         set(value) = events.setEnabled(value)
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val density = resources.displayMetrics.density
-        val width = resolveSize((KeyboardDimensions.DefaultWidthDp * density).roundToInt(), widthMeasureSpec)
-        val heightDp = KeyboardDimensions.recommendedHeightDp(
-            inputMethod, editorMode, sizingProfile, width / density, showsNumberRow,
-        )
-        val height = resolveSize((heightDp * density).roundToInt(), heightMeasureSpec)
-        setMeasuredDimension(width, height)
+        val size = measureKeyboardSurface(this, widthMeasureSpec, heightMeasureSpec,
+            inputMethod, editorMode, sizingProfile, showsNumberRow)
+        setMeasuredDimension(size.width, size.height)
     }
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
@@ -126,24 +138,11 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         events.dispatchTouch(event, ::performClick)
     override fun dispatchHoverEvent(event: MotionEvent): Boolean =
         events.dispatchHover(event) { super.dispatchHoverEvent(event) }
-    override fun performClick(): Boolean {
-        if (!events.enabled) return false
-        super.performClick(); return true
-    }
+    override fun performClick(): Boolean = events.enabled && run { super.performClick(); true }
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus); if (!hasWindowFocus) interaction.clear()
     }
     override fun onDetachedFromWindow() { interaction.clear(); alternatePopup.dismiss(); render.clear(); super.onDetachedFromWindow() }
-    private fun resolveGeometry() {
-        resolvedKeyboard = layoutState.layout.resolveGeometry(
-            width = width, height = height,
-            density = resources.displayMetrics.density, profile = sizingProfile,
-            showClipboard = clipboardKeyVisible && suggestionState.utilityKeysVisible, showPlacement = suggestionState.utilityKeysVisible,
-        )
-        suggestionState.geometryChanged(); accessibility.refresh()
-    }
-    private fun popoverBounds(): KeyBounds {
-        getLocationOnScreen(screenLocation); return KeyBounds(0f, -screenLocation[1].toFloat(), width.toFloat(), height.toFloat())
-    }
+    private fun resolveGeometry() = geometry.resolve()
     private fun updateKeyboardLayout() { interaction.reset(); requestLayout(); resolveGeometry(); invalidate() }
 }

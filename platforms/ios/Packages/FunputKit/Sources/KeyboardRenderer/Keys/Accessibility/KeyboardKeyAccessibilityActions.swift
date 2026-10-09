@@ -10,8 +10,11 @@ enum KeyboardKeyAccessibilityActions {
         emit: @escaping (KeyboardKeyEvent.Phase) -> Void
     ) -> [UIAccessibilityCustomAction]? {
         var actions = spec.alternates.map { alternate in
-            let name = presentation.shiftState.isUppercase
-                ? alternate.shiftedText : alternate.accessibilityLabel
+            // Only a cell whose text really changes with Shift is announced as that text;
+            // a caseless symbol keeps its spoken name.
+            let isShifted = presentation.shiftState.isUppercase
+                && alternate.shiftedText != alternate.text
+            let name = isShifted ? alternate.shiftedText : alternate.accessibilityLabel
             return UIAccessibilityCustomAction(
                 name: "Chọn \(name)"
             ) { _ in

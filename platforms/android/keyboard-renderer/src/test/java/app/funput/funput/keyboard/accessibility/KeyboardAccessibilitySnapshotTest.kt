@@ -4,7 +4,7 @@ import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.interaction.ClipboardTargetId
 import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
-import app.funput.funput.keyboard.layout.resolveGeometry
+import app.funput.funput.keyboard.layout.geometry.resolveGeometry
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
@@ -84,6 +84,25 @@ class KeyboardAccessibilitySnapshotTest {
         assertTrue(actions.any { it.label == "Chọn Ắ" })
         assertTrue(actions.any { it.label == "Chọn Ậ" })
         assertEquals(18, actions.size)
+    }
+
+    @Test
+    fun `period exposes all punctuation alternates to TalkBack`() {
+        val actions = snapshot().nodes.first { it.keyId == "period" }.alternateActions
+
+        assertEquals(15, actions.size)
+        assertEquals("Chọn a còng", actions.first().label)
+        assertEquals("Chọn dấu hỏi", actions[14].label)
+        assertTrue(actions.none { it.label == "Chọn dấu phẩy" })
+    }
+
+    @Test
+    fun `comma exposes named function actions to TalkBack`() {
+        val actions = snapshot().nodes.first { it.keyId == "comma" }.alternateActions
+        assertEquals(
+            listOf("Tùy chỉnh vị trí bàn phím", "Cài đặt, mở ứng dụng Funput"),
+            actions.map { it.label },
+        )
     }
 
     @Test

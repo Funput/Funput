@@ -14,7 +14,7 @@ mod settings;
 
 use std::sync::{Mutex, OnceLock};
 
-use funput_desktop::{ImeResult, KeySource, ShellState};
+use funput_desktop::{Caret, ImeResult, KeySource, ShellState};
 
 use crate::shared::settings_path;
 
@@ -46,14 +46,18 @@ pub fn flip_composing() -> ImeResult {
 pub fn on_backspace() {
     with(|s| s.on_backspace());
 }
-pub fn arm_capitalization() {
-    with(|s| s.arm_capitalization());
-}
-pub fn clear() {
-    with(|s| s.clear());
+/// The caret moved without typing: commit the composition and tell the engine
+/// where it landed — see [`ShellState::caret_moved`].
+pub fn caret_moved(caret: Caret) {
+    with(|s| s.caret_moved(caret));
 }
 pub fn note_foreground(id: String) {
     with(|s| s.note_foreground(id));
+}
+/// Focus is somewhere that is not an app (the shell, a Funput window, a window
+/// whose program could not be resolved): a hotkey pressed there pins nothing.
+pub fn clear_foreground() {
+    with(|s| s.clear_foreground());
 }
 pub fn apply_for_app(id: &str) -> Option<bool> {
     with(|s| s.apply_for_app(id))

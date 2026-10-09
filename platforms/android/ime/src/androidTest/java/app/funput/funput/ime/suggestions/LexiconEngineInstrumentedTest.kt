@@ -17,7 +17,7 @@ class LexiconEngineInstrumentedTest {
                 assertEquals(listOf("which", "when", "what"), engine.query("wh"))
                 assertEquals(emptyList<String>(), engine.query(""))
                 assertTrue(engine.query("ip").contains("iPhone"))
-                repeat(2) { engine.learn("whizzbang"); engine.learn("WHICH") }
+                repeat(4) { engine.learn("whizzbang"); engine.learn("WHICH") }
                 assertEquals(setOf("whizzbang", "which"), engine.query("wh").take(2).toSet())
                 assertEquals(1, engine.query("wh").count { it.equals("which", true) })
                 assertFalse(engine.attachLexicon(File(directory, "missing")))
@@ -29,7 +29,8 @@ class LexiconEngineInstrumentedTest {
                 assertEquals(3, engine.query("an").size)
                 repeat(199) { index ->
                     val token = "từ" + ('a' + index / 26) + ('a' + index % 26)
-                    repeat(2) { engine.learn(token) }
+                    // Synthetic marked tokens need the unrecognized promotion threshold.
+                    repeat(4) { engine.learn(token) }
                 }
                 assertEquals(listOf("ăn"), engine.query("an"))
                 assertEquals(3, engine.query("wh").size)

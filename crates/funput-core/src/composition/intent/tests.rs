@@ -1,5 +1,5 @@
-use crate::ToneStyle;
 use crate::input_method::CircumflexStem;
+use crate::{ComposeOptions, InputMethod, ToneStyle};
 
 use super::{IntentResolution, ModifierIntent, resolve};
 
@@ -8,7 +8,7 @@ fn apply(buffer: &str, key: char) -> IntentResolution {
     resolve(
         buffer,
         ModifierIntent::Circumflex { stem, key },
-        ToneStyle::Traditional,
+        ComposeOptions::new(InputMethod::Telex).with_tone_style(ToneStyle::Traditional),
     )
 }
 

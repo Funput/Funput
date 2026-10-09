@@ -1,8 +1,10 @@
-// Settings → "Cách gõ" method + tone. Smart toggles live in smart.slint.
+// Settings → "Cách gõ" method + tone. Smart toggles live in smart.slint, the
+// extra onsets (z, f, w, j) in extra_onsets/.
 
 import { Theme, PageHeader, Section, Segmented } from "../../theme/mod.slint";
 import { MethodSelector } from "method_selector.slint";
 import { SmartSection } from "smart.slint";
+import { ExtraOnsetsSection } from "extra_onsets/section.slint";
 
 export component TypingPage inherits VerticalLayout {
     in property <string> method;
@@ -63,5 +65,9 @@ export component TypingPage inherits VerticalLayout {
         set-eager(v) => { root.set-eager(v); }
         set-spell(v) => { root.set-spell(v); }
         set-auto-cap(v) => { root.set-auto-cap(v); }
+    }
+
+    ExtraOnsetsSection {
+        method: root.method;
     }
 }

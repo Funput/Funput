@@ -6,69 +6,41 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.CompletionInfo
 import android.view.inputmethod.EditorInfo
-import app.funput.funput.ime.editing.InputConnectionEditor
-import app.funput.funput.ime.hardware.HardwareKeyboard
-import app.funput.funput.ime.shortcuts.ImeShortcutsController
-import app.funput.funput.ime.shortcuts.createImeShortcutsController
-import app.funput.funput.keyboard.model.ShiftState
-import app.funput.funput.keyboard.ui.FunputKeyboardView
-import app.funput.funput.keyboard.ui.emoji.EmojiCatalogPreloader
+import app.funput.funput.ime.hardware.boundary.ImeHardwareInputBoundary
+import app.funput.funput.ime.lifecycle.ImeInputViewBinder
+import app.funput.funput.ime.lifecycle.ImeRuntime
+import app.funput.funput.ime.lifecycle.createImeRuntime
+import app.funput.funput.ime.speech.integration.lifecycle.ImeSpeechSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 
 /** System entry point that owns the Funput keyboard view inside the IME window. */
 class FunputInputMethodService : InputMethodService() {
-    private val editor = InputConnectionEditor()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val systemInputMethodSwitcher by lazy { SystemInputMethodSwitcher(this) }
-    private val themeRepository by lazy { installedImeThemeRepository() }
-    private var keyboardView: FunputKeyboardView? = null
-    private lateinit var session: ImeEditingSession
-    private lateinit var settings: ImeSettingsController
-    private lateinit var hardwareKeyboard: HardwareKeyboard
-    private lateinit var shortcuts: ImeShortcutsController
-    private val nativeEngine get() = session.nativeEngine
+    private lateinit var runtime: ImeRuntime
+    private val views = ImeInputViewBinder(this, serviceScope, { session }, { settings })
+    private val session get() = runtime.session
+    private val settings get() = runtime.settings
+    private val hardwareKeyboard get() = runtime.hardwareKeyboard
+    private val shortcuts get() = runtime.shortcuts
+    private val speech by lazy { ImeSpeechSession(this, session) }
+    private val hardwareInput by lazy { ImeHardwareInputBoundary({ hardwareKeyboard }, speech) }
     private val actionHandler get() = session.actionHandler
     private val editorRuntime get() = session.editorRuntime
     private val suggestionService get() = session.suggestionService
+
     override fun onCreate() {
         super.onCreate()
-        session = createImeEditingSession(
-            context = this,
-            scope = serviceScope,
-            editor = editor,
-            connection = { currentInputConnection },
-            currentShiftState = { keyboardView?.shiftState ?: ShiftState.OFF },
-            updateShiftState = { state -> keyboardView?.shiftState = state },
-            showSuggestions = { values -> keyboardView?.suggestions = values },
-            acknowledgeReset = { token ->
-                serviceScope.launch { session.suggestionSettings.acknowledgeReset(token) }
-            },
-        )
-        settings = ImeSettingsController(
-            engine = nativeEngine,
-            onInputMethodChanged = { method -> session.restartComposition(method, keyboardView) },
-            onViewSettingsChanged = { keyboardView?.let(::updateInputView) },
-            onPersonalSuggestionsChanged = suggestionService::configure,
-            onAutoCapitalizeChanged = editorRuntime::setAutoCapitalizeEnabled,
-        )
-        settings.observe(this, serviceScope)
-        shortcuts = createImeShortcutsController(this, serviceScope, actionHandler)
-        hardwareKeyboard = HardwareKeyboard.bind(this, session, serviceScope) { keyboardView?.shiftState ?: ShiftState.OFF }
+        runtime = createImeRuntime(this, serviceScope, views) { speech.invalidate() }
+        runtime.observe(this, serviceScope) { speech.setEnabled(it) }
     }
-    override fun onCreateInputView(): View = FunputKeyboardView(this).also { view ->
-        keyboardView = view
-        updateInputView(view)
-        ImeKeyboardCallbackBinder.bind(view, actionHandler, editorRuntime, suggestionService,
-            systemInputMethodSwitcher)
-        ImePlacementBinder.bind(view, this, serviceScope)
-        session.bindClipboard(view)
-        EmojiCatalogPreloader.schedule(view)
-    }
+
+    override fun onCreateInputView(): View = speech.bind(views.create())
+
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
+        speech.startInput(attribute)
         super.onStartInput(attribute, restarting)
         editorRuntime.configure(attribute)
         editorRuntime.setAutoCapitalizeEnabled(settings.autoCapitalizeEnabled)
@@ -76,14 +48,21 @@ class FunputInputMethodService : InputMethodService() {
         shortcuts.activate()
         suggestionService.start(editorRuntime.policy)
     }
+
     override fun onStartInputView(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInputView(attribute, restarting)
-        keyboardView?.let(::updateInputView)
+        views.update()
         session.startInputView(editorRuntime.policy)
         editorRuntime.updateCapitalization(preserveCapsLock = false)
+        speech.show()
     }
-    override fun onFinishInputView(finishingInput: Boolean) =
-        session.finishInputView().also { super.onFinishInputView(finishingInput) }
+
+    override fun onFinishInputView(finishingInput: Boolean) {
+        speech.hide()
+        session.finishInputView()
+        super.onFinishInputView(finishingInput)
+    }
+
     override fun onUpdateSelection(
         oldSelStart: Int,
         oldSelEnd: Int,
@@ -94,55 +73,77 @@ class FunputInputMethodService : InputMethodService() {
     ) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
             candidatesStart, candidatesEnd)
+        speech.selectionChanged(newSelStart, newSelEnd)
         actionHandler.onSelectionChanged(newSelStart, newSelEnd, candidatesEnd)
         suggestionService.consume(actionHandler.takeSuggestionUpdate())
         editorRuntime.updateCapitalization()
     }
+
     override fun onDisplayCompletions(completions: Array<out CompletionInfo>?) =
         editorRuntime.updateCompletions(completions)
+
     override fun onFinishInput() {
+        speech.hide()
         shortcuts.cancel()
         session.finishInput()
         super.onFinishInput()
     }
-    override fun onWindowHidden() = session.windowHidden().also { super.onWindowHidden() }
+
+    override fun onWindowShown() {
+        super.onWindowShown()
+        speech.show()
+    }
+
+    override fun onWindowHidden() {
+        speech.hide()
+        session.windowHidden()
+        super.onWindowHidden()
+    }
+
     override fun onTrimMemory(level: Int) {
         suggestionService.flush()
         super.onTrimMemory(level)
     }
 
+
     override fun onDestroy() {
+        speech.close()
         shortcuts.cancel()
         session.close()
         serviceScope.cancel()
         actionHandler.finish()
         editorRuntime.finish()
-        keyboardView = null
+        views.detach()
         // super.onDestroy() re-enters onFinishInput() while input is still open, which
         // routes back through the engine; close it only after the framework is done.
         super.onDestroy()
-        nativeEngine.close()
+        session.closeEngines()
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent) =
-        hardwareKeyboard.onKeyDown(event) || super.onKeyDown(keyCode, event)
-    override fun onKeyUp(keyCode: Int, event: KeyEvent) =
-        hardwareKeyboard.onKeyUp(event) || super.onKeyUp(keyCode, event)
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean =
+        hardwareInput.down(keyCode, event) { super.onKeyDown(keyCode, event) }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
+        hardwareInput.up(keyCode, event) { super.onKeyUp(keyCode, event) }
+
+    override fun onKeyMultiple(keyCode: Int, count: Int, event: KeyEvent): Boolean =
+        hardwareInput.multiple { super.onKeyMultiple(keyCode, count, event) }
+
     override fun onEvaluateInputViewShown() =
         super.onEvaluateInputViewShown() || hardwareKeyboard.showsSoftKeyboard
     // Implicit show requests (auto-show on focus) are refused separately beside a hardware keyboard.
+
     override fun onShowInputRequested(flags: Int, configChange: Boolean) =
         hardwareKeyboard.showsSoftKeyboard || super.onShowInputRequested(flags, configChange)
 
+
     override fun onEvaluateFullscreenMode(): Boolean = false
+
     override fun onConfigurationChanged(newConfig: Configuration) {
+        speech.hide()
         super.onConfigurationChanged(newConfig)
         hardwareKeyboard.onConfigurationChanged(newConfig)
-        keyboardView?.let(::updateInputView)
-    }
-
-    private fun updateInputView(view: FunputKeyboardView) {
-        view.applyImeState(settings, editorRuntime.policy, actionHandler.language, themeRepository, isDarkAppearance())
-        actionHandler.smartGesturesEnabled = view.areSmartGesturesEnabled
+        views.update()
     }
 }

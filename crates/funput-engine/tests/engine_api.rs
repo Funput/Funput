@@ -4,7 +4,7 @@
 //! These exercise only the public API, so they live here as integration tests
 //! rather than inline in `src/lib.rs`.
 
-use funput_core::{InputMethod, ToneStyle};
+use funput_core::{ExtraOnsets, InputMethod, SyllableRules, ToneStyle};
 use funput_engine::{Action, Engine, EngineConfig, ImeResult, KeySource};
 
 #[test]
@@ -96,6 +96,34 @@ fn autocap_focus_capitalizes_first_word() {
     assert_eq!(feed(&mut e, "viet"), "Viet");
 }
 
+/// The capital has to reach the app, not just the buffer. A host like the Windows
+/// hook lets the physical key through on `Action::None`, so a capitalized letter
+/// reported as a pass-through arrives lowercase while the engine believes `V`.
+#[test]
+fn autocap_injects_the_capital_instead_of_passing_the_key_through() {
+    let mut e = engine_autocap();
+    e.arm_capitalization();
+    let first = e.process_char('v');
+    assert_eq!(first.action, Action::Send);
+    assert_eq!((first.backspace, first.output.as_str()), (0, "V"));
+    // The rest of the word is an ordinary append again.
+    assert_eq!(e.process_char('i').action, Action::None);
+
+    // Same after a sentence end typed mid-session.
+    feed(&mut e, "et. ");
+    let next = e.process_char('x');
+    assert_eq!((next.action, next.output.as_str()), (Action::Send, "X"));
+}
+
+/// A key that is already uppercase needs nothing injected.
+#[test]
+fn autocap_passes_an_uppercase_key_through() {
+    let mut e = engine_autocap();
+    e.arm_capitalization();
+    assert_eq!(e.process_char('V').action, Action::None);
+    assert_eq!(e.buffer(), "V");
+}
+
 #[test]
 fn autocap_first_letter_composes_vietnamese() {
     let mut e = engine_autocap();
@@ -128,6 +156,35 @@ fn autocap_newline_arms() {
     let mut e = engine_autocap();
     feed(&mut e, "ok");
     e.process_char('\n');
+    assert_eq!(feed(&mut e, "lam"), "Lam");
+}
+
+/// A sentence end typed before the caret moved says nothing about where it landed:
+/// `Xong. ` then a click into the middle of another sentence.
+#[test]
+fn autocap_disarm_forgets_a_sentence_end_typed_before_the_caret_moved() {
+    let mut e = engine_autocap();
+    feed(&mut e, "xong. ");
+    e.clear();
+    e.disarm_capitalization();
+    assert_eq!(feed(&mut e, "tiep"), "tiep");
+}
+
+#[test]
+fn autocap_disarm_overrides_an_armed_start() {
+    let mut e = engine_autocap();
+    e.arm_capitalization();
+    e.disarm_capitalization();
+    assert_eq!(feed(&mut e, "viet"), "viet");
+}
+
+/// Disarming drops what is known, not the feature: the keys typed afterwards still
+/// end a sentence.
+#[test]
+fn autocap_after_disarm_the_next_sentence_end_still_arms() {
+    let mut e = engine_autocap();
+    e.disarm_capitalization();
+    feed(&mut e, "giua cau. ");
     assert_eq!(feed(&mut e, "lam"), "Lam");
 }
 
@@ -557,6 +614,7 @@ fn configure_applies_all_options() {
         smart_restore: false,
         eager_restore: false,
         spell_check: true,
+        syllable_rules: SyllableRules::STANDARD.with_extra_onsets(ExtraOnsets::ZFWJ),
         auto_capitalize: true,
         shortcuts_enabled: false,
         shortcut_smart_case: false,
@@ -572,6 +630,7 @@ fn configure_applies_all_options() {
     assert!(!config.shortcuts_enabled && !config.shortcut_smart_case);
     assert!(!config.shortcuts_in_english);
     assert!(config.typo_correction);
+    assert_eq!(config.syllable_rules.extra_onsets, ExtraOnsets::ZFWJ);
 }
 
 /// `configure` keeps the `set_*` side effect: switching method mid-word clears the

@@ -68,10 +68,10 @@ internal class AlternateSelectionController(
         cancel(session.task)
         val layout = session.layout ?: return false
         val index = layout.selectionAt(x, y, session.startX, session.startY, density)
-        index?.let { session.key.alternates.getOrNull(it) }?.let {
-            onSelected(session.key, it)
-        }
+        val selected = index?.let { session.key.alternates.getOrNull(it) }
+        if (selected is KeyAlternate.Action) cancelAll()
         onChanged()
+        selected?.let { onSelected(session.key, it) }
         return true
     }
 
@@ -92,6 +92,7 @@ internal class AlternateSelectionController(
             surfaceBounds(),
             density,
             defaultIndex = defaultIndex,
+            preferredColumns = session.key.alternatePaletteColumns,
         )
         session.selectedIndex = defaultIndex
         session.activationOrder = nextActivationOrder++
@@ -101,15 +102,21 @@ internal class AlternateSelectionController(
     }
 
     /** A hold means the user wants something other than the visible key. */
-    private fun preferredAlternateIndex(key: KeySpec): Int =
-        key.alternates.indexOfFirst { !it.text.equals(key.label, ignoreCase = true) }
-            .takeIf { it >= 0 } ?: 0
+    private fun preferredAlternateIndex(key: KeySpec): Int? {
+        key.preferredAlternateText?.let { preferred ->
+            return key.alternates.indexOfFirst { it is KeyAlternate.Text && it.text == preferred }
+        }
+        return key.alternates.indexOfFirst {
+            it is KeyAlternate.Text && !it.text.equals(key.label, ignoreCase = true)
+        }.takeIf { it >= 0 }
+            ?: key.alternates.indexOfFirst { it is KeyAlternate.Text }.takeIf { it >= 0 }
+    }
 
     private fun remove(pointerId: Int) {
         sessions.remove(pointerId)?.let { cancel(it.task) }
     }
 
     private companion object {
-        const val HoldDelayMillis = 350L
+        const val HoldDelayMillis = 250L
     }
 }

@@ -1,0 +1,35 @@
+package app.funput.funput.keyboard.layout.toolbar
+
+import app.funput.funput.keyboard.layout.KeyboardGeometry
+import app.funput.funput.keyboard.layout.geometry.KeyboardHitTargetResolver
+
+/**
+ * Density-independent toolbar geometry, shared by the layout, the renderer and the panel
+ * height budget.
+ *
+ * One copy on purpose: [KeyboardDimensions][app.funput.funput.keyboard.KeyboardDimensions]
+ * reserves this strip when it measures the panel and [KeyboardGeometry] lays the band out
+ * inside it. Two copies that drift leave the keyboard either squeezing its rows or showing
+ * a blank gap above them.
+ */
+internal object ToolbarMetrics {
+    /**
+     * The suggestion band, sized like Gboard's strip rather than like a key row: the toolbar
+     * carries one line of text and two icons, so anything taller is keyboard height spent on
+     * padding. The utility keys still take the full band and widen into their neighbours'
+     * slack (see [KeyboardHitTargetResolver]), so the shorter band costs no tap area.
+     */
+    const val SuggestionBarHeightDp = 34f
+
+    /** Microphone width stays constant when the height profile changes. */
+    const val MicrophoneWidthDp = 48f
+
+    /** The paste capsule yields as a whole if its label cannot fit. */
+    const val ClipboardPasteWidthDp = 52f
+
+    /** Separates the band from the first key row. */
+    const val SuggestionBarGapDp = 4f
+
+    /** The vertical strip the toolbar claims in total. */
+    const val ChromeDp = SuggestionBarHeightDp + SuggestionBarGapDp
+}

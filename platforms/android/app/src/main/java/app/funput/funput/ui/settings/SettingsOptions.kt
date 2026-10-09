@@ -10,7 +10,13 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.keyboard.placement.OneHandedSide
 import app.funput.funput.theme.KeyboardThemeId
-import app.funput.funput.ui.settings.components.PickerOption
+
+/** One choice in a picker sheet: the stored [value], what the user reads, and an optional hint. */
+internal data class PickerOption<T>(
+    val value: T,
+    val label: String,
+    val summary: String? = null,
+)
 
 @Composable
 internal fun ToneStyle.label(): String = when (this) {
@@ -70,9 +76,6 @@ internal fun keyboardPlacementOptions() = KeyboardPlacementMode.entries.map {
 
 @Composable
 internal fun toneStyleOptions() = ToneStyle.entries.map { PickerOption(it, it.label()) }
-
-@Composable
-internal fun appearanceOptions() = AppearanceMode.entries.map { PickerOption(it, it.label()) }
 
 @Composable
 internal fun ClipboardExpiry.label(): String = when (this) {

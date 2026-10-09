@@ -6,9 +6,9 @@ import android.widget.LinearLayout
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchContentView
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchMode
-import app.funput.funput.keyboard.ui.emoji.EmojiSearchState
+import app.funput.funput.keyboard.ui.emoji.search.EmojiSearchContentView
+import app.funput.funput.keyboard.ui.emoji.search.EmojiSearchMode
+import app.funput.funput.keyboard.ui.emoji.search.EmojiSearchState
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.KeyboardThemes
 import app.funput.funput.theme.LocalKeyboardThemeCatalog

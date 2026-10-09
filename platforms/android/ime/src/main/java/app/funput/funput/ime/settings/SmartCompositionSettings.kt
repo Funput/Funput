@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import app.funput.funput.ime.settings.extraonsets.ExtraOnsetsSettings
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -23,6 +24,7 @@ class SmartCompositionSettings(context: Context) {
                 spellCheckEnabled = values[SpellCheckEnabledKey],
                 smartRestoreEnabled = values[SmartRestoreEnabledKey],
                 autoCapitalizeEnabled = values[AutoCapitalizeEnabledKey],
+                extraOnsets = values[ExtraOnsetsSettings.SelectionKey],
             )
         }
         .distinctUntilChanged()

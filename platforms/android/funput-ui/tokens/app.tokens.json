@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "color": {
+    "accent": { "light": "#D46B08", "dark": "#FFA43F" },
+    "onAccent": { "light": "#1F1300", "dark": "#1F1300" },
+    "groupedBackground": { "light": "#F2F2F7", "dark": "#000000" },
+    "cardBackground": { "light": "#FFFFFF", "dark": "#1C1C1E" },
+    "elevatedGroupedBackground": { "light": "#F2F2F7", "dark": "#1C1C1E" },
+    "elevatedCardBackground": { "light": "#FFFFFF", "dark": "#2C2C2E" },
+    "cardStroke": { "light": "#00000012", "dark": "#FFFFFF12" },
+    "label": { "light": "#000000", "dark": "#FFFFFF" },
+    "secondaryLabel": { "light": "#3C3C4399", "dark": "#EBEBF599" },
+    "tertiaryLabel": { "light": "#3C3C434D", "dark": "#EBEBF54D" },
+    "separator": { "light": "#3C3C434A", "dark": "#54545899" },
+    "success": { "light": "#34C759", "dark": "#30D158" },
+    "destructive": { "light": "#FF3B30", "dark": "#FF453A" },
+    "brandPink": { "light": "#FF2D55", "dark": "#FF375F" },
+    "brandPurple": { "light": "#AF52DE", "dark": "#BF5AF2" },
+    "brandBlue": { "light": "#007AFF", "dark": "#0A84FF" },
+    "tintOrange": { "light": "#D46B08", "dark": "#FFA43F" },
+    "tintBlue": { "light": "#007AFF", "dark": "#0A84FF" },
+    "tintPurple": { "light": "#AF52DE", "dark": "#BF5AF2" },
+    "tintPink": { "light": "#FF2D55", "dark": "#FF375F" },
+    "tintGreen": { "light": "#248A3D", "dark": "#30D158" },
+    "tintGray": { "light": "#8E8E93", "dark": "#98989D" },
+    "tintRed": { "light": "#FF3B30", "dark": "#FF453A" }
+  },
+  "radius": {
+    "card": 22,
+    "interactiveCard": 20,
+    "thumbnail": 16,
+    "iconTile": 12,
+    "smallTile": 10
+  },
+  "spacing": {
+    "tight": 4,
+    "small": 8,
+    "medium": 12,
+    "large": 18,
+    "section": 24
+  },
+  "layout": {
+    "pageMargin": 18,
+    "cardPadding": 18,
+    "contentMaxWidth": 720,
+    "cardStrokeWidth": 0.5
+  },
+  "opacity": {
+    "tintFill": 0.12,
+    "glassTintSelected": 0.16,
+    "screenAccentWash": 0.08
+  },
+  "typography": {
+    "display": { "size": 32, "lineHeight": 40, "weight": 700 },
+    "title": { "size": 22, "lineHeight": 30, "weight": 600 },
+    "headline": { "size": 17, "lineHeight": 24, "weight": 600 },
+    "body": { "size": 16, "lineHeight": 24, "weight": 400 },
+    "label": { "size": 14, "lineHeight": 20, "weight": 500 },
+    "caption": { "size": 12, "lineHeight": 18, "weight": 400 }
+  },
+  "motion": {
+    "launchBloom": { "curve": "spring", "durationMs": 550, "bounce": 0.12 },
+    "launchExit": { "curve": "easeOut", "durationMs": 220 },
+    "themeSelect": { "curve": "easeInOut", "durationMs": 200 }
+  }
+}

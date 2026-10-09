@@ -3,10 +3,18 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.roborazzi)
 }
 
 android {
     namespace = "app.funput.funput"
+    // The app module, not :ime, owns stripReleaseDebugSymbols and
+    // extractReleaseNativeSymbolTables, and those resolve their NDK from *this*
+    // module's ndkVersion. Left unset it falls back to AGP's default NDK; when the
+    // runner image stopped shipping that version, both tasks quietly packaged
+    // libfunput_jni.so unstripped with no symbol table, and the deploy failed on
+    // missing symbols. Keep it identical to ime/build.gradle.kts.
+    ndkVersion = "29.0.14206865"
     compileSdk {
         version = release(37)
     }
@@ -49,6 +57,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Install beside a Play-signed app for device acceptance without replacing its data.
+            if (providers.gradleProperty("funput.speechTestApp").orNull.toBoolean()) {
+                applicationIdSuffix = ".speechtest"
+                resValue("string", "app_name", "Funput Speech Test")
+                resValue("string", "funput_ime_name", "Funput Speech Test")
+            }
+            resValue("string", "debug_application_id", "app.funput.funput${applicationIdSuffix.orEmpty()}")
+        }
         release {
             optimization {
                 enable = true
@@ -74,11 +91,16 @@ android {
     }
     buildFeatures {
         compose = true
+        resValues = true
     }
+    // Robolectric renders the app's own resources and fonts in JVM screenshot tests.
+    testOptions.unitTests.isIncludeAndroidResources = true
 }
 
 dependencies {
+    debugImplementation(project(":keyboard-ui"))
     implementation(project(":ime"))
+    implementation(project(":funput-ui"))
     implementation(project(":shortcut-store"))
     implementation(project(":keyboard-renderer"))
     implementation(project(":theme-runtime"))
@@ -86,18 +108,14 @@ dependencies {
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.text.google.fonts)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.espresso.core)
+    testImplementation(project(":ui-testing"))
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)

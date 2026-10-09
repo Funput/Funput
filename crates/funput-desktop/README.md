@@ -21,15 +21,16 @@ Dù vậy thiết kế ở đây vẫn đi xa hơn cái tên: Linux port nó san
 `inject.rs`, [`key/event.h`](../../platforms/linux/common/compose/key/event.h) mirror `key.rs`, và
 chế độ non-preedit của Linux chính là inject với cùng con số `backspace` từ engine.
 
-## Năm phần
+## Sáu phần
 
 | Module | Việc |
 |---|---|
 | `key` | `classify(&KeyEvent) -> KeyKind` — một phím nghĩa là gì |
+| `caret` | `Caret` — shell biết gì về chỗ caret rơi xuống sau khi nó nhảy mà không qua phím gõ |
 | `inject` | `plan_inject(&ImeResult) -> InjectPlan` — cần xoá bao nhiêu, gõ gì |
 | `layout` | `is_foreign_layout(u32)` — bàn phím đang focus có gõ được tiếng Việt không |
 | `retone` | `CommittedTail` — bản bóng của chữ đã gõ, thay cho tài liệu không đọc được |
-| `shell` | `ShellState` — trạng thái mà bốn thứ trên được quyết định trên đó |
+| `shell` | `ShellState` — trạng thái mà năm thứ trên được quyết định trên đó |
 
 ### `key` — phím nghĩa là gì
 
@@ -42,13 +43,14 @@ pub struct KeyEvent {
     pub ch: Option<char>,     // ký tự phím tạo ra (Windows: từ ToUnicodeEx), nếu có
     pub is_backspace: bool,
     pub is_navigation: bool,  // mũi tên, Home/End, PageUp/Down, Esc, Delete, F-keys, Enter, Tab
+    pub is_enter: bool,       // Enter — phím duy nhất cho biết caret rơi vào đầu dòng
     pub source: KeySource,    // Standard hay Numpad
 }
 
 pub enum KeyKind {
     Compose(char, KeySource), // nạp cho engine (kể cả space/dấu câu — engine tự quyết ranh giới từ)
     Backspace,                // gọi ShellState::on_backspace
-    Flush,                    // commit/clear composition rồi để phím đi qua
+    Flush(Caret),             // ShellState::caret_moved(caret) rồi để phím đi qua
     PassThrough,              // phím vô nghĩa — bỏ qua, giữ nguyên composition
 }
 ```
@@ -59,6 +61,17 @@ Thứ tự quyết định: phím tắt (ctrl/alt/win) → `Flush`; Backspace �
 
 `source` đi kèm suốt đường tới engine vì phím số ở numpad phải giữ nguyên là con số, không được
 làm phím dấu/phím hình của VNI.
+
+### `caret` — caret rơi vào đâu
+
+`Flush` mang theo một `Caret`, vì phím flush nào cũng dời caret khỏi chỗ các phím đã gõ mô tả, và
+Tự viết hoa đọc câu từ chính những phím đó. `Enter` (kể cả khi giữ modifier) → `LineStart`: dòng mới,
+chữ kế tiếp mở câu. Mọi phím khác → `Unknown`: shell không đọc được tài liệu nên không đoán — viết hoa
+thiếu tốn một lần Shift, viết hoa sai thì phải xoá. Click chuột và đổi app cũng báo `Unknown`, qua
+cùng `ShellState::caret_moved`, nên commit composition và bỏ trạng thái câu luôn đi cùng nhau.
+
+Shell nào sau này đọc được chữ trước caret (UI Automation, TSF) sẽ có câu trả lời tốt hơn `Unknown`;
+chỗ nhận nó là `caret_moved`, không phải từng hook.
 
 ### `inject` — cần xoá gì, gõ gì
 
@@ -89,7 +102,8 @@ cho đi qua, nên nhớ vài ký tự cuối là đủ trả lời câu duy nh�
 **Bất biến:** `tail` cộng buffer composition luôn là **hậu tố** của văn bản trước caret. Nhớ ít hơn
 sự thật thì vô hại — tính năng đơn giản là không chạy. Nhớ nhiều hơn sẽ đưa cho `adopt` một từ
 không có thật và để phím kế tiếp xoá mất ký tự Funput chưa từng gõ. Nên mọi sự kiện shell không mô
-hình hoá được — click chuột, phím di chuyển caret, đổi focus, lật VI/EN — đều phải `clear`.
+hình hoá được — click chuột, phím di chuyển caret, đổi focus, lật VI/EN — đều phải xoá nó
+(`caret_moved`, hoặc `reset_composition` với lật VI/EN).
 
 ### `shell` — trạng thái
 
@@ -104,18 +118,25 @@ phải của shell.
 
 | File | Luật |
 |---|---|
-| `config` | Đẩy settings vào engine, đọc/ghi đĩa, `effective_enabled` |
+| `config` | Đẩy settings vào engine, đọc/ghi đĩa, `effective_enabled`; `config/sync` — dùng chung file settings với process khác |
 | `options` | Từng ô setting mà UI Cài đặt bật/tắt |
 | `apps` | App đang focus, bộ nhớ VI/EN theo app, và công tắc tắt nó |
 | `shortcuts` | Bảng gõ tắt, kể cả những dòng người dùng đang gõ nửa vời |
 | `compose` | Những gì keyboard hook gọi trên mỗi phím — đường nóng, không I/O |
 
-Ba luật đáng đọc trước khi sửa:
+Bốn luật đáng đọc trước khi sửa:
 
 **Surface nào toggle thì surface đó quyết định phạm vi.** Hotkey được bấm bên trong app nó nhắm tới
 nên nó ghim app đó. Tray flyout và cửa sổ Cài đặt là cửa sổ của chính Funput, mở từ tray, không có
 app nào trước mặt — nên chúng dịch mặc định toàn cục và không ghim gì. Hai cái sau từng giữ lựa chọn
 lại rồi gắn vào app nhận focus kế tiếp, và vì flyout giành foreground nên cái nó ghim là taskbar.
+Cùng lý do đó, khi focus ở chỗ không phải app (taskbar, desktop, cửa sổ Funput, cửa sổ không đọc được
+exe) host gọi `clear_foreground`, và hotkey bấm ở đó cũng chỉ dịch mặc định toàn cục.
+
+**Một file settings, nhiều process ghi.** Mỗi process giữ cả `Settings` trong bộ nhớ và ghi nguyên
+cả struct, nên ghi từ bản cũ sẽ xoá thay đổi của process khác. Hai bên chia field theo chủ: VI/EN và
+bộ nhớ theo app thuộc về hook, phần còn lại thuộc về UI. Trước khi ghi, UI gọi `refresh_hook_state`;
+còn `save_settings` đọc file mới rồi chỉ đè VI/EN và các pin hotkey vừa tạo.
 
 **Bộ nhớ theo app tắt được**, và tắt nghĩa là bỏ qua chứ không phải quên: map ở lại trên đĩa nên bật
 lại là các app đã ghim quay về.
@@ -129,17 +150,21 @@ tưởng một session đang bị treo là một lần lật VI/EN từ process 
 
 ```
 WH_KEYBOARD_LL callback
-  ├─ tổ hợp toggle? → state.toggle_enabled_hotkey(), nuốt phím       (trước classify)
+  ├─ tổ hợp toggle? → hỏi lại app đang ở trước (note/clear_foreground),
+  │                   state.toggle_enabled_hotkey(), nuốt phím       (trước classify)
   ├─ tổ hợp flip?   → plan_inject(state.flip_composing()), nuốt phím
   ├─ !state.hook_active()? → để phím đi qua, không classify
   └─ dựng KeyEvent (mods, ToUnicodeEx → ch, backspace/navigation, numpad?)
        match classify(&ev):
          Compose(c, src) → plan_inject(state.process_key(c, src)) → SendInput; nuốt phím
          Backspace       → state.on_backspace(); để Backspace vật lý đi qua (app tự xoá)
-         Flush           → state.clear(); để phím đi qua
+         Flush(caret)    → state.caret_moved(caret); để phím đi qua
          PassThrough     → để phím đi qua
 
-EVENT_SYSTEM_FOREGROUND → reload_settings → note_foreground → apply_for_app → apply_for_layout
+EVENT_SYSTEM_FOREGROUND → save_settings (nếu còn toggle chưa ghi) → caret_moved(Unknown)
+                          → không phải app? clear_foreground, dừng
+                          → reload_settings → note_foreground → apply_for_app → apply_for_layout
+WM_[LRM]BUTTONDOWN      → caret_moved(Unknown)
 ```
 
 `apply_for_layout` đi **sau** `apply_for_app` vì nó là luật chứ không phải hồi tưởng: một app được

@@ -5,8 +5,7 @@ import UIKit
 extension KeyboardViewController {
     override func viewWillDisappear(_ animated: Bool) {
         activationState.end()
-        clipboardChangeMonitor.stop()
-        clipboardCapture.end()
+        stopClipboardMonitoring()
         cancelClipboardRetry()
         markPreferredHeightHidden()
         super.viewWillDisappear(animated)

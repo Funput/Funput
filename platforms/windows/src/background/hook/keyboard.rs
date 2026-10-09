@@ -7,7 +7,7 @@ use std::sync::atomic::Ordering;
 
 use funput_desktop::{KeyKind, classify, plan_inject};
 use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
-use windows::Win32::UI::Input::KeyboardAndMouse::{VIRTUAL_KEY, VK_RETURN};
+use windows::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY;
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
 };
@@ -57,6 +57,7 @@ fn fire(hit: Hit) -> bool {
         // The flip must land before the next keystroke; writing it down and
         // repainting the tray must not happen here at all — see [`toggle`].
         Hit::Toggle => {
+            super::foreground::refresh_for_hotkey(); // pin the app really in front
             shell::toggle_enabled_hotkey();
             toggle::defer();
             true
@@ -136,13 +137,11 @@ fn handle_keydown(kbd: &KBDLLHOOKSTRUCT) -> bool {
             shell::on_backspace();
             false
         }
-        KeyKind::Flush => {
-            shell::clear(); // commit what is shown; nav/Enter/Tab/shortcut passes
-            // Enter starts a new line → arm auto-capitalize (no-op unless the feature
-            // is on). The engine never sees the newline itself on this path.
-            if vk == VK_RETURN {
-                shell::arm_capitalization();
-            }
+        KeyKind::Flush(caret) => {
+            // Nav/Enter/Tab/shortcut: commit what is shown and let the key pass.
+            // `classify` has said where it leaves the caret — a line start for
+            // Enter, whose newline the engine never sees on this path.
+            shell::caret_moved(caret);
             false
         }
         KeyKind::PassThrough => false,

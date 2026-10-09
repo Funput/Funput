@@ -119,16 +119,22 @@ cargo run --release -p funput-cli -- dev coverage benchmarks/.corpus/Viet74K.txt
 
 | Corpus | Syllables | Telex | Adv. canonical | Adv. Full | VNI |
 |---|---:|---:|---:|---:|---:|
-| Viet74K (full) | 8,956 | **100%** | **100%** | **100%** | **100%** |
+| Viet74K (full) | 8,974 | **99.99%** | **99.99%** | **99.99%** | **100%** |
 | `sample.txt` | 137 | **100%** | **100%** | **100%** | **100%** |
 
 The Full encoder emits leading `w`, `[` and `]`; canonical parity proves that
 TelexAdvanced also inherits every standard Telex sequence.
 
-Every structurally valid syllable round-trips under all reported profiles. The one Telex
-subtlety — the `oo`→`ô` digraph in genuine double-`o` loanwords (`boong`, `xoong`,
-`soóc`) — is handled exactly the way a user types them: a third `o` escapes the
-digraph (`booong`→`boong`), which the encoder emits. VNI has no digraphs.
+Every structurally valid syllable round-trips under VNI, and all but one under Telex.
+One Telex subtlety — the `oo`→`ô` digraph in genuine double-`o` loanwords (`boong`,
+`xoong`, `soóc`) — is handled exactly the way a user types them: a third `o` escapes
+the digraph (`booong`→`boong`), which the encoder emits. VNI has no digraphs.
+
+The one Telex miss is the Tây Nguyên name `Tbuăn`: the encoder's `Tbuawn` reads
+`ua` + `w` as `ưa`, as in `mưa` — Vietnamese spells `uă` only after `q`. Typing the
+`w` after the final instead (`Tbuanw`) gives `Tbuăn`. Place-name syllables such as
+`Kpă`, `Xtiêng` or `Rcăm` count toward the total because their onset clusters are
+accepted (see `validation/ethnic` in funput-core).
 
 Malformed corpus entries (two tone marks in one syllable, or a tone on the wrong
 vowel) are **not counted** — they are not valid Vietnamese, and the engine correctly

@@ -6,7 +6,7 @@
 
 use std::collections::BTreeMap;
 
-use super::super::{FlipHotkey, Hotkey, Method, ToneStyle};
+use super::super::{ExtraOnsetLetters, FlipHotkey, Hotkey, Method, ToneStyle};
 use super::Settings;
 
 /// How many one-time repairs exist. Bump it in the same commit that adds one to
@@ -38,6 +38,7 @@ impl Default for Settings {
             eager_restore: true,
             spell_check: false,
             auto_capitalize: false,
+            extra_onsets: ExtraOnsetLetters::NONE,
             toggle_hotkey: Hotkey::CtrlBacktick,
             toggle_combo: None,
             flip_hotkey: FlipHotkey::Off,

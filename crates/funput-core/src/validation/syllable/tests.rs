@@ -2,14 +2,30 @@ use super::*;
 use crate::validation::coda::{MAX_CODA, normalized_coda, toneless_rhyme};
 use crate::validation::reachability::is_definitely_invalid;
 use crate::validation::rhyme::{VALID_RHYMES, plain_base};
+use crate::validation::rules::SyllableRules;
 
 #[test]
 fn validate_tone_cases() {
-    assert_eq!(validate_tone("ng"), ModifierValidation::Ignored);
-    assert_eq!(validate_tone("text"), ModifierValidation::PassThrough);
-    assert_eq!(validate_tone("mix"), ModifierValidation::Allow);
-    assert_eq!(validate_tone("ma"), ModifierValidation::Allow);
-    assert_eq!(validate_tone("zt"), ModifierValidation::PassThrough);
+    assert_eq!(
+        validate_tone("ng", SyllableRules::STANDARD),
+        ModifierValidation::Ignored
+    );
+    assert_eq!(
+        validate_tone("text", SyllableRules::STANDARD),
+        ModifierValidation::PassThrough
+    );
+    assert_eq!(
+        validate_tone("mix", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
+    assert_eq!(
+        validate_tone("ma", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
+    assert_eq!(
+        validate_tone("zt", SyllableRules::STANDARD),
+        ModifierValidation::PassThrough
+    );
 }
 
 #[test]
@@ -61,6 +77,19 @@ fn is_complete_syllable_cases() {
 }
 
 #[test]
+fn consonant_between_onset_and_nucleus_is_no_syllable() {
+    // Read order-blind, each of these hides a real rhyme (`cno` → `on`, `ctá` →
+    // `át`, `ona` → `oan`), but the consonant sits before the vowel, not after it.
+    for bad in [
+        "cno", "bno", "tno", "cna", "cnu", "bna", "mna", "tna", "lmo", "tma", "sno", "tnga",
+        "xnoa", "ona", "cnó", "bnà", "tnố", "cmá", "ctá", "tná", "bcá",
+    ] {
+        assert!(!is_complete_syllable(bad), "{bad} should be incomplete");
+        assert!(!is_reopenable_syllable(bad), "{bad} should be refused");
+    }
+}
+
+#[test]
 fn bare_shaped_vowel_cases() {
     // A lone vowel carrying mũ / móc / trần, with or without a tone.
     for ok in ["ă", "â", "Ă", "Â", "ê", "ô", "ơ", "ư", "ắ", "ậ", "Ừ"] {
@@ -105,7 +134,7 @@ fn real_syllables_are_complete() {
             is_complete_syllable(w),
             "{w} (rhyme {:?}) should be a complete syllable",
             {
-                let p = parse_syllable(w);
+                let p = parse_syllable(w, SyllableRules::STANDARD);
                 let (coda, len) = normalized_coda(&p).unwrap_or((['\0'; MAX_CODA], 0));
                 toneless_rhyme(&p, &coda[..len])
             }
@@ -115,15 +144,18 @@ fn real_syllables_are_complete() {
 
 #[test]
 fn definitely_invalid_detects_dead_ends() {
-    // Dead ends — unreachable rhyme (incl. open clusters), or stop coda +
-    // wrong (huyền/hỏi/ngã) tone.
-    for dead in ["tẽt", "tèt", "cảd", "máz", "pèect", "ábc", "caé", "luuỷ"] {
+    // Dead ends — unreachable rhyme (incl. open clusters), stop coda + wrong
+    // (huyền/hỏi/ngã) tone, or a consonant stranded before the vowel.
+    for dead in [
+        "tẽt", "tèt", "cảd", "máz", "pèect", "ábc", "caé", "luuỷ", "cno", "cnó", "ona",
+    ] {
         assert!(is_definitely_invalid(dead), "{dead} should be a dead end");
     }
     // Alive: still typing, already valid, OR a stop coda awaiting its tone
     // (`nuoc`/`nươc`/`côt` → user types the tone after the coda).
     for alive in [
         "tẽ", "te", "ng", "ngh", "cả", "cản", "việt", "má", "trươ", "nuoc", "nươc", "côt", "tét",
+        "cn",
     ] {
         assert!(!is_definitely_invalid(alive), "{alive} should stay alive");
     }
@@ -210,13 +242,31 @@ fn every_rhyme_is_reopenable_before_its_diacritics_land() {
 
 #[test]
 fn ckg_spelling() {
-    assert_eq!(validate_tone("ke"), ModifierValidation::Allow);
+    assert_eq!(
+        validate_tone("ke", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
     // `k` is exempt from the pairing rule for loanwords/toponyms (Kông, Kenya).
-    assert_eq!(validate_tone("ka"), ModifierValidation::Allow);
-    assert_eq!(validate_tone("ca"), ModifierValidation::Allow);
+    assert_eq!(
+        validate_tone("ka", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
+    assert_eq!(
+        validate_tone("ca", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
     // `c`+front still needs `k`; `ge` would need `gh` — these stay restricted.
-    assert_eq!(validate_tone("ce"), ModifierValidation::PassThrough);
-    assert_eq!(validate_tone("ge"), ModifierValidation::PassThrough);
+    assert_eq!(
+        validate_tone("ce", SyllableRules::STANDARD),
+        ModifierValidation::PassThrough
+    );
+    assert_eq!(
+        validate_tone("ge", SyllableRules::STANDARD),
+        ModifierValidation::PassThrough
+    );
     // `gi` digraph stays valid.
-    assert_eq!(validate_tone("gi"), ModifierValidation::Allow);
+    assert_eq!(
+        validate_tone("gi", SyllableRules::STANDARD),
+        ModifierValidation::Allow
+    );
 }

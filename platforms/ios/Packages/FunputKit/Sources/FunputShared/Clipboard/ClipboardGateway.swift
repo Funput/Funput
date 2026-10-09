@@ -6,7 +6,9 @@ import UIKit
 @MainActor
 public protocol ClipboardGateway {
     func snapshot() -> ClipboardSnapshot
-    func readText() -> String?
+    /// Reads the clipboard's text. Asynchronous because the contents may live on
+    /// another device (Universal Clipboard) and arrive only after a network fetch.
+    func readText() async -> String?
 }
 
 #if canImport(UIKit)
@@ -14,6 +16,14 @@ public protocol ClipboardGateway {
 public struct SystemClipboardGateway: ClipboardGateway {
     public init() {}
     public func snapshot() -> ClipboardSnapshot { ClipboardSnapshot(.general) }
-    public func readText() -> String? { UIPasteboard.general.string }
+
+    /// Off the main thread: a Universal Clipboard item copied on a Mac is fetched
+    /// on demand, and that wait must never freeze the keys. `UIPasteboard` carries
+    /// no main-actor requirement, and only the `Sendable` string crosses back.
+    public func readText() async -> String? {
+        await Task.detached(priority: .utility) {
+            UIPasteboard.general.string
+        }.value
+    }
 }
 #endif

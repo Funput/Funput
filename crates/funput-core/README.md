@@ -30,12 +30,16 @@ Bề mặt nhỏ và ổn định cho `funput-engine`. Đổi breaking cần đ�
 
 | Symbol | Mô tả |
 |--------|-------|
-| `InputMethod` | `Telex` \| `Vni` |
+| `InputMethod` | `Telex` \| `TelexAdvanced` \| `Vni` |
 | `ToneStyle` | `Traditional` \| `Modern` (mặc định cấu hình mới) — kiểu đặt dấu (xem mục dưới) |
 | `TransformKind` | `Pending` \| `Applied` \| `Reverted` \| `Ignored` |
 | `TransformResult` | `{ kind, text }` — trạng thái sau một phím |
 | `apply(buffer, key, method, tone_style) -> TransformResult` | Transform một bước |
 | `apply_checked(buffer, key, method, tone_style, spell_check) -> TransformResult` | Như `apply` + cổng **kiểm tra chính tả**: khi `spell_check` bật, chỉ đặt dấu nếu kết quả vẫn có thể thành âm tiết VN hợp lệ, ngược lại giữ phím dấu thành ký tự thường (`mix` + ngã → `mĩx` bị chặn). `spell_check = false` ≡ `apply` |
+| `ComposeOptions` | Mọi tuỳ chọn soạn một phím (`method`, `tone_style`, `spell_check`, `syllable_rules`); dựng bằng `new(method)` + `with_*` |
+| `apply_with(buffer, key, options) -> TransformResult` | Điểm vào chung mà `apply` / `apply_checked` bọc lại; là đường duy nhất tới mọi tuỳ chọn |
+| `SyllableRules` | Chính tả dùng để xét âm tiết — `STANDARD` (mặc định) hoặc nới thêm; có các phương thức `is_valid` / `is_complete_syllable` / `is_reopenable_syllable` / `is_definitely_invalid(_in)` xét theo luật đó |
+| `ExtraOnsets` | Tập phụ âm đầu thêm vào (`F`, `J`, `W`, `Z`, `ZFWJ`) — xem [Phụ âm đầu mở rộng](#phụ-âm-đầu-mở-rộng--syllablerules) |
 | `is_valid(buffer) -> bool` | Buffer **có thể** còn là âm tiết VN hợp lệ (lenient) |
 | `is_complete_syllable(buffer) -> bool` | Buffer là âm tiết VN **hoàn chỉnh** (strict) |
 | `is_definitely_invalid(buffer) -> bool` | Buffer **chắc chắn** không thể thành âm tiết VN |
@@ -63,6 +67,24 @@ assert_eq!(r.text, "á");
 - `Reverted` — gõ đúp modifier: bỏ dấu rồi chèn lại phím thô (`a11` → `a1`, Telex `ass` → `as`).
 - `Ignored` — modifier bị từ chối, `text` không đổi (`ng` + `1`, stroke trên ký tự không phải `d`).
 
+## Phụ âm đầu mở rộng — `SyllableRules`
+
+Các hàm `is_*` ở gốc crate luôn xét theo chính tả bản ngữ (`SyllableRules::STANDARD`).
+Muốn nhận thêm phụ âm đầu kiểu UniKey "Cho phép phụ âm đầu Z, F, W, J" (`zô`, `jờ`, `fải`,
+`wá`), dựng một `SyllableRules` rộng hơn và truyền nó qua `ComposeOptions`:
+
+```rust
+use funput_core::{apply_with, ComposeOptions, ExtraOnsets, InputMethod, SyllableRules};
+
+let rules = SyllableRules::STANDARD.with_extra_onsets(ExtraOnsets::ZFWJ);
+let options = ComposeOptions::new(InputMethod::Vni).with_syllable_rules(rules);
+assert_eq!(apply_with("zo", '6', options).text, "zô");
+assert!(rules.is_complete_syllable("zô"));
+```
+
+Chỉ âm đầu được nới — vần vẫn phải là vần tiếng Việt. Chi tiết và đánh đổi:
+[docs/features/extra-onsets.md](../../docs/features/extra-onsets.md).
+
 ## Kiểu đặt dấu — `ToneStyle`
 
 Hai kiểu **chỉ khác nhau** ở nhóm vần mở khởi đầu bằng bán nguyên âm: `oa`, `oe`, `uy`.
@@ -87,7 +109,8 @@ chọn. Tham khảo: [Quy tắc đặt dấu thanh của chữ Quốc ngữ](htt
 
 ```
 src/
-├── lib.rs                    # Public API + apply()
+├── lib.rs                    # Public API + apply() / apply_with()
+├── options/                  # Giá trị người gọi chọn: InputMethod, ToneStyle, ComposeOptions
 ├── input_method/             # Phân loại phím → KeyAction. Chỗ DUY NHẤT khác nhau giữa VNI và Telex.
 │   ├── vni.rs                # 1–9
 │   └── telex.rs              # s/f/r/x/j, aa/dd/ee/oo, w (buffer-aware)
@@ -96,9 +119,12 @@ src/
 │   ├── apply.rs              # Áp stroke / tone / shape lên buffer
 │   └── revert.rs             # Bỏ dấu khi gõ đúp phím modifier
 ├── validation/
-│   ├── parse.rs              # Tách onset / nucleus / coda
-│   ├── rhyme.rs              # Bảng vần (vần) hợp lệ — lõi quyết định "có là tiếng Việt"
-│   └── syllable.rs           # is_valid / is_complete_syllable / is_definitely_invalid + gate modifier
+│   ├── parse.rs, parse/      # Tách onset / nucleus / coda; onset.rs là cổng âm đầu duy nhất
+│   ├── rhyme.rs, coda.rs     # Bảng vần (vần) hợp lệ — lõi quyết định "có là tiếng Việt" — và âm cuối
+│   ├── syllable/             # is_valid / is_complete_syllable / … + gate modifier
+│   ├── reachability.rs       # is_definitely_invalid(_in) — eager restore
+│   ├── ethnic/               # Ngoại lệ địa danh Tây Nguyên
+│   └── rules/                # SyllableRules + ExtraOnsets — chính tả nới thêm (tuỳ chọn)
 └── unicode/
     ├── marks.rs              # Bảng dấu thanh
     ├── shapes.rs             # Bảng mũ / móc / breve

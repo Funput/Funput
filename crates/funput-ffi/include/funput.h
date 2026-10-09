@@ -67,6 +67,18 @@
 #define METHOD_TELEX_ADVANCED 2
 
 /**
+ * Letters for [`funput_set_extra_onsets`], OR-ed into one byte. The wire's own
+ * stable values — never the core's internal bits.
+ */
+#define ONSET_F 1
+
+#define ONSET_J 2
+
+#define ONSET_W 4
+
+#define ONSET_Z 8
+
+/**
  * Neighbouring keys a host may offer per touch.
  *
  * Spelled out rather than aliased to `funput_engine::MAX_ALTERNATES`, because
@@ -855,21 +867,6 @@ void funput_set_method(FunputEngine *engine, uint8_t method);
 void funput_configure(FunputEngine *engine, FunputConfig config);
 
 /**
- * Switch typo correction on or off ("Tự sửa lỗi gõ nhầm phím").
- *
- * Its own setter rather than a [`FunputConfig`] field, for the reason that struct's
- * own documentation gives: it crosses the ABI by value, so growing it breaks every
- * host built against the previous header, silently, until each is rebuilt.
- *
- * On, the engine still does nothing until the host also reports where its touches
- * land — see `funput_engine_set_next_key_touch`.
- *
- * # Safety
- * `engine` must be a valid handle or null.
- */
-void funput_set_typo_correction(FunputEngine *engine, bool on);
-
-/**
  * Enable or disable Vietnamese composition.
  *
  * Disabling does not make [`funput_process_key`] a no-op: a loaded gõ tắt table
@@ -881,6 +878,35 @@ void funput_set_typo_correction(FunputEngine *engine, bool on);
  * `engine` must be a valid handle or null.
  */
 void funput_set_enabled(FunputEngine *engine, bool enabled);
+
+/**
+ * Admit `z`, `f`, `w`, `j` as initial consonants (`zô`, `fải`, `wá`, `jờ`) — the
+ * `ONSET_*` letters OR-ed together; `0` (the default) admits none. Bits no
+ * `ONSET_*` names are ignored.
+ *
+ * Its own function rather than a [`FunputConfig`] field, so `funput_configure`
+ * leaves it alone. Off by default because it also lets English with a Vietnamese
+ * rhyme compose (Telex `fast` → `fát`).
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_extra_onsets(FunputEngine *engine, uint8_t letters);
+
+/**
+ * Switch typo correction on or off ("Tự sửa lỗi gõ nhầm phím").
+ *
+ * Its own setter rather than a `FunputConfig` field, for the reason that struct's
+ * own documentation gives: it crosses the ABI by value, so growing it breaks every
+ * host built against the previous header, silently, until each is rebuilt.
+ *
+ * On, the engine still does nothing until the host also reports where its touches
+ * land — see `funput_engine_set_next_key_touch`.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_typo_correction(FunputEngine *engine, bool on);
 
 /**
  * Report where the finger landed for the key about to be sent.

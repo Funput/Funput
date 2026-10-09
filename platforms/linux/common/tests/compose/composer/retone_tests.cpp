@@ -6,6 +6,7 @@
 
 #include <doctest/doctest.h>
 
+#include "compose/composer/nonpreedit/sync.h"
 #include "support.h"
 
 using namespace funput;
@@ -28,6 +29,7 @@ TEST_CASE("backspace re-opens the finished word so its tone can be fixed") {
     Composer composer = composerFor(Method::Telex);
     composer.setNonPreedit(true);
     // `phủ ` is in the document and the app is about to delete the trailing space.
+    REQUIRE(typeInSync(composer, "phur ") == "phủ ");
     REQUIRE(composer.adoptWordBeforeBackspace("phủ "));
 
     std::string document = "phủ"; // what the app leaves once it has deleted
@@ -55,6 +57,7 @@ TEST_CASE("the word scan splits on punctuation, as the hook shells do") {
     // which really is a Vietnamese syllable, so it is re-opened. `CommittedTail`'s
     // `is_separator` splits the same way on Windows. Pinned because it is a decision
     // shared with the other platforms, not an accident of this one.
+    REQUIRE(typeInSync(composer, "github.com ") == "github.com ");
     CHECK(composer.adoptWordBeforeBackspace("github.com "));
 }
 

@@ -1,6 +1,8 @@
 package app.funput.funput.ime.nativebridge
 
+import app.funput.funput.ime.nativebridge.configuration.nativeMask
 import app.funput.funput.ime.settings.ToneStyle
+import app.funput.funput.ime.settings.extraonsets.ExtraOnsetLetters
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.shortcuts.model.ShortcutLibrary
 
@@ -21,6 +23,7 @@ internal data class EngineConfiguration(
     val eagerRestore: Boolean,
     val spellCheck: Boolean,
     val autoCapitalize: Boolean = false,
+    val extraOnsets: ExtraOnsetLetters = ExtraOnsetLetters.None,
 )
 
 /** Platform-independent contract consumed by Android's composition adapter. */
@@ -47,12 +50,15 @@ internal interface VietnameseEngine : AutoCloseable {
     fun clear()
 }
 
-/** Owns one safe Rust engine handle for the active IME service. */
+/** Owns one safe Rust engine handle: the document's, or a panel field's of its own. */
 internal class NativeVietnameseEngine : VietnameseEngine {
     private var handle = FunputNative.nativeCreate().also {
         check(it != InvalidHandle) { "Unable to create Funput native engine" }
     }
     override var inputMethod = KeyboardInputMethod.TELEX
+        private set
+    /** The options last applied, so a panel field can compose the same way. */
+    var configuration: EngineConfiguration? = null
         private set
 
     override fun configure(configuration: EngineConfiguration) = withHandle { value ->
@@ -65,7 +71,9 @@ internal class NativeVietnameseEngine : VietnameseEngine {
             configuration.spellCheck,
             configuration.autoCapitalize,
         )
+        FunputNative.nativeSetExtraOnsets(value, configuration.extraOnsets.nativeMask)
         inputMethod = configuration.inputMethod
+        this.configuration = configuration
     }
 
     override fun setEnabled(enabled: Boolean) = withHandle { value ->

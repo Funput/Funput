@@ -12,11 +12,15 @@ internal data class KeyboardPanelPalette(
     val searchSurface: Int,
     val buttonSurface: Int,
 ) {
+    fun solidSurface(surface: Int): Int = surface.compositedOver(backgroundEnd)
+
     fun readable(preferred: Int, minimum: Double = 4.5): Int =
         contrastForeground(preferred, intArrayOf(backgroundStart, backgroundEnd), minimum)
 
     fun readableOn(surface: Int, preferred: Int): Int =
-        contrastForeground(preferred, intArrayOf(surface), 4.5)
+        contrastForeground(preferred, intArrayOf(
+            surface.compositedOver(backgroundStart), surface.compositedOver(backgroundEnd),
+        ), 4.5)
 
     companion object {
         fun from(theme: KeyboardTheme) = KeyboardPanelPalette(

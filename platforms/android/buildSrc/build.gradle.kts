@@ -4,4 +4,9 @@ plugins {
 
 repositories {
     gradlePluginPortal()
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation(libs.junit)
 }

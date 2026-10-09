@@ -1,8 +1,8 @@
 package app.funput.funput.ime
 
 import android.content.Context
-import app.funput.funput.ime.nativebridge.EngineConfiguration
 import app.funput.funput.ime.nativebridge.VietnameseEngine
+import app.funput.funput.ime.nativebridge.configuration.engineConfiguration
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackPreferences
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
@@ -106,16 +106,7 @@ internal class ImeSettingsController(
      * here, so the engine can never end up with a half-applied set of options.
      */
     private fun applyEngineConfiguration() {
-        engine.configure(
-            EngineConfiguration(
-                inputMethod = inputMethod,
-                toneStyle = toneStyle,
-                // One "smart restore" switch drives both restore behaviors on Android.
-                smartRestore = smartComposition.smartRestoreEnabled,
-                eagerRestore = smartComposition.smartRestoreEnabled,
-                spellCheck = smartComposition.spellCheckEnabled,
-            )
-        )
+        engine.configure(smartComposition.engineConfiguration(inputMethod, toneStyle))
     }
 
     private fun applySizingProfile(value: KeyboardSizingProfile) {

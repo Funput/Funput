@@ -7,6 +7,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class KeyboardPanelPaletteTest {
+    @Test fun `translucent panel buttons keep text readable on both gradient ends`() {
+        LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::theme).forEach { theme ->
+            val palette = KeyboardPanelPalette.from(theme)
+            val text = palette.readableOn(palette.buttonSurface, palette.label)
+            assertTrue(ContrastRatio.between(text, palette.buttonSurface, palette.backgroundStart) >= 4.5)
+            assertTrue(ContrastRatio.between(text, palette.buttonSurface, palette.backgroundEnd) >= 4.5)
+        }
+    }
+
     @Test fun `all presets keep panel text readable`() {
         val themes = LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::theme)
         themes.forEach { theme ->

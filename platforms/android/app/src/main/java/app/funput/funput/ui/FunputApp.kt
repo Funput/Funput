@@ -1,28 +1,28 @@
 package app.funput.funput.ui
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import app.funput.funput.ime.settings.KeyboardThemeSlot
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import app.funput.funput.ime.settings.KeyboardThemeSlot
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.store.customKeyboardThemeStore
 import app.funput.funput.ui.about.AboutRoute
+import app.funput.funput.ui.about.licenses.LicensesRoute
 import app.funput.funput.ui.appearance.AppearanceRoute
+import app.funput.funput.ui.kit.theme.FunputUiTheme
 import app.funput.funput.ui.navigation.AppDestination
 import app.funput.funput.ui.navigation.AppNavDisplay
-import app.funput.funput.ui.navigation.AppNavigationSuite
+import app.funput.funput.ui.navigation.AppTabBar
 import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
+import app.funput.funput.ui.settings.speech.SpeechSetupRoute
 import app.funput.funput.ui.shortcuts.ShortcutsRoute
-import app.funput.funput.ui.theme.FunputTheme
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
 import app.funput.funput.ui.theme.custom.rememberCustomThemeServices
 import app.funput.funput.ui.theme.resolveDarkTheme
@@ -38,7 +38,7 @@ fun FunputApp() {
     val themeRepository = remember(customThemeStore) { installedThemeRepository(customThemeStore) }
     val customThemeServices =
         rememberCustomThemeServices(themeRepository, customThemeStore, settings.keyboardTheme)
-    var themeCatalogRevision by remember { mutableStateOf(0) }
+    var themeCatalogRevision by remember { mutableIntStateOf(0) }
     // One read of the theme sources per catalog change. Asking the repository directly would hit
     // disk again on every recomposition, since it deliberately keeps no cache of its own.
     val themeCatalog = remember(themeRepository, themeCatalogRevision) { themeRepository.snapshot() }
@@ -51,13 +51,12 @@ fun FunputApp() {
     } else {
         KeyboardThemeSlot.SINGLE
     }
-    FunputTheme(appearanceMode = settings.appearanceMode, dynamicColor = settings.dynamicColor) {
+    FunputUiTheme(isDark = darkTheme) {
         SyncSystemBarAppearance(darkTheme = darkTheme)
-        Surface(modifier = Modifier.fillMaxSize()) {
-            AppNavigationSuite(navigator) {
-            AppNavDisplay(navigator) { destination ->
-                when (destination) {
-                    AppDestination.SETTINGS -> SettingsRoute(
+        AppNavDisplay(navigator) { destination ->
+            when (destination) {
+                AppDestination.SETTINGS -> {
+                    SettingsRoute(
                         settings = settings,
                         // The keyboard follows the system appearance rather than the app's own
                         // light/dark preference, so the hero has to resolve against the system to
@@ -66,10 +65,15 @@ fun FunputApp() {
                             settings.themeSelection.resolve(isSystemInDarkTheme()),
                         ),
                         onOpenAppearance = { navigator.selectTab(TopLevelDestination.APPEARANCE) },
+                        onOpenSpeech = { navigator.navigate(AppDestination.SPEECH) },
                         onOpenShortcuts = { navigator.navigate(AppDestination.SHORTCUTS) },
+                        tabBar = { AppTabBar(navigator) },
                     )
-                    AppDestination.SHORTCUTS -> ShortcutsRoute { navigator.navigateBack() }
-                    AppDestination.THEME_GALLERY -> AppearanceRoute(
+                }
+                AppDestination.SPEECH -> SpeechSetupRoute(onBack = { navigator.navigateBack() })
+                AppDestination.SHORTCUTS -> ShortcutsRoute { navigator.navigateBack() }
+                AppDestination.THEME_GALLERY -> {
+                    AppearanceRoute(
                         settings = settings,
                         catalog = themeCatalog,
                         activeSlot = activeSlot,
@@ -88,12 +92,15 @@ fun FunputApp() {
                                 themeCatalogRevision += 1
                             }
                         },
+                        tabBar = { AppTabBar(navigator) },
                     )
-                    AppDestination.ABOUT -> AboutRoute { navigator.navigate(AppDestination.THIRD_PARTY_LICENSES) }
-                    AppDestination.THIRD_PARTY_LICENSES -> app.funput.funput.ui.about.licenses.LicensesRoute {
-                        navigator.navigateBack()
-                    }
-                    AppDestination.CREATE_CUSTOM_THEME -> CustomThemeStudioRoute(
+                }
+                AppDestination.ABOUT -> AboutRoute(tabBar = { AppTabBar(navigator) }) {
+                    navigator.navigate(AppDestination.THIRD_PARTY_LICENSES)
+                }
+                AppDestination.THIRD_PARTY_LICENSES -> LicensesRoute { navigator.navigateBack() }
+                AppDestination.CREATE_CUSTOM_THEME -> {
+                    CustomThemeStudioRoute(
                         editingThemeId = editingThemeId,
                         themeRepository = themeRepository,
                         saveHandler = customThemeServices.saveHandler,
@@ -105,7 +112,6 @@ fun FunputApp() {
                         },
                     )
                 }
-            }
             }
         }
     }

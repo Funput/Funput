@@ -93,6 +93,7 @@ final class GestureTestSubject {
             containerBounds: CGRect(x: 0, y: 0, width: 390, height: 304),
             presentation: presentation
         )
+        controller.commitInitialBackspaces()
     }
 
     func move(to x: CGFloat, y: CGFloat = 220) {

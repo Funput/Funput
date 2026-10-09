@@ -42,7 +42,8 @@ one machine imports on another. macOS is the first implementation
     "autoCapitalize": false,
     "shortcutsEnabled": true,
     "shortcutSmartCase": true,
-    "shortcutsInEnglish": true
+    "shortcutsInEnglish": true,
+    "extraOnsets": "zj"              // letters among z, f, w, j; "" = none
   },
 
   "shortcuts": [
@@ -73,6 +74,7 @@ one machine imports on another. macOS is the first implementation
 | `shortcuts[]` | ✅ | `{ trigger, expansion }`. Local UUIDs are dropped; recreated on import. Whether they expand is `preferences.shortcutsEnabled`, which defaults to `true` when absent — an older file carries a working table and must not arrive switched off. Exposed as a switch on macOS, Windows and Linux. |
 | `preferences.shortcutSmartCase` | ✅ | Whether a trigger matches regardless of how it was capitalized, with the expansion re-cased to match (`tp`/`Tp`/`TP` → `TP. HCM`/`Tp. Hcm`/`TP. HCM`). Off, only the exact trigger expands and the expansion is verbatim. Defaults to `true` when absent, for the same reason as `shortcutsEnabled`. Exposed as a switch on macOS, Windows and Linux. |
 | `preferences.shortcutsInEnglish` | ✅ | Whether the gõ tắt table also expands while the app is in English mode. Only expansion happens there — no diacritics, no English restore, no auto-capitalize. Defaults to `true` when absent, for the same reason as `shortcutsEnabled`. Exposed as a switch on Windows, macOS and Linux. |
+| `preferences.extraOnsets` | ✅ | Letters admitted as initial consonants beyond Vietnamese spelling, spelled out in any order and case (`"zj"`; `""` = none; unknown letters are ignored). Absent leaves the local choice alone. Exposed letter by letter on macOS, Windows and Linux. |
 | `platform.macos.toggleShortcut` | ❌ | `KeyCombo` (`keyCode` is AppKit-specific). Applied only on macOS, only if present. |
 | `platform.macos.flipShortcut` | ❌ | `KeyCombo` or `null`. Applied only on macOS, only if present. |
 | `platform.macos.appLanguageMemory` | ❌ | `{ bundleId: rememberedIsVietnamese }`. macOS-only per-app VI/EN memory; merged by key, existing entries win. |

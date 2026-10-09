@@ -7,7 +7,7 @@ internal data class AlternatePaletteLayout(
     val bounds: KeyBounds,
     val itemBounds: List<KeyBounds>,
     val sourceBounds: KeyBounds,
-    val defaultIndex: Int,
+    val defaultIndex: Int?,
     /** True when a short viewport forces the palette to intersect its source key. */
     val overlapsSource: Boolean,
 ) {
@@ -61,20 +61,27 @@ internal data class AlternatePaletteLayout(
             source: KeyBounds,
             surface: KeyBounds,
             density: Float,
-            defaultIndex: Int = 0,
+            defaultIndex: Int? = 0,
+            preferredColumns: Int? = null,
         ): AlternatePaletteLayout {
-            require(defaultIndex in 0 until count) { "Default alternate must be in bounds" }
+            require(count > 0) { "Palette must contain items" }
+            require(defaultIndex == null || defaultIndex in 0 until count) { "Default alternate must be in bounds" }
+            require(preferredColumns == null || preferredColumns > 0) {
+                "Preferred columns must be positive"
+            }
             val safe = surface.inset(6f * density, 4f * density)
             val padding = Padding * density
             val gap = Gap * density
             val cellHeight = CellHeight * density
             val available = (safe.width - padding * 2f).coerceAtLeast(1f)
-            val columns = columnCount(count, available, density)
+            val columns = columnCount(count, available, density, preferredColumns ?: PreferredColumns)
             val rows = ceil(count.toDouble() / columns).toInt()
             val span = minOf(PreferredSpan * density, (available + gap) / columns)
             val width = minOf(safe.width, columns * span - gap + padding * 2f)
             val height = rows * cellHeight + (rows - 1) * gap + padding * 2f
-            val left = (source.centerX - width / 2f).coerceIn(safe.left, safe.right - width)
+            // Float rounding can invert the clamp range when the palette fills the safe width.
+            val maxLeft = (safe.right - width).coerceAtLeast(safe.left)
+            val left = (source.centerX - width / 2f).coerceIn(safe.left, maxLeft)
             // The surface may extend into screen space above the keyboard. Only overlap the
             // source when even that full viewport cannot fit the palette.
             val top = maxOf(safe.top, source.top - SourceGap * density - height)
@@ -89,14 +96,14 @@ internal data class AlternatePaletteLayout(
         }
 
         /**
-         * Wraps at [PreferredColumns] and widens only when the set would otherwise need more than
+         * Wraps at [preferredColumns] and widens only when the set would otherwise need more than
          * [MaximumRows] rows. The rows are then evened out, so thirteen cells read as 5 + 5 + 3
          * rather than 6 + 6 + 1.
          */
-        private fun columnCount(count: Int, available: Float, density: Float): Int {
+        private fun columnCount(count: Int, available: Float, density: Float, preferredColumns: Int): Int {
             val widthLimit = ((available + Gap * density) / (MinimumSpan * density))
                 .toInt().coerceAtLeast(1)
-            val wrapped = ceil(count.toDouble() / PreferredColumns).toInt()
+            val wrapped = ceil(count.toDouble() / preferredColumns).toInt()
             val rows = minOf(MaximumRows, wrapped.coerceAtLeast(1))
             val balanced = ceil(count.toDouble() / rows).toInt()
             return minOf(count, minOf(widthLimit, balanced.coerceAtLeast(1)))

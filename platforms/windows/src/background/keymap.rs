@@ -113,6 +113,7 @@ pub fn to_key_event(kbd: &KBDLLHOOKSTRUCT) -> KeyEvent {
         ch: translate_char(kbd),
         is_backspace: vk == VK_BACK,
         is_navigation: is_navigation(vk),
+        is_enter: vk == VK_RETURN,
         source: key_source(vk),
     }
 }

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug builds only: the FunputUI component catalog. It is deliberately not a launcher entry:
+  a second launcher activity made Android Studio's "Default Activity" start the catalog
+  instead of the app. Open it from the Funput icon's long-press shortcut, or with
+  `adb shell am start -n app.funput.funput/.catalog.CatalogActivity`.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <activity
+            android:name=".speech.catalog.SpeechPanelCatalogActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Funput" />
+        <activity
+            android:name=".speech.SpeechSpikeEditorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Funput"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".MainActivity">
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/debug_shortcuts" />
+        </activity>
+
+        <activity
+            android:name=".catalog.CatalogActivity"
+            android:exported="true"
+            android:label="@string/debug_catalog_label"
+            android:taskAffinity="${applicationId}.catalog"
+            android:theme="@style/Theme.Funput" />
+
+
+    </application>
+
+</manifest>

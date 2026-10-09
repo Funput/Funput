@@ -11,6 +11,7 @@ import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.keyboard.placement.OneHandedSide
 import app.funput.funput.theme.KeyboardThemeDescriptor
+import app.funput.funput.ui.settings.extraonsets.ExtraOnsetsSectionState
 import app.funput.funput.ui.settings.hardware.HardwareKeyboardSectionState
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 
@@ -30,11 +31,15 @@ internal class SettingsScreenState(
     val personalSuggestionsEnabled: Boolean,
     val clipboardPreferences: ClipboardPreferences,
     val smartGesturesEnabled: Boolean,
+    val returnsToLettersEnabled: Boolean = true,
     val hardwareKeyboard: HardwareKeyboardSectionState = HardwareKeyboardSectionState.Inert,
+    val extraOnsets: ExtraOnsetsSectionState = ExtraOnsetsSectionState(smartComposition.extraOnsets, inputMethod),
     val onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     val onShowsNumberRowChanged: (Boolean) -> Unit,
     val onOpenAppearance: () -> Unit,
     val onOpenShortcuts: () -> Unit = {},
+    val speechAvailable: Boolean = false,
+    val onOpenSpeech: () -> Unit = {},
     val onToneStyleSelected: (ToneStyle) -> Unit,
     val onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     val onPlacementModeSelected: (KeyboardPlacementMode) -> Unit = {},
@@ -44,6 +49,7 @@ internal class SettingsScreenState(
     val onHapticsChanged: (Boolean) -> Unit,
     val onSoundsChanged: (Boolean) -> Unit,
     val onSmartGesturesChanged: (Boolean) -> Unit,
+    val onReturnsToLettersChanged: (Boolean) -> Unit = {},
     val onSmartRestoreChanged: (Boolean) -> Unit,
     val onSpellCheckChanged: (Boolean) -> Unit,
     val onAutoCapitalizeChanged: (Boolean) -> Unit,

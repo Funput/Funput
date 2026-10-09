@@ -3,7 +3,6 @@ package app.funput.funput.ui
 import android.content.Context
 import app.funput.funput.ime.settings.AppearanceSettings
 import app.funput.funput.ime.settings.ClipboardSettings
-import app.funput.funput.ime.settings.DynamicColorSettings
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.KeyboardFeedbackSettings
 import app.funput.funput.ime.settings.KeyboardPlacementSettings
@@ -14,6 +13,7 @@ import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.settings.SmartCompositionSettings
 import app.funput.funput.ime.settings.ToneStyleSettings
 import app.funput.funput.ime.settings.gestures.SmartGestureSettings
+import app.funput.funput.ime.settings.layout.LetterPageReturnSettings
 
 /** Remembers the DataStore wrappers used by [rememberFunputSettings]. */
 internal class FunputSettingsStores(context: Context) {
@@ -24,10 +24,10 @@ internal class FunputSettingsStores(context: Context) {
     val toneStyleStore = ToneStyleSettings(context)
     val appearance = AppearanceSettings(context)
     val clipboard = ClipboardSettings(context)
-    val dynamicColorStore = DynamicColorSettings(context)
     val feedbackStore = KeyboardFeedbackSettings(context)
     val numberRowStore = NumberRowSettings(context)
     val smartCompositionStore = SmartCompositionSettings(context)
     val smartGestureStore = SmartGestureSettings(context)
+    val letterReturnStore = LetterPageReturnSettings(context)
     val personalSuggestionStore = PersonalSuggestionSettings(context)
 }

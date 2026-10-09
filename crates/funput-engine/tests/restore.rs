@@ -4,5 +4,9 @@ mod support;
 
 #[path = "restore/english.rs"]
 mod english;
+#[path = "restore/extra_onsets.rs"]
+mod extra_onsets;
+#[path = "restore/place_names.rs"]
+mod place_names;
 #[path = "restore/toggle.rs"]
 mod toggle;

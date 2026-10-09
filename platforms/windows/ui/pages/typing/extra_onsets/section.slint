@@ -1,0 +1,71 @@
+// Settings → "Cách gõ" → "Phụ âm đầu mở rộng": one switch like UniKey's, then a
+// checkbox per letter so the user keeps only the ones they type. Turning the
+// switch on ticks all four; unticking the last one turns it off.
+
+import { Theme, Section, Row, AccentSwitch } from "../../../theme/mod.slint";
+import { ExtraOnsetsState } from "state.slint";
+import { OnsetCheckbox } from "checkbox.slint";
+
+export component ExtraOnsetsSection inherits VerticalLayout {
+    // The input method id, for the Telex nâng cao hint.
+    in property <string> method;
+    // How far a checkbox pads its hover fill — what the texts around it indent by.
+    private property <length> box-inset: 6px;
+
+    width: 100%;
+
+    Section {
+        title: "Phụ âm đầu mở rộng";
+        Row {
+            icon: @image-url("../../../icons/row/onset.svg");
+            title: "Cho phép z, f, w, j đầu từ";
+            subtitle: "Gõ teencode, từ mượn và tên riêng: zô, fải, wá, jờ.";
+            AccentSwitch {
+                checked <=> ExtraOnsetsState.enabled;
+                toggled => { ExtraOnsetsState.set-all(ExtraOnsetsState.enabled); }
+            }
+        }
+
+        // Lined up with the switch's title (Row's 18px icon + gap). Each checkbox
+        // pads its own hover fill, so the box itself also lands on that line.
+        if ExtraOnsetsState.enabled: VerticalLayout {
+            spacing: Theme.sp-xs;
+            padding-left: 18px + Theme.sp-md - root.box-inset;
+
+            VerticalLayout {
+                padding-left: root.box-inset;
+                Text {
+                    text: "Chữ được phép";
+                    font-size: Theme.font-caption;
+                    font-weight: 600;
+                    color: Theme.subtle;
+                }
+            }
+            for choice in ExtraOnsetsState.letters: OnsetCheckbox {
+                inset: root.box-inset;
+                letter: choice.letter;
+                examples: choice.examples;
+                checked: choice.on;
+                toggled(on) => { ExtraOnsetsState.set-letter(choice.letter, on); }
+            }
+            // The trade every IME's switch makes; the examples sit by each letter.
+            VerticalLayout {
+                padding-left: root.box-inset;
+                spacing: Theme.sp-xs;
+                Text {
+                    text: "Từ tiếng Anh có vần tiếng Việt cũng được bỏ dấu (fast → fát) — dùng "
+                        + "phím \"Lật từ vừa gõ\" hoặc gõ đúp phím dấu (fasst) để giữ tiếng Anh.";
+                    font-size: Theme.font-caption;
+                    color: Theme.subtle;
+                    wrap: word-wrap;
+                }
+                if root.method == "telex_advanced" && ExtraOnsetsState.w-admitted: Text {
+                    text: "Telex nâng cao: w vẫn là ư — gõ ww để có phụ âm w (wwas → wá).";
+                    font-size: Theme.font-caption;
+                    color: Theme.subtle;
+                    wrap: word-wrap;
+                }
+            }
+        }
+    }
+}

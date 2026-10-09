@@ -4,4 +4,13 @@
         <item name="android:windowBackground">@color/funput_window_background</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
+
+    <!-- Launch theme: the system splash on the FunputUI background, the launcher logo on its own
+         black tile, then Theme.Funput once the first frame is ready. -->
+    <style name="Theme.Funput.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/funput_window_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/funput_splash_icon_background</item>
+        <item name="postSplashScreenTheme">@style/Theme.Funput</item>
+    </style>
 </resources>

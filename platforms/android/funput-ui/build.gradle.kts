@@ -1,0 +1,56 @@
+import app.funput.build.tokens.tasks.GenerateDesignTokensTask
+
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.roborazzi)
+}
+
+// FunputUI: the app's own design system. Tokens come from tokens/app.tokens.json beside this file and are
+// generated into this module's sources on every build; screens depend on the components here,
+// never on the tokens or on Material directly.
+android {
+    namespace = "app.funput.funput.ui.kit"
+    compileSdk {
+        version = release(37)
+    }
+
+    defaultConfig {
+        minSdk = 26
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    buildFeatures {
+        compose = true
+    }
+    testOptions.unitTests.isIncludeAndroidResources = true
+}
+
+val generateDesignTokens by tasks.registering(GenerateDesignTokensTask::class) {
+    tokenFile.set(layout.projectDirectory.file("tokens/app.tokens.json"))
+    packageName.set("app.funput.funput.ui.kit.tokens")
+    outputDirectory.set(layout.buildDirectory.dir("generated/designTokens"))
+}
+
+androidComponents.onVariants { variant ->
+    variant.sources.kotlin?.addGeneratedSourceDirectory(
+        generateDesignTokens,
+        GenerateDesignTokensTask::outputDirectory,
+    )
+}
+
+dependencies {
+    api(platform(libs.androidx.compose.bom))
+    api(libs.androidx.compose.foundation)
+    api(libs.androidx.compose.ui)
+    api(libs.kyant.shapes)
+    // Glass: blur from API 31, edge refraction from API 33. Wrapped by the glass package only.
+    implementation(libs.kyant.backdrop)
+    // Only for the few components FunputUI deliberately borrows (sheet, dialog, slider).
+    implementation(libs.androidx.compose.material3)
+    testImplementation(project(":ui-testing"))
+}

@@ -7,6 +7,7 @@ import Testing
 @MainActor
 struct BackspaceWordSwipeTests {
     private static let backspaceKey = KeySpec(id: "backspace", label: "", role: .backspace)
+    private static let repeatDelay = KeyboardSurfaceInteractionController.smartBackspaceRepeatDelay
 
     @Test("Rubbing left one step deletes one word")
     func oneStepDeletesOneWord() {
@@ -14,8 +15,8 @@ struct BackspaceWordSwipeTests {
         subject.begin()
         subject.move(to: 75)
 
-        #expect(subject.claims == [.wordDelete])
-        #expect(subject.phases == [.pressed, .deletedWord])
+        #expect(subject.claims == [.repeatKey, .wordDelete])
+        #expect(subject.phases == [.pressed, .repeated, .deletedWord])
     }
 
     @Test("Rubbing further deletes further words")
@@ -26,7 +27,7 @@ struct BackspaceWordSwipeTests {
         subject.move(to: 35)
         subject.move(to: 20)
 
-        #expect(subject.phases == [.pressed, .deletedWord, .deletedWord])
+        #expect(subject.phases == [.pressed, .repeated, .deletedWord, .deletedWord])
     }
 
     @Test("Rubbing right does nothing")
@@ -35,8 +36,8 @@ struct BackspaceWordSwipeTests {
         subject.begin()
         subject.move(to: 220)
 
-        #expect(subject.claims.isEmpty)
-        #expect(subject.phases == [.pressed])
+        #expect(subject.claims == [.repeatKey])
+        #expect(subject.phases == [.pressed, .repeated])
     }
 
     @Test("A claimed rub too short to delete a word still deletes one character")
@@ -56,18 +57,40 @@ struct BackspaceWordSwipeTests {
         subject.move(to: 75)
         subject.controller.endTouch(token: 1)
 
-        #expect(subject.phases == [.pressed, .deletedWord, .cancelled])
+        #expect(subject.phases == [.pressed, .repeated, .deletedWord, .cancelled])
+    }
+
+    @Test("Holding a beat before rubbing still deletes words")
+    func beatBeforeRubStillRatchets() {
+        let subject = subject()
+        subject.begin()
+        // The plain 0.4s repeat would have locked the rub out by now; no timer is due yet.
+        subject.scheduler.fire(after: 0.4)
+        subject.move(to: 75)
+
+        #expect(subject.claims == [.repeatKey, .wordDelete])
+        #expect(subject.phases == [.pressed, .repeated, .deletedWord])
     }
 
     @Test("Once Backspace has repeated, rubbing left keeps repeating characters")
     func repeatWinsOverRatchet() {
         let subject = subject()
         subject.begin()
-        subject.scheduler.fire(after: 0.4)
+        subject.scheduler.fire(after: Self.repeatDelay)
         subject.move(to: 75)
 
-        #expect(subject.claims == [.repeatKey])
-        #expect(subject.phases == [.pressed, .repeated])
+        #expect(subject.claims == [.repeatKey, .repeatKey])
+        #expect(subject.phases == [.pressed, .repeated, .repeated])
+    }
+
+    @Test("With smart gestures off Backspace repeats on the plain delay")
+    func disabledKeepsPlainRepeatDelay() {
+        let subject = subject()
+        subject.smartGestures = false
+        subject.begin()
+        subject.scheduler.fire(after: 0.4)
+
+        #expect(subject.phases == [.pressed, .repeated, .repeated])
     }
 
     @Test("With smart gestures off a leftward drag is not a word delete")
@@ -77,8 +100,8 @@ struct BackspaceWordSwipeTests {
         subject.begin()
         subject.move(to: 75)
 
-        #expect(subject.claims.isEmpty)
-        #expect(subject.phases == [.pressed])
+        #expect(subject.claims == [.repeatKey])
+        #expect(subject.phases == [.pressed, .repeated])
     }
 
     private func subject() -> GestureTestSubject {

@@ -15,6 +15,7 @@ internal class KeyboardSurfaceBackgroundState(
     var image: KeyboardThemeBackgroundImage? = null
         private set
     val bitmap get() = loader.bitmap
+    val isSettled get() = loader.isSettled
 
     fun update(image: KeyboardThemeBackgroundImage?) {
         if (this.image == image) return

@@ -16,7 +16,21 @@ internal class KeyboardTouchHandler(
 ) : PressedKeyState {
     private val pointerSession = PointerKeySession(keyAt, onPressedStateChanged)
 
-    fun onTouchEvent(event: MotionEvent): Result = when (event.actionMasked) {
+    private var ignoringGesture = false
+
+    fun cancelGesture() {
+        clear()
+        ignoringGesture = true
+        requestParentIntercept(false)
+    }
+
+    fun onTouchEvent(event: MotionEvent): Result {
+        if (ignoringGesture && event.actionMasked != MotionEvent.ACTION_DOWN) return Result.HANDLED
+        ignoringGesture = false
+        return handleEvent(event)
+    }
+
+    private fun handleEvent(event: MotionEvent): Result = when (event.actionMasked) {
         MotionEvent.ACTION_DOWN -> handleDown(event)
         MotionEvent.ACTION_POINTER_DOWN -> {
             startPointer(event, event.actionIndex)

@@ -41,6 +41,7 @@ struct SettingsScreen: View {
             TypingSettingsSection(model: model, shortcuts: shortcuts) { picker = $0 }
             LayoutSettingsSection(model: model) { picker = $0 }
             SmartInputSettingsSection(model: model)
+            ExtraOnsetsSettingsCard(model: model)
             FeedbackSettingsCard(
                 haptics: model.fullAccessBinding(\.isHapticFeedbackEnabled) {
                     requestsHapticAccess = true

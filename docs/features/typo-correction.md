@@ -257,7 +257,7 @@ ghim đúng sự phân vai này.
 Trong `boundary/mod.rs`, khi gặp phím ranh giới:
 
 1. **Gõ tắt** (`shortcut.rs`) — nếu khớp, dừng.
-2. **`judge`** — một lần `is_complete_syllable` trả lời cho cả hai việc còn lại. Nó chỉ chạy khi
+2. **`judge`** — một lần `is_complete_syllable` (theo `config.syllable_rules`, nên tôn trọng cả phụ âm đầu z/f/w/j khi bật) trả lời cho cả hai việc còn lại. Nó chỉ chạy khi
    có người cần: English restore còn cửa, hoặc correction có dữ liệu chạm dùng được. Nhờ vậy
    host không gửi điểm chạm thì chi phí bằng đúng hôm nay (đo bằng `alloc_budget_correction`).
 3. **Correction** — nếu qua hết §3.1: ghi ứng viên vào chỗ chờ, rồi vẫn `session.clear()` và
@@ -419,7 +419,7 @@ hai. `String(edit, 1, edit.size - 1)` dựng lại chữ từ phần đuôi.
 | Tần suất từ | `PersonalSuggestions` (module Swift) |
 | Cờ autocorrect của host | `Keyboard/Controller/KeyboardViewController+Traits.swift` — `applyTextInputTraits` đã đọc trait, thêm `autocorrectionType` |
 | Chip hoàn tác | `KeyboardRenderer/.../KeyboardToolbarView` (đang có suggestion bar) |
-| Công tắc | `Funput/Settings/KeyboardSettingsSections.swift` nhóm "Thông minh" + `FunputConfiguration` (schema v14) |
+| Công tắc | `Funput/Settings/KeyboardSettingsSections.swift` nhóm "Thông minh" + `FunputConfiguration` (schema v16; v15 là `returnsToLettersAfterPunctuation` của main) |
 
 ### 8.2. Ghi tài liệu
 

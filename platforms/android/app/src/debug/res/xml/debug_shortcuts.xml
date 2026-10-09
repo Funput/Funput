@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: long-press the Funput icon to open the FunputUI component catalog. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="funput_ui_catalog"
+        android:shortcutShortLabel="@string/debug_catalog_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="app.funput.funput.catalog.CatalogActivity"
+            android:targetPackage="@string/debug_application_id" />
+    </shortcut>
+</shortcuts>

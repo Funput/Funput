@@ -6,7 +6,7 @@ mod kinds;
 mod target;
 
 use crate::input_method::CircumflexStem;
-use crate::{ToneStyle, TransformKind, TransformResult};
+use crate::{ComposeOptions, TransformKind, TransformResult};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ModifierIntent {
@@ -23,13 +23,17 @@ pub(crate) enum IntentResolution {
     Literal(String),
 }
 
-pub(crate) fn resolve(buffer: &str, intent: ModifierIntent, style: ToneStyle) -> IntentResolution {
+pub(crate) fn resolve(
+    buffer: &str,
+    intent: ModifierIntent,
+    options: ComposeOptions,
+) -> IntentResolution {
     match intent {
         ModifierIntent::Circumflex { stem, key } => {
-            kinds::circumflex::resolve(buffer, char::from(stem), key, style)
+            kinds::circumflex::resolve(buffer, char::from(stem), key, options)
         }
         ModifierIntent::Stroke { key } => kinds::stroke::resolve(buffer, key),
-        ModifierIntent::DeferredW { key } => kinds::w::resolve(buffer, key),
+        ModifierIntent::DeferredW { key } => kinds::w::resolve(buffer, key, options.syllable_rules),
     }
 }
 

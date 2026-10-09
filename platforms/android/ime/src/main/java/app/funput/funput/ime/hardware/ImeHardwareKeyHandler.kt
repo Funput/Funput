@@ -17,13 +17,20 @@ internal class ImeHardwareKeyHandler(
     private val finish: () -> Unit,
     private val hotkeyEnabled: () -> Boolean = { false },
     private val toggleSoftKeyboard: () -> Unit = {},
+    private val setShift: (ShiftState) -> Unit = {},
 ) {
     private val consumedDown = mutableSetOf<Int>()
 
     fun onKeyDown(stroke: HardwareKeyStroke): Boolean =
         when (val decision = HardwareKeyActionMapper.map(stroke, hotkeyEnabled())) {
             is HardwareKeyDecision.Consume -> {
-                dispatch(decision.action.applyHardwareCasing(currentShift()))
+                val shift = currentShift()
+                dispatch(decision.action.applyHardwareCasing(shift))
+                // One-shot Shift ends with the first typed character, like the on-screen keys.
+                // Waiting for onUpdateSelection would let rapid keys all see Shift still on.
+                if (decision.action is KeyAction.Input && shift == ShiftState.ON) {
+                    setShift(ShiftState.OFF)
+                }
                 consumedDown.add(stroke.keyCode)
                 true
             }
@@ -51,8 +58,10 @@ internal class ImeHardwareKeyHandler(
             session: ImeEditingSession,
             softKeyboard: SoftKeyboardVisibility,
             currentShift: () -> ShiftState,
+            setShift: (ShiftState) -> Unit,
         ) = ImeHardwareKeyHandler(
             currentShift = currentShift,
+            setShift = setShift,
             dispatch = { action ->
                 ImeKeyboardCallbackBinder.dispatch(session.actionHandler, session.suggestionService, action)
             },

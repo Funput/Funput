@@ -33,10 +33,12 @@ internal class HardwareKeyboard(
             session: ImeEditingSession,
             scope: CoroutineScope,
             currentShift: () -> ShiftState,
+            setShift: (ShiftState) -> Unit,
         ): HardwareKeyboard {
             val softKeyboard = SoftKeyboardVisibility(service)
             softKeyboard.observe(HardwareKeyboardSettings(service), scope)
-            return HardwareKeyboard(ImeHardwareKeyHandler.bind(session, softKeyboard, currentShift), softKeyboard)
+            val keys = ImeHardwareKeyHandler.bind(session, softKeyboard, currentShift, setShift)
+            return HardwareKeyboard(keys, softKeyboard)
         }
     }
 }

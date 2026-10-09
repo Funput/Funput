@@ -1,8 +1,9 @@
 use super::*;
+use crate::validation::rules::SyllableRules;
 
 /// (onset, nucleus, coda, invalid_onset) with the iterators materialized.
 fn parts(buffer: &str) -> (String, String, String, bool) {
-    let p = parse_syllable(buffer);
+    let p = parse_syllable(buffer, SyllableRules::STANDARD);
     (
         p.onset.into(),
         p.nucleus_chars().collect(),
@@ -33,6 +34,42 @@ fn parse_syllable_cases() {
 }
 
 #[test]
+fn onset_never_reaches_past_the_consonant_run() {
+    // Only the `qu`/`gi` glides carry a vowel into the onset; every other onset,
+    // Tây Nguyên clusters included, is the leading consonant run or part of it.
+    assert_eq!(parts("tiếng"), ok("t", "iế", "ng"));
+    assert_eq!(parts("đẹp"), ok("đ", "ẹ", "p"));
+    assert_eq!(parts("kpă"), ok("kp", "ă", ""));
+    assert_eq!(parts("Đrắk"), ok("Đr", "ắ", "k"));
+    assert_eq!(parts("kđrao"), ok("kđr", "ao", ""));
+    assert_eq!(parts("KTy"), ok("KT", "y", ""));
+    assert_eq!(parts("glong"), ok("gl", "o", "ng"));
+    assert_eq!(parts("quy"), ok("qu", "y", ""));
+    assert_eq!(parts("yêu"), ok("", "yêu", ""));
+}
+
+#[test]
+fn is_well_ordered_cases() {
+    // Nucleus first, coda last — or either one missing.
+    for ok in [
+        "ma", "trung", "text", "tr", "", "gío", "qúa", "krông", "đắk",
+    ] {
+        assert!(
+            parse_syllable(ok, SyllableRules::STANDARD).is_well_ordered(),
+            "{ok} is well ordered"
+        );
+    }
+    // A consonant between onset and a vowel — or between two vowels — is not,
+    // even though the order-blind iterators happily read a rhyme out of it.
+    for bad in ["cno", "ona", "mixa"] {
+        assert!(
+            !parse_syllable(bad, SyllableRules::STANDARD).is_well_ordered(),
+            "{bad} is misordered"
+        );
+    }
+}
+
+#[test]
 fn onset_survives_a_tone_parked_on_the_glide() {
     // Mid-composition transients: the tone key arrived before the nucleus. These
     // must keep parsing as `gi`/`qu` onsets, or the rhyme reads as `io`/`ua` and
@@ -53,6 +90,5 @@ fn onset_survives_a_tone_parked_on_the_glide() {
 fn horned_u_is_not_a_qu_glide() {
     // `ư` is a different vowel, not a toned `u`, so `qư` forms no onset at all
     // (the bare `q` is what flags the chunk).
-    assert!(parse_syllable("qư").invalid_onset);
-    assert!(!is_valid_onset("qư"));
+    assert!(parse_syllable("qư", SyllableRules::STANDARD).invalid_onset);
 }

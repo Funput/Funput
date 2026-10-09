@@ -2,7 +2,7 @@
 
 mod shortcut;
 
-use funput_core::{InputMethod, is_bare_shaped_vowel, is_complete_syllable};
+use funput_core::{InputMethod, is_bare_shaped_vowel};
 
 use crate::ImeResult;
 use crate::compose::RestoreOverride;
@@ -48,7 +48,11 @@ pub(crate) fn judge(session: &Session) -> Verdict {
             restore: false,
         };
     }
-    let complete = !session.buffer.is_empty() && is_complete_syllable(&session.buffer);
+    let complete = !session.buffer.is_empty()
+        && session
+            .config
+            .syllable_rules
+            .is_complete_syllable(&session.buffer);
     Verdict {
         complete,
         restore: restore_candidate && !complete && !keystrokes_intend_vietnamese(session),
@@ -62,7 +66,8 @@ pub(crate) fn should_restore(session: &Session) -> bool {
 }
 
 /// Whether the keystrokes behind `buffer` can only have been meant as Vietnamese,
-/// which outranks the structural verdict of [`is_complete_syllable`].
+/// which outranks the structural verdict of
+/// [`funput_core::SyllableRules::is_complete_syllable`].
 ///
 /// Three signals say so:
 /// - a composed `đ`, unless a stray `w` shows the word is still mid-intent (`dwd`);

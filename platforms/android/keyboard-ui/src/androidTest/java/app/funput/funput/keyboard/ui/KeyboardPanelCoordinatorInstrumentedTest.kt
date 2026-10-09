@@ -2,7 +2,8 @@ package app.funput.funput.keyboard.ui
 
 import android.graphics.drawable.GradientDrawable
 import android.view.View
-import android.view.ViewGroup
+import app.funput.funput.keyboard.ui.support.childOfType
+import app.funput.funput.keyboard.ui.support.descendants
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.funput.funput.keyboard.KeyboardSurfaceView
@@ -27,11 +28,11 @@ class KeyboardPanelCoordinatorInstrumentedTest {
         val changes = mutableListOf<KeyboardPanel>()
         keyboard.callbacks.onPanelChanged = changes::add
         assertEquals(KeyboardPanel.LETTERS, keyboard.activePanel)
-        assertEquals(1, keyboard.childCount)
+        assertEquals(0, keyboard.descendants().filterIsInstance<EmojiPanelView>().count())
 
         keyboard.showEmojiPanel()
         val firstPanel = keyboard.childOfType<EmojiPanelView>()
-        assertEquals(2, keyboard.childCount)
+        assertEquals(1, keyboard.descendants().filterIsInstance<EmojiPanelView>().count())
         keyboard.showEmojiPanel()
         assertEquals(listOf(KeyboardPanel.EMOJI), changes)
 
@@ -133,9 +134,4 @@ class KeyboardPanelCoordinatorInstrumentedTest {
         }
     }
 
-    private inline fun <reified T : View> ViewGroup.childOfType(): T =
-        (0 until childCount).asSequence()
-            .map(::getChildAt)
-            .filterIsInstance<T>()
-            .first()
 }

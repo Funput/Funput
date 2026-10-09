@@ -42,6 +42,7 @@
 |---|---|
 | ⌨️ **Ba kiểu gõ** | Telex · **Telex nâng cao** (thêm `w` đầu từ và phím tắt `[` `]`) · VNI |
 | 🧠 **Gõ thông minh** | Tự khôi phục tiếng Anh · khôi phục tức thì · kiểm tra chính tả · tự động viết hoa |
+| 🔤 **Phụ âm đầu mở rộng** | Chọn riêng `z`, `f`, `w`, `j` cho teencode, từ mượn và tên riêng; mặc định tắt |
 | 💬 **Gợi ý từ cá nhân** | Chỉ học chữ bạn gõ qua Funput, **lưu trên máy** |
 | 👆 **Cử chỉ thông minh** | Gõ đúp phím cách để chấm câu · giữ phím cách rồi kéo để di chuyển con trỏ mọi hướng · vuốt trái phím xoá để xoá cả từ |
 | 🎨 **7 theme dựng sẵn** | Slate · Ink · Paper · Glass Dark · Glass Light · Blossom · Orchid |
@@ -108,12 +109,22 @@ Cả ba nằm chung một công tắc **Cử chỉ thông minh**.
 | **Gõ tiếng Việt** | Kiểu gõ · kiểu đặt dấu · gõ tắt |
 | **Bố cục bàn phím** | Hàng phím số · kích thước phím |
 | **Thông minh** | Khôi phục từ · kiểm tra chính tả · tự viết hoa · gợi ý từ · cử chỉ thông minh |
+| **Phụ âm đầu mở rộng** | Công tắc chính · chọn riêng `z`, `f`, `w`, `j` |
 | **Giao diện** | Chọn theme dựng sẵn hoặc tự tạo theme riêng |
 | **Phản hồi khi chạm** | Âm thanh và rung khi gõ |
 | **Clipboard · Dữ liệu** | Lịch sử clipboard và thao tác xoá dữ liệu cục bộ |
 
 Cấu hình lưu bằng **Preferences DataStore**. Gõ tắt là tài liệu JSON riêng trong vùng private
 của app để UI và IME dùng cùng một snapshot; xem [thiết kế Gõ tắt](../../docs/features/android-shortcuts.md).
+
+**Phụ âm đầu mở rộng** nằm ngay sau **Thông minh**, mặc định tắt. Bật công tắc
+chính chọn cả bốn chữ; có thể bỏ riêng từng chữ, và bỏ chữ cuối sẽ tự tắt công
+tắc chính. Lựa chọn áp dụng cho bàn phím, bàn phím vật lý và ô tìm emoji mà không
+cần khởi động lại app chủ.
+
+Khi bật `f`, Telex có thể đổi `fast` thành `fát`; gõ `fasst` để giữ `fast`.
+Telex nâng cao vẫn dùng `w` đầu từ để gõ `ư` (`wa` → `ưa`); khi bật phụ âm `w`,
+gõ `wwas` để lấy `wá`. Xem [thiết kế và checklist kiểm tra tay](../../docs/features/extra-onsets.md#tích-hợp-android).
 
 ### Gợi ý từ và giấy phép
 
@@ -129,6 +140,19 @@ không tải dữ liệu hoặc commit nhị phân. Installer kiểm CRC và cà
 `noBackupFilesDir/Lexicon` trên worker trước khi gọi JNI.
 
 Chi tiết và kết quả kiểm chứng: [English lexicon](../../docs/features/english-lexicon-suggestion.md).
+
+### Nhập bằng giọng nói
+
+Android 12/API 31+ có mic cạnh Emoji khi bật Giọng nói và máy hỗ trợ model
+on-device cho VI (`vi-VN`) hoặc EN (`en-US`). Tap mic, chuẩn bị quyền/model nếu
+cần, quay lại và tap lần nữa để nghe. Dừng chờ final; Huỷ/Back bỏ phiên. Panel
+đồng bộ theme bàn phím, partial chỉ xem trước và final chèn một lần.
+
+Funput không có cloud fallback, không tự thêm khoảng trắng/dấu câu/viết hoa,
+không lưu audio/transcript hay học từ từ lời nói. Feature gate đã bật sau nghiệm
+thu VI trên hai máy; các phép đo định lượng và ca còn lại được người dùng miễn.
+EN có trong code nhưng chưa kiểm chứng ASR. Xem [hướng dẫn và quyền riêng tư](docs/VoiceInput.md) và
+[checklist nghiệm thu P6](../../docs/features/android-speech-acceptance/README.md).
 
 ## Giới hạn đã biết
 
@@ -164,6 +188,8 @@ Telex nâng cao, VNI, matching và smart case của Gõ tắt.
 | `keyboard-renderer` | Bố cục co giãn, chạm, trợ năng và vẽ bằng Canvas |
 | `theme-runtime` | Hợp đồng theme có version, kiểm tra hợp lệ, phân giải token, truy cập asset an toàn |
 | `theme-store` | Lưu theme tự tạo: JSON, bản nháp và kho asset |
+| `funput-ui` | Design system riêng của app (FunputUI): theme, font Be Vietnam Pro, component; token sinh từ `funput-ui/tokens/app.tokens.json` |
+| `ui-testing` | Chỉ dùng cho test: Robolectric + Roborazzi để dựng và chụp màn Compose trên JVM |
 
 Chiều phụ thuộc là **một chiều, cố ý**:
 
@@ -177,7 +203,37 @@ app ──▶ ime ──▶ keyboard-ui ──▶ keyboard-renderer ──▶ th
  └──▶ theme-runtime ──────────────────────────────────────┘
 ```
 
-`theme-runtime` là lá — nó không phụ thuộc module nào khác trong dự án.
+`theme-runtime` là lá — nó không phụ thuộc module nào khác trong dự án. `funput-ui` cũng là lá: chỉ `app` phụ thuộc vào nó, và nó
+không biết gì về IME hay bàn phím. `ui-testing` đứng ngoài
+đồ thị này: module khác chỉ kéo nó vào bằng `testImplementation`, nên nó không bao giờ vào APK.
+
+### Test giao diện trên JVM
+
+Test Compose chạy bằng Robolectric trong `testDebugUnitTest`, không cần emulator. Chụp ảnh
+màn hình bằng Roborazzi:
+
+```bash
+./gradlew :app:recordRoborazziDebug
+```
+
+Ảnh nằm ở `app/build/outputs/roborazzi/`. Chạy `testDebugUnitTest` bình thường thì màn vẫn được
+dựng (bắt crash) nhưng không ghi ảnh. Workflow `android-screenshots` chụp lại trên mỗi PR đụng
+tới Android và đính ảnh vào artifact.
+
+**FunputUI và các màn đã làm lại dùng ảnh golden.** Ảnh mẫu nằm trong
+`funput-ui/src/test/screenshots` và `app/src/test/screenshots`; job `android` so từng PR với
+chúng (`verifyRoborazziDebug` của cả hai module). Ảnh golden phải được
+ghi trên Linux: khi cố ý đổi giao diện, tải artifact `funput-ui-goldens` / `app-goldens` của
+workflow `android-screenshots` trên PR đó và commit đè lên thư mục tương ứng. Ghi trên Mac chỉ để tự xem.
+
+**Icon.** FunputUI dùng bộ [Phosphor](https://phosphoricons.com) (MIT), ghim ở một phiên bản.
+Danh sách nằm trong `funput-ui/icons.txt`; thêm icon thì thêm một dòng rồi chạy
+`python3 scripts/import-phosphor-icons.py` để sinh lại drawable. Code chỉ gọi icon qua
+`FunputIcons`, theo ý nghĩa (`FunputIcons.Haptics`), không theo tên file. Mỗi nhóm cài đặt có
+một màu (`FunputTint`), giống ứng dụng Cài đặt của iOS.
+
+**Catalog.** Bản debug có thêm biểu tượng "Funput UI" mở màn trưng bày mọi component, có nút
+chuyển tầng kính để so kính thật với bản mờ đục ngay trên máy. Bản release không có nó.
 
 ### Build
 

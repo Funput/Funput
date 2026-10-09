@@ -6,18 +6,19 @@ import Foundation
 public final class ClipboardCaptureController {
     public private(set) var needsRetry = false
     public private(set) var lastPastedChangeCount: Int?
-    private var processed: Int?
-    private var suppressed: Int?
-    private var isReading = false
-    private var pending = false
-    private var resampleTask: Task<Void, Never>?
-    private var generation = 0
-    private var active = false
-    private let gateway: any ClipboardGateway
-    private let allowsCapture: () -> Bool
-    private let save: (ClipboardItem) -> Bool
+    var processed: Int?
+    var suppressed: Int?
+    var isReading = false
+    var pending = false
+    var readTask: Task<Void, Never>?
+    var resampleTask: Task<Void, Never>?
+    var generation = 0
+    var active = false
+    let gateway: any ClipboardGateway
+    let allowsCapture: () -> Bool
+    let save: (ClipboardItem) -> Bool
     private let marks: any ClipboardSessionMarkStoring
-    private let onUpdate: () -> Void
+    let onUpdate: () -> Void
 
     public init(
         gateway: any ClipboardGateway,
@@ -53,6 +54,8 @@ public final class ClipboardCaptureController {
         resampleTask = nil
     }
 
+    /// Checks the metadata on the spot and, when there is something new, reads the
+    /// contents in the background (see `ClipboardCaptureController+Read.swift`).
     public func synchronize(retry: Bool = false) {
         guard active, allowsCapture() else { return }
         guard !isReading else { pending = true; return }
@@ -61,22 +64,7 @@ public final class ClipboardCaptureController {
         let before = gateway.snapshot()
         guard !before.isIndeterminate, before.hasPlainText,
               before.changeCount != processed, before.changeCount != suppressed else { return }
-        isReading = true
-        defer {
-            isReading = false
-            schedulePendingRead()
-        }
-        let session = generation
-        let text = gateway.readText()
-        guard active, session == generation, allowsCapture() else { return }
-        // Do not label an old provider result with a newer clipboard generation.
-        guard gateway.snapshot().changeCount == before.changeCount else { pending = true; return }
-        guard let text else { fail(); return }
-        guard !text.isEmpty else { processed = before.changeCount; return }
-        if save(ClipboardItem(text: text, sourceChangeCount: before.changeCount)) {
-            processed = before.changeCount
-            onUpdate()
-        } else { fail() }
+        startRead(of: before)
     }
 
     /// nil means the provider could not establish a stable clipboard generation.
@@ -101,21 +89,8 @@ public final class ClipboardCaptureController {
         processed = suppressed
     }
 
-    private func fail() {
+    func fail() {
         needsRetry = true
         onUpdate()
-    }
-
-    private func schedulePendingRead() {
-        guard pending, active else { return }
-        pending = false
-        let session = generation
-        resampleTask?.cancel()
-        resampleTask = Task { @MainActor [weak self] in
-            await Task.yield()
-            guard !Task.isCancelled, let self, generation == session else { return }
-            resampleTask = nil
-            synchronize()
-        }
     }
 }

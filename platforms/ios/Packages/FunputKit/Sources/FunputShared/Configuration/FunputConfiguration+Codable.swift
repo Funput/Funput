@@ -18,12 +18,14 @@ extension FunputConfiguration {
         config.spellCheck = try container.decodeIfPresent(Bool.self, forKey: .spellCheck) ?? config.spellCheck
         config.smartRestore = try container.decodeIfPresent(Bool.self, forKey: .smartRestore) ?? config.smartRestore
         config.eagerRestore = try container.decodeIfPresent(Bool.self, forKey: .eagerRestore) ?? config.eagerRestore
+        config.extraOnsets = try container.decodeIfPresent(ExtraOnsetLetters.self, forKey: .extraOnsets) ?? config.extraOnsets
         config.autoCapitalize = try container.decodeIfPresent(Bool.self, forKey: .autoCapitalize) ?? config.autoCapitalize
         config.selectedThemeID = try container.decodeIfPresent(String.self, forKey: .selectedThemeID) ?? config.selectedThemeID
         config.isHapticFeedbackEnabled = try container.decodeIfPresent(Bool.self, forKey: .isHapticFeedbackEnabled) ?? config.isHapticFeedbackEnabled
         config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.smartGesturesEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartGesturesEnabled) ?? config.smartGesturesEnabled
+        config.returnsToLettersAfterPunctuation = try container.decodeIfPresent(Bool.self, forKey: .returnsToLettersAfterPunctuation) ?? config.returnsToLettersAfterPunctuation
         config.showsNumberRow = try container.decodeIfPresent(Bool.self, forKey: .showsNumberRow) ?? config.showsNumberRow
         config.layoutPreset = try container.decodeIfPresent(KeyboardLayoutPreset.self, forKey: .layoutPreset) ?? config.layoutPreset
         config.keySizing = try container.decodeIfPresent(KeyboardKeySizing.self, forKey: .keySizing) ?? config.keySizing
@@ -91,11 +93,17 @@ extension FunputConfiguration {
         if config.schemaVersion < 14 {
             config.schemaVersion = 14
         }
-        // v15 added `typoCorrection`, on for everyone. It cannot act until the keyboard
-        // also reports where each touch landed, so an older build's stored configuration
-        // needs nothing fixed up — it simply gains a switch.
+        // v15 added `returnsToLettersAfterPunctuation`, defaulting to on for everyone like
+        // the `< 11` rung: finishing a sentence on the symbol page should not strand the
+        // next Vietnamese word there.
         if config.schemaVersion < 15 {
             config.schemaVersion = 15
+        }
+        // v16 added `typoCorrection`, on for everyone. It cannot act until the keyboard
+        // also reports where each touch landed, so an older build's stored configuration
+        // needs nothing fixed up — it simply gains a switch.
+        if config.schemaVersion < 16 {
+            config.schemaVersion = 16
         }
         self = config
     }

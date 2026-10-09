@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
+import app.funput.funput.keyboard.ui.support.childOfType
+import app.funput.funput.keyboard.ui.support.descendants
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.funput.funput.keyboard.ui.clipboard.ClipboardPanelView
@@ -35,7 +37,7 @@ class ClipboardSwipeInstrumentedTest {
                 activity.setContentView(keyboard)
                 keyboard.measure(exactly(1080), exactly(600))
                 keyboard.layout(0, 0, 1080, 600)
-                panel = (0 until keyboard.childCount).map(keyboard::getChildAt)
+                panel = keyboard.descendants()
                     .filterIsInstance<ClipboardPanelView>().single()
             }
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().waitForIdleSync()

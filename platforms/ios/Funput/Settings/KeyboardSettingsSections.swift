@@ -97,6 +97,13 @@ struct SmartInputSettingsSection: View {
                 "hand.draw",
                 \.smartGesturesEnabled
             )
+            SettingsRowDivider()
+            toggle(
+                "Tự về bảng chữ",
+                "Gõ dấu câu ở bảng ký hiệu rồi bấm cách để quay lại bảng chữ cái.",
+                "abc",
+                \.returnsToLettersAfterPunctuation
+            )
         }
     }
 

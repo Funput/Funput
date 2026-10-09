@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.popover.model.KeyAlternate
 import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
@@ -34,7 +35,7 @@ class WebEditorNumberRowLayoutTest {
             val compact = topRow(resolve(editorMode, showsNumberRow = false))
             val standard = topRow(resolve(editorMode, showsNumberRow = true))
 
-            assertEquals(Digits, compact.keys.map { it.alternates.first().text })
+            assertEquals(Digits, compact.keys.map { (it.alternates.first() as KeyAlternate.Text).text })
             compact.keys.forEachIndexed { index, key ->
                 // Search composes, so its tone hint keeps its slot and the digit joins it on the
                 // right; email and URL never had one, so the digit stands alone.
@@ -76,7 +77,7 @@ class WebEditorNumberRowLayoutTest {
             assertEquals("qwerty-${editorMode.name.lowercase()}-vni", layout.id)
             assertEquals(5, layout.rows.size)
             assertTrue("$editorMode row role", layout.rows.first().keys.all { it.role == role })
-            assertTrue("$editorMode alternates", topRow(layout).keys[0].alternates.none { it.text == "1" })
+            assertTrue("$editorMode alternates", topRow(layout).keys[0].alternates.none { it is KeyAlternate.Text && it.text == "1" })
         }
     }
 

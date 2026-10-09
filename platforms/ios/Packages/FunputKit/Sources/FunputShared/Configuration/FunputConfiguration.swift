@@ -14,6 +14,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var spellCheck: Bool
     public var smartRestore: Bool
     public var eagerRestore: Bool
+    /// Additional initial consonants admitted when composing Vietnamese.
+    public var extraOnsets: ExtraOnsetLetters
     public var autoCapitalize: Bool
     public var selectedThemeID: String
     public var isHapticFeedbackEnabled: Bool
@@ -21,6 +23,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var showsKeyPreviews: Bool
     /// Double-tap space, spacebar cursor panning and swipe-to-delete-word, as one switch.
     public var smartGesturesEnabled: Bool
+    /// Whether a space typed after punctuation on a symbol page brings back the letters.
+    public var returnsToLettersAfterPunctuation: Bool
     public var showsNumberRow: Bool
     public var layoutPreset: KeyboardLayoutPreset
     public var keySizing: KeyboardKeySizing
@@ -44,9 +48,9 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
-        case eagerRestore, autoCapitalize, selectedThemeID
+        case eagerRestore, autoCapitalize, selectedThemeID, extraOnsets
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
-        case smartGesturesEnabled
+        case smartGesturesEnabled, returnsToLettersAfterPunctuation
         case showsNumberRow, layoutPreset, keySizing, heightScale, keyboardAppearance
         case personalSuggestionsEnabled, personalSuggestionResetToken, languageToggleEnabled
         case typoCorrection
@@ -66,6 +70,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
         smartGesturesEnabled: Bool = true,
+        returnsToLettersAfterPunctuation: Bool = true,
         showsNumberRow: Bool = false,
         layoutPreset: KeyboardLayoutPreset = .funput,
         keySizing: KeyboardKeySizing = .funput,
@@ -77,7 +82,8 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         clipboardEnabled: Bool = true,
         clipboardExpiry: ClipboardExpiry = .hour,
         personalSuggestionResetToken: UUID? = nil,
-        schemaVersion: Int = FunputConfiguration.currentSchemaVersion
+        schemaVersion: Int = FunputConfiguration.currentSchemaVersion,
+        extraOnsets: ExtraOnsetLetters = []
     ) {
         self.inputMethod = inputMethod
         self.language = language
@@ -85,12 +91,14 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.spellCheck = spellCheck
         self.smartRestore = smartRestore
         self.eagerRestore = eagerRestore
+        self.extraOnsets = extraOnsets
         self.autoCapitalize = autoCapitalize
         self.selectedThemeID = selectedThemeID
         self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
         self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
         self.smartGesturesEnabled = smartGesturesEnabled
+        self.returnsToLettersAfterPunctuation = returnsToLettersAfterPunctuation
         self.showsNumberRow = showsNumberRow
         self.layoutPreset = layoutPreset
         self.keySizing = keySizing
@@ -118,5 +126,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 15
+    public static let currentSchemaVersion = 16
 }

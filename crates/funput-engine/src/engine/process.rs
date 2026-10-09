@@ -71,7 +71,7 @@ impl Engine {
         }
         self.session.keys.push(raw_key);
         correction::note_key(&mut self.session, raw_key, touch);
-        let result = pipeline::process(&mut self.session, compose_key, capitalize_shortcut);
+        let result = pipeline::process(&mut self.session, compose_key, key, capitalize_shortcut);
         // The pipeline rewrites the raw keys when a modifier is reverted, which would
         // leave the touch log describing a word that no longer exists.
         correction::verify_alignment(&mut self.session);

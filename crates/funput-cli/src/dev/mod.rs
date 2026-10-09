@@ -13,8 +13,10 @@ mod typos;
 use std::path::PathBuf;
 
 use clap::{Args, Subcommand};
+use funput_core::{ExtraOnsets, SyllableRules};
 
 use crate::cli::MethodArg;
+use sim::SimConfig;
 
 pub use command::run;
 
@@ -104,4 +106,22 @@ pub struct CommonOpts {
     /// Print per-keystroke detail instead of just the final app text.
     #[arg(long)]
     pub steps: bool,
+    /// Also open syllables with `z`, `f`, `w`, `j` (`zô`, `fải`, `wá`, `jờ`).
+    #[arg(long)]
+    pub extra_onsets: bool,
+}
+
+impl CommonOpts {
+    /// The engine settings these flags ask for.
+    fn sim_config(&self) -> SimConfig {
+        let extra = if self.extra_onsets {
+            ExtraOnsets::ZFWJ
+        } else {
+            ExtraOnsets::NONE
+        };
+        SimConfig {
+            syllable_rules: SyllableRules::STANDARD.with_extra_onsets(extra),
+            ..SimConfig::new(self.method.into())
+        }
+    }
 }

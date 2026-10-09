@@ -3,7 +3,7 @@ package app.funput.funput.ui.theme.custom.color
 import androidx.annotation.StringRes
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardTheme
-import app.funput.funput.ui.theme.custom.ThemeEditorTab
+import app.funput.funput.ui.theme.custom.studio.ThemeEditorTab
 import app.funput.funput.ui.theme.custom.color.ThemeColorGroup.Advanced as Detail
 import app.funput.funput.ui.theme.custom.color.ThemeColorGroup.Background as Bg
 import app.funput.funput.ui.theme.custom.color.ThemeColorGroup.Keys as Keys

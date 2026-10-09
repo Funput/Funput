@@ -43,6 +43,9 @@ final class KeyboardViewController: UIInputViewController {
     let bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
     var clipboardRetryTask: Task<Void, Never>?
     let clipboardChangeMonitor = ClipboardChangeMonitor()
+    let clipboardIdleGate = ClipboardIdleGate()
+    var clipboardStartTask: Task<Void, Never>?
+    var isClipboardMonitoring = false
     lazy var clipboardCapture = makeClipboardCapture()
     var pendingBootstrapRepair: KeyboardBootstrapSnapshot?
     var adoptedIdentity: KeyboardActivationIdentity?
@@ -95,12 +98,13 @@ final class KeyboardViewController: UIInputViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         launchTrace.finish()
+        releaseSystemGestureTouchDelay()
         if hasFullAccess { accessStateStore.recordFullAccess() }
 #if DEBUG
         touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
 #endif
-        startClipboardMonitoring()
         repairBootstrapSnapshotIfNeeded()
+        scheduleClipboardMonitoringStart()
     }
 
     override func viewDidDisappear(_ animated: Bool) {

@@ -1,8 +1,10 @@
 name: Release
 
 # One tag → all platforms. Pushing a tag like v1.2026.1 builds the macOS .pkg, the
-# Windows .exe, and the Linux .debs — all stamped with the **tag version** (single
+# Windows portable .exe, and the Linux .debs — all stamped with the **tag version** (single
 # source of truth) — and publishes them to one public GitHub Release.
+# Microsoft Store builds are submitted separately through deploy-windows-store.yml.
+# Public Store listing: https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS
 #
 # workflow_dispatch is for testing the *full* pipeline (incl. EdDSA signing + the
 # update feeds) without disturbing users:
@@ -124,8 +126,10 @@ jobs:
             echo "| **iOS** | [App Store](https://apps.apple.com/vn/app/id6788829996) · [TestFlight](https://testflight.apple.com/join/E8YRd3sy) |"
             echo "| **Android** | [Google Play](https://play.google.com/store/apps/details?id=app.funput.funput) |"
             echo "| **macOS** | \`Funput-*.pkg\` (cần quyền quản trị) hoặc \`Funput-*.app.zip\` |"
-            echo "| **Windows** | \`Funput-*.exe\` — chạy ngay, tự cập nhật |"
+            echo "| **Windows** | [Microsoft Store](https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS) (khuyến nghị) hoặc \`Funput-*.exe\` portable |"
             echo "| **Linux** | \`.deb\` / \`.rpm\` — [hướng dẫn](https://docs.funput.app/docs/install/linux) |"
+            echo
+            echo "Windows: bản Microsoft Store cài đặt và cập nhật qua Store; các tệp \`.exe\` đính kèm là bản portable. Xem [hướng dẫn Windows](https://docs.funput.app/docs/install/windows/)."
             echo
             echo "Linux: khuyến nghị **Fcitx5** (\`funput-*\`); bản **IBus** (\`funput-ibus-*\`) nếu đang dùng IBus. Chọn đúng kiến trúc CPU. \`funput-settings-*\` cài kèm tự động."
           } > notes.md

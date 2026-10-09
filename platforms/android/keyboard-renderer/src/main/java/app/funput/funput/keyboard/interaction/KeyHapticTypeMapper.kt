@@ -28,6 +28,7 @@ internal object KeyHapticTypeMapper {
         KeyRole.PLACEMENT,
         KeyRole.CLIPBOARD,
         KeyRole.EMOJI,
+        KeyRole.MICROPHONE,
         -> KeyboardHapticType.CONTROL
 
         KeyRole.BACKSPACE -> KeyboardHapticType.DELETE

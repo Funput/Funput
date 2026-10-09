@@ -8,7 +8,7 @@ import UIKit
 
 @MainActor
 struct ClipboardCapturePresentationTests {
-    @Test func savingUpdatesOpenPanelAndKeepsPasteVisible() throws {
+    @Test func savingUpdatesOpenPanelAndKeepsPasteVisible() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -30,6 +30,7 @@ struct ClipboardCapturePresentationTests {
         )
         controller.begin()
         controller.synchronize()
+        await controller.settle()
         let context = ClipboardOfferPolicy.Context(
             editorMode: .text, hasToolbar: true, hasFullAccess: true
         )
@@ -65,6 +66,6 @@ private struct PresentationGateway: ClipboardGateway {
             changeCount: 1, hasStrings: true, hasURLs: false, hasPlainText: true
         )
     }
-    func readText() -> String? { "copied" }
+    func readText() async -> String? { "copied" }
 }
 #endif

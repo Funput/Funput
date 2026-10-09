@@ -213,15 +213,15 @@ fn a_digit_offered_for_the_first_key_is_not_a_word() {
     assert_eq!(candidate_texts(&engine), ["trước"]);
 }
 
-/// `ampe` is a word — a loanword in every Vietnamese dictionary — and one key from
-/// the syllable `smoe`. Typed with every finger square on its key, it used to be
-/// rewritten anyway, because a lone candidate won unopposed. The word as typed now
-/// competes, and a touch dead on the key it hit is evidence for it.
+/// `tl` ("thả lỏng", "trả lời") is chat shorthand typed on purpose, and one key from
+/// the syllable `to` (`l` sits beside `o`). Typed with every finger square on its
+/// key, it used to be rewritten anyway, because a lone candidate won unopposed. The
+/// word as typed now competes, and a touch dead on the key it hit is evidence for it.
 #[test]
 fn a_word_typed_squarely_is_kept_even_with_a_syllable_one_key_away() {
     let mut engine = correcting_engine(InputMethod::Vni);
     let mut doc = Document::new();
-    let neighbours = [('a', 's'), ('m', 'n'), ('p', 'o'), ('e', 'r')];
+    let neighbours = [('t', 'r'), ('l', 'o')];
     for (key, neighbour) in neighbours {
         engine.set_next_key_touch(KeyTouch::new(key, 0.0).with_alternate(neighbour, 1.0));
         doc.typed(key, &engine.process_char(key));

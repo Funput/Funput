@@ -1,11 +1,12 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.layout.symbols.SymbolPageContent
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
-import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.keyboard.model.KeyboardEditorMode
-import app.funput.funput.keyboard.model.KeyboardLayout
 import app.funput.funput.keyboard.model.KeySwipeAction
+import app.funput.funput.keyboard.model.KeyboardEditorMode
+import app.funput.funput.keyboard.model.KeyboardInputMethod
+import app.funput.funput.keyboard.model.KeyboardLayout
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardRow
 import org.junit.Assert.assertEquals

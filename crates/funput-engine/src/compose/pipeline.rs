@@ -4,7 +4,7 @@
 //! the zero-allocation pass-through exit; session strings (`vn_form`, `keys`)
 //! are refilled in place so their capacity is reused across keystrokes.
 
-use funput_core::{TransformKind, apply_checked, is_definitely_invalid};
+use funput_core::{TransformKind, apply_with};
 
 use crate::ImeResult;
 use crate::compose::RestoreOverride;
@@ -14,14 +14,19 @@ use crate::model::Session;
 /// Apply one keystroke to `session` and return platform instructions.
 ///
 /// `session.keys` already includes `key` (pushed by the caller).
-pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: bool) -> ImeResult {
-    let mut result = apply_checked(
-        &session.buffer,
-        key,
-        session.config.method,
-        session.config.tone_style,
-        session.config.spell_check,
-    );
+///
+/// `typed` is the character the physical key produces, which differs from `key`
+/// when auto-capitalize has already uppercased it. Only `typed` decides whether the
+/// app can echo the key itself: a host that passes the key through on
+/// [`ImeResult::none`] — the Windows hook — would otherwise let the lowercase `v`
+/// reach the app while the buffer holds `V`.
+pub(crate) fn process(
+    session: &mut Session,
+    key: char,
+    typed: char,
+    capitalize_shortcut: bool,
+) -> ImeResult {
+    let mut result = apply_with(&session.buffer, key, session.config.compose_options());
     if capitalize_shortcut && result.kind == TransformKind::Applied {
         uppercase_direct_vowel(&mut result.text);
     }
@@ -51,7 +56,7 @@ pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: boo
                 && session.config.eager_restore
                 && result.kind != TransformKind::Reverted
                 && session.keys != composed
-                && is_definitely_invalid(&composed)
+                && is_dead_end(session, &composed, key)
             {
                 session.keys.clone()
             } else {
@@ -64,7 +69,7 @@ pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: boo
     // so there is nothing to inject (and nothing to allocate).
     let prefix = common_prefix_bytes(&session.buffer, &new_buffer);
     let pass_through =
-        prefix == session.buffer.len() && new_buffer[prefix..].chars().eq(std::iter::once(key));
+        prefix == session.buffer.len() && new_buffer[prefix..].chars().eq(std::iter::once(typed));
     let instruction = if pass_through {
         ImeResult::none()
     } else {
@@ -82,6 +87,29 @@ pub(crate) fn process(session: &mut Session, key: char, capitalize_shortcut: boo
     }
 
     instruction
+}
+
+/// Whether `composed` can no longer become Vietnamese, judged for this keystroke.
+///
+/// VNI may keep the finals only place names use (`Pa8h` → `Păh`, as in Chư Păh),
+/// but a digit landing on a word that carried no mark yet is how numbers glue to
+/// English (`bar1`, `ver2`), so that keystroke is judged strictly. A letter after
+/// a digit (the `h` of `Pa8h`), or a digit on a word already marked (`Pa8h1` →
+/// `Pắh`), only extends a word the user shaped on purpose. What a strict reading
+/// restores stays in `vn_form`, so Flip still recovers `Pah8` → `Păh`.
+fn is_dead_end(session: &Session, composed: &str, key: char) -> bool {
+    let bare_before = || {
+        session
+            .keys
+            .strip_suffix(key)
+            .is_some_and(|before| before == session.buffer)
+    };
+    let rules = session.config.syllable_rules;
+    if key.is_ascii_digit() && bare_before() {
+        rules.is_definitely_invalid(composed)
+    } else {
+        rules.is_definitely_invalid_in(composed, session.config.method)
+    }
 }
 
 fn uppercase_direct_vowel(text: &mut String) {

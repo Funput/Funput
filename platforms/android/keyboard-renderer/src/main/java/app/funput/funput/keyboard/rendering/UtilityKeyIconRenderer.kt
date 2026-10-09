@@ -16,6 +16,7 @@ internal class UtilityKeyIconRenderer(private val metrics: RenderMetrics) {
     }
     private val path = Path()
     private val drawingRect = RectF()
+    private val placement = PlacementKeyIconRenderer(metrics)
 
     fun updateTheme(theme: KeyboardTheme) {
         paint.color = theme.specialLabelColor
@@ -106,16 +107,5 @@ internal class UtilityKeyIconRenderer(private val metrics: RenderMetrics) {
         canvas.drawArc(drawingRect, 18f, 144f, false, paint)
     }
 
-    fun drawPlacement(canvas: Canvas, key: ResolvedKey) {
-        val halfWidth = min(key.bounds.width, key.bounds.height) * 0.21f
-        val halfHeight = halfWidth * 0.62f
-        val left = key.bounds.centerX - halfWidth
-        val right = key.bounds.centerX + halfWidth
-        val top = key.bounds.centerY - halfHeight
-        val bottom = key.bounds.centerY + halfHeight
-        drawingRect.set(left, top, right, bottom)
-        canvas.drawRoundRect(drawingRect, metrics.dp(2f), metrics.dp(2f), paint)
-        canvas.drawLine(left, bottom + metrics.dp(4f), right, bottom + metrics.dp(4f), paint)
-        canvas.drawLine(key.bounds.centerX, bottom + metrics.dp(4f), key.bounds.centerX, bottom, paint)
-    }
+    fun drawPlacement(canvas: Canvas, key: ResolvedKey) = placement.draw(canvas, key.bounds, paint.color)
 }

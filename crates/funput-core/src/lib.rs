@@ -13,11 +13,14 @@
 //! # API FROZEN (Phase 8)
 //!
 //! The public surface is intentionally minimal for `funput-engine`:
-//! [`InputMethod`], [`TransformKind`], [`TransformResult`], [`apply`], and the
+//! [`InputMethod`], [`TransformKind`], [`TransformResult`], [`apply`] (and
+//! [`apply_with`], which takes every option as one [`ComposeOptions`]), and the
 //! syllable-structure checks [`is_valid`] (lenient) / [`is_complete_syllable`]
 //! (strict, for word boundaries) / [`is_reopenable_syllable`] (re-opening a
 //! committed word for editing) / [`is_bare_shaped_vowel`] (the lone-vowel
-//! exception to the boundary check).
+//! exception to the boundary check). Those checks judge native spelling; the same
+//! checks under widened spelling ([`ExtraOnsets`] such as `zô`) are methods of
+//! [`SyllableRules`].
 //! Breaking changes require semver coordination with the engine.
 //!
 //! That list stays complete for what the engine transforms. [`charset`],
@@ -49,7 +52,7 @@ pub mod textcase;
 mod unicode;
 mod validation;
 
-pub use options::{InputMethod, ToneStyle};
+pub use options::{ComposeOptions, InputMethod, ToneStyle};
 
 /// Result kind for a single keystroke transform.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -75,6 +78,12 @@ pub struct TransformResult {
     pub text: String,
 }
 
+pub use validation::reachability::{is_definitely_invalid, is_definitely_invalid_in};
+pub use validation::rules::{ExtraOnsets, SyllableRules};
+pub use validation::syllable::{
+    is_bare_shaped_vowel, is_complete_syllable, is_reopenable_syllable, is_valid,
+};
+
 /// Apply one keystroke to the current syllable buffer.
 ///
 /// # Examples
@@ -91,11 +100,6 @@ pub struct TransformResult {
 ///     }
 /// );
 /// ```
-pub use validation::reachability::is_definitely_invalid;
-pub use validation::syllable::{
-    is_bare_shaped_vowel, is_complete_syllable, is_reopenable_syllable, is_valid,
-};
-
 #[inline]
 pub fn apply(
     buffer: &str,
@@ -103,7 +107,11 @@ pub fn apply(
     method: InputMethod,
     tone_style: ToneStyle,
 ) -> TransformResult {
-    apply_checked(buffer, key, method, tone_style, false)
+    apply_with(
+        buffer,
+        key,
+        ComposeOptions::new(method).with_tone_style(tone_style),
+    )
 }
 
 /// Like [`apply`], but with the **spell-check** ("Kiểm tra chính tả") gate.
@@ -120,16 +128,17 @@ pub fn apply_checked(
     tone_style: ToneStyle,
     spell_check: bool,
 ) -> TransformResult {
-    if method == InputMethod::Telex {
-        return composition::transform::apply_telex(buffer, key, tone_style, spell_check);
-    }
-    match method {
-        InputMethod::Vni => composition::transform::apply_vni(buffer, key, tone_style, spell_check),
-        InputMethod::TelexAdvanced => {
-            composition::transform::apply_advanced_telex(buffer, key, tone_style, spell_check)
-        }
-        InputMethod::Telex => unreachable!("handled by the Telex fast path"),
-    }
+    let options = ComposeOptions::new(method)
+        .with_tone_style(tone_style)
+        .with_spell_check(spell_check);
+    apply_with(buffer, key, options)
+}
+
+/// Apply one keystroke under `options` — the entry point [`apply`] and
+/// [`apply_checked`] wrap, and the one that reaches every option.
+#[inline]
+pub fn apply_with(buffer: &str, key: char, options: ComposeOptions) -> TransformResult {
+    composition::transform::apply(buffer, key, options)
 }
 
 #[cfg(test)]

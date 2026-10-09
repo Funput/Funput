@@ -20,6 +20,9 @@
 ## Bắt đầu
 
 <p align="center">
+  <a href="https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS">
+    <img src="https://img.shields.io/badge/Windows-Microsoft_Store-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Tải Funput cho Windows trên Microsoft Store">
+  </a>
   <a href="https://github.com/Funput/Funput/releases/latest">
     <img src="https://img.shields.io/badge/Tải_xuống-Bản_mới_nhất-22C55E?style=for-the-badge&logo=github&logoColor=white" alt="Tải phiên bản Funput mới nhất">
   </a>
@@ -67,13 +70,13 @@
         </a>
       </td>
       <td align="center" valign="top" width="20%">
-        <a href="https://github.com/Funput/Funput/releases/latest">
+        <a href="https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS">
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="https://funput.app/windows-dark.svg">
             <img src="https://funput.app/windows.svg" alt="Windows" width="40" height="40">
           </picture>
           <br><strong>Windows</strong><br>
-          <sub>Tải xuống</sub>
+          <sub>Microsoft Store</sub>
         </a>
       </td>
       <td align="center" valign="top" width="20%">
@@ -89,6 +92,8 @@
     </tr>
   </table>
 </div>
+
+**Windows:** cài Funput miễn phí từ [Microsoft Store](https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS) và nhận cập nhật qua Store. [Bản `.exe` portable](https://github.com/Funput/Funput/releases/latest) vẫn có trên GitHub. Xem [hướng dẫn Windows](https://docs.funput.app/docs/install/windows/) để chọn cách cài phù hợp.
 
 ## Giao diện
 
@@ -186,23 +191,29 @@ Funput được xây dựng nhờ cộng đồng.
 <div align="center">
   <table>
     <tr>
-      <td align="center" valign="top" width="33%">
+      <td align="center" valign="top" width="25%">
         <a href="https://github.com/zenfas">
           <img src="https://github.com/zenfas.png?size=160" width="80" height="80" alt="zenfas">
           <br><strong>zenfas</strong>
         </a>
       </td>
-      <td align="center" valign="top" width="33%">
+      <td align="center" valign="top" width="25%">
         <a href="https://github.com/quyleanh">
           <img src="https://github.com/quyleanh.png?size=160" width="80" height="80" alt="Quy Le Anh">
           <br><strong>Quy Le Anh</strong><br>
           <sub>@quyleanh</sub>
         </a>
       </td>
-      <td align="center" valign="top" width="33%">
+      <td align="center" valign="top" width="25%">
         <a href="https://github.com/huyle0406">
           <img src="https://github.com/huyle0406.png?size=160" width="80" height="80" alt="huyle0406">
           <br><strong>huyle0406</strong>
+        </a>
+      </td>
+      <td align="center" valign="top" width="25%">
+        <a href="https://github.com/grayfind">
+          <img src="https://github.com/grayfind.png?size=160" width="80" height="80" alt="grayfind">
+          <br><strong>grayfind</strong>
         </a>
       </td>
     </tr>

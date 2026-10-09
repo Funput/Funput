@@ -53,6 +53,7 @@ policy live there, **not** in the engine. The platform reads `ImeResult` and dec
 | `set_spell_check(bool)` | Spell-check — only place a diacritic if the result can still be a valid VN syllable |
 | `set_auto_capitalize(bool)` | Auto-capitalize the first letter of a sentence |
 | `arm_capitalization()` | Arm capitalization for the next word (platform calls this on text-field focus) |
+| `disarm_capitalization()` | Forget the sentence state when the caret jumps somewhere the platform cannot see (click, app switch, caret key) |
 | `clear()` | Reset buffer + keys (word boundary, focus change) |
 | `buffer() -> &str` | The composing text — the platform renders it as preedit/marked text |
 | `keys() -> &str` | Raw keystrokes since the last word boundary — used for English restore |
@@ -119,6 +120,11 @@ buffer is **not** a complete Vietnamese syllable (`funput_core::is_complete_syll
 `keys != buffer`, the engine `Send`s the **raw keystrokes** (`keys`) + the boundary key, then
 `clear()`s. `eager_restore` does this the instant the buffer becomes a dead end instead of waiting for
 a space.
+
+The "is this a Vietnamese syllable" verdict (at the word boundary, in eager restore and in `adopt`)
+follows `EngineConfig.syllable_rules` — `SyllableRules::STANDARD` by default. Widen it, e.g. to admit
+the `z`/`f`/`w`/`j` onsets (`zô`, `fải`), and those words both compose and survive restore; see
+[docs/features/extra-onsets.md](../../docs/features/extra-onsets.md).
 
 Dictionary-free: an English word that happens to be a valid VN syllable (`test` → `tét`) is **not**
 auto-restored — in exchange it never breaks correctly-typed Vietnamese (like UniKey without a

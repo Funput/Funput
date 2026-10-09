@@ -12,21 +12,22 @@ mod status;
 use crate::unicode::shapes::shape_on_vowel;
 use crate::validation::parse::parse_syllable;
 use crate::validation::reachability::{has_shaped_rhyme_prefix, is_definitely_invalid_parts};
+use crate::validation::rules::SyllableRules;
 
 use modifier::{ModifierKind, validate_parts};
-use status::{SyllableStatus, classify};
 
 pub use modifier::{ModifierValidation, validate_shape, validate_stroke, validate_tone};
+pub(crate) use status::{SyllableStatus, classify};
 
 /// Validate a newly shaped candidate in one parse: orthographic structure, the
 /// exact shaped-rhyme prefix, and tone/coda reachability must all agree.
-pub(crate) fn is_viable_shape_candidate(buffer: &str) -> bool {
-    let parts = parse_syllable(buffer);
+pub(crate) fn is_viable_shape_candidate(buffer: &str, rules: SyllableRules) -> bool {
+    let parts = parse_syllable(buffer, rules);
     matches!(
         validate_parts(&parts, ModifierKind::Shape),
         ModifierValidation::Allow
     ) && has_shaped_rhyme_prefix(&parts)
-        && !is_definitely_invalid_parts(&parts)
+        && !is_definitely_invalid_parts(&parts, false)
 }
 
 /// Returns true if the syllable structure is valid for transform.
@@ -35,10 +36,7 @@ pub(crate) fn is_viable_shape_candidate(buffer: &str) -> bool {
 /// user may still be typing (e.g. `mix` → allow, so `mĩx` can compose). For a
 /// finished word use [`is_complete_syllable`].
 pub fn is_valid(buffer: &str) -> bool {
-    matches!(
-        validate_parts(&parse_syllable(buffer), ModifierKind::Shape),
-        ModifierValidation::Allow
-    )
+    SyllableRules::STANDARD.is_valid(buffer)
 }
 
 /// Returns true if `buffer` is a *complete* valid Vietnamese syllable.
@@ -49,7 +47,7 @@ pub fn is_valid(buffer: &str) -> bool {
 /// the raw word when a finished word is *not* a complete syllable: `cảd` (card),
 /// `côl` (cool), `tẽt` (text).
 pub fn is_complete_syllable(buffer: &str) -> bool {
-    matches!(classify(buffer), SyllableStatus::Complete)
+    SyllableRules::STANDARD.is_complete_syllable(buffer)
 }
 
 /// Returns true if `buffer` is a lone shaped vowel: `ă`, `â`, `ắ`, `ậ` — one
@@ -80,7 +78,7 @@ pub fn is_bare_shaped_vowel(buffer: &str) -> bool {
 /// leaves on screen when the user commits before finishing the word. Still strict
 /// enough to keep English words and URLs literal (`hello`, `text`, `tẽt`, `die`).
 pub fn is_reopenable_syllable(buffer: &str) -> bool {
-    !matches!(classify(buffer), SyllableStatus::Invalid)
+    SyllableRules::STANDARD.is_reopenable_syllable(buffer)
 }
 
 #[cfg(test)]

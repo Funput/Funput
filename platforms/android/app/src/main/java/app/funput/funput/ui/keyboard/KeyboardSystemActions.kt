@@ -3,10 +3,10 @@ package app.funput.funput.ui.keyboard
 import android.content.Context
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import android.view.inputmethod.InputMethodManager
+import androidx.core.net.toUri
 
 internal fun Context.openKeyboardSettings() {
     startActivity(
@@ -37,7 +37,7 @@ internal fun Context.openWebsite(url: String) {
     // reason to take the app down.
     try {
         startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            Intent(Intent.ACTION_VIEW, url.toUri())
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
     } catch (missingHandler: ActivityNotFoundException) {

@@ -10,8 +10,6 @@
 //! C(10,2) × 3 × 3 for two, is at most 435 replays — on a word that is already known
 //! not to be Vietnamese, once per word boundary.
 
-use funput_core::is_complete_syllable;
-
 use crate::EngineConfig;
 use crate::compose::pipeline;
 use crate::correction::score::{self, CorrectionCandidate};
@@ -118,9 +116,12 @@ fn replay(scratch: &mut Session, word: &[char]) -> bool {
             return false;
         }
         scratch.keys.push(key);
-        pipeline::process(scratch, key, false);
+        pipeline::process(scratch, key, key, false);
     }
-    is_complete_syllable(&scratch.buffer)
+    scratch
+        .config
+        .syllable_rules
+        .is_complete_syllable(&scratch.buffer)
 }
 
 /// Point the scratch session at the user's grammar, with everything that rewrites a

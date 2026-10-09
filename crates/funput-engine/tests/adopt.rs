@@ -3,7 +3,7 @@
 //! Android calls this when Backspace puts the caret back on a finished word, so the
 //! next keystroke retones it instead of typing a literal letter.
 
-use funput_core::InputMethod;
+use funput_core::{ExtraOnsets, InputMethod, SyllableRules};
 use funput_engine::Engine;
 
 fn engine(method: InputMethod) -> Engine {
@@ -169,4 +169,20 @@ fn boundary_after_editing_keeps_the_vietnamese_form() {
         result.output
     };
     assert_eq!(committed, "cháo ");
+}
+
+/// A word only the widened spelling admits re-opens only while it is admitted.
+#[test]
+fn adopt_follows_the_syllable_rules() {
+    let mut native = engine(InputMethod::Telex);
+    assert!(!native.adopt("zô"));
+
+    let mut widened = engine(InputMethod::Telex);
+    widened.update_config(|config| {
+        config.syllable_rules = SyllableRules::STANDARD.with_extra_onsets(ExtraOnsets::ZFWJ);
+    });
+    assert!(!widened.adopt("food"));
+    assert!(widened.adopt("zô"));
+    widened.process_char('s');
+    assert_eq!(widened.buffer(), "zố");
 }

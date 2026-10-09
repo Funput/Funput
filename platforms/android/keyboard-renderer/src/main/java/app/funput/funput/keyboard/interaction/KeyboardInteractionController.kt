@@ -1,4 +1,6 @@
 package app.funput.funput.keyboard.interaction
+import app.funput.funput.keyboard.utility.KeyboardUtilityAction
+import app.funput.funput.keyboard.utility.KeyboardUtilityDispatcher
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
@@ -15,10 +17,8 @@ internal class KeyboardInteractionController(
     private val keySpec: (keyId: String) -> KeySpec?,
     private val suggestionSelection: (targetId: String) -> SuggestionSelection?,
     private val onAction: (KeyAction) -> Unit,
-    private val onEmojiRequested: () -> Unit,
-    private val onPlacementEditorRequested: () -> Unit = {},
-    private val onClipboardPanelRequested: () -> Unit = {},
-    private val onClipboardRequested: () -> Unit = {},
+    utilities: KeyboardUtilityDispatcher = KeyboardUtilityDispatcher {},
+    onPointersCancelled: () -> Unit = {},
     private val onSuggestionSelected: (SuggestionSelection) -> Unit,
     private val onHapticFeedback: (KeyboardHapticType) -> Unit,
     private val onVisualStateChanged: () -> Unit,
@@ -41,9 +41,11 @@ internal class KeyboardInteractionController(
         },
         doubleTapTimeoutMillis = doubleTapTimeoutMillis,
     )
-    private val utilityActions = KeyboardUtilityActionRouter(
-        onSuggestionSelected, onEmojiRequested, onPlacementEditorRequested,
-        onClipboardPanelRequested, onClipboardRequested,
+    private val utilityActions = KeyboardUtilityActionRouter(onSuggestionSelected, utilities)
+    private val alternateActions = AlternateActionRouter(
+        actionDispatcher, { cancel(); onPointersCancelled() },
+        { utilities.dispatch(KeyboardUtilityAction.PLACEMENT) },
+        { utilities.dispatch(KeyboardUtilityAction.SETTINGS) },
     )
     private val backspaceRepeat = BackspaceRepeatController(
         schedule = schedule,
@@ -69,7 +71,7 @@ internal class KeyboardInteractionController(
         onCaptured = onPointerCaptured,
         onFeedback = { onHapticFeedback(KeyboardHapticType.CONTROL) },
         onChanged = onVisualStateChanged,
-        onSelected = actionDispatcher::dispatchAlternate,
+        onSelected = alternateActions::dispatch,
     )
     val shiftState: ShiftState get() = actionDispatcher.shiftState
     val alternatePreview: AlternateSelectionPreview? get() = alternateSelection.preview
@@ -123,7 +125,7 @@ internal class KeyboardInteractionController(
     }
     fun emitAlternate(keyId: String, index: Int) {
         val key = keySpec(keyId) ?: return
-        key.alternates.getOrNull(index)?.let { actionDispatcher.dispatchAlternate(key, it) }
+        key.alternates.getOrNull(index)?.let { alternateActions.dispatch(key, it) }
     }
     fun emitSuggestion(targetId: String) = suggestionSelection(targetId)?.let {
         onHapticFeedback(KeyboardHapticType.CONTROL); onSuggestionSelected(it)

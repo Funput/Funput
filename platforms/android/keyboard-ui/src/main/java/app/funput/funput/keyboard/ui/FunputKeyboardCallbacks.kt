@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.ui
 
+import app.funput.funput.keyboard.ui.speech.SpeechPanelAction
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
@@ -7,9 +8,14 @@ import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 
 /** Host callbacks emitted by the complete Funput keyboard UI. */
 class FunputKeyboardCallbacks {
+    var onSpeechRequested: (() -> Unit)? = null
+    var onSpeechAction: ((SpeechPanelAction) -> Unit)? = null
     var onKeyAction: ((KeyAction) -> Unit)? = null
     var onInputMethodSwitchRequested: (() -> Unit)? = null
+    var onSettingsRequested: (() -> Unit)? = null
     var onEmojiPanelOpened: (() -> Unit)? = null
+    var onPanelChanging: ((KeyboardPanel) -> Unit)? = null
+    var onPlacementEditorRequested: (() -> Unit)? = null
     var onPanelChanged: ((KeyboardPanel) -> Unit)? = null
     var onEmojiSelected: ((String) -> Unit)? = null
     var onClipboardPasteRequested: (() -> Unit)? = null
@@ -21,6 +27,9 @@ class FunputKeyboardCallbacks {
     var onSuggestionSelected: ((SuggestionSelection) -> Unit)? = null
     var onPlacementChanged: ((KeyboardPlacementPreferences) -> Unit)? = null
 
+    internal fun dispatchSpeechRequest() { onSpeechRequested?.invoke() }
+    internal fun dispatchSpeechAction(action: SpeechPanelAction) { onSpeechAction?.invoke(action) }
+
     internal fun dispatch(action: KeyAction) {
         onKeyAction?.invoke(action)
     }
@@ -29,9 +38,13 @@ class FunputKeyboardCallbacks {
         onInputMethodSwitchRequested?.invoke()
     }
 
+    internal fun dispatchSettingsRequest() { onSettingsRequested?.invoke() }
+
     internal fun dispatchEmojiPanelOpened() {
         onEmojiPanelOpened?.invoke()
     }
+
+    internal fun dispatchPanelChanging(panel: KeyboardPanel) { onPanelChanging?.invoke(panel) }
 
     internal fun dispatchPanelChanged(panel: KeyboardPanel) {
         onPanelChanged?.invoke(panel)

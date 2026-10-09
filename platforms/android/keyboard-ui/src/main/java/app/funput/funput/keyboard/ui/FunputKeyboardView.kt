@@ -1,10 +1,12 @@
 package app.funput.funput.keyboard.ui
 
 import android.content.Context
+import app.funput.funput.keyboard.ui.host.bindKeyboardToolbar
+import app.funput.funput.keyboard.ui.speech.KeyboardSpeechPanelBinding
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import app.funput.funput.keyboard.KeyboardSurfaceView
-import app.funput.funput.keyboard.KeyboardDimensions
+import app.funput.funput.keyboard.ui.host.KeyboardHostMeasure
 import app.funput.funput.keyboard.KeyboardClipboardHint
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardEnterAction
@@ -16,11 +18,11 @@ import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelCoordinator
 import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
+import app.funput.funput.keyboard.ui.localtext.LocalTextFields
 import app.funput.funput.keyboard.ui.panel.FunputPanelFactory
 import app.funput.funput.keyboard.ui.panel.KeyboardClipboardPanelState
 import app.funput.funput.keyboard.ui.placement.KeyboardPlacementHostController
 import app.funput.funput.theme.KeyboardTheme
-import kotlin.math.roundToInt
 
 /** Complete Funput keyboard UI, including panel navigation and host callbacks. */
 class FunputKeyboardView @JvmOverloads constructor(
@@ -34,21 +36,28 @@ class FunputKeyboardView @JvmOverloads constructor(
     private val clipboardState = KeyboardClipboardPanelState(
         keyboardSurface, { editorMode }, { activePanel }, ::showLettersPanel,
     )
+    val localTextFields = LocalTextFields()
     private val panelFactory = FunputPanelFactory(
         context, callbacks, { keyboardSurface.keyboardTheme },
         { keyboardSurface.isHapticFeedbackEnabled }, { keyboardSurface.isSoundEffectsEnabled },
-        clipboardState, ::showLettersPanel,
+        clipboardState, localTextFields, ::showLettersPanel,
     )
+    private val speech = KeyboardSpeechPanelBinding(context, keyboardSurface, callbacks, ::showLettersPanel)
     private val panelCoordinator = KeyboardPanelCoordinator(
         keyboardSurface = keyboardSurface,
+        createSpeechPanel = speech::create,
+        onSpeechAction = callbacks::dispatchSpeechAction,
+        clearSpeech = speech::clear,
         createEmojiPanel = panelFactory::createEmoji,
         createClipboardPanel = panelFactory::createClipboard,
         attachPanel = { contentHost.addView(it, matchParentLayoutParams()) },
+        onPanelChanging = callbacks::dispatchPanelChanging,
         onPanelChanged = callbacks::dispatchPanelChanged,
         syncSuggestions = ::syncSuggestions,
     )
     private val feedbackController = KeyboardFeedbackController(
         keyboardSurface, { panelCoordinator.loadedEmojiPanel }, { panelCoordinator.loadedClipboardPanel },
+        speech::updateFeedback,
     )
     val activePanel: KeyboardPanel get() = panelCoordinator.activePanel
     var shiftState: ShiftState by keyboardSurface::shiftState
@@ -57,6 +66,9 @@ class FunputKeyboardView @JvmOverloads constructor(
         get() = keyboardSurface.editorMode
         set(value) { keyboardSurface.editorMode = value; clipboardState.editorModeChanged() }
     var systemInputMethodSwitcherVisible: Boolean by keyboardSurface::systemInputMethodSwitcherVisible
+    var microphone by keyboardSurface::microphone
+    var speechPanelState by speech::state
+    var placementKeyVisible: Boolean by keyboardSurface::placementKeyVisible
     var showsNumberRow: Boolean by keyboardSurface::showsNumberRow
     var suggestionBarEnabled: Boolean
         get() = keyboardSurface.suggestionBarEnabled
@@ -90,20 +102,20 @@ class FunputKeyboardView @JvmOverloads constructor(
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
     private val safeArea = KeyboardSafeAreaController(this)
     private val placement = KeyboardPlacementHostController(this, contentHost, safeArea, callbacks)
+    private val hostMeasure = KeyboardHostMeasure(this, safeArea, placement)
     var placementPreferences: KeyboardPlacementPreferences by placement::preferences
     init { KeyboardComposeLifecycle.install(this)
         addView(contentHost, matchParentLayoutParams())
         contentHost.addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::routeKeyAction
         keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
-        keyboardSurface.callbacks.onEmojiRequested = ::openEmojiFromKeyboard
-        keyboardSurface.callbacks.onClipboardPasteRequested = callbacks::dispatchClipboardPasteRequest
-        keyboardSurface.callbacks.onClipboardPanelRequested = ::showClipboardPanel
-        keyboardSurface.callbacks.onPlacementEditorRequested = placement::showPicker
+        bindKeyboardToolbar(keyboardSurface, callbacks, ::openEmojiFromKeyboard,
+            ::showClipboardPanel, placement::showPicker)
         setBackgroundColor(keyboardTheme.backgroundEndColor)
         safeArea.install()
     }
 
+    fun showSpeechPanel(): Unit = panelCoordinator.showSpeech()
     fun showEmojiPanel(): Unit = panelCoordinator.showEmoji()
     fun showClipboardPanel() {
         if (!clipboardState.available() || activePanel == KeyboardPanel.CLIPBOARD) return
@@ -116,20 +128,9 @@ class FunputKeyboardView @JvmOverloads constructor(
     fun showLettersPanel(): Unit = panelCoordinator.showLetters()
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val density = resources.displayMetrics.density
-        val keyboardWidth = (KeyboardDimensions.DefaultWidthDp * density).roundToInt()
-        val width = resolveSize(keyboardWidth + safeArea.horizontalInset, widthMeasureSpec)
-        val contentWidth = placement.resolveContentWidth(width - safeArea.horizontalInset)
-        val contentWidthDp = contentWidth / density
-        val heightDp = KeyboardDimensions.recommendedHeightDp(
-            inputMethod, editorMode, sizingProfile, contentWidthDp, showsNumberRow,
-        )
-        val baseHeight = (heightDp * density).roundToInt()
-        val height = placement.resolveHeight(baseHeight, heightMeasureSpec)
-        super.onMeasure(
-            MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-            MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
-        )
+        val size = hostMeasure.resolve(widthMeasureSpec, heightMeasureSpec,
+            inputMethod, editorMode, sizingProfile, showsNumberRow)
+        super.onMeasure(size.widthSpec, size.heightSpec)
     }
 
     private fun openEmojiFromKeyboard() {

@@ -1,16 +1,20 @@
-use crate::validation::reachability::is_definitely_invalid;
 use crate::validation::syllable::ModifierValidation;
-use crate::{TransformKind, TransformResult};
+use crate::{ComposeOptions, TransformKind, TransformResult};
 
 use super::append;
 
+/// The spell-check gate: an applied diacritic that leaves no way to a Vietnamese
+/// syllable is undone, and the key goes in as a literal instead.
 pub(super) fn spell_check(
     buffer: &str,
     key: char,
-    enabled: bool,
+    options: ComposeOptions,
     result: TransformResult,
 ) -> TransformResult {
-    if enabled && result.kind == TransformKind::Applied && is_definitely_invalid(&result.text) {
+    if options.spell_check
+        && result.kind == TransformKind::Applied
+        && options.syllable_rules.is_definitely_invalid(&result.text)
+    {
         return TransformResult {
             kind: TransformKind::Pending,
             text: append(buffer, key),

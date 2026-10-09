@@ -1,5 +1,5 @@
 use super::*;
-use crate::settings::{Hotkey, Method, Shortcut, ToneStyle};
+use crate::settings::{ExtraOnsetLetters, Hotkey, Method, Shortcut, ToneStyle};
 
 #[test]
 fn round_trip_preserves_state() {
@@ -109,4 +109,54 @@ fn imports_other_platforms_without_platform_state() {
         assert_eq!(settings.method, method);
         assert!(!summary.applied_platform);
     }
+}
+
+// --- extra onsets ------------------------------------------------------------
+
+/// The letters travel as `preferences.extraOnsets`, spelled out — the form every
+/// platform reads (`crates/funput-config/src/transfer/tests.rs` keeps the same rule).
+#[test]
+fn extra_onsets_survive_export_and_import() {
+    let source = Settings {
+        extra_onsets: ExtraOnsetLetters::from_id("jf"),
+        ..Settings::default()
+    };
+    let json = serde_json::to_string(&to_document(&source)).unwrap();
+    assert!(json.contains("\"extraOnsets\":\"fj\""), "{json}");
+    let mut imported = Settings::default();
+    apply(&mut imported, &serde_json::from_str(&json).unwrap());
+    assert_eq!(imported.extra_onsets, ExtraOnsetLetters::from_id("fj"));
+}
+
+#[test]
+fn a_document_without_extra_onsets_keeps_the_local_letters() {
+    let mut settings = Settings {
+        extra_onsets: ExtraOnsetLetters::from_id("z"),
+        ..Settings::default()
+    };
+    let doc = serde_json::from_str(
+        r#"{"schema":"app.funput.config","version":1,"preferences":{"inputMethod":"telex"}}"#,
+    )
+    .unwrap();
+    apply(&mut settings, &doc);
+    assert_eq!(settings.method, Method::Telex); // the block was read
+    assert_eq!(settings.extra_onsets, ExtraOnsetLetters::from_id("z"));
+}
+
+#[test]
+fn extra_onsets_import_empty_as_none_and_skip_unknown_letters() {
+    let import = |value: &str| {
+        let mut settings = Settings {
+            extra_onsets: ExtraOnsetLetters::ALL,
+            ..Settings::default()
+        };
+        let json = format!(
+            r#"{{"schema":"app.funput.config","version":1,"preferences":{{"extraOnsets":"{value}"}}}}"#
+        );
+        apply(&mut settings, &serde_json::from_str(&json).unwrap());
+        settings.extra_onsets
+    };
+    assert_eq!(import(""), ExtraOnsetLetters::NONE);
+    assert_eq!(import("zxq"), ExtraOnsetLetters::from_id("z"));
+    assert_eq!(import("WJ"), ExtraOnsetLetters::from_id("wj"));
 }

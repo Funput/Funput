@@ -1,5 +1,3 @@
-use funput_core::is_reopenable_syllable;
-
 use crate::compose::{diff, flip};
 use crate::correction;
 use crate::{Engine, ImeResult};
@@ -21,7 +19,8 @@ impl Engine {
     /// ever reads the buffer, so tone and shape edits work from here; there is no raw
     /// form to flip back to, which makes the flip hotkey a no-op on an adopted word.
     pub fn adopt(&mut self, text: &str) -> bool {
-        if !self.session.enabled || text.is_empty() || !is_reopenable_syllable(text) {
+        let rules = self.session.config.syllable_rules;
+        if !self.session.enabled || text.is_empty() || !rules.is_reopenable_syllable(text) {
             return false;
         }
         // clear() + push_str refills the session strings in place, so seeding them

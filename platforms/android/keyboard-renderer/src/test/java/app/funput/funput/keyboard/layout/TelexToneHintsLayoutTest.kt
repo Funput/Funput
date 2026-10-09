@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.layout
 
+import app.funput.funput.keyboard.layout.letters.KeyboardLayouts
+import app.funput.funput.keyboard.layout.letters.TelexKeyHints
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod

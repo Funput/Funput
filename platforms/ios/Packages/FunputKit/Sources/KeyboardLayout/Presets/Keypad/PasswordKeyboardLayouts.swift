@@ -8,7 +8,7 @@ public enum PasswordKeyboardLayouts {
                 specialKey("symbols", "?123", .symbols, weight: 1.7, accessibilityLabel: "Ký hiệu"),
                 specialKey("comma", ",", .punctuation, accessibilityLabel: "Dấu phẩy"),
                 asciiSpaceKey(weight: 5.8),
-                specialKey("period", ".", .punctuation, accessibilityLabel: "Dấu chấm"),
+                periodKey("period"),
                 specialKey("enter", "", .enter, weight: 1.7, accessibilityLabel: "Enter"),
             ],
             showsToolbar: false

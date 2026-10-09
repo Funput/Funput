@@ -15,18 +15,20 @@ public extension KeyboardInputCoordinator {
         if configuration.inputMethod.isTelexFamily {
             preferredTelexMethod = configuration.inputMethod
         }
-        composer.configure(
-            FunputCompositionOptions(
-                inputMethod: configuration.inputMethod.engineMethod,
-                toneStyle: configuration.toneStyle.engineToneStyle,
-                smartRestore: configuration.smartRestore,
-                eagerRestore: configuration.eagerRestore,
-                spellCheck: configuration.spellCheck
-            )
+        let options = FunputCompositionOptions(
+            inputMethod: configuration.inputMethod.engineMethod,
+            toneStyle: configuration.toneStyle.engineToneStyle,
+            smartRestore: configuration.smartRestore,
+            eagerRestore: configuration.eagerRestore,
+            spellCheck: configuration.spellCheck,
+            extraOnsets: configuration.extraOnsets.engineOnsets
         )
+        composer.configure(options)
+        compositionOptions = options
         shiftController.resetTapSequence()
         spaceTapTracker.reset()
         smartGesturesEnabled = configuration.smartGesturesEnabled
+        returnsToLettersAfterPunctuation = configuration.returnsToLettersAfterPunctuation
         documentSynchronizer.invalidate()
         personalSuggestionsEnabled = configuration.personalSuggestionsEnabled
         resetPersonalSuggestionTracking()
@@ -42,6 +44,18 @@ extension ToneStyleOption {
         case .traditional: .traditional
         case .modern: .modern
         }
+    }
+}
+
+extension ExtraOnsetLetters {
+    /// Shared storage bits and C ABI bits are independent; map letters explicitly.
+    var engineOnsets: FunputExtraOnsets {
+        var onsets: FunputExtraOnsets = []
+        if contains(.z) { onsets.insert(.z) }
+        if contains(.f) { onsets.insert(.f) }
+        if contains(.w) { onsets.insert(.w) }
+        if contains(.j) { onsets.insert(.j) }
+        return onsets
     }
 }
 #endif

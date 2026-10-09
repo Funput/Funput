@@ -19,6 +19,7 @@ extension KeyboardSurfaceView {
         touchOverlay.onSamples = { [weak self] samples in
             guard let self else { return }
             samples.forEach(touchCoordinator.consume)
+            interactionController.commitInitialBackspaces()
         }
         touchOverlay.onUnknownCapture = { [weak self] in
             self?.touchCoordinator.recordUnknownCaptureCallback()

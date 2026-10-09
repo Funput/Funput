@@ -12,10 +12,7 @@ struct EnglishLexiconBridgeTests {
         #expect(engine.query("ip").map(\.text).contains("iPhone"))
         #expect(engine.query("").isEmpty)
         #expect(engine.query("thà").isEmpty)
-        // A token the language cannot spell waits for `unrecognized_promotion_uses`
-        // sightings (4) rather than `promotion_uses` (2) — see `engine/admission.rs`.
-        // Retuning either constant must update these counts with it.
-        for _ in 0..<4 { #expect(engine.learn("iphone")) }
+        #expect(engine.promote("iphone"))
         let values = engine.query("ip").map(\.text)
         #expect(values.first == "iphone")
         #expect(values.filter { $0.lowercased() == "iphone" }.count == 1)
@@ -30,10 +27,7 @@ struct EnglishLexiconBridgeTests {
         try Data("corrupt".utf8).write(to: root)
         #expect(!engine.attachLexicon(url: root))
         #expect(engine.query("wh").map(\.text) == ["which", "when", "what"])
-        // A token the language cannot spell waits for `unrecognized_promotion_uses`
-        // sightings (4) rather than `promotion_uses` (2) — see `engine/admission.rs`.
-        // Retuning either constant must update these counts with it.
-        for _ in 0..<4 { #expect(engine.learn("whimsy")) }
+        #expect(engine.promote("whimsy"))
         #expect(engine.query("wh").first?.text == "whimsy")
     }
 
@@ -42,8 +36,7 @@ struct EnglishLexiconBridgeTests {
         defer { try? FileManager.default.removeItem(at: root) }
         let engine = try #require(PersonalSuggestionEngine.open(storeURL: root))
         #expect(engine.attachLexicon(url: try LexiconTestResource.url()))
-        #expect(engine.learn("whimsy"))
-        #expect(engine.learn("whimsy"))
+        #expect(engine.promote("whimsy"))
         #expect(engine.reset())
         #expect(engine.stats().words == 0)
         #expect(engine.query("wh").map(\.text) == ["which", "when", "what"])
@@ -59,13 +52,22 @@ struct EnglishLexiconBridgeTests {
         for index in 0..<200 {
             // Distinct alphabetic marked words without depending on a user's store.
             let suffix = String(UnicodeScalar(97 + index / 26)!) + String(UnicodeScalar(97 + index % 26)!)
-            // Marked, but not syllables the language can spell, so they wait for the
-            // longer `unrecognized_promotion_uses` tier before they count as promoted.
-            for _ in 0..<4 { #expect(engine.learn("đ" + suffix)) }
+            #expect(engine.promote("đ" + suffix))
         }
         #expect(engine.query("an").map(\.text) == ["ăn"])
         #expect(engine.query("wh").count == 3)
         #expect(engine.reset())
         #expect(engine.query("an").count == 3)
+    }
+}
+
+extension PersonalSuggestionEngine {
+    /// Mirrors `SuggestionConfig::default().unrecognized_promotion_uses`: a word that is not
+    /// a complete Vietnamese syllable (`iphone`, `whimsy`, `đab`) is only offered after four
+    /// sightings. A complete syllable such as `ăn` still needs two.
+    static let unrecognizedPromotionUses = 4
+
+    func promote(_ word: String) -> Bool {
+        (0..<Self.unrecognizedPromotionUses).allSatisfy { _ in learn(word) }
     }
 }

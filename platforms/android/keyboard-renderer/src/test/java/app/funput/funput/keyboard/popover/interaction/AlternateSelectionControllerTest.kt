@@ -30,7 +30,7 @@ class AlternateSelectionControllerTest {
         onCaptured = {},
         onFeedback = {},
         onChanged = {},
-        onSelected = { _, alternate -> selected += alternate.text },
+        onSelected = { _, alternate -> selected += (alternate as KeyAlternate.Text).text },
     )
 
     @Test
@@ -59,7 +59,7 @@ class AlternateSelectionControllerTest {
         val digitKey = key.copy(
             id = "character-u",
             label = "u",
-            alternates = listOf(KeyAlternate("7", accessibilityLabel = "Số 7")) +
+            alternates = listOf(KeyAlternate.Text("7", accessibilityLabel = "Số 7")) +
                 VietnameseKeyAlternates.valuesFor('u'),
         )
         controller.start(1, digitKey, 120f, 220f)
@@ -120,7 +120,7 @@ class AlternateSelectionControllerTest {
     private class Scheduler {
         private var task: Runnable? = null
         fun schedule(value: Runnable, delay: Long) {
-            assertEquals(350L, delay)
+            assertEquals(250L, delay)
             task = value
         }
         fun cancel(value: Runnable) {

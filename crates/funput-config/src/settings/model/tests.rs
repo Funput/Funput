@@ -13,6 +13,7 @@ const FULL: &str = r#"{
   "eagerRestore": false,
   "spellCheck": true,
   "autoCapitalize": true,
+  "extraOnsets": "zj",
   "toggleHotkey": "alt_shift",
   "toggleCombo": { "vk": 86, "ctrl": true, "alt": false, "shift": true, "win": false, "label": "V" },
   "flipHotkey": "ctrl_shift_z",
@@ -34,6 +35,7 @@ fn reads_every_field_of_a_full_file() {
     assert!(!s.eager_restore);
     assert!(s.spell_check);
     assert!(s.auto_capitalize);
+    assert_eq!(s.extra_onsets, ExtraOnsetLetters::from_id("zj"));
     assert_eq!(s.toggle_hotkey, Hotkey::AltShift);
     assert_eq!(s.toggle_combo.as_ref().map(|c| c.vk), Some(86));
     assert_eq!(s.flip_hotkey, FlipHotkey::CtrlShiftZ);
@@ -66,6 +68,7 @@ fn serializes_with_the_documented_key_names() {
         "\"eagerRestore\"",
         "\"spellCheck\"",
         "\"autoCapitalize\"",
+        "\"extraOnsets\"",
         "\"toggleHotkey\"",
         "\"flipHotkey\"",
         "\"launchAtLogin\"",
@@ -100,6 +103,10 @@ fn a_minimal_legacy_file_falls_back_to_defaults() {
     assert_eq!(s.tone_style, ToneStyle::Traditional);
     assert!(!s.spell_check);
     assert!(!s.auto_capitalize);
+    assert!(
+        s.extra_onsets.is_empty(),
+        "a file from before the switch spells natively"
+    );
     assert_eq!(s.flip_hotkey, FlipHotkey::Off);
     assert!(s.toggle_combo.is_none());
     assert!(s.app_language_memory.is_empty());

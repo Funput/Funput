@@ -11,7 +11,7 @@
 //!
 //! # Layout
 //!
-//! - this file — the calls that change engine state.
+//! - this file — the switch, and the calls that change engine state.
 //! - `query` — the read-only calls between the two steps.
 //! - `types` — the POD structs both directions carry.
 
@@ -30,6 +30,22 @@ pub use types::{
 
 use super::{FunputEngine, FunputResult};
 use crate::abi;
+
+/// Switch typo correction on or off ("Tự sửa lỗi gõ nhầm phím").
+///
+/// Its own setter rather than a `FunputConfig` field, for the reason that struct's
+/// own documentation gives: it crosses the ABI by value, so growing it breaks every
+/// host built against the previous header, silently, until each is rebuilt.
+///
+/// On, the engine still does nothing until the host also reports where its touches
+/// land — see `funput_engine_set_next_key_touch`.
+///
+/// # Safety
+/// `engine` must be a valid handle or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_set_typo_correction(engine: *mut FunputEngine, on: bool) {
+    unsafe { abi::with_engine_mut(engine, |e| e.update_config(|cfg| cfg.typo_correction = on)) }
+}
 
 /// Report where the finger landed for the key about to be sent.
 ///

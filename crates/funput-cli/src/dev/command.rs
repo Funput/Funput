@@ -11,14 +11,14 @@ use crate::cli::{CliError, CliResult};
 pub fn run(args: DevArgs) -> CliResult {
     match args.command {
         DevCommand::Run { input, opts } => {
-            let simulation = sim::simulate(opts.method.into(), &input);
+            let simulation = sim::simulate_with(opts.sim_config(), &input);
             if opts.steps {
                 println!("{}", steps_table(&simulation));
             } else {
                 println!("{}", simulation.app_text);
             }
         }
-        DevCommand::Repl { opts } => repl::run(opts.method.into(), opts.steps),
+        DevCommand::Repl { opts } => repl::run(opts.sim_config(), opts.steps),
         DevCommand::Typos {
             corpus,
             method,

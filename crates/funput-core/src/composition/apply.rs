@@ -8,7 +8,9 @@
 use crate::composition::replace_char_at;
 use crate::composition::uo_horn::{apply_uo_compound, uo_pair_in_vowel_cluster};
 use crate::orthography::{tone_target_vowel, tone_vowel_index};
-use crate::unicode::marks::{Tone, apply_tone_to_vowel, stroke_d, tone_on_vowel, vowel_stem};
+use crate::unicode::marks::{
+    Tone, apply_tone_to_vowel, is_vowel, stroke_d, tone_on_vowel, vowel_stem,
+};
 use crate::unicode::shapes::{VowelShape, apply_shape_to_vowel, shape_target_index};
 use crate::{ToneStyle, TransformKind, TransformResult};
 
@@ -31,6 +33,11 @@ fn applied(text: String) -> TransformResult {
 /// Vietnamese syllable has at most one `d` (always the onset), and in an
 /// abbreviation run the last one is the most recent onset (`GD` + `9` → `GĐ`,
 /// `GDD` → `GĐ`).
+///
+/// Never on a `d` that opens a consonant cluster, though: a native `đ` is always
+/// followed by a vowel (or the pending `w` of `dwd`), and a name's `Đr` is struck
+/// on the spot (`ddr`, `d9r`). Striking it late would turn English `droid` and
+/// `dried` into `đroi` and `đrie`, which the `Đr` of `M'Đrắk` keeps alive.
 pub(crate) fn apply_stroke(buffer: &str) -> TransformResult {
     let Some((offset, d)) = buffer
         .char_indices()
@@ -39,6 +46,13 @@ pub(crate) fn apply_stroke(buffer: &str) -> TransformResult {
     else {
         return ignored(buffer);
     };
+    let opens_cluster = buffer[offset + d.len_utf8()..]
+        .chars()
+        .next()
+        .is_some_and(|next| !is_vowel(next) && !matches!(next, 'w' | 'W'));
+    if opens_cluster {
+        return ignored(buffer);
+    }
     let Some(struck) = stroke_d(d) else {
         return ignored(buffer);
     };

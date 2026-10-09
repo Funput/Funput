@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="speech_panel_preparing">Preparing…</string>
+    <string name="speech_panel_listening">Listening…</string>
+    <string name="speech_panel_finalizing">Processing…</string>
+    <string name="speech_panel_error">Not ready</string>
+    <string name="speech_panel_vi">Vietnamese</string>
+    <string name="speech_panel_en">English</string>
+    <string name="speech_panel_error_hint">Return to the keyboard to keep typing.</string>
+    <string name="speech_panel_stop">Stop</string>
+    <string name="speech_panel_cancel">Cancel</string>
+    <string name="speech_panel_return">Return to keyboard</string>
+    <string name="speech_panel_retry">Try again</string>
+    <string name="speech_panel_setup">Set up voice input</string>
+    <string name="speech_panel_preparing_hint">Getting voice input ready.</string>
+    <string name="speech_panel_listening_hint">Speak now. Funput is listening.</string>
+    <string name="speech_panel_finalizing_hint">Finishing what you just said.</string>
+    <string name="speech_panel_transcript">YOUR WORDS</string>
+    <string name="speech_panel_back">Back</string>
+</resources>

@@ -14,7 +14,8 @@
 //!
 //! # Layout
 //!
-//! - `config` — pushing settings into the engine, and persistence.
+//! - `config` — pushing settings into the engine, and persistence; `config::sync`
+//!   shares the settings file with the other processes that write it.
 //! - `options` — the individual setting writes the Settings UI drives.
 //! - `apps` — the focused app, the per-app VI/EN memory, and the auto-switch.
 //! - `shortcuts` — the gõ tắt table, including half-typed drafts.
@@ -59,6 +60,10 @@ pub struct ShellState {
     /// inside it. Kept until they move to a different layout, so Funput states its
     /// case once and then lets them type. `0` when there is none.
     layout_override: u32,
+    /// Pins the hotkey made that [`Self::save_settings`] has not written down yet.
+    /// The map already holds them; this is what lets the save merge them onto a
+    /// fresh read of the file rather than write a stale snapshot over it.
+    unsaved_pins: Vec<(String, bool)>,
 }
 
 impl ShellState {
@@ -74,6 +79,7 @@ impl ShellState {
             last_layout: 0,
             layout_suspended: false,
             layout_override: 0,
+            unsaved_pins: Vec::new(),
         };
         state.settings = state.read_settings();
         state.apply_settings();

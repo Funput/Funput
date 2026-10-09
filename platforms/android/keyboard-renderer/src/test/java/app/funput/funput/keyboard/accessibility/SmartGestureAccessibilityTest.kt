@@ -3,7 +3,7 @@ package app.funput.funput.keyboard.accessibility
 import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
-import app.funput.funput.keyboard.layout.resolveGeometry
+import app.funput.funput.keyboard.layout.geometry.resolveGeometry
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardInputMethod

@@ -1,0 +1,25 @@
+// "Phụ âm đầu mở rộng" state, owned by Rust (settings_callbacks/extra_onsets.rs).
+// A global rather than window properties, so the feature does not have to be
+// threaded through SettingsWindow → SettingsContent → TypingPage.
+
+// One letter the user may admit as an initial consonant.
+export struct OnsetChoice {
+    letter: string, // as typed: "z"
+    examples: string, // what it lets the user write: "zô, zui"
+    on: bool,
+}
+
+export global ExtraOnsetsState {
+    // Any letter admitted. Two-way so the switch can bind to it; Rust re-sets it
+    // after every write, which is how unticking the last letter turns it off.
+    in-out property <bool> enabled;
+    // Every letter, in settings order, with whether it is admitted.
+    in property <[OnsetChoice]> letters;
+    // `w` is admitted — Telex nâng cao then needs the `ww` hint.
+    in property <bool> w-admitted;
+
+    // The switch: on admits every letter (UniKey's behaviour), off admits none.
+    callback set-all(bool);
+    // One checkbox: admit `letter` or not.
+    callback set-letter(string, bool);
+}

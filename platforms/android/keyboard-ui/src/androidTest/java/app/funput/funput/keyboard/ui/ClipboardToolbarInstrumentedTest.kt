@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.LocaleList
 import android.view.View
+import app.funput.funput.keyboard.ui.support.childOfType
+import app.funput.funput.keyboard.ui.support.descendants
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.funput.funput.keyboard.KeyboardClipboardHint
@@ -84,15 +86,15 @@ class ClipboardToolbarInstrumentedTest {
         keyboard.clipboardEntries = listOf(
             KeyboardClipboardEntry(UUID.randomUUID(), " Việt,\\\n 😀 ", Instant.now(), true),
         )
-        assertTrue((0 until keyboard.childCount).none { keyboard.getChildAt(it) is ClipboardPanelView })
+        assertTrue(keyboard.descendants().none { it is ClipboardPanelView })
         keyboard.showClipboardPanel()
-        val panel = (0 until keyboard.childCount).map(keyboard::getChildAt)
+        val panel = keyboard.descendants()
             .filterIsInstance<ClipboardPanelView>().single()
         assertEquals(KeyboardPanel.CLIPBOARD, keyboard.activePanel)
         assertEquals(1, opened)
         keyboard.showLettersPanel()
         keyboard.showClipboardPanel()
-        assertSame(panel, (0 until keyboard.childCount).map(keyboard::getChildAt)
+        assertSame(panel, keyboard.descendants()
             .filterIsInstance<ClipboardPanelView>().single())
         assertEquals(2, opened)
         keyboard.measure(exactly(320), exactly(420))
@@ -118,7 +120,7 @@ class ClipboardToolbarInstrumentedTest {
         }
     }
 
-    private fun FunputKeyboardView.surface() = getChildAt(0) as KeyboardSurfaceView
+    private fun FunputKeyboardView.surface() = childOfType<KeyboardSurfaceView>()
     private fun KeyboardSurfaceView.bitmap() = Bitmap.createBitmap(
         width, height, Bitmap.Config.ARGB_8888,
     ).also { draw(Canvas(it)) }

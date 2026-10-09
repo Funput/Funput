@@ -1,12 +1,16 @@
-use crate::settings::{Method, Settings, Shortcut};
+//! The settings ↔ document mapping. What an import *merges* rather than overwrites
+//! (the gõ tắt table, the Linux block) lives in `transfer/merge.rs`.
+
+mod merge;
+
+use crate::settings::{ExtraOnsetLetters, Method, Settings};
 
 use super::document::{
     CURRENT_VERSION, ConfigDocument, ImportSummary, LinuxBlock, Platform, PortableShortcut,
     Preferences, SCHEMA_ID, Source,
 };
-use super::mapping::{
-    flip_from_key, flip_key, hotkey_from_key, hotkey_key, tone_from_key, tone_key,
-};
+use super::mapping::{flip_key, hotkey_key, tone_from_key, tone_key};
+use merge::{merge_linux, merge_shortcuts};
 
 pub(super) fn to_document(settings: &Settings) -> ConfigDocument {
     ConfigDocument {
@@ -24,6 +28,7 @@ pub(super) fn to_document(settings: &Settings) -> ConfigDocument {
             eager_restore: Some(settings.eager_restore),
             spell_check: Some(settings.spell_check),
             auto_capitalize: Some(settings.auto_capitalize),
+            extra_onsets: Some(settings.extra_onsets.id()),
             shortcuts_enabled: Some(settings.shortcuts_enabled),
             shortcut_smart_case: Some(settings.shortcut_smart_case),
             shortcuts_in_english: Some(settings.shortcuts_in_english),
@@ -76,6 +81,12 @@ pub(super) fn apply(settings: &mut Settings, doc: &ConfigDocument) -> ImportSumm
         if let Some(value) = prefs.auto_capitalize {
             settings.auto_capitalize = value;
         }
+        // Absent keeps the local letters; present replaces them outright, unknown
+        // letters skipped — a newer build's extra letter cannot cost the user the
+        // ones known here.
+        if let Some(letters) = prefs.extra_onsets.as_deref() {
+            settings.extra_onsets = ExtraOnsetLetters::from_id(letters);
+        }
         // Absent means the exporter had nothing to say, not "off" — the format's
         // non-destructive-import rule. A file predating these fields carries a
         // table that expands, smart-cased, and importing it must not change that.
@@ -92,51 +103,4 @@ pub(super) fn apply(settings: &mut Settings, doc: &ConfigDocument) -> ImportSumm
     merge_shortcuts(settings, doc, &mut summary);
     merge_linux(settings, doc, &mut summary);
     summary
-}
-
-fn merge_shortcuts(settings: &mut Settings, doc: &ConfigDocument, summary: &mut ImportSummary) {
-    let Some(incoming) = &doc.shortcuts else {
-        return;
-    };
-    for item in incoming {
-        if let Some(existing) = settings
-            .shortcuts
-            .iter_mut()
-            .find(|old| old.trigger == item.trigger)
-        {
-            if existing.expansion != item.expansion {
-                existing.expansion.clone_from(&item.expansion);
-                summary.shortcuts_updated += 1;
-            }
-        } else {
-            settings.shortcuts.push(Shortcut {
-                trigger: item.trigger.clone(),
-                expansion: item.expansion.clone(),
-            });
-            summary.shortcuts_added += 1;
-        }
-    }
-}
-
-fn merge_linux(settings: &mut Settings, doc: &ConfigDocument, summary: &mut ImportSummary) {
-    let Some(linux) = doc
-        .platform
-        .as_ref()
-        .and_then(|platform| platform.linux.as_ref())
-    else {
-        return;
-    };
-    if let Some(hotkey) = linux.toggle_hotkey.as_deref().and_then(hotkey_from_key) {
-        settings.toggle_hotkey = hotkey;
-    }
-    if let Some(hotkey) = linux.flip_hotkey.as_deref().and_then(flip_from_key) {
-        settings.flip_hotkey = hotkey;
-    }
-    // Absent means "the exporter had nothing to say", not "turn it off" — the format's
-    // non-destructive-import rule, and the difference between carrying a setting and
-    // silently resetting it.
-    if let Some(value) = linux.non_preedit {
-        settings.non_preedit = value;
-    }
-    summary.applied_platform = true;
 }

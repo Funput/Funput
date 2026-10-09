@@ -4,7 +4,8 @@
 //! this composer — driving the same `funput-engine` — and shows the result directly.
 //! Lives on the UI (main) thread; separate from the hook's engine.
 
-use funput_core::{InputMethod, ToneStyle};
+use funput_config::Settings;
+use funput_core::InputMethod;
 use funput_engine::Engine;
 
 /// Builds the field text as `committed` (finished words) + the engine's live buffer
@@ -33,11 +34,17 @@ impl FieldComposer {
     }
 
     /// Start a fresh composition with `text` already in the field (focus-in), applying
-    /// the user's current method/tone so it matches global typing.
-    pub fn reset(&mut self, text: &str, method: InputMethod, tone: ToneStyle) {
-        self.method = method;
-        self.engine.set_method(method);
-        self.engine.update_config(|c| c.tone_style = tone);
+    /// the user's spelling choices — method, tone placement, extra onsets — so the
+    /// field composes the way global typing does.
+    pub fn reset(&mut self, text: &str, settings: &Settings) {
+        self.method = settings.method.core();
+        self.engine.set_method(self.method);
+        self.engine.update_config(|c| {
+            c.tone_style = settings.tone_style.core();
+            c.syllable_rules = c
+                .syllable_rules
+                .with_extra_onsets(settings.extra_onsets.core());
+        });
         self.engine.clear();
         self.committed = text.to_string();
     }
@@ -100,4 +107,29 @@ fn is_text(c: char) -> bool {
         || (0xF_0000..=0xF_FFFD).contains(&u)
         || (0x10_0000..=0x10_FFFD).contains(&u);
     !private_use
+}
+
+#[cfg(test)]
+mod tests {
+    use funput_config::{ExtraOnsetLetters, Method, Settings};
+
+    use super::FieldComposer;
+
+    fn typed(keys: &str, letters: &str) -> String {
+        let settings = Settings {
+            method: Method::Telex,
+            extra_onsets: ExtraOnsetLetters::from_id(letters),
+            ..Settings::default()
+        };
+        let mut composer = FieldComposer::new();
+        composer.reset("", &settings);
+        keys.chars().fold(String::new(), |_, c| composer.key(c))
+    }
+
+    /// The gõ tắt field composes the way global typing does, extra onsets included.
+    #[test]
+    fn the_field_follows_the_chosen_onsets() {
+        assert_eq!(typed("zoo jowf", "z"), "zô jowf");
+        assert_eq!(typed("zoo jowf", "zj"), "zô jờ");
+    }
 }

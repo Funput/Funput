@@ -14,6 +14,8 @@ public final class KeyboardInputCoordinator {
     /// Mirrors ``FunputConfiguration/smartGesturesEnabled`` for the gestures the engine
     /// owns; the touch-side gestures read it from ``KeyboardPresentation`` instead.
     public internal(set) var smartGesturesEnabled = true
+    /// Mirrors ``FunputConfiguration/returnsToLettersAfterPunctuation``.
+    public internal(set) var returnsToLettersAfterPunctuation = true
     var documentSynchronizer = KeyboardDocumentSynchronizer()
     var suggestionTracker = AuthoredTokenTracker()
     /// True while Shift was raised by autocapitalization (sentence/word start), not by
@@ -23,6 +25,8 @@ public final class KeyboardInputCoordinator {
     var personalSuggestionsEnabled = true
     var suggestionTrackingActive = true
     var preferredTelexMethod: KeyboardInputMethod
+    /// The durable options last applied, kept so panel fields compose the same way.
+    var compositionOptions: FunputCompositionOptions?
     var nextTransactionSequence: UInt64 = 1
     /// Where the finger landed for the key being handled right now. Set by `handle`
     /// and spent on the first scalar that reaches the engine; never outlives the key

@@ -61,6 +61,11 @@ final class FunputComposer {
         funput_set_shortcuts_in_english(handle, on)
     }
 
+    /// Admit `letters` as initial consonants; `[]` admits none. Its own FFI call.
+    func setExtraOnsets(_ letters: ExtraOnsetLetters) {
+        funput_set_extra_onsets(handle, letters.rawValue)
+    }
+
     /// Smart-case matching for gõ tắt: on, `tp`/`Tp`/`TP` all find the `tp` entry and
     /// the expansion is re-cased to match; off, only the exact trigger expands and the
     /// expansion is verbatim. Its own FFI call rather than a `FunputConfig` field —

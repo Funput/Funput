@@ -12,6 +12,18 @@ extension KeyboardViewController {
         [.left, .right, .bottom]
     }
 
+    /// Stops the system's edge-gesture gates from holding back `touchesBegan`.
+    ///
+    /// The override above is not enough inside a keyboard extension: UIKit asks the root
+    /// view controller of the extension's window, which belongs to the system, so the
+    /// gates on that window keep `delaysTouchesBegan` on. A finger resting on Delete at the
+    /// right edge then reaches the keyboard only once the gate gives up, which delayed both
+    /// the first deletion and key repeat (#516). The gates still recognize edge swipes and
+    /// cancel the touch when they do; they just stop withholding its first sample.
+    func releaseSystemGestureTouchDelay() {
+        view.window?.gestureRecognizers?.forEach { $0.delaysTouchesBegan = false }
+    }
+
     /// Handles the phases the gesture lane writes to the document itself.
     ///
     /// Returns whether the event was fully handled, so `handleKeyEvent` can leave the

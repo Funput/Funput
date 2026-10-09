@@ -13,6 +13,8 @@ data class KeySpec(
     val horizontalSwipeAction: KeySwipeAction? = null,
     val spaceLabelOverride: String? = null,
     val alternates: List<KeyAlternate> = emptyList(),
+    val preferredAlternateText: String? = null,
+    val alternatePaletteColumns: Int? = null,
 ) {
     init {
         require(id.isNotBlank()) { "Key id must not be blank" }
@@ -21,6 +23,12 @@ data class KeySpec(
         require(accessibilityLabel.isNotBlank()) { "Accessibility label must not be blank" }
         require(spaceLabelOverride == null || spaceLabelOverride.isNotBlank()) {
             "Space label override must not be blank"
+        }
+        require(preferredAlternateText == null || alternates.any { it is KeyAlternate.Text && it.text == preferredAlternateText }) {
+            "Preferred alternate must belong to the key"
+        }
+        require(alternatePaletteColumns == null || alternatePaletteColumns > 0) {
+            "Alternate palette columns must be positive"
         }
     }
 }
@@ -46,8 +54,12 @@ data class SuggestionBarSpec(
     val clipboardKey: KeySpec? = null,
     val systemInputMethodKey: KeySpec? = null,
     val suggestionsEnabled: Boolean = true,
+    val microphoneKey: KeySpec? = null,
 ) {
     init {
+        require(microphoneKey == null || microphoneKey.role == KeyRole.MICROPHONE) {
+            "Toolbar microphone action must be a microphone key"
+        }
         require(emojiKey.role == KeyRole.EMOJI) { "Toolbar emoji action must be an emoji key" }
         require(placementKey.role == KeyRole.PLACEMENT) { "Toolbar placement action has the wrong role" }
         require(clipboardKey == null || clipboardKey.role == KeyRole.CLIPBOARD) {
@@ -71,6 +83,7 @@ data class KeyboardLayout(
 
         val keyIds = buildList {
             suggestionBar?.clipboardKey?.let { add(it.id) }
+            suggestionBar?.microphoneKey?.let { add(it.id) }
             suggestionBar?.emojiKey?.let { add(it.id) }
             suggestionBar?.placementKey?.let { add(it.id) }
             suggestionBar?.systemInputMethodKey?.let { add(it.id) }

@@ -3,34 +3,48 @@ import Testing
 
 @MainActor
 struct ClipboardCaptureControllerTests {
-    @Test func capturesBeforePasteWithoutChangingText() {
+    @Test func capturesBeforePasteWithoutChangingText() async {
         let f = CaptureFixture()
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.saved.map(\.text) == ["  Tiếng Việt\n🙂  "])
         #expect(f.updates == 1)
         #expect(f.controller.lastPastedChangeCount == nil)
-        for _ in 0..<1_000 { f.controller.synchronize() }
+        for _ in 0..<1_000 { await f.sync() }
         #expect(f.gateway.reads == 1)
         #expect(f.saved.count == 1)
         f.gateway.copy("new")
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.saved.count == 2)
     }
 
-    @Test func copyDuringReadDiscardsUnstableResult() {
+    @Test func copyDuringReadDiscardsUnstableResult() async {
         let f = CaptureFixture()
-        f.gateway.duringRead = { f.gateway.copy("new") }
-        f.controller.synchronize()
-        #expect(f.saved.isEmpty)
-        f.gateway.duringRead = nil
-        f.controller.synchronize()
-        #expect(f.saved.first?.text == "new")
+        f.gateway.duringRead = {
+            f.gateway.duringRead = nil
+            f.gateway.copy("new")
+        }
+        // The first result is thrown away; the queued re-read picks up the new copy.
+        await f.sync()
+        #expect(f.gateway.reads == 2)
+        #expect(f.saved.map(\.text) == ["new"])
         #expect(f.saved.first?.sourceChangeCount == 2)
     }
 
-    @Test func captureDoesNotSuppressPasteOffer() {
+    /// A paste through the chip lands while a slow read (a Mac clipboard still on
+    /// its way) is pending. The read must not save the same clipboard again.
+    @Test func pasteDuringReadIsNotSavedTwice() async {
         let f = CaptureFixture()
-        f.controller.synchronize()
+        f.gateway.duringRead = {
+            f.controller.didPaste(f.gateway.text!, changeCount: 1)
+        }
+        await f.sync()
+        #expect(f.saved.count == 1)
+        #expect(f.controller.lastPastedChangeCount == 1)
+    }
+
+    @Test func captureDoesNotSuppressPasteOffer() async {
+        let f = CaptureFixture()
+        await f.sync()
         let context = ClipboardOfferPolicy.Context(
             editorMode: .text, hasToolbar: true, hasFullAccess: true
         )
@@ -46,33 +60,33 @@ struct ClipboardCaptureControllerTests {
         ) == nil)
     }
 
-    @Test func lateManualPasteDoesNotSuppressOrClaimNewClipboard() {
+    @Test func lateManualPasteDoesNotSuppressOrClaimNewClipboard() async {
         let f = CaptureFixture()
         f.gateway.copy("new")
         f.controller.didPaste("old", changeCount: 1)
         #expect(f.saved.first?.sourceChangeCount == -1)
         #expect(f.controller.lastPastedChangeCount == nil)
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.saved.last?.text == "new")
     }
 
-    @Test func ignoresEmptyTextAndImages() {
+    @Test func ignoresEmptyTextAndImages() async {
         let f = CaptureFixture()
         f.gateway.copy("")
-        f.controller.synchronize()
+        await f.sync()
         f.gateway.copy(nil)
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.saved.isEmpty)
         #expect(!f.controller.needsRetry)
     }
 
-    @Test func ignoresURLShapedProvidersWithoutPlainText() {
+    @Test func ignoresURLShapedProvidersWithoutPlainText() async {
         let f = CaptureFixture()
         f.gateway.metadata = ClipboardSnapshot(
             changeCount: 2, hasStrings: true, hasURLs: true, hasPlainText: false
         )
         f.gateway.text = nil
-        f.controller.synchronize()
+        await f.sync()
         #expect(f.gateway.reads == 0)
         #expect(f.saved.isEmpty)
         #expect(!f.controller.needsRetry)

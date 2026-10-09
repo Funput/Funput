@@ -24,8 +24,8 @@ pub use compose::{
     funput_buffer, funput_clear, funput_flip_composing, funput_process_char, funput_process_key,
 };
 pub use config::{
-    FunputConfig, METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, funput_configure,
-    funput_set_enabled, funput_set_method, funput_set_typo_correction,
+    FunputConfig, METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, ONSET_F, ONSET_J, ONSET_W,
+    ONSET_Z, funput_configure, funput_set_enabled, funput_set_extra_onsets, funput_set_method,
 };
 pub use correction::{
     CORRECTION_CAP, CORRECTION_CHARS_CAP, FunputCorrectionCandidate, FunputCorrectionMetrics,
@@ -34,6 +34,7 @@ pub use correction::{
     funput_engine_correction_metrics, funput_engine_correction_undo_text,
     funput_engine_has_correction_undo, funput_engine_has_pending_correction,
     funput_engine_pending_correction_backspace, funput_engine_set_next_key_touch,
+    funput_set_typo_correction,
 };
 pub use result::{ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputResult};
 pub use shortcuts::{

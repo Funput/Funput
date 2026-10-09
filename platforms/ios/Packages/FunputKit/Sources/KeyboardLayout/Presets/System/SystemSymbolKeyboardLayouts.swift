@@ -71,7 +71,8 @@ public enum SystemSymbolKeyboardLayouts {
             accessibilityLabel: "Chuyển trang ký hiệu"
         )
         let middle = SystemSymbolPageContent.punctuationRow.enumerated().map { index, label in
-            KeySpec(id: "punctuation-\(page)-\(index)", label: label, role: .punctuation)
+            let id = "punctuation-\(page)-\(index)"
+            return label == "." ? periodKey(id) : KeySpec(id: id, label: label, role: .punctuation)
         }
         let trailing = specialKey("backspace-\(page)", "", .backspace, accessibilityLabel: "Xóa")
         return KeyboardRow(

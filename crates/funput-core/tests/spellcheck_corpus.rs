@@ -6,8 +6,15 @@
 //! (a) **recall** — real syllables, including established loanwords and onomatopoeia,
 //! are never rejected (else spell-check would wrongly block a real word); and
 //! (b) **precision** — structurally-plausible non-syllables are rejected.
+//!
+//! The last section types the opt-in extra onsets (`zô`, `jờ`, `fải`, `wá`) through
+//! the public [`apply_with`] in every method, with and without the option.
 
-use funput_core::{InputMethod, ToneStyle, TransformKind, apply_checked, is_complete_syllable};
+use funput_core::{
+    ComposeOptions, ExtraOnsets, InputMethod, SyllableRules, ToneStyle, TransformKind,
+    apply_checked, apply_with, is_complete_syllable,
+};
+use proptest::prelude::*;
 
 /// Real Vietnamese syllables (incl. established loanwords / onomatopoeia). Each MUST
 /// be accepted as a complete syllable — otherwise spell-check would block a real word.
@@ -67,6 +74,9 @@ const MUST_REJECT: &[&str] = &[
     "bèc", // stop coda + huyền
     "tẽt", // stop coda + ngã ("text")
     "eg", "id", "oab", "onk", "erf", "az", "ngb", // non-Vietnamese rhyme / structure
+    // A consonant between onset and vowel, which an order-blind parse reads as
+    // the coda (`cno` → rhyme `on`).
+    "cno", "cna", "cnu", "tnó", "ctá", "ona",
 ];
 
 #[test]
@@ -114,6 +124,13 @@ fn spell_check_keeps_real_words() {
         ("hoongf", "hồng"),
         ("koong", "kông"),
         ("drawng", "drăng"), // cluster onset dr (Ea Drăng)
+        // Tây Nguyên toponyms: final k ≈ c and cluster onsets.
+        ("ddawks", "đắk"), // Đắk Lắk
+        ("lawks", "lắk"),
+        ("kroong", "krông"), // Krông Pắc
+        ("pawcs", "pắc"),
+        ("buks", "búk"),     // Krông Búk
+        ("ploong", "plông"), // Kon Plông
     ] {
         assert_eq!(type_checked(keys), expected, "blocked real word: {keys}");
     }
@@ -134,6 +151,25 @@ fn tay_nguyen_place_names_accepted() {
         "chư",   // Chư Pưh / Chư Sê
         "kông",  // k + ô — loanword/toponym (Hồng Kông, Kông Chro)
         "pơng",  // ơng rhyme (Chư Pơng)
+        "pắc",   // Krông Pắc
+        "búk",   // Krông Búk — final k ≈ c
+        "nông",  // Đắk Nông
+        "plông", // Kon Plông
+        "prông", // Chư Prông
+        "grai",  // Ia Grai
+        "kon",   // Kon Tum
+        "tum", "pơ", // Đak Pơ
+        // Clusters no English word begins with: any rhyme after them is a name's.
+        "kpă",    // Kpă (open ă, which native Vietnamese never has)
+        "kpăng",  // Kpăng
+        "kdăm",   // Ia Kdăm
+        "mrơn",   // Ia Mrơn
+        "rcăm",   // Chư Rcăm
+        "rsươm",  // Ia Rsươm
+        "hrê",    // Hrê
+        "xtiêng", // Xtiêng
+        "dliê",   // Cư Dliê M'nông (open iê)
+        "đrắk",   // M'Đrắk
     ] {
         assert!(
             is_complete_syllable(s),
@@ -152,13 +188,20 @@ fn loanword_place_names_accepted() {
     assert!(is_complete_syllable("kê"));
 }
 
-/// Boundary of the chosen scope. `Blơr` needs a final `r`, which we deliberately do
-/// NOT add: `r` is the Telex hỏi-tone key (so it can't be a coda there) and a global
-/// `r` coda would wrongly keep English `car`/`bar`. Documented as unsupported — it
-/// falls back to the English toggle / VNI.
+/// Boundary of the chosen scope. The finals `h`, `l`, `r` (`Chư Păh`, `Ea Nuôl`,
+/// `Blơr`) are never complete syllables: in Telex they are English `cash` (`s` +
+/// `h`), `cool` and the hỏi key. VNI keeps them alive while typing (see
+/// `is_definitely_invalid_in`) and its digits keep them at the word boundary;
+/// Telex types them with the double key (`Blowrr`) or the flip hotkey.
 #[test]
 fn tay_nguyen_out_of_scope_still_rejected() {
-    assert!(!is_complete_syllable("blơr"), "final r not in scope");
+    for s in ["blơr", "păh", "nuôl"] {
+        assert!(!is_complete_syllable(s), "name final not in scope: {s}");
+    }
+    // Onsets English begins words with stay out too: `know` → `knơ`, `slow` → `slơ`.
+    for s in ["knơ", "slơ"] {
+        assert!(!is_complete_syllable(s), "English onset: {s}");
+    }
 }
 
 /// The k≈c allophone must NOT over-accept English: a lone trailing `k` only maps to
@@ -181,4 +224,144 @@ fn spell_check_blocks_nonsyllable_via_gate() {
     let r = apply_checked("bec", 'f', InputMethod::Telex, ToneStyle::Traditional, true);
     assert_eq!(r.text, "becf");
     assert_eq!(r.kind, TransformKind::Pending);
+}
+
+/// Same gate for a consonant stranded before the vowel: `cno` has no syllable to
+/// put a tone on, so the tone key stays literal.
+#[test]
+fn spell_check_blocks_tone_on_misordered_consonant() {
+    let r = apply_checked("cno", 's', InputMethod::Telex, ToneStyle::Traditional, true);
+    assert_eq!(r.text, "cnos");
+    assert_eq!(r.kind, TransformKind::Pending);
+}
+
+// --- Extra onsets ------------------------------------------------------------
+// UniKey's "Cho phép phụ âm đầu Z, F, W, J": admitted letters open a syllable like
+// a native onset. Only the onset widens; the rhyme must still be Vietnamese.
+
+const NONE: ExtraOnsets = ExtraOnsets::NONE;
+const ZFWJ: ExtraOnsets = ExtraOnsets::ZFWJ;
+
+fn options(method: InputMethod, extra: ExtraOnsets) -> ComposeOptions {
+    ComposeOptions::new(method)
+        .with_tone_style(ToneStyle::Traditional)
+        .with_syllable_rules(SyllableRules::STANDARD.with_extra_onsets(extra))
+}
+
+fn type_under(options: ComposeOptions, keys: &str) -> String {
+    keys.chars().fold(String::new(), |buffer, key| {
+        apply_with(&buffer, key, options).text
+    })
+}
+
+fn typed(method: InputMethod, extra: ExtraOnsets, keys: &str) -> String {
+    type_under(options(method, extra), keys)
+}
+
+#[test]
+fn extra_onsets_take_diacritics_in_telex() {
+    for (keys, word) in [
+        ("zoo", "zô"),
+        ("zoos", "zố"),
+        ("zuis", "zúi"),
+        ("jowf", "jờ"),
+        ("fair", "fải"),
+        ("faf", "fà"),
+        ("was", "wá"),
+        ("wow", "wơ"),
+        ("Juts", "Jút"),
+        ("Just", "Jút"),
+        ("Zoo", "Zô"),
+        ("ZOO", "ZÔ"),
+    ] {
+        assert_eq!(typed(InputMethod::Telex, ZFWJ, keys), word, "{keys}");
+        assert_eq!(typed(InputMethod::Telex, NONE, keys), keys, "{keys}");
+    }
+}
+
+#[test]
+fn extra_onsets_follow_the_native_key_rules_in_telex() {
+    // A `w` before the vowel and a circumflex typed away from its vowel act as they
+    // do after a native onset: `twa` → `tă`, `tomo` → `tôm`.
+    assert_eq!(typed(InputMethod::Telex, ZFWJ, "fwa"), "fă");
+    assert_eq!(typed(InputMethod::Telex, ZFWJ, "fomo"), "fôm");
+    assert_eq!(typed(InputMethod::Telex, NONE, "fomo"), "fomo");
+    // A word whose rhyme Vietnamese lacks never composes.
+    for word in ["file", "from", "jump", "jazz", "with", "zzz"] {
+        assert_eq!(typed(InputMethod::Telex, ZFWJ, word), word);
+    }
+}
+
+#[test]
+fn full_telex_keeps_its_leading_w_and_reaches_w_through_ww() {
+    for extra in [NONE, ZFWJ] {
+        for (keys, word) in [("w", "ư"), ("wa", "ưa"), ("wf", "ừ"), ("wngf", "ừng")] {
+            assert_eq!(
+                typed(InputMethod::TelexAdvanced, extra, keys),
+                word,
+                "{keys}"
+            );
+        }
+        assert_eq!(
+            typed(InputMethod::TelexAdvanced, extra, "WWindowws"),
+            "Windows"
+        );
+    }
+    assert_eq!(typed(InputMethod::TelexAdvanced, ZFWJ, "wwas"), "wá");
+    assert_eq!(typed(InputMethod::TelexAdvanced, ZFWJ, "WWas"), "Wá");
+    assert_eq!(typed(InputMethod::TelexAdvanced, NONE, "wwas"), "was");
+    // `z`, `j` and `f` are no shortcut keys: they work as in plain Telex.
+    assert_eq!(typed(InputMethod::TelexAdvanced, ZFWJ, "zoo"), "zô");
+    assert_eq!(typed(InputMethod::TelexAdvanced, ZFWJ, "jowf"), "jờ");
+}
+
+#[test]
+fn extra_onsets_take_diacritics_in_vni() {
+    for (keys, word) in [
+        ("zo6", "zô"),
+        ("zo61", "zố"),
+        ("jo72", "jờ"),
+        ("fa3i", "fải"),
+        ("wa1", "wá"),
+        ("Ju1t", "Jút"),
+        ("Jut1", "Jút"),
+    ] {
+        assert_eq!(typed(InputMethod::Vni, ZFWJ, keys), word, "{keys}");
+        assert_eq!(typed(InputMethod::Vni, NONE, keys), keys, "{keys}");
+    }
+}
+
+#[test]
+fn only_the_admitted_letters_open_a_syllable() {
+    let only_z = options(InputMethod::Telex, ExtraOnsets::Z);
+    assert_eq!(type_under(only_z, "zoo"), "zô");
+    assert_eq!(type_under(only_z, "fair"), "fair");
+}
+
+#[test]
+fn spell_check_judges_by_the_same_rules() {
+    let checked = |extra, keys| {
+        type_under(
+            options(InputMethod::Telex, extra).with_spell_check(true),
+            keys,
+        )
+    };
+    assert_eq!(checked(ZFWJ, "zoo"), "zô");
+    assert_eq!(checked(ZFWJ, "jowf"), "jờ");
+    assert_eq!(checked(NONE, "zoo"), "zoo");
+    // The gate still refuses a tone on a rhyme Vietnamese lacks.
+    assert_eq!(checked(ZFWJ, "fods"), "fods");
+}
+
+proptest! {
+    /// Admitting extra onsets changes nothing for a word that opens with any other
+    /// key: the onset is the only place the rules are read.
+    #[test]
+    fn extra_onsets_only_touch_words_they_open(
+        keys in "[a-eg-ik-vxyA-EG-IK-VXY][a-zA-Z0-9]{0,10}",
+    ) {
+        for method in [InputMethod::Telex, InputMethod::TelexAdvanced, InputMethod::Vni] {
+            prop_assert_eq!(typed(method, ZFWJ, &keys), typed(method, NONE, &keys), "{:?}", method);
+        }
+    }
 }

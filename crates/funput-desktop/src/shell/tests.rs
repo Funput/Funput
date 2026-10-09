@@ -2,10 +2,11 @@
 //! process-global mutex: which app gets Vietnamese, which surface is allowed to
 //! pin one, and when composition is thrown away.
 
-use funput_config::{Method, Settings};
+use funput_config::{ExtraOnsetLetters, Method, Settings};
 use funput_engine::{Action, KeySource};
 
 use super::*;
+use crate::Caret;
 
 /// In memory only — no settings file, so nothing touches the disk.
 fn shell() -> ShellState {
@@ -174,6 +175,150 @@ fn a_remembered_choice_survives_a_restart() {
     let _ = std::fs::remove_dir_all(dir);
 }
 
+/// The reported bug, first path: on the desktop, the taskbar or a Funput window
+/// there is no app in front, and a hotkey pressed there used to re-pin the app the
+/// user had just left — so they came back to it in the other language.
+#[test]
+fn a_hotkey_with_no_app_in_front_pins_nothing() {
+    let mut state = shell_remembering(&[("a.exe", false)]);
+    state.note_foreground("a.exe".into());
+    assert_eq!(state.apply_for_app("a.exe"), Some(false));
+
+    state.clear_foreground(); // the user clicked the desktop
+    assert!(
+        state.toggle_enabled_hotkey(),
+        "the global switch still flips"
+    );
+    assert_eq!(
+        state.settings().app_language_memory.get("a.exe"),
+        Some(&false),
+        "a.exe keeps the pin it was given inside it"
+    );
+    assert_eq!(
+        state.apply_for_app("a.exe"),
+        Some(false),
+        "and gets it back"
+    );
+}
+
+#[test]
+fn an_unresolvable_window_counts_as_no_app() {
+    let mut state = shell();
+    state.note_foreground("a.exe".into());
+    state.note_foreground(String::new());
+    assert_eq!(state.foreground_id(), None);
+}
+
+/// A scratch settings file shared by a "background" and a "Settings window"
+/// state, the way the two processes share one on Windows.
+fn shared_file(tag: &str) -> (std::path::PathBuf, std::path::PathBuf) {
+    let dir = std::env::temp_dir().join(format!("funput-{tag}-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("settings.json");
+    // Written up front so both sides start from the same file, as they do once
+    // Funput has run before.
+    Settings::default().save_to(&path);
+    (dir, path)
+}
+
+/// The reported bug, second path: Settings left open reads the file once, and
+/// every option it changes saves the whole struct — which used to put back the
+/// pins from when it opened.
+#[test]
+fn a_stale_settings_window_does_not_erase_a_pin() {
+    let (dir, path) = shared_file("stale-ui");
+    let mut background = ShellState::new(Some(path.clone()));
+    let mut settings_window = ShellState::new(Some(path.clone())); // opened now
+
+    background.note_foreground("a.exe".into());
+    assert!(!background.toggle_enabled_hotkey(), "a.exe → English");
+    background.save_settings();
+
+    // The user changes an unrelated option in the window they left open, through
+    // the same refresh-then-write path the platform wrappers take.
+    let spell = !settings_window.settings().spell_check;
+    settings_window.refresh_hook_state();
+    settings_window.set_spell_check(spell);
+
+    // A focus change, in the order the foreground hook runs it: reload first.
+    assert!(background.reload_settings());
+    assert_eq!(
+        background.settings().spell_check,
+        spell,
+        "the option arrived"
+    );
+    background.note_foreground("b.exe".into());
+    background.remember("b.exe", true);
+    assert_eq!(background.apply_for_app("b.exe"), Some(true));
+    assert_eq!(
+        background.settings().app_language_memory.get("a.exe"),
+        Some(&false),
+        "and a.exe's pin survived it"
+    );
+    assert_eq!(background.apply_for_app("a.exe"), Some(false));
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+/// The same lost update the other way round: a hotkey pressed while Settings has
+/// focus used to save the hook process's stale copy over what Settings wrote.
+#[test]
+fn a_hotkey_save_does_not_erase_a_settings_change() {
+    let (dir, path) = shared_file("stale-hook");
+    let mut background = ShellState::new(Some(path.clone()));
+    let mut settings_window = ShellState::new(Some(path.clone()));
+
+    let spell = !settings_window.settings().spell_check;
+    settings_window.refresh_hook_state();
+    settings_window.set_spell_check(spell);
+
+    background.note_foreground("a.exe".into());
+    background.toggle_enabled_hotkey();
+    background.save_settings();
+
+    let on_disk = Settings::load_from(&path);
+    assert_eq!(
+        on_disk.spell_check, spell,
+        "Settings' change is still there"
+    );
+    assert_eq!(on_disk.app_language_memory.get("a.exe"), Some(&false));
+    assert!(!on_disk.enabled);
+    assert_eq!(
+        background.settings().spell_check,
+        spell,
+        "and in memory too"
+    );
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+/// A UI process takes only the hook's two fields from the file: its own unsaved
+/// gõ tắt drafts are not written to disk on purpose and must survive the refresh.
+#[test]
+fn refreshing_a_settings_window_keeps_its_drafts() {
+    let (dir, path) = shared_file("drafts");
+    let mut settings_window = ShellState::new(Some(path.clone()));
+    settings_window.add_shortcut(); // a blank draft, never saved
+
+    let mut background = ShellState::new(Some(path.clone()));
+    background.note_foreground("a.exe".into());
+    background.toggle_enabled_hotkey();
+    background.save_settings();
+
+    settings_window.refresh_hook_state();
+    assert_eq!(
+        settings_window.shortcuts().len(),
+        1,
+        "the draft is still there"
+    );
+    assert!(!settings_window.settings().enabled, "VI/EN arrived");
+    assert_eq!(
+        settings_window.settings().app_language_memory.get("a.exe"),
+        Some(&false),
+        "and so did the pin"
+    );
+    let _ = std::fs::remove_dir_all(dir);
+}
+
 // --- the per-app memory switch ---------------------------------------------
 
 /// Off, the map is history: every app follows the global switch, even one the
@@ -282,6 +427,50 @@ fn backspace_after_a_word_boundary_reopens_the_word() {
 
     state.on_backspace();
     assert!(state.is_composing(), "phủ was re-opened");
+}
+
+// --- caret moves -----------------------------------------------------------
+
+fn shell_autocap() -> ShellState {
+    shell_with(Settings {
+        auto_capitalize: true,
+        ..Settings::default()
+    })
+}
+
+#[test]
+fn a_caret_move_commits_the_word_and_drops_the_shadow() {
+    let mut state = shell();
+    app_text(&mut state, "phur ");
+    state.process_key('c', KeySource::Standard);
+
+    state.caret_moved(Caret::Unknown);
+    assert!(!state.is_composing());
+
+    state.on_backspace();
+    assert!(!state.is_composing(), "phủ sits somewhere else now");
+}
+
+/// `Xong. `, then a click into the middle of another sentence: the full stop the
+/// user typed is no longer in front of the caret.
+#[test]
+fn a_sentence_end_does_not_survive_a_caret_move() {
+    let mut state = shell_autocap();
+    app_text(&mut state, "xong. ");
+
+    state.caret_moved(Caret::Unknown);
+
+    assert_eq!(app_text(&mut state, "tiep"), "tiep");
+}
+
+#[test]
+fn a_line_start_capitalizes_the_next_word() {
+    let mut state = shell_autocap();
+    app_text(&mut state, "xong");
+
+    state.caret_moved(Caret::LineStart);
+
+    assert_eq!(app_text(&mut state, "tiep"), "Tiep");
 }
 
 // --- shortcuts -------------------------------------------------------------
@@ -589,4 +778,58 @@ fn the_english_switch_does_not_touch_vietnamese_mode() {
 
     assert!(state.hook_active());
     assert_eq!(app_text(&mut state, "tp "), "TP. HCM ");
+}
+
+// --- extra onsets (z, f, w, j) -----------------------------------------------
+
+/// A Telex shell admitting `letters`, set the way the Settings window sets them.
+fn shell_with_onsets(letters: &str) -> ShellState {
+    let mut state = shell();
+    state.set_method(InputMethod::Telex);
+    state.set_extra_onsets(ExtraOnsetLetters::from_id(letters));
+    state
+}
+
+#[test]
+fn extra_onsets_are_off_by_default() {
+    let mut state = shell_with_onsets("");
+    assert_eq!(app_text(&mut state, "zoo jowf fair "), "zoo jowf fair ");
+}
+
+/// The switch has to reach the engine, not just the settings file, and only the
+/// letters picked may open a syllable.
+#[test]
+fn only_the_chosen_letters_open_a_syllable() {
+    let mut state = shell_with_onsets("z");
+    assert_eq!(app_text(&mut state, "zoo fair "), "zô fair ");
+
+    state.set_extra_onsets(ExtraOnsetLetters::from_id("zf"));
+    assert_eq!(app_text(&mut state, "zoo fair "), "zô fải ");
+    assert_eq!(
+        app_text(&mut state, "food "),
+        "food ",
+        "the rhyme still has to be Vietnamese"
+    );
+
+    state.set_extra_onsets(ExtraOnsetLetters::NONE);
+    assert_eq!(app_text(&mut state, "zoo "), "zoo ");
+}
+
+/// Import and a write from the Settings process arrive as a whole document, and
+/// take the same road to the engine.
+#[test]
+fn replaced_settings_carry_the_letters_to_the_engine() {
+    let mut state = shell_with(Settings {
+        method: Method::Telex,
+        extra_onsets: ExtraOnsetLetters::ALL,
+        ..Settings::default()
+    });
+    assert_eq!(app_text(&mut state, "jowf was "), "jờ wá ");
+}
+
+#[test]
+fn full_telex_keeps_its_leading_w() {
+    let mut state = shell_with_onsets("zfwj");
+    state.set_method(InputMethod::TelexAdvanced);
+    assert_eq!(app_text(&mut state, "wa wwas "), "ưa wá ");
 }
