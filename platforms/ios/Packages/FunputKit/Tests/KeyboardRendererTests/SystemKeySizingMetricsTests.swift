@@ -7,13 +7,13 @@ import UIKit
 @MainActor
 struct SystemKeySizingMetricsTests {
     /// Top padding 6, bottom padding 6 (none below 414pt), rows, 11pt gaps and toolbar chrome
-    /// 44 (a 36pt band plus an 8pt gap). VNI rows: four letter rows plus a number row at 0.85
+    /// 38 (a 34pt band plus a 4pt gap). VNI rows: four letter rows plus a number row at 0.85
     /// of one.
     @Test("System sizing builds the height from Apple's rows", arguments: [
-        (440.0, false, 269.0), // 12 + 45×4 + 33 + 44
-        (402.0, false, 255.0), // 6 + 43×4 + 33 + 44
-        (440.0, true, 303.7), // 12 + 42×4 + 35.7 + 44 + 44
-        (402.0, true, 289.455), // 6 + 40.3×4 + 34.255 + 44 + 44
+        (440.0, false, 263.0), // 12 + 45×4 + 33 + 38
+        (402.0, false, 249.0), // 6 + 43×4 + 33 + 38
+        (440.0, true, 297.7), // 12 + 42×4 + 35.7 + 44 + 38
+        (402.0, true, 283.455), // 6 + 40.3×4 + 34.255 + 44 + 38
     ])
     func systemHeights(screenWidth: CGFloat, numberRow: Bool, expected: CGFloat) {
         let layout = StandardKeyboardLayouts.letters(numberRow ? .vni : .telex, showsNumberRow: numberRow)
