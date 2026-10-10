@@ -22,8 +22,9 @@ class MicrophoneToolbarTest {
         val before = requireNotNull(full.suggestionBar)
         val after = requireNotNull(candidates.suggestionBar)
         assertEquals(before.microphoneKey?.spec, after.microphoneKey?.spec)
-        assertEquals(before.microphoneKey?.bounds?.width, after.microphoneKey?.bounds?.width)
-        assertEquals(before.emojiKey, after.emojiKey)
+        assertEquals(requireNotNull(before.microphoneKey).bounds.width,
+            requireNotNull(after.microphoneKey).bounds.width, 0.01f)
+        assertEquals(before.emojiKey.bounds, after.emojiKey.bounds)
         assertNull(after.clipboardKey)
         assertNull(after.placementKey)
         assertTrue(after.suggestionsBounds.width > before.suggestionsBounds.width)

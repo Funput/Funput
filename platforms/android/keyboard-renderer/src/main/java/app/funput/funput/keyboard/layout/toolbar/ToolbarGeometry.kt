@@ -26,14 +26,17 @@ internal object ToolbarGeometry {
         val micWidth = density * ToolbarMetrics.MicrophoneWidthDp
         // Left side, Gboard order (left to right): keyboard mode, then voice input.
         var leftAnchor = spec.horizontalPadding
-        fun leftKey(visible: Boolean, keyWidth: Float): KeyBounds? {
-            if (!visible) return null
+        fun leftKey(keyWidth: Float): KeyBounds {
             val bounds = KeyBounds(leftAnchor, top, leftAnchor + keyWidth, bottom)
             leftAnchor = bounds.right + spec.horizontalGap
             return bounds
         }
-        val placement = leftKey(showPlacement, spec.suggestionBarHeight)
-        val mic = leftKey(microphone.visible && bar.microphoneKey != null, micWidth)
+        val showMic = microphone.visible && bar.microphoneKey != null
+        // The microphone is required; keyboard mode yields first when the row is too narrow.
+        val micReserve = if (showMic) micWidth + spec.horizontalGap else 0f
+        val placementFits = leftAnchor + spec.suggestionBarHeight + spec.horizontalGap + micReserve <= emoji.left
+        val placement = if (showPlacement && placementFits) leftKey(spec.suggestionBarHeight) else null
+        val mic = if (showMic) leftKey(micWidth) else null
         require(emoji.left >= leftAnchor - spec.horizontalGap) {
             "Keyboard is too narrow for its required toolbar actions"
         }
