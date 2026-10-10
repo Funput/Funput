@@ -35,31 +35,33 @@ internal object KeyboardHitTargetResolver {
         keyboard: ResolvedKeyboard,
         bar: ResolvedSuggestionBar,
     ): ResolvedSuggestionBar {
-        val controls = listOfNotNull(
-            bar.systemInputMethodKey, bar.clipboardKey, bar.placementKey, bar.microphoneKey, bar.emojiKey,
-        )
+        // Left to right: keyboard mode, voice input, suggestions, then the right-hand utilities.
+        val leading = listOfNotNull(bar.placementKey, bar.microphoneKey)
+        val trailing = listOfNotNull(bar.systemInputMethodKey, bar.clipboardKey, bar.emojiKey)
         val hitBottom = midpoint(bar.bounds.bottom, keyboard.rows.first().first().bounds.top)
-        val resolvedControls = controls.mapIndexed { index, key ->
-            val left = if (index > 0) {
-                midpoint(controls[index - 1].bounds.right, key.bounds.left)
-            } else if (bar.suggestionsEnabled) {
-                midpoint(bar.suggestionsBounds.right, key.bounds.left)
-            } else {
-                key.bounds.left
-            }
-            val right = controls.getOrNull(index + 1)
-                ?.let { midpoint(key.bounds.right, it.bounds.left) } ?: keyboard.width
+        // Ordered spans of the toolbar; the suggestions area is a span too when enabled.
+        val spans = leading.map { it.bounds } +
+            (if (bar.suggestionsEnabled) listOf(bar.suggestionsBounds) else emptyList()) +
+            trailing.map { it.bounds }
+        fun edges(bounds: KeyBounds): Pair<Float, Float> {
+            val index = spans.indexOf(bounds)
+            val left = spans.getOrNull(index - 1)?.let { midpoint(it.right, bounds.left) } ?: 0f
+            val right = spans.getOrNull(index + 1)?.let { midpoint(bounds.right, it.left) } ?: keyboard.width
+            return left to right
+        }
+        val resolvedControls = (leading + trailing).map { key ->
+            val (left, right) = edges(key.bounds)
             resolveToolbarKey(key, left, right, hitBottom)
         }
         fun lookup(key: ResolvedKey?): ResolvedKey? =
             key?.let { target -> resolvedControls.first { it.spec.id == target.spec.id } }
+        val suggestionEdges = if (bar.suggestionsEnabled) edges(bar.suggestionsBounds)
+            else bar.suggestionsBounds.left to bar.suggestionsBounds.right
         return bar.copy(
             suggestionsHitBounds = KeyBounds(
-                // Nothing sits to the left of the suggestions, so like the outer keys of a
-                // row they reach the surface edge instead of leaving the padding unowned.
-                left = 0f,
+                left = suggestionEdges.first,
                 top = 0f,
-                right = bar.suggestionsBounds.right,
+                right = suggestionEdges.second,
                 bottom = hitBottom,
             ),
             systemInputMethodKey = lookup(bar.systemInputMethodKey),

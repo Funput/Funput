@@ -16,12 +16,13 @@ import org.junit.Test
 class MicrophoneToolbarTest {
     private val microphone = KeyboardMicrophoneState(true, true, "Nhập bằng giọng nói, Tiếng Anh")
 
-    @Test fun microphoneStaysBesideEmojiWhenOptionalUtilitiesYieldToCandidates() {
+    @Test fun microphoneStaysOnTheLeftWhenOptionalUtilitiesYieldToCandidates() {
         val full = resolve(360f, true)
         val candidates = resolve(360f, false)
         val before = requireNotNull(full.suggestionBar)
         val after = requireNotNull(candidates.suggestionBar)
-        assertEquals(before.microphoneKey, after.microphoneKey)
+        assertEquals(before.microphoneKey?.spec, after.microphoneKey?.spec)
+        assertEquals(before.microphoneKey?.bounds?.width, after.microphoneKey?.bounds?.width)
         assertEquals(before.emojiKey, after.emojiKey)
         assertNull(after.clipboardKey)
         assertNull(after.placementKey)

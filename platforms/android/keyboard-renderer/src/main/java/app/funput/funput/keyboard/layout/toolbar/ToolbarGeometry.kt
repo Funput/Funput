@@ -24,28 +24,36 @@ internal object ToolbarGeometry {
         val emoji = boundsBefore(right, top, bottom, spec, separated = false)
         val density = spec.suggestionBarHeight / spec.heightScale / ToolbarMetrics.SuggestionBarHeightDp
         val micWidth = density * ToolbarMetrics.MicrophoneWidthDp
-        val mic = if (microphone.visible && bar.microphoneKey != null) {
-            boundsBefore(emoji.left, top, bottom, spec, keyWidth = micWidth)
-        } else null
-        require((mic?.left ?: emoji.left) >= spec.horizontalPadding) {
+        // Left side, Gboard order (left to right): keyboard mode, then voice input.
+        var leftAnchor = spec.horizontalPadding
+        fun leftKey(visible: Boolean, keyWidth: Float): KeyBounds? {
+            if (!visible) return null
+            val bounds = KeyBounds(leftAnchor, top, leftAnchor + keyWidth, bottom)
+            leftAnchor = bounds.right + spec.horizontalGap
+            return bounds
+        }
+        val placement = leftKey(showPlacement, spec.suggestionBarHeight)
+        val mic = leftKey(microphone.visible && bar.microphoneKey != null, micWidth)
+        require(emoji.left >= leftAnchor - spec.horizontalGap) {
             "Keyboard is too narrow for its required toolbar actions"
         }
-        var anchor = mic?.left ?: emoji.left
+        // Right side, right to left: emoji (fixed), then optional clipboard and system keys.
+        var anchor = emoji.left
         fun optional(visible: Boolean): KeyBounds? {
             if (!visible) return null
             val bounds = boundsBefore(anchor, top, bottom, spec)
-            if (bounds.left < spec.horizontalPadding + spec.horizontalGap) return null
+            if (bounds.left < leftAnchor + spec.horizontalGap) return null
             anchor = bounds.left
             return bounds
         }
-        val placement = optional(showPlacement)
         val clipboard = optional(showClipboard && bar.clipboardKey != null)
         val system = optional(bar.systemInputMethodKey != null)
+        val suggestionsLeft = leftAnchor.coerceAtMost(anchor)
         val suggestionsRight = (anchor - if (bar.suggestionsEnabled) spec.horizontalGap else 0f)
-            .coerceAtLeast(spec.horizontalPadding)
+            .coerceAtLeast(suggestionsLeft)
         return ResolvedSuggestionBar(
             bounds = KeyBounds(spec.horizontalPadding, top, right, bottom),
-            suggestionsBounds = KeyBounds(spec.horizontalPadding, top, suggestionsRight, bottom),
+            suggestionsBounds = KeyBounds(suggestionsLeft, top, suggestionsRight, bottom),
             systemInputMethodKey = system?.let { ResolvedKey(requireNotNull(bar.systemInputMethodKey), it) },
             clipboardKey = clipboard?.let { ResolvedKey(requireNotNull(bar.clipboardKey), it) },
             placementKey = placement?.let { ResolvedKey(bar.placementKey, it) },
@@ -55,7 +63,7 @@ internal object ToolbarGeometry {
                     it, active = microphone.active)
             },
             suggestionsEnabled = bar.suggestionsEnabled,
-            clipboardHintFits = suggestionsRight - spec.horizontalPadding >= density * ToolbarMetrics.ClipboardPasteWidthDp,
+            clipboardHintFits = suggestionsRight - suggestionsLeft >= density * ToolbarMetrics.ClipboardPasteWidthDp,
         )
     }
 
