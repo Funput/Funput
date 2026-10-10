@@ -69,12 +69,21 @@ struct TypingHarnessView: View {
 
 /// UITextView with every smart/auto feature disabled — the harness must show
 /// exactly the characters the keyboard delivered, nothing more.
+///
+/// One exception, behind `-uitest-autocorrect`: typo correction only runs in a field
+/// that asks for autocorrect, so a test of it needs somewhere to ask. Every other
+/// smart feature stays off, because those belong to the system and would muddy what
+/// the keyboard itself delivered.
 private struct HarnessTextView: UIViewRepresentable {
+    private static var allowsAutocorrect: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-autocorrect")
+    }
+
     func makeUIView(context: Context) -> UITextView {
         let view = UITextView()
         view.accessibilityIdentifier = "typingHarness.field"
         view.font = .preferredFont(forTextStyle: .title3)
-        view.autocorrectionType = .no
+        view.autocorrectionType = Self.allowsAutocorrect ? .yes : .no
         view.autocapitalizationType = .none
         view.spellCheckingType = .no
         view.smartQuotesType = .no

@@ -26,9 +26,13 @@ extension KeyboardTouchPipeline {
                 return .fallback(id, .exceededTapSlop)
             }
             onResolved(id, sample.timestamp)
+            // The one point where the lift location and the snapshot that resolved it
+            // are both still in hand. Measuring here keeps the neighbour search off
+            // the tracking path, which runs on every moved sample.
+            let evidence = geometry?.touchEvidence(at: sample.location, typed: hit.key)
             arbiter.resolve(
                 id,
-                payload: .released(hit),
+                payload: .released(hit, evidence),
                 at: sample.timestamp
             )
             return .resolved(id, metadata)

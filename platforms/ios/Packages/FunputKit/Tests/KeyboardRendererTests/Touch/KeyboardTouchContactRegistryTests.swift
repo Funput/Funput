@@ -66,7 +66,8 @@ struct KeyboardTouchContactRegistryTests {
             KeyboardTouchHit(
                 key: key,
                 frame: .zero
-            )
+            ),
+            nil
         )
     }
 }

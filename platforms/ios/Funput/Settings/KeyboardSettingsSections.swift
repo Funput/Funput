@@ -82,6 +82,13 @@ struct SmartInputSettingsSection: View {
             SettingsRowDivider()
             toggle("Hiện gợi ý từ", "Từ đã học và từ điển tiếng Anh.", "text.badge.star", \.personalSuggestionsEnabled)
             SettingsRowDivider()
+            toggle(
+                "Tự sửa lỗi gõ nhầm phím",
+                "Sửa từ gõ trượt sang phím bên cạnh khi kết thúc từ.",
+                "hand.point.up.braille",
+                \.typoCorrection
+            )
+            SettingsRowDivider()
             // One switch for every movement-based gesture: someone who dislikes one of
             // them almost always wants all three gone.
             toggle(

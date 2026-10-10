@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use funput_core::sentence::{Rules, Scanner};
 
 use crate::compose::RestoreOverride;
+use crate::correction::CorrectionState;
 use crate::model::{EngineConfig, NumberGlue};
 
 /// Mutable session held by [`crate::Engine`]. Internal — not part of the public API.
@@ -43,6 +44,11 @@ pub(crate) struct Session {
     /// A manual flip choice for the current word: pins the displayed form and keeps
     /// the word boundary from English-restoring it back. Per-word — reset by `clear()`.
     pub(crate) restore_override: Option<RestoreOverride>,
+    /// Typo-correction state: the touch points behind the live word, a correction
+    /// parked at a word boundary, and the one-tap undo behind it. Boxed and `None`
+    /// until the setting is switched on — off, the feature costs one null check per
+    /// keystroke and eight bytes here.
+    pub(crate) correction: Option<Box<CorrectionState>>,
     /// Whether the current word is glued to a number on screen, which keeps gõ tắt
     /// off it. Unlike the rest of the per-word state, a digit still waiting for its
     /// word survives `clear()` — see [`NumberGlue`].
@@ -60,6 +66,7 @@ impl Session {
             shortcuts: HashMap::new(),
             vn_form: String::new(),
             restore_override: None,
+            correction: None,
             glue: NumberGlue::Loose,
         }
     }
@@ -80,6 +87,11 @@ impl Session {
         self.vn_form.clear();
         self.restore_override = None;
         self.glue.end_word();
+        // Only the touch log is per-word. A correction parked by the boundary that
+        // is calling this has to outlive it — the platform answers it afterwards.
+        if let Some(state) = self.correction.as_mut() {
+            state.touch.reset();
+        }
     }
 
     /// Bring the per-word state back in line with a `buffer` that Backspace just

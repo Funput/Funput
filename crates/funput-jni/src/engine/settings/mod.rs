@@ -59,6 +59,22 @@ pub(crate) fn decode_tone_style(style: jint) -> ToneStyle {
     }
 }
 
+/// Switch typo correction on or off. Runtime state like `nativeSetEnabled`, and kept
+/// out of `nativeConfigure` because that symbol's name encodes its Java signature.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeSetTypoCorrection(
+    _env: EnvUnowned<'_>,
+    _this: JavaObject<'_>,
+    handle: jlong,
+    on: jboolean,
+) {
+    safe((), || {
+        registry::with_mut(handle, |engine| {
+            engine.update_config(|config| config.typo_correction = on);
+        });
+    })
+}
+
 /// Vietnamese composition on/off — runtime state, not part of the batch config: the
 /// IME flips it per field and when the user taps the language key.
 #[unsafe(no_mangle)]

@@ -31,6 +31,10 @@ final class KeyboardViewController: UIInputViewController {
     let accessStateStore = KeyboardAccessStateStore()
     let customThemeStore = CustomThemeStore()
     let themeAssetStore = ThemeAssetStore()
+    /// The word list typo correction weighs candidates against. Separate from the
+    /// store below, and read-only, so the correction handshake can ask it on the
+    /// keystroke path without waiting on that store's queue.
+    let correctionWords = CorrectionWordSource()
     let personalSuggestionService = PersonalSuggestionService {
         PersonalSuggestionWorker(onResult: $0)
     }

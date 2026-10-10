@@ -27,6 +27,9 @@ let package = Package(
             name: "FunputEngine",
             dependencies: [
                 .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
+                // `KeyboardTouchEvidence` crosses from renderer to engine; `KeyboardLayout`
+                // is the leaf module both already share, so this adds nothing to the graph.
+                .target(name: "KeyboardLayout"),
             ]
         ),
         .target(

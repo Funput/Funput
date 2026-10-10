@@ -1,5 +1,6 @@
 use crate::compose::{boundary, pipeline};
-use crate::{Engine, ImeResult, KeySource};
+use crate::correction::{self, StoredTouch};
+use crate::{Action, Engine, ImeResult, KeySource};
 
 impl Engine {
     /// Process one Unicode scalar from the main keyboard. Shorthand for
@@ -20,6 +21,15 @@ impl Engine {
     /// A host that gates English mode itself never reaches that path; one that relies
     /// on the engine to be silent while disabled must turn `shortcuts_in_english` off.
     pub fn process_key(&mut self, key: char, source: KeySource) -> ImeResult {
+        // A correction the platform never answered settles here instead of hanging
+        // on: whatever the word boundary deferred is replayed into this keystroke.
+        let deferred = correction::flush_pending(&mut self.session);
+        let result = self.process_key_inner(key, source);
+        merge(deferred, result, key)
+    }
+
+    fn process_key_inner(&mut self, key: char, source: KeySource) -> ImeResult {
+        let touch = correction::take_next(&mut self.session);
         if !self.session.enabled {
             return self.process_key_english(key);
         }
@@ -29,14 +39,19 @@ impl Engine {
         // `…` arrives here too, which is how it counts as a sentence end without
         // `is_english_boundary` — that predicate also gates gõ tắt and English
         // restore, and widening it would start expanding triggers on an ellipsis.
-        let result = self.compose_key(key, source);
+        let result = self.compose_key(key, source, touch);
         self.session.scanner.push(key);
         let word_open = !self.session.keys.is_empty();
         self.session.glue.after_key(key, word_open);
         result
     }
 
-    fn compose_key(&mut self, key: char, source: KeySource) -> ImeResult {
+    fn compose_key(
+        &mut self,
+        key: char,
+        source: KeySource,
+        touch: Option<StoredTouch>,
+    ) -> ImeResult {
         if source.forces_literal_digit(key)
             || boundary::is_word_boundary(self.session.config.method, key)
         {
@@ -55,7 +70,12 @@ impl Engine {
             self.session.glue.start_word();
         }
         self.session.keys.push(raw_key);
-        pipeline::process(&mut self.session, compose_key, key, capitalize_shortcut)
+        correction::note_key(&mut self.session, raw_key, touch);
+        let result = pipeline::process(&mut self.session, compose_key, key, capitalize_shortcut);
+        // The pipeline rewrites the raw keys when a modifier is reverted, which would
+        // leave the touch log describing a word that no longer exists.
+        correction::verify_alignment(&mut self.session);
+        result
     }
 
     /// English mode with gõ tắt still on. Nothing is composed: the app renders
@@ -99,4 +119,24 @@ impl Engine {
         let shortcut = self.session.config.method.is_advanced_telex() && matches!(key, '[' | ']');
         (key, shortcut)
     }
+}
+
+/// Fold a restore the platform never collected into this keystroke's own result.
+pub(crate) fn merge(deferred: Option<ImeResult>, result: ImeResult, key: char) -> ImeResult {
+    let Some(mut deferred) = deferred else {
+        return result;
+    };
+    // The deferred edit deletes the word the previous boundary left behind. This key
+    // has only just opened a new word, so it can have nothing of its own to delete.
+    debug_assert_eq!(
+        result.backspace, 0,
+        "a flushed restore cannot absorb another backspace"
+    );
+    match result.action {
+        // `None` means the platform echoes the key itself — but a `Send` swallows it,
+        // so it has to ride along in the output.
+        Action::None => deferred.output.push(key),
+        _ => deferred.output.push_str(&result.output),
+    }
+    deferred
 }

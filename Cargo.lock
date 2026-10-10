@@ -450,6 +450,7 @@ dependencies = [
  "clap",
  "funput-core",
  "funput-engine",
+ "funput-suggestions",
  "funput-term",
  "unicode-normalization",
 ]
@@ -493,6 +494,7 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "funput-core",
+ "proptest",
 ]
 
 [[package]]
@@ -522,6 +524,7 @@ dependencies = [
 name = "funput-lexicon-tool"
 version = "0.1.0"
 dependencies = [
+ "funput-core",
  "funput-suggestions",
 ]
 
