@@ -21,7 +21,9 @@ struct ToolbarChromeTests {
         expectClose(
             KeyboardMetrics.phonePortraitHeight(for: shown)
                 - KeyboardMetrics.phonePortraitHeight(for: hidden),
-            KeyboardSizingProfile.default.toolbarChrome
+            // A layout without a toolbar already spends `toolbarlessTopInset` above its
+            // first row, so the toolbar only adds what it costs beyond that.
+            KeyboardSizingProfile.default.toolbarChrome - KeyboardSizingProfile.toolbarlessTopInset
         )
     }
 
