@@ -22,18 +22,21 @@ public enum KeyboardPresentationFactory {
         catalog: ThemeCatalog = ThemeCatalog()
     ) -> KeyboardPresentation {
         let theme = resolvedTheme(for: configuration, catalog: catalog)
+        let pinsAppearance = configuration.keyboardAppearance != .system
         return KeyboardPresentation(
             layout: layout,
             sizing: sizing(for: configuration, theme: theme),
             theme: theme,
-            blendsSystemEdge: selectedTheme(for: configuration, catalog: catalog).id
-                != BundledThemes.default.id,
+            // A pinned appearance must not fade into the host's backdrop, which may
+            // be the opposite appearance and would show as a stripe along the edge.
+            blendsSystemEdge: !pinsAppearance
+                && selectedTheme(for: configuration, catalog: catalog).id != BundledThemes.default.id,
             language: configuration.language,
             isHapticFeedbackEnabled: configuration.isHapticFeedbackEnabled,
             isKeySoundEnabled: configuration.isKeySoundEnabled,
             showsKeyPreviews: configuration.showsKeyPreviews,
             areSmartGesturesEnabled: configuration.smartGesturesEnabled,
-            pinsAppearance: configuration.keyboardAppearance != .system
+            pinsAppearance: pinsAppearance
         )
     }
 
