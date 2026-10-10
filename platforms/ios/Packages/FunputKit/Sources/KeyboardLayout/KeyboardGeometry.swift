@@ -35,7 +35,7 @@ public enum KeyboardGeometry {
         precondition(size.width > 0 && size.height > 0, "Keyboard size must be positive")
 
         let verticalScale = sizing.heightScale
-        let verticalPadding = sizing.verticalPadding * verticalScale
+        let verticalPadding = sizing.topPadding(for: layout) * verticalScale
         let bottomPadding = sizing.bottomPadding(forWidth: size.width) * verticalScale
         let verticalGap = sizing.verticalGap * verticalScale
         let contentWidth = max(1, size.width - sizing.horizontalPadding * 2)

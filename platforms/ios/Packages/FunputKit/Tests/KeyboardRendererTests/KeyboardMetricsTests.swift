@@ -19,9 +19,10 @@ struct KeyboardMetricsTests {
         // A layout without a band is measured in rows the standard family sizes, so
         // trimming the band lifts these by the share of it each row takes back.
         let cases: [(UITraitCollection, CGFloat, CGFloat)] = [
-            (phonePortrait, 250, 199.8),
-            (phoneLandscape, 182, 145.4),
-            (padPortrait, 270, 215.8),
+            // Toolbar-less pages add `toolbarlessTopInset` (4pt) above their first row.
+            (phonePortrait, 254, 203.8),
+            (phoneLandscape, 186, 149.4),
+            (padPortrait, 274, 219.8),
         ]
         let secureLayouts = [
             PasswordKeyboardLayouts.text(.telex),

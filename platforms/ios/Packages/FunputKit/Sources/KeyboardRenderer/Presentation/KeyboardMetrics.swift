@@ -83,7 +83,7 @@ public enum KeyboardMetrics {
         screenWidth: CGFloat
     ) -> CGFloat {
         let rows = SystemKeyMetrics.rowsHeight(screenWidth: screenWidth, rowCount: layout.rows.count)
-        return sizing.verticalPadding
+        return sizing.topPadding(for: layout)
             + sizing.bottomPadding(forWidth: screenWidth)
             + rows
             + sizing.verticalGap * CGFloat(max(layout.rows.count - 1, 0))
@@ -108,7 +108,8 @@ public enum KeyboardMetrics {
             baseHeight - verticalPadding - toolbarChrome - rowGap * (standardRows - 1)
         ) / standardRows
         let rowCount = CGFloat(layout.rows.count)
-        let targetHeight = verticalPadding
+        // Rows keep their standard height; the toolbar-less top inset is added on top.
+        let targetHeight = KeyboardSizingProfile.default.topPadding(for: layout)
             + standardRowHeight * rowCount
             + rowGap * CGFloat(max(layout.rows.count - 1, 0))
             + (layout.toolbar == nil ? 0 : toolbarChrome)
