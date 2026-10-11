@@ -12,7 +12,7 @@ public enum KeyboardLayoutResolver {
         // The system preset describes text and search; other editors retain their
         // specialized key rows. Toolbar visibility is applied afterwards, independently
         // of that choice, while secure layouts remain protected by having no toolbar.
-        // The iPad pages precede both presets; keypads and phones take the paths below.
+        // On iPad the system preset means the iPad pages; everything else takes the paths below.
         let layout = if let pad = PadKeyboardLayouts.resolve(
             formFactor: formFactor, inputMethod: inputMethod, mode: mode,
             editorMode: editorMode, showsNumberRow: showsNumberRow, preset: preset

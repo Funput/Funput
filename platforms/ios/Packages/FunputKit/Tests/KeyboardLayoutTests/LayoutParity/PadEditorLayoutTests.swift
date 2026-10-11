@@ -47,6 +47,7 @@ struct PadEditorLayoutTests {
             mode: .letters,
             editorMode: editor,
             showsNumberRow: showsNumberRow,
+            preset: .system,
             formFactor: .pad
         )
     }

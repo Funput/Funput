@@ -45,7 +45,9 @@ struct PadSurfaceTests {
         for mode: KeyboardLayoutMode,
         formFactor: KeyboardFormFactor = .pad
     ) -> KeyboardSurfaceView {
-        let layout = KeyboardLayoutResolver.resolve(inputMethod: .telex, mode: mode, formFactor: formFactor)
+        let layout = KeyboardLayoutResolver.resolve(
+            inputMethod: .telex, mode: mode, preset: .system, formFactor: formFactor
+        )
         let surface = KeyboardSurfaceView(presentation: KeyboardPresentation(layout: layout))
         surface.frame = CGRect(x: 0, y: 0, width: 1024, height: 400)
         surface.layoutIfNeeded()

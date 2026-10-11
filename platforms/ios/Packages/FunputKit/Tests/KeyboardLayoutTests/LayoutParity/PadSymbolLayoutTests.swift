@@ -84,6 +84,7 @@ struct PadSymbolLayoutTests {
             mode: mode,
             editorMode: editor,
             showsNumberRow: showsNumberRow,
+            preset: .system,
             formFactor: .pad
         )
     }

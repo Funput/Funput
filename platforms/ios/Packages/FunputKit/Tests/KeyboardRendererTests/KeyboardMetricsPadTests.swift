@@ -28,14 +28,18 @@ struct KeyboardMetricsPadTests {
 
     @Test("Switching pages keeps the iPad keyboard height", arguments: [
         (KeyboardInputMethod.telex, false), (.telex, true), (.vni, false),
-    ])
-    func pageSwitchKeepsHeight(method: KeyboardInputMethod, showsNumberRow: Bool) {
+    ], KeyboardLayoutPreset.allCases)
+    func pageSwitchKeepsHeight(
+        page: (method: KeyboardInputMethod, showsNumberRow: Bool),
+        preset: KeyboardLayoutPreset
+    ) {
         let heights = KeyboardLayoutMode.allCases.map { mode in
             height(
                 KeyboardLayoutResolver.resolve(
-                    inputMethod: method,
+                    inputMethod: page.method,
                     mode: mode,
-                    showsNumberRow: showsNumberRow,
+                    showsNumberRow: page.showsNumberRow,
+                    preset: preset,
                     formFactor: .pad
                 ),
                 width: 1024
@@ -45,7 +49,7 @@ struct KeyboardMetricsPadTests {
     }
 
     private var letters: KeyboardLayout {
-        KeyboardLayoutResolver.resolve(inputMethod: .telex, mode: .letters, formFactor: .pad)
+        KeyboardLayoutResolver.resolve(inputMethod: .telex, mode: .letters, preset: .system, formFactor: .pad)
     }
 
     private var keypad: KeyboardLayout { PhoneKeyboardLayouts.resolve(.telex) }

@@ -3,9 +3,9 @@ import KeyboardLayout
 import Testing
 
 struct PadLayoutTests {
-    @Test("The iPad letters page follows the stock keyboard, with no dictation key", arguments: KeyboardLayoutPreset.allCases)
-    func compactRows(preset: KeyboardLayoutPreset) {
-        let layout = resolve(.telex, showsNumberRow: false, preset: preset)
+    @Test("The iPad letters page follows the stock keyboard, with no dictation key")
+    func compactRows() {
+        let layout = resolve(.telex, showsNumberRow: false)
         #expect(rows(layout) == [
             ["tab", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", ""],
             ["caps lock", "a", "s", "d", "f", "g", "h", "j", "k", "l", ""],
@@ -19,12 +19,14 @@ struct PadLayoutTests {
         #expect(layout.toolbar != nil)
     }
 
-    @Test("Both presets share one bar-for-bar layout on iPad")
-    func presetsMatch() {
-        let funput = resolve(.telex, showsNumberRow: true, preset: .funput)
-        let system = resolve(.telex, showsNumberRow: true, preset: .system)
-        #expect(funput.rows == system.rows)
-        #expect(funput.id != system.id)
+    @Test("The Funput preset keeps the phone pages on iPad")
+    func funputPresetUnchanged() {
+        for editor in KeyboardEditorMode.allCases {
+            for mode in KeyboardLayoutMode.allCases {
+                let pad = resolve(.telex, mode: mode, editor: editor, preset: .funput)
+                #expect(pad == phone(.telex, mode: mode, editor: editor))
+            }
+        }
     }
 
     @Test("The digit row follows the preference, and VNI always keeps it")
@@ -68,6 +70,7 @@ struct PadLayoutTests {
         let layout = KeyboardLayoutResolver.resolve(
             inputMethod: .telex,
             mode: .letters,
+            preset: .system,
             showsToolbar: false,
             formFactor: .pad
         )
@@ -110,7 +113,7 @@ struct PadLayoutTests {
         mode: KeyboardLayoutMode = .letters,
         editor: KeyboardEditorMode = .text,
         showsNumberRow: Bool = true,
-        preset: KeyboardLayoutPreset = .funput
+        preset: KeyboardLayoutPreset = .system
     ) -> KeyboardLayout {
         KeyboardLayoutResolver.resolve(
             inputMethod: method,

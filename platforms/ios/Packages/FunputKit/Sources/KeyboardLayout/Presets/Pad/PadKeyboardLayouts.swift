@@ -1,7 +1,7 @@
-/// The iPad pages, modelled on the stock iPad keyboard and shared by both presets.
+/// The iPad pages, modelled on the stock iPad keyboard: what the system preset means on iPad.
 ///
-/// Text, search, email, URL and password fields get them; keypads (number, phone, PIN)
-/// and every phone keep the existing layouts.
+/// Text, search, email, URL and password fields get them. The Funput preset, keypads
+/// (number, phone, PIN) and every phone keep the existing layouts.
 enum PadKeyboardLayouts {
     static func resolve(
         formFactor: KeyboardFormFactor,
@@ -11,7 +11,7 @@ enum PadKeyboardLayouts {
         showsNumberRow: Bool,
         preset: KeyboardLayoutPreset
     ) -> KeyboardLayout? {
-        guard formFactor == .pad, !editorMode.usesKeypad else { return nil }
+        guard formFactor == .pad, preset == .system, !editorMode.usesKeypad else { return nil }
         let page = PadPage(
             inputMethod: inputMethod,
             editorMode: editorMode,
@@ -19,7 +19,7 @@ enum PadKeyboardLayouts {
         )
         return switch mode {
         case .letters:
-            PadLetterKeyboardLayouts.letters(page, preset: preset)
+            PadLetterKeyboardLayouts.letters(page)
         case .symbolsPrimary:
             PadSymbolKeyboardLayouts.primary(page)
         case .symbolsSecondary:

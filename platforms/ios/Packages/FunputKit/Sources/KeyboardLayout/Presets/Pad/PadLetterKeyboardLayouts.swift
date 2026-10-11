@@ -12,13 +12,13 @@
 enum PadLetterKeyboardLayouts {
     private typealias Keys = PadKeyFactory
 
-    static func letters(_ page: PadPage, preset: KeyboardLayoutPreset) -> KeyboardLayout {
+    static func letters(_ page: PadPage) -> KeyboardLayout {
         let method = page.inputMethod
         let digits = page.composes
             ? topNumberRow(for: method, pageID: "pad-\(method.rawValue)")
             : topNumberRow(.plainCharacter, pageID: "pad\(page.editorID)")
         let layout = KeyboardLayout(
-            id: "qwerty-pad-\(preset.rawValue)\(page.editorID)-\(method.rawValue)"
+            id: "qwerty-pad\(page.editorID)-\(method.rawValue)"
                 + (page.isCompact ? "-compact" : ""),
             inputMethod: method,
             toolbar: page.toolbar,
