@@ -53,7 +53,7 @@ internal fun ThemeGeneralPage(state: ThemeDraftState, baseThemes: List<KeyboardT
             modifier = Modifier.testTag(AccentColorTag),
         )
     }
-    ThemeShapeSection(state.theme, state::updateTheme)
+    ThemeShapeSection(state.theme, state.baseTheme.theme, state::updateTheme)
     if (pickingBase) {
         PickerSheet(
             title = stringResource(R.string.custom_theme_base_title),

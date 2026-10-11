@@ -93,6 +93,19 @@ class AppNavigatorTest {
     }
 
     @Test
+    fun `live destinations are every stack, and lose what back pops`() {
+        val navigator = AppNavigator()
+        navigator.navigate(AppDestination.SPEECH)
+        navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
+        val roots = TopLevelDestination.entries.map(AppDestination::rootOf).toSet()
+        assertEquals(roots + AppDestination.SPEECH + AppDestination.CREATE_CUSTOM_THEME, navigator.liveDestinations)
+
+        navigator.navigateBack()
+        // Switching tab is sideways: the Settings stack, Speech included, is still there to return to.
+        assertEquals(roots + AppDestination.SPEECH, navigator.liveDestinations)
+    }
+
+    @Test
     fun `every tab has exactly one root`() {
         // rootOf picks the depth-zero screen of a tab and would throw on a tab that has none.
         TopLevelDestination.entries.forEach { tab ->

@@ -49,6 +49,13 @@ internal class AppNavigator internal constructor(
             return stackOf(TopLevelDestination.Start).last()
         }
 
+    /**
+     * Every destination some tab could still return to. Anything outside it has been popped, and
+     * its remembered state belongs to a visit that is over.
+     */
+    val liveDestinations: Set<AppDestination>
+        get() = stacks.values.flatten().toSet()
+
     internal fun stackOf(tab: TopLevelDestination): List<AppDestination> = stacks.getValue(tab)
 
     /** Switching tab keeps whatever that tab was showing. It is a move sideways, not a push. */
