@@ -122,6 +122,13 @@
     <string name="custom_theme_metric_pressed_scale">Phóng to khi nhấn</string>
     <string name="custom_theme_metric_key_opacity">Độ hiện phím thường</string>
     <string name="custom_theme_metric_special_key_opacity">Độ hiện phím chức năng</string>
+    <string name="custom_theme_label_title">Chữ trên phím</string>
+    <string name="custom_theme_label_size">Cỡ chữ</string>
+    <string name="custom_theme_label_weight">Độ đậm</string>
+    <string name="custom_theme_label_weight_light">Mảnh</string>
+    <string name="custom_theme_label_weight_regular">Thường</string>
+    <string name="custom_theme_label_weight_medium">Hơi đậm</string>
+    <string name="custom_theme_label_weight_bold">Đậm</string>
     <string name="custom_theme_color_picker_hex">Mã màu</string>
     <string name="custom_theme_color_picker_alpha">Độ hiện: %1$d%%</string>
     <string name="custom_theme_color_picker_confirm">Chọn</string>

@@ -19,4 +19,5 @@ object MetricClamp {
     val BorderWidthDp = 0f..4f
     val ShadowOffsetDp = 0f..8f
     val KeycapInsetDp = 0f..8f
+    val LabelScale = 0.8f..1.3f
 }

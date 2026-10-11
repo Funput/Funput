@@ -3,6 +3,7 @@ package app.funput.funput.theme.store.json
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.KeyboardThemeGradientDirection
 import app.funput.funput.theme.KeyboardKeySurfaceStyle
+import app.funput.funput.theme.KeyboardLabelWeight
 import app.funput.funput.theme.MetricClamp
 import org.json.JSONObject
 
@@ -54,6 +55,8 @@ internal object KeyboardThemeTokenJson {
         put("suggestionDividerColor", theme.suggestionDividerColor)
         put("popupShadowColor", theme.popupShadowColor)
         put("keySurfaceStyle", theme.keySurfaceStyle.name)
+        put("labelScale", theme.labelScale.toDouble())
+        put("labelWeight", theme.labelWeight.name)
     }
 
     fun decode(json: JSONObject): KeyboardTheme {
@@ -98,6 +101,8 @@ internal object KeyboardThemeTokenJson {
             keySurfaceStyle = KeyboardKeySurfaceStyle.parseOrDefault(
                 json.optString("keySurfaceStyle").takeIf(String::isNotEmpty),
             ),
+            labelScale = json.optMetric("labelScale", 1f, MetricClamp.LabelScale),
+            labelWeight = KeyboardLabelWeight.parseOrDefault(json.optString("labelWeight")),
         )
     }
 
