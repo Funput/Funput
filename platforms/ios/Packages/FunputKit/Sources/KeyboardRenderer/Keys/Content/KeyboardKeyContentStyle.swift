@@ -24,7 +24,7 @@ enum KeyboardKeyContentStyle {
         case .emoji:
             name = "face.smiling"
         case .capsLock:
-            name = "capslock"
+            name = shiftState == .capsLocked ? "capslock.fill" : "capslock"
         case .globe:
             name = "globe"
         case .dismissKeyboard:

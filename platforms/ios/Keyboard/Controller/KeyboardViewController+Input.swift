@@ -31,6 +31,8 @@ extension KeyboardViewController {
             return
         }
 
+        if handleSystemKey(event.key.role) { return }
+
         let signpostID = OSSignpostID(log: KeyboardControllerSignpost.log)
         os_signpost(
             .begin,

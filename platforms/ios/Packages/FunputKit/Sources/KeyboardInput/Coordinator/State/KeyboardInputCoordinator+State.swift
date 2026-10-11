@@ -41,6 +41,14 @@ extension KeyboardInputCoordinator {
         replaceState(shiftState: shiftController.toggle(from: state.shiftState))
     }
 
+    /// The iPad caps lock key: locks from any case and unlocks from a lock, with no
+    /// double tap involved, so it also cancels a Shift tap that was waiting for one.
+    func toggleCapsLock() {
+        automaticShiftArmed = false
+        shiftController.resetTapSequence()
+        replaceState(shiftState: state.shiftState == .capsLocked ? .lowercase : .capsLocked)
+    }
+
     func toggleInputMethod() {
         let next: KeyboardInputMethod
         if state.inputMethod == .vni {

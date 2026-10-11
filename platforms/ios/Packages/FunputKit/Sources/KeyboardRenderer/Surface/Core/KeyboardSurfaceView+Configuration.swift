@@ -19,6 +19,7 @@ extension KeyboardSurfaceView {
         contentHost.addSubview(keysHost)
         contentHost.addSubview(toolbarView)
         contentHost.addSubview(touchOverlay)
+        configureInputModeSwitch()
         addSubview(previewView)
         addSubview(alternatePaletteView)
         configureTouchOverlay()
