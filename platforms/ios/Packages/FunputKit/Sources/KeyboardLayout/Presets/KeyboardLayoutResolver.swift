@@ -6,12 +6,19 @@ public enum KeyboardLayoutResolver {
         showsNumberRow: Bool = true,
         preset: KeyboardLayoutPreset = .funput,
         showsToolbar: Bool = true,
-        allowsLanguageToggle: Bool = true
+        allowsLanguageToggle: Bool = true,
+        formFactor: KeyboardFormFactor = .phone
     ) -> KeyboardLayout {
         // The system preset describes text and search; other editors retain their
         // specialized key rows. Toolbar visibility is applied afterwards, independently
         // of that choice, while secure layouts remain protected by having no toolbar.
-        let layout = if preset == .system, editorMode.usesSystemPreset {
+        // The iPad letters page precedes both presets; all else takes the paths below.
+        let layout = if let pad = PadKeyboardLayouts.resolve(
+            formFactor: formFactor, inputMethod: inputMethod, mode: mode,
+            editorMode: editorMode, showsNumberRow: showsNumberRow, preset: preset
+        ) {
+            pad
+        } else if preset == .system, editorMode.usesSystemPreset {
             systemLayout(
                 inputMethod: inputMethod,
                 mode: mode,

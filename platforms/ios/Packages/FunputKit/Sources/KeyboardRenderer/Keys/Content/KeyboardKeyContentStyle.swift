@@ -23,6 +23,12 @@ enum KeyboardKeyContentStyle {
             name = "return"
         case .emoji:
             name = "face.smiling"
+        case .capsLock:
+            name = "capslock"
+        case .globe:
+            name = "globe"
+        case .dismissKeyboard:
+            name = "keyboard.chevron.compact.down"
         default:
             name = nil
         }

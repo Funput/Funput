@@ -13,6 +13,11 @@ public enum KeyRole: String, Hashable, Sendable {
     case enter
     case emoji
     case clipboard
+    // iPad keys. Drawn by the layout only; nothing handles them yet.
+    case tab
+    case capsLock
+    case globe
+    case dismissKeyboard
 
     public var isSpecial: Bool {
         switch self {
