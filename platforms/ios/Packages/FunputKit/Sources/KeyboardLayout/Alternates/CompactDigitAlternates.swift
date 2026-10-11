@@ -19,10 +19,17 @@ public enum CompactDigitAlternates {
 
     /// Matches the row by its own labels rather than by index: the compact page has no
     /// number row in front of it, so the top character row is not at a fixed position.
+    /// Only the letters are compared, so a row with keys at either end — the iPad's tab
+    /// and delete — is matched the same way and keeps those keys as they are.
     private static func decorate(_ row: KeyboardRow) -> KeyboardRow {
-        guard row.keys.map(\.label) == rowCharacters.map(String.init) else { return row }
+        let letters = row.keys.filter { $0.role == .character }
+        guard letters.map(\.label) == rowCharacters.map(String.init) else { return row }
+        var remaining = digits.makeIterator()
         return KeyboardRow(
-            keys: zip(row.keys, digits).map { key, digit in apply(String(digit), to: key) },
+            keys: row.keys.map { key in
+                guard key.role == .character, let digit = remaining.next() else { return key }
+                return apply(String(digit), to: key)
+            },
             horizontalInsetUnits: row.horizontalInsetUnits
         )
     }

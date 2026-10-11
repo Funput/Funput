@@ -10,6 +10,7 @@ extension KeyboardTouchCoordinator {
         .character, .vniModifier, .punctuation, .shift, .backspace,
         .symbols, .moreSymbols, .letters, .inputMethod,
         .space, .enter, .emoji,
+        .tab, .capsLock, .globe, .dismissKeyboard,
     ]
 
     /// The rollover ordering window. 40 ms is a starting point, not a measured value: the
