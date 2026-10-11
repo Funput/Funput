@@ -24,7 +24,8 @@ extension KeyboardMetrics {
         screenWidth: CGFloat
     ) -> CGFloat {
         let profile = KeyboardSizingProfile.default
-        let rowCount = CGFloat(layout.rows.count)
+        // A symbol page is budgeted for the letters page's rows, so switching keeps the height.
+        let rowCount = CGFloat(layout.heightRowCount ?? layout.rows.count)
         let target = profile.topPadding(for: layout)
             + (layout.toolbar == nil ? 0 : profile.toolbarChrome)
             + padRowHeight(screenWidth: screenWidth, profile: profile) * rowCount

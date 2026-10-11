@@ -26,14 +26,16 @@ struct KeyboardMetricsPadTests {
         expectClose(height(letters, width: 1024, scale: 0.85), base * 0.85)
     }
 
-    @Test("Switching pages keeps the iPad keyboard height")
-    func pageSwitchKeepsHeight() {
+    @Test("Switching pages keeps the iPad keyboard height", arguments: [
+        (KeyboardInputMethod.telex, false), (.telex, true), (.vni, false),
+    ])
+    func pageSwitchKeepsHeight(method: KeyboardInputMethod, showsNumberRow: Bool) {
         let heights = KeyboardLayoutMode.allCases.map { mode in
             height(
                 KeyboardLayoutResolver.resolve(
-                    inputMethod: .telex,
+                    inputMethod: method,
                     mode: mode,
-                    showsNumberRow: false,
+                    showsNumberRow: showsNumberRow,
                     formFactor: .pad
                 ),
                 width: 1024

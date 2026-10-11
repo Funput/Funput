@@ -43,16 +43,17 @@ struct PadLayoutTests {
         #expect(top.first?.role == .tab)
     }
 
-    @Test("Only the letters page of a text or search field changes")
+    @Test("Keypads keep their layouts; every other field gets the iPad pages")
     func scope() {
-        for mode in [KeyboardLayoutMode.symbolsPrimary, .symbolsSecondary] {
-            #expect(resolve(.telex, mode: mode) == phone(.telex, mode: mode))
-        }
-        for editor in KeyboardEditorMode.allCases where !editor.usesSystemPreset {
+        for editor in KeyboardEditorMode.allCases where editor.usesKeypad {
             #expect(resolve(.telex, editor: editor) == phone(.telex, editor: editor))
         }
-        let search = resolve(.telex, editor: .search, showsNumberRow: false)
-        #expect(search.rows.first?.keys.first?.role == .tab)
+        for editor in KeyboardEditorMode.allCases where !editor.usesKeypad {
+            for mode in KeyboardLayoutMode.allCases {
+                let layout = resolve(.telex, mode: mode, editor: editor, showsNumberRow: false)
+                #expect(layout.rows.last?.keys.first?.role == .globe)
+            }
+        }
     }
 
     @Test("A phone is unchanged by the form factor")
