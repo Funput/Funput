@@ -9,8 +9,6 @@ public enum KeyboardMetrics {
     // keyboard ends lower instead of growing its keys.
     public static let phonePortraitBaseHeight: CGFloat = 288
     public static let phoneLandscapeBaseHeight: CGFloat = 220
-    public static let padBaseHeight: CGFloat = 308
-
     public static func recommendedHeight(
         for traits: UITraitCollection,
         scale: CGFloat = 1
@@ -36,10 +34,15 @@ public enum KeyboardMetrics {
         if effective.keySizing == .system {
             return systemHeight(for: layout, sizing: effective, screenWidth: screenWidth ?? portraitScreenWidth)
         }
-        let baseHeight: CGFloat
         if traits.userInterfaceIdiom == .pad {
-            baseHeight = padBaseHeight
-        } else if traits.verticalSizeClass == .compact {
+            return padHeight(
+                for: layout,
+                scale: effective.heightScale,
+                screenWidth: screenWidth ?? currentScreenWidth
+            )
+        }
+        let baseHeight: CGFloat
+        if traits.verticalSizeClass == .compact {
             baseHeight = phoneLandscapeBaseHeight
         } else {
             baseHeight = phonePortraitBaseHeight
