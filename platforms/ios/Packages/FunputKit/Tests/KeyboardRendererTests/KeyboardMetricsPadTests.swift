@@ -33,7 +33,8 @@ struct KeyboardMetricsPadTests {
                 KeyboardLayoutResolver.resolve(
                     inputMethod: .telex,
                     mode: mode,
-                    showsNumberRow: false
+                    showsNumberRow: false,
+                    formFactor: .pad
                 ),
                 width: 1024
             )
@@ -42,7 +43,7 @@ struct KeyboardMetricsPadTests {
     }
 
     private var letters: KeyboardLayout {
-        StandardKeyboardLayouts.letters(.telex)
+        KeyboardLayoutResolver.resolve(inputMethod: .telex, mode: .letters, formFactor: .pad)
     }
 
     private var keypad: KeyboardLayout { PhoneKeyboardLayouts.resolve(.telex) }
