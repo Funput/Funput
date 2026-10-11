@@ -9,6 +9,7 @@ final class KeyboardKeyContentView: UIView {
     private let secondaryLabel = UILabel()
     private let iconView = UIImageView()
     private let spacebarView = KeyboardSpacebarContentView()
+    private var labelPlacement = KeyLabelPlacement.center
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -30,7 +31,9 @@ final class KeyboardKeyContentView: UIView {
             in: bounds,
             hintLineHeight: secondaryLabel.font.lineHeight
         )
-        label.frame = frames.primaryLabel
+        label.frame = labelPlacement.isCorner
+            ? KeyboardKeyContentGeometry.cornerLabel(in: bounds, lineHeight: label.font.lineHeight)
+            : frames.primaryLabel
         iconView.frame = frames.icon
         secondaryLabel.frame = frames.hint
         spacebarView.frame = bounds
@@ -60,6 +63,20 @@ final class KeyboardKeyContentView: UIView {
             ? enterIcon(presentation.enterAction)
             : KeyboardKeyContentStyle.icon(for: spec.role, shiftState: presentation.shiftState)
         iconView.tintColor = enterContent ? theme.accent.uiColor(for: traits) : labelColor
+
+        labelPlacement = spec.labelPlacement
+        label.textAlignment = switch spec.labelPlacement {
+        case .center: .center
+        case .bottomLeading: .left
+        case .bottomTrailing: .right
+        }
+        if spec.labelPlacement.isCorner {
+            let isLit = KeyboardKeyContentStyle.isLit(spec.role, shiftState: presentation.shiftState)
+            label.text = KeyboardKeyContentStyle.cornerLabel(for: spec, enterAction: presentation.enterAction)
+            label.font = KeyboardKeyContentStyle.cornerFont(scale: theme.fontScale)
+            label.textColor = isLit || enterContent ? theme.accent.uiColor(for: traits) : labelColor
+            iconView.image = nil
+        }
 
         let spaceLabel = spec.horizontalSwipeAction == nil
             ? spec.label

@@ -12,6 +12,7 @@ public struct KeySpec: Hashable, Sendable, Identifiable {
     public let alternates: [KeyAlternate]
     /// Columns the alternate palette should use; `nil` lets the renderer balance the rows.
     public let alternateColumns: Int?
+    public let labelPlacement: KeyLabelPlacement
 
     public init(
         id: String,
@@ -23,7 +24,8 @@ public struct KeySpec: Hashable, Sendable, Identifiable {
         accessibilityLabel: String? = nil,
         horizontalSwipeAction: KeySwipeAction? = nil,
         alternates: [KeyAlternate] = [],
-        alternateColumns: Int? = nil
+        alternateColumns: Int? = nil,
+        labelPlacement: KeyLabelPlacement = .center
     ) {
         precondition(!id.isEmpty, "Key id must not be empty")
         precondition(widthWeight > 0, "Key width weight must be positive")
@@ -39,5 +41,6 @@ public struct KeySpec: Hashable, Sendable, Identifiable {
         self.horizontalSwipeAction = horizontalSwipeAction
         self.alternates = alternates
         self.alternateColumns = alternateColumns
+        self.labelPlacement = labelPlacement
     }
 }

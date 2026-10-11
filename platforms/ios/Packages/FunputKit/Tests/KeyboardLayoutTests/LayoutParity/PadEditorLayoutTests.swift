@@ -7,7 +7,7 @@ struct PadEditorLayoutTests {
     ])
     func bottomRow(editor: KeyboardEditorMode, label: String) {
         let row = letterRows(resolve(editor))[2].keys.map(\.label)
-        #expect(row == ["", "z", "x", "c", "v", "b", "n", "m", label, ".", ""])
+        #expect(row == ["shift", "z", "x", "c", "v", "b", "n", "m", label, ".", "shift"])
     }
 
     @Test("Fields that do not compose drop the Telex hints and the language swipe", arguments: [

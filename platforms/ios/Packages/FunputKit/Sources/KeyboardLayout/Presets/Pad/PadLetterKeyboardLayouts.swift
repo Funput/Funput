@@ -1,10 +1,10 @@
 /// The letters page of the stock iPad keyboard.
 ///
 /// ```
-/// tab    q w e r t y u i o p   delete
-/// caps   a s d f g h j k l     return
-/// shift  z x c v b n m , .     shift
-/// globe  ?123   space   ?123   hide
+/// tab        q w e r t y u i o p   delete
+/// caps lock  a s d f g h j k l     return
+/// shift      z x c v b n m , .     shift
+/// globe  .?123     space     .?123  hide
 /// ```
 ///
 /// Email swaps the comma for `@` and URL for `/`; those fields and passwords drop the
@@ -24,20 +24,20 @@ enum PadLetterKeyboardLayouts {
             toolbar: page.toolbar,
             rows: (page.isCompact ? [] : [Keys.numberRow(digits)]) + [
                 row(
-                    leading: Keys.edgeKey("tab", "tab", .tab, "Tab"),
+                    leading: Keys.leadingKey("tab", "tab", .tab, "Tab"),
                     letters: "qwertyuiop",
                     trailing: Keys.deleteKey(),
                     page: page
                 ),
                 row(
-                    leading: Keys.edgeKey("capslock", "caps lock", .capsLock, "Caps Lock", weight: Keys.wide),
+                    leading: Keys.leadingKey("capslock", "caps lock", .capsLock, "Caps Lock", weight: Keys.wide),
                     letters: "asdfghjkl",
                     trailing: Keys.returnKey(),
                     page: page
                 ),
                 bottomRow(page),
                 Keys.actionRow(
-                    switchLabel: "?123",
+                    switchLabel: ".?123",
                     switchRole: .symbols,
                     switchAccessibility: "Ký hiệu",
                     composes: page.composes
@@ -69,9 +69,9 @@ enum PadLetterKeyboardLayouts {
     /// `shift z … m , . shift`; the stock keys print `!` and `?` above the comma and period.
     private static func bottomRow(_ page: PadPage) -> KeyboardRow {
         KeyboardRow(keys:
-            [Keys.edgeKey("shift", "", .shift, "Shift", weight: Keys.wide)]
+            [Keys.leadingKey("shift", "shift", .shift, "Shift", weight: Keys.wide)]
                 + letterKeys("zxcvbnm", page) + [firstPunctuation(page.editorMode), period]
-                + [Keys.edgeKey("shift-right", "", .shift, "Shift", weight: Keys.wide)]
+                + [Keys.trailingKey("shift-right", "shift", .shift, "Shift", weight: Keys.wide)]
         )
     }
 

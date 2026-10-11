@@ -35,6 +35,34 @@ enum KeyboardKeyContentStyle {
         return name.flatMap { UIImage(systemName: $0) }
     }
 
+    /// The word a corner-labelled key shows; return names what it does, as the stock key does.
+    static func cornerLabel(for spec: KeySpec, enterAction: KeyboardEnterAction) -> String {
+        guard spec.role == .enter else { return spec.label }
+        return switch enterAction {
+        case .newLine: "return"
+        case .go: "go"
+        case .search: "search"
+        case .send: "send"
+        case .next: "next"
+        case .done: "done"
+        case .previous: "previous"
+        case let .custom(label): label
+        }
+    }
+
+    /// Shift and caps lock light up while they are on, since a word cannot fill in like an icon.
+    static func isLit(_ role: KeyRole, shiftState: ShiftState) -> Bool {
+        switch role {
+        case .shift: shiftState.isUppercase
+        case .capsLock: shiftState == .capsLocked
+        default: false
+        }
+    }
+
+    static func cornerFont(scale: Double) -> UIFont {
+        .systemFont(ofSize: 17 * scale, weight: .regular)
+    }
+
     static func font(for role: KeyRole, scale: Double) -> UIFont {
         let metrics: (size: CGFloat, weight: UIFont.Weight)
         switch role {

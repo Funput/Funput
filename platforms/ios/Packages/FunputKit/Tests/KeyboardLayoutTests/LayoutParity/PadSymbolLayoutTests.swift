@@ -7,8 +7,8 @@ struct PadSymbolLayoutTests {
     func primaryRows() {
         let layout = resolve(.symbolsPrimary)
         #expect(layout.rows.map { $0.keys.map(\.label) } == [
-            ["tab", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ""],
-            ["Telex", "@", "#", "\u{20AB}", "&", "*", "(", ")", "'", "\"", ""],
+            ["tab", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "delete"],
+            ["Telex", "@", "#", "\u{20AB}", "&", "*", "(", ")", "'", "\"", "return"],
             ["#+=", "%", "-", "+", "=", "/", ";", ":", ",", ".", "#+="],
             ["", "ABC", "Tiếng Việt", "ABC", ""],
         ])

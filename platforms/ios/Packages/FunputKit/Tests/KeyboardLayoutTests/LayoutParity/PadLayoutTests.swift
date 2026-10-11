@@ -7,15 +7,20 @@ struct PadLayoutTests {
     func compactRows() {
         let layout = resolve(.telex, showsNumberRow: false)
         #expect(rows(layout) == [
-            ["tab", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", ""],
-            ["caps lock", "a", "s", "d", "f", "g", "h", "j", "k", "l", ""],
-            ["", "z", "x", "c", "v", "b", "n", "m", ",", ".", ""],
-            ["", "?123", "Tiếng Việt", "?123", ""],
+            ["tab", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "delete"],
+            ["caps lock", "a", "s", "d", "f", "g", "h", "j", "k", "l", "return"],
+            ["shift", "z", "x", "c", "v", "b", "n", "m", ",", ".", "shift"],
+            ["", ".?123", "Tiếng Việt", ".?123", ""],
         ])
+        for row in layout.rows {
+            let ends = row.keys.filter { $0.role.isSpecial && $0.role != .globe && $0.role != .dismissKeyboard }
+            #expect(ends.map(\.labelPlacement) == [.bottomLeading, .bottomTrailing])
+        }
         #expect(layout.rows[0].keys.last?.role == .backspace)
         #expect(layout.rows[1].keys.last?.role == .enter)
         #expect(layout.rows[2].keys.map(\.role).filter { $0 == .shift }.count == 2)
         #expect(layout.rows[3].keys.map(\.role) == [.globe, .symbols, .space, .symbols, .dismissKeyboard])
+        #expect(layout.rows[3].keys.first?.labelPlacement == .center)
         #expect(layout.toolbar != nil)
     }
 

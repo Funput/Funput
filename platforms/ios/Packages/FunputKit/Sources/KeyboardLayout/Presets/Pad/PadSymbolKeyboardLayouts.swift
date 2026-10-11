@@ -42,8 +42,11 @@ enum PadSymbolKeyboardLayouts {
                 KeySpec(id: "symbol-pad-\(name)-\(row)-\(index)", label: label, role: .punctuation)
             }
         }
-        let switchKey = { (id: String) in
-            Keys.edgeKey(id, switchKey.label, switchKey.role, switchKey.accessibility, weight: Keys.wide)
+        let switchKey = { (id: String, placement: KeyLabelPlacement) in
+            Keys.edgeKey(
+                id, switchKey.label, switchKey.role, switchKey.accessibility,
+                weight: Keys.wide, placement: placement
+            )
         }
         return KeyboardLayout(
             id: "symbols-pad-\(name)\(page.editorID)-\(page.inputMethod.rawValue)"
@@ -51,9 +54,10 @@ enum PadSymbolKeyboardLayouts {
             inputMethod: page.inputMethod,
             toolbar: page.toolbar,
             rows: [
-                KeyboardRow(keys: [Keys.edgeKey("tab", "tab", .tab, "Tab")] + symbols[0] + [Keys.deleteKey()]),
+                KeyboardRow(keys: [Keys.leadingKey("tab", "tab", .tab, "Tab")] + symbols[0] + [Keys.deleteKey()]),
                 KeyboardRow(keys: [inputMethodKey(page)] + symbols[1] + [Keys.returnKey()]),
-                KeyboardRow(keys: [switchKey("switch")] + symbols[2] + [switchKey("switch-right")]),
+                KeyboardRow(keys: [switchKey("switch", .bottomLeading)] + symbols[2]
+                    + [switchKey("switch-right", .bottomTrailing)]),
                 Keys.actionRow(
                     switchLabel: "ABC",
                     switchRole: .letters,
@@ -70,7 +74,7 @@ enum PadSymbolKeyboardLayouts {
     private static func inputMethodKey(_ page: PadPage) -> KeySpec {
         guard page.composes else { return Keys.spacer("inputmethod", weight: Keys.wide) }
         let name = page.inputMethod.isTelexFamily ? "Telex" : "VNI"
-        return Keys.edgeKey(
+        return Keys.leadingKey(
             "inputmethod",
             name,
             .inputMethod,

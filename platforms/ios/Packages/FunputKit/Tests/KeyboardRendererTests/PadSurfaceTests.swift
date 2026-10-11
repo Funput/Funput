@@ -14,6 +14,30 @@ struct PadSurfaceTests {
         #expect(on?.isEqual(UIImage(systemName: "capslock.fill")) == true)
     }
 
+    @Test("Corner keys show their word, and return names what it does")
+    func cornerLabels() {
+        #expect(KeyboardKeyContentStyle.cornerLabel(for: key(.enter, "return"), enterAction: .newLine) == "return")
+        #expect(KeyboardKeyContentStyle.cornerLabel(for: key(.enter, "return"), enterAction: .search) == "search")
+        #expect(KeyboardKeyContentStyle.cornerLabel(for: key(.enter, "return"), enterAction: .custom("Gửi")) == "Gửi")
+        #expect(KeyboardKeyContentStyle.cornerLabel(for: key(.backspace, "delete"), enterAction: .go) == "delete")
+        #expect(KeyboardKeyContentStyle.isLit(.shift, shiftState: .uppercase))
+        #expect(!KeyboardKeyContentStyle.isLit(.capsLock, shiftState: .uppercase))
+        #expect(KeyboardKeyContentStyle.isLit(.capsLock, shiftState: .capsLocked))
+    }
+
+    @Test("A corner key draws its word in the corner, with no icon")
+    func cornerContent() throws {
+        let view = KeyboardKeyContentView(frame: CGRect(x: 0, y: 0, width: 110, height: 64))
+        let spec = KeySpec(id: "delete", label: "delete", role: .backspace, labelPlacement: .bottomTrailing)
+        view.apply(spec: spec, presentation: KeyboardPresentation(), traits: UITraitCollection())
+        view.layoutIfNeeded()
+        let label = try #require(view.subviews.compactMap { $0 as? UILabel }.first { $0.text == "delete" })
+        let icon = try #require(view.subviews.compactMap { $0 as? UIImageView }.first)
+        #expect(!label.isHidden && label.textAlignment == .right)
+        #expect(label.frame.midY > view.bounds.midY)
+        #expect(icon.isHidden)
+    }
+
     @Test("The input mode control covers the globe key once someone listens")
     func inputModeSwitchOverGlobe() {
         let surface = surface(for: .letters)
@@ -39,6 +63,10 @@ struct PadSurfaceTests {
         surface.setInputModeSwitch(target: target, action: #selector(Target.handle))
         surface.layoutIfNeeded()
         #expect(surface.inputModeSwitchControl.isHidden)
+    }
+
+    private func key(_ role: KeyRole, _ label: String) -> KeySpec {
+        KeySpec(id: label, label: label, role: role, labelPlacement: .bottomTrailing)
     }
 
     private func surface(

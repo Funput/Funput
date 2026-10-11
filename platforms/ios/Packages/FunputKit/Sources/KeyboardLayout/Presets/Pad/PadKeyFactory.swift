@@ -3,7 +3,9 @@ import CoreGraphics
 /// The pieces every iPad page is built from.
 ///
 /// Every row of every page adds up to 13 units — ten keys plus a key and a half at each
-/// end — so a key keeps its column from row to row and from page to page.
+/// end — so a key keeps its column from row to row and from page to page. Function keys are
+/// written out in words in a bottom corner, as on the stock keyboard: the leading end of a
+/// row on the left, the trailing end on the right. Only the globe and hide keys are icons.
 enum PadKeyFactory {
     static let side: CGFloat = 1.5
     static let wide: CGFloat = 2
@@ -13,9 +15,31 @@ enum PadKeyFactory {
         _ label: String,
         _ role: KeyRole,
         _ accessibility: String,
-        weight: CGFloat = side
+        weight: CGFloat = side,
+        placement: KeyLabelPlacement = .center
     ) -> KeySpec {
-        specialKey("\(id)-pad", label, role, weight: weight, accessibilityLabel: accessibility)
+        KeySpec(
+            id: "\(id)-pad",
+            label: label,
+            role: role,
+            widthWeight: weight,
+            accessibilityLabel: accessibility,
+            labelPlacement: placement
+        )
+    }
+
+    /// A key at the left end of a row, its word in the bottom-left corner.
+    static func leadingKey(
+        _ id: String, _ label: String, _ role: KeyRole, _ accessibility: String, weight: CGFloat = side
+    ) -> KeySpec {
+        edgeKey(id, label, role, accessibility, weight: weight, placement: .bottomLeading)
+    }
+
+    /// A key at the right end of a row, its word in the bottom-right corner.
+    static func trailingKey(
+        _ id: String, _ label: String, _ role: KeyRole, _ accessibility: String, weight: CGFloat = side
+    ) -> KeySpec {
+        edgeKey(id, label, role, accessibility, weight: weight, placement: .bottomTrailing)
     }
 
     /// An empty slot that holds the columns in place.
@@ -38,11 +62,11 @@ enum PadKeyFactory {
     }
 
     static func deleteKey(weight: CGFloat = side) -> KeySpec {
-        edgeKey("backspace", "", .backspace, "Xóa", weight: weight)
+        trailingKey("backspace", "delete", .backspace, "Xóa", weight: weight)
     }
 
     static func returnKey() -> KeySpec {
-        edgeKey("enter", "", .enter, "Enter", weight: wide)
+        trailingKey("enter", "return", .enter, "Enter", weight: wide)
     }
 
     /// The space bar: Vietnamese with the language swipe where the field composes, plain
@@ -61,9 +85,9 @@ enum PadKeyFactory {
         let id = switchRole == .letters ? "letters" : "symbols"
         return KeyboardRow(keys: [
             edgeKey("globe", "", .globe, "Đổi bàn phím"),
-            edgeKey(id, switchLabel, switchRole, switchAccessibility),
+            leadingKey(id, switchLabel, switchRole, switchAccessibility),
             spaceKey(composes: composes),
-            edgeKey("\(id)-right", switchLabel, switchRole, switchAccessibility),
+            trailingKey("\(id)-right", switchLabel, switchRole, switchAccessibility),
             edgeKey("dismiss", "", .dismissKeyboard, "Ẩn bàn phím"),
         ])
     }
