@@ -2,7 +2,6 @@ package app.funput.funput.keyboard.rendering
 
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.graphics.Typeface
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeyboardEnterAction
@@ -14,8 +13,6 @@ import app.funput.funput.theme.KeyboardTheme
 internal class KeyRenderer(private val metrics: RenderMetrics) {
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
     private val fontMetrics = Paint.FontMetrics()
-    private val characterTypeface = Typeface.create("sans-serif", Typeface.NORMAL)
-    private val specialTypeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private val surfacePainter = KeySurfacePainter(metrics)
     private val iconRenderer = KeyIconRenderer(metrics)
     private val spacebarRenderer = SpacebarContentRenderer(metrics)
@@ -58,21 +55,26 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
     ) {
         val role = key.spec.role
         labelPaint.color = if (role.isSpecial) theme.specialLabelColor else theme.labelColor
-        labelPaint.textSize = metrics.sp(role.labelSizeSp)
-        labelPaint.typeface = if (role == KeyRole.CHARACTER) characterTypeface else specialTypeface
+        labelPaint.textSize = metrics.labelSp(role.labelSizeSp, theme)
+        labelPaint.typeface = if (role == KeyRole.CHARACTER) {
+            KeyLabelTypography.characterTypeface(theme)
+        } else {
+            KeyLabelTypography.specialTypeface(theme)
+        }
         labelPaint.textAlign = Paint.Align.CENTER
-        labelPaint.getFontMetrics(fontMetrics)
-        val baseline = key.bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
         val label = if (role == KeyRole.CHARACTER && shiftState.isActive) {
             key.spec.shiftedLabel ?: key.spec.label
         } else {
             key.spec.label
         }
+        labelPaint.shrinkToFit(label, key.bounds.width - metrics.dp(LabelPaddingDp))
+        labelPaint.getFontMetrics(fontMetrics)
+        val baseline = key.bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
         canvas.drawText(label, key.bounds.centerX, baseline, labelPaint)
 
         val secondaryLabel = key.spec.secondaryLabel ?: return
         labelPaint.color = theme.accentColor
-        labelPaint.textSize = metrics.sp(SecondaryLabelSizeSp)
+        labelPaint.textSize = metrics.labelSp(SecondaryLabelSizeSp, theme)
         labelPaint.textAlign = Paint.Align.RIGHT
         labelPaint.getFontMetrics(fontMetrics)
         canvas.drawText(
@@ -94,5 +96,6 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         const val CharacterLabelSizeSp = 20f
         const val SpecialLabelSizeSp = 13f
         const val SecondaryLabelSizeSp = 9f
+        const val LabelPaddingDp = 8f
     }
 }

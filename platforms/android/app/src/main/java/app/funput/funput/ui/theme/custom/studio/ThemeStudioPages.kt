@@ -24,6 +24,7 @@ import app.funput.funput.ui.theme.custom.color.ThemeColorLinks
 import app.funput.funput.ui.theme.custom.color.ThemeColorList
 import app.funput.funput.ui.theme.custom.color.ThemeColorRole
 import app.funput.funput.ui.theme.custom.color.ThemeContrastWarnings
+import app.funput.funput.ui.theme.custom.metrics.ThemeLabelSection
 import app.funput.funput.ui.theme.custom.metrics.ThemePressedSection
 import app.funput.funput.ui.theme.custom.metrics.ThemeSurfaceSection
 
@@ -85,6 +86,7 @@ private fun ThemeEditorPage(
             ThemeContrastWarnings(state.theme)
             ThemeColorList(tab, state.theme, writeColor)
             ThemeSurfaceSection(state.theme, state::updateTheme)
+            ThemeLabelSection(state.theme, state::updateTheme)
         }
         ThemeEditorTab.Pressed -> {
             ThemeColorList(tab, state.theme, writeColor)

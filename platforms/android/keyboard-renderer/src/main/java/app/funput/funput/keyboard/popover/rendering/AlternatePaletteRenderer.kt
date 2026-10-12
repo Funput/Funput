@@ -4,11 +4,12 @@ import app.funput.funput.keyboard.popover.model.KeyAlternate
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
-import android.graphics.Typeface
 import androidx.core.graphics.ColorUtils
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionPreview
+import app.funput.funput.keyboard.rendering.KeyLabelTypography
 import app.funput.funput.keyboard.rendering.RenderMetrics
+import app.funput.funput.keyboard.rendering.labelSp
 import app.funput.funput.keyboard.rendering.liquid.LiquidGlassKeyPainter
 import app.funput.funput.theme.KeyboardTheme
 
@@ -16,10 +17,7 @@ internal class AlternatePaletteRenderer(private val metrics: RenderMetrics) {
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
-    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textAlign = Paint.Align.CENTER
-        typeface = Typeface.create("sans-serif", Typeface.NORMAL)
-    }
+    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
     private val rect = RectF()
     private val fontMetrics = Paint.FontMetrics()
     private val liquidPainter = LiquidGlassKeyPainter(metrics)
@@ -63,7 +61,8 @@ internal class AlternatePaletteRenderer(private val metrics: RenderMetrics) {
 
     private fun drawLabel(canvas: Canvas, x: Float, y: Float, text: String, theme: KeyboardTheme) {
         labelPaint.color = theme.labelColor
-        labelPaint.textSize = metrics.sp(22f)
+        labelPaint.textSize = metrics.labelSp(22f, theme)
+        labelPaint.typeface = KeyLabelTypography.characterTypeface(theme)
         labelPaint.getFontMetrics(fontMetrics)
         canvas.drawText(text, x, y - (fontMetrics.ascent + fontMetrics.descent) / 2f, labelPaint)
     }

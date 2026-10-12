@@ -3,7 +3,6 @@ package app.funput.funput.keyboard.rendering
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.Typeface
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.theme.KeyboardTheme
@@ -16,10 +15,8 @@ internal class EnterKeyContentRenderer(private val metrics: RenderMetrics) {
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
     }
-    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textAlign = Paint.Align.CENTER
-        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-    }
+    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
+    private var labelScale = 1f
     private val path = Path()
     private val fontMetrics = Paint.FontMetrics()
 
@@ -27,6 +24,8 @@ internal class EnterKeyContentRenderer(private val metrics: RenderMetrics) {
         iconPaint.color = theme.accentLabelColor
         iconPaint.strokeWidth = metrics.dp(1.7f)
         labelPaint.color = theme.accentLabelColor
+        labelPaint.typeface = KeyLabelTypography.specialTypeface(theme)
+        labelScale = theme.labelScale
     }
 
     fun draw(canvas: Canvas, key: ResolvedKey, action: KeyboardEnterAction) {
@@ -113,10 +112,8 @@ internal class EnterKeyContentRenderer(private val metrics: RenderMetrics) {
     }
 
     private fun drawLabel(canvas: Canvas, key: ResolvedKey, label: String) {
-        labelPaint.textSize = metrics.sp(12f)
-        val availableWidth = key.bounds.width - metrics.dp(8f)
-        val measuredWidth = labelPaint.measureText(label)
-        if (measuredWidth > availableWidth) labelPaint.textSize *= availableWidth / measuredWidth
+        labelPaint.textSize = metrics.sp(12f) * labelScale
+        labelPaint.shrinkToFit(label, key.bounds.width - metrics.dp(8f))
         labelPaint.getFontMetrics(fontMetrics)
         val baseline = key.bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
         canvas.drawText(label, key.bounds.centerX, baseline, labelPaint)
