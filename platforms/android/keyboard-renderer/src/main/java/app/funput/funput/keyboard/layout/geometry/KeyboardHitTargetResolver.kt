@@ -35,8 +35,8 @@ internal object KeyboardHitTargetResolver {
         keyboard: ResolvedKeyboard,
         bar: ResolvedSuggestionBar,
     ): ResolvedSuggestionBar {
-        // Left to right: keyboard mode, voice input, suggestions, then the right-hand utilities.
-        val leading = listOfNotNull(bar.placementKey, bar.microphoneKey)
+        // Left to right: voice input, keyboard mode, suggestions, then the right-hand utilities.
+        val leading = listOfNotNull(bar.microphoneKey, bar.placementKey)
         val trailing = listOfNotNull(bar.systemInputMethodKey, bar.clipboardKey, bar.emojiKey)
         val hitBottom = midpoint(bar.bounds.bottom, keyboard.rows.first().first().bounds.top)
         // Ordered spans of the toolbar; the suggestions area is a span too when enabled.

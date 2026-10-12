@@ -23,20 +23,20 @@ internal object ToolbarGeometry {
         val right = width - spec.horizontalPadding
         val emoji = boundsBefore(right, top, bottom, spec, separated = false)
         val density = spec.suggestionBarHeight / spec.heightScale / ToolbarMetrics.SuggestionBarHeightDp
-        val micWidth = density * ToolbarMetrics.MicrophoneWidthDp
-        // Left side, Gboard order (left to right): keyboard mode, then voice input.
+        val cell = spec.suggestionBarHeight
+        // Left side mirrors the right: voice input sits at the edge like emoji, keyboard mode
+        // beside it like clipboard, every action in the same square cell so the spacing matches.
         var leftAnchor = spec.horizontalPadding
-        fun leftKey(keyWidth: Float): KeyBounds {
-            val bounds = KeyBounds(leftAnchor, top, leftAnchor + keyWidth, bottom)
+        fun leftKey(): KeyBounds {
+            val bounds = KeyBounds(leftAnchor, top, leftAnchor + cell, bottom)
             leftAnchor = bounds.right + spec.horizontalGap
             return bounds
         }
         val showMic = microphone.visible && bar.microphoneKey != null
+        val mic = if (showMic) leftKey() else null
         // The microphone is required; keyboard mode yields first when the row is too narrow.
-        val micReserve = if (showMic) micWidth + spec.horizontalGap else 0f
-        val placementFits = leftAnchor + spec.suggestionBarHeight + spec.horizontalGap + micReserve <= emoji.left
-        val placement = if (showPlacement && placementFits) leftKey(spec.suggestionBarHeight) else null
-        val mic = if (showMic) leftKey(micWidth) else null
+        val placementFits = leftAnchor + cell + spec.horizontalGap <= emoji.left
+        val placement = if (showPlacement && placementFits) leftKey() else null
         require(emoji.left >= leftAnchor - spec.horizontalGap) {
             "Keyboard is too narrow for its required toolbar actions"
         }
