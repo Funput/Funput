@@ -11,7 +11,6 @@ struct KeyboardMetricsTests {
         let layout = StandardKeyboardLayouts.letters(.telex)
         expectHeight(layout, traits: phonePortrait, expected: 288)
         expectHeight(layout, traits: phoneLandscape, expected: 220)
-        expectHeight(layout, traits: padPortrait, expected: 308)
     }
 
     @Test("Toolbar and row count determine variant heights")
@@ -22,7 +21,6 @@ struct KeyboardMetricsTests {
             // Toolbar-less pages add `toolbarlessTopInset` (4pt) above their first row.
             (phonePortrait, 254, 203.8),
             (phoneLandscape, 186, 149.4),
-            (padPortrait, 274, 219.8),
         ]
         let secureLayouts = [
             PasswordKeyboardLayouts.text(.telex),

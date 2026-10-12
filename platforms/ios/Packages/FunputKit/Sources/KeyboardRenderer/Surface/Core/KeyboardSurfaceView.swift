@@ -37,6 +37,7 @@ public final class KeyboardSurfaceView: UIView {
     let contentHost = UIView()
     let keysHost = KeyboardKeysHostView()
     let touchOverlay = KeyboardTouchOverlayView()
+    let inputModeSwitchControl = KeyboardInputModeSwitchControl()
     let previewView = KeyboardKeyPreviewView()
     let alternatePaletteView = KeyboardAlternatePaletteView()
     lazy var touchCoordinator = KeyboardTouchCoordinator {
@@ -109,6 +110,7 @@ public final class KeyboardSurfaceView: UIView {
         let geometry = resolvedGeometry()
         toolbarView.frame = geometry.toolbarFrame ?? .zero
         layoutKeyControls(in: geometry)
+        layoutInputModeSwitch()
         // The coordinator owns the snapshot and its revision; the overlay borrows the same one.
         touchCoordinator.updateGeometry(geometry)
         touchOverlay.adoptGeometry(touchCoordinator.geometrySnapshot)
