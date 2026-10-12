@@ -1089,7 +1089,7 @@ Mic nằm ngay trước Emoji và không dùng `utilityKeysVisible` của candid
 Tắt Gợi ý từ không ẩn mic. Password/PIN/email/keypad không vẽ hoặc dispatch mic;
 policy đầy đủ cho caret, `KEY_EVENT`, setting và capability thuộc binder P5.
 
-Mic giữ chiều rộng visual 48dp khi đổi height profile; không thay toolbar height
+Mic dùng ô vuông như Emoji/Clipboard (xem mục 27); không thay toolbar height
 hoặc row geometry. Hit target dùng chung gap resolver, mở rộng theo slack của
 band hiện có và không chồng utility bên cạnh. Candidate capacity dùng phần chiều
 rộng còn lại; optional placement/clipboard/system switcher bị bỏ nếu không đủ
@@ -1505,3 +1505,15 @@ các operation chuẩn bị, cache, session và UI giữ nguyên. Chỉ dùng ch
 
 Probe `OnDeviceSpeechProbeInstrumentedTest` giờ in phiên bản các package Google liên
 quan và `checkStatus` cho VI/EN, không thu âm, không tải model.
+
+## 27. Mic lên đầu toolbar, khoảng cách đối xứng (12/10/2026)
+
+Bên trái toolbar đổi thành: Nhập bằng giọng nói ở mép, Chế độ bàn phím ngay cạnh,
+soi gương Emoji (mép phải) và Clipboard. Mic bỏ slot 48dp riêng, dùng ô vuông
+cạnh bằng chiều cao toolbar như các utility khác, nên khoảng cách tâm–tâm giữa
+mic và chế độ bàn phím bằng giữa Clipboard và Emoji ở mọi height scale.
+`fitMicrophonePlate()` thành thừa nên đã bỏ. Đánh đổi: vùng chạm ngang của mic khi
+đứng cạnh phím chế độ bàn phím bằng Emoji (padding + một ô, ~40dp mặc định) thay
+vì 48dp, kể cả khi phím chế độ bàn phím ẩn (đã gõ) và mic kề vùng gợi ý.
+Thứ tự hit target và accessibility theo trái→phải: mic, chế độ bàn phím, gợi ý,
+system switcher, Clipboard, Emoji.

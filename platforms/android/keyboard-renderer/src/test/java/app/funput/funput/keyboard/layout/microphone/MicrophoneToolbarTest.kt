@@ -41,14 +41,14 @@ class MicrophoneToolbarTest {
         assertFalse(requireNotNull(without.suggestionBar).suggestionsEnabled)
     }
 
-    @Test fun narrowSurfacesDropUtilitiesWithoutShrinkingOrOverlappingMic() {
+    @Test fun narrowSurfacesDropUtilitiesWithoutMovingOrOverlappingMic() {
         listOf(120f, 160f, 240f, 360f).forEach { width ->
             val keyboard = resolve(width, true)
             val bar = requireNotNull(keyboard.suggestionBar)
             val mic = requireNotNull(bar.microphoneKey)
-            assertEquals(48f, mic.bounds.width, 0.01f)
-            assertTrue(mic.hitBounds.width >= 48f)
-            assertTrue(mic.bounds.left >= bar.bounds.left)
+            assertEquals(bar.emojiKey.bounds.width, mic.bounds.width, 0.01f)
+            assertEquals(bar.bounds.left, mic.bounds.left, 0.01f)
+            assertEquals(0f, mic.hitBounds.left, 0.01f)
             val controls = keyboard.keys.filter { it.bounds.top == bar.bounds.top }
             controls.zipWithNext().forEach { (left, right) ->
                 assertTrue(left.hitBounds.right <= right.hitBounds.left)
@@ -84,12 +84,22 @@ class MicrophoneToolbarTest {
             spec, microphone = microphone).suggestionBar)
     }
 
-    @Test fun heightScaleDoesNotReduceHorizontalMicrophoneTarget() {
+    @Test fun leftActionsMirrorTheRightOnesAtEveryHeightScale() {
         listOf(0.75f, 1f, 1.3f).forEach { scale ->
             val profile = KeyboardSizingProfile.Default.copy(heightScale = scale)
-            val keyboard = KeyboardGeometry.resolve(KeyboardLayouts.telex, 240f, 300f,
-                KeyboardGeometrySpec.fromProfile(1f, profile), microphone = microphone)
-            assertEquals(48f, requireNotNull(keyboard.suggestionBar?.microphoneKey).bounds.width, 0.01f)
+            val keyboard = KeyboardGeometry.resolve(KeyboardLayouts.telex, 360f, 300f,
+                KeyboardGeometrySpec.fromProfile(1f, profile), showClipboard = true, microphone = microphone)
+            val bar = requireNotNull(keyboard.suggestionBar)
+            val mic = requireNotNull(bar.microphoneKey).bounds
+            val placement = requireNotNull(bar.placementKey).bounds
+            val clipboard = requireNotNull(bar.clipboardKey).bounds
+            val emoji = bar.emojiKey.bounds
+            // Voice input first, then keyboard mode, in the same cells as clipboard and emoji.
+            assertTrue(mic.right <= placement.left)
+            assertEquals(emoji.width, mic.width, 0.01f)
+            assertEquals(clipboard.width, placement.width, 0.01f)
+            assertEquals(bar.bounds.right - emoji.right, mic.left - bar.bounds.left, 0.01f)
+            assertEquals(emoji.centerX - clipboard.centerX, placement.centerX - mic.centerX, 0.01f)
         }
     }
 
