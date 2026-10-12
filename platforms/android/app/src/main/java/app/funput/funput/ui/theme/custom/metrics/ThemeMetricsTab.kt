@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.theme.KeyboardTheme
@@ -22,10 +23,11 @@ import app.funput.funput.ui.kit.rows.ToggleRow
 @Composable
 internal fun ThemeShapeSection(
     theme: KeyboardTheme,
+    baseTheme: KeyboardTheme,
     onThemeChange: ((KeyboardTheme) -> KeyboardTheme) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var fineTuning by rememberSaveable { mutableStateOf(false) }
+    var fineTuning by rememberSaveable { mutableStateOf(theme.hasHandTunedShape(baseTheme)) }
     val shapes = KeyShapePreset.entries
     val reliefs = KeyReliefPreset.entries
     FunputSection(
@@ -49,6 +51,7 @@ internal fun ThemeShapeSection(
         FunputDivider()
         ToggleRow(
             title = stringResource(R.string.custom_theme_metrics_fine_tune),
+            modifier = Modifier.testTag(FineTuneToggleTag),
             checked = fineTuning,
             onCheckedChange = { fineTuning = it },
         )
@@ -70,3 +73,6 @@ internal fun ThemeShapeSection(
         }
     }
 }
+
+/** Test tag of the switch that shows the exact radius and inset sliders. */
+internal const val FineTuneToggleTag = "custom-theme-fine-tune"

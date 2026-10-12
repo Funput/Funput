@@ -59,6 +59,14 @@ internal fun AppNavDisplay(
     // every other remembered bit with it. Holding that state per destination is what makes back
     // land where the user left off instead of at the top of the page.
     val stateHolder = rememberSaveableStateHolder()
+    // A popped destination must not keep that state, though. The next visit is a new one, and
+    // rememberSaveable restores by position without checking its inputs, so a leftover draft from
+    // the last visit would be handed to whatever the screen opens next. Removing it while the
+    // screen is still animating out is safe: the holder then simply skips saving it on dispose.
+    val liveDestinations = navigator.liveDestinations
+    LaunchedEffect(liveDestinations) {
+        AppDestination.entries.filterNot(liveDestinations::contains).forEach(stateHolder::removeState)
+    }
     SharedTransitionLayout(modifier = modifier) {
         transition.AnimatedContent(
             transitionSpec = { destinationTransition() },

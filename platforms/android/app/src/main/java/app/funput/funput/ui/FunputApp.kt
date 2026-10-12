@@ -42,7 +42,10 @@ fun FunputApp() {
     // One read of the theme sources per catalog change. Asking the repository directly would hit
     // disk again on every recomposition, since it deliberately keeps no cache of its own.
     val themeCatalog = remember(themeRepository, themeCatalogRevision) { themeRepository.snapshot() }
-    var editingThemeId by remember { mutableStateOf<KeyboardThemeId?>(null) }
+    // Saveable, so turning the phone or the process being reclaimed behind the photo picker does
+    // not quietly turn "edit this theme" into "make a new one" and save a duplicate.
+    var editingThemeValue by rememberSaveable { mutableStateOf<String?>(null) }
+    val editingThemeId = KeyboardThemeId.parseOrNull(editingThemeValue)
     // Which slot the gallery assigns to. Pinned to SINGLE unless the user opted into following
     // the system, so nothing about the flow changes for someone who never turns it on.
     var slotChoice by rememberSaveable { mutableStateOf(KeyboardThemeSlot.LIGHT) }
@@ -79,11 +82,11 @@ fun FunputApp() {
                         activeSlot = activeSlot,
                         onSlotSelected = { slot -> slotChoice = slot },
                         onCreateTheme = {
-                            editingThemeId = null
+                            editingThemeValue = null
                             navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
                         },
                         onEditTheme = { themeId ->
-                            editingThemeId = themeId
+                            editingThemeValue = themeId.value
                             navigator.navigate(AppDestination.CREATE_CUSTOM_THEME)
                         },
                         onDeleteTheme = { themeId ->
@@ -105,9 +108,11 @@ fun FunputApp() {
                         themeRepository = themeRepository,
                         saveHandler = customThemeServices.saveHandler,
                         activeSlot = activeSlot,
+                        // The id is left as it is: the studio is still drawn while it animates
+                        // out, and clearing the id there would rebuild it as a blank new theme.
+                        // Opening the studio again always sets the id first.
                         onDone = {
                             themeCatalogRevision += 1
-                            editingThemeId = null
                             navigator.navigateBack()
                         },
                     )
