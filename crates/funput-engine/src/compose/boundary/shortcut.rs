@@ -69,28 +69,40 @@ pub(super) fn expansion(session: &Session, boundary_key: char) -> Option<ImeResu
     // switch is instant in both directions and nothing has to be re-pushed. A word
     // glued to a number (`500k`) is a unit on that number, never a trigger.
     if !session.config.shortcuts_enabled
+        || session.shortcuts.is_empty()
         || session.keys.is_empty()
         || session.glue == NumberGlue::Word
     {
         return None;
     }
+    // A trigger is written however the user thinks of the word: as keys (`vn`,
+    // `ddc`) or as the Vietnamese they compose to (`đc`, `mấy`). The keys go first so
+    // a table written for them keeps its meaning, then the word on screen.
+    let keys = &session.keys;
+    let buffer = &session.buffer;
+    let cased = lookup(session, keys)
+        .or_else(|| (buffer != keys).then(|| lookup(session, buffer)).flatten())?;
+    let output = format!("{cased}{boundary_key}");
+    Some(ImeResult::send(session.buffer.chars().count(), output))
+}
+
+/// The expansion `word` triggers, re-cased to match it.
+fn lookup(session: &Session, word: &str) -> Option<String> {
     // Off, every trigger takes the exact-match path below: `tp` expands, `Tp`/`TP` do
     // not, and the expansion is never re-cased. Reusing the mixed-case fallback rather
     // than adding a second lookup keeps one description of "no case propagation".
     let case = if session.config.shortcut_smart_case {
-        classify_case(&session.keys)
+        classify_case(word)
     } else {
         None
     };
-    let lookup_key = match case {
-        Some(_) => session.keys.to_lowercase(),
-        None => session.keys.clone(),
+    // A lowercase word already is its own key; only re-cased words pay for a copy.
+    let expansion = match case {
+        Some(ShortcutCase::Lower) | None => session.shortcuts.get(word)?,
+        Some(_) => session.shortcuts.get(&word.to_lowercase())?,
     };
-    let expansion = session.shortcuts.get(&lookup_key)?;
-    let cased = match case {
+    Some(match case {
         Some(case) => apply_shortcut_case(expansion, case),
         None => expansion.clone(),
-    };
-    let output = format!("{cased}{boundary_key}");
-    Some(ImeResult::send(session.buffer.chars().count(), output))
+    })
 }

@@ -6,3 +6,5 @@ mod support;
 mod boundary;
 #[path = "words/shortcut.rs"]
 mod shortcut;
+#[path = "words/shortcut_composed.rs"]
+mod shortcut_composed;

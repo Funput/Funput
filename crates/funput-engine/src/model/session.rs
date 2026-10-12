@@ -29,8 +29,9 @@ pub(crate) struct Session {
     /// after switching apps. A host that does know says so through
     /// [`crate::Engine::arm_capitalization`].
     pub(crate) scanner: Scanner,
-    /// Text-expansion table (gõ tắt): raw-keystroke trigger → expansion. Matched
-    /// smart-case against `keys` at a word boundary, before English restore — a
+    /// Text-expansion table (gõ tắt): trigger → expansion. Matched smart-case at a
+    /// word boundary, before English restore, against `keys` and then against the
+    /// composed `buffer`, so `vn` and `đc` both work as triggers — a
     /// trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same
     /// entry, re-casing the expansion to match. Config that lives for the whole
     /// session — `clear()` does not touch it.
