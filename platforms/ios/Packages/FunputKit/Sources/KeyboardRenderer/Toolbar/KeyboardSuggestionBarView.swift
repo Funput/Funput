@@ -12,7 +12,7 @@ final class KeyboardSuggestionBarView: UIView {
     /// as an afterthought next to the keycaps; 17pt is what the system bar uses and what
     /// the band has room for. Dynamic Type still moves it, but only up to what the band
     /// can show without clipping the stacked Vietnamese diacritics.
-    private static var labelFont: UIFont {
+    static var labelFont: UIFont {
         UIFontMetrics(forTextStyle: .body).scaledFont(
             for: .systemFont(ofSize: 17),
             maximumPointSize: 19
@@ -24,13 +24,16 @@ final class KeyboardSuggestionBarView: UIView {
     private let buttons = (0..<maximumCount).map { _ in UIButton(type: .system) }
     private let separators = (0..<(maximumCount - 1)).map { _ in UIView() }
     private var candidates: [KeyboardSuggestionCandidate] = []
+    private var labelColor: UIColor = .label
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         buttons.enumerated().forEach { index, button in
             button.tag = index
             button.titleLabel?.font = Self.labelFont
-            button.titleLabel?.lineBreakMode = .byTruncatingTail
+            // Only reached by a word too long to fit by shrinking and narrowing; the
+            // middle goes so both the typed prefix and the distinguishing ending stay.
+            button.titleLabel?.lineBreakMode = .byTruncatingMiddle
             button.accessibilityTraits = .keyboardKey
             button.addTarget(self, action: #selector(selectCandidate(_:)), for: .touchUpInside)
             addSubview(button)
@@ -53,6 +56,12 @@ final class KeyboardSuggestionBarView: UIView {
             buttons[index].frame = visible
                 ? CGRect(x: CGFloat(index) * width, y: 0, width: width, height: bounds.height)
                 : .zero
+            if visible {
+                let title = Self.fittedTitle(
+                    candidates[index].text, slotWidth: width, font: Self.labelFont, color: labelColor
+                )
+                buttons[index].setAttributedTitle(title, for: .normal)
+            }
         }
         let separatorInset = (bounds.height * Self.separatorInsetRatio).rounded()
         for index in separators.indices {
@@ -73,7 +82,8 @@ final class KeyboardSuggestionBarView: UIView {
         self.candidates = Array(candidates.prefix(Self.maximumCount))
         buttons.enumerated().forEach { index, button in
             let candidate = self.candidates.indices.contains(index) ? self.candidates[index] : nil
-            button.setTitle(candidate?.text, for: .normal)
+            // The visible title is set in layout, once the slot width is known.
+            if candidate == nil { button.setAttributedTitle(nil, for: .normal) }
             button.accessibilityLabel = candidate.map { "Gợi ý, \($0.text)" }
         }
         isHidden = self.candidates.isEmpty
@@ -82,8 +92,10 @@ final class KeyboardSuggestionBarView: UIView {
 
     func apply(theme: ResolvedTheme, traits: UITraitCollection) {
         let label = theme.label.uiColor(for: traits)
-        buttons.forEach { $0.setTitleColor(label, for: .normal) }
+        labelColor = label
         separators.forEach { $0.backgroundColor = label.withAlphaComponent(0.18) }
+        // Titles carry their colour as an attribute, so they are rebuilt in layout.
+        setNeedsLayout()
     }
 
     @objc private func selectCandidate(_ sender: UIButton) {
