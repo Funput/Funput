@@ -5,17 +5,19 @@
 //! choice then survives leaving, re-focusing, and restarting. An app nobody has
 //! toggled in has no opinion attached, so focusing it changes nothing.
 //!
-//! **The surface a toggle came from says its scope**, which is what keeps the rule
-//! above true. The hotkey is pressed inside the app it means, so it pins that app.
-//! The tray flyout and the Settings window are Funput's own windows, opened from the
-//! tray with no app in sight, so they move the global default and pin nothing.
+//! **The latest choice wins, and no pin is made behind the user's back.**
+//!
+//! - The hotkey is pressed inside the app it means, so it pins that app.
+//! - The Control Center and the Settings window are Funput's own windows, opened
+//!   with no app in front. They move the global default and create no pin. But if
+//!   the app the user left to open them already has one, they move that pin too.
+//!   Otherwise coming back to it would replay the old pin, and the choice the user
+//!   just made would look undone.
 //!
 //! Those two used to park their choice and bind it to whichever app took focus next
-//! — the flyout steals foreground, so there was no app to bind to at the time. That
-//! made turning Vietnamese off in the tray write a permanent entry here for whatever
-//! the user clicked into afterwards: an app they never mentioned, pinned invisibly,
-//! since nothing on Windows displays this map, and still overruling the global switch
-//! long after. A global surface now stays global.
+//! — which, after a tray click, was the taskbar: an app the user never mentioned,
+//! pinned invisibly, since nothing on Windows displays this map. The app *left*
+//! is known before the flyout opens, and only a pin that already exists is moved.
 //!
 //! All of which the user can switch off (`Settings::app_language_memory_enabled`),
 //! and then this map is history: nothing is written, nothing is replayed, and every
@@ -41,7 +43,7 @@ impl ShellState {
 
     /// Flip VI/EN from the keyboard hotkey; returns the new state. Unlike the tray,
     /// the hotkey fires while the target app is focused — so it is the one toggle
-    /// that means "just here", and the only thing that writes this map.
+    /// that means "just here", and the only thing that creates a pin.
     ///
     /// In memory only. The caller persists with [`Self::save_settings`] once it is
     /// somewhere it can afford to block: on Windows this runs inside the low-level
@@ -67,6 +69,9 @@ impl ShellState {
     /// Record the app that just took focus, so a hotkey toggle knows what to bind
     /// to. An empty id is not an app, and is handled like [`Self::clear_foreground`].
     pub fn note_foreground(&mut self, id: String) {
+        if !id.is_empty() {
+            self.last_app = Some(id.clone());
+        }
         self.foreground = (!id.is_empty()).then_some(id);
     }
 
@@ -78,6 +83,20 @@ impl ShellState {
         self.foreground = None;
     }
 
+    /// A VI/EN flip arrived from the Control Center or the Settings window: carry
+    /// it to the pin of the app the user left to make it, if that app has one.
+    /// Never creates a pin — see the module docs.
+    pub(super) fn carry_flip_to_last_app(&mut self) {
+        let on = self.settings.enabled;
+        let Some(id) = self.last_app.clone() else {
+            return;
+        };
+        let pinned = self.settings.app_language_memory.get(&id).copied();
+        if pinned.is_some_and(|was| was != on) && self.remember(&id, on) {
+            self.save_settings();
+        }
+    }
+
     /// Replay the choice remembered for the newly-focused app, if it has one.
     ///
     /// An app with none is left alone: it inherits whatever state the previous app
@@ -85,8 +104,8 @@ impl ShellState {
     /// a global toggle reaches every app nobody has pinned without this being told
     /// anything.
     ///
-    /// **Reads the map, never writes it.** Only [`Self::toggle_enabled_hotkey`]
-    /// writes, because only the hotkey is pressed inside the app it is about.
+    /// **Reads the map, never writes it.** A pin changes only when the user makes a
+    /// choice: [`Self::toggle_enabled_hotkey`] and [`Self::carry_flip_to_last_app`].
     ///
     /// Returns `Some(on)` when it flipped VI/EN (so the caller can refresh its
     /// tray), `None` when nothing changed — including every app once the user has
@@ -106,44 +125,5 @@ impl ShellState {
         // not light the tray up while a foreign layout has it suspended.
         let after = self.effective_enabled();
         (after != before).then_some(after)
-    }
-
-    /// Decide VI/EN for the keyboard layout under the caret, from its handle.
-    ///
-    /// Unlike the per-app memory this is a rule, not a recollection: Vietnamese
-    /// cannot be typed on a CJK IME or a non-Latin layout at all (see
-    /// [`crate::is_foreign_layout`]). And it is the *last* word — the platform asks
-    /// it after [`Self::apply_for_app`], so it outranks a remembered choice.
-    ///
-    /// Nothing is persisted: the suspension describes the keyboard in front of the
-    /// user, would be stale by the next launch, and layouts change far too often to
-    /// spend a file write on. Returns `Some(on)` only when Vietnamese actually
-    /// started or stopped running, so the caller can refresh its tray.
-    pub fn apply_for_layout(&mut self, layout: u32) -> Option<bool> {
-        if layout == self.last_layout {
-            return None;
-        }
-        self.last_layout = layout;
-        // An override earns its keep only on the layout it was granted for.
-        if layout != self.layout_override {
-            self.layout_override = 0;
-        }
-        let suspend = self.settings.auto_english_on_foreign_layout
-            && layout != self.layout_override
-            && crate::is_foreign_layout(layout);
-        if suspend == self.layout_suspended {
-            return None;
-        }
-        let before = self.effective_enabled();
-        self.layout_suspended = suspend;
-        let after = self.effective_enabled();
-        if after == before {
-            return None; // the user is in English anyway; nothing to suspend
-        }
-        self.engine.set_enabled(after);
-        // Someone else's composition owns the caret now (or did), so the shadow of
-        // what Funput typed no longer describes the text sitting in front of it.
-        self.reset_composition();
-        Some(after)
     }
 }

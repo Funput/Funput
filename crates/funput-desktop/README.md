@@ -121,17 +121,22 @@ phải của shell.
 | `config` | Đẩy settings vào engine, đọc/ghi đĩa, `effective_enabled`; `config/sync` — dùng chung file settings với process khác |
 | `options` | Từng ô setting mà UI Cài đặt bật/tắt |
 | `apps` | App đang focus, bộ nhớ VI/EN theo app, và công tắc tắt nó |
+| `layout` | Tạm nhường khi layout bàn phím không gõ được tiếng Việt (`apply_for_layout`) |
 | `shortcuts` | Bảng gõ tắt, kể cả những dòng người dùng đang gõ nửa vời |
 | `compose` | Những gì keyboard hook gọi trên mỗi phím — đường nóng, không I/O |
 
 Bốn luật đáng đọc trước khi sửa:
 
-**Surface nào toggle thì surface đó quyết định phạm vi.** Hotkey được bấm bên trong app nó nhắm tới
-nên nó ghim app đó. Tray flyout và cửa sổ Cài đặt là cửa sổ của chính Funput, mở từ tray, không có
-app nào trước mặt — nên chúng dịch mặc định toàn cục và không ghim gì. Hai cái sau từng giữ lựa chọn
-lại rồi gắn vào app nhận focus kế tiếp, và vì flyout giành foreground nên cái nó ghim là taskbar.
-Cùng lý do đó, khi focus ở chỗ không phải app (taskbar, desktop, cửa sổ Funput, cửa sổ không đọc được
-exe) host gọi `clear_foreground`, và hotkey bấm ở đó cũng chỉ dịch mặc định toàn cục.
+**Lựa chọn gần nhất thắng, không bao giờ sinh pin ngầm.** Hotkey được bấm bên trong app nó nhắm
+tới nên nó ghim app đó, và là surface duy nhất *tạo* pin. Control Center và cửa sổ Cài đặt là cửa sổ
+của chính Funput, mở khi không có app nào trước mặt: chúng dịch mặc định toàn cục, và nếu app người
+dùng vừa rời đi (`last_app`) **đã có** pin thì sửa pin đó theo lựa chọn mới (`reload_settings` →
+`carry_flip_to_last_app`). Nếu không làm vậy, quay lại app đó sẽ phát lại pin cũ và lựa chọn vừa
+chọn trông như bị hoàn tác (#549). App chưa có pin thì vẫn không được ghim. Hai surface này từng giữ
+lựa chọn lại rồi gắn vào app nhận focus *kế tiếp*, và vì flyout giành foreground nên cái bị ghim là
+taskbar. Khi focus ở chỗ không phải app (shell, cửa sổ Funput, cửa sổ không đọc được exe), host gọi
+`clear_foreground`; hotkey bấm ở đó chỉ dịch mặc định toàn cục. Trên Windows, "shell" là mọi cửa sổ
+của `explorer.exe` trừ cửa sổ File Explorer: taskbar, popup overflow của tray, desktop, Alt-Tab.
 
 **Một file settings, nhiều process ghi.** Mỗi process giữ cả `Settings` trong bộ nhớ và ghi nguyên
 cả struct, nên ghi từ bản cũ sẽ xoá thay đổi của process khác. Hai bên chia field theo chủ: VI/EN và
@@ -163,7 +168,8 @@ WH_KEYBOARD_LL callback
 
 EVENT_SYSTEM_FOREGROUND → save_settings (nếu còn toggle chưa ghi) → caret_moved(Unknown)
                           → không phải app? clear_foreground, dừng
-                          → reload_settings → note_foreground → apply_for_app → apply_for_layout
+                          → reload_settings (flip từ CC/Cài đặt? sửa pin của last_app nếu có)
+                          → note_foreground → apply_for_app → apply_for_layout
 WM_[LRM]BUTTONDOWN      → caret_moved(Unknown)
 ```
 

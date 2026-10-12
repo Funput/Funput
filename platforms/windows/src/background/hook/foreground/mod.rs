@@ -53,7 +53,7 @@ pub(super) fn refresh_for_hotkey() {
 /// whose program cannot be resolved.
 fn typing_app(hwnd: HWND, class: &str) -> Option<String> {
     let id = exe_of_window(hwnd)?;
-    if id == own_exe_id().as_str() || is_shell_surface(class) {
+    if id == own_exe_id().as_str() || is_shell_surface(&id, class) {
         return None;
     }
     Some(id)
@@ -104,17 +104,17 @@ pub(super) unsafe extern "system" fn win_event_proc(
     shell::caret_moved(Caret::Unknown);
     // Neither of these is somewhere a person is typing, so neither gets to say what
     // language they are typing in. The shell matters most: the tray icon sits on the
-    // taskbar, so answering for `Shell_TrayWnd` would let a trip to Funput's own
-    // flyout undo the choice the user went there to make.
-    if is_funput || is_shell_surface(&class) {
+    // taskbar, so answering for `Shell_TrayWnd` or the tray's overflow popup would
+    // let a trip to Funput's own flyout undo the choice the user went there to make.
+    if is_funput || is_shell_surface(&id, &class) {
         shell::clear_foreground();
         return;
     }
 
     // A Settings child persists changes to disk. Reload them as soon as focus
     // returns to a regular app, before the next keystroke reaches the engine. A
-    // VI/EN flip made there arrives as the global default — `apply_for_app` below
-    // can still overrule it, but only for an app the user pinned with the hotkey.
+    // VI/EN flip made there arrives as the global default, and moves the pin of the
+    // app the user left to make it — so it runs before `note_foreground` below.
     if shell::reload_settings() {
         tray::sync_from_shell();
     }

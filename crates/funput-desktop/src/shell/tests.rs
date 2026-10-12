@@ -72,28 +72,102 @@ fn a_flyout_toggle_does_not_pin_the_next_app() {
     assert!(state.settings().app_language_memory.is_empty());
 }
 
-/// The trade this rule makes, stated as a test rather than left as a surprise: a
-/// global switch does not un-pin an app the user pinned on purpose.
-#[test]
-fn a_pinned_app_keeps_its_pin_when_the_global_switch_moves() {
-    let mut state = shell_remembering(&[("notepad.exe", true)]);
-
-    state.set_enabled(false); // flyout turned Vietnamese off
-    assert_eq!(
-        state.apply_for_app("notepad.exe"),
-        Some(true),
-        "the pin wins"
-    );
-    assert!(state.enabled());
-    assert_eq!(
-        state.settings().app_language_memory.get("notepad.exe"),
-        Some(&true),
-        "and it is still the only entry"
-    );
-    assert_eq!(state.settings().app_language_memory.len(), 1);
+/// Stand in for the Control Center: another process flips VI/EN in the shared file,
+/// and the background picks it up the way the platform does.
+fn flip_elsewhere(path: &std::path::Path, background: &mut ShellState, on: bool) {
+    let mut control_center = ShellState::new(Some(path.to_path_buf()));
+    control_center.refresh_hook_state();
+    control_center.set_enabled(on);
+    background.reload_settings();
 }
 
-/// The whole rule in one place: the hotkey is the only writer.
+/// #549, second path: the user was in an app pinned to English, opened the Control
+/// Center and chose Vietnamese — then went back and got English again, because the
+/// old pin replayed. The latest choice wins, so the pin moves with it.
+#[test]
+fn a_flyout_flip_moves_the_pin_of_the_app_just_left() {
+    let (dir, path) = shared_file("flip-moves-pin");
+    let mut background = ShellState::new(Some(path.clone()));
+    background.note_foreground("a.exe".into());
+    background.toggle_enabled_hotkey(); // a.exe → English
+    background.save_settings();
+    background.clear_foreground(); // the taskbar, then the flyout
+
+    flip_elsewhere(&path, &mut background, true);
+    assert!(background.enabled(), "the flip reached this process");
+    assert_eq!(
+        background.apply_for_app("a.exe"),
+        None,
+        "back in a.exe: still VI"
+    );
+    assert_eq!(
+        background.settings().app_language_memory.get("a.exe"),
+        Some(&true)
+    );
+    let reopened = ShellState::new(Some(path));
+    assert_eq!(
+        reopened.settings().app_language_memory.get("a.exe"),
+        Some(&true),
+        "and it reached the disk"
+    );
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+/// Only the app the user left is moved: every other pin is a choice made elsewhere.
+#[test]
+fn a_pinned_app_the_user_did_not_just_leave_keeps_its_pin() {
+    let (dir, path) = shared_file("flip-other-pin");
+    let mut background = ShellState::new(Some(path.clone()));
+    background.note_foreground("b.exe".into());
+    background.toggle_enabled_hotkey(); // b.exe → English
+    background.save_settings();
+    background.note_foreground("a.exe".into()); // no pin
+
+    flip_elsewhere(&path, &mut background, true);
+    assert_eq!(
+        background.apply_for_app("b.exe"),
+        Some(false),
+        "the pin wins"
+    );
+    assert_eq!(background.settings().app_language_memory.len(), 1);
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+/// The flyout moves pins that exist; it never makes one the user did not ask for.
+#[test]
+fn a_flyout_flip_never_creates_a_pin() {
+    let (dir, path) = shared_file("flip-no-pin");
+    let mut background = ShellState::new(Some(path.clone()));
+    background.note_foreground("a.exe".into());
+    background.clear_foreground();
+
+    flip_elsewhere(&path, &mut background, false);
+    assert!(!background.enabled());
+    assert!(background.settings().app_language_memory.is_empty());
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+/// With the memory switched off, the pins are history and a flip leaves them be.
+#[test]
+fn a_flip_with_the_memory_switched_off_touches_no_pin() {
+    let (dir, path) = shared_file("flip-memory-off");
+    let mut settings = Settings::default();
+    settings.app_language_memory.insert("a.exe".into(), false);
+    settings.app_language_memory_enabled = false;
+    settings.save_to(&path);
+    let mut background = ShellState::new(Some(path.clone()));
+    background.note_foreground("a.exe".into());
+
+    flip_elsewhere(&path, &mut background, false);
+    flip_elsewhere(&path, &mut background, true);
+    assert_eq!(
+        background.settings().app_language_memory.get("a.exe"),
+        Some(&false)
+    );
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+/// The whole rule in one place: the hotkey is the only surface that creates a pin.
 #[test]
 fn only_the_hotkey_writes_the_memory() {
     let mut state = shell();

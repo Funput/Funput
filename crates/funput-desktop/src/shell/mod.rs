@@ -18,12 +18,14 @@
 //!   shares the settings file with the other processes that write it.
 //! - `options` — the individual setting writes the Settings UI drives.
 //! - `apps` — the focused app, the per-app VI/EN memory, and the auto-switch.
+//! - `layout` — stepping aside on a keyboard Vietnamese cannot be typed on.
 //! - `shortcuts` — the gõ tắt table, including half-typed drafts.
 //! - `compose` — what the keyboard hook calls on every keystroke.
 
 mod apps;
 mod compose;
 mod config;
+mod layout;
 mod options;
 mod shortcuts;
 
@@ -48,6 +50,9 @@ pub struct ShellState {
     /// The app that currently has focus, fed by the foreground hook. Not
     /// persisted, and `None` until the first focus change.
     foreground: Option<String>,
+    /// The last real app in front. Unlike `foreground` it outlives a trip to the
+    /// taskbar and a Funput window, so a flip made there can find its pin.
+    last_app: Option<String>,
     /// The keyboard layout handle last judged by [`Self::apply_for_layout`], so an
     /// unchanged layout costs nothing. `0` until the platform reports one.
     last_layout: u32,
@@ -76,6 +81,7 @@ impl ShellState {
             settings: Settings::default(),
             settings_file,
             foreground: None,
+            last_app: None,
             last_layout: 0,
             layout_suspended: false,
             layout_override: 0,
