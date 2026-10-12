@@ -100,6 +100,8 @@ final class KeyboardKeyPreviewView: UIView {
     ) {
         let reduceTransparency = UIAccessibility.isReduceTransparencyEnabled
         label.textColor = theme.label.uiColor(for: traits)
+        // The callout magnifies the key under the finger, so it follows the key's own type.
+        label.font = KeyLabelTypography.font(size: 30, base: .regular, theme: theme)
         guard appliedTheme != theme
                 || appliedInterfaceStyle != traits.userInterfaceStyle
                 || appliedReduceTransparency != reduceTransparency else { return }

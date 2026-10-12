@@ -30,6 +30,7 @@ public struct ResolvedTheme: Hashable, Sendable {
     public var surfaceEffects: ThemeSurfaceEffects
     public var gradientDirection: ThemeGradientDirection
     public var backgroundEffects: ThemeBackgroundEffects
+    public var labelWeight: ThemeLabelWeight
 
     public init(
         material: KeyboardMaterial,
@@ -57,7 +58,8 @@ public struct ResolvedTheme: Hashable, Sendable {
         colorEffects: ThemeColorEffects? = nil,
         surfaceEffects: ThemeSurfaceEffects = .default,
         gradientDirection: ThemeGradientDirection = .default,
-        backgroundEffects: ThemeBackgroundEffects = .default
+        backgroundEffects: ThemeBackgroundEffects = .default,
+        labelWeight: ThemeLabelWeight = .default
     ) {
         self.material = material
         self.backgroundStart = backgroundStart
@@ -85,5 +87,6 @@ public struct ResolvedTheme: Hashable, Sendable {
         self.surfaceEffects = surfaceEffects
         self.gradientDirection = gradientDirection
         self.backgroundEffects = backgroundEffects
+        self.labelWeight = labelWeight
     }
 }

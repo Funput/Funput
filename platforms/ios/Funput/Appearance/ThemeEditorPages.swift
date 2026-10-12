@@ -47,6 +47,7 @@ private struct ThemeEditorTabPage: View {
                     ThemeKeyOpacityControls(draft: $draft)
                     ThemeBorderControls(draft: $draft)
                     ThemeTextColorControls(draft: $draft)
+                    ThemeLabelControls(draft: $draft)
                     ThemeShadowControls(draft: $draft)
                     ThemeContrastWarnings(draft: draft)
                 case .pressed:
