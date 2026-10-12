@@ -1,5 +1,6 @@
 #if canImport(UIKit)
 import KeyboardLayout
+import ThemeSchema
 import UIKit
 
 enum KeyboardKeyContentStyle {
@@ -59,11 +60,15 @@ enum KeyboardKeyContentStyle {
         }
     }
 
-    static func cornerFont(scale: Double) -> UIFont {
-        .systemFont(ofSize: 17 * scale, weight: .regular)
+    static func cornerFont(theme: ResolvedTheme) -> UIFont {
+        KeyLabelTypography.font(size: 17, base: .regular, theme: theme)
     }
 
-    static func font(for role: KeyRole, scale: Double) -> UIFont {
+    static func hintFont(theme: ResolvedTheme) -> UIFont {
+        KeyLabelTypography.font(size: 9, base: .medium, theme: theme)
+    }
+
+    static func font(for role: KeyRole, theme: ResolvedTheme) -> UIFont {
         let metrics: (size: CGFloat, weight: UIFont.Weight)
         switch role {
         case .character, .vniModifier, .punctuation:
@@ -73,7 +78,7 @@ enum KeyboardKeyContentStyle {
         default:
             metrics = (14, .semibold)
         }
-        return .systemFont(ofSize: metrics.size * scale, weight: metrics.weight)
+        return KeyLabelTypography.font(size: metrics.size, base: metrics.weight, theme: theme)
     }
 }
 #endif

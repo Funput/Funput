@@ -51,5 +51,7 @@ struct ThemeEditorDraft {
         customTheme.theme.metrics.shadowOpacity = baseTheme.metrics.shadowOpacity
         customTheme.theme.metrics.shadowRadius = baseTheme.metrics.shadowRadius
         customTheme.theme.metrics.pressedScale = baseTheme.metrics.pressedScale
+        customTheme.theme.metrics.fontScale = baseTheme.metrics.fontScale
+        customTheme.theme.labelWeight = baseTheme.labelWeight
     }
 }
