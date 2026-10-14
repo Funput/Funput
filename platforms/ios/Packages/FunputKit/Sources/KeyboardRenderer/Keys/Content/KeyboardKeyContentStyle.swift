@@ -64,8 +64,12 @@ enum KeyboardKeyContentStyle {
         KeyLabelTypography.font(size: 17, base: .regular, theme: theme)
     }
 
-    static func hintFont(theme: ResolvedTheme) -> UIFont {
-        KeyLabelTypography.font(size: 9, base: .medium, theme: theme)
+    /// The stock iPad keyboard prints the digit or symbol above a letter larger and lighter
+    /// than the phone's small hint.
+    static func hintFont(theme: ResolvedTheme, placement: KeyLabelPlacement = .center) -> UIFont {
+        placement == .bottomCenter
+            ? KeyLabelTypography.font(size: 12, base: .regular, theme: theme)
+            : KeyLabelTypography.font(size: 9, base: .medium, theme: theme)
     }
 
     static func font(for role: KeyRole, theme: ResolvedTheme) -> UIFont {

@@ -17,7 +17,7 @@ enum PadKeyboardLayouts {
             editorMode: editorMode,
             showsNumberRow: showsNumberRow
         )
-        return switch mode {
+        let layout = switch mode {
         case .letters:
             PadLetterKeyboardLayouts.letters(page)
         case .symbolsPrimary:
@@ -25,6 +25,7 @@ enum PadKeyboardLayouts {
         case .symbolsSecondary:
             PadSymbolKeyboardLayouts.secondary(page)
         }
+        return PadLabelPlacement.apply(to: layout)
     }
 }
 

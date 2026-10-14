@@ -8,7 +8,8 @@
 /// ```
 ///
 /// Email swaps the comma for `@` and URL for `/`; those fields and passwords drop the
-/// Telex hints, the Vietnamese alternates and the language swipe on the space bar.
+/// Vietnamese alternates and the language swipe on the space bar. No page prints Telex tone
+/// hints; the compact page prints the stock digits and symbols instead.
 enum PadLetterKeyboardLayouts {
     private typealias Keys = PadKeyFactory
 
@@ -44,16 +45,15 @@ enum PadLetterKeyboardLayouts {
                 ),
             ]
         )
-        return page.isCompact ? CompactDigitAlternates.decorate(layout) : layout
+        return page.isCompact
+            ? PadSymbolHints.decorate(CompactDigitAlternates.decorate(layout))
+            : layout
     }
 
     private static func letterKeys(_ characters: String, _ page: PadPage) -> [KeySpec] {
         characters.map {
-            characterKey(
-                $0,
-                showsTelexHint: page.composes && page.inputMethod.isTelexFamily,
-                supportsVietnameseAlternates: page.composes
-            )
+            // No Telex tone hints: the stock keyboard prints symbols there instead.
+            characterKey($0, supportsVietnameseAlternates: page.composes)
         }
     }
 
@@ -69,9 +69,9 @@ enum PadLetterKeyboardLayouts {
     /// `shift z … m , . shift`; the stock keys print `!` and `?` above the comma and period.
     private static func bottomRow(_ page: PadPage) -> KeyboardRow {
         KeyboardRow(keys:
-            [Keys.leadingKey("shift", "shift", .shift, "Shift", weight: Keys.wide)]
+            [Keys.leadingKey("shift", "shift", .shift, "Shift", weight: Keys.leadingShift)]
                 + letterKeys("zxcvbnm", page) + [firstPunctuation(page.editorMode), period]
-                + [Keys.trailingKey("shift-right", "shift", .shift, "Shift", weight: Keys.wide)]
+                + [Keys.trailingKey("shift-right", "shift", .shift, "Shift", weight: Keys.trailingShift)]
         )
     }
 

@@ -9,6 +9,10 @@ import CoreGraphics
 enum PadKeyFactory {
     static let side: CGFloat = 1.5
     static let wide: CGFloat = 2
+    /// The two shift keys share the four units `wide` gives both ends of the bottom letter row.
+    /// The stock left shift is longer, which pushes `z` a little to the right of `a`.
+    static let leadingShift: CGFloat = 2.3
+    static let trailingShift: CGFloat = 1.7
 
     static func edgeKey(
         _ id: String,

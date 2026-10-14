@@ -10,6 +10,7 @@ final class KeyboardKeyContentView: UIView {
     private let iconView = UIImageView()
     private let spacebarView = KeyboardSpacebarContentView()
     private var labelPlacement = KeyLabelPlacement.center
+    private var iconRole = KeyRole.character
     /// The label font as the theme sets it, before `layoutSubviews` fits it to the key's height.
     private var themedLabelFont = UIFont.systemFont(ofSize: 17)
     private var fontScale = 1.0
@@ -34,14 +35,19 @@ final class KeyboardKeyContentView: UIView {
             in: bounds,
             hintLineHeight: secondaryLabel.font.lineHeight
         )
-        label.frame = labelPlacement.isCorner
-            ? KeyboardKeyContentGeometry.cornerLabel(in: bounds, lineHeight: label.font.lineHeight)
-            : frames.primaryLabel
-        if !labelPlacement.isCorner {
+        label.frame = KeyboardKeyContentGeometry.labelFrame(
+            for: labelPlacement,
+            in: bounds,
+            lineHeight: label.font.lineHeight,
+            fallback: frames.primaryLabel
+        )
+        if labelPlacement == .center {
             label.font = KeyLabelTypography.fitting(themedLabelFont, scale: fontScale, height: label.frame.height)
         }
-        iconView.frame = frames.icon
-        secondaryLabel.frame = frames.hint
+        iconView.frame = KeyboardKeyIconSizing.frame(for: iconRole, in: bounds, fallback: frames.icon)
+        secondaryLabel.frame = KeyboardKeyContentGeometry.hintFrame(
+            for: labelPlacement, in: bounds, fallback: frames.hint
+        )
         spacebarView.frame = bounds
     }
 
@@ -63,7 +69,7 @@ final class KeyboardKeyContentView: UIView {
         label.font = KeyboardKeyContentStyle.font(for: spec.role, theme: theme)
         secondaryLabel.text = spec.secondaryLabel
         secondaryLabel.textColor = theme.secondaryLabel.uiColor(for: traits)
-        secondaryLabel.font = KeyboardKeyContentStyle.hintFont(theme: theme)
+        secondaryLabel.font = KeyboardKeyContentStyle.hintFont(theme: theme, placement: spec.labelPlacement)
 
         iconView.image = enterContent
             ? enterIcon(presentation.enterAction)
@@ -71,11 +77,13 @@ final class KeyboardKeyContentView: UIView {
         iconView.tintColor = enterContent ? theme.accent.uiColor(for: traits) : labelColor
 
         labelPlacement = spec.labelPlacement
+        iconRole = spec.role
         label.textAlignment = switch spec.labelPlacement {
-        case .center: .center
+        case .center, .bottomCenter: .center
         case .bottomLeading: .left
         case .bottomTrailing: .right
         }
+        secondaryLabel.textAlignment = spec.labelPlacement == .bottomCenter ? .center : .right
         if spec.labelPlacement.isCorner {
             let isLit = KeyboardKeyContentStyle.isLit(spec.role, shiftState: presentation.shiftState)
             label.text = KeyboardKeyContentStyle.cornerLabel(for: spec, enterAction: presentation.enterAction)
