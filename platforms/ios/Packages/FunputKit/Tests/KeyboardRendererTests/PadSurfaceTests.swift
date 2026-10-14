@@ -38,6 +38,36 @@ struct PadSurfaceTests {
         #expect(icon.isHidden)
     }
 
+    @Test("A letter key shares its baseline with the corner words and centers its hint above")
+    func bottomCenterContent() throws {
+        let bounds = CGRect(x: 0, y: 0, width: 78, height: 64)
+        let letter = KeyboardKeyContentGeometry.bottomCenterLabel(in: bounds, lineHeight: 26)
+        let corner = KeyboardKeyContentGeometry.cornerLabel(in: bounds, lineHeight: 26)
+        #expect(letter.maxY == corner.maxY)
+        #expect(letter.midY > bounds.midY)
+
+        let view = KeyboardKeyContentView(frame: bounds)
+        let spec = KeySpec(id: "q", label: "q", secondaryLabel: "1", role: .character, labelPlacement: .bottomCenter)
+        view.apply(spec: spec, presentation: KeyboardPresentation(), traits: UITraitCollection())
+        view.layoutIfNeeded()
+        let labels = view.subviews.compactMap { $0 as? UILabel }
+        let hint = try #require(labels.first { $0.text == "1" })
+        #expect(hint.textAlignment == .center)
+        #expect(try #require(labels.first { $0.text == "q" }).textAlignment == .center)
+    }
+
+    @Test("The globe, emoji and hide keys keep a small symbol on a tall key")
+    func fixedSizeIcons() {
+        let bounds = CGRect(x: 0, y: 0, width: 110, height: 90)
+        let fallback = bounds.insetBy(dx: 18, dy: 18)
+        for role in [KeyRole.globe, .emoji, .dismissKeyboard] {
+            let frame = KeyboardKeyIconSizing.frame(for: role, in: bounds, fallback: fallback)
+            #expect(frame.width == KeyboardKeyIconSizing.symbolSide && frame.height == frame.width)
+            #expect(frame.midX == bounds.midX && frame.midY == bounds.midY)
+        }
+        #expect(KeyboardKeyIconSizing.frame(for: .shift, in: bounds, fallback: fallback) == fallback)
+    }
+
     @Test("The input mode control covers the globe key once someone listens")
     func inputModeSwitchOverGlobe() {
         let surface = surface(for: .letters)
