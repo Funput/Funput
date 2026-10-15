@@ -18,7 +18,7 @@ struct ThemeBorderControls: View {
             )
             .accessibilityIdentifier("themeEditor.color.border")
             ThemeMetricSlider(
-                title: "Opacity viền · \(draft.previewMode.title)",
+                title: "Opacity viền cho chế độ \(draft.previewMode.title.lowercased())",
                 value: opacityBinding,
                 range: 0...1,
                 step: 0.05,

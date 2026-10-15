@@ -40,6 +40,19 @@ struct SettingsSectionCard<Content: View>: View {
     }
 }
 
+/// A small caption above a group of cards or controls, read as a heading by VoiceOver.
+struct SettingsGroupHeader: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 4)
+            .accessibilityAddTraits(.isHeader)
+    }
+}
+
 /// Inset to the text column of a row: a 22pt icon plus the 12pt row spacing.
 struct SettingsRowDivider: View {
     var body: some View {

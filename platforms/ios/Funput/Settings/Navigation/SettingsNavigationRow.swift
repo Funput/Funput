@@ -1,16 +1,16 @@
 import SwiftUI
 
-/// A row that opens a settings page, showing where that page currently stands.
+/// A row that opens a settings page, with a sentence on where that page stands.
 struct SettingsNavigationRow: View {
     let destination: SettingsDestination
-    let value: String?
+    let summary: String?
 
     var body: some View {
         NavigationLink(value: destination) {
             SettingsRowLabel(
                 title: destination.title,
-                systemImage: destination.systemImage,
-                value: value
+                summary: summary,
+                systemImage: destination.systemImage
             )
         }
         .buttonStyle(SettingsRowButtonStyle())
@@ -31,7 +31,7 @@ struct SettingsRowButtonStyle: ButtonStyle {
     }
 }
 
-/// A card of page links, each showing its page's current state.
+/// A card of page links, each describing its page's current state.
 struct SettingsNavigationCard: View {
     let destinations: [SettingsDestination]
     @ObservedObject var model: SettingsModel
@@ -43,7 +43,7 @@ struct SettingsNavigationCard: View {
                     if destination != destinations.first {
                         SettingsRowDivider()
                     }
-                    SettingsNavigationRow(destination: destination, value: model.summary(for: destination))
+                    SettingsNavigationRow(destination: destination, summary: model.summary(for: destination))
                 }
             }
         }
