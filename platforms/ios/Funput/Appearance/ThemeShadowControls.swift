@@ -27,7 +27,7 @@ struct ThemeShadowControls: View {
                 format: .points
             )
             .accessibilityIdentifier("themeEditor.shadowRadius")
-            Text("Màu đen · offset dọc 1 pt")
+            Text("Bóng màu đen, lệch xuống 1 pt")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

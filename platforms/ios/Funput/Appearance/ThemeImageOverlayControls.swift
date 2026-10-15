@@ -5,7 +5,7 @@ struct ThemeImageOverlayControls: View {
 
     var body: some View {
         ContentCard {
-            Text("Lớp phủ · \(draft.previewMode.title)").font(.headline)
+            Text("Lớp phủ cho chế độ \(draft.previewMode.title.lowercased())").font(.headline)
             ColorPicker("Màu lớp phủ", selection: color, supportsOpacity: false)
                 .accessibilityIdentifier("themeEditor.imageOverlayColor")
             ThemeMetricSlider(

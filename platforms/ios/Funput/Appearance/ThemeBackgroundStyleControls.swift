@@ -39,7 +39,7 @@ struct ThemeBackgroundStyleControls: View {
         stop: ThemeBackgroundStop
     ) -> some View {
         ThemeMetricSlider(
-            title: "\(title) · \(draft.previewMode.title)",
+            title: "\(title) cho chế độ \(draft.previewMode.title.lowercased())",
             value: Binding(
                 get: { draft.backgroundOpacity(for: stop) },
                 set: { draft.setBackgroundOpacity($0, for: stop) }

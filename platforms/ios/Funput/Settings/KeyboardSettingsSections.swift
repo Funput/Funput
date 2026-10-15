@@ -45,7 +45,7 @@ struct LayoutSettingsSection: View {
                 SettingsRowDivider()
                 SettingsToggleRow(
                     title: "Hàng phím số",
-                    summary: "Hiển thị 0–9 phía trên bàn phím.",
+                    summary: "Hiển thị các số từ 0 đến 9 phía trên bàn phím.",
                     systemImage: "textformat.123",
                     isOn: model.numberRowBinding
                 )
