@@ -8,11 +8,7 @@ final class ShortcutsAccessibilityUITests: XCTestCase {
         app.launchEnvironment["FUNPUT_SHORTCUTS_TEST_DIRECTORY"] = UUID().uuidString
         app.launchEnvironment["FUNPUT_SHORTCUTS_TEST_SEED"] = "1"
         app.launch()
-        let entry = app.buttons["settings.shortcuts"]
-        XCTAssertTrue(entry.waitForExistence(timeout: 10))
-        for _ in 0..<5 where !entry.isHittable { app.swipeUp() }
-        entry.tap()
-        XCTAssertTrue(app.buttons["shortcuts.add"].waitForExistence(timeout: 5))
+        ShortcutsUITestSupport.open(app)
         XCTAssertTrue(app.buttons["shortcuts.entry.vn"].waitForExistence(timeout: 5))
         try audit(app)
         capture(app, name: "Danh sách")

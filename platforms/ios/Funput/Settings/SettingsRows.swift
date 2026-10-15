@@ -7,22 +7,44 @@ struct SettingsSelectionRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                SettingsRowIcon(systemImage: option.systemImage)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(option.title).foregroundStyle(.primary)
-                    Text(option.summary).font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 12)
-                Text(value).font(.subheadline).foregroundStyle(.secondary)
-                Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(.tertiary)
-            }
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
+            SettingsRowLabel(
+                title: option.title,
+                summary: option.summary,
+                systemImage: option.systemImage,
+                value: value
+            )
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(option.title), \(value)")
         .accessibilityHint("Chạm hai lần để thay đổi")
+    }
+}
+
+/// The label every row that leads somewhere shares: icon, text column, current value
+/// and a chevron, so pickers and page links line up in one card.
+struct SettingsRowLabel: View {
+    let title: String
+    var summary: String?
+    let systemImage: String
+    var value: String?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SettingsRowIcon(systemImage: systemImage)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).foregroundStyle(.primary)
+                if let summary {
+                    Text(summary).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            Spacer(minLength: 12)
+            if let value {
+                Text(value).font(.subheadline).foregroundStyle(.secondary)
+            }
+            Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
     }
 }
 

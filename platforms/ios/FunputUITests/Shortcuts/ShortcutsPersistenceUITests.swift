@@ -76,9 +76,13 @@ final class ShortcutsPersistenceUITests: XCTestCase {
             ShortcutsUITestSupport.waitForValue(app.switches[option].firstMatch, "0")
         }
         app.buttons["Xong"].tap()
-        app.navigationBars.buttons.firstMatch.tap()
+        // The settings reset lives under "Tôi" → "Dữ liệu và khôi phục".
+        app.tabBars.buttons["Tôi"].tap()
+        let data = app.buttons["settings.destination.data"]
+        XCTAssertTrue(data.waitForExistence(timeout: 5))
+        data.tap()
         let reset = app.buttons["settings.data.reset"]
-        for _ in 0..<12 where !reset.isHittable { app.swipeUp() }
+        XCTAssertTrue(reset.waitForExistence(timeout: 5))
         reset.tap()
         app.buttons["Khôi phục"].tap()
         app.terminate()

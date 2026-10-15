@@ -7,7 +7,7 @@ struct SettingsDataCard: View {
     let resetSettings: () -> Void
 
     var body: some View {
-        SettingsSectionCard(title: "Dữ liệu & khôi phục", systemImage: "externaldrive") {
+        SettingsSectionCard(title: SettingsDestination.data.title, systemImage: "externaldrive") {
             SettingsDestructiveRow(
                 title: "Từ đã học", summary: "Giữ từ điển tiếng Anh đi kèm.",
                 systemImage: "text.badge.xmark", actionTitle: "Xóa", identifier: "settings.data.suggestions",

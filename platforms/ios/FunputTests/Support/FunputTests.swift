@@ -10,7 +10,8 @@ import Testing
 struct FunputTests {
     @Test("App shell exposes stable top-level tabs")
     func appTabs() {
-        #expect(AppTab.allCases == [.settings, .appearance, .about])
+        #expect(AppTab.allCases == [.settings, .shortcuts, .appearance, .me])
+        #expect(AppTab.allCases.count <= 5)
         #expect(AppTab.defaultTab == .settings)
         #expect(Set(AppTab.allCases.map(\.title)).count == AppTab.allCases.count)
         #expect(AppTab.allCases.allSatisfy { !$0.title.isEmpty && !$0.systemImage.isEmpty })

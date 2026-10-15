@@ -10,11 +10,7 @@ final class ShortcutsUITests: XCTestCase {
         app.launchEnvironment["FUNPUT_SHORTCUTS_TEST_DIRECTORY"] = UUID().uuidString
         app.launchEnvironment["FUNPUT_SHORTCUTS_TEST_SEED"] = "1"
         app.launch()
-        let entry = app.buttons["settings.shortcuts"]
-        XCTAssertTrue(entry.waitForExistence(timeout: 10))
-        for _ in 0..<5 where !entry.isHittable { app.swipeUp() }
-        entry.tap()
-        XCTAssertTrue(app.buttons["shortcuts.add"].waitForExistence(timeout: 5))
+        ShortcutsUITestSupport.open(app)
         XCTAssertTrue(app.buttons["shortcuts.entry.vn"].waitForExistence(timeout: 5))
     }
 
@@ -53,8 +49,9 @@ final class ShortcutsUITests: XCTestCase {
         app.alerts.buttons["Tiếp tục sửa"].tap()
         save.tap()
         XCTAssertTrue(created.label.contains("!"))
-        app.navigationBars.buttons["Cài đặt"].tap()
-        app.buttons["settings.shortcuts"].tap()
+        // Leaving the tab and coming back keeps the session's edits.
+        app.tabBars.buttons["Bàn phím"].tap()
+        app.tabBars.buttons["Gõ tắt"].tap()
         XCTAssertTrue(created.exists)
         XCTAssertEqual(app.switches["shortcuts.enabled"].firstMatch.value as? String, "0")
     }

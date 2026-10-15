@@ -1,7 +1,12 @@
+/// The app's tabs, in tab-bar order.
+///
+/// iOS folds a sixth tab into "More", so five is the ceiling: features that come later
+/// (an account, sync) belong inside ``me`` rather than beside it.
 enum AppTab: String, CaseIterable, Hashable, Identifiable {
     case settings
+    case shortcuts
     case appearance
-    case about
+    case me
 
     static let defaultTab = AppTab.settings
 
@@ -9,17 +14,19 @@ enum AppTab: String, CaseIterable, Hashable, Identifiable {
 
     var title: String {
         switch self {
-        case .settings: "Cài đặt"
+        case .settings: "Bàn phím"
+        case .shortcuts: "Gõ tắt"
         case .appearance: "Giao diện"
-        case .about: "Giới thiệu"
+        case .me: "Tôi"
         }
     }
 
     var systemImage: String {
         switch self {
-        case .settings: "gearshape"
+        case .settings: "keyboard"
+        case .shortcuts: "text.append"
         case .appearance: "paintpalette"
-        case .about: "info.circle"
+        case .me: "person.crop.circle"
         }
     }
 }
