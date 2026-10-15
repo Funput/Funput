@@ -7,6 +7,7 @@ struct AppShellView: View {
     // and two copies would let one tab save over what the other just changed.
     @StateObject private var settings = SettingsModel.makeForApp()
     @StateObject private var shortcuts = ShortcutsModel(store: ShortcutsStoreFactory.make())
+    @StateObject private var news = NewsModel.makeForApp()
 
     var body: some View {
         tabs
@@ -43,7 +44,7 @@ struct AppShellView: View {
     }
 
     private func root(_ tab: AppTab) -> some View {
-        AppTabRoot(tab: tab, settings: settings, shortcuts: shortcuts)
+        AppTabRoot(tab: tab, settings: settings, shortcuts: shortcuts, news: news)
     }
 
     /// The keyboard and the Appearance tab write the same configuration, so the copy

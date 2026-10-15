@@ -203,9 +203,10 @@ Tài liệu kiến trúc chi tiết: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.
 platforms/ios/
   Funput.xcodeproj
   Funput/                  Containing app (SwiftUI)
-    App/Shell/               Tab bar: AppTab (Bàn phím · Gõ tắt · Giao diện · Tôi)
+    App/Shell/               Tab bar: AppTab (Bàn phím · Gõ tắt · Giao diện · Tin tức · Tôi)
     Settings/                Tab Bàn phím: Navigation/ (mục lục) · Pages/ (trang con)
     Shortcuts/ Appearance/   Tab Gõ tắt, tab Giao diện
+    News/                    Tab Tin tức: JSON Feed của funput.app/blog, cache offline
     Me/ About/               Tab Tôi (dữ liệu, liên kết, giấy phép)
     Components/
   Keyboard/                Tiện ích bàn phím (UIKit)
