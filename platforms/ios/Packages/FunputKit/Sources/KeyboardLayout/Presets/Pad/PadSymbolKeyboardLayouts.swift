@@ -1,3 +1,5 @@
+import CoreGraphics
+
 /// The two symbol pages of the stock iPad keyboard.
 ///
 /// ```
@@ -42,10 +44,12 @@ enum PadSymbolKeyboardLayouts {
                 KeySpec(id: "symbol-pad-\(name)-\(row)-\(index)", label: label, role: .punctuation)
             }
         }
-        let switchKey = { (id: String, placement: KeyLabelPlacement) in
+        // The switch keys sit where the letters page has its shift keys, so they take the
+        // same uneven widths and every symbol keeps its letter's column.
+        let switchKey = { (id: String, weight: CGFloat, placement: KeyLabelPlacement) in
             Keys.edgeKey(
                 id, switchKey.label, switchKey.role, switchKey.accessibility,
-                weight: Keys.wide, placement: placement
+                weight: weight, placement: placement
             )
         }
         return KeyboardLayout(
@@ -56,8 +60,8 @@ enum PadSymbolKeyboardLayouts {
             rows: [
                 KeyboardRow(keys: [Keys.leadingKey("tab", "tab", .tab, "Tab")] + symbols[0] + [Keys.deleteKey()]),
                 KeyboardRow(keys: [inputMethodKey(page)] + symbols[1] + [Keys.returnKey()]),
-                KeyboardRow(keys: [switchKey("switch", .bottomLeading)] + symbols[2]
-                    + [switchKey("switch-right", .bottomTrailing)]),
+                KeyboardRow(keys: [switchKey("switch", Keys.leadingShift, .bottomLeading)] + symbols[2]
+                    + [switchKey("switch-right", Keys.trailingShift, .bottomTrailing)]),
                 Keys.actionRow(
                     switchLabel: "ABC",
                     switchRole: .letters,
