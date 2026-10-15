@@ -15,7 +15,8 @@ final class NewsUITests: XCTestCase {
         let tab = app.tabBars.buttons["Tin tức"]
         XCTAssertTrue(tab.waitForExistence(timeout: 10))
         tab.tap()
-        XCTAssertTrue(app.buttons["news.guide"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["news.guide.setup"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["news.guide.typing"].exists)
         let article = app.buttons["news.article.telex-vni-va-telex-nang-cao"]
         XCTAssertTrue(article.waitForExistence(timeout: 5))
         article.tap()

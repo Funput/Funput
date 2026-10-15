@@ -1,11 +1,9 @@
 import SwiftUI
 
-/// The news tab: the setup guide for this device, then the blog's posts.
+/// The news tab: the pinned guides, then the blog's posts.
 struct NewsScreen: View {
     @ObservedObject var model: NewsModel
     @State private var reading: SafariDestination?
-
-    static let guideURL = URL(string: "https://docs.funput.app/docs/install/ios/")!
 
     var body: some View {
         AppScreen {
@@ -20,15 +18,16 @@ struct NewsScreen: View {
 
     private var guideCard: some View {
         ContentCard {
-            Button { reading = SafariDestination(url: Self.guideURL) } label: {
-                SettingsRowLabel(
-                    title: "Hướng dẫn cài đặt trên iPhone",
-                    summary: "Thêm bàn phím, bật truy cập đầy đủ và gõ thử.",
-                    systemImage: "book"
-                )
+            VStack(spacing: 0) {
+                ForEach(NewsGuide.pinned) { guide in
+                    if guide.id != NewsGuide.pinned.first?.id { SettingsRowDivider() }
+                    Button { reading = SafariDestination(url: guide.url) } label: {
+                        SettingsRowLabel(title: guide.title, summary: guide.summary, systemImage: guide.systemImage)
+                    }
+                    .buttonStyle(SettingsRowButtonStyle())
+                    .accessibilityIdentifier("news.guide.\(guide.id)")
+                }
             }
-            .buttonStyle(SettingsRowButtonStyle())
-            .accessibilityIdentifier("news.guide")
         }
     }
 }

@@ -58,6 +58,14 @@ struct NewsTests {
         #expect(cache.load()?.data == feed)
     }
 
+    @Test("Pinned guides are distinct pages on the docs site")
+    func pinnedGuides() {
+        let guides = NewsGuide.pinned
+        #expect(Set(guides.map(\.id)).count == guides.count)
+        #expect(Set(guides.map(\.url)).count == guides.count)
+        #expect(guides.allSatisfy { $0.url.scheme == "https" && $0.url.host == "docs.funput.app" })
+    }
+
     private func makeCache() throws -> NewsFeedCache {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
