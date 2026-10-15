@@ -47,7 +47,7 @@ struct PadSurfaceTests {
         #expect(letter.midY > bounds.midY)
 
         let view = KeyboardKeyContentView(frame: bounds)
-        let spec = KeySpec(id: "q", label: "q", secondaryLabel: "1", role: .character, labelPlacement: .bottomCenter)
+        let spec = KeySpec(id: "q", label: "q", role: .character, secondaryLabel: "1", labelPlacement: .bottomCenter)
         view.apply(spec: spec, presentation: KeyboardPresentation(), traits: UITraitCollection())
         view.layoutIfNeeded()
         let labels = view.subviews.compactMap { $0 as? UILabel }
