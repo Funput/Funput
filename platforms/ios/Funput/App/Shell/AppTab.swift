@@ -6,6 +6,7 @@ enum AppTab: String, CaseIterable, Hashable, Identifiable {
     case settings
     case shortcuts
     case appearance
+    case news
     case me
 
     static let defaultTab = AppTab.settings
@@ -17,6 +18,7 @@ enum AppTab: String, CaseIterable, Hashable, Identifiable {
         case .settings: "Bàn phím"
         case .shortcuts: "Gõ tắt"
         case .appearance: "Giao diện"
+        case .news: "Tin tức"
         case .me: "Tôi"
         }
     }
@@ -26,6 +28,7 @@ enum AppTab: String, CaseIterable, Hashable, Identifiable {
         case .settings: "keyboard"
         case .shortcuts: "text.append"
         case .appearance: "paintpalette"
+        case .news: "newspaper"
         case .me: "person.crop.circle"
         }
     }
