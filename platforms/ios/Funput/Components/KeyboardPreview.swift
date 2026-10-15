@@ -105,7 +105,8 @@ enum KeyboardPreviewPresentation {
             showsNumberRow: configuration.showsNumberRow,
             preset: configuration.layoutPreset,
             showsToolbar: configuration.showsToolbar,
-            allowsLanguageToggle: configuration.languageToggleEnabled
+            allowsLanguageToggle: configuration.languageToggleEnabled,
+            formFactor: UIDevice.current.userInterfaceIdiom == .pad ? .pad : .phone
         )
         return KeyboardPresentationFactory.make(
             from: configuration,

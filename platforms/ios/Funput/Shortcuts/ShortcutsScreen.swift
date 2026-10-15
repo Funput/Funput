@@ -9,8 +9,7 @@ struct ShortcutsScreen: View {
 
     var body: some View {
         ShortcutsList(model: model, edit: { editor = $0 }, add: { editor = TextShortcut() })
-            .navigationTitle("Gõ tắt")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(AppTab.shortcuts.title)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { showsOptions = true } label: { Label("Tuỳ chọn", systemImage: "slider.horizontal.3") }
@@ -38,32 +37,6 @@ struct ShortcutsScreen: View {
 
     private func reloadIfActive(_ phase: ScenePhase) {
         if phase == .active { Task { await model.reload() } }
-    }
-}
-
-struct ShortcutsSettingsLink: View {
-    @ObservedObject var model: ShortcutsModel
-
-    var body: some View {
-        NavigationLink {
-            ShortcutsScreen(model: model)
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "text.append").foregroundStyle(.tint).frame(width: 22)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Gõ tắt").foregroundStyle(.primary)
-                    Text("Thay chữ tắt bằng nội dung dài hơn.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(.tertiary)
-            }
-            .frame(minHeight: 44)
-            .padding(.vertical, 10)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("settings.shortcuts")
     }
 }
 

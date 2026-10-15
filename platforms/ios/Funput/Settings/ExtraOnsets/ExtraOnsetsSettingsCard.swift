@@ -34,11 +34,11 @@ struct ExtraOnsetsSettingsCard: View {
     }
 
     private var footer: String {
-        var text = "Từ tiếng Anh có vần tiếng Việt cũng được bỏ dấu (fast → fát) — "
-            + "gõ đúp phím dấu (fasst) để giữ tiếng Anh."
+        var text = "Từ tiếng Anh có vần tiếng Việt cũng được bỏ dấu (fast → fát). "
+            + "Gõ đúp phím dấu (fasst) để giữ tiếng Anh."
         if model.configuration.inputMethod == .telexAdvanced,
            model.configuration.extraOnsets.contains(.w) {
-            text += "\nTelex nâng cao: w vẫn là ư — gõ ww để có phụ âm w."
+            text += "\nTelex nâng cao: w vẫn là ư, gõ ww để có phụ âm w."
         }
         return text
     }

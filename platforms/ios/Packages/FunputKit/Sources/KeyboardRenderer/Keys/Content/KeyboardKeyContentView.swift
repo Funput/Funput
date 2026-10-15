@@ -9,6 +9,11 @@ final class KeyboardKeyContentView: UIView {
     private let secondaryLabel = UILabel()
     private let iconView = UIImageView()
     private let spacebarView = KeyboardSpacebarContentView()
+    private var labelPlacement = KeyLabelPlacement.center
+    private var iconRole = KeyRole.character
+    /// The label font as the theme sets it, before `layoutSubviews` fits it to the key's height.
+    private var themedLabelFont = UIFont.systemFont(ofSize: 17)
+    private var fontScale = 1.0
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -30,9 +35,19 @@ final class KeyboardKeyContentView: UIView {
             in: bounds,
             hintLineHeight: secondaryLabel.font.lineHeight
         )
-        label.frame = frames.primaryLabel
-        iconView.frame = frames.icon
-        secondaryLabel.frame = frames.hint
+        label.frame = KeyboardKeyContentGeometry.labelFrame(
+            for: labelPlacement,
+            in: bounds,
+            lineHeight: label.font.lineHeight,
+            fallback: frames.primaryLabel
+        )
+        if labelPlacement == .center {
+            label.font = KeyLabelTypography.fitting(themedLabelFont, scale: fontScale, height: label.frame.height)
+        }
+        iconView.frame = KeyboardKeyIconSizing.frame(for: iconRole, in: bounds, fallback: frames.icon)
+        secondaryLabel.frame = KeyboardKeyContentGeometry.hintFrame(
+            for: labelPlacement, in: bounds, fallback: frames.hint
+        )
         spacebarView.frame = bounds
     }
 
@@ -51,15 +66,31 @@ final class KeyboardKeyContentView: UIView {
             ? enterLabel(presentation.enterAction)
             : KeyboardKeyContentStyle.label(for: spec, shiftState: presentation.shiftState)
         label.textColor = enterContent ? theme.accent.uiColor(for: traits) : labelColor
-        label.font = KeyboardKeyContentStyle.font(for: spec.role, scale: theme.fontScale)
+        label.font = KeyboardKeyContentStyle.font(for: spec.role, theme: theme)
         secondaryLabel.text = spec.secondaryLabel
         secondaryLabel.textColor = theme.secondaryLabel.uiColor(for: traits)
-        secondaryLabel.font = .systemFont(ofSize: 9 * theme.fontScale, weight: .medium)
+        secondaryLabel.font = KeyboardKeyContentStyle.hintFont(theme: theme, placement: spec.labelPlacement)
 
         iconView.image = enterContent
             ? enterIcon(presentation.enterAction)
             : KeyboardKeyContentStyle.icon(for: spec.role, shiftState: presentation.shiftState)
         iconView.tintColor = enterContent ? theme.accent.uiColor(for: traits) : labelColor
+
+        labelPlacement = spec.labelPlacement
+        iconRole = spec.role
+        label.textAlignment = switch spec.labelPlacement {
+        case .center, .bottomCenter: .center
+        case .bottomLeading: .left
+        case .bottomTrailing: .right
+        }
+        secondaryLabel.textAlignment = spec.labelPlacement == .bottomCenter ? .center : .right
+        if spec.labelPlacement.isCorner {
+            let isLit = KeyboardKeyContentStyle.isLit(spec.role, shiftState: presentation.shiftState)
+            label.text = KeyboardKeyContentStyle.cornerLabel(for: spec, enterAction: presentation.enterAction)
+            label.font = KeyboardKeyContentStyle.cornerFont(theme: theme)
+            label.textColor = isLit || enterContent ? theme.accent.uiColor(for: traits) : labelColor
+            iconView.image = nil
+        }
 
         let spaceLabel = spec.horizontalSwipeAction == nil
             ? spec.label
@@ -67,10 +98,12 @@ final class KeyboardKeyContentView: UIView {
         spacebarView.apply(
             label: spaceLabel,
             color: theme.secondaryLabel.uiColor(for: traits),
-            font: KeyboardKeyContentStyle.font(for: .space, scale: theme.fontScale),
+            font: KeyboardKeyContentStyle.font(for: .space, theme: theme),
             showsChevrons: spec.horizontalSwipeAction != nil
         )
 
+        themedLabelFont = label.font
+        fontScale = theme.fontScale
         spacebarView.isHidden = !isSpace
         secondaryLabel.isHidden = !hasHint || isSpace
         label.isHidden = isSpace || iconView.image != nil

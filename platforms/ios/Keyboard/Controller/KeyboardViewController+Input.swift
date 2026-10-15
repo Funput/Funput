@@ -31,6 +31,8 @@ extension KeyboardViewController {
             return
         }
 
+        if handleSystemKey(event.key.role) { return }
+
         let signpostID = OSSignpostID(log: KeyboardControllerSignpost.log)
         os_signpost(
             .begin,
@@ -101,7 +103,8 @@ extension KeyboardViewController {
             showsNumberRow: configuration.showsNumberRow,
             preset: configuration.layoutPreset,
             showsToolbar: configuration.showsToolbar,
-            allowsLanguageToggle: configuration.languageToggleEnabled
+            allowsLanguageToggle: configuration.languageToggleEnabled,
+            formFactor: traitCollection.userInterfaceIdiom == .pad ? .pad : .phone
         )
         presentation.shiftState = state.shiftState
         presentation.language = state.language

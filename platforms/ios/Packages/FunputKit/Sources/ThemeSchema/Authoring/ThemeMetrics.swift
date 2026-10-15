@@ -35,3 +35,10 @@ public struct ThemeMetrics: Codable, Hashable, Sendable {
         self.fontScale = fontScale
     }
 }
+
+public extension ThemeMetrics {
+    /// The label sizes a theme may ask for, as a share of the normal size. Shared by the
+    /// resolver's clamp and the editor's slider so the two can never disagree; it matches the
+    /// range the Android editor offers.
+    static let fontScaleRange: ClosedRange<Double> = 0.8...1.3
+}

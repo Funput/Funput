@@ -1,6 +1,7 @@
 package app.funput.funput.ui.theme.custom
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import app.funput.funput.ime.settings.KeyboardThemeSettings
 import app.funput.funput.ime.settings.KeyboardThemeSlot
@@ -23,9 +24,12 @@ internal fun CustomThemeStudioRoute(
     onDone: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    // Read once per theme rather than on every recomposition: finding a custom theme reads disk.
+    val baseThemes = remember { BuiltInKeyboardThemeSource.loadThemes() }
+    val editingTheme = remember(themeRepository, editingThemeId) { editingThemeId?.let(themeRepository::find) }
     CreateCustomThemeScreen(
-        baseThemes = BuiltInKeyboardThemeSource.loadThemes(),
-        editingTheme = editingThemeId?.let(themeRepository::find),
+        baseThemes = baseThemes,
+        editingTheme = editingTheme,
         onSave = { draft ->
             scope.launch {
                 saveHandler.save(draft, editingThemeId, activeSlot)

@@ -6,12 +6,19 @@ public enum KeyboardLayoutResolver {
         showsNumberRow: Bool = true,
         preset: KeyboardLayoutPreset = .funput,
         showsToolbar: Bool = true,
-        allowsLanguageToggle: Bool = true
+        allowsLanguageToggle: Bool = true,
+        formFactor: KeyboardFormFactor = .phone
     ) -> KeyboardLayout {
         // The system preset describes text and search; other editors retain their
         // specialized key rows. Toolbar visibility is applied afterwards, independently
         // of that choice, while secure layouts remain protected by having no toolbar.
-        let layout = if preset == .system, editorMode.usesSystemPreset {
+        // On iPad the system preset means the iPad pages; everything else takes the paths below.
+        let layout = if let pad = PadKeyboardLayouts.resolve(
+            formFactor: formFactor, inputMethod: inputMethod, mode: mode,
+            editorMode: editorMode, showsNumberRow: showsNumberRow, preset: preset
+        ) {
+            pad
+        } else if preset == .system, editorMode.usesSystemPreset {
             systemLayout(
                 inputMethod: inputMethod,
                 mode: mode,
@@ -33,10 +40,9 @@ public enum KeyboardLayoutResolver {
 
     /// Turns every language-switching space bar back into a plain one.
     ///
-    /// Applied to the resolved layout rather than threaded through the factories: the
-    /// switch rides on the space key of the letters page, both symbol pages and every
-    /// preset, and they have no other reason to know about the setting. Secure pages
-    /// already carry a space bar without the switch and pass through untouched.
+    /// Applied to the resolved layout rather than threaded through the factories: the switch
+    /// rides on the space key of every page and preset, which have no other reason to know
+    /// about the setting. Secure pages carry a space bar without it and pass through.
     private static func languageLocked(_ layout: KeyboardLayout) -> KeyboardLayout {
         KeyboardLayout(
             id: "\(layout.id)-vietnamese",
@@ -51,7 +57,8 @@ public enum KeyboardLayoutResolver {
                     isNumberRow: row.isNumberRow,
                     columnSpans: row.columnSpans
                 )
-            }
+            },
+            heightRowCount: layout.heightRowCount
         )
     }
 
@@ -59,8 +66,7 @@ public enum KeyboardLayoutResolver {
         guard key.horizontalSwipeAction == .toggleLanguage else { return key }
         return KeySpec(
             id: key.id,
-            // The renderer shows a static label and drops the chevrons once the swipe is
-            // gone, so the key reads as what it now is.
+            // A static label without chevrons, so the key reads as what it now is.
             label: "␣",
             role: key.role,
             widthWeight: key.widthWeight,
@@ -88,7 +94,8 @@ public enum KeyboardLayoutResolver {
             id: "\(layout.id)-toolbarless",
             inputMethod: layout.inputMethod,
             toolbar: nil,
-            rows: rows
+            rows: rows,
+            heightRowCount: layout.heightRowCount
         )
     }
 

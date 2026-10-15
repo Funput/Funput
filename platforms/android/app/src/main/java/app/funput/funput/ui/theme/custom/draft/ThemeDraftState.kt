@@ -1,12 +1,10 @@
 package app.funput.funput.ui.theme.custom.draft
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.listSaver
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.KeyboardThemeBackgroundImage
@@ -132,15 +130,4 @@ internal class ThemeDraftState(
             },
         )
     }
-}
-
-@Composable
-internal fun rememberThemeDraftState(
-    baseThemes: List<KeyboardThemeDescriptor>,
-    editingTheme: KeyboardThemeDescriptor?,
-): ThemeDraftState = rememberSaveable(
-    editingTheme?.id?.value,
-    saver = ThemeDraftState.saver(baseThemes, editingTheme),
-) {
-    ThemeDraftState(baseThemes, editingTheme)
 }

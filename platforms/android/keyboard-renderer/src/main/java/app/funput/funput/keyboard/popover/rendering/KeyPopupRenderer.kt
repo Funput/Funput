@@ -3,10 +3,11 @@ package app.funput.funput.keyboard.popover.rendering
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
-import android.graphics.Typeface
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.rendering.KeyLabelTypography
 import app.funput.funput.keyboard.rendering.RenderMetrics
+import app.funput.funput.keyboard.rendering.labelSp
 import app.funput.funput.keyboard.rendering.liquid.LiquidGlassKeyPainter
 import app.funput.funput.theme.KeyboardTheme
 
@@ -15,10 +16,7 @@ internal class KeyPopupRenderer(private val metrics: RenderMetrics) {
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
-    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textAlign = Paint.Align.CENTER
-        typeface = Typeface.create("sans-serif", Typeface.NORMAL)
-    }
+    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
     private val drawingRect = RectF()
     private val fontMetrics = Paint.FontMetrics()
     private val liquidPainter = LiquidGlassKeyPainter(metrics)
@@ -71,7 +69,8 @@ internal class KeyPopupRenderer(private val metrics: RenderMetrics) {
         shiftState: ShiftState,
     ) {
         labelPaint.color = theme.labelColor
-        labelPaint.textSize = metrics.sp(LabelSizeSp)
+        labelPaint.textSize = metrics.labelSp(LabelSizeSp, theme)
+        labelPaint.typeface = KeyLabelTypography.characterTypeface(theme)
         labelPaint.getFontMetrics(fontMetrics)
         val baseline = centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
         canvas.drawText(KeyPopupLayout.label(key, shiftState), centerX, baseline, labelPaint)

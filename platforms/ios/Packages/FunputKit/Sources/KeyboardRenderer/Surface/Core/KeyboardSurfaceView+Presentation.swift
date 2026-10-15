@@ -27,7 +27,7 @@ extension KeyboardSurfaceView {
             if edgeBlendChanged || backgroundChanged { applyBackdropPresentation() }
             var roles = Set<KeyRole>()
             if oldValue.shiftState != presentation.shiftState {
-                roles.formUnion([.character, .shift, .vniModifier])
+                roles.formUnion([.character, .shift, .capsLock, .vniModifier])
             }
             if oldValue.language != presentation.language { roles.insert(.space) }
             if oldValue.enterAction != presentation.enterAction { roles.insert(.enter) }

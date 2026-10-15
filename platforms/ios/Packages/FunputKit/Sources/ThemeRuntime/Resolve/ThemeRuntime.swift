@@ -41,7 +41,8 @@ public enum ThemeRuntime {
             colorEffects: theme.colorEffects,
             surfaceEffects: theme.surfaceEffects,
             gradientDirection: theme.gradientDirection,
-            backgroundEffects: resolvedBackground(theme.backgroundEffects)
+            backgroundEffects: resolvedBackground(theme.backgroundEffects),
+            labelWeight: theme.labelWeight
         )
     }
 

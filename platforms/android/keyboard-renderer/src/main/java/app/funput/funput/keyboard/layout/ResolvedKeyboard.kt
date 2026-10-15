@@ -51,10 +51,11 @@ data class ResolvedKeyboard(
     val rows: List<List<ResolvedKey>>,
 ) {
     val keys: List<ResolvedKey> = buildList {
+        // Left to right, matching the toolbar and the accessibility traversal order.
+        suggestionBar?.microphoneKey?.let(::add)
+        suggestionBar?.placementKey?.let(::add)
         suggestionBar?.systemInputMethodKey?.let(::add)
         suggestionBar?.clipboardKey?.let(::add)
-        suggestionBar?.placementKey?.let(::add)
-        suggestionBar?.microphoneKey?.let(::add)
         suggestionBar?.emojiKey?.let(::add)
         rows.forEach(::addAll)
     }

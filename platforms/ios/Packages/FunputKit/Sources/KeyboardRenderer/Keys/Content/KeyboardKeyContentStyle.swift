@@ -1,5 +1,6 @@
 #if canImport(UIKit)
 import KeyboardLayout
+import ThemeSchema
 import UIKit
 
 enum KeyboardKeyContentStyle {
@@ -23,13 +24,55 @@ enum KeyboardKeyContentStyle {
             name = "return"
         case .emoji:
             name = "face.smiling"
+        case .capsLock:
+            name = shiftState == .capsLocked ? "capslock.fill" : "capslock"
+        case .globe:
+            name = "globe"
+        case .dismissKeyboard:
+            name = "keyboard.chevron.compact.down"
         default:
             name = nil
         }
         return name.flatMap { UIImage(systemName: $0) }
     }
 
-    static func font(for role: KeyRole, scale: Double) -> UIFont {
+    /// The word a corner-labelled key shows; return names what it does, as the stock key does.
+    static func cornerLabel(for spec: KeySpec, enterAction: KeyboardEnterAction) -> String {
+        guard spec.role == .enter else { return spec.label }
+        return switch enterAction {
+        case .newLine: "return"
+        case .go: "go"
+        case .search: "search"
+        case .send: "send"
+        case .next: "next"
+        case .done: "done"
+        case .previous: "previous"
+        case let .custom(label): label
+        }
+    }
+
+    /// Shift and caps lock light up while they are on, since a word cannot fill in like an icon.
+    static func isLit(_ role: KeyRole, shiftState: ShiftState) -> Bool {
+        switch role {
+        case .shift: shiftState.isUppercase
+        case .capsLock: shiftState == .capsLocked
+        default: false
+        }
+    }
+
+    static func cornerFont(theme: ResolvedTheme) -> UIFont {
+        KeyLabelTypography.font(size: 17, base: .regular, theme: theme)
+    }
+
+    /// The stock iPad keyboard prints the digit or symbol above a letter larger and lighter
+    /// than the phone's small hint.
+    static func hintFont(theme: ResolvedTheme, placement: KeyLabelPlacement = .center) -> UIFont {
+        placement == .bottomCenter
+            ? KeyLabelTypography.font(size: 12, base: .regular, theme: theme)
+            : KeyLabelTypography.font(size: 9, base: .medium, theme: theme)
+    }
+
+    static func font(for role: KeyRole, theme: ResolvedTheme) -> UIFont {
         let metrics: (size: CGFloat, weight: UIFont.Weight)
         switch role {
         case .character, .vniModifier, .punctuation:
@@ -39,7 +82,7 @@ enum KeyboardKeyContentStyle {
         default:
             metrics = (14, .semibold)
         }
-        return .systemFont(ofSize: metrics.size * scale, weight: metrics.weight)
+        return KeyLabelTypography.font(size: metrics.size, base: metrics.weight, theme: theme)
     }
 }
 #endif

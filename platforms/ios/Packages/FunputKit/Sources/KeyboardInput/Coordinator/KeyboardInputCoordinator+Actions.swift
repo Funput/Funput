@@ -32,6 +32,7 @@ extension KeyboardInputCoordinator {
         let previous = state
         switch key.role {
         case .shift: toggleShift()
+        case .capsLock: toggleCapsLock()
         case .inputMethod: toggleInputMethod()
         case .symbols: updateLayoutMode(.symbolsPrimary)
         case .moreSymbols: updateLayoutMode(.symbolsSecondary)
@@ -39,7 +40,7 @@ extension KeyboardInputCoordinator {
         default: break
         }
         let changed = state != previous
-        let changesSuggestions = changed && key.role != .shift
+        let changesSuggestions = changed && key.role != .shift && key.role != .capsLock
         return .init(
             presentationChanged: changed,
             suggestionsChanged: changesSuggestions
@@ -61,6 +62,7 @@ extension KeyboardInputCoordinator {
             returnToLettersAfterPunctuationIfNeeded()
             if !applySmartSpace(builder: &builder) { input(" ", builder: &builder) }
         case .enter: input("\n", builder: &builder)
+        case .tab: input("\t", builder: &builder)
         // Re-opening the previous word is deferred to `commit`, which runs it once the
         // shadow reflects this deletion.
         case .backspace: performDeleteBackward(builder: &builder)
@@ -77,7 +79,7 @@ extension KeyboardInputCoordinator {
             return false
         }
         return switch role {
-        case .space, .punctuation, .enter: true
+        case .space, .punctuation, .enter, .tab: true
         default: false
         }
     }
@@ -86,7 +88,7 @@ extension KeyboardInputCoordinator {
 private extension KeyRole {
     var mutatesDocument: Bool {
         switch self {
-        case .character, .vniModifier, .punctuation, .space, .enter, .backspace:
+        case .character, .vniModifier, .punctuation, .space, .enter, .tab, .backspace:
             true
         default:
             false

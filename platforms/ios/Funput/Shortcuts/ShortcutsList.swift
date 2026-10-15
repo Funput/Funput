@@ -76,8 +76,8 @@ struct ShortcutsList: View {
                 }
             } header: {
                 if model.hasLoaded, model.loadError == nil, !model.entries.isEmpty {
-                    Text(model.query.isEmpty ? "Danh sách · \(model.entries.count) mục"
-                         : "Kết quả · \(model.filteredEntries.count)/\(model.entries.count) mục")
+                    Text(model.query.isEmpty ? "\(model.entries.count) gõ tắt"
+                         : "Tìm thấy \(model.filteredEntries.count) trên \(model.entries.count) gõ tắt")
                         .textCase(nil)
                 }
             }

@@ -22,6 +22,10 @@ extension KeyboardViewController {
             surface.onKeyEvent = { [weak self] event in
                 self?.handleKeyEvent(event)
             }
+            surface.setInputModeSwitch(
+                target: self,
+                action: #selector(handleInputModeList(from:with:))
+            )
             installClipboard(on: surface)
             installPersonalSuggestions(on: surface)
             view.addSubview(surface)

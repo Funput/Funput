@@ -31,12 +31,19 @@ public struct KeyboardLayout: Hashable, Sendable {
     public let inputMethod: KeyboardInputMethod
     public let toolbar: KeyboardToolbarSpec?
     public let rows: [KeyboardRow]
+    /// The row count the keyboard's height is budgeted for, when it is not `rows.count`.
+    ///
+    /// The iPad symbol pages have four rows whatever the letters page has; budgeting them
+    /// for the letters page's rows keeps the keyboard the same height when switching pages,
+    /// and the four rows grow to fill it.
+    public let heightRowCount: Int?
 
     public init(
         id: String,
         inputMethod: KeyboardInputMethod = .telex,
         toolbar: KeyboardToolbarSpec?,
-        rows: [KeyboardRow]
+        rows: [KeyboardRow],
+        heightRowCount: Int? = nil
     ) {
         precondition(!id.isEmpty, "Keyboard layout id must not be empty")
         precondition(!rows.isEmpty, "Keyboard layout must contain at least one row")
@@ -48,6 +55,7 @@ public struct KeyboardLayout: Hashable, Sendable {
         self.inputMethod = inputMethod
         self.toolbar = toolbar
         self.rows = rows
+        self.heightRowCount = heightRowCount
     }
 
     /// Whether this layout gives the user an explicit route into Funput's emoji panels.

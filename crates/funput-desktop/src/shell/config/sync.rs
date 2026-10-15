@@ -22,10 +22,15 @@ impl ShellState {
     /// actually changed, so the caller can skip refreshing its UI.
     pub fn reload_settings(&mut self) -> bool {
         // A VI/EN flip made in one of those windows arrives as a plain settings
-        // field, and `adopt` pushes it to the engine. Nothing else is owed: it was a
-        // global choice, so it needs no app to land on.
+        // field, and `adopt` pushes it to the engine. It is a global choice, but it
+        // also moves the pin of the app the user left to make it, if it has one.
         let loaded = self.read_settings();
-        self.adopt(loaded)
+        let flipped = loaded.enabled != self.settings.enabled;
+        let changed = self.adopt(loaded);
+        if flipped {
+            self.carry_flip_to_last_app();
+        }
+        changed
     }
 
     /// Write down what [`Self::toggle_enabled_hotkey`] changed. Split out because

@@ -10,13 +10,13 @@ public enum SystemKeyMetrics {
     public static let horizontalGap: CGFloat = 6
     public static let verticalGap: CGFloat = 11
 
-    /// Apple's prediction bar. The system preset reproduces the stock keyboard, so it
-    /// keeps this band even where Funput's own preset draws a shorter one.
-    public static let toolbarHeight: CGFloat = 36
-
-    /// Apple's keyboard answers a touch up to about 8pt above its top row before the
-    /// prediction bar takes it; the gap below Funput's toolbar is that slack.
-    public static let toolbarGap: CGFloat = 8
+    /// The toolbar band, kept equal to Funput's own (34pt band, 4pt gap).
+    ///
+    /// Apple's prediction bar is 36pt with an 8pt gap, but Funput's band often carries only
+    /// the clipboard key, so the stock size left a tall empty strip above the keys and made
+    /// the same toolbar look taller under system sizing than under Funput sizing.
+    public static let toolbarHeight: CGFloat = 34
+    public static let toolbarGap: CGFloat = 4
 
     /// VNI's digit row is drawn shorter than the letter rows beneath it: 35.7 over 42pt
     /// on wide phones, 34 over 40.3pt on narrow ones — the same proportion on both.

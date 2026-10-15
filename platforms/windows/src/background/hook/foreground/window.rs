@@ -25,37 +25,26 @@ pub(super) fn own_exe_id() -> &'static String {
     })
 }
 
-/// Window classes that belong to the Windows shell itself rather than to a program
-/// the user switched to.
-///
-/// **The taskbar is the one that matters**, and it is the reason this list exists:
-/// the tray icon lives on it, so every trip to Funput's own flyout goes through a
-/// foreground change to `Shell_TrayWnd` — and if per-app memory answers that, the
-/// user's choice is undone by the act of making it. The desktop is the same story
-/// on a quieter path, and Alt-Tab and Task View flash past between two real windows.
-///
-/// All of them are drawn by `explorer.exe`, which is why this is decided by class
-/// and not by program: a File Explorer window (`CabinetWClass`) is somewhere people
-/// really do type Vietnamese — renaming a file, filling the search box — and it
-/// keeps working like any other app.
-///
-/// A class missing from this list costs what the old behaviour cost, nothing worse,
-/// so add one when a surface turns up rather than guessing at them now.
-const SHELL_SURFACES: [&str; 6] = [
-    // The taskbar, and the same on a second monitor.
-    "Shell_TrayWnd",
-    "Shell_SecondaryTrayWnd",
-    // The desktop: the icon host, and the wallpaper window behind it.
-    "Progman",
-    "WorkerW",
-    // Alt-Tab, and Task View.
-    "ForegroundStaging",
-    "MultitaskingViewFrame",
-];
+/// The program that draws the Windows shell: the taskbar, the tray and its overflow
+/// popup, the desktop, Alt-Tab and Task View.
+const EXPLORER: &str = "explorer.exe";
 
-/// Whether this window is the shell rather than an app.
-pub(super) fn is_shell_surface(class: &str) -> bool {
-    SHELL_SURFACES.contains(&class)
+/// The only `explorer.exe` windows that are an app: File Explorer, where people
+/// really do type Vietnamese — renaming a file, filling the search box.
+///
+/// An allowlist, because the shell surfaces it draws are open-ended. The old list
+/// of shell classes was always one short: the tray's overflow popup was missing, so
+/// opening it replayed the pin File Explorer had been given and undid a choice just
+/// made in the Control Center (#549). Every surface the trip to the tray passes
+/// through must be invisible to per-app memory, or the act of making a choice there
+/// undoes it. An `explorer.exe` window not listed here costs nothing worse than
+/// following the global VI/EN state.
+const EXPLORER_APPS: [&str; 2] = ["CabinetWClass", "ExploreWClass"];
+
+/// Whether a window of program `exe` and class `class` is the shell rather than an
+/// app — decided by both, since the pin is keyed by program but explorer draws both.
+pub(super) fn is_shell_surface(exe: &str, class: &str) -> bool {
+    exe == EXPLORER && !EXPLORER_APPS.contains(&class)
 }
 
 /// A window's class name — what the toolkit that drew it calls itself, which is how
@@ -114,39 +103,59 @@ pub(super) fn exe_of_window(hwnd: HWND) -> Option<String> {
 mod tests {
     use super::*;
 
+    fn shell(class: &str) -> bool {
+        is_shell_surface(EXPLORER, class)
+    }
+
     /// Measured on Windows 11: clicking the tray icon puts `Shell_TrayWnd` in the
     /// foreground, which is the whole reason the guard exists.
     #[test]
     fn the_taskbar_is_the_shell() {
-        assert!(is_shell_surface("Shell_TrayWnd"));
-        assert!(is_shell_surface("Shell_SecondaryTrayWnd"));
+        assert!(shell("Shell_TrayWnd"));
+        assert!(shell("Shell_SecondaryTrayWnd"));
+    }
+
+    /// #549: the tray's ^ popup — Windows 11, then Windows 10 — replayed File
+    /// Explorer's pin right after a choice made in the Control Center.
+    #[test]
+    fn the_tray_overflow_is_the_shell() {
+        assert!(shell("TopLevelWindowForOverflowXamlIsland"));
+        assert!(shell("NotifyIconOverflowWindow"));
     }
 
     #[test]
     fn the_desktop_and_the_switchers_are_too() {
-        assert!(is_shell_surface("Progman"));
-        assert!(is_shell_surface("WorkerW"));
-        assert!(is_shell_surface("ForegroundStaging"));
-        assert!(is_shell_surface("MultitaskingViewFrame"));
+        assert!(shell("Progman"));
+        assert!(shell("WorkerW"));
+        assert!(shell("ForegroundStaging"));
+        assert!(shell("MultitaskingViewFrame"));
+        assert!(shell("XamlExplorerHostIslandWindow")); // Windows 11 Alt-Tab
     }
 
-    /// The point of deciding by class: explorer.exe also draws real windows, and
-    /// those are apps like any other.
+    /// explorer.exe also draws real windows, and those are apps like any other.
     #[test]
     fn a_file_explorer_window_is_an_app() {
-        assert!(!is_shell_surface("CabinetWClass"));
+        assert!(!shell("CabinetWClass"));
+        assert!(!shell("ExploreWClass"));
     }
 
     #[test]
     fn ordinary_windows_are_apps() {
-        assert!(!is_shell_surface("Chrome_WidgetWin_1"));
-        assert!(!is_shell_surface("Notepad"));
+        assert!(!is_shell_surface("chrome.exe", "Chrome_WidgetWin_1"));
+        assert!(!is_shell_surface("notepad.exe", "Notepad"));
     }
 
-    /// A window whose class could not be read must not be mistaken for the shell —
-    /// that would silently stop the per-app switch for a real app.
+    /// Only explorer draws the shell: a borrowed class name does not make another
+    /// program's window part of it.
     #[test]
-    fn an_unreadable_class_is_not_the_shell() {
-        assert!(!is_shell_surface(""));
+    fn another_program_with_a_shell_like_class_is_an_app() {
+        assert!(!is_shell_surface("notepad.exe", "WorkerW"));
+    }
+
+    /// A window whose program could not be read is turned away before this is
+    /// asked; one whose class could not be read is an app unless explorer drew it.
+    #[test]
+    fn an_unreadable_class_is_not_the_shell_elsewhere() {
+        assert!(!is_shell_surface("code.exe", ""));
     }
 }

@@ -18,10 +18,15 @@ struct SettingsSectionCard<Content: View>: View {
         self.content = content()
     }
 
+    @Environment(\.settingsPageTitle) private var pageTitle
+
     var body: some View {
         ContentCard {
-            Label(title, systemImage: systemImage)
-                .font(.headline)
+            // On a page of the same name the navigation bar already says it.
+            if title != pageTitle {
+                Label(title, systemImage: systemImage)
+                    .font(.headline)
+            }
             VStack(spacing: 0) {
                 content
             }
@@ -32,6 +37,19 @@ struct SettingsSectionCard<Content: View>: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+}
+
+/// A small caption above a group of cards or controls, read as a heading by VoiceOver.
+struct SettingsGroupHeader: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 4)
+            .accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -57,5 +75,17 @@ extension View {
         } else {
             buttonStyle(.bordered)
         }
+    }
+}
+
+private struct SettingsPageTitleKey: EnvironmentKey {
+    static let defaultValue: String? = nil
+}
+
+extension EnvironmentValues {
+    /// The title of the settings page a card sits on, set by ``SettingsPage``.
+    var settingsPageTitle: String? {
+        get { self[SettingsPageTitleKey.self] }
+        set { self[SettingsPageTitleKey.self] = newValue }
     }
 }

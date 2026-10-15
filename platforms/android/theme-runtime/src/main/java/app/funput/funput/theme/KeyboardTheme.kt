@@ -81,6 +81,13 @@ data class KeyboardTheme(
      * on top of that. None of them changes the authored colors or key geometry.
      */
     val keySurfaceStyle: KeyboardKeySurfaceStyle = KeyboardKeySurfaceStyle.Default,
+    /**
+     * Multiplies the size of every key label, on top of the scaling that follows the keyboard size.
+     * Only the text grows; keys and their touch targets stay where they are.
+     */
+    val labelScale: Float = 1f,
+    /** Weight of character labels; modifier labels are drawn one step heavier. */
+    val labelWeight: KeyboardLabelWeight = KeyboardLabelWeight.Default,
 ) {
     init {
         require(keyCornerRadiusDp >= 0f) { "Key corner radius must not be negative" }
@@ -93,6 +100,9 @@ data class KeyboardTheme(
         require(keyOpacity in MetricClamp.Opacity) { "Key opacity must be within 0..1" }
         require(specialKeyOpacity in MetricClamp.Opacity) { "Special key opacity must be within 0..1" }
         require(keycapInsetDp >= 0f) { "Keycap inset must not be negative" }
+        require(labelScale in MetricClamp.LabelScale) {
+            "Label scale must be within ${MetricClamp.LabelScale}"
+        }
     }
 
     private companion object {

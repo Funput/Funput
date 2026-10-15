@@ -52,3 +52,16 @@ internal enum class KeyReliefPreset(
         }
     }
 }
+
+/**
+ * Whether the shape holds a value only the fine-tuning sliders could have set: neither one of the
+ * presets nor what the base theme ships with. The editor opens those sliders for such a theme, so
+ * reopening it shows the numbers that were chosen rather than the preset they were snapped near.
+ */
+internal fun KeyboardTheme.hasHandTunedShape(base: KeyboardTheme): Boolean {
+    val radiusTuned = keyCornerRadiusDp != base.keyCornerRadiusDp &&
+        KeyShapePreset.entries.none { preset -> preset.cornerRadiusDp == keyCornerRadiusDp }
+    val insetTuned = keycapInsetDp != base.keycapInsetDp &&
+        KeyReliefPreset.entries.none { preset -> preset.keycapInsetDp == keycapInsetDp }
+    return radiusTuned || insetTuned
+}

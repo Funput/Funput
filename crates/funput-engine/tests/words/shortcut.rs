@@ -1,11 +1,11 @@
 //! Text-expansion (gõ tắt) integration tests at the [`Engine`] level.
 //!
-//! A trigger matches the raw keystrokes since the last word boundary and expands at
-//! the boundary — taking priority over English restore. Matching is smart-case: a
+//! A trigger matches the raw keystrokes since the last word boundary (or, failing
+//! that, the composed word — see `shortcut_composed.rs`) and expands at the boundary — taking priority over English restore. Matching is smart-case: a
 //! trigger typed as lowercase, Title Case, or UPPERCASE all resolve to the same
 //! entry, and the expansion is re-cased to match. Keystrokes with a mixed case that
 //! doesn't fit one of those three patterns fall back to an exact match only. See
-//! `src/compose/boundary/mod.rs` for the matching logic.
+//! `src/compose/boundary/shortcut.rs` for the matching logic.
 
 use funput_core::InputMethod;
 use funput_engine::{Action, Engine, ImeResult, KeySource};

@@ -59,7 +59,7 @@ struct ThemeRuntimeResolveTests {
         #expect(resolved.shadowRadius == 24)
         #expect(resolved.pressedScale == 0.8)
         #expect(resolved.pressedOpacityMultiplier == 1.5)
-        #expect(resolved.fontScale == 1.4)
+        #expect(resolved.fontScale == 1.3)
     }
 
     @Test("Geometry is clamped to MVP safe ranges")

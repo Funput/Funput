@@ -34,25 +34,34 @@ struct KeypadLayoutParityTests {
         assertUnitWeights(layout)
     }
 
-    @Test("Numeric pages match Android labels, roles, and weights")
-    func numericVariants() {
-        let expected: [KeyboardEditorMode: [[String]]] = [
-            .number: numberRows(period: "", sign: "", comma: ""),
-            .numberDecimal: numberRows(period: ".", sign: "", comma: ","),
-            .numberSigned: numberRows(period: "", sign: "-", comma: ""),
-            .numberSignedDecimal: numberRows(period: ".", sign: "-", comma: ","),
+    @Test("Number pads follow the system three-column layout")
+    func systemStyleNumberPads() {
+        let digits = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"]]
+        let expected: [(KeyboardEditorMode, String)] = [
+            (.number, ""),
+            (.numberDecimal, ","),
+            (.numberSigned, "-"),
         ]
-        for (mode, expectedRows) in expected {
-            let layout = resolve(mode)
-            #expect(rows(layout) == expectedRows)
-            #expect(layout.rows[0].keys[3].role == .backspace)
-            #expect(layout.rows[1].keys[3].role == .enter)
-            #expect(layout.rows[2].keys[3].role == (mode.allowsDecimal ? .punctuation : .placeholder))
-            #expect(layout.rows[3].keys[0].role == (mode.allowsSigned ? .punctuation : .placeholder))
-            #expect(layout.rows[3].keys[2].role == .placeholder)
-            #expect(layout.rows[3].keys[3].role == (mode.allowsDecimal ? .punctuation : .placeholder))
+        for (mode, bottomLeft) in expected {
+            let layout = NumberKeyboardLayouts.resolve(.vni, mode: mode, decimalSeparator: ",")
+            #expect(rows(layout) == digits + [[bottomLeft, "0", ""]])
+            #expect(layout.rows[3].keys[2].role == .backspace)
+            #expect(!layout.rows.flatMap(\.keys).contains { $0.role == .enter })
             assertUnitWeights(layout)
         }
+    }
+
+    @Test("Signed decimal keeps the four-column page so Delete stays reachable")
+    func signedDecimal() {
+        let layout = resolve(.numberSignedDecimal)
+        #expect(rows(layout) == [
+            ["1", "2", "3", ""],
+            ["4", "5", "6", ""],
+            ["7", "8", "9", "."],
+            ["-", "0", "", ","],
+        ])
+        #expect(layout.rows[0].keys[3].role == .backspace)
+        assertUnitWeights(layout)
     }
 
     @Test("Keypad editor modes disable Vietnamese composition")
@@ -69,15 +78,6 @@ struct KeypadLayoutParityTests {
 
     private func rows(_ layout: KeyboardLayout) -> [[String]] {
         layout.rows.map { $0.keys.map(\.label) }
-    }
-
-    private func numberRows(period: String, sign: String, comma: String) -> [[String]] {
-        [
-            ["1", "2", "3", ""],
-            ["4", "5", "6", ""],
-            ["7", "8", "9", period],
-            [sign, "0", "", comma],
-        ]
     }
 
     private func assertUnitWeights(_ layout: KeyboardLayout) {

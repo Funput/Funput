@@ -43,6 +43,7 @@ final class KeyboardAlternatePaletteView: UIView {
         for (index, alternate) in key.alternates.enumerated() {
             labels[index].text = alternate.text(for: presentation.shiftState)
             labels[index].textColor = theme.label.uiColor(for: traits)
+            labels[index].font = KeyLabelTypography.font(size: 22, base: .regular, theme: theme)
             labels[index].frame = layout.itemFrames[index]
         }
         self.selectedIndex = selectedIndex
@@ -60,7 +61,6 @@ final class KeyboardAlternatePaletteView: UIView {
         labels.forEach { $0.removeFromSuperview() }
         labels = (0..<count).map { _ in
             let label = UILabel()
-            label.font = .systemFont(ofSize: 22)
             label.textAlignment = .center
             // Cells narrow when the palette widens to fit above a top-row key.
             label.adjustsFontSizeToFitWidth = true

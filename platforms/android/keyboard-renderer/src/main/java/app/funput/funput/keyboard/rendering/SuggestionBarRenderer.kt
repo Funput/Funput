@@ -42,28 +42,30 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         val bounds = suggestionBar.suggestionsBounds
         val radius = metrics.dp(theme.keyCornerRadiusDp)
         drawPressedSegments(canvas, bounds, radius, suggestions.size, pressedTargets)
-        labelPaint.textSize = metrics.sp(SuggestionLabelSizeSp)
-        labelPaint.getFontMetrics(fontMetrics)
         val segmentWidth = bounds.width / suggestions.size
-        val baseline = bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
+        val labelWidth = segmentWidth - metrics.dp(LabelHorizontalInsetDp * 2f)
         suggestions.forEachIndexed { index, suggestion ->
             if (index > 0) drawDivider(canvas, bounds, bounds.left + segmentWidth * index)
             // The leading candidate is the highest ranked one, so the theme accents it.
             labelPaint.color =
                 if (index == 0) theme.suggestionHighlightColor else theme.labelColor
-            val label = TextUtils.ellipsize(
-                suggestion,
-                labelPaint,
-                segmentWidth - metrics.dp(LabelHorizontalInsetDp * 2f),
-                TextUtils.TruncateAt.END,
-            ).toString()
-            canvas.drawText(
-                label,
-                bounds.left + segmentWidth * (index + 0.5f),
-                baseline,
-                labelPaint,
-            )
+            val label = fitLabel(suggestion, labelWidth)
+            // Per label, since a fitted one is smaller and has to stay centred in the band.
+            labelPaint.getFontMetrics(fontMetrics)
+            val baseline = bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
+            canvas.drawText(label, bounds.left + segmentWidth * (index + 0.5f), baseline, labelPaint)
         }
+    }
+
+    /** Sizes [labelPaint] for [suggestion] and returns the text to draw; see [SuggestionLabelFit]. */
+    private fun fitLabel(suggestion: String, availableWidth: Float): String {
+        labelPaint.textSize = metrics.sp(SuggestionLabelSizeSp)
+        labelPaint.textScaleX = 1f
+        val fit = SuggestionLabelFit.fit(labelPaint.measureText(suggestion), availableWidth)
+        labelPaint.textSize *= fit.sizeFactor
+        labelPaint.textScaleX = fit.scaleX
+        if (!fit.ellipsize) return suggestion
+        return TextUtils.ellipsize(suggestion, labelPaint, availableWidth, TextUtils.TruncateAt.MIDDLE).toString()
     }
 
     private fun drawPressedSegments(

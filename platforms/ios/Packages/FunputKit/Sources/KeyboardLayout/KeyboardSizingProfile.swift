@@ -56,6 +56,18 @@ public struct KeyboardSizingProfile: Hashable, Sendable {
     /// sum and drift away from what the geometry actually lays out.
     public var toolbarChrome: CGFloat { toolbarHeight + toolbarGap }
 
+    /// Extra space above the first row when there is no toolbar band over it.
+    ///
+    /// The band doubles as breathing room under the keyboard's rounded top edge; keypads
+    /// and secure pages have none, so their first row would otherwise sit 6pt from the edge
+    /// and look about to spill out.
+    public static let toolbarlessTopInset: CGFloat = 4
+
+    /// The padding above the first row (or the toolbar) of `layout`, before height scaling.
+    public func topPadding(for layout: KeyboardLayout) -> CGFloat {
+        verticalPadding + (layout.toolbar == nil ? Self.toolbarlessTopInset : 0)
+    }
+
     /// The padding below the last row of a keyboard `width` points wide.
     ///
     /// None of its own: iOS keeps a globe and dictation bar below a custom keyboard, so

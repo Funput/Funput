@@ -97,7 +97,7 @@ extension SettingsPicker {
                 SettingsChoice(
                     id: value.rawValue, title: value.settingsTitle,
                     summary: value == .traditional
-                        ? "Dấu kiểu cũ — hòa, khỏe, thúy." : "Dấu kiểu mới — hoà, khoẻ, thuý.",
+                        ? "Dấu kiểu cũ, ví dụ hòa, khỏe, thúy." : "Dấu kiểu mới, ví dụ hoà, khoẻ, thuý.",
                     isSelected: model.configuration.toneStyle == value,
                     select: { model.update(\.toneStyle, to: value) }
                 )

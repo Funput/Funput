@@ -58,9 +58,9 @@ final class KeyboardBackdropView: UIView {
         self.blendsSystemEdge = blendsSystemEdge
         imageView.image = image
         let usesImage = theme.backgroundEffects.mode == .image && image != nil
-        let usesHostBackdrop = !usesImage && theme.material == .translucent
-            && theme.backgroundStart.uiColor(for: traits).cgColor.alpha == 0
-            && theme.backgroundEnd.uiColor(for: traits).cgColor.alpha == 0
+        let usesHostBackdrop = Self.borrowsHostBackdrop(
+            theme: theme, usesImage: usesImage, traits: traits, pinsAppearance: pinsAppearance
+        )
         themedView.isHidden = usesHostBackdrop
         imageView.isHidden = !usesImage
         overlayView.isHidden = !usesImage
@@ -80,26 +80,17 @@ final class KeyboardBackdropView: UIView {
         updateEdgeMask()
     }
 
-    /// Transparent translucent themes explicitly borrow the keyboard host. Other themes
-    /// borrow it only for unpinned Liquid Glass; pinned themes bring their own material.
     private func configureMaterial(
         theme: ResolvedTheme, usesImage: Bool,
         usesHostBackdrop: Bool, pinsAppearance: Bool
     ) {
-        if usesHostBackdrop {
-            usesHostMaterial = true
-            materialView.effect = nil
-            return
-        }
-        let reducesTransparency = UIAccessibility.isReduceTransparencyEnabled
-        if #available(iOS 26.0, *), theme.material == .glass, !reducesTransparency, !pinsAppearance {
-            usesHostMaterial = true
-            materialView.effect = nil
-        } else {
-            usesHostMaterial = false
-            let solid = theme.material == .solid || reducesTransparency || usesImage
-            materialView.effect = solid ? nil : UIBlurEffect(style: .systemChromeMaterial)
-        }
+        let source = Self.materialSource(
+            theme: theme, usesImage: usesImage,
+            usesHostBackdrop: usesHostBackdrop, pinsAppearance: pinsAppearance
+        )
+        usesHostMaterial = source == .host
+        materialView.effect = source == .blur ? UIBlurEffect(style: .systemChromeMaterial) : nil
+        if usesHostBackdrop { return }
         if !usesImage, theme.material == .glass {
             gradientView.isHidden = !theme.colorEffects.glassBackgroundTintEnabled
         }

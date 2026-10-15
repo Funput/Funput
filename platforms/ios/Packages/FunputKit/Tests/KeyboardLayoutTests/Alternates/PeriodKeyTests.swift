@@ -47,7 +47,16 @@ struct PeriodKeyTests {
 
     @Test("A decimal keypad separator has no palette", arguments: decimalEditors)
     func decimalKeypad(editor: KeyboardEditorMode) throws {
-        let separator = try #require(periods(.telex, .letters, editor, true, .funput).first)
+        // Found by id, not label: the separator follows the device's decimal locale.
+        let separator = try #require(
+            KeyboardLayoutResolver.resolve(
+                inputMethod: .telex,
+                mode: .letters,
+                editorMode: editor,
+                showsNumberRow: true,
+                preset: .funput
+            ).rows.flatMap(\.keys).first { $0.id == "decimal" || $0.id == "period" }
+        )
         #expect(separator.alternates.isEmpty)
         #expect(separator.alternateColumns == nil)
     }

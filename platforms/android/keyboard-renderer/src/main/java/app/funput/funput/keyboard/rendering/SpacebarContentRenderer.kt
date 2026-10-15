@@ -3,7 +3,6 @@ package app.funput.funput.keyboard.rendering
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.Typeface
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.theme.KeyboardTheme
@@ -11,10 +10,7 @@ import kotlin.math.min
 
 /** Draws the current language and bidirectional swipe affordances inside Spacebar. */
 internal class SpacebarContentRenderer(private val metrics: RenderMetrics) {
-    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textAlign = Paint.Align.CENTER
-        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-    }
+    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
     private val chevronPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
     }
@@ -29,7 +25,8 @@ internal class SpacebarContentRenderer(private val metrics: RenderMetrics) {
         customLabel: String? = null,
     ) {
         labelPaint.color = theme.secondaryLabelColor
-        labelPaint.textSize = metrics.sp(LabelSizeSp)
+        labelPaint.textSize = metrics.labelSp(LabelSizeSp, theme)
+        labelPaint.typeface = KeyLabelTypography.specialTypeface(theme)
         labelPaint.getFontMetrics(fontMetrics)
         val centerX = key.bounds.centerX
         val centerY = key.bounds.centerY

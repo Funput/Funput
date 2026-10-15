@@ -28,7 +28,7 @@ public enum ClipboardExpiry: String, CaseIterable, Codable, Hashable, Sendable {
 
     public var summary: String {
         switch self {
-        case .hour: "An toàn nhất — mật khẩu lỡ sao chép không nằm lại lâu."
+        case .hour: "An toàn nhất, mật khẩu lỡ sao chép không nằm lại lâu."
         case .day: "Giữ qua một ngày làm việc."
         case .week: "Giữ lâu nhất. Cân nhắc nếu bạn hay sao chép thông tin nhạy cảm."
         }
