@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The keyboard tab: setup status, then one link per settings page — or, while the user
-/// searches, the settings that match.
+/// The keyboard tab: setup status, the input method and quick switches, then one link per
+/// settings page — or, while the user searches, the settings that match.
 struct SettingsScreen: View {
     @Environment(\.openURL) private var openURL
     @ObservedObject var model: SettingsModel
@@ -13,7 +13,11 @@ struct SettingsScreen: View {
                 KeyboardSetupCard(hasFullAccess: model.hasFullAccess) {
                     openURL(.funputSystemSettings)
                 }
-                SettingsNavigationCard(destinations: SettingsDestination.hubRows, model: model)
+                QuickSettingsSection(model: model)
+                VStack(alignment: .leading, spacing: 10) {
+                    SettingsGroupHeader(title: "Tất cả cài đặt")
+                    SettingsNavigationCard(destinations: SettingsDestination.hubRows, model: model)
+                }
             } else {
                 SettingsSearchResults(query: query)
             }
