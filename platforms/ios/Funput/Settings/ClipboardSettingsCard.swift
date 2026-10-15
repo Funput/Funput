@@ -7,7 +7,7 @@ struct ClipboardSettingsCard: View {
     let openSettings: () -> Void
 
     var body: some View {
-        SettingsSectionCard(title: "Clipboard", systemImage: "clipboard") {
+        SettingsSectionCard(title: SettingsDestination.clipboard.title, systemImage: "clipboard") {
             SettingsToggleRow(
                 title: "Lưu lịch sử clipboard",
                 // The one place a user with existing entries will actually read this:

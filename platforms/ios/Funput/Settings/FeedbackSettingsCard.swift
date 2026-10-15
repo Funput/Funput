@@ -11,7 +11,7 @@ struct FeedbackSettingsCard: View {
 
     var body: some View {
         SettingsSectionCard(
-            title: "Phản hồi khi chạm",
+            title: SettingsDestination.feedback.title,
             systemImage: "hand.tap",
             footer: "Rung và âm thanh cần Cho phép truy cập đầy đủ."
         ) {

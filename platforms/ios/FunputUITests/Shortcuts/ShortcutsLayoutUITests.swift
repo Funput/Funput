@@ -29,13 +29,14 @@ final class ShortcutsLayoutUITests: XCTestCase {
         let search = app.textFields["shortcuts.search"]
         let cell = app.cells.containing(.textField, identifier: "shortcuts.search").firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 5))
-        XCTAssertGreaterThanOrEqual(cell.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(cell.frame.height.rounded(), 44)
         XCTAssertLessThanOrEqual(cell.frame.height, 48)
         search.tap()
         search.typeText("zzzz")
         XCTAssertTrue(app.staticTexts["Không tìm thấy gõ tắt"].waitForExistence(timeout: 3))
         let clear = app.buttons["shortcuts.search.clear"]
-        XCTAssertGreaterThanOrEqual(clear.frame.height, 44)
+        // Frames come back through a scale conversion: a 44pt target can read 43.99999….
+        XCTAssertGreaterThanOrEqual(clear.frame.height.rounded(), 44)
         XCTAssertLessThanOrEqual(cell.frame.height, 48)
         ShortcutsUITestSupport.capture(app, name: "Không có kết quả", test: self)
         clear.tap()

@@ -203,7 +203,11 @@ Tài liệu kiến trúc chi tiết: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.
 platforms/ios/
   Funput.xcodeproj
   Funput/                  Containing app (SwiftUI)
-    App/ Settings/ About/ Appearance/ Components/
+    App/Shell/               Tab bar: AppTab (Bàn phím · Gõ tắt · Giao diện · Tôi)
+    Settings/                Tab Bàn phím: Navigation/ (mục lục) · Pages/ (trang con)
+    Shortcuts/ Appearance/   Tab Gõ tắt, tab Giao diện
+    Me/ About/               Tab Tôi (dữ liệu, liên kết, giấy phép)
+    Components/
   Keyboard/                Tiện ích bàn phím (UIKit)
     Controller/              UIInputViewController + gestures, height, traits, input
     Document/ Suggestions/ Clipboard/ Presentation/ Diagnostics/

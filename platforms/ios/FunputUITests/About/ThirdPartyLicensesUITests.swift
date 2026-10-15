@@ -10,7 +10,7 @@ final class ThirdPartyLicensesUITests: XCTestCase {
     func testBundledNoticesAreReadableFromAbout() {
         let app = XCUIApplication()
         app.launch()
-        let about = app.tabBars.buttons["Giới thiệu"]
+        let about = app.tabBars.buttons["Tôi"]
         XCTAssertTrue(about.waitForExistence(timeout: 10))
         about.tap()
         let link = app.buttons["about.licenses"]

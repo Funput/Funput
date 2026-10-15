@@ -11,10 +11,9 @@ enum ShortcutsUITestSupport {
     }
 
     static func open(_ app: XCUIApplication) {
-        let entry = app.buttons["settings.shortcuts"]
-        XCTAssertTrue(entry.waitForExistence(timeout: 10))
-        for _ in 0..<12 where !entry.isHittable { app.swipeUp() }
-        entry.tap()
+        let tab = app.tabBars.buttons["Gõ tắt"]
+        XCTAssertTrue(tab.waitForExistence(timeout: 10))
+        tab.tap()
         XCTAssertTrue(app.buttons["shortcuts.add"].waitForExistence(timeout: 5))
     }
 
