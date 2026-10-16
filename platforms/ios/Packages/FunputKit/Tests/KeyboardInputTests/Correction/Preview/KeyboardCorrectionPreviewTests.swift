@@ -17,6 +17,18 @@ struct KeyboardCorrectionPreviewTests {
         #expect(fixture.previewer.rankedUses.last == [7], "the prior reaches the ranking")
     }
 
+    @Test("The real engine offers the same repair the boundary would apply")
+    func realEngine() {
+        let fixture = PreviewFixture()
+        fixture.coordinator.correctionPreviewer = fixture.coordinator.composer
+
+        fixture.type("dduwowfnh")
+
+        #expect(fixture.coordinator.correctionPreview == .offered(typed: "dduwowfnh", candidates: ["đường"]))
+        fixture.type(" ", slip: nil)
+        #expect(fixture.document.text == "đường ")
+    }
+
     @Test("A live word is left alone")
     func liveWord() {
         let fixture = PreviewFixture()

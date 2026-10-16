@@ -14,6 +14,8 @@ public struct FunputCorrectionCounts: Sendable, Equatable {
     public let keptAsTyped: Int
     public let offered: Int
     public let noCandidate: Int
+    /// Words left alone because the user undid or refused this spelling last time.
+    public let suppressed: Int
     public let validNearEdge: Int
 
     public init(
@@ -25,6 +27,7 @@ public struct FunputCorrectionCounts: Sendable, Equatable {
         keptAsTyped: Int = 0,
         offered: Int = 0,
         noCandidate: Int = 0,
+        suppressed: Int = 0,
         validNearEdge: Int = 0
     ) {
         self.applied = applied
@@ -35,6 +38,7 @@ public struct FunputCorrectionCounts: Sendable, Equatable {
         self.keptAsTyped = keptAsTyped
         self.offered = offered
         self.noCandidate = noCandidate
+        self.suppressed = suppressed
         self.validNearEdge = validNearEdge
     }
 }

@@ -14,13 +14,16 @@ public extension PersonalSuggestionEngine {
         }
     }
 
-    /// How common a syllable `word` is in the shipped Vietnamese list, as a weight
-    /// the engine's prior is written in; 0 for a word that is not in it.
-    ///
-    /// **Stub, replaced in a later change.** `funput_suggestion_syllable_weight` is
-    /// not in the shipped xcframework yet, so every syllable weighs the same and the
-    /// prior rests on the user's own frequencies alone, exactly as it did before.
-    static func syllableWeight(_ word: String) -> UInt32 { 0 }
+    /// How common a syllable `word` is on the shipped Vietnamese list, as the
+    /// pseudo-uses the engine's prior is written in; 0 for a word that is not on it.
+    /// Case and normalization do not matter. No handle, no allocation on the Rust
+    /// side — it is asked once per candidate on the keystroke path.
+    static func syllableWeight(_ word: String) -> UInt32 {
+        let scalars = word.unicodeScalars.map(\.value)
+        return scalars.withUnsafeBufferPointer {
+            funput_suggestion_syllable_weight($0.baseAddress, UInt($0.count))
+        }
+    }
 
     /// How many times the user has typed `word`; 0 for one the store has never seen.
     func frequency(of word: String) -> UInt32 {
