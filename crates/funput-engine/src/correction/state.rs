@@ -5,12 +5,14 @@
 //! (the platform answers it on the *next* call), the undo armed behind an applied
 //! correction, and the word a user has already refused.
 
-use crate::ImeResult;
-use crate::correction::score::CorrectionCandidate;
+mod apply;
 mod metrics;
 
 pub use metrics::CorrectionMetrics;
 
+pub(crate) use apply::{apply, take_undo};
+
+use crate::correction::score::CorrectionCandidate;
 use crate::correction::touch::{StoredTouch, TouchLog};
 use crate::model::Session;
 
@@ -28,7 +30,14 @@ pub(crate) struct CorrectionState {
     /// its string capacity is paid for once.
     pub(crate) scratch: Session,
     pub(crate) candidates: [CorrectionCandidate; MAX_CANDIDATES],
+    /// How many of `candidates` describe the word the search last looked at. Zero
+    /// again once the platform has answered, or the word has been left behind: a
+    /// ranking must never outlive the word it was made for.
     pub(crate) len: usize,
+    /// Touch score of that word exactly as typed, in milli-nats — what a candidate
+    /// has to beat. Lives beside `candidates` rather than in `Pending` because it is
+    /// set by the search and read by the ranking, neither of which needs a boundary.
+    pub(crate) typed_score: i32,
     pub(crate) pending: Option<Pending>,
     pub(crate) last: Option<Applied>,
     /// Raw keys of a word the user undid: not corrected again next time it is typed.
@@ -45,15 +54,13 @@ impl CorrectionState {
 /// A correction the word boundary parked, waiting for the platform's answer.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub(crate) struct Pending {
-    /// The word as the app is displaying it — what a correction has to delete.
+    /// The word as the app is displaying it once the boundary keystroke has been
+    /// handled — the raw keys when English restore ran, the composition otherwise.
+    /// It is what a correction has to delete.
     pub(crate) shown: String,
     pub(crate) shown_chars: usize,
     pub(crate) keys: String,
     pub(crate) boundary: char,
-    /// Whether the boundary would have English-restored this word.
-    pub(crate) restore: bool,
-    /// Touch score of the word exactly as typed, in milli-nats.
-    pub(crate) typed_score: i32,
 }
 
 /// A correction that landed, and can still be undone by one Backspace.
@@ -65,66 +72,20 @@ pub(crate) struct Applied {
     pub(crate) boundary: char,
 }
 
-/// Apply the candidate at `index`, or fall back to what the engine would have done.
-pub(crate) fn apply(session: &mut Session, index: Option<usize>) -> ImeResult {
-    let Some(state) = session.correction.as_mut() else {
-        return ImeResult::none();
-    };
-    let Some(pending) = state.pending.take() else {
-        return ImeResult::none();
-    };
-    let Some(candidate) = index.and_then(|i| state.candidates[..state.len].get(i)) else {
-        return fallback(&pending);
-    };
-    let corrected_chars = candidate.text().chars().count();
-    let mut output = String::with_capacity(candidate.text().len() + pending.boundary.len_utf8());
-    output.push_str(candidate.text());
-    output.push(pending.boundary);
-    state.metrics.applied += 1;
-    state.last = Some(Applied {
-        shown: pending.shown,
-        keys: pending.keys,
-        corrected_chars,
-        boundary: pending.boundary,
-    });
-    ImeResult::send(pending.shown_chars + 1, output)
-}
-
-/// What the word boundary would have returned had correction never looked at this
-/// word. Mirrors `boundary::english_restore_result` with one more backspace: that
-/// path swallows the boundary key, while this one runs after the platform echoed it.
-fn fallback(pending: &Pending) -> ImeResult {
-    if !pending.restore {
-        return ImeResult::none();
-    }
-    let mut output = String::with_capacity(pending.keys.len() + pending.boundary.len_utf8());
-    output.push_str(&pending.keys);
-    output.push(pending.boundary);
-    ImeResult::send(pending.shown_chars + 1, output)
-}
-
-/// Settle a correction the platform never answered, and disarm the one-tap undo.
+/// Let a correction the platform never answered lapse, and disarm the one-tap undo.
 /// Runs before every keystroke, so nothing correction parks can outlive one key.
-pub(crate) fn flush_pending(session: &mut Session) -> Option<ImeResult> {
-    let state = session.correction.as_mut()?;
+///
+/// Nothing is replayed. The boundary that parked the correction already did
+/// everything it would have done without the feature — English restore included —
+/// so an unanswered correction leaves the document exactly as it stands.
+pub(crate) fn flush_pending(session: &mut Session) {
+    let Some(state) = session.correction.as_mut() else {
+        return;
+    };
     state.last = None;
-    let deferred = fallback(&state.pending.take()?);
-    (deferred.action == crate::Action::Send).then_some(deferred)
-}
-
-/// Undo the correction applied on the previous keystroke, if Backspace is still the
-/// very next thing the user does.
-pub(crate) fn take_undo(session: &mut Session) -> Option<ImeResult> {
-    if !session.buffer.is_empty() {
-        return None;
+    if state.pending.take().is_some() {
+        state.len = 0;
     }
-    let state = session.correction.as_mut()?;
-    let applied = state.last.take()?;
-    state.metrics.reverted += 1;
-    state.suppressed = Some(applied.keys);
-    let mut output = applied.shown;
-    output.push(applied.boundary);
-    Some(ImeResult::send(applied.corrected_chars + 1, output))
 }
 
 /// Drop a parked correction and the undo behind it — the host is doing something
@@ -133,6 +94,7 @@ pub(crate) fn discard(session: &mut Session) {
     if let Some(state) = session.correction.as_mut() {
         state.pending = None;
         state.last = None;
+        state.len = 0;
     }
 }
 

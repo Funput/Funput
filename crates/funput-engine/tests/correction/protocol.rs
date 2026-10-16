@@ -29,10 +29,26 @@ fn applying_a_candidate_replaces_the_word_and_keeps_the_boundary() {
 }
 
 #[test]
-fn applying_a_candidate_over_a_composed_word_deletes_only_what_is_shown() {
-    // `quaa` is displayed as `quâ`, not as its four keystrokes: what has to be
-    // deleted is what the app shows, plus the space it has already echoed.
+fn applying_a_candidate_over_a_restored_word_deletes_the_keys_it_shows() {
+    // `quaa` composes to `quâ`, and the boundary restores it to its four keys in the
+    // same keystroke, correction or not. What has to be deleted is what the app shows
+    // once that keystroke is done — the keys — plus the space it has already echoed.
     let mut engine = correcting_engine(InputMethod::Telex);
+    let mut doc = Document::new();
+    type_touched(&mut engine, &mut doc, "quaa ", &[(3, 's')]);
+    assert_eq!(doc.text(), "quaa ");
+    assert_eq!(candidate_texts(&engine), ["quá"]);
+    assert_eq!(engine.pending_correction_backspace(), 5);
+    doc.edited(&engine.apply_correction(Some(0)));
+    assert_eq!(doc.text(), "quá ");
+}
+
+#[test]
+fn applying_a_candidate_over_a_composed_word_deletes_only_what_is_shown() {
+    // With English restore off the boundary leaves `quâ` on screen, so the same
+    // correction deletes three characters, not four.
+    let mut engine = correcting_engine(InputMethod::Telex);
+    engine.update_config(|config| config.smart_restore = false);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "quaa ", &[(3, 's')]);
     assert_eq!(doc.text(), "quâ ");
@@ -42,17 +58,18 @@ fn applying_a_candidate_over_a_composed_word_deletes_only_what_is_shown() {
 }
 
 #[test]
-fn declining_finishes_the_english_restore_the_boundary_deferred() {
-    // `quaa` composes to `quâ` and is restored to its keys at the boundary. With a
-    // correction parked, that restore waits for the platform's answer — and still
-    // happens, one character longer because the space is already in the document.
+fn declining_a_restored_word_changes_nothing_the_boundary_already_did() {
+    // The English restore ran at the boundary, as it would have without the feature;
+    // declining has nothing left to finish.
     let mut engine = correcting_engine(InputMethod::Telex);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "quaa ", &[(3, 's')]);
-    assert_eq!(doc.text(), "quâ ");
-    assert_eq!(candidate_texts(&engine), ["quá"]);
-    doc.edited(&engine.apply_correction(None));
     assert_eq!(doc.text(), "quaa ");
+    let declined = engine.apply_correction(None);
+    assert_eq!(declined.action, Action::None);
+    doc.edited(&declined);
+    assert_eq!(doc.text(), "quaa ");
+    assert!(!engine.has_pending_correction());
 }
 
 #[test]
@@ -68,23 +85,55 @@ fn declining_a_word_the_engine_would_have_left_alone_changes_nothing() {
 
 #[test]
 fn a_platform_that_never_answers_loses_nothing() {
-    // The next keystroke settles the parked correction, replaying the restore the
-    // boundary deferred — so a host that only implements step one still gets today's
-    // behaviour, one keystroke late.
+    // The boundary already restored the word, so a host that only implements step
+    // one gets today's behaviour in today's keystroke. The next key merely lets the
+    // parked correction lapse, candidates included.
     let mut engine = correcting_engine(InputMethod::Telex);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "quaa ", &[(3, 's')]);
+    assert_eq!(doc.text(), "quaa ");
     type_touched(&mut engine, &mut doc, "a", &[]);
     assert_eq!(doc.text(), "quaa a");
     assert!(!engine.has_pending_correction());
+    assert!(engine.correction_candidates().is_empty());
 }
 
 #[test]
 fn a_platform_that_never_answers_is_settled_by_the_next_boundary_too() {
+    // Two boundaries in a row: the second finds nothing to correct and nothing
+    // parked from the first survives it.
     let mut engine = correcting_engine(InputMethod::Telex);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "quaa  ", &[(3, 's')]);
     assert_eq!(doc.text(), "quaa  ");
+    assert!(!engine.has_pending_correction());
+}
+
+#[test]
+fn candidates_are_gone_once_the_correction_is_answered() {
+    // A ranking must never outlive the word it was made for: once answered, there
+    // is nothing to read back and nothing for `choose_correction` to rank.
+    for answer in [Some(0), None] {
+        let mut engine = correcting_engine(InputMethod::Telex);
+        let mut doc = Document::new();
+        type_touched(&mut engine, &mut doc, "dduwowfnh ", &[(8, 'g')]);
+        assert_eq!(candidate_texts(&engine), ["đường"]);
+        engine.apply_correction(answer);
+        assert!(engine.correction_candidates().is_empty());
+        assert_eq!(engine.choose_correction(&[], &[]), None);
+        let metrics = engine.correction_metrics();
+        assert_eq!(metrics.skipped_ambiguous + metrics.kept_as_typed, 0);
+    }
+}
+
+#[test]
+fn candidates_are_gone_once_the_host_clears_the_engine() {
+    let mut engine = correcting_engine(InputMethod::Telex);
+    let mut doc = Document::new();
+    type_touched(&mut engine, &mut doc, "dduwowfnh ", &[(8, 'g')]);
+    engine.clear();
+    assert!(engine.correction_candidates().is_empty());
+    assert_eq!(engine.choose_correction(&[], &[]), None);
 }
 
 #[test]

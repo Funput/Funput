@@ -113,15 +113,15 @@ fn boundary_result(session: &mut Session, boundary_key: char) -> ImeResult {
         return expansion;
     }
     let verdict = judge(session);
-    // Typo correction gets the word before English restore does, and is deliberately
-    // not hung off `restore`: the eager restore in `pipeline` has usually already
-    // rewritten the buffer to the raw keys by now, which is what makes `restore`
-    // false for precisely the mistyped words correction exists for. What it parks is
-    // answered by the platform on the next call; this keystroke behaves as it always
-    // has, so nothing here can change the text the app already shows.
-    if correction::offer(session, boundary_key, &verdict) {
-        return ImeResult::none();
-    }
+    // Typo correction looks at the word before English restore does, and is
+    // deliberately not hung off `restore`: the eager restore in `pipeline` has usually
+    // already rewritten the buffer to the raw keys by now, which is what makes
+    // `restore` false for precisely the mistyped words correction exists for. It only
+    // *parks* what it finds, for the platform to answer on a later call. This
+    // keystroke then does exactly what it did before the feature existed, restore
+    // included, so nothing here can change the text the app already shows — and the
+    // parked correction is told which text that is.
+    correction::offer(session, boundary_key, &verdict);
     if verdict.restore {
         english_restore_result(session, boundary_key)
     } else {
