@@ -467,9 +467,9 @@ mod faults {
                 tally.homophone
             ),
             // E2, with no store at all: the structural readings have nothing but
-            // touch to lose to, so a third of the old repairs are offered instead
+            // touch to lose to, so half of the old repairs are offered instead
             // (30 fixed, 13 ambiguous before). The store is what separates them.
-            (65, 20, 0, [12, 0, 24, 5, 0], 11)
+            (65, 15, 0, [12, 0, 29, 5, 0], 11)
         );
     }
 

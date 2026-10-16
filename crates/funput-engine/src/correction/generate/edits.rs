@@ -73,7 +73,8 @@ impl Edit for Delete {
 impl Edit for Transpose {
     fn each(&self, word: &Variant, _: &Evidence<'_>, each: &mut Each<'_>) -> Flow {
         for at in 0..word.len.saturating_sub(1) {
-            if word.keys[at] == word.keys[at + 1] {
+            // The same key twice, Shift or not, is a bounce — the dup edit's job.
+            if is_dup(word, at + 1) {
                 continue;
             }
             let scope = Scope {
@@ -160,5 +161,6 @@ mod tests {
             ["hcwoi", "cwhoi", "chowi", "chwio"]
         );
         assert_eq!(texts(&Transpose, "aab", InputMethod::Telex), ["aba"]);
+        assert_eq!(texts(&Transpose, "Aab", InputMethod::Telex), ["Aba"]);
     }
 }

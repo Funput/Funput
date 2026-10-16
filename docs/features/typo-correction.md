@@ -229,7 +229,7 @@ Sink::offer(keys, cost, edits)     // phát lại qua Session nháp → khác ch
 
 | Phép | Ví dụ | Chi phí (nat) | Ghi chú |
 |---|---|---|---|
-| `DupDelete` | `chowii` → `chơi` | 1,5 | xoá lần bấm thứ hai của phím lặp (không phân biệt hoa) |
+| `DupDelete` | `chowii` → `chơi` | 1,4 | xoá lần bấm thứ hai của phím lặp (không phân biệt hoa); dưới Δ một chút để đúp + Δ ≤ sàn bậc 3 |
 | `ModifierDelete` | `chsowi` → `chơi`, `cho7ii` → `chơi` | 3,0 | phím có `key_role ∈ {Tone, Shape, Stroke, Remove}` (C0) |
 | `Transpose` | `cohwi` → `chơi` | 3,0 | hai phím kề đổi chỗ; hoa/thường **ở lại vị trí** (`Nhad` → `Hnad`) |
 | `Substitute` | `dduwowfnh` → `đường` | `λ` 1,2 + điểm chạm, hoặc `SUBSTITUTE_STATIC` 1,2 | phím kề host báo, hoặc bố cục tĩnh |
@@ -240,11 +240,13 @@ Sink::offer(keys, cost, edits)     // phát lại qua Session nháp → khác ch
 - **Bậc chi phí và luật dừng** (`generate/tiers.rs`): generator xếp vào ba bậc theo chi phí thấp
   nhất có thể của nó, trong bậc thì rẻ-và-ít-phép trước. Sau mỗi bậc: **dừng khi
   `best_cost + Δ ≤ min_cost(bậc kế)`** — không ứng viên nào bậc sau còn lọt vào trong Δ của ứng
-  viên nhất để đổi verdict. Bậc: (1) thay phím, đúp, dư dấu, đảo — sàn 1,2; (2) cặp thay+thay,
-  đúp+thay — sàn 2,4; (3) thừa, thiếu, cặp dư dấu/đảo/thừa + thay — sàn 3,5. Ví dụ `chowii`:
-  bậc 1 ra `chơi` (1,5) → 3,0 > 2,4 → chạy bậc 2 → 3,0 ≤ 3,5 → dừng, không thử một phép chèn
-  nào; một phím trượt có điểm chạm (≈ 1–2 nat) cũng dừng sau bậc 2; từ không bậc nào cứu được
-  chạy tới trần.
+  viên nhất để đổi verdict. Sàn là **cận dưới thật**: `Sink::offer` kẹp cost ở 0 (điểm chạm
+  rất mạnh có thể đẩy một phép thay xuống dưới `λ`, và `touch_score = −cost` phải luôn âm), nên
+  bậc nào chứa một phép thay — đơn hay trong cặp — tính phép thay đó là 0. Bậc: (1) thay phím,
+  đúp, dư dấu, đảo — sàn 0; (2) cặp thay+thay, đúp+thay — sàn 0; (3) thừa, thiếu, cặp dư dấu/
+  đảo/thừa + thay — sàn 3,0. Hệ quả: bậc 1–2 luôn chạy, bậc 3 chỉ chạy khi ứng viên nhất tốn
+  hơn Δ = 1,5. Ví dụ `chowii`: `chơi` (1,4) → 2,9 ≤ 3,0 → dừng, không thử một phép chèn nào; cú
+  trượt có điểm chạm rõ (≤ 1,5) cũng dừng sau bậc 2; từ không bậc nào cứu được chạy tới trần.
 - **Trần:** từ dài 2–12 phím; `MAX_REPLAYS_PER_WORD = 450` lần phát lại cho mỗi từ (cùng bao thư
   với 435 của v2); chạm trần giữa bậc thì kết thúc với những gì có. `state.replays_last` ghi số
   thật cho test.
@@ -986,8 +988,9 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    điểm vá ở hàng trượt chạm, đổi lấy +3 điểm ở hàng dư dấu, vì cặp *bỏ dấu + thay phím* với tới
    bản không dấu của hầu hết từ có dấu); giá đúp gần như miễn phí (3,0 → 1,5 mất 1,4 điểm trượt
    chạm, được +20 điểm hàng đúp); phụ phí cho cặp hai phép (thử +1,0 / +1,5) chỉ giấu đối thủ đi
-   và nhân đôi sửa sai. Chốt: **đúp 1,5 · dư dấu 3,0 · đảo 3,0 · thay `λ` 1,2 (+ chạm) / tĩnh 1,2
-   · thừa 3,5 · thiếu 3,5**, ba bậc sàn 1,2 / 2,4 / 3,5 (§5.2). `INVALID_COST`, `Δ`, trọng số bậc
+   và nhân đôi sửa sai. Chốt: **đúp 1,4 · dư dấu 3,0 · đảo 3,0 · thay `λ` 1,2 (+ chạm) / tĩnh 1,2
+   · thừa 3,5 · thiếu 3,5**, ba bậc sàn 0 / 0 / 3,0 (§5.2; quét với đúp 1,5 và sàn 1,2 / 2,4 / 3,5,
+   chốt lại sau khi kẹp cost ở 0 — bảng dưới là số đo lại với bảng giá chốt). `INVALID_COST`, `Δ`, trọng số bậc
    không đổi.
 
    Đợt 3 (`--prior shipped --faults 0 --seeds 20`):

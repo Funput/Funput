@@ -9,10 +9,14 @@
 //! §12, Đợt 4): priced any lower, the structural readings — many of them real words
 //! a cheap edit from a slip — land inside the margin of the slip's own repair and
 //! turn it from "apply" into "ambiguous". Tiers in `generate` are built from these
-//! sums, so changing one means checking the tier minimums it feeds.
+//! sums, so changing one means checking the tier floors it feeds — and those floors
+//! count a substitution as free, since strong touch evidence can price one at zero
+//! (the sink clamps a cost there).
 
-/// A key pressed twice: `chowii` → `chơi`.
-pub(crate) const DUP_DELETE: f32 = 1.5;
+/// A key pressed twice: `chowii` → `chơi`. Just under the margin, so that a bounce
+/// plus `MARGIN` stays within the last tier's floor and the common bounce never pays
+/// for an insertion (see `generate::TIERS`).
+pub(crate) const DUP_DELETE: f32 = 1.4;
 /// A tone, shape or stroke key that landed where none belongs: `chsowi` → `chơi`.
 /// Priced like a transposition: paired with a substitution, dropping a tone key
 /// reaches the toneless twin of nearly every toned word, and that twin is a real

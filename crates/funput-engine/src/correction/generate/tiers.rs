@@ -20,21 +20,24 @@ pub(crate) struct Tier {
 }
 
 /// The edits the keystroke path searches, in three tiers by the least a variant of
-/// each can cost (the sums in `score::cost`; a pair is its first edit plus one
-/// substitution at `λ`), and within a tier the fewest replays first: the four single
-/// edits and the two cheap pairs come before the insertions, which try every letter.
+/// each can cost, and within a tier the fewest replays first: the four single edits
+/// and the two cheap pairs come before the insertions, which try every letter.
 ///
-/// What the floors buy: a bounce (1.5) or a slip with touch evidence (≈ 2) settles
-/// after the second tier — `1.5 + Δ ≤ 3.5` — so the common word never pays for an
-/// insertion; a dearer first reading runs on to the budget.
+/// The floors are true lower bounds given that the sink clamps a cost at zero: a
+/// substitution with strong touch evidence can be free, so a tier that holds one —
+/// alone or in a pair — floors at the other edit's price or at nothing. Under the
+/// stop rule that makes the first two tiers always run, and the third only when the
+/// best reading so far costs more than `MARGIN`: a bounce (`DUP_DELETE` 1.4) or a
+/// slip with touch evidence settles without a single insertion; a dearer first
+/// reading runs on to the budget.
 pub(crate) const TIERS: &[Tier] = &[
     Tier {
         generators: &[&Substitute, &DupDelete, &ModifierDelete, &Transpose],
-        min_cost: 1.2,
+        min_cost: 0.0,
     },
     Tier {
         generators: &[&Pair(Substitute), &Pair(DupDelete)],
-        min_cost: 2.4,
+        min_cost: 0.0,
     },
     Tier {
         generators: &[
@@ -44,7 +47,7 @@ pub(crate) const TIERS: &[Tier] = &[
             &Pair(Transpose),
             &Pair(Delete),
         ],
-        min_cost: 3.5,
+        min_cost: 3.0,
     },
 ];
 
@@ -63,7 +66,9 @@ pub(crate) fn find(
 ///
 /// After each tier the search asks whether the next one could still change the
 /// verdict: it cannot once the best cost so far plus the margin is no more than
-/// the cheapest thing that tier can produce, so the search stops there.
+/// the least that tier can produce, so the search stops there. (A later tier may
+/// still hold a candidate the host's prior lifts within the margin; the rule bounds
+/// cost, not score.)
 pub(crate) fn find_with(
     tiers: &[Tier],
     state: &mut CorrectionState,
