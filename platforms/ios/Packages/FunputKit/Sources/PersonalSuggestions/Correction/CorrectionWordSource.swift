@@ -5,12 +5,13 @@ import os
 
 /// The dictionary typo correction consults before it repairs a word.
 ///
-/// A second, **in-memory** store, separate from the one the keyboard learns into.
+/// A second, **read-only** store, separate from the one the keyboard learns into.
 /// That one lives on a serial queue off the main actor and is sometimes busy writing
 /// to disk, and the correction handshake cannot wait: the word boundary has deferred
 /// an edit and is holding it open. This one is built once, on a background queue,
-/// handed over, and from then on touched only from the main actor — the words the
-/// user finishes are counted into it there, and nothing is ever written to disk.
+/// handed over, and never written to again — so reading it from the main actor races
+/// with nothing. What the user types this session is counted beside it, on the main
+/// actor, in `personalCounts` — see `CorrectionWordSource+Counts.swift`.
 ///
 /// Until it is ready `recognizes` answers `true` for everything, which reads oddly
 /// and is deliberate: an unknown answer has to mean "do not correct", and the
@@ -24,6 +25,9 @@ public final class CorrectionWordSource: CorrectionDictionary {
     /// oldest. Lowercased: `Ko` at the start of a sentence is the same word.
     private var kept: [String] = []
     private var keptSet: Set<String> = []
+    /// How often each word was finished this session, lowercased. Never written to
+    /// disk, and never into the engine: a word seen once is still a possible typo.
+    var personalCounts: [String: UInt32] = [:]
     /// Called with the whole kept list whenever it grows, so the host can store it.
     /// Nil when there is nowhere to store it — without Full Access the list lasts as
     /// long as the keyboard does.
@@ -62,7 +66,7 @@ public final class CorrectionWordSource: CorrectionDictionary {
     }
 
     public func recognizes(_ word: String) -> Bool {
-        if isKept(word) { return true }
+        if isKept(word) || isFamiliar(word) { return true }
         guard let engine else { return true }
         return engine.recognizes(word)
     }
@@ -75,20 +79,6 @@ public final class CorrectionWordSource: CorrectionDictionary {
             keptSet.remove(kept.removeFirst())
         }
         onKeep?(kept)
-    }
-
-    /// Count a word the user finished typing, so it weighs more against a repair
-    /// next time. Lost when it arrives before the list is ready, which is fine: the
-    /// first few words of a session do not decide a prior.
-    public func learn(_ word: String) {
-        guard !word.isEmpty else { return }
-        engine?.learn(word)
-    }
-
-    /// How likely `word` is: how common a syllable it is in the shipped list, plus
-    /// how often this user has typed it.
-    public func weight(_ word: String) -> UInt32 {
-        PersonalSuggestionEngine.syllableWeight(word) &+ (engine?.frequency(of: word) ?? 0)
     }
 
     /// Whether the user took a correction of `word` back, in this session or one
