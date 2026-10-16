@@ -65,6 +65,18 @@ struct TypoCorrectionHarness {
         if space, let frame = frames[" "] { tap(x: frame.midX, y: frame.midY) }
     }
 
+    /// Tap every key dead centre, the slipped one included. With nothing leaning
+    /// towards `g`, the repair is one neighbour swap among others and the engine will
+    /// not pick it on its own: Space leaves the word and parks the repair on the bar.
+    func typeDeadCentre(space: Bool = true) {
+        let frames = FunputKeyboardDriver.resolveKeyFrames(app, for: Self.typed + " ")
+        for character in Self.typed {
+            guard let frame = frames[character] else { continue }
+            tap(x: frame.midX, y: frame.midY)
+        }
+        if space, let frame = frames[" "] { tap(x: frame.midX, y: frame.midY) }
+    }
+
     func key(labeled label: String, exact: Bool = true) throws -> XCUICoordinate {
         let frame = try XCTUnwrap(
             FunputKeyboardDriver.keyFrame(app, labeled: label, exact: exact),

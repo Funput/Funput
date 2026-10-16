@@ -78,6 +78,24 @@ final class TypoCorrectionBarUITests: XCTestCase {
     }
 
     @MainActor
+    func testAnUndecidedRepairStaysOnTheBarAfterSpace() throws {
+        let harness = try launch()
+        harness.typeDeadCentre()
+
+        // Space committed the word as typed, and the bar still offers the repair.
+        XCTAssertEqual(harness.committedText(), "\(typed) ")
+        let candidate = harness.barSlot("Sửa thành, \(repaired)")
+        XCTAssertTrue(candidate.waitForExistence(timeout: 5), "bar shows \(harness.barLabels())")
+        XCTAssertTrue(harness.barSlot("Giữ nguyên, \(typed)").exists)
+
+        candidate.tap()
+
+        // The repair takes the word's place, the space stays, and the undo chip follows.
+        XCTAssertEqual(harness.committedText(), "\(repaired) ")
+        XCTAssertTrue(harness.barSlot("Hoàn tác, \(typed)").waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     private func launch() throws -> TypoCorrectionHarness {
         let harness = try TypoCorrectionHarness(allowsAutocorrect: true)
         self.harness = harness

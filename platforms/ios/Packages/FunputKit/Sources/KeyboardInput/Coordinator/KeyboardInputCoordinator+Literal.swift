@@ -38,6 +38,7 @@ extension KeyboardInputCoordinator {
     func performDeleteBackward(builder: inout InputTransactionBuilder) {
         defer { refreshCorrectionPreview() }
         if undoCorrection(builder: &builder) { return }
+        dropParkedCorrection()
         if usesEngine, let last = composer.buffer().last {
             for _ in last.unicodeScalars { composer.backspace() }
             if composer.buffer().isEmpty { finishShortcutWord() }

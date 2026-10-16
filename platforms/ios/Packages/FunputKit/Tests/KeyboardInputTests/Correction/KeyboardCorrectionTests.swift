@@ -11,6 +11,9 @@ private final class TestDictionary: CorrectionDictionary {
     var words: Set<String> = []
     func recognizes(_ word: String) -> Bool { words.contains(word) }
     func keep(_ word: String) { words.insert(word) }
+    /// The shipped list's band for `đường`, so the repair clears the margin over the
+    /// cheaper readings the word-level search also reaches (`dường`).
+    func weight(_ word: String) -> UInt32 { word == "đường" ? 4 : 0 }
 }
 
 @MainActor

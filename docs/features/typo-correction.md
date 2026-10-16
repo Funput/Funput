@@ -116,6 +116,10 @@ Telex.
 - Giữ kiểu chữ theo từ gốc: `Nhad ` → `Nhà `, `NHAD ` không bị sửa (toàn hoa → bỏ qua).
   (Bản thiết kế viết `Nhsf `; chuỗi đó không có nguyên âm nên Telex không ra `Nhà`.)
 - Thanh gợi ý hiện chip hoàn tác `↩ dduwowfnh` cho tới khi người dùng gõ phím tiếp theo.
+- **Engine không tự chọn được** (hai ứng viên sát nhau, hoặc ngón đặt vuông phím): Space giữ
+  nguyên chữ đã gõ, nhưng thanh gợi ý **giữ** `[“chữ gốc”] [ứng viên 1] [ứng viên 2]` ngay
+  trên từ vừa commit cho tới phím kế tiếp. Bấm ứng viên thì thay từ đó và giữ dấu cách; bấm chữ
+  gốc thì giữ và nhớ mãi.
 
 ### 3.3. Hoàn tác
 
@@ -650,6 +654,22 @@ Host định tuyến ở `Keyboard/Correction/KeyboardViewController+CorrectionB
   đi cùng transaction với dấu cách — nên undo được arm và tracker học từ đã sửa y như Space.
 - **Hoàn tác** → `undoCorrectionFromBar(writer:)`: cùng `undoCorrection(builder:)` với phím Xoá.
 
+**Sau Space, khi engine không tự chọn.** Từ B3: `applyPendingCorrection` phân ba lối ra.
+`.apply(i)` và `.decline` (ô không cho autocorrect, không có kho từ, hoặc kho từ nhận ra chữ) như
+trước. `.park(candidates:)` là lối mới: `composer.chooseCorrection` trả `nil` (Ambiguous /
+AsTyped) thì **không** gọi `applyCorrection(nil)`, để `pending` sống trong engine tới phím kế
+(`flush_pending`) hay Xoá / clear (`discard`); phía Swift ghi `ParkedCorrection { shown,
+candidates }` với cùng `rankedTexts` mà preview dùng. `refreshCorrectionPreview` trả
+`.parked(typed:candidates:)` chừng nào `composer.hasPendingCorrection` còn đúng, và tự xoá khi
+engine đã buông. Thanh vẽ `.parked` y như `.offered`; bấm **Sửa thành** đi `replaceParkedWord`:
+đọc `pendingCorrectionBackspace` trước (câu trả lời tiêu nó), `applyCorrection(index)` trong một
+transaction `closesEpoch`, xoá `shown + dấu cách` theo `KeyboardReplacement.deletionCount(scalars:
+context:)` và chèn `text + dấu cách`, arm undo như Space; thiếu ngữ cảnh tài liệu thì
+`applyCorrection(nil)` và không đụng tài liệu. Bấm **Giữ nguyên** vẫn là `refuseCorrection`:
+engine `refuse_correction` lấy `pending.keys` làm từ bị chặn. Thanh công cụ ẩn (gợi ý cá nhân và
+clipboard cùng tắt) thì chip không có chỗ hiện, Space vẫn tự sửa khi đủ chắc; công tắc thanh công
+cụ không gắn với tự sửa lỗi vì tắt thanh không có nghĩa là tắt sửa lỗi.
+
 **Hai dạng của một từ.** Với eager restore bật (mặc định), từ chết đã hiện dạng phím thô ngay
 khi gõ nên chữ gốc trên thanh là `“dduwowfnh”`; tắt eager restore (harness UI test) thì là
 `“đườnh”` trong khi ranh giới có thể restore về phím thô. Vì thế `chooseCorrection` chặn khi kho
@@ -1122,7 +1142,8 @@ lời từ chối được tôn trọng, không phải từ không có ứng vi�
 | C0 ✅ | `funput_core::key_role`: vai trò phím theo kiểu gõ, không nhìn buffer, chỉ đọc (#583) | Test inline, API frozen giữ nguyên |
 | D1 ✅ | `funput dev typos --faults / --fault / --seeds`: tiêm lỗi gõ nhanh, bảng theo loại lỗi, số nền Đợt 4 | `--faults 0` tái lập seed cũ, mỗi loại lỗi đúng một phép, `--seeds` = tổng các seed |
 | E1 ✅ | Engine: tách `search.rs` thành generator / `Sink` / xếp hạng theo cost, `Variant.origin`, `find_with` (#585) | Không đổi hành vi: differential Viet74K, alloc budget, bench |
-| E2 | Engine: sửa theo từ — đúp, dư dấu, đảo, thiếu, thừa phím; bậc chi phí + luật dừng; bố cục tĩnh khi thiếu điểm chạm; chữ nguyên chỉ cạnh tranh khi đủ chạm | Bảng §12 Đợt 4 (sau), alloc budget 8 000, property test budget |
+| E2 ✅ | Engine: sửa theo từ — đúp, dư dấu, đảo, thiếu, thừa phím; bậc chi phí + luật dừng; bố cục tĩnh khi thiếu điểm chạm; chữ nguyên chỉ cạnh tranh khi đủ chạm (#591) | Bảng §12 Đợt 4 (sau), alloc budget 8 000, property test budget |
+| B3 ✅ | iOS: ứng viên ở lại thanh gợi ý sau Space khi engine không tự chọn, bấm để thay từ vừa commit, nối engine v3 | `KeyboardCorrectionParkedTests` + UI test `testAnUndecidedRepairStaysOnTheBarAfterSpace` |
 | 5 | Android: cùng lõi, batch edit | Instrumented test |
 | 6 | Chỉnh `σ`, `λ`, `Δ` theo kho lỗi và phản hồi TestFlight | Số liệu §13 |
 
