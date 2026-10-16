@@ -204,3 +204,67 @@ fn a_word_the_search_refuses_costs_no_more_than_typing_it() {
         "a word correction refuses must cost the same"
     );
 }
+
+/// Type the worst-case word without ending it.
+fn type_mistyped_keys(engine: &mut Engine) {
+    for key in "dduwowfnh".chars() {
+        engine.set_next_key_touch(
+            KeyTouch::new(key, 0.35)
+                .with_alternate('g', 0.15)
+                .with_alternate('o', 0.5)
+                .with_alternate('s', 0.6),
+        );
+        engine.process_char(key);
+    }
+}
+
+/// A preview runs the search so the boundary does not have to: the space after one
+/// costs what a boundary with nothing to search costs, plus the one syllable check
+/// that touch data makes the boundary pay for.
+#[test]
+fn the_boundary_after_a_preview_does_not_search_again() {
+    let mut plain = engine(true);
+    for key in "dduwowfnh".chars() {
+        plain.process_char(key);
+    }
+    let baseline = measure(|| {
+        std::hint::black_box(plain.process_char(' '));
+    });
+
+    let mut previewed = engine(true);
+    // One full round first, so the preview's and the parked correction's strings
+    // are not billed to the boundary being measured.
+    type_mistyped_keys(&mut previewed);
+    previewed.preview_correction();
+    previewed.process_char(' ');
+    previewed.clear();
+    type_mistyped_keys(&mut previewed);
+    assert!(previewed.preview_correction() > 0);
+    let boundary = measure(|| {
+        std::hint::black_box(previewed.process_char(' '));
+    });
+    println!("boundary: {baseline} allocs plain, {boundary} allocs after a preview");
+    assert!(
+        boundary <= baseline + 2,
+        "the boundary allocated {boundary} times after a preview against {baseline} \
+         without touches — it is running the search a second time"
+    );
+}
+
+/// A word that could still become a syllable is answered from what the session
+/// already knows: no replay, no syllable check, nothing built.
+#[test]
+fn previewing_a_word_that_is_still_alive_allocates_nothing() {
+    let mut engine = engine(true);
+    for (key, neighbour) in "chaof".chars().zip("xjsp;".chars()) {
+        engine.set_next_key_touch(KeyTouch::new(key, 0.35).with_alternate(neighbour, 0.15));
+        engine.process_char(key);
+    }
+    let allocations = measure(|| {
+        std::hint::black_box(engine.preview_correction());
+    });
+    assert_eq!(
+        allocations, 0,
+        "previewing a live word allocated {allocations} times"
+    );
+}

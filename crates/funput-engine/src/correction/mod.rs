@@ -22,24 +22,31 @@
 //! document already reads as it would have without the feature, and the next
 //! keystroke lets the parked state lapse.
 //!
+//! A host may also ask ahead of the boundary — [`preview`] runs the same search on
+//! the live word once it can no longer be a syllable, so the repair can be shown
+//! before the space, and the boundary then takes what the preview found.
+//!
 //! # Layout
 //!
 //! - `gate` — which finished words correction may look at.
+//! - `preview` — the same search, asked for early, and the refusal of its answer.
 //! - `touch` — the public [`KeyTouch`] a host reports, and the per-word log of them.
 //! - `search` — the bounded replay that turns touch data into candidate words.
 //! - `score` — [`CorrectionCandidate`] and the arithmetic that ranks them.
 //! - `state` — what is parked between the boundary and the platform's answer.
 
 mod gate;
+mod preview;
 pub(crate) mod score;
 mod search;
 pub(crate) mod state;
 mod touch;
 
-pub use score::CorrectionCandidate;
+pub use score::{CorrectionCandidate, CorrectionRanking, CorrectionVerdict};
 pub use state::CorrectionMetrics;
 pub use touch::{KeyTouch, MAX_ALTERNATES};
 
+pub(crate) use preview::{invalidate as drop_preview, preview, refuse};
 pub(crate) use state::{CorrectionState, apply, discard, flush_pending, sync, take_undo};
 pub(crate) use touch::{StoredTouch, invalidate, note_key, set_next, take_next, verify_alignment};
 
@@ -53,8 +60,9 @@ use crate::model::Session;
 /// leaves every existing boundary path untouched — which is also all a host sees
 /// until it turns the setting on.
 pub(crate) fn offer(session: &mut Session, boundary: char, verdict: &Verdict) {
-    if !gate::eligible(session, verdict) {
+    if !gate::eligible(session, verdict.complete) {
         gate::note_valid_near_edge(session, verdict);
+        preview::invalidate(session);
         return;
     }
     // Taken out and put back so the search can hold the scratch session mutably while
@@ -65,24 +73,30 @@ pub(crate) fn offer(session: &mut Session, boundary: char, verdict: &Verdict) {
     if undone_before(&mut state, &session.keys) {
         state.metrics.suppressed += 1;
     } else {
-        look(&mut state, session, boundary, verdict.restore);
+        // A preview of this very word already ran the search, and what it found still
+        // stands: the boundary does not pay for it twice.
+        if !preview::reusable(&state, &session.keys) {
+            searched(&mut state, session);
+        }
+        if state.len > 0 {
+            state.metrics.offered += 1;
+            state::park(&mut state, session, boundary, verdict.restore);
+        } else {
+            state.metrics.no_candidate += 1;
+        }
     }
+    state.preview = None;
     session.correction = Some(state);
 }
 
-/// Run the search for the word that just ended, and park whatever it finds.
-fn look(state: &mut CorrectionState, session: &Session, boundary: char, restore: bool) {
+/// Run the search for the live word, and record how it went.
+fn searched(state: &mut CorrectionState, session: &Session) -> usize {
     let started = std::time::Instant::now();
     let found = search::find(state, &session.config, &session.keys, &session.buffer);
     state
         .metrics
         .note_search(found, started.elapsed().as_micros());
-    if found > 0 {
-        state.metrics.offered += 1;
-        park(state, session, boundary, restore);
-    } else {
-        state.metrics.no_candidate += 1;
-    }
+    found
 }
 
 /// Whether correction could act on the word that just ended, and so whether the
@@ -106,26 +120,6 @@ fn undone_before(state: &mut CorrectionState, keys: &str) -> bool {
     }
     state.suppressed = None;
     true
-}
-
-/// Snapshot what the platform will need, before the boundary clears the session.
-///
-/// `shown` is the word as the app displays it *after* this keystroke: English restore
-/// runs in the same keystroke and puts the raw keys back on screen, so a correction
-/// that follows it has to delete those, not the composition they replaced.
-fn park(state: &mut CorrectionState, session: &Session, boundary: char, restore: bool) {
-    let shown = if restore {
-        &session.keys
-    } else {
-        &session.buffer
-    };
-    let pending = state.pending.get_or_insert_with(state::Pending::default);
-    pending.shown.clear();
-    pending.shown.push_str(shown);
-    pending.shown_chars = shown.chars().count();
-    pending.keys.clear();
-    pending.keys.push_str(&session.keys);
-    pending.boundary = boundary;
 }
 
 #[cfg(test)]

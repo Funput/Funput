@@ -79,6 +79,28 @@
 #define ONSET_Z 8
 
 /**
+ * `FunputCorrectionRanking.verdict`: the best candidate is clear enough to apply.
+ */
+#define CORRECTION_VERDICT_APPLY 0
+
+/**
+ * `FunputCorrectionRanking.verdict`: the two best are too close to call — show
+ * both, apply neither.
+ */
+#define CORRECTION_VERDICT_AMBIGUOUS 1
+
+/**
+ * `FunputCorrectionRanking.verdict`: no candidate beat the word as typed.
+ */
+#define CORRECTION_VERDICT_AS_TYPED 2
+
+/**
+ * `FunputCorrectionRanking.verdict`: nothing the host allowed was left to rank, or
+ * there was nothing to rank at all.
+ */
+#define CORRECTION_VERDICT_REFUSED 3
+
+/**
  * Neighbouring keys a host may offer per touch.
  *
  * Spelled out rather than aliased to `funput_engine::MAX_ALTERNATES`, because
@@ -275,6 +297,21 @@ typedef struct {
      */
     uint32_t alternate_count;
 } FunputKeyTouch;
+
+/**
+ * How the candidates rank once the host's prior is folded in.
+ *
+ * `best` and `second` index [`funput_engine_correction_candidates`]; `-1` means
+ * none. `second` is the other word to show when `verdict` is
+ * `CORRECTION_VERDICT_AMBIGUOUS`.
+ *
+ * [`funput_engine_correction_candidates`]: super::funput_engine_correction_candidates
+ */
+typedef struct {
+    int32_t best;
+    int32_t second;
+    uint32_t verdict;
+} FunputCorrectionRanking;
 
 /**
  * One word the touch evidence can still reach.
@@ -966,6 +1003,48 @@ FunputResult funput_engine_apply_correction(FunputEngine *engine, int32_t index)
  * `engine` must be a valid handle or null.
  */
 bool funput_engine_has_correction_undo(const FunputEngine *engine);
+
+/**
+ * Search the word being typed the way the boundary will, and return how many
+ * candidates it reaches — so the bar can show the repair before the space.
+ *
+ * 0 while the word could still become a syllable, for a word correction leaves
+ * alone, and for one the user already refused. Read the candidates with
+ * `funput_engine_correction_candidates` and rank them with
+ * [`funput_engine_rank_correction`]; they stand until the next letter key, and the
+ * boundary that follows reuses them rather than searching twice. An explicit call:
+ * `funput_process_key` never runs this search on its own.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+uintptr_t funput_engine_preview_correction(FunputEngine *engine);
+
+/**
+ * The user tapped the word exactly as they typed it: leave it, and do not offer
+ * this spelling again the next time it is typed. Drops any preview, parked
+ * correction and armed undo.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_engine_refuse_correction(FunputEngine *engine);
+
+/**
+ * Rank the candidates in hand — a preview's, or a parked correction's — with the
+ * host's prior folded in. `uses` and `allowed` read exactly as in
+ * `funput_engine_choose_correction`; unlike it, this counts nothing, so the bar may
+ * ask as often as it redraws.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `uses` must point to at least `len`
+ * readable `u32` values, or be null; `allowed` to at least `len` readable `bool`
+ * values, or be null.
+ */
+FunputCorrectionRanking funput_engine_rank_correction(const FunputEngine *engine,
+                                                      const uint32_t *uses,
+                                                      const bool *allowed,
+                                                      uintptr_t len);
 
 /**
  * Copy up to `cap` candidates into `out`, best touch score first, and return how

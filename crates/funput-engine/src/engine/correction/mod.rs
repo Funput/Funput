@@ -7,11 +7,15 @@
 //! A host that stops after the first step loses nothing — the document already reads
 //! as it would have, and the next keystroke lets the parked state lapse.
 //!
+//! A host that wants to show the repair before the word ends asks ahead with the
+//! calls in `preview`; the boundary then takes what the preview found.
+//!
 //! See `docs/features/typo-correction.md` and [`crate::correction`].
 
-use crate::correction::score::{self, Choice, INVALID_COST, from_milli};
+mod preview;
+
 use crate::correction::state::{CorrectionMetrics, CorrectionState};
-use crate::correction::{self, CorrectionCandidate, KeyTouch};
+use crate::correction::{self, CorrectionCandidate, CorrectionVerdict, KeyTouch};
 use crate::{Engine, ImeResult};
 
 impl Engine {
@@ -71,14 +75,16 @@ impl Engine {
     /// "Δ is too high" and "the word list is too small", and only this call knows.
     pub fn choose_correction(&mut self, uses: &[u32], allowed: &[bool]) -> Option<usize> {
         let state = self.session.correction.as_mut()?;
-        if state.len == 0 {
-            return None;
-        }
-        let as_typed = from_milli(state.typed_score) - INVALID_COST;
-        match score::choose(state.candidates(), uses, allowed, as_typed)? {
-            Choice::Apply(index) => return Some(index),
-            Choice::Ambiguous => state.metrics.skipped_ambiguous += 1,
-            Choice::AsTyped => state.metrics.kept_as_typed += 1,
+        // Only a parked correction is answered here — a preview is ranked through
+        // `rank_correction`, which counts nothing — so the counters describe what
+        // happened at word boundaries and nothing else.
+        state.pending.as_ref()?;
+        let ranking = preview::rank(state, uses, allowed);
+        match ranking.verdict {
+            CorrectionVerdict::Apply => return ranking.best,
+            CorrectionVerdict::Ambiguous => state.metrics.skipped_ambiguous += 1,
+            CorrectionVerdict::AsTyped => state.metrics.kept_as_typed += 1,
+            CorrectionVerdict::Refused => {}
         }
         None
     }

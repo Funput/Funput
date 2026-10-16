@@ -4,6 +4,8 @@ mod support;
 
 #[path = "correction/boundary.rs"]
 mod boundary;
+#[path = "correction/preview.rs"]
+mod preview;
 #[path = "correction/protocol.rs"]
 mod protocol;
 #[path = "correction/table.rs"]

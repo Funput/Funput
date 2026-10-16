@@ -3,7 +3,8 @@
 //! All of it hangs off `Session::correction`, which exists only while the setting is
 //! on. Three pieces outlive a word on purpose: the correction parked at a boundary
 //! (the platform answers it on the *next* call), the undo armed behind an applied
-//! correction, and the word a user has already refused.
+//! correction, and the word a user has already refused. A fourth — what a preview
+//! found — lives exactly as long as the word it looked at.
 
 mod apply;
 mod metrics;
@@ -38,6 +39,8 @@ pub(crate) struct CorrectionState {
     /// has to beat. Lives beside `candidates` rather than in `Pending` because it is
     /// set by the search and read by the ranking, neither of which needs a boundary.
     pub(crate) typed_score: i32,
+    /// The live word `candidates` describe, when a host asked ahead of the boundary.
+    pub(crate) preview: Option<Preview>,
     pub(crate) pending: Option<Pending>,
     pub(crate) last: Option<Applied>,
     /// Raw keys of a word the user undid: not corrected again next time it is typed.
@@ -49,6 +52,13 @@ impl CorrectionState {
     pub(crate) fn candidates(&self) -> &[CorrectionCandidate] {
         &self.candidates[..self.len]
     }
+}
+
+/// What a preview searched, kept until the next letter key so the boundary can take
+/// the candidates as they stand instead of searching the same word twice.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub(crate) struct Preview {
+    pub(crate) keys: String,
 }
 
 /// A correction the word boundary parked, waiting for the platform's answer.
@@ -72,6 +82,26 @@ pub(crate) struct Applied {
     pub(crate) boundary: char,
 }
 
+/// Snapshot what the platform will need, before the boundary clears the session.
+///
+/// `shown` is the word as the app displays it *after* this keystroke: English restore
+/// runs in the same keystroke and puts the raw keys back on screen, so a correction
+/// that follows it has to delete those, not the composition they replaced.
+pub(crate) fn park(state: &mut CorrectionState, session: &Session, boundary: char, restore: bool) {
+    let shown = if restore {
+        &session.keys
+    } else {
+        &session.buffer
+    };
+    let pending = state.pending.get_or_insert_with(Pending::default);
+    pending.shown.clear();
+    pending.shown.push_str(shown);
+    pending.shown_chars = shown.chars().count();
+    pending.keys.clear();
+    pending.keys.push_str(&session.keys);
+    pending.boundary = boundary;
+}
+
 /// Let a correction the platform never answered lapse, and disarm the one-tap undo.
 /// Runs before every keystroke, so nothing correction parks can outlive one key.
 ///
@@ -88,10 +118,12 @@ pub(crate) fn flush_pending(session: &mut Session) {
     }
 }
 
-/// Drop a parked correction and the undo behind it — the host is doing something
-/// other than typing the next key, and a stale edit would land in the wrong place.
+/// Drop a parked correction, the undo behind it and any preview — the host is doing
+/// something other than typing the next key, and a stale edit would land in the
+/// wrong place.
 pub(crate) fn discard(session: &mut Session) {
     if let Some(state) = session.correction.as_mut() {
+        state.preview = None;
         state.pending = None;
         state.last = None;
         state.len = 0;

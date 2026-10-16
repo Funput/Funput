@@ -2,6 +2,7 @@
 //! boundary key and answering.
 
 use super::FunputEngine;
+use super::preview::prior_slices;
 use super::types::{CORRECTION_CAP, FunputCorrectionCandidate, FunputCorrectionMetrics};
 use crate::abi;
 
@@ -86,16 +87,7 @@ pub unsafe extern "C" fn funput_engine_choose_correction(
         let Some(engine) = (unsafe { engine.as_mut() }) else {
             return NO_CHOICE;
         };
-        let uses = if uses.is_null() {
-            &[][..]
-        } else {
-            unsafe { std::slice::from_raw_parts(uses, len) }
-        };
-        let allowed = if allowed.is_null() {
-            &[][..]
-        } else {
-            unsafe { std::slice::from_raw_parts(allowed, len) }
-        };
+        let (uses, allowed) = unsafe { prior_slices(uses, allowed, len) };
         engine
             .inner
             .choose_correction(uses, allowed)

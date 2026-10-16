@@ -4,7 +4,9 @@
 //! each touch landed, types the key as usual, and then — only when
 //! `nativeHasPendingCorrection` says so — reads the candidates, weighs them against
 //! the personal store, and answers with `nativeApplyCorrection`. Not answering costs
-//! nothing: the next keystroke settles whatever the boundary deferred.
+//! nothing: the boundary already did what it always did, and the next keystroke lets
+//! the parked correction lapse. A bar that wants to show the repair before the space
+//! asks ahead with the calls in `preview`.
 //!
 //! An edit comes back as an `IntArray` of `[backspace, codepoint…]`, the shape
 //! `nativeStats` already uses for numbers, so one call carries both halves and there
@@ -15,10 +17,12 @@
 //!
 //! - this file — the calls that change engine state.
 //! - `query` — the read-only calls between the two steps.
+//! - `preview` — the calls a bar makes before the word ends.
 
 mod arrays;
 // Exports link by `#[unsafe(no_mangle)]` symbol name, so declaring the module is
 // all it takes for the JVM to find what is in it.
+mod preview;
 mod query;
 
 use funput_engine::{Action, ImeResult, KeyTouch};
@@ -75,9 +79,8 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
 /// Apply the candidate at `index`, or decline it with a negative index.
 ///
 /// Returns the edit to make: `[backspace, codepoint…]`, or an empty array when there
-/// is nothing to do. Declining is not always nothing — it is the word boundary
-/// finishing the job it deferred, which for a non-Vietnamese word is the English
-/// restore.
+/// is nothing to do. Declining is a no-op: the boundary keystroke already did
+/// everything it would have done without correction, English restore included.
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeApplyCorrection(
     mut env: EnvUnowned<'_>,

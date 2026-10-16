@@ -29,28 +29,51 @@ use super::{CorrectionCandidate, MARGIN, word_prior};
 /// keep list's job — `is_known_word` knows them by name, and a keyboard vetoes them.
 pub(crate) const INVALID_COST: f32 = 4.0;
 
-/// Why the ranking came out the way it did.
+/// Why a ranking came out the way it did.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Choice {
-    /// Apply the candidate at this index.
-    Apply(usize),
-    /// The two best candidates were too close to call.
+pub enum CorrectionVerdict {
+    /// The best candidate is clear enough to apply without asking.
+    Apply,
+    /// The two best were too close to call: show both, apply neither.
     Ambiguous,
     /// No candidate beat the word as typed by enough to overrule the finger.
     AsTyped,
+    /// Nothing the host allowed was left to rank — or there was nothing to rank.
+    Refused,
+}
+
+/// The candidates ranked with the platform's prior folded in.
+///
+/// Indices point into [`crate::Engine::correction_candidates`]. `best` is the top
+/// candidate the host allowed; `second` the best allowed one after it, which is the
+/// other word to show when the verdict is [`CorrectionVerdict::Ambiguous`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CorrectionRanking {
+    pub best: Option<usize>,
+    pub second: Option<usize>,
+    pub verdict: CorrectionVerdict,
+}
+
+impl CorrectionRanking {
+    /// Nothing to apply: no best, no second, verdict `Refused`.
+    pub const REFUSED: Self = Self {
+        best: None,
+        second: None,
+        verdict: CorrectionVerdict::Refused,
+    };
 }
 
 /// Rank `candidates` with the platform's `uses` and `allowed` (both parallel, both
 /// read as "0" and "permitted" past their ends) against the typed word's score.
-///
-/// `None` when every candidate was refused.
 pub(crate) fn choose(
     candidates: &[CorrectionCandidate],
     uses: &[u32],
     allowed: &[bool],
     as_typed: f32,
-) -> Option<Choice> {
+) -> CorrectionRanking {
     let mut best: Option<(usize, f32)> = None;
+    let mut second: Option<(usize, f32)> = None;
+    // The strongest rival of `best`, refused candidates included.
     let mut runner_up = f32::NEG_INFINITY;
     for (i, candidate) in candidates.iter().enumerate() {
         let score = candidate.touch_score() + word_prior(uses.get(i).copied().unwrap_or(0));
@@ -65,23 +88,35 @@ pub(crate) fn choose(
             continue;
         }
         match best {
-            Some((_, leader)) if leader >= score => runner_up = runner_up.max(score),
-            Some((_, leader)) => {
-                runner_up = runner_up.max(leader);
+            Some((_, leader)) if leader >= score => {
+                runner_up = runner_up.max(score);
+                if second.is_none_or(|(_, held)| held < score) {
+                    second = Some((i, score));
+                }
+            }
+            Some(leader) => {
+                runner_up = runner_up.max(leader.1);
+                second = Some(leader);
                 best = Some((i, score));
             }
             None => best = Some((i, score)),
         }
     }
-    let (index, top) = best?;
-    if top - runner_up.max(as_typed) >= MARGIN {
-        return Some(Choice::Apply(index));
-    }
-    Some(if as_typed >= runner_up {
-        Choice::AsTyped
+    let Some((index, top)) = best else {
+        return CorrectionRanking::REFUSED;
+    };
+    let verdict = if top - runner_up.max(as_typed) >= MARGIN {
+        CorrectionVerdict::Apply
+    } else if as_typed >= runner_up {
+        CorrectionVerdict::AsTyped
     } else {
-        Choice::Ambiguous
-    })
+        CorrectionVerdict::Ambiguous
+    };
+    CorrectionRanking {
+        best: Some(index),
+        second: second.map(|(i, _)| i),
+        verdict,
+    }
 }
 
 #[cfg(test)]
@@ -104,30 +139,62 @@ mod tests {
         candidates
     }
 
+    fn verdict(
+        candidates: &[CorrectionCandidate],
+        allowed: &[bool],
+        as_typed: f32,
+    ) -> CorrectionVerdict {
+        choose(candidates, &[], allowed, as_typed).verdict
+    }
+
     #[test]
     fn a_pair_inside_the_margin_is_ambiguous() {
         let candidates = ranked(&[-2.0, -2.5]);
-        assert_eq!(
-            choose(&candidates, &[], &[], f32::NEG_INFINITY),
-            Some(Choice::Ambiguous)
-        );
+        let ranking = choose(&candidates, &[], &[], f32::NEG_INFINITY);
+        assert_eq!(ranking.verdict, CorrectionVerdict::Ambiguous);
+        assert_eq!((ranking.best, ranking.second), (Some(0), Some(1)));
         let candidates = ranked(&[-2.0, -3.5]);
-        assert_eq!(
-            choose(&candidates, &[], &[], f32::NEG_INFINITY),
-            Some(Choice::Apply(0))
-        );
+        let ranking = choose(&candidates, &[], &[], f32::NEG_INFINITY);
+        assert_eq!(ranking.verdict, CorrectionVerdict::Apply);
+        assert_eq!((ranking.best, ranking.second), (Some(0), Some(1)));
     }
 
     #[test]
     fn a_lone_candidate_still_has_to_beat_the_word_as_typed() {
         let candidates = ranked(&[-3.0]);
-        assert_eq!(choose(&candidates, &[], &[], -2.0), Some(Choice::AsTyped));
-        assert_eq!(choose(&candidates, &[], &[], -5.0), Some(Choice::Apply(0)));
+        assert_eq!(verdict(&candidates, &[], -2.0), CorrectionVerdict::AsTyped);
+        assert_eq!(verdict(&candidates, &[], -5.0), CorrectionVerdict::Apply);
+        assert_eq!(choose(&candidates, &[], &[], -5.0).second, None);
     }
 
     #[test]
     fn nothing_to_choose_when_every_candidate_is_refused() {
         let candidates = ranked(&[-1.0]);
-        assert_eq!(choose(&candidates, &[], &[false], f32::NEG_INFINITY), None);
+        assert_eq!(
+            choose(&candidates, &[], &[false], f32::NEG_INFINITY),
+            CorrectionRanking::REFUSED
+        );
+        assert_eq!(
+            choose(&[], &[], &[], f32::NEG_INFINITY),
+            CorrectionRanking::REFUSED
+        );
+    }
+
+    #[test]
+    fn the_prior_can_reorder_what_the_touches_ranked() {
+        // Touch scores put 0 first; a word the user types all the time swaps them,
+        // and `second` follows the new order rather than the slot order.
+        let candidates = ranked(&[-2.0, -2.5, -6.0]);
+        let ranking = choose(&candidates, &[0, 40, 0], &[], f32::NEG_INFINITY);
+        assert_eq!((ranking.best, ranking.second), (Some(1), Some(0)));
+        assert_eq!(ranking.verdict, CorrectionVerdict::Apply);
+    }
+
+    #[test]
+    fn a_refused_candidate_never_becomes_second() {
+        let candidates = ranked(&[-2.0, -2.5, -2.6]);
+        let ranking = choose(&candidates, &[], &[true, false, true], f32::NEG_INFINITY);
+        assert_eq!((ranking.best, ranking.second), (Some(0), Some(2)));
+        assert_eq!(ranking.verdict, CorrectionVerdict::Ambiguous);
     }
 }

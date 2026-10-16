@@ -28,13 +28,15 @@ pub use config::{
     ONSET_Z, funput_configure, funput_set_enabled, funput_set_extra_onsets, funput_set_method,
 };
 pub use correction::{
-    CORRECTION_CAP, CORRECTION_CHARS_CAP, FunputCorrectionCandidate, FunputCorrectionMetrics,
-    FunputKeyTouch, TOUCH_ALTERNATE_CAP, funput_engine_apply_correction,
-    funput_engine_choose_correction, funput_engine_correction_candidates,
-    funput_engine_correction_metrics, funput_engine_correction_undo_text,
-    funput_engine_has_correction_undo, funput_engine_has_pending_correction,
-    funput_engine_pending_correction_backspace, funput_engine_set_next_key_touch,
-    funput_set_typo_correction,
+    CORRECTION_CAP, CORRECTION_CHARS_CAP, CORRECTION_VERDICT_AMBIGUOUS, CORRECTION_VERDICT_APPLY,
+    CORRECTION_VERDICT_AS_TYPED, CORRECTION_VERDICT_REFUSED, FunputCorrectionCandidate,
+    FunputCorrectionMetrics, FunputCorrectionRanking, FunputKeyTouch, TOUCH_ALTERNATE_CAP,
+    funput_engine_apply_correction, funput_engine_choose_correction,
+    funput_engine_correction_candidates, funput_engine_correction_metrics,
+    funput_engine_correction_undo_text, funput_engine_has_correction_undo,
+    funput_engine_has_pending_correction, funput_engine_pending_correction_backspace,
+    funput_engine_preview_correction, funput_engine_rank_correction,
+    funput_engine_refuse_correction, funput_engine_set_next_key_touch, funput_set_typo_correction,
 };
 pub use result::{ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputResult};
 pub use shortcuts::{

@@ -102,6 +102,31 @@ proptest! {
         prop_assert_eq!(doc.text(), expected.text());
     }
 
+    /// Asking ahead of the boundary is invisible to the document: with or without a
+    /// preview the same text comes out, and the boundary parks the same candidates.
+    #[test]
+    fn a_preview_changes_nothing_the_boundary_does(keys in "[a-z]{1,10}") {
+        let (without, doc_without, _) = typed(InputMethod::Telex, &keys);
+
+        let mut with = correcting_engine(InputMethod::Telex);
+        let mut doc_with = Document::new();
+        let slips: Vec<(usize, char)> = keys
+            .chars()
+            .enumerate()
+            .filter_map(|(i, key)| neighbour(key).map(|alternate| (i, alternate)))
+            .collect();
+        type_touched(&mut with, &mut doc_with, &keys, &slips);
+        let previewed = with.preview_correction();
+        if previewed > 0 {
+            prop_assert_eq!(with.correction_candidates().len(), previewed);
+        }
+        type_touched(&mut with, &mut doc_with, " ", &[]);
+
+        prop_assert_eq!(doc_with.text(), doc_without.text());
+        prop_assert_eq!(candidate_texts(&with), candidate_texts(&without));
+        prop_assert_eq!(with.has_pending_correction(), without.has_pending_correction());
+    }
+
     /// Nothing the search does leaves an edit half-applied.
     #[test]
     fn an_unanswered_correction_never_outlives_the_next_key(keys in "[a-z]{1,10}") {

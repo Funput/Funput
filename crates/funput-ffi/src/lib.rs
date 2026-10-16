@@ -68,18 +68,22 @@ pub use charset::{
 pub use convert::*;
 pub use engine::{
     ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, CORRECTION_CAP, CORRECTION_CHARS_CAP,
-    FunputConfig, FunputCorrectionCandidate, FunputCorrectionMetrics, FunputEngine, FunputKeyTouch,
-    FunputResult, METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, ONSET_F, ONSET_J, ONSET_W,
-    ONSET_Z, SOURCE_NUMPAD, SOURCE_STANDARD, TOUCH_ALTERNATE_CAP, funput_add_shortcut,
-    funput_adopt, funput_arm_capitalization, funput_backspace, funput_buffer, funput_clear,
+    CORRECTION_VERDICT_AMBIGUOUS, CORRECTION_VERDICT_APPLY, CORRECTION_VERDICT_AS_TYPED,
+    CORRECTION_VERDICT_REFUSED, FunputConfig, FunputCorrectionCandidate, FunputCorrectionMetrics,
+    FunputCorrectionRanking, FunputEngine, FunputKeyTouch, FunputResult, METHOD_TELEX,
+    METHOD_TELEX_ADVANCED, METHOD_VNI, ONSET_F, ONSET_J, ONSET_W, ONSET_Z, SOURCE_NUMPAD,
+    SOURCE_STANDARD, TOUCH_ALTERNATE_CAP, funput_add_shortcut, funput_adopt,
+    funput_arm_capitalization, funput_backspace, funput_buffer, funput_clear,
     funput_clear_shortcuts, funput_configure, funput_engine_apply_correction,
     funput_engine_choose_correction, funput_engine_correction_candidates,
     funput_engine_correction_metrics, funput_engine_correction_undo_text, funput_engine_free,
     funput_engine_has_correction_undo, funput_engine_has_pending_correction, funput_engine_new,
-    funput_engine_pending_correction_backspace, funput_engine_set_next_key_touch,
-    funput_flip_composing, funput_process_char, funput_process_key, funput_process_key_text,
-    funput_set_enabled, funput_set_extra_onsets, funput_set_method, funput_set_shortcut_smart_case,
-    funput_set_shortcuts_enabled, funput_set_shortcuts_in_english, funput_set_typo_correction,
+    funput_engine_pending_correction_backspace, funput_engine_preview_correction,
+    funput_engine_rank_correction, funput_engine_refuse_correction,
+    funput_engine_set_next_key_touch, funput_flip_composing, funput_process_char,
+    funput_process_key, funput_process_key_text, funput_set_enabled, funput_set_extra_onsets,
+    funput_set_method, funput_set_shortcut_smart_case, funput_set_shortcuts_enabled,
+    funput_set_shortcuts_in_english, funput_set_typo_correction,
 };
 pub use sentence::{funput_starts_sentence, funput_starts_word};
 pub use suggestion::{

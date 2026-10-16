@@ -10,10 +10,22 @@
 //! from `Session`, which derives `Eq`.
 
 mod choose;
+mod set;
 
-pub(crate) use choose::{Choice, INVALID_COST, choose};
+pub use choose::{CorrectionRanking, CorrectionVerdict};
+pub(crate) use choose::{INVALID_COST, choose};
+pub(crate) use set::{consider, rank};
 
 /// Touch spread in key pitches — how far a finger typically lands from centre.
+///
+/// Deliberately wider than the 0.174 measured on a device (see [`INVALID_COST`]):
+/// σ is the spread the *model* assumes, not the one observed. A narrow σ makes every
+/// score fall off a cliff a fraction of a pitch from the key, so a touch anywhere
+/// near an edge would hand the win to whichever key it is a hair closer to. At 0.45
+/// a touch between two keys still gives both a fair hearing, and the prior and the
+/// margin decide — which is what `nhad` typed dead-centre staying ambiguous relies
+/// on. Recalibrate it only together with [`INVALID_COST`] and [`MARGIN`], with
+/// `funput dev typos`.
 pub(crate) const SIGMA: f32 = 0.45;
 /// Flat cost of substituting one key, in nats.
 pub(crate) const LAMBDA: f32 = 1.2;
@@ -98,49 +110,6 @@ pub(crate) fn from_milli(score: i32) -> f32 {
     score as f32 / 1000.0
 }
 
-/// Offer one candidate to the ranked set, keeping the best `candidates.len()` of them.
-///
-/// The same word is often reachable by more than one edit path, so a repeat text
-/// updates the entry it matches instead of taking a second slot.
-pub(crate) fn consider(
-    candidates: &mut [CorrectionCandidate],
-    len: &mut usize,
-    text: &str,
-    score: i32,
-    edits: u8,
-) {
-    if let Some(slot) = candidates[..*len].iter().position(|c| c.text == text) {
-        if score > candidates[slot].score {
-            candidates[slot].fill(text, score, edits);
-        }
-        return;
-    }
-    if *len < candidates.len() {
-        candidates[*len].fill(text, score, edits);
-        *len += 1;
-        return;
-    }
-    let weakest = weakest_slot(&candidates[..*len]);
-    if score > candidates[weakest].score {
-        candidates[weakest].fill(text, score, edits);
-    }
-}
-
-fn weakest_slot(candidates: &[CorrectionCandidate]) -> usize {
-    let mut weakest = 0;
-    for (i, candidate) in candidates.iter().enumerate() {
-        if candidate.score < candidates[weakest].score {
-            weakest = i;
-        }
-    }
-    weakest
-}
-
-/// Order the filled slots best first, which is the order the platform sees.
-pub(crate) fn rank(candidates: &mut [CorrectionCandidate]) {
-    candidates.sort_by_key(|candidate| std::cmp::Reverse(candidate.score));
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -173,29 +142,5 @@ mod tests {
     #[test]
     fn milli_nats_round_trip_within_a_thousandth() {
         assert!((from_milli(to_milli(-3.25)) + 3.25).abs() < 0.001);
-    }
-
-    #[test]
-    fn the_ranked_set_keeps_the_best_and_drops_the_weakest() {
-        let mut candidates = vec![CorrectionCandidate::default(); 2];
-        let mut len = 0;
-        consider(&mut candidates, &mut len, "nhà", -100, 1);
-        consider(&mut candidates, &mut len, "nhá", -300, 1);
-        consider(&mut candidates, &mut len, "nhã", -200, 1);
-        rank(&mut candidates[..len]);
-        assert_eq!(len, 2);
-        assert_eq!(candidates[0].text(), "nhà");
-        assert_eq!(candidates[1].text(), "nhã");
-    }
-
-    #[test]
-    fn the_same_word_reached_twice_keeps_its_better_score() {
-        let mut candidates = vec![CorrectionCandidate::default(); 4];
-        let mut len = 0;
-        consider(&mut candidates, &mut len, "đường", -400, 2);
-        consider(&mut candidates, &mut len, "đường", -120, 1);
-        assert_eq!(len, 1);
-        assert_eq!(candidates[0].score, -120);
-        assert_eq!(candidates[0].edits(), 1);
     }
 }
