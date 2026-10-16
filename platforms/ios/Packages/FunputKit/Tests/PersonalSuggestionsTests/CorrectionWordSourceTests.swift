@@ -1,7 +1,8 @@
 #if os(iOS) && canImport(FunputCore)
 import Foundation
-import PersonalSuggestions
 import Testing
+
+@testable import PersonalSuggestions
 
 @MainActor
 @Suite("Correction word source")
@@ -40,6 +41,46 @@ struct CorrectionWordSourceTests {
         let source = CorrectionWordSource(lexiconURL: { nil })
         source.restoreKept(["mk"])
         #expect(source.isKept("Mk"))
+    }
+
+    @Test("One sighting weighs, two make the word the user's own")
+    func counts() throws {
+        let source = CorrectionWordSource(engine: try #require(PersonalSuggestionEngine.inMemory()))
+        #expect(source.weight("đường") == 0)
+
+        source.learn("đường")
+        #expect(source.weight("đường") == 1)
+        #expect(!source.recognizes("đường"), "a typo left alone looks exactly like this")
+
+        source.learn("Đường")
+        #expect(source.weight("đường") == 2)
+        #expect(source.recognizes("đường"))
+        #expect(source.weight("đưa") == 0, "only the word that was typed")
+    }
+
+    @Test("Counting needs no word list, and the engine is never written to")
+    func countsBeforeReady() throws {
+        let source = CorrectionWordSource(lexiconURL: { nil })
+        source.learn("đường")
+        #expect(source.weight("đường") == 1)
+
+        let engine = try #require(PersonalSuggestionEngine.inMemory())
+        let ready = CorrectionWordSource(engine: engine)
+        ready.learn("đường")
+        ready.learn("đường")
+        #expect(!engine.recognizes("đường"))
+    }
+
+    @Test("The rarest word goes once the counts are full")
+    func cappedCounts() throws {
+        let source = CorrectionWordSource(engine: try #require(PersonalSuggestionEngine.inMemory()))
+        source.learn("w0")
+        source.learn("w0")
+        for index in 1...CorrectionWordSource.countLimit {
+            source.learn("w\(index)")
+        }
+        #expect(source.weight("w0") == 2, "the one seen twice stays")
+        #expect(source.personalCounts.count == CorrectionWordSource.countLimit)
     }
 }
 #endif

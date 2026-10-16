@@ -12,6 +12,19 @@ extension PersonalSuggestionService {
         }
     }
 
+    /// What accepting `candidate` replaces and inserts, or `nil` when the bar has
+    /// moved on since it was drawn.
+    public func acceptance(
+        for candidate: KeyboardSuggestionCandidate
+    ) -> (String, String)? {
+        // An empty prefix is the ordinary shape of accepting a prediction: it
+        // replaces nothing and inserts a word.
+        guard candidate.generation == generation,
+              visibleCandidates.contains(candidate)
+        else { return nil }
+        return (prefix, candidate.text)
+    }
+
     /// Shift moved while a list was already up.
     ///
     /// Nothing is asked of the engine: these are the same words, only their shape

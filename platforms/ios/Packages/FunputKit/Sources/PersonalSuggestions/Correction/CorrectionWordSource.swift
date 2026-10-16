@@ -10,7 +10,8 @@ import os
 /// to disk, and the correction handshake cannot wait: the word boundary has deferred
 /// an edit and is holding it open. This one is built once, on a background queue,
 /// handed over, and never written to again — so reading it from the main actor races
-/// with nothing.
+/// with nothing. What the user types this session is counted beside it, on the main
+/// actor, in `personalCounts` — see `CorrectionWordSource+Counts.swift`.
 ///
 /// Until it is ready `recognizes` answers `true` for everything, which reads oddly
 /// and is deliberate: an unknown answer has to mean "do not correct", and the
@@ -24,6 +25,9 @@ public final class CorrectionWordSource: CorrectionDictionary {
     /// oldest. Lowercased: `Ko` at the start of a sentence is the same word.
     private var kept: [String] = []
     private var keptSet: Set<String> = []
+    /// How often each word was finished this session, lowercased. Never written to
+    /// disk, and never into the engine: a word seen once is still a possible typo.
+    var personalCounts: [String: UInt32] = [:]
     /// Called with the whole kept list whenever it grows, so the host can store it.
     /// Nil when there is nowhere to store it — without Full Access the list lasts as
     /// long as the keyboard does.
@@ -38,6 +42,12 @@ public final class CorrectionWordSource: CorrectionDictionary {
         }
     ) {
         self.lexiconURL = lexiconURL
+    }
+
+    /// A source whose list is already built, for tests.
+    init(engine: PersonalSuggestionEngine) {
+        self.engine = engine
+        lexiconURL = { nil }
     }
 
     /// Start building it. Opening the lexicon measures around 5 ms, which is why it
@@ -56,7 +66,7 @@ public final class CorrectionWordSource: CorrectionDictionary {
     }
 
     public func recognizes(_ word: String) -> Bool {
-        if isKept(word) { return true }
+        if isKept(word) || isFamiliar(word) { return true }
         guard let engine else { return true }
         return engine.recognizes(word)
     }

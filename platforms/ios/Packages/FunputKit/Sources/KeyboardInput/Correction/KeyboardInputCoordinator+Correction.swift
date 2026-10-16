@@ -16,9 +16,19 @@ extension KeyboardInputCoordinator {
     ///
     /// Declining is not a no-op: it is the boundary finishing the English restore it
     /// deferred, so this runs whether or not a correction is wanted.
-    func applyPendingCorrection(context: inout String?, builder: inout InputTransactionBuilder) {
+    ///
+    /// `composed` is the syllable the screen showed before the boundary key — the
+    /// word the bar named, which can differ from the raw keys the boundary restores.
+    func applyPendingCorrection(
+        context: inout String?, composed: String, builder: inout InputTransactionBuilder
+    ) {
         guard usesEngine, composer.hasPendingCorrection else { return }
-        let result = composer.applyCorrection(chooseCorrection(context: context))
+        let shown = pendingWord(context: context)
+        let chosen = chooseCorrection(shown: shown, composed: composed)
+        let result = composer.applyCorrection(chosen)
+        if chosen != nil {
+            appliedCorrection = AppliedCorrection(shown: shown ?? composed, composed: composed)
+        }
         guard result.action != .none else { return }
         guard let count = KeyboardReplacement.deletionCount(
             scalars: result.deleteCount, context: context
@@ -33,8 +43,13 @@ extension KeyboardInputCoordinator {
     }
 
     /// Which candidate to apply, or `nil` to decline.
-    private func chooseCorrection(context: String?) -> Int? {
-        let shown = pendingWord(context: context)
+    private func chooseCorrection(shown: String?, composed: String) -> Int? {
+        let candidates = composer.correctionCandidates()
+        // The user tapped this word on the bar: no dictionary and no margin stands
+        // between them and the word they asked for.
+        if let forced = forcedCorrection {
+            return candidates.firstIndex { $0.text == forced }
+        }
         guard allowsAutocorrect else {
             correctionDeclines.fieldRefused += 1
             return nil
@@ -44,15 +59,17 @@ extension KeyboardInputCoordinator {
         // against, applying one would be a guess.
         guard let dictionary = correctionDictionary else { return nil }
         // A word that is already a word is what the user meant, however odd it looks
-        // to an engine that only knows Vietnamese spelling.
-        if let shown, dictionary.recognizes(shown) {
+        // to an engine that only knows Vietnamese spelling. Both shapes are asked:
+        // the keys the boundary left on screen, and the syllable the user watched
+        // while typing — the one the bar names, and the one they keep from it.
+        if shown.map(dictionary.recognizes) == true
+            || (!composed.isEmpty && dictionary.recognizes(composed)) {
             correctionDeclines.recognized += 1
             #if DEBUG
             logCorrection(shown: shown, decision: "known word")
             #endif
             return nil
         }
-        let candidates = composer.correctionCandidates()
         #if DEBUG
         let before = composer.correctionMetrics
         #endif
@@ -60,7 +77,8 @@ extension KeyboardInputCoordinator {
         // is measured to cost nine tenths of the repairs until the list is far larger
         // than the one shipped today — see `docs/features/typo-correction.md` §12.1.
         let chosen = composer.chooseCorrection(
-            uses: [], allowed: Array(repeating: true, count: candidates.count)
+            uses: candidates.map { dictionary.weight($0.text) },
+            allowed: Array(repeating: true, count: candidates.count)
         )
         #if DEBUG
         logCorrection(

@@ -34,8 +34,14 @@ extension KeyboardInputCoordinator {
         builder.insert(result.text)
         undidCorrection = true
         // What comes back is the word as typed plus the boundary after it. The engine
-        // only suppresses the word once; the dictionary makes it permanent.
-        correctionDictionary?.keep(String(result.text.dropLast()))
+        // only suppresses the word once; the dictionary makes it permanent — in both
+        // shapes, so the bar stops offering the repair the boundary would refuse.
+        let restored = String(result.text.dropLast())
+        correctionDictionary?.keep(restored)
+        if let applied = appliedCorrection, applied.composed != restored {
+            correctionDictionary?.keep(applied.composed)
+        }
+        appliedCorrection = nil
         return true
     }
 }

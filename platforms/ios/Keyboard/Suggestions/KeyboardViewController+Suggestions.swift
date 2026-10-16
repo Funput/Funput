@@ -15,7 +15,7 @@ extension KeyboardViewController {
             surface?.updateSuggestions(candidates)
         }
         surface.onSuggestionSelected = { [weak self] candidate in
-            self?.acceptPersonalSuggestion(candidate)
+            self?.handleSuggestionTap(candidate)
         }
         NotificationCenter.default.addObserver(
             self,
@@ -54,10 +54,17 @@ extension KeyboardViewController {
             && displayedSurface == .funput
             && state.layoutMode == .letters
             && state.editorMode.supportsVietnameseComposition
+        let update = inputCoordinator.takePersonalSuggestionUpdate()
+        // The correction prior learns every word the user finishes, whether or not
+        // personal suggestions are on: it lives in memory and never leaves it.
+        if configuration.typoCorrection, let token = update.completedToken {
+            correctionWords.learn(token)
+        }
         personalSuggestionService.update(
-            inputCoordinator.takePersonalSuggestionUpdate(),
+            update,
             canQuery: canQuery,
-            shift: state.shiftState
+            shift: state.shiftState,
+            correction: inputCoordinator.correctionPreview
         )
     }
 
@@ -66,7 +73,7 @@ extension KeyboardViewController {
         keyboardView.updateSuggestions([])
     }
 
-    private func acceptPersonalSuggestion(_ candidate: KeyboardSuggestionCandidate) {
+    func acceptPersonalSuggestion(_ candidate: KeyboardSuggestionCandidate) {
         os_signpost(
             .event,
             log: PersonalSuggestionSignposts.log,

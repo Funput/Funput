@@ -26,7 +26,7 @@ extension KeyboardViewController {
         os_log(
             .default,
             log: Self.correctionLog,
-            "touches %{public}d σ %{public}.3f (mean %{public}.3f) · applied %{public}d reverted %{public}d · offered %{public}d: ambiguous %{public}d as-typed %{public}d known %{public}d field %{public}d · no candidate %{public}d · valid near edge %{public}d · candidates %{public}d max %{public}dµs",
+            "touches %{public}d σ %{public}.3f (mean %{public}.3f) · applied %{public}d reverted %{public}d · offered %{public}d: ambiguous %{public}d as-typed %{public}d known %{public}d field %{public}d refused %{public}d · no candidate %{public}d · valid near edge %{public}d · candidates %{public}d max %{public}dµs",
             spread.count,
             spread.perAxisSigma,
             spread.mean,
@@ -37,6 +37,7 @@ extension KeyboardViewController {
             counts.keptAsTyped,
             declines.recognized,
             declines.fieldRefused,
+            declines.refused,
             counts.noCandidate,
             counts.validNearEdge,
             counts.candidatesMax,

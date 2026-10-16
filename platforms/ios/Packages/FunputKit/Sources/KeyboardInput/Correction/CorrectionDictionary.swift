@@ -13,7 +13,22 @@ public protocol CorrectionDictionary: AnyObject {
     /// list. `false` for a word the dictionary has simply never heard of.
     func recognizes(_ word: String) -> Bool
 
-    /// The user took back a correction of `word`: recognize it from now on, so the
-    /// same correction is never made twice.
+    /// The user took back a correction of `word`, or kept it from the bar: recognize
+    /// it from now on, so the same correction is never offered twice.
     func keep(_ word: String)
+
+    /// How likely `word` is, as a prior the engine weighs against touch evidence:
+    /// `0` for a word it knows nothing about, larger for a common syllable or one
+    /// the user types often. Only the ratio between candidates matters.
+    func weight(_ word: String) -> UInt32
+
+    /// The user finished typing `word`: count it, so it weighs more next time.
+    func learn(_ word: String)
+}
+
+public extension CorrectionDictionary {
+    /// A dictionary that only vetoes has no opinion on likelihood.
+    func weight(_ word: String) -> UInt32 { 0 }
+
+    func learn(_ word: String) {}
 }
