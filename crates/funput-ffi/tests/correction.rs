@@ -82,12 +82,14 @@ fn the_whole_handshake_replaces_the_word_and_keeps_the_boundary() {
         assert_eq!(funput_engine_pending_correction_backspace(engine), 10);
 
         let offered = candidates(engine);
-        assert_eq!(offered.len(), 1);
         assert_eq!(offered[0].0, "đường");
         assert!(offered[0].1 < 0.0, "a log-likelihood is negative");
         assert_eq!(offered[0].2, 1);
 
-        let winner = funput_engine_choose_correction(engine, std::ptr::null(), std::ptr::null(), 0);
+        // The structural readings (`đườn`, `đương`) trail it; the shipped list's
+        // weight for `đường` is what lets a host apply it without asking.
+        let uses = [4u32];
+        let winner = funput_engine_choose_correction(engine, uses.as_ptr(), std::ptr::null(), 1);
         assert_eq!(winner, 0);
 
         let result = funput_engine_apply_correction(engine, winner);
@@ -153,7 +155,11 @@ fn the_word_store_breaks_a_tie_the_touches_cannot() {
         }
         funput_process_char(engine, ' ' as u32);
 
-        assert_eq!(candidates(engine).len(), 2);
+        let offered = candidates(engine);
+        assert_eq!(
+            (offered[0].0.as_str(), offered[1].0.as_str()),
+            ("nhà", "nhá")
+        );
         assert_eq!(
             funput_engine_choose_correction(engine, std::ptr::null(), std::ptr::null(), 0),
             -1,
@@ -288,12 +294,12 @@ fn a_preview_shows_the_repair_and_the_space_then_applies_it() {
         let mut app = String::new();
         type_word(engine, &mut app, "dduwowfnh", (8, 'g'));
 
-        assert_eq!(funput_engine_preview_correction(engine), 1);
+        assert!(funput_engine_preview_correction(engine) >= 1);
         assert_eq!(candidates(engine)[0].0, "đường");
         assert!(!funput_engine_has_pending_correction(engine));
-        let ranking = rank(engine, &[], &[]);
+        let ranking = rank(engine, &[4], &[]);
         assert_eq!(ranking.verdict, CORRECTION_VERDICT_APPLY);
-        assert_eq!((ranking.best, ranking.second), (0, -1));
+        assert_eq!(ranking.best, 0);
 
         type_word(engine, &mut app, " ", (99, ' '));
         assert_eq!(app, "dduwowfnh ");
@@ -343,21 +349,24 @@ fn the_ranking_names_both_words_when_the_touches_cannot_decide() {
             funput_engine_set_next_key_touch(engine, &raw const reported);
             funput_process_char(engine, key as u32);
         }
-        assert_eq!(funput_engine_preview_correction(engine), 2);
+        let found = funput_engine_preview_correction(engine);
+        assert!(found >= 2);
+        let offered = candidates(engine);
+        assert_eq!(
+            (offered[0].0.as_str(), offered[1].0.as_str()),
+            ("nhà", "nhá")
+        );
 
         let ranking = rank(engine, &[], &[]);
         assert_eq!(ranking.verdict, CORRECTION_VERDICT_AMBIGUOUS);
-        assert!(ranking.best >= 0 && ranking.second >= 0);
-        assert_ne!(ranking.best, ranking.second);
+        assert_eq!((ranking.best, ranking.second), (0, 1));
 
         let ranking = rank(engine, &[40, 0], &[]);
         assert_eq!(ranking.verdict, CORRECTION_VERDICT_APPLY);
         assert_eq!((ranking.best, ranking.second), (0, 1));
 
-        assert_eq!(
-            rank(engine, &[], &[false, false]).verdict,
-            CORRECTION_VERDICT_REFUSED
-        );
+        let none = vec![false; found];
+        assert_eq!(rank(engine, &[], &none).verdict, CORRECTION_VERDICT_REFUSED);
         funput_engine_free(engine);
     }
 }

@@ -88,23 +88,43 @@ fn type_paragraph(engine: &mut Engine, touches: bool) {
     }
 }
 
+/// With the feature on, every word boundary has to work out whether the word is a
+/// finished syllable — the one question correction cannot answer without asking,
+/// touch data or not. `funput-core` builds the rhyme it validates, so that is one
+/// allocation per word, and only for words the English-restore path did not already
+/// check. Nothing else is paid: the words are all syllables, so none is searched.
 #[test]
-fn a_host_that_reports_no_touches_pays_nothing_for_the_feature() {
+fn a_host_that_reports_no_touches_pays_at_most_one_syllable_check_per_word() {
     let mut off = engine(false);
     let mut on = engine(true);
     let baseline = measure(|| type_paragraph(&mut off, false));
     let with_feature = measure(|| type_paragraph(&mut on, false));
-    println!("paragraph: {baseline} allocs off, {with_feature} allocs on");
-    assert_eq!(
-        baseline, with_feature,
-        "switching typo correction on changed the keystroke hot path"
+    let words = TELEX_TEXT.split_whitespace().count();
+    println!("paragraph: {baseline} allocs off, {with_feature} allocs on ({words} words)");
+    assert!(
+        with_feature <= baseline + words,
+        "typing with the feature on allocated {with_feature} times against a baseline \
+         of {baseline} over {words} words — the boundary is judging a word more than once"
     );
 }
 
-/// With touch data flowing, every word boundary has to work out whether the word is
-/// a finished syllable — the one question correction cannot answer without asking.
-/// `funput-core` builds the rhyme it validates, so that is one allocation per word,
-/// and only for words the English-restore path did not already check.
+/// The switch is the only thing that costs: off again, the keystroke path is what it
+/// was before the feature existed.
+#[test]
+fn switching_the_setting_off_again_costs_exactly_what_plain_typing_does() {
+    let mut plain = engine(false);
+    let mut toggled = engine(true);
+    toggled.update_config(|config| config.typo_correction = false);
+    let baseline = measure(|| type_paragraph(&mut plain, false));
+    let after_toggle = measure(|| type_paragraph(&mut toggled, false));
+    println!("paragraph: {baseline} allocs plain, {after_toggle} allocs after toggling off");
+    assert_eq!(
+        baseline, after_toggle,
+        "switching the feature off left a cost behind"
+    );
+}
+
+/// Touch data changes nothing about what a boundary pays for.
 #[test]
 fn reporting_touches_costs_at_most_one_syllable_check_per_word() {
     let mut off = engine(false);
@@ -138,18 +158,17 @@ fn recording_a_touch_point_never_allocates() {
     );
 }
 
-/// The search replays every one- and two-key substitution through the composition
-/// pipeline, and `funput_core::apply_checked` returns a `String` per key — the
-/// crate's documented ~1 allocation per keystroke. A nine-key word offering three
-/// neighbours each is 396 replays, and measures at 4509 allocations: essentially one
-/// per replayed key and nothing else, which is what this budget pins. It is paid once
-/// per corrected word, never on the plain typing path.
-const MAX_ALLOCS_PER_CORRECTED_WORD: usize = 5_000;
+/// The search replays variants through the composition pipeline, and
+/// `funput_core::apply_checked` returns a `String` per key — the crate's documented
+/// ~1 allocation per keystroke. The replay budget is 450 variants, so a twelve-key
+/// word that spends all of it is about 5 400 replayed keys plus what the candidate
+/// strings cost the first time: this pins that worst case. It is paid once per word
+/// searched, never on the plain typing path.
+const MAX_ALLOCS_PER_CORRECTED_WORD: usize = 8_000;
 
-/// The worst case the key cap allows: every key of the word offering three
-/// neighbours, which is the full 435-replay search.
-fn type_mistyped_word(engine: &mut Engine) {
-    for key in "dduwowfnh".chars() {
+/// Type `keys` with every key offering three neighbours, then the space.
+fn type_mistyped(engine: &mut Engine, keys: &str) {
+    for key in keys.chars() {
         engine.set_next_key_touch(
             KeyTouch::new(key, 0.35)
                 .with_alternate('g', 0.15)
@@ -159,6 +178,12 @@ fn type_mistyped_word(engine: &mut Engine) {
         engine.process_char(key);
     }
     engine.process_char(' ');
+}
+
+/// The worst case the key cap allows: twelve keys, three neighbours each, nothing
+/// the cheap tiers settle — the search runs to its replay budget.
+fn type_mistyped_word(engine: &mut Engine) {
+    type_mistyped(engine, "dduwowfnhxxx");
 }
 
 #[test]
@@ -172,12 +197,35 @@ fn a_corrected_word_stays_inside_the_search_budget() {
         type_mistyped_word(&mut engine);
         std::hint::black_box(engine.apply_correction(Some(0)));
     });
-    println!("corrected word: {allocations} allocs");
+    println!("corrected word (12 keys, budget spent): {allocations} allocs");
     assert!(
         allocations <= MAX_ALLOCS_PER_CORRECTED_WORD,
         "correcting one word allocated {allocations} times, over the \
          {MAX_ALLOCS_PER_CORRECTED_WORD} budget — the search must reuse its scratch \
          session and candidate strings instead of building new ones"
+    );
+}
+
+/// A bounced key is the commonest slip and the cheapest edit: the search finds it in
+/// the first tier and, once the second has shown nothing within the margin, stops
+/// before it tries a single insertion. With three neighbours offered for every key
+/// that is about 175 replays of a six-key word — a fifth of the budget.
+#[test]
+fn a_bounced_key_is_repaired_before_the_search_reaches_the_dear_tiers() {
+    let mut engine = engine(true);
+    type_mistyped(&mut engine, "chowii");
+    engine.apply_correction(Some(0));
+    engine.clear();
+
+    let allocations = measure(|| {
+        type_mistyped(&mut engine, "chowii");
+        std::hint::black_box(engine.apply_correction(Some(0)));
+    });
+    println!("bounced key: {allocations} allocs");
+    assert!(
+        allocations <= 1_500,
+        "repairing a bounced key allocated {allocations} times — the search did not \
+         stop after the cheap tiers"
     );
 }
 
@@ -219,12 +267,12 @@ fn type_mistyped_keys(engine: &mut Engine) {
 }
 
 /// A preview runs the search so the boundary does not have to: the space after one
-/// costs what a boundary with nothing to search costs, plus the one syllable check
-/// that touch data makes the boundary pay for.
+/// costs what a boundary with nothing to search costs — a finished syllable's, which
+/// pays for its one syllable check — plus the parked correction's bookkeeping.
 #[test]
 fn the_boundary_after_a_preview_does_not_search_again() {
     let mut plain = engine(true);
-    for key in "dduwowfnh".chars() {
+    for key in "chaof".chars() {
         plain.process_char(key);
     }
     let baseline = measure(|| {
@@ -243,11 +291,11 @@ fn the_boundary_after_a_preview_does_not_search_again() {
     let boundary = measure(|| {
         std::hint::black_box(previewed.process_char(' '));
     });
-    println!("boundary: {baseline} allocs plain, {boundary} allocs after a preview");
+    println!("boundary: {baseline} allocs for a syllable, {boundary} allocs after a preview");
     assert!(
         boundary <= baseline + 2,
         "the boundary allocated {boundary} times after a preview against {baseline} \
-         without touches — it is running the search a second time"
+         for a word with nothing to search — it is running the search a second time"
     );
 }
 

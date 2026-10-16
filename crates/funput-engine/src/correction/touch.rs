@@ -52,11 +52,12 @@ impl KeyTouch {
         self
     }
 
-    fn store(&self) -> StoredTouch {
+    pub(crate) fn store(&self) -> StoredTouch {
         let mut stored = StoredTouch {
             typed: self.typed,
             typed_distance: to_q8(self.typed_distance),
             count: self.count,
+            reported: true,
             ..StoredTouch::default()
         };
         for (slot, &(key, distance)) in stored.alternates.iter_mut().zip(&self.alternates) {
@@ -93,14 +94,11 @@ pub(crate) fn take_next(session: &mut Session) -> Option<StoredTouch> {
 }
 
 /// Record the touch behind a key that just joined the raw keys. A key with no touch
-/// data leaves the word uncorrectable rather than half-described.
+/// data is logged as unreported: the search reads the layout for it, and the word as
+/// typed no longer competes, since nobody saw where that finger landed.
 pub(crate) fn note_key(session: &mut Session, raw_key: char, touch: Option<StoredTouch>) {
-    let Some(state) = session.correction.as_mut() else {
-        return;
-    };
-    match touch {
-        Some(touch) => state.touch.push(raw_key, touch),
-        None => state.touch.invalidate(),
+    if let Some(state) = session.correction.as_mut() {
+        state.touch.push(raw_key, touch);
     }
 }
 

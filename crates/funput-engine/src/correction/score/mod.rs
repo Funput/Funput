@@ -6,19 +6,22 @@
 //! trades that key's term for the neighbour's and pays a flat `λ`, which stops a
 //! two-key guess from beating a one-key guess on rounding noise alone.
 //!
-//! A candidate carries the *cost* of the edits that reached it, in nats: the flat
-//! `λ` per edit plus, where a touch was reported, what the swap gives up in touch
-//! evidence. The word as typed is the zero point, so its own base term never has to
-//! be computed — every comparison the ranking makes is a difference against it.
+//! A candidate carries the *cost* of the edits that reached it, in nats: each edit's
+//! flat price from `cost`, plus — for a substitution where a touch was reported —
+//! what the swap gives up in touch evidence. The word as typed is the zero point, so
+//! its own base term never has to be computed — every comparison the ranking makes
+//! is a difference against it.
 //!
 //! Costs are kept as milli-nats (`i32`) rather than `f32`: a candidate is reachable
 //! from `Session`, which derives `Eq`.
 
 mod choose;
+pub(crate) mod cost;
 mod set;
 
 pub use choose::{CorrectionRanking, CorrectionVerdict};
 pub(crate) use choose::{INVALID_COST, choose};
+pub(crate) use cost::{LAMBDA, SUBSTITUTE_STATIC};
 pub(crate) use set::{consider, rank};
 
 /// Touch spread in key pitches — how far a finger typically lands from centre.
@@ -32,8 +35,6 @@ pub(crate) use set::{consider, rank};
 /// on. Recalibrate it only together with [`INVALID_COST`] and [`MARGIN`], with
 /// `funput dev typos`.
 pub(crate) const SIGMA: f32 = 0.45;
-/// Flat cost of substituting one key, in nats.
-pub(crate) const LAMBDA: f32 = 1.2;
 /// How far ahead the winner must be before a correction is applied without asking.
 ///
 /// Measured with `funput dev typos` over Viet74K at a finger spread of 0.25 pitches,

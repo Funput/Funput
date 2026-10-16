@@ -2,9 +2,9 @@
 //! document.
 
 use funput_core::InputMethod;
-use funput_engine::Action;
+use funput_engine::{Action, CorrectionVerdict};
 
-use crate::support::{Document, candidate_texts, correcting_engine, type_touched};
+use crate::support::{Document, candidate_texts, correcting_engine, index_of, type_touched};
 
 #[test]
 fn a_boundary_with_candidates_returns_none_and_parks_them() {
@@ -14,7 +14,7 @@ fn a_boundary_with_candidates_returns_none_and_parks_them() {
     // The keystroke itself behaved exactly as it does today.
     assert_eq!(doc.text(), "dduwowfnh ");
     assert!(engine.has_pending_correction());
-    assert_eq!(candidate_texts(&engine), ["đường"]);
+    assert_eq!(candidate_texts(&engine)[0], "đường");
 }
 
 #[test]
@@ -37,9 +37,11 @@ fn applying_a_candidate_over_a_restored_word_deletes_the_keys_it_shows() {
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "quaa ", &[(3, 's')]);
     assert_eq!(doc.text(), "quaa ");
-    assert_eq!(candidate_texts(&engine), ["quá"]);
+    // The doubled `a` reads as a bounce too: `qua` trails the slip's own repair.
+    assert_eq!(&candidate_texts(&engine)[..2], ["quá", "qua"]);
+    let qua = index_of(&engine, "quá");
     assert_eq!(engine.pending_correction_backspace(), 5);
-    doc.edited(&engine.apply_correction(Some(0)));
+    doc.edited(&engine.apply_correction(Some(qua)));
     assert_eq!(doc.text(), "quá ");
 }
 
@@ -53,7 +55,8 @@ fn applying_a_candidate_over_a_composed_word_deletes_only_what_is_shown() {
     type_touched(&mut engine, &mut doc, "quaa ", &[(3, 's')]);
     assert_eq!(doc.text(), "quâ ");
     assert_eq!(engine.pending_correction_backspace(), 4);
-    doc.edited(&engine.apply_correction(Some(0)));
+    let qua = index_of(&engine, "quá");
+    doc.edited(&engine.apply_correction(Some(qua)));
     assert_eq!(doc.text(), "quá ");
 }
 
@@ -117,7 +120,7 @@ fn candidates_are_gone_once_the_correction_is_answered() {
         let mut engine = correcting_engine(InputMethod::Telex);
         let mut doc = Document::new();
         type_touched(&mut engine, &mut doc, "dduwowfnh ", &[(8, 'g')]);
-        assert_eq!(candidate_texts(&engine), ["đường"]);
+        assert_eq!(candidate_texts(&engine)[0], "đường");
         engine.apply_correction(answer);
         assert!(engine.correction_candidates().is_empty());
         assert_eq!(engine.choose_correction(&[], &[]), None);
@@ -159,7 +162,12 @@ fn a_host_with_no_word_store_still_gets_a_ranking() {
     let mut engine = correcting_engine(InputMethod::Telex);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "dduwowfnh ", &[(8, 'g')]);
-    assert_eq!(engine.choose_correction(&[], &[]), Some(0));
+    let ranking = engine.rank_correction(&[], &[]);
+    assert_eq!(ranking.best, Some(0));
+    // Touch alone cannot separate `đường` from the readings that drop a key, so a
+    // host without a store is shown both; the shipped tier list is what settles it.
+    assert_eq!(ranking.verdict, CorrectionVerdict::Ambiguous);
+    assert_eq!(engine.choose_correction(&[4, 0], &[]), Some(0));
 }
 
 #[test]
@@ -167,7 +175,7 @@ fn two_candidates_too_close_to_call_are_offered_rather_than_applied() {
     let mut engine = correcting_engine(InputMethod::Telex);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "nhad ", &[(3, 'f'), (3, 's')]);
-    assert_eq!(candidate_texts(&engine).len(), 2);
+    assert_eq!(&candidate_texts(&engine)[..2], ["nhà", "nhá"]);
     assert_eq!(engine.choose_correction(&[], &[]), None);
     // The user's own history breaks the tie.
     assert_eq!(engine.choose_correction(&[40, 0], &[]), Some(0));
@@ -186,7 +194,7 @@ fn refusing_the_leading_candidate_calls_the_whole_correction_off() {
     let mut engine = correcting_engine(InputMethod::Telex);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "nhad ", &[(3, 'f'), (3, 's')]);
-    assert_eq!(candidate_texts(&engine).len(), 2);
+    assert_eq!(&candidate_texts(&engine)[..2], ["nhà", "nhá"]);
 
     assert_eq!(
         engine.choose_correction(&[40, 0], &[false, true]),

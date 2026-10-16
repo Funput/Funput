@@ -7,10 +7,10 @@ use crate::correction::score::{self, CorrectionCandidate};
 use crate::model::Session;
 
 /// The most variants one word may replay through the pipeline. Each replay costs
-/// about one allocation per key, so this is the latency knob. Ten keys with three
-/// neighbours each is 30 single and 405 paired substitutions — exactly this, so the
-/// budget is never hit today; it exists for the generators that come next.
-pub(crate) const MAX_REPLAYS_PER_WORD: u32 = 435;
+/// about one allocation per key and about a microsecond, so this is the latency
+/// knob: the same envelope the two-key search had at its worst (435), rounded. A
+/// word that reaches it ends its search with what the cheaper tiers found.
+pub(crate) const MAX_REPLAYS_PER_WORD: u32 = 450;
 
 /// What takes a variant off a generator's hands: replays it, checks the result is a
 /// syllable other than the word on screen, and offers it to the ranked set.
@@ -43,8 +43,26 @@ impl<'a> Sink<'a> {
         }
     }
 
+    pub(crate) fn replays(&self) -> u32 {
+        self.replays
+    }
+
+    /// The cheapest candidate so far, in nats — what the tier loop measures the
+    /// next tier's floor against.
+    pub(crate) fn best_cost(&self) -> Option<f32> {
+        self.candidates[..*self.len]
+            .iter()
+            .map(CorrectionCandidate::cost)
+            .min_by(f32::total_cmp)
+    }
+
     /// Offer the raw keys of one variant, with the cost of the edits that made it
     /// and how many there were.
+    ///
+    /// A cost never goes below zero: a swap the touch evidence favours strongly can
+    /// price itself under the flat `λ` and past it, but no candidate is a better
+    /// explanation than the word as typed by more than "exactly as likely" — and
+    /// hosts read `touch_score() = -cost` as always negative.
     ///
     /// [`Flow::Exhausted`] means the budget was already spent and *this* variant was
     /// not replayed: the generator stops, and the search ends with what it has.
@@ -60,7 +78,7 @@ impl<'a> Sink<'a> {
             self.candidates,
             self.len,
             &self.scratch.buffer,
-            score::to_milli(cost),
+            score::to_milli(cost.max(0.0)),
             edits,
         );
         Flow::Continue
@@ -94,6 +112,17 @@ mod tests {
         assert_eq!(candidates[0].text(), "nhà");
         assert!((candidates[0].cost() - 1.0).abs() < 0.001);
         assert_eq!(candidates[0].edits(), 1);
+    }
+
+    #[test]
+    fn a_strongly_evidenced_swap_never_costs_less_than_nothing() {
+        let mut scratch = scratch();
+        let mut candidates = [(); MAX_CANDIDATES].map(|()| CorrectionCandidate::default());
+        let mut len = 0;
+        let mut sink = Sink::new(&mut scratch, &mut candidates, &mut len, "nhad", 10);
+        assert_eq!(sink.offer(&['n', 'h', 'a', 'f'], -0.4, 1), Flow::Continue);
+        assert_eq!(candidates[0].cost(), 0.0);
+        assert!(candidates[0].touch_score() <= 0.0);
     }
 
     #[test]

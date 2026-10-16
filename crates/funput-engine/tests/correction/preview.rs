@@ -17,8 +17,8 @@ fn previewed(keys: &str, slips: &[(usize, char)]) -> (Engine, Document, usize) {
 #[test]
 fn a_preview_offers_what_the_boundary_would() {
     let (mut engine, mut doc, found) = previewed("dduwowfnh", &[(8, 'g')]);
-    assert_eq!(found, 1);
-    assert_eq!(candidate_texts(&engine), ["đường"]);
+    assert!(found > 0);
+    assert_eq!(candidate_texts(&engine)[0], "đường");
     let previewed: Vec<_> = engine
         .correction_candidates()
         .iter()
@@ -42,7 +42,7 @@ fn a_preview_offers_what_the_boundary_would() {
     // And the boundary after a preview parks the same thing.
     type_touched(&mut engine, &mut doc, " ", &[]);
     assert!(engine.has_pending_correction());
-    assert_eq!(candidate_texts(&engine), ["đường"]);
+    assert_eq!(candidate_texts(&engine)[0], "đường");
     assert_eq!(engine.pending_correction_backspace(), 10);
     doc.edited(&engine.apply_correction(Some(0)));
     assert_eq!(doc.text(), "đường ");
@@ -94,15 +94,16 @@ fn asking_twice_answers_from_the_first_search() {
 #[test]
 fn backspace_drops_the_preview_and_the_next_word_is_searched_afresh() {
     let (mut engine, mut doc, _) = previewed("dduwowfnh", &[(8, 'g')]);
-    assert_eq!(candidate_texts(&engine), ["đường"]);
+    assert_eq!(candidate_texts(&engine)[0], "đường");
     engine.on_backspace();
-    assert!(engine.correction_candidates().is_empty());
-    // The touch behind the deleted key is gone with it, so the shortened word no
-    // longer lines up with its log and is left alone rather than guessed at.
-    assert_eq!(engine.preview_correction(), 0);
+    assert!(
+        engine.correction_candidates().is_empty(),
+        "the preview was about a word that no longer exists"
+    );
     // A new word starts clean.
     type_touched(&mut engine, &mut doc, " dduwowfnh", &[(9, 'g')]);
-    assert_eq!(engine.preview_correction(), 1);
+    assert!(engine.preview_correction() > 0);
+    assert_eq!(candidate_texts(&engine)[0], "đường");
 }
 
 #[test]
@@ -147,19 +148,20 @@ fn ranking_names_the_runner_up_when_the_two_are_too_close_to_call() {
     let mut engine = correcting_engine(InputMethod::Telex);
     let mut doc = Document::new();
     type_leaning(&mut engine, &mut doc, "nhad", 3, ('f', 0.3), ('s', 0.3));
-    assert_eq!(engine.preview_correction(), 2);
+    assert!(engine.preview_correction() >= 2);
+    assert_eq!(&candidate_texts(&engine)[..2], ["nhà", "nhá"]);
 
     let ranking = engine.rank_correction(&[], &[]);
     assert_eq!(ranking.verdict, CorrectionVerdict::Ambiguous);
-    assert!(ranking.best.is_some() && ranking.second.is_some());
-    assert_ne!(ranking.best, ranking.second);
+    assert_eq!((ranking.best, ranking.second), (Some(0), Some(1)));
 
     let ranking = engine.rank_correction(&[40, 0], &[]);
     assert_eq!(ranking.verdict, CorrectionVerdict::Apply);
     assert_eq!(ranking.best, Some(0));
     assert_eq!(ranking.second, Some(1));
 
-    let ranking = engine.rank_correction(&[], &[false, false]);
+    let none = vec![false; engine.correction_candidates().len()];
+    let ranking = engine.rank_correction(&[], &none);
     assert_eq!(ranking.verdict, CorrectionVerdict::Refused);
     assert_eq!(ranking.best, None);
 }

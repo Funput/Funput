@@ -1,32 +1,33 @@
-//! The substitution generators: one key swapped for a neighbour, and two.
+//! The substitution: one key swapped for a neighbour the evidence allows.
 
-use super::{Flow, Generator, Sink, Variant};
+use super::{Each, Edit, Flow, Scope, Variant};
 use crate::correction::evidence::Evidence;
 
 /// Every single-key substitution the evidence allows, in typing order and nearest
 /// neighbour first.
 pub(crate) struct Substitute;
 
-/// Two substitutions at once: every variant of the first paired with every
-/// substitution at a later position. Enumerated first-position-major, which is the
-/// order the one nested loop this replaced produced.
-pub(crate) struct Pair(pub(crate) Substitute, pub(crate) Substitute);
-
 impl Substitute {
-    /// Hand `each` every substitution of `word` at positions `from..`, with the
-    /// position edited and what the swap costs. Stops at the first `Exhausted`.
-    fn each(
+    /// [`Edit::each`] limited to the positions `scope` allows — how a pair stacks a
+    /// substitution on an edit without touching what that edit touched, and how two
+    /// substitutions avoid visiting the same pair of positions twice.
+    pub(super) fn each_in(
         &self,
         word: &Variant,
         evidence: &Evidence<'_>,
-        from: usize,
-        each: &mut dyn FnMut(&Variant, usize, f32) -> Flow,
+        scope: Scope,
+        each: &mut Each<'_>,
     ) -> Flow {
         let mut edited = *word;
-        for position in from..word.len {
-            for (key, cost) in evidence.neighbours(word.origin[position]).iter() {
+        for position in (scope.from..word.len).filter(|&p| scope.allows(p)) {
+            let neighbours = evidence.neighbours(word.origin[position], word.keys[position]);
+            for (key, cost) in neighbours.iter() {
                 edited.keys[position] = key;
-                if each(&edited, position, cost) == Flow::Exhausted {
+                let after = Scope {
+                    from: position + 1,
+                    skip: scope.skip,
+                };
+                if each(&edited, after, cost) == Flow::Exhausted {
                     return Flow::Exhausted;
                 }
             }
@@ -36,21 +37,8 @@ impl Substitute {
     }
 }
 
-impl Generator for Substitute {
-    fn generate(&self, word: &Variant, evidence: &Evidence<'_>, sink: &mut Sink<'_>) -> Flow {
-        self.each(word, evidence, 0, &mut |edited, _, cost| {
-            sink.offer(edited.keys(), cost, 1)
-        })
-    }
-}
-
-impl Generator for Pair {
-    fn generate(&self, word: &Variant, evidence: &Evidence<'_>, sink: &mut Sink<'_>) -> Flow {
-        self.0.each(word, evidence, 0, &mut |first, position, one| {
-            self.1
-                .each(first, evidence, position + 1, &mut |second, _, two| {
-                    sink.offer(second.keys(), one + two, 2)
-                })
-        })
+impl Edit for Substitute {
+    fn each(&self, word: &Variant, evidence: &Evidence<'_>, each: &mut Each<'_>) -> Flow {
+        self.each_in(word, evidence, Scope::ALL, each)
     }
 }

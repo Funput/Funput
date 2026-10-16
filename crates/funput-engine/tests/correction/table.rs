@@ -5,9 +5,20 @@
 //! keyboards would have produced.
 
 use funput_core::InputMethod;
-use funput_engine::KeyTouch;
+use funput_engine::{CorrectionVerdict, KeyTouch};
 
-use crate::support::{Document, candidate_texts, correcting_engine, type_leaning, type_touched};
+use crate::support::{
+    Document, candidate_texts, correcting_engine, index_of, type_leaning, type_touched,
+};
+
+/// Use counts the way the shipped syllable list hands them out: `weight` for the
+/// candidates that are real words, nothing for the rest.
+fn shipped_uses(engine: &funput_engine::Engine, words: &[&str], weight: u32) -> Vec<u32> {
+    candidate_texts(engine)
+        .iter()
+        .map(|text| if words.contains(text) { weight } else { 0 })
+        .collect()
+}
 
 struct Case {
     method: InputMethod,
@@ -105,10 +116,7 @@ fn the_measured_cases_correct_the_way_the_system_keyboards_do() {
             candidate_texts(&engine),
             case.corrected
         );
-        let index = candidate_texts(&engine)
-            .iter()
-            .position(|text| *text == case.corrected)
-            .expect("checked above");
+        let index = index_of(&engine, case.corrected);
         doc.edited(&engine.apply_correction(Some(index)));
         assert_eq!(
             doc.text(),
@@ -142,7 +150,15 @@ fn a_correction_keeps_the_case_of_the_word_it_replaces() {
     let mut engine = correcting_engine(InputMethod::Telex);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "Nhad ", &[(3, 'f')]);
-    assert_eq!(candidate_texts(&engine), ["Nhà"]);
+    assert_eq!(candidate_texts(&engine)[0], "Nhà");
+    // Every reading keeps the capital at the front, the transposed one included.
+    assert!(
+        candidate_texts(&engine)
+            .iter()
+            .all(|text| text.chars().next().is_some_and(char::is_uppercase)),
+        "{:?}",
+        candidate_texts(&engine)
+    );
 }
 
 /// The `nhad` case from the design, in all three directions. Two tones are one key
@@ -154,6 +170,10 @@ fn a_correction_keeps_the_case_of_the_word_it_replaces() {
 /// nearer key is about 0.8 pitches clearer than the other: closer than that and the
 /// engine declines and offers both, which is what the design asks for. So a tone
 /// pair resolves only for a finger that really did lean.
+///
+/// The reading that drops the `d` (`nha`, a flat 1.5) sits within Δ of either tone
+/// on touch alone; what puts it out of the running is that it is not a word, which
+/// the shipped syllable list says and the host passes in as `uses`.
 #[test]
 fn nhad_follows_the_finger_to_the_tone_it_leaned_towards() {
     for (near, far, expected) in [
@@ -165,8 +185,9 @@ fn nhad_follows_the_finger_to_the_tone_it_leaned_towards() {
         type_leaning(&mut engine, &mut doc, "nhad", 3, near, far);
         type_touched(&mut engine, &mut doc, " ", &[]);
 
+        let uses = shipped_uses(&engine, &["nhà", "nhá"], 4);
         let chosen = engine
-            .choose_correction(&[], &[])
+            .choose_correction(&uses, &[])
             .expect("one tone is clearly nearer than the other");
         assert_eq!(
             candidate_texts(&engine)[chosen],
@@ -186,8 +207,9 @@ fn nhad_leaning_slightly_is_still_too_close_to_call() {
     type_leaning(&mut engine, &mut doc, "nhad", 3, ('f', 0.15), ('s', 0.75));
     type_touched(&mut engine, &mut doc, " ", &[]);
 
-    assert_eq!(candidate_texts(&engine).len(), 2);
-    assert_eq!(engine.choose_correction(&[], &[]), None);
+    assert_eq!(candidate_texts(&engine)[0], "nhà");
+    let uses = shipped_uses(&engine, &["nhà", "nhá"], 4);
+    assert_eq!(engine.choose_correction(&uses, &[]), None);
 }
 
 #[test]
@@ -197,21 +219,32 @@ fn nhad_typed_dead_centre_is_offered_rather_than_applied() {
     type_leaning(&mut engine, &mut doc, "nhad", 3, ('f', 0.3), ('s', 0.3));
     type_touched(&mut engine, &mut doc, " ", &[]);
 
-    assert_eq!(candidate_texts(&engine).len(), 2);
-    assert_eq!(engine.choose_correction(&[], &[]), None);
+    assert_eq!(&candidate_texts(&engine)[..2], ["nhà", "nhá"]);
+    let uses = shipped_uses(&engine, &["nhà", "nhá"], 4);
+    assert_eq!(engine.choose_correction(&uses, &[]), None);
 }
 
 /// A digit is a neighbour of the top letter row, and in VNI a digit cannot open a
 /// word. Offered in the first position it used to be skipped by the replay, so the
 /// candidate lost a letter and still looked like a syllable: `rru7o7c1` with the
-/// first key's `5` neighbour came out as `rước`, beside the `trước` it was meant to be.
+/// first key's `5` neighbour came out as `ước` dressed as a correction.
+///
+/// `rước` is on offer now, legitimately: a doubled `r` is a bounce, and dropping
+/// it is the cheapest reading there is. Two real words a key apart is an honest
+/// "too close to call", not a wrong answer.
 #[test]
 fn a_digit_offered_for_the_first_key_is_not_a_word() {
     let mut engine = correcting_engine(InputMethod::Vni);
     let mut doc = Document::new();
     type_touched(&mut engine, &mut doc, "rru7o7c1", &[(0, 't'), (0, '5')]);
     type_touched(&mut engine, &mut doc, " ", &[]);
-    assert_eq!(candidate_texts(&engine), ["trước"]);
+    let texts = candidate_texts(&engine);
+    assert!(texts.contains(&"trước"), "{texts:?}");
+    assert!(!texts.contains(&"ước"), "{texts:?}");
+    assert_eq!(
+        engine.rank_correction(&[], &[]).verdict,
+        CorrectionVerdict::Ambiguous
+    );
 }
 
 /// `tl` ("thả lỏng", "trả lời") is chat shorthand typed on purpose, and one key from

@@ -2,14 +2,17 @@
 //!
 //! A prefix buffer, not a ring: correction only ever asks about the word that just
 //! ended, so a word past the key cap is dropped outright instead of keeping its tail.
-//! Distances are Q8.8 integers because the log is reachable from `Session`, which
-//! derives `Eq`.
+//! A key that arrived without a report still takes its slot, marked unreported, so
+//! the log keeps lining up with the raw keys and the search can fall back to the
+//! static layout for that key alone. Distances are Q8.8 integers because the log is
+//! reachable from `Session`, which derives `Eq`.
 
 use crate::correction::touch::MAX_ALTERNATES;
 
 /// Longest word correction will look at. Past this the replay search stops paying
-/// for itself, and a very long token is rarely a mistyped syllable.
-pub(crate) const MAX_WORD_KEYS: usize = 10;
+/// for itself, and a very long token is rarely a mistyped syllable. Twelve covers
+/// the longest Telex spellings with a doubled key or a stray modifier in them.
+pub(crate) const MAX_WORD_KEYS: usize = 12;
 
 /// A neighbouring key the same touch could have meant.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -25,6 +28,9 @@ pub(crate) struct StoredTouch {
     pub(crate) typed_distance: u16,
     pub(crate) alternates: [Alternate; MAX_ALTERNATES],
     pub(crate) count: u8,
+    /// Whether the host said where the finger landed. An unreported entry holds
+    /// the key alone, and the search reads the layout for it.
+    pub(crate) reported: bool,
 }
 
 impl StoredTouch {
@@ -75,7 +81,14 @@ impl TouchLog {
         self.usable = false;
     }
 
-    pub(crate) fn push(&mut self, raw_key: char, mut touch: StoredTouch) {
+    /// Record the key that just joined the raw keys, with the host's touch for it
+    /// when there was one. A touch that names a different key than the engine
+    /// recorded spoils the log: it would describe a word that was not typed.
+    pub(crate) fn push(&mut self, raw_key: char, touch: Option<StoredTouch>) {
+        let mut touch = touch.unwrap_or(StoredTouch {
+            typed: raw_key,
+            ..StoredTouch::default()
+        });
         touch.recase(raw_key);
         if self.len() == MAX_WORD_KEYS || touch.typed != raw_key {
             self.invalidate();

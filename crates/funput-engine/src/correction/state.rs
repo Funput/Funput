@@ -40,6 +40,8 @@ pub(crate) struct CorrectionState {
     /// speak for it. Lives beside `candidates` rather than in `Pending` because it is
     /// set by the search and read by the ranking, neither of which needs a boundary.
     pub(crate) typed_competes: bool,
+    /// How many variants the last search replayed — the latency knob, read by tests.
+    pub(crate) replays_last: u32,
     /// The live word `candidates` describe, when a host asked ahead of the boundary.
     pub(crate) preview: Option<Preview>,
     pub(crate) pending: Option<Pending>,

@@ -1,6 +1,8 @@
 //! Unit tests for typo correction, driven through the public [`Engine`] verbs so a
 //! test reads the way a platform will call it.
 
+mod budget;
+mod evidence;
 mod gate;
 mod search;
 mod undo;

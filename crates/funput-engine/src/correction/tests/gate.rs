@@ -4,7 +4,7 @@
 use funput_core::InputMethod;
 
 use super::{engine, type_and_end, type_word};
-use crate::Engine;
+use crate::{CorrectionVerdict, Engine};
 
 #[test]
 fn a_valid_syllable_is_never_offered_a_correction() {
@@ -38,21 +38,34 @@ fn a_word_containing_a_digit_is_skipped() {
 }
 
 #[test]
-fn a_word_with_no_touch_data_is_skipped() {
+fn a_word_with_no_touch_data_is_searched_through_the_layout() {
+    // Nobody said where the fingers landed, so the keyboard grid stands in for the
+    // host: `g` sits next to `h`. And with no finger to speak for it, the word as
+    // typed is not a rival — the verdict is never "as typed".
     let mut engine = engine(InputMethod::Telex);
     for key in "dduwowfnh ".chars() {
         engine.process_char(key);
     }
-    assert!(!engine.has_pending_correction());
+    assert!(engine.has_pending_correction());
+    assert!(super::candidate_texts(&engine).contains(&"đường"));
+    let verdict = engine.rank_correction(&[], &[]).verdict;
+    assert_ne!(verdict, CorrectionVerdict::AsTyped);
+    assert_ne!(verdict, CorrectionVerdict::Refused);
 }
 
 #[test]
-fn one_key_without_touch_data_spoils_the_whole_word() {
+fn one_key_without_touch_data_hands_that_key_to_the_layout() {
     let mut engine = engine(InputMethod::Telex);
     type_word(&mut engine, "dduwowfn", &[]);
     engine.process_char('h'); // no touch reported for this one
     engine.process_char(' ');
-    assert!(!engine.has_pending_correction());
+    assert!(engine.has_pending_correction());
+    assert!(super::candidate_texts(&engine).contains(&"đường"));
+    assert_ne!(
+        engine.rank_correction(&[], &[]).verdict,
+        CorrectionVerdict::AsTyped,
+        "a word missing one touch never wins as typed"
+    );
 }
 
 #[test]
