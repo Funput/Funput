@@ -320,6 +320,10 @@ typedef struct {
      */
     uint32_t no_candidate;
     /**
+     * Words left alone because the user undid this spelling the last time.
+     */
+    uint32_t suppressed;
+    /**
      * Real syllables with a touch on the edge between two keys, left alone.
      */
     uint32_t valid_near_edge;
@@ -941,9 +945,9 @@ bool funput_engine_has_pending_correction(const FunputEngine *engine);
  * Answer the parked correction: apply the candidate at `index`, or pass a negative
  * index to decline it.
  *
- * Declining is not always a no-op — it is the word boundary finishing the job it
- * deferred, which for a non-Vietnamese word is the English restore. An index past
- * the end declines too, and with nothing pending the call is a no-op, so a host can
+ * Declining is a no-op: the boundary keystroke already did everything it would have
+ * done without correction, English restore included. An index past the end declines
+ * too, and with nothing pending the call changes nothing either, so a host can
  * always ask.
  *
  * # Safety

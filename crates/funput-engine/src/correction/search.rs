@@ -40,11 +40,15 @@ pub(crate) fn find(
         scratch,
         candidates,
         len,
+        typed_score,
         ..
     } = state;
     prepare(scratch, config);
     let entries = touch.entries();
     let base = touch.base_score();
+    // Kept beside the candidates it is measured against, so the ranking can read it
+    // after the word — and its touch log — are gone.
+    *typed_score = score::to_milli(base);
     let mut word = ['\0'; MAX_WORD_KEYS];
     for (slot, key) in word.iter_mut().zip(keys.chars()) {
         *slot = key;

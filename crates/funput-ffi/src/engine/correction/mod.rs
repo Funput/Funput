@@ -5,7 +5,8 @@
 //! [`funput_engine_has_pending_correction`] says so — reads the candidates, weighs
 //! them against its own word store, and answers with
 //! [`funput_engine_apply_correction`]. A host that never answers loses nothing: the
-//! next keystroke settles whatever the boundary deferred.
+//! boundary already did what it always did, and the next keystroke lets the parked
+//! correction lapse.
 //!
 //! Nothing here is reachable until `funput_set_typo_correction(engine, true)`.
 //!
@@ -90,9 +91,9 @@ pub unsafe extern "C" fn funput_engine_has_pending_correction(engine: *const Fun
 /// Answer the parked correction: apply the candidate at `index`, or pass a negative
 /// index to decline it.
 ///
-/// Declining is not always a no-op — it is the word boundary finishing the job it
-/// deferred, which for a non-Vietnamese word is the English restore. An index past
-/// the end declines too, and with nothing pending the call is a no-op, so a host can
+/// Declining is a no-op: the boundary keystroke already did everything it would have
+/// done without correction, English restore included. An index past the end declines
+/// too, and with nothing pending the call changes nothing either, so a host can
 /// always ask.
 ///
 /// # Safety

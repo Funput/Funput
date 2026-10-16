@@ -107,6 +107,8 @@ pub struct FunputCorrectionMetrics {
     pub offered: u32,
     /// Words looked at with no syllable within reach.
     pub no_candidate: u32,
+    /// Words left alone because the user undid this spelling the last time.
+    pub suppressed: u32,
     /// Real syllables with a touch on the edge between two keys, left alone.
     pub valid_near_edge: u32,
 }
@@ -122,6 +124,7 @@ impl From<CorrectionMetrics> for FunputCorrectionMetrics {
             kept_as_typed: metrics.kept_as_typed,
             offered: metrics.offered,
             no_candidate: metrics.no_candidate,
+            suppressed: metrics.suppressed,
             valid_near_edge: metrics.valid_near_edge,
         }
     }

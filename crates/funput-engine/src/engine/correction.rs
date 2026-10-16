@@ -1,10 +1,11 @@
 //! The platform's half of typo correction.
 //!
 //! Two steps, because the engine has no dictionary. A word boundary parks the
-//! candidates its touch data can reach and returns what it always returned; the host
-//! then ranks them against its own word store and calls [`Engine::apply_correction`],
-//! which is the only call here that edits the document. A host that stops after the
-//! first step loses nothing — the next keystroke settles the parked state.
+//! candidates its touch data can reach and does what it always did, English restore
+//! included; the host then ranks them against its own word store and calls
+//! [`Engine::apply_correction`], which is the only call here that edits the document.
+//! A host that stops after the first step loses nothing — the document already reads
+//! as it would have, and the next keystroke lets the parked state lapse.
 //!
 //! See `docs/features/typo-correction.md` and [`crate::correction`].
 
@@ -70,9 +71,10 @@ impl Engine {
     /// "Δ is too high" and "the word list is too small", and only this call knows.
     pub fn choose_correction(&mut self, uses: &[u32], allowed: &[bool]) -> Option<usize> {
         let state = self.session.correction.as_mut()?;
-        let as_typed = state.pending.as_ref().map_or(f32::NEG_INFINITY, |pending| {
-            from_milli(pending.typed_score) - INVALID_COST
-        });
+        if state.len == 0 {
+            return None;
+        }
+        let as_typed = from_milli(state.typed_score) - INVALID_COST;
         match score::choose(state.candidates(), uses, allowed, as_typed)? {
             Choice::Apply(index) => return Some(index),
             Choice::Ambiguous => state.metrics.skipped_ambiguous += 1,
@@ -91,10 +93,10 @@ impl Engine {
     /// Answer the parked correction: apply the candidate at `index`, or pass `None`
     /// to decline it.
     ///
-    /// Declining is not a no-op in every case — it is the word boundary finishing the
-    /// job it deferred, which for a non-Vietnamese word is the English restore. An
-    /// index that names no candidate declines too, and with nothing pending the call
-    /// is a no-op, so a host can always ask.
+    /// Declining is a no-op: the boundary keystroke already did everything it would
+    /// have done without correction, English restore included. An index that names no
+    /// candidate declines too, and with nothing pending the call changes nothing
+    /// either, so a host can always ask. Answered either way, the candidates are gone.
     pub fn apply_correction(&mut self, index: Option<usize>) -> ImeResult {
         correction::apply(&mut self.session, index)
     }
