@@ -8,8 +8,11 @@
 //! Classifiers take the current syllable buffer because Telex digraphs (`aa`,
 //! `dd`, `w` after a vowel) depend on context; VNI ignores the buffer.
 
+mod role;
 pub mod telex;
 pub mod vni;
+
+pub use role::{KeyRole, key_role};
 
 use crate::unicode::marks::Tone;
 use crate::unicode::shapes::VowelShape;
