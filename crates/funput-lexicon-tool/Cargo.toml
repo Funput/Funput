@@ -20,3 +20,6 @@ funput-suggestions = { path = "../funput-suggestions", features = ["lexicon-buil
 # this crate links into nothing.
 [dev-dependencies]
 funput-core = { path = "../funput-core" }
+# The lookup compares bytes against a lowercase NFC key, so the test proves every
+# entry is already written that way.
+unicode-normalization = "0.1.25"

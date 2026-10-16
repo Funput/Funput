@@ -1232,6 +1232,29 @@ FunputSuggestionResult funput_suggestion_query_with(const FunputSuggestionEngine
                                                     uintptr_t prefix_len);
 
 /**
+ * How many pseudo-uses `word`'s band in the shipped syllable list is worth, and 0
+ * for a word that is not on it — what a host adds to `funput_suggestion_frequency`
+ * to form the `uses` entry of a candidate. Case and normalization do not matter.
+ *
+ * No handle, no I/O, no allocation. Malformed text answers 0.
+ *
+ * # Safety
+ * `word` must point to `word_len` readable codepoints, or be null.
+ */
+uint32_t funput_suggestion_syllable_weight(const uint32_t *word, uintptr_t word_len);
+
+/**
+ * The band `word` sits in on the shipped syllable list: 1 for the most common,
+ * 4 for the rare but real, and 0 for a word that is not on it.
+ *
+ * No handle, no I/O, no allocation. Malformed text answers 0.
+ *
+ * # Safety
+ * `word` must point to `word_len` readable codepoints, or be null.
+ */
+uint32_t funput_suggestion_syllable_tier(const uint32_t *word, uintptr_t word_len);
+
+/**
  * How many times the user has typed `word`, and 0 for one the store has never
  * seen — the `uses` entry that goes into `funput_engine_choose_correction`.
  *
