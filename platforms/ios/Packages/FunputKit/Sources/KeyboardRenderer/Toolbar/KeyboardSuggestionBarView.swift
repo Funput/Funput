@@ -58,7 +58,7 @@ final class KeyboardSuggestionBarView: UIView {
                 : .zero
             if visible {
                 let title = Self.fittedTitle(
-                    candidates[index].text, slotWidth: width, font: Self.labelFont, color: labelColor
+                    candidates[index].barTitle, slotWidth: width, font: Self.labelFont, color: labelColor
                 )
                 buttons[index].setAttributedTitle(title, for: .normal)
             }
@@ -84,7 +84,7 @@ final class KeyboardSuggestionBarView: UIView {
             let candidate = self.candidates.indices.contains(index) ? self.candidates[index] : nil
             // The visible title is set in layout, once the slot width is known.
             if candidate == nil { button.setAttributedTitle(nil, for: .normal) }
-            button.accessibilityLabel = candidate.map { "Gợi ý, \($0.text)" }
+            button.accessibilityLabel = candidate?.accessibilityLabel
         }
         isHidden = self.candidates.isEmpty
         setNeedsLayout()

@@ -116,6 +116,7 @@ extension KeyboardInputCoordinator {
 
     private func resetCompositionState() {
         clearComposition()
+        correctionPreview = nil
         shiftController.resetTapSequence()
         // A focus change must not carry a half-finished double tap into the next field.
         spaceTapTracker.reset()

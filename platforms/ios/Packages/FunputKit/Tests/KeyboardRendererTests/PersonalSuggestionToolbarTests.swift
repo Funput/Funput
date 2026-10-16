@@ -86,6 +86,26 @@ struct PersonalSuggestionToolbarTests {
         #expect(ink >= bandHeight / 2)
     }
 
+    @Test("Correction slots read as kept, repaired or taken back")
+    func correctionSlots() {
+        let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 360, height: bandHeight))
+        toolbar.apply(spec: .standard, theme: .funputGlass, traits: .init())
+        toolbar.updateSuggestions([
+            KeyboardSuggestionCandidate(text: "đườnh", generation: 1, kind: .correctionTyped),
+            KeyboardSuggestionCandidate(text: "đường", generation: 1, kind: .correctionCandidate),
+            KeyboardSuggestionCandidate(text: "đườnh", generation: 1, kind: .correctionUndo),
+        ])
+        toolbar.layoutIfNeeded()
+
+        let buttons = visibleButtons(in: toolbar).filter { $0.accessibilityLabel?.contains("đư") == true }
+        let titles = buttons.compactMap { $0.attributedTitle(for: .normal)?.string }
+        #expect(titles == ["\u{201C}đườnh\u{201D}", "đường", "\u{21A9} đườnh"])
+        let labels = buttons.compactMap(\.accessibilityLabel)
+        #expect(labels.contains("Giữ nguyên, đườnh"))
+        #expect(labels.contains("Sửa thành, đường"))
+        #expect(labels.contains("Hoàn tác, đườnh"))
+    }
+
     /// The band the shipping geometry lays out, so the fitting rules are exercised at
     /// the size users actually get.
     private var bandHeight: CGFloat { KeyboardSizingProfile.default.toolbarHeight }

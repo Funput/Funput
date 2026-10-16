@@ -1,7 +1,8 @@
 #if os(iOS) && canImport(FunputCore)
 import Foundation
-import PersonalSuggestions
 import Testing
+
+@testable import PersonalSuggestions
 
 @MainActor
 @Suite("Correction word source")
@@ -40,6 +41,27 @@ struct CorrectionWordSourceTests {
         let source = CorrectionWordSource(lexiconURL: { nil })
         source.restoreKept(["mk"])
         #expect(source.isKept("Mk"))
+    }
+
+    @Test("A word the user finishes weighs more, and counts as known")
+    func learns() throws {
+        let source = CorrectionWordSource(engine: try #require(PersonalSuggestionEngine.inMemory()))
+        #expect(source.weight("đường") == 0)
+        #expect(!source.recognizes("đường"))
+
+        source.learn("đường")
+        source.learn("đường")
+
+        #expect(source.weight("đường") >= 1)
+        #expect(source.recognizes("đường"))
+        #expect(source.weight("đưa") == 0, "only the word that was typed")
+    }
+
+    @Test("Learning before the list is ready is dropped, not queued")
+    func learnsNothingWhileLoading() {
+        let source = CorrectionWordSource(lexiconURL: { nil })
+        source.learn("đường")
+        #expect(source.weight("đường") == 0)
     }
 }
 #endif

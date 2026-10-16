@@ -77,6 +77,8 @@ struct KeyboardCorrectionUndoTests {
 
         coordinator.handle(testKey(.backspace), writer: document)
 
+        // Eager restore already showed the dead-ended word as its keys, so the
+        // shape that came back and the shape the bar named are one and the same.
         #expect(dictionary.kept == ["dduwowfnh"])
     }
 

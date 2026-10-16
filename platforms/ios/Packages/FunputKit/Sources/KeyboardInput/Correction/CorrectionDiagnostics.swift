@@ -12,6 +12,8 @@ public struct CorrectionDeclines: Sendable, Equatable {
     public internal(set) var recognized = 0
     /// The field asked for no autocorrect.
     public internal(set) var fieldRefused = 0
+    /// The user tapped the word as typed on the bar.
+    public internal(set) var refused = 0
 
     public init() {}
 }
