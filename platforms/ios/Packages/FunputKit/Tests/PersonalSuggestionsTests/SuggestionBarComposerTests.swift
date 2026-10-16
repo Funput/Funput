@@ -60,6 +60,17 @@ struct SuggestionBarComposerTests {
         #expect(composed[1].kind == .correctionCandidate)
     }
 
+    @Test("A repair parked after Space is drawn exactly like one offered before it")
+    func parked() {
+        let composed = SuggestionBarComposer.compose(
+            correction: .parked(typed: "nhad", candidates: ["nhà", "nhá"]),
+            personal: personal("nhanh"),
+            generation: 2
+        )
+        #expect(composed.map(\.kind) == [.correctionTyped, .correctionCandidate, .correctionCandidate])
+        #expect(composed.map(\.text) == ["nhad", "nhà", "nhá"])
+    }
+
     @Test("A correction shows with personal suggestions switched off")
     func withoutPersonal() {
         let composed = SuggestionBarComposer.compose(

@@ -36,13 +36,12 @@ extension PersonalSuggestionService {
         for candidate: KeyboardSuggestionCandidate
     ) -> CorrectionBarAction? {
         guard candidate.generation == generation else { return nil }
-        switch (candidate.kind, correction) {
-        case let (.correctionTyped, .offered(typed, _)?) where typed == candidate.text:
-            return .refuse(typed: typed)
-        case let (.correctionCandidate, .offered(_, candidates)?)
-            where candidates.contains(candidate.text):
+        switch (candidate.kind, correction, correction?.offer) {
+        case let (.correctionTyped, _, offer?) where offer.typed == candidate.text:
+            return .refuse(typed: offer.typed)
+        case let (.correctionCandidate, _, offer?) where offer.candidates.contains(candidate.text):
             return .accept(text: candidate.text)
-        case let (.correctionUndo, .applied(undoText)?) where undoText == candidate.text:
+        case let (.correctionUndo, .applied(undoText)?, _) where undoText == candidate.text:
             return .undo
         default:
             return nil

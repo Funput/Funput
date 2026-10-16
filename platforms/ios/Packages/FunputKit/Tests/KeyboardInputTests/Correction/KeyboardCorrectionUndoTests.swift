@@ -12,6 +12,9 @@ private final class OpenDictionary: CorrectionDictionary {
     var kept: [String] = []
     func recognizes(_ word: String) -> Bool { kept.contains(word) }
     func keep(_ word: String) { kept.append(word) }
+    /// The shipped list's band for `đường`, so the repair clears the margin over the
+    /// cheaper readings the word-level search also reaches (`dường`).
+    func weight(_ word: String) -> UInt32 { word == "đường" ? 4 : 0 }
 }
 
 @MainActor

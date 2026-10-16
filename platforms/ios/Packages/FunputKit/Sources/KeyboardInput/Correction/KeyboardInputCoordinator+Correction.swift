@@ -14,8 +14,9 @@ extension KeyboardInputCoordinator {
     /// between the two edits, expose the intermediate document to `textDidChange`,
     /// and let the suggestion tracker learn the typo before the repair replaced it.
     ///
-    /// Declining is not a no-op: it is the boundary finishing the English restore it
-    /// deferred, so this runs whether or not a correction is wanted.
+    /// Not every "no" is an answer. When the engine will not pick on its own, the
+    /// correction is left parked: the engine keeps it until the next key, and the bar
+    /// offers its candidates over the committed word meanwhile.
     ///
     /// `composed` is the syllable the screen showed before the boundary key — the
     /// word the bar named, which can differ from the raw keys the boundary restores.
@@ -24,7 +25,16 @@ extension KeyboardInputCoordinator {
     ) {
         guard usesEngine, composer.hasPendingCorrection else { return }
         let shown = pendingWord(context: context)
-        let chosen = chooseCorrection(shown: shown, composed: composed)
+        let chosen: Int?
+        switch chooseCorrection(shown: shown, composed: composed) {
+        case let .apply(index):
+            chosen = index
+        case .decline:
+            chosen = nil
+        case let .park(candidates):
+            parkedCorrection = ParkedCorrection(shown: shown ?? composed, candidates: candidates)
+            return
+        }
         let result = composer.applyCorrection(chosen)
         if chosen != nil {
             appliedCorrection = AppliedCorrection(shown: shown ?? composed, composed: composed)
@@ -42,22 +52,31 @@ extension KeyboardInputCoordinator {
         context = (context ?? "") + result.text
     }
 
-    /// Which candidate to apply, or `nil` to decline.
-    private func chooseCorrection(shown: String?, composed: String) -> Int? {
+    /// What the boundary does with the correction it parked.
+    enum CorrectionChoice: Equatable {
+        /// Apply the candidate at this index.
+        case apply(Int)
+        /// Answer "no", and nothing is worth showing either.
+        case decline
+        /// Leave it parked: the engine would not pick, but these are worth a tap.
+        case park(candidates: [String])
+    }
+
+    private func chooseCorrection(shown: String?, composed: String) -> CorrectionChoice {
         let candidates = composer.correctionCandidates()
         // The user tapped this word on the bar: no dictionary and no margin stands
         // between them and the word they asked for.
         if let forced = forcedCorrection {
-            return candidates.firstIndex { $0.text == forced }
+            return candidates.firstIndex { $0.text == forced }.map(CorrectionChoice.apply) ?? .decline
         }
         guard allowsAutocorrect else {
             correctionDeclines.fieldRefused += 1
-            return nil
+            return .decline
         }
         // No dictionary, no corrections. The engine offers any structurally valid
         // syllable the touches can reach, and without something to weigh them
         // against, applying one would be a guess.
-        guard let dictionary = correctionDictionary else { return nil }
+        guard let dictionary = correctionDictionary else { return .decline }
         // A word that is already a word is what the user meant, however odd it looks
         // to an engine that only knows Vietnamese spelling. Both shapes are asked:
         // the keys the boundary left on screen, and the syllable the user watched
@@ -68,7 +87,7 @@ extension KeyboardInputCoordinator {
             #if DEBUG
             logCorrection(shown: shown, decision: "known word")
             #endif
-            return nil
+            return .decline
         }
         #if DEBUG
         let before = composer.correctionMetrics
@@ -76,9 +95,9 @@ extension KeyboardInputCoordinator {
         // Every candidate is allowed to win. Filtering to words the dictionary knows
         // is measured to cost nine tenths of the repairs until the list is far larger
         // than the one shipped today — see `docs/features/typo-correction.md` §12.1.
+        let uses = candidates.map { dictionary.weight($0.text) }
         let chosen = composer.chooseCorrection(
-            uses: candidates.map { dictionary.weight($0.text) },
-            allowed: Array(repeating: true, count: candidates.count)
+            uses: uses, allowed: Array(repeating: true, count: candidates.count)
         )
         #if DEBUG
         logCorrection(
@@ -87,7 +106,8 @@ extension KeyboardInputCoordinator {
                 ?? declineReason(before: before)
         )
         #endif
-        return chosen
+        if let chosen { return .apply(chosen) }
+        return rankedTexts(candidates: candidates, uses: uses).map { .park(candidates: $0) } ?? .decline
     }
 
     /// The word the app is showing for the correction being answered, read back out of

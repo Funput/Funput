@@ -55,6 +55,7 @@ extension KeyboardInputCoordinator {
     func clearComposition() {
         composer.clear()
         correctionPreview = nil
+        parkedCorrection = nil
         finishShortcutWord()
     }
 

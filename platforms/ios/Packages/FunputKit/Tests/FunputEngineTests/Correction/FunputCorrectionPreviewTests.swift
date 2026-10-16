@@ -34,12 +34,18 @@ struct FunputCorrectionPreviewTests {
     func previews() {
         let composer = slipped()
 
-        #expect(composer.previewCorrection() == 1)
-        #expect(composer.correctionCandidates().map(\.text) == ["đường"])
-        let ranking = composer.rankCorrection(uses: [0], allowed: [true])
+        // The word-level search also reaches `dường` (a dropped `d` and the same
+        // swap), so the repair needs the shipped prior to clear the margin.
+        let found = composer.previewCorrection()
+        #expect(found >= 1)
+        let candidates = composer.correctionCandidates().map(\.text)
+        #expect(candidates.first == "đường")
+        var uses = [UInt32](repeating: 0, count: candidates.count)
+        uses[0] = 4
+        let ranking = composer.rankCorrection(uses: uses, allowed: [])
         #expect(ranking.best == 0)
-        #expect(ranking.second == nil)
         #expect(ranking.verdict == .apply)
+        #expect(composer.rankCorrection(uses: [], allowed: []).verdict == .ambiguous)
     }
 
     @Test("A word still being typed previews nothing")
@@ -56,7 +62,7 @@ struct FunputCorrectionPreviewTests {
     @Test("Refusing drops the preview and the boundary parks nothing")
     func refuses() {
         let composer = slipped()
-        #expect(composer.previewCorrection() == 1)
+        #expect(composer.previewCorrection() >= 1)
 
         composer.refuseCorrection()
 

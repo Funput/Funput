@@ -49,6 +49,9 @@ public final class KeyboardInputCoordinator {
     var forcedCorrection: String?
     /// The correction last applied, while the engine still offers to undo it.
     var appliedCorrection: AppliedCorrection?
+    /// A correction the boundary left parked because the engine would not pick,
+    /// shown on the bar until the next key.
+    var parkedCorrection: ParkedCorrection?
     /// Set for the one commit that undoes a correction, so re-opening the previous
     /// word is skipped for it.
     var undidCorrection = false
