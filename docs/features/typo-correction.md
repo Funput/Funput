@@ -72,11 +72,11 @@ Ràng buộc, theo thứ tự ưu tiên:
   đếm vì hai lý do. Một là **giấy phép**: mọi bảng tần suất sẵn có đều lấy từ kho ngữ liệu không
   tương thích MIT (Viet74K không bao giờ được đóng gói), còn một bảng viết tay không trả lời được
   câu hỏi "số này đo ở đâu" thì cũng không nên giả vờ là số đo. Hai là **độ chính xác cần thiết**:
-  prior chỉ cộng vào điểm chạm dưới dạng `ln(1 + uses)`, nên khoảng cách giữa các bậc (mỗi bậc
-  cách nhau xấp xỉ một nat) đã là toàn bộ thông tin engine dùng được; một con số chính xác đến
-  hàng đơn vị không đổi quyết định nào. Mỗi bậc ánh xạ sang số "lần dùng giả"
-  (`SYLLABLE_TIER_WEIGHTS = [40, 12, 4, 1]`) để `choose_correction` không phải đổi công thức.
-  Đây là **prior**, không phải cửa chặn: `is_known_word` không hỏi bảng này.
+  prior chỉ cộng vào điểm chạm dưới dạng `ln(1 + uses)`, nên thứ tự giữa các bậc đã là toàn bộ
+  thông tin engine dùng được; một con số chính xác đến hàng đơn vị không đổi quyết định nào. Mỗi
+  bậc ánh xạ sang số "lần dùng giả" (`SYLLABLE_TIER_WEIGHTS = [4, 3, 2, 1]`, đo ở §12 đợt 3) để
+  `choose_correction` không phải đổi công thức. Đây là **prior**, không phải cửa chặn:
+  `is_known_word` không hỏi bảng này.
 - Desktop tự động sửa — xem §10.
 
 ## 3. Hành vi
@@ -239,7 +239,23 @@ P(chạm | phím) = exp(−d² / (2σ²)),  d tính theo bước phím
 | `Δ` | **1,5** | Biên tối thiểu giữa ứng viên nhất và nhì để dám sửa (đo ở §12.1) |
 | `prior` nền | 0,5 | Điểm cho âm tiết hợp lệ chưa từng gõ |
 
-- `prior(từ)` = `ln(1 + số lần người dùng đã gõ từ đó)` + nền, lấy từ `funput-suggestions`.
+- `prior(từ)` = `ln(1 + uses)` + nền, với `uses` = **`syllable_weight(từ)` + số lần người dùng đã gõ
+  từ đó**, cả hai lấy từ `funput-suggestions` (§7.3). `syllable_weight` đọc bảng xếp hạng bốn bậc
+  đóng gói sẵn (§2) và trả số "lần dùng giả" của bậc:
+
+  | Bậc | Nội dung | `uses` giả | `prior` (nat) | hơn từ ngoài danh sách |
+  |---|---|---|---|---|
+  | 1 | từ chức năng, từ rất thường gặp (188) | 4 | 2,11 | +1,61 |
+  | 2 | từ vựng đời thường (492) | 3 | 1,89 | +1,39 |
+  | 3 | thông dụng nhưng ít gặp hơn (898) | 2 | 1,60 | +1,10 |
+  | 4 | hiếm nhưng có thật (522) | 1 | 1,19 | +0,69 |
+  | — | không có trong danh sách | 0 | 0,50 | 0 |
+
+  Nền tảng cộng hai số rồi truyền vào `choose_correction`; engine không biết số nào từ đâu ra.
+  Trọng số cố ý **nhẹ**: bậc 1 hơn một từ ngoài danh sách đúng 1,61 nat, vừa qua Δ = 1,5 — tức
+  nó chỉ đủ **phá hoà** khi điểm chạm không phân biệt được hai ứng viên (`nhad` chạm giữa `f`/`s`
+  → `nhà`), chứ không lật được một ngón tay đã nghiêng rõ. Bản đầu định `[40, 12, 4, 1]` (bậc 1
+  hơn 3,7 nat ≈ 2Δ) và bộ đo bác ngay: xem §12 đợt 3.
 - **Chữ nguyên như đã gõ cũng là một ứng viên**, điểm = điểm chạm gốc − `INVALID_COST` (**4,0**,
   §12.1 đợt 2): chỉ một lần chạm cách tâm phím dưới khoảng 0,15 bước phím mới được tin là cố ý. `runner_up` bắt đầu từ điểm đó, không phải âm vô cực. Trước đợt 2, một ứng viên
   duy nhất luôn thắng dù ngón đặt ngay giữa phím — nên `ko`, `atlas`, `robot` gõ đúng vẫn bị đổi.
@@ -445,9 +461,9 @@ impl SuggestionEngine {
     pub fn is_known_word(&self, word: &str) -> bool;
 }
 
-/// Pseudo-uses per band, band 1 first: about 4.2, 3.1, 2.1 and 1.2 nats through
+/// Pseudo-uses per band, band 1 first: about 2.1, 1.9, 1.6 and 1.2 nats through
 /// the engine's `ln(1 + uses) + 0.5`, against 0.5 for an unlisted syllable.
-pub const SYLLABLE_TIER_WEIGHTS: [u32; 4] = [40, 12, 4, 1];
+pub const SYLLABLE_TIER_WEIGHTS: [u32; 4] = [4, 3, 2, 1];
 
 /// The band `word` sits in on the shipped list (1 = most common), `None` when
 /// unlisted. Case and normalization do not matter. No allocation after first use.
@@ -734,6 +750,72 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    22 501 VNI), điểm chạm đúng tâm kèm đủ phím kề: **bật tính năng cho ra y hệt lúc tắt, 0 khác
    biệt**. Engine trước đợt 2 đổi 591 chuỗi trong số đó — toàn từ mượn gõ đúng (`ampe → smoe`,
    `atlas → stoá`, `robot → rổn`, `camera → cẩm`, `Latin → Lặn`).
+   **Đợt 3 (16/10/2026): prior từ bảng xếp hạng bốn bậc.** `--prior shipped` giờ đọc
+   `syllable_weight` thay vì học danh sách vào một kho rỗng (C1/C2), nên lần đầu bộ đo đo được đúng
+   thứ một máy mới cài nhìn thấy: kho cá nhân trống + bảng bậc. Viet74K, 8 955 âm tiết, cột "không"
+   là prior đều (`--prior uniform`), `INVALID_COST` 4,0, Δ 1,5, 8 seed mỗi ô:
+
+   | Trọng số bậc 1→4 | Telex 0,174: sửa đúng / sửa sai | Telex 0,25 | VNI 0,174 | VNI 0,25 |
+   |---|---|---|---|---|
+   | không (prior đều) | 50,8% / 7 (0,63%) | 40,3% / 376 (3,94%) | 64,7% / 0 | 51,6% / 501 (4,33%) |
+   | `[40, 12, 4, 1]` (bản thảo) | 46,8% / **25** (2,42%) | 39,0% / **554** (5,88%) | 57,9% / 1 | 49,2% / **593** (5,32%) |
+   | `[20, 8, 3, 1]` | 47,7% / 16 (1,53%) | 39,7% / 461 (4,85%) | 59,6% / 1 | 50,0% / 515 (4,59%) |
+   | `[12, 6, 3, 1]` | 48,6% / 11 (1,04%) | 40,2% / 431 (4,50%) | 60,4% / 0 | 50,5% / 493 (4,36%) |
+   | `[6, 3, 2, 1]` | 50,1% / 7 (0,64%) | 40,9% / 386 (3,98%) | 62,1% / 0 | 51,7% / 470 (4,07%) |
+   | **`[4, 3, 2, 1]`** ← đã chốt | **50,4% / 7** (0,64%) | **41,1% / 376** (3,87%) | **62,2% / 0** | **51,9% / 475** (4,10%) |
+   | `[3, 2, 1, 1]` | 50,9% / 7 (0,63%) | 41,3% / 369 (3,77%) | 63,2% / 0 | 52,1% / 456 (3,92%) |
+   | `[2, 1, 1, 1]` | 51,1% / 7 (0,63%) | 41,4% / 364 (3,72%) | 63,6% / 2 | 52,5% / 458 (3,91%) |
+
+   Ba điều đọc được:
+
+   - **Rủi ro §C2 lo trước là thật.** Bậc 1 nặng 40 (3,7 nat ≈ 2Δ) **tăng sửa sai lên một nửa**
+     (376 → 554 ở Telex 0,25) và mất 4 điểm sửa đúng ở nhiễu thật: prior lật cả những ngón tay đã
+     nghiêng rõ sang một từ thông dụng khác. Đường cong đơn điệu — prior càng nhẹ càng về gần
+     mức prior đều — nên trọng số là knob **phải hạ**, không phải Δ.
+   - **Viet74K không thưởng cho prior tần suất.** Mỗi âm tiết xuất hiện đúng một lần, từ hiếm
+     ngang từ thường, nên bộ đo chỉ đo được *tác hại* của prior (lật từ hiếm sang từ thường) chứ
+     không đo được *lợi ích* của nó (trong văn bản thật từ bậc 1 chiếm phần lớn số lần gõ). Con số
+     ở đây vì thế là cận trên của hại và không nói gì về lợi — chọn trọng số theo tiêu chí
+     **không làm xấu Viet74K ở bất kỳ ô nào**, rồi để lợi ích tự đến ngoài đời.
+   - **`[4, 3, 2, 1]` là mức nặng nhất đạt tiêu chí đó**, và cũng là mức nhẹ nhất còn làm được việc:
+     bậc 1 hơn từ ngoài danh sách `ln 5` = 1,61 nat, vừa qua Δ = 1,5, tức chỉ đủ phá hoà `nhad`
+     chạm giữa `f`/`s` (test `the_shipped_prior_breaks_a_tie_towards_the_commoner_word`); `[3, 2, 1, 1]`
+     tốt hơn một chút trên bảng nhưng `ln 4` = 1,39 < Δ, prior không còn quyết định được gì và hai
+     bậc cuối trùng nhau.
+
+   Quét lại `INVALID_COST` × Δ với trọng số đã chốt (8 seed; ô 4,0/1,5 là 20 seed), Viet74K, sửa
+   đúng / sửa sai, "ship" = `--prior shipped`, "đều" = prior đều, cột cuối là `--keep` (chữ gõ có
+   chủ ý bị đổi, không có cửa chặn, Telex / VNI):
+
+   | `INVALID_COST` / Δ | Telex 0,174 ship · đều | Telex 0,25 ship · đều | VNI 0,174 ship · đều | VNI 0,25 ship · đều | `--keep` |
+   |---|---|---|---|---|---|
+   | 3,0 / 1,0 | 56,6% / 0,65% · 56,8% / 1,13% | 45,3% / 6,12% · 44,0% / 6,51% | 67,1% / 0,22% · 68,3% / 0,64% | 55,3% / 5,90% · 54,0% / 6,63% | 2,3% / 1,4% |
+   | 3,0 / 1,5 | 49,9% / 0,55% · 49,7% / 0,56% | 35,9% / 3,74% · 32,9% / 3,76% | 60,8% / 0 · 62,7% / 0 | 44,5% / 3,84% · 41,5% / 4,15% | 0,5% / 0,2% |
+   | 3,0 / 2,0 | 34,7% / 0,27% · 30,6% / 0 | 20,8% / 2,65% · 13,9% / 1,87% | 43,5% / 0 · 40,1% / 0 | 26,4% / 2,03% · 18,1% / 1,48% | 0 / 0 |
+   | 3,5 / 1,0 | 56,7% / 0,73% · 57,1% / 1,20% | 47,4% / 6,15% · 46,7% / 6,55% | 67,5% / 0,22% · 68,9% / 0,63% | 58,2% / 5,96% · 57,9% / 6,63% | 6,3% / 3,6% |
+   | 3,5 / 1,5 | 50,3% / 0,55% · 50,5% / 0,55% | 39,3% / 3,75% · 38,0% / 3,78% | 61,9% / 0 · 64,3% / 0 | 49,3% / 4,06% · 48,1% / 4,33% | 2,1% / 1,2% |
+   | 3,5 / 2,0 | 41,3% / 0,22% · 41,1% / 0 | 28,9% / 2,53% · 25,5% / 1,93% | 53,1% / 0 · 55,5% / 0 | 36,9% / 1,91% · 33,1% / 1,64% | 0,5% / 0,2% |
+   | 4,0 / 1,0 | 56,8% / 0,73% · 57,2% / 1,20% | 48,7% / 6,20% · 48,6% / 6,58% | 67,6% / 0,21% · 69,0% / 0,63% | 60,2% / 5,96% · 60,8% / 6,55% | 12,1% / 9,7% |
+   | **4,0 / 1,5** ← giữ | **51,2% / 0,36%** · 51,5% / 0,36% | **41,2% / 3,80%** · 40,4% / 3,90% | **61,9% / 0,13%** · 63,8% / 0,12% | **51,8% / 3,92%** · 51,5% / 4,20% | 5,8% / 4,4% |
+   | 4,0 / 2,0 | 41,5% / 0,22% · 41,6% / 0 | 31,5% / 2,56% · 29,5% / 2,01% | 54,1% / 0 · 56,9% / 0 | 40,8% / 1,95% · 38,6% / 1,62% | 1,7% / 1,1% |
+
+   **Không đổi `INVALID_COST` lẫn Δ.** Δ 2,0 mua 1,5–2 điểm sửa sai ở nhiễu 0,25 bằng 8–11 điểm
+   sửa đúng ở cả hai mức nhiễu — đúng đòn bẩy kém đã ghi ở đợt 1; Δ 1,0 thêm 6–9 điểm sửa đúng
+   nhưng sửa sai ở 0,25 lên 6% và `--keep` lên 12%. Hạ `INVALID_COST` về 3,0 giữ sửa sai y nguyên
+   mà mất 5–7 điểm sửa đúng ở 0,25 (và lý do máy thật ở đợt 2 vẫn còn đó); phần `--keep` nó cứu
+   được là việc `is_known_word` đã làm — với bất kỳ kho từ nào, cột đó bằng 0. Đáng chú ý: ở Δ 2,0
+   prior lại *tăng nhẹ* sửa sai so với prior đều (1,95% so với 1,62%) vì nó biến ca "vướng Δ" thành
+   ca áp dụng; ở Δ 1,5 nó trung tính hoặc tốt hơn ở mọi ô — thêm một lý do để Δ đứng yên.
+
+   **Bộ lọc `--known-only` vẫn tắt.** Với 2 100 âm tiết, `--prior shipped --known-only` vá 16–21%
+   số từ trượt (so với 41–62% không lọc) — độ phủ còn xa 8 955 âm tiết của Viet74K, dù sửa sai
+   hạ xuống 3,3–3,5% ở 0,25. Ngưỡng bật vẫn phải đo bằng đúng lệnh này khi danh sách lớn hơn.
+
+   **Số liệu 20 seed ở cấu hình chốt** (4,0 / 1,5 / `[4, 3, 2, 1]`): Telex 0,174 vá 51,2%, sai 10 lần
+   trên 2 741 lần sửa (0,36%); Telex 0,25 vá 41,2%, sai 3,80%; VNI 0,174 vá 61,9%, sai 4 lần (0,13%);
+   VNI 0,25 vá 51,8%, sai 3,92%; mọi ô ngang hoặc tốt hơn prior đều về sửa sai, VNI 0,174 mất
+   1,9 điểm sửa đúng vì vài ca từ hiếm giờ rơi vào "vướng Δ" thay vì được áp dụng. Viet74K có
+   mục sai chính tả; số sửa sai gồm cả những ca engine đúng mà kho từ sai, không truy về 0.
 2. **Bất biến**: mọi âm tiết hợp lệ gõ đúng phím không bao giờ bị đổi (property test toàn tập).
    ✅ `tests/correction_property.rs`, cùng với: không ứng viên nào trùng chữ đang hiển thị, ứng
    viên luôn xếp giảm dần, sửa rồi Xoá trả lại đúng tài liệu cũ, và **từ chối thì ra đúng kết
@@ -794,6 +876,12 @@ lời từ chối được tôn trọng, không phải từ không có ứng vi�
 | 4 ✅ | iOS: hoàn tác bằng phím Xoá, công tắc Cài đặt, tôn trọng `autocorrectionType` (chip trên thanh gợi ý: chưa) | UI test hoàn tác |
 | 4b ✅ | An toàn đợt 2: chữ nguyên tham gia so sánh, loại chữ số mở từ, bộ đo `--keep` | `--keep` < 1%, differential bật = tắt khi gõ đúng |
 | 4c ✅ | Danh sách giữ nguyên trong `is_known_word`, iOS: hoàn tác thì nhớ, đếm lý do bỏ sót, nhật ký từng chữ (Debug) | Test đơn vị + thử trên máy |
+| A1 ✅ | Engine: khôi phục ngay tại ranh giới, bỏ ứng viên cũ sau khi trả lời, `suppressed` tách khỏi `noCandidate` (#573) | Protocol test, differential, property |
+| A2 | Engine: `preview_correction` / `rank_correction` / `refuse_correction` trước khi từ kết thúc | Test preview + ngân sách cấp phát |
+| C1 ✅ | `vi.txt` bốn bậc, `syllable_tier` / `syllable_weight`, C ABI + JNI không cần handle (#574) | 0 cấp phát, lexicon-tool test, `gen-header.sh --check` |
+| C2 ✅ | `funput dev typos --prior shipped` dùng bảng bậc, đo lại `INVALID_COST` / Δ / trọng số bậc | Bảng số §12 đợt 3 |
+| B1 ✅ | iOS: thanh gợi ý hiện chữ gốc + ứng viên, bấm để giữ / sửa / hoàn tác, chính sách ô nhập, điểm chạm lúc đặt ngón (#575) | Test đơn vị + `check-swift-loc.sh` |
+| B2 | iOS: nối preview / refuse / rank thật qua FFI, UI test bốn ca | `TypoCorrectionUITests` |
 | 5 | Android: cùng lõi, batch edit | Instrumented test |
 | 6 | Chỉnh `σ`, `λ`, `Δ` theo kho lỗi và phản hồi TestFlight | Số liệu §13 |
 
@@ -801,8 +889,9 @@ lời từ chối được tôn trọng, không phải từ không có ứng vi�
 
 1. **Mặc định bật hay tắt** ở bản phát hành đầu? Đề xuất: bật cho người cài mới, tắt cho người
    đang dùng, kèm thông báo một lần.
-2. **Thanh gợi ý khi không chắc**: chiếm khe gợi ý đang có, hay thêm một hàng? Đề xuất: dùng
-   đúng khe hiện có, vì lúc đó chưa có gợi ý nào khác.
-3. **Học từ đã sửa**: từ được sửa có nên được `learn` như từ người dùng tự gõ? Đề xuất: có, nhưng
-   chỉ khi người dùng không hoàn tác trong từ kế tiếp.
+2. ~~**Thanh gợi ý khi không chắc**~~ — đã chốt (B1): **dùng chung khe** của thanh gợi ý. Khe sửa
+   lỗi đứng trước, gợi ý cá nhân lấp phần còn lại trong ba khe; không thêm hàng.
+3. ~~**Học từ đã sửa**~~ — đã chốt: **có**, và không cần điều kiện riêng. Phép sửa đi cùng
+   transaction commit của từ, nên tracker học đúng từ đã sửa như mọi từ người dùng gõ xong; hoàn
+   tác trong từ kế tiếp là một commit khác và tracker học lại chữ gốc.
 4. **Tên hiển thị** của cài đặt: "Tự sửa lỗi gõ" hay "Sửa lỗi phím bấm"?

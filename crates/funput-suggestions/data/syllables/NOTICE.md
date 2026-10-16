@@ -44,9 +44,10 @@ knowing before the list is put to work:
   leave it off until that number says otherwise.
 - Used as a **prior** — being on the list is evidence, not permission — a flat list
   moved nothing measurable, because `ln(1 + uses)` with every use at 1 is small
-  beside the confidence margin. The bands exist to give the prior something to say:
-  the top band is worth about 3.7 nats over an unlisted syllable, the bottom one
-  about 0.7.
-
-Whether those weights are right is measured, not assumed, by the same harness; the
-calibration lives in `docs/features/typo-correction.md`.
+  beside the confidence margin. The bands exist to give the prior something to say,
+  and the same harness then said how much it may say: the top band is worth about
+  1.6 nats over an unlisted syllable, the bottom one about 0.7. Heavier than that
+  (the first draft gave the top band 3.7 nats) and the prior starts overruling a
+  finger that clearly leaned, which on Viet74K showed up as more wrong repairs, not
+  fewer. The weights that came out of that sweep, and the tables behind them, are in
+  `docs/features/typo-correction.md` §12.

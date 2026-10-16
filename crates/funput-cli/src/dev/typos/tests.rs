@@ -216,3 +216,57 @@ fn a_listed_word_is_never_rewritten_by_a_keyboard() {
         }
     }
 }
+
+/// The shipped bands are a prior, and this is what a prior is for: `nhad` with the
+/// finger exactly between `f` and `s` is `nhà` or `nhá` on touch evidence alone, so a
+/// host with no store declines. One of the two is among the commonest words in the
+/// language and the other is not on the list, and that is enough to decide.
+#[test]
+fn the_shipped_prior_breaks_a_tie_towards_the_commoner_word() {
+    use funput_engine::{Engine, KeyTouch};
+
+    let typed = |prior: Prior| {
+        let mut engine = Engine::new();
+        engine.update_config(|config| {
+            config.method = InputMethod::Telex;
+            config.typo_correction = true;
+        });
+        for key in ['n', 'h', 'a'] {
+            engine.set_next_key_touch(KeyTouch::new(key, 0.0));
+            engine.process_char(key);
+        }
+        engine.set_next_key_touch(
+            KeyTouch::new('d', 0.3)
+                .with_alternate('f', 0.3)
+                .with_alternate('s', 0.3),
+        );
+        engine.process_char('d');
+        engine.process_char(' ');
+        assert!(engine.has_pending_correction());
+        let store = Store::learn(&[], prior);
+        let (uses, allowed) = store::ballots(engine.correction_candidates(), &store, false, 2);
+        let chosen = engine.choose_correction(&uses, &allowed);
+        chosen.map(|index| engine.correction_candidates()[index].text().to_owned())
+    };
+
+    assert_eq!(
+        typed(Prior::Uniform),
+        None,
+        "a tie on touch alone is declined"
+    );
+    assert_eq!(typed(Prior::Shipped).as_deref(), Some("nhà"));
+}
+
+/// `--known-only` under the shipped prior admits what the list holds, and nothing a
+/// store that has learned nothing could vouch for.
+#[test]
+fn known_only_under_the_shipped_prior_reads_the_list() {
+    let store = Store::learn(&[], Prior::Shipped);
+    assert_eq!(
+        store.uses("là"),
+        funput_suggestions::SYLLABLE_TIER_WEIGHTS[0]
+    );
+    assert_eq!(store.uses("dduwowfnh"), 0);
+    assert!(store.knows("ko"), "the keep list is still the veto");
+    assert!(!store.knows("là"), "the list is a prior, not the veto");
+}
