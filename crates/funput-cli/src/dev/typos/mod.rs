@@ -13,11 +13,13 @@
 //!
 //! - this file — the run loop.
 //! - `attempt` — typing one word and naming what became of it; `--keep` mode.
+//! - `inject` — the faults a fast typist makes before the finger even wanders.
 //! - `noise` — the key grid and the finger that misses it.
 //! - `report` — what is counted, and the human and JSON renderings.
 //! - `store` — the platform's word store, or the absence of one.
 
 mod attempt;
+mod inject;
 mod noise;
 mod report;
 mod store;
@@ -30,6 +32,7 @@ use super::coverage::corpus::load_syllables;
 use super::encode;
 use attempt::attempt;
 pub(in crate::dev) use attempt::run_keep;
+pub(in crate::dev) use inject::{Fault, Rates};
 use noise::Rng;
 use report::{Outcome, Tally};
 pub(in crate::dev) use store::Prior;
@@ -46,6 +49,10 @@ pub(super) struct Options {
     /// How many substituted keys a candidate may carry.
     pub(super) max_edits: usize,
     pub(super) seed: u64,
+    /// How many seeds to run, from `seed` up, summing the tallies.
+    pub(super) seeds: u64,
+    /// How often a word gets one typing fault, and of which kind.
+    pub(super) faults: Rates,
     pub(super) limit: Option<usize>,
     pub(super) show: usize,
     pub(super) json: bool,
@@ -74,16 +81,36 @@ fn measure(syllables: &[String], options: &Options) -> Tally {
     measure_typed(syllables, &keys, options)
 }
 
-/// Type each word through its keys and tally the outcomes.
+/// Type each word through its keys, once per seed, and tally the outcomes.
 fn measure_typed(words: &[String], keys: &[String], options: &Options) -> Tally {
-    let mut rng = Rng::new(options.seed);
     let store = Store::learn(words, options.prior);
     let mut tally = Tally::default();
+    for seed in options.seed..options.seed + options.seeds.max(1) {
+        tally.merge(measure_seed(words, keys, options, &store, seed));
+    }
+    tally.samples.truncate(options.show);
+    tally
+}
+
+fn measure_seed(
+    words: &[String],
+    keys: &[String],
+    options: &Options,
+    store: &Store,
+    seed: u64,
+) -> Tally {
+    let mut rng = Rng::new(seed);
+    // Faults draw from their own stream, so a seed types the same touches it
+    // always did — the numbers pinned in the docs stay reproducible.
+    let mut faults = rng.derived(0xFA17);
+    let mut tally = Tally::default();
     for (word, keys) in words.iter().zip(keys) {
-        let outcome = attempt(word, keys, options, &store, &mut rng);
-        tally.add(outcome);
-        if tally.samples.len() < options.show && outcome != Outcome::Typed {
-            tally.samples.push((word.clone(), keys.clone(), outcome));
+        let typed = attempt(word, keys, options, store, &mut rng, &mut faults);
+        tally.add(typed.outcome, typed.fault);
+        if tally.samples.len() < options.show && typed.outcome != Outcome::Typed {
+            tally
+                .samples
+                .push((word.clone(), typed.keys, typed.outcome));
         }
     }
     tally

@@ -56,6 +56,17 @@ pub enum DevCommand {
         /// Seed for the touch noise, so a run is reproducible.
         #[arg(long, default_value_t = 1)]
         seed: u64,
+        /// Run this many seeds from `--seed` up and sum them, for a corpus too
+        /// small to settle in one.
+        #[arg(long, default_value_t = 1)]
+        seeds: u64,
+        /// The share of words given one typing fault — a doubled, dropped or
+        /// swapped key, or a stray tone or shape key — before the finger wanders.
+        #[arg(long, default_value_t = 0.0)]
+        faults: f32,
+        /// Make every injected fault this kind, instead of one of each in turn.
+        #[arg(long, value_enum)]
+        fault: Option<typos::Fault>,
         /// Only offer candidates the word store recognizes.
         #[arg(long)]
         known_only: bool,
