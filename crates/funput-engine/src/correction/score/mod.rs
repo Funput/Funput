@@ -6,7 +6,12 @@
 //! trades that key's term for the neighbour's and pays a flat `λ`, which stops a
 //! two-key guess from beating a one-key guess on rounding noise alone.
 //!
-//! Scores are kept as milli-nats (`i32`) rather than `f32`: a candidate is reachable
+//! A candidate carries the *cost* of the edits that reached it, in nats: the flat
+//! `λ` per edit plus, where a touch was reported, what the swap gives up in touch
+//! evidence. The word as typed is the zero point, so its own base term never has to
+//! be computed — every comparison the ranking makes is a difference against it.
+//!
+//! Costs are kept as milli-nats (`i32`) rather than `f32`: a candidate is reachable
 //! from `Session`, which derives `Eq`.
 
 mod choose;
@@ -42,15 +47,16 @@ pub(crate) const MARGIN: f32 = 1.5;
 /// is not shut out by a familiar one.
 pub(crate) const PRIOR_FLOOR: f32 = 0.5;
 
-/// One way the word could have been meant, with the touch evidence behind it.
+/// One way the word could have been meant, with what it cost to get there.
 ///
-/// The score is the touch evidence *only*. How likely the word is — the user's own
+/// The cost is the edit evidence *only*. How likely the word is — the user's own
 /// use counts, an English lexicon — lives outside this crate, so the platform adds
 /// its prior before choosing (see [`crate::Engine::choose_correction`]).
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CorrectionCandidate {
     text: String,
-    score: i32,
+    /// Positive milli-nats; lower is better.
+    cost: i32,
     edits: u8,
 }
 
@@ -60,10 +66,16 @@ impl CorrectionCandidate {
         &self.text
     }
 
-    /// Log-likelihood of this word given where the fingers landed, in nats. Always
-    /// negative; closer to zero is better.
+    /// Minus the cost of the edits that reach this word, in nats: always negative,
+    /// closer to zero is better. Touch evidence is folded in where the host
+    /// reported it. The sign is the public contract — hosts add a prior to it.
     pub fn touch_score(&self) -> f32 {
-        from_milli(self.score)
+        -self.cost()
+    }
+
+    /// What reaching this word cost, in nats. Lower is better.
+    pub(crate) fn cost(&self) -> f32 {
+        from_milli(self.cost)
     }
 
     /// How many keys had to be substituted to reach this word.
@@ -72,10 +84,10 @@ impl CorrectionCandidate {
     }
 
     /// Refill in place so the string capacity survives into the next word.
-    fn fill(&mut self, text: &str, score: i32, edits: u8) {
+    fn fill(&mut self, text: &str, cost: i32, edits: u8) {
         self.text.clear();
         self.text.push_str(text);
-        self.score = score;
+        self.cost = cost;
         self.edits = edits;
     }
 }
@@ -85,15 +97,12 @@ fn key_term(distance: f32) -> f32 {
     -(distance * distance) / (2.0 * SIGMA * SIGMA)
 }
 
-/// What swapping one key for an alternate does to a word's score.
-pub(crate) fn edit_delta(typed_distance: f32, alternate_distance: f32) -> f32 {
-    key_term(alternate_distance) - key_term(typed_distance) - LAMBDA
-}
-
-/// The score of the word exactly as it was typed — the baseline every candidate
-/// starts from.
-pub(crate) fn base_score(distances: impl Iterator<Item = f32>) -> f32 {
-    distances.map(key_term).sum()
+/// What swapping the key that was typed for an alternate costs, in nats: the flat
+/// `λ`, plus the touch evidence given up by moving from the key the finger was
+/// `typed_distance` from to one it was `alternate_distance` from. Below `λ` when the
+/// alternate was the nearer key.
+pub(crate) fn substitution_cost(typed_distance: f32, alternate_distance: f32) -> f32 {
+    LAMBDA + key_term(typed_distance) - key_term(alternate_distance)
 }
 
 /// How much a word's use count is worth, in nats. `ln(1 + uses)` grows slowly enough
@@ -102,12 +111,12 @@ pub(crate) fn word_prior(uses: u32) -> f32 {
     (1.0 + uses as f32).ln() + PRIOR_FLOOR
 }
 
-pub(crate) fn to_milli(score: f32) -> i32 {
-    (score * 1000.0) as i32
+pub(crate) fn to_milli(nats: f32) -> i32 {
+    (nats * 1000.0) as i32
 }
 
-pub(crate) fn from_milli(score: i32) -> f32 {
-    score as f32 / 1000.0
+pub(crate) fn from_milli(milli: i32) -> f32 {
+    milli as f32 / 1000.0
 }
 
 #[cfg(test)]
@@ -115,22 +124,31 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_nearer_alternate_outscores_the_key_that_was_typed() {
+    fn a_nearer_alternate_costs_less_than_the_edit_alone() {
         // The finger landed most of a key away from what it hit, and a hair from
-        // its neighbour: the swap is worth more than the λ it costs.
-        assert!(edit_delta(0.8, 0.1) > 0.0);
+        // its neighbour: the evidence gained outweighs the λ the swap costs.
+        assert!(substitution_cost(0.8, 0.1) < 0.0);
     }
 
     #[test]
-    fn an_alternate_no_nearer_than_the_typed_key_is_never_worth_the_edit() {
-        assert!(edit_delta(0.2, 0.2) < 0.0);
+    fn an_alternate_no_nearer_than_the_typed_key_costs_at_least_the_edit() {
+        assert!((substitution_cost(0.2, 0.2) - LAMBDA).abs() < f32::EPSILON);
+        assert!(substitution_cost(0.1, 0.5) > LAMBDA);
     }
 
     #[test]
-    fn two_edits_are_penalised_more_than_one_at_equal_distance() {
-        let one = edit_delta(0.6, 0.2);
-        let two = one + edit_delta(0.6, 0.2);
-        assert!(two < one);
+    fn two_edits_cost_more_than_one_at_equal_distance() {
+        let one = substitution_cost(0.6, 0.2);
+        let two = one + substitution_cost(0.6, 0.2);
+        assert!(two > one);
+    }
+
+    #[test]
+    fn a_candidate_reports_its_cost_with_the_sign_hosts_expect() {
+        let mut candidate = CorrectionCandidate::default();
+        candidate.fill("nhà", 1250, 1);
+        assert!((candidate.cost() - 1.25).abs() < 0.001);
+        assert!((candidate.touch_score() + 1.25).abs() < 0.001);
     }
 
     #[test]

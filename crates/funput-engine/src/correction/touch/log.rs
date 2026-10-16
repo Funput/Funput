@@ -5,8 +5,7 @@
 //! Distances are Q8.8 integers because the log is reachable from `Session`, which
 //! derives `Eq`.
 
-use crate::correction::score;
-use crate::correction::touch::{MAX_ALTERNATES, from_q8};
+use crate::correction::touch::MAX_ALTERNATES;
 
 /// Longest word correction will look at. Past this the replay search stops paying
 /// for itself, and a very long token is rarely a mistyped syllable.
@@ -96,11 +95,6 @@ impl TouchLog {
                 .iter()
                 .zip(keys.chars())
                 .all(|(entry, key)| entry.typed == key)
-    }
-
-    /// The score of the word exactly as it was typed.
-    pub(crate) fn base_score(&self) -> f32 {
-        score::base_score(self.entries().iter().map(|e| from_q8(e.typed_distance)))
     }
 }
 

@@ -811,7 +811,7 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
      trong `keep.txt` là chữ có thật, cùng với từ điển tiếng Anh và chữ người dùng đã hoàn tác.
    - **Phím số ở đầu từ làm mất một chữ cái.** Phép phát lại bỏ qua chữ số mở đầu từ (VNI không
      cho chữ số mở từ), nên thay `t` bằng phím kề `5` cho ra `rước` thay vì `trước`. Giờ ứng viên
-     như vậy bị loại (`search::replay`). Ví dụ đo được trước đó: `quạt → ũa`, `Quắc → ắc`.
+     như vậy bị loại (`generate::replay`). Ví dụ đo được trước đó: `quạt → ũa`, `Quắc → ắc`.
    - **Bộ đo so chữ bỏ qua vị trí dấu thanh.** Hơn nửa cột "sửa sai" cũ là `khóa → khoá`,
      `tọa → toạ` — cùng một chữ. Giờ còn đúng 1 lần sửa sai VNI trên 71 640 từ ở nhiễu 0,174.
      "Bỏ sót" cũng được chia theo lý do: không có ứng viên / vướng Δ / chữ nguyên thắng / bị

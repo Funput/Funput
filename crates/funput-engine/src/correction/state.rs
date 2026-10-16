@@ -35,10 +35,11 @@ pub(crate) struct CorrectionState {
     /// again once the platform has answered, or the word has been left behind: a
     /// ranking must never outlive the word it was made for.
     pub(crate) len: usize,
-    /// Touch score of that word exactly as typed, in milli-nats — what a candidate
-    /// has to beat. Lives beside `candidates` rather than in `Pending` because it is
+    /// Whether the word exactly as typed stands as a rival to `candidates` — it does
+    /// when every key carried touch evidence, so a finger square on its keys can
+    /// speak for it. Lives beside `candidates` rather than in `Pending` because it is
     /// set by the search and read by the ranking, neither of which needs a boundary.
-    pub(crate) typed_score: i32,
+    pub(crate) typed_competes: bool,
     /// The live word `candidates` describe, when a host asked ahead of the boundary.
     pub(crate) preview: Option<Preview>,
     pub(crate) pending: Option<Pending>,
