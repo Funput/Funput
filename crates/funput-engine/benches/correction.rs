@@ -1,10 +1,11 @@
 //! Cost of the typo-correction search at a word boundary.
 //!
-//! The search is the one part of the feature that is not O(1): every combination of
-//! up to two substituted keys is replayed through the composition pipeline. This
-//! measures the worst case a real word can produce — ten keys, three neighbours each,
-//! which is 435 replays — and the ordinary keystroke path with the feature on, which
-//! must stay indistinguishable from having it off.
+//! The search is the one part of the feature that is not O(1): the edits of each
+//! cost tier are replayed through the composition pipeline until the verdict is
+//! settled or the replay budget (450) is spent. This measures a nine- and a ten-key
+//! slip with three neighbours each, the twelve-key worst case that spends the whole
+//! budget and finds nothing, and the ordinary keystroke path with the feature on,
+//! which must stay indistinguishable from having it off.
 //!
 //! Run: `cargo bench -p funput-engine --bench correction`
 
@@ -16,8 +17,11 @@ use funput_engine::{Engine, KeyTouch};
 
 /// Nine keys that end as raw keystrokes, one of them a neighbour away from `đường`.
 const MISTYPED: &str = "dduwowfnh";
-/// The worst case the key cap allows.
+/// Ten keys, one past the old cap.
 const LONGEST: &str = "dduwowfnhx";
+/// The worst case the key cap allows: twelve keys no edit can turn into a syllable,
+/// so every tier runs and the budget is what ends the search.
+const HOPELESS: &str = "bcdfghjklmnp";
 const TELEX: &str = "Tooi yeeu tieesng Vieejt. Hoom nay troiwf nuwowcs ddepj. ";
 
 fn engine() -> Engine {
@@ -44,7 +48,11 @@ fn type_crowded(engine: &mut Engine, keys: &str) {
 
 fn bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("correction");
-    for (name, keys) in [("nine-keys", MISTYPED), ("ten-keys", LONGEST)] {
+    for (name, keys) in [
+        ("nine-keys", MISTYPED),
+        ("ten-keys", LONGEST),
+        ("twelve-keys-no-candidate", HOPELESS),
+    ] {
         group.bench_function(name, |b| {
             b.iter(|| {
                 let mut engine = engine();

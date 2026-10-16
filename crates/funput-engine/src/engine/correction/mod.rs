@@ -22,11 +22,19 @@ impl Engine {
     /// Report where the finger landed for the key about to be sent.
     ///
     /// Consumed by the next [`Engine::process_key`], whatever key that turns out to
-    /// be, so a touch never attaches itself to a later keystroke. A word with a key
-    /// that arrived without one is left alone entirely: half-described evidence would
-    /// be worse than none.
+    /// be, so a touch never attaches itself to a later keystroke. Optional, key by
+    /// key: a key that arrives without one is read against the engine's own keyboard
+    /// layout, at a flat cost, and the word as typed then no longer competes with
+    /// the candidates — nobody saw where that finger landed.
     pub fn set_next_key_touch(&mut self, touch: KeyTouch) {
         correction::set_next(&mut self.session, touch);
+    }
+
+    /// How many variants the last search replayed. The latency knob, for tests.
+    #[cfg(test)]
+    pub(crate) fn correction_replays_last(&self) -> u32 {
+        self.correction_state()
+            .map_or(0, |state| state.replays_last)
     }
 
     /// Whether the last keystroke ended a word on a correction the platform still

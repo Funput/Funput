@@ -942,8 +942,9 @@ void funput_set_extra_onsets(FunputEngine *engine, uint8_t letters);
  * own documentation gives: it crosses the ABI by value, so growing it breaks every
  * host built against the previous header, silently, until each is rebuilt.
  *
- * On, the engine still does nothing until the host also reports where its touches
- * land — see `funput_engine_set_next_key_touch`.
+ * On, every word that ends as something other than a syllable is searched for a
+ * repair. Touch reports (`funput_engine_set_next_key_touch`) sharpen the search for
+ * the keys they describe; without them the engine reads its own keyboard layout.
  *
  * # Safety
  * `engine` must be a valid handle or null.
@@ -954,9 +955,11 @@ void funput_set_typo_correction(FunputEngine *engine, bool on);
  * Report where the finger landed for the key about to be sent.
  *
  * Consumed by the next `funput_process_key`, whatever key that turns out to be, so
- * a touch never attaches itself to a later keystroke. A word with a key that
- * arrived without one is left alone entirely — half-described evidence would be
- * worse than none — so a host either reports every key of a word or none of them.
+ * a touch never attaches itself to a later keystroke. Optional, key by key: a key
+ * that arrives without one is read against the engine's keyboard layout at a flat
+ * cost, and the word as typed then no longer competes with the candidates — only a
+ * word every key of which was reported can be kept "as typed" on the strength of
+ * where the fingers sat.
  *
  * Null-safe both ways: a null handle or a null `touch` does nothing.
  *

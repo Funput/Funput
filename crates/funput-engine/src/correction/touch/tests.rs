@@ -40,7 +40,7 @@ fn the_log_lines_up_with_the_raw_keys_it_was_fed() {
 #[test]
 fn a_word_longer_than_the_key_cap_leaves_the_log_unusable() {
     let mut session = session();
-    let keys = "abcdefghijk"; // MAX_WORD_KEYS + 1
+    let keys = "abcdefghijklm"; // MAX_WORD_KEYS + 1
     for key in keys.chars() {
         press(&mut session, key, key);
     }
@@ -56,6 +56,20 @@ fn an_uppercase_key_uppercases_the_alternates_offered_for_it() {
     let entry = log(&session).entries()[0];
     assert_eq!(entry.typed, 'N');
     assert_eq!(entry.alternates()[0].key, 'X');
+}
+
+#[test]
+fn a_key_without_a_touch_is_logged_as_unreported() {
+    let mut session = session();
+    press(&mut session, 'n', 'n');
+    session.keys.push('h');
+    note_key(&mut session, 'h', None);
+    assert!(log(&session).matches("nh"));
+    let entries = log(&session).entries();
+    assert!(entries[0].reported);
+    assert!(!entries[1].reported);
+    assert_eq!(entries[1].typed, 'h');
+    assert!(entries[1].alternates().is_empty());
 }
 
 #[test]

@@ -170,3 +170,11 @@ pub fn candidate_texts(engine: &Engine) -> Vec<&str> {
         .map(funput_engine::CorrectionCandidate::text)
         .collect()
 }
+
+/// Where `text` sits among the candidates on offer. Panics when it is not there.
+pub fn index_of(engine: &Engine, text: &str) -> usize {
+    candidate_texts(engine)
+        .iter()
+        .position(|candidate| *candidate == text)
+        .unwrap_or_else(|| panic!("{text} not among {:?}", candidate_texts(engine)))
+}

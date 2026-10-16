@@ -1,4 +1,4 @@
-//! Typo correction — fixing a neighbouring-key slip when the word ends.
+//! Typo correction — repairing a mistyped word when it ends.
 //!
 //! The iOS and Android system keyboards quietly repair a mistyped word at its
 //! boundary; Funput did not, which is most of the accuracy gap users feel when they
@@ -31,15 +31,18 @@
 //! - `gate` — which finished words correction may look at.
 //! - `preview` — the same search, asked for early, and the refusal of its answer.
 //! - `touch` — the public [`KeyTouch`] a host reports, and the per-word log of them.
-//! - `evidence` — that log as the generators read it: what each key could have been.
-//! - `generate` — the generators, and the bounded replay that validates what they
-//!   propose.
+//! - `layout` — the static keyboard that speaks for a key no touch was reported for.
+//! - `evidence` — log and layout as the generators read them: what each key could
+//!   have been, and at what cost.
+//! - `generate` — the generators, the cost tiers they run in, and the bounded replay
+//!   that validates what they propose.
 //! - `score` — [`CorrectionCandidate`] and the arithmetic that ranks them.
 //! - `state` — what is parked between the boundary and the platform's answer.
 
 mod evidence;
 mod gate;
 mod generate;
+mod layout;
 mod preview;
 pub(crate) mod score;
 pub(crate) mod state;
@@ -105,14 +108,12 @@ fn searched(state: &mut CorrectionState, session: &Session) -> usize {
 /// Whether correction could act on the word that just ended, and so whether the
 /// boundary needs to work out if it is a finished syllable.
 ///
-/// Answered before that check rather than after, because the check allocates: a host
-/// that never reports where its touches land must not pay for a feature it is not
-/// using.
+/// Answered before that check rather than after, because the check allocates: with
+/// the feature off a host must not pay for it. On, every word boundary pays for at
+/// most that one check, touch data or not — a word that arrived with no report at
+/// all is still searched, against the layout.
 pub(crate) fn wants_verdict(session: &Session) -> bool {
-    session
-        .correction
-        .as_ref()
-        .is_some_and(|state| state.touch.matches(&session.keys))
+    session.correction.is_some()
 }
 
 /// Whether the user already undid this exact word. Consumed on the way past: typing

@@ -25,14 +25,16 @@ pub(super) fn eligible(session: &Session, complete: bool) -> bool {
 pub(super) fn eligible_live(session: &Session) -> bool {
     // The state is built when the setting goes on and dropped when it goes off, so
     // its absence is the switch.
-    let Some(state) = session.correction.as_ref() else {
+    if session.correction.is_none() {
         return false;
-    };
+    }
     session.enabled
         // A word the user flipped by hand is the form they asked for.
         && session.restore_override.is_none()
         && !session.buffer.is_empty()
-        && state.touch.matches(&session.keys)
+        // Raw keys the engine did not see typed — an adopted word's are invented
+        // from its text — cannot be replayed.
+        && session.keys.is_ascii()
         && !has_literal_digit(session)
         && !is_all_uppercase(&session.buffer)
         // `aw` → `ă` is not a complete syllable, but it is exactly the letter the

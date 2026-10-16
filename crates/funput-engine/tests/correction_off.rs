@@ -85,6 +85,44 @@ fn the_default_configuration_leaves_typo_correction_off() {
     assert!(!Engine::new().config().typo_correction);
 }
 
+/// With the setting off, nothing of the feature runs at all: the stream is the
+/// recorded one, keystroke for keystroke.
+#[test]
+fn every_fixture_case_keeps_its_instruction_stream_with_the_setting_off() {
+    for case in STEP_CASES {
+        let mut engine = Engine::new();
+        engine.update_config(|config| {
+            config.method = case.method;
+            config.tone_style = ToneStyle::Traditional;
+            config.typo_correction = false;
+        });
+        let steps: Vec<_> = case
+            .keys
+            .chars()
+            .map(|key| {
+                let result = engine.process_char(key);
+                (result.action, result.backspace, result.output)
+            })
+            .collect();
+        assert_eq!(
+            engine.buffer(),
+            case.final_buffer,
+            "{}: final buffer",
+            case.label
+        );
+        for (i, (got, expected)) in steps.iter().zip(case.steps.iter()).enumerate() {
+            assert_eq!(
+                (got.0, got.1, got.2.as_str()),
+                (expected.action, expected.backspace, expected.output),
+                "{}: step {i}",
+                case.label
+            );
+        }
+    }
+}
+
+/// On but blind — no touch reported — the boundary parks what the layout finds and
+/// emits nothing for it, so the stream is still the recorded one.
 #[test]
 fn every_fixture_case_keeps_its_instruction_stream_when_no_touches_are_reported() {
     for case in STEP_CASES {

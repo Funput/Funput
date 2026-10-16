@@ -95,9 +95,14 @@ Cần đủ **tất cả**:
 | Không phải gõ tắt (shortcut khớp) | `boundary/shortcut.rs` chạy trước |
 | Từ không chứa chữ số (trừ VNI), không toàn chữ hoa | `correction::eligible` |
 | Từ chưa bị người dùng hoàn tác | `correction::undone_before` |
+| Chuỗi phím thô là ASCII (từ `adopt` dựng lại phím từ chữ, không phát lại được) | `correction::eligible` |
 | Cài đặt `typo_correction` bật | `EngineConfig` |
 | Host cho phép autocorrect | nền tảng, §8.1 và §9.1 |
-| Có dữ liệu chạm cho **mọi** phím của từ, khớp với `session.keys` | `TouchLog::matches` |
+
+**Điểm chạm không còn là điều kiện** (E2). Từ nào ranh giới thấy là *chết* đều được tìm; phím có
+điểm chạm thì dùng phím kề host báo, phím không có thì engine tra bố cục bàn phím tĩnh của nó
+(§5.1). Điều kiện cũ "có dữ liệu chạm cho mọi phím" giờ chỉ quyết định một việc: chữ gõ nguyên có
+được đứng làm đối thủ của các ứng viên hay không (§5.3).
 
 **Đã bỏ so với bản thiết kế:** điều kiện "không rơi vào `keystrokes_intend_vietnamese`". Chính
 hai ca phải sửa của §3.4 lại bị nó bắt — `dduowxj` có `đ` trong buffer, `d9u7o7nh2` có chữ số
@@ -195,42 +200,70 @@ Trường để riêng tư và dựng bằng builder, vì bên trong engine chú
 derive `Eq`, mà `f32` thì không. Khoảng cách lưu Q8.8 (`u16`), điểm lưu milli-nat (`i32`);
 `CorrectionCandidate::touch_score()` đổi ngược khi nền tảng đọc.
 
-Nền tảng tự tính danh sách này từ hình học đang hiển thị; lõi không biết bố cục bàn phím. Phím
-nào **không** có dữ liệu chạm (gõ tắt, dán, bàn phím vật lý) làm **cả từ** mất khả năng sửa —
-bằng chứng khuyết một nửa còn tệ hơn không có. Cũng vậy khi chuỗi phím bị viết lại sau lưng
-(phím dấu bị revert, `adopt`, Xoá): log tự đánh dấu không dùng được, và hệ quả luôn là *không
-sửa*, không bao giờ là sửa sai.
+Nền tảng tự tính danh sách này từ hình học đang hiển thị. **Điểm chạm là tuỳ chọn, theo từng
+phím** (E2): phím nào host không báo (bàn phím vật lý, host chỉ báo những lần chạm mập mờ) vẫn
+được ghi vào log với cờ `reported = false`, và khi tìm ứng viên engine tra **bố cục bàn phím
+tĩnh** của nó cho phím đó (`correction/layout.rs`: lưới QWERTY so le cộng hàng số cho VNI, phím
+kề trong 1,2 bước, gần nhất trước, tối đa 6, giá phẳng `SUBSTITUTE_STATIC`). Phím có điểm chạm
+thì dùng đúng danh sách phím kề host báo, giá theo mô hình chạm. Generator không phân biệt được
+hai nguồn này — `Evidence::neighbours(origin, key)` là chỗ duy nhất biết.
+
+Hai hệ quả: (1) từ không có điểm chạm nào vẫn có ứng viên; (2) **chữ gõ nguyên chỉ đứng làm đối
+thủ khi mọi phím đều có điểm chạm** (`Evidence::has_full_touch` → `state.typed_competes`) — ngón
+đặt vuông trên phím là bằng chứng *cho* chữ gõ nguyên, còn phím không ai thấy ngón đặt đâu thì
+không. Khi chuỗi phím bị viết lại sau lưng (phím dấu bị revert, `adopt`, Xoá): log tự đánh dấu
+không dùng được, **cả từ** rơi về bố cục tĩnh (không nửa vời), và chữ gõ nguyên không cạnh tranh.
 
 ### 5.2. Sinh ứng viên
 
+Từ E2, phép tìm là **theo từ**: từ chuỗi phím thô của một từ không thể là âm tiết, tìm âm tiết hợp
+lệ gần nhất dưới một tập **phép lỗi** có chi phí, chứ không chỉ thay phím kề.
+
 ```
-cho mỗi tập con S các vị trí trong từ, |S| ≤ 2:
-    cho mỗi tổ hợp phím thay tại S:
-        phát lại toàn bộ chuỗi phím qua một Session nháp (cùng config)
-        nếu kết quả là âm tiết hoàn chỉnh hợp lệ → giữ làm ứng viên
+Variant { keys, origin, len }      // một giả thuyết về chuỗi phím; origin[i] = phím gõ mà
+                                   // vị trí i thừa hưởng điểm chạm (None = không ai bấm)
+trait Generator { generate(&self, &Variant, &Evidence, &mut Sink) -> Flow }
+Sink::offer(keys, cost, edits)     // phát lại qua Session nháp → khác chữ đang hiển thị
+                                   // → score::consider; đếm số lần phát lại
 ```
 
-- **Trần:** từ dài 2–10 phím; tối đa 3 thay thế mỗi phím; tối đa 2 phím thay.
-  Số chuỗi phải phát lại tối đa `10×3 + C(10,2)×9 = 435` (không tính chuỗi gốc — nó đã được
-  biết là không hợp lệ). Đo thật: một từ 9 phím, mỗi phím 3 phím kề, tốn 4509 lần cấp phát —
-  đúng cỡ một lần cho mỗi phím được phát lại, và chỉ trả một lần cho mỗi từ được sửa.
-- **Phát lại** chạy thẳng `compose::pipeline::process` trên một `Session` nháp dùng lại (không
-  qua `Engine`, để không chạm `prepare_key`, ranh giới từ hay trạng thái viết hoa), nên mọi luật
-  Telex, VNI, Telex nâng cao, đặt dấu kiểu cũ/mới đều đúng theo cấu hình hiện tại. Không có bản
-  sao luật thứ hai.
-- Config nháp **ép tắt** `smart_restore`, `eager_restore`, `spell_check`, `auto_capitalize`:
-  nếu không, chính cơ chế English restore sẽ biến một ứng viên hợp lệ thành chữ thô giữa chừng
-  và bước kiểm tra sẽ chấm nhầm chuỗi phím thay vì âm tiết. Vòng phát lại cũng phải tự làm hai
-  việc `process_key` làm quanh pipeline: chặn chữ số mở đầu từ, và đẩy phím vào `keys`.
-- Phím dấu (`s f r x j w z`, nhân đôi nguyên âm, chữ số VNI) được đối xử như mọi phím khác;
-  nhờ vậy `dduowxj → dduowcj` và `nhsf → nhaf` nằm trong cùng một cơ chế.
+| Phép | Ví dụ | Chi phí (nat) | Ghi chú |
+|---|---|---|---|
+| `DupDelete` | `chowii` → `chơi` | 1,5 | xoá lần bấm thứ hai của phím lặp (không phân biệt hoa) |
+| `ModifierDelete` | `chsowi` → `chơi`, `cho7ii` → `chơi` | 3,0 | phím có `key_role ∈ {Tone, Shape, Stroke, Remove}` (C0) |
+| `Transpose` | `cohwi` → `chơi` | 3,0 | hai phím kề đổi chỗ; hoa/thường **ở lại vị trí** (`Nhad` → `Hnad`) |
+| `Substitute` | `dduwowfnh` → `đường` | `λ` 1,2 + điểm chạm, hoặc `SUBSTITUTE_STATIC` 1,2 | phím kề host báo, hoặc bố cục tĩnh |
+| `Delete` | | 3,5 | những vị trí hai phép xoá rẻ hơn không phủ; không bao giờ để lại dưới 2 phím |
+| `Insert` | `chwi` → `chơi` | 3,5 | `a..z` (+ chữ số có vai trò, VNI) ở mọi khe; hoa/thường theo vị trí |
+| `Pair<F>` | `chowii` + trượt | cost(F) + cost(thay) | mỗi biến thể của F × một phép thay ở vị trí F không đụng; `edits = 2` |
+
+- **Bậc chi phí và luật dừng** (`generate/tiers.rs`): generator xếp vào ba bậc theo chi phí thấp
+  nhất có thể của nó, trong bậc thì rẻ-và-ít-phép trước. Sau mỗi bậc: **dừng khi
+  `best_cost + Δ ≤ min_cost(bậc kế)`** — không ứng viên nào bậc sau còn lọt vào trong Δ của ứng
+  viên nhất để đổi verdict. Bậc: (1) thay phím, đúp, dư dấu, đảo — sàn 1,2; (2) cặp thay+thay,
+  đúp+thay — sàn 2,4; (3) thừa, thiếu, cặp dư dấu/đảo/thừa + thay — sàn 3,5. Ví dụ `chowii`:
+  bậc 1 ra `chơi` (1,5) → 3,0 > 2,4 → chạy bậc 2 → 3,0 ≤ 3,5 → dừng, không thử một phép chèn
+  nào; một phím trượt có điểm chạm (≈ 1–2 nat) cũng dừng sau bậc 2; từ không bậc nào cứu được
+  chạy tới trần.
+- **Trần:** từ dài 2–12 phím; `MAX_REPLAYS_PER_WORD = 450` lần phát lại cho mỗi từ (cùng bao thư
+  với 435 của v2); chạm trần giữa bậc thì kết thúc với những gì có. `state.replays_last` ghi số
+  thật cho test.
+- **Phát lại** vẫn chạy thẳng `compose::pipeline::process` trên một `Session` nháp dùng lại (không
+  qua `Engine`), config nháp ép tắt `smart_restore`, `eager_restore`, `spell_check`,
+  `auto_capitalize`; chặn chữ số mở đầu từ; không có bản sao luật thứ hai.
+- Bộ giải mã vuốt phím sau này gọi `find_with(&MY_TIERS, …)` với `Evidence::none(method)`;
+  generator là unit struct `'static` trong bảng `const` vì `Session: Eq` không chứa `dyn`.
 
 ### 5.3. Chấm điểm
 
 ```
-score = Σ_i  log P(chạm_i | phím_i)  +  log prior(từ)  −  λ × số phím thay
-P(chạm | phím) = exp(−d² / (2σ²)),  d tính theo bước phím
+score = log prior(từ) − cost(ứng viên)
+cost  = Σ chi phí từng phép (bảng §5.2); với phép thay có điểm chạm:
+        λ + log P(chạm | phím gõ) − log P(chạm | phím thay),  P(chạm | phím) = exp(−d² / (2σ²))
 ```
+
+Chữ gõ nguyên là điểm 0 của thang chi phí, nên số hạng chạm của nó không bao giờ phải tính;
+`CorrectionCandidate` giữ `cost` (milli-nat dương), `touch_score()` trả `−cost` cho ABI cũ.
 
 | Hằng số | Giá trị khởi điểm | Ý nghĩa |
 |---|---|---|
@@ -256,9 +289,11 @@ P(chạm | phím) = exp(−d² / (2σ²)),  d tính theo bước phím
   nó chỉ đủ **phá hoà** khi điểm chạm không phân biệt được hai ứng viên (`nhad` chạm giữa `f`/`s`
   → `nhà`), chứ không lật được một ngón tay đã nghiêng rõ. Bản đầu định `[40, 12, 4, 1]` (bậc 1
   hơn 3,7 nat ≈ 2Δ) và bộ đo bác ngay: xem §12 đợt 3.
-- **Chữ nguyên như đã gõ cũng là một ứng viên**, điểm = điểm chạm gốc − `INVALID_COST` (**4,0**,
-  §12.1 đợt 2): chỉ một lần chạm cách tâm phím dưới khoảng 0,15 bước phím mới được tin là cố ý. `runner_up` bắt đầu từ điểm đó, không phải âm vô cực. Trước đợt 2, một ứng viên
-  duy nhất luôn thắng dù ngón đặt ngay giữa phím — nên `ko`, `atlas`, `robot` gõ đúng vẫn bị đổi.
+- **Chữ nguyên như đã gõ cũng là một ứng viên**, điểm = −`INVALID_COST` (**4,0**, §12.1 đợt 2)
+  — **chỉ khi mọi phím của từ đều có điểm chạm** (`typed_competes`); thiếu một phím thì không có
+  đối thủ này và `runner_up` bắt đầu từ âm vô cực. Nó chỉ chặn *tự áp dụng*: ứng viên vẫn được
+  đưa lên thanh. Trước đợt 2, một ứng viên duy nhất luôn thắng dù ngón đặt ngay giữa phím — nên
+  `ko`, `atlas`, `robot` gõ đúng vẫn bị đổi.
 - **Không sửa** nếu `best − runner_up < Δ`; khi đó gửi cả hai lên thanh gợi ý. Nếu thứ cản là
   chữ nguyên thì engine đếm vào `kept_as_typed`, nếu là ứng viên thứ hai thì `skipped_ambiguous`.
 - `σ`, `λ` là hằng số khởi điểm. **`Δ` đã chốt ở 1,5** sau khi đo (§12.1): nó là knob **yếu**
@@ -682,8 +717,9 @@ lý cũng khác (đảo thứ tự, gõ lặp), nên tập phép sửa phải th
 
 Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
 
-1. **Thêm/bớt một phím** (`ddleer` → `để`): mở rộng tập phép sửa, giữ nguyên phần chấm điểm.
-2. **Đảo hai phím kề** (`nhaf` ↔ `nhfa`): rẻ, hay gặp khi gõ nhanh hai ngón.
+1. ~~**Thêm/bớt một phím**~~ — **đã làm** (E2, §5.2): `Delete`, `Insert`, cùng `DupDelete` và
+   `ModifierDelete` cho hai dạng lỗi hay gặp nhất.
+2. ~~**Đảo hai phím kề**~~ — **đã làm** (E2): `Transpose`.
 3. ~~**Bảng tần suất âm tiết đóng gói**~~ — **đã làm** dưới dạng bảng xếp hạng bốn bậc
    (`syllable_weight`, §2 và §7.3), gắn vào đúng chỗ `prior`, không đụng phần còn lại. Việc còn
    lại là nối harness `funput dev typos --prior shipped` vào bảng và đo lại `INVALID_COST` /
@@ -936,6 +972,77 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
      ứng viên lên thanh và để Space chỉ tự áp dụng khi hơn ứng viên kế ≥ Δ là chỗ để làm việc đó.
    - **Hàng trượt chạm khớp Đợt 3** (50,9 / 41,1 / 59,6 / 51,9% so với 51,2 / 41,2 / 61,9 / 51,8%
      ở 20 seed): bộ đo mới không đổi gì ở phần đã đo, chỉ thêm phần chưa đo.
+   **Đợt 4 (17/10/2026, sau): engine sửa theo từ (E2).** Cùng những lệnh của phần "nền" ở trên,
+   chạy lại với engine E2 (`DupDelete`, `ModifierDelete`, `Transpose`, `Substitute`, `Delete`,
+   `Insert`, cặp hai phép; điểm chạm tuỳ chọn; chữ gõ nguyên chỉ cạnh tranh khi đủ chạm).
+
+   **Bảng giá phải đo lại.** Bảng giá viết trong kế hoạch (đúp 0,5 · dư dấu 0,7 · đảo 1,0 · thừa 1,5
+   · thiếu 2,0) làm sập hàng trượt chạm: Telex 0,174 vá 51,2 % → **4,8 %**, sửa sai 0,36 % →
+   **23,9 %** (3 129 trên 5 331 cú trượt thành "vướng Δ"). Lý do là thang đo: một phép thay có
+   điểm chạm thật tốn `λ` + phần bằng chứng ngón tay nhường lại, cỡ 1,5–2,5 nat; mọi phép cấu
+   trúc rẻ hơn thế đứng *trong* Δ của chính phép sửa cú trượt, và rất nhiều trong số đó là từ
+   thật (bỏ dấu một từ có dấu, bỏ một phím lặp) — nên "áp dụng" thành "lưỡng lự". Quét 11 bảng
+   giá trên Viet74K (kết quả thô trong PR E2): giá dư dấu là thủ phạm chính (hạ 3,0 → 2,2 mất 8
+   điểm vá ở hàng trượt chạm, đổi lấy +3 điểm ở hàng dư dấu, vì cặp *bỏ dấu + thay phím* với tới
+   bản không dấu của hầu hết từ có dấu); giá đúp gần như miễn phí (3,0 → 1,5 mất 1,4 điểm trượt
+   chạm, được +20 điểm hàng đúp); phụ phí cho cặp hai phép (thử +1,0 / +1,5) chỉ giấu đối thủ đi
+   và nhân đôi sửa sai. Chốt: **đúp 1,5 · dư dấu 3,0 · đảo 3,0 · thay `λ` 1,2 (+ chạm) / tĩnh 1,2
+   · thừa 3,5 · thiếu 3,5**, ba bậc sàn 1,2 / 2,4 / 3,5 (§5.2). `INVALID_COST`, `Δ`, trọng số bậc
+   không đổi.
+
+   Đợt 3 (`--prior shipped --faults 0 --seeds 20`):
+
+   | Kiểu gõ · nhiễu | Trượt | Vá | Sửa sai (trên số lần sửa) | Vướng Δ | Chữ nguyên thắng |
+   |---|---|---|---|---|---|
+   | Telex 0,174 | 5 331 | 43,7 % | 12 (0,51 %) | 1 123 | 8 |
+   | Telex 0,25 | 56 873 | 32,3 % | 867 (4,50 %) | 17 822 | 908 |
+   | VNI 0,174 | 5 116 | 55,9 % | 6 (0,21 %) | 949 | 7 |
+   | VNI 0,25 | 53 627 | 43,9 % | 1 073 (4,36 %) | 15 274 | 1 394 |
+
+   Đợt 4 trộn (`--faults 0.3 --seeds 8`), mỗi ô: số từ · sửa đúng · sửa sai:
+
+   | Kiểu gõ · nhiễu | Từ có lỗi | Sửa đúng | Sửa sai (trên số lần sửa) | Trượt chạm | Đúp phím | Thiếu phím | Đảo phím | Dư phím dấu |
+   |---|---|---|---|---|---|---|---|---|
+   | Telex 0,174 | 22 994 | 17,6 % | 355 (8,1 %) | 1 546 · 42,2 % · 0,5 % | 5 331 · 44,5 % · 0,8 % | 5 383 · 0,2 % · 2,9 % | 5 398 · 7,3 % · 1,4 % | 5 336 · 11,5 % · 1,3 % |
+   | Telex 0,25 | 37 375 | 20,7 % | 1 324 (14,6 %) | 15 927 · 32,3 % · 1,6 % | 5 331 · 30,7 % · 2,2 % | 5 383 · 0,2 % · 8,8 % | 5 398 · 8,7 % · 3,4 % | 5 336 · 9,0 % · 5,5 % |
+   | VNI 0,174 | 22 893 | 26,2 % | 318 (5,0 %) | 1 443 · 55,6 % · 0,3 % | 5 331 · 60,3 % · 1,0 % | 5 381 · 0,9 % · 1,7 % | 5 402 · 12,3 % · 1,9 % | 5 336 · 23,8 % · 1,2 % |
+   | VNI 0,25 | 36 386 | 28,9 % | 1 337 (11,3 %) | 14 936 · 44,1 % · 2,0 % | 5 331 · 43,3 % · 3,1 % | 5 381 · 0,9 % · 7,1 % | 5 402 · 12,0 % · 3,2 % | 5 336 · 17,4 % · 5,9 % |
+
+   Từng loại (`--fault <loại> --faults 0.3 --seeds 8`): sửa đúng / sửa sai / để nguyên:
+
+   | Loại lỗi | Telex 0,174 | Telex 0,25 | VNI 0,174 | VNI 0,25 |
+   |---|---|---|---|---|
+   | Đúp phím | 9 836 (45,5 %) / 188 (0,9 %) / 11 591 | 6 945 (32,1 %) / 584 (2,7 %) / 14 086 | 13 485 (62,4 %) / 187 (0,9 %) / 7 943 | 9 813 (45,4 %) / 630 (2,9 %) / 11 172 |
+   | Thiếu phím | 75 (0,3 %) / 686 (3,2 %) / 20 816 | 101 (0,5 %) / 1 825 (8,5 %) / 19 651 | 179 (0,8 %) / 527 (2,4 %) / 20 871 | 205 (1,0 %) / 1 870 (8,7 %) / 19 502 |
+   | Đảo phím | 1 330 (6,2 %) / 404 (1,9 %) / 19 840 | 1 706 (7,9 %) / 768 (3,6 %) / 19 100 | 2 169 (10,1 %) / 432 (2,0 %) / 18 976 | 2 307 (10,7 %) / 769 (3,6 %) / 18 501 |
+   | Dư phím dấu | 2 207 (10,3 %) / 278 (1,3 %) / 18 952 | 1 948 (9,1 %) / 1 233 (5,8 %) / 18 256 | 5 253 (24,5 %) / 243 (1,1 %) / 15 941 | 4 010 (18,7 %) / 1 241 (5,8 %) / 16 186 |
+
+   Keep (`--keep --faults 0 --seeds 20`): Telex 0,174: 0 / 2469, Telex 0,25: 0 / 1931, VNI 0,174: 0 / 2467, VNI 0,25: 0 / 1933
+
+   Đọc ra:
+
+   - **Hàng trượt chạm giữ trong cổng** sửa sai (+0,5 điểm ở 0,174, +1,0 ở 0,25 so với Đợt 3:
+     0,36 / 3,80 / 0,13 / 3,92 %) nhưng mất 5–9 điểm vá so với Đợt 3 (51,2 / 41,2 / 61,9 / 51,8 %):
+     phần mất đi nằm trọn ở cột "vướng Δ" — ứng viên đúng vẫn đứng đầu danh sách, chỉ không còn
+     được tự áp dụng vì một từ thật khác cách nó một phép rẻ. Thanh gợi ý (B1/B2) hiện cả hai.
+   - **Cột sửa sai của bốn hàng lỗi đều giảm** so với nền (đúp 7,0 → 0,9 %, thiếu 6,2 → 3,2 %, đảo
+     7,2 → 1,9 %, dư dấu 4,8 → 1,3 % ở Telex 0,174; VNI và 0,25 cùng chiều) — đúng mục tiêu chính
+     của Đợt 4: v2 không còn "thấy từ chết, thay một phím, rơi vào từ khác".
+   - **Vá theo loại lỗi chưa tới mốc 60 / 60 / 40 / 25 %**: đúp 45 / 32 / 62 / 45 %, dư dấu
+     10 / 9 / 25 / 19 %, đảo 6 / 8 / 10 / 11 %, thiếu < 1 %. Hai lý do đo được: (1) với Telex,
+     đúp một nguyên âm a/e/o *là* phép gõ mũ — `to`+`o` = `tô`, `me`+`e` = `mê` — nên một phần
+     lớn "đúp" là âm tiết hợp lệ và engine đúng khi để nguyên (cột "để nguyên" gồm cả những ca
+     này); (2) với Δ = 1,5, hai từ thật cách nhau một phép rẻ là "lưỡng lự" theo thiết kế — `chsowi`
+     ra `chơi` và `chới` cùng 3,0; `chuon` ra `chuôn` và `chươn` cùng 3,5 — và phần lớn từ có lỗi
+     có một đối thủ như thế. Thiếu phím gần như không bao giờ tự áp dụng (3,5 cộng Δ vượt xa mọi
+     prior) nhưng ứng viên vẫn lên thanh. Mốc này cần tăng Δ-theo-ngữ-cảnh hoặc prior mạnh hơn,
+     không phải hạ giá — hạ giá đã đo là đổi sửa sai lấy vá.
+   - **`--keep`: 0 / 0 / 0 / 0** từ bị đổi (nền 5,8 % / 4,4 %): mọi từ trong danh sách giữ được
+     `is_known_word` phủ quyết trước khi engine được hỏi.
+   - Độ trễ: một cú trượt có điểm chạm dừng sau bậc 2 (`dduwowfnh`: 13 lần phát lại); từ không
+     bậc nào cứu được chạy tới trần 450 (12 phím, 3 phím kề: 7 346 cấp phát, bench
+     `twelve-keys-no-candidate` 301 µs).
+
 2. **Bất biến**: mọi âm tiết hợp lệ gõ đúng phím không bao giờ bị đổi (property test toàn tập).
    ✅ `tests/correction_property.rs`, cùng với: không ứng viên nào trùng chữ đang hiển thị, ứng
    viên luôn xếp giảm dần, sửa rồi Xoá trả lại đúng tài liệu cũ, và **từ chối thì ra đúng kết
@@ -944,9 +1051,10 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    `nhá`, lệch phải ra `nhà`, chạm giữa không sửa.
 4. **Hoàn tác**: sửa → Xoá → đúng chuỗi gốc; gõ lại từ đó trong cùng phiên không bị sửa lần hai.
 5. **Hiệu năng**: p99 < 2ms cho một từ 10 phím trên thiết bị cũ nhất hỗ trợ.
-   ✅ `benches/correction.rs`. Đo trên máy dev (Apple Silicon, release): từ 9 phím **356 µs**,
-   từ 10 phím **496 µs** ở trường hợp nặng nhất — mọi phím đều có đủ 3 phím kề. Gõ thường có
-   kèm điểm chạm: **0,14 µs/phím**, không đo được khác lúc tắt.
+   ✅ `benches/correction.rs`. Đo trên máy dev (Apple Silicon, release), E2: từ 9 phím
+   **396 µs**, từ 10 phím **522 µs** (mọi phím đủ 3 phím kề), từ 12 phím không bậc nào cứu được
+   — chạy tới trần 450 — **301 µs**. Gõ thường có kèm điểm chạm: **0,14 µs/phím**, không đo
+   được khác lúc tắt. (v2: 356 / 496 µs.)
 
    Con số 496 µs là trên máy dev; một iPhone đời cũ chậm hơn cỡ 3 lần, tức ~1,5 ms — vẫn dưới
    ngưỡng nhưng không dư dả. **Cách rẻ nhất để lấy lại biên**: nền tảng chỉ gửi phím kề khi
@@ -971,9 +1079,10 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    **bật** ở cả ba dáng một nền tảng có thể mang: không gửi điểm chạm (phải ra đúng từng bước
    instruction cũ), gửi điểm chạm rồi từ chối mọi đề nghị, và gửi rồi không trả lời (cả hai phải
    ra đúng văn bản cũ).
-8. **Ngân sách cấp phát**: ✅ `tests/alloc_budget_correction.rs` — host không gửi điểm chạm thì
-   số lần cấp phát *bằng đúng* lúc tắt; gửi điểm chạm thì tốn thêm nhiều nhất một lần kiểm âm
-   tiết cho mỗi từ; một từ được sửa nằm trong trần 5000. `tests/alloc_budget.rs` cũ không đụng tới.
+8. **Ngân sách cấp phát**: ✅ `tests/alloc_budget_correction.rs` — bật tính năng (có hay không
+   điểm chạm) tốn thêm nhiều nhất một lần kiểm âm tiết cho mỗi từ; tắt lại thì *bằng đúng* lúc
+   chưa bật; từ 12 phím cạn trần 450 nằm trong 8 000 cấp phát (đo 7 346); phím đúp sửa xong trong
+   hai bậc đầu dưới 1 500 (đo 1 289). `tests/alloc_budget.rs` cũ không đụng tới.
 
 ## 13. Chỉ số
 
@@ -1007,6 +1116,8 @@ lời từ chối được tôn trọng, không phải từ không có ứng vi�
 | B2 ✅ | iOS: `FunputComposer` conform `CorrectionPreviewing` (preview / rank / refuse thật), `syllableWeight` thật, `suppressed`, UI test bốn ca trên thanh gợi ý | `FunputCorrectionPreviewTests` + `TypoCorrectionBarUITests` §12.6 |
 | C0 ✅ | `funput_core::key_role`: vai trò phím theo kiểu gõ, không nhìn buffer, chỉ đọc (#583) | Test inline, API frozen giữ nguyên |
 | D1 ✅ | `funput dev typos --faults / --fault / --seeds`: tiêm lỗi gõ nhanh, bảng theo loại lỗi, số nền Đợt 4 | `--faults 0` tái lập seed cũ, mỗi loại lỗi đúng một phép, `--seeds` = tổng các seed |
+| E1 ✅ | Engine: tách `search.rs` thành generator / `Sink` / xếp hạng theo cost, `Variant.origin`, `find_with` (#585) | Không đổi hành vi: differential Viet74K, alloc budget, bench |
+| E2 | Engine: sửa theo từ — đúp, dư dấu, đảo, thiếu, thừa phím; bậc chi phí + luật dừng; bố cục tĩnh khi thiếu điểm chạm; chữ nguyên chỉ cạnh tranh khi đủ chạm | Bảng §12 Đợt 4 (sau), alloc budget 8 000, property test budget |
 | 5 | Android: cùng lõi, batch edit | Instrumented test |
 | 6 | Chỉnh `σ`, `λ`, `Δ` theo kho lỗi và phản hồi TestFlight | Số liệu §13 |
 

@@ -7,10 +7,10 @@ use crate::correction::score::{self, CorrectionCandidate};
 use crate::model::Session;
 
 /// The most variants one word may replay through the pipeline. Each replay costs
-/// about one allocation per key, so this is the latency knob. Ten keys with three
-/// neighbours each is 30 single and 405 paired substitutions — exactly this, so the
-/// budget is never hit today; it exists for the generators that come next.
-pub(crate) const MAX_REPLAYS_PER_WORD: u32 = 435;
+/// about one allocation per key and about a microsecond, so this is the latency
+/// knob: the same envelope the two-key search had at its worst (435), rounded. A
+/// word that reaches it ends its search with what the cheaper tiers found.
+pub(crate) const MAX_REPLAYS_PER_WORD: u32 = 450;
 
 /// What takes a variant off a generator's hands: replays it, checks the result is a
 /// syllable other than the word on screen, and offers it to the ranked set.
@@ -41,6 +41,19 @@ impl<'a> Sink<'a> {
             replays: 0,
             budget,
         }
+    }
+
+    pub(crate) fn replays(&self) -> u32 {
+        self.replays
+    }
+
+    /// The cheapest candidate so far, in nats — what the tier loop measures the
+    /// next tier's floor against.
+    pub(crate) fn best_cost(&self) -> Option<f32> {
+        self.candidates[..*self.len]
+            .iter()
+            .map(CorrectionCandidate::cost)
+            .min_by(f32::total_cmp)
     }
 
     /// Offer the raw keys of one variant, with the cost of the edits that made it

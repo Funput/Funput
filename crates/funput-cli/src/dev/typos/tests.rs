@@ -453,7 +453,9 @@ mod faults {
                 tally.missed,
                 tally.homophone
             ),
-            (98, 22, 0, [8, 0, 2, 0, 0], 7)
+            // E2: one slip that used to be applied now has a structural reading
+            // inside the margin and is offered instead (22 fixed, 2 ambiguous before).
+            (98, 21, 0, [8, 0, 3, 0, 0], 7)
         );
         let (_, tally) = run_with(0.3, Prior::Uniform);
         assert_eq!(
@@ -464,7 +466,10 @@ mod faults {
                 tally.missed,
                 tally.homophone
             ),
-            (65, 30, 0, [12, 0, 13, 6, 0], 11)
+            // E2, with no store at all: the structural readings have nothing but
+            // touch to lose to, so a third of the old repairs are offered instead
+            // (30 fixed, 13 ambiguous before). The store is what separates them.
+            (65, 20, 0, [12, 0, 24, 5, 0], 11)
         );
     }
 
