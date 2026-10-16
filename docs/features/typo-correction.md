@@ -572,6 +572,77 @@ Việc hoàn tác nằm **trong engine** — `Engine::on_backspace` trả thẳn
 gốc và tự bật cờ "không sửa lại". Host chỉ cần hỏi `has_correction_undo()` trước khi để phím Xoá
 đi qua, và áp dụng kết quả như mọi `ImeResult` khác.
 
+### 8.4. Thanh gợi ý: thấy phép sửa trước khi bấm Space
+
+✅ Đã hiện thực (B1 #575 + B2). Trải nghiệm kiểu iOS: khi từ đang gõ đã "chết" và engine với
+tới một phép sửa, thanh gợi ý hiện `[“chữ gốc”] [ứng viên]` (+ ứng viên thứ hai khi hai ứng viên
+đầu sát nhau). Space áp dụng như cũ; bấm chữ gốc giữ nguyên; bấm ứng viên commit nó kèm dấu
+cách; sau khi sửa, khe đầu thành chip `↩ chữ gốc`.
+
+**Mô hình.** `CorrectionPreview` (`KeyboardInput/Correction/Preview/`) có hai dạng:
+`.offered(typed:candidates:)` và `.applied(undoText:)`. `KeyboardInputCoordinator.
+refreshCorrectionPreview()` tính lại nó cuối `input(_:builder:)` (sau `applyPendingCorrection`)
+và trong `performDeleteBackward`; `clearComposition` / `resetCompositionState` xoá. Thứ tự rẻ
+trước, không chạm FFI nếu không cần: `usesEngine && allowsAutocorrect && usesVietnameseComposition
+&& correctionDictionary != nil` → `hasCorrectionUndo` (→ `.applied`) → buffer rỗng → kho từ nhận
+ra chữ đang gõ (→ không hỏi engine) → `previewCorrection()` → `rankCorrection(uses:allowed:)` với
+`uses = candidates.map(dictionary.weight)` → `[best] + (ambiguous ? [second] : [])`. Signpost
+`CorrectionPreview` (category `Input`) đo phần hỏi engine.
+
+**Ba lời gọi engine** đi qua protocol `CorrectionPreviewing` (`FunputEngine/Correction/`), mà
+`FunputComposer` conform (`FunputComposer+CorrectionPreview.swift`): `previewCorrection()`,
+`rankCorrection(uses:allowed:) -> FunputCorrectionRanking` (best / second, `-1` → `nil`, verdict
+`apply / ambiguous / asTyped / refused` khớp `CORRECTION_VERDICT_*`), `refuseCorrection()`.
+Protocol tồn tại để test của `KeyboardInput` cắm một bản giả quyết định từ nào "chết"
+(`FakePreviewer`), còn `FunputEngineTests/Correction/` kiểm ba lời gọi thật.
+
+**Bấm trên thanh.** `KeyboardSuggestionCandidate.Kind` phân biệt `suggestion` /
+`correctionTyped` / `correctionCandidate` / `correctionUndo`; `KeyboardSuggestionBarView` vẽ
+`“chữ gốc”` và `↩ chữ gốc`, nhãn trợ năng "Giữ nguyên, …", "Sửa thành, …", "Hoàn tác, …".
+`SuggestionBarComposer` (thuần, `PersonalSuggestions/Correction/`) ghép ba khe: khe sửa lỗi
+trước, gợi ý cá nhân lấp phần còn lại, bỏ gợi ý trùng chữ với khe sửa lỗi; chạy cả khi gợi ý cá
+nhân tắt. `PersonalSuggestionService.update(_:canQuery:shift:correction:)` publish lại khi chỉ
+correction đổi; `correctionAction(for:)` kiểm generation rồi trả `.refuse / .accept / .undo`.
+Host định tuyến ở `Keyboard/Correction/KeyboardViewController+CorrectionBar.swift`:
+
+- **Giữ nguyên** → `refuseCorrection(typed:writer:)`: engine `refuse_correction` (một lần, đếm
+  `suppressed` ở ranh giới kế), `dictionary.keep(typed)` (mãi mãi), đếm
+  `CorrectionDeclines.refused`.
+- **Sửa thành** → `acceptCorrection(_:writer:)`: đặt `forcedCorrection = text` rồi `commit {
+  input(" ") }`. Ranh giới tái dùng preview, `chooseCorrection` trả đúng chỉ số bị ép, phép sửa
+  đi cùng transaction với dấu cách — nên undo được arm và tracker học từ đã sửa y như Space.
+- **Hoàn tác** → `undoCorrectionFromBar(writer:)`: cùng `undoCorrection(builder:)` với phím Xoá.
+
+**Hai dạng của một từ.** Với eager restore bật (mặc định), từ chết đã hiện dạng phím thô ngay
+khi gõ nên chữ gốc trên thanh là `“dduwowfnh”`; tắt eager restore (harness UI test) thì là
+`“đườnh”` trong khi ranh giới có thể restore về phím thô. Vì thế `chooseCorrection` chặn khi kho
+từ nhận ra **một trong hai** dạng — chữ restore trên màn hình (`shown`) hay âm tiết đã ghép
+trước phím ranh giới (`composed`) — và hoàn tác `keep` cả hai khi chúng khác nhau. Thanh gợi ý
+và Space không bao giờ nói khác nhau.
+
+**Chính sách ô nhập.** `CorrectionFieldPolicy.allowsAutocorrect(autocorrectionType:keyboardType:
+textContentType:)` (`KeyboardInput/Correction/Policy/`): `false` cho `.no`, bàn phím
+`.asciiCapable` / `.asciiCapableNumberPad`, và `textContentType` username / password /
+newPassword / oneTimeCode / URL / emailAddress. `KeyboardViewController+Traits.swift` đọc nó từ
+`textDocumentProxy`, tách khỏi `KeyboardInputContext` để một ô chỉ tắt autocorrect không làm
+xoá composition.
+
+**Prior của từ.** `CorrectionDictionary.weight(_:)` (mặc định 0) được truyền thật làm `uses`
+cho `chooseCorrection` lẫn `rankCorrection`. `CorrectionWordSource.weight` = `syllableWeight`
+(bậc trên `vi.txt`, qua `funput_suggestion_syllable_weight`, không cần handle) `&+` số lần người
+dùng gõ xong từ đó trong phiên. Số lần đếm ở `personalCounts` trên main actor
+(`CorrectionWordSource+Counts.swift`, tối đa 2 000, loại từ hiếm nhất) — **không** ghi vào
+engine Rust, vốn vẫn read-only: `is_known_word` nhận bất kỳ từ có `frequency > 0`, nên một lỗi
+gõ bỏ qua một lần mà ghi vào engine là bị "nhận ra" cả phiên. `recognizes` chỉ coi từ là của
+người dùng từ **lần thứ hai**; lần đầu chỉ tăng trọng số.
+
+**Điểm chạm lúc đặt ngón.** `KeyboardTouchPipeline` giữ `initialLocations[ContactID]` từ
+`.began`; `touchEvidence` đo ở điểm đó thay vì điểm nhấc (ngón trượt một chút trên đường rời
+kính, điểm nhấc nói về cú trượt hơn là về phím định bấm). Phím vẫn quyết định ở điểm nhấc.
+
+**Chỉ số.** `FunputCorrectionCounts.suppressed` (từ bị bỏ qua vì vừa hoàn tác / từ chối) và
+`CorrectionDeclines.refused` (bấm giữ nguyên trên thanh) có trong dòng log `typo` cuối phiên.
+
 ## 9. Android
 
 | Việc | File |
@@ -833,7 +904,10 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    khoảng cách thật sự đáng ngờ (ví dụ < 1,2 pitch). Phím nào gõ giữa tâm thì không có phím kề
    nào, và mỗi vị trí bị loại như vậy cắt cả một tầng của vòng lặp ghép đôi.
 6. **UI test iOS**: ✅ `FunputUITests/Correction/TypoCorrectionUITests.swift`, chạy qua đúng
-   bàn phím thật với VNI `d9u7o7ng2` và ngón đáp lệch sang `h`.
+   bàn phím thật với VNI `d9u7o7ng2` và ngón đáp lệch sang `h`. Harness dùng chung ở
+   `TypoCorrectionHarness.swift`; `TypoCorrectionBarUITests.swift` thêm bốn ca trên thanh gợi ý:
+   thanh hiện `“đườnh”` + `đường` trước Space, bấm ứng viên → `đường ` và chip hoàn tác, bấm
+   chữ gốc rồi Space → `đườnh ` và thanh trống, bấm chip → `đườnh ` (B2).
 
    Hai điều bản viết chưa lường:
 
@@ -877,11 +951,11 @@ lời từ chối được tôn trọng, không phải từ không có ứng vi�
 | 4b ✅ | An toàn đợt 2: chữ nguyên tham gia so sánh, loại chữ số mở từ, bộ đo `--keep` | `--keep` < 1%, differential bật = tắt khi gõ đúng |
 | 4c ✅ | Danh sách giữ nguyên trong `is_known_word`, iOS: hoàn tác thì nhớ, đếm lý do bỏ sót, nhật ký từng chữ (Debug) | Test đơn vị + thử trên máy |
 | A1 ✅ | Engine: khôi phục ngay tại ranh giới, bỏ ứng viên cũ sau khi trả lời, `suppressed` tách khỏi `noCandidate` (#573) | Protocol test, differential, property |
-| A2 | Engine: `preview_correction` / `rank_correction` / `refuse_correction` trước khi từ kết thúc | Test preview + ngân sách cấp phát |
+| A2 ✅ | Engine: `preview_correction` / `rank_correction` / `refuse_correction` trước khi từ kết thúc (#577) | Test preview + ngân sách cấp phát |
 | C1 ✅ | `vi.txt` bốn bậc, `syllable_tier` / `syllable_weight`, C ABI + JNI không cần handle (#574) | 0 cấp phát, lexicon-tool test, `gen-header.sh --check` |
 | C2 ✅ | `funput dev typos --prior shipped` dùng bảng bậc, đo lại `INVALID_COST` / Δ / trọng số bậc | Bảng số §12 đợt 3 |
 | B1 ✅ | iOS: thanh gợi ý hiện chữ gốc + ứng viên, bấm để giữ / sửa / hoàn tác, chính sách ô nhập, điểm chạm lúc đặt ngón (#575) | Test đơn vị + `check-swift-loc.sh` |
-| B2 | iOS: nối preview / refuse / rank thật qua FFI, UI test bốn ca | `TypoCorrectionUITests` |
+| B2 ✅ | iOS: `FunputComposer` conform `CorrectionPreviewing` (preview / rank / refuse thật), `syllableWeight` thật, `suppressed`, UI test bốn ca trên thanh gợi ý | `FunputCorrectionPreviewTests` + `TypoCorrectionBarUITests` §12.6 |
 | 5 | Android: cùng lõi, batch edit | Instrumented test |
 | 6 | Chỉnh `σ`, `λ`, `Δ` theo kho lỗi và phản hồi TestFlight | Số liệu §13 |
 

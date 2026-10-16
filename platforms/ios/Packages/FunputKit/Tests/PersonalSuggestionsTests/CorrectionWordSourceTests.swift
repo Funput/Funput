@@ -45,30 +45,43 @@ struct CorrectionWordSourceTests {
 
     @Test("One sighting weighs, two make the word the user's own")
     func counts() throws {
+        // Raw keys, so the shipped syllable list adds nothing to the count.
         let source = CorrectionWordSource(engine: try #require(PersonalSuggestionEngine.inMemory()))
-        #expect(source.weight("đường") == 0)
+        #expect(source.weight("dduwowfnh") == 0)
 
-        source.learn("đường")
-        #expect(source.weight("đường") == 1)
-        #expect(!source.recognizes("đường"), "a typo left alone looks exactly like this")
+        source.learn("dduwowfnh")
+        #expect(source.weight("dduwowfnh") == 1)
+        #expect(!source.recognizes("dduwowfnh"), "a typo left alone looks exactly like this")
 
-        source.learn("Đường")
-        #expect(source.weight("đường") == 2)
-        #expect(source.recognizes("đường"))
-        #expect(source.weight("đưa") == 0, "only the word that was typed")
+        source.learn("Dduwowfnh")
+        #expect(source.weight("dduwowfnh") == 2)
+        #expect(source.recognizes("dduwowfnh"))
+        #expect(source.weight("dduwowfnj") == 0, "only the word that was typed")
     }
 
     @Test("Counting needs no word list, and the engine is never written to")
     func countsBeforeReady() throws {
         let source = CorrectionWordSource(lexiconURL: { nil })
-        source.learn("đường")
-        #expect(source.weight("đường") == 1)
+        source.learn("dduwowfnh")
+        #expect(source.weight("dduwowfnh") == 1)
 
         let engine = try #require(PersonalSuggestionEngine.inMemory())
         let ready = CorrectionWordSource(engine: engine)
-        ready.learn("đường")
-        ready.learn("đường")
-        #expect(!engine.recognizes("đường"))
+        ready.learn("dduwowfnh")
+        ready.learn("dduwowfnh")
+        #expect(!engine.recognizes("dduwowfnh"))
+    }
+
+    @Test("A shipped syllable weighs by its band, on top of the user's own count")
+    func shippedWeight() throws {
+        let source = CorrectionWordSource(engine: try #require(PersonalSuggestionEngine.inMemory()))
+        #expect(source.weight("là") == 4, "the most common band")
+        #expect(source.weight("Là") == 4, "case does not matter")
+        #expect(source.weight("dduwowfnh") == 0, "raw keys are on no list")
+
+        source.learn("là")
+
+        #expect(source.weight("là") == 5)
     }
 
     @Test("The rarest word goes once the counts are full")

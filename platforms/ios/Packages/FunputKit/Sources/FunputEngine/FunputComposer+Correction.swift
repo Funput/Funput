@@ -111,6 +111,7 @@ extension FunputComposer {
             keptAsTyped: Int(raw.kept_as_typed),
             offered: Int(raw.offered),
             noCandidate: Int(raw.no_candidate),
+            suppressed: Int(raw.suppressed),
             validNearEdge: Int(raw.valid_near_edge)
         )
     }

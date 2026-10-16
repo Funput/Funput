@@ -40,10 +40,9 @@ public final class KeyboardInputCoordinator {
     public var allowsAutocorrect = true
     /// Corrections the keyboard declined before the engine ranked anything.
     public internal(set) var correctionDeclines = CorrectionDeclines()
-    /// The engine calls that look at a word before it ends. A stub until the C ABI
-    /// behind them ships; swapped for the composer itself once it does.
-    public lazy var correctionPreviewer: any CorrectionPreviewing =
-        StubCorrectionPreviewer(composer: composer)
+    /// The engine calls that look at a word before it ends: the composer, unless a
+    /// test stands a fake in.
+    public lazy var correctionPreviewer: any CorrectionPreviewing = composer
     /// What the suggestion bar shows about the word under the caret.
     public internal(set) var correctionPreview: CorrectionPreview?
     /// A candidate the user tapped on the bar, for the one space that applies it.

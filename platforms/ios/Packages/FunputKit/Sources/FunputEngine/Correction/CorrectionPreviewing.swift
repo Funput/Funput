@@ -3,8 +3,8 @@
 /// `FunputComposer` already answers the boundary (`chooseCorrection`,
 /// `applyCorrection`). These are the three calls that look at the word while it is
 /// still being typed: search it, rank what was found, or refuse the repair outright.
-/// They sit behind a protocol so the keyboard can be wired and tested against a
-/// fake while the C ABI behind them is still landing — see ``StubCorrectionPreviewer``.
+/// The composer conforms; the protocol is what lets the keyboard's tests stand a
+/// fake in for the search and decide which words dead-end.
 @MainActor
 public protocol CorrectionPreviewing: AnyObject {
     /// Search the word being typed and park what was found. Returns how many
