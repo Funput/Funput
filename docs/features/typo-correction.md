@@ -887,6 +887,55 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
    VNI 0,25 vá 51,8%, sai 3,92%; mọi ô ngang hoặc tốt hơn prior đều về sửa sai, VNI 0,174 mất
    1,9 điểm sửa đúng vì vài ca từ hiếm giờ rơi vào "vướng Δ" thay vì được áp dụng. Viet74K có
    mục sai chính tả; số sửa sai gồm cả những ca engine đúng mà kho từ sai, không truy về 0.
+
+   **Đợt 4 (16/10/2026, nền): lỗi gõ nhanh, đo trước khi có engine sửa theo từ.** Tới đây bộ đo
+   chỉ mô phỏng một loại lỗi — ngón trượt sang *phím kề* — trong khi lỗi thật khi gõ nhanh là
+   **đúp phím** (`chowii`), **thiếu phím** (`chwi`), **đảo hai phím** (`chwoi`) và **dư phím dấu**
+   (`chowis`). `funput dev typos --faults <tỉ lệ>` (D1) tiêm **tối đa một** lỗi như vậy vào chuỗi
+   phím chuẩn của một phần từ, *trước* khi ngón trượt; `--fault <loại>` ép mọi lỗi về một loại,
+   `--seeds n` chạy n seed liên tiếp và cộng dồn. Bảng `By fault kind` tách mọi kết quả theo
+   chuyện gì đã xảy ra với từ: hàng "trượt chạm" là từ chỉ trượt phím kề, bốn hàng còn lại là bốn
+   loại lỗi (từ vừa có lỗi vừa trượt tính vào hàng lỗi). Phím dấu dư lấy từ `key_role` của
+   `funput-core` (C0), không viết tay. Lỗi rút từ một luồng ngẫu nhiên riêng, nên `--seed` cũ vẫn
+   gõ đúng những điểm chạm của Đợt 1–3 (test `old_seeds_reproduce_the_touch_stream` ghim số seed 1);
+   `--keep --faults 0`, 20 seed, ra lại đúng **5,8% / 4,4%** (142 / 2 469 Telex, 109 / 2 467 VNI).
+
+   Số nền **trước mọi thay đổi engine** — E2 phải chạy lại đúng các lệnh này. Viet74K, `--prior
+   shipped --faults 0.3 --seeds 8` (30% số từ nhận một lỗi, loại chọn đều; 8 955 × 8 lượt gõ). Mỗi
+   ô theo loại: số từ · sửa đúng · sửa sai, tính trên số từ của hàng đó:
+
+   | Kiểu gõ · nhiễu | Từ có lỗi | Sửa đúng | Sửa sai (trên số lần sửa) | Trượt chạm | Đúp phím | Thiếu phím | Đảo phím | Dư phím dấu |
+   |---|---|---|---|---|---|---|---|---|
+   | Telex 0,174 | 22 994 | 4,0% | 1 299 (**58,8%**) | 1 546 · 50,9% · 0,1% | 5 331 · 0,8% · 6,7% | 5 383 · 0,0% · 6,1% | 5 398 · 0,7% · 7,2% | 5 336 · 0,8% · 4,2% |
+   | Telex 0,25 | 37 375 | 18,9% | 2 398 (25,4%) | 15 927 · 41,1% · 1,8% | 5 331 · 1,6% · 8,5% | 5 383 · 0,2% · 13,4% | 5 398 · 4,7% · 8,8% | 5 336 · 2,9% · 8,9% |
+   | VNI 0,174 | 22 893 | 4,3% | 997 (**50,4%**) | 1 443 · 59,6% · 0,2% | 5 331 · 0,6% · 4,6% | 5 381 · 0,2% · 5,5% | 5 402 · 0,8% · 4,0% | 5 336 · 0,7% · 4,5% |
+   | VNI 0,25 | 36 386 | 22,6% | 1 957 (19,2%) | 14 936 · 51,9% · 2,2% | 5 331 · 0,5% · 5,5% | 5 381 · 0,5% · 11,1% | 5 402 · 5,1% · 5,1% | 5 336 · 2,7% · 8,7% |
+
+   Từng loại tách riêng (`--fault <loại> --faults 0.3 --seeds 8`, ~21 600 từ có lỗi mỗi ô): sửa đúng /
+   sửa sai / để nguyên:
+
+   | Loại lỗi | Telex 0,174 | Telex 0,25 | VNI 0,174 | VNI 0,25 |
+   |---|---|---|---|---|
+   | Đúp phím | 207 (1,0%) / 1 507 (7,0%) / 19 901 | 371 (1,7%) / 1 881 (8,7%) / 19 363 | 130 (0,6%) / 994 (4,6%) / 20 491 | 225 (1,0%) / 1 172 (5,4%) / 20 218 |
+   | Thiếu phím | 14 (0,1%) / 1 334 (6,2%) / 20 229 | 62 (0,3%) / 2 719 (12,6%) / 18 796 | 47 (0,2%) / 1 263 (5,9%) / 20 267 | 91 (0,4%) / 2 729 (12,6%) / 18 757 |
+   | Đảo phím | 125 (0,6%) / 1 556 (7,2%) / 19 893 | 1 075 (5,0%) / 1 954 (9,1%) / 18 545 | 136 (0,6%) / 792 (3,7%) / 20 649 | 1 016 (4,7%) / 993 (4,6%) / 19 568 |
+   | Dư phím dấu | 195 (0,9%) / 1 034 (4,8%) / 20 208 | 668 (3,1%) / 2 038 (9,5%) / 18 731 | 168 (0,8%) / 888 (4,1%) / 20 381 | 545 (2,5%) / 1 829 (8,5%) / 19 063 |
+
+   Ba điều đọc được:
+
+   - **Bốn loại lỗi gần như toàn "để nguyên"** (87–95%), đúng như dự đoán: engine v2 chỉ biết thay
+     phím kề, nên `chowii` không có đường nào về `chơi`. Phần sửa đúng 0–5% là những ca hai phép
+     thay phím kề tình cờ bù được lỗi — đảo hai phím cạnh nhau trên lưới (`io`, `er`) chính là hai
+     phép thay như thế, nên hàng "đảo" nhỉnh hơn ở 0,25 khi mỗi phím có nhiều phím kề hơn.
+   - **Nhưng không vô hại.** 4–13% từ có lỗi bị **sửa sai**: v2 thấy từ chết, thay một phím kề và
+     rơi vào một từ khác (`cây` → `acay` → từ khác). Ở nhiễu thật 0,174, lỗi gõ nhanh (21 400 từ)
+     nhiều hơn hẳn trượt chạm (1 500), nên trong lượt chạy trộn **hơn nửa số lần sửa là sửa sai**
+     (58,8% Telex, 50,4% VNI) dù hàng trượt chạm vẫn ở 0,1–0,2%. Thiếu phím tệ nhất (12,6% ở 0,25):
+     bỏ một phím thường để lại một chuỗi cách từ khác đúng một phím. Cổng E2 vì thế không chỉ là
+     "sửa đúng ≥ 60 / 60 / 40 / 25%" mà còn phải **kéo cột sửa sai của bốn hàng này xuống** — đưa
+     ứng viên lên thanh và để Space chỉ tự áp dụng khi hơn ứng viên kế ≥ Δ là chỗ để làm việc đó.
+   - **Hàng trượt chạm khớp Đợt 3** (50,9 / 41,1 / 59,6 / 51,9% so với 51,2 / 41,2 / 61,9 / 51,8%
+     ở 20 seed): bộ đo mới không đổi gì ở phần đã đo, chỉ thêm phần chưa đo.
 2. **Bất biến**: mọi âm tiết hợp lệ gõ đúng phím không bao giờ bị đổi (property test toàn tập).
    ✅ `tests/correction_property.rs`, cùng với: không ứng viên nào trùng chữ đang hiển thị, ứng
    viên luôn xếp giảm dần, sửa rồi Xoá trả lại đúng tài liệu cũ, và **từ chối thì ra đúng kết
@@ -956,6 +1005,8 @@ lời từ chối được tôn trọng, không phải từ không có ứng vi�
 | C2 ✅ | `funput dev typos --prior shipped` dùng bảng bậc, đo lại `INVALID_COST` / Δ / trọng số bậc | Bảng số §12 đợt 3 |
 | B1 ✅ | iOS: thanh gợi ý hiện chữ gốc + ứng viên, bấm để giữ / sửa / hoàn tác, chính sách ô nhập, điểm chạm lúc đặt ngón (#575) | Test đơn vị + `check-swift-loc.sh` |
 | B2 ✅ | iOS: `FunputComposer` conform `CorrectionPreviewing` (preview / rank / refuse thật), `syllableWeight` thật, `suppressed`, UI test bốn ca trên thanh gợi ý | `FunputCorrectionPreviewTests` + `TypoCorrectionBarUITests` §12.6 |
+| C0 ✅ | `funput_core::key_role`: vai trò phím theo kiểu gõ, không nhìn buffer, chỉ đọc (#583) | Test inline, API frozen giữ nguyên |
+| D1 ✅ | `funput dev typos --faults / --fault / --seeds`: tiêm lỗi gõ nhanh, bảng theo loại lỗi, số nền Đợt 4 | `--faults 0` tái lập seed cũ, mỗi loại lỗi đúng một phép, `--seeds` = tổng các seed |
 | 5 | Android: cùng lõi, batch edit | Instrumented test |
 | 6 | Chỉnh `σ`, `λ`, `Δ` theo kho lỗi và phản hồi TestFlight | Số liệu §13 |
 

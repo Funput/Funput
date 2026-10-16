@@ -3,9 +3,14 @@
 //! The one number that decides the feature is `wrong`: a correction that rewrites a
 //! word into something the user never typed is worse than leaving a broken one alone.
 
+mod faults;
+mod json;
 mod print;
 
-pub(in crate::dev::typos) use print::{print_human, print_json};
+use super::inject::Fault;
+pub(in crate::dev::typos) use faults::Cell;
+pub(in crate::dev::typos) use json::print_json;
+pub(in crate::dev::typos) use print::print_human;
 
 /// What became of one word.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -51,11 +56,14 @@ pub(super) struct Tally {
     pub(super) missed: [usize; 5],
     pub(super) homophone: usize,
     pub(super) rewritten: usize,
+    /// The same outcomes again, split by what went wrong with the word: index 0 is
+    /// a touch slip with no injected fault, then one row per [`Fault`] in order.
+    pub(super) by_fault: [Cell; 5],
     pub(super) samples: Vec<(String, String, Outcome)>,
 }
 
 impl Tally {
-    pub(super) fn add(&mut self, outcome: Outcome) {
+    pub(super) fn add(&mut self, outcome: Outcome, fault: Option<Fault>) {
         match outcome {
             Outcome::Typed => self.typed += 1,
             Outcome::Fixed => self.fixed += 1,
@@ -64,9 +72,27 @@ impl Tally {
             Outcome::Homophone => self.homophone += 1,
             Outcome::Rewritten => self.rewritten += 1,
         }
+        self.by_fault[faults::index(fault)].add(outcome);
     }
 
-    /// Words where a key actually missed — everything the feature could act on.
+    /// Fold another run's counts into this one — the per-seed tallies of one run.
+    pub(super) fn merge(&mut self, other: Tally) {
+        self.typed += other.typed;
+        self.fixed += other.fixed;
+        self.wrong += other.wrong;
+        self.homophone += other.homophone;
+        self.rewritten += other.rewritten;
+        for (mine, theirs) in self.missed.iter_mut().zip(other.missed) {
+            *mine += theirs;
+        }
+        for (mine, theirs) in self.by_fault.iter_mut().zip(other.by_fault) {
+            mine.merge(theirs);
+        }
+        self.samples.extend(other.samples);
+    }
+
+    /// Words that were not typed as meant — a key missed, or a fault was injected —
+    /// which is everything the feature could act on.
     pub(super) fn slips(&self) -> usize {
         self.fixed + self.wrong + self.missed() + self.homophone
     }

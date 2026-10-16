@@ -100,6 +100,15 @@ impl Rng {
         }
     }
 
+    /// A second stream, independent of this one, for draws added after the touch
+    /// stream was pinned. Every number in the docs was measured from `--seed` alone;
+    /// a draw taken from the touch stream itself would shift every touch after it
+    /// and silently change those numbers. Fault injection draws from here instead,
+    /// so an old seed still types exactly the same touches, fault or no fault.
+    pub(super) fn derived(&self, salt: u64) -> Self {
+        Self::new(self.state.rotate_left(32) ^ salt.wrapping_mul(0x9E37_79B9_7F4A_7C15))
+    }
+
     fn next_u64(&mut self) -> u64 {
         self.state ^= self.state >> 12;
         self.state ^= self.state << 25;
@@ -108,8 +117,13 @@ impl Rng {
     }
 
     /// A uniform sample in (0, 1]; never zero, which `ln` below could not take.
-    fn uniform(&mut self) -> f32 {
+    pub(super) fn uniform(&mut self) -> f32 {
         ((self.next_u64() >> 40) as f32 + 1.0) / 16_777_216.0
+    }
+
+    /// A uniform index in `0..n`. `n` must be non-zero.
+    pub(super) fn below(&mut self, n: usize) -> usize {
+        (self.next_u64() % n as u64) as usize
     }
 
     /// One standard normal sample, Box–Muller.

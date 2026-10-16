@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use funput_core::InputMethod;
 
+use super::report::Cell;
 use super::*;
 
 fn sample_path() -> PathBuf {
@@ -18,6 +19,11 @@ fn options(noise: f32, prior: Prior) -> Options {
         known_only: false,
         max_edits: 2,
         seed: 1,
+        seeds: 1,
+        faults: Rates {
+            overall: 0.0,
+            only: None,
+        },
         limit: None,
         show: 0,
         json: false,
@@ -269,4 +275,250 @@ fn known_only_under_the_shipped_prior_reads_the_list() {
     assert_eq!(store.uses("dduwowfnh"), 0);
     assert!(store.knows("ko"), "the keep list is still the veto");
     assert!(!store.knows("là"), "the list is a prior, not the veto");
+}
+
+/// The faults a fast typist makes, and the harness's bookkeeping of them.
+mod faults {
+    use super::*;
+    use crate::dev::typos::inject::{Fault, Rates, inject, modifier_keys};
+    use crate::dev::typos::noise::Rng;
+
+    fn always(only: Fault) -> Rates {
+        Rates {
+            overall: 1.0,
+            only: Some(only),
+        }
+    }
+
+    /// Every word of the sample corpus as keys, in both methods.
+    fn corpus_keys() -> Vec<(InputMethod, String)> {
+        let syllables = load_syllables(&sample_path()).expect("load sample corpus");
+        [InputMethod::Telex, InputMethod::Vni]
+            .into_iter()
+            .flat_map(|method| {
+                syllables
+                    .iter()
+                    .map(move |syllable| (method, encode::encode(syllable, method)))
+            })
+            .collect()
+    }
+
+    /// Each word faulted with `fault` under a handful of seeds: the original, the
+    /// faulty keys, and the method.
+    fn faulted(fault: Fault) -> Vec<(InputMethod, Vec<char>, Vec<char>)> {
+        let mut out = Vec::new();
+        for seed in 1..=5 {
+            let mut rng = Rng::new(seed).derived(0xFA17);
+            for (method, keys) in corpus_keys() {
+                let (faulty, got) = inject(&keys, method, &always(fault), &mut rng);
+                if got.is_some() {
+                    out.push((method, keys.chars().collect(), faulty.chars().collect()));
+                } else {
+                    assert_eq!(faulty, keys, "a fault that did not happen changes nothing");
+                }
+            }
+        }
+        assert!(out.len() > 200, "the corpus must actually take faults");
+        out
+    }
+
+    /// Where `longer` first differs from `shorter`, or the end — the one index
+    /// whose removal is expected to give `shorter` back.
+    fn inserted_at(shorter: &[char], longer: &[char]) -> usize {
+        (0..shorter.len())
+            .find(|&i| shorter[i] != longer[i])
+            .unwrap_or(shorter.len())
+    }
+
+    #[test]
+    fn injection_is_deterministic_per_seed() {
+        let rates = Rates {
+            overall: 0.5,
+            only: None,
+        };
+        let run = |seed: u64| -> Vec<(String, Option<Fault>)> {
+            let mut rng = Rng::new(seed).derived(0xFA17);
+            corpus_keys()
+                .iter()
+                .map(|(method, keys)| inject(keys, *method, &rates, &mut rng))
+                .collect()
+        };
+        assert_eq!(run(7), run(7));
+        assert_ne!(run(7), run(8), "another seed faults other words");
+        let faulted = run(7).iter().filter(|(_, fault)| fault.is_some()).count();
+        let total = corpus_keys().len();
+        assert!(
+            (total / 3..=total * 2 / 3).contains(&faulted),
+            "{faulted} of {total} words faulted at rate 0.5"
+        );
+    }
+
+    #[test]
+    fn no_rate_means_no_fault() {
+        let mut rng = Rng::new(1).derived(0xFA17);
+        let rates = Rates {
+            overall: 0.0,
+            only: None,
+        };
+        for (method, keys) in corpus_keys() {
+            assert_eq!(
+                inject(&keys, method, &rates, &mut rng),
+                (keys.clone(), None)
+            );
+        }
+    }
+
+    #[test]
+    fn a_duplicate_presses_one_key_twice() {
+        for (_, keys, faulty) in faulted(Fault::Duplicate) {
+            assert_eq!(faulty.len(), keys.len() + 1, "{keys:?} → {faulty:?}");
+            let at = inserted_at(&keys, &faulty);
+            let mut back = faulty.clone();
+            let extra = back.remove(at);
+            assert_eq!(back, keys, "{keys:?} → {faulty:?}");
+            let twin = at.checked_sub(1).map(|i| faulty[i]) == Some(extra)
+                || faulty.get(at + 1) == Some(&extra);
+            assert!(
+                twin,
+                "{keys:?} → {faulty:?}: the extra key must repeat a neighbour"
+            );
+        }
+    }
+
+    #[test]
+    fn a_drop_loses_exactly_one_key() {
+        for (_, keys, faulty) in faulted(Fault::Drop) {
+            assert!(keys.len() >= 2, "a one-key word cannot lose its key");
+            assert_eq!(faulty.len(), keys.len() - 1, "{keys:?} → {faulty:?}");
+            let at = inserted_at(&faulty, &keys);
+            let mut back = keys.clone();
+            back.remove(at);
+            assert_eq!(back, faulty, "{keys:?} → {faulty:?}");
+        }
+    }
+
+    #[test]
+    fn a_transpose_swaps_two_neighbouring_keys() {
+        for (_, keys, faulty) in faulted(Fault::Transpose) {
+            assert_eq!(faulty.len(), keys.len(), "{keys:?} → {faulty:?}");
+            let differ: Vec<usize> = (0..keys.len()).filter(|&i| keys[i] != faulty[i]).collect();
+            assert_eq!(differ.len(), 2, "{keys:?} → {faulty:?}");
+            let (i, j) = (differ[0], differ[1]);
+            assert_eq!(j, i + 1, "{keys:?} → {faulty:?}: not neighbours");
+            assert_eq!((faulty[i], faulty[j]), (keys[j], keys[i]));
+        }
+    }
+
+    #[test]
+    fn an_extra_modifier_is_one_of_the_methods_own() {
+        for (method, keys, faulty) in faulted(Fault::ExtraModifier) {
+            assert_eq!(faulty.len(), keys.len() + 1, "{keys:?} → {faulty:?}");
+            let at = inserted_at(&keys, &faulty);
+            let mut back = faulty.clone();
+            let extra = back.remove(at);
+            assert_eq!(back, keys, "{keys:?} → {faulty:?}");
+            assert!(at >= 1, "{keys:?} → {faulty:?}: never before the first key");
+            assert!(
+                modifier_keys(method).contains(&extra),
+                "{keys:?} → {faulty:?}: {extra:?} is no {method:?} modifier"
+            );
+        }
+    }
+
+    #[test]
+    fn modifier_keys_are_read_off_key_role() {
+        assert_eq!(
+            modifier_keys(InputMethod::Telex),
+            vec!['f', 'j', 'r', 's', 'w', 'x']
+        );
+        assert_eq!(
+            modifier_keys(InputMethod::Vni),
+            ('1'..='8').collect::<Vec<_>>()
+        );
+    }
+
+    /// The numbers in the docs were measured before faults existed, from `--seed`
+    /// alone. A fault draws from a stream of its own, so with faults off a seed
+    /// types the very same touches it always did — pinned here, so a future draw
+    /// slipped into the touch stream shows up as a failure and not as a mystery
+    /// shift in the next calibration.
+    #[test]
+    fn old_seeds_reproduce_the_touch_stream() {
+        let (_, tally) = run(0.25);
+        assert_eq!(
+            (
+                tally.typed,
+                tally.fixed,
+                tally.wrong,
+                tally.missed,
+                tally.homophone
+            ),
+            (98, 22, 0, [8, 0, 2, 0, 0], 7)
+        );
+        let (_, tally) = run_with(0.3, Prior::Uniform);
+        assert_eq!(
+            (
+                tally.typed,
+                tally.fixed,
+                tally.wrong,
+                tally.missed,
+                tally.homophone
+            ),
+            (65, 30, 0, [12, 0, 13, 6, 0], 11)
+        );
+    }
+
+    fn with_faults(seed: u64, seeds: u64, rates: Rates) -> Tally {
+        let syllables: Vec<String> = load_syllables(&sample_path())
+            .expect("load sample corpus")
+            .into_iter()
+            .collect();
+        measure(
+            &syllables,
+            &Options {
+                seed,
+                seeds,
+                faults: rates,
+                ..options(0.25, Prior::Shipped)
+            },
+        )
+    }
+
+    fn counts(tally: &Tally) -> (usize, usize, usize, [usize; 5], usize, usize, [Cell; 5]) {
+        (
+            tally.typed,
+            tally.fixed,
+            tally.wrong,
+            tally.missed,
+            tally.homophone,
+            tally.rewritten,
+            tally.by_fault,
+        )
+    }
+
+    #[test]
+    fn several_seeds_are_the_sum_of_the_single_runs() {
+        let rates = Rates {
+            overall: 0.3,
+            only: None,
+        };
+        let mut summed = Tally::default();
+        for seed in 1..=3 {
+            summed.merge(with_faults(seed, 1, rates));
+        }
+        assert_eq!(counts(&with_faults(1, 3, rates)), counts(&summed));
+        assert!(summed.slips() > 100, "three seeds must exercise slips");
+    }
+
+    /// A faulted word is a word not typed as meant, whatever the finger did, and
+    /// lands in its own row of the table — never in the touch-slip one.
+    #[test]
+    fn every_fault_is_counted_in_its_own_row() {
+        let tally = with_faults(1, 1, always(Fault::Duplicate));
+        assert_eq!(tally.typed, 0, "every word took a fault");
+        assert_eq!(tally.by_fault[0].n(), 0);
+        assert_eq!(tally.by_fault[1].n(), tally.slips());
+        let rows: usize = tally.by_fault.iter().map(Cell::n).sum();
+        assert_eq!(rows, tally.slips());
+    }
 }

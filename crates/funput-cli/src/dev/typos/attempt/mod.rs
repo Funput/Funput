@@ -7,25 +7,38 @@ mod word;
 use funput_engine::{Action, Engine, ImeResult};
 
 use super::Options;
+use super::inject::{Fault, inject};
 use super::noise::{Rng, aim};
 use super::report::{Miss, Outcome};
 use super::store::{Store, ballots};
 pub(in crate::dev) use keep::run_keep;
 use word::same_word;
 
-/// Type `keys` — meant to produce `word` — with a wandering finger, and report what
-/// correction made of it.
+/// What one typing of a word came to.
+pub(super) struct Attempt {
+    pub(super) outcome: Outcome,
+    /// The fault the keys were given before typing, if any.
+    pub(super) fault: Option<Fault>,
+    /// The keys as actually pressed — `keys` with its fault in, before touch noise.
+    pub(super) keys: String,
+}
+
+/// Give `keys` — meant to produce `word` — at most one typing fault, type them with
+/// a wandering finger, and report what correction made of it.
 ///
 /// `store` stands in for the platform's word store, and is used exactly the way a
-/// keyboard uses it: veto first, then weigh the candidates.
+/// keyboard uses it: veto first, then weigh the candidates. `faults` is a stream of
+/// its own, so the touches `rng` produces for a seed never depend on the fault rate.
 pub(super) fn attempt(
     word: &str,
     keys: &str,
     options: &Options,
     store: &Store,
     rng: &mut Rng,
-) -> Outcome {
+    faults: &mut Rng,
+) -> Attempt {
     let (method, noise) = (options.method, options.noise);
+    let (keys, fault) = inject(keys, method, &options.faults, faults);
     let mut engine = Engine::new();
     engine.update_config(|config| {
         config.method = method;
@@ -48,7 +61,9 @@ pub(super) fn attempt(
         .map(|candidate| candidate.text().to_owned());
     apply(&mut app, &engine.apply_correction(answer.ok()), ' ');
 
-    match (slipped, corrected, answer) {
+    // A fault is a mistake the same as a slip: the word is not what was meant.
+    let perturbed = slipped || fault.is_some();
+    let outcome = match (perturbed, corrected, answer) {
         (false, None, _) => Outcome::Typed,
         (false, Some(_), _) => Outcome::Rewritten,
         (true, Some(fixed), _) if same_word(&fixed, word) => Outcome::Fixed,
@@ -58,6 +73,11 @@ pub(super) fn attempt(
         (true, None, _) if funput_core::is_complete_syllable(app.trim_end()) => Outcome::Homophone,
         (true, None, Err(miss)) => Outcome::Missed(miss),
         (true, None, Ok(_)) => unreachable!("an answer always names a candidate"),
+    };
+    Attempt {
+        outcome,
+        fault,
+        keys,
     }
 }
 

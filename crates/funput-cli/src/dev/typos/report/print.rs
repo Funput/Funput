@@ -1,8 +1,8 @@
-//! The human and JSON renderings of a [`Tally`].
+//! The human rendering of a [`Tally`].
 
 use std::path::Path;
 
-use super::{Outcome, Tally};
+use super::{Outcome, Tally, faults};
 use crate::dev::typos::Options;
 
 pub(in crate::dev::typos) fn print_human(
@@ -12,17 +12,29 @@ pub(in crate::dev::typos) fn print_human(
     options: &Options,
 ) {
     println!(
-        "Funput typo correction — {} syllables, finger noise {:.2} pitches, seed {} (corpus: {})",
+        "Funput typo correction — {} syllables, finger noise {:.2} pitches, {} (corpus: {})",
         syllables.len(),
         options.noise,
-        options.seed,
+        seeds(options),
         corpus.display()
     );
+    if options.faults.overall > 0.0 {
+        println!(
+            "  one typing fault in {:.0}% of words{}",
+            options.faults.overall * 100.0,
+            options
+                .faults
+                .only
+                .map_or(String::new(), |fault| format!(", always {}", fault.name()))
+        );
+    }
+    // Every seed types the whole corpus once more.
+    let words = syllables.len() * options.seeds.max(1) as usize;
     println!("  typed clean   {:>7}", tally.typed);
     println!(
         "  slips         {:>7}  ({:.1}% of words)",
         tally.slips(),
-        pct(tally.slips(), syllables.len())
+        pct(tally.slips(), words)
     );
     println!(
         "    fixed       {:>7}  ({:.1}% of slips)",
@@ -52,42 +64,13 @@ pub(in crate::dev::typos) fn print_human(
         "  rewritten     {:>7}  (typed right, changed anyway)",
         tally.rewritten
     );
+    faults::print_table(&tally.by_fault);
     if !tally.samples.is_empty() {
         println!("\nSamples: syllable → keys → outcome");
         for (syllable, keys, outcome) in &tally.samples {
             println!("  {syllable} → {keys} → {}", label(*outcome));
         }
     }
-}
-
-pub(in crate::dev::typos) fn print_json(
-    corpus: &Path,
-    syllables: &[String],
-    tally: &Tally,
-    options: &Options,
-) {
-    println!("{{");
-    println!("  \"corpus\": \"{}\",", corpus.display());
-    println!("  \"syllables\": {},", syllables.len());
-    println!("  \"noise\": {:.2},", options.noise);
-    println!("  \"seed\": {},", options.seed);
-    println!("  \"typed\": {},", tally.typed);
-    println!("  \"slips\": {},", tally.slips());
-    println!("  \"fixed\": {},", tally.fixed);
-    println!("  \"wrong\": {},", tally.wrong);
-    println!("  \"missed\": {},", tally.missed());
-    println!("  \"missed_by_reason\": {:?},", tally.missed);
-    println!("  \"rewritten\": {},", tally.rewritten);
-    println!("  \"another_word\": {},", tally.homophone);
-    println!(
-        "  \"fixed_pct_of_slips\": {:.2},",
-        pct(tally.fixed, tally.slips())
-    );
-    println!(
-        "  \"wrong_pct_of_corrections\": {:.2}",
-        pct(tally.wrong, tally.corrections())
-    );
-    println!("}}");
 }
 
 fn label(outcome: Outcome) -> &'static str {
@@ -101,7 +84,14 @@ fn label(outcome: Outcome) -> &'static str {
     }
 }
 
-fn pct(part: usize, whole: usize) -> f64 {
+fn seeds(options: &Options) -> String {
+    match options.seeds {
+        0 | 1 => format!("seed {}", options.seed),
+        n => format!("seeds {}..{}", options.seed, options.seed + n - 1),
+    }
+}
+
+pub(super) fn pct(part: usize, whole: usize) -> f64 {
     if whole == 0 {
         return 0.0;
     }
