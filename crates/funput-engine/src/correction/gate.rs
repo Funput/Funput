@@ -10,12 +10,19 @@ use crate::model::Session;
 /// before a touch reads as landing on the edge between them.
 const EDGE: f32 = 0.25;
 
-/// Whether the word that just ended may be looked at at all.
+/// Whether the word that just ended may be looked at at all: a finished syllable is
+/// what the user meant, whatever the fingers did.
+pub(super) fn eligible(session: &Session, complete: bool) -> bool {
+    !complete && eligible_live(session)
+}
+
+/// The part of [`eligible`] that needs no verdict on the word, and so can be asked
+/// of a word still being typed.
 ///
-/// Every clause here answers "is this a slip?", and each one that says no leaves the
-/// word to the engine's existing behaviour. They are ordered cheapest first; the
-/// syllable checks at the end are the only ones that allocate.
-pub(super) fn eligible(session: &Session, verdict: &Verdict) -> bool {
+/// Every clause here answers "could this be a slip?", and each one that says no
+/// leaves the word to the engine's existing behaviour. They are ordered cheapest
+/// first, and none of them allocates.
+pub(super) fn eligible_live(session: &Session) -> bool {
     // The state is built when the setting goes on and dropped when it goes off, so
     // its absence is the switch.
     let Some(state) = session.correction.as_ref() else {
@@ -25,7 +32,6 @@ pub(super) fn eligible(session: &Session, verdict: &Verdict) -> bool {
         // A word the user flipped by hand is the form they asked for.
         && session.restore_override.is_none()
         && !session.buffer.is_empty()
-        && !verdict.complete
         && state.touch.matches(&session.keys)
         && !has_literal_digit(session)
         && !is_all_uppercase(&session.buffer)

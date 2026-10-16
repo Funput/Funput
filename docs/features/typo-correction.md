@@ -295,8 +295,9 @@ keystroke**, không có `Task`, không chờ I/O:
    vào `ImeResult`: `FunputResult` là `#[repr(C)]` truyền theo giá trị, `size_of` 268 byte đã bị
    test ghim và header đã phát hành — thêm trường vào là vỡ ABI âm thầm.
 3. Nền tảng đọc ứng viên (`correction_candidates`), hỏi tần suất từng ứng viên ở
-   `funput-suggestions`, rồi `choose_correction(&uses)` trả chỉ số thắng hoặc `None` khi hai
-   ứng viên đầu sát nhau (biên Δ).
+   `funput-suggestions`, rồi `choose_correction(&uses, &allowed)` trả chỉ số thắng hoặc `None`
+   khi hai ứng viên đầu sát nhau (biên Δ). Hàm này chỉ xếp hạng — và chỉ đếm chỉ số — khi đang
+   có chỗ chờ; xếp hạng một bản xem trước là việc của `rank_correction` (bước 0).
 4. Nền tảng gọi `apply_correction(index)`. Với `Some(i)` engine sinh `ImeResult::send`; với
    `None` (hoặc chỉ số không trỏ vào ứng viên nào) là **no-op** — `Action::None` — vì ranh giới
    đã làm xong mọi việc của nó ở bước 1, kể cả English restore. Trả lời kiểu nào thì chỗ chờ và
@@ -314,6 +315,25 @@ restore, đó là chuỗi phím (`quaa` → 5), với từ còn dạng ghép là
 danh sách ứng viên. Không có gì bị hoãn nên không có gì phải phát lại: văn bản đã đúng như khi
 tắt tính năng ngay từ bước 1. Thắt lưng thứ hai là `typo_correction` mặc định tắt, nên không host
 nào đang chạy bị ảnh hưởng.
+
+**Bước 0 — xem trước (tuỳ chọn).** Host muốn hiện phép sửa *trước* khi người dùng bấm Space gọi
+`preview_correction()` sau mỗi phím chữ. Engine chạy đúng phép tìm của ranh giới, nhưng chỉ khi
+từ đã "chết" — không còn phím nào cứu được nó: eager restore đã trả buffer về phím thô, hoặc luật
+reachability (`is_definitely_invalid_in`) nói nó không thể thành âm tiết nữa, rồi một lần
+`is_complete_syllable` xác nhận. Từ còn sống (`dduwow`, `chaof`) trả 0 và **không cấp phát gì**;
+từ đã hoàn tác cũng trả 0. Kết quả đứng tới phím chữ kế tiếp (hoặc Xoá, flip, `clear`), nên gọi
+lại không tìm lại. `rank_correction(&uses, &allowed)` xếp hạng mà **không đếm** chỉ số, trả
+`best`, `second` (chip thứ hai khi mơ hồ) và verdict `Apply / Ambiguous / AsTyped / Refused`.
+
+Bước 1 sau đó **tái dùng** kết quả xem trước nếu `keys` không đổi: ranh giới không tìm lần hai
+(`alloc_budget_correction` ghim: Space sau preview ≤ Space của từ không có điểm chạm + 2). Có hay
+không có preview, văn bản và danh sách ứng viên ở ranh giới giống hệt (`correction_property`).
+
+`refuse_correction()` là người dùng bấm vào chữ gốc trên thanh gợi ý: giữ nguyên từ, nhớ cách gõ
+đó **một lần** đúng như hoàn tác bằng phím Xoá (ranh giới kế tiếp bỏ qua và đếm `suppressed`),
+xoá preview, chỗ chờ và undo đang chờ. Gọi được cả khi từ còn đang gõ lẫn khi ranh giới vừa ghi
+chỗ chờ. Preview là **lời gọi tường minh**, không nằm trong `process_key`, nên ngân sách cấp phát
+của đường gõ phím không đổi.
 
 ## 7. API
 
@@ -334,11 +354,27 @@ impl Engine {
     /// The word plus the boundary character the platform already echoed.
     pub fn pending_correction_backspace(&self) -> usize;
     /// `uses` is parallel to the candidates; `&[]` gives the touch-only ranking.
-    pub fn choose_correction(&self, uses: &[u32]) -> Option<usize>;
+    /// `allowed` vetoes candidates; a short or empty mask permits the rest.
+    pub fn choose_correction(&mut self, uses: &[u32], allowed: &[bool]) -> Option<usize>;
     pub fn apply_correction(&mut self, index: Option<usize>) -> ImeResult;
     /// While Backspace would still undo the last correction.
     pub fn has_correction_undo(&self) -> bool;
     pub fn correction_undo_text(&self) -> Option<&str>;
+
+    /// Before the word ends: the boundary's search, run early. 0 while the word
+    /// could still become a syllable. Explicit — never part of `process_key`.
+    pub fn preview_correction(&mut self) -> usize;
+    /// Rank without counting anything.
+    pub fn rank_correction(&self, uses: &[u32], allowed: &[bool]) -> CorrectionRanking;
+    /// Keep the word as typed, and do not offer this spelling again next time.
+    pub fn refuse_correction(&mut self);
+}
+
+pub struct CorrectionRanking {
+    pub best: Option<usize>,
+    /// The best allowed candidate after `best` — the second chip when ambiguous.
+    pub second: Option<usize>,
+    pub verdict: CorrectionVerdict, // Apply | Ambiguous | AsTyped | Refused
 }
 ```
 
@@ -360,7 +396,22 @@ int32_t      funput_engine_choose_correction(const FunputEngine*, const uint32_t
 FunputResult funput_engine_apply_correction(FunputEngine*, int32_t index);
 uint32_t     funput_engine_correction_undo_text(const FunputEngine*, uint32_t* out, uint32_t cap);
 void         funput_set_typo_correction(FunputEngine*, bool);
+
+/* Trước khi từ kết thúc (thanh gợi ý) */
+uintptr_t               funput_engine_preview_correction(FunputEngine*);
+void                    funput_engine_refuse_correction(FunputEngine*);
+FunputCorrectionRanking funput_engine_rank_correction(const FunputEngine*, const uint32_t* uses,
+                                                      const bool* allowed, uintptr_t len);
+
+typedef struct { int32_t best; int32_t second; uint32_t verdict; } FunputCorrectionRanking;
+#define CORRECTION_VERDICT_APPLY     0
+#define CORRECTION_VERDICT_AMBIGUOUS 1
+#define CORRECTION_VERDICT_AS_TYPED  2
+#define CORRECTION_VERDICT_REFUSED   3
 ```
+
+`funput_engine_rank_correction` tự bọc guard như `choose`: `Default` của struct là `{0, 0, 0}`,
+tức "áp dụng ứng viên 0" — handle null hay panic phải trả `{-1, -1, 3}`.
 
 `funput_set_typo_correction` là setter riêng: `FunputConfig` là `#[repr(C)]` truyền theo giá
 trị, thêm trường vào là vỡ ABI — đúng lối `funput_set_shortcuts_enabled` đã đi.
@@ -436,10 +487,16 @@ external fun nativeSetNextKeyTouch(handle: Long, typed: Int, typedDistance: Floa
 external fun nativeHasPendingCorrection(handle: Long): Boolean
 external fun nativeCorrectionCandidates(handle: Long): Array<String>
 external fun nativePendingCorrectionBackspace(handle: Long): Int
-external fun nativeChooseCorrection(handle: Long, uses: IntArray): Int
+external fun nativeChooseCorrection(handle: Long, uses: IntArray?, allowed: BooleanArray?): Int
 external fun nativeApplyCorrection(handle: Long, index: Int): IntArray
 external fun nativeHasCorrectionUndo(handle: Long): Boolean
 external fun nativeCorrectionUndoText(handle: Long): String
+
+// Trước khi từ kết thúc (thanh gợi ý)
+external fun nativePreviewCorrection(handle: Long): Int
+external fun nativeRefuseCorrection(handle: Long)
+/** `[best, second, verdict]`; -1 cho ô trống, verdict đánh số như header C. */
+external fun nativeRankCorrection(handle: Long, uses: IntArray?, allowed: BooleanArray?): IntArray
 external fun nativeUndoCorrection(handle: Long): IntArray
 external fun nativeSetTypoCorrection(handle: Long, on: Boolean)
 ```
@@ -513,6 +570,11 @@ gốc và tự bật cờ "không sửa lại". Host chỉ cần hỏi `has_corr
 **Đã giải quyết:** `nativeBackspace` và `nativeBoundary` chỉ trả `String` và vứt `ImeResult`
 đi, nên chúng không tải nổi một lệnh sửa. Thay vì đổi hai hàm đó (và đổi cả chữ ký Java của
 chúng), phần correction có đường riêng trả `IntArray` — xem §7.4.
+
+Hai điều cần nhớ khi nối Kotlin (chưa quan sát được vì IME chưa gọi): `nativeApplyCorrection(-1)`
+nay là **no-op** — ranh giới đã restore trong cùng keystroke, nên từ chối không còn trả lệnh sửa
+nào; và `nativeRankCorrection` trả `[best, second, verdict]` với `-1` cho ô trống, không bao giờ
+là `0` (đó là một chỉ số ứng viên thật).
 
 ## 10. Desktop
 

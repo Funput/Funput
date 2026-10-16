@@ -70,6 +70,9 @@ impl Engine {
             self.session.glue.start_word();
         }
         self.session.keys.push(raw_key);
+        // Whatever a preview found was about the word as it stood; this key makes it
+        // a different word.
+        correction::drop_preview(&mut self.session);
         correction::note_key(&mut self.session, raw_key, touch);
         let result = pipeline::process(&mut self.session, compose_key, key, capitalize_shortcut);
         // The pipeline rewrites the raw keys when a modifier is reverted, which would

@@ -1,13 +1,15 @@
 //! The typo-correction handshake, driven exactly as a keyboard shell drives it.
 
 use funput_ffi::{
-    ACTION_NONE, ACTION_SEND, CORRECTION_CAP, FunputCorrectionCandidate, FunputEngine,
-    FunputKeyTouch, FunputResult, TOUCH_ALTERNATE_CAP, funput_backspace,
-    funput_engine_apply_correction, funput_engine_choose_correction,
+    ACTION_NONE, ACTION_SEND, CORRECTION_CAP, CORRECTION_VERDICT_AMBIGUOUS,
+    CORRECTION_VERDICT_APPLY, CORRECTION_VERDICT_REFUSED, FunputCorrectionCandidate,
+    FunputCorrectionRanking, FunputEngine, FunputKeyTouch, FunputResult, TOUCH_ALTERNATE_CAP,
+    funput_backspace, funput_engine_apply_correction, funput_engine_choose_correction,
     funput_engine_correction_candidates, funput_engine_correction_undo_text, funput_engine_free,
     funput_engine_has_correction_undo, funput_engine_has_pending_correction, funput_engine_new,
-    funput_engine_pending_correction_backspace, funput_engine_set_next_key_touch,
-    funput_process_char, funput_set_typo_correction,
+    funput_engine_pending_correction_backspace, funput_engine_preview_correction,
+    funput_engine_rank_correction, funput_engine_refuse_correction,
+    funput_engine_set_next_key_touch, funput_process_char, funput_set_typo_correction,
 };
 
 fn output(result: &FunputResult) -> String {
@@ -259,6 +261,126 @@ fn a_touch_that_is_not_a_scalar_is_ignored_rather_than_trusted() {
         funput_process_char(engine, 'h' as u32);
         funput_process_char(engine, ' ' as u32);
         assert!(!funput_engine_has_pending_correction(engine));
+        funput_engine_free(engine);
+    }
+}
+
+fn rank(engine: *const FunputEngine, uses: &[u32], allowed: &[bool]) -> FunputCorrectionRanking {
+    let len = uses.len().max(allowed.len());
+    let uses = if uses.is_empty() {
+        std::ptr::null()
+    } else {
+        uses.as_ptr()
+    };
+    let allowed = if allowed.is_empty() {
+        std::ptr::null()
+    } else {
+        allowed.as_ptr()
+    };
+    unsafe { funput_engine_rank_correction(engine, uses, allowed, len) }
+}
+
+#[test]
+fn a_preview_shows_the_repair_and_the_space_then_applies_it() {
+    unsafe {
+        let engine = funput_engine_new();
+        funput_set_typo_correction(engine, true);
+        let mut app = String::new();
+        type_word(engine, &mut app, "dduwowfnh", (8, 'g'));
+
+        assert_eq!(funput_engine_preview_correction(engine), 1);
+        assert_eq!(candidates(engine)[0].0, "đường");
+        assert!(!funput_engine_has_pending_correction(engine));
+        let ranking = rank(engine, &[], &[]);
+        assert_eq!(ranking.verdict, CORRECTION_VERDICT_APPLY);
+        assert_eq!((ranking.best, ranking.second), (0, -1));
+
+        type_word(engine, &mut app, " ", (99, ' '));
+        assert_eq!(app, "dduwowfnh ");
+        assert!(funput_engine_has_pending_correction(engine));
+        assert_eq!(candidates(engine)[0].0, "đường");
+        let result = funput_engine_apply_correction(engine, 0);
+        assert_eq!(result.action, ACTION_SEND);
+        assert_eq!(result.backspace, 10);
+        assert_eq!(output(&result), "đường ");
+        funput_engine_free(engine);
+    }
+}
+
+#[test]
+fn refusing_the_preview_keeps_the_word_through_the_abi() {
+    unsafe {
+        let engine = funput_engine_new();
+        funput_set_typo_correction(engine, true);
+        let mut app = String::new();
+        type_word(engine, &mut app, "dduwowfnh", (8, 'g'));
+        funput_engine_preview_correction(engine);
+        funput_engine_refuse_correction(engine);
+        assert!(candidates(engine).is_empty());
+        assert_eq!(rank(engine, &[], &[]).verdict, CORRECTION_VERDICT_REFUSED);
+
+        type_word(engine, &mut app, " ", (99, ' '));
+        assert_eq!(app, "dduwowfnh ");
+        assert!(!funput_engine_has_pending_correction(engine));
+        funput_engine_free(engine);
+    }
+}
+
+#[test]
+fn the_ranking_names_both_words_when_the_touches_cannot_decide() {
+    unsafe {
+        let engine = funput_engine_new();
+        funput_set_typo_correction(engine, true);
+        for (index, key) in "nhad".chars().enumerate() {
+            let mut reported = touch(key, None);
+            if index == 3 {
+                reported.alternates[0] = 'f' as u32;
+                reported.alternates[1] = 's' as u32;
+                reported.distances[0] = 0.15;
+                reported.distances[1] = 0.15;
+                reported.alternate_count = 2;
+            }
+            funput_engine_set_next_key_touch(engine, &raw const reported);
+            funput_process_char(engine, key as u32);
+        }
+        assert_eq!(funput_engine_preview_correction(engine), 2);
+
+        let ranking = rank(engine, &[], &[]);
+        assert_eq!(ranking.verdict, CORRECTION_VERDICT_AMBIGUOUS);
+        assert!(ranking.best >= 0 && ranking.second >= 0);
+        assert_ne!(ranking.best, ranking.second);
+
+        let ranking = rank(engine, &[40, 0], &[]);
+        assert_eq!(ranking.verdict, CORRECTION_VERDICT_APPLY);
+        assert_eq!((ranking.best, ranking.second), (0, 1));
+
+        assert_eq!(
+            rank(engine, &[], &[false, false]).verdict,
+            CORRECTION_VERDICT_REFUSED
+        );
+        funput_engine_free(engine);
+    }
+}
+
+#[test]
+fn the_preview_calls_are_null_safe() {
+    unsafe {
+        let null: *mut FunputEngine = std::ptr::null_mut();
+        assert_eq!(funput_engine_preview_correction(null), 0);
+        funput_engine_refuse_correction(null);
+        let ranking = funput_engine_rank_correction(null, std::ptr::null(), std::ptr::null(), 0);
+        assert_eq!((ranking.best, ranking.second), (-1, -1));
+        assert_eq!(ranking.verdict, CORRECTION_VERDICT_REFUSED);
+
+        // Nothing in hand on a live engine answers the same way, never "apply 0".
+        let engine = funput_engine_new();
+        funput_set_typo_correction(engine, true);
+        assert_eq!(funput_engine_preview_correction(engine), 0);
+        let ranking = funput_engine_rank_correction(engine, std::ptr::null(), std::ptr::null(), 0);
+        assert_eq!(
+            (ranking.best, ranking.verdict),
+            (-1, CORRECTION_VERDICT_REFUSED)
+        );
         funput_engine_free(engine);
     }
 }

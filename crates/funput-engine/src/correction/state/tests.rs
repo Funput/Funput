@@ -3,7 +3,6 @@
 use funput_core::InputMethod;
 
 use super::*;
-use crate::correction::park;
 
 fn session() -> Session {
     let mut session = Session::new();

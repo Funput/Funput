@@ -8,17 +8,27 @@
 //! boundary already did what it always did, and the next keystroke lets the parked
 //! correction lapse.
 //!
+//! A bar that wants to show the repair before the space asks ahead with the calls
+//! in `preview`; the boundary then takes what the preview found.
+//!
 //! Nothing here is reachable until `funput_set_typo_correction(engine, true)`.
 //!
 //! # Layout
 //!
 //! - this file — the switch, and the calls that change engine state.
 //! - `query` — the read-only calls between the two steps.
+//! - `preview` — the calls a bar makes before the word ends.
 //! - `types` — the POD structs both directions carry.
 
+mod preview;
 mod query;
 mod types;
 
+pub use preview::{
+    CORRECTION_VERDICT_AMBIGUOUS, CORRECTION_VERDICT_APPLY, CORRECTION_VERDICT_AS_TYPED,
+    CORRECTION_VERDICT_REFUSED, FunputCorrectionRanking, funput_engine_preview_correction,
+    funput_engine_rank_correction, funput_engine_refuse_correction,
+};
 pub use query::{
     funput_engine_choose_correction, funput_engine_correction_candidates,
     funput_engine_correction_metrics, funput_engine_correction_undo_text,

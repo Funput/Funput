@@ -48,3 +48,19 @@ fn a_code_point_java_cannot_have_typed_is_not_a_key() {
     assert_eq!(to_char(0x11_0000), None, "past the last plane");
     assert_eq!(to_char(0xD800), None, "a surrogate is not a scalar");
 }
+
+#[test]
+fn a_ranking_encodes_as_best_second_and_verdict() {
+    use funput_engine::{CorrectionRanking, CorrectionVerdict};
+
+    use super::preview::encode_ranking;
+
+    let ranking = CorrectionRanking {
+        best: Some(1),
+        second: Some(0),
+        verdict: CorrectionVerdict::Ambiguous,
+    };
+    assert_eq!(encode_ranking(ranking), [1, 0, 1]);
+    // An empty slot is -1, never 0: 0 is a real candidate index.
+    assert_eq!(encode_ranking(CorrectionRanking::REFUSED), [-1, -1, 3]);
+}
