@@ -526,6 +526,7 @@ version = "0.1.0"
 dependencies = [
  "funput-core",
  "funput-suggestions",
+ "unicode-normalization",
 ]
 
 [[package]]

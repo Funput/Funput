@@ -66,8 +66,17 @@ Ràng buộc, theo thứ tự ưu tiên:
 - Sửa tiếng Anh, hoặc sửa khi đang ở chế độ tiếng Anh.
 - Thêm/bớt/đảo phím. Bản đầu chỉ **thay phím** (xem §11 để mở rộng).
 - Vùng chạm đổi theo ngữ cảnh (bàn phím hệ thống cũng không làm cho tiếng Việt).
-- Bảng tần suất tiếng Việt đóng gói kèm app (đã chốt 18/09/2026: xếp hạng bằng điểm chạm + từ
-  người dùng đã học).
+- Bảng **tần suất** tiếng Việt đóng gói kèm app. Thay vào đó (chốt 16/10/2026) là một **bảng xếp
+  hạng viết tay bốn bậc** (`funput-suggestions/data/syllables/vi.txt`, ~2 100 âm tiết): bậc 1 là
+  từ chức năng và từ rất thường gặp, bậc 4 là từ hiếm nhưng có thật. Chọn bậc chứ không chọn số
+  đếm vì hai lý do. Một là **giấy phép**: mọi bảng tần suất sẵn có đều lấy từ kho ngữ liệu không
+  tương thích MIT (Viet74K không bao giờ được đóng gói), còn một bảng viết tay không trả lời được
+  câu hỏi "số này đo ở đâu" thì cũng không nên giả vờ là số đo. Hai là **độ chính xác cần thiết**:
+  prior chỉ cộng vào điểm chạm dưới dạng `ln(1 + uses)`, nên khoảng cách giữa các bậc (mỗi bậc
+  cách nhau xấp xỉ một nat) đã là toàn bộ thông tin engine dùng được; một con số chính xác đến
+  hàng đơn vị không đổi quyết định nào. Mỗi bậc ánh xạ sang số "lần dùng giả"
+  (`SYLLABLE_TIER_WEIGHTS = [40, 12, 4, 1]`) để `choose_correction` không phải đổi công thức.
+  Đây là **prior**, không phải cửa chặn: `is_known_word` không hỏi bảng này.
 - Desktop tự động sửa — xem §10.
 
 ## 3. Hành vi
@@ -384,7 +393,30 @@ impl SuggestionEngine {
     /// keep list — the veto.
     pub fn is_known_word(&self, word: &str) -> bool;
 }
+
+/// Pseudo-uses per band, band 1 first: about 4.2, 3.1, 2.1 and 1.2 nats through
+/// the engine's `ln(1 + uses) + 0.5`, against 0.5 for an unlisted syllable.
+pub const SYLLABLE_TIER_WEIGHTS: [u32; 4] = [40, 12, 4, 1];
+
+/// The band `word` sits in on the shipped list (1 = most common), `None` when
+/// unlisted. Case and normalization do not matter. No allocation after first use.
+pub fn syllable_tier(word: &str) -> Option<u8>;
+
+/// `SYLLABLE_TIER_WEIGHTS` for that band, 0 when unlisted.
+pub fn syllable_weight(word: &str) -> u32;
 ```
+
+**Bảng xếp hạng âm tiết** (`data/syllables/vi.txt`, bốn bậc, tự viết, MIT — §2) được biên dịch
+vào `funput-suggestions` và dựng thành bảng tra một lần ở lần gọi đầu (`OnceLock`, sắp theo
+byte). Hai hàm `syllable_tier` / `syllable_weight` **không cần handle**: chúng đọc bảng tĩnh,
+chuẩn hoá NFC + chữ thường lên bộ đệm trên stack đúng như `context_slot`, rồi tìm nhị phân — không
+cấp phát, `tests/alloc_budget.rs` giữ lời hứa đó. Nền tảng cộng `syllable_weight(từ)` vào
+`frequency(từ)` để ra `uses` của mỗi ứng viên; `is_known_word` **không đổi** và không hỏi bảng
+này, vì cửa chặn dành cho chữ không phải tiếng Việt chứ không phải để phạt âm tiết chưa có trong
+danh sách. C ABI: `funput_suggestion_syllable_weight(word, len) -> u32`,
+`funput_suggestion_syllable_tier(word, len) -> u32` (0 = không có trong danh sách; giải mã
+codepoint vào `[u8; 128]` trên stack, không cấp phát). JNI: `nativeSyllableWeight(String)`,
+`nativeSyllableTier(String)`.
 
 **Danh sách giữ nguyên** (`data/correction/keep.txt`, tự viết, MIT) được biên dịch thẳng vào
 `funput-suggestions` và `is_known_word` hỏi nó trước tiên — quét tuần tự khoảng 130 chữ, không cấp
@@ -503,7 +535,10 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
 
 1. **Thêm/bớt một phím** (`ddleer` → `để`): mở rộng tập phép sửa, giữ nguyên phần chấm điểm.
 2. **Đảo hai phím kề** (`nhaf` ↔ `nhfa`): rẻ, hay gặp khi gõ nhanh hai ngón.
-3. **Bảng tần suất âm tiết đóng gói**: gắn vào đúng chỗ `prior`, không đụng phần còn lại.
+3. ~~**Bảng tần suất âm tiết đóng gói**~~ — **đã làm** dưới dạng bảng xếp hạng bốn bậc
+   (`syllable_weight`, §2 và §7.3), gắn vào đúng chỗ `prior`, không đụng phần còn lại. Việc còn
+   lại là nối harness `funput dev typos --prior shipped` vào bảng và đo lại `INVALID_COST` /
+   `MARGIN` với prior mới (§12) — PR kế tiếp.
 4. **Sửa từ hợp lệ theo ngữ cảnh** (`bán` → `bạn`): cần bigram; rủi ro cao nhất, làm sau cùng.
 
 ## 12. Kiểm thử và cổng gác

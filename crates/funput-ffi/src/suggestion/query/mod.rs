@@ -4,9 +4,13 @@
 //!
 //! - this file — learning a token, and the prefix lookups the suggestion bar runs.
 //! - `words` — asking about one whole word, which is what typo correction ranks with.
+//! - `syllables` — the shipped syllable bands, the other half of that ranking, asked
+//!   without a handle.
 
+mod syllables;
 mod words;
 
+pub use syllables::{funput_suggestion_syllable_tier, funput_suggestion_syllable_weight};
 pub use words::{funput_suggestion_frequency, funput_suggestion_is_known_word};
 
 use funput_suggestions::LearnOutcome;
