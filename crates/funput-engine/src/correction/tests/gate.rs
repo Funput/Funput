@@ -99,9 +99,17 @@ fn every_finished_word_it_looks_at_is_counted_once() {
     type_and_end(&mut engine, "chaof", &[(4, 's')]);
     // A real syllable typed cleanly: not counted at all.
     type_and_end(&mut engine, "chaof", &[]);
+    // A repair the user took back, then typed the same way again: honoured as a
+    // refusal, not mistaken for a word with nothing in reach.
+    type_and_end(&mut engine, "dduwowfnh", &[(8, 'g')]);
+    engine.apply_correction(Some(0));
+    engine.on_backspace();
+    type_and_end(&mut engine, "dduwowfnh", &[(8, 'g')]);
 
     let metrics = engine.correction_metrics();
-    assert_eq!(metrics.offered, 1);
+    assert_eq!(metrics.offered, 2);
     assert_eq!(metrics.no_candidate, 1);
     assert_eq!(metrics.valid_near_edge, 1);
+    assert_eq!(metrics.suppressed, 1);
+    assert_eq!((metrics.applied, metrics.reverted), (1, 1));
 }

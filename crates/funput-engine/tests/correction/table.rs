@@ -14,8 +14,8 @@ struct Case {
     keys: &'static str,
     /// The neighbour offered, and which key of `keys` it belongs to.
     slip: (usize, char),
-    /// What the app shows before the correction — the whole point of the backspace
-    /// count, which differs between a restored word and a composed one.
+    /// What the app shows just before the boundary key — a composed word here is
+    /// the one the restore and the correction then both have to reckon with.
     shown: &'static str,
     corrected: &'static str,
 }
@@ -49,8 +49,9 @@ const CASES: &[Case] = &[
         shown: "vieeyj",
         corrected: "việt",
     },
-    // A composed word rather than restored keys: what gets deleted is `quâ`, not the
-    // four keystrokes behind it.
+    // A composed word: the app shows `quâ` before the boundary, and the boundary's
+    // English restore puts the four keystrokes back. The correction deletes whichever
+    // the document shows at that point (`tests/correction/protocol.rs` pins both).
     Case {
         method: InputMethod::Telex,
         keys: "quaa",

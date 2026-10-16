@@ -134,8 +134,11 @@ Telex.
 | `quaa ` | `quâ ` | **quá** | a → s |
 | `d9u7o7nh2 ` (VNI) | `d9u7o7nh2 ` | **đường** | h → g |
 
-`quaa ` là ca *đang hiển thị dạng đã ghép*: thứ phải xoá là `quâ` (3 ký tự) chứ không phải 4
-phím đã gõ. Bảng test `tests/correction/table.rs` giữ đúng các hàng này.
+`quaa ` là ca *đang hiển thị dạng đã ghép* trước phím ranh giới. Thứ phải xoá là những gì
+màn hình hiển thị **sau** phím đó: với English restore bật (mặc định) ranh giới đã trả về 4 phím
+`quaa` nên xoá 4; tắt restore thì màn hình còn `quâ` nên xoá 3. Bảng test
+`tests/correction/table.rs` giữ đúng các hàng này, `tests/correction/protocol.rs` ghim cả hai
+con số.
 
 **Hai ứng viên** — `nhad `: `d→f` ra **nhà**, `d→s` ra **nhá**. Ngón lệch về `f` chọn nhà, lệch
 về `s` chọn nhá, chạm giữa `d` thì **không sửa** và đưa cả hai lên thanh gợi ý.
@@ -269,9 +272,12 @@ Trong `boundary/mod.rs`, khi gặp phím ranh giới:
 2. **`judge`** — một lần `is_complete_syllable` (theo `config.syllable_rules`, nên tôn trọng cả phụ âm đầu z/f/w/j khi bật) trả lời cho cả hai việc còn lại. Nó chỉ chạy khi
    có người cần: English restore còn cửa, hoặc correction có dữ liệu chạm dùng được. Nhờ vậy
    host không gửi điểm chạm thì chi phí bằng đúng hôm nay (đo bằng `alloc_budget_correction`).
-3. **Correction** — nếu qua hết §3.1: ghi ứng viên vào chỗ chờ, rồi vẫn `session.clear()` và
-   trả về đúng `ImeResult` như hôm nay (`Action::None`). Keystroke này **không** đổi văn bản.
-4. **English restore** — như hôm nay, khi correction không nhận từ này.
+3. **Correction** — nếu qua hết §3.1: ghi ứng viên vào chỗ chờ, kèm chuỗi mà màn hình sẽ hiển
+   thị *sau* keystroke này (`keys` nếu bước 4 restore, `buffer` nếu không). Chỉ ghi, không trả
+   về gì: ranh giới đi tiếp như thể không có tính năng.
+4. **English restore** — chạy **trong cùng keystroke**, như hôm nay, dù correction có nhận từ
+   này hay không. Rồi `session.clear()`. Keystroke này cho ra đúng `ImeResult` như khi tắt tính
+   năng; chỗ chờ chỉ ghi lại văn bản đã hiển thị để bước áp dụng biết phải xoá bao nhiêu.
 
 Thứ tự này khác bản thiết kế ở một điểm quan trọng: correction **không** treo dưới nhánh
 `should_restore`. Với `dduwowfnh` và `d9u7o7nh2`, eager restore trong `pipeline` đã đổi buffer
@@ -292,18 +298,22 @@ keystroke**, không có `Task`, không chờ I/O:
    `funput-suggestions`, rồi `choose_correction(&uses)` trả chỉ số thắng hoặc `None` khi hai
    ứng viên đầu sát nhau (biên Δ).
 4. Nền tảng gọi `apply_correction(index)`. Với `Some(i)` engine sinh `ImeResult::send`; với
-   `None` nó chạy nốt việc ranh giới đã hoãn (English restore, hoặc không gì cả).
+   `None` (hoặc chỉ số không trỏ vào ứng viên nào) là **no-op** — `Action::None` — vì ranh giới
+   đã làm xong mọi việc của nó ở bước 1, kể cả English restore. Trả lời kiểu nào thì chỗ chờ và
+   danh sách ứng viên cũng được xoá: `correction_candidates()` rỗng, `choose_correction` trả
+   `None` và không đếm gì.
 
-**Số ký tự phải xoá đã tính cả ký tự ranh giới**: bước 1 trả `Action::None` nên ký tự đó *đã*
-nằm trong tài liệu. Vì vậy `backspace = số ký tự đang hiển thị của từ + 1`, và nhánh English
-restore ở đây nhiều hơn `boundary::english_restore_result` đúng 1 — đường kia nuốt phím ranh
-giới, đường này thì không. `pending_correction_backspace()` trả sẵn con số đó cho host cần dựng
-batch edit trước khi quyết định.
+**Số ký tự phải xoá đã tính cả ký tự ranh giới**: bước 1 để nền tảng tự chèn ký tự đó (hoặc
+chính engine chèn nó trong chuỗi restore), nên nó *đã* nằm trong tài liệu. Vì vậy `backspace =
+số ký tự từ đang hiển thị + 1`, trong đó "đang hiển thị" là *sau* bước 1: với từ đã được English
+restore, đó là chuỗi phím (`quaa` → 5), với từ còn dạng ghép là buffer (`quâ` → 4).
+`pending_correction_backspace()` trả sẵn con số đó cho host cần dựng batch edit trước khi quyết
+định.
 
-**Nếu nền tảng không gọi bước 4** (phiên bản cũ, hoặc lỗi), keystroke kế tiếp tự chốt: nó phát
-lại đúng việc ranh giới đã hoãn rồi gộp vào kết quả của chính nó. Không có trạng thái treo, và
-không mất chữ. Thắt lưng thứ hai là `typo_correction` mặc định tắt, nên không host nào đang chạy
-bị ảnh hưởng.
+**Nếu nền tảng không gọi bước 4** (phiên bản cũ, hoặc lỗi), keystroke kế tiếp chỉ xoá chỗ chờ và
+danh sách ứng viên. Không có gì bị hoãn nên không có gì phải phát lại: văn bản đã đúng như khi
+tắt tính năng ngay từ bước 1. Thắt lưng thứ hai là `typo_correction` mặc định tắt, nên không host
+nào đang chạy bị ảnh hưởng.
 
 ## 7. API
 
@@ -701,10 +711,14 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
 ## 13. Chỉ số
 
 `correctionsApplied`, `correctionsReverted`, `correctionsSkippedAmbiguous`, `keptAsTyped`,
-`offered`, `noCandidate`, `validNearEdge` (lõi); `recognized`, `fieldRefused` (nền tảng);
-`correctionCandidatesMax`, `correctionMicrosecondsMax`. Chỉ đếm, không lưu nội dung. Lõi đếm
-trong `CorrectionMetrics`, iOS in ra log category `typo`. Tỉ lệ hoàn tác cao nghĩa là `Δ` đặt
-thấp quá; `keptAsTyped` cao nghĩa là `INVALID_COST` đặt thấp quá.
+`offered`, `noCandidate`, `suppressed`, `validNearEdge` (lõi); `recognized`, `fieldRefused`
+(nền tảng); `correctionCandidatesMax`, `correctionMicrosecondsMax`. Chỉ đếm, không lưu nội dung.
+Lõi đếm trong `CorrectionMetrics`, iOS in ra log category `typo`. Tỉ lệ hoàn tác cao nghĩa là
+`Δ` đặt thấp quá; `keptAsTyped` cao nghĩa là `INVALID_COST` đặt thấp quá.
+
+`suppressed` đếm từ bị bỏ qua vì người dùng đã hoàn tác đúng cách gõ đó ngay trước (§3.3): một
+lời từ chối được tôn trọng, không phải từ không có ứng viên — nên nó tách khỏi `noCandidate` để
+`noCandidate` vẫn đo đúng độ phủ của phép tìm.
 
 ## 14. Thứ tự hiện thực
 

@@ -21,6 +21,9 @@ pub struct CorrectionMetrics {
     pub offered: u32,
     /// Words correction looked at and found no syllable within reach of.
     pub no_candidate: u32,
+    /// Words left alone because the user undid this spelling the last time it was
+    /// corrected — a refusal honoured, not a candidate missing.
+    pub suppressed: u32,
     /// Words that ended as a real syllable with a touch on the edge between two keys —
     /// left alone, and the upper bound on slips onto another word.
     pub valid_near_edge: u32,
