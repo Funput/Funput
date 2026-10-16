@@ -323,8 +323,9 @@ typedef struct {
     uint32_t count;
     uint32_t chars[CORRECTION_CHARS_CAP];
     /**
-     * Touch evidence only, in nats; always negative, closer to zero is better. The
-     * host adds its own word prior — or lets `funput_engine_choose_correction` do it.
+     * Minus the edit cost in nats; touch evidence is folded in where the host
+     * reported it. Always negative, closer to zero is better. The host adds its own
+     * word prior — or lets `funput_engine_choose_correction` do it.
      */
     float touch_score;
     /**

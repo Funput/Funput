@@ -62,8 +62,9 @@ pub struct FunputCorrectionCandidate {
     /// Codepoints of the corrected word in `chars`.
     pub count: u32,
     pub chars: [u32; CORRECTION_CHARS_CAP],
-    /// Touch evidence only, in nats; always negative, closer to zero is better. The
-    /// host adds its own word prior — or lets `funput_engine_choose_correction` do it.
+    /// Minus the edit cost in nats; touch evidence is folded in where the host
+    /// reported it. Always negative, closer to zero is better. The host adds its own
+    /// word prior — or lets `funput_engine_choose_correction` do it.
     pub touch_score: f32,
     /// How many keys had to be substituted to reach this word.
     pub edits: u32,

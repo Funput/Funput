@@ -1,7 +1,7 @@
 //! Asking ahead of the boundary: preview the repair, rank it, or turn it down.
 
 use crate::Engine;
-use crate::correction::score::{self, INVALID_COST, from_milli};
+use crate::correction::score::{self, INVALID_COST};
 use crate::correction::state::CorrectionState;
 use crate::correction::{self, CorrectionRanking};
 
@@ -48,7 +48,15 @@ impl Engine {
 }
 
 /// The ranking of whatever candidates the state holds against the word as typed.
+///
+/// The typed word's own cost is the zero every candidate's cost is measured from,
+/// so as a rival it scores exactly what believing a non-word costs — and when it
+/// cannot compete at all, nothing.
 pub(super) fn rank(state: &CorrectionState, uses: &[u32], allowed: &[bool]) -> CorrectionRanking {
-    let as_typed = from_milli(state.typed_score) - INVALID_COST;
+    let as_typed = if state.typed_competes {
+        -INVALID_COST
+    } else {
+        f32::NEG_INFINITY
+    };
     score::choose(state.candidates(), uses, allowed, as_typed)
 }

@@ -31,14 +31,17 @@
 //! - `gate` — which finished words correction may look at.
 //! - `preview` — the same search, asked for early, and the refusal of its answer.
 //! - `touch` — the public [`KeyTouch`] a host reports, and the per-word log of them.
-//! - `search` — the bounded replay that turns touch data into candidate words.
+//! - `evidence` — that log as the generators read it: what each key could have been.
+//! - `generate` — the generators, and the bounded replay that validates what they
+//!   propose.
 //! - `score` — [`CorrectionCandidate`] and the arithmetic that ranks them.
 //! - `state` — what is parked between the boundary and the platform's answer.
 
+mod evidence;
 mod gate;
+mod generate;
 mod preview;
 pub(crate) mod score;
-mod search;
 pub(crate) mod state;
 mod touch;
 
@@ -92,7 +95,7 @@ pub(crate) fn offer(session: &mut Session, boundary: char, verdict: &Verdict) {
 /// Run the search for the live word, and record how it went.
 fn searched(state: &mut CorrectionState, session: &Session) -> usize {
     let started = std::time::Instant::now();
-    let found = search::find(state, &session.config, &session.keys, &session.buffer);
+    let found = generate::find(state, &session.config, &session.keys, &session.buffer);
     state
         .metrics
         .note_search(found, started.elapsed().as_micros());
