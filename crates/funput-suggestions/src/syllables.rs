@@ -27,12 +27,16 @@ const LIST: &str = include_str!("../data/syllables/vi.txt");
 
 /// Pseudo-uses per band, band 1 first.
 ///
-/// Through the engine's `ln(1 + uses) + 0.5` prior these come to about 4.2, 3.1,
-/// 2.1 and 1.2 nats, against 0.5 for an unlisted syllable — so band 1 is worth
-/// about 3.7 nats over nothing, band 4 about 0.7, and each band roughly one nat
-/// over the next. The calibration that decides whether those are the right
-/// distances runs in `funput dev typos`, not here.
-pub const SYLLABLE_TIER_WEIGHTS: [u32; 4] = [40, 12, 4, 1];
+/// Through the engine's `ln(1 + uses) + 0.5` prior these come to about 2.1, 1.9,
+/// 1.6 and 1.2 nats, against 0.5 for an unlisted syllable — so band 1 is worth
+/// 1.61 nats over nothing, band 4 0.69. Deliberately light: 1.61 just clears the
+/// engine's margin of 1.5, so the top band breaks an exact tie against an
+/// unlisted word and does no more than that. The first draft was `[40, 12, 4, 1]`
+/// (3.7 nats for band 1, about twice the margin), and `funput dev typos` over
+/// Viet74K rejected it: the prior started overruling fingers that had clearly
+/// leaned, and wrong repairs went up by half. The sweep is in
+/// `docs/features/typo-correction.md` §12.
+pub const SYLLABLE_TIER_WEIGHTS: [u32; 4] = [4, 3, 2, 1];
 
 static TABLE: OnceLock<Box<[(&'static str, u8)]>> = OnceLock::new();
 
