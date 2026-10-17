@@ -28,24 +28,51 @@ class KeyboardHapticsTest {
         )
     }
 
-    @Test
-    fun `each strength plays its own predefined effect from Android 10`() {
-        fun effect(strength: KeyboardHapticStrength, sdkInt: Int = 29) =
-            KeyboardHaptics.effectId(KeyboardHapticType.KEY_PRESS, strength, sdkInt)
+    private val composing = KeyboardVibratorCapabilities(
+        sdkInt = 35,
+        supportedPrimitives = setOf(
+            VibrationEffect.Composition.PRIMITIVE_CLICK,
+            VibrationEffect.Composition.PRIMITIVE_TICK,
+        ),
+        hasAmplitudeControl = true,
+    )
 
-        assertEquals(VibrationEffect.EFFECT_TICK, effect(KeyboardHapticStrength.LIGHT))
-        assertEquals(VibrationEffect.EFFECT_CLICK, effect(KeyboardHapticStrength.MEDIUM))
-        assertEquals(VibrationEffect.EFFECT_HEAVY_CLICK, effect(KeyboardHapticStrength.STRONG))
-        // Older versions have no predefined effects and keep the system feedback.
-        assertNull(effect(KeyboardHapticStrength.STRONG, sdkInt = 28))
+    private fun press(strength: KeyboardHapticStrength, device: KeyboardVibratorCapabilities) =
+        KeyboardHaptics.vibrationFor(KeyboardHapticType.KEY_PRESS, strength, device)
+
+    @Test
+    fun `strengths scale one click, so a stronger choice always vibrates harder`() {
+        val clicks = KeyboardHapticStrength.entries.map { press(it, composing) as KeyboardVibration.Primitive }
+
+        assertEquals(setOf(VibrationEffect.Composition.PRIMITIVE_CLICK), clicks.map { it.primitiveId }.toSet())
+        assertEquals(listOf(0.55f, 0.75f, 1f), clicks.map { it.scale })
     }
 
     @Test
-    fun `backspace repeat stays a tick at every strength`() {
+    fun `without primitives the pulse amplitude rises with strength`() {
+        val scaling = KeyboardVibratorCapabilities(sdkInt = 29, hasAmplitudeControl = true)
+        val pulses = KeyboardHapticStrength.entries.map { press(it, scaling) as KeyboardVibration.Pulse }
+
+        assertEquals(listOf(140, 191, 255), pulses.map { it.amplitude })
+    }
+
+    @Test
+    fun `vendor effects are the last resort, and nothing plays before Android 10 without amplitude control`() {
+        val plain = KeyboardVibratorCapabilities(sdkInt = 29)
+
+        assertEquals(
+            KeyboardVibration.Predefined(VibrationEffect.EFFECT_HEAVY_CLICK),
+            press(KeyboardHapticStrength.STRONG, plain),
+        )
+        assertNull(press(KeyboardHapticStrength.STRONG, KeyboardVibratorCapabilities(sdkInt = 28)))
+    }
+
+    @Test
+    fun `backspace repeat stays a soft tick at every strength`() {
         KeyboardHapticStrength.entries.forEach { strength ->
             assertEquals(
-                VibrationEffect.EFFECT_TICK,
-                KeyboardHaptics.effectId(KeyboardHapticType.DELETE_REPEAT, strength, sdkInt = 34),
+                KeyboardVibration.Primitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.4f),
+                KeyboardHaptics.vibrationFor(KeyboardHapticType.DELETE_REPEAT, strength, composing),
             )
         }
     }
