@@ -38,6 +38,7 @@ internal enum class AppDestination(val tab: TopLevelDestination, val depth: Int)
     CLIPBOARD(tab = TopLevelDestination.KEYBOARD, depth = 1),
     SPEECH(tab = TopLevelDestination.KEYBOARD, depth = 1),
     HARDWARE_KEYBOARD(tab = TopLevelDestination.KEYBOARD, depth = 1),
+    KEYBOARD_DATA(tab = TopLevelDestination.KEYBOARD, depth = 1),
     SHORTCUTS(tab = TopLevelDestination.SHORTCUTS, depth = 0),
     THEME_GALLERY(tab = TopLevelDestination.APPEARANCE, depth = 0),
     CREATE_CUSTOM_THEME(tab = TopLevelDestination.APPEARANCE, depth = 1),
