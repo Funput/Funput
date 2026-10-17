@@ -38,6 +38,9 @@ public enum FunputAppGroup {
     /// Encoded custom keyboard themes shared with the extension.
     public static let customThemesKey = "custom-themes"
 
+    /// Words the user took a typo correction back on, so it is never made again.
+    public static let typoKeptWordsKey = "typo-kept-words"
+
     /// Records once whether this install predates modern tone placement, so the
     /// answer never has to be guessed twice. See ``ToneStyleInstallCohort``.
     public static let toneStyleCohortKey = "tone-style-cohort"

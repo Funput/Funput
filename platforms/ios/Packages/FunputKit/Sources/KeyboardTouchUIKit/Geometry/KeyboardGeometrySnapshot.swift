@@ -5,6 +5,10 @@ public struct KeyboardGeometrySnapshot: Sendable {
     public let revision: UInt64
     public let geometry: ResolvedKeyboard
     private let keys: [ResolvedKey]
+    /// Only the keys that type something, kept apart because typo correction walks
+    /// them for every committed keystroke and a Shift or Backspace in the way is a
+    /// neighbour no correction could ever use.
+    let characterKeys: [ResolvedKey]
     private let rowBands: KeyboardRowBands
     private let trackingBounds: CGRect
 
@@ -12,6 +16,7 @@ public struct KeyboardGeometrySnapshot: Sendable {
         self.revision = revision
         self.geometry = geometry
         keys = geometry.keys.filter { $0.spec.role != .placeholder }
+        characterKeys = keys.filter { KeyboardGeometrySnapshot.scalar(of: $0.spec) != nil }
         rowBands = KeyboardRowBands(rows: geometry.rows)
         trackingBounds = KeyboardTrackingBounds.resolve(for: geometry)
     }

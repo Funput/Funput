@@ -1,4 +1,5 @@
 use crate::compose::{boundary, pipeline};
+use crate::correction::{self, StoredTouch};
 use crate::{Engine, ImeResult, KeySource};
 
 impl Engine {
@@ -20,6 +21,15 @@ impl Engine {
     /// A host that gates English mode itself never reaches that path; one that relies
     /// on the engine to be silent while disabled must turn `shortcuts_in_english` off.
     pub fn process_key(&mut self, key: char, source: KeySource) -> ImeResult {
+        // A correction the platform never answered lapses here. The boundary that
+        // parked it already did everything it would have done without the feature,
+        // so there is nothing to fold into this keystroke.
+        correction::flush_pending(&mut self.session);
+        self.process_key_inner(key, source)
+    }
+
+    fn process_key_inner(&mut self, key: char, source: KeySource) -> ImeResult {
+        let touch = correction::take_next(&mut self.session);
         if !self.session.enabled {
             return self.process_key_english(key);
         }
@@ -29,14 +39,19 @@ impl Engine {
         // `…` arrives here too, which is how it counts as a sentence end without
         // `is_english_boundary` — that predicate also gates gõ tắt and English
         // restore, and widening it would start expanding triggers on an ellipsis.
-        let result = self.compose_key(key, source);
+        let result = self.compose_key(key, source, touch);
         self.session.scanner.push(key);
         let word_open = !self.session.keys.is_empty();
         self.session.glue.after_key(key, word_open);
         result
     }
 
-    fn compose_key(&mut self, key: char, source: KeySource) -> ImeResult {
+    fn compose_key(
+        &mut self,
+        key: char,
+        source: KeySource,
+        touch: Option<StoredTouch>,
+    ) -> ImeResult {
         if source.forces_literal_digit(key)
             || boundary::is_word_boundary(self.session.config.method, key)
         {
@@ -55,7 +70,15 @@ impl Engine {
             self.session.glue.start_word();
         }
         self.session.keys.push(raw_key);
-        pipeline::process(&mut self.session, compose_key, key, capitalize_shortcut)
+        // Whatever a preview found was about the word as it stood; this key makes it
+        // a different word.
+        correction::drop_preview(&mut self.session);
+        correction::note_key(&mut self.session, raw_key, touch);
+        let result = pipeline::process(&mut self.session, compose_key, key, capitalize_shortcut);
+        // The pipeline rewrites the raw keys when a modifier is reverted, which would
+        // leave the touch log describing a word that no longer exists.
+        correction::verify_alignment(&mut self.session);
+        result
     }
 
     /// English mode with gõ tắt still on. Nothing is composed: the app renders

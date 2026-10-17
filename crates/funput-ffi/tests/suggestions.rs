@@ -3,8 +3,10 @@ use std::io::Write;
 use funput_ffi::{
     FunputSuggestionResult, funput_suggestion_attach_lexicon, funput_suggestion_engine_free,
     funput_suggestion_engine_new_in_memory, funput_suggestion_engine_open, funput_suggestion_flush,
-    funput_suggestion_learn, funput_suggestion_learn_after, funput_suggestion_query,
-    funput_suggestion_query_with, funput_suggestion_reset, funput_suggestion_stats,
+    funput_suggestion_frequency, funput_suggestion_is_known_word, funput_suggestion_learn,
+    funput_suggestion_learn_after, funput_suggestion_query, funput_suggestion_query_with,
+    funput_suggestion_reset, funput_suggestion_stats, funput_suggestion_syllable_tier,
+    funput_suggestion_syllable_weight,
 };
 use funput_suggestions::lexicon_build::encode;
 
@@ -253,4 +255,118 @@ fn reset_forgets_the_user_but_keeps_the_lexicon() {
     assert!(unsafe { funput_suggestion_reset(engine) });
     assert_eq!(texts(&query(engine, "wh")), ["what", "when", "which"]);
     unsafe { funput_suggestion_engine_free(engine) };
+}
+
+fn frequency(engine: *const funput_ffi::FunputSuggestionEngine, word: &str) -> u32 {
+    let word = codepoints(word);
+    unsafe { funput_suggestion_frequency(engine, word.as_ptr(), word.len()) }
+}
+
+fn known(engine: *const funput_ffi::FunputSuggestionEngine, word: &str) -> bool {
+    let word = codepoints(word);
+    unsafe { funput_suggestion_is_known_word(engine, word.as_ptr(), word.len()) }
+}
+
+/// What typo correction ranks its candidates with. The engine that produced them has
+/// no dictionary, so these two are the only thing standing between a deliberate
+/// English word and a Vietnamese "correction" of it.
+#[test]
+fn a_word_can_be_weighed_and_vetoed_across_the_abi() {
+    let lexicon = lexicon_file(LEXICON);
+    let engine = funput_suggestion_engine_new_in_memory();
+    assert!(attach(engine, &path_bytes(&lexicon)));
+    assert!(learn(engine, "đường"));
+    assert!(learn(engine, "đường"));
+
+    assert_eq!(frequency(engine, "đường"), 2);
+    assert_eq!(frequency(engine, "đưởng"), 0, "never typed");
+    assert!(known(engine, "đường"), "the user has typed it");
+    assert!(known(engine, "what"), "the shipped English list holds it");
+    assert!(!known(engine, "dduwowfnh"), "not a word in either sense");
+
+    unsafe { funput_suggestion_engine_free(engine) };
+}
+
+#[test]
+fn weighing_a_word_is_null_safe() {
+    let null: *const funput_ffi::FunputSuggestionEngine = std::ptr::null();
+    assert_eq!(frequency(null, "đường"), 0);
+    assert!(!known(null, "what"));
+
+    let engine = funput_suggestion_engine_new_in_memory();
+    assert_eq!(
+        unsafe { funput_suggestion_frequency(engine, std::ptr::null(), 4) },
+        0,
+        "a null pointer with a length is malformed and must not be read"
+    );
+    assert!(!unsafe { funput_suggestion_is_known_word(engine, std::ptr::null(), 4) });
+    unsafe { funput_suggestion_engine_free(engine) };
+}
+
+fn syllable_weight(word: &str) -> u32 {
+    let word = codepoints(word);
+    unsafe { funput_suggestion_syllable_weight(word.as_ptr(), word.len()) }
+}
+
+fn syllable_tier(word: &str) -> u32 {
+    let word = codepoints(word);
+    unsafe { funput_suggestion_syllable_tier(word.as_ptr(), word.len()) }
+}
+
+/// The other half of a candidate's `uses`: the shipped list's own opinion of the
+/// word, asked with no handle because it lives in the library, not in a store.
+#[test]
+fn the_shipped_syllable_bands_are_readable_across_the_abi() {
+    assert_eq!(syllable_tier("là"), 1);
+    assert_eq!(syllable_tier("Là"), 1, "case does not matter");
+    assert_eq!(syllable_tier("la\u{0300}"), 1, "nor does normalization");
+    assert_eq!(
+        syllable_tier("nguyễn"),
+        4,
+        "a family name is real, but rare"
+    );
+    assert_eq!(syllable_tier("dduwowfnh"), 0, "not on the list");
+
+    assert_eq!(
+        syllable_weight("là"),
+        funput_suggestions::SYLLABLE_TIER_WEIGHTS[0]
+    );
+    assert_eq!(
+        syllable_weight("nguyễn"),
+        funput_suggestions::SYLLABLE_TIER_WEIGHTS[3]
+    );
+    assert_eq!(syllable_weight("dduwowfnh"), 0);
+    assert_eq!(syllable_weight(""), 0);
+}
+
+#[test]
+fn reading_the_syllable_bands_is_null_safe() {
+    assert_eq!(
+        unsafe { funput_suggestion_syllable_weight(std::ptr::null(), 0) },
+        0
+    );
+    assert_eq!(
+        unsafe { funput_suggestion_syllable_tier(std::ptr::null(), 0) },
+        0
+    );
+    assert_eq!(
+        unsafe { funput_suggestion_syllable_weight(std::ptr::null(), 4) },
+        0,
+        "a null pointer with a length is malformed and must not be read"
+    );
+    assert_eq!(
+        unsafe { funput_suggestion_syllable_tier(std::ptr::null(), 4) },
+        0
+    );
+    let invalid = [0x11_0000u32];
+    assert_eq!(
+        unsafe { funput_suggestion_syllable_weight(invalid.as_ptr(), 1) },
+        0
+    );
+    let long: Vec<u32> = codepoints(&"à".repeat(100));
+    assert_eq!(
+        unsafe { funput_suggestion_syllable_tier(long.as_ptr(), long.len()) },
+        0,
+        "longer than any syllable, and must not overflow the stack buffer"
+    );
 }

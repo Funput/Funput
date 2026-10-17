@@ -12,17 +12,22 @@
 //! - `index/` — the in-memory search index (prefix trie, ranking, key normalization).
 //! - `lexicon/` — the read-only English word list (`en.lex`) and its format.
 //! - `persistence/` — the crash-safe on-disk snapshot + journal store.
+//! - `syllables` — the shipped Vietnamese syllables, ranked in four bands, and the
+//!   prior weight typo correction reads off them.
 //! - `types` — the shared vocabulary (`WordRecord` and the public result types).
 
 mod bigram;
 mod binary;
 mod engine;
 mod index;
+mod keep;
 mod lexicon;
 mod persistence;
+mod syllables;
 mod types;
 
 pub use engine::{SuggestionConfig, SuggestionEngine};
+pub use syllables::{SYLLABLE_TIER_WEIGHTS, syllable_tier, syllable_weight};
 pub use types::{LearnOutcome, SuggestionSet, SuggestionStats};
 
 /// Building `en.lex` from `en.tsv`, for `funput-lexicon-tool`. Never enabled in

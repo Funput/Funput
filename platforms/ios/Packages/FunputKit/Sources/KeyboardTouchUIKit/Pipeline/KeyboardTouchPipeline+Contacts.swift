@@ -34,6 +34,7 @@ extension KeyboardTouchPipeline {
     ) -> Bool {
         guard geometries.removeValue(forKey: contactID) != nil else { return false }
         initialHits.removeValue(forKey: contactID)
+        initialLocations.removeValue(forKey: contactID)
         arbiter.resolve(contactID, payload: action, at: timestamp)
         return true
     }
@@ -48,6 +49,7 @@ extension KeyboardTouchPipeline {
         guard existed else { return false }
         geometries.removeValue(forKey: contactID)
         initialHits.removeValue(forKey: contactID)
+        initialLocations.removeValue(forKey: contactID)
         arbiter.cancel(contactID, at: timestamp)
         return true
     }
@@ -57,6 +59,7 @@ extension KeyboardTouchPipeline {
         resolver.reset()
         geometries.removeAll(keepingCapacity: true)
         initialHits.removeAll(keepingCapacity: true)
+        initialLocations.removeAll(keepingCapacity: true)
         counters = KeyboardTouchPipelineStatistics()
     }
 

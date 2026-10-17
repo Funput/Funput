@@ -28,6 +28,41 @@ public final class KeyboardInputCoordinator {
     /// The durable options last applied, kept so panel fields compose the same way.
     var compositionOptions: FunputCompositionOptions?
     var nextTransactionSequence: UInt64 = 1
+    /// Where the finger landed for the key being handled right now. Set by `handle`
+    /// and spent on the first scalar that reaches the engine; never outlives the key
+    /// it belongs to.
+    var pendingTouch: KeyboardTouchEvidence?
+    /// What the host knows about words. Nil until it supplies one, and while it is
+    /// nil no correction is ever applied — see `chooseCorrection`.
+    public weak var correctionDictionary: (any CorrectionDictionary)?
+    /// Whether the field the user is typing in wants autocorrect at all. A password
+    /// box, a code field or a search bar that asked for `.no` gets none.
+    public var allowsAutocorrect = true
+    /// Corrections the keyboard declined before the engine ranked anything.
+    public internal(set) var correctionDeclines = CorrectionDeclines()
+    /// The engine calls that look at a word before it ends: the composer, unless a
+    /// test stands a fake in.
+    public lazy var correctionPreviewer: any CorrectionPreviewing = composer
+    /// What the suggestion bar shows about the word under the caret.
+    public internal(set) var correctionPreview: CorrectionPreview?
+    /// A candidate the user tapped on the bar, for the one space that applies it.
+    var forcedCorrection: String?
+    /// The correction last applied, while the engine still offers to undo it.
+    var appliedCorrection: AppliedCorrection?
+    /// A correction the boundary left parked because the engine would not pick,
+    /// shown on the bar until the next key.
+    var parkedCorrection: ParkedCorrection?
+    /// Set for the one commit that undoes a correction, so re-opening the previous
+    /// word is skipped for it.
+    var undidCorrection = false
+    /// How far this user's touches land from key centres. Read by the host to decide
+    /// whether correcting is worth doing at all.
+    public internal(set) var touchSpread = KeyboardTouchSpread()
+
+    /// Forget the touches counted so far — called once a session has been reported.
+    public func resetTouchSpread() {
+        touchSpread.reset()
+    }
 
     public init(
         inputMethod: KeyboardInputMethod = .vni,

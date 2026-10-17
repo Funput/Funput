@@ -41,6 +41,14 @@ extension KeyboardViewController {
 
     @discardableResult
     func applyTextInputTraits(force: Bool = false) -> Bool {
+        // Read on its own rather than through `KeyboardInputContext`: a field that
+        // merely asks for autocorrect to be off must not also clear the composition,
+        // which is what a context change does.
+        inputCoordinator.allowsAutocorrect = CorrectionFieldPolicy.allowsAutocorrect(
+            autocorrectionType: textDocumentProxy.autocorrectionType ?? .default,
+            keyboardType: textDocumentProxy.keyboardType ?? .default,
+            textContentType: textDocumentProxy.textContentType
+        )
         let resolved = makeDocumentWriter().inputContext(
             autoCapitalizeEnabled: configuration.autoCapitalize
         )

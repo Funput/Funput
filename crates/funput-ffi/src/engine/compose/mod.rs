@@ -1,6 +1,16 @@
 //! Composition operations exposed over the C ABI: feed keys, read the composed
 //! buffer, and reset state. Each wraps [`abi::with_engine_mut`] /
 //! [`abi::with_engine_ref`], which null-check the handle and guard against panics.
+//!
+//! # Layout
+//!
+//! - this file — the keystroke path and the composed buffer.
+//! - `editing` — the calls that edit a word already on screen: Backspace, the flip
+//!   hotkey, and re-opening a committed word.
+
+mod editing;
+
+pub use editing::{funput_adopt, funput_backspace, funput_flip_composing};
 
 use funput_engine::KeySource;
 
@@ -102,49 +112,5 @@ pub unsafe extern "C" fn funput_buffer(
             let dst = std::slice::from_raw_parts_mut(out, cap);
             abi::copy_codepoints(dst, e.buffer().chars())
         })
-    }
-}
-
-/// Backspace inside the current composition: drop the last composed character so the
-/// next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`). Returns a
-/// no-op result — the host passes the Backspace through to delete its own character.
-///
-/// # Safety
-/// `engine` must be a valid handle or null.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn funput_backspace(engine: *mut FunputEngine) -> FunputResult {
-    unsafe { abi::with_engine_mut(engine, |e| FunputResult::from_ime(&e.on_backspace())) }
-}
-
-/// Flip the word being composed between its Vietnamese form and its raw keystrokes
-/// (`card` ⇄ `cải`), and back on a second call. Returns the delete+inject the host
-/// should apply (`ACTION_SEND`), or [`FunputResult::none`] when there is nothing to
-/// flip. Hosts that show marked text can ignore the payload and re-render
-/// [`funput_buffer`] after a non-`ACTION_NONE` result.
-///
-/// # Safety
-/// `engine` must be a valid handle or null.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn funput_flip_composing(engine: *mut FunputEngine) -> FunputResult {
-    unsafe { abi::with_engine_mut(engine, |e| FunputResult::from_ime(&e.flip_composing())) }
-}
-
-/// Re-open an already-committed word as the live composition, so the next keystroke
-/// edits it (Backspace back onto `chào`, then `s` gives `cháo`). `word` is UTF-32, as in
-/// [`funput_add_shortcut`](crate::funput_add_shortcut). Returns whether it was taken — only
-/// a Vietnamese syllable is, so leave the document alone on `false`.
-///
-/// # Safety
-/// `engine` must be a valid handle or null; `word` must point to `len` `u32` values or
-/// be null.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn funput_adopt(
-    engine: *mut FunputEngine,
-    word: *const u32,
-    len: usize,
-) -> bool {
-    unsafe {
-        let text = abi::string_from_utf32(word, len);
-        abi::with_engine_mut(engine, |e| e.adopt(&text))
     }
 }

@@ -1,5 +1,6 @@
 mod bigram;
 mod eviction;
+mod frequency;
 mod learning;
 mod lexicon;
 mod persistence;

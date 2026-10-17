@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import KeyboardLayout
 import KeyboardTouchCore
@@ -16,6 +17,11 @@ public final class KeyboardTouchPipeline {
     var currentGeometry: KeyboardGeometrySnapshot?
     var geometries: [ContactID: KeyboardGeometrySnapshot] = [:]
     var initialHits: [ContactID: KeyboardTouchHit] = [:]
+    /// Where each contact landed. The key a press commits is decided at the lift,
+    /// but the evidence typo correction weighs is where the finger *came down*: a
+    /// thumb slides a little on its way off the glass, and the lift point says more
+    /// about that slide than about the key the user was aiming at.
+    var initialLocations: [ContactID: CGPoint] = [:]
     var counters = KeyboardTouchPipelineStatistics()
     let onResolved: ResolutionHandler
     private let clock: PressArbiterDriver<KeyboardTouchAction>.Clock

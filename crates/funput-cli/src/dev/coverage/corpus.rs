@@ -67,7 +67,7 @@ fn is_vietnamese_syllable(token: &str) -> bool {
 
 /// Read a corpus (one word per line; words may have multiple space-separated
 /// syllables), split into unique Vietnamese syllables.
-pub(super) fn load_syllables(path: &Path) -> std::io::Result<BTreeSet<String>> {
+pub(in crate::dev) fn load_syllables(path: &Path) -> std::io::Result<BTreeSet<String>> {
     let text = fs::read_to_string(path)?;
     let mut set = BTreeSet::new();
     for line in text.lines() {

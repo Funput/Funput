@@ -1,7 +1,7 @@
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::Cell;
 
-use funput_suggestions::{SuggestionConfig, SuggestionEngine};
+use funput_suggestions::{SuggestionConfig, SuggestionEngine, syllable_tier, syllable_weight};
 
 struct CountingAllocator;
 
@@ -108,6 +108,55 @@ fn warm_prediction_does_not_allocate() {
     );
 }
 
+/// Typo correction asks this once per candidate at a word boundary, so it holds the
+/// same promise the lookup path does: `context_slot` normalizes onto the stack and
+/// compares out of the records themselves, without building a key.
+#[test]
+fn asking_how_often_a_word_was_typed_does_not_allocate() {
+    let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
+    for word in ["đường", "đưởng", "không", "nhà"] {
+        engine.learn(word);
+        engine.learn(word);
+    }
+    assert_eq!(engine.frequency("đường"), 2, "the hit must be a real one");
+
+    let allocations = measure(|| {
+        for _ in 0..100_000 {
+            std::hint::black_box(engine.frequency(std::hint::black_box("đường")));
+            std::hint::black_box(engine.frequency(std::hint::black_box("dduwowfnh")));
+        }
+    });
+
+    assert_eq!(allocations, 0, "frequency allocated {allocations} times");
+}
+
+/// The shipped syllable bands are the other half of the prior, asked once per
+/// candidate beside `frequency`. The table is built on the first call in the
+/// process — that one allocates, and is made outside the measurement — and every
+/// lookup after it normalizes onto the stack and binary-searches a static slice.
+#[test]
+fn asking_which_band_a_syllable_sits_in_does_not_allocate() {
+    assert_eq!(
+        syllable_tier("là"),
+        Some(1),
+        "warm-up, and the hit must be real"
+    );
+
+    let allocations = measure(|| {
+        for _ in 0..100_000 {
+            std::hint::black_box(syllable_tier(std::hint::black_box("là")));
+            std::hint::black_box(syllable_tier(std::hint::black_box("dduwowfnh")));
+            std::hint::black_box(syllable_tier(std::hint::black_box("la\u{0300}")));
+            std::hint::black_box(syllable_weight(std::hint::black_box("Đường")));
+        }
+    });
+
+    assert_eq!(
+        allocations, 0,
+        "syllable_tier allocated {allocations} times"
+    );
+}
+
 /// The lexicon cases need the encoder, which only the `lexicon-build` feature
 /// exposes. `cargo test --workspace` turns it on through funput-lexicon-tool;
 /// run `cargo test -p funput-suggestions --features lexicon-build` alone.
@@ -163,6 +212,29 @@ mod lexicon {
                 "lexicon lookup {previous:?} {prefix:?} allocated {allocations} times"
             );
         }
+    }
+
+    /// The English veto behind typo correction: asked once per word the user
+    /// finishes, through the mapped file, so it is on the query budget too.
+    #[test]
+    fn asking_whether_a_word_is_english_does_not_allocate() {
+        let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
+        let _file = attached(&mut engine);
+        assert!(engine.is_known_word("work"), "the hit must be a real one");
+
+        let allocations = measure(|| {
+            for _ in 0..100_000 {
+                std::hint::black_box(engine.is_known_word(std::hint::black_box("work")));
+                std::hint::black_box(engine.is_known_word(std::hint::black_box("dduwowfnh")));
+                std::hint::black_box(engine.is_known_word(std::hint::black_box("đường")));
+                std::hint::black_box(engine.is_known_word(std::hint::black_box("Đc")));
+            }
+        });
+
+        assert_eq!(
+            allocations, 0,
+            "is_known_word allocated {allocations} times"
+        );
     }
 
     /// Deciding to yield reads the personal answer's marks on every keystroke of

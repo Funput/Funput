@@ -79,6 +79,48 @@
 #define ONSET_Z 8
 
 /**
+ * `FunputCorrectionRanking.verdict`: the best candidate is clear enough to apply.
+ */
+#define CORRECTION_VERDICT_APPLY 0
+
+/**
+ * `FunputCorrectionRanking.verdict`: the two best are too close to call — show
+ * both, apply neither.
+ */
+#define CORRECTION_VERDICT_AMBIGUOUS 1
+
+/**
+ * `FunputCorrectionRanking.verdict`: no candidate beat the word as typed.
+ */
+#define CORRECTION_VERDICT_AS_TYPED 2
+
+/**
+ * `FunputCorrectionRanking.verdict`: nothing the host allowed was left to rank, or
+ * there was nothing to rank at all.
+ */
+#define CORRECTION_VERDICT_REFUSED 3
+
+/**
+ * Neighbouring keys a host may offer per touch.
+ *
+ * Spelled out rather than aliased to `funput_engine::MAX_ALTERNATES`, because
+ * cbindgen does not read the engine crate and would emit a `#define` naming a macro
+ * the header never defines. The assertion below is what keeps the two in step.
+ */
+#define TOUCH_ALTERNATE_CAP 3
+
+/**
+ * Candidates a host can read back for one word.
+ */
+#define CORRECTION_CAP 8
+
+/**
+ * Codepoints carried per candidate — the same cap the suggestion bar uses, and far
+ * past the longest Vietnamese syllable.
+ */
+#define CORRECTION_CHARS_CAP 32
+
+/**
  * Max output codepoints carried inline. Generous enough for English-restore of
  * long words; longer output is truncated (practically never happens).
  */
@@ -229,6 +271,101 @@ typedef struct {
     bool spell_check;
     bool auto_capitalize;
 } FunputConfig;
+
+/**
+ * Where one touch landed, as the host measured it.
+ *
+ * Parallel arrays rather than an array of `(key, distance)` structs, so Swift and
+ * Kotlin see a flat layout with no padding to reason about. Distances are in key
+ * pitches — the gap between two neighbouring key centres — so the model does not
+ * care about screen size or keyboard height.
+ */
+typedef struct {
+    /**
+     * The key the host resolved this touch to, as a Unicode scalar.
+     */
+    uint32_t typed;
+    float typed_distance;
+    /**
+     * Keys the same touch could have meant, nearest first.
+     */
+    uint32_t alternates[TOUCH_ALTERNATE_CAP];
+    float distances[TOUCH_ALTERNATE_CAP];
+    /**
+     * How many entries of `alternates` are set; anything past `TOUCH_ALTERNATE_CAP`
+     * is ignored.
+     */
+    uint32_t alternate_count;
+} FunputKeyTouch;
+
+/**
+ * How the candidates rank once the host's prior is folded in.
+ *
+ * `best` and `second` index [`funput_engine_correction_candidates`]; `-1` means
+ * none. `second` is the other word to show when `verdict` is
+ * `CORRECTION_VERDICT_AMBIGUOUS`.
+ *
+ * [`funput_engine_correction_candidates`]: super::funput_engine_correction_candidates
+ */
+typedef struct {
+    int32_t best;
+    int32_t second;
+    uint32_t verdict;
+} FunputCorrectionRanking;
+
+/**
+ * One word the touch evidence can still reach.
+ */
+typedef struct {
+    /**
+     * Codepoints of the corrected word in `chars`.
+     */
+    uint32_t count;
+    uint32_t chars[CORRECTION_CHARS_CAP];
+    /**
+     * Minus the edit cost in nats; touch evidence is folded in where the host
+     * reported it. Always negative, closer to zero is better. The host adds its own
+     * word prior — or lets `funput_engine_choose_correction` do it.
+     */
+    float touch_score;
+    /**
+     * How many keys had to be substituted to reach this word.
+     */
+    uint32_t edits;
+} FunputCorrectionCandidate;
+
+/**
+ * What typo correction has done this session. Counts only — never a word, never a
+ * keystroke. A high revert rate means the confidence margin is set too low; a high
+ * ambiguous-skip rate means it is set too high.
+ */
+typedef struct {
+    uint32_t applied;
+    uint32_t reverted;
+    uint32_t skipped_ambiguous;
+    uint32_t candidates_max;
+    uint32_t microseconds_max;
+    /**
+     * Words where no candidate beat the word as typed.
+     */
+    uint32_t kept_as_typed;
+    /**
+     * Words the boundary parked a correction for.
+     */
+    uint32_t offered;
+    /**
+     * Words looked at with no syllable within reach.
+     */
+    uint32_t no_candidate;
+    /**
+     * Words left alone because the user undid this spelling the last time.
+     */
+    uint32_t suppressed;
+    /**
+     * Real syllables with a touch on the edge between two keys, left alone.
+     */
+    uint32_t valid_near_edge;
+} FunputCorrectionMetrics;
 
 typedef struct {
     uint32_t count;
@@ -708,8 +845,15 @@ uintptr_t funput_buffer(const FunputEngine *engine, uint32_t *out, uintptr_t cap
 
 /**
  * Backspace inside the current composition: drop the last composed character so the
- * next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`). Returns a
- * no-op result — the host passes the Backspace through to delete its own character.
+ * next keystroke composes against the corrected text (`Phua` ⌫ `s` → `Phú`). Normally
+ * returns a no-op result and the host passes the Backspace through to delete its own
+ * character.
+ *
+ * One exception: with typo correction on, a Backspace straight after a correction
+ * undoes it, and this returns an `ACTION_SEND` that puts back what the user typed.
+ * A host that passes the key through as well would then eat one character too many,
+ * so it must check `funput_engine_has_correction_undo` first — or simply stop
+ * passing the key through whenever the result is not `ACTION_NONE`.
  *
  * # Safety
  * `engine` must be a valid handle or null.
@@ -790,6 +934,193 @@ void funput_set_enabled(FunputEngine *engine, bool enabled);
  * `engine` must be a valid handle or null.
  */
 void funput_set_extra_onsets(FunputEngine *engine, uint8_t letters);
+
+/**
+ * Switch typo correction on or off ("Tự sửa lỗi gõ nhầm phím").
+ *
+ * Its own setter rather than a `FunputConfig` field, for the reason that struct's
+ * own documentation gives: it crosses the ABI by value, so growing it breaks every
+ * host built against the previous header, silently, until each is rebuilt.
+ *
+ * On, every word that ends as something other than a syllable is searched for a
+ * repair. Touch reports (`funput_engine_set_next_key_touch`) sharpen the search for
+ * the keys they describe; without them the engine reads its own keyboard layout.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_set_typo_correction(FunputEngine *engine, bool on);
+
+/**
+ * Report where the finger landed for the key about to be sent.
+ *
+ * Consumed by the next `funput_process_key`, whatever key that turns out to be, so
+ * a touch never attaches itself to a later keystroke. Optional, key by key: a key
+ * that arrives without one is read against the engine's keyboard layout at a flat
+ * cost, and the word as typed then no longer competes with the candidates — only a
+ * word every key of which was reported can be kept "as typed" on the strength of
+ * where the fingers sat.
+ *
+ * Null-safe both ways: a null handle or a null `touch` does nothing.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `touch` must point to a readable
+ * [`FunputKeyTouch`], or be null.
+ */
+void funput_engine_set_next_key_touch(FunputEngine *engine, const FunputKeyTouch *touch);
+
+/**
+ * Whether the last keystroke ended a word on a correction still waiting for an
+ * answer.
+ *
+ * A call of its own rather than a field on [`FunputResult`]: that struct crosses the
+ * ABI by value and hosts are built separately from the header, so growing it would
+ * mismatch silently until every one of them is rebuilt.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+bool funput_engine_has_pending_correction(const FunputEngine *engine);
+
+/**
+ * Answer the parked correction: apply the candidate at `index`, or pass a negative
+ * index to decline it.
+ *
+ * Declining is a no-op: the boundary keystroke already did everything it would have
+ * done without correction, English restore included. An index past the end declines
+ * too, and with nothing pending the call changes nothing either, so a host can
+ * always ask.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+FunputResult funput_engine_apply_correction(FunputEngine *engine, int32_t index);
+
+/**
+ * Whether Backspace would undo the last correction rather than delete a character.
+ *
+ * A host that passes Backspace straight through to the app must ask this first:
+ * when it is true, `funput_backspace` returns an `ACTION_SEND` that restores what
+ * the user typed, and passing the key through as well would eat one more character.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+bool funput_engine_has_correction_undo(const FunputEngine *engine);
+
+/**
+ * Search the word being typed the way the boundary will, and return how many
+ * candidates it reaches — so the bar can show the repair before the space.
+ *
+ * 0 while the word could still become a syllable, for a word correction leaves
+ * alone, and for one the user already refused. Read the candidates with
+ * `funput_engine_correction_candidates` and rank them with
+ * [`funput_engine_rank_correction`]; they stand until the next letter key, and the
+ * boundary that follows reuses them rather than searching twice. An explicit call:
+ * `funput_process_key` never runs this search on its own.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+uintptr_t funput_engine_preview_correction(FunputEngine *engine);
+
+/**
+ * The user tapped the word exactly as they typed it: leave it, and do not offer
+ * this spelling again the next time it is typed. Drops any preview, parked
+ * correction and armed undo.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_engine_refuse_correction(FunputEngine *engine);
+
+/**
+ * Rank the candidates in hand — a preview's, or a parked correction's — with the
+ * host's prior folded in. `uses` and `allowed` read exactly as in
+ * `funput_engine_choose_correction`; unlike it, this counts nothing, so the bar may
+ * ask as often as it redraws.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `uses` must point to at least `len`
+ * readable `u32` values, or be null; `allowed` to at least `len` readable `bool`
+ * values, or be null.
+ */
+FunputCorrectionRanking funput_engine_rank_correction(const FunputEngine *engine,
+                                                      const uint32_t *uses,
+                                                      const bool *allowed,
+                                                      uintptr_t len);
+
+/**
+ * Copy up to `cap` candidates into `out`, best touch score first, and return how
+ * many were written. Never more than [`CORRECTION_CAP`].
+ *
+ * Null-safe: a null handle or a null `out` writes nothing and returns 0.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `out` must point to at least `cap`
+ * writable [`FunputCorrectionCandidate`] values, or be null.
+ */
+uintptr_t funput_engine_correction_candidates(const FunputEngine *engine,
+                                              FunputCorrectionCandidate *out,
+                                              uintptr_t cap);
+
+/**
+ * How many characters applying a candidate will delete: the word as the app is
+ * displaying it, plus the boundary character the host has already echoed.
+ *
+ * Lets a host size one batch edit before it decides whether to make it. 0 when
+ * nothing is pending.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+uintptr_t funput_engine_pending_correction_backspace(const FunputEngine *engine);
+
+/**
+ * Rank the parked candidates with the host's use counts folded in and return the
+ * winner, or `-1` when the top two are too close to call — a pair to offer on the
+ * suggestion bar rather than an edit to make.
+ *
+ * `uses` and `allowed` are both parallel to [`funput_engine_correction_candidates`]
+ * and both nullable. A null or short `uses` reads its missing entries as zero, so a
+ * host with no word store can pass null and still get the touch-only ranking. A null
+ * or short `allowed` reads its missing entries as permitted.
+ *
+ * `allowed` is how a host refuses to correct *into* a word its dictionary does not
+ * know. It is answered here rather than by filtering the candidate list, because the
+ * returned index points into the unfiltered list and the confidence margin has to be
+ * measured against the runner-up that was actually eligible.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `uses` must point to at least `len`
+ * readable `u32` values, or be null; `allowed` to at least `len` readable `bool`
+ * values, or be null.
+ */
+int32_t funput_engine_choose_correction(FunputEngine *engine,
+                                        const uint32_t *uses,
+                                        const bool *allowed,
+                                        uintptr_t len);
+
+/**
+ * Copy the word the user actually typed into `out` as UTF-32, while undoing the
+ * last correction is still one Backspace away, and return how many codepoints were
+ * written. 0 once the undo is gone — which is also when the chip should disappear.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `out` must point to at least `cap`
+ * writable `u32` values, or be null.
+ */
+uintptr_t funput_engine_correction_undo_text(const FunputEngine *engine,
+                                             uint32_t *out,
+                                             uintptr_t cap);
+
+/**
+ * Read the correction counters. Zeroed when the feature has never been switched on.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+FunputCorrectionMetrics funput_engine_correction_metrics(const FunputEngine *engine);
 
 /**
  * Define a text-expansion shortcut (gõ tắt): typing `trigger` then a word boundary
@@ -986,6 +1317,56 @@ FunputSuggestionResult funput_suggestion_query_with(const FunputSuggestionEngine
                                                     uintptr_t previous_len,
                                                     const uint32_t *prefix,
                                                     uintptr_t prefix_len);
+
+/**
+ * How many pseudo-uses `word`'s band in the shipped syllable list is worth, and 0
+ * for a word that is not on it — what a host adds to `funput_suggestion_frequency`
+ * to form the `uses` entry of a candidate. Case and normalization do not matter.
+ *
+ * No handle, no I/O, no allocation. Malformed text answers 0.
+ *
+ * # Safety
+ * `word` must point to `word_len` readable codepoints, or be null.
+ */
+uint32_t funput_suggestion_syllable_weight(const uint32_t *word, uintptr_t word_len);
+
+/**
+ * The band `word` sits in on the shipped syllable list: 1 for the most common,
+ * 4 for the rare but real, and 0 for a word that is not on it.
+ *
+ * No handle, no I/O, no allocation. Malformed text answers 0.
+ *
+ * # Safety
+ * `word` must point to `word_len` readable codepoints, or be null.
+ */
+uint32_t funput_suggestion_syllable_tier(const uint32_t *word, uintptr_t word_len);
+
+/**
+ * How many times the user has typed `word`, and 0 for one the store has never
+ * seen — the `uses` entry that goes into `funput_engine_choose_correction`.
+ *
+ * Read-only, no I/O, and no allocation. A null handle or malformed text answers 0.
+ *
+ * # Safety
+ * `word` must point to `word_len` readable codepoints, or be null.
+ */
+uint32_t funput_suggestion_frequency(const FunputSuggestionEngine *engine,
+                                     const uint32_t *word,
+                                     uintptr_t word_len);
+
+/**
+ * Whether `word` is a word at all: one the user has typed, or one in the attached
+ * English list.
+ *
+ * The veto. Without it a host would let correction rewrite `text ` as `tẻ`, since
+ * `r` sits beside `t` and the engine has no way to know better.
+ *
+ * # Safety
+ * `word` must point to `word_len` readable codepoints, or be null.
+ */
+bool funput_suggestion_is_known_word(const FunputSuggestionEngine *engine,
+                                     const uint32_t *word,
+                                     uintptr_t word_len);
 
 /**
  * Flush pending learned tokens to the journal.

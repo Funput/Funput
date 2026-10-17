@@ -2,7 +2,7 @@
 
 use jni::EnvUnowned;
 use jni::objects::{JLongArray, JObjectArray, JString};
-use jni::sys::{jlong, jlongArray, jobjectArray};
+use jni::sys::{jboolean, jint, jlong, jlongArray, jobjectArray};
 
 use super::registry;
 use crate::abi::{JavaObject, neutral, safe};
@@ -105,4 +105,41 @@ fn candidates(env: &mut jni::Env<'_>, words: &[String]) -> jni::errors::Result<j
         array.set_element(env, index, &value)?;
     }
     Ok(array.into_raw())
+}
+
+/// How many times the user has typed `word`, and 0 for one the store has never
+/// seen — the `uses` entry that goes into `nativeChooseCorrection`.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeFrequency(
+    mut env: EnvUnowned<'_>,
+    _this: JavaObject<'_>,
+    handle: jlong,
+    word: JString<'_>,
+) -> jint {
+    safe(0, || {
+        let text = neutral(env.with_env(|env| word.try_to_string(env)).into_outcome());
+        registry::with(handle, |engine| {
+            jint::try_from(engine.frequency(&text)).unwrap_or(jint::MAX)
+        })
+        .unwrap_or(0)
+    })
+}
+
+/// Whether `word` is a word at all: one the user has typed, or one in the attached
+/// English list.
+///
+/// The veto behind typo correction. Without it the IME would let a correction rewrite
+/// `text ` as `tẻ`, since `r` sits beside `t` and the engine has no dictionary to know
+/// better.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeIsKnownWord(
+    mut env: EnvUnowned<'_>,
+    _this: JavaObject<'_>,
+    handle: jlong,
+    word: JString<'_>,
+) -> jboolean {
+    safe(false, || {
+        let text = neutral(env.with_env(|env| word.try_to_string(env)).into_outcome());
+        registry::with(handle, |engine| engine.is_known_word(&text)).unwrap_or(false)
+    })
 }

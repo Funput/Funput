@@ -54,6 +54,8 @@ extension KeyboardInputCoordinator {
     /// Every composition reset also closes the pending-library boundary.
     func clearComposition() {
         composer.clear()
+        correctionPreview = nil
+        parkedCorrection = nil
         finishShortcutWord()
     }
 

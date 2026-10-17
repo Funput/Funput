@@ -9,7 +9,7 @@ struct HapticFeedbackConfigurationTests {
         let config = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(config.isHapticFeedbackEnabled == enabled)
         #expect(config.hapticFeedbackStrength == .light)
-        #expect(config.schemaVersion == 16)
+        #expect(config.schemaVersion == FunputConfiguration.currentSchemaVersion)
     }
 
     @Test("Strength survives persistence while feedback is off", arguments: HapticFeedbackStrength.allCases)

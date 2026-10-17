@@ -5,7 +5,7 @@
 //! `hòa` and `hoà` are both valid spellings, so producing either is correct typing.
 //! Smart-restore is off to measure pure composition.
 
-mod corpus;
+pub(super) mod corpus;
 mod report;
 #[cfg(test)]
 mod tests;

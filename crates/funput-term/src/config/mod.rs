@@ -14,7 +14,7 @@
 
 use std::path::PathBuf;
 
-use funput_core::{InputMethod, SyllableRules, ToneStyle};
+use funput_core::{InputMethod, ToneStyle};
 use funput_engine::{Engine, EngineConfig};
 
 use crate::terminal::DEFAULT_VI_CURSOR_COLOR;
@@ -116,11 +116,11 @@ impl TermConfig {
             smart_restore: self.smart_restore,
             eager_restore: self.eager_restore,
             spell_check: self.spell_check,
-            syllable_rules: SyllableRules::STANDARD,
             auto_capitalize: self.auto_capitalize,
             shortcuts_enabled: self.shortcuts_enabled,
             shortcut_smart_case: self.shortcut_smart_case,
             shortcuts_in_english: self.shortcuts_in_english,
+            ..EngineConfig::default() // standard syllables; no touches, so no typo correction
         });
         engine.clear_shortcuts();
         for (trigger, expansion) in &self.shortcuts {

@@ -22,7 +22,11 @@ public final class PersonalSuggestionService {
     /// As the engine returned them. `visibleCandidates` puts them in the user's case.
     var received: [PersonalSuggestionCandidate] = []
     var shift: ShiftState = .lowercase
-    /// Last drawn; `nil` after a reconfigure, so reactivation always redraws.
+    /// What typo correction says about the word under the caret; drawn ahead of
+    /// the stored words. See `SuggestionBarComposer`.
+    var correction: CorrectionPreview?
+    /// Last drawn, by text and kind; `nil` after a reconfigure, so reactivation
+    /// always redraws.
     private var published: [String]?
 
     public init(workerFactory: @escaping PersonalSuggestionWorkerFactory) {
@@ -78,17 +82,6 @@ public final class PersonalSuggestionService {
         ensureWorker()?.query(.init(prefix: prefix, generation: generation, context: context))
     }
 
-    public func acceptance(
-        for candidate: KeyboardSuggestionCandidate
-    ) -> (String, String)? {
-        // An empty prefix is the ordinary shape of accepting a prediction: it
-        // replaces nothing and inserts a word.
-        guard candidate.generation == generation,
-              visibleCandidates.contains(candidate)
-        else { return nil }
-        return (prefix, candidate.text)
-    }
-
     public func clear() { invalidateAndPublish() }
     public func flush() { worker?.flush() }
 
@@ -108,11 +101,13 @@ public final class PersonalSuggestionService {
 
     private func invalidateAndPublish() {
         let needsPublish = !prefix.isEmpty || predicting || !received.isEmpty
+            || correction != nil
         generation &+= 1
         prefix = ""
         context = nil
         predicting = false
         received = []
+        correction = nil
         if needsPublish { publish([]) }
     }
 
@@ -132,12 +127,15 @@ public final class PersonalSuggestionService {
         )
     }
 
-    func publish(_ candidates: [KeyboardSuggestionCandidate]) {
+    func publish(_ personal: [KeyboardSuggestionCandidate]) {
+        let candidates = SuggestionBarComposer.compose(
+            correction: correction, personal: personal, generation: generation
+        )
         // Prediction adds a bar update after every space, most of them one empty
         // list after another. Comparing here keeps that cost off UIKit.
-        let texts = candidates.map(\.text)
-        guard texts != published else { return }
-        published = texts
+        let drawn = candidates.map { "\($0.kind.rawValue) \($0.text)" }
+        guard drawn != published else { return }
+        published = drawn
         onCandidates?(activationGeneration, candidates)
     }
 }

@@ -5,8 +5,19 @@ import KeyboardLayout
 extension KeyboardInputCoordinator {
     func input(_ text: String, builder: inout InputTransactionBuilder) {
         var context = documentSynchronizer.snapshot?.contextBeforeInput
+        // The syllable on screen before this key. If the key ends the word it is
+        // what the bar named, and what the boundary must leave alone when kept.
+        let composed = usesEngine ? composer.buffer() : ""
         for scalar in text.unicodeScalars {
             if usesEngine {
+                // One key, one touch. The engine spends the report on the next
+                // keystroke it sees, so a key that produces more than one scalar
+                // describes only its first — and the engine, finding a key with no
+                // evidence, leaves the whole word alone rather than guessing.
+                if let touch = pendingTouch {
+                    composer.setNextKeyTouch(touch)
+                    pendingTouch = nil
+                }
                 let previous = composer.buffer()
                 let signpostID = KeyboardInputSignposts.begin("ComposerFFI")
                 let result = composer.process(scalar)
@@ -28,6 +39,10 @@ extension KeyboardInputCoordinator {
             }
             trackShortcutInput(scalar)
         }
+        // The boundary key, if this was one, has parked its answer by now — and the
+        // builder is still open, which is the only place the repair can ride along.
+        applyPendingCorrection(context: &context, composed: composed, builder: &builder)
+        refreshCorrectionPreview()
     }
 
     private func insert(_ text: String, context: inout String?, builder: inout InputTransactionBuilder) {

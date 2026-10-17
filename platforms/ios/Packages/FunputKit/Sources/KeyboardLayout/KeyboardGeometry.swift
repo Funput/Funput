@@ -14,13 +14,19 @@ public struct ResolvedKeyboard: Hashable, Sendable {
     public let size: CGSize
     public let toolbarFrame: CGRect?
     public let rows: [[ResolvedKey]]
+    /// One letter key plus one gap, horizontally and vertically — the unit a touch
+    /// offset means something in. A distance of half a pitch is half a key away
+    /// whatever the screen, which is why typo correction scores in these and not in
+    /// points. Zero when the layout is too degenerate to have one.
+    public let pitch: CGSize
 
     public var keys: [ResolvedKey] { rows.flatMap { $0 } }
 
-    public init(size: CGSize, toolbarFrame: CGRect?, rows: [[ResolvedKey]]) {
+    public init(size: CGSize, toolbarFrame: CGRect?, rows: [[ResolvedKey]], pitch: CGSize = .zero) {
         self.size = size
         self.toolbarFrame = toolbarFrame
         self.rows = rows
+        self.pitch = pitch
     }
 }
 
@@ -103,7 +109,12 @@ public enum KeyboardGeometry {
             }
         }
 
-        return ResolvedKeyboard(size: size, toolbarFrame: toolbarFrame, rows: rows)
+        return ResolvedKeyboard(
+            size: size,
+            toolbarFrame: toolbarFrame,
+            rows: rows,
+            pitch: CGSize(width: canonicalUnit, height: unitRowHeight + verticalGap)
+        )
     }
 
     /// The ten-column letter grid a row's ``KeyColumnSpan``s are measured against.

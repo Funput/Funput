@@ -1,0 +1,128 @@
+//! What correction refuses to look at. Every case here is a word the engine must
+//! leave exactly as it is today.
+
+use funput_core::InputMethod;
+
+use super::{engine, type_and_end, type_word};
+use crate::{CorrectionVerdict, Engine};
+
+#[test]
+fn a_valid_syllable_is_never_offered_a_correction() {
+    // `chaof` is `chào`, typed exactly right — with a neighbour on offer anyway.
+    let mut engine = engine(InputMethod::Telex);
+    type_and_end(&mut engine, "chaof", &[(4, 's')]);
+    assert!(!engine.has_pending_correction());
+}
+
+#[test]
+fn a_bare_shaped_vowel_is_left_alone() {
+    // `aw` → `ă` is not a syllable, but it is the letter the user asked for.
+    let mut engine = engine(InputMethod::Telex);
+    type_and_end(&mut engine, "aw", &[(1, 's')]);
+    assert!(!engine.has_pending_correction());
+}
+
+#[test]
+fn an_all_uppercase_word_is_skipped() {
+    let mut engine = engine(InputMethod::Telex);
+    type_and_end(&mut engine, "DDUWOWFNH", &[(8, 'g')]);
+    assert!(!engine.has_pending_correction());
+}
+
+#[test]
+fn a_word_containing_a_digit_is_skipped() {
+    // Without the digit this is the `nhad` case, which does get `nhá` offered.
+    let mut engine = engine(InputMethod::Telex);
+    type_and_end(&mut engine, "nha2", &[(3, 's')]);
+    assert!(!engine.has_pending_correction());
+}
+
+#[test]
+fn a_word_with_no_touch_data_is_searched_through_the_layout() {
+    // Nobody said where the fingers landed, so the keyboard grid stands in for the
+    // host: `g` sits next to `h`. And with no finger to speak for it, the word as
+    // typed is not a rival — the verdict is never "as typed".
+    let mut engine = engine(InputMethod::Telex);
+    for key in "dduwowfnh ".chars() {
+        engine.process_char(key);
+    }
+    assert!(engine.has_pending_correction());
+    assert!(super::candidate_texts(&engine).contains(&"đường"));
+    let verdict = engine.rank_correction(&[], &[]).verdict;
+    assert_ne!(verdict, CorrectionVerdict::AsTyped);
+    assert_ne!(verdict, CorrectionVerdict::Refused);
+}
+
+#[test]
+fn one_key_without_touch_data_hands_that_key_to_the_layout() {
+    let mut engine = engine(InputMethod::Telex);
+    type_word(&mut engine, "dduwowfn", &[]);
+    engine.process_char('h'); // no touch reported for this one
+    engine.process_char(' ');
+    assert!(engine.has_pending_correction());
+    assert!(super::candidate_texts(&engine).contains(&"đường"));
+    assert_ne!(
+        engine.rank_correction(&[], &[]).verdict,
+        CorrectionVerdict::AsTyped,
+        "a word missing one touch never wins as typed"
+    );
+}
+
+#[test]
+fn a_flipped_word_is_left_alone() {
+    // The user pinned this form by hand; it is a choice, not a slip.
+    let mut engine = engine(InputMethod::Telex);
+    type_word(&mut engine, "dduwowfnh", &[(8, 'g')]);
+    engine.flip_composing();
+    engine.process_char(' ');
+    assert!(!engine.has_pending_correction());
+}
+
+#[test]
+fn the_feature_switched_off_offers_nothing() {
+    let mut engine = Engine::new();
+    assert!(!engine.config().typo_correction);
+    type_and_end(&mut engine, "dduwowfnh", &[(8, 'g')]);
+    assert!(!engine.has_pending_correction());
+    assert!(engine.correction_candidates().is_empty());
+}
+
+#[test]
+fn an_english_word_the_user_typed_on_purpose_still_reaches_the_platform() {
+    // `text` ends as raw keys exactly the way a mistyped Vietnamese word does, and
+    // `r` sits next to `t`, so the engine can reach `tẻ` from it. The engine has no
+    // English lexicon to know better — what keeps `text` intact is the platform's
+    // veto, and the point of this test is that the engine defers rather than deciding.
+    let mut engine = engine(InputMethod::Telex);
+    type_and_end(&mut engine, "text", &[(3, 'r')]);
+    assert!(engine.has_pending_correction());
+    assert_eq!(engine.apply_correction(None).output, "");
+}
+
+/// What a platform reads back to learn why words were or were not corrected.
+#[test]
+fn every_finished_word_it_looks_at_is_counted_once() {
+    let mut engine = engine(InputMethod::Telex);
+    // A slip with a syllable in reach: offered.
+    type_and_end(&mut engine, "dduwowfnh", &[(8, 'g')]);
+    engine.apply_correction(None);
+    // Broken, but nothing in reach: no candidate.
+    type_and_end(&mut engine, "qqq", &[]);
+    // A real syllable whose last touch sat on the edge with `s`: counted, left alone.
+    type_and_end(&mut engine, "chaof", &[(4, 's')]);
+    // A real syllable typed cleanly: not counted at all.
+    type_and_end(&mut engine, "chaof", &[]);
+    // A repair the user took back, then typed the same way again: honoured as a
+    // refusal, not mistaken for a word with nothing in reach.
+    type_and_end(&mut engine, "dduwowfnh", &[(8, 'g')]);
+    engine.apply_correction(Some(0));
+    engine.on_backspace();
+    type_and_end(&mut engine, "dduwowfnh", &[(8, 'g')]);
+
+    let metrics = engine.correction_metrics();
+    assert_eq!(metrics.offered, 2);
+    assert_eq!(metrics.no_candidate, 1);
+    assert_eq!(metrics.valid_near_edge, 1);
+    assert_eq!(metrics.suppressed, 1);
+    assert_eq!((metrics.applied, metrics.reverted), (1, 1));
+}

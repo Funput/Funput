@@ -15,26 +15,33 @@ extension KeyboardTouchPipeline {
             }
             geometries[id] = geometry
             initialHits[id] = hit
+            initialLocations[id] = sample.location
             _ = arbiter.begin(id, at: sample.timestamp)
             return .began(id, hit)
         case let .resolved(id, hit, metadata):
             geometries.removeValue(forKey: id)
             initialHits.removeValue(forKey: id)
+            let landed = initialLocations.removeValue(forKey: id) ?? sample.location
             if metadata.exceededTapSlop,
                !policy.recoversTapSlop(hit.key.role) {
                 arbiter.cancel(id, at: sample.timestamp)
                 return .fallback(id, .exceededTapSlop)
             }
             onResolved(id, sample.timestamp)
+            // The one point where the landing point and the snapshot that resolved
+            // the press are both still in hand. Measuring here keeps the neighbour
+            // search off the tracking path, which runs on every moved sample.
+            let evidence = geometry?.touchEvidence(at: landed, typed: hit.key)
             arbiter.resolve(
                 id,
-                payload: .released(hit),
+                payload: .released(hit, evidence),
                 at: sample.timestamp
             )
             return .resolved(id, metadata)
         case let .cancelled(id, reason):
             geometries.removeValue(forKey: id)
             initialHits.removeValue(forKey: id)
+            initialLocations.removeValue(forKey: id)
             arbiter.cancel(id, at: sample.timestamp)
             return disposition(id: id, reason: reason)
         case let .noOp(reason):

@@ -33,6 +33,11 @@ struct SmartInputToggle: Identifiable {
             title: "Hiện gợi ý từ", summary: "Từ đã học và từ điển tiếng Anh.",
             systemImage: "text.badge.star", keyPath: \.personalSuggestionsEnabled
         ),
+        .init(
+            title: "Tự sửa lỗi gõ nhầm phím",
+            summary: "Sửa từ gõ trượt sang phím bên cạnh khi kết thúc từ.",
+            systemImage: "hand.point.up.braille", keyPath: \.typoCorrection
+        ),
         // One switch for every movement-based gesture: someone who dislikes one of
         // them almost always wants all three gone.
         .init(

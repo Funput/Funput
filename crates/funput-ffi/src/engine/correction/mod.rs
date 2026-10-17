@@ -1,0 +1,141 @@
+//! Typo correction over the C ABI: the handshake a keyboard runs at a word boundary.
+//!
+//! Two steps, because `funput-engine` carries no dictionary. The host reports where
+//! each touch landed, types the key as usual, and then — only when
+//! [`funput_engine_has_pending_correction`] says so — reads the candidates, weighs
+//! them against its own word store, and answers with
+//! [`funput_engine_apply_correction`]. A host that never answers loses nothing: the
+//! boundary already did what it always did, and the next keystroke lets the parked
+//! correction lapse.
+//!
+//! A bar that wants to show the repair before the space asks ahead with the calls
+//! in `preview`; the boundary then takes what the preview found.
+//!
+//! Nothing here is reachable until `funput_set_typo_correction(engine, true)`.
+//!
+//! # Layout
+//!
+//! - this file — the switch, and the calls that change engine state.
+//! - `query` — the read-only calls between the two steps.
+//! - `preview` — the calls a bar makes before the word ends.
+//! - `types` — the POD structs both directions carry.
+
+mod preview;
+mod query;
+mod types;
+
+pub use preview::{
+    CORRECTION_VERDICT_AMBIGUOUS, CORRECTION_VERDICT_APPLY, CORRECTION_VERDICT_AS_TYPED,
+    CORRECTION_VERDICT_REFUSED, FunputCorrectionRanking, funput_engine_preview_correction,
+    funput_engine_rank_correction, funput_engine_refuse_correction,
+};
+pub use query::{
+    funput_engine_choose_correction, funput_engine_correction_candidates,
+    funput_engine_correction_metrics, funput_engine_correction_undo_text,
+    funput_engine_pending_correction_backspace,
+};
+pub use types::{
+    CORRECTION_CAP, CORRECTION_CHARS_CAP, FunputCorrectionCandidate, FunputCorrectionMetrics,
+    FunputKeyTouch, TOUCH_ALTERNATE_CAP,
+};
+
+use super::{FunputEngine, FunputResult};
+use crate::abi;
+
+/// Switch typo correction on or off ("Tự sửa lỗi gõ nhầm phím").
+///
+/// Its own setter rather than a `FunputConfig` field, for the reason that struct's
+/// own documentation gives: it crosses the ABI by value, so growing it breaks every
+/// host built against the previous header, silently, until each is rebuilt.
+///
+/// On, every word that ends as something other than a syllable is searched for a
+/// repair. Touch reports (`funput_engine_set_next_key_touch`) sharpen the search for
+/// the keys they describe; without them the engine reads its own keyboard layout.
+///
+/// # Safety
+/// `engine` must be a valid handle or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_set_typo_correction(engine: *mut FunputEngine, on: bool) {
+    unsafe { abi::with_engine_mut(engine, |e| e.update_config(|cfg| cfg.typo_correction = on)) }
+}
+
+/// Report where the finger landed for the key about to be sent.
+///
+/// Consumed by the next `funput_process_key`, whatever key that turns out to be, so
+/// a touch never attaches itself to a later keystroke. Optional, key by key: a key
+/// that arrives without one is read against the engine's keyboard layout at a flat
+/// cost, and the word as typed then no longer competes with the candidates — only a
+/// word every key of which was reported can be kept "as typed" on the strength of
+/// where the fingers sat.
+///
+/// Null-safe both ways: a null handle or a null `touch` does nothing.
+///
+/// # Safety
+/// `engine` must be a valid handle or null. `touch` must point to a readable
+/// [`FunputKeyTouch`], or be null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_engine_set_next_key_touch(
+    engine: *mut FunputEngine,
+    touch: *const FunputKeyTouch,
+) {
+    unsafe {
+        abi::with_engine_mut(engine, |e| {
+            if let Some(touch) = touch.as_ref().and_then(FunputKeyTouch::decode) {
+                e.set_next_key_touch(touch);
+            }
+        })
+    }
+}
+
+/// Whether the last keystroke ended a word on a correction still waiting for an
+/// answer.
+///
+/// A call of its own rather than a field on [`FunputResult`]: that struct crosses the
+/// ABI by value and hosts are built separately from the header, so growing it would
+/// mismatch silently until every one of them is rebuilt.
+///
+/// # Safety
+/// `engine` must be a valid handle or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_engine_has_pending_correction(engine: *const FunputEngine) -> bool {
+    unsafe { abi::with_engine_ref(engine, funput_engine::Engine::has_pending_correction) }
+}
+
+/// Answer the parked correction: apply the candidate at `index`, or pass a negative
+/// index to decline it.
+///
+/// Declining is a no-op: the boundary keystroke already did everything it would have
+/// done without correction, English restore included. An index past the end declines
+/// too, and with nothing pending the call changes nothing either, so a host can
+/// always ask.
+///
+/// # Safety
+/// `engine` must be a valid handle or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_engine_apply_correction(
+    engine: *mut FunputEngine,
+    index: i32,
+) -> FunputResult {
+    let index = usize::try_from(index).ok();
+    unsafe {
+        abi::with_engine_mut(engine, |e| {
+            FunputResult::from_ime(&e.apply_correction(index))
+        })
+    }
+}
+
+/// Whether Backspace would undo the last correction rather than delete a character.
+///
+/// A host that passes Backspace straight through to the app must ask this first:
+/// when it is true, `funput_backspace` returns an `ACTION_SEND` that restores what
+/// the user typed, and passing the key through as well would eat one more character.
+///
+/// # Safety
+/// `engine` must be a valid handle or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_engine_has_correction_undo(engine: *const FunputEngine) -> bool {
+    unsafe { abi::with_engine_ref(engine, funput_engine::Engine::has_correction_undo) }
+}
+
+#[cfg(test)]
+mod tests;
