@@ -10,15 +10,15 @@ import app.funput.funput.ui.kit.cards.FunputDivider
 import app.funput.funput.ui.kit.cards.FunputSection
 import app.funput.funput.ui.kit.glass.GlassTier
 import app.funput.funput.ui.kit.glass.LocalGlassTier
-import app.funput.funput.ui.kit.icons.FunputIcons
+import app.funput.funput.ui.kit.icons.FunputTabIcons
 import app.funput.funput.ui.kit.theme.FunputUi
 import app.funput.funput.ui.kit.theme.FunputUiTheme
 
 /** The three tabs the app has, used by the layout tests. */
 internal val SampleTabs = listOf(
-    FunputTab("Cài đặt", FunputIcons.Keyboard, FunputIcons.KeyboardSelected),
-    FunputTab("Giao diện", FunputIcons.Appearance, FunputIcons.AppearanceSelected),
-    FunputTab("Giới thiệu", FunputIcons.Me, FunputIcons.MeSelected),
+    FunputTab("Cài đặt", FunputTabIcons.Keyboard, FunputTabIcons.KeyboardSelected),
+    FunputTab("Giao diện", FunputTabIcons.Appearance, FunputTabIcons.AppearanceSelected),
+    FunputTab("Giới thiệu", FunputTabIcons.Me, FunputTabIcons.MeSelected),
 )
 
 /**

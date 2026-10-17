@@ -21,6 +21,8 @@ import app.funput.funput.ui.navigation.AppNavDisplay
 import app.funput.funput.ui.navigation.AppTabBar
 import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
+import app.funput.funput.ui.news.NewsRoute
+import app.funput.funput.ui.news.rememberNewsModel
 import app.funput.funput.ui.settings.pages.SettingsPage
 import app.funput.funput.ui.settings.route.KeyboardHubRoute
 import app.funput.funput.ui.settings.route.SettingsPageRoute
@@ -37,6 +39,7 @@ fun FunputApp() {
     val scope = rememberCoroutineScope()
     val darkTheme = settings.appearanceMode.resolveDarkTheme(isSystemInDarkTheme())
     val navigator = rememberAppNavigator()
+    val news = rememberNewsModel()
     val customThemeStore = remember(context) { context.customKeyboardThemeStore() }
     val themeRepository = remember(customThemeStore) { installedThemeRepository(customThemeStore) }
     val customThemeServices =
@@ -105,6 +108,7 @@ fun FunputApp() {
                         tabBar = { AppTabBar(navigator) },
                     )
                 }
+                AppDestination.NEWS -> NewsRoute(news, tabBar = { AppTabBar(navigator) })
                 AppDestination.ME -> MeRoute(
                     onOpenData = { navigator.navigate(AppDestination.DATA) },
                     onOpenLicenses = { navigator.navigate(AppDestination.THIRD_PARTY_LICENSES) },

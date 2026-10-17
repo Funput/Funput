@@ -39,10 +39,10 @@ trình tạo chủ đề, ảnh nền, Tôi (trước là Giới thiệu), Giấ
 | Icon | Phosphor (MIT), mỗi nhóm cài đặt một màu | SF Symbols: không được dùng trên Android |
 | "Màu theo hình nền" | Bỏ | App có bảng màu riêng |
 | Xem trước bàn phím | Giữ, thu nhỏ, ở đầu tab Bàn phím; chạm vào mở tab Giao diện | Bỏ hẳn cho giống iOS |
-| Thanh tab | Viên thuốc kính mờ nổi, 56dp, cả 4 tab đều có tên | Thanh rộng 64dp của bản đầu: quá cao |
+| Thanh tab | Viên thuốc kính mờ nổi, 56dp, cả 5 tab đều có tên; từ 5 tab lề hẹp lại và nhãn tự thu nhỏ thay vì bị cắt | Thanh rộng 64dp của bản đầu: quá cao |
 | Các tab | Bàn phím, Gõ tắt, Giao diện, Tôi, theo cách tổ chức của iOS (PR #568) | Giữ 3 tab Cài đặt, Giao diện, Giới thiệu: khác iOS, khó thêm tính năng |
 | Cài đặt bàn phím | Một hub mục lục, mỗi trang một dòng kèm câu mô tả; trang khai báo một lần trong `SettingsPage` | Một màn dài: khó tìm, khó mở rộng |
-| Tab Tin tức | Không làm. APK không có quyền `INTERNET`, bàn phím luôn offline | Thêm `INTERNET` để tải feed blog như iOS |
+| Tab Tin tức | Làm như iOS (PR #570): JSON Feed của funput.app/blog, cache offline, kéo để tải lại, mở bài bằng Custom Tabs. APK thêm quyền `INTERNET`, cũng cần cho đồng bộ sau này; bàn phím không gọi mạng | Không làm để giữ APK không có quyền mạng |
 | Dữ liệu | Mở từ tab Tôi, tên "Dữ liệu" (Android chưa có khôi phục mặc định) | Đặt ở hub như các trang khác |
 | Tìm cài đặt | Ô tìm ở đầu tab Bàn phím, bỏ dấu và đổi `đ` thành `d` trước khi so (PR #569 của iOS) | Không có tìm kiếm |
 | Cài đặt nhanh | Kiểu gõ dạng segmented và 6 ô bật tắt; ô "Cử chỉ" thay ô "Xem trước" của iOS vì Android không có cài đặt đó | Bỏ qua: khác iOS |

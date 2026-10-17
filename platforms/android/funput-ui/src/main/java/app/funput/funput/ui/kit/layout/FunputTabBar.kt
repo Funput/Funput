@@ -60,7 +60,8 @@ fun FunputTabBar(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(start = 24.dp, end = 24.dp, bottom = BarBottomMargin),
+            // Five tabs need the width more than the pill needs its margins.
+            .padding(start = sideMargin(tabs.size), end = sideMargin(tabs.size), bottom = BarBottomMargin),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -86,3 +87,5 @@ fun FunputTabBar(
         }
     }
 }
+
+private fun sideMargin(tabCount: Int) = if (tabCount >= 5) 12.dp else 24.dp

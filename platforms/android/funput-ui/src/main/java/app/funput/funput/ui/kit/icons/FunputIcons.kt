@@ -8,25 +8,14 @@ import app.funput.funput.ui.kit.R
  *
  * The drawings are Phosphor (MIT), imported by `scripts/import-phosphor-icons.py` from the list
  * in `funput-ui/icons.txt`. Choosing a different drawing for a meaning is a change here only.
+ * The tab bar's outlined and filled pairs live in [FunputTabIcons].
  */
 object FunputIcons {
-    /** Keyboard tab, selected. Unselected it is [Keyboard]. */
-    @DrawableRes val KeyboardSelected: Int = R.drawable.ph_keyboard_fill
-
-    /** Gõ tắt tab, selected. Unselected it is [Shortcuts]. */
-    @DrawableRes val ShortcutsSelected: Int = R.drawable.ph_lightning_fill
-
-    /** Appearance tab, unselected. */
+    /** Appearance and themes. */
     @DrawableRes val Appearance: Int = R.drawable.ph_palette
 
-    /** Appearance tab, selected. */
-    @DrawableRes val AppearanceSelected: Int = R.drawable.ph_palette_fill
-
-    /** "Tôi" tab, unselected. */
-    @DrawableRes val Me: Int = R.drawable.ph_user_circle
-
-    /** "Tôi" tab, selected. */
-    @DrawableRes val MeSelected: Int = R.drawable.ph_user_circle_fill
+    /** A pinned guide. */
+    @DrawableRes val Guide: Int = R.drawable.ph_book_open
 
     /** Going back one screen. */
     @DrawableRes val Back: Int = R.drawable.ph_caret_left
