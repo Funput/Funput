@@ -24,7 +24,7 @@ import app.funput.funput.ui.settings.label
  * The top of the keyboard hub: the input method as one segmented control, then a grid of
  * [QuickSetting] tiles. Three columns, two once the text is large enough to need the room.
  */
-internal fun LazyListScope.quickSettingsItems(state: SettingsScreenState) {
+internal fun LazyListScope.quickSettingsItems(state: SettingsScreenState, onOpenHapticStrength: () -> Unit) {
     item(key = "quick-input-method") {
         Column(Modifier.testTag(QuickInputMethodTag)) {
             FunputSectionHeader(stringResource(R.string.quick_input_method_header))
@@ -38,13 +38,13 @@ internal fun LazyListScope.quickSettingsItems(state: SettingsScreenState) {
     item(key = "quick-settings") {
         Column {
             FunputSectionHeader(stringResource(R.string.quick_settings_header))
-            QuickSettingsGrid(state)
+            QuickSettingsGrid(state, onOpenHapticStrength)
         }
     }
 }
 
 @Composable
-private fun QuickSettingsGrid(state: SettingsScreenState) {
+private fun QuickSettingsGrid(state: SettingsScreenState, onOpenHapticStrength: () -> Unit) {
     val columns = if (LocalDensity.current.fontScale >= LargeTextScale) 2 else 3
     val gap = FunputUi.spacing.small
     // Plain rows rather than a lazy grid: six tiles, inside a list that already scrolls.
@@ -61,6 +61,8 @@ private fun QuickSettingsGrid(state: SettingsScreenState) {
                         accessibilityTitle = stringResource(setting.accessibilityTitle),
                         locked = setting.isLocked(state),
                         lockedReason = stringResource(R.string.quick_vni_number_row),
+                        onClick = onOpenHapticStrength.takeIf { setting.opensChoice },
+                        onClickLabel = stringResource(R.string.quick_haptics_choose),
                         modifier = Modifier.weight(1f).testTag(quickSettingTag(setting)),
                     )
                 }

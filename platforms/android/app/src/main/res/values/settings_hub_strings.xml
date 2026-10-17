@@ -24,7 +24,6 @@
     <string name="settings_summary_mode_elevated">trên cao</string>
     <string name="settings_summary_mode_one_handed">một tay</string>
 
-    <string name="settings_summary_haptics">rung</string>
     <string name="settings_summary_sounds">âm thanh</string>
 
     <string name="settings_summary_clipboard_on">Lưu lịch sử trong %1$s</string>

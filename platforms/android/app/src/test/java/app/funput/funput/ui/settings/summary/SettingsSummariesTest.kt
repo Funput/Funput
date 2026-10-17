@@ -6,6 +6,7 @@ import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.ClipboardPreferences
 import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.extraonsets.ExtraOnsetLetters
+import app.funput.funput.keyboard.KeyboardHapticStrength
 import app.funput.funput.ui.settings.pages.SettingsPage
 import app.funput.funput.ui.settings.testSettingsState
 import app.funput.funput.uitesting.SCREENSHOT_SDK
@@ -57,9 +58,11 @@ class SettingsSummariesTest {
             summaries.of(SettingsPage.FEEDBACK, testSettingsState(hapticsEnabled = haptics, soundsEnabled = sounds))
 
         assertEquals("Đang tắt tất cả", feedback(haptics = false, sounds = false))
-        assertEquals("Đang bật rung", feedback(haptics = true, sounds = false))
+        assertEquals("Đang bật rung trung bình", feedback(haptics = true, sounds = false))
         assertEquals("Đang bật âm thanh", feedback(haptics = false, sounds = true))
-        assertEquals("Đang bật rung và âm thanh", feedback(haptics = true, sounds = true))
+        assertEquals("Đang bật rung trung bình và âm thanh", feedback(haptics = true, sounds = true))
+        val strong = testSettingsState(hapticStrength = KeyboardHapticStrength.STRONG)
+        assertEquals("Đang bật rung mạnh", summaries.of(SettingsPage.FEEDBACK, strong))
     }
 
     @Test

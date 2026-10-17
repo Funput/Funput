@@ -5,30 +5,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
+import app.funput.funput.keyboard.KeyboardHapticStrength
 import app.funput.funput.ui.kit.cards.FunputDivider
 import app.funput.funput.ui.kit.cards.FunputSection
 import app.funput.funput.ui.kit.icons.FunputIcons
 import app.funput.funput.ui.kit.rows.FunputRowDefaults
+import app.funput.funput.ui.kit.rows.LinkRow
 import app.funput.funput.ui.kit.rows.ToggleRow
 import app.funput.funput.ui.kit.theme.FunputTint
 import app.funput.funput.ui.settings.sectionTitle
 
-/** What a key press feels and sounds like: vibration and key sounds, one pink group. */
+/**
+ * What a key press feels and sounds like: how strongly it vibrates, chosen in a sheet, and key
+ * sounds. One pink group.
+ */
 @Composable
 internal fun FeedbackSection(
-    hapticsEnabled: Boolean,
+    hapticStrength: KeyboardHapticStrength?,
     soundsEnabled: Boolean,
-    onHapticsChanged: (Boolean) -> Unit,
+    onOpenHapticStrength: () -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
 ) {
     FunputSection(
         title = sectionTitle(R.string.settings_section_feedback),
         modifier = Modifier.testTag(FeedbackSettingsSectionTag),
     ) {
-        ToggleRow(
+        LinkRow(
             title = stringResource(R.string.settings_haptics_title),
-            checked = hapticsEnabled,
-            onCheckedChange = onHapticsChanged,
+            onClick = onOpenHapticStrength,
+            summary = stringResource(R.string.settings_haptics_strength_summary),
+            value = stringResource(HapticStrengthOption.of(hapticStrength).title),
             icon = FunputIcons.Haptics,
             tint = FunputTint.PINK,
         )
