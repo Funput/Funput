@@ -105,8 +105,15 @@ Cả ba nằm chung một công tắc **Cử chỉ thông minh**.
 ### Cài đặt có gì
 
 App có bốn tab, cùng cách tổ chức với app iOS: **Bàn phím**, **Gõ tắt**, **Giao diện** và **Tôi**.
-Tab **Bàn phím** là mục lục: ảnh xem trước bàn phím, thẻ thiết lập khi chưa bật xong, rồi mỗi
-trang một dòng kèm một câu nói trang đó đang đặt thế nào. Chạm vào dòng thì mở trang.
+Tab **Bàn phím** là mục lục, từ trên xuống:
+
+- ô **Tìm cài đặt**, gõ có dấu hay không dấu đều được ("dat dau" ra "Kiểu đặt dấu"), tên tiếng
+  Anh cũng được ("haptic" ra "Rung khi nhấn phím");
+- ảnh xem trước bàn phím, thẻ thiết lập khi chưa bật xong;
+- **Kiểu gõ** (Telex, Telex nâng cao, VNI) và **Cài đặt nhanh**: sáu ô bật tắt Rung, Âm thanh,
+  Viết hoa, Gợi ý từ, Hàng số, Cử chỉ. Với VNI ô Hàng số luôn bật;
+- **Tất cả cài đặt**: mỗi trang một dòng kèm một câu nói trang đó đang đặt thế nào. Chạm vào
+  dòng thì mở trang.
 
 | Trang | Chỉnh được gì |
 |---|---|
