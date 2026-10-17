@@ -31,6 +31,7 @@ readonly roots=(
     "$ime_test/editing/composition"
     "$ime_main/editing/correction"
     "$ime_test/editing/correction"
+    "$android_root/ime/src/androidTest/java/app/funput/funput/ime/correction"
     "$ime_test/editing/voice"
     "$ime_main/settings/speech"
     "$ime_test/settings/speech"

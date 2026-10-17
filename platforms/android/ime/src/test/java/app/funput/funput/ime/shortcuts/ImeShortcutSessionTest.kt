@@ -69,6 +69,19 @@ class ImeShortcutSessionTest {
         assertEquals(1, engine.clears)
     }
 
+    @Test fun `a word the engine already closed keeps its typo correction`() {
+        // At a Vietnamese boundary the engine closed the word itself, and may have parked or
+        // applied a typo correction there; clearing it again would throw that away.
+        val engine = ShortcutEngine(null)
+        val session = ImeShortcutSession(engine)
+        session.receive(library(), wordIsActive = true)
+        session.finishWord(clearsEngine = false)
+        assertEquals(0, engine.engineClears)
+        assertEquals("a library that arrived mid-word still installs", 1, engine.installs)
+        session.finishWord()
+        assertEquals(1, engine.engineClears)
+    }
+
     private fun library() = ShortcutLibrary(entries = listOf(
         TextShortcut(trigger = "vn", expansion = "việt nam"),
     ))
@@ -78,6 +91,7 @@ private class ShortcutEngine(private val boundary: String?) : VietnameseEngine {
     private var word = ""
     var installs = 0
     var clears = 0
+    var engineClears = 0
     override val inputMethod = KeyboardInputMethod.TELEX
     override fun configure(configuration: EngineConfiguration) = Unit
     override fun setEnabled(enabled: Boolean) = Unit
@@ -88,6 +102,6 @@ private class ShortcutEngine(private val boundary: String?) : VietnameseEngine {
         .also { word = it }
     override fun processBoundary(codePoint: Int): String? = boundary.also { word = "" }
     override fun backspace(): String = word.dropLast(1).also { word = it }
-    override fun clear() { word = "" }
+    override fun clear() { word = ""; engineClears += 1 }
     override fun close() = Unit
 }
