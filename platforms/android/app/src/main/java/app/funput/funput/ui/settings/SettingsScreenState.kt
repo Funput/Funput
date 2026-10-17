@@ -58,6 +58,7 @@ internal class SettingsScreenState(
     val onSmartRestoreChanged: (Boolean) -> Unit,
     val onSpellCheckChanged: (Boolean) -> Unit,
     val onAutoCapitalizeChanged: (Boolean) -> Unit,
+    val onTypoCorrectionChanged: (Boolean) -> Unit = {},
     val onPersonalSuggestionsChanged: (Boolean) -> Unit,
     val onClipboardEnabledChanged: (Boolean) -> Unit,
     val onClipboardExpirySelected: (ClipboardExpiry) -> Unit,

@@ -48,8 +48,8 @@ class SettingsSummariesTest {
 
     @Test
     fun `smart input counts what is on`() {
-        // The defaults leave spell check off and the other five on.
-        assertEquals("Đang bật 5 trên 6 tính năng", summaries.of(SettingsPage.SMART_INPUT, testSettingsState()))
+        // The defaults leave spell check off and the other six on.
+        assertEquals("Đang bật 6 trên 7 tính năng", summaries.of(SettingsPage.SMART_INPUT, testSettingsState()))
     }
 
     @Test

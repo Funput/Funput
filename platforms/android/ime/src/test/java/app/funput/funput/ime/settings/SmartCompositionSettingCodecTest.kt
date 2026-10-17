@@ -13,7 +13,13 @@ class SmartCompositionSettingCodecTest {
         assertFalse(decoded.spellCheckEnabled)
         assertTrue(decoded.smartRestoreEnabled)
         assertTrue(decoded.autoCapitalizeEnabled)
+        assertTrue("typo correction is on for everyone, as on iOS", decoded.typoCorrectionEnabled)
         assertEquals(SmartCompositionPreferences.Default, decoded)
+    }
+
+    @Test
+    fun `typo correction can be turned off`() {
+        assertFalse(SmartCompositionSettingCodec.decode(null, null, null, typoCorrectionEnabled = false).typoCorrectionEnabled)
     }
 
     @Test

@@ -112,6 +112,9 @@ internal fun rememberSettingsScreenState(
         onAutoCapitalizeChanged = { enabled ->
             scope.launch { settings.smartCompositionStore.setAutoCapitalizeEnabled(enabled) }
         },
+        onTypoCorrectionChanged = { enabled ->
+            scope.launch { settings.smartCompositionStore.setTypoCorrectionEnabled(enabled) }
+        },
         onPersonalSuggestionsChanged = { enabled ->
             scope.launch { settings.personalSuggestionStore.setEnabled(enabled) }
         },

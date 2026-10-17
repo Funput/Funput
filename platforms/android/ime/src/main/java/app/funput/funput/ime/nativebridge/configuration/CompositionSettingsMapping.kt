@@ -20,6 +20,7 @@ internal fun SmartCompositionPreferences.engineConfiguration(
     spellCheck = spellCheckEnabled,
     autoCapitalize = false,
     extraOnsets = extraOnsets,
+    typoCorrection = typoCorrectionEnabled,
 )
 
 /** JNI wire contract: F=1, J=2, W=4, Z=8; independent of model storage and Rust layout. */

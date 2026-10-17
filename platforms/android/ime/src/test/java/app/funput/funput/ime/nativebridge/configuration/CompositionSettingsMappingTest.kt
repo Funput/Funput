@@ -40,5 +40,8 @@ class CompositionSettingsMappingTest {
         assertEquals(ExtraOnsetLetters.None, defaults.extraOnsets)
         assertEquals(true, defaults.smartRestore)
         assertEquals(true, defaults.eagerRestore)
+        assertEquals("typo correction reaches the engine on by default", true, defaults.typoCorrection)
+        val off = SmartCompositionPreferences.Default.copy(typoCorrectionEnabled = false)
+        assertFalse(off.engineConfiguration(KeyboardInputMethod.TELEX, ToneStyle.MODERN).typoCorrection)
     }
 }

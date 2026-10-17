@@ -163,6 +163,8 @@
     <string name="settings_spell_check_title">Kiểm tra chính tả</string>
     <string name="settings_auto_capitalize_title">Tự viết hoa</string>
     <string name="settings_auto_capitalize_summary">Viết hoa ký tự đầu câu khi phù hợp.</string>
+    <string name="settings_typo_correction_title">Tự sửa lỗi gõ nhầm phím</string>
+    <string name="settings_typo_correction_summary">Sửa từ gõ trượt sang phím bên cạnh khi bạn kết thúc từ.</string>
     <string name="settings_personal_suggestions_title">Gợi ý từ</string>
     <string name="settings_personal_suggestions_description">Gợi ý từ đã học trên thiết bị và từ điển tiếng Anh đi kèm.</string>
     <string name="settings_personal_suggestions_reset_title">Xóa các từ đã học?</string>

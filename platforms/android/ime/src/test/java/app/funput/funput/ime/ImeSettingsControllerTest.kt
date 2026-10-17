@@ -34,6 +34,7 @@ class ImeSettingsControllerTest {
                 eagerRestore = SmartCompositionPreferences.Default.smartRestoreEnabled,
                 spellCheck = SmartCompositionPreferences.Default.spellCheckEnabled,
                 autoCapitalize = false,
+                typoCorrection = SmartCompositionPreferences.Default.typoCorrectionEnabled,
             ),
             engine.configurations.single(),
         )

@@ -1,8 +1,9 @@
 package app.funput.funput.ui.settings.groups
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import app.funput.funput.ui.kit.theme.FunputUiTheme
 import app.funput.funput.ui.settings.smart.SmartSection
 import app.funput.funput.ui.settings.testSettingsState
@@ -14,7 +15,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Each of the six smart switches flips its own preference, and only its own. */
+/** Each of the seven smart switches flips its own preference, and only its own. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [SCREENSHOT_SDK], qualifiers = "vi")
 class SmartSectionTest {
@@ -22,7 +23,7 @@ class SmartSectionTest {
     val compose = createComposeRule()
 
     @Test
-    fun `all six preferences dispatch from one section`() {
+    fun `all seven preferences dispatch from one section`() {
         val changes = mutableMapOf<String, Boolean>()
         compose.setContent {
             FunputUiTheme(isDark = false) {
@@ -30,16 +31,18 @@ class SmartSectionTest {
             }
         }
 
+        // A semantics click, not a touch: seven rows run past the test screen's bottom edge.
         listOf(
-            "Tự khôi phục từ tiếng Anh", "Kiểm tra chính tả", "Tự viết hoa",
+            "Tự khôi phục từ tiếng Anh", "Kiểm tra chính tả", "Tự viết hoa", "Tự sửa lỗi gõ nhầm phím",
             "Gợi ý từ", "Cử chỉ thông minh", "Tự về bảng chữ",
-        ).forEach { compose.onNodeWithText(it).performClick() }
+        ).forEach { compose.onNodeWithText(it).performSemanticsAction(SemanticsActions.OnClick) }
 
         assertEquals(
             mapOf(
                 "restore" to false,
                 "spelling" to true,
                 "capitalization" to false,
+                "typos" to false,
                 "suggestions" to false,
                 "gestures" to false,
                 "letters" to false,

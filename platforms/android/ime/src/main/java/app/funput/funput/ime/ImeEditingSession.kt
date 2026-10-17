@@ -1,5 +1,6 @@
 package app.funput.funput.ime
 
+import android.util.Log
 import android.view.inputmethod.InputConnection
 import app.funput.funput.ime.clipboard.session.ImeClipboardSession
 import app.funput.funput.ime.editing.AndroidCompositionSession
@@ -9,6 +10,7 @@ import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.correction.TypoCorrectionParts
 import app.funput.funput.ime.editing.correction.preview.CorrectionBarActions
 import app.funput.funput.ime.editing.correction.preview.CorrectionPreviewer
+import app.funput.funput.ime.editing.correction.report.TypoSessionReport
 import app.funput.funput.ime.editing.layout.LetterPageReturn
 import app.funput.funput.ime.localtext.ImeLocalTextFields
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
@@ -41,6 +43,7 @@ internal class ImeEditingSession(
     private val localText = ImeLocalTextFields(nativeEngine) { actionHandler.language }
     private val previewer = CorrectionPreviewer(typo.corrections)
     private val correctionBar = CorrectionBarActions(composition, connection) { dispatch(KeyAction.Space) }
+    private val typoReport = TypoSessionReport(typo.corrections) { Log.i("FunputTypo", it) }
 
     /** One key, from the soft keyboard or a hardware one, and everything it updates. */
     fun dispatch(action: KeyAction) {
@@ -111,6 +114,7 @@ internal class ImeEditingSession(
         actionHandler.typingSession.end()
         clipboard.stop()
         suggestionService.flush()
+        typoReport.report()
     }
 
     fun close() {
