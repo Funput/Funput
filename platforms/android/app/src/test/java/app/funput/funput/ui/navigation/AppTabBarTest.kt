@@ -42,4 +42,12 @@ class AppTabBarTest {
 
         assertEquals(TopLevelDestination.ME, navigator.currentTab)
     }
+
+    @Test
+    fun `the tabs are the five of iOS, in its order`() {
+        assertEquals(
+            listOf("Bàn phím", "Gõ tắt", "Giao diện", "Tin tức", "Tôi"),
+            TopLevelDestination.entries.map { tab -> label(tab.ui.label) },
+        )
+    }
 }
