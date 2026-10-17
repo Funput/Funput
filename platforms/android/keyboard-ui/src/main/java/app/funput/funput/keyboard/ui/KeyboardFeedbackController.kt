@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.ui
 
+import app.funput.funput.keyboard.KeyboardHapticStrength
+import app.funput.funput.keyboard.KeyboardHaptics
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.ui.clipboard.ClipboardPanelView
 
@@ -16,6 +18,13 @@ internal class KeyboardFeedbackController(
             emojiPanel()?.hapticsEnabled = value
             clipboardPanel()?.hapticsEnabled = value
             feedbackChanged()
+        }
+
+    /** The strength key presses vibrate at; null leaves feedback to the system. */
+    var hapticStrength: KeyboardHapticStrength?
+        get() = KeyboardHaptics.strength
+        set(value) {
+            KeyboardHaptics.strength = value
         }
 
     var soundsEnabled: Boolean

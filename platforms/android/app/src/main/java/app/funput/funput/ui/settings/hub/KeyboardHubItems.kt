@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
+import app.funput.funput.ui.settings.SettingsPicker
 import app.funput.funput.ui.settings.SettingsScreenState
 import app.funput.funput.ui.settings.keyboard.KeyboardPreviewCard
 import app.funput.funput.ui.settings.keyboard.KeyboardSetupCard
@@ -20,6 +21,7 @@ internal fun LazyListScope.keyboardHubItems(
     state: SettingsScreenState,
     rows: List<SettingsHubRow>,
     onOpenPage: (SettingsPage) -> Unit,
+    onOpenPicker: (SettingsPicker) -> Unit,
 ) {
     item(key = "preview") {
         KeyboardPreviewCard(
@@ -41,7 +43,7 @@ internal fun LazyListScope.keyboardHubItems(
             )
         }
     }
-    quickSettingsItems(state)
+    quickSettingsItems(state, onOpenHapticStrength = { onOpenPicker(SettingsPicker.HAPTIC_STRENGTH) })
     item(key = "all") {
         SettingsNavigationCard(
             title = stringResource(R.string.settings_all_title),

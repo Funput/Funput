@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
 import app.funput.funput.ui.kit.layout.FunputScreen
+import app.funput.funput.ui.settings.SettingsPicker
+import app.funput.funput.ui.settings.SettingsPickerSheet
 import app.funput.funput.ui.settings.SettingsScreenState
 import app.funput.funput.ui.settings.pages.SettingsPage
 import app.funput.funput.ui.settings.search.rememberSettingsSearchIndex
@@ -31,6 +33,7 @@ internal fun KeyboardHubScreen(
 ) {
     // Saveable, so a page opened from the results comes back to the same results.
     var query by rememberSaveable { mutableStateOf("") }
+    var picker by rememberSaveable { mutableStateOf<SettingsPicker?>(null) }
     val searching = query.isNotBlank()
     // The hub is the root of the start tab, where back would otherwise leave the app.
     BackHandler(enabled = searching) { query = "" }
@@ -46,7 +49,8 @@ internal fun KeyboardHubScreen(
         if (searching) {
             settingsSearchResults(results = results, onOpenPage = onOpenPage)
         } else {
-            keyboardHubItems(state = state, rows = rows, onOpenPage = onOpenPage)
+            keyboardHubItems(state = state, rows = rows, onOpenPage = onOpenPage, onOpenPicker = { picker = it })
         }
     }
+    SettingsPickerSheet(picker = picker, state = state, onDismiss = { picker = null })
 }

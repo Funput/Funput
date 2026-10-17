@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vibration strength, as on iOS: the row, its sheet, and the words the hub summary uses. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="settings_haptics_strength_summary">Chọn và cảm nhận mức rung của bàn phím.</string>
+    <string name="haptic_strength_hint">Chạm một mức để cảm nhận phản hồi.</string>
+
+    <string name="haptic_strength_off">Tắt</string>
+    <string name="haptic_strength_off_summary">Không rung khi gõ</string>
+    <string name="haptic_strength_light">Nhẹ</string>
+    <string name="haptic_strength_light_summary">Nhẹ nhàng, ít gây chú ý</string>
+    <string name="haptic_strength_medium">Trung bình</string>
+    <string name="haptic_strength_medium_summary">Cân bằng khi gõ hằng ngày</string>
+    <string name="haptic_strength_strong">Mạnh</string>
+    <string name="haptic_strength_strong_summary">Rõ ràng ở mỗi lần chạm</string>
+
+    <string name="settings_summary_haptics_strength">rung %1$s</string>
+    <string name="settings_summary_strength_light">nhẹ</string>
+    <string name="settings_summary_strength_medium">trung bình</string>
+    <string name="settings_summary_strength_strong">mạnh</string>
+
+    <string name="quick_haptics_choose">chọn mức rung</string>
+</resources>
