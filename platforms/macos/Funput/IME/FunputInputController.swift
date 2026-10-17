@@ -1,11 +1,13 @@
 import AppKit
 import InputMethodKit
 
-/// Bridges macOS key events to `funput-engine` via marked (underlined) text.
+/// Bridges macOS key events to `funput-engine`.
 ///
-/// Each text client gets its own controller + `FunputComposer`. The composing word
-/// is shown as marked text; it commits on a word boundary, Enter/Tab, focus change,
-/// or navigation key. Settings (method, Vietnamese on/off) are read live from
+/// Each text client gets its own controller + `FunputComposer`. The composing word is
+/// put on screen by `CompositionSession` (written into the document, or marked text);
+/// it commits on a word boundary, Enter/Tab, focus change, or navigation key. The
+/// controller decides what keys mean; it never writes to the client itself. Settings
+/// (method, Vietnamese on/off) are read live from
 /// `AppSettings.shared` — same process, so changes apply to the next keystroke.
 @objc(FunputInputController)
 final class FunputInputController: IMKInputController {
@@ -15,12 +17,15 @@ final class FunputInputController: IMKInputController {
     var lastSyncedShortcutsRevision = -1
     var lastConfiguration: ComposerConfiguration?
     var hasSyncedShortcuts = false
+    /// How the word being composed reaches the client: marked text or written directly.
+    var session = CompositionSession(
+        directEnabled: { AppSettings.shared.directComposition },
+        clicks: { MouseClickCounter.shared.clicks }
+    )
 
     private enum KeyCode {
         static let backspace: UInt16 = 51
     }
-
-    static let notFound = NSRange(location: NSNotFound, length: 0)
 
     override init!(server: IMKServer!, delegate: Any!, client inputClient: Any!) {
         super.init(server: server, delegate: delegate, client: inputClient)
@@ -38,6 +43,7 @@ final class FunputInputController: IMKInputController {
         guard event.type == .keyDown else { return false }
 
         syncSettings(client: client)
+        if session.endIfClicked() { composer.clear() }
 
         if AppSettings.shared.toggleShortcut.matches(event) {
             commit(into: client)
@@ -71,8 +77,8 @@ final class FunputInputController: IMKInputController {
             // its removal may leave the caret at the end of a finished word to re-open.
             guard !composer.buffer().isEmpty else { return reopenPreviousWord(client, event: event) }
             composer.backspace()
-            setMarked(composer.buffer(), client)
-            return true
+            // A word that had to be dropped hands Backspace back to the app.
+            return showComposition(client)
         }
 
         guard let scalar = event.characters?.unicodeScalars.first else {
@@ -104,8 +110,7 @@ final class FunputInputController: IMKInputController {
         if composer.buffer().isEmpty {
             return false
         }
-        setMarked(composer.buffer(), client)
-        return true
+        return showKey(scalar, client)
     }
 
     override func commitComposition(_ sender: Any!) {
@@ -120,6 +125,7 @@ final class FunputInputController: IMKInputController {
     override func activateServer(_ sender: Any!) {
         super.activateServer(sender)
         composer.clear()
+        session.reset()
         applyPerAppDefault()
         syncSettings()
         // Focus on a field is the start of input: arm so the first letter is capitalized.

@@ -8,6 +8,7 @@ extension AppSettings {
         static let spellCheckEnabled = "spellCheckEnabled"
         static let autoCapitalizeEnabled = "autoCapitalizeEnabled"
         static let retoneAfterBackspace = "retoneAfterBackspace"
+        static let directComposition = "directComposition"
         static let toggleShortcut = "toggleShortcut"
         static let flipShortcut = "flipShortcut"
         static let launchAtLogin = "launchAtLogin"
@@ -28,6 +29,7 @@ extension AppSettings {
         Keys.showMenuBarIcon: true,
         Keys.vietnameseEnabled: true,
         Keys.retoneAfterBackspace: true,
+        Keys.directComposition: true,
         Keys.shortcutsEnabled: true,
         Keys.shortcutsInEnglish: true,
         Keys.shortcutSmartCase: true,

@@ -5,7 +5,7 @@ import InputMethodKit
 ///
 /// Reading is the part that varies by app — a client is free to answer with nothing — so it
 /// sits behind this protocol, which also lets `Retone` be exercised against a plain string
-/// in tests. Writing needs no seam: it is one `setMarkedText` back in the controller.
+/// in tests. Writing goes through `CompositionSession.reopen`, which has its own seam.
 protocol RetoneDocument {
     /// Where the caret is, in UTF-16 units, or nil when the client cannot place it.
     func caret() -> Int?

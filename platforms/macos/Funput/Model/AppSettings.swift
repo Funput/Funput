@@ -52,6 +52,12 @@ final class AppSettings {
     var retoneAfterBackspace: Bool {
         didSet { defaults.set(retoneAfterBackspace, forKey: Keys.retoneAfterBackspace) }
     }
+    /// "Gõ không gạch chân": write the word being composed straight into the document
+    /// wherever the app allows it, instead of underlined marked text. On by default; see
+    /// `CompositionSession`.
+    var directComposition: Bool {
+        didSet { defaults.set(directComposition, forKey: Keys.directComposition) }
+    }
     /// User-recorded VI/EN toggle hotkey. Defaults to `⌃\`. Read live by
     /// `FunputInputController`.
     var toggleShortcut: KeyCombo {
@@ -60,13 +66,7 @@ final class AppSettings {
     /// User-recorded hotkey to flip the word being composed VN↔raw. `nil` = off.
     /// Read live by `FunputInputController`.
     var flipShortcut: KeyCombo? {
-        didSet {
-            if let data = flipShortcut.flatMap({ try? JSONEncoder().encode($0) }) {
-                defaults.set(data, forKey: Keys.flipShortcut)
-            } else {
-                defaults.removeObject(forKey: Keys.flipShortcut)
-            }
-        }
+        didSet { defaults.setJSON(flipShortcut, forKey: Keys.flipShortcut) }
     }
     var launchAtLogin: Bool {
         didSet { defaults.set(launchAtLogin, forKey: Keys.launchAtLogin) }
@@ -129,6 +129,7 @@ final class AppSettings {
         extraOnsets = ExtraOnsetLetters(
             rawValue: UInt8(clamping: defaults.integer(forKey: Keys.extraOnsets)))
         retoneAfterBackspace = defaults.bool(forKey: Keys.retoneAfterBackspace)
+        directComposition = defaults.bool(forKey: Keys.directComposition)
         shortcutsEnabled = defaults.bool(forKey: Keys.shortcutsEnabled)
         shortcutsInEnglish = defaults.bool(forKey: Keys.shortcutsInEnglish)
         shortcutSmartCase = defaults.bool(forKey: Keys.shortcutSmartCase)
