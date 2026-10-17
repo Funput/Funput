@@ -206,6 +206,7 @@
     <string name="appearance_slot_assigning">Đang gán cho</string>
     <string name="appearance_slot_light_named">Sáng · %1$s</string>
     <string name="appearance_slot_dark_named">Tối · %1$s</string>
+    <string name="nav_news">Tin tức</string>
     <string name="nav_me">Tôi</string>
     <string name="about_version">Phiên bản %1$s</string>
     <string name="about_section_discovery">Tìm hiểu</string>

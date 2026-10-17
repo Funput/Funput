@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -24,6 +25,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.funput.funput.ui.kit.theme.FunputMotion
 import app.funput.funput.ui.kit.theme.FunputUi
 import app.funput.funput.ui.kit.tokens.OpacityTokens
@@ -57,7 +59,7 @@ internal fun TabItem(tab: FunputTab, selected: Boolean, onClick: () -> Unit, mod
             .selectable(selected = selected, role = Role.Tab, onClick = onClick)
             // Announced once through the description above, not as an icon plus a separate label.
             .clearAndSetSemantics { contentDescription = tab.label }
-            .padding(horizontal = 8.dp),
+            .padding(horizontal = 4.dp),
     ) {
         icon?.let {
             Image(
@@ -67,11 +69,17 @@ internal fun TabItem(tab: FunputTab, selected: Boolean, onClick: () -> Unit, mod
                 modifier = Modifier.size(20.dp),
             )
         }
+        val style = FunputUi.typography.caption.copy(color = tint, fontWeight = FontWeight.SemiBold)
+        // Five tabs on a narrow phone leave a label little room: it shrinks before it is cut.
         BasicText(
             text = tab.label,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            style = FunputUi.typography.caption.copy(color = tint, fontWeight = FontWeight.SemiBold),
+            style = style,
+            autoSize = TextAutoSize.StepBased(minFontSize = MinLabelSize, maxFontSize = style.fontSize),
         )
     }
 }
+
+/** The smallest a tab label shrinks to before it is cut short. */
+private val MinLabelSize = 9.sp

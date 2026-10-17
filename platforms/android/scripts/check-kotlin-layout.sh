@@ -103,6 +103,8 @@ readonly roots=(
     "$android_root/app/src/test/java/app/funput/funput/ui/settings"
     "$android_root/app/src/main/java/app/funput/funput/ui/settings"
     "$android_root/app/src/main/java/app/funput/funput/ui/me"
+    "$android_root/app/src/main/java/app/funput/funput/ui/news"
+    "$android_root/app/src/test/java/app/funput/funput/ui/news"
     "$android_root/app/src/test/java/app/funput/funput/ui/me"
     "$android_root/app/src/main/java/app/funput/funput/ui/appearance"
     "$android_root/app/src/test/java/app/funput/funput/ui/appearance"

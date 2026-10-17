@@ -5,7 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
-import app.funput.funput.ui.kit.icons.FunputIcons
+import app.funput.funput.ui.kit.icons.FunputTabIcons
 import app.funput.funput.ui.kit.layout.FunputTab
 
 /**
@@ -24,23 +24,28 @@ internal val TopLevelDestination.ui: TopLevelDestinationUi
     get() = when (this) {
         TopLevelDestination.KEYBOARD -> TopLevelDestinationUi(
             label = R.string.nav_keyboard,
-            icon = FunputIcons.Keyboard,
-            selectedIcon = FunputIcons.KeyboardSelected,
+            icon = FunputTabIcons.Keyboard,
+            selectedIcon = FunputTabIcons.KeyboardSelected,
         )
         TopLevelDestination.SHORTCUTS -> TopLevelDestinationUi(
             label = R.string.nav_shortcuts,
-            icon = FunputIcons.Shortcuts,
-            selectedIcon = FunputIcons.ShortcutsSelected,
+            icon = FunputTabIcons.Shortcuts,
+            selectedIcon = FunputTabIcons.ShortcutsSelected,
         )
         TopLevelDestination.APPEARANCE -> TopLevelDestinationUi(
             label = R.string.nav_appearance,
-            icon = FunputIcons.Appearance,
-            selectedIcon = FunputIcons.AppearanceSelected,
+            icon = FunputTabIcons.Appearance,
+            selectedIcon = FunputTabIcons.AppearanceSelected,
+        )
+        TopLevelDestination.NEWS -> TopLevelDestinationUi(
+            label = R.string.nav_news,
+            icon = FunputTabIcons.News,
+            selectedIcon = FunputTabIcons.NewsSelected,
         )
         TopLevelDestination.ME -> TopLevelDestinationUi(
             label = R.string.nav_me,
-            icon = FunputIcons.Me,
-            selectedIcon = FunputIcons.MeSelected,
+            icon = FunputTabIcons.Me,
+            selectedIcon = FunputTabIcons.MeSelected,
         )
     }
 
