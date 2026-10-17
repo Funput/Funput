@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- The news tab reads the funput.app blog feed, and syncing between devices will need the
+         network too. The keyboard itself never calls the network. Declared here, in the app's own
+         manifest, so it outranks the removal :ime applies to what ML Kit declares. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
