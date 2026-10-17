@@ -47,11 +47,14 @@ internal class LocalTextComposer(
         }
     }
 
-    /** Copies the document's options and language switch; shortcuts are never installed. */
+    /**
+     * Copies the document's options and language switch. Shortcuts are never installed, and
+     * typo correction stays off: a panel field has no suggestion bar to offer a repair on.
+     */
     override fun reset() {
         if (closed) return
         val current = settings()
-        current.configuration?.let(engine::configure)
+        current.configuration?.copy(typoCorrection = false)?.let(engine::configure)
         composesVietnamese = current.composesVietnamese
         engine.setEnabled(composesVietnamese)
         committed = ""

@@ -1,6 +1,8 @@
 package app.funput.funput.ime.nativebridge
 
 import app.funput.funput.ime.nativebridge.configuration.nativeMask
+import app.funput.funput.ime.nativebridge.correction.NativeTypoCorrection
+import app.funput.funput.ime.nativebridge.correction.TypoCorrectionEngine
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.ime.settings.extraonsets.ExtraOnsetLetters
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -24,6 +26,7 @@ internal data class EngineConfiguration(
     val spellCheck: Boolean,
     val autoCapitalize: Boolean = false,
     val extraOnsets: ExtraOnsetLetters = ExtraOnsetLetters.None,
+    val typoCorrection: Boolean = false,
 )
 
 /** Platform-independent contract consumed by Android's composition adapter. */
@@ -31,6 +34,10 @@ internal interface VietnameseEngine : AutoCloseable {
     /** Method currently active in the engine, used by the Android boundary adapter. */
     val inputMethod: KeyboardInputMethod
         get() = KeyboardInputMethod.TELEX
+
+    /** The typo-correction handshake on this engine; inert unless the engine has one. */
+    val correction: TypoCorrectionEngine
+        get() = TypoCorrectionEngine.Off
 
     /** Single writer for durable configuration; see [EngineConfiguration]. */
     fun configure(configuration: EngineConfiguration)
@@ -57,6 +64,7 @@ internal class NativeVietnameseEngine : VietnameseEngine {
     }
     override var inputMethod = KeyboardInputMethod.TELEX
         private set
+    override val correction: TypoCorrectionEngine = NativeTypoCorrection { withHandle { it } }
     /** The options last applied, so a panel field can compose the same way. */
     var configuration: EngineConfiguration? = null
         private set
@@ -72,6 +80,7 @@ internal class NativeVietnameseEngine : VietnameseEngine {
             configuration.autoCapitalize,
         )
         FunputNative.nativeSetExtraOnsets(value, configuration.extraOnsets.nativeMask)
+        FunputNative.nativeSetTypoCorrection(value, configuration.typoCorrection)
         inputMethod = configuration.inputMethod
         this.configuration = configuration
     }

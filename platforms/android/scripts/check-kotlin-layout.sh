@@ -25,6 +25,8 @@ readonly roots=(
     "$android_root/keyboard-ui/src/androidTest/java/app/funput/funput/keyboard/ui/speech"
     "$ime_main/editing/mode"
     "$ime_test/editing/mode"
+    "$ime_main/nativebridge/correction"
+    "$ime_test/nativebridge/correction"
     "$ime_test/editing/voice"
     "$ime_main/settings/speech"
     "$ime_test/settings/speech"

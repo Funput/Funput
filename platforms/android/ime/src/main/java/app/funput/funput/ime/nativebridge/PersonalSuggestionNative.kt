@@ -17,4 +17,10 @@ internal object PersonalSuggestionNative {
     external fun nativeCompact(handle: Long): Boolean
     external fun nativeReset(handle: Long): Boolean
     external fun nativeStats(handle: Long): LongArray?
+
+    /** True for a word the user typed, the English list holds, or the keep list protects. */
+    external fun nativeIsKnownWord(handle: Long, word: String): Boolean
+
+    /** The shipped syllable tier as pseudo-uses: 4, 3, 2, 1, or 0 when unlisted. No handle. */
+    external fun nativeSyllableWeight(word: String): Int
 }
