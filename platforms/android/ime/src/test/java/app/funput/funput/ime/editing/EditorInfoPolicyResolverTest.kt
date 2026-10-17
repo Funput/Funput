@@ -27,6 +27,9 @@ class EditorInfoPolicyResolverTest {
 
         assertEquals(ImeSuggestionSource.FUNPUT, resolve(inputType).suggestionSource)
         assertTrue(resolve(inputType).showsSuggestionBar)
+        // The same flag is how a field turns autocorrect off, and typo correction obeys it.
+        assertFalse(resolve(inputType).allowsCorrection)
+        assertTrue(resolve(InputType.TYPE_CLASS_TEXT).allowsCorrection)
     }
 
     @Test

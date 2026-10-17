@@ -4,6 +4,7 @@ import android.view.inputmethod.InputConnection
 import app.funput.funput.ime.editing.AndroidCompositionSession
 import app.funput.funput.ime.editing.ImeEditCommand
 import app.funput.funput.ime.editing.InputConnectionEditor
+import app.funput.funput.ime.editing.correction.undo.CorrectionUndo
 
 /** Deletes and reopens a committed Vietnamese word as one editor transaction. */
 internal class ImeBackspaceHandler(
@@ -14,9 +15,15 @@ internal class ImeBackspaceHandler(
     private val onCompositionChanged: () -> Unit,
     private val onCompositionCleared: () -> Unit,
 ) {
+    private val corrections = CorrectionUndo(composition)
+
     fun perform() {
-        if (composition.backspace(connection())) return onCompositionChanged()
         val current = connection()
+        // Right after a repair, Backspace takes it back and does nothing else: no delete,
+        // and no reopening of the restored word either.
+        if (current != null && corrections.undo(current)) return onCompositionCleared()
+        corrections.dropParked()
+        if (composition.backspace(current)) return onCompositionChanged()
         if (current == null || !usesComposition()) {
             editor.execute(current, ImeEditCommand.DeleteBackward)
             onCompositionCleared()

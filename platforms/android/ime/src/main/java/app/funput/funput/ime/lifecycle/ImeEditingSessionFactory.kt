@@ -8,6 +8,7 @@ import app.funput.funput.ime.editing.AndroidCompositionSession
 import app.funput.funput.ime.editing.ImeEditorRuntime
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
+import app.funput.funput.ime.editing.correction.createTypoCorrection
 import app.funput.funput.ime.editing.layout.LetterPageReturn
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
@@ -34,8 +35,9 @@ internal fun createImeEditingSession(
         connection = connection,
         onSuggestionsChanged = showSuggestions,
     )
+    val typo = createTypoCorrection(context, nativeEngine) { editorRuntime.policy }
     val actionHandler = ImeKeyActionHandler(
-        composition = AndroidCompositionSession(nativeEngine),
+        composition = AndroidCompositionSession(nativeEngine, corrections = typo.corrections),
         editor = editor,
         connection = connection,
         enterCommand = { editorRuntime.policy.editorAction.command },
@@ -56,6 +58,7 @@ internal fun createImeEditingSession(
     )
     return ImeEditingSession(
         nativeEngine = nativeEngine,
+        typo = typo,
         editorRuntime = editorRuntime,
         actionHandler = actionHandler,
         suggestionService = suggestionService,

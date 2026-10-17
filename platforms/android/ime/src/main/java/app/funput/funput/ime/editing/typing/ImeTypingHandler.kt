@@ -6,6 +6,7 @@ import app.funput.funput.ime.editing.ImeEditCommand
 import app.funput.funput.ime.editing.ImeSuggestionSession
 import app.funput.funput.ime.editing.InputConnectionEditor
 import app.funput.funput.ime.shortcuts.ImeShortcutSession
+import app.funput.funput.keyboard.touch.KeyTouchEvidence
 
 /**
  * The ordinary path text takes into the document: characters, Enter, and text arriving from the
@@ -28,14 +29,14 @@ internal class ImeTypingHandler(
     private val finish: () -> Unit,
     private val onTyping: () -> Unit = {},
 ) {
-    fun input(text: String) {
+    fun input(text: String, touch: KeyTouchEvidence? = null) {
         if (text.isNotEmpty()) onTyping()
         val handled = if (usesVietnameseComposition()) {
             val current = connection()
             if (current == null) {
                 suggestions.reset()
             } else {
-                composition.input(current, text)
+                composition.input(current, text, touch)
             }
             suggestions.updateComposition()
             current != null

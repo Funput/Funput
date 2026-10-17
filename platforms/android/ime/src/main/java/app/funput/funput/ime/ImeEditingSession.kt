@@ -4,6 +4,7 @@ import app.funput.funput.ime.clipboard.session.ImeClipboardSession
 import app.funput.funput.ime.editing.EditorInfoPolicy
 import app.funput.funput.ime.editing.ImeEditorRuntime
 import app.funput.funput.ime.editing.ImeKeyActionHandler
+import app.funput.funput.ime.editing.correction.TypoCorrectionParts
 import app.funput.funput.ime.editing.layout.LetterPageReturn
 import app.funput.funput.ime.localtext.ImeLocalTextFields
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
@@ -18,6 +19,7 @@ import app.funput.funput.keyboard.ui.FunputKeyboardView
  */
 internal class ImeEditingSession(
     val nativeEngine: NativeVietnameseEngine,
+    val typo: TypoCorrectionParts,
     val editorRuntime: ImeEditorRuntime,
     val actionHandler: ImeKeyActionHandler,
     val suggestionService: PersonalSuggestionService,
@@ -76,6 +78,7 @@ internal class ImeEditingSession(
     fun close() {
         clipboard.close()
         suggestionService.close()
+        typo.wordSource.close()
     }
 
     /** Only once the framework is done with input: closed engines refuse every call. */

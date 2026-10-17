@@ -70,7 +70,7 @@ internal class ImeKeyActionHandler(
     fun onKeyAction(action: KeyAction) {
         if (gestures.consume(action)) return
         when (action) {
-            is KeyAction.Input -> typing.input(action.text)
+            is KeyAction.Input -> typing.input(action.text, action.touch)
             KeyAction.Space -> typing.input(" ")
             KeyAction.Backspace -> backspace()
             KeyAction.Enter -> typing.enter()

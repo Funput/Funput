@@ -29,6 +29,8 @@ readonly roots=(
     "$ime_test/nativebridge/correction"
     "$ime_main/editing/composition"
     "$ime_test/editing/composition"
+    "$ime_main/editing/correction"
+    "$ime_test/editing/correction"
     "$ime_test/editing/voice"
     "$ime_main/settings/speech"
     "$ime_test/settings/speech"

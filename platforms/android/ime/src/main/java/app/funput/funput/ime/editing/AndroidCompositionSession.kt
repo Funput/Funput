@@ -5,12 +5,15 @@ import android.view.inputmethod.InputConnection
 import app.funput.funput.ime.editing.composition.CompositionBoundary
 import app.funput.funput.ime.editing.composition.CursorAfterText
 import app.funput.funput.ime.editing.composition.singleCodePointOrNull
+import app.funput.funput.ime.editing.correction.TypoCorrection
 import app.funput.funput.ime.nativebridge.VietnameseEngine
+import app.funput.funput.keyboard.touch.KeyTouchEvidence
 
 /** Maps the shared engine buffer onto Android's composing-text primitives. */
 internal class AndroidCompositionSession(
     internal val engine: VietnameseEngine,
     private val composingTextFactory: (String) -> CharSequence = ::unstyledComposingText,
+    internal val corrections: TypoCorrection = TypoCorrection(engine.correction),
 ) {
     private val documentEditor = CompositionDocumentEditor(composingTextFactory)
     private val committedTail = CommittedWordTail()
@@ -24,17 +27,17 @@ internal class AndroidCompositionSession(
 
     fun setEnabled(enabled: Boolean) = engine.setEnabled(enabled)
 
-    fun setRenderMode(value: CompositionRenderMode) {
-        renderMode = value
-    }
+    fun setRenderMode(value: CompositionRenderMode) { renderMode = value }
 
     fun isBoundary(codePoint: Int): Boolean =
         CompositionBoundary.isBoundary(codePoint, engine.inputMethod)
 
-    fun input(connection: InputConnection?, text: String): Boolean {
+    /** [touch] is where the finger landed for [text], when it was a tap on a letter. */
+    fun input(connection: InputConnection?, text: String, touch: KeyTouchEvidence? = null): Boolean {
         completed = null
         if (connection == null || text.isEmpty()) return false
         val codePoint = text.singleCodePointOrNull() ?: return commitRaw(connection, text)
+        corrections.keyTyped(touch)
         return if (CompositionBoundary.isBoundary(codePoint, engine.inputMethod)) {
             commitBoundary(connection, text, codePoint)
         } else {
@@ -59,6 +62,7 @@ internal class AndroidCompositionSession(
         composingText = ""
         completed = null
         committedTail.clear()
+        corrections.reset()
         engine.clear()
     }
 
@@ -80,7 +84,7 @@ internal class AndroidCompositionSession(
         codePoint: Int,
     ): Boolean {
         val previous = composingText
-        val replacement = engine.processBoundary(codePoint)
+        val replacement = corrections.atBoundary(previous, engine.processBoundary(codePoint), text)
         // Only a space leaves the words either side of it adjacent; the tracker
         // has no other way to know which boundary this was.
         val token = replacement?.removeSuffix(text)?.ifEmpty { null } ?: previous.ifEmpty { null }
