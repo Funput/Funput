@@ -51,9 +51,10 @@ internal enum class SettingsPage(
         R.string.settings_section_hardware_keyboard, FunputIcons.HardwareKeyboard, FunputTint.GRAY,
         listOf(AppDestination.HARDWARE_KEYBOARD),
     ),
+    // Home in "Tôi"; the keyboard tab opens it too when the settings search finds it there.
     DATA(
         R.string.settings_section_data, FunputIcons.Data, FunputTint.RED,
-        listOf(AppDestination.DATA),
+        listOf(AppDestination.DATA, AppDestination.KEYBOARD_DATA),
     ),
     ;
 

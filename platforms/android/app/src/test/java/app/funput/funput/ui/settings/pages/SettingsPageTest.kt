@@ -49,6 +49,12 @@ class SettingsPageTest {
     }
 
     @Test
+    fun `data found by search in the keyboard tab opens there, so back returns to the results`() {
+        assertEquals(AppDestination.KEYBOARD_DATA, SettingsPage.DATA.destinationIn(TopLevelDestination.KEYBOARD))
+        assertEquals(SettingsPage.DATA, SettingsPage.of(AppDestination.KEYBOARD_DATA))
+    }
+
+    @Test
     fun `screens that are not settings pages have no page`() {
         listOf(AppDestination.KEYBOARD, AppDestination.SHORTCUTS, AppDestination.ME).forEach { destination ->
             assertEquals(null, SettingsPage.of(destination))

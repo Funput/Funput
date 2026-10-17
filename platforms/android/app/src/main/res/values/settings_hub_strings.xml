@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The keyboard hub: its list of pages and the one sentence under each page's row. -->
+<!-- The keyboard hub: its search, its list of pages and the one sentence under each page's row. -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="settings_all_title">Tất cả cài đặt</string>
+
+    <string name="settings_search_placeholder">Tìm cài đặt</string>
+    <string name="settings_search_clear">Xoá tìm kiếm</string>
+    <string name="settings_search_empty_title">Không tìm thấy cài đặt</string>
+    <string name="settings_search_empty_hint">Thử từ khác, ví dụ \"telex\", \"rung\" hoặc \"clipboard\".</string>
 
     <string name="settings_summary_all_off">Đang tắt tất cả</string>
     <string name="settings_summary_all_on">Đang bật tất cả</string>
