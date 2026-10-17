@@ -9,6 +9,22 @@ bool exact(const Mods &m, bool ctrl, bool alt, bool super, bool shift) {
     return m.ctrl == ctrl && m.alt == alt && m.super == super && m.shift == shift;
 }
 
+// The X11 keysyms of keys that only change what the next key means. Both shells send
+// their presses to the engine, and none of them produces a character.
+bool isModifierKeysym(uint32_t sym) {
+    // Shift, Control, Caps Lock, Shift Lock, Meta, Alt, Super, Hyper (left and right).
+    if (sym >= 0xFFE1 && sym <= 0xFFEE) return true;
+    switch (sym) {
+    case 0xFE03: // ISO_Level3_Shift, which is AltGr
+    case 0xFE11: // ISO_Level5_Shift
+    case 0xFF7E: // Mode_switch
+    case 0xFF7F: // Num_Lock
+        return true;
+    default:
+        return false;
+    }
+}
+
 } // namespace
 
 bool matchesToggle(const KeyEvent &ev, Hotkey preset) {
@@ -41,6 +57,7 @@ bool matchesFlip(const KeyEvent &ev, FlipHotkey preset) {
 }
 
 KeyKind classify(const KeyEvent &ev, const Settings &settings) {
+    if (isModifierKeysym(ev.keysym)) return KeyKind::Modifier;
     // Both hotkeys hold a non-Shift modifier, so they must be matched before the
     // Shortcut test would swallow them.
     if (matchesToggle(ev, settings.toggleHotkey)) return KeyKind::Toggle;
