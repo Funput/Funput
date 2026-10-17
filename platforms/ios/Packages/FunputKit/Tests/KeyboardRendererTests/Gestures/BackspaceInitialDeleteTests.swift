@@ -32,7 +32,8 @@ struct BackspaceInitialDeleteTests {
         subject.scheduler.fire(after: Self.repeatDelay)
 
         #expect(subject.phases == [.pressed, .repeated, .repeated])
-        #expect(subject.haptics.performed == [.light, .light])
+        #expect(subject.haptics.performed == [.light])
+        #expect(subject.haptics.ticks == 1)
 
         subject.controller.endTouch(token: 1)
         #expect(subject.phases == [.pressed, .repeated, .repeated, .cancelled])

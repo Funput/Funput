@@ -19,18 +19,23 @@ struct SpaceTrackpadHapticTests {
 
         #expect(subject.haptics.performed == [.strong, .strong])
         subject.move(to: 145)
-        #expect(subject.haptics.performed == [.strong, .strong, .strong])
+        // Caret steps tick rather than strike, whatever the chosen strength.
+        #expect(subject.haptics.performed == [.strong, .strong])
+        #expect(subject.haptics.ticks == 1)
     }
 
-    @Test("Off silences the press, trackpad hold and caret movement")
-    func offSilencesTheTrackpad() {
-        // Haptics off, the way the setting ships.
+    @Test("Off silences the press and caret steps, but not the trackpad hold")
+    func modeBuzzOutlivesTheTypingSetting() {
+        // Haptics off, the way the setting ships, with a remembered strength.
         let subject = subject()
+        subject.hapticStrength = .medium
         subject.begin()
         subject.scheduler.fire(after: Self.hold)
         subject.move(to: 145)
 
-        #expect(subject.haptics.performed.isEmpty)
+        // The one signal a gesture with no visible state depends on still arrives.
+        #expect(subject.haptics.performed == [.medium])
+        #expect(subject.haptics.ticks == 0)
         #expect(subject.claims == [.trackpad])
     }
 

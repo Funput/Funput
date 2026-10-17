@@ -55,7 +55,7 @@ extension KeyboardSurfaceInteractionController {
         guard onClaimGesture(token, .repeatKey) else { return }
         let event = KeyboardKeyEvent(key: state.initialKey, phase: .repeated)
         onContactEvent(token, event)
-        performHapticFeedback()
+        performHapticTick()
     }
 
     func finishRepeatedTouch(token: TouchToken, state: TouchState) {

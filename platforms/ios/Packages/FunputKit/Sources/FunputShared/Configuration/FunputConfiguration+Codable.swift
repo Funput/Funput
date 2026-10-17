@@ -22,7 +22,8 @@ extension FunputConfiguration {
         config.autoCapitalize = try container.decodeIfPresent(Bool.self, forKey: .autoCapitalize) ?? config.autoCapitalize
         config.selectedThemeID = try container.decodeIfPresent(String.self, forKey: .selectedThemeID) ?? config.selectedThemeID
         config.isHapticFeedbackEnabled = try container.decodeIfPresent(Bool.self, forKey: .isHapticFeedbackEnabled) ?? config.isHapticFeedbackEnabled
-        config.hapticFeedbackStrength = try container.decodeIfPresent(HapticFeedbackStrength.self, forKey: .hapticFeedbackStrength) ?? .light
+        // Lenient: a strength written by a newer build must not throw away every other setting.
+        config.hapticFeedbackStrength = (try? container.decodeIfPresent(HapticFeedbackStrength.self, forKey: .hapticFeedbackStrength)) ?? config.hapticFeedbackStrength
         config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.smartGesturesEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartGesturesEnabled) ?? config.smartGesturesEnabled

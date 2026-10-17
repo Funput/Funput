@@ -104,6 +104,7 @@ final class KeyboardSurfaceInteractionController {
     var highlightCounts: [String: Int] = [:]
     var repeatTouch: TouchToken?
     var hapticStrength: HapticFeedbackStrength? = .light
+    var modeChangeStrength: HapticFeedbackStrength = .light
     var activeKey: KeySpec? {
         repeatTouch.flatMap { touches[$0]?.currentKey }
     }

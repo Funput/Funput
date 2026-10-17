@@ -7,6 +7,9 @@ import UIKit
 protocol KeyboardHapticPerforming {
     func prepare()
     func perform(strength: HapticFeedbackStrength)
+    /// A light tick for steps that arrive many times a second: caret panning and
+    /// Backspace repeat. A full impact per step at a strong setting reads as a buzz.
+    func performTick()
 }
 
 /// The same typing feedback in the keyboard and the containing app's settings.
@@ -15,16 +18,19 @@ public final class KeyboardHaptics: KeyboardHapticPerforming {
     private let light: UIImpactFeedbackGenerator
     private let medium: UIImpactFeedbackGenerator
     private let strong: UIImpactFeedbackGenerator
+    private let tick: UISelectionFeedbackGenerator
 
     public init(view: UIView) {
         if #available(iOS 17.5, *) {
             light = UIImpactFeedbackGenerator(style: .light, view: view)
             medium = UIImpactFeedbackGenerator(style: .medium, view: view)
             strong = UIImpactFeedbackGenerator(style: .heavy, view: view)
+            tick = UISelectionFeedbackGenerator(view: view)
         } else {
             light = UIImpactFeedbackGenerator(style: .light)
             medium = UIImpactFeedbackGenerator(style: .medium)
             strong = UIImpactFeedbackGenerator(style: .heavy)
+            tick = UISelectionFeedbackGenerator()
         }
     }
 
@@ -32,6 +38,12 @@ public final class KeyboardHaptics: KeyboardHapticPerforming {
         light.prepare()
         medium.prepare()
         strong.prepare()
+        tick.prepare()
+    }
+
+    public func performTick() {
+        tick.selectionChanged()
+        tick.prepare()
     }
 
     public func perform(strength: HapticFeedbackStrength) {

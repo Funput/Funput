@@ -32,6 +32,7 @@ struct KeyboardHapticFeedbackTests {
         subject.begin()
         subject.scheduler.fire(after: KeyboardSurfaceInteractionController.smartBackspaceRepeatDelay)
         #expect(subject.haptics.performed.isEmpty)
+        #expect(subject.haptics.ticks == 0)
     }
 
     @Test("Suggestions read the current strength and enabled flag")

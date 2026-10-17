@@ -39,9 +39,11 @@ final class TestGestureScheduler {
 @MainActor
 final class HapticSpy: KeyboardHapticPerforming {
     private(set) var performed: [HapticFeedbackStrength] = []
+    private(set) var ticks = 0
 
     func prepare() {}
     func perform(strength: HapticFeedbackStrength) { performed.append(strength) }
+    func performTick() { ticks += 1 }
 }
 
 /// One interaction controller over a single key, driven by explicit touch points.

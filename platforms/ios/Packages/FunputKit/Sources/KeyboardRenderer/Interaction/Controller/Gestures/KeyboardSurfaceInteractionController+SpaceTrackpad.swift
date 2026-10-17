@@ -8,7 +8,9 @@ extension KeyboardSurfaceInteractionController {
     func armSpaceTrackpad(for token: TouchToken) {
         guard touches[token] != nil else { return }
         touches[token]?.holdArmed = true
-        performHapticFeedback()
+        // Reported at arming, not at the first sideways pixel: by then the moving caret
+        // already answered "can I pan now". Lifting without moving still types a space.
+        performModeChangeFeedback()
     }
 
     /// Promotes an armed space press into a caret pan once the finger travels sideways.
@@ -45,7 +47,7 @@ extension KeyboardSurfaceInteractionController {
             token,
             KeyboardKeyEvent(key: state.initialKey, phase: .cursorMoved(offset: offset))
         )
-        performHapticFeedback()
+        performHapticTick()
     }
 
     func completeGestureTouch(token: TouchToken, state: TouchState) {

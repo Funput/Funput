@@ -21,4 +21,12 @@ struct HapticFeedbackConfigurationTests {
         #expect(decoded == config)
         #expect(!decoded.isHapticFeedbackEnabled)
     }
+
+    @Test("An unknown strength falls back without discarding other settings")
+    func unknownStrength() throws {
+        let json = "{\"hapticFeedbackStrength\":\"extraStrong\",\"isHapticFeedbackEnabled\":true,\"schemaVersion\":16}"
+        let config = try JSONDecoder().decode(FunputConfiguration.self, from: Data(json.utf8))
+        #expect(config.hapticFeedbackStrength == .light)
+        #expect(config.isHapticFeedbackEnabled)
+    }
 }
