@@ -27,20 +27,6 @@ std::string textBeforeCaret(IBusEngine *engine) {
     return out;
 }
 
-// The document after the caret, for noticing a caret the user moved. Our own typing
-// never changes it, however late the client reports the text before it. nullopt until
-// the client has sent anything.
-std::optional<std::string> textAfterCaret(IBusEngine *engine) {
-    const EngineState *state = stateOf(engine);
-    if (!state->sawSurroundingText) return std::nullopt;
-    const std::vector<uint32_t> chars = funput::decodeUtf8(state->surroundingText);
-    std::string out;
-    for (size_t i = state->surroundingCursor; i < chars.size(); ++i) {
-        funput::appendUtf8(out, chars[i]);
-    }
-    return out;
-}
-
 bool hasSelection(IBusEngine *engine) {
     const EngineState *state = stateOf(engine);
     return state->sawSurroundingText && state->surroundingCursor != state->surroundingAnchor;

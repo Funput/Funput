@@ -79,16 +79,19 @@ void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContext
     if (composer_.reloadSettingsIfChanged()) composer_.applySettings();
     if (composer_.settings().autoCapitalize) composer_.armCapitalization();
     toggleChord_.reset();
-    // A new client: forget whether the last one could be trusted with a repair. Named,
-    // because this runs on a capability change too, not only on a focus change — an
-    // unnamed reset would hand the mode back to a client already caught breaking it
-    // every time it toggled a capability, and Cursor's editor toggles them constantly.
-    composer_.onFocusChanged(clientId(event.inputContext()));
-    // Like IBus `sawSurroundingText`: a new client has said nothing yet. `isValid()`
-    // here can be leftover from the previous focus, so do not snapshot it — and the
-    // last client's answer must not be credited to this one's first keystroke either.
-    lastSurroundingOk_ = false;
-    surroundingFresh_ = false;
+    // This also runs on a capability change, and then it is the same client carrying
+    // on: Cursor's editor toggles capabilities constantly. Only a real focus-in starts a
+    // new one, so only then forget whether the last could be trusted with a repair — a
+    // verdict has to survive the churn, and must not survive the focus, or on GNOME/Wayland
+    // (one input context for every app) a client that broke the mode takes Chrome's with it.
+    if (event.type() == fcitx::EventType::InputContextFocusIn) {
+        composer_.onFocusChanged(clientId(event.inputContext()));
+        // Like IBus `sawSurroundingText`: a new client has said nothing yet. `isValid()`
+        // here can be leftover from the previous focus, so do not snapshot it — and the
+        // last client's answer must not be credited to this one's first keystroke.
+        lastSurroundingOk_ = false;
+        surroundingFresh_ = false;
+    }
     applyNonPreeditMode();
 }
 

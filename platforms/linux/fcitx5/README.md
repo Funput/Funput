@@ -112,10 +112,10 @@ hướng, hoặc lúc bật/tắt VI/EN.
 
 | File | Dòng | Việc |
 |---|---|---|
-| [`src/funput_engine.h`](src/funput_engine.h) | 113 | Kiểu addon, config, và mọi thứ nửa còn lại cần |
-| [`src/funput_engine.cpp`](src/funput_engine.cpp) | 116 | Vòng đời: watcher, nạp lại settings, bật/tắt chế độ |
-| [`src/funput_input.cpp`](src/funput_input.cpp) | 76 | Một phím: chuẩn hoá, hỏi composer |
-| [`src/funput_client.cpp`](src/funput_client.cpp) | 143 | Thi hành plan lên client — preedit, commit, sửa tài liệu; đọc và định danh nó |
+| [`src/funput_engine.h`](src/funput_engine.h) | 111 | Kiểu addon, config, và mọi thứ nửa còn lại cần |
+| [`src/funput_engine.cpp`](src/funput_engine.cpp) | 119 | Vòng đời: watcher, nạp lại settings, bật/tắt chế độ |
+| [`src/funput_input.cpp`](src/funput_input.cpp) | 75 | Một phím: chuẩn hoá, hỏi composer |
+| [`src/funput_client.cpp`](src/funput_client.cpp) | 123 | Thi hành plan lên client — preedit, commit, sửa tài liệu; đọc và định danh nó |
 | [`src/hidden_preedit.cpp`](src/hidden_preedit.cpp) | 53 | Allowlist client tự giấu preedit, và không bao giờ gõ thẳng |
 
 ### Một phím đi qua đâu
@@ -190,20 +190,19 @@ shell này:
   trước hay không*. `BlindWrites` cần nó để phân biệt "trả lời rỗng" với "không trả lời" — hai
   thứ đọc ra cùng một chuỗi. Mỗi phím tiêu thụ rồi xoá nó.
 - **Phán quyết "client này bỏ lệnh xoá" đi theo client, không theo lần focus.** `activate()`
-  chạy cả khi capability đổi, nên nó truyền `clientId()` xuống `Composer::onFocusChanged()`:
-  `program()` nếu tên đó chỉ đúng một app, không thì uuid của input context. Trên GNOME/Wayland
-  `program()` luôn là `gnome-shell` — đo được, không đoán — nên nó bị loại trừ theo tên và uuid
-  đứng thay. Không có chốt này, một client hay đổi capability được tha thứ mỗi phím.
+  chạy cả khi capability đổi, nên nó chỉ gọi `Composer::onFocusChanged()` ở focus-in thật
+  (`event.type() == InputContextFocusIn`), với `clientId()`: `program()` nếu tên đó chỉ đúng một
+  app, không thì rỗng. Trên GNOME/Wayland `program()` luôn là `gnome-shell` — đo được, không
+  đoán — và uuid của input context cũng **không** đứng thay được: gnome-shell giữ đúng một
+  context cho mọi app. Rỗng nghĩa là mỗi lần focus là một câu hỏi mới, và phán quyết chỉ sống
+  trong lần focus nó được đưa ra. Không có chốt capability-đổi này, một client hay đổi
+  capability được tha thứ mỗi phím.
 - **`applyNonPreeditMode()` không bao giờ lật giữa từ.** Hai chế độ bất đồng về chỗ từ đang gõ
   nằm ở đâu, nên lật khi đang soạn dở sẽ để engine và client mô tả hai thứ khác nhau. Cùng một
   cổng gác với `applyNonPreeditMode()` bên IBus.
 - **Client trong allowlist ở trên không bao giờ được gõ thẳng.** Chế độ không còn công tắc, nên
   không ai tắt được nó cho WPS; `applyNonPreeditMode()` đọc `hidesClientPreedit()` và giữ những
   client đó ở preedit ngay từ đầu, thay vì chờ chế độ bị từ chối và mất một từ nát.
-- **`textAfterCaret()`** đưa phần chữ sau con trỏ xuống `Composer::observeDocument()`. Gõ của ta
-  không đổi nó, nên nó đổi nghĩa là người dùng đã dời caret giữa từ mà client không reset — lúc
-  đó từ đang soạn bị bỏ thay vì sửa nhầm chỗ. `nullopt` khi client chưa gửi gì. Lý lẽ đầy đủ ở
-  [README Linux](../README.md#hai-chốt-chặn-không-dựa-vào-phán-quyết).
 - **Có selection thì bỏ luôn cả sửa chữa lẫn composition.** Xoá lúc đó sẽ nuốt đoạn người dùng
   đang bôi đen. Bỏ mỗi lệnh xoá sẽ nhân đôi từ; bỏ im lặng sẽ để engine tin rằng nó sở hữu một
   từ mà nó không sửa được, khiến lệnh xoá của phím kế tiếp nhắm vào chữ Funput chưa từng viết.
