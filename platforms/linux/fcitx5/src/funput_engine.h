@@ -5,12 +5,14 @@
 // translates: `fcitx::KeyEvent` in, `funput::ComposePlan` out, performed against
 // the input context.
 //
-// The composing word is shown as underlined preedit and committed on a word
-// boundary, navigation key, or VI/EN toggle — the same shape as the macOS IMKit
-// shell (platforms/macos/.../FunputInputController.swift), NOT the Windows
-// backspace-injection path. On focus loss Fcitx5 itself commits the client preedit
-// before calling deactivate(), so the word survives a click into another field —
-// see deactivate(), which must not commit again.
+// By default each key is committed straight into the document and repaired in place
+// (`Effect::Replace`), the same shape as the Windows backspace-injection path. Where a
+// client cannot take that, the composing word is shown as underlined preedit and
+// committed on a word boundary, navigation key, or VI/EN toggle, the same shape as the
+// macOS IMKit shell (platforms/macos/.../FunputInputController.swift). In that case, on
+// focus loss Fcitx5 itself commits the client preedit before calling deactivate(), so
+// the word survives a click into another field. See deactivate(), which must not commit
+// again.
 
 #ifndef FUNPUT_ENGINE_H
 #define FUNPUT_ENGINE_H

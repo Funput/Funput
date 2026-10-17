@@ -413,8 +413,8 @@ ghép dấu thanh, tại
 [`unmarkText()`](https://developer.apple.com/documentation/uikit/uitextdocumentproxy/unmarktext()),
 [`UITextDocumentProxy`](https://developer.apple.com/documentation/uikit/uitextdocumentproxy).
 
-Nghĩa là mô hình preedit mà macOS (IMKit) và Linux (fcitx5/ibus) đang dùng, iOS về nguyên
-tắc cũng làm được. Codebase hiện **chưa gọi `setMarkedText` ở bất kỳ đâu**.
+Nghĩa là mô hình preedit mà macOS (IMKit) đang dùng, và Linux (fcitx5/ibus) dùng làm đường lùi
+của chế độ gõ thẳng, iOS về nguyên tắc cũng làm được. Codebase hiện **chưa gọi `setMarkedText` ở bất kỳ đâu**.
 
 Thiết kế đề xuất cho việc chuyển đổi nằm ở
 [INPUT_PIPELINE_3_ARCHITECTURE.md](INPUT_PIPELINE_3_ARCHITECTURE.md) (chưa hiện thực).
