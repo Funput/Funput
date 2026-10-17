@@ -59,6 +59,18 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
         if (kind == KeyKind::Flip) return ComposePlan::passThrough();
     }
 
+    // A highlight the user made over text before the caret — a double-click on the word
+    // just typed, a drag across it. The next key replaces or deletes it, so the word the
+    // engine still holds is gone, and keeping it handed the next word its letters
+    // (`énvieejt` where `việt` was meant). A Sheets suffix lies after the caret and
+    // leaves the word intact, hence `selectionAfter == 0`.
+    const bool highlighted =
+        nonPreedit_.on && nonPreedit_.selectionLive && nonPreedit_.selectionAfter == 0;
+    if (highlighted && (kind == KeyKind::Compose || kind == KeyKind::Boundary ||
+                        kind == KeyKind::NumpadDigit)) {
+        discard();
+    }
+
     switch (kind) {
     case KeyKind::Toggle: // handled above
         break;
@@ -83,6 +95,12 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
         return commitBuffer(false);
 
     case KeyKind::Backspace:
+        // Over a selection the key deletes that, not a character, so nothing shortens:
+        // a highlight over the word takes the word with it, a suffix leaves it whole.
+        if (nonPreedit_.on && nonPreedit_.selectionLive) {
+            if (highlighted) discard();
+            return ComposePlan::passThrough();
+        }
         // The composing word shortens and the key is swallowed. With nothing
         // composing the key passes through, so the app deletes its own character.
         if (handle_.buffer().empty()) return backspaceOutsideWord();

@@ -531,6 +531,14 @@ không phải client bỏ lệnh xoá. `Replace` mang `deleteAfterChars` để g
 ký tự đang gõ, nên `chư` cộng gợi ý `ứ` vẫn thành `chứ` chứ không còn `chưứ`. Vùng bôi đen của
 người dùng (select-all, kéo ngược) vẫn để phím đi thẳng qua.
 
+Vùng bôi đen **trước** caret — nhấp đúp vào từ vừa gõ, kéo chuột qua nó — còn thêm một việc: phím
+kế tiếp thay hoặc xoá chính vùng đó, nên từ engine đang giữ không còn nữa. Trước đây engine vẫn
+giữ nguyên `tieng`, Backspace chỉ rút nó đi một chữ trong khi ứng dụng xoá cả vùng, và từ gõ sau
+thừa kế phần còn lại: `vieejt` ra `énvieejt`, tức "xoá chữ rồi gõ lại tiếng Việt không được" cho
+tới khi có một dấu cách. Giờ `Composer::onKey()` bỏ từ trước khi xử lý một phím gõ, dấu cách hay
+Backspace gặp vùng bôi đen như thế; còn Backspace trên hậu tố Sheets thì chỉ để ứng dụng xoá
+hậu tố, không rút chữ nào khỏi từ.
+
 Còn lại **một client mà phép so ba chuỗi không bao giờ xử được**: client trả lời tài liệu rỗng ở
 mọi lần đọc. Xoá N ký tự khỏi chuỗi rỗng vẫn là chuỗi rỗng, nên cả ba dòng của bảng trên gộp làm
 một và không lần ghi nào có phán quyết. Đo được ở editor Cursor: nó trả lời surrounding text ở
