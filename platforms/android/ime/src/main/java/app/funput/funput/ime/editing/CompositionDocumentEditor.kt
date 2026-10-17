@@ -1,6 +1,7 @@
 package app.funput.funput.ime.editing
 
 import android.view.inputmethod.InputConnection
+import app.funput.funput.ime.editing.composition.CommittedSelectionTracker
 import app.funput.funput.ime.editing.keyevent.KeyEventBufferWriter
 
 /**
@@ -14,9 +15,7 @@ internal class CompositionDocumentEditor(
     private val keyEventWriter: KeyEventBufferWriter = KeyEventBufferWriter(),
 ) {
     private val committedWriter = CommittedBufferWriter()
-    private var committedSelection: Int? = null
-    private var expectedCommittedSelection: Int? = null
-    private var midEditCommittedSelection: Int? = null
+    private val selection = CommittedSelectionTracker()
 
     fun update(
         connection: InputConnection,
@@ -71,10 +70,24 @@ internal class CompositionDocumentEditor(
         if (connection.setComposingText(composingTextFactory(word), CursorAfterText)) return true
         connection.commitText(word, CursorAfterText)
         false
-    } else true.also {
-        committedSelection = null
-        expectedCommittedSelection = null
-        midEditCommittedSelection = null
+    } else true.also { selection.forget() }
+
+    /** Replaces [previous], already committed right before the caret, with [replacement]. */
+    fun replaceCommitted(
+        connection: InputConnection,
+        mode: CompositionRenderMode,
+        previous: String,
+        replacement: String,
+    ): Boolean = if (mode.usesComposingSpans) {
+        connection.beginBatchEdit()
+        try {
+            connection.deleteSurroundingText(previous.length, 0) &&
+                connection.commitText(replacement, CursorAfterText)
+        } finally {
+            connection.endBatchEdit()
+        }
+    } else {
+        replaceBeforeCursor(connection, mode, previous, replacement)
     }
 
     fun ownsSelection(
@@ -87,7 +100,7 @@ internal class CompositionDocumentEditor(
     ): Boolean = if (mode.usesComposingSpans) {
         selectionStart == composingEnd && selectionEnd == composingEnd
     } else {
-        ownsCommittedSelection(connection, text, selectionStart, selectionEnd)
+        selection.owns(connection, text, selectionStart, selectionEnd)
     }
 
     private fun replaceBeforeCursor(
@@ -96,46 +109,12 @@ internal class CompositionDocumentEditor(
         previous: String,
         replacement: String,
     ): Boolean {
-        expectCommittedSelection(previous, replacement)
+        selection.expect(previous, replacement)
         return if (mode.writesKeyEvents) {
             keyEventWriter.replace(connection, previous, replacement)
         } else {
             committedWriter.replace(connection, previous, replacement, mode.deleteWithKeyEvents)
         }
-    }
-
-    private fun ownsCommittedSelection(
-        connection: InputConnection?,
-        text: String,
-        selectionStart: Int,
-        selectionEnd: Int,
-    ): Boolean {
-        if (selectionStart != selectionEnd) return false
-        // Gecko textareas carrying `maxlength` report the caret from inside our batch
-        // edit, after the delete and before the commit. That caret is ours, not a move.
-        if (midEditCommittedSelection == selectionEnd) {
-            midEditCommittedSelection = null
-            return true
-        }
-        val beforeCursor = connection?.getTextBeforeCursor(text.length, 0)?.toString()
-        val editorConfirmsText = beforeCursor?.endsWith(text) == true
-        val editorWithholdsText = beforeCursor.isNullOrEmpty() && selectionEnd >= text.length
-        val positionMatches = expectedCommittedSelection?.let { it == selectionEnd } ?: true
-        val owned = editorConfirmsText || (editorWithholdsText && positionMatches)
-        if (owned) {
-            committedSelection = selectionEnd
-            expectedCommittedSelection = null
-            midEditCommittedSelection = null
-        }
-        return owned
-    }
-
-    private fun expectCommittedSelection(previous: String, replacement: String) {
-        val base = expectedCommittedSelection ?: committedSelection
-        val afterDelete = base?.minus(previous.length)
-        midEditCommittedSelection = afterDelete
-            ?.takeIf { deletesBeforeCommit(previous, replacement) }
-        expectedCommittedSelection = afterDelete?.plus(replacement.length)
     }
 
     private companion object {

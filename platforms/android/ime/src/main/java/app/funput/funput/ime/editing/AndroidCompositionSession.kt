@@ -125,25 +125,21 @@ internal class AndroidCompositionSession(
         return reopened
     }
 
-    fun ownsSelection(
-        connection: InputConnection?,
-        selectionStart: Int,
-        selectionEnd: Int,
-        composingEnd: Int,
-    ): Boolean = documentEditor.ownsSelection(
-        connection,
-        renderMode,
-        composingText,
-        selectionStart,
-        selectionEnd,
-        composingEnd,
-    )
+    fun ownsSelection(connection: InputConnection?, selectionStart: Int, selectionEnd: Int, composingEnd: Int) =
+        documentEditor.ownsSelection(connection, renderMode, composingText, selectionStart, selectionEnd, composingEnd)
+
+    /** Rewrites [previous], committed right before the caret, as [replacement] in one batch. */
+    fun replaceCommitted(connection: InputConnection, previous: String, replacement: String): Boolean {
+        if (!documentEditor.replaceCommitted(connection, renderMode, previous, replacement)) return false
+        committedTail.clear()
+        committedTail.record(replacement)
+        return true
+    }
 
     private fun commitRaw(connection: InputConnection, text: String): Boolean {
         finish(connection)
         return connection.commitText(text, CursorAfterText)
     }
-
 }
 
 private fun unstyledComposingText(text: String): CharSequence = SpannableString(text)
