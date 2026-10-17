@@ -77,6 +77,14 @@ bool Settings::reload() {
            shortcutsInEnglish != previous.shortcutsInEnglish;
 }
 
+bool Settings::sameTyping(const Settings &other) const {
+    return method == other.method && toneStyle == other.toneStyle &&
+           enabled == other.enabled && smartRestore == other.smartRestore &&
+           eagerRestore == other.eagerRestore && spellCheck == other.spellCheck &&
+           autoCapitalize == other.autoCapitalize && extraOnsets == other.extraOnsets &&
+           nonPreedit == other.nonPreedit;
+}
+
 void Settings::save() const {
     const std::string file = path();
     if (file.empty()) return;

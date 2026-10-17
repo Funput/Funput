@@ -81,6 +81,11 @@ struct Settings {
     // miss two writes within the same second). Returns true if values changed.
     bool reload();
 
+    // Whether `other` composes a word the same way as this. The gõ tắt table, its
+    // switches and the hotkeys are left out on purpose: they never touch a word that
+    // is half-typed, so a change confined to them must not interrupt it.
+    bool sameTyping(const Settings &other) const;
+
     // Persist the current values (used when the VI/EN hotkey toggles `enabled`).
     void save() const;
 

@@ -37,16 +37,22 @@ bool Composer::reloadSettings() {
 }
 
 void Composer::applySettings() {
-    handle_.configure(settings_);
-    handle_.setExtraOnsets(settings_.extraOnsets);
-    effectiveEnabled_ = settings_.enabled;
-    // Same shape as effectiveEnabled_: the preference is the starting point, and a
-    // shell may override it per input context (a client that cannot report
-    // surrounding text has to stay on the preedit). The `handle_.clear()` below is
-    // what makes a mid-word change safe — the half-typed word is dropped rather
-    // than left for the other mode to finish in a way it cannot.
-    setNonPreedit(settings_.nonPreedit);
-    handle_.setEnabled(effectiveEnabled_);
+    // Only the gõ tắt table or its switches moved: leave the word, the VI/EN state and
+    // the mode alone. The Settings app saves on every keystroke in its gõ tắt fields,
+    // so a full push here dropped the word being typed into them. See state/applied.h.
+    const bool keepsWord = applied_.keepsComposition(settings_);
+    if (!keepsWord) {
+        handle_.configure(settings_);
+        handle_.setExtraOnsets(settings_.extraOnsets);
+        effectiveEnabled_ = settings_.enabled;
+        // Same shape as effectiveEnabled_: the preference is the starting point, and a
+        // shell may override it per input context (a client that cannot report
+        // surrounding text has to stay on the preedit). The `handle_.clear()` below is
+        // what makes a mid-word change safe — the half-typed word is dropped rather
+        // than left for the other mode to finish in a way it cannot.
+        setNonPreedit(settings_.nonPreedit);
+        handle_.setEnabled(effectiveEnabled_);
+    }
     // The gõ tắt options ride separately from `configure` (see handle.h), and
     // ahead of the table itself only for reading order — none of them clears it.
     handle_.setShortcutsEnabled(settings_.shortcutsEnabled);
@@ -59,7 +65,8 @@ void Composer::applySettings() {
     for (const auto &[trigger, expansion] : settings_.shortcuts) {
         handle_.addShortcut(trigger, expansion);
     }
-    handle_.clear();
+    if (!keepsWord) handle_.clear();
+    applied_.remember(settings_);
 }
 
 // --- VI/EN -------------------------------------------------------------------
@@ -69,6 +76,7 @@ ComposePlan Composer::toggleEnabled() {
     ComposePlan plan = commitBuffer(true);
     effectiveEnabled_ = !effectiveEnabled_;
     settings_.enabled = effectiveEnabled_;
+    applied_.rememberEnabled(effectiveEnabled_);
     handle_.setEnabled(effectiveEnabled_);
     settings_.save();
     return plan;
