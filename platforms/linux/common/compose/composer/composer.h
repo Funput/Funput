@@ -17,7 +17,6 @@
 #ifndef FUNPUT_COMPOSE_COMPOSER_H
 #define FUNPUT_COMPOSE_COMPOSER_H
 
-#include <optional>
 #include <string>
 #include <string_view>
 
@@ -68,24 +67,25 @@ public:
     void setNonPreedit(bool on);
     bool nonPreedit() const { return nonPreedit_.on; }
 
-    // A client took focus. Clears what was learned about the last one, the only thing
-    // that lets a stood-down mode be tried again (`setNonPreedit()` cannot: IBus calls
-    // it on every keystroke). `client` is how the shell names the focus — Fcitx5's
-    // program name, else the input context. A client caught dropping a delete keeps
-    // that verdict (Fcitx5 also re-activates on capability churn); empty is always a
-    // fresh question (IBus has no name). See nonpreedit/clients.h.
+    // A client took focus. Clears what was learned about the last one, which is the
+    // only thing that lets a stood-down mode be tried again. Apart from
+    // `setNonPreedit()`: IBus calls that on every keystroke.
+    //
+    // `client` is how the shell names the focus — Fcitx5's program name, else the
+    // input context. A client caught dropping a delete keeps that verdict (Fcitx5
+    // also re-activates on capability churn). Empty is always a fresh question
+    // (IBus has no name). See nonpreedit/clients.h.
     void onFocusChanged(std::string_view client = {});
 
     // The document in front of the caret as it stands now, before this keystroke.
     // Checks that the previous repair landed, and stands down as narrowly as the
-    // failure allows — see nonpreedit.cpp. `answered` is whether the client sent
-    // surrounding text since the last keystroke: without it an empty answer and no
-    // answer are the same string, and standing down on silence would take the mode
-    // from the clients it was built for. `textAfterCaret`, when known, tells a caret
-    // the user moved from one our own typing advanced — see nonpreedit/observe.h.
+    // failure allows — see nonpreedit.cpp.
+    //
+    // `answered` is whether the client sent surrounding text since the last keystroke.
+    // Without it an empty answer and no answer are the same string, and standing the
+    // mode down on silence would take it from the clients it was built for.
     void observeDocument(const std::string &textBeforeCaret, bool selectionLive = false,
-                         bool answered = true, uint32_t selectedAfter = 0,
-                         const std::optional<std::string> &textAfterCaret = std::nullopt);
+                         bool answered = true, uint32_t selectedAfter = 0);
 
     // Whether a word is being composed right now. The shells ask before deciding
     // whether a Backspace is shortening a live word or eating a committed one.

@@ -121,7 +121,7 @@ TEST_CASE("Backspace over a Sheets suffix deletes the suffix, not a letter of th
     std::string document;
     typePrefix(composer, document, "chu7");
 
-    composer.observeDocument(document, true, true, 1, std::string("ứ"));
+    composer.observeDocument(document, true, true, 1);
     CHECK(composer.onKey(bare(keysym::BackSpace)).isNoop());
     // The typed `chư` is intact, so the word is too: the tone still lands on it.
     CHECK(composer.isComposing());

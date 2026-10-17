@@ -69,7 +69,7 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
     const bool answered = std::exchange(state->surroundingFresh, false);
     if (nonPreedit) {
         state->composer.observeDocument(before, hasSelection(engine), answered,
-                                        selectedAfter(engine), textAfterCaret(engine));
+                                        selectedAfter(engine));
     }
 
     const bool reopen = state->composer.nonPreedit() && !state->composer.isComposing() &&

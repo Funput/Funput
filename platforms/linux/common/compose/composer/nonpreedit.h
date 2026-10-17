@@ -45,7 +45,6 @@
 #define FUNPUT_COMPOSE_NONPREEDIT_H
 
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <string_view>
 
@@ -89,10 +88,6 @@ struct NonPreeditState {
     // The document as last seen and the repair last written into it — enough to say
     // what it should read now, and what it would read had the delete been dropped.
     std::string lastDoc;
-    // The text after the caret at the last reading, when there was a comparable one.
-    // Our own typing never changes it, so a change is someone moving the caret — see
-    // `movedOnItsOwn()`.
-    std::optional<std::string> lastAfter;
     std::string repairText;
     uint32_t repairDeleted = 0;
     bool repairAfterAdopt = false;
@@ -113,7 +108,6 @@ struct NonPreeditState {
         selectionAfter = 0;
         inSync = false;
         lastDoc.clear();
-        lastAfter.reset();
         repairText.clear();
         repairDeleted = 0;
         repairAfterAdopt = false;
@@ -131,10 +125,6 @@ struct NonPreeditState {
     // Judge `document` against that record and forget it either way — one reading is
     // all a repair gets. Also remembers `document` as the latest.
     Verdict observe(const std::string &document);
-
-    // Whether the caret was moved from under the word being composed, rather than by
-    // our own typing. Not a verdict on the client: nothing it did was wrong.
-    bool movedOnItsOwn(const std::optional<std::string> &after);
 };
 
 } // namespace funput

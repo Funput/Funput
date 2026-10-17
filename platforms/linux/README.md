@@ -311,7 +311,7 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       nonpreedit/backspace.cpp  Ai xoá một ký tự đã nằm trong tài liệu, và mở lại từ đã xong
       nonpreedit/clients.h    Phán quyết đó thuộc về client nào
       nonpreedit/verdict.h    Verdict, và client không bao giờ cho xem tài liệu
-      nonpreedit/observe.h    So ba chuỗi sau một lần sửa, và nhận ra caret bị người dùng dời
+      nonpreedit/observe.h    So ba chuỗi sau một lần sửa
       nonpreedit/selection.h  Hậu tố gợi ý sau caret (Sheets/Excel)
   settings/               ~/.config/Funput/settings.json
     settings.h              Model mọi shell đều đọc, gồm cả công tắc gõ tắt
@@ -465,8 +465,8 @@ thi hành nó.**
 
 Khoá `"nonPreedit"` còn sót trong một `settings.json` cũ bị bỏ qua, kể cả khi là `false`; app Cài
 đặt và addon đều xoá nó ở lần lưu kế tiếp. Bỏ công tắc cũng là bỏ lối thoát cho một app mà chế
-độ này không chạy được, nên các lưới an toàn bên dưới — phán quyết, `BlindWrites`, danh sách
-client đã biết và chốt chặn dời caret — phải tự lo thay người dùng.
+độ này không chạy được, nên các lưới an toàn bên dưới — phán quyết, `BlindWrites` và danh sách
+client đã biết — phải tự lo thay người dùng.
 
 Thay vì đỗ từ đang gõ trong một preedit, mỗi phím commit thẳng vào tài liệu rồi sửa lại thứ phím
 trước đã viết — `Effect::Replace` mang theo “xoá N ký tự, rồi commit cái này”. Đó đúng là chỉ thị
@@ -596,26 +596,14 @@ Cursor đổi capability liên tục, và chết cùng lần focus nó được 
 Cái giá là việc phát hiện chậm một nhịp, nên từ đầu tiên vẫn bị hỏng trước khi chế độ rút lui.
 Bắt sớm hơn nghĩa là phải ghi chữ dò vào tài liệu của người dùng, và điều đó không nằm trên bàn.
 
-#### Hai chốt chặn không dựa vào phán quyết
+#### Client đã biết là không chạy được thì không bao giờ được thử
 
-- **Client đã biết là không chạy được thì không bao giờ được thử.** Shell Fcitx5 đã có danh sách
-  client tự giấu preedit (`hidden_preedit.cpp`, hiện là họ WPS), và `applyNonPreeditMode()` đọc
-  luôn danh sách đó: chờ chế độ bị từ chối là mất một từ nát (`nguyen64` ra `nguyenênễn`), một cái
-  giá không còn ai gánh khi công tắc đã bỏ. Danh sách chỉ gồm tên tiến trình, không bao giờ cờ
-  capability hay việc thiếu surrounding text — cả hai nói dối, và sẽ kéo cả những client đang chạy
-  tốt vào. IBus không biết tên client nên không có đường tương đương.
-- **Caret bị dời giữa từ mà không ai báo.** Qt, Chromium và Firefox chỉ reset input method khi một
-  cú click xảy ra lúc đang có preedit, mà chế độ này không có preedit. Engine vẫn giữ `tieng`;
-  phím dấu kế tiếp sẽ xoá ký tự trước caret mới — chữ Funput chưa từng viết. Dấu hiệu duy nhất đáng
-  tin là phần chữ **sau** caret: gõ của chính ta không bao giờ đổi nó, kể cả khi client trả lời
-  muộn, nên nó đổi nghĩa là caret đã đi chỗ khác. Khi đó từ đang soạn bị bỏ và phím đi thẳng như
-  đã gõ (`NonPreeditState::movedOnItsOwn`, `nonpreedit/observe.h`). Lỗi theo hướng này chỉ mất dấu
-  của một từ; chốt chặn im lặng bất cứ khi nào không chắc: chưa có lần đọc nào, client chưa trả lời
-  từ phím trước, hay đang có vùng chọn (gợi ý Sheets/thanh địa chỉ là chữ sau caret đổi theo từng
-  phím và bị chính sửa chữa của ta xoá đi). Đây **không** phải phán quyết về client, nên không đụng
-  tới `refused`. Bản đề xuất rộng hơn — coi mọi lần đọc không khớp ba chuỗi là caret bị dời — đã
-  bị loại: Chrome chỉ trả lời 61% và hay đọc muộn một phím, nên nó sẽ phá chế độ ở đúng client mà
-  chế độ này sinh ra để phục vụ.
+Shell Fcitx5 đã có danh sách client tự giấu preedit (`hidden_preedit.cpp`, hiện là họ WPS), và
+`applyNonPreeditMode()` đọc luôn danh sách đó: chờ chế độ bị từ chối là mất một từ nát
+(`nguyen64` ra `nguyenênễn`), một cái giá không còn ai gánh khi công tắc đã bỏ. Danh sách chỉ gồm
+tên tiến trình, không bao giờ cờ capability hay việc thiếu surrounding text — cả hai nói dối, và
+sẽ kéo cả những client đang chạy tốt vào. IBus không biết tên client nên không có đường tương
+đương.
 
 #### Về phía IBus
 

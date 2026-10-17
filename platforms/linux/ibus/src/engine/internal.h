@@ -9,7 +9,6 @@
 #define FUNPUT_IBUS_ENGINE_INTERNAL_H
 
 #include <cstdint>
-#include <optional>
 #include <string>
 
 #include <ibus.h>
@@ -64,7 +63,6 @@ void updatePreedit(IBusEngine *engine, const std::string &text);
 // the "nothing usable" answer when the client has never sent surrounding text.
 
 std::string textBeforeCaret(IBusEngine *engine);
-std::optional<std::string> textAfterCaret(IBusEngine *engine);
 bool hasSelection(IBusEngine *engine);
 uint32_t selectedAfter(IBusEngine *engine);
 
