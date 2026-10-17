@@ -11,7 +11,6 @@ fn round_trip_preserves_state() {
             trigger: "vn".into(),
             expansion: "Việt Nam".into(),
         }],
-        non_preedit: true,
         shortcuts_enabled: false,
         shortcut_smart_case: false,
         shortcuts_in_english: false,
@@ -28,7 +27,6 @@ fn round_trip_preserves_state() {
     assert_eq!(imported.tone_style, ToneStyle::Modern);
     assert_eq!(imported.toggle_hotkey, Hotkey::AltShift);
     assert_eq!(imported.shortcuts.len(), 1);
-    assert!(imported.non_preedit);
     assert!(!imported.shortcuts_enabled);
     assert!(!imported.shortcut_smart_case);
     assert!(!imported.shortcuts_in_english);
@@ -38,7 +36,7 @@ fn round_trip_preserves_state() {
 fn a_document_without_the_gõ_tắt_switches_leaves_them_alone() {
     // Both default to on, so a file predating them describes a table that expands,
     // smart-cased. Reading their absence as "off" would silently change what an
-    // imported table expands to — the same rule non_preedit follows above.
+    // imported table expands to.
     let mut settings = Settings {
         shortcuts_enabled: false,
         shortcut_smart_case: false,
@@ -57,20 +55,19 @@ fn a_document_without_the_gõ_tắt_switches_leaves_them_alone() {
 }
 
 #[test]
-fn a_document_without_non_preedit_leaves_it_alone() {
-    // Import never deletes: a file exported before the setting existed — or by a
-    // platform that has no such mode — must not read as "turn it off".
-    let mut settings = Settings {
-        non_preedit: true,
-        ..Settings::default()
-    };
+fn an_older_export_that_carries_non_preedit_still_imports() {
+    // Direct typing used to travel in `platform.linux`. The key is ignored now, like any
+    // other this build does not know; the rest of the block must still apply, and an
+    // export made here must not write it again.
+    let mut settings = Settings::default();
     let doc = serde_json::from_str(
-        r#"{"schema":"app.funput.config","version":1,"platform":{"linux":{"toggleHotkey":"alt_shift"}}}"#,
+        r#"{"schema":"app.funput.config","version":1,"platform":{"linux":{"toggleHotkey":"alt_shift","nonPreedit":false}}}"#,
     )
     .unwrap();
     apply(&mut settings, &doc);
     assert_eq!(settings.toggle_hotkey, Hotkey::AltShift); // the block was read
-    assert!(settings.non_preedit); // and this survived it
+    let json = serde_json::to_string(&to_document(&settings)).unwrap();
+    assert!(!json.contains("nonPreedit"), "{json}");
 }
 
 #[test]

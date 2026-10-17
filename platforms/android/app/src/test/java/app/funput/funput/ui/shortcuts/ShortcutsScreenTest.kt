@@ -42,9 +42,9 @@ class ShortcutsScreenTest {
 
         compose.onNodeWithTag(ShortcutsSearchTag).performTextInput("NAM")
         compose.onNodeWithText("việt nam").assertExists()
-        compose.onNodeWithText("Kết quả · 1/1 mục", ignoreCase = true).assertExists()
+        compose.onNodeWithText("Tìm thấy 1 trên 1 gõ tắt", ignoreCase = true).assertExists()
         compose.onNodeWithContentDescription("Xoá tìm kiếm").performClick()
-        compose.onNodeWithText("Danh sách · 1 mục", ignoreCase = true).assertExists()
+        compose.onNodeWithText("1 gõ tắt", ignoreCase = true).assertExists()
         compose.onNodeWithTag(ShortcutsSearchTag).performTextInput("-none")
         compose.onNodeWithText("Không tìm thấy gõ tắt").assertExists()
     }

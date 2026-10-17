@@ -69,6 +69,21 @@ TEST_CASE("save keeps the gõ tắt switches") {
     CHECK_FALSE(reloaded.shortcutsInEnglish);
 }
 
+// Direct typing used to be a setting. A stale `false` left in the file would suggest it
+// still switches something off, so the first save after the change removes the key —
+// while the merge keeps every other key it does not own.
+TEST_CASE("save removes the nonPreedit key and keeps the rest") {
+    writeSettingsFile(R"({"method": "telex", "nonPreedit": false, "someFutureKey": 42})");
+    Settings settings;
+    REQUIRE(settings.reload());
+    settings.save();
+
+    std::ifstream in(Settings::path());
+    const std::string raw((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    CHECK(raw.find("nonPreedit") == std::string::npos);
+    CHECK(raw.find("someFutureKey") != std::string::npos);
+}
+
 // The addon never edits the letters, so a VI/EN toggle's save must leave the key
 // to the merge: writing its own copy back could undo a newer choice.
 TEST_CASE("save never writes extraOnsets back over the file's") {

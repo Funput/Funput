@@ -75,7 +75,54 @@ TEST_CASE("a user highlight is not treated as a suffix") {
     std::string document;
     typePrefix(composer, document, "chuw");
     composer.observeDocument(document, true, true, 0);
+    // Not a tone for the highlighted `chư`: the key replaces it and starts a word.
     CHECK(composer.onKey(ascii('s')).isNoop());
-    CHECK_FALSE(composer.isComposing());
     CHECK(composer.nonPreedit());
+}
+
+// The user highlights the word just typed — a double-click, a drag — and the next key
+// replaces or deletes it. The engine still holds the word, and must not hand it to
+// whatever is typed next: that was `énvieejt` where `việt` was meant.
+TEST_CASE("typing over a highlighted word starts a new word") {
+    // Whether the first key happens to rewrite the old word decides if the old code
+    // noticed, so try letters that do and letters that merely append.
+    const std::pair<const char *, const char *> words[] = {
+        {"vieejt", "việt"}, {"nam", "nam"}, {"xin", "xin"}, {"hoa", "hoa"}, {"as", "á"}};
+    for (const auto &[keys, expected] : words) {
+        CAPTURE(std::string(keys));
+        Composer composer = typing(Method::Telex);
+        std::string document;
+        typePrefix(composer, document, "tieengs");
+        REQUIRE(document == "tiếng");
+
+        composer.observeDocument(document, true, true, 0);
+        document.clear(); // what the app does with the key: replace the selection
+        applyPlan(document, composer.onKey(ascii(keys[0])), keys[0]);
+        typePrefix(composer, document, keys + 1);
+        CHECK(document == expected);
+    }
+}
+
+TEST_CASE("Backspace over a highlighted word leaves nothing for the next word to inherit") {
+    Composer composer = typing(Method::Telex);
+    std::string document;
+    typePrefix(composer, document, "tieengs");
+
+    composer.observeDocument(document, true, true, 0);
+    CHECK(composer.onKey(bare(keysym::BackSpace)).isNoop()); // the app deletes the selection
+    CHECK_FALSE(composer.isComposing());
+    document.clear();
+    typePrefix(composer, document, "vieejt");
+    CHECK(document == "việt");
+}
+
+TEST_CASE("Backspace over a Sheets suffix deletes the suffix, not a letter of the word") {
+    Composer composer = typing(Method::Vni);
+    std::string document;
+    typePrefix(composer, document, "chu7");
+
+    composer.observeDocument(document, true, true, 1);
+    CHECK(composer.onKey(bare(keysym::BackSpace)).isNoop());
+    // The typed `chư` is intact, so the word is too: the tone still lands on it.
+    CHECK(composer.isComposing());
 }

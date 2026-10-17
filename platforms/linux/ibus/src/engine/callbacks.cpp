@@ -37,16 +37,13 @@ void applyNonPreeditMode(IBusEngine *engine) {
     EngineState *state = stateOf(engine);
     // Never mid-word. The two modes disagree about where the composing word lives —
     // one has it in a preedit, the other in the document — so flipping under one
-    // leaves the engine and the client describing different things. Deferring until
-    // the word ends is also what lets `setNonPreedit()` be a bare assignment here,
-    // where `applySettings()` has to clear the engine.
+    // leaves the engine and the client describing different things.
     if (state->composer.isComposing()) return;
-    // The setting asks; the client decides. `sawSurroundingText` rather than the
-    // capability bit for the reason spelled out in internal.h, and it can only become
-    // true after the client has spoken — which is why this is re-evaluated on every
-    // keystroke rather than settled once at focus-in the way the Fcitx5 shell can.
-    state->composer.setNonPreedit(state->composer.settings().nonPreedit &&
-                                  state->sawSurroundingText);
+    // The client decides. `sawSurroundingText` rather than the capability bit for the
+    // reason spelled out in internal.h, and it can only become true after the client
+    // has spoken — which is why this is re-evaluated on every keystroke rather than
+    // settled once at focus-in the way the Fcitx5 shell can.
+    state->composer.setNonPreedit(state->sawSurroundingText);
 }
 
 gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifiers) {

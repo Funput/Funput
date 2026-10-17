@@ -12,6 +12,7 @@ import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.popover.rendering.KeyPopupLayout
 import app.funput.funput.keyboard.rendering.KeyboardCanvasRenderer
 
 internal class KeyboardSurfaceRenderController(
@@ -51,6 +52,9 @@ internal class KeyboardSurfaceRenderController(
     var clipboardHint: KeyboardClipboardHint? by presentation::clipboardHint
     var enterAction by presentation::enterAction
 
+    /** The user's "Xem trước phím"; the next press draws with it, so nothing needs redrawing now. */
+    var keyPreviewsEnabled = true
+
     init {
         renderer.updateSizing(sizingProfile)
     }
@@ -81,7 +85,7 @@ internal class KeyboardSurfaceRenderController(
         shiftState,
         language,
         enterAction,
-        editorMode.isPassword,
+        KeyPopupLayout.showsPreviews(secure = editorMode.isPassword, enabled = keyPreviewsEnabled),
     )
 
     fun clear() {

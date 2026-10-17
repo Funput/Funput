@@ -19,6 +19,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var autoCapitalize: Bool
     public var selectedThemeID: String
     public var isHapticFeedbackEnabled: Bool
+    public var hapticFeedbackStrength: HapticFeedbackStrength
     public var isKeySoundEnabled: Bool
     public var showsKeyPreviews: Bool
     /// Double-tap space, spacebar cursor panning and swipe-to-delete-word, as one switch.
@@ -50,6 +51,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
         case eagerRestore, autoCapitalize, selectedThemeID, extraOnsets
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
+        case hapticFeedbackStrength
         case smartGesturesEnabled, returnsToLettersAfterPunctuation
         case showsNumberRow, layoutPreset, keySizing, heightScale, keyboardAppearance
         case personalSuggestionsEnabled, personalSuggestionResetToken, languageToggleEnabled
@@ -67,6 +69,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         autoCapitalize: Bool = true,
         selectedThemeID: String = FunputConfiguration.defaultThemeID,
         isHapticFeedbackEnabled: Bool = false,
+        hapticFeedbackStrength: HapticFeedbackStrength = .light,
         isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
         smartGesturesEnabled: Bool = true,
@@ -95,6 +98,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.autoCapitalize = autoCapitalize
         self.selectedThemeID = selectedThemeID
         self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
+        self.hapticFeedbackStrength = hapticFeedbackStrength
         self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
         self.smartGesturesEnabled = smartGesturesEnabled
@@ -126,5 +130,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 16
+    public static let currentSchemaVersion = 17
 }

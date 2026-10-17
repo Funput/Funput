@@ -5,12 +5,14 @@
 // translates: `fcitx::KeyEvent` in, `funput::ComposePlan` out, performed against
 // the input context.
 //
-// The composing word is shown as underlined preedit and committed on a word
-// boundary, navigation key, or VI/EN toggle — the same shape as the macOS IMKit
-// shell (platforms/macos/.../FunputInputController.swift), NOT the Windows
-// backspace-injection path. On focus loss Fcitx5 itself commits the client preedit
-// before calling deactivate(), so the word survives a click into another field —
-// see deactivate(), which must not commit again.
+// By default each key is committed straight into the document and repaired in place
+// (`Effect::Replace`), the same shape as the Windows backspace-injection path. Where a
+// client cannot take that, the composing word is shown as underlined preedit and
+// committed on a word boundary, navigation key, or VI/EN toggle, the same shape as the
+// macOS IMKit shell (platforms/macos/.../FunputInputController.swift). In that case, on
+// focus loss Fcitx5 itself commits the client preedit before calling deactivate(), so
+// the word survives a click into another field. See deactivate(), which must not commit
+// again.
 
 #ifndef FUNPUT_ENGINE_H
 #define FUNPUT_ENGINE_H
@@ -71,11 +73,10 @@ private:
     void applyPlan(fcitx::InputContext *ic, const funput::ComposePlan &plan);
     void updatePreedit(fcitx::InputContext *ic, const std::string &text);
     void clearPreedit(fcitx::InputContext *ic);
-    // Turn non-preedit on for the focused client: the setting has to ask for it and
-    // the client has to have sent surrounding text this focus, since the mode repairs
-    // the document by reading it back. No-op while a word is composing — the two
-    // modes disagree about where that word lives. Re-applied after every
-    // `applySettings()`, which reseeds the mode from the setting alone.
+    // Decide whether the focused client gets non-preedit: it has to have sent
+    // surrounding text this focus, since the mode repairs the document by reading it
+    // back, and it must not be a client known not to take a repair. No-op while a word
+    // is composing — the two modes disagree about where that word lives.
     void applyNonPreeditMode();
     // Reload settings live when the watcher fires (Settings app wrote the file).
     void onSettingsChanged();

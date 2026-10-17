@@ -74,8 +74,6 @@ pub(super) struct LinuxBlock {
     pub toggle_hotkey: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub flip_hotkey: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub non_preedit: Option<bool>,
 }
 
 #[derive(Default)]

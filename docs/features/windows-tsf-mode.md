@@ -70,7 +70,7 @@ không nên mang nguyên mô hình này sang TSF.
 | `crates/funput-config` | Mô hình cấu hình và dữ liệu dùng chung | Tái sử dụng schema; tách cách đọc/ghi khỏi DLL |
 | `crates/funput-desktop` | Phân loại phím, ShellState và kế hoạch inject | Giữ cho Hook; chỉ tái dùng phần thuần khi phù hợp |
 | `platforms/windows/src/background` | Hook, keymap, inject, tray | Giữ đường Hook; tách quyền sở hữu tray khỏi việc khởi động hook |
-| `platforms/linux/common/compose` | Composer và kế hoạch preedit/commit | Tham khảo semantics và test; hiện là C++, không cắm thẳng vào Rust |
+| `platforms/linux/common/compose` | Composer và kế hoạch preedit, commit hoặc replace | Tham khảo semantics và test; hiện là C++, không cắm thẳng vào Rust |
 | `platforms/windows/src/ui` | Settings, onboarding, control center | Mở rộng lựa chọn mode, giữ UI ngoài DLL |
 
 ### Chi tiết quan trọng: engine chưa phải adapter composition
@@ -415,7 +415,7 @@ khẳng định mọi README cũ đều đã đồng bộ với code.
 | `crates/funput-engine/src/model/result.rs` | Hợp đồng ImeResult |
 | `crates/funput-engine/src/engine/config.rs` | API đọc buffer và clear |
 | `crates/funput-engine/src/engine/editing.rs` | Backspace, flip và adopt |
-| `platforms/linux/common/compose/composer/keys.cpp` | Semantics preedit/commit hiện có |
+| `platforms/linux/common/compose/composer/keys.cpp` | Semantics preedit, commit và replace hiện có |
 
 Tài liệu Microsoft dùng để xác minh nền tảng:
 

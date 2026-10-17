@@ -11,29 +11,31 @@ struct SpaceTrackpadHapticTests {
     func armingReportsItself() {
         let subject = subject()
         subject.hapticFeedback = true
+        subject.hapticStrength = .strong
         subject.begin()
-        #expect(!subject.haptics.performed.contains(.modeChange))
+        #expect(subject.haptics.performed == [.strong])
 
         subject.scheduler.fire(after: Self.hold)
 
-        // Straight after the press's own `.space`, and before the first sideways pixel: by
-        // the time the caret moves, the user can see the answer and the buzz is late.
-        #expect(subject.haptics.performed == [.space, .modeChange])
+        #expect(subject.haptics.performed == [.strong, .strong])
         subject.move(to: 145)
-        #expect(subject.haptics.performed.filter { $0 == .modeChange }.count == 1)
+        // Caret steps tick rather than strike, whatever the chosen strength.
+        #expect(subject.haptics.performed == [.strong, .strong])
+        #expect(subject.haptics.ticks == 1)
     }
 
-    @Test("The mode buzz does not follow the typing setting")
+    @Test("Off silences the press and caret steps, but not the trackpad hold")
     func modeBuzzOutlivesTheTypingSetting() {
-        // Haptics off, the way the setting ships.
+        // Haptics off, the way the setting ships, with a remembered strength.
         let subject = subject()
+        subject.hapticStrength = .medium
         subject.begin()
         subject.scheduler.fire(after: Self.hold)
         subject.move(to: 145)
 
-        // The press and every caret step stay silent; the one signal a gesture with no
-        // visible state depends on still arrives.
-        #expect(subject.haptics.performed == [.modeChange])
+        // The one signal a gesture with no visible state depends on still arrives.
+        #expect(subject.haptics.performed == [.medium])
+        #expect(subject.haptics.ticks == 0)
         #expect(subject.claims == [.trackpad])
     }
 

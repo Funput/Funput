@@ -130,8 +130,7 @@ cannot work and is not exported.
 "platform": {
   "linux": {
     "toggleHotkey": "ctrl_backtick",
-    "flipHotkey": "off",
-    "nonPreedit": false
+    "flipHotkey": "off"
   }
 }
 ```
@@ -141,7 +140,7 @@ cannot work and is not exported.
 | `toggleHotkey` | Preset id: `ctrl_backtick` \| `ctrl_space` \| `alt_shift`. |
 | `flipHotkey` | Preset id: `off` \| `ctrl_shift_z` \| `ctrl_shift_x`. |
 | `excludedApps[]` | **Removed.** Older exports may still carry `{ id, name }`; ignored on import and never written. |
-| `nonPreedit` | Commit as you type instead of showing a preedit. Both Linux shells; absent leaves the local value untouched. |
+| `nonPreedit` | **Removed.** Typing straight into the document is how Linux types now, with an automatic fallback to the preedit, so it is no longer a setting. Older exports may still carry a boolean; ignored on import and never written. |
 
 Linux-only, applied only when running on Linux. Note: Windows and Linux hotkey
 presets are identical, but each still reads only its own block, so hotkeys do not

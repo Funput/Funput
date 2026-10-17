@@ -11,7 +11,9 @@
 // the next word was mangled again. Forever, instead of once.
 //
 // So the latch belongs to the client, not to the focus. The shell names the client it
-// just focused and this decides whether the question is already answered.
+// just focused and this decides whether the question is already answered. A shell calls
+// `onFocusChanged()` for a real focus change only, so a capability change carries a
+// verdict on without a name — which is all an unnamed client has.
 
 #ifndef FUNPUT_COMPOSE_NONPREEDIT_CLIENTS_H
 #define FUNPUT_COMPOSE_NONPREEDIT_CLIENTS_H
@@ -30,7 +32,8 @@ public:
     // is what keeps a re-activation of the same client from reopening a settled
     // question. An unnamed client is always a fresh question — the IBus shell has no
     // name to give — and it is the shell's job never to pass a name that stands for
-    // more than one app (Fcitx5's `clientId()` refuses `gnome-shell` for that reason).
+    // more than one app. Fcitx5's `clientId()` gives none for `gnome-shell`, and not the
+    // input context's uuid either: on GNOME/Wayland one context serves every app.
     bool focus(std::string_view id) {
         current_.assign(id);
         return !current_.empty() &&

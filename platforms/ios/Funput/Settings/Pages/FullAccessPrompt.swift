@@ -2,20 +2,14 @@ import FunputShared
 import SwiftUI
 
 /// A feedback switch that only works once the keyboard has Full Access.
-enum FullAccessFeature {
+enum FullAccessFeature: Equatable {
     case haptics
+    case hapticStrength(HapticFeedbackStrength)
     case sound
-
-    var keyPath: WritableKeyPath<FunputConfiguration, Bool> {
-        switch self {
-        case .haptics: \.isHapticFeedbackEnabled
-        case .sound: \.isKeySoundEnabled
-        }
-    }
 
     var message: String {
         let action = switch self {
-        case .haptics: "Để rung hoạt động"
+        case .haptics, .hapticStrength: "Để rung hoạt động"
         case .sound: "Để phát âm thanh khi gõ"
         }
         return "\(action), hãy mở Funput trong Cài đặt, chọn Bàn phím và bật Cho phép truy cập đầy đủ."
@@ -46,7 +40,7 @@ private struct FullAccessPrompt: ViewModifier {
             Button("Hủy", role: .cancel) {}
             Button("Mở Cài đặt") {
                 // Saved before leaving: once access is granted the switch already reads on.
-                model.update(feature.keyPath, to: true)
+                guard model.enableFullAccessFeature(feature) else { return }
                 openURL(.funputSystemSettings)
             }
         } message: { feature in

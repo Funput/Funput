@@ -42,13 +42,10 @@ struct Settings {
     // Vietnamese rhyme compose (Telex `fast` → `fát`). Owned by the Settings UI:
     // read here, never written back by `save()`.
     ExtraOnsetLetters extraOnsets;
-    // Non-preedit ("Gõ thẳng vào ứng dụng"): build the word in the document and
-    // repair it with a delete, instead of showing a preedit. On by default — both
-    // shells perform it, and a client that cannot take a repair is detected and put
-    // back on the preedit by itself (common/compose/composer/nonpreedit.cpp). Only a
-    // file that predates the key inherits this; the Settings app writes every field,
-    // so an existing install keeps whatever it already chose.
-    bool nonPreedit = true;
+    // There is no setting for typing straight into the document ("Gõ thẳng"): it is
+    // how Funput types, and a client that cannot take it is detected and put back on
+    // the preedit by itself (compose/composer/nonpreedit.h). A `nonPreedit` key left
+    // in an older file is ignored, and `save()` removes it.
     Hotkey toggleHotkey = Hotkey::CtrlBacktick;
     FlipHotkey flipHotkey = FlipHotkey::Off;
     // Text-expansion shortcuts (gõ tắt): (trigger, expansion) pairs. Owned by the
@@ -80,6 +77,11 @@ struct Settings {
     // told us the file changed, and st_mtime's 1-second resolution would otherwise
     // miss two writes within the same second). Returns true if values changed.
     bool reload();
+
+    // Whether `other` composes a word the same way as this. The gõ tắt table, its
+    // switches and the hotkeys are left out on purpose: they never touch a word that
+    // is half-typed, so a change confined to them must not interrupt it.
+    bool sameTyping(const Settings &other) const;
 
     // Persist the current values (used when the VI/EN hotkey toggles `enabled`).
     void save() const;

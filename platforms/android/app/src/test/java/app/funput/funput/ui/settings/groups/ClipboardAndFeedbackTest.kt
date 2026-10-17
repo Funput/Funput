@@ -5,12 +5,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
-import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
+import app.funput.funput.keyboard.KeyboardHapticStrength
 import app.funput.funput.ui.kit.theme.FunputUiTheme
 import app.funput.funput.ui.settings.clipboard.ClipboardSection
 import app.funput.funput.ui.settings.feedback.FeedbackSection
@@ -77,22 +77,30 @@ class ClipboardAndFeedbackTest {
     }
 
     @Test
-    fun `feedback switches reflect and change their state`() {
-        val haptics = mutableListOf<Boolean>()
+    fun `feedback shows the vibration strength, opens its choice and switches sounds`() {
+        var opened = 0
+        val sounds = mutableListOf<Boolean>()
+        val previews = mutableListOf<Boolean>()
         compose.setContent {
             FunputUiTheme(isDark = false) {
                 FeedbackSection(
-                    hapticsEnabled = true,
+                    hapticStrength = KeyboardHapticStrength.STRONG,
                     soundsEnabled = false,
-                    onHapticsChanged = haptics::add,
-                    onSoundsChanged = {},
+                    keyPreviewsEnabled = true,
+                    onOpenHapticStrength = { opened += 1 },
+                    onSoundsChanged = sounds::add,
+                    onKeyPreviewsChanged = { previews += it },
                 )
             }
         }
 
-        compose.onNodeWithText("Âm thanh phím").assertIsOff()
-        compose.onNodeWithText("Rung khi nhấn phím").assertIsOn().performClick()
+        compose.onNodeWithText("Mạnh").assertExists()
+        compose.onNodeWithText("Rung khi nhấn phím").performClick()
+        compose.onNodeWithText("Âm thanh phím").assertIsOff().performClick()
+        compose.onNodeWithText("Xem trước phím").performClick()
 
-        assertEquals(listOf(false), haptics)
+        assertEquals(1, opened)
+        assertEquals(listOf(true), sounds)
+        assertEquals(listOf(false), previews)
     }
 }

@@ -1,6 +1,7 @@
 #if canImport(UIKit)
 @testable import KeyboardRenderer
 import Foundation
+import FunputShared
 import KeyboardLayout
 import UIKit
 
@@ -37,10 +38,12 @@ final class TestGestureScheduler {
 /// Records what the keyboard asked the taptic engine for, which a test bundle has none of.
 @MainActor
 final class HapticSpy: KeyboardHapticPerforming {
-    private(set) var performed: [KeyboardHapticType] = []
+    private(set) var performed: [HapticFeedbackStrength] = []
+    private(set) var ticks = 0
 
     func prepare() {}
-    func perform(_ type: KeyboardHapticType) { performed.append(type) }
+    func perform(strength: HapticFeedbackStrength) { performed.append(strength) }
+    func performTick() { ticks += 1 }
 }
 
 /// One interaction controller over a single key, driven by explicit touch points.
@@ -55,6 +58,7 @@ final class GestureTestSubject {
     var smartGestures = true
     /// Off by default, as the setting itself is.
     var hapticFeedback = false
+    var hapticStrength: HapticFeedbackStrength = .light
 
     lazy var controller = KeyboardSurfaceInteractionController(
         onEvent: { _ in },
@@ -80,6 +84,7 @@ final class GestureTestSubject {
     var presentation: KeyboardPresentation {
         var value = KeyboardPresentation()
         value.isHapticFeedbackEnabled = hapticFeedback
+        value.hapticFeedbackStrength = hapticStrength
         value.areSmartGesturesEnabled = smartGestures
         return value
     }

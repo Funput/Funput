@@ -2,6 +2,7 @@ package app.funput.funput.ui.kit.catalog
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
@@ -16,12 +17,14 @@ import app.funput.funput.ui.kit.cards.FunputSection
 import app.funput.funput.ui.kit.controls.FunputButton
 import app.funput.funput.ui.kit.controls.FunputButtonStyle
 import app.funput.funput.ui.kit.controls.FunputSegmented
+import app.funput.funput.ui.kit.icons.FunputIcons
 import app.funput.funput.ui.kit.overlays.FunputDialog
 import app.funput.funput.ui.kit.overlays.FunputSheet
 import app.funput.funput.ui.kit.rows.ChoiceRow
 import app.funput.funput.ui.kit.theme.FunputUi
+import app.funput.funput.ui.kit.tiles.FunputToggleTile
 
-/** The third tab: segmented control, every button style, and the sheet and dialog, live. */
+/** The third tab: segmented control, toggle tiles, every button style, and the sheet and dialog, live. */
 internal fun LazyListScope.controlSections() {
     item(key = "segmented") {
         var tone by rememberSaveable { mutableIntStateOf(0) }
@@ -31,6 +34,19 @@ internal fun LazyListScope.controlSections() {
                 selectedIndex = tone,
                 onSelect = { tone = it },
                 modifier = Modifier.padding(FunputUi.spacing.medium),
+            )
+        }
+    }
+    item(key = "tiles") {
+        var haptics by rememberSaveable { mutableStateOf(true) }
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(FunputUi.spacing.small)) {
+            FunputToggleTile(
+                title = "Rung", state = if (haptics) "Bật" else "Tắt", icon = FunputIcons.Haptics,
+                checked = haptics, onCheckedChange = { haptics = it }, modifier = Modifier.weight(1f),
+            )
+            FunputToggleTile(
+                title = "Hàng số", state = "Luôn bật", icon = FunputIcons.NumberRow, checked = true,
+                onCheckedChange = {}, locked = true, modifier = Modifier.weight(1f),
             )
         }
     }

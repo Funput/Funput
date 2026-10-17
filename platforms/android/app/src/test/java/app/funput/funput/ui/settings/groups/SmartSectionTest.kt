@@ -3,9 +3,9 @@ package app.funput.funput.ui.settings.groups
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ui.kit.theme.FunputUiTheme
 import app.funput.funput.ui.settings.smart.SmartSection
+import app.funput.funput.ui.settings.testSettingsState
 import app.funput.funput.uitesting.SCREENSHOT_SDK
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -26,18 +26,7 @@ class SmartSectionTest {
         val changes = mutableMapOf<String, Boolean>()
         compose.setContent {
             FunputUiTheme(isDark = false) {
-                SmartSection(
-                    preferences = SmartCompositionPreferences.Default,
-                    personalSuggestionsEnabled = true,
-                    smartGesturesEnabled = true,
-                    returnsToLettersEnabled = true,
-                    onSmartRestoreChanged = { changes["restore"] = it },
-                    onSpellCheckChanged = { changes["spelling"] = it },
-                    onAutoCapitalizeChanged = { changes["capitalization"] = it },
-                    onPersonalSuggestionsChanged = { changes["suggestions"] = it },
-                    onSmartGesturesChanged = { changes["gestures"] = it },
-                    onReturnsToLettersChanged = { changes["letters"] = it },
-                )
+                SmartSection(testSettingsState(onSmartChanged = { key, value -> changes[key] = value }))
             }
         }
 

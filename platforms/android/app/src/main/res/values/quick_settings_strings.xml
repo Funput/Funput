@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quick settings on the keyboard hub: short tile names; TalkBack reads each setting's full title. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="quick_input_method_header">Kiểu gõ</string>
+    <string name="quick_settings_header">Cài đặt nhanh</string>
+
+    <string name="quick_haptics">Rung</string>
+    <string name="quick_sounds">Âm thanh</string>
+    <string name="quick_capitalize">Viết hoa</string>
+    <string name="quick_suggestions">Gợi ý từ</string>
+    <string name="quick_number_row">Hàng số</string>
+    <string name="quick_key_previews">Xem trước</string>
+
+    <string name="quick_on">Bật</string>
+    <string name="quick_off">Tắt</string>
+    <string name="quick_locked">Luôn bật</string>
+    <string name="quick_vni_number_row">VNI dùng hàng số để bỏ dấu</string>
+</resources>

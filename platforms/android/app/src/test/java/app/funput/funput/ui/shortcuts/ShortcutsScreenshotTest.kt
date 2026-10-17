@@ -66,7 +66,7 @@ class ShortcutsScreenshotTest(private val variant: ScreenshotVariant) {
             LaunchedEffect(screenModel) { screenModel.reload() }
             FunputUiTheme(isDark = variant.isDark) {
                 CompositionLocalProvider(LocalGlassTier provides GlassTier.SOLID) {
-                    ShortcutsScreen(screenModel, onBack = {})
+                    ShortcutsScreen(screenModel)
                 }
             }
         }

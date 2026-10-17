@@ -54,10 +54,13 @@
 namespace funput {
 
 struct NonPreeditState {
-    // The mode as it applies right now. `refused` outranks it: once a client has been
-    // caught dropping a delete, a shell re-asserting the mode must not undo that. IBus
-    // re-decides on every keystroke, so without the latch a verdict lasted one key.
-    bool on = false;
+    // The mode as it applies right now. It starts on, because typing into the document
+    // is what Funput does, and a shell narrows it per client: off until the client has
+    // sent surrounding text, off for one known not to work. `refused` outranks it: once
+    // a client has been caught dropping a delete, a shell re-asserting the mode must not
+    // undo that. IBus re-decides on every keystroke, so without the latch a verdict
+    // lasted one key.
+    bool on = true;
     bool refused = false;
     // Which clients that latch has already been spent on — see clients.h. Kept across
     // `reset()`, since a client is the same client whether it was re-focused or merely

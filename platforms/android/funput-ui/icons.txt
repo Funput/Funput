@@ -3,12 +3,14 @@
 # Code refers to them by meaning through FunputIcons, never by these names.
 
 # Navigation: tabs are outlined, the selected tab filled.
-gear-six
-gear-six fill
+keyboard fill
+lightning fill
 palette
 palette fill
-info
-info fill
+newspaper
+newspaper fill
+user-circle
+user-circle fill
 
 # Controls
 caret-left
@@ -35,15 +37,20 @@ sparkle
 hand-tap
 arrow-u-up-left
 
+# Voice input
+microphone
+
 # Feedback
 vibrate
 speaker-high
+magnifying-glass-plus
 
 # Clipboard and data
 clipboard-text
 clock-countdown
 trash
 broom
+database
 
 # Hardware keyboard
 desktop
@@ -63,6 +70,9 @@ globe-simple
 # Appearance and themes
 circle-half
 pencil-simple
+
+# News
+book-open
 
 # About
 github-logo

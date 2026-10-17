@@ -24,6 +24,7 @@ import app.funput.funput.ui.kit.rows.ToggleRow
 import app.funput.funput.ui.kit.theme.FunputMotion
 import app.funput.funput.ui.kit.theme.FunputTint
 import app.funput.funput.ui.kit.theme.FunputUi
+import app.funput.funput.ui.settings.sectionTitle
 
 /** Optional consonants use the same master-and-letter interaction as iOS. */
 @Composable
@@ -33,7 +34,7 @@ internal fun ExtraOnsetsSection(state: ExtraOnsetsSectionState) {
         warning + "\n\n" + stringResource(R.string.extra_onsets_advanced_w_hint)
     } else warning
     Column(Modifier.testTag(ExtraOnsetsSectionTag)) {
-        FunputSection(title = stringResource(R.string.extra_onsets_section), footer = footer) {
+        FunputSection(title = sectionTitle(R.string.extra_onsets_section), footer = footer) {
             ToggleRow(
                 title = stringResource(R.string.extra_onsets_enabled_title),
                 summary = stringResource(R.string.extra_onsets_enabled_summary),

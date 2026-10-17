@@ -20,7 +20,7 @@ lớn, thanh tab kính) nhưng **không sao chép 1:1**: vẫn giữ điều hư
 Android.
 
 **Trong phạm vi:** app cài đặt (`:app`): Cài đặt, Gõ tắt, Giao diện và bộ sưu tập chủ đề,
-trình tạo chủ đề, ảnh nền, Giới thiệu, Giấy phép, luồng bật bàn phím.
+trình tạo chủ đề, ảnh nền, Tôi (trước là Giới thiệu), Giấy phép, luồng bật bàn phím.
 
 **Ngoài phạm vi:** layout phím và bộ vẽ bàn phím (`:keyboard-renderer`, `:keyboard-ui`,
 `:ime`), engine, dữ liệu cài đặt.
@@ -38,8 +38,15 @@ trình tạo chủ đề, ảnh nền, Giới thiệu, Giấy phép, luồng b�
 | Màu nhấn | Cam Funput | Xanh hệ thống: mất nhận diện thương hiệu |
 | Icon | Phosphor (MIT), mỗi nhóm cài đặt một màu | SF Symbols: không được dùng trên Android |
 | "Màu theo hình nền" | Bỏ | App có bảng màu riêng |
-| Xem trước bàn phím ở Cài đặt | Giữ, thu nhỏ; chạm vào mở tab Giao diện | Bỏ hẳn cho giống iOS |
-| Thanh tab | Viên thuốc kính mờ nổi, 56dp, cả 3 tab đều có tên | Thanh rộng 64dp của bản đầu: quá cao |
+| Xem trước bàn phím | Giữ, thu nhỏ, ở đầu tab Bàn phím; chạm vào mở tab Giao diện | Bỏ hẳn cho giống iOS |
+| Thanh tab | Viên thuốc kính mờ nổi, 56dp, cả 5 tab đều có tên; từ 5 tab lề hẹp lại và nhãn tự thu nhỏ thay vì bị cắt | Thanh rộng 64dp của bản đầu: quá cao |
+| Các tab | Bàn phím, Gõ tắt, Giao diện, Tôi, theo cách tổ chức của iOS (PR #568) | Giữ 3 tab Cài đặt, Giao diện, Giới thiệu: khác iOS, khó thêm tính năng |
+| Cài đặt bàn phím | Một hub mục lục, mỗi trang một dòng kèm câu mô tả; trang khai báo một lần trong `SettingsPage` | Một màn dài: khó tìm, khó mở rộng |
+| Tab Tin tức | Làm như iOS (PR #570): JSON Feed của funput.app/blog, cache offline, kéo để tải lại, mở bài bằng Custom Tabs. APK thêm quyền `INTERNET`, cũng cần cho đồng bộ sau này; bàn phím không gọi mạng | Không làm để giữ APK không có quyền mạng |
+| Dữ liệu | Mở từ tab Tôi, tên "Dữ liệu" (Android chưa có khôi phục mặc định) | Đặt ở hub như các trang khác |
+| Tìm cài đặt | Ô tìm ở đầu tab Bàn phím, bỏ dấu và đổi `đ` thành `d` trước khi so (PR #569 của iOS) | Không có tìm kiếm |
+| Cài đặt nhanh | Kiểu gõ dạng segmented và 6 ô giống hệt iOS: Rung (mở bảng chọn mức), Âm thanh, Viết hoa, Gợi ý từ, Hàng số, Xem trước (cài đặt Xem trước phím mới, mặc định bật) | Bỏ qua: khác iOS |
+| Mức rung | Tắt, Nhẹ, Trung bình, Mạnh như iOS (PR #600): cùng một cú click, độ lớn 0,55, 0,75 và 1, mặc định Trung bình | Hiệu ứng có sẵn tick, click, heavy click: mỗi hãng tự dựng, trên S21 Ultra heavy click rung yếu hơn click |
 | Kiểm tra giao diện | Bằng tay trên máy thật | Ảnh golden trong CI: mỗi thay đổi giao diện tốn một vòng chụp lại trên Linux |
 
 ## Kiến trúc

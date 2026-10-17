@@ -1,7 +1,6 @@
-//! "Tổng quan" — brand, featured delivery, status jumps, VI/EN switch.
+//! "Tổng quan" — brand, status jumps, VI/EN switch.
 
 mod brand;
-mod delivery;
 mod enabled;
 mod status;
 
@@ -23,7 +22,6 @@ pub(super) fn page(
     column.set_margin_start(12);
     column.set_margin_end(12);
     column.append(&brand::widget());
-    column.append(&delivery::group(&settings));
     column.append(&status::group(stack, split, title));
     column.append(&enabled::group(&settings));
 

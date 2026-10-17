@@ -22,6 +22,8 @@ extension FunputConfiguration {
         config.autoCapitalize = try container.decodeIfPresent(Bool.self, forKey: .autoCapitalize) ?? config.autoCapitalize
         config.selectedThemeID = try container.decodeIfPresent(String.self, forKey: .selectedThemeID) ?? config.selectedThemeID
         config.isHapticFeedbackEnabled = try container.decodeIfPresent(Bool.self, forKey: .isHapticFeedbackEnabled) ?? config.isHapticFeedbackEnabled
+        // Lenient: a strength written by a newer build must not throw away every other setting.
+        config.hapticFeedbackStrength = (try? container.decodeIfPresent(HapticFeedbackStrength.self, forKey: .hapticFeedbackStrength)) ?? config.hapticFeedbackStrength
         config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.smartGesturesEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartGesturesEnabled) ?? config.smartGesturesEnabled
@@ -99,11 +101,16 @@ extension FunputConfiguration {
         if config.schemaVersion < 15 {
             config.schemaVersion = 15
         }
-        // v16 added `typoCorrection`, on for everyone. It cannot act until the keyboard
-        // also reports where each touch landed, so an older build's stored configuration
-        // needs nothing fixed up — it simply gains a switch.
+        // v16 remembers the strength even when feedback is off. Older payloads keep
+        // their on/off choice and receive the light profile above.
         if config.schemaVersion < 16 {
             config.schemaVersion = 16
+        }
+        // v17 added `typoCorrection`, on for everyone. It cannot act until the keyboard
+        // also reports where each touch landed, so an older build's stored configuration
+        // needs nothing fixed up — it simply gains a switch.
+        if config.schemaVersion < 17 {
+            config.schemaVersion = 17
         }
         self = config
     }

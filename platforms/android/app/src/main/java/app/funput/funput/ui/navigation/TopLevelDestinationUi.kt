@@ -5,7 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.funput.funput.R
-import app.funput.funput.ui.kit.icons.FunputIcons
+import app.funput.funput.ui.kit.icons.FunputTabIcons
 import app.funput.funput.ui.kit.layout.FunputTab
 
 /**
@@ -22,24 +22,34 @@ internal data class TopLevelDestinationUi(
 
 internal val TopLevelDestination.ui: TopLevelDestinationUi
     get() = when (this) {
-        TopLevelDestination.SETTINGS -> TopLevelDestinationUi(
-            label = R.string.nav_settings,
-            icon = FunputIcons.Settings,
-            selectedIcon = FunputIcons.SettingsSelected,
+        TopLevelDestination.KEYBOARD -> TopLevelDestinationUi(
+            label = R.string.nav_keyboard,
+            icon = FunputTabIcons.Keyboard,
+            selectedIcon = FunputTabIcons.KeyboardSelected,
+        )
+        TopLevelDestination.SHORTCUTS -> TopLevelDestinationUi(
+            label = R.string.nav_shortcuts,
+            icon = FunputTabIcons.Shortcuts,
+            selectedIcon = FunputTabIcons.ShortcutsSelected,
         )
         TopLevelDestination.APPEARANCE -> TopLevelDestinationUi(
             label = R.string.nav_appearance,
-            icon = FunputIcons.Appearance,
-            selectedIcon = FunputIcons.AppearanceSelected,
+            icon = FunputTabIcons.Appearance,
+            selectedIcon = FunputTabIcons.AppearanceSelected,
         )
-        TopLevelDestination.ABOUT -> TopLevelDestinationUi(
-            label = R.string.nav_about,
-            icon = FunputIcons.About,
-            selectedIcon = FunputIcons.AboutSelected,
+        TopLevelDestination.NEWS -> TopLevelDestinationUi(
+            label = R.string.nav_news,
+            icon = FunputTabIcons.News,
+            selectedIcon = FunputTabIcons.NewsSelected,
+        )
+        TopLevelDestination.ME -> TopLevelDestinationUi(
+            label = R.string.nav_me,
+            icon = FunputTabIcons.Me,
+            selectedIcon = FunputTabIcons.MeSelected,
         )
     }
 
-/** The three tabs as FunputUI tab bar items, in [TopLevelDestination] order. */
+/** The tabs as FunputUI tab bar items, in [TopLevelDestination] order. */
 @Composable
 internal fun appTabs(): List<FunputTab> = TopLevelDestination.entries.map { tab ->
     val ui = tab.ui

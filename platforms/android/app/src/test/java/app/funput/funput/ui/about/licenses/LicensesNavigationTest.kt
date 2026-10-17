@@ -9,15 +9,15 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class LicensesNavigationTest {
-    @Test fun backAndRestorationKeepTheAboutStack() {
+    @Test fun backAndRestorationKeepTheMeStack() {
         val navigator = AppNavigator()
         navigator.navigate(AppDestination.THIRD_PARTY_LICENSES)
-        navigator.selectTab(TopLevelDestination.SETTINGS)
-        navigator.selectTab(TopLevelDestination.ABOUT)
+        navigator.selectTab(TopLevelDestination.KEYBOARD)
+        navigator.selectTab(TopLevelDestination.ME)
         val saved = with(AppNavigatorSaver) { SaverScope { true }.save(navigator) }
         val restored = requireNotNull(AppNavigatorSaver.restore(requireNotNull(saved)))
         assertEquals(AppDestination.THIRD_PARTY_LICENSES, restored.currentDestination)
         assertTrue(restored.navigateBack())
-        assertEquals(AppDestination.ABOUT, restored.currentDestination)
+        assertEquals(AppDestination.ME, restored.currentDestination)
     }
 }

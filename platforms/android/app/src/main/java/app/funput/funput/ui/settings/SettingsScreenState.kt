@@ -5,6 +5,7 @@ import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.ClipboardPreferences
 import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.ToneStyle
+import app.funput.funput.keyboard.KeyboardHapticStrength
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.placement.KeyboardPlacementMode
@@ -26,7 +27,10 @@ internal class SettingsScreenState(
     val keySizeProfile: KeyboardSizingProfile,
     val placement: KeyboardPlacementPreferences = KeyboardPlacementPreferences.Default,
     val hapticsEnabled: Boolean,
+    /** Remembered while vibration is off; see [activeHapticStrength]. */
+    val hapticStrength: KeyboardHapticStrength = KeyboardHapticStrength.Default,
     val soundsEnabled: Boolean,
+    val keyPreviewsEnabled: Boolean = true,
     val smartComposition: SmartCompositionPreferences,
     val personalSuggestionsEnabled: Boolean,
     val clipboardPreferences: ClipboardPreferences,
@@ -37,9 +41,7 @@ internal class SettingsScreenState(
     val onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     val onShowsNumberRowChanged: (Boolean) -> Unit,
     val onOpenAppearance: () -> Unit,
-    val onOpenShortcuts: () -> Unit = {},
     val speechAvailable: Boolean = false,
-    val onOpenSpeech: () -> Unit = {},
     val onToneStyleSelected: (ToneStyle) -> Unit,
     val onKeySizeSelected: (KeyboardSizingProfile) -> Unit,
     val onPlacementModeSelected: (KeyboardPlacementMode) -> Unit = {},
@@ -47,7 +49,10 @@ internal class SettingsScreenState(
     val onOneHandedWidthSelected: (Float) -> Unit = {},
     val onOneHandedSideSelected: (OneHandedSide) -> Unit = {},
     val onHapticsChanged: (Boolean) -> Unit,
+    /** Vibration off when null, otherwise on at the given strength. */
+    val onHapticStrengthSelected: (KeyboardHapticStrength?) -> Unit = {},
     val onSoundsChanged: (Boolean) -> Unit,
+    val onKeyPreviewsChanged: (Boolean) -> Unit = {},
     val onSmartGesturesChanged: (Boolean) -> Unit,
     val onReturnsToLettersChanged: (Boolean) -> Unit = {},
     val onSmartRestoreChanged: (Boolean) -> Unit,
@@ -60,4 +65,8 @@ internal class SettingsScreenState(
     val onResetPersonalSuggestions: () -> Unit,
     val onEnableKeyboard: () -> Unit,
     val onSelectKeyboard: () -> Unit,
-)
+) {
+    /** The strength key presses vibrate at, or null when vibration is off. */
+    val activeHapticStrength: KeyboardHapticStrength?
+        get() = hapticStrength.takeIf { hapticsEnabled }
+}

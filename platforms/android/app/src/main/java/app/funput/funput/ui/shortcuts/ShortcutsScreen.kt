@@ -17,18 +17,18 @@ import app.funput.funput.ui.shortcuts.editor.ShortcutEditorSheet
 import app.funput.funput.ui.shortcuts.options.ShortcutOptionsSheet
 
 /**
- * Text shortcuts: a switch for the feature, a search, and the list, with options and "add" in the
+ * The "Gõ tắt" tab: a switch for the feature, a search, and the list, with options and "add" in the
  * top bar. Editing happens in a sheet; deleting and failed saves go through dialogs.
  */
 @Composable
-internal fun ShortcutsScreen(model: ShortcutsScreenModel, onBack: () -> Unit) {
+internal fun ShortcutsScreen(model: ShortcutsScreenModel, tabBar: (@Composable () -> Unit)? = null) {
     var editor by remember { mutableStateOf<TextShortcut?>(null) }
     var showsOptions by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<TextShortcut?>(null) }
     val page = model.page()
     FunputScreen(
         title = stringResource(R.string.shortcuts_title),
-        onBack = onBack,
+        tabBar = tabBar,
         actions = {
             FunputIconButton(
                 icon = FunputIcons.More,

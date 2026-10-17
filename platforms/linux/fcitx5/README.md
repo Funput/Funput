@@ -106,17 +106,20 @@ Addon này là **adapter mỏng** trên [`funput::Composer`](../common/compose/)
 dùng chung với shell IBus. File ở đây **chỉ dịch**: `fcitx::KeyEvent` vào,
 `funput::ComposePlan` ra, rồi thi hành plan đó lên input context.
 
-Hình dạng composition giống **shell IMKit trên macOS**, không phải đường tiêm backspace của
-Windows: từ đang gõ hiện dưới dạng preedit gạch chân, và commit khi gặp ranh giới từ, phím điều
-hướng, hoặc lúc bật/tắt VI/EN.
+Mặc định composition đi theo đường **gõ thẳng**, cùng hình dạng với đường tiêm backspace của
+Windows: mỗi phím commit thẳng vào tài liệu, rồi sửa lại bằng `deleteSurroundingText` cộng
+`commitString` (`Effect::Replace`). Đường lùi mới là hình dạng của **shell IMKit trên macOS**:
+từ đang gõ hiện dưới dạng preedit gạch chân, và commit khi gặp ranh giới từ, phím điều hướng,
+hoặc lúc bật/tắt VI/EN. Client nào dùng đường nào do `applyNonPreeditMode()` quyết, từng client
+một.
 
 | File | Dòng | Việc |
 |---|---|---|
-| [`src/funput_engine.h`](src/funput_engine.h) | 105 | Kiểu addon, config, và mọi thứ nửa còn lại cần |
-| [`src/funput_engine.cpp`](src/funput_engine.cpp) | 115 | Vòng đời: watcher, nạp lại settings, bật/tắt chế độ |
-| [`src/funput_input.cpp`](src/funput_input.cpp) | 69 | Một phím: chuẩn hoá, hỏi composer |
-| [`src/funput_client.cpp`](src/funput_client.cpp) | 145 | Thi hành plan lên client — preedit, commit, sửa tài liệu; đọc và định danh nó |
-| [`src/hidden_preedit.cpp`](src/hidden_preedit.cpp) | 49 | Allowlist client tự giấu preedit |
+| [`src/funput_engine.h`](src/funput_engine.h) | 113 | Kiểu addon, config, và mọi thứ nửa còn lại cần |
+| [`src/funput_engine.cpp`](src/funput_engine.cpp) | 119 | Vòng đời: watcher, nạp lại settings, bật/tắt chế độ |
+| [`src/funput_input.cpp`](src/funput_input.cpp) | 75 | Một phím: chuẩn hoá, hỏi composer |
+| [`src/funput_client.cpp`](src/funput_client.cpp) | 123 | Thi hành plan lên client — preedit, commit, sửa tài liệu; đọc và định danh nó |
+| [`src/hidden_preedit.cpp`](src/hidden_preedit.cpp) | 53 | Allowlist client tự giấu preedit, và không bao giờ gõ thẳng |
 
 ### Một phím đi qua đâu
 
@@ -181,8 +184,8 @@ Toàn bộ lý lẽ và số liệu đo nằm ở
 [README Linux — Chế độ không preedit](../README.md#chế-độ-không-preedit). Phần thuộc riêng
 shell này:
 
-- **`lastSurroundingOk_`** bật bởi sự kiện `InputContextSurroundingTextUpdated`, xoá ở
-  `activate()`. Nó kiểm `surroundingText().isValid()` chứ **không** kiểm
+- **`lastSurroundingOk_`** bật bởi sự kiện `InputContextSurroundingTextUpdated`, xoá ở focus-in
+  thật (không xoá khi capability đổi, vì client vẫn là một). Nó kiểm `surroundingText().isValid()` chứ **không** kiểm
   `CapabilityFlag::SurroundingText` — trên GNOME/Wayland cờ đó nói dối cả hai chiều. Text rỗng
   với con trỏ 0 **vẫn** là hợp lệ: đó là một ô GTK trống, và là tín hiệu "client đã lên tiếng".
   Gác theo *nội dung* ở đây đã thử và đã revert — nó tắt chế độ ngay trong Chrome.
@@ -190,16 +193,26 @@ shell này:
   trước hay không*. `BlindWrites` cần nó để phân biệt "trả lời rỗng" với "không trả lời" — hai
   thứ đọc ra cùng một chuỗi. Mỗi phím tiêu thụ rồi xoá nó.
 - **Phán quyết "client này bỏ lệnh xoá" đi theo client, không theo lần focus.** `activate()`
-  chạy cả khi capability đổi, nên nó truyền `clientId()` xuống `Composer::onFocusChanged()`:
-  `program()` nếu tên đó chỉ đúng một app, không thì uuid của input context. Trên GNOME/Wayland
-  `program()` luôn là `gnome-shell` — đo được, không đoán — nên nó bị loại trừ theo tên và uuid
-  đứng thay. Không có chốt này, một client hay đổi capability được tha thứ mỗi phím.
+  chạy cả khi capability đổi, nên nó chỉ gọi `Composer::onFocusChanged()` ở focus-in thật
+  (`event.type() == InputContextFocusIn`), với `clientId()`: `program()` nếu tên đó chỉ đúng một
+  app, không thì rỗng. Trên GNOME/Wayland `program()` luôn là `gnome-shell` — đo được, không
+  đoán — và uuid của input context cũng **không** đứng thay được: gnome-shell giữ đúng một
+  context cho mọi app. Rỗng nghĩa là mỗi lần focus là một câu hỏi mới, và phán quyết chỉ sống
+  trong lần focus nó được đưa ra. Không có chốt capability-đổi này, một client hay đổi
+  capability được tha thứ mỗi phím.
 - **`applyNonPreeditMode()` không bao giờ lật giữa từ.** Hai chế độ bất đồng về chỗ từ đang gõ
   nằm ở đâu, nên lật khi đang soạn dở sẽ để engine và client mô tả hai thứ khác nhau. Cùng một
   cổng gác với `applyNonPreeditMode()` bên IBus.
-- **Có selection thì bỏ luôn cả sửa chữa lẫn composition.** Xoá lúc đó sẽ nuốt đoạn người dùng
-  đang bôi đen. Bỏ mỗi lệnh xoá sẽ nhân đôi từ; bỏ im lặng sẽ để engine tin rằng nó sở hữu một
-  từ mà nó không sửa được, khiến lệnh xoá của phím kế tiếp nhắm vào chữ Funput chưa từng viết.
+- **Client trong allowlist ở trên không bao giờ được gõ thẳng.** Chế độ không còn công tắc, nên
+  không ai tắt được nó cho WPS; `applyNonPreeditMode()` đọc `hidesClientPreedit()` và giữ những
+  client đó ở preedit ngay từ đầu, thay vì chờ chế độ bị từ chối và mất một từ nát.
+- **Có selection thì phải phân biệt nó nằm trước hay sau con trỏ.** Vùng bôi đen *trước* con trỏ
+  (nhấp đúp vào từ vừa gõ, kéo chuột qua nó) bị phím kế tiếp thay hoặc xoá, nên composer bỏ từ
+  đang giữ trước khi xử lý phím đó. Nếu không, Backspace chỉ rút từ đi một chữ trong khi app xoá
+  cả vùng, và từ gõ sau thừa kế phần còn lại (`vieejt` ra `énvieejt`). Vùng chọn *sau* con trỏ
+  là hậu tố gợi ý của Sheets hay thanh địa chỉ: từ đã gõ còn nguyên, nên Backspace chỉ xoá hậu
+  tố, và `Replace` gỡ nó trước khi sửa chữ đang gõ. Xoá lúc đó mà không phân biệt sẽ nuốt đoạn
+  người dùng đang bôi đen, hoặc nhắm lệnh xoá vào chữ Funput chưa từng viết.
 - **`deleteSurroundingText` tính theo ký tự.** Engine phát ra ký tự, API nhận ký tự — không có
   chỗ nào chuyển đổi dọc đường. Riêng `textBeforeCaret()` thì phải hoà giải: Fcitx5 báo con trỏ
   theo **ký tự** trong khi text là **UTF-8**, nên cắt theo con trỏ như thể nó là byte offset sẽ

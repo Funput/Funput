@@ -37,9 +37,17 @@ class AppTabBarTest {
             FunputUiTheme(isDark = false) { AppTabBar(navigator) }
         }
 
-        compose.onNode(hasContentDescription(label(R.string.nav_settings)) and isTab).assertIsSelected()
-        compose.onNode(hasContentDescription(label(R.string.nav_about)) and isTab).performClick()
+        compose.onNode(hasContentDescription(label(R.string.nav_keyboard)) and isTab).assertIsSelected()
+        compose.onNode(hasContentDescription(label(R.string.nav_me)) and isTab).performClick()
 
-        assertEquals(TopLevelDestination.ABOUT, navigator.currentTab)
+        assertEquals(TopLevelDestination.ME, navigator.currentTab)
+    }
+
+    @Test
+    fun `the tabs are the five of iOS, in its order`() {
+        assertEquals(
+            listOf("Bàn phím", "Gõ tắt", "Giao diện", "Tin tức", "Tôi"),
+            TopLevelDestination.entries.map { tab -> label(tab.ui.label) },
+        )
     }
 }

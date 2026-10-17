@@ -36,7 +36,7 @@
 | ✂️ **Gõ tắt** | Bảng viết tắt tự bung, tuỳ chọn khớp cả hoa lẫn thường |
 | 🔄 **Chuyển mã** | Đổi qua lại giữa Unicode dựng sẵn, Unicode tổ hợp, TCVN3 (ABC) và VNI-Windows |
 | ⚙️ **App Cài đặt GTK4** | Dùng chung cho cả hai shell, giao diện libadwaita |
-| 📝 **Gõ thẳng, không gạch chân** | Chữ vào thẳng ô nhập thay vì đợi ở dòng gạch chân — cứu được Chrome. **Mặc định bật.** [Chi tiết](#chế-độ-không-preedit) |
+| 📝 **Gõ thẳng, không gạch chân** | Chữ vào thẳng ô nhập thay vì đợi ở dòng gạch chân — cứu được Chrome. **Luôn bật**; app nào không nhận được thì tự lùi về gạch chân. [Chi tiết](#chế-độ-không-preedit) |
 | 🔁 **Nạp lại cấu hình tức thì** | `inotify` theo dõi `settings.json`, không cần khởi động lại |
 
 ## Yêu cầu
@@ -145,10 +145,17 @@ Nếu chưa thấy Funput trong danh sách:
 | Phím | Việc |
 |---|---|
 | **`Ctrl` + `` ` ``** | Bật / tắt tiếng Việt *(mặc định)* |
-| **`Ctrl` `Shift` `Z`** | Lật lại từ vừa gõ *(mặc định tắt)* |
+| **`Ctrl` `Shift` `Z`** | Lật từ đang gõ *(mặc định tắt; bật ở **Cài đặt → Phím tắt**)* |
 
 Đổi được trong app **Cài đặt**. Phím chuyển có 5 lựa chọn: `Ctrl` + `` ` ``, `Ctrl Space`,
-`Alt Shift`, `Super Space`, `Ctrl Shift Space`.
+`Alt Shift`, `Super Space`, `Ctrl Shift Space`. Phím lật từ chọn `Ctrl Shift Z` hoặc
+`Ctrl Shift X`.
+
+**Lật từ** đổi từ *đang gõ* giữa dạng tiếng Việt và chữ gõ gốc, và bấm lần nữa thì lật lại.
+Telex gõ `mas` ra `má`; bấm phím lật thì `má` thành `mas`, bấm tiếp lại thành `má`. Nó chỉ tác
+động trước khi từ kết thúc, nên sau Space hay dấu câu thì không còn gì để lật. Lựa chọn giữ
+nguyên đến hết từ đó, kể cả khi Space đến. Từ không có dạng tiếng Việt khác chữ đã gõ (`the`)
+thì phím này không làm gì.
 
 ### Thử nhanh
 
@@ -156,6 +163,28 @@ Nếu chưa thấy Funput trong danh sách:
 |---|---|---|
 | Telex | `tieesng vieejt` | tiếng việt |
 | VNI | `xin chao2` | xin chào |
+
+### Chữ gõ thẳng, và khi nào vẫn thấy gạch chân
+
+Mặc định chữ vào thẳng ô nhập: bạn không thấy dòng gạch chân, và đổi cửa sổ giữa chừng thì từ
+đang gõ vẫn còn nguyên. Việc này không có công tắc. Funput tự quyết cho từng app, và tự lùi về
+kiểu gạch chân khi app không nhận được cách gõ thẳng. Bạn vẫn có thể thấy gạch chân ở các
+trường hợp sau:
+
+- App không gửi văn bản quanh con trỏ cho bộ gõ, ví dụ terminal hoặc các app tự vẽ ô nhập.
+- WPS Office. Shell Fcitx5 biết trước app này không nhận được nên không thử gõ thẳng.
+- Từ đầu tiên sau khi chuyển focus, cho tới khi app gửi văn bản lần đầu. Với IBus, ô trống
+  ngay sau một ô trống có thể gạch chân đúng từ đầu tiên.
+- App bỏ lệnh xoá đi kèm lúc sửa chữ. Funput nhận ra điều đó sau một từ hỏng, hoặc sớm hơn nếu
+  app trả lời văn bản rỗng hai lần liên tiếp, rồi giữ app đó ở kiểu gạch chân cho tới hết lần
+  focus. Chuyển sang app khác thì gõ thẳng trở lại ngay.
+
+Nếu một app ra sai chữ ở từ đầu rồi mới chuyển sang gạch chân, đó là cách Funput nhận ra app
+không nhận được gõ thẳng. Hãy báo lỗi kèm tên tiến trình của app. Với Fcitx5, thêm một app vào
+danh sách `hidden_preedit.cpp` là đủ để Funput bỏ qua bước thử.
+
+Phím lật từ và gõ tắt chạy ở cả hai kiểu. Bỏ dấu lại sau Backspace (`phủ`, Space, Backspace,
+`s` ra `phú`) thì chỉ chạy ở kiểu gõ thẳng.
 
 ### Cấu hình lưu ở đâu
 
@@ -201,6 +230,15 @@ Cả hai đều tới cùng một process.
   bất cứ lần ghi nào. Đây là phía Chromium/EditContext, Funput không với tới được, nên
   `BlindWrites` đứng dậy sau hai câu trả lời rỗng — trước lần sửa đầu tiên có lệnh xoá. Khung
   chat của Cursor là input DOM thường nên không dính.
+- **IBus không biết tên client, nên một client bỏ lệnh xoá bị thử lại ở mỗi lần focus.** Phán
+  quyết gắn với tên client mà IBus không có tên nào để đưa, và lấy object path của engine làm tên
+  là sai: engine có thể dùng chung cho nhiều app, khi đó một lần từ chối tắt chế độ cho tất cả.
+  Client **luôn** trả lời rỗng thì tự an toàn bên IBus — daemon khử trùng lặp `("",0,0)` nên
+  chế độ không bao giờ bật với nó. Còn client trả lời tài liệu thật nhưng bỏ lệnh xoá thì mất một
+  từ mỗi lần quay lại; chưa có cách đo hay đặt tên đáng tin, và không còn công tắc để tắt.
+- **IBus, ô trống ngay sau một ô trống: từ đầu tiên có gạch chân.** Daemon không chuyển payload
+  trùng với lần trước, nên engine không biết client đã lên tiếng cho tới khi tài liệu đổi; từ thứ
+  hai trở đi thì chữ vào thẳng.
 - **Phím điều khiển được phân loại theo ký tự C0, không theo keysym.** Cả Fcitx5 lẫn IBus đều
   ánh xạ Return → CR, Tab → HT, Escape → ESC, nên `classify()` phải loại chúng ra *trước* phép
   thử ranh giới từ — `isBoundary()` cố tình nhận `\t \n \r` vì
@@ -208,8 +246,9 @@ Cả hai đều tới cùng một process.
   giới. Thiếu bước đó thì Enter bị nuốt và CR được nối vào chuỗi commit.
 - **Bỏ dấu sau Backspace chỉ chạy ở chế độ không preedit.** Ở chế độ preedit, Backspace chỉ rút
   ngắn composition, nên `phủ` ␣ ⌫ `s` ra chữ `s` thường.
-- **Một số client làm mất từ đang gõ dở khi đổi focus.** Cả hai shell giao việc flush cho
-  framework; client nào bỏ preedit thay vì commit thì mất từ đó.
+- **Ở kiểu gạch chân, một số client làm mất từ đang gõ dở khi đổi focus.** Cả hai shell giao
+  việc flush cho framework; client nào bỏ preedit thay vì commit thì mất từ đó. Kiểu gõ thẳng
+  không bị lỗi này vì từ đã nằm trong tài liệu từng phím một.
 - **App Cài đặt ghi đè nguyên `settings.json`.** Nó serialize struct của chính nó lên file, nên
   một khoá nó không biết sẽ bị xoá ở lần bạn đổi thiết lập kế tiếp.
 - **Chưa có AppStream metainfo**, nên `funput-settings` không xuất hiện trong GNOME Software
@@ -261,12 +300,17 @@ tồn tại hai bản — mỗi shell một — và chúng đã trôi khỏi nha
    funput-ffi ──▶ funput-engine ──▶ funput-core
                │
                ▼
-   ComposePlan ──▶ shell thi hành: preedit · commit · deleteChars
+   ComposePlan ──▶ shell thi hành: Replace (xoá N ký tự rồi commit), preedit hoặc commit
 ```
 
-Thứ thật sự khác nhau giữa hai shell chỉ là preedit tới client bằng đường nào, và **ai commit
-nó khi mất focus** — Fcitx5 dùng `setClientPreedit` cộng watcher focus-out, IBus dùng
-`IBUS_ENGINE_PREEDIT_COMMIT`. Cả hai đều có chú thích tại chỗ.
+`Replace` là đường mặc định: mỗi phím được commit thẳng vào tài liệu rồi sửa lại bằng
+`deleteSurroundingText`. Preedit chỉ còn là đường lùi cho client không nhận được cách đó.
+
+Thứ thật sự khác nhau giữa hai shell nằm ở ba chỗ. Thứ nhất là cách đọc văn bản quanh con trỏ
+và thi hành `Replace`. Thứ hai là cách gọi tên client để nhớ phán quyết: Fcitx5 có tên tiến
+trình và sự kiện focus-in, IBus không có tên nào để đưa. Thứ ba là đường lùi sang preedit, và
+**ai commit nó khi mất focus**: Fcitx5 dùng `setClientPreedit` cộng watcher focus-out, IBus
+dùng `IBUS_ENGINE_PREEDIT_COMMIT`. Cả hai đều có chú thích tại chỗ.
 
 > [!TIP]
 > Shell Fcitx5 có README riêng: [`fcitx5/README.md`](fcitx5/README.md) — panel preedit, allowlist
@@ -292,6 +336,7 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       state.cpp               Settings, VI/EN, và các lối thoát không phải phím
       nonpreedit.h            Chế độ commit-khi-gõ, và cách đánh giá một client
       nonpreedit.cpp          Composer làm gì với đánh giá đó
+      nonpreedit/backspace.cpp  Ai xoá một ký tự đã nằm trong tài liệu, và mở lại từ đã xong
       nonpreedit/clients.h    Phán quyết đó thuộc về client nào
       nonpreedit/verdict.h    Verdict, và client không bao giờ cho xem tài liệu
       nonpreedit/observe.h    So ba chuỗi sau một lần sửa
@@ -440,14 +485,16 @@ tự nối tay. Nút thì không cần: `clicked` không bao giờ nổ vì mộ
 
 ### Chế độ không preedit
 
-**Mặc định bật**; công tắc “Gõ thẳng, không gạch chân” nằm ở trang **Tổng quan** của app Cài
-đặt, hoặc đặt
-thẳng `"nonPreedit": false` trong `~/.config/Funput/settings.json`. Kiểu nào thì watcher cũng
-nhận ra ngay, không cần khởi động lại. **Cả hai shell đều thi hành nó.**
+**Luôn bật**, không còn là một thiết lập: app Cài đặt không có công tắc cho nó và `settings.json`
+không còn khoá nào. Thay vào đó mỗi client được quyết định riêng — chế độ bật khi client đã gửi
+surrounding text, và **tự lùi về preedit** khi không: client chưa lên tiếng, client nằm trong
+danh sách biết là không chạy được, hay client bị bắt quả tang bỏ lệnh xoá. **Cả hai shell đều
+thi hành nó.**
 
-Chỉ **bản cài mới** thừa hưởng mặc định đó. App Cài đặt ghi đè nguyên `settings.json` từ struct
-của nó, nên máy nào đã từng mở Cài đặt thì khoá `nonPreedit` đã nằm sẵn trong file và lựa chọn
-cũ được giữ nguyên — mặc định chỉ áp khi khoá vắng mặt.
+Khoá `"nonPreedit"` còn sót trong một `settings.json` cũ bị bỏ qua, kể cả khi là `false`; app Cài
+đặt và addon đều xoá nó ở lần lưu kế tiếp. Bỏ công tắc cũng là bỏ lối thoát cho một app mà chế
+độ này không chạy được, nên các lưới an toàn bên dưới — phán quyết, `BlindWrites` và danh sách
+client đã biết — phải tự lo thay người dùng.
 
 Thay vì đỗ từ đang gõ trong một preedit, mỗi phím commit thẳng vào tài liệu rồi sửa lại thứ phím
 trước đã viết — `Effect::Replace` mang theo “xoá N ký tự, rồi commit cái này”. Đó đúng là chỉ thị
@@ -512,6 +559,14 @@ không phải client bỏ lệnh xoá. `Replace` mang `deleteAfterChars` để g
 ký tự đang gõ, nên `chư` cộng gợi ý `ứ` vẫn thành `chứ` chứ không còn `chưứ`. Vùng bôi đen của
 người dùng (select-all, kéo ngược) vẫn để phím đi thẳng qua.
 
+Vùng bôi đen **trước** caret — nhấp đúp vào từ vừa gõ, kéo chuột qua nó — còn thêm một việc: phím
+kế tiếp thay hoặc xoá chính vùng đó, nên từ engine đang giữ không còn nữa. Trước đây engine vẫn
+giữ nguyên `tieng`, Backspace chỉ rút nó đi một chữ trong khi ứng dụng xoá cả vùng, và từ gõ sau
+thừa kế phần còn lại: `vieejt` ra `énvieejt`, tức "xoá chữ rồi gõ lại tiếng Việt không được" cho
+tới khi có một dấu cách. Giờ `Composer::onKey()` bỏ từ trước khi xử lý một phím gõ, dấu cách hay
+Backspace gặp vùng bôi đen như thế; còn Backspace trên hậu tố Sheets thì chỉ để ứng dụng xoá
+hậu tố, không rút chữ nào khỏi từ.
+
 Còn lại **một client mà phép so ba chuỗi không bao giờ xử được**: client trả lời tài liệu rỗng ở
 mọi lần đọc. Xoá N ký tự khỏi chuỗi rỗng vẫn là chuỗi rỗng, nên cả ba dòng của bảng trên gộp làm
 một và không lần ghi nào có phán quyết. Đo được ở editor Cursor: nó trả lời surrounding text ở
@@ -553,13 +608,37 @@ không riêng khi đổi focus — chú thích trong `deactivate()` nói đúng 
 thay đổi capability sẽ xoá phán quyết chỉ một hai phím sau khi nó được đưa ra. Editor của Cursor
 là client như vậy: chế độ tự bật lại rồi phá tiếp từ sau, lặp vô hạn thay vì hỏng đúng một lần.
 Bộ nhớ nằm ở `compose/composer/nonpreedit/clients.h`, giới hạn tám client gần nhất. Tên client
-là `InputContext::program()`, và khi frontend không phân giải được thì là uuid của chính input
-context — hẹp hơn nhưng đúng phần cần thiết, vì một lần re-activate do capability đổi vẫn là
-cùng context ấy. **Tên rỗng không bao giờ được nhớ**: shell IBus không có tên để đưa, và trên
-GNOME/Wayland mọi client đều trả lời `gnome-shell` — nhớ cái tên đó là tắt chế độ cho tất cả.
+là `InputContext::program()` khi nó chỉ đúng một app. **Tên rỗng không bao giờ được nhớ**: shell
+IBus không có tên để đưa, và trên GNOME/Wayland mọi client đều trả lời `gnome-shell` — nhớ cái
+tên đó là tắt chế độ cho tất cả.
+
+Uuid của input context từng được dùng thế chỗ, như một cái tên "hẹp hơn", và đó là một sai lầm đo
+được: `DebugInfo` của Fcitx5 trên GNOME/Wayland ghi `Group [wayland:] has 1 InputContext(s)`
+(`program:gnome-shell frontend:ibus`), vì gnome-shell giữ **một** context cho mọi app và chỉ
+focus lại nó. Tự kiểm được bằng:
+
+```bash
+dbus-send --session --print-reply --dest=org.fcitx.Fcitx5 /controller \
+  org.fcitx.Fcitx.Controller1.DebugInfo
+```
+
+Một phán quyết ghi dưới uuid đó tắt chế độ cho cả Chrome cho tới khi khởi động lại Fcitx5, và
+nhìn từ ngoài là "bị gạch chân rồi không bao giờ trở lại". Giờ `clientId()` trả rỗng, và
+`activate()` chỉ gọi `onFocusChanged()` ở **focus-in thật** (`InputContextFocusIn`), không phải ở
+mỗi lần capability đổi. Hai việc đó cùng giữ được cả hai điều cần: phán quyết sống sót qua việc
+Cursor đổi capability liên tục, và chết cùng lần focus nó được đưa ra.
 
 Cái giá là việc phát hiện chậm một nhịp, nên từ đầu tiên vẫn bị hỏng trước khi chế độ rút lui.
 Bắt sớm hơn nghĩa là phải ghi chữ dò vào tài liệu của người dùng, và điều đó không nằm trên bàn.
+
+#### Client đã biết là không chạy được thì không bao giờ được thử
+
+Shell Fcitx5 đã có danh sách client tự giấu preedit (`hidden_preedit.cpp`, hiện là họ WPS), và
+`applyNonPreeditMode()` đọc luôn danh sách đó: chờ chế độ bị từ chối là mất một từ nát
+(`nguyen64` ra `nguyenênễn`), một cái giá không còn ai gánh khi công tắc đã bỏ. Danh sách chỉ gồm
+tên tiến trình, không bao giờ cờ capability hay việc thiếu surrounding text — cả hai nói dối, và
+sẽ kéo cả những client đang chạy tốt vào. IBus không biết tên client nên không có đường tương
+đương.
 
 #### Về phía IBus
 

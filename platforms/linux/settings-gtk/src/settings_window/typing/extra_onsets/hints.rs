@@ -9,8 +9,8 @@ use crate::settings::{ExtraOnsetLetters, Method, OnsetLetter};
 // The flip key is off by default on Linux, so say where it lives rather than
 // assume it works.
 const TRADE_OFF: &str = "Từ tiếng Anh có vần tiếng Việt cũng được bỏ dấu (fast → fát). Gõ đúp \
-                         phím dấu để giữ tiếng Anh (fasst → fast), hoặc bật \"Phím lật từ vừa \
-                         gõ\" ở trang Phím tắt.";
+                         phím dấu để giữ tiếng Anh (fasst → fast), hoặc bật \"Phím lật từ\" ở \
+                         trang Phím tắt.";
 const DOUBLE_W: &str = "Telex nâng cao: w vẫn là ư — gõ ww để có phụ âm w (wwas → wá).";
 
 pub(super) struct Hints {

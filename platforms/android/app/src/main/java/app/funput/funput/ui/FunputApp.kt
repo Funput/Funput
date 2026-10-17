@@ -12,15 +12,20 @@ import androidx.compose.ui.platform.LocalContext
 import app.funput.funput.ime.settings.KeyboardThemeSlot
 import app.funput.funput.theme.KeyboardThemeId
 import app.funput.funput.theme.store.customKeyboardThemeStore
-import app.funput.funput.ui.about.AboutRoute
 import app.funput.funput.ui.about.licenses.LicensesRoute
 import app.funput.funput.ui.appearance.AppearanceRoute
 import app.funput.funput.ui.kit.theme.FunputUiTheme
+import app.funput.funput.ui.me.MeRoute
 import app.funput.funput.ui.navigation.AppDestination
 import app.funput.funput.ui.navigation.AppNavDisplay
 import app.funput.funput.ui.navigation.AppTabBar
 import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
+import app.funput.funput.ui.news.NewsRoute
+import app.funput.funput.ui.news.rememberNewsModel
+import app.funput.funput.ui.settings.pages.SettingsPage
+import app.funput.funput.ui.settings.route.KeyboardHubRoute
+import app.funput.funput.ui.settings.route.SettingsPageRoute
 import app.funput.funput.ui.settings.speech.SpeechSetupRoute
 import app.funput.funput.ui.shortcuts.ShortcutsRoute
 import app.funput.funput.ui.theme.custom.CustomThemeStudioRoute
@@ -34,6 +39,7 @@ fun FunputApp() {
     val scope = rememberCoroutineScope()
     val darkTheme = settings.appearanceMode.resolveDarkTheme(isSystemInDarkTheme())
     val navigator = rememberAppNavigator()
+    val news = rememberNewsModel()
     val customThemeStore = remember(context) { context.customKeyboardThemeStore() }
     val themeRepository = remember(customThemeStore) { installedThemeRepository(customThemeStore) }
     val customThemeServices =
@@ -56,25 +62,29 @@ fun FunputApp() {
     }
     FunputUiTheme(isDark = darkTheme) {
         SyncSystemBarAppearance(darkTheme = darkTheme)
+        // The keyboard follows the system appearance rather than the app's own light/dark
+        // preference, so the preview has to resolve against the system to show what the user
+        // will actually type on.
+        val keyboardTheme = themeCatalog.resolve(settings.themeSelection.resolve(isSystemInDarkTheme()))
         AppNavDisplay(navigator) { destination ->
             when (destination) {
-                AppDestination.SETTINGS -> {
-                    SettingsRoute(
-                        settings = settings,
-                        // The keyboard follows the system appearance rather than the app's own
-                        // light/dark preference, so the hero has to resolve against the system to
-                        // show what the user will actually type on.
-                        keyboardTheme = themeCatalog.resolve(
-                            settings.themeSelection.resolve(isSystemInDarkTheme()),
-                        ),
-                        onOpenAppearance = { navigator.selectTab(TopLevelDestination.APPEARANCE) },
-                        onOpenSpeech = { navigator.navigate(AppDestination.SPEECH) },
-                        onOpenShortcuts = { navigator.navigate(AppDestination.SHORTCUTS) },
-                        tabBar = { AppTabBar(navigator) },
-                    )
-                }
+                AppDestination.KEYBOARD -> KeyboardHubRoute(
+                    settings = settings,
+                    keyboardTheme = keyboardTheme,
+                    onOpenAppearance = { navigator.selectTab(TopLevelDestination.APPEARANCE) },
+                    onOpenPage = { page -> navigator.navigate(page.destinationIn(TopLevelDestination.KEYBOARD)) },
+                    tabBar = { AppTabBar(navigator) },
+                )
+                AppDestination.TYPING, AppDestination.LAYOUT, AppDestination.SMART_INPUT, AppDestination.FEEDBACK,
+                AppDestination.CLIPBOARD, AppDestination.HARDWARE_KEYBOARD, AppDestination.DATA,
+                AppDestination.KEYBOARD_DATA -> SettingsPageRoute(
+                    page = requireNotNull(SettingsPage.of(destination)),
+                    settings = settings,
+                    keyboardTheme = keyboardTheme,
+                    onBack = { navigator.navigateBack() },
+                )
                 AppDestination.SPEECH -> SpeechSetupRoute(onBack = { navigator.navigateBack() })
-                AppDestination.SHORTCUTS -> ShortcutsRoute { navigator.navigateBack() }
+                AppDestination.SHORTCUTS -> ShortcutsRoute(tabBar = { AppTabBar(navigator) })
                 AppDestination.THEME_GALLERY -> {
                     AppearanceRoute(
                         settings = settings,
@@ -98,9 +108,12 @@ fun FunputApp() {
                         tabBar = { AppTabBar(navigator) },
                     )
                 }
-                AppDestination.ABOUT -> AboutRoute(tabBar = { AppTabBar(navigator) }) {
-                    navigator.navigate(AppDestination.THIRD_PARTY_LICENSES)
-                }
+                AppDestination.NEWS -> NewsRoute(news, tabBar = { AppTabBar(navigator) })
+                AppDestination.ME -> MeRoute(
+                    onOpenData = { navigator.navigate(AppDestination.DATA) },
+                    onOpenLicenses = { navigator.navigate(AppDestination.THIRD_PARTY_LICENSES) },
+                    tabBar = { AppTabBar(navigator) },
+                )
                 AppDestination.THIRD_PARTY_LICENSES -> LicensesRoute { navigator.navigateBack() }
                 AppDestination.CREATE_CUSTOM_THEME -> {
                     CustomThemeStudioRoute(
