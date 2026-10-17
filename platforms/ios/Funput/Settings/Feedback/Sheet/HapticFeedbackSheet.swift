@@ -4,6 +4,7 @@ import SwiftUI
 struct HapticFeedbackSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @ObservedObject var model: SettingsModel
     @StateObject private var selection = HapticFeedbackSelection()
     @State private var pendingAccess: FullAccessFeature?
@@ -44,6 +45,7 @@ struct HapticFeedbackSheet: View {
                 Text("Funput đã giữ nguyên giá trị trước đó. Vui lòng thử lại.")
             }
         }
+        .hapticFeedbackSheetBackground(reduceTransparency: reduceTransparency)
         .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large])
         .presentationDragIndicator(.visible)
     }

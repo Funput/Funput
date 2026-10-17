@@ -3,6 +3,7 @@ import SwiftUI
 
 /// A compact, single-choice list for the quick-settings sheet.
 struct HapticFeedbackList: View {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let selection: HapticFeedbackStrength?
     let select: (HapticFeedbackStrength?) -> Void
     private let options: [HapticFeedbackStrength?] = [nil, .light, .medium, .strong]
@@ -17,10 +18,12 @@ struct HapticFeedbackList: View {
             }
         }
         .padding(6)
-        .background(
-            Color(uiColor: .secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
-        )
+        .background {
+            if !HapticFeedbackSurface.isGlass(reduceTransparency: reduceTransparency) {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
+            }
+        }
     }
 
     private func row(_ strength: HapticFeedbackStrength?) -> some View {
@@ -88,10 +91,10 @@ struct HapticFeedbackList: View {
         .frame(width: 26, height: 26)
     }
 
-    // The options sit on an opaque semantic surface. A quiet neutral selection
-    // keeps text legible; the system sheet and toolbar provide the glass treatment.
+    // An accent wash rather than a neutral one: grey on the sheet's glass, or on the
+    // grey fallback card, barely separates the selected row from the others.
     private var selectionBackground: some View {
         RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .fill(Color.primary.opacity(0.06))
+            .fill(Color.accentColor.opacity(0.16))
     }
 }
