@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <fcitx/addonfactory.h>
@@ -48,6 +49,7 @@ FCITX_CONFIGURATION(
 // Reading the focused client. Document helpers and its identity live in
 // funput_client.cpp; the hidden-preedit allowlist lives in hidden_preedit.cpp.
 std::string textBeforeCaret(fcitx::InputContext *context);
+std::optional<std::string> textAfterCaret(fcitx::InputContext *context);
 bool hasSelection(fcitx::InputContext *context);
 uint32_t selectedAfter(fcitx::InputContext *context);
 std::string clientId(fcitx::InputContext *context);

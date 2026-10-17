@@ -24,6 +24,7 @@ add_executable(funput_linux_tests
     compose/key/modifier_tests.cpp
     compose/composer/keys_tests.cpp
     compose/composer/keys/flip_tests.cpp
+    compose/composer/caret/moved_tests.cpp
     compose/composer/state_tests.cpp
     compose/composer/state/onsets_tests.cpp
     compose/composer/state/applied_tests.cpp

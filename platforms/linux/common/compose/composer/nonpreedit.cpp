@@ -19,12 +19,17 @@ void Composer::onFocusChanged(std::string_view client) {
 }
 
 void Composer::observeDocument(const std::string &textBeforeCaret, bool selectionLive,
-                               bool answered, uint32_t selectedAfter) {
+                               bool answered, uint32_t selectedAfter,
+                               const std::optional<std::string> &textAfterCaret) {
     nonPreedit_.selectionLive = selectionLive;
     nonPreedit_.selectionAfter = selectedAfter;
     nonPreedit_.answered = answered;
+    const bool moved = nonPreedit_.movedOnItsOwn(textAfterCaret);
     switch (nonPreedit_.observe(textBeforeCaret)) {
     case Verdict::Unknown:
+        // The caret left the word without telling us. Forget the word, and let the
+        // key through as typed rather than repair text that is no longer there.
+        if (moved && isComposing()) discard();
         return;
     case Verdict::RefuseRetone:
         // Ordinary repairs still land here; only the one issued straight after the app
