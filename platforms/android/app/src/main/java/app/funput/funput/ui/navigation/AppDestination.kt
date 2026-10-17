@@ -4,13 +4,14 @@ package app.funput.funput.ui.navigation
  * The tabs of the app, in tab-bar order. Each keeps its own back stack, so leaving a tab half way
  * into something and coming back to it lands where you were rather than at its root.
  *
- * Five tabs is the ceiling, as on iOS. There is no news tab: the APK has no INTERNET permission, so
- * the keyboard stays offline. Features that come later (an account, sync) belong inside [ME].
+ * Five tabs is the ceiling, as on iOS, and all five are used: features that come later (an
+ * account, sync) belong inside [ME] rather than beside it.
  */
 internal enum class TopLevelDestination {
     KEYBOARD,
     SHORTCUTS,
     APPEARANCE,
+    NEWS,
     ME,
     ;
 
@@ -42,6 +43,7 @@ internal enum class AppDestination(val tab: TopLevelDestination, val depth: Int)
     SHORTCUTS(tab = TopLevelDestination.SHORTCUTS, depth = 0),
     THEME_GALLERY(tab = TopLevelDestination.APPEARANCE, depth = 0),
     CREATE_CUSTOM_THEME(tab = TopLevelDestination.APPEARANCE, depth = 1),
+    NEWS(tab = TopLevelDestination.NEWS, depth = 0),
     ME(tab = TopLevelDestination.ME, depth = 0),
     DATA(tab = TopLevelDestination.ME, depth = 1),
     THIRD_PARTY_LICENSES(tab = TopLevelDestination.ME, depth = 1),

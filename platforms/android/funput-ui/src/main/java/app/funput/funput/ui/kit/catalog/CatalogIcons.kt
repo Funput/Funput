@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import app.funput.funput.ui.kit.cards.FunputDivider
 import app.funput.funput.ui.kit.cards.FunputSection
 import app.funput.funput.ui.kit.icons.FunputIcons
+import app.funput.funput.ui.kit.icons.FunputTabIcons
 import app.funput.funput.ui.kit.rows.FunputRow
 import app.funput.funput.ui.kit.rows.FunputRowDefaults
 import app.funput.funput.ui.kit.theme.FunputTint
@@ -31,12 +32,17 @@ private val TintSamples = listOf(
 
 private val AllIcons = with(FunputIcons) {
     listOf(
-        KeyboardSelected, ShortcutsSelected, Appearance, AppearanceSelected, Me, MeSelected, Back, Forward,
+        Appearance, Guide, Back, Forward,
         Check, Add, Keyboard, ToneMarks, Shortcuts, NumberRow, KeySize, Placement, OneHanded, Restore,
         SpellCheck, Capitalize, Suggestions, Gestures, ReturnToLetters, Microphone, Haptics, Sound, Clipboard,
         ClipboardExpiry, HardwareKeyboard, Delete, Clear, Data, Hotkey, OpenExternal,
         Search, ClearField, More, Language, LightDark, Edit, SourceCode, ReportBug, Mail, Privacy,
         Licenses, Heart,
+    )
+} + with(FunputTabIcons) {
+    listOf(
+        Keyboard, KeyboardSelected, Shortcuts, ShortcutsSelected, Appearance, AppearanceSelected,
+        News, NewsSelected, Me, MeSelected,
     )
 }
 
