@@ -61,9 +61,9 @@ public:
     // emits an [Effect::Replace] that repairs what the previous one wrote. See
     // nonpreedit.cpp for what the mode assumes of its shell.
     //
-    // `applySettings()` seeds this from `Settings::nonPreedit`; the setter is the
-    // per-context override on top of it. It cannot revive a mode a client has already
-    // been caught breaking — see [NonPreeditState].
+    // On from the start, with no setting behind it: this setter is how a shell narrows
+    // it per client. It cannot revive a mode a client has already been caught
+    // breaking — see [NonPreeditState].
     void setNonPreedit(bool on);
     bool nonPreedit() const { return nonPreedit_.on; }
 
@@ -94,7 +94,7 @@ public:
     // A Backspace is about to delete the last character of `textBeforeCaret`; if that
     // leaves the caret at the end of a finished Vietnamese word, re-open it so the next
     // keystroke can still fix its tone. Returns whether a word was taken — nothing is
-    // written either way, so a refusal costs nothing. See nonpreedit.cpp.
+    // written either way, so a refusal costs nothing. See nonpreedit/backspace.cpp.
     bool adoptWordBeforeBackspace(const std::string &textBeforeCaret);
 
     // --- settings & VI/EN -----------------------------------------------------

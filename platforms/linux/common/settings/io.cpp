@@ -50,7 +50,6 @@ bool Settings::reload() {
     spellCheck = data.value("spellCheck", spellCheck);
     autoCapitalize = data.value("autoCapitalize", autoCapitalize);
     extraOnsets = parseOnsets(data);
-    nonPreedit = data.value("nonPreedit", nonPreedit);
     shortcutsEnabled = data.value("shortcutsEnabled", shortcutsEnabled);
     shortcutSmartCase = data.value("shortcutSmartCase", shortcutSmartCase);
     shortcutsInEnglish = data.value("shortcutsInEnglish", shortcutsInEnglish);
@@ -70,8 +69,7 @@ bool Settings::reload() {
            enabled != previous.enabled || smartRestore != previous.smartRestore ||
            eagerRestore != previous.eagerRestore || spellCheck != previous.spellCheck ||
            autoCapitalize != previous.autoCapitalize || extraOnsets != previous.extraOnsets ||
-           nonPreedit != previous.nonPreedit || toggleHotkey != previous.toggleHotkey ||
-           flipHotkey != previous.flipHotkey ||
+           toggleHotkey != previous.toggleHotkey || flipHotkey != previous.flipHotkey ||
            shortcuts != previous.shortcuts || shortcutsEnabled != previous.shortcutsEnabled ||
            shortcutSmartCase != previous.shortcutSmartCase ||
            shortcutsInEnglish != previous.shortcutsInEnglish;
@@ -81,8 +79,7 @@ bool Settings::sameTyping(const Settings &other) const {
     return method == other.method && toneStyle == other.toneStyle &&
            enabled == other.enabled && smartRestore == other.smartRestore &&
            eagerRestore == other.eagerRestore && spellCheck == other.spellCheck &&
-           autoCapitalize == other.autoCapitalize && extraOnsets == other.extraOnsets &&
-           nonPreedit == other.nonPreedit;
+           autoCapitalize == other.autoCapitalize && extraOnsets == other.extraOnsets;
 }
 
 void Settings::save() const {
@@ -103,7 +100,9 @@ void Settings::save() const {
     // Not `extraOnsets`: the addon never changes the letters, so writing its copy
     // back could only undo a choice the Settings app saved since the last reload,
     // or drop a letter a newer build wrote. The merge above keeps the key as is.
-    data["nonPreedit"] = nonPreedit;
+    // The key that used to switch direct typing off. Nothing reads it any more, and a
+    // stale `false` in the file would only suggest that it still does something.
+    data.erase("nonPreedit");
     data["shortcutsEnabled"] = shortcutsEnabled;
     data["shortcutSmartCase"] = shortcutSmartCase;
     data["shortcutsInEnglish"] = shortcutsInEnglish;

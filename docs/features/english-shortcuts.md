@@ -96,17 +96,17 @@ Cài đặt → Gõ tắt có công tắc **Gõ tắt cả khi ở chế độ t
 Cả Fcitx5 và IBus đi qua cùng `Composer`: mở cổng khi ba điều kiện AND đúng, rồi
 để cây phím hiện có + engine EN quyết định. Không có phủ quyết layout ngoại.
 
-Đường mặc định là **gõ thẳng** (như Windows): app tự hiện phím; khớp trigger thì
-`Replace` xóa chữ tắt rồi ghi expansion. Client không chịu surrounding text, hoặc
-user tắt “Gõ thẳng, không gạch chân”, rơi về preedit phím thô rồi `Commit` (như
-macOS). Enter/Tab là phím, không phải ranh giới — app vẫn nhận chúng sau khi
-commit từ đang gõ.
+Đường duy nhất là **gõ thẳng** (như Windows): app tự hiện phím; khớp trigger thì
+`Replace` xóa chữ tắt rồi ghi expansion. Client không chịu surrounding text rơi về
+preedit phím thô rồi `Commit` (như macOS); trên Linux chế độ này không còn công tắc
+mà tự rút lui theo từng client. Enter/Tab là phím, không phải ranh giới — app vẫn
+nhận chúng sau khi commit từ đang gõ.
 
 ### Kiểm tra thủ công
 
 1. Chọn Funput (Fcitx5 và IBus), thêm `sdt` → `0901234567`, `vn` → `Việt Nam`.
-2. Tắt tiếng Việt, “Gõ thẳng…” **bật**: gõ `sdt ` / `VN.` / `address` — không
-   gạch chân; nhận expansion hoặc nguyên từ.
-3. Tắt “Gõ thẳng…”: cùng chuỗi hiện preedit rồi commit.
+2. Tắt tiếng Việt, trong một app nhận được gõ thẳng (ô GTK, Chrome): gõ `sdt ` /
+   `VN.` / `address` — không gạch chân; nhận expansion hoặc nguyên từ.
+3. Trong một app không nhận được (WPS, terminal): cùng chuỗi hiện preedit rồi commit.
 4. Thử Backspace sửa trigger, Enter (app vẫn xuống dòng), tắt lần lượt hai
    công tắc gõ tắt.

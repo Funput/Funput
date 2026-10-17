@@ -21,10 +21,6 @@ pub struct Settings {
     /// Vietnamese rhyme compose (`fast` → `fát`). Stored spelled out (`"zj"`).
     #[serde(default, deserialize_with = "lenient_onsets")]
     pub extra_onsets: ExtraOnsetLetters,
-    /// "Gõ thẳng, không gạch chân", shown on Tổng quan. `default = "on"`, not a bare
-    /// `#[serde(default)]`: that reads a keyless document as false and saves it back.
-    #[serde(default = "on")]
-    pub non_preedit: bool,
     pub toggle_hotkey: Hotkey,
     #[serde(default)]
     pub flip_hotkey: FlipHotkey,
@@ -75,7 +71,6 @@ impl Default for Settings {
             spell_check: false,
             auto_capitalize: false,
             extra_onsets: ExtraOnsetLetters::NONE,
-            non_preedit: true,
             toggle_hotkey: Hotkey::CtrlBacktick,
             flip_hotkey: FlipHotkey::Off,
             launch_at_login: false,

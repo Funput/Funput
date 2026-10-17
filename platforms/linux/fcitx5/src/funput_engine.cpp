@@ -35,27 +35,24 @@ void FunputEngine::applyNonPreeditMode() {
     // things. Same gate as the IBus shell's applyNonPreeditMode().
     if (composer_.isComposing()) return;
     const bool wasNonPreedit = composer_.nonPreedit();
-    composer_.setNonPreedit(composer_.settings().nonPreedit && lastSurroundingOk_);
+    fcitx::InputContext *context = instance_->lastFocusedInputContext();
+    // The client decides. It has to have spoken, and it must not be one the allowlist
+    // names: those are documented not to take a document repair (WPS turned
+    // `nguyen64` into `nguyenênễn`), and with no setting to switch the mode off there
+    // is nobody left to spare them the first mangled word.
+    composer_.setNonPreedit(lastSurroundingOk_ && !(context && hidesClientPreedit(context)));
     if (wasNonPreedit || !composer_.nonPreedit()) return;
     // Mode just turned on between words. A leftover preedit would sit as a ghost
-    // while the new mode writes into the document — same cleanup as a live settings
-    // reload, cheap if the panel is already empty.
-    if (fcitx::InputContext *context = instance_->lastFocusedInputContext()) {
-        clearPreedit(context);
-    }
+    // while the new mode writes into the document — cheap if the panel is already
+    // empty.
+    if (context) clearPreedit(context);
 }
 
 void FunputEngine::onSettingsChanged() {
     if (!composer_.reloadSettings()) return;
-    const bool wasNonPreedit = composer_.nonPreedit();
     composer_.applySettings();
-    applyNonPreeditMode();
     if (fcitx::InputContext *context = instance_->lastFocusedInputContext()) {
         refreshStatus(context);
-        if (composer_.nonPreedit() == wasNonPreedit) return;
-        // The mode just changed under a half-typed word. `applySettings()` dropped
-        // it from the engine, but the preedit showing it belongs to this shell.
-        clearPreedit(context);
     }
 }
 

@@ -37,20 +37,17 @@ bool Composer::reloadSettings() {
 }
 
 void Composer::applySettings() {
-    // Only the gõ tắt table or its switches moved: leave the word, the VI/EN state and
-    // the mode alone. The Settings app saves on every keystroke in its gõ tắt fields,
-    // so a full push here dropped the word being typed into them. See state/applied.h.
+    // Only the gõ tắt table or its switches moved: leave the word and the VI/EN state
+    // alone. The Settings app saves on every keystroke in its gõ tắt fields, so a full
+    // push here dropped the word being typed into them. See state/applied.h.
+    //
+    // Nothing here touches the non-preedit mode: it is not a setting, and what a shell
+    // decided about the client in front of it must survive a reload.
     const bool keepsWord = applied_.keepsComposition(settings_);
     if (!keepsWord) {
         handle_.configure(settings_);
         handle_.setExtraOnsets(settings_.extraOnsets);
         effectiveEnabled_ = settings_.enabled;
-        // Same shape as effectiveEnabled_: the preference is the starting point, and a
-        // shell may override it per input context (a client that cannot report
-        // surrounding text has to stay on the preedit). The `handle_.clear()` below is
-        // what makes a mid-word change safe — the half-typed word is dropped rather
-        // than left for the other mode to finish in a way it cannot.
-        setNonPreedit(settings_.nonPreedit);
         handle_.setEnabled(effectiveEnabled_);
     }
     // The gõ tắt options ride separately from `configure` (see handle.h), and
@@ -65,6 +62,7 @@ void Composer::applySettings() {
     for (const auto &[trigger, expansion] : settings_.shortcuts) {
         handle_.addShortcut(trigger, expansion);
     }
+    // A change to how words compose cannot finish a half-typed one, so it is dropped.
     if (!keepsWord) handle_.clear();
     applied_.remember(settings_);
 }

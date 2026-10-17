@@ -11,17 +11,24 @@ using namespace funput::test;
 
 namespace {
 
-Settings englishOn(bool nonPreedit) {
+Settings englishOn() {
     Settings settings;
     settings.method = Method::Telex;
     settings.enabled = false;
-    settings.nonPreedit = nonPreedit;
     settings.shortcuts = {{"vn", "Việt Nam"}, {"sdt", "0901234567"}};
     return settings;
 }
 
+// The same table on either typing path. Direct typing is the default; a shell is what
+// narrows it to the preedit.
+Composer english(bool nonPreedit) {
+    Composer composer(englishOn());
+    composer.setNonPreedit(nonPreedit);
+    return composer;
+}
+
 std::string typed(bool nonPreedit, const std::string &keys) {
-    Composer composer(englishOn(nonPreedit));
+    Composer composer = english(nonPreedit);
     return typeDocument(composer, keys);
 }
 
@@ -41,12 +48,12 @@ TEST_CASE("English mode expands on punctuation and follows smart case") {
 }
 
 TEST_CASE("Backspace can still correct a trigger in English mode") {
-    Composer preedit(englishOn(false));
+    Composer preedit = english(false);
     type(preedit, "vnx");
     preedit.onKey(bare(keysym::BackSpace));
     CHECK(preedit.onKey(ascii(' ')).text == "Việt Nam ");
 
-    Composer direct(englishOn(true));
+    Composer direct = english(true);
     std::string document;
     for (char c : std::string("vnx")) applyPlan(document, direct.onKey(ascii(c)), c);
     direct.onKey(bare(keysym::BackSpace));
@@ -56,19 +63,19 @@ TEST_CASE("Backspace can still correct a trigger in English mode") {
 }
 
 TEST_CASE("turning either switch off leaves English mode a passthrough") {
-    Settings settings = englishOn(true);
+    Settings settings = englishOn();
     settings.shortcutsInEnglish = false;
     Composer offEnglish(settings);
     CHECK(typeDocument(offEnglish, "vn ") == "vn ");
 
-    settings = englishOn(true);
+    settings = englishOn();
     settings.shortcutsEnabled = false;
     Composer offTable(settings);
     CHECK(typeDocument(offTable, "vn ") == "vn ");
 }
 
 TEST_CASE("applySettings pushes shortcutsInEnglish to the engine") {
-    Settings settings = englishOn(true);
+    Settings settings = englishOn();
     Composer composer(settings);
     CHECK(typeDocument(composer, "vn ") == "Việt Nam ");
     composer.settings().shortcutsInEnglish = false;
@@ -77,7 +84,7 @@ TEST_CASE("applySettings pushes shortcutsInEnglish to the engine") {
 }
 
 TEST_CASE("the flip hotkey stays inert in English with a live table") {
-    Settings settings = englishOn(false);
+    Settings settings = englishOn();
     settings.flipHotkey = FlipHotkey::CtrlShiftZ;
     Composer composer(settings);
     CHECK(composer.onKey(ctrlShift('z')).isNoop());

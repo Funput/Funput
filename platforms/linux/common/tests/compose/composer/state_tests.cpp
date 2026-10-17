@@ -103,8 +103,8 @@ TEST_CASE("gõ tắt expansions survive a settings push") {
     Settings settings;
     settings.method = Method::Telex;
     settings.shortcuts = {{"vn", "Việt Nam"}};
-    settings.nonPreedit = false; // the expansion is asserted as one preedit commit
     Composer composer(settings);
+    composer.setNonPreedit(false); // the expansion is asserted as one preedit commit
 
     // The trigger expands when the word ends.
     const ComposePlan plan = type(composer, "vn ");

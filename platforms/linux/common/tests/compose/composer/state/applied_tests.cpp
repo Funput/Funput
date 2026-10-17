@@ -17,7 +17,6 @@ namespace {
 Composer directTelex() {
     Settings settings;
     settings.method = Method::Telex;
-    settings.nonPreedit = true;
     return Composer(settings);
 }
 
@@ -70,10 +69,7 @@ TEST_CASE("a gõ tắt switch change mid-word leaves the word alone") {
 }
 
 TEST_CASE("the new gõ tắt table is in effect after a push that spared the word") {
-    Settings settings;
-    settings.method = Method::Telex;
-    settings.nonPreedit = false; // the expansion is asserted as one preedit commit
-    Composer composer(settings);
+    Composer composer = composerFor(Method::Telex); // the expansion is one preedit commit
     REQUIRE(typeDocument(composer, "vn ") == "vn ");
 
     composer.settings().shortcuts = {{"vn", "Việt Nam"}};
@@ -97,19 +93,6 @@ TEST_CASE("a change to how words compose still drops the word") {
     CHECK(document == "ba1");
 }
 
-TEST_CASE("switching non-preedit off still drops the word") {
-    Composer composer = directTelex();
-    std::string document;
-    feed(composer, document, "ba");
-    REQUIRE(composer.isComposing());
-
-    composer.settings().nonPreedit = false;
-    composer.applySettings();
-
-    CHECK_FALSE(composer.isComposing());
-    CHECK_FALSE(composer.nonPreedit());
-}
-
 TEST_CASE("a per-client non-preedit veto survives a gõ tắt push") {
     Composer composer = directTelex();
     composer.setNonPreedit(false); // the shell's call for a client that cannot take it
@@ -118,4 +101,19 @@ TEST_CASE("a per-client non-preedit veto survives a gõ tắt push") {
     composer.applySettings();
 
     CHECK_FALSE(composer.nonPreedit());
+}
+
+TEST_CASE("a full push does not decide the mode either") {
+    Composer composer = directTelex();
+    REQUIRE(composer.nonPreedit()); // on from the start, with no setting behind it
+    composer.setNonPreedit(false);
+
+    composer.settings().method = Method::Vni; // not gõ tắt: this one clears the word
+    composer.applySettings();
+    CHECK_FALSE(composer.nonPreedit());
+
+    composer.setNonPreedit(true);
+    composer.settings().method = Method::Telex;
+    composer.applySettings();
+    CHECK(composer.nonPreedit());
 }

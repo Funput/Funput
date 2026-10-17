@@ -18,8 +18,9 @@ Composer telex(bool nonPreedit) {
     Settings settings;
     settings.method = Method::Telex;
     settings.flipHotkey = FlipHotkey::CtrlShiftZ;
-    settings.nonPreedit = nonPreedit;
-    return Composer(settings);
+    Composer composer(settings);
+    composer.setNonPreedit(nonPreedit);
+    return composer;
 }
 
 // A modifier's press: a keysym and no character.
