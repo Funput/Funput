@@ -19,7 +19,8 @@ impl Settings {
     /// which merges into what is already there. So every key the addon owns has to
     /// exist on [`Settings`] even when this app shows no control for it — one that
     /// does not is deleted from the user's settings the next time anything here is
-    /// saved. `non_preedit` is carried for exactly that reason.
+    /// saved. `launch_at_login` is carried for exactly that reason. A key that no
+    /// longer exists on it, like the old `nonPreedit`, is dropped by the same rule.
     pub fn save(&self) {
         let Some(path) = settings_path() else {
             return;

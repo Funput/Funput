@@ -108,8 +108,8 @@ TEST_CASE("the flip hotkey swaps the word for its raw keys") {
     Settings settings;
     settings.method = Method::Telex;
     settings.flipHotkey = FlipHotkey::CtrlShiftZ;
-    settings.nonPreedit = false; // this case is about the preedit the flip rewrites
     Composer composer(settings);
+    composer.setNonPreedit(false); // this case is about the preedit the flip rewrites
 
     type(composer, "tieengs");
     const ComposePlan flipped = composer.onKey(ctrlShift('z'));

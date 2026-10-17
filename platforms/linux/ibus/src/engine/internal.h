@@ -9,6 +9,7 @@
 #define FUNPUT_IBUS_ENGINE_INTERNAL_H
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
 #include <ibus.h>
@@ -63,13 +64,13 @@ void updatePreedit(IBusEngine *engine, const std::string &text);
 // the "nothing usable" answer when the client has never sent surrounding text.
 
 std::string textBeforeCaret(IBusEngine *engine);
+std::optional<std::string> textAfterCaret(IBusEngine *engine);
 bool hasSelection(IBusEngine *engine);
 uint32_t selectedAfter(IBusEngine *engine);
 
-// Decide whether the composer may build the word in the document. Must run after
-// every `applySettings()`, which seeds the mode from the setting alone — and the
-// setting is shared with the Fcitx5 shell, which is the only one that can perform an
-// `Effect::Replace` today.
+// Decide whether the composer may build the word in the document: only once the
+// client has sent surrounding text. Nothing else asks — there is no setting for it,
+// so a settings reload has no say.
 void applyNonPreeditMode(IBusEngine *engine);
 
 // Tell the client this engine wants surrounding text. Per input context, not per

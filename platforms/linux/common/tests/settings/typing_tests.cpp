@@ -48,10 +48,6 @@ TEST_CASE("each field that shapes a word is a difference") {
     other = base;
     other.extraOnsets = ExtraOnsetLetters::all();
     CHECK_FALSE(base.sameTyping(other));
-
-    other = base;
-    other.nonPreedit = !base.nonPreedit;
-    CHECK_FALSE(base.sameTyping(other));
 }
 
 TEST_CASE("the gõ tắt table, its switches and the hotkeys are not a difference") {

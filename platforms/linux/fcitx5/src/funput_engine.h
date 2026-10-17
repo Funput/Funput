@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <fcitx/addonfactory.h>
@@ -48,6 +49,7 @@ FCITX_CONFIGURATION(
 // Reading the focused client. Document helpers and its identity live in
 // funput_client.cpp; the hidden-preedit allowlist lives in hidden_preedit.cpp.
 std::string textBeforeCaret(fcitx::InputContext *context);
+std::optional<std::string> textAfterCaret(fcitx::InputContext *context);
 bool hasSelection(fcitx::InputContext *context);
 uint32_t selectedAfter(fcitx::InputContext *context);
 std::string clientId(fcitx::InputContext *context);
@@ -71,11 +73,10 @@ private:
     void applyPlan(fcitx::InputContext *ic, const funput::ComposePlan &plan);
     void updatePreedit(fcitx::InputContext *ic, const std::string &text);
     void clearPreedit(fcitx::InputContext *ic);
-    // Turn non-preedit on for the focused client: the setting has to ask for it and
-    // the client has to have sent surrounding text this focus, since the mode repairs
-    // the document by reading it back. No-op while a word is composing — the two
-    // modes disagree about where that word lives. Re-applied after every
-    // `applySettings()`, which reseeds the mode from the setting alone.
+    // Decide whether the focused client gets non-preedit: it has to have sent
+    // surrounding text this focus, since the mode repairs the document by reading it
+    // back, and it must not be a client known not to take a repair. No-op while a word
+    // is composing — the two modes disagree about where that word lives.
     void applyNonPreeditMode();
     // Reload settings live when the watcher fires (Settings app wrote the file).
     void onSettingsChanged();

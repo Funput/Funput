@@ -27,6 +27,20 @@ std::string textBeforeCaret(fcitx::InputContext *context) {
     return out;
 }
 
+// The document after the caret, for noticing a caret the user moved. Our own typing
+// never changes it, however late the client reports the text before it. Same
+// character/byte reconciliation as above; nullopt until the client has sent anything.
+std::optional<std::string> textAfterCaret(fcitx::InputContext *context) {
+    const auto &surrounding = context->surroundingText();
+    if (!surrounding.isValid()) return std::nullopt;
+    const std::vector<uint32_t> chars = funput::decodeUtf8(surrounding.text());
+    std::string out;
+    for (size_t i = surrounding.cursor(); i < chars.size(); ++i) {
+        funput::appendUtf8(out, chars[i]);
+    }
+    return out;
+}
+
 // Who this input context is, for the non-preedit verdict to be remembered against.
 //
 // `program()` when it names one app, so a verdict survives clicking away and back. It

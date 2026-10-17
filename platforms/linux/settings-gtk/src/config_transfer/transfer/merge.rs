@@ -52,11 +52,7 @@ pub(super) fn merge_linux(
     if let Some(hotkey) = linux.flip_hotkey.as_deref().and_then(flip_from_key) {
         settings.flip_hotkey = hotkey;
     }
-    // Absent means "the exporter had nothing to say", not "turn it off" — the format's
-    // non-destructive-import rule, and the difference between carrying a setting and
-    // silently resetting it.
-    if let Some(value) = linux.non_preedit {
-        settings.non_preedit = value;
-    }
+    // `nonPreedit` is not read: direct typing stopped being a setting, and an export
+    // that still carries it is ignored like any other key this build does not know.
     summary.applied_platform = true;
 }

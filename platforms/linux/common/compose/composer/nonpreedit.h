@@ -45,6 +45,7 @@
 #define FUNPUT_COMPOSE_NONPREEDIT_H
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -54,10 +55,13 @@
 namespace funput {
 
 struct NonPreeditState {
-    // The mode as it applies right now. `refused` outranks it: once a client has been
-    // caught dropping a delete, a shell re-asserting the mode must not undo that. IBus
-    // re-decides on every keystroke, so without the latch a verdict lasted one key.
-    bool on = false;
+    // The mode as it applies right now. It starts on, because typing into the document
+    // is what Funput does, and a shell narrows it per client: off until the client has
+    // sent surrounding text, off for one known not to work. `refused` outranks it: once
+    // a client has been caught dropping a delete, a shell re-asserting the mode must not
+    // undo that. IBus re-decides on every keystroke, so without the latch a verdict
+    // lasted one key.
+    bool on = true;
     bool refused = false;
     // Which clients that latch has already been spent on — see clients.h. Kept across
     // `reset()`, since a client is the same client whether it was re-focused or merely
@@ -85,6 +89,10 @@ struct NonPreeditState {
     // The document as last seen and the repair last written into it — enough to say
     // what it should read now, and what it would read had the delete been dropped.
     std::string lastDoc;
+    // The text after the caret at the last reading, when there was a comparable one.
+    // Our own typing never changes it, so a change is someone moving the caret — see
+    // `movedOnItsOwn()`.
+    std::optional<std::string> lastAfter;
     std::string repairText;
     uint32_t repairDeleted = 0;
     bool repairAfterAdopt = false;
@@ -105,6 +113,7 @@ struct NonPreeditState {
         selectionAfter = 0;
         inSync = false;
         lastDoc.clear();
+        lastAfter.reset();
         repairText.clear();
         repairDeleted = 0;
         repairAfterAdopt = false;
@@ -122,6 +131,10 @@ struct NonPreeditState {
     // Judge `document` against that record and forget it either way — one reading is
     // all a repair gets. Also remembers `document` as the latest.
     Verdict observe(const std::string &document);
+
+    // Whether the caret was moved from under the word being composed, rather than by
+    // our own typing. Not a verdict on the client: nothing it did was wrong.
+    bool movedOnItsOwn(const std::optional<std::string> &after);
 };
 
 } // namespace funput

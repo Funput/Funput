@@ -47,7 +47,6 @@ pub(super) fn to_document(settings: &Settings) -> ConfigDocument {
             linux: Some(LinuxBlock {
                 toggle_hotkey: Some(hotkey_key(settings.toggle_hotkey).to_string()),
                 flip_hotkey: Some(flip_key(settings.flip_hotkey).to_string()),
-                non_preedit: Some(settings.non_preedit),
             }),
         }),
     }

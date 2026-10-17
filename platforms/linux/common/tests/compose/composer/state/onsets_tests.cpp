@@ -14,9 +14,10 @@ namespace {
 Composer composerWith(Method method, const char *letters) {
     Settings settings;
     settings.method = method;
-    settings.nonPreedit = false;
     settings.extraOnsets = ExtraOnsetLetters::fromId(letters);
-    return Composer(settings);
+    Composer composer(settings);
+    composer.setNonPreedit(false);
+    return composer;
 }
 
 // The word committed by typing `keys` and then a space.

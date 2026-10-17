@@ -4,6 +4,10 @@
 // channel is the Fcitx5-drawn panel preedit. IBus has no equivalent that works;
 // this file is Fcitx5-only.
 //
+// For the same reason the list also keeps these clients off non-preedit
+// (FunputEngine::applyNonPreeditMode): they are known not to take a document repair,
+// so waiting for the mode to be refused would cost them a mangled word first.
+//
 // Adding an app: put its process basename in kHiddenPreedit below.
 // updatePreedit() already draws the panel for anyone on the list. Do not match
 // on capability flags or missing surrounding text — those lie both ways, and

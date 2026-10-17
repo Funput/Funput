@@ -19,7 +19,6 @@ TEST_CASE("reload parses every field from its wire name") {
         "spellCheck": true,
         "autoCapitalize": true,
         "extraOnsets": "jz",
-        "nonPreedit": true,
         "toggleHotkey": "ctrl_space",
         "flipHotkey": "ctrl_shift_x",
         "shortcutsEnabled": false,
@@ -38,7 +37,6 @@ TEST_CASE("reload parses every field from its wire name") {
     CHECK(settings.spellCheck);
     CHECK(settings.autoCapitalize);
     CHECK(settings.extraOnsets.id() == "zj");
-    CHECK(settings.nonPreedit);
     CHECK(settings.toggleHotkey == Hotkey::CtrlSpace);
     CHECK(settings.flipHotkey == FlipHotkey::CtrlShiftX);
     CHECK_FALSE(settings.shortcutsEnabled);
@@ -65,22 +63,14 @@ TEST_CASE("the gõ tắt switches default to on when the file predates them") {
     CHECK(settings.shortcutsInEnglish);
 }
 
-TEST_CASE("direct typing defaults to on when the file predates the key") {
-    // The only users the flip reaches. The Settings app writes every field, so an
-    // install that has ever opened it keeps whatever it already chose.
-    writeSettingsFile(R"({"method": "telex"})");
-
-    Settings settings;
-    REQUIRE(settings.reload());
-    CHECK(settings.nonPreedit);
-}
-
-TEST_CASE("an explicit choice still wins over the default") {
+TEST_CASE("a nonPreedit key left in an older file is ignored") {
+    // Direct typing used to be a setting. A file that still says `false` must neither
+    // fail to load nor read as a change to anything: no one consumes the key now.
     writeSettingsFile(R"({"method": "telex", "nonPreedit": false})");
 
     Settings settings;
     REQUIRE(settings.reload());
-    CHECK_FALSE(settings.nonPreedit);
+    CHECK(settings.method == Method::Telex); // the rest of the file was read
 }
 
 TEST_CASE("tone placement is modern only without an existing settings file") {

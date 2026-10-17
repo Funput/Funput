@@ -36,7 +36,7 @@
 | ✂️ **Gõ tắt** | Bảng viết tắt tự bung, tuỳ chọn khớp cả hoa lẫn thường |
 | 🔄 **Chuyển mã** | Đổi qua lại giữa Unicode dựng sẵn, Unicode tổ hợp, TCVN3 (ABC) và VNI-Windows |
 | ⚙️ **App Cài đặt GTK4** | Dùng chung cho cả hai shell, giao diện libadwaita |
-| 📝 **Gõ thẳng, không gạch chân** | Chữ vào thẳng ô nhập thay vì đợi ở dòng gạch chân — cứu được Chrome. **Mặc định bật.** [Chi tiết](#chế-độ-không-preedit) |
+| 📝 **Gõ thẳng, không gạch chân** | Chữ vào thẳng ô nhập thay vì đợi ở dòng gạch chân — cứu được Chrome. **Luôn bật**; app nào không nhận được thì tự lùi về gạch chân. [Chi tiết](#chế-độ-không-preedit) |
 | 🔁 **Nạp lại cấu hình tức thì** | `inotify` theo dõi `settings.json`, không cần khởi động lại |
 
 ## Yêu cầu
@@ -208,6 +208,15 @@ Cả hai đều tới cùng một process.
   bất cứ lần ghi nào. Đây là phía Chromium/EditContext, Funput không với tới được, nên
   `BlindWrites` đứng dậy sau hai câu trả lời rỗng — trước lần sửa đầu tiên có lệnh xoá. Khung
   chat của Cursor là input DOM thường nên không dính.
+- **IBus không biết tên client, nên một client bỏ lệnh xoá bị thử lại ở mỗi lần focus.** Phán
+  quyết gắn với tên client mà IBus không có tên nào để đưa, và lấy object path của engine làm tên
+  là sai: engine có thể dùng chung cho nhiều app, khi đó một lần từ chối tắt chế độ cho tất cả.
+  Client **luôn** trả lời rỗng thì tự an toàn bên IBus — daemon khử trùng lặp `("",0,0)` nên
+  chế độ không bao giờ bật với nó. Còn client trả lời tài liệu thật nhưng bỏ lệnh xoá thì mất một
+  từ mỗi lần quay lại; chưa có cách đo hay đặt tên đáng tin, và không còn công tắc để tắt.
+- **IBus, ô trống ngay sau một ô trống: từ đầu tiên có gạch chân.** Daemon không chuyển payload
+  trùng với lần trước, nên engine không biết client đã lên tiếng cho tới khi tài liệu đổi; từ thứ
+  hai trở đi thì chữ vào thẳng.
 - **Phím điều khiển được phân loại theo ký tự C0, không theo keysym.** Cả Fcitx5 lẫn IBus đều
   ánh xạ Return → CR, Tab → HT, Escape → ESC, nên `classify()` phải loại chúng ra *trước* phép
   thử ranh giới từ — `isBoundary()` cố tình nhận `\t \n \r` vì
@@ -299,9 +308,10 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       state.cpp               Settings, VI/EN, và các lối thoát không phải phím
       nonpreedit.h            Chế độ commit-khi-gõ, và cách đánh giá một client
       nonpreedit.cpp          Composer làm gì với đánh giá đó
+      nonpreedit/backspace.cpp  Ai xoá một ký tự đã nằm trong tài liệu, và mở lại từ đã xong
       nonpreedit/clients.h    Phán quyết đó thuộc về client nào
       nonpreedit/verdict.h    Verdict, và client không bao giờ cho xem tài liệu
-      nonpreedit/observe.h    So ba chuỗi sau một lần sửa
+      nonpreedit/observe.h    So ba chuỗi sau một lần sửa, và nhận ra caret bị người dùng dời
       nonpreedit/selection.h  Hậu tố gợi ý sau caret (Sheets/Excel)
   settings/               ~/.config/Funput/settings.json
     settings.h              Model mọi shell đều đọc, gồm cả công tắc gõ tắt
@@ -447,14 +457,16 @@ tự nối tay. Nút thì không cần: `clicked` không bao giờ nổ vì mộ
 
 ### Chế độ không preedit
 
-**Mặc định bật**; công tắc “Gõ thẳng, không gạch chân” nằm ở trang **Tổng quan** của app Cài
-đặt, hoặc đặt
-thẳng `"nonPreedit": false` trong `~/.config/Funput/settings.json`. Kiểu nào thì watcher cũng
-nhận ra ngay, không cần khởi động lại. **Cả hai shell đều thi hành nó.**
+**Luôn bật**, không còn là một thiết lập: app Cài đặt không có công tắc cho nó và `settings.json`
+không còn khoá nào. Thay vào đó mỗi client được quyết định riêng — chế độ bật khi client đã gửi
+surrounding text, và **tự lùi về preedit** khi không: client chưa lên tiếng, client nằm trong
+danh sách biết là không chạy được, hay client bị bắt quả tang bỏ lệnh xoá. **Cả hai shell đều
+thi hành nó.**
 
-Chỉ **bản cài mới** thừa hưởng mặc định đó. App Cài đặt ghi đè nguyên `settings.json` từ struct
-của nó, nên máy nào đã từng mở Cài đặt thì khoá `nonPreedit` đã nằm sẵn trong file và lựa chọn
-cũ được giữ nguyên — mặc định chỉ áp khi khoá vắng mặt.
+Khoá `"nonPreedit"` còn sót trong một `settings.json` cũ bị bỏ qua, kể cả khi là `false`; app Cài
+đặt và addon đều xoá nó ở lần lưu kế tiếp. Bỏ công tắc cũng là bỏ lối thoát cho một app mà chế
+độ này không chạy được, nên các lưới an toàn bên dưới — phán quyết, `BlindWrites`, danh sách
+client đã biết và chốt chặn dời caret — phải tự lo thay người dùng.
 
 Thay vì đỗ từ đang gõ trong một preedit, mỗi phím commit thẳng vào tài liệu rồi sửa lại thứ phím
 trước đã viết — `Effect::Replace` mang theo “xoá N ký tự, rồi commit cái này”. Đó đúng là chỉ thị
@@ -567,6 +579,27 @@ GNOME/Wayland mọi client đều trả lời `gnome-shell` — nhớ cái tên 
 
 Cái giá là việc phát hiện chậm một nhịp, nên từ đầu tiên vẫn bị hỏng trước khi chế độ rút lui.
 Bắt sớm hơn nghĩa là phải ghi chữ dò vào tài liệu của người dùng, và điều đó không nằm trên bàn.
+
+#### Hai chốt chặn không dựa vào phán quyết
+
+- **Client đã biết là không chạy được thì không bao giờ được thử.** Shell Fcitx5 đã có danh sách
+  client tự giấu preedit (`hidden_preedit.cpp`, hiện là họ WPS), và `applyNonPreeditMode()` đọc
+  luôn danh sách đó: chờ chế độ bị từ chối là mất một từ nát (`nguyen64` ra `nguyenênễn`), một cái
+  giá không còn ai gánh khi công tắc đã bỏ. Danh sách chỉ gồm tên tiến trình, không bao giờ cờ
+  capability hay việc thiếu surrounding text — cả hai nói dối, và sẽ kéo cả những client đang chạy
+  tốt vào. IBus không biết tên client nên không có đường tương đương.
+- **Caret bị dời giữa từ mà không ai báo.** Qt, Chromium và Firefox chỉ reset input method khi một
+  cú click xảy ra lúc đang có preedit, mà chế độ này không có preedit. Engine vẫn giữ `tieng`;
+  phím dấu kế tiếp sẽ xoá ký tự trước caret mới — chữ Funput chưa từng viết. Dấu hiệu duy nhất đáng
+  tin là phần chữ **sau** caret: gõ của chính ta không bao giờ đổi nó, kể cả khi client trả lời
+  muộn, nên nó đổi nghĩa là caret đã đi chỗ khác. Khi đó từ đang soạn bị bỏ và phím đi thẳng như
+  đã gõ (`NonPreeditState::movedOnItsOwn`, `nonpreedit/observe.h`). Lỗi theo hướng này chỉ mất dấu
+  của một từ; chốt chặn im lặng bất cứ khi nào không chắc: chưa có lần đọc nào, client chưa trả lời
+  từ phím trước, hay đang có vùng chọn (gợi ý Sheets/thanh địa chỉ là chữ sau caret đổi theo từng
+  phím và bị chính sửa chữa của ta xoá đi). Đây **không** phải phán quyết về client, nên không đụng
+  tới `refused`. Bản đề xuất rộng hơn — coi mọi lần đọc không khớp ba chuỗi là caret bị dời — đã
+  bị loại: Chrome chỉ trả lời 61% và hay đọc muộn một phím, nên nó sẽ phá chế độ ở đúng client mà
+  chế độ này sinh ra để phục vụ.
 
 #### Về phía IBus
 
