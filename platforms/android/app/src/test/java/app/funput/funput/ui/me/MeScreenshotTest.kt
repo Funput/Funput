@@ -1,4 +1,4 @@
-package app.funput.funput.ui.about
+package app.funput.funput.ui.me
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -25,21 +25,21 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** The about page at its top and its end, and the licences page, in every appearance and font scale. */
+/** The "Tôi" tab at its top and its end, and the licences page, in every appearance and font scale. */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [SCREENSHOT_SDK], qualifiers = "vi-" + ScreenshotDevices.PHONE)
-class AboutScreenshotTest(private val variant: ScreenshotVariant) {
+class MeScreenshotTest(private val variant: ScreenshotVariant) {
     @get:Rule
     val compose = createComposeRule()
 
     @Test
-    fun top() = capture("about-top") { AboutScreen(versionName = "1.2026.70", onOpenLink = {}) }
+    fun top() = capture("me-top") { MeScreen(versionName = "1.2026.70", onOpenLink = {}) }
 
     @Test
-    fun end() = capture("about-end", prepare = {
+    fun end() = capture("me-end", prepare = {
         onNodeWithTag(FunputScreenListTag).performScrollToNode(hasText("Được xây dựng cho cộng đồng"))
-    }) { AboutScreen(versionName = "1.2026.70", onOpenLink = {}) }
+    }) { MeScreen(versionName = "1.2026.70", onOpenLink = {}) }
 
     @Test
     fun licenses() = capture("licenses", prepare = { waitForText("SCOWL", substring = true) }) {

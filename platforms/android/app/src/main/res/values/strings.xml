@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="app_name">Funput</string>
-    <string name="settings_title">Cài đặt</string>
     <string name="settings_keyboard_hero_hint">Chạm để đổi giao diện bàn phím</string>
     <string name="settings_section_typing">Gõ tiếng Việt</string>
-    <string name="settings_section_layout">Bố cục bàn phím</string>
+    <string name="settings_section_layout">Bố cục và kích thước</string>
     <string name="settings_section_smart">Thông minh</string>
     <string name="settings_section_feedback">Phản hồi khi chạm</string>
     <string name="settings_smart_gestures_title">Cử chỉ thông minh</string>
@@ -19,7 +18,7 @@
     <string name="settings_keyboard_setup_step_select">Chọn Funput khi gõ</string>
     <string name="settings_input_method_title">Kiểu gõ</string>
     <string name="settings_number_row_title">Hàng phím số</string>
-    <string name="settings_number_row_summary">Hiển thị 0–9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.</string>
+    <string name="settings_number_row_summary">Hiển thị các số từ 0 đến 9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.</string>
     <string name="settings_key_size_title">Kích thước phím</string>
     <string name="settings_keyboard_mode_title">Chế độ bàn phím</string>
     <string name="keyboard_mode_standard">Thường</string>
@@ -177,7 +176,7 @@
     <string name="settings_clipboard_expiry_hour">1 giờ</string>
     <string name="settings_clipboard_expiry_day">1 ngày</string>
     <string name="settings_clipboard_expiry_week">1 tuần</string>
-    <string name="settings_clipboard_expiry_hour_summary">An toàn nhất — mật khẩu lỡ sao chép không nằm lại lâu.</string>
+    <string name="settings_clipboard_expiry_hour_summary">An toàn nhất, mật khẩu lỡ sao chép không nằm lại lâu.</string>
     <string name="settings_clipboard_expiry_day_summary">Giữ qua một ngày làm việc.</string>
     <string name="settings_clipboard_expiry_week_summary">Giữ lâu nhất. Cân nhắc nếu bạn hay sao chép thông tin nhạy cảm.</string>
     <string name="settings_clipboard_clear">Xoá tất cả</string>
@@ -198,8 +197,8 @@
     <string name="settings_data_clipboard_summary">Kể cả những mục đã ghim.</string>
     <string name="settings_website_title">Website</string>
     <string name="settings_website_url">https://funput.app/</string>
-    <string name="about_title">Giới thiệu</string>
-    <string name="nav_settings">Cài đặt</string>
+    <string name="nav_keyboard">Bàn phím</string>
+    <string name="nav_shortcuts">Gõ tắt</string>
     <string name="nav_appearance">Giao diện</string>
     <string name="appearance_section_app">Ứng dụng</string>
     <string name="appearance_section_keyboard">Bàn phím</string>
@@ -207,7 +206,7 @@
     <string name="appearance_slot_assigning">Đang gán cho</string>
     <string name="appearance_slot_light_named">Sáng · %1$s</string>
     <string name="appearance_slot_dark_named">Tối · %1$s</string>
-    <string name="nav_about">Giới thiệu</string>
+    <string name="nav_me">Tôi</string>
     <string name="about_version">Phiên bản %1$s</string>
     <string name="about_section_discovery">Tìm hiểu</string>
     <string name="about_website_summary">Tin tức và thông tin về Funput</string>
@@ -235,7 +234,6 @@
     <string name="licenses_font">Phông chữ Be Vietnam Pro</string>
     <string name="licenses_icons">Biểu tượng Phosphor</string>
     <string name="shortcuts_title">Gõ tắt</string>
-    <string name="shortcuts_settings_summary">Thay chữ tắt bằng nội dung dài hơn.</string>
     <string name="shortcuts_options">Tuỳ chọn</string>
     <string name="shortcuts_add">Thêm gõ tắt</string>
     <string name="shortcuts_enabled">Bật gõ tắt</string>
@@ -243,8 +241,8 @@
     <string name="shortcuts_reopen_hint">Thay đổi có hiệu lực khi mở lại bàn phím Funput.</string>
     <string name="shortcuts_search">Tìm chữ tắt hoặc nội dung</string>
     <string name="shortcuts_clear_search">Xoá tìm kiếm</string>
-    <string name="shortcuts_list_count">Danh sách · %1$d mục</string>
-    <string name="shortcuts_result_count">Kết quả · %1$d/%2$d mục</string>
+    <string name="shortcuts_list_count">%1$d gõ tắt</string>
+    <string name="shortcuts_result_count">Tìm thấy %1$d trên %2$d gõ tắt</string>
     <string name="shortcuts_empty_title">Chưa có gõ tắt</string>
     <string name="shortcuts_empty_body">Gõ ít hơn với những nội dung thường dùng.\nVí dụ: vn → việt nam</string>
     <string name="shortcuts_no_result_title">Không tìm thấy gõ tắt</string>

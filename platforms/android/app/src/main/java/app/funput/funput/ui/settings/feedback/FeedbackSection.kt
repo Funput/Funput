@@ -11,6 +11,7 @@ import app.funput.funput.ui.kit.icons.FunputIcons
 import app.funput.funput.ui.kit.rows.FunputRowDefaults
 import app.funput.funput.ui.kit.rows.ToggleRow
 import app.funput.funput.ui.kit.theme.FunputTint
+import app.funput.funput.ui.settings.sectionTitle
 
 /** What a key press feels and sounds like: vibration and key sounds, one pink group. */
 @Composable
@@ -21,7 +22,7 @@ internal fun FeedbackSection(
     onSoundsChanged: (Boolean) -> Unit,
 ) {
     FunputSection(
-        title = stringResource(R.string.settings_section_feedback),
+        title = sectionTitle(R.string.settings_section_feedback),
         modifier = Modifier.testTag(FeedbackSettingsSectionTag),
     ) {
         ToggleRow(

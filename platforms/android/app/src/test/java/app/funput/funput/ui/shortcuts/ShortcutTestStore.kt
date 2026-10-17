@@ -75,7 +75,7 @@ internal fun ComposeContentTestRule.setShortcutsContent(
         LaunchedEffect(screenModel) { screenModel.reload() }
         FunputUiTheme(isDark = isDark) {
             CompositionLocalProvider(LocalGlassTier provides GlassTier.SOLID) {
-                ShortcutsScreen(screenModel, onBack = {})
+                ShortcutsScreen(screenModel)
             }
         }
     }

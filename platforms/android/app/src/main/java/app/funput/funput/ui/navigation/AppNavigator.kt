@@ -22,8 +22,11 @@ internal class AppNavigator internal constructor(
 ) {
     private val stacks = mutableStateMapOf<TopLevelDestination, List<AppDestination>>().apply {
         TopLevelDestination.entries.forEach { tab ->
-            val restored = initialStacks[tab]?.takeIf { stack -> stack.isNotEmpty() }
-            put(tab, restored ?: listOf(AppDestination.rootOf(tab)))
+            val root = AppDestination.rootOf(tab)
+            // A stack saved by an older version can lose its root and keep a deeper screen, which
+            // would leave back with nowhere to go inside the tab: the root goes back in front.
+            val restored = initialStacks[tab].orEmpty().filter { destination -> destination != root }
+            put(tab, listOf(root) + restored)
         }
     }
 

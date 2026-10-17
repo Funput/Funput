@@ -10,11 +10,11 @@ import app.funput.funput.ui.kit.R
  * in `funput-ui/icons.txt`. Choosing a different drawing for a meaning is a change here only.
  */
 object FunputIcons {
-    /** Settings tab, unselected. */
-    @DrawableRes val Settings: Int = R.drawable.ph_gear_six
+    /** Keyboard tab, selected. Unselected it is [Keyboard]. */
+    @DrawableRes val KeyboardSelected: Int = R.drawable.ph_keyboard_fill
 
-    /** Settings tab, selected. */
-    @DrawableRes val SettingsSelected: Int = R.drawable.ph_gear_six_fill
+    /** Gõ tắt tab, selected. Unselected it is [Shortcuts]. */
+    @DrawableRes val ShortcutsSelected: Int = R.drawable.ph_lightning_fill
 
     /** Appearance tab, unselected. */
     @DrawableRes val Appearance: Int = R.drawable.ph_palette
@@ -22,11 +22,11 @@ object FunputIcons {
     /** Appearance tab, selected. */
     @DrawableRes val AppearanceSelected: Int = R.drawable.ph_palette_fill
 
-    /** About tab, unselected. */
-    @DrawableRes val About: Int = R.drawable.ph_info
+    /** "Tôi" tab, unselected. */
+    @DrawableRes val Me: Int = R.drawable.ph_user_circle
 
-    /** About tab, selected. */
-    @DrawableRes val AboutSelected: Int = R.drawable.ph_info_fill
+    /** "Tôi" tab, selected. */
+    @DrawableRes val MeSelected: Int = R.drawable.ph_user_circle_fill
 
     /** Going back one screen. */
     @DrawableRes val Back: Int = R.drawable.ph_caret_left
@@ -79,6 +79,9 @@ object FunputIcons {
     /** Returning to the letters after punctuation. */
     @DrawableRes val ReturnToLetters: Int = R.drawable.ph_arrow_u_up_left
 
+    /** Voice input. */
+    @DrawableRes val Microphone: Int = R.drawable.ph_microphone
+
     /** Vibration on key press. */
     @DrawableRes val Haptics: Int = R.drawable.ph_vibrate
 
@@ -99,6 +102,9 @@ object FunputIcons {
 
     /** Clearing a history. */
     @DrawableRes val Clear: Int = R.drawable.ph_broom
+
+    /** What Funput keeps on the device. */
+    @DrawableRes val Data: Int = R.drawable.ph_database
 
     /** A keyboard shortcut (hotkey). */
     @DrawableRes val Hotkey: Int = R.drawable.ph_command

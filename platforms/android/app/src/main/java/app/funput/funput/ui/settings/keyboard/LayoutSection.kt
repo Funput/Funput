@@ -19,6 +19,7 @@ import app.funput.funput.ui.kit.rows.SegmentedRow
 import app.funput.funput.ui.kit.rows.ToggleRow
 import app.funput.funput.ui.kit.theme.FunputTint
 import app.funput.funput.ui.settings.label
+import app.funput.funput.ui.settings.sectionTitle
 
 /**
  * The keyboard's shape and place: placement mode (with its own controls when elevated or
@@ -39,7 +40,7 @@ internal fun LayoutSection(
 ) {
     val divider = @Composable { FunputDivider(startInset = FunputRowDefaults.IconDividerInset) }
     FunputSection(
-        title = stringResource(R.string.settings_section_layout),
+        title = sectionTitle(R.string.settings_section_layout),
         modifier = Modifier.testTag(LayoutSettingsSectionTag),
     ) {
         LinkRow(

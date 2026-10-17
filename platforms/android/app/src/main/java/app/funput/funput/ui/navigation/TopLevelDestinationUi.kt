@@ -22,24 +22,29 @@ internal data class TopLevelDestinationUi(
 
 internal val TopLevelDestination.ui: TopLevelDestinationUi
     get() = when (this) {
-        TopLevelDestination.SETTINGS -> TopLevelDestinationUi(
-            label = R.string.nav_settings,
-            icon = FunputIcons.Settings,
-            selectedIcon = FunputIcons.SettingsSelected,
+        TopLevelDestination.KEYBOARD -> TopLevelDestinationUi(
+            label = R.string.nav_keyboard,
+            icon = FunputIcons.Keyboard,
+            selectedIcon = FunputIcons.KeyboardSelected,
+        )
+        TopLevelDestination.SHORTCUTS -> TopLevelDestinationUi(
+            label = R.string.nav_shortcuts,
+            icon = FunputIcons.Shortcuts,
+            selectedIcon = FunputIcons.ShortcutsSelected,
         )
         TopLevelDestination.APPEARANCE -> TopLevelDestinationUi(
             label = R.string.nav_appearance,
             icon = FunputIcons.Appearance,
             selectedIcon = FunputIcons.AppearanceSelected,
         )
-        TopLevelDestination.ABOUT -> TopLevelDestinationUi(
-            label = R.string.nav_about,
-            icon = FunputIcons.About,
-            selectedIcon = FunputIcons.AboutSelected,
+        TopLevelDestination.ME -> TopLevelDestinationUi(
+            label = R.string.nav_me,
+            icon = FunputIcons.Me,
+            selectedIcon = FunputIcons.MeSelected,
         )
     }
 
-/** The three tabs as FunputUI tab bar items, in [TopLevelDestination] order. */
+/** The tabs as FunputUI tab bar items, in [TopLevelDestination] order. */
 @Composable
 internal fun appTabs(): List<FunputTab> = TopLevelDestination.entries.map { tab ->
     val ui = tab.ui

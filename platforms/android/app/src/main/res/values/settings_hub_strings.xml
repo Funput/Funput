@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The keyboard hub: its list of pages and the one sentence under each page's row. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="settings_all_title">Tất cả cài đặt</string>
+
+    <string name="settings_summary_all_off">Đang tắt tất cả</string>
+    <string name="settings_summary_all_on">Đang bật tất cả</string>
+    <string name="settings_summary_some_on">Đang bật %1$d trên %2$d tính năng</string>
+    <string name="settings_summary_enabled">Đang bật %1$s</string>
+    <string name="settings_summary_pair">%1$s và %2$s</string>
+    <string name="settings_summary_list_separator">", "</string>
+
+    <string name="settings_summary_tone_modern">Đặt dấu kiểu mới</string>
+    <string name="settings_summary_tone_traditional">Đặt dấu kiểu cũ</string>
+    <string name="settings_summary_typing_extra_onsets">%1$s, cho phép %2$s đầu từ</string>
+
+    <string name="settings_summary_layout">Chế độ %1$s, phím cao %2$d%%</string>
+    <string name="settings_summary_mode_standard">thường</string>
+    <string name="settings_summary_mode_elevated">trên cao</string>
+    <string name="settings_summary_mode_one_handed">một tay</string>
+
+    <string name="settings_summary_haptics">rung</string>
+    <string name="settings_summary_sounds">âm thanh</string>
+
+    <string name="settings_summary_clipboard_on">Lưu lịch sử trong %1$s</string>
+    <string name="settings_summary_clipboard_off">Không lưu lịch sử</string>
+
+    <string name="settings_summary_hardware_show">hiện bàn phím trên màn hình</string>
+    <string name="settings_summary_hardware_hotkey">phím tắt Alt + Space</string>
+</resources>
