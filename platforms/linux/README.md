@@ -572,10 +572,18 @@ không riêng khi đổi focus — chú thích trong `deactivate()` nói đúng 
 thay đổi capability sẽ xoá phán quyết chỉ một hai phím sau khi nó được đưa ra. Editor của Cursor
 là client như vậy: chế độ tự bật lại rồi phá tiếp từ sau, lặp vô hạn thay vì hỏng đúng một lần.
 Bộ nhớ nằm ở `compose/composer/nonpreedit/clients.h`, giới hạn tám client gần nhất. Tên client
-là `InputContext::program()`, và khi frontend không phân giải được thì là uuid của chính input
-context — hẹp hơn nhưng đúng phần cần thiết, vì một lần re-activate do capability đổi vẫn là
-cùng context ấy. **Tên rỗng không bao giờ được nhớ**: shell IBus không có tên để đưa, và trên
-GNOME/Wayland mọi client đều trả lời `gnome-shell` — nhớ cái tên đó là tắt chế độ cho tất cả.
+là `InputContext::program()` khi nó chỉ đúng một app. **Tên rỗng không bao giờ được nhớ**: shell
+IBus không có tên để đưa, và trên GNOME/Wayland mọi client đều trả lời `gnome-shell` — nhớ cái
+tên đó là tắt chế độ cho tất cả.
+
+Uuid của input context từng được dùng thế chỗ, như một cái tên "hẹp hơn", và đó là một sai lầm đo
+được: `DebugInfo` của Fcitx5 trên GNOME/Wayland ghi `Group [wayland:] has 1 InputContext(s)`
+(`program:gnome-shell frontend:ibus`), vì gnome-shell giữ **một** context cho mọi app và chỉ
+focus lại nó. Một phán quyết ghi dưới uuid đó tắt chế độ cho cả Chrome cho tới khi khởi động lại
+Fcitx5 — nhìn từ ngoài là "bị gạch chân rồi không bao giờ trở lại". Giờ `clientId()` trả rỗng, và
+`activate()` chỉ gọi `onFocusChanged()` ở **focus-in thật** (`InputContextFocusIn`), không phải ở
+mỗi lần capability đổi. Hai việc đó cùng giữ được cả hai điều cần: phán quyết sống sót qua việc
+Cursor đổi capability liên tục, và chết cùng lần focus nó được đưa ra.
 
 Cái giá là việc phát hiện chậm một nhịp, nên từ đầu tiên vẫn bị hỏng trước khi chế độ rút lui.
 Bắt sớm hơn nghĩa là phải ghi chữ dò vào tài liệu của người dùng, và điều đó không nằm trên bàn.

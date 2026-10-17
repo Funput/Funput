@@ -41,7 +41,8 @@ std::optional<std::string> textAfterCaret(fcitx::InputContext *context) {
     return out;
 }
 
-// Who this input context is, for the non-preedit verdict to be remembered against.
+// Who this client is, for the non-preedit verdict to be remembered against — or empty
+// when nothing names one app.
 //
 // `program()` when it names one app, so a verdict survives clicking away and back. It
 // is documented as possibly empty, and on GNOME/Wayland it is worse than empty: every
@@ -51,22 +52,15 @@ std::optional<std::string> textAfterCaret(fcitx::InputContext *context) {
 // mistake this whole mechanism is built to avoid. Excluded by name rather than guessed
 // at, the same way hidden_preedit.cpp names the clients it is about.
 //
-// Either way it falls back to the input context's own uuid. That is narrower — a real
-// focus-out and back may build a new context — but it is the part that matters here:
-// Fcitx5 calls `activate()` on a capability change as well as on a focus change, and
-// that keeps the same context, so a client that churns capabilities (Cursor's editor
-// does, constantly) can no longer wipe a verdict it has already earned.
+// The input context's uuid is not a way out. It used to stand in, as the narrower
+// name, and it is not narrower: Fcitx5's own debug info on that desktop reads
+// `Group [wayland:] has 1 InputContext(s)`, because gnome-shell holds one context for
+// every app and refocuses it. A verdict filed under that uuid disabled the mode for
+// Chrome too, until Fcitx5 restarted. Empty means a fresh question at every focus,
+// the way IBus has it, and a verdict then lasts as long as the focus it was reached in.
 std::string clientId(fcitx::InputContext *context) {
     const std::string &program = context->program();
-    if (!program.empty() && program != "gnome-shell") return program;
-    std::string hex;
-    hex.reserve(context->uuid().size() * 2);
-    for (const uint8_t byte : context->uuid()) {
-        static constexpr char kDigits[] = "0123456789abcdef";
-        hex.push_back(kDigits[byte >> 4]);
-        hex.push_back(kDigits[byte & 0x0F]);
-    }
-    return hex;
+    return program == "gnome-shell" ? std::string() : program;
 }
 
 // Is the client holding a selection? Backspace must not take that key over, and
