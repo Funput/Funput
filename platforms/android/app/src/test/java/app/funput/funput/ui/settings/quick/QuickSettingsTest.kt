@@ -52,7 +52,13 @@ class QuickSettingsTest {
 
     @Test
     fun `there are six tiles, each its own setting`() {
-        assertEquals(6, QuickSetting.entries.size)
+        assertEquals(
+            listOf(
+                QuickSetting.HAPTICS, QuickSetting.SOUNDS, QuickSetting.AUTO_CAPITALIZE,
+                QuickSetting.SUGGESTIONS, QuickSetting.NUMBER_ROW, QuickSetting.KEY_PREVIEWS,
+            ),
+            QuickSetting.entries,
+        )
         assertEquals(6, QuickSetting.entries.map { it.title }.distinct().size)
         assertEquals(6, QuickSetting.entries.map { it.accessibilityTitle }.distinct().size)
     }
@@ -65,7 +71,7 @@ class QuickSettingsTest {
         assertEquals(
             mapOf(
                 "haptics" to false, "sounds" to true, "capitalization" to false,
-                "suggestions" to false, "numberRow" to true, "gestures" to false,
+                "suggestions" to false, "numberRow" to true, "previews" to false,
             ),
             writes,
         )

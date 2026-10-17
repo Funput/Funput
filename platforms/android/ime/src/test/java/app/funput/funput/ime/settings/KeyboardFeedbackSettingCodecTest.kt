@@ -41,4 +41,11 @@ class KeyboardFeedbackSettingCodecTest {
             KeyboardFeedbackSettingCodec.decode(true, false, hapticStrength = "unknown").hapticStrength,
         )
     }
+
+    @Test
+    fun `key previews stay on until turned off`() {
+        assertEquals(true, KeyboardFeedbackSettingCodec.decode(true, false).keyPreviewsEnabled)
+        val off = KeyboardFeedbackSettingCodec.decode(true, false, keyPreviewsEnabled = false)
+        assertEquals(false, off.keyPreviewsEnabled)
+    }
 }

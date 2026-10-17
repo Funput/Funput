@@ -52,8 +52,10 @@ internal fun LazyListScope.settingsPageItems(
             FeedbackSection(
                 hapticStrength = state.activeHapticStrength,
                 soundsEnabled = state.soundsEnabled,
+                keyPreviewsEnabled = state.keyPreviewsEnabled,
                 onOpenHapticStrength = { onOpenPicker(SettingsPicker.HAPTIC_STRENGTH) },
                 onSoundsChanged = state.onSoundsChanged,
+                onKeyPreviewsChanged = state.onKeyPreviewsChanged,
             )
         }
         SettingsPage.CLIPBOARD -> item(key = "clipboard") {

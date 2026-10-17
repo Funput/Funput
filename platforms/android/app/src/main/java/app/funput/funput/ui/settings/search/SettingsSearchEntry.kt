@@ -43,6 +43,8 @@ private val rows = listOf(
     entry(R.string.settings_haptics_title, FunputIcons.Haptics, SettingsPage.FEEDBACK,
         "haptic", "vibration", "cuong do", "strength", "nhe", "manh"),
     entry(R.string.settings_sounds_title, FunputIcons.Sound, SettingsPage.FEEDBACK, "sound", "click", "tieng"),
+    entry(R.string.settings_key_previews_title, FunputIcons.KeyPreview, SettingsPage.FEEDBACK,
+        "preview", "phong to", "popup"),
     entry(R.string.settings_clipboard_enabled_title, FunputIcons.Clipboard, SettingsPage.CLIPBOARD,
         "clipboard", "copy", "sao chep", "dan", "paste"),
     entry(R.string.speech_settings_title, FunputIcons.Microphone, SettingsPage.SPEECH,

@@ -45,7 +45,7 @@ trình tạo chủ đề, ảnh nền, Tôi (trước là Giới thiệu), Giấ
 | Tab Tin tức | Làm như iOS (PR #570): JSON Feed của funput.app/blog, cache offline, kéo để tải lại, mở bài bằng Custom Tabs. APK thêm quyền `INTERNET`, cũng cần cho đồng bộ sau này; bàn phím không gọi mạng | Không làm để giữ APK không có quyền mạng |
 | Dữ liệu | Mở từ tab Tôi, tên "Dữ liệu" (Android chưa có khôi phục mặc định) | Đặt ở hub như các trang khác |
 | Tìm cài đặt | Ô tìm ở đầu tab Bàn phím, bỏ dấu và đổi `đ` thành `d` trước khi so (PR #569 của iOS) | Không có tìm kiếm |
-| Cài đặt nhanh | Kiểu gõ dạng segmented và 6 ô bật tắt; ô "Cử chỉ" thay ô "Xem trước" của iOS vì Android không có cài đặt đó | Bỏ qua: khác iOS |
+| Cài đặt nhanh | Kiểu gõ dạng segmented và 6 ô giống hệt iOS: Rung (mở bảng chọn mức), Âm thanh, Viết hoa, Gợi ý từ, Hàng số, Xem trước (cài đặt Xem trước phím mới, mặc định bật) | Bỏ qua: khác iOS |
 | Mức rung | Tắt, Nhẹ, Trung bình, Mạnh như iOS (PR #600): cùng một cú click, độ lớn 0,55, 0,75 và 1, mặc định Trung bình | Hiệu ứng có sẵn tick, click, heavy click: mỗi hãng tự dựng, trên S21 Ultra heavy click rung yếu hơn click |
 | Kiểm tra giao diện | Bằng tay trên máy thật | Ảnh golden trong CI: mỗi thay đổi giao diện tốn một vòng chụp lại trên Linux |
 

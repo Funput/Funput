@@ -27,6 +27,13 @@ internal class KeyboardFeedbackController(
             KeyboardHaptics.strength = value
         }
 
+    /** Whether pressed keys show their enlarged preview. Only the letters surface has them. */
+    var keyPreviewsEnabled: Boolean
+        get() = keyboardSurface.keyPreviewsEnabled
+        set(value) {
+            keyboardSurface.keyPreviewsEnabled = value
+        }
+
     var soundsEnabled: Boolean
         get() = keyboardSurface.isSoundEffectsEnabled
         set(value) {

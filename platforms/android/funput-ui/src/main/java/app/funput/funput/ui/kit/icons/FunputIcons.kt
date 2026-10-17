@@ -74,6 +74,9 @@ object FunputIcons {
     /** Vibration on key press. */
     @DrawableRes val Haptics: Int = R.drawable.ph_vibrate
 
+    /** The enlarged preview over a pressed key. */
+    @DrawableRes val KeyPreview: Int = R.drawable.ph_magnifying_glass_plus
+
     /** Key sounds. */
     @DrawableRes val Sound: Int = R.drawable.ph_speaker_high
 

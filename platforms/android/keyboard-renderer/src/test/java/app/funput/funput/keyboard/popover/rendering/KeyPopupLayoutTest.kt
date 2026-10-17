@@ -12,16 +12,19 @@ import org.junit.Test
 
 class KeyPopupLayoutTest {
     @Test
-    fun `printable keys are eligible outside secure editors`() {
-        assertTrue(KeyPopupLayout.isEligible(key(KeyRole.CHARACTER, "a"), secure = false))
-        assertTrue(KeyPopupLayout.isEligible(key(KeyRole.VNI_MODIFIER, "1"), secure = false))
-        assertTrue(KeyPopupLayout.isEligible(key(KeyRole.PUNCTUATION, "."), secure = false))
-        assertFalse(KeyPopupLayout.isEligible(key(KeyRole.BACKSPACE, "Backspace"), secure = false))
+    fun `printable keys are eligible while previews show`() {
+        assertTrue(KeyPopupLayout.isEligible(key(KeyRole.CHARACTER, "a"), showsPreviews = true))
+        assertTrue(KeyPopupLayout.isEligible(key(KeyRole.VNI_MODIFIER, "1"), showsPreviews = true))
+        assertTrue(KeyPopupLayout.isEligible(key(KeyRole.PUNCTUATION, "."), showsPreviews = true))
+        assertFalse(KeyPopupLayout.isEligible(key(KeyRole.BACKSPACE, "Backspace"), showsPreviews = true))
+        assertFalse(KeyPopupLayout.isEligible(key(KeyRole.CHARACTER, "a"), showsPreviews = false))
     }
 
     @Test
-    fun `secure editors suppress printable key popups`() {
-        assertFalse(KeyPopupLayout.isEligible(key(KeyRole.CHARACTER, "a"), secure = true))
+    fun `previews show only when wanted, and never in secure editors`() {
+        assertTrue(KeyPopupLayout.showsPreviews(secure = false, enabled = true))
+        assertFalse(KeyPopupLayout.showsPreviews(secure = false, enabled = false))
+        assertFalse(KeyPopupLayout.showsPreviews(secure = true, enabled = true))
     }
 
     @Test

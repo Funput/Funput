@@ -16,15 +16,17 @@ import app.funput.funput.ui.kit.theme.FunputTint
 import app.funput.funput.ui.settings.sectionTitle
 
 /**
- * What a key press feels and sounds like: how strongly it vibrates, chosen in a sheet, and key
- * sounds. One pink group.
+ * What a key press feels, sounds and looks like: how strongly it vibrates, chosen in a sheet, key
+ * sounds, and the enlarged preview over the key. One pink group.
  */
 @Composable
 internal fun FeedbackSection(
     hapticStrength: KeyboardHapticStrength?,
     soundsEnabled: Boolean,
+    keyPreviewsEnabled: Boolean,
     onOpenHapticStrength: () -> Unit,
     onSoundsChanged: (Boolean) -> Unit,
+    onKeyPreviewsChanged: (Boolean) -> Unit,
 ) {
     FunputSection(
         title = sectionTitle(R.string.settings_section_feedback),
@@ -44,6 +46,15 @@ internal fun FeedbackSection(
             checked = soundsEnabled,
             onCheckedChange = onSoundsChanged,
             icon = FunputIcons.Sound,
+            tint = FunputTint.PINK,
+        )
+        FunputDivider(startInset = FunputRowDefaults.IconDividerInset)
+        ToggleRow(
+            title = stringResource(R.string.settings_key_previews_title),
+            summary = stringResource(R.string.settings_key_previews_summary),
+            checked = keyPreviewsEnabled,
+            onCheckedChange = onKeyPreviewsChanged,
+            icon = FunputIcons.KeyPreview,
             tint = FunputTint.PINK,
         )
     }

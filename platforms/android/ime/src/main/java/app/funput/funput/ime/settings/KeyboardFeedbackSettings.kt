@@ -25,6 +25,7 @@ class KeyboardFeedbackSettings(context: Context) {
                 hapticsEnabled = values[HapticsEnabledKey],
                 soundsEnabled = values[SoundsEnabledKey],
                 hapticStrength = values[HapticStrengthKey],
+                keyPreviewsEnabled = values[KeyPreviewsEnabledKey],
             )
         }
         .distinctUntilChanged()
@@ -41,6 +42,10 @@ class KeyboardFeedbackSettings(context: Context) {
         }
     }
 
+    suspend fun setKeyPreviewsEnabled(enabled: Boolean) {
+        dataStore.edit { it[KeyPreviewsEnabledKey] = enabled }
+    }
+
     suspend fun setSoundsEnabled(enabled: Boolean) {
         dataStore.edit { it[SoundsEnabledKey] = enabled }
     }
@@ -49,6 +54,7 @@ class KeyboardFeedbackSettings(context: Context) {
         val HapticsEnabledKey = booleanPreferencesKey("haptics_enabled")
         val SoundsEnabledKey = booleanPreferencesKey("sounds_enabled")
         val HapticStrengthKey = stringPreferencesKey("haptic_strength")
+        val KeyPreviewsEnabledKey = booleanPreferencesKey("key_previews_enabled")
     }
 }
 
@@ -57,9 +63,11 @@ internal object KeyboardFeedbackSettingCodec {
         hapticsEnabled: Boolean?,
         soundsEnabled: Boolean?,
         hapticStrength: String? = null,
+        keyPreviewsEnabled: Boolean? = null,
     ) = KeyboardFeedbackPreferences(
         hapticsEnabled = hapticsEnabled ?: KeyboardFeedbackPreferences.Default.hapticsEnabled,
         soundsEnabled = soundsEnabled ?: KeyboardFeedbackPreferences.Default.soundsEnabled,
         hapticStrength = KeyboardHapticStrength.fromStorage(hapticStrength),
+        keyPreviewsEnabled = keyPreviewsEnabled ?: true,
     )
 }
