@@ -3,6 +3,7 @@ package app.funput.funput.ime.editing
 import android.text.InputType
 import android.text.TextUtils
 import android.view.inputmethod.EditorInfo
+import app.funput.funput.ime.editing.correction.policy.CorrectionFieldPolicy
 
 /** Converts Android editor flags into one immutable runtime policy. */
 internal object EditorInfoPolicyResolver {
@@ -42,6 +43,7 @@ internal object EditorInfoPolicyResolver {
             allowsShortcuts = editorMode.supportsVietnameseComposition &&
                 variation != InputType.TYPE_TEXT_VARIATION_URI,
             compositionRenderMode = CompositionCompatibilityPolicy.renderMode(packageName),
+            allowsCorrection = CorrectionFieldPolicy.allows(inputType, editorMode),
         )
     }
 

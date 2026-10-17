@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.surface
 
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -17,8 +18,8 @@ class KeyboardSurfacePresentationStateTest {
             onEnterActionChanged = {},
         )
 
-        state.suggestions = listOf("xin", "chào", "bạn")
-        state.suggestions = listOf("xin", "chào", "bạn")
+        state.suggestions = listOf("xin", "chào", "bạn").asSuggestionChips()
+        state.suggestions = listOf("xin", "chào", "bạn").asSuggestionChips()
 
         assertEquals(1, suggestionChanges)
         assertEquals(0, themeChanges)

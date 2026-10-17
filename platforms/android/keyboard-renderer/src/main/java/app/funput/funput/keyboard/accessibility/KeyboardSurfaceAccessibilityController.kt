@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.accessibility
 
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 import android.view.MotionEvent
 import android.view.View
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
@@ -26,7 +27,7 @@ internal class KeyboardSurfaceAccessibilityController(
     fun refresh(
         keyboard: ResolvedKeyboard?,
         shiftState: ShiftState,
-        suggestions: List<String> = emptyList(),
+        suggestions: List<SuggestionChip> = emptyList(),
         clipboardLabel: String? = null,
         clipboardKeyLabel: String? = null,
         smartGesturesEnabled: Boolean = true,

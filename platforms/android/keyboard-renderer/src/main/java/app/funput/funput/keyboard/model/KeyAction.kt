@@ -1,10 +1,14 @@
 package app.funput.funput.keyboard.model
 
+import app.funput.funput.keyboard.touch.KeyTouchEvidence
+
 /** Semantic keyboard output emitted after a pointer is released over a key. */
 sealed interface KeyAction {
+    /** [touch] is where the finger landed, when a real tap on the key typed [text]. */
     data class Input(
         val keyId: String,
         val text: String,
+        val touch: KeyTouchEvidence? = null,
     ) : KeyAction {
         init {
             require(keyId.isNotBlank()) { "Input key id must not be blank" }

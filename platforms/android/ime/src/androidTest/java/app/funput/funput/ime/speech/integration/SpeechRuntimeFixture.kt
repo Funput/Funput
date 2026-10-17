@@ -37,8 +37,7 @@ internal class SpeechRuntimeFixture : AutoCloseable {
         host.layOutNarrow()
         editing.editorRuntime.configure(info)
         editing.startActionHandler()
-        ImeKeyboardCallbackBinder.bind(keyboard, editing.actionHandler, editing.editorRuntime,
-            editing.suggestionService, SystemInputMethodSwitcher(service), editing.letterReturn)
+        ImeKeyboardCallbackBinder.bind(keyboard, editing, SystemInputMethodSwitcher(service))
         editing.bindPanels(keyboard)
         runtime.bind(keyboard)
         runtime.startInput(info)

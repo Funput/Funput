@@ -62,9 +62,7 @@ internal class ImeHardwareKeyHandler(
         ) = ImeHardwareKeyHandler(
             currentShift = currentShift,
             setShift = setShift,
-            dispatch = { action ->
-                ImeKeyboardCallbackBinder.dispatch(session.actionHandler, session.suggestionService, action)
-            },
+            dispatch = { action -> ImeKeyboardCallbackBinder.dispatch(session, action) },
             finish = session.actionHandler::finish,
             hotkeyEnabled = { softKeyboard.hotkeyEnabled },
             toggleSoftKeyboard = softKeyboard::toggle,

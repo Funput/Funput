@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.surface
 
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Canvas
@@ -48,7 +49,7 @@ internal class KeyboardSurfaceRenderController(
         set(value) {
             presentation.sizingProfile = value.constrainedForLandscape(resources.configuration.isPhoneLandscape)
         }
-    var suggestions: List<String> by presentation::suggestions
+    var suggestions: List<SuggestionChip> by presentation::suggestions
     var clipboardHint: KeyboardClipboardHint? by presentation::clipboardHint
     var enterAction by presentation::enterAction
 

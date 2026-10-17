@@ -50,9 +50,14 @@ internal class ImeShortcutSession(private val engine: VietnameseEngine) {
         if (directWord.isEmpty()) installPending()
     }
 
-    fun finishWord() {
+    /**
+     * Ends the tracked word and installs a library that arrived mid-word. [clearsEngine] is
+     * false when the engine itself just closed the word at a boundary: clearing it again
+     * would also drop the typo correction that boundary parked or applied.
+     */
+    fun finishWord(clearsEngine: Boolean = true) {
         directWord = ""
-        engine.clear()
+        if (clearsEngine) engine.clear()
         installPending()
     }
 

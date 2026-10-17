@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.accessibility
 
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.interaction.ClipboardTargetId
 import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
@@ -133,6 +134,6 @@ class KeyboardAccessibilitySnapshotTest {
             density = 1f,
             profile = profile,
         ))
-        return KeyboardAccessibilitySnapshot(keyboard, shiftState, suggestions, clipboardLabel)
+        return KeyboardAccessibilitySnapshot(keyboard, shiftState, suggestions.asSuggestionChips(), clipboardLabel)
     }
 }

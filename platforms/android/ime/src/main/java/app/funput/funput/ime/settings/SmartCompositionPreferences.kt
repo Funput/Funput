@@ -12,6 +12,8 @@ data class SmartCompositionPreferences(
     val autoCapitalizeEnabled: Boolean,
     /** Extra initial consonants; absent settings preserve standard Vietnamese spelling. */
     val extraOnsets: ExtraOnsetLetters = ExtraOnsetLetters.None,
+    /** Repair a key slipped onto its neighbour when the word ends. On for everyone, as on iOS. */
+    val typoCorrectionEnabled: Boolean = true,
 ) {
     /** Defaults for absent Preferences DataStore keys. */
     companion object {

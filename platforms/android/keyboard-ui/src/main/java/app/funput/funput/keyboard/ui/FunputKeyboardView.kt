@@ -14,6 +14,7 @@ import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 import app.funput.funput.keyboard.ui.host.KeyboardHostMeasure
 import app.funput.funput.keyboard.ui.host.bindKeyboardToolbar
@@ -88,7 +89,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         }
     var keyboardThemeBackgroundImage by keyboardSurface::keyboardThemeBackgroundImage
     var sizingProfile: KeyboardSizingProfile by keyboardSurface::sizingProfile
-    var suggestions: List<String> = emptyList()
+    var suggestions: List<SuggestionChip> = emptyList()
         set(value) {
             field = value
             syncSuggestions()
@@ -145,6 +146,5 @@ class FunputKeyboardView @JvmOverloads constructor(
         val visible = activePanel == KeyboardPanel.LETTERS && suggestionBarEnabled
         keyboardSurface.suggestions = suggestions.takeIf { visible }.orEmpty()
     }
-
     private fun matchParentLayoutParams() = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
 }

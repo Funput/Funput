@@ -64,3 +64,38 @@ fn a_ranking_encodes_as_best_second_and_verdict() {
     // An empty slot is -1, never 0: 0 is a real candidate index.
     assert_eq!(encode_ranking(CorrectionRanking::REFUSED), [-1, -1, 3]);
 }
+
+#[test]
+fn metrics_encode_in_the_order_the_c_header_declares_them() {
+    use funput_engine::CorrectionMetrics;
+
+    use super::query::encode_metrics;
+
+    // Ten distinct values, so a swapped pair cannot pass by accident.
+    let metrics = CorrectionMetrics {
+        applied: 1,
+        reverted: 2,
+        skipped_ambiguous: 3,
+        candidates_max: 4,
+        microseconds_max: 5,
+        kept_as_typed: 6,
+        offered: 7,
+        no_candidate: 8,
+        suppressed: 9,
+        valid_near_edge: 10,
+    };
+    assert_eq!(encode_metrics(&metrics), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+}
+
+#[test]
+fn a_count_past_what_java_can_hold_clamps_rather_than_wraps() {
+    use funput_engine::CorrectionMetrics;
+
+    use super::query::encode_metrics;
+
+    let metrics = CorrectionMetrics {
+        microseconds_max: u32::MAX,
+        ..CorrectionMetrics::default()
+    };
+    assert_eq!(encode_metrics(&metrics)[4], jint::MAX);
+}

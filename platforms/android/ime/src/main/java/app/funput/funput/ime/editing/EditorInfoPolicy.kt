@@ -24,6 +24,8 @@ internal data class EditorInfoPolicy(
     val allowsPersonalSuggestions: Boolean,
     val allowsShortcuts: Boolean,
     val compositionRenderMode: CompositionRenderMode,
+    /** Whether typo correction may repair words here; see `CorrectionFieldPolicy`. */
+    val allowsCorrection: Boolean = true,
 ) {
     val showsSuggestionBar: Boolean get() = suggestionSource != ImeSuggestionSource.NONE
 

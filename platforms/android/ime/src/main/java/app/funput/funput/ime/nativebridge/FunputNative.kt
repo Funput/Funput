@@ -48,4 +48,23 @@ internal object FunputNative {
 
     /** Whether a caret sitting after [before] starts a word. Stateless, hence no handle. */
     external fun nativeStartsWord(before: String): Boolean
+
+    // Typo correction: see `nativebridge/correction/TypoCorrectionEngine` for the contract.
+    external fun nativeSetTypoCorrection(handle: Long, on: Boolean)
+    external fun nativeSetNextKeyTouch(
+        handle: Long, typed: Int, typedDistance: Float,
+        a1: Int, d1: Float, a2: Int, d2: Float, a3: Int, d3: Float,
+    )
+    external fun nativeHasPendingCorrection(handle: Long): Boolean
+    external fun nativeCorrectionCandidates(handle: Long): Array<String>?
+    external fun nativePendingCorrectionBackspace(handle: Long): Int
+    external fun nativeChooseCorrection(handle: Long, uses: IntArray?, allowed: BooleanArray?): Int
+    external fun nativeApplyCorrection(handle: Long, index: Int): IntArray?
+    external fun nativeHasCorrectionUndo(handle: Long): Boolean
+    external fun nativeCorrectionUndoText(handle: Long): String
+    external fun nativeUndoCorrection(handle: Long): IntArray?
+    external fun nativePreviewCorrection(handle: Long): Int
+    external fun nativeRefuseCorrection(handle: Long)
+    external fun nativeRankCorrection(handle: Long, uses: IntArray?, allowed: BooleanArray?): IntArray?
+    external fun nativeCorrectionMetrics(handle: Long): IntArray?
 }

@@ -8,11 +8,13 @@ internal object SmartCompositionSettingCodec {
         smartRestoreEnabled: Boolean?,
         autoCapitalizeEnabled: Boolean?,
         extraOnsets: String? = null,
+        typoCorrectionEnabled: Boolean? = null,
     ) = SmartCompositionPreferences(
         spellCheckEnabled = spellCheckEnabled ?: SmartCompositionPreferences.Default.spellCheckEnabled,
         smartRestoreEnabled = smartRestoreEnabled ?: SmartCompositionPreferences.Default.smartRestoreEnabled,
         autoCapitalizeEnabled = autoCapitalizeEnabled
             ?: SmartCompositionPreferences.Default.autoCapitalizeEnabled,
         extraOnsets = ExtraOnsetLetters.parse(extraOnsets),
+        typoCorrectionEnabled = typoCorrectionEnabled ?: SmartCompositionPreferences.Default.typoCorrectionEnabled,
     )
 }

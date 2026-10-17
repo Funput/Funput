@@ -34,6 +34,11 @@ internal enum class SmartInputToggle(
         { it.smartComposition.autoCapitalizeEnabled }, { it.onAutoCapitalizeChanged },
         listOf("capitalize", "chu hoa"),
     ),
+    TYPO_CORRECTION(
+        R.string.settings_typo_correction_title, R.string.settings_typo_correction_summary, FunputIcons.TypoCorrection,
+        { it.smartComposition.typoCorrectionEnabled }, { it.onTypoCorrectionChanged },
+        listOf("typo", "go nham", "sua loi", "autocorrect"),
+    ),
     SUGGESTIONS(
         R.string.settings_personal_suggestions_title, R.string.settings_personal_suggestions_description,
         FunputIcons.Suggestions, { it.personalSuggestionsEnabled }, { it.onPersonalSuggestionsChanged },

@@ -2,10 +2,9 @@
 
 ## Trạng thái
 
-**Rust và iOS đã hiện thực** trên nhánh `feat/typo-correction`: lõi
-(`crates/funput-engine/src/correction/`), hai câu truy vấn ở `funput-suggestions`, cầu nối C ABI
-+ JNI, và bàn phím iOS (bật sẵn, tắt được trong Cài đặt). Engine để mặc định tắt; mỗi nền tảng
-tự bật. Android chưa làm. Mọi quyết định hành vi sống ở tài liệu này; khi hiện thực lệch khỏi bản
+**Rust, iOS và Android đã hiện thực**: lõi (`crates/funput-engine/src/correction/`), hai câu
+truy vấn ở `funput-suggestions`, cầu nối C ABI + JNI, bàn phím iOS và bàn phím Android (cả hai bật
+sẵn, tắt được trong Cài đặt). Engine để mặc định tắt; mỗi nền tảng tự bật. Mọi quyết định hành vi sống ở tài liệu này; khi hiện thực lệch khỏi bản
 viết, cập nhật lại tài liệu trong cùng PR — các mục dưới đây đã được sửa theo đúng những gì
 code làm, chỗ nào lệch đều ghi rõ lý do.
 
@@ -556,11 +555,17 @@ external fun nativeRefuseCorrection(handle: Long)
 external fun nativeRankCorrection(handle: Long, uses: IntArray?, allowed: BooleanArray?): IntArray
 external fun nativeUndoCorrection(handle: Long): IntArray
 external fun nativeSetTypoCorrection(handle: Long, on: Boolean)
+/** Mười bộ đếm của engine, đúng thứ tự `FunputCorrectionMetrics` trong header C. */
+external fun nativeCorrectionMetrics(handle: Long): IntArray
 ```
 
 `nativeUndoCorrection` tách khỏi `nativeBackspace` và là no-op khi `nativeHasCorrectionUndo` sai,
 nên một phím Xoá bình thường không bao giờ bị nuốt ở đường này: IME hỏi trước rồi gọi một trong
 hai. `String(edit, 1, edit.size - 1)` dựng lại chữ từ phần đuôi.
+
+Mỗi handle của kho gợi ý có khoá riêng (`suggestion/registry.rs`): luồng chính hỏi
+`nativeIsKnownWord` trên một kho chỉ đọc ngay trong phím ranh giới, và không được phải chờ worker
+gợi ý đang flush kho cá nhân trên luồng của nó.
 
 ## 8. iOS
 
@@ -702,23 +707,30 @@ kính, điểm nhấc nói về cú trượt hơn là về phím định bấm).
 
 ## 9. Android
 
+Cùng giao thức §6, cùng thứ tự gọi như iOS (§8). Không nhánh code nào riêng cho Android trong lõi.
+
 | Việc | File |
 |---|---|
-| Điểm chạm | `keyboard-renderer/.../interaction/KeyboardTouchHandler.kt` — đã truyền `x, y` ở `onKeyReleased` |
-| Phím kề | `keyboard-renderer/.../layout/KeyboardHitTester.kt` — thêm hàm trả phím gần nhất kèm khoảng cách |
-| Gọi engine | `ime/.../nativebridge/FunputNative` (đã có `nativeProcess`, `nativeAdopt`) |
-| Ghi tài liệu | `ime/.../editing/CommittedBufferWriter.kt` — một batch edit, như retone |
-| Tần suất từ | `PersonalSuggestionNative` (đã có `nativeQuery`) |
-| Cờ autocorrect | `EditorInfo.inputType` — bỏ qua khi có `TYPE_TEXT_FLAG_NO_SUGGESTIONS` hoặc ô mật khẩu |
+| Pitch phím, điểm chạm | `keyboard-renderer/.../layout/ResolvedKeyboard.kt` (`pitchX` / `pitchY`), `keyboard/touch/KeyTouchEvidenceResolver.kt` (mọi phím chữ và phím dấu VNI, đo từ tâm theo từng trục, tối đa 3 phím trong 1,2 pitch) |
+| Lấy điểm lúc đặt ngón | `keyboard/touch/KeyTouchRecorder.kt` trong `KeyboardSurfaceInteraction`; gắn vào `KeyAction.Input.touch` chỉ khi chữ đúng là nhãn phím |
+| Gọi engine | `ime/.../nativebridge/correction/` (`TypoCorrectionEngine`, `NativeTypoCorrection`) |
+| Ranh giới từ | `ime/.../editing/correction/BoundaryCorrection.kt`, gọi trong `AndroidCompositionSession.commitBoundary`: lệnh sửa thay chỗ đầu ra của ranh giới, nên mọi chế độ ghi chỉ ghi một lần |
+| Hoàn tác | `editing/correction/undo/CorrectionUndo.kt`, chạy trước mọi việc khác của `ImeBackspaceHandler` |
+| Thanh gợi ý | `editing/correction/preview/`, `suggestions/bar/` (`SuggestionChip` có loại ở `keyboard-renderer/.../suggestion/`) |
+| Từ điển | `suggestions/correction/`: kho chỉ đọc riêng có `en.lex` (dựng trên luồng riêng, hỏi trên luồng chính), số lần gõ trong bộ nhớ, danh sách đã giữ ở `noBackupFilesDir/TypoCorrection/kept-words.txt` |
+| Cờ ô nhập | `editing/correction/policy/CorrectionFieldPolicy.kt`: `TYPE_TEXT_FLAG_NO_SUGGESTIONS`, mật khẩu, email, URI |
+| Công tắc | `typo_correction_enabled` trong `SmartCompositionSettings`, mặc định bật; trang Thông minh |
 
-**Đã giải quyết:** `nativeBackspace` và `nativeBoundary` chỉ trả `String` và vứt `ImeResult`
-đi, nên chúng không tải nổi một lệnh sửa. Thay vì đổi hai hàm đó (và đổi cả chữ ký Java của
-chúng), phần correction có đường riêng trả `IntArray` — xem §7.4.
+Hai chỗ lệch khỏi kế hoạch cũ, đều có lý do:
 
-Hai điều cần nhớ khi nối Kotlin (chưa quan sát được vì IME chưa gọi): `nativeApplyCorrection(-1)`
-nay là **no-op** — ranh giới đã restore trong cùng keystroke, nên từ chối không còn trả lệnh sửa
-nào; và `nativeRankCorrection` trả `[best, second, verdict]` với `-1` cho ô trống, không bao giờ
-là `0` (đó là một chỉ số ứng viên thật).
+- Engine **không** bị `clear()` sau ranh giới tiếng Việt nữa (`ImeShortcutSession.finishWord`):
+  trước đây mỗi ranh giới đều xoá engine để cài thư viện gõ tắt đến muộn, và lệnh xoá đó vứt luôn
+  phép sửa vừa áp dụng hoặc vừa đỗ. Instrumented test với engine thật bắt được chuyện này.
+- Kho đã giữ chỉ ghi ra đĩa khi ô nhập cho học cá nhân (`IME_FLAG_NO_PERSONALIZED_LEARNING`
+  thì giữ trong bộ nhớ), tương ứng với điều kiện Full Access của iOS.
+
+`nativeApplyCorrection(-1)` là **no-op**; `nativeRankCorrection` trả `[best, second, verdict]` với
+`-1` cho ô trống, không bao giờ là `0`.
 
 ## 10. Desktop
 
@@ -1114,7 +1126,8 @@ Xếp theo thứ tự giá trị trên mỗi đơn vị rủi ro:
 `correctionsApplied`, `correctionsReverted`, `correctionsSkippedAmbiguous`, `keptAsTyped`,
 `offered`, `noCandidate`, `suppressed`, `validNearEdge` (lõi); `recognized`, `fieldRefused`
 (nền tảng); `correctionCandidatesMax`, `correctionMicrosecondsMax`. Chỉ đếm, không lưu nội dung.
-Lõi đếm trong `CorrectionMetrics`, iOS in ra log category `typo`. Tỉ lệ hoàn tác cao nghĩa là
+Lõi đếm trong `CorrectionMetrics`, iOS in ra log category `typo`, Android in một dòng
+`FunputTypo` (`Log.i`) khi bàn phím ẩn, cùng thứ tự với iOS. Tỉ lệ hoàn tác cao nghĩa là
 `Δ` đặt thấp quá; `keptAsTyped` cao nghĩa là `INVALID_COST` đặt thấp quá.
 
 `suppressed` đếm từ bị bỏ qua vì người dùng đã hoàn tác đúng cách gõ đó ngay trước (§3.3): một
@@ -1144,7 +1157,7 @@ lời từ chối được tôn trọng, không phải từ không có ứng vi�
 | E1 ✅ | Engine: tách `search.rs` thành generator / `Sink` / xếp hạng theo cost, `Variant.origin`, `find_with` (#585) | Không đổi hành vi: differential Viet74K, alloc budget, bench |
 | E2 ✅ | Engine: sửa theo từ — đúp, dư dấu, đảo, thiếu, thừa phím; bậc chi phí + luật dừng; bố cục tĩnh khi thiếu điểm chạm; chữ nguyên chỉ cạnh tranh khi đủ chạm (#591) | Bảng §12 Đợt 4 (sau), alloc budget 8 000, property test budget |
 | B3 ✅ | iOS: ứng viên ở lại thanh gợi ý sau Space khi engine không tự chọn, bấm để thay từ vừa commit, nối engine v3 | `KeyboardCorrectionParkedTests` + UI test `testAnUndecidedRepairStaysOnTheBarAfterSpace` |
-| 5 | Android: cùng lõi, batch edit | Instrumented test |
+| 5 ✅ | Android: điểm chạm, ranh giới, hoàn tác, thanh gợi ý (xem trước, đỗ sau Space), danh sách đã giữ, công tắc bật sẵn, `nativeCorrectionMetrics`, khoá kho gợi ý theo từng handle | Unit test + `TypoCorrectionInstrumentedTest`, `check-kotlin-loc.sh`, `check-kotlin-layout.sh` |
 | 6 | Chỉnh `σ`, `λ`, `Δ` theo kho lỗi và phản hồi TestFlight | Số liệu §13 |
 
 ## 15. Câu hỏi còn mở

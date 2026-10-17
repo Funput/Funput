@@ -39,7 +39,8 @@ internal class ImeShortcutCoordinator(
             if (vietnamese) composition.isBoundary(codePoint)
             else CompositionBoundary.isBoundary(codePoint)
         }
-        if (boundary) session.finishWord()
+        // A Vietnamese boundary went through the engine, which already closed the word.
+        if (boundary) session.finishWord(clearsEngine = !vietnamese)
     }
 
     fun reconcile() {

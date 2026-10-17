@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.interaction
 
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import app.funput.funput.keyboard.layout.KeyboardGeometry
 import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
 import app.funput.funput.keyboard.layout.letters.KeyboardLayouts
@@ -103,7 +104,7 @@ class KeyboardInteractionTargetsTest {
 
     @Test
     fun targetResolvesBackToSelectionData() {
-        val suggestions = listOf("mình", "chào", "bạn")
+        val suggestions = listOf("mình", "chào", "bạn").asSuggestionChips()
 
         assertEquals(
             SuggestionSelection(index = 1, text = "chào"),

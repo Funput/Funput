@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.surface
 
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 import app.funput.funput.keyboard.SuggestionNormalizer
 import app.funput.funput.keyboard.KeyboardClipboardHint
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
@@ -35,7 +36,7 @@ internal class KeyboardSurfacePresentationState(
             field = value
             onSizingChanged(value)
         }
-    var suggestions: List<String> = emptyList()
+    var suggestions: List<SuggestionChip> = emptyList()
         set(value) {
             val normalized = SuggestionNormalizer.normalize(value)
             if (field == normalized) return

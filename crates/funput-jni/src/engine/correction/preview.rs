@@ -1,18 +1,19 @@
 //! Asking before the word ends: preview the repair, rank it, or turn it down.
 //!
-//! The three calls a suggestion bar runs while a word is still being typed. The
+//! The three calls a suggestion bar runs while a word is still being typed, and the
+//! text its undo chip shows once a repair has landed. The
 //! ranking comes back as an `IntArray` `[best, second, verdict]` — `-1` for a slot
 //! with nothing in it, and the verdict numbered as the C header does: 0 apply,
 //! 1 ambiguous, 2 as typed, 3 refused.
 
 use funput_engine::{CorrectionRanking, CorrectionVerdict};
 use jni::EnvUnowned;
-use jni::objects::{JBooleanArray, JIntArray};
+use jni::objects::{JBooleanArray, JIntArray, JString};
 use jni::sys::{jint, jintArray, jlong};
 
-use super::arrays::{read_bools, read_ints};
+use super::arrays::{int_array, read_bools, read_ints};
 use super::registry;
-use crate::abi::{JavaObject, neutral, safe};
+use crate::abi::{JavaObject, neutral, safe, string_result};
 
 /// Search the word being typed the way the boundary will, and return how many
 /// candidates it reaches. 0 while the word could still become a syllable, for a word
@@ -63,15 +64,25 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
         let ranking =
             registry::with_mut(handle, |engine| engine.rank_correction(&counts, &allowed))
                 .unwrap_or(CorrectionRanking::REFUSED);
-        let values = encode_ranking(ranking);
-        let result = env
-            .with_env(|env| -> jni::errors::Result<_> {
-                let array = JIntArray::new(env, values.len())?;
-                array.set_region(env, 0, &values)?;
-                Ok(array.into_raw())
-            })
-            .into_outcome();
-        neutral(result)
+        int_array(&mut env, &encode_ranking(ranking))
+    })
+}
+
+/// The word the user actually typed, while the undo is still one Backspace away —
+/// what the `↩ dduwowfnh` chip shows. Empty once the undo is gone.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeCorrectionUndoText<
+    'caller,
+>(
+    env: EnvUnowned<'caller>,
+    _this: JavaObject<'caller>,
+    handle: jlong,
+) -> JString<'caller> {
+    string_result(env, || {
+        registry::with_mut(handle, |engine| {
+            engine.correction_undo_text().unwrap_or_default().to_owned()
+        })
+        .unwrap_or_default()
     })
 }
 

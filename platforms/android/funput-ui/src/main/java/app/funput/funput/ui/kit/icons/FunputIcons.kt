@@ -59,6 +59,9 @@ object FunputIcons {
     /** Automatic capitalisation. */
     @DrawableRes val Capitalize: Int = R.drawable.ph_text_t
 
+    /** Typo correction: the finger that slipped onto the next key. */
+    @DrawableRes val TypoCorrection: Int = R.drawable.ph_hand_pointing
+
     /** Word suggestions. */
     @DrawableRes val Suggestions: Int = R.drawable.ph_sparkle
 

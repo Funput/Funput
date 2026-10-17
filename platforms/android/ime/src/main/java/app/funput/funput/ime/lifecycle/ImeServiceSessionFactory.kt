@@ -22,7 +22,7 @@ internal fun createServiceEditingSession(
         connection = { service.currentInputConnection },
         currentShiftState = { view()?.shiftState ?: ShiftState.OFF },
         updateShiftState = { state -> view()?.shiftState = state },
-        showSuggestions = { values -> view()?.suggestions = values },
+        showSuggestions = { chips -> view()?.suggestions = chips },
         acknowledgeReset = { token ->
             scope.launch { session.suggestionSettings.acknowledgeReset(token) }
         },

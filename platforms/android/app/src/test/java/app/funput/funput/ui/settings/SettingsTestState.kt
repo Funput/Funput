@@ -65,6 +65,7 @@ internal fun testSettingsState(
     onSmartRestoreChanged = { onSmartChanged("restore", it) },
     onSpellCheckChanged = { onSmartChanged("spelling", it) },
     onAutoCapitalizeChanged = { onSmartChanged("capitalization", it) },
+    onTypoCorrectionChanged = { onSmartChanged("typos", it) },
     onPersonalSuggestionsChanged = { onSmartChanged("suggestions", it) },
     onClipboardEnabledChanged = {},
     onClipboardExpirySelected = onClipboardExpirySelected,

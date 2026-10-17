@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.ui.speech
 
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import android.view.View
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -119,7 +120,7 @@ class SpeechPanelInstrumentedTest {
                 assertEquals(0, requests)
                 keyboard.microphone = KeyboardMicrophoneState(visible = true)
                 keyboard.suggestionBarEnabled = false
-                keyboard.suggestions = listOf("xin", "chào")
+                keyboard.suggestions = listOf("xin", "chào").asSuggestionChips()
                 surface.callbacks.onMicrophoneRequested?.invoke()
                 assertEquals(1, requests)
                 assertEquals(KeyboardPanel.LETTERS, keyboard.activePanel)

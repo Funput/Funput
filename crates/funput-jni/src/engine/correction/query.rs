@@ -1,13 +1,14 @@
 //! The read-only half of the handshake: what the IME reads between typing the
-//! boundary key and answering.
+//! boundary key and answering, and the counters it reports at the end of a session.
 
+use funput_engine::CorrectionMetrics;
 use jni::EnvUnowned;
-use jni::objects::{JBooleanArray, JIntArray, JObjectArray, JString};
-use jni::sys::{jboolean, jint, jlong, jobjectArray};
+use jni::objects::{JBooleanArray, JIntArray};
+use jni::sys::{jboolean, jint, jintArray, jlong, jobjectArray};
 
-use super::arrays::{read_bools, read_ints};
+use super::arrays::{int_array, read_bools, read_ints, string_array};
 use super::registry;
-use crate::abi::{JavaObject, neutral, safe, string_result};
+use crate::abi::{JavaObject, neutral, safe};
 
 /// Whether the last keystroke ended a word on a correction still waiting for an
 /// answer.
@@ -39,18 +40,7 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
-        let result = env
-            .with_env(|env| -> jni::errors::Result<_> {
-                let initial = JString::from_str(env, words.first().map_or("", String::as_str))?;
-                let array = JObjectArray::<JString>::new(env, words.len(), &initial)?;
-                for (index, word) in words.iter().enumerate().skip(1) {
-                    let value = JString::from_str(env, word)?;
-                    array.set_element(env, index, &value)?;
-                }
-                Ok(array.into_raw())
-            })
-            .into_outcome();
-        neutral(result)
+        string_array(&mut env, &words)
     })
 }
 
@@ -117,20 +107,32 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
     })
 }
 
-/// The word the user actually typed, while the undo is still one Backspace away —
-/// what the `↩ dduwowfnh` chip shows. Empty once the undo is gone.
+/// The engine's correction counters since it was created, for the IME's end-of-session
+/// log. Counts only, never words: see `encode_metrics` for the order.
 #[unsafe(no_mangle)]
-pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeCorrectionUndoText<
-    'caller,
->(
-    env: EnvUnowned<'caller>,
-    _this: JavaObject<'caller>,
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeCorrectionMetrics(
+    mut env: EnvUnowned<'_>,
+    _this: JavaObject<'_>,
     handle: jlong,
-) -> JString<'caller> {
-    string_result(env, || {
-        registry::with_mut(handle, |engine| {
-            engine.correction_undo_text().unwrap_or_default().to_owned()
-        })
-        .unwrap_or_default()
-    })
+) -> jintArray {
+    let metrics = registry::with_mut(handle, |engine| engine.correction_metrics());
+    int_array(&mut env, &encode_metrics(&metrics.unwrap_or_default()))
+}
+
+/// The counters in the order `FunputCorrectionMetrics` declares them in the C header,
+/// so both platforms log the same line. A count past `i32::MAX` clamps, never wraps.
+pub(super) fn encode_metrics(metrics: &CorrectionMetrics) -> [jint; 10] {
+    [
+        metrics.applied,
+        metrics.reverted,
+        metrics.skipped_ambiguous,
+        metrics.candidates_max,
+        metrics.microseconds_max,
+        metrics.kept_as_typed,
+        metrics.offered,
+        metrics.no_candidate,
+        metrics.suppressed,
+        metrics.valid_near_edge,
+    ]
+    .map(|count| jint::try_from(count).unwrap_or(jint::MAX))
 }

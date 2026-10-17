@@ -12,6 +12,8 @@ import app.funput.funput.keyboard.interaction.PressedKeyState
 import app.funput.funput.keyboard.interaction.SuggestionTargetIds
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
+import app.funput.funput.keyboard.suggestion.SuggestionChip
+import app.funput.funput.keyboard.suggestion.accentIndex
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.LocalKeyboardThemeCatalog
 
@@ -35,7 +37,7 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     fun draw(
         canvas: Canvas,
         suggestionBar: ResolvedSuggestionBar,
-        suggestions: List<String>,
+        suggestions: List<SuggestionChip>,
         pressedTargets: PressedKeyState,
     ) {
         if (suggestions.isEmpty()) return
@@ -44,12 +46,13 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
         drawPressedSegments(canvas, bounds, radius, suggestions.size, pressedTargets)
         val segmentWidth = bounds.width / suggestions.size
         val labelWidth = segmentWidth - metrics.dp(LabelHorizontalInsetDp * 2f)
+        val accent = suggestions.accentIndex()
         suggestions.forEachIndexed { index, suggestion ->
             if (index > 0) drawDivider(canvas, bounds, bounds.left + segmentWidth * index)
-            // The leading candidate is the highest ranked one, so the theme accents it.
+            // The pick the bar recommends (a repair, else the top suggestion) is accented.
             labelPaint.color =
-                if (index == 0) theme.suggestionHighlightColor else theme.labelColor
-            val label = fitLabel(suggestion, labelWidth)
+                if (index == accent) theme.suggestionHighlightColor else theme.labelColor
+            val label = fitLabel(suggestion.title, labelWidth)
             // Per label, since a fitted one is smaller and has to stay centred in the band.
             labelPaint.getFontMetrics(fontMetrics)
             val baseline = bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f

@@ -1,5 +1,6 @@
 package app.funput.funput.ui.theme
 
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
@@ -73,7 +74,7 @@ private fun KeyboardSurfaceView.applyPreview(
     sizingProfile = configuration.sizingProfile
     suggestionBarEnabled = configuration.suggestionBarEnabled
     showsNumberRow = configuration.showsNumberRow
-    suggestions = configuration.suggestions
+    suggestions = configuration.suggestions.asSuggestionChips()
     enterAction = configuration.enterAction
     systemInputMethodSwitcherVisible = false
 }

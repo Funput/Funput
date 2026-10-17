@@ -5,25 +5,25 @@ import android.view.ViewConfiguration
 import app.funput.funput.keyboard.KeyboardCallbacks
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
-import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.layout.KeyBounds
+import app.funput.funput.keyboard.layout.ResolvedKeyboard
 
 /** Creates the Android-bound interaction pipeline shared by live and preview surfaces. */
 internal fun createKeyboardSurfaceInteraction(
     host: View,
     callbacks: KeyboardCallbacks,
     keyAt: (x: Float, y: Float) -> String?,
-    keySpec: (keyId: String) -> KeySpec?,
+    keyboard: () -> ResolvedKeyboard?,
     suggestionSelection: (targetId: String) -> SuggestionSelection?,
     onHapticFeedback: (KeyboardHapticType) -> Unit,
     onVisualStateChanged: () -> Unit,
     onSemanticStateChanged: () -> Unit,
-    keyBounds: (keyId: String) -> KeyBounds?,
     surfaceBounds: () -> KeyBounds,
 ): KeyboardSurfaceInteraction = KeyboardSurfaceInteraction(
     keyAt = keyAt,
-    keySpec = keySpec,
+    keyboard = keyboard,
+    keySpec = { id -> keyboard()?.keys?.firstOrNull { it.spec.id == id }?.spec },
     suggestionSelection = suggestionSelection,
     onAction = callbacks::dispatch,
     utilities = callbacks,
@@ -37,6 +37,6 @@ internal fun createKeyboardSurfaceInteraction(
     doubleTapTimeoutMillis = ViewConfiguration.getDoubleTapTimeout().toLong(),
     density = host.resources.displayMetrics.density,
     touchSlop = ViewConfiguration.get(host.context).scaledTouchSlop.toFloat(),
-    keyBounds = keyBounds,
+    keyBounds = { id -> keyboard()?.keys?.firstOrNull { it.spec.id == id }?.bounds },
     surfaceBounds = surfaceBounds,
 )

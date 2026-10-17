@@ -1,5 +1,6 @@
 package app.funput.funput.speech.catalog
 
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import android.os.Bundle
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -87,7 +88,7 @@ class SpeechPanelCatalogActivity : ComponentActivity() {
         val config = Configuration(resources.configuration).apply { fontScale = if (largeText) 2f else 1f }
         keyboard = FunputKeyboardView(createConfigurationContext(config)).apply {
             keyboardTheme = theme()
-            suggestions = listOf("xin", "chào", "bạn")
+            suggestions = listOf("xin", "chào", "bạn").asSuggestionChips()
             hapticsEnabled = false
             soundsEnabled = false
             callbacks.onSpeechRequested = ::showState

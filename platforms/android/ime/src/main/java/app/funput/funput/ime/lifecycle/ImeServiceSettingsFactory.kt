@@ -19,6 +19,9 @@ internal fun createServiceSettings(
         invalidateSpeech()
         updateView()
     },
-    onPersonalSuggestionsChanged = session.suggestionService::configure,
+    onPersonalSuggestionsChanged = { preferences ->
+        session.suggestionService.configure(preferences)
+        session.typo.wordSource.applyResetToken(preferences.resetToken)
+    },
     onAutoCapitalizeChanged = session.editorRuntime::setAutoCapitalizeEnabled,
 )

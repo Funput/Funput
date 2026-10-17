@@ -25,6 +25,7 @@ class SmartCompositionSettings(context: Context) {
                 smartRestoreEnabled = values[SmartRestoreEnabledKey],
                 autoCapitalizeEnabled = values[AutoCapitalizeEnabledKey],
                 extraOnsets = values[ExtraOnsetsSettings.SelectionKey],
+                typoCorrectionEnabled = values[TypoCorrectionEnabledKey],
             )
         }
         .distinctUntilChanged()
@@ -41,9 +42,14 @@ class SmartCompositionSettings(context: Context) {
         dataStore.edit { it[AutoCapitalizeEnabledKey] = enabled }
     }
 
+    suspend fun setTypoCorrectionEnabled(enabled: Boolean) {
+        dataStore.edit { it[TypoCorrectionEnabledKey] = enabled }
+    }
+
     private companion object {
         val SpellCheckEnabledKey = booleanPreferencesKey("spell_check_enabled")
         val SmartRestoreEnabledKey = booleanPreferencesKey("smart_restore_enabled")
         val AutoCapitalizeEnabledKey = booleanPreferencesKey("auto_capitalize_enabled")
+        val TypoCorrectionEnabledKey = booleanPreferencesKey("typo_correction_enabled")
     }
 }

@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard
 
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 
 /**
  * Normalizes suggestion candidates and refreshes visible capacity.
@@ -11,16 +12,16 @@ import app.funput.funput.keyboard.layout.ResolvedKeyboard
 internal class KeyboardSurfaceSuggestionState(
     private val density: () -> Float,
     private val keyboard: () -> ResolvedKeyboard?,
-    private val apply: (List<String>) -> Unit,
+    private val apply: (List<SuggestionChip>) -> Unit,
     private val onUtilityKeysVisibilityChanged: (Boolean) -> Unit = {},
 ) {
-    private var requested = emptyList<String>()
+    private var requested = emptyList<SuggestionChip>()
 
     /** True when the toolbar has room to keep utility keys (no suggestion candidates). */
     var utilityKeysVisible: Boolean = true
         private set
 
-    fun update(values: List<String>) {
+    fun update(values: List<SuggestionChip>) {
         requested = SuggestionNormalizer.normalize(values)
         val nextUtilityKeysVisible = requested.isEmpty()
         if (nextUtilityKeysVisible != utilityKeysVisible) {

@@ -6,6 +6,8 @@ import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
+import app.funput.funput.keyboard.suggestion.SuggestionChip
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -15,7 +17,7 @@ class KeyboardSurfaceSuggestionStateTest {
     @Test
     fun emptyToNonEmptyFlipsUtilityKeysVisibleAndRebuildsGeometry() {
         var geometryRebuilds = 0
-        var applied = emptyList<String>()
+        var applied = emptyList<SuggestionChip>()
         var keyboard = keyboardWithSuggestionsWidth(500f)
         val state = KeyboardSurfaceSuggestionState(
             density = { 1f },
@@ -29,19 +31,19 @@ class KeyboardSurfaceSuggestionStateTest {
         )
 
         assertTrue(state.utilityKeysVisible)
-        state.update(listOf("xin", "chào"))
+        state.update(listOf("xin", "chào").asSuggestionChips())
         // Caller must invoke geometryChanged after rebuild, same as the surface view.
         state.geometryChanged()
 
         assertFalse(state.utilityKeysVisible)
         assertEquals(1, geometryRebuilds)
-        assertEquals(listOf("xin", "chào"), applied)
+        assertEquals(listOf("xin", "chào").asSuggestionChips(), applied)
     }
 
     @Test
     fun sameVisibilityOnlyRefreshesCandidates() {
         var geometryRebuilds = 0
-        var applied = emptyList<String>()
+        var applied = emptyList<SuggestionChip>()
         val state = KeyboardSurfaceSuggestionState(
             density = { 1f },
             keyboard = { keyboardWithSuggestionsWidth(900f) },
@@ -49,13 +51,13 @@ class KeyboardSurfaceSuggestionStateTest {
             onUtilityKeysVisibilityChanged = { geometryRebuilds += 1 },
         )
 
-        state.update(listOf("a", "b"))
+        state.update(listOf("a", "b").asSuggestionChips())
         state.geometryChanged()
-        state.update(listOf("a", "b", "c"))
+        state.update(listOf("a", "b", "c").asSuggestionChips())
 
         assertEquals(1, geometryRebuilds)
         assertFalse(state.utilityKeysVisible)
-        assertEquals(listOf("a", "b", "c"), applied)
+        assertEquals(listOf("a", "b", "c").asSuggestionChips(), applied)
     }
 
     @Test
@@ -68,7 +70,7 @@ class KeyboardSurfaceSuggestionStateTest {
             onUtilityKeysVisibilityChanged = { geometryRebuilds += 1 },
         )
 
-        state.update(listOf("xin"))
+        state.update(listOf("xin").asSuggestionChips())
         state.update(emptyList())
 
         assertTrue(state.utilityKeysVisible)

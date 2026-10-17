@@ -67,7 +67,11 @@ object KeyboardGeometry {
             }
         }
         return KeyboardHitTargetResolver.resolve(
-            ResolvedKeyboard(width, height, suggestionBar, rows),
+            ResolvedKeyboard(
+                width, height, suggestionBar, rows,
+                pitchX = horizontalMetrics.canonicalUnit + resolvedSpec.horizontalGap,
+                pitchY = verticalMetrics.rowHeight + resolvedSpec.verticalGap,
+            ),
         )
     }
 

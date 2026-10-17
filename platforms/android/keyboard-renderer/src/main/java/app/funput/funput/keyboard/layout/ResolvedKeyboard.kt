@@ -49,6 +49,9 @@ data class ResolvedKeyboard(
     val height: Float,
     val suggestionBar: ResolvedSuggestionBar?,
     val rows: List<List<ResolvedKey>>,
+    /** One key step on each axis: a canonical key plus its gap. 0 when unknown. */
+    val pitchX: Float = 0f,
+    val pitchY: Float = 0f,
 ) {
     val keys: List<ResolvedKey> = buildList {
         // Left to right, matching the toolbar and the accessibility traversal order.
