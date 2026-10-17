@@ -16,8 +16,9 @@
 //! # Layout
 //!
 //! - this file — the calls that change engine state.
-//! - `query` — the read-only calls between the two steps.
+//! - `query` — the read-only calls between the two steps, and the counters.
 //! - `preview` — the calls a bar makes before the word ends.
+//! - `arrays` — the Java arrays every call above reads or returns.
 
 mod arrays;
 // Exports link by `#[unsafe(no_mangle)]` symbol name, so declaring the module is
@@ -27,12 +28,12 @@ mod query;
 
 use funput_engine::{Action, ImeResult, KeyTouch};
 use jni::EnvUnowned;
-use jni::objects::JIntArray;
 use jni::sys::{jfloat, jint, jintArray, jlong};
 
+use self::arrays::int_array;
 use super::composition::to_char;
 use super::registry;
-use crate::abi::{JavaObject, neutral, safe};
+use crate::abi::{JavaObject, safe};
 
 /// Report where the finger landed for the key about to be sent.
 ///
@@ -126,17 +127,7 @@ fn encode_edit(edit: Option<ImeResult>) -> Vec<jint> {
 
 /// Marshal an edit into the Java array the IME reads it from.
 fn edit_array(env: &mut EnvUnowned<'_>, edit: Option<ImeResult>) -> jintArray {
-    safe(std::ptr::null_mut(), || {
-        let values = encode_edit(edit);
-        let result = env
-            .with_env(|env| -> jni::errors::Result<_> {
-                let array = JIntArray::new(env, values.len())?;
-                array.set_region(env, 0, &values)?;
-                Ok(array.into_raw())
-            })
-            .into_outcome();
-        neutral(result)
-    })
+    int_array(env, &encode_edit(edit))
 }
 
 #[cfg(test)]

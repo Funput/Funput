@@ -556,11 +556,17 @@ external fun nativeRefuseCorrection(handle: Long)
 external fun nativeRankCorrection(handle: Long, uses: IntArray?, allowed: BooleanArray?): IntArray
 external fun nativeUndoCorrection(handle: Long): IntArray
 external fun nativeSetTypoCorrection(handle: Long, on: Boolean)
+/** Mười bộ đếm của engine, đúng thứ tự `FunputCorrectionMetrics` trong header C. */
+external fun nativeCorrectionMetrics(handle: Long): IntArray
 ```
 
 `nativeUndoCorrection` tách khỏi `nativeBackspace` và là no-op khi `nativeHasCorrectionUndo` sai,
 nên một phím Xoá bình thường không bao giờ bị nuốt ở đường này: IME hỏi trước rồi gọi một trong
 hai. `String(edit, 1, edit.size - 1)` dựng lại chữ từ phần đuôi.
+
+Mỗi handle của kho gợi ý có khoá riêng (`suggestion/registry.rs`): luồng chính hỏi
+`nativeIsKnownWord` trên một kho chỉ đọc ngay trong phím ranh giới, và không được phải chờ worker
+gợi ý đang flush kho cá nhân trên luồng của nó.
 
 ## 8. iOS
 
