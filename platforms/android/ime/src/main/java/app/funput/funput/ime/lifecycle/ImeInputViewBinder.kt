@@ -29,8 +29,7 @@ internal class ImeInputViewBinder(
         view = keyboard
         update()
         val editing = session()
-        ImeKeyboardCallbackBinder.bind(keyboard, editing.actionHandler, editing.editorRuntime,
-            editing.suggestionService, switcher, editing.letterReturn)
+        ImeKeyboardCallbackBinder.bind(keyboard, editing, switcher)
         ImePlacementBinder.bind(keyboard, service, scope)
         editing.bindPanels(keyboard)
         EmojiCatalogPreloader.schedule(keyboard)

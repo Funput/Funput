@@ -14,6 +14,8 @@ import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.settings.layout.LetterPageReturnSettings
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
+import app.funput.funput.ime.suggestions.bar.SuggestionBarState
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 import app.funput.funput.keyboard.model.ShiftState
 import kotlinx.coroutines.CoroutineScope
 
@@ -25,25 +27,27 @@ internal fun createImeEditingSession(
     connection: () -> InputConnection?,
     currentShiftState: () -> ShiftState,
     updateShiftState: (ShiftState) -> Unit,
-    showSuggestions: (List<String>) -> Unit,
+    showSuggestions: (List<SuggestionChip>) -> Unit,
     acknowledgeReset: (String) -> Unit,
 ): ImeEditingSession {
     val nativeEngine = NativeVietnameseEngine()
+    val bar = SuggestionBarState(showSuggestions)
     val editorRuntime = ImeEditorRuntime(
         currentShiftState = currentShiftState,
         updateShiftState = updateShiftState,
         connection = connection,
-        onSuggestionsChanged = showSuggestions,
+        onSuggestionsChanged = bar::showPersonal,
     )
     val typo = createTypoCorrection(context, nativeEngine) { editorRuntime.policy }
+    val composition = AndroidCompositionSession(nativeEngine, corrections = typo.corrections)
     val actionHandler = ImeKeyActionHandler(
-        composition = AndroidCompositionSession(nativeEngine, corrections = typo.corrections),
+        composition = composition,
         editor = editor,
         connection = connection,
         enterCommand = { editorRuntime.policy.editorAction.command },
     )
     val suggestionService = PersonalSuggestionService(
-        context = context, show = showSuggestions,
+        context = context, show = bar::showPersonal,
         shift = currentShiftState, acknowledgeReset = acknowledgeReset,
     )
     val clipboard = ImeClipboardSession(
@@ -53,12 +57,15 @@ internal fun createImeEditingSession(
         afterCommit = { suggestionService.consume(actionHandler.takeSuggestionUpdate()) },
         preparePanel = {
             actionHandler.finish()
-            showSuggestions(emptyList())
+            bar.showPersonal(emptyList())
         },
     )
     return ImeEditingSession(
         nativeEngine = nativeEngine,
         typo = typo,
+        composition = composition,
+        bar = bar,
+        connection = connection,
         editorRuntime = editorRuntime,
         actionHandler = actionHandler,
         suggestionService = suggestionService,

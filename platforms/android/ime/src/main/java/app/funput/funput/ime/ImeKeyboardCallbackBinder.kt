@@ -1,33 +1,21 @@
 package app.funput.funput.ime
 
-import app.funput.funput.ime.editing.ImeEditorRuntime
-import app.funput.funput.ime.editing.ImeKeyActionHandler
-import app.funput.funput.ime.editing.layout.LetterPageReturn
-import app.funput.funput.ime.suggestions.PersonalSuggestionService
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 
 internal object ImeKeyboardCallbackBinder {
-    fun dispatch(
-        handler: ImeKeyActionHandler,
-        suggestions: PersonalSuggestionService,
-        action: KeyAction,
-    ) {
-        handler.onKeyAction(action)
-        suggestions.consume(handler.takeSuggestionUpdate())
-    }
+    fun dispatch(editing: ImeEditingSession, action: KeyAction) = editing.dispatch(action)
 
     fun bind(
         view: FunputKeyboardView,
-        handler: ImeKeyActionHandler,
-        runtime: ImeEditorRuntime,
-        suggestions: PersonalSuggestionService,
+        editing: ImeEditingSession,
         switcher: SystemInputMethodSwitcher,
-        letterReturn: LetterPageReturn,
     ) = with(view.callbacks) {
+        val handler = editing.actionHandler
+        val suggestions = editing.suggestionService
         handler.typingSession.observe { hasTyped -> view.placementKeyVisible = !hasTyped }
         onKeyAction = { action ->
-            letterReturn.dispatch(action, view) { dispatch(handler, suggestions, action) }
+            editing.letterReturn.dispatch(action, view) { dispatch(editing, action) }
         }
         onSettingsRequested = ImeSettingsLauncher(view.context) {
             handler.finish()
@@ -44,12 +32,8 @@ internal object ImeKeyboardCallbackBinder {
             // Swapping panels rebuilds the layout, and that resets Shift. Without
             // this the `!` and `?` on the symbol panel never capitalize: the space
             // after them raises Shift, and the trip back to ABC drops it again.
-            runtime.updateCapitalization()
+            editing.editorRuntime.updateCapitalization()
         }
-        onSuggestionSelected = { selection ->
-            if (!runtime.selectCompletion(selection, handler::finish)) {
-                suggestions.select(selection, handler)
-            }
-        }
+        onSuggestionSelected = editing::select
     }
 }
