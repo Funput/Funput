@@ -1,28 +1,28 @@
-package app.funput.funput.ui.about
+package app.funput.funput.ui.me
 
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import app.funput.funput.ui.kit.theme.FunputUiTheme
 
-@Preview(name = "Giới thiệu · Sáng", showBackground = true, widthDp = 390, heightDp = 844)
+@Preview(name = "Tôi, sáng", showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
-private fun AboutLightPreview() {
+private fun MeLightPreview() {
     FunputUiTheme(isDark = false) {
-        AboutScreen(versionName = "1.2026.53", onOpenLink = {})
+        MeScreen(versionName = "1.2026.53", onOpenLink = {})
     }
 }
 
 @Preview(
-    name = "Giới thiệu · Tối",
+    name = "Tôi, tối",
     showBackground = true,
     widthDp = 390,
     heightDp = 844,
     uiMode = Configuration.UI_MODE_NIGHT_YES,
 )
 @Composable
-private fun AboutDarkPreview() {
+private fun MeDarkPreview() {
     FunputUiTheme(isDark = true) {
-        AboutScreen(versionName = "1.2026.53", onOpenLink = {})
+        MeScreen(versionName = "1.2026.53", onOpenLink = {})
     }
 }

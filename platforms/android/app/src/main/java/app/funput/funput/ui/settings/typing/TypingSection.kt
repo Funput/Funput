@@ -15,18 +15,18 @@ import app.funput.funput.ui.kit.rows.LinkRow
 import app.funput.funput.ui.kit.rows.SegmentedRow
 import app.funput.funput.ui.settings.SettingsPicker
 import app.funput.funput.ui.settings.label
+import app.funput.funput.ui.settings.sectionTitle
 
-/** How Vietnamese is typed: the input method, where tone marks go, and text shortcuts. */
+/** How Vietnamese is typed: the input method and where tone marks go. */
 @Composable
 internal fun TypingSection(
     inputMethod: KeyboardInputMethod,
     toneStyle: ToneStyle,
     onOpenPicker: (SettingsPicker) -> Unit,
     onToneStyleSelected: (ToneStyle) -> Unit,
-    onOpenShortcuts: () -> Unit,
 ) {
     FunputSection(
-        title = stringResource(R.string.settings_section_typing),
+        title = sectionTitle(R.string.settings_section_typing),
         modifier = Modifier.testTag(TypingSettingsSectionTag),
     ) {
         LinkRow(
@@ -42,13 +42,6 @@ internal fun TypingSection(
             selectedIndex = toneStyle.ordinal,
             onSelect = { onToneStyleSelected(ToneStyle.entries[it]) },
             icon = FunputIcons.ToneMarks,
-        )
-        FunputDivider(startInset = FunputRowDefaults.IconDividerInset)
-        LinkRow(
-            title = stringResource(R.string.shortcuts_title),
-            summary = stringResource(R.string.shortcuts_settings_summary),
-            icon = FunputIcons.Shortcuts,
-            onClick = onOpenShortcuts,
         )
     }
 }

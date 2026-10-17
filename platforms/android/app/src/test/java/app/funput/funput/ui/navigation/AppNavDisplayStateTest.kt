@@ -50,13 +50,13 @@ class AppNavDisplayStateTest {
     @Test
     fun `a destination still on a back stack keeps its state`() {
         showCounters()
-        tapCounter(AppDestination.SETTINGS)
+        tapCounter(AppDestination.KEYBOARD)
 
         compose.runOnIdle { navigator.navigate(AppDestination.SPEECH) }
         compose.waitForIdle()
         compose.runOnIdle { navigator.navigateBack() }
 
-        counter(AppDestination.SETTINGS).assertTextEquals("1")
+        counter(AppDestination.KEYBOARD).assertTextEquals("1")
     }
 
     private fun showCounters() {

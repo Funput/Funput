@@ -17,6 +17,7 @@ import app.funput.funput.ui.kit.overlays.FunputDialog
 import app.funput.funput.ui.kit.rows.ActionRow
 import app.funput.funput.ui.kit.rows.FunputRowDefaults
 import app.funput.funput.ui.kit.theme.FunputTint
+import app.funput.funput.ui.settings.sectionTitle
 
 /** What can be erased, and the words the confirmation uses for it. */
 private enum class DataAction(
@@ -44,7 +45,7 @@ private enum class DataAction(
 internal fun DataSection(onResetPersonalSuggestions: () -> Unit, onClearClipboardHistory: () -> Unit) {
     var pending by rememberSaveable { mutableStateOf<DataAction?>(null) }
     FunputSection(
-        title = stringResource(R.string.settings_section_data),
+        title = sectionTitle(R.string.settings_section_data),
         modifier = Modifier.testTag(DataSettingsSectionTag),
     ) {
         ActionRow(

@@ -16,9 +16,9 @@ import app.funput.funput.ui.kit.theme.FunputUiTheme
 
 /** The three tabs the app has, used by the layout tests. */
 internal val SampleTabs = listOf(
-    FunputTab("Cài đặt", FunputIcons.Settings, FunputIcons.SettingsSelected),
+    FunputTab("Cài đặt", FunputIcons.Keyboard, FunputIcons.KeyboardSelected),
     FunputTab("Giao diện", FunputIcons.Appearance, FunputIcons.AppearanceSelected),
-    FunputTab("Giới thiệu", FunputIcons.About, FunputIcons.AboutSelected),
+    FunputTab("Giới thiệu", FunputIcons.Me, FunputIcons.MeSelected),
 )
 
 /**

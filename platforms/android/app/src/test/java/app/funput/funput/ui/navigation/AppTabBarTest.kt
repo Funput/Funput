@@ -37,9 +37,9 @@ class AppTabBarTest {
             FunputUiTheme(isDark = false) { AppTabBar(navigator) }
         }
 
-        compose.onNode(hasContentDescription(label(R.string.nav_settings)) and isTab).assertIsSelected()
-        compose.onNode(hasContentDescription(label(R.string.nav_about)) and isTab).performClick()
+        compose.onNode(hasContentDescription(label(R.string.nav_keyboard)) and isTab).assertIsSelected()
+        compose.onNode(hasContentDescription(label(R.string.nav_me)) and isTab).performClick()
 
-        assertEquals(TopLevelDestination.ABOUT, navigator.currentTab)
+        assertEquals(TopLevelDestination.ME, navigator.currentTab)
     }
 }

@@ -20,7 +20,7 @@ lớn, thanh tab kính) nhưng **không sao chép 1:1**: vẫn giữ điều hư
 Android.
 
 **Trong phạm vi:** app cài đặt (`:app`): Cài đặt, Gõ tắt, Giao diện và bộ sưu tập chủ đề,
-trình tạo chủ đề, ảnh nền, Giới thiệu, Giấy phép, luồng bật bàn phím.
+trình tạo chủ đề, ảnh nền, Tôi (trước là Giới thiệu), Giấy phép, luồng bật bàn phím.
 
 **Ngoài phạm vi:** layout phím và bộ vẽ bàn phím (`:keyboard-renderer`, `:keyboard-ui`,
 `:ime`), engine, dữ liệu cài đặt.
@@ -38,8 +38,12 @@ trình tạo chủ đề, ảnh nền, Giới thiệu, Giấy phép, luồng b�
 | Màu nhấn | Cam Funput | Xanh hệ thống: mất nhận diện thương hiệu |
 | Icon | Phosphor (MIT), mỗi nhóm cài đặt một màu | SF Symbols: không được dùng trên Android |
 | "Màu theo hình nền" | Bỏ | App có bảng màu riêng |
-| Xem trước bàn phím ở Cài đặt | Giữ, thu nhỏ; chạm vào mở tab Giao diện | Bỏ hẳn cho giống iOS |
-| Thanh tab | Viên thuốc kính mờ nổi, 56dp, cả 3 tab đều có tên | Thanh rộng 64dp của bản đầu: quá cao |
+| Xem trước bàn phím | Giữ, thu nhỏ, ở đầu tab Bàn phím; chạm vào mở tab Giao diện | Bỏ hẳn cho giống iOS |
+| Thanh tab | Viên thuốc kính mờ nổi, 56dp, cả 4 tab đều có tên | Thanh rộng 64dp của bản đầu: quá cao |
+| Các tab | Bàn phím, Gõ tắt, Giao diện, Tôi, theo cách tổ chức của iOS (PR #568) | Giữ 3 tab Cài đặt, Giao diện, Giới thiệu: khác iOS, khó thêm tính năng |
+| Cài đặt bàn phím | Một hub mục lục, mỗi trang một dòng kèm câu mô tả; trang khai báo một lần trong `SettingsPage` | Một màn dài: khó tìm, khó mở rộng |
+| Tab Tin tức | Không làm. APK không có quyền `INTERNET`, bàn phím luôn offline | Thêm `INTERNET` để tải feed blog như iOS |
+| Dữ liệu | Mở từ tab Tôi, tên "Dữ liệu" (Android chưa có khôi phục mặc định) | Đặt ở hub như các trang khác |
 | Kiểm tra giao diện | Bằng tay trên máy thật | Ảnh golden trong CI: mỗi thay đổi giao diện tốn một vòng chụp lại trên Linux |
 
 ## Kiến trúc

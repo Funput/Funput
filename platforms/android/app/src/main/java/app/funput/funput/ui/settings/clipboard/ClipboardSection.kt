@@ -14,6 +14,7 @@ import app.funput.funput.ui.kit.rows.LinkRow
 import app.funput.funput.ui.kit.rows.ToggleRow
 import app.funput.funput.ui.kit.theme.FunputTint
 import app.funput.funput.ui.settings.label
+import app.funput.funput.ui.settings.sectionTitle
 
 /** Clipboard history: whether Funput keeps it, and how long unpinned items last. One green group. */
 @Composable
@@ -24,7 +25,7 @@ internal fun ClipboardSection(
     onOpenExpiry: () -> Unit,
 ) {
     FunputSection(
-        title = stringResource(R.string.settings_clipboard_section),
+        title = sectionTitle(R.string.settings_clipboard_section),
         modifier = Modifier.testTag(ClipboardSettingsSectionTag),
     ) {
         ToggleRow(

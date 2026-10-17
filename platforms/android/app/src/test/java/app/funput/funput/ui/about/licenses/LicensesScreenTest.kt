@@ -8,7 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
-import app.funput.funput.ui.about.AboutRoute
+import app.funput.funput.ui.me.MeRoute
 import app.funput.funput.ui.kit.glass.GlassTier
 import app.funput.funput.ui.kit.glass.LocalGlassTier
 import app.funput.funput.ui.kit.layout.FunputScreenListTag
@@ -24,7 +24,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** About → licences and back, with every shipped notice readable offline. */
+/** "Tôi" → licences and back, with every shipped notice readable offline. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [SCREENSHOT_SDK], qualifiers = "vi-" + ScreenshotDevices.PHONE)
 class LicensesScreenTest {
@@ -35,7 +35,7 @@ class LicensesScreenTest {
         compose.onNodeWithTag(FunputScreenListTag).performScrollToNode(hasText(text))
 
     @Test
-    fun `about opens every notice, and back returns to about`() {
+    fun `me opens every notice, and back returns to me`() {
         compose.setContent {
             val navigator = rememberAppNavigator()
             FunputUiTheme(isDark = false) {
@@ -43,7 +43,10 @@ class LicensesScreenTest {
                     if (navigator.currentDestination == AppDestination.THIRD_PARTY_LICENSES) {
                         LicensesRoute { navigator.navigateBack() }
                     } else {
-                        AboutRoute { navigator.navigate(AppDestination.THIRD_PARTY_LICENSES) }
+                        MeRoute(
+                            onOpenData = {},
+                            onOpenLicenses = { navigator.navigate(AppDestination.THIRD_PARTY_LICENSES) },
+                        )
                     }
                 }
             }

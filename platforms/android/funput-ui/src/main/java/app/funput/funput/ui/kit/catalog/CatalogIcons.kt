@@ -31,10 +31,10 @@ private val TintSamples = listOf(
 
 private val AllIcons = with(FunputIcons) {
     listOf(
-        Settings, SettingsSelected, Appearance, AppearanceSelected, About, AboutSelected, Back, Forward,
+        KeyboardSelected, ShortcutsSelected, Appearance, AppearanceSelected, Me, MeSelected, Back, Forward,
         Check, Add, Keyboard, ToneMarks, Shortcuts, NumberRow, KeySize, Placement, OneHanded, Restore,
-        SpellCheck, Capitalize, Suggestions, Gestures, ReturnToLetters, Haptics, Sound, Clipboard,
-        ClipboardExpiry, HardwareKeyboard, Delete, Clear, Hotkey, OpenExternal,
+        SpellCheck, Capitalize, Suggestions, Gestures, ReturnToLetters, Microphone, Haptics, Sound, Clipboard,
+        ClipboardExpiry, HardwareKeyboard, Delete, Clear, Data, Hotkey, OpenExternal,
         Search, ClearField, More, Language, LightDark, Edit, SourceCode, ReportBug, Mail, Privacy,
         Licenses, Heart,
     )

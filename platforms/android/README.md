@@ -86,11 +86,11 @@ Xong bước cuối, thẻ đổi thành **Funput đã sẵn sàng**.
 | Telex | `tieesng vieejt` | tiếng việt |
 | VNI | `xin chao2` | xin chào |
 
-Mặc định lần đầu chạy là **VNI**. Đổi trong **Cài đặt → Bàn phím → Kiểu gõ**.
+Mặc định lần đầu chạy là **VNI**. Đổi trong **Bàn phím → Gõ tiếng Việt → Kiểu gõ**.
 
 > [!TIP]
 > **VNI luôn cần hàng phím số** để nhập dấu, nên Funput tự bật hàng số khi bạn chọn VNI. Với các
-> kiểu Telex thì hàng số là tuỳ chọn — bật hay tắt trong **Cài đặt → Bàn phím → Hàng phím số**.
+> kiểu Telex thì hàng số là tuỳ chọn, bật hay tắt trong **Bàn phím → Bố cục và kích thước → Hàng phím số**.
 
 ### Cử chỉ
 
@@ -104,20 +104,33 @@ Cả ba nằm chung một công tắc **Cử chỉ thông minh**.
 
 ### Cài đặt có gì
 
-| Mục | Chỉnh được gì |
+App có bốn tab, cùng cách tổ chức với app iOS: **Bàn phím**, **Gõ tắt**, **Giao diện** và **Tôi**.
+Tab **Bàn phím** là mục lục: ảnh xem trước bàn phím, thẻ thiết lập khi chưa bật xong, rồi mỗi
+trang một dòng kèm một câu nói trang đó đang đặt thế nào. Chạm vào dòng thì mở trang.
+
+| Trang | Chỉnh được gì |
 |---|---|
-| **Gõ tiếng Việt** | Kiểu gõ · kiểu đặt dấu · gõ tắt |
-| **Bố cục bàn phím** | Hàng phím số · kích thước phím |
-| **Thông minh** | Khôi phục từ · kiểm tra chính tả · tự viết hoa · gợi ý từ · cử chỉ thông minh |
-| **Phụ âm đầu mở rộng** | Công tắc chính · chọn riêng `z`, `f`, `w`, `j` |
-| **Giao diện** | Chọn theme dựng sẵn hoặc tự tạo theme riêng |
+| **Gõ tiếng Việt** | Kiểu gõ, kiểu đặt dấu, phụ âm đầu mở rộng `z`, `f`, `w`, `j` |
+| **Bố cục và kích thước** | Chế độ bàn phím, hàng phím số, kích thước phím |
+| **Thông minh** | Khôi phục từ, kiểm tra chính tả, tự viết hoa, gợi ý từ, cử chỉ thông minh, tự về bảng chữ |
 | **Phản hồi khi chạm** | Âm thanh và rung khi gõ |
-| **Clipboard · Dữ liệu** | Lịch sử clipboard và thao tác xoá dữ liệu cục bộ |
+| **Clipboard** | Lưu lịch sử clipboard và thời gian tự xoá |
+| **Nhập bằng giọng nói** | Quyền micro và dữ liệu nhận dạng (chỉ ở bản có tính năng này) |
+| **Bàn phím rời** | Hiện Funput khi có bàn phím rời, phím tắt Alt + Space |
+| **Dữ liệu** (mở từ tab **Tôi**) | Xoá từ đã học và lịch sử clipboard |
+
+Tab **Gõ tắt** là danh sách gõ tắt, tab **Giao diện** là bộ sưu tập chủ đề, tab **Tôi** gồm dữ liệu,
+liên kết, quyền riêng tư và giấy phép. Không có tab Tin tức như iOS: APK không có quyền `INTERNET`,
+nên bàn phím luôn offline.
+
+Thêm một trang là thêm một mục vào `SettingsPage` (`ui/settings/pages/`), destination tương ứng
+trong `AppDestination` và các section của nó trong `settingsPageItems`. Dòng ở hub, tiêu đề và
+điều hướng đi theo từ đó.
 
 Cấu hình lưu bằng **Preferences DataStore**. Gõ tắt là tài liệu JSON riêng trong vùng private
 của app để UI và IME dùng cùng một snapshot; xem [thiết kế Gõ tắt](../../docs/features/android-shortcuts.md).
 
-**Phụ âm đầu mở rộng** nằm ngay sau **Thông minh**, mặc định tắt. Bật công tắc
+**Phụ âm đầu mở rộng** nằm trong trang **Gõ tiếng Việt**, mặc định tắt. Bật công tắc
 chính chọn cả bốn chữ; có thể bỏ riêng từng chữ, và bỏ chữ cuối sẽ tự tắt công
 tắc chính. Lựa chọn áp dụng cho bàn phím, bàn phím vật lý và ô tìm emoji mà không
 cần khởi động lại app chủ.
@@ -134,7 +147,7 @@ kho tiếng Việt theo luật Rust dùng chung với iOS. Công tắc **Gợi �
 cả hai nguồn; **Xóa từ đã học** giữ nguyên từ điển đi kèm. Android tiếp tục tôn trọng
 mật khẩu, nguồn gợi ý của editor và `IME_FLAG_NO_PERSONALIZED_LEARNING`.
 
-**Giới thiệu → Giấy phép bên thứ ba** hiển thị đầy đủ ghi công offline. Gradle sinh
+**Tôi → Giấy phép bên thứ ba** hiển thị đầy đủ ghi công offline. Gradle sinh
 `lexicon/en.lex` và chép nguyên `NOTICE.md` từ source vào generated assets của `ime`;
 không tải dữ liệu hoặc commit nhị phân. Installer kiểm CRC và cài file phiên bản trong
 `noBackupFilesDir/Lexicon` trên worker trước khi gọi JNI.

@@ -12,6 +12,7 @@ import app.funput.funput.ui.kit.rows.ActionRow
 import app.funput.funput.ui.kit.rows.FunputRowDefaults
 import app.funput.funput.ui.kit.rows.ToggleRow
 import app.funput.funput.ui.kit.theme.FunputTint
+import app.funput.funput.ui.settings.sectionTitle
 
 /**
  * Working beside a physical keyboard: keep Funput's keys on screen, toggle it with Alt + Space,
@@ -20,7 +21,7 @@ import app.funput.funput.ui.kit.theme.FunputTint
 @Composable
 internal fun HardwareKeyboardSection(state: HardwareKeyboardSectionState) {
     FunputSection(
-        title = stringResource(R.string.settings_section_hardware_keyboard),
+        title = sectionTitle(R.string.settings_section_hardware_keyboard),
         modifier = Modifier.testTag(HardwareKeyboardSettingsSectionTag),
     ) {
         ToggleRow(

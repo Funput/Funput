@@ -1,4 +1,4 @@
-package app.funput.funput.ui.about
+package app.funput.funput.ui.me
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.hasText
@@ -21,26 +21,35 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** The about page's links open where they say, and the licences row opens the licences. */
+/** The "Tôi" tab: its links open where they say, and its rows open the data page and the licences. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [SCREENSHOT_SDK], qualifiers = "vi-" + ScreenshotDevices.PHONE)
-class AboutScreenTest {
+class MeScreenTest {
     @get:Rule
     val compose = createComposeRule()
 
     @Test
-    fun `each link opens its own address`() {
+    fun `each row opens its own page or address`() {
         val opened = mutableListOf<String>()
         var licenses = 0
+        var data = 0
         compose.setContent {
             FunputUiTheme(isDark = false) {
                 CompositionLocalProvider(LocalGlassTier provides GlassTier.SOLID) {
-                    AboutScreen(versionName = "1.2026.70", onOpenLink = { opened += it }, onOpenLicenses = { licenses += 1 })
+                    MeScreen(
+                        versionName = "1.2026.70",
+                        onOpenLink = { opened += it },
+                        onOpenData = { data += 1 },
+                        onOpenLicenses = { licenses += 1 },
+                    )
                 }
             }
         }
 
-        for (title in listOf("Website", "GitHub", "Báo lỗi", "Liên hệ", "Chính sách quyền riêng tư", "Giấy phép bên thứ ba")) {
+        val titles = listOf(
+            "Dữ liệu", "Website", "GitHub", "Báo lỗi", "Liên hệ", "Chính sách quyền riêng tư", "Giấy phép bên thứ ba",
+        )
+        for (title in titles) {
             compose.onNodeWithTag(FunputScreenListTag).performScrollToNode(hasText(title))
             compose.onNodeWithText(title).performClick()
         }
@@ -57,6 +66,7 @@ class AboutScreenTest {
                 opened,
             )
             assertTrue(licenses == 1)
+            assertTrue(data == 1)
         }
     }
 }
