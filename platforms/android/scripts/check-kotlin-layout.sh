@@ -30,6 +30,8 @@ readonly roots=(
     "$ime_test/settings/speech"
     "$renderer_main/utility"
     "$renderer_test/utility"
+    "$renderer_main/touch"
+    "$renderer_test/touch"
     "$renderer_main/surface/geometry"
     "$android_root/keyboard-ui/src/main/java/app/funput/funput/keyboard/ui/host"
     "$android_root/keyboard-ui/src/androidTest/java/app/funput/funput/keyboard/ui/support"

@@ -9,11 +9,14 @@ import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.layout.KeyBounds
+import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionPreview
+import app.funput.funput.keyboard.touch.KeyTouchRecorder
 
 /** Wires Android touch routing to renderer-independent keyboard interaction state. */
 internal class KeyboardSurfaceInteraction(
     keyAt: (x: Float, y: Float) -> String?,
+    keyboard: () -> ResolvedKeyboard?,
     keySpec: (keyId: String) -> KeySpec?,
     suggestionSelection: (targetId: String) -> SuggestionSelection?,
     onAction: (KeyAction) -> Unit,
@@ -32,10 +35,11 @@ internal class KeyboardSurfaceInteraction(
     surfaceBounds: () -> KeyBounds,
 ) : PressedKeyState {
     private lateinit var touchHandler: KeyboardTouchHandler
+    private val touches = KeyTouchRecorder(keyboard)
     private val controller = KeyboardInteractionController(
         keySpec = keySpec,
         suggestionSelection = suggestionSelection,
-        onAction = onAction,
+        onAction = { onAction(touches.attach(it)) },
         utilities = utilities,
         onPointersCancelled = { touchHandler.cancelGesture() },
         onSuggestionSelected = onSuggestionSelected,
@@ -55,10 +59,12 @@ internal class KeyboardSurfaceInteraction(
         touchHandler = KeyboardTouchHandler(
             keyAt = keyAt,
             onPressedStateChanged = onVisualStateChanged,
-            onPointerStarted = controller::onPointerStarted,
+            onPointerStarted = { id, key, x, y -> touches.down(id, x, y); controller.onPointerStarted(id, key, x, y) },
             onPointerKeyChanged = controller::onPointerKeyChanged,
             onPointerMoved = controller::onPointerMoved,
-            onKeyReleased = controller::onKeyReleased,
+            onKeyReleased = { id, key, x, y, time ->
+                touches.releasing(id, key) { controller.onKeyReleased(id, key, x, y, time) }
+            },
             isPointerCaptured = controller::isPointerCaptured,
             onCancelled = controller::cancel,
             requestParentIntercept = requestParentIntercept,
@@ -87,10 +93,13 @@ internal class KeyboardSurfaceInteraction(
 
     fun performAccessibilityAction(action: KeyAction) = controller.emitAction(action)
 
-    fun clear() = touchHandler.clear()
+    fun clear() {
+        touchHandler.clear()
+        touches.clear()
+    }
 
     fun reset() {
-        touchHandler.clear()
+        clear()
         controller.reset()
     }
 

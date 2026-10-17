@@ -99,7 +99,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             x, y, suggestions.size, clipboardHint != null && suggestions.isEmpty() &&
                 resolvedKeyboard?.suggestionBar?.clipboardHintFits == true,
         ) },
-        keySpec = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.spec },
+        keyboard = { resolvedKeyboard },
         suggestionSelection = { id -> suggestions.selectionForTarget(id) },
         onHapticFeedback = { type ->
             KeyboardHaptics.perform(this, type)
@@ -110,7 +110,6 @@ class KeyboardSurfaceView @JvmOverloads constructor(
             postInvalidateOnAnimation()
         },
         onSemanticStateChanged = accessibility::refresh,
-        keyBounds = { id -> resolvedKeyboard?.keys?.firstOrNull { it.spec.id == id }?.bounds },
         surfaceBounds = popoverGeometry::resolve,
     )
     private val events = KeyboardSurfaceEventDispatcher(
