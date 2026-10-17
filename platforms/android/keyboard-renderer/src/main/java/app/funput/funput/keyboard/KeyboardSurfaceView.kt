@@ -70,6 +70,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         get() = render.clipboardHint
         set(value) { render.clipboardHint = value; accessibility.refresh() }
     var enterAction by render::enterAction
+    var keyPreviewsEnabled: Boolean by render::keyPreviewsEnabled
     val callbacks = KeyboardCallbacks()
     var shiftState: ShiftState
         get() = interaction.shiftState

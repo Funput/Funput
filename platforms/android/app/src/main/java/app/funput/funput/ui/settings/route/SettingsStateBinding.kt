@@ -51,6 +51,7 @@ internal fun rememberSettingsScreenState(
         hapticsEnabled = settings.feedback.hapticsEnabled,
         hapticStrength = settings.feedback.hapticStrength,
         soundsEnabled = settings.feedback.soundsEnabled,
+        keyPreviewsEnabled = settings.feedback.keyPreviewsEnabled,
         smartComposition = settings.smartComposition,
         personalSuggestionsEnabled = settings.personalSuggestions.enabled,
         clipboardPreferences = settings.clipboard,
@@ -89,6 +90,9 @@ internal fun rememberSettingsScreenState(
         },
         onHapticStrengthSelected = { strength ->
             scope.launch { settings.feedbackStore.selectHaptics(strength) }
+        },
+        onKeyPreviewsChanged = { enabled ->
+            scope.launch { settings.feedbackStore.setKeyPreviewsEnabled(enabled) }
         },
         onSoundsChanged = { enabled ->
             scope.launch { settings.feedbackStore.setSoundsEnabled(enabled) }

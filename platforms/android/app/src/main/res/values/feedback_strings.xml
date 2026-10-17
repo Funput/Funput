@@ -19,4 +19,8 @@
     <string name="settings_summary_strength_strong">mạnh</string>
 
     <string name="quick_haptics_choose">chọn mức rung</string>
+
+    <string name="settings_key_previews_title">Xem trước phím</string>
+    <string name="settings_key_previews_summary">Hiện ký tự phóng lớn khi chạm phím.</string>
+    <string name="settings_summary_key_previews">xem trước phím</string>
 </resources>

@@ -34,6 +34,7 @@ internal class SettingsSummaries(private val resources: Resources) {
             listOfNotNull(
                 state.activeHapticStrength?.let(::haptics),
                 resources.getString(R.string.settings_summary_sounds).takeIf { state.soundsEnabled },
+                resources.getString(R.string.settings_summary_key_previews).takeIf { state.keyPreviewsEnabled },
             ),
         )
         SettingsPage.CLIPBOARD -> clipboard(state)

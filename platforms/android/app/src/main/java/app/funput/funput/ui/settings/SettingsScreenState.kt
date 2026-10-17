@@ -30,6 +30,7 @@ internal class SettingsScreenState(
     /** Remembered while vibration is off; see [activeHapticStrength]. */
     val hapticStrength: KeyboardHapticStrength = KeyboardHapticStrength.Default,
     val soundsEnabled: Boolean,
+    val keyPreviewsEnabled: Boolean = true,
     val smartComposition: SmartCompositionPreferences,
     val personalSuggestionsEnabled: Boolean,
     val clipboardPreferences: ClipboardPreferences,
@@ -51,6 +52,7 @@ internal class SettingsScreenState(
     /** Vibration off when null, otherwise on at the given strength. */
     val onHapticStrengthSelected: (KeyboardHapticStrength?) -> Unit = {},
     val onSoundsChanged: (Boolean) -> Unit,
+    val onKeyPreviewsChanged: (Boolean) -> Unit = {},
     val onSmartGesturesChanged: (Boolean) -> Unit,
     val onReturnsToLettersChanged: (Boolean) -> Unit = {},
     val onSmartRestoreChanged: (Boolean) -> Unit,

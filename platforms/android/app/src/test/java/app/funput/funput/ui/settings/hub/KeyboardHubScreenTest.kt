@@ -66,8 +66,8 @@ class KeyboardHubScreenTest {
 
         scrollTo("Đặt dấu kiểu cũ")
         compose.onNodeWithText("Đặt dấu kiểu cũ").assertExists()
-        scrollTo("Đang bật rung trung bình và âm thanh")
-        compose.onNodeWithText("Đang bật rung trung bình và âm thanh").assertExists()
+        scrollTo("Đang bật rung trung bình, âm thanh và xem trước phím")
+        compose.onNodeWithText("Đang bật rung trung bình, âm thanh và xem trước phím").assertExists()
     }
 
     @Test

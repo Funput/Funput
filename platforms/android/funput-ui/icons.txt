@@ -43,6 +43,7 @@ microphone
 # Feedback
 vibrate
 speaker-high
+magnifying-glass-plus
 
 # Clipboard and data
 clipboard-text

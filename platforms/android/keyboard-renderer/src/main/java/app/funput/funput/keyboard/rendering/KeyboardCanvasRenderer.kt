@@ -76,7 +76,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         shiftState: ShiftState,
         language: KeyboardLanguage,
         enterAction: KeyboardEnterAction,
-        secure: Boolean,
+        showsKeyPreviews: Boolean,
     ) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
         liquidGlassBackdrop.draw(canvas, width, height)
@@ -103,7 +103,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         val alternatePreview = (pressedKeys as? KeyboardSurfaceInteraction)?.alternatePreview
         keyboard.keys.forEach { key ->
             if (alternatePreview == null && pressedKeys.isPressed(key.spec.id) &&
-                KeyPopupLayout.isEligible(key, secure)) {
+                KeyPopupLayout.isEligible(key, showsKeyPreviews)) {
                 keyPopupRenderer.draw(canvas, key, width.toFloat(), theme, shiftState)
             }
         }

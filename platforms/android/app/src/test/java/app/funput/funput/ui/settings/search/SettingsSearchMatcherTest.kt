@@ -40,6 +40,7 @@ class SettingsSearchMatcherTest {
         assertTrue("Rung khi nhấn phím" in titles("haptic"))
         assertTrue("Kiểu gõ" in titles("telex"))
         assertTrue("Từ đã học" in titles("reset"))
+        assertTrue("Xem trước phím" in titles("popup"))
     }
 
     @Test

@@ -2,9 +2,12 @@ package app.funput.funput.ui.settings.quick
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -50,7 +53,11 @@ private fun QuickSettingsGrid(state: SettingsScreenState, onOpenHapticStrength: 
     // Plain rows rather than a lazy grid: six tiles, inside a list that already scrolls.
     Column(verticalArrangement = Arrangement.spacedBy(gap)) {
         QuickSetting.entries.chunked(columns).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.fillMaxWidth()) {
+            // As tall as the row's tallest tile, so a name that wraps does not leave a ragged row.
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(gap),
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            ) {
                 row.forEach { setting ->
                     FunputToggleTile(
                         title = stringResource(setting.title),
@@ -63,7 +70,7 @@ private fun QuickSettingsGrid(state: SettingsScreenState, onOpenHapticStrength: 
                         lockedReason = stringResource(R.string.quick_vni_number_row),
                         onClick = onOpenHapticStrength.takeIf { setting.opensChoice },
                         onClickLabel = stringResource(R.string.quick_haptics_choose),
-                        modifier = Modifier.weight(1f).testTag(quickSettingTag(setting)),
+                        modifier = Modifier.weight(1f).fillMaxHeight().testTag(quickSettingTag(setting)),
                     )
                 }
                 repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }

@@ -12,7 +12,7 @@ import app.funput.funput.ui.settings.feedback.HapticStrengthOption
  * than set once. [title] is the short name on the tile, [accessibilityTitle] the setting's full
  * name, which TalkBack reads and the settings pages use.
  *
- * iOS has a key preview tile here; Android has no such setting, so smart gestures take its place.
+ * The same six tiles as iOS, in the same order.
  */
 internal enum class QuickSetting(
     @param:StringRes val title: Int,
@@ -43,9 +43,9 @@ internal enum class QuickSetting(
         R.string.quick_number_row, R.string.settings_number_row_title, FunputIcons.NumberRow,
         { it.showsNumberRow }, { it.onShowsNumberRowChanged },
     ),
-    SMART_GESTURES(
-        R.string.quick_gestures, R.string.settings_smart_gestures_title, FunputIcons.Gestures,
-        { it.smartGesturesEnabled }, { it.onSmartGesturesChanged },
+    KEY_PREVIEWS(
+        R.string.quick_key_previews, R.string.settings_key_previews_title, FunputIcons.KeyPreview,
+        { it.keyPreviewsEnabled }, { it.onKeyPreviewsChanged },
     ),
     ;
 

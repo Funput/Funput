@@ -7,6 +7,8 @@ data class KeyboardFeedbackPreferences(
     val soundsEnabled: Boolean,
     /** Kept while vibration is off, so turning it back on returns to the same strength. */
     val hapticStrength: KeyboardHapticStrength = KeyboardHapticStrength.Default,
+    /** The enlarged character over a pressed key; on unless the user turns it off. */
+    val keyPreviewsEnabled: Boolean = true,
 ) {
     /** The strength in use, or null when vibration is off. */
     val activeHapticStrength: KeyboardHapticStrength?

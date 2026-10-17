@@ -7,8 +7,14 @@ import app.funput.funput.keyboard.model.ShiftState
 
 /** Pure popup policy and geometry, kept separate from Canvas drawing for testability. */
 internal object KeyPopupLayout {
-    fun isEligible(key: ResolvedKey, secure: Boolean): Boolean =
-        !secure && key.spec.label.isNotEmpty() && key.spec.role in PopupRoles
+    /**
+     * Whether pressed keys show their preview at all: only while the user keeps "Xem trước phím"
+     * on, and never in a password field, where an enlarged character would be read over a shoulder.
+     */
+    fun showsPreviews(secure: Boolean, enabled: Boolean): Boolean = enabled && !secure
+
+    fun isEligible(key: ResolvedKey, showsPreviews: Boolean): Boolean =
+        showsPreviews && key.spec.label.isNotEmpty() && key.spec.role in PopupRoles
 
     fun label(key: ResolvedKey, shiftState: ShiftState): String =
         if (key.spec.role == KeyRole.CHARACTER && shiftState.isActive) {

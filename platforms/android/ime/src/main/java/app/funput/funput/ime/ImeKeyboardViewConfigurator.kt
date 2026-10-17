@@ -69,5 +69,6 @@ internal fun FunputKeyboardView.configureForEditor(
     enterAction = policy.editorAction.presentation
     hapticsEnabled = feedback.hapticsEnabled
     hapticStrength = feedback.hapticStrength
+    keyPreviewsEnabled = feedback.keyPreviewsEnabled
     soundsEnabled = feedback.soundsEnabled
 }

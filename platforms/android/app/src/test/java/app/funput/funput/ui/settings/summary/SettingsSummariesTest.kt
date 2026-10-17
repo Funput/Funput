@@ -54,14 +54,21 @@ class SettingsSummariesTest {
 
     @Test
     fun `feedback lists what is on, in a sentence`() {
-        fun feedback(haptics: Boolean, sounds: Boolean) =
-            summaries.of(SettingsPage.FEEDBACK, testSettingsState(hapticsEnabled = haptics, soundsEnabled = sounds))
+        fun feedback(haptics: Boolean, sounds: Boolean, previews: Boolean = false) = summaries.of(
+            SettingsPage.FEEDBACK,
+            testSettingsState(hapticsEnabled = haptics, soundsEnabled = sounds, keyPreviewsEnabled = previews),
+        )
 
         assertEquals("Đang tắt tất cả", feedback(haptics = false, sounds = false))
         assertEquals("Đang bật rung trung bình", feedback(haptics = true, sounds = false))
         assertEquals("Đang bật âm thanh", feedback(haptics = false, sounds = true))
         assertEquals("Đang bật rung trung bình và âm thanh", feedback(haptics = true, sounds = true))
-        val strong = testSettingsState(hapticStrength = KeyboardHapticStrength.STRONG)
+        assertEquals("Đang bật xem trước phím", feedback(haptics = false, sounds = false, previews = true))
+        assertEquals(
+            "Đang bật rung trung bình, âm thanh và xem trước phím",
+            feedback(haptics = true, sounds = true, previews = true),
+        )
+        val strong = testSettingsState(hapticStrength = KeyboardHapticStrength.STRONG, keyPreviewsEnabled = false)
         assertEquals("Đang bật rung mạnh", summaries.of(SettingsPage.FEEDBACK, strong))
     }
 

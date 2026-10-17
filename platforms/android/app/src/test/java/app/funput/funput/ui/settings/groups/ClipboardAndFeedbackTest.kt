@@ -80,13 +80,16 @@ class ClipboardAndFeedbackTest {
     fun `feedback shows the vibration strength, opens its choice and switches sounds`() {
         var opened = 0
         val sounds = mutableListOf<Boolean>()
+        val previews = mutableListOf<Boolean>()
         compose.setContent {
             FunputUiTheme(isDark = false) {
                 FeedbackSection(
                     hapticStrength = KeyboardHapticStrength.STRONG,
                     soundsEnabled = false,
+                    keyPreviewsEnabled = true,
                     onOpenHapticStrength = { opened += 1 },
                     onSoundsChanged = sounds::add,
+                    onKeyPreviewsChanged = { previews += it },
                 )
             }
         }
@@ -94,8 +97,10 @@ class ClipboardAndFeedbackTest {
         compose.onNodeWithText("Mạnh").assertExists()
         compose.onNodeWithText("Rung khi nhấn phím").performClick()
         compose.onNodeWithText("Âm thanh phím").assertIsOff().performClick()
+        compose.onNodeWithText("Xem trước phím").performClick()
 
         assertEquals(1, opened)
         assertEquals(listOf(true), sounds)
+        assertEquals(listOf(false), previews)
     }
 }
