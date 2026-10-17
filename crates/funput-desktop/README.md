@@ -12,14 +12,16 @@ Mọi quyết định **"phím này nghĩa là gì"**, **"cần xoá/gõ gì"** 
 đây nên unit-test được mà không cần một API hệ điều hành nào. Cùng mô hình với `result_bytes` của
 `funput-term`, nhưng sinh ra một *plan trung tính* thay vì byte terminal.
 
-> Chỉ shell **hook + inject** dùng crate này — hiện là **Windows** ([`platforms/windows`](../../platforms/windows)).
-> macOS (IMKit marked text) và Linux (Fcitx5/IBus preedit) đi mô hình khác nên **không** link;
-> hai shell đó chỉ chạm Rust qua C ABI của [`funput-ffi`](../funput-ffi).
+> Chỉ shell **hook + inject** dùng crate này, hiện là **Windows** ([`platforms/windows`](../../platforms/windows)).
+> macOS (IMKit marked text) đi mô hình preedit nên **không** link. Linux (Fcitx5/IBus) mặc định
+> gõ thẳng giống Windows nhưng cũng **không** link, vì hai shell đó viết bằng C++; cả hai chỉ
+> chạm Rust qua C ABI của [`funput-ffi`](../funput-ffi).
 
 Dù vậy thiết kế ở đây vẫn đi xa hơn cái tên: Linux port nó sang C++ bằng tay và nói rõ như vậy —
 [`common/compose/plan.h`](../../platforms/linux/common/compose/plan.h) tự nhận là bản đối chiếu của
 `inject.rs`, [`key/event.h`](../../platforms/linux/common/compose/key/event.h) mirror `key.rs`, và
-chế độ non-preedit của Linux chính là inject với cùng con số `backspace` từ engine.
+đường gõ thẳng của Linux (mặc định, `Effect::Replace`) chính là inject với cùng con số
+`backspace` từ engine.
 
 ## Sáu phần
 

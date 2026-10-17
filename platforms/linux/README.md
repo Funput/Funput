@@ -164,6 +164,28 @@ thì phím này không làm gì.
 | Telex | `tieesng vieejt` | tiếng việt |
 | VNI | `xin chao2` | xin chào |
 
+### Chữ gõ thẳng, và khi nào vẫn thấy gạch chân
+
+Mặc định chữ vào thẳng ô nhập: bạn không thấy dòng gạch chân, và đổi cửa sổ giữa chừng thì từ
+đang gõ vẫn còn nguyên. Việc này không có công tắc. Funput tự quyết cho từng app, và tự lùi về
+kiểu gạch chân khi app không nhận được cách gõ thẳng. Bạn vẫn có thể thấy gạch chân ở các
+trường hợp sau:
+
+- App không gửi văn bản quanh con trỏ cho bộ gõ, ví dụ terminal hoặc các app tự vẽ ô nhập.
+- WPS Office. Shell Fcitx5 biết trước app này không nhận được nên không thử gõ thẳng.
+- Từ đầu tiên sau khi chuyển focus, cho tới khi app gửi văn bản lần đầu. Với IBus, ô trống
+  ngay sau một ô trống có thể gạch chân đúng từ đầu tiên.
+- App bỏ lệnh xoá đi kèm lúc sửa chữ. Funput nhận ra điều đó sau một từ hỏng, hoặc sớm hơn nếu
+  app trả lời văn bản rỗng hai lần liên tiếp, rồi giữ app đó ở kiểu gạch chân cho tới hết lần
+  focus. Chuyển sang app khác thì gõ thẳng trở lại ngay.
+
+Nếu một app ra sai chữ ở từ đầu rồi mới chuyển sang gạch chân, đó là cách Funput nhận ra app
+không nhận được gõ thẳng. Hãy báo lỗi kèm tên tiến trình của app. Với Fcitx5, thêm một app vào
+danh sách `hidden_preedit.cpp` là đủ để Funput bỏ qua bước thử.
+
+Phím lật từ và gõ tắt chạy ở cả hai kiểu. Bỏ dấu lại sau Backspace (`phủ`, Space, Backspace,
+`s` ra `phú`) thì chỉ chạy ở kiểu gõ thẳng.
+
 ### Cấu hình lưu ở đâu
 
 ```
@@ -224,8 +246,9 @@ Cả hai đều tới cùng một process.
   giới. Thiếu bước đó thì Enter bị nuốt và CR được nối vào chuỗi commit.
 - **Bỏ dấu sau Backspace chỉ chạy ở chế độ không preedit.** Ở chế độ preedit, Backspace chỉ rút
   ngắn composition, nên `phủ` ␣ ⌫ `s` ra chữ `s` thường.
-- **Một số client làm mất từ đang gõ dở khi đổi focus.** Cả hai shell giao việc flush cho
-  framework; client nào bỏ preedit thay vì commit thì mất từ đó.
+- **Ở kiểu gạch chân, một số client làm mất từ đang gõ dở khi đổi focus.** Cả hai shell giao
+  việc flush cho framework; client nào bỏ preedit thay vì commit thì mất từ đó. Kiểu gõ thẳng
+  không bị lỗi này vì từ đã nằm trong tài liệu từng phím một.
 - **App Cài đặt ghi đè nguyên `settings.json`.** Nó serialize struct của chính nó lên file, nên
   một khoá nó không biết sẽ bị xoá ở lần bạn đổi thiết lập kế tiếp.
 - **Chưa có AppStream metainfo**, nên `funput-settings` không xuất hiện trong GNOME Software
@@ -277,12 +300,17 @@ tồn tại hai bản — mỗi shell một — và chúng đã trôi khỏi nha
    funput-ffi ──▶ funput-engine ──▶ funput-core
                │
                ▼
-   ComposePlan ──▶ shell thi hành: preedit · commit · deleteChars
+   ComposePlan ──▶ shell thi hành: Replace (xoá N ký tự rồi commit), preedit hoặc commit
 ```
 
-Thứ thật sự khác nhau giữa hai shell chỉ là preedit tới client bằng đường nào, và **ai commit
-nó khi mất focus** — Fcitx5 dùng `setClientPreedit` cộng watcher focus-out, IBus dùng
-`IBUS_ENGINE_PREEDIT_COMMIT`. Cả hai đều có chú thích tại chỗ.
+`Replace` là đường mặc định: mỗi phím được commit thẳng vào tài liệu rồi sửa lại bằng
+`deleteSurroundingText`. Preedit chỉ còn là đường lùi cho client không nhận được cách đó.
+
+Thứ thật sự khác nhau giữa hai shell nằm ở ba chỗ. Thứ nhất là cách đọc văn bản quanh con trỏ
+và thi hành `Replace`. Thứ hai là cách gọi tên client để nhớ phán quyết: Fcitx5 có tên tiến
+trình và sự kiện focus-in, IBus không có tên nào để đưa. Thứ ba là đường lùi sang preedit, và
+**ai commit nó khi mất focus**: Fcitx5 dùng `setClientPreedit` cộng watcher focus-out, IBus
+dùng `IBUS_ENGINE_PREEDIT_COMMIT`. Cả hai đều có chú thích tại chỗ.
 
 > [!TIP]
 > Shell Fcitx5 có README riêng: [`fcitx5/README.md`](fcitx5/README.md) — panel preedit, allowlist
@@ -587,8 +615,15 @@ tên đó là tắt chế độ cho tất cả.
 Uuid của input context từng được dùng thế chỗ, như một cái tên "hẹp hơn", và đó là một sai lầm đo
 được: `DebugInfo` của Fcitx5 trên GNOME/Wayland ghi `Group [wayland:] has 1 InputContext(s)`
 (`program:gnome-shell frontend:ibus`), vì gnome-shell giữ **một** context cho mọi app và chỉ
-focus lại nó. Một phán quyết ghi dưới uuid đó tắt chế độ cho cả Chrome cho tới khi khởi động lại
-Fcitx5 — nhìn từ ngoài là "bị gạch chân rồi không bao giờ trở lại". Giờ `clientId()` trả rỗng, và
+focus lại nó. Tự kiểm được bằng:
+
+```bash
+dbus-send --session --print-reply --dest=org.fcitx.Fcitx5 /controller \
+  org.fcitx.Fcitx.Controller1.DebugInfo
+```
+
+Một phán quyết ghi dưới uuid đó tắt chế độ cho cả Chrome cho tới khi khởi động lại Fcitx5, và
+nhìn từ ngoài là "bị gạch chân rồi không bao giờ trở lại". Giờ `clientId()` trả rỗng, và
 `activate()` chỉ gọi `onFocusChanged()` ở **focus-in thật** (`InputContextFocusIn`), không phải ở
 mỗi lần capability đổi. Hai việc đó cùng giữ được cả hai điều cần: phán quyết sống sót qua việc
 Cursor đổi capability liên tục, và chết cùng lần focus nó được đưa ra.
