@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.ui
 
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import android.graphics.drawable.GradientDrawable
 import android.view.View
 import app.funput.funput.keyboard.ui.support.childOfType
@@ -77,7 +78,7 @@ class KeyboardPanelCoordinatorInstrumentedTest {
     fun suggestionsAndFeedbackFollowPanelLifecycle() = withKeyboard { keyboard ->
         keyboard.keyboardTheme = KeyboardThemes.GlassDark
         keyboard.suggestionBarEnabled = true
-        keyboard.suggestions = listOf("xin", "chào")
+        keyboard.suggestions = listOf("xin", "chào").asSuggestionChips()
         assertEquals(keyboard.suggestions, keyboard.surface().suggestions)
 
         keyboard.showSymbolsPanel()

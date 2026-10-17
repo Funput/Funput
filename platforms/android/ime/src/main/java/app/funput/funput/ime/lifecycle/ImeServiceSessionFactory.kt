@@ -1,5 +1,6 @@
 package app.funput.funput.ime.lifecycle
 
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import android.inputmethodservice.InputMethodService
 import app.funput.funput.ime.ImeEditingSession
 import app.funput.funput.ime.editing.InputConnectionEditor
@@ -22,7 +23,7 @@ internal fun createServiceEditingSession(
         connection = { service.currentInputConnection },
         currentShiftState = { view()?.shiftState ?: ShiftState.OFF },
         updateShiftState = { state -> view()?.shiftState = state },
-        showSuggestions = { values -> view()?.suggestions = values },
+        showSuggestions = { values -> view()?.suggestions = values.asSuggestionChips() },
         acknowledgeReset = { token ->
             scope.launch { session.suggestionSettings.acknowledgeReset(token) }
         },

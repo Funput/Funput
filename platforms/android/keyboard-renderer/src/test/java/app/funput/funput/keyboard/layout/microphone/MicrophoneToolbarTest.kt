@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.layout.microphone
 
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import app.funput.funput.keyboard.SuggestionCapacity
 import app.funput.funput.keyboard.accessibility.KeyboardAccessibilitySnapshot
 import app.funput.funput.keyboard.interaction.interactionTargetAt
@@ -62,7 +63,7 @@ class MicrophoneToolbarTest {
     @Test fun accessibilitySharesHitBoundsLabelAndActiveState() {
         val keyboard = resolve(240f, false)
         val mic = requireNotNull(keyboard.suggestionBar?.microphoneKey)
-        val snapshot = KeyboardAccessibilitySnapshot(keyboard, ShiftState.OFF, listOf("xin", "chào"))
+        val snapshot = KeyboardAccessibilitySnapshot(keyboard, ShiftState.OFF, listOf("xin", "chào").asSuggestionChips())
         val node = requireNotNull(snapshot.nodes.firstOrNull { it.keyId == mic.spec.id })
         assertEquals(microphone.accessibilityLabel, node.label)
         assertEquals(mic.hitBounds, node.hitBounds)

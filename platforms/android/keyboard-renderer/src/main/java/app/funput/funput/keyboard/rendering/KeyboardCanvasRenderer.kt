@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.rendering
 
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -70,7 +71,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         keyboard: ResolvedKeyboard,
         backgroundImage: KeyboardThemeBackgroundImage?,
         backgroundBitmap: Bitmap?,
-        suggestions: List<String>,
+        suggestions: List<SuggestionChip>,
         clipboardHint: KeyboardClipboardHint?,
         pressedKeys: PressedKeyState,
         shiftState: ShiftState,

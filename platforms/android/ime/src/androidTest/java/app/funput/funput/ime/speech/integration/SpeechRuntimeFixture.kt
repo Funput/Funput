@@ -1,5 +1,6 @@
 package app.funput.funput.ime.speech.integration
 
+import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import androidx.test.core.app.ApplicationProvider
@@ -21,7 +22,7 @@ internal class SpeechRuntimeFixture : AutoCloseable {
     val keyboard = FunputKeyboardView(context)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     val editing = createImeEditingSession(context, scope, InputConnectionEditor(), { service.connection },
-        { keyboard.shiftState }, { keyboard.shiftState = it }, { keyboard.suggestions = it }, {})
+        { keyboard.shiftState }, { keyboard.shiftState = it }, { keyboard.suggestions = it.asSuggestionChips() }, {})
     val backend = SpeechTestBackend()
     val preparation = SpeechTestPreparation()
     val runtime = ImeSpeechRuntime(service, editing, backend, preparation)

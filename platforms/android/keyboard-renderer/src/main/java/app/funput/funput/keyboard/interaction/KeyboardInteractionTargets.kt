@@ -2,6 +2,7 @@ package app.funput.funput.keyboard.interaction
 
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.SuggestionSelection
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 
 internal object SuggestionTargetIds {
     private val ids = arrayOf("suggestion-0", "suggestion-1", "suggestion-2")
@@ -35,8 +36,8 @@ internal fun ResolvedKeyboard.interactionTargetAt(
     return SuggestionTargetIds.id(index)
 }
 
-internal fun List<String>.selectionForTarget(targetId: String): SuggestionSelection? {
+internal fun List<SuggestionChip>.selectionForTarget(targetId: String): SuggestionSelection? {
     val index = SuggestionTargetIds.indexOf(targetId) ?: return null
-    val text = getOrNull(index) ?: return null
-    return SuggestionSelection(index, text)
+    val chip = getOrNull(index) ?: return null
+    return SuggestionSelection(index, chip.text, chip.kind)
 }

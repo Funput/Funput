@@ -8,12 +8,13 @@ import app.funput.funput.keyboard.interaction.SuggestionTargetIds
 import app.funput.funput.keyboard.interaction.ClipboardTargetId
 import app.funput.funput.keyboard.popover.accessibility.AlternateAccessibilityAction
 import app.funput.funput.keyboard.popover.accessibility.alternateAccessibilityActions
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 
 /** Immutable virtual-node snapshot consumed by TalkBack and unit tests. */
 internal class KeyboardAccessibilitySnapshot(
     keyboard: ResolvedKeyboard,
     shiftState: ShiftState,
-    suggestions: List<String> = emptyList(),
+    suggestions: List<SuggestionChip> = emptyList(),
     clipboardLabel: String? = null,
     clipboardKeyLabel: String? = null,
     smartGesturesEnabled: Boolean = true,
@@ -37,10 +38,10 @@ internal class KeyboardAccessibilitySnapshot(
         val hit = bar?.suggestionsHitBounds
         if (bounds != null && hit != null && suggestions.isNotEmpty()) {
             val width = bounds.width / suggestions.size
-            suggestions.forEachIndexed { index, text ->
+            suggestions.forEachIndexed { index, chip ->
                 val segment = KeyBounds(bounds.left + width * index, bounds.top, bounds.left + width * (index + 1), bounds.bottom)
                 val target = KeyBounds(segment.left, hit.top, segment.right, hit.bottom)
-                add(KeyboardAccessibilityNode(size, SuggestionTargetIds.id(index), "Gợi ý, $text", segment, target, false))
+                add(KeyboardAccessibilityNode(size, SuggestionTargetIds.id(index), chip.accessibilityLabel, segment, target, false))
             }
         } else if (bounds != null && hit != null && clipboardLabel != null) {
             add(KeyboardAccessibilityNode(size, ClipboardTargetId, clipboardLabel, bounds, hit, false))

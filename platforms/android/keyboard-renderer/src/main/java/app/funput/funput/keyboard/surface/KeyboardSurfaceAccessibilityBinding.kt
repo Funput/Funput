@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.surface
 
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
@@ -19,7 +20,7 @@ internal class KeyboardSurfaceAccessibilityBinding(
     private val interaction: () -> KeyboardSurfaceInteraction,
     private val keyboard: () -> ResolvedKeyboard?,
     private val shiftState: () -> ShiftState,
-    private val suggestions: () -> List<String>,
+    private val suggestions: () -> List<SuggestionChip>,
     private val clipboardHint: () -> KeyboardClipboardHint?,
 ) {
     private val resources = host.resources
