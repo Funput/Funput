@@ -7,6 +7,7 @@ import app.funput.funput.ui.kit.cards.FunputDivider
 import app.funput.funput.ui.kit.cards.FunputSection
 import app.funput.funput.ui.kit.overlays.FunputSheet
 import app.funput.funput.ui.kit.rows.ChoiceRow
+import app.funput.funput.ui.settings.feedback.HapticStrengthSheet
 
 /** Shows the sheet for [picker], bound to the matching value and action in [state]; nothing when null. */
 @Composable
@@ -38,6 +39,11 @@ internal fun SettingsPickerSheet(picker: SettingsPicker?, state: SettingsScreenS
             options = clipboardExpiryOptions(),
             selected = state.clipboardPreferences.expiry,
             onSelected = state.onClipboardExpirySelected,
+            onDismiss = onDismiss,
+        )
+        SettingsPicker.HAPTIC_STRENGTH -> HapticStrengthSheet(
+            selected = state.activeHapticStrength,
+            onSelect = state.onHapticStrengthSelected,
             onDismiss = onDismiss,
         )
         null -> Unit

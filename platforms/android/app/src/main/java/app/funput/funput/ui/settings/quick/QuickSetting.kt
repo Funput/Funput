@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import app.funput.funput.R
 import app.funput.funput.ui.kit.icons.FunputIcons
 import app.funput.funput.ui.settings.SettingsScreenState
+import app.funput.funput.ui.settings.feedback.HapticStrengthOption
 
 /**
  * The tiles of the hub's quick settings, in grid order: the switches people flip by taste rather
@@ -20,9 +21,11 @@ internal enum class QuickSetting(
     private val read: (SettingsScreenState) -> Boolean,
     private val write: (SettingsScreenState) -> (Boolean) -> Unit,
 ) {
+    // Back on at the remembered strength, as on iOS; the hub opens the strength sheet instead.
     HAPTICS(
         R.string.quick_haptics, R.string.settings_haptics_title, FunputIcons.Haptics,
-        { it.hapticsEnabled }, { it.onHapticsChanged },
+        { it.hapticsEnabled },
+        { state -> { on -> state.onHapticStrengthSelected(state.hapticStrength.takeIf { on }) } },
     ),
     SOUNDS(
         R.string.quick_sounds, R.string.settings_sounds_title, FunputIcons.Sound,
@@ -55,10 +58,14 @@ internal enum class QuickSetting(
     /** Whether the tile shows as on: a locked number row always is. */
     fun isOn(state: SettingsScreenState): Boolean = isLocked(state) || read(state)
 
-    /** The tile's state line: "Bật", "Tắt", or "Luôn bật" when locked. */
+    /** Whether tapping the tile opens a choice rather than flipping it: vibration has strengths. */
+    val opensChoice: Boolean get() = this == HAPTICS
+
+    /** The tile's state line: "Bật", "Tắt", "Luôn bật" when locked, or the vibration strength. */
     @StringRes
     fun stateLabel(state: SettingsScreenState): Int = when {
         isLocked(state) -> R.string.quick_locked
+        this == HAPTICS -> HapticStrengthOption.of(state.activeHapticStrength).title
         isOn(state) -> R.string.quick_on
         else -> R.string.quick_off
     }

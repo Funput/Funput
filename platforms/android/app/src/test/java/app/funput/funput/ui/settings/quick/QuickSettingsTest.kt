@@ -3,6 +3,7 @@ package app.funput.funput.ui.settings.quick
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import app.funput.funput.R
+import app.funput.funput.keyboard.KeyboardHapticStrength
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.ui.kit.layout.FunputScreenListTag
 import app.funput.funput.ui.kit.theme.FunputUiTheme
@@ -95,7 +97,6 @@ class QuickSettingsTest {
 
         list.performScrollToNode(hasTestTag(quickSettingTag(QuickSetting.SOUNDS)))
         compose.onNodeWithTag(quickSettingTag(QuickSetting.SOUNDS)).assertIsOff().performClick()
-        compose.onNodeWithTag(quickSettingTag(QuickSetting.HAPTICS)).assertIsOn()
         list.performScrollToNode(hasTestTag(quickSettingTag(QuickSetting.NUMBER_ROW)))
         compose.onNodeWithTag(quickSettingTag(QuickSetting.NUMBER_ROW)).assertIsOn().assertIsNotEnabled()
 
@@ -112,5 +113,20 @@ class QuickSettingsTest {
         compose.onNode(hasText("VNI")).performClick()
 
         compose.runOnIdle { assertEquals(KeyboardInputMethod.VNI, selected) }
+    }
+
+    @Test
+    fun `the vibration tile names the strength and opens the strength sheet`() {
+        val strong = testSettingsState(hapticStrength = KeyboardHapticStrength.STRONG)
+        val off = testSettingsState(hapticsEnabled = false)
+        assertEquals(R.string.haptic_strength_strong, QuickSetting.HAPTICS.stateLabel(strong))
+        assertEquals(R.string.haptic_strength_off, QuickSetting.HAPTICS.stateLabel(off))
+        show(strong)
+        val tile = hasTestTag(quickSettingTag(QuickSetting.HAPTICS))
+
+        compose.onNodeWithTag(FunputScreenListTag).performScrollToNode(tile)
+        compose.onNode(tile).performClick()
+
+        compose.onNodeWithText("Rõ ràng ở mỗi lần chạm").assertExists()
     }
 }

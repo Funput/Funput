@@ -4,6 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
@@ -30,6 +31,8 @@ import app.funput.funput.ui.kit.theme.FunputUi
  * A quick-settings tile: an icon, a short [title] and a [state] line, the whole tile one switch.
  * On, it takes a wash of the accent and its icon and state turn accent; off, it is a plain card.
  * A [locked] tile shows its value but cannot be changed, and says why through [lockedReason].
+ * With [onClick], tapping opens a choice (a sheet of strengths, say) instead of flipping the tile,
+ * and the tile reads as a button that names it through [onClickLabel].
  *
  * TalkBack reads [accessibilityTitle], the longer name, with the state, as a switch.
  */
@@ -44,6 +47,8 @@ fun FunputToggleTile(
     accessibilityTitle: String = title,
     locked: Boolean = false,
     lockedReason: String? = null,
+    onClick: (() -> Unit)? = null,
+    onClickLabel: String? = null,
 ) {
     val colors = FunputUi.colors
     val type = FunputUi.typography
@@ -57,7 +62,15 @@ fun FunputToggleTile(
             .background(colors.cardBackground)
             .then(if (checked) Modifier.background(colors.accent.copy(alpha = 0.14f)) else Modifier)
             .border(FunputUi.spacing.cardStrokeWidth, colors.cardStroke, shape)
-            .toggleable(value = checked, enabled = !locked, role = Role.Switch, onValueChange = onCheckedChange)
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(enabled = !locked, onClickLabel = onClickLabel, role = Role.Button) {
+                        onClick()
+                    }
+                } else {
+                    Modifier.toggleable(checked, enabled = !locked, role = Role.Switch, onValueChange = onCheckedChange)
+                },
+            )
             .semantics {
                 contentDescription = accessibilityTitle
                 stateDescription = listOfNotNull(state, lockedReason?.takeIf { locked }).joinToString(". ")

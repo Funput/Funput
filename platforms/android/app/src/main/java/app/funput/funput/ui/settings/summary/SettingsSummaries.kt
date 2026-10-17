@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalResources
 import app.funput.funput.R
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.extraonsets.ExtraOnsetLetter
+import app.funput.funput.keyboard.KeyboardHapticStrength
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.ui.settings.SettingsScreenState
@@ -29,9 +30,11 @@ internal class SettingsSummaries(private val resources: Resources) {
             on = SmartInputToggle.entries.count { toggle -> toggle.isOn(state) },
             total = SmartInputToggle.entries.size,
         )
-        SettingsPage.FEEDBACK -> enabled(
-            R.string.settings_summary_haptics to state.hapticsEnabled,
-            R.string.settings_summary_sounds to state.soundsEnabled,
+        SettingsPage.FEEDBACK -> resources.enabledSentence(
+            listOfNotNull(
+                state.activeHapticStrength?.let(::haptics),
+                resources.getString(R.string.settings_summary_sounds).takeIf { state.soundsEnabled },
+            ),
         )
         SettingsPage.CLIPBOARD -> clipboard(state)
         SettingsPage.SPEECH -> resources.getString(R.string.speech_settings_summary)
@@ -45,6 +48,16 @@ internal class SettingsSummaries(private val resources: Resources) {
     /** "Đang bật …" naming each item whose flag is on, or "Đang tắt tất cả". */
     private fun enabled(vararg items: Pair<Int, Boolean>): String =
         resources.enabledSentence(items.filter { (_, on) -> on }.map { (name, _) -> resources.getString(name) })
+
+    /** "rung nhẹ", "rung trung bình" or "rung mạnh". */
+    private fun haptics(strength: KeyboardHapticStrength): String {
+        val word = when (strength) {
+            KeyboardHapticStrength.LIGHT -> R.string.settings_summary_strength_light
+            KeyboardHapticStrength.MEDIUM -> R.string.settings_summary_strength_medium
+            KeyboardHapticStrength.STRONG -> R.string.settings_summary_strength_strong
+        }
+        return resources.getString(R.string.settings_summary_haptics_strength, resources.getString(word))
+    }
 
     private fun typing(state: SettingsScreenState): String {
         val tone = resources.getString(
