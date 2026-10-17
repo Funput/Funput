@@ -1,5 +1,6 @@
 #if canImport(UIKit)
 import Foundation
+import FunputShared
 import KeyboardLayout
 import os
 import UIKit
@@ -102,7 +103,8 @@ final class KeyboardSurfaceInteractionController {
     var touches: [TouchToken: TouchState] = [:]
     var highlightCounts: [String: Int] = [:]
     var repeatTouch: TouchToken?
-    var hapticsEnabled = true
+    var hapticStrength: HapticFeedbackStrength? = .light
+    var modeChangeStrength: HapticFeedbackStrength = .light
     var activeKey: KeySpec? {
         repeatTouch.flatMap { touches[$0]?.currentKey }
     }

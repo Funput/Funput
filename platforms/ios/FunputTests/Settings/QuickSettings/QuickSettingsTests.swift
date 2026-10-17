@@ -82,4 +82,20 @@ struct QuickSettingsTests {
         #expect(Set(keyPaths).count == keyPaths.count)
         #expect(QuickSetting.allCases.count == 6)
     }
+
+    @Test("The haptics tile remembers and names the chosen strength")
+    func hapticsRemembersStrength() {
+        var configuration = FunputConfiguration.default
+        configuration.hapticFeedbackStrength = .strong
+        let (model, store) = makeModel(configuration)
+
+        #expect(model.stateLabel(for: .haptics) == "Tắt")
+        #expect(model.toggle(.haptics) == nil)
+        #expect(model.stateLabel(for: .haptics) == "Mạnh")
+        #expect(model.toggle(.haptics) == nil)
+        #expect(!store.configuration.isHapticFeedbackEnabled)
+        #expect(store.configuration.hapticFeedbackStrength == .strong)
+        #expect(model.toggle(.haptics) == nil)
+        #expect(model.selectedHapticStrength == .strong)
+    }
 }

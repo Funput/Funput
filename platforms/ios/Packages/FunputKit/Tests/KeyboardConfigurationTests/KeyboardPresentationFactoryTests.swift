@@ -32,11 +32,13 @@ struct KeyboardPresentationFactoryTests {
         var config = FunputConfiguration.default
         config.language = .english
         config.isHapticFeedbackEnabled = false
+        config.hapticFeedbackStrength = .strong
         config.showsKeyPreviews = false
         config.heightScale = 1.2
         let presentation = KeyboardPresentationFactory.make(from: config)
         #expect(presentation.language == .english)
         #expect(!presentation.isHapticFeedbackEnabled)
+        #expect(presentation.hapticFeedbackStrength == .strong)
         #expect(!presentation.showsKeyPreviews)
         #expect(presentation.sizing.heightScale == 1.2)
     }

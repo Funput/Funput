@@ -18,6 +18,7 @@ struct FunputConfigurationTests {
         #expect(config.autoCapitalize == true)
         #expect(config.selectedThemeID == FunputConfiguration.defaultThemeID)
         #expect(!config.isHapticFeedbackEnabled)
+        #expect(config.hapticFeedbackStrength == .light)
         #expect(!config.isKeySoundEnabled)
         #expect(!config.showsNumberRow)
         #expect(config.heightScale == 1)
@@ -29,7 +30,7 @@ struct FunputConfigurationTests {
         #expect(config.layoutPreset == .funput)
         #expect(config.keyboardAppearance == .system) // follow the host app, as before v12
         #expect(config.returnsToLettersAfterPunctuation)
-        #expect(config.schemaVersion == 15)
+        #expect(config.schemaVersion == 16)
     }
 
     @Test("Configuration survives a JSON round-trip")

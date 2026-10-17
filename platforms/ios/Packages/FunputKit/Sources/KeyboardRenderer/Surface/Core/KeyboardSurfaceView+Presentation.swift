@@ -7,6 +7,7 @@ extension KeyboardSurfaceView {
         from oldValue: KeyboardPresentation,
         backgroundChanged: Bool = false
     ) {
+        interactionController.updateHapticFeedback(presentation)
         let layoutChanged = oldValue.layout != presentation.layout
         let sizingChanged = oldValue.sizing != presentation.sizing
         let themeChanged = oldValue.theme != presentation.theme

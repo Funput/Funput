@@ -37,7 +37,7 @@ extension KeyboardSurfaceInteractionController {
                 KeyboardKeyEvent(key: state.initialKey, phase: .deletedWord)
             )
         }
-        if hapticsEnabled { haptics.perform(.delete) }
+        performHapticFeedback()
     }
 
     /// A rub that claimed but never crossed a full step still deletes one character, so a
