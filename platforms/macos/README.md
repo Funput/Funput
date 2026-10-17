@@ -8,7 +8,7 @@
 
 <p align="center">
   <strong>Funput cho macOS</strong> — Input Method native, tích hợp thẳng vào hệ thống.<br>
-  SwiftUI + InputMethodKit · gõ bằng preedit · engine Rust qua
+  SwiftUI + InputMethodKit · gõ thẳng không gạch chân, preedit dự phòng · engine Rust qua
   <code>funput-ffi</code>
 </p>
 
@@ -204,9 +204,12 @@ Funput trên macOS là **bundle Input Method**, không phải app thường: mac
 scene SwiftUI — thanh menu, Cài đặt, Onboarding, Chuyển mã — nên không có process con nào cả (khác
 hẳn shell Windows).
 
-Composition đi theo đường **preedit**: chữ đang gõ hiện ra qua `setMarkedText` và chỉ `insertText`
-khi từ đã chốt. Engine là Rust, vào qua [`funput-ffi`](../../crates/funput-ffi) dưới dạng static
-library `Vendor/libfunput_ffi.a`.
+Chữ đang gõ đi ra app qua `CompositionSession` (`Funput/IME/Composition/`). Mặc định nó được
+**ghi thẳng** vào văn bản bằng `insertText` và thay tại chỗ khi đổi dấu, nên không có gạch chân.
+App không nhận `replacementRange`, hoặc khi người dùng tắt **Gõ không gạch chân**, thì quay về
+đường **preedit** cũ: chữ đang gõ là marked text (`setMarkedText`) và chỉ `insertText` khi từ đã
+chốt. Xem [thiết kế](../../docs/features/macos-direct-composition.md). Engine là Rust, vào qua
+[`funput-ffi`](../../crates/funput-ffi) dưới dạng static library `Vendor/libfunput_ffi.a`.
 
 ```text
 Funput.app   trong /Library/Input Methods — MỘT process, hai vai trò
@@ -217,8 +220,9 @@ Funput.app   trong /Library/Input Methods — MỘT process, hai vai trò
 │                     │                       │
 │                     │                       └──▶ funput-ffi ──▶ funput-engine
 │                     │
-│                     ├── setMarkedText   preedit — chữ đang gõ, gạch chân
-│                     └── insertText      commit — chốt từ đã xong
+│                     └──▶ CompositionSession ── chọn cách hiện chữ cho từng từ
+│                              ├── DirectPresenter   insertText thẳng vào văn bản, không gạch chân
+│                              └── MarkedPresenter   setMarkedText khi đang gõ, insertText khi chốt
 │
 ├── Thanh menu ............... SwiftUI · bật/tắt VI · đổi kiểu gõ
 ├── Cài đặt · Onboarding ..... SwiftUI Scene, cùng process

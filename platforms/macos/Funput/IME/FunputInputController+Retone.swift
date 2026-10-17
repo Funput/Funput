@@ -10,7 +10,7 @@ extension FunputInputController {
     /// Returns whether Funput handled the key. `false` is the safe answer, and the common
     /// one: the app then deletes its own character exactly as it did before, with nothing
     /// here having touched the document. `true` means the word *and* the character being
-    /// deleted were replaced in a single `setMarkedText`, so the app must not delete again.
+    /// deleted were replaced in a single write, so the app must not delete again.
     ///
     /// Auto-repeat is left alone. Holding Backspace to wipe a phrase would otherwise
     /// re-open a word per repeat — an underline flickering through text on its way out —
@@ -22,7 +22,7 @@ extension FunputInputController {
         guard let plan = Retone.plan(document: document, adopt: composer.adopt) else {
             return false
         }
-        setMarked(plan.word, client, replacementRange: plan.replacement)
+        session.reopen(plan.word, replacing: plan.replacement, on: IMKCompositionSurface(client: client))
         return true
     }
 }

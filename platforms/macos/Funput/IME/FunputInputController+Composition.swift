@@ -12,11 +12,28 @@ extension FunputInputController {
         composer.setEnabled(vietnamese)
     }
 
+    /// Put the engine's current composition on screen. When the session had to drop the
+    /// word (the text before the caret is no longer Funput's), the engine forgets it too
+    /// and the result is false: the key was not handled.
+    func showComposition(_ client: IMKTextInput) -> Bool {
+        guard session.show(composer.buffer(), on: IMKCompositionSurface(client: client)) else {
+            composer.clear()
+            return false
+        }
+        return true
+    }
+
+    /// Show the composition after `scalar` reached the engine. A dropped word does not
+    /// swallow the key: it is replayed as the first letter of a new word.
+    func showKey(_ scalar: Unicode.Scalar, _ client: IMKTextInput) -> Bool {
+        if showComposition(client) { return true }
+        composer.process(scalar)
+        return !composer.buffer().isEmpty && showComposition(client)
+    }
+
     func commit(into client: IMKTextInput) {
         let text = composer.finishComposition()
-        if !text.isEmpty {
-            client.insertText(text, replacementRange: Self.notFound)
-        }
+        session.commit(text, boundary: "", on: IMKCompositionSurface(client: client))
     }
 
     func commitBoundary(
@@ -35,17 +52,15 @@ extension FunputInputController {
             ? String(FunputComposer.output(of: result).dropLast())
             : pre
 
-        if scalar == "\n" || scalar == "\r" || scalar == "\t" {
-            client.insertText(word, replacementRange: Self.notFound)
-            return false
-        }
-        client.insertText(word + String(scalar), replacementRange: Self.notFound)
-        return true
+        // Enter and Tab keep their native action: the app receives the key itself.
+        let actionKey = scalar == "\n" || scalar == "\r" || scalar == "\t"
+        session.commit(word, boundary: actionKey ? "" : String(scalar), on: IMKCompositionSurface(client: client))
+        return !actionKey
     }
 
     func flipComposing(_ client: IMKTextInput) {
         guard composer.flipComposing().action != ACTION_NONE else { return }
-        setMarked(composer.buffer(), client)
+        _ = showComposition(client)
     }
 
     func toggleEnabled() {

@@ -68,6 +68,8 @@ struct ConfigDocument: Codable {
             var excludedApps: [LegacyExcludedApp]?
             /// Per-app VI/EN memory, keyed by bundle id.
             var appLanguageMemory: [String: Bool]?
+            /// "Gõ không gạch chân" (`AppSettings.directComposition`).
+            var directComposition: Bool?
         }
 
         /// Decode-only shape of the removed `ExcludedApp` model — just enough to

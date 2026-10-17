@@ -50,7 +50,8 @@ extension AppSettings {
             platform: .init(macos: .init(
                 toggleShortcut: toggleShortcut,
                 flipShortcut: flipShortcut,
-                appLanguageMemory: appLanguageMemory.snapshot
+                appLanguageMemory: appLanguageMemory.snapshot,
+                directComposition: directComposition
             ))
         )
     }
@@ -115,6 +116,7 @@ extension AppSettings {
         if let mac = document.platform?.macos {
             if let toggle = mac.toggleShortcut { toggleShortcut = toggle }
             if let flip = mac.flipShortcut { flipShortcut = flip }
+            if let direct = mac.directComposition { directComposition = direct }
             // Newer exports carry the per-app memory directly; older ones only have
             // the now-removed exclusion list, migrated to "remembered as English".
             if let memory = mac.appLanguageMemory { appLanguageMemory.merge(memory) }

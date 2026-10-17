@@ -1,5 +1,27 @@
 # Known Issues
 
+## Direct composition (typing without an underline)
+
+Since direct composition (Settings → Cách gõ → **Gõ không gạch chân**, on by default), the
+word being typed is written into the document and rewritten in place, instead of being
+underlined marked text. Design: [`docs/features/macos-direct-composition.md`](../../../docs/features/macos-direct-composition.md).
+
+- **Some apps still underline.** Apps that do not speak TSM document access, or cannot say
+  where their caret is (Terminal, many games), fall back to marked text automatically.
+  That is the intended behaviour, not a bug.
+- **A word can lose its tone mark.** Before a rewrite, Funput checks that the text right
+  before the caret is still the word it wrote. When an app edited it (autocomplete,
+  autocorrect) or reports a stale caret (Chromium answers from an asynchronous cache), the
+  word is dropped instead of being written over, and the key starts a new word.
+- **Fake selections.** Cursor has reported a selection of `(0, 17)` where the user only saw
+  a caret. A rewrite covers the selection after the word (that is how inline suggestions
+  are replaced), so such a report at the moment of a rewrite could delete text after the
+  caret. Not observed in testing so far.
+- **Undo** may step back one rewrite at a time rather than one word.
+
+If an app misbehaves, turning the switch off restores the previous underlined behaviour
+everywhere.
+
 ## Backspace does not retone in Cursor
 
 **Symptom:** `chào` + Space + ⌫ + `s` gives `cháo` in TextEdit, Notes, Mail, Safari,

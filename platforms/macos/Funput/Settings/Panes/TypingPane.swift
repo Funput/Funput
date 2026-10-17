@@ -67,6 +67,19 @@ struct TypingPane: View {
                 }
             }
 
+            Section("Hiển thị chữ đang gõ") {
+                SettingsRow(
+                    title: "Gõ không gạch chân",
+                    subtitle: "Ghi chữ thẳng vào văn bản, ứng dụng không hỗ trợ vẫn có gạch chân",
+                    systemImage: "underline"
+                ) {
+                    Toggle("Gõ không gạch chân", isOn: $settings.directComposition)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .tint(Theme.accent)
+                }
+            }
+
             ExtraOnsetsSection()
         }
     }
