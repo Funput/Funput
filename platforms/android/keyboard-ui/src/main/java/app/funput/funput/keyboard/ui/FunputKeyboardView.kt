@@ -1,27 +1,28 @@
 package app.funput.funput.keyboard.ui
 
 import android.content.Context
-import app.funput.funput.keyboard.ui.host.bindKeyboardToolbar
-import app.funput.funput.keyboard.ui.speech.KeyboardSpeechPanelBinding
 import android.util.AttributeSet
 import android.widget.FrameLayout
-import app.funput.funput.keyboard.KeyboardSurfaceView
-import app.funput.funput.keyboard.ui.host.KeyboardHostMeasure
 import app.funput.funput.keyboard.KeyboardClipboardHint
+import app.funput.funput.keyboard.KeyboardHapticStrength
+import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
-import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardEditorMode
+import app.funput.funput.keyboard.model.KeyboardEnterAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
-import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.KeyboardLanguage
+import app.funput.funput.keyboard.model.KeyboardLayoutMode
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
-import app.funput.funput.keyboard.ui.panel.KeyboardPanelCoordinator
 import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
+import app.funput.funput.keyboard.ui.host.KeyboardHostMeasure
+import app.funput.funput.keyboard.ui.host.bindKeyboardToolbar
 import app.funput.funput.keyboard.ui.localtext.LocalTextFields
 import app.funput.funput.keyboard.ui.panel.FunputPanelFactory
 import app.funput.funput.keyboard.ui.panel.KeyboardClipboardPanelState
+import app.funput.funput.keyboard.ui.panel.KeyboardPanelCoordinator
 import app.funput.funput.keyboard.ui.placement.KeyboardPlacementHostController
+import app.funput.funput.keyboard.ui.speech.KeyboardSpeechPanelBinding
 import app.funput.funput.theme.KeyboardTheme
 
 /** Complete Funput keyboard UI, including panel navigation and host callbacks. */
@@ -99,6 +100,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     var language: KeyboardLanguage by keyboardSurface::language
     var areSmartGesturesEnabled by keyboardSurface::areSmartGesturesEnabled
     var hapticsEnabled: Boolean by feedbackController::hapticsEnabled
+    var hapticStrength: KeyboardHapticStrength? by feedbackController::hapticStrength
     var soundsEnabled: Boolean by feedbackController::soundsEnabled
     private val safeArea = KeyboardSafeAreaController(this)
     private val placement = KeyboardPlacementHostController(this, contentHost, safeArea, callbacks)

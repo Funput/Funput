@@ -4,6 +4,7 @@ import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.ime.settings.ClipboardPreferences
 import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.ToneStyle
+import app.funput.funput.keyboard.KeyboardHapticStrength
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
@@ -28,6 +29,7 @@ internal fun testSettingsState(
     onSmartChanged: (String, Boolean) -> Unit = { _, _ -> },
     onFeedbackChanged: (String, Boolean) -> Unit = { _, _ -> },
     hapticsEnabled: Boolean = true,
+    hapticStrength: KeyboardHapticStrength = KeyboardHapticStrength.Default,
     soundsEnabled: Boolean = false,
     speechAvailable: Boolean = false,
     smartComposition: SmartCompositionPreferences = SmartCompositionPreferences.Default,
@@ -41,6 +43,7 @@ internal fun testSettingsState(
     keySizeProfile = KeyboardSizingProfile.Normal,
     placement = placement,
     hapticsEnabled = hapticsEnabled,
+    hapticStrength = hapticStrength,
     soundsEnabled = soundsEnabled,
     smartComposition = smartComposition,
     personalSuggestionsEnabled = true,
@@ -54,6 +57,7 @@ internal fun testSettingsState(
     onKeySizeSelected = onKeySizeSelected,
     onHapticsChanged = { onFeedbackChanged("haptics", it) },
     onSoundsChanged = { onFeedbackChanged("sounds", it) },
+    onHapticStrengthSelected = { onFeedbackChanged("haptics", it != null) },
     onSmartGesturesChanged = { onSmartChanged("gestures", it) },
     onSmartRestoreChanged = { onSmartChanged("restore", it) },
     onSpellCheckChanged = { onSmartChanged("spelling", it) },

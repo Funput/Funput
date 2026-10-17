@@ -50,9 +50,9 @@ internal fun LazyListScope.settingsPageItems(
         SettingsPage.SMART_INPUT -> item(key = "smart") { SmartSection(state) }
         SettingsPage.FEEDBACK -> item(key = "feedback") {
             FeedbackSection(
-                hapticsEnabled = state.hapticsEnabled,
+                hapticStrength = state.activeHapticStrength,
                 soundsEnabled = state.soundsEnabled,
-                onHapticsChanged = state.onHapticsChanged,
+                onOpenHapticStrength = { onOpenPicker(SettingsPicker.HAPTIC_STRENGTH) },
                 onSoundsChanged = state.onSoundsChanged,
             )
         }

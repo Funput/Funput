@@ -110,8 +110,8 @@ Tab **Bàn phím** là mục lục, từ trên xuống:
 - ô **Tìm cài đặt**, gõ có dấu hay không dấu đều được ("dat dau" ra "Kiểu đặt dấu"), tên tiếng
   Anh cũng được ("haptic" ra "Rung khi nhấn phím");
 - ảnh xem trước bàn phím, thẻ thiết lập khi chưa bật xong;
-- **Kiểu gõ** (Telex, Telex nâng cao, VNI) và **Cài đặt nhanh**: sáu ô bật tắt Rung, Âm thanh,
-  Viết hoa, Gợi ý từ, Hàng số, Cử chỉ. Với VNI ô Hàng số luôn bật;
+- **Kiểu gõ** (Telex, Telex nâng cao, VNI) và **Cài đặt nhanh**: sáu ô Rung, Âm thanh, Viết hoa,
+  Gợi ý từ, Hàng số, Cử chỉ. Ô Rung mở bảng chọn mức rung; với VNI ô Hàng số luôn bật;
 - **Tất cả cài đặt**: mỗi trang một dòng kèm một câu nói trang đó đang đặt thế nào. Chạm vào
   dòng thì mở trang.
 
@@ -120,7 +120,7 @@ Tab **Bàn phím** là mục lục, từ trên xuống:
 | **Gõ tiếng Việt** | Kiểu gõ, kiểu đặt dấu, phụ âm đầu mở rộng `z`, `f`, `w`, `j` |
 | **Bố cục và kích thước** | Chế độ bàn phím, hàng phím số, kích thước phím |
 | **Thông minh** | Khôi phục từ, kiểm tra chính tả, tự viết hoa, gợi ý từ, cử chỉ thông minh, tự về bảng chữ |
-| **Phản hồi khi chạm** | Âm thanh và rung khi gõ |
+| **Phản hồi khi chạm** | Mức rung (Tắt, Nhẹ, Trung bình, Mạnh) và âm thanh khi gõ |
 | **Clipboard** | Lưu lịch sử clipboard và thời gian tự xoá |
 | **Nhập bằng giọng nói** | Quyền micro và dữ liệu nhận dạng (chỉ ở bản có tính năng này) |
 | **Bàn phím rời** | Hiện Funput khi có bàn phím rời, phím tắt Alt + Space |
