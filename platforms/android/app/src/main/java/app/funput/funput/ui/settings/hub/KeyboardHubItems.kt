@@ -9,11 +9,12 @@ import app.funput.funput.ui.settings.SettingsScreenState
 import app.funput.funput.ui.settings.keyboard.KeyboardPreviewCard
 import app.funput.funput.ui.settings.keyboard.KeyboardSetupCard
 import app.funput.funput.ui.settings.pages.SettingsPage
+import app.funput.funput.ui.settings.quick.quickSettingsItems
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 
 /**
- * The keyboard hub, top to bottom: the keyboard preview, setup while it is unfinished, then every
- * settings page as one card of rows.
+ * The keyboard hub, top to bottom: the keyboard preview, setup while it is unfinished, the input
+ * method and quick settings, then every settings page as one card of rows.
  */
 internal fun LazyListScope.keyboardHubItems(
     state: SettingsScreenState,
@@ -40,6 +41,7 @@ internal fun LazyListScope.keyboardHubItems(
             )
         }
     }
+    quickSettingsItems(state)
     item(key = "all") {
         SettingsNavigationCard(
             title = stringResource(R.string.settings_all_title),

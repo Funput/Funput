@@ -62,7 +62,8 @@ class SettingsSearchScreenTest {
         search("rung")
         compose.onNodeWithContentDescription("Xoá tìm kiếm").performClick()
 
-        compose.onNodeWithTag(SettingsAllTag).assertExists()
+        compose.onNodeWithTag(SettingsHeroTag).assertExists()
+        compose.onNodeWithTag(SettingsSearchResultsTag).assertDoesNotExist()
     }
 
     @Test
