@@ -27,13 +27,17 @@ pub(super) fn page() -> PreferencesPage {
     group.add(&row);
     page.add(&group);
 
-    // Flip the word being composed VN↔raw (card ⇄ cải). Presets mirror the Windows
-    // build; "Tắt" disables it.
+    // Flip the word still being composed between its Vietnamese form and the keys as
+    // typed (`mas` ⇄ `má`). It acts only before the word ends, so Space leaves nothing to
+    // flip. Presets mirror the Windows build; "Tắt" disables it.
     let flip_group = PreferencesGroup::builder()
-        .description("Đổi từ đang gõ giữa tiếng Việt và chữ gốc (card ⇄ cải).")
+        .description(
+            "Đổi từ đang gõ (trước khi bấm Space) giữa tiếng Việt và chữ gõ gốc, \
+             ví dụ mas ⇄ má. Bấm lần nữa để lật lại.",
+        )
         .build();
     let flip_row = ComboRow::builder()
-        .title("Phím lật từ vừa gõ")
+        .title("Phím lật từ")
         .model(&StringList::new(&[
             "Tắt",
             "Ctrl + Shift + Z",

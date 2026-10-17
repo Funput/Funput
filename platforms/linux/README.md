@@ -145,10 +145,17 @@ Nếu chưa thấy Funput trong danh sách:
 | Phím | Việc |
 |---|---|
 | **`Ctrl` + `` ` ``** | Bật / tắt tiếng Việt *(mặc định)* |
-| **`Ctrl` `Shift` `Z`** | Lật lại từ vừa gõ *(mặc định tắt)* |
+| **`Ctrl` `Shift` `Z`** | Lật từ đang gõ *(mặc định tắt; bật ở **Cài đặt → Phím tắt**)* |
 
 Đổi được trong app **Cài đặt**. Phím chuyển có 5 lựa chọn: `Ctrl` + `` ` ``, `Ctrl Space`,
-`Alt Shift`, `Super Space`, `Ctrl Shift Space`.
+`Alt Shift`, `Super Space`, `Ctrl Shift Space`. Phím lật từ chọn `Ctrl Shift Z` hoặc
+`Ctrl Shift X`.
+
+**Lật từ** đổi từ *đang gõ* giữa dạng tiếng Việt và chữ gõ gốc, và bấm lần nữa thì lật lại.
+Telex gõ `mas` ra `má`; bấm phím lật thì `má` thành `mas`, bấm tiếp lại thành `má`. Nó chỉ tác
+động trước khi từ kết thúc, nên sau Space hay dấu câu thì không còn gì để lật. Lựa chọn giữ
+nguyên đến hết từ đó, kể cả khi Space đến. Từ không có dạng tiếng Việt khác chữ đã gõ (`the`)
+thì phím này không làm gì.
 
 ### Thử nhanh
 

@@ -11,6 +11,7 @@ namespace funput {
 // The order the composer tests these in is the order `classify` returns them —
 // see the comment there.
 enum class KeyKind {
+    Modifier,    // Shift, Ctrl, Alt... on its own: it is a prefix, not a key, so it ends nothing
     Toggle,      // the VI/EN hotkey
     Flip,        // the flip-composing (VN <-> raw keys) hotkey
     Shortcut,    // Ctrl/Alt/Super held: flush and let the app have the key
@@ -25,7 +26,12 @@ enum class KeyKind {
 // so the VI/EN gate lives in the composer, between `Toggle` and everything else —
 // exactly where both shells put it today.
 //
-// Toggle and Flip come first because their combos hold a non-Shift modifier,
+// A modifier key is matched before anything else. Both shells deliver its press, and
+// Ctrl+Shift+Z is three of them: the two modifiers arrive before the Z, so treating
+// either as a key that produces nothing flushed the word and left the flip hotkey
+// with nothing to flip.
+//
+// Toggle and Flip come next because their combos hold a non-Shift modifier,
 // which would otherwise be swallowed by the `Shortcut` test. `Backspace` is
 // matched on its keysym before `ch` is looked at, so Ctrl+BackSpace stays a
 // `Shortcut`.

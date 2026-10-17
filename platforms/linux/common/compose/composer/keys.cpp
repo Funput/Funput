@@ -63,6 +63,11 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
     case KeyKind::Toggle: // handled above
         break;
 
+    case KeyKind::Modifier:
+        // Ctrl and Shift go down before the Z of Ctrl+Shift+Z. Committing here would
+        // end the word the hotkey is about to act on, so the press just goes through.
+        return ComposePlan::passThrough();
+
     case KeyKind::Flip: {
         // The hotkey is always swallowed, but a flip that changed nothing (no word
         // composing) leaves the client alone.
