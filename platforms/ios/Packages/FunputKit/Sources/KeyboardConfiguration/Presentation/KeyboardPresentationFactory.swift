@@ -33,6 +33,7 @@ public enum KeyboardPresentationFactory {
                 && selectedTheme(for: configuration, catalog: catalog).id != BundledThemes.default.id,
             language: configuration.language,
             isHapticFeedbackEnabled: configuration.isHapticFeedbackEnabled,
+            hapticFeedbackStrength: configuration.hapticFeedbackStrength,
             isKeySoundEnabled: configuration.isKeySoundEnabled,
             showsKeyPreviews: configuration.showsKeyPreviews,
             areSmartGesturesEnabled: configuration.smartGesturesEnabled,

@@ -25,7 +25,7 @@ extension KeyboardSurfaceInteractionController {
         if let key = state.currentKey { setHighlighted(key, false) }
         state.currentKey = nil
         touches[token] = state
-        if hapticsEnabled { haptics.perform(.control) }
+        performHapticFeedback()
         refreshPreview()
     }
 
@@ -37,7 +37,8 @@ extension KeyboardSurfaceInteractionController {
     }
 
     func performSuggestionFeedback(presentation: KeyboardPresentation) {
-        if presentation.isHapticFeedbackEnabled { haptics.perform(.control) }
+        updateHapticFeedback(presentation)
+        performHapticFeedback()
         if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
     }
 
@@ -54,7 +55,7 @@ extension KeyboardSurfaceInteractionController {
         guard onClaimGesture(token, .repeatKey) else { return }
         let event = KeyboardKeyEvent(key: state.initialKey, phase: .repeated)
         onContactEvent(token, event)
-        if hapticsEnabled { haptics.perform(.deleteRepeat) }
+        performHapticFeedback()
     }
 
     func finishRepeatedTouch(token: TouchToken, state: TouchState) {

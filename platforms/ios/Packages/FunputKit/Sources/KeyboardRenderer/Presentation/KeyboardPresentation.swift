@@ -1,4 +1,5 @@
 #if canImport(UIKit)
+import FunputShared
 import KeyboardLayout
 import ThemeSchema
 import UIKit
@@ -12,6 +13,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
     public var language: KeyboardLanguage
     public var enterAction: KeyboardEnterAction
     public var isHapticFeedbackEnabled: Bool
+    public var hapticFeedbackStrength: HapticFeedbackStrength
     public var isKeySoundEnabled: Bool
     public var showsKeyPreviews: Bool
     /// Double-tap space, spacebar cursor panning and swipe-to-delete-word.
@@ -28,6 +30,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
         language: KeyboardLanguage = .vietnamese,
         enterAction: KeyboardEnterAction = .newLine,
         isHapticFeedbackEnabled: Bool = true,
+        hapticFeedbackStrength: HapticFeedbackStrength = .light,
         isKeySoundEnabled: Bool = false,
         showsKeyPreviews: Bool = true,
         areSmartGesturesEnabled: Bool = true,
@@ -41,6 +44,7 @@ public struct KeyboardPresentation: Hashable, Sendable {
         self.language = language
         self.enterAction = enterAction
         self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
+        self.hapticFeedbackStrength = hapticFeedbackStrength
         self.isKeySoundEnabled = isKeySoundEnabled
         self.showsKeyPreviews = showsKeyPreviews
         self.areSmartGesturesEnabled = areSmartGesturesEnabled

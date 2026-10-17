@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct InteractiveGlassCard<Content: View>: View {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let isSelected: Bool
     let content: Content
 
@@ -10,7 +11,20 @@ struct InteractiveGlassCard<Content: View>: View {
     }
 
     var body: some View {
-        if #available(iOS 26, *) {
+        if reduceTransparency {
+            content
+                .padding(12)
+                .background(
+                    Color(uiColor: isSelected ? .secondarySystemGroupedBackground : .tertiarySystemGroupedBackground),
+                    in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+                )
+                .overlay {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(Color.accentColor, lineWidth: 2)
+                    }
+                }
+        } else if #available(iOS 26, *) {
             content
                 .padding(12)
                 .glassEffect(glass, in: .rect(cornerRadius: 20))

@@ -2,11 +2,12 @@ import FunputShared
 import KeyboardLayout
 import SwiftUI
 
-/// The top of the keyboard tab: the input method, then the switches people flip most.
+/// The top of the keyboard tab: the input method and frequently used settings.
 struct QuickSettingsSection: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ObservedObject var model: SettingsModel
     @State private var pendingAccess: FullAccessFeature?
+    @State private var showsHapticSheet = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -31,6 +32,7 @@ struct QuickSettingsSection: View {
                 }
             }
         }
+        .sheet(isPresented: $showsHapticSheet) { HapticFeedbackSheet(model: model) }
         .fullAccessPrompt($pendingAccess, model: model)
     }
 
@@ -53,7 +55,11 @@ struct QuickSettingsSection: View {
             isLocked: model.isLocked(setting),
             state: model.stateLabel(for: setting)
         ) {
-            pendingAccess = model.toggle(setting)
+            if setting == .haptics {
+                showsHapticSheet = true
+            } else {
+                pendingAccess = model.toggle(setting)
+            }
         }
     }
 }

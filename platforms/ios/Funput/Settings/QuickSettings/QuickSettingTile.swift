@@ -20,9 +20,16 @@ struct QuickSettingTile: View {
                         .font(.title3)
                         .foregroundStyle(isOn ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
                         .frame(height: 26)
-                    Text(setting.title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
+                    HStack(spacing: 4) {
+                        Text(setting.title)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        if setting == .haptics {
+                            Image(systemName: "chevron.down")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                     Text(state)
                         .font(.caption)
                         .foregroundStyle(isOn ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
@@ -41,8 +48,13 @@ struct QuickSettingTile: View {
             .disabled(isLocked)
             .accessibilityLabel(setting.accessibilityTitle)
             .accessibilityValue(state)
-            .accessibilityHint(isLocked ? "VNI dùng hàng số để bỏ dấu" : "Chạm hai lần để bật hoặc tắt")
+            .accessibilityHint(accessibilityHint)
             .accessibilityIdentifier("settings.quick.\(setting)")
         }
+    }
+
+    private var accessibilityHint: String {
+        if isLocked { return "VNI dùng hàng số để bỏ dấu" }
+        return setting == .haptics ? "Chạm hai lần để chọn mức rung" : "Chạm hai lần để bật hoặc tắt"
     }
 }

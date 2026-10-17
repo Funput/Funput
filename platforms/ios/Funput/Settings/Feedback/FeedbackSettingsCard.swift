@@ -1,11 +1,10 @@
+import FunputShared
 import SwiftUI
 
 /// The "Phản hồi khi chạm" card: how the keyboard answers a touch.
-///
-/// Haptics and sound need Full Access, so their bindings arrive already wrapped by
-/// ``SettingsModel/fullAccessBinding(_:onDenied:)`` — this view only lays them out.
 struct FeedbackSettingsCard: View {
-    @Binding var haptics: Bool
+    let hapticStrength: HapticFeedbackStrength?
+    let selectHapticStrength: () -> Void
     @Binding var sound: Bool
     @Binding var keyPreviews: Bool
 
@@ -15,12 +14,7 @@ struct FeedbackSettingsCard: View {
             systemImage: "hand.tap",
             footer: "Rung và âm thanh cần Cho phép truy cập đầy đủ."
         ) {
-            SettingsToggleRow(
-                title: "Rung khi gõ",
-                summary: "Rung nhẹ mỗi lần chạm phím.",
-                systemImage: "iphone.radiowaves.left.and.right",
-                isOn: $haptics
-            )
+            HapticFeedbackPicker(selection: hapticStrength, select: selectHapticStrength)
             SettingsRowDivider()
             SettingsToggleRow(
                 title: "Âm thanh khi gõ",

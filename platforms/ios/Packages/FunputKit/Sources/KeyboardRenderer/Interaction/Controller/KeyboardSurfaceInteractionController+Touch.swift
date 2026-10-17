@@ -63,7 +63,7 @@ extension KeyboardSurfaceInteractionController {
             KeyboardKeyEvent(key: state.initialKey, phase: .swiped(action))
         )
         endSignpost(state, token: token, phase: 3)
-        if hapticsEnabled { haptics.perform(.control) }
+        performHapticFeedback()
         refreshPreview()
     }
 
