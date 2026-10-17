@@ -104,7 +104,7 @@ Cả ba nằm chung một công tắc **Cử chỉ thông minh**.
 
 ### Cài đặt có gì
 
-App có bốn tab, cùng cách tổ chức với app iOS: **Bàn phím**, **Gõ tắt**, **Giao diện** và **Tôi**.
+App có năm tab, cùng cách tổ chức với app iOS: **Bàn phím**, **Gõ tắt**, **Giao diện**, **Tin tức** và **Tôi**.
 Tab **Bàn phím** là mục lục, từ trên xuống:
 
 - ô **Tìm cài đặt**, gõ có dấu hay không dấu đều được ("dat dau" ra "Kiểu đặt dấu"), tên tiếng
@@ -127,8 +127,12 @@ Tab **Bàn phím** là mục lục, từ trên xuống:
 | **Dữ liệu** (mở từ tab **Tôi**) | Xoá từ đã học và lịch sử clipboard |
 
 Tab **Gõ tắt** là danh sách gõ tắt, tab **Giao diện** là bộ sưu tập chủ đề, tab **Tôi** gồm dữ liệu,
-liên kết, quyền riêng tư và giấy phép. Không có tab Tin tức như iOS: APK không có quyền `INTERNET`,
-nên bàn phím luôn offline.
+liên kết, quyền riêng tư và giấy phép. Tab **Tin tức** hiện hai hướng dẫn ghim và các bài trên
+[blog funput.app](https://funput.app/blog/), đọc từ JSON Feed, lưu lại để xem khi mất mạng, kéo xuống
+để tải lại. Bài viết mở trong Custom Tab.
+
+Vì tab Tin tức (và tính năng đồng bộ sắp tới), APK có quyền `INTERNET`. Bàn phím không gọi mạng:
+nhận dạng giọng nói chạy trên máy, và quyền mạng mà ML Kit khai báo vẫn bị gỡ ở `:ime`.
 
 Thêm một trang là thêm một mục vào `SettingsPage` (`ui/settings/pages/`), destination tương ứng
 trong `AppDestination` và các section của nó trong `settingsPageItems`. Dòng ở hub, tiêu đề và

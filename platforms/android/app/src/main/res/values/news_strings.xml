@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The news tab: pinned guides and the funput.app blog feed. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="news_section_guides">Hướng dẫn</string>
+    <string name="news_section_articles">Bài viết</string>
+
+    <string name="news_guide_setup_title">Hướng dẫn cài đặt</string>
+    <string name="news_guide_setup_summary">Thêm bàn phím, bật Funput và gõ thử.</string>
+    <string name="news_guide_typing_title">Hướng dẫn gõ tiếng Việt</string>
+    <string name="news_guide_typing_summary">Bảng phím và ví dụ gõ bằng Telex và VNI.</string>
+
+    <string name="news_chip_guide">Hướng dẫn</string>
+    <string name="news_open_article">mở bài viết</string>
+
+    <string name="news_loading">Đang tải bài viết…</string>
+    <string name="news_failed_empty_title">Chưa tải được bài viết</string>
+    <string name="news_failed_empty_body">Kiểm tra kết nối mạng rồi thử lại.</string>
+    <string name="news_failed_stale_title">Chưa cập nhật được</string>
+    <string name="news_failed_stale_body">Đang hiện các bài đã lưu trên máy. Kiểm tra kết nối mạng rồi thử lại.</string>
+    <string name="news_retry">Thử lại</string>
+</resources>
