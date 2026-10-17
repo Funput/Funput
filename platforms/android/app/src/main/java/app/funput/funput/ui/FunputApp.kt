@@ -73,7 +73,8 @@ fun FunputApp() {
                     tabBar = { AppTabBar(navigator) },
                 )
                 AppDestination.TYPING, AppDestination.LAYOUT, AppDestination.SMART_INPUT, AppDestination.FEEDBACK,
-                AppDestination.CLIPBOARD, AppDestination.HARDWARE_KEYBOARD, AppDestination.DATA -> SettingsPageRoute(
+                AppDestination.CLIPBOARD, AppDestination.HARDWARE_KEYBOARD, AppDestination.DATA,
+                AppDestination.KEYBOARD_DATA -> SettingsPageRoute(
                     page = requireNotNull(SettingsPage.of(destination)),
                     settings = settings,
                     keyboardTheme = keyboardTheme,
