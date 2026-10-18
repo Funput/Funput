@@ -1,6 +1,9 @@
 package app.funput.funput.ui.settings.speech.model
 
+import app.funput.funput.ime.speech.model.SpeechLocale
 import app.funput.funput.ime.speech.preparation.SpeechCapability
+import app.funput.funput.ime.speech.preparation.SpeechDownloadEvent
+import app.funput.funput.ime.speech.services.GoogleSpeechServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -51,6 +54,28 @@ class SpeechSetupModelTest {
         assertTrue(model.state.locales.values.all { it.checking })
         model.resume(true)
         assertEquals(2, service.checks.size)
+    }
+    @Test fun downloadWithoutGoogleSpeechAppOpensTheGuideInstead() = withModel { model, service, _ ->
+        model.resume(true, GoogleSpeechServices.Status.MISSING)
+        model.download(SpeechLocale.VI)
+        assertTrue(service.downloads.isEmpty())
+        assertTrue(model.state.guideVisible)
+        model.hideGuide()
+        assertFalse(model.state.guideVisible)
+    }
+    @Test fun scheduledDownloadRequestsConsentUntilHandled() = withModel { model, service, _ ->
+        model.resume(true)
+        model.download(SpeechLocale.VI)
+        service.downloads.single().emit(SpeechDownloadEvent.Scheduled)
+        assertEquals(SpeechLocale.VI, model.state.pendingConsent)
+        model.consentHandled(opened = true)
+        assertNull(model.state.pendingConsent)
+        assertFalse(model.state.guideVisible)
+    }
+    @Test fun consentThatCannotOpenFallsBackToTheGuide() = withModel { model, _, _ ->
+        model.resume(true)
+        model.consentHandled(opened = false)
+        assertTrue(model.state.guideVisible)
     }
     @Test fun saveFailureIsVisibleAndDoesNotChangePreference() {
         val service = FakeSpeechPreparation()

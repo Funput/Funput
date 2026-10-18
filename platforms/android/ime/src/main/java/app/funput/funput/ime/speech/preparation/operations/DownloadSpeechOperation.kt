@@ -38,7 +38,8 @@ internal class DownloadSpeechOperation(
     }
 
     private companion object {
-        // Model packs are downloaded by the app process; allow slow networks before giving up.
+        // Speech Services by Google downloads the pack, after its own consent dialog; allow slow
+        // networks and a user who reads the dialog before giving up.
         const val DEADLINE_MILLIS = 600_000L
     }
 }

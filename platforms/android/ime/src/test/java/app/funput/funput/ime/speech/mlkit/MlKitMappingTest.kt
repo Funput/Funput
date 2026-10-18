@@ -59,4 +59,18 @@ class MlKitMappingTest {
         val failed = DownloadStatus.DownloadFailed(GenAiException(RuntimeException(), GenAiException.ErrorCode.UNKNOWN))
         assertEquals(SpeechDownloadEvent.Failure(SpeechRecognizer.ERROR_CLIENT), mapper.map(failed))
     }
+
+    @Test fun downloadFailureKeepsTheReasonFromTheMessage() {
+        fun failed(message: String) = MlKitDownloadMapper().map(DownloadStatus.DownloadFailed(
+            GenAiException(message, null, GenAiException.ErrorCode.NOT_AVAILABLE)))
+        // The exact texts ML Kit 1.0.0-alpha1 builds from Speech Services' end reasons.
+        assertEquals(SpeechDownloadEvent.Scheduled,
+            failed("Model download is not completed yet and will be retried automatically"))
+        assertEquals(SpeechDownloadEvent.Failure(SpeechRecognizer.ERROR_NETWORK),
+            failed("Model download failed with reason: END_REASON_NO_INTERNET_CONNECTION"))
+        assertEquals(SpeechDownloadEvent.Failure(SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE),
+            failed("Model download failed with reason: END_REASON_MODEL_UNAVAILABLE"))
+        assertEquals(SpeechDownloadEvent.Failure(SpeechRecognizer.ERROR_CLIENT),
+            failed("Model download failed with reason: END_REASON_DOWNLOAD_ERROR"))
+    }
 }
