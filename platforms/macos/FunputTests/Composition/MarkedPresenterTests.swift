@@ -38,8 +38,15 @@ final class MarkedPresenterTests: XCTestCase {
     func testReopenMarksTheWordOverTheRangeRetoneChose() {
         let surface = FakeCompositionSurface(document: "Xin chào ")
         var presenter = MarkedPresenter()
-        presenter.reopen("chào", replacing: NSRange(location: 4, length: 5), on: surface)
+        XCTAssertTrue(presenter.reopen("chào", replacing: NSRange(location: 4, length: 5), on: surface))
         XCTAssertEqual(surface.calls, [.mark("chào", NSRange(location: 4, length: 5))])
+    }
+
+    func testBackspaceRemarksTheShorterWordAndConsumesTheKey() {
+        let surface = FakeCompositionSurface()
+        var presenter = MarkedPresenter()
+        XCTAssertTrue(presenter.backspace(to: "ti", on: surface))
+        XCTAssertEqual(surface.calls, [.mark("ti", nil)])
     }
 
     func testMarkedTextNeverWritesIntoTheDocument() {

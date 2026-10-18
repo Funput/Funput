@@ -159,15 +159,30 @@ engine:
 
 - Phím chữ được **phát lại** như chữ đầu của từ mới
   (`FunputInputController.showKey`), nên trường hợp xấu nhất chỉ là ra chữ thô cho từ đó.
-- Backspace được trả về cho app tự xoá.
 - Ở chế độ English, chữ không bao giờ bị viết lại khi đang gõ, nên phím được trả cho app.
+
+### 3.6b Backspace không bao giờ ghi
+
+Khi một bộ gõ ghi qua `replacementRange` trong lúc xử lý phím và không có marked text,
+Chromium vẫn chuyển **phím gốc** cho trang (`keyEvent:` trong
+`render_widget_host_view_cocoa.mm`: lần ghi đó không nằm trong `_textToBeInserted`). Với
+phím chữ thì phím gốc không sinh thêm chữ; với Backspace thì trang tự xoá thêm một ký tự.
+Bản đầu (#607) ghi đè cả ở Backspace nên trong Chrome, Cursor và các app Electron mỗi lần
+Backspace xoá hai ký tự.
+
+Vì vậy với từ ghi thẳng, Backspace luôn được trả cho app (`DirectPresenter.backspace`):
+app tự xoá ký tự cuối, Funput chỉ bớt ký tự cuối khỏi `shown`. Nếu engine đổi nhiều hơn
+thế (bỏ `n` khỏi `hoàn` kéo dấu về `hòa` theo kiểu đặt dấu cũ), phím kế tiếp sẽ ghi lại cho
+khớp bằng phép thay có kiểm tra như mọi lần đổi dấu. Từ marked text vẫn xử lý Backspace như
+trước.
 
 ### 3.7 Retone sau Backspace
 
 `Retone.plan` giữ nguyên (đọc tài liệu, hỏi engine `adopt`). `CompositionSession.reopen`
-chọn presenter như một từ mới: `DirectPresenter.reopen` ghi từ lại bằng một `insertText`
-thay cả từ lẫn ký tự đang xoá; `MarkedPresenter.reopen` mở lại bằng marked text như trước.
-Việc này cũng sửa lỗi gợi ý của Cursor bị lặp khi xoá từ.
+chọn presenter như một từ mới. `DirectPresenter.reopen` **không ghi gì**: từ đã nằm sẵn
+trước ký tự sắp bị xoá, nên phím được trả cho app xoá ký tự đó và từ trở thành từ đang gõ
+(lý do ở 3.6b). `MarkedPresenter.reopen` mở lại bằng marked text như trước. Không còn
+marked text khi mở lại từ cũng tránh được lỗi gợi ý của Cursor bị lặp khi xoá từ.
 
 ### 3.8 Khi nào bật
 
@@ -224,7 +239,8 @@ trip này là chỗ cầu nối text input của Chromium hay kẹt (xem
 | Sự kiện | Số lần đọc |
 | :--- | :--- |
 | Gõ thêm chữ | 0 |
-| Đổi dấu, đổi chữ, Backspace giữa từ | 2 (`selectedRange` + `attributedSubstring`) |
+| Đổi dấu, đổi chữ | 2 (`selectedRange` + `attributedSubstring`) |
+| Backspace giữa từ | 0 (app tự xoá) |
 | Bắt đầu từ, client đã chứng minh | 0 |
 | Client chưa chứng minh | Tối đa 4 lần thử mỗi activate, mỗi lần 1 hoặc 2 lần đọc |
 | Retone sau Backspace | Như trước (của `Retone.plan`) |
@@ -271,6 +287,9 @@ Còn lại:
 
 ## 7. Rủi ro đã biết
 
+- **Phím gốc đi tiếp sau một lần thay chữ trong Chromium** (3.6b). Vô hại với phím chữ và
+  phím ranh giới; Backspace đã được tránh. Riêng phím tắt lật Anh/Việt (mặc định tắt) nếu
+  trùng một phím tắt của trang web thì trang cũng sẽ nhận phím đó.
 - **Vùng chọn giả.** Cursor từng báo `{0, 17}` khi người dùng chỉ thấy con trỏ. Nếu
   điều đó xảy ra đúng lúc đổi dấu, `rewriteRange` sẽ phủ cả vùng chọn và có thể xoá ký
   tự ngay sau con trỏ (ví dụ `)` tự đóng). Chưa gặp trong thử nghiệm.

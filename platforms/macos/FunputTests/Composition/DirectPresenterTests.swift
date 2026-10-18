@@ -27,14 +27,6 @@ final class DirectPresenterTests: XCTestCase {
         XCTAssertEqual(surface.calls.last, .insert("ếng", NSRange(location: 6, length: 3)))
     }
 
-    func testBackspaceShrinksTheWordInPlace() {
-        let surface = FakeCompositionSurface()
-        var presenter = typed(["d", "đ", "đi"], into: surface)
-        XCTAssertEqual(presenter.show("đ", on: surface), .rewritten)
-        XCTAssertEqual(presenter.show("", on: surface), .rewritten)
-        XCTAssertEqual(surface.document, "")
-    }
-
     func testAClientThatRenumbersBetweenKeysStillGetsTheRightRange() {
         // Cursor: the word started at 1 in its text area, then the area was rebuilt.
         let surface = FakeCompositionSurface(document: "a ")
@@ -118,11 +110,37 @@ final class DirectPresenterTests: XCTestCase {
         XCTAssertEqual(surface.document, "vnx ")
     }
 
-    func testAReopenedWordCanBeRetonedInPlace() {
+    func testAReopenedWordIsNotWrittenAndTheAppDeletesTheSpace() {
+        // Chromium forwards the original Backspace after any replacement write, so writing
+        // here would delete a second character.
         let surface = FakeCompositionSurface(document: "chao ")
         var presenter = DirectPresenter()
-        presenter.reopen("chao", replacing: NSRange(location: 0, length: 5), on: surface)
+        XCTAssertFalse(presenter.reopen("chao", replacing: NSRange(location: 0, length: 5), on: surface))
+        XCTAssertEqual(surface.calls, [])
+        surface.deleteBackward()
         XCTAssertEqual(presenter.show("chào", on: surface), .rewritten)
         XCTAssertEqual(surface.document, "chào")
+    }
+
+    func testBackspaceLeavesTheDeleteToTheApp() {
+        let surface = FakeCompositionSurface()
+        var presenter = typed(["t", "ti", "tie", "tiê", "tiế"], into: surface)
+        surface.clearCalls()
+        XCTAssertFalse(presenter.backspace(to: "ti", on: surface))
+        XCTAssertEqual(surface.calls, [])
+        surface.deleteBackward()
+        XCTAssertEqual(presenter.show("tì", on: surface), .rewritten)
+        XCTAssertEqual(surface.document, "tì")
+    }
+
+    func testTheNextKeyReconcilesABackspaceThatMovedTheTone() {
+        // Traditional placement: dropping `n` from `hoàn` moves the tone back to `o`.
+        let surface = FakeCompositionSurface()
+        var presenter = typed(["h", "ho", "hoa", "hoan", "hoàn"], into: surface)
+        XCTAssertFalse(presenter.backspace(to: "hòa", on: surface))
+        surface.deleteBackward()
+        XCTAssertEqual(surface.document, "hoà")
+        XCTAssertEqual(presenter.show("hòa", on: surface), .rewritten)
+        XCTAssertEqual(surface.document, "hòa")
     }
 }

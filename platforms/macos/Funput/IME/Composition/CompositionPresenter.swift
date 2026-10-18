@@ -31,9 +31,14 @@ protocol CompositionPresenter {
     /// End the word: the document must now read `word` followed by `boundary`.
     mutating func commit(_ word: String, boundary: String, on surface: CompositionSurface)
 
-    /// Make a committed word the live composition again. `range` covers the word and the
-    /// character Backspace is deleting, and `word` replaces both in one write.
-    mutating func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface)
+    /// Backspace took the last character off the word in the engine, leaving `text`.
+    /// Returns whether Funput consumed the key; false lets the app delete the character.
+    mutating func backspace(to text: String, on surface: CompositionSurface) -> Bool
+
+    /// Backspace is about to make a committed word the live composition again: `range`
+    /// covers the word and the character being deleted. Returns whether Funput consumed
+    /// the key; false lets the app delete that character itself.
+    mutating func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface) -> Bool
 }
 
 /// The composing word as marked text, which every client underlines: the way Funput has
@@ -55,8 +60,16 @@ struct MarkedPresenter: CompositionPresenter {
         surface.insert(word + boundary, replacing: nil)
     }
 
-    mutating func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface) {
+    mutating func backspace(to text: String, on surface: CompositionSurface) -> Bool {
+        _ = show(text, on: surface)
+        return true
+    }
+
+    /// One `setMarkedText` replaces the word and the deleted character, so the app must
+    /// not delete again.
+    mutating func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface) -> Bool {
         surface.mark(word, replacing: range)
         shown = word
+        return true
     }
 }

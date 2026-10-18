@@ -77,6 +77,16 @@ final class FakeCompositionSurface: CompositionSurface {
         marked = nil
     }
 
+    /// The app's own Backspace, which runs when Funput does not consume the key.
+    func deleteBackward() {
+        let target = selectionLength > 0
+            ? NSRange(location: caret, length: selectionLength)
+            : NSRange(location: caret - 1, length: 1)
+        document = (document as NSString).replacingCharacters(in: target, with: "")
+        caret = target.location
+        selectionLength = 0
+    }
+
     func clearCalls() {
         calls.removeAll()
     }

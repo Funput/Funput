@@ -24,7 +24,7 @@ extension FunputInputController {
 
         if event.keyCode == 51 {
             guard let edit = EnglishComposition.backspace(composer: composer) else { return false }
-            return applyEnglish(edit, client: client)
+            return session.backspace(to: edit.text, on: IMKCompositionSurface(client: client))
         }
         guard let characters = event.characters, characters.unicodeScalars.count == 1,
             let scalar = characters.unicodeScalars.first, !isNonTextKey(event, scalar)

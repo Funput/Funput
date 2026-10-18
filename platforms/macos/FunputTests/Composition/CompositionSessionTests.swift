@@ -76,6 +76,26 @@ final class CompositionSessionTests: XCTestCase {
         XCTAssertFalse(session.endIfClicked(), "IMKit commits marked text on a click itself")
     }
 
+    func testBackspaceInADirectWordGoesToTheAppAndTheWordGoesOn() {
+        var session = makeSession()
+        let surface = provenField()
+        _ = session.show("ti", on: surface)
+        XCTAssertFalse(session.backspace(to: "t", on: surface))
+        surface.deleteBackward()
+        XCTAssertTrue(session.show("tô", on: surface))
+        XCTAssertEqual(surface.document, "x tô")
+    }
+
+    func testBackspaceInAMarkedWordIsConsumedAsBefore() {
+        switchOn = false
+        var session = makeSession()
+        let surface = provenField()
+        _ = session.show("ti", on: surface)
+        XCTAssertTrue(session.backspace(to: "t", on: surface))
+        XCTAssertTrue(session.backspace(to: "", on: surface))
+        XCTAssertEqual(surface.calls.suffix(2), [.mark("t", nil), .mark("", nil)])
+    }
+
     func testCommittingWithNoWordOnScreenIsPlainTyping() {
         var session = makeSession()
         let surface = provenField()
@@ -88,7 +108,8 @@ final class CompositionSessionTests: XCTestCase {
     func testReopenFollowsTheSameChoiceAsANewWord() {
         var session = makeSession()
         let surface = FakeCompositionSurface(document: "chao ")
-        session.reopen("chao", replacing: NSRange(location: 0, length: 5), on: surface)
+        XCTAssertFalse(session.reopen("chao", replacing: NSRange(location: 0, length: 5), on: surface))
+        surface.deleteBackward()
         XCTAssertTrue(session.show("chào", on: surface))
         XCTAssertEqual(surface.document, "chào")
     }
