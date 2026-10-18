@@ -3,9 +3,11 @@ package app.funput.funput.ui.shortcuts.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import app.funput.funput.R
@@ -40,7 +42,9 @@ private fun StatusCard(title: String, body: String?, actionLabel: String?, actio
     val colors = FunputUi.colors
     val type = FunputUi.typography
     FunputCard(contentPadding = PaddingValues(FunputUi.spacing.section)) {
+        // Full width, or the card's start-aligned column parks the centred block on the left.
         Column(
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(FunputUi.spacing.small),
         ) {
