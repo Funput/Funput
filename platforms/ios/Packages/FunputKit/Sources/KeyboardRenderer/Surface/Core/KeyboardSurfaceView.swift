@@ -58,6 +58,9 @@ public final class KeyboardSurfaceView: UIView {
         },
         onHighlight: { [weak self] key, highlighted in
             self?.keyControls[key.id]?.setPressed(highlighted, presentation: self?.presentation)
+        },
+        onSwipeProgress: { [weak self] key, progress, animated in
+            self?.keyControls[key.id]?.setSwipeProgress(progress, animated: animated)
         }
     )
     var keyControls: [String: KeyboardKeyControl] = [:]

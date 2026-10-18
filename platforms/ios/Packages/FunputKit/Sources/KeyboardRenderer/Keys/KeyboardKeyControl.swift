@@ -64,11 +64,11 @@ final class KeyboardKeyControl: UIControl {
         emit(.released)
         return true
     }
-
     func setPressed(_ pressed: Bool, presentation: KeyboardPresentation?) {
         guard let presentation else { return }
         surface.setPressed(pressed, theme: presentation.theme, animated: true)
     }
+    func setSwipeProgress(_ progress: CGFloat, animated: Bool) { contentView.setSwipeProgress(progress, animated: animated) }
 
     private func configureAccessibility() {
         isAccessibilityElement = true

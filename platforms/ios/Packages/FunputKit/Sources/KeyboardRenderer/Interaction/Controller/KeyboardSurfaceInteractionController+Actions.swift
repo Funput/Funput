@@ -90,7 +90,8 @@ extension KeyboardSurfaceInteractionController {
             return
         }
         onAlternatePreview(nil, nil, nil)
-        guard let key = state.currentKey else {
+        // A pull-down draws on the key itself; a preview bubble would cover it.
+        guard let key = state.currentKey, state.swipeDown?.progress ?? 0 == 0 else {
             onPreview(nil, nil)
             return
         }

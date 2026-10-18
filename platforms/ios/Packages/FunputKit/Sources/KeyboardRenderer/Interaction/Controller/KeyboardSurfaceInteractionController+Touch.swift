@@ -5,6 +5,7 @@ extension KeyboardSurfaceInteractionController {
     func finishTrackedTouch(token: TouchToken, state: TouchState) {
         alternateHoldController.cancel(for: token)
         spaceHoldController.cancel(for: token)
+        if finishSwipeDown(token: token, state: state) { return }
         if state.ratchet != nil {
             finishWordRatchet(token: token, state: state)
             return
@@ -39,6 +40,7 @@ extension KeyboardSurfaceInteractionController {
     func cancelTrackedTouch(token: TouchToken, state: TouchState) {
         alternateHoldController.cancel(for: token)
         spaceHoldController.cancel(for: token)
+        if state.swipeDown?.progress ?? 0 > 0 { onSwipeProgress(state.initialKey, 0, true) }
         if let key = state.currentKey { setHighlighted(key, false) }
         _ = repeatTouch == token && repeatController.finish()
         if repeatTouch == token { repeatTouch = nil }

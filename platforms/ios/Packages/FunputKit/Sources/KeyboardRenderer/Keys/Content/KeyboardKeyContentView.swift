@@ -5,8 +5,11 @@ import UIKit
 
 @MainActor
 final class KeyboardKeyContentView: UIView {
-    private let label = UILabel()
-    private let secondaryLabel = UILabel()
+    let label = UILabel()
+    let secondaryLabel = UILabel()
+    /// The hint drawn at the letter's size, which a pull down slides into the letter's place.
+    let swipeHintLabel = UILabel()
+    var swipeProgress: CGFloat = 0
     private let iconView = UIImageView()
     private let spacebarView = KeyboardSpacebarContentView()
     private var labelPlacement = KeyLabelPlacement.center
@@ -20,6 +23,7 @@ final class KeyboardKeyContentView: UIView {
         [label, secondaryLabel].forEach(configureLabel)
         secondaryLabel.textAlignment = .right
         configureIcon()
+        configureSwipeHint()
         spacebarView.isUserInteractionEnabled = false
         addSubview(spacebarView)
     }
@@ -31,6 +35,7 @@ final class KeyboardKeyContentView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        applySwipe(0)
         let frames = KeyboardKeyContentGeometry.frames(
             in: bounds,
             hintLineHeight: secondaryLabel.font.lineHeight
@@ -45,16 +50,13 @@ final class KeyboardKeyContentView: UIView {
             label.font = KeyLabelTypography.fitting(themedLabelFont, scale: fontScale, height: label.frame.height)
         }
         iconView.frame = KeyboardKeyIconSizing.frame(
-            for: iconRole,
-            placement: labelPlacement,
-            in: bounds,
-            imageSize: iconView.image?.size,
-            fallback: frames.icon
+            for: iconRole, placement: labelPlacement, in: bounds, imageSize: iconView.image?.size, fallback: frames.icon
         )
         secondaryLabel.frame = KeyboardKeyContentGeometry.hintFrame(
             for: labelPlacement, in: bounds, fallback: frames.hint
         )
         spacebarView.frame = bounds
+        layoutSwipeHint()
     }
 
     func apply(
@@ -83,6 +85,7 @@ final class KeyboardKeyContentView: UIView {
         iconView.tintColor = enterContent ? theme.accent.uiColor(for: traits) : labelColor
 
         labelPlacement = spec.labelPlacement
+        swipeProgress = 0
         iconRole = spec.role
         label.textAlignment = switch spec.labelPlacement {
         case .center, .bottomCenter: .center

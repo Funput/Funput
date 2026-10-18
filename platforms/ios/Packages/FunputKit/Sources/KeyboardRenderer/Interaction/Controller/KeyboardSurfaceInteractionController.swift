@@ -48,6 +48,7 @@ final class KeyboardSurfaceInteractionController {
         var alternateLayout: KeyboardAlternatePaletteLayout?
         var selectedAlternateIndex: Int?
         var swipeTracker = KeySwipeGestureTracker()
+        var swipeDown: KeySwipeDownTracker?
         /// Snapshotted at touch-down so a configuration change mid-press cannot flip the
         /// state machine under a finger that is already moving.
         var smartGestures = false
@@ -81,6 +82,7 @@ final class KeyboardSurfaceInteractionController {
     let onPreview: PreviewHandler
     let onAlternatePreview: AlternatePreviewHandler
     let onHighlight: HighlightHandler
+    let onSwipeProgress: (_ key: KeySpec, _ progress: CGFloat, _ animated: Bool) -> Void
     let repeatScheduler: BackspaceRepeatController.Scheduler
     lazy var repeatController = BackspaceRepeatController(
         schedule: repeatScheduler
@@ -118,6 +120,7 @@ final class KeyboardSurfaceInteractionController {
         onPreview: @escaping PreviewHandler,
         onAlternatePreview: @escaping AlternatePreviewHandler = { _, _, _ in },
         onHighlight: @escaping HighlightHandler = { _, _ in },
+        onSwipeProgress: @escaping (KeySpec, CGFloat, Bool) -> Void = { _, _, _ in },
         repeatScheduler: @escaping BackspaceRepeatController.Scheduler =
             BackspaceRepeatController.schedule,
         haptics: (any KeyboardHapticPerforming)? = nil
@@ -129,6 +132,7 @@ final class KeyboardSurfaceInteractionController {
         self.onPreview = onPreview
         self.onAlternatePreview = onAlternatePreview
         self.onHighlight = onHighlight
+        self.onSwipeProgress = onSwipeProgress
         self.repeatScheduler = repeatScheduler
         touches.reserveCapacity(10)
         self.haptics.prepare()

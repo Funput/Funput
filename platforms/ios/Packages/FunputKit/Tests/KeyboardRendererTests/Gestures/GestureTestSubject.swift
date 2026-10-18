@@ -53,6 +53,10 @@ final class GestureTestSubject {
     let haptics = HapticSpy()
     var events: [(token: UInt64, event: KeyboardKeyEvent)] = []
     var claims: [KeyboardSurfaceInteractionController.GestureClaim] = []
+    /// Pull-down progress the controller handed the key, in order.
+    var swipeProgress: [CGFloat] = []
+    /// The key each preview update showed, nil when it hid the bubble.
+    var previews: [String?] = []
     var grantsClaims = true
     let key: KeySpec
     var smartGestures = true
@@ -70,7 +74,8 @@ final class GestureTestSubject {
             claims.append(kind)
             return grantsClaims
         },
-        onPreview: { _, _ in },
+        onPreview: { [weak self] key, _ in self?.previews.append(key?.id) },
+        onSwipeProgress: { [weak self] _, progress, _ in self?.swipeProgress.append(progress) },
         repeatScheduler: scheduler.schedule,
         haptics: haptics
     )
