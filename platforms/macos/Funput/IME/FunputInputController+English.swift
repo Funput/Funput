@@ -3,9 +3,9 @@ import InputMethodKit
 
 extension FunputInputController {
     /// Own the raw word as the live composition, so an expanding shortcut can replace it:
-    /// written into the document where the session can, marked text elsewhere, which
-    /// needs no committed ranges from the client. The disabled engine still handles
-    /// shortcut matching; it never adds diacritics.
+    /// written into the document where the session can, and as marked text only while
+    /// direct composition is switched off. The disabled engine still handles shortcut
+    /// matching; it never adds diacritics.
     func handleEnglish(_ event: NSEvent, client: IMKTextInput) -> Bool {
         let settings = AppSettings.shared
         guard settings.shortcutsEnabled, settings.shortcutsInEnglish,
@@ -14,6 +14,13 @@ extension FunputInputController {
 
         guard !InputEventPolicy.passesThroughEnglish(keyCode: event.keyCode, modifiers: event.modifierFlags)
         else { commit(into: client); return false }
+
+        // An app that will not take direct writes gets plain keys: gõ tắt cannot expand
+        // there, but the app's own Tab and arrow shortcuts keep working.
+        if composer.buffer().isEmpty,
+            !session.allowsOptionalComposition(on: IMKCompositionSurface(client: client)) {
+            return false
+        }
 
         if event.keyCode == 51 {
             guard let edit = EnglishComposition.backspace(composer: composer) else { return false }

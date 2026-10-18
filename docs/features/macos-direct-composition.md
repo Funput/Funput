@@ -204,7 +204,16 @@ Nếu lúc thay chữ client trả `NSNotFound` cho vị trí con trỏ (`.unsup
 còn lại của lần activate đó dùng marked text, tránh mất dấu liên tục. Con trỏ đọc được
 nhưng lệch chỉ là `.dropped`: bản thử từng nhầm hai trường hợp này.
 
-Gõ tắt ở chế độ English cũng đi qua session, nên cũng không còn gạch chân.
+Gõ tắt ở chế độ English cũng đi qua session, nên cũng không còn gạch chân. Riêng ở chế
+độ English, từ chỉ được giữ làm composition (để bung gõ tắt) ở nơi nó sẽ được ghi thẳng
+(`CompositionSession.allowsOptionalComposition`). Ở app không chứng minh được, phím đi thẳng
+tới app và gõ tắt English không bung ở đó: Warp bỏ qua Tab, mũi tên và phần lớn phím tắt
+của nó khi có composition đang mở (ngữ cảnh `IMEOpen`), nên giữ marked text sẽ làm hỏng
+chúng ngay cả khi người dùng đã chuyển sang EN. Khi tắt công tắc, chế độ English giữ hành vi
+cũ ở mọi nơi.
+
+Ở chế độ tiếng Việt, Warp vẫn bỏ qua Tab và mũi tên khi đang gõ dở một từ. Bộ gõ không sửa
+được điều đó: từ đang gõ phải là marked text vì Warp không cho thay chữ đã gõ.
 
 ### 3.9 Ngân sách đọc tài liệu
 

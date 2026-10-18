@@ -103,4 +103,22 @@ final class CompositionTrustTests: XCTestCase {
         _ = session.show("y", on: surface)
         XCTAssertEqual(surface.calls.last, .insert("y", nil), "proven again on the next activation")
     }
+
+    /// English words are held only for gõ tắt; Warp ignores Tab and the arrows while a
+    /// composition is open, so an app that never proves itself gets plain keys instead.
+    func testOptionalWordsAreHeldOnlyWhereTheyWouldBeWrittenDirectly() {
+        var session = makeSession()
+        XCTAssertTrue(session.allowsOptionalComposition(on: provenField()))
+
+        var blindSession = makeSession()
+        let blind = FakeCompositionSurface(document: "x ")
+        blind.blind = true
+        blind.clientID = "dev.warp.Warp-Stable"
+        XCTAssertFalse(blindSession.allowsOptionalComposition(on: blind))
+        XCTAssertEqual(blind.calls.filter { $0 != .supportsDocumentAccess }, [.selection])
+
+        switchOn = false
+        var offSession = makeSession()
+        XCTAssertTrue(offSession.allowsOptionalComposition(on: blind), "switched off: as before")
+    }
 }

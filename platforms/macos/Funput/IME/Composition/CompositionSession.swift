@@ -67,6 +67,16 @@ struct CompositionSession {
         presenter.commit(word, boundary: boundary, on: surface)
     }
 
+    /// Whether a word that only might need replacing (English typing, held for gõ tắt) may
+    /// be held as the live composition. With the switch off this is the old behaviour,
+    /// always. With it on, only where the word would be written directly: marked text in an
+    /// app that never proves itself would keep that app's own shortcuts from firing (Warp
+    /// ignores Tab and the arrows while a composition is open).
+    mutating func allowsOptionalComposition(on surface: CompositionSurface) -> Bool {
+        guard directEnabled() else { return true }
+        return trust.allowsDirect(on: surface)
+    }
+
     /// Make a committed word the live composition again (retone after Backspace).
     mutating func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface) {
         var presenter = startWord(on: surface)

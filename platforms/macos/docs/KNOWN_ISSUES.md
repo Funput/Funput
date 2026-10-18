@@ -10,6 +10,11 @@ underlined marked text. Design: [`docs/features/macos-direct-composition.md`](..
   Funput the text before their caret, fall back to marked text automatically. Warp is one:
   its text view answers every caret question with `(0, 0)`, hands over no text and ignores
   replacement ranges. That is the intended behaviour, not a bug.
+- **Warp ignores Tab and the arrows in the middle of a Vietnamese word.** Warp turns its
+  own shortcuts off while any input method has marked text open (its `IMEOpen` keymap
+  context), and in Warp a Vietnamese word has to be marked text. Finish the word (Space)
+  first, or switch Warp to English: in English mode Funput holds no word in such apps, so
+  every key reaches Warp, at the cost of English gõ tắt not expanding there.
 - **The first letter in an empty field can flash an underline.** An app has to prove it
   reports its text before Funput writes into it. In an empty field nothing is there yet, so
   the first letter starts as marked text and turns plain on the next key. A proof is kept
