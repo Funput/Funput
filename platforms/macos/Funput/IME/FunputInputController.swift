@@ -20,7 +20,8 @@ final class FunputInputController: IMKInputController {
     /// How the word being composed reaches the client: marked text or written directly.
     var session = CompositionSession(
         directEnabled: { AppSettings.shared.directComposition },
-        clicks: { MouseClickCounter.shared.clicks }
+        clicks: { MouseClickCounter.shared.clicks },
+        memory: .shared
     )
 
     private enum KeyCode {

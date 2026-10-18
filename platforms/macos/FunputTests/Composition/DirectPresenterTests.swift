@@ -7,7 +7,9 @@ import XCTest
 final class DirectPresenterTests: XCTestCase {
     private func typed(_ steps: [String], into surface: FakeCompositionSurface) -> DirectPresenter {
         var presenter = DirectPresenter()
-        for step in steps { XCTAssertEqual(presenter.show(step, on: surface), .shown) }
+        for step in steps {
+            XCTAssert([.shown, .rewritten].contains(presenter.show(step, on: surface)), step)
+        }
         return presenter
     }
 
@@ -28,8 +30,8 @@ final class DirectPresenterTests: XCTestCase {
     func testBackspaceShrinksTheWordInPlace() {
         let surface = FakeCompositionSurface()
         var presenter = typed(["d", "đ", "đi"], into: surface)
-        XCTAssertEqual(presenter.show("đ", on: surface), .shown)
-        XCTAssertEqual(presenter.show("", on: surface), .shown)
+        XCTAssertEqual(presenter.show("đ", on: surface), .rewritten)
+        XCTAssertEqual(presenter.show("", on: surface), .rewritten)
         XCTAssertEqual(surface.document, "")
     }
 
@@ -38,7 +40,7 @@ final class DirectPresenterTests: XCTestCase {
         let surface = FakeCompositionSurface(document: "a ")
         var presenter = typed(["t", "ti", "tie"], into: surface)
         surface.windowStart = 2
-        XCTAssertEqual(presenter.show("tiê", on: surface), .shown)
+        XCTAssertEqual(presenter.show("tiê", on: surface), .rewritten)
         XCTAssertEqual(surface.document, "a tiê")
     }
 
@@ -48,8 +50,25 @@ final class DirectPresenterTests: XCTestCase {
         surface.replaceDocument("tieng Anh")
         surface.caret = 5
         surface.selectionLength = 4
-        XCTAssertEqual(presenter.show("tiêng", on: surface), .shown)
+        XCTAssertEqual(presenter.show("tiêng", on: surface), .rewritten)
         XCTAssertEqual(surface.document, "tiêng")
+    }
+
+    func testABlindClientNeverHasTheWordRewritten() {
+        // Warp: caret always (0, 0), no text, replacement ranges ignored.
+        let surface = FakeCompositionSurface()
+        surface.blind = true
+        var presenter = typed(["t", "ti", "tie"], into: surface)
+        XCTAssertEqual(presenter.show("tiê", on: surface), .dropped)
+        XCTAssertEqual(surface.document, "tie")
+    }
+
+    func testTheCharacterBeforeTheCaretProvesAClient() {
+        XCTAssertTrue(DirectPresenter.readsBeforeCaret(on: FakeCompositionSurface(document: "a")))
+        XCTAssertFalse(DirectPresenter.readsBeforeCaret(on: FakeCompositionSurface()), "nothing to show yet")
+        let blind = FakeCompositionSurface(document: "a")
+        blind.blind = true
+        XCTAssertFalse(DirectPresenter.readsBeforeCaret(on: blind))
     }
 
     func testTextChangedBehindFunputIsLeftAlone() {
@@ -103,7 +122,7 @@ final class DirectPresenterTests: XCTestCase {
         let surface = FakeCompositionSurface(document: "chao ")
         var presenter = DirectPresenter()
         presenter.reopen("chao", replacing: NSRange(location: 0, length: 5), on: surface)
-        XCTAssertEqual(presenter.show("chào", on: surface), .shown)
+        XCTAssertEqual(presenter.show("chào", on: surface), .rewritten)
         XCTAssertEqual(surface.document, "chào")
     }
 }

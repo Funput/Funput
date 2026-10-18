@@ -3,6 +3,9 @@ import Foundation
 /// What became of a word a presenter was asked to show.
 enum CompositionOutcome: Equatable {
     case shown
+    /// Shown by rewriting text the client first confirmed was the word: proof that the
+    /// client's answers describe its document (see `ClientTrust`).
+    case rewritten
     /// The word could not be updated safely and was given up. The document is unchanged.
     case dropped
     /// The client cannot say where its caret is, so this presenter cannot work there.
@@ -19,6 +22,9 @@ protocol CompositionPresenter {
     /// knows nothing of it: neither a commit nor a click reaches IMKit on its behalf.
     var writesIntoDocument: Bool { get }
 
+    /// The text last shown for this word.
+    var shown: String { get }
+
     /// Show `text`, possibly empty, as the word being composed.
     mutating func show(_ text: String, on surface: CompositionSurface) -> CompositionOutcome
 
@@ -33,10 +39,13 @@ protocol CompositionPresenter {
 /// The composing word as marked text, which every client underlines: the way Funput has
 /// always typed, and the fallback wherever writing into the document is off or unsupported.
 struct MarkedPresenter: CompositionPresenter {
+    private(set) var shown = ""
+
     var writesIntoDocument: Bool { false }
 
-    func show(_ text: String, on surface: CompositionSurface) -> CompositionOutcome {
+    mutating func show(_ text: String, on surface: CompositionSurface) -> CompositionOutcome {
         surface.mark(text, replacing: nil)
+        shown = text
         return .shown
     }
 
@@ -46,7 +55,8 @@ struct MarkedPresenter: CompositionPresenter {
         surface.insert(word + boundary, replacing: nil)
     }
 
-    func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface) {
+    mutating func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface) {
         surface.mark(word, replacing: range)
+        shown = word
     }
 }

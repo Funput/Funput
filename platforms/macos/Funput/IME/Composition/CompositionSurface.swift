@@ -18,8 +18,11 @@ protocol CompositionSurface {
     /// The document text in `range`, or nil when the client will not hand it over.
     func text(in range: NSRange) -> String?
 
-    /// Whether the client honours `replacing:` on `insert`.
+    /// Whether the client claims to honour `replacing:` on `insert` (see `ClientTrust`).
     var supportsDocumentAccess: Bool { get }
+
+    /// The app the client belongs to, or nil when it will not say.
+    var clientID: String? { get }
 }
 
 /// An `IMKTextInput` client as a composition surface: the one place that writes the word
@@ -60,6 +63,10 @@ struct IMKCompositionSurface: CompositionSurface {
     /// the others ignore it (see `IMKTextInput.insertText(_:replacementRange:)`).
     var supportsDocumentAccess: Bool {
         client.supportsProperty(TSMDocumentPropertyTag(kTSMDocumentSupportDocumentAccessPropertyTag))
+    }
+
+    var clientID: String? {
+        client.bundleIdentifier()
     }
 
     /// The replacement range IMKit reads as "wherever the caret is".

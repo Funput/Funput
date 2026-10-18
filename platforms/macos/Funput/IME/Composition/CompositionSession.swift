@@ -1,54 +1,56 @@
 import Foundation
 
-/// Decides, word by word, how the word being composed reaches the focused app, and keeps
-/// what it learns about that app for one activation.
+/// Decides, word by word, how the word being composed reaches the focused app.
 ///
-/// A word is written straight into the document (`DirectPresenter`) when the user allows
-/// it and the client takes replacement ranges; otherwise it is marked text
-/// (`MarkedPresenter`), exactly as before direct composition existed. The choice is made
-/// when a word starts and kept until it is committed, so one word never mixes the two.
+/// A word is written straight into the document (`DirectPresenter`) when the user allows it
+/// and the client has earned it (`ClientTrust`); otherwise it is marked text
+/// (`MarkedPresenter`), exactly as before direct composition existed. A word keeps the way it
+/// started until it is committed, with one exception: an unproven client that shows Funput
+/// the marked word it is displaying has proven itself, and that word turns direct at once.
 struct CompositionSession {
-    private enum Availability {
-        case unknown
-        case available
-        case unavailable
-    }
-
     /// The user's switch, read as each word starts so a change applies to the next word.
     private let directEnabled: () -> Bool
     /// Clicks seen so far, anywhere; read only for words written into the document.
     private let clicks: () -> Int
 
-    private var direct = Availability.unknown
+    private var trust: ClientTrust
     private var active: (any CompositionPresenter)?
     private var clicksAtStart = 0
 
-    init(directEnabled: @escaping () -> Bool, clicks: @escaping () -> Int) {
+    init(directEnabled: @escaping () -> Bool, clicks: @escaping () -> Int, memory: ProvenClients) {
         self.directEnabled = directEnabled
         self.clicks = clicks
+        trust = ClientTrust(memory: memory)
     }
 
     /// Forget the word and the client: focus has moved to a new one.
     mutating func reset() {
         active = nil
-        direct = .unknown
+        trust.reset()
     }
 
     /// Show `text` as the word being composed. False when the word had to be dropped: the
     /// document is unchanged, and the caller drops it from the engine too.
     mutating func show(_ text: String, on surface: CompositionSurface) -> Bool {
+        if let marked = active, !marked.writesIntoDocument, !text.isEmpty, directEnabled(),
+            trust.provesWithMarkedWord(marked.shown, on: surface) {
+            // Typing at the caret commits over the marked text: from here the word is plain.
+            active = startDirect()
+        }
         // Clearing marked text that is not there is how Funput always behaved; keep it.
         var presenter = active ?? (text.isEmpty ? MarkedPresenter() : startWord(on: surface))
-        switch presenter.show(text, on: surface) {
-        case .shown:
+        let outcome = presenter.show(text, on: surface)
+        switch outcome {
+        case .shown, .rewritten:
+            if outcome == .rewritten { trust.confirm(on: surface) }
             active = text.isEmpty ? nil : presenter
             return true
         case .dropped:
+            trust.withdrawIfUnconfirmed(on: surface)
             active = nil
             return false
         case .unsupported:
-            // Every later word would fail the same way; mark them until focus moves.
-            direct = .unavailable
+            trust.refuse(on: surface)
             active = nil
             return false
         }
@@ -82,16 +84,12 @@ struct CompositionSession {
     }
 
     private mutating func startWord(on surface: CompositionSurface) -> any CompositionPresenter {
-        guard directEnabled(), isDirectAvailable(on: surface) else { return MarkedPresenter() }
-        clicksAtStart = clicks()
-        return DirectPresenter()
+        guard directEnabled(), trust.allowsDirect(on: surface) else { return MarkedPresenter() }
+        return startDirect()
     }
 
-    /// Asked once per activation: the answer belongs to the client, not to the keystroke.
-    private mutating func isDirectAvailable(on surface: CompositionSurface) -> Bool {
-        if direct == .unknown {
-            direct = surface.supportsDocumentAccess ? .available : .unavailable
-        }
-        return direct == .available
+    private mutating func startDirect() -> any CompositionPresenter {
+        clicksAtStart = clicks()
+        return DirectPresenter()
     }
 }

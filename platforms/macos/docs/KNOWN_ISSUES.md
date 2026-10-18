@@ -6,9 +6,14 @@ Since direct composition (Settings → Cách gõ → **Gõ không gạch chân**
 word being typed is written into the document and rewritten in place, instead of being
 underlined marked text. Design: [`docs/features/macos-direct-composition.md`](../../../docs/features/macos-direct-composition.md).
 
-- **Some apps still underline.** Apps that do not speak TSM document access, or cannot say
-  where their caret is (Terminal, many games), fall back to marked text automatically.
-  That is the intended behaviour, not a bug.
+- **Some apps still underline.** Apps that do not speak TSM document access, or never show
+  Funput the text before their caret, fall back to marked text automatically. Warp is one:
+  its text view answers every caret question with `(0, 0)`, hands over no text and ignores
+  replacement ranges. That is the intended behaviour, not a bug.
+- **The first letter in an empty field can flash an underline.** An app has to prove it
+  reports its text before Funput writes into it. In an empty field nothing is there yet, so
+  the first letter starts as marked text and turns plain on the next key. A proof is kept
+  for the app until Funput's process restarts.
 - **A word can lose its tone mark.** Before a rewrite, Funput checks that the text right
   before the caret is still the word it wrote. When an app edited it (autocomplete,
   autocorrect) or reports a stale caret (Chromium answers from an asynchronous cache), the

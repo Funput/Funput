@@ -1,24 +1,31 @@
 import XCTest
 @testable import Funput
 
-/// Which presenter a word gets, and how long the session trusts a client.
+/// Which presenter a word gets, and how long it keeps it.
 @MainActor
 final class CompositionSessionTests: XCTestCase {
     private var switchOn = true
     private var clickCount = 0
     private var clickReads = 0
+    private let memory = ProvenClients()
 
     private func makeSession() -> CompositionSession {
         CompositionSession(
             directEnabled: { [unowned self] in switchOn },
-            clicks: { [unowned self] in clickReads += 1; return clickCount }
+            clicks: { [unowned self] in clickReads += 1; return clickCount },
+            memory: memory
         )
+    }
+
+    /// A field with text before the caret, which proves the client as the first word starts.
+    private func provenField() -> FakeCompositionSurface {
+        FakeCompositionSurface(document: "x ")
     }
 
     func testWithTheSwitchOffEveryWordIsMarkedAndTheClientIsNotAsked() {
         switchOn = false
         var session = makeSession()
-        let surface = FakeCompositionSurface()
+        let surface = provenField()
         XCTAssertTrue(session.show("t", on: surface))
         XCTAssertEqual(surface.calls, [.mark("t", nil)])
         XCTAssertEqual(clickReads, 0, "no click monitor for marked words")
@@ -26,69 +33,37 @@ final class CompositionSessionTests: XCTestCase {
 
     func testAClientWithoutDocumentAccessGetsMarkedText() {
         var session = makeSession()
-        let surface = FakeCompositionSurface()
+        let surface = provenField()
         surface.acceptsReplacementRanges = false
-        XCTAssertTrue(session.show("t", on: surface))
+        _ = session.show("t", on: surface)
         XCTAssertEqual(surface.calls, [.supportsDocumentAccess, .mark("t", nil)])
-    }
-
-    func testAClientWithDocumentAccessGetsTheWordWritten() {
-        var session = makeSession()
-        let surface = FakeCompositionSurface()
-        XCTAssertTrue(session.show("t", on: surface))
-        XCTAssertEqual(surface.document, "t")
-    }
-
-    func testTheClientIsAskedOncePerActivation() {
-        var session = makeSession()
-        let surface = FakeCompositionSurface()
-        _ = session.show("a", on: surface)
-        session.commit("a", boundary: " ", on: surface)
-        _ = session.show("b", on: surface)
-        session.reset()
-        _ = session.show("c", on: surface)
-        XCTAssertEqual(surface.calls.filter { $0 == .supportsDocumentAccess }.count, 2)
     }
 
     func testAWordKeepsItsPresenterWhenTheSwitchFlips() {
         var session = makeSession()
-        let surface = FakeCompositionSurface()
+        let surface = provenField()
         _ = session.show("t", on: surface)
         switchOn = false
         _ = session.show("ti", on: surface)
         session.commit("ti", boundary: " ", on: surface)
-        XCTAssertEqual(surface.document, "ti ")
-        _ = session.show("x", on: surface)
-        XCTAssertEqual(surface.calls.last, .mark("x", nil), "the next word follows the switch")
-    }
-
-    func testAnUnsupportedClientIsMarkedUntilFocusMoves() {
-        var session = makeSession()
-        let surface = FakeCompositionSurface()
-        _ = session.show("ti", on: surface)
-        surface.placesCaret = false
-        XCTAssertFalse(session.show("tì", on: surface))
-        XCTAssertTrue(session.show("x", on: surface))
-        XCTAssertEqual(surface.calls.last, .mark("x", nil))
-        session.reset()
-        surface.placesCaret = true
-        _ = session.show("y", on: surface)
-        XCTAssertEqual(surface.calls.last, .insert("y", nil))
+        XCTAssertEqual(surface.document, "x ti ")
+        _ = session.show("m", on: surface)
+        XCTAssertEqual(surface.calls.last, .mark("m", nil), "the next word follows the switch")
     }
 
     func testADroppedWordLeavesTheNextOneDirect() {
         var session = makeSession()
-        let surface = FakeCompositionSurface()
+        let surface = provenField()
         _ = session.show("ti", on: surface)
-        surface.replaceDocument("tix")
+        surface.replaceDocument("x tix")
         XCTAssertFalse(session.show("tì", on: surface))
         XCTAssertTrue(session.show("a", on: surface))
-        XCTAssertEqual(surface.document, "tixa")
+        XCTAssertEqual(surface.document, "x tixa")
     }
 
     func testAClickEndsOnlyAWordWrittenIntoTheDocument() {
         var session = makeSession()
-        let surface = FakeCompositionSurface()
+        let surface = provenField()
         _ = session.show("t", on: surface)
         XCTAssertFalse(session.endIfClicked(), "no click yet")
         clickCount += 1
@@ -103,7 +78,7 @@ final class CompositionSessionTests: XCTestCase {
 
     func testCommittingWithNoWordOnScreenIsPlainTyping() {
         var session = makeSession()
-        let surface = FakeCompositionSurface()
+        let surface = provenField()
         session.commit("", boundary: "", on: surface)
         XCTAssertEqual(surface.calls, [])
         session.commit("a", boundary: ".", on: surface)

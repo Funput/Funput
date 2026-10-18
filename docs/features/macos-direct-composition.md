@@ -97,8 +97,9 @@ CompositionSession ── chọn cách trình bày cho mỗi từ, nhớ khả n
 | `CompositionPresenter` | Protocol một cách trình bày: `show` (trả `.shown` / `.dropped` / `.unsupported`), `commit(word, boundary)`, `reopen`, `writesIntoDocument` |
 | `MarkedPresenter` | Đường cũ, không trạng thái. Test khoá chuỗi lời gọi IMK giống hệt code trước khi tách tầng |
 | `DirectPresenter` | Chỉ lưu `shown` (chữ đã ghi cho từ này). **Không lưu vị trí trong tài liệu**, xem 3.3 |
-| `CompositionSession` | Chọn presenter ở đầu từ, giữ nó tới khi chốt; nhớ client có hỗ trợ không trong một lần activate; chốt từ khi có click |
-| `DirectEdit` | Phép tính thuần: phần cần thay và range của nó |
+| `CompositionSession` | Chọn presenter ở đầu từ, giữ nó tới khi chốt; chuyển từ marked sang ghi thẳng khi client vừa chứng minh; chốt từ khi có click |
+| `ClientTrust` | Client có được ghi thẳng không: hỏi khả năng, bắt chứng minh, nhớ lời chứng minh theo app, rút lại khi thất bại (3.8) |
+| `DirectEdit` | Phép tính thuần: phần cần thay và range của nó (cùng file với `DirectPresenter`) |
 
 Mở rộng về sau: thêm một cách trình bày mới là thêm một `CompositionPresenter` và một dòng
 trong lựa chọn của session; controller không đổi. Xoá cờ khi ổn định là bỏ closure
@@ -170,13 +171,34 @@ Việc này cũng sửa lỗi gợi ý của Cursor bị lặp khi xoá từ.
 
 ### 3.8 Khi nào bật
 
-Một từ được ghi thẳng khi **cả hai** đúng lúc từ bắt đầu:
+Một từ được ghi thẳng khi **cả ba** đúng lúc từ bắt đầu:
 
 1. Công tắc bật (`AppSettings.directComposition`, đọc live nên đổi công tắc có tác dụng
    từ từ kế tiếp).
 2. `supportsDocumentAccess` (`kTSMDocumentSupportDocumentAccessPropertyTag`), hỏi một lần
    mỗi lần activate: chỉ client nói giao thức truy cập tài liệu của TSM mới tôn trọng
    `replacementRange` (theo header `IMKInputSession.h`).
+3. **Client đã chứng minh** nó báo đúng chữ trước con trỏ (`ClientTrust`).
+
+Điều 3 có vì lời nhận "hỗ trợ truy cập tài liệu" không đủ. Warp (và nhiều view dựng theo
+GLFW) cài `NSTextInputClient` tối giản: `selectedRange` luôn `(0, 0)`,
+`attributedSubstringForProposedRange` luôn `nil`, `insertText` bỏ qua `replacementRange`
+(mã nguồn: `crates/warpui/src/platform/mac/objc/host_view.m` của warpdotdev/warp). Bản đầu
+tin lời nhận đó: mọi lần đổi dấu đều bị bỏ từ, gõ tiếng Việt trong Warp ra chữ thô.
+
+Cách chứng minh, không ghi gì trước khi chứng minh xong:
+
+- **Đầu từ**, nếu con trỏ không ở đầu văn bản: đọc ký tự ngay trước con trỏ
+  (`DirectPresenter.readsBeforeCaret`). Đọc được là đủ.
+- **Ô trống** (con trỏ ở 0, không phân biệt được với Warp): từ bắt đầu bằng marked text.
+  Ở phím kế tiếp, nếu client báo đúng chữ marked đó ngay trước con trỏ
+  (`DirectPresenter.locate`) thì client đã chứng minh, và từ chuyển sang ghi thẳng ngay:
+  `insertText` gõ đè lên marked text. Gạch chân chỉ hiện ở chữ cái đầu tiên.
+- Mỗi lần activate chỉ thử tối đa 4 lần (`ClientTrust.probesPerActivation`), nên client
+  không bao giờ trả lời được (Warp) không bị hỏi ở mọi phím; nó dùng marked text như cũ.
+- Lời chứng minh được nhớ theo bundle id trong suốt vòng đời process (`ProvenClients`,
+  không lưu xuống đĩa), nên lần activate sau ghi thẳng ngay. Lần thay chữ đầu tiên không
+  đặt được của một client chỉ được tin nhờ trí nhớ sẽ xoá trí nhớ đó và bắt chứng minh lại.
 
 Nếu lúc thay chữ client trả `NSNotFound` cho vị trí con trỏ (`.unsupported`), mọi từ
 còn lại của lần activate đó dùng marked text, tránh mất dấu liên tục. Con trỏ đọc được
@@ -194,7 +216,8 @@ trip này là chỗ cầu nối text input của Chromium hay kẹt (xem
 | :--- | :--- |
 | Gõ thêm chữ | 0 |
 | Đổi dấu, đổi chữ, Backspace giữa từ | 2 (`selectedRange` + `attributedSubstring`) |
-| Bắt đầu từ | 0 |
+| Bắt đầu từ, client đã chứng minh | 0 |
+| Client chưa chứng minh | Tối đa 4 lần thử mỗi activate, mỗi lần 1 hoặc 2 lần đọc |
 | Retone sau Backspace | Như trước (của `Retone.plan`) |
 
 ## 4. Cấu hình
@@ -219,7 +242,8 @@ nhất, marked text chỉ còn là đường dự phòng tự động cho app kh
 | Spotlight, các app của Apple | Tốt |
 | Chrome | Tốt |
 | Cursor | Tốt sau khi chuyển sang đo lùi từ con trỏ (3.3) và retone ghi thẳng (3.7) |
-| Terminal | Chưa ghi nhận; dự kiến tự quay về gạch chân |
+| Terminal | Gõ được |
+| Warp | Bản đầu ra chữ thô (3.8); đã sửa bằng cơ chế chứng minh, chờ thử lại |
 | Excel | Chưa thử |
 
 Log Cursor sau khi sửa: các lần thay (`rewrite {2, 3} selection={5, 0}`, …) đều khớp,
@@ -256,8 +280,11 @@ Tự động, `FunputTests/Composition/`:
 | `MarkedPresenterTests` | Chuỗi lời gọi IMK của đường cũ giữ nguyên sau khi tách tầng |
 | `DirectPresenterTests` | Gõ thêm không đọc tài liệu; đổi dấu; Backspace; client đánh số lại kiểu Cursor; phủ gợi ý bôi đen; chữ bị sửa sau lưng thì không ghi; con trỏ lệch là `.dropped`, không đọc được con trỏ là `.unsupported`; commit, gõ tắt, reopen |
 | `CompositionSessionTests` | Chọn presenter theo công tắc và khả năng client; hỏi client một lần mỗi activate; từ giữ presenter khi đổi công tắc; `.unsupported` dùng marked tới khi đổi ô; click chỉ chốt từ ghi thẳng |
+| `CompositionTrustTests` | Chứng minh bằng ký tự trước con trỏ; ô trống chuyển sang ghi thẳng ở phím thứ hai; client mù kiểu Warp giữ marked và chỉ bị hỏi 4 lần; nhớ lời chứng minh theo app; rút lại khi thất bại; mất con trỏ thì marked tới khi đổi ô |
 | `DirectEditTests` | Phép ghi nhỏ nhất và range, tính theo UTF-16, không tách dấu tổ hợp |
-| `FakeCompositionSurface` | Ô nhập giả: áp dụng ghi như app thật, ghi lại mọi lời gọi |
+
+`FunputTests/FakeCompositionSurface.swift` là ô nhập giả dùng chung: áp dụng ghi và marked
+text như app thật, mô phỏng client đánh số lại và client mù, ghi lại mọi lời gọi.
 
 `ConfigDocumentTests` khoá xuất/nhập công tắc. `scripts/check-swift-loc.sh` giới hạn hai
 thư mục `Composition` ở 5 file.
@@ -275,8 +302,8 @@ Chrome, Terminal.
 | :--- | :--- |
 | `Funput/IME/Composition/CompositionSurface.swift` | Protocol surface và `IMKCompositionSurface` |
 | `Funput/IME/Composition/CompositionPresenter.swift` | Protocol presenter, `CompositionOutcome`, `MarkedPresenter` |
-| `Funput/IME/Composition/DirectPresenter.swift` | Gõ thẳng: thay chữ có kiểm tra |
-| `Funput/IME/Composition/DirectEdit.swift` | Phép ghi nhỏ nhất và range, logic thuần |
+| `Funput/IME/Composition/DirectPresenter.swift` | Gõ thẳng: thay chữ có kiểm tra, cách chứng minh client; kèm `DirectEdit` |
+| `Funput/IME/Composition/ClientTrust.swift` | `ClientTrust` và `ProvenClients` |
 | `Funput/IME/Composition/CompositionSession.swift` | Chọn presenter, nhớ khả năng client, chốt từ khi click |
 | `Funput/IME/MouseClickCounter.swift` | Đếm click chuột toàn hệ thống, cài lười |
 | `Funput/IME/FunputInputController+Composition.swift` | `showComposition`, `showKey` (phát lại phím), commit qua session |
