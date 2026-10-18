@@ -77,11 +77,22 @@ struct CompositionSession {
         return trust.allowsDirect(on: surface)
     }
 
-    /// Make a committed word the live composition again (retone after Backspace).
-    mutating func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface) {
+    /// Backspace inside the word left `text` in the engine. Returns whether Funput consumed
+    /// the key; false lets the app delete the character, and the word goes on.
+    mutating func backspace(to text: String, on surface: CompositionSurface) -> Bool {
+        guard var presenter = active else { return show(text, on: surface) }
+        let consumed = presenter.backspace(to: text, on: surface)
+        active = text.isEmpty ? nil : presenter
+        return consumed
+    }
+
+    /// Make a committed word the live composition again (retone after Backspace). Returns
+    /// whether Funput consumed the key.
+    mutating func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface) -> Bool {
         var presenter = startWord(on: surface)
-        presenter.reopen(word, replacing: range, on: surface)
+        let consumed = presenter.reopen(word, replacing: range, on: surface)
         active = presenter
+        return consumed
     }
 
     /// End a word written into the document if the user clicked since it started. With no

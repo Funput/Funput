@@ -78,8 +78,8 @@ final class FunputInputController: IMKInputController {
             // its removal may leave the caret at the end of a finished word to re-open.
             guard !composer.buffer().isEmpty else { return reopenPreviousWord(client, event: event) }
             composer.backspace()
-            // A word that had to be dropped hands Backspace back to the app.
-            return showComposition(client)
+            // A word written into the document hands Backspace to the app to delete.
+            return session.backspace(to: composer.buffer(), on: IMKCompositionSurface(client: client))
         }
 
         guard let scalar = event.characters?.unicodeScalars.first else {

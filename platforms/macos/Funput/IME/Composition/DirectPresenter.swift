@@ -42,9 +42,21 @@ struct DirectPresenter: CompositionPresenter {
         if !boundary.isEmpty { surface.insert(boundary, replacing: nil) }
     }
 
-    mutating func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface) {
-        surface.insert(word, replacing: range)
+    /// Backspace is never answered with a write. Chromium forwards the original key to the
+    /// page whenever an input method writes through a replacement range, so a rewrite here
+    /// would be followed by the page deleting one more character. The app deletes the last
+    /// character itself; if the engine changed more than that (a tone moving back as a final
+    /// consonant goes), the next key's `show` reconciles the document.
+    mutating func backspace(to text: String, on surface: CompositionSurface) -> Bool {
+        shown = String(shown.dropLast())
+        return false
+    }
+
+    /// The word is already in the document, right before the character Backspace is about to
+    /// delete, so nothing is written: the app deletes that character and the word is live.
+    mutating func reopen(_ word: String, replacing range: NSRange, on surface: CompositionSurface) -> Bool {
         shown = word
+        return false
     }
 
     enum Location: Equatable {
