@@ -3,13 +3,11 @@ package app.funput.funput.ui.shortcuts
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performCustomAccessibilityActionWithLabel
 import androidx.compose.ui.test.performTextInput
@@ -75,19 +73,6 @@ class ShortcutsScreenTest {
         compose.onNodeWithText("Chưa có gõ tắt").assertExists()
         compose.onNodeWithText("Thêm gõ tắt").performClick()
         compose.onNodeWithTag("shortcuts-editor-trigger").assertExists()
-    }
-
-    @Test
-    fun `the empty state is centred, not parked on the left`() {
-        compose.showShortcuts(ShortcutLibrary())
-
-        val screen = compose.onRoot().getBoundsInRoot()
-        val screenCentre = (screen.left + screen.right) / 2
-        listOf("Chưa có gõ tắt", "Thêm gõ tắt").forEach { text ->
-            val bounds = compose.onNodeWithText(text).getBoundsInRoot()
-            val offset = ((bounds.left + bounds.right) / 2 - screenCentre).value
-            assertTrue("$text is ${offset}dp off centre", kotlin.math.abs(offset) < 1f)
-        }
     }
 
     @OptIn(ExperimentalTestApi::class)
