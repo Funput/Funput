@@ -44,7 +44,13 @@ final class KeyboardKeyContentView: UIView {
         if labelPlacement == .center {
             label.font = KeyLabelTypography.fitting(themedLabelFont, scale: fontScale, height: label.frame.height)
         }
-        iconView.frame = KeyboardKeyIconSizing.frame(for: iconRole, in: bounds, fallback: frames.icon)
+        iconView.frame = KeyboardKeyIconSizing.frame(
+            for: iconRole,
+            placement: labelPlacement,
+            in: bounds,
+            imageSize: iconView.image?.size,
+            fallback: frames.icon
+        )
         secondaryLabel.frame = KeyboardKeyContentGeometry.hintFrame(
             for: labelPlacement, in: bounds, fallback: frames.hint
         )
@@ -72,7 +78,7 @@ final class KeyboardKeyContentView: UIView {
         secondaryLabel.font = KeyboardKeyContentStyle.hintFont(theme: theme, placement: spec.labelPlacement)
 
         iconView.image = enterContent
-            ? enterIcon(presentation.enterAction)
+            ? KeyboardKeyContentStyle.enterIcon(presentation.enterAction)
             : KeyboardKeyContentStyle.icon(for: spec.role, shiftState: presentation.shiftState)
         iconView.tintColor = enterContent ? theme.accent.uiColor(for: traits) : labelColor
 
@@ -84,7 +90,8 @@ final class KeyboardKeyContentView: UIView {
         case .bottomTrailing: .right
         }
         secondaryLabel.textAlignment = spec.labelPlacement == .bottomCenter ? .center : .right
-        if spec.labelPlacement.isCorner {
+        // A symbol-only key keeps its symbol in the corner; the rest become words.
+        if spec.labelPlacement.isCorner, !KeyboardKeyIconSizing.isFixedSize(spec.role) {
             let isLit = KeyboardKeyContentStyle.isLit(spec.role, shiftState: presentation.shiftState)
             label.text = KeyboardKeyContentStyle.cornerLabel(for: spec, enterAction: presentation.enterAction)
             label.font = KeyboardKeyContentStyle.cornerFont(theme: theme)
@@ -124,20 +131,6 @@ final class KeyboardKeyContentView: UIView {
         iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(weight: .medium)
         iconView.isUserInteractionEnabled = false
         addSubview(iconView)
-    }
-
-    private func enterIcon(_ action: KeyboardEnterAction) -> UIImage? {
-        let name: String? = switch action {
-        case .newLine: "return"
-        case .go: "arrow.right"
-        case .search: "magnifyingglass"
-        case .send: "paperplane"
-        case .next: "arrow.right.to.line"
-        case .done: "checkmark"
-        case .previous: "arrow.left.to.line"
-        case .custom: nil
-        }
-        return name.flatMap { UIImage(systemName: $0) }
     }
 
     private func enterLabel(_ action: KeyboardEnterAction) -> String {

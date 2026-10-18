@@ -84,7 +84,7 @@ public enum KeyboardLayoutResolver {
            let actionIndex = rows.indices.last {
             let action = rows[actionIndex]
             var keys = action.keys
-            keys.insert(actionRowEmojiKey(page: layout.id), at: min(1, keys.count))
+            keys.insert(actionRowEmojiKey(page: layout.id, after: keys.first), at: min(1, keys.count))
             rows[actionIndex] = KeyboardRow(
                 keys: keys,
                 horizontalInsetUnits: action.horizontalInsetUnits
