@@ -31,6 +31,21 @@ final class ConfigDocumentTests: XCTestCase {
         XCTAssertFalse(destination.shortcutSmartCase)
     }
 
+    /// "Gõ không gạch chân" lives in the macOS platform block: on by default, and a user
+    /// who turned it off keeps it off on the next Mac they import into.
+    func testDirectCompositionSurvivesExportAndImport() throws {
+        let (source, sourceSuite) = makeSettings()
+        defer { UserDefaults().removePersistentDomain(forName: sourceSuite) }
+        XCTAssertTrue(source.directComposition, "on by default")
+        source.directComposition = false
+
+        let (destination, destinationSuite) = makeSettings()
+        defer { UserDefaults().removePersistentDomain(forName: destinationSuite) }
+        try destination.importData(source.exportData())
+
+        XCTAssertFalse(destination.directComposition)
+    }
+
     /// Import is a merge: a file written before these fields existed must leave the
     /// local switches alone rather than resetting them to the format's default.
     func testAFileWithoutTheSwitchesLeavesLocalOnesAlone() throws {

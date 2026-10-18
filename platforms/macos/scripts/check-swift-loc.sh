@@ -16,7 +16,9 @@ while IFS= read -r -d '' file; do
     fi
 done < <(find "$macos_root/Funput" -type f -name '*.swift' -print0)
 
-for feature_root in "$macos_root/Funput/Convert" "$macos_root/FunputTests/Convert"; do
+for feature_root in \
+    "$macos_root/Funput/Convert" "$macos_root/FunputTests/Convert" \
+    "$macos_root/Funput/IME/Composition" "$macos_root/FunputTests/Composition"; do
     [[ -d "$feature_root" ]] || continue
     while IFS= read -r -d '' directory; do
         count="$(find "$directory" -maxdepth 1 -type f -name '*.swift' | wc -l | tr -d ' ')"
