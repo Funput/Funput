@@ -6,11 +6,13 @@ import androidx.compose.runtime.setValue
 import app.funput.funput.ime.speech.model.SpeechLocale
 import app.funput.funput.ime.speech.preparation.SpeechAvailability
 import app.funput.funput.ime.speech.preparation.SpeechPreparationService
+import app.funput.funput.ime.speech.services.GoogleSpeechServices
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
@@ -26,7 +28,17 @@ internal class SpeechSetupModel(
         private set
     private var closed = false
     private var resumed = false
-    private val operations = SpeechLocaleOperations(service) { locale, value ->
+    private val operations = SpeechLocaleOperations(
+        service,
+        scheduler = { delayMillis, task ->
+            val job = scope.launch {
+                delay(delayMillis)
+                task()
+            }
+            AutoCloseable { job.cancel() }
+        },
+        consentNeeded = { locale -> state = state.copy(pendingConsent = locale) },
+    ) { locale, value ->
         state = state.copy(locales = state.locales + (locale to value))
     }
 
@@ -34,9 +46,12 @@ internal class SpeechSetupModel(
         scope.launch { enabled.collect { state = state.copy(enabled = it) } }
     }
 
-    fun resume(permissionGranted: Boolean) {
+    fun resume(
+        permissionGranted: Boolean,
+        speechServices: GoogleSpeechServices.Status = GoogleSpeechServices.Status.INSTALLED,
+    ) {
         if (closed) return
-        state = state.copy(permissionGranted = permissionGranted)
+        state = state.copy(permissionGranted = permissionGranted, speechServices = speechServices)
         if (resumed) return
         resumed = true
         if (!state.featureAvailable) return
@@ -54,7 +69,25 @@ internal class SpeechSetupModel(
     }
 
     fun refresh(locale: SpeechLocale) = operations.check(locale)
-    fun download(locale: SpeechLocale) = operations.download(locale)
+
+    /** Without the Google app a download cannot start, so the tap explains how to get it. */
+    fun download(locale: SpeechLocale) {
+        if (state.speechServices != GoogleSpeechServices.Status.INSTALLED) showGuide()
+        else operations.download(locale)
+    }
+
+    /** The consent dialog was opened, or could not be: either way, stop asking for it. */
+    fun consentHandled(opened: Boolean) {
+        state = state.copy(pendingConsent = null, guideVisible = state.guideVisible || !opened)
+    }
+
+    fun showGuide() {
+        state = state.copy(guideVisible = true)
+    }
+
+    fun hideGuide() {
+        state = state.copy(guideVisible = false)
+    }
 
     fun setEnabled(value: Boolean) {
         if (closed || !state.featureAvailable || state.saving || value == state.enabled) return

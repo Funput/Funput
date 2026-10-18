@@ -1,11 +1,13 @@
 package app.funput.funput.ime.speech.mlkit
 
 import android.os.Build
+import android.util.Log
 import app.funput.funput.ime.speech.platform.SpeechRequest
 import app.funput.funput.ime.speech.preparation.SpeechDownloadEvent
 import app.funput.funput.ime.speech.preparation.platform.PreparationClient
 import app.funput.funput.ime.speech.preparation.platform.PreparationClientFactory
 import app.funput.funput.ime.speech.preparation.platform.SpeechSupportResult
+import com.google.mlkit.genai.common.DownloadStatus
 import com.google.mlkit.genai.speechrecognition.SpeechRecognizer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -47,9 +49,14 @@ private class MlKitPreparationClient : PreparationClient {
             recognizer.download()
                 .catch { error ->
                     if (error is CancellationException) throw error
+                    Log.w(TAG, "Speech model download threw", error)
                     listener(SpeechDownloadEvent.Failure(MlKitSpeech.errorCode(error)))
                 }
-                .collect { status -> mapper.map(status)?.let(listener) }
+                .collect { status ->
+                    // The mapper keeps only a category; the raw reason is what adb debugging needs.
+                    if (status is DownloadStatus.DownloadFailed) Log.w(TAG, "Speech model download: ${status.e.message}")
+                    mapper.map(status)?.let(listener)
+                }
         }
     }
 
@@ -57,6 +64,10 @@ private class MlKitPreparationClient : PreparationClient {
         scope.cancel()
         owned.forEach { runCatching { it.close() } }
         owned.clear()
+    }
+
+    private companion object {
+        const val TAG = "FunputSpeech"
     }
 
     private fun open(request: SpeechRequest) = MlKitSpeech.recognizer(request.localeTag).also { owned += it }

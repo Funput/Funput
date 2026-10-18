@@ -12,19 +12,46 @@
     <string name="speech_feature_unavailable">Nhập giọng nói chưa được bật trong bản này.</string>
     <string name="speech_unsupported_os">Nhập giọng nói cần Android 12 trở lên.</string>
     <string name="speech_service_unavailable">Chưa có dịch vụ nhận dạng trên thiết bị. Hãy mở lại màn hình để kiểm tra.</string>
-    <string name="speech_vietnamese">Tiếng Việt · vi-VN</string>
-    <string name="speech_english">Tiếng Anh · en-US</string>
-    <string name="speech_download_footer">Tải dữ liệu ngôn ngữ cần kết nối mạng. Nhận dạng dùng dịch vụ trên thiết bị; đóng màn hình không huỷ quá trình tải của hệ thống.</string>
-    <string name="speech_check_again">Kiểm tra lại</string>
-    <string name="speech_download">Tải dữ liệu nhận dạng</string>
-    <string name="speech_checking">Đang kiểm tra ngôn ngữ…</string>
-    <string name="speech_downloading">Đang yêu cầu dữ liệu ngôn ngữ…</string>
-    <string name="speech_download_progress">Đang tải: %1$d%%</string>
-    <string name="speech_download_requested">Đã gửi yêu cầu tải. Chọn Kiểm tra lại để xem khi nào sẵn sàng.</string>
-    <string name="speech_pending">Đang chờ hệ thống tải ngôn ngữ này.</string>
-    <string name="speech_download_error">Yêu cầu tải chưa phản hồi hoặc gặp lỗi. Hãy kiểm tra lại trước khi thử tải tiếp.</string>
-    <string name="speech_ready">Sẵn sàng trên thiết bị</string>
-    <string name="speech_downloadable">Có thể tải dữ liệu ngôn ngữ</string>
-    <string name="speech_unsupported_locale">Dịch vụ này không hỗ trợ ngôn ngữ này trên thiết bị.</string>
-    <string name="speech_unknown_locale">Chưa kiểm tra được mức sẵn sàng. Bạn có thể thử từ bàn phím.</string>
+
+    <!-- Languages: one row each, the status underneath, one action at the end. -->
+    <string name="speech_languages_title">Ngôn ngữ nhận dạng</string>
+    <string name="speech_languages_footer">Dữ liệu nhận dạng do ứng dụng Speech Recognition &amp; Synthesis của Google tải về, cần kết nối mạng.</string>
+    <string name="speech_vietnamese">Tiếng Việt</string>
+    <string name="speech_english">Tiếng Anh</string>
+    <string name="speech_download">Tải về</string>
+    <string name="speech_retry">Thử lại</string>
+    <string name="speech_checking">Đang kiểm tra…</string>
+    <string name="speech_preparing">Đang chuẩn bị tải…</string>
+    <string name="speech_download_progress">Đang tải, được %1$d%%</string>
+    <string name="speech_installing">Đang cài dữ liệu, có thể mất vài phút</string>
+    <string name="speech_pending">Đang tải trên máy…</string>
+    <string name="speech_download_requested">Đã gửi yêu cầu tải, màn hình sẽ tự cập nhật.</string>
+    <string name="speech_ready">Sẵn sàng, dùng được cả khi không có mạng</string>
+    <string name="speech_downloadable">Chưa có dữ liệu trên máy</string>
+    <string name="speech_unsupported_locale">Ứng dụng của Google chưa có ngôn ngữ này cho máy, hãy thử lại sau ít phút</string>
+    <string name="speech_network_error">Không có kết nối mạng</string>
+    <string name="speech_download_error">Chưa tải được</string>
+    <string name="speech_unknown_locale">Chưa kiểm tra được</string>
+    <string name="speech_ready_description">Đã sẵn sàng</string>
+    <string name="speech_busy_description">Đang xử lý</string>
+    <string name="speech_services_missing">Cần ứng dụng nhận dạng của Google</string>
+    <string name="speech_services_disabled">Ứng dụng nhận dạng của Google đang bị tắt</string>
+    <string name="speech_services_missing_summary">Chạm để xem hướng dẫn</string>
+    <string name="speech_open_guide">Xem hướng dẫn</string>
+
+    <!-- Guide sheet for devices without a usable Speech Services by Google. -->
+    <string name="speech_guide_title">Cài ứng dụng nhận dạng giọng nói</string>
+    <string name="speech_guide_intro">Funput dùng ứng dụng nhận dạng giọng nói của Google để tải dữ liệu và nhận dạng ngay trên máy.</string>
+    <string name="speech_guide_install">Cài hoặc cập nhật ứng dụng</string>
+    <string name="speech_guide_install_summary">Tìm \"Speech Recognition &amp; Synthesis\" của Google trên Google Play. Tên cũ của ứng dụng là Speech Services by Google.</string>
+    <string name="speech_guide_enable">Bật lại ứng dụng</string>
+    <string name="speech_guide_enable_summary">Mở cài đặt ứng dụng Speech Recognition &amp; Synthesis và chọn Bật.</string>
+    <string name="speech_guide_popup">Cho phép hiện cửa sổ khi chạy nền</string>
+    <string name="speech_guide_popup_summary">Trong cài đặt ứng dụng Speech Recognition &amp; Synthesis, mở Quyền khác và bật \"Hiển thị cửa sổ bật lên khi chạy trong nền\". Máy của bạn cần quyền này để hỏi trước khi tải.</string>
+    <string name="speech_guide_return">Quay lại Funput</string>
+    <string name="speech_guide_return_summary">Chạm Tải về ở ngôn ngữ bạn cần, rồi chọn Download trên hộp thoại của Google. Nếu vừa cài lại ứng dụng mà vẫn báo chưa có ngôn ngữ, mở cài đặt ứng dụng, chọn Buộc dừng rồi chạm Thử lại.</string>
+    <string name="speech_guide_no_play">Máy này chưa có Google Play nên chưa cài được ứng dụng nhận dạng của Google.</string>
+    <string name="speech_guide_open_play">Mở Google Play</string>
+    <string name="speech_guide_open_settings">Mở cài đặt ứng dụng</string>
+    <string name="speech_guide_later">Để sau</string>
 </resources>
