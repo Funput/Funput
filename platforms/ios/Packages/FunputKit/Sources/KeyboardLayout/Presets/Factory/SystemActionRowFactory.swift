@@ -10,14 +10,16 @@ enum SystemActionRowWeights {
 ///
 /// It matches the switch key beside it, as on the stock keyboard. The toolbar hides its own
 /// emoji button while this key is present, so the two never appear at once; the roles route
-/// identically either way.
-func actionRowEmojiKey(page: String) -> KeySpec {
-    specialKey(
-        "emoji-\(page)",
-        "",
-        .emoji,
-        weight: SystemActionRowWeights.emoji,
-        accessibilityLabel: "Mở bảng biểu tượng cảm xúc"
+/// identically either way. Set after a globe key, it shares the globe's corner, so on iPad
+/// both symbols sit in the bottom-left corner of their keys.
+func actionRowEmojiKey(page: String, after leading: KeySpec? = nil) -> KeySpec {
+    KeySpec(
+        id: "emoji-\(page)",
+        label: "",
+        role: .emoji,
+        widthWeight: SystemActionRowWeights.emoji,
+        accessibilityLabel: "Mở bảng biểu tượng cảm xúc",
+        labelPlacement: leading.flatMap { $0.role == .globe ? $0.labelPlacement : nil } ?? .center
     )
 }
 

@@ -36,6 +36,21 @@ enum KeyboardKeyContentStyle {
         return name.flatMap { UIImage(systemName: $0) }
     }
 
+    /// The symbol the return key shows for what it does; a custom action shows its words.
+    static func enterIcon(_ action: KeyboardEnterAction) -> UIImage? {
+        let name: String? = switch action {
+        case .newLine: "return"
+        case .go: "arrow.right"
+        case .search: "magnifyingglass"
+        case .send: "paperplane"
+        case .next: "arrow.right.to.line"
+        case .done: "checkmark"
+        case .previous: "arrow.left.to.line"
+        case .custom: nil
+        }
+        return name.flatMap { UIImage(systemName: $0) }
+    }
+
     /// The word a corner-labelled key shows; return names what it does, as the stock key does.
     static func cornerLabel(for spec: KeySpec, enterAction: KeyboardEnterAction) -> String {
         guard spec.role == .enter else { return spec.label }

@@ -20,6 +20,7 @@ extension KeyboardSurfaceInteractionController {
         spaceHoldController.cancelAll()
         for (token, state) in touches {
             if let key = state.currentKey { setHighlighted(key, false) }
+            if state.swipeDown?.progress ?? 0 > 0 { onSwipeProgress(state.initialKey, 0, false) }
             endSignpost(state, token: token, phase: 2)
         }
         touches.removeAll(keepingCapacity: true)

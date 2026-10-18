@@ -1,8 +1,10 @@
 /// Puts the iPad's typing keys on the same bottom line as its function keys.
 ///
 /// The stock keyboard sets `q` and `tab` on one line, with the digit or hint centered above
-/// the letter. Running this last means pages built from phone parts, and the compact digit
-/// hints, all get it without each builder repeating the placement.
+/// the letter. Its globe and emoji symbols sit in the bottom-left corner of their keys and
+/// the hide-keyboard symbol in the bottom-right, on that same line. Running this last means
+/// pages built from phone parts, and the compact digit hints, all get it without each
+/// builder repeating the placement.
 enum PadLabelPlacement {
     static func apply(to layout: KeyboardLayout) -> KeyboardLayout {
         KeyboardLayout(
@@ -18,6 +20,8 @@ enum PadLabelPlacement {
         guard key.labelPlacement == .center else { return key.labelPlacement }
         switch key.role {
         case .character, .punctuation, .vniModifier: return .bottomCenter
+        case .globe, .emoji: return .bottomLeading
+        case .dismissKeyboard: return .bottomTrailing
         default: return key.labelPlacement
         }
     }

@@ -35,6 +35,7 @@ extension KeyboardSurfaceInteractionController {
             token,
             touches.count
         )
+        touches[token]?.swipeDown = makeSwipeDownTracker(for: key, sourceFrame: sourceFrame)
         setHighlighted(key, true)
         if key.role != .placeholder { performHapticFeedback() }
         if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
@@ -91,6 +92,11 @@ extension KeyboardSurfaceInteractionController {
             }
         }
         let travel = translation(for: state, at: point)
+        if state.swipeDown != nil {
+            touches[token] = state
+            if updateSwipeDown(token: token, translation: travel) { return }
+            state = touches[token] ?? state
+        }
         if activateSpaceTrackpad(token: token, translation: travel) {
             updateSpaceTrackpad(token: token, translation: travel)
             return

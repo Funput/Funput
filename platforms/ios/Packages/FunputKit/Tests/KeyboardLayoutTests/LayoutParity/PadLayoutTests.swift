@@ -20,7 +20,7 @@ struct PadLayoutTests {
         #expect(layout.rows[1].keys.last?.role == .enter)
         #expect(layout.rows[2].keys.map(\.role).filter { $0 == .shift }.count == 2)
         #expect(layout.rows[3].keys.map(\.role) == [.globe, .symbols, .space, .symbols, .dismissKeyboard])
-        #expect(layout.rows[3].keys.first?.labelPlacement == .center)
+        #expect(layout.rows[3].keys.map(\.labelPlacement) == [.bottomLeading, .bottomLeading, .center, .bottomTrailing, .bottomTrailing])
         #expect(layout.toolbar != nil)
     }
 
