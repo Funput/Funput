@@ -2,7 +2,7 @@
 
 | Thuộc tính | Nội dung |
 | :--- | :--- |
-| Trạng thái | **Đã hiện thực** trên nhánh `feat/macos-direct-composition`, chờ thử trên máy thật, chưa merge |
+| Trạng thái | **Đã hiện thực** ([PR #607](https://github.com/Funput/Funput/pull/607), issue #201), đã thử trên máy thật |
 | Cập nhật | 18/10/2026 |
 | Phạm vi | Shell macOS (`platforms/macos`), không đụng engine Rust |
 | Quyết định đã chốt | Hai chế độ song song; công tắc trong Cài đặt **mặc định bật**; không có danh sách app; xoá cờ khi tính năng ổn định |
@@ -252,7 +252,7 @@ nhất, marked text chỉ còn là đường dự phòng tự động cho app kh
 | Chrome | Tốt |
 | Cursor | Tốt sau khi chuyển sang đo lùi từ con trỏ (3.3) và retone ghi thẳng (3.7) |
 | Terminal | Gõ được |
-| Warp | Bản đầu ra chữ thô (3.8); đã sửa bằng cơ chế chứng minh, chờ thử lại |
+| Warp | Gõ tiếng Việt được, có gạch chân (Warp không chứng minh được, 3.8). Chế độ EN: Tab và mũi tên chạy. Chế độ VI: Tab và mũi tên chỉ chạy sau khi gõ xong từ |
 | Excel | Chưa thử |
 
 Log Cursor sau khi sửa: các lần thay (`rewrite {2, 3} selection={5, 0}`, …) đều khớp,
@@ -265,7 +265,7 @@ công tắc trong Cài đặt, gõ tắt English, xoá log tạm, README và `KN
 
 Còn lại:
 
-1. Thử lại trên máy thật với bản kiến trúc (danh sách ở mục 8), nhất là Terminal và Excel.
+1. Thử Excel (gợi ý tự điền bôi đen, mục 3.4).
 2. Theo dõi rủi ro vùng chọn giả (mục 7) sau khi phát hành.
 3. Khi ổn định: xoá công tắc (mục 4).
 
