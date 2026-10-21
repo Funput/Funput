@@ -9,17 +9,16 @@ publish.workspace = true
 workspace = true
 
 # Data work run by hand when the English lexicon is refreshed. Nothing here links
-# into a shipped binary. The one dependency is the library whose format `pack`
-# writes, so the layout is defined in exactly one place.
+# into a shipped binary. `funput-suggestions` is the library whose format `pack`
+# writes, so the layout is defined in exactly one place; `funput-engine` and
+# `funput-core` are what `doubled` types every word through, so the word list it
+# writes describes the reverts the engine really makes.
 [dependencies]
+funput-core = { path = "../funput-core" }
+funput-engine = { path = "../funput-engine" }
 funput-suggestions = { path = "../funput-suggestions", features = ["lexicon-build"] }
 
-# Test-only: the shipped Vietnamese syllable list is checked against the engine that
-# will consume it, which is the only way to catch a malformed spelling before a
-# device sees one. `funput-suggestions` stays independent of the composition engine;
-# this crate links into nothing.
+# Test-only: the lookup compares bytes against a lowercase NFC key, so the test
+# proves every entry is already written that way.
 [dev-dependencies]
-funput-core = { path = "../funput-core" }
-# The lookup compares bytes against a lowercase NFC key, so the test proves every
-# entry is already written that way.
 unicode-normalization = "0.1.25"
