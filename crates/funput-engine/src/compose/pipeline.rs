@@ -9,6 +9,7 @@ use funput_core::{TransformKind, apply_with};
 use crate::ImeResult;
 use crate::compose::RestoreOverride;
 use crate::compose::diff::common_prefix_bytes;
+use crate::compose::doubled;
 use crate::model::Session;
 
 /// Apply one keystroke to `session` and return platform instructions.
@@ -80,8 +81,10 @@ pub(crate) fn process(
 
     // A revert is itself a restore to raw, so keep `keys` in sync — otherwise a
     // later word boundary sees `keys != buffer` and re-restores the stale original
-    // keystrokes (e.g. `mixx` revert → `mix`, then Space → wrongly `mixx`).
+    // keystrokes (e.g. `mixx` revert → `mix`, then Space → wrongly `mixx`). The
+    // swallowed key is not lost: doubled-key restore keeps it before the rewrite.
     if result.kind == TransformKind::Reverted {
+        doubled::on_revert(session);
         session.keys.clear();
         session.keys.push_str(&session.buffer);
     }

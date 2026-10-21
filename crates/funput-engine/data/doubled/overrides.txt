@@ -1,0 +1,7 @@
+# Hand corrections to words.txt, applied by `funput-lexicon-tool doubled`.
+#
+#   +word   list a word the scan leaves out
+#   -word   drop a word the scan keeps
+#
+# Put the reason in a comment above each line. A line that changes nothing fails
+# the generator, so it cannot outlive the reason it was added for.

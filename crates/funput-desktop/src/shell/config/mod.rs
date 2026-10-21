@@ -31,6 +31,7 @@ impl ShellState {
             tone_style: self.settings.tone_style.core(),
             smart_restore: self.settings.smart_restore,
             eager_restore: self.settings.eager_restore,
+            restore_doubled_keys: true,
             spell_check: self.settings.spell_check,
             syllable_rules: SyllableRules::STANDARD
                 .with_extra_onsets(self.settings.extra_onsets.core()),

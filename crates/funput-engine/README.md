@@ -133,6 +133,17 @@ và `aa` → `â` được commit — tiếng Việt không có vần mở `ă`/
 chỉnh, nhưng gõ trơ một nguyên âm như vậy thì chỉ có thể là chủ đích, và nhờ đó Telex trả lời `Aw`
 giống VNI trả lời `A8`. Có âm đầu thì vẫn là tiếng Anh: `caw`/`law` → `că`/`lă` vẫn được restore.
 
+### Phím lặp (`compose/doubled/`)
+
+Gõ lại phím dấu thì hủy dấu (`pá` + `s` → `pas`), và lần hủy đó ghi đè `keys` nên phím thứ hai mất:
+`password` từng ra `pasword`. Engine giờ giữ chuỗi phím gốc trong `Session.literal` (chỉ bắt đầu từ
+lần hủy dấu đầu tiên của từ). Ở ranh giới từ, nếu chuỗi đó là từ tiếng Anh trong
+`data/doubled/words.txt`, engine trả lại nó: `password ` → `password `, `pass ` → `pass `. Thói quen
+gõ lặp để lấy chữ thường vẫn giữ nguyên (`tesst` → `test`, `mixx` → `mix`, `off` → `of`), vì những chuỗi
+đó không có trong bảng. Bảng do `funput-lexicon-tool doubled` sinh từ `en.tsv`. Công tắc là
+`EngineConfig.restore_doubled_keys` (mặc định bật, đi chung `smart_restore`). Chi tiết:
+[docs/features/doubled-key-restore.md](../../docs/features/doubled-key-restore.md).
+
 ## Lật VN ⇄ phím thô (flip)
 
 `flip_composing()` lật **từ đang soạn** giữa dạng tiếng Việt và chuỗi phím thô (`card` ⇄ `cải`), lật

@@ -8,6 +8,10 @@ use crate::compose::RestoreOverride;
 use crate::correction::CorrectionState;
 use crate::model::{EngineConfig, NumberGlue};
 
+/// Room reserved for [`Session::literal`] up front, so a revert on the keystroke
+/// hot path never allocates. The longest word the doubled-key list can hold is 32.
+const LITERAL_CAPACITY: usize = 32;
+
 /// Mutable session held by [`crate::Engine`]. Internal — not part of the public API.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Session {
@@ -20,6 +24,10 @@ pub(crate) struct Session {
     /// (phase E3) rebuild the original Latin text when the composed buffer is
     /// not a complete Vietnamese syllable (`keys != buffer && !is_complete_syllable(buffer)`).
     pub(crate) keys: String,
+    /// Every key since the word boundary, including the one a revert swallowed
+    /// (`pass` while `keys` holds `pas`). Empty until the word's first revert, so a
+    /// word without one never touches it. Per-word — reset by `clear()`.
+    pub(crate) literal: String,
     /// Where auto-capitalize thinks the next letter sits, by the sentence rules
     /// every Funput platform shares. Fed one keystroke at a time, because a desktop
     /// shell hands the engine keys and never the document. Survives `clear()` —
@@ -63,6 +71,7 @@ impl Session {
             config: EngineConfig::default(),
             buffer: String::new(),
             keys: String::new(),
+            literal: String::with_capacity(LITERAL_CAPACITY),
             scanner: Scanner::mid_text(Rules::TYPING),
             shortcuts: HashMap::new(),
             vn_form: String::new(),
@@ -85,6 +94,7 @@ impl Session {
     pub(crate) fn clear(&mut self) {
         self.buffer.clear();
         self.keys.clear();
+        self.literal.clear();
         self.vn_form.clear();
         self.restore_override = None;
         self.glue.end_word();
@@ -107,9 +117,13 @@ impl Session {
     /// mid-word is still that word, so the choice stays; emptying the buffer ends
     /// it, and the choice has to go with it or it would pin the *next* word too and
     /// keep its diacritics off.
+    ///
+    /// `literal` is dropped rather than shortened: which of its keys the deleted
+    /// character stood for is no longer known, so the word leaves doubled-key restore.
     pub(crate) fn resync_after_backspace(&mut self) {
         self.keys.clear();
         self.keys.push_str(&self.buffer);
+        self.literal.clear();
         self.vn_form.clear();
         self.vn_form.push_str(&self.buffer);
         if self.buffer.is_empty() {

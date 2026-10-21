@@ -1,4 +1,4 @@
-use crate::compose::{boundary, pipeline};
+use crate::compose::{boundary, doubled, pipeline};
 use crate::correction::{self, StoredTouch};
 use crate::{Engine, ImeResult, KeySource};
 
@@ -70,6 +70,7 @@ impl Engine {
             self.session.glue.start_word();
         }
         self.session.keys.push(raw_key);
+        doubled::note_key(&mut self.session, raw_key);
         // Whatever a preview found was about the word as it stood; this key makes it
         // a different word.
         correction::drop_preview(&mut self.session);

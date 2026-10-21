@@ -92,6 +92,7 @@ Cần đủ **tất cả**:
 | Buffer không phải nguyên âm trần (`ă`, `â`) | `funput_core::is_bare_shaped_vowel` |
 | Người dùng chưa tự lật dạng chữ cho từ này | `session.restore_override` |
 | Không phải gõ tắt (shortcut khớp) | `boundary/shortcut.rs` chạy trước |
+| Từ không được khôi phục phím lặp (`password`, xem [doubled-key-restore.md](doubled-key-restore.md)) | `doubled::restorable` chạy trước, trả kết quả trước `offer` |
 | Từ không chứa chữ số (trừ VNI), không toàn chữ hoa | `correction::eligible` |
 | Từ chưa bị người dùng hoàn tác | `correction::undone_before` |
 | Chuỗi phím thô là ASCII (từ `adopt` dựng lại phím từ chữ, không phát lại được) | `correction::eligible` |

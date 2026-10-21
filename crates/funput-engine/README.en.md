@@ -138,6 +138,18 @@ Vietnamese has no open `ă`/`â` rhyme so they are not complete syllables, yet a
 have been meant, and it makes Telex answer `Aw` the way VNI answers `A8`. An onset still means
 English: `caw`/`law` → `că`/`lă` are restored as before.
 
+### Doubled keys (`compose/doubled/`)
+
+Pressing a tone key again reverts it (`pá` + `s` → `pas`), and that revert rewrites `keys`, so the
+second key used to vanish: `password` came out `pasword`. The engine now keeps the raw keys in
+`Session.literal` (only from the word's first revert on). At the word boundary, if they spell an
+English word listed in `data/doubled/words.txt`, the engine writes them back: `password ` →
+`password `, `pass ` → `pass `. The doubled-key habit for a plain letter is unchanged (`tesst` →
+`test`, `mixx` → `mix`, `off` → `of`), because those keys are not listed. `funput-lexicon-tool
+doubled` generates the list from `en.tsv`. The switch is `EngineConfig.restore_doubled_keys` (on by
+default, rides on `smart_restore`). Details:
+[docs/features/doubled-key-restore.md](../../docs/features/doubled-key-restore.md).
+
 ## Flip VN ⇄ raw keys
 
 `flip_composing()` flips the **composing word** between its Vietnamese form and its raw keystrokes

@@ -2,6 +2,8 @@
 
 mod support;
 
+#[path = "restore/doubled/mod.rs"]
+mod doubled;
 #[path = "restore/english.rs"]
 mod english;
 #[path = "restore/extra_onsets.rs"]

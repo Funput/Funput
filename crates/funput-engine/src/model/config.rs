@@ -20,6 +20,10 @@ pub struct EngineConfig {
     /// Restore the instant a word dead-ends, without waiting for a word boundary.
     /// Only meaningful while `smart_restore` is on.
     pub eager_restore: bool,
+    /// Give a word back the key a doubled tone key swallowed when its raw keys spell
+    /// an English word (`password`, not `pasword`). Part of `smart_restore`, so it
+    /// does nothing while that is off. On by default; Rust-only for now.
+    pub restore_doubled_keys: bool,
     /// Spell-check ("Kiểm tra chính tả"): only place a diacritic when the result can
     /// still become a real Vietnamese syllable. Off by default.
     pub spell_check: bool,
@@ -71,6 +75,7 @@ impl Default for EngineConfig {
             tone_style: ToneStyle::Modern,
             smart_restore: true,
             eager_restore: true,
+            restore_doubled_keys: true,
             spell_check: false,
             syllable_rules: SyllableRules::STANDARD,
             auto_capitalize: false,
