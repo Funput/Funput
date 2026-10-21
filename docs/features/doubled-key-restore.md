@@ -2,8 +2,9 @@
 
 ## Trạng thái
 
-**Giai đoạn 1 đã hiện thực** (quyết định ở dấu cách, §5.2); số đo và các điểm lệch khỏi thiết kế ở
-[§15](#15-kết-quả-giai-đoạn-1). Giai đoạn 2–4 vẫn là thiết kế (§12).
+**Giai đoạn 1 và 2 đã hiện thực**: quyết định ở dấu cách (§5.2) và giữa từ (§5.3). Số đo và các điểm
+lệch khỏi thiết kế nằm ở [§15](#15-kết-quả-giai-đoạn-1) và [§16](#16-kết-quả-giai-đoạn-2). Giai đoạn
+1b, 3 và 4 vẫn là thiết kế (§12).
 Nguồn: [issue #611](https://github.com/Funput/Funput/issues/611) — "Tự động hủy dấu khi gõ tiếp từ
 và không nuốt phím. Tiện lợi khi gõ song ngữ."
 
@@ -11,7 +12,7 @@ và không nuốt phím. Tiện lợi khi gõ song ngữ."
 |---|---|
 | Logic | `crates/funput-engine/src/compose/doubled/` (`mod.rs`, `lookup.rs`) |
 | Trạng thái, công tắc | `Session.literal`, `EngineConfig.restore_doubled_keys` (mặc định bật, chỉ Rust) |
-| Bảng từ | `crates/funput-engine/data/doubled/words.txt` (1 054 từ, 9,4 KB), `overrides.txt` |
+| Bảng từ | `crates/funput-engine/data/doubled/words.txt` (1 054 từ, 9,4 KB), `decisive.txt` (472 phần đầu, 3,1 KB), `overrides.txt` |
 | Bộ sinh | `funput-lexicon-tool doubled` (`crates/funput-lexicon-tool/src/doubled/`) |
 | Test | `compose/doubled/tests.rs`, `tests/restore/doubled/`, `funput-lexicon-tool/tests/doubled_table.rs` |
 
@@ -193,8 +194,23 @@ Kết quả trả về là `ImeResult::send(buffer.chars().count(), literal + bo
 ### 5.3. Quyết định giữa từ
 
 Mỗi phím gõ khi `literal` đang hoạt động, engine hỏi: **`literal` hiện tại có phải "phần đầu quyết định"
-không?** Phần đầu quyết định của một từ trong bảng là phần đầu ngắn nhất mà tại đó **dạng rút gọn
-đang hiển thị không còn là phần đầu của bất kỳ từ tiếng Anh nào** trong `en.tsv`.
+không?** Phần đầu quyết định của một từ trong bảng là phần đầu ngắn nhất thoả cả hai điều kiện sau, ở
+**mọi** cấu hình đã có lần hủy dấu tính tới phần đầu đó:
+
+- **dạng rút gọn đang hiển thị không còn là phần đầu của bất kỳ từ tiếng Anh nào** trong `en.tsv`
+  (buffer có chữ tiếng Việt cũng tính là không);
+- và phần đầu đó **không** là phần đầu của một từ bị loại có chủ đích, tức từ có hủy dấu mà không nằm
+  trong bảng (`off`, `hiss`, `doses`, hoặc dòng `-word` của tệp ghi đè). Nhờ điều kiện này, quyết định
+  giữa từ không bao giờ đè lên quyết định tần suất của §5.5.
+
+Tính chất này chỉ phụ thuộc vào phần đầu, vì engine tất định, nên một danh sách dùng chung là đúng cho
+mọi từ có cùng phần đầu. Bốn cấu hình mà bộ sinh quét (§6.4) là đủ: phụ âm đầu mở rộng chỉ ảnh hưởng
+chữ đầu từ, nên một từ bắt đầu bằng `f` gõ khi chỉ bật `F` hành xử như khi bật `ZFWJ`, và một từ không
+bắt đầu bằng f/j/w/z hành xử như `STANDARD`.
+
+Phím hủy dấu cũng có thể chính là phím quyết định: `basis` gõ ra `bái`, rồi `s` hủy dấu, và vì `bais`
+không mở đầu từ nào nên `basis` hiện ra ngay ở phím đó. Để làm được vậy, `on_revert` chạy **trước**
+khi pipeline chọn dạng hiển thị (§7.2).
 
 - `password`: ở `pass`, dạng rút gọn `pas` vẫn là phần đầu của `past` và `pastor`, nên chưa quyết. Tới
   `passw`, không từ nào bắt đầu bằng `pasw`, nên đây là phần đầu quyết định. Engine đổi màn hình sang
@@ -211,9 +227,13 @@ khớp chính xác bắt được đúng phím quyết định.
 Quyết định giữa từ đi chung công tắc với eager restore: `smart_restore && eager_restore &&
 restore_doubled_keys`. Tắt eager restore thì chỉ còn quyết định ở dấu cách (§5.2).
 
-Sau khi quyết định, `buffer`, `keys` và `literal` bằng nhau. Các phím sau đi qua pipeline như mọi từ đã
-được eager restore (`text`): core có thể thử đặt dấu, nhưng `is_dead_end` trả về phím thô **ngay trong
-cùng phím đó**, nên màn hình không nhấp nháy.
+Sau khi quyết định, `buffer`, `keys` và `literal` bằng nhau (`sync_keys` giữ `keys` khớp). Các phím
+sau đi qua pipeline như mọi từ đã được eager restore (`text`): core có thể thử đặt dấu, nhưng
+`is_dead_end` trả về phím thô **ngay trong cùng phím đó**, nên màn hình không nhấp nháy.
+
+Flip sau khi quyết định hành xử như với mọi từ đã được khôi phục tiếng Anh: lật sang dạng ghép tiếng
+Việt (`passw` → `păs`, vì core ghép `w` thành dấu trăng), lật lần nữa thì về lại phím thô. Muốn lật về
+**dạng rút gọn** (`pasw`) thì phải có Flip ba trạng thái của giai đoạn 3 (§8.1).
 
 ### 5.4. Ví dụ (đích của bảng test)
 
@@ -228,7 +248,9 @@ cùng phím đó**, nên màn hình không nhấp nháy.
 | `boss ` | `bos ` | `boss ` | dấu cách |
 | `Password ` | `Pasword ` | `Password ` | `Passw` |
 | `PASSWORD ` | `PASWORD ` | `PASSWORD ` | `PASSW` |
-| `seemed ` | `semed ` | `seemed ` | bộ sinh bảng quyết định |
+| `session ` | `sesion ` | `session ` | `sessi` |
+| `basis ` | `bais ` | `basis ` | `basis` (chính phím hủy dấu) |
+| `seemed ` | `semed ` | `seemed ` | `seemed` (chữ cuối) |
 | `mixx ` | `mix ` | `mix ` | không đổi |
 | `tesst ` | `test ` | `test ` | không đổi |
 | `iss ` | `is ` | `is ` | không đổi |
@@ -302,16 +324,16 @@ restore `cảd ` → `card `.
 
 | Tầng | Thay đổi |
 |---|---|
-| `crates/funput-engine/src/compose/doubled/mod.rs` (mới) | `note_key`, `on_revert`, `restorable` (giai đoạn 2 thêm `decides_raw`): toàn bộ logic, thuần, có unit test |
-| `crates/funput-engine/data/doubled/words.txt` (mới, sinh tự động) | `WORDS`: mỗi dòng một từ, đã sắp xếp. Giai đoạn 2 thêm `decisive.txt` cùng định dạng |
+| `crates/funput-engine/src/compose/doubled/mod.rs` (mới) | `note_key`, `on_revert`, `restorable`, `decides_raw`, `sync_keys`: toàn bộ logic, thuần, có unit test |
+| `crates/funput-engine/data/doubled/words.txt`, `decisive.txt` (mới, sinh tự động) | `WORDS` và `DECISIVE`: mỗi dòng một mục, đã sắp xếp |
 | `crates/funput-engine/src/compose/doubled/lookup.rs` (mới) | `SortedLines`: tìm nhị phân trên văn bản nhúng, không phân biệt hoa thường ASCII, không cấp phát |
 | `crates/funput-engine/src/model/session.rs` | Trường `literal: String`. `clear()` và `resync_after_backspace()` xoá nó |
 | `crates/funput-engine/src/model/config.rs` | `restore_doubled_keys: bool`, mặc định `true`, chỉ có trong Rust (§6.5) |
 | `crates/funput-engine/src/engine/process.rs` | `compose_key` gọi `doubled::note_key` sau `keys.push` |
-| `crates/funput-engine/src/compose/pipeline.rs` | Gọi `on_revert` trước khi ghi đè `keys`. Thêm nhánh `decides_raw` khi chọn `new_buffer` |
+| `crates/funput-engine/src/compose/pipeline.rs` | Gọi `on_revert` trước khi chọn dạng hiển thị và trước khi ghi đè `keys`. Việc chọn dạng hiển thị tách thành `displayed()`, có nhánh `decides_raw`. Gọi `sync_keys` cuối mỗi phím |
 | `crates/funput-engine/src/compose/boundary/mod.rs` | Hỏi `restorable` sau gõ tắt, trước `judge`/correction. English restore và tính năng này dùng chung helper `replace_word` |
 | `crates/funput-engine/data/doubled/overrides.txt` (mới) | Ghi đè viết tay: `+word` thêm, `-word` loại, kèm lý do |
-| `crates/funput-lexicon-tool/src/doubled/` (mới: `mod.rs`, `scan.rs`, `overrides.rs`) | Lệnh `doubled`: sinh `words.txt` |
+| `crates/funput-lexicon-tool/src/doubled/` (mới: `mod.rs`, `scan.rs`, `overrides.rs`, `decisive.rs`) | Lệnh `doubled --out DIR`: sinh `words.txt` và `decisive.txt` từ một lần quét |
 | `crates/funput-cli/src/dev/coverage/` | Thêm chế độ đo độ phủ tiếng Anh (§11.3) |
 
 `funput-engine` **vẫn chỉ phụ thuộc `funput-core`**. Bảng là mã nguồn được sinh, không phải dependency.
@@ -358,7 +380,7 @@ static WORDS: SortedLines = SortedLines::new(include_str!("../../../data/doubled
   lúc khởi động, không `OnceLock`, không cấp phát. Từ chứa ký tự không phải ASCII bị từ chối ngay.
 - Bất biến của tệp (đã sắp xếp, không trùng, chữ thường, có `\n` cuối) được unit test giữ, vì tìm
   nhị phân chỉ đúng khi các bất biến này đúng.
-- Giai đoạn 2 thêm `decisive.txt` cùng định dạng, dùng lại `SortedLines`.
+- `decisive.txt` (giai đoạn 2) cùng định dạng và dùng lại `SortedLines`: 472 phần đầu, 3,1 KB.
 
 ### 6.4. Bộ sinh bảng: `funput-lexicon-tool doubled`
 
@@ -366,10 +388,18 @@ Bảng được sinh bằng cách **cho chính engine gõ từng từ**, với `
 bảng luôn khớp hành vi thật của core, kể cả những đường hủy dấu khó đoán bằng regex (`seemed`,
 `daddy`, `ươ` + `w`).
 
-Giai đoạn 1 hiện thực phần `WORDS`, ở `scan.rs` (gõ một từ, trả dạng rút gọn) và `mod.rs` (thứ
-hạng, cặp mơ hồ, ghi đè, ghi tệp). Bộ sinh quét **bốn cấu hình**: Telex và Telex nâng cao, mỗi
-method có và không có phụ âm đầu mở rộng z/f/w/j. Lý do: `ferry` chỉ mất chữ `r` khi `f` được nhận
-làm âm đầu. Phần `DECISIVE` trong mã giả dưới đây thuộc giai đoạn 2.
+Hiện thực gồm:
+
+- `scan.rs`: `typed()` gõ một từ và trả từng bước (đã có hủy dấu chưa, buffer, keys); `shortened()`
+  dựng trên nó.
+- `mod.rs`: thứ hạng, cặp mơ hồ, ghi đè, ghi hai tệp.
+- `decisive.rs`: luật của §5.3.
+
+Bộ sinh quét **bốn cấu hình**: Telex và Telex nâng cao, mỗi method có và không có phụ âm đầu mở rộng
+z/f/w/j, vì `ferry` chỉ mất chữ `r` khi `f` được nhận làm âm đầu. CLI là `doubled [--overrides FILE]
+--out DIR`; cả hai tệp ra từ **một lần quét**, nên không thể lệch nhau. Mã giả dưới đây viết gộp theo
+từng cấu hình; code thật tính phần đầu quyết định trên cả bốn cấu hình cùng lúc, như luật §5.3, và
+chặn mọi phần đầu mở đầu một từ bị loại.
 
 ```text
 for each word W in en.tsv (ASCII letters, length >= 2), for each setup (method × onsets):
@@ -433,41 +463,37 @@ correction::verify_alignment(&mut self.session);
 
 ### 7.2. Pipeline (`compose/pipeline.rs::process`)
 
-```rust
-let new_buffer = match session.restore_override {
-    Some(RestoreOverride::ForceVietnamese) => composed,
-    Some(RestoreOverride::ForceRaw) => session.keys.clone(),
-    None => {
-        if doubled::decides_raw(session) {
-            // The shortened form can no longer begin an English word; the raw keys can.
-            session.literal.clone()
-        } else if /* existing eager English restore condition */ {
-            session.keys.clone()
-        } else {
-            composed
-        }
-    }
-};
-// ... diff + pass-through exactly as today ...
-session.buffer = new_buffer;
+Đúng như code đã hiện thực (rút gọn):
 
+```rust
+// process(): on_revert runs while `keys` still holds the doubled key, and before the
+// display is chosen, so the reverting key itself can be the decisive one.
 if result.kind == TransformKind::Reverted {
-    doubled::on_revert(session); // copies `keys` into `literal` on the word's first revert
+    doubled::on_revert(session);
+}
+let new_buffer = displayed(session, composed, result.kind, key);
+// ... diff + pass-through exactly as before ...
+session.buffer = new_buffer;
+if result.kind == TransformKind::Reverted {
     session.keys.clear();
     session.keys.push_str(&session.buffer);
 }
-if !session.literal.is_empty() && session.buffer == session.literal {
-    // Raw keys are on screen now: keep `keys` in step so boundary restore stays quiet.
-    session.keys.clear();
-    session.keys.push_str(&session.literal);
+doubled::sync_keys(session); // keys = literal once the raw keys are on screen
+
+fn displayed(session: &Session, composed: String, kind: TransformKind, key: char) -> String {
+    match session.restore_override {
+        Some(RestoreOverride::ForceVietnamese) => composed,
+        Some(RestoreOverride::ForceRaw) => session.keys.clone(),
+        None if doubled::decides_raw(session, &composed) => session.literal.clone(),
+        None if /* eager English restore, unchanged */ => session.keys.clone(),
+        None => composed,
+    }
 }
 ```
 
-Phím đầu tiên của một lần hủy dấu: `decides_raw` thấy `literal` còn rỗng nên trả `false`, tức là
-hành vi y hệt hôm nay. Phím hủy dấu kích hoạt `literal`, và **từ phím sau** việc tra bảng mới bắt đầu.
-
-`decides_raw` kiểm theo thứ tự rẻ trước: `literal` rỗng thì dừng; rồi tới các cờ cấu hình; rồi
-`buffer != literal`; cuối cùng mới `lookup::contains(DECISIVE, literal)`.
+`decides_raw` kiểm theo thứ tự rẻ trước: `literal` rỗng thì dừng; rồi tới các cờ cấu hình
+(`active` và `eager_restore`); rồi `composed != literal`; cuối cùng mới `DECISIVE.contains(literal)`.
+Phím quyết định trả `Send(0, "sw")` cho `pas` + `w`, cùng dạng với eager restore `tẽt` → `text`.
 
 ### 7.3. Ranh giới từ (`compose/boundary/mod.rs::boundary_result`)
 
@@ -550,12 +576,12 @@ chỉ nhận được `pasw`. Cần xác nhận khi kiểm tra tay.
 
 | Hạng mục | Chi phí |
 |---|---|
-| Phím trong từ không có hủy dấu (gần như mọi phím) | Một `is_empty()` trong `note_key` (giai đoạn 2 thêm một trong `decides_raw`) |
-| Phím trong từ đã hủy dấu | Một `push` vào `literal` (giai đoạn 2 thêm một lần tìm nhị phân trên `DECISIVE`) |
+| Phím trong từ không có hủy dấu (gần như mọi phím) | Một `is_empty()` trong `note_key`, một trong `decides_raw`, một trong `sync_keys` |
+| Phím trong từ đã hủy dấu | Một `push` vào `literal`, một lần tìm nhị phân trên `DECISIVE` |
 | Ranh giới từ không có hủy dấu | Một `is_empty()` |
 | Ranh giới từ có hủy dấu | Một lần tìm nhị phân trên `WORDS`, bỏ qua `judge` nếu trúng |
-| Cấp phát | Một lần 32 byte khi tạo `Session` (§6.2). Khi gõ: không có. Ở ranh giới từ được khôi phục: một chuỗi kết quả, như English restore. Giai đoạn 2 thêm `literal.clone()` khi quyết định giữa từ, giống `keys.clone()` của eager restore |
-| Bộ nhớ tĩnh | 9,4 KB `.rodata` (`words.txt`, §6.3) |
+| Cấp phát | Một lần 32 byte khi tạo `Session` (§6.2). Khi gõ: không có. Ở phím quyết định giữa từ: `literal.clone()`, giống `keys.clone()` của eager restore. Ở ranh giới từ được khôi phục: một chuỗi kết quả, như English restore |
+| Bộ nhớ tĩnh | 12,5 KB `.rodata` (`words.txt` 9,4 KB + `decisive.txt` 3,1 KB, §6.3) |
 | `size_of::<Engine>()` | +24 byte (152 → 176) |
 
 Cổng: `alloc_budget` (giữ ≤ 2,0 alloc/phím, câu mẫu tiếng Việt không có hủy dấu nên không đổi),
@@ -568,15 +594,25 @@ Cổng: `alloc_budget` (giữ ≤ 2,0 alloc/phím, câu mẫu tiếng Việt kh�
 - `lookup`: không phân biệt hoa thường, từ không phải ASCII, chuỗi rỗng, danh sách một dòng, hai đầu
   danh sách.
 - Bảng: `words.txt` đã sắp xếp, không trùng, chữ thường ASCII, có `\n` cuối; có `password`, `correct`,
-  `pass`; không có `off`, `tesst`, `mix`. Giai đoạn 2 thêm: mỗi phần tử của `DECISIVE` là phần đầu của
-  ít nhất một phần tử trong `WORDS`.
+  `pass`; không có `off`, `tesst`, `mix`. `decisive.txt` có cùng bất biến, và mỗi phần đầu của nó
+  mở đầu ít nhất một từ trong `words.txt`.
+- `decides_raw` đúng ở `passw`, sai ở `pass`, sai khi tắt eager restore. Pipeline hiện `passw` và
+  đồng bộ `keys`.
 - Vòng đời `literal`: rỗng khi không hủy dấu, kích hoạt ở lần hủy dấu đầu, không chạy khi tắt công tắc
   hoặc với VNI, bị xoá bởi `clear()` và `resync_after_backspace()`.
 
 ### 11.2. Integration test và bất biến
 
-- `tests/restore/doubled/cases.rs`: bảng §5.4, kèm `ImeResult` của phím dấu cách trong `password `
-  (xoá 7 ký tự `pasword`, chèn `password `).
+- `tests/restore/doubled/cases.rs`: bảng §5.4. Khi tắt eager restore, phím dấu cách của `password `,
+  `pass `, `session ` thay cả từ trong một lần sửa.
+- `tests/restore/doubled/midword.rs` (giai đoạn 2):
+  - Phím quyết định trả `Send(0, "sw")`, và dấu cách sau đó không còn gì phải làm.
+  - Mỗi từ đổi đúng ở phần đầu bộ sinh tính ra, kể cả `basis` (ngay phím hủy dấu).
+  - Thói quen gõ lặp không đổi ở phím nào.
+  - Tắt eager restore thì từ chờ tới dấu cách.
+  - Flip lật qua lại như mọi từ đã khôi phục.
+  - **Test vét toàn bộ:** mọi từ trong `words.txt`, ở cả 4 cấu hình, cho chữ cuối giống hệt khi bật
+    và khi tắt eager restore.
 - `tests/restore/doubled/toggles.rs`: tắt `smart_restore`, tắt `eager_restore`, tắt
   `restore_doubled_keys`, mỗi trường hợp một test. Gõ tắt có trigger `pas` thắng (`pass ` →
   `Pasteur `). Flip trước phím lặp thì tính năng đứng ngoài.
@@ -597,15 +633,14 @@ lưu ở `benchmarks/results/`. CI báo lỗi nếu số từ hỏng **tăng**, 
 ### 11.4. Độ mới của bảng
 
 `funput-lexicon-tool/tests/doubled_table.rs`: chạy chính binary `doubled` trên `en.tsv` + overrides
-rồi so byte-by-byte với `words.txt` đã commit, sai thì in lệnh sinh lại.
+vào một thư mục tạm, rồi so byte-by-byte **cả hai** tệp với bản đã commit, sai thì in lệnh sinh lại.
 Đổi core làm hành vi hủy dấu đổi theo thì test này đỏ, buộc phải sinh lại bảng trong cùng PR.
 
 ### 11.5. Kiểm tra tay (mỗi nền tảng)
 
 Telex, cấu hình mặc định, trong một ô nhập thường (Notes / Notepad / gedit / Tin nhắn):
 
-- `password ` → `password `. Từ giai đoạn 2: màn hình đổi sang `passw` ngay ở phím `w` (không đợi
-  dấu cách).
+- `password ` → `password `, và màn hình đổi sang `passw` ngay ở phím `w` (không đợi dấu cách).
 - `correct ` → `correct `, `pass ` → `pass `, `Password ` → `Password `.
 - Thói quen cũ không đổi: `tesst ` → `test `, `mixx ` → `mix `, `iss ` → `is `, `off ` → `of `.
 - Tiếng Việt không đổi: `xins chaof `, `ddaayf ddur `, `hoir `.
@@ -621,7 +656,7 @@ Telex, cấu hình mặc định, trong một ô nhập thường (Notes / Notep
 |---|---|---|---|
 | 1 (**đã làm**) | `literal`, `restore_doubled_keys`, bộ sinh bảng, `words.txt`, quyết định ở dấu cách, test §11.1–11.2 và §11.4 | 2 commit: (a) engine + test, (b) bộ sinh + bảng | Không |
 | 1b | `funput dev coverage --english` + đường cơ sở CI | 1 PR (có thể làm trước để đo) | Không |
-| 2 | `DECISIVE`, quyết định giữa từ | 1 PR | Không |
+| 2 (**đã làm**) | `decisive.txt`, quyết định giữa từ (§16) | 2 commit trên cùng PR: (a) engine + test, (b) bộ sinh | Không |
 | 3 | Flip ba trạng thái, `boundary_undo` dùng chung | 2 PR | Không trên di động. Máy tính chỉ có Flip |
 | 4 (tuỳ chọn) | Di động bổ sung từ người dùng đã học vào bảng (`add_doubled_words`) | Sau khi có số liệu thực tế | iOS, Android |
 
@@ -636,7 +671,7 @@ Telex, cấu hình mặc định, trong một ô nhập thường (Notes / Notep
    *Đã quyết:* chưa cần ở bản đầu, đi chung "Tự khôi phục tiếng Anh". Chỉ có trường Rust
    `restore_doubled_keys`; thêm setter FFI về sau chỉ tốn một PR nhỏ.
 3. **Quyết định giữa từ có bật mặc định không?**
-   *Đề xuất:* có, đi chung công tắc eager restore. Người tắt eager restore vốn đã chọn "đợi dấu cách".
+   *Đã làm:* có, đi chung công tắc eager restore. Người tắt eager restore vốn đã chọn "đợi dấu cách".
 4. **Thứ tự của Flip ba trạng thái.**
    *Đề xuất:* `literal` → `keys` → `vn_form`, như §8.1.
 5. **Hoàn tác bằng Backspace trên máy tính.**
@@ -696,7 +731,7 @@ Số từ được sửa (880) cao hơn ước tính ban đầu (~708, §2). Lý
 | `cargo clippy --workspace --all-targets -D warnings`, `cargo fmt --check` | Sạch |
 | `scripts/check-loc.sh` (150 dòng/file, 5 file/thư mục) | Đạt |
 | `alloc_budget` | Không đổi: 1,1 alloc/phím với cấu hình mặc định; Full Telex 55 lần cấp phát, bằng chuỗi đối chứng |
-| Criterion so với `main` (baseline `before_doubled`, cùng máy, cùng toolchain) | `process_char/paragraph/telex` +0,99%, `paragraph/vni` +0,62%; 6 bench `process_char` còn lại và 2 bench FFI `latency` không đổi. Tất cả trong ngưỡng 3% |
+| Criterion so với `main` (cùng máy, cùng toolchain, mỗi bản build một thư mục target riêng; đo lại ở giai đoạn 2, xem ghi chú bên dưới) | Từ −1,6% đến +1,8%. `paragraph/telex` −1,59%, `paragraph/vni` −0,93%, `w-permutation/deferred` +0,97%, `multi-intent/pending-w-first` +1,7–1,8% qua hai lần đo lại (lần đầu +4,56% là nhiễu). FFI `latency`: −1,64% và −0,44%. Tất cả trong ngưỡng 3% |
 | Bảng từ | 1 054 từ, 9,4 KB |
 | `size_of::<Engine>()` | 152 → 176 byte |
 
@@ -732,3 +767,67 @@ Số "trước" (1 477) có được bằng cách tạm đặt mặc định `re
   cùng dạng với English restore, nhưng chưa thử trên thiết bị thật.
 - Các giai đoạn tiếp theo theo §12: 1b (lệnh đo trong CI), 2 (quyết định giữa từ), 3 (Flip ba trạng
   thái và hoàn tác).
+
+## 16. Kết quả giai đoạn 2
+
+Đo ngày 22/10/2026, Telex, cấu hình mặc định.
+
+### 16.1. Quyết định giữa từ
+
+Đo bằng chính engine trên 1 054 từ của `words.txt`. Thời điểm quyết định là phím đầu tiên, sau một lần
+hủy dấu, mà màn hình hiện đúng chuỗi phím đã gõ:
+
+| Thời điểm quyết định | Số từ | Tỷ lệ |
+|---|---|---|
+| Trước khi gõ xong (trung bình còn **3,4 chữ**) | 771 | 73% |
+| Ở đúng chữ cuối (`seemed`, `basis`) | 158 | 15% |
+| Phải chờ dấu cách | 125 | 12% |
+
+Từ phải chờ dấu cách là những từ mà dạng rút gọn vẫn mở đầu một từ thật cho tới chữ cuối: `bass` (`bas`
+→ `base`), `bless` (`bles` → `blessed`), `barrel` (`barel` → `barely`). Với các từ này, chờ là đúng.
+
+Tỷ lệ 73% thấp hơn con số 95% khảo sát ban đầu (§2). Lý do: luật hiện thực chặt hơn. Nó đòi cả bốn cấu
+hình cùng đồng ý, cấm mọi phần đầu mở đầu một từ bị loại, và tra tiền tố trên toàn bộ `en.tsv` kể cả
+tên riêng; còn phép khảo sát chỉ tính một cấu hình.
+
+**Kết quả cuối không đổi:** trên 25 979 từ của `en.tsv`, số từ hỏng vẫn là **597**, và chữ cuối cùng
+của **cả 25 979 từ** giống hệt giai đoạn 1. Quyết định giữa từ chỉ đổi *thời điểm*, không đổi *chữ*.
+Test vét toàn bộ trong `midword.rs` ghim điều này cho mọi từ trong bảng ở cả 4 cấu hình.
+
+### 16.2. Chất lượng và tài nguyên
+
+| Hạng mục | Kết quả |
+|---|---|
+| Test riêng của tính năng | 14 unit test engine, 19 integration test (`tests/restore/doubled/`, gồm 6 test giữa từ và test vét toàn bộ), 15 unit test bộ sinh, 1 test độ mới cho cả hai tệp |
+| `alloc_budget` | Không đổi (Full Telex 55 lần cấp phát) |
+| `decisive.txt` | 472 phần đầu, 3,1 KB; `words.txt` không đổi |
+| `size_of::<Engine>()` | Không đổi (176 byte) |
+
+### 16.3. Criterion so với `main`
+
+Mỗi bản build có thư mục target riêng; criterion dùng chung chỗ lưu baseline (`CRITERION_HOME`).
+
+| Bench | Thay đổi |
+|---|---|
+| `process_char/paragraph/telex`, `paragraph/vni` | −0,9%, −0,5% (không có ý nghĩa thống kê) |
+| `process_char/circumflex/*` | +0,3%, +0,5% |
+| `process_char/w-permutation/*` | +0,9%, +1,5% |
+| `process_char/multi-intent/*` | −0,4%, +1,8% |
+| FFI `latency` telex, vni | +0,3%, +1,2% |
+
+Tất cả trong ngưỡng 3%.
+
+**Sửa số đo của giai đoạn 1:** lần đo criterion đầu tiên (§15.2, bản trước) dùng chung một thư mục
+target cho worktree `main` và branch. Cargo đã dùng lại bản `funput-engine` cũ của `main` cho bản release,
+và việc này chỉ lộ ra khi bộ sinh không biên dịch được vì thiếu trường `restore_doubled_keys`. Bench
+`process_char` không dùng trường mới nên vẫn biên dịch được với bản cũ, vì vậy số đo đó không tin được.
+§15.2 đã thay bằng số đo lại với thư mục target riêng. Trong lần đo lại, `multi-intent/pending-w-first`
+có một lần ra +4,6%, nhưng hai lần chạy tiếp cho +1,7% và +1,8%, nên đó là nhiễu.
+
+### 16.4. Khác với plan giai đoạn 2
+
+- **`on_revert` chạy trước khi chọn dạng hiển thị**, không phải trong khối `Reverted` như giai đoạn 1.
+  Nếu không, phần đầu quyết định rơi đúng vào phím hủy dấu (`basis`, `amass`) bị bỏ lỡ, và 171 từ phải
+  chờ dấu cách thay vì được quyết định sớm.
+- **Flip sau khi quyết định không đưa về dạng rút gọn.** Nó lật sang dạng ghép tiếng Việt (`păs`) như
+  với mọi từ đã khôi phục tiếng Anh. Lối thoát về `pasw` cần Flip ba trạng thái của giai đoạn 3.

@@ -7,15 +7,19 @@ use crate::compose::pipeline;
 const FRUIT: SortedLines = SortedLines::new("apple\nbanana\ncherry\ndate\nfig\n");
 
 /// Feed `keys` the way `Engine::compose_key` does: raw key first, then the pipeline.
-fn typed(method: InputMethod, keys: &str) -> Session {
-    let mut session = Session::new();
-    session.config.method = method;
+fn typed_in(mut session: Session, keys: &str) -> Session {
     for key in keys.chars() {
         session.keys.push(key);
         note_key(&mut session, key);
         pipeline::process(&mut session, key, key, false);
     }
     session
+}
+
+fn typed(method: InputMethod, keys: &str) -> Session {
+    let mut session = Session::new();
+    session.config.method = method;
+    typed_in(session, keys)
 }
 
 #[test]
@@ -42,18 +46,18 @@ fn a_single_line_and_an_empty_list() {
     assert!(!SortedLines::new("").contains("pass"));
 }
 
-#[test]
-fn the_shipped_list_is_sorted_lowercase_and_newline_terminated() {
-    assert!(WORDS.text().ends_with('\n'));
-    let words: Vec<&str> = WORDS.lines().collect();
-    assert!(!words.is_empty());
-    for word in &words {
+/// What the binary search relies on: sorted, unique, lowercase ASCII, `\n`-ended.
+fn assert_well_formed(list: SortedLines) {
+    assert!(list.text().ends_with('\n'));
+    let entries: Vec<&str> = list.lines().collect();
+    assert!(!entries.is_empty());
+    for entry in &entries {
         assert!(
-            !word.is_empty() && word.bytes().all(|byte| byte.is_ascii_lowercase()),
-            "{word:?} is not a lowercase ASCII word"
+            !entry.is_empty() && entry.bytes().all(|byte| byte.is_ascii_lowercase()),
+            "{entry:?} is not a lowercase ASCII word"
         );
     }
-    for pair in words.windows(2) {
+    for pair in entries.windows(2) {
         assert!(
             pair[0] < pair[1],
             "{:?} is not before {:?}",
@@ -61,6 +65,41 @@ fn the_shipped_list_is_sorted_lowercase_and_newline_terminated() {
             pair[1]
         );
     }
+}
+
+#[test]
+fn the_shipped_lists_are_sorted_lowercase_and_newline_terminated() {
+    assert_well_formed(WORDS);
+    assert_well_formed(DECISIVE);
+}
+
+#[test]
+fn every_decisive_prefix_starts_a_listed_word() {
+    for prefix in DECISIVE.lines() {
+        assert!(
+            WORDS.lines().any(|word| word.starts_with(prefix)),
+            "{prefix:?} starts no listed word"
+        );
+    }
+}
+
+#[test]
+fn decides_at_the_decisive_prefix_and_not_before() {
+    let mut session = typed(InputMethod::Telex, "pass");
+    assert!(!decides_raw(&session, "pas"));
+    session.keys.push('w');
+    note_key(&mut session, 'w');
+    assert!(decides_raw(&session, "pasw"));
+    session.config.eager_restore = false;
+    assert!(!decides_raw(&session, "pasw"));
+}
+
+#[test]
+fn the_pipeline_shows_the_raw_keys_once_decided() {
+    let session = typed(InputMethod::Telex, "passw");
+    assert_eq!(session.buffer, "passw");
+    assert_eq!(session.keys, "passw");
+    assert!(!restorable(&session));
 }
 
 #[test]
@@ -94,20 +133,21 @@ fn the_first_revert_keeps_the_doubled_key_and_later_keys_follow() {
 
 #[test]
 fn restorable_only_for_a_listed_word_not_yet_shown() {
-    assert!(restorable(&typed(InputMethod::Telex, "password")));
+    assert!(restorable(&typed(InputMethod::Telex, "pass")));
     assert!(!restorable(&typed(InputMethod::Telex, "tesst")));
     assert!(!restorable(&typed(InputMethod::Telex, "mixx")));
+    // Decided mid-word, `password` is already shown as typed when it ends.
+    assert!(!restorable(&typed(InputMethod::Telex, "password")));
+    let mut waiting = Session::new();
+    waiting.config.eager_restore = false;
+    assert!(restorable(&typed_in(waiting, "password")));
 }
 
 #[test]
 fn switched_off_it_never_starts() {
     let mut session = Session::new();
     session.config.restore_doubled_keys = false;
-    for key in "pass".chars() {
-        session.keys.push(key);
-        note_key(&mut session, key);
-        pipeline::process(&mut session, key, key, false);
-    }
+    let session = typed_in(session, "pass");
     assert!(session.literal.is_empty());
     assert!(!restorable(&session));
 }

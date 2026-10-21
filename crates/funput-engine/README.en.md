@@ -145,9 +145,11 @@ second key used to vanish: `password` came out `pasword`. The engine now keeps t
 `Session.literal` (only from the word's first revert on). At the word boundary, if they spell an
 English word listed in `data/doubled/words.txt`, the engine writes them back: `password ` →
 `password `, `pass ` → `pass `. The doubled-key habit for a plain letter is unchanged (`tesst` →
-`test`, `mixx` → `mix`, `off` → `of`), because those keys are not listed. `funput-lexicon-tool
-doubled` generates the list from `en.tsv`. The switch is `EngineConfig.restore_doubled_keys` (on by
-default, rides on `smart_restore`). Details:
+`test`, `mixx` → `mix`, `off` → `of`), because those keys are not listed. Most words are decided
+**mid-word**: once the shortened form begins no English word (`pasw`), the engine shows the raw keys
+(`passw`) at once, per `data/doubled/decisive.txt`; that step rides on `eager_restore`.
+`funput-lexicon-tool doubled` generates both lists from `en.tsv`. The switch is
+`EngineConfig.restore_doubled_keys` (on by default, rides on `smart_restore`). Details:
 [docs/features/doubled-key-restore.md](../../docs/features/doubled-key-restore.md).
 
 ## Flip VN ⇄ raw keys

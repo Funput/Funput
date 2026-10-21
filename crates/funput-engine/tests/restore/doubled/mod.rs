@@ -3,6 +3,7 @@
 
 mod cases;
 mod invariant;
+mod midword;
 mod toggles;
 
 use funput_core::InputMethod;

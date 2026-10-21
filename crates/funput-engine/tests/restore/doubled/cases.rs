@@ -69,38 +69,39 @@ fn session_keeps_both_esses() {
         assert_eq!(telex(keys), text, "{keys:?}");
     }
 
-    let mut on = engine(InputMethod::Telex, true);
-    for key in "session".chars() {
-        on.process_char(key);
-    }
-    assert_eq!(on.buffer(), "sesion");
-    assert_eq!(
-        on.process_char(' '),
-        ImeResult {
-            action: Action::Send,
-            backspace: "sesion".chars().count(),
-            output: "session ".into(),
-        }
-    );
-
+    assert_boundary_edit("session");
     let mut off = engine(InputMethod::Telex, false);
     assert_eq!(app_text_in(&mut off, "session "), "sesion ");
 }
 
 #[test]
 fn the_boundary_replaces_the_shortened_word_in_one_edit() {
+    assert_boundary_edit("password");
+    assert_boundary_edit("pass");
+}
+
+/// With eager restore off nothing is decided mid-word, so `word` waits for its
+/// boundary, which replaces whatever it shows with the raw keys in one edit.
+fn assert_boundary_edit(word: &str) {
     let mut engine = engine(InputMethod::Telex, true);
-    for key in "password".chars() {
+    engine.update_config(|config| config.eager_restore = false);
+    for key in word.chars() {
         engine.process_char(key);
     }
-    assert_eq!(engine.buffer(), "pasword");
+    assert_ne!(
+        engine.buffer(),
+        word,
+        "{word} was decided before its boundary"
+    );
+    let shown = engine.buffer().chars().count();
     assert_eq!(
         engine.process_char(' '),
         ImeResult {
             action: Action::Send,
-            backspace: "pasword".chars().count(),
-            output: "password ".into(),
-        }
+            backspace: shown,
+            output: format!("{word} "),
+        },
+        "{word}"
     );
     assert_eq!(engine.buffer(), "");
 }

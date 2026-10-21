@@ -140,8 +140,11 @@ Gõ lại phím dấu thì hủy dấu (`pá` + `s` → `pas`), và lần hủy 
 lần hủy dấu đầu tiên của từ). Ở ranh giới từ, nếu chuỗi đó là từ tiếng Anh trong
 `data/doubled/words.txt`, engine trả lại nó: `password ` → `password `, `pass ` → `pass `. Thói quen
 gõ lặp để lấy chữ thường vẫn giữ nguyên (`tesst` → `test`, `mixx` → `mix`, `off` → `of`), vì những chuỗi
-đó không có trong bảng. Bảng do `funput-lexicon-tool doubled` sinh từ `en.tsv`. Công tắc là
-`EngineConfig.restore_doubled_keys` (mặc định bật, đi chung `smart_restore`). Chi tiết:
+đó không có trong bảng. Phần lớn từ còn được quyết định **ngay giữa từ**: khi dạng rút gọn không còn
+mở đầu từ tiếng Anh nào (`pasw`), engine hiện phím gốc (`passw`) ngay lập tức, theo danh sách
+`data/doubled/decisive.txt`. Bước này đi chung `eager_restore`. Hai bảng do `funput-lexicon-tool
+doubled` sinh từ `en.tsv`. Công tắc là `EngineConfig.restore_doubled_keys` (mặc định bật, đi chung
+`smart_restore`). Chi tiết:
 [docs/features/doubled-key-restore.md](../../docs/features/doubled-key-restore.md).
 
 ## Lật VN ⇄ phím thô (flip)

@@ -43,28 +43,12 @@ pub(crate) fn process(
     session.vn_form.clear();
     session.vn_form.push_str(&composed);
 
-    // A manual flip pins which form is displayed for the rest of the word, overriding
-    // the automatic restore decision below.
-    let new_buffer = match session.restore_override {
-        Some(RestoreOverride::ForceVietnamese) => composed,
-        Some(RestoreOverride::ForceRaw) => session.keys.clone(),
-        // Eager English restore: flip to the raw keystrokes the instant the word can
-        // no longer be Vietnamese (`tẽt` → `text` on the closing `t`). Gated by the
-        // smart + eager toggles. Skip on Reverted (a deliberate user restore) and when
-        // nothing was transformed (`keys == composed`, e.g. a literal digit `ng1`).
-        None => {
-            if session.config.smart_restore
-                && session.config.eager_restore
-                && result.kind != TransformKind::Reverted
-                && session.keys != composed
-                && is_dead_end(session, &composed, key)
-            {
-                session.keys.clone()
-            } else {
-                composed
-            }
-        }
-    };
+    // Keep the keys a revert swallows while `keys` still holds them, and before the
+    // display is chosen, so the reverting key itself can be the decisive one.
+    if result.kind == TransformKind::Reverted {
+        doubled::on_revert(session);
+    }
+    let new_buffer = displayed(session, composed, result.kind, key);
 
     // A pure append of the typed key passes through — the app echoes it itself,
     // so there is nothing to inject (and nothing to allocate).
@@ -82,14 +66,41 @@ pub(crate) fn process(
     // A revert is itself a restore to raw, so keep `keys` in sync — otherwise a
     // later word boundary sees `keys != buffer` and re-restores the stale original
     // keystrokes (e.g. `mixx` revert → `mix`, then Space → wrongly `mixx`). The
-    // swallowed key is not lost: doubled-key restore keeps it before the rewrite.
+    // swallowed key is not lost: `on_revert` above kept it in `literal`.
     if result.kind == TransformKind::Reverted {
-        doubled::on_revert(session);
         session.keys.clear();
         session.keys.push_str(&session.buffer);
     }
+    doubled::sync_keys(session);
 
     instruction
+}
+
+/// The form the app shows after this key, from the composition core produced.
+///
+/// A manual flip pins the form for the rest of the word, overriding every automatic
+/// decision below it.
+fn displayed(session: &Session, composed: String, kind: TransformKind, key: char) -> String {
+    match session.restore_override {
+        Some(RestoreOverride::ForceVietnamese) => composed,
+        Some(RestoreOverride::ForceRaw) => session.keys.clone(),
+        // Doubled-key restore: the shortened form can no longer begin an English word
+        // (`pasw`), so the keys a revert swallowed come back now (`passw`).
+        None if doubled::decides_raw(session, &composed) => session.literal.clone(),
+        // Eager English restore: flip to the raw keystrokes the instant the word can
+        // no longer be Vietnamese (`tẽt` → `text` on the closing `t`). Gated by the
+        // smart + eager toggles. Skip on Reverted (a deliberate user restore) and when
+        // nothing was transformed (`keys == composed`, e.g. a literal digit `ng1`).
+        None if session.config.smart_restore
+            && session.config.eager_restore
+            && kind != TransformKind::Reverted
+            && session.keys != composed
+            && is_dead_end(session, &composed, key) =>
+        {
+            session.keys.clone()
+        }
+        None => composed,
+    }
 }
 
 /// Whether `composed` can no longer become Vietnamese, judged for this keystroke.
