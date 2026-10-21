@@ -64,8 +64,8 @@ echo "wrote $data/en.tsv ($(grep -vc '^#' "$data/en.tsv") words)" >&2
 #    The file stays in WORK; the shells build their own.
 "$tool" pack < "$data/en.tsv" > "$work/en.lex"
 
-# 5. The engine's doubled-key list follows the lexicon, so it is rebuilt from the
-#    new en.tsv here — into WORK first, for the same reason as step 3.
+# 5. The engine's doubled-key lists follow the lexicon, so they are rebuilt from
+#    the new en.tsv here — into WORK first, for the same reason as step 3.
 doubled=$app/crates/funput-engine/data/doubled
-"$tool" doubled --overrides "$doubled/overrides.txt" < "$data/en.tsv" > "$work/words.txt"
-mv "$work/words.txt" "$doubled/words.txt"
+"$tool" doubled --overrides "$doubled/overrides.txt" --out "$work/doubled" < "$data/en.tsv"
+mv "$work/doubled/words.txt" "$work/doubled/decisive.txt" "$doubled/"

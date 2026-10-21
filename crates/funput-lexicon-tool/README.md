@@ -35,20 +35,28 @@ with the counts already in `WORK`, the script goes straight to the rank step.
 | `count` | one decompressed 1-gram shard on stdin | `word\tcount`, lowercased, years 2000–2019, spellings under 100 dropped |
 | `rank` | `allowed.txt`, `supplement.tsv`, `blocklist.txt`, every count file | `en.tsv` |
 | `pack` | `en.tsv` on stdin | `en.lex` on stdout, checked by the library's own validation first |
-| `doubled` | `en.tsv` on stdin, `--overrides` | `crates/funput-engine/data/doubled/words.txt` on stdout |
+| `doubled` | `en.tsv` on stdin, `--overrides`, `--out DIR` | `words.txt` and `decisive.txt` in `DIR` |
 
 `doubled` types every word through `funput-engine` (Telex and Telex nâng cao, with
-and without the z/f/w/j onsets) and lists those a revert shortens, `password` →
-`pasword`, unless the shortened form is a more frequent word (`off` → `of`). The
-engine gives listed words their raw keys back at the word boundary — see
-[doubled-key-restore.md](../../docs/features/doubled-key-restore.md). `refresh.sh`
-rebuilds it after `rank`; after a core change that moves a revert, rebuild it by
-hand (the `doubled_table` test says so):
+and without the z/f/w/j onsets) and writes two lists from that one scan:
+
+- `words.txt` — the words a revert shortens, `password` → `pasword`, unless the
+  shortened form is a more frequent word (`off` → `of`). The engine gives them their
+  raw keys back at the word boundary.
+- `decisive.txt` — for each listed word, the shortest raw-key prefix at which the
+  shortened form on screen can no longer begin any `en.tsv` word, in every setup
+  (`passw`, since nothing begins with `pasw`). The engine switches to the raw keys
+  there, mid-word. A prefix that begins a word left out on purpose (`off`) never
+  qualifies.
+
+See [doubled-key-restore.md](../../docs/features/doubled-key-restore.md).
+`refresh.sh` rebuilds both after `rank`; after a core change that moves a revert,
+rebuild them by hand (the `doubled_table` test says so):
 
 ```bash
 cargo run -p funput-lexicon-tool -- doubled \
     --overrides crates/funput-engine/data/doubled/overrides.txt \
-    < crates/funput-suggestions/data/lexicon/en.tsv > crates/funput-engine/data/doubled/words.txt
+    --out crates/funput-engine/data/doubled < crates/funput-suggestions/data/lexicon/en.tsv
 ```
 
 `overrides.txt` holds `+word` / `-word` lines with the reason in a comment; one
