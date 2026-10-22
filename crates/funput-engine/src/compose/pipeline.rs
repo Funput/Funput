@@ -4,13 +4,15 @@
 //! the zero-allocation pass-through exit; session strings (`vn_form`, `keys`)
 //! are refilled in place so their capacity is reused across keystrokes.
 
+mod display;
+
 use funput_core::{TransformKind, apply_with};
 
 use crate::ImeResult;
-use crate::compose::RestoreOverride;
 use crate::compose::diff::common_prefix_bytes;
 use crate::compose::doubled;
 use crate::model::Session;
+use display::{Shown, displayed};
 
 /// Apply one keystroke to `session` and return platform instructions.
 ///
@@ -48,7 +50,13 @@ pub(crate) fn process(
     if result.kind == TransformKind::Reverted {
         doubled::on_revert(session);
     }
-    let new_buffer = displayed(session, composed, result.kind, key);
+    let shown = displayed(session, composed, result.kind, key);
+    let literal_shown = matches!(shown, Shown::Literal);
+    let new_buffer = match shown {
+        Shown::Composed(text) => text,
+        Shown::Keys => session.keys.clone(),
+        Shown::Literal => session.literal.as_str().to_owned(),
+    };
 
     // A pure append of the typed key passes through — the app echoes it itself,
     // so there is nothing to inject (and nothing to allocate).
@@ -71,59 +79,11 @@ pub(crate) fn process(
         session.keys.clear();
         session.keys.push_str(&session.buffer);
     }
-    doubled::sync_keys(session);
+    if literal_shown {
+        doubled::settle_keys(session);
+    }
 
     instruction
-}
-
-/// The form the app shows after this key, from the composition core produced.
-///
-/// A manual flip pins the form for the rest of the word, overriding every automatic
-/// decision below it.
-fn displayed(session: &Session, composed: String, kind: TransformKind, key: char) -> String {
-    match session.restore_override {
-        Some(RestoreOverride::ForceVietnamese) => composed,
-        Some(RestoreOverride::ForceRaw) => session.keys.clone(),
-        // Doubled-key restore: the shortened form can no longer begin an English word
-        // (`pasw`), so the keys a revert swallowed come back now (`passw`).
-        None if doubled::decides_raw(session, &composed) => session.literal.clone(),
-        // Eager English restore: flip to the raw keystrokes the instant the word can
-        // no longer be Vietnamese (`tẽt` → `text` on the closing `t`). Gated by the
-        // smart + eager toggles. Skip on Reverted (a deliberate user restore) and when
-        // nothing was transformed (`keys == composed`, e.g. a literal digit `ng1`).
-        None if session.config.smart_restore
-            && session.config.eager_restore
-            && kind != TransformKind::Reverted
-            && session.keys != composed
-            && is_dead_end(session, &composed, key) =>
-        {
-            session.keys.clone()
-        }
-        None => composed,
-    }
-}
-
-/// Whether `composed` can no longer become Vietnamese, judged for this keystroke.
-///
-/// VNI may keep the finals only place names use (`Pa8h` → `Păh`, as in Chư Păh),
-/// but a digit landing on a word that carried no mark yet is how numbers glue to
-/// English (`bar1`, `ver2`), so that keystroke is judged strictly. A letter after
-/// a digit (the `h` of `Pa8h`), or a digit on a word already marked (`Pa8h1` →
-/// `Pắh`), only extends a word the user shaped on purpose. What a strict reading
-/// restores stays in `vn_form`, so Flip still recovers `Pah8` → `Păh`.
-fn is_dead_end(session: &Session, composed: &str, key: char) -> bool {
-    let bare_before = || {
-        session
-            .keys
-            .strip_suffix(key)
-            .is_some_and(|before| before == session.buffer)
-    };
-    let rules = session.config.syllable_rules;
-    if key.is_ascii_digit() && bare_before() {
-        rules.is_definitely_invalid(composed)
-    } else {
-        rules.is_definitely_invalid_in(composed, session.config.method)
-    }
 }
 
 fn uppercase_direct_vowel(text: &mut String) {

@@ -137,7 +137,8 @@ fn layout_stays_compact() {
     // costs a whole word, and typo correction adds `Option<Box<CorrectionState>>`:
     // the state itself is several hundred bytes, so it is boxed and the engine pays
     // one pointer for a feature that is off by default. Doubled-key restore adds the
-    // `literal` string (24 bytes), which allocates only once a word has a revert.
+    // `literal` string (24 bytes); `Session::new` reserves its 32 bytes up front, so
+    // the revert that fills it never allocates on the keystroke path.
     // Keep `benchmarks/README.md` in step when this moves.
     assert_eq!(std::mem::size_of::<Engine>(), 176);
 }

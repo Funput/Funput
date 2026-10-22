@@ -20,7 +20,7 @@ pub(super) fn replay(scratch: &mut Session, word: &[char]) -> bool {
         if scratch.buffer.is_empty() && key.is_ascii_digit() {
             return false;
         }
-        scratch.keys.push(key);
+        scratch.push_key(key);
         pipeline::process(scratch, key, key, false);
     }
     scratch
@@ -40,6 +40,7 @@ pub(super) fn prepare(scratch: &mut Session, config: &EngineConfig) {
     scratch.config.clone_from(config);
     scratch.config.smart_restore = false;
     scratch.config.eager_restore = false;
+    scratch.config.restore_doubled_keys = false;
     scratch.config.spell_check = false;
     scratch.config.auto_capitalize = false;
     scratch.config.typo_correction = false;

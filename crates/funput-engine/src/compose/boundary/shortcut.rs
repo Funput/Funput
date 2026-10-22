@@ -2,6 +2,7 @@
 //! `shortcut_smart_case` is on.
 
 use crate::ImeResult;
+use crate::compose::doubled;
 use crate::model::{NumberGlue, Session};
 
 /// The letter-casing pattern of typed keys, used to mirror the expansion's case
@@ -77,11 +78,19 @@ pub(super) fn expansion(session: &Session, boundary_key: char) -> Option<ImeResu
     }
     // A trigger is written however the user thinks of the word: as keys (`vn`,
     // `ddc`) or as the Vietnamese they compose to (`đc`, `mấy`). The keys go first so
-    // a table written for them keeps its meaning, then the word on screen.
-    let keys = &session.keys;
-    let buffer = &session.buffer;
-    let cased = lookup(session, keys)
-        .or_else(|| (buffer != keys).then(|| lookup(session, buffer)).flatten())?;
+    // a table written for them keeps its meaning, then the word on screen. Keys as
+    // typed come before what a revert left of them, so `pass` reaches a `pass`
+    // trigger whether or not the word was decided mid-word, and still reaches `pas`.
+    let typed = doubled::typed_keys(session);
+    let keys = session.keys.as_str();
+    let buffer = session.buffer.as_str();
+    let cased = lookup(session, typed)
+        .or_else(|| (keys != typed).then(|| lookup(session, keys)).flatten())
+        .or_else(|| {
+            (buffer != keys && buffer != typed)
+                .then(|| lookup(session, buffer))
+                .flatten()
+        })?;
     let output = format!("{cased}{boundary_key}");
     Some(ImeResult::send(session.buffer.chars().count(), output))
 }

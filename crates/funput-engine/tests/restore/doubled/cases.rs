@@ -22,6 +22,43 @@ fn an_english_word_gets_its_doubled_key_back() {
 }
 
 #[test]
+fn digits_glued_to_a_listed_word_keep_its_keys() {
+    for (keys, text) in [
+        ("pass1 ", "pass1 "),
+        ("boss23 ", "boss23 "),
+        ("Password1 ", "Password1 "),
+        // `off` is not listed, so the habit still wins with a number after it.
+        ("off1 ", "of1 "),
+    ] {
+        assert_eq!(telex(keys), text, "{keys:?}");
+    }
+}
+
+/// With eager restore off the doubled key lands on a composed tone (`clá` + `s`)
+/// rather than on raw letters, so many more words revert. The table lists those too.
+#[test]
+fn eager_restore_off_gets_back_the_words_only_it_shortens() {
+    for (keys, text) in [
+        ("class ", "class "),
+        ("order ", "order "),
+        ("process ", "process "),
+        ("cases ", "cases "),
+        ("received ", "received "),
+    ] {
+        let mut on = engine(InputMethod::Telex, true);
+        on.update_config(|config| config.eager_restore = false);
+        assert_eq!(app_text_in(&mut on, keys), text, "{keys:?}");
+        let mut off = engine(InputMethod::Telex, false);
+        off.update_config(|config| config.eager_restore = false);
+        assert_ne!(
+            app_text_in(&mut off, keys),
+            text,
+            "{keys:?} needs no restore"
+        );
+    }
+}
+
+#[test]
 fn the_raw_keys_come_back_in_the_case_they_were_typed() {
     assert_eq!(telex("Password "), "Password ");
     assert_eq!(telex("PASSWORD "), "PASSWORD ");
@@ -53,6 +90,25 @@ fn vietnamese_is_untouched() {
 fn advanced_telex_restores_too() {
     let mut advanced = engine(InputMethod::TelexAdvanced, true);
     assert_eq!(app_text_in(&mut advanced, "password "), "password ");
+    // `w` alone is `ư` there, so `ww` is how a plain `w` is typed.
+    let mut advanced = engine(InputMethod::TelexAdvanced, true);
+    assert_eq!(app_text_in(&mut advanced, "ww "), "w ");
+}
+
+/// A revert can lose a key that sits apart from its twin (`ma[r]ke[r]s`). Nobody types
+/// that for the shorter word, so it comes back even when the shorter one is commoner.
+#[test]
+fn a_key_lost_away_from_its_twin_comes_back() {
+    for (keys, text) in [
+        ("casts ", "casts "),
+        ("nests ", "nests "),
+        ("doses ", "doses "),
+    ] {
+        assert_eq!(telex(keys), text, "{keys:?}");
+    }
+    let mut lazy = engine(InputMethod::Telex, true);
+    lazy.update_config(|config| config.eager_restore = false);
+    assert_eq!(app_text_in(&mut lazy, "markers "), "markers ");
 }
 
 /// `s` is the onset and the sắc key at once: the first `ss` reverts the tone the

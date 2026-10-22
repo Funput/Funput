@@ -2,6 +2,7 @@
 //! (`password`, not `pasword`), while the doubled-key habit and Vietnamese stay put.
 
 mod cases;
+mod flip;
 mod invariant;
 mod midword;
 mod toggles;

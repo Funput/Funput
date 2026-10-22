@@ -51,8 +51,44 @@ fn a_flip_before_the_doubled_key_wins() {
     );
 }
 
+/// A trigger is matched against the keys as typed first, so it fires the same way
+/// whether the word was decided mid-word (`office`) or only at its boundary (`pass`).
 #[test]
-fn a_shortcut_on_the_shortened_keys_wins() {
+fn a_shortcut_on_the_typed_keys_fires_with_eager_restore_on_or_off() {
+    for eager in [true, false] {
+        let shortcuts = |engine: &mut Engine| {
+            engine.update_config(|c| c.eager_restore = eager);
+            engine.add_shortcut("office", "Văn phòng");
+            engine.add_shortcut("pass", "mật khẩu");
+        };
+        assert_eq!(
+            with_feature("office ", shortcuts),
+            "Văn phòng ",
+            "eager {eager}"
+        );
+        assert_eq!(
+            with_feature("pass ", shortcuts),
+            "mật khẩu ",
+            "eager {eager}"
+        );
+    }
+}
+
+/// With a trigger for each spelling, the keys as typed win: `pass` was typed.
+#[test]
+fn the_trigger_for_the_typed_keys_beats_the_one_for_the_shortened_keys() {
+    let both = |engine: &mut Engine| {
+        engine.add_shortcut("pas", "Pasteur");
+        engine.add_shortcut("pass", "mật khẩu");
+    };
+    assert_eq!(with_feature("pass ", both), "mật khẩu ");
+    assert_eq!(without_feature("pass ", both), "Pasteur ");
+}
+
+/// Alone, a trigger written for the shortened keys still fires: the habit of doubling
+/// a key for a plain letter meant `pas`.
+#[test]
+fn a_shortcut_on_the_shortened_keys_still_fires() {
     let shortcut = |engine: &mut Engine| engine.add_shortcut("pas", "Pasteur");
     assert_eq!(with_feature("pass ", shortcut), "Pasteur ");
     assert_eq!(without_feature("pass ", shortcut), "Pasteur ");

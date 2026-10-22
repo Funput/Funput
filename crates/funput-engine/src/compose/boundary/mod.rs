@@ -115,7 +115,7 @@ fn boundary_result(session: &mut Session, boundary_key: char) -> ImeResult {
     if doubled::restorable(session) {
         // The word is English, so typo correction must not park a repair for it.
         correction::drop_preview(session);
-        return replace_word(session, &session.literal, boundary_key);
+        return replace_word(session, session.literal.as_str(), boundary_key);
     }
     let verdict = judge(session);
     // Typo correction looks at the word before English restore does, and is
