@@ -93,10 +93,22 @@ pub enum DevCommand {
         #[arg(long)]
         json: bool,
     },
-    /// Round-trip coverage check over a Vietnamese corpus (Telex, Advanced & VNI).
+    /// Round-trip coverage check over a Vietnamese corpus (Telex, Advanced & VNI),
+    /// or with `--english`, how the English lexicon comes out typed under Telex.
     Coverage {
-        /// Corpus file (one word per line). Defaults to `benchmarks/sample.txt`.
+        /// Corpus file (one word per line). Defaults to `benchmarks/sample.txt`, or
+        /// with `--english` to `crates/funput-suggestions/data/lexicon/en.tsv`.
         corpus: Option<PathBuf>,
+        /// Type the English lexicon and sort the words that come out wrong.
+        #[arg(long)]
+        english: bool,
+        /// With `--english`: compare the counts with this baseline file, and exit
+        /// non-zero when any of them moved.
+        #[arg(long, requires = "english")]
+        baseline: Option<PathBuf>,
+        /// With `--baseline`: overwrite the file with the counts instead of checking.
+        #[arg(long, requires = "baseline")]
+        write_baseline: bool,
         /// Emit machine-readable JSON instead of a human report.
         #[arg(long)]
         json: bool,

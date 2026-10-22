@@ -68,9 +68,34 @@ pub fn run(args: DevArgs) -> CliResult {
         }
         DevCommand::Coverage {
             corpus,
+            english: true,
             json,
             show_mismatches,
             limit,
+            baseline,
+            write_baseline,
+        } => {
+            let path = corpus.unwrap_or_else(|| PathBuf::from(coverage::english::LEXICON));
+            let options = coverage::english::Options {
+                json,
+                show: show_mismatches,
+                limit,
+                baseline: baseline.as_deref(),
+                write_baseline,
+            };
+            let matches = coverage::english::run(&path, &options).map_err(|e| {
+                CliError::Msg(format!("coverage --english: {}: {e}", path.display()))
+            })?;
+            if !matches {
+                return Ok(ExitCode::FAILURE);
+            }
+        }
+        DevCommand::Coverage {
+            corpus,
+            json,
+            show_mismatches,
+            limit,
+            ..
         } => {
             let path = corpus.unwrap_or_else(|| PathBuf::from("benchmarks/sample.txt"));
             coverage::run(&path, json, show_mismatches, limit).map_err(|e| {
