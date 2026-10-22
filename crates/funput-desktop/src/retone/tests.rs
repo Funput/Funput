@@ -31,7 +31,7 @@ fn backspace_over_the_space_reopens_the_word() {
     let mut tail = CommittedTail::new();
     commit(&mut tail, "phủ", ' ');
 
-    assert_eq!(tail.backspace(), Some("phủ"));
+    assert_eq!(tail.backspace().and_then(|hit| hit.word), Some("phủ"));
     tail.resolve(true);
     // The word belongs to the engine now, so the shadow no longer claims it.
     assert_eq!(tail.backspace(), None);
@@ -49,7 +49,7 @@ fn a_key_that_is_still_composing_leaves_the_shadow_alone() {
     tail.before_key("c");
     tail.after_key('h', &none(), "ch");
 
-    assert_eq!(tail.backspace(), Some("phủ"));
+    assert_eq!(tail.backspace().and_then(|hit| hit.word), Some("phủ"));
 }
 
 #[test]
@@ -59,13 +59,14 @@ fn every_separator_has_to_be_deleted_before_the_word_is_offered() {
     tail.before_key("");
     tail.after_key(' ', &none(), ""); // a space typed on an empty composition
 
+    let space = tail.backspace().expect("the space was deleted");
     assert_eq!(
-        tail.backspace(),
-        None,
-        "deleted the space, caret on the comma"
+        (space.deleted, space.word),
+        (' ', None),
+        "caret on the comma"
     );
     assert_eq!(
-        tail.backspace(),
+        tail.backspace().and_then(|hit| hit.word),
         Some("phủ"),
         "deleted the comma, caret at the end of the word"
     );
@@ -80,8 +81,9 @@ fn a_passed_through_digit_counts_as_a_character() {
     tail.before_key("");
     tail.after_key('1', &none(), "");
 
-    assert_eq!(tail.backspace(), None); // deleted the digit
-    assert_eq!(tail.backspace(), Some("phủ"));
+    let digit = tail.backspace().expect("the digit was deleted");
+    assert_eq!((digit.deleted, digit.word), ('1', None));
+    assert_eq!(tail.backspace().and_then(|hit| hit.word), Some("phủ"));
 }
 
 /// English restore and gõ tắt expansion inject the finished text themselves; the
@@ -92,7 +94,7 @@ fn injected_output_is_folded_in_whole() {
     tail.before_key("tẽt");
     tail.after_key(' ', &send(3, "text "), "");
 
-    assert_eq!(tail.backspace(), Some("text"));
+    assert_eq!(tail.backspace().and_then(|hit| hit.word), Some("text"));
 }
 
 #[test]
@@ -102,7 +104,7 @@ fn an_expansion_offers_only_its_last_word() {
     tail.after_key(' ', &send(2, "Việt Nam "), "");
 
     // `Nam` is what the caret is at the end of — `Việt` is two words back.
-    assert_eq!(tail.backspace(), Some("Nam"));
+    assert_eq!(tail.backspace().and_then(|hit| hit.word), Some("Nam"));
 }
 
 /// A refused word (the engine only adopts real syllables) stays on screen, and so
@@ -115,9 +117,9 @@ fn a_refused_word_keeps_the_shadow() {
     commit(&mut tail, "chào", ' ');
     commit(&mut tail, "dungh", ' ');
 
-    assert_eq!(tail.backspace(), Some("dungh"));
+    assert_eq!(tail.backspace().and_then(|hit| hit.word), Some("dungh"));
     tail.resolve(false); // not a syllable
-    assert_eq!(tail.backspace(), Some("dung"));
+    assert_eq!(tail.backspace().and_then(|hit| hit.word), Some("dung"));
     tail.resolve(true); // `dung` is the live composition now
 }
 
@@ -152,7 +154,7 @@ fn trimming_drops_whole_words_and_keeps_the_last_one() {
         "trimming cut a word in half: {:?}",
         tail.tail
     );
-    assert_eq!(tail.backspace(), Some("phủ"));
+    assert_eq!(tail.backspace().and_then(|hit| hit.word), Some("phủ"));
 }
 
 /// A single run longer than the cap has no separator to cut at, so the shadow gives

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use funput_core::sentence::{Rules, Scanner};
 use funput_core::{InputMethod, ToneStyle};
 
 use crate::correction;
@@ -22,7 +21,7 @@ impl Engine {
             self.session.clear();
         }
         if auto_capitalize_off {
-            self.session.scanner = Scanner::mid_text(Rules::TYPING);
+            self.session.sentence.disarm();
         }
     }
 
@@ -72,7 +71,7 @@ impl Engine {
     /// it knows something about the caret that the keystrokes cannot say.
     pub fn arm_capitalization(&mut self) {
         if self.session.config.auto_capitalize {
-            self.session.scanner = Scanner::new(Rules::TYPING);
+            self.session.sentence.arm();
         }
     }
 
@@ -82,7 +81,7 @@ impl Engine {
     /// here end a sentence. Not gated on the switch: a lost position is lost either
     /// way, and [`Self::configure`] resets to the same state when it turns off.
     pub fn disarm_capitalization(&mut self) {
-        self.session.scanner = Scanner::mid_text(Rules::TYPING);
+        self.session.sentence.disarm();
     }
 
     /// Reset per-word state without changing settings.

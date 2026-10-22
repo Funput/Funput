@@ -2,12 +2,10 @@
 
 use std::collections::HashMap;
 
-use funput_core::sentence::{Rules, Scanner};
-
 use crate::compose::RestoreOverride;
 use crate::compose::doubled::Literal;
 use crate::correction::CorrectionState;
-use crate::model::{EngineConfig, NumberGlue};
+use crate::model::{EngineConfig, NumberGlue, SentenceTrace};
 
 /// Mutable session held by [`crate::Engine`]. Internal — not part of the public API.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,16 +27,8 @@ pub(crate) struct Session {
     /// Every key since the word boundary, once the word has had a revert. Per-word —
     /// reset by `clear()` and by Backspace.
     pub(crate) literal: Literal,
-    /// Where auto-capitalize thinks the next letter sits, by the sentence rules
-    /// every Funput platform shares. Fed one keystroke at a time, because a desktop
-    /// shell hands the engine keys and never the document. Survives `clear()` —
-    /// capitalize state spans word commits.
-    ///
-    /// Resumed rather than started: a new session does not know where the caret is,
-    /// and assuming the start of a document would capitalize the first word typed
-    /// after switching apps. A host that does know says so through
-    /// [`crate::Engine::arm_capitalization`].
-    pub(crate) scanner: Scanner,
+    /// Auto-capitalize's sentence position. Survives `clear()` — see [`SentenceTrace`].
+    pub(crate) sentence: SentenceTrace,
     /// Text-expansion table (gõ tắt): trigger → expansion. Matched smart-case at a
     /// word boundary, before English restore, against the keys as typed (`literal`
     /// when a revert dropped one), then `keys`, then the composed `buffer`, so `vn`
@@ -74,7 +64,7 @@ impl Session {
             buffer: String::new(),
             keys: String::new(),
             literal: Literal::new(),
-            scanner: Scanner::mid_text(Rules::TYPING),
+            sentence: SentenceTrace::mid_text(),
             shortcuts: HashMap::new(),
             vn_form: String::new(),
             restore_override: None,

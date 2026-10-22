@@ -36,5 +36,5 @@ pub use funput_engine::{ImeResult, KeySource};
 pub use inject::{InjectPlan, plan_inject};
 pub use key::{KeyEvent, KeyKind, Mods, classify};
 pub use layout::is_foreign_layout;
-pub use retone::CommittedTail;
+pub use retone::{CommittedTail, Removed};
 pub use shell::ShellState;

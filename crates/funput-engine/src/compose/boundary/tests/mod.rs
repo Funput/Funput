@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
-use funput_core::sentence::{Rules, Scanner};
 use funput_core::{InputMethod, SyllableRules, ToneStyle};
 
 use crate::compose::doubled::Literal;
-use crate::model::{EngineConfig, NumberGlue, Session};
+use crate::model::{EngineConfig, NumberGlue, SentenceTrace, Session};
 
 fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
     Session {
@@ -26,7 +25,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
         buffer: buffer.into(),
         keys: keys.into(),
         literal: Literal::new(),
-        scanner: Scanner::mid_text(Rules::TYPING),
+        sentence: SentenceTrace::mid_text(),
         shortcuts: HashMap::new(),
         vn_form: String::new(),
         restore_override: None,

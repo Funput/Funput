@@ -53,9 +53,20 @@ impl Engine {
         }
         correction::discard(&mut self.session);
         correction::invalidate(&mut self.session);
-        self.session.buffer.pop();
+        // Only when the deleted character is the key that was pushed. A composed
+        // syllable does not match, and must not rewind a key still on screen.
+        if let Some(deleted) = self.session.buffer.pop() {
+            self.rewind_sentence(deleted);
+        }
         self.session.resync_after_backspace();
         ImeResult::none()
+    }
+
+    /// Undo the sentence effect of `deleted` when it is the last key the engine
+    /// was fed. The desktop shell calls this for a committed character, which
+    /// never lived in the composition buffer — a full stop, for example.
+    pub fn rewind_sentence(&mut self, deleted: char) {
+        self.session.sentence.rewind(deleted);
     }
 
     /// Flip the live word between its Vietnamese and raw-keystroke forms.

@@ -56,11 +56,14 @@ impl Shell {
             self.engine.on_backspace();
             return;
         }
-        let Some(word) = self.tail.backspace() else {
+        let Some(removed) = self.tail.backspace() else {
             return;
         };
-        let adopted = self.engine.adopt(word);
-        self.tail.resolve(adopted);
+        self.engine.rewind_sentence(removed.deleted);
+        if let Some(word) = removed.word {
+            let adopted = self.engine.adopt(word);
+            self.tail.resolve(adopted);
+        }
     }
 
     /// `KeyKind::Flush`: a caret key, Enter, a shortcut, or a mouse click.

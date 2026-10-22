@@ -39,8 +39,11 @@ impl Engine {
         // `…` arrives here too, which is how it counts as a sentence end without
         // `is_english_boundary` — that predicate also gates gõ tắt and English
         // restore, and widening it would start expanding triggers on an ellipsis.
+        // Snapshotted first: `prepare_key` may consume a sentence start, and
+        // Backspace has to restore that together with the key.
+        let before = self.session.sentence.snapshot();
         let result = self.compose_key(key, source, touch);
-        self.session.scanner.push(key);
+        self.session.sentence.push(key, before);
         let word_open = !self.session.keys.is_empty();
         self.session.glue.after_key(key, word_open);
         result
@@ -106,7 +109,7 @@ impl Engine {
         if !self.session.config.auto_capitalize || !self.session.buffer.is_empty() {
             return (key, false);
         }
-        if !self.session.scanner.awaiting_sentence() {
+        if !self.session.sentence.awaiting_sentence() {
             // Nothing to take, and taking anyway would drop a terminator still
             // waiting for its space — which is what a closer like `»` is doing here,
             // since it is not ASCII and so never reached the boundary path.
@@ -115,7 +118,7 @@ impl Engine {
         // Taken here rather than left to the push below, because `[` expanding to a
         // whole word is punctuation as far as the scan is concerned and would leave
         // the sentence open over the word it just wrote.
-        self.session.scanner.consume_sentence_start();
+        self.session.sentence.consume_sentence_start();
         if key.is_alphabetic() {
             return (key.to_ascii_uppercase(), false);
         }
