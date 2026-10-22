@@ -6,8 +6,8 @@
 lệch khỏi thiết kế nằm ở [§15](#15-kết-quả-giai-đoạn-1) và [§16](#16-kết-quả-giai-đoạn-2). Các chỗ sửa
 sau hai vòng code review nằm ở [§17](#17-sửa-sau-review). Vòng 1: Flip đọc chuỗi phím đã gõ, bảng quét
 cả khi tắt eager restore, gõ tắt, chữ số. Vòng 2: phủ quyết tần suất chỉ áp cho thói quen gõ lặp, và
-phần đầu quyết định hỏi điều thói quen gõ lặp muốn gõ (`meant`). Giai đoạn 1b, 3 và 4 vẫn là thiết kế
-(§12).
+phần đầu quyết định hỏi điều thói quen gõ lặp muốn gõ (`meant`). Giai đoạn 1b (lệnh đo độ phủ tiếng Anh
+và cổng chặn trong CI, §11.3) cũng đã làm. Giai đoạn 3 và 4 vẫn là thiết kế (§12).
 Nguồn: [issue #611](https://github.com/Funput/Funput/issues/611) — "Tự động hủy dấu khi gõ tiếp từ
 và không nuốt phím. Tiện lợi khi gõ song ngữ."
 
@@ -413,7 +413,8 @@ restore `cảd ` → `card `.
 | `crates/funput-lexicon-tool/src/doubled/` (mới: `mod.rs`, `scan.rs`, `habit.rs`, `overrides.rs`, `decisive.rs`) | Lệnh `doubled --out DIR`: sinh `words.txt` và `decisive.txt` từ một lần quét. `scan::SETUPS` có 8 `Setup` (§6.4) |
 | `crates/funput-lexicon-tool/src/doubled/habit.rs` (mới, vòng 2 của review) | Thói quen gõ lặp: `collapses_doubled_keys(word, form)` (dạng rút gọn chỉ bỏ phím ở các cặp phím đôi đứng cạnh nhau, §5.5) và `meant(typed, reverting)` (chuỗi phím đã gõ bỏ mỗi phím hủy dấu lặp lại phím trước nó, §5.3) |
 | `crates/funput-desktop/src/shell/config/mod.rs` | Chưa có cài đặt riêng: lấy `EngineConfig::default().restore_doubled_keys` thay vì viết lại giá trị mặc định |
-| `crates/funput-cli/src/dev/coverage/` | Thêm chế độ đo độ phủ tiếng Anh (§11.3). Giai đoạn 1b, **chưa làm** |
+| `crates/funput-cli/src/dev/coverage/english/` | `funput dev coverage --english`: đo độ phủ tiếng Anh và so với đường cơ sở (§11.3). Giai đoạn 1b, **đã làm** |
+| `benchmarks/results/english-coverage.txt` | Đường cơ sở của phép đo trên |
 
 `funput-engine` **vẫn chỉ phụ thuộc `funput-core`**. Bảng là mã nguồn được sinh, không phải dependency.
 
@@ -869,9 +870,43 @@ Bộ sinh có 22 unit test riêng (`funput-lexicon-tool/src/doubled/`):
 
 ### 11.3. Đo độ phủ tiếng Anh: `funput dev coverage --english`
 
-Lệnh mới tự động hoá phép đo đã làm tay ở §2: gõ mọi từ trong `en.tsv` kèm dấu cách, phân loại kết quả
-sai thành *mất phím lặp*, *trùng âm tiết tiếng Việt* và *khác*. `--json` dùng cho CI. Đường cơ sở được
-lưu ở `benchmarks/results/`. CI báo lỗi nếu số từ hỏng **tăng**, và đường cơ sở chỉ được hạ xuống.
+**Đã làm (giai đoạn 1b).** Lệnh tự động hoá phép đo đã làm tay ở §2 và §15.4: gõ mọi từ chữ thường
+ASCII trong `en.tsv` kèm dấu cách, dưới Telex, một lần bật và một lần tắt eager restore. Mỗi từ ra sai
+được xếp vào một trong ba loại (`coverage/english/outcome.rs`):
+
+| Loại | Điều kiện | Ví dụ |
+|---|---|---|
+| `lost_key` (mất phím lặp) | Chữ ASCII nhưng ngắn hơn từ đã gõ | `off` → `of` |
+| `vietnamese` (còn dạng tiếng Việt) | Có chữ tiếng Việt | `is` → `í`, `been` → `bên` |
+| `other` | Còn lại | Hiện là 0 |
+
+```bash
+funput dev coverage --english --show-mismatches 5            # báo cáo, kèm 5 ví dụ mỗi loại
+funput dev coverage --english --json                         # máy đọc
+funput dev coverage --english --baseline benchmarks/results/english-coverage.txt                  # so, khác thì exit 1
+funput dev coverage --english --baseline benchmarks/results/english-coverage.txt --write-baseline # ghi lại
+```
+
+Đường cơ sở là `benchmarks/results/english-coverage.txt`, mỗi dòng `tên số`. Hôm nay:
+
+| Cấu hình | Tổng | Sai | Mất phím lặp | Còn tiếng Việt | Khác |
+|---|---:|---:|---:|---:|---:|
+| `telex.eager` (eager restore bật) | 25 979 | 587 | 10 | 577 | 0 |
+| `telex.lazy` (eager restore tắt) | 25 979 | 1 243 | 13 | 1 230 | 0 |
+
+**Cổng chặn** là test `the_engine_types_english_as_the_baseline_says` trong
+`crates/funput-cli/src/dev/coverage/english/tests.rs`. Test nằm trong `cargo test --workspace`, nên job
+`rust` của CI chạy nó mà không cần thêm job hay required check mới. Test so **khớp tuyệt đối**:
+
+- Một số tăng là hồi quy, test đỏ.
+- Một số giảm cũng làm test đỏ, kèm lời nhắc hạ đường cơ sở ngay trong cùng thay đổi. Nhờ vậy lần hồi
+  quy sau được bắt từ mức mới, không phải mức cũ.
+- `en.tsv` đổi số từ thì test báo phải ghi lại đường cơ sở.
+
+Thông báo lỗi in sẵn lệnh ghi lại. Trên máy dev, test chạy dưới 1 giây (bản debug).
+
+Lệnh này chưa có cờ tắt `restore_doubled_keys`, nên con số "trước tính năng" (1 477) vẫn đo theo cách ở
+§15.4.
 
 ### 11.4. Độ mới của bảng
 
@@ -901,7 +936,7 @@ Telex, cấu hình mặc định, trong một ô nhập thường (Notes / Notep
 | Giai đoạn | Nội dung | PR đề xuất | Nền tảng phải sửa |
 |---|---|---|---|
 | 1 (**đã làm**) | `literal`, `restore_doubled_keys`, bộ sinh bảng, `words.txt`, quyết định ở dấu cách, test §11.1–11.2 và §11.4 | 2 commit: (a) engine + test, (b) bộ sinh + bảng | Không |
-| 1b | `funput dev coverage --english` + đường cơ sở CI | 1 PR (có thể làm trước để đo) | Không |
+| 1b (**đã làm**) | `funput dev coverage --english` + đường cơ sở CI (§11.3) | 1 PR | Không |
 | 2 (**đã làm**) | `decisive.txt`, quyết định giữa từ (§16) | 2 commit trên cùng PR: (a) engine + test, (b) bộ sinh | Không |
 | 3 | Flip ba trạng thái (`ForceLiteral`), `boundary_undo` dùng chung. Flip đọc chuỗi phím đã gõ thì đã làm sau review (§8.1, §17) | 2 PR | Không trên di động. Máy tính chỉ có Flip |
 | 4 (tuỳ chọn) | Di động bổ sung từ người dùng đã học vào bảng (`add_doubled_words`) | Sau khi có số liệu thực tế | iOS, Android |
@@ -1009,7 +1044,8 @@ Số từ được sửa (880) cao hơn ước tính ban đầu (~708, §2). Lý
 
 ### 15.4. Cách đo lại
 
-Cho tới khi có `funput dev coverage --english` (giai đoạn 1b, §11.3):
+Từ giai đoạn 1b, `funput dev coverage --english` (§11.3) đo thay cho cách dưới đây. Cách cũ vẫn dùng được
+khi cần đo với tính năng tắt:
 
 ```bash
 awk -F'\t' '!/^#/ && $1 ~ /^[a-z]+$/ {print $1}' crates/funput-suggestions/data/lexicon/en.tsv > /tmp/en_words.txt

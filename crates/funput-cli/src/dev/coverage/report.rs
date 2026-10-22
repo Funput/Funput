@@ -73,7 +73,7 @@ fn pct(covered: usize, total: usize) -> f64 {
 
 /// Escape a string for embedding in a JSON double-quoted value. No dependency: it
 /// handles exactly what JSON requires — `"`, `\`, and control characters below 0x20.
-fn json_escape(s: &str) -> String {
+pub(super) fn json_escape(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + 2);
     for c in s.chars() {
         match c {

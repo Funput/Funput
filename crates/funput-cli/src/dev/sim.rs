@@ -34,6 +34,7 @@ pub struct SimConfig {
     pub method: InputMethod,
     pub tone_style: ToneStyle,
     pub smart_restore: bool,
+    pub eager_restore: bool,
     pub spell_check: bool,
     pub syllable_rules: SyllableRules,
 }
@@ -46,6 +47,7 @@ impl SimConfig {
             method,
             tone_style: ToneStyle::Traditional,
             smart_restore: true,
+            eager_restore: true,
             spell_check: false,
             syllable_rules: SyllableRules::STANDARD,
         }
@@ -59,6 +61,7 @@ pub fn simulate_with(config: SimConfig, input: &str) -> Simulation {
     engine.set_method(config.method);
     engine.update_config(|c| c.tone_style = config.tone_style);
     engine.update_config(|c| c.smart_restore = config.smart_restore);
+    engine.update_config(|c| c.eager_restore = config.eager_restore);
     engine.update_config(|c| c.spell_check = config.spell_check);
     engine.update_config(|c| c.syllable_rules = config.syllable_rules);
 

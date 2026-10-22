@@ -6,6 +6,7 @@
 //! Smart-restore is off to measure pure composition.
 
 pub(super) mod corpus;
+pub(super) mod english;
 mod report;
 #[cfg(test)]
 mod tests;

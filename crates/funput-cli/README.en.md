@@ -27,12 +27,15 @@ funput dev run --steps "a1"          # per-keystroke table
 funput dev repl -m telex --steps     # REPL: type a line + Enter; :q or Ctrl-D to quit
 funput dev run -m telex --extra-onsets "zoo fair "  # z/f/w/j onsets (zô, fải)
 funput dev coverage benchmarks/sample.txt   # round-trip Telex & VNI over a corpus
+funput dev coverage --english               # type the English lexicon in Telex, count wrong words
 ```
 
 ```
 funput dev run      [-m telex|vni] [--steps] [--extra-onsets] <INPUT>   # transform → app-text (or a --steps table)
 funput dev repl     [-m telex|vni] [--steps] [--extra-onsets]           # line-by-line REPL
 funput dev coverage [CORPUS] [--json] [--show-mismatches N] [--limit N]
+funput dev coverage --english [LEXICON] [--json] [--show-mismatches N] [--limit N]
+                    [--baseline FILE [--write-baseline]]
 ```
 
 - `INPUT` is a **literal string**; spaces and punctuation are **word boundaries**. English-restore
@@ -60,6 +63,20 @@ a machine-readable report for CI:
 ```bash
 funput dev coverage benchmarks/sample.txt --show-mismatches 10
 funput dev coverage benchmarks/.corpus/Viet74K.txt --json
+```
+
+### English coverage
+
+`funput dev coverage --english` types every lowercase word of `en.tsv` plus a space through Telex (eager
+restore on and off) and counts the words that come out wrong by kind: lost a doubled key, left
+Vietnamese, other. `--baseline FILE` compares with a baseline and exits 1 when any count differs; add
+`--write-baseline` to rewrite it. The baseline lives in `benchmarks/results/english-coverage.txt`, and a
+test in `coverage/english/tests.rs` holds it in CI. Details:
+[doubled-key-restore.md §11.3](../../docs/features/doubled-key-restore.md).
+
+```bash
+funput dev coverage --english --show-mismatches 5
+funput dev coverage --english --baseline benchmarks/results/english-coverage.txt
 ```
 
 ## Usage — `funput convert`
@@ -150,6 +167,7 @@ src/
     ├── repl.rs    # line-based REPL
     ├── encode.rs  # reverse-encode text → Telex/VNI keystrokes (for coverage)
     └── coverage/  # mod (round-trip check) + corpus (load/filter) + report (human/json)
+        └── english/  # --english: outcome (classify) + counts + baseline + report
 ```
 
 Each command family is **one folder** owning its args + `run() -> CliResult`. Adding a product = a new
