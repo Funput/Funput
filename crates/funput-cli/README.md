@@ -27,12 +27,15 @@ funput dev run --steps "a1"          # bảng từng phím
 funput dev repl -m telex --steps     # REPL: gõ một dòng + Enter; :q hoặc Ctrl-D để thoát
 funput dev run -m telex --extra-onsets "zoo fair "  # phụ âm đầu z/f/w/j (zô, fải)
 funput dev coverage benchmarks/sample.txt   # round-trip Telex & VNI trên corpus
+funput dev coverage --english               # gõ từ điển tiếng Anh qua Telex, đếm từ ra sai
 ```
 
 ```
 funput dev run      [-m telex|vni] [--steps] [--extra-onsets] <INPUT>   # transform → app-text (hoặc bảng --steps)
 funput dev repl     [-m telex|vni] [--steps] [--extra-onsets]           # REPL đọc từng dòng
 funput dev coverage [CORPUS] [--json] [--show-mismatches N] [--limit N]
+funput dev coverage --english [LEXICON] [--json] [--show-mismatches N] [--limit N]
+                    [--baseline FILE [--write-baseline]]
 ```
 
 - `INPUT` là **chuỗi literal**; dấu cách và dấu câu là **ranh giới từ**. English-restore chỉ kích
@@ -59,6 +62,19 @@ VNI (đúng nếu tái tạo được ở **một trong hai** kiểu đặt dấ
 ```bash
 funput dev coverage benchmarks/sample.txt --show-mismatches 10
 funput dev coverage benchmarks/.corpus/Viet74K.txt --json
+```
+
+### Coverage tiếng Anh
+
+`funput dev coverage --english` gõ mọi từ chữ thường của `en.tsv` kèm dấu cách qua Telex (eager restore
+bật và tắt), rồi đếm từ ra sai theo loại: mất phím lặp, còn dạng tiếng Việt, khác. `--baseline FILE` so
+với đường cơ sở và exit 1 nếu có số nào khác; thêm `--write-baseline` để ghi lại. Đường cơ sở nằm ở
+`benchmarks/results/english-coverage.txt`, và test trong `coverage/english/tests.rs` giữ nó trong CI.
+Chi tiết: [doubled-key-restore.md §11.3](../../docs/features/doubled-key-restore.md).
+
+```bash
+funput dev coverage --english --show-mismatches 5
+funput dev coverage --english --baseline benchmarks/results/english-coverage.txt
 ```
 
 ## Dùng — `funput convert`
@@ -148,6 +164,7 @@ src/
     ├── repl.rs    # REPL line-based
     ├── encode.rs  # mã hoá ngược text → phím Telex/VNI (cho coverage)
     └── coverage/  # mod (round-trip check) + corpus (nạp/lọc) + report (human/json)
+        └── english/  # --english: outcome (phân loại) + counts + baseline + report
 ```
 
 Mỗi nhóm lệnh là **một thư mục** tự chứa args + `run() -> CliResult`. Thêm sản phẩm mới = thêm

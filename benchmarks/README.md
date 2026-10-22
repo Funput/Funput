@@ -140,6 +140,27 @@ Malformed corpus entries (two tone marks in one syllable, or a tone on the wrong
 vowel) are **not counted** — they are not valid Vietnamese, and the engine correctly
 declines to reproduce them (see `CORPUS_NOISE` in `crates/funput-cli/src/coverage.rs`).
 
+## English coverage
+
+The other direction: how English comes out of Telex, where a word is only known to be
+English once it ends. Every lowercase word of
+`crates/funput-suggestions/data/lexicon/en.tsv` is typed with a space after it, with eager
+restore on and off, and each wrong word is sorted by kind.
+
+```sh
+cargo run --release -p funput-cli -- dev coverage --english --show-mismatches 5
+```
+
+| Setup | Words | Wrong | Lost a doubled key | Left Vietnamese | Other |
+|---|---:|---:|---:|---:|---:|
+| Telex, eager restore on | 25,979 | 587 | 10 | 577 | 0 |
+| Telex, eager restore off | 25,979 | 1,243 | 13 | 1,230 | 0 |
+
+"Left Vietnamese" is the price of composing without knowing the language (`is` → `í`).
+The lost doubled keys left are ambiguous pairs kept on purpose (`off` → `of`). The counts are
+committed in `results/english-coverage.txt`, and a test in `cargo test --workspace` fails when
+any of them moves, up or down. See `docs/features/doubled-key-restore.md` §11.3.
+
 ## Data & licensing
 
 `sample.txt` is our own, MIT-licensed. We **do not vendor** the large word list —
