@@ -1,8 +1,8 @@
 //! The second axis: this shell's half of it.
 //!
 //! Nothing here decides anything either. Which transforms exist, what each is
-//! called, what pressing one does to a document and what a second press on the same
-//! one means — all of it lives in [`funput_convert::casing`], shared with the GTK
+//! called, and what a press does — append when absent, take every copy off when
+//! already applied — all of it lives in [`funput_convert::casing`], shared with the GTK
 //! window on Linux and with macOS through the C door. What is here is the mapping:
 //! a [`View`] poured into the `Casing` global, and five buttons tied back to the
 //! session.

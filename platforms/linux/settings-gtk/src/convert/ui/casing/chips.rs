@@ -1,10 +1,9 @@
 //! The five transform chips.
 //!
-//! Buttons, not toggles. A press **stacks** a transform onto the list, and pressing the
-//! one already on top is a no-op in the crate because every transform is idempotent. A
-//! toggle would promise that the second click takes it back off — that is `Hoàn tác`'s
-//! job, and not necessarily for the same transform — and it would flip itself before the
-//! refresh flipped it back, which is a re-entrancy hole bought for nothing.
+//! Buttons, not toggle widgets. A press asks the session to toggle that transform:
+//! off appends it, on takes every copy off. `refresh` paints the lit state from
+//! the session, so a `ToggleButton` would flip itself and then be painted back —
+//! the same re-entrancy `widget::connect_switch` already closes for the switches.
 //!
 //! Plain buttons in a `FlowBox`, not libadwaita's `pill`, and not `adw::WrapBox` —
 //! `docs/features/text-case.md` carries the measurements behind both, next to the same

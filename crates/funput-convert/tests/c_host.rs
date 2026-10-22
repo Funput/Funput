@@ -253,18 +253,19 @@ fn a_host_can_drive_the_casing_axis_by_index() {
     assert_eq!(read_text(&session.view().output_preview), "Gửi Về Tp. Hcm");
     assert!(!session.view().keep_d && !session.view().flatten_caps);
 
-    // A press a host made up is answered rather than fatal, like every other index
-    // on this door: it clamps to the last menu entry.
-    session.apply_transform(usize::MAX);
-    session.refresh();
-    assert_eq!(
-        session.view().transforms.last().copied(),
-        Some(menu.len() - 1),
-        "a made-up position should clamp to the last entry, not panic"
-    );
-
     session.clear_transforms();
     session.refresh();
     assert!(session.view().transforms.is_empty());
     assert_eq!(read_text(&session.view().output_preview), "GỬI VỀ TP. HCM");
+
+    // A press a host made up is answered rather than fatal, like every other index
+    // on this door: it clamps to the last menu entry. Done on an empty list so the
+    // clamp is an append, not a toggle of a transform that is already applied.
+    session.apply_transform(usize::MAX);
+    session.refresh();
+    assert_eq!(
+        session.view().transforms,
+        vec![menu.len() - 1],
+        "a made-up position should clamp to the last entry, not panic"
+    );
 }

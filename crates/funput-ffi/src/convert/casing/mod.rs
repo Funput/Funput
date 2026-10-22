@@ -5,10 +5,11 @@
 //! worth saying is the shape, because an ABI is append-only and a shape settled
 //! wrongly is settled forever:
 //!
-//! - **The transforms are a list the user built**, not a single choice. A press is
-//!   [`funput_convert_session_apply_transform`], undo takes the last one off, and the
-//!   list is read back the way every other collection on this door is read: a count
-//!   in the snapshot, then one accessor per index.
+//! - **The transforms are a list the user built**, not a single choice. A press
+//!   [`funput_convert_session_apply_transform`] toggles one: appends it when absent,
+//!   and takes every copy off when it is already applied. Undo takes the last one
+//!   off, and the list is read back the way every other collection on this door is
+//!   read: a count in the snapshot, then one accessor per index.
 //! - **The axis has a snapshot of its own.** `FunputConvertView` does not grow a tail
 //!   of fields that only some hosts read, and a third axis — if one ever arrives —
 //!   gets its own struct rather than lengthening a struct everyone reads.
@@ -38,8 +39,11 @@ pub struct FunputConvertCasing {
     pub flatten_caps: bool,
 }
 
-/// Press the transform at `index` in the menu. Out of range clamps, as everywhere
-/// else a menu position crosses this door.
+/// Toggle the transform at `index` in the menu.
+///
+/// Absent, it is appended. Already applied, every occurrence comes off and the
+/// rest keep their order. Out of range clamps, as everywhere else a menu
+/// position crosses this door.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn funput_convert_session_apply_transform(
     session: *mut FunputConvertSession,

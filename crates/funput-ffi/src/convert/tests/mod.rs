@@ -141,6 +141,15 @@ fn transforms_apply_in_order_and_come_back_off_one_at_a_time() {
             text(|out, cap| funput_convert_session_result_text(session, out, cap)),
             "GỬI VỀ TP. HCM"
         );
+
+        funput_convert_session_apply_transform(session, lower);
+        funput_convert_session_apply_transform(session, lower);
+        funput_convert_session_refresh(session);
+        assert_eq!(funput_convert_session_casing(session).count, 0);
+        assert_eq!(
+            text(|out, cap| funput_convert_session_result_text(session, out, cap)),
+            "GỬI VỀ TP. HCM"
+        );
         funput_convert_session_free(session);
     }
 }

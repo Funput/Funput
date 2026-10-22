@@ -548,8 +548,11 @@ int32_t funput_charset_detect(const uint32_t *text, uintptr_t text_len);
 
 #if defined(FUNPUT_CONVERT)
 /**
- * Press the transform at `index` in the menu. Out of range clamps, as everywhere
- * else a menu position crosses this door.
+ * Toggle the transform at `index` in the menu.
+ *
+ * Absent, it is appended. Already applied, every occurrence comes off and the
+ * rest keep their order. Out of range clamps, as everywhere else a menu
+ * position crosses this door.
  */
 void funput_convert_session_apply_transform(FunputConvertSession *session, uintptr_t index);
 #endif

@@ -313,17 +313,43 @@ fn undo_takes_off_one_transform_and_leaves_the_rest() {
     assert_eq!(session.view().transforms, vec![lower()]);
 }
 
-/// Every transform is idempotent, so a second press cannot change the document —
-/// and a list that grew anyway would make undo feel broken.
+/// The chip is lit, so the second click is how it goes dark — and the preview
+/// returns to the document, because the list is replayed from the original.
 #[test]
-fn pressing_the_same_transform_twice_does_not_grow_the_list() {
-    let mut session = Session::new();
-    session.set_input("việt nam".to_string());
-    session.apply_transform(upper());
+fn pressing_the_only_applied_transform_again_restores_the_document() {
+    let mut session = pasted("việt nam");
     session.apply_transform(upper());
     session.refresh();
-
+    assert_eq!(session.view().output_preview, "VIỆT NAM");
     assert_eq!(session.view().transforms, vec![upper()]);
+
+    session.apply_transform(upper());
+    session.refresh();
+    assert!(session.view().transforms.is_empty());
+    assert_eq!(session.view().output_preview, "việt nam");
+}
+
+/// A lit chip is that transform wherever it sits, not only the last one.
+/// Taking the middle one off leaves the others in order, replayed on the
+/// original text rather than on the text the removed transform had produced.
+#[test]
+fn pressing_a_transform_that_is_not_last_removes_it_and_keeps_the_rest() {
+    let sentence = transform(funput_core::textcase::Transform::Sentence);
+    let mut stacked = pasted("GỬI VỀ TP. HCM");
+    stacked.apply_transform(lower());
+    stacked.apply_transform(title());
+    stacked.apply_transform(sentence);
+
+    let mut kept = pasted("GỬI VỀ TP. HCM");
+    kept.apply_transform(lower());
+    kept.apply_transform(sentence);
+
+    stacked.apply_transform(title());
+    stacked.refresh();
+    kept.refresh();
+
+    assert_eq!(stacked.view().transforms, vec![lower(), sentence]);
+    assert_eq!(stacked.view().output_preview, kept.view().output_preview);
 }
 
 /// The transforms belonged to the document they were pressed on, exactly as the

@@ -11,8 +11,11 @@ use super::Session;
 
 impl Session {
     /// A transform button was pressed, by menu position.
+    ///
+    /// Absent, it is appended. Already applied, every copy comes off and the rest
+    /// keep their order, so a lit chip goes dark on the next click.
     pub fn apply_transform(&mut self, index: usize) {
-        self.casing.push(casing::at(index));
+        self.casing.toggle(casing::at(index));
     }
 
     /// Undo, which takes off the last transform rather than all of them: pressing a

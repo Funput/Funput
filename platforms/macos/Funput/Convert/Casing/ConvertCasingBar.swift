@@ -38,9 +38,10 @@ struct ConvertCasingBar: View {
         .disabled(!state.canUseCasing)
     }
 
-    /// A press appends; pressing the one already on top is a no-op in core, so the
-    /// chip is a button rather than a checkbox. The checkmark is the non-color cue
-    /// the guidelines require — the tint alone would not be one.
+    /// A press toggles in core: absent, the transform is appended; already applied,
+    /// every copy comes off. The chip stays a button because core owns the lit
+    /// state. The checkmark is the non-color cue the guidelines require — the tint
+    /// alone would not be one.
     private func chip(_ transform: ConvertTransform) -> some View {
         let isApplied = state.appliedTransforms.contains(transform.id)
         return Button {

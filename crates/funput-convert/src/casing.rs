@@ -70,13 +70,15 @@ pub struct Casing {
 }
 
 impl Casing {
-    /// Press a transform.
+    /// Press a transform that is off, or take one that is on back off.
     ///
-    /// Pressing the one already on top does nothing: every transform is idempotent
-    /// — core has a property test saying so — so a second press cannot change the
-    /// document, and letting it grow the list would only make undo feel broken.
-    pub fn push(&mut self, transform: Transform) {
-        if self.transforms.last() != Some(&transform) {
+    /// Absent, it is appended. Already in the list — wherever it sits, and however
+    /// many times — every copy comes off and the rest keep their order. A lit chip
+    /// is that membership, so the next click on it is how the chip goes dark.
+    pub fn toggle(&mut self, transform: Transform) {
+        if self.transforms.contains(&transform) {
+            self.transforms.retain(|applied| *applied != transform);
+        } else {
             self.transforms.push(transform);
         }
     }
@@ -158,14 +160,14 @@ mod tests {
         assert_eq!(at(usize::MAX), ALL[ALL.len() - 1]);
     }
 
-    /// The list is what the user pressed, and pressing the same button twice is not
-    /// two presses worth of document.
+    /// The list is the order pressed. A second press of a transform that is already
+    /// on takes every copy off; whatever is left keeps its order, and pressing it
+    /// once more appends it at the end.
     #[test]
-    fn the_list_records_presses_in_order_and_ignores_a_repeat() {
+    fn the_list_records_presses_in_order_and_a_second_press_removes_it() {
         let mut casing = Casing::default();
-        casing.push(Transform::Lower);
-        casing.push(Transform::Lower);
-        casing.push(Transform::Title);
+        casing.toggle(Transform::Lower);
+        casing.toggle(Transform::Title);
         assert_eq!(
             casing.indices(),
             vec![
@@ -174,8 +176,20 @@ mod tests {
             ]
         );
 
+        casing.toggle(Transform::Lower);
+        assert_eq!(casing.indices(), vec![index_of(Transform::Title).unwrap()]);
+
+        casing.toggle(Transform::Lower);
+        assert_eq!(
+            casing.indices(),
+            vec![
+                index_of(Transform::Title).unwrap(),
+                index_of(Transform::Lower).unwrap()
+            ]
+        );
+
         casing.undo();
-        assert_eq!(casing.indices(), vec![index_of(Transform::Lower).unwrap()]);
+        assert_eq!(casing.indices(), vec![index_of(Transform::Title).unwrap()]);
         casing.clear();
         assert!(casing.indices().is_empty());
     }
@@ -185,7 +199,7 @@ mod tests {
     #[test]
     fn the_reading_counts_are_not_disturbed_by_a_transform() {
         let mut casing = Casing::default();
-        casing.push(Transform::Upper);
+        casing.toggle(Transform::Upper);
         let plain = render(
             "việt nam",
             Charset::Unicode,
