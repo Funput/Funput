@@ -5,13 +5,16 @@
 //! word: nothing begins with `pasw`, so `password` shows `passw` at its `w`.
 //! Design: `docs/features/doubled-key-restore.md` §5.3.
 //!
-//! A raw-key prefix is decisive when, in every setup where a revert has happened by
-//! then, the word on screen (lowercased) begins no `en.tsv` word — one holding a
-//! Vietnamese letter begins none — and the prefix itself begins no word the list
-//! leaves out on purpose. That last rule keeps the switch from overriding the
-//! frequency call: `off` is left out because `of` is the commoner word, so no
-//! prefix that `off` starts with may switch to the raw keys either. Each listed word
-//! contributes its shortest decisive prefix, if it has one.
+//! A raw-key prefix is decisive when, in every setup with eager restore on where a
+//! revert has happened by then, neither the word on screen (lowercased) nor the keys
+//! as a doubled-key habit means them begin an `en.tsv` word, and the prefix itself
+//! begins no word the list leaves out on purpose. A screen holding a Vietnamese
+//! letter begins none, which is why the habit's reading is asked as well. Setups with
+//! eager restore off do not count: there the engine never switches mid-word. The
+//! last rule keeps the switch from overriding the frequency call: `off` is left out
+//! because `of` is the commoner word, so no prefix that `off` starts with may switch
+//! to the raw keys either. Each listed word contributes its shortest decisive
+//! prefix, if it has one.
 
 use std::collections::BTreeSet;
 use std::ops::Bound;
@@ -46,10 +49,13 @@ pub(crate) fn prefixes(
         .collect()
 }
 
+/// Only the setups with eager restore on count: the engine switches mid-word only
+/// there, and off, every listed word waits for its boundary.
 fn shortest(word: &str, english: &Words, excluded: &Words) -> Option<String> {
     let setups: Vec<Vec<Step>> = SETUPS
         .iter()
-        .map(|&(method, rules)| scan::typed(word, method, rules))
+        .filter(|setup| setup.eager)
+        .map(|&setup| scan::typed(word, setup))
         .collect();
     (1..=word.len()).find_map(|len| {
         let prefix = &word[..len];
@@ -57,9 +63,19 @@ fn shortest(word: &str, english: &Words, excluded: &Words) -> Option<String> {
         let reverted = steps.clone().any(|step| step.reverted);
         let unambiguous = steps
             .filter(|step| step.reverted)
-            .all(|step| !english.any_starts_with(&step.buffer.to_lowercase()));
+            .all(|step| !begins_a_word(english, step, prefix));
         (reverted && unambiguous && !excluded.any_starts_with(prefix)).then(|| prefix.to_owned())
     })
+}
+
+/// Whether the word typed so far could still be the start of an English word the
+/// user means. The screen is asked first; one holding a Vietnamese letter begins no
+/// word (`nêcs` for `necess`). So the keys are asked too, as a user doubling a key
+/// for a plain letter means them (`neces`, which begins `necessary`), whenever a
+/// doubled key reverted; with none, they are just the prefix of the listed word.
+fn begins_a_word(english: &Words, step: &Step, prefix: &str) -> bool {
+    english.any_starts_with(&step.buffer.to_lowercase())
+        || (step.meant != prefix && english.any_starts_with(&step.meant))
 }
 
 #[cfg(test)]
@@ -88,6 +104,18 @@ mod tests {
     fn never_decides_while_the_shortened_form_is_still_a_word() {
         assert_eq!(decisive("tesst", ENGLISH, &[]), None);
         assert_eq!(decisive("pass", ENGLISH, &[]), None);
+    }
+
+    #[test]
+    fn a_vietnamese_screen_does_not_hide_what_a_doubled_key_meant() {
+        // `necess` shows `nêcs`, which begins no word, yet a user doubling the `s`
+        // means `neces`, which begins `necessa`: the switch waits one key.
+        assert_eq!(
+            decisive("necessa", &["necessa"], &[]).as_deref(),
+            Some("necessa")
+        );
+        // And `necesa`, what `necessa` means to that user, may begin a word too.
+        assert_eq!(decisive("necessa", &["necessa", "necesary"], &[]), None);
     }
 
     #[test]

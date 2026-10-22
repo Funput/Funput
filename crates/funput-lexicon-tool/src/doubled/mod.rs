@@ -6,12 +6,15 @@
 //!   the boundary (see `decisive`).
 //!
 //! Design: `docs/features/doubled-key-restore.md`. A word is left out when what the
-//! revert leaves is itself a more frequent word: `off` shortens to `of`, and typing
-//! `off` for `of` is the habit the revert exists for. `pass` stays, because `pas`
-//! is far rarer. Both lists come from one scan, sorted and lowercase, one entry per
-//! line, so the engine can binary-search them in place.
+//! revert leaves is what a doubled key may well have been typed for: a more frequent
+//! word one doubled key shorter (`off` → `of`, the habit the revert exists for), or a
+//! single letter (`ww` → `w`). `pass` stays, because `pas` is far rarer, and so do
+//! `markers` and `casts`, whose lost key sits apart from its twin (see `habit`).
+//! Both lists come from one scan, sorted and lowercase, one entry per line, so the
+//! engine can binary-search them in place.
 
 mod decisive;
+mod habit;
 mod overrides;
 mod scan;
 
@@ -20,7 +23,7 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
-use crate::{forms, rank};
+use crate::{MIN_LEN, forms, rank};
 use decisive::Words;
 use overrides::Overrides;
 
@@ -104,17 +107,22 @@ fn ranks(tsv: &str) -> HashMap<String, usize> {
 }
 
 /// `None` when no setup shortens `word`. Otherwise whether to list it: not when
-/// some setup shortens it to a more frequent word.
+/// some setup shortens it to what a doubled key may well have been typed for.
 fn verdict(word: &str, rank: usize, ranks: &HashMap<String, usize>) -> Option<bool> {
     let shortened: Vec<String> = scan::SETUPS
         .iter()
-        .filter_map(|&(method, rules)| scan::shortened(word, method, rules))
+        .filter_map(|&setup| scan::shortened(word, setup))
         .collect();
-    (!shortened.is_empty()).then(|| {
-        shortened
-            .iter()
-            .all(|form| ranks.get(form).is_none_or(|&other| other > rank))
-    })
+    (!shortened.is_empty()).then(|| !shortened.iter().any(|form| vetoes(word, rank, form, ranks)))
+}
+
+/// Whether `form`, what a revert left of `word`, may be what the user typed `word`
+/// for: a doubled key collapsed (`off` → `of`, never `markers` → `makers`) into a
+/// more frequent word, or into a single letter (`ww` → `w`, the only way to type `w`
+/// in Telex nâng cao), which `en.tsv` never ranks.
+fn vetoes(word: &str, rank: usize, form: &str, ranks: &HashMap<String, usize>) -> bool {
+    habit::collapses_doubled_keys(word, form)
+        && (form.len() < MIN_LEN || ranks.get(form).is_some_and(|&other| other < rank))
 }
 
 fn write(path: &Path, list: &BTreeSet<String>) -> io::Result<()> {
@@ -154,6 +162,20 @@ mod tests {
         let (words, decisive) = generated("of\t0\noff\t1\npass\t2\npas\t3\n");
         assert_eq!(words, ["pass"]);
         assert!(decisive.is_empty());
+    }
+
+    #[test]
+    fn only_a_doubled_key_can_mean_the_shortened_word() {
+        // `markers` loses an `r` that sits apart from its twin: nobody types it for `makers`.
+        let (words, _) = generated("makers\t0\nmarkers\t1\n");
+        assert_eq!(words, ["markers"]);
+    }
+
+    #[test]
+    fn a_double_shortened_to_one_letter_is_the_habit() {
+        // Telex nâng cao shortens `ww` to `w`, a letter `en.tsv` never ranks.
+        let (words, _) = generated("ww\t0\n");
+        assert!(words.is_empty(), "{words:?}");
     }
 
     #[test]

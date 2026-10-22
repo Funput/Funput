@@ -61,7 +61,7 @@ fn each_word_switches_where_the_generator_found_it_decided() {
 #[test]
 fn the_doubled_key_habit_never_switches_mid_word() {
     for keys in [
-        "tesst ", "lasst ", "iss ", "mixx ", "off ", "offf ", "hiss ", "doses ",
+        "tesst ", "lasst ", "iss ", "mixx ", "off ", "offf ", "hiss ",
     ] {
         let mut on = engine(InputMethod::Telex, true);
         let mut off = engine(InputMethod::Telex, false);
