@@ -37,17 +37,30 @@ with the counts already in `WORK`, the script goes straight to the rank step.
 | `pack` | `en.tsv` on stdin | `en.lex` on stdout, checked by the library's own validation first |
 | `doubled` | `en.tsv` on stdin, `--overrides`, `--out DIR` | `words.txt` and `decisive.txt` in `DIR` |
 
-`doubled` types every word through `funput-engine` (Telex and Telex nâng cao, with
-and without the z/f/w/j onsets) and writes two lists from that one scan:
+`doubled` types every word through `funput-engine` under eight setups (`scan::SETUPS`:
+Telex and Telex nâng cao, with and without the z/f/w/j onsets, with eager restore on
+and off) and writes two lists from that one scan:
 
-- `words.txt` — the words a revert shortens, `password` → `pasword`, unless the
-  shortened form is a more frequent word (`off` → `of`). The engine gives them their
-  raw keys back at the word boundary.
-- `decisive.txt` — for each listed word, the shortest raw-key prefix at which the
-  shortened form on screen can no longer begin any `en.tsv` word, in every setup
-  (`passw`, since nothing begins with `pasw`). The engine switches to the raw keys
-  there, mid-word. A prefix that begins a word left out on purpose (`off`) never
-  qualifies.
+- `words.txt` — every word a revert shortens in some setup, `password` → `pasword`,
+  unless some setup shortens it the way the doubled-key habit would (`habit.rs`:
+  one key dropped from adjacent doubled keys) to a more frequent word (`off` → `of`)
+  or to a single letter (`ww` → `w`, a plain `w` in Telex nâng cao, which `en.tsv`
+  never ranks). A key lost anywhere else is no habit, so `markers` (→ `makers`),
+  `casts` (→ `cats`) and `doses` (→ `does`) stay listed. Eager restore off adds the
+  words only it shortens (`class` → `clas`, since `clá` + `s` reverts). The engine
+  gives them their raw keys back at the word boundary.
+- `decisive.txt` — for each listed word, the shortest raw-key prefix at which
+  neither the word on screen nor what the habit means by the keys (`meant`: the
+  keys typed minus every reverting key that repeats the one before it) can begin
+  any `en.tsv` word, in every setup with eager restore on that has reverted by then
+  (`passw`, since nothing begins with `pasw`). `necess` shows `nêcs`, which begins
+  nothing, but means `neces`, which begins `necessary`, so the switch waits for
+  `necessa`. The engine switches to the raw keys there, mid-word, which it only does
+  with eager restore on. A prefix that begins a word left out on purpose (`off`)
+  never qualifies.
+
+Every entry fits the engine's reserved `literal` capacity (32, this tool's `MAX_LEN`);
+an engine unit test holds both lists to it.
 
 See [doubled-key-restore.md](../../docs/features/doubled-key-restore.md).
 `refresh.sh` rebuilds both after `rank`; after a core change that moves a revert,

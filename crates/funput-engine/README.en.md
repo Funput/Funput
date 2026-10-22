@@ -143,13 +143,20 @@ English: `caw`/`law` → `că`/`lă` are restored as before.
 Pressing a tone key again reverts it (`pá` + `s` → `pas`), and that revert rewrites `keys`, so the
 second key used to vanish: `password` came out `pasword`. The engine now keeps the raw keys in
 `Session.literal` (only from the word's first revert on). At the word boundary, if they spell an
-English word listed in `data/doubled/words.txt`, the engine writes them back: `password ` →
-`password `, `pass ` → `pass `. The doubled-key habit for a plain letter is unchanged (`tesst` →
-`test`, `mixx` → `mix`, `off` → `of`), because those keys are not listed. Most words are decided
-**mid-word**: once the shortened form begins no English word (`pasw`), the engine shows the raw keys
-(`passw`) at once, per `data/doubled/decisive.txt`; that step rides on `eager_restore`.
-`funput-lexicon-tool doubled` generates both lists from `en.tsv`. The switch is
-`EngineConfig.restore_doubled_keys` (on by default, rides on `smart_restore`). Details:
+English word listed in `data/doubled/words.txt` (digits glued to the end aside), the engine writes
+them back: `password ` → `password `, `pass ` → `pass `, `pass1 ` → `pass1 `. The doubled-key habit
+for a plain letter is unchanged (`tesst` → `test`, `mixx` → `mix`, `off` → `of`, `ww` → `w` in Telex
+nâng cao), because those keys are not listed. The list leaves a word out only when the shortened form
+is that habit (a key dropped from adjacent doubled keys) and a more frequent word or a single letter; a
+key lost anywhere else still comes back (`casts ` → `casts `, not `cats `). Most words are decided
+**mid-word**: once neither the screen nor what the habit would mean (the keys typed minus the doubled
+key, `pasw`) begins an English word, the engine shows the raw keys (`passw`) at once, per
+`data/doubled/decisive.txt`; that step
+rides on `eager_restore`. Flip and gõ tắt read the keys as typed (`doubled::typed_keys`), so `pass` +
+Flip gives `pass`, and a `pass` trigger fires on `pass `. `funput-lexicon-tool doubled` generates both
+lists from `en.tsv`, scanning with eager restore both on and off (off, `class` loses a key too:
+`clá` + `s` → `clas`). The switch is `EngineConfig.restore_doubled_keys` (on by default, rides on
+`smart_restore`). Details:
 [docs/features/doubled-key-restore.md](../../docs/features/doubled-key-restore.md).
 
 ## Flip VN ⇄ raw keys
@@ -165,15 +172,22 @@ will **not** English-restore it back. The override is reset per word (`clear()`)
 `flip.rs`; `session.vn_form` keeps the VN form captured before an eager restore can collapse the
 buffer to raw keys, so a flip can recover it even after a restore.
 
+The raw form is the **keys as typed** (`doubled::typed_keys`), not `keys`. When a doubled tone key
+has swallowed one (`pá` + `s` → `pas`), a flip shows every key again (`pass`), and later keys keep that
+form (`pass` + flip + `word ` → `password `). Flipping again gives the VN form, here `pas`. See
+Doubled keys above.
+
 ## Shortcuts / Text expansion (macro)
 
 A user-defined trigger → expansion table (`vn` → `việt nam`, `kg` → `không`). At a **word boundary**
-the engine matches the **raw keystrokes** (`keys`) against the table using **smart-case** matching:
-typing `vn`/`Vn`/`VN` all resolve to the same trigger, and the expansion is re-cased to match —
+the engine tries, in order, the **keys as typed** (`doubled::typed_keys`, including any key a revert
+swallowed), the **raw keystrokes** (`keys`), then the composed buffer (`đc`) against the table using
+**smart-case** matching: typing `vn`/`Vn`/`VN` all resolve to the same trigger, and the expansion is
+re-cased to match —
 `vn` → `việt nam`, `Vn` → `Việt Nam` (capitalize every word), `VN` → `VIỆT NAM` (all uppercase). Keys
 with a mixed case that don't fit one of those three patterns (e.g. `vNa`) fall back to an **exact**
 match only, so a deliberately mixed-case trigger (e.g. `iOS`) still works exactly as defined. See
-`classify_case`/`apply_shortcut_case` in `compose/boundary.rs`.
+`classify_case`/`apply_shortcut_case` in `compose/boundary/shortcut.rs`.
 
 - Hit → `Send`: delete what is displayed (`backspace = buffer.chars().count()`), insert `expansion +
   boundary key`, then `clear()`. Backspace counts the displayed buffer, so `as` → `á` (one char) is

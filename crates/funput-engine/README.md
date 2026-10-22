@@ -137,14 +137,20 @@ giống VNI trả lời `A8`. Có âm đầu thì vẫn là tiếng Anh: `caw`/`
 
 Gõ lại phím dấu thì hủy dấu (`pá` + `s` → `pas`), và lần hủy đó ghi đè `keys` nên phím thứ hai mất:
 `password` từng ra `pasword`. Engine giờ giữ chuỗi phím gốc trong `Session.literal` (chỉ bắt đầu từ
-lần hủy dấu đầu tiên của từ). Ở ranh giới từ, nếu chuỗi đó là từ tiếng Anh trong
-`data/doubled/words.txt`, engine trả lại nó: `password ` → `password `, `pass ` → `pass `. Thói quen
-gõ lặp để lấy chữ thường vẫn giữ nguyên (`tesst` → `test`, `mixx` → `mix`, `off` → `of`), vì những chuỗi
-đó không có trong bảng. Phần lớn từ còn được quyết định **ngay giữa từ**: khi dạng rút gọn không còn
-mở đầu từ tiếng Anh nào (`pasw`), engine hiện phím gốc (`passw`) ngay lập tức, theo danh sách
-`data/doubled/decisive.txt`. Bước này đi chung `eager_restore`. Hai bảng do `funput-lexicon-tool
-doubled` sinh từ `en.tsv`. Công tắc là `EngineConfig.restore_doubled_keys` (mặc định bật, đi chung
-`smart_restore`). Chi tiết:
+lần hủy dấu đầu tiên của từ). Ở ranh giới từ, nếu chuỗi đó (bỏ chữ số dính ở cuối) là từ tiếng Anh
+trong `data/doubled/words.txt`, engine trả lại nó: `password ` → `password `, `pass ` → `pass `,
+`pass1 ` → `pass1 `. Thói quen gõ lặp để lấy chữ thường vẫn giữ nguyên (`tesst` → `test`, `mixx` →
+`mix`, `off` → `of`, `ww` → `w` trong Telex nâng cao), vì những chuỗi đó không có trong bảng. Bảng chỉ
+bỏ một từ khi dạng rút gọn là thói quen gõ lặp (bỏ phím ở cặp phím đôi đứng cạnh nhau) và là từ phổ
+biến hơn hoặc một chữ cái; phím mất ở chỗ khác thì từ vẫn được trả lại (`casts ` → `casts `, không ra
+`cats `). Phần lớn từ còn được quyết định **ngay giữa từ**: khi cả màn hình lẫn điều thói quen gõ lặp
+muốn gõ (phím đã gõ bỏ phím lặp, `pasw`) không còn mở đầu từ tiếng Anh nào, engine hiện phím gốc
+(`passw`) ngay lập tức, theo danh sách `data/doubled/decisive.txt`. Bước này đi chung `eager_restore`.
+Flip và gõ tắt đọc chuỗi phím đã gõ (`doubled::typed_keys`), nên `pass` + Flip → `pass`, và trigger
+`pass` nổ ở `pass `. Hai bảng do
+`funput-lexicon-tool doubled` sinh từ `en.tsv`, quét cả khi bật lẫn khi tắt eager restore (tắt thì
+`class` cũng bị nuốt phím: `clá` + `s` → `clas`). Công tắc là `EngineConfig.restore_doubled_keys` (mặc
+định bật, đi chung `smart_restore`). Chi tiết:
 [docs/features/doubled-key-restore.md](../../docs/features/doubled-key-restore.md).
 
 ## Lật VN ⇄ phím thô (flip)
@@ -159,15 +165,22 @@ Lựa chọn **dính (sticky)**: sau khi lật, các phím tiếp theo giữ d�
 `flip.rs`; `session.vn_form` giữ lại dạng VN trước khi eager-restore kịp thu gọn buffer, để lật khôi
 phục được ngay cả sau khi đã restore.
 
+Dạng phím thô là **chuỗi phím đã gõ** (`doubled::typed_keys`), không phải `keys`. Khi phím dấu lặp đã
+nuốt một phím (`pá` + `s` → `pas`), Flip hiện lại đủ phím (`pass`), và các phím sau vẫn giữ dạng đó
+(`pass` + Flip + `word ` → `password `). Lật lần nữa ra dạng VN, ở đây là `pas`. Xem mục Phím lặp ở
+trên.
+
 ## Gõ tắt / Text expansion (macro)
 
 Bảng trigger → expansion do người dùng định nghĩa (`vn` → `việt nam`, `kg` → `không`). Tại **ranh
-giới từ**, engine khớp **chuỗi phím thô** (`keys`) với bảng gõ tắt theo kiểu **smart-case**: gõ
-`vn`/`Vn`/`VN` đều khớp cùng một trigger, và expansion được viết lại hoa/thường tương ứng —
+giới từ**, engine khớp lần lượt **chuỗi phím đã gõ** (`doubled::typed_keys`, gồm cả phím mà hủy dấu đã
+nuốt), **chuỗi phím thô** (`keys`), rồi buffer đã ghép (`đc`) với bảng gõ tắt theo kiểu
+**smart-case**: gõ `vn`/`Vn`/`VN` đều khớp cùng một trigger, và expansion được viết lại hoa/thường
+tương ứng —
 `vn` → `việt nam`, `Vn` → `Việt Nam` (hoa chữ đầu mỗi từ), `VN` → `VIỆT NAM` (hoa toàn bộ). Kiểu gõ
 hoa/thường "lộn xộn" không khớp 1 trong 3 mẫu trên (ví dụ `vNa`) chỉ được khớp **chính xác** — nhờ
 vậy trigger cố ý viết hoa/thường tuỳ ý (ví dụ `iOS`) vẫn hoạt động đúng như định nghĩa. Xem
-`classify_case`/`apply_shortcut_case` trong `compose/boundary.rs`.
+`classify_case`/`apply_shortcut_case` trong `compose/boundary/shortcut.rs`.
 
 - Trúng → `Send`: xoá phần đang hiển thị (`backspace = buffer.chars().count()`), chèn `expansion +
   phím ranh giới`, rồi `clear()`. Backspace đếm theo buffer hiển thị nên `as` → `á` (1 ký tự) vẫn xoá
