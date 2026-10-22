@@ -46,9 +46,10 @@ export global Casing {
     callback set-flatten-caps(bool);
 }
 
-// A press appends, and pressing the one already on top is a no-op in core — so this
-// is a button rather than a checkbox. The tick is the non-colour cue: the accent
-// fill alone would leave the state invisible to a colour-blind user.
+// A press toggles in core: absent, the transform is appended; already applied,
+// every copy comes off. This stays a button rather than a checkbox because core
+// owns the lit state. The tick is the non-colour cue: the accent fill alone would
+// leave the state invisible to a colour-blind user.
 component Chip inherits Rectangle {
     in property <string> label;
     in property <bool> applied;

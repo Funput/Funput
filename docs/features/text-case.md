@@ -260,8 +260,8 @@ trước/sau:
 - Nút **Hoàn tác** gỡ **phép cuối cùng** chứ không phải tất cả — bấm nhầm phép thứ ba
   không nên mất hai phép trước nó — và **Bỏ hết** trả về nguyên bản.
 - Phép biến đổi **cộng dồn được**: bấm "chữ thường" rồi "Viết Hoa Đầu Mỗi Từ" cho kết
-  quả của cả hai. Bấm lại đúng phép đang ở đỉnh là **không làm gì**, vì mọi phép đều
-  idempotent nên lần bấm thứ hai không đổi được văn bản. Nguyên bản luôn giữ: danh
+  quả của cả hai. Bấm lại một phép đang sáng thì **gỡ phép đó** khỏi danh sách, dù
+  nó không nằm ở đỉnh; các phép còn lại giữ thứ tự. Nguyên bản luôn giữ: danh
   sách phép được phát lại từ đầu ở mỗi lần dựng preview, không bao giờ ghi đè lên
   đoạn người dùng đã dán.
 - Thanh **mờ và không bấm được** khi chưa có bảng mã nào giải thích được văn bản: văn
@@ -367,7 +367,8 @@ không đoán trước.
    phép biến đổi chạy trước khi tính giá, nên chữ hoa TCVN3 không có chỗ mới lộ ra ở
    đây. Ở hình dạng batch, cột `N chữ sẽ mất` của từng dòng phải đổi theo.
 5. Bấm chồng hai phép: dòng `Đang áp` phải viết đúng thứ tự đã bấm, và đổi thứ tự phải
-   cho văn bản khác. **Hoàn tác** gỡ đúng phép cuối; **Bỏ hết** về nguyên bản.
+   cho văn bản khác. Bấm lại một phép đang sáng thì gỡ đúng phép đó, các phép còn lại
+   giữ thứ tự. **Hoàn tác** gỡ đúng phép cuối; **Bỏ hết** về nguyên bản.
 6. Dán chuỗi không đoán được bảng mã (`hello world`): cả thanh phải mờ và không bấm
    được.
 7. `echo "Tiếng Việt" | funput case no-diacritics` cho `Tieng Viet` — CLI và ba cửa
