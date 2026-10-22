@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 266007ce60e112fd1aa27f138c9d2ee58154bfce538ccd0d1974131a99947d93 # shrinks to script = "ass aa", method = Telex, eager = true, wide = false
+cc e4e2d7c9f845fd8dfdd00a265961cc54ce62d5318c07a0a451dda06ca2de1ca4 # shrinks to script = "aao<a^", method = Telex, eager = false, wide = false

@@ -69,7 +69,7 @@ impl Engine {
         if self.session.keys.is_empty() {
             self.session.glue.start_word();
         }
-        self.session.keys.push(raw_key);
+        self.session.push_key(raw_key);
         // Whatever a preview found was about the word as it stood; this key makes it
         // a different word.
         correction::drop_preview(&mut self.session);
@@ -97,7 +97,7 @@ impl Engine {
         if boundary::is_english_boundary(key) {
             return boundary::on_english_boundary(&mut self.session, key);
         }
-        self.session.keys.push(key);
+        self.session.push_key(key);
         self.session.buffer.push(key);
         ImeResult::none()
     }

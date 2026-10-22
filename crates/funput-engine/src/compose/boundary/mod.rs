@@ -5,7 +5,7 @@ mod shortcut;
 use funput_core::{InputMethod, is_bare_shaped_vowel};
 
 use crate::ImeResult;
-use crate::compose::RestoreOverride;
+use crate::compose::{RestoreOverride, doubled};
 use crate::correction;
 use crate::model::Session;
 
@@ -87,10 +87,10 @@ fn keystrokes_intend_vietnamese(session: &Session) -> bool {
         || is_bare_shaped_vowel(&session.buffer)
 }
 
-fn english_restore_result(session: &Session, boundary_key: char) -> ImeResult {
+/// Replace the word on screen with `text`, then type the boundary key after it.
+fn replace_word(session: &Session, text: &str, boundary_key: char) -> ImeResult {
     let backspace = session.buffer.chars().count();
-    let output = format!("{}{}", session.keys, boundary_key);
-    ImeResult::send(backspace, output)
+    ImeResult::send(backspace, format!("{text}{boundary_key}"))
 }
 
 /// English-mode word boundary: gõ tắt is all that is left to do. There is no
@@ -112,6 +112,11 @@ fn boundary_result(session: &mut Session, boundary_key: char) -> ImeResult {
     if let Some(expansion) = shortcut::expansion(session, boundary_key) {
         return expansion;
     }
+    if doubled::restorable(session) {
+        // The word is English, so typo correction must not park a repair for it.
+        correction::drop_preview(session);
+        return replace_word(session, session.literal.as_str(), boundary_key);
+    }
     let verdict = judge(session);
     // Typo correction looks at the word before English restore does, and is
     // deliberately not hung off `restore`: the eager restore in `pipeline` has usually
@@ -123,7 +128,7 @@ fn boundary_result(session: &mut Session, boundary_key: char) -> ImeResult {
     // parked correction is told which text that is.
     correction::offer(session, boundary_key, &verdict);
     if verdict.restore {
-        english_restore_result(session, boundary_key)
+        replace_word(session, &session.keys, boundary_key)
     } else {
         ImeResult::none()
     }

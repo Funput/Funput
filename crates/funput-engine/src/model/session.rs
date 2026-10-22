@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use funput_core::sentence::{Rules, Scanner};
 
 use crate::compose::RestoreOverride;
+use crate::compose::doubled::Literal;
 use crate::correction::CorrectionState;
 use crate::model::{EngineConfig, NumberGlue};
 
@@ -19,7 +20,15 @@ pub(crate) struct Session {
     /// Raw keystrokes since the last word boundary. Lets English restore
     /// (phase E3) rebuild the original Latin text when the composed buffer is
     /// not a complete Vietnamese syllable (`keys != buffer && !is_complete_syllable(buffer)`).
+    ///
+    /// A revert rewrites it to what the revert left on screen (`pass` → `pas`), so it
+    /// is then what English restore falls back to, and every typed key is in `literal`.
+    /// Keys join through [`Session::push_key`]; a revert, Backspace, `adopt` and
+    /// [`crate::compose::doubled::settle_keys`] rewrite it whole.
     pub(crate) keys: String,
+    /// Every key since the word boundary, once the word has had a revert. Per-word —
+    /// reset by `clear()` and by Backspace.
+    pub(crate) literal: Literal,
     /// Where auto-capitalize thinks the next letter sits, by the sentence rules
     /// every Funput platform shares. Fed one keystroke at a time, because a desktop
     /// shell hands the engine keys and never the document. Survives `clear()` —
@@ -31,8 +40,9 @@ pub(crate) struct Session {
     /// [`crate::Engine::arm_capitalization`].
     pub(crate) scanner: Scanner,
     /// Text-expansion table (gõ tắt): trigger → expansion. Matched smart-case at a
-    /// word boundary, before English restore, against `keys` and then against the
-    /// composed `buffer`, so `vn` and `đc` both work as triggers — a
+    /// word boundary, before English restore, against the keys as typed (`literal`
+    /// when a revert dropped one), then `keys`, then the composed `buffer`, so `vn`
+    /// and `đc` both work as triggers — a
     /// trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same
     /// entry, re-casing the expansion to match. Config that lives for the whole
     /// session — `clear()` does not touch it.
@@ -63,6 +73,7 @@ impl Session {
             config: EngineConfig::default(),
             buffer: String::new(),
             keys: String::new(),
+            literal: Literal::new(),
             scanner: Scanner::mid_text(Rules::TYPING),
             shortcuts: HashMap::new(),
             vn_form: String::new(),
@@ -82,9 +93,18 @@ impl Session {
             && !self.shortcuts.is_empty()
     }
 
+    /// Record a key the user typed into the live word: `keys` always, `literal` while
+    /// a revert has it following the word. Every key goes in through here, so the
+    /// two cannot drift apart.
+    pub(crate) fn push_key(&mut self, key: char) {
+        self.keys.push(key);
+        self.literal.follow(key);
+    }
+
     pub(crate) fn clear(&mut self) {
         self.buffer.clear();
         self.keys.clear();
+        self.literal.reset();
         self.vn_form.clear();
         self.restore_override = None;
         self.glue.end_word();
@@ -107,9 +127,13 @@ impl Session {
     /// mid-word is still that word, so the choice stays; emptying the buffer ends
     /// it, and the choice has to go with it or it would pin the *next* word too and
     /// keep its diacritics off.
+    ///
+    /// `literal` is dropped rather than shortened: which of its keys the deleted
+    /// character stood for is no longer known, so the word leaves doubled-key restore.
     pub(crate) fn resync_after_backspace(&mut self) {
         self.keys.clear();
         self.keys.push_str(&self.buffer);
+        self.literal.reset();
         self.vn_form.clear();
         self.vn_form.push_str(&self.buffer);
         if self.buffer.is_empty() {

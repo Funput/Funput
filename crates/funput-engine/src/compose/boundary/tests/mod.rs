@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use funput_core::sentence::{Rules, Scanner};
 use funput_core::{InputMethod, SyllableRules, ToneStyle};
 
+use crate::compose::doubled::Literal;
 use crate::model::{EngineConfig, NumberGlue, Session};
 
 fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
@@ -13,6 +14,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
             tone_style: ToneStyle::Traditional,
             smart_restore: true,
             eager_restore: true,
+            restore_doubled_keys: true,
             spell_check: false,
             syllable_rules: SyllableRules::STANDARD,
             auto_capitalize: false,
@@ -23,6 +25,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
         },
         buffer: buffer.into(),
         keys: keys.into(),
+        literal: Literal::new(),
         scanner: Scanner::mid_text(Rules::TYPING),
         shortcuts: HashMap::new(),
         vn_form: String::new(),

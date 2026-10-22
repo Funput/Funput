@@ -80,7 +80,9 @@ vần với phụ âm đầu bản ngữ vẫn bị hôm nay (`vast` → `vát`,
 
 - Telex: `fast` → `fát`, `for` → `fỏ`, `fix` → `fĩ`, `fee` → `fê`, `just` → `jút`
   (trùng phím với `Cư Jút`), `war` → `wả`, `wow` → `wơ`, `zoom` → `zôm`. Từ có phụ âm
-  đôi mất một chữ như với âm đầu bản ngữ (`ferry` → `fery`, giống `berry` → `bery`).
+  đôi từng mất một chữ như với âm đầu bản ngữ (`ferry` → `fery`, giống `berry` → `bery`);
+  khôi phục phím lặp nay trả lại chữ đó cho từ có trong bảng, và bảng được quét cả khi bật
+  bốn chữ này — xem [doubled-key-restore.md](doubled-key-restore.md).
 - VNI: chỉ chạm tới tiếng Anh qua số dính chữ — `win10` → `win`, giống `bin10` →
   `bin`.
 

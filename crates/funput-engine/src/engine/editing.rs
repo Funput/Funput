@@ -1,4 +1,4 @@
-use crate::compose::{diff, flip};
+use crate::compose::{RestoreOverride, diff, doubled, flip};
 use crate::correction;
 use crate::{Engine, ImeResult};
 
@@ -59,17 +59,23 @@ impl Engine {
     }
 
     /// Flip the live word between its Vietnamese and raw-keystroke forms.
+    ///
+    /// The raw form is the keys as typed, so a key a doubled tone key swallowed
+    /// comes back with it (`pas` → `pass`).
     pub fn flip_composing(&mut self) -> ImeResult {
         correction::discard(&mut self.session);
         match flip::flip(
             &self.session.buffer,
-            &self.session.keys,
+            doubled::typed_keys(&self.session),
             &self.session.vn_form,
         ) {
             Some((new_buffer, override_)) => {
                 let (backspace, output) = diff::diff(&self.session.buffer, &new_buffer);
                 self.session.buffer = new_buffer;
                 self.session.restore_override = Some(override_);
+                if override_ == RestoreOverride::ForceRaw && doubled::has_literal(&self.session) {
+                    doubled::settle_keys(&mut self.session);
+                }
                 ImeResult::send(backspace, output)
             }
             None => ImeResult::none(),

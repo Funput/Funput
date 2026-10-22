@@ -82,7 +82,7 @@ pub(crate) fn run(options: &Options, out: &mut impl Write) -> io::Result<()> {
     out.flush()
 }
 
-fn read_optional(path: Option<&PathBuf>) -> io::Result<String> {
+pub(crate) fn read_optional(path: Option<&PathBuf>) -> io::Result<String> {
     path.map_or(Ok(String::new()), fs::read_to_string)
 }
 
