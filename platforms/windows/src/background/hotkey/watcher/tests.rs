@@ -233,3 +233,24 @@ fn a_click_ends_the_gesture_without_stranding_it() {
         Some(mods(true, false, true, false))
     );
 }
+
+#[test]
+fn a_lone_alt_tap_is_reported_for_the_menus() {
+    // Excel's Alt, E, S, V starts with exactly this gesture.
+    let mut w = Watcher::default();
+    assert_eq!(w.feed(down(ALT), ALT), None);
+    assert_eq!(w.feed(up(ALT), NONE), Some(ALT));
+}
+
+#[test]
+fn a_held_alt_shortcut_or_click_is_not_a_tap() {
+    // Alt+E with Alt held is the app's shortcut, not a trip into its menus.
+    let mut w = Watcher::default();
+    w.feed(down(ALT), ALT);
+    w.feed(OtherDown, ALT);
+    assert_eq!(w.feed(up(ALT), NONE), None);
+    // Nor is Alt+click.
+    w.feed(down(ALT), ALT);
+    w.interrupt();
+    assert_eq!(w.feed(up(ALT), NONE), None);
+}

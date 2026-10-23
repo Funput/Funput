@@ -6,9 +6,14 @@
 //! no user pointer, so they reach the engine through
 //! [`crate::shared::shell`]'s process-global state.
 //!
+//! [`access_keys`] is state the three share rather than a callback: whether a lone
+//! Alt tap has handed the keys to the focused app's menus, which each hook can see
+//! end in its own way.
+//!
 //! Everything runs on the background process's main thread, which must own a
 //! message loop — `WH_KEYBOARD_LL` requires one, and the tray shares it.
 
+mod access_keys;
 mod foreground;
 mod keyboard;
 mod mouse;

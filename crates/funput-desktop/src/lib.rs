@@ -23,7 +23,11 @@
 //! `shell` then holds the state those decisions are made against — the engine,
 //! the shadow, the settings, and which app is focused — as a plain struct the
 //! platform owns and can unit-test.
+//!
+//! `access_keys` decides which keys skip composition altogether because a bare
+//! Alt tap handed them to the app's menus — see [`AccessKeys`].
 
+mod access_keys;
 mod caret;
 mod inject;
 mod key;
@@ -31,6 +35,7 @@ mod layout;
 mod retone;
 mod shell;
 
+pub use access_keys::AccessKeys;
 pub use caret::Caret;
 pub use funput_engine::{ImeResult, KeySource};
 pub use inject::{InjectPlan, plan_inject};
