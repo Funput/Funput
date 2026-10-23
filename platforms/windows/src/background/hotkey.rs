@@ -47,10 +47,20 @@ pub fn on_keydown(vk: VIRTUAL_KEY, mods: Mods) -> Option<Hit> {
     flip.then_some(Hit::Flip)
 }
 
+/// A bare-modifier gesture that just completed, and whether it was a hotkey.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Gesture {
+    /// The modifiers bound to the toggle or the flip key.
+    Hotkey(Hit),
+    /// Any other set, for whoever else gives it a meaning — a lone Alt opens
+    /// the focused app's menus.
+    Modifiers(Mods),
+}
+
 /// Feed every key event to the modifier-only gesture tracker, including the ones
 /// the engine goes on to swallow — a swallowed keystroke still means the user
 /// was typing a shortcut, not tapping a bare modifier pair.
-pub fn on_key_event(vk: VIRTUAL_KEY, mods: Mods, down: bool) -> Option<Hit> {
+pub fn on_key_event(vk: VIRTUAL_KEY, mods: Mods, down: bool) -> Option<Gesture> {
     let event = match (rules::mod_bit(vk), down) {
         (Some(bit), down) => Event::Modifier { bit, down },
         (None, true) => Event::OtherDown,
@@ -59,10 +69,15 @@ pub fn on_key_event(vk: VIRTUAL_KEY, mods: Mods, down: bool) -> Option<Hit> {
     let held = rules::mods_with(vk, mods, down);
     let gesture = WATCHER.with(|w| w.borrow_mut().feed(event, held))?;
 
-    if toggle_mods() == Some(gesture) {
-        return Some(Hit::Toggle);
-    }
-    (flip_mods() == Some(gesture)).then_some(Hit::Flip)
+    // A hotkey wins over any other meaning, so a toggle recorded as a lone Alt
+    // still toggles rather than opening the menus.
+    Some(if toggle_mods() == Some(gesture) {
+        Gesture::Hotkey(Hit::Toggle)
+    } else if flip_mods() == Some(gesture) {
+        Gesture::Hotkey(Hit::Flip)
+    } else {
+        Gesture::Modifiers(gesture)
+    })
 }
 
 /// Whether this virtual-key is a modifier (either side, generic or specific).

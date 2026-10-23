@@ -81,6 +81,9 @@ pub(super) unsafe extern "system" fn win_event_proc(
     let id = exe_of_window(hwnd);
     inject::note_foreground(&class, id.as_deref().unwrap_or_default());
     NOTED_HWND.store(hwnd.0 as isize, Ordering::Relaxed);
+    // Whatever menus a lone Alt tap opened belonged to the window just left —
+    // whichever window this is, even one that never gets an app on record.
+    super::access_keys::cancel();
 
     // A hotkey toggle still waiting to be written down must land on disk before
     // `reload_settings` below compares the file with memory — or the reload takes

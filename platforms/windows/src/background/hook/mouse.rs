@@ -23,6 +23,8 @@ pub(super) unsafe extern "system" fn mouse_proc(
         let msg = wparam.0 as u32;
         if is_caret_moving_click(msg) {
             shell::caret_moved(Caret::Unknown);
+            // A click closes an app's menus too, or lands back in the document.
+            super::access_keys::cancel();
         }
         // Any deliberate mouse action ends a modifier-only gesture: Ctrl+Shift
         // then a click is multi-select, not a hotkey. Movement is excluded — it
