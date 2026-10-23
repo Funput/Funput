@@ -1,4 +1,4 @@
-package app.funput.funput.keyboard.interaction
+package app.funput.funput.keyboard.interaction.backspace
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -8,13 +8,11 @@ import org.junit.Test
 
 class BackspaceRepeatControllerTest {
     private val scheduler = TestScheduler()
-    private var repeatCount = 0
+    private val emittedStages = mutableListOf<BackspaceRepeatStage>()
     private val controller = BackspaceRepeatController(
         schedule = scheduler::schedule,
         cancel = scheduler::cancel,
-        onRepeat = { repeatCount++ },
-        initialDelayMillis = 400L,
-        repeatIntervalMillis = 50L,
+        onRepeat = { emittedStages += it },
     )
 
     @Test
@@ -22,7 +20,7 @@ class BackspaceRepeatControllerTest {
         controller.update(pointerId = 3, isBackspace = true)
 
         assertFalse(controller.finish(pointerId = 3, isBackspace = true))
-        assertEquals(0, repeatCount)
+        assertTrue(emittedStages.isEmpty())
         assertNull(scheduler.task)
     }
 
@@ -34,10 +32,33 @@ class BackspaceRepeatControllerTest {
         scheduler.runNext()
         scheduler.runNext()
 
-        assertEquals(2, repeatCount)
+        assertEquals(
+            listOf(BackspaceRepeatStage.Character, BackspaceRepeatStage.Character),
+            emittedStages,
+        )
         assertEquals(50L, scheduler.delayMillis)
         assertTrue(controller.finish(pointerId = 3, isBackspace = true))
         assertNull(scheduler.task)
+    }
+
+    @Test
+    fun sustainedHoldEscalatesFromCharacterToWordDeletionAndResetsAfterRelease() {
+        controller.update(pointerId = 3, isBackspace = true)
+
+        repeat(BackspaceRepeatPolicy.WordStageStartIndex) {
+            scheduler.runNext()
+        }
+        assertTrue(emittedStages.all { it == BackspaceRepeatStage.Character })
+
+        scheduler.runNext()
+        assertEquals(BackspaceRepeatStage.Word, emittedStages.last())
+        assertEquals(BackspaceRepeatPolicy.WordIntervalMillis, scheduler.delayMillis)
+        assertTrue(controller.finish(pointerId = 3, isBackspace = true))
+
+        emittedStages.clear()
+        controller.update(pointerId = 3, isBackspace = true)
+        scheduler.runNext()
+        assertEquals(listOf(BackspaceRepeatStage.Character), emittedStages)
     }
 
     @Test
@@ -72,7 +93,7 @@ class BackspaceRepeatControllerTest {
         assertEquals(400L, scheduler.delayMillis)
 
         scheduler.runNext()
-        assertEquals(2, repeatCount)
+        assertEquals(2, emittedStages.size)
         assertTrue(controller.finish(pointerId = 11, isBackspace = true))
     }
 

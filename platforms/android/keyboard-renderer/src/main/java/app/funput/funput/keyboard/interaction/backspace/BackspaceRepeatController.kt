@@ -1,29 +1,30 @@
-package app.funput.funput.keyboard.interaction
+package app.funput.funput.keyboard.interaction.backspace
 
 /** Schedules Backspace repeats while preserving one action for a normal tap. */
 internal class BackspaceRepeatController(
     private val schedule: (task: Runnable, delayMillis: Long) -> Unit,
     private val cancel: (task: Runnable) -> Unit,
-    private val onRepeat: () -> Unit,
-    private val initialDelayMillis: Long = InitialDelayMillis,
-    private val repeatIntervalMillis: Long = RepeatIntervalMillis,
+    private val onRepeat: (BackspaceRepeatStage) -> Unit,
+    private val policy: BackspaceRepeatPolicy = BackspaceRepeatPolicy.Default,
 ) {
     private val pointerIds = linkedSetOf<Int>()
     private var activePointerId: Int? = null
+    private var repeatIndex = 0
     var hasRepeated = false
         private set
+
     private val repeatTask = object : Runnable {
         override fun run() {
             if (activePointerId == null) return
             hasRepeated = true
-            onRepeat()
-            schedule(this, repeatIntervalMillis)
+            val step = policy.step(repeatIndex++)
+            onRepeat(step.stage)
+            schedule(this, step.nextDelayMillis)
         }
     }
 
     init {
-        require(initialDelayMillis > 0L) { "Initial repeat delay must be positive" }
-        require(repeatIntervalMillis > 0L) { "Repeat interval must be positive" }
+        require(policy.initialDelayMillis > 0L) { "Initial repeat delay must be positive" }
     }
 
     fun update(pointerId: Int, isBackspace: Boolean) {
@@ -54,22 +55,19 @@ internal class BackspaceRepeatController(
 
     private fun start(pointerId: Int) {
         activePointerId = pointerId
+        repeatIndex = 0
         hasRepeated = false
-        schedule(repeatTask, initialDelayMillis)
+        schedule(repeatTask, policy.initialDelayMillis)
     }
 
     private fun stopActive() {
         if (activePointerId != null) cancel(repeatTask)
         activePointerId = null
+        repeatIndex = 0
         hasRepeated = false
     }
 
     private fun startNextPointer() {
         pointerIds.firstOrNull()?.let(::start)
-    }
-
-    private companion object {
-        const val InitialDelayMillis = 400L
-        const val RepeatIntervalMillis = 50L
     }
 }

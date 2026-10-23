@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.interaction
 
+import app.funput.funput.keyboard.interaction.backspace.BackspaceRepeatStage
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
@@ -31,7 +32,11 @@ internal class KeyboardActionDispatcher(
         if (shiftController.consumeAfter(key.role)) onShiftStateChanged()
     }
 
-    fun repeatBackspace() = onAction(KeyAction.Backspace)
+    fun repeatBackspace(stage: BackspaceRepeatStage = BackspaceRepeatStage.Character) =
+        when (stage) {
+            BackspaceRepeatStage.Character -> onAction(KeyAction.Backspace)
+            BackspaceRepeatStage.Word -> onAction(KeyAction.DeleteWord)
+        }
 
     fun dispatchAlternate(key: KeySpec, alternate: KeyAlternate.Text) {
         onAction(KeyAction.Input(key.id, alternate.textFor(shiftState)))

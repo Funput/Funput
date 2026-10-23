@@ -24,6 +24,9 @@ class KeyboardWordDeletionSpanTest(
             arrayOf("xin chào ", 5),
             arrayOf("xin   ", 6),
             arrayOf("a!!!", 3),
+            arrayOf("https://github.com/Funput/Funput/issues/536", 3),
+            arrayOf("https://github.com/Funput/Funput/issues/", 1),
+            arrayOf("https://github.com/Funput/Funput/issues", 6),
         )
     }
 }
@@ -38,5 +41,23 @@ class KeyboardWordDeletionTest {
     @Test
     fun aNewlineIsNotTrailingSpaceToSwallow() {
         assertNull(KeyboardWordDeletion.spanBeforeCursor("xin\n"))
+    }
+
+    @Test
+    fun unbrokenLongTokenDeletesInBoundedChunks() {
+        val longToken = "a".repeat(60)
+        assertEquals(
+            KeyboardWordDeletion.MaxSegmentCodePoints,
+            KeyboardWordDeletion.spanBeforeCursor(longToken),
+        )
+    }
+
+    @Test
+    fun cappingSurrogatePairsNeverSplitsACodePoint() {
+        val emojis = "\uD83D\uDE00".repeat(30)
+        assertEquals(
+            KeyboardWordDeletion.MaxSegmentCodePoints * 2,
+            KeyboardWordDeletion.spanBeforeCursor(emojis),
+        )
     }
 }
