@@ -191,6 +191,47 @@ fn autocap_arm_forgets_a_full_stop_typed_before_focus() {
     assert_eq!(feed(&mut e, "lam"), "Lam");
 }
 
+/// The screen shows `V` for the key `v`; deleting it reopens the sentence.
+#[test]
+fn autocap_backspace_over_the_capital_reopens_the_sentence() {
+    let mut e = engine_autocap();
+    e.arm_capitalization();
+    assert_eq!(feed(&mut e, "v"), "V");
+    e.on_backspace();
+    assert_eq!(feed(&mut e, "v"), "V");
+}
+
+/// `x aa. Â`, then Backspace back to `x `. Deleting `Â` matches no key, so the
+/// trace is out of step with the screen; the `aa` before the full stop must not
+/// then match the keys of `Â` and reopen a sentence after `x`.
+#[test]
+fn autocap_backspace_out_of_step_stops_rewinding() {
+    let mut e = engine_autocap();
+    feed(&mut e, "x aaa. ");
+    assert_eq!(feed(&mut e, "aa"), "Â");
+    e.on_backspace();
+    for deleted in [' ', '.', 'a', 'a'] {
+        e.rewind_sentence(deleted);
+    }
+    assert_eq!(feed(&mut e, "n"), "n");
+}
+
+/// English keys never reach the sentence trace, so Backspace there must not
+/// take back the Vietnamese keys typed before the switch.
+#[test]
+fn autocap_backspace_in_english_leaves_vietnamese_keys_alone() {
+    let mut e = engine_autocap();
+    e.add_shortcut("zz", "xyz");
+    feed(&mut e, "ok. a");
+    e.clear();
+    e.set_enabled(false);
+    feed(&mut e, "ba");
+    e.on_backspace();
+    e.on_backspace();
+    e.set_enabled(true);
+    assert_eq!(feed(&mut e, "c"), "c");
+}
+
 #[test]
 fn autocap_requires_whitespace_after_period() {
     let mut e = engine_autocap();

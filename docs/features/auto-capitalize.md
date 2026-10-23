@@ -189,8 +189,18 @@ rồi gõ dấu cách không còn viết hoa từ sau. `?` `!` `…` và dấu c
 vậy. Một âm tiết đã ghép (`ệ` từ phím `j`) hay phần bung của gõ tắt không trùng phím
 đó, nên không bị lùi nhầm — ký tự còn trên màn hình giữ chỗ trong câu.
 
-Vòng nhớ giữ 64 phím, cùng tầm với shadow văn bản đã commit. Xa hơn thì dừng hoàn
-tác chứ không đoán một đầu câu.
+So khớp không phân biệt hoa thường theo ASCII, đúng như cách auto-capitalize viết
+hoa: chữ `V` trên màn hình là phím `v`. Xóa chữ cái mở câu rồi gõ lại thì vẫn được
+viết hoa.
+
+Lần đầu không khớp thì vòng nhớ bị xóa sạch: từ đó vòng nhớ đã lệch với màn hình, và
+một lần khớp sau đó chỉ là trùng hợp. Ví dụ `x aa. Â` rồi Backspace về `x `: `Â`
+không khớp phím `a`, nên `aa` phía trước không được lùi theo hai phím của `Â` để mở
+lại một câu ngay sau `x`. Chế độ English cũng xóa vòng nhớ khi bật lên, vì phím gõ
+tiếng Anh ra màn hình mà không đi qua scanner.
+
+Vòng nhớ giữ 64 phím; shadow văn bản đã commit của desktop giữ 64 byte, nên hiếm khi
+cần sâu hơn. Xa hơn thì dừng hoàn tác chứ không đoán một đầu câu.
 
 `clear()` và `adopt()` không xóa vòng nhớ: trạng thái câu sống qua biên từ. Click,
 đổi app, và tắt công tắc thì xóa, như trước.

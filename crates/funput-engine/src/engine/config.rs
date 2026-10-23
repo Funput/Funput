@@ -45,6 +45,11 @@ impl Engine {
     /// flip, `adopt` — stops.
     pub fn set_enabled(&mut self, enabled: bool) {
         self.session.enabled = enabled;
+        if !enabled {
+            // English keys reach the screen but not the sentence trace, so Backspace
+            // could no longer tell which of its keys is the one being deleted.
+            self.session.sentence.forget_keys();
+        }
     }
 
     pub fn is_enabled(&self) -> bool {
