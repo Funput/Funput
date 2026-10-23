@@ -547,6 +547,72 @@ fn a_line_start_capitalizes_the_next_word() {
     assert_eq!(app_text(&mut state, "tiep"), "Tiep");
 }
 
+/// Issue 619: deleting the full stop must forget it, so the space that follows
+/// does not capitalize the next word.
+#[test]
+fn deleting_a_full_stop_then_spacing_does_not_capitalize() {
+    let mut state = shell_autocap();
+    state.set_method(InputMethod::Telex);
+    let mut app = String::new();
+    type_into(&mut state, &mut app, "tieengs vieetj.");
+    backspace_into(&mut state, &mut app);
+    type_into(&mut state, &mut app, " tiep");
+
+    assert_eq!(app, "tiếng việt tiep");
+}
+
+#[test]
+fn deleting_question_or_bang_then_spacing_does_not_capitalize() {
+    for punct in ['?', '!'] {
+        let mut state = shell_autocap();
+        let mut app = String::new();
+        type_into(&mut state, &mut app, &format!("xong{punct}"));
+        backspace_into(&mut state, &mut app);
+        type_into(&mut state, &mut app, " tiep");
+        assert_eq!(app, "xong tiep", "{punct}");
+    }
+}
+
+/// `ok` is not a syllable, so nothing is re-opened. The full stop is still forgotten.
+#[test]
+fn deleting_a_full_stop_after_a_non_syllable_does_not_capitalize() {
+    let mut state = shell_autocap();
+    let mut app = String::new();
+    type_into(&mut state, &mut app, "ok.");
+    backspace_into(&mut state, &mut app);
+    type_into(&mut state, &mut app, " tiep");
+
+    assert_eq!(app, "ok tiep");
+}
+
+#[test]
+fn a_full_stop_that_stays_still_capitalizes() {
+    let mut state = shell_autocap();
+    assert_eq!(app_text(&mut state, "xong. tiep"), "xong. Tiep");
+}
+
+#[test]
+fn deleting_the_confirming_space_does_not_capitalize() {
+    let mut state = shell_autocap();
+    let mut app = String::new();
+    type_into(&mut state, &mut app, "xong. ");
+    backspace_into(&mut state, &mut app);
+    type_into(&mut state, &mut app, "tiep");
+
+    assert_eq!(app, "xong.tiep");
+}
+
+#[test]
+fn deleting_a_comma_still_does_not_capitalize() {
+    let mut state = shell_autocap();
+    let mut app = String::new();
+    type_into(&mut state, &mut app, "xong,");
+    backspace_into(&mut state, &mut app);
+    type_into(&mut state, &mut app, " tiep");
+
+    assert_eq!(app, "xong tiep");
+}
+
 // --- shortcuts -------------------------------------------------------------
 
 #[test]
@@ -583,6 +649,11 @@ fn pruning_drops_drafts_and_keeps_complete_rows() {
 /// backspaces and inject.
 fn app_text(state: &mut ShellState, keys: &str) -> String {
     let mut app = String::new();
+    type_into(state, &mut app, keys);
+    app
+}
+
+fn type_into(state: &mut ShellState, app: &mut String, keys: &str) {
     for key in keys.chars() {
         let result = state.process_key(key, KeySource::Standard);
         match result.action {
@@ -596,7 +667,12 @@ fn app_text(state: &mut ShellState, keys: &str) -> String {
             Action::Restore => unreachable!("Restore not implemented yet"),
         }
     }
-    app
+}
+
+/// The Windows hook lets Backspace through; the shell only stays in step with it.
+fn backspace_into(state: &mut ShellState, app: &mut String) {
+    state.on_backspace();
+    app.pop();
 }
 
 /// A shell holding one finished row, `tp` → `TP. HCM`.

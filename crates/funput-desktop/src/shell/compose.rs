@@ -40,11 +40,16 @@ impl ShellState {
             self.engine.on_backspace();
             return;
         }
-        let Some(word) = self.tail.backspace() else {
+        let Some(removed) = self.tail.backspace() else {
             return;
         };
-        let adopted = self.engine.adopt(word);
-        self.tail.resolve(adopted);
+        // A full stop leaves the caret on punctuation, so there is no word to
+        // adopt — and that full stop is what the sentence scanner must forget.
+        self.engine.rewind_sentence(removed.deleted);
+        if let Some(word) = removed.word {
+            let adopted = self.engine.adopt(word);
+            self.tail.resolve(adopted);
+        }
     }
 
     /// Flip the word being composed VN↔raw; returns the delete+inject to apply.

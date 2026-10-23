@@ -38,6 +38,14 @@ pub struct CommittedTail {
     word_start: usize,
 }
 
+/// The character Backspace removed, and the word now ending at the caret, if any.
+#[derive(Debug, PartialEq, Eq)]
+pub struct Removed<'a> {
+    pub deleted: char,
+    /// `None` when the caret landed on a separator rather than a word.
+    pub word: Option<&'a str>,
+}
+
 impl CommittedTail {
     pub fn new() -> Self {
         Self::default()
@@ -78,18 +86,19 @@ impl CommittedTail {
         self.trim();
     }
 
-    /// One Backspace with nothing composing: the app is about to delete the last
-    /// committed character. Returns the finished word the caret then sits at the end
-    /// of — offer it to [`funput_engine::Engine::adopt`] and report back with
-    /// [`CommittedTail::resolve`].
-    pub fn backspace(&mut self) -> Option<&str> {
-        self.tail.pop()?;
+    /// One Backspace with nothing composing. The app deletes [`Removed::deleted`].
+    /// Offer [`Removed::word`] to [`funput_engine::Engine::adopt`] when it is set,
+    /// then report back with [`CommittedTail::resolve`].
+    pub fn backspace(&mut self) -> Option<Removed<'_>> {
+        let deleted = self.tail.pop()?;
         let start = word_start(&self.tail);
-        if start == self.tail.len() {
-            return None; // the caret landed on a separator, not on a word
-        }
-        self.word_start = start;
-        Some(&self.tail[start..])
+        let word = if start == self.tail.len() {
+            None
+        } else {
+            self.word_start = start;
+            Some(&self.tail[start..])
+        };
+        Some(Removed { deleted, word })
     }
 
     /// What the engine did with the word from [`CommittedTail::backspace`]. `true`:

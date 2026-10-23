@@ -160,7 +160,7 @@ kể cả khi người dùng hạ Shift ngay chỗ một bộ đếm câu sẽ v
 ## Desktop
 
 macOS, Windows và Linux không viết một dòng nào cho tính năng này: cả ba link
-`funput-engine`, và engine giữ một `Scanner` trong `Session` thay cho hai cờ
+`funput-engine`, và engine giữ một `SentenceTrace` trong `Session` thay cho hai cờ
 `cap_armed` / `cap_sentence_ended` cũ. `update_caps_on_boundary` đã bị xoá.
 
 Việc này vá luôn ba điểm engine từng lệch khỏi luật chung: thiếu `…`, không có luật
@@ -180,6 +180,30 @@ nhận `None`, để lọt chữ `v` thường vào app trong khi buffer của e
 câu chỉ hiện hoa khi phím sau sửa lại nó (`dd` → `Đ`, `as` → `Á`), nên tính năng trông
 như lúc được lúc không. `autocap_injects_the_capital_instead_of_passing_the_key_through`
 ghim lại `Send(0, "V")`.
+
+### Backspace hoàn tác đúng một phím
+
+Desktop không đọc được chữ vừa xóa, nên chỉ hoàn tác khi ký tự Backspace xóa trùng
+phím cuối cùng đã đẩy vào scanner. Dấu `.` trên màn hình chính là phím `.`: xóa nó
+rồi gõ dấu cách không còn viết hoa từ sau. `?` `!` `…` và dấu cách xác nhận cũng
+vậy. Một âm tiết đã ghép (`ệ` từ phím `j`) hay phần bung của gõ tắt không trùng phím
+đó, nên không bị lùi nhầm — ký tự còn trên màn hình giữ chỗ trong câu.
+
+So khớp không phân biệt hoa thường theo ASCII, đúng như cách auto-capitalize viết
+hoa: chữ `V` trên màn hình là phím `v`. Xóa chữ cái mở câu rồi gõ lại thì vẫn được
+viết hoa.
+
+Lần đầu không khớp thì vòng nhớ bị xóa sạch: từ đó vòng nhớ đã lệch với màn hình, và
+một lần khớp sau đó chỉ là trùng hợp. Ví dụ `x aa. Â` rồi Backspace về `x `: `Â`
+không khớp phím `a`, nên `aa` phía trước không được lùi theo hai phím của `Â` để mở
+lại một câu ngay sau `x`. Chế độ English cũng xóa vòng nhớ khi bật lên, vì phím gõ
+tiếng Anh ra màn hình mà không đi qua scanner.
+
+Vòng nhớ giữ 64 phím; shadow văn bản đã commit của desktop giữ 64 byte, nên hiếm khi
+cần sâu hơn. Xa hơn thì dừng hoàn tác chứ không đoán một đầu câu.
+
+`clear()` và `adopt()` không xóa vòng nhớ: trạng thái câu sống qua biên từ. Click,
+đổi app, và tắt công tắc thì xóa, như trước.
 
 ### Windows: con trỏ nhảy thì không đoán
 

@@ -21,7 +21,7 @@ const CLOSERS: [char; 9] = ['"', '\'', ')', ']', '}', '»', '”', '’', '›']
 /// [`Scanner::new`] and walks it. A keyboard engine sees only keystrokes and never
 /// the document, so it starts at [`Scanner::mid_text`] and keeps one scanner alive
 /// for the session.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Scanner {
     rules: Rules,
     /// A sentence has begun and its first letter has not arrived yet.

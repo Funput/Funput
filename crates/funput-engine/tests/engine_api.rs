@@ -143,6 +143,95 @@ fn autocap_after_sentence_end_and_space() {
     assert_eq!(feed(&mut e, "lam"), "Lam");
 }
 
+/// The full stop never sat in the composition buffer, so `on_backspace` cannot see
+/// it. The shell tells the engine which committed character disappeared.
+#[test]
+fn autocap_rewinding_a_deleted_full_stop_does_not_capitalize() {
+    let mut e = engine_autocap();
+    feed(&mut e, "ok");
+    e.process_char('.');
+    e.rewind_sentence('.');
+    e.process_char(' ');
+    assert_eq!(feed(&mut e, "lam"), "lam");
+}
+
+#[test]
+fn autocap_rewind_ignores_a_character_that_is_not_the_last_key() {
+    let mut e = engine_autocap();
+    feed(&mut e, "ok");
+    e.process_char('.');
+    e.rewind_sentence('x');
+    e.process_char(' ');
+    assert_eq!(feed(&mut e, "lam"), "Lam");
+}
+
+#[test]
+fn autocap_rewinding_the_confirming_space_unarms() {
+    let mut e = engine_autocap();
+    feed(&mut e, "ok. ");
+    e.rewind_sentence(' ');
+    assert_eq!(feed(&mut e, "lam"), "lam");
+}
+
+/// `clear` ends a word. The sentence the word belonged to is still there.
+#[test]
+fn autocap_clear_keeps_a_sentence_end() {
+    let mut e = engine_autocap();
+    feed(&mut e, "ok. ");
+    e.clear();
+    assert_eq!(feed(&mut e, "lam"), "Lam");
+}
+
+#[test]
+fn autocap_arm_forgets_a_full_stop_typed_before_focus() {
+    let mut e = engine_autocap();
+    feed(&mut e, "ok.");
+    e.arm_capitalization();
+    e.rewind_sentence('.');
+    assert_eq!(feed(&mut e, "lam"), "Lam");
+}
+
+/// The screen shows `V` for the key `v`; deleting it reopens the sentence.
+#[test]
+fn autocap_backspace_over_the_capital_reopens_the_sentence() {
+    let mut e = engine_autocap();
+    e.arm_capitalization();
+    assert_eq!(feed(&mut e, "v"), "V");
+    e.on_backspace();
+    assert_eq!(feed(&mut e, "v"), "V");
+}
+
+/// `x aa. Â`, then Backspace back to `x `. Deleting `Â` matches no key, so the
+/// trace is out of step with the screen; the `aa` before the full stop must not
+/// then match the keys of `Â` and reopen a sentence after `x`.
+#[test]
+fn autocap_backspace_out_of_step_stops_rewinding() {
+    let mut e = engine_autocap();
+    feed(&mut e, "x aaa. ");
+    assert_eq!(feed(&mut e, "aa"), "Â");
+    e.on_backspace();
+    for deleted in [' ', '.', 'a', 'a'] {
+        e.rewind_sentence(deleted);
+    }
+    assert_eq!(feed(&mut e, "n"), "n");
+}
+
+/// English keys never reach the sentence trace, so Backspace there must not
+/// take back the Vietnamese keys typed before the switch.
+#[test]
+fn autocap_backspace_in_english_leaves_vietnamese_keys_alone() {
+    let mut e = engine_autocap();
+    e.add_shortcut("zz", "xyz");
+    feed(&mut e, "ok. a");
+    e.clear();
+    e.set_enabled(false);
+    feed(&mut e, "ba");
+    e.on_backspace();
+    e.on_backspace();
+    e.set_enabled(true);
+    assert_eq!(feed(&mut e, "c"), "c");
+}
+
 #[test]
 fn autocap_requires_whitespace_after_period() {
     let mut e = engine_autocap();

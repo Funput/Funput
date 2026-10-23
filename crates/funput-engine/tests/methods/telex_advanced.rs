@@ -139,6 +139,8 @@ fn layout_stays_compact() {
     // one pointer for a feature that is off by default. Doubled-key restore adds the
     // `literal` string (24 bytes); `Session::new` reserves its 32 bytes up front, so
     // the revert that fills it never allocates on the keystroke path.
+    // The sentence-undo ring is boxed, so Backspace history costs one pointer
+    // (176 → 184) and nothing on the keystroke path.
     // Keep `benchmarks/README.md` in step when this moves.
-    assert_eq!(std::mem::size_of::<Engine>(), 176);
+    assert_eq!(std::mem::size_of::<Engine>(), 184);
 }

@@ -53,9 +53,23 @@ impl Engine {
         }
         correction::discard(&mut self.session);
         correction::invalidate(&mut self.session);
-        self.session.buffer.pop();
+        // Rewinds only when the deleted character is the key that was pushed. A
+        // composed `ệ` is not, and its keys must not be taken back one by one.
+        if let Some(deleted) = self.session.buffer.pop() {
+            self.rewind_sentence(deleted);
+        }
         self.session.resync_after_backspace();
         ImeResult::none()
+    }
+
+    /// Undo the sentence effect of `deleted` when it is the last key the engine
+    /// was fed. The desktop shell calls this for a committed character, which
+    /// never lived in the composition buffer — a full stop, for example.
+    ///
+    /// Any other character means the engine has lost track of what is on screen,
+    /// so Backspace stops rewinding until new keys are typed.
+    pub fn rewind_sentence(&mut self, deleted: char) {
+        self.session.sentence.rewind(deleted);
     }
 
     /// Flip the live word between its Vietnamese and raw-keystroke forms.
