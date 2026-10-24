@@ -38,4 +38,20 @@ internal class SoftKeyboardVisibilityState {
     fun onKeyboardDetached() {
         hotkeyOverride = null
     }
+
+    /**
+     * Decides whether the IME window must move right now to match [shouldShow].
+     *
+     * Turning the setting on while an editor is already focused raises the soft keyboard without
+     * waiting for another tap; turning it off closes a visible window immediately.
+     */
+    fun syncWindow(
+        currentlyShown: Boolean,
+        inputStarted: Boolean,
+        shouldShow: Boolean = showsWithHardwareKeyboard,
+    ): SoftKeyboardRequest? = when {
+        currentlyShown && !shouldShow -> SoftKeyboardRequest.HIDE
+        !currentlyShown && inputStarted && shouldShow -> SoftKeyboardRequest.SHOW
+        else -> null
+    }
 }

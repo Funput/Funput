@@ -190,6 +190,11 @@
     <string name="settings_hardware_keyboard_show_summary">Android mặc định ẩn bàn phím trên màn hình khi đã kết nối bàn phím rời.</string>
     <string name="settings_hardware_keyboard_hotkey_title">Alt + Space để hiện hoặc ẩn</string>
     <string name="settings_hardware_keyboard_hotkey_summary">Nhấn trên bàn phím rời để hiện hoặc ẩn Funput. Khi tắt, Alt + Space gõ dấu cách.</string>
+    <string name="settings_hardware_keyboard_tile_title">Nút trên Trung tâm điều khiển</string>
+    <string name="settings_hardware_keyboard_tile_summary">Thêm nút bật hoặc tắt nhanh bàn phím ảo khi đang ở xa bàn phím rời.</string>
+    <string name="settings_hardware_keyboard_tile_added">Đã thêm nút vào Trung tâm điều khiển</string>
+    <string name="settings_hardware_keyboard_tile_already_added">Nút này đã có trong Trung tâm điều khiển</string>
+    <string name="settings_hardware_keyboard_tile_manual_hint">Hãy kéo thanh trạng thái xuống và nhấn chỉnh sửa để thêm nút Bàn phím ảo</string>
     <string name="settings_hardware_keyboard_system_title">Cài đặt bàn phím vật lý</string>
     <string name="settings_hardware_keyboard_system_summary">Bố cục phím và các tuỳ chọn khác của Android.</string>
     <string name="settings_section_data">Dữ liệu</string>

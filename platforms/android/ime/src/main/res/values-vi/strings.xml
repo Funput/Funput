@@ -4,4 +4,9 @@
     <string name="clipboard_paste_too_large">Nội dung đã sao chép quá dài để dán</string>
     <string name="clipboard_paste_failed">Không thể dán nội dung đã sao chép</string>
     <string name="open_settings_failed">Không thể mở Funput</string>
+    <string name="hardware_keyboard_tile_label">Bàn phím ảo</string>
+    <string name="hardware_keyboard_tile_subtitle_shown">Đang hiện</string>
+    <string name="hardware_keyboard_tile_subtitle_hidden">Ẩn khi có phím rời</string>
+    <string name="hardware_keyboard_tile_description_shown">Hiện Funput khi có bàn phím rời: Đang bật</string>
+    <string name="hardware_keyboard_tile_description_hidden">Hiện Funput khi có bàn phím rời: Đang tắt</string>
 </resources>

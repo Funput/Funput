@@ -29,6 +29,7 @@ class HardwareKeyboardSectionTest {
     fun `the section dispatches both switches and the system settings link`() {
         val showChanges = mutableListOf<Boolean>()
         val hotkeyChanges = mutableListOf<Boolean>()
+        var addedControlCenterTile = false
         var openedSystemSettings = false
         compose.setContent {
             FunputUiTheme(isDark = false) {
@@ -37,6 +38,7 @@ class HardwareKeyboardSectionTest {
                         preferences = HardwareKeyboardPreferences.Default,
                         onShowsSoftKeyboardChanged = showChanges::add,
                         onToggleHotkeyChanged = hotkeyChanges::add,
+                        onAddControlCenterTile = { addedControlCenterTile = true },
                         onOpenSystemSettings = { openedSystemSettings = true },
                     ),
                 )
@@ -45,10 +47,12 @@ class HardwareKeyboardSectionTest {
 
         compose.onNodeWithText(ShowTitle).performClick()
         compose.onNodeWithText(HotkeyTitle).performClick()
+        compose.onNodeWithText("Nút trên Trung tâm điều khiển").performClick()
         compose.onNodeWithText("Cài đặt bàn phím vật lý").performClick()
 
         assertEquals(listOf(true), showChanges)
         assertEquals(listOf(false), hotkeyChanges)
+        assertTrue(addedControlCenterTile)
         assertTrue(openedSystemSettings)
     }
 

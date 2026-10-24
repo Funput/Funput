@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.IBinder
 import android.view.inputmethod.InputMethodManager
 import app.funput.funput.ime.collectIn
+import app.funput.funput.ime.hardware.tile.HardwareKeyboardTileSync
 import app.funput.funput.ime.settings.hardware.HardwareKeyboardSettings
 import kotlinx.coroutines.CoroutineScope
 
@@ -27,25 +28,41 @@ internal class SoftKeyboardVisibility(private val service: InputMethodService) {
     fun observe(settings: HardwareKeyboardSettings, scope: CoroutineScope) {
         settings.preferences.collectIn(scope) { preferences ->
             state.update(preferences)
-            // Android only re-asks onEvaluateInputViewShown() on its own events, so a setting
-            // that takes the keyboard away has to close the window itself.
-            if (service.isInputViewShown && !service.onEvaluateInputViewShown()) {
-                service.requestHideSelf(0)
-            }
+            syncServiceWindow()
+        }
+        HardwareKeyboardTileSync.requests.collectIn(scope) {
+            syncServiceWindow()
         }
     }
 
     fun toggle() {
-        when (state.toggle(currentlyShown = service.isInputViewShown)) {
-            SoftKeyboardRequest.SHOW -> service.requestShowSelfCompat()
-            SoftKeyboardRequest.HIDE -> service.requestHideSelf(0)
-        }
+        applyRequest(state.toggle(currentlyShown = service.isInputViewShown))
     }
 
     fun onConfigurationChanged(config: Configuration) {
         if (!config.hasUsableHardwareKeyboard()) state.onKeyboardDetached()
     }
+
+    private fun syncServiceWindow() {
+        // Android only re-asks onEvaluateInputViewShown() on its own events, so a setting or
+        // Quick Settings tile change has to open or close the window itself.
+        state.syncWindow(
+            currentlyShown = service.isInputViewShown,
+            inputStarted = service.isInputStarted,
+            shouldShow = service.onEvaluateInputViewShown(),
+        )?.let(::applyRequest)
+    }
+
+    private fun applyRequest(request: SoftKeyboardRequest) {
+        when (request) {
+            SoftKeyboardRequest.SHOW -> service.requestShowSelfCompat()
+            SoftKeyboardRequest.HIDE -> service.requestHideSelf(0)
+        }
+    }
 }
+
+private val InputMethodService.isInputStarted: Boolean
+    get() = currentInputStarted && currentInputConnection != null
 
 /** Mirrors the test `InputMethodService.onEvaluateInputViewShown()` applies by default. */
 private fun Configuration.hasUsableHardwareKeyboard(): Boolean =
