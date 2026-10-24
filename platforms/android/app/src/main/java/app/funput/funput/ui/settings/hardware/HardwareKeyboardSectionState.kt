@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import app.funput.funput.ime.settings.hardware.HardwareKeyboardPreferences
 import app.funput.funput.ime.settings.hardware.HardwareKeyboardSettings
 import app.funput.funput.ui.keyboard.openHardwareKeyboardSettings
+import app.funput.funput.ui.keyboard.requestAddHardwareKeyboardTile
 import kotlinx.coroutines.launch
 
 /** What the hardware-keyboard section renders and every action it can dispatch. */
@@ -18,6 +19,7 @@ internal class HardwareKeyboardSectionState(
     val preferences: HardwareKeyboardPreferences,
     val onShowsSoftKeyboardChanged: (Boolean) -> Unit,
     val onToggleHotkeyChanged: (Boolean) -> Unit,
+    val onAddControlCenterTile: () -> Unit = {},
     val onOpenSystemSettings: () -> Unit,
 ) {
     companion object {
@@ -26,6 +28,7 @@ internal class HardwareKeyboardSectionState(
             preferences = HardwareKeyboardPreferences.Default,
             onShowsSoftKeyboardChanged = {},
             onToggleHotkeyChanged = {},
+            onAddControlCenterTile = {},
             onOpenSystemSettings = {},
         )
     }
@@ -47,6 +50,7 @@ internal fun rememberHardwareKeyboardSectionState(): HardwareKeyboardSectionStat
         preferences = preferences,
         onShowsSoftKeyboardChanged = { enabled -> scope.launch { store.setShowsSoftKeyboard(enabled) } },
         onToggleHotkeyChanged = { enabled -> scope.launch { store.setToggleHotkeyEnabled(enabled) } },
+        onAddControlCenterTile = context::requestAddHardwareKeyboardTile,
         onOpenSystemSettings = context::openHardwareKeyboardSettings,
     )
 }

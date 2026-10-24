@@ -31,6 +31,20 @@
                 android:name="android.view.im"
                 android:resource="@xml/funput_input_method" />
         </service>
+
+        <service
+            android:name=".hardware.tile.HardwareKeyboardTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_qs_hardware_keyboard"
+            android:label="@string/hardware_keyboard_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
     </application>
 
 </manifest>

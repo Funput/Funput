@@ -3,6 +3,7 @@ package app.funput.funput.ime.hardware.visibility
 import app.funput.funput.ime.settings.hardware.HardwareKeyboardPreferences
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -84,6 +85,29 @@ class SoftKeyboardVisibilityStateTest {
         state.update(preferences(toggleHotkeyEnabled = false))
 
         assertFalse(state.hotkeyEnabled)
+    }
+
+    @Test
+    fun `syncing hides a visible keyboard when it should not show`() {
+        val state = SoftKeyboardVisibilityState()
+
+        assertEquals(
+            SoftKeyboardRequest.HIDE,
+            state.syncWindow(currentlyShown = true, inputStarted = true, shouldShow = false),
+        )
+    }
+
+    @Test
+    fun `syncing raises the keyboard when an editor is active and it should show`() {
+        val state = SoftKeyboardVisibilityState()
+        state.update(preferences(showsSoftKeyboard = true))
+
+        assertEquals(
+            SoftKeyboardRequest.SHOW,
+            state.syncWindow(currentlyShown = false, inputStarted = true),
+        )
+        assertNull(state.syncWindow(currentlyShown = false, inputStarted = false))
+        assertNull(state.syncWindow(currentlyShown = true, inputStarted = true))
     }
 
     private fun preferences(

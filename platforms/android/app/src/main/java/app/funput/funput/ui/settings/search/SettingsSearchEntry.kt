@@ -53,6 +53,8 @@ private val rows = listOf(
         "hardware", "physical", "vat ly"),
     entry(R.string.settings_hardware_keyboard_hotkey_title, FunputIcons.Hotkey, SettingsPage.HARDWARE_KEYBOARD,
         "hotkey", "phim tat", "shortcut"),
+    entry(R.string.settings_hardware_keyboard_tile_title, FunputIcons.Add, SettingsPage.HARDWARE_KEYBOARD,
+        "control center", "quick settings", "tile", "trung tam dieu khien", "thanh trang thai"),
     entry(R.string.settings_hardware_keyboard_system_title, FunputIcons.OpenExternal, SettingsPage.HARDWARE_KEYBOARD,
         "hardware", "physical", "android"),
     entry(R.string.settings_data_suggestions_title, FunputIcons.Delete, SettingsPage.DATA,

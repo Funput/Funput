@@ -43,6 +43,14 @@ internal fun HardwareKeyboardSection(state: HardwareKeyboardSectionState) {
         )
         FunputDivider(startInset = FunputRowDefaults.IconDividerInset)
         ActionRow(
+            title = stringResource(R.string.settings_hardware_keyboard_tile_title),
+            summary = stringResource(R.string.settings_hardware_keyboard_tile_summary),
+            onClick = state.onAddControlCenterTile,
+            icon = FunputIcons.Add,
+            tint = FunputTint.GRAY,
+        )
+        FunputDivider(startInset = FunputRowDefaults.IconDividerInset)
+        ActionRow(
             title = stringResource(R.string.settings_hardware_keyboard_system_title),
             summary = stringResource(R.string.settings_hardware_keyboard_system_summary),
             onClick = state.onOpenSystemSettings,
