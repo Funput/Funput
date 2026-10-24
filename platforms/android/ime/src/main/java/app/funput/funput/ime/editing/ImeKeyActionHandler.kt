@@ -22,9 +22,13 @@ internal class ImeKeyActionHandler(
 ) {
     private val mode = ImeTypingMode()
     private val suggestions = ImeSuggestionSession(composition, connection)
+    private val shortcutCoordinator = ImeShortcutCoordinator(composition, shortcuts, connection)
     private val gestures = ImeGestureEditor(
         composition, editor, connection, ::backspace,
-    ) { if (mode.suggestionsAllowed) suggestions.reset() }
+    ) {
+        shortcutCoordinator.finish()
+        if (mode.suggestionsAllowed) suggestions.reset()
+    }
     var smartGesturesEnabled: Boolean by gestures::enabled
     val typingSession = ImeTypingSession()
     private val typing = ImeTypingHandler(
@@ -49,7 +53,6 @@ internal class ImeKeyActionHandler(
         onCompositionChanged = suggestions::updateComposition,
         onCompositionCleared = { if (usesVietnameseComposition) suggestions.reset() },
     )
-    private val shortcutCoordinator = ImeShortcutCoordinator(composition, shortcuts, connection)
 
     val language: KeyboardLanguage get() = mode.language
     fun start(

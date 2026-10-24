@@ -12,6 +12,8 @@ import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionController
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionPreview
+import app.funput.funput.keyboard.interaction.backspace.BackspaceRepeatController
+import app.funput.funput.keyboard.interaction.backspace.BackspaceRepeatStage
 import app.funput.funput.keyboard.interaction.gestures.SmartGestureCoordinator
 internal class KeyboardInteractionController(
     private val keySpec: (keyId: String) -> KeySpec?,
@@ -50,9 +52,9 @@ internal class KeyboardInteractionController(
     private val backspaceRepeat = BackspaceRepeatController(
         schedule = schedule,
         cancel = cancel,
-        onRepeat = {
-            actionDispatcher.repeatBackspace()
-            onHapticFeedback(KeyboardHapticType.DELETE_REPEAT)
+        onRepeat = { stage ->
+            actionDispatcher.repeatBackspace(stage)
+            onHapticFeedback(if (stage == BackspaceRepeatStage.Word) KeyboardHapticType.DELETE else KeyboardHapticType.DELETE_REPEAT)
         },
     )
     private val swipeGestures = KeySwipeGestureTracker.fromDensity(density)
