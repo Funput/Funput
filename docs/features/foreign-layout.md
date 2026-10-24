@@ -52,10 +52,19 @@ Không có thông báo toàn cục nào cho việc đổi ngôn ngữ nhập.
 TSF (`ITfInputProcessorProfileActivationSink`, `ITfLanguageProfileNotifySink`)
 chỉ theo thread và cần TSF thread manager nằm trong process đó. Nên phải hỏi.
 
-`keymap::foreground_layout()` hỏi bằng ba lời gọi user32 rẻ:
-`GetForegroundWindow` → `GetWindowThreadProcessId` → `GetKeyboardLayout(tid)`.
-Ngôn ngữ nhập là thuộc tính của **thread** sở hữu cửa sổ, nên câu hỏi này đúng dù
-người dùng đặt Windows dùng chung một ngôn ngữ hay mỗi cửa sổ một ngôn ngữ.
+`keymap::foreground_layout()` hỏi bằng vài lời gọi user32 rẻ:
+`GetForegroundWindow` → `GetWindowThreadProcessId` → `GetGUIThreadInfo` (lấy
+`hwndFocus`) → `GetKeyboardLayout(tid)`. Ngôn ngữ nhập là thuộc tính của **thread**,
+nên câu hỏi này đúng dù người dùng đặt Windows dùng chung một ngôn ngữ hay mỗi cửa
+sổ một ngôn ngữ.
+
+Thread cần hỏi là thread **đang giữ focus bàn phím**, không phải thread sở hữu cửa
+sổ top-level. Notepad trên Windows 11, cũng như app WinUI hay XAML Islands, đặt ô
+soạn thảo trên một thread riêng, và khi chuyển ngôn ngữ thì chỉ thread đó đổi
+layout. Hỏi thread của cửa sổ thì vẫn nhận `0409` sau khi đã chuyển sang Pinyin, nên
+Funput tiếp tục gõ tiếng Việt vào IME tiếng Trung (#599). Chiều ngược lại cũng sai:
+Funput bị treo dù bàn phím đã về ENG. Nếu không có cửa sổ focus (ví dụ console) thì
+mới quay về thread của cửa sổ.
 
 Hỏi ở hai chỗ:
 
@@ -67,7 +76,7 @@ Hỏi ở hai chỗ:
    không có keystroke nào ở giữa.
 
 `apply_for_layout` trả `None` cho layout nó vừa thấy, tức gần như mọi lần được
-hỏi, nên chi phí thường trực chỉ là ba lời gọi đó cộng một lần khoá mutex.
+hỏi, nên chi phí thường trực chỉ là các lời gọi đó cộng một lần khoá mutex.
 
 ## Người dùng vẫn có tiếng nói cuối
 
