@@ -26,17 +26,6 @@ version = 2
 unmaintained = "workspace"
 yanked = "deny"
 
-ignore = [
-  # quick-xml 0.39.4, reached only through wayland-scanner and zbus_xml. Both are
-  # Linux-only crates that appear in platforms/windows/Cargo.lock because a lockfile
-  # covers every target, and neither is compiled into any shipped Windows binary.
-  # The fix has to come from those two crates bumping to quick-xml >=0.41; there is
-  # no version of this tree that resolves it from here.
-  # Revisit when either publishes a release that moves off 0.39.
-  { id = "RUSTSEC-2026-0194", reason = "quick-xml via wayland-scanner/zbus_xml; Linux-only, not compiled on Windows; no fix available from this tree" },
-  { id = "RUSTSEC-2026-0195", reason = "same quick-xml 0.39.4 path as RUSTSEC-2026-0194" },
-]
-
 # ---------------------------------------------------------------------------
 [licenses]
 version = 2
