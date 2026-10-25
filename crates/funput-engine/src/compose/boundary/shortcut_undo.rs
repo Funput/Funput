@@ -28,6 +28,12 @@ struct Armed {
 }
 
 /// Remember an expansion that just matched, before the boundary clears the word.
+fn slot(session: &mut Session) -> &mut ShortcutUndo {
+    session
+        .shortcut_undo
+        .get_or_insert_with(|| Box::new(ShortcutUndo::default()))
+}
+
 pub(super) fn arm(
     session: &mut Session,
     matched: &str,
@@ -35,7 +41,7 @@ pub(super) fn arm(
     written: &str,
     boundary: char,
 ) {
-    session.shortcut_undo.armed = Some(Armed {
+    slot(session).armed = Some(Armed {
         shown: shown.to_owned(),
         matched: matched.to_owned(),
         written: written.to_owned(),
@@ -45,38 +51,46 @@ pub(super) fn arm(
 
 /// The next key spent the one-tap undo. A refusal already recorded stays.
 pub(crate) fn lapse(session: &mut Session) {
-    session.shortcut_undo.armed = None;
+    let Some(undo) = session.shortcut_undo.as_mut() else {
+        return;
+    };
+    undo.armed = None;
+    if undo.suppressed.is_none() {
+        session.shortcut_undo = None;
+    }
 }
 
 /// The caret left the field. Both the undo and the one-time refusal are stale.
 pub(crate) fn dismiss(session: &mut Session) {
-    session.shortcut_undo = ShortcutUndo::default();
+    session.shortcut_undo = None;
 }
 
 pub(crate) fn is_armed(session: &Session) -> bool {
-    session.shortcut_undo.armed.is_some()
+    session
+        .shortcut_undo
+        .as_ref()
+        .is_some_and(|undo| undo.armed.is_some())
 }
 
 pub(crate) fn shown(session: &Session) -> Option<&str> {
     session
         .shortcut_undo
-        .armed
         .as_ref()
-        .map(|armed| armed.shown.as_str())
+        .and_then(|undo| undo.armed.as_ref().map(|armed| armed.shown.as_str()))
 }
 
 pub(crate) fn written(session: &Session) -> Option<&str> {
     session
         .shortcut_undo
-        .armed
         .as_ref()
-        .map(|armed| armed.written.as_str())
+        .and_then(|undo| undo.armed.as_ref().map(|armed| armed.written.as_str()))
 }
 
 /// Put the shown word back, with the same boundary character, and refuse the trigger once.
 pub(crate) fn undo(session: &mut Session) -> Option<ImeResult> {
-    let armed = session.shortcut_undo.armed.take()?;
-    session.shortcut_undo.suppressed = Some(armed.matched);
+    let undo = session.shortcut_undo.as_mut()?;
+    let armed = undo.armed.take()?;
+    undo.suppressed = Some(armed.matched);
     let mut output = armed.shown;
     output.push(armed.boundary);
     Some(ImeResult::send(armed.written.chars().count(), output))
@@ -87,13 +101,24 @@ pub(crate) fn undo(session: &mut Session) -> Option<ImeResult> {
 /// Called before expansion, doubled-key restore, and typo correction, so a refused
 /// `cm` is not repaired into some other syllable on the way past.
 pub(super) fn declined(session: &mut Session) -> bool {
-    let Some(suppressed) = session.shortcut_undo.suppressed.clone() else {
+    let Some(suppressed) = session
+        .shortcut_undo
+        .as_ref()
+        .and_then(|undo| undo.suppressed.clone())
+    else {
         return false;
     };
     if suppressed.is_empty() || !matches_word(session, &suppressed) {
         return false;
     }
-    session.shortcut_undo.suppressed = None;
+    let Some(undo) = session.shortcut_undo.as_mut() else {
+        return false;
+    };
+    undo.suppressed = None;
+    let empty = undo.armed.is_none();
+    if empty {
+        session.shortcut_undo = None;
+    }
     true
 }
 

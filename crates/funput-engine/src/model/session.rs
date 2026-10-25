@@ -39,8 +39,8 @@ pub(crate) struct Session {
     /// session — `clear()` does not touch it.
     pub(crate) shortcuts: HashMap<String, String>,
     /// One-tap undo of the last gõ tắt expansion, and the trigger refused once.
-    /// A word boundary's `clear()` keeps both: the undo is answered afterwards.
-    pub(crate) shortcut_undo: ShortcutUndo,
+    /// Boxed and `None` until an expansion lands, so an idle engine pays a pointer.
+    pub(crate) shortcut_undo: Option<Box<ShortcutUndo>>,
     /// The composed Vietnamese form of the current word, captured each keystroke
     /// *before* an eager English-restore can collapse `buffer` to the raw keys. Lets
     /// the flip hotkey recover the Vietnamese form even after a restore. Per-word —
@@ -70,7 +70,7 @@ impl Session {
             literal: Literal::new(),
             sentence: SentenceTrace::mid_text(),
             shortcuts: HashMap::new(),
-            shortcut_undo: ShortcutUndo::default(),
+            shortcut_undo: None,
             vn_form: String::new(),
             restore_override: None,
             correction: None,
