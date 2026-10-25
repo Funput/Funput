@@ -66,6 +66,24 @@ class ShortcutUndoInstrumentedTest {
         }
     }
 
+    @Test fun erasingTheUndoneWordGivesTheTriggerBackItsEffect() = onMainThread {
+        for (language in KeyboardLanguage.entries) {
+            ImeEditingScenario.create().use { scenario ->
+                scenario.handler.receiveShortcuts(library())
+                scenario.handler.onKeyAction(KeyAction.ToggleLanguage(language))
+                scenario.handler.type("vn ")
+                scenario.handler.onKeyAction(KeyAction.Backspace)
+                assertEquals("vn ", scenario.text)
+                repeat(3) { scenario.handler.onKeyAction(KeyAction.Backspace) }
+                assertEquals("", scenario.text)
+
+                scenario.handler.type("vn ")
+
+                assertEquals("$language", "việt nam ", scenario.text)
+            }
+        }
+    }
+
     @Test fun anotherTriggerStillExpandsWhileOneIsRefused() = onMainThread {
         ImeEditingScenario.create().use { scenario ->
             scenario.handler.receiveShortcuts(library(TextShortcut(trigger = "kg", expansion = "không")))

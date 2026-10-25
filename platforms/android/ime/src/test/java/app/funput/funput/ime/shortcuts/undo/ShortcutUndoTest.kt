@@ -38,6 +38,19 @@ class ShortcutUndoTest {
         assertTrue(undo.dismissed)
     }
 
+    @Test fun theBackspaceAfterAnUndoForgetsTheRefusal() {
+        val undo = armed()
+        val editor = CommittedEditor(text = "việt nam ")
+        val shortcut = ShortcutUndo(session(undo)) { editor.proxy }
+        assertTrue(shortcut.undo())
+        assertFalse("the undo itself keeps the refusal", undo.dismissed)
+
+        assertFalse("nothing left to undo, so Backspace deletes as usual", shortcut.undo())
+
+        assertTrue("erasing the word means the trigger counts again", undo.dismissed)
+        assertEquals("vn ", editor.text)
+    }
+
     @Test fun anUnreadableDocumentHidesTheChipWithoutDroppingTheBeat() {
         val undo = armed()
         val editor = CommittedEditor(text = "việt nam ", exposesSurroundingText = false)

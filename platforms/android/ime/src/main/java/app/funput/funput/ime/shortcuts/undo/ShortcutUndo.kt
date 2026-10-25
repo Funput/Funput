@@ -20,10 +20,21 @@ internal class ShortcutUndo(
      */
     fun chipText(): String? = engine.text()?.takeIf { confirmed() == true }
 
-    /** True when the expansion was put back and Backspace must not also delete. */
+    /**
+     * True when the expansion was put back and Backspace must not also delete.
+     *
+     * Any other Backspace is the user editing the word they just refused, so the
+     * engine forgets the refusal too: erase `vn ` after undoing it, type `vn ` again,
+     * and it expands. Left standing, it would swallow that trigger with nothing on
+     * screen to explain why.
+     */
     fun undo(): Boolean {
-        val current = connection() ?: return false
-        val suffix = engine.suffix() ?: return false
+        val suffix = engine.suffix()
+        val current = connection()
+        if (suffix == null || current == null) {
+            engine.dismiss()
+            return false
+        }
         if (!sitsBeforeCaret(current, suffix)) {
             engine.dismiss()
             return false
