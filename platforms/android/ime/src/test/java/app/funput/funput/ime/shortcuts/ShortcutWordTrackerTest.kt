@@ -5,9 +5,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ShortcutWordTrackerTest {
-    @Test fun backspaceOnAnEmptyWordDoesNotPretendItEmptiedOne() {
+    @Test fun anEmptyTrackerStillReportsTheWordAsEnded() {
+        // A reopened Vietnamese word never lived in this tracker. Deleting it has to
+        // read as "the word is over" so a library that arrived mid-word can install.
         val tracker = ShortcutWordTracker()
-        assertFalse(tracker.backspace())
+        assertTrue(tracker.backspace())
     }
 
     @Test fun backspaceThatRemovesTheLastLetterReportsTheWordEnded() {

@@ -18,8 +18,10 @@ internal class ShortcutWordTracker {
     }
 
     fun backspace(): Boolean {
-        if (word.isEmpty()) return false
-        word = word.substring(0, word.offsetByCodePoints(word.length, -1))
+        if (word.isNotEmpty()) word = word.substring(0, word.offsetByCodePoints(word.length, -1))
+        // An already-empty tracker still answers "the word is over". A composition the
+        // tracker never followed — a reopened Vietnamese word — ends by deletion, and
+        // the caller installs a library that arrived while that word was open.
         return word.isEmpty()
     }
 

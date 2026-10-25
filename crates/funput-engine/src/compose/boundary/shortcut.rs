@@ -96,20 +96,14 @@ fn matched_expansion(session: &Session) -> Option<(String, String)> {
     let typed = doubled::typed_keys(session);
     let keys = session.keys.as_str();
     let buffer = session.buffer.as_str();
-    if let Some(expansion) = lookup(session, typed) {
-        return Some((typed.to_owned(), expansion));
-    }
-    if keys != typed {
-        if let Some(expansion) = lookup(session, keys) {
-            return Some((keys.to_owned(), expansion));
-        }
-    }
-    if buffer != keys && buffer != typed {
-        if let Some(expansion) = lookup(session, buffer) {
-            return Some((buffer.to_owned(), expansion));
-        }
-    }
-    None
+    let hit = |word: &str| lookup(session, word).map(|expansion| (word.to_owned(), expansion));
+    hit(typed)
+        .or_else(|| (keys != typed).then(|| hit(keys)).flatten())
+        .or_else(|| {
+            (buffer != keys && buffer != typed)
+                .then(|| hit(buffer))
+                .flatten()
+        })
 }
 
 /// The expansion `word` triggers, re-cased to match it.
