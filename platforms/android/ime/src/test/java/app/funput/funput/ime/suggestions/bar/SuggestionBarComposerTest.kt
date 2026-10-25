@@ -5,6 +5,7 @@ import app.funput.funput.keyboard.suggestion.SuggestionChip
 import app.funput.funput.keyboard.suggestion.SuggestionChipKind.CORRECTION_CANDIDATE
 import app.funput.funput.keyboard.suggestion.SuggestionChipKind.CORRECTION_TYPED
 import app.funput.funput.keyboard.suggestion.SuggestionChipKind.CORRECTION_UNDO
+import app.funput.funput.keyboard.suggestion.SuggestionChipKind.SHORTCUT_UNDO
 import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -49,6 +50,19 @@ class SuggestionBarComposerTest {
     fun deduplicated() {
         val chips = SuggestionBarComposer.compose(CorrectionPreview.Offered("đườnh", listOf("đường")), personal)
         assertEquals("a repair is not offered twice", 1, chips.count { it.text == "đường" })
+    }
+
+    @Test
+    fun shortcutUndoLeadsWhenNothingIsBeingCorrected() {
+        val chips = SuggestionBarComposer.compose(null, personal, "vn")
+        assertEquals(SuggestionChip("vn", SHORTCUT_UNDO), chips.first())
+        assertEquals(listOf("vn", "đường", "đi"), chips.map { it.text })
+    }
+
+    @Test
+    fun aCorrectionKeepsTheShortcutUndoOffTheBar() {
+        val chips = SuggestionBarComposer.compose(CorrectionPreview.Applied("đườnh"), personal, "vn")
+        assertEquals(CORRECTION_UNDO, chips.first().kind)
     }
 
     @Test

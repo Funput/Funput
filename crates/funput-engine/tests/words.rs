@@ -8,3 +8,5 @@ mod boundary;
 mod shortcut;
 #[path = "words/shortcut_composed.rs"]
 mod shortcut_composed;
+#[path = "words/shortcut_undo.rs"]
+mod shortcut_undo;

@@ -65,7 +65,7 @@ fn apply_shortcut_case(expansion: &str, case: ShortcutCase) -> String {
     }
 }
 
-pub(super) fn expansion(session: &Session, boundary_key: char) -> Option<ImeResult> {
+pub(super) fn expansion(session: &mut Session, boundary_key: char) -> Option<ImeResult> {
     // Gated here rather than by clearing the table: the rows stay loaded, so the
     // switch is instant in both directions and nothing has to be re-pushed. A word
     // glued to a number (`500k`) is a unit on that number, never a trigger.
@@ -76,23 +76,40 @@ pub(super) fn expansion(session: &Session, boundary_key: char) -> Option<ImeResu
     {
         return None;
     }
-    // A trigger is written however the user thinks of the word: as keys (`vn`,
-    // `ddc`) or as the Vietnamese they compose to (`đc`, `mấy`). The keys go first so
-    // a table written for them keeps its meaning, then the word on screen. Keys as
-    // typed come before what a revert left of them, so `pass` reaches a `pass`
-    // trigger whether or not the word was decided mid-word, and still reaches `pas`.
+    let (matched, cased) = matched_expansion(session)?;
+    // The word on screen, not the raw keys: `ddc` composes to `đc` before it expands.
+    let shown = session.buffer.clone();
+    let mut written = cased;
+    written.push(boundary_key);
+    let backspace = shown.chars().count();
+    super::shortcut_undo::arm(session, &matched, &shown, &written, boundary_key);
+    Some(ImeResult::send(backspace, written))
+}
+
+/// The expansion and the form that matched it: typed keys, then `keys`, then buffer.
+///
+/// A trigger is written however the user thinks of the word: as keys (`vn`, `ddc`)
+/// or as the Vietnamese they compose to (`đc`, `mấy`). Keys as typed come before
+/// what a revert left of them, so `pass` reaches a `pass` trigger whether or not the
+/// word was decided mid-word, and still reaches `pas`.
+fn matched_expansion(session: &Session) -> Option<(String, String)> {
     let typed = doubled::typed_keys(session);
     let keys = session.keys.as_str();
     let buffer = session.buffer.as_str();
-    let cased = lookup(session, typed)
-        .or_else(|| (keys != typed).then(|| lookup(session, keys)).flatten())
-        .or_else(|| {
-            (buffer != keys && buffer != typed)
-                .then(|| lookup(session, buffer))
-                .flatten()
-        })?;
-    let output = format!("{cased}{boundary_key}");
-    Some(ImeResult::send(session.buffer.chars().count(), output))
+    if let Some(expansion) = lookup(session, typed) {
+        return Some((typed.to_owned(), expansion));
+    }
+    if keys != typed {
+        if let Some(expansion) = lookup(session, keys) {
+            return Some((keys.to_owned(), expansion));
+        }
+    }
+    if buffer != keys && buffer != typed {
+        if let Some(expansion) = lookup(session, buffer) {
+            return Some((buffer.to_owned(), expansion));
+        }
+    }
+    None
 }
 
 /// The expansion `word` triggers, re-cased to match it.

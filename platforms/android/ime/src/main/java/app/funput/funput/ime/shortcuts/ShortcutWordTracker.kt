@@ -18,7 +18,8 @@ internal class ShortcutWordTracker {
     }
 
     fun backspace(): Boolean {
-        if (word.isNotEmpty()) word = word.substring(0, word.offsetByCodePoints(word.length, -1))
+        if (word.isEmpty()) return false
+        word = word.substring(0, word.offsetByCodePoints(word.length, -1))
         return word.isEmpty()
     }
 

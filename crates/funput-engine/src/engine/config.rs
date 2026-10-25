@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use funput_core::{InputMethod, ToneStyle};
 
+use crate::compose::boundary::shortcut_undo;
 use crate::correction;
 use crate::{Engine, EngineConfig};
 
@@ -99,6 +100,7 @@ impl Engine {
         // The caret has moved or the field has changed: a correction parked for the
         // old word would land somewhere it was never meant to.
         correction::discard(&mut self.session);
+        shortcut_undo::dismiss(&mut self.session);
     }
 
     pub fn add_shortcut(&mut self, trigger: impl Into<String>, expansion: impl Into<String>) {

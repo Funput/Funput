@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use crate::compose::RestoreOverride;
+use crate::compose::boundary::shortcut_undo::ShortcutUndo;
 use crate::compose::doubled::Literal;
 use crate::correction::CorrectionState;
 use crate::model::{EngineConfig, NumberGlue, SentenceTrace};
@@ -37,6 +38,9 @@ pub(crate) struct Session {
     /// entry, re-casing the expansion to match. Config that lives for the whole
     /// session — `clear()` does not touch it.
     pub(crate) shortcuts: HashMap<String, String>,
+    /// One-tap undo of the last gõ tắt expansion, and the trigger refused once.
+    /// A word boundary's `clear()` keeps both: the undo is answered afterwards.
+    pub(crate) shortcut_undo: ShortcutUndo,
     /// The composed Vietnamese form of the current word, captured each keystroke
     /// *before* an eager English-restore can collapse `buffer` to the raw keys. Lets
     /// the flip hotkey recover the Vietnamese form even after a restore. Per-word —
@@ -66,6 +70,7 @@ impl Session {
             literal: Literal::new(),
             sentence: SentenceTrace::mid_text(),
             shortcuts: HashMap::new(),
+            shortcut_undo: ShortcutUndo::default(),
             vn_form: String::new(),
             restore_override: None,
             correction: None,

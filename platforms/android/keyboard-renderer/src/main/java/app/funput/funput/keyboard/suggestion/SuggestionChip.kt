@@ -13,6 +13,9 @@ enum class SuggestionChipKind {
 
     /** The word a repair replaced: tapping puts it back. */
     CORRECTION_UNDO,
+
+    /** The word a gõ tắt expansion replaced: tapping puts it back. */
+    SHORTCUT_UNDO,
 }
 
 /** One slot on the suggestion bar. */
@@ -24,7 +27,7 @@ data class SuggestionChip(
     val title: String
         get() = when (kind) {
             SuggestionChipKind.CORRECTION_TYPED -> "“$text”"
-            SuggestionChipKind.CORRECTION_UNDO -> "↩ $text"
+            SuggestionChipKind.CORRECTION_UNDO, SuggestionChipKind.SHORTCUT_UNDO -> "↩ $text"
             else -> text
         }
 
@@ -35,6 +38,7 @@ data class SuggestionChip(
             SuggestionChipKind.CORRECTION_TYPED -> "Giữ nguyên, $text"
             SuggestionChipKind.CORRECTION_CANDIDATE -> "Sửa thành, $text"
             SuggestionChipKind.CORRECTION_UNDO -> "Hoàn tác, $text"
+            SuggestionChipKind.SHORTCUT_UNDO -> "Hoàn tác gõ tắt, $text"
         }
 }
 

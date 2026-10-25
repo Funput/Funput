@@ -126,7 +126,7 @@ fn encode_edit(edit: Option<ImeResult>) -> Vec<jint> {
 }
 
 /// Marshal an edit into the Java array the IME reads it from.
-fn edit_array(env: &mut EnvUnowned<'_>, edit: Option<ImeResult>) -> jintArray {
+pub(crate) fn edit_array(env: &mut EnvUnowned<'_>, edit: Option<ImeResult>) -> jintArray {
     int_array(env, &encode_edit(edit))
 }
 

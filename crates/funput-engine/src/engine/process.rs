@@ -25,6 +25,9 @@ impl Engine {
         // parked it already did everything it would have done without the feature,
         // so there is nothing to fold into this keystroke.
         correction::flush_pending(&mut self.session);
+        // A gõ tắt undo the platform did not take dies with this key. The refusal
+        // recorded by an undo that *was* taken stays until that trigger is typed again.
+        crate::compose::boundary::shortcut_undo::lapse(&mut self.session);
         self.process_key_inner(key, source)
     }
 
