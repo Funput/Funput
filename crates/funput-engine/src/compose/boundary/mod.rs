@@ -88,17 +88,6 @@ fn keystrokes_intend_vietnamese(session: &Session) -> bool {
         || is_bare_shaped_vowel(&session.buffer)
 }
 
-/// Expansion, or an explicit keep when the user just refused this trigger.
-///
-/// `Some` stops the boundary: a refusal must not fall through into doubled-key
-/// restore or typo correction. `None` means gõ tắt had nothing to say.
-fn shortcut_result(session: &mut Session, boundary_key: char) -> Option<ImeResult> {
-    if shortcut_undo::declined(session) {
-        return Some(ImeResult::none());
-    }
-    shortcut::expansion(session, boundary_key)
-}
-
 /// Replace the word on screen with `text`, then type the boundary key after it.
 fn replace_word(session: &Session, text: &str, boundary_key: char) -> ImeResult {
     let backspace = session.buffer.chars().count();
@@ -109,7 +98,10 @@ fn replace_word(session: &Session, text: &str, boundary_key: char) -> ImeResult 
 /// composition to restore (the keys are already the text on screen) and
 /// auto-capitalize is a Vietnamese-mode feature, so neither runs here.
 pub(crate) fn on_english_boundary(session: &mut Session, boundary_key: char) -> ImeResult {
-    let result = shortcut_result(session, boundary_key).unwrap_or_else(ImeResult::none);
+    let result = (!shortcut_undo::declined(session))
+        .then(|| shortcut::expansion(session, boundary_key))
+        .flatten()
+        .unwrap_or_else(ImeResult::none);
     session.clear();
     result
 }
@@ -121,8 +113,10 @@ pub(crate) fn on_word_boundary(session: &mut Session, boundary_key: char) -> Ime
 }
 
 fn boundary_result(session: &mut Session, boundary_key: char) -> ImeResult {
-    if let Some(result) = shortcut_result(session, boundary_key) {
-        return result;
+    // An undone trigger gets no expansion and no repair; English restore still runs.
+    let declined = shortcut_undo::declined(session);
+    if !declined && let Some(expansion) = shortcut::expansion(session, boundary_key) {
+        return expansion;
     }
     if doubled::restorable(session) {
         // The word is English, so typo correction must not park a repair for it.
@@ -138,7 +132,11 @@ fn boundary_result(session: &mut Session, boundary_key: char) -> ImeResult {
     // keystroke then does exactly what it did before the feature existed, restore
     // included, so nothing here can change the text the app already shows — and the
     // parked correction is told which text that is.
-    correction::offer(session, boundary_key, &verdict);
+    if declined {
+        correction::drop_preview(session);
+    } else {
+        correction::offer(session, boundary_key, &verdict);
+    }
     if verdict.restore {
         replace_word(session, &session.keys, boundary_key)
     } else {

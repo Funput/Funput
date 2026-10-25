@@ -1,4 +1,6 @@
-//! JNI exports for the shared engine's text-expansion table and switches.
+//! JNI exports for the shared engine's text-expansion (gõ tắt): the table, its
+//! switches, and the one-tap undo of the expansion just written. An undo edit comes
+//! back in the same `[backspace, codepoint…]` shape as a typo correction.
 
 use jni::EnvUnowned;
 use jni::objects::JString;
@@ -80,7 +82,7 @@ fn shortcut_string(handle: jlong, read: impl Fn(&funput_engine::Engine) -> Optio
     registry::with_mut(handle, |engine| read(engine).unwrap_or("").to_owned()).unwrap_or_default()
 }
 
-/// Whether Backspace can still put the last expansion back. Empty text means no.
+/// Whether Backspace can still put the last expansion back.
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nativeHasShortcutUndo(
     _env: EnvUnowned<'_>,
@@ -142,3 +144,6 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
         registry::with_mut(handle, |engine| engine.dismiss_shortcut_undo());
     });
 }
+
+#[cfg(test)]
+mod tests;

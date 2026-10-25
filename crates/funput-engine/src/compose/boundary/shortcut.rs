@@ -77,11 +77,12 @@ pub(super) fn expansion(session: &mut Session, boundary_key: char) -> Option<Ime
         return None;
     }
     let (matched, cased) = matched_expansion(session)?;
-    // The word on screen, not the raw keys: `ddc` composes to `đc` before it expands.
-    let shown = session.buffer.clone();
+    // Undo restores the word, not the raw keys: `ddc` composes to `đc` before it
+    // expands. What has to be deleted is what the app shows right now: `buffer`.
+    let backspace = session.buffer.chars().count();
+    let shown = super::shortcut_undo::plain_form(session);
     let mut written = cased;
     written.push(boundary_key);
-    let backspace = shown.chars().count();
     super::shortcut_undo::arm(session, &matched, &shown, &written, boundary_key);
     Some(ImeResult::send(backspace, written))
 }

@@ -106,7 +106,7 @@ fn the_refused_trigger_is_kept_once_and_then_expands_again() {
 }
 
 #[test]
-fn a_different_trigger_still_expands_while_one_is_refused() {
+fn a_different_trigger_still_expands_right_after_one_is_refused() {
     let mut engine = engine_with(&[("vn", "Việt Nam"), ("kg", "không")]);
     let mut doc = Document::new();
     type_into(&mut engine, &mut doc, "vn ");
@@ -114,8 +114,89 @@ fn a_different_trigger_still_expands_while_one_is_refused() {
     type_into(&mut engine, &mut doc, "kg ");
 
     assert_eq!(doc.text(), "vn không ");
+}
+
+/// The refusal is for the next word only. Left standing, an `a` → `anh` undone in
+/// one sentence would silently fail to expand in a later one.
+#[test]
+fn the_refusal_is_spent_by_the_next_word_even_when_it_is_another() {
+    let mut engine = engine_with(&[("vn", "Việt Nam"), ("kg", "không")]);
+    let mut doc = Document::new();
     type_into(&mut engine, &mut doc, "vn ");
-    assert_eq!(doc.text(), "vn không vn ");
+    undo(&mut engine, &mut doc);
+    type_into(&mut engine, &mut doc, "kg ");
+    type_into(&mut engine, &mut doc, "vn ");
+
+    assert_eq!(doc.text(), "vn không Việt Nam ");
+}
+
+#[test]
+fn the_refusal_does_not_outlive_an_ordinary_sentence() {
+    let mut engine = engine_with(&[("vn", "Việt Nam")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "vn ");
+    undo(&mut engine, &mut doc);
+    type_into(&mut engine, &mut doc, "toi o day, hom nay moi ngay ");
+    type_into(&mut engine, &mut doc, "vn ");
+
+    assert!(doc.text().ends_with("ngay Việt Nam "), "{}", doc.text());
+}
+
+/// A second space ends no word, so it must not eat the refusal meant for the
+/// word retyped after it.
+#[test]
+fn an_empty_boundary_leaves_the_refusal_standing() {
+    let mut engine = engine_with(&[("vn", "Việt Nam")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "vn ");
+    undo(&mut engine, &mut doc);
+    type_into(&mut engine, &mut doc, " ");
+    type_into(&mut engine, &mut doc, "vn ");
+
+    assert_eq!(doc.text(), "vn  vn ");
+}
+
+/// A refused trigger stands down gõ tắt and typo correction, not English restore:
+/// with eager restore off, `text` is only turned back into `text` at the boundary.
+#[test]
+fn a_refused_trigger_still_gets_english_restore() {
+    for eager in [true, false] {
+        let mut engine = engine_with(&[("text", "văn bản")]);
+        engine.update_config(|config| config.eager_restore = eager);
+        let mut doc = Document::new();
+        type_into(&mut engine, &mut doc, "text ");
+        undo(&mut engine, &mut doc);
+        type_into(&mut engine, &mut doc, "text ");
+
+        assert_eq!(doc.text(), "text text ", "eager restore {eager}");
+    }
+}
+
+#[test]
+fn clearing_the_table_keeps_the_undo_that_the_screen_still_needs() {
+    let mut engine = engine_with(&[("vn", "Việt Nam")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "vn ");
+    engine.clear_shortcuts();
+    assert!(engine.has_shortcut_undo());
+
+    undo(&mut engine, &mut doc);
+
+    assert_eq!(doc.text(), "vn ");
+}
+
+#[test]
+fn turning_gõ_tắt_off_leaves_a_refusal_harmless() {
+    let mut engine = engine_with(&[("vn", "Việt Nam")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "vn ");
+    undo(&mut engine, &mut doc);
+    engine.update_config(|config| config.shortcuts_enabled = false);
+    type_into(&mut engine, &mut doc, "vn ");
+    engine.update_config(|config| config.shortcuts_enabled = true);
+    type_into(&mut engine, &mut doc, "vn ");
+
+    assert_eq!(doc.text(), "vn vn Việt Nam ");
 }
 
 #[test]

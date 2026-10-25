@@ -114,7 +114,7 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_FunputNative_nati
 
 /// `[backspace, codepoint…]`, or nothing at all for a no-op. Split from the JNI
 /// marshalling below so the shape the IME decodes can be tested without a JVM.
-fn encode_edit(edit: Option<ImeResult>) -> Vec<jint> {
+pub(super) fn encode_edit(edit: Option<ImeResult>) -> Vec<jint> {
     match edit {
         Some(result) if result.action != Action::None => {
             std::iter::once(jint::try_from(result.backspace).unwrap_or(jint::MAX))

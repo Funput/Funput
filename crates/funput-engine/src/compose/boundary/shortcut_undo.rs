@@ -12,8 +12,8 @@ use crate::model::Session;
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub(crate) struct ShortcutUndo {
     armed: Option<Armed>,
-    /// The form that matched (`typed` keys, `keys`, or `buffer`). The next boundary
-    /// that types it again keeps the word, once, then forgets the refusal.
+    /// The form that matched (`typed` keys, `keys`, or `buffer`). The next word that
+    /// ends is kept as typed if it is this one; either way the refusal is then spent.
     suppressed: Option<String>,
 }
 
@@ -27,13 +27,27 @@ struct Armed {
     boundary: char,
 }
 
-/// Remember an expansion that just matched, before the boundary clears the word.
+/// The word as the boundary would have left it with no expansion: what undo puts
+/// back, and what the `↩` chip names. Usually the composed word (`đc`), but a word
+/// English restore would turn back into keys (`text`, not `tẽt`) comes back as
+/// those keys, exactly as a refused retype does.
+pub(super) fn plain_form(session: &Session) -> String {
+    if doubled::restorable(session) {
+        session.literal.as_str().to_owned()
+    } else if super::judge(session).restore {
+        session.keys.clone()
+    } else {
+        session.buffer.clone()
+    }
+}
+
 fn slot(session: &mut Session) -> &mut ShortcutUndo {
     session
         .shortcut_undo
         .get_or_insert_with(|| Box::new(ShortcutUndo::default()))
 }
 
+/// Remember an expansion that just matched, before the boundary clears the word.
 pub(super) fn arm(
     session: &mut Session,
     matched: &str,
@@ -49,7 +63,8 @@ pub(super) fn arm(
     });
 }
 
-/// The next key spent the one-tap undo. A refusal already recorded stays.
+/// The next key spent the one-tap undo. A refusal already recorded stays until the
+/// next word ends: see [`declined`].
 pub(crate) fn lapse(session: &mut Session) {
     let Some(undo) = session.shortcut_undo.as_mut() else {
         return;
@@ -96,30 +111,29 @@ pub(crate) fn undo(session: &mut Session) -> Option<ImeResult> {
     Some(ImeResult::send(armed.written.chars().count(), output))
 }
 
-/// The word that just ended is the trigger the user refused. Keep it, once.
+/// Whether the word that just ended is the trigger the user refused, and so keeps
+/// its screen form instead of expanding or being repaired.
 ///
-/// Called before expansion, doubled-key restore, and typo correction, so a refused
-/// `cm` is not repaired into some other syllable on the way past.
+/// The refusal is for the very next word, not for the trigger forever: the first
+/// boundary that ends a real word spends it, match or not. Otherwise an `a` →
+/// `anh` refused in one sentence would silently fail to expand in a later one.
+/// An empty boundary (a second space) ends no word, so it leaves the refusal be.
+/// English restore still runs for a refused word; only gõ tắt and typo correction
+/// stand down.
 pub(super) fn declined(session: &mut Session) -> bool {
-    let Some(suppressed) = session
-        .shortcut_undo
-        .as_ref()
-        .and_then(|undo| undo.suppressed.clone())
-    else {
-        return false;
-    };
-    if suppressed.is_empty() || !matches_word(session, &suppressed) {
+    if session.keys.is_empty() {
         return false;
     }
     let Some(undo) = session.shortcut_undo.as_mut() else {
         return false;
     };
-    undo.suppressed = None;
-    let empty = undo.armed.is_none();
-    if empty {
+    let Some(suppressed) = undo.suppressed.take() else {
+        return false;
+    };
+    if undo.armed.is_none() {
         session.shortcut_undo = None;
     }
-    true
+    !suppressed.is_empty() && matches_word(session, &suppressed)
 }
 
 fn matches_word(session: &Session, suppressed: &str) -> bool {
