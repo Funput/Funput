@@ -155,6 +155,7 @@ src/engine/         # composition IME C API (FunputEngine)
                     #   compose.rs  process_char/key, buffer, backspace, flip, clear, arm
                     #   config.rs   FunputConfig + configure() + set_method/set_enabled
                     #   shortcuts.rs add_shortcut/clear_shortcuts (text expansion, "gõ tắt")
+                    #   shortcut_undo.rs take the last expansion back (text/undo/dismiss, UTF-8 callback text)
                     #   result.rs   #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 src/suggestion/     # personal-suggestion C API (FunputSuggestionEngine)
                     #   engine.rs (handle new/open/free, attach_lexicon), query.rs (learn/query),

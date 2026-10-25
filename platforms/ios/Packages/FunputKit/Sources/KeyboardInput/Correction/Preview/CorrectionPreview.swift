@@ -17,13 +17,16 @@ public enum CorrectionPreview: Equatable, Sendable {
     /// A repair was just applied, and one tap takes it back: `undoText` is the word
     /// that would come back.
     case applied(undoText: String)
+    /// A gõ tắt expansion was just written, and one tap takes it back: `undoText` is
+    /// the word it replaced. Not a correction, but it rides the same slots on the bar.
+    case shortcut(undoText: String)
 
     /// The word and its repairs, for the two shapes that show them.
     public var offer: (typed: String, candidates: [String])? {
         switch self {
         case let .offered(typed, candidates), let .parked(typed, candidates):
             (typed, candidates)
-        case .applied:
+        case .applied, .shortcut:
             nil
         }
     }

@@ -49,6 +49,15 @@ struct SuggestionBarComposerTests {
         #expect(composed.first?.text == "đườnh")
     }
 
+    @Test("After an expansion the undo chip leads and completions follow")
+    func shortcut() {
+        let composed = SuggestionBarComposer.compose(
+            correction: .shortcut(undoText: "vn"), personal: personal("vn", "việt", "viết"), generation: 3
+        )
+        #expect(composed.map(\.kind) == [.shortcutUndo, .suggestion, .suggestion])
+        #expect(composed.map(\.text) == ["vn", "việt", "viết"])
+    }
+
     @Test("A completion that repeats a correction slot is dropped")
     func deduplicated() {
         let composed = SuggestionBarComposer.compose(

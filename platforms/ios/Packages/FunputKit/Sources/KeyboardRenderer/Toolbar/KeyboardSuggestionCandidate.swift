@@ -10,6 +10,8 @@ public struct KeyboardSuggestionCandidate: Equatable, Sendable {
         case correctionCandidate
         /// The word a repair just replaced; tapping puts it back.
         case correctionUndo
+        /// The word a gõ tắt expansion just replaced; tapping puts it back.
+        case shortcutUndo
     }
 
     public let text: String
@@ -28,7 +30,7 @@ public struct KeyboardSuggestionCandidate: Equatable, Sendable {
         switch kind {
         case .suggestion, .correctionCandidate: text
         case .correctionTyped: "\u{201C}\(text)\u{201D}"
-        case .correctionUndo: "\u{21A9} \(text)"
+        case .correctionUndo, .shortcutUndo: "\u{21A9} \(text)"
         }
     }
 
@@ -38,6 +40,7 @@ public struct KeyboardSuggestionCandidate: Equatable, Sendable {
         case .correctionTyped: "Giữ nguyên, \(text)"
         case .correctionCandidate: "Sửa thành, \(text)"
         case .correctionUndo: "Hoàn tác, \(text)"
+        case .shortcutUndo: "Hoàn tác gõ tắt, \(text)"
         }
     }
 }

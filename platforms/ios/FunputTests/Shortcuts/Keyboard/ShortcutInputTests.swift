@@ -84,12 +84,12 @@ struct ShortcutInputTests {
         #expect(rig.writer.text == "prefix vn việt nam ")
     }
 
-    @Test func backspaceAfterExpansionKeepsOrdinaryDeletion() {
+    @Test func backspaceAfterExpansionRestoresTheTriggerThenDeletesOrdinarily() {
         let rig = ShortcutTypingRig()
         rig.type("vn ")
         rig.key("delete", role: .backspace)
+        #expect(rig.writer.text == "vn ")
         rig.key("delete", role: .backspace)
-        #expect(rig.writer.text == "việt na")
+        #expect(rig.writer.text == "vn")
     }
-
 }

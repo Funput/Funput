@@ -5,6 +5,7 @@
 //! - [`config`] — method, tone style, and the boolean feature toggles.
 //! - [`correction`] — the typo-correction handshake at a word boundary.
 //! - [`shortcuts`] — the gõ tắt (text-expansion) table.
+//! - [`shortcut_undo`] — taking the last expansion back with one Backspace.
 //! - [`result`] — the POD [`FunputResult`] returned by value from each keystroke.
 //!
 //! The handle mirrors [`crate::suggestion`]'s: an opaque `*mut` boxed over a
@@ -15,6 +16,7 @@ mod compose;
 mod config;
 mod correction;
 mod result;
+mod shortcut_undo;
 mod shortcuts;
 
 use funput_engine::Engine;
@@ -39,6 +41,10 @@ pub use correction::{
     funput_engine_refuse_correction, funput_engine_set_next_key_touch, funput_set_typo_correction,
 };
 pub use result::{ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputResult};
+pub use shortcut_undo::{
+    funput_engine_dismiss_shortcut_undo, funput_engine_shortcut_undo_text,
+    funput_engine_undo_shortcut,
+};
 pub use shortcuts::{
     funput_add_shortcut, funput_clear_shortcuts, funput_process_key_text,
     funput_set_shortcut_smart_case, funput_set_shortcuts_enabled, funput_set_shortcuts_in_english,

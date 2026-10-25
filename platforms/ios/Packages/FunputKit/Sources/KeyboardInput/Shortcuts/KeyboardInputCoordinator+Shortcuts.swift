@@ -6,6 +6,11 @@ struct KeyboardShortcutState {
     var library = ShortcutLibrary(isEnabled: false)
     var pending: ShortcutLibrary?
     var word = ""
+    /// What Backspace or the `↩` chip can take back, while the engine still offers it.
+    var undo: ShortcutUndoState?
+    /// An undo was taken: the engine keeps that trigger refused until the next word
+    /// ends, unless a Backspace dismisses it first. Only tells us whether to ask.
+    var refused = false
 }
 
 extension KeyboardInputCoordinator {
@@ -56,6 +61,9 @@ extension KeyboardInputCoordinator {
         composer.clear()
         correctionPreview = nil
         parkedCorrection = nil
+        // The engine dropped its own undo in `clear()`; the caret moved or the field changed.
+        shortcuts.undo = nil
+        shortcuts.refused = false
         finishShortcutWord()
     }
 

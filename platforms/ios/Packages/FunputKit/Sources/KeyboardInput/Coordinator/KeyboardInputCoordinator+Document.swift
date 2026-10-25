@@ -50,14 +50,14 @@ extension KeyboardInputCoordinator {
         // The selection check has to look at the snapshot from before the mutation: staging a
         // deletion always clears `hasSelection`, and a deletion that replaced a selection left
         // the shadow holding text the document no longer contains.
-        // Undoing a correction already put a whole word back and left nothing
-        // composing; re-opening would hand the next keystroke the very word the user
-        // just rejected.
-        if reopensPreviousWord, !undidCorrection,
+        // Taking back a correction or an expansion already put a whole word back and
+        // left nothing composing; re-opening would hand the next keystroke the very
+        // word the user just rejected.
+        if reopensPreviousWord, !tookBackLastEdit,
            documentSynchronizer.snapshotBeforeMutation?.hasSelection != true {
             reopenPreviousWord()
         }
-        undidCorrection = false
+        tookBackLastEdit = false
         if let snapshot = documentSynchronizer.snapshot,
            snapshot != documentSynchronizer.snapshotBeforeMutation {
             synchronizeCapitalization(

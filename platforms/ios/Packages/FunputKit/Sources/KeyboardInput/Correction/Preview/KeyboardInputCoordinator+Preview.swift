@@ -13,6 +13,10 @@ extension KeyboardInputCoordinator {
     }
 
     private func computeCorrectionPreview() -> CorrectionPreview? {
+        // Before the guards below: undoing an expansion needs neither autocorrect nor a
+        // dictionary, and works in English mode. It cannot coexist with a correction,
+        // which is born at a different boundary, so no ranking is needed between them.
+        if let undo = shortcuts.undo { return .shortcut(undoText: undo.shown) }
         guard usesEngine, allowsAutocorrect, state.usesVietnameseComposition,
               let dictionary = correctionDictionary
         else { return nil }

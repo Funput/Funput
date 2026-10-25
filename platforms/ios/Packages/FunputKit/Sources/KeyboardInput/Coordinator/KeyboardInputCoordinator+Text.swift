@@ -8,6 +8,8 @@ extension KeyboardInputCoordinator {
         // The syllable on screen before this key. If the key ends the word it is
         // what the bar named, and what the boundary must leave alone when kept.
         let composed = usesEngine ? composer.buffer() : ""
+        // Any key spends the one-tap undo, as it does in the engine. A refusal outlives it.
+        shortcuts.undo = nil
         for scalar in text.unicodeScalars {
             if usesEngine {
                 // One key, one touch. The engine spends the report on the next
@@ -34,6 +36,7 @@ extension KeyboardInputCoordinator {
                     abandonUnsafeReplacement()
                     insert(String(scalar), context: &context, builder: &builder)
                 }
+                noteExpansion(result)
             } else {
                 insert(String(scalar), context: &context, builder: &builder)
             }

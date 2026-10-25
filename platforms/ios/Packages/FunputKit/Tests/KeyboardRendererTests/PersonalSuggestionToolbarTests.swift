@@ -106,6 +106,17 @@ struct PersonalSuggestionToolbarTests {
         #expect(labels.contains("Hoàn tác, đườnh"))
     }
 
+    @Test("The gõ tắt undo chip leads with its arrow and tells VoiceOver what a tap does")
+    func shortcutSlot() {
+        let toolbar = KeyboardToolbarView(frame: CGRect(x: 0, y: 0, width: 360, height: bandHeight))
+        toolbar.apply(spec: .standard, theme: .funputGlass, traits: .init())
+        toolbar.updateSuggestions([.init(text: "vn", generation: 1, kind: .shortcutUndo)])
+        toolbar.layoutIfNeeded()
+
+        let button = visibleButtons(in: toolbar).first { $0.accessibilityLabel == "Hoàn tác gõ tắt, vn" }
+        #expect(button?.attributedTitle(for: .normal)?.string == "\u{21A9} vn")
+    }
+
     /// The band the shipping geometry lays out, so the fitting rules are exercised at
     /// the size users actually get.
     private var bandHeight: CGFloat { KeyboardSizingProfile.default.toolbarHeight }
