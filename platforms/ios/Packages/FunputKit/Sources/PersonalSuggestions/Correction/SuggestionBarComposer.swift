@@ -25,6 +25,8 @@ public enum SuggestionBarComposer {
             }
         case let .applied(undoText):
             slots.append(.init(text: undoText, generation: generation, kind: .correctionUndo))
+        case let .shortcut(undoText):
+            slots.append(.init(text: undoText, generation: generation, kind: .shortcutUndo))
         case nil:
             break
         }

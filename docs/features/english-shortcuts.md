@@ -5,7 +5,9 @@
 Đã có trong bản Windows, macOS, Linux và Android. Setting `shortcutsInEnglish`, **mặc định bật**,
 công tắc nằm ở Cài đặt → Gõ tắt. File cấu hình đã mang sẵn khoá này:
 
-- **iOS**: shell vẫn tự chặn chế độ EN trước khi gọi engine.
+- **iOS**: `KeyboardInputCoordinator.usesEngine` cho phím đi qua engine ở chế độ EN khi gõ tắt
+  đang bật, có bật "cả khi ở chế độ tiếng Anh" và bảng không rỗng. Hoàn tác một lần Backspace
+  hoạt động y hệt ở chế độ này: xem [Bỏ gõ tắt vừa bung](shortcut-undo.md).
 - **Android**: IME theo dõi từ thô và gọi cùng engine qua JNI; xem
   [Gõ tắt trên Android](android-shortcuts.md).
 - **funput-term**: driver cũng tự chặn EN (`state.composing()`) và không bao giờ gọi

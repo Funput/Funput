@@ -52,9 +52,9 @@ public final class KeyboardInputCoordinator {
     /// A correction the boundary left parked because the engine would not pick,
     /// shown on the bar until the next key.
     var parkedCorrection: ParkedCorrection?
-    /// Set for the one commit that undoes a correction, so re-opening the previous
-    /// word is skipped for it.
-    var undidCorrection = false
+    /// Set for the one commit that takes back a correction or a gõ tắt expansion, so
+    /// re-opening the previous word is skipped for it.
+    var tookBackLastEdit = false
     /// How far this user's touches land from key centres. Read by the host to decide
     /// whether correcting is worth doing at all.
     public internal(set) var touchSpread = KeyboardTouchSpread()

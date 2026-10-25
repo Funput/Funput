@@ -27,6 +27,8 @@ extension KeyboardViewController {
             effects = inputCoordinator.acceptCorrection(text, writer: writer)
         case .undo:
             effects = inputCoordinator.undoCorrectionFromBar(writer: writer)
+        case .undoShortcut:
+            effects = inputCoordinator.undoShortcutFromBar(writer: writer)
         }
         applyPostCommitEffects(effects)
     }

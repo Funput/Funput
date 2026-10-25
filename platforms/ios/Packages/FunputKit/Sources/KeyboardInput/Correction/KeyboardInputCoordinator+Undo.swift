@@ -32,7 +32,7 @@ extension KeyboardInputCoordinator {
         }
         builder.deleteBackward(count: count)
         builder.insert(result.text)
-        undidCorrection = true
+        tookBackLastEdit = true
         // What comes back is the word as typed plus the boundary after it. The engine
         // only suppresses the word once; the dictionary makes it permanent — in both
         // shapes, so the bar stops offering the repair the boundary would refuse.

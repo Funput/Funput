@@ -153,6 +153,7 @@ src/engine/         # C API composition (FunputEngine)
                     #   compose.rs  process_char/key, buffer, backspace, flip, clear, arm
                     #   config.rs   FunputConfig + configure() + set_method/set_enabled
                     #   shortcuts.rs add_shortcut/clear_shortcuts (gõ tắt)
+                    #   shortcut_undo.rs hoàn tác gõ tắt vừa bung (text/undo/dismiss, văn bản qua callback UTF-8)
                     #   result.rs   #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 src/suggestion/     # C API personal suggestions (FunputSuggestionEngine)
                     #   engine.rs (handle new/open/free, attach_lexicon), query.rs (learn/query),

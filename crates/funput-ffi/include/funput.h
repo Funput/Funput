@@ -1126,6 +1126,53 @@ uintptr_t funput_engine_correction_undo_text(const FunputEngine *engine,
 FunputCorrectionMetrics funput_engine_correction_metrics(const FunputEngine *engine);
 
 /**
+ * Whether the last expansion can still be taken back, and the word it replaced.
+ *
+ * Returns `true` while the undo is armed. With a non-null `receive`, the word the
+ * expansion replaced (not the raw keys, and without the boundary character) is
+ * delivered to it synchronously, as borrowed UTF-8 valid only during the call. A
+ * null `receive` just asks the question. Returns `false`, and calls nothing, when
+ * nothing is armed or the handle is null.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `receive` must accept `context` and a
+ * borrowed UTF-8 pointer and length, must not re-enter or free the engine, and must
+ * not unwind across the C boundary.
+ */
+bool funput_engine_shortcut_undo_text(const FunputEngine *engine,
+                                      void (*receive)(void*, const uint8_t*, uintptr_t),
+                                      void *context);
+
+/**
+ * Take the last expansion back: delete it and put the word it replaced, plus the
+ * same boundary character, in its place.
+ *
+ * The returned `backspace` counts Unicode scalars to delete. The text to insert is
+ * delivered to `receive` as UTF-8, like `funput_process_key_text`. The trigger the
+ * user just refused is then kept as typed once, the next time it is typed.
+ *
+ * Spends the undo whether or not `receive` is null, so a host must check that the
+ * document still ends with the expansion **before** calling. Nothing armed, or a
+ * null handle, returns a no-op and does not call `receive`.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `receive` follows the rules of
+ * [`funput_engine_shortcut_undo_text`].
+ */
+FunputResult funput_engine_undo_shortcut(FunputEngine *engine,
+                                         void (*receive)(void*, const uint8_t*, uintptr_t),
+                                         void *context);
+
+/**
+ * Drop the undo and the one-time refusal it left behind: the user went on to edit
+ * the word (any Backspace that is not the undo), or the caret left the field.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+void funput_engine_dismiss_shortcut_undo(FunputEngine *engine);
+
+/**
  * Define a text-expansion shortcut (gõ tắt): typing `trigger` then a word boundary
  * injects `expansion` (`vn` → `Việt Nam`). Both strings are passed as UTF-32
  * (`*const u32` + length), matching [`crate::funput_buffer`]. An empty trigger is

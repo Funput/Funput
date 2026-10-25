@@ -10,6 +10,8 @@ public enum CorrectionBarAction: Equatable, Sendable {
     case accept(text: String)
     /// Put back the word the last repair replaced.
     case undo
+    /// Put back the word the last gõ tắt expansion replaced.
+    case undoShortcut
 }
 
 extension PersonalSuggestionService {
@@ -43,6 +45,8 @@ extension PersonalSuggestionService {
             return .accept(text: candidate.text)
         case let (.correctionUndo, .applied(undoText)?, _) where undoText == candidate.text:
             return .undo
+        case let (.shortcutUndo, .shortcut(undoText)?, _) where undoText == candidate.text:
+            return .undoShortcut
         default:
             return nil
         }
