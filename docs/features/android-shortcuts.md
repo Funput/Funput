@@ -40,6 +40,14 @@ không chạy. Trong tiếng Anh, ký tự vẫn được commit trực tiếp; 
 IME kiểm tra lại suffix trước con trỏ rồi mới xoá đúng số UTF-16 code unit trong batch edit.
 Nếu context không an toàn, trigger được giữ nguyên và chỉ boundary được chèn.
 
+## Bỏ gõ tắt vừa bung
+
+Ngay sau khi một chữ tắt bung, Backspace một lần — hoặc chip `↩` đầu thanh gợi ý — trả lại chữ đang hiện trước khi bung, kể cả dấu cách hay dấu câu. `a ` bung thành `anh ` thì Backspace ra `a `, không phải `an`. Chip hiện chữ đó (`↩ a`), không phải chuỗi phím thô: `ddc` đang hiện `đc` thì hoàn tác ra `đc `.
+
+Chữ trả lại là chữ mà ranh giới sẽ ghi nếu không có gõ tắt: thường là chữ đã ghép (`đc`), nhưng một từ mà English restore sẽ trả về phím gốc thì quay lại đúng phím gốc (`text`, không phải `tẽt`).
+
+Nhịp này chết khi gõ phím khác, đổi ô, hoặc bung không ghi được vào tài liệu. Chữ vừa từ chối chỉ được giữ nguyên cho **từ kế tiếp**: nếu từ đó đúng là chuỗi này thì không bung và không bị sửa lỗi gõ (English restore vẫn chạy), còn từ nào kết thúc trước cũng làm hết hạn lệnh này, nên một lần hoàn tác không làm chữ tắt mất tác dụng ở câu sau. Dấu cách thừa không kết thúc từ nào nên không tiêu lệnh. Backspace thứ hai xóa dấu cách như mọi từ khác. Desktop không có chip nên không nuốt Backspace này.
+
 ## Điểm mở rộng
 
 UI chỉ phụ thuộc `ShortcutsStoring`, không phụ thuộc implementation bàn phím. Một store

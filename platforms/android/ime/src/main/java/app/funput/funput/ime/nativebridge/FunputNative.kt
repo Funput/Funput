@@ -30,6 +30,11 @@ internal object FunputNative {
     external fun nativeSetShortcutsEnabled(handle: Long, enabled: Boolean)
     external fun nativeSetShortcutSmartCase(handle: Long, enabled: Boolean)
     external fun nativeSetShortcutsInEnglish(handle: Long, enabled: Boolean)
+    external fun nativeHasShortcutUndo(handle: Long): Boolean
+    external fun nativeShortcutUndoText(handle: Long): String
+    external fun nativeShortcutUndoSuffix(handle: Long): String
+    external fun nativeUndoShortcut(handle: Long): IntArray?
+    external fun nativeDismissShortcutUndo(handle: Long)
     /** Re-opens an already-committed word for editing; false when it is not adoptable. */
     external fun nativeAdopt(handle: Long, word: String): Boolean
 

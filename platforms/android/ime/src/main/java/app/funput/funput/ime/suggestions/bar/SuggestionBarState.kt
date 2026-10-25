@@ -11,6 +11,7 @@ import app.funput.funput.keyboard.suggestion.SuggestionChip
 internal class SuggestionBarState(private val show: (List<SuggestionChip>) -> Unit) {
     private var personal: List<String> = emptyList()
     private var correction: CorrectionPreview? = null
+    private var shortcutUndo: String? = null
     private var shown: List<SuggestionChip>? = null
 
     /** The personal suggestion service's or the editor's latest words. */
@@ -25,6 +26,13 @@ internal class SuggestionBarState(private val show: (List<SuggestionChip>) -> Un
         publish()
     }
 
+    /** The gõ tắt trigger a `↩` chip would put back, or null when that beat is over. */
+    fun showShortcut(value: String?) {
+        if (value == shortcutUndo) return
+        shortcutUndo = value
+        publish()
+    }
+
     /**
      * A tapped suggestion, re-indexed into the list its source gave: correction chips come
      * first and repeats are dropped, so a slot is not the source's index.
@@ -35,7 +43,7 @@ internal class SuggestionBarState(private val show: (List<SuggestionChip>) -> Un
     }
 
     private fun publish() {
-        val next = SuggestionBarComposer.compose(correction, personal)
+        val next = SuggestionBarComposer.compose(correction, personal, shortcutUndo)
         if (next == shown) return
         shown = next
         runCatching { show(next) }

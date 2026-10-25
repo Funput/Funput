@@ -40,7 +40,10 @@ internal class ImeShortcutSession(private val engine: VietnameseEngine) {
         val replacement = engine.processBoundary(codePoint)
         directWord = ""
         val expanded = replacement != null && replaceSafely(connection, previous, replacement)
-        if (!expanded) connection.commitText(text, CursorAfterText)
+        if (!expanded) {
+            connection.commitText(text, CursorAfterText)
+            if (replacement != null) engine.shortcutUndo.dismiss()
+        }
         installPending()
         return expanded
     }
@@ -57,7 +60,7 @@ internal class ImeShortcutSession(private val engine: VietnameseEngine) {
      */
     fun finishWord(clearsEngine: Boolean = true) {
         directWord = ""
-        if (clearsEngine) engine.clear()
+        if (clearsEngine && !engine.shortcutUndo.isArmed()) engine.clear()
         installPending()
     }
 

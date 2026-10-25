@@ -11,12 +11,18 @@ import app.funput.funput.keyboard.suggestion.SuggestionChipKind
 internal object SuggestionBarComposer {
     const val SlotCount = 3
 
-    fun compose(correction: CorrectionPreview?, personal: List<String>): List<SuggestionChip> {
+    fun compose(
+        correction: CorrectionPreview?,
+        personal: List<String>,
+        shortcutUndo: String? = null,
+    ): List<SuggestionChip> {
         val leading = when (correction) {
             is CorrectionPreview.Offered -> offer(correction.typed, correction.candidates)
             is CorrectionPreview.Parked -> offer(correction.typed, correction.candidates)
             is CorrectionPreview.Applied -> listOf(SuggestionChip(correction.typed, SuggestionChipKind.CORRECTION_UNDO))
-            null -> emptyList()
+            null -> shortcutUndo?.let {
+                listOf(SuggestionChip(it, SuggestionChipKind.SHORTCUT_UNDO))
+            }.orEmpty()
         }
         val shown = leading.mapTo(HashSet()) { it.text }
         val rest = personal.filter { it !in shown }.map(::SuggestionChip)

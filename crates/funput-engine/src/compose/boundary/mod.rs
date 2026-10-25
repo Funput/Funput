@@ -1,6 +1,7 @@
 //! Word-boundary handling — end-of-word clears composition state.
 
 mod shortcut;
+pub(crate) mod shortcut_undo;
 
 use funput_core::{InputMethod, is_bare_shaped_vowel};
 
@@ -97,7 +98,10 @@ fn replace_word(session: &Session, text: &str, boundary_key: char) -> ImeResult 
 /// composition to restore (the keys are already the text on screen) and
 /// auto-capitalize is a Vietnamese-mode feature, so neither runs here.
 pub(crate) fn on_english_boundary(session: &mut Session, boundary_key: char) -> ImeResult {
-    let result = shortcut::expansion(session, boundary_key).unwrap_or_else(ImeResult::none);
+    let result = (!shortcut_undo::declined(session))
+        .then(|| shortcut::expansion(session, boundary_key))
+        .flatten()
+        .unwrap_or_else(ImeResult::none);
     session.clear();
     result
 }
@@ -109,7 +113,9 @@ pub(crate) fn on_word_boundary(session: &mut Session, boundary_key: char) -> Ime
 }
 
 fn boundary_result(session: &mut Session, boundary_key: char) -> ImeResult {
-    if let Some(expansion) = shortcut::expansion(session, boundary_key) {
+    // An undone trigger gets no expansion and no repair; English restore still runs.
+    let declined = shortcut_undo::declined(session);
+    if !declined && let Some(expansion) = shortcut::expansion(session, boundary_key) {
         return expansion;
     }
     if doubled::restorable(session) {
@@ -126,7 +132,11 @@ fn boundary_result(session: &mut Session, boundary_key: char) -> ImeResult {
     // keystroke then does exactly what it did before the feature existed, restore
     // included, so nothing here can change the text the app already shows — and the
     // parked correction is told which text that is.
-    correction::offer(session, boundary_key, &verdict);
+    if declined {
+        correction::drop_preview(session);
+    } else {
+        correction::offer(session, boundary_key, &verdict);
+    }
     if verdict.restore {
         replace_word(session, &session.keys, boundary_key)
     } else {

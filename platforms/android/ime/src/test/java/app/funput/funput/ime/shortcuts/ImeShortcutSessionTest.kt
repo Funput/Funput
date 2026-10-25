@@ -3,6 +3,8 @@ package app.funput.funput.ime.shortcuts
 import app.funput.funput.ime.editing.CommittedEditor
 import app.funput.funput.ime.nativebridge.EngineConfiguration
 import app.funput.funput.ime.nativebridge.VietnameseEngine
+import app.funput.funput.ime.shortcuts.undo.IdleShortcutUndo
+import app.funput.funput.ime.shortcuts.undo.ShortcutUndoEngine
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.shortcuts.model.ShortcutLibrary
 import app.funput.funput.shortcuts.model.TextShortcut
@@ -69,6 +71,15 @@ class ImeShortcutSessionTest {
         assertEquals(1, engine.clears)
     }
 
+    @Test fun `an armed shortcut undo survives the word ending`() {
+        val undo = object : ShortcutUndoEngine {
+            override fun isArmed() = true
+        }
+        val engine = ShortcutEngine(null, undo)
+        ImeShortcutSession(engine).finishWord()
+        assertEquals(0, engine.engineClears)
+    }
+
     @Test fun `a word the engine already closed keeps its typo correction`() {
         // At a Vietnamese boundary the engine closed the word itself, and may have parked or
         // applied a typo correction there; clearing it again would throw that away.
@@ -87,7 +98,11 @@ class ImeShortcutSessionTest {
     ))
 }
 
-private class ShortcutEngine(private val boundary: String?) : VietnameseEngine {
+private class ShortcutEngine(
+    private val boundary: String?,
+    private val undo: ShortcutUndoEngine = IdleShortcutUndo,
+) : VietnameseEngine {
+    override val shortcutUndo = undo
     private var word = ""
     var installs = 0
     var clears = 0

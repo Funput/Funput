@@ -31,7 +31,9 @@ internal class ImeShortcutCoordinator(
         if (tracksEnglish) session.backspaceEnglish()
         // Reopening restores the shared engine, but not this raw-keystroke tracker.
         // An empty tracker must not clear a Vietnamese composition that still owns it.
-        if (word.backspace() && !composition.isComposing) session.finishWord()
+        // Clearing here would drop a one-tap gõ tắt undo. The engine already closed
+        // its own word; this call only installs a library that waited out the word.
+        if (word.backspace() && !composition.isComposing) session.finishWord(clearsEngine = false)
     }
 
     fun track(text: String, vietnamese: Boolean) {

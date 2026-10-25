@@ -3,6 +3,9 @@ package app.funput.funput.ime.nativebridge
 import app.funput.funput.ime.nativebridge.configuration.nativeMask
 import app.funput.funput.ime.nativebridge.correction.NativeTypoCorrection
 import app.funput.funput.ime.nativebridge.correction.TypoCorrectionEngine
+import app.funput.funput.ime.shortcuts.undo.IdleShortcutUndo
+import app.funput.funput.ime.shortcuts.undo.NativeShortcutUndo
+import app.funput.funput.ime.shortcuts.undo.ShortcutUndoEngine
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.ime.settings.extraonsets.ExtraOnsetLetters
 import app.funput.funput.keyboard.model.KeyboardInputMethod
@@ -39,6 +42,8 @@ internal interface VietnameseEngine : AutoCloseable {
     val correction: TypoCorrectionEngine
         get() = TypoCorrectionEngine.Off
 
+    val shortcutUndo: ShortcutUndoEngine get() = IdleShortcutUndo
+
     /** Single writer for durable configuration; see [EngineConfiguration]. */
     fun configure(configuration: EngineConfiguration)
     fun setEnabled(enabled: Boolean)
@@ -65,6 +70,7 @@ internal class NativeVietnameseEngine : VietnameseEngine {
     override var inputMethod = KeyboardInputMethod.TELEX
         private set
     override val correction: TypoCorrectionEngine = NativeTypoCorrection { withHandle { it } }
+    override val shortcutUndo: ShortcutUndoEngine = NativeShortcutUndo { withHandle { it } }
     /** The options last applied, so a panel field can compose the same way. */
     var configuration: EngineConfiguration? = null
         private set

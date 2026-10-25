@@ -64,14 +64,14 @@ class BackspaceShortcutInstrumentedTest {
         }
     }
 
-    @Test fun backspaceAfterExpansionKeepsTheLastVietnameseWord() = onMainThread {
+    @Test fun backspaceAfterExpansionRestoresTheTriggerAndKeepsTheSpace() = onMainThread {
         ImeEditingScenario.create().use { scenario ->
             scenario.handler.receiveShortcuts(library())
             scenario.handler.type("vn ")
-            for (expected in listOf("việt nam", "việt na", "việt n", "việt ")) {
-                scenario.handler.onKeyAction(KeyAction.Backspace)
-                assertEquals(expected, scenario.text)
-            }
+            scenario.handler.onKeyAction(KeyAction.Backspace)
+            assertEquals("vn ", scenario.text)
+            scenario.handler.onKeyAction(KeyAction.Backspace)
+            assertEquals("vn", scenario.text)
         }
     }
 

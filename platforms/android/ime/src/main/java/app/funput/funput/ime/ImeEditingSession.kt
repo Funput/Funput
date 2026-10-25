@@ -15,6 +15,7 @@ import app.funput.funput.ime.editing.layout.LetterPageReturn
 import app.funput.funput.ime.localtext.ImeLocalTextFields
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
+import app.funput.funput.ime.shortcuts.undo.ShortcutUndo
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
 import app.funput.funput.ime.suggestions.bar.SuggestionBarState
 import app.funput.funput.keyboard.model.KeyAction
@@ -42,6 +43,7 @@ internal class ImeEditingSession(
 ) {
     private val localText = ImeLocalTextFields(nativeEngine) { actionHandler.language }
     private val previewer = CorrectionPreviewer(typo.corrections)
+    private val shortcutUndo = ShortcutUndo(composition, connection)
     private val correctionBar = CorrectionBarActions(composition, connection) { dispatch(KeyAction.Space) }
     private val typoReport = TypoSessionReport(typo.corrections) { Log.i("FunputTypo", it) }
 
@@ -49,7 +51,7 @@ internal class ImeEditingSession(
     fun dispatch(action: KeyAction) {
         actionHandler.onKeyAction(action)
         suggestionService.consume(actionHandler.takeSuggestionUpdate())
-        refreshCorrection()
+        refreshBars()
     }
 
     /** A tap on the bar, routed by what the slot does. */
@@ -58,16 +60,20 @@ internal class ImeEditingSession(
             SuggestionChipKind.CORRECTION_TYPED -> correctionBar.refuse(selection.text)
             SuggestionChipKind.CORRECTION_CANDIDATE -> correctionBar.accept(selection.text)
             SuggestionChipKind.CORRECTION_UNDO -> correctionBar.undo()
+            SuggestionChipKind.SHORTCUT_UNDO -> shortcutUndo.undo()
             SuggestionChipKind.SUGGESTION -> bar.personalSelection(selection)?.let { picked ->
                 if (!editorRuntime.selectCompletion(picked, actionHandler::finish)) {
                     suggestionService.select(picked, actionHandler)
                 }
             }
         }
-        refreshCorrection()
+        refreshBars()
     }
 
-    private fun refreshCorrection() = bar.showCorrection(previewer.compute(composition.composingText))
+    private fun refreshBars() {
+        bar.showCorrection(previewer.compute(composition.composingText))
+        bar.showShortcut(shortcutUndo.chipText())
+    }
 
     fun startActionHandler() {
         actionHandler.start(
@@ -90,7 +96,7 @@ internal class ImeEditingSession(
         actionHandler.finish()
         editorRuntime.finish()
         suggestionService.finish()
-        refreshCorrection()
+        refreshBars()
     }
 
     fun finishInputView() {

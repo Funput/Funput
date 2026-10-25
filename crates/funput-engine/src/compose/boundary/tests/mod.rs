@@ -27,6 +27,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
         literal: Literal::new(),
         sentence: SentenceTrace::mid_text(),
         shortcuts: HashMap::new(),
+        shortcut_undo: None,
         vn_form: String::new(),
         restore_override: None,
         correction: None,
