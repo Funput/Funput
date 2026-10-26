@@ -114,6 +114,18 @@ pub fn send_plan(plan: &InjectPlan) {
     } else {
         inputs.extend(deletions(plan.backspaces));
     }
+    // Some apps drop text that follows Backspaces too closely (see
+    // [`lead::split_delay`]). The batch is then split with a pause, which gives up
+    // atomicity, so it is paid only where measured to be needed and only when
+    // there is something deleted for the text to follow.
+    if plan.backspaces > 0
+        && let Some(pause) = lead::split_delay()
+    {
+        raw_send(&inputs);
+        std::thread::sleep(pause);
+        raw_send(&text(&plan.units));
+        return;
+    }
     inputs.extend(text(&plan.units));
     raw_send(&inputs);
 }
