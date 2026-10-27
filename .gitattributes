@@ -1,0 +1,6 @@
+# Data files are embedded with `include_str!` and parsed line by line, so their
+# line endings are part of the contract: always LF, whatever `core.autocrlf` says.
+# Without this a Windows checkout turned the doubled-key word lists into CRLF and
+# the release build embedded `password\r`, which never matched a typed word.
+*.txt text eol=lf
+*.tsv text eol=lf

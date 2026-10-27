@@ -525,6 +525,32 @@ jobs:
         working-directory: platforms/windows
         run: cargo test --locked
 
+  # The engine on Windows. The `rust` job runs on Linux, and the `windows` job above
+  # tests only the shell, so nothing ran the engine's own tests on the platform
+  # whose checkout differs: `core.autocrlf` turned the doubled-key word lists into
+  # CRLF, the Windows build embedded `password\r`, and the feature never matched a
+  # word while every check here stayed green (#611).
+  #
+  # Only the engine, not `--workspace`: it is the crate that embeds line-parsed data
+  # files, and the rest of the workspace has no Windows-specific input. Like `rust`,
+  # it runs on every change. It is not one of the eight required checks above;
+  # making it required means adding it to the ruleset on `main`.
+  rust-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: engine
+
+      - name: Test (funput-engine)
+        run: cargo test --locked -p funput-engine
+
   # The Android keyboard. It had no CI of any kind — `shell-line-budget` counted
   # its lines and nothing compiled it, so 606 unit tests across six modules had
   # never run anywhere but a maintainer's laptop. That is the largest untested
