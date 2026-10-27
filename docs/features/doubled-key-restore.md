@@ -492,6 +492,10 @@ static WORDS: SortedLines = SortedLines::new(include_str!("../../../data/doubled
   nhị phân chỉ đúng khi các bất biến này đúng. Cùng test đó giữ mọi mục không dài hơn
   `literal::CAPACITY` (32); mục dài nhất hiện nay 18 chữ.
 - `decisive.txt` (giai đoạn 2) cùng định dạng và dùng lại `SortedLines`: 480 phần đầu, 3 207 byte.
+- **Kết thúc dòng:** các file dữ liệu luôn là LF, `.gitattributes` ép `*.txt` và `*.tsv` về `eol=lf`.
+  Trước đó repo không có file này, nên checkout trên Windows (`core.autocrlf=true`) ra CRLF, bản
+  Windows nhúng `password\r` và `contains` không bao giờ khớp: chức năng chết trên Windows (#611).
+  `SortedLines` cũng bỏ `\r` cuối dòng khi so, nên một working copy CRLF cũ vẫn tra đúng.
 
 ### 6.4. Bộ sinh bảng: `funput-lexicon-tool doubled`
 

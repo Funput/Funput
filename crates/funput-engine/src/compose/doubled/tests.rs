@@ -6,6 +6,8 @@ use super::*;
 use crate::compose::pipeline;
 
 const FRUIT: SortedLines = SortedLines::new("apple\nbanana\ncherry\ndate\nfig\n");
+/// The same list as a Windows checkout without `.gitattributes` used to embed it.
+const FRUIT_CRLF: SortedLines = SortedLines::new("apple\r\nbanana\r\ncherry\r\ndate\r\nfig\r\n");
 
 /// Feed `keys` the way `Engine::compose_key` does: raw key first, then the pipeline.
 fn typed_in(mut session: Session, keys: &str) -> Session {
@@ -29,6 +31,16 @@ fn finds_every_line_and_nothing_between() {
     }
     for word in ["", "a", "app", "apples", "blueberry", "egg", "zebra"] {
         assert!(!FRUIT.contains(word), "{word}");
+    }
+}
+
+#[test]
+fn finds_every_line_of_a_crlf_list() {
+    for word in ["apple", "banana", "cherry", "date", "fig"] {
+        assert!(FRUIT_CRLF.contains(word), "{word}");
+    }
+    for word in ["", "a", "app", "apples", "blueberry", "egg", "zebra"] {
+        assert!(!FRUIT_CRLF.contains(word), "{word}");
     }
 }
 

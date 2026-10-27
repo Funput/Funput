@@ -1,9 +1,10 @@
 //! Membership in a sorted word list embedded as text, read in place.
 //!
 //! The lists are data files pulled in with `include_str!`: one lowercase ASCII word
-//! per line, in byte order, every line ending in `\n`. A lookup is a binary search
-//! over byte offsets that snaps each probe back to the start of its line, so there
-//! is no index to build at startup and nothing to allocate per query.
+//! per line, in byte order, every line ending in `\n`. A `\r` before it is ignored,
+//! so a list checked out with CRLF line endings still matches. A lookup is a binary
+//! search over byte offsets that snaps each probe back to the start of its line, so
+//! there is no index to build at startup and nothing to allocate per query.
 
 use std::cmp::Ordering;
 
@@ -65,7 +66,9 @@ fn line_end(text: &[u8], start: usize) -> usize {
         .map_or(text.len(), |newline| start + newline)
 }
 
+/// Order a list line against the word being looked up, ignoring a trailing `\r`.
 fn compare(line: &[u8], word: &[u8]) -> Ordering {
+    let line = line.strip_suffix(b"\r").unwrap_or(line);
     line.iter()
         .copied()
         .cmp(word.iter().map(u8::to_ascii_lowercase))
