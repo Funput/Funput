@@ -1,4 +1,5 @@
-//! Which foreground app needs [`super::send_plan`]'s lead character.
+//! Which foreground app needs [`super::send_plan`]'s lead character, and which needs
+//! a pause between a plan's Backspaces and its text (see [`split_delay`]).
 //!
 //! The lead is what makes a plan's Backspaces unambiguous when the app has put a
 //! selection in front of the caret without being asked — see [`super::send_plan`]
@@ -38,8 +39,15 @@
 //! Those render text through Blink and pay the extra Backspace without noticing.
 //! Missing a match costs one visibly wrong syllable in an address bar, while inline
 //! autofill is actually showing. Neither direction can lose text.
+//!
+//! # The pause is a different question
+//!
+//! The lead is about what the app *does* with a Backspace. [`split_delay`] is about
+//! how soon the app will take text *after* one. They are answered separately and
+//! never combined: a JetBrains window gets the pause and no lead.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::time::Duration;
 
 /// Top-level window class of every Chromium-based browser, and of Electron and CEF
 /// apps along with them. The trailing number is a widget-type counter rather than a
@@ -83,10 +91,45 @@ fn inline_autofills(window_class: &str, app_id: &str) -> bool {
         || AUTOFILL_APPS.contains(&app_id)
 }
 
+/// Top-level window class prefix of every Java AWT/Swing window, which is what all
+/// JetBrains IDEs (IntelliJ, RustRover, ...) draw with: `SunAwtFrame`, `SunAwtDialog`.
+const AWT_CLASS_PREFIX: &str = "SunAwt";
+
+/// How long to wait between a plan's Backspaces and its text in an AWT app.
+///
+/// Measured in RustRover's AI chat box (issue #623): sent in one burst, or even split
+/// by 4 ms, the text that follows the Backspaces is intermittently dropped ("chào"
+/// ends up as "cha"). 50 ms and 100 ms were both clean. The IDE consumes the
+/// Backspaces on its event thread and needs time before it takes the text. Lower it
+/// only with a measurement behind it. The wait runs inside `WH_KEYBOARD_LL`, whose
+/// timeout is far longer, and holds back the next key rather than reordering it.
+const AWT_SPLIT_MS: u32 = 50;
+
+/// Milliseconds to wait between deletions and text for the focused app; 0 = none.
+/// Written by the foreground hook, read on the keystroke hot path — an atomic for
+/// the same reason as [`FOREGROUND_INLINE_AUTOFILLS`].
+static FOREGROUND_SPLIT_MS: AtomicU32 = AtomicU32::new(0);
+
+/// The wait for a window of this class; 0 for every app that needs none.
+fn split_ms_for(window_class: &str) -> u32 {
+    if window_class.starts_with(AWT_CLASS_PREFIX) {
+        AWT_SPLIT_MS
+    } else {
+        0
+    }
+}
+
 /// Record the app that just took focus.
 pub fn note_foreground(window_class: &str, app_id: &str) {
     let autofills = inline_autofills(window_class, app_id);
     FOREGROUND_INLINE_AUTOFILLS.store(autofills, Ordering::Relaxed);
+    FOREGROUND_SPLIT_MS.store(split_ms_for(window_class), Ordering::Relaxed);
+}
+
+/// Pause to put between Backspaces and text for the focused app, if it needs one.
+pub(super) fn split_delay() -> Option<Duration> {
+    let ms = FOREGROUND_SPLIT_MS.load(Ordering::Relaxed);
+    (ms > 0).then(|| Duration::from_millis(u64::from(ms)))
 }
 
 /// Whether a replacement should lead with its first character.
@@ -153,6 +196,17 @@ mod tests {
             assert_eq!(*id, id.to_lowercase(), "{id} would never match");
             assert!(id.ends_with(".exe"), "{id} is not an exe file name");
         }
+    }
+
+    #[test]
+    fn only_awt_windows_get_a_pause_between_backspaces_and_text() {
+        // JetBrains IDEs report `SunAwtFrame` / `SunAwtDialog`.
+        assert_eq!(split_ms_for("SunAwtFrame"), AWT_SPLIT_MS);
+        assert_eq!(split_ms_for("SunAwtDialog"), AWT_SPLIT_MS);
+        // Everything else keeps the single atomic batch.
+        assert_eq!(split_ms_for("Chrome_WidgetWin_1"), 0);
+        assert_eq!(split_ms_for("Notepad"), 0);
+        assert_eq!(split_ms_for(""), 0);
     }
 
     /// The only test that touches the process-global flag, so nothing it does can
