@@ -5,6 +5,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import app.funput.funput.ime.editing.capitalization.AutoCapitalizationController
 import app.funput.funput.ime.editing.capitalization.NativeCapitalizationBoundary
+import app.funput.funput.ime.editing.entersend.EnterToSendPolicy
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
 
@@ -14,6 +15,7 @@ internal class ImeEditorRuntime(
     updateShiftState: (ShiftState) -> Unit,
     connection: () -> InputConnection?,
     onSuggestionsChanged: (List<String>) -> Unit,
+    private val enterToSendPackages: () -> Set<String> = { emptySet() },
 ) {
     private val autoCapitalization = AutoCapitalizationController(
         boundary = NativeCapitalizationBoundary,
@@ -31,7 +33,11 @@ internal class ImeEditorRuntime(
         private set
 
     fun configure(info: EditorInfo) {
-        policy = EditorInfoPolicyResolver.resolve(info)
+        policy = EnterToSendPolicy.apply(
+            policy = EditorInfoPolicyResolver.resolve(info),
+            packageName = info.packageName,
+            packages = enterToSendPackages(),
+        )
         autoCapitalization.configure(policy)
         completions.configure(policy.suggestionSource == ImeSuggestionSource.EDITOR)
     }
