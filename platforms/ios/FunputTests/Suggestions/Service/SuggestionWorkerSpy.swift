@@ -1,4 +1,5 @@
 import Foundation
+import PersonalDictionary
 import PersonalSuggestions
 
 @MainActor
@@ -45,6 +46,7 @@ final class SuggestionWorkerSpy: PersonalSuggestionWorking, @unchecked Sendable 
         case learn(String, context: String?)
         case query(PersonalSuggestionQueryRequest)
         case flush
+        case edit(DictionaryEditKind, word: String)
 
         var learned: (token: String, context: String?)? {
             guard case .learn(let token, let context) = self else { return nil }
@@ -82,6 +84,10 @@ final class SuggestionWorkerSpy: PersonalSuggestionWorking, @unchecked Sendable 
     }
 
     func flush() { events.append(.flush) }
+
+    func edit(_ kind: DictionaryEditKind, word: String) {
+        events.append(.edit(kind, word: word))
+    }
 
     func emit(_ values: [String], for request: PersonalSuggestionQueryRequest) {
         handler(request, values.map(PersonalSuggestionCandidate.init(text:)))

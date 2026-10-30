@@ -5,6 +5,10 @@ import UIKit
 @MainActor
 final class KeyboardSuggestionBarView: UIView {
     var onSelection: ((KeyboardSuggestionCandidate) -> Void)?
+    /// A long-press edit. While `nil`, no slot offers a menu.
+    var onEdit: ((KeyboardSuggestionCandidate, KeyboardSuggestionAction) -> Void)? {
+        didSet { refreshAccessibilityActions() }
+    }
 
     private static let maximumCount = 3
     private static let minimumWidth: CGFloat = 64
@@ -23,7 +27,7 @@ final class KeyboardSuggestionBarView: UIView {
     private static let separatorInsetRatio: CGFloat = 0.24
     private let buttons = (0..<maximumCount).map { _ in UIButton(type: .system) }
     private let separators = (0..<(maximumCount - 1)).map { _ in UIView() }
-    private var candidates: [KeyboardSuggestionCandidate] = []
+    private(set) var candidates: [KeyboardSuggestionCandidate] = []
     private var labelColor: UIColor = .label
 
     override init(frame: CGRect) {
@@ -36,6 +40,7 @@ final class KeyboardSuggestionBarView: UIView {
             button.titleLabel?.lineBreakMode = .byTruncatingMiddle
             button.accessibilityTraits = .keyboardKey
             button.addTarget(self, action: #selector(selectCandidate(_:)), for: .touchUpInside)
+            button.addInteraction(UIContextMenuInteraction(delegate: self))
             addSubview(button)
         }
         separators.forEach(addSubview)
@@ -86,6 +91,7 @@ final class KeyboardSuggestionBarView: UIView {
             if candidate == nil { button.setAttributedTitle(nil, for: .normal) }
             button.accessibilityLabel = candidate?.accessibilityLabel
         }
+        refreshAccessibilityActions()
         isHidden = self.candidates.isEmpty
         setNeedsLayout()
     }
@@ -96,6 +102,12 @@ final class KeyboardSuggestionBarView: UIView {
         separators.forEach { $0.backgroundColor = label.withAlphaComponent(0.18) }
         // Titles carry their colour as an attribute, so they are rebuilt in layout.
         setNeedsLayout()
+    }
+
+    private func refreshAccessibilityActions() {
+        for (index, button) in buttons.enumerated() {
+            button.accessibilityCustomActions = accessibilityActions(forSlot: index)
+        }
     }
 
     @objc private func selectCandidate(_ sender: UIButton) {

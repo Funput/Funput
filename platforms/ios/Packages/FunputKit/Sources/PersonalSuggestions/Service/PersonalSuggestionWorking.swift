@@ -1,4 +1,5 @@
 import Foundation
+import PersonalDictionary
 
 public struct PersonalSuggestionWorkerConfiguration: Equatable, Sendable {
     public let enabled: Bool
@@ -17,6 +18,8 @@ public protocol PersonalSuggestionWorking: AnyObject, Sendable {
     func learn(_ token: String, after previous: String?)
     func query(_ request: PersonalSuggestionQueryRequest)
     func flush()
+    /// Applies a dictionary edit to the store and makes it durable.
+    func edit(_ kind: DictionaryEditKind, word: String)
 }
 
 public typealias PersonalSuggestionResultHandler = @Sendable (

@@ -6,13 +6,13 @@ import PersonalSuggestions
 final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Sendable {
     typealias Query = PersonalSuggestionQueryRequest
 
-    private let queue = DispatchQueue(label: "app.funput.keyboard.personal-suggestions")
+    let queue = DispatchQueue(label: "app.funput.keyboard.personal-suggestions")
     private let querySlot = PersonalSuggestionQuerySlot()
     private let onResult: @Sendable (Query, [PersonalSuggestionCandidate]) -> Void
     private let flushTimer: DispatchSourceTimer
     private let lexiconURL: @Sendable () -> URL?
     private let storeURL: @Sendable () -> URL?
-    private var engine: PersonalSuggestionEngine?
+    private(set) var engine: PersonalSuggestionEngine?
     private var activeStoreURL: URL?
     private var enabled = true
     private var learnedSinceFlush = 0
@@ -72,6 +72,7 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
         }
         let persistentReady = requestedURL == nil || activeStoreURL == requestedURL
         if persistentReady { applyResetIfNeeded(resetToken) }
+        if persistentReady, activeStoreURL != nil { engine?.applyPendingEdits() }
         if !enabled { _ = engine?.flush() }
     }
 
