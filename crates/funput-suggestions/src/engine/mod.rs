@@ -17,8 +17,8 @@ use std::path::Path;
 
 use config::sanitize;
 
+use crate::dictionary::BlockedWords;
 use crate::dictionary::Origin;
-use crate::dictionary::exclusion::{BlockedWords, Exclusions};
 use crate::index::ArenaTrie;
 use crate::lexicon::LexiconSlot;
 use crate::persistence::{JournalEntry, Loaded, Store};
@@ -65,8 +65,9 @@ pub struct SuggestionEngine {
     pub(crate) journalled_previous: Option<(u32, u16)>,
     /// The shipped English word list, beside the personal store, never in it.
     pub(crate) lexicon: LexiconSlot,
-    /// What the bar never offers: the words the user blocked.
-    pub(crate) exclusions: Exclusions,
+    /// The words the user blocked: never learned, never offered, English
+    /// lexicon included.
+    pub(crate) blocked: BlockedWords,
 }
 
 impl SuggestionEngine {
@@ -86,7 +87,7 @@ impl SuggestionEngine {
             evictions_since_rebuild: 0,
             journalled_previous: None,
             lexicon: LexiconSlot::default(),
-            exclusions: Exclusions::default(),
+            blocked: BlockedWords::default(),
         }
     }
 
@@ -106,7 +107,7 @@ impl SuggestionEngine {
     pub(crate) fn from_loaded(config: SuggestionConfig, loaded: Loaded) -> Self {
         let mut engine = Self::in_memory(config);
         engine.words = loaded.words;
-        engine.exclusions.blocked = BlockedWords::from_loaded(loaded.blocked);
+        engine.blocked = BlockedWords::from_loaded(loaded.blocked);
         engine.sequence = loaded.sequence;
         engine.journal_bytes = loaded.journal_bytes;
         engine.enforce_capacity();

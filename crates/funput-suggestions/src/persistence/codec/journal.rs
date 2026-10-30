@@ -18,9 +18,10 @@
 
 use std::io;
 
+use super::frame;
 use super::record::{Record, TagFormat};
-use crate::binary::{Cursor, checksum, invalid_data, put_u16, put_u32, put_u64};
-use crate::persistence::schema::{self, JOURNAL_MAGIC, JOURNAL_WRITE_VERSION, Version};
+use crate::binary::{Cursor, invalid_data, put_u32, put_u64};
+use crate::persistence::schema::{self, JOURNAL_MAGIC, JOURNAL_WRITE_VERSION};
 
 /// A decoded frame: its entries, and the sequence it ends at when the format
 /// recorded one. `None` is a frame from before v3, which has to be replayed
@@ -37,38 +38,13 @@ pub(crate) fn encode_frame(entries: &[Record], sequence: u64) -> Vec<u8> {
     for entry in entries {
         entry.encode(&mut payload);
     }
-    let mut frame = Vec::with_capacity(14 + payload.len());
-    frame.extend_from_slice(JOURNAL_MAGIC);
-    put_u16(&mut frame, JOURNAL_WRITE_VERSION);
-    put_u32(&mut frame, payload.len() as u32);
-    put_u32(&mut frame, checksum(&payload));
-    frame.extend_from_slice(&payload);
-    frame
+    frame::encode(JOURNAL_MAGIC, JOURNAL_WRITE_VERSION, &payload)
 }
 
+/// An `InvalidData` error is not fatal: the reader stops at this frame and keeps
+/// the prefix it already decoded, the same as it does for a torn one.
 pub(crate) fn decode_frame(cursor: &mut Cursor<'_>) -> io::Result<Frame> {
-    if cursor.take(JOURNAL_MAGIC.len())? != JOURNAL_MAGIC {
-        return Err(invalid_data());
-    }
-    let version = cursor.u16()?;
-    match schema::accept_journal(version) {
-        Version::Readable => {}
-        Version::TooNew => {
-            return Err(io::Error::new(
-                io::ErrorKind::Unsupported,
-                "journal schema is newer than this build",
-            ));
-        }
-        // Not fatal: the reader stops at this frame and keeps the prefix it
-        // already decoded, the same as it does for a torn one.
-        Version::TooOld => return Err(invalid_data()),
-    }
-    let payload_len = cursor.u32()? as usize;
-    let expected = cursor.u32()?;
-    let payload = cursor.take(payload_len)?;
-    if checksum(payload) != expected {
-        return Err(invalid_data());
-    }
+    let (version, payload) = frame::decode(cursor, JOURNAL_MAGIC, schema::accept_journal)?;
     let mut payload = Cursor::new(payload);
     let sequence = if version >= 3 {
         Some(payload.u64()?)

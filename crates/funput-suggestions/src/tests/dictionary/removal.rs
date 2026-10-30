@@ -52,6 +52,24 @@ fn forgetting_the_last_word_leaves_no_edge_behind() {
     assert!(followers_of(&engine, "cảm").is_empty());
 }
 
+#[test]
+fn a_context_speaks_again_once_its_forgotten_follower_is_replaced() {
+    let mut engine = engine();
+    pair(&mut engine, "xin", "chào", 8);
+    apply(&mut engine, EditKind::Forget, "chào");
+    pair(&mut engine, "xin", "lỗi", 2);
+    let predicted: Vec<String> = engine
+        .suggest_with(Some("xin"), "")
+        .iter()
+        .map(str::to_owned)
+        .collect();
+    assert_eq!(
+        predicted,
+        ["lỗi"],
+        "the forgotten follower's sightings must not linger"
+    );
+}
+
 const WORDS: [&str; 6] = ["anh", "em", "chị", "bạn", "mình", "ta"];
 
 proptest! {

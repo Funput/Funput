@@ -8,6 +8,7 @@ use std::time::SystemTime;
 use tempfile::tempdir;
 
 use super::{blocked, listed};
+use crate::persistence::MAX_INBOX_FILES;
 use crate::tests::learned;
 use crate::{Edit, EditKind, SuggestionConfig, SuggestionEngine, post_edits};
 
@@ -121,4 +122,70 @@ fn the_app_can_read_a_store_that_does_not_exist_yet() {
     let view = SuggestionEngine::open_snapshot(&missing, SuggestionConfig::default()).unwrap();
     assert!(listed(&view).is_empty());
     assert!(!missing.exists());
+}
+
+#[test]
+fn a_file_from_a_newer_build_is_left_for_that_build() {
+    let directory = tempdir().unwrap();
+    post_edits(directory.path(), &[Edit::new(EditKind::Add, "funput")]).unwrap();
+    let edits = directory.path().join("edits");
+    let posted = edits.join(&inbox(directory.path())[0]);
+    let mut newer = fs::read(&posted).unwrap();
+    newer[4..6].copy_from_slice(&u16::MAX.to_le_bytes());
+    fs::write(edits.join("0-newer.edit"), newer).unwrap();
+
+    let engine = opened(directory.path());
+    assert_eq!(listed(&engine), ["funput"]);
+    assert_eq!(inbox(directory.path()), ["0-newer.edit"]);
+}
+
+#[test]
+fn a_drain_takes_the_oldest_files_first_and_leaves_the_rest() {
+    let directory = tempdir().unwrap();
+    let words: Vec<String> = (0..=MAX_INBOX_FILES).map(|n| format!("w{n:03}")).collect();
+    for word in &words {
+        post_edits(directory.path(), &[Edit::new(EditKind::Add, word)]).unwrap();
+    }
+    let mut keyboard = opened(directory.path());
+    assert_eq!(listed(&keyboard).len(), MAX_INBOX_FILES);
+    assert!(!listed(&keyboard).contains(&words[MAX_INBOX_FILES]));
+    assert_eq!(keyboard.apply_pending_edits().unwrap(), 1);
+    assert!(listed(&keyboard).contains(&words[MAX_INBOX_FILES]));
+}
+
+#[test]
+fn a_word_no_store_can_hold_is_refused_before_anything_is_written() {
+    let directory = tempdir().unwrap();
+    let long = "a".repeat(33);
+    let edits = [
+        Edit::new(EditKind::Add, "funput"),
+        Edit::new(EditKind::Add, &long),
+    ];
+    let error = post_edits(directory.path(), &edits).unwrap_err();
+    assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
+    assert!(inbox(directory.path()).is_empty());
+}
+
+#[test]
+fn a_large_post_is_split_into_files_that_all_apply_in_order() {
+    let directory = tempdir().unwrap();
+    let words: Vec<String> = (0..600).map(|n| format!("w{n:03}")).collect();
+    let mut edits: Vec<_> = words
+        .iter()
+        .map(|word| Edit::new(EditKind::Block, word))
+        .collect();
+    edits.push(Edit::new(EditKind::Unblock, "w000"));
+    post_edits(directory.path(), &edits).unwrap();
+    assert_eq!(inbox(directory.path()).len(), 3);
+
+    let engine = SuggestionEngine::open(
+        directory.path(),
+        SuggestionConfig {
+            max_blocked_words: 1_000,
+            ..SuggestionConfig::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(blocked(&engine).len(), 599);
+    assert!(!blocked(&engine).contains(&"w000"));
 }

@@ -1,6 +1,7 @@
 use std::io;
 
 use super::{JOURNAL_COMPACT_BYTES, SuggestionEngine};
+use crate::dictionary::Mode;
 use crate::persistence::JournalEntry;
 
 impl SuggestionEngine {
@@ -45,11 +46,7 @@ impl SuggestionEngine {
             self.journal_bytes = 0;
             return Ok(0);
         };
-        let bytes = store.compact(
-            &self.words,
-            self.exclusions.blocked.as_slice(),
-            self.sequence,
-        )?;
+        let bytes = store.compact(&self.words, self.blocked.as_slice(), self.sequence)?;
         self.pending.clear();
         self.pending_overflow = false;
         self.last_snapshot_bytes = bytes;
@@ -84,7 +81,7 @@ impl SuggestionEngine {
                     previous = Some(token);
                 }
                 JournalEntry::Edit { kind, word } => {
-                    self.apply_one(kind, &word, false);
+                    self.apply_one(kind, &word, Mode::Replay);
                     edited = true;
                     previous = None;
                 }

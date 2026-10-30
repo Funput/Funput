@@ -2,11 +2,12 @@
 //! change one word at a time.
 //!
 //! - `listing` — what the store holds, filtered, searched and sorted for display.
-//! - `edit` — the four changes a person can make (add, forget, block, unblock).
-//! - `removal` — taking one word out without leaving its slot's edges stale.
+//! - `edit/` — the four changes a person can make (add, forget, block, unblock),
+//!   applied in batches, and taking one word out without leaving edges stale.
+//! - `blocked` — the words the user blocked, which the bar and the English
+//!   lexicon never offer.
 //! - `view` — the app's read-only open, and the keyboard draining the edits the
 //!   app posted while the store was the keyboard's to write.
-//! - [`exclusion`] — what the bar never offers: the words the user blocked.
 //!
 //! Edits reach the store the same way learning does — journalled, replayed on open,
 //! folded into the snapshot by a compact — so a crash loses at most what was not
@@ -14,11 +15,13 @@
 //!
 //! See `docs/features/personal-dictionary.md`.
 
+mod blocked;
 mod edit;
-pub(crate) mod exclusion;
 mod listing;
-mod removal;
 mod view;
+
+pub(crate) use blocked::BlockedWords;
+pub(crate) use edit::Mode;
 
 pub use listing::{DictionaryEntry, DictionaryFilter, DictionaryQuery, DictionarySort};
 pub use view::post_edits;

@@ -152,6 +152,32 @@ fn an_added_word_is_never_evicted_to_make_room() {
 }
 
 #[test]
+fn a_full_store_of_added_words_refuses_rather_than_evicting_one() {
+    let directory = tempfile::tempdir().unwrap();
+    {
+        let mut engine =
+            SuggestionEngine::open(directory.path(), SuggestionConfig::default()).unwrap();
+        for word in ["một", "hai", "ba"] {
+            apply(&mut engine, EditKind::Add, word);
+        }
+        engine.flush().unwrap();
+    }
+    let shrunk = SuggestionConfig {
+        max_words: 2,
+        ..SuggestionConfig::default()
+    };
+    let mut engine = SuggestionEngine::open(directory.path(), shrunk).unwrap();
+    assert_eq!(engine.learn("bốn"), LearnOutcome::Ignored);
+    assert_eq!(
+        apply(&mut engine, EditKind::Add, "năm"),
+        EditOutcome::LimitReached
+    );
+    let mut words = listed(&engine);
+    words.sort();
+    assert_eq!(words, ["ba", "hai", "một"], "no added word may be evicted");
+}
+
+#[test]
 fn a_blocked_word_is_never_predicted_from_its_context() {
     let mut engine = engine();
     for _ in 0..4 {

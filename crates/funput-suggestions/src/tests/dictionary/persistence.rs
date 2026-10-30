@@ -62,6 +62,24 @@ fn a_journal_that_outlived_its_compact_applies_no_edit_twice() {
 }
 
 #[test]
+fn replay_keeps_edits_a_since_lowered_limit_would_refuse() {
+    let directory = tempdir().unwrap();
+    {
+        let mut engine = opened(directory.path());
+        for word in ["một", "hai", "ba"] {
+            apply(&mut engine, EditKind::Block, word);
+        }
+        engine.flush().unwrap();
+    }
+    let lowered = SuggestionConfig {
+        max_blocked_words: 1,
+        ..SuggestionConfig::default()
+    };
+    let engine = SuggestionEngine::open(directory.path(), lowered).unwrap();
+    assert_eq!(blocked(&engine), ["ba", "hai", "một"]);
+}
+
+#[test]
 fn a_version_two_snapshot_and_a_version_three_journal_still_load() {
     let directory = tempdir().unwrap();
     fs::write(

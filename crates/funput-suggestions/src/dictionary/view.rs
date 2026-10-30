@@ -9,16 +9,21 @@
 use std::io;
 use std::path::Path;
 
-use super::Edit;
+use super::{Edit, EditKind, Mode};
 use crate::engine::{SuggestionConfig, SuggestionEngine};
 use crate::persistence::inbox;
-use crate::persistence::{Access, JournalEntry, Store};
+use crate::persistence::{Access, Store};
 
 /// Posts edits for the keyboard to apply to the store at `path`.
 ///
-/// For the process that does not own the store. Writes one new file and nothing
-/// else, so it is safe while the keyboard has the store open. Words are checked
-/// when applied, not here: one the store cannot hold is skipped as `Invalid`.
+/// For the process that does not own the store. Writes new files and nothing
+/// else, so it is safe while the keyboard has the store open. A word longer than
+/// any token is refused with `InvalidInput` and nothing is written; anything else
+/// about a word is checked when it is applied, where one the store cannot hold is
+/// skipped as `Invalid`. Check an edit against [`open_snapshot`] first to learn
+/// whether the keyboard will accept it.
+///
+/// [`open_snapshot`]: SuggestionEngine::open_snapshot
 pub fn post_edits(path: impl AsRef<Path>, edits: &[Edit<'_>]) -> io::Result<()> {
     inbox::post(path.as_ref(), edits)
 }
@@ -36,7 +41,7 @@ impl SuggestionEngine {
         let path = path.as_ref();
         let mut engine = Self::from_loaded(config, Store::read(path)?);
         let pending = inbox::read(path, Access::ReadOnly)?;
-        engine.replay(pending.edits);
+        engine.apply_batch(as_edits(&pending.edits), Mode::Preview);
         Ok(engine)
     }
 
@@ -51,18 +56,13 @@ impl SuggestionEngine {
         if pending.files.is_empty() {
             return Ok(0);
         }
-        let count = pending.edits.len();
-        let mut applied = false;
-        for edit in pending.edits {
-            if let JournalEntry::Edit { kind, word } = edit {
-                applied |= self.apply_one(kind, &word, true) == super::EditOutcome::Applied;
-            }
-        }
-        if applied {
-            self.rebuild_tries();
-        }
+        self.apply_batch(as_edits(&pending.edits), Mode::Record);
         self.flush()?;
         inbox::remove(&root, &pending.files)?;
-        Ok(count)
+        Ok(pending.edits.len())
     }
+}
+
+fn as_edits(edits: &[(EditKind, String)]) -> impl Iterator<Item = (EditKind, &str)> {
+    edits.iter().map(|(kind, word)| (*kind, word.as_str()))
 }

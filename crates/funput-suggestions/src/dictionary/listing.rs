@@ -80,11 +80,7 @@ impl SuggestionEngine {
 
     /// The blocked words, in code point order.
     pub fn blocked_words(&self) -> impl ExactSizeIterator<Item = &str> + '_ {
-        self.exclusions
-            .blocked
-            .as_slice()
-            .iter()
-            .map(String::as_str)
+        self.blocked.as_slice().iter().map(String::as_str)
     }
 
     fn entry<'a>(&self, word: &'a WordRecord) -> DictionaryEntry<'a> {

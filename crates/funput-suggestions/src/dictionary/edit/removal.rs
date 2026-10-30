@@ -36,7 +36,13 @@ impl SuggestionEngine {
         };
         let vacated = vacated as u32;
         for word in &mut self.words {
-            slots::relocate(&mut word.followers, removed, vacated, moved);
+            slots::relocate(
+                &mut word.followers,
+                &mut word.context_seen,
+                removed,
+                vacated,
+                moved,
+            );
         }
         // Adjacency in the journal is by slot, and the slots just changed.
         self.journalled_previous = None;

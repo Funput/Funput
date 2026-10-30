@@ -12,7 +12,7 @@ pub(super) const MAX_JOURNAL_BYTES: u64 = 1024 * 1024;
 pub(super) const MAX_INBOX_FILE_BYTES: u64 = 64 * 1024;
 /// How many edit files one drain reads. The rest wait for the next one, so a
 /// flooded inbox costs a bounded pause, never an unbounded one.
-pub(super) const MAX_INBOX_FILES: usize = 256;
+pub(crate) const MAX_INBOX_FILES: usize = 256;
 
 // The two records are separate formats that happened to share a number. They are
 // versioned apart so one can move without claiming anything about the other —

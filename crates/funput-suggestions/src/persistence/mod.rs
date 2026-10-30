@@ -23,6 +23,8 @@ use codec::{journal, snapshot};
 
 pub(crate) use codec::record::Record as JournalEntry;
 pub(crate) use recovery::Access;
+#[cfg(test)]
+pub(crate) use schema::MAX_INBOX_FILES;
 
 pub(crate) struct Store {
     pub(super) root: PathBuf,

@@ -71,10 +71,17 @@ Trên iOS, app và bàn phím là hai tiến trình dùng chung kho trong App Gr
 | Bàn phím | `open`, `apply_edit`, `apply_pending_edits` | snapshot, journal, và xoá file inbox đã áp |
 | App | `open_snapshot`, `post_edits` | chỉ các file mới trong `edits/` |
 
-`post_edits` ghi mỗi lần gửi thành một file riêng trong `edits/`:
+`post_edits` ghi mỗi lần gửi thành file riêng trong `edits/`:
 - Thứ tự ghi: file tạm `.tmp`, fsync, rename, rồi sync thư mục. Bàn phím chỉ thấy file
   hoặc nguyên vẹn, hoặc không thấy gì.
-- Tên file sắp theo thứ tự gửi (đồng hồ, pid, bộ đếm).
+- Tên file là `<tem>-<pid>-<bộ đếm>.edit`, sắp theo thứ tự gửi. Tem là đồng hồ tính bằng
+  nano giây, nhưng **không bao giờ nhỏ hơn tem của file mới nhất còn chờ cộng một**. Nhờ
+  vậy, đồng hồ có lùi (ví dụ NTP chỉnh giờ) giữa Chặn và Bỏ chặn thì hai thao tác vẫn được
+  áp đúng thứ tự.
+- Mỗi file chứa tối đa 256 thao tác; lần gửi lớn hơn được chia thành nhiều file liên tiếp,
+  nên không file nào vượt giới hạn kích thước bên đọc chấp nhận.
+- Từ dài hơn mọi token (32 ký tự) bị từ chối ngay bằng `InvalidInput` và không file nào
+  được ghi. Các kiểm tra khác diễn ra lúc áp.
 - Hai tiến trình không bao giờ ghi chung một file, nên không cần khoá.
 
 `apply_pending_edits` đọc tối đa `MAX_INBOX_FILES` file theo thứ tự tên, áp các thao tác,
@@ -87,7 +94,20 @@ và vì thao tác idempotent nên không mất gì, không đếm trùng gì. C�
 `open` tự rút inbox; nền tảng gọi thêm `apply_pending_edits` khi bàn phím hiện ra.
 
 `open_snapshot` không ghi gì: không tạo thư mục, không sửa file, không compact. Nó áp sẵn
-các thao tác còn chờ trong bộ nhớ, nên danh sách hiện đúng trạng thái kho sắp có.
+các thao tác còn chờ trong bộ nhớ, với đúng các giới hạn bàn phím sẽ áp, nên danh sách hiện
+đúng trạng thái kho sắp có.
+
+Mỗi thao tác được áp theo một trong ba chế độ (`Mode`):
+
+| Chế độ | Khi nào | Kiểm tra giới hạn | Ghi journal |
+|---|---|---|---|
+| `Record` | Bàn phím sửa trực tiếp hoặc rút inbox | Có | Có |
+| `Preview` | App xem các thao tác còn chờ | Có | Không |
+| `Replay` | Đọc lại journal khi mở kho | **Không** | Không |
+
+Replay không kiểm tra giới hạn vì thao tác đã được chấp nhận lúc ghi. Nếu không, một giới
+hạn bị hạ sau đó sẽ âm thầm bỏ các thao tác chặn đã ghi, và lần compact kế tiếp xoá hẳn
+chúng.
 
 ## Lưu trữ
 
@@ -112,7 +132,9 @@ Từ nằm trong một `Vec` liền nhau; trie và cạnh follower tham chiếu 
 `remove_slot` dùng `swap_remove`, sau đó:
 - Từ bị dời vào chỗ trống nhận generation **lớn hơn mọi generation cả hai ô từng có**, nên
   không cạnh cũ nào trỏ nhầm vào nó.
-- Cạnh trỏ tới từ bị xoá bị xoá theo.
+- Cạnh trỏ tới từ bị xoá bị xoá theo, và số lần dùng của chúng được trừ khỏi
+  `context_seen` của từ đứng trước. Nếu không, phép thử áp đảo vẫn chia cho những lần thấy
+  một follower đã không còn, và ngữ cảnh đó im lặng rất lâu sau khi follower mới thế chỗ.
 - Mọi cạnh trỏ tới ô cuối vừa trống cũng bị xoá: từ mới đẩy vào ô đó bắt đầu ở generation 0,
   nên nếu không xoá thì nó sẽ khớp nhầm với cạnh của người ở trước.
 - Cạnh trỏ tới từ bị dời được chuyển sang chỗ mới.
@@ -121,17 +143,22 @@ Từ nằm trong một `Vec` liền nhau; trie và cạnh follower tham chiếu 
 `enforce_capacity` (dùng khi nạp kho vào một cấu hình nhỏ hơn) dùng lại đúng đường này, nên
 giờ nó giữ được cạnh thay vì làm mất.
 
+Từ tự thêm không bao giờ bị đẩy ra. Khi kho đầy mà toàn là từ tự thêm (chỉ xảy ra khi
+`max_words` bị hạ), từ mới gõ không được học, còn `Add` mới trả `LimitReached`. Riêng `Add`
+đọc lại từ journal vẫn được giữ, vượt sức chứa, như khi nạp một snapshot chứa nó.
+
 ## Bố cục mã
 
 - `funput-suggestions/src/dictionary/`:
-  - `edit`: các thao tác sửa.
+  - `edit/`: chế độ áp và lô thao tác (`mod`), từng thao tác (`words`), xoá một từ
+    (`removal`).
   - `listing`: liệt kê, lọc, tìm, sắp xếp.
-  - `removal`: xoá một từ.
+  - `blocked`: danh sách chặn.
   - `view`: `open_snapshot`, `post_edits`, `apply_pending_edits`.
-  - `exclusion/`: những gì thanh gợi ý không bao giờ đưa ra (hiện là danh sách chặn).
 - `funput-suggestions/src/persistence/`:
-  - `inbox.rs`: thao tác file của inbox.
-  - `codec/`: `record`, `journal`, `snapshot/`, `inbox`.
+  - `inbox/`: thao tác file của inbox (`mod`) và cách đặt tên file theo thứ tự (`name`).
+  - `codec/`: `frame` (khung có checksum dùng chung cho journal và file inbox), `record`,
+    `journal`, `snapshot/`, `inbox`.
 - `funput-ffi/src/suggestion/dictionary/`:
   - `edit`, `view`, `list`.
   - `types`: các hằng `FUNPUT_DICTIONARY_*` và struct `FunputDictionaryEntry`.
@@ -142,7 +169,10 @@ giờ nó giữ được cạnh thay vì làm mất.
   - Ngữ nghĩa từng thao tác và các giới hạn.
   - Cạnh sau khi xoá, kèm proptest so với một mô hình đếm.
   - Round-trip snapshot/journal, crash giữa compact và truncate, đọc file v2/v3 cũ.
-  - Inbox: rút, file hỏng, view không ghi gì.
-- Test inline cho danh sách chặn, codec record và codec inbox.
+  - Inbox: rút, file hỏng, file của bản build mới hơn, giới hạn số file mỗi lần rút, từ
+    quá dài, lần gửi lớn chia nhiều file, view không ghi gì.
+  - Kho đầy toàn từ tự thêm, replay khi giới hạn đã hạ, ngữ cảnh nói lại sau khi follower
+    bị quên.
+- Test inline cho danh sách chặn, tên file inbox, codec record và codec inbox.
 - `tests/alloc_budget.rs`: thêm ca tra cứu khi danh sách chặn không rỗng.
 - `funput-ffi/tests/dictionary.rs`: round-trip qua C ABI, mã không hợp lệ, con trỏ null.

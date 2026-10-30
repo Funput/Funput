@@ -75,7 +75,7 @@ impl SuggestionEngine {
     pub fn is_known_word(&self, word: &str) -> bool {
         crate::keep::is_kept(word)
             || self.context_slot(word).is_some()
-            || self.exclusions.blocked.contains(word)
+            || self.blocked.contains(word)
             || self
                 .lexicon
                 .file
@@ -105,7 +105,7 @@ impl SuggestionEngine {
             journal_bytes: self.journal_bytes,
             estimated_heap_bytes: word_bytes
                 + pending_bytes
-                + self.exclusions.blocked.heap_bytes()
+                + self.blocked.heap_bytes()
                 + self.exact.heap_bytes()
                 + self.folded.heap_bytes(),
             last_snapshot_bytes: self.last_snapshot_bytes,

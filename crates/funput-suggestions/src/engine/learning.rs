@@ -17,12 +17,14 @@ impl SuggestionEngine {
         let Some(normalized) = self.token_key(token) else {
             return (LearnOutcome::Ignored, NONE);
         };
-        if self.exclusions.blocked.contains(&normalized) {
+        if self.blocked.contains(&normalized) {
             return (LearnOutcome::Ignored, NONE);
         }
 
         self.sequence = self.sequence.saturating_add(1);
-        let (word_id, previous_uses, evicted_indexed) = self.upsert_word(normalized);
+        let Some((word_id, previous_uses, evicted_indexed)) = self.upsert_word(normalized) else {
+            return (LearnOutcome::Ignored, NONE);
+        };
         if evicted_indexed {
             // The evicted word's entries are stale, not wrong: its slot's
             // generation moved on, so they already read as dead. Sweeping them is
@@ -77,21 +79,23 @@ impl SuggestionEngine {
         }
     }
 
-    fn upsert_word(&mut self, normalized: String) -> (u32, u32, bool) {
-        if let Some(index) = self.words.iter().position(|word| word.text == normalized) {
+    /// `None` when a new word finds a full store holding only added words, which
+    /// are never evicted: there is no room for it, so it is not learned.
+    fn upsert_word(&mut self, normalized: String) -> Option<(u32, u32, bool)> {
+        if let Some(index) = self.slot_of(&normalized) {
             let word = &mut self.words[index];
             let previous = word.uses;
             word.uses = word.uses.saturating_add(1);
             word.last_used = self.sequence;
-            return (index as u32, previous, false);
+            return Some((index as u32, previous, false));
         }
         let record = WordRecord::new(normalized, 1, self.sequence);
         if self.words.len() < self.config.max_words {
             let index = self.words.len() as u32;
             self.words.push(record);
-            return (index, 0, false);
+            return Some((index, 0, false));
         }
-        let index = self.lowest_ranked_index().unwrap_or(0);
+        let index = self.lowest_ranked_index()?;
         let rebuild = self.offers(&self.words[index]);
         if rebuild && normalize::is_marked(&self.words[index].text) {
             self.lexicon.vietnamese_words = self.lexicon.vietnamese_words.saturating_sub(1);
@@ -101,7 +105,7 @@ impl SuggestionEngine {
         let generation = self.words[index].generation.wrapping_add(1);
         self.words[index] = record;
         self.words[index].generation = generation;
-        (index as u32, 0, rebuild)
+        Some((index as u32, 0, rebuild))
     }
 
     /// Returns whether the word is marked, which is exactly whether it went into
