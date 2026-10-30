@@ -77,6 +77,7 @@ internal class ImeKeyActionHandler(
             KeyAction.Space -> typing.input(" ")
             KeyAction.Backspace -> backspace()
             KeyAction.Enter -> typing.enter()
+            KeyAction.NewLine -> typing.newLine()
             is KeyAction.ToggleLanguage -> toggleLanguage(action.language)
             is KeyAction.Shift,
             is KeyAction.MoveCursor,

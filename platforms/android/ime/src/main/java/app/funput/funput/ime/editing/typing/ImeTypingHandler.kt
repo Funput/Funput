@@ -62,11 +62,14 @@ internal class ImeTypingHandler(
         if (handled) inputTracked(text)
     }
 
-    fun enter() {
+    fun enter() = enter(enterCommand())
+
+    /** A line break even where Enter performs the field's action, such as Send in a chat app. */
+    fun newLine() = enter(LineBreak)
+
+    private fun enter(command: ImeEditCommand) {
         onTyping()
-        val command = enterCommand()
-        if ((usesVietnameseComposition() || usesEnglishShortcuts()) &&
-            command == ImeEditCommand.CommitText("\n")) {
+        if ((usesVietnameseComposition() || usesEnglishShortcuts()) && command == LineBreak) {
             input("\n")
         } else {
             if (usesVietnameseComposition() || usesEnglishShortcuts()) finish()
@@ -86,4 +89,8 @@ internal class ImeTypingHandler(
     fun commitVoice(text: String): Boolean = text.isNotEmpty() && execute(ImeEditCommand.CommitText(text))
 
     private fun execute(command: ImeEditCommand) = editor.execute(connection(), command)
+
+    private companion object {
+        val LineBreak = ImeEditCommand.CommitText("\n")
+    }
 }

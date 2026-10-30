@@ -47,6 +47,7 @@ internal class KeyboardSurfaceAccessibilityBinding(
             ?.accessibilityLabel(resources),
         resources.getString(R.string.clipboard_open_accessibility),
         interaction().areSmartGesturesEnabled,
+        interaction().breaksLineOnEnterHold,
     )
 
     private fun activate(keyId: String) {

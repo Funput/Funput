@@ -12,6 +12,7 @@ import app.funput.funput.ime.editing.correction.preview.CorrectionBarActions
 import app.funput.funput.ime.editing.correction.preview.CorrectionPreviewer
 import app.funput.funput.ime.editing.correction.report.TypoSessionReport
 import app.funput.funput.ime.editing.layout.LetterPageReturn
+import app.funput.funput.ime.editing.typing.forEditor
 import app.funput.funput.ime.localtext.ImeLocalTextFields
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
@@ -49,7 +50,7 @@ internal class ImeEditingSession(
 
     /** One key, from the soft keyboard or a hardware one, and everything it updates. */
     fun dispatch(action: KeyAction) {
-        actionHandler.onKeyAction(action)
+        actionHandler.onKeyAction(action.forEditor(editorRuntime.policy))
         suggestionService.consume(actionHandler.takeSuggestionUpdate())
         refreshBars()
     }

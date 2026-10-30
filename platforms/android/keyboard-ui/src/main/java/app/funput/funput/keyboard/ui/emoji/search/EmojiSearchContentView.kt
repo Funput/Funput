@@ -103,7 +103,7 @@ internal class EmojiSearchContentView(context: Context) : KeyboardPanelComposeVi
         is KeyAction.Input -> onInput(action.text)
         KeyAction.Space -> onSpace()
         KeyAction.Backspace -> onBackspace()
-        KeyAction.Enter -> onDone()
+        KeyAction.Enter, KeyAction.NewLine -> onDone()
         else -> Unit
     }
 }

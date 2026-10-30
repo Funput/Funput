@@ -31,10 +31,12 @@ internal class KeyboardSurfaceAccessibilityController(
         clipboardLabel: String? = null,
         clipboardKeyLabel: String? = null,
         smartGesturesEnabled: Boolean = true,
+        breaksLineOnEnterHold: Boolean = false,
     ) {
         snapshot = keyboard?.let {
             KeyboardAccessibilitySnapshot(
                 it, shiftState, suggestions, clipboardLabel, clipboardKeyLabel, smartGesturesEnabled,
+                breaksLineOnEnterHold,
             )
         }
         delegate.invalidateRoot()

@@ -27,5 +27,7 @@ sealed interface KeyAction {
     /** Caret movement from the spacebar trackpad, on both axes. */
     data class MoveCursor(val columns: Int, val lines: Int = 0) : KeyAction
     data object Enter : KeyAction
+    /** A line break, even where Enter performs the field's action (holding Enter, Shift+Enter). */
+    data object NewLine : KeyAction
     data class ToggleLanguage(val language: KeyboardLanguage) : KeyAction
 }

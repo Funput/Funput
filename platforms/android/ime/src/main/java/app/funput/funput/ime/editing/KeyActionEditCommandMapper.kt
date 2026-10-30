@@ -9,6 +9,7 @@ internal fun KeyAction.toImeEditCommand(
     is KeyAction.Input -> ImeEditCommand.CommitText(text)
     KeyAction.Space -> ImeEditCommand.CommitText(" ")
     KeyAction.Enter -> enterCommand
+    KeyAction.NewLine -> ImeEditCommand.CommitText("\n")
     KeyAction.Backspace -> ImeEditCommand.DeleteBackward
     is KeyAction.Shift,
     is KeyAction.ToggleLanguage,

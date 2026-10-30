@@ -7,7 +7,7 @@ import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
 
 /**
- * Turns space-hold pans and backspace rubs into semantic keyboard actions.
+ * Turns space-hold pans, backspace rubs and Enter holds into semantic keyboard actions.
  *
  * Claiming captures the pointer so a neighbouring key cannot commit on release.
  */
@@ -26,13 +26,22 @@ internal class SmartGestureCoordinator(
     private val hold = KeyHoldController(schedule, cancel) { pointerId ->
         sessions[pointerId]?.holdArmed = true
     }
+    // Not a smart gesture: the line break stays reachable with that switch off.
+    private val enterHold = EnterLineBreakHold(schedule, cancel) { pointerId ->
+        detach(pointerId)
+        onAction(KeyAction.NewLine)
+        onHaptic(KeyboardHapticType.CONTROL)
+    }
+    var enterAction by enterHold::enterAction
 
-    fun isCaptured(pointerId: Int): Boolean = sessions[pointerId]?.claimed == true
+    fun isCaptured(pointerId: Int): Boolean =
+        sessions[pointerId]?.claimed == true || enterHold.isClaimed(pointerId)
 
     fun onStarted(pointerId: Int, key: KeySpec?, x: Float, y: Float) {
         if (key == null) return
         sessions[pointerId] = SmartGestureSession(key, x, y, enabled, density)
         if (enabled && key.role == KeyRole.SPACE) hold.start(pointerId)
+        enterHold.start(pointerId, key)
     }
 
     /** Returns true when this contact is fully owned by a gesture. */
@@ -48,6 +57,7 @@ internal class SmartGestureCoordinator(
             return true
         }
         if (session.hasWandered && !session.holdArmed) hold.cancel(pointerId)
+        if (session.hasWandered) enterHold.abandon(pointerId)
         if (claimTrackpad(pointerId, session)) {
             emitTrackpad(session)
             return true
@@ -62,7 +72,10 @@ internal class SmartGestureCoordinator(
     /** Returns true when release must not emit the ordinary key action. */
     fun onReleased(pointerId: Int): Boolean {
         hold.cancel(pointerId)
-        val session = sessions.remove(pointerId) ?: return false
+        val heldEnter = enterHold.finish(pointerId)
+        val session = sessions.remove(pointerId)
+        if (heldEnter) return true
+        if (session == null) return false
         val ratchet = session.ratchet ?: return session.trackpad != null
         if (!ratchet.hasDeleted) onAction(KeyAction.Backspace)
         return true
@@ -70,11 +83,13 @@ internal class SmartGestureCoordinator(
 
     fun cancelAll() {
         hold.cancelAll()
+        enterHold.cancelAll()
         sessions.clear()
     }
 
     fun forget(pointerId: Int) {
         hold.cancel(pointerId)
+        enterHold.finish(pointerId)
         sessions.remove(pointerId)
     }
 
