@@ -29,6 +29,30 @@ pub(crate) fn record(
     }
 }
 
+/// Retargets the edges of one word after `words.swap_remove`.
+///
+/// Edges to the removed word go, and so does every edge to the vacated last slot:
+/// a word pushed there later starts at generation zero and would otherwise answer
+/// to an edge left over from an earlier tenant. Edges to the word that moved now
+/// point at its new slot and generation.
+pub(crate) fn relocate(
+    followers: &mut [Follower; FOLLOWER_SLOTS],
+    removed: Follower,
+    vacated: u32,
+    moved: Option<(Follower, Follower)>,
+) {
+    for slot in followers.iter_mut().filter(|slot| !slot.is_free()) {
+        if let Some((from, to)) = moved
+            && slot.points_at(from)
+        {
+            slot.word = to.word;
+            slot.generation = to.generation;
+        } else if slot.points_at(removed) || slot.word == vacated {
+            *slot = Follower::EMPTY;
+        }
+    }
+}
+
 fn admit(followers: &mut [Follower; FOLLOWER_SLOTS], dead: [bool; FOLLOWER_SLOTS], next: Follower) {
     if let Some(index) = (0..FOLLOWER_SLOTS).find(|&index| followers[index].points_at(next)) {
         followers[index].uses = followers[index].uses.saturating_add(1);

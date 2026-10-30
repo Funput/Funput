@@ -15,3 +15,10 @@ Platform code must give the engine completed tokens and call it from one serial
 worker. Querying is read-only, allocation-free after warm-up, and performs no I/O.
 Persistence is explicit through `flush` and `compact`, allowing keyboard shells to
 schedule disk work outside their input hot path.
+
+The store is also a personal dictionary the user can read and edit one word at a
+time: `dictionary` lists it, and `apply_edit` adds, forgets, blocks or unblocks a
+word. Only the keyboard writes the store; the app reads it with `open_snapshot` and hands
+its edits over through `post_edits`, which the keyboard folds in with
+`apply_pending_edits`. See
+[personal-dictionary.md](../../docs/features/personal-dictionary.md).

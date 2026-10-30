@@ -5,10 +5,12 @@
 //! - `codec` — pure bytes to data translation, no filesystem.
 //! - `recovery` — reading a store that may be damaged.
 //! - `fs` — the filesystem calls that have to be durable, not merely successful.
+//! - `inbox` — the edit files the app posts and the keyboard drains.
 //! - here — paths, and the two write paths (`append_journal`, `compact`).
 
 mod codec;
 mod fs;
+pub(crate) mod inbox;
 mod recovery;
 mod schema;
 
@@ -17,56 +19,36 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use crate::types::WordRecord;
-use codec::journal::Entry;
 use codec::{journal, snapshot};
 
-pub(crate) use codec::journal::Entry as JournalEntry;
+pub(crate) use codec::record::Record as JournalEntry;
+pub(crate) use recovery::Access;
 
 pub(crate) struct Store {
     pub(super) root: PathBuf,
 }
 
+/// Everything a store holds once read: the snapshot, and the journal entries it
+/// does not yet contain.
+#[derive(Default)]
 pub(crate) struct Loaded {
     pub(crate) words: Vec<WordRecord>,
+    pub(crate) blocked: Vec<String>,
     pub(crate) sequence: u64,
-    pub(crate) journal: Vec<Entry>,
+    pub(crate) journal: Vec<JournalEntry>,
     pub(crate) journal_bytes: u64,
 }
 
 impl Store {
-    pub(crate) fn open(root: &Path) -> io::Result<(Self, Loaded)> {
-        std::fs::create_dir_all(root)?;
-        let store = Self {
-            root: root.to_owned(),
-        };
-        let snapshot = store.load_snapshot()?;
-        let (words, sequence, snapshot_valid) = match snapshot {
-            Some((words, sequence)) => (words, sequence, true),
-            None => (Vec::new(), 0, false),
-        };
-        let (journal, journal_bytes) = if snapshot_valid {
-            store.load_journal(sequence)?
-        } else {
-            // The snapshot was damaged, not absent. Repair both files now: leaving
-            // the snapshot means every later open discards the journal again, and
-            // leaving the journal means its unreadable head swallows every valid
-            // frame appended after it. Best effort — an empty engine works either
-            // way, and the next flush will try again.
-            let _ = store.compact(&[], 0);
-            (Vec::new(), 0)
-        };
-        Ok((
-            store,
-            Loaded {
-                words,
-                sequence,
-                journal,
-                journal_bytes,
-            },
-        ))
+    pub(crate) fn root(&self) -> &Path {
+        &self.root
     }
 
-    pub(crate) fn append_journal(&self, entries: &[Entry], sequence: u64) -> io::Result<u64> {
+    pub(crate) fn append_journal(
+        &self,
+        entries: &[JournalEntry],
+        sequence: u64,
+    ) -> io::Result<u64> {
         if entries.is_empty() {
             return Ok(0);
         }
@@ -84,8 +66,13 @@ impl Store {
         Ok(frame.len() as u64)
     }
 
-    pub(crate) fn compact(&self, words: &[WordRecord], sequence: u64) -> io::Result<u64> {
-        let bytes = snapshot::encode(words, sequence);
+    pub(crate) fn compact(
+        &self,
+        words: &[WordRecord],
+        blocked: &[String],
+        sequence: u64,
+    ) -> io::Result<u64> {
+        let bytes = snapshot::encode(words, blocked, sequence);
         let temporary = self.root.join("personal-lexicon.snapshot.tmp");
         let mut file = File::create(&temporary)?;
         file.write_all(&bytes)?;

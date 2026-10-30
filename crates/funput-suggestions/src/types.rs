@@ -1,4 +1,5 @@
 use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
+use crate::dictionary::Origin;
 use crate::index::TOP_K;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -58,4 +59,21 @@ pub(crate) struct WordRecord {
     /// own: the edges then cost no allocation, and a word losing its slot takes
     /// its edges with it instead of leaving a table to go stale.
     pub(crate) followers: [Follower; FOLLOWER_SLOTS],
+    /// Learned or added by hand. Written with the record.
+    pub(crate) origin: Origin,
+}
+
+impl WordRecord {
+    /// A record with no history: no edges, generation zero, learned.
+    pub(crate) fn new(text: String, uses: u32, last_used: u64) -> Self {
+        Self {
+            text,
+            uses,
+            last_used,
+            generation: 0,
+            context_seen: 0,
+            followers: [Follower::EMPTY; FOLLOWER_SLOTS],
+            origin: Origin::Learned,
+        }
+    }
 }

@@ -7,6 +7,8 @@
 //!
 //! - `binary` — little-endian integers and the CRC-32 every on-disk format uses.
 //! - `bigram/` — which words follow which, and the write path that learns them.
+//! - `dictionary/` — the store as a list the user can read and edit word by word,
+//!   what the bar never offers, and the edit inbox between the app and the keyboard.
 //! - `engine/` — the [`SuggestionEngine`] facade, its [`SuggestionConfig`], and the
 //!   learn / query / durability behaviours.
 //! - `index/` — the in-memory search index (prefix trie, ranking, key normalization).
@@ -18,6 +20,7 @@
 
 mod bigram;
 mod binary;
+mod dictionary;
 mod engine;
 mod index;
 mod keep;
@@ -26,6 +29,10 @@ mod persistence;
 mod syllables;
 mod types;
 
+pub use dictionary::{
+    DictionaryEntry, DictionaryFilter, DictionaryQuery, DictionarySort, Edit, EditKind,
+    EditOutcome, Origin, post_edits,
+};
 pub use engine::{SuggestionConfig, SuggestionEngine};
 pub use syllables::{SYLLABLE_TIER_WEIGHTS, syllable_tier, syllable_weight};
 pub use types::{LearnOutcome, SuggestionSet, SuggestionStats};

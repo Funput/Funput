@@ -58,7 +58,9 @@ impl SuggestionEngine {
         for word in file.top3(prefix).iter() {
             // A learned word is stored lowercase and the lexicon keeps its own
             // case, so `iphone` and `iPhone` are the same suggestion.
-            if personal.iter().any(|mine| mine.eq_ignore_ascii_case(word)) {
+            if personal.iter().any(|mine| mine.eq_ignore_ascii_case(word))
+                || self.exclusions.hides_text(word)
+            {
                 continue;
             }
             let Some(slot) = merged.items.get_mut(merged.len) else {
