@@ -27,8 +27,8 @@ class EnterKeyScreenTest {
     private val added = mutableListOf<String>()
     private val removed = mutableListOf<String>()
     private val installed = listOf(
-        InstalledApp("com.facebook.orca", "Messenger", null),
-        InstalledApp("com.zing.zalo", "Zalo", null),
+        InstalledApp("com.facebook.orca", "Messenger"),
+        InstalledApp("com.zing.zalo", "Zalo"),
     )
 
     @Test fun `with nothing chosen the page explains itself and suggests messenger`() {

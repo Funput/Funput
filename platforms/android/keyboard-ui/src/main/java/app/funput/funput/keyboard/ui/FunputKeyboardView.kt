@@ -64,8 +64,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     val activePanel: KeyboardPanel get() = panelCoordinator.activePanel
     var shiftState: ShiftState by keyboardSurface::shiftState
     var inputMethod: KeyboardInputMethod by keyboardSurface::inputMethod
-    var editorMode: KeyboardEditorMode
-        get() = keyboardSurface.editorMode
+    var editorMode: KeyboardEditorMode get() = keyboardSurface.editorMode
         set(value) { keyboardSurface.editorMode = value; clipboardState.editorModeChanged() }
     var systemInputMethodSwitcherVisible: Boolean by keyboardSurface::systemInputMethodSwitcherVisible
     var microphone by keyboardSurface::microphone
@@ -79,6 +78,7 @@ class FunputKeyboardView @JvmOverloads constructor(
             syncSuggestions()
         }
     var enterAction: KeyboardEnterAction by keyboardSurface::enterAction
+    var breaksLineOnEnterHold: Boolean by keyboardSurface::breaksLineOnEnterHold
     var keyboardTheme: KeyboardTheme
         get() = keyboardSurface.keyboardTheme
         set(value) {

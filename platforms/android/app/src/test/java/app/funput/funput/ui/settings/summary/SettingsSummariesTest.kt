@@ -82,6 +82,15 @@ class SettingsSummariesTest {
     }
 
     @Test
+    fun `the enter key names the apps it sends in, and says nothing until they are read`() {
+        fun enterKey(apps: List<String>?) = summaries.of(SettingsPage.ENTER_KEY, testSettingsState(enterToSendApps = apps))
+
+        assertNull(enterKey(null))
+        assertEquals("Enter luôn xuống dòng", enterKey(emptyList()))
+        assertEquals("Enter gửi tin trong Messenger và Zalo", enterKey(listOf("Messenger", "Zalo")))
+    }
+
+    @Test
     fun `data has no summary`() {
         assertNull(summaries.of(SettingsPage.DATA, testSettingsState()))
     }

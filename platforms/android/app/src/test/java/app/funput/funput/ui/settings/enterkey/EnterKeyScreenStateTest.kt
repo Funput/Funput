@@ -11,10 +11,10 @@ private const val Messenger = "com.facebook.orca"
 /** What the Enter key page shows for a given store and set of installed apps. */
 class EnterKeyScreenStateTest {
     private val installed = listOf(
-        InstalledApp("org.telegram.messenger", "Telegram", null),
-        InstalledApp(Messenger, "Messenger", null),
-        InstalledApp("com.zing.zalo", "Zalo", null),
-        InstalledApp("com.example.dao", "Đào", null),
+        InstalledApp("org.telegram.messenger", "Telegram"),
+        InstalledApp(Messenger, "Messenger"),
+        InstalledApp("com.zing.zalo", "Zalo"),
+        InstalledApp("com.example.dao", "Đào"),
     )
 
     @Test fun `nothing shows as empty until the store has been read`() {

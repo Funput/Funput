@@ -58,6 +58,16 @@ class EnterKeyLineBreakTest {
         assertEquals(KeyAction.Enter, KeyAction.Enter.forEditor(multiLine))
     }
 
+    @Test fun `holding enter breaks the line only in a multi-line field whose enter performs an action`() {
+        val chat = EditorInfoPolicy.Default.copy(isMultiline = true, editorAction = EnterToSendPolicy.Send)
+        val search = EditorInfoPolicy.Default.copy(isMultiline = false, editorAction = EnterToSendPolicy.Send)
+        val notes = EditorInfoPolicy.Default.copy(isMultiline = true)
+
+        assertEquals(true, chat.breaksLineOnEnterHold)
+        assertEquals(false, search.breaksLineOnEnterHold)
+        assertEquals(false, notes.breaksLineOnEnterHold)
+    }
+
     @Test fun `the edit command for a line break is always a new line`() {
         assertEquals(
             ImeEditCommand.CommitText("\n"),

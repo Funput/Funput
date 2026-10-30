@@ -30,7 +30,13 @@ internal fun createImeRuntime(
     views: ImeInputViewBinder,
     invalidateSpeech: () -> Unit,
 ): ImeRuntime {
-    val session = createServiceEditingSession(service, scope) { views.view }
+    val session = createServiceEditingSession(
+        service = service,
+        scope = scope,
+        view = { views.view },
+        // The list of Enter-to-send apps can arrive after the first field has started.
+        onEnterKeyChanged = views::update,
+    )
     val settings = createServiceSettings(session, { views.view }, invalidateSpeech, views::update)
     return ImeRuntime(
         session = session,

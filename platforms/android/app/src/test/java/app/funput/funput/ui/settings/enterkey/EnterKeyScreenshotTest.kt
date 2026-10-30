@@ -25,8 +25,8 @@ class EnterKeyScreenshotTest(private val variant: ScreenshotVariant) {
     @get:Rule
     val compose = createComposeRule()
     private val installed = listOf(
-        InstalledApp("com.facebook.orca", "Messenger", null),
-        InstalledApp("org.telegram.messenger", "Telegram", null),
+        InstalledApp("com.facebook.orca", "Messenger"),
+        InstalledApp("org.telegram.messenger", "Telegram"),
     )
 
     @Test

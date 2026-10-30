@@ -15,8 +15,9 @@ import app.funput.funput.keyboard.model.KeyboardEnterAction
  * DONE, which only hides the keyboard, yet sends on `IME_ACTION_SEND`. So the command is always
  * Send, whatever the field declared.
  *
- * Only a multi-line text field that would otherwise insert a new line changes. A field that
- * already shows an action (a search box) and single-line or non-text fields are left as they are.
+ * Only a text field that would otherwise insert a new line changes, multi-line or not: a
+ * single-line message box has no use for a line break either. A field that already shows an
+ * action (a search box), and password, number or address fields, are left as they are.
  */
 internal object EnterToSendPolicy {
     val Send = ImeEditorAction(
@@ -27,7 +28,6 @@ internal object EnterToSendPolicy {
     fun apply(policy: EditorInfoPolicy, packageName: String?, packages: Set<String>): EditorInfoPolicy {
         val applies = packageName != null &&
             packageName in packages &&
-            policy.isMultiline &&
             policy.editorMode == KeyboardEditorMode.TEXT &&
             policy.editorAction == ImeEditorAction.NewLine
         return if (applies) policy.copy(editorAction = Send) else policy

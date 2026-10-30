@@ -32,17 +32,34 @@ internal class ImeEditorRuntime(
     var policy: EditorInfoPolicy = EditorInfoPolicy.Default
         private set
 
+    /** The field's own policy and app, kept so the Enter key can follow a later change of the list. */
+    private var declared: EditorInfoPolicy = EditorInfoPolicy.Default
+    private var packageName: String? = null
+
     fun configure(info: EditorInfo) {
-        policy = EnterToSendPolicy.apply(
-            policy = EditorInfoPolicyResolver.resolve(info),
-            packageName = info.packageName,
-            packages = enterToSendPackages(),
-        )
+        declared = EditorInfoPolicyResolver.resolve(info)
+        packageName = info.packageName
+        policy = withEnterToSend()
         autoCapitalization.configure(policy)
         completions.configure(policy.suggestionSource == ImeSuggestionSource.EDITOR)
     }
 
+    /**
+     * Applies the current list of apps to the open field. The list is read asynchronously, so on a
+     * cold start it can arrive after the field has started. Returns whether the Enter key changed.
+     */
+    fun refreshEnterToSend(): Boolean {
+        val updated = withEnterToSend()
+        if (updated == policy) return false
+        policy = updated
+        return true
+    }
+
+    private fun withEnterToSend() = EnterToSendPolicy.apply(declared, packageName, enterToSendPackages())
+
     fun finish() {
+        declared = EditorInfoPolicy.Default
+        packageName = null
         policy = EditorInfoPolicy.Default
         autoCapitalization.configure(policy = null)
         completions.configure(enabled = false)

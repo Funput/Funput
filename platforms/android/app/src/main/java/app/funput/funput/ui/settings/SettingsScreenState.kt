@@ -37,8 +37,8 @@ internal class SettingsScreenState(
     val smartGesturesEnabled: Boolean,
     val returnsToLettersEnabled: Boolean = true,
     val hardwareKeyboard: HardwareKeyboardSectionState = HardwareKeyboardSectionState.Inert,
-    /** Names of the apps whose Enter key sends, for the hub's summary line. */
-    val enterToSendApps: List<String> = emptyList(),
+    /** Names of the apps whose Enter key sends, for the hub's summary line; null until read. */
+    val enterToSendApps: List<String>? = null,
     val extraOnsets: ExtraOnsetsSectionState = ExtraOnsetsSectionState(smartComposition.extraOnsets, inputMethod),
     val onInputMethodSelected: (KeyboardInputMethod) -> Unit,
     val onShowsNumberRowChanged: (Boolean) -> Unit,

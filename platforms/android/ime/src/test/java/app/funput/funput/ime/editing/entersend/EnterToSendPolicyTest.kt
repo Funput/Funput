@@ -34,11 +34,15 @@ class EnterToSendPolicyTest {
         assertEquals(ImeEditorAction.NewLine, resolve(MessengerInputType, MessengerImeOptions, packages = emptySet()).editorAction)
     }
 
-    @Test fun `single line fields and fields with their own action are left alone`() {
+    @Test fun `a single line message box sends too`() {
         val singleLine = resolve(InputType.TYPE_CLASS_TEXT, MessengerImeOptions)
+
+        assertEquals(EnterToSendPolicy.Send, singleLine.editorAction)
+    }
+
+    @Test fun `a field with its own action keeps it`() {
         val search = resolve(InputType.TYPE_CLASS_TEXT, EditorInfo.IME_ACTION_SEARCH)
 
-        assertEquals(ImeEditorAction.NewLine, singleLine.editorAction)
         assertEquals(KeyboardEnterAction.Standard.SEARCH, search.editorAction.presentation)
     }
 

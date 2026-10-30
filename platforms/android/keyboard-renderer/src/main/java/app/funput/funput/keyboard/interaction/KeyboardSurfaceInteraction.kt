@@ -8,7 +8,6 @@ import app.funput.funput.keyboard.model.KeySpec
 import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
-import app.funput.funput.keyboard.interaction.gestures.EnterLineBreakHold
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionPreview
@@ -77,8 +76,7 @@ internal class KeyboardSurfaceInteraction(
         get() = controller.language
         set(value) = controller.setLanguage(value)
     var areSmartGesturesEnabled by controller::areSmartGesturesEnabled
-    var enterAction by controller::enterAction
-    val breaksLineOnEnterHold: Boolean get() = EnterLineBreakHold.isAvailable(enterAction)
+    var breaksLineOnEnterHold by controller::breaksLineOnEnterHold
     val alternatePreview: AlternateSelectionPreview? get() = controller.alternatePreview
 
     fun setShiftState(value: ShiftState) = controller.setShiftState(value)

@@ -31,10 +31,11 @@ internal fun createImeEditingSession(
     updateShiftState: (ShiftState) -> Unit,
     showSuggestions: (List<SuggestionChip>) -> Unit,
     acknowledgeReset: (String) -> Unit,
+    onEnterKeyChanged: () -> Unit = {},
 ): ImeEditingSession {
     val nativeEngine = NativeVietnameseEngine()
     val bar = SuggestionBarState(showSuggestions)
-    val enterToSend = EnterToSendHosts().also { it.observe(EnterToSendSettings(context), scope) }
+    val enterToSend = EnterToSendHosts()
     val editorRuntime = ImeEditorRuntime(
         currentShiftState = currentShiftState,
         updateShiftState = updateShiftState,
@@ -42,6 +43,9 @@ internal fun createImeEditingSession(
         onSuggestionsChanged = bar::showPersonal,
         enterToSendPackages = { enterToSend.packages },
     )
+    enterToSend.observe(EnterToSendSettings(context), scope) {
+        if (editorRuntime.refreshEnterToSend()) onEnterKeyChanged()
+    }
     val typo = createTypoCorrection(context, nativeEngine) { editorRuntime.policy }
     val composition = AndroidCompositionSession(nativeEngine, corrections = typo.corrections)
     val actionHandler = ImeKeyActionHandler(

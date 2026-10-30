@@ -4,7 +4,6 @@ import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
-import app.funput.funput.keyboard.model.KeyboardEnterAction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -15,7 +14,7 @@ class EnterLineBreakHoldTest {
 
     @Test
     fun holdingASendKeyBreaksTheLineAndDoesNotSend() {
-        val subject = subject(KeyboardEnterAction.Standard.SEND)
+        val subject = subject(breaksLine = true)
         subject.begin(enter)
         subject.scheduler.fire(after = 350L)
         subject.release(enter, 120f)
@@ -27,7 +26,7 @@ class EnterLineBreakHoldTest {
 
     @Test
     fun aTapOnASendKeyStillSends() {
-        val subject = subject(KeyboardEnterAction.Standard.SEND)
+        val subject = subject(breaksLine = true)
         subject.begin(enter)
         subject.release(enter, 120f)
 
@@ -36,8 +35,8 @@ class EnterLineBreakHoldTest {
     }
 
     @Test
-    fun aNewLineKeyHasNothingToHoldFor() {
-        val subject = subject(KeyboardEnterAction.Standard.NEW_LINE)
+    fun withoutTheImeTurningItOnThereIsNothingToHoldFor() {
+        val subject = subject(breaksLine = false)
         subject.begin(enter)
 
         assertFalse(subject.scheduler.hasPending(after = 350L))
@@ -47,7 +46,7 @@ class EnterLineBreakHoldTest {
 
     @Test
     fun slidingOffBeforeTheHoldFiresIsNotAHold() {
-        val subject = subject(KeyboardEnterAction.Standard.SEND)
+        val subject = subject(breaksLine = true)
         subject.begin(enter)
         subject.move(enter, 160f)
 
@@ -56,7 +55,7 @@ class EnterLineBreakHoldTest {
 
     @Test
     fun theHoldDoesNotNeedSmartGestures() {
-        val subject = subject(KeyboardEnterAction.Standard.SEND)
+        val subject = subject(breaksLine = true)
         subject.controller.areSmartGesturesEnabled = false
         subject.begin(enter)
         subject.scheduler.fire(after = 350L)
@@ -65,6 +64,6 @@ class EnterLineBreakHoldTest {
         assertEquals(listOf<KeyAction>(KeyAction.NewLine), subject.actions)
     }
 
-    private fun subject(action: KeyboardEnterAction) =
-        GestureControllerSubject().also { it.controller.enterAction = action }
+    private fun subject(breaksLine: Boolean) =
+        GestureControllerSubject().also { it.controller.breaksLineOnEnterHold = breaksLine }
 }

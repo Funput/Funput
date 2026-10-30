@@ -11,8 +11,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import app.funput.funput.R
 import app.funput.funput.ui.kit.cards.FunputDivider
+import app.funput.funput.ui.kit.cards.FunputMessageCard
 import app.funput.funput.ui.kit.cards.FunputSection
 import app.funput.funput.ui.kit.controls.FunputButton
 import app.funput.funput.ui.kit.controls.FunputButtonStyle
@@ -21,12 +24,10 @@ import app.funput.funput.ui.kit.gestures.SwipeToDelete
 import app.funput.funput.ui.kit.icons.FunputIcons
 import app.funput.funput.ui.kit.layout.FunputScreen
 import app.funput.funput.ui.kit.overlays.FunputDialog
-import app.funput.funput.ui.kit.rows.FunputRow
 import app.funput.funput.ui.kit.rows.FunputRowDefaults
-import app.funput.funput.ui.kit.theme.FunputTint
 import app.funput.funput.ui.kit.theme.FunputUi
-import app.funput.funput.ui.settings.enterkey.components.AppIcon
-import app.funput.funput.ui.settings.enterkey.components.EnterKeyEmptyState
+import app.funput.funput.ui.settings.enterkey.components.AppRow
+import app.funput.funput.ui.settings.enterkey.components.NewLineSection
 
 /**
  * "Phím Enter": the apps whose Enter key sends, apps worth adding, and how to break a line once
@@ -80,7 +81,12 @@ internal fun EnterKeyScreen(state: EnterKeyScreenState, onBack: () -> Unit) {
 private fun ChosenApps(state: EnterKeyScreenState, onAdd: () -> Unit, onRemove: (ChosenApp) -> Unit) {
     if (!state.isLoaded) return
     if (state.chosen.isEmpty()) {
-        EnterKeyEmptyState(onAdd)
+        FunputMessageCard(
+            title = stringResource(R.string.settings_enter_key_empty_title),
+            body = stringResource(R.string.settings_enter_key_empty_body),
+            actionLabel = stringResource(R.string.settings_enter_key_add),
+            onAction = onAdd,
+        )
         return
     }
     FunputSection(
@@ -94,10 +100,10 @@ private fun ChosenApps(state: EnterKeyScreenState, onAdd: () -> Unit, onRemove: 
                 onDelete = { onRemove(chosen) },
                 modifier = Modifier.testTag("enter-key-app-${chosen.packageName}"),
             ) {
-                FunputRow(
+                AppRow(
+                    packageName = chosen.packageName,
                     title = chosen.label,
                     summary = if (chosen.isMissing) stringResource(R.string.settings_enter_key_not_installed) else null,
-                    leading = { AppIcon(chosen.app?.icon) },
                 )
             }
         }
@@ -110,40 +116,21 @@ private fun SuggestedApps(state: EnterKeyScreenState) {
     FunputSection(title = stringResource(R.string.settings_enter_key_suggestions_title)) {
         state.suggestions.forEachIndexed { index, app ->
             if (index > 0) FunputDivider(startInset = FunputRowDefaults.IconDividerInset)
-            FunputRow(
+            val addDescription = stringResource(R.string.settings_enter_key_suggestion_add_description, app.label)
+            AppRow(
+                packageName = app.packageName,
                 title = app.label,
                 summary = stringResource(R.string.settings_enter_key_suggestion_summary),
-                leading = { AppIcon(app.icon) },
                 accessory = {
                     FunputButton(
                         text = stringResource(R.string.settings_enter_key_suggestion_add),
                         onClick = { state.onAdd(app.packageName) },
+                        // "Thêm" alone does not say what is added once there is more than one row.
+                        modifier = Modifier.semantics { contentDescription = addDescription },
                         style = FunputButtonStyle.SECONDARY,
                     )
                 },
             )
         }
-    }
-}
-
-@Composable
-private fun NewLineSection() {
-    FunputSection(
-        title = stringResource(R.string.settings_enter_key_new_line_title),
-        footer = stringResource(R.string.settings_enter_key_new_line_footer),
-    ) {
-        FunputRow(
-            title = stringResource(R.string.settings_enter_key_hold_title),
-            summary = stringResource(R.string.settings_enter_key_hold_summary),
-            icon = FunputIcons.Gestures,
-            tint = FunputTint.BLUE,
-        )
-        FunputDivider(startInset = FunputRowDefaults.IconDividerInset)
-        FunputRow(
-            title = stringResource(R.string.settings_enter_key_shift_title),
-            summary = stringResource(R.string.settings_enter_key_shift_summary),
-            icon = FunputIcons.HardwareKeyboard,
-            tint = FunputTint.BLUE,
-        )
     }
 }

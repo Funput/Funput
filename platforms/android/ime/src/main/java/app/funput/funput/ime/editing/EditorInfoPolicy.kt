@@ -1,6 +1,7 @@
 package app.funput.funput.ime.editing
 
 import app.funput.funput.keyboard.model.KeyboardEditorMode
+import app.funput.funput.keyboard.model.KeyboardEnterAction
 
 internal enum class ImeSuggestionSource {
     NONE,
@@ -28,6 +29,10 @@ internal data class EditorInfoPolicy(
     val allowsCorrection: Boolean = true,
 ) {
     val showsSuggestionBar: Boolean get() = suggestionSource != ImeSuggestionSource.NONE
+
+    /** Holding Enter breaks the line where a tap performs an action and the field takes lines. */
+    val breaksLineOnEnterHold: Boolean
+        get() = isMultiline && editorAction.presentation != KeyboardEnterAction.Standard.NEW_LINE
 
     companion object {
         val Default = EditorInfoPolicy(

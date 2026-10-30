@@ -32,7 +32,7 @@ internal class SmartGestureCoordinator(
         onAction(KeyAction.NewLine)
         onHaptic(KeyboardHapticType.CONTROL)
     }
-    var enterAction by enterHold::enterAction
+    var breaksLineOnEnterHold by enterHold::isAvailable
 
     fun isCaptured(pointerId: Int): Boolean =
         sessions[pointerId]?.claimed == true || enterHold.isClaimed(pointerId)
