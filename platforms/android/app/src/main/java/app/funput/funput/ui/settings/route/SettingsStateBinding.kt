@@ -15,6 +15,7 @@ import app.funput.funput.ui.keyboard.openKeyboardSettings
 import app.funput.funput.ui.keyboard.showKeyboardPicker
 import app.funput.funput.ui.settings.SettingsScreenState
 import app.funput.funput.ui.settings.extraonsets.rememberExtraOnsetsSectionState
+import app.funput.funput.ui.settings.enterkey.rememberEnterToSendAppNames
 import app.funput.funput.ui.settings.hardware.rememberHardwareKeyboardSectionState
 import app.funput.funput.ui.settings.setup.rememberKeyboardSetupStatus
 import kotlinx.coroutines.Dispatchers
@@ -58,6 +59,7 @@ internal fun rememberSettingsScreenState(
         smartGesturesEnabled = settings.smartGesturesEnabled,
         returnsToLettersEnabled = settings.returnsToLettersEnabled,
         hardwareKeyboard = rememberHardwareKeyboardSectionState(),
+        enterToSendApps = rememberEnterToSendAppNames(),
         extraOnsets = rememberExtraOnsetsSectionState(settings.smartComposition.extraOnsets, settings.inputMethod),
         onInputMethodSelected = { method ->
             scope.launch { settings.input.setInputMethod(method) }

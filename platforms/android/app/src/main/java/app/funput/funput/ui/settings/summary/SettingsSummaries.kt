@@ -30,6 +30,11 @@ internal class SettingsSummaries(private val resources: Resources) {
             on = SmartInputToggle.entries.count { toggle -> toggle.isOn(state) },
             total = SmartInputToggle.entries.size,
         )
+        SettingsPage.ENTER_KEY -> if (state.enterToSendApps.isEmpty()) {
+            resources.getString(R.string.settings_summary_enter_key_off)
+        } else {
+            resources.getString(R.string.settings_summary_enter_key_on, resources.joinAsSentence(state.enterToSendApps))
+        }
         SettingsPage.FEEDBACK -> resources.enabledSentence(
             listOfNotNull(
                 state.activeHapticStrength?.let(::haptics),

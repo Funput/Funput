@@ -39,8 +39,8 @@ object FunputRowDefaults {
 
 /**
  * The shared anatomy of every FunputUI row, inside a card: an optional icon tile in the group's
- * [tint], a title
- * with an optional summary, an optional detail that moves below the title when space runs out
+ * [tint] (or, in its place, [leading] content such as an app's own icon), a title with an optional
+ * summary, an optional detail that moves below the title when space runs out
  * (see [RowLayout]), and an optional accessory at the end.
  *
  * Interaction (click, toggle, select) and its semantics belong to [modifier], set by the specific
@@ -58,6 +58,7 @@ fun FunputRow(
     enabled: Boolean = true,
     detail: (@Composable () -> Unit)? = null,
     accessory: (@Composable () -> Unit)? = null,
+    leading: (@Composable () -> Unit)? = null,
 ) {
     val colors = FunputUi.colors
     val type = FunputUi.typography
@@ -71,7 +72,11 @@ fun FunputRow(
             .padding(horizontal = spacing.cardPadding, vertical = spacing.medium)
             .alpha(if (enabled) 1f else DisabledAlpha),
     ) {
-        icon?.let { RowIcon(it, colors.tint(tint), Modifier.rowSlot(RowSlot.LEADING)) }
+        if (leading != null) {
+            Box(Modifier.rowSlot(RowSlot.LEADING)) { leading() }
+        } else {
+            icon?.let { RowIcon(it, colors.tint(tint), Modifier.rowSlot(RowSlot.LEADING)) }
+        }
         Column(Modifier.rowSlot(RowSlot.BODY)) {
             BasicText(title, style = type.body.copy(color = titleColor.takeOrElse { colors.label }))
             summary?.let {

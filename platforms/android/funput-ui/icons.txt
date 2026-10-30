@@ -55,6 +55,9 @@ database
 # Hardware keyboard
 desktop
 
+# Enter key
+paper-plane-tilt
+
 # System integration
 command
 arrow-square-out

@@ -35,6 +35,10 @@ internal enum class SettingsPage(
         R.string.settings_section_smart, FunputIcons.Suggestions, FunputTint.PURPLE,
         listOf(AppDestination.SMART_INPUT),
     ),
+    ENTER_KEY(
+        R.string.settings_section_enter_key, FunputIcons.Send, FunputTint.BLUE,
+        listOf(AppDestination.ENTER_KEY),
+    ),
     FEEDBACK(
         R.string.settings_section_feedback, FunputIcons.Haptics, FunputTint.PINK,
         listOf(AppDestination.FEEDBACK),

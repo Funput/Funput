@@ -35,6 +35,7 @@ internal enum class AppDestination(val tab: TopLevelDestination, val depth: Int)
     TYPING(tab = TopLevelDestination.KEYBOARD, depth = 1),
     LAYOUT(tab = TopLevelDestination.KEYBOARD, depth = 1),
     SMART_INPUT(tab = TopLevelDestination.KEYBOARD, depth = 1),
+    ENTER_KEY(tab = TopLevelDestination.KEYBOARD, depth = 1),
     FEEDBACK(tab = TopLevelDestination.KEYBOARD, depth = 1),
     CLIPBOARD(tab = TopLevelDestination.KEYBOARD, depth = 1),
     SPEECH(tab = TopLevelDestination.KEYBOARD, depth = 1),
