@@ -10,7 +10,9 @@ extension KeyboardViewController {
         if let emojiView {
             return emojiView
         }
-        let emojiView = KeyboardLaunchTrace.makePanel(.emoji, EmojiKeyboardView())
+        let emojiView = KeyboardLaunchTrace.makePanel(
+            .emoji, EmojiKeyboardView(catalog: emojiCatalogCache.load())
+        )
         emojiView.onEmojiSelected = { [weak self] item in
             self?.insertEmoji(item)
         }
@@ -23,6 +25,10 @@ extension KeyboardViewController {
         emojiView.onKaomoji = { [weak self] in
             self?.showKaomoji()
         }
+        emojiView.makeSearchComposer = { [weak self] () -> any LocalTextComposing in
+            guard let self else { return PlainLocalTextComposer() }
+            return makeEmojiSearchComposer()
+        }
         emojiView.backgroundImage = cachedBackgroundImage
         self.emojiView = emojiView
         attachSupplementarySurface(emojiView)
@@ -32,16 +38,16 @@ extension KeyboardViewController {
     func showEmoji() {
         guard currentPresentation.layout.allowsEmojiPanel else { return }
         launchTrace.recordPanelFirstOpen(.emoji)
-        ensureEmojiView().searchComposer = makeEmojiSearchComposer()
+        ensureEmojiView()
         inputCoordinator.prepareForLiteralInput()
         clearPersonalSuggestions()
         refreshEmojiPresentation()
         switchSurface(to: .emoji)
     }
 
+    /// Back to the letters. The panels are released on the way, so none of them needs
+    /// resetting for its next visit.
     func showFunput() {
-        kaomojiView?.reset()
-        clipboardPanelView?.reset()
         switchSurface(to: .funput)
     }
 
@@ -52,8 +58,9 @@ extension KeyboardViewController {
         )
     }
 
-    /// A fresh field on every visit, so the search follows the Telex/VNI key and the
-    /// language switch as they are now.
+    /// A fresh field, and with it a fresh engine, for every search: the query follows
+    /// the Telex/VNI key and the language switch as they are now, and the engine is
+    /// freed as soon as the search ends.
     private func makeEmojiSearchComposer() -> LocalTextComposer {
         let composer = LocalTextComposer()
         inputCoordinator.configure(composer)

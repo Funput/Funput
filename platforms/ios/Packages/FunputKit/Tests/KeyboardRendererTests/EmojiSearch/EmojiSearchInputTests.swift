@@ -34,28 +34,61 @@ struct EmojiSearchInputTests {
     @Test("Clearing, cancelling and a new field all reset the query")
     func resets() {
         let (view, field) = makeView()
-        let before = field.resets
         view.beginSearch()
         view.clearSearch()
         view.resetSearch()
-        #expect(field.resets == before + 2)
+        #expect(field.resets == 2)
+
+        var built = 0
+        view.makeSearchComposer = {
+            built += 1
+            return RecordingLocalTextField()
+        }
+        view.beginSearch()
+        view.beginSearch()
+        #expect(built == 1)
+    }
+
+    @Test("Only a running search holds a field, an index and search keys")
+    func searchStateLifetime() async {
+        let (view, _) = makeView()
+        #expect(view.searchComposer == nil)
+        #expect(view.searchIndex == nil)
+        #expect(view.searchKeyboard == nil)
 
         view.beginSearch()
-        let next = RecordingLocalTextField()
-        view.searchComposer = next
-        #expect(view.searchState == .browsing)
-        #expect(next.resets == 1)
+        #expect(view.searchComposer != nil)
+        #expect(view.searchKeyboard?.superview === view)
+        await view.searchIndexTask?.value
+        #expect(view.searchIndex != nil)
+
+        view.resetSearch()
+        #expect(view.searchComposer == nil)
+        #expect(view.searchIndex == nil)
+        #expect(view.searchIndexTask == nil)
+        #expect(view.searchKeyboard == nil)
+    }
+
+    @Test("Ending a search before its index lands drops the index")
+    func cancelledIndex() async {
+        let (view, _) = makeView()
+        view.beginSearch()
+        let pending = view.searchIndexTask
+        view.resetSearch()
+        await pending?.value
+        #expect(view.searchIndex == nil)
     }
 
     @Test("Search keyboard follows the document's input method")
     func followsInputMethod() {
         let (view, _) = makeView()
+        view.beginSearch()
         for method in KeyboardInputMethod.allCases {
             view.apply(
                 presentation: KeyboardPresentation(layout: StandardKeyboardLayouts.letters(method)),
                 recent: []
             )
-            #expect(view.searchKeyboard.presentation.layout
+            #expect(view.searchKeyboard?.presentation.layout
                 == PanelSearchKeyboardLayouts.letters(method, spaceLabel: "Tìm emoji"))
         }
     }
@@ -63,7 +96,7 @@ struct EmojiSearchInputTests {
     private func makeView() -> (EmojiKeyboardView, RecordingLocalTextField) {
         let view = EmojiKeyboardView(catalog: EmojiCatalog(version: "test", emojis: []))
         let field = RecordingLocalTextField()
-        view.searchComposer = field
+        view.makeSearchComposer = { field }
         return (view, field)
     }
 

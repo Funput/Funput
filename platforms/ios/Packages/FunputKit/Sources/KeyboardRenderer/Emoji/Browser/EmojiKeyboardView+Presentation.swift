@@ -5,7 +5,7 @@ import UIKit
 extension EmojiKeyboardView {
     public func apply(presentation: KeyboardPresentation, recent: [EmojiItem]) {
         self.presentation = presentation
-        reload(recent: recent)
+        rebuildSections(recent: recent)
         applyPresentation()
     }
 
@@ -37,9 +37,7 @@ extension EmojiKeyboardView {
         searchHeader.onClear = { [weak self] in self?.clearSearch() }
         searchHeader.onCancel = { [weak self] in self?.resetSearch() }
         searchResults.onSelect = { [weak self] in self?.onEmojiSelected?($0) }
-        searchKeyboard.onKeyEvent = { [weak self] in self?.handleSearchKey($0) }
-        searchKeyboard.backdropView.isHidden = true
-        [backdropView, collectionView, bottomBar, searchHeader, searchResults, searchKeyboard]
+        [backdropView, collectionView, bottomBar, searchHeader, searchResults]
             .forEach(addSubview)
         NotificationCenter.default.addObserver(
             self,
@@ -50,6 +48,13 @@ extension EmojiKeyboardView {
     }
 
     func reload(recent: [EmojiItem]) {
+        rebuildSections(recent: recent)
+        collectionView.reloadData()
+    }
+
+    /// Recomputes the sections without reloading the grid, for callers that reload it
+    /// themselves: every reload redraws each visible cell.
+    private func rebuildSections(recent: [EmojiItem]) {
         latestRecents = Array(recent.prefix(Self.recentLimit))
         let visibleRecents = freezesRecents
             ? sections.first(where: { $0.category == .recent })?.items ?? [] : latestRecents
@@ -57,7 +62,6 @@ extension EmojiKeyboardView {
             let items = category == .recent ? visibleRecents : catalog.items(in: category)
             return items.isEmpty ? nil : (category, items)
         }
-        collectionView.reloadData()
         if !sections.contains(where: { $0.category == selectedCategory }) {
             selectedCategory = sections.first?.category ?? .smileysPeople
         }
@@ -65,13 +69,7 @@ extension EmojiKeyboardView {
 
     func applyPresentation() {
         let label = theme.label.uiColor(for: traitCollection)
-        backdropView.apply(
-            theme: theme,
-            traits: traitCollection,
-            image: backgroundImage,
-            blendsSystemEdge: presentation.blendsSystemEdge,
-            pinsAppearance: presentation.pinsAppearance
-        )
+        applyBackdrop()
         bottomBar.apply(color: label, selected: selectedCategory)
         searchHeader.apply(
             query: searchQuery,
@@ -84,8 +82,20 @@ extension EmojiKeyboardView {
         collectionView.reloadData()
     }
 
+    func applyBackdrop() {
+        backdropView.apply(
+            theme: theme,
+            traits: traitCollection,
+            image: backgroundImage,
+            blendsSystemEdge: presentation.blendsSystemEdge,
+            pinsAppearance: presentation.pinsAppearance
+        )
+    }
+
     func configureCollection() {
         collectionView.backgroundColor = .clear
+        // Only the cells on screen should exist: each one holds a glyph bitmap.
+        collectionView.isPrefetchingEnabled = false
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.register(EmojiCell.self, forCellWithReuseIdentifier: EmojiCell.reuseIdentifier)

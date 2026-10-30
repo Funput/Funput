@@ -97,14 +97,15 @@ struct EmojiKeyboardViewTests {
     }
 
     @Test("Search layout stays within the keyboard")
-    func searchLayout() {
+    func searchLayout() throws {
         let view = makeView()
         view.frame = CGRect(x: 0, y: 0, width: 430, height: 304)
         view.beginSearch()
         view.layoutIfNeeded()
+        let keyboard = try #require(view.searchKeyboard)
         #expect(view.searchHeader.frame.maxY <= view.searchResults.frame.minY)
-        #expect(view.searchResults.frame.maxY <= view.searchKeyboard.frame.minY)
-        #expect(view.searchKeyboard.frame.maxY <= view.bounds.maxY)
+        #expect(view.searchResults.frame.maxY <= keyboard.frame.minY)
+        #expect(keyboard.frame.maxY <= view.bounds.maxY)
     }
 
     private func makeView() -> EmojiKeyboardView {

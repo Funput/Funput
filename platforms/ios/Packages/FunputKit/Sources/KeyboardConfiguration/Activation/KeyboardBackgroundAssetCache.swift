@@ -23,7 +23,7 @@ public final class KeyboardBackgroundAssetCache<Value> {
             clear()
             return nil
         }
-        if requestedID == assetID, requestedVariant == variant, let value {
+        if holds(assetID: requestedID, variant: requestedVariant), let value {
             return value
         }
 
@@ -35,6 +35,11 @@ public final class KeyboardBackgroundAssetCache<Value> {
         variant = requestedVariant
         value = decoded
         return decoded
+    }
+
+    /// Whether `resolve` would answer this asset and variant without decoding.
+    public func holds(assetID requestedID: String?, variant requestedVariant: Int) -> Bool {
+        value != nil && requestedID != nil && requestedID == assetID && requestedVariant == variant
     }
 
     public func clear() {

@@ -4,15 +4,11 @@ import UIKit
 @MainActor
 final class EmojiCell: UICollectionViewCell {
     static let reuseIdentifier = "EmojiCell"
-    private let label = UILabel()
+    let glyphLayer = EmojiGlyphLayer()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        label.font = .systemFont(ofSize: 32)
-        label.textAlignment = .center
-        label.adjustsFontSizeToFitWidth = true
-        label.minimumScaleFactor = 0.7
-        contentView.addSubview(label)
+        contentView.layer.addSublayer(glyphLayer)
     }
 
     @available(*, unavailable)
@@ -22,11 +18,11 @@ final class EmojiCell: UICollectionViewCell {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        label.frame = contentView.bounds
+        glyphLayer.frame = contentView.bounds
     }
 
     func apply(_ item: EmojiItem) {
-        label.text = item.glyph
+        glyphLayer.glyph = item.glyph
         isAccessibilityElement = true
         accessibilityLabel = item.localizedName ?? item.name
         accessibilityTraits = .keyboardKey

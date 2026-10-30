@@ -36,13 +36,18 @@ extension KeyboardViewController {
         )
         guard resolvedBackgroundRequest != request else { return }
         resolvedBackgroundRequest = request
+        if !backgroundImageCache.holds(assetID: request.assetID, variant: request.pixelBudget) {
+            // Let go of the old bitmap before decoding its replacement; otherwise a
+            // width change briefly holds both, and they are the largest allocations
+            // the extension makes.
+            showBackgroundImage(nil)
+        }
 
         let image = loadBackgroundImage(
             assetID: request.assetID,
             pixelBudget: request.pixelBudget
         )
-        keyboardView.backgroundImage = image
-        applyBackgroundImageToSupplementarySurfaces(image)
+        showBackgroundImage(image)
     }
 
     /// Drops the decoded backdrop when the keyboard is off screen.
@@ -55,8 +60,12 @@ extension KeyboardViewController {
         guard !isKeyboardVisible else { return }
         backgroundImageCache.clear()
         resolvedBackgroundRequest = nil
-        keyboardView.backgroundImage = nil
-        applyBackgroundImageToSupplementarySurfaces(nil)
+        showBackgroundImage(nil)
+    }
+
+    private func showBackgroundImage(_ image: UIImage?) {
+        keyboardView.backgroundImage = image
+        applyBackgroundImageToSupplementarySurfaces(image)
     }
 
     /// The keyboard spans the host's full width, so width alone bounds the backdrop.

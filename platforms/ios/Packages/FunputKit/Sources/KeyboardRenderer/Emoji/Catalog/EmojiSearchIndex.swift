@@ -1,7 +1,7 @@
 import Foundation
 
-struct EmojiSearchIndex {
-    private struct Entry {
+struct EmojiSearchIndex: Sendable {
+    private struct Entry: Sendable {
         let item: EmojiItem
         let names: [String]
         let terms: [String]

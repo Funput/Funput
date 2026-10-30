@@ -1,5 +1,6 @@
 import FunputShared
 import KeyboardConfiguration
+import KeyboardRenderer
 import UIKit
 
 extension KeyboardViewController {
@@ -18,6 +19,8 @@ extension KeyboardViewController {
         super.didReceiveMemoryWarning()
         flushPersonalSuggestions()
         releaseHiddenSupplementarySurfaces()
+        emojiCatalogCache.release()
         releaseBackgroundImageIfHidden()
+        KeyboardMemoryTrace.record("MemoryWarning")
     }
 }

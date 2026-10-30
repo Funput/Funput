@@ -14,6 +14,7 @@ final class EmojiSearchResultsView: UIView, UICollectionViewDataSource, UICollec
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         super.init(frame: frame)
         collectionView.backgroundColor = .clear
+        collectionView.isPrefetchingEnabled = false
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.register(EmojiCell.self, forCellWithReuseIdentifier: EmojiCell.reuseIdentifier)
