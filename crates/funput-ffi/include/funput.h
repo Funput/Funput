@@ -135,6 +135,46 @@
 
 #define ACTION_RESTORE 2
 
+#define FUNPUT_DICTIONARY_EDIT_ADD 0
+
+#define FUNPUT_DICTIONARY_EDIT_FORGET 1
+
+#define FUNPUT_DICTIONARY_EDIT_BLOCK 2
+
+#define FUNPUT_DICTIONARY_EDIT_UNBLOCK 3
+
+#define FUNPUT_DICTIONARY_APPLIED 0
+
+#define FUNPUT_DICTIONARY_UNCHANGED 1
+
+/**
+ * Also the answer to a null handle, an unknown code, or text that is not UTF-32.
+ */
+#define FUNPUT_DICTIONARY_INVALID 2
+
+#define FUNPUT_DICTIONARY_LIMIT_REACHED 3
+
+#define FUNPUT_DICTIONARY_FILTER_ALL 0
+
+#define FUNPUT_DICTIONARY_FILTER_LEARNED 1
+
+#define FUNPUT_DICTIONARY_FILTER_ADDED 2
+
+#define FUNPUT_DICTIONARY_SORT_MOST_USED 0
+
+#define FUNPUT_DICTIONARY_SORT_RECENT 1
+
+#define FUNPUT_DICTIONARY_SORT_ALPHABETICAL 2
+
+#define FUNPUT_DICTIONARY_ORIGIN_LEARNED 0
+
+#define FUNPUT_DICTIONARY_ORIGIN_ADDED 1
+
+/**
+ * Only in the list `funput_suggestion_blocked_list` returns.
+ */
+#define FUNPUT_DICTIONARY_ORIGIN_BLOCKED 2
+
 #define SUGGESTION_CAP 3
 
 #define SUGGESTION_CHARS_CAP 32
@@ -158,6 +198,12 @@ typedef struct FunputConvertScan FunputConvertScan;
 #if defined(FUNPUT_CONVERT)
 typedef struct FunputConvertSession FunputConvertSession;
 #endif
+
+/**
+ * Opaque, owned list of dictionary entries. Free with
+ * `funput_suggestion_dictionary_list_free`.
+ */
+typedef struct FunputDictionaryList FunputDictionaryList;
 
 /**
  * Opaque IME engine handle for C callers. Create with [`funput_engine_new`],
@@ -366,6 +412,23 @@ typedef struct {
      */
     uint32_t valid_near_edge;
 } FunputCorrectionMetrics;
+
+/**
+ * One word of a dictionary list, by value.
+ */
+typedef struct {
+    uint32_t count;
+    uint32_t chars[SUGGESTION_CHARS_CAP];
+    uint32_t uses;
+    /**
+     * One of `FUNPUT_DICTIONARY_ORIGIN_*`.
+     */
+    uint32_t origin;
+    /**
+     * Comparable between entries of one store; not a time.
+     */
+    uint64_t last_used;
+} FunputDictionaryEntry;
 
 typedef struct {
     uint32_t count;
@@ -1283,6 +1346,107 @@ bool funput_starts_sentence(const uint32_t *text, uintptr_t text_len);
  * `text` must point to at least `text_len` readable `u32` values, or be null.
  */
 bool funput_starts_word(const uint32_t *text, uintptr_t text_len);
+
+/**
+ * Apply one edit (`FUNPUT_DICTIONARY_EDIT_*`) to `word` and return a
+ * `FUNPUT_DICTIONARY_*` outcome. Durable on the next `funput_suggestion_flush`.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used
+ * concurrently. `word` must point to `word_len` readable codepoints, or be null.
+ */
+uint32_t funput_suggestion_apply_edit(FunputSuggestionEngine *engine,
+                                      uint32_t kind,
+                                      const uint32_t *word,
+                                      uintptr_t word_len);
+
+/**
+ * Apply the edits the app posted with `funput_suggestion_post_edit`, make them
+ * durable, and remove them from the inbox. Returns how many were read, or -1 when
+ * the inbox could not be read or the journal not written; the edits then stay in
+ * the inbox for the next call.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used concurrently.
+ */
+int32_t funput_suggestion_apply_pending_edits(FunputSuggestionEngine *engine);
+
+/**
+ * List the dictionary: `filter` is a `FUNPUT_DICTIONARY_FILTER_*`, `sort` a
+ * `FUNPUT_DICTIONARY_SORT_*`, and `search` is matched anywhere in a word with
+ * marks and case ignored (empty or null matches everything). Null on invalid
+ * input.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used
+ * concurrently. `search` must point to `search_len` readable codepoints, or be null.
+ */
+FunputDictionaryList *funput_suggestion_dictionary_list(const FunputSuggestionEngine *engine,
+                                                        uint32_t filter_code,
+                                                        uint32_t sort_code,
+                                                        const uint32_t *search,
+                                                        uintptr_t search_len);
+
+/**
+ * List the blocked words, each with origin `FUNPUT_DICTIONARY_ORIGIN_BLOCKED`.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used concurrently.
+ */
+FunputDictionaryList *funput_suggestion_blocked_list(const FunputSuggestionEngine *engine);
+
+/**
+ * How many entries the list holds; 0 for null.
+ *
+ * # Safety
+ * `list` must be a live list handle or null.
+ */
+uintptr_t funput_suggestion_dictionary_list_len(const FunputDictionaryList *list);
+
+/**
+ * Copy entry `index` into `out`. False, with `out` untouched, for a null
+ * argument or an index past the end.
+ *
+ * # Safety
+ * `list` must be a live list handle or null; `out` must be writable or null.
+ */
+bool funput_suggestion_dictionary_list_entry(const FunputDictionaryList *list,
+                                             uintptr_t index,
+                                             FunputDictionaryEntry *out);
+
+/**
+ * # Safety
+ * `list` must be a live list handle or null, and is invalid afterwards.
+ */
+void funput_suggestion_dictionary_list_free(FunputDictionaryList *list);
+
+/**
+ * Open the store at a UTF-8 path to read, while another process may own it.
+ * Writes nothing, includes the edits still waiting in the inbox, and keeps no
+ * change made through the handle: post those with `funput_suggestion_post_edit`.
+ * Failure returns null.
+ *
+ * # Safety
+ * `path` must point to `path_len` readable bytes, or be null.
+ */
+FunputSuggestionEngine *funput_suggestion_engine_open_snapshot(const uint8_t *path,
+                                                               uintptr_t path_len);
+
+/**
+ * Post one edit (`FUNPUT_DICTIONARY_EDIT_*`) for the owner of the store at a
+ * UTF-8 path to apply. Needs no handle and writes one new file, so it is safe
+ * while the keyboard has the store open. Returns false for invalid input or a
+ * failed write. The word is checked when applied, not here.
+ *
+ * # Safety
+ * `path` must point to `path_len` readable bytes, or be null. `word` must point to
+ * `word_len` readable codepoints, or be null.
+ */
+bool funput_suggestion_post_edit(const uint8_t *path,
+                                 uintptr_t path_len,
+                                 uint32_t kind,
+                                 const uint32_t *word,
+                                 uintptr_t word_len);
 
 FunputSuggestionEngine *funput_suggestion_engine_new_in_memory(void);
 

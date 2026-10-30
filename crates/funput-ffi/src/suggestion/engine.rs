@@ -83,7 +83,7 @@ pub(crate) fn bytes_from_raw<'a>(pointer: *const u8, len: usize) -> Option<&'a [
 
 /// A file path passed as UTF-8 bytes, the one spelling every path on this surface
 /// uses. `None` when the bytes are unreadable or not UTF-8.
-fn path_from_raw<'a>(pointer: *const u8, len: usize) -> Option<&'a Path> {
+pub(crate) fn path_from_raw<'a>(pointer: *const u8, len: usize) -> Option<&'a Path> {
     std::str::from_utf8(bytes_from_raw(pointer, len)?)
         .ok()
         .map(Path::new)

@@ -30,6 +30,13 @@ Handle này chỉ được gọi tuần tự trên worker của platform và kh�
 `engine_open`) để query lấp những ô từ cá nhân để trống; lỗi trả `false` và giữ nguyên từ điển
 đang gắn.
 
+Từ điển cá nhân đi qua cùng handle. Bàn phím (tiến trình sở hữu kho) sửa từng từ bằng
+`funput_suggestion_apply_edit` (`FUNPUT_DICTIONARY_EDIT_ADD/FORGET/BLOCK/UNBLOCK`) và rút các
+thao tác app gửi sang bằng `funput_suggestion_apply_pending_edits`. App không bao giờ ghi kho: nó
+mở bản chỉ đọc bằng `funput_suggestion_engine_open_snapshot` và gửi thao tác bằng
+`funput_suggestion_post_edit` (không cần handle). Danh sách trả về một handle `FunputDictionaryList` giữ bản sao, đọc từng mục bằng
+`funput_suggestion_dictionary_list_entry` rồi giải phóng bằng `funput_suggestion_dictionary_list_free`.
+
 Per-app VI/EN memory dùng một opaque handle riêng (`FunputAppLanguage`), cũng độc lập với
 `FunputEngine`: nó chỉ quyết định "app này nên VI hay EN", host tự gọi `funput_set_enabled` với kết
 quả. `id` là **UTF-8 bytes** (bundle id / exe name / WM_CLASS), không phải UTF-32 như văn bản soạn
@@ -157,7 +164,8 @@ src/engine/         # C API composition (FunputEngine)
                     #   result.rs   #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 src/suggestion/     # C API personal suggestions (FunputSuggestionEngine)
                     #   engine.rs (handle new/open/free, attach_lexicon), query.rs (learn/query),
-                    #   store.rs (flush/compact/reset/stats), types.rs (POD candidate/stats)
+                    #   store.rs (flush/compact/reset/stats), types.rs (POD candidate/stats),
+                    #   dictionary/ (edit, view: open_snapshot/post_edit, list, types)
 src/app_language/   # C API per-app VI/EN memory (FunputAppLanguage), độc lập FunputEngine
                     #   handle.rs (handle new/free + marshalling UTF-8 dùng chung),
                     #   memory.rs (seed/clear/forget), focus.rs (note_focus/note_toggle),

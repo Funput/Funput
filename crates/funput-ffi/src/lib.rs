@@ -19,7 +19,8 @@
 //!   including the typo-correction handshake ([`funput_engine_set_next_key_touch`]
 //!   and friends).
 //! - `suggestion/` — the personal-suggestion store ([`FunputSuggestionEngine`] +
-//!   the `funput_suggestion_*` calls), independent of composition.
+//!   the `funput_suggestion_*` calls, the personal dictionary included),
+//!   independent of composition.
 //! - `app_language/` — per-app VI/EN memory ([`FunputAppLanguage`] + the
 //!   `funput_app_language_*` calls), independent of composition too; the host
 //!   wires its decision into [`funput_set_enabled`] itself.
@@ -88,6 +89,7 @@ pub use engine::{
     funput_set_typo_correction,
 };
 pub use sentence::{funput_starts_sentence, funput_starts_word};
+pub use suggestion::dictionary::*;
 pub use suggestion::{
     FunputSuggestionCandidate, FunputSuggestionEngine, FunputSuggestionResult,
     FunputSuggestionStats, SUGGESTION_CAP, SUGGESTION_CHARS_CAP, funput_suggestion_attach_lexicon,

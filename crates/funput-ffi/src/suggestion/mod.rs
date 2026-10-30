@@ -1,9 +1,10 @@
 //! Personal-suggestion C ABI surface, grouped by concern: the opaque engine
 //! handle and the lexicon attached to it (`engine`), learn/query calls
-//! (`query`), store maintenance (`store`), and the POD result/stats types
-//! (`types`). Everything is re-exported flat from the crate root so the C header
+//! (`query`), store maintenance (`store`), the POD result/stats types
+//! (`types`), and the personal dictionary (`dictionary/`). Everything is re-exported flat from the crate root so the C header
 //! sees a single `funput_suggestion_*` family.
 
+pub(crate) mod dictionary;
 mod engine;
 mod query;
 mod store;
