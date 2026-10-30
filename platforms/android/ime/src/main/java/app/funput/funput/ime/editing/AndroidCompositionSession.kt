@@ -6,6 +6,7 @@ import app.funput.funput.ime.editing.composition.CompositionBoundary
 import app.funput.funput.ime.editing.composition.CursorAfterText
 import app.funput.funput.ime.editing.composition.singleCodePointOrNull
 import app.funput.funput.ime.editing.correction.TypoCorrection
+import app.funput.funput.ime.editing.reopen.PreviousWordReopener
 import app.funput.funput.ime.nativebridge.VietnameseEngine
 import app.funput.funput.keyboard.touch.KeyTouchEvidence
 
@@ -16,7 +17,7 @@ internal class AndroidCompositionSession(
     internal val corrections: TypoCorrection = TypoCorrection(engine.correction),
 ) {
     private val documentEditor = CompositionDocumentEditor(composingTextFactory)
-    private val committedTail = CommittedWordTail()
+    private val previousWord = PreviousWordReopener(engine::adopt)
     private var renderMode = CompositionRenderMode.COMPOSING
     var composingText: String = ""
         private set
@@ -61,7 +62,7 @@ internal class AndroidCompositionSession(
     fun reset() {
         composingText = ""
         completed = null
-        committedTail.clear()
+        previousWord.clear()
         corrections.reset()
         engine.clear()
     }
@@ -71,7 +72,7 @@ internal class AndroidCompositionSession(
     fun acceptSuggestion(connection: InputConnection, prefix: String, candidate: String): Boolean {
         if (composingText != prefix) return false
         val accepted = documentEditor.acceptSuggestion(connection, renderMode, prefix, candidate)
-        if (accepted) committedTail.record("$candidate ")
+        if (accepted) previousWord.committed(prefix, "$candidate ")
         composingText = ""
         completed = null
         engine.clear()
@@ -89,7 +90,7 @@ internal class AndroidCompositionSession(
         // has no other way to know which boundary this was.
         val token = replacement?.removeSuffix(text)?.ifEmpty { null } ?: previous.ifEmpty { null }
         completed = token?.let { it to (codePoint == ' '.code) }
-        committedTail.record(replacement ?: previous + text)
+        previousWord.committed(previous, replacement ?: previous + text)
         composingText = ""
         return documentEditor.commitBoundary(connection, renderMode, previous, replacement, text)
     }
@@ -107,17 +108,12 @@ internal class AndroidCompositionSession(
     }
 
     /**
-     * Re-opens the word behind the caret so the next keystroke can retone it.
-     * Walks [committedTail] when the editor withholds or stale-reads surrounding text.
+     * Re-opens the word behind the caret so the next keystroke can retone it. Call right after
+     * Backspace deleted outside any selection; [before] is what the editor showed before that.
      */
-    fun reopenPreviousWord(connection: InputConnection?): Boolean {
+    fun reopenPreviousWord(connection: InputConnection?, before: CharSequence?): Boolean {
         if (connection == null || isComposing) return false
-        if (!connection.getSelectedText(0).isNullOrEmpty()) return false
-        val word = listOfNotNull(committedTail.backspace(), connection.wordBeforeCursor())
-            .distinct()
-            .firstOrNull(engine::adopt)
-        committedTail.resolve(word != null)
-        if (word == null) return false
+        val word = previousWord.wordToReopen(connection, before) ?: return false
 
         connection.beginBatchEdit()
         val reopened = try {
@@ -129,14 +125,18 @@ internal class AndroidCompositionSession(
         return reopened
     }
 
-    fun ownsSelection(connection: InputConnection?, selectionStart: Int, selectionEnd: Int, composingEnd: Int) =
-        documentEditor.ownsSelection(connection, renderMode, composingText, selectionStart, selectionEnd, composingEnd)
+    /** Whether the live composition has lost the caret reported by the editor and must finish. */
+    fun disownsSelection(connection: InputConnection?, start: Int, end: Int, composingStart: Int, composingEnd: Int): Boolean {
+        val owned = isComposing &&
+            documentEditor.ownsSelection(connection, renderMode, composingText, start, end, composingEnd)
+        previousWord.caretReported(start, end, composingStart, owned)
+        return isComposing && !owned
+    }
 
     /** Rewrites [previous], committed right before the caret, as [replacement] in one batch. */
     fun replaceCommitted(connection: InputConnection, previous: String, replacement: String): Boolean {
         if (!documentEditor.replaceCommitted(connection, renderMode, previous, replacement)) return false
-        committedTail.clear()
-        committedTail.record(replacement)
+        previousWord.rewrote(previous, replacement)
         return true
     }
 

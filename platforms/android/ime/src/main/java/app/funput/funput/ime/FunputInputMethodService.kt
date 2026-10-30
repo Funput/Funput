@@ -74,7 +74,7 @@ class FunputInputMethodService : InputMethodService() {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
             candidatesStart, candidatesEnd)
         speech.selectionChanged(newSelStart, newSelEnd)
-        actionHandler.onSelectionChanged(newSelStart, newSelEnd, candidatesEnd)
+        actionHandler.onSelectionChanged(newSelStart, newSelEnd, candidatesStart, candidatesEnd)
         suggestionService.consume(actionHandler.takeSuggestionUpdate())
         editorRuntime.updateCapitalization()
     }

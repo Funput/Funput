@@ -8,7 +8,6 @@ import java.lang.reflect.Proxy
 /** Editor stub covering the calls the re-open path makes. */
 internal class ReopenWordEditor(
     textBeforeCursor: String,
-    private val selectedText: String? = null,
     private val setComposingTextFails: Boolean = false,
 ) {
     var text = textBeforeCursor
@@ -26,7 +25,6 @@ internal class ReopenWordEditor(
     ) { _, method, arguments ->
         when (method.name) {
             "getTextBeforeCursor" -> text.takeLast(arguments?.first() as Int)
-            "getSelectedText" -> selectedText
             "deleteSurroundingText" -> true.also {
                 val count = arguments?.first() as Int
                 deletedBefore += count

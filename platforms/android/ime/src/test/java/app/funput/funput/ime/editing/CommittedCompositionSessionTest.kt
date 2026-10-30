@@ -59,7 +59,7 @@ class CommittedCompositionSessionTest {
         session.input(editor.proxy, "a")
         session.input(editor.proxy, " ")
         handler.onKeyAction(KeyAction.Backspace)
-        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingStart = -1, composingEnd = -1)
         handler.onKeyAction(KeyAction.Input(keyId = "character-s", text = "s"))
 
         assertEquals("cháo", editor.text)
@@ -84,12 +84,12 @@ class CommittedCompositionSessionTest {
         "dungh".forEach { session.input(editor.proxy, it.toString()) }
         session.input(editor.proxy, " ")
         handler.onKeyAction(KeyAction.Backspace)
-        handler.onSelectionChanged(newStart = 5, newEnd = 5, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 5, newEnd = 5, composingStart = -1, composingEnd = -1)
         assertEquals("dungh", editor.text)
         assertEquals("", session.composingText)
 
         handler.onKeyAction(KeyAction.Backspace)
-        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingStart = -1, composingEnd = -1)
         handler.onKeyAction(KeyAction.Input(keyId = "character-s", text = "s"))
 
         assertEquals("dúng", editor.text)
