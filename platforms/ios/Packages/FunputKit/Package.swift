@@ -2,22 +2,20 @@
 
 import PackageDescription
 
+/// The Rust engine, which only exists for iOS.
+let funputCore: Target.Dependency = .target(name: "FunputCore", condition: .when(platforms: [.iOS]))
+
+/// Every library target is also a product under its own name.
+let libraries = [
+    "FunputEngine", "PersonalSuggestions", "PersonalDictionary", "KeyboardInput", "KeyboardLayout",
+    "FunputShared", "ThemeSchema", "ThemeRuntime", "KeyboardRenderer", "KeyboardConfiguration",
+    "KeyboardTouchCore", "KeyboardTouchUIKit",
+]
+
 let package = Package(
     name: "FunputKit",
     platforms: [.iOS(.v16)],
-    products: [
-        .library(name: "FunputEngine", targets: ["FunputEngine"]),
-        .library(name: "PersonalSuggestions", targets: ["PersonalSuggestions"]),
-        .library(name: "KeyboardInput", targets: ["KeyboardInput"]),
-        .library(name: "KeyboardLayout", targets: ["KeyboardLayout"]),
-        .library(name: "FunputShared", targets: ["FunputShared"]),
-        .library(name: "ThemeSchema", targets: ["ThemeSchema"]),
-        .library(name: "ThemeRuntime", targets: ["ThemeRuntime"]),
-        .library(name: "KeyboardRenderer", targets: ["KeyboardRenderer"]),
-        .library(name: "KeyboardConfiguration", targets: ["KeyboardConfiguration"]),
-        .library(name: "KeyboardTouchCore", targets: ["KeyboardTouchCore"]),
-        .library(name: "KeyboardTouchUIKit", targets: ["KeyboardTouchUIKit"]),
-    ],
+    products: libraries.map { .library(name: $0, targets: [$0]) },
     targets: [
         .binaryTarget(
             name: "FunputCore",
@@ -26,16 +24,20 @@ let package = Package(
         .target(
             name: "FunputEngine",
             dependencies: [
-                .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
+                funputCore,
                 // `KeyboardTouchEvidence` crosses from renderer to engine; `KeyboardLayout`
                 // is the leaf module both already share, so this adds nothing to the graph.
                 .target(name: "KeyboardLayout"),
             ]
         ),
+        // The dictionary alone, light enough for the app to link: the engine and
+        // nothing of the keyboard.
+        .target(name: "PersonalDictionary", dependencies: [funputCore]),
         .target(
             name: "PersonalSuggestions",
             dependencies: [
-                .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
+                funputCore,
+                .target(name: "PersonalDictionary"),
                 .target(name: "KeyboardInput"),
                 .target(name: "KeyboardLayout"),
                 .target(name: "KeyboardRenderer"),
@@ -117,17 +119,12 @@ let package = Package(
                 "KeyboardRenderer",
             ]
         ),
-        .testTarget(
-            name: "FunputEngineTests",
-            dependencies: [
-                "FunputEngine",
-                .target(name: "FunputCore", condition: .when(platforms: [.iOS])),
-            ]
-        ),
+        .testTarget(name: "FunputEngineTests", dependencies: ["FunputEngine", funputCore]),
         .testTarget(
             name: "PersonalSuggestionsTests",
-            dependencies: ["PersonalSuggestions"]
+            dependencies: ["PersonalSuggestions", "PersonalDictionary"]
         ),
+        .testTarget(name: "PersonalDictionaryTests", dependencies: ["PersonalDictionary", funputCore]),
         .testTarget(
             name: "KeyboardInputTests",
             dependencies: ["KeyboardInput", "KeyboardLayout", "FunputShared", "FunputEngine"]
