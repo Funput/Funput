@@ -37,6 +37,8 @@ public final class EmojiKeyboardView: UIView {
     var searchShiftState = ShiftState.lowercase
     let catalog: EmojiCatalog
     var searchIndex: EmojiSearchIndex?
+    /// Builds ``searchIndex`` off the main thread; nil once it has landed.
+    var searchIndexTask: Task<Void, Never>?
     var theme: ResolvedTheme { presentation.theme }
     public var backgroundImage: UIImage? { didSet { applyBackdrop() } }
 

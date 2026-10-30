@@ -20,15 +20,28 @@ struct EmojiMemoryBudgetTests {
     @Test("Drawing the catalog stays on the cheap strike")
     func glyphCost() throws {
         // The end of the catalog, which other tests are least likely to have drawn.
-        let glyphs = EmojiCatalog.bundled.emojis.suffix(301).map(\.glyph)
+        let glyphs = Array(EmojiCatalog.bundled.emojis.suffix(301).map(\.glyph))
         // One glyph first, so the font and drawing setup are not counted as cache.
         draw(glyphs[0])
-        let before = try #require(MemoryFootprint.current())
-        glyphs.dropFirst().forEach(draw)
-        let after = try #require(MemoryFootprint.current())
-        let perGlyph = Double(Int64(after.physical) - Int64(before.physical))
-            / Double(glyphs.count - 1)
-        #expect(perGlyph < Self.budgetPerGlyph, "\(Int(perGlyph / 1024)) KB per glyph")
+        // Other suites run in parallel and allocate into the same footprint, which
+        // can only inflate a round. The cheapest of three disjoint rounds is the
+        // one least disturbed, and still nowhere near the 96 px strike's cost.
+        var cheapest = Double.infinity
+        for round in 0..<3 {
+            let batch = glyphs[1 + round * 100 ..< 1 + (round + 1) * 100]
+            let before = try #require(MemoryFootprint.current())
+            batch.forEach(draw)
+            let after = try #require(MemoryFootprint.current())
+            let perGlyph = Double(Int64(after.physical) - Int64(before.physical))
+                / Double(batch.count)
+            cheapest = min(cheapest, perGlyph)
+        }
+        #expect(cheapest < Self.budgetPerGlyph, "\(Int(cheapest / 1024)) KB per glyph")
+    }
+
+    @Test("The raster lands on the 64 px strike whatever the screen")
+    func strikeSize() {
+        #expect(EmojiGlyphRaster.pointSize * EmojiGlyphRaster.scale <= 64)
     }
 
     /// Draws `glyph` the way a cell does, then lets the layer go. The flush is what

@@ -1,4 +1,5 @@
 #if canImport(UIKit)
+import CoreText
 import UIKit
 
 /// How the emoji panels rasterize a glyph, chosen for memory before sharpness.
@@ -19,24 +20,30 @@ enum EmojiGlyphRaster {
     static let pointSize: CGFloat = 32
     /// How far a wide sequence (a flag, a family) may shrink to fit its cell.
     static let minimumFitScale: CGFloat = 0.7
+    private static let font = UIFont.systemFont(ofSize: pointSize)
 
-    /// Draws `glyph` centred in `bounds` into a UIKit-oriented context, shrunk to the
-    /// width when it is wider.
+    /// Draws `glyph` centred in `bounds` into a UIKit-oriented (y-down) context,
+    /// shrunk to the width when it is wider. One line is typeset once and both
+    /// measured and drawn, since this runs for every cell scrolled into view.
     static func draw(_ glyph: String, in bounds: CGRect, context: CGContext) {
         let text = NSAttributedString(
             string: glyph,
-            attributes: [.font: UIFont.systemFont(ofSize: pointSize)]
+            attributes: [.font: font]
         )
-        let size = text.size()
-        guard size.width > 0, size.height > 0, bounds.width > 0 else { return }
-        let fit = min(1, max(minimumFitScale, bounds.width / size.width))
-        UIGraphicsPushContext(context)
-        defer { UIGraphicsPopContext() }
+        let line = CTLineCreateWithAttributedString(text)
+        var ascent: CGFloat = 0
+        var descent: CGFloat = 0
+        let width = CGFloat(CTLineGetTypographicBounds(line, &ascent, &descent, nil))
+        guard width > 0, bounds.width > 0 else { return }
+        let fit = min(1, max(minimumFitScale, bounds.width / width))
         context.saveGState()
         defer { context.restoreGState() }
         context.translateBy(x: bounds.midX, y: bounds.midY)
-        context.scaleBy(x: fit, y: fit)
-        text.draw(at: CGPoint(x: -size.width / 2, y: -size.height / 2))
+        // CoreText draws y-up; flipping here centres the line box on the middle.
+        context.scaleBy(x: fit, y: -fit)
+        context.textMatrix = .identity
+        context.textPosition = CGPoint(x: -width / 2, y: (descent - ascent) / 2)
+        CTLineDraw(line, context)
     }
 }
 #endif

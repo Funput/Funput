@@ -10,7 +10,9 @@ extension KeyboardViewController {
         if let emojiView {
             return emojiView
         }
-        let emojiView = KeyboardLaunchTrace.makePanel(.emoji, EmojiKeyboardView())
+        let emojiView = KeyboardLaunchTrace.makePanel(
+            .emoji, EmojiKeyboardView(catalog: emojiCatalogCache.load())
+        )
         emojiView.onEmojiSelected = { [weak self] item in
             self?.insertEmoji(item)
         }

@@ -1,3 +1,4 @@
+import Dispatch
 import FunputShared
 import os
 
@@ -10,6 +11,15 @@ import os
 /// or as `Footprint` events in Instruments.
 enum KeyboardMemoryTrace {
     private static let log = OSLog(subsystem: "app.funput.keyboard", category: "Memory")
+
+    /// Records a little after the current run loop turn. A released view's layer
+    /// backing stores are only returned when Core Animation commits, so sampling at
+    /// the release itself still counts the memory it is about to free.
+    static func recordAfterCommit(_ moment: String) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
+            record(moment)
+        }
+    }
 
     static func record(_ moment: String) {
         guard let footprint = MemoryFootprint.current() else { return }

@@ -25,6 +25,7 @@ final class KeyboardViewController: UIInputViewController {
     var kaomojiView: KaomojiKeyboardView?
     var clipboardPanelView: ClipboardKeyboardView?
     let emojiRecentsStore = EmojiRecentsStore()
+    let emojiCatalogCache = EmojiCatalogCache()
     /// Rebuilt whenever configuration changes, since it carries the chosen expiry.
     var clipboardStore = ClipboardStore()
     let kaomojiRecentsStore = EmojiRecentsStore(key: FunputAppGroup.kaomojiRecentsKey)
@@ -114,6 +115,7 @@ final class KeyboardViewController: UIInputViewController {
         // The next activation starts on the letters anyway; an open panel would only
         // hold memory while the keyboard is off screen.
         switchSurface(to: .funput)
+        emojiCatalogCache.release()
         KeyboardMemoryTrace.record("Disappeared")
 #if DEBUG
         touchDiagnosticsReporter.finish()
@@ -138,11 +140,4 @@ final class KeyboardViewController: UIInputViewController {
         }
     }
 
-}
-
-enum KeyboardSurface: String {
-    case funput
-    case emoji
-    case kaomoji
-    case clipboard
 }

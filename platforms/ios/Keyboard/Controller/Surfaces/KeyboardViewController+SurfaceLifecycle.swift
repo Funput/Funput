@@ -15,7 +15,9 @@ extension KeyboardViewController {
     }
 
     func switchSurface(to surface: KeyboardSurface) {
-        if displayedSurface == .emoji, surface != .emoji {
+        // Only a panel that survives the switch needs to look fresh for next time.
+        let retained = KeyboardPanelRetention.retained(whileShowing: surface.panel)
+        if displayedSurface == .emoji, surface != .emoji, retained.contains(.emoji) {
             emojiView?.reset()
         }
         displayedSurface = surface
@@ -23,35 +25,30 @@ extension KeyboardViewController {
         emojiView?.isHidden = surface != .emoji
         kaomojiView?.isHidden = surface != .kaomoji
         clipboardPanelView?.isHidden = surface != .clipboard
-        releaseSupplementarySurfaces(notNeededBy: surface)
+        scheduleSupplementarySurfaceRelease()
     }
 
-    /// Drops every panel `surface` cannot lead straight back to.
-    ///
-    /// A panel is cheap to rebuild and expensive to keep: the emoji grid alone holds
-    /// its catalog, its cells' bitmaps and their layers. Leaving one for the letters
-    /// or the clipboard therefore lets it go. Emoji and kaomoji link to each other, so
-    /// while either shows the other is kept for the way back.
-    private func releaseSupplementarySurfaces(notNeededBy surface: KeyboardSurface) {
-        if surface != .emoji, surface != .kaomoji {
-            releaseEmojiView()
-            releaseKaomojiView()
-        }
-        if surface != .clipboard {
-            releaseClipboardPanelView()
+    /// Releases the panels ``KeyboardPanelRetention`` no longer keeps, on the next
+    /// turn of the run loop rather than now: a switch is often asked for from inside
+    /// a panel's own callback (a clipboard row's selection), and UIKit is still
+    /// working on that panel's views when the callback returns. The rule is applied
+    /// to whatever shows by then, so a quick switch back keeps its panel.
+    private func scheduleSupplementarySurfaceRelease() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            releasePanels(keeping: KeyboardPanelRetention.retained(whileShowing: displayedSurface.panel))
         }
     }
 
+    /// Under memory pressure even the way back is not worth keeping.
     func releaseHiddenSupplementarySurfaces() {
-        if displayedSurface != .emoji {
-            releaseEmojiView()
-        }
-        if displayedSurface != .kaomoji {
-            releaseKaomojiView()
-        }
-        if displayedSurface != .clipboard {
-            releaseClipboardPanelView()
-        }
+        releasePanels(keeping: Set([displayedSurface.panel].compactMap { $0 }))
+    }
+
+    private func releasePanels(keeping retained: Set<KeyboardPanel>) {
+        if !retained.contains(.emoji) { releaseEmojiView() }
+        if !retained.contains(.kaomoji) { releaseKaomojiView() }
+        if !retained.contains(.clipboard) { releaseClipboardPanelView() }
     }
 
     private func releaseEmojiView() {
@@ -73,5 +70,22 @@ extension KeyboardViewController {
         clipboardPanelView.removeFromSuperview()
         self.clipboardPanelView = nil
         launchTrace.recordPanelReleased(.clipboard)
+    }
+}
+
+enum KeyboardSurface: String {
+    case funput
+    case emoji
+    case kaomoji
+    case clipboard
+
+    /// The panel this surface shows; nil for the letters.
+    var panel: KeyboardPanel? {
+        switch self {
+        case .funput: nil
+        case .emoji: .emoji
+        case .kaomoji: .kaomoji
+        case .clipboard: .clipboard
+        }
     }
 }

@@ -78,6 +78,23 @@ struct KeyboardActivationTests {
         #expect(cache.variant == 880)
     }
 
+    @Test("Holds answers exactly what resolve would serve from cache")
+    func holdsMatchesResolve() {
+        let cache = KeyboardBackgroundAssetCache<String>()
+        let load: (String) -> Data? = { Data($0.utf8) }
+        let decode: (Data) -> String? = { String(data: $0, encoding: .utf8) }
+        #expect(!cache.holds(assetID: "a", variant: 440))
+
+        _ = cache.resolve(assetID: "a", variant: 440, load: load, decode: decode)
+        #expect(cache.holds(assetID: "a", variant: 440))
+        #expect(!cache.holds(assetID: "a", variant: 880))
+        #expect(!cache.holds(assetID: "b", variant: 440))
+        #expect(!cache.holds(assetID: nil, variant: 440))
+
+        cache.clear()
+        #expect(!cache.holds(assetID: "a", variant: 440))
+    }
+
     @Test("Clearing drops the value so the next resolve decodes again")
     func clearForcesReload() {
         let cache = KeyboardBackgroundAssetCache<String>()

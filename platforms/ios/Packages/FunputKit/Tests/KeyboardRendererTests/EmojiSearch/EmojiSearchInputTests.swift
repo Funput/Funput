@@ -50,7 +50,7 @@ struct EmojiSearchInputTests {
     }
 
     @Test("Only a running search holds a field, an index and search keys")
-    func searchStateLifetime() {
+    func searchStateLifetime() async {
         let (view, _) = makeView()
         #expect(view.searchComposer == nil)
         #expect(view.searchIndex == nil)
@@ -58,13 +58,25 @@ struct EmojiSearchInputTests {
 
         view.beginSearch()
         #expect(view.searchComposer != nil)
-        #expect(view.searchIndex != nil)
         #expect(view.searchKeyboard?.superview === view)
+        await view.searchIndexTask?.value
+        #expect(view.searchIndex != nil)
 
         view.resetSearch()
         #expect(view.searchComposer == nil)
         #expect(view.searchIndex == nil)
+        #expect(view.searchIndexTask == nil)
         #expect(view.searchKeyboard == nil)
+    }
+
+    @Test("Ending a search before its index lands drops the index")
+    func cancelledIndex() async {
+        let (view, _) = makeView()
+        view.beginSearch()
+        let pending = view.searchIndexTask
+        view.resetSearch()
+        await pending?.value
+        #expect(view.searchIndex == nil)
     }
 
     @Test("Search keyboard follows the document's input method")

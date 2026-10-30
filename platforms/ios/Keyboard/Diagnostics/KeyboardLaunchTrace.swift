@@ -109,7 +109,7 @@ final class KeyboardLaunchTrace {
             .event, log: Self.log, name: "PanelReleased",
             "surface=%{public}@", surface.rawValue
         )
-        KeyboardMemoryTrace.record("PanelReleased \(surface.rawValue)")
+        KeyboardMemoryTrace.recordAfterCommit("PanelReleased \(surface.rawValue)")
     }
 
     func finish() {

@@ -14,7 +14,7 @@ extension EmojiKeyboardView {
     /// panel is only browsed, and ``resetSearch()`` gives all of it back.
     func beginSearch() {
         if searchComposer == nil { searchComposer = makeSearchComposer() }
-        if searchIndex == nil { searchIndex = EmojiSearchIndex(catalog: catalog) }
+        prepareSearchIndex()
         if searchKeyboard == nil { installSearchKeyboard() }
         searchState = .editing
         updateSearchUI()
@@ -29,6 +29,8 @@ extension EmojiKeyboardView {
         searchState = .browsing
         searchComposer?.reset()
         searchComposer = nil
+        searchIndexTask?.cancel()
+        searchIndexTask = nil
         searchIndex = nil
         searchKeyboard?.removeFromSuperview()
         searchKeyboard = nil
@@ -74,9 +76,10 @@ extension EmojiKeyboardView {
     func updateSearchResults() {
         guard searchState != .browsing else { return }
         let items = searchIndex?.search(searchQuery) ?? []
+        // While the index is still building, an empty list is not yet a miss.
         let message = searchQuery.isEmpty
             ? "Nhập tên biểu tượng"
-            : "Không tìm thấy biểu tượng"
+            : searchIndex == nil ? "" : "Không tìm thấy biểu tượng"
         searchResults.apply(
             items: items,
             emptyMessage: message,
@@ -96,6 +99,22 @@ extension EmojiKeyboardView {
         value.language = .vietnamese
         value.enterAction = .custom("Xong")
         searchKeyboard.presentation = value
+    }
+
+    /// Normalizing every name in the catalog takes long enough to stall the tap on
+    /// the search field, so it runs detached and the results refresh when it lands.
+    private func prepareSearchIndex() {
+        guard searchIndex == nil, searchIndexTask == nil else { return }
+        let catalog = catalog
+        searchIndexTask = Task { [weak self] in
+            let index = await Task.detached(priority: .userInitiated) {
+                EmojiSearchIndex(catalog: catalog)
+            }.value
+            guard !Task.isCancelled, let self else { return }
+            searchIndex = index
+            searchIndexTask = nil
+            updateSearchResults()
+        }
     }
 
     private func installSearchKeyboard() {

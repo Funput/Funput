@@ -36,7 +36,7 @@ extension KeyboardViewController {
         )
         guard resolvedBackgroundRequest != request else { return }
         resolvedBackgroundRequest = request
-        if !backgroundImageCache.holds(request) {
+        if !backgroundImageCache.holds(assetID: request.assetID, variant: request.pixelBudget) {
             // Let go of the old bitmap before decoding its replacement; otherwise a
             // width change briefly holds both, and they are the largest allocations
             // the extension makes.
@@ -75,11 +75,5 @@ extension KeyboardViewController {
         let width = view.bounds.width
         guard width > 0 else { return 0 }
         return Int((width * max(traitCollection.displayScale, 1)).rounded(.up))
-    }
-}
-
-private extension KeyboardBackgroundAssetCache {
-    func holds(_ request: KeyboardBackgroundRequest) -> Bool {
-        value != nil && assetID == request.assetID && variant == request.pixelBudget
     }
 }
