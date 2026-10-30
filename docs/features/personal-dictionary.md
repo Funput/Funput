@@ -2,13 +2,12 @@
 
 ## Trạng thái
 
-**Phần lõi Rust và C ABI đã hiện thực.** Phần này nằm trong `crates/funput-suggestions`
-và `crates/funput-ffi`, và đáp ứng issue
+**Phần lõi Rust, C ABI và iOS đã hiện thực.** Lõi nằm trong `crates/funput-suggestions` và
+`crates/funput-ffi`; iOS gồm trang Từ điển cá nhân trong app và menu nhấn giữ trên thanh
+gợi ý của bàn phím. Đáp ứng issue
 [Funput/Funput#552](https://github.com/Funput/Funput/issues/552).
 
-**Còn lại:**
-- Giao diện iOS: trang Từ điển cá nhân và menu nhấn giữ trên thanh gợi ý.
-- JNI và giao diện khi port sang Android.
+**Còn lại:** JNI và giao diện khi port sang Android.
 
 Như [context-suggestion.md](context-suggestion.md), tài liệu này là nơi mọi quyết định
 thiết kế sống. Thay đổi hành vi nào sau này cũng cập nhật lại tài liệu trong cùng PR.
@@ -176,3 +175,20 @@ Từ tự thêm không bao giờ bị đẩy ra. Khi kho đầy mà toàn là t�
 - Test inline cho danh sách chặn, tên file inbox, codec record và codec inbox.
 - `tests/alloc_budget.rs`: thêm ca tra cứu khi danh sách chặn không rỗng.
 - `funput-ffi/tests/dictionary.rs`: round-trip qua C ABI, mã không hợp lệ, con trỏ null.
+
+## iOS
+
+- **Target `PersonalDictionary`** (FunputKit): chỉ phụ thuộc `FunputCore`, nên app link được Rust
+  mà không kéo theo phần bàn phím. Gồm kiểu dữ liệu, `PersonalDictionarySnapshot` (mở chỉ đọc,
+  `preview` một thao tác bằng chính luật của engine), `PersonalDictionaryInbox` (gửi thao tác) và
+  `PersonalDictionaryStore` (actor app dùng; mỗi lần tải mở lại snapshot).
+- **Bàn phím:** worker rút inbox mỗi lần `configure` khi kho bền đã sẵn sàng. Nhấn giữ một ô gợi ý
+  (chỉ ô từ đã lưu, không phải ô sửa lỗi hay hoàn tác) mở menu hệ thống "Không gợi ý từ này" và
+  "Quên từ này"; VoiceOver có thao tác tương ứng. Không có Full Access thì không có menu, vì kho
+  khi đó chỉ sống trong phiên.
+- **App:** trang `Settings/Dictionary/` mở từ thẻ "Gợi ý từ" của trang Thông minh. Một `List`
+  với thông báo (Full Access, gợi ý đang tắt, đang chờ xoá), thẻ tổng số kèm ba bộ lọc, tìm kiếm
+  bỏ dấu, thanh tần suất cho từ đã học, vuốt hoặc context menu để chặn, bỏ chặn, xoá, và sheet
+  thêm từ có chip xem trước.
+- Không có mục "Mở từ điển" trong menu bàn phím: iOS không có API chính thức để extension mở app.
+
