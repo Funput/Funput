@@ -23,6 +23,23 @@ extension KeyboardViewController {
         emojiView?.isHidden = surface != .emoji
         kaomojiView?.isHidden = surface != .kaomoji
         clipboardPanelView?.isHidden = surface != .clipboard
+        releaseSupplementarySurfaces(notNeededBy: surface)
+    }
+
+    /// Drops every panel `surface` cannot lead straight back to.
+    ///
+    /// A panel is cheap to rebuild and expensive to keep: the emoji grid alone holds
+    /// its catalog, its cells' bitmaps and their layers. Leaving one for the letters
+    /// or the clipboard therefore lets it go. Emoji and kaomoji link to each other, so
+    /// while either shows the other is kept for the way back.
+    private func releaseSupplementarySurfaces(notNeededBy surface: KeyboardSurface) {
+        if surface != .emoji, surface != .kaomoji {
+            releaseEmojiView()
+            releaseKaomojiView()
+        }
+        if surface != .clipboard {
+            releaseClipboardPanelView()
+        }
     }
 
     func releaseHiddenSupplementarySurfaces() {

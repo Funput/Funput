@@ -105,12 +105,16 @@ final class KeyboardViewController: UIInputViewController {
 #endif
         repairBootstrapSnapshotIfNeeded()
         scheduleClipboardMonitoringStart()
+        KeyboardMemoryTrace.record("Appeared")
     }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         shortcutsLoader.cancel()
-        emojiView?.reset()
+        // The next activation starts on the letters anyway; an open panel would only
+        // hold memory while the keyboard is off screen.
+        switchSurface(to: .funput)
+        KeyboardMemoryTrace.record("Disappeared")
 #if DEBUG
         touchDiagnosticsReporter.finish()
 #endif

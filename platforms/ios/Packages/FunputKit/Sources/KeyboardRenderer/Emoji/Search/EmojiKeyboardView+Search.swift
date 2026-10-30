@@ -9,19 +9,29 @@ enum EmojiSearchState {
 }
 
 extension EmojiKeyboardView {
+    /// Builds what a search needs: the field (an engine, in the keyboard), the index
+    /// over the whole catalog and a second set of keys. None of it exists while the
+    /// panel is only browsed, and ``resetSearch()`` gives all of it back.
     func beginSearch() {
+        if searchComposer == nil { searchComposer = makeSearchComposer() }
+        if searchIndex == nil { searchIndex = EmojiSearchIndex(catalog: catalog) }
+        if searchKeyboard == nil { installSearchKeyboard() }
         searchState = .editing
         updateSearchUI()
     }
 
     func clearSearch() {
-        searchComposer.reset()
+        searchComposer?.reset()
         updateSearchUI()
     }
 
     func resetSearch() {
         searchState = .browsing
-        searchComposer.reset()
+        searchComposer?.reset()
+        searchComposer = nil
+        searchIndex = nil
+        searchKeyboard?.removeFromSuperview()
+        searchKeyboard = nil
         searchShiftState = .lowercase
         updateSearchUI()
     }
@@ -31,13 +41,13 @@ extension EmojiKeyboardView {
         let key = event.key
         switch key.role {
         case .character:
-            searchComposer.apply(.text(searchCharacter(for: key)))
+            searchComposer?.apply(.text(searchCharacter(for: key)))
         case .vniModifier, .punctuation:
-            searchComposer.apply(.text(key.label))
+            searchComposer?.apply(.text(key.label))
         case .space:
-            searchComposer.apply(.space)
+            searchComposer?.apply(.space)
         case .backspace:
-            searchComposer.apply(.deleteBackward)
+            searchComposer?.apply(.deleteBackward)
         case .shift:
             searchShiftState = searchShiftState == .lowercase ? .uppercase : .lowercase
         case .enter:
@@ -56,14 +66,14 @@ extension EmojiKeyboardView {
         collectionView.isHidden = !browsing
         bottomBar.isHidden = !browsing
         searchResults.isHidden = browsing
-        searchKeyboard.isHidden = searchState != .editing
+        searchKeyboard?.isHidden = searchState != .editing
         applyPresentation()
         setNeedsLayout()
     }
 
     func updateSearchResults() {
         guard searchState != .browsing else { return }
-        let items = searchIndex.search(searchQuery)
+        let items = searchIndex?.search(searchQuery) ?? []
         let message = searchQuery.isEmpty
             ? "Nhập tên biểu tượng"
             : "Không tìm thấy biểu tượng"
@@ -76,6 +86,7 @@ extension EmojiKeyboardView {
     }
 
     func applySearchKeyboardPresentation() {
+        guard let searchKeyboard else { return }
         var value = presentation
         value.layout = PanelSearchKeyboardLayouts.letters(
             presentation.layout.inputMethod,
@@ -85,6 +96,14 @@ extension EmojiKeyboardView {
         value.language = .vietnamese
         value.enterAction = .custom("Xong")
         searchKeyboard.presentation = value
+    }
+
+    private func installSearchKeyboard() {
+        let keyboard = KeyboardSurfaceView()
+        keyboard.onKeyEvent = { [weak self] in self?.handleSearchKey($0) }
+        keyboard.backdropView.isHidden = true
+        searchKeyboard = keyboard
+        addSubview(keyboard)
     }
 
     /// Applies the one-shot Shift, which then drops back to lowercase.

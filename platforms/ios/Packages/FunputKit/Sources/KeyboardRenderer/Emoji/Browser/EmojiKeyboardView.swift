@@ -16,7 +16,10 @@ public final class EmojiKeyboardView: UIView {
     let bottomBar = EmojiBottomBar()
     let searchHeader = EmojiSearchHeaderView()
     let searchResults = EmojiSearchResultsView()
-    let searchKeyboard = KeyboardSurfaceView()
+    /// The letters the query is typed on. Built when a search starts and dropped when
+    /// it ends, like the field and the index below: a panel that is only browsed
+    /// carries none of the three.
+    var searchKeyboard: KeyboardSurfaceView?
     var sections: [(category: EmojiCategory, items: [EmojiItem])] = []
     static let recentLimit = 8
     var latestRecents: [EmojiItem] = []
@@ -25,21 +28,20 @@ public final class EmojiKeyboardView: UIView {
     var selectedCategory = EmojiCategory.smileysPeople
     var presentation = KeyboardPresentation()
     var searchState = EmojiSearchState.browsing
-    /// Where the search keys land. The keyboard injects an engine-backed field so the
-    /// query composes Vietnamese; without one, keys are kept exactly as typed.
-    public var searchComposer: any LocalTextComposing = PlainLocalTextComposer() {
-        didSet { resetSearch() }
-    }
-    var searchQuery: String { searchComposer.text }
+    /// Builds the field search keys land in, once per search. The keyboard injects an
+    /// engine-backed field so the query composes Vietnamese; the default keeps keys
+    /// exactly as typed.
+    public var makeSearchComposer: () -> any LocalTextComposing = { PlainLocalTextComposer() }
+    var searchComposer: (any LocalTextComposing)?
+    var searchQuery: String { searchComposer?.text ?? "" }
     var searchShiftState = ShiftState.lowercase
     let catalog: EmojiCatalog
-    let searchIndex: EmojiSearchIndex
+    var searchIndex: EmojiSearchIndex?
     var theme: ResolvedTheme { presentation.theme }
-    public var backgroundImage: UIImage? { didSet { applyPresentation() } }
+    public var backgroundImage: UIImage? { didSet { applyBackdrop() } }
 
     public init(catalog: EmojiCatalog = .bundled) {
         self.catalog = catalog
-        searchIndex = EmojiSearchIndex(catalog: catalog)
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: Self.makeLayout())
         super.init(frame: .zero)
         configureView()
@@ -89,7 +91,7 @@ public final class EmojiKeyboardView: UIView {
         if searchState == .editing {
             let resultHeight = min(54, max(46, bounds.height * 0.18))
             searchResults.frame = CGRect(x: 0, y: resultsY, width: bounds.width, height: resultHeight)
-            searchKeyboard.frame = CGRect(
+            searchKeyboard?.frame = CGRect(
                 x: 0, y: resultsY + resultHeight, width: bounds.width,
                 height: max(0, bounds.height - resultsY - resultHeight)
             )
