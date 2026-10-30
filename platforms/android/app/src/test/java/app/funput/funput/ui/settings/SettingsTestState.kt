@@ -35,6 +35,7 @@ internal fun testSettingsState(
     speechAvailable: Boolean = false,
     smartComposition: SmartCompositionPreferences = SmartCompositionPreferences.Default,
     onClipboardExpirySelected: (ClipboardExpiry) -> Unit = {},
+    enterToSendApps: List<String>? = null,
 ) = SettingsScreenState(
     keyboardSetupStatus = keyboardSetupStatus,
     keyboardTheme = InstalledThemeRepository.builtIn().themes.first(),
@@ -51,6 +52,7 @@ internal fun testSettingsState(
     personalSuggestionsEnabled = true,
     clipboardPreferences = clipboardPreferences,
     smartGesturesEnabled = true,
+    enterToSendApps = enterToSendApps,
     onInputMethodSelected = onInputMethodSelected,
     onShowsNumberRowChanged = onShowsNumberRowChanged,
     onOpenAppearance = {},

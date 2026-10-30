@@ -38,6 +38,15 @@ class SmartGestureAccessibilityTest {
     }
 
     @Test
+    fun `enter offers a line break whenever holding it types one, smart gestures or not`() {
+        val enter = { snapshot: KeyboardAccessibilitySnapshot -> snapshot.nodes.first { it.keyId == "enter" } }
+
+        assertEquals(listOf("Xuống dòng"), enter(snapshot(enabled = false, breaksLine = true)).customActions.map { it.label })
+        assertTrue(enter(snapshot(enabled = true, breaksLine = false)).customActions.isEmpty())
+        assertEquals(KeyAction.NewLine, SmartGestureAccessibility.keyAction(SmartGestureAccessibility.LineBreak))
+    }
+
+    @Test
     fun `action ids map to key actions`() {
         assertEquals(
             KeyAction.DeleteWord,
@@ -61,7 +70,7 @@ class SmartGestureAccessibilityTest {
         )
     }
 
-    private fun snapshot(enabled: Boolean): KeyboardAccessibilitySnapshot {
+    private fun snapshot(enabled: Boolean, breaksLine: Boolean = false): KeyboardAccessibilitySnapshot {
         val profile = KeyboardSizingProfile.Normal
         val layout = KeyboardLayoutResolver.resolve(
             inputMethod = KeyboardInputMethod.VNI,
@@ -76,6 +85,8 @@ class SmartGestureAccessibilityTest {
             density = 1f,
             profile = profile,
         ))
-        return KeyboardAccessibilitySnapshot(keyboard, ShiftState.OFF, smartGesturesEnabled = enabled)
+        return KeyboardAccessibilitySnapshot(
+            keyboard, ShiftState.OFF, smartGesturesEnabled = enabled, breaksLineOnEnterHold = breaksLine,
+        )
     }
 }

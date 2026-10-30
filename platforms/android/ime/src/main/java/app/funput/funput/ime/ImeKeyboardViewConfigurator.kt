@@ -67,6 +67,7 @@ internal fun FunputKeyboardView.configureForEditor(
         KeyboardLanguage.ENGLISH
     }
     enterAction = policy.editorAction.presentation
+    breaksLineOnEnterHold = policy.breaksLineOnEnterHold
     hapticsEnabled = feedback.hapticsEnabled
     hapticStrength = feedback.hapticStrength
     keyPreviewsEnabled = feedback.keyPreviewsEnabled

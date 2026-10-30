@@ -92,6 +92,9 @@ object FunputIcons {
     /** A physical keyboard. */
     @DrawableRes val HardwareKeyboard: Int = R.drawable.ph_desktop
 
+    /** The Enter key sending a message. */
+    @DrawableRes val Send: Int = R.drawable.ph_paper_plane_tilt
+
     /** Deleting learned data. */
     @DrawableRes val Delete: Int = R.drawable.ph_trash
 

@@ -35,6 +35,7 @@ internal fun rememberSettingsScreenState(
     settings: FunputSettingsState,
     keyboardTheme: KeyboardThemeDescriptor,
     onOpenAppearance: () -> Unit,
+    enterToSendApps: List<String>? = null,
 ): SettingsScreenState {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -58,6 +59,7 @@ internal fun rememberSettingsScreenState(
         smartGesturesEnabled = settings.smartGesturesEnabled,
         returnsToLettersEnabled = settings.returnsToLettersEnabled,
         hardwareKeyboard = rememberHardwareKeyboardSectionState(),
+        enterToSendApps = enterToSendApps,
         extraOnsets = rememberExtraOnsetsSectionState(settings.smartComposition.extraOnsets, settings.inputMethod),
         onInputMethodSelected = { method ->
             scope.launch { settings.input.setInputMethod(method) }

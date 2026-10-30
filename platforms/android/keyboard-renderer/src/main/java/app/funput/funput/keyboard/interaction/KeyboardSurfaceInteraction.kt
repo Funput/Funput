@@ -76,6 +76,7 @@ internal class KeyboardSurfaceInteraction(
         get() = controller.language
         set(value) = controller.setLanguage(value)
     var areSmartGesturesEnabled by controller::areSmartGesturesEnabled
+    var breaksLineOnEnterHold by controller::breaksLineOnEnterHold
     val alternatePreview: AlternateSelectionPreview? get() = controller.alternatePreview
 
     fun setShiftState(value: ShiftState) = controller.setShiftState(value)

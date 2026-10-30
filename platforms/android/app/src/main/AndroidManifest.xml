@@ -7,6 +7,15 @@
          manifest, so it outranks the removal :ime applies to what ML Kit declares. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- The Enter key page lists the launcher's apps to choose from. Asking for the launcher
+         intent alone keeps every other installed package out of view. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

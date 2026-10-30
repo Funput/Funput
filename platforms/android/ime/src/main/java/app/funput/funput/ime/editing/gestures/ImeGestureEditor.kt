@@ -35,6 +35,7 @@ internal class ImeGestureEditor(
         is KeyAction.Input,
         KeyAction.Backspace,
         KeyAction.Enter,
+        KeyAction.NewLine,
         is KeyAction.ToggleLanguage,
         -> {
             tracker.reset()

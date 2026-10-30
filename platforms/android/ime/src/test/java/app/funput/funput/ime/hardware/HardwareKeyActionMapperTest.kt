@@ -24,6 +24,12 @@ class HardwareKeyActionMapperTest {
     }
 
     @Test
+    fun `shift enter breaks the line`() {
+        assertEquals(KeyAction.NewLine, consume(HardwareKeyStroke(KeyEvent.KEYCODE_ENTER, isShift = true)))
+        assertEquals(KeyAction.NewLine, consume(HardwareKeyStroke(KeyEvent.KEYCODE_NUMPAD_ENTER, isShift = true)))
+    }
+
+    @Test
     fun `arrows and ctrl shortcuts finish then pass`() {
         assertEquals(
             HardwareKeyDecision.FinishAndPass,

@@ -30,6 +30,7 @@ internal class SettingsSummaries(private val resources: Resources) {
             on = SmartInputToggle.entries.count { toggle -> toggle.isOn(state) },
             total = SmartInputToggle.entries.size,
         )
+        SettingsPage.ENTER_KEY -> state.enterToSendApps?.let(::enterKey)
         SettingsPage.FEEDBACK -> resources.enabledSentence(
             listOfNotNull(
                 state.activeHapticStrength?.let(::haptics),
@@ -49,6 +50,11 @@ internal class SettingsSummaries(private val resources: Resources) {
     /** "Đang bật …" naming each item whose flag is on, or "Đang tắt tất cả". */
     private fun enabled(vararg items: Pair<Int, Boolean>): String =
         resources.enabledSentence(items.filter { (_, on) -> on }.map { (name, _) -> resources.getString(name) })
+
+    /** Which apps Enter sends in, or that it always breaks the line. */
+    private fun enterKey(apps: List<String>): String =
+        if (apps.isEmpty()) resources.getString(R.string.settings_summary_enter_key_off)
+        else resources.getString(R.string.settings_summary_enter_key_on, resources.joinAsSentence(apps))
 
     /** "rung nhẹ", "rung trung bình" or "rung mạnh". */
     private fun haptics(strength: KeyboardHapticStrength): String {

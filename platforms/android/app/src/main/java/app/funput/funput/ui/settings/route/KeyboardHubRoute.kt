@@ -3,6 +3,7 @@ package app.funput.funput.ui.settings.route
 import androidx.compose.runtime.Composable
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.FunputSettingsState
+import app.funput.funput.ui.settings.enterkey.rememberEnterToSendAppNames
 import app.funput.funput.ui.settings.hub.KeyboardHubScreen
 import app.funput.funput.ui.settings.pages.SettingsPage
 
@@ -16,7 +17,13 @@ internal fun KeyboardHubRoute(
     tabBar: @Composable () -> Unit,
 ) {
     KeyboardHubScreen(
-        state = rememberSettingsScreenState(settings, keyboardTheme, onOpenAppearance),
+        state = rememberSettingsScreenState(
+            settings = settings,
+            keyboardTheme = keyboardTheme,
+            onOpenAppearance = onOpenAppearance,
+            // Only the hub's summary names these apps, so only the hub looks them up.
+            enterToSendApps = rememberEnterToSendAppNames(),
+        ),
         onOpenPage = onOpenPage,
         tabBar = tabBar,
     )

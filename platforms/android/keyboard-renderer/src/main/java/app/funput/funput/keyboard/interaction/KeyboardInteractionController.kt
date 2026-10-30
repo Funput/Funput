@@ -63,6 +63,7 @@ internal class KeyboardInteractionController(
         { backspaceRepeat.hasRepeated }, { id -> backspaceRepeat.update(id, false) },
     )
     var areSmartGesturesEnabled by gestures::enabled
+    var breaksLineOnEnterHold by gestures::breaksLineOnEnterHold
     private val alternateSelection = AlternateSelectionController(
         keyBounds = keyBounds,
         surfaceBounds = surfaceBounds,

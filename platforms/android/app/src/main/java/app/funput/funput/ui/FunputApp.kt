@@ -23,6 +23,7 @@ import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.news.NewsRoute
 import app.funput.funput.ui.news.rememberNewsModel
+import app.funput.funput.ui.settings.enterkey.EnterKeyRoute
 import app.funput.funput.ui.settings.pages.SettingsPage
 import app.funput.funput.ui.settings.route.KeyboardHubRoute
 import app.funput.funput.ui.settings.route.SettingsPageRoute
@@ -84,6 +85,7 @@ fun FunputApp() {
                     onBack = { navigator.navigateBack() },
                 )
                 AppDestination.SPEECH -> SpeechSetupRoute(onBack = { navigator.navigateBack() })
+                AppDestination.ENTER_KEY -> EnterKeyRoute(onBack = { navigator.navigateBack() })
                 AppDestination.SHORTCUTS -> ShortcutsRoute(tabBar = { AppTabBar(navigator) })
                 AppDestination.THEME_GALLERY -> {
                     AppearanceRoute(

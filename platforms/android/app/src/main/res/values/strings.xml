@@ -285,4 +285,34 @@
     <string name="shortcuts_smart_case_summary">Gõ vn → việt nam, Vn → Việt Nam, VN → VIỆT NAM. Tắt để chỉ khớp đúng chữ tắt đã lưu.</string>
     <string name="shortcuts_in_english">Gõ tắt khi dùng tiếng Anh</string>
     <string name="shortcuts_in_english_summary">Vẫn thay chữ tắt khi bàn phím ở chế độ tiếng Anh.</string>
+
+    <!-- Enter key: send in chosen apps, issue #636 -->
+    <string name="settings_section_enter_key">Phím Enter</string>
+    <string name="settings_summary_enter_key_off">Enter luôn xuống dòng</string>
+    <string name="settings_summary_enter_key_on">Enter gửi tin trong %1$s</string>
+    <string name="settings_enter_key_apps_title">Enter gửi tin trong</string>
+    <string name="settings_enter_key_apps_footer">Vuốt để bỏ một ứng dụng. Thay đổi có hiệu lực từ lần mở bàn phím tiếp theo.</string>
+    <string name="settings_enter_key_empty_title">Chưa chọn ứng dụng nào</string>
+    <string name="settings_enter_key_empty_body">Chọn ứng dụng nhắn tin để phím Enter gửi tin ngay, không cần chạm vào nút gửi.</string>
+    <string name="settings_enter_key_add">Thêm ứng dụng</string>
+    <string name="settings_enter_key_suggestions_title">Gợi ý</string>
+    <string name="settings_enter_key_suggestion_summary">Đã kiểm tra với Funput</string>
+    <string name="settings_enter_key_suggestion_add">Thêm</string>
+    <string name="settings_enter_key_suggestion_add_description">Thêm %1$s</string>
+    <string name="settings_enter_key_not_installed">Chưa cài trên máy này</string>
+    <string name="settings_enter_key_new_line_title">Cách xuống dòng</string>
+    <string name="settings_enter_key_hold_title">Nhấn giữ phím Enter</string>
+    <string name="settings_enter_key_hold_summary">Xuống dòng khi phím Enter đang là nút gửi.</string>
+    <string name="settings_enter_key_shift_title">Shift + Enter trên bàn phím rời</string>
+    <string name="settings_enter_key_shift_summary">Xuống dòng khi gõ bằng bàn phím rời.</string>
+    <string name="settings_enter_key_new_line_footer">Mỗi ứng dụng tự quyết định phím Enter làm gì. Funput chỉ ra lệnh gửi tin trong những ứng dụng bạn chọn.</string>
+    <string name="settings_enter_key_remove">Bỏ</string>
+    <string name="settings_enter_key_remove_title">Bỏ %1$s?</string>
+    <string name="settings_enter_key_remove_body">Phím Enter trong %1$s sẽ xuống dòng như trước.</string>
+    <string name="settings_enter_key_cancel">Huỷ</string>
+    <string name="settings_enter_key_picker_title">Chọn ứng dụng</string>
+    <string name="settings_enter_key_picker_search">Tìm ứng dụng</string>
+    <string name="settings_enter_key_picker_clear">Xoá tìm kiếm</string>
+    <string name="settings_enter_key_picker_loading">Đang tải danh sách ứng dụng</string>
+    <string name="settings_enter_key_picker_empty">Không tìm thấy ứng dụng nào</string>
 </resources>

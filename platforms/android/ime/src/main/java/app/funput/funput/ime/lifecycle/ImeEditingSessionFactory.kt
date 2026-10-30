@@ -9,9 +9,11 @@ import app.funput.funput.ime.editing.ImeEditorRuntime
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.InputConnectionEditor
 import app.funput.funput.ime.editing.correction.createTypoCorrection
+import app.funput.funput.ime.editing.entersend.EnterToSendHosts
 import app.funput.funput.ime.editing.layout.LetterPageReturn
 import app.funput.funput.ime.nativebridge.NativeVietnameseEngine
 import app.funput.funput.ime.settings.PersonalSuggestionSettings
+import app.funput.funput.ime.settings.entersend.EnterToSendSettings
 import app.funput.funput.ime.settings.layout.LetterPageReturnSettings
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
 import app.funput.funput.ime.suggestions.bar.SuggestionBarState
@@ -29,15 +31,21 @@ internal fun createImeEditingSession(
     updateShiftState: (ShiftState) -> Unit,
     showSuggestions: (List<SuggestionChip>) -> Unit,
     acknowledgeReset: (String) -> Unit,
+    onEnterKeyChanged: () -> Unit = {},
 ): ImeEditingSession {
     val nativeEngine = NativeVietnameseEngine()
     val bar = SuggestionBarState(showSuggestions)
+    val enterToSend = EnterToSendHosts()
     val editorRuntime = ImeEditorRuntime(
         currentShiftState = currentShiftState,
         updateShiftState = updateShiftState,
         connection = connection,
         onSuggestionsChanged = bar::showPersonal,
+        enterToSendPackages = { enterToSend.packages },
     )
+    enterToSend.observe(EnterToSendSettings(context), scope) {
+        if (editorRuntime.refreshEnterToSend()) onEnterKeyChanged()
+    }
     val typo = createTypoCorrection(context, nativeEngine) { editorRuntime.policy }
     val composition = AndroidCompositionSession(nativeEngine, corrections = typo.corrections)
     val actionHandler = ImeKeyActionHandler(

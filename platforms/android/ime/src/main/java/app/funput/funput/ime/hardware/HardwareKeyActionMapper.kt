@@ -22,7 +22,7 @@ internal object HardwareKeyActionMapper {
         if (stroke.isCtrl || stroke.isMeta) return HardwareKeyDecision.FinishAndPass
         // Ahead of specialAction, which would otherwise type Alt+Space as a plain space.
         if (hotkeyEnabled && stroke.isSoftKeyboardHotkey) return HardwareKeyDecision.ToggleSoftKeyboard
-        specialAction(stroke.keyCode)?.let { return HardwareKeyDecision.Consume(it) }
+        specialAction(stroke)?.let { return HardwareKeyDecision.Consume(it) }
         if (stroke.keyCode in NavigationKeys) return HardwareKeyDecision.FinishAndPass
         if (stroke.isAlt && printableText(stroke.codePoint) == null) {
             return HardwareKeyDecision.FinishAndPass
@@ -39,9 +39,11 @@ internal object HardwareKeyActionMapper {
 private val HardwareKeyStroke.isSoftKeyboardHotkey: Boolean
     get() = keyCode == KeyEvent.KEYCODE_SPACE && isAlt && !isShift
 
-private fun specialAction(keyCode: Int): KeyAction? = when (keyCode) {
+/** Shift+Enter breaks the line where Enter sends, as in desktop chat apps. */
+private fun specialAction(stroke: HardwareKeyStroke): KeyAction? = when (stroke.keyCode) {
     KeyEvent.KEYCODE_DEL -> KeyAction.Backspace
-    KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> KeyAction.Enter
+    KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER ->
+        if (stroke.isShift) KeyAction.NewLine else KeyAction.Enter
     KeyEvent.KEYCODE_SPACE -> KeyAction.Space
     else -> null
 }

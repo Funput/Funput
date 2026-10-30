@@ -75,7 +75,7 @@ internal fun LazyListScope.settingsPageItems(
                 onClearClipboardHistory = state.onClearClipboardHistory,
             )
         }
-        // Voice input has its own screen with its own model; it is not drawn from these sections.
-        SettingsPage.SPEECH -> Unit
+        // Voice input and the Enter key have their own screens; they are not drawn from these sections.
+        SettingsPage.SPEECH, SettingsPage.ENTER_KEY -> Unit
     }
 }

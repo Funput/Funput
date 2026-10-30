@@ -13,6 +13,7 @@ internal fun createServiceEditingSession(
     service: InputMethodService,
     scope: CoroutineScope,
     view: () -> FunputKeyboardView?,
+    onEnterKeyChanged: () -> Unit,
 ): ImeEditingSession {
     lateinit var session: ImeEditingSession
     session = createImeEditingSession(
@@ -26,6 +27,7 @@ internal fun createServiceEditingSession(
         acknowledgeReset = { token ->
             scope.launch { session.suggestionSettings.acknowledgeReset(token) }
         },
+        onEnterKeyChanged = onEnterKeyChanged,
     )
     return session
 }
