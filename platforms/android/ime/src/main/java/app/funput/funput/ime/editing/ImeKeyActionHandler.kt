@@ -114,12 +114,7 @@ internal class ImeKeyActionHandler(
             shortcutCoordinator.reconcile()
             return
         }
-        if (
-            composition.isComposing &&
-            !composition.ownsSelection(connection(), newStart, newEnd, composingEnd)
-        ) {
-            finish()
-        }
+        if (composition.disownsSelection(connection(), newStart, newEnd, composingEnd)) finish()
     }
     fun takeSuggestionUpdate(): AuthoredSuggestionUpdate =
         if (mode.suggestionsAllowed) suggestions.takeUpdate() else AuthoredSuggestionUpdate.Empty

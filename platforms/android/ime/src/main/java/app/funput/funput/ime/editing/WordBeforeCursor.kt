@@ -13,8 +13,10 @@ private const val WordLookback = 12
  * Reads at most [WordLookback] characters: enough for any Vietnamese syllable, and
  * small enough to stay cheap on the one keystroke that asks for it.
  */
-internal fun InputConnection.wordBeforeCursor(): String? =
-    getTextBeforeCursor(WordLookback, 0)?.wordAtEnd()
+internal fun InputConnection.wordBeforeCursor(): String? = recentText()?.wordAtEnd()
+
+/** The last [WordLookback] characters before the caret, or null when the editor withholds them. */
+internal fun InputConnection.recentText(): CharSequence? = getTextBeforeCursor(WordLookback, 0)
 
 internal fun CharSequence.wordAtEnd(): String? {
     var start = length

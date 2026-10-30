@@ -1,4 +1,4 @@
-package app.funput.funput.ime.editing
+package app.funput.funput.ime.editing.reopen
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

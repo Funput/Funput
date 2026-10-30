@@ -1,6 +1,7 @@
-package app.funput.funput.ime.editing
+package app.funput.funput.ime.editing.reopen
 
 import app.funput.funput.ime.editing.composition.CompositionBoundary
+import app.funput.funput.ime.editing.wordAtEnd
 
 /**
  * Last committed word plus trailing separators, walked back on each Backspace.

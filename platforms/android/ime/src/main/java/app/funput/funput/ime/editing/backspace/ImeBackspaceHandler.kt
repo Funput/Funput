@@ -20,6 +20,7 @@ internal class ImeBackspaceHandler(
 
     fun perform() {
         val current = connection()
+        if (current != null && !current.getSelectedText(0).isNullOrEmpty()) return deleteSelection(current)
         // Right after a repair, Backspace takes it back and does nothing else: no delete,
         // and no reopening of the restored word either.
         if (current != null && corrections.undo(current)) return onCompositionCleared()
@@ -42,5 +43,16 @@ internal class ImeBackspaceHandler(
             current.endBatchEdit()
         }
         if (composition.isComposing) onCompositionChanged() else onCompositionCleared()
+    }
+
+    /**
+     * A selection is a range the user picked, unrelated to the words just typed: delete exactly
+     * that range. Undoing a repair or reopening a word would edit text outside it.
+     */
+    private fun deleteSelection(current: InputConnection) {
+        composition.finish(current)
+        corrections.dropParked()
+        editor.execute(current, ImeEditCommand.DeleteBackward)
+        onCompositionCleared()
     }
 }
