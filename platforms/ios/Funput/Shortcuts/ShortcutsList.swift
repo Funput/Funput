@@ -62,7 +62,7 @@ struct ShortcutsList: View {
                 } else if model.entries.isEmpty {
                     emptyState
                 } else if model.filteredEntries.isEmpty {
-                    ShortcutsEmptyState(
+                    EmptyStateView(
                         title: "Không tìm thấy gõ tắt", systemImage: "magnifyingglass",
                         summary: "Thử tìm bằng chữ tắt hoặc một phần nội dung khác."
                     ) {
@@ -84,7 +84,7 @@ struct ShortcutsList: View {
         }
         .listStyle(.insetGrouped)
         .environment(\.defaultMinListRowHeight, 44)
-        .modifier(ShortcutsListSpacing())
+        .modifier(ListSectionSpacing())
         .scrollDismissesKeyboard(.interactively)
         .accessibilityIdentifier("shortcuts.list")
         .alert("Xoá gõ tắt?", isPresented: Binding(
@@ -102,11 +102,11 @@ struct ShortcutsList: View {
     }
 
     private var emptyState: some View {
-        ShortcutsEmptyState(
+        EmptyStateView(
             title: "Chưa có gõ tắt", systemImage: "text.append",
             summary: "Gõ ít hơn với những nội dung thường dùng.\nVí dụ: vn → việt nam"
         ) {
-            ShortcutsAddButton(action: add)
+            GlassAddButton(title: "Thêm gõ tắt", action: add)
                 .disabled(!model.canWrite)
                 .accessibilityIdentifier("shortcuts.empty.add")
         }

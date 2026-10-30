@@ -60,26 +60,38 @@ struct LayoutSettingsSection: View {
 }
 
 /// "Thông minh": every feature that reads intent — restore, spelling, suggestions, gestures.
+///
+/// The suggestion bar's switches get a card of their own, with the way into the words
+/// it has learned; everything that acts while typing shares the other.
 struct SmartInputSettingsSection: View {
     @ObservedObject var model: SettingsModel
 
     var body: some View {
         SettingsSectionCard(
-            title: SettingsDestination.smartInput.title,
-            systemImage: "wand.and.stars",
+            title: "Gợi ý từ",
+            systemImage: "text.badge.star",
             footer: "Gợi ý chỉ học chữ gõ bằng Funput và lưu trên thiết bị."
         ) {
-            ForEach(SmartInputToggle.all) { toggle in
-                if toggle.id != SmartInputToggle.all.first?.id {
-                    SettingsRowDivider()
-                }
-                SettingsToggleRow(
-                    title: toggle.title,
-                    summary: toggle.summary,
-                    systemImage: toggle.systemImage,
-                    isOn: model.boolBinding(toggle.keyPath)
-                )
+            toggles(SmartInputToggle.suggestions)
+            SettingsRowDivider()
+            SettingsNavigationRow(destination: .personalDictionary, summary: "Xem, thêm và chặn từ")
+        }
+        SettingsSectionCard(title: "Khi gõ", systemImage: "keyboard") {
+            toggles(SmartInputToggle.typing)
+        }
+    }
+
+    private func toggles(_ toggles: [SmartInputToggle]) -> some View {
+        ForEach(toggles) { toggle in
+            if toggle.id != toggles.first?.id {
+                SettingsRowDivider()
             }
+            SettingsToggleRow(
+                title: toggle.title,
+                summary: toggle.summary,
+                systemImage: toggle.systemImage,
+                isOn: model.boolBinding(toggle.keyPath)
+            )
         }
     }
 }
