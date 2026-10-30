@@ -8,16 +8,13 @@ import app.funput.funput.ime.editing.deletesBeforeCommit
  * evidence of a write is the selection update the editor sends back afterwards.
  */
 internal class CommittedSelectionTracker {
-    private var committedSelection: Int? = null
-    private var expectedSelection: Int? = null
+    private val caret = ExpectedCaret()
     private var midEditSelection: Int? = null
 
     /** Records that [previous] before the caret is about to become [replacement]. */
     fun expect(previous: String, replacement: String) {
-        val base = expectedSelection ?: committedSelection
-        val afterDelete = base?.minus(previous.length)
+        val afterDelete = caret.expect(previous.length, replacement.length)
         midEditSelection = afterDelete?.takeIf { deletesBeforeCommit(previous, replacement) }
-        expectedSelection = afterDelete?.plus(replacement.length)
     }
 
     /** Whether a caret at [selectionStart]..[selectionEnd] still sits right after [text]. */
@@ -32,11 +29,10 @@ internal class CommittedSelectionTracker {
         val beforeCursor = connection?.getTextBeforeCursor(text.length, 0)?.toString()
         val editorConfirmsText = beforeCursor?.endsWith(text) == true
         val editorWithholdsText = beforeCursor.isNullOrEmpty() && selectionEnd >= text.length
-        val positionMatches = expectedSelection?.let { it == selectionEnd } ?: true
+        val positionMatches = caret.target?.let { it == selectionEnd } ?: true
         val owned = editorConfirmsText || (editorWithholdsText && positionMatches)
         if (owned) {
-            committedSelection = selectionEnd
-            expectedSelection = null
+            caret.confirm(selectionEnd)
             midEditSelection = null
         }
         return owned
@@ -44,8 +40,7 @@ internal class CommittedSelectionTracker {
 
     /** Forgets every position: the text it described is no longer ours. */
     fun forget() {
-        committedSelection = null
-        expectedSelection = null
+        caret.forget()
         midEditSelection = null
     }
 }

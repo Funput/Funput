@@ -107,14 +107,15 @@ internal class ImeKeyActionHandler(
         composition.setEnabled(usesVietnameseComposition)
     }
 
-    fun onSelectionChanged(newStart: Int, newEnd: Int, composingEnd: Int) {
+    /** Mirrors `onUpdateSelection`: the composing bounds are -1 when the editor has no region. */
+    fun onSelectionChanged(newStart: Int, newEnd: Int, composingStart: Int, composingEnd: Int) {
         gestures.onSelectionChanged(newStart)
         if (!usesVietnameseComposition) {
             if (mode.suggestionsAllowed) suggestions.reconcileDirectSelection()
             shortcutCoordinator.reconcile()
             return
         }
-        if (composition.disownsSelection(connection(), newStart, newEnd, composingEnd)) finish()
+        if (composition.disownsSelection(connection(), newStart, newEnd, composingStart, composingEnd)) finish()
     }
     fun takeSuggestionUpdate(): AuthoredSuggestionUpdate =
         if (mode.suggestionsAllowed) suggestions.takeUpdate() else AuthoredSuggestionUpdate.Empty
@@ -123,6 +124,8 @@ internal class ImeKeyActionHandler(
         mode.suggestionsAllowed && suggestions.accept(candidate, prefix, usesVietnameseComposition)
 
     private fun backspace() {
+        // A range delete ends every word-level tracker, not just the composition.
+        if (backspaceHandler.deleteSelection()) return finish()
         val direct = !usesVietnameseComposition
         backspaceHandler.perform()
         if (direct && mode.suggestionsAllowed) suggestions.backspaceDirect()

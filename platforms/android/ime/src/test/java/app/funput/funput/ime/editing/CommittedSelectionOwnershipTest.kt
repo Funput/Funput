@@ -17,7 +17,7 @@ class CommittedSelectionOwnershipTest {
         val handler = committedHandler(session, editor)
 
         handler.onKeyAction(KeyAction.Input(keyId = "character-a", text = "a"))
-        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingStart = -1, composingEnd = -1)
 
         assertTrue(session.isComposing)
         assertEquals("chào", editor.text)
@@ -30,16 +30,16 @@ class CommittedSelectionOwnershipTest {
         val handler = committedHandler(session, editor)
 
         handler.onKeyAction(KeyAction.Input(keyId = "character-u", text = "u"))
-        handler.onSelectionChanged(newStart = 1, newEnd = 1, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 1, newEnd = 1, composingStart = -1, composingEnd = -1)
         handler.onKeyAction(KeyAction.Input(keyId = "character-o", text = "o"))
-        handler.onSelectionChanged(newStart = 2, newEnd = 2, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 2, newEnd = 2, composingStart = -1, composingEnd = -1)
         // Replacing "uo" with "uơ" deletes before it commits; a host that ignores the
         // batch reports the empty document in between before reporting the result.
         handler.onKeyAction(KeyAction.Input(keyId = "character-w", text = "w"))
         editor.textBeforeCursor = ""
-        handler.onSelectionChanged(newStart = 0, newEnd = 0, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 0, newEnd = 0, composingStart = -1, composingEnd = -1)
         editor.textBeforeCursor = null
-        handler.onSelectionChanged(newStart = 2, newEnd = 2, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 2, newEnd = 2, composingStart = -1, composingEnd = -1)
         handler.onKeyAction(KeyAction.Input(keyId = "character-n", text = "n"))
 
         assertEquals("ươn", editor.text)
@@ -53,15 +53,15 @@ class CommittedSelectionOwnershipTest {
         val handler = committedHandler(session, editor)
 
         handler.onKeyAction(KeyAction.Input(keyId = "character-u", text = "u"))
-        handler.onSelectionChanged(newStart = 1, newEnd = 1, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 1, newEnd = 1, composingStart = -1, composingEnd = -1)
         handler.onKeyAction(KeyAction.Input(keyId = "character-o", text = "o"))
-        handler.onSelectionChanged(newStart = 2, newEnd = 2, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 2, newEnd = 2, composingStart = -1, composingEnd = -1)
         // The replacement settles first, which is what retires the caret we expect from
         // inside the batch. The tap that follows is the user's, and has to be obeyed.
         handler.onKeyAction(KeyAction.Input(keyId = "character-w", text = "w"))
-        handler.onSelectionChanged(newStart = 2, newEnd = 2, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 2, newEnd = 2, composingStart = -1, composingEnd = -1)
         editor.textBeforeCursor = ""
-        handler.onSelectionChanged(newStart = 0, newEnd = 0, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 0, newEnd = 0, composingStart = -1, composingEnd = -1)
 
         assertEquals("", session.composingText)
     }

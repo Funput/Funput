@@ -48,7 +48,7 @@ class RetoneAfterBackspaceTest {
         handler.start(allowComposition = true)
         handler.onKeyAction(KeyAction.Backspace)
         // Final state after one batched edit: caret and composing end coincide.
-        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingEnd = 4)
+        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingStart = 0, composingEnd = 4)
 
         assertTrue(session.isComposing)
         assertEquals("chào", session.composingText)
@@ -64,7 +64,7 @@ class RetoneAfterBackspaceTest {
         handler.onKeyAction(KeyAction.Backspace)
         // What arrives when DeleteBackward is its own top-level edit: the delete's
         // onUpdateSelection is delivered after reopen has set isComposing.
-        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingEnd = -1)
+        handler.onSelectionChanged(newStart = 4, newEnd = 4, composingStart = -1, composingEnd = -1)
 
         assertFalse(session.isComposing)
         assertEquals(1, editor.finishCount)

@@ -72,7 +72,7 @@ internal class AndroidCompositionSession(
     fun acceptSuggestion(connection: InputConnection, prefix: String, candidate: String): Boolean {
         if (composingText != prefix) return false
         val accepted = documentEditor.acceptSuggestion(connection, renderMode, prefix, candidate)
-        if (accepted) previousWord.recorded(prefix, "$candidate ")
+        if (accepted) previousWord.committed(prefix, "$candidate ")
         composingText = ""
         completed = null
         engine.clear()
@@ -90,7 +90,7 @@ internal class AndroidCompositionSession(
         // has no other way to know which boundary this was.
         val token = replacement?.removeSuffix(text)?.ifEmpty { null } ?: previous.ifEmpty { null }
         completed = token?.let { it to (codePoint == ' '.code) }
-        previousWord.recorded(previous, replacement ?: previous + text)
+        previousWord.committed(previous, replacement ?: previous + text)
         composingText = ""
         return documentEditor.commitBoundary(connection, renderMode, previous, replacement, text)
     }
@@ -107,11 +107,13 @@ internal class AndroidCompositionSession(
         }
     }
 
-    /** Re-opens the word behind the caret, right after Backspace, so the next keystroke can retone it. */
-    fun reopenPreviousWord(connection: InputConnection?): Boolean {
+    /**
+     * Re-opens the word behind the caret so the next keystroke can retone it. Call right after
+     * Backspace deleted outside any selection; [before] is what the editor showed before that.
+     */
+    fun reopenPreviousWord(connection: InputConnection?, before: CharSequence?): Boolean {
         if (connection == null || isComposing) return false
-        if (!connection.getSelectedText(0).isNullOrEmpty()) return false
-        val word = previousWord.wordToReopen(connection) ?: return false
+        val word = previousWord.wordToReopen(connection, before) ?: return false
 
         connection.beginBatchEdit()
         val reopened = try {
@@ -124,10 +126,10 @@ internal class AndroidCompositionSession(
     }
 
     /** Whether the live composition has lost the caret reported by the editor and must finish. */
-    fun disownsSelection(connection: InputConnection?, start: Int, end: Int, composingEnd: Int): Boolean {
+    fun disownsSelection(connection: InputConnection?, start: Int, end: Int, composingStart: Int, composingEnd: Int): Boolean {
         val owned = isComposing &&
             documentEditor.ownsSelection(connection, renderMode, composingText, start, end, composingEnd)
-        previousWord.caretReported(start, end, owned)
+        previousWord.caretReported(start, end, composingStart, owned)
         return isComposing && !owned
     }
 

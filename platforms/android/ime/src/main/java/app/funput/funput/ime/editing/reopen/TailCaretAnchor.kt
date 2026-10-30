@@ -1,35 +1,39 @@
 package app.funput.funput.ime.editing.reopen
 
+import app.funput.funput.ime.editing.composition.ExpectedCaret
+
 /**
  * Tells our own caret moves from the user's while no word is being composed.
  *
  * The committed tail describes the text right before the caret only while the caret stays where
- * our writes left it. Hosts echo each write through `onUpdateSelection`, sometimes in several
- * steps and late, so a write opens a window of positions that are still ours: the caret before
- * the write, the caret between its delete and its commit, and the caret after it. A report
- * outside that window, or any report once the window has settled that is not the settled caret,
- * is the user moving the caret.
+ * our writes left it. Hosts echo each write late, sometimes in several steps, so every caret an
+ * in-flight write passes through is still ours; a report outside them, or any report once they
+ * have landed that is not the confirmed caret, is the user moving the caret.
  */
 internal class TailCaretAnchor {
-    private var settled: Int? = null
-    private var target: Int? = null
-    private var window: IntRange? = null
+    private val caret = ExpectedCaret()
+    /** Where the live composing region starts, as the editor last reported it. */
+    private var composingStart: Int? = null
 
-    /** Records a write of ours that turns [replaced] characters before the caret into [written]. */
-    fun expect(replaced: Int, written: Int) {
-        val base = target ?: settled ?: return forget()
-        val afterDelete = base - replaced
-        val next = afterDelete + written
-        val previous = window ?: base..base
-        window = minOf(previous.first, afterDelete)..maxOf(previous.last, base, next)
-        target = next
+    /**
+     * The live composition was committed as [written]. Measured from where its region starts:
+     * echoes of the last keystrokes may still be on their way, leaving the confirmed caret behind,
+     * while the region's start stays put for the whole word.
+     */
+    fun committed(composed: Int, written: Int) {
+        caret.expect(composed, written, from = composingStart?.plus(composed))
+        composingStart = null
     }
 
-    /** Takes [end] as the caret: the composition owns it, so it is ours by construction. */
-    fun settle(end: Int) {
-        settled = end
-        target = null
-        window = null
+    /** A write of ours turned the [replaced] characters right before the caret into [written]. */
+    fun edited(replaced: Int, written: Int) {
+        caret.expect(replaced, written)
+    }
+
+    /** The composition owns [end], so it is ours; [composingStart] is -1 without a region. */
+    fun settle(end: Int, composingStart: Int) {
+        caret.confirm(end)
+        this.composingStart = composingStart.takeIf { it >= 0 }
     }
 
     /**
@@ -42,20 +46,19 @@ internal class TailCaretAnchor {
             forget()
             return false
         }
-        val pending = target
+        val pending = caret.target
         val ours = when {
-            pending != null -> window?.contains(end) == true
-            settled != null -> end == settled
+            pending != null -> caret.span?.contains(end) == true
+            caret.confirmed != null -> end == caret.confirmed
             else -> true
         }
-        if (!ours || pending == null || end == pending) settle(end)
+        if (!ours || pending == null || end == pending) caret.confirm(end)
         return ours
     }
 
     /** Drops every position: nothing is known about where the caret is. */
     fun forget() {
-        settled = null
-        target = null
-        window = null
+        caret.forget()
+        composingStart = null
     }
 }

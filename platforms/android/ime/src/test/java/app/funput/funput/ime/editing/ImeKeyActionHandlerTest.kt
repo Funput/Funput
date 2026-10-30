@@ -66,10 +66,10 @@ class ImeKeyActionHandlerTest {
         handler.onKeyAction(KeyAction.Input("character-b", "b"))
         handler.onKeyAction(KeyAction.Input("character-a", "a"))
 
-        handler.onSelectionChanged(2, 2, -1)
+        handler.onSelectionChanged(2, 2, -1, -1)
         assertEquals("ba", handler.takeSuggestionUpdate().prefix)
         connection.moveCursor(0)
-        handler.onSelectionChanged(0, 0, -1)
+        handler.onSelectionChanged(0, 0, -1, -1)
         handler.onKeyAction(KeyAction.Input("character-x", "x"))
 
         assertEquals("x", handler.takeSuggestionUpdate().prefix)

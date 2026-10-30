@@ -17,7 +17,7 @@ class ReopenPreviousWordTest {
         val engine = ReopenWordEngine(adoptable = setOf("chào"))
         val session = testSession(engine)
 
-        assertTrue(session.reopenPreviousWord(editor.proxy))
+        assertTrue(session.reopenPreviousWord(editor.proxy, before = null))
 
         assertEquals("chào", engine.adopted)
         assertEquals(listOf(4), editor.deletedBefore)
@@ -31,7 +31,7 @@ class ReopenPreviousWordTest {
         val editor = ReopenWordEditor(textBeforeCursor = "xin chào")
         val engine = ReopenWordEngine(adoptable = setOf("chào"))
 
-        assertTrue(testSession(engine).reopenPreviousWord(editor.proxy))
+        assertTrue(testSession(engine).reopenPreviousWord(editor.proxy, before = null))
         assertEquals(listOf(4), editor.deletedBefore)
     }
 
@@ -41,7 +41,7 @@ class ReopenPreviousWordTest {
         val engine = ReopenWordEngine(adoptable = emptySet())
         val session = testSession(engine)
 
-        assertFalse(session.reopenPreviousWord(editor.proxy))
+        assertFalse(session.reopenPreviousWord(editor.proxy, before = null))
 
         assertTrue(editor.deletedBefore.isEmpty())
         assertTrue(editor.composingTexts.isEmpty())
@@ -53,16 +53,7 @@ class ReopenPreviousWordTest {
         val editor = ReopenWordEditor(textBeforeCursor = "chào ")
         val engine = ReopenWordEngine(adoptable = setOf("chào"))
 
-        assertFalse(testSession(engine).reopenPreviousWord(editor.proxy))
-        assertNull(engine.adopted)
-    }
-
-    @Test
-    fun `skips while a selection is active`() {
-        val editor = ReopenWordEditor(textBeforeCursor = "chào", selectedText = "chào")
-        val engine = ReopenWordEngine(adoptable = setOf("chào"))
-
-        assertFalse(testSession(engine).reopenPreviousWord(editor.proxy))
+        assertFalse(testSession(engine).reopenPreviousWord(editor.proxy, before = null))
         assertNull(engine.adopted)
     }
 
@@ -74,14 +65,14 @@ class ReopenPreviousWordTest {
         session.input(editor.proxy, "a") // starts composing
         editor.composingTexts.clear()
 
-        assertFalse(session.reopenPreviousWord(editor.proxy))
+        assertFalse(session.reopenPreviousWord(editor.proxy, before = null))
         assertNull(engine.adopted)
         assertTrue(editor.composingTexts.isEmpty())
     }
 
     @Test
     fun `skips when there is no connection`() {
-        assertFalse(testSession(ReopenWordEngine(setOf("chào"))).reopenPreviousWord(null))
+        assertFalse(testSession(ReopenWordEngine(setOf("chào"))).reopenPreviousWord(null, before = null))
     }
 
     @Test
@@ -90,7 +81,7 @@ class ReopenPreviousWordTest {
         val engine = ReopenWordEngine(adoptable = setOf("chào"))
         val session = testSession(engine)
 
-        assertFalse(session.reopenPreviousWord(editor.proxy))
+        assertFalse(session.reopenPreviousWord(editor.proxy, before = null))
 
         assertEquals("chào", engine.adopted)
         assertEquals(listOf(4), editor.deletedBefore)

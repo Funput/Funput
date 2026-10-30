@@ -2,7 +2,6 @@ package app.funput.funput.ime.editing.reopen
 
 import android.view.inputmethod.InputConnection
 import app.funput.funput.ime.editing.recentText
-import app.funput.funput.ime.editing.wordAtEnd
 
 /**
  * Picks the word Backspace may reopen for retoning, and never one the caret has left.
@@ -16,36 +15,41 @@ internal class PreviousWordReopener(private val adopt: (String) -> Boolean) {
     private val tail = CommittedWordTail()
     private val anchor = TailCaretAnchor()
 
-    /** [written] replaced [replaced], the composed text right before the caret. */
-    fun recorded(replaced: String, written: String) {
+    /** The live composition [composed] was committed as [written]. */
+    fun committed(composed: String, written: String) {
         tail.record(written)
-        anchor.expect(replaced.length, written.length)
+        anchor.committed(composed.length, written.length)
     }
 
     /** [replacement] rewrote [previous], which was committed right before the caret. */
     fun rewrote(previous: String, replacement: String) {
         tail.clear()
-        recorded(previous, replacement)
+        tail.record(replacement)
+        anchor.edited(previous.length, replacement.length)
     }
 
     /** [owned] means the live composition claims this caret, which makes it ours. */
-    fun caretReported(start: Int, end: Int, owned: Boolean) {
-        if (owned) anchor.settle(end) else if (!anchor.accepts(start, end)) tail.clear()
+    fun caretReported(start: Int, end: Int, composingStart: Int, owned: Boolean) {
+        if (owned) anchor.settle(end, composingStart) else if (!anchor.accepts(start, end)) tail.clear()
     }
 
     /**
-     * Called right after Backspace deleted one character outside any composition.
-     * Returns the word the engine adopted, or null when nothing before the caret can be reopened.
+     * Called right after Backspace deleted outside any selection; [before] is the text the editor
+     * showed before that delete. Returns the word the engine adopted, or null when nothing before
+     * the caret can be reopened.
      */
-    fun wordToReopen(connection: InputConnection): String? {
-        anchor.expect(replaced = 1, written = 0)
-        val visible = connection.recentText()
-        val remembered = tail.backspace()
-        val trusted = remembered?.takeIf { visible.isNullOrEmpty() || visible.endsWith(it) }
-        val word = listOfNotNull(trusted, visible?.wordAtEnd()).distinct().firstOrNull(adopt)
+    fun wordToReopen(connection: InputConnection, before: CharSequence?): String? {
+        val reads = BackspaceReads(before, after = connection.recentText())
+        val step = tail.backspace()
+        if (step == null) anchor.forget() else anchor.edited(replaced = step.erased.length, written = 0)
+        val remembered = step?.word?.takeIf { reads.confirms(it, step.erased) }
+        val contradicted = step?.word != null && remembered == null
+        val word = listOfNotNull(remembered, reads.editorWord).distinct().firstOrNull(adopt)
         when {
-            word != null && word == trusted -> tail.resolve(true)
-            word != null || remembered != trusted -> tail.clear()
+            // The reopened composition holds the word now; the tail keeps what came before it.
+            word != null && word == remembered -> tail.adoptWord()
+            // The editor's own word, or text that contradicts the tail: it no longer describes it.
+            word != null || contradicted -> tail.clear()
         }
         return word
     }

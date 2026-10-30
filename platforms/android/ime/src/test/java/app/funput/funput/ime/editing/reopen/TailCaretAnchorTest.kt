@@ -15,29 +15,49 @@ class TailCaretAnchorTest {
     }
 
     @Test
-    fun `the echo of our own commit is ours`() {
+    fun `the echo of our own edit is ours`() {
         val anchor = settledAt(10)
-        anchor.expect(replaced = 2, written = 3)
+        anchor.edited(replaced = 2, written = 3)
 
         assertTrue(anchor.accepts(11, 11))
         assertFalse("settled at 11 now", anchor.accepts(10, 10))
     }
 
     @Test
-    fun `intermediate and late echoes inside the write stay ours`() {
+    fun `intermediate echoes inside the write stay ours`() {
         val anchor = settledAt(10)
-        anchor.expect(replaced = 2, written = 3)
+        anchor.edited(replaced = 2, written = 3)
 
-        assertTrue("finishComposingText, before the commit", anchor.accepts(10, 10))
+        assertTrue("before the write", anchor.accepts(10, 10))
         assertTrue("between the delete and the commit", anchor.accepts(8, 8))
-        assertTrue("the commit itself", anchor.accepts(11, 11))
+        assertTrue("the write itself", anchor.accepts(11, 11))
+    }
+
+    @Test
+    fun `a commit is measured from where the composing region starts`() {
+        val anchor = TailCaretAnchor()
+        // `b` composing at 8..9; `a` and the space land before the echo for `a` arrives.
+        anchor.settle(end = 9, composingStart = 8)
+        anchor.committed(composed = 2, written = 3)
+
+        assertTrue("the late echo for `ba`", anchor.accepts(10, 10))
+        assertTrue("the commit of `ba `", anchor.accepts(11, 11))
+        assertFalse(anchor.accepts(10, 10))
+    }
+
+    @Test
+    fun `a commit without a reported region falls back to the confirmed caret`() {
+        val anchor = settledAt(10)
+        anchor.committed(composed = 2, written = 3)
+
+        assertTrue(anchor.accepts(11, 11))
     }
 
     @Test
     fun `chained writes widen the window until the last one lands`() {
         val anchor = settledAt(10)
-        anchor.expect(replaced = 2, written = 3)
-        anchor.expect(replaced = 1, written = 0)
+        anchor.edited(replaced = 2, written = 3)
+        anchor.edited(replaced = 1, written = 0)
 
         assertTrue(anchor.accepts(11, 11))
         assertTrue(anchor.accepts(10, 10))
@@ -47,7 +67,7 @@ class TailCaretAnchorTest {
     @Test
     fun `a tap outside the window is the user moving the caret`() {
         val anchor = settledAt(10)
-        anchor.expect(replaced = 2, written = 3)
+        anchor.edited(replaced = 2, written = 3)
 
         assertFalse(anchor.accepts(3, 3))
         assertTrue("the tapped caret is the new reference", anchor.accepts(3, 3))
@@ -55,25 +75,21 @@ class TailCaretAnchorTest {
 
     @Test
     fun `a selection is never ours`() {
-        val anchor = settledAt(10)
-
-        assertFalse(anchor.accepts(4, 10))
+        assertFalse(settledAt(10).accepts(4, 10))
     }
 
     @Test
     fun `a settled caret rejects any other position`() {
-        val anchor = settledAt(10)
-
-        assertFalse(anchor.accepts(9, 9))
+        assertFalse(settledAt(10).accepts(9, 9))
     }
 
     @Test
     fun `writes with no known caret leave it unknown`() {
         val anchor = TailCaretAnchor()
-        anchor.expect(replaced = 2, written = 3)
+        anchor.edited(replaced = 2, written = 3)
 
         assertTrue(anchor.accepts(42, 42))
     }
 
-    private fun settledAt(caret: Int) = TailCaretAnchor().apply { settle(caret) }
+    private fun settledAt(caret: Int) = TailCaretAnchor().apply { settle(caret, composingStart = -1) }
 }

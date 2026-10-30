@@ -124,7 +124,7 @@ class ImeCompositionInstrumentedTest {
             scenario.handler.type("vieejt")
             val composingEnd = scenario.host.editText.selectionEnd
             scenario.host.moveCursorTo(0)
-            scenario.handler.onSelectionChanged(newStart = 0, newEnd = 0, composingEnd = composingEnd)
+            scenario.handler.onSelectionChanged(newStart = 0, newEnd = 0, composingStart = 0, composingEnd = composingEnd)
 
             assertFalse(scenario.composition.isComposing)
             assertEquals("việt", scenario.text)
