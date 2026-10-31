@@ -29,6 +29,11 @@ pub struct SuggestionConfig {
     /// word is Vietnamese typing, and the English lexicon stays out of its empty
     /// slots. Zero yields from the first marked word.
     pub lexicon_yield_after_words: u32,
+    /// How many words may be added by hand. Always fewer than `max_words`, so a
+    /// full store keeps a learned word to evict.
+    pub max_added_words: usize,
+    /// How many words may be blocked.
+    pub max_blocked_words: usize,
 }
 
 impl Default for SuggestionConfig {
@@ -42,13 +47,16 @@ impl Default for SuggestionConfig {
             context_predict_uses: 2,
             context_dominance_percent: 40,
             lexicon_yield_after_words: 200,
+            max_added_words: 1_000,
+            max_blocked_words: 1_000,
         }
     }
 }
 
 pub(crate) fn sanitize(config: SuggestionConfig) -> SuggestionConfig {
+    let max_words = config.max_words.max(1);
     SuggestionConfig {
-        max_words: config.max_words.max(1),
+        max_words,
         max_token_scalars: config.max_token_scalars.clamp(1, MAX_TOKEN_SCALARS),
         promotion_uses: config.promotion_uses.max(1),
         // Never the easier of the two, whatever a caller passes.
@@ -59,5 +67,7 @@ pub(crate) fn sanitize(config: SuggestionConfig) -> SuggestionConfig {
         context_predict_uses: config.context_predict_uses.max(1),
         context_dominance_percent: config.context_dominance_percent.min(100),
         lexicon_yield_after_words: config.lexicon_yield_after_words,
+        max_added_words: config.max_added_words.min(max_words - 1),
+        max_blocked_words: config.max_blocked_words,
     }
 }

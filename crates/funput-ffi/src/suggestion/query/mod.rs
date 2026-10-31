@@ -143,6 +143,6 @@ fn context_from_raw(previous: *const u32, len: usize) -> Option<Option<String>> 
     decode_valid_codepoints(codepoints_from_raw(previous, len)?).map(Some)
 }
 
-pub(super) fn decode_valid_codepoints(codepoints: &[u32]) -> Option<String> {
+pub(crate) fn decode_valid_codepoints(codepoints: &[u32]) -> Option<String> {
     codepoints.iter().copied().map(char::from_u32).collect()
 }

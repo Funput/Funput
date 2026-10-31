@@ -1,6 +1,6 @@
 use super::admission::promotion_threshold;
 use super::{PENDING_LIMIT, REBUILD_AFTER_EVICTIONS, SuggestionEngine};
-use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
+use crate::dictionary::Origin;
 use crate::index::{NONE, normalize};
 use crate::persistence::JournalEntry;
 use crate::types::{LearnOutcome, WordRecord};
@@ -14,30 +14,32 @@ impl SuggestionEngine {
     /// when it was ignored. Appending it to the journal is `learn_after_inner`'s
     /// job, because only that knows whether it followed what came before.
     pub(crate) fn learn_inner(&mut self, token: &str) -> (LearnOutcome, u32) {
-        let normalized = normalize::exact(token);
-        let length = normalized.chars().count();
-        if length == 0
-            || length > self.config.max_token_scalars
-            || normalized.chars().any(char::is_whitespace)
-        {
+        let Some(normalized) = self.token_key(token) else {
+            return (LearnOutcome::Ignored, NONE);
+        };
+        if self.blocked.contains(&normalized) {
             return (LearnOutcome::Ignored, NONE);
         }
 
         self.sequence = self.sequence.saturating_add(1);
-        let (word_id, previous_uses, evicted_indexed) = self.upsert_word(normalized);
+        let Some((word_id, previous_uses, evicted_indexed)) = self.upsert_word(normalized) else {
+            return (LearnOutcome::Ignored, NONE);
+        };
         if evicted_indexed {
             // The evicted word's entries are stale, not wrong: its slot's
             // generation moved on, so they already read as dead. Sweeping them is
             // bookkeeping, and bookkeeping does not belong between two keystrokes.
             self.evictions_since_rebuild = self.evictions_since_rebuild.saturating_add(1);
         }
-        let uses = self.words[word_id as usize].uses;
-        let threshold = promotion_threshold(&self.words[word_id as usize].text, &self.config);
-        if uses >= threshold {
+        let word = &self.words[word_id as usize];
+        let (uses, origin) = (word.uses, word.origin);
+        let threshold = promotion_threshold(&word.text, &self.config);
+        if self.offers(word) {
             let marked = self.index_word(word_id);
             // Counted before any rebuild below, which recounts from scratch and
-            // would otherwise see this word twice.
-            if marked && previous_uses < threshold {
+            // would otherwise see this word twice. An added word was counted when
+            // it was added.
+            if marked && origin == Origin::Learned && previous_uses < threshold {
                 self.lexicon.vietnamese_words = self.lexicon.vietnamese_words.saturating_add(1);
             }
         }
@@ -55,6 +57,17 @@ impl SuggestionEngine {
         (outcome, word_id)
     }
 
+    /// The key a token is stored under, or `None` for one no record may hold:
+    /// empty, spaced, or longer than any token.
+    pub(crate) fn token_key(&self, token: &str) -> Option<String> {
+        let normalized = normalize::exact(token);
+        let length = normalized.chars().count();
+        let valid = length > 0
+            && length <= self.config.max_token_scalars
+            && !normalized.chars().any(char::is_whitespace);
+        valid.then_some(normalized)
+    }
+
     /// Overflow is not a gap in the journal: `flush` turns it into a compact,
     /// which replaces the journal outright rather than appending a chain with a
     /// hole nothing marked.
@@ -66,30 +79,24 @@ impl SuggestionEngine {
         }
     }
 
-    fn upsert_word(&mut self, normalized: String) -> (u32, u32, bool) {
-        if let Some(index) = self.words.iter().position(|word| word.text == normalized) {
+    /// `None` when a new word finds a full store holding only added words, which
+    /// are never evicted: there is no room for it, so it is not learned.
+    fn upsert_word(&mut self, normalized: String) -> Option<(u32, u32, bool)> {
+        if let Some(index) = self.slot_of(&normalized) {
             let word = &mut self.words[index];
             let previous = word.uses;
             word.uses = word.uses.saturating_add(1);
             word.last_used = self.sequence;
-            return (index as u32, previous, false);
+            return Some((index as u32, previous, false));
         }
-        let record = WordRecord {
-            text: normalized,
-            uses: 1,
-            last_used: self.sequence,
-            generation: 0,
-            context_seen: 0,
-            followers: [Follower::EMPTY; FOLLOWER_SLOTS],
-        };
+        let record = WordRecord::new(normalized, 1, self.sequence);
         if self.words.len() < self.config.max_words {
             let index = self.words.len() as u32;
             self.words.push(record);
-            return (index, 0, false);
+            return Some((index, 0, false));
         }
-        let index = self.lowest_ranked_index().unwrap_or(0);
-        let rebuild =
-            self.words[index].uses >= promotion_threshold(&self.words[index].text, &self.config);
+        let index = self.lowest_ranked_index()?;
+        let rebuild = self.offers(&self.words[index]);
         if rebuild && normalize::is_marked(&self.words[index].text) {
             self.lexicon.vietnamese_words = self.lexicon.vietnamese_words.saturating_sub(1);
         }
@@ -98,7 +105,7 @@ impl SuggestionEngine {
         let generation = self.words[index].generation.wrapping_add(1);
         self.words[index] = record;
         self.words[index].generation = generation;
-        (index as u32, 0, rebuild)
+        Some((index as u32, 0, rebuild))
     }
 
     /// Returns whether the word is marked, which is exactly whether it went into
@@ -125,8 +132,7 @@ impl SuggestionEngine {
         self.folded.clear();
         let mut marked = 0u32;
         for index in 0..self.words.len() {
-            let threshold = promotion_threshold(&self.words[index].text, &self.config);
-            if self.words[index].uses >= threshold && self.index_word(index as u32) {
+            if self.offers(&self.words[index]) && self.index_word(index as u32) {
                 marked = marked.saturating_add(1);
             }
         }

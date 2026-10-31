@@ -1,7 +1,6 @@
 use std::array;
 
 use super::SuggestionEngine;
-use super::admission::promotion_threshold;
 use crate::index::{NONE, TOP_K, normalize};
 use crate::types::{SuggestionSet, SuggestionStats, WordRecord};
 
@@ -62,9 +61,11 @@ impl SuggestionEngine {
             .map_or(0, |record| record.uses)
     }
 
-    /// Whether `word` is a word at all — one the user has typed, one in the shipped
-    /// English list, or one of the words typed on purpose that correction must keep
-    /// (`ko`, `dc`, a brand name; see `data/correction/keep.txt`).
+    /// Whether `word` is a word at all — one the user has typed, added or blocked,
+    /// one in the shipped English list, or one of the words typed on purpose that
+    /// correction must keep (`ko`, `dc`, a brand name; see
+    /// `data/correction/keep.txt`). A blocked word is still a word: the user typed
+    /// it on purpose, and correction must not turn it into another.
     ///
     /// This is the veto behind typo correction. `funput-engine` carries no
     /// dictionary, so `text ` reaches it looking exactly like a mistyped Vietnamese
@@ -73,7 +74,8 @@ impl SuggestionEngine {
     /// slip.
     pub fn is_known_word(&self, word: &str) -> bool {
         crate::keep::is_kept(word)
-            || self.frequency(word) > 0
+            || self.context_slot(word).is_some()
+            || self.blocked.contains(word)
             || self
                 .lexicon
                 .file
@@ -92,21 +94,18 @@ impl SuggestionEngine {
             + self
                 .pending
                 .iter()
-                .map(|(token, _)| token.capacity())
+                .map(crate::persistence::JournalEntry::heap_bytes)
                 .sum::<usize>();
         SuggestionStats {
             words: self.words.len(),
-            promoted_words: self
-                .words
-                .iter()
-                .filter(|word| word.uses >= promotion_threshold(&word.text, &self.config))
-                .count(),
+            promoted_words: self.words.iter().filter(|word| self.offers(word)).count(),
             exact_nodes: self.exact.node_count(),
             folded_nodes: self.folded.node_count(),
             pending_mutations: self.pending.len(),
             journal_bytes: self.journal_bytes,
             estimated_heap_bytes: word_bytes
                 + pending_bytes
+                + self.blocked.heap_bytes()
                 + self.exact.heap_bytes()
                 + self.folded.heap_bytes(),
             last_snapshot_bytes: self.last_snapshot_bytes,

@@ -4,23 +4,36 @@
 
 pub(super) const SNAPSHOT_MAGIC: &[u8; 8] = b"FPSNAP01";
 pub(super) const JOURNAL_MAGIC: &[u8; 4] = b"FPJR";
+pub(super) const INBOX_MAGIC: &[u8; 4] = b"FPED";
 pub(super) const MAX_SNAPSHOT_BYTES: u64 = 2 * 1024 * 1024;
 pub(super) const MAX_JOURNAL_BYTES: u64 = 1024 * 1024;
+/// One edit file holds what one tap in the app changed. Far past that is not a
+/// file the app wrote.
+pub(super) const MAX_INBOX_FILE_BYTES: u64 = 64 * 1024;
+/// How many edit files one drain reads. The rest wait for the next one, so a
+/// flooded inbox costs a bounded pause, never an unbounded one.
+pub(crate) const MAX_INBOX_FILES: usize = 256;
 
 // The two records are separate formats that happened to share a number. They are
 // versioned apart so one can move without claiming anything about the other —
 // stamping a journal as v2 because the snapshot grew would tell the reader it
 // contains context breaks it does not have.
 
-/// v2 carries each word's follower edges; v1 is the word list alone.
-pub(super) const SNAPSHOT_WRITE_VERSION: u16 = 2;
+/// v2 carries each word's follower edges; v1 is the word list alone. v3 adds each
+/// word's origin and, after the words, the blocked list.
+pub(super) const SNAPSHOT_WRITE_VERSION: u16 = 3;
 pub(super) const SNAPSHOT_MIN_READ_VERSION: u16 = 1;
 
 /// v1 is a flat token list; v2 marks which tokens followed which; v3 records the
 /// sequence a frame ends at, which is what lets replay know it has already been
-/// folded into the snapshot.
-pub(super) const JOURNAL_WRITE_VERSION: u16 = 3;
+/// folded into the snapshot. v4 turns the flag byte into a tag that can also
+/// carry a dictionary edit.
+pub(super) const JOURNAL_WRITE_VERSION: u16 = 4;
 pub(super) const JOURNAL_MIN_READ_VERSION: u16 = 1;
+
+/// The edit files the app posts for the keyboard. v1 is the first.
+pub(super) const INBOX_WRITE_VERSION: u16 = 1;
+pub(super) const INBOX_MIN_READ_VERSION: u16 = 1;
 
 /// The oldest schema a build can still read. Raising one is how a format is
 /// retired: files below it are discarded and rebuilt rather than rejected.
@@ -29,6 +42,7 @@ pub(super) const JOURNAL_MIN_READ_VERSION: u16 = 1;
 /// so the windows are checked here — a bad one fails the build, not a test.
 const _: () = assert!(SNAPSHOT_MIN_READ_VERSION <= SNAPSHOT_WRITE_VERSION);
 const _: () = assert!(JOURNAL_MIN_READ_VERSION <= JOURNAL_WRITE_VERSION);
+const _: () = assert!(INBOX_MIN_READ_VERSION <= INBOX_WRITE_VERSION);
 
 pub(super) enum Version {
     Readable,
@@ -46,6 +60,10 @@ pub(super) fn accept_snapshot(version: u16) -> Version {
 
 pub(super) fn accept_journal(version: u16) -> Version {
     verdict(version, JOURNAL_MIN_READ_VERSION, JOURNAL_WRITE_VERSION)
+}
+
+pub(super) fn accept_inbox(version: u16) -> Version {
+    verdict(version, INBOX_MIN_READ_VERSION, INBOX_WRITE_VERSION)
 }
 
 /// The window is a parameter so the verdict can be exercised across ranges this

@@ -1,6 +1,8 @@
 use std::io;
 
 use super::{JOURNAL_COMPACT_BYTES, SuggestionEngine};
+use crate::dictionary::Mode;
+use crate::persistence::JournalEntry;
 
 impl SuggestionEngine {
     pub fn flush(&mut self) -> io::Result<()> {
@@ -44,7 +46,7 @@ impl SuggestionEngine {
             self.journal_bytes = 0;
             return Ok(0);
         };
-        let bytes = store.compact(&self.words, self.sequence)?;
+        let bytes = store.compact(&self.words, self.blocked.as_slice(), self.sequence)?;
         self.pending.clear();
         self.pending_overflow = false;
         self.last_snapshot_bytes = bytes;
@@ -52,6 +54,8 @@ impl SuggestionEngine {
         Ok(bytes)
     }
 
+    /// Forgets every word, learned or added. The blocked list stays: it is a choice
+    /// the user made about what never to see, not something the store learned.
     pub fn reset(&mut self) -> io::Result<()> {
         self.words.clear();
         self.evictions_since_rebuild = 0;
@@ -63,5 +67,30 @@ impl SuggestionEngine {
         self.pending.clear();
         self.pending_overflow = false;
         self.compact().map(|_| ())
+    }
+
+    /// Replays journal entries read on open, without writing them again.
+    pub(crate) fn replay(&mut self, journal: Vec<JournalEntry>) {
+        let mut previous: Option<String> = None;
+        let mut edited = false;
+        for entry in journal {
+            match entry {
+                JournalEntry::Learned { token, chained } => {
+                    let context = chained.then_some(previous.as_deref()).flatten();
+                    self.learn_after_inner(context, &token, false);
+                    previous = Some(token);
+                }
+                JournalEntry::Edit { kind, word } => {
+                    self.apply_one(kind, &word, Mode::Replay);
+                    edited = true;
+                    previous = None;
+                }
+            }
+        }
+        if edited {
+            self.rebuild_tries();
+        }
+        self.pending.clear();
+        self.pending_overflow = false;
     }
 }

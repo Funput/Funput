@@ -4,6 +4,7 @@ use super::follower::{FOLLOWER_SLOTS, Follower};
 use super::slots;
 use crate::engine::{MAX_TOKEN_SCALARS, SuggestionEngine};
 use crate::index::normalize;
+use crate::persistence::JournalEntry;
 use crate::types::LearnOutcome;
 
 impl SuggestionEngine {
@@ -40,7 +41,7 @@ impl SuggestionEngine {
         }
         if record_pending {
             let token = self.words[word_id as usize].text.clone();
-            self.push_pending((token, chained));
+            self.push_pending(JournalEntry::Learned { token, chained });
         }
         if let Some((index, generation)) = context
             && self.words[index as usize].generation == generation

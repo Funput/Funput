@@ -1,6 +1,8 @@
 use funput_core::is_complete_syllable;
 
-use super::SuggestionConfig;
+use super::{SuggestionConfig, SuggestionEngine};
+use crate::dictionary::Origin;
+use crate::types::WordRecord;
 
 /// How many sightings a token needs before the bar may offer it.
 ///
@@ -20,5 +22,15 @@ pub(crate) fn promotion_threshold(token: &str, config: &SuggestionConfig) -> u32
         config.promotion_uses
     } else {
         config.unrecognized_promotion_uses
+    }
+}
+
+impl SuggestionEngine {
+    /// Whether the bar may offer `word`: added by hand, or seen often enough. The
+    /// one test that decides what goes into the tries and what the dictionary
+    /// lists, so learning, rebuilding, counting and listing never disagree.
+    #[inline]
+    pub(crate) fn offers(&self, word: &WordRecord) -> bool {
+        word.origin == Origin::Added || word.uses >= promotion_threshold(&word.text, &self.config)
     }
 }

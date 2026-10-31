@@ -165,6 +165,7 @@ mod lexicon {
     use std::io::Write;
 
     use funput_suggestions::lexicon_build::encode;
+    use funput_suggestions::{Edit, EditKind};
 
     use super::*;
 
@@ -210,6 +211,41 @@ mod lexicon {
             assert_eq!(
                 allocations, 0,
                 "lexicon lookup {previous:?} {prefix:?} allocated {allocations} times"
+            );
+        }
+    }
+
+    /// Once a user has blocked a word, every English candidate a query merges in
+    /// is checked against the blocked list: a binary search that must not allocate.
+    #[test]
+    fn a_lookup_past_a_blocked_word_does_not_allocate() {
+        let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
+        for word in ["không", "khỏe", "work"] {
+            engine.learn(word);
+            engine.learn(word);
+        }
+        engine.learn_after(None, "xin");
+        engine.learn_after(Some("xin"), "khỏe");
+        engine.learn_after(Some("xin"), "khỏe");
+        engine.apply_edit(Edit::new(EditKind::Block, "world"));
+        let _file = attached(&mut engine);
+        assert!(
+            engine.suggest("wor").iter().all(|word| word != "world"),
+            "the case must actually skip a blocked word"
+        );
+
+        for (previous, prefix) in [(None, "wo"), (Some("xin"), ""), (Some("xin"), "kh")] {
+            let allocations = measure(|| {
+                for _ in 0..100_000 {
+                    std::hint::black_box(engine.suggest_with(
+                        std::hint::black_box(previous),
+                        std::hint::black_box(prefix),
+                    ));
+                }
+            });
+            assert_eq!(
+                allocations, 0,
+                "lookup past a block {previous:?} {prefix:?} allocated {allocations} times"
             );
         }
     }

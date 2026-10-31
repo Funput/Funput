@@ -30,6 +30,14 @@ empty result. Platforms drive this handle serially on a worker, never from the c
 `engine_open`) so queries fill the slots personal words leave empty; a failure returns `false` and
 keeps the lexicon already attached.
 
+The personal dictionary goes through the same handle. The keyboard, which owns the store, edits one
+word at a time with `funput_suggestion_apply_edit` (`FUNPUT_DICTIONARY_EDIT_ADD/FORGET/BLOCK/UNBLOCK`)
+and drains what the app posted with `funput_suggestion_apply_pending_edits`. The app never writes the
+store: it opens a read-only view with `funput_suggestion_engine_open_snapshot` and posts edits with
+`funput_suggestion_post_edit`, which needs no handle. Listings come back as an owned
+`FunputDictionaryList` handle, read with `funput_suggestion_dictionary_list_entry` and freed with
+`funput_suggestion_dictionary_list_free`.
+
 Per-app VI/EN memory uses another separate opaque handle, `FunputAppLanguage`, also independent of
 `FunputEngine`: it only decides "should this app be Vietnamese", the host calls `funput_set_enabled`
 itself with the answer. `id` is **UTF-8 bytes** (bundle id / exe name / WM_CLASS), not UTF-32 like
@@ -159,7 +167,8 @@ src/engine/         # composition IME C API (FunputEngine)
                     #   result.rs   #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 src/suggestion/     # personal-suggestion C API (FunputSuggestionEngine)
                     #   engine.rs (handle new/open/free, attach_lexicon), query.rs (learn/query),
-                    #   store.rs (flush/compact/reset/stats), types.rs (candidate/stats PODs)
+                    #   store.rs (flush/compact/reset/stats), types.rs (candidate/stats PODs),
+                    #   dictionary/ (edit, view: open_snapshot/post_edit, list, types)
 src/app_language/   # per-app VI/EN memory C API (FunputAppLanguage), independent of FunputEngine
                     #   handle.rs (handle new/free + shared UTF-8 marshalling),
                     #   memory.rs (seed/clear/forget), focus.rs (note_focus/note_toggle),

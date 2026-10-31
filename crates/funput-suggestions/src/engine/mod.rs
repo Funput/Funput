@@ -17,9 +17,11 @@ use std::path::Path;
 
 use config::sanitize;
 
+use crate::dictionary::BlockedWords;
+use crate::dictionary::Origin;
 use crate::index::ArenaTrie;
 use crate::lexicon::LexiconSlot;
-use crate::persistence::{JournalEntry, Store};
+use crate::persistence::{JournalEntry, Loaded, Store};
 use crate::types::WordRecord;
 
 pub(crate) const PENDING_LIMIT: usize = 256;
@@ -63,6 +65,9 @@ pub struct SuggestionEngine {
     pub(crate) journalled_previous: Option<(u32, u16)>,
     /// The shipped English word list, beside the personal store, never in it.
     pub(crate) lexicon: LexiconSlot,
+    /// The words the user blocked: never learned, never offered, English
+    /// lexicon included.
+    pub(crate) blocked: BlockedWords,
 }
 
 impl SuggestionEngine {
@@ -82,34 +87,41 @@ impl SuggestionEngine {
             evictions_since_rebuild: 0,
             journalled_previous: None,
             lexicon: LexiconSlot::default(),
+            blocked: BlockedWords::default(),
         }
     }
 
+    /// Opens the store at `path` for this process to write, and applies any edits
+    /// the app has posted to it since it was last open.
     pub fn open(path: impl AsRef<Path>, config: SuggestionConfig) -> io::Result<Self> {
-        let config = sanitize(config);
         let (store, loaded) = Store::open(path.as_ref())?;
-        let mut engine = Self::in_memory(config);
+        let mut engine = Self::from_loaded(config, loaded);
         engine.store = Some(store);
+        // Best effort: an inbox that cannot be read now is read on the next drain,
+        // and the store itself opened fine.
+        let _ = engine.apply_pending_edits();
+        Ok(engine)
+    }
+
+    /// An engine holding what was read off disk, with no store to write it back to.
+    pub(crate) fn from_loaded(config: SuggestionConfig, loaded: Loaded) -> Self {
+        let mut engine = Self::in_memory(config);
         engine.words = loaded.words;
+        engine.blocked = BlockedWords::from_loaded(loaded.blocked);
         engine.sequence = loaded.sequence;
         engine.journal_bytes = loaded.journal_bytes;
         engine.enforce_capacity();
         engine.rebuild_tries();
-        let mut previous: Option<String> = None;
-        for (token, chained) in loaded.journal {
-            let context = chained.then_some(previous.as_deref()).flatten();
-            engine.learn_after_inner(context, &token, false);
-            previous = Some(token);
-        }
-        engine.pending.clear();
-        engine.pending_overflow = false;
-        Ok(engine)
+        engine.replay(loaded.journal);
+        engine
     }
 
+    /// The learned word that should make room next. Words added by hand never do.
     pub(crate) fn lowest_ranked_index(&self) -> Option<usize> {
         self.words
             .iter()
             .enumerate()
+            .filter(|(_, word)| word.origin == Origin::Learned)
             .min_by(|(_, left), (_, right)| {
                 left.uses
                     .cmp(&right.uses)
@@ -119,25 +131,14 @@ impl SuggestionEngine {
             .map(|(index, _)| index)
     }
 
-    /// Only ever called from `open`, which rebuilds the tries straight after.
-    /// Unlike the learn path this *shrinks* `words`, so trie entries can be left
-    /// pointing past the end; they read as dead rather than panicking, but the
-    /// rebuild is what actually clears them.
+    /// Only ever called while loading, which rebuilds the tries straight after:
+    /// `remove_slot` leaves them stale.
     fn enforce_capacity(&mut self) {
         while self.words.len() > self.config.max_words {
             let Some(index) = self.lowest_ranked_index() else {
                 break;
             };
-            self.words.swap_remove(index);
-            // `swap_remove` hands this slot to whatever was last in the list, so
-            // anything still holding the old index has to stop resolving — the
-            // same reuse `upsert_word` bumps for. It matters here because a
-            // freshly loaded store has every record at generation 0, so a
-            // follower read off disk would otherwise match its new tenant and
-            // read as perfectly alive.
-            if let Some(word) = self.words.get_mut(index) {
-                word.generation = word.generation.wrapping_add(1);
-            }
+            self.remove_slot(index);
         }
     }
 }
