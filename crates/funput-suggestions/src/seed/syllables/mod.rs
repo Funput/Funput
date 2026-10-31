@@ -16,8 +16,7 @@ use std::sync::OnceLock;
 
 use funput_core::ToneStyle;
 
-use super::marks;
-use crate::index::{TOP_K, normalize};
+use crate::index::{TOP_K, marks, normalize};
 
 static SHIPPED: OnceLock<SyllableIndex> = OnceLock::new();
 

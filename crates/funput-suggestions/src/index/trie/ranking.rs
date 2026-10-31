@@ -4,7 +4,7 @@ use super::node::{Entry, Node, TOP_K};
 use crate::types::WordRecord;
 
 /// Dead entries rank last, so a live word always displaces one.
-fn ranks_before(left: Entry, right: Entry, words: &[WordRecord]) -> bool {
+pub(super) fn ranks_before(left: Entry, right: Entry, words: &[WordRecord]) -> bool {
     let Some(left) = left.word(words) else {
         return false;
     };

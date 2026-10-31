@@ -8,9 +8,9 @@
 //! words are looked up once per keystroke and handed out over those two turns. See
 //! `docs/features/vietnamese-seed-suggestion.md`, Phần B.
 
-use super::{SeedSlot, marks};
+use super::SeedSlot;
 use crate::engine::{MAX_TOKEN_SCALARS, SuggestionEngine};
-use crate::index::{TOP_K, normalize};
+use crate::index::{TOP_K, marks, normalize};
 use crate::types::SuggestionSet;
 
 /// The shipped words a prefix could become, best first, and how many are handed out.

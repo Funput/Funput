@@ -4,6 +4,7 @@ mod eviction;
 mod frequency;
 mod learning;
 mod lexicon;
+mod marks;
 mod persistence;
 mod seed;
 mod stress;

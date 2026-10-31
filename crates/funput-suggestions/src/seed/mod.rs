@@ -3,7 +3,6 @@
 //! - `pairs` — the hand-written pair list Predict falls back on, and its table.
 //! - `query` — what that list offers once the user's pairs have no evidence.
 //! - `syllables` — the shipped syllable list, indexed for completing a prefix.
-//! - `marks` — matching a syllable typed so far by the marks typed.
 //! - `complete` — where pairs and syllables fill the slots a prefix left empty.
 //!
 //! Off until a shell says which language the user is typing and how they place
@@ -14,7 +13,6 @@
 //! See `docs/features/vietnamese-seed-suggestion.md`.
 
 mod complete;
-mod marks;
 mod pairs;
 mod query;
 mod syllables;

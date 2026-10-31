@@ -7,8 +7,8 @@
 //! the prefix, so it is still a completion of what the user is typing.
 
 use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
-use crate::engine::SuggestionEngine;
-use crate::index::{NONE, TOP_K, normalize};
+use crate::engine::{MAX_TOKEN_SCALARS, SuggestionEngine};
+use crate::index::{NONE, TOP_K, marks, normalize};
 
 impl SuggestionEngine {
     pub(super) fn with_context(
@@ -46,7 +46,10 @@ impl SuggestionEngine {
         let Some(word) = self.words.get(context as usize) else {
             return 0;
         };
-        let folded_allowed = normalize::folded_chars(prefix).eq(normalize::exact_chars(prefix));
+        let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
+        let Some(typed) = normalize::exact_into(prefix, &mut buffer) else {
+            return 0;
+        };
 
         let mut slots = word.followers;
         let mut len = 0;
@@ -60,7 +63,7 @@ impl SuggestionEngine {
                 // Sorted by uses, so nothing after this one clears the bar either.
                 break;
             }
-            if self.completes(follower, prefix, folded_allowed) {
+            if self.completes(follower, typed) {
                 out[len] = follower.word;
                 len += 1;
             }
@@ -68,21 +71,10 @@ impl SuggestionEngine {
         len
     }
 
-    fn completes(&self, follower: Follower, prefix: &str, folded_allowed: bool) -> bool {
-        let Some(word) = follower.word(&self.words) else {
-            return false;
-        };
-        if starts_with(word.text.chars(), normalize::exact_chars(prefix)) {
-            return true;
-        }
-        folded_allowed
-            && starts_with(
-                normalize::folded_chars(&word.text),
-                normalize::folded_chars(prefix),
-            )
+    /// Whether the follower is what `typed` could still become, by the marks typed.
+    fn completes(&self, follower: Follower, typed: &str) -> bool {
+        follower
+            .word(&self.words)
+            .is_some_and(|word| marks::completes(typed, &word.text))
     }
-}
-
-fn starts_with(mut word: impl Iterator<Item = char>, prefix: impl Iterator<Item = char>) -> bool {
-    prefix.into_iter().all(|scalar| word.next() == Some(scalar))
 }

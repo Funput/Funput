@@ -64,12 +64,10 @@ fn the_shipped_pair_comes_before_the_syllables() {
 
 #[test]
 fn the_users_own_words_keep_their_slots() {
-    // `đư`, not `đươ`: the store itself still matches marks exactly, so `đươ` would
-    // not reach the learned `đường` (an open question in the design doc).
     let mut engine = engine(SuggestionConfig::default());
     engine.learn("đường");
     engine.learn("đường");
-    let words = offered(&engine, None, "đư");
+    let words = offered(&engine, None, "đươ");
     assert_eq!(
         words.first().map(String::as_str),
         Some("đường"),

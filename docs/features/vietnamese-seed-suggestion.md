@@ -63,9 +63,9 @@ Ràng buộc kế thừa nguyên từ hai tài liệu trước, không thương 
   phép và dung lượng tải. Tài liệu riêng, làm sau.
 - **Từ ghép nhiều âm tiết trên một ô** (`cảm ơn` hiện thành một gợi ý). Engine học và gợi
   ý theo âm tiết (`learn` loại token có khoảng trắng); đổi điều đó là đổi mô hình.
-- **Đổi cách kho cá nhân khớp prefix.** Hôm nay prefix có dấu chỉ khớp chính xác, nên
-  `đươ` không tìm ra `được` đã học. Phần B dưới đây khớp mềm hơn cho dữ liệu kèm app; đưa
-  cùng luật đó vào kho cá nhân là việc riêng, xem [câu hỏi mở](#câu-hỏi-mở).
+- ~~Đổi cách kho cá nhân khớp prefix.~~ **Đã đổi khi hiện thực**: làm luôn cùng Phần B, vì
+  để âm tiết kèm app khớp mềm hơn từ người dùng đã học là ngược với "cá nhân luôn đứng trước".
+  Xem [câu hỏi mở](#câu-hỏi-mở) 1.
 - Mô hình ngôn ngữ · trigram · tải dữ liệu qua mạng · dữ liệu suy ra từ corpus hoặc danh
   sách từ của bên thứ ba.
 
@@ -268,7 +268,7 @@ tự:
 | `thà` | `thành` | `thầy` (`à` không khớp `ầ`) |
 
 - Âm tiết trùng chính xác với prefix không được gợi ý (gõ `ăn` không cần ô `ăn`).
-- Kho cá nhân **không** đổi luật khớp trong bản này, xem [Không thuộc phạm vi](#không-thuộc-phạm-vi).
+- Kho cá nhân dùng **cùng luật này** (đã đổi khi hiện thực, xem câu hỏi mở 1).
 
 ### Cấu trúc tra cứu
 
@@ -299,8 +299,7 @@ tự:
   đứng trước trong kho), không khớp 0,5 µs. Nhóm `lookup` và `predict` ở `Off` không đổi so với
   `main` (đo xen kẽ hai nhánh).
 - `vi.txt` không có `đương`, nên bảng ví dụ ở trên thực tế ra `được · đường`.
-- Kho cá nhân vẫn khớp chính xác (câu hỏi mở 1): `đươ` chưa tìm ra `đường` đã học, nhưng âm tiết
-  kèm app thì có.
+- Luật khớp chuyển về `index/marks.rs`, là luật duy nhất cho cả kho cá nhân lẫn dữ liệu kèm app.
 
 ## Không đổi
 
@@ -428,10 +427,17 @@ Bước 6 không phụ thuộc bước 5, nên có thể chạy song song khi da
 
 ## Câu hỏi mở
 
-1. **Kho cá nhân có nên dùng luật khớp mới không?** Hôm nay `đươ` không tìm ra `được` đã
-   học. Đưa luật "theo những dấu đã gõ" vào trie cá nhân giúp cả người dùng lâu năm,
-   nhưng đụng vào trie `folded` và thứ tự kết quả hiện có. Đề xuất làm sau bước 7, khi đã
-   thấy luật đó chạy thật trên dữ liệu kèm app.
+1. ~~**Kho cá nhân có nên dùng luật khớp mới không?**~~ **Đã giải quyết** (cùng PR Phần B):
+   nếu chỉ dữ liệu kèm app khớp theo dấu đã gõ, `đươ` sẽ đưa âm tiết kèm app ra trong khi
+   `đường` người dùng đã học không hiện, ngược với "cá nhân luôn đứng trước".
+   `prefix_candidates` giờ: khớp chính xác trước; prefix không dấu đi trie `folded` như cũ
+   (luật dấu trùng với so khớp bỏ dấu, có proptest giữ); prefix có dấu đi trie chính xác theo
+   từng chữ (`ArenaTrie::find_matching` với `marks::matches`), rẽ vào mọi nhánh mà chữ đã gõ
+   có thể đứng thay, rồi gộp ba từ tốt nhất của mỗi nút cuối. Mỗi từ khớp đi qua đúng một nút
+   cuối, nên đây là ba từ tốt nhất thật trong mọi từ khớp, kể cả từ kết thúc ngay ở prefix
+   (`phô` ra `phố` dù `phòng · phóng · phỏng` dùng nhiều hơn). Tối đa 64 nút mỗi lần tra,
+   không cấp phát. Rerank theo ngữ cảnh dùng `marks::completes`. Đo: `khô` 152 ns; các ca tra
+   cũ nhanh hơn `main` 15–44% vì prefix chỉ chuẩn hoá một lần.
 2. **`context_evidence_seen = 3` có đúng không?** Thấp quá thì bảng rút lui trước khi người
    dùng kịp chấp nhận gợi ý; cao quá thì bảng cãi dữ liệu cá nhân lâu hơn. Chốt ở bước 7.
 3. **Có cần công tắc riêng "Gợi ý có sẵn" không?** Bản này nói không, dùng chung "Gợi ý từ".
