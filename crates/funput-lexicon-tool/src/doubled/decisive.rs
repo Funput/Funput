@@ -19,7 +19,8 @@
 use std::collections::BTreeSet;
 use std::ops::Bound;
 
-use super::scan::{self, SETUPS, Step};
+use super::scan::{self, Step};
+use crate::wordlist::setup::SETUPS;
 
 /// A set of lowercase words, asked whether any of them starts with a prefix.
 pub(crate) struct Words(BTreeSet<String>);

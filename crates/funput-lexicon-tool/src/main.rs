@@ -18,6 +18,7 @@ mod doubled;
 mod forms;
 mod pack;
 mod rank;
+mod wordlist;
 
 use std::io::{self, BufWriter};
 use std::process::ExitCode;

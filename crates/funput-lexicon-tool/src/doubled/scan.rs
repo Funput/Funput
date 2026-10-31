@@ -4,48 +4,9 @@
 //! every path a revert can take — `ss` after a tone, `seemed` reverting its own
 //! circumflex, `daddy` reverting `đ` — and keeps it in step when the core changes.
 
-use funput_core::{ExtraOnsets, InputMethod, SyllableRules};
-use funput_engine::Engine;
+use crate::wordlist::setup::Setup;
 
 use super::habit;
-
-/// One configuration a word is typed under.
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct Setup {
-    pub(crate) method: InputMethod,
-    pub(crate) rules: SyllableRules,
-    /// Eager restore on: a word that dead-ends is shown as its raw keys before the
-    /// next key, so a doubled key lands on raw letters and reverts nothing (`class`
-    /// keeps both `s`). Off, the same key reverts the tone (`clá` + `s` → `clas`).
-    pub(crate) eager: bool,
-}
-
-impl Setup {
-    const fn new(method: InputMethod, rules: SyllableRules, eager: bool) -> Self {
-        Self {
-            method,
-            rules,
-            eager,
-        }
-    }
-}
-
-/// Every setup a user can type English under where a revert could differ: both
-/// letter-keyed methods, with and without the extra onsets that let `f`/`j`/`w`/`z`
-/// start a syllable (`ferry` only loses an `r` once `f` is an onset), and with eager
-/// restore on and off.
-pub(crate) const SETUPS: [Setup; 8] = [
-    Setup::new(InputMethod::Telex, SyllableRules::STANDARD, true),
-    Setup::new(InputMethod::Telex, WIDE, true),
-    Setup::new(InputMethod::TelexAdvanced, SyllableRules::STANDARD, true),
-    Setup::new(InputMethod::TelexAdvanced, WIDE, true),
-    Setup::new(InputMethod::Telex, SyllableRules::STANDARD, false),
-    Setup::new(InputMethod::Telex, WIDE, false),
-    Setup::new(InputMethod::TelexAdvanced, SyllableRules::STANDARD, false),
-    Setup::new(InputMethod::TelexAdvanced, WIDE, false),
-];
-
-const WIDE: SyllableRules = SyllableRules::STANDARD.with_extra_onsets(ExtraOnsets::ZFWJ);
 
 /// The engine's state after one key of a word.
 pub(crate) struct Step {
@@ -66,13 +27,7 @@ pub(crate) struct Step {
 /// word's keys instead of appending to them, so that alone says when one happened.
 /// Their length does not: `tômr` + `o` reverts to `tomro`, one key longer.
 pub(crate) fn typed(word: &str, setup: Setup) -> Vec<Step> {
-    let mut engine = Engine::new();
-    engine.update_config(|config| {
-        config.method = setup.method;
-        config.syllable_rules = setup.rules;
-        config.eager_restore = setup.eager;
-        config.restore_doubled_keys = false;
-    });
+    let mut engine = setup.engine(|config| config.restore_doubled_keys = false);
     let (mut typed, mut reverting) = (String::new(), Vec::new());
     word.chars()
         .map(|key| {
@@ -102,6 +57,7 @@ pub(crate) fn shortened(word: &str, setup: Setup) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::wordlist::setup::SETUPS;
 
     #[test]
     fn a_doubled_tone_key_shortens_the_word() {
