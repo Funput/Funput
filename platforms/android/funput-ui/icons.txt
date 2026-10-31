@@ -84,3 +84,9 @@ envelope-simple
 shield-check
 scroll
 heart fill
+
+# Lists the user keeps: sorting, copying and blocking an item, kept on the device
+arrows-down-up
+copy
+prohibit
+lock-simple

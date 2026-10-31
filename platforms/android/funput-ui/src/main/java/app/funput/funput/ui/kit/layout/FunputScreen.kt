@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.funput.funput.ui.kit.glass.LocalGlassBackdrop
 import app.funput.funput.ui.kit.glass.glassSource
@@ -49,7 +50,9 @@ private val CollapseDistance = 40.dp
  * (icon buttons), an optional floating [tabBar], and
  * a centred column never wider than the layout token allows.
  *
- * [content] is a lazy list of sections (typically `FunputSection`s), spaced by the section gap.
+ * [content] is a lazy list of sections (typically `FunputSection`s), spaced by [itemSpacing]. A
+ * list too long to compose at once, drawn with `funputCardItems`, needs its rows to touch: such a
+ * screen passes no spacing and spaces its own sections.
  * The screen owns the glass backdrop its bars sample, so bars placed here need no wiring.
  */
 @Composable
@@ -60,6 +63,7 @@ fun FunputScreen(
     actions: (@Composable RowScope.() -> Unit)? = null,
     listState: LazyListState = rememberLazyListState(),
     tabBar: (@Composable () -> Unit)? = null,
+    itemSpacing: Dp = FunputUi.spacing.section,
     content: LazyListScope.() -> Unit,
 ) {
     val backdrop = rememberGlassBackdrop()
@@ -90,7 +94,7 @@ fun FunputScreen(
                         top = top,
                         bottom = bottom,
                     ),
-                    verticalArrangement = Arrangement.spacedBy(spacing.section),
+                    verticalArrangement = Arrangement.spacedBy(itemSpacing),
                     modifier = Modifier
                         .widthIn(max = spacing.contentMaxWidth)
                         .fillMaxSize()
