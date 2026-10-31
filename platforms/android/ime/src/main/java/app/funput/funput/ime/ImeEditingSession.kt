@@ -33,7 +33,7 @@ import app.funput.funput.keyboard.ui.FunputKeyboardView
 internal class ImeEditingSession(
     val nativeEngine: NativeVietnameseEngine,
     val typo: TypoCorrectionParts,
-    private val composition: AndroidCompositionSession,
+    val composition: AndroidCompositionSession,
     private val bar: SuggestionBarState,
     connection: () -> InputConnection?,
     val editorRuntime: ImeEditorRuntime,

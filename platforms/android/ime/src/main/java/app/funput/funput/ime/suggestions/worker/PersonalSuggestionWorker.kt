@@ -7,6 +7,7 @@ import android.os.Process
 import app.funput.funput.ime.suggestions.dictionary.DictionaryEditKind
 import app.funput.funput.ime.suggestions.dictionary.DictionaryEditOutcome
 import java.io.File
+import java.util.concurrent.atomic.AtomicReference
 
 internal class PersonalSuggestionWorker(
     private val storeDirectory: () -> File,
@@ -24,6 +25,9 @@ internal class PersonalSuggestionWorker(
     private var learnedSinceFlush = 0
     private val idleFlush = Runnable(::flushNow)
     private val drain = Runnable(::drainQueries)
+    /** Set on the main thread, taken on the worker; see [setSeedLanguage]. */
+    private val pendingSeed = AtomicReference<SeedLanguage?>()
+    private val applySeed = Runnable(::applyPendingSeed)
 
     init {
         worker.post(::openEngine)
@@ -58,6 +62,17 @@ internal class PersonalSuggestionWorker(
 
     fun flush() = worker.post(::flushNow)
 
+    /**
+     * Takes effect before any query submitted after it. A query can be drained in the same
+     * pass as the one before it, ahead of anything posted in between, so each query applies
+     * the latest setting itself rather than relying on a posted task's turn. The post covers
+     * a change with no query behind it; [openEngine] always runs first, as `init` posts it.
+     */
+    fun setSeedLanguage(language: SeedLanguage) {
+        pendingSeed.set(language)
+        worker.post(applySeed)
+    }
+
     fun clearQueries() = requests.clear()
 
     fun close(onClosed: () -> Unit = {}) {
@@ -82,6 +97,7 @@ internal class PersonalSuggestionWorker(
     private fun drainQueries() {
         while (true) {
             val request = requests.takeLatest() ?: break
+            applyPendingSeed()
             suggestionCounter("SuggestionGeneration", request.generation)
             val result = suggestionTrace("SuggestionJNIQuery") { engine?.query(request.prefix, request.context).orEmpty() }
             main.post { runCatching { publish(request, result) } }
@@ -89,7 +105,11 @@ internal class PersonalSuggestionWorker(
         if (requests.finishDrain()) worker.post(drain)
     }
 
-    private fun flushNow() = suggestionTrace("SuggestionFlush") {
+    private fun applyPendingSeed() {
+        pendingSeed.getAndSet(null)?.let { engine?.setSeedLanguage(it) }
+    }
+
+    private fun flushNow(): Unit = suggestionTrace("SuggestionFlush") {
         worker.removeCallbacks(idleFlush)
         if (engine?.flush() == true) learnedSinceFlush = 0
     }

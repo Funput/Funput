@@ -41,6 +41,11 @@ internal class PersonalSuggestionService(
         if (!value.enabled) clear()
     }
 
+    /** Called by [SeedLanguageReportingEngine] whenever the composer's state changes it. */
+    fun setSeedLanguage(language: SeedLanguage) {
+        worker?.setSeedLanguage(language)
+    }
+
     /** A field gets focus: also the moment to fold in what the settings app posted. */
     fun start(value: EditorInfoPolicy) {
         session += 1

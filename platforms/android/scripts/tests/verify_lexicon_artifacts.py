@@ -22,7 +22,8 @@ def verify(path):
         for abi in ("arm64-v8a", "x86_64"):
             native = archive.read(prefix + "lib/" + abi + "/libfunput_jni.so")
             assert native[:4] == b"\x7fELF"
-            assert b"Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeAttachLexicon" in native
+            for symbol in ("nativeAttachLexicon", "nativeSetSeedLanguage"):
+                assert b"Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_" + symbol.encode() in native
     print(f"{path.name}: {words} words, {len(lexicon)} bytes, CRC {crc:08x}; notice + both JNI ABIs verified")
 
 
