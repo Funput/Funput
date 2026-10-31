@@ -7,8 +7,8 @@ import KeyboardRenderer
 public final class PersonalSuggestionService {
     public var onCandidates: ((UInt64, [KeyboardSuggestionCandidate]) -> Void)?
     private let workerFactory: PersonalSuggestionWorkerFactory
-    private var worker: (any PersonalSuggestionWorking)?
-    private var workerConfiguration = PersonalSuggestionWorkerConfiguration(
+    private(set) var worker: (any PersonalSuggestionWorking)?
+    var workerConfiguration = PersonalSuggestionWorkerConfiguration(
         enabled: false,
         hasFullAccess: false,
         resetToken: nil
@@ -42,7 +42,8 @@ public final class PersonalSuggestionService {
         workerConfiguration = .init(
             enabled: enabled,
             hasFullAccess: hasFullAccess,
-            resetToken: resetToken
+            resetToken: resetToken,
+            seedLanguage: workerConfiguration.seedLanguage
         )
         self.activationGeneration = activationGeneration
         worker?.configure(workerConfiguration)

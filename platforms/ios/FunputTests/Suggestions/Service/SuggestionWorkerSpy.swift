@@ -1,4 +1,5 @@
 import Foundation
+import KeyboardInput
 import PersonalDictionary
 import PersonalSuggestions
 
@@ -47,6 +48,7 @@ final class SuggestionWorkerSpy: PersonalSuggestionWorking, @unchecked Sendable 
         case query(PersonalSuggestionQueryRequest)
         case flush
         case edit(DictionaryEditKind, word: String)
+        case setSeedLanguage(SuggestionSeedLanguage)
 
         var learned: (token: String, context: String?)? {
             guard case .learn(let token, let context) = self else { return nil }
@@ -87,6 +89,10 @@ final class SuggestionWorkerSpy: PersonalSuggestionWorking, @unchecked Sendable 
 
     func edit(_ kind: DictionaryEditKind, word: String) {
         events.append(.edit(kind, word: word))
+    }
+
+    func setSeedLanguage(_ language: SuggestionSeedLanguage) {
+        events.append(.setSeedLanguage(language))
     }
 
     func emit(_ values: [String], for request: PersonalSuggestionQueryRequest) {

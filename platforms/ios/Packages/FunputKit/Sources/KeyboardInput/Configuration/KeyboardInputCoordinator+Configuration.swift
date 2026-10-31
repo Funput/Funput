@@ -34,7 +34,7 @@ public extension KeyboardInputCoordinator {
         resetPersonalSuggestionTracking()
         replaceState(inputMethod: configuration.inputMethod, language: configuration.language)
         composer.setTypoCorrection(configuration.typoCorrection)
-        composer.setEnabled(state.usesVietnameseComposition)
+        syncComposerLanguage()
     }
 }
 
