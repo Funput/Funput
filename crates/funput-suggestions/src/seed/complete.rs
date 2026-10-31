@@ -2,7 +2,7 @@
 //!
 //! The user's own words keep the slots they took. After them, in order: the second
 //! syllable of a shipped pair after the previous word, if the prefix could become it
-//! (`cảm` + `ơ` → `ơn`), then the commonest listed syllables the prefix could become.
+//! (`tuy` + `nh` → `nhiên`), then the commonest listed syllables the prefix could become.
 //! An unmarked prefix (`th`) may still be English, so the shipped words stop one slot
 //! short, the English lexicon gets its turn, and only then is the rest filled. The
 //! words are looked up once per keystroke and handed out over those two turns. See

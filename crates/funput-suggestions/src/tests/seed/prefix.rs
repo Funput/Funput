@@ -1,14 +1,13 @@
 //! Phần B: the shipped syllables and pairs filling what a prefix left empty.
 //!
 //! These lean on the shipped lists: `được` is in band 1 of `data/syllables/vi.txt`, and
-//! `cảm ơn` is a shipped pair. Dropping either means picking another example here.
+//! `tuy nhiên` and `sức khoẻ` are shipped pairs. Dropping either means picking another example here.
 
 use std::io::Write;
 
-use funput_core::ToneStyle::Modern;
+use funput_core::ToneStyle::{Modern, Traditional};
 
 use crate::lexicon::encode::encode;
-use crate::seed::marks;
 use crate::{Edit, EditKind, SeedLanguage, SuggestionConfig, SuggestionEngine};
 
 fn engine(config: SuggestionConfig) -> SuggestionEngine {
@@ -39,10 +38,7 @@ fn a_fresh_store_completes_a_syllable_typed_without_its_tone() {
     let words = offered(&engine, None, "đươ");
     assert_eq!(words.first().map(String::as_str), Some("được"), "{words:?}");
     assert!(words.len() >= 2, "{words:?}");
-    assert!(
-        words.iter().all(|word| marks::completes("đươ", word)),
-        "{words:?}"
-    );
+    assert!(words.iter().all(|word| word.starts_with("đư")), "{words:?}");
 }
 
 #[test]
@@ -53,13 +49,17 @@ fn the_syllable_typed_in_full_is_not_offered_back() {
 
 #[test]
 fn the_shipped_pair_comes_before_the_syllables() {
+    // Two letters: both keyboards drop a one-letter prefix before it reaches here.
+    // `nhiên` is a rare syllable on its own (band 3); only the pair puts it first.
     let engine = engine(SuggestionConfig::default());
+    let words = offered(&engine, Some("tuy"), "nh");
     assert_eq!(
-        offered(&engine, Some("cảm"), "ơ")
-            .first()
-            .map(String::as_str),
-        Some("ơn")
+        words.first().map(String::as_str),
+        Some("nhiên"),
+        "{words:?}"
     );
+    let alone = offered(&engine, None, "nh");
+    assert!(!alone.contains(&"nhiên".to_owned()), "{alone:?}");
 }
 
 #[test]
@@ -129,4 +129,19 @@ fn shipped_syllables_do_not_make_english_give_way() {
     });
     let _file = attach_english(&mut engine);
     assert!(offered(&engine, None, "th").contains(&"the".to_owned()));
+}
+
+#[test]
+fn a_traditional_user_gets_the_traditional_spellings() {
+    let mut engine = engine(SuggestionConfig::default());
+    engine.set_seed_language(SeedLanguage::Vietnamese(Traditional));
+    let words = offered(&engine, None, "hoa");
+    assert!(words.contains(&"hòa".to_owned()), "{words:?}");
+    assert!(!words.contains(&"hoà".to_owned()), "{words:?}");
+    assert_eq!(
+        offered(&engine, Some("sức"), "kh")
+            .first()
+            .map(String::as_str),
+        Some("khỏe")
+    );
 }

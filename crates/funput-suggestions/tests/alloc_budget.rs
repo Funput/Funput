@@ -162,7 +162,7 @@ fn warm_lookup_from_the_shipped_syllables_does_not_allocate() {
             for (previous, prefix) in [
                 (None, "đươ"),
                 (None, "th"),
-                (Some("cảm"), "ơ"),
+                (Some("tuy"), "nh"),
                 (None, "zzzz"),
             ] {
                 std::hint::black_box(

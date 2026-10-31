@@ -230,7 +230,7 @@ Thứ tự lấp ba ô khi `seed_language` là `Vietnamese`:
 ```text
 suggest_with(prev, prefix):
     P = như hôm nay (trie cá nhân, rerank theo ngữ cảnh)
-    S = [seed_pair(prev)] nếu nó khớp prefix          // ví dụ `cảm` + `ơ` → `ơn`
+    S = [seed_pair(prev)] nếu nó khớp prefix          // ví dụ `tuy` + `nh` → `nhiên`
     V = seed_syllables(prefix), bỏ trùng P và S, bỏ từ bị chặn
     E = en.lex như hôm nay
     lấp: P, rồi S, rồi V, rồi E
@@ -295,7 +295,7 @@ tự:
   độ phổ biến), kiểu dấu, và chỉ số cách viết kiểu còn lại để từ bị chặn ở kiểu này cũng bị chặn ở kiểu
   kia. 24 byte mỗi mục, khoảng 50 KiB cho 2.100 âm tiết, gác bằng test ≤ 64 KiB. `skip` (tra từ bị
   chặn) chỉ chạy cho âm tiết đủ tốt để vào top 3.
-- **Đo (release, kho 5.000 từ):** `đươ` 1,4 µs, `th` 2,85 µs, `cảm` + `ơ` 4,2 µs (phần lớn là tìm chữ
+- **Đo (release, kho 5.000 từ):** `đươ` 1,4 µs, `th` 2,85 µs, `tuy` + `nh` khoảng 4 µs (phần lớn là tìm chữ
   đứng trước trong kho), không khớp 0,5 µs. Nhóm `lookup` và `predict` ở `Off` không đổi so với
   `main` (đo xen kẽ hai nhánh).
 - `vi.txt` không có `đương`, nên bảng ví dụ ở trên thực tế ra `được · đường`.

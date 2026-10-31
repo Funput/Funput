@@ -14,7 +14,7 @@
 //! See `docs/features/vietnamese-seed-suggestion.md`.
 
 mod complete;
-pub(crate) mod marks;
+mod marks;
 mod pairs;
 mod query;
 mod syllables;

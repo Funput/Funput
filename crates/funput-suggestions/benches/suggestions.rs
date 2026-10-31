@@ -115,7 +115,7 @@ fn bench_seed(c: &mut Criterion) {
     for (name, previous, prefix) in [
         ("marked", None, "đươ"),
         ("unmarked", None, "th"),
-        ("pair", Some("cảm"), "ơ"),
+        ("pair", Some("tuy"), "nh"),
         ("predict", Some("cảm"), ""),
         ("miss", None, "zzzz"),
     ] {

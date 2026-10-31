@@ -37,7 +37,8 @@ impl SyllableIndex {
     }
 }
 
-/// Points each style-specific spelling at its counterpart.
+/// Points each style-specific spelling at its counterpart, searching only the run of
+/// entries with the same folded form.
 fn link_spellings(entries: &mut [Entry]) {
     for index in 0..entries.len() {
         let style = match entries[index].styles {
@@ -48,8 +49,17 @@ fn link_spellings(entries: &mut [Entry]) {
         let Some(other) = respell_tone(entries[index].text, style) else {
             continue;
         };
-        if let Some(at) = entries.iter().position(|entry| entry.text == other) {
-            entries[index].other = u16::try_from(at).unwrap_or(NO_OTHER);
+        // Both spellings fold the same, and the entries are sorted by folded form, so
+        // the counterpart sits in the run of entries that fold like this one.
+        let folded = normalize::folded(entries[index].text);
+        let start =
+            entries.partition_point(|entry| normalize::folded_chars(entry.text).lt(folded.chars()));
+        let found = entries[start..]
+            .iter()
+            .take_while(|entry| normalize::folded_chars(entry.text).eq(folded.chars()))
+            .position(|entry| entry.text == other);
+        if let Some(at) = found {
+            entries[index].other = u16::try_from(start + at).unwrap_or(NO_OTHER);
         }
     }
 }
