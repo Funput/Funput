@@ -1,7 +1,10 @@
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::Cell;
 
-use funput_suggestions::{SuggestionConfig, SuggestionEngine, syllable_tier, syllable_weight};
+use funput_core::ToneStyle;
+use funput_suggestions::{
+    SeedLanguage, SuggestionConfig, SuggestionEngine, syllable_tier, syllable_weight,
+};
 
 struct CountingAllocator;
 
@@ -106,6 +109,40 @@ fn warm_prediction_does_not_allocate() {
         allocations, 0,
         "warm prediction allocated {allocations} times"
     );
+}
+
+/// A prediction from the shipped pairs is on the same budget. The tables are
+/// built when the shell turns them on, outside the measurement; every lookup after
+/// that normalizes onto the stack and binary-searches, in both tone styles, for a
+/// context the store holds, one it does not, and one the list has no pair for.
+#[test]
+fn warm_prediction_from_the_shipped_pairs_does_not_allocate() {
+    let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
+    engine.learn_after(None, "tuy");
+    for style in [ToneStyle::Modern, ToneStyle::Traditional] {
+        engine.set_seed_language(SeedLanguage::Vietnamese(style));
+        assert_eq!(
+            engine.suggest_with(Some("sức"), "").len(),
+            1,
+            "the hit must be real"
+        );
+
+        let allocations = measure(|| {
+            for _ in 0..100_000 {
+                for previous in ["sức", "Tuy", "của"] {
+                    std::hint::black_box(engine.suggest_with(
+                        std::hint::black_box(Some(previous)),
+                        std::hint::black_box(""),
+                    ));
+                }
+            }
+        });
+
+        assert_eq!(
+            allocations, 0,
+            "a {style:?} prediction from the shipped pairs allocated {allocations} times"
+        );
+    }
 }
 
 /// Typo correction asks this once per candidate at a word boundary, so it holds the

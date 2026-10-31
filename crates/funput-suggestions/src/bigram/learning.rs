@@ -62,15 +62,8 @@ impl SuggestionEngine {
     /// the learn path, and this now runs on every keystroke.
     pub(crate) fn context_slot(&self, previous: &str) -> Option<(u32, u16)> {
         let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
-        let mut len = 0;
-        for scalar in normalize::exact_chars(previous) {
-            if len + scalar.len_utf8() > buffer.len() {
-                // Longer than anything `learn` would have accepted.
-                return None;
-            }
-            len += scalar.encode_utf8(&mut buffer[len..]).len();
-        }
-        let key = std::str::from_utf8(&buffer[..len]).ok()?;
+        // `None` is a word longer than anything `learn` would have accepted.
+        let key = normalize::exact_into(previous, &mut buffer)?;
         self.words
             .iter()
             .position(|word| word.text == key)

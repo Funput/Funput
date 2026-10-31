@@ -46,6 +46,10 @@ kéo theo corpus, giấy phép, kích thước gói và một đường dữ li�
 thì đã được thiết kế riêng, xem [english-lexicon-suggestion.md](english-lexicon-suggestion.md);
 bigram vẫn chỉ học từ người dùng.
 
+**Đã đổi sau đó**: Predict có thêm một bảng cặp tiếng Việt viết tay kèm app, chỉ nói khi
+bigram cá nhân chưa nói được gì và tự rút lui khi người dùng đã có dữ liệu; xem
+[vietnamese-seed-suggestion.md](vietnamese-seed-suggestion.md).
+
 Cũng ngoài phạm vi: mô hình ngôn ngữ · trigram · học từ nội dung người dùng không tự
 gõ (paste, văn bản có sẵn) · gợi ý ở các shell desktop · đồng bộ giữa thiết bị.
 

@@ -32,6 +32,20 @@ pub(crate) fn is_marked(exact: &str) -> bool {
     folded_chars(exact).ne(exact.chars())
 }
 
+/// [`exact`] written onto `buffer` instead of the heap, for a query path that must
+/// not allocate. `None` when the word does not fit, which for a buffer sized to
+/// `MAX_TOKEN_SCALARS` means a word no list could hold.
+pub(crate) fn exact_into<'b>(input: &str, buffer: &'b mut [u8]) -> Option<&'b str> {
+    let mut len = 0;
+    for scalar in exact_chars(input) {
+        if len + scalar.len_utf8() > buffer.len() {
+            return None;
+        }
+        len += scalar.encode_utf8(&mut buffer[len..]).len();
+    }
+    std::str::from_utf8(&buffer[..len]).ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

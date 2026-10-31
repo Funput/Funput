@@ -22,6 +22,7 @@ use crate::dictionary::Origin;
 use crate::index::ArenaTrie;
 use crate::lexicon::LexiconSlot;
 use crate::persistence::{JournalEntry, Loaded, Store};
+use crate::seed::SeedSlot;
 use crate::types::WordRecord;
 
 pub(crate) const PENDING_LIMIT: usize = 256;
@@ -68,6 +69,8 @@ pub struct SuggestionEngine {
     /// The words the user blocked: never learned, never offered, English
     /// lexicon included.
     pub(crate) blocked: BlockedWords,
+    /// The shipped Vietnamese data, and whether it may speak.
+    pub(crate) seed: SeedSlot,
 }
 
 impl SuggestionEngine {
@@ -88,6 +91,7 @@ impl SuggestionEngine {
             journalled_previous: None,
             lexicon: LexiconSlot::default(),
             blocked: BlockedWords::default(),
+            seed: SeedSlot::default(),
         }
     }
 

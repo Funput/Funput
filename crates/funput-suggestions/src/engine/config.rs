@@ -24,6 +24,11 @@ pub struct SuggestionConfig {
     /// feature's judgement: "cảm" is nearly always followed by "ơn" and clears it
     /// at once, while "của" can be followed by anything and never will.
     pub context_dominance_percent: u8,
+    /// How often a word must have been seen as a context before Predict's silence
+    /// counts as the user's answer. Below it, the user's pairs have no evidence
+    /// either way and shipped data may speak for them; past it, a Predict that
+    /// says nothing means what follows is spread out, and nothing fills the slot.
+    pub context_evidence_seen: u16,
     /// How many promoted words carrying Vietnamese marks make the store a
     /// Vietnamese one. From then on, a prefix whose personal answer holds such a
     /// word is Vietnamese typing, and the English lexicon stays out of its empty
@@ -46,6 +51,7 @@ impl Default for SuggestionConfig {
             context_rerank_uses: 1,
             context_predict_uses: 2,
             context_dominance_percent: 40,
+            context_evidence_seen: 3,
             lexicon_yield_after_words: 200,
             max_added_words: 1_000,
             max_blocked_words: 1_000,
@@ -66,6 +72,7 @@ pub(crate) fn sanitize(config: SuggestionConfig) -> SuggestionConfig {
         context_rerank_uses: config.context_rerank_uses.max(1),
         context_predict_uses: config.context_predict_uses.max(1),
         context_dominance_percent: config.context_dominance_percent.min(100),
+        context_evidence_seen: config.context_evidence_seen.max(1),
         lexicon_yield_after_words: config.lexicon_yield_after_words,
         max_added_words: config.max_added_words.min(max_words - 1),
         max_blocked_words: config.max_blocked_words,

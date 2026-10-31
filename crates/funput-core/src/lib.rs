@@ -58,6 +58,7 @@ mod validation;
 
 pub use input_method::{KeyRole, key_role};
 pub use options::{ComposeOptions, InputMethod, ToneStyle};
+pub use orthography::respell_tone;
 
 /// Result kind for a single keystroke transform.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
