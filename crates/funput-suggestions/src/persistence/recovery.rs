@@ -18,6 +18,7 @@ use super::fs::{sync_dir, truncate};
 use super::schema::{MAX_JOURNAL_BYTES, MAX_SNAPSHOT_BYTES};
 use super::{JournalEntry, Loaded, Store};
 use crate::binary::Cursor;
+use crate::ngram::{PROBE_WINDOW, TrigramTable};
 
 /// Whether a reader may change the files it reads.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -54,7 +55,7 @@ impl Store {
             // frame appended after it. Best effort — an empty engine works either
             // way, and the next flush will try again.
             if access == Access::Repair {
-                let _ = self.compact(&[], &[], 0);
+                let _ = self.compact(&[], &[], &TrigramTable::new(PROBE_WINDOW), 0);
             }
             return Ok(Loaded::default());
         };
@@ -62,6 +63,7 @@ impl Store {
         Ok(Loaded {
             words: snapshot.words,
             blocked: snapshot.blocked,
+            trigrams: snapshot.trigrams,
             sequence: snapshot.sequence,
             journal,
             journal_bytes,

@@ -13,6 +13,7 @@
 //!   learn / query / durability behaviours.
 //! - `index/` — the in-memory search index (prefix trie, ranking, key normalization).
 //! - `lexicon/` — the read-only English word list (`en.lex`) and its format.
+//! - `ngram/` — contexts longer than one word: the fixed-size trigram table.
 //! - `persistence/` — the crash-safe on-disk snapshot + journal store.
 //! - `seed/` — shipped Vietnamese data for a bar the user has not taught anything
 //!   yet: the pair list Predict falls back on.
@@ -27,6 +28,7 @@ mod engine;
 mod index;
 mod keep;
 mod lexicon;
+mod ngram;
 mod persistence;
 mod seed;
 mod syllables;

@@ -10,9 +10,16 @@ use tempfile::TempDir;
 /// resolving a real context costs rather than what an early slot costs.
 const SHARP_CONTEXT: &str = "word2500";
 const FLAT_CONTEXT: &str = "word2501";
+/// Two more, typed one after the other, for a trigram context.
+const TRIGRAM_OLDER: &str = "word2498";
+const TRIGRAM_PREVIOUS: &str = "word2502";
 
 fn populated() -> SuggestionEngine {
-    let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
+    populated_with(SuggestionConfig::default())
+}
+
+fn populated_with(config: SuggestionConfig) -> SuggestionEngine {
+    let mut engine = SuggestionEngine::in_memory(config);
     for index in 0..5_000 {
         let word = format!("word{index:04}");
         engine.learn(&word);
@@ -81,7 +88,19 @@ fn bench_predict(c: &mut Criterion) {
             engine.learn_after(Some(FLAT_CONTEXT), word);
         }
     }
+    // A trigram that speaks: the two words, then the same third word, each time.
+    for _ in 0..8 {
+        engine.learn(TRIGRAM_OLDER);
+        engine.learn_after(Some(TRIGRAM_OLDER), TRIGRAM_PREVIOUS);
+        engine.learn_after(Some(TRIGRAM_PREVIOUS), "bạn");
+    }
     let engine = engine;
+    assert_eq!(
+        engine
+            .suggest_in(&[TRIGRAM_OLDER, TRIGRAM_PREVIOUS], "")
+            .len(),
+        1
+    );
     assert_eq!(engine.suggest_with(Some(SHARP_CONTEXT), "").len(), 1);
     assert_eq!(engine.suggest_with(Some(FLAT_CONTEXT), "").len(), 0);
 
@@ -101,6 +120,14 @@ fn bench_predict(c: &mut Criterion) {
             });
         });
     }
+    group.bench_function("trigram", |b| {
+        b.iter(|| {
+            black_box(
+                engine.suggest_in(black_box(&[TRIGRAM_OLDER, TRIGRAM_PREVIOUS]), black_box("")),
+            )
+            .len()
+        });
+    });
     group.finish();
 }
 
@@ -133,6 +160,26 @@ fn bench_learning(c: &mut Criterion) {
     c.bench_function("suggestions/learn/existing", |b| {
         b.iter(|| black_box(engine.learn(black_box("word1234"))))
     });
+
+    // Every learn chained to the one before: with order 2 it writes a pair, with
+    // order 3 a pair and a trigram. The difference is what the table costs.
+    for (name, context_order) in [("chained", 2), ("trigram", 3)] {
+        let mut engine = populated_with(SuggestionConfig {
+            context_order,
+            ..SuggestionConfig::default()
+        });
+        let pair = [SHARP_CONTEXT, FLAT_CONTEXT];
+        let mut turn = 0;
+        engine.learn(pair[0]);
+        c.bench_function(&format!("suggestions/learn/{name}"), |b| {
+            b.iter(|| {
+                turn ^= 1;
+                black_box(
+                    engine.learn_after(black_box(Some(pair[turn ^ 1])), black_box(pair[turn])),
+                )
+            })
+        });
+    }
 
     // The eviction path, on a lexicon already full of promoted words. Each
     // iteration learns one new word twice: the first call evicts a promoted word

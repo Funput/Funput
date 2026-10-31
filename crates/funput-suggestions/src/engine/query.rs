@@ -67,7 +67,7 @@ impl SuggestionEngine {
     /// against how likely each one is to be what this user meant.
     pub fn frequency(&self, word: &str) -> u32 {
         self.context_slot(word)
-            .and_then(|(index, _)| self.words.get(index as usize))
+            .and_then(|slot| self.words.get(slot.index as usize))
             .map_or(0, |record| record.uses)
     }
 
@@ -116,6 +116,7 @@ impl SuggestionEngine {
             estimated_heap_bytes: word_bytes
                 + pending_bytes
                 + self.blocked.heap_bytes()
+                + self.trigrams.heap_bytes()
                 + self.exact.heap_bytes()
                 + self.folded.heap_bytes(),
             last_snapshot_bytes: self.last_snapshot_bytes,

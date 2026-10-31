@@ -88,6 +88,35 @@ fn warm_lookup_with_a_context_does_not_allocate() {
     );
 }
 
+/// Two words of context resolve in one pass over the store and probe a fixed
+/// window of the trigram table: the same budget as one word, Predict and Rerank.
+#[test]
+fn warm_lookup_with_two_words_of_context_does_not_allocate() {
+    let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
+    for _ in 0..3 {
+        engine.learn_after(None, "cảm");
+        engine.learn_after(Some("cảm"), "ơn");
+        engine.learn_after(Some("ơn"), "bạn");
+    }
+    assert_eq!(engine.suggest_in(&["cảm", "ơn"], "").len(), 1);
+
+    let allocations = measure(|| {
+        for _ in 0..100_000 {
+            for prefix in ["", "b"] {
+                std::hint::black_box(engine.suggest_in(
+                    std::hint::black_box(&["cảm", "ơn"]),
+                    std::hint::black_box(prefix),
+                ));
+            }
+        }
+    });
+
+    assert_eq!(
+        allocations, 0,
+        "warm lookup with two words of context allocated {allocations} times"
+    );
+}
+
 /// Prediction runs after every space, so it is on the same budget: it normalizes
 /// the previous word and walks four follower slots with no heap in sight.
 #[test]

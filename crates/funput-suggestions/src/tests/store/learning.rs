@@ -1,6 +1,6 @@
 use proptest::prelude::*;
 
-use super::*;
+use crate::tests::*;
 
 #[test]
 fn second_use_promotes_and_ranking_is_deterministic() {

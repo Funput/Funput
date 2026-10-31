@@ -32,7 +32,7 @@ pub(super) fn encode(bytes: &mut Vec<u8>, word: &WordRecord, words: &[WordRecord
     } else {
         0
     });
-    encode_followers(bytes, word, words);
+    encode_edges(bytes, word.context_seen, &word.followers, words);
 }
 
 pub(super) fn decode(cursor: &mut Cursor<'_>, version: u16) -> io::Result<WordRecord> {
@@ -45,19 +45,24 @@ pub(super) fn decode(cursor: &mut Cursor<'_>, version: u16) -> io::Result<WordRe
         word.origin = Origin::Added;
     }
     if version >= 2 {
-        (word.context_seen, word.followers) = decode_followers(cursor)?;
+        (word.context_seen, word.followers) = decode_edges(cursor)?;
     }
     Ok(word)
 }
 
+/// A context's count and its follower edges, for a word here and for a trigram
+/// entry in `ngram`.
+///
 /// Only the slots still pointing at their word go out, so a word nobody has
 /// followed costs three bytes rather than twenty-seven.
-fn encode_followers(bytes: &mut Vec<u8>, word: &WordRecord, words: &[WordRecord]) {
-    put_u16(bytes, word.context_seen);
-    let live = word
-        .followers
-        .iter()
-        .filter(|slot| slot.word(words).is_some());
+pub(super) fn encode_edges(
+    bytes: &mut Vec<u8>,
+    context_seen: u16,
+    followers: &[Follower; FOLLOWER_SLOTS],
+    words: &[WordRecord],
+) {
+    put_u16(bytes, context_seen);
+    let live = followers.iter().filter(|slot| slot.word(words).is_some());
     bytes.push(live.clone().count() as u8);
     for follower in live {
         put_u32(bytes, follower.word);
@@ -65,7 +70,9 @@ fn encode_followers(bytes: &mut Vec<u8>, word: &WordRecord, words: &[WordRecord]
     }
 }
 
-fn decode_followers(cursor: &mut Cursor<'_>) -> io::Result<(u16, [Follower; FOLLOWER_SLOTS])> {
+pub(super) fn decode_edges(
+    cursor: &mut Cursor<'_>,
+) -> io::Result<(u16, [Follower; FOLLOWER_SLOTS])> {
     let context_seen = cursor.u16()?;
     let count = cursor.u8()? as usize;
     if count > FOLLOWER_SLOTS {

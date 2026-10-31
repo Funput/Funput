@@ -1,12 +1,12 @@
 //! The [`SuggestionEngine`] facade — its state, lifecycle (`in_memory` / `open`),
 //! and capacity policy — plus the behaviours split by concern into [`learning`]
 //! (learn), [`query`] (suggest/stats), and [`durability`] (flush/compact/reset).
-//! [`admission`] decides how often a word has to be seen before learning offers it.
+//! `policy` decides who gets into the store and who makes room.
 
-pub(crate) mod admission;
 mod config;
 mod durability;
 mod learning;
+pub(crate) mod policy;
 mod query;
 
 pub(crate) use config::MAX_TOKEN_SCALARS;
@@ -18,9 +18,9 @@ use std::path::Path;
 use config::sanitize;
 
 use crate::dictionary::BlockedWords;
-use crate::dictionary::Origin;
 use crate::index::ArenaTrie;
 use crate::lexicon::LexiconSlot;
+use crate::ngram::{JournalChain, TrigramTable};
 use crate::persistence::{JournalEntry, Loaded, Store};
 use crate::seed::SeedSlot;
 use crate::types::WordRecord;
@@ -58,12 +58,15 @@ pub struct SuggestionEngine {
     /// Indexed words evicted since the last rebuild — that is, how many dead
     /// entries the tries are currently carrying.
     pub(crate) evictions_since_rebuild: u32,
-    /// The slot and generation of the last token appended to the journal.
+    /// The last tokens appended to the journal, while each followed the one before.
     ///
     /// Replay rebuilds pairs from adjacency, so the writer has to know whether
     /// the context it was handed really is what it wrote last. When it is not, a
-    /// break goes in and replay loses an edge rather than inventing one.
-    pub(crate) journalled_previous: Option<(u32, u16)>,
+    /// break goes in and replay loses an edge rather than inventing one. Two
+    /// chained links are what a trigram is learned from.
+    pub(crate) journal_chain: JournalChain,
+    /// Two-word contexts and what followed them.
+    pub(crate) trigrams: TrigramTable,
     /// The shipped English word list, beside the personal store, never in it.
     pub(crate) lexicon: LexiconSlot,
     /// The words the user blocked: never learned, never offered, English
@@ -75,8 +78,9 @@ pub struct SuggestionEngine {
 
 impl SuggestionEngine {
     pub fn in_memory(config: SuggestionConfig) -> Self {
+        let config = sanitize(config);
         Self {
-            config: sanitize(config),
+            config,
             words: Vec::new(),
             exact: ArenaTrie::new(),
             folded: ArenaTrie::new(),
@@ -88,7 +92,8 @@ impl SuggestionEngine {
             journal_bytes: 0,
             rebuilds: 0,
             evictions_since_rebuild: 0,
-            journalled_previous: None,
+            journal_chain: JournalChain::default(),
+            trigrams: TrigramTable::new(config.ngram_contexts),
             lexicon: LexiconSlot::default(),
             blocked: BlockedWords::default(),
             seed: SeedSlot::default(),
@@ -114,35 +119,12 @@ impl SuggestionEngine {
         engine.blocked = BlockedWords::from_loaded(loaded.blocked);
         engine.sequence = loaded.sequence;
         engine.journal_bytes = loaded.journal_bytes;
+        for entry in loaded.trigrams {
+            engine.trigrams.insert(entry, &engine.words);
+        }
         engine.enforce_capacity();
         engine.rebuild_tries();
         engine.replay(loaded.journal);
         engine
-    }
-
-    /// The learned word that should make room next. Words added by hand never do.
-    pub(crate) fn lowest_ranked_index(&self) -> Option<usize> {
-        self.words
-            .iter()
-            .enumerate()
-            .filter(|(_, word)| word.origin == Origin::Learned)
-            .min_by(|(_, left), (_, right)| {
-                left.uses
-                    .cmp(&right.uses)
-                    .then_with(|| left.last_used.cmp(&right.last_used))
-                    .then_with(|| right.text.cmp(&left.text))
-            })
-            .map(|(index, _)| index)
-    }
-
-    /// Only ever called while loading, which rebuilds the tries straight after:
-    /// `remove_slot` leaves them stale.
-    fn enforce_capacity(&mut self) {
-        while self.words.len() > self.config.max_words {
-            let Some(index) = self.lowest_ranked_index() else {
-                break;
-            };
-            self.remove_slot(index);
-        }
     }
 }

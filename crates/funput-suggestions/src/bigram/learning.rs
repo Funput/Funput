@@ -2,10 +2,10 @@
 
 use super::follower::{FOLLOWER_SLOTS, Follower};
 use super::slots;
-use crate::engine::{MAX_TOKEN_SCALARS, SuggestionEngine};
-use crate::index::normalize;
+use crate::engine::SuggestionEngine;
 use crate::persistence::JournalEntry;
 use crate::types::LearnOutcome;
+use crate::types::WordRef;
 
 impl SuggestionEngine {
     /// Learn `token`, and record that it followed `previous`.
@@ -14,6 +14,10 @@ impl SuggestionEngine {
     /// at document context, so a platform that cannot vouch for what came before
     /// — a fresh focus, a moved caret, a sentence boundary — passes `None` and
     /// gets exactly the behaviour `learn` always had.
+    ///
+    /// The word before `previous` is not asked for: when `previous` itself was
+    /// learned after a word, the journal already says so, and that is where the
+    /// trigram comes from (see `ngram::chain`).
     pub fn learn_after(&mut self, previous: Option<&str>, token: &str) -> LearnOutcome {
         self.learn_after_inner(previous, token, true)
     }
@@ -33,7 +37,8 @@ impl SuggestionEngine {
         // Anything else — a sentence boundary, an ignored token in between, a
         // context evicted since — is left unchained, and replay then misses an
         // edge instead of inventing one.
-        let chained = context.is_some() && context == self.journalled_previous;
+        let chained = context.is_some() && context == self.journal_chain.last();
+        let older = chained.then(|| self.journal_chain.before_last()).flatten();
 
         let (outcome, word_id) = self.learn_inner(token);
         if outcome == LearnOutcome::Ignored {
@@ -43,31 +48,19 @@ impl SuggestionEngine {
             let token = self.words[word_id as usize].text.clone();
             self.push_pending(JournalEntry::Learned { token, chained });
         }
-        if let Some((index, generation)) = context
-            && self.words[index as usize].generation == generation
+        let Some(learned) = WordRef::at(word_id, &self.words) else {
+            return outcome;
+        };
+        if let Some(context) = context
+            && context.is_live(&self.words)
         {
-            self.record_edge(index as usize, word_id);
+            self.record_edge(context.index as usize, word_id);
+            if let Some(older) = older {
+                self.record_trigram([older, context], learned);
+            }
         }
-        self.journalled_previous = Some((word_id, self.words[word_id as usize].generation));
+        self.journal_chain.push(learned, chained);
         outcome
-    }
-
-    /// The slot `previous` sits in, and the generation it sits there at.
-    ///
-    /// Normalizes onto the stack and then compares with `==`, which is the same
-    /// shape `upsert_word` uses: the length check reads out of the record itself
-    /// and rejects almost every word without touching its heap buffer. Comparing
-    /// through `normalize::exact_chars` inside the loop instead would rebuild an
-    /// NFC iterator per word and take a cache miss on each one — affordable on
-    /// the learn path, and this now runs on every keystroke.
-    pub(crate) fn context_slot(&self, previous: &str) -> Option<(u32, u16)> {
-        let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
-        // `None` is a word longer than anything `learn` would have accepted.
-        let key = normalize::exact_into(previous, &mut buffer)?;
-        self.words
-            .iter()
-            .position(|word| word.text == key)
-            .map(|index| (index as u32, self.words[index].generation))
     }
 
     fn record_edge(&mut self, context: usize, next_id: u32) {
@@ -81,5 +74,12 @@ impl SuggestionEngine {
 
         let word = &mut self.words[context];
         slots::record(&mut word.followers, &mut word.context_seen, dead, next);
+    }
+
+    /// Learning `next` may have evicted the older word, so it is checked here.
+    fn record_trigram(&mut self, key: [WordRef; 2], next: WordRef) {
+        if self.config.reads_trigrams() && key[0].is_live(&self.words) {
+            self.trigrams.record(key, next, &self.words);
+        }
     }
 }

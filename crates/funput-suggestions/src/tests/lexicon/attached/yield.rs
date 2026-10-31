@@ -7,7 +7,7 @@ use std::io::Write;
 use proptest::prelude::*;
 
 use super::*;
-use crate::engine::admission::promotion_threshold;
+use crate::engine::policy::admission::promotion_threshold;
 use crate::index::normalize;
 use crate::{SuggestionConfig, SuggestionEngine};
 

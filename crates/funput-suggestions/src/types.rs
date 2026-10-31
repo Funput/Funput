@@ -1,6 +1,6 @@
 use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
 use crate::dictionary::Origin;
-use crate::index::TOP_K;
+use crate::index::{NONE, TOP_K};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LearnOutcome {
@@ -90,5 +90,36 @@ impl WordRecord {
             followers: [Follower::EMPTY; FOLLOWER_SLOTS],
             origin: Origin::Learned,
         }
+    }
+}
+
+/// A word slot and the generation it was written at: what an edge, a trigram key
+/// and a removal all name a word by.
+///
+/// The engine hands word slots to new words, so a reference only means anything
+/// while the generation it was taken at still matches.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct WordRef {
+    pub(crate) index: u32,
+    pub(crate) generation: u16,
+}
+
+impl WordRef {
+    pub(crate) const NONE: Self = Self {
+        index: NONE,
+        generation: 0,
+    };
+
+    pub(crate) fn at(index: u32, words: &[WordRecord]) -> Option<Self> {
+        words.get(index as usize).map(|word| Self {
+            index,
+            generation: word.generation,
+        })
+    }
+
+    pub(crate) fn is_live(self, words: &[WordRecord]) -> bool {
+        words
+            .get(self.index as usize)
+            .is_some_and(|word| word.generation == self.generation)
     }
 }

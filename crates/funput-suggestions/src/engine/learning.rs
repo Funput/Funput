@@ -1,4 +1,4 @@
-use super::admission::promotion_threshold;
+use super::policy::admission::promotion_threshold;
 use super::{PENDING_LIMIT, REBUILD_AFTER_EVICTIONS, SuggestionEngine};
 use crate::dictionary::Origin;
 use crate::index::{NONE, normalize};

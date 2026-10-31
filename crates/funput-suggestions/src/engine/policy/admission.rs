@@ -1,7 +1,7 @@
 use funput_core::is_complete_syllable;
 
-use super::{SuggestionConfig, SuggestionEngine};
 use crate::dictionary::Origin;
+use crate::engine::{SuggestionConfig, SuggestionEngine};
 use crate::types::WordRecord;
 
 /// How many sightings a token needs before the bar may offer it.
