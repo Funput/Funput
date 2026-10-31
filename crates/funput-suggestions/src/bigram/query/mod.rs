@@ -7,7 +7,10 @@
 mod predict;
 mod rerank;
 
+use predict::Prediction;
+
 use crate::engine::SuggestionEngine;
+use crate::index::{NONE, TOP_K};
 use crate::types::SuggestionSet;
 
 impl SuggestionEngine {
@@ -24,9 +27,19 @@ impl SuggestionEngine {
         let context = previous.and_then(|text| self.context_slot(text));
         if prefix.is_empty() {
             // No prefix means no candidates to reorder, so the context is all
-            // there is to go on and a much stricter question applies. The English
-            // lexicon has nothing to add: an empty prefix finds nothing in it.
-            return self.predict_or_seed(previous, context);
+            // there is to go on and a much stricter question applies. The user's
+            // pairs answer first; shipped data only speaks where they have no
+            // evidence either way. The English lexicon has nothing to add: an
+            // empty prefix finds nothing in it.
+            return match self.predict(context.map(|(slot, _)| slot)) {
+                Prediction::Speaks(word) => {
+                    let mut ids = [NONE; TOP_K];
+                    ids[0] = word;
+                    self.assemble(ids, 1)
+                }
+                Prediction::Unsure => SuggestionSet::EMPTY,
+                Prediction::NoEvidence => self.seed_after(previous),
+            };
         }
         let (ids, len) = self.prefix_candidates(prefix);
         let (ids, len) = match context {

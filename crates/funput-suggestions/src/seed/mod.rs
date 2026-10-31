@@ -1,8 +1,7 @@
 //! Shipped Vietnamese data for a bar the user has not taught anything yet.
 //!
 //! - `pairs` — the hand-written pair list Predict falls back on, and its table.
-//! - `predict` — where that list meets the user's own pairs.
-//! - `respell` — moving a tone mark between the two tone styles.
+//! - `query` — what that list offers once the user's pairs have no evidence.
 //!
 //! Off until a shell says which language the user is typing and how they place
 //! tones: Vietnamese pairs after an English word would be noise, and `hoà` is a
@@ -12,8 +11,7 @@
 //! See `docs/features/vietnamese-seed-suggestion.md`.
 
 mod pairs;
-mod predict;
-mod respell;
+mod query;
 
 use funput_core::ToneStyle;
 
@@ -30,11 +28,17 @@ pub enum SeedLanguage {
     Vietnamese(ToneStyle),
 }
 
-/// What an engine holds of the shipped Vietnamese data.
-#[derive(Default)]
-pub(crate) struct SeedSlot {
-    pub(crate) language: SeedLanguage,
-    pub(crate) pairs: Option<&'static PairTable>,
+/// What an engine holds of the shipped Vietnamese data: nothing, or the style to
+/// write in together with every table that style reads. One value, so there is
+/// no state in which the data is on but its tables were never built.
+#[derive(Clone, Copy, Default)]
+pub(crate) enum SeedSlot {
+    #[default]
+    Off,
+    Vietnamese {
+        style: ToneStyle,
+        pairs: &'static PairTable,
+    },
 }
 
 impl SuggestionEngine {
@@ -45,9 +49,12 @@ impl SuggestionEngine {
     /// than on the first keystroke. `reset` leaves this alone: it is shipped data,
     /// not the user's.
     pub fn set_seed_language(&mut self, language: SeedLanguage) {
-        if matches!(language, SeedLanguage::Vietnamese(_)) && self.seed.pairs.is_none() {
-            self.seed.pairs = Some(pairs::shipped());
-        }
-        self.seed.language = language;
+        self.seed = match language {
+            SeedLanguage::Off => SeedSlot::Off,
+            SeedLanguage::Vietnamese(style) => SeedSlot::Vietnamese {
+                style,
+                pairs: pairs::shipped(),
+            },
+        };
     }
 }

@@ -102,7 +102,7 @@ thoải mái
   tĩnh không cứu được chúng, và cố cứu là gợi ý bừa.
 - Hai phía đều là âm tiết hoàn chỉnh, chữ thường, NFC, **viết theo kiểu dấu mới**
   (`ToneStyle::Modern`: `hoà`, `khoẻ`). Kiểu cũ do code đổi khi tra, xem
-  [kiểu dấu](#kiểu-đặt-dấu).
+  [tra bảng](#tra-bảng).
 - Quy mô ước tính: vài trăm đến khoảng 2.000 cặp, khoảng 25 KB. Bắt đầu với một danh sách
   nhỏ đã review kỹ, mở rộng theo đợt.
 - Có `NOTICE.md` bên cạnh, cùng giọng với `data/syllables/NOTICE.md`.
@@ -156,34 +156,52 @@ predict_with_seed(prev):
     nếu context_slot(prev) có:
         r = predict(context)                       // bigram cá nhân, không đổi
         nếu r khác rỗng: trả r
-        nếu context_seen(context) >= seed_pairs_until_seen: im lặng
+        nếu context_seen(context) >= context_evidence_seen: im lặng
     t = seed_pair(prev)                            // tra bảng, theo kiểu dấu
     nếu không có t, hoặc t bị chặn: im lặng
     trả [t]
 ```
 
+**Đã đổi khi hiện thực.** Luật rút lui không nằm ở tầng dữ liệu kèm app mà ở chính bigram:
+`predict` trả về ba trạng thái (`bigram/query/predict.rs::Prediction`):
+
+| Trạng thái | Khi nào | Thanh gợi ý |
+|---|---|---|
+| `Speaks(word)` | Ứng viên dẫn đầu qua `context_predict_uses` và ngưỡng áp đảo | Ứng viên đó |
+| `Unsure` | Chữ đứng trước đã gặp ≥ `context_evidence_seen` lần mà vẫn bẹt | Im, không nguồn nào được lấp |
+| `NoEvidence` | Chưa có trong kho, hoặc gặp quá ít lần | Hỏi dữ liệu kèm app (`seed/query.rs::seed_after`) |
+
+`suggest_with` ghép ba nhánh đó. Bằng cách này, nguồn nào sau này muốn lấp chỗ im lặng
+(Phần B, bảng tĩnh tiếng Anh) chỉ cần trả lời nhánh `NoEvidence`, không phải tự đọc
+`context_seen`. Tham số đổi tên thành `context_evidence_seen` vì nó là tính chất của bigram
+cá nhân, không riêng gì dữ liệu kèm app.
+
 - **Cá nhân luôn đứng trước.** Nếu bigram cá nhân đã đủ tự tin để nói, nó nói, kể cả khi
   khác bảng tĩnh. Người hay gõ `cảm thấy` sẽ thấy `thấy`, không phải `ơn`.
 - **Rút lui khi người dùng đã có dữ liệu.** Khi người dùng đã gõ chữ đứng trước đủ
-  `seed_pairs_until_seen` lần (mặc định 3) mà bigram cá nhân vẫn im, tức là phân bố của
+  `context_evidence_seen` lần (mặc định 3) mà bigram cá nhân vẫn im, tức là phân bố của
   chính họ bẹt hoặc khác bảng. Lúc đó bảng tĩnh cũng phải im, không thì nó cãi lại dữ liệu
   của người dùng.
 - **Không cần chữ đứng trước có trong kho.** Người mới gõ `cảm` lần đầu thì `cảm` vừa được
   ghi nhận (uses 1, `context_seen` 0) hoặc chưa có trong kho; cả hai trường hợp đều đi tới
   bảng tĩnh.
 - **Từ bị chặn** (`blocked.contains`) không bao giờ được gợi ý, như `complete_from_lexicon`
-  đang làm.
+  đang làm. Kiểm tra cả hai cách viết, nên chặn `khỏe` ở kiểu cũ rồi đổi sang kiểu mới thì
+  `khoẻ` cũng không hiện.
 
 ### Tra bảng
 
-- `prev` được chuẩn hoá lên stack như `context_slot` đang làm (`exact_chars`: chữ thường,
-  NFC), đổi sang kiểu dấu mới, rồi binary search trong bảng đã sắp theo byte. Không cấp
-  phát.
+- `prev` được chuẩn hoá lên stack (`normalize::exact_into`: chữ thường, NFC) rồi binary
+  search trong bảng đã sắp theo byte. Không cấp phát. **Đã đổi khi hiện thực**: không đổi
+  kiểu dấu của `prev` lúc tra; bảng giữ sẵn cả hai cách viết của chữ đứng trước.
+- Vị trí dấu do `funput_core::respell_tone` quyết định, là `reposition_existing_tone` mà bộ
+  gõ dùng mỗi phím, mở ra public. Không có bản thứ hai của luật đặt dấu trong
+  `funput-suggestions`.
 - Chữ đi sau trả về theo kiểu dấu đang chọn. Bảng giữ sẵn dạng kiểu cũ cho số ít chữ đi
   sau có `oa`, `oe`, `uy`, dựng một lần lúc bật.
 - Trả `&'static str` hoặc chuỗi do bảng sở hữu, nên `SuggestionSet<'_>` không đổi.
   **Đã đổi khi hiện thực**: Predict từ bảng lấp `SuggestionSet` trực tiếp
-  (`seed/predict.rs::predict_or_seed`), không qua `assemble(ids)`, vì `ids` chỉ trỏ được vào
+  (`seed/query.rs::seed_after`), không qua `assemble(ids)`, vì `ids` chỉ trỏ được vào
   kho cá nhân. Với prefix rỗng, `suggest_with` giờ trả thẳng kết quả Predict, bỏ lượt gọi
   `complete_from_lexicon` vốn không bao giờ thêm gì cho prefix rỗng.
 
@@ -288,7 +306,8 @@ tự:
 **Dữ liệu** (trong `funput-lexicon-tool/tests/`, cạnh `vi_syllables.rs`):
 
 - Mỗi phía của mỗi cặp là âm tiết hoàn chỉnh theo `funput_core::is_complete_syllable`.
-- Chữ thường, NFC, kiểu dấu mới; không có chữ đứng trước nào xuất hiện hai lần.
+- Chữ thường, NFC, kiểu dấu mới (`respell_tone(x, Modern)` không đổi gì); không có chữ đứng
+  trước nào xuất hiện hai lần.
 - ~~Chữ đi sau có trong `vi.txt`.~~ **Đã đổi khi hiện thực**: bỏ. `vi.txt` là 2.100 âm
   tiết thường gặp, còn chữ đi sau của từ láy và từ ghép ràng buộc (`khoăn`, `loẹt`, `hức`)
   phần lớn là âm tiết hiếm, vốn là loại cặp nhọn nhất. Thêm chúng vào `vi.txt` thì đổi prior
@@ -301,7 +320,7 @@ tự:
 
 - Kho trống, VI: `cảm` + `""` → `ơn`; EN hoặc `Off` → im lặng, đúng như hôm nay.
 - Bigram cá nhân đủ tự tin thì thắng bảng (`cảm thấy` ×3 → `thấy`).
-- `context_seen ≥ seed_pairs_until_seen` mà cá nhân im → bảng cũng im.
+- `context_seen ≥ context_evidence_seen` mà cá nhân im → bảng cũng im.
 - Từ bị chặn không bao giờ hiện. `reset()` giữ bảng.
 - Kiểu cũ: `hoà`/`hòa` ở chữ đứng trước đều tra ra; chữ đi sau viết theo kiểu đang chọn.
 - Phần B: bảng luật khớp ở trên; prefix không dấu để lại ô cho `en.lex`; thứ tự P, S, V, E.
@@ -342,7 +361,7 @@ không đổi hành vi.
 | 4 | iOS + Android gọi setter | #560 |
 | 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả đánh giá offline | #560 |
 | 6 | Rust: phần B (âm tiết cho prefix, cặp tĩnh khớp prefix, trần 2 ô cho prefix không dấu) | #561 |
-| 7 | Đo trên máy thật (độ trễ, bộ nhớ extension iOS, cảm giác gõ); chỉnh `seed_pairs_until_seen` và trần 2 ô | cả hai |
+| 7 | Đo trên máy thật (độ trễ, bộ nhớ extension iOS, cảm giác gõ); chỉnh `context_evidence_seen` và trần 2 ô | cả hai |
 
 Bước 6 không phụ thuộc bước 5, nên có thể chạy song song khi danh sách cặp đang được viết.
 
@@ -352,7 +371,7 @@ Bước 6 không phụ thuộc bước 5, nên có thể chạy song song khi da
    học. Đưa luật "theo những dấu đã gõ" vào trie cá nhân giúp cả người dùng lâu năm,
    nhưng đụng vào trie `folded` và thứ tự kết quả hiện có. Đề xuất làm sau bước 7, khi đã
    thấy luật đó chạy thật trên dữ liệu kèm app.
-2. **`seed_pairs_until_seen = 3` có đúng không?** Thấp quá thì bảng rút lui trước khi người
+2. **`context_evidence_seen = 3` có đúng không?** Thấp quá thì bảng rút lui trước khi người
    dùng kịp chấp nhận gợi ý; cao quá thì bảng cãi dữ liệu cá nhân lâu hơn. Chốt ở bước 7.
 3. **Có cần công tắc riêng "Gợi ý có sẵn" không?** Bản này nói không, dùng chung "Gợi ý từ".
    Xem lại nếu có phản hồi gợi ý tĩnh gây nhiễu.

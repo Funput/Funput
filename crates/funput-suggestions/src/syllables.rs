@@ -68,15 +68,8 @@ fn table() -> &'static [(&'static str, u8)] {
 /// answer 1. Allocation-free after the first call in the process.
 pub fn syllable_tier(word: &str) -> Option<u8> {
     let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
-    let mut len = 0;
-    for scalar in normalize::exact_chars(word) {
-        if len + scalar.len_utf8() > buffer.len() {
-            // Longer than any syllable on the list.
-            return None;
-        }
-        len += scalar.encode_utf8(&mut buffer[len..]).len();
-    }
-    let key = &buffer[..len];
+    // `None` is a word longer than any syllable on the list.
+    let key = normalize::exact_into(word, &mut buffer)?.as_bytes();
     let table = table();
     table
         .binary_search_by(|(entry, _)| entry.as_bytes().cmp(key))

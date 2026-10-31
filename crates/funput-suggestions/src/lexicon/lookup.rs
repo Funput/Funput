@@ -21,10 +21,7 @@ use crate::types::SuggestionSet;
 
 impl Lexicon {
     pub(crate) fn top3(&self, prefix: &str) -> SuggestionSet<'_> {
-        let mut set = SuggestionSet {
-            items: [None; TOP_K],
-            len: 0,
-        };
+        let mut set = SuggestionSet::EMPTY;
         if admissible(prefix.as_bytes()) {
             self.fill(prefix.as_bytes(), &mut set);
         }

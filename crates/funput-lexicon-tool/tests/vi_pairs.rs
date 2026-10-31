@@ -7,7 +7,7 @@
 
 use std::collections::BTreeSet;
 
-use funput_core::{ToneStyle, is_complete_syllable};
+use funput_core::{ToneStyle, is_complete_syllable, respell_tone};
 use funput_suggestions::{SeedLanguage, SuggestionConfig, SuggestionEngine};
 use unicode_normalization::UnicodeNormalization;
 
@@ -62,6 +62,20 @@ fn every_side_is_written_in_lowercase_nfc() {
         })
         .collect();
     assert!(odd.is_empty(), "not lowercase NFC: {odd:?}");
+}
+
+/// The table derives the traditional spelling from the modern one and never the
+/// other way round, so a traditional line would leave modern users with no key to
+/// match and hand them a second syllable spelled the way they did not choose.
+#[test]
+fn every_side_is_written_in_the_modern_tone_style() {
+    let traditional: Vec<&str> = every_syllable()
+        .filter(|syllable| respell_tone(syllable, ToneStyle::Modern).is_some())
+        .collect();
+    assert!(
+        traditional.is_empty(),
+        "write these the modern way (`hoà`, not `hòa`): {traditional:?}"
+    );
 }
 
 #[test]

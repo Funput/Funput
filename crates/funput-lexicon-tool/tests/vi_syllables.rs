@@ -9,7 +9,7 @@
 
 use std::collections::BTreeSet;
 
-use funput_core::is_complete_syllable;
+use funput_core::{ToneStyle, is_complete_syllable, respell_tone};
 use funput_suggestions::syllable_tier;
 use unicode_normalization::UnicodeNormalization;
 
@@ -124,4 +124,28 @@ fn the_lookup_agrees_with_the_file() {
         assert_eq!(syllable_tier(entry), Some(tier), "{entry}");
     }
     assert_eq!(syllable_tier("dduwowfnh"), None);
+}
+
+/// The list writes both spellings of every syllable the tone styles disagree on.
+/// `respell_tone` is what turns one into the other wherever the shipped lists are
+/// read in the other style, so each spelling must be exactly one respelling of a
+/// listed entry, both ways.
+#[test]
+fn every_dual_spelling_is_one_respelling_apart() {
+    let listed: BTreeSet<&str> = entries().into_iter().map(|(entry, _)| entry).collect();
+    let mut pairs = 0;
+    for entry in &listed {
+        if let Some(traditional) = respell_tone(entry, ToneStyle::Traditional) {
+            assert!(
+                listed.contains(traditional.as_str()),
+                "{entry} → {traditional}"
+            );
+            assert_eq!(
+                respell_tone(&traditional, ToneStyle::Modern).as_deref(),
+                Some(*entry)
+            );
+            pairs += 1;
+        }
+    }
+    assert!(pairs >= 10, "only {pairs} dual spellings were exercised");
 }

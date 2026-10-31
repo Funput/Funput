@@ -100,6 +100,18 @@ fn a_blocked_word_is_never_offered() {
 }
 
 #[test]
+fn a_word_blocked_in_one_tone_style_stays_blocked_in_the_other() {
+    let mut engine = engine(SeedLanguage::Vietnamese(Traditional));
+    engine.apply_edit(Edit::new(EditKind::Block, "khỏe"));
+    assert!(predicted(&engine, "sức").is_empty());
+    engine.set_seed_language(SeedLanguage::Vietnamese(Modern));
+    assert!(
+        predicted(&engine, "sức").is_empty(),
+        "switching to the modern style must not bring back `khoẻ`"
+    );
+}
+
+#[test]
 fn clearing_the_users_data_keeps_the_shipped_pairs() {
     let mut engine = engine(SeedLanguage::Vietnamese(Modern));
     engine.learn_after(None, "cảm");

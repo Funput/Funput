@@ -24,5 +24,17 @@ mod tone_position;
 
 pub(crate) use tone_position::{reposition_existing_tone, tone_target_vowel, tone_vowel_index};
 
+use crate::ToneStyle;
+
+/// A finished syllable with its tone moved to where `style` puts it, or `None`
+/// when it already sits there (or the syllable carries no tone).
+///
+/// The same rule composition applies on every keystroke, for callers that hold
+/// whole words rather than a buffer being typed: the suggestion engine ships its
+/// word lists in one style and has to read and write both (`hoà` / `hòa`).
+pub fn respell_tone(syllable: &str, style: ToneStyle) -> Option<String> {
+    reposition_existing_tone(syllable, style)
+}
+
 #[cfg(test)]
 mod tests;
