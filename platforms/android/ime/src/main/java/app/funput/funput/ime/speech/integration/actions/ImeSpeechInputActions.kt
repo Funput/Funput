@@ -24,6 +24,9 @@ internal object ImeSpeechInputActions {
         onClipboardPasteRequested = guard(onClipboardPasteRequested, current, ::beforeEdit, refresh)
         onClipboardEntrySelected = guard(onClipboardEntrySelected, current, { beforeEdit() }, refresh)
         onSuggestionSelected = guard(onSuggestionSelected, current, { beforeEdit() }, refresh)
+        // Store edits change no text, so only the view check applies, not the dictation reset.
+        suggestionEditable = suggestionEditable?.let { editable -> { selection -> current() && editable(selection) } }
+        onSuggestionAction = onSuggestionAction?.let { act -> { selection, action -> if (current()) act(selection, action) } }
         onPlacementChanged = guard(onPlacementChanged, current, { beforeNavigation() }, refresh)
         onPlacementEditorRequested = { if (current()) invalidate(false) }
         onPanelChanging = { panel ->

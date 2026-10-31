@@ -4,6 +4,8 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.os.Process
+import app.funput.funput.ime.suggestions.dictionary.DictionaryEditKind
+import app.funput.funput.ime.suggestions.dictionary.DictionaryEditOutcome
 import java.io.File
 
 internal class PersonalSuggestionWorker(
@@ -16,7 +18,9 @@ internal class PersonalSuggestionWorker(
     private val main = Handler(Looper.getMainLooper())
     private val requests = PersonalSuggestionRequestSlot()
     private var engine: PersonalSuggestionEngine? = null
-    private var persistentAvailable = false
+    /** Whether edits last: false while the store is in memory, read from the main thread. */
+    @Volatile var persistentAvailable = false
+        private set
     private var learnedSinceFlush = 0
     private val idleFlush = Runnable(::flushNow)
     private val drain = Runnable(::drainQueries)
@@ -40,6 +44,16 @@ internal class PersonalSuggestionWorker(
         if (!persistentAvailable || engine?.reset() != true) return@post
         learnedSinceFlush = 0
         main.post { runCatching(onApplied) }
+    }
+
+    /** Folds in what the settings app posted; it waits in the inbox until the store is open. */
+    fun applyPendingEdits() = worker.post {
+        if (persistentAvailable) engine?.applyPendingEdits()
+    }
+
+    /** A deliberate choice rather than a keystroke, so it is made durable at once. */
+    fun edit(kind: DictionaryEditKind, word: String) = worker.post {
+        if (persistentAvailable && engine?.applyEdit(kind, word) == DictionaryEditOutcome.APPLIED) flushNow()
     }
 
     fun flush() = worker.post(::flushNow)

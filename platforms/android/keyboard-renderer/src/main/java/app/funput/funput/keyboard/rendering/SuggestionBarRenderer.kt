@@ -9,14 +9,13 @@ import android.text.TextPaint
 import android.text.TextUtils
 import androidx.core.graphics.withSave
 import app.funput.funput.keyboard.interaction.PressedKeyState
-import app.funput.funput.keyboard.interaction.SuggestionTargetIds
 import app.funput.funput.keyboard.layout.KeyBounds
-import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
-import app.funput.funput.keyboard.suggestion.SuggestionChip
-import app.funput.funput.keyboard.suggestion.accentIndex
+import app.funput.funput.keyboard.suggestion.SuggestionBandSegment
+import app.funput.funput.keyboard.suggestion.SuggestionBandSegment.Tone
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.LocalKeyboardThemeCatalog
 
+/** Draws a row of suggestion-band slots: the candidates, or the actions a long press opens. */
 internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -36,27 +35,25 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
 
     fun draw(
         canvas: Canvas,
-        suggestionBar: ResolvedSuggestionBar,
-        suggestions: List<SuggestionChip>,
+        bounds: KeyBounds,
+        segments: List<SuggestionBandSegment>,
         pressedTargets: PressedKeyState,
     ) {
-        if (suggestions.isEmpty()) return
-        val bounds = suggestionBar.suggestionsBounds
-        val radius = metrics.dp(theme.keyCornerRadiusDp)
-        drawPressedSegments(canvas, bounds, radius, suggestions.size, pressedTargets)
-        val segmentWidth = bounds.width / suggestions.size
-        val labelWidth = segmentWidth - metrics.dp(LabelHorizontalInsetDp * 2f)
-        val accent = suggestions.accentIndex()
-        suggestions.forEachIndexed { index, suggestion ->
-            if (index > 0) drawDivider(canvas, bounds, bounds.left + segmentWidth * index)
-            // The pick the bar recommends (a repair, else the top suggestion) is accented.
-            labelPaint.color =
-                if (index == accent) theme.suggestionHighlightColor else theme.labelColor
-            val label = fitLabel(suggestion.title, labelWidth)
+        if (segments.isEmpty()) return
+        drawPressedSegments(canvas, bounds, segments, pressedTargets)
+        segments.forEachIndexed { index, segment ->
+            if (index > 0) drawDivider(canvas, bounds, segment.left)
+            labelPaint.color = when (segment.tone) {
+                // The pick the bar recommends (a repair, else the top suggestion) is accented.
+                Tone.ACCENT -> theme.suggestionHighlightColor
+                Tone.MUTED -> theme.secondaryLabelColor
+                Tone.PLAIN -> theme.labelColor
+            }
+            val label = fitLabel(segment.title, segment.width - metrics.dp(LabelHorizontalInsetDp * 2f))
             // Per label, since a fitted one is smaller and has to stay centred in the band.
             labelPaint.getFontMetrics(fontMetrics)
             val baseline = bounds.centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f
-            canvas.drawText(label, bounds.left + segmentWidth * (index + 0.5f), baseline, labelPaint)
+            canvas.drawText(label, segment.centerX, baseline, labelPaint)
         }
     }
 
@@ -74,23 +71,19 @@ internal class SuggestionBarRenderer(private val metrics: RenderMetrics) {
     private fun drawPressedSegments(
         canvas: Canvas,
         bounds: KeyBounds,
-        radius: Float,
-        suggestionCount: Int,
+        segments: List<SuggestionBandSegment>,
         pressedTargets: PressedKeyState,
     ) {
-        val segmentWidth = bounds.width / suggestionCount
+        val pressed = segments.filter { it.pressable && pressedTargets.isPressed(it.targetId) }
+        if (pressed.isEmpty()) return
+        val radius = metrics.dp(theme.keyCornerRadiusDp)
         canvas.withSave {
             drawingRect.set(bounds.left, bounds.top, bounds.right, bounds.bottom)
             clipPath.reset()
             clipPath.addRoundRect(drawingRect, radius, radius, Path.Direction.CW)
             clipPath(clipPath)
             fillPaint.color = theme.pressedKeyColor
-            repeat(suggestionCount) { index ->
-                if (pressedTargets.isPressed(SuggestionTargetIds.id(index))) {
-                    val left = bounds.left + segmentWidth * index
-                    drawRect(left, bounds.top, left + segmentWidth, bounds.bottom, fillPaint)
-                }
-            }
+            pressed.forEach { drawRect(it.left, bounds.top, it.right, bounds.bottom, fillPaint) }
         }
     }
 

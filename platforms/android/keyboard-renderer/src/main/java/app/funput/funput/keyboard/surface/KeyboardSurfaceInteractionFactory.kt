@@ -5,7 +5,7 @@ import android.view.ViewConfiguration
 import app.funput.funput.keyboard.KeyboardCallbacks
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
-import app.funput.funput.keyboard.model.SuggestionSelection
+import app.funput.funput.keyboard.suggestion.SuggestionChip
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 
@@ -15,7 +15,7 @@ internal fun createKeyboardSurfaceInteraction(
     callbacks: KeyboardCallbacks,
     keyAt: (x: Float, y: Float) -> String?,
     keyboard: () -> ResolvedKeyboard?,
-    suggestionSelection: (targetId: String) -> SuggestionSelection?,
+    suggestions: () -> List<SuggestionChip>,
     onHapticFeedback: (KeyboardHapticType) -> Unit,
     onVisualStateChanged: () -> Unit,
     onSemanticStateChanged: () -> Unit,
@@ -24,10 +24,12 @@ internal fun createKeyboardSurfaceInteraction(
     keyAt = keyAt,
     keyboard = keyboard,
     keySpec = { id -> keyboard()?.keys?.firstOrNull { it.spec.id == id }?.spec },
-    suggestionSelection = suggestionSelection,
+    suggestions = suggestions,
     onAction = callbacks::dispatch,
     utilities = callbacks,
     onSuggestionSelected = callbacks::dispatchSuggestion,
+    suggestionEditable = callbacks::isSuggestionEditable,
+    onSuggestionAction = callbacks::dispatchSuggestionAction,
     onHapticFeedback = onHapticFeedback,
     onVisualStateChanged = onVisualStateChanged,
     onSemanticStateChanged = onSemanticStateChanged,

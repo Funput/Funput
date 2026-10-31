@@ -5,13 +5,14 @@ import android.view.MotionEvent
 import android.view.View
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.model.SuggestionSelection
 
 /** Owns the virtual accessibility tree exposed by a keyboard surface. */
 internal class KeyboardSurfaceAccessibilityController(
     host: View,
     activate: (String) -> Unit,
     activateAlternate: (String, Int) -> Unit,
-    activateCustom: (Int) -> Unit,
+    activateCustom: (String, Int) -> Unit,
 ) {
     private var snapshot: KeyboardAccessibilitySnapshot? = null
     private val delegate = KeyboardAccessibilityDelegate(
@@ -32,11 +33,12 @@ internal class KeyboardSurfaceAccessibilityController(
         clipboardKeyLabel: String? = null,
         smartGesturesEnabled: Boolean = true,
         breaksLineOnEnterHold: Boolean = false,
+        suggestionEditable: (SuggestionSelection) -> Boolean = { false },
     ) {
         snapshot = keyboard?.let {
             KeyboardAccessibilitySnapshot(
                 it, shiftState, suggestions, clipboardLabel, clipboardKeyLabel, smartGesturesEnabled,
-                breaksLineOnEnterHold,
+                breaksLineOnEnterHold, suggestionEditable,
             )
         }
         delegate.invalidateRoot()

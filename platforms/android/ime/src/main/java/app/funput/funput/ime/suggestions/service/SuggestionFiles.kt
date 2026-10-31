@@ -8,9 +8,12 @@ internal fun lexiconInstaller(context: Context) = LexiconInstaller(
     directory = { context.noBackupFilesDir.resolve("Lexicon") },
 )
 
+/** The personal store: opened by the keyboard, read by the settings app through a snapshot. */
+internal fun personalSuggestionDirectory(context: Context) = context.noBackupFilesDir.resolve("PersonalSuggestions")
+
 internal fun suggestionWorker(context: Context, publish: (PersonalSuggestionRequest, List<String>) -> Unit) =
     PersonalSuggestionWorker(
-        storeDirectory = { context.noBackupFilesDir.resolve("PersonalSuggestions") },
+        storeDirectory = { personalSuggestionDirectory(context) },
         attachLexicon = { engine -> lexiconInstaller(context).attach(engine::attachLexicon) },
         publish = publish,
     )

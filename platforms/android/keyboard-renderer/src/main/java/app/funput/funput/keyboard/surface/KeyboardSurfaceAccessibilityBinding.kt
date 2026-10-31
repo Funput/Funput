@@ -13,6 +13,7 @@ import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.suggestion.actions.SuggestionAction
 
 /** Keeps virtual-key accessibility wiring out of the keyboard View. */
 internal class KeyboardSurfaceAccessibilityBinding(
@@ -30,9 +31,12 @@ internal class KeyboardSurfaceAccessibilityBinding(
         activateAlternate = { keyId, index ->
             interaction().performAccessibilityAlternate(keyId, index)
         },
-        activateCustom = { actionId ->
-            SmartGestureAccessibility.keyAction(actionId)?.let {
-                interaction().performAccessibilityAction(it)
+        activateCustom = { keyId, actionId ->
+            val suggestionAction = SuggestionAction.forAccessibilityAction(actionId)
+            if (suggestionAction != null) {
+                interaction().performAccessibilitySuggestionAction(keyId, suggestionAction)
+            } else {
+                SmartGestureAccessibility.keyAction(actionId)?.let { interaction().performAccessibilityAction(it) }
             }
         },
     )
@@ -48,6 +52,7 @@ internal class KeyboardSurfaceAccessibilityBinding(
         resources.getString(R.string.clipboard_open_accessibility),
         interaction().areSmartGesturesEnabled,
         interaction().breaksLineOnEnterHold,
+        interaction()::isSuggestionEditable,
     )
 
     private fun activate(keyId: String) {

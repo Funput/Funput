@@ -6,15 +6,15 @@ import app.funput.funput.ime.editing.EditorInfoPolicy
 import app.funput.funput.ime.editing.ImeKeyActionHandler
 import app.funput.funput.ime.editing.ImeSuggestionSource
 import app.funput.funput.ime.settings.PersonalSuggestionPreferences
-import app.funput.funput.ime.settings.pendingReset
+import app.funput.funput.ime.suggestions.dictionary.DictionaryEditKind
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.ui.KeyboardPanel
 
 internal class PersonalSuggestionService(
     context: Context,
-    private val show: (List<String>) -> Unit,
-    private val shift: () -> ShiftState = { ShiftState.OFF },
+    show: (List<String>) -> Unit,
+    shift: () -> ShiftState = { ShiftState.OFF },
     private val acknowledgeReset: (String) -> Unit,
     createWorker: (Context, (PersonalSuggestionRequest, List<String>) -> Unit) -> PersonalSuggestionWorker = ::suggestionWorker,
 ) {
@@ -29,30 +29,25 @@ internal class PersonalSuggestionService(
     private var previousWord: String? = null
     /** Whether the bar is currently answering a context rather than a prefix. */
     private var predicting = false
-    /** As the engine returned them; [candidates] is the same list in the user's case. */
-    private var received = emptyList<String>()
-    private var candidates = emptyList<String>()
-    private var pendingReset: String? = null
+    private val candidates = PersonalSuggestionCandidates(show, shift)
+    private val resets = PersonalSuggestionResetGate(worker) { reset ->
+        clear()
+        acknowledgeReset(reset)
+    }
 
     fun configure(value: PersonalSuggestionPreferences) {
         preferences = value
-        val reset = value.pendingReset(pendingReset)
-        if (reset != null && worker != null) {
-            pendingReset = reset
-            worker.reset {
-                pendingReset = null
-                clear()
-                acknowledgeReset(reset)
-            }
-        }
+        resets.apply(value)
         if (!value.enabled) clear()
     }
 
+    /** A field gets focus: also the moment to fold in what the settings app posted. */
     fun start(value: EditorInfoPolicy) {
         session += 1
         policy = value
         panel = KeyboardPanel.LETTERS
         clear()
+        worker?.applyPendingEdits()
     }
 
     fun finish() {
@@ -83,17 +78,26 @@ internal class PersonalSuggestionService(
         if (!eligible() || (!predicts && prefix.codePointCount(0, prefix.length) < MinimumPrefix)) {
             return clear()
         }
-        generation += 1
-        clearCandidates()
-        worker?.query(PersonalSuggestionRequest(prefix, generation, session, previousWord))
+        requery()
+    }
+
+    /** Whether a long press may block or forget [selection]: a word this service drew, from a store that lasts. */
+    fun isEditable(selection: SuggestionSelection): Boolean =
+        eligible() && worker?.persistentAvailable == true && candidates.isShown(selection.index, selection.text)
+
+    /** Applies a long-press edit to the stored spelling behind [selection], then asks again so the bar drops it. */
+    fun edit(selection: SuggestionSelection, kind: DictionaryEditKind) {
+        if (!isEditable(selection)) return
+        val stored = candidates.stored(selection.index, selection.text) ?: return
+        worker?.edit(kind, stored)
+        requery()
     }
 
     fun select(selection: SuggestionSelection, handler: ImeKeyActionHandler): Boolean {
-        val candidate = candidates.getOrNull(selection.index) ?: return reject()
         // An empty prefix is the ordinary shape of accepting a prediction: it
         // replaces nothing and inserts a word.
-        if (candidate != selection.text || !eligible()) return reject()
-        if (!handler.acceptSuggestion(candidate, prefix)) return reject()
+        if (!candidates.isShown(selection.index, selection.text) || !eligible()) return reject()
+        if (!handler.acceptSuggestion(selection.text, prefix)) return reject()
         consume(handler.takeSuggestionUpdate())
         return true
     }
@@ -103,20 +107,19 @@ internal class PersonalSuggestionService(
 
     private fun publish(request: PersonalSuggestionRequest, values: List<String>) {
         if (request.generation != generation || request.session != session || request.prefix != prefix) return
-        received = values
-        draw()
+        candidates.receive(values, prefix)
         suggestionCounter("SuggestionQueryToToolbarUs", (System.nanoTime() - request.startedNanos) / 1_000)
     }
 
-    /** Cases what the engine gave us and shows it, keeping both lists in step: the
-     *  accept path matches the tapped text against [candidates], so a bar drawn from a
-     *  list nobody stored is a bar whose every tap is silently refused. */
     private fun draw() {
-        if (!eligible()) return
-        val next = received.map { PersonalSuggestionCasing.apply(it, prefix, shift()) }
-        if (next == candidates) return
-        candidates = next
-        runCatching { show(candidates) }
+        if (eligible()) candidates.draw(prefix)
+    }
+
+    /** Asks again for what the bar is answering, dropping whatever it showed. */
+    private fun requery() {
+        generation += 1
+        candidates.clear()
+        worker?.query(PersonalSuggestionRequest(prefix, generation, session, previousWord))
     }
 
     private fun eligible() = preferences.enabled && policy.allowsPersonalSuggestions &&
@@ -131,15 +134,7 @@ internal class PersonalSuggestionService(
         previousWord = null
         predicting = false
         worker?.clearQueries()
-        clearCandidates()
-    }
-
-    private fun clearCandidates() {
-        // The raw list goes with them, or a later Shift would redraw what was dropped.
-        received = emptyList()
-        if (candidates.isEmpty()) return
-        candidates = emptyList()
-        runCatching { show(emptyList()) }
+        candidates.clear()
     }
 
     private companion object {

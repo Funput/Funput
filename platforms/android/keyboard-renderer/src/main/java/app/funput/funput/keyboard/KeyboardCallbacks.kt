@@ -4,6 +4,7 @@ import app.funput.funput.keyboard.utility.KeyboardUtilityAction
 import app.funput.funput.keyboard.utility.KeyboardUtilityDispatcher
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.SuggestionSelection
+import app.funput.funput.keyboard.suggestion.actions.SuggestionAction
 
 /** Host callbacks emitted by the keyboard surface. */
 class KeyboardCallbacks : KeyboardUtilityDispatcher {
@@ -15,6 +16,10 @@ class KeyboardCallbacks : KeyboardUtilityDispatcher {
     var onClipboardPanelRequested: (() -> Unit)? = null
     var onClipboardPasteRequested: (() -> Unit)? = null
     var onSuggestionSelected: ((SuggestionSelection) -> Unit)? = null
+
+    /** Whether a long press on the suggestion may offer [SuggestionAction]s; none when unset. */
+    var suggestionEditable: ((SuggestionSelection) -> Boolean)? = null
+    var onSuggestionAction: ((SuggestionSelection, SuggestionAction) -> Unit)? = null
 
     internal fun dispatch(action: KeyAction) {
         onKeyAction?.invoke(action)
@@ -33,5 +38,12 @@ class KeyboardCallbacks : KeyboardUtilityDispatcher {
 
     internal fun dispatchSuggestion(selection: SuggestionSelection) {
         onSuggestionSelected?.invoke(selection)
+    }
+
+    internal fun isSuggestionEditable(selection: SuggestionSelection): Boolean =
+        suggestionEditable?.invoke(selection) == true
+
+    internal fun dispatchSuggestionAction(selection: SuggestionSelection, action: SuggestionAction) {
+        onSuggestionAction?.invoke(selection, action)
     }
 }

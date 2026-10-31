@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.rendering
 
+import app.funput.funput.keyboard.suggestion.SuggestionBand
 import app.funput.funput.keyboard.suggestion.SuggestionChip
 import android.content.res.Resources
 import android.graphics.Bitmap
@@ -82,9 +83,13 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
         liquidGlassBackdrop.draw(canvas, width, height)
         backgroundImageRenderer.draw(canvas, backgroundBitmap, backgroundImage, width, height)
+        val interaction = pressedKeys as? KeyboardSurfaceInteraction
         keyboard.suggestionBar?.let { bar ->
             if (bar.suggestionsEnabled) {
-                suggestionBarRenderer.draw(canvas, bar, suggestions, pressedKeys)
+                // A long press swaps the candidates for the word's actions until it closes.
+                val segments = interaction?.suggestionActionSegments(keyboard)?.takeIf { it.isNotEmpty() }
+                    ?: SuggestionBand.chips(suggestions, bar.suggestionsBounds)
+                suggestionBarRenderer.draw(canvas, bar.suggestionsBounds, segments, pressedKeys)
             }
             if (suggestions.isEmpty() && clipboardHint != null && bar.clipboardHintFits) {
                 clipboardChipRenderer.draw(canvas, bar.suggestionsBounds, clipboardHint, pressedKeys)
@@ -101,7 +106,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
                 enterAction,
             )
         }
-        val alternatePreview = (pressedKeys as? KeyboardSurfaceInteraction)?.alternatePreview
+        val alternatePreview = interaction?.alternatePreview
         keyboard.keys.forEach { key ->
             if (alternatePreview == null && pressedKeys.isPressed(key.spec.id) &&
                 KeyPopupLayout.isEligible(key, showsKeyPreviews)) {

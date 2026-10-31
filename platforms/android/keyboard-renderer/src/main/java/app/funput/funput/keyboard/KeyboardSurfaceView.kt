@@ -6,7 +6,6 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import app.funput.funput.keyboard.interaction.interactionTargetAt
-import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.KeyboardEditorMode
@@ -102,7 +101,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
                 resolvedKeyboard?.suggestionBar?.clipboardHintFits == true,
         ) },
         keyboard = { resolvedKeyboard },
-        suggestionSelection = { id -> suggestions.selectionForTarget(id) },
+        suggestions = { suggestions },
         onHapticFeedback = { type ->
             KeyboardHaptics.perform(this, type)
             KeyboardSounds.perform(this, type)
