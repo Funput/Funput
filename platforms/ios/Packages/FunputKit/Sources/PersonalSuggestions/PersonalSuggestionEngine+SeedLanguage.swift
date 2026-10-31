@@ -10,17 +10,12 @@ extension PersonalSuggestionEngine {
     /// native boundary abandoned.
     @discardableResult
     public func setSeedLanguage(_ language: SuggestionSeedLanguage) -> Bool {
-        switch language {
-        case .off:
-            // The tone byte is ignored while off; any valid one will do.
-            funput_suggestion_set_seed_language(
-                handle, UInt8(FUNPUT_SEED_LANGUAGE_OFF), FunputToneStyle.modern.rawValue
-            )
-        case let .vietnamese(style):
-            funput_suggestion_set_seed_language(
-                handle, UInt8(FUNPUT_SEED_LANGUAGE_VIETNAMESE), style.rawValue
-            )
+        // The tone byte is ignored while off; any valid one will do.
+        let (code, tone): (Int32, FunputToneStyle) = switch language {
+        case .off: (FUNPUT_SEED_LANGUAGE_OFF, .modern)
+        case let .vietnamese(style): (FUNPUT_SEED_LANGUAGE_VIETNAMESE, style)
         }
+        return funput_suggestion_set_seed_language(handle, UInt8(code), tone.rawValue)
     }
 }
 #endif

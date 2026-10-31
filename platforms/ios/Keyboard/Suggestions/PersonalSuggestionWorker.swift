@@ -18,7 +18,7 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
     private var enabled = true
     private var learnedSinceFlush = 0
     /// Set from the main actor, taken on `queue`; see `setSeedLanguage`.
-    let pendingSeed = PersonalSuggestionSeedSlot()
+    let pendingSeed = LatestValueSlot<SuggestionSeedLanguage>()
     /// Queue only: the setting the current engine has, given to any engine created next.
     var seedLanguage: SuggestionSeedLanguage = .off
 

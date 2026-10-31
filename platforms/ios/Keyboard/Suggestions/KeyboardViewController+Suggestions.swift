@@ -50,7 +50,8 @@ extension KeyboardViewController {
     }
 
     /// The shipped Vietnamese data follows the composer from the coordinator's one writer.
-    /// The service keeps the value across configurations, so this is the only delivery.
+    /// Subscribing hands over the current value, so this works at any point after the
+    /// service exists; the service keeps the value across configurations.
     func followSeedLanguage() {
         inputCoordinator.onSeedLanguageChange = { [weak self] language in
             self?.personalSuggestionService.setSeedLanguage(language)

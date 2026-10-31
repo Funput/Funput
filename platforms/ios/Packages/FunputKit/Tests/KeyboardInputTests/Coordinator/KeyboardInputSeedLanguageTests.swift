@@ -75,6 +75,29 @@ struct KeyboardInputSeedLanguageTests {
         #expect(reports.values == [.vietnamese(.modern)])
     }
 
+    @Test("A subscriber set after the settings hears the current value at once")
+    func lateSubscriberHearsCurrentValue() {
+        let reports = Reports()
+        let coordinator = KeyboardInputCoordinator(inputMethod: .telex)
+        coordinator.apply(FunputConfiguration(inputMethod: .telex, toneStyle: .traditional))
+
+        coordinator.onSeedLanguageChange = { reports.values.append($0) }
+        coordinator.apply(FunputConfiguration(inputMethod: .telex, toneStyle: .traditional))
+
+        #expect(reports.values == [.vietnamese(.traditional)])
+    }
+
+    @Test("A subscriber set before any settings hears nothing until they arrive")
+    func earlySubscriberWaitsForSettings() {
+        let reports = Reports()
+        let coordinator = coordinator(reporting: reports)
+        #expect(reports.values.isEmpty)
+
+        coordinator.apply(FunputConfiguration(inputMethod: .telex))
+
+        #expect(reports.values == [.vietnamese(.modern)])
+    }
+
     @Test("Nothing is configured yet, so nothing is on")
     func unconfiguredIsOff() {
         #expect(KeyboardInputCoordinator(inputMethod: .telex).seedLanguage == .off)

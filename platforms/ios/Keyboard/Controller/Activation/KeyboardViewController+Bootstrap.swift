@@ -25,7 +25,6 @@ extension KeyboardViewController {
         // configuration before the first presentation is built, or bootstrap would
         // size the keyboard for the wrong one and `viewWillAppear` would resize it.
         adoptConfiguration(source)
-        // Before the first `apply`, so the suggestion data hears every change from it on.
         followSeedLanguage()
         inputCoordinator.apply(source.configuration)
         applyTextInputTraits(force: true)

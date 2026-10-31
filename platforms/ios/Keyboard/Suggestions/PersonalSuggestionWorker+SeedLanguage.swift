@@ -1,5 +1,5 @@
+import Foundation
 import KeyboardInput
-import os
 import PersonalSuggestions
 
 extension PersonalSuggestionWorker {
@@ -18,21 +18,5 @@ extension PersonalSuggestionWorker {
         guard let language = pendingSeed.take() else { return }
         seedLanguage = language
         engine?.setSeedLanguage(language)
-    }
-}
-
-/// The latest seed setting, handed from the main actor to the worker queue.
-final class PersonalSuggestionSeedSlot: @unchecked Sendable {
-    private let state = OSAllocatedUnfairLock<SuggestionSeedLanguage?>(initialState: nil)
-
-    func submit(_ language: SuggestionSeedLanguage) {
-        state.withLock { $0 = language }
-    }
-
-    func take() -> SuggestionSeedLanguage? {
-        state.withLock { state in
-            defer { state = nil }
-            return state
-        }
     }
 }
