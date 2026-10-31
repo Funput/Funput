@@ -12,6 +12,8 @@ struct AuthoredTokenTracker {
     /// the prefix was abandoned. Anything downstream sees the result and not the
     /// reason.
     private(set) var context: String?
+    /// The word `context` followed, kept only while the two were typed in a row.
+    private(set) var older: String?
     private var prefixLength = 0
     private var overflowCount = 0
 
@@ -43,7 +45,7 @@ struct AuthoredTokenTracker {
         } else {
             // Nothing left of this word to delete, so the caret has crossed back
             // over a boundary and what precedes it is no longer known.
-            context = nil
+            follow(nil)
         }
     }
 
@@ -66,7 +68,8 @@ struct AuthoredTokenTracker {
         let update = KeyboardSuggestionInputUpdate(
             prefix: overflowCount == 0 ? prefix : "",
             completedToken: completedToken,
-            context: context
+            context: context,
+            older: older
         )
         completedToken = nil
         return update
@@ -75,7 +78,7 @@ struct AuthoredTokenTracker {
     mutating func reset() {
         prefix.removeAll(keepingCapacity: true)
         completedToken = nil
-        context = nil
+        follow(nil)
         prefixLength = 0
         overflowCount = 0
     }
@@ -98,10 +101,17 @@ struct AuthoredTokenTracker {
         if overflowCount == 0, prefixLength >= Self.minimumLength {
             completedToken = prefix
         }
-        context = separator == " " ? completedToken : nil
+        follow(separator == " " ? completedToken : nil)
         prefix.removeAll(keepingCapacity: true)
         prefixLength = 0
         overflowCount = 0
+    }
+
+    /// `next` is now the word before the caret: the old one becomes the word
+    /// before it, or both go.
+    private mutating func follow(_ next: String?) {
+        older = next == nil ? nil : context
+        context = next
     }
 
     private func isCombiningMark(_ character: Character) -> Bool {
@@ -119,11 +129,21 @@ public struct KeyboardSuggestionInputUpdate: Equatable, Sendable {
     public let completedToken: String?
     /// The word `prefix` is being typed after, when one can be vouched for.
     public let context: String?
+    /// The word `context` was typed after, when the two were typed in a row.
+    public let older: String?
 
-    public init(prefix: String, completedToken: String?, context: String? = nil) {
+    public init(prefix: String, completedToken: String?, context: String? = nil, older: String? = nil) {
         self.prefix = prefix
         self.completedToken = completedToken
         self.context = context
+        self.older = context == nil ? nil : older
+    }
+
+    /// The words before `prefix` as the engine reads them: oldest first, space separated.
+    public var queryContext: String? {
+        guard let context else { return nil }
+        guard let older else { return context }
+        return older + " " + context
     }
 
     public static let empty = KeyboardSuggestionInputUpdate(prefix: "", completedToken: nil)

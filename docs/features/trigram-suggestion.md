@@ -299,7 +299,9 @@ Mỗi bước một PR, xếp chồng:
 3. C ABI và JNI (chỉ đường truy vấn), `funput_suggestion_query_in` và `nativeQueryIn`.
 4. Android: tracker giữ vòng hai chữ (`older` và `queryContext` trên `AuthoredSuggestionUpdate`), service
    giữ bản cập nhật cuối của tracker, engine truy vấn qua `nativeQueryIn`.
-5. iOS: như Android.
+5. iOS: như Android. `KeyboardSuggestionInputUpdate` có `older` và `queryContext`, service giữ bản
+   cập nhật cuối, `PersonalSuggestionEngine.query(_:after:)` nhận các chữ cách nhau bằng dấu cách và
+   gọi `funput_suggestion_query_in`.
 6. Đo trên máy thật: bộ nhớ extension iOS, tỉ lệ đoán, `ngram_contexts`, `PROBE_WINDOW`.
 
 ## Mở rộng sau này

@@ -64,12 +64,14 @@ public final class PersonalSuggestionEngine: @unchecked Sendable {
         }
     }
 
+    /// `previous` is the words before, oldest first and separated by spaces: one
+    /// word, or two for the engine's trigrams.
     public func query(_ prefix: String, after previous: String? = nil) -> [PersonalSuggestionCandidate] {
         let context = (previous ?? "").unicodeScalars.map(\.value)
         let codepoints = prefix.unicodeScalars.map(\.value)
         let result = context.withUnsafeBufferPointer { context in
             codepoints.withUnsafeBufferPointer { prefix in
-                funput_suggestion_query_with(
+                funput_suggestion_query_in(
                     handle,
                     context.baseAddress,
                     UInt(context.count),

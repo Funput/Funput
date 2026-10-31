@@ -4,7 +4,8 @@ import os
 public struct PersonalSuggestionQueryRequest: Equatable, Sendable {
     public let prefix: String
     public let generation: UInt64
-    /// The word `prefix` is being typed after, when the caller can vouch for one.
+    /// The words `prefix` is being typed after, oldest first and space separated,
+    /// when the caller can vouch for any.
     public let context: String?
 
     public init(prefix: String, generation: UInt64, context: String? = nil) {
