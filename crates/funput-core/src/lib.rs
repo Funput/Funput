@@ -28,9 +28,9 @@
 //! re-export nothing here, so the engine's view of this crate is the same with
 //! either feature on or off.
 //!
-//! [`key_role`] / [`KeyRole`] are likewise additive and read-only: the role a key
-//! plays in a method, read off the key alone, for callers that model typing
-//! errors. It consults the same tables as [`apply`] and has no effect on it.
+//! [`key_role`] / [`KeyRole`] and [`telex_defers_w`] are likewise read-only: the
+//! role a key plays in a method, or whether Telex holds a `w` back, for callers
+//! that model typing. They consult the same rules as [`apply`] and change nothing.
 //!
 //! [`sentence`] alone is not feature-gated. Where a sentence begins is asked by the
 //! keyboards, which link this crate without [`textcase`], and keeping one copy of
@@ -56,7 +56,7 @@ pub mod textcase;
 mod unicode;
 mod validation;
 
-pub use input_method::{KeyRole, key_role};
+pub use input_method::{KeyRole, key_role, telex_defers_w};
 pub use options::{ComposeOptions, InputMethod, ToneStyle};
 pub use orthography::respell_tone;
 

@@ -2,6 +2,8 @@
 
 mod support;
 
+#[path = "restore/collision/mod.rs"]
+mod collision;
 #[path = "restore/doubled/mod.rs"]
 mod doubled;
 #[path = "restore/english.rs"]

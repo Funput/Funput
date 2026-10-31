@@ -14,6 +14,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
             smart_restore: true,
             eager_restore: true,
             restore_doubled_keys: true,
+            restore_collisions: true,
             spell_check: false,
             syllable_rules: SyllableRules::STANDARD,
             auto_capitalize: false,

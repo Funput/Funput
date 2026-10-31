@@ -13,6 +13,7 @@ pub mod telex;
 pub mod vni;
 
 pub use role::{KeyRole, key_role};
+pub use telex::telex_defers_w;
 
 use crate::unicode::marks::Tone;
 use crate::unicode::shapes::VowelShape;

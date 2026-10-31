@@ -9,10 +9,13 @@
 //!   library that will read it.
 //! - `doubled` lists the `en.tsv` words a Telex revert shortens, and the prefixes
 //!   at which the engine may restore them mid-word, for doubled-key restore.
+//! - `collision` lists the `en.tsv` words a composition rule turns into a real
+//!   Vietnamese syllable (`two` → `tơ`), for collision restore.
 //!
 //! See `README.md` for the whole refresh, and
 //! `docs/features/english-lexicon-suggestion.md` for why the data is shaped so.
 
+mod collision;
 mod count;
 mod doubled;
 mod forms;
@@ -36,7 +39,9 @@ usage:
                            [--top N] COUNTS...
   funput-lexicon-tool pack < en.tsv > en.lex
   funput-lexicon-tool doubled [--overrides FILE] --out DIR < en.tsv
-                              (writes DIR/words.txt and DIR/decisive.txt)";
+                              (writes DIR/words.txt and DIR/decisive.txt)
+  funput-lexicon-tool collision [--data DIR] --out DIR < en.tsv
+                              (writes DIR/<class>/words.txt)";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -46,6 +51,10 @@ fn main() -> ExitCode {
         Some("pack") => pack::run(io::stdin().lock(), &mut out),
         Some("doubled") => match doubled::Options::parse(&args[1..]) {
             Ok(options) => doubled::run(&options, io::stdin().lock()),
+            Err(message) => return usage(&message),
+        },
+        Some("collision") => match collision::Options::parse(&args[1..]) {
+            Ok(options) => collision::run(&options, io::stdin().lock()),
             Err(message) => return usage(&message),
         },
         Some("rank") => match rank::Options::parse(&args[1..]) {

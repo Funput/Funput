@@ -24,6 +24,11 @@ pub struct EngineConfig {
     /// an English word (`password`, not `pasword`). Part of `smart_restore`, so it
     /// does nothing while that is off. On by default; Rust-only for now.
     pub restore_doubled_keys: bool,
+    /// Give a word back its raw keys when composition turned a listed English word
+    /// into a real Vietnamese syllable (`two` → `tơ` in Telex). Part of
+    /// `smart_restore`, so it does nothing while that is off. On by default;
+    /// Rust-only for now.
+    pub restore_collisions: bool,
     /// Spell-check ("Kiểm tra chính tả"): only place a diacritic when the result can
     /// still become a real Vietnamese syllable. Off by default.
     pub spell_check: bool,
@@ -76,6 +81,7 @@ impl Default for EngineConfig {
             smart_restore: true,
             eager_restore: true,
             restore_doubled_keys: true,
+            restore_collisions: true,
             spell_check: false,
             syllable_rules: SyllableRules::STANDARD,
             auto_capitalize: false,

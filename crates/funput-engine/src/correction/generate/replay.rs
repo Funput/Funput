@@ -41,6 +41,7 @@ pub(super) fn prepare(scratch: &mut Session, config: &EngineConfig) {
     scratch.config.smart_restore = false;
     scratch.config.eager_restore = false;
     scratch.config.restore_doubled_keys = false;
+    scratch.config.restore_collisions = false;
     scratch.config.spell_check = false;
     scratch.config.auto_capitalize = false;
     scratch.config.typo_correction = false;

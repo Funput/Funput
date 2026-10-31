@@ -6,7 +6,7 @@ pub(crate) mod shortcut_undo;
 use funput_core::{InputMethod, is_bare_shaped_vowel};
 
 use crate::ImeResult;
-use crate::compose::{RestoreOverride, doubled};
+use crate::compose::{RestoreOverride, collision, doubled};
 use crate::correction;
 use crate::model::Session;
 
@@ -88,6 +88,21 @@ fn keystrokes_intend_vietnamese(session: &Session) -> bool {
         || is_bare_shaped_vowel(&session.buffer)
 }
 
+/// The word as one of the embedded English lists says it was typed, ready to
+/// replace what is shown: the keys a revert swallowed ([`doubled`]), or the keys a
+/// composition rule read as diacritics ([`collision`]). These outrank the syllable
+/// verdict, because each list holds exactly the words that verdict gets wrong.
+fn listed_restore(session: &Session, boundary_key: char) -> Option<ImeResult> {
+    let raw = if doubled::restorable(session) {
+        session.literal.as_str()
+    } else if collision::restorable(session) {
+        session.keys.as_str()
+    } else {
+        return None;
+    };
+    Some(replace_word(session, raw, boundary_key))
+}
+
 /// Replace the word on screen with `text`, then type the boundary key after it.
 fn replace_word(session: &Session, text: &str, boundary_key: char) -> ImeResult {
     let backspace = session.buffer.chars().count();
@@ -118,10 +133,10 @@ fn boundary_result(session: &mut Session, boundary_key: char) -> ImeResult {
     if !declined && let Some(expansion) = shortcut::expansion(session, boundary_key) {
         return expansion;
     }
-    if doubled::restorable(session) {
+    if let Some(result) = listed_restore(session, boundary_key) {
         // The word is English, so typo correction must not park a repair for it.
         correction::drop_preview(session);
-        return replace_word(session, session.literal.as_str(), boundary_key);
+        return result;
     }
     let verdict = judge(session);
     // Typo correction looks at the word before English restore does, and is

@@ -703,6 +703,7 @@ fn configure_applies_all_options() {
         smart_restore: false,
         eager_restore: false,
         restore_doubled_keys: false,
+        restore_collisions: false,
         spell_check: true,
         syllable_rules: SyllableRules::STANDARD.with_extra_onsets(ExtraOnsets::ZFWJ),
         auto_capitalize: true,
@@ -717,7 +718,7 @@ fn configure_applies_all_options() {
     assert_eq!(config.method, InputMethod::Vni);
     assert!(config.spell_check && config.auto_capitalize);
     assert!(!config.smart_restore && !config.eager_restore);
-    assert!(!config.restore_doubled_keys);
+    assert!(!config.restore_doubled_keys && !config.restore_collisions);
     assert!(!config.shortcuts_enabled && !config.shortcut_smart_case);
     assert!(!config.shortcuts_in_english);
     assert!(config.typo_correction);

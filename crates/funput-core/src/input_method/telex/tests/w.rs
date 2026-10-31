@@ -1,7 +1,7 @@
 use crate::input_method::KeyAction;
 use crate::unicode::shapes::VowelShape;
 
-use super::super::classify_key;
+use super::super::{classify_key, telex_defers_w};
 
 fn shape(buffer: &str, expected: VowelShape) {
     assert_eq!(classify_key(buffer, 'w'), KeyAction::Shape(expected));
@@ -34,4 +34,15 @@ fn ua_targets_u_except_qu_glide() {
     }
     shape("qua", VowelShape::Breve);
     shape("hoa", VowelShape::Breve);
+}
+
+#[test]
+fn defers_one_w_typed_between_onset_and_nucleus() {
+    for keys in ["two", "swan", "swift", "cwon", "nwux", "quwon", "Two", "tw"] {
+        assert!(telex_defers_w(keys), "{keys}");
+    }
+    // Leading, after the nucleus, or not alone before it: no deferred modifier.
+    for keys in ["tow", "w", "was", "lww", "law", "t", ""] {
+        assert!(!telex_defers_w(keys), "{keys}");
+    }
 }
