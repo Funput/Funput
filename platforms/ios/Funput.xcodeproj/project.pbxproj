@@ -95,6 +95,7 @@
 				"Suggestions/Dictionary/PersonalSuggestionWorker+Dictionary.swift",
 				Suggestions/PersonalSuggestionSignposts.swift,
 				Suggestions/PersonalSuggestionWorker.swift,
+				"Suggestions/PersonalSuggestionWorker+SeedLanguage.swift",
 				"Suggestions/PersonalSuggestionWorker+Store.swift",
 			);
 			target = 5FB3C7C33001F78400CE4906 /* FunputTests */;

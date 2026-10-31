@@ -27,6 +27,9 @@ public final class KeyboardInputCoordinator {
     var preferredTelexMethod: KeyboardInputMethod
     /// The durable options last applied, kept so panel fields compose the same way.
     var compositionOptions: FunputCompositionOptions?
+    /// Told whenever ``seedLanguage`` changes; see ``syncComposerLanguage()``.
+    public var onSeedLanguageChange: ((SuggestionSeedLanguage) -> Void)?
+    var reportedSeedLanguage: SuggestionSeedLanguage?
     var nextTransactionSequence: UInt64 = 1
     /// Where the finger landed for the key being handled right now. Set by `handle`
     /// and spent on the first scalar that reaches the engine; never outlives the key

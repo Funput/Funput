@@ -37,6 +37,7 @@ let package = Package(
             name: "PersonalSuggestions",
             dependencies: [
                 funputCore,
+                .target(name: "FunputEngine"),
                 .target(name: "PersonalDictionary"),
                 .target(name: "KeyboardInput"),
                 .target(name: "KeyboardLayout"),
@@ -122,7 +123,7 @@ let package = Package(
         .testTarget(name: "FunputEngineTests", dependencies: ["FunputEngine", funputCore]),
         .testTarget(
             name: "PersonalSuggestionsTests",
-            dependencies: ["PersonalSuggestions", "PersonalDictionary"]
+            dependencies: ["PersonalSuggestions", "PersonalDictionary", "KeyboardInput", "FunputEngine"]
         ),
         .testTarget(name: "PersonalDictionaryTests", dependencies: ["PersonalDictionary", funputCore]),
         .testTarget(

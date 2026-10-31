@@ -4,8 +4,9 @@
 
 **Bước 1–2 đã hiện thực** (tài liệu này cùng phần lõi Rust của Phần A, chung một PR):
 `SeedLanguage`, bảng cặp với 69 cặp đầu tiên, Predict có dữ liệu kèm app. **Bước 3 đã hiện
-thực** (PR xếp chồng): setter qua C ABI và JNI. Mặc định `Off`, nên trên máy chưa có gì đổi cho
-tới khi hai nền tảng gọi setter (bước 4).
+thực** (PR xếp chồng): setter qua C ABI và JNI. **Bước 4 đã hiện thực** trên cả Android và iOS
+(hai PR riêng, cùng xếp chồng lên bước 3): người mới cài gõ `cảm` rồi dấu cách là có `ơn`, đã thử
+trên simulator iOS và bằng instrumented test trên emulator Android. Còn bước 5–7.
 
 Giải quyết [#560](https://github.com/Funput/Funput/issues/560)
 (đoán từ tiếp theo sau dấu cách) và [#561](https://github.com/Funput/Funput/issues/561)
@@ -346,8 +347,26 @@ không merge.
 |---|---|
 | `funput-ffi` | `funput_suggestion_set_seed_language(engine, language: u8, tone_style: u8) -> bool` (`suggestion/seed.rs`) |
 | `funput-jni` | `PersonalSuggestionNative.nativeSetSeedLanguage(handle: Long, language: Int, toneStyle: Int): Boolean`, qua `registry::set_seed_language` |
-| iOS | Gọi khi tạo engine và khi đổi VI/EN hoặc kiểu dấu; không đổi đường chấp nhận |
-| Android | Như iOS; thêm khai báo `external fun` và dòng kiểm symbol trong `verify_lexicon_artifacts.py` |
+| iOS | `KeyboardInputCoordinator.syncComposerLanguage()` là nơi duy nhất gọi `composer.setEnabled`; nó báo `onSeedLanguageChange` khi `seedLanguage` đổi. Controller nối callback tới `PersonalSuggestionService.setSeedLanguage` lúc bootstrap, trước lần `apply` đầu tiên |
+| Android | `SeedLanguageReportingEngine` bọc engine bộ gõ của tài liệu; mọi `configure` và `setEnabled` đi qua nó, kể cả `ImeSettingsController` (nhận `session.composition.engine`). Báo tới `PersonalSuggestionService.setSeedLanguage` |
+
+**Đã đổi khi hiện thực (bước 4).**
+
+- **Một chỗ trên mỗi nền tảng.** Android không có chỗ nào gom cả kiểu dấu lẫn VI/EN, nên chỗ đó là
+  một lớp bọc engine bộ gõ (cả hai đều đi qua engine). iOS đã có coordinator ghi trạng thái bộ gõ,
+  nên chỉ cần gom ba lời gọi `setEnabled` về một hàm. Cả hai chỉ báo khi đã biết đủ hai nửa và chỉ
+  khi giá trị đổi.
+- **Một đường giao duy nhất trên iOS.** Bản viết định truyền thêm giá trị hiện tại lúc
+  `configurePersonalSuggestions`; không cần nữa, vì service sống suốt đời controller và callback được
+  gắn trước lần `apply` đầu tiên, nên service nghe được mọi thay đổi. Service giữ giá trị trong
+  `PersonalSuggestionWorkerConfiguration.seedLanguage` để worker tạo sau vẫn có, và gửi riêng
+  `setSeedLanguage` cho worker đang sống để một lần đổi VI/EN không chạy lại đường configure.
+- **Race giữa đổi cài đặt và query.** Vòng drain của worker (cả hai nền tảng) lấy query mới ngay
+  trong lượt đang chạy, trước một tác vụ "áp cài đặt" đã xếp hàng, nên query đó bị trả lời theo cài
+  đặt cũ. Instrumented test Android bắt được (`khoẻ` thay vì `khỏe`). Cách sửa giống nhau: giá trị chờ
+  nằm trong một ô có khoá (`AtomicReference` / `OSAllocatedUnfairLock`) và vòng drain áp nó trước mỗi
+  query; tác vụ xếp hàng chỉ còn lo trường hợp đổi mà không có query nào theo sau.
+- Không có bộ nhớ VI/EN theo app trên Android lẫn iOS (chỉ macOS có), nên không có nguồn đổi thứ ba.
 
 **Mã wire**, giống nhau ở hai tầng:
 
@@ -377,7 +396,7 @@ không đổi hành vi.
 | 1 | Tài liệu này (cùng PR với bước 2) | |
 | 2 | Rust: `SeedLanguage`, đổi kiểu dấu, bảng cặp với danh sách nhỏ (69 cặp), Predict có dữ liệu kèm app, test dữ liệu và engine | #560 |
 | 3 | `funput-ffi` + `funput-jni`: setter | #560 |
-| 4 | iOS + Android gọi setter (Android thêm khai báo `external fun`) | #560 |
+| 4 | iOS + Android gọi setter (hai PR riêng) | #560 |
 | 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả đánh giá offline | #560 |
 | 6 | Rust: phần B (âm tiết cho prefix, cặp tĩnh khớp prefix, trần 2 ô cho prefix không dấu) | #561 |
 | 7 | Đo trên máy thật (độ trễ, bộ nhớ extension iOS, cảm giác gõ); chỉnh `context_evidence_seen` và trần 2 ô | cả hai |

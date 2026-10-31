@@ -1,5 +1,6 @@
 import Foundation
 import FunputShared
+import KeyboardInput
 import os
 import PersonalSuggestions
 
@@ -16,6 +17,10 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
     private var activeStoreURL: URL?
     private var enabled = true
     private var learnedSinceFlush = 0
+    /// Set from the main actor, taken on `queue`; see `setSeedLanguage`.
+    let pendingSeed = PersonalSuggestionSeedSlot()
+    /// Queue only: the setting the current engine has, given to any engine created next.
+    var seedLanguage: SuggestionSeedLanguage = .off
 
     init(
         lexiconURL: @escaping @Sendable () -> URL? = { Bundle.main.url(forResource: "en", withExtension: "lex") },
@@ -35,12 +40,14 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
     }
 
     func configure(_ configuration: PersonalSuggestionWorkerConfiguration) {
+        pendingSeed.submit(configuration.seedLanguage)
         queue.async { [weak self] in
             self?.applyConfiguration(
                 enabled: configuration.enabled,
                 requestedURL: configuration.hasFullAccess ? self?.storeURL() : nil,
                 resetToken: configuration.resetToken
             )
+            self?.applyPendingSeed()
         }
     }
 
@@ -96,6 +103,7 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
                 request.generation
             )
             ensureEngine()
+            applyPendingSeed()
             let result = enabled ? engine?.query(request.prefix, after: request.context) ?? [] : []
             os_signpost(
                 .end,
@@ -119,6 +127,7 @@ final class PersonalSuggestionWorker: PersonalSuggestionWorking, @unchecked Send
         let persistent = storeURL.flatMap(PersonalSuggestionEngine.open)
         activeStoreURL = persistent == nil ? nil : storeURL
         engine = persistent ?? PersonalSuggestionEngine.inMemory()
+        engine?.setSeedLanguage(seedLanguage)
         let attached = lexiconURL().map { engine?.attachLexicon(url: $0) == true } ?? false
         // Personal suggestions carry on without it; on-device checks still need to see this.
         if !attached {

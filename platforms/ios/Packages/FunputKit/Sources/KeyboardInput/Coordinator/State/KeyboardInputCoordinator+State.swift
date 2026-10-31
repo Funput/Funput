@@ -25,7 +25,7 @@ extension KeyboardInputCoordinator {
             autocapitalization: context.autocapitalization
         )
         if inputContextChanged {
-            composer.setEnabled(state.usesVietnameseComposition)
+            syncComposerLanguage()
         }
     }
 
@@ -70,7 +70,7 @@ extension KeyboardInputCoordinator {
         resetPersonalSuggestionTracking()
         let next: KeyboardLanguage = state.language == .vietnamese ? .english : .vietnamese
         replaceState(language: next)
-        composer.setEnabled(state.usesVietnameseComposition)
+        syncComposerLanguage()
     }
 
     func updateLayoutMode(_ mode: KeyboardLayoutMode) {

@@ -49,6 +49,14 @@ extension KeyboardViewController {
         publishPersonalSuggestionUpdate()
     }
 
+    /// The shipped Vietnamese data follows the composer from the coordinator's one writer.
+    /// The service keeps the value across configurations, so this is the only delivery.
+    func followSeedLanguage() {
+        inputCoordinator.onSeedLanguageChange = { [weak self] language in
+            self?.personalSuggestionService.setSeedLanguage(language)
+        }
+    }
+
     func publishPersonalSuggestionUpdate() {
         let state = inputCoordinator.state
         let canQuery = configuration.personalSuggestionsEnabled
