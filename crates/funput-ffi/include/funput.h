@@ -175,6 +175,18 @@
  */
 #define FUNPUT_DICTIONARY_ORIGIN_BLOCKED 2
 
+/**
+ * [`funput_suggestion_set_seed_language`]: the user is typing English, or the
+ * host has not said. Nothing shipped is offered.
+ */
+#define FUNPUT_SEED_LANGUAGE_OFF 0
+
+/**
+ * [`funput_suggestion_set_seed_language`]: the user is typing Vietnamese, so the
+ * shipped pairs may predict the word after a space.
+ */
+#define FUNPUT_SEED_LANGUAGE_VIETNAMESE 1
+
 #define SUGGESTION_CAP 3
 
 #define SUGGESTION_CHARS_CAP 32
@@ -1581,6 +1593,33 @@ uint32_t funput_suggestion_frequency(const FunputSuggestionEngine *engine,
 bool funput_suggestion_is_known_word(const FunputSuggestionEngine *engine,
                                      const uint32_t *word,
                                      uintptr_t word_len);
+
+/**
+ * Say what the shipped Vietnamese data may say from now on.
+ *
+ * `language` is a `FUNPUT_SEED_LANGUAGE_*` value; any other value means off, since
+ * staying silent is never wrong. `tone_style` is the composer's wire byte
+ * (`0 = Traditional`, `1 = Modern`, as in `FunputConfig`), and decides how the
+ * bar spells `hòa` / `hoà`.
+ *
+ * The handle keeps its own copy of both, apart from the composition engine's
+ * config, so the host must call this whenever the active input language or the
+ * tone style changes, whatever changed it: the user's toggle, a settings change,
+ * or per-app VI/EN memory switching on focus. Route those through the same place
+ * that calls `funput_configure`, so the two handles cannot disagree. It is cheap;
+ * the first switch to Vietnamese builds the tables here rather than on a
+ * keystroke. `funput_suggestion_reset` leaves it alone.
+ *
+ * Returns false for a null handle, or when the call panicked and the boundary
+ * abandoned it; the engine then keeps the setting it had.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used
+ * concurrently.
+ */
+bool funput_suggestion_set_seed_language(FunputSuggestionEngine *engine,
+                                         uint8_t language,
+                                         uint8_t tone_style);
 
 /**
  * Flush pending learned tokens to the journal.

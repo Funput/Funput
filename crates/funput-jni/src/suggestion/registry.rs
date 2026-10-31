@@ -11,7 +11,7 @@ use std::path::Path;
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 
-use funput_suggestions::{SuggestionConfig, SuggestionEngine};
+use funput_suggestions::{SeedLanguage, SuggestionConfig, SuggestionEngine};
 
 type Shared = Arc<Mutex<SuggestionEngine>>;
 
@@ -70,6 +70,12 @@ pub(crate) fn attach_lexicon(handle: i64, path: &Path) -> bool {
     with_mut(handle, |engine| engine.attach_lexicon(path).is_ok()).unwrap_or(false)
 }
 
+/// Says what the shipped Vietnamese data behind `handle` may say. `false` for an
+/// unknown handle.
+pub(crate) fn set_seed_language(handle: i64, language: SeedLanguage) -> bool {
+    with_mut(handle, |engine| engine.set_seed_language(language)).is_some()
+}
+
 pub(crate) fn with<T>(handle: i64, operation: impl FnOnce(&SuggestionEngine) -> T) -> Option<T> {
     let engine = shared(handle)?;
     let result = operation(&guard(&engine));
@@ -122,6 +128,25 @@ mod tests {
 
         destroy(handle);
         assert!(!attach_lexicon(handle, lexicon.path()));
+    }
+
+    #[test]
+    fn the_seed_language_turns_shipped_predictions_on_and_off() {
+        use funput_core::ToneStyle;
+
+        let handle = create();
+        let predicted = || with(handle, |engine| engine.suggest_with(Some("cảm"), "").len());
+        assert_eq!(predicted(), Some(0), "off until the host says otherwise");
+        assert!(set_seed_language(
+            handle,
+            SeedLanguage::Vietnamese(ToneStyle::Modern)
+        ));
+        assert_eq!(predicted(), Some(1));
+        assert!(set_seed_language(handle, SeedLanguage::Off));
+        assert_eq!(predicted(), Some(0));
+
+        destroy(handle);
+        assert!(!set_seed_language(handle, SeedLanguage::Off));
     }
 
     #[test]

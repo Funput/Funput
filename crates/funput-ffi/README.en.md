@@ -28,7 +28,13 @@ three UTF-32 candidates as a POD; open/learn/flush/compact/reset failures return
 empty result. Platforms drive this handle serially on a worker, never from the composition path.
 `funput_suggestion_attach_lexicon` attaches the English `en.lex` (a UTF-8 path, as for
 `engine_open`) so queries fill the slots personal words leave empty; a failure returns `false` and
-keeps the lexicon already attached.
+keeps the lexicon already attached. `funput_suggestion_set_seed_language`
+(`FUNPUT_SEED_LANGUAGE_OFF/VIETNAMESE`, plus the tone-style byte of `FunputConfig`) lets the shipped
+Vietnamese data predict the word after a space while the personal store has nothing to say. Off by
+default. The suggestion handle keeps its own copy of the language and tone style, apart from
+`FunputConfig`, so the host calls it when it creates the handle and whenever the active input
+language or the tone style changes, whatever changed it (the toggle, settings, per-app VI/EN
+memory), from the same place that calls `funput_configure`.
 
 The personal dictionary goes through the same handle. The keyboard, which owns the store, edits one
 word at a time with `funput_suggestion_apply_edit` (`FUNPUT_DICTIONARY_EDIT_ADD/FORGET/BLOCK/UNBLOCK`)
@@ -167,6 +173,7 @@ src/engine/         # composition IME C API (FunputEngine)
                     #   result.rs   #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 src/suggestion/     # personal-suggestion C API (FunputSuggestionEngine)
                     #   engine.rs (handle new/open/free, attach_lexicon), query.rs (learn/query),
+                    #   seed.rs (set_seed_language: shipped Vietnamese data),
                     #   store.rs (flush/compact/reset/stats), types.rs (candidate/stats PODs),
                     #   dictionary/ (edit, view: open_snapshot/post_edit, list, types)
 src/app_language/   # per-app VI/EN memory C API (FunputAppLanguage), independent of FunputEngine

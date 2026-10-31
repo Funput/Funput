@@ -3,8 +3,9 @@
 ## Trạng thái
 
 **Bước 1–2 đã hiện thực** (tài liệu này cùng phần lõi Rust của Phần A, chung một PR):
-`SeedLanguage`, bảng cặp với 69 cặp đầu tiên, Predict có dữ liệu kèm app. Mặc định `Off`,
-nên trên máy chưa có gì đổi cho tới khi FFI/JNI và hai nền tảng gọi setter (bước 3–4).
+`SeedLanguage`, bảng cặp với 69 cặp đầu tiên, Predict có dữ liệu kèm app. **Bước 3 đã hiện
+thực** (PR xếp chồng): setter qua C ABI và JNI. Mặc định `Off`, nên trên máy chưa có gì đổi cho
+tới khi hai nền tảng gọi setter (bước 4).
 
 Giải quyết [#560](https://github.com/Funput/Funput/issues/560)
 (đoán từ tiếp theo sau dấu cách) và [#561](https://github.com/Funput/Funput/issues/561)
@@ -343,10 +344,28 @@ không merge.
 
 | Tầng | Việc |
 |---|---|
-| `funput-ffi` | `funput_suggestions_set_seed_language(handle, language, tone_style)` |
-| `funput-jni` | Hàm JNI tương ứng, theo cách khoá handle hiện có |
+| `funput-ffi` | `funput_suggestion_set_seed_language(engine, language: u8, tone_style: u8) -> bool` (`suggestion/seed.rs`) |
+| `funput-jni` | `PersonalSuggestionNative.nativeSetSeedLanguage(handle: Long, language: Int, toneStyle: Int): Boolean`, qua `registry::set_seed_language` |
 | iOS | Gọi khi tạo engine và khi đổi VI/EN hoặc kiểu dấu; không đổi đường chấp nhận |
-| Android | Như iOS |
+| Android | Như iOS; thêm khai báo `external fun` và dòng kiểm symbol trong `verify_lexicon_artifacts.py` |
+
+**Mã wire**, giống nhau ở hai tầng:
+
+| Tham số | Giá trị |
+|---|---|
+| `language` | `0` tắt (`FUNPUT_SEED_LANGUAGE_OFF`), `1` tiếng Việt (`FUNPUT_SEED_LANGUAGE_VIETNAMESE`); giá trị khác coi như tắt |
+| `tone_style` | Byte của bộ gõ: `0` kiểu cũ, `1` kiểu mới (như `FunputConfig.tone_style`), giải mã bằng chính `decode_tone_style` của tầng đó |
+
+Trả `false` khi handle null (C) hoặc không còn (JNI), hoặc khi biên ABI phải bỏ một lời gọi bị
+panic; engine giữ nguyên cài đặt cũ. Mã và hàm giải mã nằm một chỗ,
+`SeedLanguage::{WIRE_OFF, WIRE_VIETNAMESE, from_wire}`; FFI viết lại hai hằng bằng số cho
+cbindgen và `const assert` chúng bằng mã của thư viện, JNI thu `int` về byte rồi gọi `from_wire`.
+
+**Một nơi đặt trạng thái gõ.** Handle gợi ý giữ bản sao riêng của ngôn ngữ và kiểu dấu, tách khỏi
+cấu hình bộ gõ. Ở bước 4, mỗi nền tảng phải gọi setter từ **cùng một chỗ** đang đẩy cấu hình cho bộ
+gõ, cho mọi nguyên nhân đổi: nút VI/EN, đổi kiểu dấu trong cài đặt, và bộ nhớ VI/EN theo app tự
+chuyển khi đổi ô nhập. Nếu hai lời gọi tách nhau, bộ gõ có thể ra `hòa` trong khi thanh gợi ý ra
+`khoẻ`, hoặc vẫn đoán tiếng Việt khi bàn phím đã sang tiếng Anh, mà không tầng nào phát hiện.
 
 Shell nào chưa gọi setter thì vẫn `Off`, nên các PR Rust merge được trước PR nền tảng mà
 không đổi hành vi.
@@ -358,7 +377,7 @@ không đổi hành vi.
 | 1 | Tài liệu này (cùng PR với bước 2) | |
 | 2 | Rust: `SeedLanguage`, đổi kiểu dấu, bảng cặp với danh sách nhỏ (69 cặp), Predict có dữ liệu kèm app, test dữ liệu và engine | #560 |
 | 3 | `funput-ffi` + `funput-jni`: setter | #560 |
-| 4 | iOS + Android gọi setter | #560 |
+| 4 | iOS + Android gọi setter (Android thêm khai báo `external fun`) | #560 |
 | 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả đánh giá offline | #560 |
 | 6 | Rust: phần B (âm tiết cho prefix, cặp tĩnh khớp prefix, trần 2 ô cho prefix không dấu) | #561 |
 | 7 | Đo trên máy thật (độ trễ, bộ nhớ extension iOS, cảm giác gõ); chỉnh `context_evidence_seen` và trần 2 ô | cả hai |
