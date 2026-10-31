@@ -31,6 +31,22 @@ struct PersonalSuggestionServiceContextTests {
         #expect(learned.context == "xin")
     }
 
+    @Test("Two words reach the query, and the learn still takes the word before")
+    func forwardsTwoWords() throws {
+        let factory = SuggestionWorkerFactorySpy()
+        let service = factory.makeService()
+        _ = factory.configure(service)
+
+        service.update(.init(prefix: "", completedToken: "ơn", context: "ơn", older: "cảm"), canQuery: true)
+        let worker = try #require(factory.workers.first)
+        #expect(worker.events.compactMap(\.query).last?.context == "cảm ơn")
+
+        service.update(.init(prefix: "", completedToken: "bạn", context: "bạn", older: "ơn"), canQuery: true)
+        let learned = try #require(worker.events.compactMap(\.learned).last)
+        #expect(learned.token == "bạn")
+        #expect(learned.context == "ơn", "the engine reads the word before that off its journal")
+    }
+
     @Test("A context with no prefix asks for a prediction")
     func predictsAfterASpace() throws {
         let factory = SuggestionWorkerFactorySpy()

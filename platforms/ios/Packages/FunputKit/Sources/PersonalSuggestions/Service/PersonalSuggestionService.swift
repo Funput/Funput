@@ -16,7 +16,8 @@ public final class PersonalSuggestionService {
     private(set) var generation: UInt64 = 0
     private var activationGeneration: UInt64 = 0
     private(set) var prefix = ""
-    private var context: String?
+    /// The tracker's last update: what the next word follows, and the words the bar asks after.
+    private var latest = KeyboardSuggestionInputUpdate.empty
     /// Whether the bar is currently answering a context rather than a prefix.
     private var predicting = false
     /// As the engine returned them. `visibleCandidates` puts them in the user's case.
@@ -64,15 +65,15 @@ public final class PersonalSuggestionService {
             )
         }
         if let token = update.completedToken, workerConfiguration.enabled {
-            ensureWorker()?.learn(token, after: context)
+            ensureWorker()?.learn(token, after: latest.context)
         }
-        context = update.context
+        latest = update
         self.shift = shift
         let allowed = canQuery && workerConfiguration.enabled
         let next = allowed && update.prefix.count >= 2 ? update.prefix : ""
         // A prediction answers a context with no prefix at all. One character is
         // neither a prefix worth completing nor a word boundary, and stays out.
-        let predicts = allowed && update.prefix.isEmpty && context != nil
+        let predicts = allowed && update.prefix.isEmpty && latest.context != nil
         if update.completedToken == nil, next == prefix, predicts == predicting { return }
         prefix = next
         predicting = predicts
@@ -85,7 +86,7 @@ public final class PersonalSuggestionService {
         received = []
         publish([])
         guard !prefix.isEmpty || predicting else { return }
-        ensureWorker()?.query(.init(prefix: prefix, generation: generation, context: context))
+        ensureWorker()?.query(.init(prefix: prefix, generation: generation, context: latest.queryContext))
     }
 
     public func clear() { invalidateAndPublish() }
@@ -110,7 +111,7 @@ public final class PersonalSuggestionService {
             || correction != nil
         generation &+= 1
         prefix = ""
-        context = nil
+        latest = .empty
         predicting = false
         received = []
         correction = nil
