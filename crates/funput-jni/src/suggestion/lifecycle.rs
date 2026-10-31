@@ -32,6 +32,23 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
     })
 }
 
+/// Opens the store at `path` read-only, as the app does while the keyboard owns it.
+/// 0 for an empty path or a store that cannot be read.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeOpenSnapshot(
+    mut env: EnvUnowned<'_>,
+    _this: JavaObject<'_>,
+    path: JString<'_>,
+) -> jlong {
+    safe(0, || {
+        let value = neutral(env.with_env(|env| path.try_to_string(env)).into_outcome());
+        (!value.is_empty())
+            .then(|| registry::open_snapshot(Path::new(&value)))
+            .flatten()
+            .unwrap_or(0)
+    })
+}
+
 /// Attaches the English `en.lex` at `path` so queries fill the slots personal
 /// words leave empty. `false` for an empty path, an unknown handle, or a file
 /// that will not attach, and the engine keeps the lexicon it had. The decision is

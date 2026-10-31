@@ -1,17 +1,9 @@
-//! Java arrays in and out of the correction calls.
-//!
-//! Reading: the two parallel arrays the IME ranks candidates with. Both are nullable
-//! on the Java side, and an absent array has a meaning rather than being an error: no
-//! counts means an even prior, no mask means every candidate is eligible.
-//!
-//! Writing: every result that is more than one number comes back as an `int[]` or a
-//! `String[]`, built here so each export stays a one-line marshalling call.
+//! The two parallel arrays the IME ranks correction candidates with. Both are
+//! nullable on the Java side, and an absent array has a meaning rather than being an
+//! error: no counts means an even prior, no mask means every candidate is eligible.
+//! Results go back through the shared writers in `crate::abi`.
 
-use jni::EnvUnowned;
-use jni::objects::{JBooleanArray, JIntArray, JObjectArray, JString};
-use jni::sys::{jint, jintArray, jobjectArray};
-
-use crate::abi::{neutral, safe};
+use jni::objects::{JBooleanArray, JIntArray};
 
 /// A Java `int[]` as counts the engine can read, empty when the array is absent.
 pub(super) fn read_ints(
@@ -43,36 +35,4 @@ pub(super) fn read_bools(
     let mut values = vec![false; len];
     array.get_region(env, 0, &mut values)?;
     Ok(values)
-}
-
-/// `values` as a new Java `int[]`, or null if the JVM could not allocate one.
-pub(super) fn int_array(env: &mut EnvUnowned<'_>, values: &[jint]) -> jintArray {
-    safe(std::ptr::null_mut(), || {
-        let result = env
-            .with_env(|env| -> jni::errors::Result<_> {
-                let array = JIntArray::new(env, values.len())?;
-                array.set_region(env, 0, values)?;
-                Ok(array.into_raw())
-            })
-            .into_outcome();
-        neutral(result)
-    })
-}
-
-/// `words` as a new Java `String[]`, or null if the JVM could not allocate one.
-pub(super) fn string_array(env: &mut EnvUnowned<'_>, words: &[String]) -> jobjectArray {
-    safe(std::ptr::null_mut(), || {
-        let result = env
-            .with_env(|env| -> jni::errors::Result<_> {
-                let initial = JString::from_str(env, words.first().map_or("", String::as_str))?;
-                let array = JObjectArray::<JString>::new(env, words.len(), &initial)?;
-                for (index, word) in words.iter().enumerate().skip(1) {
-                    let value = JString::from_str(env, word)?;
-                    array.set_element(env, index, &value)?;
-                }
-                Ok(array.into_raw())
-            })
-            .into_outcome();
-        neutral(result)
-    })
 }

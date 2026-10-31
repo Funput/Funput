@@ -1,11 +1,17 @@
 //! Allocation-bounded JNI query and text-free stats exports.
 
+use funput_suggestions::SuggestionSet;
 use jni::EnvUnowned;
-use jni::objects::{JLongArray, JObjectArray, JString};
+use jni::objects::JString;
 use jni::sys::{jboolean, jint, jlong, jlongArray, jobjectArray};
 
 use super::registry;
-use crate::abi::{JavaObject, neutral, safe};
+use crate::abi::{JavaObject, long_array, neutral, read_string, safe, string_array};
+
+/// The bar's three slots, as owned text that outlives the engine lock.
+fn top(set: SuggestionSet<'_>) -> Vec<String> {
+    set.iter().take(3).map(str::to_owned).collect()
+}
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeQuery(
@@ -15,22 +21,9 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
     prefix: JString<'_>,
 ) -> jobjectArray {
     safe(std::ptr::null_mut(), || {
-        let result = env
-            .with_env(|env| -> jni::errors::Result<_> {
-                let text = prefix.try_to_string(env)?;
-                let words = registry::with(handle, |engine| {
-                    engine
-                        .suggest(&text)
-                        .iter()
-                        .take(3)
-                        .map(str::to_owned)
-                        .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
-                candidates(env, &words)
-            })
-            .into_outcome();
-        neutral(result)
+        let text = read_string(&mut env, &prefix);
+        let words = registry::with(handle, |engine| top(engine.suggest(&text))).unwrap_or_default();
+        string_array(&mut env, &words)
     })
 }
 
@@ -45,23 +38,12 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
     prefix: JString<'_>,
 ) -> jobjectArray {
     safe(std::ptr::null_mut(), || {
-        let result = env
-            .with_env(|env| -> jni::errors::Result<_> {
-                let context = previous.try_to_string(env)?;
-                let text = prefix.try_to_string(env)?;
-                let words = registry::with(handle, |engine| {
-                    engine
-                        .suggest_with(Some(context.as_str()).filter(|it| !it.is_empty()), &text)
-                        .iter()
-                        .take(3)
-                        .map(str::to_owned)
-                        .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
-                candidates(env, &words)
-            })
-            .into_outcome();
-        neutral(result)
+        let context = read_string(&mut env, &previous);
+        let text = read_string(&mut env, &prefix);
+        let context = Some(context.as_str()).filter(|it| !it.is_empty());
+        let words = registry::with(handle, |engine| top(engine.suggest_with(context, &text)))
+            .unwrap_or_default();
+        string_array(&mut env, &words)
     })
 }
 
@@ -86,25 +68,8 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
             ]
         })
         .unwrap_or([0; 8]);
-        let result = env
-            .with_env(|env| -> jni::errors::Result<_> {
-                let array = JLongArray::new(env, values.len())?;
-                array.set_region(env, 0, &values)?;
-                Ok(array.into_raw())
-            })
-            .into_outcome();
-        neutral(result)
+        long_array(&mut env, &values)
     })
-}
-
-fn candidates(env: &mut jni::Env<'_>, words: &[String]) -> jni::errors::Result<jobjectArray> {
-    let initial = JString::from_str(env, words.first().map(String::as_str).unwrap_or(""))?;
-    let array = JObjectArray::<JString>::new(env, words.len(), &initial)?;
-    for (index, word) in words.iter().enumerate().skip(1) {
-        let value = JString::from_str(env, word)?;
-        array.set_element(env, index, &value)?;
-    }
-    Ok(array.into_raw())
 }
 
 /// How many times the user has typed `word`, and 0 for one the store has never

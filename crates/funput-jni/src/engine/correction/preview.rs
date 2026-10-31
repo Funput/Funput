@@ -11,9 +11,9 @@ use jni::EnvUnowned;
 use jni::objects::{JBooleanArray, JIntArray, JString};
 use jni::sys::{jint, jintArray, jlong};
 
-use super::arrays::{int_array, read_bools, read_ints};
+use super::arrays::{read_bools, read_ints};
 use super::registry;
-use crate::abi::{JavaObject, neutral, safe, string_result};
+use crate::abi::{JavaObject, int_array, neutral, safe, string_result};
 
 /// Search the word being typed the way the boundary will, and return how many
 /// candidates it reaches. 0 while the word could still become a syllable, for a word
