@@ -47,6 +47,27 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
     })
 }
 
+/// As `nativeQueryWith`, with the words before as one string separated by spaces,
+/// oldest first: `"cảm ơn"` reads the two words before. Empty means no context.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeQueryIn(
+    mut env: EnvUnowned<'_>,
+    _this: JavaObject<'_>,
+    handle: jlong,
+    context: JString<'_>,
+    prefix: JString<'_>,
+) -> jobjectArray {
+    safe(std::ptr::null_mut(), || {
+        let context = read_string(&mut env, &context);
+        let text = read_string(&mut env, &prefix);
+        let words = registry::with(handle, |engine| {
+            top(engine.suggest_after_words(&context, &text))
+        })
+        .unwrap_or_default();
+        string_array(&mut env, &words)
+    })
+}
+
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeStats(
     mut env: EnvUnowned<'_>,

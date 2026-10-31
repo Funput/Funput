@@ -18,8 +18,9 @@ pub use engine::{
 };
 pub use query::{
     funput_suggestion_frequency, funput_suggestion_is_known_word, funput_suggestion_learn,
-    funput_suggestion_learn_after, funput_suggestion_query, funput_suggestion_query_with,
-    funput_suggestion_syllable_tier, funput_suggestion_syllable_weight,
+    funput_suggestion_learn_after, funput_suggestion_query, funput_suggestion_query_in,
+    funput_suggestion_query_with, funput_suggestion_syllable_tier,
+    funput_suggestion_syllable_weight,
 };
 pub use seed::{
     FUNPUT_SEED_LANGUAGE_OFF, FUNPUT_SEED_LANGUAGE_VIETNAMESE, funput_suggestion_set_seed_language,

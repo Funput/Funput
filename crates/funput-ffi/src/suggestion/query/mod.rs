@@ -3,13 +3,16 @@
 //! # Layout
 //!
 //! - this file — learning a token, and the prefix lookups the suggestion bar runs.
+//! - `context` — the lookup with more than one word of context.
 //! - `words` — asking about one whole word, which is what typo correction ranks with.
 //! - `syllables` — the shipped syllable bands, the other half of that ranking, asked
 //!   without a handle.
 
+mod context;
 mod syllables;
 mod words;
 
+pub use context::funput_suggestion_query_in;
 pub use syllables::{funput_suggestion_syllable_tier, funput_suggestion_syllable_weight};
 pub use words::{funput_suggestion_frequency, funput_suggestion_is_known_word};
 
@@ -19,6 +22,7 @@ use crate::abi::safe;
 
 use super::engine::{FunputSuggestionEngine, codepoints_from_raw};
 use super::types::FunputSuggestionResult;
+use context::context_from_raw;
 
 /// Record one completed UTF-32 token. Returns false for invalid input or failure.
 ///
@@ -132,15 +136,6 @@ pub unsafe extern "C" fn funput_suggestion_query_with(
         };
         FunputSuggestionResult::from_set(engine.inner.suggest_with(context.as_deref(), &text))
     })
-}
-
-/// `None` when the call is malformed; `Some(None)` when the caller had no context
-/// to offer, which is a normal thing to say and not an error.
-fn context_from_raw(previous: *const u32, len: usize) -> Option<Option<String>> {
-    if len == 0 {
-        return Some(None);
-    }
-    decode_valid_codepoints(codepoints_from_raw(previous, len)?).map(Some)
 }
 
 pub(crate) fn decode_valid_codepoints(codepoints: &[u32]) -> Option<String> {

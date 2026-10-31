@@ -1545,6 +1545,22 @@ FunputSuggestionResult funput_suggestion_query_with(const FunputSuggestionEngine
                                                     uintptr_t prefix_len);
 
 /**
+ * As `funput_suggestion_query_with`, with the words before as one UTF-32 string
+ * separated by spaces, oldest first: `cảm ơn` reads the two words before. The
+ * engine reads as many of the last words as it has contexts for. Null or empty
+ * means no context. Any failure returns empty.
+ *
+ * # Safety
+ * `context` and `prefix` must each point to their stated number of readable
+ * codepoints, or be null.
+ */
+FunputSuggestionResult funput_suggestion_query_in(const FunputSuggestionEngine *engine,
+                                                  const uint32_t *context,
+                                                  uintptr_t context_len,
+                                                  const uint32_t *prefix,
+                                                  uintptr_t prefix_len);
+
+/**
  * How many pseudo-uses `word`'s band in the shipped syllable list is worth, and 0
  * for a word that is not on it — what a host adds to `funput_suggestion_frequency`
  * to form the `uses` entry of a candidate. Case and normalization do not matter.

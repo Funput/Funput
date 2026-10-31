@@ -69,6 +69,24 @@ impl SuggestionEngine {
         set
     }
 
+    /// [`Self::suggest_in`] with the context as one string, the words before
+    /// separated by spaces, oldest first: what a binding that cannot pass a list
+    /// cheaply hands over. A learned token never holds a space, so the split is
+    /// exact. No allocation.
+    pub fn suggest_after_words(&self, words: &str, prefix: &str) -> SuggestionSet<'_> {
+        let mut context = [""; MAX_CONTEXT];
+        let mut len = 0;
+        for word in words
+            .rsplit(' ')
+            .filter(|word| !word.is_empty())
+            .take(MAX_CONTEXT)
+        {
+            len += 1;
+            context[MAX_CONTEXT - len] = word;
+        }
+        self.suggest_in(&context[MAX_CONTEXT - len..], prefix)
+    }
+
     /// What the store holds about `context`: the trigram entry for its last two
     /// words when the order allows and the table has one, then the last word's
     /// own followers.
