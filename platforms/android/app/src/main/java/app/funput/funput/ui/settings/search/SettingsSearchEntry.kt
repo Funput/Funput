@@ -61,6 +61,9 @@ private val rows = listOf(
         "control center", "quick settings", "tile", "trung tam dieu khien", "thanh trang thai"),
     entry(R.string.settings_hardware_keyboard_system_title, FunputIcons.OpenExternal, SettingsPage.HARDWARE_KEYBOARD,
         "hardware", "physical", "android"),
+    // On the smart page, where the row into the dictionary is; search lands on pages, not their children.
+    entry(R.string.dictionary_title, FunputIcons.Suggestions, SettingsPage.SMART_INPUT,
+        "tu dien", "dictionary", "chan tu", "block", "tu da hoc", "learned words", "them tu"),
     entry(R.string.settings_data_suggestions_title, FunputIcons.Delete, SettingsPage.DATA,
         "xoa", "goi y", "learned", "reset"),
     entry(R.string.settings_data_clipboard_title, FunputIcons.Clear, SettingsPage.DATA, "xoa", "clipboard", "ghim"),

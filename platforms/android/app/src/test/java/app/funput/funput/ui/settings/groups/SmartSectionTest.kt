@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Each of the seven smart switches flips its own preference, and only its own. */
+/** Each of the seven smart switches flips its own preference, and the suggestion card leads into the dictionary. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [SCREENSHOT_SDK], qualifiers = "vi")
 class SmartSectionTest {
@@ -23,7 +23,7 @@ class SmartSectionTest {
     val compose = createComposeRule()
 
     @Test
-    fun `all seven preferences dispatch from one section`() {
+    fun `all seven preferences dispatch from the smart page`() {
         val changes = mutableMapOf<String, Boolean>()
         compose.setContent {
             FunputUiTheme(isDark = false) {
@@ -49,5 +49,18 @@ class SmartSectionTest {
             ),
             changes,
         )
+    }
+
+    @Test
+    fun `the suggestion card leads into the personal dictionary`() {
+        var opened = 0
+        compose.setContent {
+            FunputUiTheme(isDark = false) {
+                SmartSection(testSettingsState(onSmartChanged = { _, _ -> }), onOpenDictionary = { opened++ })
+            }
+        }
+
+        compose.onNodeWithText("Từ điển cá nhân").performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals(1, opened)
     }
 }

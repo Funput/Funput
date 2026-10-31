@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The personal dictionary page and its way in from the smart input page. Worded as on iOS. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="dictionary_title">Từ điển cá nhân</string>
+    <string name="dictionary_link_summary">Xem, thêm và chặn từ</string>
+    <string name="settings_smart_section_suggestions">Gợi ý từ</string>
+    <string name="settings_smart_section_suggestions_footer">Gợi ý chỉ học chữ gõ bằng Funput và lưu trên thiết bị.</string>
+    <string name="settings_smart_section_typing">Khi gõ</string>
+
+    <string name="dictionary_add">Thêm từ</string>
+    <string name="dictionary_reset">Xoá toàn bộ từ đã học</string>
+    <string name="dictionary_reset_title">Xoá toàn bộ từ đã học?</string>
+    <string name="dictionary_reset_body">Xoá cả từ tự thêm khi bạn mở bàn phím lần tới. Từ bị chặn vẫn được giữ.</string>
+    <string name="dictionary_reset_confirm">Xoá tất cả</string>
+
+    <string name="dictionary_notice_off">Gợi ý từ đang tắt. Từ điển vẫn được giữ và dùng lại khi bạn bật.</string>
+    <string name="dictionary_notice_turn_on">Bật gợi ý</string>
+    <string name="dictionary_notice_reset_pending">Các từ đã học sẽ được xoá khi bạn mở bàn phím lần tới. Danh sách từ bị chặn vẫn được giữ.</string>
+
+    <string name="dictionary_total_caption">từ trong từ điển</string>
+    <string name="dictionary_privacy">Học từ những gì bạn gõ bằng Funput, chỉ lưu trên máy này.</string>
+    <string name="dictionary_filter_learned">Đã học</string>
+    <string name="dictionary_filter_added">Tự thêm</string>
+    <string name="dictionary_filter_blocked">Đã chặn</string>
+    <string name="dictionary_filter_option">%1$s %2$d</string>
+
+    <string name="dictionary_search">Tìm từ</string>
+    <string name="dictionary_clear_search">Xoá tìm kiếm</string>
+    <string name="dictionary_count">%1$d từ</string>
+    <string name="dictionary_result_count">Tìm thấy %1$d trên %2$d từ</string>
+    <string name="dictionary_sort">Sắp xếp</string>
+    <string name="dictionary_sort_most_used">Dùng nhiều nhất</string>
+    <string name="dictionary_sort_recent">Mới dùng</string>
+    <string name="dictionary_sort_alphabetical">Theo bảng chữ cái</string>
+
+    <string name="dictionary_word_uses">Dùng %1$d lần</string>
+    <string name="dictionary_word_added">Bạn tự thêm</string>
+    <string name="dictionary_word_blocked">Không bao giờ được gợi ý</string>
+    <string name="dictionary_badge_added">Tự thêm</string>
+    <string name="dictionary_menu_label">Tuỳ chọn</string>
+    <string name="dictionary_copy">Sao chép</string>
+    <string name="dictionary_block">Chặn</string>
+    <string name="dictionary_block_menu">Không gợi ý từ này</string>
+    <string name="dictionary_unblock">Bỏ chặn</string>
+    <string name="dictionary_delete">Xoá</string>
+    <string name="dictionary_delete_menu">Xoá khỏi từ điển</string>
+    <string name="dictionary_delete_title">Xoá “%1$s” khỏi từ điển?</string>
+    <string name="dictionary_delete_body">Funput quên số lần bạn đã gõ từ này. Gõ lại vài lần thì từ được học lại.</string>
+    <string name="dictionary_cancel">Huỷ</string>
+
+    <string name="dictionary_loading">Đang mở từ điển</string>
+    <string name="dictionary_load_error">Không mở được từ điển</string>
+    <string name="dictionary_retry">Thử lại</string>
+    <string name="dictionary_action_error">Không thể cập nhật từ điển</string>
+    <string name="dictionary_action_error_body">Funput không ghi được thay đổi này. Hãy thử lại.</string>
+    <string name="dictionary_close">Đóng</string>
+
+    <string name="dictionary_empty_search_title">Không tìm thấy từ</string>
+    <string name="dictionary_empty_search_body">Thử gõ một phần khác của từ. Có dấu hay không dấu đều được.</string>
+    <string name="dictionary_empty_learned_title">Chưa có từ nào</string>
+    <string name="dictionary_empty_learned_body">Funput học một từ sau khi bạn gõ nó vài lần bằng bàn phím Funput.</string>
+    <string name="dictionary_empty_added_title">Chưa có từ tự thêm</string>
+    <string name="dictionary_empty_added_body">Thêm tên riêng, thương hiệu hay biệt danh để Funput gợi ý ngay từ lần đầu.</string>
+    <string name="dictionary_empty_blocked_title">Chưa chặn từ nào</string>
+    <string name="dictionary_empty_blocked_body">Từ bạn chặn sẽ không bao giờ được gợi ý, kể cả khi bạn gõ lại nó.</string>
+
+    <string name="dictionary_add_field">Từ mới</string>
+    <string name="dictionary_add_placeholder">Ví dụ: Funput</string>
+    <string name="dictionary_add_hint">Từ tự thêm được gợi ý ngay, kể cả khi bạn chưa gõ nó lần nào. Thêm một từ đang bị chặn sẽ bỏ chặn từ đó.</string>
+    <string name="dictionary_add_preview">Thanh gợi ý sẽ hiện</string>
+    <string name="dictionary_add_preview_label">Gợi ý %1$s</string>
+    <string name="dictionary_add_confirm">Thêm</string>
+    <string name="dictionary_add_spaced">Mỗi lần thêm một từ, không có dấu cách. Muốn thêm cả cụm, hãy dùng Gõ tắt.</string>
+    <string name="dictionary_add_too_long">Từ dài quá %1$d ký tự.</string>
+    <string name="dictionary_add_unchanged">Từ này đã có trong từ điển.</string>
+    <string name="dictionary_add_limit">Đã đủ số từ tự thêm tối đa. Hãy xoá bớt rồi thêm lại.</string>
+    <string name="dictionary_add_invalid">Funput không lưu được từ này.</string>
+    <string name="dictionary_discard_title">Bỏ từ đang nhập?</string>
+    <string name="dictionary_discard">Bỏ</string>
+    <string name="dictionary_keep_editing">Tiếp tục nhập</string>
+</resources>

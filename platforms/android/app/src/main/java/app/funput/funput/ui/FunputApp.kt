@@ -23,6 +23,7 @@ import app.funput.funput.ui.navigation.TopLevelDestination
 import app.funput.funput.ui.navigation.rememberAppNavigator
 import app.funput.funput.ui.news.NewsRoute
 import app.funput.funput.ui.news.rememberNewsModel
+import app.funput.funput.ui.settings.dictionary.PersonalDictionaryRoute
 import app.funput.funput.ui.settings.enterkey.EnterKeyRoute
 import app.funput.funput.ui.settings.pages.SettingsPage
 import app.funput.funput.ui.settings.route.KeyboardHubRoute
@@ -83,7 +84,9 @@ fun FunputApp() {
                     settings = settings,
                     keyboardTheme = keyboardTheme,
                     onBack = { navigator.navigateBack() },
+                    onOpenDictionary = { navigator.navigate(AppDestination.PERSONAL_DICTIONARY) },
                 )
+                AppDestination.PERSONAL_DICTIONARY -> PersonalDictionaryRoute(settings) { navigator.navigateBack() }
                 AppDestination.SPEECH -> SpeechSetupRoute(onBack = { navigator.navigateBack() })
                 AppDestination.ENTER_KEY -> EnterKeyRoute(onBack = { navigator.navigateBack() })
                 AppDestination.SHORTCUTS -> ShortcutsRoute(tabBar = { AppTabBar(navigator) })
