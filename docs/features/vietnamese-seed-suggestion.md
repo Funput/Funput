@@ -345,7 +345,8 @@ tìm lại:
 4. **Đo và chỉnh trên máy thật (bước 7):** `context_evidence_seen` (3), trần 2 ô cho prefix không
    dấu, `MAX_VISITS` (64) của `ArenaTrie::find_matching`, bộ nhớ extension iOS.
 5. **Ngữ cảnh dài hơn một chữ** (trigram, cụm cố định như `by the way`, `cảm ơn bạn`): engine chỉ
-   nhìn một chữ đứng trước; đổi điều đó là đổi mô hình bigram cá nhân.
+   nhìn một chữ đứng trước; đổi điều đó là đổi mô hình bigram cá nhân. **Đang thiết kế**: trigram
+   cá nhân, xem [trigram-suggestion.md](trigram-suggestion.md); trigram kèm app để đợt sau.
 6. **Công tắc riêng "Gợi ý có sẵn"**, nếu có phản hồi rằng dữ liệu kèm app gây nhiễu; hôm nay dùng
    chung công tắc "Gợi ý từ".
 

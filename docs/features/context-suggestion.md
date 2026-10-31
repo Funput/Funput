@@ -53,6 +53,9 @@ bigram cá nhân chưa nói được gì và tự rút lui khi người dùng đ
 Cũng ngoài phạm vi: mô hình ngôn ngữ · trigram · học từ nội dung người dùng không tự
 gõ (paste, văn bản có sẵn) · gợi ý ở các shell desktop · đồng bộ giữa thiết bị.
 
+**Đã đổi sau đó**: trigram cá nhân (ngữ cảnh hai chữ, mở cho 4-gram) được thiết kế riêng,
+xem [trigram-suggestion.md](trigram-suggestion.md).
+
 ## Hai chế độ, một kho dữ liệu
 
 Cùng một bảng bigram phục vụ hai chế độ có mức rủi ro rất khác nhau, nên chúng có
