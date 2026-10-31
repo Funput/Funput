@@ -1,7 +1,7 @@
 package app.funput.funput.ime
 
 import app.funput.funput.ime.nativebridge.EngineConfiguration
-import app.funput.funput.ime.nativebridge.VietnameseEngine
+import app.funput.funput.ime.nativebridge.RecordingVietnameseEngine
 import app.funput.funput.ime.settings.InputMethodSettings
 import app.funput.funput.ime.settings.SmartCompositionPreferences
 import app.funput.funput.ime.settings.ToneStyleSettings
@@ -11,7 +11,7 @@ import org.junit.Test
 class ImeSettingsControllerTest {
     @Test
     fun engineIsConfiguredBeforeAnySettingReportsAChange() {
-        val engine = RecordingEngine()
+        val engine = RecordingVietnameseEngine()
 
         ImeSettingsController(
             engine = engine,
@@ -39,20 +39,4 @@ class ImeSettingsControllerTest {
             engine.configurations.single(),
         )
     }
-}
-
-private class RecordingEngine : VietnameseEngine {
-    val configurations = mutableListOf<EngineConfiguration>()
-
-    override fun configure(configuration: EngineConfiguration) {
-        configurations += configuration
-    }
-
-    override fun setEnabled(enabled: Boolean) = Unit
-    override fun adopt(word: String): Boolean = false
-    override fun process(codePoint: Int): String = ""
-    override fun processBoundary(codePoint: Int): String? = null
-    override fun backspace(): String = ""
-    override fun clear() = Unit
-    override fun close() = Unit
 }

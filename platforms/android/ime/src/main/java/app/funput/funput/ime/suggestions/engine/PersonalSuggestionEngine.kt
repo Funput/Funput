@@ -21,6 +21,9 @@ internal class PersonalSuggestionEngine private constructor(private var handle: 
     fun attachLexicon(file: File): Boolean = call(false) {
         PersonalSuggestionNative.nativeAttachLexicon(it, file.absolutePath)
     }
+    fun setSeedLanguage(language: SeedLanguage): Boolean = call(false) {
+        PersonalSuggestionNative.nativeSetSeedLanguage(it, language.wireCode, language.toneStyleValue)
+    }
     fun flush(): Boolean = call(false, PersonalSuggestionNative::nativeFlush)
     fun compact(): Boolean = call(false, PersonalSuggestionNative::nativeCompact)
     fun reset(): Boolean = call(false, PersonalSuggestionNative::nativeReset)

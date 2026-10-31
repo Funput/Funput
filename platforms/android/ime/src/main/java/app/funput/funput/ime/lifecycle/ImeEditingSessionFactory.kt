@@ -16,6 +16,7 @@ import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.settings.entersend.EnterToSendSettings
 import app.funput.funput.ime.settings.layout.LetterPageReturnSettings
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
+import app.funput.funput.ime.suggestions.SeedLanguageReportingEngine
 import app.funput.funput.ime.suggestions.bar.SuggestionBarState
 import app.funput.funput.keyboard.suggestion.SuggestionChip
 import app.funput.funput.keyboard.model.ShiftState
@@ -47,16 +48,19 @@ internal fun createImeEditingSession(
         if (editorRuntime.refreshEnterToSend()) onEnterKeyChanged()
     }
     val typo = createTypoCorrection(context, nativeEngine) { editorRuntime.policy }
-    val composition = AndroidCompositionSession(nativeEngine, corrections = typo.corrections)
+    val suggestionService = PersonalSuggestionService(
+        context = context, show = bar::showPersonal,
+        shift = currentShiftState, acknowledgeReset = acknowledgeReset,
+    )
+    // Every configure and VI/EN switch of the document's composer goes through this, so
+    // the shipped suggestion data follows the composer from one place.
+    val composer = SeedLanguageReportingEngine(nativeEngine, suggestionService::setSeedLanguage)
+    val composition = AndroidCompositionSession(composer, corrections = typo.corrections)
     val actionHandler = ImeKeyActionHandler(
         composition = composition,
         editor = editor,
         connection = connection,
         enterCommand = { editorRuntime.policy.editorAction.command },
-    )
-    val suggestionService = PersonalSuggestionService(
-        context = context, show = bar::showPersonal,
-        shift = currentShiftState, acknowledgeReset = acknowledgeReset,
     )
     val clipboard = ImeClipboardSession(
         context = context,

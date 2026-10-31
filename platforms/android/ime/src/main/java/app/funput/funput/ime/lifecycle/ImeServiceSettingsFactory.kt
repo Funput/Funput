@@ -10,7 +10,9 @@ internal fun createServiceSettings(
     invalidateSpeech: () -> Unit,
     updateView: () -> Unit,
 ): ImeSettingsController = ImeSettingsController(
-    engine = session.nativeEngine,
+    // Not `session.nativeEngine`: the tone style must pass through the same
+    // seed-language wrapper as the VI/EN switch.
+    engine = session.composer,
     onInputMethodChanged = { method ->
         invalidateSpeech()
         session.restartComposition(method, view())

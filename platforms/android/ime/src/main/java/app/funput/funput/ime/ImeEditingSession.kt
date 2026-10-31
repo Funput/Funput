@@ -43,6 +43,7 @@ internal class ImeEditingSession(
     val clipboard: ImeClipboardSession,
     val letterReturn: LetterPageReturn,
 ) {
+    val composer get() = composition.engine // through the seed-language wrapper
     private val localText = ImeLocalTextFields(nativeEngine) { actionHandler.language }
     private val previewer = CorrectionPreviewer(typo.corrections)
     private val shortcutUndo = ShortcutUndo(composition, connection)

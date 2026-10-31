@@ -1,8 +1,7 @@
 package app.funput.funput.ime.editing
 
 import android.view.inputmethod.InputConnection
-import app.funput.funput.ime.nativebridge.EngineConfiguration
-import app.funput.funput.ime.nativebridge.VietnameseEngine
+import app.funput.funput.ime.nativebridge.RecordingVietnameseEngine
 import app.funput.funput.keyboard.model.KeyAction
 import java.lang.reflect.Proxy
 import org.junit.Assert.assertEquals
@@ -12,7 +11,7 @@ import org.junit.Test
 class ImeKeyActionHandlerTest {
     @Test
     fun `ASCII editor commits directly without invoking composition`() {
-        val engine = RecordingEngine()
+        val engine = RecordingVietnameseEngine()
         val connection = RecordingCommitConnection()
         val handler = ImeKeyActionHandler(
             composition = AndroidCompositionSession(engine),
@@ -33,7 +32,7 @@ class ImeKeyActionHandlerTest {
     fun `clipboard selection finishes composition and commits exact text once`() {
         val connection = RecordingCommitConnection()
         val handler = ImeKeyActionHandler(
-            composition = AndroidCompositionSession(RecordingEngine()),
+            composition = AndroidCompositionSession(RecordingVietnameseEngine()),
             editor = InputConnectionEditor(),
             connection = { connection.proxy },
             enterCommand = { ImeEditCommand.CommitText("\n") },
@@ -87,20 +86,6 @@ class ImeKeyActionHandlerTest {
     }
 }
 
-private class RecordingEngine : VietnameseEngine {
-    var enabledValue = true
-    var processCount = 0
-
-    override fun process(codePoint: Int): String = "".also { processCount++ }
-    override fun processBoundary(codePoint: Int): String? = null
-    override fun backspace(): String = ""
-    override fun configure(configuration: EngineConfiguration) = Unit
-    override fun adopt(word: String): Boolean = false
-    override fun setEnabled(enabled: Boolean) { enabledValue = enabled }
-    override fun clear() = Unit
-    override fun close() = Unit
-}
-
 private class RecordingCommitConnection {
     val committedTexts = mutableListOf<String>()
     val document = StringBuilder()
@@ -139,7 +124,7 @@ private class RecordingCommitConnection {
 }
 
 private fun handler(connection: RecordingCommitConnection) = ImeKeyActionHandler(
-    composition = AndroidCompositionSession(RecordingEngine()),
+    composition = AndroidCompositionSession(RecordingVietnameseEngine()),
     editor = InputConnectionEditor(),
     connection = { connection.proxy },
     enterCommand = { ImeEditCommand.CommitText("\n") },
