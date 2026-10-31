@@ -5,9 +5,9 @@ use funput_ffi::{
     funput_suggestion_attach_lexicon, funput_suggestion_engine_free,
     funput_suggestion_engine_new_in_memory, funput_suggestion_engine_open, funput_suggestion_flush,
     funput_suggestion_frequency, funput_suggestion_is_known_word, funput_suggestion_learn,
-    funput_suggestion_learn_after, funput_suggestion_query, funput_suggestion_query_with,
-    funput_suggestion_reset, funput_suggestion_set_seed_language, funput_suggestion_stats,
-    funput_suggestion_syllable_tier, funput_suggestion_syllable_weight,
+    funput_suggestion_learn_after, funput_suggestion_query, funput_suggestion_query_in,
+    funput_suggestion_query_with, funput_suggestion_reset, funput_suggestion_set_seed_language,
+    funput_suggestion_stats, funput_suggestion_syllable_tier, funput_suggestion_syllable_weight,
 };
 use funput_suggestions::lexicon_build::encode;
 
@@ -144,6 +144,50 @@ fn a_context_reorders_the_candidates_through_c_abi() {
     let none = query_with(engine, "", "ch");
     assert_eq!(candidate(&none, 0), "chúc");
     assert_eq!(none.count, plain.count);
+
+    unsafe { funput_suggestion_engine_free(engine) };
+}
+
+fn query_in(
+    engine: *const funput_ffi::FunputSuggestionEngine,
+    context: &str,
+    prefix: &str,
+) -> FunputSuggestionResult {
+    let context = codepoints(context);
+    let prefix = codepoints(prefix);
+    unsafe {
+        funput_suggestion_query_in(
+            engine,
+            context.as_ptr(),
+            context.len(),
+            prefix.as_ptr(),
+            prefix.len(),
+        )
+    }
+}
+
+#[test]
+fn two_words_of_context_reach_the_trigram_through_c_abi() {
+    let engine = funput_suggestion_engine_new_in_memory();
+    for _ in 0..10 {
+        assert!(learn(engine, "nhờ"));
+        assert!(learn_after(engine, "nhờ", "ơn"));
+        assert!(learn_after(engine, "ơn", "trời"));
+    }
+    for _ in 0..3 {
+        assert!(learn(engine, "cảm"));
+        assert!(learn_after(engine, "cảm", "ơn"));
+        assert!(learn_after(engine, "ơn", "bạn"));
+    }
+
+    assert_eq!(candidate(&query_with(engine, "ơn", ""), 0), "trời");
+    let two = query_in(engine, "cảm ơn", "");
+    assert_eq!((two.count, candidate(&two, 0)), (1, "bạn".to_owned()));
+    // One word, or none, is what `query_with` already says.
+    assert_eq!(candidate(&query_in(engine, "ơn", ""), 0), "trời");
+    let none =
+        unsafe { funput_suggestion_query_in(engine, std::ptr::null(), 0, std::ptr::null(), 0) };
+    assert_eq!(none.count, query(engine, "").count);
 
     unsafe { funput_suggestion_engine_free(engine) };
 }

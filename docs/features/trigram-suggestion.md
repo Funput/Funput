@@ -238,11 +238,16 @@ như không tốn gì thêm khi học. Ngữ cảnh hai chữ tốn thêm đúng
 `context_order = 2` chữ trước chữ cuối không được tìm. Toàn bộ chạy trên worker nền của nền tảng,
 không trên luồng gõ, và không cấp phát.
 
-**C ABI.** Thêm `funput_suggestion_query_in`, nhận một mảng `{ptr, len}` UTF-32 cũ → mới. Hàm hiện
-có giữ nguyên ABI. Tạo lại `funput.h` và bản header trong `FunputCore.xcframework`.
+**C ABI.** Thêm `funput_suggestion_query_in`. Hàm hiện có giữ nguyên ABI; `funput.h` tạo lại bằng
+`crates/funput-ffi/scripts/gen-header.sh`.
 
-**JNI.** `nativeQueryIn(handle, context: Array<String>, prefix)`. Phía Kotlin giữ sẵn mảng, không
-tạo mảng mới mỗi phím.
+**JNI.** `nativeQueryIn(handle, context: String, prefix)`.
+
+**Đã đổi khi hiện thực: ngữ cảnh là một chuỗi, các chữ cách nhau bằng dấu cách**, cũ → mới
+(`"cảm ơn"`), thay vì một mảng `{ptr, len}` hay `Array<String>`. Token đã học không bao giờ chứa dấu
+cách, nên tách lại là chính xác. Swift và Kotlin chỉ cần nối chuỗi, không phải giữ nhiều con trỏ
+cùng lúc hay tạo mảng mỗi phím, và 4-gram sau này không phải đổi chữ ký. Việc tách nằm trong crate
+(`suggest_after_words`, không cấp phát), nên C ABI và JNI chỉ chuyển chuỗi qua.
 
 **Nền tảng.** `AuthoredTokenTracker` ở iOS và Android giữ một vòng `MAX_CONTEXT` chữ thay vì một chữ
 **cho truy vấn**, cắt ở đúng các ranh giới đang có: dấu câu không phải dấu cách, xoá lùi qua ranh
@@ -291,7 +296,7 @@ Mỗi bước một PR, xếp chồng:
 
 1. #664: snapshot bỏ cạnh chết (đã mở).
 2. Engine Rust: `NgramTable`, học, xoá, snapshot v4, backoff, cấu hình, test và bench.
-3. C ABI và JNI (chỉ đường truy vấn).
+3. C ABI và JNI (chỉ đường truy vấn), `funput_suggestion_query_in` và `nativeQueryIn`.
 4. Android: tracker giữ vòng hai chữ, worker truyền ngữ cảnh.
 5. iOS: như Android.
 6. Đo trên máy thật: bộ nhớ extension iOS, tỉ lệ đoán, `ngram_contexts`, `PROBE_WINDOW`.

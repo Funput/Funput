@@ -80,3 +80,19 @@ fn suggest_with_is_suggest_in_with_one_word() {
         .collect();
     assert_eq!(with, suggested(&engine, &["ơn"], ""));
 }
+
+#[test]
+fn a_spaced_context_reads_as_its_words() {
+    let engine = trained(SuggestionConfig::default());
+    let spaced = |words: &str| -> Vec<String> {
+        engine
+            .suggest_after_words(words, "")
+            .iter()
+            .map(str::to_owned)
+            .collect()
+    };
+    assert_eq!(spaced("cảm ơn"), ["bạn"]);
+    assert_eq!(spaced("nhờ  cảm ơn "), ["bạn"]);
+    assert_eq!(spaced("ơn"), ["trời"]);
+    assert_eq!(spaced(""), suggested(&engine, &[], ""));
+}

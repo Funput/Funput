@@ -107,6 +107,10 @@ fn warm_lookup_with_two_words_of_context_does_not_allocate() {
                     std::hint::black_box(&["cảm", "ơn"]),
                     std::hint::black_box(prefix),
                 ));
+                std::hint::black_box(engine.suggest_after_words(
+                    std::hint::black_box("cảm ơn"),
+                    std::hint::black_box(prefix),
+                ));
             }
         }
     });
