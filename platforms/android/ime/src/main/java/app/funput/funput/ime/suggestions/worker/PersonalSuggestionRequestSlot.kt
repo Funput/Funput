@@ -7,7 +7,7 @@ internal data class PersonalSuggestionRequest(
     val prefix: String,
     val generation: Long,
     val session: Long,
-    /** The word [prefix] is being typed after, when one can be vouched for. */
+    /** The words [prefix] is being typed after, oldest first and space separated, when any can be vouched for. */
     val context: String? = null,
     val startedNanos: Long = System.nanoTime(),
 )

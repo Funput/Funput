@@ -15,6 +15,9 @@ internal object PersonalSuggestionNative {
     external fun nativeLearnAfter(handle: Long, previous: String, token: String): Boolean
     external fun nativeQuery(handle: Long, prefix: String): Array<String>?
     external fun nativeQueryWith(handle: Long, previous: String, prefix: String): Array<String>?
+
+    /** [context] is the words before, oldest first and separated by spaces. */
+    external fun nativeQueryIn(handle: Long, context: String, prefix: String): Array<String>?
     external fun nativeFlush(handle: Long): Boolean
     external fun nativeCompact(handle: Long): Boolean
     external fun nativeReset(handle: Long): Boolean

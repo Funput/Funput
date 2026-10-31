@@ -5,7 +5,12 @@ internal data class AuthoredSuggestionUpdate(
     val completedToken: String?,
     /** The word [prefix] is being typed after, when one can be vouched for. */
     val context: String? = null,
+    /** The word [context] was typed after, when the two were typed in a row. */
+    val older: String? = null,
 ) {
+    /** The words before [prefix] as the engine reads them: oldest first, space separated. */
+    val queryContext: String? get() = context?.let { last -> older?.let { "$it $last" } ?: last }
+
     companion object {
         val Empty = AuthoredSuggestionUpdate("", null)
     }
@@ -24,13 +29,15 @@ internal class AuthoredTokenTracker {
      * prefix was abandoned. Everything downstream sees the result, not the reason.
      */
     private var context: String? = null
+    /** The word [context] followed, kept only while the two were typed in a row. */
+    private var older: String? = null
     private var directOverflow = false
 
     fun update(composingText: String, completed: String?, completedOnSpace: Boolean) {
         directOverflow = false
         prefix = composingText.takeIf(::isValidToken).orEmpty()
         completedToken = completed?.takeIf { isValidToken(it) && scalarCount(it) >= MinimumLength }
-        if (completed != null) context = completedToken.takeIf { completedOnSpace }
+        if (completed != null) follow(completedToken.takeIf { completedOnSpace })
     }
 
     fun accepted(candidate: String) {
@@ -38,7 +45,7 @@ internal class AuthoredTokenTracker {
         prefix = ""
         completedToken = candidate.takeIf(::isValidToken)
         // Accepting a candidate writes the word and a space after it.
-        context = completedToken
+        follow(completedToken)
     }
 
     fun input(text: String) {
@@ -60,7 +67,7 @@ internal class AuthoredTokenTracker {
                 // A space continues the sentence, so the word just finished is
                 // what the next one follows. Anything else ends it, and the two
                 // words either side were never adjacent.
-                context = completedToken.takeIf { codePoint == ' '.code }
+                follow(completedToken.takeIf { codePoint == ' '.code })
                 prefix = ""
                 directOverflow = false
             }
@@ -72,7 +79,7 @@ internal class AuthoredTokenTracker {
         if (directOverflow || prefix.isEmpty()) {
             // Nothing left of this word to delete, so the caret has crossed back
             // over a boundary and what precedes it is no longer known.
-            context = null
+            follow(null)
             return
         }
         prefix = prefix.dropLast(Character.charCount(prefix.codePointBefore(prefix.length)))
@@ -80,7 +87,7 @@ internal class AuthoredTokenTracker {
     }
 
     fun consume(): AuthoredSuggestionUpdate =
-        AuthoredSuggestionUpdate(prefix, completedToken, context).also { completedToken = null }
+        AuthoredSuggestionUpdate(prefix, completedToken, context, older).also { completedToken = null }
 
     fun currentPrefix(): String = prefix
 
@@ -88,7 +95,13 @@ internal class AuthoredTokenTracker {
         directOverflow = false
         prefix = ""
         completedToken = null
-        context = null
+        follow(null)
+    }
+
+    /** [next] is now the word before the caret: the old one becomes the word before it, or both go. */
+    private fun follow(next: String?) {
+        older = next?.let { context }
+        context = next
     }
 
     private fun isValidToken(text: String): Boolean {
