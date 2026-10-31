@@ -310,11 +310,14 @@ tự:
 Nhiều người gõ tiếng Anh ngay trong chế độ VI, nhờ bàn phím tự khôi phục chữ gốc. Bigram cá
 nhân vốn đã học cặp tiếng Anh của họ; phần thiếu chỉ là dữ liệu cho người mới cài.
 
-- **Dữ liệu:** `data/pairs/en.txt`, khoảng 45 cặp viết tay (MIT) theo đúng tiêu chí "nhọn" của
+- **Dữ liệu:** `data/pairs/en.txt`, 42 cặp viết tay (MIT) theo đúng tiêu chí "nhọn" của
   `vi.txt` (`thank you`, `according to`, `instead of`, `depends on`...). Không chữ có nhiều hướng
-  (`as`, `in`, `make`), không chữ phải viết hoa (`i`, tên riêng).
-- **Một bảng, một luật:** `seed/pairs.rs` dựng một `PairTable` từ cả hai danh sách (tiếng Việt
-  trước). Chữ tiếng Anh là ASCII nên `respell_tone` không đổi gì. Predict, đường prefix
+  (`as`, `in`, `make`, có danh sách `FLAT` trong test gác), không chữ phải viết hoa (`i`, tên
+  riêng). Bỏ `due to`, `focus on`, `figure out` vì chữ đứng trước hay đi hướng khác khi nhắn tin.
+- **Mỗi ngôn ngữ một bảng, chung một luật:** `seed/pairs.rs` dựng hai `PairTable` sau
+  `ShippedPairs`, hỏi bảng tiếng Việt trước rồi mới đến bảng tiếng Anh. Thêm chế độ EN sau này chỉ
+  là chọn bảng nào được hỏi, không phải tách lại một bảng gộp. Chữ tiếng Anh là ASCII nên
+  `respell_tone` không đổi gì. Predict, đường prefix
   (`thank` + `yo` → `you`), luật rút lui, luật chặn từ và "cá nhân trước" giữ nguyên, không thêm
   nhánh nào.
 - **Hai ngôn ngữ không chạm nhau**, gác bằng `funput-lexicon-tool/tests/en_pairs.rs`: chữ đứng

@@ -1,7 +1,9 @@
-//! Shipped Vietnamese data for a bar the user has not taught anything yet.
+//! Shipped data for a bar the user has not taught anything yet: Vietnamese first,
+//! with a short English supplement for English typed in Vietnamese mode.
 //!
-//! - `pairs` — the hand-written pair list Predict falls back on, and its table.
-//! - `query` — what that list offers once the user's pairs have no evidence.
+//! - `pairs` — the hand-written pair lists Predict falls back on (`vi.txt`, and the
+//!   English supplement `en.txt`), one table per language.
+//! - `query` — what those lists offer once the user's pairs have no evidence.
 //! - `syllables` — the shipped syllable list, indexed for completing a prefix.
 //! - `complete` — where pairs and syllables fill the slots a prefix left empty.
 //!
@@ -20,16 +22,19 @@ mod syllables;
 use funput_core::ToneStyle;
 
 use crate::engine::SuggestionEngine;
-use pairs::PairTable;
+use pairs::ShippedPairs;
 use syllables::SyllableIndex;
 
-/// What the shipped Vietnamese data may say.
+/// What the shipped data may say, decided by the language the user is typing in.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum SeedLanguage {
-    /// Nothing: the user is typing English, or the shell has not said.
+    /// Nothing: English mode, a field that does not compose, or the shell has not
+    /// said. English mode getting the English supplement is a listed extension in
+    /// `docs/features/vietnamese-seed-suggestion.md`, not done.
     #[default]
     Off,
-    /// The user is typing Vietnamese with tones placed in this style.
+    /// Vietnamese mode, tones placed in this style: the Vietnamese pairs and
+    /// syllables, and the English pairs for English typed in this mode.
     Vietnamese(ToneStyle),
 }
 
@@ -51,8 +56,8 @@ impl SeedLanguage {
     }
 }
 
-/// What an engine holds of the shipped Vietnamese data: nothing, or the style to
-/// write in together with every table that style reads. One value, so there is
+/// What an engine holds of the shipped data: nothing, or the style to write in
+/// together with every table Vietnamese mode reads. One value, so there is
 /// no state in which the data is on but its tables were never built.
 #[derive(Clone, Copy, Default)]
 pub(crate) enum SeedSlot {
@@ -60,7 +65,7 @@ pub(crate) enum SeedSlot {
     Off,
     Vietnamese {
         style: ToneStyle,
-        pairs: &'static PairTable,
+        pairs: &'static ShippedPairs,
         syllables: &'static SyllableIndex,
     },
 }

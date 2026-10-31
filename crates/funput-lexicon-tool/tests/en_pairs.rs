@@ -13,6 +13,15 @@ const LIST: &str = include_str!("../../funput-suggestions/data/pairs/en.txt");
 const VIETNAMESE: &str = include_str!("../../funput-suggestions/data/pairs/vi.txt");
 const LEXICON: &str = include_str!("../../funput-suggestions/data/lexicon/en.tsv");
 
+/// Words anything can follow. Predict offers one word, so a pair led by one of these
+/// would guess after the commonest words there are. Listed, not discovered, so a
+/// reviewer sees why a tempting line (`as well`, `in order`) is refused.
+const FLAT: &[&str] = &[
+    "a", "an", "and", "as", "at", "be", "but", "by", "can", "do", "for", "from", "get", "go",
+    "good", "have", "in", "is", "it", "just", "like", "make", "my", "not", "of", "on", "or", "so",
+    "that", "the", "this", "to", "we", "what", "will", "with", "you",
+];
+
 fn pairs_of(list: &'static str) -> Vec<(&'static str, &'static str)> {
     list.lines()
         .map(str::trim)
@@ -75,6 +84,16 @@ fn no_first_word_is_a_vietnamese_syllable() {
         vietnamese.is_empty(),
         "these are also Vietnamese syllables: {vietnamese:?}"
     );
+}
+
+#[test]
+fn no_pair_starts_with_a_word_anything_can_follow() {
+    let flat: Vec<&str> = pairs()
+        .into_iter()
+        .map(|(first, _)| first)
+        .filter(|first| FLAT.contains(first))
+        .collect();
+    assert!(flat.is_empty(), "these predict nothing well: {flat:?}");
 }
 
 #[test]

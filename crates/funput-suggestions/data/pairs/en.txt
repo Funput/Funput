@@ -16,6 +16,9 @@
 # word that is also a complete Vietnamese syllable: Vietnamese typing must not get an
 # English prediction by accident.
 #
+# Left out on purpose because the first word often leads elsewhere in chat: `due`
+# (`due date`, `due tomorrow`), `focus` (`focus mode`), `figure` (`figure 1`).
+#
 # Checked by `funput-lexicon-tool/tests/en_pairs.rs`; additions want a second reader.
 
 # --- set phrases
@@ -26,7 +29,6 @@ instead of
 regardless of
 rather than
 such as
-due to
 prior to
 contrary to
 
@@ -54,7 +56,6 @@ relies on
 rely on
 insist on
 concentrate on
-focus on
 interested in
 involved in
 participate in
@@ -67,4 +68,3 @@ consists of
 consist of
 proud of
 fond of
-figure out
