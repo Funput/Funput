@@ -30,7 +30,7 @@ Funput iOS sử dụng kiến trúc **hybrid native**: giao diện và tích h�
 - **Xcode:** 26.4.1
 - **Swift:** 6.3, Swift language mode 6
 - **iOS SDK:** 26.4
-- **Rust:** 1.97 stable, edition 2024
+- **Rust:** 1.99 stable, edition 2024
 - **Minimum deployment:** iOS 16.0 — giá trị `IPHONEOS_DEPLOYMENT_TARGET` của mọi target trong `Funput.xcodeproj`, và là `MinimumOSVersion` của cả `.app` lẫn `.appex` khi đóng gói. Cài đặt cấp project cũng là 16.0; vẫn ghi đè tường minh trên từng target để Xcode không âm thầm nâng sàn khi tạo target mới.
 - **Giao diện mục tiêu chính:** iOS/iPadOS 26.4
 
