@@ -95,6 +95,35 @@ fn a_shrunk_capacity_does_not_leave_edges_pointing_at_the_wrong_word() {
     );
 }
 
+#[test]
+fn an_edge_to_an_evicted_word_does_not_come_back_after_a_compact() {
+    let directory = tempdir().unwrap();
+    let config = SuggestionConfig {
+        max_words: 3,
+        ..SuggestionConfig::default()
+    };
+    {
+        let mut engine = SuggestionEngine::open(directory.path(), config).unwrap();
+        learned(&mut engine, "xin", 4);
+        engine.learn_after(Some("xin"), "chào");
+        learned(&mut engine, "cảm", 3);
+        // The store is full, so `ơn` takes the weakest slot, which is `chào`'s.
+        // The `xin` edge still names that slot at the old generation: dead.
+        engine.learn("ơn");
+        assert!(followers_of(&engine, "xin").is_empty());
+        engine.compact().unwrap();
+    }
+    let reopened = SuggestionEngine::open(directory.path(), config).unwrap();
+    assert!(
+        reopened.words.iter().any(|record| record.text == "ơn"),
+        "the evicting word must survive"
+    );
+    assert!(
+        followers_of(&reopened, "xin").is_empty(),
+        "the edge pointed at the evicted `chào`; reloading must not hand it to `ơn`"
+    );
+}
+
 fn context_seen(engine: &SuggestionEngine, word: &str) -> u16 {
     engine
         .words

@@ -32,7 +32,7 @@ pub(crate) fn encode(words: &[WordRecord], blocked: &[String], sequence: u64) ->
     put_u64(&mut bytes, sequence);
     put_u32(&mut bytes, words.len() as u32);
     for word in words {
-        words::encode(&mut bytes, word);
+        words::encode(&mut bytes, word, words);
     }
     blocked::encode(&mut bytes, blocked);
     let sum = checksum(&bytes);
