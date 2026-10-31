@@ -1,16 +1,17 @@
 //! `collision`: `en.tsv` on stdin, one word list per composition rule in `--out DIR`.
 //!
-//! A word is listed for a [`Class`] when the class's rule shapes its keys and some
-//! setup of the class's method leaves it a Vietnamese syllable at the word boundary
-//! (`two` → `tơ`). The engine then writes those words' keys back at the boundary.
-//! Each list is `<out>/<class>/words.txt`; hand corrections are read from
-//! `<data>/<class>/overrides.txt` when it exists. Sorted, lowercase, one per line.
+//! A word is listed for a [`Collision`] class when the class's rule shapes its keys
+//! and some setup of the class's method leaves it a Vietnamese syllable at the word
+//! boundary (`two` → `tơ`). The engine then writes those words' keys back at the
+//! boundary. The classes, their gates and their names come from the engine itself,
+//! so the two cannot drift. Each list is `<out>/<class>/words.txt`; hand corrections
+//! are read from `<data>/<class>/overrides.txt` when it exists. Sorted, lowercase,
+//! one per line.
 //! Design: `docs/features/english-collision-restore.md`.
 
-mod class;
 mod scan;
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::fs;
 use std::io::{self, Read};
 use std::path::PathBuf;
@@ -18,7 +19,7 @@ use std::path::PathBuf;
 use crate::wordlist::overrides::Overrides;
 use crate::wordlist::setup::SETUPS;
 use crate::wordlist::{invalid, ranks, write};
-use class::Class;
+use funput_engine::Collision;
 
 pub(crate) struct Options {
     data: Option<PathBuf>,
@@ -45,13 +46,21 @@ impl Options {
         Ok(Self { data, out })
     }
 
-    /// The class's hand corrections, or none when there is no file for it.
-    fn overrides(&self, class: Class) -> io::Result<String> {
+    /// The class's hand corrections, or none when it has no `overrides.txt`.
+    ///
+    /// A `--data` directory that does not exist is an error, not an empty set: a
+    /// mistyped path would otherwise drop every correction and write the words they
+    /// remove straight back into the lists.
+    fn overrides(&self, class: Collision) -> io::Result<String> {
         let Some(data) = &self.data else {
             return Ok(String::new());
         };
+        if !data.is_dir() {
+            let message = format!("--data {} is not a directory", data.display());
+            return Err(io::Error::new(io::ErrorKind::NotFound, message));
+        }
         let path = data.join(class.name()).join("overrides.txt");
-        if path.exists() {
+        if path.is_file() {
             fs::read_to_string(path)
         } else {
             Ok(String::new())
@@ -62,12 +71,12 @@ impl Options {
 pub(crate) fn run(options: &Options, mut input: impl Read) -> io::Result<()> {
     let mut tsv = String::new();
     input.read_to_string(&mut tsv)?;
-    let mut overrides = BTreeMap::new();
-    for class in Class::ALL {
-        overrides.insert(class, options.overrides(class)?);
+    let mut overrides = Vec::with_capacity(Collision::ALL.len());
+    for class in Collision::ALL {
+        overrides.push(options.overrides(class)?);
     }
-    let lists = generate(&tsv, |class| overrides[&class].as_str()).map_err(invalid)?;
-    for (class, words) in &lists {
+    let lists = generate(&tsv, &overrides).map_err(invalid)?;
+    for (class, words) in Collision::ALL.into_iter().zip(&lists) {
         let dir = options.out.join(class.name());
         fs::create_dir_all(&dir)?;
         write(&dir.join("words.txt"), words)?;
@@ -76,28 +85,29 @@ pub(crate) fn run(options: &Options, mut input: impl Read) -> io::Result<()> {
     Ok(())
 }
 
-fn generate<'a>(
-    tsv: &str,
-    overrides: impl Fn(Class) -> &'a str,
-) -> Result<BTreeMap<Class, BTreeSet<String>>, String> {
+/// One list per class, in [`Collision::ALL`] order, each with the hand corrections
+/// at the same index of `overrides` applied.
+fn generate(tsv: &str, overrides: &[String]) -> Result<Vec<BTreeSet<String>>, String> {
     let words: BTreeSet<String> = ranks(tsv).into_keys().collect();
-    let mut lists = BTreeMap::new();
-    for class in Class::ALL {
-        let mut listed: BTreeSet<String> = words
-            .iter()
-            .filter(|word| collides(class, word))
-            .cloned()
-            .collect();
-        Overrides::parse(overrides(class))?.apply(&mut listed)?;
-        lists.insert(class, listed);
-    }
-    Ok(lists)
+    Collision::ALL
+        .into_iter()
+        .zip(overrides)
+        .map(|(class, overrides)| {
+            let mut listed: BTreeSet<String> = words
+                .iter()
+                .filter(|word| collides(class, word))
+                .cloned()
+                .collect();
+            Overrides::parse(overrides)?.apply(&mut listed)?;
+            Ok(listed)
+        })
+        .collect()
 }
 
 /// Whether `class`'s rule shapes `word` and some setup of its method leaves it
 /// Vietnamese. The cheap gate runs first, so few words are ever typed.
-fn collides(class: Class, word: &str) -> bool {
-    class.admits(word)
+fn collides(class: Collision, word: &str) -> bool {
+    class.shapes(word)
         && SETUPS
             .iter()
             .filter(|setup| setup.method == class.method())
@@ -109,12 +119,8 @@ mod tests {
     use super::*;
 
     fn listed(tsv: &str, overrides: &str) -> Result<Vec<String>, String> {
-        let mut lists = generate(tsv, |_| overrides)?;
-        Ok(lists
-            .remove(&Class::DeferredW)
-            .unwrap()
-            .into_iter()
-            .collect())
+        let lists = generate(tsv, &[overrides.to_owned()])?;
+        Ok(lists[0].iter().cloned().collect())
     }
 
     #[test]
@@ -129,6 +135,15 @@ mod tests {
         let tsv = "two\t0\nswan\t1\n";
         assert_eq!(listed(tsv, "# why\n-swan\n").unwrap(), ["two"]);
         assert!(listed(tsv, "-tow\n").is_err(), "a no-op override fails");
+    }
+
+    #[test]
+    fn a_missing_data_dir_is_an_error() {
+        let args = ["--data", "no/such/dir", "--out", "dir"].map(str::to_owned);
+        let options = Options::parse(&args).unwrap();
+        assert!(options.overrides(Collision::DeferredW).is_err());
+        let no_data = Options::parse(&["--out", "dir"].map(str::to_owned)).unwrap();
+        assert_eq!(no_data.overrides(Collision::DeferredW).unwrap(), "");
     }
 
     #[test]

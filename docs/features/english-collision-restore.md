@@ -41,10 +41,13 @@ bật eager restore. Chỉ 9 từ trong số đó đi qua luật `w` được gi
 
 ### 2.1. Một lớp cho mỗi luật
 
-Mỗi luật ghép chữ gây va chạm là một biến thể của `enum Collision` (`class.rs`). Biến thể sở hữu:
+Mỗi luật ghép chữ gây va chạm là một biến thể của `enum Collision` (`class.rs`, công khai là
+`funput_engine::Collision`). Đây là định nghĩa duy nhất: bộ sinh đọc cùng cổng và cùng tên từ đây,
+nên hai bên không thể lệch nhau. Biến thể sở hữu:
 
-- **cổng** (`shaped`): kiểu gõ mà luật chạy, và cách nhận ra từ chuỗi phím thô rằng luật đã ghép từ
-  này. Với `DeferredW`: `method == Telex && telex_defers_w(keys)`;
+- **tên** (`name`): thư mục dữ liệu `data/collision/<tên>/`;
+- **cổng** (`method` + `shapes`): kiểu gõ mà luật chạy, và cách nhận ra từ chuỗi phím thô rằng luật
+  đã ghép từ này. Với `DeferredW`: `Telex` và `telex_defers_w(keys)`;
 - **bảng từ** (`words`): danh sách tiếng Anh nhúng sẵn, tìm nhị phân tại chỗ bằng `SortedLines`.
 
 Ranh giới từ chỉ trả phím thô khi **cả hai** đều đúng. Vì vậy chuỗi ngoài bảng không bao giờ đổi:
@@ -76,7 +79,7 @@ Cổng chạy trước, không cấp phát. Chỉ chuỗi qua cổng mới bị 
 `funput-lexicon-tool collision --data DIR --out DIR < en.tsv` gõ từng từ của `en.tsv` qua engine
 thật, với `restore_collisions = false`. Một từ được ghi vào `<out>/<luật>/words.txt` khi:
 
-- cổng của luật nhận chuỗi phím (`Class::admits`);
+- cổng của luật nhận chuỗi phím (`Collision::shapes`);
 - có ít nhất một cấu hình của kiểu gõ đó (`STANDARD`/`ZFWJ` × eager restore bật/tắt) giữ từ ở dạng
   tiếng Việt khi gõ dấu cách (`scan::left_vietnamese`).
 
@@ -91,16 +94,17 @@ cargo run -p funput-lexicon-tool -- collision \
     --out crates/funput-engine/data/collision < crates/funput-suggestions/data/lexicon/en.tsv
 ```
 
-Test `collision_table` sinh lại và so từng byte, nên bảng cũ làm CI đỏ.
+Test `collision_table` sinh lại và so từng byte, nên bảng cũ làm CI đỏ. Test cũng so danh sách
+thư mục hai bên, nên thư mục engine có mà bộ sinh không tạo ra cũng làm CI đỏ. `--data` trỏ tới thư
+mục không tồn tại là lỗi, để gõ sai đường dẫn không âm thầm bỏ mất `overrides.txt`.
 
 ## 4. Thêm một luật mới
 
-1. Thêm biến thể vào `Collision` (`compose/collision/class.rs`): cổng `shaped`, `static` bảng từ,
-   nhánh trong `words`.
-2. Thêm biến thể cùng tên vào `Class` (`funput-lexicon-tool/src/collision/class.rs`): `name`,
-   `method`, `admits`. Tên chính là thư mục dữ liệu.
-3. Tạo `data/collision/<tên>/overrides.txt` (chỉ header), chạy bộ sinh.
-4. Thêm ca vào `tests/restore/collision/` và hạ baseline coverage tiếng Anh trong cùng thay đổi.
+1. Thêm biến thể vào `Collision` (`compose/collision/class.rs`): `name`, `method`, `shapes`, một
+   `static` bảng từ và nhánh trong `words`. Bộ sinh tự nhận biến thể mới.
+2. Tạo `data/collision/<tên>/overrides.txt` (chỉ header), chạy bộ sinh. Test
+   `every_class_embeds_the_list_its_name_points_at` giữ đường dẫn `include_str!` khớp với `name`.
+3. Thêm ca vào `tests/restore/collision/` và hạ baseline coverage tiếng Anh trong cùng thay đổi.
 
 Cổng phải hẹp và rẻ: nó là thứ bảo đảm tiếng Việt ngoài bảng không bị đụng tới.
 

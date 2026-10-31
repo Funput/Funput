@@ -23,6 +23,21 @@ fn every_shipped_list_is_well_formed() {
     }
 }
 
+/// `include_str!` needs a literal path, so this ties each embedded list to the
+/// directory its [`Collision::name`] names — the one the generator writes.
+#[test]
+fn every_class_embeds_the_list_its_name_points_at() {
+    for class in Collision::ALL {
+        let path = format!(
+            "{}/data/collision/{}/words.txt",
+            env!("CARGO_MANIFEST_DIR"),
+            class.name()
+        );
+        let on_disk = std::fs::read_to_string(&path).expect("the class has a list");
+        assert_eq!(class.words().text(), on_disk, "{path}");
+    }
+}
+
 #[test]
 fn every_deferred_w_entry_defers_its_w() {
     for word in Collision::DeferredW.words().lines() {

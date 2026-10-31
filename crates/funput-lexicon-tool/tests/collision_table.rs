@@ -4,9 +4,10 @@
 //! without anyone touching the files. Regenerating them here and comparing byte
 //! for byte is what catches that.
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 const LEXICON: &str = include_str!("../../funput-suggestions/data/lexicon/en.tsv");
@@ -40,20 +41,34 @@ fn the_shipped_lists_are_up_to_date() {
         "collision failed"
     );
 
-    let classes = fs::read_dir(&out).expect("the tool wrote its lists");
-    let mut compared = 0;
-    for class in classes {
-        let name = class.expect("a class dir").file_name();
-        let list = PathBuf::from(&name).join("words.txt");
-        let generated = fs::read(out.join(&list)).expect("the tool wrote the list");
-        let shipped = fs::read(PathBuf::from(DATA).join(&list)).unwrap_or_default();
+    // Both sides, so a class only the engine ships (or one renamed on one side) is
+    // a stale list too, not a directory nobody compares.
+    let generated = class_dirs(&out);
+    let shipped = class_dirs(&PathBuf::from(DATA));
+    assert!(!generated.is_empty(), "the tool listed no class");
+    assert_eq!(
+        generated, shipped,
+        "data/collision/ holds other classes than the tool generates"
+    );
+    for class in &generated {
+        let list = PathBuf::from(class).join("words.txt");
+        let fresh = fs::read(out.join(&list)).expect("the tool wrote the list");
+        let current = fs::read(PathBuf::from(DATA).join(&list)).unwrap_or_default();
         assert!(
-            generated == shipped,
+            fresh == current,
             "data/collision/{} is stale; regenerate the lists with:\n  {REGENERATE}",
             list.display()
         );
-        compared += 1;
     }
-    assert!(compared > 0, "the tool listed no class");
     fs::remove_dir_all(&out).expect("the scratch dir is removed");
+}
+
+/// The class directories under `dir`, by name.
+fn class_dirs(dir: &Path) -> BTreeSet<String> {
+    fs::read_dir(dir)
+        .expect("the directory is readable")
+        .map(|entry| entry.expect("an entry"))
+        .filter(|entry| entry.path().is_dir())
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .collect()
 }

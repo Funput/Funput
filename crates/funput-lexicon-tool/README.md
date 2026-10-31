@@ -76,11 +76,13 @@ cargo run -p funput-lexicon-tool -- doubled \
 `overrides.txt` holds `+word` / `-word` lines with the reason in a comment; one
 that changes nothing is an error, so a stale line cannot linger.
 
-`collision` lists, for each composition rule (`collision::Class`), the words the
+`collision` lists, for each composition rule (`funput_engine::Collision`, the one
+definition of each rule's gate and name), the words the
 rule's gate admits and that some setup of its method leaves a Vietnamese syllable at
 the word boundary with collision restore off (`two` → `tơ` in Telex). It writes
 `<class>/words.txt` under `--out` and reads hand corrections from
-`<class>/overrides.txt` under `--data`, in the same `+word` / `-word` format. The
+`<class>/overrides.txt` under `--data`, in the same `+word` / `-word` format (a
+`--data` directory that does not exist is an error, so a typo cannot drop them). The
 overrides parser, the setups and the rank/write helpers live in `wordlist/`, shared
 with `doubled`. `refresh.sh` rebuilds the lists after `doubled`; after a core change,
 rebuild them by hand (the `collision_table` test says so):

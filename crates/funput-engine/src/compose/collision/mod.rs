@@ -15,15 +15,16 @@
 //! type `tơ` and `cơn`. Mid-word nothing switches — `tơ`, `să` and `sư` begin many
 //! real syllables, so only the finished word can say it was English.
 //!
-//! The lists live in `data/collision/<class>/words.txt`, generated from the English
-//! lexicon by `funput-lexicon-tool collision`, with hand corrections in the
+//! The lists live in `data/collision/<class>/words.txt` ([`Collision::name`]),
+//! generated from the English lexicon by `funput-lexicon-tool collision`, which
+//! reads each class's gate from here, with hand corrections in the
 //! `overrides.txt` beside each. Regenerate them when `en.tsv` or the core changes;
 //! the tool's `collision_table` test fails until you do.
 //! Design: `docs/features/english-collision-restore.md`.
 
 mod class;
 
-pub(crate) use class::Collision;
+pub use class::Collision;
 
 use crate::model::{EngineConfig, Session};
 
