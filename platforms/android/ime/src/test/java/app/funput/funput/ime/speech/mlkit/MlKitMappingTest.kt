@@ -36,16 +36,21 @@ class MlKitMappingTest {
         assertEquals(SpeechRecognizer.ERROR_CLIENT, MlKitSpeech.errorCode(IllegalStateException()))
     }
 
+    // 1.0.0-alpha2 declares a default for wordTimings in its Kotlin metadata but ships without the
+    // synthetic default constructor, so omitting the argument compiles and then fails at runtime.
+    private fun final(text: String) = R.FinalTextResponse(text, emptyList())
+
     @Test fun responsesBecomeSessionEvents() {
         val mapper = MlKitResponseMapper()
         assertEquals(SpeechEvent.Partial("chiều nay"), mapper.map(R.PartialTextResponse("chiều nay")))
-        assertEquals(SpeechEvent.Final("chiều nay gặp"), mapper.map(R.FinalTextResponse("chiều nay gặp")))
+        assertNull(mapper.map(R.AudioLevelResponse(42)))
+        assertEquals(SpeechEvent.Final("chiều nay gặp"), mapper.map(final("chiều nay gặp")))
         assertNull(mapper.map(R.CompletedResponse))
     }
 
     @Test fun blankFinalOrCompletionWithoutFinalIsNoMatch() {
         val noMatch = SpeechEvent.Failure(SpeechRecognizer.ERROR_NO_MATCH)
-        assertEquals(noMatch, MlKitResponseMapper().map(R.FinalTextResponse("  ")))
+        assertEquals(noMatch, MlKitResponseMapper().map(final("  ")))
         assertEquals(noMatch, MlKitResponseMapper().map(R.CompletedResponse))
     }
 
