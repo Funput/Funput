@@ -1,21 +1,25 @@
-//! Matching a syllable typed so far against a whole one, by the marks typed.
+//! Matching a word typed so far against a whole one, by the marks typed.
 //!
 //! Telex and VNI put the tone last, and often the vowel shape too: `đươ` comes before
 //! `được`, `duo` before `dưới`. Byte or NFC prefixes never see those, because `ơ` and
-//! `ợ` are different characters. Here a typed character matches a listed one when it
+//! `ợ` are different characters. Here a typed character matches a stored one when it
 //! is that character, or that character without its tone, or without any mark at all
 //! (`đ` as `d`). A mark that *was* typed still has to be right: `thà` reaches `thành`,
-//! not `thầy`.
+//! not `thầy`. An unmarked prefix therefore matches exactly what the folded trie
+//! matches; a marked one matches more than an exact prefix would, and no less.
+//!
+//! The personal store (`prefix_candidates`, context rerank) and the shipped syllables
+//! (`seed::syllables`) all ask this one rule.
 
 use unicode_normalization::char::{compose, decompose_canonical};
 
 /// The five tone marks, as canonical decomposition writes them.
 const TONES: [char; 5] = ['\u{0300}', '\u{0301}', '\u{0303}', '\u{0309}', '\u{0323}'];
 
-/// Whether `syllable` is what `typed` could still become. Both lowercase NFC: the
-/// caller normalizes the prefix once (`normalize::exact_into`), not per syllable.
-pub(crate) fn completes(typed: &str, syllable: &str) -> bool {
-    let mut letters = syllable.chars();
+/// Whether `word` is what `typed` could still become. Both lowercase NFC: the caller
+/// normalizes the prefix once (`normalize::exact_into`), not per word.
+pub(crate) fn completes(typed: &str, word: &str) -> bool {
+    let mut letters = word.chars();
     typed
         .chars()
         .all(|mark| letters.next().is_some_and(|c| matches(mark, c)))

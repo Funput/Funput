@@ -1,7 +1,7 @@
 use std::array;
 
-use super::SuggestionEngine;
-use crate::index::{NONE, TOP_K, normalize};
+use super::{MAX_TOKEN_SCALARS, SuggestionEngine};
+use crate::index::{NONE, TOP_K, marks, normalize};
 use crate::types::{SuggestionSet, SuggestionStats, WordRecord};
 
 impl SuggestionEngine {
@@ -11,20 +11,30 @@ impl SuggestionEngine {
 
     /// The words the prefix alone would offer, best first. Split out so the
     /// context-aware path can reorder and extend the same set.
+    ///
+    /// Exact prefix matches first, then the folded trie's words that the marks typed
+    /// still allow (`marks::completes`): `đươ` reaches a learned `đường` before its
+    /// tone is typed. The folded trie keeps its best three per node, so this finds the
+    /// best of those, not every word that would match.
     #[inline]
     pub(crate) fn prefix_candidates(&self, prefix: &str) -> ([u32; TOP_K], usize) {
+        let none = ([NONE; TOP_K], 0);
         let scalar_count = normalize::exact_chars(prefix).count();
         if scalar_count == 0 || scalar_count > self.config.max_token_scalars {
-            return ([NONE; TOP_K], 0);
+            return none;
         }
-        let exact = self.exact.find(normalize::exact_chars(prefix), &self.words);
-        let differs = normalize::folded_chars(prefix).ne(normalize::exact_chars(prefix));
-        let folded = if differs {
-            [NONE; TOP_K]
-        } else {
-            self.folded
-                .find(normalize::folded_chars(prefix), &self.words)
+        let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
+        let Some(typed) = normalize::exact_into(prefix, &mut buffer) else {
+            return none;
         };
+        let exact = self.exact.find(typed.chars(), &self.words);
+        let folded = self
+            .folded
+            .find(normalize::folded_chars(prefix), &self.words)
+            .map(|id| match self.words.get(id as usize) {
+                Some(word) if marks::completes(typed, &word.text) => id,
+                _ => NONE,
+            });
 
         let mut ids = [NONE; TOP_K];
         let mut len = 0;
