@@ -1,4 +1,12 @@
-//! The shipped pair list, parsed once into a table sorted by first syllable.
+//! The shipped pair lists, each parsed once into its own table sorted by first word.
+//!
+//! Two lists: `data/pairs/vi.txt`, the point of the feature, and `data/pairs/en.txt`,
+//! a short English supplement for people who type English in Vietnamese mode. They
+//! stay separate tables ([`ShippedPairs`]) so a mode can ask only the lists it allows
+//! (English mode, a listed extension, would ask only the English one). Their tests
+//! keep them apart: no English first word is a Vietnamese syllable, and no first word
+//! is listed in both. The English words are ASCII, so everything below about tone
+//! styles leaves them as they are.
 //!
 //! `data/pairs/vi.txt` is written in the modern tone style. Building the table
 //! adds the traditional spelling of every first syllable the styles disagree on,
@@ -16,13 +24,34 @@ use funput_core::{ToneStyle, respell_tone};
 use crate::engine::MAX_TOKEN_SCALARS;
 use crate::index::normalize;
 
-const LIST: &str = include_str!("../../data/pairs/vi.txt");
+const VIETNAMESE: &str = include_str!("../../data/pairs/vi.txt");
+const ENGLISH: &str = include_str!("../../data/pairs/en.txt");
 
-static SHIPPED: OnceLock<PairTable> = OnceLock::new();
+static SHIPPED: OnceLock<ShippedPairs> = OnceLock::new();
 
-/// The table built from the shipped list, built on first use.
-pub(crate) fn shipped() -> &'static PairTable {
-    SHIPPED.get_or_init(|| PairTable::parse(LIST))
+/// The tables built from the shipped lists, built on first use.
+pub(crate) fn shipped() -> &'static ShippedPairs {
+    SHIPPED.get_or_init(|| ShippedPairs {
+        vietnamese: PairTable::parse(VIETNAMESE),
+        english: PairTable::parse(ENGLISH),
+    })
+}
+
+/// Every shipped list, one table each.
+pub(crate) struct ShippedPairs {
+    vietnamese: PairTable,
+    english: PairTable,
+}
+
+impl ShippedPairs {
+    /// What Vietnamese mode offers after `previous`: the Vietnamese pair, else the
+    /// English supplement's (a first word both lead is refused by the tests, and
+    /// Vietnamese would win it).
+    pub(crate) fn next_after(&self, previous: &str) -> Option<&Next> {
+        self.vietnamese
+            .next_after(previous)
+            .or_else(|| self.english.next_after(previous))
+    }
 }
 
 pub(crate) struct PairTable {
@@ -67,9 +96,9 @@ impl Next {
 }
 
 impl PairTable {
-    /// Trusts `list` to be lowercase NFC, modern style, with one second syllable
-    /// per first one — `funput-lexicon-tool/tests/vi_pairs.rs` checks the shipped
-    /// file. A first syllable listed twice keeps the line that came first.
+    /// Trusts `list` to be lowercase NFC, modern style, with one second word per first
+    /// one — `funput-lexicon-tool/tests/{vi,en}_pairs.rs` check the shipped files. A
+    /// first word listed twice keeps the line that came first.
     pub(crate) fn parse(list: &'static str) -> Self {
         let mut entries = Vec::new();
         for line in list.lines().map(str::trim) {
@@ -161,6 +190,15 @@ mod tests {
     }
 
     #[test]
+    fn vietnamese_mode_asks_the_vietnamese_list_then_the_english_one() {
+        let pairs = shipped();
+        let after = |previous| pairs.next_after(previous).map(|next| next.spelled(Modern));
+        assert_eq!(after("cảm"), Some("ơn"));
+        assert_eq!(after("thank"), Some("you"));
+        assert_eq!(after("nothing"), None);
+    }
+
+    #[test]
     fn both_tone_styles_are_read_and_written() {
         let table = PairTable::parse(LIST);
         assert_eq!(after(&table, "hoà", Modern).as_deref(), Some("bình"));
@@ -173,8 +211,9 @@ mod tests {
     }
 
     #[test]
-    fn the_shipped_table_stays_small() {
-        let bytes = heap_bytes(shipped());
+    fn the_shipped_tables_stay_small() {
+        let pairs = shipped();
+        let bytes = heap_bytes(&pairs.vietnamese) + heap_bytes(&pairs.english);
         assert!(
             bytes <= 128 * 1024,
             "{bytes} bytes is over the 128 KiB budget"

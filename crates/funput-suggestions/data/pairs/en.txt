@@ -1,0 +1,70 @@
+# English pairs whose second word a reader would bet on, for Vietnamese-mode typing.
+#
+# Built by hand for Funput, from no external word list or corpus, so it carries the
+# project's own licence (see NOTICE.md). It shares the table and every rule of `vi.txt`:
+# after the first word and a space, Predict offers the second while the user's own pairs
+# have nothing to say. Only in Vietnamese mode: many users type English there too, and
+# the keyboard's restore keeps the letters. English mode is listed as a later extension
+# in docs/features/vietnamese-seed-suggestion.md.
+#
+# Layout: one pair per line, two lowercase ASCII words separated by one space. Any `#`
+# line is a comment.
+#
+# What belongs here: a first word that, in everyday chat, is followed by this second
+# word most of the time. Not a word with several strong continuations (`as`, `in`,
+# `make`, `good`), not a word that must be capitalised (`i`, names), and never a first
+# word that is also a complete Vietnamese syllable: Vietnamese typing must not get an
+# English prediction by accident.
+#
+# Left out on purpose because the first word often leads elsewhere in chat: `due`
+# (`due date`, `due tomorrow`), `focus` (`focus mode`), `figure` (`figure 1`).
+#
+# Checked by `funput-lexicon-tool/tests/en_pairs.rs`; additions want a second reader.
+
+# --- set phrases
+thank you
+excuse me
+according to
+instead of
+regardless of
+rather than
+such as
+prior to
+contrary to
+
+# --- quantities
+lots of
+plenty of
+bunch of
+dozens of
+hundreds of
+thousands of
+millions of
+
+# --- verbs and adjectives with their preposition
+able to
+unable to
+ought to
+supposed to
+similar to
+related to
+belongs to
+refers to
+listen to
+depends on
+relies on
+rely on
+insist on
+concentrate on
+interested in
+involved in
+participate in
+familiar with
+comply with
+cope with
+aware of
+capable of
+consists of
+consist of
+proud of
+fond of

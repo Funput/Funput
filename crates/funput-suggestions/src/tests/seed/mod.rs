@@ -3,6 +3,7 @@
 //! These lean on three pairs of the shipped list (`cảm ơn`, `sức khoẻ`,
 //! `tuy nhiên`). Dropping one from `data/pairs/vi.txt` means picking another here.
 
+mod english;
 mod prefix;
 
 use funput_core::ToneStyle::{Modern, Traditional};
